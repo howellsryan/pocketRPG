@@ -3899,7 +3899,7 @@ function avgDpsVsMonster(playerStats, equipment, monster, stance, itemsData) {
  * Roll drops for one monster kill.
  * Returns array of { itemId, quantity }
  */
-function rollDrops(monster) {
+function idleRollDrops(monster) {
     const drops = [];
     for (const drop of (monster.drops || [])) {
         if (Math.random() < drop.chance) {
@@ -3956,7 +3956,7 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
     const lootGained = {}; // what made it into inventory
     const lootLost = {}; // what was discarded (inv full)
     for (let k = 0; k < monstersKilled; k++) {
-        const drops = rollDrops(monster);
+        const drops = idleRollDrops(monster);
         for (const drop of drops) {
             const item = itemsData[drop.itemId];
             const stackable = item?.stackable || false;
