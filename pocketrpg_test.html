@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PocketRPG — Test Suite</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f0f0f; color: #e8d5b0; padding: 16px; }
+  h1 { font-size: 22px; color: #d4af37; margin-bottom: 4px; }
+  .subtitle { font-size: 12px; color: #e8d5b0; opacity: 0.5; margin-bottom: 20px; }
+  .summary { display: flex; gap: 16px; margin-bottom: 20px; font-size: 14px; }
+  .summary .pass { color: #4ade80; font-weight: bold; }
+  .summary .fail { color: #f87171; font-weight: bold; }
+  .summary .total { color: #d4af37; font-weight: bold; }
+  .group { margin-bottom: 16px; border: 1px solid #2a2a2a; border-radius: 10px; overflow: hidden; }
+  .group-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #1a1a1a; cursor: pointer; user-select: none; }
+  .group-header h3 { font-size: 13px; font-weight: 700; }
+  .group-badge { font-size: 11px; padding: 2px 8px; border-radius: 6px; font-weight: 700; }
+  .group-badge.pass { background: #16532d; color: #4ade80; }
+  .group-badge.fail { background: #532020; color: #f87171; }
+  .group-body { display: none; }
+  .group.open .group-body { display: block; }
+  .test-row { display: flex; align-items: flex-start; gap: 8px; padding: 6px 14px; border-top: 1px solid #1a1a1a; font-size: 12px; }
+  .test-row .icon { flex-shrink: 0; font-size: 13px; }
+  .test-row .name { flex: 1; }
+  .test-row .detail { color: #888; font-size: 11px; margin-top: 2px; }
+  .test-row.pass .icon { color: #4ade80; }
+  .test-row.fail .icon { color: #f87171; }
+  .test-row.fail .name { color: #f87171; }
+  .modal-preview { margin-top: 24px; border: 1px solid #333; border-radius: 12px; padding: 16px; background: #1a1a1a; }
+  .modal-preview h3 { font-size: 13px; color: #d4af37; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<h1>🧪 PocketRPG Test Suite</h1>
+<div class="subtitle">Standalone test runner — no build required. Open in any browser.</div>
+<div id="summary" class="summary"></div>
+<div id="results"></div>
+<div id="modal-preview"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// INLINED CONSTANTS
+// ═══════════════════════════════════════════════════════════════════
+const TICK_DURATION = 600;
+const INVENTORY_SIZE = 28;
+const EQUIPMENT_SLOTS = ['head', 'body', 'legs', 'weapon', 'shield', 'gloves', 'boots', 'cape', 'neck', 'ring', 'ammo'];
+const MAX_XP = 200_000_000;
+const MAX_LEVEL = 99;
+const HITPOINTS_START_XP = 1154;
+const MELEE_XP_PER_DAMAGE = 4;
+const HP_XP_PER_DAMAGE = 1.33;
+const COMBAT_SKILLS = ['attack', 'strength', 'defence', 'hitpoints', 'ranged', 'magic', 'prayer'];
+const GATHERING_SKILLS = ['mining', 'woodcutting', 'fishing', 'farming', 'hunter'];
+const PRODUCTION_SKILLS = ['smithing', 'cooking', 'crafting', 'fletching', 'herblore', 'runecraft'];
+const UTILITY_SKILLS = ['agility', 'thieving', 'slayer', 'firemaking', 'construction'];
+const ALL_SKILLS = [...COMBAT_SKILLS, ...GATHERING_SKILLS, ...PRODUCTION_SKILLS, ...UTILITY_SKILLS];
+const SAVE_VERSION = 1;
+
+// ═══════════════════════════════════════════════════════════════════
+// INLINED HELPERS
+// ═══════════════════════════════════════════════════════════════════
+function fnv1a(str) {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    hash ^= str.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16);
+}
+
+function calcCombatLevel(stats) {
+  const base = 0.25 * (stats.defence + stats.hitpoints + Math.floor(stats.prayer / 2));
+  const melee = 0.325 * (stats.attack + stats.strength);
+  const range = 0.325 * Math.floor(stats.ranged * 1.5);
+  const mage = 0.325 * Math.floor(stats.magic * 1.5);
+  return Math.floor(base + Math.max(melee, range, mage));
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// INLINED ENGINE: experience.js
+// ═══════════════════════════════════════════════════════════════════
+const XP_TABLE = new Array(MAX_LEVEL + 1);
+XP_TABLE[1] = 0;
+(function buildXPTable() {
+  let cumulative = 0;
+  for (let level = 1; level < MAX_LEVEL; level++) {
+    cumulative += Math.floor(level + 300 * Math.pow(2, level / 7));
+    XP_TABLE[level + 1] = Math.floor(cumulative / 4);
+  }
+})();
+
+function getXPForLevel(level) {
+  if (level < 1) return 0;
+  if (level > MAX_LEVEL) return XP_TABLE[MAX_LEVEL];
+  return XP_TABLE[level];
+}
+
+function getLevelFromXP(xp) {
+  if (xp < 0) return 1;
+  let lo = 1, hi = MAX_LEVEL;
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    if (XP_TABLE[mid] <= xp) lo = mid;
+    else hi = mid - 1;
+  }
+  return lo;
+}
+
+function getXPToNextLevel(currentXP) {
+  const level = getLevelFromXP(currentXP);
+  if (level >= MAX_LEVEL) return 0;
+  return XP_TABLE[level + 1] - currentXP;
+}
+
+function getLevelProgress(currentXP) {
+  const level = getLevelFromXP(currentXP);
+  if (level >= MAX_LEVEL) return 1;
+  const thisLevelXP = XP_TABLE[level];
+  const nextLevelXP = XP_TABLE[level + 1];
+  return (currentXP - thisLevelXP) / (nextLevelXP - thisLevelXP);
+}
+
+function clampXP(xp) { return Math.min(xp, MAX_XP); }
+
+// ═══════════════════════════════════════════════════════════════════
+// INLINED ENGINE: formulas.js
+// ═══════════════════════════════════════════════════════════════════
+function effectiveStrength(strengthLevel, potionBonus = 0, prayerMult = 1.0, styleBonus = 0) {
+  return Math.floor((strengthLevel + potionBonus) * prayerMult) + styleBonus + 8;
+}
+
+function meleeMaxHit(effectiveStr, equipmentStrengthBonus, gearMult = 1.0) {
+  const base = Math.floor(0.5 + effectiveStr * (equipmentStrengthBonus + 64) / 640);
+  return Math.floor(base * gearMult);
+}
+
+function effectiveAttack(attackLevel, potionBonus = 0, prayerMult = 1.0, styleBonus = 0) {
+  return Math.floor((attackLevel + potionBonus) * prayerMult) + styleBonus + 8;
+}
+
+function maxAttackRoll(effectiveAtk, equipmentAttackBonus) {
+  return effectiveAtk * (equipmentAttackBonus + 64);
+}
+
+function maxDefenceRoll(defenceLevel, styleDefenceBonus) {
+  return (defenceLevel + 9) * (styleDefenceBonus + 64);
+}
+
+function hitChance(atkRoll, defRoll) {
+  if (atkRoll > defRoll) return 1 - (defRoll + 2) / (2 * (atkRoll + 1));
+  return atkRoll / (2 * (defRoll + 1));
+}
+
+function getMeleeStyleBonuses(stance) {
+  switch (stance) {
+    case 'accurate':   return { attackStyleBonus: 3, strengthStyleBonus: 0, defenceStyleBonus: 0 };
+    case 'aggressive': return { attackStyleBonus: 0, strengthStyleBonus: 3, defenceStyleBonus: 0 };
+    case 'controlled': return { attackStyleBonus: 1, strengthStyleBonus: 1, defenceStyleBonus: 1 };
+    case 'defensive':  return { attackStyleBonus: 0, strengthStyleBonus: 0, defenceStyleBonus: 3 };
+    default:           return { attackStyleBonus: 0, strengthStyleBonus: 0, defenceStyleBonus: 0 };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// INLINED ENGINE: equipment.js
+// ═══════════════════════════════════════════════════════════════════
+function getEquipmentBonuses(equipment, itemsData) {
+  const bonuses = {
+    attackBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
+    defenceBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
+    otherBonus: { meleeStrength: 0, rangedStrength: 0, magicDamage: 0 }
+  };
+  for (const slot of EQUIPMENT_SLOTS) {
+    if (!equipment[slot]) continue;
+    const item = itemsData[equipment[slot].itemId];
+    if (!item) continue;
+    if (item.attackBonus) for (const [k, v] of Object.entries(item.attackBonus)) bonuses.attackBonus[k] = (bonuses.attackBonus[k] || 0) + v;
+    if (item.defenceBonus) for (const [k, v] of Object.entries(item.defenceBonus)) bonuses.defenceBonus[k] = (bonuses.defenceBonus[k] || 0) + v;
+    if (item.otherBonus) for (const [k, v] of Object.entries(item.otherBonus)) bonuses.otherBonus[k] = (bonuses.otherBonus[k] || 0) + v;
+  }
+  return bonuses;
+}
+
+function getAttackSpeed(equipment, itemsData) {
+  if (!equipment.weapon) return 4;
+  const weapon = itemsData[equipment.weapon.itemId];
+  return weapon?.attackSpeed || 4;
+}
+
+function getAttackStyle(equipment, itemsData) {
+  if (!equipment.weapon) return 'crush';
+  const weapon = itemsData[equipment.weapon.itemId];
+  return weapon?.attackStyle || 'crush';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// INLINED ENGINE: inventory.js
+// ═══════════════════════════════════════════════════════════════════
+function freeSlots(inventory) { return inventory.filter(s => s === null).length; }
+
+function addItem(inventory, itemId, quantity, stackable = false) {
+  if (stackable) {
+    const existing = inventory.findIndex(s => s && s.itemId === itemId);
+    if (existing !== -1) {
+      inventory[existing] = { ...inventory[existing], quantity: inventory[existing].quantity + quantity };
+      return true;
+    }
+    const empty = inventory.indexOf(null);
+    if (empty === -1) return false;
+    inventory[empty] = { itemId, quantity };
+    return true;
+  }
+  for (let q = 0; q < quantity; q++) {
+    const empty = inventory.indexOf(null);
+    if (empty === -1) return false;
+    inventory[empty] = { itemId, quantity: 1 };
+  }
+  return true;
+}
+
+function countItem(inventory, itemId) {
+  return inventory.reduce((sum, slot) => (slot && slot.itemId === itemId) ? sum + slot.quantity : sum, 0);
+}
+
+function removeItem(inventory, itemId, quantity = 1) {
+  if (countItem(inventory, itemId) < quantity) return false;
+  let remaining = quantity;
+  for (let i = 0; i < inventory.length && remaining > 0; i++) {
+    if (inventory[i] && inventory[i].itemId === itemId) {
+      const take = Math.min(inventory[i].quantity, remaining);
+      inventory[i].quantity -= take;
+      remaining -= take;
+      if (inventory[i].quantity <= 0) inventory[i] = null;
+    }
+  }
+  return true;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// INLINED ENGINE: idleEngine.js
+// ═══════════════════════════════════════════════════════════════════
+const TICK_MS = 600;
+
+function formatIdleTime(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const days    = Math.floor(totalSeconds / 86400);
+  const hours   = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const parts = [];
+  if (days > 0)    parts.push(`${days}d`);
+  if (hours > 0)   parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`);
+  return parts.join(' ');
+}
+
+function simulateIdleSkilling(task, elapsedMs) {
+  if (!task || !task.action) return null;
+  const totalTicks = Math.floor(elapsedMs / TICK_MS);
+  const actionTicks = task.action.ticks;
+  const actions = Math.floor(totalTicks / actionTicks);
+  if (actions <= 0) return null;
+  const xpGained = {};
+  const itemsGained = {};
+  const xpPer = task.action.xp || 0;
+  if (xpPer > 0 && task.skill) xpGained[task.skill] = xpPer * actions;
+  if (task.action.product) {
+    const qty = (task.action.productQty || 1) * actions;
+    itemsGained[task.action.product] = (itemsGained[task.action.product] || 0) + qty;
+  }
+  return { xpGained, itemsGained, actions, skill: task.skill, actionName: task.action.name };
+}
+
+function simulateIdleGather(task, elapsedMs) {
+  if (!task || !task.gatherTask) return null;
+  const totalTicks = Math.floor(elapsedMs / TICK_MS);
+  const actionTicks = task.gatherTask.ticks;
+  const actions = Math.floor(totalTicks / actionTicks);
+  if (actions <= 0) return null;
+  const itemsGained = {};
+  const qty = (task.gatherTask.qty || 1) * actions;
+  itemsGained[task.gatherTask.product] = (itemsGained[task.gatherTask.product] || 0) + qty;
+  return { itemsGained, actions, actionName: task.gatherTask.name };
+}
+
+function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsData) {
+  if (!task || !task.monster) return null;
+  const monster = task.monster;
+  const totalTicks = Math.floor(elapsedMs / TICK_MS);
+  if (totalTicks <= 0) return null;
+  const playerStats = {
+    attack:   getLevelFromXP(stats.attack?.xp   || 0),
+    strength: getLevelFromXP(stats.strength?.xp || 0),
+    defence:  getLevelFromXP(stats.defence?.xp  || 0),
+  };
+  // Inline avgDpsVsMonster
+  const bonuses = getEquipmentBonuses(equipment, itemsData);
+  const weaponStyle = getAttackStyle(equipment, itemsData);
+  const weaponSpeed = getAttackSpeed(equipment, itemsData);
+  const styleBonuses = getMeleeStyleBonuses(task.stance || 'accurate');
+  const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus);
+  const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength);
+  const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus);
+  const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0);
+  const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus?.[weaponStyle] || 0);
+  const acc = hitChance(atkRoll, defRoll);
+  const avgDmgPerHit = acc * (maxHit / 2);
+  const dpsPerTick = avgDmgPerHit / weaponSpeed;
+
+  const ticksPerKill = dpsPerTick > 0 ? Math.max(1, Math.ceil(monster.hitpoints / dpsPerTick)) : Infinity;
+  const ticksPerCycle = ticksPerKill + 2;
+  const monstersKilled = ticksPerCycle < Infinity ? Math.floor(totalTicks / ticksPerCycle) : 0;
+  if (monstersKilled <= 0) return { xpGained: {}, lootGained: {}, monstersKilled: 0, lootLost: {} };
+
+  const xpSkill = task.stance === 'aggressive' ? 'strength' : task.stance === 'defensive' ? 'defence' : 'attack';
+  const dmgDealt = monster.hitpoints;
+  const xpGained = {};
+  xpGained[xpSkill] = Math.floor(dmgDealt * MELEE_XP_PER_DAMAGE) * monstersKilled;
+  xpGained.hitpoints = Math.floor(dmgDealt * HP_XP_PER_DAMAGE) * monstersKilled;
+
+  const newInv = [...inventory];
+  const lootGained = {};
+  const lootLost = {};
+
+  for (let k = 0; k < monstersKilled; k++) {
+    const drops = [];
+    for (const drop of (monster.drops || [])) {
+      if (Math.random() < drop.chance) {
+        const qty = Array.isArray(drop.quantity)
+          ? Math.floor(Math.random() * (drop.quantity[1] - drop.quantity[0] + 1)) + drop.quantity[0]
+          : drop.quantity;
+        drops.push({ itemId: drop.itemId, quantity: qty });
+      }
+    }
+    for (const drop of drops) {
+      const item = itemsData[drop.itemId];
+      const stackable = item?.stackable || false;
+      let added = false;
+      if (stackable) {
+        const existingIdx = newInv.findIndex(s => s && s.itemId === drop.itemId);
+        if (existingIdx !== -1) {
+          newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + drop.quantity };
+          added = true;
+        } else {
+          const emptyIdx = newInv.indexOf(null);
+          if (emptyIdx !== -1) { newInv[emptyIdx] = { itemId: drop.itemId, quantity: drop.quantity }; added = true; }
+        }
+      } else {
+        for (let q = 0; q < drop.quantity; q++) {
+          const emptyIdx = newInv.indexOf(null);
+          if (emptyIdx !== -1) { newInv[emptyIdx] = { itemId: drop.itemId, quantity: 1 }; added = true; }
+          else { lootLost[drop.itemId] = (lootLost[drop.itemId] || 0) + (drop.quantity - q); break; }
+        }
+        if (!added && newInv.indexOf(null) === -1) { lootLost[drop.itemId] = (lootLost[drop.itemId] || 0) + drop.quantity; continue; }
+      }
+      if (added) lootGained[drop.itemId] = (lootGained[drop.itemId] || 0) + drop.quantity;
+      else lootLost[drop.itemId] = (lootLost[drop.itemId] || 0) + drop.quantity;
+    }
+  }
+  return { xpGained, lootGained, lootLost, monstersKilled, finalInventory: newInv };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// INLINED ENGINE: saveload helpers (snapshot + restore)
+// ═══════════════════════════════════════════════════════════════════
+function snapshotToLocalStorage(player, stats, inventory, bank, equipment) {
+  const data = {
+    version: SAVE_VERSION,
+    timestamp: Date.now(),
+    player, stats, inventory, bank, equipment,
+    settings: {}
+  };
+  try { data.settings.activeTask = JSON.parse(localStorage.getItem('pocketrpg_activeTask')); } catch { data.settings.activeTask = null; }
+  data.settings.lastTick = parseInt(localStorage.getItem('pocketrpg_lastTick'), 10) || data.timestamp;
+
+  const json = JSON.stringify(data);
+  const hash = fnv1a(json);
+  const payload = JSON.stringify({ hash, data: json });
+  const encoded = btoa(unescape(encodeURIComponent(payload)));
+  localStorage.setItem('pocketrpg_backup', encoded);
+  return encoded;
+}
+
+function decodeBackup(encoded) {
+  const decoded = decodeURIComponent(escape(atob(encoded)));
+  const { hash, data: json } = JSON.parse(decoded);
+  if (fnv1a(json) !== hash) return null;
+  return JSON.parse(json);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// MINIMAL ITEMS DATA (for tests)
+// ═══════════════════════════════════════════════════════════════════
+const TEST_ITEMS = {
+  bones: { id: 'bones', name: 'Bones', type: 'resource', stackable: false, shopValue: 2 },
+  raw_chicken: { id: 'raw_chicken', name: 'Raw Chicken', type: 'food', stackable: false, shopValue: 4 },
+  feathers: { id: 'feathers', name: 'Feathers', type: 'resource', stackable: true, shopValue: 3 },
+  coins: { id: 'coins', name: 'Coins', type: 'currency', stackable: true, shopValue: 0 },
+  cowhide: { id: 'cowhide', name: 'Cowhide', type: 'resource', stackable: false, shopValue: 41 },
+  raw_beef: { id: 'raw_beef', name: 'Raw Beef', type: 'food', stackable: false, shopValue: 4 },
+  bronze_scimitar: { id: 'bronze_scimitar', name: 'Bronze Scimitar', type: 'weapon', slot: 'weapon', attackStyle: 'slash', attackSpeed: 4, attackBonus: { slash: 7 }, otherBonus: { meleeStrength: 6 }, stackable: false, shopValue: 32 },
+  tin_ore: { id: 'tin_ore', name: 'Tin Ore', type: 'resource', stackable: false, shopValue: 1 },
+  flax: { id: 'flax', name: 'Flax', type: 'resource', stackable: false, shopValue: 2 },
+};
+
+const TEST_CHICKEN = {
+  id: 'chicken', name: 'Chicken', combatLevel: 1, hitpoints: 3,
+  stats: { attack: 1, strength: 1, defence: 1, magic: 1, ranged: 1 },
+  attackSpeed: 4, attackStyle: 'crush', attackBonus: 0, strengthBonus: 0,
+  defenceBonus: { stab: -42, slash: -42, crush: -42, magic: -42, ranged: -42 },
+  drops: [
+    { itemId: 'bones', quantity: 1, chance: 1.0 },
+    { itemId: 'raw_chicken', quantity: 1, chance: 1.0 },
+    { itemId: 'feathers', quantity: [5, 15], chance: 1.0 }
+  ]
+};
+
+const TEST_COW = {
+  id: 'cow', name: 'Cow', combatLevel: 8, hitpoints: 8,
+  stats: { attack: 1, strength: 1, defence: 1, magic: 1, ranged: 1 },
+  attackSpeed: 4, attackStyle: 'crush', attackBonus: 0, strengthBonus: 0,
+  defenceBonus: { stab: -21, slash: -21, crush: -21, magic: -21, ranged: -21 },
+  drops: [
+    { itemId: 'bones', quantity: 1, chance: 1.0 },
+    { itemId: 'raw_beef', quantity: 1, chance: 1.0 },
+    { itemId: 'cowhide', quantity: 1, chance: 1.0 }
+  ]
+};
+
+const TEST_GOBLIN = {
+  id: 'goblin', name: 'Goblin', combatLevel: 5, hitpoints: 5,
+  stats: { attack: 1, strength: 1, defence: 1, magic: 1, ranged: 1 },
+  attackSpeed: 4, attackStyle: 'crush', attackBonus: 0, strengthBonus: 0,
+  defenceBonus: { stab: -15, slash: -15, crush: -15, magic: -15, ranged: -15 },
+  drops: [
+    { itemId: 'bones', quantity: 1, chance: 1.0 },
+    { itemId: 'coins', quantity: [1, 5], chance: 0.75 }
+  ]
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// TEST FRAMEWORK
+// ═══════════════════════════════════════════════════════════════════
+const results = [];
+let currentGroup = '';
+
+function group(name) { currentGroup = name; }
+
+function assert(name, condition, detail) {
+  results.push({ group: currentGroup, name, pass: !!condition, detail: detail || '' });
+}
+
+function assertEq(name, actual, expected, detail) {
+  const pass = actual === expected;
+  assert(name, pass, detail || `expected ${expected}, got ${actual}`);
+}
+
+function assertApprox(name, actual, expected, tolerance, detail) {
+  const pass = Math.abs(actual - expected) <= tolerance;
+  assert(name, pass, detail || `expected ~${expected}±${tolerance}, got ${actual}`);
+}
+
+function assertGt(name, actual, threshold, detail) {
+  assert(name, actual > threshold, detail || `expected >${threshold}, got ${actual}`);
+}
+
+function assertGte(name, actual, threshold, detail) {
+  assert(name, actual >= threshold, detail || `expected >=${threshold}, got ${actual}`);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// RUN ALL TESTS
+// ═══════════════════════════════════════════════════════════════════
+function runAll() {
+
+  // ── GROUP 1: XP & Leveling ──
+  group('XP & Leveling');
+  assertEq('Level 1 = 0 XP', getXPForLevel(1), 0);
+  assertEq('Level 2 = 83 XP', getXPForLevel(2), 83);
+  assertEq('Level 10 = 1154 XP', getXPForLevel(10), 1154);
+  assertEq('Level 92 ≈ halfway to 99', getXPForLevel(92) >= 6000000, true, `Level 92 XP = ${getXPForLevel(92)}`);
+  assertEq('Level 99 = 13034431', getXPForLevel(99), 13034431);
+  assertEq('getLevelFromXP(0) = 1', getLevelFromXP(0), 1);
+  assertEq('getLevelFromXP(82) = 1', getLevelFromXP(82), 1);
+  assertEq('getLevelFromXP(83) = 2', getLevelFromXP(83), 2);
+  assertEq('getLevelFromXP(1154) = 10', getLevelFromXP(1154), 10);
+  assertEq('getLevelFromXP(13034431) = 99', getLevelFromXP(13034431), 99);
+  assertEq('getLevelFromXP(200M) = 99', getLevelFromXP(200000000), 99);
+  assertEq('getLevelFromXP(-1) = 1', getLevelFromXP(-1), 1);
+  assertEq('clampXP caps at 200M', clampXP(300000000), 200000000);
+  assertEq('clampXP passes through valid', clampXP(5000), 5000);
+  assertEq('getXPToNextLevel at 99 = 0', getXPToNextLevel(13034431), 0);
+  assertGt('getXPToNextLevel at 0 > 0', getXPToNextLevel(0), 0);
+  const prog = getLevelProgress(Math.floor((getXPForLevel(50) + getXPForLevel(51)) / 2));
+  assert('getLevelProgress ~0.5 at midpoint', prog > 0.4 && prog < 0.6, `progress = ${prog.toFixed(3)}`);
+
+  // ── GROUP 2: Combat Formulas ──
+  group('Combat Formulas');
+  const es = effectiveStrength(1, 0, 1.0, 0);
+  assertEq('effectiveStrength(1,0,1,0) = 9', es, 9);
+  const es3 = effectiveStrength(1, 0, 1.0, 3);
+  assertEq('effectiveStrength(1,0,1,3) = 12 (accurate)', es3, 12);
+  const mh = meleeMaxHit(9, 0);
+  assertEq('meleeMaxHit(9,0) = 1', mh, 1);
+  const mh50 = meleeMaxHit(effectiveStrength(50, 0, 1.0, 0), 0);
+  assertGt('meleeMaxHit lv50 > 1', mh50, 1, `maxHit = ${mh50}`);
+  const ea = effectiveAttack(1, 0, 1.0, 3);
+  assertEq('effectiveAttack(1,0,1,3) = 12', ea, 12);
+  const ar = maxAttackRoll(12, 0);
+  assertEq('maxAttackRoll(12,0) = 768', ar, 768);
+  const dr = maxDefenceRoll(1, -42);
+  assertEq('maxDefenceRoll(1,-42) chicken = 220', dr, 220);
+  const hc = hitChance(768, 220);
+  assert('hitChance vs chicken > 0.5', hc > 0.5, `acc = ${hc.toFixed(4)}`);
+  const hc2 = hitChance(100, 1000);
+  assert('hitChance low vs high < 0.1', hc2 < 0.1, `acc = ${hc2.toFixed(4)}`);
+  const sb = getMeleeStyleBonuses('accurate');
+  assertEq('accurate gives +3 attack', sb.attackStyleBonus, 3);
+  assertEq('accurate gives +0 strength', sb.strengthStyleBonus, 0);
+  const sb2 = getMeleeStyleBonuses('aggressive');
+  assertEq('aggressive gives +3 strength', sb2.strengthStyleBonus, 3);
+  const sb3 = getMeleeStyleBonuses('controlled');
+  assertEq('controlled gives +1/+1/+1', sb3.attackStyleBonus, 1);
+
+  // ── GROUP 3: Equipment Bonuses ──
+  group('Equipment Bonuses');
+  const emptyEq = {};
+  EQUIPMENT_SLOTS.forEach(s => emptyEq[s] = null);
+  const emptyBonuses = getEquipmentBonuses(emptyEq, TEST_ITEMS);
+  assertEq('Empty equipment — slash atk = 0', emptyBonuses.attackBonus.slash, 0);
+  assertEq('Empty equipment — melee str = 0', emptyBonuses.otherBonus.meleeStrength, 0);
+  const scimEq = { ...emptyEq, weapon: { itemId: 'bronze_scimitar' } };
+  const scimBonuses = getEquipmentBonuses(scimEq, TEST_ITEMS);
+  assertEq('Bronze scimitar — slash atk = 7', scimBonuses.attackBonus.slash, 7);
+  assertEq('Bronze scimitar — melee str = 6', scimBonuses.otherBonus.meleeStrength, 6);
+  assertEq('getAttackSpeed unarmed = 4', getAttackSpeed(emptyEq, TEST_ITEMS), 4);
+  assertEq('getAttackSpeed scim = 4', getAttackSpeed(scimEq, TEST_ITEMS), 4);
+  assertEq('getAttackStyle unarmed = crush', getAttackStyle(emptyEq, TEST_ITEMS), 'crush');
+  assertEq('getAttackStyle scim = slash', getAttackStyle(scimEq, TEST_ITEMS), 'slash');
+
+  // ── GROUP 4: Inventory ──
+  group('Inventory');
+  const inv1 = new Array(INVENTORY_SIZE).fill(null);
+  assertEq('Fresh inv has 28 free slots', freeSlots(inv1), 28);
+  addItem(inv1, 'bones', 1, false);
+  assertEq('After 1 add, 27 free', freeSlots(inv1), 27);
+  addItem(inv1, 'coins', 100, true);
+  assertEq('After stackable add, 26 free', freeSlots(inv1), 26);
+  addItem(inv1, 'coins', 50, true);
+  assertEq('Stacking same item, still 26 free', freeSlots(inv1), 26);
+  assertEq('Coin count = 150', countItem(inv1, 'coins'), 150);
+  removeItem(inv1, 'coins', 30);
+  assertEq('After removing 30 coins, 120 left', countItem(inv1, 'coins'), 120);
+  removeItem(inv1, 'bones', 1);
+  assertEq('After removing bones, 27 free', freeSlots(inv1), 27);
+  const fullInv = new Array(INVENTORY_SIZE).fill(null);
+  for (let i = 0; i < INVENTORY_SIZE; i++) fullInv[i] = { itemId: 'bones', quantity: 1 };
+  assertEq('Full inv has 0 free', freeSlots(fullInv), 0);
+  const added = addItem(fullInv, 'tin_ore', 1, false);
+  assertEq('Cannot add to full inv', added, false);
+
+  // ── GROUP 5: formatIdleTime ──
+  group('formatIdleTime');
+  assertEq('0ms = "0s"', formatIdleTime(0), '0s');
+  assertEq('500ms = "0s"', formatIdleTime(500), '0s');
+  assertEq('1000ms = "1s"', formatIdleTime(1000), '1s');
+  assertEq('61000ms = "1m 1s"', formatIdleTime(61000), '1m 1s');
+  assertEq('3600000ms = "1h"', formatIdleTime(3600000), '1h');
+  assertEq('3661000ms = "1h 1m 1s"', formatIdleTime(3661000), '1h 1m 1s');
+  assertEq('86400000ms = "1d"', formatIdleTime(86400000), '1d');
+  assertEq('90061000ms = "1d 1h 1m 1s"', formatIdleTime(90061000), '1d 1h 1m 1s');
+  assertEq('60000ms = "1m"', formatIdleTime(60000), '1m');
+  assertEq('120000ms = "2m"', formatIdleTime(120000), '2m');
+
+  // ── GROUP 6: simulateIdleSkilling ──
+  group('simulateIdleSkilling');
+  const skillTask = { type: 'skill', skill: 'mining', action: { name: 'Mine tin ore', ticks: 4, xp: 17, product: 'tin_ore' } };
+  const skillRes = simulateIdleSkilling(skillTask, 60000); // 60s = 100 ticks = 25 actions
+  assert('60s mining returns result', skillRes !== null);
+  assertEq('25 actions in 60s at 4 ticks', skillRes?.actions, 25);
+  assertEq('Mining XP = 25*17 = 425', skillRes?.xpGained?.mining, 425);
+  assertEq('Produces 25 tin ore', skillRes?.itemsGained?.tin_ore, 25);
+  const skillResShort = simulateIdleSkilling(skillTask, 1000); // 1s = 1.67 ticks, <4 ticks per action
+  assert('1s too short for mining', skillResShort === null);
+  const skillResNull = simulateIdleSkilling(null, 60000);
+  assert('null task returns null', skillResNull === null);
+  const skillResNoAction = simulateIdleSkilling({ type: 'skill' }, 60000);
+  assert('task without action returns null', skillResNoAction === null);
+  // 5-tick action in 10s = 16 ticks = 3 actions
+  const fishTask = { type: 'skill', skill: 'fishing', action: { name: 'Fish shrimp', ticks: 5, xp: 10, product: 'raw_shrimp' } };
+  const fishRes = simulateIdleSkilling(fishTask, 10000);
+  assertEq('10s fishing at 5 ticks = 3 actions', fishRes?.actions, 3);
+
+  // ── GROUP 7: simulateIdleGather ──
+  group('simulateIdleGather');
+  const gatherTask = { type: 'gather', gatherTask: { name: 'Pick Flax', ticks: 3, product: 'flax', qty: 1 } };
+  const gatherRes = simulateIdleGather(gatherTask, 60000);
+  assert('60s gather returns result', gatherRes !== null);
+  assertEq('Gather actions = floor(100/3) = 33', gatherRes?.actions, 33);
+  assertEq('33 flax produced', gatherRes?.itemsGained?.flax, 33);
+  const gatherShort = simulateIdleGather(gatherTask, 1000);
+  assert('1s short gather still works (1.67 ticks >= 0 actions)', gatherShort === null || gatherShort?.actions === 0);
+  const gatherNull = simulateIdleGather(null, 60000);
+  assert('null gather returns null', gatherNull === null);
+  const gatherNoTask = simulateIdleGather({ type: 'gather' }, 60000);
+  assert('gather without gatherTask returns null', gatherNoTask === null);
+  const gatherMulti = simulateIdleGather({ type: 'gather', gatherTask: { name: 'Test', ticks: 3, product: 'flax', qty: 2 } }, 60000);
+  assertEq('qty=2 gather produces 66', gatherMulti?.itemsGained?.flax, 66);
+
+  // ── GROUP 8: simulateIdleCombat — chickens ──
+  group('simulateIdleCombat/chickens');
+  const combatStats = {};
+  ALL_SKILLS.forEach(s => combatStats[s] = { skill: s, xp: 0, level: 1 });
+  combatStats.hitpoints = { skill: 'hitpoints', xp: HITPOINTS_START_XP, level: 10 };
+  const combatEq = {};
+  EQUIPMENT_SLOTS.forEach(s => combatEq[s] = null);
+  const combatInv = new Array(INVENTORY_SIZE).fill(null);
+  const chickenTask = { type: 'combat', monster: TEST_CHICKEN, stance: 'accurate' };
+  const combatRes = simulateIdleCombat(chickenTask, 300000, combatStats, combatEq, combatInv, TEST_ITEMS); // 5 min
+  assert('5 min chicken combat returns result', combatRes !== null);
+  assertGt('Kills > 0', combatRes?.monstersKilled, 0, `kills = ${combatRes?.monstersKilled}`);
+  assertGt('Attack XP > 0 (accurate stance)', combatRes?.xpGained?.attack, 0, `xp = ${combatRes?.xpGained?.attack}`);
+  assertGt('Hitpoints XP > 0', combatRes?.xpGained?.hitpoints, 0, `xp = ${combatRes?.xpGained?.hitpoints}`);
+  assert('No strength XP in accurate', !combatRes?.xpGained?.strength, `str xp = ${combatRes?.xpGained?.strength || 0}`);
+  assertGt('Loot bones > 0', (combatRes?.lootGained?.bones || 0), 0, `bones = ${combatRes?.lootGained?.bones}`);
+  assertGt('Loot raw_chicken > 0', (combatRes?.lootGained?.raw_chicken || 0), 0);
+  assertGt('Loot feathers > 0', (combatRes?.lootGained?.feathers || 0), 0);
+  // Attack XP should be kills * 3hp * 4xp/dmg = kills * 12
+  const expectedAtkXP = combatRes.monstersKilled * Math.floor(3 * MELEE_XP_PER_DAMAGE);
+  assertEq('Attack XP formula correct', combatRes.xpGained.attack, expectedAtkXP);
+  // HP XP = kills * floor(3 * 1.33) = kills * 3
+  const expectedHpXP = combatRes.monstersKilled * Math.floor(3 * HP_XP_PER_DAMAGE);
+  assertEq('HP XP formula correct', combatRes.xpGained.hitpoints, expectedHpXP);
+  assert('finalInventory returned', Array.isArray(combatRes.finalInventory));
+  assertEq('finalInventory length = 28', combatRes.finalInventory.length, INVENTORY_SIZE);
+
+  // ── GROUP 9: simulateIdleCombat — aggressive stance ──
+  group('simulateIdleCombat/aggressive');
+  const aggroTask = { type: 'combat', monster: TEST_CHICKEN, stance: 'aggressive' };
+  const aggroRes = simulateIdleCombat(aggroTask, 300000, combatStats, combatEq, new Array(28).fill(null), TEST_ITEMS);
+  assertGt('Aggressive: str XP > 0', aggroRes?.xpGained?.strength, 0);
+  assert('Aggressive: no attack XP', !aggroRes?.xpGained?.attack);
+  assertGt('Aggressive: hp XP > 0', aggroRes?.xpGained?.hitpoints, 0);
+
+  // ── GROUP 10: simulateIdleCombat — full inventory ──
+  group('simulateIdleCombat/full-inv');
+  const fullInv2 = new Array(INVENTORY_SIZE).fill(null).map(() => ({ itemId: 'bones', quantity: 1 }));
+  const fullRes = simulateIdleCombat(chickenTask, 300000, combatStats, combatEq, fullInv2, TEST_ITEMS);
+  assert('Full inv combat still runs', fullRes !== null);
+  assertGt('Still gets kills', fullRes?.monstersKilled, 0);
+  assertGt('Loot lost > 0', Object.keys(fullRes?.lootLost || {}).length, 0, `lostItems = ${JSON.stringify(fullRes?.lootLost)}`);
+
+  // ── GROUP 11: simulateIdleCombat — with weapon ──
+  group('simulateIdleCombat/weapon');
+  const weaponEq = { ...combatEq, weapon: { itemId: 'bronze_scimitar' } };
+  const weaponRes = simulateIdleCombat(chickenTask, 300000, combatStats, weaponEq, new Array(28).fill(null), TEST_ITEMS);
+  assertGt('With weapon: kills > 0', weaponRes?.monstersKilled, 0);
+  // With weapon (+6 str, +7 slash), should kill faster
+  const unarmedRes = simulateIdleCombat(chickenTask, 300000, combatStats, combatEq, new Array(28).fill(null), TEST_ITEMS);
+  assertGte('Weapon kills >= unarmed', weaponRes?.monstersKilled, unarmedRes?.monstersKilled,
+    `weapon=${weaponRes?.monstersKilled} unarmed=${unarmedRes?.monstersKilled}`);
+
+  // ── GROUP 12: simulateIdleCombat — higher stats ──
+  group('simulateIdleCombat/highstats');
+  const highStats = {};
+  ALL_SKILLS.forEach(s => highStats[s] = { skill: s, xp: getXPForLevel(50), level: 50 });
+  highStats.hitpoints = { skill: 'hitpoints', xp: getXPForLevel(50), level: 50 };
+  const highTask = { type: 'combat', monster: TEST_GOBLIN, stance: 'accurate' };
+  const highRes = simulateIdleCombat(highTask, 300000, highStats, combatEq, new Array(28).fill(null), TEST_ITEMS);
+  assertGt('High stats kill goblins fast', highRes?.monstersKilled, 20, `kills = ${highRes?.monstersKilled}`);
+
+  // ── GROUP 13: Combat Level Formula ──
+  group('Combat Level');
+  const cl1 = calcCombatLevel({ attack: 1, strength: 1, defence: 1, hitpoints: 10, prayer: 1, ranged: 1, magic: 1 });
+  assertEq('Starting combat level = 3', cl1, 3);
+  const cl99 = calcCombatLevel({ attack: 99, strength: 99, defence: 99, hitpoints: 99, prayer: 99, ranged: 99, magic: 99 });
+  assertEq('Max combat level = 126', cl99, 126);
+  const cl_melee = calcCombatLevel({ attack: 50, strength: 50, defence: 40, hitpoints: 45, prayer: 1, ranged: 1, magic: 1 });
+  const cl_range = calcCombatLevel({ attack: 1, strength: 1, defence: 40, hitpoints: 45, prayer: 1, ranged: 75, magic: 1 });
+  assertGt('Range build can be higher', cl_range, cl_melee - 10, `melee=${cl_melee} range=${cl_range}`);
+
+  // ── GROUP 14: FNV-1a Hash ──
+  group('FNV-1a Hash');
+  const h1 = fnv1a('hello');
+  const h2 = fnv1a('hello');
+  assertEq('Same input = same hash', h1, h2);
+  const h3 = fnv1a('hello!');
+  assert('Different input = different hash', h1 !== h3, `"hello"=${h1} "hello!"=${h3}`);
+  assertEq('Hash is hex string', typeof h1, 'string');
+  assert('Hash length 1-8 hex chars', h1.length >= 1 && h1.length <= 8);
+  const h4 = fnv1a('');
+  assertEq('Empty string has consistent hash', h4, fnv1a(''));
+
+  // ── GROUP 15: localStorage Backup Round-Trip ──
+  group('localStorage Backup');
+  // Clean up
+  localStorage.removeItem('pocketrpg_backup');
+  localStorage.removeItem('pocketrpg_lastTick');
+  localStorage.removeItem('pocketrpg_activeTask');
+
+  const testPlayer = { name: 'TestHero', created: Date.now() };
+  const testStats = {};
+  ALL_SKILLS.forEach(s => testStats[s] = { skill: s, xp: s === 'hitpoints' ? HITPOINTS_START_XP : 0, level: s === 'hitpoints' ? 10 : 1 });
+  const testInv = new Array(INVENTORY_SIZE).fill(null);
+  testInv[0] = { itemId: 'bronze_scimitar', quantity: 1 };
+  testInv[1] = { itemId: 'coins', quantity: 500 };
+  const testBank = { bones: { itemId: 'bones', quantity: 42 } };
+  const testEquip = {};
+  EQUIPMENT_SLOTS.forEach(s => testEquip[s] = null);
+
+  // Set activeTask and lastTick in localStorage before snapshot
+  const activeTask = { type: 'combat', monster: TEST_CHICKEN, stance: 'accurate' };
+  localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTask));
+  localStorage.setItem('pocketrpg_lastTick', String(Date.now() - 60000)); // 60s ago
+
+  const encoded = snapshotToLocalStorage(testPlayer, testStats, testInv, testBank, testEquip);
+  const backupStr = localStorage.getItem('pocketrpg_backup');
+  assert('Backup written to localStorage', !!backupStr);
+  assert('Backup is a string', typeof backupStr === 'string');
+  assertGt('Backup length > 100', backupStr.length, 100, `length = ${backupStr.length}`);
+
+  // Decode and verify
+  const restored = decodeBackup(backupStr);
+  assert('Backup decodes successfully', restored !== null);
+  assertEq('Player name restored', restored?.player?.name, 'TestHero');
+  assertEq('Stats hitpoints XP restored', restored?.stats?.hitpoints?.xp, HITPOINTS_START_XP);
+  assertEq('Inventory slot 0 = bronze_scimitar', restored?.inventory?.[0]?.itemId, 'bronze_scimitar');
+  assertEq('Inventory slot 1 = 500 coins', restored?.inventory?.[1]?.quantity, 500);
+  assertEq('Bank bones = 42', restored?.bank?.bones?.quantity, 42);
+  assert('Settings include activeTask', restored?.settings?.activeTask?.type === 'combat');
+  assert('Settings include lastTick', typeof restored?.settings?.lastTick === 'number');
+  assertGt('lastTick is recent', restored?.settings?.lastTick, Date.now() - 120000);
+
+  // Tamper test
+  const tampered = backupStr.slice(0, -5) + 'XXXXX';
+  localStorage.setItem('pocketrpg_backup', tampered);
+  const tamperedResult = decodeBackup(localStorage.getItem('pocketrpg_backup'));
+  assert('Tampered backup returns null', tamperedResult === null);
+
+  // Clean up
+  localStorage.removeItem('pocketrpg_backup');
+  localStorage.removeItem('pocketrpg_lastTick');
+  localStorage.removeItem('pocketrpg_activeTask');
+
+  // ── GROUP 16: Idle Engine Edge Cases ──
+  group('Idle Edge Cases');
+  const zeroDuration = simulateIdleSkilling(skillTask, 0);
+  assert('0ms skill = null', zeroDuration === null);
+  const negDuration = simulateIdleGather(gatherTask, -1000);
+  assert('Negative ms gather = null', negDuration === null);
+  const combatZero = simulateIdleCombat(chickenTask, 0, combatStats, combatEq, combatInv, TEST_ITEMS);
+  assert('0ms combat = null', combatZero === null);
+  const combatTiny = simulateIdleCombat(chickenTask, 500, combatStats, combatEq, combatInv, TEST_ITEMS);
+  assert('500ms combat = null (< 1 tick)', combatTiny === null);
+  // Very long idle (1 hour)
+  const longRes = simulateIdleSkilling(skillTask, 3600000);
+  assertEq('1h mining = 1500 actions', longRes?.actions, 1500);
+  assertEq('1h mining XP = 25500', longRes?.xpGained?.mining, 25500);
+  // Combat with no drops monster
+  const noDropMonster = { ...TEST_CHICKEN, drops: [] };
+  const noDropTask = { type: 'combat', monster: noDropMonster, stance: 'accurate' };
+  const noDropRes = simulateIdleCombat(noDropTask, 300000, combatStats, combatEq, new Array(28).fill(null), TEST_ITEMS);
+  assertGt('No-drop monster still gives kills', noDropRes?.monstersKilled, 0);
+  assertEq('No-drop monster: 0 loot', Object.keys(noDropRes?.lootGained || {}).length, 0);
+
+  // ── GROUP 17: Auto-bank delay formula ──
+  group('Auto-bank Delay');
+  function getAutoBankSeconds(agilityLevel) {
+    const lvl = Math.max(1, Math.min(99, agilityLevel));
+    return Math.round(120 - (110 * (lvl - 1) / 98));
+  }
+  assertEq('Agility 1 = 120s', getAutoBankSeconds(1), 120);
+  assertEq('Agility 99 = 10s', getAutoBankSeconds(99), 10);
+  const mid = getAutoBankSeconds(50);
+  assert('Agility 50 between 10-120', mid > 10 && mid < 120, `mid = ${mid}`);
+  assertEq('Agility 0 clamps to 1 = 120s', getAutoBankSeconds(0), 120);
+  assertEq('Agility 100 clamps to 99 = 10s', getAutoBankSeconds(100), 10);
+
+  // ── GROUP 18: XP Table Integrity ──
+  group('XP Table Integrity');
+  assert('XP table is monotonically increasing', (() => {
+    for (let i = 2; i <= MAX_LEVEL; i++) {
+      if (XP_TABLE[i] <= XP_TABLE[i - 1]) return false;
+    }
+    return true;
+  })());
+  assert('All XP table entries are integers', (() => {
+    for (let i = 1; i <= MAX_LEVEL; i++) {
+      if (!Number.isInteger(XP_TABLE[i])) return false;
+    }
+    return true;
+  })());
+  // getLevelFromXP is inverse of getXPForLevel
+  assert('getLevelFromXP is inverse of getXPForLevel', (() => {
+    for (let lv = 1; lv <= 99; lv++) {
+      if (getLevelFromXP(getXPForLevel(lv)) !== lv) return false;
+    }
+    return true;
+  })());
+
+  // ── GROUP 19: Stackable vs Non-stackable Items ──
+  group('Stackable Items');
+  const stkInv = new Array(INVENTORY_SIZE).fill(null);
+  addItem(stkInv, 'coins', 100, true);
+  addItem(stkInv, 'coins', 200, true);
+  assertEq('Coins stack to 300', countItem(stkInv, 'coins'), 300);
+  assertEq('Coins use 1 slot', INVENTORY_SIZE - freeSlots(stkInv), 1);
+  addItem(stkInv, 'feathers', 50, true);
+  assertEq('Feathers in separate stack', INVENTORY_SIZE - freeSlots(stkInv), 2);
+  addItem(stkInv, 'bones', 3, false);
+  assertEq('3 non-stackable bones = 3 slots', INVENTORY_SIZE - freeSlots(stkInv), 5);
+  assertEq('Bones count = 3', countItem(stkInv, 'bones'), 3);
+
+  // ── GROUP 20: Cow Combat (multi-drop non-stackable) ──
+  group('simulateIdleCombat/cows');
+  const cowTask = { type: 'combat', monster: TEST_COW, stance: 'accurate' };
+  const cowRes = simulateIdleCombat(cowTask, 600000, combatStats, combatEq, new Array(28).fill(null), TEST_ITEMS); // 10 min
+  assert('10 min cow combat returns result', cowRes !== null);
+  assertGt('Cow kills > 0', cowRes?.monstersKilled, 0);
+  // Cows drop bones + raw_beef + cowhide (all non-stackable, all 100% chance)
+  // So each kill uses 3 inv slots — max ~9 kills before full
+  assert('Cow loot lost eventually', cowRes?.monstersKilled > 9 ?
+    Object.keys(cowRes?.lootLost || {}).length > 0 : true,
+    `kills=${cowRes?.monstersKilled} lost=${JSON.stringify(cowRes?.lootLost)}`);
+
+  // ── GROUP 21: End-to-end loadGame idle simulation ──
+  group('End-to-end Idle Flow');
+  // Simulate what loadGame does: read lastTick + activeTask from localStorage,
+  // calculate elapsed, run idle engine, apply results
+  const mockLastTick = Date.now() - 120000; // 2 minutes ago
+  const mockTask = { type: 'skill', skill: 'mining', action: { name: 'Mine tin ore', ticks: 4, xp: 17, product: 'tin_ore' } };
+  const elapsed = Date.now() - mockLastTick;
+  assert('Elapsed ~120s', elapsed >= 119000 && elapsed <= 121000, `elapsed = ${elapsed}`);
+  const e2eSim = simulateIdleSkilling(mockTask, elapsed);
+  assert('E2E idle sim returns result', e2eSim !== null);
+  // ~120s = 200 ticks / 4 ticks per action = 50 actions
+  assertApprox('E2E ~50 actions', e2eSim.actions, 50, 2);
+  assertApprox('E2E ~850 mining XP', e2eSim.xpGained.mining, 850, 40);
+  assertApprox('E2E ~50 tin ore', e2eSim.itemsGained.tin_ore, 50, 2);
+
+  // Simulate applying XP to stats
+  const e2eStats = { mining: { skill: 'mining', xp: 0, level: 1 } };
+  const newXP = Math.min((e2eStats.mining.xp || 0) + Math.floor(e2eSim.xpGained.mining), MAX_XP);
+  const newLevel = getLevelFromXP(newXP);
+  assertGt('After e2e, mining XP > 0', newXP, 0);
+  assertGte('After e2e, mining level >= 1', newLevel, 1);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// RENDER RESULTS
+// ═══════════════════════════════════════════════════════════════════
+function renderResults() {
+  runAll();
+
+  const groups = {};
+  for (const r of results) {
+    if (!groups[r.group]) groups[r.group] = [];
+    groups[r.group].push(r);
+  }
+
+  const totalPass = results.filter(r => r.pass).length;
+  const totalFail = results.filter(r => !r.pass).length;
+
+  document.getElementById('summary').innerHTML = `
+    <span class="total">${results.length} tests</span>
+    <span class="pass">✅ ${totalPass} passed</span>
+    ${totalFail > 0 ? `<span class="fail">❌ ${totalFail} failed</span>` : ''}
+  `;
+
+  let html = '';
+  for (const [name, tests] of Object.entries(groups)) {
+    const allPass = tests.every(t => t.pass);
+    const failCount = tests.filter(t => !t.pass).length;
+    // Auto-open groups with failures
+    html += `<div class="group ${allPass ? '' : 'open'}">`;
+    html += `<div class="group-header" onclick="this.parentElement.classList.toggle('open')">`;
+    html += `<h3>${name} (${tests.length})</h3>`;
+    html += `<span class="group-badge ${allPass ? 'pass' : 'fail'}">${allPass ? '✅ PASS' : `❌ ${failCount} FAIL`}</span>`;
+    html += `</div><div class="group-body">`;
+    for (const t of tests) {
+      html += `<div class="test-row ${t.pass ? 'pass' : 'fail'}">`;
+      html += `<span class="icon">${t.pass ? '✓' : '✗'}</span>`;
+      html += `<div><div class="name">${t.name}</div>`;
+      if (t.detail) html += `<div class="detail">${t.detail}</div>`;
+      html += `</div></div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  document.getElementById('results').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// RENDER MODAL PREVIEW
+// ═══════════════════════════════════════════════════════════════════
+function renderModalPreview() {
+  // Simulate a combat idle result and render the modal as it would appear in-game
+  const combatStats = {};
+  ALL_SKILLS.forEach(s => combatStats[s] = { skill: s, xp: s === 'hitpoints' ? HITPOINTS_START_XP : 0, level: s === 'hitpoints' ? 10 : 1 });
+  const combatEq = {};
+  EQUIPMENT_SLOTS.forEach(s => combatEq[s] = null);
+  const chickenTask = { type: 'combat', monster: TEST_CHICKEN, stance: 'accurate' };
+  const sim = simulateIdleCombat(chickenTask, 300000, combatStats, combatEq, new Array(28).fill(null), TEST_ITEMS);
+
+  if (!sim) return;
+
+  const elapsed = formatIdleTime(300000);
+  let html = `<div class="modal-preview">`;
+  html += `<h3>💤 Welcome Back! Modal Preview</h3>`;
+  html += `<div style="font-size:12px;color:#c8a96e;margin-bottom:8px">Away for ${elapsed} — Fighting Chicken (accurate)</div>`;
+
+  if (sim.monstersKilled > 0) {
+    html += `<div style="padding:8px;background:#111;border-radius:8px;margin-bottom:8px">`;
+    html += `<div style="font-size:11px;color:#888;margin-bottom:4px">⚔️ COMBAT</div>`;
+    html += `<div style="font-size:13px">${sim.monstersKilled} kills</div></div>`;
+  }
+
+  if (sim.xpGained && Object.keys(sim.xpGained).length > 0) {
+    html += `<div style="padding:8px;background:#111;border-radius:8px;margin-bottom:8px">`;
+    html += `<div style="font-size:11px;color:#888;margin-bottom:4px">⭐ XP GAINED</div>`;
+    for (const [skill, xp] of Object.entries(sim.xpGained)) {
+      if (xp > 0) html += `<div style="display:flex;justify-content:space-between;font-size:13px"><span>${skill}</span><span style="color:#d4af37;font-family:monospace">+${xp.toLocaleString()} xp</span></div>`;
+    }
+    html += `</div>`;
+  }
+
+  const items = sim.lootGained || {};
+  if (Object.keys(items).length > 0) {
+    html += `<div style="padding:8px;background:#111;border-radius:8px;margin-bottom:8px">`;
+    html += `<div style="font-size:11px;color:#888;margin-bottom:4px">🎒 LOOT (Inventory)</div>`;
+    for (const [itemId, qty] of Object.entries(items)) {
+      html += `<div style="display:flex;justify-content:space-between;font-size:13px"><span>${itemId.replace(/_/g, ' ')}</span><span style="color:#d4af37;font-family:monospace">×${qty}</span></div>`;
+    }
+    html += `</div>`;
+  }
+
+  if (sim.lootLost && Object.keys(sim.lootLost).length > 0) {
+    html += `<div style="padding:8px;background:#1a0f0f;border:1px solid #3a1a1a;border-radius:8px">`;
+    html += `<div style="font-size:11px;color:#e57373;margin-bottom:4px">⚠️ LOST (Inventory Full)</div>`;
+    for (const [itemId, qty] of Object.entries(sim.lootLost)) {
+      html += `<div style="display:flex;justify-content:space-between;font-size:13px;color:#e57373"><span>${itemId.replace(/_/g, ' ')}</span><span style="font-family:monospace">×${qty}</span></div>`;
+    }
+    html += `</div>`;
+  }
+
+  html += `</div>`;
+  document.getElementById('modal-preview').innerHTML = html;
+}
+
+// Run on load
+renderResults();
+renderModalPreview();
+</script>
+</body>
+</html>

@@ -4237,13 +4237,25 @@ function snapshotToLocalStorage(player, stats, inventory, bank, equipment) {
             stats,
             inventory,
             bank,
-            equipment
+            equipment,
+            settings: {}
         };
+        // Capture active task and last tick from localStorage so idle engine
+        // can calculate elapsed time after a full page close + reopen
+        try {
+            data.settings.activeTask = JSON.parse(localStorage.getItem('pocketrpg_activeTask'));
+        }
+        catch {
+            data.settings.activeTask = null;
+        }
+        data.settings.lastTick = parseInt(localStorage.getItem('pocketrpg_lastTick'), 10) || data.timestamp;
         const json = JSON.stringify(data);
         const hash = fnv1a(json);
         const payload = JSON.stringify({ hash, data: json });
+        // Use safe UTF-16→Latin1 encoding for btoa (TextEncoder round-trip)
         const encoded = btoa(unescape(encodeURIComponent(payload)));
         localStorage.setItem('pocketrpg_backup', encoded);
+        console.log('[PocketRPG] Snapshot saved to localStorage, size:', encoded.length);
     }
     catch (err) {
         // localStorage may be full or unavailable — fail silently
@@ -4294,6 +4306,26 @@ async function restoreFromLocalStorage() {
                 eqTx.store.put(val, slot);
         }
         await eqTx.done;
+        // Restore settings to IDB if present
+        if (data.settings) {
+            const setTx = db.transaction('settings', 'readwrite');
+            for (const [key, val] of Object.entries(data.settings)) {
+                if (key !== 'activeTask' && key !== 'lastTick' && val != null) {
+                    setTx.store.put({ key, value: val }, key);
+                }
+            }
+            await setTx.done;
+        }
+        // ── CRITICAL: Restore localStorage keys so idle engine can calculate elapsed time ──
+        // Use the snapshot's lastTick (or timestamp as fallback) so loadGame() sees
+        // a valid elapsed-time window on the next startup.
+        const savedLastTick = data.settings?.lastTick || data.timestamp;
+        if (savedLastTick) {
+            localStorage.setItem('pocketrpg_lastTick', String(savedLastTick));
+        }
+        if (data.settings?.activeTask) {
+            localStorage.setItem('pocketrpg_activeTask', JSON.stringify(data.settings.activeTask));
+        }
         console.log('[PocketRPG] Restored from localStorage backup, timestamp:', data.timestamp);
         return data;
     }
@@ -6266,12 +6298,19 @@ function GameApp() {
     const hpRegenCounter = useRef(0);
     const autoBankCounter = useRef(0);
     const autoBankingActive = useRef(false);
-    const snapshotCounter = useRef(0);
+    const snapshotCounter = useRef(99); // Start at 99 so first snapshot fires after 1 tick
     useEffect(() => {
         checkSave();
     }, []);
     useEffect(() => {
         if (gameReady) {
+            // Immediately stamp lastTick so idle engine has a baseline if user closes tab
+            localStorage.setItem('pocketrpg_lastTick', String(Date.now()));
+            // Do an immediate snapshot so localStorage backup exists from the start
+            const snap = getSnapshot();
+            if (snap.player) {
+                snapshotToLocalStorage(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment);
+            }
             startTicks();
             return () => stopTicks();
         }
@@ -6378,6 +6417,7 @@ function GameApp() {
             }
             // Snapshot full save to localStorage every 100 ticks (~60s) as IDB failover
             // Uses getSnapshot() to read live refs — avoids stale closure values
+            // Counter starts at 99 so first snapshot fires after ~0.6s (immediate on load)
             snapshotCounter.current++;
             if (snapshotCounter.current >= 100) {
                 snapshotCounter.current = 0;
