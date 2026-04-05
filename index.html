@@ -4236,6 +4236,7 @@ function GameProvider({ children }) {
         ]);
         // ── Idle simulation (runs on raw DB data, before state is set) ──
         let idleResult = null;
+        console.log('[PocketRPG] loadGame — savedTask:', savedTask, 'savedLastTick:', savedLastTick, 'elapsed:', savedLastTick ? Date.now() - savedLastTick : 0);
         if (savedTask && savedLastTick) {
             const elapsedMs = Date.now() - savedLastTick;
             if (elapsedMs >= 2000) {
@@ -4385,9 +4386,10 @@ function GameProvider({ children }) {
     }, []);
     const setActiveTask = useCallback((task) => {
         setActiveTaskState(task);
-        saveSetting('activeTask', task);
-        if (task)
-            saveSetting('lastTick', Date.now());
+        // lastTick + activeTask are stamped every tick in App.jsx tick loop
+        // so we only need to persist the null case (task stopped) immediately
+        if (!task)
+            saveSetting('activeTask', null);
     }, []);
     // Direct bank update without inventory changes (for skill/gather item routing)
     const updateBankDirect = useCallback((itemUpdates) => {
@@ -6125,7 +6127,7 @@ function getAutoBankSeconds(agilityLevel) {
     return Math.round(120 - (110 * (lvl - 1) / 98));
 }
 function GameApp() {
-    const { loaded, loadGame, player, stats, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, addToast, getSkillLevel } = useGame();
+    const { loaded, loadGame, player, stats, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, addToast, getSkillLevel, activeTask } = useGame();
     const [screen, setScreen] = useState(SCREENS.HOME);
     const [gameReady, setGameReady] = useState(false);
     const [showNewGame, setShowNewGame] = useState(false);
@@ -6147,19 +6149,18 @@ function GameApp() {
             return () => stopTicks();
         }
     }, [gameReady]);
-    // Stamp lastTick every 5s (every ~8 ticks) so idle knows when we were last active
-    const lastTickStampCounter = useRef(0);
+    // Keep a ref to activeTask so the tick closure always sees the latest value
+    const activeTaskRef = useRef(activeTask);
+    useEffect(() => { activeTaskRef.current = activeTask; }, [activeTask]);
     // HP regen tick: once per minute (100 ticks at 600ms = 60s)
     useEffect(() => {
         if (!gameReady)
             return;
         const unsub = onTick(() => {
-            // Stamp last tick time periodically for idle system
-            lastTickStampCounter.current++;
-            if (lastTickStampCounter.current >= 8) {
-                lastTickStampCounter.current = 0;
-                saveSetting('lastTick', Date.now());
-            }
+            // Stamp lastTick + activeTask every tick so idle is always accurate to within 600ms
+            const now = Date.now();
+            saveSetting('lastTick', now);
+            saveSetting('activeTask', activeTaskRef.current);
             hpRegenCounter.current++;
             if (hpRegenCounter.current >= 100) {
                 hpRegenCounter.current = 0;
