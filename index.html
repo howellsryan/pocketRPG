@@ -4534,13 +4534,21 @@ function GameProvider({ children }) {
             setToasts(prev => prev.filter(t => t.id !== id));
         }, 3000);
     }, []);
+    // Returns a fresh snapshot of all live state — always reads from refs, never stale
+    const getSnapshot = useCallback(() => ({
+        player: stateRef.current.player,
+        stats: stateRef.current.stats,
+        inventory: stateRef.current.inventory,
+        bank: stateRef.current.bank,
+        equipment: stateRef.current.equipment,
+    }), []);
     const value = {
         loaded, player, stats, inventory, equipment, bank, currentHP, toasts,
         homeShortcuts, combatStance, activeTask,
         loadGame, grantXP, updateInventory, updateEquipment, updateBank,
         updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,
         markDirty, itemsData, updateHomeShortcuts, updateCombatStance,
-        setActiveTask, updateBankDirect
+        setActiveTask, updateBankDirect, getSnapshot
     };
     return h(GameContext.Provider, { value: value }, children);
 }
@@ -6245,7 +6253,7 @@ function getAutoBankSeconds(agilityLevel) {
     return Math.round(120 - (110 * (lvl - 1) / 98));
 }
 function GameApp() {
-    const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, getSkillLevel, activeTask, itemsData } = useGame();
+    const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, getSkillLevel, activeTask, itemsData, getSnapshot } = useGame();
     const [screen, setScreen] = useState(SCREENS.HOME);
     const [gameReady, setGameReady] = useState(false);
     const [showNewGame, setShowNewGame] = useState(false);
@@ -6285,34 +6293,39 @@ function GameApp() {
             return;
         const handleVisibility = async () => {
             if (document.hidden) {
-                // Page going to background — stamp immediately before JS freezes
+                // Page going to background — stamp the hide time separately from tick heartbeat
                 const now = Date.now();
-                // Synchronous — guaranteed to complete before iOS freezes JS
-                localStorage.setItem('pocketrpg_lastTick', String(now));
+                localStorage.setItem('pocketrpg_hiddenAt', String(now));
                 localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current));
             }
             else {
-                // Page returning to foreground — check for idle time
+                // Page returning to foreground — use hiddenAt (not lastTick) for elapsed time
                 try {
-                    // Read synchronously from localStorage — no async, no freeze risk
-                    const savedLastTick = (() => { const v = localStorage.getItem('pocketrpg_lastTick'); return v ? parseInt(v, 10) : null; })();
+                    const rawHiddenAt = localStorage.getItem('pocketrpg_hiddenAt');
                     const savedTask = (() => { try {
                         return JSON.parse(localStorage.getItem('pocketrpg_activeTask'));
                     }
                     catch {
                         return null;
                     } })();
-                    if (!savedLastTick || !savedTask)
+                    if (!rawHiddenAt)
                         return;
-                    const elapsedMs = Date.now() - savedLastTick;
+                    const hiddenAt = parseInt(rawHiddenAt, 10);
+                    const elapsedMs = Date.now() - hiddenAt;
                     if (elapsedMs < 2000)
                         return;
+                    // Clear the hiddenAt stamp so a second quick return doesn't double-count
+                    localStorage.removeItem('pocketrpg_hiddenAt');
+                    // If no active task, still show "Welcome Back" modal with elapsed time
+                    if (!savedTask) {
+                        setIdleResult({ elapsedMs, task: null });
+                        return;
+                    }
                     // Re-read latest stats/equipment/inventory from DB to avoid stale state
-                    const [freshStats, freshInv, freshEq, freshBank] = await Promise.all([
+                    const [freshStats, freshInv, freshEq] = await Promise.all([
                         getAllStats(),
                         getInventory(),
                         getEquipment(),
-                        getBank(),
                     ]);
                     let sim = null;
                     if (savedTask.type === 'skill')
@@ -6321,8 +6334,11 @@ function GameApp() {
                         sim = simulateIdleGather(savedTask, elapsedMs);
                     if (savedTask.type === 'combat')
                         sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current);
-                    if (!sim)
+                    // Always show the modal — even if sim is null (e.g. <1 action completed)
+                    if (!sim) {
+                        setIdleResult({ elapsedMs, task: savedTask });
                         return;
+                    }
                     // Apply XP
                     if (sim.xpGained) {
                         for (const [skill, xp] of Object.entries(sim.xpGained)) {
@@ -6337,8 +6353,6 @@ function GameApp() {
                     else if (sim.itemsGained) {
                         updateBankDirect(sim.itemsGained);
                     }
-                    // Re-stamp synchronously so a second quick return doesn't double-count
-                    localStorage.setItem('pocketrpg_lastTick', String(Date.now()));
                     setIdleResult({ elapsedMs, task: savedTask, ...sim });
                 }
                 catch (err) {
@@ -6363,10 +6377,12 @@ function GameApp() {
                 localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current));
             }
             // Snapshot full save to localStorage every 100 ticks (~60s) as IDB failover
+            // Uses getSnapshot() to read live refs — avoids stale closure values
             snapshotCounter.current++;
             if (snapshotCounter.current >= 100) {
                 snapshotCounter.current = 0;
-                snapshotToLocalStorage(player, stats, inventory, bank, equipment);
+                const snap = getSnapshot();
+                snapshotToLocalStorage(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment);
             }
             hpRegenCounter.current++;
             if (hpRegenCounter.current >= 100) {
@@ -6493,8 +6509,11 @@ function GameApp() {
         try {
             await importSave(file);
             await loadGame();
-            addToast('Save imported!', 'info');
+            // Dismiss whichever UI triggered this — new game screen or save menu
+            setShowNewGame(false);
             setShowSaveMenu(false);
+            setGameReady(true);
+            addToast('Save imported!', 'info');
         }
         catch (err) {
             addToast(`Import failed: ${err.message}`, 'error');
