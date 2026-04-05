@@ -3801,6 +3801,209 @@ function getAvailableActions(skillActions, skillXP) {
     return skillActions.filter(a => a.level <= level);
 }
 
+// ── engine/idleEngine.js ──
+/**
+ * Idle Engine — calculates what would have happened while the player was away.
+ * Pure functions, no UI imports.
+ */
+
+
+
+
+const TICK_MS = 600;
+/**
+ * Format elapsed milliseconds into a human-readable duration string.
+ * Only shows units that have a non-zero value, starting from the largest.
+ */
+function formatIdleTime(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    const parts = [];
+    if (days > 0)
+        parts.push(`${days}d`);
+    if (hours > 0)
+        parts.push(`${hours}h`);
+    if (minutes > 0)
+        parts.push(`${minutes}m`);
+    if (seconds > 0 || parts.length === 0)
+        parts.push(`${seconds}s`);
+    return parts.join(' ');
+}
+/**
+ * Simulate idle skilling.
+ * Returns { xpGained: { skill: xp }, itemsGained: { itemId: qty }, actions }
+ * Items go straight to bank — materials are NOT consumed (simplified).
+ */
+function simulateIdleSkilling(task, elapsedMs, currentStats) {
+    if (!task || !task.action)
+        return null;
+    const totalTicks = Math.floor(elapsedMs / TICK_MS);
+    const actionTicks = task.action.ticks;
+    const actions = Math.floor(totalTicks / actionTicks);
+    if (actions <= 0)
+        return null;
+    const xpGained = {};
+    const itemsGained = {};
+    const xpPer = task.action.xp || 0;
+    if (xpPer > 0 && task.skill) {
+        xpGained[task.skill] = xpPer * actions;
+    }
+    if (task.action.product) {
+        const qty = (task.action.productQty || 1) * actions;
+        itemsGained[task.action.product] = (itemsGained[task.action.product] || 0) + qty;
+    }
+    return { xpGained, itemsGained, actions, skill: task.skill, actionName: task.action.name };
+}
+/**
+ * Simulate idle gathering.
+ * Returns { itemsGained: { itemId: qty }, actions }
+ * Materials consumed from bank if present, otherwise unlimited (simplified).
+ */
+function simulateIdleGather(task, elapsedMs) {
+    if (!task || !task.gatherTask)
+        return null;
+    const totalTicks = Math.floor(elapsedMs / TICK_MS);
+    const actionTicks = task.gatherTask.ticks;
+    const actions = Math.floor(totalTicks / actionTicks);
+    if (actions <= 0)
+        return null;
+    const itemsGained = {};
+    const qty = (task.gatherTask.qty || 1) * actions;
+    itemsGained[task.gatherTask.product] = (itemsGained[task.gatherTask.product] || 0) + qty;
+    return { itemsGained, actions, actionName: task.gatherTask.name };
+}
+/**
+ * Compute average player DPS against a monster.
+ * Returns avg damage per tick.
+ */
+function avgDpsVsMonster(playerStats, equipment, monster, stance, itemsData) {
+    const bonuses = getEquipmentBonuses(equipment, itemsData);
+    const weaponStyle = getAttackStyle(equipment, itemsData);
+    const weaponSpeed = getAttackSpeed(equipment, itemsData);
+    const styleBonuses = getMeleeStyleBonuses(stance);
+    const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus);
+    const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength);
+    const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus);
+    const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0);
+    const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus?.[weaponStyle] || 0);
+    const acc = hitChance(atkRoll, defRoll);
+    // Average damage per hit = acc * maxHit / 2
+    const avgDmgPerHit = acc * (maxHit / 2);
+    // Hits land every weaponSpeed ticks
+    return avgDmgPerHit / weaponSpeed;
+}
+/**
+ * Roll drops for one monster kill.
+ * Returns array of { itemId, quantity }
+ */
+function rollDrops(monster) {
+    const drops = [];
+    for (const drop of (monster.drops || [])) {
+        if (Math.random() < drop.chance) {
+            const qty = Array.isArray(drop.quantity)
+                ? Math.floor(Math.random() * (drop.quantity[1] - drop.quantity[0] + 1)) + drop.quantity[0]
+                : drop.quantity;
+            drops.push({ itemId: drop.itemId, quantity: qty });
+        }
+    }
+    return drops;
+}
+/**
+ * Simulate idle combat.
+ * Returns { xpGained, lootGained, monstersKilled, lootLost, itemsData needed for names }
+ *
+ * inventory: current inventory array (28 slots)
+ * itemsData: items lookup
+ */
+function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsData) {
+    if (!task || !task.monster)
+        return null;
+    const monster = task.monster;
+    const totalTicks = Math.floor(elapsedMs / TICK_MS);
+    if (totalTicks <= 0)
+        return null;
+    const playerStats = {
+        attack: getLevelFromXP(stats.attack?.xp || 0),
+        strength: getLevelFromXP(stats.strength?.xp || 0),
+        defence: getLevelFromXP(stats.defence?.xp || 0),
+    };
+    const dpsPerTick = avgDpsVsMonster(playerStats, equipment, monster, task.stance || 'accurate', itemsData);
+    // Seconds to kill one monster; minimum 1 tick
+    const ticksPerKill = dpsPerTick > 0
+        ? Math.max(1, Math.ceil(monster.hitpoints / dpsPerTick))
+        : Infinity;
+    // Add respawn delay (2 ticks)
+    const ticksPerCycle = ticksPerKill + 2;
+    const monstersKilled = ticksPerCycle < Infinity
+        ? Math.floor(totalTicks / ticksPerCycle)
+        : 0;
+    if (monstersKilled <= 0)
+        return { xpGained: {}, lootGained: {}, monstersKilled: 0, lootLost: {} };
+    // XP — simplified: assume average damage per kill = monster.hitpoints
+    // actual XP = hitpoints dmg dealt (melee xp for primary skill + hp xp)
+    const xpSkill = task.stance === 'aggressive' ? 'strength'
+        : task.stance === 'defensive' ? 'defence'
+            : 'attack';
+    const dmgDealt = monster.hitpoints;
+    const xpGained = {};
+    xpGained[xpSkill] = Math.floor(dmgDealt * MELEE_XP_PER_DAMAGE) * monstersKilled;
+    xpGained.hitpoints = Math.floor(dmgDealt * HP_XP_PER_DAMAGE) * monstersKilled;
+    // Loot — simulate drops for each kill, fill inventory slots, discard rest
+    const newInv = [...inventory];
+    const lootGained = {}; // what made it into inventory
+    const lootLost = {}; // what was discarded (inv full)
+    for (let k = 0; k < monstersKilled; k++) {
+        const drops = rollDrops(monster);
+        for (const drop of drops) {
+            const item = itemsData[drop.itemId];
+            const stackable = item?.stackable || false;
+            // Try to add to inventory
+            let added = false;
+            if (stackable) {
+                const existingIdx = newInv.findIndex(s => s && s.itemId === drop.itemId);
+                if (existingIdx !== -1) {
+                    newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + drop.quantity };
+                    added = true;
+                }
+                else {
+                    const emptyIdx = newInv.indexOf(null);
+                    if (emptyIdx !== -1) {
+                        newInv[emptyIdx] = { itemId: drop.itemId, quantity: drop.quantity };
+                        added = true;
+                    }
+                }
+            }
+            else {
+                for (let q = 0; q < drop.quantity; q++) {
+                    const emptyIdx = newInv.indexOf(null);
+                    if (emptyIdx !== -1) {
+                        newInv[emptyIdx] = { itemId: drop.itemId, quantity: 1 };
+                        added = true;
+                    }
+                    else {
+                        lootLost[drop.itemId] = (lootLost[drop.itemId] || 0) + (drop.quantity - q);
+                        break;
+                    }
+                }
+                if (!added && newInv.indexOf(null) === -1) {
+                    lootLost[drop.itemId] = (lootLost[drop.itemId] || 0) + drop.quantity;
+                    continue;
+                }
+            }
+            if (added) {
+                lootGained[drop.itemId] = (lootGained[drop.itemId] || 0) + drop.quantity;
+            }
+            else {
+                lootLost[drop.itemId] = (lootLost[drop.itemId] || 0) + drop.quantity;
+            }
+        }
+    }
+    return { xpGained, lootGained, lootLost, monstersKilled, finalInventory: newInv };
+}
+
 // ── engine/tick.js ──
 
 let tickInterval = null;
