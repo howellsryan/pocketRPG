@@ -3655,9 +3655,12 @@ function processCombatTick(combatState, playerStats, equipment, itemsData) {
         }
         monster.currentHP -= damage;
         events.push({ type: 'playerHit', damage, monsterHP: monster.currentHP });
-        // Accumulate XP
+        // Accumulate XP and emit per-attack
         for (const [skill, xp] of Object.entries(xpSkills)) {
             state.xpGained[skill] = (state.xpGained[skill] || 0) + xp;
+        }
+        if (Object.keys(xpSkills).length > 0) {
+            events.push({ type: 'xp', xpSkills });
         }
         // Reset attack timer
         let speed = weaponSpeed;
@@ -3763,15 +3766,16 @@ function processSkillingTick(skillingState) {
 /**
  * Check if player can perform this skilling action
  */
-function canPerformAction(action, skillXP, inventory, itemsData) {
+function canPerformAction(action, skillXP, inventory, itemsData, bank = {}) {
     const level = getLevelFromXP(skillXP);
     if (level < action.level)
         return { can: false, reason: `Requires ${action.skillName || 'skill'} level ${action.level}` };
-    // Check required materials
+    // Check required materials (inventory + bank combined)
     if (action.materials) {
         for (const [itemId, qty] of Object.entries(action.materials)) {
-            const count = inventory.filter(s => s && s.itemId === itemId).reduce((sum, s) => sum + s.quantity, 0);
-            if (count < qty) {
+            const invCount = inventory.filter(s => s && s.itemId === itemId).reduce((sum, s) => sum + s.quantity, 0);
+            const bankCount = bank[itemId]?.quantity || 0;
+            if (invCount + bankCount < qty) {
                 const item = itemsData[itemId];
                 return { can: false, reason: `Need ${qty} ${item?.name || itemId}` };
             }
@@ -4688,8 +4692,8 @@ function GameProvider({ children }) {
                     agility: '🏃', thieving: '🗝️', slayer: '💀', firemaking: '🔥', construction: '🏠'
                 };
                 const icon = SKILL_ICONS[skill] || '⭐';
-                const msg = `${icon} Congratulations! Your ${skillName} is now ${newLevel}`;
-                addToast(msg, 'levelup');
+                const msg = `Congratulations! Your ${skillName} is now ${newLevel}`;
+                addToast(msg, 'levelup', icon);
                 // If hitpoints levelled, update max HP
                 if (skill === 'hitpoints') {
                     setCurrentHP(prev => Math.min(prev + (newLevel - oldLevel), newLevel));
@@ -4750,9 +4754,15 @@ function GameProvider({ children }) {
             const newBank = { ...prev };
             for (const [itemId, qty] of Object.entries(itemUpdates)) {
                 if (newBank[itemId]) {
-                    newBank[itemId] = { ...newBank[itemId], quantity: newBank[itemId].quantity + qty };
+                    const newQty = newBank[itemId].quantity + qty;
+                    if (newQty <= 0) {
+                        delete newBank[itemId];
+                    }
+                    else {
+                        newBank[itemId] = { ...newBank[itemId], quantity: newQty };
+                    }
                 }
-                else {
+                else if (qty > 0) {
                     newBank[itemId] = { itemId, quantity: qty };
                 }
             }
@@ -4762,9 +4772,9 @@ function GameProvider({ children }) {
         });
     }, [autoSave]);
     // ── Toasts ──
-    const addToast = useCallback((message, type = 'info') => {
+    const addToast = useCallback((message, type = 'info', icon = null) => {
         const id = Date.now() + Math.random();
-        setToasts(prev => [...prev, { id, message, type }]);
+        setToasts(prev => [...prev, { id, message, type, icon }]);
         setTimeout(() => {
             setToasts(prev => prev.filter(t => t.id !== id));
         }, 3000);
@@ -4915,7 +4925,7 @@ function ToastContainer() {
             ? 'bg-gradient-to-r from-[#2a1f00]/95 to-[#1a1500]/95 border-2 border-[var(--color-gold)]'
             : 'bg-[#1a1a1a]/95'}` },
         h("div", { class: "flex items-center gap-2" },
-            h("span", { class: `${toast.type === 'levelup' ? 'text-xl' : 'text-sm'}` }, TOAST_ICONS[toast.type] || TOAST_ICONS.info),
+            h("span", { class: `${toast.type === 'levelup' ? 'text-xl' : 'text-sm'}` }, toast.icon || TOAST_ICONS[toast.type] || TOAST_ICONS.info),
             h("span", { class: `font-semibold text-[var(--color-parchment)]
               ${toast.type === 'levelup' ? 'text-base text-[var(--color-gold)]' : 'text-sm'}` }, toast.message)))))));
 }
@@ -5626,11 +5636,13 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
                         hpRef.current = getMaxHP();
                     }
                 }
-                if (ev.type === 'monsterDeath') {
-                    for (const [skill, xp] of Object.entries(ev.xpGained)) {
+                if (ev.type === 'xp') {
+                    for (const [skill, xp] of Object.entries(ev.xpSkills)) {
                         if (xp > 0)
                             grantXP(skill, xp);
                     }
+                }
+                if (ev.type === 'monsterDeath') {
                     if (ev.loot && ev.loot.length > 0) {
                         const newInv = [...inventory];
                         for (const drop of ev.loot) {
@@ -5825,7 +5837,9 @@ function SkillingScreen({ initialSkillId, initialActionId }) {
                     if (action.materials) {
                         let hasMats = true;
                         for (const [matId, qty] of Object.entries(action.materials)) {
-                            if (countItem(newInv, matId) < qty) {
+                            const invCount = countItem(newInv, matId);
+                            const bankCount = bank[matId]?.quantity || 0;
+                            if (invCount + bankCount < qty) {
                                 hasMats = false;
                                 break;
                             }
@@ -5836,10 +5850,19 @@ function SkillingScreen({ initialSkillId, initialActionId }) {
                             addToast('Out of materials!', 'error');
                             return;
                         }
-                        // Remove materials
+                        // Remove materials — consume from inventory first, then bank
+                        const bankUpdates = {};
                         for (const [matId, qty] of Object.entries(action.materials)) {
-                            removeItem(newInv, matId, qty);
+                            const invCount = countItem(newInv, matId);
+                            const fromInv = Math.min(invCount, qty);
+                            const fromBank = qty - fromInv;
+                            if (fromInv > 0)
+                                removeItem(newInv, matId, fromInv);
+                            if (fromBank > 0)
+                                bankUpdates[matId] = -fromBank;
                         }
+                        if (Object.keys(bankUpdates).length > 0)
+                            updateBankDirect(bankUpdates);
                     }
                     // Handle cooking burn
                     if (action.burnStopLevel) {
@@ -5867,7 +5890,7 @@ function SkillingScreen({ initialSkillId, initialActionId }) {
             setSkilling({ ...skillingRef.current });
         });
         return unsub;
-    }, [skilling?.active, stats, inventory]);
+    }, [skilling?.active, stats, inventory, bank]);
     const startSkilling = (action) => {
         const state = createSkillingState(selectedSkill, action);
         setSelectedAction(action);
@@ -5957,7 +5980,7 @@ function SkillingScreen({ initialSkillId, initialActionId }) {
                 skillLevel),
             h("div", { class: "space-y-2" }, allActions.map(action => {
                 const available = action.level <= skillLevel;
-                const hasMats = !action.materials || Object.entries(action.materials).every(([id, qty]) => countItem(inventory, id) >= qty);
+                const hasMats = !action.materials || Object.entries(action.materials).every(([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty);
                 return (h("div", { key: action.id, class: "flex gap-2 items-stretch" },
                     h("button", { onClick: () => available && hasMats && startSkilling(action), disabled: !available || !hasMats, class: `flex-1 flex items-center justify-between p-3 rounded-xl border transition-colors
                     ${available && hasMats
@@ -6141,7 +6164,7 @@ const ITEM_NAMES = {
     pot: 'Pot',
 };
 function GatherScreen({ initialTaskId }) {
-    const { inventory, updateInventory, updateBankDirect, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask } = useGame();
+    const { inventory, bank, updateInventory, updateBankDirect, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask } = useGame();
     const [category, setCategory] = useState('all');
     const [activeTask, setLocalTask] = useState(null);
     const taskRef = useRef(null);
@@ -6166,7 +6189,9 @@ function GatherScreen({ initialTaskId }) {
                 if (task.materials) {
                     let hasMats = true;
                     for (const [id, qty] of Object.entries(task.materials)) {
-                        if (countItem(newInv, id) < qty) {
+                        const invCount = countItem(newInv, id);
+                        const bankCount = bank[id]?.quantity || 0;
+                        if (invCount + bankCount < qty) {
                             hasMats = false;
                             break;
                         }
@@ -6177,19 +6202,29 @@ function GatherScreen({ initialTaskId }) {
                         addToast('Out of materials!', 'error');
                         return;
                     }
+                    // Remove materials — consume from inventory first, then bank
+                    const bankUpdates = {};
                     for (const [id, qty] of Object.entries(task.materials)) {
-                        // remove materials (use inline since no removeItem import issue)
-                        let rem = qty;
-                        for (let i = 0; i < newInv.length && rem > 0; i++) {
-                            if (newInv[i] && newInv[i].itemId === id) {
-                                const take = Math.min(newInv[i].quantity, rem);
-                                newInv[i] = { ...newInv[i], quantity: newInv[i].quantity - take };
-                                rem -= take;
-                                if (newInv[i].quantity <= 0)
-                                    newInv[i] = null;
+                        const invCount = countItem(newInv, id);
+                        const fromInv = Math.min(invCount, qty);
+                        const fromBank = qty - fromInv;
+                        if (fromInv > 0) {
+                            let rem = fromInv;
+                            for (let i = 0; i < newInv.length && rem > 0; i++) {
+                                if (newInv[i] && newInv[i].itemId === id) {
+                                    const take = Math.min(newInv[i].quantity, rem);
+                                    newInv[i] = { ...newInv[i], quantity: newInv[i].quantity - take };
+                                    rem -= take;
+                                    if (newInv[i].quantity <= 0)
+                                        newInv[i] = null;
+                                }
                             }
                         }
+                        if (fromBank > 0)
+                            bankUpdates[id] = -fromBank;
                     }
+                    if (Object.keys(bankUpdates).length > 0)
+                        updateBankDirect(bankUpdates);
                 }
                 // Add product to bank directly
                 updateBankDirect({ [task.product]: task.qty || 1 });
@@ -6211,7 +6246,7 @@ function GatherScreen({ initialTaskId }) {
             }
         });
         return unsub;
-    }, [activeTask?.task?.id, inventory]);
+    }, [activeTask?.task?.id, inventory, bank]);
     const startTask = (task) => {
         const newState = {
             task,
@@ -6306,7 +6341,7 @@ function GatherScreen({ initialTaskId }) {
                 cat.label))))),
         h("div", { style: { flex: 1, overflowY: 'auto', padding: '0 16px 16px' } },
             h("div", { style: { display: 'flex', flexDirection: 'column', gap: '8px' } }, visibleTasks.map(task => {
-                const hasMats = !task.materials || Object.entries(task.materials).every(([id, qty]) => countItem(inventory, id) >= qty);
+                const hasMats = !task.materials || Object.entries(task.materials).every(([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty);
                 const invFull = freeSlots(inventory) === 0;
                 return (h("div", { key: task.id, style: { display: 'flex', gap: '8px', alignItems: 'stretch' } },
                     h("button", { onClick: () => hasMats && !invFull && startTask(task), disabled: !hasMats || invFull, style: {

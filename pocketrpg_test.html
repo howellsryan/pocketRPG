@@ -364,6 +364,25 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// INLINED ENGINE: skilling.js (canPerformAction)
+// ═══════════════════════════════════════════════════════════════════
+function canPerformAction(action, skillXP, inventory, itemsData, bank) {
+  if (bank === undefined) bank = {};
+  const level = getLevelFromXP(skillXP);
+  if (level < action.level) return { can: false, reason: 'Requires level ' + action.level };
+  if (action.materials) {
+    for (const [itemId, qty] of Object.entries(action.materials)) {
+      const invCount = inventory.filter(s => s && s.itemId === itemId).reduce((sum, s) => sum + s.quantity, 0);
+      const bankCount = (bank[itemId] && bank[itemId].quantity) || 0;
+      if (invCount + bankCount < qty) {
+        return { can: false, reason: 'Need ' + qty + ' ' + itemId };
+      }
+    }
+  }
+  return { can: true };
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // INLINED ENGINE: saveload helpers (snapshot + restore)
 // ═══════════════════════════════════════════════════════════════════
 function snapshotToLocalStorage(player, stats, inventory, bank, equipment) {
@@ -847,6 +866,37 @@ function runAll() {
   const newLevel = getLevelFromXP(newXP);
   assertGt('After e2e, mining XP > 0', newXP, 0);
   assertGte('After e2e, mining level >= 1', newLevel, 1);
+
+  // ── GROUP 22: canPerformAction bank awareness ──
+  group('canPerformAction + Bank');
+
+  const cpaAction = { id: 'smelt_bronze', name: 'Smelt Bronze', level: 1, materials: { tin_ore: 1, copper_ore: 1 }, xp: 6.2, ticks: 5 };
+  const cpaItems = { tin_ore: { name: 'Tin ore' }, copper_ore: { name: 'Copper ore' } };
+
+  // Mats only in inventory
+  const cpaInv1 = [{ itemId: 'tin_ore', quantity: 5 }, { itemId: 'copper_ore', quantity: 3 }];
+  const cpaBnk1 = {};
+  assert('Inv-only: can perform', canPerformAction(cpaAction, 0, cpaInv1, cpaItems, cpaBnk1).can);
+
+  // Mats only in bank
+  const cpaInv2 = new Array(28).fill(null);
+  const cpaBnk2 = { tin_ore: { itemId: 'tin_ore', quantity: 5 }, copper_ore: { itemId: 'copper_ore', quantity: 3 } };
+  assert('Bank-only: can perform', canPerformAction(cpaAction, 0, cpaInv2, cpaItems, cpaBnk2).can);
+
+  // Mats split between inv and bank
+  const cpaInv3 = [{ itemId: 'tin_ore', quantity: 1 }];
+  const cpaBnk3 = { copper_ore: { itemId: 'copper_ore', quantity: 1 } };
+  assert('Split inv+bank: can perform', canPerformAction(cpaAction, 0, cpaInv3, cpaItems, cpaBnk3).can);
+
+  // Not enough in either
+  const cpaInv4 = [{ itemId: 'tin_ore', quantity: 1 }];
+  const cpaBnk4 = {};
+  const cpaResult4 = canPerformAction(cpaAction, 0, cpaInv4, cpaItems, cpaBnk4);
+  assert('Missing mat: cannot perform', !cpaResult4.can);
+
+  // No bank param (backwards compat)
+  const cpaInv5 = [{ itemId: 'tin_ore', quantity: 1 }, { itemId: 'copper_ore', quantity: 1 }];
+  assert('No bank param: can perform with inv mats', canPerformAction(cpaAction, 0, cpaInv5, cpaItems).can);
 }
 
 // ═══════════════════════════════════════════════════════════════════
