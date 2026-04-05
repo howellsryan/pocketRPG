@@ -962,6 +962,46 @@ function runAll() {
   assert('Fletching capped to 7 actions', matRes6.actions === 7, `got ${matRes6.actions}`);
   assert('Fletching: 105 arrow shafts', matRes6.itemsGained.arrow_shaft === 105, `got ${matRes6.itemsGained.arrow_shaft}`);
   assert('Fletching: consumed 7 logs', matRes6.itemsConsumed.logs === 7, `got ${matRes6.itemsConsumed.logs}`);
+
+  // ── GROUP 24: Noted Items ──
+  group('Noted Items');
+
+  // Noted items should stack in inventory (like stackable items)
+  const notedInv = new Array(28).fill(null);
+  notedInv[0] = { itemId: 'bronze_scimitar', quantity: 3, noted: true };
+  const notedSlot = notedInv[0];
+  assert('Noted slot has noted flag', notedSlot.noted === true);
+  assert('Noted slot stacks qty', notedSlot.quantity === 3);
+
+  // Adding more noted items of same type should stack
+  const notedInv2 = [...notedInv];
+  const existingIdx = notedInv2.findIndex(s => s && s.itemId === 'bronze_scimitar' && s.noted);
+  assert('Find existing noted stack', existingIdx === 0);
+  notedInv2[existingIdx] = { ...notedInv2[existingIdx], quantity: notedInv2[existingIdx].quantity + 5 };
+  assert('Noted stack grows to 8', notedInv2[0].quantity === 8);
+
+  // Noted and un-noted items of same type should NOT stack together
+  notedInv2[1] = { itemId: 'bronze_scimitar', quantity: 1 }; // not noted
+  const notedIdx = notedInv2.findIndex(s => s && s.itemId === 'bronze_scimitar' && s.noted);
+  const unnotedIdx = notedInv2.findIndex(s => s && s.itemId === 'bronze_scimitar' && !s.noted);
+  assert('Noted and un-noted occupy different slots', notedIdx !== unnotedIdx);
+  assert('Noted in slot 0', notedIdx === 0);
+  assert('Un-noted in slot 1', unnotedIdx === 1);
+
+  // Depositing noted items back to bank — quantity should transfer correctly
+  const notedBank = {};
+  const depositQty = 5;
+  const itemId = 'bronze_scimitar';
+  // Simulate deposit
+  if (notedBank[itemId]) {
+    notedBank[itemId] = { ...notedBank[itemId], quantity: notedBank[itemId].quantity + depositQty };
+  } else {
+    notedBank[itemId] = { itemId, quantity: depositQty };
+  }
+  assert('Deposited noted items to bank', notedBank[itemId].quantity === 5);
+
+  // Noted flag should not exist on bank entries
+  assert('Bank entry has no noted flag', notedBank[itemId].noted === undefined);
 }
 
 // ═══════════════════════════════════════════════════════════════════

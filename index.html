@@ -3076,6 +3076,7 @@ const SCREENS = {
     STATS: 'stats',
     BANK: 'bank',
     INVENTORY: 'inventory',
+    EQUIPMENT: 'equipment',
     COMBAT: 'combat',
     SKILLS: 'skills',
     GATHER: 'gather',
@@ -3140,7 +3141,7 @@ function debounce(fn, ms) {
     };
 }
 /**
- * Calculate combat level from skills (OSRS formula)
+ * Calculate combat level from skills
  */
 function calcCombatLevel(stats) {
     const base = 0.25 * (stats.defence + stats.hitpoints + Math.floor(stats.prayer / 2));
@@ -3152,7 +3153,7 @@ function calcCombatLevel(stats) {
 
 // ── engine/experience.js ──
 
-// Pre-compute XP table using exact OSRS formula
+// Pre-compute XP table using exact level formula
 // totalXP(L) = floor( sum(x=1 to L-1) of floor(x + 300 * 2^(x/7)) / 4 )
 const XP_TABLE = new Array(MAX_LEVEL + 1);
 XP_TABLE[1] = 0;
@@ -3263,7 +3264,7 @@ function hitChance(atkRoll, defRoll) {
 }
 /**
  * Roll damage for an attack
- * Returns 0 for miss, 1-maxHit for hit (simplified from OSRS)
+ * Returns 0 for miss, 1-maxHit for hit
  */
 function rollDamage(accuracy, maxHit) {
     if (Math.random() < accuracy) {
@@ -4930,6 +4931,7 @@ function ItemSlot({ slot, onClick, size = 'normal', showName = false, highlight 
         active:bg-[#252525] transition-colors
         ${highlight ? 'ring-1 ring-[var(--color-gold)]' : ''}` },
         h("span", { class: size === 'small' ? 'text-sm' : 'text-lg' }, emoji),
+        slot.noted && (h("span", { class: "absolute top-0 left-0.5 text-[8px]" }, "\uD83D\uDCDC")),
         slot.quantity > 1 && (h("span", { class: "absolute top-0 right-0.5 text-[8px] font-[var(--font-mono)] font-bold text-[var(--color-gold)]" }, slot.quantity > 9999 ? `${Math.floor(slot.quantity / 1000)}k` : slot.quantity)),
         showName && (h("span", { class: "text-[7px] text-[var(--color-parchment)] opacity-60 truncate w-full text-center mt-0.5 px-0.5" }, item.name))));
 }
@@ -5014,6 +5016,7 @@ const tabs = [
     { id: SCREENS.HOME, label: 'Home', icon: '🏠' },
     { id: SCREENS.STATS, label: 'Stats', icon: '📊' },
     { id: SCREENS.INVENTORY, label: 'Items', icon: '🎒' },
+    { id: SCREENS.EQUIPMENT, label: 'Equip', icon: '🛡️' },
     { id: SCREENS.BANK, label: 'Bank', icon: '🏦' },
     { id: SCREENS.STORE, label: 'Store', icon: '🪙' },
     { id: SCREENS.GATHER, label: 'Gather', icon: '🌿' },
@@ -5055,6 +5058,7 @@ const DEFAULT_SHORTCUTS = [
     { label: 'Open Bank', icon: '🏦', screen: SCREENS.BANK },
     { label: 'View Stats', icon: '📊', screen: SCREENS.STATS },
     { label: 'Inventory', icon: '🎒', screen: SCREENS.INVENTORY },
+    { label: 'Equipment', icon: '🛡️', screen: SCREENS.EQUIPMENT },
 ];
 function HomeScreen({ onNavigate, onSaveMenu }) {
     const { player, stats, homeShortcuts, updateHomeShortcuts } = useGame();
@@ -5275,8 +5279,8 @@ function InventoryScreen() {
         if (!selected)
             return;
         const { slotIndex, slot, item } = selected;
-        if (item.stackable) {
-            // Deposit qty (or full stack if no qty specified)
+        if (item.stackable || slot.noted) {
+            // Stackable + noted items: deposit from the stack
             const actualQty = qty ? Math.min(qty, slot.quantity) : slot.quantity;
             const newBank = { ...bank };
             if (newBank[slot.itemId]) {
@@ -5332,8 +5336,7 @@ function InventoryScreen() {
             return;
         }
         const newInv = [...inventory];
-        if (item.stackable) {
-            // Sell from the stack
+        if (item.stackable || slot.noted) {
             const actualQty = Math.min(qty, slot.quantity);
             const idx = newInv.findIndex(s => s && s.itemId === slot.itemId);
             if (idx === -1)
@@ -5414,8 +5417,8 @@ function InventoryScreen() {
         addToast(`Deposited all items to bank`, 'info');
     };
     // For non-stackable deposit/sell, count how many of the same item in inventory
-    const sameItemCount = selected && !selected.item.stackable
-        ? inventory.filter(s => s && s.itemId === selected.slot.itemId).length
+    const sameItemCount = selected && !selected.item.stackable && !selected.slot.noted
+        ? inventory.filter(s => s && s.itemId === selected.slot.itemId && !s.noted).length
         : 0;
     return (h("div", { class: "h-full overflow-y-auto p-4" },
         h("div", { class: "flex justify-between items-center mb-3" },
@@ -5429,6 +5432,7 @@ function InventoryScreen() {
         selected && (h(Modal, { title: selected.item.name, onClose: () => setSelected(null) },
             h("div", { class: "space-y-2" },
                 h("div", { class: "bg-[#111] rounded-lg p-3 text-sm text-[var(--color-parchment)] opacity-70" },
+                    selected.slot.noted && (h("p", { style: { color: '#d4a017', fontWeight: '600', marginBottom: '4px' } }, "\uD83D\uDCDC Noted \u2014 cannot be used")),
                     selected.item.type === 'food' && h("p", null,
                         "Heals ",
                         selected.item.heals,
@@ -5456,12 +5460,12 @@ function InventoryScreen() {
                             selected.item.shopValue,
                             " gp")))),
                 h("div", { class: "grid grid-cols-2 gap-2" },
-                    (selected.item.slot) && (h("button", { onClick: handleEquip, class: "py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80" }, "Equip")),
-                    selected.item.type === 'food' && (h("button", { onClick: handleEat, class: "py-2.5 rounded-lg bg-[var(--color-emerald)] text-white font-semibold text-sm active:opacity-80" }, "Eat")),
+                    (selected.item.slot) && !selected.slot.noted && (h("button", { onClick: handleEquip, class: "py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80" }, "Equip")),
+                    selected.item.type === 'food' && !selected.slot.noted && (h("button", { onClick: handleEat, class: "py-2.5 rounded-lg bg-[var(--color-emerald)] text-white font-semibold text-sm active:opacity-80" }, "Eat")),
                     h("button", { onClick: handleDrop, class: "py-2.5 rounded-lg bg-[var(--color-blood-mid)] text-white font-semibold text-sm active:opacity-80" }, "Drop")),
                 h("div", { class: "border-t border-[#333] pt-2 mt-1" },
                     h("p", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold" }, "Bank"),
-                    selected.item.stackable ? (h("div", { class: "grid grid-cols-3 gap-2" },
+                    (selected.item.stackable || selected.slot.noted) ? (h("div", { class: "grid grid-cols-3 gap-2" },
                         [1, 5, 10].map(qty => (h("button", { key: qty, onClick: () => handleDeposit(qty), disabled: selected.slot.quantity < qty, class: `py-2 rounded-lg text-white font-semibold text-sm ${selected.slot.quantity < qty ? 'bg-[#222] opacity-30' : 'bg-[var(--color-emerald-mid)] active:opacity-80'}` },
                             "Bank ",
                             qty))),
@@ -5478,7 +5482,7 @@ function InventoryScreen() {
                             ")"))))),
                 selected.item.shopValue > 0 && selected.item.type !== 'currency' && (h("div", { class: "border-t border-[#333] pt-2 mt-1" },
                     h("p", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold" }, "Sell"),
-                    selected.item.stackable ? (h("div", { class: "grid grid-cols-3 gap-2" },
+                    (selected.item.stackable || selected.slot.noted) ? (h("div", { class: "grid grid-cols-3 gap-2" },
                         [1, 5, 10].map(qty => (h("button", { key: qty, onClick: () => handleSell(qty), disabled: selected.slot.quantity < qty, class: `py-2 rounded-lg text-white font-semibold text-sm ${selected.slot.quantity < qty ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}` },
                             "Sell ",
                             qty,
@@ -5513,15 +5517,19 @@ function BankScreen() {
     const { bank, inventory, updateBank, updateInventory, addToast, itemsData } = useGame();
     const [selected, setSelected] = useState(null);
     const bankItems = Object.values(bank).filter(b => b && b.quantity > 0);
-    const handleWithdraw = (itemId, qty = 1) => {
+    const handleWithdraw = (itemId, qty = 1, asNote = false) => {
         const bankEntry = bank[itemId];
         if (!bankEntry || bankEntry.quantity < qty)
             return;
         const item = itemsData[itemId];
         const newInv = [...inventory];
         let actualWithdrawn = 0;
-        if (item?.stackable) {
-            const existing = newInv.findIndex(s => s && s.itemId === itemId);
+        if (item?.stackable || asNote) {
+            // Stackable items and noted items stack in one slot
+            const matchFn = asNote
+                ? (s) => s && s.itemId === itemId && s.noted
+                : (s) => s && s.itemId === itemId && !s.noted;
+            const existing = newInv.findIndex(matchFn);
             if (existing !== -1) {
                 newInv[existing] = { ...newInv[existing], quantity: newInv[existing].quantity + qty };
                 actualWithdrawn = qty;
@@ -5532,7 +5540,10 @@ function BankScreen() {
                     addToast('Inventory full', 'error');
                     return;
                 }
-                newInv[empty] = { itemId, quantity: qty };
+                const slot = { itemId, quantity: qty };
+                if (asNote)
+                    slot.noted = true;
+                newInv[empty] = slot;
                 actualWithdrawn = qty;
             }
         }
@@ -5574,19 +5585,33 @@ function BankScreen() {
                     "\u00D7",
                     entry.quantity)));
         }))),
-        selected && (h(Modal, { title: itemsData[selected.itemId]?.name || selected.itemId, onClose: () => setSelected(null) },
-            h("div", { class: "space-y-3" },
-                h("div", { class: "text-center text-sm text-[var(--color-parchment)] opacity-60" },
-                    "In bank: ",
-                    h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, selected.quantity)),
-                h("div", { class: "grid grid-cols-3 gap-2" },
-                    [1, 5, 10].map(qty => (h("button", { key: qty, onClick: () => handleWithdraw(selected.itemId, Math.min(qty, selected.quantity)), class: "py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80" },
-                        "Take ",
-                        qty))),
-                    h("button", { onClick: () => handleWithdraw(selected.itemId, selected.quantity), class: "py-2.5 rounded-lg bg-[var(--color-gold-dim)] text-white font-semibold text-sm active:opacity-80 col-span-3" },
-                        "Take All (",
-                        selected.quantity,
-                        ")")))))));
+        selected && (() => {
+            const selItem = itemsData[selected.itemId];
+            const isStackable = selItem?.stackable;
+            return (h(Modal, { title: selItem?.name || selected.itemId, onClose: () => setSelected(null) },
+                h("div", { class: "space-y-3" },
+                    h("div", { class: "text-center text-sm text-[var(--color-parchment)] opacity-60" },
+                        "In bank: ",
+                        h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, selected.quantity)),
+                    h("div", { class: "grid grid-cols-3 gap-2" },
+                        [1, 5, 10].map(qty => (h("button", { key: qty, onClick: () => handleWithdraw(selected.itemId, Math.min(qty, selected.quantity)), class: "py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80" },
+                            "Take ",
+                            qty))),
+                        h("button", { onClick: () => handleWithdraw(selected.itemId, selected.quantity), class: "py-2.5 rounded-lg bg-[var(--color-gold-dim)] text-white font-semibold text-sm active:opacity-80 col-span-3" },
+                            "Take All (",
+                            selected.quantity,
+                            ")")),
+                    !isStackable && (h("div", { class: "border-t border-[#333] pt-2 mt-1" },
+                        h("p", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold" }, "Withdraw as Note"),
+                        h("div", { class: "grid grid-cols-3 gap-2" },
+                            [1, 5, 10].map(qty => (h("button", { key: qty, onClick: () => handleWithdraw(selected.itemId, Math.min(qty, selected.quantity), true), class: "py-2 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80" },
+                                "Note ",
+                                qty))),
+                            h("button", { onClick: () => handleWithdraw(selected.itemId, selected.quantity, true), class: "py-2 rounded-lg bg-[var(--color-emerald)] text-white font-semibold text-sm active:opacity-80 col-span-3" },
+                                "Note All (",
+                                selected.quantity,
+                                ")")))))));
+        })()));
 }
 
 // ── screens/CombatScreen.js ──
@@ -6074,7 +6099,7 @@ function SkillingScreen({ initialSkillId, initialActionId }) {
 
 /**
  * Gathering tasks — no skill level required, just time-based resource collection.
- * Inspired by OSRS activities like picking flax, collecting sand, etc.
+ * Inspired by activities like picking flax, collecting sand, etc.
  */
 const GATHER_TASKS = [
     {
@@ -6427,7 +6452,7 @@ function GatherScreen({ initialTaskId }) {
 
 
 
-// OSRS-accurate general store stock
+// General store stock with accurate pricing
 const STORE_ITEMS = [
     { id: 'needle', name: 'Needle', icon: '🪡', price: 1, stackable: false, desc: 'Used for crafting leather armour.' },
     { id: 'thread', name: 'Thread', icon: '🧵', price: 1, stackable: true, desc: 'Used alongside a needle to craft leather armour.' },
@@ -6472,7 +6497,7 @@ function GeneralStoreScreen() {
             addItem(newInv, storeItem.id, 1, storeItem.stackable);
         }
         updateInventory(newInv);
-        // No toast — OSRS doesn't flash a toast for buying, the inventory just updates
+        // No toast for buying — the inventory just updates silently
     };
     return (h("div", { style: { height: '100%', overflowY: 'auto', padding: '16px' } },
         h("div", { style: { marginBottom: '16px' } },
@@ -6527,7 +6552,174 @@ function GeneralStoreScreen() {
         h("p", { style: { marginTop: '20px', fontSize: '10px', color: '#e8d5b0', opacity: 0.25, textAlign: 'center' } }, "More stock added as the game expands.")));
 }
 
+// ── screens/EquipmentScreen.js ──
+
+
+
+
+
+const EQ_TYPE_EMOJIS = {
+    weapon: '🗡️', armour: '🛡️', food: '🍖', resource: '📦', ammo: '🏹',
+    currency: '🪙', junk: '🗑️', tool: '🔧'
+};
+const EQ_SLOT_LABELS = {
+    head: '🪖', cape: '🧣', neck: '📿', ammo: '🏹',
+    weapon: '🗡️', body: '👕', shield: '🛡️',
+    legs: '👖', gloves: '🧤', boots: '👢', ring: '💍'
+};
+const EQ_SLOT_NAMES = {
+    head: 'Head', cape: 'Cape', neck: 'Neck', ammo: 'Ammo',
+    weapon: 'Weapon', body: 'Body', shield: 'Shield',
+    legs: 'Legs', gloves: 'Gloves', boots: 'Boots', ring: 'Ring'
+};
+/**
+ * Renders a single equipment slot in the paperdoll grid.
+ */
+function EquipSlot({ slotName, equipment, itemsData, onSelect }) {
+    const entry = equipment[slotName];
+    const item = entry ? itemsData[entry.itemId] : null;
+    const isEmpty = !item;
+    return (h("button", { onClick: () => { if (item)
+            onSelect(slotName, item); }, style: {
+            width: '56px', height: '56px', borderRadius: '10px',
+            background: isEmpty ? '#111' : '#1a1a1a',
+            border: `1px solid ${isEmpty ? '#222' : '#444'}`,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            cursor: item ? 'pointer' : 'default', position: 'relative',
+            opacity: isEmpty ? 0.4 : 1,
+        } },
+        h("span", { style: { fontSize: item ? '18px' : '14px' } }, item ? (EQ_TYPE_EMOJIS[item.type] || '📦') : EQ_SLOT_LABELS[slotName]),
+        h("span", { style: {
+                fontSize: '7px', color: item ? '#e8d5b0' : '#555',
+                textAlign: 'center', marginTop: '2px', fontWeight: item ? '600' : '400',
+                maxWidth: '52px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+            } }, item ? item.name : EQ_SLOT_NAMES[slotName])));
+}
+function EquipmentScreen() {
+    const { equipment, inventory, updateEquipment, updateInventory, addToast, itemsData } = useGame();
+    const [selected, setSelected] = useState(null); // { slot, item }
+    const handleSelect = (slotName, item) => {
+        setSelected({ slot: slotName, item });
+    };
+    const handleUnequip = () => {
+        if (!selected)
+            return;
+        const newInv = [...inventory];
+        const empty = newInv.indexOf(null);
+        if (empty === -1) {
+            addToast('Inventory full', 'error');
+            setSelected(null);
+            return;
+        }
+        const newEq = { ...equipment };
+        const removed = unequipSlot(newEq, selected.slot);
+        if (removed) {
+            newInv[empty] = { itemId: removed.itemId, quantity: 1 };
+            updateEquipment(newEq);
+            updateInventory(newInv);
+        }
+        setSelected(null);
+    };
+    const bonuses = getEquipmentBonuses(equipment, itemsData);
+    // Paperdoll grid layout:
+    //   Row 0:  [head]
+    //   Row 1:  [cape] [neck] [ammo]
+    //   Row 2:  [weapon] [body] [shield]
+    //   Row 3:  [legs]
+    //   Row 4:  [gloves] [boots] [ring]
+    return (h("div", { style: { height: '100%', overflowY: 'auto', padding: '16px' } },
+        h("h2", { style: {
+                fontFamily: 'Cinzel, serif', fontSize: '11px', fontWeight: 'bold',
+                color: '#e8d5b0', opacity: 0.6, textTransform: 'uppercase',
+                letterSpacing: '0.1em', marginBottom: '12px'
+            } }, "Equipment"),
+        h("div", { style: {
+                background: 'linear-gradient(135deg, #141414, #0f0f0f)',
+                borderRadius: '14px', border: '1px solid #2a2a2a',
+                padding: '16px', marginBottom: '16px',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px'
+            } },
+            h("div", { style: { display: 'flex', justifyContent: 'center' } },
+                h(EquipSlot, { slotName: "head", equipment: equipment, itemsData: itemsData, onSelect: handleSelect })),
+            h("div", { style: { display: 'flex', gap: '6px', justifyContent: 'center' } },
+                h(EquipSlot, { slotName: "cape", equipment: equipment, itemsData: itemsData, onSelect: handleSelect }),
+                h(EquipSlot, { slotName: "neck", equipment: equipment, itemsData: itemsData, onSelect: handleSelect }),
+                h(EquipSlot, { slotName: "ammo", equipment: equipment, itemsData: itemsData, onSelect: handleSelect })),
+            h("div", { style: { display: 'flex', gap: '6px', justifyContent: 'center' } },
+                h(EquipSlot, { slotName: "weapon", equipment: equipment, itemsData: itemsData, onSelect: handleSelect }),
+                h(EquipSlot, { slotName: "body", equipment: equipment, itemsData: itemsData, onSelect: handleSelect }),
+                h(EquipSlot, { slotName: "shield", equipment: equipment, itemsData: itemsData, onSelect: handleSelect })),
+            h("div", { style: { display: 'flex', justifyContent: 'center' } },
+                h(EquipSlot, { slotName: "legs", equipment: equipment, itemsData: itemsData, onSelect: handleSelect })),
+            h("div", { style: { display: 'flex', gap: '6px', justifyContent: 'center' } },
+                h(EquipSlot, { slotName: "gloves", equipment: equipment, itemsData: itemsData, onSelect: handleSelect }),
+                h(EquipSlot, { slotName: "boots", equipment: equipment, itemsData: itemsData, onSelect: handleSelect }),
+                h(EquipSlot, { slotName: "ring", equipment: equipment, itemsData: itemsData, onSelect: handleSelect }))),
+        h("div", { style: {
+                background: '#141414', borderRadius: '12px', border: '1px solid #2a2a2a',
+                padding: '12px'
+            } },
+            h("h3", { style: {
+                    fontFamily: 'Cinzel, serif', fontSize: '10px', fontWeight: 'bold',
+                    color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase',
+                    letterSpacing: '0.1em', marginBottom: '8px'
+                } }, "Bonuses"),
+            h("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '11px' } },
+                h("div", null,
+                    h("div", { style: { fontSize: '9px', color: '#e8d5b0', opacity: 0.4, marginBottom: '4px', fontWeight: 'bold', textTransform: 'uppercase' } }, "Attack"),
+                    Object.entries(bonuses.attackBonus).map(([k, v]) => (h("div", { key: k, style: { display: 'flex', justifyContent: 'space-between', color: '#e8d5b0', opacity: 0.7, padding: '1px 0' } },
+                        h("span", { style: { textTransform: 'capitalize' } }, k),
+                        h("span", { style: { fontFamily: 'JetBrains Mono, monospace', color: v > 0 ? '#27ae60' : v < 0 ? '#c0392b' : '#555' } },
+                            v > 0 ? '+' : '',
+                            v))))),
+                h("div", null,
+                    h("div", { style: { fontSize: '9px', color: '#e8d5b0', opacity: 0.4, marginBottom: '4px', fontWeight: 'bold', textTransform: 'uppercase' } }, "Defence"),
+                    Object.entries(bonuses.defenceBonus).map(([k, v]) => (h("div", { key: k, style: { display: 'flex', justifyContent: 'space-between', color: '#e8d5b0', opacity: 0.7, padding: '1px 0' } },
+                        h("span", { style: { textTransform: 'capitalize' } }, k),
+                        h("span", { style: { fontFamily: 'JetBrains Mono, monospace', color: v > 0 ? '#27ae60' : v < 0 ? '#c0392b' : '#555' } },
+                            v > 0 ? '+' : '',
+                            v)))))),
+            h("div", { style: { borderTop: '1px solid #222', marginTop: '8px', paddingTop: '8px' } },
+                h("div", { style: { fontSize: '9px', color: '#e8d5b0', opacity: 0.4, marginBottom: '4px', fontWeight: 'bold', textTransform: 'uppercase' } }, "Other"),
+                h("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px', fontSize: '11px' } }, Object.entries(bonuses.otherBonus).map(([k, v]) => {
+                    const label = k === 'meleeStrength' ? 'Str' : k === 'rangedStrength' ? 'Rng Str' : 'Mag %';
+                    return (h("div", { key: k, style: { display: 'flex', justifyContent: 'space-between', color: '#e8d5b0', opacity: 0.7 } },
+                        h("span", null, label),
+                        h("span", { style: { fontFamily: 'JetBrains Mono, monospace', color: v > 0 ? '#27ae60' : '#555' } },
+                            v > 0 ? '+' : '',
+                            v)));
+                })))),
+        selected && (h(Modal, { title: selected.item.name, onClose: () => setSelected(null) },
+            h("div", { style: { display: 'flex', flexDirection: 'column', gap: '8px' } },
+                h("div", { style: {
+                        background: '#111', borderRadius: '8px', padding: '12px',
+                        fontSize: '12px', color: '#e8d5b0', opacity: 0.7
+                    } },
+                    h("p", null,
+                        "Slot: ",
+                        EQ_SLOT_NAMES[selected.slot]),
+                    selected.item.attackSpeed && h("p", null,
+                        "Attack speed: ",
+                        selected.item.attackSpeed,
+                        " ticks"),
+                    selected.item.attackStyle && h("p", null,
+                        "Style: ",
+                        selected.item.attackStyle),
+                    selected.item.otherBonus?.meleeStrength > 0 && h("p", null,
+                        "Strength bonus: +",
+                        selected.item.otherBonus.meleeStrength),
+                    selected.item.requirements && Object.entries(selected.item.requirements).length > 0 && (h("p", null,
+                        "Requires: ",
+                        Object.entries(selected.item.requirements).map(([s, l]) => `${s} ${l}`).join(', ')))),
+                h("button", { onClick: handleUnequip, style: {
+                        padding: '12px', borderRadius: '10px',
+                        background: '#8b1a1a', color: 'white',
+                        fontWeight: '600', fontSize: '14px', border: 'none', cursor: 'pointer'
+                    } }, "Unequip"))))));
+}
+
 // ── App.js ──
+
 
 
 
@@ -6850,7 +7042,7 @@ function GameApp() {
             h("div", { style: { width: '100%', maxWidth: '360px' } },
                 h("div", { style: { textAlign: 'center', marginBottom: '32px' } },
                     h("h1", { style: { fontFamily: 'Cinzel, serif', fontSize: '28px', fontWeight: '900', color: '#d4af37', letterSpacing: '0.05em' } }, "PocketRPG"),
-                    h("p", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.35, marginTop: '4px', fontFamily: 'Nunito, sans-serif' } }, "An idle OSRS-inspired adventure")),
+                    h("p", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.35, marginTop: '4px', fontFamily: 'Nunito, sans-serif' } }, "A mobile tick-based idle fantasy RPG")),
                 h("div", { style: { marginBottom: '20px' } },
                     h("label", { style: { display: 'block', fontSize: '11px', color: '#e8d5b0', opacity: 0.6, marginBottom: '6px', fontWeight: '600' } }, "Character Name"),
                     h("input", { type: "text", value: playerName, onInput: (e) => setPlayerName(e.target.value), placeholder: "Enter your name...", maxLength: 16, style: { width: '100%', padding: '12px 16px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333', color: '#e8d5b0', fontSize: '14px', fontFamily: 'Nunito, sans-serif', boxSizing: 'border-box', outline: 'none' } })),
@@ -6872,6 +7064,7 @@ function GameApp() {
             case SCREENS.HOME: return h(HomeScreen, { onNavigate: navigate, onSaveMenu: () => setShowSaveMenu(true) });
             case SCREENS.STATS: return h(StatsScreen, null);
             case SCREENS.INVENTORY: return h(InventoryScreen, null);
+            case SCREENS.EQUIPMENT: return h(EquipmentScreen, null);
             case SCREENS.BANK: return h(BankScreen, null);
             case SCREENS.COMBAT: return h(CombatScreen, { onNavigate: navigate, initialMonsterId: actionData?.monsterId });
             case SCREENS.SKILLS: return h(SkillingScreen, { initialSkillId: actionData?.skillId, initialActionId: actionData?.actionId });
