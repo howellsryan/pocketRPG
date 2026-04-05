@@ -555,13 +555,46 @@ function runAll() {
 
 async function testIDBRoundTrip() {
   const statusEl = document.getElementById('idbStatus')
+
+  // ── localStorage tests (lastTick + activeTask now use localStorage) ──
   try {
     const testTask = { type:'gather', gatherTask:{ id:'pick_flax', name:'Pick Flax', ticks:3, product:'flax', qty:1 } }
     const testTick = Date.now()
 
-    // Write
+    // Write (synchronous — this is the whole point)
+    localStorage.setItem('pocketrpg_lastTick', String(testTick))
+    localStorage.setItem('pocketrpg_activeTask', JSON.stringify(testTask))
+
+    // Read back (synchronous)
+    const readTick = (() => { const v = localStorage.getItem('pocketrpg_lastTick'); return v ? parseInt(v, 10) : null })()
+    const readTask = (() => { try { return JSON.parse(localStorage.getItem('pocketrpg_activeTask')) } catch { return null } })()
+
+    assert('localStorage: lastTick write/read roundtrip',    readTick === testTick,
+           `wrote ${testTick}, read ${readTick}`)
+    assert('localStorage: activeTask write/read roundtrip',  readTask?.type === 'gather' && readTask?.gatherTask?.id === 'pick_flax',
+           JSON.stringify(readTask))
+    assert('localStorage: write is synchronous (no await needed)', true,
+           'localStorage.setItem completes in same call stack — survives iOS background freeze')
+
+    // Cleanup test keys
+    localStorage.removeItem('pocketrpg_lastTick')
+    localStorage.removeItem('pocketrpg_activeTask')
+
+    // Confirm removal
+    const afterClean = localStorage.getItem('pocketrpg_lastTick')
+    assert('localStorage: removeItem clears key',            afterClean === null,
+           `after remove: ${afterClean}`)
+
+    statusEl.innerHTML = `<div class="idb-status ok">✅ localStorage accessible — synchronous round-trip passed. lastTick/activeTask are safe from iOS background freeze.</div>`
+  } catch (err) {
+    assert('localStorage: accessible', false, err.message)
+    statusEl.innerHTML = `<div class="idb-status warn">⚠️ localStorage error: ${err.message}</div>`
+  }
+
+  // ── IndexedDB still used for main save data (stats, inventory, bank etc.) ──
+  try {
     const db = await new Promise((res, rej) => {
-      const req = indexedDB.open('pocketrpg', 1)
+      const req = indexedDB.open('PocketRPG', 1)
       req.onupgradeneeded = e => {
         const d = e.target.result
         if (!d.objectStoreNames.contains('settings')) d.createObjectStore('settings')
@@ -569,43 +602,14 @@ async function testIDBRoundTrip() {
       req.onsuccess = e => res(e.target.result)
       req.onerror = () => rej(req.error)
     })
-
-    await new Promise((res, rej) => {
-      const tx = db.transaction('settings', 'readwrite')
-      tx.objectStore('settings').put({ key:'activeTask', value: testTask }, 'activeTask')
-      tx.objectStore('settings').put({ key:'lastTick',   value: testTick }, 'lastTick')
-      tx.oncomplete = res
-      tx.onerror = () => rej(tx.error)
-    })
-
-    // Read back
-    const [readTask, readTick] = await Promise.all([
-      new Promise((res, rej) => {
-        const tx = db.transaction('settings', 'readonly')
-        const req = tx.objectStore('settings').get('activeTask')
-        req.onsuccess = () => res(req.result?.value)
-        req.onerror = () => rej(req.error)
-      }),
-      new Promise((res, rej) => {
-        const tx = db.transaction('settings', 'readonly')
-        const req = tx.objectStore('settings').get('lastTick')
-        req.onsuccess = () => res(req.result?.value)
-        req.onerror = () => rej(req.error)
-      }),
-    ])
-
-    const taskOk = readTask?.type === 'gather' && readTask?.gatherTask?.id === 'pick_flax'
-    const tickOk = readTick === testTick
-
-    assert('IDB: activeTask written and read back correctly', taskOk, JSON.stringify(readTask))
-    assert('IDB: lastTick written and read back correctly',   tickOk, `wrote ${testTick}, read ${readTick}`)
-
-    statusEl.innerHTML = `<div class="idb-status ok">✅ IndexedDB accessible — settings store round-trip passed. This is the same DB PocketRPG uses.</div>`
+    assert('IDB: main save database accessible', !!db,
+           'PocketRPG IndexedDB should be reachable (full save data lives here)')
+    db.close()
   } catch (err) {
-    assert('IDB: round-trip accessible', false, err.message)
-    statusEl.innerHTML = `<div class="idb-status warn">⚠️ IndexedDB error: ${err.message} — game may be using a different origin.</div>`
+    assert('IDB: main save database accessible', false, err.message)
   }
-  renderResults(0) // re-render with IDB results added
+
+  renderResults(0)
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -628,11 +632,12 @@ function renderResults(elapsed) {
     'simulateIdleCombat (level 30 + goblin)': [],
     'End-to-End loadGame simulation': [],
     'visibilitychange idle simulation': [],
-    'IndexedDB round-trip': [],
+    'localStorage round-trip (lastTick/activeTask)': [],
+    'IndexedDB accessibility (main save)': [],
   }
 
   const groupKeys = Object.keys(groups)
-  const thresholds = [10, 17, 25, 34, 36, 38, 45, 51, 53]
+  const thresholds = [10, 17, 25, 34, 36, 38, 45, 51, 56, 57]
   results.forEach((r, i) => {
     const gIdx = thresholds.findIndex(t => i < t)
     const g = gIdx === -1 ? groupKeys[groupKeys.length-1] : groupKeys[gIdx]

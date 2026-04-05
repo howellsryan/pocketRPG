@@ -4257,11 +4257,18 @@ function GameProvider({ children }) {
     useEffect(() => { stateRef.current.player = player; }, [player]);
     // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
     const loadGame = useCallback(async () => {
-        const [p, s, inv, eq, b, shortcuts, stance, savedHP, savedTask, savedLastTick] = await Promise.all([
+        const [p, s, inv, eq, b, shortcuts, stance, savedHP] = await Promise.all([
             getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
-            getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
-            getSetting('activeTask'), getSetting('lastTick')
+            getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP')
         ]);
+        // lastTick and activeTask live in localStorage — synchronous, survives iOS background freeze
+        const savedLastTick = (() => { const v = localStorage.getItem('pocketrpg_lastTick'); return v ? parseInt(v, 10) : null; })();
+        const savedTask = (() => { try {
+            return JSON.parse(localStorage.getItem('pocketrpg_activeTask'));
+        }
+        catch {
+            return null;
+        } })();
         // ── Idle simulation (runs on raw DB data, before state is set) ──
         let idleResult = null;
         console.log('[PocketRPG] loadGame — savedTask:', savedTask, 'savedLastTick:', savedLastTick, 'elapsed:', savedLastTick ? Date.now() - savedLastTick : 0);
@@ -4414,10 +4421,14 @@ function GameProvider({ children }) {
     }, []);
     const setActiveTask = useCallback((task) => {
         setActiveTaskState(task);
-        // lastTick + activeTask are stamped every tick in App.jsx tick loop
-        // so we only need to persist the null case (task stopped) immediately
-        if (!task)
-            saveSetting('activeTask', null);
+        // Synchronous localStorage write — safe from iOS background freeze
+        if (task) {
+            localStorage.setItem('pocketrpg_activeTask', JSON.stringify(task));
+        }
+        else {
+            localStorage.removeItem('pocketrpg_activeTask');
+            localStorage.removeItem('pocketrpg_lastTick');
+        }
     }, []);
     // Direct bank update without inventory changes (for skill/gather item routing)
     const updateBankDirect = useCallback((itemUpdates) => {
@@ -6196,16 +6207,21 @@ function GameApp() {
             if (document.hidden) {
                 // Page going to background — stamp immediately before JS freezes
                 const now = Date.now();
-                await saveSetting('lastTick', now);
-                await saveSetting('activeTask', activeTaskRef.current);
+                // Synchronous — guaranteed to complete before iOS freezes JS
+                localStorage.setItem('pocketrpg_lastTick', String(now));
+                localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current));
             }
             else {
                 // Page returning to foreground — check for idle time
                 try {
-                    const [savedLastTick, savedTask] = await Promise.all([
-                        getSetting('lastTick'),
-                        getSetting('activeTask'),
-                    ]);
+                    // Read synchronously from localStorage — no async, no freeze risk
+                    const savedLastTick = (() => { const v = localStorage.getItem('pocketrpg_lastTick'); return v ? parseInt(v, 10) : null; })();
+                    const savedTask = (() => { try {
+                        return JSON.parse(localStorage.getItem('pocketrpg_activeTask'));
+                    }
+                    catch {
+                        return null;
+                    } })();
                     if (!savedLastTick || !savedTask)
                         return;
                     const elapsedMs = Date.now() - savedLastTick;
@@ -6241,8 +6257,8 @@ function GameApp() {
                     else if (sim.itemsGained) {
                         updateBankDirect(sim.itemsGained);
                     }
-                    // Stamp new lastTick so returning again doesn't double-count
-                    await saveSetting('lastTick', Date.now());
+                    // Re-stamp synchronously so a second quick return doesn't double-count
+                    localStorage.setItem('pocketrpg_lastTick', String(Date.now()));
                     setIdleResult({ elapsedMs, task: savedTask, ...sim });
                 }
                 catch (err) {
@@ -6260,10 +6276,12 @@ function GameApp() {
         if (!gameReady)
             return;
         const unsub = onTick(() => {
-            // Stamp lastTick + activeTask every tick so idle is always accurate to within 600ms
+            // Sync localStorage stamp — completes in same call stack, safe from iOS freeze
             const now = Date.now();
-            saveSetting('lastTick', now);
-            saveSetting('activeTask', activeTaskRef.current);
+            localStorage.setItem('pocketrpg_lastTick', String(now));
+            if (activeTaskRef.current) {
+                localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current));
+            }
             hpRegenCounter.current++;
             if (hpRegenCounter.current >= 100) {
                 hpRegenCounter.current = 0;
