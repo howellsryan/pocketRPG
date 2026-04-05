@@ -19,6 +19,7 @@
   --color-gold-light: #f0c040;
   --color-gold-dim: #8b6914;
   --color-blood: #8b1a1a;
+  --color-blood-mid: #6b1414;
   --color-blood-light: #c0392b;
   --color-emerald: #1a6b3c;
   --color-emerald-mid: #1d7a44;
@@ -4203,6 +4204,7 @@ async function importSave(file) {
 
 
 
+
 const GameContext = createContext(null);
 function GameProvider({ children }) {
     const [loaded, setLoaded] = useState(false);
@@ -4225,34 +4227,76 @@ function GameProvider({ children }) {
     useEffect(() => { stateRef.current.equipment = equipment; }, [equipment]);
     useEffect(() => { stateRef.current.bank = bank; }, [bank]);
     useEffect(() => { stateRef.current.player = player; }, [player]);
-    // Load all state from IndexedDB
+    // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
     const loadGame = useCallback(async () => {
         const [p, s, inv, eq, b, shortcuts, stance, savedHP, savedTask, savedLastTick] = await Promise.all([
             getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
             getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
             getSetting('activeTask'), getSetting('lastTick')
         ]);
+        // ── Idle simulation (runs on raw DB data, before state is set) ──
+        let idleResult = null;
+        if (savedTask && savedLastTick) {
+            const elapsedMs = Date.now() - savedLastTick;
+            if (elapsedMs >= 2000) {
+                let sim = null;
+                if (savedTask.type === 'skill') {
+                    sim = simulateIdleSkilling(savedTask, elapsedMs);
+                }
+                else if (savedTask.type === 'gather') {
+                    sim = simulateIdleGather(savedTask, elapsedMs);
+                }
+                else if (savedTask.type === 'combat') {
+                    sim = simulateIdleCombat(savedTask, elapsedMs, s, eq, inv, itemsData);
+                }
+                if (sim) {
+                    // Apply XP directly to raw stats object
+                    if (sim.xpGained) {
+                        for (const [skill, xp] of Object.entries(sim.xpGained)) {
+                            if (xp > 0 && s[skill]) {
+                                s[skill] = { ...s[skill], xp: Math.min((s[skill].xp || 0) + Math.floor(xp), 200000000) };
+                            }
+                        }
+                    }
+                    // Apply items to bank (skilling/gather) or inventory (combat)
+                    if (savedTask.type === 'combat' && sim.finalInventory) {
+                        // Use the already-mutated inventory from simulation
+                        sim.finalInventory.forEach((slot, i) => { inv[i] = slot; });
+                    }
+                    else if (sim.itemsGained) {
+                        for (const [itemId, qty] of Object.entries(sim.itemsGained)) {
+                            if (b[itemId]) {
+                                b[itemId] = { ...b[itemId], quantity: b[itemId].quantity + qty };
+                            }
+                            else {
+                                b[itemId] = { itemId, quantity: qty };
+                            }
+                        }
+                    }
+                    // Persist updated stats + bank/inventory to DB
+                    await saveAllStats(s);
+                    if (savedTask.type === 'combat') {
+                        await saveInventory(inv);
+                    }
+                    else {
+                        await saveBank(b);
+                    }
+                    idleResult = { elapsedMs, task: savedTask, ...sim };
+                }
+            }
+        }
         setPlayer(p);
-        setStats(s);
-        setInventory(inv);
+        setStats({ ...s });
+        setInventory([...inv]);
         setEquipment(eq);
-        setBank(b);
+        setBank({ ...b });
         setHomeShortcuts(shortcuts ?? null);
         setCombatStanceState(stance ?? 'accurate');
         setActiveTaskState(savedTask ?? null);
         const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10;
         setCurrentHP(savedHP != null ? Math.min(savedHP, hpLevel) : hpLevel);
-        // Expose lastTick for idle calculation — store on window temporarily for App.jsx
-        if (savedLastTick)
-            window.__pocketRPGLastTick = savedLastTick;
-        if (savedTask)
-            window.__pocketRPGActiveTask = savedTask;
-        // Expose loaded state for App idle processing
-        window.__pocketRPGStats = s;
-        window.__pocketRPGEquipment = eq;
-        window.__pocketRPGInventory = inv;
-        window.__pocketRPGItems = itemsData;
         setLoaded(true);
+        return idleResult;
     }, []);
     // Auto-save debounced — reads from refs for latest state
     const autoSave = useCallback(debounce(async () => {
@@ -5008,7 +5052,7 @@ function InventoryScreen() {
                 h("div", { class: "grid grid-cols-2 gap-2" },
                     (selected.item.slot) && (h("button", { onClick: handleEquip, class: "py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80" }, "Equip")),
                     selected.item.type === 'food' && (h("button", { onClick: handleEat, class: "py-2.5 rounded-lg bg-[var(--color-emerald)] text-white font-semibold text-sm active:opacity-80" }, "Eat")),
-                    h("button", { onClick: handleDrop, class: "py-2.5 rounded-lg bg-[var(--color-blood)]/60 text-white font-semibold text-sm active:opacity-80" }, "Drop")),
+                    h("button", { onClick: handleDrop, class: "py-2.5 rounded-lg bg-[var(--color-blood-mid)] text-white font-semibold text-sm active:opacity-80" }, "Drop")),
                 h("div", { class: "border-t border-[#333] pt-2 mt-1" },
                     h("p", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold" }, "Bank"),
                     selected.item.stackable ? (h("div", { class: "grid grid-cols-3 gap-2" },
@@ -5371,9 +5415,9 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
                             entry.type === 'victory' ? 'text-[var(--color-gold)]' :
                                 'text-[var(--color-parchment)] opacity-50'}` }, entry.text)))),
         h("div", { class: "flex-shrink-0 grid grid-cols-3 gap-2" }, combat.active ? (h(Fragment, null,
-            h("button", { onClick: handleEat, class: "py-2.5 rounded-lg bg-[var(--color-emerald)]/80 text-white font-semibold text-sm active:opacity-80" }, "\uD83C\uDF56 Eat"),
+            h("button", { onClick: handleEat, class: "py-2.5 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80" }, "\uD83C\uDF56 Eat"),
             h("button", { class: "py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] opacity-40 text-sm cursor-default" }, "\uD83E\uDDEA Potion"),
-            h("button", { onClick: flee, class: "py-2.5 rounded-lg bg-[var(--color-blood)]/60 text-white font-semibold text-sm active:opacity-80" }, "\uD83C\uDFC3 Flee"))) : (h(Fragment, null,
+            h("button", { onClick: flee, class: "py-2.5 rounded-lg bg-[var(--color-blood-mid)] text-white font-semibold text-sm active:opacity-80" }, "\uD83C\uDFC3 Flee"))) : (h(Fragment, null,
             h("button", { onClick: fightAnother, class: "py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80 col-span-2" }, "\u2694\uFE0F Fight Again"),
             h("button", { onClick: () => { setCombat(null); setLog([]); setActiveTask(null); }, class: "py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80" }, "Back"))))));
 }
@@ -6074,7 +6118,6 @@ function GeneralStoreScreen() {
 
 
 
-
 // Auto-bank delay: 120s at agility 1, 10s at agility 99 (linear interpolation)
 function getAutoBankSeconds(agilityLevel) {
     const lvl = Math.max(1, Math.min(99, agilityLevel));
@@ -6082,7 +6125,7 @@ function getAutoBankSeconds(agilityLevel) {
     return Math.round(120 - (110 * (lvl - 1) / 98));
 }
 function GameApp() {
-    const { loaded, loadGame, player, stats, inventory, equipment, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, getSkillLevel, setActiveTask } = useGame();
+    const { loaded, loadGame, player, stats, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, addToast, getSkillLevel } = useGame();
     const [screen, setScreen] = useState(SCREENS.HOME);
     const [gameReady, setGameReady] = useState(false);
     const [showNewGame, setShowNewGame] = useState(false);
@@ -6176,55 +6219,14 @@ function GameApp() {
     async function checkSave() {
         const exists = await hasSave();
         if (exists) {
-            await loadGame();
+            const idleResult = await loadGame();
             setGameReady(true);
-            // Process idle time after load — window globals set by loadGame
-            setTimeout(() => processIdle(), 50);
+            if (idleResult)
+                setIdleResult(idleResult);
         }
         else {
             setShowNewGame(true);
         }
-    }
-    function processIdle() {
-        const lastTick = window.__pocketRPGLastTick;
-        const task = window.__pocketRPGActiveTask;
-        delete window.__pocketRPGLastTick;
-        delete window.__pocketRPGActiveTask;
-        if (!lastTick || !task)
-            return;
-        const elapsedMs = Date.now() - lastTick;
-        if (elapsedMs < 2000)
-            return; // less than 2s — not worth showing
-        let result = null;
-        if (task.type === 'skill') {
-            result = simulateIdleSkilling(task, elapsedMs);
-        }
-        else if (task.type === 'gather') {
-            result = simulateIdleGather(task, elapsedMs);
-        }
-        else if (task.type === 'combat') {
-            result = simulateIdleCombat(task, elapsedMs, 
-            // We need current stats/equipment/inventory — read from refs or re-read state
-            // Use the globals from the game context via window (set in loadGame)
-            window.__pocketRPGStats || {}, window.__pocketRPGEquipment || {}, window.__pocketRPGInventory || new Array(28).fill(null), window.__pocketRPGItems || {});
-        }
-        if (!result)
-            return;
-        // Apply XP gains
-        if (result.xpGained) {
-            for (const [skill, xp] of Object.entries(result.xpGained)) {
-                if (xp > 0)
-                    grantXP(skill, xp);
-            }
-        }
-        // Apply items — skilling/gather go to bank, combat loot goes to inventory (already in finalInventory)
-        if (task.type === 'combat' && result.finalInventory) {
-            updateInventory(result.finalInventory);
-        }
-        else if (result.itemsGained) {
-            updateBankDirect(result.itemsGained);
-        }
-        setIdleResult({ elapsedMs, task, ...result });
     }
     async function handleNewGame(e) {
         e.preventDefault();
