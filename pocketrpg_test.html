@@ -257,12 +257,26 @@ function formatIdleTime(ms) {
   return parts.join(' ');
 }
 
-function simulateIdleSkilling(task, elapsedMs) {
+function simulateIdleSkilling(task, elapsedMs, bank) {
   if (!task || !task.action) return null;
   const totalTicks = Math.floor(elapsedMs / TICK_MS);
   const actionTicks = task.action.ticks;
-  const actions = Math.floor(totalTicks / actionTicks);
+  let actions = Math.floor(totalTicks / actionTicks);
   if (actions <= 0) return null;
+  const itemsConsumed = {};
+  if (task.action.materials) {
+    let maxFromMaterials = Infinity;
+    for (const [itemId, qtyPerAction] of Object.entries(task.action.materials)) {
+      const available = (bank && bank[itemId]) ? bank[itemId].quantity : 0;
+      const possible = Math.floor(available / qtyPerAction);
+      if (possible < maxFromMaterials) maxFromMaterials = possible;
+    }
+    if (maxFromMaterials === 0) return null;
+    actions = Math.min(actions, maxFromMaterials);
+    for (const [itemId, qtyPerAction] of Object.entries(task.action.materials)) {
+      itemsConsumed[itemId] = qtyPerAction * actions;
+    }
+  }
   const xpGained = {};
   const itemsGained = {};
   const xpPer = task.action.xp || 0;
@@ -271,7 +285,7 @@ function simulateIdleSkilling(task, elapsedMs) {
     const qty = (task.action.productQty || 1) * actions;
     itemsGained[task.action.product] = (itemsGained[task.action.product] || 0) + qty;
   }
-  return { xpGained, itemsGained, actions, skill: task.skill, actionName: task.action.name };
+  return { xpGained, itemsGained, itemsConsumed, actions, skill: task.skill, actionName: task.action.name };
 }
 
 function simulateIdleGather(task, elapsedMs) {
@@ -897,6 +911,57 @@ function runAll() {
   // No bank param (backwards compat)
   const cpaInv5 = [{ itemId: 'tin_ore', quantity: 1 }, { itemId: 'copper_ore', quantity: 1 }];
   assert('No bank param: can perform with inv mats', canPerformAction(cpaAction, 0, cpaInv5, cpaItems).can);
+
+  // ── GROUP 23: Idle Skilling Material Consumption ──
+  group('Idle Skilling Materials');
+
+  // Smithing task: smelt bronze bar requires 1 tin_ore + 1 copper_ore per action, 4 ticks
+  const smeltTask = {
+    type: 'skill', skill: 'smithing',
+    action: { id: 'smelt_bronze', name: 'Smelt bronze bar', level: 1, ticks: 4, xp: 6, product: 'bronze_bar', materials: { tin_ore: 1, copper_ore: 1 } }
+  };
+
+  // 60s = 100 ticks / 4 = 25 possible actions by time, but only 3 bars worth of materials
+  const matBank1 = { tin_ore: { itemId: 'tin_ore', quantity: 3 }, copper_ore: { itemId: 'copper_ore', quantity: 10 } };
+  const matRes1 = simulateIdleSkilling(smeltTask, 60000, matBank1);
+  assert('Capped to 3 actions (limited by tin)', matRes1.actions === 3, `got ${matRes1.actions}`);
+  assert('Produced 3 bronze bars', matRes1.itemsGained.bronze_bar === 3, `got ${matRes1.itemsGained.bronze_bar}`);
+  assert('Consumed 3 tin ore', matRes1.itemsConsumed.tin_ore === 3, `got ${matRes1.itemsConsumed.tin_ore}`);
+  assert('Consumed 3 copper ore', matRes1.itemsConsumed.copper_ore === 3, `got ${matRes1.itemsConsumed.copper_ore}`);
+  assert('XP capped to 3 actions', matRes1.xpGained.smithing === 18, `got ${matRes1.xpGained.smithing}`);
+
+  // Zero materials → returns null (can't do anything)
+  const matBank2 = {};
+  const matRes2 = simulateIdleSkilling(smeltTask, 60000, matBank2);
+  assert('Zero materials returns null', matRes2 === null);
+
+  // No bank param at all (undefined) with materials → returns null
+  const matRes3 = simulateIdleSkilling(smeltTask, 60000);
+  assert('Undefined bank with materials returns null', matRes3 === null);
+
+  // Plenty of materials — time is the bottleneck
+  const matBank4 = { tin_ore: { itemId: 'tin_ore', quantity: 999 }, copper_ore: { itemId: 'copper_ore', quantity: 999 } };
+  const matRes4 = simulateIdleSkilling(smeltTask, 60000, matBank4);
+  assert('Time-limited: 25 actions', matRes4.actions === 25, `got ${matRes4.actions}`);
+  assert('Time-limited: consumed 25 tin', matRes4.itemsConsumed.tin_ore === 25, `got ${matRes4.itemsConsumed.tin_ore}`);
+
+  // No-material skill (mining) still works with bank param
+  const mineTask = { type: 'skill', skill: 'mining', action: { id: 'tin', name: 'Mine tin ore', level: 1, ticks: 4, xp: 17, product: 'tin_ore' } };
+  const matRes5 = simulateIdleSkilling(mineTask, 60000, matBank4);
+  assert('No-material skill unaffected', matRes5.actions === 25, `got ${matRes5.actions}`);
+  assert('No-material: itemsConsumed empty', Object.keys(matRes5.itemsConsumed).length === 0);
+
+  // Multi-material recipe: fletching requires 1 log per 15 arrow shafts
+  const fletchTask = {
+    type: 'skill', skill: 'fletching',
+    action: { id: 'arrow_shafts', name: 'Cut arrow shafts (15)', level: 1, ticks: 2, xp: 5, product: 'arrow_shaft', productQty: 15, materials: { logs: 1 } }
+  };
+  const fletchBank = { logs: { itemId: 'logs', quantity: 7 } };
+  // 60s = 100 ticks / 2 = 50 possible, but only 7 logs
+  const matRes6 = simulateIdleSkilling(fletchTask, 60000, fletchBank);
+  assert('Fletching capped to 7 actions', matRes6.actions === 7, `got ${matRes6.actions}`);
+  assert('Fletching: 105 arrow shafts', matRes6.itemsGained.arrow_shaft === 105, `got ${matRes6.itemsGained.arrow_shaft}`);
+  assert('Fletching: consumed 7 logs', matRes6.itemsConsumed.logs === 7, `got ${matRes6.itemsConsumed.logs}`);
 }
 
 // ═══════════════════════════════════════════════════════════════════

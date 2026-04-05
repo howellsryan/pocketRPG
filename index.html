@@ -3838,17 +3838,36 @@ function formatIdleTime(ms) {
 }
 /**
  * Simulate idle skilling.
- * Returns { xpGained: { skill: xp }, itemsGained: { itemId: qty }, actions }
- * Items go straight to bank — materials are NOT consumed (simplified).
+ * Returns { xpGained, itemsGained, itemsConsumed, actions, skill, actionName }
+ * If the action has materials, caps actions to available bank resources and returns
+ * itemsConsumed so the caller can deduct them.
  */
-function simulateIdleSkilling(task, elapsedMs, currentStats) {
+function simulateIdleSkilling(task, elapsedMs, bank) {
     if (!task || !task.action)
         return null;
     const totalTicks = Math.floor(elapsedMs / TICK_MS);
     const actionTicks = task.action.ticks;
-    const actions = Math.floor(totalTicks / actionTicks);
+    let actions = Math.floor(totalTicks / actionTicks);
     if (actions <= 0)
         return null;
+    const itemsConsumed = {};
+    // Cap actions to available materials in bank
+    if (task.action.materials) {
+        let maxFromMaterials = Infinity;
+        for (const [itemId, qtyPerAction] of Object.entries(task.action.materials)) {
+            const available = (bank && bank[itemId]) ? bank[itemId].quantity : 0;
+            const possible = Math.floor(available / qtyPerAction);
+            if (possible < maxFromMaterials)
+                maxFromMaterials = possible;
+        }
+        if (maxFromMaterials === 0)
+            return null;
+        actions = Math.min(actions, maxFromMaterials);
+        // Record consumed materials
+        for (const [itemId, qtyPerAction] of Object.entries(task.action.materials)) {
+            itemsConsumed[itemId] = qtyPerAction * actions;
+        }
+    }
     const xpGained = {};
     const itemsGained = {};
     const xpPer = task.action.xp || 0;
@@ -3859,7 +3878,7 @@ function simulateIdleSkilling(task, elapsedMs, currentStats) {
         const qty = (task.action.productQty || 1) * actions;
         itemsGained[task.action.product] = (itemsGained[task.action.product] || 0) + qty;
     }
-    return { xpGained, itemsGained, actions, skill: task.skill, actionName: task.action.name };
+    return { xpGained, itemsGained, itemsConsumed, actions, skill: task.skill, actionName: task.action.name };
 }
 /**
  * Simulate idle gathering.
@@ -4595,7 +4614,7 @@ function GameProvider({ children }) {
             if (elapsedMs >= 2000) {
                 let sim = null;
                 if (savedTask.type === 'skill') {
-                    sim = simulateIdleSkilling(savedTask, elapsedMs);
+                    sim = simulateIdleSkilling(savedTask, elapsedMs, b);
                 }
                 else if (savedTask.type === 'gather') {
                     sim = simulateIdleGather(savedTask, elapsedMs);
@@ -4609,6 +4628,20 @@ function GameProvider({ children }) {
                         for (const [skill, xp] of Object.entries(sim.xpGained)) {
                             if (xp > 0 && s[skill]) {
                                 s[skill] = { ...s[skill], xp: Math.min((s[skill].xp || 0) + Math.floor(xp), 200000000) };
+                            }
+                        }
+                    }
+                    // Deduct consumed materials from bank
+                    if (sim.itemsConsumed) {
+                        for (const [itemId, qty] of Object.entries(sim.itemsConsumed)) {
+                            if (b[itemId]) {
+                                const newQty = b[itemId].quantity - qty;
+                                if (newQty <= 0) {
+                                    delete b[itemId];
+                                }
+                                else {
+                                    b[itemId] = { ...b[itemId], quantity: newQty };
+                                }
                             }
                         }
                     }
@@ -6598,15 +6631,16 @@ function GameApp() {
                         setIdleResult({ elapsedMs, task: null });
                         return;
                     }
-                    // Re-read latest stats/equipment/inventory from DB to avoid stale state
-                    const [freshStats, freshInv, freshEq] = await Promise.all([
+                    // Re-read latest stats/equipment/inventory/bank from DB to avoid stale state
+                    const [freshStats, freshInv, freshEq, freshBank] = await Promise.all([
                         getAllStats(),
                         getInventory(),
                         getEquipment(),
+                        getBank(),
                     ]);
                     let sim = null;
                     if (savedTask.type === 'skill')
-                        sim = simulateIdleSkilling(savedTask, elapsedMs);
+                        sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank);
                     if (savedTask.type === 'gather')
                         sim = simulateIdleGather(savedTask, elapsedMs);
                     if (savedTask.type === 'combat')
@@ -6629,6 +6663,14 @@ function GameApp() {
                     }
                     else if (sim.itemsGained) {
                         updateBankDirect(sim.itemsGained);
+                    }
+                    // Deduct consumed materials from bank
+                    if (sim.itemsConsumed && Object.keys(sim.itemsConsumed).length > 0) {
+                        const negated = {};
+                        for (const [itemId, qty] of Object.entries(sim.itemsConsumed)) {
+                            negated[itemId] = -qty;
+                        }
+                        updateBankDirect(negated);
                     }
                     setIdleResult({ elapsedMs, task: savedTask, ...sim });
                 }
