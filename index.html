@@ -3866,11 +3866,27 @@ const DB_NAME = 'PocketRPG';
 const DB_VERSION = 1;
 let dbInstance = null;
 /**
- * Get or create the database instance
+ * Get or create the database instance.
+ * Handles stale connections (e.g. iOS Safari kills background tabs).
  */
 async function getDB() {
-    if (dbInstance)
-        return dbInstance;
+    // If we have an instance, do a quick health-check before returning it
+    if (dbInstance) {
+        try {
+            // A lightweight read to confirm the connection is alive
+            await dbInstance.get('settings', '__healthcheck__');
+            return dbInstance;
+        }
+        catch (e) {
+            // Connection is dead — clear it and reconnect
+            console.warn('[PocketRPG] DB connection stale, reconnecting...', e);
+            try {
+                dbInstance.close();
+            }
+            catch (_) { }
+            dbInstance = null;
+        }
+    }
     dbInstance = await openDB(DB_NAME, DB_VERSION, {
         upgrade(db, oldVersion) {
             // Version 1: initial schema
@@ -3886,6 +3902,18 @@ async function getDB() {
         }
     });
     return dbInstance;
+}
+/**
+ * Force-close and clear the DB instance (call before re-opening after error)
+ */
+function closeDB() {
+    if (dbInstance) {
+        try {
+            dbInstance.close();
+        }
+        catch (_) { }
+        dbInstance = null;
+    }
 }
 /**
  * Check if a save exists
@@ -6127,7 +6155,7 @@ function getAutoBankSeconds(agilityLevel) {
     return Math.round(120 - (110 * (lvl - 1) / 98));
 }
 function GameApp() {
-    const { loaded, loadGame, player, stats, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, addToast, getSkillLevel, activeTask } = useGame();
+    const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, getSkillLevel, activeTask, itemsData } = useGame();
     const [screen, setScreen] = useState(SCREENS.HOME);
     const [gameReady, setGameReady] = useState(false);
     const [showNewGame, setShowNewGame] = useState(false);
@@ -6152,6 +6180,81 @@ function GameApp() {
     // Keep a ref to activeTask so the tick closure always sees the latest value
     const activeTaskRef = useRef(activeTask);
     useEffect(() => { activeTaskRef.current = activeTask; }, [activeTask]);
+    // Keep refs to stats/equipment/inventory for visibility handler (avoids stale closures)
+    const statsRef = useRef(stats);
+    const equipmentRef = useRef(equipment);
+    const inventoryRef = useRef(inventory);
+    const itemsDataRef = useRef(itemsData);
+    useEffect(() => { statsRef.current = stats; }, [stats]);
+    useEffect(() => { equipmentRef.current = equipment; }, [equipment]);
+    useEffect(() => { inventoryRef.current = inventory; }, [inventory]);
+    // visibilitychange: stamp on hide, run idle on return
+    useEffect(() => {
+        if (!gameReady)
+            return;
+        const handleVisibility = async () => {
+            if (document.hidden) {
+                // Page going to background — stamp immediately before JS freezes
+                const now = Date.now();
+                await saveSetting('lastTick', now);
+                await saveSetting('activeTask', activeTaskRef.current);
+            }
+            else {
+                // Page returning to foreground — check for idle time
+                try {
+                    const [savedLastTick, savedTask] = await Promise.all([
+                        getSetting('lastTick'),
+                        getSetting('activeTask'),
+                    ]);
+                    if (!savedLastTick || !savedTask)
+                        return;
+                    const elapsedMs = Date.now() - savedLastTick;
+                    if (elapsedMs < 2000)
+                        return;
+                    // Re-read latest stats/equipment/inventory from DB to avoid stale state
+                    const [freshStats, freshInv, freshEq, freshBank] = await Promise.all([
+                        getAllStats(),
+                        getInventory(),
+                        getEquipment(),
+                        getBank(),
+                    ]);
+                    let sim = null;
+                    if (savedTask.type === 'skill')
+                        sim = simulateIdleSkilling(savedTask, elapsedMs);
+                    if (savedTask.type === 'gather')
+                        sim = simulateIdleGather(savedTask, elapsedMs);
+                    if (savedTask.type === 'combat')
+                        sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current);
+                    if (!sim)
+                        return;
+                    // Apply XP
+                    if (sim.xpGained) {
+                        for (const [skill, xp] of Object.entries(sim.xpGained)) {
+                            if (xp > 0)
+                                grantXP(skill, xp);
+                        }
+                    }
+                    // Apply items
+                    if (savedTask.type === 'combat' && sim.finalInventory) {
+                        updateInventory(sim.finalInventory);
+                    }
+                    else if (sim.itemsGained) {
+                        updateBankDirect(sim.itemsGained);
+                    }
+                    // Stamp new lastTick so returning again doesn't double-count
+                    await saveSetting('lastTick', Date.now());
+                    setIdleResult({ elapsedMs, task: savedTask, ...sim });
+                }
+                catch (err) {
+                    console.warn('[PocketRPG] Visibility idle error:', err);
+                    // DB may be stale — force reconnect for next read
+                    closeDB();
+                }
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+        return () => document.removeEventListener('visibilitychange', handleVisibility);
+    }, [gameReady, grantXP, updateInventory, updateBankDirect]);
     // HP regen tick: once per minute (100 ticks at 600ms = 60s)
     useEffect(() => {
         if (!gameReady)
@@ -6218,15 +6321,41 @@ function GameApp() {
         return unsub;
     }, [gameReady, inventory, bank, stats]);
     async function checkSave() {
-        const exists = await hasSave();
-        if (exists) {
-            const idleResult = await loadGame();
-            setGameReady(true);
-            if (idleResult)
-                setIdleResult(idleResult);
+        try {
+            const exists = await hasSave();
+            if (exists) {
+                const idleResult = await loadGame();
+                setGameReady(true);
+                if (idleResult)
+                    setIdleResult(idleResult);
+            }
+            else {
+                setShowNewGame(true);
+            }
         }
-        else {
-            setShowNewGame(true);
+        catch (err) {
+            // DB connection may be stale (iOS Safari kills background tabs)
+            // Force-close, wait briefly, then retry once
+            console.warn('[PocketRPG] checkSave error, retrying...', err);
+            closeDB();
+            await new Promise(r => setTimeout(r, 300));
+            try {
+                const exists = await hasSave();
+                if (exists) {
+                    const idleResult = await loadGame();
+                    setGameReady(true);
+                    if (idleResult)
+                        setIdleResult(idleResult);
+                }
+                else {
+                    setShowNewGame(true);
+                }
+            }
+            catch (err2) {
+                console.error('[PocketRPG] Fatal DB error after retry:', err2);
+                // Last resort: show new game screen rather than hanging on loading
+                setShowNewGame(true);
+            }
         }
     }
     async function handleNewGame(e) {
