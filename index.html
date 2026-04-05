@@ -4223,6 +4223,85 @@ async function importSave(file) {
         reader.readAsText(file);
     });
 }
+/**
+ * Snapshot live game state to localStorage as a base64+hash backup.
+ * Called every ~100 ticks (60s) from App tick loop.
+ * Takes live state objects — no IDB read needed.
+ */
+function snapshotToLocalStorage(player, stats, inventory, bank, equipment) {
+    try {
+        const data = {
+            version: SAVE_VERSION,
+            timestamp: Date.now(),
+            player,
+            stats,
+            inventory,
+            bank,
+            equipment
+        };
+        const json = JSON.stringify(data);
+        const hash = fnv1a(json);
+        const payload = JSON.stringify({ hash, data: json });
+        const encoded = btoa(unescape(encodeURIComponent(payload)));
+        localStorage.setItem('pocketrpg_backup', encoded);
+    }
+    catch (err) {
+        // localStorage may be full or unavailable — fail silently
+        console.warn('[PocketRPG] Backup snapshot failed:', err);
+    }
+}
+/**
+ * Restore game state from localStorage backup into IndexedDB.
+ * Returns the restored data object on success, or null if no backup / integrity fail.
+ */
+async function restoreFromLocalStorage() {
+    try {
+        const encoded = localStorage.getItem('pocketrpg_backup');
+        if (!encoded)
+            return null;
+        const decoded = decodeURIComponent(escape(atob(encoded)));
+        const { hash, data: json } = JSON.parse(decoded);
+        if (fnv1a(json) !== hash) {
+            console.warn('[PocketRPG] Backup integrity check failed — discarding');
+            return null;
+        }
+        const data = JSON.parse(json);
+        // Wipe IDB and restore
+        await deleteDB();
+        const db = await getDB();
+        if (data.player)
+            await db.put('player', data.player, 'profile');
+        const statsTx = db.transaction('stats', 'readwrite');
+        for (const [skill, val] of Object.entries(data.stats || {})) {
+            if (val)
+                statsTx.store.put(val, skill);
+        }
+        await statsTx.done;
+        const invTx = db.transaction('inventory', 'readwrite');
+        for (let i = 0; i < INVENTORY_SIZE; i++) {
+            if (data.inventory?.[i])
+                invTx.store.put(data.inventory[i], i);
+        }
+        await invTx.done;
+        const bankTx = db.transaction('bank', 'readwrite');
+        for (const [key, val] of Object.entries(data.bank || {})) {
+            bankTx.store.put(val, key);
+        }
+        await bankTx.done;
+        const eqTx = db.transaction('equipment', 'readwrite');
+        for (const [slot, val] of Object.entries(data.equipment || {})) {
+            if (val)
+                eqTx.store.put(val, slot);
+        }
+        await eqTx.done;
+        console.log('[PocketRPG] Restored from localStorage backup, timestamp:', data.timestamp);
+        return data;
+    }
+    catch (err) {
+        console.warn('[PocketRPG] Restore from backup failed:', err);
+        return null;
+    }
+}
 
 // ── state/gameState.js ──
 
@@ -6179,6 +6258,7 @@ function GameApp() {
     const hpRegenCounter = useRef(0);
     const autoBankCounter = useRef(0);
     const autoBankingActive = useRef(false);
+    const snapshotCounter = useRef(0);
     useEffect(() => {
         checkSave();
     }, []);
@@ -6282,6 +6362,12 @@ function GameApp() {
             if (activeTaskRef.current) {
                 localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current));
             }
+            // Snapshot full save to localStorage every 100 ticks (~60s) as IDB failover
+            snapshotCounter.current++;
+            if (snapshotCounter.current >= 100) {
+                snapshotCounter.current = 0;
+                snapshotToLocalStorage(player, stats, inventory, bank, equipment);
+            }
             hpRegenCounter.current++;
             if (hpRegenCounter.current >= 100) {
                 hpRegenCounter.current = 0;
@@ -6348,32 +6434,38 @@ function GameApp() {
                     setIdleResult(idleResult);
             }
             else {
-                setShowNewGame(true);
+                // No IDB save — check localStorage backup before giving up
+                await attemptBackupRestore();
             }
         }
         catch (err) {
-            // DB connection may be stale (iOS Safari kills background tabs)
-            // Force-close, wait briefly, then retry once
-            console.warn('[PocketRPG] checkSave error, retrying...', err);
+            // IDB connection broken (iOS Safari kills background tabs)
+            console.warn('[PocketRPG] checkSave IDB error, trying backup restore...', err);
             closeDB();
             await new Promise(r => setTimeout(r, 300));
-            try {
-                const exists = await hasSave();
-                if (exists) {
-                    const idleResult = await loadGame();
-                    setGameReady(true);
-                    if (idleResult)
-                        setIdleResult(idleResult);
-                }
-                else {
-                    setShowNewGame(true);
-                }
+            await attemptBackupRestore();
+        }
+    }
+    async function attemptBackupRestore() {
+        try {
+            const restored = await restoreFromLocalStorage();
+            if (restored) {
+                // Backup restored to IDB — now load normally (idle engine will run from lastTick)
+                console.log('[PocketRPG] Backup restore succeeded, loading...');
+                const idleResult = await loadGame();
+                setGameReady(true);
+                if (idleResult)
+                    setIdleResult(idleResult);
+                addToast('💾 Save restored from backup!', 'info');
             }
-            catch (err2) {
-                console.error('[PocketRPG] Fatal DB error after retry:', err2);
-                // Last resort: show new game screen rather than hanging on loading
+            else {
+                // No backup either — new game
                 setShowNewGame(true);
             }
+        }
+        catch (err2) {
+            console.error('[PocketRPG] Backup restore failed:', err2);
+            setShowNewGame(true);
         }
     }
     async function handleNewGame(e) {

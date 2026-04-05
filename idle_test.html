@@ -268,6 +268,40 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
 }
 
 // ─────────────────────────────────────────────────────────────
+// BACKUP / RESTORE (inlined from src/db/saveload.js)
+// ─────────────────────────────────────────────────────────────
+
+const SAVE_VERSION = 1
+
+function fnv1a(str) {
+  let hash = 2166136261
+  for (let i = 0; i < str.length; i++) {
+    hash ^= str.charCodeAt(i)
+    hash = (hash * 16777619) >>> 0
+  }
+  return hash
+}
+
+function snapshotToLocalStorage(player, stats, inventory, bank, equipment) {
+  const data = { version: SAVE_VERSION, timestamp: Date.now(), player, stats, inventory, bank, equipment }
+  const json = JSON.stringify(data)
+  const hash = fnv1a(json)
+  const payload = JSON.stringify({ hash, data: json })
+  const encoded = btoa(unescape(encodeURIComponent(payload)))
+  localStorage.setItem('pocketrpg_backup', encoded)
+  return encoded
+}
+
+function restoreFromLocalStorage() {
+  const encoded = localStorage.getItem('pocketrpg_backup')
+  if (!encoded) return null
+  const decoded = decodeURIComponent(escape(atob(encoded)))
+  const { hash, data: json } = JSON.parse(decoded)
+  if (fnv1a(json) !== hash) return null
+  return JSON.parse(json)
+}
+
+// ─────────────────────────────────────────────────────────────
 // TEST DATA FIXTURES
 // ─────────────────────────────────────────────────────────────
 
@@ -542,6 +576,51 @@ function runAll() {
   assert('visibility: lastTick stamp is within 1 tick',  stampAge < TICK_MS,
          `stamp age: ${stampAge}ms, should be < ${TICK_MS}ms`)
 
+  // ── GROUP 11: localStorage backup / restore ─────────────────
+  const backupPlayer = { name: 'TestHero', created: 12345 }
+  const backupBank   = { logs: { itemId:'logs', quantity:50 }, flax: { itemId:'flax', quantity:100 } }
+  const backupInv    = EMPTY_INV()
+  backupInv[0] = { itemId: 'bronze_dagger', quantity: 1 }
+
+  // Clean up any prior test backup
+  localStorage.removeItem('pocketrpg_backup')
+
+  // Snapshot
+  snapshotToLocalStorage(backupPlayer, STARTER_STATS, backupInv, backupBank, EMPTY_EQUIPMENT)
+  assert('backup: localStorage key written',          localStorage.getItem('pocketrpg_backup') !== null)
+
+  // Restore
+  const restored = restoreFromLocalStorage()
+  assert('backup: restore returns non-null',          restored !== null)
+  assert('backup: player name preserved',             restored?.player?.name === 'TestHero')
+  assert('backup: stats preserved',                   restored?.stats?.hitpoints?.xp === 1154)
+  assert('backup: bank preserved',                    restored?.bank?.logs?.quantity === 50)
+  assert('backup: bank flax preserved',               restored?.bank?.flax?.quantity === 100)
+  assert('backup: inventory slot 0 preserved',        restored?.inventory?.[0]?.itemId === 'bronze_dagger')
+  assert('backup: inventory length is 28',            restored?.inventory?.length === 28)
+
+  // Integrity check — tamper with the stored value
+  const good = localStorage.getItem('pocketrpg_backup')
+  localStorage.setItem('pocketrpg_backup', good.slice(0, -5) + 'XXXXX')
+  const tampered = restoreFromLocalStorage()
+  assert('backup: tampered data returns null',        tampered === null,
+         'FNV1a hash mismatch should reject corrupted backup')
+
+  // Restore good value again and overwrite test
+  localStorage.setItem('pocketrpg_backup', good)
+  const restored2 = restoreFromLocalStorage()
+  assert('backup: re-read after tamper test succeeds', restored2?.player?.name === 'TestHero')
+
+  // Snapshot with updated bank (simulates 60s later snapshot)
+  const updatedBank = { ...backupBank, logs: { itemId:'logs', quantity:75 } }
+  snapshotToLocalStorage(backupPlayer, STARTER_STATS, backupInv, updatedBank, EMPTY_EQUIPMENT)
+  const restored3 = restoreFromLocalStorage()
+  assert('backup: second snapshot overwrites first',  restored3?.bank?.logs?.quantity === 75)
+
+  // Missing key
+  localStorage.removeItem('pocketrpg_backup')
+  assert('backup: missing key returns null',          restoreFromLocalStorage() === null)
+
   // ── GROUP 9: IndexedDB round-trip ────────────────────────
   testIDBRoundTrip()
 
@@ -632,12 +711,13 @@ function renderResults(elapsed) {
     'simulateIdleCombat (level 30 + goblin)': [],
     'End-to-End loadGame simulation': [],
     'visibilitychange idle simulation': [],
+    'localStorage backup / restore': [],
     'localStorage round-trip (lastTick/activeTask)': [],
     'IndexedDB accessibility (main save)': [],
   }
 
   const groupKeys = Object.keys(groups)
-  const thresholds = [10, 17, 25, 34, 36, 38, 45, 51, 56, 57]
+  const thresholds = [10, 17, 25, 34, 36, 38, 45, 51, 63, 68, 69]
   results.forEach((r, i) => {
     const gIdx = thresholds.findIndex(t => i < t)
     const g = gIdx === -1 ? groupKeys[groupKeys.length-1] : groupKeys[gIdx]
