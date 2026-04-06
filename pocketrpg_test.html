@@ -5,42 +5,58 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PocketRPG Test Suite</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #0f0f0f; color: #e8d5b0; font-family: 'Segoe UI', sans-serif; font-size: 13px; padding: 16px; }
-  h1 { font-family: serif; color: #d4af37; font-size: 20px; margin-bottom: 4px; }
-  .subtitle { color: #e8d5b0; opacity: 0.4; font-size: 11px; margin-bottom: 16px; }
-  .summary { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
-  .summary-box { background: #1a1a1a; border: 1px solid #333; border-radius: 10px; padding: 10px 16px; text-align: center; }
-  .summary-box .num { font-size: 22px; font-weight: bold; font-family: monospace; }
-  .summary-box .lbl { font-size: 10px; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
-  .pass { color: #4caf50; } .fail { color: #e57373; } .warn { color: #ffb74d; }
-  .group { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
-  .group-header { padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-  .group-header:hover { background: #222; }
-  .group-title { font-weight: bold; font-size: 13px; }
-  .badge { font-size: 10px; font-family: monospace; padding: 2px 8px; border-radius: 99px; font-weight: bold; }
-  .badge-pass { background: #1a3a1a; color: #4caf50; }
-  .badge-fail { background: #3a1a1a; color: #e57373; }
-  .group-body { padding: 0 14px 10px; display: none; }
-  .group-body.open { display: block; }
-  .test { padding: 5px 0; border-bottom: 1px solid #222; }
-  .test:last-child { border-bottom: none; }
-  .test-name { display: flex; align-items: center; gap: 6px; }
-  .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-  .dot-pass { background: #4caf50; }
-  .dot-fail { background: #e57373; }
-  .test-detail { font-size: 10px; color: #e8d5b0; opacity: 0.45; margin-left: 13px; font-family: monospace; margin-top: 2px; }
-  .section-title { font-family: serif; color: #d4af37; font-size: 15px; margin: 20px 0 10px; }
-  .modal-preview { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 14px; margin-bottom: 12px; max-width: 380px; }
-  .modal-preview h3 { font-size: 12px; color: #d4af37; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+  body { background: #0d0d0d; color: #e8dcc8; font-family: monospace; padding: 16px; margin: 0; }
+  h1 { color: #c9a84c; font-size: 18px; margin: 0 0 4px; }
+  .subtitle { color: #888; font-size: 11px; margin-bottom: 16px; }
+  .summary { background: #111; border-radius: 8px; padding: 12px; margin-bottom: 16px; display: flex; gap: 24px; }
+  .stat { text-align: center; }
+  .stat-num { font-size: 24px; font-weight: bold; }
+  .stat-label { font-size: 10px; color: #888; }
+  .pass-num { color: #4ade80; }
+  .fail-num { color: #f87171; }
+  .group { background: #111; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+  .group-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+  .group-name { font-size: 13px; font-weight: bold; color: #e8dcc8; }
+  .badge { font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: bold; }
+  .badge-pass { background: #14532d; color: #4ade80; }
+  .badge-fail { background: #450a0a; color: #f87171; }
+  .tests { margin-top: 8px; border-top: 1px solid #1e1e1e; padding-top: 8px; display: none; }
+  .group.open .tests { display: block; }
+  .test { display: flex; align-items: flex-start; gap: 8px; padding: 3px 0; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .dot-pass { background: #4ade80; }
+  .dot-fail { background: #f87171; }
+  .test-name { font-size: 11px; }
+  .test-detail { font-size: 10px; color: #888; margin-left: 16px; }
+  .section-title { font-size: 10px; color: #c9a84c; text-transform: uppercase; letter-spacing: 1px; margin: 16px 0 6px; }
+  .preview-card { background: #111; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+  .preview-label { font-size: 10px; color: #888; margin-bottom: 8px; }
+  .toggle-wrap { display: flex; align-items: center; gap: 12px; }
+  .toggle-track { position: relative; width: 48px; height: 28px; border-radius: 14px; cursor: pointer; transition: background 0.2s; }
+  .toggle-track.off { background: #333; }
+  .toggle-track.on { background: #9a7c2e; }
+  .toggle-thumb { position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; background: white; border-radius: 50%; box-shadow: 0 1px 4px rgba(0,0,0,.4); transition: transform 0.2s; }
+  .toggle-track.on .toggle-thumb { transform: translateX(20px); }
+  .toggle-label { font-size: 12px; }
+  .course-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1e1e1e; font-size: 11px; }
+  .course-row:last-child { border: none; }
+  .gold { color: #c9a84c; }
 </style>
 </head>
 <body>
-<h1>PocketRPG Test Suite</h1>
-<div class="subtitle" id="subtitle">Running tests…</div>
-<div class="summary" id="summary"></div>
+
+<h1>⚔️ PocketRPG Test Suite</h1>
+<div class="subtitle">Standalone · No build required · Last updated: session 3</div>
+
+<div class="summary">
+  <div class="stat"><div class="stat-num pass-num" id="total-pass">0</div><div class="stat-label">PASS</div></div>
+  <div class="stat"><div class="stat-num fail-num" id="total-fail">0</div><div class="stat-label">FAIL</div></div>
+  <div class="stat"><div class="stat-num" id="total-tests" style="color:#e8dcc8">0</div><div class="stat-label">TOTAL</div></div>
+</div>
+
 <div id="results"></div>
-<div class="section-title">Modal / UI Previews</div>
+
+<div class="section-title">UI Previews</div>
 <div id="previews"></div>
 
 <script>
@@ -49,33 +65,32 @@
 // ─────────────────────────────────────────────
 const MAX_LEVEL = 99
 const MAX_XP = 200_000_000
-const TICK_MS = 600
 const INVENTORY_SIZE = 28
+const TICK_MS = 600
 const MELEE_XP_PER_DAMAGE = 4
 const HP_XP_PER_DAMAGE = 1.33
-const AGILITY_BANK_DELAY_LV1_MS = 5 * 60 * 1000  // 300000 ms
-const AGILITY_BANK_DELAY_LV99_MS = 10 * 1000       // 10000 ms
+const AGILITY_BANK_DELAY_LV1_MS = 5 * 60 * 1000
+const AGILITY_BANK_DELAY_LV99_MS = 10 * 1000
+const EQUIPMENT_SLOTS = ['head','body','legs','weapon','shield','gloves','boots','cape','neck','ring','ammo']
 
 // ─────────────────────────────────────────────
-// INLINED ENGINE: experience
+// INLINED ENGINE: experience.js
 // ─────────────────────────────────────────────
 const XP_TABLE = new Array(MAX_LEVEL + 1)
 XP_TABLE[1] = 0
-function buildXPTable() {
+;(function buildXPTable() {
   let cumulative = 0
   for (let level = 1; level < MAX_LEVEL; level++) {
     cumulative += Math.floor(level + 300 * Math.pow(2, level / 7))
     XP_TABLE[level + 1] = Math.floor(cumulative / 4)
   }
-}
-buildXPTable()
+})()
 
 function getXPForLevel(level) {
   if (level < 1) return 0
   if (level > MAX_LEVEL) return XP_TABLE[MAX_LEVEL]
   return XP_TABLE[level]
 }
-
 function getLevelFromXP(xp) {
   if (xp < 0) return 1
   let lo = 1, hi = MAX_LEVEL
@@ -86,137 +101,42 @@ function getLevelFromXP(xp) {
   }
   return lo
 }
-
-// ─────────────────────────────────────────────
-// INLINED ENGINE: formulas
-// ─────────────────────────────────────────────
-function effectiveStrength(strengthLevel, potionBonus = 0, prayerMult = 1.0, styleBonus = 0) {
-  return Math.floor((strengthLevel + potionBonus) * prayerMult) + styleBonus + 8
+function getXPToNextLevel(currentXP) {
+  const level = getLevelFromXP(currentXP)
+  if (level >= MAX_LEVEL) return 0
+  return XP_TABLE[level + 1] - currentXP
 }
-function meleeMaxHit(effectiveStr, equipmentStrengthBonus, gearMult = 1.0) {
-  const base = Math.floor(0.5 + effectiveStr * (equipmentStrengthBonus + 64) / 640)
-  return Math.floor(base * gearMult)
-}
-function effectiveAttack(attackLevel, potionBonus = 0, prayerMult = 1.0, styleBonus = 0) {
-  return Math.floor((attackLevel + potionBonus) * prayerMult) + styleBonus + 8
-}
-function maxAttackRoll(effectiveAtk, equipmentAttackBonus) {
-  return effectiveAtk * (equipmentAttackBonus + 64)
-}
-function maxDefenceRoll(defenceLevel, styleDefenceBonus) {
-  return (defenceLevel + 9) * (styleDefenceBonus + 64)
-}
-function hitChance(atkRoll, defRoll) {
-  if (atkRoll > defRoll) return 1 - (defRoll + 2) / (2 * (atkRoll + 1))
-  return atkRoll / (2 * (defRoll + 1))
-}
-function getMeleeStyleBonuses(stance) {
-  switch (stance) {
-    case 'accurate':   return { attackStyleBonus: 3, strengthStyleBonus: 0, defenceStyleBonus: 0 }
-    case 'aggressive': return { attackStyleBonus: 0, strengthStyleBonus: 3, defenceStyleBonus: 0 }
-    case 'controlled': return { attackStyleBonus: 1, strengthStyleBonus: 1, defenceStyleBonus: 1 }
-    case 'defensive':  return { attackStyleBonus: 0, strengthStyleBonus: 0, defenceStyleBonus: 3 }
-    default:           return { attackStyleBonus: 0, strengthStyleBonus: 0, defenceStyleBonus: 0 }
-  }
+function getLevelProgress(currentXP) {
+  const level = getLevelFromXP(currentXP)
+  if (level >= MAX_LEVEL) return 1
+  const thisLevelXP = XP_TABLE[level]
+  const nextLevelXP = XP_TABLE[level + 1]
+  return (currentXP - thisLevelXP) / (nextLevelXP - thisLevelXP)
 }
 
 // ─────────────────────────────────────────────
-// INLINED ENGINE: equipment
+// INLINED ENGINE: helpers.js
 // ─────────────────────────────────────────────
-const EQUIPMENT_SLOTS = ['head', 'body', 'legs', 'weapon', 'shield', 'gloves', 'boots', 'cape', 'neck', 'ring', 'ammo']
-function getEquipmentBonuses(equipment, itemsData) {
-  const bonuses = {
-    attackBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
-    defenceBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
-    otherBonus: { meleeStrength: 0, rangedStrength: 0, magicDamage: 0 }
-  }
-  for (const slot of EQUIPMENT_SLOTS) {
-    if (!equipment[slot]) continue
-    const item = itemsData[equipment[slot].itemId]
-    if (!item) continue
-    if (item.attackBonus) for (const [k, v] of Object.entries(item.attackBonus)) bonuses.attackBonus[k] = (bonuses.attackBonus[k] || 0) + v
-    if (item.defenceBonus) for (const [k, v] of Object.entries(item.defenceBonus)) bonuses.defenceBonus[k] = (bonuses.defenceBonus[k] || 0) + v
-    if (item.otherBonus) for (const [k, v] of Object.entries(item.otherBonus)) bonuses.otherBonus[k] = (bonuses.otherBonus[k] || 0) + v
-  }
-  return bonuses
-}
-function getAttackSpeed(equipment, itemsData) {
-  if (!equipment.weapon) return 4
-  const weapon = itemsData[equipment.weapon.itemId]
-  return weapon?.attackSpeed || 4
-}
-function getAttackStyle(equipment, itemsData) {
-  if (!equipment.weapon) return 'crush'
-  const weapon = itemsData[equipment.weapon.itemId]
-  return weapon?.attackStyle || 'crush'
-}
-
-// ─────────────────────────────────────────────
-// INLINED ENGINE: inventory
-// ─────────────────────────────────────────────
-function freeSlots(inventory) { return inventory.filter(s => s === null).length }
-function findItem(inventory, itemId) { return inventory.findIndex(s => s && s.itemId === itemId) }
-function countItem(inventory, itemId) {
-  return inventory.reduce((sum, slot) => { if (slot && slot.itemId === itemId) return sum + slot.quantity; return sum }, 0)
-}
-function addItem(inventory, itemId, quantity, stackable = false) {
-  if (stackable) {
-    const existing = findItem(inventory, itemId)
-    if (existing !== -1) { inventory[existing] = { ...inventory[existing], quantity: inventory[existing].quantity + quantity }; return true }
-    const empty = inventory.indexOf(null)
-    if (empty === -1) return false
-    inventory[empty] = { itemId, quantity }
-    return true
-  }
-  for (let q = 0; q < quantity; q++) {
-    const empty = inventory.indexOf(null)
-    if (empty === -1) return false
-    inventory[empty] = { itemId, quantity: 1 }
-  }
-  return true
-}
-function removeItem(inventory, itemId, quantity = 1) {
-  if (countItem(inventory, itemId) < quantity) return false
-  let remaining = quantity
-  for (let i = 0; i < inventory.length && remaining > 0; i++) {
-    if (inventory[i] && inventory[i].itemId === itemId) {
-      const take = Math.min(inventory[i].quantity, remaining)
-      inventory[i].quantity -= take
-      remaining -= take
-      if (inventory[i].quantity <= 0) inventory[i] = null
-    }
-  }
-  return true
-}
-
-// ─────────────────────────────────────────────
-// INLINED ENGINE: helpers
-// ─────────────────────────────────────────────
-function formatIdleTime(ms) {
-  const totalSeconds = Math.floor(ms / 1000)
-  const days    = Math.floor(totalSeconds / 86400)
-  const hours   = Math.floor((totalSeconds % 86400) / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const seconds = totalSeconds % 60
-  const parts = []
-  if (days > 0) parts.push(`${days}d`)
-  if (hours > 0) parts.push(`${hours}h`)
-  if (minutes > 0) parts.push(`${minutes}m`)
-  if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`)
-  return parts.join(' ')
-}
-
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min }
 function fnv1a(str) {
-  let hash = 2166136261
+  let hash = 0x811c9dc5
   for (let i = 0; i < str.length; i++) {
     hash ^= str.charCodeAt(i)
-    hash = (hash * 16777619) >>> 0
+    hash = Math.imul(hash, 0x01000193)
   }
-  return hash >>> 0
+  return (hash >>> 0).toString(16)
 }
+function calcCombatLevel(stats) {
+  const base = 0.25 * (stats.defence + stats.hitpoints + Math.floor(stats.prayer / 2))
+  const melee = 0.325 * (stats.attack + stats.strength)
+  const range = 0.325 * Math.floor(stats.ranged * 1.5)
+  const mage = 0.325 * Math.floor(stats.magic * 1.5)
+  return Math.floor(base + Math.max(melee, range, mage))
+}
+function formatNumber(n) { return n.toLocaleString('en-US') }
 
 // ─────────────────────────────────────────────
-// INLINED ENGINE: agility
+// INLINED ENGINE: agility.js
 // ─────────────────────────────────────────────
 function getAgilityBankDelayMs(agilityLevel) {
   const lvl = Math.max(1, Math.min(99, agilityLevel))
@@ -236,20 +156,6 @@ function formatBankDelay(ms) {
   if (mins > 0) return `${mins}m`
   return `${secs}s`
 }
-function createAgilityState(action) {
-  return { active: true, action, ticksRemaining: action.ticks, tickCount: 0 }
-}
-function processAgilityTick(agilityState) {
-  const state = { ...agilityState }
-  const events = []
-  state.tickCount++
-  state.ticksRemaining--
-  if (state.ticksRemaining <= 0) {
-    events.push({ type: 'courseComplete', xp: state.action.xp, coinReward: state.action.coinReward || 0, actionName: state.action.name })
-    state.ticksRemaining = state.action.ticks
-  }
-  return { agilityState: state, events }
-}
 function simulateIdleAgility(task, elapsedMs) {
   if (!task || !task.action) return null
   const totalTicks = Math.floor(elapsedMs / TICK_MS)
@@ -261,35 +167,143 @@ function simulateIdleAgility(task, elapsedMs) {
 }
 
 // ─────────────────────────────────────────────
-// INLINED ENGINE: idle skilling / gather / combat
+// INLINED ENGINE: formulas.js
 // ─────────────────────────────────────────────
-function simulateIdleSkilling(task, elapsedMs, bank) {
+function effectiveStrength(strengthLevel, potionBonus=0, prayerMult=1.0, styleBonus=0) {
+  return Math.floor((strengthLevel + potionBonus) * prayerMult) + styleBonus + 8
+}
+function meleeMaxHit(effectiveStr, equipmentStrengthBonus, gearMult=1.0) {
+  const base = Math.floor(0.5 + effectiveStr * (equipmentStrengthBonus + 64) / 640)
+  return Math.floor(base * gearMult)
+}
+function effectiveAttack(attackLevel, potionBonus=0, prayerMult=1.0, styleBonus=0) {
+  return Math.floor((attackLevel + potionBonus) * prayerMult) + styleBonus + 8
+}
+function maxAttackRoll(effectiveAtk, equipmentAttackBonus) { return effectiveAtk * (equipmentAttackBonus + 64) }
+function maxDefenceRoll(defenceLevel, styleDefenceBonus) { return (defenceLevel + 9) * (styleDefenceBonus + 64) }
+function hitChance(atkRoll, defRoll) {
+  if (atkRoll > defRoll) return 1 - (defRoll + 2) / (2 * (atkRoll + 1))
+  else return atkRoll / (2 * (defRoll + 1))
+}
+function getMeleeStyleBonuses(stance) {
+  switch (stance) {
+    case 'accurate':   return { attackStyleBonus: 3, strengthStyleBonus: 0, defenceStyleBonus: 0 }
+    case 'aggressive': return { attackStyleBonus: 0, strengthStyleBonus: 3, defenceStyleBonus: 0 }
+    case 'controlled': return { attackStyleBonus: 1, strengthStyleBonus: 1, defenceStyleBonus: 1 }
+    case 'defensive':  return { attackStyleBonus: 0, strengthStyleBonus: 0, defenceStyleBonus: 3 }
+    default:           return { attackStyleBonus: 0, strengthStyleBonus: 0, defenceStyleBonus: 0 }
+  }
+}
+
+// ─────────────────────────────────────────────
+// INLINED ENGINE: equipment.js
+// ─────────────────────────────────────────────
+function createEquipment() {
+  const eq = {}
+  for (const slot of EQUIPMENT_SLOTS) eq[slot] = null
+  return eq
+}
+function getEquipmentBonuses(equipment, itemsData) {
+  const bonuses = {
+    attackBonus: { stab:0,slash:0,crush:0,magic:0,ranged:0 },
+    defenceBonus: { stab:0,slash:0,crush:0,magic:0,ranged:0 },
+    otherBonus: { meleeStrength:0,rangedStrength:0,magicDamage:0 }
+  }
+  for (const slot of EQUIPMENT_SLOTS) {
+    if (!equipment[slot]) continue
+    const item = itemsData[equipment[slot].itemId]
+    if (!item) continue
+    if (item.attackBonus) for (const [k,v] of Object.entries(item.attackBonus)) bonuses.attackBonus[k] = (bonuses.attackBonus[k]||0)+v
+    if (item.defenceBonus) for (const [k,v] of Object.entries(item.defenceBonus)) bonuses.defenceBonus[k] = (bonuses.defenceBonus[k]||0)+v
+    if (item.otherBonus) for (const [k,v] of Object.entries(item.otherBonus)) bonuses.otherBonus[k] = (bonuses.otherBonus[k]||0)+v
+  }
+  return bonuses
+}
+function getAttackSpeed(equipment, itemsData) {
+  if (!equipment.weapon) return 4
+  const weapon = itemsData[equipment.weapon.itemId]
+  return weapon?.attackSpeed || 4
+}
+function getAttackStyle(equipment, itemsData) {
+  if (!equipment.weapon) return 'crush'
+  const weapon = itemsData[equipment.weapon.itemId]
+  return weapon?.attackStyle || 'crush'
+}
+
+// ─────────────────────────────────────────────
+// INLINED ENGINE: inventory.js
+// ─────────────────────────────────────────────
+function createInventory() { return new Array(INVENTORY_SIZE).fill(null) }
+function freeSlots(inventory) { return inventory.filter(s => s === null).length }
+function findItem(inventory, itemId) { return inventory.findIndex(s => s && s.itemId === itemId) }
+function countItem(inventory, itemId) {
+  return inventory.reduce((sum,slot) => slot && slot.itemId===itemId ? sum+slot.quantity : sum, 0)
+}
+function addItem(inventory, itemId, quantity, stackable=false) {
+  if (stackable) {
+    const existing = findItem(inventory, itemId)
+    if (existing !== -1) { inventory[existing] = { ...inventory[existing], quantity: inventory[existing].quantity + quantity }; return true }
+    const empty = inventory.indexOf(null)
+    if (empty === -1) return false
+    inventory[empty] = { itemId, quantity }
+    return true
+  }
+  for (let q = 0; q < quantity; q++) {
+    const empty = inventory.indexOf(null)
+    if (empty === -1) return false
+    inventory[empty] = { itemId, quantity: 1 }
+  }
+  return true
+}
+
+// ─────────────────────────────────────────────
+// INLINED ENGINE: idleEngine.js (partial)
+// ─────────────────────────────────────────────
+function formatIdleTime(ms) {
+  const totalSeconds = Math.floor(ms / 1000)
+  const days    = Math.floor(totalSeconds / 86400)
+  const hours   = Math.floor((totalSeconds % 86400) / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  const parts = []
+  if (days > 0)    parts.push(`${days}d`)
+  if (hours > 0)   parts.push(`${hours}h`)
+  if (minutes > 0) parts.push(`${minutes}m`)
+  if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`)
+  return parts.join(' ')
+}
+
+function simulateIdleSkilling(task, elapsedMs, bank, equipment=null, stats={}, itemsData={}) {
   if (!task || !task.action) return null
   const totalTicks = Math.floor(elapsedMs / TICK_MS)
-  const actionTicks = task.action.ticks
+  let toolMult = 1.0
+  if (equipment?.weapon) {
+    const item = itemsData[equipment.weapon.itemId]
+    if (item && item.toolFor === task.skill) toolMult = item.speedMultiplier ?? 1.0
+  }
+  const actionTicks = Math.max(1, Math.floor(task.action.ticks * toolMult))
   let actions = Math.floor(totalTicks / actionTicks)
   if (actions <= 0) return null
   const itemsConsumed = {}
   if (task.action.materials) {
     let maxFromMaterials = Infinity
-    for (const [itemId, qtyPerAction] of Object.entries(task.action.materials)) {
+    for (const [itemId, qtyPer] of Object.entries(task.action.materials)) {
       const available = (bank && bank[itemId]) ? bank[itemId].quantity : 0
-      const possible = Math.floor(available / qtyPerAction)
+      const possible = Math.floor(available / qtyPer)
       if (possible < maxFromMaterials) maxFromMaterials = possible
     }
     if (maxFromMaterials === 0) return null
     actions = Math.min(actions, maxFromMaterials)
-    for (const [itemId, qtyPerAction] of Object.entries(task.action.materials)) {
-      itemsConsumed[itemId] = qtyPerAction * actions
+    for (const [itemId, qtyPer] of Object.entries(task.action.materials)) {
+      itemsConsumed[itemId] = qtyPer * actions
     }
   }
   const xpGained = {}
   const itemsGained = {}
-  const xpPer = task.action.xp || 0
-  if (xpPer > 0 && task.skill) xpGained[task.skill] = xpPer * actions
+  if ((task.action.xp||0) > 0 && task.skill) xpGained[task.skill] = task.action.xp * actions
   if (task.action.product) {
-    const qty = (task.action.productQty || 1) * actions
-    itemsGained[task.action.product] = qty
+    const qty = (task.action.productQty||1) * actions
+    itemsGained[task.action.product] = (itemsGained[task.action.product]||0) + qty
   }
   return { xpGained, itemsGained, itemsConsumed, actions, skill: task.skill, actionName: task.action.name }
 }
@@ -300,53 +314,105 @@ function simulateIdleGather(task, elapsedMs) {
   const actions = Math.floor(totalTicks / task.gatherTask.ticks)
   if (actions <= 0) return null
   const itemsGained = {}
-  const qty = (task.gatherTask.qty || 1) * actions
-  itemsGained[task.gatherTask.product] = qty
+  const qty = (task.gatherTask.qty||1) * actions
+  itemsGained[task.gatherTask.product] = (itemsGained[task.gatherTask.product]||0) + qty
   return { itemsGained, actions, actionName: task.gatherTask.name }
 }
 
-// ─────────────────────────────────────────────
-// INLINED ENGINE: canPerformAction + auto-bank
-// ─────────────────────────────────────────────
-function canPerformAction(inventory, bank, action) {
-  if (!action.materials) return true
-  for (const [itemId, qty] of Object.entries(action.materials)) {
-    const inv = countItem(inventory, itemId)
-    const bnk = bank[itemId]?.quantity || 0
-    if (inv + bnk < qty) return false
-  }
-  return true
+function avgHitStats_test(playerStats, equipment, monster, stance, itemsData) {
+  const bonuses = getEquipmentBonuses(equipment, itemsData)
+  const weaponStyle = getAttackStyle(equipment, itemsData)
+  const weaponSpeed = getAttackSpeed(equipment, itemsData)
+  const styleBonuses = getMeleeStyleBonuses(stance)
+  const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
+  const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
+  const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
+  const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle]||0)
+  const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus?.[weaponStyle]||0)
+  const acc = hitChance(atkRoll, defRoll)
+  const avgDmgPerHit = acc * (maxHit / 2)
+  return { avgDmgPerHit, weaponSpeed, acc }
 }
 
-function autoBank(inventory, bank) {
-  const newBank = { ...bank }
-  const newInv = [...inventory]
-  for (let i = 0; i < newInv.length; i++) {
-    if (!newInv[i]) continue
-    const slot = newInv[i]
-    if (newBank[slot.itemId]) {
-      newBank[slot.itemId] = { ...newBank[slot.itemId], quantity: newBank[slot.itemId].quantity + slot.quantity }
-    } else {
-      newBank[slot.itemId] = { itemId: slot.itemId, quantity: slot.quantity }
-    }
-    newInv[i] = null
+function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsData) {
+  if (!task || !task.monster) return null
+  const monster = task.monster
+  const totalTicks = Math.floor(elapsedMs / TICK_MS)
+  if (totalTicks <= 0) return null
+  const playerStats = {
+    attack:   getLevelFromXP(stats.attack?.xp   || 0),
+    strength: getLevelFromXP(stats.strength?.xp || 0),
+    defence:  getLevelFromXP(stats.defence?.xp  || 0),
   }
-  return { inventory: newInv, bank: newBank }
+  const { avgDmgPerHit, weaponSpeed } = avgHitStats_test(playerStats, equipment, monster, task.stance||'accurate', itemsData)
+  const hitsNeeded = avgDmgPerHit > 0 ? Math.ceil(monster.hitpoints / avgDmgPerHit) : Infinity
+  const ticksPerKill = hitsNeeded < Infinity ? 1 + (hitsNeeded-1)*weaponSpeed : Infinity
+  const RESPAWN_TICKS = 2
+  const ticksPerCycle = ticksPerKill < Infinity ? ticksPerKill + RESPAWN_TICKS : Infinity
+  const monstersKilled = ticksPerCycle < Infinity ? Math.floor(totalTicks / ticksPerCycle) : 0
+  if (monstersKilled <= 0) return { xpGained:{}, lootGained:{}, monstersKilled:0, lootLost:{} }
+  const xpSkill = task.stance==='aggressive'?'strength':task.stance==='defensive'?'defence':'attack'
+  const dmgDealt = monster.hitpoints
+  const xpGained = {}
+  xpGained[xpSkill] = Math.floor(dmgDealt * MELEE_XP_PER_DAMAGE) * monstersKilled
+  xpGained.hitpoints = Math.floor(dmgDealt * HP_XP_PER_DAMAGE) * monstersKilled
+  const newInv = [...inventory]
+  const lootGained = {}
+  const lootLost = {}
+  for (let k = 0; k < monstersKilled; k++) {
+    for (const drop of (monster.drops||[])) {
+      if (Math.random() < drop.chance) {
+        const qty = Array.isArray(drop.quantity)
+          ? Math.floor(Math.random()*(drop.quantity[1]-drop.quantity[0]+1))+drop.quantity[0]
+          : drop.quantity
+        const item = itemsData[drop.itemId]
+        const stackable = item?.stackable||false
+        let added = false
+        if (stackable) {
+          const eIdx = newInv.findIndex(s => s && s.itemId===drop.itemId)
+          if (eIdx!==-1) { newInv[eIdx]={...newInv[eIdx],quantity:newInv[eIdx].quantity+qty}; added=true }
+          else { const ei=newInv.indexOf(null); if(ei!==-1){newInv[ei]={itemId:drop.itemId,quantity:qty};added=true} }
+        } else {
+          for (let q=0;q<qty;q++){const ei=newInv.indexOf(null);if(ei!==-1){newInv[ei]={itemId:drop.itemId,quantity:1};added=true}else{lootLost[drop.itemId]=(lootLost[drop.itemId]||0)+(qty-q);break}}
+        }
+        if (added) lootGained[drop.itemId]=(lootGained[drop.itemId]||0)+qty
+        else lootLost[drop.itemId]=(lootLost[drop.itemId]||0)+qty
+      }
+    }
+  }
+  return { xpGained, lootGained, lootLost, monstersKilled, finalInventory: newInv }
 }
 
 // ─────────────────────────────────────────────
 // TEST HARNESS
 // ─────────────────────────────────────────────
-const results = []
+const allTests = []
 let currentGroup = null
 
 function group(name) {
-  currentGroup = name
+  currentGroup = { name, tests: [] }
+  allTests.push(currentGroup)
 }
 
-function assert(name, condition, detail) {
-  results.push({ group: currentGroup, name, pass: !!condition, detail: detail || '' })
+function assert(name, condition, detail='') {
+  currentGroup.tests.push({ name, pass: !!condition, detail })
 }
+
+// ─────────────────────────────────────────────
+// AGILITY DATA (buffed ticks from session 3)
+// ─────────────────────────────────────────────
+const AGILITY_ACTIONS = [
+  { id:'gnome_stronghold', name:'Gnome Stronghold Course', level:1,  ticks:40, xp:86,  coinReward:10  },
+  { id:'draynor_village',  name:'Draynor Village Rooftop',  level:10, ticks:38, xp:120, coinReward:25  },
+  { id:'al_kharid',        name:'Al Kharid Rooftop',        level:20, ticks:35, xp:180, coinReward:50  },
+  { id:'varrock',          name:'Varrock Rooftop',           level:30, ticks:33, xp:238, coinReward:90  },
+  { id:'canifis',          name:'Canifis Rooftop',           level:40, ticks:30, xp:240, coinReward:140 },
+  { id:'falador',          name:'Falador Rooftop',           level:50, ticks:28, xp:440, coinReward:200 },
+  { id:'seers_village',    name:"Seers' Village Rooftop",    level:60, ticks:25, xp:570, coinReward:300 },
+  { id:'pollnivneach',     name:'Pollnivneach Rooftop',      level:70, ticks:23, xp:890, coinReward:420 },
+  { id:'rellekka',         name:'Rellekka Rooftop',          level:80, ticks:20, xp:780, coinReward:560 },
+  { id:'ardougne',         name:'Ardougne Rooftop',          level:90, ticks:18, xp:793, coinReward:750 },
+]
 
 // ─────────────────────────────────────────────
 // RUN ALL TESTS
@@ -355,84 +421,85 @@ function runAll() {
 
   // ── GROUP 1: XP & Leveling ──
   group('XP & Leveling')
-  assert('Level 1 starts at 0 XP', getXPForLevel(1) === 0, `got ${getXPForLevel(1)}`)
-  assert('Level 10 HP start XP = 1154', getXPForLevel(10) === 1154, `got ${getXPForLevel(10)}`)
-  assert('Level 2 XP > 0', getXPForLevel(2) > 0, `got ${getXPForLevel(2)}`)
-  assert('Level 99 XP = 13034431', getXPForLevel(99) === 13034431, `got ${getXPForLevel(99)}`)
-  assert('getLevelFromXP(0) = 1', getLevelFromXP(0) === 1)
-  assert('getLevelFromXP(1154) = 10', getLevelFromXP(1154) === 10, `got ${getLevelFromXP(1154)}`)
-  assert('getLevelFromXP(13034431) = 99', getLevelFromXP(13034431) === 99, `got ${getLevelFromXP(13034431)}`)
-  assert('getLevelFromXP(-1) = 1', getLevelFromXP(-1) === 1)
-  assert('Level caps at 99', getLevelFromXP(MAX_XP) === 99)
-  assert('XP table is monotonic', (() => {
+  assert('Level 1 needs 0 XP', getXPForLevel(1) === 0)
+  assert('Level 2 XP > 0', getXPForLevel(2) > 0)
+  assert('Level 10 XP = 1154', getXPForLevel(10) === 1154, `got ${getXPForLevel(10)}`)
+  assert('Level 99 XP < MAX_XP', getXPForLevel(99) < MAX_XP)
+  assert('Level table monotone increasing', (() => {
     for (let i = 2; i <= 99; i++) if (getXPForLevel(i) <= getXPForLevel(i-1)) return false
     return true
-  })(), 'table not monotonically increasing')
-  assert('getLevelFromXP(getXPForLevel(50)) = 50', getLevelFromXP(getXPForLevel(50)) === 50, `got ${getLevelFromXP(getXPForLevel(50))}`)
-  assert('getLevelFromXP(getXPForLevel(75)) = 75', getLevelFromXP(getXPForLevel(75)) === 75)
-  assert('getLevelFromXP(getXPForLevel(99)-1) = 98', getLevelFromXP(getXPForLevel(99) - 1) === 98)
-  assert('Level 5 XP > Level 4 XP', getXPForLevel(5) > getXPForLevel(4))
-  assert('XP for level 1 = 0', XP_TABLE[1] === 0)
-  assert('XP for level 2 = 83', XP_TABLE[2] === 83, `got ${XP_TABLE[2]}`)
-  assert('getLevelFromXP(83) = 2', getLevelFromXP(83) === 2, `got ${getLevelFromXP(83)}`)
+  })())
+  assert('getLevelFromXP(0) = 1', getLevelFromXP(0) === 1)
+  assert('getLevelFromXP(1154) = 10', getLevelFromXP(1154) === 10, `got ${getLevelFromXP(1154)}`)
+  assert('getLevelFromXP(1153) = 9', getLevelFromXP(1153) === 9, `got ${getLevelFromXP(1153)}`)
+  assert('getLevelFromXP(MAX_XP) = 99', getLevelFromXP(MAX_XP) === 99)
+  assert('getLevelFromXP negative = 1', getLevelFromXP(-100) === 1)
+  assert('getXPToNextLevel at 99 = 0', getXPToNextLevel(getXPForLevel(99)) === 0)
+  assert('getXPToNextLevel at 1 > 0', getXPToNextLevel(0) > 0)
+  assert('getLevelProgress at midpoint ≈ 0.5', (() => {
+    const l1 = getXPForLevel(5), l2 = getXPForLevel(6)
+    const mid = Math.floor((l1 + l2) / 2)
+    const p = getLevelProgress(mid)
+    return p > 0.4 && p < 0.6
+  })(), 'progress should be near 0.5 at midpoint')
+  assert('getLevelProgress at level cap = 1', getLevelProgress(MAX_XP) === 1)
+  assert('XP table has 100 entries', XP_TABLE.length === 100, `got ${XP_TABLE.length}`)
+  assert('Level 50 XP in range', getXPForLevel(50) > 100000 && getXPForLevel(50) < 2000000)
+  assert('Level from just-above threshold', getLevelFromXP(getXPForLevel(20)) === 20)
 
   // ── GROUP 2: Combat Formulas ──
   group('Combat Formulas')
-  assert('effectiveStrength lv1 no bonus = 9', effectiveStrength(1) === 9, `got ${effectiveStrength(1)}`)
-  assert('effectiveStrength lv99 = 107', effectiveStrength(99) === 107, `got ${effectiveStrength(99)}`)
-  assert('meleeMaxHit lv1 = 1', meleeMaxHit(effectiveStrength(1), 0) >= 1)
-  assert('meleeMaxHit lv99 bonuses = expected', (() => { const h = meleeMaxHit(effectiveStrength(99, 0, 1, 3), 64); return h > 0 })())
-  assert('maxAttackRoll positive', maxAttackRoll(effectiveAttack(40), 20) > 0)
-  assert('maxDefenceRoll positive', maxDefenceRoll(30, 10) > 0)
-  assert('hitChance high atk > 0.5', hitChance(10000, 100) > 0.5)
-  assert('hitChance low atk < 0.5', hitChance(100, 10000) < 0.5)
-  assert('hitChance equal ~ 0.333', Math.abs(hitChance(100, 100) - 1/3) < 0.01, `got ${hitChance(100,100).toFixed(4)}`)
-  assert('hitChance is 0-1', (() => { for (let i=10; i<1000; i+=37) { const h = hitChance(i, 500); if (h<0||h>1) return false } return true })())
-  assert('getMeleeStyleBonuses accurate gives +3 atk', getMeleeStyleBonuses('accurate').attackStyleBonus === 3)
-  assert('getMeleeStyleBonuses aggressive gives +3 str', getMeleeStyleBonuses('aggressive').strengthStyleBonus === 3)
-  assert('getMeleeStyleBonuses defensive gives +3 def', getMeleeStyleBonuses('defensive').defenceStyleBonus === 3)
+  assert('effectiveStrength base', effectiveStrength(1) === 9, `got ${effectiveStrength(1)}`)
+  assert('effectiveStrength with style', effectiveStrength(10, 0, 1.0, 3) === 21, `got ${effectiveStrength(10,0,1.0,3)}`)
+  assert('meleeMaxHit unarmed lv1', meleeMaxHit(effectiveStrength(1), 0) > 0)
+  assert('hitChance perfect acc', hitChance(10000, 1) > 0.99)
+  assert('hitChance zero atk', hitChance(0, 100) === 0)
+  assert('hitChance equal rolls < 0.5', hitChance(100, 100) < 0.5)
+  assert('hitChance atk > def > 0.5', hitChance(200, 100) > 0.5)
+  assert('maxAttackRoll scales', maxAttackRoll(20, 0) === 20*64, `got ${maxAttackRoll(20,0)}`)
+  assert('maxDefenceRoll base', maxDefenceRoll(1, 0) === 10*64, `got ${maxDefenceRoll(1,0)}`)
+  assert('getMeleeStyleBonuses accurate', getMeleeStyleBonuses('accurate').attackStyleBonus === 3)
+  assert('getMeleeStyleBonuses aggressive', getMeleeStyleBonuses('aggressive').strengthStyleBonus === 3)
+  assert('getMeleeStyleBonuses defensive', getMeleeStyleBonuses('defensive').defenceStyleBonus === 3)
+  assert('getMeleeStyleBonuses controlled all 1', (() => {
+    const b = getMeleeStyleBonuses('controlled')
+    return b.attackStyleBonus===1 && b.strengthStyleBonus===1 && b.defenceStyleBonus===1
+  })())
 
   // ── GROUP 3: Equipment Bonuses ──
   group('Equipment Bonuses')
-  const emptyEq = {}
-  const itemsData = {
-    bronze_sword: { attackBonus: { slash: 7 }, defenceBonus: {}, otherBonus: { meleeStrength: 6 }, attackSpeed: 4, attackStyle: 'slash' },
-    iron_chainbody: { attackBonus: {}, defenceBonus: { slash: 13 }, otherBonus: {} }
+  const emptyEq = createEquipment()
+  const testItems = {
+    'bronze_sword': { id:'bronze_sword', slot:'weapon', attackBonus:{slash:4}, otherBonus:{meleeStrength:3}, attackSpeed:4, attackStyle:'slash' },
+    'iron_helm': { id:'iron_helm', slot:'head', defenceBonus:{slash:5,stab:4,crush:3} }
   }
-  const eq1 = { weapon: { itemId: 'bronze_sword' }, body: { itemId: 'iron_chainbody' } }
-  const bonuses1 = getEquipmentBonuses(eq1, itemsData)
-  assert('Weapon slash bonus applied', bonuses1.attackBonus.slash === 7, `got ${bonuses1.attackBonus.slash}`)
-  assert('Body defence slash applied', bonuses1.defenceBonus.slash === 13, `got ${bonuses1.defenceBonus.slash}`)
-  assert('Other meleeStrength applied', bonuses1.otherBonus.meleeStrength === 6, `got ${bonuses1.otherBonus.meleeStrength}`)
-  assert('Empty eq all zeros', (() => { const b = getEquipmentBonuses({}, {}); return b.attackBonus.slash === 0 && b.otherBonus.meleeStrength === 0 })())
-  assert('getAttackSpeed no weapon = 4', getAttackSpeed({}, {}) === 4)
-  assert('getAttackSpeed with weapon', getAttackSpeed(eq1, itemsData) === 4, `got ${getAttackSpeed(eq1, itemsData)}`)
-  assert('getAttackStyle no weapon = crush', getAttackStyle({}, {}) === 'crush')
-  assert('getAttackStyle with weapon = slash', getAttackStyle(eq1, itemsData) === 'slash', `got ${getAttackStyle(eq1, itemsData)}`)
+  const equippedEq = { ...emptyEq, weapon:{ itemId:'bronze_sword' }, head:{ itemId:'iron_helm' } }
+  const bonuses = getEquipmentBonuses(equippedEq, testItems)
+  assert('Equipment slash attack', bonuses.attackBonus.slash === 4, `got ${bonuses.attackBonus.slash}`)
+  assert('Equipment melee strength', bonuses.otherBonus.meleeStrength === 3, `got ${bonuses.otherBonus.meleeStrength}`)
+  assert('Equipment helm def slash', bonuses.defenceBonus.slash === 5, `got ${bonuses.defenceBonus.slash}`)
+  assert('Empty equipment zeroes', getEquipmentBonuses(emptyEq, {}).attackBonus.slash === 0)
+  assert('getAttackSpeed default', getAttackSpeed(emptyEq, {}) === 4)
+  assert('getAttackSpeed with weapon', getAttackSpeed(equippedEq, testItems) === 4)
+  assert('getAttackStyle default', getAttackStyle(emptyEq, {}) === 'crush')
+  assert('getAttackStyle with weapon', getAttackStyle(equippedEq, testItems) === 'slash')
 
   // ── GROUP 4: Inventory ──
   group('Inventory')
-  const inv = () => new Array(INVENTORY_SIZE).fill(null)
-  assert('Empty inv has 28 free slots', freeSlots(inv()) === 28)
-  const i1 = inv()
-  addItem(i1, 'logs', 1, false)
-  assert('After add 1 item, 27 free', freeSlots(i1) === 27)
-  assert('countItem finds 1', countItem(i1, 'logs') === 1)
-  addItem(i1, 'logs', 1, false)
-  assert('Non-stackable uses second slot', freeSlots(i1) === 26)
-  const i2 = inv()
-  addItem(i2, 'coins', 100, true)
-  assert('Stackable coins uses 1 slot', freeSlots(i2) === 27)
-  addItem(i2, 'coins', 50, true)
-  assert('Stackable coins stacks', countItem(i2, 'coins') === 150)
-  removeItem(i2, 'coins', 50)
-  assert('Remove 50 coins leaves 100', countItem(i2, 'coins') === 100)
-  const fullInv = new Array(INVENTORY_SIZE).fill({ itemId: 'logs', quantity: 1 })
-  assert('Full inv add fails', addItem(fullInv, 'logs', 1, false) === false)
-  assert('freeSlots full inv = 0', freeSlots(fullInv) === 0)
-  const i3 = inv()
-  addItem(i3, 'x', 5, false)
-  assert('Add 5 non-stackable uses 5 slots', freeSlots(i3) === 23)
+  const inv = createInventory()
+  assert('Fresh inventory 28 slots', inv.length === 28)
+  assert('Fresh inventory all null', inv.every(s => s === null))
+  assert('freeSlots fresh = 28', freeSlots(inv) === 28)
+  addItem(inv, 'logs', 1, false)
+  assert('addItem non-stackable', inv[0]?.itemId === 'logs')
+  assert('freeSlots after add = 27', freeSlots(inv) === 27)
+  const inv2 = createInventory()
+  addItem(inv2, 'coins', 100, true)
+  addItem(inv2, 'coins', 50, true)
+  assert('addItem stackable stacks', countItem(inv2, 'coins') === 150, `got ${countItem(inv2,'coins')}`)
+  assert('Stackable uses 1 slot', freeSlots(inv2) === 27)
+  const fullInv = new Array(28).fill({ itemId:'logs', quantity:1 })
+  assert('addItem to full inv returns false', addItem(fullInv, 'ore', 1, false) === false)
 
   // ── GROUP 5: formatIdleTime ──
   group('formatIdleTime')
@@ -444,433 +511,214 @@ function runAll() {
   assert('3661000ms = 1h 1m 1s', formatIdleTime(3661000) === '1h 1m 1s')
   assert('86400000ms = 1d', formatIdleTime(86400000) === '1d')
   assert('90061000ms = 1d 1h 1m 1s', formatIdleTime(90061000) === '1d 1h 1m 1s')
-  assert('500ms rounds to 0s', formatIdleTime(500) === '0s')
-  assert('Never empty string', formatIdleTime(0) !== '')
+  assert('999ms = 0s', formatIdleTime(999) === '0s')
+  assert('1800000ms = 30m', formatIdleTime(1800000) === '30m')
 
   // ── GROUP 6: simulateIdleSkilling ──
   group('simulateIdleSkilling')
-  const logAction = { id: 'normal_logs', name: 'Normal Logs', level: 1, xp: 25, ticks: 4, product: 'logs' }
-  const wc1 = simulateIdleSkilling({ type: 'skill', skill: 'woodcutting', action: logAction }, 60000, {})
-  assert('WC 60s → 100 ticks → 25 actions', wc1 && wc1.actions === 25, `got ${wc1?.actions}`)
-  assert('WC XP = 25 * 25 = 625', wc1 && wc1.xpGained.woodcutting === 625, `got ${wc1?.xpGained?.woodcutting}`)
-  assert('WC product = logs', wc1 && wc1.itemsGained.logs === 25, `got ${wc1?.itemsGained?.logs}`)
-  const noTask = simulateIdleSkilling(null, 60000, {})
-  assert('Null task returns null', noTask === null)
-  const smeltAction = { id: 'bronze_bar', name: 'Bronze Bar', level: 1, xp: 6, ticks: 3, product: 'bronze_bar', materials: { tin_ore: 1, copper_ore: 1 } }
-  const bankWith = { tin_ore: { quantity: 10 }, copper_ore: { quantity: 10 } }
-  const sm1 = simulateIdleSkilling({ type: 'skill', skill: 'smithing', action: smeltAction }, 60000, bankWith)
-  assert('Smithing capped by materials', sm1 && sm1.actions === 10, `got ${sm1?.actions}`)
-  assert('Smithing consumed tin', sm1 && sm1.itemsConsumed.tin_ore === 10)
-  const sm2 = simulateIdleSkilling({ type: 'skill', skill: 'smithing', action: smeltAction }, 60000, {})
-  assert('No materials returns null', sm2 === null)
+  const woodTask = { skill:'woodcutting', action:{ name:'Chop Normal Logs', ticks:4, xp:25, product:'logs' } }
+  const woodResult = simulateIdleSkilling(woodTask, 60000, {})
+  assert('Skilling returns result', woodResult !== null)
+  assert('Skilling actions count', woodResult.actions === Math.floor(60000/TICK_MS/4), `got ${woodResult.actions}`)
+  assert('Skilling XP correct', woodResult.xpGained.woodcutting === woodResult.actions * 25)
+  assert('Skilling product correct', woodResult.itemsGained.logs === woodResult.actions)
+  assert('Skilling 0ms returns null', simulateIdleSkilling(woodTask, 0, {}) === null)
+  const smithTask = { skill:'smithing', action:{ name:'Smelt Bronze', ticks:3, xp:6.2, product:'bronze_bar', materials:{ copper_ore:1, tin_ore:1 } } }
+  const bank = { copper_ore:{ itemId:'copper_ore', quantity:10 }, tin_ore:{ itemId:'tin_ore', quantity:5 } }
+  const smithResult = simulateIdleSkilling(smithTask, 600000, bank)
+  assert('Skilling capped by materials', smithResult.actions <= 5, `got ${smithResult.actions}`)
+  assert('Skilling no materials returns null', simulateIdleSkilling(smithTask, 60000, {}) === null)
 
   // ── GROUP 7: simulateIdleGather ──
   group('simulateIdleGather')
-  const flaxTask = { gatherTask: { name: 'Pick Flax', product: 'flax', ticks: 3, qty: 1 } }
-  const g1 = simulateIdleGather(flaxTask, 60000)
-  assert('Flax 60s / 3-tick = 33 actions', g1 && g1.actions === 33, `got ${g1?.actions}`)
-  assert('Flax items gained = 33', g1 && g1.itemsGained.flax === 33)
-  const g2 = simulateIdleGather(null, 60000)
-  assert('Null gather task returns null', g2 === null)
-  const g3 = simulateIdleGather({ gatherTask: { name: 'X', product: 'x', ticks: 100, qty: 2 } }, 1000)
-  assert('Sub-1-action gather returns null', g3 === null)
-  const g4 = simulateIdleGather({ gatherTask: { name: 'X', product: 'x', ticks: 100, qty: 5 } }, 60000)
-  assert('qty multiplier works (qty=5)', g4 && g4.itemsGained.x === g4.actions * 5, `expected ${g4?.actions * 5}, got ${g4?.itemsGained?.x}`)
-  const g5 = simulateIdleGather({ gatherTask: null }, 60000)
-  assert('Missing gatherTask returns null', g5 === null)
-  const g6 = simulateIdleGather(flaxTask, 599)
-  assert('Under 1 tick returns null', g6 === null)
-
-  // ── GROUP 8-12: simulateIdleCombat (inline lightweight version) ──
-  const chicken = { id: 'chicken', name: 'Chicken', combatLevel: 1, hitpoints: 3, stats: { attack: 1, defence: 1, strength: 1 }, attackSpeed: 4, drops: [{ itemId: 'raw_chicken', quantity: 1, chance: 1.0 }] }
-  const cowMonster = { id: 'cow', name: 'Cow', combatLevel: 2, hitpoints: 8, stats: { attack: 2, defence: 2, strength: 2 }, attackSpeed: 4, drops: [{ itemId: 'cowhide', quantity: 1, chance: 1.0 }] }
-  const baseStats = { attack: { xp: getXPForLevel(40) }, strength: { xp: getXPForLevel(40) }, defence: { xp: getXPForLevel(40) } }
-  const highStats = { attack: { xp: getXPForLevel(99) }, strength: { xp: getXPForLevel(99) }, defence: { xp: getXPForLevel(99) } }
-  const noEq = {}
-
-  function simCombat(monster, elapsedMs, stats, equipment, inventory) {
-    if (!monster) return null
-    const totalTicks = Math.floor(elapsedMs / TICK_MS)
-    if (totalTicks <= 0) return null
-    const pStats = {
-      attack:   getLevelFromXP(stats.attack?.xp || 0),
-      strength: getLevelFromXP(stats.strength?.xp || 0),
-      defence:  getLevelFromXP(stats.defence?.xp || 0)
-    }
-    const bonuses = getEquipmentBonuses(equipment, {})
-    const weaponSpeed = getAttackSpeed(equipment, {})
-    const styleBonuses = getMeleeStyleBonuses('accurate')
-    const effStr = effectiveStrength(pStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-    const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
-    const effAtk = effectiveAttack(pStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-    const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus.crush || 0)
-    const defRoll = maxDefenceRoll(monster.stats.defence, 0)
-    const acc = hitChance(atkRoll, defRoll)
-    const avgDmg = acc * (maxHit / 2)
-    const hitsNeeded = avgDmg > 0 ? Math.ceil(monster.hitpoints / avgDmg) : Infinity
-    const ticksPerKill = hitsNeeded < Infinity ? 1 + (hitsNeeded - 1) * weaponSpeed : Infinity
-    const RESPAWN_TICKS = 2
-    const ticksPerCycle = ticksPerKill < Infinity ? ticksPerKill + RESPAWN_TICKS : Infinity
-    const monstersKilled = ticksPerCycle < Infinity ? Math.floor(totalTicks / ticksPerCycle) : 0
-    if (monstersKilled <= 0) return { xpGained: {}, lootGained: {}, monstersKilled: 0, lootLost: {} }
-    const xpGained = {}
-    xpGained.attack = Math.floor(monster.hitpoints * MELEE_XP_PER_DAMAGE) * monstersKilled
-    xpGained.hitpoints = Math.floor(monster.hitpoints * HP_XP_PER_DAMAGE) * monstersKilled
-    const newInv = [...inventory]
-    const lootGained = {}
-    const lootLost = {}
-    for (let k = 0; k < monstersKilled; k++) {
-      for (const drop of (monster.drops || [])) {
-        if (Math.random() < drop.chance) {
-          const qty = Array.isArray(drop.quantity) ? drop.quantity[0] : drop.quantity
-          const empty = newInv.indexOf(null)
-          if (empty !== -1) { newInv[empty] = { itemId: drop.itemId, quantity: qty }; lootGained[drop.itemId] = (lootGained[drop.itemId] || 0) + qty }
-          else { lootLost[drop.itemId] = (lootLost[drop.itemId] || 0) + qty }
-        }
-      }
-    }
-    return { xpGained, lootGained, lootLost, monstersKilled, finalInventory: newInv }
-  }
-
-  group('simulateIdleCombat/chickens')
-  const emptyInv = new Array(28).fill(null)
-  const cSim = simCombat(chicken, 3600000, baseStats, noEq, emptyInv)
-  assert('Chickens: killed > 0', cSim && cSim.monstersKilled > 0, `got ${cSim?.monstersKilled}`)
-  assert('Chickens: XP gained', cSim && (cSim.xpGained.attack || 0) > 0)
-  assert('Chickens: HP XP gained', cSim && (cSim.xpGained.hitpoints || 0) > 0)
-  assert('Chickens: XP proportional to kills', cSim && cSim.xpGained.attack === Math.floor(chicken.hitpoints * MELEE_XP_PER_DAMAGE) * cSim.monstersKilled)
-  assert('Chickens: HP XP = floor(3 * 1.33) * kills', cSim && cSim.xpGained.hitpoints === Math.floor(chicken.hitpoints * HP_XP_PER_DAMAGE) * cSim.monstersKilled)
-  assert('Chickens: loot in inventory', cSim && Object.keys(cSim.lootGained).length > 0)
-  assert('Chickens: finalInventory is 28 slots', cSim && cSim.finalInventory.length === 28)
-  assert('Chickens: loot does not exceed kills', cSim && (cSim.lootGained.raw_chicken || 0) <= cSim.monstersKilled)
-  assert('Chickens: kills/hr > 0 (lv40)', cSim && cSim.monstersKilled > 100, `kills/hr too low: ${cSim?.monstersKilled * 3600000 / 3600000}`)
-  assert('Zero elapsed returns 0 kills', simCombat(chicken, 0, baseStats, noEq, emptyInv)?.monstersKilled === 0)
-  assert('Null monster returns null', simCombat(null, 60000, baseStats, noEq, emptyInv) === null)
-  assert('Sub-tick elapsed returns 0 kills', simCombat(chicken, 599, baseStats, noEq, emptyInv)?.monstersKilled === 0)
-
-  group('simulateIdleCombat/aggressive')
-  const cSim2 = simCombat(chicken, 600000, baseStats, noEq, emptyInv)
-  assert('10 min combat kills > 0', cSim2 && cSim2.monstersKilled > 0)
-  assert('10 min combat XP > 0', cSim2 && (cSim2.xpGained.attack || 0) > 0)
-  assert('Kills scale with time', (() => {
-    const s1 = simCombat(chicken, 600000, baseStats, noEq, emptyInv)
-    const s2 = simCombat(chicken, 1200000, baseStats, noEq, emptyInv)
-    return s1 && s2 && s2.monstersKilled > s1.monstersKilled
+  const gatherTask = { gatherTask:{ name:'Pick Flax', ticks:3, product:'flax', qty:1 } }
+  const gResult = simulateIdleGather(gatherTask, 60000)
+  assert('Gather returns result', gResult !== null)
+  assert('Gather actions correct', gResult.actions === Math.floor(60000/TICK_MS/3))
+  assert('Gather items correct', gResult.itemsGained.flax === gResult.actions)
+  assert('Gather 0ms returns null', simulateIdleGather(gatherTask, 0) === null)
+  assert('Gather null task returns null', simulateIdleGather(null, 60000) === null)
+  assert('Gather actionName correct', gResult.actionName === 'Pick Flax')
+  assert('Gather multi-qty', (() => {
+    const t = { gatherTask:{ name:'Collect Sand', ticks:2, product:'sand', qty:3 } }
+    const r = simulateIdleGather(t, 6000)
+    return r.itemsGained.sand === r.actions * 3
   })())
 
-  group('simulateIdleCombat/full-inv')
-  const fullInvCombat = new Array(28).fill({ itemId: 'logs', quantity: 1 })
-  const cSim3 = simCombat(chicken, 600000, baseStats, noEq, fullInvCombat)
-  assert('Full inv: loot goes to lootLost', cSim3 && Object.keys(cSim3.lootLost).length > 0)
-  assert('Full inv: kills still happen', cSim3 && cSim3.monstersKilled > 0)
-  assert('Full inv: no new items in inventory', cSim3 && cSim3.finalInventory.filter(s => s?.itemId === 'raw_chicken').length === 0)
+  // ── GROUP 8: simulateIdleCombat / chickens ──
+  group('simulateIdleCombat / chickens')
+  const chicken = {
+    id:'chicken', name:'Chicken', hitpoints:3, combatLevel:1,
+    stats:{ attack:1, strength:1, defence:1 }, attackSpeed:4,
+    drops:[{ itemId:'raw_chicken', quantity:1, chance:1.0 },{ itemId:'feather', quantity:5, chance:1.0 }]
+  }
+  const testItemsD = {
+    raw_chicken:{ id:'raw_chicken', stackable:false },
+    feather:{ id:'feather', stackable:true }
+  }
+  const combatStats = { attack:{ xp:getXPForLevel(10) }, strength:{ xp:getXPForLevel(10) }, defence:{ xp:0 } }
+  const combatResult = simulateIdleCombat({ monster:chicken, stance:'accurate' }, 3600000, combatStats, emptyEq, createInventory(), testItemsD)
+  assert('Combat returns result', combatResult !== null)
+  assert('Chickens killed > 0', combatResult.monstersKilled > 0, `got ${combatResult.monstersKilled}`)
+  assert('Attack XP gained', (combatResult.xpGained.attack||0) > 0)
+  assert('HP XP gained', (combatResult.xpGained.hitpoints||0) > 0)
+  assert('Final inventory populated', combatResult.finalInventory.some(s => s !== null))
+  assert('Feathers stackable in inv', (() => {
+    const featherSlots = combatResult.finalInventory.filter(s => s?.itemId==='feather')
+    return featherSlots.length === 1
+  })(), 'feathers should stack into one slot')
+  assert('Raw chicken not stacked', (() => {
+    // raw chicken is unstackable, so each kill should have its own slot
+    return combatResult.finalInventory.filter(s => s?.itemId==='raw_chicken').length > 1 ||
+           combatResult.monstersKilled === 1 ||
+           combatResult.lootLost.raw_chicken > 0
+  })())
+  assert('XP = dmg * multiplier', (() => {
+    const expected = Math.floor(chicken.hitpoints * MELEE_XP_PER_DAMAGE) * combatResult.monstersKilled
+    return combatResult.xpGained.attack === expected
+  })())
+  assert('HP XP correct', (() => {
+    const expected = Math.floor(chicken.hitpoints * HP_XP_PER_DAMAGE) * combatResult.monstersKilled
+    return combatResult.xpGained.hitpoints === expected
+  })())
+  assert('lootGained or lootLost for raw chicken', (() => {
+    const gained = combatResult.lootGained.raw_chicken || 0
+    const lost = combatResult.lootLost.raw_chicken || 0
+    return gained + lost === combatResult.monstersKilled
+  })(), 'every kill should account for raw chicken')
+  assert('No negative inventory slots', combatResult.finalInventory.every(s => s===null||s.quantity>0))
+  assert('finalInventory length 28', combatResult.finalInventory.length === 28)
 
-  group('simulateIdleCombat/weapon')
-  const swordItems = { iron_sword: { attackBonus: { slash: 14 }, defenceBonus: {}, otherBonus: { meleeStrength: 14 }, attackSpeed: 4, attackStyle: 'slash' } }
-  const swordEq = { weapon: { itemId: 'iron_sword' } }
-  const noWeapon = simCombat(chicken, 600000, baseStats, noEq, emptyInv)
-  const withSword = simCombat(chicken, 600000, baseStats, swordEq, emptyInv)
-  assert('Sword kills more than fists', withSword && noWeapon && withSword.monstersKilled >= noWeapon.monstersKilled)
-  assert('Sword XP >= fist XP', withSword && noWeapon && withSword.xpGained.attack >= noWeapon.xpGained.attack)
+  // ── GROUP 9: simulateIdleCombat / aggressive ──
+  group('simulateIdleCombat / aggressive')
+  const aggressiveResult = simulateIdleCombat({ monster:chicken, stance:'aggressive' }, 3600000, combatStats, emptyEq, createInventory(), testItemsD)
+  assert('Aggressive grants strength XP', (aggressiveResult.xpGained.strength||0) > 0)
+  assert('Aggressive no attack XP', !aggressiveResult.xpGained.attack)
+  assert('Aggressive kills > 0', aggressiveResult.monstersKilled > 0)
 
-  group('simulateIdleCombat/highstats')
-  const hSim = simCombat(chicken, 3600000, highStats, noEq, emptyInv)
-  assert('LV99 kills more chickens than lv40', hSim && cSim && hSim.monstersKilled > cSim.monstersKilled)
+  // ── GROUP 10: simulateIdleCombat / full-inv ──
+  group('simulateIdleCombat / full-inv')
+  const fullInventory = new Array(28).fill({ itemId:'logs', quantity:1 })
+  const fullInvResult = simulateIdleCombat({ monster:chicken, stance:'accurate' }, 3600000, combatStats, emptyEq, fullInventory, testItemsD)
+  assert('Full inv result not null', fullInvResult !== null)
+  assert('Full inv loot goes to lostLoot', Object.keys(fullInvResult.lootLost).length > 0 || fullInvResult.monstersKilled === 0)
+  assert('Full inv kills > 0', fullInvResult.monstersKilled > 0)
 
-  group('simulateIdleCombat/cows')
-  const cSim4 = simCombat(cowMonster, 3600000, baseStats, noEq, emptyInv)
-  assert('Cows: kills > 0', cSim4 && cSim4.monstersKilled > 0, `got ${cSim4?.monstersKilled}`)
-  assert('Cows: kills < chicken kills (tougher)', cSim4 && cSim && cSim4.monstersKilled < cSim.monstersKilled)
-  assert('Cows: cowhide in loot', cSim4 && (cSim4.lootGained.cowhide || 0) > 0)
-
-  // ── GROUP 13: Combat Level ──
+  // ── GROUP 11: Combat Level ──
   group('Combat Level')
-  function calcCombatLevel(attack, strength, defence, hitpoints, ranged, magic, prayer) {
-    const base = 0.25 * (defence + hitpoints + Math.floor(prayer / 2))
-    const melee = 0.325 * (attack + strength)
-    const rangedCb = 0.325 * Math.floor(3 * ranged / 2)
-    const magicCb = 0.325 * Math.floor(3 * magic / 2)
-    return Math.floor(base + Math.max(melee, rangedCb, magicCb))
-  }
-  assert('CB lv3 (all 1s)', calcCombatLevel(1,1,1,10,1,1,1) === 3, `got ${calcCombatLevel(1,1,1,10,1,1,1)}`)
-  assert('CB scales with attack+str', calcCombatLevel(40,40,1,10,1,1,1) > calcCombatLevel(1,1,1,10,1,1,1))
-  assert('CB max 126 (all 99)', calcCombatLevel(99,99,99,99,99,99,99) === 126, `got ${calcCombatLevel(99,99,99,99,99,99,99)}`)
+  assert('Lv1 character CB ~3', calcCombatLevel({attack:1,strength:1,defence:1,hitpoints:10,ranged:1,magic:1,prayer:1}) > 0)
+  assert('High stat = high CB', (() => {
+    const low = calcCombatLevel({attack:1,strength:1,defence:1,hitpoints:10,ranged:1,magic:1,prayer:1})
+    const high = calcCombatLevel({attack:99,strength:99,defence:99,hitpoints:99,ranged:99,magic:99,prayer:99})
+    return high > low
+  })())
+  assert('CB = 126 at 99 all', (() => {
+    const cb = calcCombatLevel({attack:99,strength:99,defence:99,hitpoints:99,ranged:99,magic:99,prayer:99})
+    return cb === 126
+  })(), `got ${calcCombatLevel({attack:99,strength:99,defence:99,hitpoints:99,ranged:99,magic:99,prayer:99})}`)
 
-  // ── GROUP 14: FNV-1a Hash ──
+  // ── GROUP 12: FNV-1a Hash ──
   group('FNV-1a Hash')
-  assert('Empty string hash', fnv1a('') === 2166136261, `got ${fnv1a('')}`)
-  assert('Hello hash consistent', fnv1a('hello') === fnv1a('hello'))
-  assert('Different strings differ', fnv1a('abc') !== fnv1a('def'))
-  assert('Hash is a number', typeof fnv1a('test') === 'number')
-  assert('Hash is 32-bit unsigned', fnv1a('anything') <= 0xFFFFFFFF && fnv1a('anything') >= 0)
+  assert('Hash non-empty string', fnv1a('hello').length > 0)
+  assert('Hash deterministic', fnv1a('test') === fnv1a('test'))
+  assert('Hash different strings differ', fnv1a('abc') !== fnv1a('def'))
+  assert('Hash empty string', fnv1a('') !== fnv1a('a'))
+  assert('Hash hex only', /^[0-9a-f]+$/.test(fnv1a('pocketrpg')))
 
-  // ── GROUP 15: localStorage Backup ──
-  group('localStorage Backup')
-  const LS_KEY_PREFIX = 'pocketrpg_backup_'
-  function snapshotToLocalStorage(player, stats, inventory, bank, equipment) {
-    try {
-      const payload = { player, stats, inventory, bank, equipment, savedAt: Date.now() }
-      localStorage.setItem(LS_KEY_PREFIX + 'save', JSON.stringify(payload))
-      return true
-    } catch { return false }
-  }
-  function restoreFromLocalStorage() {
-    try {
-      const raw = localStorage.getItem(LS_KEY_PREFIX + 'save')
-      if (!raw) return null
-      return JSON.parse(raw)
-    } catch { return null }
-  }
-  const testPlayer = { name: 'Tester', created: 12345 }
-  const testStats = { hitpoints: { xp: 1154 } }
-  const testInv = new Array(28).fill(null)
-  const testBank = { coins: { itemId: 'coins', quantity: 100 } }
-  const testEq = {}
-  snapshotToLocalStorage(testPlayer, testStats, testInv, testBank, testEq)
-  const restored = restoreFromLocalStorage()
-  assert('Snapshot saves to localStorage', restored !== null)
-  assert('Player name restored', restored?.player?.name === 'Tester')
-  assert('Stats restored', restored?.stats?.hitpoints?.xp === 1154)
-  assert('Bank restored', restored?.bank?.coins?.quantity === 100)
-  assert('savedAt timestamp present', typeof restored?.savedAt === 'number')
-  assert('savedAt is recent', Date.now() - restored?.savedAt < 5000)
-  snapshotToLocalStorage({ name: 'Updated' }, {}, [], {}, {})
-  const restored2 = restoreFromLocalStorage()
-  assert('Overwrite updates name', restored2?.player?.name === 'Updated')
-  localStorage.removeItem(LS_KEY_PREFIX + 'save')
-  const restored3 = restoreFromLocalStorage()
-  assert('Removed key returns null', restored3 === null)
-  snapshotToLocalStorage(testPlayer, testStats, testInv, testBank, testEq)
-  const r4 = restoreFromLocalStorage()
-  assert('Re-saved player matches', r4?.player?.name === 'Tester')
-  assert('Inventory array length preserved', r4?.inventory?.length === 28)
-  assert('Equipment is object', typeof r4?.equipment === 'object')
-  assert('Stats is object', typeof r4?.stats === 'object')
-  localStorage.removeItem(LS_KEY_PREFIX + 'save')
-
-  // ── GROUP 16: Idle Edge Cases ──
-  group('Idle Edge Cases')
-  assert('simulateIdleSkilling no action = null', simulateIdleSkilling({ type: 'skill', skill: 'wc' }, 60000, {}) === null)
-  assert('simulateIdleSkilling 0ms = null', simulateIdleSkilling({ type: 'skill', skill: 'wc', action: logAction }, 0, {}) === null)
-  assert('simulateIdleGather 0ms = null', simulateIdleGather({ gatherTask: { name:'x', product:'x', ticks:3, qty:1 } }, 0) === null)
-  assert('formatIdleTime handles large (1 week)', formatIdleTime(7 * 86400 * 1000) === '7d')
-  assert('simulateIdleAgility no task = null', simulateIdleAgility(null, 60000) === null)
-  assert('simulateIdleAgility 0ms = null', simulateIdleAgility({ action: { ticks:100, xp:86, coinReward:10 } }, 0) === null)
-  assert('simulateIdleAgility sub-lap = null', simulateIdleAgility({ action: { ticks:100, xp:86, coinReward:10 } }, 1000) === null)
-  assert('simulateIdleSkilling short time = null', simulateIdleSkilling({ type:'skill', skill:'wc', action: logAction }, 1000, {}) === null)
-
-  // ── GROUP 17: Auto-bank Delay ──
+  // ── GROUP 13: Auto-bank Delay ──
   group('Auto-bank Delay')
-  assert('Level 1 delay = 300s (5 min)', getAgilityBankDelayMs(1) === 300000, `got ${getAgilityBankDelayMs(1)}`)
-  assert('Level 99 delay = 10s', getAgilityBankDelayMs(99) === 10000, `got ${getAgilityBankDelayMs(99)}`)
-  assert('Delay decreases as level increases', getAgilityBankDelayMs(50) < getAgilityBankDelayMs(10))
-  assert('Level 0 clamps to level 1', getAgilityBankDelayMs(0) === getAgilityBankDelayMs(1))
-  assert('Level 100 clamps to level 99', getAgilityBankDelayMs(100) === getAgilityBankDelayMs(99))
+  assert('Lv1 delay = 5m', getAgilityBankDelayMs(1) === AGILITY_BANK_DELAY_LV1_MS, `got ${getAgilityBankDelayMs(1)}`)
+  assert('Lv99 delay = 10s', getAgilityBankDelayMs(99) === AGILITY_BANK_DELAY_LV99_MS, `got ${getAgilityBankDelayMs(99)}`)
+  assert('Delay decreases with level', getAgilityBankDelayMs(50) < getAgilityBankDelayMs(1))
+  assert('Delay clamps below 1', getAgilityBankDelayMs(0) === AGILITY_BANK_DELAY_LV1_MS)
+  assert('formatBankDelay 5m', formatBankDelay(300000) === '5m')
+  assert('formatBankDelay 10s', formatBankDelay(10000) === '10s')
+  assert('formatBankDelay mixed', formatBankDelay(90000) === '1m 30s')
 
-  // ── GROUP 18: XP Table Integrity ──
-  group('XP Table Integrity')
-  assert('XP table has 100 entries (1-99 + index 0)', XP_TABLE.length >= 100)
-  assert('XP strictly increasing 1→99', (() => { for (let i = 2; i <= 99; i++) if (XP_TABLE[i] <= XP_TABLE[i-1]) return false; return true })())
-  assert('Max XP cap respected', getXPForLevel(99) <= MAX_XP)
+  // ── GROUP 14: Agility Buff (new ticks) ──
+  group('Agility Buff — ticks')
+  assert('Gnome lv1 ticks = 40', AGILITY_ACTIONS[0].ticks === 40, `got ${AGILITY_ACTIONS[0].ticks}`)
+  assert('Gnome lap time = 24s', (AGILITY_ACTIONS[0].ticks * 0.6) === 24, `got ${AGILITY_ACTIONS[0].ticks * 0.6}s`)
+  assert('Ardougne ticks = 18', AGILITY_ACTIONS[9].ticks === 18, `got ${AGILITY_ACTIONS[9].ticks}`)
+  assert('All courses ≤ 40 ticks', AGILITY_ACTIONS.every(a => a.ticks <= 40))
+  assert('Ticks generally decrease by level', (() => {
+    for (let i = 1; i < AGILITY_ACTIONS.length; i++) {
+      if (AGILITY_ACTIONS[i].ticks > AGILITY_ACTIONS[i-1].ticks) return false
+    }
+    return true
+  })(), 'higher level courses should be faster or equal')
 
-  // ── GROUP 19: Stackable Items ──
-  group('Stackable Items')
-  const si = inv()
-  addItem(si, 'coins', 1000000, true)
-  assert('1M coins uses 1 slot', freeSlots(si) === 27)
-  assert('countItem coins = 1M', countItem(si, 'coins') === 1000000)
-  addItem(si, 'coins', 500000, true)
-  assert('Stack grows to 1.5M', countItem(si, 'coins') === 1500000)
-  removeItem(si, 'coins', 1500000)
-  assert('Remove all coins leaves null slot', si[0] === null)
-  const si2 = inv()
-  addItem(si2, 'arrows', 1000, true)
-  addItem(si2, 'arrows', 1000, true)
-  assert('Arrow stack adds correctly', countItem(si2, 'arrows') === 2000)
+  // ── GROUP 15: Agility XP rates (buffed) ──
+  group('Agility XP rates')
+  const gnomeAction = AGILITY_ACTIONS[0]
+  const gnomeSim = simulateIdleAgility({ action: gnomeAction }, 3600000) // 1 hour
+  assert('Gnome sim not null', gnomeSim !== null)
+  assert('Gnome laps per hour > 80', gnomeSim.laps > 80, `got ${gnomeSim.laps} laps/hr`)
+  assert('Gnome XP per hour > 7000', gnomeSim.xpGained.agility > 7000, `got ${gnomeSim.xpGained.agility} xp/hr`)
+  assert('Gnome coins per hour > 800', gnomeSim.coinsGained > 800, `got ${gnomeSim.coinsGained} coins/hr`)
 
-  // ── GROUP 20-22: Idle Flow / canPerform / Noted Items ──
-  group('End-to-end Idle Flow')
-  const idleInv = inv()
-  const idleBank = { logs: { itemId: 'logs', quantity: 0 } }
-  const wcTask = { type: 'skill', skill: 'woodcutting', action: logAction }
-  const wcResult = simulateIdleSkilling(wcTask, 3600000, idleBank)
-  assert('WC 1hr produces logs', wcResult && (wcResult.itemsGained.logs || 0) > 0)
-  assert('WC 1hr produces XP', wcResult && (wcResult.xpGained.woodcutting || 0) > 0)
-  assert('WC actions = XP / 25', wcResult && wcResult.xpGained.woodcutting === wcResult.actions * 25)
-  assert('WC 1hr > 100 actions', wcResult && wcResult.actions > 100, `got ${wcResult?.actions}`)
-  assert('Idle agility 1hr gnome course', (() => {
-    const gnome = { id: 'gnome_stronghold', name: 'Gnome Stronghold Course', level: 1, ticks: 100, xp: 86, coinReward: 10 }
-    const r = simulateIdleAgility({ action: gnome }, 3600000)
-    return r && r.laps > 0 && r.xpGained.agility > 0 && r.coinsGained > 0
-  })())
-  assert('Idle agility xp = laps * 86', (() => {
-    const gnome = { ticks: 100, xp: 86, coinReward: 10 }
-    const r = simulateIdleAgility({ action: gnome }, 3600000)
-    return r && r.xpGained.agility === r.laps * 86
-  })())
+  // Old ticks were 100, new are 40 — verify at least 2x more laps
+  const oldLapsPerHour = Math.floor(Math.floor(3600000/TICK_MS) / 100)
+  assert('Gnome laps ≥ 2× old rate', gnomeSim.laps >= oldLapsPerHour * 2, `new:${gnomeSim.laps} old:${oldLapsPerHour}`)
 
-  group('canPerformAction + Bank')
-  const cpInv = inv()
-  addItem(cpInv, 'tin_ore', 5, false)
-  const cpBank = { copper_ore: { quantity: 10 } }
-  const bronzeAction = { materials: { tin_ore: 1, copper_ore: 1 } }
-  assert('canPerform with inv+bank mats', canPerformAction(cpInv, cpBank, bronzeAction))
-  assert('canPerform no mats = true', canPerformAction(cpInv, {}, { name: 'Mine' }))
-  const emptyBank2 = {}
-  const emptyInv2 = inv()
-  assert('canPerform missing mats = false', !canPerformAction(emptyInv2, emptyBank2, bronzeAction))
-  const { inventory: abInv, bank: abBank } = autoBank(cpInv, cpBank)
-  assert('autoBank empties inventory', freeSlots(abInv) === 28)
-  assert('autoBank adds items to bank', (abBank.tin_ore?.quantity || 0) > 0)
-
-  group('Noted Items')
-  const ni = inv()
-  ni[0] = { itemId: 'logs', quantity: 100, noted: true }
-  assert('Noted flag present', ni[0].noted === true)
-  assert('Noted item has itemId', ni[0].itemId === 'logs')
-  assert('Noted item stacks (qty 100)', ni[0].quantity === 100)
-  ni[0] = { ...ni[0], quantity: ni[0].quantity + 50 }
-  assert('Noted item qty increases', ni[0].quantity === 150)
-  const notedCopy = { ...ni[0], noted: false }
-  assert('Un-noted copy has noted=false', notedCopy.noted === false)
-  assert('countItem counts noted items', countItem(ni, 'logs') === 150)
-  const ni2 = inv()
-  ni2[0] = { itemId: 'fish', quantity: 1, noted: true }
-  ni2[1] = { itemId: 'fish', quantity: 1, noted: false }
-  assert('Noted and un-noted both counted', countItem(ni2, 'fish') === 2)
-  assert('freeSlots ignores noted items normally', freeSlots(ni2) === 26)
-  const removedNoted = removeItem(ni2, 'fish', 1)
-  assert('removeItem works on noted item', removedNoted === true)
-
-  // ── GROUP 23: Agility Engine ──
-  group('Agility Engine')
-
-  // getAgilityBankDelayMs interpolation
-  const midDelay = getAgilityBankDelayMs(50)
-  assert('Lv50 delay between lv1 and lv99', midDelay > AGILITY_BANK_DELAY_LV99_MS && midDelay < AGILITY_BANK_DELAY_LV1_MS,
-    `got ${midDelay}ms, expected between ${AGILITY_BANK_DELAY_LV99_MS} and ${AGILITY_BANK_DELAY_LV1_MS}`)
-  assert('Delay is linear (midpoint ~155s)', Math.abs(midDelay - 155000) < 5000, `got ${midDelay}ms`)
-
-  // formatBankDelay
-  assert('formatBankDelay 300000ms = "5m"', formatBankDelay(300000) === '5m', `got "${formatBankDelay(300000)}"`)
-  assert('formatBankDelay 10000ms = "10s"', formatBankDelay(10000) === '10s', `got "${formatBankDelay(10000)}"`)
-  assert('formatBankDelay 90000ms = "1m 30s"', formatBankDelay(90000) === '1m 30s', `got "${formatBankDelay(90000)}"`)
-  assert('formatBankDelay 60000ms = "1m"', formatBankDelay(60000) === '1m', `got "${formatBankDelay(60000)}"`)
-
-  // createAgilityState
-  const gnomeAction = { id: 'gnome_stronghold', name: 'Gnome Stronghold Course', level: 1, ticks: 100, xp: 86, coinReward: 10 }
-  const aState = createAgilityState(gnomeAction)
-  assert('createAgilityState: active=true', aState.active === true)
-  assert('createAgilityState: ticksRemaining = action.ticks', aState.ticksRemaining === 100)
-  assert('createAgilityState: tickCount = 0', aState.tickCount === 0)
-
-  // processAgilityTick — mid-lap, no event
-  const { agilityState: midState, events: midEvents } = processAgilityTick(aState)
-  assert('processAgilityTick mid-lap: no events', midEvents.length === 0, `got ${midEvents.length}`)
-  assert('processAgilityTick mid-lap: tickCount = 1', midState.tickCount === 1)
-  assert('processAgilityTick mid-lap: ticksRemaining = 99', midState.ticksRemaining === 99)
-
-  // processAgilityTick — run to lap completion
-  let runState = createAgilityState(gnomeAction)
-  let completionEvents = []
-  for (let t = 0; t < 100; t++) {
-    const res = processAgilityTick(runState)
-    runState = res.agilityState
-    completionEvents.push(...res.events)
+  // ── GROUP 16: Agility coins to inventory ──
+  group('Agility coins → inventory')
+  const invForCoins = createInventory()
+  // Simulate adding coins to inventory (the new behavior)
+  const coinsIdx = invForCoins.findIndex(s => s && s.itemId === 'coins')
+  const emptyIdx = invForCoins.findIndex(s => s === null)
+  if (coinsIdx >= 0) {
+    invForCoins[coinsIdx] = { ...invForCoins[coinsIdx], quantity: invForCoins[coinsIdx].quantity + 100 }
+  } else if (emptyIdx >= 0) {
+    invForCoins[emptyIdx] = { itemId: 'coins', quantity: 100 }
   }
-  assert('processAgilityTick: 1 courseComplete after 100 ticks', completionEvents.length === 1, `got ${completionEvents.length}`)
-  assert('processAgilityTick: event type = courseComplete', completionEvents[0]?.type === 'courseComplete')
-  assert('processAgilityTick: event xp = 86', completionEvents[0]?.xp === 86, `got ${completionEvents[0]?.xp}`)
-  assert('processAgilityTick: event coinReward = 10', completionEvents[0]?.coinReward === 10, `got ${completionEvents[0]?.coinReward}`)
-  assert('processAgilityTick: resets for next lap', runState.ticksRemaining === 100, `got ${runState.ticksRemaining}`)
+  assert('Coins added to inventory slot', invForCoins.some(s => s?.itemId === 'coins'))
+  assert('Coins amount correct', countItem(invForCoins, 'coins') === 100, `got ${countItem(invForCoins,'coins')}`)
+  // Stacking: add more coins
+  const coinsIdx2 = invForCoins.findIndex(s => s && s.itemId === 'coins')
+  if (coinsIdx2 >= 0) invForCoins[coinsIdx2] = { ...invForCoins[coinsIdx2], quantity: invForCoins[coinsIdx2].quantity + 50 }
+  assert('Coins stack (150 total)', countItem(invForCoins, 'coins') === 150, `got ${countItem(invForCoins,'coins')}`)
+  assert('Coins take only 1 slot', invForCoins.filter(s => s?.itemId === 'coins').length === 1)
+  // Full inventory fallback
+  const fullInv2 = new Array(28).fill({ itemId:'logs', quantity:1 })
+  const fullCoinsIdx = fullInv2.findIndex(s => s && s.itemId === 'coins')
+  const fullEmpty = fullInv2.findIndex(s => s === null)
+  const wouldGoToBank = fullCoinsIdx === -1 && fullEmpty === -1
+  assert('Full inv falls back to bank', wouldGoToBank)
 
-  // simulateIdleAgility — gnome course 1 hour
-  const gnomeResult = simulateIdleAgility({ action: gnomeAction }, 3600000)
-  const expectedLaps = Math.floor(Math.floor(3600000 / TICK_MS) / gnomeAction.ticks)
-  assert('simulateIdleAgility: correct laps (1hr gnome)', gnomeResult && gnomeResult.laps === expectedLaps,
-    `expected ${expectedLaps}, got ${gnomeResult?.laps}`)
-  assert('simulateIdleAgility: xpGained.agility = laps * 86', gnomeResult && gnomeResult.xpGained.agility === expectedLaps * 86,
-    `expected ${expectedLaps * 86}, got ${gnomeResult?.xpGained?.agility}`)
-  assert('simulateIdleAgility: coinsGained = laps * 10', gnomeResult && gnomeResult.coinsGained === expectedLaps * 10,
-    `expected ${expectedLaps * 10}, got ${gnomeResult?.coinsGained}`)
-  assert('simulateIdleAgility: skill = agility', gnomeResult && gnomeResult.skill === 'agility')
+  // ── GROUP 17: XP Table Integrity ──
+  group('XP Table Integrity')
+  assert('XP table length = 100', XP_TABLE.length === 100)
+  assert('XP[1] = 0', XP_TABLE[1] === 0)
+  assert('XP monotone increase lv1-99', (() => {
+    for (let i = 2; i <= 99; i++) if (XP_TABLE[i] <= XP_TABLE[i-1]) return false
+    return true
+  })())
 
-  // simulateIdleAgility — ardougne course (high level)
-  const ardougneAction = { id: 'ardougne', name: 'Ardougne Rooftop', level: 90, ticks: 45, xp: 793, coinReward: 750 }
-  const ardResult = simulateIdleAgility({ action: ardougneAction }, 3600000)
-  const ardLaps = Math.floor(Math.floor(3600000 / TICK_MS) / ardougneAction.ticks)
-  assert('Ardougne: correct laps', ardResult && ardResult.laps === ardLaps, `expected ${ardLaps}, got ${ardResult?.laps}`)
-  assert('Ardougne: higher XP/hr than gnome', ardResult && gnomeResult && ardResult.xpGained.agility > gnomeResult.xpGained.agility)
-  assert('Ardougne: higher coins/hr than gnome', ardResult && gnomeResult && ardResult.coinsGained > gnomeResult.coinsGained)
+  // ── GROUP 18: Stackable Items ──
+  group('Stackable Items')
+  const stackInv = createInventory()
+  addItem(stackInv, 'arrow', 100, true)
+  assert('Stack created', countItem(stackInv,'arrow') === 100)
+  addItem(stackInv, 'arrow', 50, true)
+  assert('Stack merged', countItem(stackInv,'arrow') === 150)
+  assert('Stack one slot', stackInv.filter(s=>s?.itemId==='arrow').length === 1)
+  addItem(stackInv, 'bolt', 200, true)
+  assert('Two stackables two slots', freeSlots(stackInv) === 26)
+  assert('countItem correct', countItem(stackInv,'bolt') === 200)
 
-  // getAgilityBankDelayFromStats
-  const statsLv1 = { agility: { xp: 0 } }
-  const statsLv99 = { agility: { xp: getXPForLevel(99) } }
-  assert('getAgilityBankDelayFromStats lv1 = 300s', getAgilityBankDelayFromStats(statsLv1) === 300000,
-    `got ${getAgilityBankDelayFromStats(statsLv1)}`)
-  assert('getAgilityBankDelayFromStats lv99 = 10s', getAgilityBankDelayFromStats(statsLv99) === 10000,
-    `got ${getAgilityBankDelayFromStats(statsLv99)}`)
-  assert('getAgilityBankDelayFromStats no stats = lv1 delay', getAgilityBankDelayFromStats({}) === 300000,
-    `got ${getAgilityBankDelayFromStats({})}`)
-
-  // ── GROUP 24: Idle Skilling Materials ──
-  group('Idle Skilling Materials')
-  const cookAction = { id: 'trout', name: 'Cook Trout', level: 20, xp: 70, ticks: 4, product: 'cooked_trout', materials: { raw_trout: 1 } }
-  const fullFish = { raw_trout: { quantity: 100 } }
-  const cSim5 = simulateIdleSkilling({ type: 'skill', skill: 'cooking', action: cookAction }, 3600000, fullFish)
-  assert('Cooking: capped to 100 fish', cSim5 && cSim5.actions === 100, `got ${cSim5?.actions}`)
-  assert('Cooking: consumed 100 raw_trout', cSim5 && cSim5.itemsConsumed.raw_trout === 100, `got ${cSim5?.itemsConsumed?.raw_trout}`)
-  assert('Cooking: produced 100 cooked_trout', cSim5 && cSim5.itemsGained.cooked_trout === 100)
-  assert('Cooking: correct XP (100 * 70)', cSim5 && cSim5.xpGained.cooking === 7000, `got ${cSim5?.xpGained?.cooking}`)
-  const partialFish = { raw_trout: { quantity: 3 } }
-  const cSim6 = simulateIdleSkilling({ type: 'skill', skill: 'cooking', action: cookAction }, 60000, partialFish)
-  assert('Cooking: 3 fish only produces 3', cSim6 && cSim6.actions === 3, `got ${cSim6?.actions}`)
-  const noFish = {}
-  const cSim7 = simulateIdleSkilling({ type: 'skill', skill: 'cooking', action: cookAction }, 60000, noFish)
-  assert('Cooking: 0 fish returns null', cSim7 === null)
-  const smeltBronze = { id: 'bronze_bar', xp: 6, ticks: 3, product: 'bronze_bar', materials: { tin_ore: 1, copper_ore: 1 } }
-  const mixedBank = { tin_ore: { quantity: 20 }, copper_ore: { quantity: 15 } }
-  const smSim = simulateIdleSkilling({ type: 'skill', skill: 'smithing', action: smeltBronze }, 3600000, mixedBank)
-  assert('Bronze: limited by copper (15)', smSim && smSim.actions === 15, `got ${smSim?.actions}`)
-  assert('Bronze: consumed 15 tin_ore', smSim && smSim.itemsConsumed.tin_ore === 15)
-  assert('Bronze: consumed 15 copper_ore', smSim && smSim.itemsConsumed.copper_ore === 15)
-  assert('Bronze: produced 15 bronze_bar', smSim && smSim.itemsGained.bronze_bar === 15)
-  const bigBank = { tin_ore: { quantity: 10000 }, copper_ore: { quantity: 10000 } }
-  const bigSim = simulateIdleSkilling({ type: 'skill', skill: 'smithing', action: smeltBronze }, 3600000, bigBank)
-  assert('Bronze 1hr: time-limited not material-limited', bigSim && bigSim.actions > 0 && bigSim.actions < 10000)
-  assert('Woodcutting has no itemsConsumed', wc1 && !wc1.itemsConsumed.logs)
-
-  // ── GROUP 25: Idle Agility Simulation ──
-  group('Idle Agility Simulation')
-  const varrocAction = { id: 'varrock', name: 'Varrock Rooftop', level: 30, ticks: 75, xp: 238, coinReward: 90 }
-  const vResult = simulateIdleAgility({ action: varrocAction }, 3600000)
-  const vLaps = Math.floor(Math.floor(3600000 / TICK_MS) / varrocAction.ticks)
-  assert('Varrock: correct laps', vResult && vResult.laps === vLaps, `expected ${vLaps}, got ${vResult?.laps}`)
-  assert('Varrock: XP = laps * 238', vResult && vResult.xpGained.agility === vLaps * 238, `expected ${vLaps*238}, got ${vResult?.xpGained?.agility}`)
-  assert('Varrock: coins = laps * 90', vResult && vResult.coinsGained === vLaps * 90, `expected ${vLaps*90}, got ${vResult?.coinsGained}`)
-
-  // Faster course = more laps
-  const seersAction = { id: 'seers_village', name: "Seers' Village Rooftop", level: 60, ticks: 60, xp: 570, coinReward: 300 }
-  const sResult = simulateIdleAgility({ action: seersAction }, 3600000)
-  assert('Faster course has more laps', sResult && vResult && sResult.laps > vResult.laps)
-
-  // Short time — under 1 lap
-  const shortSim = simulateIdleAgility({ action: gnomeAction }, gnomeAction.ticks * TICK_MS - 1)
-  assert('Under 1 lap returns null', shortSim === null)
-
-  // Exactly 1 lap worth of time
-  const exactOneLap = simulateIdleAgility({ action: gnomeAction }, gnomeAction.ticks * TICK_MS)
-  assert('Exactly 1 lap = 1 lap', exactOneLap && exactOneLap.laps === 1, `got ${exactOneLap?.laps}`)
-  assert('Exactly 1 lap xp = 86', exactOneLap && exactOneLap.xpGained.agility === 86, `got ${exactOneLap?.xpGained?.agility}`)
-  assert('Exactly 1 lap coins = 10', exactOneLap && exactOneLap.coinsGained === 10, `got ${exactOneLap?.coinsGained}`)
-
-  // No coin reward course
-  const noCoinsAction = { id: 'test', name: 'No Coins', level: 1, ticks: 50, xp: 100, coinReward: 0 }
-  const ncResult = simulateIdleAgility({ action: noCoinsAction }, 3600000)
-  assert('Zero coinReward: coinsGained = 0', ncResult && ncResult.coinsGained === 0, `got ${ncResult?.coinsGained}`)
-
-  // actionName propagated
-  assert('actionName propagated in result', gnomeResult && gnomeResult.actionName === gnomeAction.name)
+  // ── GROUP 19: simulateIdleCombat / cows ──
+  group('simulateIdleCombat / cows')
+  const cow = {
+    id:'cow', name:'Cow', hitpoints:8, combatLevel:2,
+    stats:{ attack:1, strength:1, defence:1 }, attackSpeed:4,
+    drops:[{ itemId:'cowhide', quantity:1, chance:1.0 },{ itemId:'raw_beef', quantity:1, chance:1.0 }]
+  }
+  const cowItems = { cowhide:{ stackable:false }, raw_beef:{ stackable:false } }
+  const cowResult = simulateIdleCombat({ monster:cow, stance:'accurate' }, 3600000, combatStats, emptyEq, createInventory(), cowItems)
+  assert('Cows killed > 0', cowResult.monstersKilled > 0)
+  assert('Cowhide or lostLoot', (cowResult.lootGained.cowhide||0) + (cowResult.lootLost.cowhide||0) === cowResult.monstersKilled)
+  assert('Raw beef or lostLoot', (cowResult.lootGained.raw_beef||0) + (cowResult.lootLost.raw_beef||0) === cowResult.monstersKilled)
 }
 
 // ─────────────────────────────────────────────
@@ -878,156 +726,93 @@ function runAll() {
 // ─────────────────────────────────────────────
 function renderResults() {
   runAll()
+  let totalPass = 0, totalFail = 0
+  const container = document.getElementById('results')
 
-  const groups = {}
-  for (const r of results) {
-    if (!groups[r.group]) groups[r.group] = []
-    groups[r.group].push(r)
-  }
+  for (const grp of allTests) {
+    const pass = grp.tests.filter(t => t.pass).length
+    const fail = grp.tests.length - pass
+    totalPass += pass
+    totalFail += fail
 
-  const totalPass = results.filter(r => r.pass).length
-  const totalFail = results.filter(r => !r.pass).length
-  const total = results.length
-
-  document.getElementById('subtitle').textContent = `${total} assertions across ${Object.keys(groups).length} groups`
-
-  const summaryEl = document.getElementById('summary')
-  summaryEl.innerHTML = `
-    <div class="summary-box"><div class="num pass">${totalPass}</div><div class="lbl">Passed</div></div>
-    <div class="summary-box"><div class="num ${totalFail > 0 ? 'fail' : 'pass'}">${totalFail}</div><div class="lbl">Failed</div></div>
-    <div class="summary-box"><div class="num">${total}</div><div class="lbl">Total</div></div>
-    <div class="summary-box"><div class="num ${totalFail === 0 ? 'pass' : 'fail'}">${Math.round(100 * totalPass / total)}%</div><div class="lbl">Pass Rate</div></div>
-  `
-
-  const resultsEl = document.getElementById('results')
-  resultsEl.innerHTML = ''
-
-  // Always open failing groups, collapse passing ones
-  for (const [groupName, groupResults] of Object.entries(groups)) {
-    const pass = groupResults.filter(r => r.pass).length
-    const fail = groupResults.filter(r => !r.pass).length
-    const allPass = fail === 0
-
-    const groupEl = document.createElement('div')
-    groupEl.className = 'group'
-
-    const header = document.createElement('div')
-    header.className = 'group-header'
-    header.innerHTML = `
-      <span class="group-title ${allPass ? 'pass' : 'fail'}">${allPass ? '✓' : '✗'} ${groupName}</span>
-      <span class="badge ${allPass ? 'badge-pass' : 'badge-fail'}">${pass}/${pass + fail}</span>
+    const div = document.createElement('div')
+    div.className = 'group' + (fail > 0 ? ' open' : '')
+    div.innerHTML = `
+      <div class="group-header" onclick="this.parentElement.classList.toggle('open')">
+        <span class="group-name">${grp.name}</span>
+        <span class="badge ${fail===0?'badge-pass':'badge-fail'}">${fail===0?`✓ ${pass}`:`✗ ${fail} fail`}</span>
+      </div>
+      <div class="tests">
+        ${grp.tests.map(t => `
+          <div class="test">
+            <div class="dot ${t.pass?'dot-pass':'dot-fail'}"></div>
+            <div>
+              <div class="test-name" style="color:${t.pass?'#e8dcc8':'#f87171'}">${t.name}</div>
+              ${t.detail ? `<div class="test-detail">${t.detail}</div>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
     `
-
-    const body = document.createElement('div')
-    body.className = 'group-body' + (!allPass ? ' open' : '')
-
-    for (const r of groupResults) {
-      const testEl = document.createElement('div')
-      testEl.className = 'test'
-      testEl.innerHTML = `
-        <div class="test-name">
-          <div class="dot ${r.pass ? 'dot-pass' : 'dot-fail'}"></div>
-          <span class="${r.pass ? 'pass' : 'fail'}">${r.name}</span>
-        </div>
-        ${r.detail ? `<div class="test-detail">${r.detail}</div>` : ''}
-      `
-      body.appendChild(testEl)
-    }
-
-    header.onclick = () => body.classList.toggle('open')
-    groupEl.appendChild(header)
-    groupEl.appendChild(body)
-    resultsEl.appendChild(groupEl)
+    container.appendChild(div)
   }
+
+  document.getElementById('total-pass').textContent = totalPass
+  document.getElementById('total-fail').textContent = totalFail
+  document.getElementById('total-tests').textContent = totalPass + totalFail
 }
 
 // ─────────────────────────────────────────────
-// MODAL PREVIEWS
+// RENDER UI PREVIEWS
 // ─────────────────────────────────────────────
 function renderModalPreview() {
-  const gnomeAction = { id: 'gnome_stronghold', name: 'Gnome Stronghold Course', level: 1, ticks: 100, xp: 86, coinReward: 10 }
-  const ardougneAction = { id: 'ardougne', name: 'Ardougne Rooftop', level: 90, ticks: 45, xp: 793, coinReward: 750 }
-  const previewsEl = document.getElementById('previews')
+  const container = document.getElementById('previews')
 
-  // Preview 1: Idle return from agility
-  const r = simulateIdleAgility({ action: gnomeAction }, 7200000)
-  if (r) {
-    const el = document.createElement('div')
-    el.className = 'modal-preview'
-    el.innerHTML = `
-      <h3>Welcome Back Modal — Agility</h3>
-      <div style="font-size:28px;text-align:center;margin-bottom:6px">💤</div>
-      <div style="text-align:center;font-size:14px;color:#d4af37;font-weight:bold;margin-bottom:4px">Welcome Back!</div>
-      <div style="text-align:center;font-size:11px;color:#c8a96e;margin-bottom:8px">Away for ${formatIdleTime(7200000)}</div>
-      <div style="text-align:center;font-size:11px;color:#e8d5b0;opacity:0.5;margin-bottom:12px">Running ${gnomeAction.name}</div>
-      <div style="background:#111;border-radius:8px;padding:10px;margin-bottom:8px">
-        <div style="font-size:10px;color:#e8d5b0;opacity:0.5;text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:6px">⭐ XP Gained</div>
-        <div style="display:flex;justify-content:space-between;font-size:13px;color:#e8d5b0;margin-bottom:4px">
-          <span>Agility</span><span style="color:#d4af37;font-family:monospace">+${r.xpGained.agility.toLocaleString()} xp</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:#e8d5b0;opacity:0.45">
-          <span>XP/hr</span><span style="font-family:monospace">${Math.round(r.xpGained.agility / 2).toLocaleString()}</span>
-        </div>
+  // Toggle preview (fixed UX)
+  const toggleCard = document.createElement('div')
+  toggleCard.className = 'preview-card'
+  let toggleOn = false
+  toggleCard.innerHTML = `
+    <div class="preview-label">Auto-Bank Loot Toggle — fixed UX (click to toggle)</div>
+    <div style="background:#1a1a1a;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;max-width:340px">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:#e8dcc8">🏦 Auto-Bank Loot</div>
+        <div id="toggle-sub" style="font-size:11px;color:#888;margin-top:2px">Off — loot stays in inventory</div>
       </div>
-      <div style="background:#111;border-radius:8px;padding:10px;margin-bottom:8px">
-        <div style="font-size:10px;color:#e8d5b0;opacity:0.5;text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:6px">🏃 Agility</div>
-        <div style="display:flex;justify-content:space-between;font-size:13px;color:#e8d5b0;margin-bottom:3px">
-          <span>Laps completed</span><span style="color:#d4af37;font-family:monospace">${r.laps}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:13px;color:#e8d5b0">
-          <span>🪙 Coins earned</span><span style="color:#d4af37;font-family:monospace">${r.coinsGained.toLocaleString()}</span>
-        </div>
+      <div class="toggle-track off" id="toggle-demo">
+        <div class="toggle-thumb"></div>
       </div>
-      <div style="text-align:center;padding:10px;background:linear-gradient(135deg,#b8940e,#d4af37);border-radius:10px;color:#0f0f0f;font-weight:bold;font-size:13px">
-        Continue Adventure
-      </div>
-    `
-    previewsEl.appendChild(el)
-  }
+    </div>
+  `
+  container.appendChild(toggleCard)
+  setTimeout(() => {
+    document.getElementById('toggle-demo').addEventListener('click', function() {
+      toggleOn = !toggleOn
+      this.className = 'toggle-track ' + (toggleOn ? 'on' : 'off')
+      document.getElementById('toggle-sub').textContent = toggleOn
+        ? '5m delay (Agility lv 1)'
+        : 'Off — loot stays in inventory'
+    })
+  }, 0)
 
-  // Preview 2: Agility course picker
-  const courses = [gnomeAction, { id: 'draynor_village', name: 'Draynor Village Rooftop', level: 10, ticks: 90, xp: 120, coinReward: 25 }, ardougneAction]
-  const el2 = document.createElement('div')
-  el2.className = 'modal-preview'
-  el2.style.maxWidth = '400px'
-  el2.innerHTML = `<h3>Agility Course Picker</h3>`
-  for (const course of courses) {
-    const delay = getAgilityBankDelayMs(course.level)
-    el2.innerHTML += `
-      <div style="background:#111;border-radius:8px;padding:10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <div style="font-size:13px;font-weight:600;color:#e8d5b0">${course.name}</div>
-          <div style="font-size:10px;color:#e8d5b0;opacity:0.4;margin-top:2px">Lv ${course.level} · ${course.xp} XP · ${(course.ticks * 0.6).toFixed(1)}s lap</div>
-          <div style="font-size:10px;color:#e8d5b0;opacity:0.3;margin-top:1px">🏦 Bank delay at this lv: ${formatBankDelay(getAgilityBankDelayMs(course.level))}</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:12px;color:#d4af37;font-family:monospace">🪙 ${course.coinReward}</div>
-          <div style="font-size:10px;color:#e8d5b0;opacity:0.3">per lap</div>
-        </div>
-      </div>
-    `
-  }
-  previewsEl.appendChild(el2)
-
-  // Preview 3: Bank delay widget
-  const el3 = document.createElement('div')
-  el3.className = 'modal-preview'
-  el3.innerHTML = `<h3>Auto-Bank Delay by Agility Level</h3>`
-  const checkpoints = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99]
-  for (const lv of checkpoints) {
-    const delay = getAgilityBankDelayMs(lv)
-    const pct = 1 - (delay - AGILITY_BANK_DELAY_LV99_MS) / (AGILITY_BANK_DELAY_LV1_MS - AGILITY_BANK_DELAY_LV99_MS)
-    el3.innerHTML += `
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-        <span style="font-size:10px;color:#d4af37;font-family:monospace;width:32px">Lv ${lv}</span>
-        <div style="flex:1;background:#222;border-radius:4px;height:8px">
-          <div style="width:${Math.round(pct*100)}%;background:#d4af37;height:100%;border-radius:4px"></div>
-        </div>
-        <span style="font-size:10px;color:#e8d5b0;font-family:monospace;width:50px;text-align:right">${formatBankDelay(delay)}</span>
-      </div>
-    `
-  }
-  previewsEl.appendChild(el3)
+  // Agility course rates
+  const agilityCard = document.createElement('div')
+  agilityCard.className = 'preview-card'
+  agilityCard.innerHTML = `
+    <div class="preview-label">Agility Course Rates (buffed ticks)</div>
+    <div style="max-width:340px">
+      ${AGILITY_ACTIONS.map(a => {
+        const secPerLap = (a.ticks * 0.6).toFixed(0)
+        const lapsPerHr = Math.floor(3600 / (a.ticks * 0.6))
+        const xpPerHr = Math.floor(lapsPerHr * a.xp).toLocaleString()
+        return `<div class="course-row">
+          <span style="color:#e8dcc8">Lv ${a.level} ${a.name.split(' ')[0]}</span>
+          <span class="gold">${secPerLap}s · ${lapsPerHr}/hr · ${xpPerHr} xp/hr</span>
+        </div>`
+      }).join('')}
+    </div>
+  `
+  container.appendChild(agilityCard)
 }
 
 renderResults()

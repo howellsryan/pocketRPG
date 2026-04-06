@@ -3710,7 +3710,7 @@ const skillsData = {
         "id": "gnome_stronghold",
         "name": "Gnome Stronghold Course",
         "level": 1,
-        "ticks": 100,
+        "ticks": 40,
         "xp": 86,
         "coinReward": 10,
         "description": "Beginner course in the Gnome Stronghold"
@@ -3719,7 +3719,7 @@ const skillsData = {
         "id": "draynor_village",
         "name": "Draynor Village Rooftop",
         "level": 10,
-        "ticks": 90,
+        "ticks": 38,
         "xp": 120,
         "coinReward": 25,
         "description": "Rooftop course through Draynor Village"
@@ -3728,7 +3728,7 @@ const skillsData = {
         "id": "al_kharid",
         "name": "Al Kharid Rooftop",
         "level": 20,
-        "ticks": 80,
+        "ticks": 35,
         "xp": 180,
         "coinReward": 50,
         "description": "Desert rooftop course in Al Kharid"
@@ -3737,7 +3737,7 @@ const skillsData = {
         "id": "varrock",
         "name": "Varrock Rooftop",
         "level": 30,
-        "ticks": 75,
+        "ticks": 33,
         "xp": 238,
         "coinReward": 90,
         "description": "Rooftop agility course through Varrock"
@@ -3746,7 +3746,7 @@ const skillsData = {
         "id": "canifis",
         "name": "Canifis Rooftop",
         "level": 40,
-        "ticks": 70,
+        "ticks": 30,
         "xp": 240,
         "coinReward": 140,
         "description": "Rooftop course through the spooky village of Canifis"
@@ -3755,7 +3755,7 @@ const skillsData = {
         "id": "falador",
         "name": "Falador Rooftop",
         "level": 50,
-        "ticks": 65,
+        "ticks": 28,
         "xp": 440,
         "coinReward": 200,
         "description": "High-speed rooftop course over Falador"
@@ -3764,7 +3764,7 @@ const skillsData = {
         "id": "seers_village",
         "name": "Seers' Village Rooftop",
         "level": 60,
-        "ticks": 60,
+        "ticks": 25,
         "xp": 570,
         "coinReward": 300,
         "description": "Agility course over the rooftops of Seers' Village"
@@ -3773,7 +3773,7 @@ const skillsData = {
         "id": "pollnivneach",
         "name": "Pollnivneach Rooftop",
         "level": 70,
-        "ticks": 55,
+        "ticks": 23,
         "xp": 890,
         "coinReward": 420,
         "description": "Challenging desert rooftop course in Pollnivneach"
@@ -3782,7 +3782,7 @@ const skillsData = {
         "id": "rellekka",
         "name": "Rellekka Rooftop",
         "level": 80,
-        "ticks": 50,
+        "ticks": 20,
         "xp": 780,
         "coinReward": 560,
         "description": "Rugged northern rooftop course in Rellekka"
@@ -3791,7 +3791,7 @@ const skillsData = {
         "id": "ardougne",
         "name": "Ardougne Rooftop",
         "level": 90,
-        "ticks": 45,
+        "ticks": 18,
         "xp": 793,
         "coinReward": 750,
         "description": "Elite rooftop course in the grand city of Ardougne"
@@ -5579,12 +5579,25 @@ function GameProvider({ children }) {
                         sim.finalInventory.forEach((slot, i) => { inv[i] = slot; });
                     }
                     else if (savedTask.type === 'agility' && sim.coinsGained > 0) {
-                        // Agility coins go to bank
-                        if (b['coins']) {
-                            b['coins'] = { ...b['coins'], quantity: b['coins'].quantity + sim.coinsGained };
+                        // Agility coins go to inventory (stackable), fall back to bank if full
+                        const coinsSlot = inv.findIndex(s => s && s.itemId === 'coins');
+                        if (coinsSlot >= 0) {
+                            inv[coinsSlot] = { ...inv[coinsSlot], quantity: inv[coinsSlot].quantity + sim.coinsGained };
                         }
                         else {
-                            b['coins'] = { itemId: 'coins', quantity: sim.coinsGained };
+                            const emptySlot = inv.findIndex(s => s === null);
+                            if (emptySlot >= 0) {
+                                inv[emptySlot] = { itemId: 'coins', quantity: sim.coinsGained };
+                            }
+                            else {
+                                // Inventory full — bank overflow
+                                if (b['coins']) {
+                                    b['coins'] = { ...b['coins'], quantity: b['coins'].quantity + sim.coinsGained };
+                                }
+                                else {
+                                    b['coins'] = { itemId: 'coins', quantity: sim.coinsGained };
+                                }
+                            }
                         }
                     }
                     else if (sim.itemsGained) {
@@ -6836,8 +6849,8 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
                     h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5" }, bankingEnabled
                         ? `${formatBankDelay(bankDelayMs)} delay (Agility lv ${agilityLevel})`
                         : 'Off — loot stays in inventory')),
-                h("button", { onClick: () => setBankingEnabled(v => !v), class: `relative w-11 h-6 rounded-full transition-colors ${bankingEnabled ? 'bg-[var(--color-gold-dim)]' : 'bg-[#333]'}` },
-                    h("span", { class: `absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${bankingEnabled ? 'translate-x-5' : 'translate-x-0.5'}` }))),
+                h("button", { onClick: () => setBankingEnabled(v => !v), class: `relative flex-shrink-0 w-12 h-7 rounded-full transition-colors duration-200 ${bankingEnabled ? 'bg-[var(--color-gold-dim)]' : 'bg-[#333]'}`, style: "min-width:48px" },
+                    h("span", { class: `absolute top-[3px] left-[3px] w-[22px] h-[22px] bg-white rounded-full shadow-md transition-transform duration-200 ${bankingEnabled ? 'translate-x-[20px]' : 'translate-x-0'}` }))),
             h("div", { class: "space-y-2" }, monsterList.map(monster => (h("div", { key: monster.id, class: "flex gap-2 items-stretch" },
                 h("button", { onClick: () => startFight(monster), class: "flex-1 flex items-center justify-between p-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors" },
                     h("div", { class: "flex items-center gap-3" },
@@ -6912,12 +6925,15 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
 
 const agilityData = skillsData.agility;
 function AgilityScreen({ initialActionId, onBack }) {
-    const { stats, bank, updateBankDirect, grantXP, addToast, setActiveTask } = useGame();
+    const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask } = useGame();
     const agilityLevel = getLevelFromXP(stats.agility?.xp || 0);
     const agilityXP = stats.agility?.xp || 0;
     const [agility, setAgility] = useState(null);
     const agilityRef = useRef(null);
+    const inventoryRef = useRef(inventory);
     const hasAutoStarted = useRef(false);
+    // Keep inventoryRef current
+    useEffect(() => { inventoryRef.current = inventory; }, [inventory]);
     // Auto-start from shortcut
     useEffect(() => {
         if (initialActionId && !hasAutoStarted.current && !agility) {
@@ -6942,7 +6958,23 @@ function AgilityScreen({ initialActionId, onBack }) {
                 if (ev.type === 'courseComplete') {
                     grantXP('agility', ev.xp);
                     if (ev.coinReward > 0) {
-                        updateBankDirect({ coins: ev.coinReward });
+                        // Coins go to inventory; fall back to bank if full
+                        const currentInv = [...(inventoryRef.current)];
+                        const coinsSlotIdx = currentInv.findIndex(s => s && s.itemId === 'coins');
+                        if (coinsSlotIdx >= 0) {
+                            currentInv[coinsSlotIdx] = { ...currentInv[coinsSlotIdx], quantity: currentInv[coinsSlotIdx].quantity + ev.coinReward };
+                            updateInventory(currentInv);
+                        }
+                        else {
+                            const emptyIdx = currentInv.findIndex(s => s === null);
+                            if (emptyIdx >= 0) {
+                                currentInv[emptyIdx] = { itemId: 'coins', quantity: ev.coinReward };
+                                updateInventory(currentInv);
+                            }
+                            else {
+                                updateBankDirect({ coins: ev.coinReward });
+                            }
+                        }
                     }
                     // Update session totals on the state object
                     agilityRef.current = {
@@ -6981,6 +7013,7 @@ function AgilityScreen({ initialActionId, onBack }) {
     // Course picker
     if (!agility) {
         return (h("div", { class: "h-full overflow-y-auto p-4" },
+            onBack && (h("button", { onClick: onBack, class: "text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1" }, "\u2190 Skills")),
             h("div", { class: "flex items-center justify-between mb-1" },
                 h("h2", { class: "font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider" }, "Agility Courses"),
                 h("span", { class: "text-xs font-[var(--font-mono)] text-[var(--color-gold)]" },
