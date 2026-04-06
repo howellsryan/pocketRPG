@@ -3701,6 +3701,102 @@ const skillsData = {
     "id": "herblore",
     "name": "Herblore",
     "actions": []
+  },
+  "agility": {
+    "id": "agility",
+    "name": "Agility",
+    "actions": [
+      {
+        "id": "gnome_stronghold",
+        "name": "Gnome Stronghold Course",
+        "level": 1,
+        "ticks": 100,
+        "xp": 86,
+        "coinReward": 10,
+        "description": "Beginner course in the Gnome Stronghold"
+      },
+      {
+        "id": "draynor_village",
+        "name": "Draynor Village Rooftop",
+        "level": 10,
+        "ticks": 90,
+        "xp": 120,
+        "coinReward": 25,
+        "description": "Rooftop course through Draynor Village"
+      },
+      {
+        "id": "al_kharid",
+        "name": "Al Kharid Rooftop",
+        "level": 20,
+        "ticks": 80,
+        "xp": 180,
+        "coinReward": 50,
+        "description": "Desert rooftop course in Al Kharid"
+      },
+      {
+        "id": "varrock",
+        "name": "Varrock Rooftop",
+        "level": 30,
+        "ticks": 75,
+        "xp": 238,
+        "coinReward": 90,
+        "description": "Rooftop agility course through Varrock"
+      },
+      {
+        "id": "canifis",
+        "name": "Canifis Rooftop",
+        "level": 40,
+        "ticks": 70,
+        "xp": 240,
+        "coinReward": 140,
+        "description": "Rooftop course through the spooky village of Canifis"
+      },
+      {
+        "id": "falador",
+        "name": "Falador Rooftop",
+        "level": 50,
+        "ticks": 65,
+        "xp": 440,
+        "coinReward": 200,
+        "description": "High-speed rooftop course over Falador"
+      },
+      {
+        "id": "seers_village",
+        "name": "Seers' Village Rooftop",
+        "level": 60,
+        "ticks": 60,
+        "xp": 570,
+        "coinReward": 300,
+        "description": "Agility course over the rooftops of Seers' Village"
+      },
+      {
+        "id": "pollnivneach",
+        "name": "Pollnivneach Rooftop",
+        "level": 70,
+        "ticks": 55,
+        "xp": 890,
+        "coinReward": 420,
+        "description": "Challenging desert rooftop course in Pollnivneach"
+      },
+      {
+        "id": "rellekka",
+        "name": "Rellekka Rooftop",
+        "level": 80,
+        "ticks": 50,
+        "xp": 780,
+        "coinReward": 560,
+        "description": "Rugged northern rooftop course in Rellekka"
+      },
+      {
+        "id": "ardougne",
+        "name": "Ardougne Rooftop",
+        "level": 90,
+        "ticks": 45,
+        "xp": 793,
+        "coinReward": 750,
+        "description": "Elite rooftop course in the grand city of Ardougne"
+      }
+    ]
   }
 };
 const spellsData = {
@@ -3754,7 +3850,10 @@ const GATHERING_SKILLS = ['mining', 'woodcutting', 'fishing', 'farming', 'hunter
 const PRODUCTION_SKILLS = ['smithing', 'cooking', 'crafting', 'fletching', 'herblore', 'runecraft'];
 const UTILITY_SKILLS = ['agility', 'thieving', 'slayer', 'firemaking', 'construction'];
 const ALL_SKILLS = [...COMBAT_SKILLS, ...GATHERING_SKILLS, ...PRODUCTION_SKILLS, ...UTILITY_SKILLS];
-const STUB_SKILLS = new Set(['prayer', 'farming', 'hunter', 'runecraft', 'agility', 'thieving', 'slayer', 'firemaking', 'construction']);
+const STUB_SKILLS = new Set(['prayer', 'farming', 'hunter', 'runecraft', 'thieving', 'slayer', 'firemaking', 'construction']);
+// Agility banking: delay in ms at level 1 and level 99
+const AGILITY_BANK_DELAY_LV1_MS = 5 * 60 * 1000; // 5 minutes
+const AGILITY_BANK_DELAY_LV99_MS = 10 * 1000; // 10 seconds
 // Equipment slots
 const EQUIPMENT_SLOTS = ['head', 'body', 'legs', 'weapon', 'shield', 'gloves', 'boots', 'cape', 'neck', 'ring', 'ammo'];
 // Skill icons (emoji for MVP)
@@ -3775,6 +3874,7 @@ const SCREENS = {
     COMBAT: 'combat',
     SKILLS: 'skills',
     GATHER: 'gather',
+    AGILITY: 'agility',
     STORE: 'store'
 };
 
@@ -4249,6 +4349,94 @@ function swapSlots(inventory, slotA, slotB) {
     inventory[slotB] = temp;
 }
 
+// ── engine/agility.js ──
+/**
+ * Agility Engine — pure logic for agility courses and banking delay.
+ * No UI imports.
+ */
+
+
+/**
+ * Get the agility-scaled bank delay in milliseconds.
+ * Level 1 → 5 minutes, Level 99 → 10 seconds. Linear interpolation.
+ */
+function getAgilityBankDelayMs(agilityLevel) {
+    const lvl = Math.max(1, Math.min(99, agilityLevel));
+    // Linear interpolation: delay = LV1_MS + (lvl - 1) / 98 * (LV99_MS - LV1_MS)
+    const t = (lvl - 1) / 98;
+    return Math.round(AGILITY_BANK_DELAY_LV1_MS + t * (AGILITY_BANK_DELAY_LV99_MS - AGILITY_BANK_DELAY_LV1_MS));
+}
+/**
+ * Get the agility bank delay from a stats object (which has xp values).
+ */
+function getAgilityBankDelayFromStats(stats) {
+    const agilityXP = stats?.agility?.xp || 0;
+    const agilityLevel = getLevelFromXP(agilityXP);
+    return getAgilityBankDelayMs(agilityLevel);
+}
+/**
+ * Format the bank delay into a human-readable string (e.g. "2m 30s", "45s").
+ */
+function formatBankDelay(ms) {
+    const totalSeconds = Math.round(ms / 1000);
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    if (mins > 0 && secs > 0)
+        return `${mins}m ${secs}s`;
+    if (mins > 0)
+        return `${mins}m`;
+    return `${secs}s`;
+}
+/**
+ * Create an agility state object for a course run.
+ */
+function createAgilityState(action) {
+    return {
+        active: true,
+        action,
+        ticksRemaining: action.ticks,
+        tickCount: 0
+    };
+}
+/**
+ * Process one tick of agility training.
+ * Returns { agilityState, events[] }
+ * events: { type: 'courseComplete', xp, coinReward, actionName }
+ */
+function processAgilityTick(agilityState) {
+    const state = { ...agilityState };
+    const events = [];
+    state.tickCount++;
+    state.ticksRemaining--;
+    if (state.ticksRemaining <= 0) {
+        events.push({
+            type: 'courseComplete',
+            xp: state.action.xp,
+            coinReward: state.action.coinReward || 0,
+            actionName: state.action.name
+        });
+        // Reset for next lap
+        state.ticksRemaining = state.action.ticks;
+    }
+    return { agilityState: state, events };
+}
+/**
+ * Simulate idle agility training.
+ * Returns { xpGained, coinsGained, laps, skill, actionName }
+ */
+function simulateIdleAgility(task, elapsedMs) {
+    if (!task || !task.action)
+        return null;
+    const TICK_MS = 600;
+    const totalTicks = Math.floor(elapsedMs / TICK_MS);
+    const laps = Math.floor(totalTicks / task.action.ticks);
+    if (laps <= 0)
+        return null;
+    const xpGained = { agility: task.action.xp * laps };
+    const coinsGained = (task.action.coinReward || 0) * laps;
+    return { xpGained, coinsGained, laps, skill: 'agility', actionName: task.action.name };
+}
+
 // ── engine/combat.js ──
 
 
@@ -4534,6 +4722,7 @@ function getAvailableActions(skillActions, skillXP) {
  * Idle Engine — calculates what would have happened while the player was away.
  * Pure functions, no UI imports.
  */
+
 
 
 
@@ -5358,6 +5547,9 @@ function GameProvider({ children }) {
                 else if (savedTask.type === 'combat') {
                     sim = simulateIdleCombat(savedTask, elapsedMs, s, eq, inv, itemsData);
                 }
+                else if (savedTask.type === 'agility') {
+                    sim = simulateIdleAgility(savedTask, elapsedMs);
+                }
                 if (sim) {
                     // Apply XP directly to raw stats object
                     if (sim.xpGained) {
@@ -5385,6 +5577,15 @@ function GameProvider({ children }) {
                     if (savedTask.type === 'combat' && sim.finalInventory) {
                         // Use the already-mutated inventory from simulation
                         sim.finalInventory.forEach((slot, i) => { inv[i] = slot; });
+                    }
+                    else if (savedTask.type === 'agility' && sim.coinsGained > 0) {
+                        // Agility coins go to bank
+                        if (b['coins']) {
+                            b['coins'] = { ...b['coins'], quantity: b['coins'].quantity + sim.coinsGained };
+                        }
+                        else {
+                            b['coins'] = { itemId: 'coins', quantity: sim.coinsGained };
+                        }
                     }
                     else if (sim.itemsGained) {
                         for (const [itemId, qty] of Object.entries(sim.itemsGained)) {
@@ -5880,6 +6081,7 @@ function HomeScreen({ onNavigate, onSaveMenu }) {
 
 
 
+
 function SkillGroup({ title, skills, stats, onSelect }) {
     return (h("div", { class: "mb-4" },
         h("h3", { class: "text-[10px] font-bold text-[var(--color-parchment)] opacity-40 uppercase tracking-widest mb-1.5" }, title),
@@ -5926,7 +6128,12 @@ function StatsScreen() {
                         h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" },
                             (selProgress * 100).toFixed(1),
                             "%"))),
-                STUB_SKILLS.has(selectedSkill) && (h("div", { class: "text-xs text-center text-[var(--color-parchment)] opacity-40 italic" }, "This skill is not yet trainable \u2014 coming soon!")))))));
+                STUB_SKILLS.has(selectedSkill) && (h("div", { class: "text-xs text-center text-[var(--color-parchment)] opacity-40 italic" }, "This skill is not yet trainable \u2014 coming soon!")),
+                selectedSkill === 'agility' && (h("div", { class: "bg-[#111] rounded-lg p-3" },
+                    h("div", { class: "flex justify-between text-sm" },
+                        h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "\uD83C\uDFE6 Bank delay"),
+                        h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, formatBankDelay(getAgilityBankDelayMs(selLevel)))),
+                    h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-30 mt-1" }, "Time to bank a full inventory during combat"))))))));
 }
 
 // ── screens/InventoryScreen.js ──
@@ -6353,20 +6560,35 @@ function BankScreen() {
 
 
 
+
 const monsterList = Object.values(monstersData);
 const MONSTER_ICONS = {
     chicken: '🐔', goblin: '👺', cow: '🐄', giant_spider: '🕷️'
 };
 function CombatScreen({ onNavigate, initialMonsterId }) {
-    const { stats, inventory, equipment, currentHP, updateHP, updateInventory, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask } = useGame();
+    const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask } = useGame();
     const [combat, setCombat] = useState(null);
     const [log, setLog] = useState([]);
     const [killCount, setKillCount] = useState(0);
     const [fightStartedAt, setFightStartedAt] = useState(null);
+    const [bankingEnabled, setBankingEnabled] = useState(true);
+    const [bankingCountdown, setBankingCountdown] = useState(null); // ms remaining, or null
     const combatRef = useRef(null);
     const hpRef = useRef(currentHP);
     const hasAutoStarted = useRef(false);
+    const bankingCounterRef = useRef(0); // ticks counted since inv was full
+    const bankingActiveRef = useRef(false); // currently counting toward a bank
+    const bankingEnabledRef = useRef(true);
+    const inventoryRef = useRef(inventory);
+    const bankRef = useRef(bank);
+    const statsRef = useRef(stats);
+    const equipmentRef = useRef(equipment);
     useEffect(() => { hpRef.current = currentHP; }, [currentHP]);
+    useEffect(() => { bankingEnabledRef.current = bankingEnabled; }, [bankingEnabled]);
+    useEffect(() => { inventoryRef.current = inventory; }, [inventory]);
+    useEffect(() => { bankRef.current = bank; }, [bank]);
+    useEffect(() => { statsRef.current = stats; }, [stats]);
+    useEffect(() => { equipmentRef.current = equipment; }, [equipment]);
     // Auto-start fight from home shortcut
     useEffect(() => {
         if (initialMonsterId && !hasAutoStarted.current && !combat) {
@@ -6386,14 +6608,14 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
             if (!state || !state.active)
                 return;
             const playerStats = {
-                attack: getLevelFromXP(stats.attack?.xp || 0),
-                strength: getLevelFromXP(stats.strength?.xp || 0),
-                defence: getLevelFromXP(stats.defence?.xp || 0),
-                ranged: getLevelFromXP(stats.ranged?.xp || 0),
-                magic: getLevelFromXP(stats.magic?.xp || 0),
+                attack: getLevelFromXP(statsRef.current.attack?.xp || 0),
+                strength: getLevelFromXP(statsRef.current.strength?.xp || 0),
+                defence: getLevelFromXP(statsRef.current.defence?.xp || 0),
+                ranged: getLevelFromXP(statsRef.current.ranged?.xp || 0),
+                magic: getLevelFromXP(statsRef.current.magic?.xp || 0),
                 currentHP: hpRef.current
             };
-            const { combatState, events } = processCombatTick(state, playerStats, equipment, itemsData);
+            const { combatState, events } = processCombatTick(state, playerStats, equipmentRef.current, itemsData);
             combatRef.current = combatState;
             setCombat({ ...combatState });
             for (const ev of events) {
@@ -6432,7 +6654,7 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
                 if (ev.type === 'monsterDeath') {
                     setKillCount(k => k + 1);
                     if (ev.loot && ev.loot.length > 0) {
-                        const newInv = [...inventory];
+                        const newInv = [...inventoryRef.current];
                         for (const drop of ev.loot) {
                             const item = itemsData[drop.itemId];
                             const added = addItem(newInv, drop.itemId, drop.quantity, item?.stackable || false);
@@ -6447,7 +6669,6 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
                             type: 'victory',
                             time: Date.now()
                         }]);
-                    // Auto-fight next monster after a short delay — continues same session, no reset
                     setTimeout(() => {
                         const original = monstersData[state.monster.id];
                         if (original)
@@ -6455,31 +6676,93 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
                     }, 1200);
                 }
             }
+            // ── Agility-scaled auto-banking ──
+            if (bankingEnabledRef.current) {
+                const free = freeSlots(inventoryRef.current);
+                if (free > 0) {
+                    // Inventory not full — reset counter
+                    bankingCounterRef.current = 0;
+                    bankingActiveRef.current = false;
+                    setBankingCountdown(null);
+                }
+                else {
+                    // Inventory full — start/continue countdown
+                    if (!bankingActiveRef.current) {
+                        bankingActiveRef.current = true;
+                        bankingCounterRef.current = 0;
+                    }
+                    bankingCounterRef.current++;
+                    const agilityLevel = getLevelFromXP(statsRef.current.agility?.xp || 0);
+                    const delayMs = getAgilityBankDelayMs(agilityLevel);
+                    const delayTicks = Math.ceil(delayMs / 600);
+                    const remaining = Math.max(0, (delayTicks - bankingCounterRef.current) * 600);
+                    setBankingCountdown(remaining);
+                    if (bankingCounterRef.current >= delayTicks) {
+                        // Do the bank
+                        const newBank = { ...bankRef.current };
+                        const newInv = [...inventoryRef.current];
+                        let bankedCount = 0;
+                        for (let i = 0; i < newInv.length; i++) {
+                            if (!newInv[i])
+                                continue;
+                            const slot = newInv[i];
+                            if (newBank[slot.itemId]) {
+                                newBank[slot.itemId] = { ...newBank[slot.itemId], quantity: newBank[slot.itemId].quantity + slot.quantity };
+                            }
+                            else {
+                                newBank[slot.itemId] = { itemId: slot.itemId, quantity: slot.quantity };
+                            }
+                            newInv[i] = null;
+                            bankedCount++;
+                        }
+                        updateInventory(newInv);
+                        updateBank(newBank);
+                        addToast(`🏦 Banked inventory! (${formatBankDelay(delayMs)} delay)`, 'info');
+                        setLog(prev => [...prev.slice(-20), {
+                                text: `🏦 Banked items (agility lv ${getLevelFromXP(statsRef.current.agility?.xp || 0)})`,
+                                type: 'info',
+                                time: Date.now()
+                            }]);
+                        bankingCounterRef.current = 0;
+                        bankingActiveRef.current = false;
+                        setBankingCountdown(null);
+                    }
+                }
+            }
+            else {
+                // Banking off — reset
+                bankingCounterRef.current = 0;
+                bankingActiveRef.current = false;
+                setBankingCountdown(null);
+            }
         });
         return unsub;
-    }, [combat?.active, equipment, stats]);
+    }, [combat?.active]);
     const startFight = (monster) => {
+        bankingCounterRef.current = 0;
+        bankingActiveRef.current = false;
+        setBankingCountdown(null);
         const state = createCombatState(monster, 'melee', combatStance);
         setCombat(state);
         setKillCount(0);
         setFightStartedAt(Date.now());
         setLog([{ text: `Fighting ${monster.name}...`, type: 'info', time: Date.now() }]);
-        setActiveTask({ type: 'combat', monster, stance: combatStance });
+        setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled });
     };
-    // Auto-continue: same session, preserves killCount and fightStartedAt
     const continueFight = (monster) => {
         const state = createCombatState(monster, 'melee', combatStance);
         setCombat(state);
-        setActiveTask({ type: 'combat', monster, stance: combatStance });
+        setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled });
     };
     const flee = () => {
         setCombat(null);
         setLog([]);
         setActiveTask(null);
+        setBankingCountdown(null);
         addToast('You fled!', 'info');
     };
     const handleEat = () => {
-        const newInv = [...inventory];
+        const newInv = [...inventoryRef.current];
         const foodIdx = newInv.findIndex(s => s && itemsData[s.itemId]?.type === 'food');
         if (foodIdx === -1) {
             addToast('No food!', 'error');
@@ -6539,12 +6822,22 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
         updateHomeShortcuts([...current, shortcut]);
         addToast(`${icon} ${shortcut.label} added to Home!`, 'info');
     };
+    const agilityLevel = getLevelFromXP(stats.agility?.xp || 0);
+    const bankDelayMs = getAgilityBankDelayMs(agilityLevel);
     // Monster picker
     if (!combat) {
         return (h("div", { class: "h-full overflow-y-auto p-4" },
             h("h2", { class: "font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider mb-3" }, "Choose a Monster"),
             h("div", { class: "flex gap-1.5 mb-3" }, ['accurate', 'aggressive', 'defensive', 'controlled'].map(s => (h("button", { key: s, onClick: () => updateCombatStance(s), class: `flex-1 py-1.5 rounded-lg text-[10px] font-semibold capitalize transition-colors
                 ${combatStance === s ? 'bg-[var(--color-gold-dim)] text-white' : 'bg-[#1a1a1a] text-[var(--color-parchment)] opacity-50'}` }, s)))),
+            h("div", { class: "mb-3 bg-[#111] rounded-lg px-3 py-2.5 flex items-center justify-between" },
+                h("div", null,
+                    h("div", { class: "text-xs font-semibold text-[var(--color-parchment)]" }, "\uD83C\uDFE6 Auto-Bank Loot"),
+                    h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5" }, bankingEnabled
+                        ? `${formatBankDelay(bankDelayMs)} delay (Agility lv ${agilityLevel})`
+                        : 'Off — loot stays in inventory')),
+                h("button", { onClick: () => setBankingEnabled(v => !v), class: `relative w-11 h-6 rounded-full transition-colors ${bankingEnabled ? 'bg-[var(--color-gold-dim)]' : 'bg-[#333]'}` },
+                    h("span", { class: `absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${bankingEnabled ? 'translate-x-5' : 'translate-x-0.5'}` }))),
             h("div", { class: "space-y-2" }, monsterList.map(monster => (h("div", { key: monster.id, class: "flex gap-2 items-stretch" },
                 h("button", { onClick: () => startFight(monster), class: "flex-1 flex items-center justify-between p-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors" },
                     h("div", { class: "flex items-center gap-3" },
@@ -6575,10 +6868,18 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
                     "CB ",
                     combat.monster.combatLevel)),
             h(HPBar, { current: Math.max(0, combat.monster.currentHP), max: combat.monster.hitpoints, size: "large" })),
-        h("div", { class: "mb-3" },
+        h("div", { class: "mb-2" },
             h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-50 mb-0.5" }, "Your HP"),
             h(HPBar, { current: currentHP, max: getMaxHP(), size: "large" })),
-        h("div", { class: "flex-1 bg-[#111] rounded-lg border border-[#222] p-2 overflow-y-auto mb-3 min-h-[120px]" }, log.map((entry, i) => (h("div", { key: i, class: `text-[11px] font-[var(--font-mono)] py-0.5
+        bankingEnabled && (h("div", { class: "mb-2 bg-[#111] rounded-lg px-3 py-1.5 flex items-center justify-between" },
+            h("span", { class: "text-[10px] text-[var(--color-parchment)] opacity-50" }, "\uD83C\uDFE6 Auto-bank"),
+            bankingCountdown !== null ? (h("span", { class: "text-[10px] font-[var(--font-mono)] text-[var(--color-gold)]" },
+                "Banking in ",
+                formatBankDelay(bankingCountdown),
+                "...")) : (h("span", { class: "text-[10px] text-[var(--color-parchment)] opacity-30" },
+                freeSlots(inventory),
+                "/28 free")))),
+        h("div", { class: "flex-1 bg-[#111] rounded-lg border border-[#222] p-2 overflow-y-auto mb-2 min-h-[100px]" }, log.map((entry, i) => (h("div", { key: i, class: `text-[11px] font-[var(--font-mono)] py-0.5
             ${entry.type === 'hit' ? 'text-[var(--color-emerald-light)]' :
                 entry.type === 'miss' ? 'text-[var(--color-parchment)] opacity-30' :
                     entry.type === 'enemy' ? 'text-[var(--color-blood-light)]' :
@@ -6600,6 +6901,169 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
             h("button", { onClick: () => { setCombat(null); setLog([]); setActiveTask(null); }, class: "py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80" }, "Back"))))));
 }
 
+// ── screens/AgilityScreen.js ──
+
+
+
+
+
+
+
+
+const agilityData = skillsData.agility;
+function AgilityScreen({ initialActionId, onBack }) {
+    const { stats, bank, updateBankDirect, grantXP, addToast, setActiveTask } = useGame();
+    const agilityLevel = getLevelFromXP(stats.agility?.xp || 0);
+    const agilityXP = stats.agility?.xp || 0;
+    const [agility, setAgility] = useState(null);
+    const agilityRef = useRef(null);
+    const hasAutoStarted = useRef(false);
+    // Auto-start from shortcut
+    useEffect(() => {
+        if (initialActionId && !hasAutoStarted.current && !agility) {
+            hasAutoStarted.current = true;
+            const action = agilityData.actions.find(a => a.id === initialActionId);
+            if (action && agilityLevel >= action.level)
+                startCourse(action);
+        }
+    }, [initialActionId]);
+    // Tick listener
+    useEffect(() => {
+        if (!agility || !agility.active)
+            return;
+        agilityRef.current = agility;
+        const unsub = onTick(() => {
+            const state = agilityRef.current;
+            if (!state || !state.active)
+                return;
+            const { agilityState, events } = processAgilityTick(state);
+            agilityRef.current = agilityState;
+            for (const ev of events) {
+                if (ev.type === 'courseComplete') {
+                    grantXP('agility', ev.xp);
+                    if (ev.coinReward > 0) {
+                        updateBankDirect({ coins: ev.coinReward });
+                    }
+                    // Update session totals on the state object
+                    agilityRef.current = {
+                        ...agilityRef.current,
+                        totalLaps: (agilityRef.current.totalLaps || 0) + 1,
+                        totalXP: (agilityRef.current.totalXP || 0) + ev.xp,
+                        totalCoins: (agilityRef.current.totalCoins || 0) + ev.coinReward
+                    };
+                }
+            }
+            setAgility({ ...agilityRef.current });
+        });
+        return unsub;
+    }, [agility?.active]);
+    const startCourse = (action) => {
+        const state = {
+            ...createAgilityState(action),
+            totalLaps: 0,
+            totalXP: 0,
+            totalCoins: 0,
+            startedAt: Date.now()
+        };
+        setAgility(state);
+        agilityRef.current = state;
+        setActiveTask({ type: 'agility', action });
+        addToast(`Started: ${action.name}`, 'info');
+    };
+    const stopCourse = () => {
+        setAgility(null);
+        agilityRef.current = null;
+        setActiveTask(null);
+        if (onBack)
+            onBack();
+    };
+    const bankDelay = getAgilityBankDelayMs(agilityLevel);
+    // Course picker
+    if (!agility) {
+        return (h("div", { class: "h-full overflow-y-auto p-4" },
+            h("div", { class: "flex items-center justify-between mb-1" },
+                h("h2", { class: "font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider" }, "Agility Courses"),
+                h("span", { class: "text-xs font-[var(--font-mono)] text-[var(--color-gold)]" },
+                    "Lv ",
+                    agilityLevel)),
+            h("div", { class: "mb-3 bg-[#111] rounded-lg px-3 py-2 text-[11px] text-[var(--color-parchment)] opacity-60 flex items-center gap-2" },
+                h("span", null, "\uD83C\uDFE6"),
+                h("span", null,
+                    "Current bank speed: ",
+                    h("span", { class: "text-[var(--color-gold)] opacity-100" }, formatBankDelay(bankDelay)),
+                    " delay per full inventory")),
+            h("div", { class: "space-y-2" }, agilityData.actions.map(action => {
+                const available = agilityLevel >= action.level;
+                return (h("button", { key: action.id, onClick: () => available && startCourse(action), disabled: !available, class: `w-full flex items-between justify-between p-3 rounded-xl border transition-colors text-left
+                  ${available
+                        ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
+                        : 'bg-[#111] border-[#1a1a1a] opacity-40'}` },
+                    h("div", { class: "flex-1" },
+                        h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, action.name),
+                        h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5" },
+                            "Lv ",
+                            action.level,
+                            " \u00B7 ",
+                            action.xp,
+                            " XP \u00B7 ",
+                            (action.ticks * 0.6).toFixed(1),
+                            "s lap"),
+                        h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40" }, action.description)),
+                    h("div", { class: "text-right ml-3 flex flex-col justify-center" },
+                        h("div", { class: "text-xs font-[var(--font-mono)] text-[var(--color-gold)]" },
+                            "\uD83E\uDE99 ",
+                            action.coinReward.toLocaleString()),
+                        h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-30" }, "per lap"))));
+            }))));
+    }
+    // Active course
+    const progress = agility.active
+        ? 1 - (agility.ticksRemaining / agility.action.ticks)
+        : 0;
+    const elapsed = agility.startedAt ? Date.now() - agility.startedAt : 0;
+    const lapsPerHr = elapsed > 5000 && agility.totalLaps > 0
+        ? Math.round(agility.totalLaps / (elapsed / 3600000))
+        : null;
+    const xpPerHr = elapsed > 5000 && agility.totalXP > 0
+        ? Math.round(agility.totalXP / (elapsed / 3600000))
+        : null;
+    return (h("div", { class: "h-full flex flex-col p-4" },
+        h("button", { onClick: stopCourse, class: "text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1" }, "\u2190 Stop & Back"),
+        h("div", { class: "flex-1 flex flex-col items-center justify-center" },
+            h("span", { class: "text-4xl mb-2" }, "\uD83C\uDFC3"),
+            h("h2", { class: "font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)] mb-1" }, agility.action.name),
+            h("div", { class: "text-xs text-[var(--color-parchment)] opacity-40 mb-4" }, agility.action.description),
+            h("div", { class: "w-full max-w-xs mb-4" },
+                h(ProgressBar, { value: progress, max: 1, height: "h-4", color: "var(--color-gold)", showText: true })),
+            h("div", { class: "bg-[#111] rounded-lg p-3 w-full max-w-xs space-y-1.5" },
+                h("div", { class: "flex justify-between text-sm" },
+                    h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "Laps completed"),
+                    h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, agility.totalLaps)),
+                h("div", { class: "flex justify-between text-sm" },
+                    h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "Laps/hr"),
+                    h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, lapsPerHr ? lapsPerHr.toLocaleString() : '—')),
+                h("div", { class: "flex justify-between text-sm" },
+                    h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "XP gained"),
+                    h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, formatNumber(agility.totalXP))),
+                h("div", { class: "flex justify-between text-sm" },
+                    h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "XP/hr"),
+                    h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, xpPerHr ? formatNumber(xpPerHr) : '—')),
+                h("div", { class: "flex justify-between text-sm" },
+                    h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "Coins earned"),
+                    h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" },
+                        "\uD83E\uDE99 ",
+                        agility.totalCoins.toLocaleString())),
+                h("div", { class: "flex justify-between text-sm" },
+                    h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "Coins/hr"),
+                    h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, xpPerHr ? `🪙 ${Math.round(agility.totalCoins / (elapsed / 3600000)).toLocaleString()}` : '—')),
+                h("div", { class: "flex justify-between text-sm border-t border-[#222] pt-1.5 mt-1.5" },
+                    h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "\uD83C\uDFE6 Bank speed"),
+                    h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" },
+                        formatBankDelay(bankDelay),
+                        " delay")))),
+        h("button", { onClick: stopCourse, class: "flex-shrink-0 w-full py-3 rounded-xl bg-[var(--color-blood)]/60 text-white font-semibold text-sm active:opacity-80" }, "Stop")));
+}
+
 // ── screens/SkillingScreen.js ──
 
 
@@ -6613,7 +7077,11 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
 
 
 
+
+// Agility is a UTILITY_SKILL shown here in the Skills tab
+const AGILITY_SKILLS = ['agility'];
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0);
+const allSkillsInTab = [...trainableSkills, ...AGILITY_SKILLS];
 function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
     const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask } = useGame();
     const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null);
@@ -6621,6 +7089,10 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
     const [skilling, setSkilling] = useState(null);
     const skillingRef = useRef(null);
     const hasAutoStarted = useRef(false);
+    // If agility is selected (from picker or initialSkillId), delegate to AgilityScreen
+    if (selectedSkill === 'agility') {
+        return (h(AgilityScreen, { initialActionId: initialActionId, onBack: () => setSelectedSkill(null) }));
+    }
     // Tick listener
     useEffect(() => {
         if (!skilling || !skilling.active)
@@ -6764,7 +7236,7 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
     if (!selectedSkill) {
         return (h("div", { class: "h-full overflow-y-auto p-4" },
             h("h2", { class: "font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider mb-3" }, "Train a Skill"),
-            h("div", { class: "grid grid-cols-2 gap-2" }, trainableSkills.map(skill => {
+            h("div", { class: "grid grid-cols-2 gap-2" }, allSkillsInTab.map(skill => {
                 const data = stats[skill] || { xp: 0, level: 1 };
                 const level = data.level || getLevelFromXP(data.xp);
                 return (h("button", { key: skill, onClick: () => setSelectedSkill(skill), class: "flex items-center gap-2.5 p-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors" },
@@ -7516,6 +7988,7 @@ function EquipmentScreen() {
 
 
 
+
 // Auto-bank delay: 120s at agility 1, 10s at agility 99 (linear interpolation)
 function getAutoBankSeconds(agilityLevel) {
     const lvl = Math.max(1, Math.min(99, agilityLevel));
@@ -7612,6 +8085,8 @@ function GameApp() {
                         sim = simulateIdleGather(savedTask, elapsedMs);
                     if (savedTask.type === 'combat')
                         sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current);
+                    if (savedTask.type === 'agility')
+                        sim = simulateIdleAgility(savedTask, elapsedMs);
                     // Always show the modal — even if sim is null (e.g. <1 action completed)
                     if (!sim) {
                         setIdleResult({ elapsedMs, task: savedTask });
@@ -7630,6 +8105,10 @@ function GameApp() {
                     }
                     else if (sim.itemsGained) {
                         updateBankDirect(sim.itemsGained);
+                    }
+                    // Apply agility coin reward directly to bank
+                    if (savedTask.type === 'agility' && sim.coinsGained > 0) {
+                        updateBankDirect({ coins: sim.coinsGained });
                     }
                     // Deduct consumed materials from bank
                     if (sim.itemsConsumed && Object.keys(sim.itemsConsumed).length > 0) {
@@ -7847,6 +8326,7 @@ function GameApp() {
             case SCREENS.COMBAT: return h(CombatScreen, { onNavigate: navigate, initialMonsterId: actionData?.monsterId });
             case SCREENS.SKILLS: return h(SkillingScreen, { initialSkillId: actionData?.skillId, initialActionId: actionData?.actionId, idleResult: idleResult });
             case SCREENS.GATHER: return h(GatherScreen, { initialTaskId: actionData?.gatherTaskId, idleResult: idleResult });
+            case SCREENS.AGILITY: return h(AgilityScreen, { initialActionId: actionData?.actionId });
             case SCREENS.STORE: return h(GeneralStoreScreen, null);
             default: return h(HomeScreen, { onNavigate: navigate, onSaveMenu: () => setShowSaveMenu(true) });
         }
