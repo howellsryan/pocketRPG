@@ -257,10 +257,29 @@ function formatIdleTime(ms) {
   return parts.join(' ');
 }
 
-function simulateIdleSkilling(task, elapsedMs, bank) {
+function getToolSpeedMultiplier(skill, equipment, itemsData, stats) {
+  if (!stats) stats = {};
+  if (!equipment || !equipment.weapon) return 1.0;
+  const item = itemsData && itemsData[equipment.weapon.itemId];
+  if (!item || item.toolFor !== skill) return 1.0;
+  if (item.requirements) {
+    const skillXP = (stats[skill] && stats[skill].xp) || 0;
+    const playerLevel = getLevelFromXP(skillXP);
+    for (const [reqSkill, reqLevel] of Object.entries(item.requirements)) {
+      if (reqSkill === skill && playerLevel < reqLevel) return 1.0;
+    }
+  }
+  return item.speedMultiplier != null ? item.speedMultiplier : 1.0;
+}
+
+function simulateIdleSkilling(task, elapsedMs, bank, equipment, stats, itemsData) {
   if (!task || !task.action) return null;
+  if (!equipment) equipment = null;
+  if (!stats) stats = {};
+  if (!itemsData) itemsData = {};
   const totalTicks = Math.floor(elapsedMs / TICK_MS);
-  const actionTicks = task.action.ticks;
+  const toolMult = getToolSpeedMultiplier(task.skill, equipment, itemsData, stats);
+  const actionTicks = Math.max(1, Math.floor(task.action.ticks * toolMult));
   let actions = Math.floor(totalTicks / actionTicks);
   if (actions <= 0) return null;
   const itemsConsumed = {};
@@ -1002,6 +1021,85 @@ function runAll() {
 
   // Noted flag should not exist on bank entries
   assert('Bank entry has no noted flag', notedBank[itemId].noted === undefined);
+
+  // ── GROUP 25: Tool Speed Multiplier ──
+  group('Tool Speed Multiplier');
+
+  // Minimal itemsData stubs for tool tests
+  const TOOL_ITEMS = {
+    bronze_axe:   { id: 'bronze_axe',   toolFor: 'woodcutting', speedMultiplier: 1.0,  requirements: { woodcutting: 1 } },
+    iron_axe:     { id: 'iron_axe',     toolFor: 'woodcutting', speedMultiplier: 0.9,  requirements: { woodcutting: 1 } },
+    steel_axe:    { id: 'steel_axe',    toolFor: 'woodcutting', speedMultiplier: 0.85, requirements: { woodcutting: 5 } },
+    mithril_axe:  { id: 'mithril_axe',  toolFor: 'woodcutting', speedMultiplier: 0.8,  requirements: { woodcutting: 20 } },
+    adamant_axe:  { id: 'adamant_axe',  toolFor: 'woodcutting', speedMultiplier: 0.7,  requirements: { woodcutting: 30 } },
+    rune_axe:     { id: 'rune_axe',     toolFor: 'woodcutting', speedMultiplier: 0.6,  requirements: { woodcutting: 40 } },
+    iron_pickaxe: { id: 'iron_pickaxe', toolFor: 'mining',      speedMultiplier: 0.9,  requirements: { mining: 1 } },
+    mithril_pickaxe: { id: 'mithril_pickaxe', toolFor: 'mining', speedMultiplier: 0.8, requirements: { mining: 20 } },
+    bronze_scimitar: { id: 'bronze_scimitar' } // non-tool weapon
+  };
+
+  // XP needed for various WC levels
+  const XP_WC_1  = 0;
+  const XP_WC_5  = getXPForLevel(5);
+  const XP_WC_20 = getXPForLevel(20);
+  const XP_WC_30 = getXPForLevel(30);
+  const XP_WC_40 = getXPForLevel(40);
+
+  const eqNone    = { weapon: null };
+  const eqBronze  = { weapon: { itemId: 'bronze_axe' } };
+  const eqIron    = { weapon: { itemId: 'iron_axe' } };
+  const eqSteel   = { weapon: { itemId: 'steel_axe' } };
+  const eqMithril = { weapon: { itemId: 'mithril_axe' } };
+  const eqAdamant = { weapon: { itemId: 'adamant_axe' } };
+  const eqRune    = { weapon: { itemId: 'rune_axe' } };
+  const eqScimitar = { weapon: { itemId: 'bronze_scimitar' } };
+  const eqPickIron = { weapon: { itemId: 'iron_pickaxe' } };
+  const eqPickMith = { weapon: { itemId: 'mithril_pickaxe' } };
+
+  const statsLv1  = { woodcutting: { xp: XP_WC_1 },  mining: { xp: 0 } };
+  const statsLv5  = { woodcutting: { xp: XP_WC_5 },  mining: { xp: 0 } };
+  const statsLv20 = { woodcutting: { xp: XP_WC_20 }, mining: { xp: getXPForLevel(20) } };
+  const statsLv30 = { woodcutting: { xp: XP_WC_30 }, mining: { xp: 0 } };
+  const statsLv40 = { woodcutting: { xp: XP_WC_40 }, mining: { xp: 0 } };
+
+  // No weapon → 1.0
+  assert('No weapon → mult 1.0', getToolSpeedMultiplier('woodcutting', eqNone, TOOL_ITEMS, statsLv1) === 1.0);
+  // Non-tool weapon (scimitar) → 1.0
+  assert('Scimitar → mult 1.0', getToolSpeedMultiplier('woodcutting', eqScimitar, TOOL_ITEMS, statsLv1) === 1.0);
+  // Bronze axe → 1.0 (no reduction)
+  assert('Bronze axe → mult 1.0', getToolSpeedMultiplier('woodcutting', eqBronze, TOOL_ITEMS, statsLv1) === 1.0);
+  // Iron axe at wc lv1 → 0.9 (no skill req gating)
+  assert('Iron axe lv1 → mult 0.9', getToolSpeedMultiplier('woodcutting', eqIron, TOOL_ITEMS, statsLv1) === 0.9);
+  // Steel axe needs wc 5 — lv1 player → 1.0 (blocked)
+  assert('Steel axe lv1 player → blocked 1.0', getToolSpeedMultiplier('woodcutting', eqSteel, TOOL_ITEMS, statsLv1) === 1.0);
+  // Steel axe at wc lv5 → 0.85
+  assert('Steel axe lv5 player → mult 0.85', getToolSpeedMultiplier('woodcutting', eqSteel, TOOL_ITEMS, statsLv5) === 0.85);
+  // Mithril axe needs wc 20 — lv5 player → blocked
+  assert('Mithril axe lv5 player → blocked 1.0', getToolSpeedMultiplier('woodcutting', eqMithril, TOOL_ITEMS, statsLv5) === 1.0);
+  // Mithril axe at wc lv20 → 0.8
+  assert('Mithril axe lv20 → mult 0.8', getToolSpeedMultiplier('woodcutting', eqMithril, TOOL_ITEMS, statsLv20) === 0.8);
+  // Adamant axe at wc lv30 → 0.7
+  assert('Adamant axe lv30 → mult 0.7', getToolSpeedMultiplier('woodcutting', eqAdamant, TOOL_ITEMS, statsLv30) === 0.7);
+  // Rune axe at wc lv40 → 0.6
+  assert('Rune axe lv40 → mult 0.6', getToolSpeedMultiplier('woodcutting', eqRune, TOOL_ITEMS, statsLv40) === 0.6);
+  // Iron pickaxe used for woodcutting → 1.0 (wrong skill)
+  assert('Iron pickaxe on woodcutting → 1.0', getToolSpeedMultiplier('woodcutting', eqPickIron, TOOL_ITEMS, statsLv20) === 1.0);
+  // Iron pickaxe on mining → 0.9
+  assert('Iron pickaxe on mining → mult 0.9', getToolSpeedMultiplier('mining', eqPickIron, TOOL_ITEMS, statsLv20) === 0.9);
+  // Mithril pickaxe needs mining 20 — lv1 mining → blocked
+  assert('Mithril pickaxe lv1 mining → blocked', getToolSpeedMultiplier('mining', eqPickMith, TOOL_ITEMS, statsLv1) === 1.0);
+  // Mithril pickaxe mining lv20 → 0.8
+  assert('Mithril pickaxe lv20 mining → mult 0.8', getToolSpeedMultiplier('mining', eqPickMith, TOOL_ITEMS, statsLv20) === 0.8);
+
+  // simulateIdleSkilling applies tool multiplier — iron axe (0.9x) on 4-tick chop
+  // 4 ticks * 0.9 = 3.6 → floor = 3 ticks per action
+  // 60s = 100 ticks → floor(100/3) = 33 actions (vs 25 without axe)
+  const wcTask = { type: 'skill', skill: 'woodcutting', action: { id: 'normal', name: 'Chop tree', ticks: 4, xp: 25, product: 'logs' } };
+  const wcNoTool = simulateIdleSkilling(wcTask, 60000, null, eqNone, statsLv1, TOOL_ITEMS);
+  const wcIronAxe = simulateIdleSkilling(wcTask, 60000, null, eqIron, statsLv1, TOOL_ITEMS);
+  assert('Without axe: 25 actions in 60s', wcNoTool.actions === 25, `got ${wcNoTool && wcNoTool.actions}`);
+  assert('Iron axe gives more actions (33 vs 25)', wcIronAxe.actions === 33, `got ${wcIronAxe && wcIronAxe.actions}`);
+  assert('Iron axe XP scales with extra actions', wcIronAxe.xpGained.woodcutting === 33 * 25, `got ${wcIronAxe && wcIronAxe.xpGained && wcIronAxe.xpGained.woodcutting}`);
 }
 
 // ═══════════════════════════════════════════════════════════════════
