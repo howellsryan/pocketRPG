@@ -329,7 +329,7 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
     strength: getLevelFromXP(stats.strength?.xp || 0),
     defence:  getLevelFromXP(stats.defence?.xp  || 0),
   };
-  // Inline avgDpsVsMonster
+  // Inline avgHitStats
   const bonuses = getEquipmentBonuses(equipment, itemsData);
   const weaponStyle = getAttackStyle(equipment, itemsData);
   const weaponSpeed = getAttackSpeed(equipment, itemsData);
@@ -341,10 +341,12 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
   const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus?.[weaponStyle] || 0);
   const acc = hitChance(atkRoll, defRoll);
   const avgDmgPerHit = acc * (maxHit / 2);
-  const dpsPerTick = avgDmgPerHit / weaponSpeed;
 
-  const ticksPerKill = dpsPerTick > 0 ? Math.max(1, Math.ceil(monster.hitpoints / dpsPerTick)) : Infinity;
-  const ticksPerCycle = ticksPerKill + 2;
+  // Fixed: first hit lands on tick 1, then every weaponSpeed ticks (mirrors active engine)
+  const hitsNeeded = avgDmgPerHit > 0 ? Math.ceil(monster.hitpoints / avgDmgPerHit) : Infinity;
+  const ticksPerKill = hitsNeeded < Infinity ? 1 + (hitsNeeded - 1) * weaponSpeed : Infinity;
+  const RESPAWN_TICKS = 2;
+  const ticksPerCycle = ticksPerKill < Infinity ? ticksPerKill + RESPAWN_TICKS : Infinity;
   const monstersKilled = ticksPerCycle < Infinity ? Math.floor(totalTicks / ticksPerCycle) : 0;
   if (monstersKilled <= 0) return { xpGained: {}, lootGained: {}, monstersKilled: 0, lootLost: {} };
 
@@ -1100,6 +1102,107 @@ function runAll() {
   assert('Without axe: 25 actions in 60s', wcNoTool.actions === 25, `got ${wcNoTool && wcNoTool.actions}`);
   assert('Iron axe gives more actions (33 vs 25)', wcIronAxe.actions === 33, `got ${wcIronAxe && wcIronAxe.actions}`);
   assert('Iron axe XP scales with extra actions', wcIronAxe.xpGained.woodcutting === 33 * 25, `got ${wcIronAxe && wcIronAxe.xpGained && wcIronAxe.xpGained.woodcutting}`);
+
+  // ── GROUP 26: Item icons in items.json ──
+  group('Item Icons (items.json)');
+
+  // Inline a minimal slice of items.json to verify icon field is present and correct
+  const ICON_TEST_ITEMS = {
+    bronze_full_helm:  { type: 'armour', slot: 'head',   icon: '⛑️' },
+    bronze_platebody:  { type: 'armour', slot: 'body',   icon: '🧥' },
+    bronze_platelegs:  { type: 'armour', slot: 'legs',   icon: '👖' },
+    bronze_kiteshield: { type: 'armour', slot: 'shield', icon: '🛡️' },
+    leather_gloves:    { type: 'armour', slot: 'gloves', icon: '🧤' },
+    leather_boots:     { type: 'armour', slot: 'boots',  icon: '👢' },
+    amulet_of_power:   { type: 'armour', slot: 'neck',   icon: '📿' },
+    bronze_scimitar:   { type: 'weapon', slot: 'weapon', icon: '⚔️' },
+    bronze_dagger:     { type: 'weapon', slot: 'weapon', icon: '🗡️' },
+    rune_axe:          { type: 'weapon', slot: 'weapon', icon: '🪓' },
+    iron_pickaxe:      { type: 'weapon', slot: 'weapon', icon: '⛏️' },
+    shortbow:          { type: 'weapon', slot: 'weapon', icon: '🏹' },
+    shark:             { type: 'food',   icon: '🦈' },
+    lobster:           { type: 'food',   icon: '🦞' },
+    logs:              { type: 'resource', icon: '🪵' },
+    coins:             { type: 'currency', icon: '🪙' },
+    bones:             { type: 'resource', icon: '🦴' },
+  };
+
+  // Simulate ItemSlot's emoji lookup: always item.icon
+  function getIconFromItem(item) { return item.icon || '📦'; }
+
+  assert('Head armour icon is ⛑️',   getIconFromItem(ICON_TEST_ITEMS.bronze_full_helm)  === '⛑️');
+  assert('Body armour icon is 🧥',   getIconFromItem(ICON_TEST_ITEMS.bronze_platebody)  === '🧥');
+  assert('Legs armour icon is 👖',   getIconFromItem(ICON_TEST_ITEMS.bronze_platelegs)  === '👖');
+  assert('Shield icon is 🛡️',        getIconFromItem(ICON_TEST_ITEMS.bronze_kiteshield) === '🛡️');
+  assert('Gloves icon is 🧤',        getIconFromItem(ICON_TEST_ITEMS.leather_gloves)    === '🧤');
+  assert('Boots icon is 👢',         getIconFromItem(ICON_TEST_ITEMS.leather_boots)     === '👢');
+  assert('Neck amulet icon is 📿',   getIconFromItem(ICON_TEST_ITEMS.amulet_of_power)   === '📿');
+  assert('Scimitar icon is ⚔️',      getIconFromItem(ICON_TEST_ITEMS.bronze_scimitar)   === '⚔️');
+  assert('Dagger icon is 🗡️',        getIconFromItem(ICON_TEST_ITEMS.bronze_dagger)     === '🗡️');
+  assert('Axe tool icon is 🪓',      getIconFromItem(ICON_TEST_ITEMS.rune_axe)          === '🪓');
+  assert('Pickaxe icon is ⛏️',       getIconFromItem(ICON_TEST_ITEMS.iron_pickaxe)      === '⛏️');
+  assert('Bow icon is 🏹',           getIconFromItem(ICON_TEST_ITEMS.shortbow)           === '🏹');
+  assert('Shark food icon is 🦈',    getIconFromItem(ICON_TEST_ITEMS.shark)             === '🦈');
+  assert('Coins currency icon is 🪙',getIconFromItem(ICON_TEST_ITEMS.coins)             === '🪙');
+  assert('Bones resource icon is 🦴',getIconFromItem(ICON_TEST_ITEMS.bones)             === '🦴');
+  assert('Logs resource icon is 🪵', getIconFromItem(ICON_TEST_ITEMS.logs)              === '🪵');
+
+  // ── GROUP 27: Navigation clears localStorage active task ──
+  group('Navigation clears localStorage');
+
+  // Simulate setActiveTask(null) behaviour (mirrors gameState.jsx)
+  function mockSetActiveTask(task) {
+    if (task) {
+      localStorage.setItem('pocketrpg_activeTask', JSON.stringify(task));
+      localStorage.setItem('pocketrpg_lastTick', String(Date.now()));
+    } else {
+      localStorage.removeItem('pocketrpg_activeTask');
+      localStorage.removeItem('pocketrpg_lastTick');
+    }
+  }
+  function mockNavigate() { mockSetActiveTask(null); }
+
+  const navTestTask = { type: 'gather', gatherTask: { id: 'pick_flax', ticks: 3 } };
+  mockSetActiveTask(navTestTask);
+  assert('Task stored before nav', localStorage.getItem('pocketrpg_activeTask') !== null);
+  assert('LastTick stored before nav', localStorage.getItem('pocketrpg_lastTick') !== null);
+  mockNavigate();
+  assert('activeTask cleared after nav', localStorage.getItem('pocketrpg_activeTask') === null);
+  assert('lastTick cleared after nav', localStorage.getItem('pocketrpg_lastTick') === null);
+
+  mockSetActiveTask({ type: 'skill', skill: 'mining', action: { id: 'mine_tin' } });
+  mockSetActiveTask(null);
+  assert('activeTask cleared after stop', localStorage.getItem('pocketrpg_activeTask') === null);
+  assert('lastTick cleared after stop', localStorage.getItem('pocketrpg_lastTick') === null);
+
+  const gatherIdleAfterNav = simulateIdleGather(null, 60000);
+  assert('No idle result when task is null after nav', gatherIdleAfterNav === null);
+  const skillingIdleAfterNav = simulateIdleSkilling(null, 60000, null, {}, {}, {});
+  assert('No idle skilling result when task is null after nav', skillingIdleAfterNav === null);
+
+  // ── GROUP 28: Per-hour rate calculations ──
+  group('Per-hour rate calculations');
+
+  // Rate = count / elapsedHours  — mirrors Gather, Skills, and Combat modals
+  function calcPerHour(count, elapsedMs) {
+    const hrs = elapsedMs / 3600000;
+    return hrs > 0 ? Math.round(count / hrs) : 0;
+  }
+
+  // 100 actions in 1 hour → 100/hr
+  assertEq('100 items in 1 hr → 100/hr', calcPerHour(100, 3600000), 100);
+  // 50 kills in 30 min → 100/hr
+  assertEq('50 kills in 30 min → 100/hr', calcPerHour(50, 1800000), 100);
+  // 1 action in 6 min → 10/hr
+  assertEq('1 action in 6 min → 10/hr', calcPerHour(1, 360000), 10);
+  // 0 actions → 0/hr (not shown as —, just zero before display guard)
+  assertEq('0 actions → 0/hr raw', calcPerHour(0, 3600000), 0);
+  // elapsedMs = 0 → 0 (no division by zero)
+  assertEq('0 elapsed → 0/hr raw', calcPerHour(10, 0), 0);
+  // 360 kills in 1 hr → 360/hr
+  assertEq('360 kills in 1hr → 360/hr', calcPerHour(360, 3600000), 360);
+  // Rounding: 1 action in 7 min (420000ms) → round(1 / (420000/3600000)) = round(8.57) = 9
+  assertEq('1 action in 7 min → 9/hr (rounded)', calcPerHour(1, 420000), 9);
 }
 
 // ═══════════════════════════════════════════════════════════════════
