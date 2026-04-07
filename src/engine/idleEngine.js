@@ -11,7 +11,7 @@ import {
 import { getEquipmentBonuses, getAttackSpeed, getAttackStyle } from './equipment.js'
 import { getToolSpeedMultiplier } from './skilling.js'
 import { MELEE_XP_PER_DAMAGE, HP_XP_PER_DAMAGE } from '../utils/constants.js'
-import { getAgilityBankDelayMs, simulateIdleAgility } from './agility.js'
+import { getAgilityBankDelayFromStats, simulateIdleAgility } from './agility.js'
 
 const TICK_MS = 600
 
@@ -151,7 +151,14 @@ function idleRollDrops(monster) {
 
 /**
  * Simulate idle combat.
- * Returns { xpGained, lootGained, monstersKilled, lootLost, itemsData needed for names }
+ * Returns { xpGained, lootGained, lootLost, lootBanked, monstersKilled, finalInventory }
+ *
+ * lootGained  — items in final inventory (player physically holds these)
+ * lootLost    — items discarded due to full inventory (bankingEnabled = false)
+ * lootBanked  — items banked during auto-bank trips (bankingEnabled = true)
+ *
+ * When task.bankingEnabled is true, the simulation deducts one agility-scaled bank
+ * delay per full-inventory trip instead of losing items to the floor.
  *
  * inventory: current inventory array (28 slots)
  * itemsData: items lookup
@@ -185,71 +192,98 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   // 2 tick respawn gap between kills (1200ms / 600ms per tick)
   const RESPAWN_TICKS = 2
   const ticksPerCycle = ticksPerKill < Infinity ? ticksPerKill + RESPAWN_TICKS : Infinity
-  const monstersKilled = ticksPerCycle < Infinity
-    ? Math.floor(totalTicks / ticksPerCycle)
-    : 0
 
-  if (monstersKilled <= 0) return { xpGained: {}, lootGained: {}, monstersKilled: 0, lootLost: {} }
+  if (ticksPerCycle === Infinity) {
+    return { xpGained: {}, lootGained: {}, monstersKilled: 0, lootLost: {}, lootBanked: {} }
+  }
 
-  // XP — simplified: assume average damage per kill = monster.hitpoints
-  // actual XP = hitpoints dmg dealt (melee xp for primary skill + hp xp)
+  // Auto-bank setup
+  const bankingEnabled = task.bankingEnabled || false
+  const bankDelayTicks = Math.ceil(getAgilityBankDelayFromStats(stats) / TICK_MS)
+
+  // XP per kill (assumes player deals exactly monster.hitpoints damage per kill)
   const xpSkill = task.stance === 'aggressive' ? 'strength'
     : task.stance === 'defensive' ? 'defence'
     : 'attack'
-  const dmgDealt = monster.hitpoints
-  const xpGained = {}
-  xpGained[xpSkill] = Math.floor(dmgDealt * MELEE_XP_PER_DAMAGE) * monstersKilled
-  xpGained.hitpoints = Math.floor(dmgDealt * HP_XP_PER_DAMAGE) * monstersKilled
+  const xpPerKill = {
+    [xpSkill]: Math.floor(monster.hitpoints * MELEE_XP_PER_DAMAGE),
+    hitpoints:  Math.floor(monster.hitpoints * HP_XP_PER_DAMAGE),
+  }
 
-  // Loot — simulate drops for each kill, fill inventory slots, discard rest
+  // Simulate kill-by-kill, tracking remaining time so bank trips can deduct time
   const newInv = [...inventory]
-  const lootGained = {}   // what made it into inventory
-  const lootLost = {}     // what was discarded (inv full)
+  const lootLost   = {}
+  const lootBanked = {}
+  const xpGained   = {}
+  let monstersKilled = 0
+  let remainingTicks = totalTicks
 
-  for (let k = 0; k < monstersKilled; k++) {
-    const drops = idleRollDrops(monster)
-    for (const drop of drops) {
+  while (remainingTicks >= ticksPerCycle) {
+    remainingTicks -= ticksPerCycle
+    monstersKilled++
+
+    // XP for this kill
+    for (const [skill, xp] of Object.entries(xpPerKill)) {
+      xpGained[skill] = (xpGained[skill] || 0) + xp
+    }
+
+    // Loot for this kill — place items into inventory, overflow to lost/banked
+    for (const drop of idleRollDrops(monster)) {
       const item = itemsData[drop.itemId]
       const stackable = item?.stackable || false
 
-      // Try to add to inventory
-      let added = false
       if (stackable) {
         const existingIdx = newInv.findIndex(s => s && s.itemId === drop.itemId)
         if (existingIdx !== -1) {
           newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + drop.quantity }
-          added = true
         } else {
           const emptyIdx = newInv.indexOf(null)
           if (emptyIdx !== -1) {
             newInv[emptyIdx] = { itemId: drop.itemId, quantity: drop.quantity }
-            added = true
+          } else {
+            if (bankingEnabled) lootBanked[drop.itemId] = (lootBanked[drop.itemId] || 0) + drop.quantity
+            else                lootLost[drop.itemId]   = (lootLost[drop.itemId]   || 0) + drop.quantity
           }
         }
       } else {
+        // Place non-stackable items one-by-one; track exact placed vs lost counts
+        let addedQty = 0
         for (let q = 0; q < drop.quantity; q++) {
           const emptyIdx = newInv.indexOf(null)
           if (emptyIdx !== -1) {
             newInv[emptyIdx] = { itemId: drop.itemId, quantity: 1 }
-            added = true
+            addedQty++
           } else {
-            lootLost[drop.itemId] = (lootLost[drop.itemId] || 0) + (drop.quantity - q)
             break
           }
         }
-        if (!added && newInv.indexOf(null) === -1) {
-          lootLost[drop.itemId] = (lootLost[drop.itemId] || 0) + drop.quantity
-          continue
+        const lostQty = drop.quantity - addedQty
+        if (lostQty > 0) {
+          if (bankingEnabled) lootBanked[drop.itemId] = (lootBanked[drop.itemId] || 0) + lostQty
+          else                lootLost[drop.itemId]   = (lootLost[drop.itemId]   || 0) + lostQty
         }
       }
+    }
 
-      if (added) {
-        lootGained[drop.itemId] = (lootGained[drop.itemId] || 0) + drop.quantity
-      } else {
-        lootLost[drop.itemId] = (lootLost[drop.itemId] || 0) + drop.quantity
+    // Auto-bank trip: if inventory is full and banking is enabled, deduct travel
+    // time and clear inventory into lootBanked. Stop if no time remains.
+    if (bankingEnabled && newInv.indexOf(null) === -1) {
+      if (remainingTicks < bankDelayTicks) break
+      remainingTicks -= bankDelayTicks
+      for (let i = 0; i < newInv.length; i++) {
+        if (!newInv[i]) continue
+        lootBanked[newInv[i].itemId] = (lootBanked[newInv[i].itemId] || 0) + newInv[i].quantity
+        newInv[i] = null
       }
     }
   }
 
-  return { xpGained, lootGained, lootLost, monstersKilled, finalInventory: newInv }
+  // lootGained is whatever ended up in the final inventory (what the player carries home)
+  const lootGained = {}
+  for (const slot of newInv) {
+    if (!slot) continue
+    lootGained[slot.itemId] = (lootGained[slot.itemId] || 0) + slot.quantity
+  }
+
+  return { xpGained, lootGained, lootLost, lootBanked, monstersKilled, finalInventory: newInv }
 }

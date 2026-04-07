@@ -7866,7 +7866,14 @@ function idleRollDrops(monster) {
 }
 /**
  * Simulate idle combat.
- * Returns { xpGained, lootGained, monstersKilled, lootLost, itemsData needed for names }
+ * Returns { xpGained, lootGained, lootLost, lootBanked, monstersKilled, finalInventory }
+ *
+ * lootGained  — items in final inventory (player physically holds these)
+ * lootLost    — items discarded due to full inventory (bankingEnabled = false)
+ * lootBanked  — items banked during auto-bank trips (bankingEnabled = true)
+ *
+ * When task.bankingEnabled is true, the simulation deducts one agility-scaled bank
+ * delay per full-inventory trip instead of losing items to the floor.
  *
  * inventory: current inventory array (28 slots)
  * itemsData: items lookup
@@ -7897,71 +7904,100 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
     // 2 tick respawn gap between kills (1200ms / 600ms per tick)
     const RESPAWN_TICKS = 2;
     const ticksPerCycle = ticksPerKill < Infinity ? ticksPerKill + RESPAWN_TICKS : Infinity;
-    const monstersKilled = ticksPerCycle < Infinity
-        ? Math.floor(totalTicks / ticksPerCycle)
-        : 0;
-    if (monstersKilled <= 0)
-        return { xpGained: {}, lootGained: {}, monstersKilled: 0, lootLost: {} };
-    // XP — simplified: assume average damage per kill = monster.hitpoints
-    // actual XP = hitpoints dmg dealt (melee xp for primary skill + hp xp)
+    if (ticksPerCycle === Infinity) {
+        return { xpGained: {}, lootGained: {}, monstersKilled: 0, lootLost: {}, lootBanked: {} };
+    }
+    // Auto-bank setup
+    const bankingEnabled = task.bankingEnabled || false;
+    const bankDelayTicks = Math.ceil(getAgilityBankDelayFromStats(stats) / TICK_MS);
+    // XP per kill (assumes player deals exactly monster.hitpoints damage per kill)
     const xpSkill = task.stance === 'aggressive' ? 'strength'
         : task.stance === 'defensive' ? 'defence'
             : 'attack';
-    const dmgDealt = monster.hitpoints;
-    const xpGained = {};
-    xpGained[xpSkill] = Math.floor(dmgDealt * MELEE_XP_PER_DAMAGE) * monstersKilled;
-    xpGained.hitpoints = Math.floor(dmgDealt * HP_XP_PER_DAMAGE) * monstersKilled;
-    // Loot — simulate drops for each kill, fill inventory slots, discard rest
+    const xpPerKill = {
+        [xpSkill]: Math.floor(monster.hitpoints * MELEE_XP_PER_DAMAGE),
+        hitpoints: Math.floor(monster.hitpoints * HP_XP_PER_DAMAGE),
+    };
+    // Simulate kill-by-kill, tracking remaining time so bank trips can deduct time
     const newInv = [...inventory];
-    const lootGained = {}; // what made it into inventory
-    const lootLost = {}; // what was discarded (inv full)
-    for (let k = 0; k < monstersKilled; k++) {
-        const drops = idleRollDrops(monster);
-        for (const drop of drops) {
+    const lootLost = {};
+    const lootBanked = {};
+    const xpGained = {};
+    let monstersKilled = 0;
+    let remainingTicks = totalTicks;
+    while (remainingTicks >= ticksPerCycle) {
+        remainingTicks -= ticksPerCycle;
+        monstersKilled++;
+        // XP for this kill
+        for (const [skill, xp] of Object.entries(xpPerKill)) {
+            xpGained[skill] = (xpGained[skill] || 0) + xp;
+        }
+        // Loot for this kill — place items into inventory, overflow to lost/banked
+        for (const drop of idleRollDrops(monster)) {
             const item = itemsData[drop.itemId];
             const stackable = item?.stackable || false;
-            // Try to add to inventory
-            let added = false;
             if (stackable) {
                 const existingIdx = newInv.findIndex(s => s && s.itemId === drop.itemId);
                 if (existingIdx !== -1) {
                     newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + drop.quantity };
-                    added = true;
                 }
                 else {
                     const emptyIdx = newInv.indexOf(null);
                     if (emptyIdx !== -1) {
                         newInv[emptyIdx] = { itemId: drop.itemId, quantity: drop.quantity };
-                        added = true;
+                    }
+                    else {
+                        if (bankingEnabled)
+                            lootBanked[drop.itemId] = (lootBanked[drop.itemId] || 0) + drop.quantity;
+                        else
+                            lootLost[drop.itemId] = (lootLost[drop.itemId] || 0) + drop.quantity;
                     }
                 }
             }
             else {
+                // Place non-stackable items one-by-one; track exact placed vs lost counts
+                let addedQty = 0;
                 for (let q = 0; q < drop.quantity; q++) {
                     const emptyIdx = newInv.indexOf(null);
                     if (emptyIdx !== -1) {
                         newInv[emptyIdx] = { itemId: drop.itemId, quantity: 1 };
-                        added = true;
+                        addedQty++;
                     }
                     else {
-                        lootLost[drop.itemId] = (lootLost[drop.itemId] || 0) + (drop.quantity - q);
                         break;
                     }
                 }
-                if (!added && newInv.indexOf(null) === -1) {
-                    lootLost[drop.itemId] = (lootLost[drop.itemId] || 0) + drop.quantity;
-                    continue;
+                const lostQty = drop.quantity - addedQty;
+                if (lostQty > 0) {
+                    if (bankingEnabled)
+                        lootBanked[drop.itemId] = (lootBanked[drop.itemId] || 0) + lostQty;
+                    else
+                        lootLost[drop.itemId] = (lootLost[drop.itemId] || 0) + lostQty;
                 }
             }
-            if (added) {
-                lootGained[drop.itemId] = (lootGained[drop.itemId] || 0) + drop.quantity;
-            }
-            else {
-                lootLost[drop.itemId] = (lootLost[drop.itemId] || 0) + drop.quantity;
+        }
+        // Auto-bank trip: if inventory is full and banking is enabled, deduct travel
+        // time and clear inventory into lootBanked. Stop if no time remains.
+        if (bankingEnabled && newInv.indexOf(null) === -1) {
+            if (remainingTicks < bankDelayTicks)
+                break;
+            remainingTicks -= bankDelayTicks;
+            for (let i = 0; i < newInv.length; i++) {
+                if (!newInv[i])
+                    continue;
+                lootBanked[newInv[i].itemId] = (lootBanked[newInv[i].itemId] || 0) + newInv[i].quantity;
+                newInv[i] = null;
             }
         }
     }
-    return { xpGained, lootGained, lootLost, monstersKilled, finalInventory: newInv };
+    // lootGained is whatever ended up in the final inventory (what the player carries home)
+    const lootGained = {};
+    for (const slot of newInv) {
+        if (!slot)
+            continue;
+        lootGained[slot.itemId] = (lootGained[slot.itemId] || 0) + slot.quantity;
+    }
+    return { xpGained, lootGained, lootLost, lootBanked, monstersKilled, finalInventory: newInv };
 }
 
 // ── engine/tick.js ──
@@ -8592,6 +8628,19 @@ function GameProvider({ children }) {
                     if (savedTask.type === 'combat' && sim.finalInventory) {
                         // Use the already-mutated inventory from simulation
                         sim.finalInventory.forEach((slot, i) => { inv[i] = slot; });
+                        // Apply any items banked during auto-bank trips
+                        if (sim.lootBanked) {
+                            for (const [itemId, qty] of Object.entries(sim.lootBanked)) {
+                                if (qty <= 0)
+                                    continue;
+                                if (b[itemId]) {
+                                    b[itemId] = { ...b[itemId], quantity: b[itemId].quantity + qty };
+                                }
+                                else {
+                                    b[itemId] = { itemId, quantity: qty };
+                                }
+                            }
+                        }
                     }
                     else if (savedTask.type === 'agility' && sim.coinsGained > 0) {
                         // Agility coins go to inventory (stackable), fall back to bank if full
@@ -8629,6 +8678,9 @@ function GameProvider({ children }) {
                     await saveAllStats(s);
                     if (savedTask.type === 'combat') {
                         await saveInventory(inv);
+                        if (sim.lootBanked && Object.keys(sim.lootBanked).length > 0) {
+                            await saveBank(b);
+                        }
                     }
                     else {
                         await saveBank(b);
@@ -11168,15 +11220,8 @@ function EquipmentScreen() {
 
 
 
-
-// Auto-bank delay: 120s at agility 1, 10s at agility 99 (linear interpolation)
-function getAutoBankSeconds(agilityLevel) {
-    const lvl = Math.max(1, Math.min(99, agilityLevel));
-    // 120s at 1, 10s at 99 — linear
-    return Math.round(120 - (110 * (lvl - 1) / 98));
-}
 function GameApp() {
-    const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, getSkillLevel, activeTask, setActiveTask, itemsData, getSnapshot } = useGame();
+    const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot } = useGame();
     const [screen, setScreen] = useState(SCREENS.HOME);
     const [gameReady, setGameReady] = useState(false);
     const [showNewGame, setShowNewGame] = useState(false);
@@ -11187,8 +11232,6 @@ function GameApp() {
     const [actionData, setActionData] = useState(null); // { monsterId, gatherTaskId, skillId, actionId }
     // Refs for tick-based systems
     const hpRegenCounter = useRef(0);
-    const autoBankCounter = useRef(0);
-    const autoBankingActive = useRef(false);
     const snapshotCounter = useRef(99); // Start at 99 so first snapshot fires after 1 tick
     useEffect(() => {
         checkSave();
@@ -11282,6 +11325,9 @@ function GameApp() {
                     // Apply items
                     if (savedTask.type === 'combat' && sim.finalInventory) {
                         updateInventory(sim.finalInventory);
+                        if (sim.lootBanked && Object.keys(sim.lootBanked).length > 0) {
+                            updateBankDirect(sim.lootBanked);
+                        }
                     }
                     else if (sim.itemsGained) {
                         updateBankDirect(sim.itemsGained);
@@ -11341,51 +11387,6 @@ function GameApp() {
         });
         return unsub;
     }, [gameReady, currentHP, stats]);
-    // Auto-bank when inventory is full
-    useEffect(() => {
-        if (!gameReady)
-            return;
-        const unsub = onTick(() => {
-            const free = freeSlots(inventory);
-            if (free > 0) {
-                autoBankCounter.current = 0;
-                autoBankingActive.current = false;
-                return;
-            }
-            // Inventory is full — start counting
-            if (!autoBankingActive.current) {
-                autoBankingActive.current = true;
-                autoBankCounter.current = 0;
-            }
-            autoBankCounter.current++;
-            const agilityLevel = getSkillLevel('agility');
-            const delaySeconds = getAutoBankSeconds(agilityLevel);
-            const delayTicks = Math.round(delaySeconds / 0.6);
-            if (autoBankCounter.current >= delayTicks) {
-                // Auto-bank: deposit all inventory items to bank
-                const newBank = { ...bank };
-                const newInv = [...inventory];
-                for (let i = 0; i < newInv.length; i++) {
-                    if (!newInv[i])
-                        continue;
-                    const slot = newInv[i];
-                    if (newBank[slot.itemId]) {
-                        newBank[slot.itemId] = { ...newBank[slot.itemId], quantity: newBank[slot.itemId].quantity + slot.quantity };
-                    }
-                    else {
-                        newBank[slot.itemId] = { itemId: slot.itemId, quantity: slot.quantity };
-                    }
-                    newInv[i] = null;
-                }
-                updateInventory(newInv);
-                updateBank(newBank);
-                addToast(`🏦 Auto-banked items! (${delaySeconds}s)`, 'info');
-                autoBankCounter.current = 0;
-                autoBankingActive.current = false;
-            }
-        });
-        return unsub;
-    }, [gameReady, inventory, bank, stats]);
     async function checkSave() {
         try {
             const exists = await hasSave();
@@ -11567,13 +11568,20 @@ function GameApp() {
                                         h("span", null, "/hr"),
                                         h("span", { style: { fontFamily: 'monospace' } }, perHr(qty)))))))) : null;
                         })(),
+                        idleResult.lootBanked && Object.keys(idleResult.lootBanked).length > 0 && (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#0f1a0f', borderRadius: '10px', border: '1px solid #1a3a1a' } },
+                            h("div", { style: { fontSize: '11px', color: '#81c784', opacity: 0.9, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' } }, "\uD83C\uDFE6 Auto-Banked"),
+                            Object.entries(idleResult.lootBanked).map(([itemId, qty]) => (h("div", { key: itemId, style: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#81c784', marginBottom: '3px', opacity: 0.85 } },
+                                h("span", { style: { textTransform: 'capitalize' } }, itemId.replace(/_/g, ' ')),
+                                h("span", { style: { fontFamily: 'monospace' } },
+                                    "\u00D7",
+                                    qty.toLocaleString())))))),
                         idleResult.lootLost && Object.keys(idleResult.lootLost).length > 0 && (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#1a0f0f', borderRadius: '10px', border: '1px solid #3a1a1a' } },
                             h("div", { style: { fontSize: '11px', color: '#e57373', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' } }, "\u26A0\uFE0F Lost (Inventory Full)"),
                             Object.entries(idleResult.lootLost).map(([itemId, qty]) => (h("div", { key: itemId, style: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e57373', marginBottom: '3px', opacity: 0.8 } },
                                 h("span", { style: { textTransform: 'capitalize' } }, itemId.replace(/_/g, ' ')),
                                 h("span", { style: { fontFamily: 'monospace' } },
                                     "\u00D7",
-                                    qty))))))));
+                                    qty.toLocaleString()))))))));
                 })()),
                 h("div", { style: { padding: '12px 16px', borderTop: '1px solid #222' } },
                     h("button", { onClick: () => setIdleResult(null), style: { width: '100%', padding: '13px', borderRadius: '12px', background: 'linear-gradient(135deg, #b8940e, #d4af37)', color: '#0f0f0f', fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '14px', border: 'none', cursor: 'pointer' } }, "Continue Adventure"))))),

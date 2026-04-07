@@ -89,6 +89,17 @@ export function GameProvider({ children }) {
           if (savedTask.type === 'combat' && sim.finalInventory) {
             // Use the already-mutated inventory from simulation
             sim.finalInventory.forEach((slot, i) => { inv[i] = slot })
+            // Apply any items banked during auto-bank trips
+            if (sim.lootBanked) {
+              for (const [itemId, qty] of Object.entries(sim.lootBanked)) {
+                if (qty <= 0) continue
+                if (b[itemId]) {
+                  b[itemId] = { ...b[itemId], quantity: b[itemId].quantity + qty }
+                } else {
+                  b[itemId] = { itemId, quantity: qty }
+                }
+              }
+            }
           } else if (savedTask.type === 'agility' && sim.coinsGained > 0) {
             // Agility coins go to inventory (stackable), fall back to bank if full
             const coinsSlot = inv.findIndex(s => s && s.itemId === 'coins')
@@ -120,6 +131,9 @@ export function GameProvider({ children }) {
           await saveAllStats(s)
           if (savedTask.type === 'combat') {
             await saveInventory(inv)
+            if (sim.lootBanked && Object.keys(sim.lootBanked).length > 0) {
+              await saveBank(b)
+            }
           } else {
             await saveBank(b)
           }
