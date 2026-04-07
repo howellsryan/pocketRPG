@@ -1,0 +1,946 @@
+{
+  "chicken": {
+    "id": "chicken",
+    "name": "Chicken",
+    "combatLevel": 1,
+    "hitpoints": 3,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 1,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": -42,
+      "slash": -42,
+      "crush": -42,
+      "magic": -42,
+      "ranged": -42
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "raw_chicken",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "feathers",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 1.0
+      }
+    ]
+  },
+  "goblin": {
+    "id": "goblin",
+    "name": "Goblin",
+    "combatLevel": 5,
+    "hitpoints": 5,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 1,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": -15,
+      "slash": -15,
+      "crush": -15,
+      "magic": -15,
+      "ranged": -15
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          1,
+          5
+        ],
+        "chance": 0.75
+      },
+      {
+        "itemId": "bronze_spear",
+        "quantity": 1,
+        "chance": 0.05
+      }
+    ]
+  },
+  "cow": {
+    "id": "cow",
+    "name": "Cow",
+    "combatLevel": 8,
+    "hitpoints": 8,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 1,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": -21,
+      "slash": -21,
+      "crush": -21,
+      "magic": -21,
+      "ranged": -21
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "raw_beef",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "cowhide",
+        "quantity": 1,
+        "chance": 1.0
+      }
+    ]
+  },
+  "giant_spider": {
+    "id": "giant_spider",
+    "name": "Giant Spider",
+    "combatLevel": 27,
+    "hitpoints": 26,
+    "stats": {
+      "attack": 17,
+      "strength": 18,
+      "defence": 14,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": -4,
+      "slash": 6,
+      "crush": -4,
+      "magic": -4,
+      "ranged": -4
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          1,
+          15
+        ],
+        "chance": 0.5
+      }
+    ]
+  },
+  "lesser_demon": {
+    "id": "lesser_demon",
+    "name": "Lesser Demon",
+    "combatLevel": 82,
+    "hitpoints": 79,
+    "stats": {
+      "attack": 68,
+      "strength": 67,
+      "defence": 71,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          30,
+          150
+        ],
+        "chance": 0.85
+      },
+      {
+        "itemId": "rune_med_helm",
+        "quantity": 1,
+        "chance": 0.02
+      }
+    ]
+  },
+  "rock_crab": {
+    "id": "rock_crab",
+    "name": "Rock Crab",
+    "combatLevel": 13,
+    "hitpoints": 50,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 1,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          4,
+          25
+        ],
+        "chance": 0.6
+      },
+      {
+        "itemId": "iron_ore",
+        "quantity": 1,
+        "chance": 0.1
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": 7,
+        "chance": 0.12
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": 4,
+        "chance": 0.08
+      }
+    ]
+  },
+  "sand_crab": {
+    "id": "sand_crab",
+    "name": "Sand Crab",
+    "combatLevel": 15,
+    "hitpoints": 60,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 1,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          5,
+          30
+        ],
+        "chance": 0.6
+      },
+      {
+        "itemId": "iron_ore",
+        "quantity": 1,
+        "chance": 0.12
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": 7,
+        "chance": 0.12
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": 4,
+        "chance": 0.1
+      }
+    ]
+  },
+  "hill_giant": {
+    "id": "hill_giant",
+    "name": "Hill Giant",
+    "combatLevel": 28,
+    "hitpoints": 35,
+    "stats": {
+      "attack": 18,
+      "strength": 22,
+      "defence": 26,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 6,
+    "attackStyle": "crush",
+    "attackBonus": 18,
+    "strengthBonus": 16,
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "drops": [
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          3,
+          45
+        ],
+        "chance": 0.55
+      },
+      {
+        "itemId": "limpwurt_root",
+        "quantity": 1,
+        "chance": 0.1
+      },
+      {
+        "itemId": "iron_arrow",
+        "quantity": 3,
+        "chance": 0.3
+      },
+      {
+        "itemId": "water_rune",
+        "quantity": 7,
+        "chance": 0.15
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": 15,
+        "chance": 0.15
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": 6,
+        "chance": 0.1
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": 2,
+        "chance": 0.06
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": 2,
+        "chance": 0.04
+      },
+      {
+        "itemId": "iron_full_helm",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "steel_longsword",
+        "quantity": 1,
+        "chance": 0.04
+      }
+    ]
+  },
+  "moss_giant": {
+    "id": "moss_giant",
+    "name": "Moss Giant",
+    "combatLevel": 42,
+    "hitpoints": 60,
+    "stats": {
+      "attack": 30,
+      "strength": 38,
+      "defence": 0,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 5,
+    "attackStyle": "crush",
+    "attackBonus": 30,
+    "strengthBonus": 28,
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "drops": [
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          10,
+          80
+        ],
+        "chance": 0.55
+      },
+      {
+        "itemId": "limpwurt_root",
+        "quantity": 1,
+        "chance": 0.1
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": [
+          3,
+          6
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          2,
+          5
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "law_rune",
+        "quantity": 2,
+        "chance": 0.06
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": 2,
+        "chance": 0.05
+      },
+      {
+        "itemId": "iron_platelegs",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "steel_full_helm",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "mithril_scimitar",
+        "quantity": 1,
+        "chance": 0.02
+      }
+    ]
+  },
+  "wizard": {
+    "id": "wizard",
+    "name": "Wizard",
+    "combatLevel": 9,
+    "hitpoints": 17,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 1,
+      "magic": 9,
+      "ranged": 1
+    },
+    "attackSpeed": 5,
+    "attackStyle": "magic",
+    "attackBonus": 8,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": -5,
+      "slash": -5,
+      "crush": -5,
+      "magic": 5,
+      "ranged": -5
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          1,
+          15
+        ],
+        "chance": 0.5
+      },
+      {
+        "itemId": "air_rune",
+        "quantity": [
+          5,
+          12
+        ],
+        "chance": 0.4
+      },
+      {
+        "itemId": "water_rune",
+        "quantity": [
+          5,
+          10
+        ],
+        "chance": 0.35
+      },
+      {
+        "itemId": "earth_rune",
+        "quantity": [
+          5,
+          10
+        ],
+        "chance": 0.35
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": [
+          5,
+          10
+        ],
+        "chance": 0.35
+      },
+      {
+        "itemId": "mind_rune",
+        "quantity": [
+          5,
+          10
+        ],
+        "chance": 0.3
+      },
+      {
+        "itemId": "body_rune",
+        "quantity": [
+          5,
+          10
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          2,
+          4
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": [
+          2,
+          4
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "wizard_hat",
+        "quantity": 1,
+        "chance": 0.1
+      },
+      {
+        "itemId": "wizard_robe_top",
+        "quantity": 1,
+        "chance": 0.08
+      },
+      {
+        "itemId": "staff",
+        "quantity": 1,
+        "chance": 0.1
+      }
+    ]
+  },
+  "dark_wizard": {
+    "id": "dark_wizard",
+    "name": "Dark Wizard",
+    "combatLevel": 20,
+    "hitpoints": 24,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 1,
+      "magic": 18,
+      "ranged": 1
+    },
+    "attackSpeed": 5,
+    "attackStyle": "magic",
+    "attackBonus": 15,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": -5,
+      "slash": -5,
+      "crush": -5,
+      "magic": 8,
+      "ranged": -5
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          5,
+          30
+        ],
+        "chance": 0.6
+      },
+      {
+        "itemId": "air_rune",
+        "quantity": [
+          10,
+          18
+        ],
+        "chance": 0.5
+      },
+      {
+        "itemId": "water_rune",
+        "quantity": [
+          10,
+          18
+        ],
+        "chance": 0.45
+      },
+      {
+        "itemId": "earth_rune",
+        "quantity": [
+          10,
+          18
+        ],
+        "chance": 0.45
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": [
+          10,
+          18
+        ],
+        "chance": 0.45
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          3,
+          5
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": [
+          2,
+          5
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "law_rune",
+        "quantity": 3,
+        "chance": 0.08
+      },
+      {
+        "itemId": "cosmic_rune",
+        "quantity": [
+          2,
+          4
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          2,
+          4
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          2,
+          4
+        ],
+        "chance": 0.04
+      },
+      {
+        "itemId": "black_wizard_hat",
+        "quantity": 1,
+        "chance": 0.12
+      },
+      {
+        "itemId": "black_wizard_robe",
+        "quantity": 1,
+        "chance": 0.1
+      },
+      {
+        "itemId": "staff_of_air",
+        "quantity": 1,
+        "chance": 0.08
+      },
+      {
+        "itemId": "staff_of_water",
+        "quantity": 1,
+        "chance": 0.06
+      },
+      {
+        "itemId": "staff_of_earth",
+        "quantity": 1,
+        "chance": 0.06
+      },
+      {
+        "itemId": "staff_of_fire",
+        "quantity": 1,
+        "chance": 0.06
+      },
+      {
+        "itemId": "magic_staff",
+        "quantity": 1,
+        "chance": 0.04
+      }
+    ]
+  },
+  "abyssal_demon": {
+    "id": "abyssal_demon",
+    "name": "Abyssal Demon",
+    "combatLevel": 124,
+    "hitpoints": 150,
+    "stats": {
+      "attack": 97,
+      "strength": 67,
+      "defence": 135,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": 86,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 20,
+      "slash": 25,
+      "crush": 20,
+      "magic": 20,
+      "ranged": 20
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          200,
+          600
+        ],
+        "chance": 0.8
+      },
+      {
+        "itemId": "rune_chainbody",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "rune_med_helm",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          5,
+          20
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          10,
+          30
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          3,
+          7
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "adamant_platelegs",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "rune_platelegs",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "abyssal_whip",
+        "quantity": 1,
+        "chance": 0.002
+      }
+    ]
+  },
+  "green_dragon": {
+    "id": "green_dragon",
+    "name": "Green Dragon",
+    "combatLevel": 79,
+    "hitpoints": 75,
+    "stats": {
+      "attack": 68,
+      "strength": 68,
+      "defence": 68,
+      "magic": 68,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 20,
+      "slash": 40,
+      "crush": 40,
+      "magic": 0,
+      "ranged": 20
+    },
+    "specialAttack": "dragonfire",
+    "dragonfireDamage": 50,
+    "drops": [
+      {
+        "itemId": "dragon_bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "green_dragonhide",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          44,
+          132
+        ],
+        "chance": 0.5
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": 15,
+        "chance": 0.1
+      },
+      {
+        "itemId": "law_rune",
+        "quantity": 5,
+        "chance": 0.08
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          10,
+          20
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "iron_arrow",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "mithril_arrow",
+        "quantity": [
+          5,
+          10
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "adamant_full_helm",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "rune_full_helm",
+        "quantity": 1,
+        "chance": 0.01
+      }
+    ]
+  }
+}

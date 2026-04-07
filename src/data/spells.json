@@ -1,0 +1,18 @@
+{
+  "wind_strike": { "id": "wind_strike", "name": "Wind Strike", "baseDamage": 2, "levelReq": 1, "baseXP": 5, "tier": "strike" },
+  "water_strike": { "id": "water_strike", "name": "Water Strike", "baseDamage": 4, "levelReq": 5, "baseXP": 7, "tier": "strike" },
+  "earth_strike": { "id": "earth_strike", "name": "Earth Strike", "baseDamage": 6, "levelReq": 9, "baseXP": 9, "tier": "strike" },
+  "fire_strike": { "id": "fire_strike", "name": "Fire Strike", "baseDamage": 8, "levelReq": 13, "baseXP": 11, "tier": "strike" },
+  "wind_bolt": { "id": "wind_bolt", "name": "Wind Bolt", "baseDamage": 9, "levelReq": 17, "baseXP": 13, "tier": "bolt" },
+  "water_bolt": { "id": "water_bolt", "name": "Water Bolt", "baseDamage": 10, "levelReq": 23, "baseXP": 16, "tier": "bolt" },
+  "earth_bolt": { "id": "earth_bolt", "name": "Earth Bolt", "baseDamage": 11, "levelReq": 29, "baseXP": 19, "tier": "bolt" },
+  "fire_bolt": { "id": "fire_bolt", "name": "Fire Bolt", "baseDamage": 12, "levelReq": 35, "baseXP": 22, "tier": "bolt" },
+  "wind_blast": { "id": "wind_blast", "name": "Wind Blast", "baseDamage": 13, "levelReq": 41, "baseXP": 25, "tier": "blast" },
+  "water_blast": { "id": "water_blast", "name": "Water Blast", "baseDamage": 14, "levelReq": 47, "baseXP": 28, "tier": "blast" },
+  "earth_blast": { "id": "earth_blast", "name": "Earth Blast", "baseDamage": 15, "levelReq": 53, "baseXP": 31, "tier": "blast" },
+  "fire_blast": { "id": "fire_blast", "name": "Fire Blast", "baseDamage": 16, "levelReq": 59, "baseXP": 34, "tier": "blast" },
+  "wind_wave": { "id": "wind_wave", "name": "Wind Wave", "baseDamage": 17, "levelReq": 62, "baseXP": 36, "tier": "wave" },
+  "water_wave": { "id": "water_wave", "name": "Water Wave", "baseDamage": 18, "levelReq": 65, "baseXP": 37, "tier": "wave" },
+  "earth_wave": { "id": "earth_wave", "name": "Earth Wave", "baseDamage": 19, "levelReq": 70, "baseXP": 40, "tier": "wave" },
+  "fire_wave": { "id": "fire_wave", "name": "Fire Wave", "baseDamage": 20, "levelReq": 75, "baseXP": 42, "tier": "wave" }
+}

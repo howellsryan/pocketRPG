@@ -1,0 +1,4555 @@
+{
+  "coins": {
+    "id": "coins",
+    "name": "Coins",
+    "type": "currency",
+    "stackable": true,
+    "shopValue": 0,
+    "icon": "🪙"
+  },
+  "bones": {
+    "id": "bones",
+    "name": "Bones",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 2,
+    "icon": "🦴"
+  },
+  "feathers": {
+    "id": "feathers",
+    "name": "Feathers",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 3,
+    "icon": "🪶"
+  },
+  "cowhide": {
+    "id": "cowhide",
+    "name": "Cowhide",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 41,
+    "icon": "🐄"
+  },
+  "bronze_dagger": {
+    "id": "bronze_dagger",
+    "name": "Bronze dagger",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 4,
+      "slash": 2,
+      "crush": -4,
+      "magic": 1,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 3,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 1
+    },
+    "shopValue": 35,
+    "icon": "🗡️"
+  },
+  "bronze_scimitar": {
+    "id": "bronze_scimitar",
+    "name": "Bronze scimitar",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 1,
+      "slash": 7,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 6,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 1
+    },
+    "shopValue": 64,
+    "icon": "⚔️"
+  },
+  "iron_scimitar": {
+    "id": "iron_scimitar",
+    "name": "Iron scimitar",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 2,
+      "slash": 10,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 9,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 1
+    },
+    "shopValue": 168,
+    "icon": "⚔️"
+  },
+  "steel_scimitar": {
+    "id": "steel_scimitar",
+    "name": "Steel scimitar",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 3,
+      "slash": 15,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 14,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 5
+    },
+    "shopValue": 640,
+    "icon": "⚔️"
+  },
+  "mithril_scimitar": {
+    "id": "mithril_scimitar",
+    "name": "Mithril scimitar",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 5,
+      "slash": 21,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 20,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 20
+    },
+    "shopValue": 1560,
+    "icon": "⚔️"
+  },
+  "adamant_scimitar": {
+    "id": "adamant_scimitar",
+    "name": "Adamant scimitar",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 6,
+      "slash": 29,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 28,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 30
+    },
+    "shopValue": 3840,
+    "icon": "⚔️"
+  },
+  "rune_scimitar": {
+    "id": "rune_scimitar",
+    "name": "Rune scimitar",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 7,
+      "slash": 45,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 44,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 40
+    },
+    "shopValue": 15360,
+    "icon": "⚔️"
+  },
+  "bronze_spear": {
+    "id": "bronze_spear",
+    "name": "Bronze spear",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 5,
+      "slash": 5,
+      "crush": 5,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 1,
+      "slash": 1,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 5,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 1
+    },
+    "shopValue": 26,
+    "icon": "🔱"
+  },
+  "shortbow": {
+    "id": "shortbow",
+    "name": "Shortbow",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "ranged",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 8
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 1
+    },
+    "shopValue": 50,
+    "icon": "🏹"
+  },
+  "bronze_arrow": {
+    "id": "bronze_arrow",
+    "name": "Bronze arrow",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 7,
+      "magicDamage": 0
+    },
+    "shopValue": 3,
+    "icon": "🏹"
+  },
+  "iron_arrow": {
+    "id": "iron_arrow",
+    "name": "Iron arrow",
+    "type": "ammo",
+    "stackable": true,
+    "rangedStrength": 7,
+    "shopValue": 7,
+    "icon": "🏹"
+  },
+  "staff": {
+    "id": "staff",
+    "name": "Staff",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "crush",
+    "attackBonus": {
+      "stab": 2,
+      "slash": -1,
+      "crush": 10,
+      "magic": 10,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 2,
+      "slash": 3,
+      "crush": 1,
+      "magic": 10,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 3,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 15,
+    "icon": "🪄"
+  },
+  "bronze_full_helm": {
+    "id": "bronze_full_helm",
+    "name": "Bronze full helm",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -6,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 4,
+      "slash": 5,
+      "crush": 3,
+      "magic": -1,
+      "ranged": 4
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 1
+    },
+    "shopValue": 42,
+    "icon": "⛑️"
+  },
+  "bronze_platebody": {
+    "id": "bronze_platebody",
+    "name": "Bronze platebody",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -30,
+      "ranged": -15
+    },
+    "defenceBonus": {
+      "stab": 15,
+      "slash": 14,
+      "crush": 9,
+      "magic": -6,
+      "ranged": 14
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 1
+    },
+    "shopValue": 160,
+    "icon": "🧥"
+  },
+  "bronze_platelegs": {
+    "id": "bronze_platelegs",
+    "name": "Bronze platelegs",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -21,
+      "ranged": -11
+    },
+    "defenceBonus": {
+      "stab": 7,
+      "slash": 6,
+      "crush": 5,
+      "magic": -4,
+      "ranged": 7
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 1
+    },
+    "shopValue": 80,
+    "icon": "👖"
+  },
+  "bronze_kiteshield": {
+    "id": "bronze_kiteshield",
+    "name": "Bronze kiteshield",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -8,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 6,
+      "slash": 8,
+      "crush": 7,
+      "magic": -1,
+      "ranged": 6
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 1
+    },
+    "shopValue": 54,
+    "icon": "🛡️"
+  },
+  "iron_full_helm": {
+    "id": "iron_full_helm",
+    "name": "Iron full helm",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -6,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 7,
+      "slash": 8,
+      "crush": 6,
+      "magic": -1,
+      "ranged": 7
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 1
+    },
+    "shopValue": 84,
+    "icon": "⛑️"
+  },
+  "iron_platebody": {
+    "id": "iron_platebody",
+    "name": "Iron platebody",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -30,
+      "ranged": -15
+    },
+    "defenceBonus": {
+      "stab": 22,
+      "slash": 20,
+      "crush": 14,
+      "magic": -6,
+      "ranged": 20
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 1
+    },
+    "shopValue": 280,
+    "icon": "🧥"
+  },
+  "rune_med_helm": {
+    "id": "rune_med_helm",
+    "name": "Rune med helm",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -3,
+      "ranged": -1
+    },
+    "defenceBonus": {
+      "stab": 22,
+      "slash": 24,
+      "crush": 19,
+      "magic": -1,
+      "ranged": 22
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 40
+    },
+    "shopValue": 11000,
+    "icon": "⛑️"
+  },
+  "leather_body": {
+    "id": "leather_body",
+    "name": "Leather body",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -1,
+      "ranged": 2
+    },
+    "defenceBonus": {
+      "stab": 8,
+      "slash": 9,
+      "crush": 7,
+      "magic": -1,
+      "ranged": 8
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 1
+    },
+    "shopValue": 21,
+    "icon": "🧥"
+  },
+  "leather_chaps": {
+    "id": "leather_chaps",
+    "name": "Leather chaps",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -1,
+      "ranged": 2
+    },
+    "defenceBonus": {
+      "stab": 4,
+      "slash": 3,
+      "crush": 4,
+      "magic": 0,
+      "ranged": 4
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 1
+    },
+    "shopValue": 18,
+    "icon": "👖"
+  },
+  "wizard_hat": {
+    "id": "wizard_hat",
+    "name": "Wizard hat",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 2,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 2,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 2,
+    "icon": "🧙"
+  },
+  "wizard_robe_top": {
+    "id": "wizard_robe_top",
+    "name": "Wizard robe top",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 3,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 3,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 5,
+    "icon": "🧥"
+  },
+  "wizard_robe_skirt": {
+    "id": "wizard_robe_skirt",
+    "name": "Wizard robe skirt",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 2,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 2,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 3,
+    "icon": "👖"
+  },
+  "amulet_of_strength": {
+    "id": "amulet_of_strength",
+    "name": "Amulet of strength",
+    "type": "armour",
+    "slot": "neck",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 10,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 2025,
+    "icon": "📿"
+  },
+  "amulet_of_power": {
+    "id": "amulet_of_power",
+    "name": "Amulet of power",
+    "type": "armour",
+    "slot": "neck",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 6,
+      "slash": 6,
+      "crush": 6,
+      "magic": 6,
+      "ranged": 6
+    },
+    "defenceBonus": {
+      "stab": 6,
+      "slash": 6,
+      "crush": 6,
+      "magic": 6,
+      "ranged": 6
+    },
+    "otherBonus": {
+      "meleeStrength": 6,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 4725,
+    "icon": "📿"
+  },
+  "raw_shrimp": {
+    "id": "raw_shrimp",
+    "name": "Raw shrimps",
+    "type": "resource",
+    "stackable": false,
+    "cookedInto": "shrimp",
+    "cookLevel": 1,
+    "cookXP": 30,
+    "burnStopLevel": 34,
+    "shopValue": 5,
+    "icon": "🦐"
+  },
+  "shrimp": {
+    "id": "shrimp",
+    "name": "Shrimps",
+    "type": "food",
+    "stackable": false,
+    "heals": 3,
+    "eatTicks": 3,
+    "shopValue": 10,
+    "icon": "🦐"
+  },
+  "raw_trout": {
+    "id": "raw_trout",
+    "name": "Raw trout",
+    "type": "resource",
+    "stackable": false,
+    "cookedInto": "trout",
+    "cookLevel": 15,
+    "cookXP": 70,
+    "burnStopLevel": 50,
+    "shopValue": 20,
+    "icon": "🐟"
+  },
+  "trout": {
+    "id": "trout",
+    "name": "Trout",
+    "type": "food",
+    "stackable": false,
+    "heals": 7,
+    "eatTicks": 3,
+    "shopValue": 38,
+    "icon": "🐟"
+  },
+  "raw_lobster": {
+    "id": "raw_lobster",
+    "name": "Raw lobster",
+    "type": "resource",
+    "stackable": false,
+    "cookedInto": "lobster",
+    "cookLevel": 40,
+    "cookXP": 120,
+    "burnStopLevel": 74,
+    "shopValue": 120,
+    "icon": "🦞"
+  },
+  "lobster": {
+    "id": "lobster",
+    "name": "Lobster",
+    "type": "food",
+    "stackable": false,
+    "heals": 12,
+    "eatTicks": 3,
+    "shopValue": 150,
+    "icon": "🦞"
+  },
+  "raw_swordfish": {
+    "id": "raw_swordfish",
+    "name": "Raw swordfish",
+    "type": "resource",
+    "stackable": false,
+    "cookedInto": "swordfish",
+    "cookLevel": 45,
+    "cookXP": 140,
+    "burnStopLevel": 86,
+    "shopValue": 200,
+    "icon": "🐟"
+  },
+  "swordfish": {
+    "id": "swordfish",
+    "name": "Swordfish",
+    "type": "food",
+    "stackable": false,
+    "heals": 14,
+    "eatTicks": 3,
+    "shopValue": 300,
+    "icon": "🐟"
+  },
+  "raw_shark": {
+    "id": "raw_shark",
+    "name": "Raw shark",
+    "type": "resource",
+    "stackable": false,
+    "cookedInto": "shark",
+    "cookLevel": 80,
+    "cookXP": 210,
+    "burnStopLevel": 99,
+    "shopValue": 550,
+    "icon": "🦈"
+  },
+  "shark": {
+    "id": "shark",
+    "name": "Shark",
+    "type": "food",
+    "stackable": false,
+    "heals": 20,
+    "eatTicks": 3,
+    "shopValue": 800,
+    "icon": "🦈"
+  },
+  "raw_chicken": {
+    "id": "raw_chicken",
+    "name": "Raw chicken",
+    "type": "resource",
+    "stackable": false,
+    "cookedInto": "cooked_chicken",
+    "cookLevel": 1,
+    "cookXP": 30,
+    "burnStopLevel": 34,
+    "shopValue": 4,
+    "icon": "🐔"
+  },
+  "cooked_chicken": {
+    "id": "cooked_chicken",
+    "name": "Cooked chicken",
+    "type": "food",
+    "stackable": false,
+    "heals": 3,
+    "eatTicks": 3,
+    "shopValue": 10,
+    "icon": "🍗"
+  },
+  "raw_beef": {
+    "id": "raw_beef",
+    "name": "Raw beef",
+    "type": "resource",
+    "stackable": false,
+    "cookedInto": "cooked_meat",
+    "cookLevel": 1,
+    "cookXP": 30,
+    "burnStopLevel": 34,
+    "shopValue": 4,
+    "icon": "🥩"
+  },
+  "cooked_meat": {
+    "id": "cooked_meat",
+    "name": "Cooked meat",
+    "type": "food",
+    "stackable": false,
+    "heals": 3,
+    "eatTicks": 3,
+    "shopValue": 10,
+    "icon": "🥩"
+  },
+  "burnt_food": {
+    "id": "burnt_food",
+    "name": "Burnt food",
+    "type": "junk",
+    "stackable": false,
+    "shopValue": 1,
+    "icon": "🔥"
+  },
+  "tin_ore": {
+    "id": "tin_ore",
+    "name": "Tin ore",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 4,
+    "icon": "🪨"
+  },
+  "copper_ore": {
+    "id": "copper_ore",
+    "name": "Copper ore",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 4,
+    "icon": "🪨"
+  },
+  "iron_ore": {
+    "id": "iron_ore",
+    "name": "Iron ore",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 42,
+    "icon": "🪨"
+  },
+  "coal": {
+    "id": "coal",
+    "name": "Coal",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 72,
+    "icon": "⬛"
+  },
+  "mithril_ore": {
+    "id": "mithril_ore",
+    "name": "Mithril ore",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 162,
+    "icon": "🪨"
+  },
+  "adamantite_ore": {
+    "id": "adamantite_ore",
+    "name": "Adamantite ore",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 640,
+    "icon": "🪨"
+  },
+  "runite_ore": {
+    "id": "runite_ore",
+    "name": "Runite ore",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 11000,
+    "icon": "🪨"
+  },
+  "bronze_bar": {
+    "id": "bronze_bar",
+    "name": "Bronze bar",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 12,
+    "icon": "🔶"
+  },
+  "iron_bar": {
+    "id": "iron_bar",
+    "name": "Iron bar",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 56,
+    "icon": "🔷"
+  },
+  "steel_bar": {
+    "id": "steel_bar",
+    "name": "Steel bar",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 200,
+    "icon": "🔷"
+  },
+  "mithril_bar": {
+    "id": "mithril_bar",
+    "name": "Mithril bar",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 500,
+    "icon": "🔷"
+  },
+  "adamant_bar": {
+    "id": "adamant_bar",
+    "name": "Adamant bar",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 2048,
+    "icon": "🔷"
+  },
+  "rune_bar": {
+    "id": "rune_bar",
+    "name": "Rune bar",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 12500,
+    "icon": "🔷"
+  },
+  "logs": {
+    "id": "logs",
+    "name": "Logs",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 12,
+    "icon": "🪵"
+  },
+  "oak_logs": {
+    "id": "oak_logs",
+    "name": "Oak logs",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 20,
+    "icon": "🪵"
+  },
+  "willow_logs": {
+    "id": "willow_logs",
+    "name": "Willow logs",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 4,
+    "icon": "🪵"
+  },
+  "maple_logs": {
+    "id": "maple_logs",
+    "name": "Maple logs",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 8,
+    "icon": "🪵"
+  },
+  "yew_logs": {
+    "id": "yew_logs",
+    "name": "Yew logs",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 160,
+    "icon": "🪵"
+  },
+  "magic_logs": {
+    "id": "magic_logs",
+    "name": "Magic logs",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 500,
+    "icon": "🪵"
+  },
+  "bowstring": {
+    "id": "bowstring",
+    "name": "Bowstring",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 45,
+    "icon": "🧵"
+  },
+  "flax": {
+    "id": "flax",
+    "name": "Flax",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 3,
+    "icon": "🌿"
+  },
+  "bucket_of_sand": {
+    "id": "bucket_of_sand",
+    "name": "Bucket of sand",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 7,
+    "icon": "🏖️"
+  },
+  "bucket": {
+    "id": "bucket",
+    "name": "Bucket",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 2,
+    "icon": "🪣"
+  },
+  "soda_ash": {
+    "id": "soda_ash",
+    "name": "Soda ash",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 18,
+    "icon": "⬜"
+  },
+  "molten_glass": {
+    "id": "molten_glass",
+    "name": "Molten glass",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 25,
+    "icon": "🫧"
+  },
+  "giant_seaweed": {
+    "id": "giant_seaweed",
+    "name": "Seaweed",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 10,
+    "icon": "🌊"
+  },
+  "soft_clay": {
+    "id": "soft_clay",
+    "name": "Soft clay",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 22,
+    "icon": "🟫"
+  },
+  "clay": {
+    "id": "clay",
+    "name": "Clay",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 6,
+    "icon": "🟫"
+  },
+  "pot_of_flour": {
+    "id": "pot_of_flour",
+    "name": "Pot of flour",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 10,
+    "icon": "🫙"
+  },
+  "pot": {
+    "id": "pot",
+    "name": "Pot",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 1,
+    "icon": "🫙"
+  },
+  "wheat": {
+    "id": "wheat",
+    "name": "Wheat",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 2,
+    "icon": "🌾"
+  },
+  "nettles": {
+    "id": "nettles",
+    "name": "Nettles",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 1,
+    "icon": "🌿"
+  },
+  "bird_snare": {
+    "id": "bird_snare",
+    "name": "Bird snare",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 6,
+    "icon": "🪤"
+  },
+  "leather": {
+    "id": "leather",
+    "name": "Leather",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 52,
+    "icon": "🟤"
+  },
+  "hard_leather": {
+    "id": "hard_leather",
+    "name": "Hard leather",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 75,
+    "icon": "🟤"
+  },
+  "green_dhide": {
+    "id": "green_dhide",
+    "name": "Green dragon leather",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 1320,
+    "icon": "📦"
+  },
+  "blue_dhide": {
+    "id": "blue_dhide",
+    "name": "Blue dragon leather",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 1638,
+    "icon": "📦"
+  },
+  "red_dhide": {
+    "id": "red_dhide",
+    "name": "Red dragon leather",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 1710,
+    "icon": "📦"
+  },
+  "black_dhide": {
+    "id": "black_dhide",
+    "name": "Black dragon leather",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 2520,
+    "icon": "🟤"
+  },
+  "leather_gloves": {
+    "id": "leather_gloves",
+    "name": "Leather gloves",
+    "type": "armour",
+    "slot": "gloves",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 1,
+      "slash": 1,
+      "crush": 1,
+      "magic": 0,
+      "ranged": 1
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 1
+    },
+    "shopValue": 6,
+    "icon": "🧤"
+  },
+  "leather_boots": {
+    "id": "leather_boots",
+    "name": "Leather boots",
+    "type": "armour",
+    "slot": "boots",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 1,
+      "slash": 1,
+      "crush": 1,
+      "magic": 0,
+      "ranged": 1
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 6,
+    "icon": "👢"
+  },
+  "leather_coif": {
+    "id": "leather_coif",
+    "name": "Leather cowl",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 2
+    },
+    "defenceBonus": {
+      "stab": 3,
+      "slash": 4,
+      "crush": 3,
+      "magic": 0,
+      "ranged": 4
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 1
+    },
+    "shopValue": 9,
+    "icon": "⛑️"
+  },
+  "hard_leather_body": {
+    "id": "hard_leather_body",
+    "name": "Hard leather body",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -3,
+      "ranged": 5
+    },
+    "defenceBonus": {
+      "stab": 15,
+      "slash": 16,
+      "crush": 13,
+      "magic": -3,
+      "ranged": 17
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 10
+    },
+    "shopValue": 132,
+    "icon": "🧥"
+  },
+  "green_dhide_body": {
+    "id": "green_dhide_body",
+    "name": "Green d'hide body",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -15,
+      "ranged": 20
+    },
+    "defenceBonus": {
+      "stab": 40,
+      "slash": 44,
+      "crush": 36,
+      "magic": -10,
+      "ranged": 50
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 40,
+      "defence": 1
+    },
+    "shopValue": 4680,
+    "icon": "🧥"
+  },
+  "green_dhide_chaps": {
+    "id": "green_dhide_chaps",
+    "name": "Green d'hide chaps",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -7,
+      "ranged": 13
+    },
+    "defenceBonus": {
+      "stab": 18,
+      "slash": 20,
+      "crush": 15,
+      "magic": -5,
+      "ranged": 22
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 40
+    },
+    "shopValue": 2964,
+    "icon": "👖"
+  },
+  "uncut_sapphire": {
+    "id": "uncut_sapphire",
+    "name": "Uncut sapphire",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 125,
+    "icon": "💎"
+  },
+  "uncut_emerald": {
+    "id": "uncut_emerald",
+    "name": "Uncut emerald",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 225,
+    "icon": "💎"
+  },
+  "uncut_ruby": {
+    "id": "uncut_ruby",
+    "name": "Uncut ruby",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 575,
+    "icon": "💎"
+  },
+  "uncut_diamond": {
+    "id": "uncut_diamond",
+    "name": "Uncut diamond",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 1575,
+    "icon": "💎"
+  },
+  "sapphire": {
+    "id": "sapphire",
+    "name": "Sapphire",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 250,
+    "icon": "💎"
+  },
+  "emerald": {
+    "id": "emerald",
+    "name": "Emerald",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 500,
+    "icon": "💎"
+  },
+  "ruby": {
+    "id": "ruby",
+    "name": "Ruby",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 1000,
+    "icon": "💎"
+  },
+  "diamond": {
+    "id": "diamond",
+    "name": "Diamond",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 2500,
+    "icon": "💎"
+  },
+  "gold_bar": {
+    "id": "gold_bar",
+    "name": "Gold bar",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 210,
+    "icon": "🟡"
+  },
+  "sapphire_amulet": {
+    "id": "sapphire_amulet",
+    "name": "Sapphire amulet",
+    "type": "armour",
+    "slot": "neck",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 2,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 900,
+    "icon": "📿"
+  },
+  "emerald_amulet": {
+    "id": "emerald_amulet",
+    "name": "Emerald amulet",
+    "type": "armour",
+    "slot": "neck",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 4,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 1275,
+    "icon": "📿"
+  },
+  "ruby_amulet": {
+    "id": "ruby_amulet",
+    "name": "Ruby amulet",
+    "type": "armour",
+    "slot": "neck",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 8,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 2025,
+    "icon": "📿"
+  },
+  "diamond_amulet": {
+    "id": "diamond_amulet",
+    "name": "Diamond amulet",
+    "type": "armour",
+    "slot": "neck",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 10,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 4725,
+    "icon": "📿"
+  },
+  "gold_amulet": {
+    "id": "gold_amulet",
+    "name": "Gold amulet (u)",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 280,
+    "icon": "📿"
+  },
+  "glass_orb": {
+    "id": "glass_orb",
+    "name": "Unpowered orb",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 35,
+    "icon": "🔮"
+  },
+  "glass_vial": {
+    "id": "glass_vial",
+    "name": "Vial",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 10,
+    "icon": "🧪"
+  },
+  "arrow_shaft": {
+    "id": "arrow_shaft",
+    "name": "Arrow shaft",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 1,
+    "icon": "🪵"
+  },
+  "headless_arrow": {
+    "id": "headless_arrow",
+    "name": "Headless arrow",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 2,
+    "icon": "🏹"
+  },
+  "iron_arrow_heads": {
+    "id": "iron_arrow_heads",
+    "name": "Iron arrowtips",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 6,
+    "icon": "🔩"
+  },
+  "steel_arrow_heads": {
+    "id": "steel_arrow_heads",
+    "name": "Steel arrowtips",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 12,
+    "icon": "🔩"
+  },
+  "mithril_arrow_heads": {
+    "id": "mithril_arrow_heads",
+    "name": "Mithril arrowtips",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 20,
+    "icon": "🔩"
+  },
+  "adamant_arrow_heads": {
+    "id": "adamant_arrow_heads",
+    "name": "Adamant arrowtips",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 40,
+    "icon": "🔩"
+  },
+  "rune_arrow_heads": {
+    "id": "rune_arrow_heads",
+    "name": "Rune arrowtips",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 80,
+    "icon": "🔩"
+  },
+  "steel_arrow": {
+    "id": "steel_arrow",
+    "name": "Steel arrow",
+    "type": "ammo",
+    "stackable": true,
+    "rangedStrength": 10,
+    "shopValue": 19,
+    "icon": "🏹"
+  },
+  "mithril_arrow": {
+    "id": "mithril_arrow",
+    "name": "Mithril arrow",
+    "type": "ammo",
+    "stackable": true,
+    "rangedStrength": 14,
+    "shopValue": 32,
+    "icon": "🏹"
+  },
+  "adamant_arrow": {
+    "id": "adamant_arrow",
+    "name": "Adamant arrow",
+    "type": "ammo",
+    "stackable": true,
+    "rangedStrength": 21,
+    "shopValue": 64,
+    "icon": "🏹"
+  },
+  "rune_arrow": {
+    "id": "rune_arrow",
+    "name": "Rune arrow",
+    "type": "ammo",
+    "stackable": true,
+    "rangedStrength": 26,
+    "shopValue": 160,
+    "icon": "🏹"
+  },
+  "shortbow_u": {
+    "id": "shortbow_u",
+    "name": "Shortbow (u)",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 5,
+    "icon": "🏹"
+  },
+  "oak_shortbow_u": {
+    "id": "oak_shortbow_u",
+    "name": "Oak shortbow (u)",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 15,
+    "icon": "🏹"
+  },
+  "willow_shortbow_u": {
+    "id": "willow_shortbow_u",
+    "name": "Willow shortbow (u)",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 25,
+    "icon": "🏹"
+  },
+  "maple_shortbow_u": {
+    "id": "maple_shortbow_u",
+    "name": "Maple shortbow (u)",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 50,
+    "icon": "🏹"
+  },
+  "yew_shortbow_u": {
+    "id": "yew_shortbow_u",
+    "name": "Yew shortbow (u)",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 300,
+    "icon": "🏹"
+  },
+  "magic_shortbow_u": {
+    "id": "magic_shortbow_u",
+    "name": "Magic shortbow (u)",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 800,
+    "icon": "🏹"
+  },
+  "oak_shortbow": {
+    "id": "oak_shortbow",
+    "name": "Oak shortbow",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "ranged",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 14
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 5
+    },
+    "shopValue": 100,
+    "icon": "🏹"
+  },
+  "willow_shortbow": {
+    "id": "willow_shortbow",
+    "name": "Willow shortbow",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "ranged",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 24
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 20
+    },
+    "shopValue": 240,
+    "icon": "🏹"
+  },
+  "maple_shortbow": {
+    "id": "maple_shortbow",
+    "name": "Maple shortbow",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "ranged",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 29
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 30
+    },
+    "shopValue": 400,
+    "icon": "🏹"
+  },
+  "yew_shortbow": {
+    "id": "yew_shortbow",
+    "name": "Yew shortbow",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "ranged",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 47
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 40
+    },
+    "shopValue": 640,
+    "icon": "🏹"
+  },
+  "magic_shortbow": {
+    "id": "magic_shortbow",
+    "name": "Magic shortbow",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "ranged",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 69
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 50
+    },
+    "shopValue": 1800,
+    "icon": "🏹"
+  },
+  "needle": {
+    "id": "needle",
+    "name": "Needle",
+    "type": "tool",
+    "stackable": false,
+    "shopValue": 1,
+    "icon": "🧵"
+  },
+  "thread": {
+    "id": "thread",
+    "name": "Thread",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 1,
+    "icon": "🧵"
+  },
+  "gold_ore": {
+    "id": "gold_ore",
+    "name": "Gold ore",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 150,
+    "icon": "🟡"
+  },
+  "bronze_axe": {
+    "id": "bronze_axe",
+    "name": "Bronze axe",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": -2,
+      "slash": 10,
+      "crush": -1,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 10,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "woodcutting",
+    "speedMultiplier": 1.0,
+    "requirements": {
+      "woodcutting": 1
+    },
+    "shopValue": 32,
+    "icon": "🪓"
+  },
+  "iron_axe": {
+    "id": "iron_axe",
+    "name": "Iron axe",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": -2,
+      "slash": 16,
+      "crush": -1,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 14,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "woodcutting",
+    "speedMultiplier": 0.9,
+    "requirements": {
+      "woodcutting": 1
+    },
+    "shopValue": 56,
+    "icon": "🪓"
+  },
+  "steel_axe": {
+    "id": "steel_axe",
+    "name": "Steel axe",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": -2,
+      "slash": 22,
+      "crush": -1,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 21,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "woodcutting",
+    "speedMultiplier": 0.85,
+    "requirements": {
+      "woodcutting": 5
+    },
+    "shopValue": 200,
+    "icon": "🪓"
+  },
+  "mithril_axe": {
+    "id": "mithril_axe",
+    "name": "Mithril axe",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": -2,
+      "slash": 31,
+      "crush": -1,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 31,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "woodcutting",
+    "speedMultiplier": 0.8,
+    "requirements": {
+      "woodcutting": 20
+    },
+    "shopValue": 520,
+    "icon": "🪓"
+  },
+  "adamant_axe": {
+    "id": "adamant_axe",
+    "name": "Adamant axe",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": -2,
+      "slash": 41,
+      "crush": -1,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 42,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "woodcutting",
+    "speedMultiplier": 0.7,
+    "requirements": {
+      "woodcutting": 30
+    },
+    "shopValue": 1280,
+    "icon": "🪓"
+  },
+  "rune_axe": {
+    "id": "rune_axe",
+    "name": "Rune axe",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": -2,
+      "slash": 57,
+      "crush": -1,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 58,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "woodcutting",
+    "speedMultiplier": 0.6,
+    "requirements": {
+      "woodcutting": 40
+    },
+    "shopValue": 4000,
+    "icon": "🪓"
+  },
+  "bronze_pickaxe": {
+    "id": "bronze_pickaxe",
+    "name": "Bronze pickaxe",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 7,
+      "slash": -2,
+      "crush": -1,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 6,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "mining",
+    "speedMultiplier": 1.0,
+    "requirements": {
+      "mining": 1
+    },
+    "shopValue": 32,
+    "icon": "⛏️"
+  },
+  "iron_pickaxe": {
+    "id": "iron_pickaxe",
+    "name": "Iron pickaxe",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 11,
+      "slash": -2,
+      "crush": -1,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 9,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "mining",
+    "speedMultiplier": 0.9,
+    "requirements": {
+      "mining": 1
+    },
+    "shopValue": 56,
+    "icon": "⛏️"
+  },
+  "steel_pickaxe": {
+    "id": "steel_pickaxe",
+    "name": "Steel pickaxe",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 16,
+      "slash": -2,
+      "crush": -1,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 14,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "mining",
+    "speedMultiplier": 0.85,
+    "requirements": {
+      "mining": 5
+    },
+    "shopValue": 200,
+    "icon": "⛏️"
+  },
+  "mithril_pickaxe": {
+    "id": "mithril_pickaxe",
+    "name": "Mithril pickaxe",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 24,
+      "slash": -2,
+      "crush": -1,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 22,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "mining",
+    "speedMultiplier": 0.8,
+    "requirements": {
+      "mining": 20
+    },
+    "shopValue": 520,
+    "icon": "⛏️"
+  },
+  "adamant_pickaxe": {
+    "id": "adamant_pickaxe",
+    "name": "Adamant pickaxe",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 32,
+      "slash": -2,
+      "crush": -1,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 31,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "mining",
+    "speedMultiplier": 0.7,
+    "requirements": {
+      "mining": 30
+    },
+    "shopValue": 1280,
+    "icon": "⛏️"
+  },
+  "rune_pickaxe": {
+    "id": "rune_pickaxe",
+    "name": "Rune pickaxe",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 47,
+      "slash": -2,
+      "crush": -1,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 44,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "mining",
+    "speedMultiplier": 0.6,
+    "requirements": {
+      "mining": 40
+    },
+    "shopValue": 4000,
+    "icon": "⛏️"
+  },
+  "tinderbox": {
+    "id": "tinderbox",
+    "name": "Tinderbox",
+    "type": "tool",
+    "slot": null,
+    "stackable": false,
+    "shopValue": 1,
+    "icon": "🔥",
+    "requirements": {}
+  },
+  "chisel": {
+    "id": "chisel",
+    "name": "Chisel",
+    "type": "tool",
+    "slot": null,
+    "stackable": false,
+    "shopValue": 1,
+    "icon": "🔧",
+    "requirements": {}
+  },
+  "hammer": {
+    "id": "hammer",
+    "name": "Hammer",
+    "type": "tool",
+    "slot": null,
+    "stackable": false,
+    "shopValue": 1,
+    "icon": "🔨",
+    "requirements": {}
+  },
+  "rope": {
+    "id": "rope",
+    "name": "Rope",
+    "type": "resource",
+    "slot": null,
+    "stackable": false,
+    "shopValue": 18,
+    "icon": "🪢",
+    "requirements": {}
+  },
+  "shears": {
+    "id": "shears",
+    "name": "Shears",
+    "type": "tool",
+    "slot": null,
+    "stackable": false,
+    "shopValue": 1,
+    "icon": "✂️",
+    "requirements": {}
+  },
+  "iron_dagger": {
+    "id": "iron_dagger",
+    "name": "Iron dagger",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 8,
+      "slash": 4,
+      "crush": -4,
+      "magic": 1,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 7,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 1
+    },
+    "shopValue": 45,
+    "icon": "🗡️"
+  },
+  "steel_dagger": {
+    "id": "steel_dagger",
+    "name": "Steel dagger",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 12,
+      "slash": 8,
+      "crush": -4,
+      "magic": 1,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 12,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 5
+    },
+    "shopValue": 175,
+    "icon": "🗡️"
+  },
+  "mithril_dagger": {
+    "id": "mithril_dagger",
+    "name": "Mithril dagger",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 20,
+      "slash": 14,
+      "crush": -4,
+      "magic": 1,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 20,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 20
+    },
+    "shopValue": 585,
+    "icon": "🗡️"
+  },
+  "adamant_dagger": {
+    "id": "adamant_dagger",
+    "name": "Adamant dagger",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 29,
+      "slash": 21,
+      "crush": -4,
+      "magic": 1,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 31,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 30
+    },
+    "shopValue": 1248,
+    "icon": "🗡️"
+  },
+  "bronze_sword": {
+    "id": "bronze_sword",
+    "name": "Bronze sword",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 3,
+      "slash": 4,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 5,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 1
+    },
+    "shopValue": 26,
+    "icon": "⚔️"
+  },
+  "iron_sword": {
+    "id": "iron_sword",
+    "name": "Iron sword",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 7,
+      "slash": 8,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 10,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 1
+    },
+    "shopValue": 91,
+    "icon": "⚔️"
+  },
+  "steel_sword": {
+    "id": "steel_sword",
+    "name": "Steel sword",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 15,
+      "slash": 17,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 17,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 5
+    },
+    "shopValue": 325,
+    "icon": "⚔️"
+  },
+  "mithril_sword": {
+    "id": "mithril_sword",
+    "name": "Mithril sword",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 26,
+      "slash": 30,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 28,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 20
+    },
+    "shopValue": 845,
+    "icon": "⚔️"
+  },
+  "adamant_sword": {
+    "id": "adamant_sword",
+    "name": "Adamant sword",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 36,
+      "slash": 43,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 42,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 30
+    },
+    "shopValue": 2080,
+    "icon": "⚔️"
+  },
+  "bronze_longsword": {
+    "id": "bronze_longsword",
+    "name": "Bronze longsword",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 6,
+      "slash": 9,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 1,
+      "slash": 2,
+      "crush": 1,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 8,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 1
+    },
+    "shopValue": 40,
+    "icon": "⚔️"
+  },
+  "iron_longsword": {
+    "id": "iron_longsword",
+    "name": "Iron longsword",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 12,
+      "slash": 18,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 1,
+      "slash": 2,
+      "crush": 1,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 14,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 1
+    },
+    "shopValue": 140,
+    "icon": "⚔️"
+  },
+  "steel_longsword": {
+    "id": "steel_longsword",
+    "name": "Steel longsword",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 22,
+      "slash": 32,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 1,
+      "slash": 2,
+      "crush": 1,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 24,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 5
+    },
+    "shopValue": 500,
+    "icon": "⚔️"
+  },
+  "mithril_longsword": {
+    "id": "mithril_longsword",
+    "name": "Mithril longsword",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 39,
+      "slash": 56,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 1,
+      "slash": 2,
+      "crush": 1,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 40,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 20
+    },
+    "shopValue": 1300,
+    "icon": "⚔️"
+  },
+  "adamant_longsword": {
+    "id": "adamant_longsword",
+    "name": "Adamant longsword",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 53,
+      "slash": 78,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 1,
+      "slash": 2,
+      "crush": 1,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 58,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 30
+    },
+    "shopValue": 3200,
+    "icon": "⚔️"
+  },
+  "bronze_mace": {
+    "id": "bronze_mace",
+    "name": "Bronze mace",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": {
+      "stab": 5,
+      "slash": -3,
+      "crush": 6,
+      "magic": 1,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 4,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 5,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 1
+    },
+    "shopValue": 18,
+    "icon": "🪃"
+  },
+  "iron_mace": {
+    "id": "iron_mace",
+    "name": "Iron mace",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": {
+      "stab": 8,
+      "slash": -3,
+      "crush": 11,
+      "magic": 1,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 4,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 10,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 1
+    },
+    "shopValue": 50,
+    "icon": "🪃"
+  },
+  "steel_mace": {
+    "id": "steel_mace",
+    "name": "Steel mace",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": {
+      "stab": 16,
+      "slash": -3,
+      "crush": 21,
+      "magic": 1,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 4,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 17,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 5
+    },
+    "shopValue": 260,
+    "icon": "🪃"
+  },
+  "mithril_mace": {
+    "id": "mithril_mace",
+    "name": "Mithril mace",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": {
+      "stab": 27,
+      "slash": -3,
+      "crush": 35,
+      "magic": 1,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 4,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 29,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 20
+    },
+    "shopValue": 650,
+    "icon": "🪃"
+  },
+  "adamant_mace": {
+    "id": "adamant_mace",
+    "name": "Adamant mace",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": {
+      "stab": 37,
+      "slash": -3,
+      "crush": 51,
+      "magic": 1,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 4,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 44,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 30
+    },
+    "shopValue": 1664,
+    "icon": "🪃"
+  },
+  "iron_platelegs": {
+    "id": "iron_platelegs",
+    "name": "Iron platelegs",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -21,
+      "ranged": -7
+    },
+    "defenceBonus": {
+      "stab": 9,
+      "slash": 11,
+      "crush": 9,
+      "magic": -4,
+      "ranged": 9
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 1
+    },
+    "shopValue": 224,
+    "icon": "🦵"
+  },
+  "iron_kiteshield": {
+    "id": "iron_kiteshield",
+    "name": "Iron kiteshield",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -8,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 9,
+      "slash": 11,
+      "crush": 10,
+      "magic": -1,
+      "ranged": 9
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 1
+    },
+    "shopValue": 112,
+    "icon": "🛡️"
+  },
+  "steel_full_helm": {
+    "id": "steel_full_helm",
+    "name": "Steel full helm",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -6,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 9,
+      "slash": 11,
+      "crush": 8,
+      "magic": -1,
+      "ranged": 9
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 5
+    },
+    "shopValue": 400,
+    "icon": "⛑️"
+  },
+  "steel_platebody": {
+    "id": "steel_platebody",
+    "name": "Steel platebody",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -30,
+      "ranged": -15
+    },
+    "defenceBonus": {
+      "stab": 28,
+      "slash": 27,
+      "crush": 22,
+      "magic": -6,
+      "ranged": 28
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 5
+    },
+    "shopValue": 1200,
+    "icon": "🧥"
+  },
+  "steel_platelegs": {
+    "id": "steel_platelegs",
+    "name": "Steel platelegs",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -21,
+      "ranged": -7
+    },
+    "defenceBonus": {
+      "stab": 17,
+      "slash": 19,
+      "crush": 16,
+      "magic": -4,
+      "ranged": 17
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 5
+    },
+    "shopValue": 650,
+    "icon": "🦵"
+  },
+  "steel_kiteshield": {
+    "id": "steel_kiteshield",
+    "name": "Steel kiteshield",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -8,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 15,
+      "slash": 18,
+      "crush": 17,
+      "magic": -1,
+      "ranged": 16
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 5
+    },
+    "shopValue": 320,
+    "icon": "🛡️"
+  },
+  "mithril_full_helm": {
+    "id": "mithril_full_helm",
+    "name": "Mithril full helm",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -6,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 14,
+      "slash": 17,
+      "crush": 13,
+      "magic": -1,
+      "ranged": 14
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 20
+    },
+    "shopValue": 1040,
+    "icon": "⛑️"
+  },
+  "mithril_platebody": {
+    "id": "mithril_platebody",
+    "name": "Mithril platebody",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -30,
+      "ranged": -15
+    },
+    "defenceBonus": {
+      "stab": 44,
+      "slash": 42,
+      "crush": 37,
+      "magic": -6,
+      "ranged": 44
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 20
+    },
+    "shopValue": 3900,
+    "icon": "🧥"
+  },
+  "mithril_platelegs": {
+    "id": "mithril_platelegs",
+    "name": "Mithril platelegs",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -21,
+      "ranged": -7
+    },
+    "defenceBonus": {
+      "stab": 28,
+      "slash": 31,
+      "crush": 26,
+      "magic": -4,
+      "ranged": 28
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 20
+    },
+    "shopValue": 1950,
+    "icon": "🦵"
+  },
+  "mithril_kiteshield": {
+    "id": "mithril_kiteshield",
+    "name": "Mithril kiteshield",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -8,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 24,
+      "slash": 27,
+      "crush": 26,
+      "magic": -1,
+      "ranged": 25
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 20
+    },
+    "shopValue": 1040,
+    "icon": "🛡️"
+  },
+  "adamant_full_helm": {
+    "id": "adamant_full_helm",
+    "name": "Adamant full helm",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -6,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 19,
+      "slash": 23,
+      "crush": 17,
+      "magic": -1,
+      "ranged": 19
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 30
+    },
+    "shopValue": 2304,
+    "icon": "⛑️"
+  },
+  "adamant_platebody": {
+    "id": "adamant_platebody",
+    "name": "Adamant platebody",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -30,
+      "ranged": -15
+    },
+    "defenceBonus": {
+      "stab": 63,
+      "slash": 61,
+      "crush": 55,
+      "magic": -6,
+      "ranged": 63
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 30
+    },
+    "shopValue": 9600,
+    "icon": "🧥"
+  },
+  "adamant_platelegs": {
+    "id": "adamant_platelegs",
+    "name": "Adamant platelegs",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -21,
+      "ranged": -7
+    },
+    "defenceBonus": {
+      "stab": 40,
+      "slash": 45,
+      "crush": 38,
+      "magic": -4,
+      "ranged": 40
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 30
+    },
+    "shopValue": 5312,
+    "icon": "🦵"
+  },
+  "adamant_kiteshield": {
+    "id": "adamant_kiteshield",
+    "name": "Adamant kiteshield",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -8,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 33,
+      "slash": 38,
+      "crush": 36,
+      "magic": -1,
+      "ranged": 34
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 30
+    },
+    "shopValue": 2496,
+    "icon": "🛡️"
+  },
+  "studded_body": {
+    "id": "studded_body",
+    "name": "Studded body",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -15,
+      "ranged": 15
+    },
+    "defenceBonus": {
+      "stab": 22,
+      "slash": 24,
+      "crush": 17,
+      "magic": -3,
+      "ranged": 30
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 20
+    },
+    "shopValue": 850,
+    "icon": "🧥"
+  },
+  "studded_chaps": {
+    "id": "studded_chaps",
+    "name": "Studded chaps",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -10,
+      "ranged": 10
+    },
+    "defenceBonus": {
+      "stab": 13,
+      "slash": 15,
+      "crush": 12,
+      "magic": -2,
+      "ranged": 21
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 20
+    },
+    "shopValue": 430,
+    "icon": "🩲"
+  },
+  "longbow": {
+    "id": "longbow",
+    "name": "Longbow",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 6,
+    "attackStyle": "ranged",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 8
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 1
+    },
+    "shopValue": 80,
+    "icon": "🏹"
+  },
+  "oak_longbow": {
+    "id": "oak_longbow",
+    "name": "Oak longbow",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 6,
+    "attackStyle": "ranged",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 14
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 5
+    },
+    "shopValue": 160,
+    "icon": "🏹"
+  },
+  "willow_longbow": {
+    "id": "willow_longbow",
+    "name": "Willow longbow",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 6,
+    "attackStyle": "ranged",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 29
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 20
+    },
+    "shopValue": 320,
+    "icon": "🏹"
+  },
+  "maple_longbow": {
+    "id": "maple_longbow",
+    "name": "Maple longbow",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 6,
+    "attackStyle": "ranged",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 46
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 30
+    },
+    "shopValue": 640,
+    "icon": "🏹"
+  },
+  "crossbow": {
+    "id": "crossbow",
+    "name": "Crossbow",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "ranged",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 18
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 1
+    },
+    "shopValue": 70,
+    "icon": "🏹"
+  },
+  "bronze_bolts": {
+    "id": "bronze_bolts",
+    "name": "Bronze bolts",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 10,
+      "magicDamage": 0
+    },
+    "shopValue": 1,
+    "icon": "🔩"
+  },
+  "iron_bolts": {
+    "id": "iron_bolts",
+    "name": "Iron bolts",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 10,
+      "magicDamage": 0
+    },
+    "shopValue": 3,
+    "icon": "🏹"
+  },
+  "magic_staff": {
+    "id": "magic_staff",
+    "name": "Magic staff",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "crush",
+    "attackBonus": {
+      "stab": 7,
+      "slash": -1,
+      "crush": 15,
+      "magic": 15,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 4,
+      "slash": 6,
+      "crush": 2,
+      "magic": 15,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 8,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 1
+    },
+    "shopValue": 200,
+    "icon": "🪄"
+  },
+  "staff_of_air": {
+    "id": "staff_of_air",
+    "name": "Staff of air",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "crush",
+    "attackBonus": {
+      "stab": 7,
+      "slash": -1,
+      "crush": 17,
+      "magic": 10,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 4,
+      "slash": 6,
+      "crush": 2,
+      "magic": 6,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 8,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 1
+    },
+    "shopValue": 1500,
+    "icon": "🌬️"
+  },
+  "staff_of_water": {
+    "id": "staff_of_water",
+    "name": "Staff of water",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "crush",
+    "attackBonus": {
+      "stab": 7,
+      "slash": -1,
+      "crush": 17,
+      "magic": 10,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 4,
+      "slash": 6,
+      "crush": 2,
+      "magic": 6,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 8,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 1
+    },
+    "shopValue": 1500,
+    "icon": "💧"
+  },
+  "staff_of_fire": {
+    "id": "staff_of_fire",
+    "name": "Staff of fire",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "crush",
+    "attackBonus": {
+      "stab": 7,
+      "slash": -1,
+      "crush": 17,
+      "magic": 10,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 4,
+      "slash": 6,
+      "crush": 2,
+      "magic": 6,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 8,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 1
+    },
+    "shopValue": 1500,
+    "icon": "🔥"
+  },
+  "staff_of_earth": {
+    "id": "staff_of_earth",
+    "name": "Staff of earth",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "crush",
+    "attackBonus": {
+      "stab": 7,
+      "slash": -1,
+      "crush": 17,
+      "magic": 10,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 4,
+      "slash": 6,
+      "crush": 2,
+      "magic": 6,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 8,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 1
+    },
+    "shopValue": 1500,
+    "icon": "🌍"
+  },
+  "air_rune": {
+    "id": "air_rune",
+    "name": "Air rune",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 17,
+    "icon": "💨"
+  },
+  "water_rune": {
+    "id": "water_rune",
+    "name": "Water rune",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 17,
+    "icon": "💧"
+  },
+  "earth_rune": {
+    "id": "earth_rune",
+    "name": "Earth rune",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 17,
+    "icon": "🌍"
+  },
+  "fire_rune": {
+    "id": "fire_rune",
+    "name": "Fire rune",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 17,
+    "icon": "🔥"
+  },
+  "mind_rune": {
+    "id": "mind_rune",
+    "name": "Mind rune",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 17,
+    "icon": "🧠"
+  },
+  "body_rune": {
+    "id": "body_rune",
+    "name": "Body rune",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 16,
+    "icon": "🫀"
+  },
+  "chaos_rune": {
+    "id": "chaos_rune",
+    "name": "Chaos rune",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 140,
+    "icon": "💜"
+  },
+  "death_rune": {
+    "id": "death_rune",
+    "name": "Death rune",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 310,
+    "icon": "💀"
+  },
+  "nature_rune": {
+    "id": "nature_rune",
+    "name": "Nature rune",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 200,
+    "icon": "🍀"
+  },
+  "law_rune": {
+    "id": "law_rune",
+    "name": "Law rune",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 200,
+    "icon": "⚖️"
+  },
+  "cosmic_rune": {
+    "id": "cosmic_rune",
+    "name": "Cosmic rune",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 200,
+    "icon": "✨"
+  },
+  "bronze_chainbody": {
+    "id": "bronze_chainbody",
+    "name": "Bronze chainbody",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -15,
+      "ranged": -10
+    },
+    "defenceBonus": {
+      "stab": 11,
+      "slash": 15,
+      "crush": 9,
+      "magic": -3,
+      "ranged": 11
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 1
+    },
+    "shopValue": 60,
+    "icon": "🔗"
+  },
+  "iron_chainbody": {
+    "id": "iron_chainbody",
+    "name": "Iron chainbody",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -15,
+      "ranged": -10
+    },
+    "defenceBonus": {
+      "stab": 19,
+      "slash": 24,
+      "crush": 16,
+      "magic": -3,
+      "ranged": 19
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 1
+    },
+    "shopValue": 112,
+    "icon": "🔗"
+  },
+  "steel_chainbody": {
+    "id": "steel_chainbody",
+    "name": "Steel chainbody",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -15,
+      "ranged": -10
+    },
+    "defenceBonus": {
+      "stab": 28,
+      "slash": 34,
+      "crush": 23,
+      "magic": -3,
+      "ranged": 28
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 5
+    },
+    "shopValue": 400,
+    "icon": "🔗"
+  },
+  "mithril_chainbody": {
+    "id": "mithril_chainbody",
+    "name": "Mithril chainbody",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -15,
+      "ranged": -10
+    },
+    "defenceBonus": {
+      "stab": 39,
+      "slash": 47,
+      "crush": 32,
+      "magic": -3,
+      "ranged": 39
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 20
+    },
+    "shopValue": 1560,
+    "icon": "🔗"
+  },
+  "rune_full_helm": {
+    "id": "rune_full_helm",
+    "name": "Rune full helm",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -6,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 30,
+      "slash": 32,
+      "crush": 27,
+      "magic": -1,
+      "ranged": 30
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 40
+    },
+    "shopValue": 20160,
+    "icon": "⛑️"
+  },
+  "rune_platebody": {
+    "id": "rune_platebody",
+    "name": "Rune platebody",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -30,
+      "ranged": -15
+    },
+    "defenceBonus": {
+      "stab": 82,
+      "slash": 80,
+      "crush": 72,
+      "magic": -6,
+      "ranged": 80
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 40
+    },
+    "shopValue": 65000,
+    "icon": "🛡️"
+  },
+  "rune_platelegs": {
+    "id": "rune_platelegs",
+    "name": "Rune platelegs",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -21,
+      "ranged": -11
+    },
+    "defenceBonus": {
+      "stab": 51,
+      "slash": 49,
+      "crush": 47,
+      "magic": -4,
+      "ranged": 49
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 40
+    },
+    "shopValue": 38400,
+    "icon": "🦵"
+  },
+  "rune_kiteshield": {
+    "id": "rune_kiteshield",
+    "name": "Rune kiteshield",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -8,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 50,
+      "slash": 48,
+      "crush": 46,
+      "magic": 0,
+      "ranged": 50
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 40
+    },
+    "shopValue": 32000,
+    "icon": "🛡️"
+  },
+  "rune_chainbody": {
+    "id": "rune_chainbody",
+    "name": "Rune chainbody",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -15,
+      "ranged": -10
+    },
+    "defenceBonus": {
+      "stab": 60,
+      "slash": 72,
+      "crush": 50,
+      "magic": -3,
+      "ranged": 60
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 40
+    },
+    "shopValue": 60000,
+    "icon": "🔗"
+  },
+  "big_bones": {
+    "id": "big_bones",
+    "name": "Big bones",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 200,
+    "icon": "🦴"
+  },
+  "dragon_bones": {
+    "id": "dragon_bones",
+    "name": "Dragon bones",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 2200,
+    "icon": "🦴"
+  },
+  "green_dragonhide": {
+    "id": "green_dragonhide",
+    "name": "Green dragonhide",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 1500,
+    "icon": "🐉"
+  },
+  "blood_rune": {
+    "id": "blood_rune",
+    "name": "Blood rune",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 300,
+    "icon": "🔴"
+  },
+  "soul_rune": {
+    "id": "soul_rune",
+    "name": "Soul rune",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 250,
+    "icon": "🔵"
+  },
+  "limpwurt_root": {
+    "id": "limpwurt_root",
+    "name": "Limpwurt root",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 400,
+    "icon": "🌿"
+  },
+  "anti_dragon_shield": {
+    "id": "anti_dragon_shield",
+    "name": "Anti-dragon shield",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 8,
+      "slash": 10,
+      "crush": 9,
+      "magic": 0,
+      "ranged": 8
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "antiDragon": true
+    },
+    "requirements": {
+      "defence": 1
+    },
+    "shopValue": 800,
+    "icon": "🛡️"
+  },
+  "abyssal_whip": {
+    "id": "abyssal_whip",
+    "name": "Abyssal whip",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 82,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 82,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 70
+    },
+    "shopValue": 1500000,
+    "icon": "🪱"
+  },
+  "black_wizard_hat": {
+    "id": "black_wizard_hat",
+    "name": "Black wizard hat",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 4,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 4,
+      "ranged": -1
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 10,
+    "icon": "🎩"
+  },
+  "black_wizard_robe": {
+    "id": "black_wizard_robe",
+    "name": "Black wizard robe",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 12,
+      "ranged": -5
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 16,
+      "ranged": -3
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 25,
+    "icon": "🥷"
+  }
+}

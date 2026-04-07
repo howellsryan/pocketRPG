@@ -1,0 +1,226 @@
+import { useState } from 'preact/hooks'
+import { useGame } from '../state/gameState.jsx'
+import { unequipSlot, getEquipmentBonuses } from '../engine/equipment.js'
+import { EQUIPMENT_SLOTS } from '../utils/constants.js'
+import Modal from '../components/Modal.jsx'
+
+const EQ_SLOT_LABELS = {
+  head: '🪖', cape: '🧣', neck: '📿', ammo: '🏹',
+  weapon: '🗡️', body: '👕', shield: '🛡️',
+  legs: '👖', gloves: '🧤', boots: '👢', ring: '💍'
+}
+
+const EQ_SLOT_NAMES = {
+  head: 'Head', cape: 'Cape', neck: 'Neck', ammo: 'Ammo',
+  weapon: 'Weapon', body: 'Body', shield: 'Shield',
+  legs: 'Legs', gloves: 'Gloves', boots: 'Boots', ring: 'Ring'
+}
+
+/**
+ * Renders a single equipment slot in the paperdoll grid.
+ */
+function EquipSlot({ slotName, equipment, itemsData, onSelect }) {
+  const entry = equipment[slotName]
+  const item = entry ? itemsData[entry.itemId] : null
+  const isEmpty = !item
+
+  return (
+    <button
+      onClick={() => { if (item) onSelect(slotName, item) }}
+      style={{
+        width: '56px', height: '56px', borderRadius: '10px',
+        background: isEmpty ? '#111' : '#1a1a1a',
+        border: `1px solid ${isEmpty ? '#222' : '#444'}`,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        cursor: item ? 'pointer' : 'default', position: 'relative',
+        opacity: isEmpty ? 0.4 : 1,
+      }}
+    >
+      <span style={{ fontSize: item ? '18px' : '14px' }}>
+        {item ? (item.icon || '📦') : EQ_SLOT_LABELS[slotName]}
+      </span>
+      <span style={{
+        fontSize: '7px', color: item ? '#e8d5b0' : '#555',
+        textAlign: 'center', marginTop: '2px', fontWeight: item ? '600' : '400',
+        maxWidth: '52px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+      }}>
+        {item ? item.name : EQ_SLOT_NAMES[slotName]}
+      </span>
+    </button>
+  )
+}
+
+export default function EquipmentScreen() {
+  const { equipment, inventory, updateEquipment, updateInventory, addToast, itemsData } = useGame()
+  const [selected, setSelected] = useState(null) // { slot, item }
+
+  const handleSelect = (slotName, item) => {
+    setSelected({ slot: slotName, item })
+  }
+
+  const handleUnequip = () => {
+    if (!selected) return
+    const newInv = [...inventory]
+    const empty = newInv.indexOf(null)
+    if (empty === -1) {
+      addToast('Inventory full', 'error')
+      setSelected(null)
+      return
+    }
+
+    const newEq = { ...equipment }
+    const removed = unequipSlot(newEq, selected.slot)
+    if (removed) {
+      newInv[empty] = { itemId: removed.itemId, quantity: 1 }
+      updateEquipment(newEq)
+      updateInventory(newInv)
+    }
+    setSelected(null)
+  }
+
+  const bonuses = getEquipmentBonuses(equipment, itemsData)
+
+  // Paperdoll grid layout:
+  //   Row 0:  [head]
+  //   Row 1:  [cape] [neck] [ammo]
+  //   Row 2:  [weapon] [body] [shield]
+  //   Row 3:  [legs]
+  //   Row 4:  [gloves] [boots] [ring]
+
+  return (
+    <div style={{ height: '100%', overflowY: 'auto', padding: '16px' }}>
+      <h2 style={{
+        fontFamily: 'Cinzel, serif', fontSize: '11px', fontWeight: 'bold',
+        color: '#e8d5b0', opacity: 0.6, textTransform: 'uppercase',
+        letterSpacing: '0.1em', marginBottom: '12px'
+      }}>Equipment</h2>
+
+      {/* Paperdoll */}
+      <div style={{
+        background: 'linear-gradient(135deg, #141414, #0f0f0f)',
+        borderRadius: '14px', border: '1px solid #2a2a2a',
+        padding: '16px', marginBottom: '16px',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px'
+      }}>
+        {/* Row 0: Head */}
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <EquipSlot slotName="head" equipment={equipment} itemsData={itemsData} onSelect={handleSelect} />
+        </div>
+
+        {/* Row 1: Cape / Neck / Ammo */}
+        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+          <EquipSlot slotName="cape" equipment={equipment} itemsData={itemsData} onSelect={handleSelect} />
+          <EquipSlot slotName="neck" equipment={equipment} itemsData={itemsData} onSelect={handleSelect} />
+          <EquipSlot slotName="ammo" equipment={equipment} itemsData={itemsData} onSelect={handleSelect} />
+        </div>
+
+        {/* Row 2: Weapon / Body / Shield */}
+        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+          <EquipSlot slotName="weapon" equipment={equipment} itemsData={itemsData} onSelect={handleSelect} />
+          <EquipSlot slotName="body" equipment={equipment} itemsData={itemsData} onSelect={handleSelect} />
+          <EquipSlot slotName="shield" equipment={equipment} itemsData={itemsData} onSelect={handleSelect} />
+        </div>
+
+        {/* Row 3: Legs */}
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <EquipSlot slotName="legs" equipment={equipment} itemsData={itemsData} onSelect={handleSelect} />
+        </div>
+
+        {/* Row 4: Gloves / Boots / Ring */}
+        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+          <EquipSlot slotName="gloves" equipment={equipment} itemsData={itemsData} onSelect={handleSelect} />
+          <EquipSlot slotName="boots" equipment={equipment} itemsData={itemsData} onSelect={handleSelect} />
+          <EquipSlot slotName="ring" equipment={equipment} itemsData={itemsData} onSelect={handleSelect} />
+        </div>
+      </div>
+
+      {/* Bonuses summary */}
+      <div style={{
+        background: '#141414', borderRadius: '12px', border: '1px solid #2a2a2a',
+        padding: '12px'
+      }}>
+        <h3 style={{
+          fontFamily: 'Cinzel, serif', fontSize: '10px', fontWeight: 'bold',
+          color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase',
+          letterSpacing: '0.1em', marginBottom: '8px'
+        }}>Bonuses</h3>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '11px' }}>
+          {/* Attack bonuses */}
+          <div>
+            <div style={{ fontSize: '9px', color: '#e8d5b0', opacity: 0.4, marginBottom: '4px', fontWeight: 'bold', textTransform: 'uppercase' }}>Attack</div>
+            {Object.entries(bonuses.attackBonus).map(([k, v]) => (
+              <div key={k} style={{ display: 'flex', justifyContent: 'space-between', color: '#e8d5b0', opacity: 0.7, padding: '1px 0' }}>
+                <span style={{ textTransform: 'capitalize' }}>{k}</span>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', color: v > 0 ? '#27ae60' : v < 0 ? '#c0392b' : '#555' }}>
+                  {v > 0 ? '+' : ''}{v}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Defence bonuses */}
+          <div>
+            <div style={{ fontSize: '9px', color: '#e8d5b0', opacity: 0.4, marginBottom: '4px', fontWeight: 'bold', textTransform: 'uppercase' }}>Defence</div>
+            {Object.entries(bonuses.defenceBonus).map(([k, v]) => (
+              <div key={k} style={{ display: 'flex', justifyContent: 'space-between', color: '#e8d5b0', opacity: 0.7, padding: '1px 0' }}>
+                <span style={{ textTransform: 'capitalize' }}>{k}</span>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', color: v > 0 ? '#27ae60' : v < 0 ? '#c0392b' : '#555' }}>
+                  {v > 0 ? '+' : ''}{v}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Other bonuses */}
+        <div style={{ borderTop: '1px solid #222', marginTop: '8px', paddingTop: '8px' }}>
+          <div style={{ fontSize: '9px', color: '#e8d5b0', opacity: 0.4, marginBottom: '4px', fontWeight: 'bold', textTransform: 'uppercase' }}>Other</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px', fontSize: '11px' }}>
+            {Object.entries(bonuses.otherBonus).map(([k, v]) => {
+              const label = k === 'meleeStrength' ? 'Str' : k === 'rangedStrength' ? 'Rng Str' : 'Mag %'
+              return (
+                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', color: '#e8d5b0', opacity: 0.7 }}>
+                  <span>{label}</span>
+                  <span style={{ fontFamily: 'JetBrains Mono, monospace', color: v > 0 ? '#27ae60' : '#555' }}>
+                    {v > 0 ? '+' : ''}{v}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Unequip modal */}
+      {selected && (
+        <Modal title={selected.item.name} onClose={() => setSelected(null)}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{
+              background: '#111', borderRadius: '8px', padding: '12px',
+              fontSize: '12px', color: '#e8d5b0', opacity: 0.7
+            }}>
+              <p>Slot: {EQ_SLOT_NAMES[selected.slot]}</p>
+              {selected.item.attackSpeed && <p>Attack speed: {selected.item.attackSpeed} ticks</p>}
+              {selected.item.attackStyle && <p>Style: {selected.item.attackStyle}</p>}
+              {selected.item.otherBonus?.meleeStrength > 0 && <p>Strength bonus: +{selected.item.otherBonus.meleeStrength}</p>}
+              {selected.item.requirements && Object.entries(selected.item.requirements).length > 0 && (
+                <p>Requires: {Object.entries(selected.item.requirements).map(([s, l]) => `${s} ${l}`).join(', ')}</p>
+              )}
+            </div>
+            <button
+              onClick={handleUnequip}
+              style={{
+                padding: '12px', borderRadius: '10px',
+                background: '#8b1a1a', color: 'white',
+                fontWeight: '600', fontSize: '14px', border: 'none', cursor: 'pointer'
+              }}
+            >
+              Unequip
+            </button>
+          </div>
+        </Modal>
+      )}
+    </div>
+  )
+}

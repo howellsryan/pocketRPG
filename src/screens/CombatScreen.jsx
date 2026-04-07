@@ -1,0 +1,412 @@
+import { useState, useEffect, useRef } from 'preact/hooks'
+import { useGame } from '../state/gameState.jsx'
+import Modal from '../components/Modal.jsx'
+import HPBar from '../components/HPBar.jsx'
+import { createCombatState, processCombatTick, applyEat } from '../engine/combat.js'
+import { getLevelFromXP } from '../engine/experience.js'
+import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
+import { onTick } from '../engine/tick.js'
+import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
+import monstersData from '../data/monsters.json'
+import itemsData from '../data/items.json'
+import { SCREENS } from '../utils/constants.js'
+
+const monsterList = Object.values(monstersData)
+
+const MONSTER_ICONS = {
+  chicken: '🐔', goblin: '👺', cow: '🐄', giant_spider: '🕷️',
+  rock_crab: '🦀', sand_crab: '🦀', hill_giant: '👊', moss_giant: '🌿',
+  wizard: '🧙', dark_wizard: '🧙‍♂️', abyssal_demon: '😈',
+  green_dragon: '🐉', lesser_demon: '👿'
+}
+
+export default function CombatScreen({ onNavigate, initialMonsterId }) {
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot } = useGame()
+
+  const [combat, setCombat] = useState(null)
+  const [log, setLog] = useState([])
+  const [killCount, setKillCount] = useState(0)
+  const [fightStartedAt, setFightStartedAt] = useState(null)
+
+  const combatRef = useRef(null)
+  const hpRef = useRef(currentHP)
+  const hasAutoStarted = useRef(false)
+  const inventoryRef = useRef(inventory)
+  const bankRef = useRef(bank)
+  const statsRef = useRef(stats)
+  const equipmentRef = useRef(equipment)
+
+  useEffect(() => { hpRef.current = currentHP }, [currentHP])
+  useEffect(() => { inventoryRef.current = inventory }, [inventory])
+  useEffect(() => { bankRef.current = bank }, [bank])
+  useEffect(() => { statsRef.current = stats }, [stats])
+  useEffect(() => { equipmentRef.current = equipment }, [equipment])
+
+  // Auto-start fight from home shortcut
+  useEffect(() => {
+    if (initialMonsterId && !hasAutoStarted.current && !combat) {
+      hasAutoStarted.current = true
+      const monster = monstersData[initialMonsterId]
+      if (monster) startFight(monster)
+    }
+  }, [initialMonsterId])
+
+  // Tick listener for combat
+  useEffect(() => {
+    if (!combat || !combat.active) return
+    combatRef.current = combat
+
+    const unsub = onTick(() => {
+      const state = combatRef.current
+      if (!state || !state.active) return
+
+      const playerStats = {
+        attack: getLevelFromXP(statsRef.current.attack?.xp || 0),
+        strength: getLevelFromXP(statsRef.current.strength?.xp || 0),
+        defence: getLevelFromXP(statsRef.current.defence?.xp || 0),
+        ranged: getLevelFromXP(statsRef.current.ranged?.xp || 0),
+        magic: getLevelFromXP(statsRef.current.magic?.xp || 0),
+        currentHP: hpRef.current
+      }
+
+      const { combatState, events } = processCombatTick(state, playerStats, equipmentRef.current, itemsData)
+      combatRef.current = combatState
+      setCombat({ ...combatState })
+
+      for (const ev of events) {
+        if (ev.type === 'playerHit') {
+          setLog(prev => [...prev.slice(-20), {
+            text: ev.damage > 0 ? `You hit ${ev.damage}` : 'You miss',
+            type: ev.damage > 0 ? 'hit' : 'miss',
+            time: Date.now()
+          }])
+        }
+        if (ev.type === 'monsterHit') {
+          const newHP = Math.max(0, hpRef.current - ev.damage)
+          updateHP(newHP)
+          hpRef.current = newHP
+          if (ev.damage > 0) {
+            setLog(prev => [...prev.slice(-20), {
+              text: `${state.monster.name} hits ${ev.damage}`,
+              type: 'enemy',
+              time: Date.now()
+            }])
+          }
+          if (newHP <= 0) {
+            setCombat(prev => ({ ...prev, active: false }))
+            addToast('You died! Respawning...', 'error')
+            setActiveTask(null)
+            updateHP(getMaxHP())
+            hpRef.current = getMaxHP()
+          }
+        }
+        if (ev.type === 'dragonfireHit') {
+          const newHP = Math.max(0, hpRef.current - ev.damage)
+          updateHP(newHP)
+          hpRef.current = newHP
+          setLog(prev => [...prev.slice(-20), {
+            text: `🔥 Dragon breathes fire — ${ev.damage > 0 ? `hits ${ev.damage}!` : 'misses'} (equip Anti-dragon shield!)`,
+            type: 'dragonfire',
+            time: Date.now()
+          }])
+          if (newHP <= 0) {
+            setCombat(prev => ({ ...prev, active: false }))
+            addToast('Incinerated by dragonfire! Respawning...', 'error')
+            setActiveTask(null)
+            updateHP(getMaxHP())
+            hpRef.current = getMaxHP()
+          }
+        }
+        if (ev.type === 'dragonfireBlocked') {
+          setLog(prev => [...prev.slice(-20), {
+            text: `🛡️ Anti-dragon shield blocks the dragonfire!`,
+            type: 'heal',
+            time: Date.now()
+          }])
+        }
+        if (ev.type === 'xp') {
+          for (const [skill, xp] of Object.entries(ev.xpSkills)) {
+            if (xp > 0) grantXP(skill, xp)
+          }
+        }
+        if (ev.type === 'monsterDeath') {
+          setKillCount(k => k + 1)
+          if (ev.loot && ev.loot.length > 0) {
+            const newInv = [...inventoryRef.current]
+            for (const drop of ev.loot) {
+              const item = itemsData[drop.itemId]
+              const added = addItem(newInv, drop.itemId, drop.quantity, item?.stackable || false)
+              if (added) {
+                addToast(`Loot: ${item?.name || drop.itemId} ×${drop.quantity}`, 'drop')
+              }
+            }
+            updateInventory(newInv)
+          }
+          setLog(prev => [...prev.slice(-20), {
+            text: `${state.monster.name} defeated!`,
+            type: 'victory',
+            time: Date.now()
+          }])
+          setTimeout(() => {
+            const original = monstersData[state.monster.id]
+            if (original) continueFight(original)
+          }, 1200)
+        }
+      }
+
+    })
+
+    return unsub
+  }, [combat?.active])
+
+  const startFight = (monster) => {
+    const state = createCombatState(monster, 'melee', combatStance)
+    setCombat(state)
+    setKillCount(0)
+    setFightStartedAt(Date.now())
+    setLog([{ text: `Fighting ${monster.name}...`, type: 'info', time: Date.now() }])
+    setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot })
+  }
+
+  const continueFight = (monster) => {
+    const state = createCombatState(monster, 'melee', combatStance)
+    setCombat(state)
+    setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot })
+  }
+
+  const flee = () => {
+    setCombat(null)
+    setLog([])
+    setActiveTask(null)
+    addToast('You fled!', 'info')
+  }
+
+  const handleEat = () => {
+    const newInv = [...inventoryRef.current]
+    const foodIdx = newInv.findIndex(s => s && itemsData[s.itemId]?.type === 'food')
+    if (foodIdx === -1) { addToast('No food!', 'error'); return }
+
+    const food = itemsData[newInv[foodIdx].itemId]
+    if (newInv[foodIdx].quantity > 1) {
+      newInv[foodIdx] = { ...newInv[foodIdx], quantity: newInv[foodIdx].quantity - 1 }
+    } else {
+      newInv[foodIdx] = null
+    }
+    updateInventory(newInv)
+    const maxHP = getMaxHP()
+    const newHP = Math.min(hpRef.current + food.heals, maxHP)
+    updateHP(newHP)
+    hpRef.current = newHP
+
+    if (combat) {
+      const newState = applyEat(combat)
+      setCombat(newState)
+      combatRef.current = newState
+    }
+
+    setLog(prev => [...prev.slice(-20), {
+      text: `Ate ${food.name}, healed ${food.heals}`,
+      type: 'heal',
+      time: Date.now()
+    }])
+  }
+
+  const fightAnother = () => {
+    if (combat?.monster) {
+      const original = monstersData[combat.monster.id]
+      if (original) startFight(original)
+    }
+  }
+
+  const handleAddToHome = (monster) => {
+    const icon = MONSTER_ICONS[monster.id] || '👹'
+    const shortcut = {
+      label: `Fight ${monster.name}`,
+      icon,
+      screen: SCREENS.COMBAT,
+      monsterId: monster.id
+    }
+    const current = homeShortcuts ?? [
+      { label: 'Fight Monsters', icon: '⚔️', screen: SCREENS.COMBAT },
+      { label: 'Train Skills', icon: '🔨', screen: SCREENS.SKILLS },
+      { label: 'Gather Resources', icon: '🌿', screen: SCREENS.GATHER },
+      { label: 'Open Bank', icon: '🏦', screen: SCREENS.BANK },
+      { label: 'View Stats', icon: '📊', screen: SCREENS.STATS },
+      { label: 'Inventory', icon: '🎒', screen: SCREENS.INVENTORY },
+    ]
+    const alreadyExists = current.some(s => s.label === shortcut.label)
+    if (alreadyExists) {
+      addToast(`Already on home screen!`, 'info')
+      return
+    }
+    updateHomeShortcuts([...current, shortcut])
+    addToast(`${icon} ${shortcut.label} added to Home!`, 'info')
+  }
+
+  const agilityLevel = getLevelFromXP(stats.agility?.xp || 0)
+  const bankDelayMs = getAgilityBankDelayMs(agilityLevel)
+  // Monster picker
+  if (!combat) {
+    return (
+      <div class="h-full overflow-y-auto p-4">
+        <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider mb-3">
+          Choose a Monster
+        </h2>
+
+        {/* Stance selector */}
+        <div class="flex gap-1.5 mb-3">
+          {['accurate', 'aggressive', 'defensive', 'controlled'].map(s => (
+            <button
+              key={s}
+              onClick={() => updateCombatStance(s)}
+              class={`flex-1 py-1.5 rounded-lg text-[10px] font-semibold capitalize transition-colors
+                ${combatStance === s ? 'bg-[var(--color-gold-dim)] text-white' : 'bg-[#1a1a1a] text-[var(--color-parchment)] opacity-50'}`}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+
+        {/* Banking toggle — idle only, persisted */}
+        <div class="mb-3 bg-[#111] rounded-lg px-3 py-2.5 flex items-center justify-between">
+          <div>
+            <div class="text-xs font-semibold text-[var(--color-parchment)]">🏦 Auto-Bank Loot (Idle)</div>
+            <div class="text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5">
+              {autoBankLoot
+                ? `${formatBankDelay(bankDelayMs)} delay (Agility lv ${agilityLevel})`
+                : 'Off — loot stays in inventory'}
+            </div>
+          </div>
+          <button
+            onClick={() => updateAutoBankLoot(!autoBankLoot)}
+            class={`relative flex-shrink-0 w-12 h-7 rounded-full transition-colors duration-200 ${autoBankLoot ? 'bg-[var(--color-gold-dim)]' : 'bg-[#333]'}`}
+            style="min-width:48px"
+          >
+            <span class={`absolute top-[3px] left-[3px] w-[22px] h-[22px] bg-white rounded-full shadow-md transition-transform duration-200 ${autoBankLoot ? 'translate-x-[20px]' : 'translate-x-0'}`} />
+          </button>
+        </div>
+
+        <div class="space-y-2">
+          {monsterList.map(monster => (
+            <div key={monster.id} class="flex gap-2 items-stretch">
+              <button
+                onClick={() => startFight(monster)}
+                class="flex-1 flex items-center justify-between p-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors"
+              >
+                <div class="flex items-center gap-3">
+                  <span class="text-2xl">{MONSTER_ICONS[monster.id] || '👹'}</span>
+                  <div class="text-left">
+                    <div class="text-sm font-semibold text-[var(--color-parchment)]">{monster.name}</div>
+                    <div class="text-[10px] text-[var(--color-parchment)] opacity-40">
+                      HP {monster.hitpoints} · Att {monster.stats.attack} · Def {monster.stats.defence}
+                    </div>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div class="text-xs font-[var(--font-mono)] text-[var(--color-blood-light)]">CB {monster.combatLevel}</div>
+                </div>
+              </button>
+              <button
+                onClick={() => handleAddToHome(monster)}
+                class="px-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5"
+                title="Add to Home Screen"
+              >
+                <span class="text-base">🏠</span>
+                <span class="text-[8px] text-[var(--color-parchment)] opacity-50">Add</span>
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  // Combat view
+  return (
+    <div class="h-full flex flex-col p-4">
+      {/* Monster HP */}
+      <div class="mb-3">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-sm font-semibold text-[var(--color-parchment)]">{combat.monster.name}</span>
+          <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-blood-light)]">CB {combat.monster.combatLevel}</span>
+        </div>
+        <HPBar current={Math.max(0, combat.monster.currentHP)} max={combat.monster.hitpoints} size="large" />
+      </div>
+
+      {/* Player HP */}
+      <div class="mb-2">
+        <div class="text-[10px] text-[var(--color-parchment)] opacity-50 mb-0.5">Your HP</div>
+        <HPBar current={currentHP} max={getMaxHP()} size="large" />
+      </div>
+
+      {/* Inventory slots indicator */}
+      <div class="mb-2 bg-[#111] rounded-lg px-3 py-1.5 flex items-center justify-between">
+        <span class="text-[10px] text-[var(--color-parchment)] opacity-50">🎒 Inventory</span>
+        <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40">
+          {freeSlots(inventory)}/28 free{autoBankLoot ? ' · 🏦 idle auto-bank on' : ''}
+        </span>
+      </div>
+
+      {/* Combat log */}
+      <div class="flex-1 bg-[#111] rounded-lg border border-[#222] p-2 overflow-y-auto mb-2 min-h-[100px]">
+        {log.map((entry, i) => (
+          <div key={i} class={`text-[11px] font-[var(--font-mono)] py-0.5
+            ${entry.type === 'hit' ? 'text-[var(--color-emerald-light)]' :
+              entry.type === 'miss' ? 'text-[var(--color-parchment)] opacity-30' :
+              entry.type === 'enemy' ? 'text-[var(--color-blood-light)]' :
+              entry.type === 'heal' ? 'text-[var(--color-hp-green)]' :
+              entry.type === 'dragonfire' ? 'text-orange-400' :
+              entry.type === 'victory' ? 'text-[var(--color-gold)]' :
+              'text-[var(--color-parchment)] opacity-50'}`}
+          >
+            {entry.text}
+          </div>
+        ))}
+      </div>
+
+      {/* Kill stats */}
+      {fightStartedAt && (
+        <div class="flex-shrink-0 flex justify-between bg-[#111] rounded-lg px-3 py-2 mb-2 text-[11px]">
+          <span class="text-[var(--color-parchment)] opacity-50">Kills</span>
+          <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{killCount}</span>
+          <span class="text-[var(--color-parchment)] opacity-50">Kills/hr</span>
+          <span class="font-[var(--font-mono)] text-[var(--color-gold)]">
+            {killCount > 0 && (Date.now() - fightStartedAt) > 5000
+              ? Math.round(killCount / ((Date.now() - fightStartedAt) / 3600000)).toLocaleString()
+              : '—'}
+          </span>
+        </div>
+      )}
+
+      {/* Action buttons */}
+      <div class="flex-shrink-0 grid grid-cols-3 gap-2">
+        {combat.active ? (
+          <>
+            <button onClick={handleEat}
+              class="py-2.5 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80">
+              🍖 Eat
+            </button>
+            <button class="py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] opacity-40 text-sm cursor-default">
+              🧪 Potion
+            </button>
+            <button onClick={flee}
+              class="py-2.5 rounded-lg bg-[var(--color-blood-mid)] text-white font-semibold text-sm active:opacity-80">
+              🏃 Flee
+            </button>
+          </>
+        ) : (
+          <>
+            <button onClick={fightAnother}
+              class="py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80 col-span-2">
+              ⚔️ Fight Again
+            </button>
+            <button onClick={() => { setCombat(null); setLog([]); setActiveTask(null) }}
+              class="py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80">
+              Back
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}

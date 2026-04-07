@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+:root {
+  --color-parchment: #f5e6c8;
+  --color-parchment-dark: #e8d5a8;
+  --color-ink: #1a1a0e;
+  --color-ink-light: #3d3a2e;
+  --color-gold: #d4a017;
+  --color-gold-light: #f0c040;
+  --color-gold-dim: #8b6914;
+  --color-blood: #8b1a1a;
+  --color-blood-mid: #6b1414;
+  --color-blood-light: #c0392b;
+  --color-emerald: #1a6b3c;
+  --color-emerald-mid: #1d7a44;
+  --color-emerald-light: #27ae60;
+  --color-mana: #2c5aa0;
+  --color-mana-light: #3498db;
+  --color-void: #0f0f0f;
+  --color-void-light: #1a1a1a;
+  --color-void-lighter: #252525;
+  --color-void-border: #333;
+  --color-xp-bar: #3cb043;
+  --color-hp-green: #27ae60;
+  --color-hp-yellow: #f39c12;
+  --color-hp-red: #c0392b;
+  --font-display: 'Cinzel', serif;
+  --font-body: 'Nunito', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+html, body, #app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: var(--color-void);
+  color: var(--color-parchment);
+  font-family: var(--font-body);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--color-void-light); }
+::-webkit-scrollbar-thumb { background: var(--color-void-border); border-radius: 2px; }
+
+/* Toast animations */
+@keyframes toast-in {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes toast-out {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-100%); opacity: 0; }
+}
+.toast-enter { animation: toast-in 0.3s ease-out forwards; }
+.toast-exit { animation: toast-out 0.3s ease-in forwards; }
+
+/* Progress bar animation */
+@keyframes progress-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+.progress-active { animation: progress-pulse 1.2s ease-in-out infinite; }
+
+/* Combat hit flash */
+@keyframes hit-flash {
+  0% { background-color: rgba(192, 57, 43, 0.3); }
+  100% { background-color: transparent; }
+}
+.hit-flash { animation: hit-flash 0.3s ease-out; }
+
+/* Safe area */
+.pb-safe { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
+.mb-safe { margin-bottom: env(safe-area-inset-bottom); }
