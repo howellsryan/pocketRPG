@@ -20,17 +20,9 @@ import { startTicks, stopTicks, onTick } from './engine/tick.js'
 import { exportSave, importSave, snapshotToLocalStorage, restoreFromLocalStorage } from './db/saveload.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility } from './engine/idleEngine.js'
 import { getLevelFromXP } from './engine/experience.js'
-import { freeSlots } from './engine/inventory.js'
-
-// Auto-bank delay: 120s at agility 1, 10s at agility 99 (linear interpolation)
-function getAutoBankSeconds(agilityLevel) {
-  const lvl = Math.max(1, Math.min(99, agilityLevel))
-  // 120s at 1, 10s at 99 — linear
-  return Math.round(120 - (110 * (lvl - 1) / 98))
-}
 
 function GameApp() {
-  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, getSkillLevel, activeTask, setActiveTask, itemsData, getSnapshot } = useGame()
+  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot } = useGame()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [gameReady, setGameReady] = useState(false)
   const [showNewGame, setShowNewGame] = useState(false)
@@ -42,8 +34,6 @@ function GameApp() {
 
   // Refs for tick-based systems
   const hpRegenCounter = useRef(0)
-  const autoBankCounter = useRef(0)
-  const autoBankingActive = useRef(false)
   const snapshotCounter = useRef(99) // Start at 99 so first snapshot fires after 1 tick
 
   useEffect(() => {
@@ -135,6 +125,9 @@ function GameApp() {
           // Apply items
           if (savedTask.type === 'combat' && sim.finalInventory) {
             updateInventory(sim.finalInventory)
+            if (sim.lootBanked && Object.keys(sim.lootBanked).length > 0) {
+              updateBankDirect(sim.lootBanked)
+            }
           } else if (sim.itemsGained) {
             updateBankDirect(sim.itemsGained)
           }
@@ -194,49 +187,6 @@ function GameApp() {
     })
     return unsub
   }, [gameReady, currentHP, stats])
-
-  // Auto-bank when inventory is full
-  useEffect(() => {
-    if (!gameReady) return
-    const unsub = onTick(() => {
-      const free = freeSlots(inventory)
-      if (free > 0) {
-        autoBankCounter.current = 0
-        autoBankingActive.current = false
-        return
-      }
-      // Inventory is full — start counting
-      if (!autoBankingActive.current) {
-        autoBankingActive.current = true
-        autoBankCounter.current = 0
-      }
-      autoBankCounter.current++
-      const agilityLevel = getSkillLevel('agility')
-      const delaySeconds = getAutoBankSeconds(agilityLevel)
-      const delayTicks = Math.round(delaySeconds / 0.6)
-      if (autoBankCounter.current >= delayTicks) {
-        // Auto-bank: deposit all inventory items to bank
-        const newBank = { ...bank }
-        const newInv = [...inventory]
-        for (let i = 0; i < newInv.length; i++) {
-          if (!newInv[i]) continue
-          const slot = newInv[i]
-          if (newBank[slot.itemId]) {
-            newBank[slot.itemId] = { ...newBank[slot.itemId], quantity: newBank[slot.itemId].quantity + slot.quantity }
-          } else {
-            newBank[slot.itemId] = { itemId: slot.itemId, quantity: slot.quantity }
-          }
-          newInv[i] = null
-        }
-        updateInventory(newInv)
-        updateBank(newBank)
-        addToast(`🏦 Auto-banked items! (${delaySeconds}s)`, 'info')
-        autoBankCounter.current = 0
-        autoBankingActive.current = false
-      }
-    })
-    return unsub
-  }, [gameReady, inventory, bank, stats])
 
   async function checkSave() {
     try {
@@ -487,13 +437,27 @@ function GameApp() {
                   })()}
 
                   {/* Loot lost (combat only) */}
+                  {/* Auto-banked loot (combat with bankingEnabled) */}
+                  {idleResult.lootBanked && Object.keys(idleResult.lootBanked).length > 0 && (
+                    <div style={{ marginBottom: '12px', padding: '10px', background: '#0f1a0f', borderRadius: '10px', border: '1px solid #1a3a1a' }}>
+                      <div style={{ fontSize: '11px', color: '#81c784', opacity: 0.9, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>🏦 Auto-Banked</div>
+                      {Object.entries(idleResult.lootBanked).map(([itemId, qty]) => (
+                        <div key={itemId} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#81c784', marginBottom: '3px', opacity: 0.85 }}>
+                          <span style={{ textTransform: 'capitalize' }}>{itemId.replace(/_/g, ' ')}</span>
+                          <span style={{ fontFamily: 'monospace' }}>×{qty.toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Lost loot (combat without bankingEnabled) */}
                   {idleResult.lootLost && Object.keys(idleResult.lootLost).length > 0 && (
                     <div style={{ marginBottom: '12px', padding: '10px', background: '#1a0f0f', borderRadius: '10px', border: '1px solid #3a1a1a' }}>
                       <div style={{ fontSize: '11px', color: '#e57373', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>⚠️ Lost (Inventory Full)</div>
                       {Object.entries(idleResult.lootLost).map(([itemId, qty]) => (
                         <div key={itemId} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e57373', marginBottom: '3px', opacity: 0.8 }}>
                           <span style={{ textTransform: 'capitalize' }}>{itemId.replace(/_/g, ' ')}</span>
-                          <span style={{ fontFamily: 'monospace' }}>×{qty}</span>
+                          <span style={{ fontFamily: 'monospace' }}>×{qty.toLocaleString()}</span>
                         </div>
                       ))}
                     </div>

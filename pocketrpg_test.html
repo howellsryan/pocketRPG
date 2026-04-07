@@ -340,6 +340,13 @@ function avgHitStats_test(playerStats, equipment, monster, stance, itemsData) {
   return { avgDmgPerHit, weaponSpeed, acc }
 }
 
+function getAgilityBankDelayFromStats(stats) {
+  // Simplified stub for tests: returns 5-minute delay (level 1 agility)
+  const lvl = Math.max(1, Math.min(99, getLevelFromXP(stats?.agility?.xp || 0)))
+  const t = (lvl - 1) / 98
+  return Math.round(300000 + t * (10000 - 300000))
+}
+
 function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsData) {
   if (!task || !task.monster) return null
   const monster = task.monster
@@ -355,17 +362,29 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
   const ticksPerKill = hitsNeeded < Infinity ? 1 + (hitsNeeded-1)*weaponSpeed : Infinity
   const RESPAWN_TICKS = 2
   const ticksPerCycle = ticksPerKill < Infinity ? ticksPerKill + RESPAWN_TICKS : Infinity
-  const monstersKilled = ticksPerCycle < Infinity ? Math.floor(totalTicks / ticksPerCycle) : 0
-  if (monstersKilled <= 0) return { xpGained:{}, lootGained:{}, monstersKilled:0, lootLost:{} }
+  if (ticksPerCycle === Infinity) return { xpGained:{}, lootGained:{}, monstersKilled:0, lootLost:{}, lootBanked:{} }
+
+  const bankingEnabled = task.bankingEnabled || false
+  const bankDelayTicks = Math.ceil(getAgilityBankDelayFromStats(stats) / TICK_MS)
+
   const xpSkill = task.stance==='aggressive'?'strength':task.stance==='defensive'?'defence':'attack'
-  const dmgDealt = monster.hitpoints
-  const xpGained = {}
-  xpGained[xpSkill] = Math.floor(dmgDealt * MELEE_XP_PER_DAMAGE) * monstersKilled
-  xpGained.hitpoints = Math.floor(dmgDealt * HP_XP_PER_DAMAGE) * monstersKilled
+  const xpPerKill = {
+    [xpSkill]: Math.floor(monster.hitpoints * MELEE_XP_PER_DAMAGE),
+    hitpoints:  Math.floor(monster.hitpoints * HP_XP_PER_DAMAGE),
+  }
   const newInv = [...inventory]
-  const lootGained = {}
   const lootLost = {}
-  for (let k = 0; k < monstersKilled; k++) {
+  const lootBanked = {}
+  const xpGained = {}
+  let monstersKilled = 0
+  let remainingTicks = totalTicks
+
+  while (remainingTicks >= ticksPerCycle) {
+    remainingTicks -= ticksPerCycle
+    monstersKilled++
+    for (const [skill, xp] of Object.entries(xpPerKill)) {
+      xpGained[skill] = (xpGained[skill] || 0) + xp
+    }
     for (const drop of (monster.drops||[])) {
       if (Math.random() < drop.chance) {
         const qty = Array.isArray(drop.quantity)
@@ -373,20 +392,30 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
           : drop.quantity
         const item = itemsData[drop.itemId]
         const stackable = item?.stackable||false
-        let added = false
         if (stackable) {
           const eIdx = newInv.findIndex(s => s && s.itemId===drop.itemId)
-          if (eIdx!==-1) { newInv[eIdx]={...newInv[eIdx],quantity:newInv[eIdx].quantity+qty}; added=true }
-          else { const ei=newInv.indexOf(null); if(ei!==-1){newInv[ei]={itemId:drop.itemId,quantity:qty};added=true} }
+          if (eIdx!==-1) { newInv[eIdx]={...newInv[eIdx],quantity:newInv[eIdx].quantity+qty} }
+          else { const ei=newInv.indexOf(null); if(ei!==-1){newInv[ei]={itemId:drop.itemId,quantity:qty}}
+                 else if(bankingEnabled) lootBanked[drop.itemId]=(lootBanked[drop.itemId]||0)+qty
+                 else lootLost[drop.itemId]=(lootLost[drop.itemId]||0)+qty }
         } else {
-          for (let q=0;q<qty;q++){const ei=newInv.indexOf(null);if(ei!==-1){newInv[ei]={itemId:drop.itemId,quantity:1};added=true}else{lootLost[drop.itemId]=(lootLost[drop.itemId]||0)+(qty-q);break}}
+          let addedQty=0
+          for(let q=0;q<qty;q++){const ei=newInv.indexOf(null);if(ei!==-1){newInv[ei]={itemId:drop.itemId,quantity:1};addedQty++}else break}
+          const lostQty=qty-addedQty
+          if(lostQty>0){if(bankingEnabled)lootBanked[drop.itemId]=(lootBanked[drop.itemId]||0)+lostQty
+                        else lootLost[drop.itemId]=(lootLost[drop.itemId]||0)+lostQty}
         }
-        if (added) lootGained[drop.itemId]=(lootGained[drop.itemId]||0)+qty
-        else lootLost[drop.itemId]=(lootLost[drop.itemId]||0)+qty
       }
     }
+    if (bankingEnabled && newInv.indexOf(null)===-1) {
+      if (remainingTicks < bankDelayTicks) break
+      remainingTicks -= bankDelayTicks
+      for(let i=0;i<newInv.length;i++){if(!newInv[i])continue;lootBanked[newInv[i].itemId]=(lootBanked[newInv[i].itemId]||0)+newInv[i].quantity;newInv[i]=null}
+    }
   }
-  return { xpGained, lootGained, lootLost, monstersKilled, finalInventory: newInv }
+  const lootGained = {}
+  for (const slot of newInv) { if(!slot)continue; lootGained[slot.itemId]=(lootGained[slot.itemId]||0)+slot.quantity }
+  return { xpGained, lootGained, lootLost, lootBanked, monstersKilled, finalInventory: newInv }
 }
 
 // ─────────────────────────────────────────────
@@ -942,6 +971,40 @@ function runAll() {
   assert('abyssal_whip exists in ITEMS_DATA', !!ITEMS_DATA['abyssal_whip'], 'item missing')
   assert('abyssal_whip slash bonus = 82', ITEMS_DATA['abyssal_whip'] && ITEMS_DATA['abyssal_whip'].attackBonus && ITEMS_DATA['abyssal_whip'].attackBonus.slash === 82, `got ${ITEMS_DATA['abyssal_whip'] && ITEMS_DATA['abyssal_whip'].attackBonus && ITEMS_DATA['abyssal_whip'].attackBonus.slash}`)
   assert('abyssal_whip requires attack 70', ITEMS_DATA['abyssal_whip'] && ITEMS_DATA['abyssal_whip'].requirements && ITEMS_DATA['abyssal_whip'].requirements.attack === 70, 'wrong attack requirement')
+
+  // ── GROUP 24: Auto-bank in idle combat ──
+  group('Auto-bank in Idle Combat')
+  const cowBankItems = { cowhide:{ stackable:false }, raw_beef:{ stackable:false }, bones:{ stackable:false } }
+  const cowBankMon = {
+    id:'cow', name:'Cow', hitpoints:8, combatLevel:2,
+    stats:{ attack:1, strength:1, defence:1 }, attackSpeed:4,
+    drops:[
+      { itemId:'cowhide',  quantity:1, chance:1.0 },
+      { itemId:'raw_beef', quantity:1, chance:1.0 },
+      { itemId:'bones',    quantity:1, chance:1.0 },
+    ]
+  }
+  // Without banking: items lost when inv fills
+  const noBankResult = simulateIdleCombat({ monster:cowBankMon, stance:'accurate', bankingEnabled:false }, 3600000, combatStats, emptyEq, createInventory(), cowBankItems)
+  assert('No-bank: kills > 0', noBankResult.monstersKilled > 0, `got ${noBankResult.monstersKilled}`)
+  assert('No-bank: items lost when inv fills', Object.keys(noBankResult.lootLost).length > 0, 'expected some lost loot')
+  assert('No-bank: lootBanked is empty', Object.keys(noBankResult.lootBanked).length === 0, 'expected empty lootBanked')
+  assert('No-bank: gained + lost = kills per item', (() => {
+    const g = noBankResult.lootGained.cowhide || 0
+    const l = noBankResult.lootLost.cowhide || 0
+    return g + l === noBankResult.monstersKilled
+  })(), 'cowhide gained+lost should equal kills')
+
+  // With banking: no items lost, banked items accumulate, fewer kills (bank trips cost time)
+  const bankResult = simulateIdleCombat({ monster:cowBankMon, stance:'accurate', bankingEnabled:true }, 3600000, combatStats, emptyEq, createInventory(), cowBankItems)
+  assert('Bank: lootLost is empty', Object.keys(bankResult.lootLost).length === 0, 'expected no lost loot with banking on')
+  assert('Bank: lootBanked has items', Object.keys(bankResult.lootBanked).length > 0, 'expected banked loot')
+  assert('Bank: gained + banked = kills per item', (() => {
+    const g = bankResult.lootGained.cowhide || 0
+    const b = bankResult.lootBanked.cowhide || 0
+    return g + b === bankResult.monstersKilled
+  })(), 'cowhide gained+banked should equal kills')
+  assert('Bank: fewer kills than no-bank (trips cost time)', bankResult.monstersKilled <= noBankResult.monstersKilled, `bank:${bankResult.monstersKilled} no-bank:${noBankResult.monstersKilled}`)
 
 
 // ─────────────────────────────────────────────
