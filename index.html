@@ -6850,6 +6850,19 @@ function formatNumber(n) {
     return n.toLocaleString('en-US');
 }
 /**
+ * Format an item quantity for display.
+ * >= 10,000,000 → e.g. "956M" (isM: true, shown in green)
+ * >= 100,000    → e.g. "105k" (isM: false, shown in gold)
+ * otherwise     → plain number string
+ */
+function formatQuantity(n) {
+    if (n >= 10000000)
+        return { text: `${Math.floor(n / 1000000)}M`, isM: true };
+    if (n >= 100000)
+        return { text: `${Math.floor(n / 1000)}k`, isM: false };
+    return { text: String(n), isM: false };
+}
+/**
  * Format ticks to human-readable time
  */
 function ticksToTime(ticks) {
@@ -8859,6 +8872,7 @@ function SkillBadge({ skill, xp, level, onClick, compact = false }) {
 
 // ── components/ItemSlot.js ──
 
+
 const TYPE_COLORS = {
     weapon: 'border-[var(--color-blood)]/40',
     armour: 'border-[var(--color-mana)]/40',
@@ -8884,7 +8898,10 @@ function ItemSlot({ slot, onClick, size = 'normal', showName = false, highlight 
         ${highlight ? 'ring-1 ring-[var(--color-gold)]' : ''}` },
         h("span", { class: size === 'small' ? 'text-sm' : 'text-lg' }, emoji),
         slot.noted && (h("span", { class: "absolute top-0 left-0.5 text-[8px]" }, "\uD83D\uDCDC")),
-        slot.quantity > 1 && (h("span", { class: "absolute top-0 right-0.5 text-[8px] font-[var(--font-mono)] font-bold text-[var(--color-gold)]" }, slot.quantity > 9999 ? `${Math.floor(slot.quantity / 1000)}k` : slot.quantity)),
+        slot.quantity > 1 && (() => {
+            const { text, isM } = formatQuantity(slot.quantity);
+            return (h("span", { class: `absolute top-0 right-0.5 text-[8px] font-[var(--font-mono)] font-bold ${isM ? 'text-[var(--color-emerald)]' : 'text-[var(--color-gold)]'}` }, text));
+        })(),
         showName && (h("span", { class: "text-[7px] text-[var(--color-parchment)] opacity-60 truncate w-full text-center mt-0.5 px-0.5" }, item.name))));
 }
 
@@ -9467,6 +9484,7 @@ function InventoryScreen() {
 
 
 
+
 function BankScreen() {
     const { bank, inventory, updateBank, updateInventory, addToast, itemsData } = useGame();
     const [selected, setSelected] = useState(null);
@@ -9535,9 +9553,12 @@ function BankScreen() {
             return (h("button", { key: entry.itemId, onClick: () => setSelected(entry), class: "flex flex-col items-center p-2 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222]" },
                 h("span", { class: "text-lg" }, emoji),
                 h("span", { class: "text-[8px] text-[var(--color-parchment)] opacity-60 truncate w-full text-center" }, item.name),
-                h("span", { class: "text-[9px] font-[var(--font-mono)] font-bold text-[var(--color-gold)]" },
-                    "\u00D7",
-                    entry.quantity)));
+                (() => {
+                    const { text, isM } = formatQuantity(entry.quantity);
+                    return (h("span", { class: `text-[9px] font-[var(--font-mono)] font-bold ${isM ? 'text-[var(--color-emerald)]' : 'text-[var(--color-gold)]'}` },
+                        "\u00D7",
+                        text));
+                })()));
         }))),
         selected && (() => {
             const selItem = itemsData[selected.itemId];
@@ -9546,14 +9567,17 @@ function BankScreen() {
                 h("div", { class: "space-y-3" },
                     h("div", { class: "text-center text-sm text-[var(--color-parchment)] opacity-60" },
                         "In bank: ",
-                        h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, selected.quantity)),
+                        (() => {
+                            const { text, isM } = formatQuantity(selected.quantity);
+                            return h("span", { class: `font-[var(--font-mono)] ${isM ? 'text-[var(--color-emerald)]' : 'text-[var(--color-gold)]'}` }, text);
+                        })()),
                     h("div", { class: "grid grid-cols-3 gap-2" },
                         [1, 5, 10].map(qty => (h("button", { key: qty, onClick: () => handleWithdraw(selected.itemId, Math.min(qty, selected.quantity)), class: "py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80" },
                             "Take ",
                             qty))),
                         h("button", { onClick: () => handleWithdraw(selected.itemId, selected.quantity), class: "py-2.5 rounded-lg bg-[var(--color-gold-dim)] text-white font-semibold text-sm active:opacity-80 col-span-3" },
                             "Take All (",
-                            selected.quantity,
+                            formatQuantity(selected.quantity).text,
                             ")")),
                     !isStackable && (h("div", { class: "border-t border-[#333] pt-2 mt-1" },
                         h("p", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold" }, "Withdraw as Note"),
@@ -9563,7 +9587,7 @@ function BankScreen() {
                                 qty))),
                             h("button", { onClick: () => handleWithdraw(selected.itemId, selected.quantity, true), class: "py-2 rounded-lg bg-[var(--color-emerald)] text-white font-semibold text-sm active:opacity-80 col-span-3" },
                                 "Note All (",
-                                selected.quantity,
+                                formatQuantity(selected.quantity).text,
                                 ")")))))));
         })()));
 }

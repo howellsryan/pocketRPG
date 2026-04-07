@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import Modal from '../components/Modal.jsx'
+import { formatQuantity } from '../utils/helpers'
 
 export default function BankScreen() {
   const { bank, inventory, updateBank, updateInventory, addToast, itemsData } = useGame()
@@ -76,7 +77,12 @@ export default function BankScreen() {
               >
                 <span class="text-lg">{emoji}</span>
                 <span class="text-[8px] text-[var(--color-parchment)] opacity-60 truncate w-full text-center">{item.name}</span>
-                <span class="text-[9px] font-[var(--font-mono)] font-bold text-[var(--color-gold)]">×{entry.quantity}</span>
+                {(() => {
+                  const { text, isM } = formatQuantity(entry.quantity)
+                  return (
+                    <span class={`text-[9px] font-[var(--font-mono)] font-bold ${isM ? 'text-[var(--color-emerald)]' : 'text-[var(--color-gold)]'}`}>×{text}</span>
+                  )
+                })()}
               </button>
             )
           })}
@@ -91,7 +97,10 @@ export default function BankScreen() {
         <Modal title={selItem?.name || selected.itemId} onClose={() => setSelected(null)}>
           <div class="space-y-3">
             <div class="text-center text-sm text-[var(--color-parchment)] opacity-60">
-              In bank: <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{selected.quantity}</span>
+              In bank: {(() => {
+                const { text, isM } = formatQuantity(selected.quantity)
+                return <span class={`font-[var(--font-mono)] ${isM ? 'text-[var(--color-emerald)]' : 'text-[var(--color-gold)]'}`}>{text}</span>
+              })()}
             </div>
             <div class="grid grid-cols-3 gap-2">
               {[1, 5, 10].map(qty => (
@@ -107,7 +116,7 @@ export default function BankScreen() {
                 onClick={() => handleWithdraw(selected.itemId, selected.quantity)}
                 class="py-2.5 rounded-lg bg-[var(--color-gold-dim)] text-white font-semibold text-sm active:opacity-80 col-span-3"
               >
-                Take All ({selected.quantity})
+                Take All ({formatQuantity(selected.quantity).text})
               </button>
             </div>
 
@@ -129,7 +138,7 @@ export default function BankScreen() {
                     onClick={() => handleWithdraw(selected.itemId, selected.quantity, true)}
                     class="py-2 rounded-lg bg-[var(--color-emerald)] text-white font-semibold text-sm active:opacity-80 col-span-3"
                   >
-                    Note All ({selected.quantity})
+                    Note All ({formatQuantity(selected.quantity).text})
                   </button>
                 </div>
               </div>

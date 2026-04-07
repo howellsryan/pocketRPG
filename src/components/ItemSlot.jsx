@@ -1,4 +1,5 @@
 import itemsData from '../data/items.json'
+import { formatQuantity } from '../utils/helpers'
 
 const TYPE_COLORS = {
   weapon: 'border-[var(--color-blood)]/40',
@@ -37,11 +38,14 @@ export default function ItemSlot({ slot, onClick, size = 'normal', showName = fa
       {slot.noted && (
         <span class="absolute top-0 left-0.5 text-[8px]">📜</span>
       )}
-      {slot.quantity > 1 && (
-        <span class="absolute top-0 right-0.5 text-[8px] font-[var(--font-mono)] font-bold text-[var(--color-gold)]">
-          {slot.quantity > 9999 ? `${Math.floor(slot.quantity / 1000)}k` : slot.quantity}
-        </span>
-      )}
+      {slot.quantity > 1 && (() => {
+        const { text, isM } = formatQuantity(slot.quantity)
+        return (
+          <span class={`absolute top-0 right-0.5 text-[8px] font-[var(--font-mono)] font-bold ${isM ? 'text-[var(--color-emerald)]' : 'text-[var(--color-gold)]'}`}>
+            {text}
+          </span>
+        )
+      })()}
       {showName && (
         <span class="text-[7px] text-[var(--color-parchment)] opacity-60 truncate w-full text-center mt-0.5 px-0.5">
           {item.name}
