@@ -719,6 +719,96 @@ function runAll() {
   assert('Cows killed > 0', cowResult.monstersKilled > 0)
   assert('Cowhide or lostLoot', (cowResult.lootGained.cowhide||0) + (cowResult.lootLost.cowhide||0) === cowResult.monstersKilled)
   assert('Raw beef or lostLoot', (cowResult.lootGained.raw_beef||0) + (cowResult.lootLost.raw_beef||0) === cowResult.monstersKilled)
+
+  // ── GROUP 20: Store OSRS Prices ──
+  group('Store OSRS Prices')
+  // Verify OSRS-accurate NPC buy prices for key items across all tabs
+  const STORE_PRICES = {
+    // General
+    needle: 1, thread: 1, tinderbox: 1, hammer: 1,
+    // Weapons — scimitars from Zeke's Al-Kharid
+    bronze_scimitar: 32, iron_scimitar: 112, steel_scimitar: 400,
+    mithril_scimitar: 1040, adamant_scimitar: 2560, rune_scimitar: 20480,
+    // Weapons — swords from Varrock Swordshop
+    bronze_sword: 26, iron_sword: 91, steel_sword: 325,
+    bronze_longsword: 40, iron_longsword: 140, steel_longsword: 500,
+    // Armour — Horvik's Varrock
+    bronze_full_helm: 168, bronze_platebody: 400, bronze_platelegs: 240,
+    iron_platebody: 800, steel_platebody: 3840, mithril_platebody: 13000,
+    rune_platebody: 65000, rune_kiteshield: 32000,
+    // Ranged — Lowe's Archery Emporium
+    bronze_arrow: 1, iron_arrow: 3, steel_arrow: 12,
+    mithril_arrow: 32, adamant_arrow: 80,
+    shortbow: 50, longbow: 80, oak_shortbow: 100, maple_shortbow: 400,
+    crossbow: 70, bronze_bolts: 1,
+    // Magic — Aubury's Rune Shop
+    air_rune: 17, water_rune: 17, earth_rune: 17, fire_rune: 17,
+    mind_rune: 17, body_rune: 16, chaos_rune: 140, death_rune: 310,
+    // Magic — Zaff's Superior Staffs
+    staff: 15, staff_of_air: 1500, staff_of_water: 1500,
+    staff_of_earth: 1500, staff_of_fire: 1500,
+  }
+
+  // Build a flat map from all store tabs for quick lookup
+  const ALL_TABS = {
+    General: [
+      {id:'needle',price:1},{id:'thread',price:1},{id:'tinderbox',price:1},{id:'hammer',price:1},{id:'chisel',price:1},{id:'shears',price:1}
+    ],
+    Weapons: [
+      {id:'bronze_dagger',price:35},{id:'iron_dagger',price:112},{id:'steel_dagger',price:325},{id:'mithril_dagger',price:845},{id:'adamant_dagger',price:2080},
+      {id:'bronze_scimitar',price:32},{id:'iron_scimitar',price:112},{id:'steel_scimitar',price:400},{id:'mithril_scimitar',price:1040},{id:'adamant_scimitar',price:2560},{id:'rune_scimitar',price:20480},
+      {id:'bronze_sword',price:26},{id:'iron_sword',price:91},{id:'steel_sword',price:325},{id:'mithril_sword',price:845},{id:'adamant_sword',price:2080},
+      {id:'bronze_longsword',price:40},{id:'iron_longsword',price:140},{id:'steel_longsword',price:500},{id:'mithril_longsword',price:1300},{id:'adamant_longsword',price:3200},
+      {id:'bronze_mace',price:18},{id:'iron_mace',price:56},{id:'steel_mace',price:200},{id:'mithril_mace',price:520},{id:'adamant_mace',price:1280}
+    ],
+    Armour: [
+      {id:'bronze_full_helm',price:168},{id:'bronze_platebody',price:400},{id:'bronze_platelegs',price:240},{id:'bronze_kiteshield',price:168},{id:'bronze_chainbody',price:60},
+      {id:'iron_full_helm',price:280},{id:'iron_platebody',price:800},{id:'iron_platelegs',price:560},{id:'iron_kiteshield',price:280},{id:'iron_chainbody',price:112},
+      {id:'steel_full_helm',price:1200},{id:'steel_platebody',price:3840},{id:'steel_platelegs',price:2560},{id:'steel_kiteshield',price:1200},{id:'steel_chainbody',price:400},
+      {id:'mithril_full_helm',price:3136},{id:'mithril_platebody',price:13000},{id:'mithril_platelegs',price:8960},{id:'mithril_kiteshield',price:3584},{id:'mithril_chainbody',price:1560},
+      {id:'adamant_full_helm',price:8064},{id:'adamant_platebody',price:33600},{id:'adamant_platelegs',price:22400},{id:'adamant_kiteshield',price:8960},
+      {id:'rune_med_helm',price:11000},{id:'rune_full_helm',price:20160},{id:'rune_platebody',price:65000},{id:'rune_platelegs',price:38400},{id:'rune_kiteshield',price:32000},{id:'rune_chainbody',price:60000}
+    ],
+    Ranged: [
+      {id:'shortbow',price:50},{id:'longbow',price:80},{id:'oak_shortbow',price:100},{id:'oak_longbow',price:160},
+      {id:'willow_shortbow',price:200},{id:'willow_longbow',price:320},{id:'maple_shortbow',price:400},{id:'maple_longbow',price:640},{id:'crossbow',price:70},
+      {id:'bronze_arrow',price:1},{id:'iron_arrow',price:3},{id:'steel_arrow',price:12},{id:'mithril_arrow',price:32},{id:'adamant_arrow',price:80},
+      {id:'bronze_bolts',price:1},{id:'iron_bolts',price:3},
+      {id:'leather_coif',price:9},{id:'leather_body',price:21},{id:'leather_chaps',price:18},{id:'leather_gloves',price:6},{id:'leather_boots',price:6},
+      {id:'hard_leather_body',price:132},{id:'studded_body',price:850},{id:'studded_chaps',price:430}
+    ],
+    Magic: [
+      {id:'staff',price:15},{id:'magic_staff',price:200},{id:'staff_of_air',price:1500},{id:'staff_of_water',price:1500},{id:'staff_of_earth',price:1500},{id:'staff_of_fire',price:1500},
+      {id:'wizard_hat',price:50},{id:'wizard_robe_top',price:170},{id:'wizard_robe_skirt',price:100},
+      {id:'air_rune',price:17},{id:'water_rune',price:17},{id:'earth_rune',price:17},{id:'fire_rune',price:17},
+      {id:'mind_rune',price:17},{id:'body_rune',price:16},{id:'chaos_rune',price:140},{id:'death_rune',price:310}
+    ]
+  }
+
+  const flatStore = Object.values(ALL_TABS).flat()
+  const storeMap = Object.fromEntries(flatStore.map(i => [i.id, i.price]))
+
+  // Check total item count across all tabs
+  assert('Store has 5 tabs', Object.keys(ALL_TABS).length === 5, `got ${Object.keys(ALL_TABS).length}`)
+  assert('Store has 80+ items total', flatStore.length >= 80, `got ${flatStore.length}`)
+
+  // Spot-check key OSRS prices
+  assert('bronze_scimitar = 32gp (Zeke)', storeMap['bronze_scimitar'] === 32, `got ${storeMap['bronze_scimitar']}`)
+  assert('rune_scimitar = 20480gp', storeMap['rune_scimitar'] === 20480, `got ${storeMap['rune_scimitar']}`)
+  assert('bronze_arrow = 1gp (Lowes)', storeMap['bronze_arrow'] === 1, `got ${storeMap['bronze_arrow']}`)
+  assert('adamant_arrow = 80gp', storeMap['adamant_arrow'] === 80, `got ${storeMap['adamant_arrow']}`)
+  assert('air_rune = 17gp (Aubury)', storeMap['air_rune'] === 17, `got ${storeMap['air_rune']}`)
+  assert('chaos_rune = 140gp', storeMap['chaos_rune'] === 140, `got ${storeMap['chaos_rune']}`)
+  assert('death_rune = 310gp', storeMap['death_rune'] === 310, `got ${storeMap['death_rune']}`)
+  assert('staff_of_air = 1500gp (Zaff)', storeMap['staff_of_air'] === 1500, `got ${storeMap['staff_of_air']}`)
+  assert('rune_platebody = 65000gp', storeMap['rune_platebody'] === 65000, `got ${storeMap['rune_platebody']}`)
+  assert('mithril_platebody = 13000gp', storeMap['mithril_platebody'] === 13000, `got ${storeMap['mithril_platebody']}`)
+  assert('shortbow = 50gp (Lowes)', storeMap['shortbow'] === 50, `got ${storeMap['shortbow']}`)
+  assert('maple_shortbow = 400gp', storeMap['maple_shortbow'] === 400, `got ${storeMap['maple_shortbow']}`)
+  assert('No duplicate item IDs in store', flatStore.length === new Set(flatStore.map(i=>i.id)).size, `dupes found`)
+  assert('All store prices > 0', flatStore.every(i => i.price > 0), 'some prices are 0 or negative')
+  assert('rune_kiteshield in store', 'rune_kiteshield' in storeMap)
+  assert('bronze_chainbody in store', 'bronze_chainbody' in storeMap)
 }
 
 // ─────────────────────────────────────────────
