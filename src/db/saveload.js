@@ -51,7 +51,7 @@ export async function exportSave() {
   const json = JSON.stringify(data)
   const hash = fnv1a(json)
   const payload = JSON.stringify({ hash, data: json })
-  const encoded = btoa(payload)
+  const encoded = btoa(unescape(encodeURIComponent(payload)))
 
   // Download
   const blob = new Blob([encoded], { type: 'application/octet-stream' })
@@ -71,7 +71,7 @@ export async function importSave(file) {
     const reader = new FileReader()
     reader.onload = async (e) => {
       try {
-        const decoded = atob(e.target.result)
+        const decoded = decodeURIComponent(escape(atob(e.target.result)))
         const { hash, data: json } = JSON.parse(decoded)
 
         // Verify integrity
