@@ -1,56 +1,51 @@
-# PocketRPG — Compact Briefing
-**v1.3 | Status: Pre-MVP Prototype**
+# PocketRPG — Project Reference
+**v1.4 | Status: Pre-MVP Prototype**
 
 ## 1. CORE CONCEPT
 Menu-driven idle/simulation fantasy RPG. 0.6s tick-based engine. Text/icon/progress-bar UI. Mobile-first, offline-first (IndexedDB). No animations/pixel art.
 
 ## 2. TECH STACK & RULES
-- **Stack:** Preact (UI), Vite (Build — when node_modules available), Tailwind v4 (Style), IndexedDB/idb (Storage).
-- **Architecture:** `engine/` (pure logic, no UI), `screens/` (top-level), `state/` (Preact signals), `db/` (persistence).
+- **Stack:** Preact (UI), Tailwind v4 via CDN (Style), IndexedDB/idb (Storage).
+- **Architecture:** `engine/` (pure logic, no UI), `screens/` (top-level), `state/` (Preact context/hooks), `db/` (persistence).
 - **Rules:** Engine has ZERO UI imports. Static JSON is immutable. State flows down, events flow up. Debounced auto-save (300ms).
 
 ## 3. BUILD PROCESS
-Two build paths exist:
+The standard build is the **single-file build** — this is what gets committed and served.
 
-### A) Vite Build (requires node_modules)
-```bash
-npm install
-npm run build
-```
-Produces `dist/` folder with optimized bundle.
-
-### B) Single-File Build (no node_modules needed)
 ```bash
 tsc --project tsconfig.build.json   # Transpile JSX → h() calls via TypeScript
-node build_single.cjs               # Concatenate + inline into single HTML
+node build_single.cjs               # Concatenate + inline into index.html
 ```
-Uses `tsc` (globally available) to transpile JSX with `jsxFactory: "h"` and `jsxFragmentFactory: "Fragment"` for Preact. The `build_single.cjs` script then:
-1. Reads all transpiled `.js` files from `dist_tmp/` in dependency order
-2. Strips import/export statements (everything is concatenated into one scope)
+
+`build_single.cjs` transpiles with `jsxFactory: "h"` / `jsxFragmentFactory: "Fragment"` for Preact, then:
+1. Reads all `.js` files from `dist_tmp/` in dependency order
+2. Strips import/export statements (everything concatenated into one scope)
 3. Inlines JSON data files (items, monsters, skills, spells)
-4. Inlines CSS (minus Tailwind import — CDN script tag used instead)
+4. Inlines CSS (Tailwind loaded via CDN `<script>` tag instead)
 5. Wraps in HTML with ESM CDN imports: `preact@10.25.4`, `preact/hooks`, `idb@8.0.2`
-6. Fixes dynamic imports (e.g. `import('./database.js')` → uses global `getDB()`)
-7. Outputs `/mnt/user-data/outputs/index.html`
+6. Fixes dynamic imports (`import('./database.js')` → global `getDB()`)
+7. **Writes output to `index.html` in the project root** (the committed/served file)
 
 **Key files:**
 - `tsconfig.build.json` — TypeScript config for JSX transpilation
-- `build_single.cjs` — Concatenation/inlining script (CommonJS, since package.json has `"type": "module"`)
+- `build_single.cjs` — Build script (CommonJS; `package.json` has `"type": "module"`)
+- `index.html` — The built artifact; committed to git and served directly
 
-## 4. MANDATORY DELIVERY (Non-Negotiable)
-Every session MUST output all three files to `/mnt/user-data/outputs/`:
-1. `index.html`: Single-file playable (ESM CDN imports, inline CSS/Logic, direct IndexedDB).
-2. `pocketrpg_source.zip`: Full project (modular source, build scripts).
-3. `pocketrpg_test.html`: Standalone test suite (see Section 12). **Must be updated every session** to cover any new features built.
+## 4. WORKFLOW (Claude Code)
+Development now uses **Claude Code CLI** with git. The source lives in the repo — no zip exports needed.
 
-### How to update `pocketrpg_test.html`
-The test page lives at `/mnt/user-data/outputs/pocketrpg_test.html` and is delivered alongside the game each session. When adding new features:
-- Read the existing file from the previous session's output before modifying — it is the source of truth for the test suite.
-- Add new test groups at the bottom of `runAll()` following the existing `assert(name, condition, detail)` pattern.
-- Add corresponding modal/visual previews in `renderModalPreview()` if the feature produces UI output.
-- Re-inline any new engine functions added to `src/engine/` — the test page is fully self-contained with no build step.
-- Update the `thresholds` array in `renderResults()` to reflect the new total assertion count per group.
-- All tests must pass (green) before delivery. A failing test is a bug, not a known issue.
+### Every session
+1. Make source changes in `src/`
+2. Rebuild: `tsc --project tsconfig.build.json && node build_single.cjs`
+3. Commit source + rebuilt `index.html` together and push
+
+### Test suite (`pocketrpg_test.html`)
+`pocketrpg_test.html` lives in the project root. When adding new features:
+- Add new test groups at the bottom of `runAll()` using `assert(name, condition, detail)`.
+- Add modal/visual previews in `renderModalPreview()` for UI features.
+- Re-inline any new `src/engine/` functions — the test page is self-contained.
+- Update the `thresholds` array in `renderResults()` to match the new assertion count.
+- All tests must pass (green). A failing test is a bug, not a known issue.
 
 ## 5. XP & LEVELING
 - **Table:** 1–99. Formula: `totalXP(L) = floor(sum(x=1 to L-1) of floor(x + 300 * 2^(x/7)) / 4)`.

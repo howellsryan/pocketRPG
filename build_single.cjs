@@ -124,7 +124,12 @@ render(h(App, null), document.getElementById('app'));
 </body>
 </html>`;
 
-const outDir = '/mnt/user-data/outputs';
-if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
-fs.writeFileSync(path.join(outDir, 'index.html'), html);
+// Always write to project root (the served/committed artifact)
+fs.writeFileSync(path.join(__dirname, 'index.html'), html);
 console.log('✅ Built index.html (' + (html.length / 1024).toFixed(1) + ' KB)');
+
+// Also write to /mnt/user-data/outputs/ if it exists (legacy path)
+const outDir = '/mnt/user-data/outputs';
+if (fs.existsSync(outDir)) {
+  fs.writeFileSync(path.join(outDir, 'index.html'), html);
+}
