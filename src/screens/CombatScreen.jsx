@@ -11,7 +11,32 @@ import monstersData from '../data/monsters.json'
 import itemsData from '../data/items.json'
 import { SCREENS } from '../utils/constants.js'
 
-const monsterList = Object.values(monstersData)
+const COMBAT_CATEGORIES = [
+  {
+    key: 'training',
+    label: 'Training',
+    icon: '⚔️',
+    ids: ['chicken', 'goblin', 'cow', 'rock_crab', 'sand_crab', 'wizard', 'dark_wizard'],
+  },
+  {
+    key: 'dragons_giants',
+    label: 'Dragons & Giants',
+    icon: '🐉',
+    ids: ['giant_spider', 'hill_giant', 'moss_giant', 'lesser_demon', 'green_dragon'],
+  },
+  {
+    key: 'slayer',
+    label: 'Slayer',
+    icon: '💀',
+    ids: ['abyssal_demon'],
+  },
+  {
+    key: 'bossing',
+    label: 'Bossing',
+    icon: '👑',
+    ids: [],
+  },
+]
 
 const MONSTER_ICONS = {
   chicken: '🐔', goblin: '👺', cow: '🐄', giant_spider: '🕷️',
@@ -286,36 +311,55 @@ export default function CombatScreen({ onNavigate, initialMonsterId }) {
           </button>
         </div>
 
-        <div class="space-y-2">
-          {monsterList.map(monster => (
-            <div key={monster.id} class="flex gap-2 items-stretch">
-              <button
-                onClick={() => startFight(monster)}
-                class="flex-1 flex items-center justify-between p-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors"
-              >
-                <div class="flex items-center gap-3">
-                  <span class="text-2xl">{MONSTER_ICONS[monster.id] || '👹'}</span>
-                  <div class="text-left">
-                    <div class="text-sm font-semibold text-[var(--color-parchment)]">{monster.name}</div>
-                    <div class="text-[10px] text-[var(--color-parchment)] opacity-40">
-                      HP {monster.hitpoints} · Att {monster.stats.attack} · Def {monster.stats.defence}
+        <div class="space-y-4">
+          {COMBAT_CATEGORIES.map(category => {
+            const monsters = category.ids
+              .map(id => monstersData[id])
+              .filter(Boolean)
+              .sort((a, b) => a.combatLevel - b.combatLevel)
+            return (
+              <div key={category.key}>
+                <div class="flex items-center gap-2 mb-2 px-1">
+                  <span class="text-base">{category.icon}</span>
+                  <span class="text-xs font-semibold text-[var(--color-parchment)] uppercase tracking-wider opacity-60">{category.label}</span>
+                  {monsters.length === 0 && (
+                    <span class="text-[10px] text-[var(--color-parchment)] opacity-30 italic">— coming soon</span>
+                  )}
+                </div>
+                <div class="space-y-2">
+                  {monsters.map(monster => (
+                    <div key={monster.id} class="flex gap-2 items-stretch">
+                      <button
+                        onClick={() => startFight(monster)}
+                        class="flex-1 flex items-center justify-between p-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors"
+                      >
+                        <div class="flex items-center gap-3">
+                          <span class="text-2xl">{MONSTER_ICONS[monster.id] || '👹'}</span>
+                          <div class="text-left">
+                            <div class="text-sm font-semibold text-[var(--color-parchment)]">{monster.name}</div>
+                            <div class="text-[10px] text-[var(--color-parchment)] opacity-40">
+                              HP {monster.hitpoints} · Att {monster.stats.attack} · Def {monster.stats.defence}
+                            </div>
+                          </div>
+                        </div>
+                        <div class="text-right">
+                          <div class="text-xs font-[var(--font-mono)] text-[var(--color-blood-light)]">CB {monster.combatLevel}</div>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => handleAddToHome(monster)}
+                        class="px-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5"
+                        title="Add to Home Screen"
+                      >
+                        <span class="text-base">🏠</span>
+                        <span class="text-[8px] text-[var(--color-parchment)] opacity-50">Add</span>
+                      </button>
                     </div>
-                  </div>
+                  ))}
                 </div>
-                <div class="text-right">
-                  <div class="text-xs font-[var(--font-mono)] text-[var(--color-blood-light)]">CB {monster.combatLevel}</div>
-                </div>
-              </button>
-              <button
-                onClick={() => handleAddToHome(monster)}
-                class="px-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5"
-                title="Add to Home Screen"
-              >
-                <span class="text-base">🏠</span>
-                <span class="text-[8px] text-[var(--color-parchment)] opacity-50">Add</span>
-              </button>
-            </div>
-          ))}
+              </div>
+            )
+          })}
         </div>
       </div>
     )

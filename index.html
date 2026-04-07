@@ -9965,7 +9965,32 @@ function BankScreen() {
 
 
 
-const monsterList = Object.values(monstersData);
+const COMBAT_CATEGORIES = [
+    {
+        key: 'training',
+        label: 'Training',
+        icon: '⚔️',
+        ids: ['chicken', 'goblin', 'cow', 'rock_crab', 'sand_crab', 'wizard', 'dark_wizard'],
+    },
+    {
+        key: 'dragons_giants',
+        label: 'Dragons & Giants',
+        icon: '🐉',
+        ids: ['giant_spider', 'hill_giant', 'moss_giant', 'lesser_demon', 'green_dragon'],
+    },
+    {
+        key: 'slayer',
+        label: 'Slayer',
+        icon: '💀',
+        ids: ['abyssal_demon'],
+    },
+    {
+        key: 'bossing',
+        label: 'Bossing',
+        icon: '👑',
+        ids: [],
+    },
+];
 const MONSTER_ICONS = {
     chicken: '🐔', goblin: '👺', cow: '🐄', giant_spider: '🕷️',
     rock_crab: '🦀', sand_crab: '🦀', hill_giant: '👊', moss_giant: '🌿',
@@ -10200,26 +10225,37 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
                         : 'Off — loot stays in inventory')),
                 h("button", { onClick: () => updateAutoBankLoot(!autoBankLoot), class: `relative flex-shrink-0 w-12 h-7 rounded-full transition-colors duration-200 ${autoBankLoot ? 'bg-[var(--color-gold-dim)]' : 'bg-[#333]'}`, style: "min-width:48px" },
                     h("span", { class: `absolute top-[3px] left-[3px] w-[22px] h-[22px] bg-white rounded-full shadow-md transition-transform duration-200 ${autoBankLoot ? 'translate-x-[20px]' : 'translate-x-0'}` }))),
-            h("div", { class: "space-y-2" }, monsterList.map(monster => (h("div", { key: monster.id, class: "flex gap-2 items-stretch" },
-                h("button", { onClick: () => startFight(monster), class: "flex-1 flex items-center justify-between p-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors" },
-                    h("div", { class: "flex items-center gap-3" },
-                        h("span", { class: "text-2xl" }, MONSTER_ICONS[monster.id] || '👹'),
-                        h("div", { class: "text-left" },
-                            h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, monster.name),
-                            h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40" },
-                                "HP ",
-                                monster.hitpoints,
-                                " \u00B7 Att ",
-                                monster.stats.attack,
-                                " \u00B7 Def ",
-                                monster.stats.defence))),
-                    h("div", { class: "text-right" },
-                        h("div", { class: "text-xs font-[var(--font-mono)] text-[var(--color-blood-light)]" },
-                            "CB ",
-                            monster.combatLevel))),
-                h("button", { onClick: () => handleAddToHome(monster), class: "px-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5", title: "Add to Home Screen" },
-                    h("span", { class: "text-base" }, "\uD83C\uDFE0"),
-                    h("span", { class: "text-[8px] text-[var(--color-parchment)] opacity-50" }, "Add"))))))));
+            h("div", { class: "space-y-4" }, COMBAT_CATEGORIES.map(category => {
+                const monsters = category.ids
+                    .map(id => monstersData[id])
+                    .filter(Boolean)
+                    .sort((a, b) => a.combatLevel - b.combatLevel);
+                return (h("div", { key: category.key },
+                    h("div", { class: "flex items-center gap-2 mb-2 px-1" },
+                        h("span", { class: "text-base" }, category.icon),
+                        h("span", { class: "text-xs font-semibold text-[var(--color-parchment)] uppercase tracking-wider opacity-60" }, category.label),
+                        monsters.length === 0 && (h("span", { class: "text-[10px] text-[var(--color-parchment)] opacity-30 italic" }, "\u2014 coming soon"))),
+                    h("div", { class: "space-y-2" }, monsters.map(monster => (h("div", { key: monster.id, class: "flex gap-2 items-stretch" },
+                        h("button", { onClick: () => startFight(monster), class: "flex-1 flex items-center justify-between p-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors" },
+                            h("div", { class: "flex items-center gap-3" },
+                                h("span", { class: "text-2xl" }, MONSTER_ICONS[monster.id] || '👹'),
+                                h("div", { class: "text-left" },
+                                    h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, monster.name),
+                                    h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40" },
+                                        "HP ",
+                                        monster.hitpoints,
+                                        " \u00B7 Att ",
+                                        monster.stats.attack,
+                                        " \u00B7 Def ",
+                                        monster.stats.defence))),
+                            h("div", { class: "text-right" },
+                                h("div", { class: "text-xs font-[var(--font-mono)] text-[var(--color-blood-light)]" },
+                                    "CB ",
+                                    monster.combatLevel))),
+                        h("button", { onClick: () => handleAddToHome(monster), class: "px-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5", title: "Add to Home Screen" },
+                            h("span", { class: "text-base" }, "\uD83C\uDFE0"),
+                            h("span", { class: "text-[8px] text-[var(--color-parchment)] opacity-50" }, "Add"))))))));
+            }))));
     }
     // Combat view
     return (h("div", { class: "h-full flex flex-col p-4" },
