@@ -4479,6 +4479,178 @@ const itemsData = {
     },
     "shopValue": 60000,
     "icon": "🔗"
+  },
+  "big_bones": {
+    "id": "big_bones",
+    "name": "Big bones",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 200,
+    "icon": "🦴"
+  },
+  "dragon_bones": {
+    "id": "dragon_bones",
+    "name": "Dragon bones",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 2200,
+    "icon": "🦴"
+  },
+  "green_dragonhide": {
+    "id": "green_dragonhide",
+    "name": "Green dragonhide",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 1500,
+    "icon": "🐉"
+  },
+  "blood_rune": {
+    "id": "blood_rune",
+    "name": "Blood rune",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 300,
+    "icon": "🔴"
+  },
+  "soul_rune": {
+    "id": "soul_rune",
+    "name": "Soul rune",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 250,
+    "icon": "🔵"
+  },
+  "limpwurt_root": {
+    "id": "limpwurt_root",
+    "name": "Limpwurt root",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 400,
+    "icon": "🌿"
+  },
+  "anti_dragon_shield": {
+    "id": "anti_dragon_shield",
+    "name": "Anti-dragon shield",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 8,
+      "slash": 10,
+      "crush": 9,
+      "magic": 0,
+      "ranged": 8
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "antiDragon": true
+    },
+    "requirements": {
+      "defence": 1
+    },
+    "shopValue": 800,
+    "icon": "🛡️"
+  },
+  "abyssal_whip": {
+    "id": "abyssal_whip",
+    "name": "Abyssal whip",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 82,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 82,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 70
+    },
+    "shopValue": 1500000,
+    "icon": "🪱"
+  },
+  "black_wizard_hat": {
+    "id": "black_wizard_hat",
+    "name": "Black wizard hat",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 4,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 4,
+      "ranged": -1
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 10,
+    "icon": "🎩"
+  },
+  "black_wizard_robe": {
+    "id": "black_wizard_robe",
+    "name": "Black wizard robe",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 12,
+      "ranged": -5
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 16,
+      "ranged": -3
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 25,
+    "icon": "🥷"
   }
 };
 const monstersData = {
@@ -4487,16 +4659,43 @@ const monstersData = {
     "name": "Chicken",
     "combatLevel": 1,
     "hitpoints": 3,
-    "stats": { "attack": 1, "strength": 1, "defence": 1, "magic": 1, "ranged": 1 },
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 1,
+      "magic": 1,
+      "ranged": 1
+    },
     "attackSpeed": 4,
     "attackStyle": "crush",
     "attackBonus": 0,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": -42, "slash": -42, "crush": -42, "magic": -42, "ranged": -42 },
+    "defenceBonus": {
+      "stab": -42,
+      "slash": -42,
+      "crush": -42,
+      "magic": -42,
+      "ranged": -42
+    },
     "drops": [
-      { "itemId": "bones", "quantity": 1, "chance": 1.0 },
-      { "itemId": "raw_chicken", "quantity": 1, "chance": 1.0 },
-      { "itemId": "feathers", "quantity": [5, 15], "chance": 1.0 }
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "raw_chicken",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "feathers",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 1.0
+      }
     ]
   },
   "goblin": {
@@ -4504,16 +4703,43 @@ const monstersData = {
     "name": "Goblin",
     "combatLevel": 5,
     "hitpoints": 5,
-    "stats": { "attack": 1, "strength": 1, "defence": 1, "magic": 1, "ranged": 1 },
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 1,
+      "magic": 1,
+      "ranged": 1
+    },
     "attackSpeed": 4,
     "attackStyle": "crush",
     "attackBonus": 0,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": -15, "slash": -15, "crush": -15, "magic": -15, "ranged": -15 },
+    "defenceBonus": {
+      "stab": -15,
+      "slash": -15,
+      "crush": -15,
+      "magic": -15,
+      "ranged": -15
+    },
     "drops": [
-      { "itemId": "bones", "quantity": 1, "chance": 1.0 },
-      { "itemId": "coins", "quantity": [1, 5], "chance": 0.75 },
-      { "itemId": "bronze_spear", "quantity": 1, "chance": 0.05 }
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          1,
+          5
+        ],
+        "chance": 0.75
+      },
+      {
+        "itemId": "bronze_spear",
+        "quantity": 1,
+        "chance": 0.05
+      }
     ]
   },
   "cow": {
@@ -4521,16 +4747,40 @@ const monstersData = {
     "name": "Cow",
     "combatLevel": 8,
     "hitpoints": 8,
-    "stats": { "attack": 1, "strength": 1, "defence": 1, "magic": 1, "ranged": 1 },
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 1,
+      "magic": 1,
+      "ranged": 1
+    },
     "attackSpeed": 4,
     "attackStyle": "crush",
     "attackBonus": 0,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": -21, "slash": -21, "crush": -21, "magic": -21, "ranged": -21 },
+    "defenceBonus": {
+      "stab": -21,
+      "slash": -21,
+      "crush": -21,
+      "magic": -21,
+      "ranged": -21
+    },
     "drops": [
-      { "itemId": "bones", "quantity": 1, "chance": 1.0 },
-      { "itemId": "raw_beef", "quantity": 1, "chance": 1.0 },
-      { "itemId": "cowhide", "quantity": 1, "chance": 1.0 }
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "raw_beef",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "cowhide",
+        "quantity": 1,
+        "chance": 1.0
+      }
     ]
   },
   "giant_spider": {
@@ -4538,15 +4788,38 @@ const monstersData = {
     "name": "Giant Spider",
     "combatLevel": 27,
     "hitpoints": 26,
-    "stats": { "attack": 17, "strength": 18, "defence": 14, "magic": 1, "ranged": 1 },
+    "stats": {
+      "attack": 17,
+      "strength": 18,
+      "defence": 14,
+      "magic": 1,
+      "ranged": 1
+    },
     "attackSpeed": 4,
     "attackStyle": "stab",
     "attackBonus": 0,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": -4, "slash": 6, "crush": -4, "magic": -4, "ranged": -4 },
+    "defenceBonus": {
+      "stab": -4,
+      "slash": 6,
+      "crush": -4,
+      "magic": -4,
+      "ranged": -4
+    },
     "drops": [
-      { "itemId": "bones", "quantity": 1, "chance": 1.0 },
-      { "itemId": "coins", "quantity": [1, 15], "chance": 0.5 }
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          1,
+          15
+        ],
+        "chance": 0.5
+      }
     ]
   },
   "lesser_demon": {
@@ -4554,20 +4827,778 @@ const monstersData = {
     "name": "Lesser Demon",
     "combatLevel": 82,
     "hitpoints": 79,
-    "stats": { "attack": 68, "strength": 67, "defence": 71, "magic": 1, "ranged": 1 },
+    "stats": {
+      "attack": 68,
+      "strength": 67,
+      "defence": 71,
+      "magic": 1,
+      "ranged": 1
+    },
     "attackSpeed": 4,
     "attackStyle": "crush",
     "attackBonus": 0,
     "strengthBonus": 0,
-    "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
     "drops": [
-      { "itemId": "bones", "quantity": 1, "chance": 1.0 },
-      { "itemId": "coins", "quantity": [30, 150], "chance": 0.85 },
-      { "itemId": "rune_med_helm", "quantity": 1, "chance": 0.02 }
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          30,
+          150
+        ],
+        "chance": 0.85
+      },
+      {
+        "itemId": "rune_med_helm",
+        "quantity": 1,
+        "chance": 0.02
+      }
+    ]
+  },
+  "rock_crab": {
+    "id": "rock_crab",
+    "name": "Rock Crab",
+    "combatLevel": 13,
+    "hitpoints": 50,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 1,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          4,
+          25
+        ],
+        "chance": 0.6
+      },
+      {
+        "itemId": "iron_ore",
+        "quantity": 1,
+        "chance": 0.1
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": 7,
+        "chance": 0.12
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": 4,
+        "chance": 0.08
+      }
+    ]
+  },
+  "sand_crab": {
+    "id": "sand_crab",
+    "name": "Sand Crab",
+    "combatLevel": 15,
+    "hitpoints": 60,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 1,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          5,
+          30
+        ],
+        "chance": 0.6
+      },
+      {
+        "itemId": "iron_ore",
+        "quantity": 1,
+        "chance": 0.12
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": 7,
+        "chance": 0.12
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": 4,
+        "chance": 0.1
+      }
+    ]
+  },
+  "hill_giant": {
+    "id": "hill_giant",
+    "name": "Hill Giant",
+    "combatLevel": 28,
+    "hitpoints": 35,
+    "stats": {
+      "attack": 18,
+      "strength": 22,
+      "defence": 26,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 6,
+    "attackStyle": "crush",
+    "attackBonus": 18,
+    "strengthBonus": 16,
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "drops": [
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          3,
+          45
+        ],
+        "chance": 0.55
+      },
+      {
+        "itemId": "limpwurt_root",
+        "quantity": 1,
+        "chance": 0.1
+      },
+      {
+        "itemId": "iron_arrow",
+        "quantity": 3,
+        "chance": 0.3
+      },
+      {
+        "itemId": "water_rune",
+        "quantity": 7,
+        "chance": 0.15
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": 15,
+        "chance": 0.15
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": 6,
+        "chance": 0.1
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": 2,
+        "chance": 0.06
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": 2,
+        "chance": 0.04
+      },
+      {
+        "itemId": "iron_full_helm",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "steel_longsword",
+        "quantity": 1,
+        "chance": 0.04
+      }
+    ]
+  },
+  "moss_giant": {
+    "id": "moss_giant",
+    "name": "Moss Giant",
+    "combatLevel": 42,
+    "hitpoints": 60,
+    "stats": {
+      "attack": 30,
+      "strength": 38,
+      "defence": 0,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 5,
+    "attackStyle": "crush",
+    "attackBonus": 30,
+    "strengthBonus": 28,
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "drops": [
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          10,
+          80
+        ],
+        "chance": 0.55
+      },
+      {
+        "itemId": "limpwurt_root",
+        "quantity": 1,
+        "chance": 0.1
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": [
+          3,
+          6
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          2,
+          5
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "law_rune",
+        "quantity": 2,
+        "chance": 0.06
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": 2,
+        "chance": 0.05
+      },
+      {
+        "itemId": "iron_platelegs",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "steel_full_helm",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "mithril_scimitar",
+        "quantity": 1,
+        "chance": 0.02
+      }
+    ]
+  },
+  "wizard": {
+    "id": "wizard",
+    "name": "Wizard",
+    "combatLevel": 9,
+    "hitpoints": 17,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 1,
+      "magic": 9,
+      "ranged": 1
+    },
+    "attackSpeed": 5,
+    "attackStyle": "magic",
+    "attackBonus": 8,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": -5,
+      "slash": -5,
+      "crush": -5,
+      "magic": 5,
+      "ranged": -5
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          1,
+          15
+        ],
+        "chance": 0.5
+      },
+      {
+        "itemId": "air_rune",
+        "quantity": [
+          5,
+          12
+        ],
+        "chance": 0.4
+      },
+      {
+        "itemId": "water_rune",
+        "quantity": [
+          5,
+          10
+        ],
+        "chance": 0.35
+      },
+      {
+        "itemId": "earth_rune",
+        "quantity": [
+          5,
+          10
+        ],
+        "chance": 0.35
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": [
+          5,
+          10
+        ],
+        "chance": 0.35
+      },
+      {
+        "itemId": "mind_rune",
+        "quantity": [
+          5,
+          10
+        ],
+        "chance": 0.3
+      },
+      {
+        "itemId": "body_rune",
+        "quantity": [
+          5,
+          10
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          2,
+          4
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": [
+          2,
+          4
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "wizard_hat",
+        "quantity": 1,
+        "chance": 0.1
+      },
+      {
+        "itemId": "wizard_robe_top",
+        "quantity": 1,
+        "chance": 0.08
+      },
+      {
+        "itemId": "staff",
+        "quantity": 1,
+        "chance": 0.1
+      }
+    ]
+  },
+  "dark_wizard": {
+    "id": "dark_wizard",
+    "name": "Dark Wizard",
+    "combatLevel": 20,
+    "hitpoints": 24,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 1,
+      "magic": 18,
+      "ranged": 1
+    },
+    "attackSpeed": 5,
+    "attackStyle": "magic",
+    "attackBonus": 15,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": -5,
+      "slash": -5,
+      "crush": -5,
+      "magic": 8,
+      "ranged": -5
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          5,
+          30
+        ],
+        "chance": 0.6
+      },
+      {
+        "itemId": "air_rune",
+        "quantity": [
+          10,
+          18
+        ],
+        "chance": 0.5
+      },
+      {
+        "itemId": "water_rune",
+        "quantity": [
+          10,
+          18
+        ],
+        "chance": 0.45
+      },
+      {
+        "itemId": "earth_rune",
+        "quantity": [
+          10,
+          18
+        ],
+        "chance": 0.45
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": [
+          10,
+          18
+        ],
+        "chance": 0.45
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          3,
+          5
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": [
+          2,
+          5
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "law_rune",
+        "quantity": 3,
+        "chance": 0.08
+      },
+      {
+        "itemId": "cosmic_rune",
+        "quantity": [
+          2,
+          4
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          2,
+          4
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          2,
+          4
+        ],
+        "chance": 0.04
+      },
+      {
+        "itemId": "black_wizard_hat",
+        "quantity": 1,
+        "chance": 0.12
+      },
+      {
+        "itemId": "black_wizard_robe",
+        "quantity": 1,
+        "chance": 0.1
+      },
+      {
+        "itemId": "staff_of_air",
+        "quantity": 1,
+        "chance": 0.08
+      },
+      {
+        "itemId": "staff_of_water",
+        "quantity": 1,
+        "chance": 0.06
+      },
+      {
+        "itemId": "staff_of_earth",
+        "quantity": 1,
+        "chance": 0.06
+      },
+      {
+        "itemId": "staff_of_fire",
+        "quantity": 1,
+        "chance": 0.06
+      },
+      {
+        "itemId": "magic_staff",
+        "quantity": 1,
+        "chance": 0.04
+      }
+    ]
+  },
+  "abyssal_demon": {
+    "id": "abyssal_demon",
+    "name": "Abyssal Demon",
+    "combatLevel": 124,
+    "hitpoints": 150,
+    "stats": {
+      "attack": 97,
+      "strength": 67,
+      "defence": 135,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": 86,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 20,
+      "slash": 25,
+      "crush": 20,
+      "magic": 20,
+      "ranged": 20
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          200,
+          600
+        ],
+        "chance": 0.8
+      },
+      {
+        "itemId": "rune_chainbody",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "rune_med_helm",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          5,
+          20
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          10,
+          30
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          3,
+          7
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "adamant_platelegs",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "rune_platelegs",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "abyssal_whip",
+        "quantity": 1,
+        "chance": 0.002
+      }
+    ]
+  },
+  "green_dragon": {
+    "id": "green_dragon",
+    "name": "Green Dragon",
+    "combatLevel": 79,
+    "hitpoints": 75,
+    "stats": {
+      "attack": 68,
+      "strength": 68,
+      "defence": 68,
+      "magic": 68,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 20,
+      "slash": 40,
+      "crush": 40,
+      "magic": 0,
+      "ranged": 20
+    },
+    "specialAttack": "dragonfire",
+    "dragonfireDamage": 50,
+    "drops": [
+      {
+        "itemId": "dragon_bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "green_dragonhide",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          44,
+          132
+        ],
+        "chance": 0.5
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": 15,
+        "chance": 0.1
+      },
+      {
+        "itemId": "law_rune",
+        "quantity": 5,
+        "chance": 0.08
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          10,
+          20
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "iron_arrow",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "mithril_arrow",
+        "quantity": [
+          5,
+          10
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "adamant_full_helm",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "rune_full_helm",
+        "quantity": 1,
+        "chance": 0.01
+      }
     ]
   }
-}
-;
+};
 const skillsData = {
   "mining": {
     "id": "mining",
@@ -6464,8 +7495,26 @@ function processCombatTick(combatState, playerStats, equipment, itemsData) {
                 xpSkills.hitpoints = Math.floor(damage * HP_XP_PER_DAMAGE);
             }
         }
-        monster.currentHP -= damage;
-        events.push({ type: 'playerHit', damage, monsterHP: monster.currentHP });
+        const actualDamage = Math.min(damage, Math.max(0, monster.currentHP));
+        monster.currentHP -= actualDamage;
+        events.push({ type: 'playerHit', damage: actualDamage, monsterHP: monster.currentHP });
+        // Recompute xpSkills based on actualDamage to avoid overkill XP
+        if (actualDamage !== damage && actualDamage >= 0) {
+            for (const skill of Object.keys(xpSkills)) {
+                if (skill === 'magic' && state.combatType === 'magic') {
+                    // Keep base spell XP, scale only the damage portion
+                    const baseXP = state.spell?.baseXP || 0;
+                    xpSkills[skill] = baseXP + (actualDamage > 0 ? actualDamage * MAGIC_XP_PER_DAMAGE : 0);
+                }
+                else if (skill === 'hitpoints') {
+                    xpSkills[skill] = Math.floor(actualDamage * HP_XP_PER_DAMAGE);
+                }
+                else {
+                    const ratio = damage > 0 ? actualDamage / damage : 0;
+                    xpSkills[skill] = Math.floor(xpSkills[skill] * ratio);
+                }
+            }
+        }
         // Accumulate XP and emit per-attack
         for (const [skill, xp] of Object.entries(xpSkills)) {
             state.xpGained[skill] = (state.xpGained[skill] || 0) + xp;
@@ -6490,17 +7539,40 @@ function processCombatTick(combatState, playerStats, equipment, itemsData) {
     }
     // ── Monster Attack ──
     if (state.monsterAttackTimer <= 0) {
-        const monsterEffAtk = (monster.stats.attack + 9);
-        const monsterAtkRoll = monsterEffAtk * ((monster.attackBonus || 0) + 64);
-        // Player defence
-        const playerDefLevel = playerStats.defence;
-        const styleBonuses = getMeleeStyleBonuses(state.stance);
-        const effDef = Math.floor(playerDefLevel) + styleBonuses.defenceStyleBonus + 8;
-        const defRoll = effDef * ((bonuses.defenceBonus[monster.attackStyle] || bonuses.defenceBonus.crush || 0) + 64);
-        const acc = hitChance(monsterAtkRoll, defRoll);
-        const monsterMaxHit = Math.floor(0.5 + (monster.stats.strength + 8) * ((monster.strengthBonus || 0) + 64) / 640);
-        const damage = rollDamage(acc, monsterMaxHit);
-        events.push({ type: 'monsterHit', damage, playerHP: playerStats.currentHP - damage });
+        let damage = 0;
+        // ── Dragonfire attack ──
+        if (monster.specialAttack === 'dragonfire' && Math.random() < 0.33) {
+            const maxDragonfire = monster.dragonfireDamage || 50;
+            // Check if player has anti-dragon shield equipped
+            const hasAntiDragon = equipment && Object.values(equipment).some(slot => {
+                if (!slot || !slot.itemId)
+                    return false;
+                const item = itemsData[slot.itemId];
+                return item && item.otherBonus && item.otherBonus.antiDragon;
+            });
+            if (hasAntiDragon) {
+                // Nullified — 0 damage
+                damage = 0;
+                events.push({ type: 'dragonfireBlocked', damage: 0, playerHP: playerStats.currentHP });
+            }
+            else {
+                // Full dragonfire — up to 50
+                damage = Math.floor(Math.random() * (maxDragonfire + 1));
+                events.push({ type: 'dragonfireHit', damage, playerHP: playerStats.currentHP - damage });
+            }
+        }
+        else {
+            const monsterEffAtk = (monster.stats.attack + 9);
+            const monsterAtkRoll = monsterEffAtk * ((monster.attackBonus || 0) + 64);
+            const playerDefLevel = playerStats.defence;
+            const styleBonuses = getMeleeStyleBonuses(state.stance);
+            const effDef = Math.floor(playerDefLevel) + styleBonuses.defenceStyleBonus + 8;
+            const defRoll = effDef * ((bonuses.defenceBonus[monster.attackStyle] || bonuses.defenceBonus.crush || 0) + 64);
+            const acc = hitChance(monsterAtkRoll, defRoll);
+            const monsterMaxHit = Math.floor(0.5 + (monster.stats.strength + 8) * ((monster.strengthBonus || 0) + 64) / 640);
+            damage = rollDamage(acc, monsterMaxHit);
+            events.push({ type: 'monsterHit', damage, playerHP: playerStats.currentHP - damage });
+        }
         state.monsterAttackTimer = monster.attackSpeed || 4;
     }
     state.monster = monster;
@@ -7434,6 +8506,7 @@ function GameProvider({ children }) {
     const [currentHP, setCurrentHP] = useState(10);
     const [homeShortcuts, setHomeShortcuts] = useState(null); // null = not loaded yet
     const [combatStance, setCombatStanceState] = useState('accurate');
+    const [autoBankLoot, setAutoBankLootState] = useState(true);
     const [activeTask, setActiveTaskState] = useState(null);
     const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false });
     // Refs to hold latest state for the debounced auto-save
@@ -7446,9 +8519,10 @@ function GameProvider({ children }) {
     useEffect(() => { stateRef.current.player = player; }, [player]);
     // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
     const loadGame = useCallback(async () => {
-        const [p, s, inv, eq, b, shortcuts, stance, savedHP] = await Promise.all([
+        const [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting] = await Promise.all([
             getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
-            getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP')
+            getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
+            getSetting('autoBankLoot')
         ]);
         // lastTick and activeTask live in localStorage — synchronous, survives iOS background freeze
         const savedLastTick = (() => { const v = localStorage.getItem('pocketrpg_lastTick'); return v ? parseInt(v, 10) : null; })();
@@ -7482,7 +8556,8 @@ function GameProvider({ children }) {
                     if (sim.xpGained) {
                         for (const [skill, xp] of Object.entries(sim.xpGained)) {
                             if (xp > 0 && s[skill]) {
-                                s[skill] = { ...s[skill], xp: Math.min((s[skill].xp || 0) + Math.floor(xp), 200000000) };
+                                const newXP = Math.min((s[skill].xp || 0) + Math.floor(xp), 200000000);
+                                s[skill] = { ...s[skill], xp: newXP, level: getLevelFromXP(newXP) };
                             }
                         }
                     }
@@ -7556,6 +8631,7 @@ function GameProvider({ children }) {
         setBank({ ...b });
         setHomeShortcuts(shortcuts ?? null);
         setCombatStanceState(stance ?? 'accurate');
+        setAutoBankLootState(autoBankSetting !== false); // default true
         setActiveTaskState(savedTask ?? null);
         const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10;
         setCurrentHP(savedHP != null ? Math.min(savedHP, hpLevel) : hpLevel);
@@ -7647,6 +8723,10 @@ function GameProvider({ children }) {
         setCombatStanceState(stance);
         saveSetting('combatStance', stance);
     }, []);
+    const updateAutoBankLoot = useCallback((enabled) => {
+        setAutoBankLootState(enabled);
+        saveSetting('autoBankLoot', enabled);
+    }, []);
     const setActiveTask = useCallback((task) => {
         setActiveTaskState(task);
         // Synchronous localStorage write — safe from iOS background freeze
@@ -7699,11 +8779,11 @@ function GameProvider({ children }) {
     }), []);
     const value = {
         loaded, player, stats, inventory, equipment, bank, currentHP, toasts,
-        homeShortcuts, combatStance, activeTask,
+        homeShortcuts, combatStance, activeTask, autoBankLoot,
         loadGame, grantXP, updateInventory, updateEquipment, updateBank,
         updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,
         markDirty, itemsData, updateHomeShortcuts, updateCombatStance,
-        setActiveTask, updateBankDirect, getSnapshot
+        setActiveTask, updateBankDirect, getSnapshot, updateAutoBankLoot
     };
     return h(GameContext.Provider, { value: value }, children);
 }
@@ -8503,28 +9583,25 @@ function BankScreen() {
 
 const monsterList = Object.values(monstersData);
 const MONSTER_ICONS = {
-    chicken: '🐔', goblin: '👺', cow: '🐄', giant_spider: '🕷️'
+    chicken: '🐔', goblin: '👺', cow: '🐄', giant_spider: '🕷️',
+    rock_crab: '🦀', sand_crab: '🦀', hill_giant: '👊', moss_giant: '🌿',
+    wizard: '🧙', dark_wizard: '🧙‍♂️', abyssal_demon: '😈',
+    green_dragon: '🐉', lesser_demon: '👿'
 };
 function CombatScreen({ onNavigate, initialMonsterId }) {
-    const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask } = useGame();
+    const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot } = useGame();
     const [combat, setCombat] = useState(null);
     const [log, setLog] = useState([]);
     const [killCount, setKillCount] = useState(0);
     const [fightStartedAt, setFightStartedAt] = useState(null);
-    const [bankingEnabled, setBankingEnabled] = useState(true);
-    const [bankingCountdown, setBankingCountdown] = useState(null); // ms remaining, or null
     const combatRef = useRef(null);
     const hpRef = useRef(currentHP);
     const hasAutoStarted = useRef(false);
-    const bankingCounterRef = useRef(0); // ticks counted since inv was full
-    const bankingActiveRef = useRef(false); // currently counting toward a bank
-    const bankingEnabledRef = useRef(true);
     const inventoryRef = useRef(inventory);
     const bankRef = useRef(bank);
     const statsRef = useRef(stats);
     const equipmentRef = useRef(equipment);
     useEffect(() => { hpRef.current = currentHP; }, [currentHP]);
-    useEffect(() => { bankingEnabledRef.current = bankingEnabled; }, [bankingEnabled]);
     useEffect(() => { inventoryRef.current = inventory; }, [inventory]);
     useEffect(() => { bankRef.current = bank; }, [bank]);
     useEffect(() => { statsRef.current = stats; }, [stats]);
@@ -8585,6 +9662,30 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
                         hpRef.current = getMaxHP();
                     }
                 }
+                if (ev.type === 'dragonfireHit') {
+                    const newHP = Math.max(0, hpRef.current - ev.damage);
+                    updateHP(newHP);
+                    hpRef.current = newHP;
+                    setLog(prev => [...prev.slice(-20), {
+                            text: `🔥 Dragon breathes fire — ${ev.damage > 0 ? `hits ${ev.damage}!` : 'misses'} (equip Anti-dragon shield!)`,
+                            type: 'dragonfire',
+                            time: Date.now()
+                        }]);
+                    if (newHP <= 0) {
+                        setCombat(prev => ({ ...prev, active: false }));
+                        addToast('Incinerated by dragonfire! Respawning...', 'error');
+                        setActiveTask(null);
+                        updateHP(getMaxHP());
+                        hpRef.current = getMaxHP();
+                    }
+                }
+                if (ev.type === 'dragonfireBlocked') {
+                    setLog(prev => [...prev.slice(-20), {
+                            text: `🛡️ Anti-dragon shield blocks the dragonfire!`,
+                            type: 'heal',
+                            time: Date.now()
+                        }]);
+                }
                 if (ev.type === 'xp') {
                     for (const [skill, xp] of Object.entries(ev.xpSkills)) {
                         if (xp > 0)
@@ -8616,89 +9717,26 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
                     }, 1200);
                 }
             }
-            // ── Agility-scaled auto-banking ──
-            if (bankingEnabledRef.current) {
-                const free = freeSlots(inventoryRef.current);
-                if (free > 0) {
-                    // Inventory not full — reset counter
-                    bankingCounterRef.current = 0;
-                    bankingActiveRef.current = false;
-                    setBankingCountdown(null);
-                }
-                else {
-                    // Inventory full — start/continue countdown
-                    if (!bankingActiveRef.current) {
-                        bankingActiveRef.current = true;
-                        bankingCounterRef.current = 0;
-                    }
-                    bankingCounterRef.current++;
-                    const agilityLevel = getLevelFromXP(statsRef.current.agility?.xp || 0);
-                    const delayMs = getAgilityBankDelayMs(agilityLevel);
-                    const delayTicks = Math.ceil(delayMs / 600);
-                    const remaining = Math.max(0, (delayTicks - bankingCounterRef.current) * 600);
-                    setBankingCountdown(remaining);
-                    if (bankingCounterRef.current >= delayTicks) {
-                        // Do the bank
-                        const newBank = { ...bankRef.current };
-                        const newInv = [...inventoryRef.current];
-                        let bankedCount = 0;
-                        for (let i = 0; i < newInv.length; i++) {
-                            if (!newInv[i])
-                                continue;
-                            const slot = newInv[i];
-                            if (newBank[slot.itemId]) {
-                                newBank[slot.itemId] = { ...newBank[slot.itemId], quantity: newBank[slot.itemId].quantity + slot.quantity };
-                            }
-                            else {
-                                newBank[slot.itemId] = { itemId: slot.itemId, quantity: slot.quantity };
-                            }
-                            newInv[i] = null;
-                            bankedCount++;
-                        }
-                        updateInventory(newInv);
-                        updateBank(newBank);
-                        addToast(`🏦 Banked inventory! (${formatBankDelay(delayMs)} delay)`, 'info');
-                        setLog(prev => [...prev.slice(-20), {
-                                text: `🏦 Banked items (agility lv ${getLevelFromXP(statsRef.current.agility?.xp || 0)})`,
-                                type: 'info',
-                                time: Date.now()
-                            }]);
-                        bankingCounterRef.current = 0;
-                        bankingActiveRef.current = false;
-                        setBankingCountdown(null);
-                    }
-                }
-            }
-            else {
-                // Banking off — reset
-                bankingCounterRef.current = 0;
-                bankingActiveRef.current = false;
-                setBankingCountdown(null);
-            }
         });
         return unsub;
     }, [combat?.active]);
     const startFight = (monster) => {
-        bankingCounterRef.current = 0;
-        bankingActiveRef.current = false;
-        setBankingCountdown(null);
         const state = createCombatState(monster, 'melee', combatStance);
         setCombat(state);
         setKillCount(0);
         setFightStartedAt(Date.now());
         setLog([{ text: `Fighting ${monster.name}...`, type: 'info', time: Date.now() }]);
-        setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled });
+        setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot });
     };
     const continueFight = (monster) => {
         const state = createCombatState(monster, 'melee', combatStance);
         setCombat(state);
-        setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled });
+        setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot });
     };
     const flee = () => {
         setCombat(null);
         setLog([]);
         setActiveTask(null);
-        setBankingCountdown(null);
         addToast('You fled!', 'info');
     };
     const handleEat = () => {
@@ -8772,12 +9810,12 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
                 ${combatStance === s ? 'bg-[var(--color-gold-dim)] text-white' : 'bg-[#1a1a1a] text-[var(--color-parchment)] opacity-50'}` }, s)))),
             h("div", { class: "mb-3 bg-[#111] rounded-lg px-3 py-2.5 flex items-center justify-between" },
                 h("div", null,
-                    h("div", { class: "text-xs font-semibold text-[var(--color-parchment)]" }, "\uD83C\uDFE6 Auto-Bank Loot"),
-                    h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5" }, bankingEnabled
+                    h("div", { class: "text-xs font-semibold text-[var(--color-parchment)]" }, "\uD83C\uDFE6 Auto-Bank Loot (Idle)"),
+                    h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5" }, autoBankLoot
                         ? `${formatBankDelay(bankDelayMs)} delay (Agility lv ${agilityLevel})`
                         : 'Off — loot stays in inventory')),
-                h("button", { onClick: () => setBankingEnabled(v => !v), class: `relative flex-shrink-0 w-12 h-7 rounded-full transition-colors duration-200 ${bankingEnabled ? 'bg-[var(--color-gold-dim)]' : 'bg-[#333]'}`, style: "min-width:48px" },
-                    h("span", { class: `absolute top-[3px] left-[3px] w-[22px] h-[22px] bg-white rounded-full shadow-md transition-transform duration-200 ${bankingEnabled ? 'translate-x-[20px]' : 'translate-x-0'}` }))),
+                h("button", { onClick: () => updateAutoBankLoot(!autoBankLoot), class: `relative flex-shrink-0 w-12 h-7 rounded-full transition-colors duration-200 ${autoBankLoot ? 'bg-[var(--color-gold-dim)]' : 'bg-[#333]'}`, style: "min-width:48px" },
+                    h("span", { class: `absolute top-[3px] left-[3px] w-[22px] h-[22px] bg-white rounded-full shadow-md transition-transform duration-200 ${autoBankLoot ? 'translate-x-[20px]' : 'translate-x-0'}` }))),
             h("div", { class: "space-y-2" }, monsterList.map(monster => (h("div", { key: monster.id, class: "flex gap-2 items-stretch" },
                 h("button", { onClick: () => startFight(monster), class: "flex-1 flex items-center justify-between p-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors" },
                     h("div", { class: "flex items-center gap-3" },
@@ -8811,21 +9849,20 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
         h("div", { class: "mb-2" },
             h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-50 mb-0.5" }, "Your HP"),
             h(HPBar, { current: currentHP, max: getMaxHP(), size: "large" })),
-        bankingEnabled && (h("div", { class: "mb-2 bg-[#111] rounded-lg px-3 py-1.5 flex items-center justify-between" },
-            h("span", { class: "text-[10px] text-[var(--color-parchment)] opacity-50" }, "\uD83C\uDFE6 Auto-bank"),
-            bankingCountdown !== null ? (h("span", { class: "text-[10px] font-[var(--font-mono)] text-[var(--color-gold)]" },
-                "Banking in ",
-                formatBankDelay(bankingCountdown),
-                "...")) : (h("span", { class: "text-[10px] text-[var(--color-parchment)] opacity-30" },
+        h("div", { class: "mb-2 bg-[#111] rounded-lg px-3 py-1.5 flex items-center justify-between" },
+            h("span", { class: "text-[10px] text-[var(--color-parchment)] opacity-50" }, "\uD83C\uDF92 Inventory"),
+            h("span", { class: "text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40" },
                 freeSlots(inventory),
-                "/28 free")))),
+                "/28 free",
+                autoBankLoot ? ' · 🏦 idle auto-bank on' : '')),
         h("div", { class: "flex-1 bg-[#111] rounded-lg border border-[#222] p-2 overflow-y-auto mb-2 min-h-[100px]" }, log.map((entry, i) => (h("div", { key: i, class: `text-[11px] font-[var(--font-mono)] py-0.5
             ${entry.type === 'hit' ? 'text-[var(--color-emerald-light)]' :
                 entry.type === 'miss' ? 'text-[var(--color-parchment)] opacity-30' :
                     entry.type === 'enemy' ? 'text-[var(--color-blood-light)]' :
                         entry.type === 'heal' ? 'text-[var(--color-hp-green)]' :
-                            entry.type === 'victory' ? 'text-[var(--color-gold)]' :
-                                'text-[var(--color-parchment)] opacity-50'}` }, entry.text)))),
+                            entry.type === 'dragonfire' ? 'text-orange-400' :
+                                entry.type === 'victory' ? 'text-[var(--color-gold)]' :
+                                    'text-[var(--color-parchment)] opacity-50'}` }, entry.text)))),
         fightStartedAt && (h("div", { class: "flex-shrink-0 flex justify-between bg-[#111] rounded-lg px-3 py-2 mb-2 text-[11px]" },
             h("span", { class: "text-[var(--color-parchment)] opacity-50" }, "Kills"),
             h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, killCount),
@@ -9744,6 +10781,7 @@ const SHOPS = [
             { id: 'adamant_platelegs', name: 'Adamant platelegs', icon: '🦵', price: 5312, stackable: false, desc: 'Def: stab+40 slash+45 crush+38. Def 30.' },
             { id: 'adamant_kiteshield', name: 'Adamant kiteshield', icon: '🛡️', price: 2496, stackable: false, desc: 'Def: stab+33 slash+38 crush+36. Def 30.' },
             { id: 'rune_med_helm', name: 'Rune med helm', icon: '⛑️', price: 11000, stackable: false, desc: 'Rune medium helm. Def 40.' },
+            { id: 'anti_dragon_shield', name: 'Anti-dragon shield', icon: '🛡️', price: 800, stackable: false, desc: '🔥 Blocks dragonfire attacks from dragons. Def 1.' },
         ],
     },
     {
