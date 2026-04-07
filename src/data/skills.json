@@ -1,0 +1,1158 @@
+{
+  "mining": {
+    "id": "mining",
+    "name": "Mining",
+    "actions": [
+      {
+        "id": "tin",
+        "name": "Mine tin ore",
+        "level": 1,
+        "ticks": 4,
+        "xp": 17,
+        "product": "tin_ore"
+      },
+      {
+        "id": "copper",
+        "name": "Mine copper ore",
+        "level": 1,
+        "ticks": 4,
+        "xp": 17,
+        "product": "copper_ore"
+      },
+      {
+        "id": "clay",
+        "name": "Mine clay",
+        "level": 1,
+        "ticks": 4,
+        "xp": 5,
+        "product": "clay"
+      },
+      {
+        "id": "iron",
+        "name": "Mine iron ore",
+        "level": 15,
+        "ticks": 5,
+        "xp": 35,
+        "product": "iron_ore"
+      },
+      {
+        "id": "coal",
+        "name": "Mine coal",
+        "level": 30,
+        "ticks": 6,
+        "xp": 50,
+        "product": "coal"
+      },
+      {
+        "id": "gold",
+        "name": "Mine gold ore",
+        "level": 40,
+        "ticks": 6,
+        "xp": 65,
+        "product": "gold_ore"
+      },
+      {
+        "id": "mithril",
+        "name": "Mine mithril ore",
+        "level": 55,
+        "ticks": 7,
+        "xp": 80,
+        "product": "mithril_ore"
+      },
+      {
+        "id": "adamantite",
+        "name": "Mine adamantite ore",
+        "level": 70,
+        "ticks": 8,
+        "xp": 95,
+        "product": "adamantite_ore"
+      },
+      {
+        "id": "runite",
+        "name": "Mine runite ore",
+        "level": 85,
+        "ticks": 9,
+        "xp": 125,
+        "product": "runite_ore"
+      }
+    ]
+  },
+  "woodcutting": {
+    "id": "woodcutting",
+    "name": "Woodcutting",
+    "actions": [
+      {
+        "id": "normal",
+        "name": "Chop tree",
+        "level": 1,
+        "ticks": 4,
+        "xp": 25,
+        "product": "logs"
+      },
+      {
+        "id": "oak",
+        "name": "Chop oak",
+        "level": 15,
+        "ticks": 5,
+        "xp": 37,
+        "product": "oak_logs"
+      },
+      {
+        "id": "willow",
+        "name": "Chop willow",
+        "level": 30,
+        "ticks": 6,
+        "xp": 67,
+        "product": "willow_logs"
+      },
+      {
+        "id": "maple",
+        "name": "Chop maple",
+        "level": 45,
+        "ticks": 7,
+        "xp": 100,
+        "product": "maple_logs"
+      },
+      {
+        "id": "yew",
+        "name": "Chop yew",
+        "level": 60,
+        "ticks": 8,
+        "xp": 175,
+        "product": "yew_logs"
+      },
+      {
+        "id": "magic",
+        "name": "Chop magic",
+        "level": 75,
+        "ticks": 9,
+        "xp": 250,
+        "product": "magic_logs"
+      }
+    ]
+  },
+  "fishing": {
+    "id": "fishing",
+    "name": "Fishing",
+    "actions": [
+      {
+        "id": "shrimp",
+        "name": "Fish shrimps",
+        "level": 1,
+        "ticks": 4,
+        "xp": 10,
+        "product": "raw_shrimp"
+      },
+      {
+        "id": "trout",
+        "name": "Fish trout",
+        "level": 20,
+        "ticks": 5,
+        "xp": 50,
+        "product": "raw_trout"
+      },
+      {
+        "id": "lobster",
+        "name": "Fish lobster",
+        "level": 40,
+        "ticks": 6,
+        "xp": 90,
+        "product": "raw_lobster"
+      },
+      {
+        "id": "swordfish",
+        "name": "Fish swordfish",
+        "level": 50,
+        "ticks": 7,
+        "xp": 100,
+        "product": "raw_swordfish"
+      },
+      {
+        "id": "shark",
+        "name": "Fish shark",
+        "level": 76,
+        "ticks": 8,
+        "xp": 110,
+        "product": "raw_shark"
+      }
+    ]
+  },
+  "smithing": {
+    "id": "smithing",
+    "name": "Smithing",
+    "actions": [
+      {
+        "id": "smelt_bronze",
+        "name": "Smelt bronze bar",
+        "level": 1,
+        "ticks": 4,
+        "xp": 6,
+        "product": "bronze_bar",
+        "materials": {
+          "tin_ore": 1,
+          "copper_ore": 1
+        }
+      },
+      {
+        "id": "smith_bronze_dagger",
+        "name": "Smith bronze dagger",
+        "level": 1,
+        "ticks": 5,
+        "xp": 12,
+        "product": "bronze_dagger",
+        "materials": {
+          "bronze_bar": 1
+        }
+      },
+      {
+        "id": "smith_bronze_axe",
+        "name": "Smith bronze axe",
+        "level": 4,
+        "ticks": 5,
+        "xp": 25,
+        "product": "bronze_axe",
+        "materials": {
+          "bronze_bar": 1
+        }
+      },
+      {
+        "id": "smith_bronze_pickaxe",
+        "name": "Smith bronze pickaxe",
+        "level": 4,
+        "ticks": 5,
+        "xp": 25,
+        "product": "bronze_pickaxe",
+        "materials": {
+          "bronze_bar": 1
+        }
+      },
+      {
+        "id": "smith_bronze_scimitar",
+        "name": "Smith bronze scimitar",
+        "level": 4,
+        "ticks": 5,
+        "xp": 25,
+        "product": "bronze_scimitar",
+        "materials": {
+          "bronze_bar": 2
+        }
+      },
+      {
+        "id": "smelt_iron",
+        "name": "Smelt iron bar",
+        "level": 15,
+        "ticks": 4,
+        "xp": 12,
+        "product": "iron_bar",
+        "materials": {
+          "iron_ore": 1
+        }
+      },
+      {
+        "id": "smith_iron_axe",
+        "name": "Smith iron axe",
+        "level": 16,
+        "ticks": 5,
+        "xp": 25,
+        "product": "iron_axe",
+        "materials": {
+          "iron_bar": 1
+        }
+      },
+      {
+        "id": "smith_iron_pickaxe",
+        "name": "Smith iron pickaxe",
+        "level": 16,
+        "ticks": 5,
+        "xp": 25,
+        "product": "iron_pickaxe",
+        "materials": {
+          "iron_bar": 1
+        }
+      },
+      {
+        "id": "smith_iron_scimitar",
+        "name": "Smith iron scimitar",
+        "level": 19,
+        "ticks": 5,
+        "xp": 50,
+        "product": "iron_scimitar",
+        "materials": {
+          "iron_bar": 2
+        }
+      },
+      {
+        "id": "smelt_steel",
+        "name": "Smelt steel bar",
+        "level": 30,
+        "ticks": 4,
+        "xp": 17,
+        "product": "steel_bar",
+        "materials": {
+          "iron_ore": 1,
+          "coal": 2
+        }
+      },
+      {
+        "id": "smith_steel_axe",
+        "name": "Smith steel axe",
+        "level": 31,
+        "ticks": 5,
+        "xp": 75,
+        "product": "steel_axe",
+        "materials": {
+          "steel_bar": 1
+        }
+      },
+      {
+        "id": "smith_steel_pickaxe",
+        "name": "Smith steel pickaxe",
+        "level": 31,
+        "ticks": 5,
+        "xp": 75,
+        "product": "steel_pickaxe",
+        "materials": {
+          "steel_bar": 1
+        }
+      },
+      {
+        "id": "smith_steel_scimitar",
+        "name": "Smith steel scimitar",
+        "level": 34,
+        "ticks": 5,
+        "xp": 75,
+        "product": "steel_scimitar",
+        "materials": {
+          "steel_bar": 2
+        }
+      },
+      {
+        "id": "smelt_gold",
+        "name": "Smelt gold bar",
+        "level": 40,
+        "ticks": 4,
+        "xp": 22,
+        "product": "gold_bar",
+        "materials": {
+          "gold_ore": 1
+        }
+      },
+      {
+        "id": "smelt_mithril",
+        "name": "Smelt mithril bar",
+        "level": 50,
+        "ticks": 4,
+        "xp": 30,
+        "product": "mithril_bar",
+        "materials": {
+          "mithril_ore": 1,
+          "coal": 4
+        }
+      },
+      {
+        "id": "smith_mithril_axe",
+        "name": "Smith mithril axe",
+        "level": 51,
+        "ticks": 5,
+        "xp": 100,
+        "product": "mithril_axe",
+        "materials": {
+          "mithril_bar": 1
+        }
+      },
+      {
+        "id": "smith_mithril_pickaxe",
+        "name": "Smith mithril pickaxe",
+        "level": 51,
+        "ticks": 5,
+        "xp": 100,
+        "product": "mithril_pickaxe",
+        "materials": {
+          "mithril_bar": 1
+        }
+      },
+      {
+        "id": "smith_mithril_scimitar",
+        "name": "Smith mithril scimitar",
+        "level": 54,
+        "ticks": 5,
+        "xp": 100,
+        "product": "mithril_scimitar",
+        "materials": {
+          "mithril_bar": 2
+        }
+      },
+      {
+        "id": "smelt_adamant",
+        "name": "Smelt adamant bar",
+        "level": 70,
+        "ticks": 4,
+        "xp": 37,
+        "product": "adamant_bar",
+        "materials": {
+          "adamantite_ore": 1,
+          "coal": 6
+        }
+      },
+      {
+        "id": "smith_adamant_axe",
+        "name": "Smith adamant axe",
+        "level": 71,
+        "ticks": 5,
+        "xp": 125,
+        "product": "adamant_axe",
+        "materials": {
+          "adamant_bar": 1
+        }
+      },
+      {
+        "id": "smith_adamant_pickaxe",
+        "name": "Smith adamant pickaxe",
+        "level": 71,
+        "ticks": 5,
+        "xp": 125,
+        "product": "adamant_pickaxe",
+        "materials": {
+          "adamant_bar": 1
+        }
+      },
+      {
+        "id": "smith_adamant_scimitar",
+        "name": "Smith adamant scimitar",
+        "level": 74,
+        "ticks": 5,
+        "xp": 125,
+        "product": "adamant_scimitar",
+        "materials": {
+          "adamant_bar": 2
+        }
+      },
+      {
+        "id": "smelt_rune",
+        "name": "Smelt rune bar",
+        "level": 85,
+        "ticks": 4,
+        "xp": 50,
+        "product": "rune_bar",
+        "materials": {
+          "runite_ore": 1,
+          "coal": 8
+        }
+      },
+      {
+        "id": "smith_rune_axe",
+        "name": "Smith rune axe",
+        "level": 86,
+        "ticks": 5,
+        "xp": 200,
+        "product": "rune_axe",
+        "materials": {
+          "rune_bar": 1
+        }
+      },
+      {
+        "id": "smith_rune_pickaxe",
+        "name": "Smith rune pickaxe",
+        "level": 86,
+        "ticks": 5,
+        "xp": 200,
+        "product": "rune_pickaxe",
+        "materials": {
+          "rune_bar": 1
+        }
+      },
+      {
+        "id": "smith_rune_scimitar",
+        "name": "Smith rune scimitar",
+        "level": 89,
+        "ticks": 5,
+        "xp": 150,
+        "product": "rune_scimitar",
+        "materials": {
+          "rune_bar": 2
+        }
+      }
+    ]
+  },
+  "cooking": {
+    "id": "cooking",
+    "name": "Cooking",
+    "actions": [
+      {
+        "id": "cook_shrimp",
+        "name": "Cook shrimps",
+        "level": 1,
+        "ticks": 4,
+        "xp": 30,
+        "product": "shrimp",
+        "materials": {
+          "raw_shrimp": 1
+        },
+        "burnStopLevel": 34
+      },
+      {
+        "id": "cook_chicken",
+        "name": "Cook chicken",
+        "level": 1,
+        "ticks": 4,
+        "xp": 30,
+        "product": "cooked_chicken",
+        "materials": {
+          "raw_chicken": 1
+        },
+        "burnStopLevel": 34
+      },
+      {
+        "id": "cook_meat",
+        "name": "Cook meat",
+        "level": 1,
+        "ticks": 4,
+        "xp": 30,
+        "product": "cooked_meat",
+        "materials": {
+          "raw_beef": 1
+        },
+        "burnStopLevel": 34
+      },
+      {
+        "id": "cook_trout",
+        "name": "Cook trout",
+        "level": 15,
+        "ticks": 4,
+        "xp": 70,
+        "product": "trout",
+        "materials": {
+          "raw_trout": 1
+        },
+        "burnStopLevel": 50
+      },
+      {
+        "id": "cook_lobster",
+        "name": "Cook lobster",
+        "level": 40,
+        "ticks": 4,
+        "xp": 120,
+        "product": "lobster",
+        "materials": {
+          "raw_lobster": 1
+        },
+        "burnStopLevel": 74
+      },
+      {
+        "id": "cook_swordfish",
+        "name": "Cook swordfish",
+        "level": 45,
+        "ticks": 4,
+        "xp": 140,
+        "product": "swordfish",
+        "materials": {
+          "raw_swordfish": 1
+        },
+        "burnStopLevel": 86
+      },
+      {
+        "id": "cook_shark",
+        "name": "Cook shark",
+        "level": 80,
+        "ticks": 4,
+        "xp": 210,
+        "product": "shark",
+        "materials": {
+          "raw_shark": 1
+        },
+        "burnStopLevel": 99
+      }
+    ]
+  },
+  "fletching": {
+    "id": "fletching",
+    "name": "Fletching",
+    "actions": [
+      {
+        "id": "arrow_shafts",
+        "name": "Cut arrow shafts (15)",
+        "level": 1,
+        "ticks": 2,
+        "xp": 5,
+        "product": "arrow_shaft",
+        "productQty": 15,
+        "materials": {
+          "logs": 1
+        }
+      },
+      {
+        "id": "headless_arrows",
+        "name": "Attach feathers (15)",
+        "level": 1,
+        "ticks": 2,
+        "xp": 15,
+        "product": "headless_arrow",
+        "productQty": 15,
+        "materials": {
+          "arrow_shaft": 15,
+          "feathers": 15
+        }
+      },
+      {
+        "id": "bronze_arrows",
+        "name": "Make bronze arrows (15)",
+        "level": 1,
+        "ticks": 3,
+        "xp": 20,
+        "product": "bronze_arrow",
+        "productQty": 15,
+        "materials": {
+          "headless_arrow": 15,
+          "feathers": 0
+        }
+      },
+      {
+        "id": "shortbow_u_cut",
+        "name": "Cut shortbow (u)",
+        "level": 5,
+        "ticks": 3,
+        "xp": 5,
+        "product": "shortbow_u",
+        "materials": {
+          "logs": 1
+        }
+      },
+      {
+        "id": "shortbow_string",
+        "name": "String shortbow",
+        "level": 5,
+        "ticks": 3,
+        "xp": 10,
+        "product": "shortbow",
+        "materials": {
+          "shortbow_u": 1,
+          "bowstring": 1
+        }
+      },
+      {
+        "id": "iron_arrows",
+        "name": "Make iron arrows (15)",
+        "level": 15,
+        "ticks": 3,
+        "xp": 37,
+        "product": "iron_arrow",
+        "productQty": 15,
+        "materials": {
+          "headless_arrow": 15,
+          "iron_arrow_heads": 15
+        }
+      },
+      {
+        "id": "oak_shortbow_u_cut",
+        "name": "Cut oak shortbow (u)",
+        "level": 20,
+        "ticks": 3,
+        "xp": 16,
+        "product": "oak_shortbow_u",
+        "materials": {
+          "oak_logs": 1
+        }
+      },
+      {
+        "id": "oak_shortbow_string",
+        "name": "String oak shortbow",
+        "level": 20,
+        "ticks": 3,
+        "xp": 25,
+        "product": "oak_shortbow",
+        "materials": {
+          "oak_shortbow_u": 1,
+          "bowstring": 1
+        }
+      },
+      {
+        "id": "steel_arrows",
+        "name": "Make steel arrows (15)",
+        "level": 30,
+        "ticks": 3,
+        "xp": 55,
+        "product": "steel_arrow",
+        "productQty": 15,
+        "materials": {
+          "headless_arrow": 15,
+          "steel_arrow_heads": 15
+        }
+      },
+      {
+        "id": "willow_shortbow_u_cut",
+        "name": "Cut willow shortbow (u)",
+        "level": 35,
+        "ticks": 4,
+        "xp": 33,
+        "product": "willow_shortbow_u",
+        "materials": {
+          "willow_logs": 1
+        }
+      },
+      {
+        "id": "willow_shortbow_string",
+        "name": "String willow shortbow",
+        "level": 35,
+        "ticks": 4,
+        "xp": 50,
+        "product": "willow_shortbow",
+        "materials": {
+          "willow_shortbow_u": 1,
+          "bowstring": 1
+        }
+      },
+      {
+        "id": "mithril_arrows",
+        "name": "Make mithril arrows (15)",
+        "level": 45,
+        "ticks": 3,
+        "xp": 75,
+        "product": "mithril_arrow",
+        "productQty": 15,
+        "materials": {
+          "headless_arrow": 15,
+          "mithril_arrow_heads": 15
+        }
+      },
+      {
+        "id": "maple_shortbow_u_cut",
+        "name": "Cut maple shortbow (u)",
+        "level": 50,
+        "ticks": 4,
+        "xp": 50,
+        "product": "maple_shortbow_u",
+        "materials": {
+          "maple_logs": 1
+        }
+      },
+      {
+        "id": "maple_shortbow_string",
+        "name": "String maple shortbow",
+        "level": 50,
+        "ticks": 4,
+        "xp": 75,
+        "product": "maple_shortbow",
+        "materials": {
+          "maple_shortbow_u": 1,
+          "bowstring": 1
+        }
+      },
+      {
+        "id": "adamant_arrows",
+        "name": "Make adamant arrows (15)",
+        "level": 60,
+        "ticks": 3,
+        "xp": 105,
+        "product": "adamant_arrow",
+        "productQty": 15,
+        "materials": {
+          "headless_arrow": 15,
+          "adamant_arrow_heads": 15
+        }
+      },
+      {
+        "id": "yew_shortbow_u_cut",
+        "name": "Cut yew shortbow (u)",
+        "level": 65,
+        "ticks": 5,
+        "xp": 67,
+        "product": "yew_shortbow_u",
+        "materials": {
+          "yew_logs": 1
+        }
+      },
+      {
+        "id": "yew_shortbow_string",
+        "name": "String yew shortbow",
+        "level": 65,
+        "ticks": 5,
+        "xp": 100,
+        "product": "yew_shortbow",
+        "materials": {
+          "yew_shortbow_u": 1,
+          "bowstring": 1
+        }
+      },
+      {
+        "id": "rune_arrows",
+        "name": "Make rune arrows (15)",
+        "level": 75,
+        "ticks": 3,
+        "xp": 150,
+        "product": "rune_arrow",
+        "productQty": 15,
+        "materials": {
+          "headless_arrow": 15,
+          "rune_arrow_heads": 15
+        }
+      },
+      {
+        "id": "magic_shortbow_u_cut",
+        "name": "Cut magic shortbow (u)",
+        "level": 80,
+        "ticks": 6,
+        "xp": 83,
+        "product": "magic_shortbow_u",
+        "materials": {
+          "magic_logs": 1
+        }
+      },
+      {
+        "id": "magic_shortbow_string",
+        "name": "String magic shortbow",
+        "level": 80,
+        "ticks": 6,
+        "xp": 125,
+        "product": "magic_shortbow",
+        "materials": {
+          "magic_shortbow_u": 1,
+          "bowstring": 1
+        }
+      }
+    ]
+  },
+  "crafting": {
+    "id": "crafting",
+    "name": "Crafting",
+    "actions": [
+      {
+        "id": "tan_cowhide",
+        "name": "Tan cowhide",
+        "level": 1,
+        "ticks": 2,
+        "xp": 1,
+        "product": "leather",
+        "materials": {
+          "cowhide": 1
+        }
+      },
+      {
+        "id": "tan_cowhide_hard",
+        "name": "Tan cowhide (hard)",
+        "level": 1,
+        "ticks": 2,
+        "xp": 1,
+        "product": "hard_leather",
+        "materials": {
+          "cowhide": 1
+        }
+      },
+      {
+        "id": "leather_gloves",
+        "name": "Craft leather gloves",
+        "level": 1,
+        "ticks": 3,
+        "xp": 14,
+        "product": "leather_gloves",
+        "materials": {
+          "leather": 1,
+          "needle": 1,
+          "thread": 1
+        }
+      },
+      {
+        "id": "molten_glass",
+        "name": "Make molten glass",
+        "level": 1,
+        "ticks": 4,
+        "xp": 20,
+        "product": "molten_glass",
+        "materials": {
+          "soda_ash": 1,
+          "bucket_of_sand": 1
+        }
+      },
+      {
+        "id": "leather_boots",
+        "name": "Craft leather boots",
+        "level": 7,
+        "ticks": 3,
+        "xp": 16,
+        "product": "leather_boots",
+        "materials": {
+          "leather": 1,
+          "needle": 1,
+          "thread": 1
+        }
+      },
+      {
+        "id": "leather_coif",
+        "name": "Craft leather cowl",
+        "level": 9,
+        "ticks": 4,
+        "xp": 18,
+        "product": "leather_coif",
+        "materials": {
+          "leather": 1,
+          "needle": 1,
+          "thread": 1
+        }
+      },
+      {
+        "id": "spin_bowstring",
+        "name": "Spin bowstring",
+        "level": 10,
+        "ticks": 3,
+        "xp": 15,
+        "product": "bowstring",
+        "materials": {
+          "flax": 1
+        }
+      },
+      {
+        "id": "leather_body",
+        "name": "Craft leather body",
+        "level": 14,
+        "ticks": 5,
+        "xp": 25,
+        "product": "leather_body",
+        "materials": {
+          "leather": 1,
+          "needle": 1,
+          "thread": 1
+        }
+      },
+      {
+        "id": "leather_chaps",
+        "name": "Craft leather chaps",
+        "level": 18,
+        "ticks": 5,
+        "xp": 27,
+        "product": "leather_chaps",
+        "materials": {
+          "leather": 1,
+          "needle": 1,
+          "thread": 1
+        }
+      },
+      {
+        "id": "cut_sapphire",
+        "name": "Cut sapphire",
+        "level": 20,
+        "ticks": 3,
+        "xp": 50,
+        "product": "sapphire",
+        "materials": {
+          "uncut_sapphire": 1
+        }
+      },
+      {
+        "id": "sapphire_amulet",
+        "name": "String sapphire amulet",
+        "level": 24,
+        "ticks": 4,
+        "xp": 65,
+        "product": "sapphire_amulet",
+        "materials": {
+          "sapphire": 1,
+          "gold_bar": 1
+        }
+      },
+      {
+        "id": "cut_emerald",
+        "name": "Cut emerald",
+        "level": 27,
+        "ticks": 3,
+        "xp": 67,
+        "product": "emerald",
+        "materials": {
+          "uncut_emerald": 1
+        }
+      },
+      {
+        "id": "hard_leather_body",
+        "name": "Craft hard leather body",
+        "level": 28,
+        "ticks": 5,
+        "xp": 35,
+        "product": "hard_leather_body",
+        "materials": {
+          "hard_leather": 1,
+          "needle": 1,
+          "thread": 1
+        }
+      },
+      {
+        "id": "emerald_amulet",
+        "name": "String emerald amulet",
+        "level": 31,
+        "ticks": 4,
+        "xp": 80,
+        "product": "emerald_amulet",
+        "materials": {
+          "emerald": 1,
+          "gold_bar": 1
+        }
+      },
+      {
+        "id": "cut_ruby",
+        "name": "Cut ruby",
+        "level": 34,
+        "ticks": 3,
+        "xp": 85,
+        "product": "ruby",
+        "materials": {
+          "uncut_ruby": 1
+        }
+      },
+      {
+        "id": "cut_diamond",
+        "name": "Cut diamond",
+        "level": 43,
+        "ticks": 3,
+        "xp": 107,
+        "product": "diamond",
+        "materials": {
+          "uncut_diamond": 1
+        }
+      },
+      {
+        "id": "ruby_amulet",
+        "name": "String ruby amulet",
+        "level": 50,
+        "ticks": 4,
+        "xp": 100,
+        "product": "ruby_amulet",
+        "materials": {
+          "ruby": 1,
+          "gold_bar": 1
+        }
+      },
+      {
+        "id": "green_dhide_chaps",
+        "name": "Craft green d'hide chaps",
+        "level": 57,
+        "ticks": 5,
+        "xp": 62,
+        "product": "green_dhide_chaps",
+        "materials": {
+          "green_dhide": 2
+        }
+      },
+      {
+        "id": "green_dhide_body",
+        "name": "Craft green d'hide body",
+        "level": 63,
+        "ticks": 5,
+        "xp": 186,
+        "product": "green_dhide_body",
+        "materials": {
+          "green_dhide": 3
+        }
+      },
+      {
+        "id": "diamond_amulet",
+        "name": "String diamond amulet",
+        "level": 70,
+        "ticks": 4,
+        "xp": 130,
+        "product": "diamond_amulet",
+        "materials": {
+          "diamond": 1,
+          "gold_bar": 1
+        }
+      }
+    ]
+  },
+  "herblore": {
+    "id": "herblore",
+    "name": "Herblore",
+    "actions": []
+  },
+  "agility": {
+    "id": "agility",
+    "name": "Agility",
+    "actions": [
+      {
+        "id": "gnome_stronghold",
+        "name": "Gnome Stronghold Course",
+        "level": 1,
+        "ticks": 40,
+        "xp": 86,
+        "coinReward": 10,
+        "description": "Beginner course in the Gnome Stronghold"
+      },
+      {
+        "id": "draynor_village",
+        "name": "Draynor Village Rooftop",
+        "level": 10,
+        "ticks": 38,
+        "xp": 120,
+        "coinReward": 25,
+        "description": "Rooftop course through Draynor Village"
+      },
+      {
+        "id": "al_kharid",
+        "name": "Al Kharid Rooftop",
+        "level": 20,
+        "ticks": 35,
+        "xp": 180,
+        "coinReward": 50,
+        "description": "Desert rooftop course in Al Kharid"
+      },
+      {
+        "id": "varrock",
+        "name": "Varrock Rooftop",
+        "level": 30,
+        "ticks": 33,
+        "xp": 238,
+        "coinReward": 90,
+        "description": "Rooftop agility course through Varrock"
+      },
+      {
+        "id": "canifis",
+        "name": "Canifis Rooftop",
+        "level": 40,
+        "ticks": 30,
+        "xp": 240,
+        "coinReward": 140,
+        "description": "Rooftop course through the spooky village of Canifis"
+      },
+      {
+        "id": "falador",
+        "name": "Falador Rooftop",
+        "level": 50,
+        "ticks": 28,
+        "xp": 440,
+        "coinReward": 200,
+        "description": "High-speed rooftop course over Falador"
+      },
+      {
+        "id": "seers_village",
+        "name": "Seers' Village Rooftop",
+        "level": 60,
+        "ticks": 25,
+        "xp": 570,
+        "coinReward": 300,
+        "description": "Agility course over the rooftops of Seers' Village"
+      },
+      {
+        "id": "pollnivneach",
+        "name": "Pollnivneach Rooftop",
+        "level": 70,
+        "ticks": 23,
+        "xp": 890,
+        "coinReward": 420,
+        "description": "Challenging desert rooftop course in Pollnivneach"
+      },
+      {
+        "id": "rellekka",
+        "name": "Rellekka Rooftop",
+        "level": 80,
+        "ticks": 20,
+        "xp": 780,
+        "coinReward": 560,
+        "description": "Rugged northern rooftop course in Rellekka"
+      },
+      {
+        "id": "ardougne",
+        "name": "Ardougne Rooftop",
+        "level": 90,
+        "ticks": 18,
+        "xp": 793,
+        "coinReward": 750,
+        "description": "Elite rooftop course in the grand city of Ardougne"
+      }
+    ]
+  }
+}

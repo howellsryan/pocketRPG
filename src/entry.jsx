@@ -1,0 +1,3 @@
+import { h, render, Fragment } from 'preact'
+import App from './App.jsx'
+render(h(App, null), document.getElementById('app'))
