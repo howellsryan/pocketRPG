@@ -49,7 +49,9 @@ const SHOPS = [
       { id: 'steel_scimitar',   name: 'Steel scimitar',   icon: '⚔️', price: 400,   stackable: false, desc: 'Steel scimitar. Atk 5. Str +24.' },
       { id: 'mithril_scimitar', name: 'Mithril scimitar', icon: '⚔️', price: 1040,  stackable: false, desc: 'Mithril scimitar. Atk 20. Str +40.' },
       { id: 'adamant_scimitar', name: 'Adamant scimitar', icon: '⚔️', price: 2560,  stackable: false, desc: 'Adamant scimitar. Atk 30. Str +67.' },
-      { id: 'rune_scimitar',    name: 'Rune scimitar',    icon: '⚔️', price: 20480, stackable: false, desc: 'Best F2P scimitar. Atk 40. Str +75.' },
+      { id: 'rune_scimitar',    name: 'Rune scimitar',    icon: '⚔️', price: 20480,  stackable: false, desc: 'Best F2P scimitar. Atk 40. Str +75.' },
+      { id: 'dragon_dagger',    name: 'Dragon dagger',    icon: '🗡️', price: 30000,  stackable: false, desc: 'Fast dragon stab weapon. Atk 60. Str +40.' },
+      { id: 'dragon_scimitar',  name: 'Dragon scimitar',  icon: '⚔️', price: 59776,  stackable: false, desc: 'Best slash weapon. Atk 60. Str +66.' },
       { id: 'bronze_mace',  name: 'Bronze mace',  icon: '🔱', price: 18,   stackable: false, desc: 'Crush + prayer bonus. Atk 1. Str +5.' },
       { id: 'iron_mace',    name: 'Iron mace',    icon: '🔱', price: 50,   stackable: false, desc: 'Iron crush weapon. Atk 1. Str +10.' },
       { id: 'steel_mace',   name: 'Steel mace',   icon: '🔱', price: 260,  stackable: false, desc: 'Steel crush weapon. Atk 5. Str +17.' },
@@ -85,6 +87,7 @@ const SHOPS = [
       { id: 'adamant_kiteshield', name: 'Adamant kiteshield', icon: '🛡️', price: 2496,  stackable: false, desc: 'Def: stab+33 slash+38 crush+36. Def 30.' },
       { id: 'rune_med_helm',      name: 'Rune med helm',      icon: '⛑️', price: 11000, stackable: false, desc: 'Rune medium helm. Def 40.' },
       { id: 'anti_dragon_shield', name: 'Anti-dragon shield', icon: '🛡️', price: 800,   stackable: false, desc: '🔥 Blocks dragonfire attacks from dragons. Def 1.' },
+      { id: 'berserker_helm',     name: 'Berserker helm',     icon: '⛑️', price: 78000, stackable: false, desc: 'Str bonus helmet. Def 45 + Str 45. Str +3.' },
     ],
   },
   {
@@ -148,11 +151,35 @@ const SHOPS = [
       { id: 'death_rune',     name: 'Death rune',     icon: '💀', price: 310,  stackable: true,  desc: 'High-level combat spells.' },
     ],
   },
+  {
+    id: 'capes',
+    label: '🎗️',
+    title: 'Skill Capes',
+    desc: 'Awarded for reaching level 99. Requires 99 in the matching skill.',
+    items: [
+      { id: 'attack_cape',      name: 'Attack cape',      icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Attack 99. Def +9 all styles.', requiresSkill: 'attack',      requiresLevel: 99 },
+      { id: 'strength_cape',    name: 'Strength cape',    icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Strength 99. Def +9 all styles.', requiresSkill: 'strength',    requiresLevel: 99 },
+      { id: 'defence_cape',     name: 'Defence cape',     icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Defence 99. Def +9 all styles.', requiresSkill: 'defence',     requiresLevel: 99 },
+      { id: 'hitpoints_cape',   name: 'Hitpoints cape',   icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Hitpoints 99. Def +9 all styles.', requiresSkill: 'hitpoints',   requiresLevel: 99 },
+      { id: 'ranged_cape',      name: 'Ranged cape',      icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Ranged 99. Def +9 all styles.', requiresSkill: 'ranged',      requiresLevel: 99 },
+      { id: 'magic_cape',       name: 'Magic cape',       icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Magic 99. Def +9 all styles.', requiresSkill: 'magic',       requiresLevel: 99 },
+      { id: 'prayer_cape',      name: 'Prayer cape',      icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Prayer 99. Def +9 all styles.', requiresSkill: 'prayer',      requiresLevel: 99 },
+      { id: 'mining_cape',      name: 'Mining cape',      icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Mining 99. Def +9 all styles.', requiresSkill: 'mining',      requiresLevel: 99 },
+      { id: 'woodcutting_cape', name: 'Woodcutting cape', icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Woodcutting 99. Def +9 all styles.', requiresSkill: 'woodcutting', requiresLevel: 99 },
+      { id: 'fishing_cape',     name: 'Fishing cape',     icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Fishing 99. Def +9 all styles.', requiresSkill: 'fishing',     requiresLevel: 99 },
+      { id: 'smithing_cape',    name: 'Smithing cape',    icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Smithing 99. Def +9 all styles.', requiresSkill: 'smithing',    requiresLevel: 99 },
+      { id: 'cooking_cape',     name: 'Cooking cape',     icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Cooking 99. Def +9 all styles.', requiresSkill: 'cooking',     requiresLevel: 99 },
+      { id: 'fletching_cape',   name: 'Fletching cape',   icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Fletching 99. Def +9 all styles.', requiresSkill: 'fletching',   requiresLevel: 99 },
+      { id: 'crafting_cape',    name: 'Crafting cape',    icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Crafting 99. Def +9 all styles.', requiresSkill: 'crafting',    requiresLevel: 99 },
+      { id: 'herblore_cape',    name: 'Herblore cape',    icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Herblore 99. Def +9 all styles.', requiresSkill: 'herblore',    requiresLevel: 99 },
+      { id: 'agility_cape',     name: 'Agility cape',     icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Agility 99. Def +9 all styles.', requiresSkill: 'agility',     requiresLevel: 99 },
+    ],
+  },
 ]
 
 // ── COMPONENT ───────────────────────────────────────────────────────────────
 export default function GeneralStoreScreen() {
-  const { inventory, updateInventory, addToast } = useGame()
+  const { inventory, updateInventory, addToast, getSkillLevel } = useGame()
   const [activeShop, setActiveShop] = useState('general')
   const [quantities, setQuantities] = useState({})
 
@@ -168,6 +195,15 @@ export default function GeneralStoreScreen() {
   const handleBuy = (storeItem) => {
     const qty = getQty(storeItem.id)
     const totalCost = storeItem.price * qty
+
+    if (storeItem.requiresSkill && storeItem.requiresLevel) {
+      const playerLevel = getSkillLevel(storeItem.requiresSkill)
+      if (playerLevel < storeItem.requiresLevel) {
+        const skillName = storeItem.requiresSkill.charAt(0).toUpperCase() + storeItem.requiresSkill.slice(1)
+        addToast(`Need ${skillName} level ${storeItem.requiresLevel} to buy this cape.`, 'error')
+        return
+      }
+    }
 
     if (coins < totalCost) {
       addToast(`Need ${totalCost.toLocaleString()} coins — you have ${coins.toLocaleString()}.`, 'error')
@@ -253,6 +289,9 @@ export default function GeneralStoreScreen() {
             const qty = getQty(item.id)
             const totalCost = item.price * qty
             const canAfford = coins >= totalCost
+            const skillLocked = item.requiresSkill
+              ? getSkillLevel(item.requiresSkill) < item.requiresLevel
+              : false
 
             return (
               <div
@@ -266,14 +305,19 @@ export default function GeneralStoreScreen() {
               >
                 {/* Item info row */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '22px', lineHeight: 1, flexShrink: 0 }}>{item.icon}</span>
+                  <span style={{ fontSize: '22px', lineHeight: 1, flexShrink: 0, opacity: skillLocked ? 0.4 : 1 }}>{item.icon}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '13px', fontWeight: '600', color: '#e8d5b0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
+                    <div style={{ fontSize: '13px', fontWeight: '600', color: skillLocked ? '#888' : '#e8d5b0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
                     <div style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.38, marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.desc}</div>
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: '12px', color: '#d4af37', fontFamily: 'monospace' }}>{item.price.toLocaleString()} gp</div>
-                    <div style={{ fontSize: '9px', color: '#e8d5b0', opacity: 0.3 }}>each</div>
+                    {skillLocked
+                      ? <div style={{ fontSize: '11px', color: '#888' }}>🔒 Lv {item.requiresLevel}</div>
+                      : <>
+                          <div style={{ fontSize: '12px', color: '#d4af37', fontFamily: 'monospace' }}>{item.price.toLocaleString()} gp</div>
+                          <div style={{ fontSize: '9px', color: '#e8d5b0', opacity: 0.3 }}>each</div>
+                        </>
+                    }
                   </div>
                 </div>
 
@@ -310,17 +354,17 @@ export default function GeneralStoreScreen() {
                       padding: '0 12px',
                       height: '28px',
                       borderRadius: '8px',
-                      background: canAfford ? 'linear-gradient(135deg, #b8940e, #d4af37)' : '#222',
+                      background: skillLocked ? '#222' : canAfford ? 'linear-gradient(135deg, #b8940e, #d4af37)' : '#222',
                       border: 'none',
-                      color: canAfford ? '#0f0f0f' : '#888',
+                      color: skillLocked ? '#555' : canAfford ? '#0f0f0f' : '#888',
                       fontSize: '11px',
                       fontWeight: '700',
-                      cursor: canAfford ? 'pointer' : 'not-allowed',
+                      cursor: skillLocked || !canAfford ? 'not-allowed' : 'pointer',
                       whiteSpace: 'nowrap',
                       flexShrink: 0,
                     }}
                   >
-                    Buy · {totalCost.toLocaleString()} gp
+                    {skillLocked ? 'Locked' : `Buy · ${totalCost.toLocaleString()} gp`}
                   </button>
                 </div>
               </div>

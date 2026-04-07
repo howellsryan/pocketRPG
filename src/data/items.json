@@ -4551,5 +4551,313 @@
     "requirements": {},
     "shopValue": 25,
     "icon": "🥷"
+  },
+  "dragon_dagger": {
+    "id": "dragon_dagger",
+    "name": "Dragon dagger",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 40,
+      "slash": 25,
+      "crush": -4,
+      "magic": 1,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 40,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 60
+    },
+    "shopValue": 30000,
+    "icon": "🗡️"
+  },
+  "dragon_scimitar": {
+    "id": "dragon_scimitar",
+    "name": "Dragon scimitar",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 8,
+      "slash": 67,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 66,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 60
+    },
+    "shopValue": 59776,
+    "icon": "⚔️"
+  },
+  "berserker_helm": {
+    "id": "berserker_helm",
+    "name": "Berserker helm",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": -6,
+      "slash": -6,
+      "crush": -6,
+      "magic": -3,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 8,
+      "slash": 10,
+      "crush": 7,
+      "magic": -6,
+      "ranged": 8
+    },
+    "otherBonus": {
+      "meleeStrength": 3,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 45,
+      "strength": 45
+    },
+    "shopValue": 78000,
+    "icon": "⛑️"
+  },
+  "attack_cape": {
+    "id": "attack_cape",
+    "name": "Attack cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
+    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
+    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
+    "requirements": { "attack": 99 },
+    "shopValue": 99000,
+    "icon": "🎗️"
+  },
+  "strength_cape": {
+    "id": "strength_cape",
+    "name": "Strength cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
+    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
+    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
+    "requirements": { "strength": 99 },
+    "shopValue": 99000,
+    "icon": "🎗️"
+  },
+  "defence_cape": {
+    "id": "defence_cape",
+    "name": "Defence cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
+    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
+    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
+    "requirements": { "defence": 99 },
+    "shopValue": 99000,
+    "icon": "🎗️"
+  },
+  "hitpoints_cape": {
+    "id": "hitpoints_cape",
+    "name": "Hitpoints cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
+    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
+    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
+    "requirements": { "hitpoints": 99 },
+    "shopValue": 99000,
+    "icon": "🎗️"
+  },
+  "ranged_cape": {
+    "id": "ranged_cape",
+    "name": "Ranged cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
+    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
+    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
+    "requirements": { "ranged": 99 },
+    "shopValue": 99000,
+    "icon": "🎗️"
+  },
+  "magic_cape": {
+    "id": "magic_cape",
+    "name": "Magic cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
+    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
+    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
+    "requirements": { "magic": 99 },
+    "shopValue": 99000,
+    "icon": "🎗️"
+  },
+  "prayer_cape": {
+    "id": "prayer_cape",
+    "name": "Prayer cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
+    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
+    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
+    "requirements": { "prayer": 99 },
+    "shopValue": 99000,
+    "icon": "🎗️"
+  },
+  "mining_cape": {
+    "id": "mining_cape",
+    "name": "Mining cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
+    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
+    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
+    "requirements": { "mining": 99 },
+    "shopValue": 99000,
+    "icon": "🎗️"
+  },
+  "woodcutting_cape": {
+    "id": "woodcutting_cape",
+    "name": "Woodcutting cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
+    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
+    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
+    "requirements": { "woodcutting": 99 },
+    "shopValue": 99000,
+    "icon": "🎗️"
+  },
+  "fishing_cape": {
+    "id": "fishing_cape",
+    "name": "Fishing cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
+    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
+    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
+    "requirements": { "fishing": 99 },
+    "shopValue": 99000,
+    "icon": "🎗️"
+  },
+  "smithing_cape": {
+    "id": "smithing_cape",
+    "name": "Smithing cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
+    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
+    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
+    "requirements": { "smithing": 99 },
+    "shopValue": 99000,
+    "icon": "🎗️"
+  },
+  "cooking_cape": {
+    "id": "cooking_cape",
+    "name": "Cooking cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
+    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
+    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
+    "requirements": { "cooking": 99 },
+    "shopValue": 99000,
+    "icon": "🎗️"
+  },
+  "fletching_cape": {
+    "id": "fletching_cape",
+    "name": "Fletching cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
+    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
+    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
+    "requirements": { "fletching": 99 },
+    "shopValue": 99000,
+    "icon": "🎗️"
+  },
+  "crafting_cape": {
+    "id": "crafting_cape",
+    "name": "Crafting cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
+    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
+    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
+    "requirements": { "crafting": 99 },
+    "shopValue": 99000,
+    "icon": "🎗️"
+  },
+  "herblore_cape": {
+    "id": "herblore_cape",
+    "name": "Herblore cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
+    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
+    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
+    "requirements": { "herblore": 99 },
+    "shopValue": 99000,
+    "icon": "🎗️"
+  },
+  "agility_cape": {
+    "id": "agility_cape",
+    "name": "Agility cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
+    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
+    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
+    "requirements": { "agility": 99 },
+    "shopValue": 99000,
+    "icon": "🎗️"
   }
 }
