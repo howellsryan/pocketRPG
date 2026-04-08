@@ -12,14 +12,33 @@ export function createEquipment() {
 }
 
 /**
- * Equip an item. Returns { equipped: true, unequipped: [] } or { equipped: false }
- * Handles 2H weapon / shield conflicts.
+ * Check if an ammo item is compatible with the currently equipped weapon.
+ * Returns true if compatible, false if not.
+ * Also returns true if no weapon is equipped or if either item has no ammoType/ammoKind.
  */
-export function equipItem(equipment, itemData) {
+export function isAmmoCompatible(equipment, ammoItemData, itemsData) {
+  if (!equipment.weapon) return true
+  const weapon = itemsData[equipment.weapon.itemId]
+  if (!weapon || !weapon.ammoType || !ammoItemData.ammoKind) return true
+  return weapon.ammoType === ammoItemData.ammoKind
+}
+
+/**
+ * Equip an item. Returns { equipped: true, unequipped: [] } or { equipped: false, reason }
+ * Handles 2H weapon / shield conflicts and ammo-weapon type validation.
+ */
+export function equipItem(equipment, itemData, itemsData) {
   const slot = itemData.slot
   if (!slot || !EQUIPMENT_SLOTS.includes(slot)) return { equipped: false, unequipped: [] }
 
   const unequipped = []
+
+  // Validate ammo type vs equipped weapon
+  if (slot === 'ammo' && itemsData) {
+    if (!isAmmoCompatible(equipment, itemData, itemsData)) {
+      return { equipped: false, unequipped: [], reason: 'wrong_ammo_type' }
+    }
+  }
 
   // 2H weapon clears shield
   if (slot === 'weapon' && itemData.twoHanded) {
