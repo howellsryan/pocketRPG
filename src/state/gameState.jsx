@@ -51,7 +51,10 @@ export function GameProvider({ children }) {
     let idleResult = null
     console.log('[PocketRPG] loadGame — savedTask:', savedTask, 'savedLastTick:', savedLastTick, 'elapsed:', savedLastTick ? Date.now() - savedLastTick : 0)
     if (savedTask && savedLastTick) {
-      const elapsedMs = Date.now() - savedLastTick
+      // Cap at 24h to limit cross-session clock manipulation; legitimate offline play
+      // beyond 24h can use the in-game skip button.
+      const MAX_OFFLINE_MS = 24 * 60 * 60 * 1000
+      const elapsedMs = Math.min(Date.now() - savedLastTick, MAX_OFFLINE_MS)
       if (elapsedMs >= 2000) {
         let sim = null
         if (savedTask.type === 'skill') {
