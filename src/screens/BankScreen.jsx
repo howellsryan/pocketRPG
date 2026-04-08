@@ -29,7 +29,16 @@ export default function BankScreen() {
   const bankItems = Object.values(bank).filter(b => b && b.quantity > 0)
 
   const getDisplayItems = () => {
-    if (activeTab === 0) return bankItems.filter(e => !itemTabMap[e.itemId])
+    if (activeTab === 0) {
+      // Show unassigned items + items explicitly ordered in All (tabIndex: 0)
+      return bankItems
+        .filter(e => !itemTabMap[e.itemId] || itemTabMap[e.itemId].tabIndex === 0)
+        .sort((a, b) => {
+          const pa = itemTabMap[a.itemId]?.tabIndex === 0 ? (itemTabMap[a.itemId].position ?? 9999) : 9999
+          const pb = itemTabMap[b.itemId]?.tabIndex === 0 ? (itemTabMap[b.itemId].position ?? 9999) : 9999
+          return pa - pb
+        })
+    }
     return bankItems
       .filter(e => itemTabMap[e.itemId]?.tabIndex === activeTab)
       .sort((a, b) => (itemTabMap[a.itemId]?.position ?? 9999) - (itemTabMap[b.itemId]?.position ?? 9999))
@@ -128,13 +137,26 @@ export default function BankScreen() {
 
   // ── Drag reorder ─────────────────────────────────────────────────────────────
   const reorderItems = (draggedId, targetId) => {
-    if (draggedId === targetId || activeTab === 0) return
+    if (draggedId === targetId) return
     const newMap = { ...itemTabMap }
 
-    const ids = Object.entries(newMap)
-      .filter(([, info]) => info.tabIndex === activeTab)
-      .sort(([, a], [, b]) => a.position - b.position)
-      .map(([id]) => id)
+    let ids
+    if (activeTab === 0) {
+      // All tab: unassigned items + tabIndex:0 items, in current display order
+      ids = bankItems
+        .filter(e => !newMap[e.itemId] || newMap[e.itemId].tabIndex === 0)
+        .sort((a, b) => {
+          const pa = newMap[a.itemId]?.tabIndex === 0 ? (newMap[a.itemId].position ?? 9999) : 9999
+          const pb = newMap[b.itemId]?.tabIndex === 0 ? (newMap[b.itemId].position ?? 9999) : 9999
+          return pa - pb
+        })
+        .map(e => e.itemId)
+    } else {
+      ids = Object.entries(newMap)
+        .filter(([, info]) => info.tabIndex === activeTab)
+        .sort(([, a], [, b]) => a.position - b.position)
+        .map(([id]) => id)
+    }
 
     const fromIdx = ids.indexOf(draggedId)
     if (fromIdx === -1) return
@@ -144,7 +166,7 @@ export default function BankScreen() {
     ids.splice(toIdx, 0, draggedId)
 
     ids.forEach((id, pos) => {
-      if (newMap[id]) newMap[id] = { ...newMap[id], position: pos }
+      newMap[id] = { tabIndex: activeTab, position: pos }
     })
     updateBankConfig({ tabs, itemTabMap: newMap, allTabName })
   }
@@ -348,19 +370,17 @@ export default function BankScreen() {
                     <span class={`text-[9px] font-[var(--font-mono)] font-bold ${isM ? 'text-[var(--color-emerald)]' : 'text-[var(--color-gold)]'}`}>×{text}</span>
                   </button>
 
-                  {/* Drag handle — only shown in custom tabs */}
-                  {activeTab !== 0 && (
-                    <span
-                      class="absolute top-0.5 right-0.5 text-[10px] text-[var(--color-parchment)] opacity-20 leading-none select-none z-10 px-0.5 py-0.5 cursor-grab"
-                      style={{ touchAction: 'none' }}
-                      onPointerDown={(e) => handleDragStart(e, entry.itemId)}
-                      onPointerMove={(e) => handleDragMove(e, entry.itemId)}
-                      onPointerUp={(e) => handleDragEnd(e, entry.itemId)}
-                      onPointerCancel={(e) => handleDragCancel(e, entry.itemId)}
-                    >
-                      ⠿
-                    </span>
-                  )}
+                  {/* Drag handle — shown in all tabs */}
+                  <span
+                    class="absolute top-0.5 right-0.5 text-[10px] text-[var(--color-parchment)] opacity-20 leading-none select-none z-10 px-0.5 py-0.5 cursor-grab"
+                    style={{ touchAction: 'none' }}
+                    onPointerDown={(e) => handleDragStart(e, entry.itemId)}
+                    onPointerMove={(e) => handleDragMove(e, entry.itemId)}
+                    onPointerUp={(e) => handleDragEnd(e, entry.itemId)}
+                    onPointerCancel={(e) => handleDragCancel(e, entry.itemId)}
+                  >
+                    ⠿
+                  </span>
                 </div>
               )
             })}
