@@ -10944,12 +10944,6 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
         setCombat(state);
         setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot });
     };
-    const flee = () => {
-        setCombat(null);
-        setLog([]);
-        setActiveTask(null);
-        addToast('You fled!', 'info');
-    };
     const stopAndBack = () => {
         setCombat(null);
         setLog([]);
@@ -11098,11 +11092,10 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                 ? Math.round(killCount / ((Date.now() - fightStartedAt) / 3600000)).toLocaleString()
                 : '—'))),
         h("div", { class: "flex-shrink-0 flex flex-col gap-2" }, combat.active ? (h(Fragment, null,
-            h("div", { class: "grid grid-cols-3 gap-2" },
+            h("div", { class: "grid grid-cols-2 gap-2" },
                 h("button", { onClick: handleEat, class: "py-2.5 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80" }, "\uD83C\uDF56 Eat"),
-                h("button", { class: "py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] opacity-40 text-sm cursor-default" }, "\uD83E\uDDEA Potion"),
-                h("button", { onClick: flee, class: "py-2.5 rounded-lg bg-[var(--color-blood-mid)] text-white font-semibold text-sm active:opacity-80" }, "\uD83C\uDFC3 Flee")),
-            h("div", { class: "flex justify-center gap-2" },
+                h("button", { class: "py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] opacity-40 text-sm cursor-default" }, "\uD83E\uDDEA Potion")),
+            h("div", { class: "flex gap-2" },
                 h("button", { onClick: stopAndBack, class: "flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80" }, "\u2190 Stop & Back"),
                 skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "flex-1 py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\u23ED\uFE0F Skip 1h"))))) : (h("div", { class: "grid grid-cols-3 gap-2" },
             h("button", { onClick: fightAnother, class: "py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80 col-span-2" }, "\u2694\uFE0F Fight Again"),
@@ -11310,7 +11303,7 @@ function AgilityScreen({ initialActionId, onBack }) {
 const AGILITY_SKILLS = ['agility'];
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0);
 const allSkillsInTab = [...trainableSkills, ...AGILITY_SKILLS];
-function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
+function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHour, skipHourUnlocked }) {
     const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask } = useGame();
     const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null);
     const [selectedAction, setSelectedAction] = useState(null);
@@ -11536,7 +11529,6 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
         ? 1 - (skilling.ticksRemaining / skilling.action.ticks)
         : 0;
     return (h("div", { class: "h-full flex flex-col p-4" },
-        h("button", { onClick: stopSkilling, class: "text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1" }, "\u2190 Stop & Back"),
         h("div", { class: "flex-1 flex flex-col items-center justify-center" },
             h("span", { class: "text-4xl mb-2" }, SKILL_ICONS[selectedSkill]),
             h("h2", { class: "font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)] mb-1" }, skilling.action.name),
@@ -11559,7 +11551,9 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
                     h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, skilling.startedAt && (Date.now() - skilling.startedAt) > 5000
                         ? formatNumber(Math.round(skilling.totalXP / ((Date.now() - skilling.startedAt) / 3600000)))
                         : '—')))),
-        h("button", { onClick: stopSkilling, class: "flex-shrink-0 w-full py-3 rounded-xl bg-[var(--color-blood)]/60 text-white font-semibold text-sm active:opacity-80" }, "Stop")));
+        h("div", { class: "flex-shrink-0 flex gap-2 mt-3" },
+            h("button", { onClick: stopSkilling, class: "flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80" }, "\u2190 Stop & Back"),
+            skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "flex-1 py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\u23ED\uFE0F Skip 1h")))));
 }
 
 // ── screens/GatherScreen.js ──
@@ -11694,7 +11688,7 @@ const ITEM_NAMES = {
     soda_ash: 'Soda ash', cowhide: 'Cowhide', bucket: 'Bucket',
     pot: 'Pot',
 };
-function GatherScreen({ initialTaskId, idleResult }) {
+function GatherScreen({ initialTaskId, idleResult, onSkipHour, skipHourUnlocked }) {
     const { inventory, bank, updateInventory, updateBankDirect, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask } = useGame();
     const [category, setCategory] = useState('all');
     const [activeTask, setLocalTask] = useState(null);
@@ -11838,7 +11832,6 @@ function GatherScreen({ initialTaskId, idleResult }) {
         const { task } = activeTask;
         const progress = 1 - activeTask.ticksRemaining / task.ticks;
         return (h("div", { style: { height: '100%', display: 'flex', flexDirection: 'column', padding: '16px' } },
-            h("button", { onClick: stopTask, style: { fontSize: '12px', color: '#c8a96e', marginBottom: '12px', textAlign: 'left' } }, "\u2190 Stop & Back"),
             h("div", { style: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' } },
                 h("span", { style: { fontSize: '48px', marginBottom: '8px' } }, task.icon),
                 h("h2", { style: { fontFamily: 'Cinzel, serif', fontSize: '18px', fontWeight: 'bold', color: '#d4af37', marginBottom: '4px', textAlign: 'center' } }, task.name),
@@ -11856,7 +11849,9 @@ function GatherScreen({ initialTaskId, idleResult }) {
                             h("span", { style: { fontSize: '13px', color: '#e8d5b0', opacity: 0.6 } }, "Items banked/hr"),
                             h("span", { style: { fontFamily: 'monospace', color: '#d4af37', fontWeight: 'bold' } }, elapsedHrs > 0 ? perHour.toLocaleString() : '—'))));
                 })())),
-            h("button", { onClick: stopTask, style: { flexShrink: 0, width: '100%', padding: '12px', borderRadius: '12px', background: 'rgba(139,0,0,0.6)', color: 'white', fontWeight: '600', fontSize: '14px' } }, "Stop")));
+            h("div", { class: "flex gap-2 mt-3", style: { flexShrink: 0, width: '100%' } },
+                h("button", { onClick: stopTask, class: "flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80" }, "\u2190 Stop & Back"),
+                skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "flex-1 py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\u23ED\uFE0F Skip 1h")))));
     }
     // Task picker
     return (h("div", { style: { height: '100%', display: 'flex', flexDirection: 'column' } },
@@ -12812,8 +12807,8 @@ function GameApp() {
             case SCREENS.EQUIPMENT: return h(EquipmentScreen, null);
             case SCREENS.BANK: return h(BankScreen, null);
             case SCREENS.COMBAT: return h(CombatScreen, { onNavigate: navigate, initialMonsterId: actionData?.monsterId, onSkipHour: handleSkipHour, skipHourUnlocked: unlockedFeatures?.has('skip_hour') });
-            case SCREENS.SKILLS: return h(SkillingScreen, { initialSkillId: actionData?.skillId, initialActionId: actionData?.actionId, idleResult: idleResult });
-            case SCREENS.GATHER: return h(GatherScreen, { initialTaskId: actionData?.gatherTaskId, idleResult: idleResult });
+            case SCREENS.SKILLS: return h(SkillingScreen, { initialSkillId: actionData?.skillId, initialActionId: actionData?.actionId, idleResult: idleResult, onSkipHour: handleSkipHour, skipHourUnlocked: unlockedFeatures?.has('skip_hour') });
+            case SCREENS.GATHER: return h(GatherScreen, { initialTaskId: actionData?.gatherTaskId, idleResult: idleResult, onSkipHour: handleSkipHour, skipHourUnlocked: unlockedFeatures?.has('skip_hour') });
             case SCREENS.AGILITY: return h(AgilityScreen, { initialActionId: actionData?.actionId });
             case SCREENS.STORE: return h(GeneralStoreScreen, null);
             default: return h(HomeScreen, { onNavigate: navigate, onSaveMenu: () => setShowSaveMenu(true) });
@@ -12824,29 +12819,6 @@ function GameApp() {
         h(ToastContainer, null),
         h("main", { style: { flex: 1, overflow: 'hidden' } }, renderScreen()),
         h(BottomNav, { active: screen, onNavigate: (s) => navigate(s) }),
-        unlockedFeatures?.has('skip_hour') && activeTask && activeTask.type !== 'combat' && (h("button", { onClick: handleSkipHour, style: {
-                position: 'fixed',
-                bottom: '62px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                zIndex: 50,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                padding: '8px 18px',
-                borderRadius: '20px',
-                background: 'linear-gradient(135deg, #1a3a2a, #2a5a3a)',
-                border: '1px solid rgba(100,200,120,0.4)',
-                color: '#7de8a0',
-                fontSize: '12px',
-                fontWeight: '700',
-                cursor: 'pointer',
-                boxShadow: '0 2px 12px rgba(0,0,0,0.5)',
-                letterSpacing: '0.03em',
-                whiteSpace: 'nowrap',
-            } },
-            h("span", { style: { fontSize: '14px' } }, "\u23ED\uFE0F"),
-            " Skip 1h")),
         idleResult && (h("div", { style: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' } },
             h("div", { style: { width: '100%', maxWidth: '380px', background: '#1a1a1a', borderRadius: '20px', border: '1px solid #333', overflow: 'hidden' } },
                 h("div", { style: { background: 'linear-gradient(135deg, #1d3a2a, #2a1a0a)', padding: '20px 20px 16px', borderBottom: '1px solid #333' } },

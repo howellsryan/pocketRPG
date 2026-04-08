@@ -17,7 +17,7 @@ const AGILITY_SKILLS = ['agility']
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0)
 const allSkillsInTab = [...trainableSkills, ...AGILITY_SKILLS]
 
-export default function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
+export default function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHour, skipHourUnlocked }) {
   const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask } = useGame()
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
   const [selectedAction, setSelectedAction] = useState(null)
@@ -285,11 +285,6 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
 
   return (
     <div class="h-full flex flex-col p-4">
-      <button onClick={stopSkilling}
-        class="text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1">
-        ← Stop & Back
-      </button>
-
       <div class="flex-1 flex flex-col items-center justify-center">
         <span class="text-4xl mb-2">{SKILL_ICONS[selectedSkill]}</span>
         <h2 class="font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)] mb-1">
@@ -330,13 +325,20 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
         </div>
       </div>
 
-      {/* Stop button */}
-      <button
-        onClick={stopSkilling}
-        class="flex-shrink-0 w-full py-3 rounded-xl bg-[var(--color-blood)]/60 text-white font-semibold text-sm active:opacity-80"
-      >
-        Stop
-      </button>
+      {/* Stop & Back / Skip 1h */}
+      <div class="flex-shrink-0 flex gap-2 mt-3">
+        <button onClick={stopSkilling}
+          class="flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80">
+          ← Stop &amp; Back
+        </button>
+        {skipHourUnlocked && (
+          <button onClick={onSkipHour}
+            class="flex-1 py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
+            style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
+            ⏭️ Skip 1h
+          </button>
+        )}
+      </div>
     </div>
   )
 }

@@ -200,13 +200,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
     setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot })
   }
 
-  const flee = () => {
-    setCombat(null)
-    setLog([])
-    setActiveTask(null)
-    addToast('You fled!', 'info')
-  }
-
   const stopAndBack = () => {
     setCombat(null)
     setLog([])
@@ -434,7 +427,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
         {combat.active ? (
           <>
             {/* Primary combat actions */}
-            <div class="grid grid-cols-3 gap-2">
+            <div class="grid grid-cols-2 gap-2">
               <button onClick={handleEat}
                 class="py-2.5 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80">
                 🍖 Eat
@@ -442,13 +435,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
               <button class="py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] opacity-40 text-sm cursor-default">
                 🧪 Potion
               </button>
-              <button onClick={flee}
-                class="py-2.5 rounded-lg bg-[var(--color-blood-mid)] text-white font-semibold text-sm active:opacity-80">
-                🏃 Flee
-              </button>
             </div>
-            {/* Stop & Back row — centre aligned with optional Skip 1h */}
-            <div class="flex justify-center gap-2">
+            {/* Stop & Back / Skip 1h */}
+            <div class="flex gap-2">
               <button onClick={stopAndBack}
                 class="flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80">
                 ← Stop &amp; Back
