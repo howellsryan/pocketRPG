@@ -2,6 +2,20 @@ import { useState } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import { countItem, removeItem, addItem, freeSlots } from '../engine/inventory.js'
 
+// ── UNLOCK DEFINITIONS ───────────────────────────────────────────────────────
+
+const UNLOCKS = [
+  {
+    id: 'skip_hour',
+    name: 'Skip 1 Hour',
+    icon: '⏭️',
+    price: 10_000_000,
+    desc: 'Instantly simulate 1 hour of active task progress. Repeatable. Does not work during boss fights.',
+  },
+]
+
+const UNLOCK_TAB = { id: 'unlocks', label: '🔓', title: 'Unlocks', desc: 'Permanent features & upgrades. One-time purchases.' }
+
 // ── SHOP DEFINITIONS ────────────────────────────────────────────────────────
 // All prices match OSRS NPC shop buy prices (cheapest source when multiple exist).
 
@@ -179,12 +193,13 @@ const SHOPS = [
 
 // ── COMPONENT ───────────────────────────────────────────────────────────────
 export default function GeneralStoreScreen() {
-  const { inventory, updateInventory, addToast, getSkillLevel } = useGame()
+  const { inventory, updateInventory, addToast, getSkillLevel, unlockedFeatures, unlockFeature } = useGame()
   const [activeShop, setActiveShop] = useState('general')
   const [quantities, setQuantities] = useState({})
 
   const coins = countItem(inventory, 'coins')
-  const shop = SHOPS.find(s => s.id === activeShop)
+  const isUnlocksTab = activeShop === 'unlocks'
+  const shop = isUnlocksTab ? UNLOCK_TAB : SHOPS.find(s => s.id === activeShop)
 
   const getQty = (id) => quantities[id] || 1
   const setQty = (id, val) => {
@@ -233,6 +248,22 @@ export default function GeneralStoreScreen() {
     updateInventory(newInv)
   }
 
+  const handleUnlock = (unlock) => {
+    if (unlockedFeatures.has(unlock.id)) {
+      addToast('Already unlocked.', 'info')
+      return
+    }
+    if (coins < unlock.price) {
+      addToast(`Need ${unlock.price.toLocaleString()} coins — you have ${coins.toLocaleString()}.`, 'error')
+      return
+    }
+    const newInv = [...inventory]
+    removeItem(newInv, 'coins', unlock.price)
+    updateInventory(newInv)
+    unlockFeature(unlock.id)
+    addToast(`${unlock.name} unlocked!`, 'info', unlock.icon)
+  }
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
@@ -258,7 +289,7 @@ export default function GeneralStoreScreen() {
           paddingBottom: '8px',
           scrollbarWidth: 'none',
         }}>
-          {SHOPS.map(s => (
+          {[...SHOPS, UNLOCK_TAB].map(s => (
             <button
               key={s.id}
               onClick={() => setActiveShop(s.id)}
@@ -282,95 +313,155 @@ export default function GeneralStoreScreen() {
         </div>
       </div>
 
-      {/* ── ITEM LIST ── */}
+      {/* ── ITEM LIST / UNLOCKS ── */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px 80px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {shop.items.map(item => {
-            const qty = getQty(item.id)
-            const totalCost = item.price * qty
-            const canAfford = coins >= totalCost
-            const skillLocked = item.requiresSkill
-              ? getSkillLevel(item.requiresSkill) < item.requiresLevel
-              : false
 
-            return (
-              <div
-                key={item.id}
-                style={{
-                  background: '#1a1a1a',
-                  border: '1px solid #2a2a2a',
-                  borderRadius: '10px',
-                  padding: '10px 12px',
-                }}
-              >
-                {/* Item info row */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '22px', lineHeight: 1, flexShrink: 0, opacity: skillLocked ? 0.4 : 1 }}>{item.icon}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '13px', fontWeight: '600', color: skillLocked ? '#888' : '#e8d5b0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
-                    <div style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.38, marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.desc}</div>
+        {/* ── UNLOCKS TAB ── */}
+        {isUnlocksTab && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {UNLOCKS.map(unlock => {
+              const owned = unlockedFeatures.has(unlock.id)
+              const canAfford = coins >= unlock.price
+              return (
+                <div
+                  key={unlock.id}
+                  style={{
+                    background: '#1a1a1a',
+                    border: owned ? '1px solid rgba(212,175,55,0.4)' : '1px solid #2a2a2a',
+                    borderRadius: '10px',
+                    padding: '12px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                    <span style={{ fontSize: '26px', lineHeight: 1, flexShrink: 0 }}>{unlock.icon}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '13px', fontWeight: '700', color: '#e8d5b0' }}>{unlock.name}</div>
+                      <div style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.4, marginTop: '2px' }}>{unlock.desc}</div>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      {owned
+                        ? <div style={{ fontSize: '11px', color: '#d4af37', fontWeight: '700' }}>✓ Owned</div>
+                        : <>
+                            <div style={{ fontSize: '12px', color: '#d4af37', fontFamily: 'monospace' }}>{unlock.price.toLocaleString()} gp</div>
+                            <div style={{ fontSize: '9px', color: '#e8d5b0', opacity: 0.3 }}>one-time</div>
+                          </>
+                      }
+                    </div>
                   </div>
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    {skillLocked
-                      ? <div style={{ fontSize: '11px', color: '#888' }}>🔒 Lv {item.requiresLevel}</div>
-                      : <>
-                          <div style={{ fontSize: '12px', color: '#d4af37', fontFamily: 'monospace' }}>{item.price.toLocaleString()} gp</div>
-                          <div style={{ fontSize: '9px', color: '#e8d5b0', opacity: 0.3 }}>each</div>
-                        </>
-                    }
-                  </div>
-                </div>
-
-                {/* Buy controls row */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  {/* Qty controls */}
                   <button
-                    onClick={() => setQty(item.id, qty - 1)}
-                    style={{ width: '26px', height: '26px', borderRadius: '6px', background: '#222', border: '1px solid #333', color: '#e8d5b0', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-                  >−</button>
-                  <input
-                    type="number" min="1" max="9999" value={qty}
-                    onInput={e => setQty(item.id, e.target.value)}
-                    style={{ width: '44px', height: '26px', borderRadius: '6px', background: '#111', border: '1px solid #333', color: '#e8d5b0', fontSize: '12px', fontFamily: 'monospace', textAlign: 'center', outline: 'none' }}
-                  />
-                  <button
-                    onClick={() => setQty(item.id, qty + 1)}
-                    style={{ width: '26px', height: '26px', borderRadius: '6px', background: '#222', border: '1px solid #333', color: '#e8d5b0', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-                  >+</button>
-                  {/* Quick presets */}
-                  {[5, 10, 100].map(n => (
-                    <button
-                      key={n}
-                      onClick={() => setQty(item.id, n)}
-                      style={{ height: '26px', padding: '0 7px', borderRadius: '6px', background: '#222', border: '1px solid #333', color: '#e8d5b0', fontSize: '10px', cursor: 'pointer', opacity: qty === n ? 1 : 0.45, flexShrink: 0 }}
-                    >{n}</button>
-                  ))}
-                  {/* Spacer */}
-                  <div style={{ flex: 1 }} />
-                  {/* Buy button */}
-                  <button
-                    onClick={() => handleBuy(item)}
+                    onClick={() => handleUnlock(unlock)}
+                    disabled={owned}
                     style={{
-                      padding: '0 12px',
-                      height: '28px',
+                      width: '100%',
+                      padding: '8px',
                       borderRadius: '8px',
-                      background: skillLocked ? '#222' : canAfford ? 'linear-gradient(135deg, #b8940e, #d4af37)' : '#222',
-                      border: 'none',
-                      color: skillLocked ? '#555' : canAfford ? '#0f0f0f' : '#888',
-                      fontSize: '11px',
+                      background: owned ? '#1a1a1a' : canAfford ? 'linear-gradient(135deg, #b8940e, #d4af37)' : '#222',
+                      border: owned ? '1px solid #333' : 'none',
+                      color: owned ? '#d4af37' : canAfford ? '#0f0f0f' : '#888',
+                      fontSize: '12px',
                       fontWeight: '700',
-                      cursor: skillLocked || !canAfford ? 'not-allowed' : 'pointer',
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0,
+                      cursor: owned || !canAfford ? 'not-allowed' : 'pointer',
                     }}
                   >
-                    {skillLocked ? 'Locked' : `Buy · ${totalCost.toLocaleString()} gp`}
+                    {owned ? '✓ Unlocked' : canAfford ? `Unlock · ${unlock.price.toLocaleString()} gp` : `Need ${unlock.price.toLocaleString()} gp`}
                   </button>
                 </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* ── SHOP ITEMS TAB ── */}
+        {!isUnlocksTab && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {shop.items.map(item => {
+              const qty = getQty(item.id)
+              const totalCost = item.price * qty
+              const canAfford = coins >= totalCost
+              const skillLocked = item.requiresSkill
+                ? getSkillLevel(item.requiresSkill) < item.requiresLevel
+                : false
+
+              return (
+                <div
+                  key={item.id}
+                  style={{
+                    background: '#1a1a1a',
+                    border: '1px solid #2a2a2a',
+                    borderRadius: '10px',
+                    padding: '10px 12px',
+                  }}
+                >
+                  {/* Item info row */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '22px', lineHeight: 1, flexShrink: 0, opacity: skillLocked ? 0.4 : 1 }}>{item.icon}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '13px', fontWeight: '600', color: skillLocked ? '#888' : '#e8d5b0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
+                      <div style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.38, marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.desc}</div>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      {skillLocked
+                        ? <div style={{ fontSize: '11px', color: '#888' }}>🔒 Lv {item.requiresLevel}</div>
+                        : <>
+                            <div style={{ fontSize: '12px', color: '#d4af37', fontFamily: 'monospace' }}>{item.price.toLocaleString()} gp</div>
+                            <div style={{ fontSize: '9px', color: '#e8d5b0', opacity: 0.3 }}>each</div>
+                          </>
+                      }
+                    </div>
+                  </div>
+
+                  {/* Buy controls row */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {/* Qty controls */}
+                    <button
+                      onClick={() => setQty(item.id, qty - 1)}
+                      style={{ width: '26px', height: '26px', borderRadius: '6px', background: '#222', border: '1px solid #333', color: '#e8d5b0', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                    >−</button>
+                    <input
+                      type="number" min="1" max="9999" value={qty}
+                      onInput={e => setQty(item.id, e.target.value)}
+                      style={{ width: '44px', height: '26px', borderRadius: '6px', background: '#111', border: '1px solid #333', color: '#e8d5b0', fontSize: '12px', fontFamily: 'monospace', textAlign: 'center', outline: 'none' }}
+                    />
+                    <button
+                      onClick={() => setQty(item.id, qty + 1)}
+                      style={{ width: '26px', height: '26px', borderRadius: '6px', background: '#222', border: '1px solid #333', color: '#e8d5b0', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                    >+</button>
+                    {/* Quick presets */}
+                    {[5, 10, 100].map(n => (
+                      <button
+                        key={n}
+                        onClick={() => setQty(item.id, n)}
+                        style={{ height: '26px', padding: '0 7px', borderRadius: '6px', background: '#222', border: '1px solid #333', color: '#e8d5b0', fontSize: '10px', cursor: 'pointer', opacity: qty === n ? 1 : 0.45, flexShrink: 0 }}
+                      >{n}</button>
+                    ))}
+                    {/* Spacer */}
+                    <div style={{ flex: 1 }} />
+                    {/* Buy button */}
+                    <button
+                      onClick={() => handleBuy(item)}
+                      style={{
+                        padding: '0 12px',
+                        height: '28px',
+                        borderRadius: '8px',
+                        background: skillLocked ? '#222' : canAfford ? 'linear-gradient(135deg, #b8940e, #d4af37)' : '#222',
+                        border: 'none',
+                        color: skillLocked ? '#555' : canAfford ? '#0f0f0f' : '#888',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        cursor: skillLocked || !canAfford ? 'not-allowed' : 'pointer',
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {skillLocked ? 'Locked' : `Buy · ${totalCost.toLocaleString()} gp`}
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
       </div>
     </div>
   )
