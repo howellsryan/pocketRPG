@@ -5029,6 +5029,78 @@ const itemsData = {
     "shopValue": 65000,
     "icon": "🔩"
   },
+  "godsword_blade": {
+    "id": "godsword_blade",
+    "name": "Godsword blade",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 500000,
+    "icon": "🗡️"
+  },
+  "bandos_godsword": {
+    "id": "bandos_godsword",
+    "name": "Bandos godsword",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 6,
+    "attackStyle": "slash",
+    "attackBonus": { "stab": 0, "slash": 132, "crush": 0, "magic": 0, "ranged": 0 },
+    "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
+    "otherBonus": { "meleeStrength": 132, "rangedStrength": 0, "magicDamage": 0 },
+    "requirements": { "attack": 75 },
+    "shopValue": 4500000,
+    "icon": "⚔️"
+  },
+  "armadyl_godsword": {
+    "id": "armadyl_godsword",
+    "name": "Armadyl godsword",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 6,
+    "attackStyle": "slash",
+    "attackBonus": { "stab": 0, "slash": 132, "crush": 0, "magic": 0, "ranged": 0 },
+    "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
+    "otherBonus": { "meleeStrength": 132, "rangedStrength": 0, "magicDamage": 0 },
+    "requirements": { "attack": 75 },
+    "shopValue": 8500000,
+    "icon": "⚔️"
+  },
+  "saradomin_godsword": {
+    "id": "saradomin_godsword",
+    "name": "Saradomin godsword",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 6,
+    "attackStyle": "slash",
+    "attackBonus": { "stab": 0, "slash": 132, "crush": 0, "magic": 0, "ranged": 0 },
+    "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
+    "otherBonus": { "meleeStrength": 132, "rangedStrength": 0, "magicDamage": 0 },
+    "requirements": { "attack": 75 },
+    "shopValue": 2500000,
+    "icon": "⚔️"
+  },
+  "zamorak_godsword": {
+    "id": "zamorak_godsword",
+    "name": "Zamorak godsword",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 6,
+    "attackStyle": "slash",
+    "attackBonus": { "stab": 0, "slash": 132, "crush": 0, "magic": 0, "ranged": 0 },
+    "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
+    "otherBonus": { "meleeStrength": 132, "rangedStrength": 0, "magicDamage": 0 },
+    "requirements": { "attack": 75 },
+    "shopValue": 2500000,
+    "icon": "⚔️"
+  },
   "bandos_chestplate": {
     "id": "bandos_chestplate",
     "name": "Bandos chestplate",
@@ -6775,6 +6847,65 @@ const skillsData = {
         "product": "rune_scimitar",
         "materials": {
           "rune_bar": 2
+        }
+      },
+      {
+        "id": "forge_godsword_blade",
+        "name": "Forge godsword blade",
+        "level": 80,
+        "ticks": 10,
+        "xp": 200,
+        "product": "godsword_blade",
+        "materials": {
+          "godsword_shard": 3
+        }
+      },
+      {
+        "id": "make_bandos_godsword",
+        "name": "Attach Bandos hilt",
+        "level": 1,
+        "ticks": 2,
+        "xp": 0,
+        "product": "bandos_godsword",
+        "materials": {
+          "godsword_blade": 1,
+          "bandos_hilt": 1
+        }
+      },
+      {
+        "id": "make_armadyl_godsword",
+        "name": "Attach Armadyl hilt",
+        "level": 1,
+        "ticks": 2,
+        "xp": 0,
+        "product": "armadyl_godsword",
+        "materials": {
+          "godsword_blade": 1,
+          "armadyl_hilt": 1
+        }
+      },
+      {
+        "id": "make_saradomin_godsword",
+        "name": "Attach Saradomin hilt",
+        "level": 1,
+        "ticks": 2,
+        "xp": 0,
+        "product": "saradomin_godsword",
+        "materials": {
+          "godsword_blade": 1,
+          "saradomin_hilt": 1
+        }
+      },
+      {
+        "id": "make_zamorak_godsword",
+        "name": "Attach Zamorak hilt",
+        "level": 1,
+        "ticks": 2,
+        "xp": 0,
+        "product": "zamorak_godsword",
+        "materials": {
+          "godsword_blade": 1,
+          "zamorak_hilt": 1
         }
       }
     ]
