@@ -46,7 +46,7 @@ const MONSTER_ICONS = {
   general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅'
 }
 
-export default function CombatScreen({ onNavigate, initialMonsterId }) {
+export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlocked }) {
   const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot } = useGame()
 
   const [combat, setCombat] = useState(null)
@@ -205,6 +205,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId }) {
     setLog([])
     setActiveTask(null)
     addToast('You fled!', 'info')
+  }
+
+  const stopAndBack = () => {
+    setCombat(null)
+    setLog([])
+    setActiveTask(null)
   }
 
   const handleEat = () => {
@@ -424,23 +430,40 @@ export default function CombatScreen({ onNavigate, initialMonsterId }) {
       )}
 
       {/* Action buttons */}
-      <div class="flex-shrink-0 grid grid-cols-3 gap-2">
+      <div class="flex-shrink-0 flex flex-col gap-2">
         {combat.active ? (
           <>
-            <button onClick={handleEat}
-              class="py-2.5 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80">
-              🍖 Eat
-            </button>
-            <button class="py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] opacity-40 text-sm cursor-default">
-              🧪 Potion
-            </button>
-            <button onClick={flee}
-              class="py-2.5 rounded-lg bg-[var(--color-blood-mid)] text-white font-semibold text-sm active:opacity-80">
-              🏃 Flee
-            </button>
+            {/* Primary combat actions */}
+            <div class="grid grid-cols-3 gap-2">
+              <button onClick={handleEat}
+                class="py-2.5 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80">
+                🍖 Eat
+              </button>
+              <button class="py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] opacity-40 text-sm cursor-default">
+                🧪 Potion
+              </button>
+              <button onClick={flee}
+                class="py-2.5 rounded-lg bg-[var(--color-blood-mid)] text-white font-semibold text-sm active:opacity-80">
+                🏃 Flee
+              </button>
+            </div>
+            {/* Stop & Back row — centre aligned with optional Skip 1h */}
+            <div class="flex justify-center gap-2">
+              <button onClick={stopAndBack}
+                class="flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80">
+                ← Stop &amp; Back
+              </button>
+              {skipHourUnlocked && (
+                <button onClick={onSkipHour}
+                  class="flex-1 py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
+                  style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
+                  ⏭️ Skip 1h
+                </button>
+              )}
+            </div>
           </>
         ) : (
-          <>
+          <div class="grid grid-cols-3 gap-2">
             <button onClick={fightAnother}
               class="py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80 col-span-2">
               ⚔️ Fight Again
@@ -449,7 +472,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId }) {
               class="py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80">
               Back
             </button>
-          </>
+          </div>
         )}
       </div>
     </div>

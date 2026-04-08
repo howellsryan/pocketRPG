@@ -10799,7 +10799,7 @@ const MONSTER_ICONS = {
     green_dragon: '🐉', lesser_demon: '👿',
     general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅'
 };
-function CombatScreen({ onNavigate, initialMonsterId }) {
+function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlocked }) {
     const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot } = useGame();
     const [combat, setCombat] = useState(null);
     const [log, setLog] = useState([]);
@@ -10950,6 +10950,11 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
         setActiveTask(null);
         addToast('You fled!', 'info');
     };
+    const stopAndBack = () => {
+        setCombat(null);
+        setLog([]);
+        setActiveTask(null);
+    };
     const handleEat = () => {
         const newInv = [...inventoryRef.current];
         const foodIdx = newInv.findIndex(s => s && itemsData[s.itemId]?.type === 'food');
@@ -11092,10 +11097,14 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
             h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, killCount > 0 && (Date.now() - fightStartedAt) > 5000
                 ? Math.round(killCount / ((Date.now() - fightStartedAt) / 3600000)).toLocaleString()
                 : '—'))),
-        h("div", { class: "flex-shrink-0 grid grid-cols-3 gap-2" }, combat.active ? (h(Fragment, null,
-            h("button", { onClick: handleEat, class: "py-2.5 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80" }, "\uD83C\uDF56 Eat"),
-            h("button", { class: "py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] opacity-40 text-sm cursor-default" }, "\uD83E\uDDEA Potion"),
-            h("button", { onClick: flee, class: "py-2.5 rounded-lg bg-[var(--color-blood-mid)] text-white font-semibold text-sm active:opacity-80" }, "\uD83C\uDFC3 Flee"))) : (h(Fragment, null,
+        h("div", { class: "flex-shrink-0 flex flex-col gap-2" }, combat.active ? (h(Fragment, null,
+            h("div", { class: "grid grid-cols-3 gap-2" },
+                h("button", { onClick: handleEat, class: "py-2.5 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80" }, "\uD83C\uDF56 Eat"),
+                h("button", { class: "py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] opacity-40 text-sm cursor-default" }, "\uD83E\uDDEA Potion"),
+                h("button", { onClick: flee, class: "py-2.5 rounded-lg bg-[var(--color-blood-mid)] text-white font-semibold text-sm active:opacity-80" }, "\uD83C\uDFC3 Flee")),
+            h("div", { class: "flex justify-center gap-2" },
+                h("button", { onClick: stopAndBack, class: "flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80" }, "\u2190 Stop & Back"),
+                skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "flex-1 py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\u23ED\uFE0F Skip 1h"))))) : (h("div", { class: "grid grid-cols-3 gap-2" },
             h("button", { onClick: fightAnother, class: "py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80 col-span-2" }, "\u2694\uFE0F Fight Again"),
             h("button", { onClick: () => { setCombat(null); setLog([]); setActiveTask(null); }, class: "py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80" }, "Back"))))));
 }
@@ -12802,7 +12811,7 @@ function GameApp() {
             case SCREENS.INVENTORY: return h(InventoryScreen, null);
             case SCREENS.EQUIPMENT: return h(EquipmentScreen, null);
             case SCREENS.BANK: return h(BankScreen, null);
-            case SCREENS.COMBAT: return h(CombatScreen, { onNavigate: navigate, initialMonsterId: actionData?.monsterId });
+            case SCREENS.COMBAT: return h(CombatScreen, { onNavigate: navigate, initialMonsterId: actionData?.monsterId, onSkipHour: handleSkipHour, skipHourUnlocked: unlockedFeatures?.has('skip_hour') });
             case SCREENS.SKILLS: return h(SkillingScreen, { initialSkillId: actionData?.skillId, initialActionId: actionData?.actionId, idleResult: idleResult });
             case SCREENS.GATHER: return h(GatherScreen, { initialTaskId: actionData?.gatherTaskId, idleResult: idleResult });
             case SCREENS.AGILITY: return h(AgilityScreen, { initialActionId: actionData?.actionId });
@@ -12815,15 +12824,16 @@ function GameApp() {
         h(ToastContainer, null),
         h("main", { style: { flex: 1, overflow: 'hidden' } }, renderScreen()),
         h(BottomNav, { active: screen, onNavigate: (s) => navigate(s) }),
-        unlockedFeatures?.has('skip_hour') && activeTask && !(activeTask.type === 'combat' && activeTask.monster?.boss) && (h("button", { onClick: handleSkipHour, style: {
+        unlockedFeatures?.has('skip_hour') && activeTask && activeTask.type !== 'combat' && (h("button", { onClick: handleSkipHour, style: {
                 position: 'fixed',
                 bottom: '62px',
-                right: '12px',
+                left: '50%',
+                transform: 'translateX(-50%)',
                 zIndex: 50,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '5px',
-                padding: '8px 14px',
+                padding: '8px 18px',
                 borderRadius: '20px',
                 background: 'linear-gradient(135deg, #1a3a2a, #2a5a3a)',
                 border: '1px solid rgba(100,200,120,0.4)',
@@ -12833,6 +12843,7 @@ function GameApp() {
                 cursor: 'pointer',
                 boxShadow: '0 2px 12px rgba(0,0,0,0.5)',
                 letterSpacing: '0.03em',
+                whiteSpace: 'nowrap',
             } },
             h("span", { style: { fontSize: '14px' } }, "\u23ED\uFE0F"),
             " Skip 1h")),
