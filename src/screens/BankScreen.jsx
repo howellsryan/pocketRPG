@@ -20,6 +20,7 @@ export default function BankScreen() {
 
   const tabs = bankConfig?.tabs ?? []
   const itemTabMap = bankConfig?.itemTabMap ?? {}
+  const allTabName = bankConfig?.allTabName ?? 'All'
 
   // Derive selected entry fresh from bank state each render
   const selected = selectedId && bank[selectedId]?.quantity > 0 ? bank[selectedId] : null
@@ -28,7 +29,7 @@ export default function BankScreen() {
   const bankItems = Object.values(bank).filter(b => b && b.quantity > 0)
 
   const getDisplayItems = () => {
-    if (activeTab === 0) return bankItems
+    if (activeTab === 0) return bankItems.filter(e => !itemTabMap[e.itemId])
     return bankItems
       .filter(e => itemTabMap[e.itemId]?.tabIndex === activeTab)
       .sort((a, b) => (itemTabMap[a.itemId]?.position ?? 9999) - (itemTabMap[b.itemId]?.position ?? 9999))
@@ -82,16 +83,20 @@ export default function BankScreen() {
   const addTab = () => {
     if (tabs.length >= MAX_TABS) return
     const name = DEFAULT_NAMES[tabs.length] ?? `Tab ${tabs.length + 1}`
-    updateBankConfig({ tabs: [...tabs, name], itemTabMap })
+    updateBankConfig({ tabs: [...tabs, name], itemTabMap, allTabName })
     setActiveTab(tabs.length + 1)
   }
 
   const confirmRename = () => {
     if (tabMenu === null) return
-    const newTabs = [...tabs]
     const trimmed = renameValue.trim()
-    newTabs[tabMenu - 1] = trimmed || tabs[tabMenu - 1]
-    updateBankConfig({ tabs: newTabs, itemTabMap })
+    if (tabMenu === 0) {
+      updateBankConfig({ tabs, itemTabMap, allTabName: trimmed || allTabName })
+    } else {
+      const newTabs = [...tabs]
+      newTabs[tabMenu - 1] = trimmed || tabs[tabMenu - 1]
+      updateBankConfig({ tabs: newTabs, itemTabMap, allTabName })
+    }
     setTabMenu(null)
   }
 
@@ -102,7 +107,7 @@ export default function BankScreen() {
       if (info.tabIndex === tabIndex) continue
       newMap[id] = info.tabIndex > tabIndex ? { ...info, tabIndex: info.tabIndex - 1 } : info
     }
-    updateBankConfig({ tabs: newTabs, itemTabMap: newMap })
+    updateBankConfig({ tabs: newTabs, itemTabMap: newMap, allTabName })
     if (activeTab === tabIndex) setActiveTab(0)
     else if (activeTab > tabIndex) setActiveTab(activeTab - 1)
     setTabMenu(null)
@@ -117,7 +122,7 @@ export default function BankScreen() {
       const pos = Object.values(newMap).filter(v => v.tabIndex === tabIndex).length
       newMap[itemId] = { tabIndex, position: pos }
     }
-    updateBankConfig({ tabs, itemTabMap: newMap })
+    updateBankConfig({ tabs, itemTabMap: newMap, allTabName })
     setSelectedId(null)
   }
 
@@ -141,7 +146,7 @@ export default function BankScreen() {
     ids.forEach((id, pos) => {
       if (newMap[id]) newMap[id] = { ...newMap[id], position: pos }
     })
-    updateBankConfig({ tabs, itemTabMap: newMap })
+    updateBankConfig({ tabs, itemTabMap: newMap, allTabName })
   }
 
   // Drag handle pointer events — pointer capture ensures move/up fire on the handle
@@ -255,27 +260,28 @@ export default function BankScreen() {
           <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider">
             Bank ({bankItems.length})
           </h2>
-          {activeTab !== 0 && (
-            <button
-              onClick={() => { setTabMenu(activeTab); setRenameValue(tabs[activeTab - 1] ?? '') }}
-              class="text-[10px] text-[var(--color-parchment)] opacity-40 px-2 py-1 rounded active:opacity-70"
-            >
-              ✏️ Edit tab
-            </button>
-          )}
+          <button
+            onClick={() => {
+              setTabMenu(activeTab)
+              setRenameValue(activeTab === 0 ? allTabName : (tabs[activeTab - 1] ?? ''))
+            }}
+            class="text-[10px] text-[var(--color-parchment)] opacity-40 px-2 py-1 rounded active:opacity-70"
+          >
+            ✏️ Edit tab
+          </button>
         </div>
 
         <div class="flex gap-1.5 overflow-x-auto pb-2" style="scrollbar-width:none;-webkit-overflow-scrolling:touch">
           {/* All tab */}
           <button
             onClick={() => setActiveTab(0)}
-            class={`flex-shrink-0 px-3 py-1.5 rounded-md text-xs font-bold ${
+            class={`flex-shrink-0 px-3 py-1.5 rounded-md text-xs font-bold max-w-[80px] truncate ${
               activeTab === 0
                 ? 'bg-[var(--color-gold-dim)] text-white'
                 : 'bg-[#222] text-[var(--color-parchment)] opacity-50 active:opacity-80'
             }`}
           >
-            All
+            {allTabName}
           </button>
 
           {tabs.map((name, i) => (
@@ -308,7 +314,7 @@ export default function BankScreen() {
         {displayItems.length === 0 ? (
           <div class="text-center py-12 text-[var(--color-parchment)] opacity-30 text-sm">
             {activeTab === 0
-              ? 'Your bank is empty'
+              ? (bankItems.length > 0 ? 'All items are in tabs' : 'Your bank is empty')
               : 'No items — tap an item and use "Move to Tab"'}
           </div>
         ) : (
@@ -364,7 +370,10 @@ export default function BankScreen() {
 
       {/* ── Tab edit modal ───────────────────────────────────────────────── */}
       {tabMenu !== null && (
-        <Modal title={`Edit "${tabs[tabMenu - 1] ?? ''}" Tab`} onClose={() => setTabMenu(null)}>
+        <Modal
+          title={`Edit "${tabMenu === 0 ? allTabName : (tabs[tabMenu - 1] ?? '')}" Tab`}
+          onClose={() => setTabMenu(null)}
+        >
           <div class="space-y-3">
             <div>
               <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1 uppercase tracking-wider">Tab Name</p>
@@ -383,12 +392,14 @@ export default function BankScreen() {
             >
               Rename
             </button>
-            <button
-              onClick={() => deleteTab(tabMenu)}
-              class="w-full py-2.5 rounded-lg bg-red-900 text-white font-semibold text-sm active:opacity-80"
-            >
-              Delete Tab
-            </button>
+            {tabMenu !== 0 && (
+              <button
+                onClick={() => deleteTab(tabMenu)}
+                class="w-full py-2.5 rounded-lg bg-red-900 text-white font-semibold text-sm active:opacity-80"
+              >
+                Delete Tab
+              </button>
+            )}
           </div>
         </Modal>
       )}

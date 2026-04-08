@@ -10392,6 +10392,7 @@ function BankScreen() {
     const overRef = useRef(null);
     const tabs = bankConfig?.tabs ?? [];
     const itemTabMap = bankConfig?.itemTabMap ?? {};
+    const allTabName = bankConfig?.allTabName ?? 'All';
     // Derive selected entry fresh from bank state each render
     const selected = selectedId && bank[selectedId]?.quantity > 0 ? bank[selectedId] : null;
     useEffect(() => { if (selectedId && !selected)
@@ -10399,7 +10400,7 @@ function BankScreen() {
     const bankItems = Object.values(bank).filter(b => b && b.quantity > 0);
     const getDisplayItems = () => {
         if (activeTab === 0)
-            return bankItems;
+            return bankItems.filter(e => !itemTabMap[e.itemId]);
         return bankItems
             .filter(e => itemTabMap[e.itemId]?.tabIndex === activeTab)
             .sort((a, b) => (itemTabMap[a.itemId]?.position ?? 9999) - (itemTabMap[b.itemId]?.position ?? 9999));
@@ -10460,16 +10461,21 @@ function BankScreen() {
         if (tabs.length >= MAX_TABS)
             return;
         const name = DEFAULT_NAMES[tabs.length] ?? `Tab ${tabs.length + 1}`;
-        updateBankConfig({ tabs: [...tabs, name], itemTabMap });
+        updateBankConfig({ tabs: [...tabs, name], itemTabMap, allTabName });
         setActiveTab(tabs.length + 1);
     };
     const confirmRename = () => {
         if (tabMenu === null)
             return;
-        const newTabs = [...tabs];
         const trimmed = renameValue.trim();
-        newTabs[tabMenu - 1] = trimmed || tabs[tabMenu - 1];
-        updateBankConfig({ tabs: newTabs, itemTabMap });
+        if (tabMenu === 0) {
+            updateBankConfig({ tabs, itemTabMap, allTabName: trimmed || allTabName });
+        }
+        else {
+            const newTabs = [...tabs];
+            newTabs[tabMenu - 1] = trimmed || tabs[tabMenu - 1];
+            updateBankConfig({ tabs: newTabs, itemTabMap, allTabName });
+        }
         setTabMenu(null);
     };
     const deleteTab = (tabIndex) => {
@@ -10480,7 +10486,7 @@ function BankScreen() {
                 continue;
             newMap[id] = info.tabIndex > tabIndex ? { ...info, tabIndex: info.tabIndex - 1 } : info;
         }
-        updateBankConfig({ tabs: newTabs, itemTabMap: newMap });
+        updateBankConfig({ tabs: newTabs, itemTabMap: newMap, allTabName });
         if (activeTab === tabIndex)
             setActiveTab(0);
         else if (activeTab > tabIndex)
@@ -10497,7 +10503,7 @@ function BankScreen() {
             const pos = Object.values(newMap).filter(v => v.tabIndex === tabIndex).length;
             newMap[itemId] = { tabIndex, position: pos };
         }
-        updateBankConfig({ tabs, itemTabMap: newMap });
+        updateBankConfig({ tabs, itemTabMap: newMap, allTabName });
         setSelectedId(null);
     };
     // ── Drag reorder ─────────────────────────────────────────────────────────────
@@ -10521,7 +10527,7 @@ function BankScreen() {
             if (newMap[id])
                 newMap[id] = { ...newMap[id], position: pos };
         });
-        updateBankConfig({ tabs, itemTabMap: newMap });
+        updateBankConfig({ tabs, itemTabMap: newMap, allTabName });
     };
     // Drag handle pointer events — pointer capture ensures move/up fire on the handle
     // even after the pointer leaves it.
@@ -10624,17 +10630,20 @@ function BankScreen() {
                     "Bank (",
                     bankItems.length,
                     ")"),
-                activeTab !== 0 && (h("button", { onClick: () => { setTabMenu(activeTab); setRenameValue(tabs[activeTab - 1] ?? ''); }, class: "text-[10px] text-[var(--color-parchment)] opacity-40 px-2 py-1 rounded active:opacity-70" }, "\u270F\uFE0F Edit tab"))),
+                h("button", { onClick: () => {
+                        setTabMenu(activeTab);
+                        setRenameValue(activeTab === 0 ? allTabName : (tabs[activeTab - 1] ?? ''));
+                    }, class: "text-[10px] text-[var(--color-parchment)] opacity-40 px-2 py-1 rounded active:opacity-70" }, "\u270F\uFE0F Edit tab")),
             h("div", { class: "flex gap-1.5 overflow-x-auto pb-2", style: "scrollbar-width:none;-webkit-overflow-scrolling:touch" },
-                h("button", { onClick: () => setActiveTab(0), class: `flex-shrink-0 px-3 py-1.5 rounded-md text-xs font-bold ${activeTab === 0
+                h("button", { onClick: () => setActiveTab(0), class: `flex-shrink-0 px-3 py-1.5 rounded-md text-xs font-bold max-w-[80px] truncate ${activeTab === 0
                         ? 'bg-[var(--color-gold-dim)] text-white'
-                        : 'bg-[#222] text-[var(--color-parchment)] opacity-50 active:opacity-80'}` }, "All"),
+                        : 'bg-[#222] text-[var(--color-parchment)] opacity-50 active:opacity-80'}` }, allTabName),
                 tabs.map((name, i) => (h("button", { key: i, onClick: () => setActiveTab(i + 1), class: `flex-shrink-0 px-3 py-1.5 rounded-md text-xs font-bold max-w-[80px] truncate ${activeTab === i + 1
                         ? 'bg-[var(--color-mana)] text-white'
                         : 'bg-[#222] text-[var(--color-parchment)] opacity-50 active:opacity-80'}` }, name))),
                 tabs.length < MAX_TABS && (h("button", { onClick: addTab, class: "flex-shrink-0 px-2.5 py-1.5 rounded-md bg-[#222] text-[var(--color-parchment)] opacity-30 text-sm font-bold active:opacity-60" }, "+")))),
         h("div", { class: "flex-1 overflow-y-auto px-4 pb-4" }, displayItems.length === 0 ? (h("div", { class: "text-center py-12 text-[var(--color-parchment)] opacity-30 text-sm" }, activeTab === 0
-            ? 'Your bank is empty'
+            ? (bankItems.length > 0 ? 'All items are in tabs' : 'Your bank is empty')
             : 'No items — tap an item and use "Move to Tab"')) : (h("div", { class: "grid grid-cols-4 gap-2" }, displayItems.map(entry => {
             const item = itemsData[entry.itemId];
             if (!item)
@@ -10656,13 +10665,13 @@ function BankScreen() {
                         text)),
                 activeTab !== 0 && (h("span", { class: "absolute top-0.5 right-0.5 text-[10px] text-[var(--color-parchment)] opacity-20 leading-none select-none z-10 px-0.5 py-0.5 cursor-grab", style: { touchAction: 'none' }, onPointerDown: (e) => handleDragStart(e, entry.itemId), onPointerMove: (e) => handleDragMove(e, entry.itemId), onPointerUp: (e) => handleDragEnd(e, entry.itemId), onPointerCancel: (e) => handleDragCancel(e, entry.itemId) }, "\u283F"))));
         })))),
-        tabMenu !== null && (h(Modal, { title: `Edit "${tabs[tabMenu - 1] ?? ''}" Tab`, onClose: () => setTabMenu(null) },
+        tabMenu !== null && (h(Modal, { title: `Edit "${tabMenu === 0 ? allTabName : (tabs[tabMenu - 1] ?? '')}" Tab`, onClose: () => setTabMenu(null) },
             h("div", { class: "space-y-3" },
                 h("div", null,
                     h("p", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mb-1 uppercase tracking-wider" }, "Tab Name"),
                     h("input", { type: "text", value: renameValue, onInput: (e) => setRenameValue(e.target.value), maxLength: 20, class: "w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-gold)]", placeholder: "Enter tab name" })),
                 h("button", { onClick: confirmRename, class: "w-full py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80" }, "Rename"),
-                h("button", { onClick: () => deleteTab(tabMenu), class: "w-full py-2.5 rounded-lg bg-red-900 text-white font-semibold text-sm active:opacity-80" }, "Delete Tab")))),
+                tabMenu !== 0 && (h("button", { onClick: () => deleteTab(tabMenu), class: "w-full py-2.5 rounded-lg bg-red-900 text-white font-semibold text-sm active:opacity-80" }, "Delete Tab"))))),
         selected && (() => {
             const selItem = itemsData[selected.itemId];
             const isStackable = selItem?.stackable;
