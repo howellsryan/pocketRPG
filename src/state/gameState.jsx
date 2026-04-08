@@ -22,6 +22,7 @@ export function GameProvider({ children }) {
   const [combatStance, setCombatStanceState] = useState('accurate')
   const [autoBankLoot, setAutoBankLootState] = useState(true)
   const [activeTask, setActiveTaskState] = useState(null)
+  const [bankConfig, setBankConfig] = useState({ tabs: [], itemTabMap: {} })
   const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false })
 
   // Refs to hold latest state for the debounced auto-save
@@ -36,10 +37,10 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    const [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting] = await Promise.all([
+    const [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
-      getSetting('autoBankLoot')
+      getSetting('autoBankLoot'), getSetting('bankConfig')
     ])
     // lastTick and activeTask live in localStorage — synchronous, survives iOS background freeze
     const savedLastTick = (() => { const v = localStorage.getItem('pocketrpg_lastTick'); return v ? parseInt(v, 10) : null })()
@@ -150,6 +151,7 @@ export function GameProvider({ children }) {
     setHomeShortcuts(shortcuts ?? null)
     setCombatStanceState(stance ?? 'accurate')
     setAutoBankLootState(autoBankSetting !== false) // default true
+    setBankConfig(savedBankConfig ?? { tabs: [], itemTabMap: {} })
     setActiveTaskState(savedTask ?? null)
     const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
     setCurrentHP(savedHP != null ? Math.min(savedHP, hpLevel) : hpLevel)
@@ -256,6 +258,11 @@ export function GameProvider({ children }) {
     saveSetting('autoBankLoot', enabled)
   }, [])
 
+  const updateBankConfig = useCallback((config) => {
+    setBankConfig(config)
+    saveSetting('bankConfig', config)
+  }, [])
+
   const setActiveTask = useCallback((task) => {
     setActiveTaskState(task)
     // Synchronous localStorage write — safe from iOS background freeze
@@ -309,11 +316,11 @@ export function GameProvider({ children }) {
 
   const value = {
     loaded, player, stats, inventory, equipment, bank, currentHP, toasts,
-    homeShortcuts, combatStance, activeTask, autoBankLoot,
+    homeShortcuts, combatStance, activeTask, autoBankLoot, bankConfig,
     loadGame, grantXP, updateInventory, updateEquipment, updateBank,
     updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,
     markDirty, itemsData, updateHomeShortcuts, updateCombatStance,
-    setActiveTask, updateBankDirect, getSnapshot, updateAutoBankLoot
+    setActiveTask, updateBankDirect, getSnapshot, updateAutoBankLoot, updateBankConfig
   }
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>
