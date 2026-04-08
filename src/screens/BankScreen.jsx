@@ -490,6 +490,22 @@ export default function BankScreen() {
                 <div class="border-t border-[#333] pt-2">
                   <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1 uppercase tracking-wider font-bold">Move to Tab</p>
                   <div class="flex flex-wrap gap-1.5">
+                    {/* All tab as first option */}
+                    {(() => {
+                      const isInAll = !currentAssignment || currentAssignment.tabIndex === 0
+                      return (
+                        <button
+                          onClick={() => !isInAll && assignToTab(selected.itemId, 0)}
+                          class={`px-3 py-1.5 rounded-md text-xs font-semibold ${
+                            isInAll
+                              ? 'bg-[var(--color-gold-dim)] text-white cursor-default'
+                              : 'bg-[#2a2a2a] text-[var(--color-parchment)] active:opacity-70'
+                          }`}
+                        >
+                          {allTabName}
+                        </button>
+                      )
+                    })()}
                     {tabs.map((name, i) => {
                       const tabIdx = i + 1
                       const isAssigned = currentAssignment?.tabIndex === tabIdx
