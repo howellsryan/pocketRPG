@@ -10594,18 +10594,13 @@ function BankScreen() {
                                 ")")))),
                     tabs.length > 0 && (h("div", { class: "border-t border-[#333] pt-2" },
                         h("p", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mb-1 uppercase tracking-wider font-bold" }, "Move to Tab"),
-                        currentAssignment && (h("p", { class: "text-[10px] text-[var(--color-parchment)] opacity-50 mb-2" },
-                            "Currently in: ",
-                            h("span", { class: "text-[var(--color-gold)]" }, tabs[currentAssignment.tabIndex - 1] ?? `Tab ${currentAssignment.tabIndex}`))),
-                        h("div", { class: "flex flex-wrap gap-1.5" },
-                            tabs.map((name, i) => {
-                                const tabIdx = i + 1;
-                                const isAssigned = currentAssignment?.tabIndex === tabIdx;
-                                return (h("button", { key: i, onClick: () => !isAssigned && assignToTab(selected.itemId, tabIdx), class: `px-3 py-1.5 rounded-md text-xs font-semibold ${isAssigned
-                                        ? 'bg-[var(--color-mana)] text-white cursor-default'
-                                        : 'bg-[#2a2a2a] text-[var(--color-parchment)] active:opacity-70'}` }, name));
-                            }),
-                            currentAssignment && (h("button", { onClick: () => assignToTab(selected.itemId, 0), class: "px-3 py-1.5 rounded-md text-xs font-semibold bg-[#2a2a2a] text-[var(--color-parchment)] opacity-60 active:opacity-80" }, "Remove"))))))));
+                        h("div", { class: "flex flex-wrap gap-1.5" }, tabs.map((name, i) => {
+                            const tabIdx = i + 1;
+                            const isAssigned = currentAssignment?.tabIndex === tabIdx;
+                            return (h("button", { key: i, onClick: () => !isAssigned && assignToTab(selected.itemId, tabIdx), class: `px-3 py-1.5 rounded-md text-xs font-semibold ${isAssigned
+                                    ? 'bg-[var(--color-mana)] text-white cursor-default'
+                                    : 'bg-[#2a2a2a] text-[var(--color-parchment)] active:opacity-70'}` }, name));
+                        })))))));
         })()));
 }
 

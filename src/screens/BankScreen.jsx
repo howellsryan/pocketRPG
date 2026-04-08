@@ -489,11 +489,6 @@ export default function BankScreen() {
               {tabs.length > 0 && (
                 <div class="border-t border-[#333] pt-2">
                   <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1 uppercase tracking-wider font-bold">Move to Tab</p>
-                  {currentAssignment && (
-                    <p class="text-[10px] text-[var(--color-parchment)] opacity-50 mb-2">
-                      Currently in: <span class="text-[var(--color-gold)]">{tabs[currentAssignment.tabIndex - 1] ?? `Tab ${currentAssignment.tabIndex}`}</span>
-                    </p>
-                  )}
                   <div class="flex flex-wrap gap-1.5">
                     {tabs.map((name, i) => {
                       const tabIdx = i + 1
@@ -512,14 +507,6 @@ export default function BankScreen() {
                         </button>
                       )
                     })}
-                    {currentAssignment && (
-                      <button
-                        onClick={() => assignToTab(selected.itemId, 0)}
-                        class="px-3 py-1.5 rounded-md text-xs font-semibold bg-[#2a2a2a] text-[var(--color-parchment)] opacity-60 active:opacity-80"
-                      >
-                        Remove
-                      </button>
-                    )}
                   </div>
                 </div>
               )}
