@@ -471,6 +471,65 @@
         "materials": {
           "rune_bar": 2
         }
+      },
+      {
+        "id": "forge_godsword_blade",
+        "name": "Forge godsword blade",
+        "level": 80,
+        "ticks": 10,
+        "xp": 200,
+        "product": "godsword_blade",
+        "materials": {
+          "godsword_shard": 3
+        }
+      },
+      {
+        "id": "make_bandos_godsword",
+        "name": "Attach Bandos hilt",
+        "level": 1,
+        "ticks": 2,
+        "xp": 0,
+        "product": "bandos_godsword",
+        "materials": {
+          "godsword_blade": 1,
+          "bandos_hilt": 1
+        }
+      },
+      {
+        "id": "make_armadyl_godsword",
+        "name": "Attach Armadyl hilt",
+        "level": 1,
+        "ticks": 2,
+        "xp": 0,
+        "product": "armadyl_godsword",
+        "materials": {
+          "godsword_blade": 1,
+          "armadyl_hilt": 1
+        }
+      },
+      {
+        "id": "make_saradomin_godsword",
+        "name": "Attach Saradomin hilt",
+        "level": 1,
+        "ticks": 2,
+        "xp": 0,
+        "product": "saradomin_godsword",
+        "materials": {
+          "godsword_blade": 1,
+          "saradomin_hilt": 1
+        }
+      },
+      {
+        "id": "make_zamorak_godsword",
+        "name": "Attach Zamorak hilt",
+        "level": 1,
+        "ticks": 2,
+        "xp": 0,
+        "product": "zamorak_godsword",
+        "materials": {
+          "godsword_blade": 1,
+          "zamorak_hilt": 1
+        }
       }
     ]
   },
