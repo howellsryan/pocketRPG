@@ -134,7 +134,7 @@ const ITEM_NAMES = {
   pot: 'Pot',
 }
 
-export default function GatherScreen({ initialTaskId, idleResult }) {
+export default function GatherScreen({ initialTaskId, idleResult, onSkipHour, skipHourUnlocked }) {
   const { inventory, bank, updateInventory, updateBankDirect, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask } = useGame()
   const [category, setCategory] = useState('all')
   const [activeTask, setLocalTask] = useState(null)
@@ -283,10 +283,6 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
 
     return (
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '16px' }}>
-        <button onClick={stopTask} style={{ fontSize: '12px', color: '#c8a96e', marginBottom: '12px', textAlign: 'left' }}>
-          ← Stop &amp; Back
-        </button>
-
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <span style={{ fontSize: '48px', marginBottom: '8px' }}>{task.icon}</span>
           <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '18px', fontWeight: 'bold', color: '#d4af37', marginBottom: '4px', textAlign: 'center' }}>
@@ -316,12 +312,20 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
           </div>
         </div>
 
-        <button
-          onClick={stopTask}
-          style={{ flexShrink: 0, width: '100%', padding: '12px', borderRadius: '12px', background: 'rgba(139,0,0,0.6)', color: 'white', fontWeight: '600', fontSize: '14px' }}
-        >
-          Stop
-        </button>
+        {/* Stop & Back / Skip 1h */}
+        <div class="flex gap-2 mt-3" style={{ flexShrink: 0, width: '100%' }}>
+          <button onClick={stopTask}
+            class="flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80">
+            ← Stop &amp; Back
+          </button>
+          {skipHourUnlocked && (
+            <button onClick={onSkipHour}
+              class="flex-1 py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
+              style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
+              ⏭️ Skip 1h
+            </button>
+          )}
+        </div>
       </div>
     )
   }
