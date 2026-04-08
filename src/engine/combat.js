@@ -84,8 +84,20 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const acc = hitChance(atkRoll, defRoll)
       damage = rollDamage(acc, maxHit)
 
+      // Consume one bolt/arrow per shot
+      const equippedAmmo = equipment && equipment.ammo
+      if (equippedAmmo) {
+        events.push({ type: 'consumeAmmo', itemId: equippedAmmo.itemId, qty: 1 })
+      }
+
       if (damage > 0) {
-        xpSkills.ranged = damage * RANGED_XP_PER_DAMAGE
+        if (state.stance === 'longrange') {
+          // Longrange splits XP: 2 ranged + 2 defence per damage
+          xpSkills.ranged = damage * (RANGED_XP_PER_DAMAGE / 2)
+          xpSkills.defence = damage * (RANGED_XP_PER_DAMAGE / 2)
+        } else {
+          xpSkills.ranged = damage * RANGED_XP_PER_DAMAGE
+        }
         xpSkills.hitpoints = Math.floor(damage * HP_XP_PER_DAMAGE)
       }
     } else if (state.combatType === 'magic' && state.spell) {

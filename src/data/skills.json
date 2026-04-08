@@ -473,6 +473,78 @@
         }
       },
       {
+        "id": "smith_bronze_bolt_heads",
+        "name": "Smith bronze bolt heads (10)",
+        "level": 9,
+        "ticks": 4,
+        "xp": 13,
+        "product": "bronze_bolt_heads",
+        "productQty": 10,
+        "materials": {
+          "bronze_bar": 1
+        }
+      },
+      {
+        "id": "smith_iron_bolt_heads",
+        "name": "Smith iron bolt heads (10)",
+        "level": 18,
+        "ticks": 4,
+        "xp": 25,
+        "product": "iron_bolt_heads",
+        "productQty": 10,
+        "materials": {
+          "iron_bar": 1
+        }
+      },
+      {
+        "id": "smith_steel_bolt_heads",
+        "name": "Smith steel bolt heads (10)",
+        "level": 33,
+        "ticks": 4,
+        "xp": 38,
+        "product": "steel_bolt_heads",
+        "productQty": 10,
+        "materials": {
+          "steel_bar": 1
+        }
+      },
+      {
+        "id": "smith_mithril_bolt_heads",
+        "name": "Smith mithril bolt heads (10)",
+        "level": 53,
+        "ticks": 4,
+        "xp": 50,
+        "product": "mithril_bolt_heads",
+        "productQty": 10,
+        "materials": {
+          "mithril_bar": 1
+        }
+      },
+      {
+        "id": "smith_adamant_bolt_heads",
+        "name": "Smith adamant bolt heads (10)",
+        "level": 73,
+        "ticks": 4,
+        "xp": 63,
+        "product": "adamant_bolt_heads",
+        "productQty": 10,
+        "materials": {
+          "adamant_bar": 1
+        }
+      },
+      {
+        "id": "smith_rune_bolt_heads",
+        "name": "Smith rune bolt heads (10)",
+        "level": 88,
+        "ticks": 4,
+        "xp": 75,
+        "product": "rune_bolt_heads",
+        "productQty": 10,
+        "materials": {
+          "rune_bar": 1
+        }
+      },
+      {
         "id": "forge_godsword_blade",
         "name": "Forge godsword blade",
         "level": 80,
@@ -866,6 +938,96 @@
         "materials": {
           "magic_shortbow_u": 1,
           "bowstring": 1
+        }
+      },
+      {
+        "id": "cut_wooden_stocks",
+        "name": "Cut wooden stocks (10)",
+        "level": 9,
+        "ticks": 2,
+        "xp": 6,
+        "product": "wooden_stock",
+        "productQty": 10,
+        "materials": {
+          "logs": 1
+        }
+      },
+      {
+        "id": "make_bronze_bolts",
+        "name": "Make bronze bolts (10)",
+        "level": 9,
+        "ticks": 3,
+        "xp": 5,
+        "product": "bronze_bolts",
+        "productQty": 10,
+        "materials": {
+          "wooden_stock": 10,
+          "bronze_bolt_heads": 10
+        }
+      },
+      {
+        "id": "make_iron_bolts",
+        "name": "Make iron bolts (10)",
+        "level": 39,
+        "ticks": 3,
+        "xp": 10,
+        "product": "iron_bolts",
+        "productQty": 10,
+        "materials": {
+          "wooden_stock": 10,
+          "iron_bolt_heads": 10
+        }
+      },
+      {
+        "id": "make_steel_bolts",
+        "name": "Make steel bolts (10)",
+        "level": 46,
+        "ticks": 3,
+        "xp": 35,
+        "product": "steel_bolts",
+        "productQty": 10,
+        "materials": {
+          "wooden_stock": 10,
+          "steel_bolt_heads": 10
+        }
+      },
+      {
+        "id": "make_mithril_bolts",
+        "name": "Make mithril bolts (10)",
+        "level": 54,
+        "ticks": 3,
+        "xp": 50,
+        "product": "mithril_bolts",
+        "productQty": 10,
+        "materials": {
+          "wooden_stock": 10,
+          "mithril_bolt_heads": 10
+        }
+      },
+      {
+        "id": "make_adamant_bolts",
+        "name": "Make adamant bolts (10)",
+        "level": 61,
+        "ticks": 3,
+        "xp": 70,
+        "product": "adamant_bolts",
+        "productQty": 10,
+        "materials": {
+          "wooden_stock": 10,
+          "adamant_bolt_heads": 10
+        }
+      },
+      {
+        "id": "make_rune_bolts",
+        "name": "Make rune bolts (10)",
+        "level": 69,
+        "ticks": 3,
+        "xp": 100,
+        "product": "rune_bolts",
+        "productQty": 10,
+        "materials": {
+          "wooden_stock": 10,
+          "rune_bolt_heads": 10
         }
       }
     ]

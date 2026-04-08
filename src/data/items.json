@@ -312,6 +312,7 @@
     "stackable": false,
     "attackSpeed": 4,
     "attackStyle": "ranged",
+    "ammoType": "arrow",
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -343,6 +344,7 @@
     "type": "ammo",
     "slot": "ammo",
     "stackable": true,
+    "ammoKind": "arrow",
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 7,
@@ -355,8 +357,14 @@
     "id": "iron_arrow",
     "name": "Iron arrow",
     "type": "ammo",
+    "slot": "ammo",
     "stackable": true,
-    "rangedStrength": 7,
+    "ammoKind": "arrow",
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 10,
+      "magicDamage": 0
+    },
     "shopValue": 7,
     "icon": "🏹"
   },
@@ -1747,8 +1755,14 @@
     "id": "steel_arrow",
     "name": "Steel arrow",
     "type": "ammo",
+    "slot": "ammo",
     "stackable": true,
-    "rangedStrength": 10,
+    "ammoKind": "arrow",
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 16,
+      "magicDamage": 0
+    },
     "shopValue": 19,
     "icon": "🏹"
   },
@@ -1756,8 +1770,14 @@
     "id": "mithril_arrow",
     "name": "Mithril arrow",
     "type": "ammo",
+    "slot": "ammo",
     "stackable": true,
-    "rangedStrength": 14,
+    "ammoKind": "arrow",
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 22,
+      "magicDamage": 0
+    },
     "shopValue": 32,
     "icon": "🏹"
   },
@@ -1765,8 +1785,14 @@
     "id": "adamant_arrow",
     "name": "Adamant arrow",
     "type": "ammo",
+    "slot": "ammo",
     "stackable": true,
-    "rangedStrength": 21,
+    "ammoKind": "arrow",
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 31,
+      "magicDamage": 0
+    },
     "shopValue": 64,
     "icon": "🏹"
   },
@@ -1774,8 +1800,14 @@
     "id": "rune_arrow",
     "name": "Rune arrow",
     "type": "ammo",
+    "slot": "ammo",
     "stackable": true,
-    "rangedStrength": 26,
+    "ammoKind": "arrow",
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 49,
+      "magicDamage": 0
+    },
     "shopValue": 160,
     "icon": "🏹"
   },
@@ -1836,6 +1868,7 @@
     "stackable": false,
     "attackSpeed": 4,
     "attackStyle": "ranged",
+    "ammoType": "arrow",
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -1870,6 +1903,7 @@
     "stackable": false,
     "attackSpeed": 4,
     "attackStyle": "ranged",
+    "ammoType": "arrow",
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -1904,6 +1938,7 @@
     "stackable": false,
     "attackSpeed": 4,
     "attackStyle": "ranged",
+    "ammoType": "arrow",
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -1938,6 +1973,7 @@
     "stackable": false,
     "attackSpeed": 4,
     "attackStyle": "ranged",
+    "ammoType": "arrow",
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -1972,6 +2008,7 @@
     "stackable": false,
     "attackSpeed": 4,
     "attackStyle": "ranged",
+    "ammoType": "arrow",
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -3790,6 +3827,7 @@
     "stackable": false,
     "attackSpeed": 5,
     "attackStyle": "ranged",
+    "ammoType": "bolt",
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -3815,12 +3853,153 @@
     "shopValue": 70,
     "icon": "🏹"
   },
+  "iron_crossbow": {
+    "id": "iron_crossbow",
+    "name": "Iron crossbow",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "ranged",
+    "ammoType": "bolt",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 26
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 1
+    },
+    "shopValue": 140,
+    "icon": "🏹"
+  },
+  "steel_crossbow": {
+    "id": "steel_crossbow",
+    "name": "Steel crossbow",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "ranged",
+    "ammoType": "bolt",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 34
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 20
+    },
+    "shopValue": 400,
+    "icon": "🏹"
+  },
+  "mithril_crossbow": {
+    "id": "mithril_crossbow",
+    "name": "Mithril crossbow",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "ranged",
+    "ammoType": "bolt",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 42
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 30
+    },
+    "shopValue": 1300,
+    "icon": "🏹"
+  },
+  "adamant_crossbow": {
+    "id": "adamant_crossbow",
+    "name": "Adamant crossbow",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "ranged",
+    "ammoType": "bolt",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 50
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 40
+    },
+    "shopValue": 3600,
+    "icon": "🏹"
+  },
   "bronze_bolts": {
     "id": "bronze_bolts",
     "name": "Bronze bolts",
     "type": "ammo",
     "slot": "ammo",
     "stackable": true,
+    "ammoKind": "bolt",
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 10,
@@ -3835,13 +4014,130 @@
     "type": "ammo",
     "slot": "ammo",
     "stackable": true,
+    "ammoKind": "bolt",
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 10,
+      "rangedStrength": 14,
       "magicDamage": 0
     },
     "shopValue": 3,
-    "icon": "🏹"
+    "icon": "🔩"
+  },
+  "steel_bolts": {
+    "id": "steel_bolts",
+    "name": "Steel bolts",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 22,
+      "magicDamage": 0
+    },
+    "shopValue": 5,
+    "icon": "🔩"
+  },
+  "mithril_bolts": {
+    "id": "mithril_bolts",
+    "name": "Mithril bolts",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 35,
+      "magicDamage": 0
+    },
+    "shopValue": 8,
+    "icon": "🔩"
+  },
+  "adamant_bolts": {
+    "id": "adamant_bolts",
+    "name": "Adamant bolts",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 46,
+      "magicDamage": 0
+    },
+    "shopValue": 12,
+    "icon": "🔩"
+  },
+  "rune_bolts": {
+    "id": "rune_bolts",
+    "name": "Rune bolts",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 69,
+      "magicDamage": 0
+    },
+    "shopValue": 42,
+    "icon": "🔩"
+  },
+  "bronze_bolt_heads": {
+    "id": "bronze_bolt_heads",
+    "name": "Bronze bolt heads",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 1,
+    "icon": "🔩"
+  },
+  "iron_bolt_heads": {
+    "id": "iron_bolt_heads",
+    "name": "Iron bolt heads",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 2,
+    "icon": "🔩"
+  },
+  "steel_bolt_heads": {
+    "id": "steel_bolt_heads",
+    "name": "Steel bolt heads",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 4,
+    "icon": "🔩"
+  },
+  "mithril_bolt_heads": {
+    "id": "mithril_bolt_heads",
+    "name": "Mithril bolt heads",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 7,
+    "icon": "🔩"
+  },
+  "adamant_bolt_heads": {
+    "id": "adamant_bolt_heads",
+    "name": "Adamant bolt heads",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 10,
+    "icon": "🔩"
+  },
+  "rune_bolt_heads": {
+    "id": "rune_bolt_heads",
+    "name": "Rune bolt heads",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 35,
+    "icon": "🔩"
+  },
+  "wooden_stock": {
+    "id": "wooden_stock",
+    "name": "Wooden stock",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 1,
+    "icon": "🪵"
   },
   "magic_staff": {
     "id": "magic_staff",
@@ -4914,6 +5210,7 @@
     "stackable": false,
     "attackSpeed": 5,
     "attackStyle": "ranged",
+    "ammoType": "bolt",
     "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 90 },
     "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
     "otherBonus": { "meleeStrength": 0, "rangedStrength": 42, "magicDamage": 0 },
@@ -5128,6 +5425,7 @@
     "stackable": false,
     "attackSpeed": 5,
     "attackStyle": "ranged",
+    "ammoType": "bolt",
     "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 100 },
     "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
     "otherBonus": { "meleeStrength": 0, "rangedStrength": 90, "magicDamage": 0 },
