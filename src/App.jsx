@@ -22,7 +22,7 @@ import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleC
 import { getLevelFromXP } from './engine/experience.js'
 
 function GameApp() {
-  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot } = useGame()
+  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures } = useGame()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [gameReady, setGameReady] = useState(false)
   const [showNewGame, setShowNewGame] = useState(false)
@@ -263,6 +263,58 @@ function GameApp() {
     }
   }
 
+  // Skip 1 hour — simulate 1 hour of the current active task
+  const handleSkipHour = async () => {
+    const task = activeTaskRef.current
+    if (!task) return
+    if (task.type === 'combat' && task.monster?.boss) {
+      addToast('Cannot skip time during a boss fight.', 'error')
+      return
+    }
+
+    const ONE_HOUR_MS = 3_600_000
+    const [freshStats, freshInv, freshEq, freshBank] = await Promise.all([
+      getAllStats(), getInventory(), getEquipment(), getBank(),
+    ])
+
+    let sim = null
+    if (task.type === 'skill')   sim = simulateIdleSkilling(task, ONE_HOUR_MS, freshBank, freshEq, freshStats, itemsDataRef.current)
+    if (task.type === 'gather')  sim = simulateIdleGather(task, ONE_HOUR_MS)
+    if (task.type === 'combat')  sim = simulateIdleCombat(task, ONE_HOUR_MS, freshStats, freshEq, freshInv, itemsDataRef.current)
+    if (task.type === 'agility') sim = simulateIdleAgility(task, ONE_HOUR_MS)
+
+    if (!sim) {
+      addToast('Nothing to skip — no materials or progress possible.', 'info')
+      return
+    }
+
+    if (sim.xpGained) {
+      for (const [skill, xp] of Object.entries(sim.xpGained)) {
+        if (xp > 0) grantXP(skill, xp)
+      }
+    }
+    if (task.type === 'combat' && sim.finalInventory) {
+      updateInventory(sim.finalInventory)
+      if (sim.lootBanked && Object.keys(sim.lootBanked).length > 0) {
+        updateBankDirect(sim.lootBanked)
+      }
+    } else if (sim.itemsGained) {
+      updateBankDirect(sim.itemsGained)
+    }
+    if (task.type === 'agility' && sim.coinsGained > 0) {
+      updateBankDirect({ coins: sim.coinsGained })
+    }
+    if (sim.itemsConsumed && Object.keys(sim.itemsConsumed).length > 0) {
+      const negated = {}
+      for (const [itemId, qty] of Object.entries(sim.itemsConsumed)) {
+        negated[itemId] = -qty
+      }
+      updateBankDirect(negated)
+    }
+
+    setIdleResult({ elapsedMs: ONE_HOUR_MS, task, ...sim })
+  }
+
   // Navigate with optional action data
   const navigate = (scr, data) => {
     // Navigating away stops any active task and clears localStorage idle-engine
@@ -348,6 +400,34 @@ function GameApp() {
         {renderScreen()}
       </main>
       <BottomNav active={screen} onNavigate={(s) => navigate(s)} />
+
+      {/* Skip 1 Hour button — visible when feature is unlocked and a non-boss task is active */}
+      {unlockedFeatures?.has('skip_hour') && activeTask && !(activeTask.type === 'combat' && activeTask.monster?.boss) && (
+        <button
+          onClick={handleSkipHour}
+          style={{
+            position: 'fixed',
+            bottom: '62px',
+            right: '12px',
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+            padding: '8px 14px',
+            borderRadius: '20px',
+            background: 'linear-gradient(135deg, #1a3a2a, #2a5a3a)',
+            border: '1px solid rgba(100,200,120,0.4)',
+            color: '#7de8a0',
+            fontSize: '12px',
+            fontWeight: '700',
+            cursor: 'pointer',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.5)',
+            letterSpacing: '0.03em',
+          }}
+        >
+          <span style={{ fontSize: '14px' }}>⏭️</span> Skip 1h
+        </button>
+      )}
 
       {/* Idle Result Modal */}
       {idleResult && (

@@ -9393,6 +9393,7 @@ function GameProvider({ children }) {
     const [autoBankLoot, setAutoBankLootState] = useState(true);
     const [activeTask, setActiveTaskState] = useState(null);
     const [bankConfig, setBankConfig] = useState({ tabs: [], itemTabMap: {} });
+    const [unlockedFeatures, setUnlockedFeatures] = useState(new Set());
     const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false });
     // Refs to hold latest state for the debounced auto-save
     const stateRef = useRef({ stats: {}, inventory: new Array(28).fill(null), equipment: {}, bank: {}, player: null });
@@ -9404,10 +9405,10 @@ function GameProvider({ children }) {
     useEffect(() => { stateRef.current.player = player; }, [player]);
     // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
     const loadGame = useCallback(async () => {
-        const [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig] = await Promise.all([
+        const [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks] = await Promise.all([
             getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
             getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
-            getSetting('autoBankLoot'), getSetting('bankConfig')
+            getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures')
         ]);
         // lastTick and activeTask live in localStorage — synchronous, survives iOS background freeze
         const savedLastTick = (() => { const v = localStorage.getItem('pocketrpg_lastTick'); return v ? parseInt(v, 10) : null; })();
@@ -9534,6 +9535,7 @@ function GameProvider({ children }) {
         setCombatStanceState(stance ?? 'accurate');
         setAutoBankLootState(autoBankSetting !== false); // default true
         setBankConfig(savedBankConfig ?? { tabs: [], itemTabMap: {} });
+        setUnlockedFeatures(new Set(savedUnlocks || []));
         setActiveTaskState(savedTask ?? null);
         const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10;
         setCurrentHP(savedHP != null ? Math.min(savedHP, hpLevel) : hpLevel);
@@ -9633,6 +9635,14 @@ function GameProvider({ children }) {
         setBankConfig(config);
         saveSetting('bankConfig', config);
     }, []);
+    const unlockFeature = useCallback((featureId) => {
+        setUnlockedFeatures(prev => {
+            const next = new Set(prev);
+            next.add(featureId);
+            saveSetting('unlockedFeatures', [...next]);
+            return next;
+        });
+    }, []);
     const setActiveTask = useCallback((task) => {
         setActiveTaskState(task);
         // Synchronous localStorage write — safe from iOS background freeze
@@ -9686,6 +9696,7 @@ function GameProvider({ children }) {
     const value = {
         loaded, player, stats, inventory, equipment, bank, currentHP, toasts,
         homeShortcuts, combatStance, activeTask, autoBankLoot, bankConfig,
+        unlockedFeatures, unlockFeature,
         loadGame, grantXP, updateInventory, updateEquipment, updateBank,
         updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,
         markDirty, itemsData, updateHomeShortcuts, updateCombatStance,
@@ -11904,6 +11915,17 @@ function GatherScreen({ initialTaskId, idleResult }) {
 
 
 
+// ── UNLOCK DEFINITIONS ───────────────────────────────────────────────────────
+const UNLOCKS = [
+    {
+        id: 'skip_hour',
+        name: 'Skip 1 Hour',
+        icon: '⏭️',
+        price: 10000000,
+        desc: 'Instantly simulate 1 hour of active task progress. Repeatable. Does not work during boss fights.',
+    },
+];
+const UNLOCK_TAB = { id: 'unlocks', label: '🔓', title: 'Unlocks', desc: 'Permanent features & upgrades. One-time purchases.' };
 // ── SHOP DEFINITIONS ────────────────────────────────────────────────────────
 // All prices match OSRS NPC shop buy prices (cheapest source when multiple exist).
 const SHOPS = [
@@ -12079,11 +12101,12 @@ const SHOPS = [
 ];
 // ── COMPONENT ───────────────────────────────────────────────────────────────
 function GeneralStoreScreen() {
-    const { inventory, updateInventory, addToast, getSkillLevel } = useGame();
+    const { inventory, updateInventory, addToast, getSkillLevel, unlockedFeatures, unlockFeature } = useGame();
     const [activeShop, setActiveShop] = useState('general');
     const [quantities, setQuantities] = useState({});
     const coins = countItem(inventory, 'coins');
-    const shop = SHOPS.find(s => s.id === activeShop);
+    const isUnlocksTab = activeShop === 'unlocks';
+    const shop = isUnlocksTab ? UNLOCK_TAB : SHOPS.find(s => s.id === activeShop);
     const getQty = (id) => quantities[id] || 1;
     const setQty = (id, val) => {
         const n = Math.max(1, Math.min(9999, parseInt(val) || 1));
@@ -12125,6 +12148,21 @@ function GeneralStoreScreen() {
         }
         updateInventory(newInv);
     };
+    const handleUnlock = (unlock) => {
+        if (unlockedFeatures.has(unlock.id)) {
+            addToast('Already unlocked.', 'info');
+            return;
+        }
+        if (coins < unlock.price) {
+            addToast(`Need ${unlock.price.toLocaleString()} coins — you have ${coins.toLocaleString()}.`, 'error');
+            return;
+        }
+        const newInv = [...inventory];
+        removeItem(newInv, 'coins', unlock.price);
+        updateInventory(newInv);
+        unlockFeature(unlock.id);
+        addToast(`${unlock.name} unlocked!`, 'info', unlock.icon);
+    };
     return (h("div", { style: { height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' } },
         h("div", { style: { padding: '12px 16px 0', flexShrink: 0 } },
             h("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' } },
@@ -12139,7 +12177,7 @@ function GeneralStoreScreen() {
                     overflowX: 'auto',
                     paddingBottom: '8px',
                     scrollbarWidth: 'none',
-                } }, SHOPS.map(s => (h("button", { key: s.id, onClick: () => setActiveShop(s.id), style: {
+                } }, [...SHOPS, UNLOCK_TAB].map(s => (h("button", { key: s.id, onClick: () => setActiveShop(s.id), style: {
                     flexShrink: 0,
                     padding: '6px 12px',
                     borderRadius: '8px',
@@ -12153,7 +12191,40 @@ function GeneralStoreScreen() {
                     transition: 'all 0.15s',
                 } }, s.label))))),
         h("div", { style: { flex: 1, overflowY: 'auto', padding: '0 16px 80px' } },
-            h("div", { style: { display: 'flex', flexDirection: 'column', gap: '8px' } }, shop.items.map(item => {
+            isUnlocksTab && (h("div", { style: { display: 'flex', flexDirection: 'column', gap: '8px' } }, UNLOCKS.map(unlock => {
+                const owned = unlockedFeatures.has(unlock.id);
+                const canAfford = coins >= unlock.price;
+                return (h("div", { key: unlock.id, style: {
+                        background: '#1a1a1a',
+                        border: owned ? '1px solid rgba(212,175,55,0.4)' : '1px solid #2a2a2a',
+                        borderRadius: '10px',
+                        padding: '12px',
+                    } },
+                    h("div", { style: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' } },
+                        h("span", { style: { fontSize: '26px', lineHeight: 1, flexShrink: 0 } }, unlock.icon),
+                        h("div", { style: { flex: 1, minWidth: 0 } },
+                            h("div", { style: { fontSize: '13px', fontWeight: '700', color: '#e8d5b0' } }, unlock.name),
+                            h("div", { style: { fontSize: '10px', color: '#e8d5b0', opacity: 0.4, marginTop: '2px' } }, unlock.desc)),
+                        h("div", { style: { textAlign: 'right', flexShrink: 0 } }, owned
+                            ? h("div", { style: { fontSize: '11px', color: '#d4af37', fontWeight: '700' } }, "\u2713 Owned")
+                            : h(Fragment, null,
+                                h("div", { style: { fontSize: '12px', color: '#d4af37', fontFamily: 'monospace' } },
+                                    unlock.price.toLocaleString(),
+                                    " gp"),
+                                h("div", { style: { fontSize: '9px', color: '#e8d5b0', opacity: 0.3 } }, "one-time")))),
+                    h("button", { onClick: () => handleUnlock(unlock), disabled: owned, style: {
+                            width: '100%',
+                            padding: '8px',
+                            borderRadius: '8px',
+                            background: owned ? '#1a1a1a' : canAfford ? 'linear-gradient(135deg, #b8940e, #d4af37)' : '#222',
+                            border: owned ? '1px solid #333' : 'none',
+                            color: owned ? '#d4af37' : canAfford ? '#0f0f0f' : '#888',
+                            fontSize: '12px',
+                            fontWeight: '700',
+                            cursor: owned || !canAfford ? 'not-allowed' : 'pointer',
+                        } }, owned ? '✓ Unlocked' : canAfford ? `Unlock · ${unlock.price.toLocaleString()} gp` : `Need ${unlock.price.toLocaleString()} gp`)));
+            }))),
+            !isUnlocksTab && (h("div", { style: { display: 'flex', flexDirection: 'column', gap: '8px' } }, shop.items.map(item => {
                 const qty = getQty(item.id);
                 const totalCost = item.price * qty;
                 const canAfford = coins >= totalCost;
@@ -12199,7 +12270,7 @@ function GeneralStoreScreen() {
                                 whiteSpace: 'nowrap',
                                 flexShrink: 0,
                             } }, skillLocked ? 'Locked' : `Buy · ${totalCost.toLocaleString()} gp`))));
-            })))));
+            }))))));
 }
 
 // ── screens/EquipmentScreen.js ──
@@ -12388,7 +12459,7 @@ function EquipmentScreen() {
 
 
 function GameApp() {
-    const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot } = useGame();
+    const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures } = useGame();
     const [screen, setScreen] = useState(SCREENS.HOME);
     const [gameReady, setGameReady] = useState(false);
     const [showNewGame, setShowNewGame] = useState(false);
@@ -12633,6 +12704,59 @@ function GameApp() {
             addToast(`Import failed: ${err.message}`, 'error');
         }
     }
+    // Skip 1 hour — simulate 1 hour of the current active task
+    const handleSkipHour = async () => {
+        const task = activeTaskRef.current;
+        if (!task)
+            return;
+        if (task.type === 'combat' && task.monster?.boss) {
+            addToast('Cannot skip time during a boss fight.', 'error');
+            return;
+        }
+        const ONE_HOUR_MS = 3600000;
+        const [freshStats, freshInv, freshEq, freshBank] = await Promise.all([
+            getAllStats(), getInventory(), getEquipment(), getBank(),
+        ]);
+        let sim = null;
+        if (task.type === 'skill')
+            sim = simulateIdleSkilling(task, ONE_HOUR_MS, freshBank, freshEq, freshStats, itemsDataRef.current);
+        if (task.type === 'gather')
+            sim = simulateIdleGather(task, ONE_HOUR_MS);
+        if (task.type === 'combat')
+            sim = simulateIdleCombat(task, ONE_HOUR_MS, freshStats, freshEq, freshInv, itemsDataRef.current);
+        if (task.type === 'agility')
+            sim = simulateIdleAgility(task, ONE_HOUR_MS);
+        if (!sim) {
+            addToast('Nothing to skip — no materials or progress possible.', 'info');
+            return;
+        }
+        if (sim.xpGained) {
+            for (const [skill, xp] of Object.entries(sim.xpGained)) {
+                if (xp > 0)
+                    grantXP(skill, xp);
+            }
+        }
+        if (task.type === 'combat' && sim.finalInventory) {
+            updateInventory(sim.finalInventory);
+            if (sim.lootBanked && Object.keys(sim.lootBanked).length > 0) {
+                updateBankDirect(sim.lootBanked);
+            }
+        }
+        else if (sim.itemsGained) {
+            updateBankDirect(sim.itemsGained);
+        }
+        if (task.type === 'agility' && sim.coinsGained > 0) {
+            updateBankDirect({ coins: sim.coinsGained });
+        }
+        if (sim.itemsConsumed && Object.keys(sim.itemsConsumed).length > 0) {
+            const negated = {};
+            for (const [itemId, qty] of Object.entries(sim.itemsConsumed)) {
+                negated[itemId] = -qty;
+            }
+            updateBankDirect(negated);
+        }
+        setIdleResult({ elapsedMs: ONE_HOUR_MS, task, ...sim });
+    };
     // Navigate with optional action data
     const navigate = (scr, data) => {
         // Navigating away stops any active task and clears localStorage idle-engine
@@ -12684,6 +12808,27 @@ function GameApp() {
         h(ToastContainer, null),
         h("main", { style: { flex: 1, overflow: 'hidden' } }, renderScreen()),
         h(BottomNav, { active: screen, onNavigate: (s) => navigate(s) }),
+        unlockedFeatures?.has('skip_hour') && activeTask && !(activeTask.type === 'combat' && activeTask.monster?.boss) && (h("button", { onClick: handleSkipHour, style: {
+                position: 'fixed',
+                bottom: '62px',
+                right: '12px',
+                zIndex: 50,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '8px 14px',
+                borderRadius: '20px',
+                background: 'linear-gradient(135deg, #1a3a2a, #2a5a3a)',
+                border: '1px solid rgba(100,200,120,0.4)',
+                color: '#7de8a0',
+                fontSize: '12px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                boxShadow: '0 2px 12px rgba(0,0,0,0.5)',
+                letterSpacing: '0.03em',
+            } },
+            h("span", { style: { fontSize: '14px' } }, "\u23ED\uFE0F"),
+            " Skip 1h")),
         idleResult && (h("div", { style: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' } },
             h("div", { style: { width: '100%', maxWidth: '380px', background: '#1a1a1a', borderRadius: '20px', border: '1px solid #333', overflow: 'hidden' } },
                 h("div", { style: { background: 'linear-gradient(135deg, #1d3a2a, #2a1a0a)', padding: '20px 20px 16px', borderBottom: '1px solid #333' } },
