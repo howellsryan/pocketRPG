@@ -853,6 +853,159 @@
       }
     ]
   },
+  "general_graardor": {
+    "id": "general_graardor",
+    "name": "General Graardor",
+    "combatLevel": 624,
+    "hitpoints": 255,
+    "stats": {
+      "attack": 280,
+      "strength": 340,
+      "defence": 250,
+      "magic": 80,
+      "ranged": 80
+    },
+    "attackSpeed": 5,
+    "attackStyle": "crush",
+    "attackBonus": 155,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 240,
+      "slash": 250,
+      "crush": 240,
+      "magic": 0,
+      "ranged": 90
+    },
+    "drops": [
+      { "itemId": "big_bones", "quantity": 1, "chance": 1.0 },
+      { "itemId": "coins", "quantity": [19000, 21000], "chance": 1.0 },
+      { "itemId": "death_rune", "quantity": [25, 50], "chance": 0.15 },
+      { "itemId": "blood_rune", "quantity": [15, 25], "chance": 0.1 },
+      { "itemId": "soul_rune", "quantity": [15, 20], "chance": 0.08 },
+      { "itemId": "rune_platelegs", "quantity": 1, "chance": 0.0079 },
+      { "itemId": "rune_plateskirt", "quantity": 1, "chance": 0.0079 },
+      { "itemId": "rune_2h_sword", "quantity": 1, "chance": 0.0079 },
+      { "itemId": "rune_pickaxe", "quantity": 1, "chance": 0.0079 },
+      { "itemId": "bandos_chestplate", "quantity": 1, "chance": 0.00262 },
+      { "itemId": "bandos_tassets", "quantity": 1, "chance": 0.00262 },
+      { "itemId": "bandos_boots", "quantity": 1, "chance": 0.00262 },
+      { "itemId": "bandos_hilt", "quantity": 1, "chance": 0.00197 },
+      { "itemId": "godsword_shard", "quantity": 1, "chance": 0.00393 }
+    ]
+  },
+  "commander_zilyana": {
+    "id": "commander_zilyana",
+    "name": "Commander Zilyana",
+    "combatLevel": 596,
+    "hitpoints": 255,
+    "stats": {
+      "attack": 280,
+      "strength": 300,
+      "defence": 300,
+      "magic": 300,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": 80,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 280,
+      "slash": 250,
+      "crush": 240,
+      "magic": 0,
+      "ranged": 0
+    },
+    "drops": [
+      { "itemId": "big_bones", "quantity": 1, "chance": 1.0 },
+      { "itemId": "coins", "quantity": [19000, 21000], "chance": 1.0 },
+      { "itemId": "death_rune", "quantity": [25, 50], "chance": 0.15 },
+      { "itemId": "blood_rune", "quantity": [15, 25], "chance": 0.1 },
+      { "itemId": "soul_rune", "quantity": [15, 20], "chance": 0.08 },
+      { "itemId": "rune_platelegs", "quantity": 1, "chance": 0.0079 },
+      { "itemId": "rune_plateskirt", "quantity": 1, "chance": 0.0079 },
+      { "itemId": "saradomin_sword", "quantity": 1, "chance": 0.0079 },
+      { "itemId": "armadyl_crossbow", "quantity": 1, "chance": 0.00197 },
+      { "itemId": "saradomin_hilt", "quantity": 1, "chance": 0.00197 },
+      { "itemId": "godsword_shard", "quantity": 1, "chance": 0.00393 }
+    ]
+  },
+  "kril_tsutsaroth": {
+    "id": "kril_tsutsaroth",
+    "name": "K'ril Tsutsaroth",
+    "combatLevel": 650,
+    "hitpoints": 255,
+    "stats": {
+      "attack": 270,
+      "strength": 340,
+      "defence": 250,
+      "magic": 270,
+      "ranged": 1
+    },
+    "attackSpeed": 6,
+    "attackStyle": "slash",
+    "attackBonus": 130,
+    "strengthBonus": 26,
+    "defenceBonus": {
+      "stab": 250,
+      "slash": 250,
+      "crush": 250,
+      "magic": 0,
+      "ranged": 250
+    },
+    "drops": [
+      { "itemId": "big_bones", "quantity": 1, "chance": 1.0 },
+      { "itemId": "coins", "quantity": [19000, 21000], "chance": 1.0 },
+      { "itemId": "death_rune", "quantity": [25, 50], "chance": 0.15 },
+      { "itemId": "blood_rune", "quantity": [15, 25], "chance": 0.1 },
+      { "itemId": "soul_rune", "quantity": [15, 20], "chance": 0.08 },
+      { "itemId": "rune_platelegs", "quantity": 1, "chance": 0.0079 },
+      { "itemId": "rune_plateskirt", "quantity": 1, "chance": 0.0079 },
+      { "itemId": "rune_2h_sword", "quantity": 1, "chance": 0.0079 },
+      { "itemId": "zamorak_spear", "quantity": 1, "chance": 0.0079 },
+      { "itemId": "staff_of_the_dead", "quantity": 1, "chance": 0.00197 },
+      { "itemId": "zamorak_hilt", "quantity": 1, "chance": 0.00197 },
+      { "itemId": "godsword_shard", "quantity": 1, "chance": 0.00393 }
+    ]
+  },
+  "kreearra": {
+    "id": "kreearra",
+    "name": "Kree'arra",
+    "combatLevel": 580,
+    "hitpoints": 255,
+    "stats": {
+      "attack": 260,
+      "strength": 350,
+      "defence": 260,
+      "magic": 260,
+      "ranged": 350
+    },
+    "attackSpeed": 4,
+    "attackStyle": "ranged",
+    "attackBonus": 130,
+    "strengthBonus": 63,
+    "defenceBonus": {
+      "stab": 1000,
+      "slash": 1000,
+      "crush": 1000,
+      "magic": 60,
+      "ranged": 60
+    },
+    "drops": [
+      { "itemId": "big_bones", "quantity": 1, "chance": 1.0 },
+      { "itemId": "coins", "quantity": [19000, 21000], "chance": 1.0 },
+      { "itemId": "death_rune", "quantity": [25, 50], "chance": 0.15 },
+      { "itemId": "blood_rune", "quantity": [15, 25], "chance": 0.1 },
+      { "itemId": "soul_rune", "quantity": [15, 20], "chance": 0.08 },
+      { "itemId": "rune_platelegs", "quantity": 1, "chance": 0.0079 },
+      { "itemId": "rune_crossbow", "quantity": 1, "chance": 0.0079 },
+      { "itemId": "armadyl_helmet", "quantity": 1, "chance": 0.00262 },
+      { "itemId": "armadyl_chestplate", "quantity": 1, "chance": 0.00262 },
+      { "itemId": "armadyl_chainskirt", "quantity": 1, "chance": 0.00262 },
+      { "itemId": "armadyl_hilt", "quantity": 1, "chance": 0.00197 },
+      { "itemId": "godsword_shard", "quantity": 1, "chance": 0.00393 }
+    ]
+  },
   "green_dragon": {
     "id": "green_dragon",
     "name": "Green Dragon",
