@@ -35,6 +35,7 @@ function GameApp() {
   // Refs for tick-based systems
   const hpRegenCounter = useRef(0)
   const snapshotCounter = useRef(99) // Start at 99 so first snapshot fires after 1 tick
+  const hiddenAtPerfRef = useRef(null) // performance.now() at hide — monotonic, immune to clock changes
 
   useEffect(() => {
     checkSave()
@@ -75,16 +76,27 @@ function GameApp() {
       if (document.hidden) {
         // Page going to background — stamp the hide time separately from tick heartbeat
         const now = Date.now()
+        hiddenAtPerfRef.current = performance.now() // monotonic — not affected by clock changes
         localStorage.setItem('pocketrpg_hiddenAt', String(now))
         localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
       } else {
-        // Page returning to foreground — use hiddenAt (not lastTick) for elapsed time
+        // Page returning to foreground — prefer performance.now() diff (monotonic) over wall-clock
+        // to prevent system-time manipulation from granting fake idle progress.
         try {
           const rawHiddenAt = localStorage.getItem('pocketrpg_hiddenAt')
           const savedTask = (() => { try { return JSON.parse(localStorage.getItem('pocketrpg_activeTask')) } catch { return null } })()
           if (!rawHiddenAt) return
           const hiddenAt = parseInt(rawHiddenAt, 10)
-          const elapsedMs = Date.now() - hiddenAt
+          const perfNow = performance.now()
+          let elapsedMs
+          if (hiddenAtPerfRef.current !== null && perfNow >= hiddenAtPerfRef.current) {
+            // Same session: use monotonic clock — immune to system time changes
+            elapsedMs = Math.floor(perfNow - hiddenAtPerfRef.current)
+          } else {
+            // New session (page reloaded while hidden): fall back to wall-clock, capped at 24h
+            elapsedMs = Math.min(Date.now() - hiddenAt, 24 * 60 * 60 * 1000)
+          }
+          hiddenAtPerfRef.current = null
           if (elapsedMs < 2000) return
 
           // Clear the hiddenAt stamp so a second quick return doesn't double-count
