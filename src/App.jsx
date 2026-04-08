@@ -383,7 +383,7 @@ function GameApp() {
       case SCREENS.INVENTORY: return <InventoryScreen />
       case SCREENS.EQUIPMENT: return <EquipmentScreen />
       case SCREENS.BANK:      return <BankScreen />
-      case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} />
+      case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} onSkipHour={handleSkipHour} skipHourUnlocked={unlockedFeatures?.has('skip_hour')} />
       case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} idleResult={idleResult} />
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} />
       case SCREENS.AGILITY:   return <AgilityScreen initialActionId={actionData?.actionId} />
@@ -401,19 +401,20 @@ function GameApp() {
       </main>
       <BottomNav active={screen} onNavigate={(s) => navigate(s)} />
 
-      {/* Skip 1 Hour button — visible when feature is unlocked and a non-boss task is active */}
-      {unlockedFeatures?.has('skip_hour') && activeTask && !(activeTask.type === 'combat' && activeTask.monster?.boss) && (
+      {/* Skip 1 Hour button — for skilling/gather/agility only (combat handles it inline) */}
+      {unlockedFeatures?.has('skip_hour') && activeTask && activeTask.type !== 'combat' && (
         <button
           onClick={handleSkipHour}
           style={{
             position: 'fixed',
             bottom: '62px',
-            right: '12px',
+            left: '50%',
+            transform: 'translateX(-50%)',
             zIndex: 50,
             display: 'flex',
             alignItems: 'center',
             gap: '5px',
-            padding: '8px 14px',
+            padding: '8px 18px',
             borderRadius: '20px',
             background: 'linear-gradient(135deg, #1a3a2a, #2a5a3a)',
             border: '1px solid rgba(100,200,120,0.4)',
@@ -423,6 +424,7 @@ function GameApp() {
             cursor: 'pointer',
             boxShadow: '0 2px 12px rgba(0,0,0,0.5)',
             letterSpacing: '0.03em',
+            whiteSpace: 'nowrap',
           }}
         >
           <span style={{ fontSize: '14px' }}>⏭️</span> Skip 1h
