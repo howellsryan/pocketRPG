@@ -32,9 +32,9 @@ const COMBAT_CATEGORIES = [
   },
   {
     key: 'bossing',
-    label: 'Bossing',
+    label: 'God Wars Dungeon',
     icon: '👑',
-    ids: [],
+    ids: ['general_graardor', 'commander_zilyana', 'kril_tsutsaroth', 'kreearra'],
   },
 ]
 
@@ -42,7 +42,8 @@ const MONSTER_ICONS = {
   chicken: '🐔', goblin: '👺', cow: '🐄', giant_spider: '🕷️',
   rock_crab: '🦀', sand_crab: '🦀', hill_giant: '👊', moss_giant: '🌿',
   wizard: '🧙', dark_wizard: '🧙‍♂️', abyssal_demon: '😈',
-  green_dragon: '🐉', lesser_demon: '👿'
+  green_dragon: '🐉', lesser_demon: '👿',
+  general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅'
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId }) {
