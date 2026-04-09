@@ -12818,7 +12818,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
 
 
 const agilityData = skillsData.agility;
-function AgilityScreen({ initialActionId, onBack }) {
+function AgilityScreen({ initialActionId, onBack, onSkipHour, skipHourUnlocked }) {
     const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask } = useGame();
     const agilityLevel = getLevelFromXP(stats.agility?.xp || 0);
     const agilityXP = stats.agility?.xp || 0;
@@ -12955,7 +12955,7 @@ function AgilityScreen({ initialActionId, onBack }) {
         ? Math.round(agility.totalXP / (elapsed / 3600000))
         : null;
     return (h("div", { class: "h-full flex flex-col p-4" },
-        h("button", { onClick: stopCourse, class: "text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1" }, "\u2190 Stop & Back"),
+        h("button", { onClick: stopCourse, class: "text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1" }, "\u2190 Back"),
         h("div", { class: "flex-1 flex flex-col items-center justify-center" },
             h("span", { class: "text-4xl mb-2" }, "\uD83C\uDFC3"),
             h("h2", { class: "font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)] mb-1" }, agility.action.name),
@@ -12988,7 +12988,7 @@ function AgilityScreen({ initialActionId, onBack }) {
                     h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" },
                         formatBankDelay(bankDelay),
                         " delay")))),
-        h("button", { onClick: stopCourse, class: "flex-shrink-0 w-full py-3 rounded-xl bg-[var(--color-blood)]/60 text-white font-semibold text-sm active:opacity-80" }, "Stop")));
+        skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "flex-shrink-0 w-full py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\u23ED\uFE0F Skip 1h"))));
 }
 
 // ── screens/SkillingScreen.js ──
@@ -13018,7 +13018,7 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
     const hasAutoStarted = useRef(false);
     // If agility is selected, delegate to AgilityScreen (special screen for agility only)
     if (selectedSkill === 'agility') {
-        return (h(AgilityScreen, { initialActionId: initialActionId, onBack: () => setSelectedSkill(null) }));
+        return (h(AgilityScreen, { initialActionId: initialActionId, onBack: () => setSelectedSkill(null), onSkipHour: onSkipHour, skipHourUnlocked: skipHourUnlocked }));
     }
     // Tick listener
     useEffect(() => {
