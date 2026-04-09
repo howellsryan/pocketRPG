@@ -11,9 +11,10 @@ import { formatNumber } from '../utils/helpers.js'
 import skillsData from '../data/skills.json'
 import itemsData from '../data/items.json'
 import AgilityScreen from './AgilityScreen.jsx'
+import SlayerScreen from './SlayerScreen.jsx'
 
-// Agility and Prayer are special skills shown here in the Skills tab
-const SPECIAL_SKILLS = ['agility', 'prayer']
+// Agility, Prayer, and Slayer are special skills shown here in the Skills tab
+const SPECIAL_SKILLS = ['agility', 'prayer', 'slayer']
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0)
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS]
 
@@ -33,6 +34,15 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
         onBack={() => setSelectedSkill(null)}
         onSkipHour={onSkipHour}
         skipHourUnlocked={skipHourUnlocked}
+      />
+    )
+  }
+
+  // If slayer is selected, delegate to SlayerScreen
+  if (selectedSkill === 'slayer') {
+    return (
+      <SlayerScreen
+        onBack={() => setSelectedSkill(null)}
       />
     )
   }

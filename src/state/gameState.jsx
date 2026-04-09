@@ -24,6 +24,8 @@ export function GameProvider({ children }) {
   const [activeTask, setActiveTaskState] = useState(null)
   const [bankConfig, setBankConfig] = useState({ tabs: [], itemTabMap: {} })
   const [unlockedFeatures, setUnlockedFeatures] = useState(new Set())
+  const [slayerTask, setSlayerTaskState] = useState(null)
+  const [slayerPoints, setSlayerPointsState] = useState(0)
   const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false })
 
   // Refs to hold latest state for the debounced auto-save
@@ -38,10 +40,11 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    const [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks] = await Promise.all([
+    const [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
-      getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures')
+      getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
+      getSetting('slayerTask'), getSetting('slayerPoints')
     ])
     // lastTick and activeTask live in localStorage — synchronous, survives iOS background freeze
     const savedLastTick = (() => { const v = localStorage.getItem('pocketrpg_lastTick'); return v ? parseInt(v, 10) : null })()
@@ -158,6 +161,8 @@ export function GameProvider({ children }) {
     setBankConfig(savedBankConfig ?? { tabs: [], itemTabMap: {} })
     setUnlockedFeatures(new Set(savedUnlocks || []))
     setActiveTaskState(savedTask ?? null)
+    setSlayerTaskState(savedSlayerTask ?? null)
+    setSlayerPointsState(savedSlayerPoints ?? 0)
     const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
     setCurrentHP(savedHP != null ? Math.min(savedHP, hpLevel) : hpLevel)
     setLoaded(true)
@@ -288,6 +293,16 @@ export function GameProvider({ children }) {
     }
   }, [])
 
+  const setSlayerTask = useCallback((task) => {
+    setSlayerTaskState(task)
+    saveSetting('slayerTask', task)
+  }, [])
+
+  const updateSlayerPoints = useCallback((points) => {
+    setSlayerPointsState(points)
+    saveSetting('slayerPoints', points)
+  }, [])
+
   // Direct bank update without inventory changes (for skill/gather item routing)
   const updateBankDirect = useCallback((itemUpdates) => {
     setBank(prev => {
@@ -332,6 +347,7 @@ export function GameProvider({ children }) {
     loaded, player, stats, inventory, equipment, bank, currentHP, toasts,
     homeShortcuts, combatStance, activeTask, autoBankLoot, bankConfig,
     unlockedFeatures, unlockFeature,
+    slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints,
     loadGame, grantXP, updateInventory, updateEquipment, updateBank,
     updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,
     markDirty, itemsData, updateHomeShortcuts, updateCombatStance,

@@ -5688,5 +5688,37 @@
     },
     "shopValue": 350000,
     "icon": "⚔️"
+  },
+  "slayer_helmet": {
+    "id": "slayer_helmet",
+    "name": "Slayer helmet",
+    "type": "armor",
+    "slot": "head",
+    "stackable": false,
+    "icon": "💀",
+    "shopValue": 0,
+    "attackBonus": {
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": -3,
+      "ranged": -5
+    },
+    "defenceBonus": {
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": -1,
+      "ranged": -1
+    },
+    "otherBonus": {
+      "meleeStrength": 3,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "slayerHelmet": true
+    },
+    "requirements": {
+      "slayer": 20
+    }
   }
 }

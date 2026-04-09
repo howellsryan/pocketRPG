@@ -40,6 +40,7 @@ const sourceFiles = [
   'screens/CombatScreen.js',
   'screens/AgilityScreen.js',
   'screens/SkillingScreen.js',
+  'screens/SlayerScreen.js',
   'screens/GatherScreen.js',
   'screens/GeneralStoreScreen.js',
   'screens/EquipmentScreen.js',
