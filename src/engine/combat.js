@@ -362,7 +362,6 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
   const weapon = itemsData[weaponEntry.itemId]
   if (!weapon?.specialAttack) return { combatState, events: [] }
   const spec = weapon.specialAttack
-  if ((combatState.specialAttackEnergy || 0) < spec.energyCost) return { combatState, events: [] }
 
   const state = {
     ...combatState,
