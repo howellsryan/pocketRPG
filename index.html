@@ -12594,7 +12594,6 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
         };
         combatRef.current = newState;
         setCombat({ ...newState });
-        addToast(`⚡ ${weapon.name} special queued`, 'info');
     };
     const handlePrayer = (prayerId) => {
         if (!combatRef.current)

@@ -297,8 +297,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
     }
     combatRef.current = newState
     setCombat({ ...newState })
-
-    addToast(`⚡ ${weapon.name} special queued`, 'info')
   }
 
   const handlePrayer = (prayerId) => {
