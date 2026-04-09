@@ -37,7 +37,7 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
  * Returns { combatState, events[] }
  * events: { type: 'playerHit'|'monsterHit'|'monsterDeath'|'playerDeath'|'xp'|'levelUp', ... }
  */
-export function processCombatTick(combatState, playerStats, equipment, itemsData, prayersData = null) {
+export function processCombatTick(combatState, playerStats, equipment, itemsData, prayersData = {}) {
   const state = { ...combatState }
   const events = []
   state.tickCount++
@@ -201,11 +201,17 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       damage = rollDamage(acc, monsterMaxHit)
 
       // Apply protection prayer damage reduction if active and matches attack style
-      if (state.activePrayer && prayersData && prayersData[state.activePrayer]) {
-        const prayer = prayersData[state.activePrayer]
-        if (prayer.bonusType === 'protection' && prayer.damageReductionPercent && protectionPrayerMatches(prayer.style, monster.attackStyle)) {
-          const reduction = Math.floor(damage * prayer.damageReductionPercent / 100)
-          damage = Math.max(0, damage - reduction)
+      if (state.activePrayer && typeof prayersData === 'object' && prayersData[state.activePrayer]) {
+        try {
+          const prayer = prayersData[state.activePrayer]
+          if (prayer && prayer.bonusType === 'protection' && typeof prayer.damageReductionPercent === 'number') {
+            if (protectionPrayerMatches(prayer.style, monster.attackStyle)) {
+              const reduction = Math.floor(damage * prayer.damageReductionPercent / 100)
+              damage = Math.max(0, damage - reduction)
+            }
+          }
+        } catch (e) {
+          // Silently fail if prayer application fails
         }
       }
 
@@ -261,29 +267,37 @@ function protectionPrayerMatches(prayerStyle, attackStyle) {
 /**
  * Apply prayer bonuses to player stats based on active prayer
  */
-export function applyPrayerBonuses(playerStats, activePrayer, prayersData) {
-  if (!activePrayer || !prayersData || !prayersData[activePrayer]) {
+export function applyPrayerBonuses(playerStats, activePrayer, prayersData = {}) {
+  // If no active prayer or no prayers data, return unmodified stats
+  if (!activePrayer || typeof prayersData !== 'object' || !prayersData[activePrayer]) {
     return playerStats
   }
 
-  const prayer = prayersData[activePrayer]
-  const boostedStats = { ...playerStats }
+  try {
+    const prayer = prayersData[activePrayer]
+    if (!prayer) return playerStats
 
-  if (prayer.bonusType === 'stat' && prayer.stat && prayer.boostPercent) {
-    const statValue = boostedStats[prayer.stat]
-    if (statValue !== undefined) {
-      boostedStats[prayer.stat] = Math.floor(statValue * (1 + prayer.boostPercent / 100))
-    }
-  } else if (prayer.bonusType === 'multi_stat' && prayer.stats) {
-    for (const [stat, boostPercent] of Object.entries(prayer.stats)) {
-      const statValue = boostedStats[stat]
-      if (statValue !== undefined) {
-        boostedStats[stat] = Math.floor(statValue * (1 + boostPercent / 100))
+    const boostedStats = { ...playerStats }
+
+    if (prayer.bonusType === 'stat' && prayer.stat && prayer.boostPercent) {
+      const statValue = boostedStats[prayer.stat]
+      if (typeof statValue === 'number') {
+        boostedStats[prayer.stat] = Math.floor(statValue * (1 + prayer.boostPercent / 100))
+      }
+    } else if (prayer.bonusType === 'multi_stat' && prayer.stats) {
+      for (const [stat, boostPercent] of Object.entries(prayer.stats)) {
+        const statValue = boostedStats[stat]
+        if (typeof statValue === 'number') {
+          boostedStats[stat] = Math.floor(statValue * (1 + boostPercent / 100))
+        }
       }
     }
-  }
 
-  return boostedStats
+    return boostedStats
+  } catch (e) {
+    // Silently return unmodified stats if anything goes wrong
+    return playerStats
+  }
 }
 
 /**
