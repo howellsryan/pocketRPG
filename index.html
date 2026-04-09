@@ -9243,8 +9243,11 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
         state.eatCooldown--;
     if (state.potionCooldown > 0)
         state.potionCooldown--;
-    // Apply prayer bonuses to player stats
-    const boostedPlayerStats = applyPrayerBonuses(playerStats, state.activePrayer, prayersData);
+    // Apply prayer bonuses to player stats only if there's an active prayer
+    let boostedPlayerStats = playerStats;
+    if (state.activePrayer && typeof prayersData === 'object' && prayersData[state.activePrayer]) {
+        boostedPlayerStats = applyPrayerBonuses(playerStats, state.activePrayer, prayersData) || playerStats;
+    }
     const bonuses = getEquipmentBonuses(equipment, itemsData);
     const weaponSpeed = getAttackSpeed(equipment, itemsData);
     const weaponStyle = getAttackStyle(equipment, itemsData);
@@ -12550,14 +12553,12 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                 (() => {
                     const weaponEntry = equipment?.weapon;
                     const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null;
-                    if (!weapon?.specialAttack)
-                        return null;
+                    const hasSpec = weapon?.specialAttack;
                     const energy = combat.specialAttackEnergy || 0;
-                    const canSpec = energy >= weapon.specialAttack.energyCost;
-                    return (h("button", { onClick: canSpec ? handleSpecialAttack : undefined, class: `py-2.5 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`, style: canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888' },
-                        "\u26A1 Special (",
-                        weapon.specialAttack.energyCost,
-                        "%)"));
+                    const canSpec = hasSpec && energy >= weapon.specialAttack.energyCost;
+                    return (h("button", { onClick: canSpec ? handleSpecialAttack : undefined, disabled: !canSpec, class: `py-2.5 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`, style: canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888' },
+                        "\u26A1 ",
+                        hasSpec ? `Special (${weapon.specialAttack.energyCost}%)` : 'No Spec'));
                 })(),
                 h("button", { onClick: () => setShowPrayerModal(true), class: "py-2.5 rounded-lg bg-[#1a2a1a] text-[var(--color-gold-dim)] font-semibold text-sm active:opacity-80 border border-[#2a4a2a]" }, "\uD83D\uDE4F Prayer")),
             h("div", { class: "flex gap-2" },

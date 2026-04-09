@@ -559,16 +559,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
               {(() => {
                 const weaponEntry = equipment?.weapon
                 const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
-                if (!weapon?.specialAttack) return null
+                const hasSpec = weapon?.specialAttack
                 const energy = combat.specialAttackEnergy || 0
-                const canSpec = energy >= weapon.specialAttack.energyCost
+                const canSpec = hasSpec && energy >= weapon.specialAttack.energyCost
                 return (
                   <button
                     onClick={canSpec ? handleSpecialAttack : undefined}
+                    disabled={!canSpec}
                     class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
                     style={canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
                   >
-                    ⚡ Special ({weapon.specialAttack.energyCost}%)
+                    ⚡ {hasSpec ? `Special (${weapon.specialAttack.energyCost}%)` : 'No Spec'}
                   </button>
                 )
               })()}

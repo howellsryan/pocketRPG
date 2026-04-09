@@ -48,8 +48,11 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   if (state.eatCooldown > 0) state.eatCooldown--
   if (state.potionCooldown > 0) state.potionCooldown--
 
-  // Apply prayer bonuses to player stats
-  const boostedPlayerStats = applyPrayerBonuses(playerStats, state.activePrayer, prayersData)
+  // Apply prayer bonuses to player stats only if there's an active prayer
+  let boostedPlayerStats = playerStats
+  if (state.activePrayer && typeof prayersData === 'object' && prayersData[state.activePrayer]) {
+    boostedPlayerStats = applyPrayerBonuses(playerStats, state.activePrayer, prayersData) || playerStats
+  }
 
   const bonuses = getEquipmentBonuses(equipment, itemsData)
   const weaponSpeed = getAttackSpeed(equipment, itemsData)
