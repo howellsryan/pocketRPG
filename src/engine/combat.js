@@ -50,7 +50,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
 
   // Apply prayer bonuses to player stats only if there's an active prayer
   let boostedPlayerStats = playerStats
-  if (state.activePrayer && typeof prayersData === 'object' && prayersData[state.activePrayer]) {
+  if (state.activePrayer && prayersData && typeof prayersData === 'object' && prayersData[state.activePrayer]) {
     boostedPlayerStats = applyPrayerBonuses(playerStats, state.activePrayer, prayersData) || playerStats
   }
 
@@ -204,7 +204,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       damage = rollDamage(acc, monsterMaxHit)
 
       // Apply protection prayer damage reduction if active and matches attack style
-      if (state.activePrayer && typeof prayersData === 'object' && prayersData[state.activePrayer]) {
+      if (state.activePrayer && prayersData && typeof prayersData === 'object' && prayersData[state.activePrayer]) {
         try {
           const prayer = prayersData[state.activePrayer]
           if (prayer && prayer.bonusType === 'protection' && typeof prayer.damageReductionPercent === 'number') {
@@ -272,7 +272,7 @@ function protectionPrayerMatches(prayerStyle, attackStyle) {
  */
 export function applyPrayerBonuses(playerStats, activePrayer, prayersData = {}) {
   // If no active prayer or no prayers data, return unmodified stats
-  if (!activePrayer || typeof prayersData !== 'object' || !prayersData[activePrayer]) {
+  if (!activePrayer || !prayersData || typeof prayersData !== 'object' || !prayersData[activePrayer]) {
     return playerStats
   }
 
