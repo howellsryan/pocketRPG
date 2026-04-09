@@ -12586,11 +12586,10 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
         const energy = combatRef.current.specialAttackEnergy || 0;
         if (energy < weapon.specialAttack.energyCost)
             return;
-        // Queue the special attack to be fired on next tick
+        // Queue the special attack to be fired on next tick (without draining energy yet)
         const newState = {
             ...combatRef.current,
-            specialAttackQueued: true,
-            specialAttackEnergy: energy - weapon.specialAttack.energyCost
+            specialAttackQueued: true
         };
         combatRef.current = newState;
         setCombat({ ...newState });
