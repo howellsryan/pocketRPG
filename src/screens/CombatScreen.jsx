@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import Modal from '../components/Modal.jsx'
 import HPBar from '../components/HPBar.jsx'
-import { createCombatState, processCombatTick, applyEat } from '../engine/combat.js'
+import { createCombatState, processCombatTick, applyEat, applySpecialAttack } from '../engine/combat.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick } from '../engine/tick.js'
@@ -243,6 +243,78 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
     }
   }
 
+  const handleSpecialAttack = () => {
+    if (!combatRef.current || !combatRef.current.active) return
+    const playerStats = {
+      attack: getLevelFromXP(statsRef.current.attack?.xp || 0),
+      strength: getLevelFromXP(statsRef.current.strength?.xp || 0),
+      defence: getLevelFromXP(statsRef.current.defence?.xp || 0),
+      ranged: getLevelFromXP(statsRef.current.ranged?.xp || 0),
+      magic: getLevelFromXP(statsRef.current.magic?.xp || 0),
+      currentHP: hpRef.current
+    }
+    const { combatState: newState, events } = applySpecialAttack(combatRef.current, playerStats, equipmentRef.current, itemsData)
+    combatRef.current = newState
+    setCombat({ ...newState })
+
+    for (const ev of events) {
+      if (ev.type === 'specialHit') {
+        const hitsStr = ev.hits.map(h => h > 0 ? h : 'miss').join(' + ')
+        const specLabels = {
+          double_hit: '⚔️⚔️ Puncture',
+          zero_defence: '🎯 Sever',
+          stun: ev.stunned ? '🪱 Energy Drain (stunned!)' : '🪱 Energy Drain',
+          judgement: '⚡ The Judgement',
+          healing_blade: `✨ Healing Blade (+${ev.healAmount} HP)`,
+          freeze: '❄️ Ice Cleave (frozen!)',
+          warstrike: '💥 Warstrike',
+          lightning: '⚡ Saradomin\'s Lightning',
+          snapshot: '🏹🏹 Snapshot',
+          pebble_shot: '🎯 Pebble Shot',
+          shove: '🗡️ Shove (staggered!)'
+        }
+        const label = specLabels[ev.specType] || '⚡ Special Attack'
+        setLog(prev => [...prev.slice(-20), {
+          text: `${label}: ${hitsStr} (total ${ev.totalDamage})`,
+          type: 'special',
+          time: Date.now()
+        }])
+        if (ev.specType === 'healing_blade' && ev.healAmount > 0) {
+          const maxHP = getMaxHP()
+          const newHP = Math.min(hpRef.current + ev.healAmount, maxHP)
+          updateHP(newHP)
+          hpRef.current = newHP
+        }
+      }
+      if (ev.type === 'xp') {
+        for (const [skill, xp] of Object.entries(ev.xpSkills)) {
+          if (xp > 0) grantXP(skill, xp)
+        }
+      }
+      if (ev.type === 'monsterDeath') {
+        setKillCount(k => k + 1)
+        if (ev.loot && ev.loot.length > 0) {
+          const newInv = [...inventoryRef.current]
+          for (const drop of ev.loot) {
+            const item = itemsData[drop.itemId]
+            const added = addItem(newInv, drop.itemId, drop.quantity, item?.stackable || false)
+            if (added) addToast(`Loot: ${item?.name || drop.itemId} ×${drop.quantity}`, 'drop')
+          }
+          updateInventory(newInv)
+        }
+        setLog(prev => [...prev.slice(-20), {
+          text: `${newState.monster.name} defeated!`,
+          type: 'victory',
+          time: Date.now()
+        }])
+        setTimeout(() => {
+          const original = monstersData[newState.monster.id]
+          if (original) continueFight(original)
+        }, 1200)
+      }
+    }
+  }
+
   const handleAddToHome = (monster) => {
     const icon = MONSTER_ICONS[monster.id] || '👹'
     const shortcut = {
@@ -391,6 +463,32 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
         </span>
       </div>
 
+      {/* Special attack bar — only shown when equipped weapon has a spec */}
+      {(() => {
+        const weaponEntry = equipment?.weapon
+        const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
+        if (!weapon?.specialAttack) return null
+        const energy = combat.specialAttackEnergy || 0
+        const canSpec = energy >= weapon.specialAttack.energyCost
+        return (
+          <div class="mb-2 bg-[#111] rounded-lg px-3 py-2">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[10px] text-yellow-400 font-semibold">⚡ Special Attack</span>
+              <span class="text-[10px] font-[var(--font-mono)] text-yellow-400">{energy}%</span>
+            </div>
+            <div class="h-2 rounded-full bg-[#222] overflow-hidden">
+              <div
+                class="h-full rounded-full transition-all duration-300"
+                style={{ width: `${energy}%`, background: canSpec ? '#eab308' : '#78530a' }}
+              />
+            </div>
+            <div class="text-[9px] text-[var(--color-parchment)] opacity-40 mt-0.5">
+              {weapon.specialAttack.energyCost}% cost · refills on kill
+            </div>
+          </div>
+        )
+      })()}
+
       {/* Combat log */}
       <div class="flex-1 bg-[#111] rounded-lg border border-[#222] p-2 overflow-y-auto mb-2 min-h-[100px]">
         {log.map((entry, i) => (
@@ -400,6 +498,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
               entry.type === 'enemy' ? 'text-[var(--color-blood-light)]' :
               entry.type === 'heal' ? 'text-[var(--color-hp-green)]' :
               entry.type === 'dragonfire' ? 'text-orange-400' :
+              entry.type === 'special' ? 'text-yellow-300' :
               entry.type === 'victory' ? 'text-[var(--color-gold)]' :
               'text-[var(--color-parchment)] opacity-50'}`}
           >
@@ -436,6 +535,23 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
                 🧪 Potion
               </button>
             </div>
+            {/* Special attack button — shown when weapon has a spec */}
+            {(() => {
+              const weaponEntry = equipment?.weapon
+              const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
+              if (!weapon?.specialAttack) return null
+              const energy = combat.specialAttackEnergy || 0
+              const canSpec = energy >= weapon.specialAttack.energyCost
+              return (
+                <button
+                  onClick={canSpec ? handleSpecialAttack : undefined}
+                  class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
+                  style={canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
+                >
+                  ⚡ Special Attack ({weapon.specialAttack.energyCost}%)
+                </button>
+              )
+            })()}
             {/* Stop & Back / Skip 1h */}
             <div class="flex gap-2">
               <button onClick={stopAndBack}

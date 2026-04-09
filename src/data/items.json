@@ -2031,6 +2031,11 @@
     "requirements": {
       "ranged": 50
     },
+    "specialAttack": {
+      "type": "snapshot",
+      "energyCost": 55,
+      "description": "Snapshot: Fires two arrows in rapid succession, each dealing up to 75% of your normal max hit."
+    },
     "shopValue": 1800,
     "icon": "🏹"
   },
@@ -4787,6 +4792,11 @@
     "requirements": {
       "attack": 70
     },
+    "specialAttack": {
+      "type": "stun",
+      "energyCost": 50,
+      "description": "Energy Drain: Lashes at the target — if it connects, the creature is stunned for one attack cycle, skipping its next hit."
+    },
     "shopValue": 1500000,
     "icon": "🪱"
   },
@@ -4879,6 +4889,11 @@
     "requirements": {
       "attack": 60
     },
+    "specialAttack": {
+      "type": "double_hit",
+      "energyCost": 25,
+      "description": "Puncture: Strikes twice in rapid succession, each hit capable of dealing up to 115% of your normal max hit."
+    },
     "shopValue": 30000,
     "icon": "🗡️"
   },
@@ -4912,6 +4927,11 @@
     },
     "requirements": {
       "attack": 60
+    },
+    "specialAttack": {
+      "type": "zero_defence",
+      "energyCost": 55,
+      "description": "Sever: A precise strike that completely bypasses the target's defences, rolling against zero defence."
     },
     "shopValue": 59776,
     "icon": "⚔️"
@@ -5247,6 +5267,11 @@
     "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
     "otherBonus": { "meleeStrength": 132, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "attack": 75 },
+    "specialAttack": {
+      "type": "warstrike",
+      "energyCost": 50,
+      "description": "Warstrike: A crushing blow that deals damage and permanently weakens the target's defences for the rest of the fight by the amount of damage dealt."
+    },
     "shopValue": 4500000,
     "icon": "⚔️"
   },
@@ -5263,6 +5288,11 @@
     "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
     "otherBonus": { "meleeStrength": 132, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "attack": 75 },
+    "specialAttack": {
+      "type": "judgement",
+      "energyCost": 50,
+      "description": "The Judgement: A devastating strike rolled at 125% accuracy and capable of hitting up to 125% of your normal max damage."
+    },
     "shopValue": 8500000,
     "icon": "⚔️"
   },
@@ -5279,6 +5309,12 @@
     "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
     "otherBonus": { "meleeStrength": 132, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "attack": 75 },
+    "specialAttack": {
+      "type": "healing_blade",
+      "energyCost": 50,
+      "minHeal": 10,
+      "description": "Healing Blade: Strikes with divine power, restoring your HP by half the damage dealt (minimum 10 HP healed)."
+    },
     "shopValue": 2500000,
     "icon": "⚔️"
   },
@@ -5295,6 +5331,12 @@
     "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
     "otherBonus": { "meleeStrength": 132, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "attack": 75 },
+    "specialAttack": {
+      "type": "freeze",
+      "energyCost": 50,
+      "stunTicks": 33,
+      "description": "Ice Cleave: Strikes with chaotic energy, dealing damage and freezing the target for ~20 seconds (33 ticks), preventing it from attacking."
+    },
     "shopValue": 2500000,
     "icon": "⚔️"
   },
@@ -5405,6 +5447,12 @@
     "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
     "otherBonus": { "meleeStrength": 82, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "attack": 70 },
+    "specialAttack": {
+      "type": "lightning",
+      "energyCost": 100,
+      "lightningMax": 16,
+      "description": "Saradomin's Lightning: A two-hit attack — a melee strike followed by a divine lightning bolt dealing 1–16 magic damage (always hits)."
+    },
     "shopValue": 750000,
     "icon": "⚔️"
   },
@@ -5430,6 +5478,11 @@
     "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
     "otherBonus": { "meleeStrength": 0, "rangedStrength": 90, "magicDamage": 0 },
     "requirements": { "ranged": 70 },
+    "specialAttack": {
+      "type": "pebble_shot",
+      "energyCost": 40,
+      "description": "Pebble Shot: Fires a bolt that never misses, dealing up to 125% of your normal ranged max hit."
+    },
     "shopValue": 2500000,
     "icon": "🏹"
   },
@@ -5446,6 +5499,11 @@
     "defenceBonus": { "stab": 4, "slash": 4, "crush": 4, "magic": 0, "ranged": 0 },
     "otherBonus": { "meleeStrength": 75, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "attack": 70 },
+    "specialAttack": {
+      "type": "shove",
+      "energyCost": 25,
+      "description": "Shove: A powerful stab rolled at 175% accuracy that staggers the target, skipping their next 2 attacks."
+    },
     "shopValue": 300000,
     "icon": "🗡️"
   },
