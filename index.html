@@ -9223,6 +9223,23 @@ function getAttackStyle(equipment, itemsData) {
     const weapon = itemsData[equipment.weapon.itemId];
     return weapon?.attackStyle || 'crush';
 }
+/**
+ * Get the combat type based on the equipped weapon's attack style
+ * Returns 'melee', 'ranged', or 'magic'
+ */
+function getCombatType(equipment, itemsData) {
+    if (!equipment || !equipment.weapon)
+        return 'melee';
+    const weapon = itemsData[equipment.weapon.itemId];
+    if (!weapon)
+        return 'melee';
+    const attackStyle = weapon.attackStyle || 'crush';
+    if (attackStyle === 'ranged')
+        return 'ranged';
+    if (attackStyle === 'magic')
+        return 'magic';
+    return 'melee';
+}
 
 // ── engine/inventory.js ──
 
@@ -11592,7 +11609,7 @@ function HomeScreen({ onNavigate, onSaveMenu }) {
                     }, "aria-label": `Remove ${sc.label}` }, "\u2715")))),
             shortcuts.length === 0 && (h("div", { style: { gridColumn: '1/-1', textAlign: 'center', padding: '24px', color: '#e8d5b0', opacity: 0.3, fontSize: '13px' } }, "No shortcuts. Add them from the monster or skill screens."))),
         h("h2", { style: { fontFamily: 'Cinzel, serif', fontSize: '11px', fontWeight: 'bold', color: '#e8d5b0', marginBottom: '8px', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.1em' } }, "Combat Stats"),
-        h("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' } }, [['attack', '⚔️'], ['strength', '💪'], ['defence', '🛡️'], ['hitpoints', '❤️']].map(([skill, icon]) => (h("div", { key: skill, style: { display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px', borderRadius: '10px', background: '#1a1a1a', border: '1px solid #2a2a2a' } },
+        h("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' } }, [['attack', '⚔️'], ['strength', '💪'], ['defence', '🛡️'], ['hitpoints', '❤️'], ['ranged', '🏹'], ['magic', '✨'], ['prayer', '🙏']].map(([skill, icon]) => (h("div", { key: skill, style: { display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px', borderRadius: '10px', background: '#1a1a1a', border: '1px solid #2a2a2a' } },
             h("span", { style: { fontSize: '16px' } }, icon),
             h("span", { style: { fontSize: '18px', fontFamily: 'monospace', fontWeight: 'bold', color: '#d4af37' } }, levels[skill] || 1),
             h("span", { style: { fontSize: '8px', color: '#e8d5b0', opacity: 0.4, textTransform: 'uppercase' } }, skill.slice(0, 3)))))),
@@ -12390,6 +12407,7 @@ function BankScreen() {
 
 
 
+
 const COMBAT_CATEGORIES = [
     {
         key: 'training',
@@ -12637,7 +12655,8 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                 return;
             }
         }
-        const state = createCombatState(monster, 'melee', combatStance);
+        const combatType = getCombatType(equipment, itemsData);
+        const state = createCombatState(monster, combatType, combatStance);
         setCombat(state);
         setKillCount(0);
         setFightStartedAt(Date.now());
@@ -12645,7 +12664,8 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
         setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot });
     };
     const continueFight = (monster) => {
-        const state = createCombatState(monster, 'melee', combatStance);
+        const combatType = getCombatType(equipment, itemsData);
+        const state = createCombatState(monster, combatType, combatStance);
         setCombat(state);
         setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot });
     };

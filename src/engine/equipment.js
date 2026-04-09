@@ -133,3 +133,18 @@ export function getAttackStyle(equipment, itemsData) {
   const weapon = itemsData[equipment.weapon.itemId]
   return weapon?.attackStyle || 'crush'
 }
+
+/**
+ * Get the combat type based on the equipped weapon's attack style
+ * Returns 'melee', 'ranged', or 'magic'
+ */
+export function getCombatType(equipment, itemsData) {
+  if (!equipment || !equipment.weapon) return 'melee'
+  const weapon = itemsData[equipment.weapon.itemId]
+  if (!weapon) return 'melee'
+
+  const attackStyle = weapon.attackStyle || 'crush'
+  if (attackStyle === 'ranged') return 'ranged'
+  if (attackStyle === 'magic') return 'magic'
+  return 'melee'
+}

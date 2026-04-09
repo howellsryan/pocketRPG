@@ -7,6 +7,7 @@ import { getLevelFromXP } from '../engine/experience.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
+import { getCombatType } from '../engine/equipment.js'
 import monstersData from '../data/monsters.json'
 import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
@@ -271,7 +272,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
         return
       }
     }
-    const state = createCombatState(monster, 'melee', combatStance)
+    const combatType = getCombatType(equipment, itemsData)
+    const state = createCombatState(monster, combatType, combatStance)
     setCombat(state)
     setKillCount(0)
     setFightStartedAt(Date.now())
@@ -280,7 +282,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
   }
 
   const continueFight = (monster) => {
-    const state = createCombatState(monster, 'melee', combatStance)
+    const combatType = getCombatType(equipment, itemsData)
+    const state = createCombatState(monster, combatType, combatStance)
     setCombat(state)
     setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot })
   }
