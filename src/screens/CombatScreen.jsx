@@ -324,11 +324,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
 
   const handlePrayer = (prayerId) => {
     if (!combatRef.current) return
+    const prayer = prayersData[prayerId]
     const newState = { ...combatRef.current, activePrayer: prayerId }
     combatRef.current = newState
     setCombat(newState)
     setShowPrayerModal(false)
-    const prayer = prayersData[prayerId]
     if (prayer) {
       addToast(`${prayer.icon} ${prayer.name}`, 'info')
     }

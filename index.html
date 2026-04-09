@@ -9245,7 +9245,7 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
         state.potionCooldown--;
     // Apply prayer bonuses to player stats only if there's an active prayer
     let boostedPlayerStats = playerStats;
-    if (state.activePrayer && typeof prayersData === 'object' && prayersData[state.activePrayer]) {
+    if (state.activePrayer && prayersData && typeof prayersData === 'object' && prayersData[state.activePrayer]) {
         boostedPlayerStats = applyPrayerBonuses(playerStats, state.activePrayer, prayersData) || playerStats;
     }
     const bonuses = getEquipmentBonuses(equipment, itemsData);
@@ -9395,7 +9395,7 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
             const monsterMaxHit = Math.floor(0.5 + (monster.stats.strength + 8) * ((monster.strengthBonus || 0) + 64) / 640);
             damage = rollDamage(acc, monsterMaxHit);
             // Apply protection prayer damage reduction if active and matches attack style
-            if (state.activePrayer && typeof prayersData === 'object' && prayersData[state.activePrayer]) {
+            if (state.activePrayer && prayersData && typeof prayersData === 'object' && prayersData[state.activePrayer]) {
                 try {
                     const prayer = prayersData[state.activePrayer];
                     if (prayer && prayer.bonusType === 'protection' && typeof prayer.damageReductionPercent === 'number') {
@@ -9457,7 +9457,7 @@ function protectionPrayerMatches(prayerStyle, attackStyle) {
  */
 function applyPrayerBonuses(playerStats, activePrayer, prayersData = {}) {
     // If no active prayer or no prayers data, return unmodified stats
-    if (!activePrayer || typeof prayersData !== 'object' || !prayersData[activePrayer]) {
+    if (!activePrayer || !prayersData || typeof prayersData !== 'object' || !prayersData[activePrayer]) {
         return playerStats;
     }
     try {
@@ -12411,11 +12411,11 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
     const handlePrayer = (prayerId) => {
         if (!combatRef.current)
             return;
+        const prayer = prayersData[prayerId];
         const newState = { ...combatRef.current, activePrayer: prayerId };
         combatRef.current = newState;
         setCombat(newState);
         setShowPrayerModal(false);
-        const prayer = prayersData[prayerId];
         if (prayer) {
             addToast(`${prayer.icon} ${prayer.name}`, 'info');
         }
