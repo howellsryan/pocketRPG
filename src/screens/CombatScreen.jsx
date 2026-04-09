@@ -9,6 +9,7 @@ import { onTick } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
 import monstersData from '../data/monsters.json'
 import itemsData from '../data/items.json'
+import prayersData from '../data/prayers.json'
 import { SCREENS } from '../utils/constants.js'
 
 const COMBAT_CATEGORIES = [
@@ -61,6 +62,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
   const [killCount, setKillCount] = useState(0)
   const [fightStartedAt, setFightStartedAt] = useState(null)
   const [isAutoRestarting, setIsAutoRestarting] = useState(false)
+  const [showPrayerModal, setShowPrayerModal] = useState(false)
 
   const combatRef = useRef(null)
   const hpRef = useRef(currentHP)
@@ -103,7 +105,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
         currentHP: hpRef.current
       }
 
-      const { combatState, events } = processCombatTick(state, playerStats, equipmentRef.current, itemsData)
+      const { combatState, events } = processCombatTick(state, playerStats, equipmentRef.current, itemsData, prayersData)
       combatRef.current = combatState
       setCombat({ ...combatState })
 
@@ -317,6 +319,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
           setIsAutoRestarting(false)
         }, 1200)
       }
+    }
+  }
+
+  const handlePrayer = (prayerId) => {
+    if (!combatRef.current) return
+    const newState = { ...combatRef.current, activePrayer: prayerId }
+    combatRef.current = newState
+    setCombat(newState)
+    setShowPrayerModal(false)
+    const prayer = prayersData[prayerId]
+    if (prayer) {
+      addToast(`${prayer.icon} ${prayer.name}`, 'info')
     }
   }
 
@@ -536,8 +550,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
                 class="py-2.5 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80">
                 🍖 Eat
               </button>
-              <button class="py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] opacity-40 text-sm cursor-default">
-                🧪 Potion
+              <button onClick={() => setShowPrayerModal(true)}
+                class="py-2.5 rounded-lg bg-[#1a2a1a] text-[var(--color-gold-dim)] font-semibold text-sm active:opacity-80 border border-[#2a4a2a]">
+                🙏 Prayer
               </button>
             </div>
             {/* Special attack button — shown when weapon has a spec */}
@@ -550,10 +565,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
               return (
                 <button
                   onClick={canSpec ? handleSpecialAttack : undefined}
-                  class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
+                  class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity w-1/2 ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
                   style={canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
                 >
-                  ⚡ Special Attack ({weapon.specialAttack.energyCost}%)
+                  ⚡ Special ({weapon.specialAttack.energyCost}%)
                 </button>
               )
             })()}
@@ -574,6 +589,42 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
           </>
         )}
       </div>
+
+      {/* Prayer modal */}
+      {showPrayerModal && (
+        <Modal onClose={() => setShowPrayerModal(false)}>
+          <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] mb-3">Choose Prayer</h3>
+          <div class="space-y-2 max-h-96 overflow-y-auto">
+            {Object.values(prayersData).map(prayer => {
+              const prayerLevel = getLevelFromXP(stats.prayer?.xp || 0)
+              const canUse = prayerLevel >= prayer.level
+              return (
+                <button
+                  key={prayer.id}
+                  onClick={() => canUse && handlePrayer(prayer.id)}
+                  disabled={!canUse}
+                  class={`w-full p-3 rounded-lg border transition-colors ${
+                    canUse
+                      ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
+                      : 'bg-[#111] border-[#1a1a1a] opacity-40'
+                  }`}
+                >
+                  <div class="flex items-center justify-between">
+                    <div class="text-left">
+                      <div class="text-sm font-semibold text-[var(--color-parchment)]">{prayer.icon} {prayer.name}</div>
+                      <div class="text-[10px] text-[var(--color-parchment)] opacity-60">{prayer.description}</div>
+                      <div class="text-[9px] text-[var(--color-gold-dim)] mt-0.5">Lv {prayer.level}</div>
+                    </div>
+                    {combat?.activePrayer === prayer.id && (
+                      <span class="text-base">✓</span>
+                    )}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }
