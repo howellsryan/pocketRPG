@@ -9720,8 +9720,6 @@ function applySpecialAttack(combatState, playerStats, equipment, itemsData) {
     if (!weapon?.specialAttack)
         return { combatState, events: [] };
     const spec = weapon.specialAttack;
-    if ((combatState.specialAttackEnergy || 0) < spec.energyCost)
-        return { combatState, events: [] };
     const state = {
         ...combatState,
         monster: { ...combatState.monster, defenceBonus: { ...combatState.monster.defenceBonus }, stats: { ...combatState.monster.stats } }
