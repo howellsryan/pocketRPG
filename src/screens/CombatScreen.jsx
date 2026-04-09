@@ -161,8 +161,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
           }])
         }
         if (ev.type === 'xp') {
-          for (const [skill, xp] of Object.entries(ev.xpSkills)) {
-            if (xp > 0) grantXP(skill, xp)
+          if (ev.xpSkills && typeof ev.xpSkills === 'object') {
+            for (const [skill, xp] of Object.entries(ev.xpSkills)) {
+              if (xp > 0) grantXP(skill, xp)
+            }
           }
         }
         if (ev.type === 'monsterDeath') {
