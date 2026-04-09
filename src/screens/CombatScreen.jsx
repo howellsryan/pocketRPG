@@ -117,6 +117,34 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
             time: Date.now()
           }])
         }
+        if (ev.type === 'specialHit') {
+          const hitsStr = ev.hits.map(h => h > 0 ? h : 'miss').join(' + ')
+          const specLabels = {
+            double_hit: '⚔️⚔️ Puncture',
+            zero_defence: '🎯 Sever',
+            stun: ev.stunned ? '🪱 Energy Drain (stunned!)' : '🪱 Energy Drain',
+            judgement: '⚡ The Judgement',
+            healing_blade: `✨ Healing Blade (+${ev.healAmount} HP)`,
+            freeze: '❄️ Ice Cleave (frozen!)',
+            warstrike: '💥 Warstrike',
+            lightning: '⚡ Saradomin\'s Lightning',
+            snapshot: '🏹🏹 Snapshot',
+            pebble_shot: '🎯 Pebble Shot',
+            shove: '🗡️ Shove (staggered!)'
+          }
+          const label = specLabels[ev.specType] || '⚡ Special Attack'
+          setLog(prev => [...prev.slice(-20), {
+            text: `${label}: ${hitsStr} (total ${ev.totalDamage})`,
+            type: 'special',
+            time: Date.now()
+          }])
+          if (ev.specType === 'healing_blade' && ev.healAmount > 0) {
+            const maxHP = getMaxHP()
+            const newHP = Math.min(hpRef.current + ev.healAmount, maxHP)
+            updateHP(newHP)
+            hpRef.current = newHP
+          }
+        }
         if (ev.type === 'monsterHit') {
           const newHP = Math.max(0, hpRef.current - ev.damage)
           updateHP(newHP)
@@ -190,7 +218,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
             const original = monstersData[state.monster.id]
             if (original) continueFight(original)
             setIsAutoRestarting(false)
-          }, 1200)
+          }, 3000)
         }
       }
 
@@ -252,76 +280,23 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
 
   const handleSpecialAttack = () => {
     if (!combatRef.current || !combatRef.current.active) return
-    const playerStats = {
-      attack: getLevelFromXP(statsRef.current.attack?.xp || 0),
-      strength: getLevelFromXP(statsRef.current.strength?.xp || 0),
-      defence: getLevelFromXP(statsRef.current.defence?.xp || 0),
-      ranged: getLevelFromXP(statsRef.current.ranged?.xp || 0),
-      magic: getLevelFromXP(statsRef.current.magic?.xp || 0),
-      currentHP: hpRef.current
+
+    // Check if weapon has special attack and enough energy
+    const weaponEntry = equipmentRef.current?.weapon
+    const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
+    if (!weapon?.specialAttack) return
+
+    const energy = combatRef.current.specialAttackEnergy || 0
+    if (energy < weapon.specialAttack.energyCost) return
+
+    // Queue the special attack to be fired on next tick
+    const newState = {
+      ...combatRef.current,
+      specialAttackQueued: true,
+      specialAttackEnergy: energy - weapon.specialAttack.energyCost
     }
-    const { combatState: newState, events } = applySpecialAttack(combatRef.current, playerStats, equipmentRef.current, itemsData)
     combatRef.current = newState
     setCombat({ ...newState })
-
-    for (const ev of events) {
-      if (ev.type === 'specialHit') {
-        const hitsStr = ev.hits.map(h => h > 0 ? h : 'miss').join(' + ')
-        const specLabels = {
-          double_hit: '⚔️⚔️ Puncture',
-          zero_defence: '🎯 Sever',
-          stun: ev.stunned ? '🪱 Energy Drain (stunned!)' : '🪱 Energy Drain',
-          judgement: '⚡ The Judgement',
-          healing_blade: `✨ Healing Blade (+${ev.healAmount} HP)`,
-          freeze: '❄️ Ice Cleave (frozen!)',
-          warstrike: '💥 Warstrike',
-          lightning: '⚡ Saradomin\'s Lightning',
-          snapshot: '🏹🏹 Snapshot',
-          pebble_shot: '🎯 Pebble Shot',
-          shove: '🗡️ Shove (staggered!)'
-        }
-        const label = specLabels[ev.specType] || '⚡ Special Attack'
-        setLog(prev => [...prev.slice(-20), {
-          text: `${label}: ${hitsStr} (total ${ev.totalDamage})`,
-          type: 'special',
-          time: Date.now()
-        }])
-        if (ev.specType === 'healing_blade' && ev.healAmount > 0) {
-          const maxHP = getMaxHP()
-          const newHP = Math.min(hpRef.current + ev.healAmount, maxHP)
-          updateHP(newHP)
-          hpRef.current = newHP
-        }
-      }
-      if (ev.type === 'xp') {
-        for (const [skill, xp] of Object.entries(ev.xpSkills)) {
-          if (xp > 0) grantXP(skill, xp)
-        }
-      }
-      if (ev.type === 'monsterDeath') {
-        setKillCount(k => k + 1)
-        if (ev.loot && ev.loot.length > 0) {
-          const newInv = [...inventoryRef.current]
-          for (const drop of ev.loot) {
-            const item = itemsData[drop.itemId]
-            const added = addItem(newInv, drop.itemId, drop.quantity, item?.stackable || false)
-            if (added) addToast(`Loot: ${item?.name || drop.itemId} ×${drop.quantity}`, 'drop')
-          }
-          updateInventory(newInv)
-        }
-        setLog(prev => [...prev.slice(-20), {
-          text: `${newState.monster.name} defeated!`,
-          type: 'victory',
-          time: Date.now()
-        }])
-        setIsAutoRestarting(true)
-        setTimeout(() => {
-          const original = monstersData[newState.monster.id]
-          if (original) continueFight(original)
-          setIsAutoRestarting(false)
-        }, 1200)
-      }
-    }
   }
 
   const handlePrayer = (prayerId) => {
