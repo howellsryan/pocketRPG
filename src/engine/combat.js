@@ -200,10 +200,10 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const monsterMaxHit = Math.floor(0.5 + (monster.stats.strength + 8) * ((monster.strengthBonus || 0) + 64) / 640)
       damage = rollDamage(acc, monsterMaxHit)
 
-      // Apply protection prayer damage reduction if active
+      // Apply protection prayer damage reduction if active and matches attack style
       if (state.activePrayer && prayersData && prayersData[state.activePrayer]) {
         const prayer = prayersData[state.activePrayer]
-        if (prayer.bonusType === 'protection' && prayer.damageReductionPercent) {
+        if (prayer.bonusType === 'protection' && prayer.damageReductionPercent && protectionPrayerMatches(prayer.style, monster.attackStyle)) {
           const reduction = Math.floor(damage * prayer.damageReductionPercent / 100)
           damage = Math.max(0, damage - reduction)
         }
@@ -241,6 +241,21 @@ function rollDrops(monster) {
  */
 export function applyEat(combatState) {
   return { ...combatState, eatCooldown: EAT_TICK_COST, playerAttackTimer: Math.max(combatState.playerAttackTimer, EAT_TICK_COST) }
+}
+
+/**
+ * Check if a protection prayer protects against a given attack style
+ */
+function protectionPrayerMatches(prayerStyle, attackStyle) {
+  if (!prayerStyle || !attackStyle) return false
+
+  // Map attack styles to protection prayer types
+  const meleeStyles = ['crush', 'stab', 'slash']
+
+  if (prayerStyle === 'melee') {
+    return meleeStyles.includes(attackStyle)
+  }
+  return prayerStyle === attackStyle
 }
 
 /**
