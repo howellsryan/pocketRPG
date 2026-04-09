@@ -28,6 +28,7 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     xpGained: {},    // accumulated xp per skill
     loot: null,      // set on monster death
     specialAttackEnergy: 100,  // 0-100; starts at 100 for each new fight, drains on use, refills on kill
+    specialAttackQueued: false,  // flag to fire special attack on next available tick
     activeProtectionPrayer: null,  // one protection prayer, reset on each new fight
     activeCombatPrayer: null       // one combat enhancing prayer, reset on each new fight
   }
@@ -67,6 +68,39 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
 
   // ── Player Attack ──
   if (state.playerAttackTimer <= 0 && state.eatCooldown <= 0) {
+    // Check if special attack is queued
+    if (state.specialAttackQueued) {
+      // Fire the special attack instead of normal attack
+      const weaponEntry = equipment?.weapon
+      if (weaponEntry) {
+        const weapon = itemsData[weaponEntry.itemId]
+        if (weapon?.specialAttack) {
+          const { combatState: newState, events: specEvents } = applySpecialAttack(state, playerStats, equipment, itemsData)
+          // Merge events from special attack
+          for (const ev of specEvents) {
+            events.push(ev)
+          }
+          Object.assign(state, newState)
+          state.specialAttackQueued = false
+          // Reset attack timer for next action
+          let speed = weaponSpeed
+          if (state.combatType === 'ranged' && state.stance === 'rapid') speed = Math.max(1, speed - 1)
+          state.playerAttackTimer = speed
+          // Check monster death
+          if (state.monster.currentHP <= 0) {
+            state.monster.currentHP = 0
+            state.active = false
+            state.specialAttackEnergy = 100
+            state.loot = rollDrops(state.monster)
+            events.push({ type: 'monsterDeath', loot: state.loot, xpGained: { ...state.xpGained } })
+            return { combatState: state, events }
+          }
+          return { combatState: state, events }
+        }
+      }
+      state.specialAttackQueued = false
+    }
+
     let damage = 0
     let xpSkills = {}
 
