@@ -8503,6 +8503,26 @@ const skillsData = {
         "materials": {
           "dragon_bones": 1
         }
+      },
+      {
+        "id": "bury_dagganoth_bones",
+        "name": "Bury dagganoth bones",
+        "level": 40,
+        "ticks": 1,
+        "xp": 125,
+        "materials": {
+          "dagganoth_bones": 1
+        }
+      },
+      {
+        "id": "altar_dagganoth_bones",
+        "name": "Use gilded altar (dagganoth bones)",
+        "level": 40,
+        "ticks": 1,
+        "xp": 1250,
+        "materials": {
+          "dagganoth_bones": 1
+        }
       }
     ]
   }
@@ -12509,19 +12529,21 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
         h("div", { class: "flex-shrink-0 flex flex-col gap-2" }, combat.active && !isAutoRestarting && (h(Fragment, null,
             h("div", { class: "grid grid-cols-2 gap-2" },
                 h("button", { onClick: handleEat, class: "py-2.5 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80" }, "\uD83C\uDF56 Eat"),
+                h("button", { class: "py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] opacity-40 text-sm cursor-default" }, "\uD83E\uDDEA Potion")),
+            h("div", { class: "grid grid-cols-2 gap-2" },
+                (() => {
+                    const weaponEntry = equipment?.weapon;
+                    const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null;
+                    if (!weapon?.specialAttack)
+                        return null;
+                    const energy = combat.specialAttackEnergy || 0;
+                    const canSpec = energy >= weapon.specialAttack.energyCost;
+                    return (h("button", { onClick: canSpec ? handleSpecialAttack : undefined, class: `py-2.5 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`, style: canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888' },
+                        "\u26A1 Special (",
+                        weapon.specialAttack.energyCost,
+                        "%)"));
+                })(),
                 h("button", { onClick: () => setShowPrayerModal(true), class: "py-2.5 rounded-lg bg-[#1a2a1a] text-[var(--color-gold-dim)] font-semibold text-sm active:opacity-80 border border-[#2a4a2a]" }, "\uD83D\uDE4F Prayer")),
-            (() => {
-                const weaponEntry = equipment?.weapon;
-                const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null;
-                if (!weapon?.specialAttack)
-                    return null;
-                const energy = combat.specialAttackEnergy || 0;
-                const canSpec = energy >= weapon.specialAttack.energyCost;
-                return (h("button", { onClick: canSpec ? handleSpecialAttack : undefined, class: `py-2.5 rounded-lg font-semibold text-sm transition-opacity w-1/2 ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`, style: canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888' },
-                    "\u26A1 Special (",
-                    weapon.specialAttack.energyCost,
-                    "%)"));
-            })(),
             h("div", { class: "flex gap-2" },
                 h("button", { onClick: stopAndBack, class: "flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80" }, "\u2190 Stop & Back"),
                 skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "flex-1 py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\u23ED\uFE0F Skip 1h")))))),

@@ -550,28 +550,33 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
                 class="py-2.5 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80">
                 🍖 Eat
               </button>
+              <button class="py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] opacity-40 text-sm cursor-default">
+                🧪 Potion
+              </button>
+            </div>
+            {/* Special attack & Prayer buttons */}
+            <div class="grid grid-cols-2 gap-2">
+              {(() => {
+                const weaponEntry = equipment?.weapon
+                const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
+                if (!weapon?.specialAttack) return null
+                const energy = combat.specialAttackEnergy || 0
+                const canSpec = energy >= weapon.specialAttack.energyCost
+                return (
+                  <button
+                    onClick={canSpec ? handleSpecialAttack : undefined}
+                    class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
+                    style={canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
+                  >
+                    ⚡ Special ({weapon.specialAttack.energyCost}%)
+                  </button>
+                )
+              })()}
               <button onClick={() => setShowPrayerModal(true)}
                 class="py-2.5 rounded-lg bg-[#1a2a1a] text-[var(--color-gold-dim)] font-semibold text-sm active:opacity-80 border border-[#2a4a2a]">
                 🙏 Prayer
               </button>
             </div>
-            {/* Special attack button — shown when weapon has a spec */}
-            {(() => {
-              const weaponEntry = equipment?.weapon
-              const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
-              if (!weapon?.specialAttack) return null
-              const energy = combat.specialAttackEnergy || 0
-              const canSpec = energy >= weapon.specialAttack.energyCost
-              return (
-                <button
-                  onClick={canSpec ? handleSpecialAttack : undefined}
-                  class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity w-1/2 ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
-                  style={canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
-                >
-                  ⚡ Special ({weapon.specialAttack.energyCost}%)
-                </button>
-              )
-            })()}
             {/* Stop & Back / Skip 1h */}
             <div class="flex gap-2">
               <button onClick={stopAndBack}

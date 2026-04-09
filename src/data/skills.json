@@ -1439,6 +1439,26 @@
         "materials": {
           "dragon_bones": 1
         }
+      },
+      {
+        "id": "bury_dagganoth_bones",
+        "name": "Bury dagganoth bones",
+        "level": 40,
+        "ticks": 1,
+        "xp": 125,
+        "materials": {
+          "dagganoth_bones": 1
+        }
+      },
+      {
+        "id": "altar_dagganoth_bones",
+        "name": "Use gilded altar (dagganoth bones)",
+        "level": 40,
+        "ticks": 1,
+        "xp": 1250,
+        "materials": {
+          "dagganoth_bones": 1
+        }
       }
     ]
   }

@@ -44,9 +44,9 @@
     "name": "Protect from Melee",
     "icon": "⚔️",
     "level": 26,
-    "description": "-50% Melee damage taken",
+    "description": "Blocks Melee damage",
     "bonusType": "protection",
-    "damageReductionPercent": 50,
+    "damageReductionPercent": 100,
     "style": "melee"
   },
   "protection_from_ranged": {
@@ -54,9 +54,9 @@
     "name": "Protect from Ranged",
     "icon": "🏹",
     "level": 40,
-    "description": "-50% Ranged damage taken",
+    "description": "Blocks Ranged damage",
     "bonusType": "protection",
-    "damageReductionPercent": 50,
+    "damageReductionPercent": 100,
     "style": "ranged"
   },
   "protection_from_magic": {
@@ -64,9 +64,9 @@
     "name": "Protect from Magic",
     "icon": "🔮",
     "level": 46,
-    "description": "-50% Magic damage taken",
+    "description": "Blocks Magic damage",
     "bonusType": "protection",
-    "damageReductionPercent": 50,
+    "damageReductionPercent": 100,
     "style": "magic"
   },
   "burst_of_strength": {
