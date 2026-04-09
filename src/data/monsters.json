@@ -770,6 +770,7 @@
     "name": "Abyssal Demon",
     "combatLevel": 124,
     "hitpoints": 150,
+    "slayerRequirement": 85,
     "stats": {
       "attack": 97,
       "strength": 67,
@@ -856,6 +857,7 @@
   "general_graardor": {
     "id": "general_graardor",
     "name": "General Graardor",
+    "boss": true,
     "combatLevel": 624,
     "hitpoints": 255,
     "stats": {
@@ -896,6 +898,7 @@
   "commander_zilyana": {
     "id": "commander_zilyana",
     "name": "Commander Zilyana",
+    "boss": true,
     "combatLevel": 596,
     "hitpoints": 255,
     "stats": {
@@ -933,6 +936,7 @@
   "kril_tsutsaroth": {
     "id": "kril_tsutsaroth",
     "name": "K'ril Tsutsaroth",
+    "boss": true,
     "combatLevel": 650,
     "hitpoints": 255,
     "stats": {
@@ -971,6 +975,7 @@
   "kreearra": {
     "id": "kreearra",
     "name": "Kree'arra",
+    "boss": true,
     "combatLevel": 580,
     "hitpoints": 255,
     "stats": {
@@ -1099,6 +1104,7 @@
   "dagganoth_rex": {
     "id": "dagganoth_rex",
     "name": "Dagganoth Rex",
+    "boss": true,
     "combatLevel": 303,
     "hitpoints": 150,
     "stats": {
@@ -1160,6 +1166,7 @@
   "dagganoth_prime": {
     "id": "dagganoth_prime",
     "name": "Dagganoth Prime",
+    "boss": true,
     "combatLevel": 303,
     "hitpoints": 150,
     "stats": {
@@ -1216,6 +1223,7 @@
   "dagganoth_supreme": {
     "id": "dagganoth_supreme",
     "name": "Dagganoth Supreme",
+    "boss": true,
     "combatLevel": 303,
     "hitpoints": 150,
     "stats": {

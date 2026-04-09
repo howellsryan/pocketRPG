@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import { countItem, removeItem, addItem, freeSlots } from '../engine/inventory.js'
+import { getLevelFromXP } from '../engine/experience.js'
 
 // ── UNLOCK DEFINITIONS ───────────────────────────────────────────────────────
 
@@ -15,6 +16,21 @@ const UNLOCKS = [
 ]
 
 const UNLOCK_TAB = { id: 'unlocks', label: '🔓', title: 'Unlocks', desc: 'Permanent features & upgrades. One-time purchases.' }
+
+// ── SLAYER SHOP ──────────────────────────────────────────────────────────────
+const SLAYER_SHOP_TAB = { id: 'slayer', label: '💀', title: 'Slayer Reward Shop', desc: 'Spend slayer points earned from completing tasks. Requires slayer level to purchase.' }
+
+const SLAYER_SHOP_ITEMS = [
+  {
+    id: 'slayer_helmet',
+    name: 'Slayer helmet',
+    icon: '💀',
+    cost: 400,
+    stackable: false,
+    slayerReq: 20,
+    desc: 'Combines the black mask effect. +15% melee accuracy & strength while on a slayer task. Requires Slayer 20.',
+  },
+]
 
 // ── SHOP DEFINITIONS ────────────────────────────────────────────────────────
 // All prices match OSRS NPC shop buy prices (cheapest source when multiple exist).
@@ -193,13 +209,14 @@ const SHOPS = [
 
 // ── COMPONENT ───────────────────────────────────────────────────────────────
 export default function GeneralStoreScreen() {
-  const { inventory, updateInventory, addToast, getSkillLevel, unlockedFeatures, unlockFeature } = useGame()
+  const { inventory, updateInventory, addToast, getSkillLevel, unlockedFeatures, unlockFeature, slayerPoints, updateSlayerPoints, stats } = useGame()
   const [activeShop, setActiveShop] = useState('general')
   const [quantities, setQuantities] = useState({})
 
   const coins = countItem(inventory, 'coins')
   const isUnlocksTab = activeShop === 'unlocks'
-  const shop = isUnlocksTab ? UNLOCK_TAB : SHOPS.find(s => s.id === activeShop)
+  const isSlayerTab = activeShop === 'slayer'
+  const shop = isUnlocksTab ? UNLOCK_TAB : isSlayerTab ? SLAYER_SHOP_TAB : SHOPS.find(s => s.id === activeShop)
 
   const getQty = (id) => quantities[id] || 1
   const setQty = (id, val) => {
@@ -264,6 +281,36 @@ export default function GeneralStoreScreen() {
     addToast(`${unlock.name} unlocked!`, 'info', unlock.icon)
   }
 
+  const handleSlayerBuy = (item) => {
+    // Check slayer level requirement
+    const slayerLevel = getLevelFromXP(stats.slayer?.xp || 0)
+    if (item.slayerReq && slayerLevel < item.slayerReq) {
+      addToast(`Need Slayer level ${item.slayerReq} to purchase this.`, 'error')
+      return
+    }
+    if ((slayerPoints || 0) < item.cost) {
+      addToast(`Need ${item.cost} slayer points — you have ${slayerPoints || 0}.`, 'error')
+      return
+    }
+    const newInv = [...inventory]
+    if (!item.stackable) {
+      if (freeSlots(newInv) === 0) {
+        addToast('Not enough inventory space.', 'error')
+        return
+      }
+    } else {
+      const existing = countItem(newInv, item.id)
+      if (existing === 0 && freeSlots(newInv) === 0) {
+        addToast('Not enough inventory space.', 'error')
+        return
+      }
+    }
+    addItem(newInv, item.id, 1, item.stackable)
+    updateInventory(newInv)
+    updateSlayerPoints((slayerPoints || 0) - item.cost)
+    addToast(`${item.icon} ${item.name} purchased!`, 'info')
+  }
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
@@ -274,7 +321,9 @@ export default function GeneralStoreScreen() {
             {shop.title}
           </h2>
           <span style={{ fontSize: '11px', color: '#d4af37', fontFamily: 'monospace' }}>
-            🪙 {coins.toLocaleString()}
+            {isSlayerTab
+              ? `💀 ${(slayerPoints || 0).toLocaleString()} pts`
+              : `🪙 ${coins.toLocaleString()}`}
           </span>
         </div>
         <p style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.4, margin: '0 0 10px' }}>
@@ -289,7 +338,7 @@ export default function GeneralStoreScreen() {
           paddingBottom: '8px',
           scrollbarWidth: 'none',
         }}>
-          {[...SHOPS, UNLOCK_TAB].map(s => (
+          {[...SHOPS, SLAYER_SHOP_TAB, UNLOCK_TAB].map(s => (
             <button
               key={s.id}
               onClick={() => setActiveShop(s.id)}
@@ -371,8 +420,67 @@ export default function GeneralStoreScreen() {
           </div>
         )}
 
+        {/* ── SLAYER SHOP TAB ── */}
+        {isSlayerTab && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {SLAYER_SHOP_ITEMS.map(item => {
+              const slayerLevel = getLevelFromXP(stats.slayer?.xp || 0)
+              const canAfford = (slayerPoints || 0) >= item.cost
+              const levelLocked = item.slayerReq && slayerLevel < item.slayerReq
+              return (
+                <div
+                  key={item.id}
+                  style={{
+                    background: '#1a1a1a',
+                    border: '1px solid #2a2a2a',
+                    borderRadius: '10px',
+                    padding: '10px 12px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '22px', lineHeight: 1, flexShrink: 0, opacity: levelLocked ? 0.4 : 1 }}>{item.icon}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '13px', fontWeight: '600', color: levelLocked ? '#888' : '#e8d5b0' }}>{item.name}</div>
+                      <div style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.38, marginTop: '1px' }}>{item.desc}</div>
+                      {item.slayerReq && (
+                        <div style={{ fontSize: '9px', marginTop: '2px', color: levelLocked ? '#e57373' : '#81c784', fontWeight: '600' }}>
+                          💀 Slayer {item.slayerReq} required {levelLocked ? `(you: ${slayerLevel})` : '✓'}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontSize: '12px', color: canAfford ? '#d4af37' : '#888', fontFamily: 'monospace', fontWeight: '700' }}>{item.cost} pts</div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => !levelLocked && handleSlayerBuy(item)}
+                    disabled={levelLocked}
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      borderRadius: '8px',
+                      background: levelLocked ? '#1a1a1a' : canAfford ? 'linear-gradient(135deg, #4a1a4a, #7a3a7a)' : '#222',
+                      border: levelLocked ? '1px solid #333' : 'none',
+                      color: levelLocked ? '#888' : canAfford ? '#f0c0f0' : '#888',
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      cursor: levelLocked || !canAfford ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {levelLocked
+                      ? `Need Slayer ${item.slayerReq}`
+                      : canAfford
+                        ? `Buy · ${item.cost} pts`
+                        : `Need ${item.cost} pts`}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
         {/* ── SHOP ITEMS TAB ── */}
-        {!isUnlocksTab && (
+        {!isUnlocksTab && !isSlayerTab && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {shop.items.map(item => {
               const qty = getQty(item.id)

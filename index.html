@@ -5788,6 +5788,38 @@ const itemsData = {
     },
     "shopValue": 350000,
     "icon": "⚔️"
+  },
+  "slayer_helmet": {
+    "id": "slayer_helmet",
+    "name": "Slayer helmet",
+    "type": "armor",
+    "slot": "head",
+    "stackable": false,
+    "icon": "💀",
+    "shopValue": 0,
+    "attackBonus": {
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": -3,
+      "ranged": -5
+    },
+    "defenceBonus": {
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": -1,
+      "ranged": -1
+    },
+    "otherBonus": {
+      "meleeStrength": 3,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "slayerHelmet": true
+    },
+    "requirements": {
+      "slayer": 20
+    }
   }
 };
 const monstersData = {
@@ -6562,6 +6594,7 @@ const monstersData = {
     "name": "Abyssal Demon",
     "combatLevel": 124,
     "hitpoints": 150,
+    "slayerRequirement": 85,
     "stats": {
       "attack": 97,
       "strength": 67,
@@ -6648,6 +6681,7 @@ const monstersData = {
   "general_graardor": {
     "id": "general_graardor",
     "name": "General Graardor",
+    "boss": true,
     "combatLevel": 624,
     "hitpoints": 255,
     "stats": {
@@ -6688,6 +6722,7 @@ const monstersData = {
   "commander_zilyana": {
     "id": "commander_zilyana",
     "name": "Commander Zilyana",
+    "boss": true,
     "combatLevel": 596,
     "hitpoints": 255,
     "stats": {
@@ -6725,6 +6760,7 @@ const monstersData = {
   "kril_tsutsaroth": {
     "id": "kril_tsutsaroth",
     "name": "K'ril Tsutsaroth",
+    "boss": true,
     "combatLevel": 650,
     "hitpoints": 255,
     "stats": {
@@ -6763,6 +6799,7 @@ const monstersData = {
   "kreearra": {
     "id": "kreearra",
     "name": "Kree'arra",
+    "boss": true,
     "combatLevel": 580,
     "hitpoints": 255,
     "stats": {
@@ -6891,6 +6928,7 @@ const monstersData = {
   "dagganoth_rex": {
     "id": "dagganoth_rex",
     "name": "Dagganoth Rex",
+    "boss": true,
     "combatLevel": 303,
     "hitpoints": 150,
     "stats": {
@@ -6952,6 +6990,7 @@ const monstersData = {
   "dagganoth_prime": {
     "id": "dagganoth_prime",
     "name": "Dagganoth Prime",
+    "boss": true,
     "combatLevel": 303,
     "hitpoints": 150,
     "stats": {
@@ -7008,6 +7047,7 @@ const monstersData = {
   "dagganoth_supreme": {
     "id": "dagganoth_supreme",
     "name": "Dagganoth Supreme",
+    "boss": true,
     "combatLevel": 303,
     "hitpoints": 150,
     "stats": {
@@ -8751,7 +8791,7 @@ const GATHERING_SKILLS = ['mining', 'woodcutting', 'fishing', 'farming', 'hunter
 const PRODUCTION_SKILLS = ['smithing', 'cooking', 'crafting', 'fletching', 'herblore', 'runecraft'];
 const UTILITY_SKILLS = ['agility', 'thieving', 'slayer', 'firemaking', 'construction'];
 const ALL_SKILLS = [...COMBAT_SKILLS, ...GATHERING_SKILLS, ...PRODUCTION_SKILLS, ...UTILITY_SKILLS];
-const STUB_SKILLS = new Set(['farming', 'hunter', 'runecraft', 'thieving', 'slayer', 'firemaking', 'construction']);
+const STUB_SKILLS = new Set(['farming', 'hunter', 'runecraft', 'thieving', 'firemaking', 'construction']);
 // Agility banking: delay in ms at level 1 and level 99
 const AGILITY_BANK_DELAY_LV1_MS = 5 * 60 * 1000; // 5 minutes
 const AGILITY_BANK_DELAY_LV99_MS = 10 * 1000; // 10 seconds
@@ -10922,6 +10962,8 @@ function GameProvider({ children }) {
     const [activeTask, setActiveTaskState] = useState(null);
     const [bankConfig, setBankConfig] = useState({ tabs: [], itemTabMap: {} });
     const [unlockedFeatures, setUnlockedFeatures] = useState(new Set());
+    const [slayerTask, setSlayerTaskState] = useState(null);
+    const [slayerPoints, setSlayerPointsState] = useState(0);
     const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false });
     // Refs to hold latest state for the debounced auto-save
     const stateRef = useRef({ stats: {}, inventory: new Array(28).fill(null), equipment: {}, bank: {}, player: null });
@@ -10933,10 +10975,11 @@ function GameProvider({ children }) {
     useEffect(() => { stateRef.current.player = player; }, [player]);
     // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
     const loadGame = useCallback(async () => {
-        const [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks] = await Promise.all([
+        const [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints] = await Promise.all([
             getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
             getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
-            getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures')
+            getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
+            getSetting('slayerTask'), getSetting('slayerPoints')
         ]);
         // lastTick and activeTask live in localStorage — synchronous, survives iOS background freeze
         const savedLastTick = (() => { const v = localStorage.getItem('pocketrpg_lastTick'); return v ? parseInt(v, 10) : null; })();
@@ -11068,6 +11111,8 @@ function GameProvider({ children }) {
         setBankConfig(savedBankConfig ?? { tabs: [], itemTabMap: {} });
         setUnlockedFeatures(new Set(savedUnlocks || []));
         setActiveTaskState(savedTask ?? null);
+        setSlayerTaskState(savedSlayerTask ?? null);
+        setSlayerPointsState(savedSlayerPoints ?? 0);
         const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10;
         setCurrentHP(savedHP != null ? Math.min(savedHP, hpLevel) : hpLevel);
         setLoaded(true);
@@ -11185,6 +11230,14 @@ function GameProvider({ children }) {
             localStorage.removeItem('pocketrpg_lastTick');
         }
     }, []);
+    const setSlayerTask = useCallback((task) => {
+        setSlayerTaskState(task);
+        saveSetting('slayerTask', task);
+    }, []);
+    const updateSlayerPoints = useCallback((points) => {
+        setSlayerPointsState(points);
+        saveSetting('slayerPoints', points);
+    }, []);
     // Direct bank update without inventory changes (for skill/gather item routing)
     const updateBankDirect = useCallback((itemUpdates) => {
         setBank(prev => {
@@ -11228,6 +11281,7 @@ function GameProvider({ children }) {
         loaded, player, stats, inventory, equipment, bank, currentHP, toasts,
         homeShortcuts, combatStance, activeTask, autoBankLoot, bankConfig,
         unlockedFeatures, unlockFeature,
+        slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints,
         loadGame, grantXP, updateInventory, updateEquipment, updateBank,
         updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,
         markDirty, itemsData, updateHomeShortcuts, updateCombatStance,
@@ -12366,7 +12420,7 @@ const MONSTER_ICONS = {
     dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹'
 };
 function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlocked }) {
-    const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot } = useGame();
+    const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints } = useGame();
     const [combat, setCombat] = useState(null);
     const [log, setLog] = useState([]);
     const [killCount, setKillCount] = useState(0);
@@ -12380,11 +12434,15 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
     const bankRef = useRef(bank);
     const statsRef = useRef(stats);
     const equipmentRef = useRef(equipment);
+    const slayerTaskRef = useRef(slayerTask);
+    const slayerPointsRef = useRef(slayerPoints);
     useEffect(() => { hpRef.current = currentHP; }, [currentHP]);
     useEffect(() => { inventoryRef.current = inventory; }, [inventory]);
     useEffect(() => { bankRef.current = bank; }, [bank]);
     useEffect(() => { statsRef.current = stats; }, [stats]);
     useEffect(() => { equipmentRef.current = equipment; }, [equipment]);
+    useEffect(() => { slayerTaskRef.current = slayerTask; }, [slayerTask]);
+    useEffect(() => { slayerPointsRef.current = slayerPoints; }, [slayerPoints]);
     // Auto-start fight from home shortcut
     useEffect(() => {
         if (initialMonsterId && !hasAutoStarted.current && !combat) {
@@ -12411,6 +12469,13 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                 magic: getLevelFromXP(statsRef.current.magic?.xp || 0),
                 currentHP: hpRef.current
             };
+            // Apply slayer helmet +15% melee accuracy & strength bonus when on task
+            const headEquip = equipmentRef.current?.head;
+            const headItemData = headEquip ? itemsData[headEquip.itemId] : null;
+            if (headItemData?.otherBonus?.slayerHelmet && slayerTaskRef.current?.monsterId === state.monster.id) {
+                playerStats.attack = Math.floor(playerStats.attack * 1.15);
+                playerStats.strength = Math.floor(playerStats.strength * 1.15);
+            }
             const { combatState, events } = processCombatTick(state, playerStats, equipmentRef.current, itemsData, prayersData);
             combatRef.current = combatState;
             setCombat({ ...combatState });
@@ -12503,6 +12568,26 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                 }
                 if (ev.type === 'monsterDeath') {
                     setKillCount(k => k + 1);
+                    // Slayer task tracking
+                    const task = slayerTaskRef.current;
+                    if (task && task.monsterId === state.monster.id) {
+                        // Grant slayer XP equal to monster's hitpoints
+                        grantXP('slayer', state.monster.hitpoints);
+                        const newRemaining = task.monstersRemaining - 1;
+                        if (newRemaining <= 0) {
+                            // Task complete!
+                            const pts = task.pointsOnComplete;
+                            const newPts = slayerPointsRef.current + pts;
+                            updateSlayerPoints(newPts);
+                            setSlayerTask(null);
+                            addToast(pts > 0
+                                ? `💀 Slayer task complete! +${pts} points (${newPts} total)`
+                                : '💀 Slayer task complete!', 'levelup');
+                        }
+                        else {
+                            setSlayerTask({ ...task, monstersRemaining: newRemaining });
+                        }
+                    }
                     if (ev.loot && ev.loot.length > 0) {
                         const newInv = [...inventoryRef.current];
                         for (const drop of ev.loot) {
@@ -12531,7 +12616,16 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
         });
         return unsub;
     }, [combat?.active]);
+    const getSlayerLevel = () => getLevelFromXP(stats.slayer?.xp || 0);
     const startFight = (monster) => {
+        // Check slayer requirement
+        if (monster.slayerRequirement) {
+            const slayLvl = getSlayerLevel();
+            if (slayLvl < monster.slayerRequirement) {
+                addToast(`Need Slayer level ${monster.slayerRequirement} to fight ${monster.name}`, 'error');
+                return;
+            }
+        }
         const state = createCombatState(monster, 'melee', combatStance);
         setCombat(state);
         setKillCount(0);
@@ -12668,26 +12762,44 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                         h("span", { class: "text-base" }, category.icon),
                         h("span", { class: "text-xs font-semibold text-[var(--color-parchment)] uppercase tracking-wider opacity-60" }, category.label),
                         monsters.length === 0 && (h("span", { class: "text-[10px] text-[var(--color-parchment)] opacity-30 italic" }, "\u2014 coming soon"))),
-                    h("div", { class: "space-y-2" }, monsters.map(monster => (h("div", { key: monster.id, class: "flex gap-2 items-stretch" },
-                        h("button", { onClick: () => startFight(monster), class: "flex-1 flex items-center justify-between p-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors" },
-                            h("div", { class: "flex items-center gap-3" },
-                                h("span", { class: "text-2xl" }, MONSTER_ICONS[monster.id] || '👹'),
-                                h("div", { class: "text-left" },
-                                    h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, monster.name),
-                                    h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40" },
-                                        "HP ",
-                                        monster.hitpoints,
-                                        " \u00B7 Att ",
-                                        monster.stats.attack,
-                                        " \u00B7 Def ",
-                                        monster.stats.defence))),
-                            h("div", { class: "text-right" },
-                                h("div", { class: "text-xs font-[var(--font-mono)] text-[var(--color-blood-light)]" },
-                                    "CB ",
-                                    monster.combatLevel))),
-                        h("button", { onClick: () => handleAddToHome(monster), class: "px-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5", title: "Add to Home Screen" },
-                            h("span", { class: "text-base" }, "\uD83C\uDFE0"),
-                            h("span", { class: "text-[8px] text-[var(--color-parchment)] opacity-50" }, "Add"))))))));
+                    h("div", { class: "space-y-2" }, monsters.map(monster => {
+                        const slayLvl = getSlayerLevel();
+                        const slayReq = monster.slayerRequirement;
+                        const slayLocked = slayReq && slayLvl < slayReq;
+                        const isOnTask = slayerTask?.monsterId === monster.id;
+                        return (h("div", { key: monster.id, class: "flex gap-2 items-stretch" },
+                            h("button", { onClick: () => !slayLocked && startFight(monster), disabled: slayLocked, class: `flex-1 flex items-center justify-between p-3 rounded-xl border transition-colors
+                          ${isOnTask ? 'bg-[#1a1a08] border-[#3a3a10]' :
+                                    slayLocked ? 'bg-[#111] border-[#1a1a1a] opacity-50' :
+                                        'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'}` },
+                                h("div", { class: "flex items-center gap-3" },
+                                    h("span", { class: "text-2xl" }, MONSTER_ICONS[monster.id] || '👹'),
+                                    h("div", { class: "text-left" },
+                                        h("div", { class: "flex items-center gap-1.5" },
+                                            h("span", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, monster.name),
+                                            isOnTask && h("span", { class: "text-[9px] bg-yellow-500 text-black font-bold px-1 rounded" }, "TASK")),
+                                        h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40" },
+                                            "HP ",
+                                            monster.hitpoints,
+                                            " \u00B7 Att ",
+                                            monster.stats.attack,
+                                            " \u00B7 Def ",
+                                            monster.stats.defence),
+                                        slayReq && (h("div", { class: `text-[9px] font-semibold ${slayLocked ? 'text-[var(--color-blood-light)]' : 'text-[var(--color-hp-green)]'}` },
+                                            "\uD83D\uDC80 Slayer ",
+                                            slayReq,
+                                            slayLocked ? ` (you: ${slayLvl})` : ' ✓')))),
+                                h("div", { class: "text-right" },
+                                    h("div", { class: "text-xs font-[var(--font-mono)] text-[var(--color-blood-light)]" },
+                                        "CB ",
+                                        monster.combatLevel),
+                                    isOnTask && (h("div", { class: "text-[9px] text-yellow-400 font-mono mt-0.5" },
+                                        slayerTask.monstersRemaining,
+                                        " left")))),
+                            h("button", { onClick: () => handleAddToHome(monster), class: "px-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5", title: "Add to Home Screen" },
+                                h("span", { class: "text-base" }, "\uD83C\uDFE0"),
+                                h("span", { class: "text-[8px] text-[var(--color-parchment)] opacity-50" }, "Add"))));
+                    }))));
             }))));
     }
     // Combat view
@@ -12703,6 +12815,13 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
         h("div", { class: "mb-2" },
             h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-50 mb-0.5" }, "Your HP"),
             h(HPBar, { current: currentHP, max: getMaxHP(), size: "large" })),
+        slayerTask?.monsterId === combat.monster.id && (h("div", { class: "mb-2 bg-[#1a1a08] border border-[#3a3a10] rounded-lg px-3 py-1.5 flex items-center justify-between" },
+            h("span", { class: "text-[10px] text-yellow-400 font-semibold" }, "\uD83D\uDC80 Slayer Task"),
+            h("span", { class: "text-[10px] font-[var(--font-mono)] text-yellow-400" },
+                slayerTask.monstersRemaining,
+                " / ",
+                slayerTask.totalCount,
+                " remaining"))),
         h("div", { class: "mb-2 bg-[#111] rounded-lg px-3 py-1.5 flex items-center justify-between" },
             h("span", { class: "text-[10px] text-[var(--color-parchment)] opacity-50" }, "\uD83C\uDF92 Inventory"),
             h("span", { class: "text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40" },
@@ -13015,8 +13134,9 @@ function AgilityScreen({ initialActionId, onBack, onSkipHour, skipHourUnlocked }
 
 
 
-// Agility and Prayer are special skills shown here in the Skills tab
-const SPECIAL_SKILLS = ['agility', 'prayer'];
+
+// Agility, Prayer, and Slayer are special skills shown here in the Skills tab
+const SPECIAL_SKILLS = ['agility', 'prayer', 'slayer'];
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0);
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS];
 function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHour, skipHourUnlocked }) {
@@ -13029,6 +13149,10 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
     // If agility is selected, delegate to AgilityScreen (special screen for agility only)
     if (selectedSkill === 'agility') {
         return (h(AgilityScreen, { initialActionId: initialActionId, onBack: () => setSelectedSkill(null), onSkipHour: onSkipHour, skipHourUnlocked: skipHourUnlocked }));
+    }
+    // If slayer is selected, delegate to SlayerScreen
+    if (selectedSkill === 'slayer') {
+        return (h(SlayerScreen, { onBack: () => setSelectedSkill(null) }));
     }
     // Tick listener
     useEffect(() => {
@@ -13270,6 +13394,261 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
         h("div", { class: "flex-shrink-0 flex gap-2 mt-3" },
             h("button", { onClick: stopSkilling, class: "flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80" }, "\u2190 Stop & Back"),
             skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "flex-1 py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\u23ED\uFE0F Skip 1h")))));
+}
+
+// ── screens/SlayerScreen.js ──
+
+
+
+// OSRS slayer masters — requirements and monster pools from OSRS Wiki
+const SLAYER_MASTERS = [
+    {
+        id: 'turael',
+        name: 'Turael',
+        location: 'Burthorpe',
+        icon: '👴',
+        combatReq: 0,
+        slayerReq: 0,
+        pointsPerTask: 0,
+        description: 'Assigns the easiest slayer tasks. No requirements.',
+        taskRange: [50, 120],
+        monsterPool: [
+            'chicken', 'goblin', 'cow', 'wizard', 'rock_crab', 'sand_crab', 'dark_wizard',
+        ],
+    },
+    {
+        id: 'mazchna',
+        name: 'Mazchna',
+        location: 'Canifis',
+        icon: '🧙',
+        combatReq: 20,
+        slayerReq: 0,
+        pointsPerTask: 2,
+        description: 'Assigns medium-low level monsters. Requires combat 20.',
+        taskRange: [60, 130],
+        monsterPool: [
+            'dark_wizard', 'giant_spider', 'hill_giant', 'moss_giant',
+        ],
+    },
+    {
+        id: 'vannaka',
+        name: 'Vannaka',
+        location: 'Edgeville Dungeon',
+        icon: '⚔️',
+        combatReq: 40,
+        slayerReq: 0,
+        pointsPerTask: 4,
+        description: 'Assigns mid-level combat tasks. Requires combat 40.',
+        taskRange: [70, 160],
+        monsterPool: [
+            'moss_giant', 'green_dragon', 'lesser_demon',
+        ],
+    },
+    {
+        id: 'chaeldar',
+        name: 'Chaeldar',
+        location: 'Zanaris',
+        icon: '🧝',
+        combatReq: 70,
+        slayerReq: 0,
+        pointsPerTask: 10,
+        description: 'High-level tasks including Abyssal Demons. Requires combat 70.',
+        taskRange: [80, 200],
+        monsterPool: [
+            'green_dragon', 'lesser_demon', 'abyssal_demon',
+        ],
+    },
+    {
+        id: 'nieve',
+        name: 'Nieve',
+        location: 'Tree Gnome Stronghold',
+        icon: '🌿',
+        combatReq: 85,
+        slayerReq: 0,
+        pointsPerTask: 12,
+        description: 'Elite tasks including God Wars Dungeon bosses. Requires combat 85.',
+        taskRange: [100, 250],
+        bossTaskRange: [20, 50],
+        monsterPool: [
+            'abyssal_demon',
+            { id: 'general_graardor', boss: true },
+            { id: 'commander_zilyana', boss: true },
+            { id: 'kril_tsutsaroth', boss: true },
+            { id: 'kreearra', boss: true },
+        ],
+    },
+    {
+        id: 'duradel',
+        name: 'Duradel',
+        location: 'Shilo Village',
+        icon: '💀',
+        combatReq: 100,
+        slayerReq: 50,
+        pointsPerTask: 15,
+        description: 'The most prestigious master. Assigns the hardest tasks. Requires combat 100, slayer 50.',
+        taskRange: [100, 250],
+        bossTaskRange: [20, 50],
+        monsterPool: [
+            'abyssal_demon',
+            { id: 'dagganoth_rex', boss: true },
+            { id: 'dagganoth_prime', boss: true },
+            { id: 'dagganoth_supreme', boss: true },
+            { id: 'general_graardor', boss: true },
+            { id: 'commander_zilyana', boss: true },
+            { id: 'kril_tsutsaroth', boss: true },
+            { id: 'kreearra', boss: true },
+        ],
+    },
+];
+// OSRS combat level formula
+function getPlayerCombatLevel(stats) {
+    const atk = getLevelFromXP(stats.attack?.xp || 0);
+    const str = getLevelFromXP(stats.strength?.xp || 0);
+    const def = getLevelFromXP(stats.defence?.xp || 0);
+    const hp = getLevelFromXP(stats.hitpoints?.xp || 0);
+    const prayer = getLevelFromXP(stats.prayer?.xp || 0);
+    const ranged = getLevelFromXP(stats.ranged?.xp || 0);
+    const magic = getLevelFromXP(stats.magic?.xp || 0);
+    const base = Math.floor((def + hp + Math.floor(prayer / 2)) / 4);
+    const melee = Math.floor((atk + str) * 13 / 40);
+    const rangedCB = Math.floor(Math.floor(ranged * 3 / 2) * 13 / 40);
+    const magicCB = Math.floor(Math.floor(magic * 3 / 2) * 13 / 40);
+    return base + Math.max(melee, rangedCB, magicCB);
+}
+function randRange(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+const MONSTER_ICONS = {
+    chicken: '🐔', goblin: '👺', cow: '🐄', wizard: '🧙', rock_crab: '🦀',
+    sand_crab: '🦀', dark_wizard: '🧙‍♂️', giant_spider: '🕷️', hill_giant: '👊',
+    moss_giant: '🌿', green_dragon: '🐉', lesser_demon: '👿', abyssal_demon: '😈',
+    general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
+    dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
+};
+function SlayerScreen({ onBack }) {
+    const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast } = useGame();
+    const combatLevel = getPlayerCombatLevel(stats);
+    const slayerLevel = getLevelFromXP(stats.slayer?.xp || 0);
+    const handleGetTask = (master) => {
+        if (slayerTask) {
+            addToast('Complete your current task first!', 'error');
+            return;
+        }
+        if (combatLevel < master.combatReq) {
+            addToast(`Need combat level ${master.combatReq} (you are ${combatLevel})`, 'error');
+            return;
+        }
+        if (slayerLevel < master.slayerReq) {
+            addToast(`Need slayer level ${master.slayerReq} (you have ${slayerLevel})`, 'error');
+            return;
+        }
+        // Pick random monster from pool
+        const pool = master.monsterPool;
+        const pick = pool[Math.floor(Math.random() * pool.length)];
+        const isBoss = typeof pick === 'object' && pick.boss;
+        const monsterId = typeof pick === 'object' ? pick.id : pick;
+        // Check slayer requirement on the monster itself
+        const monsterData = monstersData[monsterId];
+        if (monsterData?.slayerRequirement && slayerLevel < monsterData.slayerRequirement) {
+            // Re-roll once to avoid blocking the player
+            const fallback = pool.find(p => {
+                const id = typeof p === 'object' ? p.id : p;
+                const m = monstersData[id];
+                return !m?.slayerRequirement || slayerLevel >= m.slayerRequirement;
+            });
+            if (!fallback) {
+                addToast(`Need slayer level ${monsterData.slayerRequirement} for this task`, 'error');
+                return;
+            }
+            const fbId = typeof fallback === 'object' ? fallback.id : fallback;
+            const fbBoss = typeof fallback === 'object' && fallback.boss;
+            assignTask(master, fbId, fbBoss);
+            return;
+        }
+        assignTask(master, monsterId, isBoss);
+    };
+    const assignTask = (master, monsterId, isBoss) => {
+        const monsterData = monstersData[monsterId];
+        const monsterName = monsterData?.name || monsterId.replace(/_/g, ' ');
+        const taskRange = isBoss ? (master.bossTaskRange || [20, 50]) : master.taskRange;
+        const totalCount = randRange(taskRange[0], taskRange[1]);
+        const task = {
+            monsterId,
+            monsterName,
+            monstersRemaining: totalCount,
+            totalCount,
+            masterId: master.id,
+            pointsOnComplete: master.pointsPerTask,
+            isBoss,
+        };
+        setSlayerTask(task);
+        addToast(`💀 Task: Kill ${totalCount} ${monsterName}`, 'info');
+    };
+    const handleCancelTask = () => {
+        setSlayerTask(null);
+        addToast('Task cancelled. No points awarded.', 'info');
+    };
+    const progressPct = slayerTask
+        ? Math.round((1 - slayerTask.monstersRemaining / slayerTask.totalCount) * 100)
+        : 0;
+    return (h("div", { class: "h-full overflow-y-auto p-4" },
+        h("button", { onClick: onBack, class: "text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1" }, "\u2190 Skills"),
+        h("h2", { class: "font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] mb-0.5" }, "\uD83D\uDC80 Slayer"),
+        h("p", { class: "text-xs text-[var(--color-parchment)] opacity-40 mb-3" },
+            "Level ",
+            slayerLevel,
+            " \u00B7 Combat ",
+            combatLevel,
+            " \u00B7 ",
+            slayerPoints.toLocaleString(),
+            " points"),
+        slayerTask ? (h("div", { class: "mb-4 bg-[#1a1a08] border border-[#3a3a10] rounded-xl p-3" },
+            h("div", { class: "text-[10px] text-yellow-400 uppercase font-bold tracking-wider mb-1" }, "\u2694\uFE0F Current Task"),
+            h("div", { class: "flex items-center gap-2 mb-2" },
+                h("span", { class: "text-xl" }, MONSTER_ICONS[slayerTask.monsterId] || '👹'),
+                h("div", null,
+                    h("div", { class: "text-sm font-bold text-[var(--color-parchment)]" }, slayerTask.monsterName),
+                    h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-50" },
+                        slayerTask.monstersRemaining,
+                        " / ",
+                        slayerTask.totalCount,
+                        " remaining",
+                        slayerTask.pointsOnComplete > 0 && ` · +${slayerTask.pointsOnComplete} pts on complete`))),
+            h("div", { class: "h-2 rounded-full bg-[#333] overflow-hidden mb-2" },
+                h("div", { class: "h-full rounded-full transition-all", style: { width: `${progressPct}%`, background: '#eab308' } })),
+            h("div", { class: "flex items-center justify-between" },
+                h("span", { class: "text-[10px] text-yellow-400" },
+                    progressPct,
+                    "% complete"),
+                h("button", { onClick: handleCancelTask, class: "text-[10px] text-[var(--color-parchment)] opacity-40 underline" }, "Cancel (no points)")))) : (h("div", { class: "mb-3 bg-[#111] rounded-xl p-3 text-center" },
+            h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-50" }, "No active task \u2014 select a master below to get one."))),
+        h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-50 uppercase font-bold tracking-wider mb-2" }, "Slayer Masters"),
+        h("div", { class: "space-y-2" }, SLAYER_MASTERS.map(master => {
+            const meetsCombat = combatLevel >= master.combatReq;
+            const meetsSlayer = slayerLevel >= master.slayerReq;
+            const meetsReq = meetsCombat && meetsSlayer;
+            return (h("button", { key: master.id, onClick: () => meetsReq && handleGetTask(master), disabled: !meetsReq || !!slayerTask, class: `w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left
+                ${meetsReq && !slayerTask
+                    ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
+                    : 'bg-[#111] border-[#1a1a1a] opacity-40'}` },
+                h("div", { class: "flex items-center gap-3 min-w-0" },
+                    h("span", { class: "text-2xl flex-shrink-0" }, master.icon),
+                    h("div", { class: "min-w-0" },
+                        h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, master.name),
+                        h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-50" }, master.location),
+                        h("div", { class: "text-[9px] text-[var(--color-parchment)] opacity-35 mt-0.5 leading-tight" }, master.description))),
+                h("div", { class: "text-right flex-shrink-0 ml-3 space-y-0.5" },
+                    h("div", { class: "text-[10px] font-[var(--font-mono)] text-[var(--color-gold)]" },
+                        master.pointsPerTask,
+                        " pts"),
+                    master.combatReq > 0 && (h("div", { class: `text-[9px] font-semibold ${meetsCombat ? 'text-[var(--color-hp-green)]' : 'text-[var(--color-blood-light)]'}` },
+                        "CB ",
+                        master.combatReq)),
+                    master.slayerReq > 0 && (h("div", { class: `text-[9px] font-semibold ${meetsSlayer ? 'text-[var(--color-hp-green)]' : 'text-[var(--color-blood-light)]'}` },
+                        "Slay ",
+                        master.slayerReq)),
+                    master.combatReq === 0 && (h("div", { class: "text-[9px] text-[var(--color-hp-green)]" }, "No req")))));
+        }))));
 }
 
 // ── screens/GatherScreen.js ──
@@ -13641,6 +14020,7 @@ function GatherScreen({ initialTaskId, idleResult, onSkipHour, skipHourUnlocked 
 
 
 
+
 // ── UNLOCK DEFINITIONS ───────────────────────────────────────────────────────
 const UNLOCKS = [
     {
@@ -13652,6 +14032,19 @@ const UNLOCKS = [
     },
 ];
 const UNLOCK_TAB = { id: 'unlocks', label: '🔓', title: 'Unlocks', desc: 'Permanent features & upgrades. One-time purchases.' };
+// ── SLAYER SHOP ──────────────────────────────────────────────────────────────
+const SLAYER_SHOP_TAB = { id: 'slayer', label: '💀', title: 'Slayer Reward Shop', desc: 'Spend slayer points earned from completing tasks. Requires slayer level to purchase.' };
+const SLAYER_SHOP_ITEMS = [
+    {
+        id: 'slayer_helmet',
+        name: 'Slayer helmet',
+        icon: '💀',
+        cost: 400,
+        stackable: false,
+        slayerReq: 20,
+        desc: 'Combines the black mask effect. +15% melee accuracy & strength while on a slayer task. Requires Slayer 20.',
+    },
+];
 // ── SHOP DEFINITIONS ────────────────────────────────────────────────────────
 // All prices match OSRS NPC shop buy prices (cheapest source when multiple exist).
 const SHOPS = [
@@ -13827,12 +14220,13 @@ const SHOPS = [
 ];
 // ── COMPONENT ───────────────────────────────────────────────────────────────
 function GeneralStoreScreen() {
-    const { inventory, updateInventory, addToast, getSkillLevel, unlockedFeatures, unlockFeature } = useGame();
+    const { inventory, updateInventory, addToast, getSkillLevel, unlockedFeatures, unlockFeature, slayerPoints, updateSlayerPoints, stats } = useGame();
     const [activeShop, setActiveShop] = useState('general');
     const [quantities, setQuantities] = useState({});
     const coins = countItem(inventory, 'coins');
     const isUnlocksTab = activeShop === 'unlocks';
-    const shop = isUnlocksTab ? UNLOCK_TAB : SHOPS.find(s => s.id === activeShop);
+    const isSlayerTab = activeShop === 'slayer';
+    const shop = isUnlocksTab ? UNLOCK_TAB : isSlayerTab ? SLAYER_SHOP_TAB : SHOPS.find(s => s.id === activeShop);
     const getQty = (id) => quantities[id] || 1;
     const setQty = (id, val) => {
         const n = Math.max(1, Math.min(9999, parseInt(val) || 1));
@@ -13889,13 +14283,43 @@ function GeneralStoreScreen() {
         unlockFeature(unlock.id);
         addToast(`${unlock.name} unlocked!`, 'info', unlock.icon);
     };
+    const handleSlayerBuy = (item) => {
+        // Check slayer level requirement
+        const slayerLevel = getLevelFromXP(stats.slayer?.xp || 0);
+        if (item.slayerReq && slayerLevel < item.slayerReq) {
+            addToast(`Need Slayer level ${item.slayerReq} to purchase this.`, 'error');
+            return;
+        }
+        if ((slayerPoints || 0) < item.cost) {
+            addToast(`Need ${item.cost} slayer points — you have ${slayerPoints || 0}.`, 'error');
+            return;
+        }
+        const newInv = [...inventory];
+        if (!item.stackable) {
+            if (freeSlots(newInv) === 0) {
+                addToast('Not enough inventory space.', 'error');
+                return;
+            }
+        }
+        else {
+            const existing = countItem(newInv, item.id);
+            if (existing === 0 && freeSlots(newInv) === 0) {
+                addToast('Not enough inventory space.', 'error');
+                return;
+            }
+        }
+        addItem(newInv, item.id, 1, item.stackable);
+        updateInventory(newInv);
+        updateSlayerPoints((slayerPoints || 0) - item.cost);
+        addToast(`${item.icon} ${item.name} purchased!`, 'info');
+    };
     return (h("div", { style: { height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' } },
         h("div", { style: { padding: '12px 16px 0', flexShrink: 0 } },
             h("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' } },
                 h("h2", { style: { fontFamily: 'Cinzel, serif', fontSize: '15px', fontWeight: '700', color: '#d4af37', margin: 0 } }, shop.title),
-                h("span", { style: { fontSize: '11px', color: '#d4af37', fontFamily: 'monospace' } },
-                    "\uD83E\uDE99 ",
-                    coins.toLocaleString())),
+                h("span", { style: { fontSize: '11px', color: '#d4af37', fontFamily: 'monospace' } }, isSlayerTab
+                    ? `💀 ${(slayerPoints || 0).toLocaleString()} pts`
+                    : `🪙 ${coins.toLocaleString()}`)),
             h("p", { style: { fontSize: '10px', color: '#e8d5b0', opacity: 0.4, margin: '0 0 10px' } }, shop.desc),
             h("div", { style: {
                     display: 'flex',
@@ -13903,7 +14327,7 @@ function GeneralStoreScreen() {
                     overflowX: 'auto',
                     paddingBottom: '8px',
                     scrollbarWidth: 'none',
-                } }, [...SHOPS, UNLOCK_TAB].map(s => (h("button", { key: s.id, onClick: () => setActiveShop(s.id), style: {
+                } }, [...SHOPS, SLAYER_SHOP_TAB, UNLOCK_TAB].map(s => (h("button", { key: s.id, onClick: () => setActiveShop(s.id), style: {
                     flexShrink: 0,
                     padding: '6px 12px',
                     borderRadius: '8px',
@@ -13950,7 +14374,47 @@ function GeneralStoreScreen() {
                             cursor: owned || !canAfford ? 'not-allowed' : 'pointer',
                         } }, owned ? '✓ Unlocked' : canAfford ? `Unlock · ${unlock.price.toLocaleString()} gp` : `Need ${unlock.price.toLocaleString()} gp`)));
             }))),
-            !isUnlocksTab && (h("div", { style: { display: 'flex', flexDirection: 'column', gap: '8px' } }, shop.items.map(item => {
+            isSlayerTab && (h("div", { style: { display: 'flex', flexDirection: 'column', gap: '8px' } }, SLAYER_SHOP_ITEMS.map(item => {
+                const slayerLevel = getLevelFromXP(stats.slayer?.xp || 0);
+                const canAfford = (slayerPoints || 0) >= item.cost;
+                const levelLocked = item.slayerReq && slayerLevel < item.slayerReq;
+                return (h("div", { key: item.id, style: {
+                        background: '#1a1a1a',
+                        border: '1px solid #2a2a2a',
+                        borderRadius: '10px',
+                        padding: '10px 12px',
+                    } },
+                    h("div", { style: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' } },
+                        h("span", { style: { fontSize: '22px', lineHeight: 1, flexShrink: 0, opacity: levelLocked ? 0.4 : 1 } }, item.icon),
+                        h("div", { style: { flex: 1, minWidth: 0 } },
+                            h("div", { style: { fontSize: '13px', fontWeight: '600', color: levelLocked ? '#888' : '#e8d5b0' } }, item.name),
+                            h("div", { style: { fontSize: '10px', color: '#e8d5b0', opacity: 0.38, marginTop: '1px' } }, item.desc),
+                            item.slayerReq && (h("div", { style: { fontSize: '9px', marginTop: '2px', color: levelLocked ? '#e57373' : '#81c784', fontWeight: '600' } },
+                                "\uD83D\uDC80 Slayer ",
+                                item.slayerReq,
+                                " required ",
+                                levelLocked ? `(you: ${slayerLevel})` : '✓'))),
+                        h("div", { style: { textAlign: 'right', flexShrink: 0 } },
+                            h("div", { style: { fontSize: '12px', color: canAfford ? '#d4af37' : '#888', fontFamily: 'monospace', fontWeight: '700' } },
+                                item.cost,
+                                " pts"))),
+                    h("button", { onClick: () => !levelLocked && handleSlayerBuy(item), disabled: levelLocked, style: {
+                            width: '100%',
+                            padding: '8px',
+                            borderRadius: '8px',
+                            background: levelLocked ? '#1a1a1a' : canAfford ? 'linear-gradient(135deg, #4a1a4a, #7a3a7a)' : '#222',
+                            border: levelLocked ? '1px solid #333' : 'none',
+                            color: levelLocked ? '#888' : canAfford ? '#f0c0f0' : '#888',
+                            fontSize: '12px',
+                            fontWeight: '700',
+                            cursor: levelLocked || !canAfford ? 'not-allowed' : 'pointer',
+                        } }, levelLocked
+                        ? `Need Slayer ${item.slayerReq}`
+                        : canAfford
+                            ? `Buy · ${item.cost} pts`
+                            : `Need ${item.cost} pts`)));
+            }))),
+            !isUnlocksTab && !isSlayerTab && (h("div", { style: { display: 'flex', flexDirection: 'column', gap: '8px' } }, shop.items.map(item => {
                 const qty = getQty(item.id);
                 const totalCost = item.price * qty;
                 const canAfford = coins >= totalCost;

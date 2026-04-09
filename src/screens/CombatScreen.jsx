@@ -55,7 +55,7 @@ const MONSTER_ICONS = {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlocked }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints } = useGame()
 
   const [combat, setCombat] = useState(null)
   const [log, setLog] = useState([])
@@ -71,12 +71,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
   const bankRef = useRef(bank)
   const statsRef = useRef(stats)
   const equipmentRef = useRef(equipment)
+  const slayerTaskRef = useRef(slayerTask)
+  const slayerPointsRef = useRef(slayerPoints)
 
   useEffect(() => { hpRef.current = currentHP }, [currentHP])
   useEffect(() => { inventoryRef.current = inventory }, [inventory])
   useEffect(() => { bankRef.current = bank }, [bank])
   useEffect(() => { statsRef.current = stats }, [stats])
   useEffect(() => { equipmentRef.current = equipment }, [equipment])
+  useEffect(() => { slayerTaskRef.current = slayerTask }, [slayerTask])
+  useEffect(() => { slayerPointsRef.current = slayerPoints }, [slayerPoints])
 
   // Auto-start fight from home shortcut
   useEffect(() => {
@@ -103,6 +107,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
         ranged: getLevelFromXP(statsRef.current.ranged?.xp || 0),
         magic: getLevelFromXP(statsRef.current.magic?.xp || 0),
         currentHP: hpRef.current
+      }
+
+      // Apply slayer helmet +15% melee accuracy & strength bonus when on task
+      const headEquip = equipmentRef.current?.head
+      const headItemData = headEquip ? itemsData[headEquip.itemId] : null
+      if (headItemData?.otherBonus?.slayerHelmet && slayerTaskRef.current?.monsterId === state.monster.id) {
+        playerStats.attack = Math.floor(playerStats.attack * 1.15)
+        playerStats.strength = Math.floor(playerStats.strength * 1.15)
       }
 
       const { combatState, events } = processCombatTick(state, playerStats, equipmentRef.current, itemsData, prayersData)
@@ -197,6 +209,27 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
         }
         if (ev.type === 'monsterDeath') {
           setKillCount(k => k + 1)
+
+          // Slayer task tracking
+          const task = slayerTaskRef.current
+          if (task && task.monsterId === state.monster.id) {
+            // Grant slayer XP equal to monster's hitpoints
+            grantXP('slayer', state.monster.hitpoints)
+            const newRemaining = task.monstersRemaining - 1
+            if (newRemaining <= 0) {
+              // Task complete!
+              const pts = task.pointsOnComplete
+              const newPts = slayerPointsRef.current + pts
+              updateSlayerPoints(newPts)
+              setSlayerTask(null)
+              addToast(pts > 0
+                ? `💀 Slayer task complete! +${pts} points (${newPts} total)`
+                : '💀 Slayer task complete!', 'levelup')
+            } else {
+              setSlayerTask({ ...task, monstersRemaining: newRemaining })
+            }
+          }
+
           if (ev.loot && ev.loot.length > 0) {
             const newInv = [...inventoryRef.current]
             for (const drop of ev.loot) {
@@ -227,7 +260,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
     return unsub
   }, [combat?.active])
 
+  const getSlayerLevel = () => getLevelFromXP(stats.slayer?.xp || 0)
+
   const startFight = (monster) => {
+    // Check slayer requirement
+    if (monster.slayerRequirement) {
+      const slayLvl = getSlayerLevel()
+      if (slayLvl < monster.slayerRequirement) {
+        addToast(`Need Slayer level ${monster.slayerRequirement} to fight ${monster.name}`, 'error')
+        return
+      }
+    }
     const state = createCombatState(monster, 'melee', combatStance)
     setCombat(state)
     setKillCount(0)
@@ -403,23 +446,43 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
                   )}
                 </div>
                 <div class="space-y-2">
-                  {monsters.map(monster => (
+                  {monsters.map(monster => {
+                    const slayLvl = getSlayerLevel()
+                    const slayReq = monster.slayerRequirement
+                    const slayLocked = slayReq && slayLvl < slayReq
+                    const isOnTask = slayerTask?.monsterId === monster.id
+                    return (
                     <div key={monster.id} class="flex gap-2 items-stretch">
                       <button
-                        onClick={() => startFight(monster)}
-                        class="flex-1 flex items-center justify-between p-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors"
+                        onClick={() => !slayLocked && startFight(monster)}
+                        disabled={slayLocked}
+                        class={`flex-1 flex items-center justify-between p-3 rounded-xl border transition-colors
+                          ${isOnTask ? 'bg-[#1a1a08] border-[#3a3a10]' :
+                            slayLocked ? 'bg-[#111] border-[#1a1a1a] opacity-50' :
+                            'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'}`}
                       >
                         <div class="flex items-center gap-3">
                           <span class="text-2xl">{MONSTER_ICONS[monster.id] || '👹'}</span>
                           <div class="text-left">
-                            <div class="text-sm font-semibold text-[var(--color-parchment)]">{monster.name}</div>
+                            <div class="flex items-center gap-1.5">
+                              <span class="text-sm font-semibold text-[var(--color-parchment)]">{monster.name}</span>
+                              {isOnTask && <span class="text-[9px] bg-yellow-500 text-black font-bold px-1 rounded">TASK</span>}
+                            </div>
                             <div class="text-[10px] text-[var(--color-parchment)] opacity-40">
                               HP {monster.hitpoints} · Att {monster.stats.attack} · Def {monster.stats.defence}
                             </div>
+                            {slayReq && (
+                              <div class={`text-[9px] font-semibold ${slayLocked ? 'text-[var(--color-blood-light)]' : 'text-[var(--color-hp-green)]'}`}>
+                                💀 Slayer {slayReq}{slayLocked ? ` (you: ${slayLvl})` : ' ✓'}
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div class="text-right">
                           <div class="text-xs font-[var(--font-mono)] text-[var(--color-blood-light)]">CB {monster.combatLevel}</div>
+                          {isOnTask && (
+                            <div class="text-[9px] text-yellow-400 font-mono mt-0.5">{slayerTask.monstersRemaining} left</div>
+                          )}
                         </div>
                       </button>
                       <button
@@ -431,7 +494,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
                         <span class="text-[8px] text-[var(--color-parchment)] opacity-50">Add</span>
                       </button>
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             )
@@ -464,6 +528,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
         <div class="text-[10px] text-[var(--color-parchment)] opacity-50 mb-0.5">Your HP</div>
         <HPBar current={currentHP} max={getMaxHP()} size="large" />
       </div>
+
+      {/* Slayer task indicator */}
+      {slayerTask?.monsterId === combat.monster.id && (
+        <div class="mb-2 bg-[#1a1a08] border border-[#3a3a10] rounded-lg px-3 py-1.5 flex items-center justify-between">
+          <span class="text-[10px] text-yellow-400 font-semibold">💀 Slayer Task</span>
+          <span class="text-[10px] font-[var(--font-mono)] text-yellow-400">
+            {slayerTask.monstersRemaining} / {slayerTask.totalCount} remaining
+          </span>
+        </div>
+      )}
 
       {/* Inventory slots indicator */}
       <div class="mb-2 bg-[#111] rounded-lg px-3 py-1.5 flex items-center justify-between">
