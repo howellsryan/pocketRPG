@@ -27,7 +27,7 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     tickCount: 0,
     xpGained: {},    // accumulated xp per skill
     loot: null,      // set on monster death
-    specialAttackEnergy: 0  // 0-100; regenerates to 100 on each monster kill
+    specialAttackEnergy: 100  // 0-100; starts at 100 for each new fight, drains on use, refills on kill
   }
 }
 
