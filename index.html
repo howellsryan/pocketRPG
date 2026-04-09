@@ -12683,6 +12683,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
     }
     // Combat view
     return (h("div", { class: "h-full flex flex-col p-4" },
+        h("button", { onClick: stopAndBack, class: "text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1" }, "\u2190 Back"),
         h("div", { class: "mb-3" },
             h("div", { class: "flex items-center justify-between mb-1" },
                 h("span", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, combat.monster.name),
@@ -12697,8 +12698,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
             h("span", { class: "text-[10px] text-[var(--color-parchment)] opacity-50" }, "\uD83C\uDF92 Inventory"),
             h("span", { class: "text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40" },
                 freeSlots(inventory),
-                "/28 free",
-                autoBankLoot ? ' · 🏦 idle auto-bank on' : '')),
+                "/28 free")),
         (() => {
             const weaponEntry = equipment?.weapon;
             const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null;
@@ -12736,7 +12736,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                 : '—'))),
         h("div", { class: "flex-shrink-0 flex flex-col gap-2" }, combat.active && !isAutoRestarting && (h(Fragment, null,
             h("div", { class: "grid grid-cols-2 gap-2" },
-                h("button", { onClick: handleEat, class: "py-2.5 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80" }, "\uD83C\uDF56 Eat"),
+                h("button", { onClick: handleEat, class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\uD83C\uDF56 Eat"),
                 h("button", { class: "py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] opacity-40 text-sm cursor-default" }, "\uD83E\uDDEA Potion")),
             h("div", { class: "grid grid-cols-2 gap-2" },
                 (() => {
@@ -12749,10 +12749,8 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                         "\u26A1 ",
                         hasSpec ? `Special (${weapon.specialAttack.energyCost}%)` : 'No Spec'));
                 })(),
-                h("button", { onClick: () => setShowPrayerModal(true), class: "py-2.5 rounded-lg bg-[#1a2a1a] text-[var(--color-gold-dim)] font-semibold text-sm active:opacity-80 border border-[#2a4a2a]" }, "\uD83D\uDE4F Prayer")),
-            h("div", { class: "flex gap-2" },
-                h("button", { onClick: stopAndBack, class: "flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80" }, "\u2190 Stop & Back"),
-                skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "flex-1 py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\u23ED\uFE0F Skip 1h")))))),
+                h("button", { onClick: () => setShowPrayerModal(true), class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\uD83D\uDE4F Prayer")),
+            skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "w-full py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\u23ED\uFE0F Skip 1h"))))),
         showPrayerModal && (h(Modal, { onClose: () => setShowPrayerModal(false) },
             h("div", { class: "flex items-center justify-between mb-3" },
                 h("h3", { class: "font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]" }, "Choose Prayer"),
@@ -13540,6 +13538,7 @@ function GatherScreen({ initialTaskId, idleResult, onSkipHour, skipHourUnlocked 
         const { task } = activeTask;
         const progress = 1 - activeTask.ticksRemaining / task.ticks;
         return (h("div", { style: { height: '100%', display: 'flex', flexDirection: 'column', padding: '16px' } },
+            h("button", { onClick: stopTask, style: { fontSize: '12px', color: '#c4af7a', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', cursor: 'pointer' } }, "\u2190 Back"),
             h("div", { style: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' } },
                 h("span", { style: { fontSize: '48px', marginBottom: '8px' } }, task.icon),
                 h("h2", { style: { fontFamily: 'Cinzel, serif', fontSize: '18px', fontWeight: 'bold', color: '#d4af37', marginBottom: '4px', textAlign: 'center' } }, task.name),
@@ -13557,9 +13556,7 @@ function GatherScreen({ initialTaskId, idleResult, onSkipHour, skipHourUnlocked 
                             h("span", { style: { fontSize: '13px', color: '#e8d5b0', opacity: 0.6 } }, "Items banked/hr"),
                             h("span", { style: { fontFamily: 'monospace', color: '#d4af37', fontWeight: 'bold' } }, elapsedHrs > 0 ? perHour.toLocaleString() : '—'))));
                 })())),
-            h("div", { class: "flex gap-2 mt-3", style: { flexShrink: 0, width: '100%' } },
-                h("button", { onClick: stopTask, class: "flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80" }, "\u2190 Stop & Back"),
-                skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "flex-1 py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\u23ED\uFE0F Skip 1h")))));
+            skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "w-full py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0;margin-top:12px;flex-shrink:0" }, "\u23ED\uFE0F Skip 1h"))));
     }
     // Task picker
     return (h("div", { style: { height: '100%', display: 'flex', flexDirection: 'column' } },

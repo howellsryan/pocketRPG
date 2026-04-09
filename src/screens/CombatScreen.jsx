@@ -470,6 +470,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
   // Combat view
   return (
     <div class="h-full flex flex-col p-4">
+      {/* Back button */}
+      <button onClick={stopAndBack}
+        class="text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1">
+        ← Back
+      </button>
+
       {/* Monster HP */}
       <div class="mb-3">
         <div class="flex items-center justify-between mb-1">
@@ -489,7 +495,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
       <div class="mb-2 bg-[#111] rounded-lg px-3 py-1.5 flex items-center justify-between">
         <span class="text-[10px] text-[var(--color-parchment)] opacity-50">🎒 Inventory</span>
         <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40">
-          {freeSlots(inventory)}/28 free{autoBankLoot ? ' · 🏦 idle auto-bank on' : ''}
+          {freeSlots(inventory)}/28 free
         </span>
       </div>
 
@@ -558,7 +564,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
             {/* Primary combat actions */}
             <div class="grid grid-cols-2 gap-2">
               <button onClick={handleEat}
-                class="py-2.5 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80">
+                class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
+                style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
                 🍖 Eat
               </button>
               <button class="py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] opacity-40 text-sm cursor-default">
@@ -585,24 +592,19 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
                 )
               })()}
               <button onClick={() => setShowPrayerModal(true)}
-                class="py-2.5 rounded-lg bg-[#1a2a1a] text-[var(--color-gold-dim)] font-semibold text-sm active:opacity-80 border border-[#2a4a2a]">
+                class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
+                style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
                 🙏 Prayer
               </button>
             </div>
-            {/* Stop & Back / Skip 1h */}
-            <div class="flex gap-2">
-              <button onClick={stopAndBack}
-                class="flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80">
-                ← Stop &amp; Back
+            {/* Skip 1h */}
+            {skipHourUnlocked && (
+              <button onClick={onSkipHour}
+                class="w-full py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
+                style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
+                ⏭️ Skip 1h
               </button>
-              {skipHourUnlocked && (
-                <button onClick={onSkipHour}
-                  class="flex-1 py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
-                  style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
-                  ⏭️ Skip 1h
-                </button>
-              )}
-            </div>
+            )}
           </>
         )}
       </div>
