@@ -53,9 +53,11 @@ function EquipSlot({ slotName, equipment, itemsData, onSelect }) {
 export default function EquipmentScreen() {
   const { equipment, inventory, updateEquipment, updateInventory, addToast, itemsData } = useGame()
   const [selected, setSelected] = useState(null) // { slot, item }
+  const [showSpecInfo, setShowSpecInfo] = useState(false)
 
   const handleSelect = (slotName, item) => {
     setSelected({ slot: slotName, item })
+    setShowSpecInfo(false)
   }
 
   const handleUnequip = () => {
@@ -208,6 +210,33 @@ export default function EquipmentScreen() {
                 <p>Requires: {Object.entries(selected.item.requirements).map(([s, l]) => `${s} ${l}`).join(', ')}</p>
               )}
             </div>
+
+            {/* Special attack info */}
+            {selected.item.specialAttack && (
+              <div style={{ background: '#111', borderRadius: '8px', border: '1px solid #3a2a00', overflow: 'hidden' }}>
+                <button
+                  onClick={() => setShowSpecInfo(v => !v)}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '8px 12px', background: 'transparent', border: 'none', cursor: 'pointer'
+                  }}
+                >
+                  <span style={{ fontSize: '12px', fontWeight: '600', color: '#eab308' }}>⚡ Special Attack</span>
+                  <span style={{ fontSize: '10px', color: '#78530a' }}>{showSpecInfo ? '▲' : '▼'} {selected.item.specialAttack.energyCost}% energy</span>
+                </button>
+                {showSpecInfo && (
+                  <div style={{ padding: '0 12px 12px', borderTop: '1px solid #3a2a00' }}>
+                    <p style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.7, marginTop: '8px', lineHeight: '1.5' }}>
+                      {selected.item.specialAttack.description}
+                    </p>
+                    <p style={{ fontSize: '10px', color: '#78530a', marginTop: '4px' }}>
+                      Bar refills to 100% on each monster kill.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             <button
               onClick={handleUnequip}
               style={{

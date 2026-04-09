@@ -212,3 +212,57 @@ When checking OSRS Wiki drop tables for future monsters:
 - Add any missing items to `items.json` before adding them to the monster drop table.
 - Stackable drops (runes, coins, arrows) use `[min, max]` array for quantity.
 - Non-stackable equipment drops use single `quantity: 1`.
+
+---
+
+## 14. SPECIAL ATTACKS (as of v1.5)
+
+### Mechanic
+- The special attack bar is a **0–100% energy bar** stored in `combatState.specialAttackEnergy`.
+- Bar starts at **0** on the first fight; **regenerates to 100% on every monster kill**.
+- The player manually fires the special by pressing the **⚡ Special Attack** button in the combat screen.
+- Each use drains the weapon's defined `energyCost`. Multiple uses are possible if enough energy remains (e.g. Dragon Dagger at 25% cost = 4 uses per kill).
+- Specs do **not** fire during idle/offline simulation — manual only.
+
+### Weapon Special Attacks Implemented
+| Weapon              | Type           | Cost | Effect |
+|---------------------|----------------|------|--------|
+| Dragon Dagger       | `double_hit`   | 25%  | Two hits, each up to 115% max hit |
+| Dragon Scimitar     | `zero_defence` | 55%  | Rolls against zero monster defence |
+| Abyssal Whip        | `stun`         | 50%  | Hit + stun monster 1 attack cycle on connect |
+| Bandos Godsword     | `warstrike`    | 50%  | Hit + reduce all monster defenceBonus by damage dealt |
+| Armadyl Godsword    | `judgement`    | 50%  | 125% accuracy + 125% max hit |
+| Saradomin Godsword  | `healing_blade`| 50%  | Hit + heal max(10, damage/2) HP |
+| Zamorak Godsword    | `freeze`       | 50%  | Hit + freeze monster for 33 ticks (~20s) |
+| Saradomin Sword     | `lightning`    | 100% | Melee hit + 1–16 guaranteed magic hit |
+| Magic Shortbow      | `snapshot`     | 55%  | Two ranged hits at 75% max hit each |
+| Armadyl Crossbow    | `pebble_shot`  | 40%  | Guaranteed hit at 125% max hit |
+| Zamorak Spear       | `shove`        | 25%  | 175% accuracy + stun monster 2 attack cycles |
+
+### Adding New Weapons
+When adding a new weapon from OSRS, **always check if it has a special attack on the OSRS Wiki**. If it does:
+1. Ask the user how they want to adapt the special for PocketRPG (since some OSRS specs are PvP-only or require mechanics we don't have).
+2. Reference the table above for how existing specs are structured.
+3. Add a `"specialAttack"` object to the weapon in `items.json`:
+   ```json
+   "specialAttack": {
+     "type": "your_type",
+     "energyCost": 50,
+     "description": "Short flavour description shown in item modal."
+   }
+   ```
+4. Add a `case 'your_type':` block in `applySpecialAttack()` in `src/engine/combat.js`.
+5. Add a label entry in the `specLabels` map in `CombatScreen.jsx → handleSpecialAttack`.
+
+### Data Schema
+```json
+"specialAttack": {
+  "type": "string (matches case in applySpecialAttack)",
+  "energyCost": 25,
+  "description": "Player-facing description shown in item modal ⚡ panel.",
+  // optional extras used by the engine:
+  "stunTicks": 33,    // for freeze/stun types
+  "minHeal": 10,      // for healing_blade
+  "lightningMax": 16  // for lightning
+}
+```

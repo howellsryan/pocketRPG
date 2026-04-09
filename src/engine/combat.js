@@ -7,6 +7,7 @@ import {
 import { getEquipmentBonuses, getAttackSpeed, getAttackStyle } from './equipment.js'
 import { getLevelFromXP } from './experience.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE, EAT_TICK_COST } from '../utils/constants.js'
+import { randInt } from '../utils/helpers.js'
 
 /**
  * Create a new combat state
@@ -25,7 +26,8 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     log: [],         // combat log entries
     tickCount: 0,
     xpGained: {},    // accumulated xp per skill
-    loot: null       // set on monster death
+    loot: null,      // set on monster death
+    specialAttackEnergy: 0  // 0-100; regenerates to 100 on each monster kill
   }
 }
 
@@ -141,6 +143,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     if (monster.currentHP <= 0) {
       monster.currentHP = 0
       state.active = false
+      state.specialAttackEnergy = 100  // regenerate spec bar on kill
       // Roll drops
       state.loot = rollDrops(monster)
       events.push({ type: 'monsterDeath', loot: state.loot, xpGained: { ...state.xpGained } })
@@ -212,4 +215,290 @@ function rollDrops(monster) {
  */
 export function applyEat(combatState) {
   return { ...combatState, eatCooldown: EAT_TICK_COST, playerAttackTimer: Math.max(combatState.playerAttackTimer, EAT_TICK_COST) }
+}
+
+/**
+ * Apply a special attack — manually triggered by the player.
+ * Returns { combatState, events[] }
+ * Consumes specialAttackEnergy per the weapon's energyCost.
+ * Regenerates to 100 automatically in processCombatTick on monster death.
+ */
+export function applySpecialAttack(combatState, playerStats, equipment, itemsData) {
+  const weaponEntry = equipment?.weapon
+  if (!weaponEntry) return { combatState, events: [] }
+  const weapon = itemsData[weaponEntry.itemId]
+  if (!weapon?.specialAttack) return { combatState, events: [] }
+  const spec = weapon.specialAttack
+  if ((combatState.specialAttackEnergy || 0) < spec.energyCost) return { combatState, events: [] }
+
+  const state = {
+    ...combatState,
+    monster: { ...combatState.monster, defenceBonus: { ...combatState.monster.defenceBonus }, stats: { ...combatState.monster.stats } },
+    specialAttackEnergy: (combatState.specialAttackEnergy || 0) - spec.energyCost
+  }
+  const events = []
+  const bonuses = getEquipmentBonuses(equipment, itemsData)
+  const weaponStyle = getAttackStyle(equipment, itemsData)
+  const monster = state.monster
+
+  switch (spec.type) {
+    case 'double_hit': {
+      // Dragon Dagger — two hits at 115% max hit
+      const styleBonuses = getMeleeStyleBonuses(state.stance)
+      const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
+      const maxHit = Math.floor(meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength) * 1.15)
+      const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
+      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      const hits = [rollDamage(acc, maxHit), rollDamage(acc, maxHit)]
+      const rawTotal = hits[0] + hits[1]
+      const actual = Math.min(rawTotal, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const xpSkills = _meleeXP(state.stance, actual)
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits, totalDamage: actual, specType: 'double_hit', monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'zero_defence': {
+      // Dragon Scimitar — ignores all monster defence bonuses
+      const styleBonuses = getMeleeStyleBonuses(state.stance)
+      const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
+      const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
+      const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
+      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const defRoll = maxDefenceRoll(0, 0)
+      const acc = hitChance(atkRoll, defRoll)
+      const damage = rollDamage(acc, maxHit)
+      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const xpSkills = _meleeXP(state.stance, actual)
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'zero_defence', monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'stun': {
+      // Abyssal Whip — hit + if not miss, delay monster's next attack by 1 attack cycle
+      const styleBonuses = getMeleeStyleBonuses(state.stance)
+      const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
+      const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
+      const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
+      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      const damage = rollDamage(acc, maxHit)
+      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const stunned = damage > 0
+      if (stunned) state.monsterAttackTimer += (monster.attackSpeed || 4)
+      const xpSkills = _meleeXP(state.stance, actual)
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'stun', stunned, monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'judgement': {
+      // Armadyl Godsword — 125% accuracy + 125% max hit
+      const styleBonuses = getMeleeStyleBonuses(state.stance)
+      const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
+      const maxHit = Math.floor(meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength) * 1.25)
+      const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
+      const atkRoll = Math.floor(maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0) * 1.25)
+      const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      const damage = rollDamage(acc, maxHit)
+      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const xpSkills = _meleeXP(state.stance, actual)
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'judgement', monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'healing_blade': {
+      // Saradomin Godsword — hit + heal 50% of damage (min 10 HP)
+      const styleBonuses = getMeleeStyleBonuses(state.stance)
+      const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
+      const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
+      const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
+      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      const damage = rollDamage(acc, maxHit)
+      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const minHeal = spec.minHeal || 10
+      const healAmount = Math.max(minHeal, Math.floor(actual / 2))
+      const xpSkills = _meleeXP(state.stance, actual)
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'healing_blade', healAmount, monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'freeze': {
+      // Zamorak Godsword — hit + freeze monster for stunTicks ticks
+      const styleBonuses = getMeleeStyleBonuses(state.stance)
+      const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
+      const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
+      const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
+      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      const damage = rollDamage(acc, maxHit)
+      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      state.monsterAttackTimer += (spec.stunTicks || 33)
+      const xpSkills = _meleeXP(state.stance, actual)
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'freeze', monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'warstrike': {
+      // Bandos Godsword — hit + reduce monster defenceBonus by damage dealt
+      const styleBonuses = getMeleeStyleBonuses(state.stance)
+      const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
+      const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
+      const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
+      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      const damage = rollDamage(acc, maxHit)
+      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      if (actual > 0) {
+        for (const k of Object.keys(monster.defenceBonus)) {
+          monster.defenceBonus[k] = Math.max(-64, monster.defenceBonus[k] - actual)
+        }
+      }
+      const xpSkills = _meleeXP(state.stance, actual)
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'warstrike', monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'lightning': {
+      // Saradomin Sword — normal melee hit + guaranteed magic lightning hit
+      const styleBonuses = getMeleeStyleBonuses(state.stance)
+      const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
+      const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
+      const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
+      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      const meleeDmg = rollDamage(acc, maxHit)
+      const lightningDmg = randInt(1, spec.lightningMax || 16)
+      const rawTotal = meleeDmg + lightningDmg
+      const actual = Math.min(rawTotal, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const xpSkills = _meleeXP(state.stance, meleeDmg > actual ? actual : meleeDmg)
+      if (actual > meleeDmg) {
+        xpSkills.magic = (xpSkills.magic || 0) + Math.floor((actual - meleeDmg) * MAGIC_XP_PER_DAMAGE)
+      }
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits: [meleeDmg, lightningDmg], totalDamage: actual, specType: 'lightning', monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'snapshot': {
+      // Magic Shortbow — two ranged hits at 75% max hit
+      const styleBonus = getRangedStyleBonus(state.stance)
+      const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
+      const maxHit = Math.floor(rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength) * 0.75)
+      const atkRoll = maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0)
+      const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus.ranged || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      const hits = [rollDamage(acc, maxHit), rollDamage(acc, maxHit)]
+      const rawTotal = hits[0] + hits[1]
+      const actual = Math.min(rawTotal, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const xpSkills = { ranged: actual * RANGED_XP_PER_DAMAGE, hitpoints: Math.floor(actual * HP_XP_PER_DAMAGE) }
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits, totalDamage: actual, specType: 'snapshot', monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'pebble_shot': {
+      // Armadyl Crossbow — guaranteed hit at 125% max hit
+      const styleBonus = getRangedStyleBonus(state.stance)
+      const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
+      const maxHit = Math.floor(rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength) * 1.25)
+      const damage = randInt(1, Math.max(1, maxHit))
+      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const xpSkills = { ranged: actual * RANGED_XP_PER_DAMAGE, hitpoints: Math.floor(actual * HP_XP_PER_DAMAGE) }
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'pebble_shot', monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'shove': {
+      // Zamorak Spear — 175% accuracy + stun 2 monster attacks
+      const styleBonuses = getMeleeStyleBonuses(state.stance)
+      const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
+      const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
+      const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
+      const atkRoll = Math.floor(maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0) * 1.75)
+      const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      const damage = rollDamage(acc, maxHit)
+      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      state.monsterAttackTimer += (monster.attackSpeed || 4) * 2
+      const xpSkills = _meleeXP(state.stance, actual)
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'shove', monsterHP: monster.currentHP })
+      break
+    }
+
+    default:
+      return { combatState, events: [] }
+  }
+
+  // Check monster death from special attack
+  if (monster.currentHP <= 0) {
+    monster.currentHP = 0
+    state.active = false
+    state.specialAttackEnergy = 100
+    state.loot = rollDrops(monster)
+    events.push({ type: 'monsterDeath', loot: state.loot, xpGained: { ...state.xpGained } })
+  }
+
+  state.monster = monster
+  return { combatState: state, events }
+}
+
+// ── XP helpers (internal) ──
+
+function _meleeXP(stance, damage) {
+  if (damage <= 0) return {}
+  const xpSkill = getMeleeXPSkill(stance)
+  const xpSkills = {}
+  if (Array.isArray(xpSkill)) {
+    const per = Math.floor(damage * MELEE_XP_PER_DAMAGE / 3)
+    for (const s of xpSkill) xpSkills[s] = per
+  } else {
+    xpSkills[xpSkill] = damage * MELEE_XP_PER_DAMAGE
+  }
+  xpSkills.hitpoints = Math.floor(damage * HP_XP_PER_DAMAGE)
+  return xpSkills
+}
+
+function _accXP(state, xpSkills) {
+  for (const [skill, xp] of Object.entries(xpSkills)) {
+    state.xpGained[skill] = (state.xpGained[skill] || 0) + xp
+  }
 }

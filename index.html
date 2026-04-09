@@ -2094,6 +2094,11 @@ const itemsData = {
     "requirements": {
       "ranged": 50
     },
+    "specialAttack": {
+      "type": "snapshot",
+      "energyCost": 55,
+      "description": "Snapshot: Fires two arrows in rapid succession, each dealing up to 75% of your normal max hit."
+    },
     "shopValue": 1800,
     "icon": "🏹"
   },
@@ -4591,6 +4596,11 @@ const itemsData = {
     "requirements": {
       "attack": 70
     },
+    "specialAttack": {
+      "type": "stun",
+      "energyCost": 50,
+      "description": "Energy Drain: Lashes at the target — if it connects, the creature is stunned for one attack cycle, skipping its next hit."
+    },
     "shopValue": 1500000,
     "icon": "🪱"
   },
@@ -4683,6 +4693,11 @@ const itemsData = {
     "requirements": {
       "attack": 60
     },
+    "specialAttack": {
+      "type": "double_hit",
+      "energyCost": 25,
+      "description": "Puncture: Strikes twice in rapid succession, each hit capable of dealing up to 115% of your normal max hit."
+    },
     "shopValue": 30000,
     "icon": "🗡️"
   },
@@ -4716,6 +4731,11 @@ const itemsData = {
     },
     "requirements": {
       "attack": 60
+    },
+    "specialAttack": {
+      "type": "zero_defence",
+      "energyCost": 55,
+      "description": "Sever: A precise strike that completely bypasses the target's defences, rolling against zero defence."
     },
     "shopValue": 59776,
     "icon": "⚔️"
@@ -5050,6 +5070,11 @@ const itemsData = {
     "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
     "otherBonus": { "meleeStrength": 132, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "attack": 75 },
+    "specialAttack": {
+      "type": "warstrike",
+      "energyCost": 50,
+      "description": "Warstrike: A crushing blow that deals damage and permanently weakens the target's defences for the rest of the fight by the amount of damage dealt."
+    },
     "shopValue": 4500000,
     "icon": "⚔️"
   },
@@ -5066,6 +5091,11 @@ const itemsData = {
     "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
     "otherBonus": { "meleeStrength": 132, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "attack": 75 },
+    "specialAttack": {
+      "type": "judgement",
+      "energyCost": 50,
+      "description": "The Judgement: A devastating strike rolled at 125% accuracy and capable of hitting up to 125% of your normal max damage."
+    },
     "shopValue": 8500000,
     "icon": "⚔️"
   },
@@ -5082,6 +5112,12 @@ const itemsData = {
     "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
     "otherBonus": { "meleeStrength": 132, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "attack": 75 },
+    "specialAttack": {
+      "type": "healing_blade",
+      "energyCost": 50,
+      "minHeal": 10,
+      "description": "Healing Blade: Strikes with divine power, restoring your HP by half the damage dealt (minimum 10 HP healed)."
+    },
     "shopValue": 2500000,
     "icon": "⚔️"
   },
@@ -5098,6 +5134,12 @@ const itemsData = {
     "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
     "otherBonus": { "meleeStrength": 132, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "attack": 75 },
+    "specialAttack": {
+      "type": "freeze",
+      "energyCost": 50,
+      "stunTicks": 33,
+      "description": "Ice Cleave: Strikes with chaotic energy, dealing damage and freezing the target for ~20 seconds (33 ticks), preventing it from attacking."
+    },
     "shopValue": 2500000,
     "icon": "⚔️"
   },
@@ -5208,6 +5250,12 @@ const itemsData = {
     "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
     "otherBonus": { "meleeStrength": 82, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "attack": 70 },
+    "specialAttack": {
+      "type": "lightning",
+      "energyCost": 100,
+      "lightningMax": 16,
+      "description": "Saradomin's Lightning: A two-hit attack — a melee strike followed by a divine lightning bolt dealing 1–16 magic damage (always hits)."
+    },
     "shopValue": 750000,
     "icon": "⚔️"
   },
@@ -5232,6 +5280,11 @@ const itemsData = {
     "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
     "otherBonus": { "meleeStrength": 0, "rangedStrength": 90, "magicDamage": 0 },
     "requirements": { "ranged": 70 },
+    "specialAttack": {
+      "type": "pebble_shot",
+      "energyCost": 40,
+      "description": "Pebble Shot: Fires a bolt that never misses, dealing up to 125% of your normal ranged max hit."
+    },
     "shopValue": 2500000,
     "icon": "🏹"
   },
@@ -5248,6 +5301,11 @@ const itemsData = {
     "defenceBonus": { "stab": 4, "slash": 4, "crush": 4, "magic": 0, "ranged": 0 },
     "otherBonus": { "meleeStrength": 75, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "attack": 70 },
+    "specialAttack": {
+      "type": "shove",
+      "energyCost": 25,
+      "description": "Shove: A powerful stab rolled at 175% accuracy that staggers the target, skipping their next 2 attacks."
+    },
     "shopValue": 300000,
     "icon": "🗡️"
   },
@@ -8248,6 +8306,7 @@ function simulateIdleAgility(task, elapsedMs) {
 
 
 
+
 /**
  * Create a new combat state
  */
@@ -8265,7 +8324,8 @@ function createCombatState(monster, combatType = 'melee', stance = 'accurate', s
         log: [], // combat log entries
         tickCount: 0,
         xpGained: {}, // accumulated xp per skill
-        loot: null // set on monster death
+        loot: null, // set on monster death
+        specialAttackEnergy: 0 // 0-100; regenerates to 100 on each monster kill
     };
 }
 /**
@@ -8379,6 +8439,7 @@ function processCombatTick(combatState, playerStats, equipment, itemsData) {
         if (monster.currentHP <= 0) {
             monster.currentHP = 0;
             state.active = false;
+            state.specialAttackEnergy = 100; // regenerate spec bar on kill
             // Roll drops
             state.loot = rollDrops(monster);
             events.push({ type: 'monsterDeath', loot: state.loot, xpGained: { ...state.xpGained } });
@@ -8448,6 +8509,280 @@ function rollDrops(monster) {
  */
 function applyEat(combatState) {
     return { ...combatState, eatCooldown: EAT_TICK_COST, playerAttackTimer: Math.max(combatState.playerAttackTimer, EAT_TICK_COST) };
+}
+/**
+ * Apply a special attack — manually triggered by the player.
+ * Returns { combatState, events[] }
+ * Consumes specialAttackEnergy per the weapon's energyCost.
+ * Regenerates to 100 automatically in processCombatTick on monster death.
+ */
+function applySpecialAttack(combatState, playerStats, equipment, itemsData) {
+    const weaponEntry = equipment?.weapon;
+    if (!weaponEntry)
+        return { combatState, events: [] };
+    const weapon = itemsData[weaponEntry.itemId];
+    if (!weapon?.specialAttack)
+        return { combatState, events: [] };
+    const spec = weapon.specialAttack;
+    if ((combatState.specialAttackEnergy || 0) < spec.energyCost)
+        return { combatState, events: [] };
+    const state = {
+        ...combatState,
+        monster: { ...combatState.monster, defenceBonus: { ...combatState.monster.defenceBonus }, stats: { ...combatState.monster.stats } },
+        specialAttackEnergy: (combatState.specialAttackEnergy || 0) - spec.energyCost
+    };
+    const events = [];
+    const bonuses = getEquipmentBonuses(equipment, itemsData);
+    const weaponStyle = getAttackStyle(equipment, itemsData);
+    const monster = state.monster;
+    switch (spec.type) {
+        case 'double_hit': {
+            // Dragon Dagger — two hits at 115% max hit
+            const styleBonuses = getMeleeStyleBonuses(state.stance);
+            const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus);
+            const maxHit = Math.floor(meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength) * 1.15);
+            const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus);
+            const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0);
+            const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0);
+            const acc = hitChance(atkRoll, defRoll);
+            const hits = [rollDamage(acc, maxHit), rollDamage(acc, maxHit)];
+            const rawTotal = hits[0] + hits[1];
+            const actual = Math.min(rawTotal, Math.max(0, monster.currentHP));
+            monster.currentHP -= actual;
+            const xpSkills = _meleeXP(state.stance, actual);
+            _accXP(state, xpSkills);
+            events.push({ type: 'xp', xpSkills });
+            events.push({ type: 'specialHit', hits, totalDamage: actual, specType: 'double_hit', monsterHP: monster.currentHP });
+            break;
+        }
+        case 'zero_defence': {
+            // Dragon Scimitar — ignores all monster defence bonuses
+            const styleBonuses = getMeleeStyleBonuses(state.stance);
+            const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus);
+            const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength);
+            const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus);
+            const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0);
+            const defRoll = maxDefenceRoll(0, 0);
+            const acc = hitChance(atkRoll, defRoll);
+            const damage = rollDamage(acc, maxHit);
+            const actual = Math.min(damage, Math.max(0, monster.currentHP));
+            monster.currentHP -= actual;
+            const xpSkills = _meleeXP(state.stance, actual);
+            _accXP(state, xpSkills);
+            events.push({ type: 'xp', xpSkills });
+            events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'zero_defence', monsterHP: monster.currentHP });
+            break;
+        }
+        case 'stun': {
+            // Abyssal Whip — hit + if not miss, delay monster's next attack by 1 attack cycle
+            const styleBonuses = getMeleeStyleBonuses(state.stance);
+            const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus);
+            const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength);
+            const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus);
+            const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0);
+            const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0);
+            const acc = hitChance(atkRoll, defRoll);
+            const damage = rollDamage(acc, maxHit);
+            const actual = Math.min(damage, Math.max(0, monster.currentHP));
+            monster.currentHP -= actual;
+            const stunned = damage > 0;
+            if (stunned)
+                state.monsterAttackTimer += (monster.attackSpeed || 4);
+            const xpSkills = _meleeXP(state.stance, actual);
+            _accXP(state, xpSkills);
+            events.push({ type: 'xp', xpSkills });
+            events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'stun', stunned, monsterHP: monster.currentHP });
+            break;
+        }
+        case 'judgement': {
+            // Armadyl Godsword — 125% accuracy + 125% max hit
+            const styleBonuses = getMeleeStyleBonuses(state.stance);
+            const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus);
+            const maxHit = Math.floor(meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength) * 1.25);
+            const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus);
+            const atkRoll = Math.floor(maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0) * 1.25);
+            const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0);
+            const acc = hitChance(atkRoll, defRoll);
+            const damage = rollDamage(acc, maxHit);
+            const actual = Math.min(damage, Math.max(0, monster.currentHP));
+            monster.currentHP -= actual;
+            const xpSkills = _meleeXP(state.stance, actual);
+            _accXP(state, xpSkills);
+            events.push({ type: 'xp', xpSkills });
+            events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'judgement', monsterHP: monster.currentHP });
+            break;
+        }
+        case 'healing_blade': {
+            // Saradomin Godsword — hit + heal 50% of damage (min 10 HP)
+            const styleBonuses = getMeleeStyleBonuses(state.stance);
+            const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus);
+            const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength);
+            const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus);
+            const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0);
+            const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0);
+            const acc = hitChance(atkRoll, defRoll);
+            const damage = rollDamage(acc, maxHit);
+            const actual = Math.min(damage, Math.max(0, monster.currentHP));
+            monster.currentHP -= actual;
+            const minHeal = spec.minHeal || 10;
+            const healAmount = Math.max(minHeal, Math.floor(actual / 2));
+            const xpSkills = _meleeXP(state.stance, actual);
+            _accXP(state, xpSkills);
+            events.push({ type: 'xp', xpSkills });
+            events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'healing_blade', healAmount, monsterHP: monster.currentHP });
+            break;
+        }
+        case 'freeze': {
+            // Zamorak Godsword — hit + freeze monster for stunTicks ticks
+            const styleBonuses = getMeleeStyleBonuses(state.stance);
+            const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus);
+            const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength);
+            const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus);
+            const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0);
+            const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0);
+            const acc = hitChance(atkRoll, defRoll);
+            const damage = rollDamage(acc, maxHit);
+            const actual = Math.min(damage, Math.max(0, monster.currentHP));
+            monster.currentHP -= actual;
+            state.monsterAttackTimer += (spec.stunTicks || 33);
+            const xpSkills = _meleeXP(state.stance, actual);
+            _accXP(state, xpSkills);
+            events.push({ type: 'xp', xpSkills });
+            events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'freeze', monsterHP: monster.currentHP });
+            break;
+        }
+        case 'warstrike': {
+            // Bandos Godsword — hit + reduce monster defenceBonus by damage dealt
+            const styleBonuses = getMeleeStyleBonuses(state.stance);
+            const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus);
+            const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength);
+            const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus);
+            const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0);
+            const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0);
+            const acc = hitChance(atkRoll, defRoll);
+            const damage = rollDamage(acc, maxHit);
+            const actual = Math.min(damage, Math.max(0, monster.currentHP));
+            monster.currentHP -= actual;
+            if (actual > 0) {
+                for (const k of Object.keys(monster.defenceBonus)) {
+                    monster.defenceBonus[k] = Math.max(-64, monster.defenceBonus[k] - actual);
+                }
+            }
+            const xpSkills = _meleeXP(state.stance, actual);
+            _accXP(state, xpSkills);
+            events.push({ type: 'xp', xpSkills });
+            events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'warstrike', monsterHP: monster.currentHP });
+            break;
+        }
+        case 'lightning': {
+            // Saradomin Sword — normal melee hit + guaranteed magic lightning hit
+            const styleBonuses = getMeleeStyleBonuses(state.stance);
+            const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus);
+            const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength);
+            const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus);
+            const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0);
+            const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0);
+            const acc = hitChance(atkRoll, defRoll);
+            const meleeDmg = rollDamage(acc, maxHit);
+            const lightningDmg = randInt(1, spec.lightningMax || 16);
+            const rawTotal = meleeDmg + lightningDmg;
+            const actual = Math.min(rawTotal, Math.max(0, monster.currentHP));
+            monster.currentHP -= actual;
+            const xpSkills = _meleeXP(state.stance, meleeDmg > actual ? actual : meleeDmg);
+            if (actual > meleeDmg) {
+                xpSkills.magic = (xpSkills.magic || 0) + Math.floor((actual - meleeDmg) * MAGIC_XP_PER_DAMAGE);
+            }
+            _accXP(state, xpSkills);
+            events.push({ type: 'xp', xpSkills });
+            events.push({ type: 'specialHit', hits: [meleeDmg, lightningDmg], totalDamage: actual, specType: 'lightning', monsterHP: monster.currentHP });
+            break;
+        }
+        case 'snapshot': {
+            // Magic Shortbow — two ranged hits at 75% max hit
+            const styleBonus = getRangedStyleBonus(state.stance);
+            const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus);
+            const maxHit = Math.floor(rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength) * 0.75);
+            const atkRoll = maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0);
+            const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus.ranged || 0);
+            const acc = hitChance(atkRoll, defRoll);
+            const hits = [rollDamage(acc, maxHit), rollDamage(acc, maxHit)];
+            const rawTotal = hits[0] + hits[1];
+            const actual = Math.min(rawTotal, Math.max(0, monster.currentHP));
+            monster.currentHP -= actual;
+            const xpSkills = { ranged: actual * RANGED_XP_PER_DAMAGE, hitpoints: Math.floor(actual * HP_XP_PER_DAMAGE) };
+            _accXP(state, xpSkills);
+            events.push({ type: 'xp', xpSkills });
+            events.push({ type: 'specialHit', hits, totalDamage: actual, specType: 'snapshot', monsterHP: monster.currentHP });
+            break;
+        }
+        case 'pebble_shot': {
+            // Armadyl Crossbow — guaranteed hit at 125% max hit
+            const styleBonus = getRangedStyleBonus(state.stance);
+            const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus);
+            const maxHit = Math.floor(rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength) * 1.25);
+            const damage = randInt(1, Math.max(1, maxHit));
+            const actual = Math.min(damage, Math.max(0, monster.currentHP));
+            monster.currentHP -= actual;
+            const xpSkills = { ranged: actual * RANGED_XP_PER_DAMAGE, hitpoints: Math.floor(actual * HP_XP_PER_DAMAGE) };
+            _accXP(state, xpSkills);
+            events.push({ type: 'xp', xpSkills });
+            events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'pebble_shot', monsterHP: monster.currentHP });
+            break;
+        }
+        case 'shove': {
+            // Zamorak Spear — 175% accuracy + stun 2 monster attacks
+            const styleBonuses = getMeleeStyleBonuses(state.stance);
+            const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus);
+            const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength);
+            const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus);
+            const atkRoll = Math.floor(maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0) * 1.75);
+            const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0);
+            const acc = hitChance(atkRoll, defRoll);
+            const damage = rollDamage(acc, maxHit);
+            const actual = Math.min(damage, Math.max(0, monster.currentHP));
+            monster.currentHP -= actual;
+            state.monsterAttackTimer += (monster.attackSpeed || 4) * 2;
+            const xpSkills = _meleeXP(state.stance, actual);
+            _accXP(state, xpSkills);
+            events.push({ type: 'xp', xpSkills });
+            events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'shove', monsterHP: monster.currentHP });
+            break;
+        }
+        default:
+            return { combatState, events: [] };
+    }
+    // Check monster death from special attack
+    if (monster.currentHP <= 0) {
+        monster.currentHP = 0;
+        state.active = false;
+        state.specialAttackEnergy = 100;
+        state.loot = rollDrops(monster);
+        events.push({ type: 'monsterDeath', loot: state.loot, xpGained: { ...state.xpGained } });
+    }
+    state.monster = monster;
+    return { combatState: state, events };
+}
+// ── XP helpers (internal) ──
+function _meleeXP(stance, damage) {
+    if (damage <= 0)
+        return {};
+    const xpSkill = getMeleeXPSkill(stance);
+    const xpSkills = {};
+    if (Array.isArray(xpSkill)) {
+        const per = Math.floor(damage * MELEE_XP_PER_DAMAGE / 3);
+        for (const s of xpSkill)
+            xpSkills[s] = per;
+    }
+    else {
+        xpSkills[xpSkill] = damage * MELEE_XP_PER_DAMAGE;
+    }
+    xpSkills.hitpoints = Math.floor(damage * HP_XP_PER_DAMAGE);
+    return xpSkills;
+}
+function _accXP(state, xpSkills) {
+    for (const [skill, xp] of Object.entries(xpSkills)) {
+        state.xpGained[skill] = (state.xpGained[skill] || 0) + xp;
+    }
 }
 
 // ── engine/skilling.js ──
@@ -10088,9 +10423,11 @@ function StatsScreen() {
 function InventoryScreen() {
     const { inventory, equipment, stats, bank, updateInventory, updateEquipment, updateBank, updateHP, currentHP, getMaxHP, addToast, itemsData } = useGame();
     const [selected, setSelected] = useState(null); // { slotIndex, slot, item }
+    const [showSpecInfo, setShowSpecInfo] = useState(false);
     const handleSlotClick = (slot, item, index) => {
         const idx = inventory.indexOf(slot);
         setSelected({ slotIndex: idx >= 0 ? idx : index, slot, item });
+        setShowSpecInfo(false);
     };
     const handleEquip = () => {
         if (!selected)
@@ -10338,6 +10675,17 @@ function InventoryScreen() {
                         h("span", { class: "text-[var(--color-gold)]" },
                             selected.item.shopValue,
                             " gp")))),
+                selected.item.specialAttack && (h("div", { class: "bg-[#111] rounded-lg border border-yellow-900 overflow-hidden" },
+                    h("button", { onClick: () => setShowSpecInfo(v => !v), class: "w-full flex items-center justify-between px-3 py-2 active:bg-[#1a1a1a]" },
+                        h("span", { class: "text-xs font-semibold text-yellow-400" }, "\u26A1 Special Attack"),
+                        h("span", { class: "text-[10px] text-yellow-600" },
+                            showSpecInfo ? '▲' : '▼',
+                            " ",
+                            selected.item.specialAttack.energyCost,
+                            "% energy")),
+                    showSpecInfo && (h("div", { class: "px-3 pb-3 space-y-1 border-t border-yellow-900" },
+                        h("p", { class: "text-[11px] text-[var(--color-parchment)] opacity-70 mt-2 leading-relaxed" }, selected.item.specialAttack.description),
+                        h("p", { class: "text-[10px] text-yellow-600 mt-1" }, "Bar refills to 100% on each monster kill."))))),
                 h("div", { class: "grid grid-cols-2 gap-2" },
                     (selected.item.slot) && !selected.slot.noted && (h("button", { onClick: handleEquip, class: "py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80" }, "Equip")),
                     selected.item.type === 'food' && !selected.slot.noted && (h("button", { onClick: handleEat, class: "py-2.5 rounded-lg bg-[var(--color-emerald)] text-white font-semibold text-sm active:opacity-80" }, "Eat")),
@@ -10986,6 +11334,80 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                 startFight(original);
         }
     };
+    const handleSpecialAttack = () => {
+        if (!combatRef.current || !combatRef.current.active)
+            return;
+        const playerStats = {
+            attack: getLevelFromXP(statsRef.current.attack?.xp || 0),
+            strength: getLevelFromXP(statsRef.current.strength?.xp || 0),
+            defence: getLevelFromXP(statsRef.current.defence?.xp || 0),
+            ranged: getLevelFromXP(statsRef.current.ranged?.xp || 0),
+            magic: getLevelFromXP(statsRef.current.magic?.xp || 0),
+            currentHP: hpRef.current
+        };
+        const { combatState: newState, events } = applySpecialAttack(combatRef.current, playerStats, equipmentRef.current, itemsData);
+        combatRef.current = newState;
+        setCombat({ ...newState });
+        for (const ev of events) {
+            if (ev.type === 'specialHit') {
+                const hitsStr = ev.hits.map(h => h > 0 ? h : 'miss').join(' + ');
+                const specLabels = {
+                    double_hit: '⚔️⚔️ Puncture',
+                    zero_defence: '🎯 Sever',
+                    stun: ev.stunned ? '🪱 Energy Drain (stunned!)' : '🪱 Energy Drain',
+                    judgement: '⚡ The Judgement',
+                    healing_blade: `✨ Healing Blade (+${ev.healAmount} HP)`,
+                    freeze: '❄️ Ice Cleave (frozen!)',
+                    warstrike: '💥 Warstrike',
+                    lightning: '⚡ Saradomin\'s Lightning',
+                    snapshot: '🏹🏹 Snapshot',
+                    pebble_shot: '🎯 Pebble Shot',
+                    shove: '🗡️ Shove (staggered!)'
+                };
+                const label = specLabels[ev.specType] || '⚡ Special Attack';
+                setLog(prev => [...prev.slice(-20), {
+                        text: `${label}: ${hitsStr} (total ${ev.totalDamage})`,
+                        type: 'special',
+                        time: Date.now()
+                    }]);
+                if (ev.specType === 'healing_blade' && ev.healAmount > 0) {
+                    const maxHP = getMaxHP();
+                    const newHP = Math.min(hpRef.current + ev.healAmount, maxHP);
+                    updateHP(newHP);
+                    hpRef.current = newHP;
+                }
+            }
+            if (ev.type === 'xp') {
+                for (const [skill, xp] of Object.entries(ev.xpSkills)) {
+                    if (xp > 0)
+                        grantXP(skill, xp);
+                }
+            }
+            if (ev.type === 'monsterDeath') {
+                setKillCount(k => k + 1);
+                if (ev.loot && ev.loot.length > 0) {
+                    const newInv = [...inventoryRef.current];
+                    for (const drop of ev.loot) {
+                        const item = itemsData[drop.itemId];
+                        const added = addItem(newInv, drop.itemId, drop.quantity, item?.stackable || false);
+                        if (added)
+                            addToast(`Loot: ${item?.name || drop.itemId} ×${drop.quantity}`, 'drop');
+                    }
+                    updateInventory(newInv);
+                }
+                setLog(prev => [...prev.slice(-20), {
+                        text: `${newState.monster.name} defeated!`,
+                        type: 'victory',
+                        time: Date.now()
+                    }]);
+                setTimeout(() => {
+                    const original = monstersData[newState.monster.id];
+                    if (original)
+                        continueFight(original);
+                }, 1200);
+            }
+        }
+    };
     const handleAddToHome = (monster) => {
         const icon = MONSTER_ICONS[monster.id] || '👹';
         const shortcut = {
@@ -11076,14 +11498,34 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                 freeSlots(inventory),
                 "/28 free",
                 autoBankLoot ? ' · 🏦 idle auto-bank on' : '')),
+        (() => {
+            const weaponEntry = equipment?.weapon;
+            const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null;
+            if (!weapon?.specialAttack)
+                return null;
+            const energy = combat.specialAttackEnergy || 0;
+            const canSpec = energy >= weapon.specialAttack.energyCost;
+            return (h("div", { class: "mb-2 bg-[#111] rounded-lg px-3 py-2" },
+                h("div", { class: "flex items-center justify-between mb-1" },
+                    h("span", { class: "text-[10px] text-yellow-400 font-semibold" }, "\u26A1 Special Attack"),
+                    h("span", { class: "text-[10px] font-[var(--font-mono)] text-yellow-400" },
+                        energy,
+                        "%")),
+                h("div", { class: "h-2 rounded-full bg-[#222] overflow-hidden" },
+                    h("div", { class: "h-full rounded-full transition-all duration-300", style: { width: `${energy}%`, background: canSpec ? '#eab308' : '#78530a' } })),
+                h("div", { class: "text-[9px] text-[var(--color-parchment)] opacity-40 mt-0.5" },
+                    weapon.specialAttack.energyCost,
+                    "% cost \u00B7 refills on kill")));
+        })(),
         h("div", { class: "flex-1 bg-[#111] rounded-lg border border-[#222] p-2 overflow-y-auto mb-2 min-h-[100px]" }, log.map((entry, i) => (h("div", { key: i, class: `text-[11px] font-[var(--font-mono)] py-0.5
             ${entry.type === 'hit' ? 'text-[var(--color-emerald-light)]' :
                 entry.type === 'miss' ? 'text-[var(--color-parchment)] opacity-30' :
                     entry.type === 'enemy' ? 'text-[var(--color-blood-light)]' :
                         entry.type === 'heal' ? 'text-[var(--color-hp-green)]' :
                             entry.type === 'dragonfire' ? 'text-orange-400' :
-                                entry.type === 'victory' ? 'text-[var(--color-gold)]' :
-                                    'text-[var(--color-parchment)] opacity-50'}` }, entry.text)))),
+                                entry.type === 'special' ? 'text-yellow-300' :
+                                    entry.type === 'victory' ? 'text-[var(--color-gold)]' :
+                                        'text-[var(--color-parchment)] opacity-50'}` }, entry.text)))),
         fightStartedAt && (h("div", { class: "flex-shrink-0 flex justify-between bg-[#111] rounded-lg px-3 py-2 mb-2 text-[11px]" },
             h("span", { class: "text-[var(--color-parchment)] opacity-50" }, "Kills"),
             h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, killCount),
@@ -11095,6 +11537,18 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
             h("div", { class: "grid grid-cols-2 gap-2" },
                 h("button", { onClick: handleEat, class: "py-2.5 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80" }, "\uD83C\uDF56 Eat"),
                 h("button", { class: "py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] opacity-40 text-sm cursor-default" }, "\uD83E\uDDEA Potion")),
+            (() => {
+                const weaponEntry = equipment?.weapon;
+                const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null;
+                if (!weapon?.specialAttack)
+                    return null;
+                const energy = combat.specialAttackEnergy || 0;
+                const canSpec = energy >= weapon.specialAttack.energyCost;
+                return (h("button", { onClick: canSpec ? handleSpecialAttack : undefined, class: `py-2.5 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`, style: canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888' },
+                    "\u26A1 Special Attack (",
+                    weapon.specialAttack.energyCost,
+                    "%)"));
+            })(),
             h("div", { class: "flex gap-2" },
                 h("button", { onClick: stopAndBack, class: "flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80" }, "\u2190 Stop & Back"),
                 skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "flex-1 py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\u23ED\uFE0F Skip 1h"))))) : (h("div", { class: "grid grid-cols-3 gap-2" },
@@ -12326,8 +12780,10 @@ function EquipSlot({ slotName, equipment, itemsData, onSelect }) {
 function EquipmentScreen() {
     const { equipment, inventory, updateEquipment, updateInventory, addToast, itemsData } = useGame();
     const [selected, setSelected] = useState(null); // { slot, item }
+    const [showSpecInfo, setShowSpecInfo] = useState(false);
     const handleSelect = (slotName, item) => {
         setSelected({ slot: slotName, item });
+        setShowSpecInfo(false);
     };
     const handleUnequip = () => {
         if (!selected)
@@ -12439,6 +12895,20 @@ function EquipmentScreen() {
                     selected.item.requirements && Object.entries(selected.item.requirements).length > 0 && (h("p", null,
                         "Requires: ",
                         Object.entries(selected.item.requirements).map(([s, l]) => `${s} ${l}`).join(', ')))),
+                selected.item.specialAttack && (h("div", { style: { background: '#111', borderRadius: '8px', border: '1px solid #3a2a00', overflow: 'hidden' } },
+                    h("button", { onClick: () => setShowSpecInfo(v => !v), style: {
+                            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            padding: '8px 12px', background: 'transparent', border: 'none', cursor: 'pointer'
+                        } },
+                        h("span", { style: { fontSize: '12px', fontWeight: '600', color: '#eab308' } }, "\u26A1 Special Attack"),
+                        h("span", { style: { fontSize: '10px', color: '#78530a' } },
+                            showSpecInfo ? '▲' : '▼',
+                            " ",
+                            selected.item.specialAttack.energyCost,
+                            "% energy")),
+                    showSpecInfo && (h("div", { style: { padding: '0 12px 12px', borderTop: '1px solid #3a2a00' } },
+                        h("p", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.7, marginTop: '8px', lineHeight: '1.5' } }, selected.item.specialAttack.description),
+                        h("p", { style: { fontSize: '10px', color: '#78530a', marginTop: '4px' } }, "Bar refills to 100% on each monster kill."))))),
                 h("button", { onClick: handleUnequip, style: {
                         padding: '12px', borderRadius: '10px',
                         background: '#8b1a1a', color: 'white',

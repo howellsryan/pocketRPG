@@ -9,10 +9,12 @@ import { getLevelFromXP } from '../engine/experience.js'
 export default function InventoryScreen() {
   const { inventory, equipment, stats, bank, updateInventory, updateEquipment, updateBank, updateHP, currentHP, getMaxHP, addToast, itemsData } = useGame()
   const [selected, setSelected] = useState(null) // { slotIndex, slot, item }
+  const [showSpecInfo, setShowSpecInfo] = useState(false)
 
   const handleSlotClick = (slot, item, index) => {
     const idx = inventory.indexOf(slot)
     setSelected({ slotIndex: idx >= 0 ? idx : index, slot, item })
+    setShowSpecInfo(false)
   }
 
   const handleEquip = () => {
@@ -276,6 +278,29 @@ export default function InventoryScreen() {
                 <p class="mt-1">Value: <span class="text-[var(--color-gold)]">{selected.item.shopValue} gp</span></p>
               )}
             </div>
+
+            {/* Special attack info — shown for weapons with a spec */}
+            {selected.item.specialAttack && (
+              <div class="bg-[#111] rounded-lg border border-yellow-900 overflow-hidden">
+                <button
+                  onClick={() => setShowSpecInfo(v => !v)}
+                  class="w-full flex items-center justify-between px-3 py-2 active:bg-[#1a1a1a]"
+                >
+                  <span class="text-xs font-semibold text-yellow-400">⚡ Special Attack</span>
+                  <span class="text-[10px] text-yellow-600">{showSpecInfo ? '▲' : '▼'} {selected.item.specialAttack.energyCost}% energy</span>
+                </button>
+                {showSpecInfo && (
+                  <div class="px-3 pb-3 space-y-1 border-t border-yellow-900">
+                    <p class="text-[11px] text-[var(--color-parchment)] opacity-70 mt-2 leading-relaxed">
+                      {selected.item.specialAttack.description}
+                    </p>
+                    <p class="text-[10px] text-yellow-600 mt-1">
+                      Bar refills to 100% on each monster kill.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Action buttons */}
             <div class="grid grid-cols-2 gap-2">
