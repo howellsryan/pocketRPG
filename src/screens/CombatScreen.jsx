@@ -53,6 +53,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
   const [log, setLog] = useState([])
   const [killCount, setKillCount] = useState(0)
   const [fightStartedAt, setFightStartedAt] = useState(null)
+  const [isAutoRestarting, setIsAutoRestarting] = useState(false)
 
   const combatRef = useRef(null)
   const hpRef = useRef(currentHP)
@@ -173,9 +174,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
             type: 'victory',
             time: Date.now()
           }])
+          setIsAutoRestarting(true)
           setTimeout(() => {
             const original = monstersData[state.monster.id]
             if (original) continueFight(original)
+            setIsAutoRestarting(false)
           }, 1200)
         }
       }
@@ -234,13 +237,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
       type: 'heal',
       time: Date.now()
     }])
-  }
-
-  const fightAnother = () => {
-    if (combat?.monster) {
-      const original = monstersData[combat.monster.id]
-      if (original) startFight(original)
-    }
   }
 
   const handleSpecialAttack = () => {
@@ -307,9 +303,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
           type: 'victory',
           time: Date.now()
         }])
+        setIsAutoRestarting(true)
         setTimeout(() => {
           const original = monstersData[newState.monster.id]
           if (original) continueFight(original)
+          setIsAutoRestarting(false)
         }, 1200)
       }
     }
@@ -523,7 +521,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
 
       {/* Action buttons */}
       <div class="flex-shrink-0 flex flex-col gap-2">
-        {combat.active ? (
+        {combat.active && !isAutoRestarting && (
           <>
             {/* Primary combat actions */}
             <div class="grid grid-cols-2 gap-2">
@@ -567,17 +565,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
               )}
             </div>
           </>
-        ) : (
-          <div class="grid grid-cols-3 gap-2">
-            <button onClick={fightAnother}
-              class="py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80 col-span-2">
-              ⚔️ Fight Again
-            </button>
-            <button onClick={() => { setCombat(null); setLog([]); setActiveTask(null) }}
-              class="py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80">
-              Back
-            </button>
-          </div>
         )}
       </div>
     </div>

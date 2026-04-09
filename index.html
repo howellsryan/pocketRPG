@@ -11647,6 +11647,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
     const [log, setLog] = useState([]);
     const [killCount, setKillCount] = useState(0);
     const [fightStartedAt, setFightStartedAt] = useState(null);
+    const [isAutoRestarting, setIsAutoRestarting] = useState(false);
     const combatRef = useRef(null);
     const hpRef = useRef(currentHP);
     const hasAutoStarted = useRef(false);
@@ -11763,10 +11764,12 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                             type: 'victory',
                             time: Date.now()
                         }]);
+                    setIsAutoRestarting(true);
                     setTimeout(() => {
                         const original = monstersData[state.monster.id];
                         if (original)
                             continueFight(original);
+                        setIsAutoRestarting(false);
                     }, 1200);
                 }
             }
@@ -11820,13 +11823,6 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                 type: 'heal',
                 time: Date.now()
             }]);
-    };
-    const fightAnother = () => {
-        if (combat?.monster) {
-            const original = monstersData[combat.monster.id];
-            if (original)
-                startFight(original);
-        }
     };
     const handleSpecialAttack = () => {
         if (!combatRef.current || !combatRef.current.active)
@@ -11894,10 +11890,12 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                         type: 'victory',
                         time: Date.now()
                     }]);
+                setIsAutoRestarting(true);
                 setTimeout(() => {
                     const original = monstersData[newState.monster.id];
                     if (original)
                         continueFight(original);
+                    setIsAutoRestarting(false);
                 }, 1200);
             }
         }
@@ -12027,7 +12025,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
             h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, killCount > 0 && (Date.now() - fightStartedAt) > 5000
                 ? Math.round(killCount / ((Date.now() - fightStartedAt) / 3600000)).toLocaleString()
                 : '—'))),
-        h("div", { class: "flex-shrink-0 flex flex-col gap-2" }, combat.active ? (h(Fragment, null,
+        h("div", { class: "flex-shrink-0 flex flex-col gap-2" }, combat.active && !isAutoRestarting && (h(Fragment, null,
             h("div", { class: "grid grid-cols-2 gap-2" },
                 h("button", { onClick: handleEat, class: "py-2.5 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80" }, "\uD83C\uDF56 Eat"),
                 h("button", { class: "py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] opacity-40 text-sm cursor-default" }, "\uD83E\uDDEA Potion")),
@@ -12045,9 +12043,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
             })(),
             h("div", { class: "flex gap-2" },
                 h("button", { onClick: stopAndBack, class: "flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80" }, "\u2190 Stop & Back"),
-                skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "flex-1 py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\u23ED\uFE0F Skip 1h"))))) : (h("div", { class: "grid grid-cols-3 gap-2" },
-            h("button", { onClick: fightAnother, class: "py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80 col-span-2" }, "\u2694\uFE0F Fight Again"),
-            h("button", { onClick: () => { setCombat(null); setLog([]); setActiveTask(null); }, class: "py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80" }, "Back"))))));
+                skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "flex-1 py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\u23ED\uFE0F Skip 1h"))))))));
 }
 
 // ── screens/AgilityScreen.js ──
