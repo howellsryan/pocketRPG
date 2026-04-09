@@ -75,31 +75,36 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       if (weaponEntry) {
         const weapon = itemsData[weaponEntry.itemId]
         if (weapon?.specialAttack) {
-          // Drain energy when special attack actually fires
-          state.specialAttackEnergy = Math.max(0, (state.specialAttackEnergy || 0) - weapon.specialAttack.energyCost)
-          const { combatState: newState, events: specEvents } = applySpecialAttack(state, playerStats, equipment, itemsData)
-          // Merge events from special attack
-          for (const ev of specEvents) {
-            events.push(ev)
-          }
-          Object.assign(state, newState)
-          state.specialAttackQueued = false
-          // Reset attack timer for next action
-          let speed = weaponSpeed
-          if (state.combatType === 'ranged' && state.stance === 'rapid') speed = Math.max(1, speed - 1)
-          state.playerAttackTimer = speed
-          // Check monster death
-          if (state.monster.currentHP <= 0) {
-            state.monster.currentHP = 0
-            state.active = false
-            state.specialAttackEnergy = 100
-            state.loot = rollDrops(state.monster)
-            events.push({ type: 'monsterDeath', loot: state.loot, xpGained: { ...state.xpGained } })
+          // Check if we still have enough energy before firing
+          const currentEnergy = state.specialAttackEnergy || 0
+          if (currentEnergy >= weapon.specialAttack.energyCost) {
+            // Drain energy when special attack actually fires
+            state.specialAttackEnergy = Math.max(0, currentEnergy - weapon.specialAttack.energyCost)
+            const { combatState: newState, events: specEvents } = applySpecialAttack(state, playerStats, equipment, itemsData)
+            // Merge events from special attack
+            for (const ev of specEvents) {
+              events.push(ev)
+            }
+            Object.assign(state, newState)
+            state.specialAttackQueued = false
+            // Reset attack timer for next action
+            let speed = weaponSpeed
+            if (state.combatType === 'ranged' && state.stance === 'rapid') speed = Math.max(1, speed - 1)
+            state.playerAttackTimer = speed
+            // Check monster death
+            if (state.monster.currentHP <= 0) {
+              state.monster.currentHP = 0
+              state.active = false
+              state.specialAttackEnergy = 100
+              state.loot = rollDrops(state.monster)
+              events.push({ type: 'monsterDeath', loot: state.loot, xpGained: { ...state.xpGained } })
+              return { combatState: state, events }
+            }
             return { combatState: state, events }
           }
-          return { combatState: state, events }
         }
       }
+      // Clear queued flag if we can't fire for any reason
       state.specialAttackQueued = false
     }
 
