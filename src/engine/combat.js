@@ -75,6 +75,8 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       if (weaponEntry) {
         const weapon = itemsData[weaponEntry.itemId]
         if (weapon?.specialAttack) {
+          // Drain energy when special attack actually fires
+          state.specialAttackEnergy = Math.max(0, (state.specialAttackEnergy || 0) - weapon.specialAttack.energyCost)
           const { combatState: newState, events: specEvents } = applySpecialAttack(state, playerStats, equipment, itemsData)
           // Merge events from special attack
           for (const ev of specEvents) {
@@ -359,8 +361,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
 
   const state = {
     ...combatState,
-    monster: { ...combatState.monster, defenceBonus: { ...combatState.monster.defenceBonus }, stats: { ...combatState.monster.stats } },
-    specialAttackEnergy: (combatState.specialAttackEnergy || 0) - spec.energyCost
+    monster: { ...combatState.monster, defenceBonus: { ...combatState.monster.defenceBonus }, stats: { ...combatState.monster.stats } }
   }
   const events = []
   const bonuses = getEquipmentBonuses(equipment, itemsData)
