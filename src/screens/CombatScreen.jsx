@@ -36,6 +36,12 @@ const COMBAT_CATEGORIES = [
     icon: '👑',
     ids: ['general_graardor', 'commander_zilyana', 'kril_tsutsaroth', 'kreearra'],
   },
+  {
+    key: 'dagganoth_kings',
+    label: 'Dagganoth Kings',
+    icon: '👹',
+    ids: ['dagganoth_rex', 'dagganoth_prime', 'dagganoth_supreme'],
+  },
 ]
 
 const MONSTER_ICONS = {
@@ -43,7 +49,8 @@ const MONSTER_ICONS = {
   rock_crab: '🦀', sand_crab: '🦀', hill_giant: '👊', moss_giant: '🌿',
   wizard: '🧙', dark_wizard: '🧙‍♂️', abyssal_demon: '😈',
   green_dragon: '🐉', lesser_demon: '👿',
-  general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅'
+  general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
+  dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹'
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlocked }) {
