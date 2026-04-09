@@ -10271,7 +10271,7 @@ function idleRollDrops(monster) {
  * Simulate idle combat.
  * Returns { xpGained, lootGained, lootLost, lootBanked, monstersKilled, finalInventory }
  *
- * lootGained  — items in final inventory (player physically holds these)
+ * lootGained  — newly gained items only (difference from starting inventory)
  * lootLost    — items discarded due to full inventory (bankingEnabled = false)
  * lootBanked  — items banked during auto-bank trips (bankingEnabled = true)
  *
@@ -10321,6 +10321,13 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
         [xpSkill]: Math.floor(monster.hitpoints * MELEE_XP_PER_DAMAGE),
         hitpoints: Math.floor(monster.hitpoints * HP_XP_PER_DAMAGE),
     };
+    // Track starting inventory state for delta calculation
+    const startingInvState = {};
+    for (const slot of inventory) {
+        if (!slot)
+            continue;
+        startingInvState[slot.itemId] = (startingInvState[slot.itemId] || 0) + slot.quantity;
+    }
     // Simulate kill-by-kill, tracking remaining time so bank trips can deduct time
     const newInv = [...inventory];
     const lootLost = {};
@@ -10393,12 +10400,16 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
             }
         }
     }
-    // lootGained is whatever ended up in the final inventory (what the player carries home)
+    // lootGained is the delta from starting inventory (only newly acquired items)
     const lootGained = {};
     for (const slot of newInv) {
         if (!slot)
             continue;
-        lootGained[slot.itemId] = (lootGained[slot.itemId] || 0) + slot.quantity;
+        const startingQty = startingInvState[slot.itemId] || 0;
+        const deltaQty = slot.quantity - startingQty;
+        if (deltaQty > 0) {
+            lootGained[slot.itemId] = deltaQty;
+        }
     }
     return { xpGained, lootGained, lootLost, lootBanked, monstersKilled, finalInventory: newInv };
 }
