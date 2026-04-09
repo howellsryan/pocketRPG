@@ -9444,7 +9444,7 @@ function createCombatState(monster, combatType = 'melee', stance = 'accurate', s
         stance, // 'accurate', 'aggressive', 'controlled', 'defensive', 'rapid', 'longrange'
         spell, // spell object for magic combat
         playerAttackTimer: 0,
-        monsterAttackTimer: 0,
+        monsterAttackTimer: 2, // 2 ticks = 1.2s delay for monster's first attack
         eatCooldown: 0,
         potionCooldown: 0,
         log: [], // combat log entries
@@ -12561,6 +12561,14 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                         setActiveTask(null);
                         updateHP(getMaxHP());
                         hpRef.current = getMaxHP();
+                        // Auto-restart the fight after delay
+                        setIsAutoRestarting(true);
+                        setTimeout(() => {
+                            const original = monstersData[state.monster.id];
+                            if (original)
+                                continueFight(original);
+                            setIsAutoRestarting(false);
+                        }, 3000);
                     }
                 }
                 if (ev.type === 'dragonfireHit') {
@@ -12578,6 +12586,14 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                         setActiveTask(null);
                         updateHP(getMaxHP());
                         hpRef.current = getMaxHP();
+                        // Auto-restart the fight after delay
+                        setIsAutoRestarting(true);
+                        setTimeout(() => {
+                            const original = monstersData[state.monster.id];
+                            if (original)
+                                continueFight(original);
+                            setIsAutoRestarting(false);
+                        }, 3000);
                     }
                 }
                 if (ev.type === 'dragonfireBlocked') {

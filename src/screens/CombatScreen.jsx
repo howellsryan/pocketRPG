@@ -175,6 +175,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
             setActiveTask(null)
             updateHP(getMaxHP())
             hpRef.current = getMaxHP()
+            // Auto-restart the fight after delay
+            setIsAutoRestarting(true)
+            setTimeout(() => {
+              const original = monstersData[state.monster.id]
+              if (original) continueFight(original)
+              setIsAutoRestarting(false)
+            }, 3000)
           }
         }
         if (ev.type === 'dragonfireHit') {
@@ -192,6 +199,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
             setActiveTask(null)
             updateHP(getMaxHP())
             hpRef.current = getMaxHP()
+            // Auto-restart the fight after delay
+            setIsAutoRestarting(true)
+            setTimeout(() => {
+              const original = monstersData[state.monster.id]
+              if (original) continueFight(original)
+              setIsAutoRestarting(false)
+            }, 3000)
           }
         }
         if (ev.type === 'dragonfireBlocked') {

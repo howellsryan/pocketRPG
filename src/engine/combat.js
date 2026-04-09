@@ -20,7 +20,7 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     stance,          // 'accurate', 'aggressive', 'controlled', 'defensive', 'rapid', 'longrange'
     spell,           // spell object for magic combat
     playerAttackTimer: 0,
-    monsterAttackTimer: 0,
+    monsterAttackTimer: 2,  // 2 ticks = 1.2s delay for monster's first attack
     eatCooldown: 0,
     potionCooldown: 0,
     log: [],         // combat log entries
