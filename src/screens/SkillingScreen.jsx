@@ -12,10 +12,10 @@ import skillsData from '../data/skills.json'
 import itemsData from '../data/items.json'
 import AgilityScreen from './AgilityScreen.jsx'
 
-// Agility is a UTILITY_SKILL shown here in the Skills tab
-const AGILITY_SKILLS = ['agility']
+// Agility and Prayer are special skills shown here in the Skills tab
+const SPECIAL_SKILLS = ['agility', 'prayer']
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0)
-const allSkillsInTab = [...trainableSkills, ...AGILITY_SKILLS]
+const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS]
 
 export default function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHour, skipHourUnlocked }) {
   const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask } = useGame()
@@ -25,7 +25,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   const skillingRef = useRef(null)
   const hasAutoStarted = useRef(false)
 
-  // If agility is selected (from picker or initialSkillId), delegate to AgilityScreen
+  // If agility is selected, delegate to AgilityScreen (special screen for agility only)
   if (selectedSkill === 'agility') {
     return (
       <AgilityScreen

@@ -1375,5 +1375,91 @@
         "description": "Elite rooftop course in the grand city of Ardougne"
       }
     ]
+  },
+  "prayer": {
+    "id": "prayer",
+    "name": "Prayer",
+    "actions": [
+      {
+        "id": "bury_bones",
+        "name": "Bury bones",
+        "level": 1,
+        "ticks": 1,
+        "xp": 5,
+        "materials": {
+          "bones": 1
+        }
+      },
+      {
+        "id": "bury_big_bones",
+        "name": "Bury big bones",
+        "level": 5,
+        "ticks": 1,
+        "xp": 15,
+        "materials": {
+          "big_bones": 1
+        }
+      },
+      {
+        "id": "bury_dragon_bones",
+        "name": "Bury dragon bones",
+        "level": 35,
+        "ticks": 1,
+        "xp": 72,
+        "materials": {
+          "dragon_bones": 1
+        }
+      },
+      {
+        "id": "altar_bones",
+        "name": "Use gilded altar (bones)",
+        "level": 1,
+        "ticks": 1,
+        "xp": 50,
+        "materials": {
+          "bones": 1
+        }
+      },
+      {
+        "id": "altar_big_bones",
+        "name": "Use gilded altar (big bones)",
+        "level": 5,
+        "ticks": 1,
+        "xp": 150,
+        "materials": {
+          "big_bones": 1
+        }
+      },
+      {
+        "id": "altar_dragon_bones",
+        "name": "Use gilded altar (dragon bones)",
+        "level": 35,
+        "ticks": 1,
+        "xp": 720,
+        "materials": {
+          "dragon_bones": 1
+        }
+      },
+      {
+        "id": "bury_dagganoth_bones",
+        "name": "Bury dagganoth bones",
+        "level": 40,
+        "ticks": 1,
+        "xp": 125,
+        "materials": {
+          "dagganoth_bones": 1
+        }
+      },
+      {
+        "id": "altar_dagganoth_bones",
+        "name": "Use gilded altar (dagganoth bones)",
+        "level": 40,
+        "ticks": 1,
+        "xp": 1250,
+        "materials": {
+          "dagganoth_bones": 1
+        }
+      }
+    ]
   }
 }

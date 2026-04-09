@@ -1,0 +1,172 @@
+{
+  "thick_skin": {
+    "id": "thick_skin",
+    "name": "Thick Skin",
+    "icon": "🛡️",
+    "level": 1,
+    "description": "+5% Defence",
+    "bonusType": "stat",
+    "stat": "defence",
+    "boostPercent": 5
+  },
+  "burst_of_strength": {
+    "id": "burst_of_strength",
+    "name": "Burst of Strength",
+    "icon": "💪",
+    "level": 4,
+    "description": "+5% Strength",
+    "bonusType": "stat",
+    "stat": "strength",
+    "boostPercent": 5
+  },
+  "clarity_of_thought": {
+    "id": "clarity_of_thought",
+    "name": "Clarity of Thought",
+    "icon": "⚡",
+    "level": 7,
+    "description": "+5% Attack",
+    "bonusType": "stat",
+    "stat": "attack",
+    "boostPercent": 5
+  },
+  "sharp_eye": {
+    "id": "sharp_eye",
+    "name": "Sharp Eye",
+    "icon": "🏹",
+    "level": 8,
+    "description": "+5% Ranged",
+    "bonusType": "stat",
+    "stat": "ranged",
+    "boostPercent": 5
+  },
+  "mystic_will": {
+    "id": "mystic_will",
+    "name": "Mystic Will",
+    "icon": "🔮",
+    "level": 9,
+    "description": "+5% Magic",
+    "bonusType": "stat",
+    "stat": "magic",
+    "boostPercent": 5
+  },
+  "rock_skin": {
+    "id": "rock_skin",
+    "name": "Rock Skin",
+    "icon": "🪨",
+    "level": 10,
+    "description": "+10% Defence",
+    "bonusType": "stat",
+    "stat": "defence",
+    "boostPercent": 10
+  },
+  "superhuman_strength": {
+    "id": "superhuman_strength",
+    "name": "Superhuman Strength",
+    "icon": "🦾",
+    "level": 13,
+    "description": "+10% Strength",
+    "bonusType": "stat",
+    "stat": "strength",
+    "boostPercent": 10
+  },
+  "steel_skin": {
+    "id": "steel_skin",
+    "name": "Steel Skin",
+    "icon": "⚙️",
+    "level": 28,
+    "description": "+15% Defence",
+    "bonusType": "stat",
+    "stat": "defence",
+    "boostPercent": 15
+  },
+  "ultimate_strength": {
+    "id": "ultimate_strength",
+    "name": "Ultimate Strength",
+    "icon": "💪",
+    "level": 31,
+    "description": "+20% Strength",
+    "bonusType": "stat",
+    "stat": "strength",
+    "boostPercent": 20
+  },
+  "protection_from_magic": {
+    "id": "protection_from_magic",
+    "name": "Protect from Magic",
+    "icon": "🔮",
+    "level": 37,
+    "description": "Blocks Magic damage",
+    "bonusType": "protection",
+    "damageReductionPercent": 100,
+    "style": "magic"
+  },
+  "protection_from_missiles": {
+    "id": "protection_from_missiles",
+    "name": "Protect from Missiles",
+    "icon": "🏹",
+    "level": 40,
+    "description": "Blocks Ranged damage",
+    "bonusType": "protection",
+    "damageReductionPercent": 100,
+    "style": "ranged"
+  },
+  "protection_from_melee": {
+    "id": "protection_from_melee",
+    "name": "Protect from Melee",
+    "icon": "⚔️",
+    "level": 43,
+    "description": "Blocks Melee damage",
+    "bonusType": "protection",
+    "damageReductionPercent": 100,
+    "style": "melee"
+  },
+  "chivalry": {
+    "id": "chivalry",
+    "name": "Chivalry",
+    "icon": "👑",
+    "level": 60,
+    "description": "+15% Attack, +18% Strength, +20% Defence",
+    "bonusType": "multi_stat",
+    "stats": {
+      "attack": 15,
+      "strength": 18,
+      "defence": 20
+    }
+  },
+  "piety": {
+    "id": "piety",
+    "name": "Piety",
+    "icon": "✨",
+    "level": 70,
+    "description": "+20% Attack, +23% Strength, +25% Defence",
+    "bonusType": "multi_stat",
+    "stats": {
+      "attack": 20,
+      "strength": 23,
+      "defence": 25
+    }
+  },
+  "rigour": {
+    "id": "rigour",
+    "name": "Rigour",
+    "icon": "🦅",
+    "level": 74,
+    "description": "+20% Ranged, +23% Ranged Strength, +25% Defence",
+    "bonusType": "multi_stat",
+    "stats": {
+      "ranged": 20,
+      "defence": 25
+    }
+  },
+  "augury": {
+    "id": "augury",
+    "name": "Augury",
+    "icon": "🔮",
+    "level": 77,
+    "description": "+25% Magic, +25% Defence",
+    "bonusType": "multi_stat",
+    "stats": {
+      "magic": 25,
+      "defence": 25
+    }
+  }
+}

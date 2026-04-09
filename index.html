@@ -8439,6 +8439,92 @@ const skillsData = {
         "description": "Elite rooftop course in the grand city of Ardougne"
       }
     ]
+  },
+  "prayer": {
+    "id": "prayer",
+    "name": "Prayer",
+    "actions": [
+      {
+        "id": "bury_bones",
+        "name": "Bury bones",
+        "level": 1,
+        "ticks": 1,
+        "xp": 5,
+        "materials": {
+          "bones": 1
+        }
+      },
+      {
+        "id": "bury_big_bones",
+        "name": "Bury big bones",
+        "level": 5,
+        "ticks": 1,
+        "xp": 15,
+        "materials": {
+          "big_bones": 1
+        }
+      },
+      {
+        "id": "bury_dragon_bones",
+        "name": "Bury dragon bones",
+        "level": 35,
+        "ticks": 1,
+        "xp": 72,
+        "materials": {
+          "dragon_bones": 1
+        }
+      },
+      {
+        "id": "altar_bones",
+        "name": "Use gilded altar (bones)",
+        "level": 1,
+        "ticks": 1,
+        "xp": 50,
+        "materials": {
+          "bones": 1
+        }
+      },
+      {
+        "id": "altar_big_bones",
+        "name": "Use gilded altar (big bones)",
+        "level": 5,
+        "ticks": 1,
+        "xp": 150,
+        "materials": {
+          "big_bones": 1
+        }
+      },
+      {
+        "id": "altar_dragon_bones",
+        "name": "Use gilded altar (dragon bones)",
+        "level": 35,
+        "ticks": 1,
+        "xp": 720,
+        "materials": {
+          "dragon_bones": 1
+        }
+      },
+      {
+        "id": "bury_dagganoth_bones",
+        "name": "Bury dagganoth bones",
+        "level": 40,
+        "ticks": 1,
+        "xp": 125,
+        "materials": {
+          "dagganoth_bones": 1
+        }
+      },
+      {
+        "id": "altar_dagganoth_bones",
+        "name": "Use gilded altar (dagganoth bones)",
+        "level": 40,
+        "ticks": 1,
+        "xp": 1250,
+        "materials": {
+          "dagganoth_bones": 1
+        }
+      }
+    ]
   }
 };
 const spellsData = {
@@ -8492,7 +8578,7 @@ const GATHERING_SKILLS = ['mining', 'woodcutting', 'fishing', 'farming', 'hunter
 const PRODUCTION_SKILLS = ['smithing', 'cooking', 'crafting', 'fletching', 'herblore', 'runecraft'];
 const UTILITY_SKILLS = ['agility', 'thieving', 'slayer', 'firemaking', 'construction'];
 const ALL_SKILLS = [...COMBAT_SKILLS, ...GATHERING_SKILLS, ...PRODUCTION_SKILLS, ...UTILITY_SKILLS];
-const STUB_SKILLS = new Set(['prayer', 'farming', 'hunter', 'runecraft', 'thieving', 'slayer', 'firemaking', 'construction']);
+const STUB_SKILLS = new Set(['farming', 'hunter', 'runecraft', 'thieving', 'slayer', 'firemaking', 'construction']);
 // Agility banking: delay in ms at level 1 and level 99
 const AGILITY_BANK_DELAY_LV1_MS = 5 * 60 * 1000; // 5 minutes
 const AGILITY_BANK_DELAY_LV99_MS = 10 * 1000; // 10 seconds
@@ -9135,7 +9221,8 @@ function createCombatState(monster, combatType = 'melee', stance = 'accurate', s
         tickCount: 0,
         xpGained: {}, // accumulated xp per skill
         loot: null, // set on monster death
-        specialAttackEnergy: 100 // 0-100; starts at 100 for each new fight, drains on use, refills on kill
+        specialAttackEnergy: 100, // 0-100; starts at 100 for each new fight, drains on use, refills on kill
+        activePrayer: null // active prayer id, reset on each new fight
     };
 }
 /**
@@ -9143,7 +9230,7 @@ function createCombatState(monster, combatType = 'melee', stance = 'accurate', s
  * Returns { combatState, events[] }
  * events: { type: 'playerHit'|'monsterHit'|'monsterDeath'|'playerDeath'|'xp'|'levelUp', ... }
  */
-function processCombatTick(combatState, playerStats, equipment, itemsData) {
+function processCombatTick(combatState, playerStats, equipment, itemsData, prayersData = null) {
     const state = { ...combatState };
     const events = [];
     state.tickCount++;
@@ -9156,6 +9243,8 @@ function processCombatTick(combatState, playerStats, equipment, itemsData) {
         state.eatCooldown--;
     if (state.potionCooldown > 0)
         state.potionCooldown--;
+    // Apply prayer bonuses to player stats
+    const boostedPlayerStats = applyPrayerBonuses(playerStats, state.activePrayer, prayersData);
     const bonuses = getEquipmentBonuses(equipment, itemsData);
     const weaponSpeed = getAttackSpeed(equipment, itemsData);
     const weaponStyle = getAttackStyle(equipment, itemsData);
@@ -9166,9 +9255,9 @@ function processCombatTick(combatState, playerStats, equipment, itemsData) {
         let xpSkills = {};
         if (state.combatType === 'melee') {
             const styleBonuses = getMeleeStyleBonuses(state.stance);
-            const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus);
+            const effStr = effectiveStrength(boostedPlayerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus);
             const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength);
-            const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus);
+            const effAtk = effectiveAttack(boostedPlayerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus);
             const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0);
             const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0);
             const acc = hitChance(atkRoll, defRoll);
@@ -9188,7 +9277,7 @@ function processCombatTick(combatState, playerStats, equipment, itemsData) {
         }
         else if (state.combatType === 'ranged') {
             const styleBonus = getRangedStyleBonus(state.stance);
-            const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus);
+            const effRng = effectiveRanged(boostedPlayerStats.ranged, 0, 1.0, styleBonus);
             const maxHit = rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength);
             const atkRoll = maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0);
             const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus.ranged || 0);
@@ -9212,7 +9301,7 @@ function processCombatTick(combatState, playerStats, equipment, itemsData) {
             }
         }
         else if (state.combatType === 'magic' && state.spell) {
-            const effMag = effectiveMagic(playerStats.magic);
+            const effMag = effectiveMagic(boostedPlayerStats.magic);
             const atkRoll = maxAttackRoll(effMag, bonuses.attackBonus.magic || 0);
             const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0);
             const acc = hitChance(atkRoll, defRoll);
@@ -9295,13 +9384,21 @@ function processCombatTick(combatState, playerStats, equipment, itemsData) {
         else {
             const monsterEffAtk = (monster.stats.attack + 9);
             const monsterAtkRoll = monsterEffAtk * ((monster.attackBonus || 0) + 64);
-            const playerDefLevel = playerStats.defence;
+            const playerDefLevel = boostedPlayerStats.defence;
             const styleBonuses = getMeleeStyleBonuses(state.stance);
             const effDef = Math.floor(playerDefLevel) + styleBonuses.defenceStyleBonus + 8;
             const defRoll = effDef * ((bonuses.defenceBonus[monster.attackStyle] || bonuses.defenceBonus.crush || 0) + 64);
             const acc = hitChance(monsterAtkRoll, defRoll);
             const monsterMaxHit = Math.floor(0.5 + (monster.stats.strength + 8) * ((monster.strengthBonus || 0) + 64) / 640);
             damage = rollDamage(acc, monsterMaxHit);
+            // Apply protection prayer damage reduction if active and matches attack style
+            if (state.activePrayer && prayersData && prayersData[state.activePrayer]) {
+                const prayer = prayersData[state.activePrayer];
+                if (prayer.bonusType === 'protection' && prayer.damageReductionPercent && protectionPrayerMatches(prayer.style, monster.attackStyle)) {
+                    const reduction = Math.floor(damage * prayer.damageReductionPercent / 100);
+                    damage = Math.max(0, damage - reduction);
+                }
+            }
             events.push({ type: 'monsterHit', damage, playerHP: playerStats.currentHP - damage });
         }
         state.monsterAttackTimer = monster.attackSpeed || 4;
@@ -9331,6 +9428,44 @@ function rollDrops(monster) {
  */
 function applyEat(combatState) {
     return { ...combatState, eatCooldown: EAT_TICK_COST, playerAttackTimer: Math.max(combatState.playerAttackTimer, EAT_TICK_COST) };
+}
+/**
+ * Check if a protection prayer protects against a given attack style
+ */
+function protectionPrayerMatches(prayerStyle, attackStyle) {
+    if (!prayerStyle || !attackStyle)
+        return false;
+    // Map attack styles to protection prayer types
+    const meleeStyles = ['crush', 'stab', 'slash'];
+    if (prayerStyle === 'melee') {
+        return meleeStyles.includes(attackStyle);
+    }
+    return prayerStyle === attackStyle;
+}
+/**
+ * Apply prayer bonuses to player stats based on active prayer
+ */
+function applyPrayerBonuses(playerStats, activePrayer, prayersData) {
+    if (!activePrayer || !prayersData || !prayersData[activePrayer]) {
+        return playerStats;
+    }
+    const prayer = prayersData[activePrayer];
+    const boostedStats = { ...playerStats };
+    if (prayer.bonusType === 'stat' && prayer.stat && prayer.boostPercent) {
+        const statValue = boostedStats[prayer.stat];
+        if (statValue !== undefined) {
+            boostedStats[prayer.stat] = Math.floor(statValue * (1 + prayer.boostPercent / 100));
+        }
+    }
+    else if (prayer.bonusType === 'multi_stat' && prayer.stats) {
+        for (const [stat, boostPercent] of Object.entries(prayer.stats)) {
+            const statValue = boostedStats[stat];
+            if (statValue !== undefined) {
+                boostedStats[stat] = Math.floor(statValue * (1 + boostPercent / 100));
+            }
+        }
+    }
+    return boostedStats;
 }
 /**
  * Apply a special attack — manually triggered by the player.
@@ -11953,6 +12088,7 @@ function BankScreen() {
 
 
 
+
 const COMBAT_CATEGORIES = [
     {
         key: 'training',
@@ -12000,6 +12136,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
     const [killCount, setKillCount] = useState(0);
     const [fightStartedAt, setFightStartedAt] = useState(null);
     const [isAutoRestarting, setIsAutoRestarting] = useState(false);
+    const [showPrayerModal, setShowPrayerModal] = useState(false);
     const combatRef = useRef(null);
     const hpRef = useRef(currentHP);
     const hasAutoStarted = useRef(false);
@@ -12038,7 +12175,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                 magic: getLevelFromXP(statsRef.current.magic?.xp || 0),
                 currentHP: hpRef.current
             };
-            const { combatState, events } = processCombatTick(state, playerStats, equipmentRef.current, itemsData);
+            const { combatState, events } = processCombatTick(state, playerStats, equipmentRef.current, itemsData, prayersData);
             combatRef.current = combatState;
             setCombat({ ...combatState });
             for (const ev of events) {
@@ -12252,6 +12389,18 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
             }
         }
     };
+    const handlePrayer = (prayerId) => {
+        if (!combatRef.current)
+            return;
+        const newState = { ...combatRef.current, activePrayer: prayerId };
+        combatRef.current = newState;
+        setCombat(newState);
+        setShowPrayerModal(false);
+        const prayer = prayersData[prayerId];
+        if (prayer) {
+            addToast(`${prayer.icon} ${prayer.name}`, 'info');
+        }
+    };
     const handleAddToHome = (monster) => {
         const icon = MONSTER_ICONS[monster.id] || '👹';
         const shortcut = {
@@ -12381,21 +12530,43 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
             h("div", { class: "grid grid-cols-2 gap-2" },
                 h("button", { onClick: handleEat, class: "py-2.5 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80" }, "\uD83C\uDF56 Eat"),
                 h("button", { class: "py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] opacity-40 text-sm cursor-default" }, "\uD83E\uDDEA Potion")),
-            (() => {
-                const weaponEntry = equipment?.weapon;
-                const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null;
-                if (!weapon?.specialAttack)
-                    return null;
-                const energy = combat.specialAttackEnergy || 0;
-                const canSpec = energy >= weapon.specialAttack.energyCost;
-                return (h("button", { onClick: canSpec ? handleSpecialAttack : undefined, class: `py-2.5 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`, style: canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888' },
-                    "\u26A1 Special Attack (",
-                    weapon.specialAttack.energyCost,
-                    "%)"));
-            })(),
+            h("div", { class: "grid grid-cols-2 gap-2" },
+                (() => {
+                    const weaponEntry = equipment?.weapon;
+                    const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null;
+                    if (!weapon?.specialAttack)
+                        return null;
+                    const energy = combat.specialAttackEnergy || 0;
+                    const canSpec = energy >= weapon.specialAttack.energyCost;
+                    return (h("button", { onClick: canSpec ? handleSpecialAttack : undefined, class: `py-2.5 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`, style: canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888' },
+                        "\u26A1 Special (",
+                        weapon.specialAttack.energyCost,
+                        "%)"));
+                })(),
+                h("button", { onClick: () => setShowPrayerModal(true), class: "py-2.5 rounded-lg bg-[#1a2a1a] text-[var(--color-gold-dim)] font-semibold text-sm active:opacity-80 border border-[#2a4a2a]" }, "\uD83D\uDE4F Prayer")),
             h("div", { class: "flex gap-2" },
                 h("button", { onClick: stopAndBack, class: "flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80" }, "\u2190 Stop & Back"),
-                skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "flex-1 py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\u23ED\uFE0F Skip 1h"))))))));
+                skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "flex-1 py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\u23ED\uFE0F Skip 1h")))))),
+        showPrayerModal && (h(Modal, { onClose: () => setShowPrayerModal(false) },
+            h("h3", { class: "font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] mb-3" }, "Choose Prayer"),
+            h("div", { class: "space-y-2 max-h-96 overflow-y-auto" }, Object.values(prayersData).map(prayer => {
+                const prayerLevel = getLevelFromXP(stats.prayer?.xp || 0);
+                const canUse = prayerLevel >= prayer.level;
+                return (h("button", { key: prayer.id, onClick: () => canUse && handlePrayer(prayer.id), disabled: !canUse, class: `w-full p-3 rounded-lg border transition-colors ${canUse
+                        ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
+                        : 'bg-[#111] border-[#1a1a1a] opacity-40'}` },
+                    h("div", { class: "flex items-center justify-between" },
+                        h("div", { class: "text-left" },
+                            h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" },
+                                prayer.icon,
+                                " ",
+                                prayer.name),
+                            h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60" }, prayer.description),
+                            h("div", { class: "text-[9px] text-[var(--color-gold-dim)] mt-0.5" },
+                                "Lv ",
+                                prayer.level)),
+                        combat?.activePrayer === prayer.id && (h("span", { class: "text-base" }, "\u2713")))));
+            }))))));
 }
 
 // ── screens/AgilityScreen.js ──
@@ -12595,10 +12766,10 @@ function AgilityScreen({ initialActionId, onBack }) {
 
 
 
-// Agility is a UTILITY_SKILL shown here in the Skills tab
-const AGILITY_SKILLS = ['agility'];
+// Agility and Prayer are special skills shown here in the Skills tab
+const SPECIAL_SKILLS = ['agility', 'prayer'];
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0);
-const allSkillsInTab = [...trainableSkills, ...AGILITY_SKILLS];
+const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS];
 function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHour, skipHourUnlocked }) {
     const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask } = useGame();
     const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null);
@@ -12606,7 +12777,7 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
     const [skilling, setSkilling] = useState(null);
     const skillingRef = useRef(null);
     const hasAutoStarted = useRef(false);
-    // If agility is selected (from picker or initialSkillId), delegate to AgilityScreen
+    // If agility is selected, delegate to AgilityScreen (special screen for agility only)
     if (selectedSkill === 'agility') {
         return (h(AgilityScreen, { initialActionId: initialActionId, onBack: () => setSelectedSkill(null) }));
     }

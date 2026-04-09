@@ -27,7 +27,8 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     tickCount: 0,
     xpGained: {},    // accumulated xp per skill
     loot: null,      // set on monster death
-    specialAttackEnergy: 100  // 0-100; starts at 100 for each new fight, drains on use, refills on kill
+    specialAttackEnergy: 100,  // 0-100; starts at 100 for each new fight, drains on use, refills on kill
+    activePrayer: null  // active prayer id, reset on each new fight
   }
 }
 
@@ -36,7 +37,7 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
  * Returns { combatState, events[] }
  * events: { type: 'playerHit'|'monsterHit'|'monsterDeath'|'playerDeath'|'xp'|'levelUp', ... }
  */
-export function processCombatTick(combatState, playerStats, equipment, itemsData) {
+export function processCombatTick(combatState, playerStats, equipment, itemsData, prayersData = null) {
   const state = { ...combatState }
   const events = []
   state.tickCount++
@@ -46,6 +47,9 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   if (state.monsterAttackTimer > 0) state.monsterAttackTimer--
   if (state.eatCooldown > 0) state.eatCooldown--
   if (state.potionCooldown > 0) state.potionCooldown--
+
+  // Apply prayer bonuses to player stats
+  const boostedPlayerStats = applyPrayerBonuses(playerStats, state.activePrayer, prayersData)
 
   const bonuses = getEquipmentBonuses(equipment, itemsData)
   const weaponSpeed = getAttackSpeed(equipment, itemsData)
@@ -59,9 +63,9 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
 
     if (state.combatType === 'melee') {
       const styleBonuses = getMeleeStyleBonuses(state.stance)
-      const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
+      const effStr = effectiveStrength(boostedPlayerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
       const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
-      const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
+      const effAtk = effectiveAttack(boostedPlayerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
       const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
@@ -79,7 +83,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       }
     } else if (state.combatType === 'ranged') {
       const styleBonus = getRangedStyleBonus(state.stance)
-      const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
+      const effRng = effectiveRanged(boostedPlayerStats.ranged, 0, 1.0, styleBonus)
       const maxHit = rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength)
       const atkRoll = maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus.ranged || 0)
@@ -103,7 +107,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
         xpSkills.hitpoints = Math.floor(damage * HP_XP_PER_DAMAGE)
       }
     } else if (state.combatType === 'magic' && state.spell) {
-      const effMag = effectiveMagic(playerStats.magic)
+      const effMag = effectiveMagic(boostedPlayerStats.magic)
       const atkRoll = maxAttackRoll(effMag, bonuses.attackBonus.magic || 0)
       const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0)
       const acc = hitChance(atkRoll, defRoll)
@@ -188,13 +192,23 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     } else {
       const monsterEffAtk = (monster.stats.attack + 9)
       const monsterAtkRoll = monsterEffAtk * ((monster.attackBonus || 0) + 64)
-      const playerDefLevel = playerStats.defence
+      const playerDefLevel = boostedPlayerStats.defence
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effDef = Math.floor(playerDefLevel) + styleBonuses.defenceStyleBonus + 8
       const defRoll = effDef * ((bonuses.defenceBonus[monster.attackStyle] || bonuses.defenceBonus.crush || 0) + 64)
       const acc = hitChance(monsterAtkRoll, defRoll)
       const monsterMaxHit = Math.floor(0.5 + (monster.stats.strength + 8) * ((monster.strengthBonus || 0) + 64) / 640)
       damage = rollDamage(acc, monsterMaxHit)
+
+      // Apply protection prayer damage reduction if active and matches attack style
+      if (state.activePrayer && prayersData && prayersData[state.activePrayer]) {
+        const prayer = prayersData[state.activePrayer]
+        if (prayer.bonusType === 'protection' && prayer.damageReductionPercent && protectionPrayerMatches(prayer.style, monster.attackStyle)) {
+          const reduction = Math.floor(damage * prayer.damageReductionPercent / 100)
+          damage = Math.max(0, damage - reduction)
+        }
+      }
+
       events.push({ type: 'monsterHit', damage, playerHP: playerStats.currentHP - damage })
     }
 
@@ -227,6 +241,49 @@ function rollDrops(monster) {
  */
 export function applyEat(combatState) {
   return { ...combatState, eatCooldown: EAT_TICK_COST, playerAttackTimer: Math.max(combatState.playerAttackTimer, EAT_TICK_COST) }
+}
+
+/**
+ * Check if a protection prayer protects against a given attack style
+ */
+function protectionPrayerMatches(prayerStyle, attackStyle) {
+  if (!prayerStyle || !attackStyle) return false
+
+  // Map attack styles to protection prayer types
+  const meleeStyles = ['crush', 'stab', 'slash']
+
+  if (prayerStyle === 'melee') {
+    return meleeStyles.includes(attackStyle)
+  }
+  return prayerStyle === attackStyle
+}
+
+/**
+ * Apply prayer bonuses to player stats based on active prayer
+ */
+export function applyPrayerBonuses(playerStats, activePrayer, prayersData) {
+  if (!activePrayer || !prayersData || !prayersData[activePrayer]) {
+    return playerStats
+  }
+
+  const prayer = prayersData[activePrayer]
+  const boostedStats = { ...playerStats }
+
+  if (prayer.bonusType === 'stat' && prayer.stat && prayer.boostPercent) {
+    const statValue = boostedStats[prayer.stat]
+    if (statValue !== undefined) {
+      boostedStats[prayer.stat] = Math.floor(statValue * (1 + prayer.boostPercent / 100))
+    }
+  } else if (prayer.bonusType === 'multi_stat' && prayer.stats) {
+    for (const [stat, boostPercent] of Object.entries(prayer.stats)) {
+      const statValue = boostedStats[stat]
+      if (statValue !== undefined) {
+        boostedStats[stat] = Math.floor(statValue * (1 + boostPercent / 100))
+      }
+    }
+  }
+
+  return boostedStats
 }
 
 /**
