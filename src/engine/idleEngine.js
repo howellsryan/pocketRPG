@@ -6,11 +6,12 @@
 import { getLevelFromXP } from './experience.js'
 import {
   effectiveStrength, meleeMaxHit, effectiveAttack, maxAttackRoll,
-  maxDefenceRoll, hitChance, getMeleeStyleBonuses
+  maxDefenceRoll, hitChance, getMeleeStyleBonuses,
+  effectiveRanged, rangedMaxHit, getRangedStyleBonus
 } from './formulas.js'
-import { getEquipmentBonuses, getAttackSpeed, getAttackStyle } from './equipment.js'
+import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getCombatType } from './equipment.js'
 import { getToolSpeedMultiplier } from './skilling.js'
-import { MELEE_XP_PER_DAMAGE, HP_XP_PER_DAMAGE } from '../utils/constants.js'
+import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, HP_XP_PER_DAMAGE } from '../utils/constants.js'
 import { getAgilityBankDelayFromStats, simulateIdleAgility } from './agility.js'
 
 const TICK_MS = 600
@@ -112,24 +113,35 @@ export function simulateIdleGather(task, elapsedMs) {
 
 /**
  * Compute average player DPS against a monster.
- * Returns { avgDmgPerHit, weaponSpeed, acc } so callers can use per-hit granularity.
+ * Returns { avgDmgPerHit, weaponSpeed, acc, combatType } so callers can use per-hit granularity.
  */
 function avgHitStats(playerStats, equipment, monster, stance, itemsData) {
   const bonuses = getEquipmentBonuses(equipment, itemsData)
-  const weaponStyle = getAttackStyle(equipment, itemsData)
   const weaponSpeed = getAttackSpeed(equipment, itemsData)
-  const styleBonuses = getMeleeStyleBonuses(stance)
+  const combatType = getCombatType(equipment, itemsData)
 
-  const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-  const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
-  const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-  const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
-  const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus?.[weaponStyle] || 0)
-  const acc = hitChance(atkRoll, defRoll)
+  let maxHit, atkRoll, defRoll, acc
 
-  // Average damage per hit = acc * maxHit / 2
+  if (combatType === 'ranged') {
+    const styleBonus = getRangedStyleBonus(stance)
+    const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
+    maxHit = rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength)
+    atkRoll = maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0)
+    defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus.ranged || 0)
+  } else {
+    // Melee (default)
+    const weaponStyle = getAttackStyle(equipment, itemsData)
+    const styleBonuses = getMeleeStyleBonuses(stance)
+    const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
+    maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
+    const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
+    atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+    defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus?.[weaponStyle] || 0)
+  }
+
+  acc = hitChance(atkRoll, defRoll)
   const avgDmgPerHit = acc * (maxHit / 2)
-  return { avgDmgPerHit, weaponSpeed, acc }
+  return { avgDmgPerHit, weaponSpeed, acc, combatType }
 }
 
 /**
@@ -174,9 +186,10 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     attack:   getLevelFromXP(stats.attack?.xp   || 0),
     strength: getLevelFromXP(stats.strength?.xp || 0),
     defence:  getLevelFromXP(stats.defence?.xp  || 0),
+    ranged:   getLevelFromXP(stats.ranged?.xp   || 0),
   }
 
-  const { avgDmgPerHit, weaponSpeed } = avgHitStats(playerStats, equipment, monster, task.stance || 'accurate', itemsData)
+  const { avgDmgPerHit, weaponSpeed, combatType } = avgHitStats(playerStats, equipment, monster, task.stance || 'accurate', itemsData)
 
   // Active engine: playerAttackTimer starts at 0, first hit lands on tick 1,
   // then resets to weaponSpeed. So hits land on ticks: 1, 1+W, 1+2W, ...
@@ -202,13 +215,23 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   const bankDelayTicks = Math.ceil(getAgilityBankDelayFromStats(stats) / TICK_MS)
 
   // XP per kill (assumes player deals exactly monster.hitpoints damage per kill)
-  const xpSkill = task.stance === 'aggressive' ? 'strength'
-    : task.stance === 'defensive' ? 'defence'
-    : 'attack'
-  const xpPerKill = {
-    [xpSkill]: Math.floor(monster.hitpoints * MELEE_XP_PER_DAMAGE),
-    hitpoints:  Math.floor(monster.hitpoints * HP_XP_PER_DAMAGE),
+  let xpPerKill = {}
+  if (combatType === 'ranged') {
+    if (task.stance === 'longrange') {
+      // Longrange splits ranged and defence XP
+      xpPerKill.ranged = Math.floor(monster.hitpoints * (RANGED_XP_PER_DAMAGE / 2))
+      xpPerKill.defence = Math.floor(monster.hitpoints * (RANGED_XP_PER_DAMAGE / 2))
+    } else {
+      xpPerKill.ranged = Math.floor(monster.hitpoints * RANGED_XP_PER_DAMAGE)
+    }
+  } else {
+    // Melee
+    const xpSkill = task.stance === 'aggressive' ? 'strength'
+      : task.stance === 'defensive' ? 'defence'
+      : 'attack'
+    xpPerKill[xpSkill] = Math.floor(monster.hitpoints * MELEE_XP_PER_DAMAGE)
   }
+  xpPerKill.hitpoints = Math.floor(monster.hitpoints * HP_XP_PER_DAMAGE)
 
   // Track starting inventory state for delta calculation
   const startingInvState = {}
@@ -232,6 +255,17 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     // XP for this kill
     for (const [skill, xp] of Object.entries(xpPerKill)) {
       xpGained[skill] = (xpGained[skill] || 0) + xp
+    }
+
+    // Consume ammo for ranged combat (one ammo per kill)
+    if (combatType === 'ranged' && equipment?.ammo) {
+      const ammoSlot = newInv.findIndex(s => s && s.itemId === equipment.ammo.itemId)
+      if (ammoSlot !== -1) {
+        newInv[ammoSlot].quantity -= 1
+        if (newInv[ammoSlot].quantity <= 0) {
+          newInv[ammoSlot] = null
+        }
+      }
     }
 
     // Loot for this kill — place items into inventory, overflow to lost/banked
