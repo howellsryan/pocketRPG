@@ -5760,7 +5760,7 @@ const itemsData = {
     "name": "Dragon axe",
     "type": "weapon",
     "slot": "weapon",
-    "twoHanded": true,
+    "twoHanded": false,
     "stackable": false,
     "attackSpeed": 5,
     "attackStyle": "slash",
@@ -11978,13 +11978,20 @@ const COMBAT_CATEGORIES = [
         icon: '👑',
         ids: ['general_graardor', 'commander_zilyana', 'kril_tsutsaroth', 'kreearra'],
     },
+    {
+        key: 'dagganoth_kings',
+        label: 'Dagganoth Kings',
+        icon: '👹',
+        ids: ['dagganoth_rex', 'dagganoth_prime', 'dagganoth_supreme'],
+    },
 ];
 const MONSTER_ICONS = {
     chicken: '🐔', goblin: '👺', cow: '🐄', giant_spider: '🕷️',
     rock_crab: '🦀', sand_crab: '🦀', hill_giant: '👊', moss_giant: '🌿',
     wizard: '🧙', dark_wizard: '🧙‍♂️', abyssal_demon: '😈',
     green_dragon: '🐉', lesser_demon: '👿',
-    general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅'
+    general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
+    dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹'
 };
 function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlocked }) {
     const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot } = useGame();
