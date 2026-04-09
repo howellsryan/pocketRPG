@@ -31,6 +31,8 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
       <AgilityScreen
         initialActionId={initialActionId}
         onBack={() => setSelectedSkill(null)}
+        onSkipHour={onSkipHour}
+        skipHourUnlocked={skipHourUnlocked}
       />
     )
   }

@@ -283,6 +283,12 @@ export default function GatherScreen({ initialTaskId, idleResult, onSkipHour, sk
 
     return (
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '16px' }}>
+        {/* Back button */}
+        <button onClick={stopTask}
+          style={{ fontSize: '12px', color: '#c4af7a', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', cursor: 'pointer' }}>
+          ← Back
+        </button>
+
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <span style={{ fontSize: '48px', marginBottom: '8px' }}>{task.icon}</span>
           <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '18px', fontWeight: 'bold', color: '#d4af37', marginBottom: '4px', textAlign: 'center' }}>
@@ -312,20 +318,14 @@ export default function GatherScreen({ initialTaskId, idleResult, onSkipHour, sk
           </div>
         </div>
 
-        {/* Stop & Back / Skip 1h */}
-        <div class="flex gap-2 mt-3" style={{ flexShrink: 0, width: '100%' }}>
-          <button onClick={stopTask}
-            class="flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80">
-            ← Stop &amp; Back
+        {/* Skip 1h */}
+        {skipHourUnlocked && (
+          <button onClick={onSkipHour}
+            class="w-full py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
+            style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0;margin-top:12px;flex-shrink:0">
+            ⏭️ Skip 1h
           </button>
-          {skipHourUnlocked && (
-            <button onClick={onSkipHour}
-              class="flex-1 py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
-              style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
-              ⏭️ Skip 1h
-            </button>
-          )}
-        </div>
+        )}
       </div>
     )
   }
