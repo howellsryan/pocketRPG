@@ -412,6 +412,7 @@ const itemsData = {
     "stackable": false,
     "attackSpeed": 4,
     "attackStyle": "ranged",
+    "ammoType": "arrow",
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -443,6 +444,7 @@ const itemsData = {
     "type": "ammo",
     "slot": "ammo",
     "stackable": true,
+    "ammoKind": "arrow",
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 7,
@@ -455,8 +457,14 @@ const itemsData = {
     "id": "iron_arrow",
     "name": "Iron arrow",
     "type": "ammo",
+    "slot": "ammo",
     "stackable": true,
-    "rangedStrength": 7,
+    "ammoKind": "arrow",
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 10,
+      "magicDamage": 0
+    },
     "shopValue": 7,
     "icon": "🏹"
   },
@@ -1847,8 +1855,14 @@ const itemsData = {
     "id": "steel_arrow",
     "name": "Steel arrow",
     "type": "ammo",
+    "slot": "ammo",
     "stackable": true,
-    "rangedStrength": 10,
+    "ammoKind": "arrow",
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 16,
+      "magicDamage": 0
+    },
     "shopValue": 19,
     "icon": "🏹"
   },
@@ -1856,8 +1870,14 @@ const itemsData = {
     "id": "mithril_arrow",
     "name": "Mithril arrow",
     "type": "ammo",
+    "slot": "ammo",
     "stackable": true,
-    "rangedStrength": 14,
+    "ammoKind": "arrow",
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 22,
+      "magicDamage": 0
+    },
     "shopValue": 32,
     "icon": "🏹"
   },
@@ -1865,8 +1885,14 @@ const itemsData = {
     "id": "adamant_arrow",
     "name": "Adamant arrow",
     "type": "ammo",
+    "slot": "ammo",
     "stackable": true,
-    "rangedStrength": 21,
+    "ammoKind": "arrow",
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 31,
+      "magicDamage": 0
+    },
     "shopValue": 64,
     "icon": "🏹"
   },
@@ -1874,8 +1900,14 @@ const itemsData = {
     "id": "rune_arrow",
     "name": "Rune arrow",
     "type": "ammo",
+    "slot": "ammo",
     "stackable": true,
-    "rangedStrength": 26,
+    "ammoKind": "arrow",
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 49,
+      "magicDamage": 0
+    },
     "shopValue": 160,
     "icon": "🏹"
   },
@@ -1936,6 +1968,7 @@ const itemsData = {
     "stackable": false,
     "attackSpeed": 4,
     "attackStyle": "ranged",
+    "ammoType": "arrow",
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -1970,6 +2003,7 @@ const itemsData = {
     "stackable": false,
     "attackSpeed": 4,
     "attackStyle": "ranged",
+    "ammoType": "arrow",
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -2004,6 +2038,7 @@ const itemsData = {
     "stackable": false,
     "attackSpeed": 4,
     "attackStyle": "ranged",
+    "ammoType": "arrow",
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -2038,6 +2073,7 @@ const itemsData = {
     "stackable": false,
     "attackSpeed": 4,
     "attackStyle": "ranged",
+    "ammoType": "arrow",
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -2072,6 +2108,7 @@ const itemsData = {
     "stackable": false,
     "attackSpeed": 4,
     "attackStyle": "ranged",
+    "ammoType": "arrow",
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -3895,6 +3932,7 @@ const itemsData = {
     "stackable": false,
     "attackSpeed": 5,
     "attackStyle": "ranged",
+    "ammoType": "bolt",
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -3920,12 +3958,153 @@ const itemsData = {
     "shopValue": 70,
     "icon": "🏹"
   },
+  "iron_crossbow": {
+    "id": "iron_crossbow",
+    "name": "Iron crossbow",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "ranged",
+    "ammoType": "bolt",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 26
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 1
+    },
+    "shopValue": 140,
+    "icon": "🏹"
+  },
+  "steel_crossbow": {
+    "id": "steel_crossbow",
+    "name": "Steel crossbow",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "ranged",
+    "ammoType": "bolt",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 34
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 20
+    },
+    "shopValue": 400,
+    "icon": "🏹"
+  },
+  "mithril_crossbow": {
+    "id": "mithril_crossbow",
+    "name": "Mithril crossbow",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "ranged",
+    "ammoType": "bolt",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 42
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 30
+    },
+    "shopValue": 1300,
+    "icon": "🏹"
+  },
+  "adamant_crossbow": {
+    "id": "adamant_crossbow",
+    "name": "Adamant crossbow",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "ranged",
+    "ammoType": "bolt",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 50
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 40
+    },
+    "shopValue": 3600,
+    "icon": "🏹"
+  },
   "bronze_bolts": {
     "id": "bronze_bolts",
     "name": "Bronze bolts",
     "type": "ammo",
     "slot": "ammo",
     "stackable": true,
+    "ammoKind": "bolt",
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 10,
@@ -3940,13 +4119,130 @@ const itemsData = {
     "type": "ammo",
     "slot": "ammo",
     "stackable": true,
+    "ammoKind": "bolt",
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 10,
+      "rangedStrength": 14,
       "magicDamage": 0
     },
     "shopValue": 3,
-    "icon": "🏹"
+    "icon": "🔩"
+  },
+  "steel_bolts": {
+    "id": "steel_bolts",
+    "name": "Steel bolts",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 22,
+      "magicDamage": 0
+    },
+    "shopValue": 5,
+    "icon": "🔩"
+  },
+  "mithril_bolts": {
+    "id": "mithril_bolts",
+    "name": "Mithril bolts",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 35,
+      "magicDamage": 0
+    },
+    "shopValue": 8,
+    "icon": "🔩"
+  },
+  "adamant_bolts": {
+    "id": "adamant_bolts",
+    "name": "Adamant bolts",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 46,
+      "magicDamage": 0
+    },
+    "shopValue": 12,
+    "icon": "🔩"
+  },
+  "rune_bolts": {
+    "id": "rune_bolts",
+    "name": "Rune bolts",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 69,
+      "magicDamage": 0
+    },
+    "shopValue": 42,
+    "icon": "🔩"
+  },
+  "bronze_bolt_heads": {
+    "id": "bronze_bolt_heads",
+    "name": "Bronze bolt heads",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 1,
+    "icon": "🔩"
+  },
+  "iron_bolt_heads": {
+    "id": "iron_bolt_heads",
+    "name": "Iron bolt heads",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 2,
+    "icon": "🔩"
+  },
+  "steel_bolt_heads": {
+    "id": "steel_bolt_heads",
+    "name": "Steel bolt heads",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 4,
+    "icon": "🔩"
+  },
+  "mithril_bolt_heads": {
+    "id": "mithril_bolt_heads",
+    "name": "Mithril bolt heads",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 7,
+    "icon": "🔩"
+  },
+  "adamant_bolt_heads": {
+    "id": "adamant_bolt_heads",
+    "name": "Adamant bolt heads",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 10,
+    "icon": "🔩"
+  },
+  "rune_bolt_heads": {
+    "id": "rune_bolt_heads",
+    "name": "Rune bolt heads",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 35,
+    "icon": "🔩"
+  },
+  "wooden_stock": {
+    "id": "wooden_stock",
+    "name": "Wooden stock",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 1,
+    "icon": "🪵"
   },
   "magic_staff": {
     "id": "magic_staff",
@@ -5034,6 +5330,7 @@ const itemsData = {
     "stackable": false,
     "attackSpeed": 5,
     "attackStyle": "ranged",
+    "ammoType": "bolt",
     "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 90 },
     "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
     "otherBonus": { "meleeStrength": 0, "rangedStrength": 42, "magicDamage": 0 },
@@ -5276,6 +5573,7 @@ const itemsData = {
     "stackable": false,
     "attackSpeed": 5,
     "attackStyle": "ranged",
+    "ammoType": "bolt",
     "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 100 },
     "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
     "otherBonus": { "meleeStrength": 0, "rangedStrength": 90, "magicDamage": 0 },
@@ -6908,6 +7206,78 @@ const skillsData = {
         }
       },
       {
+        "id": "smith_bronze_bolt_heads",
+        "name": "Smith bronze bolt heads (10)",
+        "level": 9,
+        "ticks": 4,
+        "xp": 13,
+        "product": "bronze_bolt_heads",
+        "productQty": 10,
+        "materials": {
+          "bronze_bar": 1
+        }
+      },
+      {
+        "id": "smith_iron_bolt_heads",
+        "name": "Smith iron bolt heads (10)",
+        "level": 18,
+        "ticks": 4,
+        "xp": 25,
+        "product": "iron_bolt_heads",
+        "productQty": 10,
+        "materials": {
+          "iron_bar": 1
+        }
+      },
+      {
+        "id": "smith_steel_bolt_heads",
+        "name": "Smith steel bolt heads (10)",
+        "level": 33,
+        "ticks": 4,
+        "xp": 38,
+        "product": "steel_bolt_heads",
+        "productQty": 10,
+        "materials": {
+          "steel_bar": 1
+        }
+      },
+      {
+        "id": "smith_mithril_bolt_heads",
+        "name": "Smith mithril bolt heads (10)",
+        "level": 53,
+        "ticks": 4,
+        "xp": 50,
+        "product": "mithril_bolt_heads",
+        "productQty": 10,
+        "materials": {
+          "mithril_bar": 1
+        }
+      },
+      {
+        "id": "smith_adamant_bolt_heads",
+        "name": "Smith adamant bolt heads (10)",
+        "level": 73,
+        "ticks": 4,
+        "xp": 63,
+        "product": "adamant_bolt_heads",
+        "productQty": 10,
+        "materials": {
+          "adamant_bar": 1
+        }
+      },
+      {
+        "id": "smith_rune_bolt_heads",
+        "name": "Smith rune bolt heads (10)",
+        "level": 88,
+        "ticks": 4,
+        "xp": 75,
+        "product": "rune_bolt_heads",
+        "productQty": 10,
+        "materials": {
+          "rune_bar": 1
+        }
+      },
+      {
         "id": "forge_godsword_blade",
         "name": "Forge godsword blade",
         "level": 80,
@@ -7301,6 +7671,96 @@ const skillsData = {
         "materials": {
           "magic_shortbow_u": 1,
           "bowstring": 1
+        }
+      },
+      {
+        "id": "cut_wooden_stocks",
+        "name": "Cut wooden stocks (10)",
+        "level": 9,
+        "ticks": 2,
+        "xp": 6,
+        "product": "wooden_stock",
+        "productQty": 10,
+        "materials": {
+          "logs": 1
+        }
+      },
+      {
+        "id": "make_bronze_bolts",
+        "name": "Make bronze bolts (10)",
+        "level": 9,
+        "ticks": 3,
+        "xp": 5,
+        "product": "bronze_bolts",
+        "productQty": 10,
+        "materials": {
+          "wooden_stock": 10,
+          "bronze_bolt_heads": 10
+        }
+      },
+      {
+        "id": "make_iron_bolts",
+        "name": "Make iron bolts (10)",
+        "level": 39,
+        "ticks": 3,
+        "xp": 10,
+        "product": "iron_bolts",
+        "productQty": 10,
+        "materials": {
+          "wooden_stock": 10,
+          "iron_bolt_heads": 10
+        }
+      },
+      {
+        "id": "make_steel_bolts",
+        "name": "Make steel bolts (10)",
+        "level": 46,
+        "ticks": 3,
+        "xp": 35,
+        "product": "steel_bolts",
+        "productQty": 10,
+        "materials": {
+          "wooden_stock": 10,
+          "steel_bolt_heads": 10
+        }
+      },
+      {
+        "id": "make_mithril_bolts",
+        "name": "Make mithril bolts (10)",
+        "level": 54,
+        "ticks": 3,
+        "xp": 50,
+        "product": "mithril_bolts",
+        "productQty": 10,
+        "materials": {
+          "wooden_stock": 10,
+          "mithril_bolt_heads": 10
+        }
+      },
+      {
+        "id": "make_adamant_bolts",
+        "name": "Make adamant bolts (10)",
+        "level": 61,
+        "ticks": 3,
+        "xp": 70,
+        "product": "adamant_bolts",
+        "productQty": 10,
+        "materials": {
+          "wooden_stock": 10,
+          "adamant_bolt_heads": 10
+        }
+      },
+      {
+        "id": "make_rune_bolts",
+        "name": "Make rune bolts (10)",
+        "level": 69,
+        "ticks": 3,
+        "xp": 100,
+        "product": "rune_bolts",
+        "productQty": 10,
+        "materials": {
+          "wooden_stock": 10,
+          "rune_bolt_heads": 10
         }
       }
     ]
@@ -8020,14 +8480,33 @@ function createEquipment() {
     return eq;
 }
 /**
- * Equip an item. Returns { equipped: true, unequipped: [] } or { equipped: false }
- * Handles 2H weapon / shield conflicts.
+ * Check if an ammo item is compatible with the currently equipped weapon.
+ * Returns true if compatible, false if not.
+ * Also returns true if no weapon is equipped or if either item has no ammoType/ammoKind.
  */
-function equipItem(equipment, itemData) {
+function isAmmoCompatible(equipment, ammoItemData, itemsData) {
+    if (!equipment.weapon)
+        return true;
+    const weapon = itemsData[equipment.weapon.itemId];
+    if (!weapon || !weapon.ammoType || !ammoItemData.ammoKind)
+        return true;
+    return weapon.ammoType === ammoItemData.ammoKind;
+}
+/**
+ * Equip an item. Returns { equipped: true, unequipped: [] } or { equipped: false, reason }
+ * Handles 2H weapon / shield conflicts and ammo-weapon type validation.
+ */
+function equipItem(equipment, itemData, itemsData) {
     const slot = itemData.slot;
     if (!slot || !EQUIPMENT_SLOTS.includes(slot))
         return { equipped: false, unequipped: [] };
     const unequipped = [];
+    // Validate ammo type vs equipped weapon
+    if (slot === 'ammo' && itemsData) {
+        if (!isAmmoCompatible(equipment, itemData, itemsData)) {
+            return { equipped: false, unequipped: [], reason: 'wrong_ammo_type' };
+        }
+    }
     // 2H weapon clears shield
     if (slot === 'weapon' && itemData.twoHanded) {
         if (equipment.shield) {
@@ -8384,8 +8863,20 @@ function processCombatTick(combatState, playerStats, equipment, itemsData) {
             const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus.ranged || 0);
             const acc = hitChance(atkRoll, defRoll);
             damage = rollDamage(acc, maxHit);
+            // Consume one bolt/arrow per shot
+            const equippedAmmo = equipment && equipment.ammo;
+            if (equippedAmmo) {
+                events.push({ type: 'consumeAmmo', itemId: equippedAmmo.itemId, qty: 1 });
+            }
             if (damage > 0) {
-                xpSkills.ranged = damage * RANGED_XP_PER_DAMAGE;
+                if (state.stance === 'longrange') {
+                    // Longrange splits XP: 2 ranged + 2 defence per damage
+                    xpSkills.ranged = damage * (RANGED_XP_PER_DAMAGE / 2);
+                    xpSkills.defence = damage * (RANGED_XP_PER_DAMAGE / 2);
+                }
+                else {
+                    xpSkills.ranged = damage * RANGED_XP_PER_DAMAGE;
+                }
                 xpSkills.hitpoints = Math.floor(damage * HP_XP_PER_DAMAGE);
             }
         }
@@ -9757,7 +10248,10 @@ function GameProvider({ children }) {
         let idleResult = null;
         console.log('[PocketRPG] loadGame — savedTask:', savedTask, 'savedLastTick:', savedLastTick, 'elapsed:', savedLastTick ? Date.now() - savedLastTick : 0);
         if (savedTask && savedLastTick) {
-            const elapsedMs = Date.now() - savedLastTick;
+            // Cap at 24h to limit cross-session clock manipulation; legitimate offline play
+            // beyond 24h can use the in-game skip button.
+            const MAX_OFFLINE_MS = 24 * 60 * 60 * 1000;
+            const elapsedMs = Math.min(Date.now() - savedLastTick, MAX_OFFLINE_MS);
             if (elapsedMs >= 2000) {
                 let sim = null;
                 if (savedTask.type === 'skill') {
@@ -12952,6 +13446,7 @@ function GameApp() {
     // Refs for tick-based systems
     const hpRegenCounter = useRef(0);
     const snapshotCounter = useRef(99); // Start at 99 so first snapshot fires after 1 tick
+    const hiddenAtPerfRef = useRef(null); // performance.now() at hide — monotonic, immune to clock changes
     useEffect(() => {
         checkSave();
     }, []);
@@ -12987,11 +13482,13 @@ function GameApp() {
             if (document.hidden) {
                 // Page going to background — stamp the hide time separately from tick heartbeat
                 const now = Date.now();
+                hiddenAtPerfRef.current = performance.now(); // monotonic — not affected by clock changes
                 localStorage.setItem('pocketrpg_hiddenAt', String(now));
                 localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current));
             }
             else {
-                // Page returning to foreground — use hiddenAt (not lastTick) for elapsed time
+                // Page returning to foreground — prefer performance.now() diff (monotonic) over wall-clock
+                // to prevent system-time manipulation from granting fake idle progress.
                 try {
                     const rawHiddenAt = localStorage.getItem('pocketrpg_hiddenAt');
                     const savedTask = (() => { try {
@@ -13003,7 +13500,17 @@ function GameApp() {
                     if (!rawHiddenAt)
                         return;
                     const hiddenAt = parseInt(rawHiddenAt, 10);
-                    const elapsedMs = Date.now() - hiddenAt;
+                    const perfNow = performance.now();
+                    let elapsedMs;
+                    if (hiddenAtPerfRef.current !== null && perfNow >= hiddenAtPerfRef.current) {
+                        // Same session: use monotonic clock — immune to system time changes
+                        elapsedMs = Math.floor(perfNow - hiddenAtPerfRef.current);
+                    }
+                    else {
+                        // New session (page reloaded while hidden): fall back to wall-clock, capped at 24h
+                        elapsedMs = Math.min(Date.now() - hiddenAt, 24 * 60 * 60 * 1000);
+                    }
+                    hiddenAtPerfRef.current = null;
                     if (elapsedMs < 2000)
                         return;
                     // Clear the hiddenAt stamp so a second quick return doesn't double-count

@@ -1,162 +1,67 @@
 # PocketRPG — Project Reference
-**v1.4 | Status: Pre-MVP Prototype**
-
 ## 1. CORE CONCEPT
-Menu-driven idle/simulation fantasy RPG. 0.6s tick-based engine. Text/icon/progress-bar UI. Mobile-first, offline-first (IndexedDB). No animations/pixel art.
-
+Menu-driven idle/simulation fantasy RPG. 0.6s tick-based engine with a text, icon, and progress-bar UI. Mobile-first and offline-first.
 ## 2. TECH STACK & RULES
-- **Stack:** Preact (UI), Tailwind v4 via CDN (Style), IndexedDB/idb (Storage).
-- **Architecture:** `engine/` (pure logic, no UI), `screens/` (top-level), `state/` (Preact context/hooks), `db/` (persistence).
-- **Rules:** Engine has ZERO UI imports. Static JSON is immutable. State flows down, events flow up. Debounced auto-save (300ms).
-
+ * **Stack**: Preact (UI), Tailwind v4 via CDN (Style), and IndexedDB/idb/localStorage for persistence.
+ * **Architecture**:
+   * engine/: Pure logic with zero UI imports.
+   * screens/: Top-level UI components.
+   * state/: Preact context and hooks.
+   * db/: Persistence layer.
+ * **Flow**: Static JSON is immutable; state flows down, events flow up.
+ * **Persistence**: Debounced auto-save at 300ms.
 ## 3. BUILD PROCESS
-The standard build is the **single-file build** — this is what gets committed and served.
-
+The standard build is a **single-file build** that gets committed and served directly.
 ```bash
 tsc --project tsconfig.build.json   # Transpile JSX → h() calls via TypeScript
 node build_single.cjs               # Concatenate + inline into index.html
+
 ```
-
-`build_single.cjs` transpiles with `jsxFactory: "h"` / `jsxFragmentFactory: "Fragment"` for Preact, then:
-1. Reads all `.js` files from `dist_tmp/` in dependency order
-2. Strips import/export statements (everything concatenated into one scope)
-3. Inlines JSON data files (items, monsters, skills, spells)
-4. Inlines CSS (Tailwind loaded via CDN `<script>` tag instead)
-5. Wraps in HTML with ESM CDN imports: `preact@10.25.4`, `preact/hooks`, `idb@8.0.2`
-6. Fixes dynamic imports (`import('./database.js')` → global `getDB()`)
-7. **Writes output to `index.html` in the project root** (the committed/served file)
-
-**Key files:**
-- `tsconfig.build.json` — TypeScript config for JSX transpilation
-- `build_single.cjs` — Build script (CommonJS; `package.json` has `"type": "module"`)
-- `index.html` — The built artifact; committed to git and served directly
-
+ * **Artifact Rule**: **index.html** is an automated output. Never edit it manually.
 ## 4. WORKFLOW (Claude Code)
-Development now uses **Claude Code CLI** with git. The source lives in the repo — no zip exports needed.
-
-### Every session
-1. Make source changes in `src/`
-2. Rebuild: `tsc --project tsconfig.build.json && node build_single.cjs`
-3. Commit source + rebuilt `index.html` together and push
-
-### Test suite (`pocketrpg_test.html`)
-`pocketrpg_test.html` lives in the project root. When adding new features:
-- Add new test groups at the bottom of `runAll()` using `assert(name, condition, detail)`.
-- Add modal/visual previews in `renderModalPreview()` for UI features.
-- Re-inline any new `src/engine/` functions — the test page is self-contained.
-- Update the `thresholds` array in `renderResults()` to match the new assertion count.
-- All tests must pass (green). A failing test is a bug, not a known issue.
-
+ 1. Make source changes in src/.
+ 2. Rebuild: tsc --project tsconfig.build.json && node build_single.cjs.
+ 3. Commit source and rebuilt index.html together.
 ## 5. XP & LEVELING
-- **Table:** 1–99. Formula: `totalXP(L) = floor(sum(x=1 to L-1) of floor(x + 300 * 2^(x/7)) / 4)`.
-- **Caps:** 200M XP. Level 10 HP start (1,154 XP).
-- **Combat XP:** 4 XP/dmg to primary skill, 1.33 XP/dmg to HP. Magic: Base + 2 XP/dmg.
-- **Level up message:** `"Congratulations! Your {Skill} is now {level}"` with skill icon shown as the toast icon (no confetti).
-
+ * **Progression**: 1–99.
+ * **XP Formula**: totalXP(L) = floor(sum(x=1 to L-1) of floor(x + 300 * 2^(x/7)) / 4).
+ * **Caps**: 200M XP limit.
+ * **Start**: Level 10 HP start (1,154 XP).
+ * **Gains**:
+   * **Combat**: 4 XP/dmg to primary skill, 1.33 XP/dmg to HP.
+   * **Magic**: Base spell XP + 2 XP/dmg.
 ## 6. COMBAT ENGINE (Per Tick)
-- **Tick:** 600ms. Actions (attack, eat, drink) consume ticks.
-- **Melee Max Hit:** `base = floor(0.5 + effectiveStr * (bonus + 64) / 640)`.
-- **Accuracy:** `maxRoll = effectiveLevel * (bonus + 64)`. If attackRoll > defRoll: `acc = 1 - (defRoll + 2) / (2 * (attackRoll + 1))`. Else: `acc = attackRoll / (2 * (defRoll + 1))`.
-- **Magic:** Acc uses 70% Magic + 30% Defence for target roll. Max hit is spell-based.
-- **Styles:** Acc/Agg/Def/Longrange give +3 to relevant effective level; Controlled +1.
-- **Loop:** 1. Decr timers → 2. Process player hit → 3. Process monster hit → 4. Death check → 5. Auto-eat/pot.
-- **Auto-fight:** After slaying a monster, auto-restarts combat with same monster after 1.2s delay.
-
+ * **Tick**: 600ms engine cycle. Actions like attacking or eating consume ticks.
+ * **Melee Max Hit**: base = floor(0.5 + effectiveStr * (bonus + 64) / 640).
+ * **Accuracy Logic**:
+   * maxRoll = effectiveLevel * (bonus + 64).
+   * If attackRoll > defRoll: acc = 1 - (defRoll + 2) / (2 * (attackRoll + 1)).
+   * Else: acc = attackRoll / (2 * (defRoll + 1)).
+ * **Styles**: Accurate (Attack), Aggressive (Str), and Defensive (Def) give +3 to the relevant effective level; Controlled gives +1 to all.
+ * **Auto-fight**: Combat restarts after 1.2s delay following a kill.
+ * **Dragonfire**: 33% proc chance with 50 max damage. Fully blocked by items with otherBonus.antiDragon: true.
 ## 7. SKILLING & RESOURCES
-- **Flow:** Picker → Action → Modal (Progress Bar).
-- **Chains:**
-  - Mining/Smithing: Tin/Cop (1) → Clay (1) → Iron (15) → Coal (30) → Gold (40) → Mith (55) → Addy (70) → Rune (85).
-  - Smithing includes: Smelting bars (bronze→rune, gold bar at lv40).
-  - Crafting includes: Molten glass (lv1), leather/gems/jewellery.
-  - Wood/Fletch: Normal (1) → Oak (15) → Willow (30) → Maple (45) → Yew (60) → Magic (75).
-  - Fish/Cook: Shrimp (3HP, lv1) → Trout (7HP, lv20) → Lob (12HP, lv40) → Sword (14HP, lv50) → Shark (20HP, lv76).
-- **Gather tasks** (no level required): Pick flax, collect sand/seaweed, soften clay, pick wheat, grind flour, tan leather, burn seaweed.
-
+ * **Gathering**: No level requirement for basic tasks.
+ * **Skilling**: Requires specific levels; uses a Picker → Action → Modal flow with a progress bar.
 ## 8. IDLE MECHANICS
-- **HP Regen:** +1 HP every 60 seconds (100 ticks), automatic.
-- **Auto-Bank:** When inventory is full, auto-deposits all items to bank after a delay. Delay scales with Agility level: 120s at lv1, linearly down to 10s at lv99.
-- **Home Screen shortcuts:** Can add specific combat monsters, skill actions, and gather tasks. Clicking goes directly to that action (auto-starts fight/skill/gather).
-
+ * **Regen**: +1 HP every 60s.
+ * **Auto-Bank**: Triggered on full inventory. Delay scales linearly from 5 minutes at Level 1 Agility down to 10 seconds at Level 99.
 ## 9. INVENTORY & BANKING
-- **Deposit:** Done from Inventory screen. Click item → modal with Bank 1/5/10/All. Stackable items bank entire stack. Non-stackable counts same items across inventory.
-- **Withdraw:** Done from Bank screen. Click item → Take 1/5/10/All.
-- **Withdraw as Note:** Non-stackable items can be withdrawn as "noted" from the bank. Noted items stack like stackable items but cannot be equipped or eaten — only sold, dropped, or deposited back to bank. Noted slots carry a `noted: true` flag in the inventory slot object. The 📜 icon is shown on noted items.
-- **Selling:** Items can be sold from inventory modal. Prices stored as `shopValue` in items.json.
-- **No drop toast** — dropping items is silent.
-- **Equipment Screen:** Paperdoll layout showing all 11 equipment slots (head, cape, neck, ammo, weapon, body, shield, legs, gloves, boots, ring) with attack/defence/other bonus summary. Tap equipped item to unequip.
-
+ * **Inventory Cap**: Hard limit of 28 slots.
+ * **Withdraw as Note**: Sets noted: true. Noted items stack but cannot be equipped or eaten.
+ * **Equipment**: Equipping a shield clears 2H weapons and vice-versa.
+ * **UX**: Dropping items is silent with no toast notification.
 ## 10. DATA SCHEMAS
-- **Items:** `{ id, name, type, slot, stackable, shopValue, attackBonus:{}, defenceBonus:{}, otherBonus:{} }`
-- **Monsters:** `{ id, name, combatLevel, hitpoints, stats:{}, attackSpeed, drops:[{itemId, quantity, chance}] }`
-
+ * **Items**: Located in src/data/items.json.
+ * **Monsters**: Located in src/data/monsters.json.
 ## 11. KEY INVARIANTS
-- **Rounding:** Always `Math.floor()`.
-- **Inventory:** Hard cap 28 slots. Check before adding.
-- **2H/Shield:** Equipping shield clears 2H weapon; vice versa.
-- **Ticks:** Handle backgrounding by pausing or batch-catching ticks.
-- **UI:** Minimum 44×44px tap targets. Fixed Header/Footer with scrollable body.
-- **Icons:** Same emoji icons used in both Bank and Inventory screens (TYPE_EMOJIS map).
-- **Tailwind CDN:** No `/N` opacity modifiers (e.g. `bg-[var(--x)]/70` won't work). Use solid CSS vars instead (e.g. `--color-emerald-mid`).
-
-## 12. TEST SUITE (`pocketrpg_test.html`)
-A standalone, no-build-required HTML test page. Open in any browser — no server needed.
-
-### Structure
-```
-runAll()
-  ├── XP & Leveling             (17 assertions)
-  ├── Combat Formulas            (13 assertions)
-  ├── Equipment Bonuses          (8 assertions)
-  ├── Inventory                  (10 assertions)
-  ├── formatIdleTime             (10 assertions)
-  ├── simulateIdleSkilling       (8 assertions)
-  ├── simulateIdleGather         (7 assertions)
-  ├── simulateIdleCombat/chickens (12 assertions)
-  ├── simulateIdleCombat/aggressive (3 assertions)
-  ├── simulateIdleCombat/full-inv (3 assertions)
-  ├── simulateIdleCombat/weapon  (2 assertions)
-  ├── simulateIdleCombat/highstats (1 assertion)
-  ├── Combat Level               (3 assertions)
-  ├── FNV-1a Hash                (5 assertions)
-  ├── localStorage Backup        (12 assertions)
-  ├── Idle Edge Cases            (8 assertions)
-  ├── Auto-bank Delay            (5 assertions)
-  ├── XP Table Integrity         (3 assertions)
-  ├── Stackable Items            (5 assertions)
-  ├── simulateIdleCombat/cows    (3 assertions)
-  ├── End-to-end Idle Flow       (6 assertions)
-  ├── canPerformAction + Bank    (5 assertions)
-  ├── Idle Skilling Materials    (15 assertions)
-  └── Noted Items                (9 assertions)
-
-renderResults()   — renders pass/fail badges per group
-renderModalPreview() — renders real modal UI from simulation output
-```
-
-### assert() signature
-```js
-assert(name: string, condition: boolean, detail?: string)
-```
-`detail` appears as a subtitle under the test — use it for expected vs actual values.
-
-### Adding a new test group
-1. Add assertions inside `runAll()` with a comment block `// ── GROUP N: feature name ──`
-2. Add the group name as a new key in the `groups` object in `renderResults()`
-3. Add its threshold (cumulative assertion count up to and including this group) to the `thresholds` array
-4. If the feature has UI output (a modal, a screen), add a preview card in `renderModalPreview()`
-
-### What to test for each new feature
-- **New engine function:** unit test inputs/outputs, edge cases (null, zero, boundary values)
-- **New skilling action:** correct XP per action, correct product, correct tick count
-- **New monster:** DPS calculation, drop table rolls, loot gained/lost split
-- **New screen/UI:** no assertions needed in test page — verify via game directly
-- **New DB setting:** add an IDB round-trip test reading/writing the new key
-
-### Inlining engine functions
-The test page inlines all pure engine functions. When a new file is added to `src/engine/`:
-1. Copy the function body into the `// INLINED ENGINE` block in `idle_test.html`
-2. Remove import/export keywords — everything is in one global scope
-3. Ensure any constants it depends on are also present in the `// CONSTANTS` block
+ * **Rounding**: Always use Math.floor().
+ * **UI**: 44×44px minimum tap targets. Fixed Header/Footer with a scrollable body.
+ * **Styles**: Tailwind CDN is used; do not use /N opacity modifiers. Use solid CSS variables.
+## 12. TEST SUITE
+ * **Command**: Run npm test for the Vitest suite.
+ * **File**: pocketrpg_test.ts covers core logic only. Avoid UI testing.
+ * **Requirement**: All tests must pass (green) before committing changes.
 
 ---
 

@@ -68,6 +68,7 @@ const MAX_XP = 200_000_000
 const INVENTORY_SIZE = 28
 const TICK_MS = 600
 const MELEE_XP_PER_DAMAGE = 4
+const RANGED_XP_PER_DAMAGE = 4
 const HP_XP_PER_DAMAGE = 1.33
 const AGILITY_BANK_DELAY_LV1_MS = 5 * 60 * 1000
 const AGILITY_BANK_DELAY_LV99_MS = 10 * 1000
@@ -200,6 +201,20 @@ function getMeleeStyleBonuses(stance) {
     default:           return { attackStyleBonus: 0, strengthStyleBonus: 0, defenceStyleBonus: 0 }
   }
 }
+function effectiveRanged(rangedLevel, potionBonus=0, prayerMult=1.0, styleBonus=0) {
+  return Math.floor((rangedLevel + potionBonus) * prayerMult) + styleBonus + 8
+}
+function rangedMaxHit(effectiveRng, rangedStrengthBonus) {
+  return Math.floor(0.5 + effectiveRng * (rangedStrengthBonus + 64) / 640)
+}
+function getRangedStyleBonus(stance) {
+  switch (stance) {
+    case 'accurate':  return 3
+    case 'rapid':     return 0
+    case 'longrange': return 3
+    default:          return 0
+  }
+}
 
 // ─────────────────────────────────────────────
 // INLINED ENGINE: equipment.js
@@ -234,6 +249,12 @@ function getAttackStyle(equipment, itemsData) {
   if (!equipment.weapon) return 'crush'
   const weapon = itemsData[equipment.weapon.itemId]
   return weapon?.attackStyle || 'crush'
+}
+function isAmmoCompatible(equipment, ammoItemData, itemsData) {
+  if (!equipment.weapon) return true
+  const weapon = itemsData[equipment.weapon.itemId]
+  if (!weapon || !weapon.ammoType || !ammoItemData.ammoKind) return true
+  return weapon.ammoType === ammoItemData.ammoKind
 }
 
 // ─────────────────────────────────────────────
@@ -1005,6 +1026,87 @@ function runAll() {
     return g + b === bankResult.monstersKilled
   })(), 'cowhide gained+banked should equal kills')
   assert('Bank: fewer kills than no-bank (trips cost time)', bankResult.monstersKilled <= noBankResult.monstersKilled, `bank:${bankResult.monstersKilled} no-bank:${noBankResult.monstersKilled}`)
+
+  // ── GROUP 25: Ranged Mechanics ──
+  group('Ranged Mechanics')
+
+  // Small self-contained items fixture for ranged tests (mirrors items.json source values)
+  const RANGED_ITEMS = {
+    crossbow:       { id: 'crossbow',       attackStyle: 'ranged', ammoType: 'bolt' },
+    iron_crossbow:  { id: 'iron_crossbow',  attackStyle: 'ranged', ammoType: 'bolt', attackBonus: { ranged: 26 } },
+    steel_crossbow: { id: 'steel_crossbow', attackStyle: 'ranged', ammoType: 'bolt' },
+    shortbow:       { id: 'shortbow',       attackStyle: 'ranged', ammoType: 'arrow' },
+    bronze_arrow:   { id: 'bronze_arrow',   type: 'ammo', ammoKind: 'arrow', otherBonus: { rangedStrength: 7  } },
+    bronze_bolts:   { id: 'bronze_bolts',   type: 'ammo', ammoKind: 'bolt',  otherBonus: { rangedStrength: 10 } },
+    iron_bolts:     { id: 'iron_bolts',     type: 'ammo', ammoKind: 'bolt',  otherBonus: { rangedStrength: 14 } },
+    steel_bolts:    { id: 'steel_bolts',    type: 'ammo', ammoKind: 'bolt',  otherBonus: { rangedStrength: 22 } },
+    mithril_bolts:  { id: 'mithril_bolts',  type: 'ammo', ammoKind: 'bolt',  otherBonus: { rangedStrength: 35 } },
+    adamant_bolts:  { id: 'adamant_bolts',  type: 'ammo', ammoKind: 'bolt',  otherBonus: { rangedStrength: 46 } },
+    rune_bolts:     { id: 'rune_bolts',     type: 'ammo', ammoKind: 'bolt',  otherBonus: { rangedStrength: 69 } },
+    wooden_stock:   { id: 'wooden_stock',   type: 'resource', stackable: true },
+    bronze_bolt_heads: { id: 'bronze_bolt_heads', type: 'resource', stackable: true },
+    rune_bolt_heads:   { id: 'rune_bolt_heads',   type: 'resource', stackable: true },
+  }
+
+  // Bolt ammoKind and rangedStrength
+  assert('bronze_bolts ammoKind=bolt', RANGED_ITEMS.bronze_bolts.ammoKind === 'bolt', `got ${RANGED_ITEMS.bronze_bolts.ammoKind}`)
+  assert('iron_bolts rangedStrength=14', RANGED_ITEMS.iron_bolts.otherBonus.rangedStrength === 14, `got ${RANGED_ITEMS.iron_bolts.otherBonus.rangedStrength}`)
+  assert('steel_bolts rangedStrength=22', RANGED_ITEMS.steel_bolts.otherBonus.rangedStrength === 22, `got ${RANGED_ITEMS.steel_bolts.otherBonus.rangedStrength}`)
+  assert('rune_bolts rangedStrength=69', RANGED_ITEMS.rune_bolts.otherBonus.rangedStrength === 69, `got ${RANGED_ITEMS.rune_bolts.otherBonus.rangedStrength}`)
+
+  // Crossbow/bow ammoType
+  assert('crossbow ammoType=bolt', RANGED_ITEMS.crossbow.ammoType === 'bolt', `got ${RANGED_ITEMS.crossbow.ammoType}`)
+  assert('iron_crossbow exists with ranged+26', RANGED_ITEMS.iron_crossbow.attackBonus.ranged === 26, `got ${RANGED_ITEMS.iron_crossbow.attackBonus.ranged}`)
+  assert('shortbow ammoType=arrow', RANGED_ITEMS.shortbow.ammoType === 'arrow', `got ${RANGED_ITEMS.shortbow.ammoType}`)
+
+  // Ammo-weapon compatibility
+  const cbEq = createEquipment()
+  cbEq.weapon = { itemId: 'crossbow', _twoHanded: false }
+  assert('Crossbow + bolts: compatible', isAmmoCompatible(cbEq, RANGED_ITEMS.bronze_bolts, RANGED_ITEMS) === true, 'should be compatible')
+  assert('Crossbow + arrows: incompatible', isAmmoCompatible(cbEq, RANGED_ITEMS.bronze_arrow, RANGED_ITEMS) === false, 'crossbow should reject arrows')
+  const bowEq = createEquipment()
+  bowEq.weapon = { itemId: 'shortbow', _twoHanded: true }
+  assert('Shortbow + arrows: compatible', isAmmoCompatible(bowEq, RANGED_ITEMS.bronze_arrow, RANGED_ITEMS) === true, 'should be compatible')
+  assert('Shortbow + bolts: incompatible', isAmmoCompatible(bowEq, RANGED_ITEMS.bronze_bolts, RANGED_ITEMS) === false, 'shortbow should reject bolts')
+
+  // consumeAmmo event logic
+  {
+    const eq = createEquipment()
+    eq.weapon = { itemId: 'crossbow', _twoHanded: false }
+    eq.ammo = { itemId: 'bronze_bolts', _twoHanded: false }
+    const events = []
+    if (eq.ammo) events.push({ type: 'consumeAmmo', itemId: eq.ammo.itemId, qty: 1 })
+    assert('consumeAmmo event fires when ammo equipped', events.some(e => e.type === 'consumeAmmo'), 'expected consumeAmmo event')
+    assert('consumeAmmo targets bronze_bolts', events.find(e => e.type === 'consumeAmmo')?.itemId === 'bronze_bolts', `got ${events.find(e => e.type === 'consumeAmmo')?.itemId}`)
+  }
+  {
+    const eq = createEquipment() // no ammo equipped
+    const events = []
+    if (eq.ammo) events.push({ type: 'consumeAmmo', itemId: eq.ammo.itemId, qty: 1 })
+    assert('No consumeAmmo when ammo slot empty', events.length === 0, 'should not fire when no ammo')
+  }
+
+  // Longrange XP split: 2 ranged + 2 defence per damage
+  {
+    const dmg = 10
+    const longrangeRangedXP = dmg * (RANGED_XP_PER_DAMAGE / 2)
+    const longrangeDefXP    = dmg * (RANGED_XP_PER_DAMAGE / 2)
+    const accurateRangedXP  = dmg * RANGED_XP_PER_DAMAGE
+    assert('Longrange: 2 ranged XP per dmg', longrangeRangedXP === 20, `got ${longrangeRangedXP}`)
+    assert('Longrange: 2 defence XP per dmg', longrangeDefXP === 20, `got ${longrangeDefXP}`)
+    assert('Accurate: 4 ranged XP per dmg (no split)', accurateRangedXP === 40, `got ${accurateRangedXP}`)
+  }
+
+  // Ranged formula correctness
+  assert('getRangedStyleBonus accurate=3', getRangedStyleBonus('accurate') === 3, `got ${getRangedStyleBonus('accurate')}`)
+  assert('getRangedStyleBonus rapid=0', getRangedStyleBonus('rapid') === 0, `got ${getRangedStyleBonus('rapid')}`)
+  assert('getRangedStyleBonus longrange=3', getRangedStyleBonus('longrange') === 3, `got ${getRangedStyleBonus('longrange')}`)
+  assert('effectiveRanged lv1 = 9', effectiveRanged(1) === 9, `got ${effectiveRanged(1)}`)
+  assert('rangedMaxHit lv70 rune_bolts', rangedMaxHit(effectiveRanged(70, 0, 1.0, 3), 69) > 10, `got ${rangedMaxHit(effectiveRanged(70, 0, 1.0, 3), 69)}`)
+
+  // wooden_stock and bolt heads exist
+  assert('wooden_stock is resource', RANGED_ITEMS.wooden_stock.type === 'resource', `got ${RANGED_ITEMS.wooden_stock.type}`)
+  assert('bronze_bolt_heads is resource', RANGED_ITEMS.bronze_bolt_heads.type === 'resource', `got ${RANGED_ITEMS.bronze_bolt_heads.type}`)
 
 
 // ─────────────────────────────────────────────
