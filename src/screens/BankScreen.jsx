@@ -14,6 +14,7 @@ export default function BankScreen() {
   const [renameValue, setRenameValue] = useState('')
   const [draggingId, setDraggingId] = useState(null)
   const [overItemId, setOverItemId] = useState(null)
+  const [searchTerm, setSearchTerm] = useState('')
 
   const dragRef = useRef(null)
   const overRef = useRef(null)
@@ -29,19 +30,29 @@ export default function BankScreen() {
   const bankItems = Object.values(bank).filter(b => b && b.quantity > 0)
 
   const getDisplayItems = () => {
+    let items
     if (activeTab === 0) {
       // Show unassigned items + items explicitly ordered in All (tabIndex: 0)
-      return bankItems
+      items = bankItems
         .filter(e => !itemTabMap[e.itemId] || itemTabMap[e.itemId].tabIndex === 0)
         .sort((a, b) => {
           const pa = itemTabMap[a.itemId]?.tabIndex === 0 ? (itemTabMap[a.itemId].position ?? 9999) : 9999
           const pb = itemTabMap[b.itemId]?.tabIndex === 0 ? (itemTabMap[b.itemId].position ?? 9999) : 9999
           return pa - pb
         })
+    } else {
+      items = bankItems
+        .filter(e => itemTabMap[e.itemId]?.tabIndex === activeTab)
+        .sort((a, b) => (itemTabMap[a.itemId]?.position ?? 9999) - (itemTabMap[b.itemId]?.position ?? 9999))
     }
-    return bankItems
-      .filter(e => itemTabMap[e.itemId]?.tabIndex === activeTab)
-      .sort((a, b) => (itemTabMap[a.itemId]?.position ?? 9999) - (itemTabMap[b.itemId]?.position ?? 9999))
+
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const lower = searchTerm.toLowerCase()
+      items = items.filter(e => itemsData[e.itemId]?.name.toLowerCase().includes(lower))
+    }
+
+    return items
   }
 
   // ── Withdrawal ──────────────────────────────────────────────────────────────
@@ -278,16 +289,35 @@ export default function BankScreen() {
 
       {/* ── Header + Tab bar ─────────────────────────────────────────────── */}
       <div class="px-4 pt-4 pb-0 flex-shrink-0">
-        <div class="flex items-center justify-between mb-2">
-          <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider">
+        <div class="flex items-center gap-2 mb-2">
+          <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider flex-shrink-0">
             Bank ({bankItems.length})
           </h2>
+          <div class="flex-1 flex justify-center">
+            <div class="w-32 flex items-center bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-2.5 py-1.5">
+              <input
+                type="text"
+                value={searchTerm}
+                onInput={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search..."
+                class="flex-1 bg-transparent text-xs text-[var(--color-parchment)] outline-none placeholder:opacity-30"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  class="text-[var(--color-parchment)] opacity-40 hover:opacity-70 active:opacity-80 text-[12px] ml-1 flex-shrink-0"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
           <button
             onClick={() => {
               setTabMenu(activeTab)
               setRenameValue(activeTab === 0 ? allTabName : (tabs[activeTab - 1] ?? ''))
             }}
-            class="text-[10px] text-[var(--color-parchment)] opacity-40 px-2 py-1 rounded active:opacity-70"
+            class="text-[10px] text-[var(--color-parchment)] opacity-40 px-2 py-1 rounded active:opacity-70 flex-shrink-0"
           >
             ✏️ Edit tab
           </button>
