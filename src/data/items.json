@@ -5660,7 +5660,7 @@
     "name": "Dragon axe",
     "type": "weapon",
     "slot": "weapon",
-    "twoHanded": true,
+    "twoHanded": false,
     "stackable": false,
     "attackSpeed": 5,
     "attackStyle": "slash",
