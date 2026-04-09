@@ -124,7 +124,7 @@ function randRange(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
-const MONSTER_ICONS = {
+const SLAYER_MONSTER_ICONS = {
   chicken: '🐔', goblin: '👺', cow: '🐄', wizard: '🧙', rock_crab: '🦀',
   sand_crab: '🦀', dark_wizard: '🧙‍♂️', giant_spider: '🕷️', hill_giant: '👊',
   moss_giant: '🌿', green_dragon: '🐉', lesser_demon: '👿', abyssal_demon: '😈',
@@ -230,7 +230,7 @@ export default function SlayerScreen({ onBack }) {
         <div class="mb-4 bg-[#1a1a08] border border-[#3a3a10] rounded-xl p-3">
           <div class="text-[10px] text-yellow-400 uppercase font-bold tracking-wider mb-1">⚔️ Current Task</div>
           <div class="flex items-center gap-2 mb-2">
-            <span class="text-xl">{MONSTER_ICONS[slayerTask.monsterId] || '👹'}</span>
+            <span class="text-xl">{SLAYER_MONSTER_ICONS[slayerTask.monsterId] || '👹'}</span>
             <div>
               <div class="text-sm font-bold text-[var(--color-parchment)]">{slayerTask.monsterName}</div>
               <div class="text-[10px] text-[var(--color-parchment)] opacity-50">
