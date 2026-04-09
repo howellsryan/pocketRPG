@@ -5654,5 +5654,39 @@
     "requirements": {},
     "shopValue": 100000,
     "icon": "💍"
+  },
+  "dragon_axe": {
+    "id": "dragon_axe",
+    "name": "Dragon axe",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 2,
+      "slash": 60,
+      "crush": -10,
+      "magic": -10,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 55,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 60
+    },
+    "shopValue": 350000,
+    "icon": "⚔️"
   }
 }
