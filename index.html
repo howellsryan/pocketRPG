@@ -5630,6 +5630,130 @@ const itemsData = {
     "stackable": false,
     "shopValue": 2000000,
     "icon": "⚔️"
+  },
+  "dagganoth_bones": {
+    "id": "dagganoth_bones",
+    "name": "Dagganoth bones",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 5000,
+    "icon": "🦴"
+  },
+  "berserker_ring": {
+    "id": "berserker_ring",
+    "name": "Berserker ring",
+    "type": "armour",
+    "slot": "ring",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 16,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 100000,
+    "icon": "💍"
+  },
+  "seers_ring": {
+    "id": "seers_ring",
+    "name": "Seers ring",
+    "type": "armour",
+    "slot": "ring",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 12
+    },
+    "requirements": {},
+    "shopValue": 100000,
+    "icon": "💍"
+  },
+  "archers_ring": {
+    "id": "archers_ring",
+    "name": "Archers ring",
+    "type": "armour",
+    "slot": "ring",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 14,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 100000,
+    "icon": "💍"
+  },
+  "warriors_ring": {
+    "id": "warriors_ring",
+    "name": "Warriors ring",
+    "type": "armour",
+    "slot": "ring",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 16,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 100000,
+    "icon": "💍"
   }
 };
 const monstersData = {
@@ -6727,6 +6851,179 @@ const monstersData = {
         "itemId": "rune_full_helm",
         "quantity": 1,
         "chance": 0.01
+      }
+    ]
+  },
+  "dagganoth_rex": {
+    "id": "dagganoth_rex",
+    "name": "Dagganoth Rex",
+    "combatLevel": 303,
+    "hitpoints": 150,
+    "stats": {
+      "attack": 90,
+      "strength": 80,
+      "defence": 100,
+      "magic": 10,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 50,
+      "slash": 50,
+      "crush": 50,
+      "magic": 10,
+      "ranged": 50
+    },
+    "drops": [
+      {
+        "itemId": "dagganoth_bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [5000, 8000],
+        "chance": 1.0
+      },
+      {
+        "itemId": "rune_platelegs",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "rune_platebody",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "dragon_axe",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "berserker_ring",
+        "quantity": 1,
+        "chance": 0.0078125
+      },
+      {
+        "itemId": "warriors_ring",
+        "quantity": 1,
+        "chance": 0.0078125
+      }
+    ]
+  },
+  "dagganoth_prime": {
+    "id": "dagganoth_prime",
+    "name": "Dagganoth Prime",
+    "combatLevel": 303,
+    "hitpoints": 150,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 100,
+      "magic": 90,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "magic",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 50,
+      "slash": 50,
+      "crush": 50,
+      "magic": 50,
+      "ranged": 10
+    },
+    "drops": [
+      {
+        "itemId": "dagganoth_bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [5000, 8000],
+        "chance": 1.0
+      },
+      {
+        "itemId": "rune_platelegs",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "rune_platebody",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "dragon_axe",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "seers_ring",
+        "quantity": 1,
+        "chance": 0.0078125
+      }
+    ]
+  },
+  "dagganoth_supreme": {
+    "id": "dagganoth_supreme",
+    "name": "Dagganoth Supreme",
+    "combatLevel": 303,
+    "hitpoints": 150,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 100,
+      "magic": 1,
+      "ranged": 90
+    },
+    "attackSpeed": 4,
+    "attackStyle": "ranged",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 50,
+      "slash": 50,
+      "crush": 50,
+      "magic": 10,
+      "ranged": 50
+    },
+    "drops": [
+      {
+        "itemId": "dagganoth_bones",
+        "quantity": 1,
+        "chance": 1.0
+      },
+      {
+        "itemId": "coins",
+        "quantity": [5000, 8000],
+        "chance": 1.0
+      },
+      {
+        "itemId": "rune_platelegs",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "rune_platebody",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "dragon_axe",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "archers_ring",
+        "quantity": 1,
+        "chance": 0.0078125
       }
     ]
   }
