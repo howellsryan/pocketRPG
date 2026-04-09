@@ -28,7 +28,8 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     xpGained: {},    // accumulated xp per skill
     loot: null,      // set on monster death
     specialAttackEnergy: 100,  // 0-100; starts at 100 for each new fight, drains on use, refills on kill
-    activePrayer: null  // active prayer id, reset on each new fight
+    activeProtectionPrayer: null,  // one protection prayer, reset on each new fight
+    activeCombatPrayer: null       // one combat enhancing prayer, reset on each new fight
   }
 }
 
@@ -48,10 +49,15 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   if (state.eatCooldown > 0) state.eatCooldown--
   if (state.potionCooldown > 0) state.potionCooldown--
 
-  // Apply prayer bonuses to player stats only if there's an active prayer
+  // Apply prayer bonuses to player stats from both active prayers
   let boostedPlayerStats = playerStats
-  if (state.activePrayer && prayersData && typeof prayersData === 'object' && prayersData[state.activePrayer]) {
-    boostedPlayerStats = applyPrayerBonuses(playerStats, state.activePrayer, prayersData) || playerStats
+  if (prayersData && typeof prayersData === 'object') {
+    if (state.activeProtectionPrayer && prayersData[state.activeProtectionPrayer]) {
+      boostedPlayerStats = applyPrayerBonuses(boostedPlayerStats, state.activeProtectionPrayer, prayersData) || boostedPlayerStats
+    }
+    if (state.activeCombatPrayer && prayersData[state.activeCombatPrayer]) {
+      boostedPlayerStats = applyPrayerBonuses(boostedPlayerStats, state.activeCombatPrayer, prayersData) || boostedPlayerStats
+    }
   }
 
   const bonuses = getEquipmentBonuses(equipment, itemsData)
@@ -204,9 +210,9 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       damage = rollDamage(acc, monsterMaxHit)
 
       // Apply protection prayer damage reduction if active and matches attack style
-      if (state.activePrayer && prayersData && typeof prayersData === 'object' && prayersData[state.activePrayer]) {
+      if (state.activeProtectionPrayer && prayersData && typeof prayersData === 'object' && prayersData[state.activeProtectionPrayer]) {
         try {
-          const prayer = prayersData[state.activePrayer]
+          const prayer = prayersData[state.activeProtectionPrayer]
           if (prayer && prayer.bonusType === 'protection' && typeof prayer.damageReductionPercent === 'number') {
             if (protectionPrayerMatches(prayer.style, monster.attackStyle)) {
               const reduction = Math.floor(damage * prayer.damageReductionPercent / 100)

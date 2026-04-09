@@ -327,13 +327,22 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
   const handlePrayer = (prayerId) => {
     if (!combatRef.current) return
     const prayer = prayersData[prayerId]
-    const newState = { ...combatRef.current, activePrayer: prayerId }
+    if (!prayer) return
+
+    let newState = { ...combatRef.current }
+
+    // Determine prayer type and update accordingly
+    if (prayer.bonusType === 'protection') {
+      // Toggle or set protection prayer
+      newState.activeProtectionPrayer = combatRef.current.activeProtectionPrayer === prayerId ? null : prayerId
+    } else {
+      // Toggle or set combat prayer
+      newState.activeCombatPrayer = combatRef.current.activeCombatPrayer === prayerId ? null : prayerId
+    }
+
     combatRef.current = newState
     setCombat(newState)
-    setShowPrayerModal(false)
-    if (prayer) {
-      addToast(`${prayer.icon} ${prayer.name}`, 'info')
-    }
+    addToast(`${prayer.icon} ${prayer.name}`, 'info')
   }
 
   const handleAddToHome = (monster) => {
@@ -601,35 +610,95 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
       {/* Prayer modal */}
       {showPrayerModal && (
         <Modal onClose={() => setShowPrayerModal(false)}>
-          <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] mb-3">Choose Prayer</h3>
-          <div class="space-y-2 max-h-96 overflow-y-auto">
-            {Object.values(prayersData).map(prayer => {
-              const prayerLevel = getLevelFromXP(stats.prayer?.xp || 0)
-              const canUse = prayerLevel >= prayer.level
-              return (
-                <button
-                  key={prayer.id}
-                  onClick={() => canUse && handlePrayer(prayer.id)}
-                  disabled={!canUse}
-                  class={`w-full p-3 rounded-lg border transition-colors ${
-                    canUse
-                      ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
-                      : 'bg-[#111] border-[#1a1a1a] opacity-40'
-                  }`}
-                >
-                  <div class="flex items-center justify-between">
-                    <div class="text-left">
-                      <div class="text-sm font-semibold text-[var(--color-parchment)]">{prayer.icon} {prayer.name}</div>
-                      <div class="text-[10px] text-[var(--color-parchment)] opacity-60">{prayer.description}</div>
-                      <div class="text-[9px] text-[var(--color-gold-dim)] mt-0.5">Lv {prayer.level}</div>
-                    </div>
-                    {combat?.activePrayer === prayer.id && (
-                      <span class="text-base">✓</span>
-                    )}
-                  </div>
-                </button>
-              )
-            })}
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">Choose Prayer</h3>
+            <button
+              onClick={() => setShowPrayerModal(false)}
+              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
+              title="Close"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="space-y-4 max-h-96 overflow-y-auto">
+            {/* Protection Prayers */}
+            <div>
+              <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Protection</h4>
+              <div class="space-y-2">
+                {Object.values(prayersData)
+                  .filter(p => p.bonusType === 'protection')
+                  .map(prayer => {
+                    const prayerLevel = getLevelFromXP(stats.prayer?.xp || 0)
+                    const canUse = prayerLevel >= prayer.level
+                    const isActive = combat?.activeProtectionPrayer === prayer.id
+                    return (
+                      <button
+                        key={prayer.id}
+                        onClick={() => canUse && handlePrayer(prayer.id)}
+                        disabled={!canUse}
+                        class={`w-full p-3 rounded-lg border transition-colors ${
+                          isActive
+                            ? 'bg-[#2a4a2a] border-[#4a8a4a]'
+                            : canUse
+                              ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
+                              : 'bg-[#111] border-[#1a1a1a] opacity-40'
+                        }`}
+                      >
+                        <div class="flex items-center justify-between">
+                          <div class="text-left">
+                            <div class="text-sm font-semibold text-[var(--color-parchment)]">{prayer.icon} {prayer.name}</div>
+                            <div class="text-[10px] text-[var(--color-parchment)] opacity-60">{prayer.description}</div>
+                            <div class="text-[9px] text-[var(--color-gold-dim)] mt-0.5">Lv {prayer.level}</div>
+                          </div>
+                          {isActive && (
+                            <span class="text-base text-[var(--color-hp-green)]">✓</span>
+                          )}
+                        </div>
+                      </button>
+                    )
+                  })}
+              </div>
+            </div>
+
+            {/* Combat Enhancement Prayers */}
+            <div>
+              <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Combat</h4>
+              <div class="space-y-2">
+                {Object.values(prayersData)
+                  .filter(p => p.bonusType !== 'protection')
+                  .map(prayer => {
+                    const prayerLevel = getLevelFromXP(stats.prayer?.xp || 0)
+                    const canUse = prayerLevel >= prayer.level
+                    const isActive = combat?.activeCombatPrayer === prayer.id
+                    return (
+                      <button
+                        key={prayer.id}
+                        onClick={() => canUse && handlePrayer(prayer.id)}
+                        disabled={!canUse}
+                        class={`w-full p-3 rounded-lg border transition-colors ${
+                          isActive
+                            ? 'bg-[#2a3a1a] border-[#4a8a2a]'
+                            : canUse
+                              ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
+                              : 'bg-[#111] border-[#1a1a1a] opacity-40'
+                        }`}
+                      >
+                        <div class="flex items-center justify-between">
+                          <div class="text-left">
+                            <div class="text-sm font-semibold text-[var(--color-parchment)]">{prayer.icon} {prayer.name}</div>
+                            <div class="text-[10px] text-[var(--color-parchment)] opacity-60">{prayer.description}</div>
+                            <div class="text-[9px] text-[var(--color-gold-dim)] mt-0.5">Lv {prayer.level}</div>
+                          </div>
+                          {isActive && (
+                            <span class="text-base text-[var(--color-hp-green)]">✓</span>
+                          )}
+                        </div>
+                      </button>
+                    )
+                  })}
+              </div>
+            </div>
           </div>
         </Modal>
       )}
