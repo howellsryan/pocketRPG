@@ -73,6 +73,7 @@ const itemsJSON = readSrc('data/items.json');
 const monstersJSON = readSrc('data/monsters.json');
 const skillsJSON = readSrc('data/skills.json');
 const spellsJSON = readSrc('data/spells.json');
+const prayersJSON = readSrc('data/prayers.json');
 
 // Concatenate all JS
 let allJS = '';
@@ -115,6 +116,7 @@ const itemsData = ${itemsJSON};
 const monstersData = ${monstersJSON};
 const skillsData = ${skillsJSON};
 const spellsData = ${spellsJSON};
+const prayersData = ${prayersJSON};
 
 ${allJS}
 
