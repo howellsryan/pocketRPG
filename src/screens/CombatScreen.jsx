@@ -64,6 +64,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
   const [fightStartedAt, setFightStartedAt] = useState(null)
   const [isAutoRestarting, setIsAutoRestarting] = useState(false)
   const [showPrayerModal, setShowPrayerModal] = useState(false)
+  const [showPotionModal, setShowPotionModal] = useState(false)
 
   const combatRef = useRef(null)
   const hpRef = useRef(currentHP)
@@ -274,6 +275,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
     }
     const combatType = getCombatType(equipment, itemsData)
     const state = createCombatState(monster, combatType, combatStance)
+    // Reset potion and special attack energy on new fight
+    state.specialAttackEnergy = 100
+    state.activePotion = null
+    state.potionDuration = 0
     setCombat(state)
     setKillCount(0)
     setFightStartedAt(Date.now())
@@ -284,6 +289,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
   const continueFight = (monster) => {
     const combatType = getCombatType(equipment, itemsData)
     const state = createCombatState(monster, combatType, combatStance)
+    // Reset potion and special attack energy on new fight
+    state.specialAttackEnergy = 100
+    state.activePotion = null
+    state.potionDuration = 0
     setCombat(state)
     setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot })
   }
@@ -342,6 +351,60 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
     }
     combatRef.current = newState
     setCombat({ ...newState })
+  }
+
+  const handlePotion = (potionItemId) => {
+    if (!combatRef.current || !combatRef.current.active) return
+
+    const newInv = [...inventoryRef.current]
+    const potionIdx = newInv.findIndex(s => s && s.itemId === potionItemId)
+    if (potionIdx === -1) return
+
+    const potion = itemsData[potionItemId]
+    if (!potion) return
+
+    // Remove potion from inventory
+    if (newInv[potionIdx].quantity > 1) {
+      newInv[potionIdx] = { ...newInv[potionIdx], quantity: newInv[potionIdx].quantity - 1 }
+    } else {
+      newInv[potionIdx] = null
+    }
+    updateInventory(newInv)
+    inventoryRef.current = newInv
+
+    // Apply potion effect to combat state
+    const newState = { ...combatRef.current }
+
+    // Duration: 300 ticks = 300 * 0.6s = 180s = 3 minutes
+    const durationTicks = (potion.duration || 300) / 0.6  // Convert seconds to ticks
+    newState.activePotion = potionItemId
+    newState.activePotionStartTick = newState.tickCount
+    newState.potionDuration = durationTicks
+
+    // HP potions heal immediately
+    if (potion.effect === 'hp') {
+      const maxHP = getMaxHP()
+      const healing = potion.boost || 10
+      const newHP = Math.min(hpRef.current + healing, maxHP)
+      updateHP(newHP)
+      hpRef.current = newHP
+      setLog(prev => [...prev.slice(-20), {
+        text: `Drank ${potion.name}, healed ${newHP - hpRef.current + healing} HP`,
+        type: 'heal',
+        time: Date.now()
+      }])
+    } else {
+      setLog(prev => [...prev.slice(-20), {
+        text: `Drank ${potion.name}`,
+        type: 'heal',
+        time: Date.now()
+      }])
+    }
+
+    combatRef.current = newState
+    setCombat(newState)
+    setShowPotionModal(false)
+    addToast(`${potion.icon} ${potion.name}`, 'info')
   }
 
   const handlePrayer = (prayerId) => {
@@ -619,7 +682,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
                 style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
                 🍖 Eat
               </button>
-              <button class="py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] opacity-40 text-sm cursor-default">
+              <button onClick={() => setShowPotionModal(true)}
+                class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
+                style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
                 🧪 Potion
               </button>
             </div>
@@ -752,6 +817,66 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
                   })}
               </div>
             </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Potion modal */}
+      {showPotionModal && (
+        <Modal onClose={() => setShowPotionModal(false)}>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">Choose Potion</h3>
+            <button
+              onClick={() => setShowPotionModal(false)}
+              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
+              title="Close"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="space-y-2 max-h-96 overflow-y-auto">
+            {(() => {
+              const potions = inventoryRef.current
+                .filter(slot => slot && itemsData[slot.itemId]?.type === 'potion')
+              if (potions.length === 0) {
+                return (
+                  <div class="text-center py-4 text-[var(--color-parchment)] opacity-50">
+                    No potions in inventory
+                  </div>
+                )
+              }
+              return potions.map(slot => {
+                const potion = itemsData[slot.itemId]
+                return (
+                  <button
+                    key={slot.itemId}
+                    onClick={() => handlePotion(slot.itemId)}
+                    class="w-full p-3 rounded-lg border bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a] transition-colors"
+                  >
+                    <div class="flex items-center justify-between">
+                      <div class="text-left flex-1">
+                        <div class="text-sm font-semibold text-[var(--color-parchment)]">{potion.icon} {potion.name}</div>
+                        <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                          {potion.effect === 'hp' && `+${potion.boost} HP`}
+                          {potion.effect === 'attack' && `+${potion.boost} Attack`}
+                          {potion.effect === 'strength' && `+${potion.boost} Strength`}
+                          {potion.effect === 'defence' && `+${potion.boost} Defence`}
+                          {potion.effect === 'ranged' && `+${potion.boost} Ranged`}
+                          {potion.effect === 'magic' && `+${potion.boost} Magic`}
+                          {potion.effect === 'combat' && `+${potion.boost} All Combat Stats`}
+                          {potion.effect === 'super_restore' && `Restores stats`}
+                        </div>
+                        <div class="text-[9px] text-[var(--color-gold-dim)] mt-0.5">Duration: {potion.duration}s</div>
+                      </div>
+                      <div class="text-right flex-shrink-0 ml-2">
+                        <div class="text-sm font-semibold text-[var(--color-parchment)]">×{slot.quantity}</div>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })
+            })()}
           </div>
         </Modal>
       )}
