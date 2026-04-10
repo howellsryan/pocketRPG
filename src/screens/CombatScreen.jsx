@@ -50,6 +50,12 @@ const COMBAT_CATEGORIES = [
     icon: '🏴',
     ids: ['crazy_archaeologist'],
   },
+  {
+    key: 'lair',
+    label: 'Lair',
+    icon: '🐲',
+    ids: ['king_black_dragon'],
+  },
 ]
 
 const MONSTER_ICONS = {
@@ -59,7 +65,7 @@ const MONSTER_ICONS = {
   green_dragon: '🐉', red_dragon: '🔴', lesser_demon: '👿',
   general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
   dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
-  crazy_archaeologist: '📜'
+  crazy_archaeologist: '📜', king_black_dragon: '👑'
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlocked }) {

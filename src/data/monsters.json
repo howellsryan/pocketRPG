@@ -3235,5 +3235,89 @@
         "chance": 0.1
       }
     ]
+  },
+  "king_black_dragon": {
+    "id": "king_black_dragon",
+    "name": "King Black Dragon",
+    "boss": true,
+    "combatLevel": 276,
+    "hitpoints": 150,
+    "stats": {
+      "attack": 100,
+      "strength": 100,
+      "defence": 100,
+      "magic": 50,
+      "ranged": 50
+    },
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 80,
+      "slash": 100,
+      "crush": 100,
+      "magic": 40,
+      "ranged": 80
+    },
+    "specialAttack": "dragonfire",
+    "dragonfireDamage": 50,
+    "drops": [
+      {
+        "itemId": "dragon_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "dragon_pickaxe",
+        "quantity": 1,
+        "chance": 0.0025
+      },
+      {
+        "itemId": "dragonic_visage",
+        "quantity": 1,
+        "chance": 0.0005
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          20000,
+          30000
+        ],
+        "chance": 0.5
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          20,
+          30
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "soul_rune",
+        "quantity": [
+          20,
+          25
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          30,
+          50
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "runite_ore",
+        "quantity": [
+          2,
+          5
+        ],
+        "chance": 0.2
+      }
+    ]
   }
 }
