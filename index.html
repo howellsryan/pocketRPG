@@ -15157,57 +15157,29 @@ function GameApp() {
                 h("div", { style: { padding: '16px', maxHeight: '55vh', overflowY: 'auto' } }, (() => {
                     const hrs = idleResult.elapsedMs / 3600000;
                     const perHr = (n) => hrs > 0 ? Math.round(n / hrs).toLocaleString() : '—';
-                    return (h(Fragment, null,
-                        idleResult.monstersKilled > 0 && (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' } },
-                            h("div", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' } }, "\u2694\uFE0F Combat"),
-                            h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0', marginBottom: '3px' } },
-                                h("span", null, "Kills"),
-                                h("span", { style: { color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' } }, idleResult.monstersKilled.toLocaleString())),
-                            h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#e8d5b0', opacity: 0.55 } },
-                                h("span", null, "Kills/hr"),
-                                h("span", { style: { fontFamily: 'monospace' } }, perHr(idleResult.monstersKilled))))),
-                        idleResult.xpGained && Object.keys(idleResult.xpGained).length > 0 && (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' } },
-                            h("div", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' } }, "\u2B50 XP Gained"),
-                            Object.entries(idleResult.xpGained).filter(([, xp]) => xp > 0).map(([skill, xp]) => (h("div", { key: skill, style: { marginBottom: '4px' } },
+                    return (h(Fragment, null, (() => {
+                        const merged = {};
+                        for (const src of [idleResult.lootGained, idleResult.lootBanked, idleResult.lootLost, idleResult.itemsGained]) {
+                            if (!src)
+                                continue;
+                            for (const [itemId, qty] of Object.entries(src)) {
+                                if (qty > 0)
+                                    merged[itemId] = (merged[itemId] || 0) + qty;
+                            }
+                        }
+                        const entries = Object.entries(merged);
+                        return entries.length > 0 ? (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' } },
+                            h("div", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' } }, "\uD83C\uDF92 Loot"),
+                            entries.map(([itemId, qty]) => (h("div", { key: itemId, style: { marginBottom: '4px' } },
                                 h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' } },
-                                    h("span", { style: { textTransform: 'capitalize' } }, skill),
+                                    h("span", { style: { textTransform: 'capitalize' } }, itemId.replace(/_/g, ' ')),
                                     h("span", { style: { color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' } },
-                                        "+",
-                                        xp.toLocaleString(),
-                                        " xp")),
+                                        "\u00D7",
+                                        qty.toLocaleString())),
                                 h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8d5b0', opacity: 0.45 } },
-                                    h("span", null, "XP/hr"),
-                                    h("span", { style: { fontFamily: 'monospace' } }, perHr(xp)))))))),
-                        (() => {
-                            const items = idleResult.itemsGained || idleResult.lootGained || {};
-                            const entries = Object.entries(items).filter(([, q]) => q > 0);
-                            const totalItems = entries.reduce((s, [, q]) => s + q, 0);
-                            return entries.length > 0 ? (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' } },
-                                h("div", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' } }, idleResult.task?.type === 'combat' ? '🎒 Loot (Inventory)' : '🏦 Items (Banked)'),
-                                entries.map(([itemId, qty]) => (h("div", { key: itemId, style: { marginBottom: '4px' } },
-                                    h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' } },
-                                        h("span", { style: { textTransform: 'capitalize' } }, itemId.replace(/_/g, ' ')),
-                                        h("span", { style: { color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' } },
-                                            "\u00D7",
-                                            qty.toLocaleString())),
-                                    h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8d5b0', opacity: 0.45 } },
-                                        h("span", null, "/hr"),
-                                        h("span", { style: { fontFamily: 'monospace' } }, perHr(qty)))))))) : null;
-                        })(),
-                        idleResult.lootBanked && Object.keys(idleResult.lootBanked).length > 0 && (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#0f1a0f', borderRadius: '10px', border: '1px solid #1a3a1a' } },
-                            h("div", { style: { fontSize: '11px', color: '#81c784', opacity: 0.9, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' } }, "\uD83C\uDFE6 Auto-Banked"),
-                            Object.entries(idleResult.lootBanked).map(([itemId, qty]) => (h("div", { key: itemId, style: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#81c784', marginBottom: '3px', opacity: 0.85 } },
-                                h("span", { style: { textTransform: 'capitalize' } }, itemId.replace(/_/g, ' ')),
-                                h("span", { style: { fontFamily: 'monospace' } },
-                                    "\u00D7",
-                                    qty.toLocaleString())))))),
-                        idleResult.lootLost && Object.keys(idleResult.lootLost).length > 0 && (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#1a0f0f', borderRadius: '10px', border: '1px solid #3a1a1a' } },
-                            h("div", { style: { fontSize: '11px', color: '#e57373', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' } }, "\u26A0\uFE0F Lost (Inventory Full)"),
-                            Object.entries(idleResult.lootLost).map(([itemId, qty]) => (h("div", { key: itemId, style: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e57373', marginBottom: '3px', opacity: 0.8 } },
-                                h("span", { style: { textTransform: 'capitalize' } }, itemId.replace(/_/g, ' ')),
-                                h("span", { style: { fontFamily: 'monospace' } },
-                                    "\u00D7",
-                                    qty.toLocaleString()))))))));
+                                    h("span", null, "/hr"),
+                                    h("span", { style: { fontFamily: 'monospace' } }, perHr(qty)))))))) : null;
+                    })()));
                 })()),
                 h("div", { style: { padding: '12px 16px', borderTop: '1px solid #222' } },
                     h("button", { onClick: () => setIdleResult(null), style: { width: '100%', padding: '13px', borderRadius: '12px', background: 'linear-gradient(135deg, #b8940e, #d4af37)', color: '#0f0f0f', fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '14px', border: 'none', cursor: 'pointer' } }, "Continue Adventure"))))),
