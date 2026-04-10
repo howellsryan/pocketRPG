@@ -6200,9 +6200,17 @@ const itemsData = {
     "shopValue": 100000,
     "icon": "⛏️"
   },
-  "dragonic_visage": {
-    "id": "dragonic_visage",
-    "name": "Dragonic visage",
+  "draconic_visage": {
+    "id": "draconic_visage",
+    "name": "Draconic visage",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 50000,
+    "icon": "🐉"
+  },
+  "dragonfire_shield": {
+    "id": "dragonfire_shield",
+    "name": "Dragonfire shield",
     "type": "armour",
     "slot": "shield",
     "stackable": false,
@@ -6214,21 +6222,22 @@ const itemsData = {
       "ranged": 0
     },
     "defenceBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 15,
-      "ranged": 1
+      "stab": 20,
+      "slash": 20,
+      "crush": 20,
+      "magic": 10,
+      "ranged": 20
     },
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 0,
+      "antiDragon": true
     },
     "requirements": {
-      "defence": 25
+      "defence": 75
     },
-    "shopValue": 50000,
+    "shopValue": 500000,
     "icon": "🛡️"
   }
 };
@@ -9508,7 +9517,7 @@ const monstersData = {
         "chance": 0.0025
       },
       {
-        "itemId": "dragonic_visage",
+        "itemId": "draconic_visage",
         "quantity": 1,
         "chance": 0.0005
       },
@@ -10158,6 +10167,18 @@ const skillsData = {
         "materials": {
           "godsword_blade": 1,
           "zamorak_hilt": 1
+        }
+      },
+      {
+        "id": "make_dragonfire_shield",
+        "name": "Attach draconic visage",
+        "level": 90,
+        "ticks": 10,
+        "xp": 2000,
+        "product": "dragonfire_shield",
+        "materials": {
+          "anti_dragon_shield": 1,
+          "draconic_visage": 1
         }
       }
     ]
