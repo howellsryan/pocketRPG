@@ -474,16 +474,19 @@ function GameApp() {
                     </div>
                   )}
 
-                  {/* Items gained */}
+                  {/* Loot gained */}
                   {(() => {
-                    const items = idleResult.itemsGained || idleResult.lootGained || {}
-                    const entries = Object.entries(items).filter(([,q]) => q > 0)
-                    const totalItems = entries.reduce((s, [,q]) => s + q, 0)
+                    const merged = {}
+                    for (const src of [idleResult.itemsGained, idleResult.lootGained, idleResult.lootBanked, idleResult.lootLost]) {
+                      if (!src) continue
+                      for (const [itemId, qty] of Object.entries(src)) {
+                        if (qty > 0) merged[itemId] = (merged[itemId] || 0) + qty
+                      }
+                    }
+                    const entries = Object.entries(merged)
                     return entries.length > 0 ? (
                       <div style={{ marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' }}>
-                        <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>
-                          {idleResult.task?.type === 'combat' ? '🎒 Loot (Inventory)' : '🏦 Items (Banked)'}
-                        </div>
+                        <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>🎒 Loot</div>
                         {entries.map(([itemId, qty]) => (
                           <div key={itemId} style={{ marginBottom: '4px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' }}>
@@ -499,33 +502,6 @@ function GameApp() {
                       </div>
                     ) : null
                   })()}
-
-                  {/* Loot lost (combat only) */}
-                  {/* Auto-banked loot (combat with bankingEnabled) */}
-                  {idleResult.lootBanked && Object.keys(idleResult.lootBanked).length > 0 && (
-                    <div style={{ marginBottom: '12px', padding: '10px', background: '#0f1a0f', borderRadius: '10px', border: '1px solid #1a3a1a' }}>
-                      <div style={{ fontSize: '11px', color: '#81c784', opacity: 0.9, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>🏦 Auto-Banked</div>
-                      {Object.entries(idleResult.lootBanked).map(([itemId, qty]) => (
-                        <div key={itemId} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#81c784', marginBottom: '3px', opacity: 0.85 }}>
-                          <span style={{ textTransform: 'capitalize' }}>{itemId.replace(/_/g, ' ')}</span>
-                          <span style={{ fontFamily: 'monospace' }}>×{qty.toLocaleString()}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Lost loot (combat without bankingEnabled) */}
-                  {idleResult.lootLost && Object.keys(idleResult.lootLost).length > 0 && (
-                    <div style={{ marginBottom: '12px', padding: '10px', background: '#1a0f0f', borderRadius: '10px', border: '1px solid #3a1a1a' }}>
-                      <div style={{ fontSize: '11px', color: '#e57373', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>⚠️ Lost (Inventory Full)</div>
-                      {Object.entries(idleResult.lootLost).map(([itemId, qty]) => (
-                        <div key={itemId} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e57373', marginBottom: '3px', opacity: 0.8 }}>
-                          <span style={{ textTransform: 'capitalize' }}>{itemId.replace(/_/g, ' ')}</span>
-                          <span style={{ fontFamily: 'monospace' }}>×{qty.toLocaleString()}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </>)
               })()}
             </div>
