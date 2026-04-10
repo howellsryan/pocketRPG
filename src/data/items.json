@@ -1162,14 +1162,6 @@
     "shopValue": 7,
     "icon": "🏖️"
   },
-  "bucket": {
-    "id": "bucket",
-    "name": "Bucket",
-    "type": "resource",
-    "stackable": false,
-    "shopValue": 2,
-    "icon": "🪣"
-  },
   "soda_ash": {
     "id": "soda_ash",
     "name": "Soda ash",
@@ -1216,14 +1208,6 @@
     "type": "resource",
     "stackable": false,
     "shopValue": 10,
-    "icon": "🫙"
-  },
-  "pot": {
-    "id": "pot",
-    "name": "Pot",
-    "type": "resource",
-    "stackable": false,
-    "shopValue": 1,
     "icon": "🫙"
   },
   "wheat": {
@@ -2555,26 +2539,6 @@
     "stackable": false,
     "shopValue": 1,
     "icon": "🔨",
-    "requirements": {}
-  },
-  "rope": {
-    "id": "rope",
-    "name": "Rope",
-    "type": "resource",
-    "slot": null,
-    "stackable": false,
-    "shopValue": 18,
-    "icon": "🪢",
-    "requirements": {}
-  },
-  "shears": {
-    "id": "shears",
-    "name": "Shears",
-    "type": "tool",
-    "slot": null,
-    "stackable": false,
-    "shopValue": 1,
-    "icon": "✂️",
     "requirements": {}
   },
   "iron_dagger": {

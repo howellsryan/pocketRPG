@@ -47,10 +47,10 @@ const SHOPS = [
       { id: 'tinderbox', name: 'Tinderbox', icon: '🔥', price: 1,   stackable: false, desc: 'Used to light fires.' },
       { id: 'chisel',    name: 'Chisel',    icon: '🔧', price: 1,   stackable: false, desc: 'Used to cut gems and craft items.' },
       { id: 'hammer',    name: 'Hammer',    icon: '🔨', price: 1,   stackable: false, desc: 'Required for smithing at an anvil.' },
-      { id: 'shears',    name: 'Shears',    icon: '✂️',  price: 1,   stackable: false, desc: 'Used to shear sheep.' },
-      { id: 'rope',      name: 'Rope',      icon: '🪢', price: 18,  stackable: false, desc: 'A length of rope. Various uses.' },
-      { id: 'bucket',    name: 'Bucket',    icon: '🪣', price: 2,   stackable: false, desc: 'A wooden bucket.' },
-      { id: 'pot',       name: 'Pot',       icon: '🏺', price: 1,   stackable: false, desc: 'A clay pot for cooking.' },
+      { id: 'fishing_net',  name: 'Fishing net',  icon: '🕸️', price: 50,  stackable: false, desc: 'Net for catching shrimps. Fishing 1. 2-handed.' },
+      { id: 'fishing_rod',  name: 'Fishing rod',  icon: '🎣', price: 100, stackable: false, desc: 'Rod for catching trout. Fishing 20. 2-handed.' },
+      { id: 'lobster_cage', name: 'Lobster cage', icon: '🪤', price: 200, stackable: false, desc: 'Cage for catching lobsters. Fishing 40. 2-handed.' },
+      { id: 'harpoon',      name: 'Harpoon',      icon: '🔱', price: 500, stackable: false, desc: 'Harpoon for swordfish & sharks. Fishing 50. 2-handed.' },
     ],
   },
   {
@@ -179,18 +179,6 @@ const SHOPS = [
       { id: 'law_rune',       name: 'Law rune',       icon: '⚖️', price: 200,  stackable: true,  desc: 'Teleportation spells.' },
       { id: 'cosmic_rune',    name: 'Cosmic rune',    icon: '✨', price: 200,  stackable: true,  desc: 'Enchantment spells.' },
       { id: 'death_rune',     name: 'Death rune',     icon: '💀', price: 310,  stackable: true,  desc: 'High-level combat spells.' },
-    ],
-  },
-  {
-    id: 'fishing',
-    label: '🎣',
-    title: 'Fishing Shop',
-    desc: 'Fishing tools and equipment.',
-    items: [
-      { id: 'fishing_net',  name: 'Fishing net',  icon: '🕸️', price: 50,  stackable: false, desc: 'Net for catching shrimps. Fishing 1. 2-handed.' },
-      { id: 'fishing_rod',  name: 'Fishing rod',  icon: '🎣', price: 100, stackable: false, desc: 'Rod for catching trout. Fishing 20. 2-handed.' },
-      { id: 'lobster_cage', name: 'Lobster cage', icon: '🪤', price: 200, stackable: false, desc: 'Cage for catching lobsters. Fishing 40. 2-handed.' },
-      { id: 'harpoon',      name: 'Harpoon',      icon: '🔱', price: 500, stackable: false, desc: 'Harpoon for swordfish & sharks. Fishing 50. 2-handed.' },
     ],
   },
   {
