@@ -6129,7 +6129,7 @@
       "ranged": 20
     },
     "otherBonus": {
-      "meleeStrength": 0,
+      "meleeStrength": 8,
       "rangedStrength": 0,
       "magicDamage": 0,
       "antiDragon": true
