@@ -5720,5 +5720,333 @@
     "requirements": {
       "slayer": 20
     }
+  },
+  "guam_leaf": {
+    "id": "guam_leaf",
+    "name": "Guam leaf",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 50,
+    "icon": "🌿"
+  },
+  "tarromin": {
+    "id": "tarromin",
+    "name": "Tarromin",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 80,
+    "icon": "🌿"
+  },
+  "ranarr_weed": {
+    "id": "ranarr_weed",
+    "name": "Ranarr weed",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 150,
+    "icon": "🌿"
+  },
+  "harralander": {
+    "id": "harralander",
+    "name": "Harralander",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 200,
+    "icon": "🌿"
+  },
+  "irit_leaf": {
+    "id": "irit_leaf",
+    "name": "Irit leaf",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 300,
+    "icon": "🌿"
+  },
+  "kwuarm": {
+    "id": "kwuarm",
+    "name": "Kwuarm",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 400,
+    "icon": "🌿"
+  },
+  "snapdragon": {
+    "id": "snapdragon",
+    "name": "Snapdragon",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 600,
+    "icon": "🌿"
+  },
+  "cadantine": {
+    "id": "cadantine",
+    "name": "Cadantine",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 800,
+    "icon": "🌿"
+  },
+  "dwarf_weed": {
+    "id": "dwarf_weed",
+    "name": "Dwarf weed",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 1000,
+    "icon": "🌿"
+  },
+  "lantadyme": {
+    "id": "lantadyme",
+    "name": "Lantadyme",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 1200,
+    "icon": "🌿"
+  },
+  "toadflax": {
+    "id": "toadflax",
+    "name": "Toadflax",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 1500,
+    "icon": "🌿"
+  },
+  "torstol": {
+    "id": "torstol",
+    "name": "Torstol",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 2000,
+    "icon": "🌿"
+  },
+  "eye_of_newt": {
+    "id": "eye_of_newt",
+    "name": "Eye of newt",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 20,
+    "icon": "👁️"
+  },
+  "white_berries": {
+    "id": "white_berries",
+    "name": "White berries",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 60,
+    "icon": "🫐"
+  },
+  "goat_horn_dust": {
+    "id": "goat_horn_dust",
+    "name": "Goat horn dust",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 100,
+    "icon": "💥"
+  },
+  "snape_grass": {
+    "id": "snape_grass",
+    "name": "Snape grass",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 120,
+    "icon": "🌾"
+  },
+  "wine_of_zamorak": {
+    "id": "wine_of_zamorak",
+    "name": "Wine of Zamorak",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 250,
+    "icon": "🍷"
+  },
+  "potato_cactus": {
+    "id": "potato_cactus",
+    "name": "Potato cactus",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 180,
+    "icon": "🌵"
+  },
+  "red_spiders_eggs": {
+    "id": "red_spiders_eggs",
+    "name": "Red spiders' eggs",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 90,
+    "icon": "🥚"
+  },
+  "crushed_birds_nest": {
+    "id": "crushed_birds_nest",
+    "name": "Crushed bird's nest",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 110,
+    "icon": "🪹"
+  },
+  "empty_birds_nest": {
+    "id": "empty_birds_nest",
+    "name": "Empty bird's nest",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 50,
+    "icon": "🪹"
+  },
+  "attack_potion": {
+    "id": "attack_potion",
+    "name": "Attack potion",
+    "type": "potion",
+    "stackable": true,
+    "shopValue": 150,
+    "icon": "🧪",
+    "effect": "attack",
+    "boost": 13,
+    "duration": 300
+  },
+  "strength_potion": {
+    "id": "strength_potion",
+    "name": "Strength potion",
+    "type": "potion",
+    "stackable": true,
+    "shopValue": 150,
+    "icon": "🧪",
+    "effect": "strength",
+    "boost": 13,
+    "duration": 300
+  },
+  "defence_potion": {
+    "id": "defence_potion",
+    "name": "Defence potion",
+    "type": "potion",
+    "stackable": true,
+    "shopValue": 150,
+    "icon": "🧪",
+    "effect": "defence",
+    "boost": 13,
+    "duration": 300
+  },
+  "combat_potion": {
+    "id": "combat_potion",
+    "name": "Combat potion",
+    "type": "potion",
+    "stackable": true,
+    "shopValue": 200,
+    "icon": "🧪",
+    "effect": "combat",
+    "boost": 13,
+    "duration": 300
+  },
+  "prayer_potion": {
+    "id": "prayer_potion",
+    "name": "Prayer potion",
+    "type": "potion",
+    "stackable": true,
+    "shopValue": 200,
+    "icon": "🧪",
+    "effect": "prayer",
+    "boost": 32,
+    "duration": 300
+  },
+  "super_attack": {
+    "id": "super_attack",
+    "name": "Super attack",
+    "type": "potion",
+    "stackable": true,
+    "shopValue": 400,
+    "icon": "🧪",
+    "effect": "attack",
+    "boost": 18,
+    "duration": 300
+  },
+  "super_strength": {
+    "id": "super_strength",
+    "name": "Super strength",
+    "type": "potion",
+    "stackable": true,
+    "shopValue": 400,
+    "icon": "🧪",
+    "effect": "strength",
+    "boost": 18,
+    "duration": 300
+  },
+  "super_restore": {
+    "id": "super_restore",
+    "name": "Super restore",
+    "type": "potion",
+    "stackable": true,
+    "shopValue": 500,
+    "icon": "🧪",
+    "effect": "super_restore",
+    "duration": 300
+  },
+  "super_defence": {
+    "id": "super_defence",
+    "name": "Super defence",
+    "type": "potion",
+    "stackable": true,
+    "shopValue": 400,
+    "icon": "🧪",
+    "effect": "defence",
+    "boost": 18,
+    "duration": 300
+  },
+  "ranging_potion": {
+    "id": "ranging_potion",
+    "name": "Ranging potion",
+    "type": "potion",
+    "stackable": true,
+    "shopValue": 300,
+    "icon": "🧪",
+    "effect": "ranged",
+    "boost": 14,
+    "duration": 300
+  },
+  "magic_potion": {
+    "id": "magic_potion",
+    "name": "Magic potion",
+    "type": "potion",
+    "stackable": true,
+    "shopValue": 350,
+    "icon": "🧪",
+    "effect": "magic",
+    "boost": 4,
+    "duration": 300
+  },
+  "bastion_potion": {
+    "id": "bastion_potion",
+    "name": "Bastion potion",
+    "type": "potion",
+    "stackable": true,
+    "shopValue": 500,
+    "icon": "🧪",
+    "effect": "bastion",
+    "duration": 300
+  },
+  "battlemage_potion": {
+    "id": "battlemage_potion",
+    "name": "Battlemage potion",
+    "type": "potion",
+    "stackable": true,
+    "shopValue": 500,
+    "icon": "🧪",
+    "effect": "battlemage",
+    "duration": 300
+  },
+  "saradomin_brew": {
+    "id": "saradomin_brew",
+    "name": "Saradomin brew",
+    "type": "potion",
+    "stackable": true,
+    "shopValue": 600,
+    "icon": "🧪",
+    "effect": "saradomin_brew",
+    "duration": 300
+  },
+  "super_combat_potion": {
+    "id": "super_combat_potion",
+    "name": "Super combat potion",
+    "type": "potion",
+    "stackable": true,
+    "shopValue": 800,
+    "icon": "🧪",
+    "effect": "super_combat",
+    "duration": 300
   }
 }

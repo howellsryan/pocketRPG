@@ -1278,7 +1278,190 @@
   "herblore": {
     "id": "herblore",
     "name": "Herblore",
-    "actions": []
+    "actions": [
+      {
+        "id": "attack_potion",
+        "name": "Make attack potion",
+        "level": 3,
+        "ticks": 4,
+        "xp": 25,
+        "product": "attack_potion",
+        "materials": {
+          "guam_leaf": 1,
+          "eye_of_newt": 1
+        }
+      },
+      {
+        "id": "strength_potion",
+        "name": "Make strength potion",
+        "level": 12,
+        "ticks": 4,
+        "xp": 40,
+        "product": "strength_potion",
+        "materials": {
+          "tarromin": 1,
+          "limpwurt_root": 1
+        }
+      },
+      {
+        "id": "defence_potion",
+        "name": "Make defence potion",
+        "level": 30,
+        "ticks": 4,
+        "xp": 55,
+        "product": "defence_potion",
+        "materials": {
+          "ranarr_weed": 1,
+          "white_berries": 1
+        }
+      },
+      {
+        "id": "combat_potion",
+        "name": "Make combat potion",
+        "level": 36,
+        "ticks": 4,
+        "xp": 70,
+        "product": "combat_potion",
+        "materials": {
+          "harralander": 1,
+          "goat_horn_dust": 1
+        }
+      },
+      {
+        "id": "prayer_potion",
+        "name": "Make prayer potion",
+        "level": 38,
+        "ticks": 4,
+        "xp": 75,
+        "product": "prayer_potion",
+        "materials": {
+          "ranarr_weed": 1,
+          "snape_grass": 1
+        }
+      },
+      {
+        "id": "super_attack",
+        "name": "Make super attack",
+        "level": 45,
+        "ticks": 4,
+        "xp": 90,
+        "product": "super_attack",
+        "materials": {
+          "irit_leaf": 1,
+          "eye_of_newt": 1
+        }
+      },
+      {
+        "id": "super_strength",
+        "name": "Make super strength",
+        "level": 55,
+        "ticks": 4,
+        "xp": 110,
+        "product": "super_strength",
+        "materials": {
+          "kwuarm": 1,
+          "limpwurt_root": 1
+        }
+      },
+      {
+        "id": "super_restore",
+        "name": "Make super restore",
+        "level": 63,
+        "ticks": 4,
+        "xp": 130,
+        "product": "super_restore",
+        "materials": {
+          "snapdragon": 1,
+          "red_spiders_eggs": 1
+        }
+      },
+      {
+        "id": "super_defence",
+        "name": "Make super defence",
+        "level": 66,
+        "ticks": 4,
+        "xp": 140,
+        "product": "super_defence",
+        "materials": {
+          "cadantine": 1,
+          "white_berries": 1
+        }
+      },
+      {
+        "id": "ranging_potion",
+        "name": "Make ranging potion",
+        "level": 72,
+        "ticks": 4,
+        "xp": 160,
+        "product": "ranging_potion",
+        "materials": {
+          "dwarf_weed": 1,
+          "wine_of_zamorak": 1
+        }
+      },
+      {
+        "id": "magic_potion",
+        "name": "Make magic potion",
+        "level": 76,
+        "ticks": 4,
+        "xp": 180,
+        "product": "magic_potion",
+        "materials": {
+          "lantadyme": 1,
+          "potato_cactus": 1
+        }
+      },
+      {
+        "id": "bastion_potion",
+        "name": "Make bastion potion",
+        "level": 80,
+        "ticks": 4,
+        "xp": 190,
+        "product": "bastion_potion",
+        "materials": {
+          "cadantine": 1,
+          "wine_of_zamorak": 1
+        }
+      },
+      {
+        "id": "battlemage_potion",
+        "name": "Make battlemage potion",
+        "level": 80,
+        "ticks": 4,
+        "xp": 190,
+        "product": "battlemage_potion",
+        "materials": {
+          "cadantine": 1,
+          "potato_cactus": 1
+        }
+      },
+      {
+        "id": "saradomin_brew",
+        "name": "Make saradomin brew",
+        "level": 81,
+        "ticks": 4,
+        "xp": 200,
+        "product": "saradomin_brew",
+        "materials": {
+          "toadflax": 1,
+          "crushed_birds_nest": 1
+        }
+      },
+      {
+        "id": "super_combat_potion",
+        "name": "Make super combat potion",
+        "level": 90,
+        "ticks": 4,
+        "xp": 250,
+        "product": "super_combat_potion",
+        "materials": {
+          "torstol": 1,
+          "super_attack": 1,
+          "super_strength": 1,
+          "super_defence": 1
+        }
+      }
+    ]
   },
   "agility": {
     "id": "agility",
