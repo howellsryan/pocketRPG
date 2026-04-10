@@ -6009,26 +6009,6 @@
     "boost": 4,
     "duration": 300
   },
-  "bastion_potion": {
-    "id": "bastion_potion",
-    "name": "Bastion potion",
-    "type": "potion",
-    "stackable": true,
-    "shopValue": 500,
-    "icon": "🧪",
-    "effect": "bastion",
-    "duration": 300
-  },
-  "battlemage_potion": {
-    "id": "battlemage_potion",
-    "name": "Battlemage potion",
-    "type": "potion",
-    "stackable": true,
-    "shopValue": 500,
-    "icon": "🧪",
-    "effect": "battlemage",
-    "duration": 300
-  },
   "saradomin_brew": {
     "id": "saradomin_brew",
     "name": "Saradomin brew",
@@ -6036,7 +6016,8 @@
     "stackable": true,
     "shopValue": 600,
     "icon": "🧪",
-    "effect": "saradomin_brew",
+    "effect": "hp",
+    "boost": 22,
     "duration": 300
   },
   "super_combat_potion": {
@@ -6046,7 +6027,8 @@
     "stackable": true,
     "shopValue": 800,
     "icon": "🧪",
-    "effect": "super_combat",
+    "effect": "combat",
+    "boost": 18,
     "duration": 300
   }
 }

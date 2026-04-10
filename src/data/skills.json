@@ -1412,30 +1412,6 @@
         }
       },
       {
-        "id": "bastion_potion",
-        "name": "Make bastion potion",
-        "level": 80,
-        "ticks": 4,
-        "xp": 190,
-        "product": "bastion_potion",
-        "materials": {
-          "cadantine": 1,
-          "wine_of_zamorak": 1
-        }
-      },
-      {
-        "id": "battlemage_potion",
-        "name": "Make battlemage potion",
-        "level": 80,
-        "ticks": 4,
-        "xp": 190,
-        "product": "battlemage_potion",
-        "materials": {
-          "cadantine": 1,
-          "potato_cactus": 1
-        }
-      },
-      {
         "id": "saradomin_brew",
         "name": "Make saradomin brew",
         "level": 81,
@@ -1458,7 +1434,9 @@
           "torstol": 1,
           "super_attack": 1,
           "super_strength": 1,
-          "super_defence": 1
+          "super_defence": 1,
+          "ranging_potion": 1,
+          "magic_potion": 1
         }
       }
     ]

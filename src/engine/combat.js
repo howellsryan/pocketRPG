@@ -30,7 +30,10 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     specialAttackEnergy: 100,  // 0-100; starts at 100 for each new fight, drains on use, refills on kill
     specialAttackQueued: false,  // flag to fire special attack on next available tick
     activeProtectionPrayer: null,  // one protection prayer, reset on each new fight
-    activeCombatPrayer: null       // one combat enhancing prayer, reset on each new fight
+    activeCombatPrayer: null,      // one combat enhancing prayer, reset on each new fight
+    activePotion: null,            // active potion item ID
+    activePotionStartTick: 0,      // tick when potion was applied
+    potionDuration: 0              // duration in ticks remaining for active potion
   }
 }
 
@@ -50,6 +53,10 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   if (state.eatCooldown > 0) state.eatCooldown--
   if (state.potionCooldown > 0) state.potionCooldown--
 
+  // Decrement potion duration
+  if (state.potionDuration > 0) state.potionDuration--
+  if (state.potionDuration <= 0) state.activePotion = null
+
   // Apply prayer bonuses to player stats from both active prayers
   let boostedPlayerStats = playerStats
   if (prayersData && typeof prayersData === 'object') {
@@ -58,6 +65,14 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     }
     if (state.activeCombatPrayer && prayersData[state.activeCombatPrayer]) {
       boostedPlayerStats = applyPrayerBonuses(boostedPlayerStats, state.activeCombatPrayer, prayersData) || boostedPlayerStats
+    }
+  }
+
+  // Apply potion bonuses to player stats
+  if (state.activePotion && itemsData && typeof itemsData === 'object') {
+    const potionItem = itemsData[state.activePotion]
+    if (potionItem) {
+      boostedPlayerStats = applyPotionBonuses(boostedPlayerStats, potionItem) || boostedPlayerStats
     }
   }
 
@@ -341,6 +356,54 @@ export function applyPrayerBonuses(playerStats, activePrayer, prayersData = {}) 
           boostedStats[stat] = Math.floor(statValue * (1 + boostPercent / 100))
         }
       }
+    }
+
+    return boostedStats
+  } catch (e) {
+    // Silently return unmodified stats if anything goes wrong
+    return playerStats
+  }
+}
+
+/**
+ * Apply potion bonuses to player stats based on active potion
+ */
+export function applyPotionBonuses(playerStats, potionItem) {
+  // If no potion item or no boost, return unmodified stats
+  if (!potionItem || !potionItem.boost) {
+    return playerStats
+  }
+
+  try {
+    const boostedStats = { ...playerStats }
+    const effect = potionItem.effect
+
+    if (effect === 'combat') {
+      // Apply boost to all combat stats (melee + ranged + magic)
+      boostedStats.attack = Math.floor(boostedStats.attack + potionItem.boost)
+      boostedStats.strength = Math.floor(boostedStats.strength + potionItem.boost)
+      boostedStats.defence = Math.floor(boostedStats.defence + potionItem.boost)
+      boostedStats.ranged = Math.floor(boostedStats.ranged + potionItem.boost)
+      boostedStats.magic = Math.floor(boostedStats.magic + potionItem.boost)
+    } else if (effect === 'attack') {
+      // Apply boost to attack only
+      boostedStats.attack = Math.floor(boostedStats.attack + potionItem.boost)
+    } else if (effect === 'strength') {
+      // Apply boost to strength only
+      boostedStats.strength = Math.floor(boostedStats.strength + potionItem.boost)
+    } else if (effect === 'defence') {
+      // Apply boost to defence only
+      boostedStats.defence = Math.floor(boostedStats.defence + potionItem.boost)
+    } else if (effect === 'ranged') {
+      // Apply boost to ranged only
+      boostedStats.ranged = Math.floor(boostedStats.ranged + potionItem.boost)
+    } else if (effect === 'magic') {
+      // Apply boost to magic only
+      boostedStats.magic = Math.floor(boostedStats.magic + potionItem.boost)
+    } else if (effect === 'hp') {
+      // HP effect is handled in the drinking logic, not here
+      // Return unmodified stats
+      return playerStats
     }
 
     return boostedStats

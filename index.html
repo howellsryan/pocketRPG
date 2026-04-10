@@ -6109,26 +6109,6 @@ const itemsData = {
     "boost": 4,
     "duration": 300
   },
-  "bastion_potion": {
-    "id": "bastion_potion",
-    "name": "Bastion potion",
-    "type": "potion",
-    "stackable": true,
-    "shopValue": 500,
-    "icon": "🧪",
-    "effect": "bastion",
-    "duration": 300
-  },
-  "battlemage_potion": {
-    "id": "battlemage_potion",
-    "name": "Battlemage potion",
-    "type": "potion",
-    "stackable": true,
-    "shopValue": 500,
-    "icon": "🧪",
-    "effect": "battlemage",
-    "duration": 300
-  },
   "saradomin_brew": {
     "id": "saradomin_brew",
     "name": "Saradomin brew",
@@ -6136,7 +6116,8 @@ const itemsData = {
     "stackable": true,
     "shopValue": 600,
     "icon": "🧪",
-    "effect": "saradomin_brew",
+    "effect": "hp",
+    "boost": 22,
     "duration": 300
   },
   "super_combat_potion": {
@@ -6146,7 +6127,8 @@ const itemsData = {
     "stackable": true,
     "shopValue": 800,
     "icon": "🧪",
-    "effect": "super_combat",
+    "effect": "combat",
+    "boost": 18,
     "duration": 300
   }
 };
@@ -10557,30 +10539,6 @@ const skillsData = {
         }
       },
       {
-        "id": "bastion_potion",
-        "name": "Make bastion potion",
-        "level": 80,
-        "ticks": 4,
-        "xp": 190,
-        "product": "bastion_potion",
-        "materials": {
-          "cadantine": 1,
-          "wine_of_zamorak": 1
-        }
-      },
-      {
-        "id": "battlemage_potion",
-        "name": "Make battlemage potion",
-        "level": 80,
-        "ticks": 4,
-        "xp": 190,
-        "product": "battlemage_potion",
-        "materials": {
-          "cadantine": 1,
-          "potato_cactus": 1
-        }
-      },
-      {
         "id": "saradomin_brew",
         "name": "Make saradomin brew",
         "level": 81,
@@ -10603,7 +10561,9 @@ const skillsData = {
           "torstol": 1,
           "super_attack": 1,
           "super_strength": 1,
-          "super_defence": 1
+          "super_defence": 1,
+          "ranging_potion": 1,
+          "magic_potion": 1
         }
       }
     ]
@@ -11729,7 +11689,10 @@ function createCombatState(monster, combatType = 'melee', stance = 'accurate', s
         specialAttackEnergy: 100, // 0-100; starts at 100 for each new fight, drains on use, refills on kill
         specialAttackQueued: false, // flag to fire special attack on next available tick
         activeProtectionPrayer: null, // one protection prayer, reset on each new fight
-        activeCombatPrayer: null // one combat enhancing prayer, reset on each new fight
+        activeCombatPrayer: null, // one combat enhancing prayer, reset on each new fight
+        activePotion: null, // active potion item ID
+        activePotionStartTick: 0, // tick when potion was applied
+        potionDuration: 0 // duration in ticks remaining for active potion
     };
 }
 /**
@@ -11750,6 +11713,11 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
         state.eatCooldown--;
     if (state.potionCooldown > 0)
         state.potionCooldown--;
+    // Decrement potion duration
+    if (state.potionDuration > 0)
+        state.potionDuration--;
+    if (state.potionDuration <= 0)
+        state.activePotion = null;
     // Apply prayer bonuses to player stats from both active prayers
     let boostedPlayerStats = playerStats;
     if (prayersData && typeof prayersData === 'object') {
@@ -11758,6 +11726,13 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
         }
         if (state.activeCombatPrayer && prayersData[state.activeCombatPrayer]) {
             boostedPlayerStats = applyPrayerBonuses(boostedPlayerStats, state.activeCombatPrayer, prayersData) || boostedPlayerStats;
+        }
+    }
+    // Apply potion bonuses to player stats
+    if (state.activePotion && itemsData && typeof itemsData === 'object') {
+        const potionItem = itemsData[state.activePotion];
+        if (potionItem) {
+            boostedPlayerStats = applyPotionBonuses(boostedPlayerStats, potionItem) || boostedPlayerStats;
         }
     }
     const bonuses = getEquipmentBonuses(equipment, itemsData);
@@ -12030,6 +12005,57 @@ function applyPrayerBonuses(playerStats, activePrayer, prayersData = {}) {
                     boostedStats[stat] = Math.floor(statValue * (1 + boostPercent / 100));
                 }
             }
+        }
+        return boostedStats;
+    }
+    catch (e) {
+        // Silently return unmodified stats if anything goes wrong
+        return playerStats;
+    }
+}
+/**
+ * Apply potion bonuses to player stats based on active potion
+ */
+function applyPotionBonuses(playerStats, potionItem) {
+    // If no potion item or no boost, return unmodified stats
+    if (!potionItem || !potionItem.boost) {
+        return playerStats;
+    }
+    try {
+        const boostedStats = { ...playerStats };
+        const effect = potionItem.effect;
+        if (effect === 'combat') {
+            // Apply boost to all combat stats (melee + ranged + magic)
+            boostedStats.attack = Math.floor(boostedStats.attack + potionItem.boost);
+            boostedStats.strength = Math.floor(boostedStats.strength + potionItem.boost);
+            boostedStats.defence = Math.floor(boostedStats.defence + potionItem.boost);
+            boostedStats.ranged = Math.floor(boostedStats.ranged + potionItem.boost);
+            boostedStats.magic = Math.floor(boostedStats.magic + potionItem.boost);
+        }
+        else if (effect === 'attack') {
+            // Apply boost to attack only
+            boostedStats.attack = Math.floor(boostedStats.attack + potionItem.boost);
+        }
+        else if (effect === 'strength') {
+            // Apply boost to strength only
+            boostedStats.strength = Math.floor(boostedStats.strength + potionItem.boost);
+        }
+        else if (effect === 'defence') {
+            // Apply boost to defence only
+            boostedStats.defence = Math.floor(boostedStats.defence + potionItem.boost);
+        }
+        else if (effect === 'ranged') {
+            // Apply boost to ranged only
+            boostedStats.ranged = Math.floor(boostedStats.ranged + potionItem.boost);
+        }
+        else if (effect === 'magic') {
+            // Apply boost to magic only
+            boostedStats.magic = Math.floor(boostedStats.magic + potionItem.boost);
+        }
+        else if (effect === 'hp') {
+            // HP effect is handled in the drinking logic, not here
+            // Return unmodified stats
+            return playerStats;
         }
         return boostedStats;
     }
@@ -14765,6 +14791,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
     const [fightStartedAt, setFightStartedAt] = useState(null);
     const [isAutoRestarting, setIsAutoRestarting] = useState(false);
     const [showPrayerModal, setShowPrayerModal] = useState(false);
+    const [showPotionModal, setShowPotionModal] = useState(false);
     const combatRef = useRef(null);
     const hpRef = useRef(currentHP);
     const hasAutoStarted = useRef(false);
@@ -14966,6 +14993,10 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
         }
         const combatType = getCombatType(equipment, itemsData);
         const state = createCombatState(monster, combatType, combatStance);
+        // Reset potion and special attack energy on new fight
+        state.specialAttackEnergy = 100;
+        state.activePotion = null;
+        state.potionDuration = 0;
         setCombat(state);
         setKillCount(0);
         setFightStartedAt(Date.now());
@@ -14975,6 +15006,10 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
     const continueFight = (monster) => {
         const combatType = getCombatType(equipment, itemsData);
         const state = createCombatState(monster, combatType, combatStance);
+        // Reset potion and special attack energy on new fight
+        state.specialAttackEnergy = 100;
+        state.activePotion = null;
+        state.potionDuration = 0;
         setCombat(state);
         setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot });
     };
@@ -15031,6 +15066,57 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
         };
         combatRef.current = newState;
         setCombat({ ...newState });
+    };
+    const handlePotion = (potionItemId) => {
+        if (!combatRef.current || !combatRef.current.active)
+            return;
+        const newInv = [...inventoryRef.current];
+        const potionIdx = newInv.findIndex(s => s && s.itemId === potionItemId);
+        if (potionIdx === -1)
+            return;
+        const potion = itemsData[potionItemId];
+        if (!potion)
+            return;
+        // Remove potion from inventory
+        if (newInv[potionIdx].quantity > 1) {
+            newInv[potionIdx] = { ...newInv[potionIdx], quantity: newInv[potionIdx].quantity - 1 };
+        }
+        else {
+            newInv[potionIdx] = null;
+        }
+        updateInventory(newInv);
+        inventoryRef.current = newInv;
+        // Apply potion effect to combat state
+        const newState = { ...combatRef.current };
+        // Duration: 300 ticks = 300 * 0.6s = 180s = 3 minutes
+        const durationTicks = (potion.duration || 300) / 0.6; // Convert seconds to ticks
+        newState.activePotion = potionItemId;
+        newState.activePotionStartTick = newState.tickCount;
+        newState.potionDuration = durationTicks;
+        // HP potions heal immediately
+        if (potion.effect === 'hp') {
+            const maxHP = getMaxHP();
+            const healing = potion.boost || 10;
+            const newHP = Math.min(hpRef.current + healing, maxHP);
+            updateHP(newHP);
+            hpRef.current = newHP;
+            setLog(prev => [...prev.slice(-20), {
+                    text: `Drank ${potion.name}, healed ${newHP - hpRef.current + healing} HP`,
+                    type: 'heal',
+                    time: Date.now()
+                }]);
+        }
+        else {
+            setLog(prev => [...prev.slice(-20), {
+                    text: `Drank ${potion.name}`,
+                    type: 'heal',
+                    time: Date.now()
+                }]);
+        }
+        combatRef.current = newState;
+        setCombat(newState);
+        setShowPotionModal(false);
+        addToast(`${potion.icon} ${potion.name}`, 'info');
     };
     const handlePrayer = (prayerId) => {
         if (!combatRef.current)
@@ -15205,7 +15291,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
         h("div", { class: "flex-shrink-0 flex flex-col gap-2" }, combat.active && !isAutoRestarting && (h(Fragment, null,
             h("div", { class: "grid grid-cols-2 gap-2" },
                 h("button", { onClick: handleEat, class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\uD83C\uDF56 Eat"),
-                h("button", { class: "py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] opacity-40 text-sm cursor-default" }, "\uD83E\uDDEA Potion")),
+                h("button", { onClick: () => setShowPotionModal(true), class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\uD83E\uDDEA Potion")),
             h("div", { class: "grid grid-cols-2 gap-2" },
                 (() => {
                     const weaponEntry = equipment?.weapon;
@@ -15273,7 +15359,45 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                                         "Lv ",
                                         prayer.level)),
                                 isActive && (h("span", { class: "text-base text-[var(--color-hp-green)]" }, "\u2713")))));
-                    }))))))));
+                    })))))),
+        showPotionModal && (h(Modal, { onClose: () => setShowPotionModal(false) },
+            h("div", { class: "flex items-center justify-between mb-3" },
+                h("h3", { class: "font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]" }, "Choose Potion"),
+                h("button", { onClick: () => setShowPotionModal(false), class: "w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors", title: "Close" }, "\u2715")),
+            h("div", { class: "space-y-2 max-h-96 overflow-y-auto" }, (() => {
+                const potions = inventoryRef.current
+                    .filter(slot => slot && itemsData[slot.itemId]?.type === 'potion');
+                if (potions.length === 0) {
+                    return (h("div", { class: "text-center py-4 text-[var(--color-parchment)] opacity-50" }, "No potions in inventory"));
+                }
+                return potions.map(slot => {
+                    const potion = itemsData[slot.itemId];
+                    return (h("button", { key: slot.itemId, onClick: () => handlePotion(slot.itemId), class: "w-full p-3 rounded-lg border bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a] transition-colors" },
+                        h("div", { class: "flex items-center justify-between" },
+                            h("div", { class: "text-left flex-1" },
+                                h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" },
+                                    potion.icon,
+                                    " ",
+                                    potion.name),
+                                h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5" },
+                                    potion.effect === 'hp' && `+${potion.boost} HP`,
+                                    potion.effect === 'attack' && `+${potion.boost} Attack`,
+                                    potion.effect === 'strength' && `+${potion.boost} Strength`,
+                                    potion.effect === 'defence' && `+${potion.boost} Defence`,
+                                    potion.effect === 'ranged' && `+${potion.boost} Ranged`,
+                                    potion.effect === 'magic' && `+${potion.boost} Magic`,
+                                    potion.effect === 'combat' && `+${potion.boost} All Combat Skills`,
+                                    potion.effect === 'super_restore' && `Restores stats`),
+                                h("div", { class: "text-[9px] text-[var(--color-gold-dim)] mt-0.5" },
+                                    "Duration: ",
+                                    potion.duration,
+                                    "s")),
+                            h("div", { class: "text-right flex-shrink-0 ml-2" },
+                                h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" },
+                                    "\u00D7",
+                                    slot.quantity)))));
+                });
+            })())))));
 }
 
 // ── screens/AgilityScreen.js ──
