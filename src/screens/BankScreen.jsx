@@ -15,6 +15,8 @@ export default function BankScreen() {
   const [draggingId, setDraggingId] = useState(null)
   const [overItemId, setOverItemId] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [quantityModalMode, setQuantityModalMode] = useState(null) // 'take' | 'note' | null
+  const [quantityInput, setQuantityInput] = useState('')
 
   const dragRef = useRef(null)
   const overRef = useRef(null)
@@ -97,6 +99,23 @@ export default function BankScreen() {
     updateInventory(newInv)
     updateBank(newBank)
     setSelectedId(null)
+  }
+
+  const handleQuantityModalSubmit = () => {
+    if (!quantityInput || !selectedId) return
+    const qty = parseInt(quantityInput, 10)
+    if (isNaN(qty) || qty <= 0) {
+      addToast('Invalid quantity', 'error')
+      return
+    }
+    const maxQty = bank[selectedId]?.quantity || 0
+    if (qty > maxQty) {
+      addToast(`Only ${maxQty} available`, 'error')
+      return
+    }
+    handleWithdraw(selectedId, qty, quantityModalMode === 'note')
+    setQuantityModalMode(null)
+    setQuantityInput('')
   }
 
   // ── Tab management ───────────────────────────────────────────────────────────
@@ -483,11 +502,24 @@ export default function BankScreen() {
                     Take {qty}
                   </button>
                 ))}
+              </div>
+
+              {/* Take All + Take X buttons (50/50) */}
+              <div class="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => handleWithdraw(selected.itemId, selected.quantity)}
-                  class="py-2.5 rounded-lg bg-[var(--color-gold-dim)] text-white font-semibold text-sm active:opacity-80 col-span-3"
+                  class="py-2.5 rounded-lg bg-[var(--color-gold-dim)] text-white font-semibold text-sm active:opacity-80"
                 >
-                  Take All ({formatQuantity(selected.quantity).text})
+                  Take All
+                </button>
+                <button
+                  onClick={() => {
+                    setQuantityModalMode('take')
+                    setQuantityInput('')
+                  }}
+                  class="py-2.5 rounded-lg bg-[var(--color-gold)] text-white font-semibold text-sm active:opacity-80"
+                >
+                  Take X
                 </button>
               </div>
 
@@ -495,7 +527,7 @@ export default function BankScreen() {
               {!isStackable && (
                 <div class="border-t border-[#333] pt-2">
                   <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold">Withdraw as Note</p>
-                  <div class="grid grid-cols-3 gap-2">
+                  <div class="grid grid-cols-3 gap-2 mb-2">
                     {[1, 5, 10].map(qty => (
                       <button
                         key={qty}
@@ -505,11 +537,24 @@ export default function BankScreen() {
                         Note {qty}
                       </button>
                     ))}
+                  </div>
+
+                  {/* Note All + Note X buttons (50/50) */}
+                  <div class="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => handleWithdraw(selected.itemId, selected.quantity, true)}
-                      class="py-2 rounded-lg bg-[var(--color-emerald)] text-white font-semibold text-sm active:opacity-80 col-span-3"
+                      class="py-2 rounded-lg bg-[var(--color-emerald)] text-white font-semibold text-sm active:opacity-80"
                     >
-                      Note All ({formatQuantity(selected.quantity).text})
+                      Note All
+                    </button>
+                    <button
+                      onClick={() => {
+                        setQuantityModalMode('note')
+                        setQuantityInput('')
+                      }}
+                      class="py-2 rounded-lg bg-[var(--color-emerald-light)] text-white font-semibold text-sm active:opacity-80"
+                    >
+                      Note X
                     </button>
                   </div>
                 </div>
@@ -557,6 +602,44 @@ export default function BankScreen() {
                 </div>
               )}
 
+            </div>
+          </Modal>
+        )
+      })()}
+
+      {/* ── Quantity input modal ─────────────────────────────────────────── */}
+      {quantityModalMode && selected && (() => {
+        const selItem = itemsData[selected.itemId]
+        const maxQty = selected.quantity
+        const title = quantityModalMode === 'note' ? `Note ${selItem?.name || selected.itemId}` : `Take ${selItem?.name || selected.itemId}`
+
+        return (
+          <Modal title={title} onClose={() => { setQuantityModalMode(null); setQuantityInput('') }}>
+            <div class="space-y-3">
+              <div>
+                <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1 uppercase tracking-wider">Available: {maxQty}</p>
+                <input
+                  type="number"
+                  value={quantityInput}
+                  onInput={(e) => setQuantityInput(e.target.value)}
+                  min="1"
+                  max={maxQty}
+                  placeholder="Enter quantity"
+                  class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-gold)]"
+                  autoFocus
+                />
+              </div>
+              <button
+                onClick={handleQuantityModalSubmit}
+                disabled={!quantityInput || isNaN(parseInt(quantityInput, 10)) || parseInt(quantityInput, 10) <= 0}
+                class={`w-full py-2.5 rounded-lg font-semibold text-sm active:opacity-80 ${
+                  quantityModalMode === 'note'
+                    ? 'bg-[var(--color-emerald)] text-white'
+                    : 'bg-[var(--color-gold-dim)] text-white'
+                }`}
+              >
+                {quantityModalMode === 'note' ? 'Note' : 'Take'} {quantityInput || '0'}
+              </button>
             </div>
           </Modal>
         )

@@ -13142,14 +13142,18 @@ function formatIdleTime(ms) {
 }
 /**
  * Simulate idle skilling.
- * Returns { xpGained, itemsGained, itemsConsumed, actions, skill, actionName }
+ * Returns { xpGained, itemsGained, itemsConsumed, itemsDropped, actions, skill, actionName }
  * If the action has materials, caps actions to available bank resources and returns
  * itemsConsumed so the caller can deduct them.
  *
+ * When bankingEnabled is true, processes items through inventory with auto-banking.
+ * When bankingEnabled is false, items accumulate directly to bank (original behavior).
+ *
  * equipment and stats are optional — used to apply tool speed bonuses.
  * itemsData is required when equipment is provided (for tool lookup).
+ * inventory is required when bankingEnabled is true (for inventory processing).
  */
-function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {}, itemsData = {}) {
+function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {}, itemsData = {}, inventory = []) {
     if (!task || !task.action)
         return null;
     const totalTicks = Math.floor(elapsedMs / TICK_MS);
@@ -13180,22 +13184,153 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
     }
     const xpGained = {};
     const itemsGained = {};
+    const itemsDropped = {};
     const xpPer = task.action.xp || 0;
     if (xpPer > 0 && task.skill) {
         xpGained[task.skill] = xpPer * actions;
     }
+    // Handle product placement based on bankingEnabled
     if (task.action.product) {
-        const qty = (task.action.productQty || 1) * actions;
-        itemsGained[task.action.product] = (itemsGained[task.action.product] || 0) + qty;
+        const bankingEnabled = task.bankingEnabled || false;
+        const newInv = [...inventory];
+        const product = task.action.product;
+        const qtyPerAction = task.action.productQty || 1;
+        // Track starting inventory state
+        const startingInvState = {};
+        for (const slot of inventory) {
+            if (!slot)
+                continue;
+            startingInvState[slot.itemId] = (startingInvState[slot.itemId] || 0) + slot.quantity;
+        }
+        if (bankingEnabled) {
+            // Process items through inventory with auto-banking on full
+            const bankDelayTicks = Math.ceil(getAgilityBankDelayFromStats(stats) / TICK_MS);
+            let remainingTicks = totalTicks;
+            let actionsCompleted = 0;
+            while (remainingTicks >= actionTicks && actionsCompleted < actions) {
+                remainingTicks -= actionTicks;
+                actionsCompleted++;
+                // Add product to inventory
+                const item = itemsData[product];
+                const stackable = item?.stackable || false;
+                if (stackable) {
+                    const existingIdx = newInv.findIndex(s => s && s.itemId === product);
+                    if (existingIdx !== -1) {
+                        newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + qtyPerAction };
+                    }
+                    else {
+                        const emptyIdx = newInv.indexOf(null);
+                        if (emptyIdx !== -1) {
+                            newInv[emptyIdx] = { itemId: product, quantity: qtyPerAction };
+                        }
+                        else {
+                            itemsDropped[product] = (itemsDropped[product] || 0) + qtyPerAction;
+                        }
+                    }
+                }
+                else {
+                    // Non-stackable
+                    for (let q = 0; q < qtyPerAction; q++) {
+                        const emptyIdx = newInv.indexOf(null);
+                        if (emptyIdx !== -1) {
+                            newInv[emptyIdx] = { itemId: product, quantity: 1 };
+                        }
+                        else {
+                            itemsDropped[product] = (itemsDropped[product] || 0) + 1;
+                        }
+                    }
+                }
+                // Auto-bank trip if inventory full
+                if (newInv.indexOf(null) === -1) {
+                    if (remainingTicks < bankDelayTicks)
+                        break;
+                    remainingTicks -= bankDelayTicks;
+                    for (let i = 0; i < newInv.length; i++) {
+                        if (!newInv[i])
+                            continue;
+                        // Only bank items that are NEW (not starting inventory items)
+                        const startingQty = startingInvState[newInv[i].itemId] || 0;
+                        const newQty = newInv[i].quantity - startingQty;
+                        if (newQty > 0) {
+                            itemsGained[newInv[i].itemId] = (itemsGained[newInv[i].itemId] || 0) + newQty;
+                        }
+                        newInv[i] = null;
+                    }
+                }
+            }
+            // Items still in inventory go to itemsGained
+            for (const slot of newInv) {
+                if (!slot)
+                    continue;
+                const startingQty = startingInvState[slot.itemId] || 0;
+                const deltaQty = slot.quantity - startingQty;
+                if (deltaQty > 0) {
+                    itemsGained[slot.itemId] = (itemsGained[slot.itemId] || 0) + deltaQty;
+                }
+            }
+        }
+        else {
+            // Banking disabled: items fill inventory, excess is dropped (preserves XP/hr, limits items/hr)
+            const item = itemsData[product];
+            const stackable = item?.stackable || false;
+            let remainingQty = (task.action.productQty || 1) * actions;
+            for (let a = 0; a < actions; a++) {
+                const qtyThisAction = qtyPerAction;
+                let addedQty = 0;
+                if (stackable) {
+                    const existingIdx = newInv.findIndex(s => s && s.itemId === product);
+                    if (existingIdx !== -1) {
+                        newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + qtyThisAction };
+                        addedQty = qtyThisAction;
+                    }
+                    else {
+                        const emptyIdx = newInv.indexOf(null);
+                        if (emptyIdx !== -1) {
+                            newInv[emptyIdx] = { itemId: product, quantity: qtyThisAction };
+                            addedQty = qtyThisAction;
+                        }
+                    }
+                }
+                else {
+                    // Non-stackable
+                    for (let q = 0; q < qtyThisAction; q++) {
+                        const emptyIdx = newInv.indexOf(null);
+                        if (emptyIdx !== -1) {
+                            newInv[emptyIdx] = { itemId: product, quantity: 1 };
+                            addedQty++;
+                        }
+                    }
+                }
+                const droppedQty = qtyThisAction - addedQty;
+                if (droppedQty > 0) {
+                    itemsDropped[product] = (itemsDropped[product] || 0) + droppedQty;
+                }
+            }
+            // Items still in inventory go to itemsGained
+            for (const slot of newInv) {
+                if (!slot)
+                    continue;
+                const startingQty = startingInvState[slot.itemId] || 0;
+                const deltaQty = slot.quantity - startingQty;
+                if (deltaQty > 0) {
+                    itemsGained[slot.itemId] = (itemsGained[slot.itemId] || 0) + deltaQty;
+                }
+            }
+        }
     }
-    return { xpGained, itemsGained, itemsConsumed, actions, skill: task.skill, actionName: task.action.name };
+    return { xpGained, itemsGained, itemsConsumed, itemsDropped, actions, skill: task.skill, actionName: task.action.name };
 }
 /**
  * Simulate idle gathering.
- * Returns { itemsGained: { itemId: qty }, actions }
- * Materials consumed from bank if present, otherwise unlimited (simplified).
+ * Returns { itemsGained: { itemId: qty }, itemsDropped, actions }
+ * Always processes items through inventory with auto-banking enabled.
+ * When inventory fills, triggers bank trip with agility-scaled delay.
+ *
+ * inventory: current inventory array (28 slots)
+ * stats: player stats for agility-based bank delay
+ * itemsData: items lookup for stackable/non-stackable determination
  */
-function simulateIdleGather(task, elapsedMs) {
+function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, itemsData = {}) {
     if (!task || !task.gatherTask)
         return null;
     const totalTicks = Math.floor(elapsedMs / TICK_MS);
@@ -13203,10 +13338,85 @@ function simulateIdleGather(task, elapsedMs) {
     const actions = Math.floor(totalTicks / actionTicks);
     if (actions <= 0)
         return null;
+    // Gather always has banking enabled
+    const bankingEnabled = true;
+    const bankDelayTicks = Math.ceil(getAgilityBankDelayFromStats(stats) / TICK_MS);
     const itemsGained = {};
-    const qty = (task.gatherTask.qty || 1) * actions;
-    itemsGained[task.gatherTask.product] = (itemsGained[task.gatherTask.product] || 0) + qty;
-    return { itemsGained, actions, actionName: task.gatherTask.name };
+    const itemsDropped = {};
+    const newInv = [...inventory];
+    let remainingTicks = totalTicks;
+    const product = task.gatherTask.product;
+    const qtyPerAction = task.gatherTask.qty || 1;
+    // Track starting inventory state for delta calculation
+    const startingInvState = {};
+    for (const slot of inventory) {
+        if (!slot)
+            continue;
+        startingInvState[slot.itemId] = (startingInvState[slot.itemId] || 0) + slot.quantity;
+    }
+    let actionsCompleted = 0;
+    while (remainingTicks >= actionTicks && actionsCompleted < actions) {
+        remainingTicks -= actionTicks;
+        actionsCompleted++;
+        // Add product to inventory
+        const item = itemsData[product];
+        const stackable = item?.stackable || false;
+        if (stackable) {
+            const existingIdx = newInv.findIndex(s => s && s.itemId === product);
+            if (existingIdx !== -1) {
+                newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + qtyPerAction };
+            }
+            else {
+                const emptyIdx = newInv.indexOf(null);
+                if (emptyIdx !== -1) {
+                    newInv[emptyIdx] = { itemId: product, quantity: qtyPerAction };
+                }
+                else {
+                    itemsDropped[product] = (itemsDropped[product] || 0) + qtyPerAction;
+                }
+            }
+        }
+        else {
+            // Non-stackable: place one item per slot
+            for (let q = 0; q < qtyPerAction; q++) {
+                const emptyIdx = newInv.indexOf(null);
+                if (emptyIdx !== -1) {
+                    newInv[emptyIdx] = { itemId: product, quantity: 1 };
+                }
+                else {
+                    itemsDropped[product] = (itemsDropped[product] || 0) + 1;
+                }
+            }
+        }
+        // Auto-bank trip: if inventory is full and banking is enabled, deduct delay and clear
+        if (bankingEnabled && newInv.indexOf(null) === -1) {
+            if (remainingTicks < bankDelayTicks)
+                break;
+            remainingTicks -= bankDelayTicks;
+            for (let i = 0; i < newInv.length; i++) {
+                if (!newInv[i])
+                    continue;
+                // Only bank items that are NEW (not starting inventory items)
+                const startingQty = startingInvState[newInv[i].itemId] || 0;
+                const newQty = newInv[i].quantity - startingQty;
+                if (newQty > 0) {
+                    itemsGained[newInv[i].itemId] = (itemsGained[newInv[i].itemId] || 0) + newQty;
+                }
+                newInv[i] = null;
+            }
+        }
+    }
+    // Items still in inventory at end go to itemsGained
+    for (const slot of newInv) {
+        if (!slot)
+            continue;
+        const startingQty = startingInvState[slot.itemId] || 0;
+        const deltaQty = slot.quantity - startingQty;
+        if (deltaQty > 0) {
+            itemsGained[slot.itemId] = (itemsGained[slot.itemId] || 0) + deltaQty;
+        }
+    }
+    return { itemsGained, itemsDropped, actions: actionsCompleted, actionName: task.gatherTask.name };
 }
 /**
  * Compute average player DPS against a monster.
@@ -14021,10 +14231,10 @@ function GameProvider({ children }) {
             if (elapsedMs >= 2000) {
                 let sim = null;
                 if (savedTask.type === 'skill') {
-                    sim = simulateIdleSkilling(savedTask, elapsedMs, b, eq, s, itemsData);
+                    sim = simulateIdleSkilling(savedTask, elapsedMs, b, eq, s, itemsData, inv);
                 }
                 else if (savedTask.type === 'gather') {
-                    sim = simulateIdleGather(savedTask, elapsedMs);
+                    sim = simulateIdleGather(savedTask, elapsedMs, inv, s, itemsData);
                 }
                 else if (savedTask.type === 'combat') {
                     sim = simulateIdleCombat(savedTask, elapsedMs, s, eq, inv, itemsData);
@@ -15019,6 +15229,8 @@ function BankScreen() {
     const [draggingId, setDraggingId] = useState(null);
     const [overItemId, setOverItemId] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [quantityModalMode, setQuantityModalMode] = useState(null); // 'take' | 'note' | null
+    const [quantityInput, setQuantityInput] = useState('');
     const dragRef = useRef(null);
     const overRef = useRef(null);
     const tabs = bankConfig?.tabs ?? [];
@@ -15103,6 +15315,23 @@ function BankScreen() {
         updateInventory(newInv);
         updateBank(newBank);
         setSelectedId(null);
+    };
+    const handleQuantityModalSubmit = () => {
+        if (!quantityInput || !selectedId)
+            return;
+        const qty = parseInt(quantityInput, 10);
+        if (isNaN(qty) || qty <= 0) {
+            addToast('Invalid quantity', 'error');
+            return;
+        }
+        const maxQty = bank[selectedId]?.quantity || 0;
+        if (qty > maxQty) {
+            addToast(`Only ${maxQty} available`, 'error');
+            return;
+        }
+        handleWithdraw(selectedId, qty, quantityModalMode === 'note');
+        setQuantityModalMode(null);
+        setQuantityInput('');
     };
     // ── Tab management ───────────────────────────────────────────────────────────
     const addTab = () => {
@@ -15349,24 +15578,26 @@ function BankScreen() {
                             const { text, isM } = formatQuantity(selected.quantity);
                             return h("span", { class: `font-[var(--font-mono)] ${isM ? 'text-[var(--color-emerald)]' : 'text-[var(--color-gold)]'}` }, text);
                         })()),
-                    h("div", { class: "grid grid-cols-3 gap-2" },
-                        [1, 5, 10].map(qty => (h("button", { key: qty, onClick: () => handleWithdraw(selected.itemId, Math.min(qty, selected.quantity)), class: "py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80" },
-                            "Take ",
-                            qty))),
-                        h("button", { onClick: () => handleWithdraw(selected.itemId, selected.quantity), class: "py-2.5 rounded-lg bg-[var(--color-gold-dim)] text-white font-semibold text-sm active:opacity-80 col-span-3" },
-                            "Take All (",
-                            formatQuantity(selected.quantity).text,
-                            ")")),
+                    h("div", { class: "grid grid-cols-3 gap-2" }, [1, 5, 10].map(qty => (h("button", { key: qty, onClick: () => handleWithdraw(selected.itemId, Math.min(qty, selected.quantity)), class: "py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80" },
+                        "Take ",
+                        qty)))),
+                    h("div", { class: "grid grid-cols-2 gap-2" },
+                        h("button", { onClick: () => handleWithdraw(selected.itemId, selected.quantity), class: "py-2.5 rounded-lg bg-[var(--color-gold-dim)] text-white font-semibold text-sm active:opacity-80" }, "Take All"),
+                        h("button", { onClick: () => {
+                                setQuantityModalMode('take');
+                                setQuantityInput('');
+                            }, class: "py-2.5 rounded-lg bg-[var(--color-gold)] text-white font-semibold text-sm active:opacity-80" }, "Take X")),
                     !isStackable && (h("div", { class: "border-t border-[#333] pt-2" },
                         h("p", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold" }, "Withdraw as Note"),
-                        h("div", { class: "grid grid-cols-3 gap-2" },
-                            [1, 5, 10].map(qty => (h("button", { key: qty, onClick: () => handleWithdraw(selected.itemId, Math.min(qty, selected.quantity), true), class: "py-2 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80" },
-                                "Note ",
-                                qty))),
-                            h("button", { onClick: () => handleWithdraw(selected.itemId, selected.quantity, true), class: "py-2 rounded-lg bg-[var(--color-emerald)] text-white font-semibold text-sm active:opacity-80 col-span-3" },
-                                "Note All (",
-                                formatQuantity(selected.quantity).text,
-                                ")")))),
+                        h("div", { class: "grid grid-cols-3 gap-2 mb-2" }, [1, 5, 10].map(qty => (h("button", { key: qty, onClick: () => handleWithdraw(selected.itemId, Math.min(qty, selected.quantity), true), class: "py-2 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80" },
+                            "Note ",
+                            qty)))),
+                        h("div", { class: "grid grid-cols-2 gap-2" },
+                            h("button", { onClick: () => handleWithdraw(selected.itemId, selected.quantity, true), class: "py-2 rounded-lg bg-[var(--color-emerald)] text-white font-semibold text-sm active:opacity-80" }, "Note All"),
+                            h("button", { onClick: () => {
+                                    setQuantityModalMode('note');
+                                    setQuantityInput('');
+                                }, class: "py-2 rounded-lg bg-[var(--color-emerald-light)] text-white font-semibold text-sm active:opacity-80" }, "Note X")))),
                     tabs.length > 0 && (h("div", { class: "border-t border-[#333] pt-2" },
                         h("p", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mb-1 uppercase tracking-wider font-bold" }, "Move to Tab"),
                         h("div", { class: "flex flex-wrap gap-1.5" },
@@ -15383,6 +15614,24 @@ function BankScreen() {
                                         ? 'bg-[var(--color-mana)] text-white cursor-default'
                                         : 'bg-[#2a2a2a] text-[var(--color-parchment)] active:opacity-70'}` }, name));
                             })))))));
+        })(),
+        quantityModalMode && selected && (() => {
+            const selItem = itemsData[selected.itemId];
+            const maxQty = selected.quantity;
+            const title = quantityModalMode === 'note' ? `Note ${selItem?.name || selected.itemId}` : `Take ${selItem?.name || selected.itemId}`;
+            return (h(Modal, { title: title, onClose: () => { setQuantityModalMode(null); setQuantityInput(''); } },
+                h("div", { class: "space-y-3" },
+                    h("div", null,
+                        h("p", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mb-1 uppercase tracking-wider" },
+                            "Available: ",
+                            maxQty),
+                        h("input", { type: "number", value: quantityInput, onInput: (e) => setQuantityInput(e.target.value), min: "1", max: maxQty, placeholder: "Enter quantity", class: "w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-gold)]", autoFocus: true })),
+                    h("button", { onClick: handleQuantityModalSubmit, disabled: !quantityInput || isNaN(parseInt(quantityInput, 10)) || parseInt(quantityInput, 10) <= 0, class: `w-full py-2.5 rounded-lg font-semibold text-sm active:opacity-80 ${quantityModalMode === 'note'
+                            ? 'bg-[var(--color-emerald)] text-white'
+                            : 'bg-[var(--color-gold-dim)] text-white'}` },
+                        quantityModalMode === 'note' ? 'Note' : 'Take',
+                        " ",
+                        quantityInput || '0'))));
         })()));
 }
 
@@ -16279,6 +16528,7 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
     const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null);
     const [selectedAction, setSelectedAction] = useState(null);
     const [skilling, setSkilling] = useState(null);
+    const [skillingBankingEnabled, setSkillingBankingEnabled] = useState(false); // Banking toggle for skilling
     const skillingRef = useRef(null);
     const hasAutoStarted = useRef(false);
     // If agility is selected, delegate to AgilityScreen (special screen for agility only)
@@ -16369,7 +16619,7 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
         const state = { ...createSkillingState(selectedSkill, adjustedAction), startedAt: Date.now() };
         setSelectedAction(action);
         setSkilling(state);
-        setActiveTask({ type: 'skill', skill: selectedSkill, action: adjustedAction });
+        setActiveTask({ type: 'skill', skill: selectedSkill, action: adjustedAction, bankingEnabled: skillingBankingEnabled });
     };
     const stopSkilling = () => {
         if (skillingRef.current) {
@@ -16467,6 +16717,9 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
             h("p", { class: "text-xs text-[var(--color-parchment)] opacity-40 mb-3" },
                 "Level ",
                 skillLevel),
+            h("div", { class: "flex items-center gap-2 mb-3 p-2 rounded-lg bg-[#111]" },
+                h("input", { type: "checkbox", id: "skill-banking-picker", checked: skillingBankingEnabled, onChange: (e) => setSkillingBankingEnabled(e.target.checked), style: { cursor: 'pointer' } }),
+                h("label", { htmlFor: "skill-banking-picker", style: { fontSize: '12px', color: '#e8d5b0', opacity: 0.7, cursor: 'pointer' } }, "Auto-bank items")),
             h("div", { class: "space-y-2" }, allActions.map(action => {
                 const available = action.level <= skillLevel;
                 const hasMats = !action.materials || Object.entries(action.materials).every(([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty);
@@ -16536,6 +16789,11 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
                     h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, skilling.startedAt && (Date.now() - skilling.startedAt) > 5000
                         ? formatNumber(Math.round(skilling.totalXP / ((Date.now() - skilling.startedAt) / 3600000)))
                         : '—')))),
+        h("div", { class: "flex-shrink-0 mt-4 space-y-2" },
+            h("div", { class: "flex items-center gap-2" },
+                h("input", { type: "checkbox", id: "skill-banking", checked: skillingBankingEnabled, onChange: (e) => setSkillingBankingEnabled(e.target.checked), style: { cursor: 'pointer' } }),
+                h("label", { htmlFor: "skill-banking", style: { fontSize: '12px', color: '#e8d5b0', opacity: 0.7, cursor: 'pointer' } }, "Auto-bank items (may reduce XP/hr)")),
+            skillingBankingEnabled && (h("div", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.5 } }, "\u23F3 Items go to inventory first. Auto-banks when full. Banking delay scales with Agility level."))),
         h("div", { class: "flex-shrink-0 flex gap-2 mt-3" },
             h("button", { onClick: stopSkilling, class: "flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80" }, "\u2190 Stop & Back"),
             skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "flex-1 py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\u23ED\uFE0F Skip 1h")))));
@@ -17097,7 +17355,8 @@ function GatherScreen({ initialTaskId, idleResult, onSkipHour, skipHourUnlocked 
         };
         taskRef.current = newState;
         setLocalTask(newState);
-        setActiveTask({ type: 'gather', gatherTask: task });
+        // Gathering always has bankingEnabled = true (auto-bank enabled)
+        setActiveTask({ type: 'gather', gatherTask: task, bankingEnabled: true });
     };
     const stopTask = () => {
         if (taskRef.current)
@@ -17149,7 +17408,7 @@ function GatherScreen({ initialTaskId, idleResult, onSkipHour, skipHourUnlocked 
                 h("p", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.5, marginBottom: '16px', textAlign: 'center' } }, task.description),
                 h("div", { style: { width: '100%', maxWidth: '280px', marginBottom: '16px' } },
                     h(ProgressBar, { value: progress, max: 1, height: "h-4", color: "var(--color-gold)", showText: true })),
-                h("div", { style: { background: '#111', borderRadius: '12px', padding: '12px', width: '100%', maxWidth: '280px' } }, (() => {
+                h("div", { style: { background: '#111', borderRadius: '12px', padding: '12px', width: '100%', maxWidth: '280px', marginBottom: '12px' } }, (() => {
                     const elapsedHrs = activeTask.startedAt ? (Date.now() - activeTask.startedAt) / 3600000 : 0;
                     const perHour = elapsedHrs > 0 ? Math.round(activeTask.totalItems / elapsedHrs) : 0;
                     return (h(Fragment, null,
@@ -17159,7 +17418,8 @@ function GatherScreen({ initialTaskId, idleResult, onSkipHour, skipHourUnlocked 
                         h("div", { style: { display: 'flex', justifyContent: 'space-between' } },
                             h("span", { style: { fontSize: '13px', color: '#e8d5b0', opacity: 0.6 } }, "Items banked/hr"),
                             h("span", { style: { fontFamily: 'monospace', color: '#d4af37', fontWeight: 'bold' } }, elapsedHrs > 0 ? perHour.toLocaleString() : '—'))));
-                })())),
+                })()),
+                h("div", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textAlign: 'center', maxWidth: '280px' } }, "\u23F3 Items go to inventory first. Auto-banks when full. Banking delay scales with Agility level.")),
             skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "w-full py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0;margin-top:12px;flex-shrink:0" }, "\u23ED\uFE0F Skip 1h"))));
     }
     // Task picker

@@ -61,9 +61,9 @@ export function GameProvider({ children }) {
       if (elapsedMs >= 2000) {
         let sim = null
         if (savedTask.type === 'skill') {
-          sim = simulateIdleSkilling(savedTask, elapsedMs, b, eq, s, itemsData)
+          sim = simulateIdleSkilling(savedTask, elapsedMs, b, eq, s, itemsData, inv)
         } else if (savedTask.type === 'gather') {
-          sim = simulateIdleGather(savedTask, elapsedMs)
+          sim = simulateIdleGather(savedTask, elapsedMs, inv, s, itemsData)
         } else if (savedTask.type === 'combat') {
           sim = simulateIdleCombat(savedTask, elapsedMs, s, eq, inv, itemsData)
         } else if (savedTask.type === 'agility') {
