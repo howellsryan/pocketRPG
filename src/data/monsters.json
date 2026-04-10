@@ -2989,5 +2989,91 @@
         "chance": 0.005
       }
     ]
+  },
+  "crazy_archaeologist": {
+    "id": "crazy_archaeologist",
+    "name": "Crazy Archaeologist",
+    "combatLevel": 204,
+    "hitpoints": 225,
+    "stats": {
+      "attack": 160,
+      "strength": 90,
+      "defence": 240,
+      "magic": 1,
+      "ranged": 180
+    },
+    "attackSpeed": 4,
+    "attackStyles": ["melee", "ranged"],
+    "attackBonus": 250,
+    "strengthBonus": 25,
+    "defenceBonus": {
+      "stab": 50,
+      "slash": 60,
+      "crush": 50,
+      "magic": 30,
+      "ranged": 60
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "amulet_of_power",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "rune_crossbow",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "red_dhide_body",
+        "quantity": 1,
+        "chance": 0.03125
+      },
+      {
+        "itemId": "white_berries",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.05
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      }
+    ]
   }
 }
