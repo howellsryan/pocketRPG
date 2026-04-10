@@ -24,7 +24,7 @@ const COMBAT_CATEGORIES = [
     key: 'dragons_giants',
     label: 'Dragons & Giants',
     icon: '🐉',
-    ids: ['giant_spider', 'hill_giant', 'moss_giant', 'lesser_demon', 'green_dragon'],
+    ids: ['giant_spider', 'hill_giant', 'moss_giant', 'lesser_demon', 'green_dragon', 'red_dragon'],
   },
   {
     key: 'slayer',
@@ -44,15 +44,22 @@ const COMBAT_CATEGORIES = [
     icon: '👹',
     ids: ['dagganoth_rex', 'dagganoth_prime', 'dagganoth_supreme'],
   },
+  {
+    key: 'wilderness',
+    label: 'Wilderness',
+    icon: '🏴',
+    ids: ['crazy_archaeologist'],
+  },
 ]
 
 const MONSTER_ICONS = {
   chicken: '🐔', goblin: '👺', cow: '🐄', giant_spider: '🕷️',
   rock_crab: '🦀', sand_crab: '🦀', hill_giant: '👊', moss_giant: '🌿',
   wizard: '🧙', dark_wizard: '🧙‍♂️', abyssal_demon: '😈',
-  green_dragon: '🐉', lesser_demon: '👿',
+  green_dragon: '🐉', red_dragon: '🔴', lesser_demon: '👿',
   general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
-  dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹'
+  dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
+  crazy_archaeologist: '📜'
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlocked }) {
@@ -172,7 +179,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
           }
           if (newHP <= 0) {
             setCombat(prev => ({ ...prev, active: false }))
-            addToast('You died! Respawning...', 'error')
+            addToast('You died!', 'error')
             setActiveTask(null)
             updateHP(getMaxHP())
             hpRef.current = getMaxHP()
@@ -189,7 +196,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
           }])
           if (newHP <= 0) {
             setCombat(prev => ({ ...prev, active: false }))
-            addToast('Incinerated by dragonfire! Respawning...', 'error')
+            addToast('Incinerated by dragonfire!', 'error')
             setActiveTask(null)
             updateHP(getMaxHP())
             hpRef.current = getMaxHP()
