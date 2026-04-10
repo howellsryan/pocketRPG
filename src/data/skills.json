@@ -1434,7 +1434,9 @@
           "torstol": 1,
           "super_attack": 1,
           "super_strength": 1,
-          "super_defence": 1
+          "super_defence": 1,
+          "ranging_potion": 1,
+          "magic_potion": 1
         }
       }
     ]
