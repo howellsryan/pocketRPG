@@ -92,22 +92,20 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
   // Handle product placement based on bankingEnabled
   if (task.action.product) {
     const bankingEnabled = task.bankingEnabled || false
-    const totalProductQty = (task.action.productQty || 1) * actions
+    const newInv = [...inventory]
+    const product = task.action.product
+    const qtyPerAction = task.action.productQty || 1
+
+    // Track starting inventory state
+    const startingInvState = {}
+    for (const slot of inventory) {
+      if (!slot) continue
+      startingInvState[slot.itemId] = (startingInvState[slot.itemId] || 0) + slot.quantity
+    }
 
     if (bankingEnabled) {
-      // Process items through inventory with auto-banking
+      // Process items through inventory with auto-banking on full
       const bankDelayTicks = Math.ceil(getAgilityBankDelayFromStats(stats) / TICK_MS)
-      const newInv = [...inventory]
-      const product = task.action.product
-      const qtyPerAction = task.action.productQty || 1
-
-      // Track starting inventory state
-      const startingInvState = {}
-      for (const slot of inventory) {
-        if (!slot) continue
-        startingInvState[slot.itemId] = (startingInvState[slot.itemId] || 0) + slot.quantity
-      }
-
       let remainingTicks = totalTicks
       let actionsCompleted = 0
 
@@ -165,8 +163,53 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
         }
       }
     } else {
-      // Original behavior: all items go straight to bank
-      itemsGained[task.action.product] = totalProductQty
+      // Banking disabled: items fill inventory, excess is dropped (preserves XP/hr, limits items/hr)
+      const item = itemsData[product]
+      const stackable = item?.stackable || false
+      let remainingQty = (task.action.productQty || 1) * actions
+
+      for (let a = 0; a < actions; a++) {
+        const qtyThisAction = qtyPerAction
+        let addedQty = 0
+
+        if (stackable) {
+          const existingIdx = newInv.findIndex(s => s && s.itemId === product)
+          if (existingIdx !== -1) {
+            newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + qtyThisAction }
+            addedQty = qtyThisAction
+          } else {
+            const emptyIdx = newInv.indexOf(null)
+            if (emptyIdx !== -1) {
+              newInv[emptyIdx] = { itemId: product, quantity: qtyThisAction }
+              addedQty = qtyThisAction
+            }
+          }
+        } else {
+          // Non-stackable
+          for (let q = 0; q < qtyThisAction; q++) {
+            const emptyIdx = newInv.indexOf(null)
+            if (emptyIdx !== -1) {
+              newInv[emptyIdx] = { itemId: product, quantity: 1 }
+              addedQty++
+            }
+          }
+        }
+
+        const droppedQty = qtyThisAction - addedQty
+        if (droppedQty > 0) {
+          itemsDropped[product] = (itemsDropped[product] || 0) + droppedQty
+        }
+      }
+
+      // Items still in inventory go to itemsGained
+      for (const slot of newInv) {
+        if (!slot) continue
+        const startingQty = startingInvState[slot.itemId] || 0
+        const deltaQty = slot.quantity - startingQty
+        if (deltaQty > 0) {
+          itemsGained[slot.itemId] = (itemsGained[slot.itemId] || 0) + deltaQty
+        }
+      }
     }
   }
 
