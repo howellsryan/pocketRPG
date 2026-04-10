@@ -1282,7 +1282,7 @@
       {
         "id": "attack_potion",
         "name": "Make attack potion",
-        "level": 3,
+        "level": 1,
         "ticks": 4,
         "xp": 25,
         "product": "attack_potion",
