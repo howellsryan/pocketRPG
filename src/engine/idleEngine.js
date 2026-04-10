@@ -50,7 +50,8 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
   const totalTicks = Math.floor(elapsedMs / TICK_MS)
 
   // Apply tool speed multiplier (e.g. mithril axe for woodcutting)
-  const toolMult = getToolSpeedMultiplier(task.skill, equipment, itemsData, stats)
+  // Note: inventory not available during idle simulation, so tools must be equipped
+  const toolMult = getToolSpeedMultiplier(task.skill, equipment, itemsData, stats, [])
   const actionTicks = Math.max(1, Math.floor(task.action.ticks * toolMult))
 
   let actions = Math.floor(totalTicks / actionTicks)

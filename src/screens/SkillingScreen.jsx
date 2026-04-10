@@ -4,7 +4,7 @@ import Modal from '../components/Modal.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import { SKILL_ICONS, STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS } from '../utils/constants.js'
 import { getLevelFromXP } from '../engine/experience.js'
-import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getToolSpeedMultiplier } from '../engine/skilling.js'
+import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getToolSpeedMultiplier, hasToolForSkill } from '../engine/skilling.js'
 import { addItem, removeItem, countItem } from '../engine/inventory.js'
 import { onTick } from '../engine/tick.js'
 import { formatNumber } from '../utils/helpers.js'
@@ -122,7 +122,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   }, [skilling?.active, stats, inventory, bank])
 
   const startSkilling = (action) => {
-    const mult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats)
+    const mult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory)
     const effectiveTicks = Math.max(1, Math.floor(action.ticks * mult))
     const adjustedAction = mult < 1.0 ? { ...action, ticks: effectiveTicks } : action
     const state = { ...createSkillingState(selectedSkill, adjustedAction), startedAt: Date.now() }
@@ -149,7 +149,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
         const action = skill.actions.find(a => a.id === initialActionId)
         if (action) {
           setSelectedSkill(initialSkillId)
-          const mult = getToolSpeedMultiplier(initialSkillId, equipment, itemsData, stats)
+          const mult = getToolSpeedMultiplier(initialSkillId, equipment, itemsData, stats, inventory)
           const effectiveTicks = Math.max(1, Math.floor(action.ticks * mult))
           const adjustedAction = mult < 1.0 ? { ...action, ticks: effectiveTicks } : action
           const state = { ...createSkillingState(initialSkillId, adjustedAction), startedAt: Date.now() }
@@ -202,16 +202,27 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
           {allSkillsInTab.map(skill => {
             const data = stats[skill] || { xp: 0, level: 1 }
             const level = data.level || getLevelFromXP(data.xp)
+            const needsTool = ['mining', 'woodcutting', 'fishing'].includes(skill)
+            const hasTool = !needsTool || hasToolForSkill(skill, equipment, inventory, itemsData, stats)
+            const isClickable = hasTool
             return (
               <button
                 key={skill}
-                onClick={() => setSelectedSkill(skill)}
-                class="flex items-center gap-2.5 p-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors"
+                onClick={() => isClickable && setSelectedSkill(skill)}
+                disabled={!isClickable}
+                class={`flex items-center gap-2.5 p-3 rounded-xl border transition-colors ${
+                  isClickable
+                    ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
+                    : 'bg-[#111] border-[#1a1a1a] opacity-40'
+                }`}
               >
                 <span class="text-xl">{SKILL_ICONS[skill]}</span>
                 <div class="text-left">
                   <div class="text-sm font-semibold text-[var(--color-parchment)] capitalize">{skill}</div>
                   <div class="text-[10px] font-[var(--font-mono)] text-[var(--color-gold)]">Lv {level}</div>
+                  {needsTool && !hasTool && (
+                    <div class="text-[9px] text-[#ff6b6b]">No tool available</div>
+                  )}
                 </div>
               </button>
             )
@@ -227,7 +238,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   const skillLevel = getLevelFromXP(skillXP)
   const actions = skillData ? getAvailableActions(skillData.actions, skillXP) : []
   const allActions = skillData?.actions || []
-  const toolMult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats)
+  const toolMult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory)
 
   if (!skilling) {
     return (
@@ -248,13 +259,16 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             const hasMats = !action.materials || Object.entries(action.materials).every(
               ([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty
             )
+            const needsTool = ['mining', 'woodcutting', 'fishing'].includes(selectedSkill)
+            const hasTool = !needsTool || hasToolForSkill(selectedSkill, equipment, inventory, itemsData, stats)
+            const canStart = available && hasMats && hasTool
             return (
               <div key={action.id} class="flex gap-2 items-stretch">
                 <button
-                  onClick={() => available && hasMats && startSkilling(action)}
-                  disabled={!available || !hasMats}
+                  onClick={() => canStart && startSkilling(action)}
+                  disabled={!canStart}
                   class={`flex-1 flex items-center justify-between p-3 rounded-xl border transition-colors
-                    ${available && hasMats
+                    ${canStart
                       ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
                       : 'bg-[#111] border-[#1a1a1a] opacity-40'}`}
                 >
@@ -266,6 +280,11 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                         : `${(action.ticks * 0.6).toFixed(1)}s`}
                       {action.materials && (
                         <span> · Needs: {Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>
+                      )}
+                      {needsTool && !hasTool && (
+                        <span class="block text-[#ff6b6b] mt-1">
+                          {selectedSkill === 'mining' ? '⚒️ No pickaxe' : selectedSkill === 'woodcutting' ? '🪓 No axe' : '🎣 No rod'}
+                        </span>
                       )}
                     </div>
                   </div>
@@ -290,7 +309,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   }
 
   // Active skilling modal
-  const activeMult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats)
+  const activeMult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory)
   const progress = skilling.active
     ? 1 - (skilling.ticksRemaining / skilling.action.ticks)
     : 0
