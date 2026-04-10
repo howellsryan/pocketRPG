@@ -1262,14 +1262,6 @@ const itemsData = {
     "shopValue": 7,
     "icon": "🏖️"
   },
-  "bucket": {
-    "id": "bucket",
-    "name": "Bucket",
-    "type": "resource",
-    "stackable": false,
-    "shopValue": 2,
-    "icon": "🪣"
-  },
   "soda_ash": {
     "id": "soda_ash",
     "name": "Soda ash",
@@ -1316,14 +1308,6 @@ const itemsData = {
     "type": "resource",
     "stackable": false,
     "shopValue": 10,
-    "icon": "🫙"
-  },
-  "pot": {
-    "id": "pot",
-    "name": "Pot",
-    "type": "resource",
-    "stackable": false,
-    "shopValue": 1,
     "icon": "🫙"
   },
   "wheat": {
@@ -2655,26 +2639,6 @@ const itemsData = {
     "stackable": false,
     "shopValue": 1,
     "icon": "🔨",
-    "requirements": {}
-  },
-  "rope": {
-    "id": "rope",
-    "name": "Rope",
-    "type": "resource",
-    "slot": null,
-    "stackable": false,
-    "shopValue": 18,
-    "icon": "🪢",
-    "requirements": {}
-  },
-  "shears": {
-    "id": "shears",
-    "name": "Shears",
-    "type": "tool",
-    "slot": null,
-    "stackable": false,
-    "shopValue": 1,
-    "icon": "✂️",
     "requirements": {}
   },
   "iron_dagger": {
@@ -6239,6 +6203,150 @@ const itemsData = {
     },
     "shopValue": 500000,
     "icon": "🛡️"
+  },
+  "fishing_net": {
+    "id": "fishing_net",
+    "name": "Fishing net",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "fishing",
+    "speedMultiplier": 1.0,
+    "requirements": {
+      "fishing": 1
+    },
+    "shopValue": 50,
+    "icon": "🕸️"
+  },
+  "fishing_rod": {
+    "id": "fishing_rod",
+    "name": "Fishing rod",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "fishing",
+    "speedMultiplier": 0.9,
+    "requirements": {
+      "fishing": 20
+    },
+    "shopValue": 100,
+    "icon": "🎣"
+  },
+  "lobster_cage": {
+    "id": "lobster_cage",
+    "name": "Lobster cage",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "fishing",
+    "speedMultiplier": 0.8,
+    "requirements": {
+      "fishing": 40
+    },
+    "shopValue": 200,
+    "icon": "🪤"
+  },
+  "harpoon": {
+    "id": "harpoon",
+    "name": "Harpoon",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "fishing",
+    "speedMultiplier": 0.7,
+    "requirements": {
+      "fishing": 50
+    },
+    "shopValue": 500,
+    "icon": "🔱"
   }
 };
 const monstersData = {
@@ -12815,31 +12923,40 @@ function _accXP(state, xpSkills) {
 
 
 /**
- * Returns the tick-speed multiplier for a skill given the equipped weapon.
- * Only applies when the weapon has a matching toolFor field AND the player meets
- * the skill-level requirement. Bronze tools return 1.0 (no reduction).
+ * Returns the tick-speed multiplier for a skill using the best available tool.
+ * Checks both equipped weapon and inventory for the highest-tier tool the player
+ * has the skill-level requirement for. Only applies if tool has matching toolFor field.
+ * Bronze tools return 1.0 (no reduction).
  *
  * @param {string} skill - e.g. 'woodcutting' or 'mining'
  * @param {object} equipment - equipment state object { weapon: { itemId } | null, ... }
  * @param {object} itemsData - items.json lookup
  * @param {object} stats - stats object, e.g. { woodcutting: { xp: 0 } }
+ * @param {array} inventory - inventory array (optional, used to find best tool)
  * @returns {number} multiplier, e.g. 0.9 means 10% faster (fewer ticks)
  */
-function getToolSpeedMultiplier(skill, equipment, itemsData, stats = {}) {
-    if (!equipment?.weapon)
-        return 1.0;
-    const item = itemsData[equipment.weapon.itemId];
-    if (!item || item.toolFor !== skill)
-        return 1.0;
-    // Check skill-level requirement on the tool (e.g. mithril axe needs wc 20)
-    if (item.requirements) {
-        const skillXP = stats[skill]?.xp || 0;
-        const playerLevel = getLevelFromXP(skillXP);
-        for (const [reqSkill, reqLevel] of Object.entries(item.requirements)) {
-            if (reqSkill === skill && playerLevel < reqLevel)
-                return 1.0;
+function getToolSpeedMultiplier(skill, equipment, itemsData, stats = {}, inventory = []) {
+    // Try to find best available tool (equipped or in inventory)
+    const bestTool = inventory && inventory.length > 0
+        ? findBestToolForSkill(skill, equipment, inventory, itemsData, stats)
+        : null;
+    let item = bestTool;
+    if (!item && equipment?.weapon) {
+        item = itemsData[equipment.weapon.itemId];
+        if (!item || item.toolFor !== skill)
+            return 1.0;
+        // Check skill-level requirement
+        if (item.requirements) {
+            const skillXP = stats[skill]?.xp || 0;
+            const playerLevel = getLevelFromXP(skillXP);
+            for (const [reqSkill, reqLevel] of Object.entries(item.requirements)) {
+                if (reqSkill === skill && playerLevel < reqLevel)
+                    return 1.0;
+            }
         }
     }
+    if (!item)
+        return 1.0;
     return item.speedMultiplier ?? 1.0;
 }
 /**
@@ -12886,10 +13003,17 @@ function processSkillingTick(skillingState) {
 /**
  * Check if player can perform this skilling action
  */
-function canPerformAction(action, skillXP, inventory, itemsData, bank = {}) {
+function canPerformAction(action, skillXP, inventory, itemsData, bank = {}, skill = null, equipment = {}, stats = {}) {
     const level = getLevelFromXP(skillXP);
     if (level < action.level)
         return { can: false, reason: `Requires ${action.skillName || 'skill'} level ${action.level}` };
+    // Check for required tool (if skill uses tools)
+    if (skill && ['mining', 'woodcutting', 'fishing'].includes(skill)) {
+        if (!hasToolForSkill(skill, equipment, inventory, itemsData, stats)) {
+            const toolName = skill === 'mining' ? 'pickaxe' : skill === 'woodcutting' ? 'axe' : 'rod';
+            return { can: false, reason: `Need a ${toolName}` };
+        }
+    }
     // Check required materials (inventory + bank combined)
     if (action.materials) {
         for (const [itemId, qty] of Object.entries(action.materials)) {
@@ -12923,6 +13047,64 @@ function checkBurn(cookingLevel, recipe) {
 function getAvailableActions(skillActions, skillXP) {
     const level = getLevelFromXP(skillXP);
     return skillActions.filter(a => a.level <= level);
+}
+/**
+ * Find the best tool available for a skill (equipped or in inventory)
+ * Returns the tool item data that:
+ * - has toolFor === skill
+ * - player meets the skill-level requirement for
+ * - is highest tier (highest skill requirement)
+ * Returns null if no suitable tool found
+ *
+ * @param {string} skill - e.g. 'woodcutting' or 'mining'
+ * @param {object} equipment - equipment state { weapon: { itemId } | null, ... }
+ * @param {array} inventory - inventory array
+ * @param {object} itemsData - items.json lookup
+ * @param {object} stats - stats object with skill XP
+ * @returns {object|null} best tool item data or null
+ */
+function findBestToolForSkill(skill, equipment, inventory, itemsData, stats = {}) {
+    const skillXP = stats[skill]?.xp || 0;
+    const playerLevel = getLevelFromXP(skillXP);
+    const candidateTools = [];
+    // Check equipped weapon
+    if (equipment?.weapon) {
+        const item = itemsData[equipment.weapon.itemId];
+        if (item && item.toolFor === skill) {
+            // Check skill-level requirement
+            const reqLevel = item.requirements?.[skill] || 0;
+            if (playerLevel >= reqLevel) {
+                candidateTools.push({ ...item, tier: reqLevel });
+            }
+        }
+    }
+    // Check inventory for tools
+    for (const slot of inventory) {
+        if (!slot)
+            continue;
+        const item = itemsData[slot.itemId];
+        if (!item || item.toolFor !== skill)
+            continue;
+        // Check skill-level requirement
+        const reqLevel = item.requirements?.[skill] || 0;
+        if (playerLevel >= reqLevel) {
+            // Avoid adding duplicates (e.g., if we already have equipped version)
+            if (!candidateTools.some(t => t.id === item.id)) {
+                candidateTools.push({ ...item, tier: reqLevel });
+            }
+        }
+    }
+    // Return the tool with highest tier (highest requirement level)
+    if (candidateTools.length === 0)
+        return null;
+    return candidateTools.reduce((best, current) => current.tier > best.tier ? current : best);
+}
+/**
+ * Check if a valid tool exists for a skill
+ * @returns {boolean} true if player has a suitable tool
+ */
+function hasToolForSkill(skill, equipment, inventory, itemsData, stats = {}) {
+    return findBestToolForSkill(skill, equipment, inventory, itemsData, stats) !== null;
 }
 
 // ── engine/idleEngine.js ──
@@ -12972,7 +13154,8 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
         return null;
     const totalTicks = Math.floor(elapsedMs / TICK_MS);
     // Apply tool speed multiplier (e.g. mithril axe for woodcutting)
-    const toolMult = getToolSpeedMultiplier(task.skill, equipment, itemsData, stats);
+    // Note: inventory not available during idle simulation, so tools must be equipped
+    const toolMult = getToolSpeedMultiplier(task.skill, equipment, itemsData, stats, []);
     const actionTicks = Math.max(1, Math.floor(task.action.ticks * toolMult));
     let actions = Math.floor(totalTicks / actionTicks);
     if (actions <= 0)
@@ -16180,7 +16363,7 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
         return unsub;
     }, [skilling?.active, stats, inventory, bank]);
     const startSkilling = (action) => {
-        const mult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats);
+        const mult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory);
         const effectiveTicks = Math.max(1, Math.floor(action.ticks * mult));
         const adjustedAction = mult < 1.0 ? { ...action, ticks: effectiveTicks } : action;
         const state = { ...createSkillingState(selectedSkill, adjustedAction), startedAt: Date.now() };
@@ -16205,7 +16388,7 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
                 const action = skill.actions.find(a => a.id === initialActionId);
                 if (action) {
                     setSelectedSkill(initialSkillId);
-                    const mult = getToolSpeedMultiplier(initialSkillId, equipment, itemsData, stats);
+                    const mult = getToolSpeedMultiplier(initialSkillId, equipment, itemsData, stats, inventory);
                     const effectiveTicks = Math.max(1, Math.floor(action.ticks * mult));
                     const adjustedAction = mult < 1.0 ? { ...action, ticks: effectiveTicks } : action;
                     const state = { ...createSkillingState(initialSkillId, adjustedAction), startedAt: Date.now() };
@@ -16252,13 +16435,19 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
             h("div", { class: "grid grid-cols-2 gap-2" }, allSkillsInTab.map(skill => {
                 const data = stats[skill] || { xp: 0, level: 1 };
                 const level = data.level || getLevelFromXP(data.xp);
-                return (h("button", { key: skill, onClick: () => setSelectedSkill(skill), class: "flex items-center gap-2.5 p-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors" },
+                const needsTool = ['mining', 'woodcutting', 'fishing'].includes(skill);
+                const hasTool = !needsTool || hasToolForSkill(skill, equipment, inventory, itemsData, stats);
+                const isClickable = hasTool;
+                return (h("button", { key: skill, onClick: () => isClickable && setSelectedSkill(skill), disabled: !isClickable, class: `flex items-center gap-2.5 p-3 rounded-xl border transition-colors ${isClickable
+                        ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
+                        : 'bg-[#111] border-[#1a1a1a] opacity-40'}` },
                     h("span", { class: "text-xl" }, SKILL_ICONS[skill]),
                     h("div", { class: "text-left" },
                         h("div", { class: "text-sm font-semibold text-[var(--color-parchment)] capitalize" }, skill),
                         h("div", { class: "text-[10px] font-[var(--font-mono)] text-[var(--color-gold)]" },
                             "Lv ",
-                            level))));
+                            level),
+                        needsTool && !hasTool && (h("div", { class: "text-[9px] text-[#ff6b6b]" }, "No tool available")))));
             }))));
     }
     // Action picker (no active skilling)
@@ -16267,7 +16456,7 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
     const skillLevel = getLevelFromXP(skillXP);
     const actions = skillData ? getAvailableActions(skillData.actions, skillXP) : [];
     const allActions = skillData?.actions || [];
-    const toolMult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats);
+    const toolMult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory);
     if (!skilling) {
         return (h("div", { class: "h-full overflow-y-auto p-4" },
             h("button", { onClick: () => setSelectedSkill(null), class: "text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1" }, "\u2190 Back"),
@@ -16281,9 +16470,12 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
             h("div", { class: "space-y-2" }, allActions.map(action => {
                 const available = action.level <= skillLevel;
                 const hasMats = !action.materials || Object.entries(action.materials).every(([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty);
+                const needsTool = ['mining', 'woodcutting', 'fishing'].includes(selectedSkill);
+                const hasTool = !needsTool || hasToolForSkill(selectedSkill, equipment, inventory, itemsData, stats);
+                const canStart = available && hasMats && hasTool;
                 return (h("div", { key: action.id, class: "flex gap-2 items-stretch" },
-                    h("button", { onClick: () => available && hasMats && startSkilling(action), disabled: !available || !hasMats, class: `flex-1 flex items-center justify-between p-3 rounded-xl border transition-colors
-                    ${available && hasMats
+                    h("button", { onClick: () => canStart && startSkilling(action), disabled: !canStart, class: `flex-1 flex items-center justify-between p-3 rounded-xl border transition-colors
+                    ${canStart
                             ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
                             : 'bg-[#111] border-[#1a1a1a] opacity-40'}` },
                         h("div", { class: "text-left" },
@@ -16306,7 +16498,8 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
                                     : `${(action.ticks * 0.6).toFixed(1)}s`,
                                 action.materials && (h("span", null,
                                     " \u00B7 Needs: ",
-                                    Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', '))))),
+                                    Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', '))),
+                                needsTool && !hasTool && (h("span", { class: "block text-[#ff6b6b] mt-1" }, selectedSkill === 'mining' ? '⚒️ No pickaxe' : selectedSkill === 'woodcutting' ? '🪓 No axe' : '🎣 No rod')))),
                         action.product && (h("span", { class: "text-[10px] text-[var(--color-gold-dim)]" },
                             "\u2192 ",
                             itemsData[action.product]?.name || action.product))),
@@ -16316,7 +16509,7 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
             }))));
     }
     // Active skilling modal
-    const activeMult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats);
+    const activeMult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory);
     const progress = skilling.active
         ? 1 - (skilling.ticksRemaining / skilling.action.ticks)
         : 0;
@@ -17081,10 +17274,10 @@ const SHOPS = [
             { id: 'tinderbox', name: 'Tinderbox', icon: '🔥', price: 1, stackable: false, desc: 'Used to light fires.' },
             { id: 'chisel', name: 'Chisel', icon: '🔧', price: 1, stackable: false, desc: 'Used to cut gems and craft items.' },
             { id: 'hammer', name: 'Hammer', icon: '🔨', price: 1, stackable: false, desc: 'Required for smithing at an anvil.' },
-            { id: 'shears', name: 'Shears', icon: '✂️', price: 1, stackable: false, desc: 'Used to shear sheep.' },
-            { id: 'rope', name: 'Rope', icon: '🪢', price: 18, stackable: false, desc: 'A length of rope. Various uses.' },
-            { id: 'bucket', name: 'Bucket', icon: '🪣', price: 2, stackable: false, desc: 'A wooden bucket.' },
-            { id: 'pot', name: 'Pot', icon: '🏺', price: 1, stackable: false, desc: 'A clay pot for cooking.' },
+            { id: 'fishing_net', name: 'Fishing net', icon: '🕸️', price: 50, stackable: false, desc: 'Net for catching shrimps. Fishing 1. 2-handed.' },
+            { id: 'fishing_rod', name: 'Fishing rod', icon: '🎣', price: 100, stackable: false, desc: 'Rod for catching trout. Fishing 20. 2-handed.' },
+            { id: 'lobster_cage', name: 'Lobster cage', icon: '🪤', price: 200, stackable: false, desc: 'Cage for catching lobsters. Fishing 40. 2-handed.' },
+            { id: 'harpoon', name: 'Harpoon', icon: '🔱', price: 500, stackable: false, desc: 'Harpoon for swordfish & sharks. Fishing 50. 2-handed.' },
         ],
     },
     {

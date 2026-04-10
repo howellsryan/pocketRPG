@@ -1162,14 +1162,6 @@
     "shopValue": 7,
     "icon": "🏖️"
   },
-  "bucket": {
-    "id": "bucket",
-    "name": "Bucket",
-    "type": "resource",
-    "stackable": false,
-    "shopValue": 2,
-    "icon": "🪣"
-  },
   "soda_ash": {
     "id": "soda_ash",
     "name": "Soda ash",
@@ -1216,14 +1208,6 @@
     "type": "resource",
     "stackable": false,
     "shopValue": 10,
-    "icon": "🫙"
-  },
-  "pot": {
-    "id": "pot",
-    "name": "Pot",
-    "type": "resource",
-    "stackable": false,
-    "shopValue": 1,
     "icon": "🫙"
   },
   "wheat": {
@@ -2555,26 +2539,6 @@
     "stackable": false,
     "shopValue": 1,
     "icon": "🔨",
-    "requirements": {}
-  },
-  "rope": {
-    "id": "rope",
-    "name": "Rope",
-    "type": "resource",
-    "slot": null,
-    "stackable": false,
-    "shopValue": 18,
-    "icon": "🪢",
-    "requirements": {}
-  },
-  "shears": {
-    "id": "shears",
-    "name": "Shears",
-    "type": "tool",
-    "slot": null,
-    "stackable": false,
-    "shopValue": 1,
-    "icon": "✂️",
     "requirements": {}
   },
   "iron_dagger": {
@@ -6139,5 +6103,149 @@
     },
     "shopValue": 500000,
     "icon": "🛡️"
+  },
+  "fishing_net": {
+    "id": "fishing_net",
+    "name": "Fishing net",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "fishing",
+    "speedMultiplier": 1.0,
+    "requirements": {
+      "fishing": 1
+    },
+    "shopValue": 50,
+    "icon": "🕸️"
+  },
+  "fishing_rod": {
+    "id": "fishing_rod",
+    "name": "Fishing rod",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "fishing",
+    "speedMultiplier": 0.9,
+    "requirements": {
+      "fishing": 20
+    },
+    "shopValue": 100,
+    "icon": "🎣"
+  },
+  "lobster_cage": {
+    "id": "lobster_cage",
+    "name": "Lobster cage",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "fishing",
+    "speedMultiplier": 0.8,
+    "requirements": {
+      "fishing": 40
+    },
+    "shopValue": 200,
+    "icon": "🪤"
+  },
+  "harpoon": {
+    "id": "harpoon",
+    "name": "Harpoon",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "fishing",
+    "speedMultiplier": 0.7,
+    "requirements": {
+      "fishing": 50
+    },
+    "shopValue": 500,
+    "icon": "🔱"
   }
 }
