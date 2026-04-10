@@ -440,44 +440,10 @@ function GameApp() {
                 const perHr = (n) => hrs > 0 ? Math.round(n / hrs).toLocaleString() : '—'
 
                 return (<>
-                  {/* Combat kills */}
-                  {idleResult.monstersKilled > 0 && (
-                    <div style={{ marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' }}>
-                      <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>⚔️ Combat</div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0', marginBottom: '3px' }}>
-                        <span>Kills</span>
-                        <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>{idleResult.monstersKilled.toLocaleString()}</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#e8d5b0', opacity: 0.55 }}>
-                        <span>Kills/hr</span>
-                        <span style={{ fontFamily: 'monospace' }}>{perHr(idleResult.monstersKilled)}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* XP gained */}
-                  {idleResult.xpGained && Object.keys(idleResult.xpGained).length > 0 && (
-                    <div style={{ marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' }}>
-                      <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>⭐ XP Gained</div>
-                      {Object.entries(idleResult.xpGained).filter(([,xp]) => xp > 0).map(([skill, xp]) => (
-                        <div key={skill} style={{ marginBottom: '4px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' }}>
-                            <span style={{ textTransform: 'capitalize' }}>{skill}</span>
-                            <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>+{xp.toLocaleString()} xp</span>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8d5b0', opacity: 0.45 }}>
-                            <span>XP/hr</span>
-                            <span style={{ fontFamily: 'monospace' }}>{perHr(xp)}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Loot gained */}
+                  {/* Loot gained — drop table results only */}
                   {(() => {
                     const merged = {}
-                    for (const src of [idleResult.itemsGained, idleResult.lootGained, idleResult.lootBanked, idleResult.lootLost]) {
+                    for (const src of [idleResult.lootGained, idleResult.lootBanked, idleResult.lootLost, idleResult.itemsGained]) {
                       if (!src) continue
                       for (const [itemId, qty] of Object.entries(src)) {
                         if (qty > 0) merged[itemId] = (merged[itemId] || 0) + qty
