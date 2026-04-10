@@ -12023,10 +12023,12 @@ function applyPotionBonuses(playerStats, potionItem) {
         const boostedStats = { ...playerStats };
         const effect = potionItem.effect;
         if (effect === 'combat') {
-            // Apply boost to all combat stats
+            // Apply boost to all combat stats (melee + ranged + magic)
             boostedStats.attack = Math.floor(boostedStats.attack + potionItem.boost);
             boostedStats.strength = Math.floor(boostedStats.strength + potionItem.boost);
             boostedStats.defence = Math.floor(boostedStats.defence + potionItem.boost);
+            boostedStats.ranged = Math.floor(boostedStats.ranged + potionItem.boost);
+            boostedStats.magic = Math.floor(boostedStats.magic + potionItem.boost);
         }
         else if (effect === 'attack') {
             // Apply boost to attack only
@@ -15382,7 +15384,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                                     potion.effect === 'defence' && `+${potion.boost} Defence`,
                                     potion.effect === 'ranged' && `+${potion.boost} Ranged`,
                                     potion.effect === 'magic' && `+${potion.boost} Magic`,
-                                    potion.effect === 'combat' && `+${potion.boost} All Combat Stats`,
+                                    potion.effect === 'combat' && `+${potion.boost} All Combat Skills`,
                                     potion.effect === 'super_restore' && `Restores stats`),
                                 h("div", { class: "text-[9px] text-[var(--color-gold-dim)] mt-0.5" },
                                     "Duration: ",

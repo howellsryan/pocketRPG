@@ -864,7 +864,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
                           {potion.effect === 'defence' && `+${potion.boost} Defence`}
                           {potion.effect === 'ranged' && `+${potion.boost} Ranged`}
                           {potion.effect === 'magic' && `+${potion.boost} Magic`}
-                          {potion.effect === 'combat' && `+${potion.boost} All Combat Stats`}
+                          {potion.effect === 'combat' && `+${potion.boost} All Combat Skills`}
                           {potion.effect === 'super_restore' && `Restores stats`}
                         </div>
                         <div class="text-[9px] text-[var(--color-gold-dim)] mt-0.5">Duration: {potion.duration}s</div>

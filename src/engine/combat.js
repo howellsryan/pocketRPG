@@ -379,10 +379,12 @@ export function applyPotionBonuses(playerStats, potionItem) {
     const effect = potionItem.effect
 
     if (effect === 'combat') {
-      // Apply boost to all combat stats
+      // Apply boost to all combat stats (melee + ranged + magic)
       boostedStats.attack = Math.floor(boostedStats.attack + potionItem.boost)
       boostedStats.strength = Math.floor(boostedStats.strength + potionItem.boost)
       boostedStats.defence = Math.floor(boostedStats.defence + potionItem.boost)
+      boostedStats.ranged = Math.floor(boostedStats.ranged + potionItem.boost)
+      boostedStats.magic = Math.floor(boostedStats.magic + potionItem.boost)
     } else if (effect === 'attack') {
       // Apply boost to attack only
       boostedStats.attack = Math.floor(boostedStats.attack + potionItem.boost)
