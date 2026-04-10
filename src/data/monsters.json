@@ -2586,6 +2586,166 @@
       }
     ]
   },
+  "red_dragon": {
+    "id": "red_dragon",
+    "name": "Red Dragon",
+    "combatLevel": 152,
+    "hitpoints": 140,
+    "stats": {
+      "attack": 130,
+      "strength": 130,
+      "defence": 130,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 70,
+      "crush": 70,
+      "magic": 60,
+      "ranged": 50
+    },
+    "specialAttack": "dragonfire",
+    "dragonfireDamage": 50,
+    "drops": [
+      {
+        "itemId": "dragon_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "red_dhide",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          60,
+          180
+        ],
+        "chance": 0.5
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": 20,
+        "chance": 0.12
+      },
+      {
+        "itemId": "law_rune",
+        "quantity": 8,
+        "chance": 0.1
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          15,
+          25
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          10,
+          20
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "adamant_full_helm",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "rune_full_helm",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "rune_platelegs",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "toadflax",
+        "quantity": 1,
+        "chance": 0.005
+      }
+    ]
+  },
   "dagganoth_rex": {
     "id": "dagganoth_rex",
     "name": "Dagganoth Rex",
@@ -2987,6 +3147,92 @@
         "itemId": "toadflax",
         "quantity": 1,
         "chance": 0.005
+      }
+    ]
+  },
+  "crazy_archaeologist": {
+    "id": "crazy_archaeologist",
+    "name": "Crazy Archaeologist",
+    "combatLevel": 204,
+    "hitpoints": 225,
+    "stats": {
+      "attack": 160,
+      "strength": 90,
+      "defence": 240,
+      "magic": 1,
+      "ranged": 180
+    },
+    "attackSpeed": 4,
+    "attackStyles": ["melee", "ranged"],
+    "attackBonus": 250,
+    "strengthBonus": 25,
+    "defenceBonus": {
+      "stab": 50,
+      "slash": 60,
+      "crush": 50,
+      "magic": 30,
+      "ranged": 60
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "amulet_of_power",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "rune_crossbow",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "red_dhide_body",
+        "quantity": 1,
+        "chance": 0.03125
+      },
+      {
+        "itemId": "white_berries",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.05
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
       }
     ]
   }

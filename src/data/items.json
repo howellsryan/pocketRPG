@@ -1290,6 +1290,38 @@
     "shopValue": 1710,
     "icon": "📦"
   },
+  "red_dhide_body": {
+    "id": "red_dhide_body",
+    "name": "Red d'hide body",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -15,
+      "ranged": 30
+    },
+    "defenceBonus": {
+      "stab": 44,
+      "slash": 48,
+      "crush": 40,
+      "magic": -10,
+      "ranged": 70
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 60,
+      "defence": 1
+    },
+    "shopValue": 9840,
+    "icon": "🧥"
+  },
   "black_dhide": {
     "id": "black_dhide",
     "name": "Black dragon leather",

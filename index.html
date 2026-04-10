@@ -1390,6 +1390,38 @@ const itemsData = {
     "shopValue": 1710,
     "icon": "📦"
   },
+  "red_dhide_body": {
+    "id": "red_dhide_body",
+    "name": "Red d'hide body",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -15,
+      "ranged": 30
+    },
+    "defenceBonus": {
+      "stab": 44,
+      "slash": 48,
+      "crush": 40,
+      "magic": -10,
+      "ranged": 70
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 60,
+      "defence": 1
+    },
+    "shopValue": 9840,
+    "icon": "🧥"
+  },
   "black_dhide": {
     "id": "black_dhide",
     "name": "Black dragon leather",
@@ -8720,6 +8752,166 @@ const monstersData = {
       }
     ]
   },
+  "red_dragon": {
+    "id": "red_dragon",
+    "name": "Red Dragon",
+    "combatLevel": 152,
+    "hitpoints": 140,
+    "stats": {
+      "attack": 130,
+      "strength": 130,
+      "defence": 130,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 70,
+      "crush": 70,
+      "magic": 60,
+      "ranged": 50
+    },
+    "specialAttack": "dragonfire",
+    "dragonfireDamage": 50,
+    "drops": [
+      {
+        "itemId": "dragon_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "red_dhide",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          60,
+          180
+        ],
+        "chance": 0.5
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": 20,
+        "chance": 0.12
+      },
+      {
+        "itemId": "law_rune",
+        "quantity": 8,
+        "chance": 0.1
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          15,
+          25
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          10,
+          20
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "adamant_full_helm",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "rune_full_helm",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "rune_platelegs",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "toadflax",
+        "quantity": 1,
+        "chance": 0.005
+      }
+    ]
+  },
   "dagganoth_rex": {
     "id": "dagganoth_rex",
     "name": "Dagganoth Rex",
@@ -9121,6 +9313,92 @@ const monstersData = {
         "itemId": "toadflax",
         "quantity": 1,
         "chance": 0.005
+      }
+    ]
+  },
+  "crazy_archaeologist": {
+    "id": "crazy_archaeologist",
+    "name": "Crazy Archaeologist",
+    "combatLevel": 204,
+    "hitpoints": 225,
+    "stats": {
+      "attack": 160,
+      "strength": 90,
+      "defence": 240,
+      "magic": 1,
+      "ranged": 180
+    },
+    "attackSpeed": 4,
+    "attackStyles": ["melee", "ranged"],
+    "attackBonus": 250,
+    "strengthBonus": 25,
+    "defenceBonus": {
+      "stab": 50,
+      "slash": 60,
+      "crush": 50,
+      "magic": 30,
+      "ranged": 60
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "amulet_of_power",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "rune_crossbow",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "red_dhide_body",
+        "quantity": 1,
+        "chance": 0.03125
+      },
+      {
+        "itemId": "white_berries",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.05
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
       }
     ]
   }
@@ -10386,6 +10664,17 @@ const skillsData = {
         "product": "green_dhide_body",
         "materials": {
           "green_dhide": 3
+        }
+      },
+      {
+        "id": "red_dhide_body",
+        "name": "Craft red d'hide body",
+        "level": 75,
+        "ticks": 6,
+        "xp": 225,
+        "product": "red_dhide_body",
+        "materials": {
+          "red_dhide": 4
         }
       },
       {
@@ -11890,6 +12179,19 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
     // ── Monster Attack ──
     if (state.monsterAttackTimer <= 0) {
         let damage = 0;
+        // Determine the effective attack style (handle both single style and multiple styles array)
+        let effectiveAttackStyle = monster.attackStyle;
+        if (monster.attackStyles && Array.isArray(monster.attackStyles)) {
+            const selectedStyle = monster.attackStyles[Math.floor(Math.random() * monster.attackStyles.length)];
+            // Map 'melee' to a random melee style, keep 'ranged' as-is
+            if (selectedStyle === 'melee') {
+                const meleeStyles = ['crush', 'stab', 'slash'];
+                effectiveAttackStyle = meleeStyles[Math.floor(Math.random() * meleeStyles.length)];
+            }
+            else {
+                effectiveAttackStyle = selectedStyle;
+            }
+        }
         // ── Dragonfire attack ──
         if (monster.specialAttack === 'dragonfire' && Math.random() < 0.33) {
             const maxDragonfire = monster.dragonfireDamage || 50;
@@ -11917,7 +12219,7 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
             const playerDefLevel = boostedPlayerStats.defence;
             const styleBonuses = getMeleeStyleBonuses(state.stance);
             const effDef = Math.floor(playerDefLevel) + styleBonuses.defenceStyleBonus + 8;
-            const defRoll = effDef * ((bonuses.defenceBonus[monster.attackStyle] || bonuses.defenceBonus.crush || 0) + 64);
+            const defRoll = effDef * ((bonuses.defenceBonus[effectiveAttackStyle] || bonuses.defenceBonus.crush || 0) + 64);
             const acc = hitChance(monsterAtkRoll, defRoll);
             const monsterMaxHit = Math.floor(0.5 + (monster.stats.strength + 8) * ((monster.strengthBonus || 0) + 64) / 640);
             damage = rollDamage(acc, monsterMaxHit);
@@ -11926,7 +12228,7 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
                 try {
                     const prayer = prayersData[state.activeProtectionPrayer];
                     if (prayer && prayer.bonusType === 'protection' && typeof prayer.damageReductionPercent === 'number') {
-                        if (protectionPrayerMatches(prayer.style, monster.attackStyle)) {
+                        if (protectionPrayerMatches(prayer.style, effectiveAttackStyle)) {
                             const reduction = Math.floor(damage * prayer.damageReductionPercent / 100);
                             damage = Math.max(0, damage - reduction);
                         }

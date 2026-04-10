@@ -1262,6 +1262,17 @@
         }
       },
       {
+        "id": "red_dhide_body",
+        "name": "Craft red d'hide body",
+        "level": 75,
+        "ticks": 6,
+        "xp": 225,
+        "product": "red_dhide_body",
+        "materials": {
+          "red_dhide": 4
+        }
+      },
+      {
         "id": "diamond_amulet",
         "name": "String diamond amulet",
         "level": 70,

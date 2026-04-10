@@ -236,6 +236,19 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   if (state.monsterAttackTimer <= 0) {
     let damage = 0
 
+    // Determine the effective attack style (handle both single style and multiple styles array)
+    let effectiveAttackStyle = monster.attackStyle
+    if (monster.attackStyles && Array.isArray(monster.attackStyles)) {
+      const selectedStyle = monster.attackStyles[Math.floor(Math.random() * monster.attackStyles.length)]
+      // Map 'melee' to a random melee style, keep 'ranged' as-is
+      if (selectedStyle === 'melee') {
+        const meleeStyles = ['crush', 'stab', 'slash']
+        effectiveAttackStyle = meleeStyles[Math.floor(Math.random() * meleeStyles.length)]
+      } else {
+        effectiveAttackStyle = selectedStyle
+      }
+    }
+
     // ── Dragonfire attack ──
     if (monster.specialAttack === 'dragonfire' && Math.random() < 0.33) {
       const maxDragonfire = monster.dragonfireDamage || 50
@@ -260,7 +273,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const playerDefLevel = boostedPlayerStats.defence
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effDef = Math.floor(playerDefLevel) + styleBonuses.defenceStyleBonus + 8
-      const defRoll = effDef * ((bonuses.defenceBonus[monster.attackStyle] || bonuses.defenceBonus.crush || 0) + 64)
+      const defRoll = effDef * ((bonuses.defenceBonus[effectiveAttackStyle] || bonuses.defenceBonus.crush || 0) + 64)
       const acc = hitChance(monsterAtkRoll, defRoll)
       const monsterMaxHit = Math.floor(0.5 + (monster.stats.strength + 8) * ((monster.strengthBonus || 0) + 64) / 640)
       damage = rollDamage(acc, monsterMaxHit)
@@ -270,7 +283,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
         try {
           const prayer = prayersData[state.activeProtectionPrayer]
           if (prayer && prayer.bonusType === 'protection' && typeof prayer.damageReductionPercent === 'number') {
-            if (protectionPrayerMatches(prayer.style, monster.attackStyle)) {
+            if (protectionPrayerMatches(prayer.style, effectiveAttackStyle)) {
               const reduction = Math.floor(damage * prayer.damageReductionPercent / 100)
               damage = Math.max(0, damage - reduction)
             }
