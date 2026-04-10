@@ -26,12 +26,12 @@
       {
         "itemId": "bones",
         "quantity": 1,
-        "chance": 1.0
+        "chance": 1
       },
       {
         "itemId": "raw_chicken",
         "quantity": 1,
-        "chance": 1.0
+        "chance": 1
       },
       {
         "itemId": "feathers",
@@ -39,7 +39,80 @@
           5,
           15
         ],
-        "chance": 1.0
+        "chance": 1
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "toadflax",
+        "quantity": 1,
+        "chance": 0.005
       }
     ]
   },
@@ -70,7 +143,7 @@
       {
         "itemId": "bones",
         "quantity": 1,
-        "chance": 1.0
+        "chance": 1
       },
       {
         "itemId": "coins",
@@ -84,6 +157,79 @@
         "itemId": "bronze_spear",
         "quantity": 1,
         "chance": 0.05
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "toadflax",
+        "quantity": 1,
+        "chance": 0.005
       }
     ]
   },
@@ -114,17 +260,90 @@
       {
         "itemId": "bones",
         "quantity": 1,
-        "chance": 1.0
+        "chance": 1
       },
       {
         "itemId": "raw_beef",
         "quantity": 1,
-        "chance": 1.0
+        "chance": 1
       },
       {
         "itemId": "cowhide",
         "quantity": 1,
-        "chance": 1.0
+        "chance": 1
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "toadflax",
+        "quantity": 1,
+        "chance": 0.005
       }
     ]
   },
@@ -155,7 +374,7 @@
       {
         "itemId": "bones",
         "quantity": 1,
-        "chance": 1.0
+        "chance": 1
       },
       {
         "itemId": "coins",
@@ -164,6 +383,79 @@
           15
         ],
         "chance": 0.5
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "toadflax",
+        "quantity": 1,
+        "chance": 0.005
       }
     ]
   },
@@ -194,7 +486,7 @@
       {
         "itemId": "bones",
         "quantity": 1,
-        "chance": 1.0
+        "chance": 1
       },
       {
         "itemId": "coins",
@@ -208,6 +500,79 @@
         "itemId": "rune_med_helm",
         "quantity": 1,
         "chance": 0.02
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "toadflax",
+        "quantity": 1,
+        "chance": 0.005
       }
     ]
   },
@@ -238,7 +603,7 @@
       {
         "itemId": "bones",
         "quantity": 1,
-        "chance": 1.0
+        "chance": 1
       },
       {
         "itemId": "coins",
@@ -262,6 +627,79 @@
         "itemId": "nature_rune",
         "quantity": 4,
         "chance": 0.08
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "toadflax",
+        "quantity": 1,
+        "chance": 0.005
       }
     ]
   },
@@ -292,7 +730,7 @@
       {
         "itemId": "bones",
         "quantity": 1,
-        "chance": 1.0
+        "chance": 1
       },
       {
         "itemId": "coins",
@@ -316,6 +754,79 @@
         "itemId": "nature_rune",
         "quantity": 4,
         "chance": 0.1
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "toadflax",
+        "quantity": 1,
+        "chance": 0.005
       }
     ]
   },
@@ -346,7 +857,7 @@
       {
         "itemId": "big_bones",
         "quantity": 1,
-        "chance": 1.0
+        "chance": 1
       },
       {
         "itemId": "coins",
@@ -400,6 +911,79 @@
         "itemId": "steel_longsword",
         "quantity": 1,
         "chance": 0.04
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "toadflax",
+        "quantity": 1,
+        "chance": 0.005
       }
     ]
   },
@@ -430,7 +1014,7 @@
       {
         "itemId": "big_bones",
         "quantity": 1,
-        "chance": 1.0
+        "chance": 1
       },
       {
         "itemId": "coins",
@@ -493,6 +1077,79 @@
         "itemId": "mithril_scimitar",
         "quantity": 1,
         "chance": 0.02
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "toadflax",
+        "quantity": 1,
+        "chance": 0.005
       }
     ]
   },
@@ -523,7 +1180,7 @@
       {
         "itemId": "bones",
         "quantity": 1,
-        "chance": 1.0
+        "chance": 1
       },
       {
         "itemId": "coins",
@@ -611,6 +1268,79 @@
         "itemId": "staff",
         "quantity": 1,
         "chance": 0.1
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "toadflax",
+        "quantity": 1,
+        "chance": 0.005
       }
     ]
   },
@@ -641,7 +1371,7 @@
       {
         "itemId": "bones",
         "quantity": 1,
-        "chance": 1.0
+        "chance": 1
       },
       {
         "itemId": "coins",
@@ -762,6 +1492,79 @@
         "itemId": "magic_staff",
         "quantity": 1,
         "chance": 0.04
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "toadflax",
+        "quantity": 1,
+        "chance": 0.005
       }
     ]
   },
@@ -793,7 +1596,7 @@
       {
         "itemId": "bones",
         "quantity": 1,
-        "chance": 1.0
+        "chance": 1
       },
       {
         "itemId": "coins",
@@ -851,6 +1654,79 @@
         "itemId": "abyssal_whip",
         "quantity": 1,
         "chance": 0.002
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "toadflax",
+        "quantity": 1,
+        "chance": 0.005
       }
     ]
   },
@@ -879,20 +1755,161 @@
       "ranged": 90
     },
     "drops": [
-      { "itemId": "big_bones", "quantity": 1, "chance": 1.0 },
-      { "itemId": "coins", "quantity": [19000, 21000], "chance": 1.0 },
-      { "itemId": "death_rune", "quantity": [25, 50], "chance": 0.15 },
-      { "itemId": "blood_rune", "quantity": [15, 25], "chance": 0.1 },
-      { "itemId": "soul_rune", "quantity": [15, 20], "chance": 0.08 },
-      { "itemId": "rune_platelegs", "quantity": 1, "chance": 0.0079 },
-      { "itemId": "rune_plateskirt", "quantity": 1, "chance": 0.0079 },
-      { "itemId": "rune_2h_sword", "quantity": 1, "chance": 0.0079 },
-      { "itemId": "rune_pickaxe", "quantity": 1, "chance": 0.0079 },
-      { "itemId": "bandos_chestplate", "quantity": 1, "chance": 0.00262 },
-      { "itemId": "bandos_tassets", "quantity": 1, "chance": 0.00262 },
-      { "itemId": "bandos_boots", "quantity": 1, "chance": 0.00262 },
-      { "itemId": "bandos_hilt", "quantity": 1, "chance": 0.00197 },
-      { "itemId": "godsword_shard", "quantity": 1, "chance": 0.00393 }
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          19000,
+          21000
+        ],
+        "chance": 1
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          25,
+          50
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          15,
+          25
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "soul_rune",
+        "quantity": [
+          15,
+          20
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "rune_platelegs",
+        "quantity": 1,
+        "chance": 0.0079
+      },
+      {
+        "itemId": "rune_plateskirt",
+        "quantity": 1,
+        "chance": 0.0079
+      },
+      {
+        "itemId": "rune_2h_sword",
+        "quantity": 1,
+        "chance": 0.0079
+      },
+      {
+        "itemId": "rune_pickaxe",
+        "quantity": 1,
+        "chance": 0.0079
+      },
+      {
+        "itemId": "bandos_chestplate",
+        "quantity": 1,
+        "chance": 0.00262
+      },
+      {
+        "itemId": "bandos_tassets",
+        "quantity": 1,
+        "chance": 0.00262
+      },
+      {
+        "itemId": "bandos_boots",
+        "quantity": 1,
+        "chance": 0.00262
+      },
+      {
+        "itemId": "bandos_hilt",
+        "quantity": 1,
+        "chance": 0.00197
+      },
+      {
+        "itemId": "godsword_shard",
+        "quantity": 1,
+        "chance": 0.00393
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "toadflax",
+        "quantity": 1,
+        "chance": 0.005
+      }
     ]
   },
   "commander_zilyana": {
@@ -920,17 +1937,146 @@
       "ranged": 0
     },
     "drops": [
-      { "itemId": "big_bones", "quantity": 1, "chance": 1.0 },
-      { "itemId": "coins", "quantity": [19000, 21000], "chance": 1.0 },
-      { "itemId": "death_rune", "quantity": [25, 50], "chance": 0.15 },
-      { "itemId": "blood_rune", "quantity": [15, 25], "chance": 0.1 },
-      { "itemId": "soul_rune", "quantity": [15, 20], "chance": 0.08 },
-      { "itemId": "rune_platelegs", "quantity": 1, "chance": 0.0079 },
-      { "itemId": "rune_plateskirt", "quantity": 1, "chance": 0.0079 },
-      { "itemId": "saradomin_sword", "quantity": 1, "chance": 0.0079 },
-      { "itemId": "armadyl_crossbow", "quantity": 1, "chance": 0.00197 },
-      { "itemId": "saradomin_hilt", "quantity": 1, "chance": 0.00197 },
-      { "itemId": "godsword_shard", "quantity": 1, "chance": 0.00393 }
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          19000,
+          21000
+        ],
+        "chance": 1
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          25,
+          50
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          15,
+          25
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "soul_rune",
+        "quantity": [
+          15,
+          20
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "rune_platelegs",
+        "quantity": 1,
+        "chance": 0.0079
+      },
+      {
+        "itemId": "rune_plateskirt",
+        "quantity": 1,
+        "chance": 0.0079
+      },
+      {
+        "itemId": "saradomin_sword",
+        "quantity": 1,
+        "chance": 0.0079
+      },
+      {
+        "itemId": "armadyl_crossbow",
+        "quantity": 1,
+        "chance": 0.00197
+      },
+      {
+        "itemId": "saradomin_hilt",
+        "quantity": 1,
+        "chance": 0.00197
+      },
+      {
+        "itemId": "godsword_shard",
+        "quantity": 1,
+        "chance": 0.00393
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "toadflax",
+        "quantity": 1,
+        "chance": 0.005
+      }
     ]
   },
   "kril_tsutsaroth": {
@@ -958,18 +2104,151 @@
       "ranged": 250
     },
     "drops": [
-      { "itemId": "big_bones", "quantity": 1, "chance": 1.0 },
-      { "itemId": "coins", "quantity": [19000, 21000], "chance": 1.0 },
-      { "itemId": "death_rune", "quantity": [25, 50], "chance": 0.15 },
-      { "itemId": "blood_rune", "quantity": [15, 25], "chance": 0.1 },
-      { "itemId": "soul_rune", "quantity": [15, 20], "chance": 0.08 },
-      { "itemId": "rune_platelegs", "quantity": 1, "chance": 0.0079 },
-      { "itemId": "rune_plateskirt", "quantity": 1, "chance": 0.0079 },
-      { "itemId": "rune_2h_sword", "quantity": 1, "chance": 0.0079 },
-      { "itemId": "zamorak_spear", "quantity": 1, "chance": 0.0079 },
-      { "itemId": "staff_of_the_dead", "quantity": 1, "chance": 0.00197 },
-      { "itemId": "zamorak_hilt", "quantity": 1, "chance": 0.00197 },
-      { "itemId": "godsword_shard", "quantity": 1, "chance": 0.00393 }
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          19000,
+          21000
+        ],
+        "chance": 1
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          25,
+          50
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          15,
+          25
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "soul_rune",
+        "quantity": [
+          15,
+          20
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "rune_platelegs",
+        "quantity": 1,
+        "chance": 0.0079
+      },
+      {
+        "itemId": "rune_plateskirt",
+        "quantity": 1,
+        "chance": 0.0079
+      },
+      {
+        "itemId": "rune_2h_sword",
+        "quantity": 1,
+        "chance": 0.0079
+      },
+      {
+        "itemId": "zamorak_spear",
+        "quantity": 1,
+        "chance": 0.0079
+      },
+      {
+        "itemId": "staff_of_the_dead",
+        "quantity": 1,
+        "chance": 0.00197
+      },
+      {
+        "itemId": "zamorak_hilt",
+        "quantity": 1,
+        "chance": 0.00197
+      },
+      {
+        "itemId": "godsword_shard",
+        "quantity": 1,
+        "chance": 0.00393
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "toadflax",
+        "quantity": 1,
+        "chance": 0.005
+      }
     ]
   },
   "kreearra": {
@@ -997,18 +2276,151 @@
       "ranged": 60
     },
     "drops": [
-      { "itemId": "big_bones", "quantity": 1, "chance": 1.0 },
-      { "itemId": "coins", "quantity": [19000, 21000], "chance": 1.0 },
-      { "itemId": "death_rune", "quantity": [25, 50], "chance": 0.15 },
-      { "itemId": "blood_rune", "quantity": [15, 25], "chance": 0.1 },
-      { "itemId": "soul_rune", "quantity": [15, 20], "chance": 0.08 },
-      { "itemId": "rune_platelegs", "quantity": 1, "chance": 0.0079 },
-      { "itemId": "rune_crossbow", "quantity": 1, "chance": 0.0079 },
-      { "itemId": "armadyl_helmet", "quantity": 1, "chance": 0.00262 },
-      { "itemId": "armadyl_chestplate", "quantity": 1, "chance": 0.00262 },
-      { "itemId": "armadyl_chainskirt", "quantity": 1, "chance": 0.00262 },
-      { "itemId": "armadyl_hilt", "quantity": 1, "chance": 0.00197 },
-      { "itemId": "godsword_shard", "quantity": 1, "chance": 0.00393 }
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          19000,
+          21000
+        ],
+        "chance": 1
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          25,
+          50
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          15,
+          25
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "soul_rune",
+        "quantity": [
+          15,
+          20
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "rune_platelegs",
+        "quantity": 1,
+        "chance": 0.0079
+      },
+      {
+        "itemId": "rune_crossbow",
+        "quantity": 1,
+        "chance": 0.0079
+      },
+      {
+        "itemId": "armadyl_helmet",
+        "quantity": 1,
+        "chance": 0.00262
+      },
+      {
+        "itemId": "armadyl_chestplate",
+        "quantity": 1,
+        "chance": 0.00262
+      },
+      {
+        "itemId": "armadyl_chainskirt",
+        "quantity": 1,
+        "chance": 0.00262
+      },
+      {
+        "itemId": "armadyl_hilt",
+        "quantity": 1,
+        "chance": 0.00197
+      },
+      {
+        "itemId": "godsword_shard",
+        "quantity": 1,
+        "chance": 0.00393
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "toadflax",
+        "quantity": 1,
+        "chance": 0.005
+      }
     ]
   },
   "green_dragon": {
@@ -1040,12 +2452,12 @@
       {
         "itemId": "dragon_bones",
         "quantity": 1,
-        "chance": 1.0
+        "chance": 1
       },
       {
         "itemId": "green_dragonhide",
         "quantity": 1,
-        "chance": 1.0
+        "chance": 1
       },
       {
         "itemId": "coins",
@@ -1098,6 +2510,79 @@
         "itemId": "rune_full_helm",
         "quantity": 1,
         "chance": 0.01
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "toadflax",
+        "quantity": 1,
+        "chance": 0.005
       }
     ]
   },
@@ -1129,12 +2614,15 @@
       {
         "itemId": "dagganoth_bones",
         "quantity": 1,
-        "chance": 1.0
+        "chance": 1
       },
       {
         "itemId": "coins",
-        "quantity": [5000, 8000],
-        "chance": 1.0
+        "quantity": [
+          5000,
+          8000
+        ],
+        "chance": 1
       },
       {
         "itemId": "rune_platelegs",
@@ -1160,6 +2648,79 @@
         "itemId": "warriors_ring",
         "quantity": 1,
         "chance": 0.0078125
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "toadflax",
+        "quantity": 1,
+        "chance": 0.005
       }
     ]
   },
@@ -1191,12 +2752,15 @@
       {
         "itemId": "dagganoth_bones",
         "quantity": 1,
-        "chance": 1.0
+        "chance": 1
       },
       {
         "itemId": "coins",
-        "quantity": [5000, 8000],
-        "chance": 1.0
+        "quantity": [
+          5000,
+          8000
+        ],
+        "chance": 1
       },
       {
         "itemId": "rune_platelegs",
@@ -1217,6 +2781,79 @@
         "itemId": "seers_ring",
         "quantity": 1,
         "chance": 0.0078125
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "toadflax",
+        "quantity": 1,
+        "chance": 0.005
       }
     ]
   },
@@ -1248,12 +2885,15 @@
       {
         "itemId": "dagganoth_bones",
         "quantity": 1,
-        "chance": 1.0
+        "chance": 1
       },
       {
         "itemId": "coins",
-        "quantity": [5000, 8000],
-        "chance": 1.0
+        "quantity": [
+          5000,
+          8000
+        ],
+        "chance": 1
       },
       {
         "itemId": "rune_platelegs",
@@ -1274,6 +2914,79 @@
         "itemId": "archers_ring",
         "quantity": 1,
         "chance": 0.0078125
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "harralander",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "toadflax",
+        "quantity": 1,
+        "chance": 0.005
       }
     ]
   }
