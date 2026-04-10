@@ -23,6 +23,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
   const [selectedAction, setSelectedAction] = useState(null)
   const [skilling, setSkilling] = useState(null)
+  const [skillingBankingEnabled, setSkillingBankingEnabled] = useState(false) // Banking toggle for skilling
   const skillingRef = useRef(null)
   const hasAutoStarted = useRef(false)
 
@@ -128,7 +129,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     const state = { ...createSkillingState(selectedSkill, adjustedAction), startedAt: Date.now() }
     setSelectedAction(action)
     setSkilling(state)
-    setActiveTask({ type: 'skill', skill: selectedSkill, action: adjustedAction })
+    setActiveTask({ type: 'skill', skill: selectedSkill, action: adjustedAction, bankingEnabled: skillingBankingEnabled })
   }
 
   const stopSkilling = () => {
@@ -253,6 +254,20 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
         </h2>
         <p class="text-xs text-[var(--color-parchment)] opacity-40 mb-3">Level {skillLevel}</p>
 
+        {/* Banking toggle for skilling */}
+        <div class="flex items-center gap-2 mb-3 p-2 rounded-lg bg-[#111]">
+          <input
+            type="checkbox"
+            id="skill-banking-picker"
+            checked={skillingBankingEnabled}
+            onChange={(e) => setSkillingBankingEnabled(e.target.checked)}
+            style={{ cursor: 'pointer' }}
+          />
+          <label htmlFor="skill-banking-picker" style={{ fontSize: '12px', color: '#e8d5b0', opacity: 0.7, cursor: 'pointer' }}>
+            Auto-bank items
+          </label>
+        </div>
+
         <div class="space-y-2">
           {allActions.map(action => {
             const available = action.level <= skillLevel
@@ -354,6 +369,27 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             </span>
           </div>
         </div>
+      </div>
+
+      {/* Banking toggle & note */}
+      <div class="flex-shrink-0 mt-4 space-y-2">
+        <div class="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="skill-banking"
+            checked={skillingBankingEnabled}
+            onChange={(e) => setSkillingBankingEnabled(e.target.checked)}
+            style={{ cursor: 'pointer' }}
+          />
+          <label htmlFor="skill-banking" style={{ fontSize: '12px', color: '#e8d5b0', opacity: 0.7, cursor: 'pointer' }}>
+            Auto-bank items (may reduce XP/hr)
+          </label>
+        </div>
+        {skillingBankingEnabled && (
+          <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5 }}>
+            ⏳ Items go to inventory first. Auto-banks when full. Banking delay scales with Agility level.
+          </div>
+        )}
       </div>
 
       {/* Stop & Back / Skip 1h */}

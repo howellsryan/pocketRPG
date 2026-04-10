@@ -37,14 +37,18 @@ export function formatIdleTime(ms) {
 
 /**
  * Simulate idle skilling.
- * Returns { xpGained, itemsGained, itemsConsumed, actions, skill, actionName }
+ * Returns { xpGained, itemsGained, itemsConsumed, itemsDropped, actions, skill, actionName }
  * If the action has materials, caps actions to available bank resources and returns
  * itemsConsumed so the caller can deduct them.
  *
+ * When bankingEnabled is true, processes items through inventory with auto-banking.
+ * When bankingEnabled is false, items accumulate directly to bank (original behavior).
+ *
  * equipment and stats are optional — used to apply tool speed bonuses.
  * itemsData is required when equipment is provided (for tool lookup).
+ * inventory is required when bankingEnabled is true (for inventory processing).
  */
-export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {}, itemsData = {}) {
+export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {}, itemsData = {}, inventory = []) {
   if (!task || !task.action) return null
 
   const totalTicks = Math.floor(elapsedMs / TICK_MS)
@@ -78,26 +82,108 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
 
   const xpGained = {}
   const itemsGained = {}
+  const itemsDropped = {}
 
   const xpPer = task.action.xp || 0
   if (xpPer > 0 && task.skill) {
     xpGained[task.skill] = xpPer * actions
   }
 
+  // Handle product placement based on bankingEnabled
   if (task.action.product) {
-    const qty = (task.action.productQty || 1) * actions
-    itemsGained[task.action.product] = (itemsGained[task.action.product] || 0) + qty
+    const bankingEnabled = task.bankingEnabled || false
+    const totalProductQty = (task.action.productQty || 1) * actions
+
+    if (bankingEnabled) {
+      // Process items through inventory with auto-banking
+      const bankDelayTicks = Math.ceil(getAgilityBankDelayFromStats(stats) / TICK_MS)
+      const newInv = [...inventory]
+      const product = task.action.product
+      const qtyPerAction = task.action.productQty || 1
+
+      // Track starting inventory state
+      const startingInvState = {}
+      for (const slot of inventory) {
+        if (!slot) continue
+        startingInvState[slot.itemId] = (startingInvState[slot.itemId] || 0) + slot.quantity
+      }
+
+      let remainingTicks = totalTicks
+      let actionsCompleted = 0
+
+      while (remainingTicks >= actionTicks && actionsCompleted < actions) {
+        remainingTicks -= actionTicks
+        actionsCompleted++
+
+        // Add product to inventory
+        const item = itemsData[product]
+        const stackable = item?.stackable || false
+
+        if (stackable) {
+          const existingIdx = newInv.findIndex(s => s && s.itemId === product)
+          if (existingIdx !== -1) {
+            newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + qtyPerAction }
+          } else {
+            const emptyIdx = newInv.indexOf(null)
+            if (emptyIdx !== -1) {
+              newInv[emptyIdx] = { itemId: product, quantity: qtyPerAction }
+            } else {
+              itemsDropped[product] = (itemsDropped[product] || 0) + qtyPerAction
+            }
+          }
+        } else {
+          // Non-stackable
+          for (let q = 0; q < qtyPerAction; q++) {
+            const emptyIdx = newInv.indexOf(null)
+            if (emptyIdx !== -1) {
+              newInv[emptyIdx] = { itemId: product, quantity: 1 }
+            } else {
+              itemsDropped[product] = (itemsDropped[product] || 0) + 1
+            }
+          }
+        }
+
+        // Auto-bank trip if inventory full
+        if (newInv.indexOf(null) === -1) {
+          if (remainingTicks < bankDelayTicks) break
+          remainingTicks -= bankDelayTicks
+          for (let i = 0; i < newInv.length; i++) {
+            if (!newInv[i]) continue
+            itemsGained[newInv[i].itemId] = (itemsGained[newInv[i].itemId] || 0) + newInv[i].quantity
+            newInv[i] = null
+          }
+        }
+      }
+
+      // Items still in inventory go to itemsGained
+      for (const slot of newInv) {
+        if (!slot) continue
+        const startingQty = startingInvState[slot.itemId] || 0
+        const deltaQty = slot.quantity - startingQty
+        if (deltaQty > 0) {
+          itemsGained[slot.itemId] = (itemsGained[slot.itemId] || 0) + deltaQty
+        }
+      }
+    } else {
+      // Original behavior: all items go straight to bank
+      itemsGained[task.action.product] = totalProductQty
+    }
   }
 
-  return { xpGained, itemsGained, itemsConsumed, actions, skill: task.skill, actionName: task.action.name }
+  return { xpGained, itemsGained, itemsConsumed, itemsDropped, actions, skill: task.skill, actionName: task.action.name }
 }
 
 /**
  * Simulate idle gathering.
- * Returns { itemsGained: { itemId: qty }, actions }
- * Materials consumed from bank if present, otherwise unlimited (simplified).
+ * Returns { itemsGained: { itemId: qty }, itemsDropped, actions }
+ * Always processes items through inventory with auto-banking enabled.
+ * When inventory fills, triggers bank trip with agility-scaled delay.
+ *
+ * inventory: current inventory array (28 slots)
+ * stats: player stats for agility-based bank delay
+ * itemsData: items lookup for stackable/non-stackable determination
  */
-export function simulateIdleGather(task, elapsedMs) {
+export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, itemsData = {}) {
   if (!task || !task.gatherTask) return null
 
   const totalTicks = Math.floor(elapsedMs / TICK_MS)
@@ -105,11 +191,81 @@ export function simulateIdleGather(task, elapsedMs) {
   const actions = Math.floor(totalTicks / actionTicks)
   if (actions <= 0) return null
 
-  const itemsGained = {}
-  const qty = (task.gatherTask.qty || 1) * actions
-  itemsGained[task.gatherTask.product] = (itemsGained[task.gatherTask.product] || 0) + qty
+  // Gather always has banking enabled
+  const bankingEnabled = true
+  const bankDelayTicks = Math.ceil(getAgilityBankDelayFromStats(stats) / TICK_MS)
 
-  return { itemsGained, actions, actionName: task.gatherTask.name }
+  const itemsGained = {}
+  const itemsDropped = {}
+  const newInv = [...inventory]
+  let remainingTicks = totalTicks
+  const product = task.gatherTask.product
+  const qtyPerAction = task.gatherTask.qty || 1
+
+  // Track starting inventory state for delta calculation
+  const startingInvState = {}
+  for (const slot of inventory) {
+    if (!slot) continue
+    startingInvState[slot.itemId] = (startingInvState[slot.itemId] || 0) + slot.quantity
+  }
+
+  let actionsCompleted = 0
+
+  while (remainingTicks >= actionTicks && actionsCompleted < actions) {
+    remainingTicks -= actionTicks
+    actionsCompleted++
+
+    // Add product to inventory
+    const item = itemsData[product]
+    const stackable = item?.stackable || false
+
+    if (stackable) {
+      const existingIdx = newInv.findIndex(s => s && s.itemId === product)
+      if (existingIdx !== -1) {
+        newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + qtyPerAction }
+      } else {
+        const emptyIdx = newInv.indexOf(null)
+        if (emptyIdx !== -1) {
+          newInv[emptyIdx] = { itemId: product, quantity: qtyPerAction }
+        } else {
+          itemsDropped[product] = (itemsDropped[product] || 0) + qtyPerAction
+        }
+      }
+    } else {
+      // Non-stackable: place one item per slot
+      for (let q = 0; q < qtyPerAction; q++) {
+        const emptyIdx = newInv.indexOf(null)
+        if (emptyIdx !== -1) {
+          newInv[emptyIdx] = { itemId: product, quantity: 1 }
+        } else {
+          itemsDropped[product] = (itemsDropped[product] || 0) + 1
+        }
+      }
+    }
+
+    // Auto-bank trip: if inventory is full and banking is enabled, deduct delay and clear
+    if (bankingEnabled && newInv.indexOf(null) === -1) {
+      if (remainingTicks < bankDelayTicks) break
+      remainingTicks -= bankDelayTicks
+      for (let i = 0; i < newInv.length; i++) {
+        if (!newInv[i]) continue
+        itemsGained[newInv[i].itemId] = (itemsGained[newInv[i].itemId] || 0) + newInv[i].quantity
+        newInv[i] = null
+      }
+    }
+  }
+
+  // Items still in inventory at end go to itemsGained
+  for (const slot of newInv) {
+    if (!slot) continue
+    const startingQty = startingInvState[slot.itemId] || 0
+    const deltaQty = slot.quantity - startingQty
+    if (deltaQty > 0) {
+      itemsGained[slot.itemId] = (itemsGained[slot.itemId] || 0) + deltaQty
+    }
+  }
+
+  return { itemsGained, itemsDropped, actions: actionsCompleted, actionName: task.gatherTask.name }
 }
 
 /**

@@ -303,7 +303,8 @@ export default function GatherScreen({ initialTaskId, idleResult, onSkipHour, sk
     }
     taskRef.current = newState
     setLocalTask(newState)
-    setActiveTask({ type: 'gather', gatherTask: task })
+    // Gathering always has bankingEnabled = true (auto-bank enabled)
+    setActiveTask({ type: 'gather', gatherTask: task, bankingEnabled: true })
   }
 
   const stopTask = () => {
@@ -370,7 +371,7 @@ export default function GatherScreen({ initialTaskId, idleResult, onSkipHour, sk
             <ProgressBar value={progress} max={1} height="h-4" color="var(--color-gold)" showText />
           </div>
 
-          <div style={{ background: '#111', borderRadius: '12px', padding: '12px', width: '100%', maxWidth: '280px' }}>
+          <div style={{ background: '#111', borderRadius: '12px', padding: '12px', width: '100%', maxWidth: '280px', marginBottom: '12px' }}>
             {(() => {
               const elapsedHrs = activeTask.startedAt ? (Date.now() - activeTask.startedAt) / 3600000 : 0
               const perHour = elapsedHrs > 0 ? Math.round(activeTask.totalItems / elapsedHrs) : 0
@@ -385,6 +386,11 @@ export default function GatherScreen({ initialTaskId, idleResult, onSkipHour, sk
                 </div>
               </>)
             })()}
+          </div>
+
+          {/* Banking delay note */}
+          <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textAlign: 'center', maxWidth: '280px' }}>
+            ⏳ Items go to inventory first. Auto-banks when full. Banking delay scales with Agility level.
           </div>
         </div>
 
