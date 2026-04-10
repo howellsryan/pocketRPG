@@ -602,6 +602,18 @@
           "godsword_blade": 1,
           "zamorak_hilt": 1
         }
+      },
+      {
+        "id": "make_dragonfire_shield",
+        "name": "Attach draconic visage",
+        "level": 90,
+        "ticks": 10,
+        "xp": 2000,
+        "product": "dragonfire_shield",
+        "materials": {
+          "anti_dragon_shield": 1,
+          "draconic_visage": 1
+        }
       }
     ]
   },

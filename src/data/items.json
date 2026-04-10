@@ -6062,5 +6062,82 @@
     "effect": "combat",
     "boost": 18,
     "duration": 300
+  },
+  "dragon_pickaxe": {
+    "id": "dragon_pickaxe",
+    "name": "Dragon pickaxe",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 57,
+      "slash": -4,
+      "crush": -2,
+      "magic": -7,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 44,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "mining",
+    "speedMultiplier": 0.5,
+    "requirements": {
+      "attack": 60,
+      "mining": 60
+    },
+    "shopValue": 100000,
+    "icon": "⛏️"
+  },
+  "draconic_visage": {
+    "id": "draconic_visage",
+    "name": "Draconic visage",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 50000,
+    "icon": "🐉"
+  },
+  "dragonfire_shield": {
+    "id": "dragonfire_shield",
+    "name": "Dragonfire shield",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": -5,
+      "ranged": -10
+    },
+    "defenceBonus": {
+      "stab": 20,
+      "slash": 20,
+      "crush": 20,
+      "magic": 10,
+      "ranged": 20
+    },
+    "otherBonus": {
+      "meleeStrength": 8,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "antiDragon": true
+    },
+    "requirements": {
+      "defence": 75
+    },
+    "shopValue": 500000,
+    "icon": "🛡️"
   }
 }

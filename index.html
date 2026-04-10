@@ -6162,6 +6162,83 @@ const itemsData = {
     "effect": "combat",
     "boost": 18,
     "duration": 300
+  },
+  "dragon_pickaxe": {
+    "id": "dragon_pickaxe",
+    "name": "Dragon pickaxe",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 57,
+      "slash": -4,
+      "crush": -2,
+      "magic": -7,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 44,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "mining",
+    "speedMultiplier": 0.5,
+    "requirements": {
+      "attack": 60,
+      "mining": 60
+    },
+    "shopValue": 100000,
+    "icon": "⛏️"
+  },
+  "draconic_visage": {
+    "id": "draconic_visage",
+    "name": "Draconic visage",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 50000,
+    "icon": "🐉"
+  },
+  "dragonfire_shield": {
+    "id": "dragonfire_shield",
+    "name": "Dragonfire shield",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": -5,
+      "ranged": -10
+    },
+    "defenceBonus": {
+      "stab": 20,
+      "slash": 20,
+      "crush": 20,
+      "magic": 10,
+      "ranged": 20
+    },
+    "otherBonus": {
+      "meleeStrength": 8,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "antiDragon": true
+    },
+    "requirements": {
+      "defence": 75
+    },
+    "shopValue": 500000,
+    "icon": "🛡️"
   }
 };
 const monstersData = {
@@ -9401,6 +9478,90 @@ const monstersData = {
         "chance": 0.1
       }
     ]
+  },
+  "king_black_dragon": {
+    "id": "king_black_dragon",
+    "name": "King Black Dragon",
+    "boss": true,
+    "combatLevel": 276,
+    "hitpoints": 150,
+    "stats": {
+      "attack": 100,
+      "strength": 100,
+      "defence": 100,
+      "magic": 50,
+      "ranged": 50
+    },
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 80,
+      "slash": 100,
+      "crush": 100,
+      "magic": 40,
+      "ranged": 80
+    },
+    "specialAttack": "dragonfire",
+    "dragonfireDamage": 50,
+    "drops": [
+      {
+        "itemId": "dragon_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "dragon_pickaxe",
+        "quantity": 1,
+        "chance": 0.0025
+      },
+      {
+        "itemId": "draconic_visage",
+        "quantity": 1,
+        "chance": 0.0005
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          20000,
+          30000
+        ],
+        "chance": 0.5
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          20,
+          30
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "soul_rune",
+        "quantity": [
+          20,
+          25
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          30,
+          50
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "runite_ore",
+        "quantity": [
+          2,
+          5
+        ],
+        "chance": 0.2
+      }
+    ]
   }
 };
 const skillsData = {
@@ -10006,6 +10167,18 @@ const skillsData = {
         "materials": {
           "godsword_blade": 1,
           "zamorak_hilt": 1
+        }
+      },
+      {
+        "id": "make_dragonfire_shield",
+        "name": "Attach draconic visage",
+        "level": 90,
+        "ticks": 10,
+        "xp": 2000,
+        "product": "dragonfire_shield",
+        "materials": {
+          "anti_dragon_shield": 1,
+          "draconic_visage": 1
         }
       }
     ]
@@ -15082,6 +15255,12 @@ const COMBAT_CATEGORIES = [
         icon: '🏴',
         ids: ['crazy_archaeologist'],
     },
+    {
+        key: 'lair',
+        label: 'Lair',
+        icon: '🐲',
+        ids: ['king_black_dragon'],
+    },
 ];
 const MONSTER_ICONS = {
     chicken: '🐔', goblin: '👺', cow: '🐄', giant_spider: '🕷️',
@@ -15090,7 +15269,7 @@ const MONSTER_ICONS = {
     green_dragon: '🐉', red_dragon: '🔴', lesser_demon: '👿',
     general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
     dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
-    crazy_archaeologist: '📜'
+    crazy_archaeologist: '📜', king_black_dragon: '👑'
 };
 function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlocked }) {
     const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints } = useGame();
