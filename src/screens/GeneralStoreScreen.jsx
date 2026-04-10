@@ -182,6 +182,18 @@ const SHOPS = [
     ],
   },
   {
+    id: 'fishing',
+    label: '🎣',
+    title: 'Fishing Shop',
+    desc: 'Fishing tools and equipment.',
+    items: [
+      { id: 'fishing_net',  name: 'Fishing net',  icon: '🕸️', price: 50,  stackable: false, desc: 'Net for catching shrimps. Fishing 1. 2-handed.' },
+      { id: 'fishing_rod',  name: 'Fishing rod',  icon: '🎣', price: 100, stackable: false, desc: 'Rod for catching trout. Fishing 20. 2-handed.' },
+      { id: 'lobster_cage', name: 'Lobster cage', icon: '🪤', price: 200, stackable: false, desc: 'Cage for catching lobsters. Fishing 40. 2-handed.' },
+      { id: 'harpoon',      name: 'Harpoon',      icon: '🔱', price: 500, stackable: false, desc: 'Harpoon for swordfish & sharks. Fishing 50. 2-handed.' },
+    ],
+  },
+  {
     id: 'capes',
     label: '🎗️',
     title: 'Skill Capes',

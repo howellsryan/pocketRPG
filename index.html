@@ -6239,6 +6239,150 @@ const itemsData = {
     },
     "shopValue": 500000,
     "icon": "🛡️"
+  },
+  "fishing_net": {
+    "id": "fishing_net",
+    "name": "Fishing net",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "fishing",
+    "speedMultiplier": 1.0,
+    "requirements": {
+      "fishing": 1
+    },
+    "shopValue": 50,
+    "icon": "🕸️"
+  },
+  "fishing_rod": {
+    "id": "fishing_rod",
+    "name": "Fishing rod",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "fishing",
+    "speedMultiplier": 0.9,
+    "requirements": {
+      "fishing": 20
+    },
+    "shopValue": 100,
+    "icon": "🎣"
+  },
+  "lobster_cage": {
+    "id": "lobster_cage",
+    "name": "Lobster cage",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "fishing",
+    "speedMultiplier": 0.8,
+    "requirements": {
+      "fishing": 40
+    },
+    "shopValue": 200,
+    "icon": "🪤"
+  },
+  "harpoon": {
+    "id": "harpoon",
+    "name": "Harpoon",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "toolFor": "fishing",
+    "speedMultiplier": 0.7,
+    "requirements": {
+      "fishing": 50
+    },
+    "shopValue": 500,
+    "icon": "🔱"
   }
 };
 const monstersData = {
@@ -17298,6 +17442,18 @@ const SHOPS = [
             { id: 'law_rune', name: 'Law rune', icon: '⚖️', price: 200, stackable: true, desc: 'Teleportation spells.' },
             { id: 'cosmic_rune', name: 'Cosmic rune', icon: '✨', price: 200, stackable: true, desc: 'Enchantment spells.' },
             { id: 'death_rune', name: 'Death rune', icon: '💀', price: 310, stackable: true, desc: 'High-level combat spells.' },
+        ],
+    },
+    {
+        id: 'fishing',
+        label: '🎣',
+        title: 'Fishing Shop',
+        desc: 'Fishing tools and equipment.',
+        items: [
+            { id: 'fishing_net', name: 'Fishing net', icon: '🕸️', price: 50, stackable: false, desc: 'Net for catching shrimps. Fishing 1. 2-handed.' },
+            { id: 'fishing_rod', name: 'Fishing rod', icon: '🎣', price: 100, stackable: false, desc: 'Rod for catching trout. Fishing 20. 2-handed.' },
+            { id: 'lobster_cage', name: 'Lobster cage', icon: '🪤', price: 200, stackable: false, desc: 'Cage for catching lobsters. Fishing 40. 2-handed.' },
+            { id: 'harpoon', name: 'Harpoon', icon: '🔱', price: 500, stackable: false, desc: 'Harpoon for swordfish & sharks. Fishing 50. 2-handed.' },
         ],
     },
     {
