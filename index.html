@@ -8632,7 +8632,7 @@ const prayersData = {
     "name": "Mystic Will",
     "icon": "🔮",
     "level": 9,
-    "description": "+5% Magic",
+    "description": "+5% Magical attack and defence",
     "bonusType": "stat",
     "stat": "magic",
     "boostPercent": 5
@@ -8657,6 +8657,36 @@ const prayersData = {
     "stat": "strength",
     "boostPercent": 10
   },
+  "improved_reflexes": {
+    "id": "improved_reflexes",
+    "name": "Improved Reflexes",
+    "icon": "⚡",
+    "level": 16,
+    "description": "+10% Attack",
+    "bonusType": "stat",
+    "stat": "attack",
+    "boostPercent": 10
+  },
+  "hawk_eye": {
+    "id": "hawk_eye",
+    "name": "Hawk Eye",
+    "icon": "🦅",
+    "level": 26,
+    "description": "+10% Ranged",
+    "bonusType": "stat",
+    "stat": "ranged",
+    "boostPercent": 10
+  },
+  "mystic_lore": {
+    "id": "mystic_lore",
+    "name": "Mystic Lore",
+    "icon": "📖",
+    "level": 27,
+    "description": "+10% Magical attack and defence",
+    "bonusType": "stat",
+    "stat": "magic",
+    "boostPercent": 10
+  },
   "steel_skin": {
     "id": "steel_skin",
     "name": "Steel Skin",
@@ -8672,10 +8702,20 @@ const prayersData = {
     "name": "Ultimate Strength",
     "icon": "💪",
     "level": 31,
-    "description": "+20% Strength",
+    "description": "+15% Strength",
     "bonusType": "stat",
     "stat": "strength",
-    "boostPercent": 20
+    "boostPercent": 15
+  },
+  "incredible_reflexes": {
+    "id": "incredible_reflexes",
+    "name": "Incredible Reflexes",
+    "icon": "⚡",
+    "level": 34,
+    "description": "+15% Attack",
+    "bonusType": "stat",
+    "stat": "attack",
+    "boostPercent": 15
   },
   "protection_from_magic": {
     "id": "protection_from_magic",
@@ -8706,6 +8746,16 @@ const prayersData = {
     "bonusType": "protection",
     "damageReductionPercent": 100,
     "style": "melee"
+  },
+  "eagle_eye": {
+    "id": "eagle_eye",
+    "name": "Eagle Eye",
+    "icon": "🦅",
+    "level": 44,
+    "description": "+15% Ranged",
+    "bonusType": "stat",
+    "stat": "ranged",
+    "boostPercent": 15
   },
   "chivalry": {
     "id": "chivalry",
@@ -8738,10 +8788,11 @@ const prayersData = {
     "name": "Rigour",
     "icon": "🦅",
     "level": 74,
-    "description": "+20% Ranged, +23% Ranged Strength, +25% Defence",
+    "description": "+20% Ranged attack, +23% Ranged strength, +25% Defence",
     "bonusType": "multi_stat",
     "stats": {
       "ranged": 20,
+      "ranged_strength": 23,
       "defence": 25
     }
   },
