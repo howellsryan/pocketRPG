@@ -147,7 +147,12 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
           remainingTicks -= bankDelayTicks
           for (let i = 0; i < newInv.length; i++) {
             if (!newInv[i]) continue
-            itemsGained[newInv[i].itemId] = (itemsGained[newInv[i].itemId] || 0) + newInv[i].quantity
+            // Only bank items that are NEW (not starting inventory items)
+            const startingQty = startingInvState[newInv[i].itemId] || 0
+            const newQty = newInv[i].quantity - startingQty
+            if (newQty > 0) {
+              itemsGained[newInv[i].itemId] = (itemsGained[newInv[i].itemId] || 0) + newQty
+            }
             newInv[i] = null
           }
         }
@@ -292,7 +297,12 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
       remainingTicks -= bankDelayTicks
       for (let i = 0; i < newInv.length; i++) {
         if (!newInv[i]) continue
-        itemsGained[newInv[i].itemId] = (itemsGained[newInv[i].itemId] || 0) + newInv[i].quantity
+        // Only bank items that are NEW (not starting inventory items)
+        const startingQty = startingInvState[newInv[i].itemId] || 0
+        const newQty = newInv[i].quantity - startingQty
+        if (newQty > 0) {
+          itemsGained[newInv[i].itemId] = (itemsGained[newInv[i].itemId] || 0) + newQty
+        }
         newInv[i] = null
       }
     }

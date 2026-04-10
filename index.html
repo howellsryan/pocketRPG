@@ -13248,7 +13248,12 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
                     for (let i = 0; i < newInv.length; i++) {
                         if (!newInv[i])
                             continue;
-                        itemsGained[newInv[i].itemId] = (itemsGained[newInv[i].itemId] || 0) + newInv[i].quantity;
+                        // Only bank items that are NEW (not starting inventory items)
+                        const startingQty = startingInvState[newInv[i].itemId] || 0;
+                        const newQty = newInv[i].quantity - startingQty;
+                        if (newQty > 0) {
+                            itemsGained[newInv[i].itemId] = (itemsGained[newInv[i].itemId] || 0) + newQty;
+                        }
                         newInv[i] = null;
                     }
                 }
@@ -13391,7 +13396,12 @@ function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, itemsDa
             for (let i = 0; i < newInv.length; i++) {
                 if (!newInv[i])
                     continue;
-                itemsGained[newInv[i].itemId] = (itemsGained[newInv[i].itemId] || 0) + newInv[i].quantity;
+                // Only bank items that are NEW (not starting inventory items)
+                const startingQty = startingInvState[newInv[i].itemId] || 0;
+                const newQty = newInv[i].quantity - startingQty;
+                if (newQty > 0) {
+                    itemsGained[newInv[i].itemId] = (itemsGained[newInv[i].itemId] || 0) + newQty;
+                }
                 newInv[i] = null;
             }
         }
@@ -15219,6 +15229,8 @@ function BankScreen() {
     const [draggingId, setDraggingId] = useState(null);
     const [overItemId, setOverItemId] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [quantityModalMode, setQuantityModalMode] = useState(null); // 'take' | 'note' | null
+    const [quantityInput, setQuantityInput] = useState('');
     const dragRef = useRef(null);
     const overRef = useRef(null);
     const tabs = bankConfig?.tabs ?? [];
@@ -15303,6 +15315,23 @@ function BankScreen() {
         updateInventory(newInv);
         updateBank(newBank);
         setSelectedId(null);
+    };
+    const handleQuantityModalSubmit = () => {
+        if (!quantityInput || !selectedId)
+            return;
+        const qty = parseInt(quantityInput, 10);
+        if (isNaN(qty) || qty <= 0) {
+            addToast('Invalid quantity', 'error');
+            return;
+        }
+        const maxQty = bank[selectedId]?.quantity || 0;
+        if (qty > maxQty) {
+            addToast(`Only ${maxQty} available`, 'error');
+            return;
+        }
+        handleWithdraw(selectedId, qty, quantityModalMode === 'note');
+        setQuantityModalMode(null);
+        setQuantityInput('');
     };
     // ── Tab management ───────────────────────────────────────────────────────────
     const addTab = () => {
@@ -15549,24 +15578,26 @@ function BankScreen() {
                             const { text, isM } = formatQuantity(selected.quantity);
                             return h("span", { class: `font-[var(--font-mono)] ${isM ? 'text-[var(--color-emerald)]' : 'text-[var(--color-gold)]'}` }, text);
                         })()),
-                    h("div", { class: "grid grid-cols-3 gap-2" },
-                        [1, 5, 10].map(qty => (h("button", { key: qty, onClick: () => handleWithdraw(selected.itemId, Math.min(qty, selected.quantity)), class: "py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80" },
-                            "Take ",
-                            qty))),
-                        h("button", { onClick: () => handleWithdraw(selected.itemId, selected.quantity), class: "py-2.5 rounded-lg bg-[var(--color-gold-dim)] text-white font-semibold text-sm active:opacity-80 col-span-3" },
-                            "Take All (",
-                            formatQuantity(selected.quantity).text,
-                            ")")),
+                    h("div", { class: "grid grid-cols-3 gap-2" }, [1, 5, 10].map(qty => (h("button", { key: qty, onClick: () => handleWithdraw(selected.itemId, Math.min(qty, selected.quantity)), class: "py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80" },
+                        "Take ",
+                        qty)))),
+                    h("div", { class: "grid grid-cols-2 gap-2" },
+                        h("button", { onClick: () => handleWithdraw(selected.itemId, selected.quantity), class: "py-2.5 rounded-lg bg-[var(--color-gold-dim)] text-white font-semibold text-sm active:opacity-80" }, "Take All"),
+                        h("button", { onClick: () => {
+                                setQuantityModalMode('take');
+                                setQuantityInput('');
+                            }, class: "py-2.5 rounded-lg bg-[var(--color-gold)] text-white font-semibold text-sm active:opacity-80" }, "Take X")),
                     !isStackable && (h("div", { class: "border-t border-[#333] pt-2" },
                         h("p", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold" }, "Withdraw as Note"),
-                        h("div", { class: "grid grid-cols-3 gap-2" },
-                            [1, 5, 10].map(qty => (h("button", { key: qty, onClick: () => handleWithdraw(selected.itemId, Math.min(qty, selected.quantity), true), class: "py-2 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80" },
-                                "Note ",
-                                qty))),
-                            h("button", { onClick: () => handleWithdraw(selected.itemId, selected.quantity, true), class: "py-2 rounded-lg bg-[var(--color-emerald)] text-white font-semibold text-sm active:opacity-80 col-span-3" },
-                                "Note All (",
-                                formatQuantity(selected.quantity).text,
-                                ")")))),
+                        h("div", { class: "grid grid-cols-3 gap-2 mb-2" }, [1, 5, 10].map(qty => (h("button", { key: qty, onClick: () => handleWithdraw(selected.itemId, Math.min(qty, selected.quantity), true), class: "py-2 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80" },
+                            "Note ",
+                            qty)))),
+                        h("div", { class: "grid grid-cols-2 gap-2" },
+                            h("button", { onClick: () => handleWithdraw(selected.itemId, selected.quantity, true), class: "py-2 rounded-lg bg-[var(--color-emerald)] text-white font-semibold text-sm active:opacity-80" }, "Note All"),
+                            h("button", { onClick: () => {
+                                    setQuantityModalMode('note');
+                                    setQuantityInput('');
+                                }, class: "py-2 rounded-lg bg-[var(--color-emerald-light)] text-white font-semibold text-sm active:opacity-80" }, "Note X")))),
                     tabs.length > 0 && (h("div", { class: "border-t border-[#333] pt-2" },
                         h("p", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mb-1 uppercase tracking-wider font-bold" }, "Move to Tab"),
                         h("div", { class: "flex flex-wrap gap-1.5" },
@@ -15583,6 +15614,24 @@ function BankScreen() {
                                         ? 'bg-[var(--color-mana)] text-white cursor-default'
                                         : 'bg-[#2a2a2a] text-[var(--color-parchment)] active:opacity-70'}` }, name));
                             })))))));
+        })(),
+        quantityModalMode && selected && (() => {
+            const selItem = itemsData[selected.itemId];
+            const maxQty = selected.quantity;
+            const title = quantityModalMode === 'note' ? `Note ${selItem?.name || selected.itemId}` : `Take ${selItem?.name || selected.itemId}`;
+            return (h(Modal, { title: title, onClose: () => { setQuantityModalMode(null); setQuantityInput(''); } },
+                h("div", { class: "space-y-3" },
+                    h("div", null,
+                        h("p", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mb-1 uppercase tracking-wider" },
+                            "Available: ",
+                            maxQty),
+                        h("input", { type: "number", value: quantityInput, onInput: (e) => setQuantityInput(e.target.value), min: "1", max: maxQty, placeholder: "Enter quantity", class: "w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-gold)]", autoFocus: true })),
+                    h("button", { onClick: handleQuantityModalSubmit, disabled: !quantityInput || isNaN(parseInt(quantityInput, 10)) || parseInt(quantityInput, 10) <= 0, class: `w-full py-2.5 rounded-lg font-semibold text-sm active:opacity-80 ${quantityModalMode === 'note'
+                            ? 'bg-[var(--color-emerald)] text-white'
+                            : 'bg-[var(--color-gold-dim)] text-white'}` },
+                        quantityModalMode === 'note' ? 'Note' : 'Take',
+                        " ",
+                        quantityInput || '0'))));
         })()));
 }
 
