@@ -13650,7 +13650,7 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
             slayerTaskUpdate = { ...slayerTask, monstersRemaining: newRemaining };
         }
     }
-    return { xpGained, lootGained, lootLost, lootBanked, monstersKilled, finalInventory: newInv, slayerXpGained, slayerTaskUpdate };
+    return { xpGained, lootGained, lootLost, lootBanked, monstersKilled, monstersKilledOnTask, finalInventory: newInv, slayerXpGained, slayerTaskUpdate };
 }
 
 // ── engine/tick.js ──
@@ -18774,8 +18774,20 @@ function GameApp() {
                             const taskCompleted = idleResult.slayerTaskUpdate?.completed;
                             return (hasXp || hasMonstersKilled || hasSlayerXp || taskCompleted) ? (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' } },
                                 h("div", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' } }, "\uD83D\uDCCA Summary"),
-                                taskCompleted && (h("div", { style: { marginBottom: '8px', padding: '8px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '6px', borderLeft: '3px solid #d4af37' } },
-                                    h("div", { style: { fontSize: '13px', color: '#d4af37', fontWeight: 'bold' } }, "\uD83D\uDC80 Slayer Task Complete!"))),
+                                idleResult.slayerTaskUpdate && idleResult.monstersKilledOnTask > 0 && (h("div", { style: { marginBottom: '8px', padding: '8px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '6px', borderLeft: '3px solid #d4af37' } }, taskCompleted ? (h(Fragment, null,
+                                    h("div", { style: { fontSize: '12px', color: '#d4af37', fontWeight: 'bold' } },
+                                        "\uD83D\uDC80 Slayer: ",
+                                        idleResult.monstersKilledOnTask.toLocaleString(),
+                                        " ",
+                                        idleResult.slayerTaskUpdate.monsterName),
+                                    h("div", { style: { fontSize: '11px', color: '#d4af37', marginTop: '2px' } }, "\u2705 Task Complete!"))) : (h("div", { style: { fontSize: '12px', color: '#d4af37', fontWeight: 'bold' } },
+                                    "\uD83D\uDC80 Slayer: ",
+                                    idleResult.monstersKilledOnTask.toLocaleString(),
+                                    " ",
+                                    idleResult.slayerTaskUpdate.monsterName,
+                                    " / ",
+                                    idleResult.slayerTaskUpdate.monstersRemaining.toLocaleString(),
+                                    " remaining")))),
                                 hasMonstersKilled && (h("div", { style: { marginBottom: '6px' } },
                                     h("div", { style: { fontSize: '13px', color: '#e8d5b0' } }, "\uD83D\uDDE1\uFE0F Monsters Slain"),
                                     h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' } },

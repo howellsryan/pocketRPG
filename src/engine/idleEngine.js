@@ -558,5 +558,5 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     }
   }
 
-  return { xpGained, lootGained, lootLost, lootBanked, monstersKilled, finalInventory: newInv, slayerXpGained, slayerTaskUpdate }
+  return { xpGained, lootGained, lootLost, lootBanked, monstersKilled, monstersKilledOnTask, finalInventory: newInv, slayerXpGained, slayerTaskUpdate }
 }

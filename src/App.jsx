@@ -501,9 +501,18 @@ function GameApp() {
                     return (hasXp || hasMonstersKilled || hasSlayerXp || taskCompleted) ? (
                       <div style={{ marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' }}>
                         <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>📊 Summary</div>
-                        {taskCompleted && (
+                        {idleResult.slayerTaskUpdate && idleResult.monstersKilledOnTask > 0 && (
                           <div style={{ marginBottom: '8px', padding: '8px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '6px', borderLeft: '3px solid #d4af37' }}>
-                            <div style={{ fontSize: '13px', color: '#d4af37', fontWeight: 'bold' }}>💀 Slayer Task Complete!</div>
+                            {taskCompleted ? (
+                              <>
+                                <div style={{ fontSize: '12px', color: '#d4af37', fontWeight: 'bold' }}>💀 Slayer: {idleResult.monstersKilledOnTask.toLocaleString()} {idleResult.slayerTaskUpdate.monsterName}</div>
+                                <div style={{ fontSize: '11px', color: '#d4af37', marginTop: '2px' }}>✅ Task Complete!</div>
+                              </>
+                            ) : (
+                              <div style={{ fontSize: '12px', color: '#d4af37', fontWeight: 'bold' }}>
+                                💀 Slayer: {idleResult.monstersKilledOnTask.toLocaleString()} {idleResult.slayerTaskUpdate.monsterName} / {idleResult.slayerTaskUpdate.monstersRemaining.toLocaleString()} remaining
+                              </div>
+                            )}
                           </div>
                         )}
                         {hasMonstersKilled && (
