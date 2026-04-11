@@ -1652,13 +1652,11 @@
     "actions": [
       {
         "id": "high_alch",
-        "name": "High Alchemy (1)",
+        "name": "High Alchemy",
         "level": 55,
         "ticks": 5,
         "xp": 65,
         "type": "alchemy",
-        "product": "coins",
-        "productQty": 50,
         "runeReq": {
           "nature_rune": 1,
           "fire_rune": 5

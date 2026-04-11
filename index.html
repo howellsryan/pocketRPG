@@ -11502,13 +11502,11 @@ const skillsData = {
     "actions": [
       {
         "id": "high_alch",
-        "name": "High Alchemy (1)",
+        "name": "High Alchemy",
         "level": 55,
         "ticks": 5,
         "xp": 65,
         "type": "alchemy",
-        "product": "coins",
-        "productQty": 50,
         "runeReq": {
           "nature_rune": 1,
           "fire_rune": 5
@@ -17089,6 +17087,8 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
     const [selectedAction, setSelectedAction] = useState(null);
     const [skilling, setSkilling] = useState(null);
     const [skillingBankingEnabled, setSkillingBankingEnabled] = useState(false); // Banking toggle for skilling
+    const [selectedAlchemyItem, setSelectedAlchemyItem] = useState(null); // Track selected item for High Alchemy
+    const [showAlchemyPicker, setShowAlchemyPicker] = useState(false); // Show item picker for alchemy
     const skillingRef = useRef(null);
     const hasAutoStarted = useRef(false);
     // If agility is selected, delegate to AgilityScreen (special screen for agility only)
@@ -17187,8 +17187,32 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
                             return;
                         }
                     }
-                    // Add product — goes to bank directly
-                    if (action.product) {
+                    // Handle High Alchemy special calculation
+                    if (action.type === 'alchemy' && selectedAlchemyItem) {
+                        const alchItem = itemsData[selectedAlchemyItem.itemId];
+                        if (alchItem && typeof alchItem.shopValue === 'number') {
+                            // Calculate coins based on shop value: <100k = 1.5x, >=100k = 1.1x
+                            const alchValue = alchItem.shopValue >= 100000
+                                ? Math.floor(alchItem.shopValue * 1.1)
+                                : Math.floor(alchItem.shopValue * 1.5);
+                            // Remove the alchemized item from inventory
+                            const alchemyItemIdx = newInv.indexOf(selectedAlchemyItem);
+                            if (alchemyItemIdx !== -1) {
+                                if (selectedAlchemyItem.quantity > 1) {
+                                    newInv[alchemyItemIdx] = { ...selectedAlchemyItem, quantity: selectedAlchemyItem.quantity - 1 };
+                                }
+                                else {
+                                    newInv[alchemyItemIdx] = null;
+                                }
+                            }
+                            // Add coins to bank
+                            updateBankDirect({ coins: alchValue });
+                            updateInventory(newInv);
+                            addToast(`Alchemized ${alchItem.name} for ${alchValue.toLocaleString()} coins`, 'success');
+                        }
+                    }
+                    else if (action.product) {
+                        // Add product — goes to bank directly
                         const qty = action.productQty || 1;
                         updateBankDirect({ [action.product]: qty });
                     }
@@ -17204,6 +17228,12 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
         return unsub;
     }, [skilling?.active, stats, inventory, bank]);
     const startSkilling = (action) => {
+        // For High Alchemy, show item picker first
+        if (action.type === 'alchemy') {
+            setSelectedAction(action);
+            setShowAlchemyPicker(true);
+            return;
+        }
         const mult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory);
         const effectiveTicks = Math.max(1, Math.floor(action.ticks * mult));
         const adjustedAction = mult < 1.0 ? { ...action, ticks: effectiveTicks } : action;
@@ -17212,6 +17242,19 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
         setSkilling(state);
         // Store original action in task — idle engine will apply tool multiplier separately
         setActiveTask({ type: 'skill', skill: selectedSkill, action, bankingEnabled: skillingBankingEnabled });
+    };
+    const startAlchemy = (item) => {
+        if (!selectedAction)
+            return;
+        setShowAlchemyPicker(false);
+        setSelectedAlchemyItem(item);
+        const mult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory);
+        const effectiveTicks = Math.max(1, Math.floor(selectedAction.ticks * mult));
+        const adjustedAction = mult < 1.0 ? { ...selectedAction, ticks: effectiveTicks } : selectedAction;
+        const state = { ...createSkillingState(selectedSkill, adjustedAction), startedAt: Date.now() };
+        setSkilling(state);
+        // Store original action in task — idle engine will apply tool multiplier separately
+        setActiveTask({ type: 'skill', skill: selectedSkill, action: selectedAction, bankingEnabled: skillingBankingEnabled });
     };
     const stopSkilling = () => {
         if (skillingRef.current) {
@@ -17352,7 +17395,39 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
                     h("button", { onClick: () => handleAddToHome(selectedSkill, action), class: "px-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5", title: "Add to Home Screen" },
                         h("span", { class: "text-base" }, "\uD83C\uDFE0"),
                         h("span", { class: "text-[8px] text-[var(--color-parchment)] opacity-50" }, "Add"))));
-            }))));
+            })),
+            showAlchemyPicker && selectedAction && (h(Modal, { onClose: () => { setShowAlchemyPicker(false); setSelectedAction(null); } },
+                h("div", { class: "flex items-center justify-between mb-3" },
+                    h("h3", { class: "font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]" }, "Select item to Alchemize"),
+                    h("button", { onClick: () => { setShowAlchemyPicker(false); setSelectedAction(null); }, class: "w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors", title: "Close" }, "\u2715")),
+                h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60 mb-3" }, "Shop value < 100k: \u00D71.5 | Shop value \u2265 100k: \u00D71.1"),
+                h("div", { class: "space-y-2 max-h-96 overflow-y-auto" },
+                    inventory.map((slot, idx) => {
+                        if (!slot)
+                            return null;
+                        const item = itemsData[slot.itemId];
+                        if (!item || item.stackable === false && slot.quantity > 1) {
+                            // Skip if not stackable but quantity > 1 (only show first instance)
+                            return null;
+                        }
+                        const alchValue = item.shopValue >= 100000
+                            ? Math.floor(item.shopValue * 1.1)
+                            : Math.floor(item.shopValue * 1.5);
+                        return (h("button", { key: `${idx}-${slot.itemId}`, onClick: () => startAlchemy(slot), class: "w-full p-3 rounded-lg border bg-[#1a1a1a] border-[#2a4a2a] active:bg-[#2a3a2a] transition-colors text-left" },
+                            h("div", { class: "flex items-center justify-between" },
+                                h("div", { class: "flex items-center gap-2 flex-1" },
+                                    h("span", { class: "text-lg" }, item.icon),
+                                    h("div", null,
+                                        h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, item.name),
+                                        h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60" },
+                                            "Shop: ",
+                                            item.shopValue.toLocaleString(),
+                                            "gp"))),
+                                h("div", { class: "text-right" },
+                                    h("div", { class: "text-sm font-semibold text-[var(--color-gold)]" }, alchValue.toLocaleString()),
+                                    h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60" }, "coins")))));
+                    }),
+                    inventory.every(s => !s) && (h("div", { class: "text-center py-4 text-[var(--color-parchment)] opacity-50" }, "No items in inventory")))))));
     }
     // Active skilling modal
     const activeMult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory);
