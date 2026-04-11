@@ -1238,22 +1238,6 @@ const itemsData = {
     "shopValue": 500,
     "icon": "🪵"
   },
-  "bowstring": {
-    "id": "bowstring",
-    "name": "Bowstring",
-    "type": "resource",
-    "stackable": false,
-    "shopValue": 45,
-    "icon": "🧵"
-  },
-  "flax": {
-    "id": "flax",
-    "name": "Flax",
-    "type": "resource",
-    "stackable": false,
-    "shopValue": 3,
-    "icon": "🌿"
-  },
   "bucket_of_sand": {
     "id": "bucket_of_sand",
     "name": "Bucket of sand",
@@ -1333,14 +1317,6 @@ const itemsData = {
     "stackable": false,
     "shopValue": 6,
     "icon": "🪤"
-  },
-  "leather": {
-    "id": "leather",
-    "name": "Leather",
-    "type": "resource",
-    "stackable": false,
-    "shopValue": 52,
-    "icon": "🟤"
   },
   "hard_leather": {
     "id": "hard_leather",
@@ -6408,7 +6384,7 @@ const itemsData = {
     "id": "leather",
     "name": "Leather",
     "type": "resource",
-    "stackable": false,
+    "stackable": true,
     "shopValue": 100,
     "icon": "🧥"
   },
@@ -6416,7 +6392,7 @@ const itemsData = {
     "id": "flax",
     "name": "Flax",
     "type": "resource",
-    "stackable": false,
+    "stackable": true,
     "shopValue": 30,
     "icon": "🌾"
   },
@@ -6424,9 +6400,17 @@ const itemsData = {
     "id": "bowstring",
     "name": "Bowstring",
     "type": "resource",
-    "stackable": false,
+    "stackable": true,
     "shopValue": 100,
     "icon": "🔗"
+  },
+  "planks": {
+    "id": "planks",
+    "name": "Planks",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 150,
+    "icon": "🪵"
   },
   "sapphire_ring": {
     "id": "sapphire_ring",
@@ -11518,11 +11502,13 @@ const skillsData = {
     "actions": [
       {
         "id": "high_alch",
-        "name": "High Alchemy",
+        "name": "High Alchemy (1)",
         "level": 55,
         "ticks": 5,
         "xp": 65,
         "type": "alchemy",
+        "product": "coins",
+        "productQty": 50,
         "runeReq": {
           "nature_rune": 1,
           "fire_rune": 5
@@ -11530,11 +11516,16 @@ const skillsData = {
       },
       {
         "id": "superheat",
-        "name": "Superheat Item",
+        "name": "Superheat Item (iron ore)",
         "level": 43,
         "ticks": 5,
         "xp": 53,
         "type": "superheat",
+        "product": "iron_bar",
+        "materials": {
+          "iron_ore": 1,
+          "coal": 1
+        },
         "runeReq": {
           "nature_rune": 1,
           "fire_rune": 4
@@ -11600,6 +11591,9 @@ const skillsData = {
         "xp": 75,
         "type": "spin_flax",
         "product": "bowstring",
+        "materials": {
+          "flax": 1
+        },
         "runeReq": {
           "nature_rune": 1,
           "astral_rune": 2,
@@ -11614,6 +11608,9 @@ const skillsData = {
         "xp": 81,
         "type": "tan_leather",
         "product": "leather",
+        "materials": {
+          "cowhide": 1
+        },
         "runeReq": {
           "nature_rune": 1,
           "astral_rune": 2,
@@ -11627,6 +11624,10 @@ const skillsData = {
         "ticks": 3,
         "xp": 90,
         "type": "plank_make",
+        "product": "planks",
+        "materials": {
+          "logs": 1
+        },
         "runeReq": {
           "nature_rune": 1,
           "astral_rune": 2,
@@ -16795,7 +16796,10 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                 const magicLevel = getLevelFromXP(stats.magic?.xp || 0);
                 const canCast = magicLevel >= spell.levelReq;
                 const isActive = activeCombatSpell?.id === spell.id;
-                return (h("button", { key: spell.id, onClick: () => canCast && updateActiveCombatSpell({ id: spell.id, name: spell.name, baseDamage: spell.baseDamage }) && setShowSpellModal(false), disabled: !canCast, class: `w-full p-3 rounded-lg border transition-colors ${isActive
+                return (h("button", { key: spell.id, onClick: () => { if (canCast) {
+                        updateActiveCombatSpell({ id: spell.id, name: spell.name, baseDamage: spell.baseDamage });
+                        setShowSpellModal(false);
+                    } }, disabled: !canCast, class: `w-full p-3 rounded-lg border transition-colors ${isActive
                         ? 'bg-[#1a2a3a] border-[#2a5a7a]'
                         : canCast
                             ? 'bg-[#1a1a2a] border-[#2a2a4a] active:bg-[#2a2a3a]'

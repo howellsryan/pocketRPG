@@ -1138,22 +1138,6 @@
     "shopValue": 500,
     "icon": "🪵"
   },
-  "bowstring": {
-    "id": "bowstring",
-    "name": "Bowstring",
-    "type": "resource",
-    "stackable": false,
-    "shopValue": 45,
-    "icon": "🧵"
-  },
-  "flax": {
-    "id": "flax",
-    "name": "Flax",
-    "type": "resource",
-    "stackable": false,
-    "shopValue": 3,
-    "icon": "🌿"
-  },
   "bucket_of_sand": {
     "id": "bucket_of_sand",
     "name": "Bucket of sand",
@@ -1233,14 +1217,6 @@
     "stackable": false,
     "shopValue": 6,
     "icon": "🪤"
-  },
-  "leather": {
-    "id": "leather",
-    "name": "Leather",
-    "type": "resource",
-    "stackable": false,
-    "shopValue": 52,
-    "icon": "🟤"
   },
   "hard_leather": {
     "id": "hard_leather",
@@ -6308,7 +6284,7 @@
     "id": "leather",
     "name": "Leather",
     "type": "resource",
-    "stackable": false,
+    "stackable": true,
     "shopValue": 100,
     "icon": "🧥"
   },
@@ -6316,7 +6292,7 @@
     "id": "flax",
     "name": "Flax",
     "type": "resource",
-    "stackable": false,
+    "stackable": true,
     "shopValue": 30,
     "icon": "🌾"
   },
@@ -6324,9 +6300,17 @@
     "id": "bowstring",
     "name": "Bowstring",
     "type": "resource",
-    "stackable": false,
+    "stackable": true,
     "shopValue": 100,
     "icon": "🔗"
+  },
+  "planks": {
+    "id": "planks",
+    "name": "Planks",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 150,
+    "icon": "🪵"
   },
   "sapphire_ring": {
     "id": "sapphire_ring",

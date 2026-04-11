@@ -1652,11 +1652,13 @@
     "actions": [
       {
         "id": "high_alch",
-        "name": "High Alchemy",
+        "name": "High Alchemy (1)",
         "level": 55,
         "ticks": 5,
         "xp": 65,
         "type": "alchemy",
+        "product": "coins",
+        "productQty": 50,
         "runeReq": {
           "nature_rune": 1,
           "fire_rune": 5
@@ -1664,11 +1666,16 @@
       },
       {
         "id": "superheat",
-        "name": "Superheat Item",
+        "name": "Superheat Item (iron ore)",
         "level": 43,
         "ticks": 5,
         "xp": 53,
         "type": "superheat",
+        "product": "iron_bar",
+        "materials": {
+          "iron_ore": 1,
+          "coal": 1
+        },
         "runeReq": {
           "nature_rune": 1,
           "fire_rune": 4
@@ -1734,6 +1741,9 @@
         "xp": 75,
         "type": "spin_flax",
         "product": "bowstring",
+        "materials": {
+          "flax": 1
+        },
         "runeReq": {
           "nature_rune": 1,
           "astral_rune": 2,
@@ -1748,6 +1758,9 @@
         "xp": 81,
         "type": "tan_leather",
         "product": "leather",
+        "materials": {
+          "cowhide": 1
+        },
         "runeReq": {
           "nature_rune": 1,
           "astral_rune": 2,
@@ -1761,6 +1774,10 @@
         "ticks": 3,
         "xp": 90,
         "type": "plank_make",
+        "product": "planks",
+        "materials": {
+          "logs": 1
+        },
         "runeReq": {
           "nature_rune": 1,
           "astral_rune": 2,
