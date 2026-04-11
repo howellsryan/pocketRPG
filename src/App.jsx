@@ -536,6 +536,18 @@ function GameApp() {
                             </div>
                           </div>
                         ))}
+                        {hasSlayerXp && (
+                          <div style={{ marginBottom: '4px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' }}>
+                              <span>{SKILL_ICONS.slayer} Slayer</span>
+                              <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>+{Math.floor(idleResult.slayerXpGained).toLocaleString()}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8d5b0', opacity: 0.45 }}>
+                              <span>/hr</span>
+                              <span style={{ fontFamily: 'monospace' }}>{perHr(idleResult.slayerXpGained)}</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ) : null
                   })()}
