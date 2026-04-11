@@ -13184,6 +13184,7 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
     }
     const xpGained = {};
     const itemsGained = {};
+    const itemsBanked = {};
     const itemsDropped = {};
     const newInv = [...inventory];
     const xpPer = task.action.xp || 0;
@@ -13253,6 +13254,7 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
                         const newQty = newInv[i].quantity - startingQty;
                         if (newQty > 0) {
                             itemsGained[newInv[i].itemId] = (itemsGained[newInv[i].itemId] || 0) + newQty;
+                            itemsBanked[newInv[i].itemId] = (itemsBanked[newInv[i].itemId] || 0) + newQty;
                         }
                         newInv[i] = null;
                     }
@@ -13318,7 +13320,7 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
             }
         }
     }
-    return { xpGained, itemsGained, itemsConsumed, itemsDropped, actions, skill: task.skill, actionName: task.action.name, finalInventory: newInv };
+    return { xpGained, itemsGained, itemsBanked, itemsConsumed, itemsDropped, actions, skill: task.skill, actionName: task.action.name, finalInventory: newInv };
 }
 /**
  * Simulate idle gathering.
@@ -13342,6 +13344,7 @@ function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, itemsDa
     const bankingEnabled = true;
     const bankDelayTicks = Math.ceil(getAgilityBankDelayFromStats(stats) / TICK_MS);
     const itemsGained = {};
+    const itemsBanked = {};
     const itemsDropped = {};
     const newInv = [...inventory];
     let remainingTicks = totalTicks;
@@ -13401,6 +13404,7 @@ function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, itemsDa
                 const newQty = newInv[i].quantity - startingQty;
                 if (newQty > 0) {
                     itemsGained[newInv[i].itemId] = (itemsGained[newInv[i].itemId] || 0) + newQty;
+                    itemsBanked[newInv[i].itemId] = (itemsBanked[newInv[i].itemId] || 0) + newQty;
                 }
                 newInv[i] = null;
             }
@@ -13416,7 +13420,7 @@ function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, itemsDa
             itemsGained[slot.itemId] = (itemsGained[slot.itemId] || 0) + deltaQty;
         }
     }
-    return { itemsGained, itemsDropped, actions: actionsCompleted, actionName: task.gatherTask.name, finalInventory: newInv };
+    return { itemsGained, itemsBanked, itemsDropped, actions: actionsCompleted, actionName: task.gatherTask.name, finalInventory: newInv };
 }
 /**
  * Compute average player DPS against a monster.
@@ -18473,10 +18477,12 @@ function GameApp() {
                     grantXP(skill, xp);
             }
         }
-        if ((task.type === 'combat' || task.type === 'skill' || task.type === 'gather') && sim.finalInventory) {
+        if (sim.finalInventory) {
             updateInventory(sim.finalInventory);
-            if (sim.lootBanked && Object.keys(sim.lootBanked).length > 0) {
-                updateBankDirect(sim.lootBanked);
+            // combat uses lootBanked; skill/gather use itemsBanked (pure bank-trip items, not end-state inventory)
+            const banked = sim.lootBanked || sim.itemsBanked;
+            if (banked && Object.keys(banked).length > 0) {
+                updateBankDirect(banked);
             }
         }
         else if (sim.itemsGained) {
