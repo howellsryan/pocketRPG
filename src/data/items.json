@@ -1507,6 +1507,22 @@
     "shopValue": 1575,
     "icon": "💎"
   },
+  "uncut_dragonstone": {
+    "id": "uncut_dragonstone",
+    "name": "Uncut dragonstone",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 2100,
+    "icon": "💎"
+  },
+  "uncut_onyx": {
+    "id": "uncut_onyx",
+    "name": "Uncut onyx",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 2400,
+    "icon": "💎"
+  },
   "sapphire": {
     "id": "sapphire",
     "name": "Sapphire",
@@ -1537,6 +1553,22 @@
     "type": "resource",
     "stackable": false,
     "shopValue": 2500,
+    "icon": "💎"
+  },
+  "dragonstone": {
+    "id": "dragonstone",
+    "name": "Dragonstone",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 3500,
+    "icon": "💎"
+  },
+  "onyx": {
+    "id": "onyx",
+    "name": "Onyx",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 4000,
     "icon": "💎"
   },
   "gold_bar": {
@@ -1661,6 +1693,209 @@
     },
     "requirements": {},
     "shopValue": 4725,
+    "icon": "📿"
+  },
+  "dragonstone_amulet": {
+    "id": "dragonstone_amulet",
+    "name": "Dragonstone amulet",
+    "type": "armour",
+    "slot": "neck",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 6600,
+    "icon": "📿"
+  },
+  "onyx_amulet": {
+    "id": "onyx_amulet",
+    "name": "Onyx amulet",
+    "type": "armour",
+    "slot": "neck",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 7500,
+    "icon": "📿"
+  },
+  "amulet_of_magic": {
+    "id": "amulet_of_magic",
+    "name": "Amulet of magic",
+    "type": "armour",
+    "slot": "neck",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 5,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 900,
+    "icon": "📿"
+  },
+  "amulet_of_strength": {
+    "id": "amulet_of_strength",
+    "name": "Amulet of strength",
+    "type": "armour",
+    "slot": "neck",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 8,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 1000,
+    "icon": "📿"
+  },
+  "amulet_of_power": {
+    "id": "amulet_of_power",
+    "name": "Amulet of power",
+    "type": "armour",
+    "slot": "neck",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 2,
+      "slash": 2,
+      "crush": 2,
+      "magic": 2,
+      "ranged": 2
+    },
+    "defenceBonus": {
+      "stab": 2,
+      "slash": 2,
+      "crush": 2,
+      "magic": 2,
+      "ranged": 2
+    },
+    "otherBonus": {
+      "meleeStrength": 2,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 4725,
+    "icon": "📿"
+  },
+  "amulet_of_glory": {
+    "id": "amulet_of_glory",
+    "name": "Amulet of glory",
+    "type": "armour",
+    "slot": "neck",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 6600,
+    "icon": "📿"
+  },
+  "amulet_of_fury": {
+    "id": "amulet_of_fury",
+    "name": "Amulet of fury",
+    "type": "armour",
+    "slot": "neck",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 2,
+      "slash": 2,
+      "crush": 2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 2,
+      "slash": 2,
+      "crush": 2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 4,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 7500,
     "icon": "📿"
   },
   "gold_amulet": {

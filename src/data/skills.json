@@ -74,6 +74,46 @@
         "ticks": 9,
         "xp": 125,
         "product": "runite_ore"
+      },
+      {
+        "id": "sapphire_gem",
+        "name": "Mine uncut sapphire",
+        "level": 10,
+        "ticks": 15,
+        "xp": 50,
+        "product": "uncut_sapphire"
+      },
+      {
+        "id": "ruby_gem",
+        "name": "Mine uncut ruby",
+        "level": 40,
+        "ticks": 20,
+        "xp": 80,
+        "product": "uncut_ruby"
+      },
+      {
+        "id": "diamond_gem",
+        "name": "Mine uncut diamond",
+        "level": 60,
+        "ticks": 25,
+        "xp": 110,
+        "product": "uncut_diamond"
+      },
+      {
+        "id": "dragonstone_gem",
+        "name": "Mine uncut dragonstone",
+        "level": 75,
+        "ticks": 30,
+        "xp": 140,
+        "product": "uncut_dragonstone"
+      },
+      {
+        "id": "onyx_gem",
+        "name": "Mine uncut onyx",
+        "level": 90,
+        "ticks": 35,
+        "xp": 170,
+        "product": "uncut_onyx"
       }
     ]
   },
@@ -1240,6 +1280,28 @@
         }
       },
       {
+        "id": "cut_dragonstone",
+        "name": "Cut dragonstone",
+        "level": 55,
+        "ticks": 3,
+        "xp": 137,
+        "product": "dragonstone",
+        "materials": {
+          "uncut_dragonstone": 1
+        }
+      },
+      {
+        "id": "cut_onyx",
+        "name": "Cut onyx",
+        "level": 72,
+        "ticks": 3,
+        "xp": 167,
+        "product": "onyx",
+        "materials": {
+          "uncut_onyx": 1
+        }
+      },
+      {
         "id": "ruby_amulet",
         "name": "String ruby amulet",
         "level": 50,
@@ -1293,6 +1355,30 @@
         "product": "diamond_amulet",
         "materials": {
           "diamond": 1,
+          "gold_bar": 1
+        }
+      },
+      {
+        "id": "dragonstone_amulet",
+        "name": "String dragonstone amulet",
+        "level": 80,
+        "ticks": 4,
+        "xp": 150,
+        "product": "dragonstone_amulet",
+        "materials": {
+          "dragonstone": 1,
+          "gold_bar": 1
+        }
+      },
+      {
+        "id": "onyx_amulet",
+        "name": "String onyx amulet",
+        "level": 90,
+        "ticks": 4,
+        "xp": 165,
+        "product": "onyx_amulet",
+        "materials": {
+          "onyx": 1,
           "gold_bar": 1
         }
       }
@@ -1686,7 +1772,7 @@
         "ticks": 3,
         "xp": 17,
         "type": "enchant_jewel",
-        "product": "sapphire_amulet",
+        "product": "amulet_of_magic",
         "itemReq": ["sapphire_amulet"],
         "runeReq": {
           "cosmic_rune": 1,
@@ -1714,7 +1800,7 @@
         "ticks": 3,
         "xp": 59,
         "type": "enchant_jewel",
-        "product": "ruby_amulet",
+        "product": "amulet_of_strength",
         "itemReq": ["ruby_amulet"],
         "runeReq": {
           "cosmic_rune": 1,
@@ -1728,11 +1814,39 @@
         "ticks": 3,
         "xp": 67,
         "type": "enchant_jewel",
-        "product": "diamond_amulet",
+        "product": "amulet_of_power",
         "itemReq": ["diamond_amulet"],
         "runeReq": {
           "cosmic_rune": 1,
           "earth_rune": 1
+        }
+      },
+      {
+        "id": "enchant_dragonstone",
+        "name": "Enchant Dragonstone",
+        "level": 68,
+        "ticks": 3,
+        "xp": 78,
+        "type": "enchant_jewel",
+        "product": "amulet_of_glory",
+        "itemReq": ["dragonstone_amulet"],
+        "runeReq": {
+          "cosmic_rune": 1,
+          "fire_rune": 1
+        }
+      },
+      {
+        "id": "enchant_onyx",
+        "name": "Enchant Onyx",
+        "level": 87,
+        "ticks": 3,
+        "xp": 97,
+        "type": "enchant_jewel",
+        "product": "amulet_of_fury",
+        "itemReq": ["onyx_amulet"],
+        "runeReq": {
+          "cosmic_rune": 1,
+          "water_rune": 1
         }
       },
       {
