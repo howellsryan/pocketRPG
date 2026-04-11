@@ -155,6 +155,18 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             // Add product — goes to bank directly
             const qty = action.productQty || 1
             updateBankDirect({ [action.product]: qty })
+          } else if (action.dropTable) {
+            // Roll drops from drop table
+            const bankUpdates = {}
+            for (const drop of action.dropTable) {
+              if (Math.random() < drop.chance) {
+                const qty = Array.isArray(drop.quantity)
+                  ? Math.floor(Math.random() * (drop.quantity[1] - drop.quantity[0] + 1)) + drop.quantity[0]
+                  : drop.quantity
+                bankUpdates[drop.itemId] = (bankUpdates[drop.itemId] || 0) + qty
+              }
+            }
+            if (Object.keys(bankUpdates).length > 0) updateBankDirect(bankUpdates)
           }
 
           // Still update inventory if materials were consumed
@@ -391,6 +403,15 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                   </div>
                   {action.product && (
                     <span class="text-[10px] text-[var(--color-gold-dim)]">→ {itemsData[action.product]?.name || action.product}</span>
+                  )}
+                  {action.dropTable && (
+                    <div class="text-right flex flex-col gap-0.5">
+                      {action.dropTable.map(drop => (
+                        <div key={drop.itemId} class="text-[9px] text-[var(--color-gold-dim)]">
+                          {Math.round(drop.chance * 100)}% {itemsData[drop.itemId]?.name || drop.itemId}
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </button>
                 <button

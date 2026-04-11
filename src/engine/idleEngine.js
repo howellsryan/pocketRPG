@@ -19,6 +19,23 @@ import { getAgilityBankDelayFromStats, simulateIdleAgility } from './agility.js'
 const TICK_MS = 600
 
 /**
+ * Roll drops from a drop table (used for mining gems, etc.)
+ * Returns object of { itemId: quantity }
+ */
+function rollDropTableOnce(dropTable) {
+  const drops = {}
+  for (const drop of dropTable) {
+    if (Math.random() < drop.chance) {
+      const qty = Array.isArray(drop.quantity)
+        ? Math.floor(Math.random() * (drop.quantity[1] - drop.quantity[0] + 1)) + drop.quantity[0]
+        : drop.quantity
+      drops[drop.itemId] = (drops[drop.itemId] || 0) + qty
+    }
+  }
+  return drops
+}
+
+/**
  * Format elapsed milliseconds into a human-readable duration string.
  * Only shows units that have a non-zero value, starting from the largest.
  */
@@ -129,8 +146,117 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
     }
   }
 
+  // Handle drop table (for actions with multiple possible products like gem mining)
+  if (task.action.dropTable) {
+    const bankingEnabled = task.bankingEnabled || false
+
+    // Track starting inventory state
+    const startingInvState = {}
+    for (const slot of newInv) {
+      if (!slot) continue
+      startingInvState[slot.itemId] = (startingInvState[slot.itemId] || 0) + slot.quantity
+    }
+
+    if (bankingEnabled) {
+      const bankDelayTicks = Math.ceil(getAgilityBankDelayFromStats(stats) / TICK_MS)
+      let remainingTicks = totalTicks
+      let actionsCompleted = 0
+
+      while (remainingTicks >= actionTicks && actionsCompleted < actions) {
+        remainingTicks -= actionTicks
+        actionsCompleted++
+
+        // Roll drops and add to inventory
+        const drops = rollDropTableOnce(task.action.dropTable)
+        for (const [itemId, qty] of Object.entries(drops)) {
+          const item = itemsData[itemId]
+          const stackable = item?.stackable || false
+
+          if (stackable) {
+            const existingIdx = newInv.findIndex(s => s && s.itemId === itemId)
+            if (existingIdx !== -1) {
+              newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + qty }
+            } else {
+              const emptyIdx = newInv.indexOf(null)
+              if (emptyIdx !== -1) {
+                newInv[emptyIdx] = { itemId, quantity: qty }
+              } else {
+                itemsDropped[itemId] = (itemsDropped[itemId] || 0) + qty
+              }
+            }
+          } else {
+            for (let q = 0; q < qty; q++) {
+              const emptyIdx = newInv.indexOf(null)
+              if (emptyIdx !== -1) {
+                newInv[emptyIdx] = { itemId, quantity: 1 }
+              } else {
+                itemsDropped[itemId] = (itemsDropped[itemId] || 0) + 1
+              }
+            }
+          }
+        }
+
+        // Auto-bank trip if inventory full
+        if (newInv.indexOf(null) === -1) {
+          if (remainingTicks < bankDelayTicks) break
+          remainingTicks -= bankDelayTicks
+          for (let i = 0; i < newInv.length; i++) {
+            if (!newInv[i]) continue
+            itemsBanked[newInv[i].itemId] = (itemsBanked[newInv[i].itemId] || 0) + newInv[i].quantity
+            newInv[i] = null
+          }
+        }
+      }
+
+      // Compute itemsGained
+      const totalAccumulated = { ...itemsBanked }
+      for (const slot of newInv) {
+        if (!slot) continue
+        totalAccumulated[slot.itemId] = (totalAccumulated[slot.itemId] || 0) + slot.quantity
+      }
+      for (const [itemId, qty] of Object.entries(totalAccumulated)) {
+        const netGain = qty - (startingInvState[itemId] || 0)
+        if (netGain > 0) itemsGained[itemId] = netGain
+      }
+    } else {
+      // Banking disabled: items fill inventory, excess is dropped
+      for (let a = 0; a < actions; a++) {
+        const drops = rollDropTableOnce(task.action.dropTable)
+        for (const [itemId, qty] of Object.entries(drops)) {
+          const item = itemsData[itemId]
+          const stackable = item?.stackable || false
+
+          if (stackable) {
+            const existingIdx = newInv.findIndex(s => s && s.itemId === itemId)
+            if (existingIdx !== -1) {
+              newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + qty }
+              itemsGained[itemId] = (itemsGained[itemId] || 0) + qty
+            } else {
+              const emptyIdx = newInv.indexOf(null)
+              if (emptyIdx !== -1) {
+                newInv[emptyIdx] = { itemId, quantity: qty }
+                itemsGained[itemId] = (itemsGained[itemId] || 0) + qty
+              } else {
+                itemsDropped[itemId] = (itemsDropped[itemId] || 0) + qty
+              }
+            }
+          } else {
+            for (let q = 0; q < qty; q++) {
+              const emptyIdx = newInv.indexOf(null)
+              if (emptyIdx !== -1) {
+                newInv[emptyIdx] = { itemId, quantity: 1 }
+                itemsGained[itemId] = (itemsGained[itemId] || 0) + 1
+              } else {
+                itemsDropped[itemId] = (itemsDropped[itemId] || 0) + 1
+              }
+            }
+          }
+        }
+      }
+    }
+  }
   // Handle product placement based on bankingEnabled
-  if (task.action.product) {
+  else if (task.action.product) {
     const bankingEnabled = task.bankingEnabled || false
     const product = task.action.product
     const qtyPerAction = task.action.productQty || 1

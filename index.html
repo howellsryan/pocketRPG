@@ -10053,44 +10053,38 @@ const skillsData = {
         "product": "runite_ore"
       },
       {
-        "id": "sapphire_gem",
-        "name": "Mine uncut sapphire",
+        "id": "gem_mining",
+        "name": "Mine gems",
         "level": 10,
-        "ticks": 15,
-        "xp": 50,
-        "product": "uncut_sapphire"
-      },
-      {
-        "id": "ruby_gem",
-        "name": "Mine uncut ruby",
-        "level": 40,
         "ticks": 20,
-        "xp": 80,
-        "product": "uncut_ruby"
-      },
-      {
-        "id": "diamond_gem",
-        "name": "Mine uncut diamond",
-        "level": 60,
-        "ticks": 25,
-        "xp": 110,
-        "product": "uncut_diamond"
-      },
-      {
-        "id": "dragonstone_gem",
-        "name": "Mine uncut dragonstone",
-        "level": 75,
-        "ticks": 30,
-        "xp": 140,
-        "product": "uncut_dragonstone"
-      },
-      {
-        "id": "onyx_gem",
-        "name": "Mine uncut onyx",
-        "level": 90,
-        "ticks": 35,
-        "xp": 170,
-        "product": "uncut_onyx"
+        "xp": 65,
+        "dropTable": [
+          {
+            "itemId": "uncut_sapphire",
+            "chance": 0.35,
+            "quantity": 1
+          },
+          {
+            "itemId": "uncut_ruby",
+            "chance": 0.28,
+            "quantity": 1
+          },
+          {
+            "itemId": "uncut_diamond",
+            "chance": 0.20,
+            "quantity": 1
+          },
+          {
+            "itemId": "uncut_dragonstone",
+            "chance": 0.12,
+            "quantity": 1
+          },
+          {
+            "itemId": "uncut_onyx",
+            "chance": 0.05,
+            "quantity": 1
+          }
+        ]
       }
     ]
   },
@@ -13695,6 +13689,22 @@ function hasToolForSkill(skill, equipment, inventory, itemsData, stats = {}) {
 
 const TICK_MS = 600;
 /**
+ * Roll drops from a drop table (used for mining gems, etc.)
+ * Returns object of { itemId: quantity }
+ */
+function rollDropTableOnce(dropTable) {
+    const drops = {};
+    for (const drop of dropTable) {
+        if (Math.random() < drop.chance) {
+            const qty = Array.isArray(drop.quantity)
+                ? Math.floor(Math.random() * (drop.quantity[1] - drop.quantity[0] + 1)) + drop.quantity[0]
+                : drop.quantity;
+            drops[drop.itemId] = (drops[drop.itemId] || 0) + qty;
+        }
+    }
+    return drops;
+}
+/**
  * Format elapsed milliseconds into a human-readable duration string.
  * Only shows units that have a non-zero value, starting from the largest.
  */
@@ -13801,8 +13811,123 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
             }
         }
     }
+    // Handle drop table (for actions with multiple possible products like gem mining)
+    if (task.action.dropTable) {
+        const bankingEnabled = task.bankingEnabled || false;
+        // Track starting inventory state
+        const startingInvState = {};
+        for (const slot of newInv) {
+            if (!slot)
+                continue;
+            startingInvState[slot.itemId] = (startingInvState[slot.itemId] || 0) + slot.quantity;
+        }
+        if (bankingEnabled) {
+            const bankDelayTicks = Math.ceil(getAgilityBankDelayFromStats(stats) / TICK_MS);
+            let remainingTicks = totalTicks;
+            let actionsCompleted = 0;
+            while (remainingTicks >= actionTicks && actionsCompleted < actions) {
+                remainingTicks -= actionTicks;
+                actionsCompleted++;
+                // Roll drops and add to inventory
+                const drops = rollDropTableOnce(task.action.dropTable);
+                for (const [itemId, qty] of Object.entries(drops)) {
+                    const item = itemsData[itemId];
+                    const stackable = item?.stackable || false;
+                    if (stackable) {
+                        const existingIdx = newInv.findIndex(s => s && s.itemId === itemId);
+                        if (existingIdx !== -1) {
+                            newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + qty };
+                        }
+                        else {
+                            const emptyIdx = newInv.indexOf(null);
+                            if (emptyIdx !== -1) {
+                                newInv[emptyIdx] = { itemId, quantity: qty };
+                            }
+                            else {
+                                itemsDropped[itemId] = (itemsDropped[itemId] || 0) + qty;
+                            }
+                        }
+                    }
+                    else {
+                        for (let q = 0; q < qty; q++) {
+                            const emptyIdx = newInv.indexOf(null);
+                            if (emptyIdx !== -1) {
+                                newInv[emptyIdx] = { itemId, quantity: 1 };
+                            }
+                            else {
+                                itemsDropped[itemId] = (itemsDropped[itemId] || 0) + 1;
+                            }
+                        }
+                    }
+                }
+                // Auto-bank trip if inventory full
+                if (newInv.indexOf(null) === -1) {
+                    if (remainingTicks < bankDelayTicks)
+                        break;
+                    remainingTicks -= bankDelayTicks;
+                    for (let i = 0; i < newInv.length; i++) {
+                        if (!newInv[i])
+                            continue;
+                        itemsBanked[newInv[i].itemId] = (itemsBanked[newInv[i].itemId] || 0) + newInv[i].quantity;
+                        newInv[i] = null;
+                    }
+                }
+            }
+            // Compute itemsGained
+            const totalAccumulated = { ...itemsBanked };
+            for (const slot of newInv) {
+                if (!slot)
+                    continue;
+                totalAccumulated[slot.itemId] = (totalAccumulated[slot.itemId] || 0) + slot.quantity;
+            }
+            for (const [itemId, qty] of Object.entries(totalAccumulated)) {
+                const netGain = qty - (startingInvState[itemId] || 0);
+                if (netGain > 0)
+                    itemsGained[itemId] = netGain;
+            }
+        }
+        else {
+            // Banking disabled: items fill inventory, excess is dropped
+            for (let a = 0; a < actions; a++) {
+                const drops = rollDropTableOnce(task.action.dropTable);
+                for (const [itemId, qty] of Object.entries(drops)) {
+                    const item = itemsData[itemId];
+                    const stackable = item?.stackable || false;
+                    if (stackable) {
+                        const existingIdx = newInv.findIndex(s => s && s.itemId === itemId);
+                        if (existingIdx !== -1) {
+                            newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + qty };
+                            itemsGained[itemId] = (itemsGained[itemId] || 0) + qty;
+                        }
+                        else {
+                            const emptyIdx = newInv.indexOf(null);
+                            if (emptyIdx !== -1) {
+                                newInv[emptyIdx] = { itemId, quantity: qty };
+                                itemsGained[itemId] = (itemsGained[itemId] || 0) + qty;
+                            }
+                            else {
+                                itemsDropped[itemId] = (itemsDropped[itemId] || 0) + qty;
+                            }
+                        }
+                    }
+                    else {
+                        for (let q = 0; q < qty; q++) {
+                            const emptyIdx = newInv.indexOf(null);
+                            if (emptyIdx !== -1) {
+                                newInv[emptyIdx] = { itemId, quantity: 1 };
+                                itemsGained[itemId] = (itemsGained[itemId] || 0) + 1;
+                            }
+                            else {
+                                itemsDropped[itemId] = (itemsDropped[itemId] || 0) + 1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
     // Handle product placement based on bankingEnabled
-    if (task.action.product) {
+    else if (task.action.product) {
         const bankingEnabled = task.bankingEnabled || false;
         const product = task.action.product;
         const qtyPerAction = task.action.productQty || 1;
@@ -17598,6 +17723,20 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
                         const qty = action.productQty || 1;
                         updateBankDirect({ [action.product]: qty });
                     }
+                    else if (action.dropTable) {
+                        // Roll drops from drop table
+                        const bankUpdates = {};
+                        for (const drop of action.dropTable) {
+                            if (Math.random() < drop.chance) {
+                                const qty = Array.isArray(drop.quantity)
+                                    ? Math.floor(Math.random() * (drop.quantity[1] - drop.quantity[0] + 1)) + drop.quantity[0]
+                                    : drop.quantity;
+                                bankUpdates[drop.itemId] = (bankUpdates[drop.itemId] || 0) + qty;
+                            }
+                        }
+                        if (Object.keys(bankUpdates).length > 0)
+                            updateBankDirect(bankUpdates);
+                    }
                     // Still update inventory if materials were consumed
                     if (action.materials)
                         updateInventory(newInv);
@@ -17779,7 +17918,11 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
                                 action.runeReq && !hasRunes && (h("span", { class: "block text-[#ff6b6b] mt-1" }, "\uD83D\uDD2E Missing runes (or equip staff)")))),
                         action.product && (h("span", { class: "text-[10px] text-[var(--color-gold-dim)]" },
                             "\u2192 ",
-                            itemsData[action.product]?.name || action.product))),
+                            itemsData[action.product]?.name || action.product)),
+                        action.dropTable && (h("div", { class: "text-right flex flex-col gap-0.5" }, action.dropTable.map(drop => (h("div", { key: drop.itemId, class: "text-[9px] text-[var(--color-gold-dim)]" },
+                            Math.round(drop.chance * 100),
+                            "% ",
+                            itemsData[drop.itemId]?.name || drop.itemId)))))),
                     h("button", { onClick: () => handleAddToHome(selectedSkill, action), class: "px-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5", title: "Add to Home Screen" },
                         h("span", { class: "text-base" }, "\uD83C\uDFE0"),
                         h("span", { class: "text-[8px] text-[var(--color-parchment)] opacity-50" }, "Add"))));
