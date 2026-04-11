@@ -19,7 +19,7 @@ const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => 
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS]
 
 export default function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHour, skipHourUnlocked }) {
-  const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask } = useGame()
+  const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask, activeTask } = useGame()
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
   const [selectedAction, setSelectedAction] = useState(null)
   const [skilling, setSkilling] = useState(null)
@@ -378,7 +378,10 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             type="checkbox"
             id="skill-banking"
             checked={skillingBankingEnabled}
-            onChange={(e) => setSkillingBankingEnabled(e.target.checked)}
+            onChange={(e) => {
+              setSkillingBankingEnabled(e.target.checked)
+              if (activeTask) setActiveTask({ ...activeTask, bankingEnabled: e.target.checked })
+            }}
             style={{ cursor: 'pointer' }}
           />
           <label htmlFor="skill-banking" style={{ fontSize: '12px', color: '#e8d5b0', opacity: 0.7, cursor: 'pointer' }}>
