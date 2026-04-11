@@ -476,7 +476,7 @@ const itemsData = {
     "twoHanded": false,
     "stackable": false,
     "attackSpeed": 5,
-    "attackStyle": "crush",
+    "attackStyle": "magic",
     "attackBonus": {
       "stab": 2,
       "slash": -1,
@@ -4224,7 +4224,7 @@ const itemsData = {
     "twoHanded": false,
     "stackable": false,
     "attackSpeed": 5,
-    "attackStyle": "crush",
+    "attackStyle": "magic",
     "attackBonus": {
       "stab": 7,
       "slash": -1,
@@ -4258,7 +4258,7 @@ const itemsData = {
     "twoHanded": false,
     "stackable": false,
     "attackSpeed": 5,
-    "attackStyle": "crush",
+    "attackStyle": "magic",
     "attackBonus": {
       "stab": 7,
       "slash": -1,
@@ -4292,7 +4292,7 @@ const itemsData = {
     "twoHanded": false,
     "stackable": false,
     "attackSpeed": 5,
-    "attackStyle": "crush",
+    "attackStyle": "magic",
     "attackBonus": {
       "stab": 7,
       "slash": -1,
@@ -4326,7 +4326,7 @@ const itemsData = {
     "twoHanded": false,
     "stackable": false,
     "attackSpeed": 5,
-    "attackStyle": "crush",
+    "attackStyle": "magic",
     "attackBonus": {
       "stab": 7,
       "slash": -1,
@@ -4360,7 +4360,7 @@ const itemsData = {
     "twoHanded": false,
     "stackable": false,
     "attackSpeed": 5,
-    "attackStyle": "crush",
+    "attackStyle": "magic",
     "attackBonus": {
       "stab": 7,
       "slash": -1,
@@ -16372,6 +16372,9 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
         }
         const combatType = getCombatType(equipment, itemsData);
         const spell = combatType === 'magic' && activeCombatSpell ? spellsData[activeCombatSpell.id] : null;
+        if (combatType === 'magic' && !spell) {
+            addToast('No spell selected! Use the 🔮 Cast button to pick a spell.', 'error');
+        }
         const state = createCombatState(monster, combatType, combatStance, spell);
         // Reset potion and special attack energy on new fight
         state.specialAttackEnergy = 100;
@@ -17390,7 +17393,7 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
     const skillXP = stats[selectedSkill]?.xp || 0;
     const skillLevel = getLevelFromXP(skillXP);
     const actions = skillData ? getAvailableActions(skillData.actions, skillXP) : [];
-    const allActions = skillData?.actions || [];
+    const allActions = [...(skillData?.actions || [])].sort((a, b) => a.level - b.level);
     const toolMult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory);
     if (!skilling) {
         return (h("div", { class: "h-full overflow-y-auto p-4" },

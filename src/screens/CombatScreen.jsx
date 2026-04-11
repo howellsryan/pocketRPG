@@ -316,6 +316,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
     }
     const combatType = getCombatType(equipment, itemsData)
     const spell = combatType === 'magic' && activeCombatSpell ? spellsData[activeCombatSpell.id] : null
+    if (combatType === 'magic' && !spell) {
+      addToast('No spell selected! Use the 🔮 Cast button to pick a spell.', 'error')
+    }
     const state = createCombatState(monster, combatType, combatStance, spell)
     // Reset potion and special attack energy on new fight
     state.specialAttackEnergy = 100
