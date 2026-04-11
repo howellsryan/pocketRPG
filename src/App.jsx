@@ -22,7 +22,7 @@ import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleC
 import { getLevelFromXP } from './engine/experience.js'
 
 function GameApp() {
-  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures } = useGame()
+  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask } = useGame()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [gameReady, setGameReady] = useState(false)
   const [showNewGame, setShowNewGame] = useState(false)
@@ -155,6 +155,14 @@ function GameApp() {
               negated[itemId] = -qty
             }
             updateBankDirect(negated)
+          }
+          // Persist slayer task update if present
+          if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
+            if (sim.slayerTaskUpdate.completed) {
+              await saveSetting('slayerTask', null)
+            } else {
+              await saveSetting('slayerTask', sim.slayerTaskUpdate)
+            }
           }
 
           setIdleResult({ elapsedMs, task: savedTask, ...sim })
@@ -325,6 +333,10 @@ function GameApp() {
         negated[itemId] = -qty
       }
       updateBankDirect(negated)
+    }
+    // Update slayer task if present
+    if (task.type === 'combat' && sim.slayerTaskUpdate) {
+      setSlayerTask(sim.slayerTaskUpdate.completed ? null : sim.slayerTaskUpdate)
     }
 
     setIdleResult({ elapsedMs: ONE_HOUR_MS, task, ...sim })
