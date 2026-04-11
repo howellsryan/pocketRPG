@@ -376,7 +376,7 @@
     "twoHanded": false,
     "stackable": false,
     "attackSpeed": 5,
-    "attackStyle": "crush",
+    "attackStyle": "magic",
     "attackBonus": {
       "stab": 2,
       "slash": -1,
@@ -4124,7 +4124,7 @@
     "twoHanded": false,
     "stackable": false,
     "attackSpeed": 5,
-    "attackStyle": "crush",
+    "attackStyle": "magic",
     "attackBonus": {
       "stab": 7,
       "slash": -1,
@@ -4158,7 +4158,7 @@
     "twoHanded": false,
     "stackable": false,
     "attackSpeed": 5,
-    "attackStyle": "crush",
+    "attackStyle": "magic",
     "attackBonus": {
       "stab": 7,
       "slash": -1,
@@ -4192,7 +4192,7 @@
     "twoHanded": false,
     "stackable": false,
     "attackSpeed": 5,
-    "attackStyle": "crush",
+    "attackStyle": "magic",
     "attackBonus": {
       "stab": 7,
       "slash": -1,
@@ -4226,7 +4226,7 @@
     "twoHanded": false,
     "stackable": false,
     "attackSpeed": 5,
-    "attackStyle": "crush",
+    "attackStyle": "magic",
     "attackBonus": {
       "stab": 7,
       "slash": -1,
@@ -4260,7 +4260,7 @@
     "twoHanded": false,
     "stackable": false,
     "attackSpeed": 5,
-    "attackStyle": "crush",
+    "attackStyle": "magic",
     "attackBonus": {
       "stab": 7,
       "slash": -1,

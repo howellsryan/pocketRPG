@@ -314,10 +314,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
         return
       }
     }
-    const weaponItem = equipment?.weapon ? itemsData[equipment.weapon.itemId] : null
-    const isMagicWeapon = weaponItem && (weaponItem.attackStyle === 'magic' || (weaponItem.attackBonus?.magic || 0) > 0)
-    const combatType = (isMagicWeapon && activeCombatSpell) ? 'magic' : getCombatType(equipment, itemsData)
+    const combatType = getCombatType(equipment, itemsData)
     const spell = combatType === 'magic' && activeCombatSpell ? spellsData[activeCombatSpell.id] : null
+    if (combatType === 'magic' && !spell) {
+      addToast('No spell selected! Use the 🔮 Cast button to pick a spell.', 'error')
+    }
     const state = createCombatState(monster, combatType, combatStance, spell)
     // Reset potion and special attack energy on new fight
     state.specialAttackEnergy = 100
@@ -332,9 +333,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
   }
 
   const continueFight = (monster) => {
-    const weaponItem = equipment?.weapon ? itemsData[equipment.weapon.itemId] : null
-    const isMagicWeapon = weaponItem && (weaponItem.attackStyle === 'magic' || (weaponItem.attackBonus?.magic || 0) > 0)
-    const combatType = (isMagicWeapon && activeCombatSpell) ? 'magic' : getCombatType(equipment, itemsData)
+    const combatType = getCombatType(equipment, itemsData)
     const spell = combatType === 'magic' && activeCombatSpell ? spellsData[activeCombatSpell.id] : null
     const state = createCombatState(monster, combatType, combatStance, spell)
     // Reset potion and special attack energy on new fight
