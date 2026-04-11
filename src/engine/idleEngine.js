@@ -367,19 +367,22 @@ function idleRollDrops(monster) {
 
 /**
  * Simulate idle combat.
- * Returns { xpGained, lootGained, lootLost, lootBanked, monstersKilled, finalInventory }
+ * Returns { xpGained, lootGained, lootLost, lootBanked, monstersKilled, finalInventory, slayerXpGained, slayerTaskUpdate }
  *
  * lootGained  — newly gained items only (difference from starting inventory)
  * lootLost    — items discarded due to full inventory (bankingEnabled = false)
  * lootBanked  — items banked during auto-bank trips (bankingEnabled = true)
+ * slayerXpGained — slayer XP earned from monsters on-task
+ * slayerTaskUpdate — updated slayer task with new monstersRemaining, or null if task complete
  *
  * When task.bankingEnabled is true, the simulation deducts one agility-scaled bank
  * delay per full-inventory trip instead of losing items to the floor.
  *
  * inventory: current inventory array (28 slots)
  * itemsData: items lookup
+ * slayerTask: optional current slayer task (if not on-task, will be null)
  */
-export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsData) {
+export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsData, slayerTask = null) {
   if (!task || !task.monster) return null
 
   const monster = task.monster
@@ -450,11 +453,19 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   const lootBanked = {}
   const xpGained   = {}
   let monstersKilled = 0
+  let monstersKilledOnTask = 0
+  let slayerXpGained = 0
   let remainingTicks = totalTicks
 
   while (remainingTicks >= ticksPerCycle) {
     remainingTicks -= ticksPerCycle
     monstersKilled++
+
+    // Check if this kill counts toward slayer task
+    if (slayerTask && slayerTask.monsterId === monster.id && slayerTask.monstersRemaining > 0) {
+      monstersKilledOnTask++
+      slayerXpGained += monster.hitpoints // Slayer XP = monster HP
+    }
 
     // XP for this kill
     for (const [skill, xp] of Object.entries(xpPerKill)) {
@@ -534,5 +545,18 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     }
   }
 
-  return { xpGained, lootGained, lootLost, lootBanked, monstersKilled, finalInventory: newInv }
+  // Calculate slayer task update
+  let slayerTaskUpdate = null
+  if (slayerTask && monstersKilledOnTask > 0) {
+    const newRemaining = Math.max(0, slayerTask.monstersRemaining - monstersKilledOnTask)
+    if (newRemaining <= 0) {
+      // Task complete
+      slayerTaskUpdate = { ...slayerTask, monstersRemaining: 0, completed: true }
+    } else {
+      // Task in progress
+      slayerTaskUpdate = { ...slayerTask, monstersRemaining: newRemaining }
+    }
+  }
+
+  return { xpGained, lootGained, lootLost, lootBanked, monstersKilled, finalInventory: newInv, slayerXpGained, slayerTaskUpdate }
 }
