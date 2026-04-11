@@ -6411,118 +6411,6 @@ const itemsData = {
     "stackable": true,
     "shopValue": 150,
     "icon": "🪵"
-  },
-  "sapphire_ring": {
-    "id": "sapphire_ring",
-    "name": "Sapphire ring",
-    "type": "armour",
-    "slot": "ring",
-    "stackable": false,
-    "attackBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
-    },
-    "defenceBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
-    },
-    "otherBonus": {
-      "meleeStrength": 0,
-      "rangedStrength": 0,
-      "magicDamage": 0
-    },
-    "shopValue": 500,
-    "icon": "💍"
-  },
-  "emerald_ring": {
-    "id": "emerald_ring",
-    "name": "Emerald ring",
-    "type": "armour",
-    "slot": "ring",
-    "stackable": false,
-    "attackBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
-    },
-    "defenceBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
-    },
-    "otherBonus": {
-      "meleeStrength": 0,
-      "rangedStrength": 0,
-      "magicDamage": 0
-    },
-    "shopValue": 750,
-    "icon": "💍"
-  },
-  "ruby_ring": {
-    "id": "ruby_ring",
-    "name": "Ruby ring",
-    "type": "armour",
-    "slot": "ring",
-    "stackable": false,
-    "attackBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
-    },
-    "defenceBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
-    },
-    "otherBonus": {
-      "meleeStrength": 0,
-      "rangedStrength": 0,
-      "magicDamage": 0
-    },
-    "shopValue": 1000,
-    "icon": "💍"
-  },
-  "diamond_ring": {
-    "id": "diamond_ring",
-    "name": "Diamond ring",
-    "type": "armour",
-    "slot": "ring",
-    "stackable": false,
-    "attackBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
-    },
-    "defenceBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
-    },
-    "otherBonus": {
-      "meleeStrength": 0,
-      "rangedStrength": 0,
-      "magicDamage": 0
-    },
-    "shopValue": 1500,
-    "icon": "💍"
   }
 };
 const monstersData = {
@@ -11536,7 +11424,8 @@ const skillsData = {
         "ticks": 3,
         "xp": 17,
         "type": "enchant_jewel",
-        "product": "sapphire_ring",
+        "product": "sapphire_amulet",
+        "itemReq": ["sapphire_amulet"],
         "runeReq": {
           "cosmic_rune": 1,
           "water_rune": 1
@@ -11549,7 +11438,8 @@ const skillsData = {
         "ticks": 3,
         "xp": 37,
         "type": "enchant_jewel",
-        "product": "emerald_ring",
+        "product": "emerald_amulet",
+        "itemReq": ["emerald_amulet"],
         "runeReq": {
           "cosmic_rune": 1,
           "air_rune": 1
@@ -11562,7 +11452,8 @@ const skillsData = {
         "ticks": 3,
         "xp": 59,
         "type": "enchant_jewel",
-        "product": "ruby_ring",
+        "product": "ruby_amulet",
+        "itemReq": ["ruby_amulet"],
         "runeReq": {
           "cosmic_rune": 1,
           "fire_rune": 1
@@ -11575,7 +11466,8 @@ const skillsData = {
         "ticks": 3,
         "xp": 67,
         "type": "enchant_jewel",
-        "product": "diamond_ring",
+        "product": "diamond_amulet",
+        "itemReq": ["diamond_amulet"],
         "runeReq": {
           "cosmic_rune": 1,
           "earth_rune": 1
@@ -17507,7 +17399,8 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
                 const hasMats = !action.materials || Object.entries(action.materials).every(([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty);
                 const needsTool = ['mining', 'woodcutting', 'fishing'].includes(selectedSkill);
                 const hasTool = !needsTool || hasToolForSkill(selectedSkill, equipment, inventory, itemsData, stats);
-                const canStart = available && hasMats && hasTool;
+                const hasItems = !action.itemReq || action.itemReq.some(id => (countItem(inventory, id) + (bank[id]?.quantity || 0)) > 0);
+                const canStart = available && hasMats && hasTool && hasItems;
                 return (h("div", { key: action.id, class: "flex gap-2 items-stretch" },
                     h("button", { onClick: () => canStart && startSkilling(action), disabled: !canStart, class: `flex-1 flex items-center justify-between p-3 rounded-xl border transition-colors
                     ${canStart
@@ -17534,7 +17427,10 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
                                 action.materials && (h("span", null,
                                     " \u00B7 Needs: ",
                                     Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', '))),
-                                needsTool && !hasTool && (h("span", { class: "block text-[#ff6b6b] mt-1" }, selectedSkill === 'mining' ? '⚒️ No pickaxe' : selectedSkill === 'woodcutting' ? '🪓 No axe' : '🎣 No rod')))),
+                                needsTool && !hasTool && (h("span", { class: "block text-[#ff6b6b] mt-1" }, selectedSkill === 'mining' ? '⚒️ No pickaxe' : selectedSkill === 'woodcutting' ? '🪓 No axe' : '🎣 No rod')),
+                                action.itemReq && !hasItems && (h("span", { class: "block text-[#ff6b6b] mt-1" },
+                                    "\u2728 Needs: ",
+                                    action.itemReq.map(id => itemsData[id]?.name || id).join(' or '))))),
                         action.product && (h("span", { class: "text-[10px] text-[var(--color-gold-dim)]" },
                             "\u2192 ",
                             itemsData[action.product]?.name || action.product))),

@@ -352,7 +352,10 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             )
             const needsTool = ['mining', 'woodcutting', 'fishing'].includes(selectedSkill)
             const hasTool = !needsTool || hasToolForSkill(selectedSkill, equipment, inventory, itemsData, stats)
-            const canStart = available && hasMats && hasTool
+            const hasItems = !action.itemReq || action.itemReq.some(
+              id => (countItem(inventory, id) + (bank[id]?.quantity || 0)) > 0
+            )
+            const canStart = available && hasMats && hasTool && hasItems
             return (
               <div key={action.id} class="flex gap-2 items-stretch">
                 <button
@@ -375,6 +378,11 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                       {needsTool && !hasTool && (
                         <span class="block text-[#ff6b6b] mt-1">
                           {selectedSkill === 'mining' ? '⚒️ No pickaxe' : selectedSkill === 'woodcutting' ? '🪓 No axe' : '🎣 No rod'}
+                        </span>
+                      )}
+                      {action.itemReq && !hasItems && (
+                        <span class="block text-[#ff6b6b] mt-1">
+                          ✨ Needs: {action.itemReq.map(id => itemsData[id]?.name || id).join(' or ')}
                         </span>
                       )}
                     </div>
