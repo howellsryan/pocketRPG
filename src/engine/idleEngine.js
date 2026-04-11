@@ -12,6 +12,7 @@ import {
 } from './formulas.js'
 import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getCombatType } from './equipment.js'
 import { getToolSpeedMultiplier } from './skilling.js'
+import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE } from '../utils/constants.js'
 import { getAgilityBankDelayFromStats, simulateIdleAgility } from './agility.js'
 
@@ -84,17 +85,19 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
   // Cap actions to available runes (for magic skilling)
   if (task.action.runeReq) {
     let maxFromRunes = Infinity
-    for (const [runeId, qtyPerAction] of Object.entries(task.action.runeReq)) {
+    const runesToConsume = getRunesToConsume(task.action.runeReq, equipment, itemsData)
+
+    for (const [runeId, qtyPerAction] of Object.entries(runesToConsume)) {
       const invCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === runeId ? (slot?.quantity || 0) : 0), 0)
       const bankCount = (bank && bank[runeId]) ? bank[runeId].quantity : 0
       const possible = Math.floor((invCount + bankCount) / qtyPerAction)
       if (possible < maxFromRunes) maxFromRunes = possible
     }
-    if (maxFromRunes === 0) return null
+    if (maxFromRunes === 0 && Object.keys(runesToConsume).length > 0) return null
     actions = Math.min(actions, maxFromRunes)
 
-    // Record consumed runes
-    for (const [runeId, qtyPerAction] of Object.entries(task.action.runeReq)) {
+    // Record consumed runes (only those not provided by staff)
+    for (const [runeId, qtyPerAction] of Object.entries(runesToConsume)) {
       itemsConsumed[runeId] = qtyPerAction * actions
     }
   }
@@ -112,7 +115,8 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
 
   // Consume runes from inventory (for magic skilling)
   if (task.action.runeReq) {
-    for (const [runeId, qtyPerAction] of Object.entries(task.action.runeReq)) {
+    const runesToConsume = getRunesToConsume(task.action.runeReq, equipment, itemsData)
+    for (const [runeId, qtyPerAction] of Object.entries(runesToConsume)) {
       let remaining = qtyPerAction * actions
       for (let i = 0; i < newInv.length && remaining > 0; i++) {
         if (newInv[i]?.itemId === runeId) {
@@ -490,7 +494,8 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   // Pre-calculate how many kills are possible given available runes (inventory + bank)
   let maxKillsFromRunes = Infinity
   if (combatType === 'magic' && task.spell?.runeReq && hitsNeeded < Infinity) {
-    for (const [runeId, qtyPerCast] of Object.entries(task.spell.runeReq)) {
+    const runesToConsume = getRunesToConsume(task.spell.runeReq, equipment, itemsData)
+    for (const [runeId, qtyPerCast] of Object.entries(runesToConsume)) {
       const invCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === runeId ? (slot?.quantity || 0) : 0), 0)
       const bankCount = (bank && bank[runeId]) ? bank[runeId].quantity : 0
       const runesPerKill = qtyPerCast * hitsNeeded
@@ -597,7 +602,8 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   // Deduct runes for magic combat: consume from inventory first, track bank overflow
   const runesConsumed = {}
   if (combatType === 'magic' && task.spell?.runeReq && hitsNeeded < Infinity && monstersKilled > 0) {
-    for (const [runeId, qtyPerCast] of Object.entries(task.spell.runeReq)) {
+    const runesToConsume = getRunesToConsume(task.spell.runeReq, equipment, itemsData)
+    for (const [runeId, qtyPerCast] of Object.entries(runesToConsume)) {
       let remaining = qtyPerCast * hitsNeeded * monstersKilled
       for (let i = 0; i < newInv.length && remaining > 0; i++) {
         if (newInv[i]?.itemId === runeId) {

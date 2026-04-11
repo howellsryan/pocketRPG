@@ -4159,6 +4159,7 @@
     "stackable": false,
     "attackSpeed": 5,
     "attackStyle": "magic",
+    "elemental": "air_rune",
     "attackBonus": {
       "stab": 7,
       "slash": -1,
@@ -4193,6 +4194,7 @@
     "stackable": false,
     "attackSpeed": 5,
     "attackStyle": "magic",
+    "elemental": "water_rune",
     "attackBonus": {
       "stab": 7,
       "slash": -1,
@@ -4227,6 +4229,7 @@
     "stackable": false,
     "attackSpeed": 5,
     "attackStyle": "magic",
+    "elemental": "fire_rune",
     "attackBonus": {
       "stab": 7,
       "slash": -1,
@@ -4261,6 +4264,7 @@
     "stackable": false,
     "attackSpeed": 5,
     "attackStyle": "magic",
+    "elemental": "earth_rune",
     "attackBonus": {
       "stab": 7,
       "slash": -1,

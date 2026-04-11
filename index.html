@@ -4259,6 +4259,7 @@ const itemsData = {
     "stackable": false,
     "attackSpeed": 5,
     "attackStyle": "magic",
+    "elemental": "air_rune",
     "attackBonus": {
       "stab": 7,
       "slash": -1,
@@ -4293,6 +4294,7 @@ const itemsData = {
     "stackable": false,
     "attackSpeed": 5,
     "attackStyle": "magic",
+    "elemental": "water_rune",
     "attackBonus": {
       "stab": 7,
       "slash": -1,
@@ -4327,6 +4329,7 @@ const itemsData = {
     "stackable": false,
     "attackSpeed": 5,
     "attackStyle": "magic",
+    "elemental": "fire_rune",
     "attackBonus": {
       "stab": 7,
       "slash": -1,
@@ -4361,6 +4364,7 @@ const itemsData = {
     "stackable": false,
     "attackSpeed": 5,
     "attackStyle": "magic",
+    "elemental": "earth_rune",
     "attackBonus": {
       "stab": 7,
       "slash": -1,
@@ -12444,6 +12448,7 @@ function simulateIdleAgility(task, elapsedMs) {
 
 
 
+
 /**
  * Create a new combat state
  */
@@ -12607,17 +12612,8 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
             }
         }
         else if (state.combatType === 'magic' && state.spell) {
-            // Check if player has required runes
-            let hasRunes = true;
-            if (state.spell.runeReq) {
-                for (const [runeId, qty] of Object.entries(state.spell.runeReq)) {
-                    const runeCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === runeId ? (slot?.quantity || 1) : 0), 0);
-                    if (runeCount < qty) {
-                        hasRunes = false;
-                        break;
-                    }
-                }
-            }
+            // Check if player has required runes (considering equipped staffs)
+            const hasRunes = hasRequiredRunes(state.spell.runeReq, inventory, {}, equipment, itemsData);
             // Only cast if runes are available
             if (hasRunes) {
                 const effMag = effectiveMagic(boostedPlayerStats.magic);
@@ -12626,9 +12622,9 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
                 const acc = hitChance(atkRoll, defRoll);
                 const maxHit = magicMaxHit(state.spell.baseDamage, bonuses.otherBonus.magicDamage);
                 damage = rollDamage(acc, maxHit);
-                // Track which runes to consume
+                // Track which runes to consume (excluding those provided by staff)
                 if (state.spell.runeReq) {
-                    state.runesConsumed = { ...state.spell.runeReq };
+                    state.runesConsumed = getRunesToConsume(state.spell.runeReq, equipment, itemsData);
                 }
                 // Magic always grants base spell XP on cast
                 xpSkills.magic = (state.spell.baseXP || 0);
@@ -13347,6 +13343,7 @@ function hasToolForSkill(skill, equipment, inventory, itemsData, stats = {}) {
 
 
 
+
 const TICK_MS = 600;
 /**
  * Format elapsed milliseconds into a human-readable duration string.
@@ -13414,18 +13411,19 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
     // Cap actions to available runes (for magic skilling)
     if (task.action.runeReq) {
         let maxFromRunes = Infinity;
-        for (const [runeId, qtyPerAction] of Object.entries(task.action.runeReq)) {
+        const runesToConsume = getRunesToConsume(task.action.runeReq, equipment, itemsData);
+        for (const [runeId, qtyPerAction] of Object.entries(runesToConsume)) {
             const invCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === runeId ? (slot?.quantity || 0) : 0), 0);
             const bankCount = (bank && bank[runeId]) ? bank[runeId].quantity : 0;
             const possible = Math.floor((invCount + bankCount) / qtyPerAction);
             if (possible < maxFromRunes)
                 maxFromRunes = possible;
         }
-        if (maxFromRunes === 0)
+        if (maxFromRunes === 0 && Object.keys(runesToConsume).length > 0)
             return null;
         actions = Math.min(actions, maxFromRunes);
-        // Record consumed runes
-        for (const [runeId, qtyPerAction] of Object.entries(task.action.runeReq)) {
+        // Record consumed runes (only those not provided by staff)
+        for (const [runeId, qtyPerAction] of Object.entries(runesToConsume)) {
             itemsConsumed[runeId] = qtyPerAction * actions;
         }
     }
@@ -13440,7 +13438,8 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
     }
     // Consume runes from inventory (for magic skilling)
     if (task.action.runeReq) {
-        for (const [runeId, qtyPerAction] of Object.entries(task.action.runeReq)) {
+        const runesToConsume = getRunesToConsume(task.action.runeReq, equipment, itemsData);
+        for (const [runeId, qtyPerAction] of Object.entries(runesToConsume)) {
             let remaining = qtyPerAction * actions;
             for (let i = 0; i < newInv.length && remaining > 0; i++) {
                 if (newInv[i]?.itemId === runeId) {
@@ -13809,7 +13808,8 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
     // Pre-calculate how many kills are possible given available runes (inventory + bank)
     let maxKillsFromRunes = Infinity;
     if (combatType === 'magic' && task.spell?.runeReq && hitsNeeded < Infinity) {
-        for (const [runeId, qtyPerCast] of Object.entries(task.spell.runeReq)) {
+        const runesToConsume = getRunesToConsume(task.spell.runeReq, equipment, itemsData);
+        for (const [runeId, qtyPerCast] of Object.entries(runesToConsume)) {
             const invCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === runeId ? (slot?.quantity || 0) : 0), 0);
             const bankCount = (bank && bank[runeId]) ? bank[runeId].quantity : 0;
             const runesPerKill = qtyPerCast * hitsNeeded;
@@ -13917,7 +13917,8 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
     // Deduct runes for magic combat: consume from inventory first, track bank overflow
     const runesConsumed = {};
     if (combatType === 'magic' && task.spell?.runeReq && hitsNeeded < Infinity && monstersKilled > 0) {
-        for (const [runeId, qtyPerCast] of Object.entries(task.spell.runeReq)) {
+        const runesToConsume = getRunesToConsume(task.spell.runeReq, equipment, itemsData);
+        for (const [runeId, qtyPerCast] of Object.entries(runesToConsume)) {
             let remaining = qtyPerCast * hitsNeeded * monstersKilled;
             for (let i = 0; i < newInv.length && remaining > 0; i++) {
                 if (newInv[i]?.itemId === runeId) {
@@ -17115,6 +17116,7 @@ function AgilityScreen({ initialActionId, onBack, onSkipHour, skipHourUnlocked }
 
 
 
+
 // Agility, Prayer, and Slayer are special skills shown here in the Skills tab
 const SPECIAL_SKILLS = ['agility', 'prayer', 'slayer'];
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0);
@@ -17155,24 +17157,16 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
                     const newInv = [...inventory];
                     // Check and consume runes (for magic spells)
                     if (action.runeReq) {
-                        let hasRunes = true;
-                        for (const [runeId, qty] of Object.entries(action.runeReq)) {
-                            const invCount = countItem(newInv, runeId);
-                            const bankCount = bank[runeId]?.quantity || 0;
-                            if (invCount + bankCount < qty) {
-                                hasRunes = false;
-                                break;
-                            }
-                        }
-                        if (!hasRunes) {
+                        if (!hasRequiredRunes(action.runeReq, newInv, bank, equipment, itemsData)) {
                             skillingRef.current = { ...skillingState, active: false, stopped: true };
                             setSkilling({ ...skillingState, active: false, stopped: true });
                             addToast('Out of runes!', 'error');
                             return;
                         }
-                        // Remove runes — consume from inventory first, then bank
+                        // Remove runes that need to be consumed (excluding those provided by staff)
+                        const runesToConsume = getRunesToConsume(action.runeReq, equipment, itemsData);
                         const bankUpdates = {};
-                        for (const [runeId, qty] of Object.entries(action.runeReq)) {
+                        for (const [runeId, qty] of Object.entries(runesToConsume)) {
                             const invCount = countItem(newInv, runeId);
                             const fromInv = Math.min(invCount, qty);
                             const fromBank = qty - fromInv;
@@ -17397,10 +17391,11 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
             h("div", { class: "space-y-2" }, allActions.map(action => {
                 const available = action.level <= skillLevel;
                 const hasMats = !action.materials || Object.entries(action.materials).every(([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty);
+                const hasRunes = hasRequiredRunes(action.runeReq, inventory, bank, equipment, itemsData);
                 const needsTool = ['mining', 'woodcutting', 'fishing'].includes(selectedSkill);
                 const hasTool = !needsTool || hasToolForSkill(selectedSkill, equipment, inventory, itemsData, stats);
                 const hasItems = !action.itemReq || action.itemReq.some(id => (countItem(inventory, id) + (bank[id]?.quantity || 0)) > 0);
-                const canStart = available && hasMats && hasTool && hasItems;
+                const canStart = available && hasMats && hasRunes && hasTool && hasItems;
                 return (h("div", { key: action.id, class: "flex gap-2 items-stretch" },
                     h("button", { onClick: () => canStart && startSkilling(action), disabled: !canStart, class: `flex-1 flex items-center justify-between p-3 rounded-xl border transition-colors
                     ${canStart
@@ -17430,7 +17425,8 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
                                 needsTool && !hasTool && (h("span", { class: "block text-[#ff6b6b] mt-1" }, selectedSkill === 'mining' ? '⚒️ No pickaxe' : selectedSkill === 'woodcutting' ? '🪓 No axe' : '🎣 No rod')),
                                 action.itemReq && !hasItems && (h("span", { class: "block text-[#ff6b6b] mt-1" },
                                     "\u2728 Needs: ",
-                                    action.itemReq.map(id => itemsData[id]?.name || id).join(' or '))))),
+                                    action.itemReq.map(id => itemsData[id]?.name || id).join(' or '))),
+                                action.runeReq && !hasRunes && (h("span", { class: "block text-[#ff6b6b] mt-1" }, "\uD83D\uDD2E Missing runes (or equip staff)")))),
                         action.product && (h("span", { class: "text-[10px] text-[var(--color-gold-dim)]" },
                             "\u2192 ",
                             itemsData[action.product]?.name || action.product))),
