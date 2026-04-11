@@ -16563,7 +16563,7 @@ const SPECIAL_SKILLS = ['agility', 'prayer', 'slayer'];
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0);
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS];
 function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHour, skipHourUnlocked }) {
-    const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask } = useGame();
+    const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask, activeTask } = useGame();
     const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null);
     const [selectedAction, setSelectedAction] = useState(null);
     const [skilling, setSkilling] = useState(null);
@@ -16830,7 +16830,11 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
                         : '—')))),
         h("div", { class: "flex-shrink-0 mt-4 space-y-2" },
             h("div", { class: "flex items-center gap-2" },
-                h("input", { type: "checkbox", id: "skill-banking", checked: skillingBankingEnabled, onChange: (e) => setSkillingBankingEnabled(e.target.checked), style: { cursor: 'pointer' } }),
+                h("input", { type: "checkbox", id: "skill-banking", checked: skillingBankingEnabled, onChange: (e) => {
+                        setSkillingBankingEnabled(e.target.checked);
+                        if (activeTask)
+                            setActiveTask({ ...activeTask, bankingEnabled: e.target.checked });
+                    }, style: { cursor: 'pointer' } }),
                 h("label", { htmlFor: "skill-banking", style: { fontSize: '12px', color: '#e8d5b0', opacity: 0.7, cursor: 'pointer' } }, "Auto-bank items (may reduce XP/hr)")),
             skillingBankingEnabled && (h("div", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.5 } }, "\u23F3 Items go to inventory first. Auto-banks when full. Banking delay scales with Agility level."))),
         h("div", { class: "flex-shrink-0 flex gap-2 mt-3" },
