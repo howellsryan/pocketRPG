@@ -973,7 +973,7 @@
         "product": "bronze_bolts",
         "productQty": 10,
         "materials": {
-          "wooden_stock": 10,
+          "feathers": 10,
           "bronze_bolt_heads": 10
         }
       },
@@ -986,7 +986,7 @@
         "product": "iron_bolts",
         "productQty": 10,
         "materials": {
-          "wooden_stock": 10,
+          "feathers": 10,
           "iron_bolt_heads": 10
         }
       },
@@ -999,7 +999,7 @@
         "product": "steel_bolts",
         "productQty": 10,
         "materials": {
-          "wooden_stock": 10,
+          "feathers": 10,
           "steel_bolt_heads": 10
         }
       },
@@ -1012,7 +1012,7 @@
         "product": "mithril_bolts",
         "productQty": 10,
         "materials": {
-          "wooden_stock": 10,
+          "feathers": 10,
           "mithril_bolt_heads": 10
         }
       },
@@ -1025,7 +1025,7 @@
         "product": "adamant_bolts",
         "productQty": 10,
         "materials": {
-          "wooden_stock": 10,
+          "feathers": 10,
           "adamant_bolt_heads": 10
         }
       },
@@ -1038,7 +1038,7 @@
         "product": "rune_bolts",
         "productQty": 10,
         "materials": {
-          "wooden_stock": 10,
+          "feathers": 10,
           "rune_bolt_heads": 10
         }
       }
