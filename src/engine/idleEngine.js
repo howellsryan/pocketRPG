@@ -461,8 +461,8 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     remainingTicks -= ticksPerCycle
     monstersKilled++
 
-    // Check if this kill counts toward slayer task
-    if (slayerTask && slayerTask.monsterId === monster.id && slayerTask.monstersRemaining > 0) {
+    // Check if this kill counts toward slayer task — cap at total task count
+    if (slayerTask && slayerTask.monsterId === monster.id && monstersKilledOnTask < slayerTask.monstersRemaining) {
       monstersKilledOnTask++
       slayerXpGained += monster.hitpoints // Slayer XP = monster HP
     }
