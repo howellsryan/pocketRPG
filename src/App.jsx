@@ -15,7 +15,7 @@ import GeneralStoreScreen from './screens/GeneralStoreScreen.jsx'
 import EquipmentScreen from './screens/EquipmentScreen.jsx'
 import { SCREENS } from './utils/constants.js'
 import { hasSave, closeDB } from './db/database.js'
-import { initNewGame, saveSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
+import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
 import { startTicks, stopTicks, onTick } from './engine/tick.js'
 import { exportSave, importSave, snapshotToLocalStorage, restoreFromLocalStorage } from './db/saveload.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility } from './engine/idleEngine.js'
@@ -109,17 +109,18 @@ function GameApp() {
           }
 
           // Re-read latest stats/equipment/inventory/bank from DB to avoid stale state
-          const [freshStats, freshInv, freshEq, freshBank] = await Promise.all([
+          const [freshStats, freshInv, freshEq, freshBank, freshSlayerTask] = await Promise.all([
             getAllStats(),
             getInventory(),
             getEquipment(),
             getBank(),
+            getSetting('slayerTask'),
           ])
 
           let sim = null
           if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank)
           if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs)
-          if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current)
+          if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask)
           if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
 
           // Always show the modal — even if sim is null (e.g. <1 action completed)
@@ -285,14 +286,14 @@ function GameApp() {
     }
 
     const ONE_HOUR_MS = 3_600_000
-    const [freshStats, freshInv, freshEq, freshBank] = await Promise.all([
-      getAllStats(), getInventory(), getEquipment(), getBank(),
+    const [freshStats, freshInv, freshEq, freshBank, freshSlayerTask] = await Promise.all([
+      getAllStats(), getInventory(), getEquipment(), getBank(), getSetting('slayerTask'),
     ])
 
     let sim = null
     if (task.type === 'skill')   sim = simulateIdleSkilling(task, ONE_HOUR_MS, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
     if (task.type === 'gather')  sim = simulateIdleGather(task, ONE_HOUR_MS, freshInv, freshStats, itemsDataRef.current)
-    if (task.type === 'combat')  sim = simulateIdleCombat(task, ONE_HOUR_MS, freshStats, freshEq, freshInv, itemsDataRef.current)
+    if (task.type === 'combat')  sim = simulateIdleCombat(task, ONE_HOUR_MS, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask)
     if (task.type === 'agility') sim = simulateIdleAgility(task, ONE_HOUR_MS)
 
     if (!sim) {
@@ -454,8 +455,50 @@ function GameApp() {
               {(() => {
                 const hrs = idleResult.elapsedMs / 3600000
                 const perHr = (n) => hrs > 0 ? Math.round(n / hrs).toLocaleString() : '—'
+                const SKILL_ICONS = {
+                  attack: '⚔️', strength: '💪', defence: '🛡️', hitpoints: '❤️',
+                  ranged: '🏹', magic: '🔮', prayer: '🙏',
+                  mining: '⛏️', woodcutting: '🪓', fishing: '🎣', farming: '🌾', hunter: '🪤',
+                  smithing: '🔨', cooking: '🍳', crafting: '✂️', fletching: '🏹', herblore: '🧪', runecraft: '🔴',
+                  agility: '🏃', thieving: '🗝️', slayer: '💀', firemaking: '🔥', construction: '🏠'
+                }
 
                 return (<>
+                  {/* XP Gained Summary */}
+                  {(() => {
+                    const xpEntries = idleResult.xpGained ? Object.entries(idleResult.xpGained).filter(([_, xp]) => xp > 0) : []
+                    const hasXp = xpEntries.length > 0
+                    const hasMonstersKilled = idleResult.task?.type === 'combat' && idleResult.monstersKilled > 0
+                    const hasSlayerXp = idleResult.slayerXpGained > 0
+
+                    return (hasXp || hasMonstersKilled || hasSlayerXp) ? (
+                      <div style={{ marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' }}>
+                        <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>📊 Summary</div>
+                        {hasMonstersKilled && (
+                          <div style={{ marginBottom: '6px' }}>
+                            <div style={{ fontSize: '13px', color: '#e8d5b0' }}>🗡️ Monsters Slain</div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>
+                              <span>{idleResult.monstersKilled.toLocaleString()}</span>
+                              <span style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.45 }}>/hr {perHr(idleResult.monstersKilled)}</span>
+                            </div>
+                          </div>
+                        )}
+                        {xpEntries.map(([skill, xp]) => (
+                          <div key={skill} style={{ marginBottom: '4px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' }}>
+                              <span>{SKILL_ICONS[skill] || '⭐'} {skill.charAt(0).toUpperCase() + skill.slice(1)}</span>
+                              <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>+{Math.floor(xp).toLocaleString()}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8d5b0', opacity: 0.45 }}>
+                              <span>/hr</span>
+                              <span style={{ fontFamily: 'monospace' }}>{perHr(xp)}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null
+                  })()}
+
                   {/* Loot gained — drop table results only */}
                   {(() => {
                     const merged = {}
