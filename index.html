@@ -16835,6 +16835,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                 const isActive = activeCombatSpell?.id === spell.id;
                 return (h("button", { key: spell.id, onClick: () => { if (canCast) {
                         updateActiveCombatSpell({ id: spell.id, name: spell.name, baseDamage: spell.baseDamage });
+                        addToast(`Spell changed to ${spell.name}`, 'info');
                         setShowSpellModal(false);
                     } }, disabled: !canCast, class: `w-full p-3 rounded-lg border transition-colors ${isActive
                         ? 'bg-[#1a2a3a] border-[#2a5a7a]'
