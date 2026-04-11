@@ -7,7 +7,7 @@ import { getLevelFromXP } from '../engine/experience.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
-import { getCombatType } from '../engine/equipment.js'
+import { getCombatType, equipItem } from '../engine/equipment.js'
 import monstersData from '../data/monsters.json'
 import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
@@ -78,6 +78,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
   const [isAutoRestarting, setIsAutoRestarting] = useState(false)
   const [showPrayerModal, setShowPrayerModal] = useState(false)
   const [showPotionModal, setShowPotionModal] = useState(false)
+  const [showEquipmentModal, setShowEquipmentModal] = useState(false)
 
   const combatRef = useRef(null)
   const hpRef = useRef(currentHP)
@@ -420,6 +421,55 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
     addToast(`${potion.icon} ${potion.name}`, 'info')
   }
 
+  const handleEquipItem = (itemId) => {
+    if (!combat) return
+    const newInv = [...inventoryRef.current]
+    const itemIdx = newInv.findIndex(s => s && s.itemId === itemId)
+    if (itemIdx === -1) return
+
+    const itemData = itemsData[itemId]
+    if (!itemData || !itemData.slot) return
+
+    // Copy equipment to avoid mutating ref directly
+    const newEq = { ...equipmentRef.current }
+    const result = equipItem(newEq, itemData, itemsData)
+
+    if (!result.equipped) {
+      addToast('Could not equip item', 'error')
+      return
+    }
+
+    // Remove the equipped item from inventory
+    if (newInv[itemIdx].quantity > 1) {
+      newInv[itemIdx] = { ...newInv[itemIdx], quantity: newInv[itemIdx].quantity - 1 }
+    } else {
+      newInv[itemIdx] = null
+    }
+
+    // Add any unequipped items back to inventory
+    for (const unequipped of result.unequipped) {
+      if (itemsData[unequipped.itemId]?.stackable) {
+        const existingIdx = newInv.findIndex(s => s && s.itemId === unequipped.itemId)
+        if (existingIdx !== -1) {
+          newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + (unequipped.quantity || 1) }
+          continue
+        }
+      }
+      // Add to empty slot
+      const emptyIdx = newInv.findIndex(s => s === null)
+      if (emptyIdx !== -1) {
+        newInv[emptyIdx] = unequipped
+      }
+    }
+
+    updateInventory(newInv)
+    inventoryRef.current = newInv
+    updateEquipment(newEq)
+    equipmentRef.current = newEq
+
+    addToast(`Equipped ${itemData.name}`, 'info')
+  }
+
   const handlePrayer = (prayerId) => {
     if (!combatRef.current) return
     const prayer = prayersData[prayerId]
@@ -701,8 +751,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
                 🧪 Potion
               </button>
             </div>
-            {/* Special attack & Prayer buttons */}
-            <div class="grid grid-cols-2 gap-2">
+            {/* Special attack, Prayer, and Equipment buttons */}
+            <div class="grid grid-cols-3 gap-2">
               {(() => {
                 const weaponEntry = equipment?.weapon
                 const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
@@ -720,6 +770,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
                   </button>
                 )
               })()}
+              <button onClick={() => setShowEquipmentModal(true)}
+                class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
+                style="background:linear-gradient(135deg,#2a2a3a,#3a3a5a);border:1px solid rgba(150,150,200,0.35);color:#a8a8d8">
+                ⚙️ Gear
+              </button>
               <button onClick={() => setShowPrayerModal(true)}
                 class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
                 style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
@@ -887,6 +942,112 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
                       </div>
                     </div>
                   </button>
+                )
+              })
+            })()}
+          </div>
+        </Modal>
+      )}
+
+      {/* Equipment modal */}
+      {showEquipmentModal && (
+        <Modal onClose={() => setShowEquipmentModal(false)}>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">Swap Gear</h3>
+            <button
+              onClick={() => setShowEquipmentModal(false)}
+              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
+              title="Close"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="space-y-4 max-h-96 overflow-y-auto">
+            {(() => {
+              const equipment_items = inventoryRef.current
+                .filter(slot => slot && itemsData[slot.itemId]?.slot)
+
+              if (equipment_items.length === 0) {
+                return (
+                  <div class="text-center py-4 text-[var(--color-parchment)] opacity-50">
+                    No weapons or armour in inventory
+                  </div>
+                )
+              }
+
+              // Group by slot
+              const slotGroups = {}
+              equipment_items.forEach(slot => {
+                const item = itemsData[slot.itemId]
+                const itemSlot = item.slot
+                if (!slotGroups[itemSlot]) {
+                  slotGroups[itemSlot] = []
+                }
+                slotGroups[itemSlot].push(slot)
+              })
+
+              const slotOrder = ['weapon', 'shield', 'head', 'body', 'legs', 'gloves', 'boots', 'cape', 'neck', 'ring', 'ammo']
+              const slotLabels = {
+                weapon: '⚔️ Weapon',
+                shield: '🛡️ Shield',
+                head: '👑 Head',
+                body: '👕 Body',
+                legs: '👖 Legs',
+                gloves: '🧤 Gloves',
+                boots: '👢 Boots',
+                cape: '🧥 Cape',
+                neck: '📿 Neck',
+                ring: '💍 Ring',
+                ammo: '🏹 Ammo'
+              }
+
+              return slotOrder.map(slotKey => {
+                if (!slotGroups[slotKey]) return null
+                return (
+                  <div key={slotKey}>
+                    <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">
+                      {slotLabels[slotKey]}
+                    </h4>
+                    <div class="space-y-2">
+                      {slotGroups[slotKey].map(slot => {
+                        const item = itemsData[slot.itemId]
+                        const equipped = equipmentRef.current[item.slot]?.itemId === item.id
+                        return (
+                          <button
+                            key={`${slot.itemId}-${inventoryRef.current.indexOf(slot)}`}
+                            onClick={() => handleEquipItem(slot.itemId)}
+                            class={`w-full p-3 rounded-lg border transition-colors ${
+                              equipped
+                                ? 'bg-[#2a3a2a] border-[#4a8a4a]'
+                                : 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
+                            }`}
+                          >
+                            <div class="flex items-center justify-between">
+                              <div class="text-left flex-1">
+                                <div class="text-sm font-semibold text-[var(--color-parchment)]">
+                                  {item.icon} {item.name}
+                                </div>
+                                <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                                  {item.type === 'weapon' && item.attackStyle && `${item.attackStyle} · ${item.attackSpeed}s`}
+                                  {item.type === 'armour' && 'Armour'}
+                                  {item.type === 'shield' && 'Shield'}
+                                </div>
+                                {item.requirements && Object.entries(item.requirements).length > 0 && (
+                                  <div class="text-[9px] text-[var(--color-gold-dim)] mt-0.5">
+                                    {Object.entries(item.requirements).map(([skill, level]) => `${skill} ${level}`).join(' · ')}
+                                  </div>
+                                )}
+                              </div>
+                              {equipped && (
+                                <span class="text-base text-[var(--color-hp-green)] flex-shrink-0 ml-2">✓</span>
+                              )}
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
                 )
               })
             })()}
