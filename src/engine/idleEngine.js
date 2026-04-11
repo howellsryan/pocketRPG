@@ -7,11 +7,12 @@ import { getLevelFromXP } from './experience.js'
 import {
   effectiveStrength, meleeMaxHit, effectiveAttack, maxAttackRoll,
   maxDefenceRoll, hitChance, getMeleeStyleBonuses,
-  effectiveRanged, rangedMaxHit, getRangedStyleBonus
+  effectiveRanged, rangedMaxHit, getRangedStyleBonus,
+  effectiveMagic, monsterMagicDefenceRoll, magicMaxHit
 } from './formulas.js'
 import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getCombatType } from './equipment.js'
 import { getToolSpeedMultiplier } from './skilling.js'
-import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, HP_XP_PER_DAMAGE } from '../utils/constants.js'
+import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE } from '../utils/constants.js'
 import { getAgilityBankDelayFromStats, simulateIdleAgility } from './agility.js'
 
 const TICK_MS = 600
@@ -319,7 +320,7 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
  * Compute average player DPS against a monster.
  * Returns { avgDmgPerHit, weaponSpeed, acc, combatType } so callers can use per-hit granularity.
  */
-function avgHitStats(playerStats, equipment, monster, stance, itemsData) {
+function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell = null) {
   const bonuses = getEquipmentBonuses(equipment, itemsData)
   const weaponSpeed = getAttackSpeed(equipment, itemsData)
   const combatType = getCombatType(equipment, itemsData)
@@ -332,6 +333,12 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData) {
     maxHit = rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength)
     atkRoll = maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0)
     defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus.ranged || 0)
+  } else if (combatType === 'magic') {
+    if (!spell) return { avgDmgPerHit: 0, weaponSpeed, acc: 0, combatType }
+    const effMag = effectiveMagic(playerStats.magic || 1)
+    maxHit = magicMaxHit(spell.baseDamage, bonuses.otherBonus.magicDamage || 0)
+    atkRoll = maxAttackRoll(effMag, bonuses.attackBonus.magic || 0)
+    defRoll = monsterMagicDefenceRoll(monster.stats.magic || 1, monster.stats.defence, monster.defenceBonus?.magic || 0)
   } else {
     // Melee (default)
     const weaponStyle = getAttackStyle(equipment, itemsData)
@@ -382,7 +389,7 @@ function idleRollDrops(monster) {
  * itemsData: items lookup
  * slayerTask: optional current slayer task (if not on-task, will be null)
  */
-export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsData, slayerTask = null) {
+export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsData, slayerTask = null, bank = {}) {
   if (!task || !task.monster) return null
 
   const monster = task.monster
@@ -394,9 +401,10 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     strength: getLevelFromXP(stats.strength?.xp || 0),
     defence:  getLevelFromXP(stats.defence?.xp  || 0),
     ranged:   getLevelFromXP(stats.ranged?.xp   || 0),
+    magic:    getLevelFromXP(stats.magic?.xp    || 0),
   }
 
-  const { avgDmgPerHit, weaponSpeed, combatType } = avgHitStats(playerStats, equipment, monster, task.stance || 'accurate', itemsData)
+  const { avgDmgPerHit, weaponSpeed, combatType } = avgHitStats(playerStats, equipment, monster, task.stance || 'accurate', itemsData, task.spell || null)
 
   // Active engine: playerAttackTimer starts at 0, first hit lands on tick 1,
   // then resets to weaponSpeed. So hits land on ticks: 1, 1+W, 1+2W, ...
@@ -431,6 +439,12 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     } else {
       xpPerKill.ranged = Math.floor(monster.hitpoints * RANGED_XP_PER_DAMAGE)
     }
+  } else if (combatType === 'magic' && task.spell) {
+    // Base spell XP per cast (hitsNeeded casts to kill) plus 2 XP per damage dealt
+    xpPerKill.magic = Math.floor(
+      (hitsNeeded < Infinity ? hitsNeeded : 0) * (task.spell.baseXP || 0) +
+      monster.hitpoints * MAGIC_XP_PER_DAMAGE
+    )
   } else {
     // Melee
     const xpSkill = task.stance === 'aggressive' ? 'strength'
@@ -439,6 +453,19 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     xpPerKill[xpSkill] = Math.floor(monster.hitpoints * MELEE_XP_PER_DAMAGE)
   }
   xpPerKill.hitpoints = Math.floor(monster.hitpoints * HP_XP_PER_DAMAGE)
+
+  // Pre-calculate how many kills are possible given available runes (inventory + bank)
+  let maxKillsFromRunes = Infinity
+  if (combatType === 'magic' && task.spell?.runeReq && hitsNeeded < Infinity) {
+    for (const [runeId, qtyPerCast] of Object.entries(task.spell.runeReq)) {
+      const invCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === runeId ? (slot?.quantity || 0) : 0), 0)
+      const bankCount = (bank && bank[runeId]) ? bank[runeId].quantity : 0
+      const runesPerKill = qtyPerCast * hitsNeeded
+      if (runesPerKill > 0) {
+        maxKillsFromRunes = Math.min(maxKillsFromRunes, Math.floor((invCount + bankCount) / runesPerKill))
+      }
+    }
+  }
 
   // Track starting inventory state for delta calculation
   const startingInvState = {}
@@ -457,7 +484,7 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   let slayerXpGained = 0
   let remainingTicks = totalTicks
 
-  while (remainingTicks >= ticksPerCycle) {
+  while (remainingTicks >= ticksPerCycle && monstersKilled < maxKillsFromRunes) {
     remainingTicks -= ticksPerCycle
     monstersKilled++
 
@@ -534,6 +561,23 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     }
   }
 
+  // Deduct runes for magic combat: consume from inventory first, track bank overflow
+  const runesConsumed = {}
+  if (combatType === 'magic' && task.spell?.runeReq && hitsNeeded < Infinity && monstersKilled > 0) {
+    for (const [runeId, qtyPerCast] of Object.entries(task.spell.runeReq)) {
+      let remaining = qtyPerCast * hitsNeeded * monstersKilled
+      for (let i = 0; i < newInv.length && remaining > 0; i++) {
+        if (newInv[i]?.itemId === runeId) {
+          const consumed = Math.min(newInv[i].quantity, remaining)
+          newInv[i] = { ...newInv[i], quantity: newInv[i].quantity - consumed }
+          if (newInv[i].quantity === 0) newInv[i] = null
+          remaining -= consumed
+        }
+      }
+      if (remaining > 0) runesConsumed[runeId] = remaining
+    }
+  }
+
   // lootGained is the delta from starting inventory (only newly acquired items)
   const lootGained = {}
   for (const slot of newInv) {
@@ -558,5 +602,5 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     }
   }
 
-  return { xpGained, lootGained, lootLost, lootBanked, monstersKilled, monstersKilledOnTask, finalInventory: newInv, slayerXpGained, slayerTaskUpdate }
+  return { xpGained, lootGained, lootLost, lootBanked, runesConsumed, monstersKilled, monstersKilledOnTask, finalInventory: newInv, slayerXpGained, slayerTaskUpdate }
 }
