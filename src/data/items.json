@@ -1138,22 +1138,6 @@
     "shopValue": 500,
     "icon": "🪵"
   },
-  "bowstring": {
-    "id": "bowstring",
-    "name": "Bowstring",
-    "type": "resource",
-    "stackable": false,
-    "shopValue": 45,
-    "icon": "🧵"
-  },
-  "flax": {
-    "id": "flax",
-    "name": "Flax",
-    "type": "resource",
-    "stackable": false,
-    "shopValue": 3,
-    "icon": "🌿"
-  },
   "bucket_of_sand": {
     "id": "bucket_of_sand",
     "name": "Bucket of sand",
@@ -1233,14 +1217,6 @@
     "stackable": false,
     "shopValue": 6,
     "icon": "🪤"
-  },
-  "leather": {
-    "id": "leather",
-    "name": "Leather",
-    "type": "resource",
-    "stackable": false,
-    "shopValue": 52,
-    "icon": "🟤"
   },
   "hard_leather": {
     "id": "hard_leather",
@@ -6247,5 +6223,205 @@
     },
     "shopValue": 500,
     "icon": "🔱"
+  },
+  "air_rune": {
+    "id": "air_rune",
+    "name": "Air rune",
+    "type": "rune",
+    "stackable": true,
+    "shopValue": 3,
+    "icon": "💨"
+  },
+  "water_rune": {
+    "id": "water_rune",
+    "name": "Water rune",
+    "type": "rune",
+    "stackable": true,
+    "shopValue": 4,
+    "icon": "💧"
+  },
+  "earth_rune": {
+    "id": "earth_rune",
+    "name": "Earth rune",
+    "type": "rune",
+    "stackable": true,
+    "shopValue": 4,
+    "icon": "🪨"
+  },
+  "fire_rune": {
+    "id": "fire_rune",
+    "name": "Fire rune",
+    "type": "rune",
+    "stackable": true,
+    "shopValue": 6,
+    "icon": "🔥"
+  },
+  "nature_rune": {
+    "id": "nature_rune",
+    "name": "Nature rune",
+    "type": "rune",
+    "stackable": true,
+    "shopValue": 100,
+    "icon": "🍃"
+  },
+  "cosmic_rune": {
+    "id": "cosmic_rune",
+    "name": "Cosmic rune",
+    "type": "rune",
+    "stackable": true,
+    "shopValue": 125,
+    "icon": "⭐"
+  },
+  "astral_rune": {
+    "id": "astral_rune",
+    "name": "Astral rune",
+    "type": "rune",
+    "stackable": true,
+    "shopValue": 190,
+    "icon": "✨"
+  },
+  "leather": {
+    "id": "leather",
+    "name": "Leather",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 100,
+    "icon": "🧥"
+  },
+  "flax": {
+    "id": "flax",
+    "name": "Flax",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 30,
+    "icon": "🌾"
+  },
+  "bowstring": {
+    "id": "bowstring",
+    "name": "Bowstring",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 100,
+    "icon": "🔗"
+  },
+  "planks": {
+    "id": "planks",
+    "name": "Planks",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 150,
+    "icon": "🪵"
+  },
+  "sapphire_ring": {
+    "id": "sapphire_ring",
+    "name": "Sapphire ring",
+    "type": "armour",
+    "slot": "ring",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "shopValue": 500,
+    "icon": "💍"
+  },
+  "emerald_ring": {
+    "id": "emerald_ring",
+    "name": "Emerald ring",
+    "type": "armour",
+    "slot": "ring",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "shopValue": 750,
+    "icon": "💍"
+  },
+  "ruby_ring": {
+    "id": "ruby_ring",
+    "name": "Ruby ring",
+    "type": "armour",
+    "slot": "ring",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "shopValue": 1000,
+    "icon": "💍"
+  },
+  "diamond_ring": {
+    "id": "diamond_ring",
+    "name": "Diamond ring",
+    "type": "armour",
+    "slot": "ring",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "shopValue": 1500,
+    "icon": "💍"
   }
 }

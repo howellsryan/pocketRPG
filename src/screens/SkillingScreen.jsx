@@ -24,6 +24,8 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   const [selectedAction, setSelectedAction] = useState(null)
   const [skilling, setSkilling] = useState(null)
   const [skillingBankingEnabled, setSkillingBankingEnabled] = useState(false) // Banking toggle for skilling
+  const [selectedAlchemyItem, setSelectedAlchemyItem] = useState(null) // Track selected item for High Alchemy
+  const [showAlchemyPicker, setShowAlchemyPicker] = useState(false) // Show item picker for alchemy
   const skillingRef = useRef(null)
   const hasAutoStarted = useRef(false)
 
@@ -62,9 +64,35 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
 
       for (const ev of events) {
         if (ev.type === 'actionComplete') {
-          // Check materials
+          // Check materials and runes
           const action = ev.action
           const newInv = [...inventory]
+
+          // Check and consume runes (for magic spells)
+          if (action.runeReq) {
+            let hasRunes = true
+            for (const [runeId, qty] of Object.entries(action.runeReq)) {
+              const invCount = countItem(newInv, runeId)
+              const bankCount = bank[runeId]?.quantity || 0
+              if (invCount + bankCount < qty) { hasRunes = false; break }
+            }
+            if (!hasRunes) {
+              skillingRef.current = { ...skillingState, active: false, stopped: true }
+              setSkilling({ ...skillingState, active: false, stopped: true })
+              addToast('Out of runes!', 'error')
+              return
+            }
+            // Remove runes — consume from inventory first, then bank
+            const bankUpdates = {}
+            for (const [runeId, qty] of Object.entries(action.runeReq)) {
+              const invCount = countItem(newInv, runeId)
+              const fromInv = Math.min(invCount, qty)
+              const fromBank = qty - fromInv
+              if (fromInv > 0) removeItem(newInv, runeId, fromInv)
+              if (fromBank > 0) bankUpdates[runeId] = -fromBank
+            }
+            if (Object.keys(bankUpdates).length > 0) updateBankDirect(bankUpdates)
+          }
 
           if (action.materials) {
             let hasMats = true
@@ -103,11 +131,36 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             }
           }
 
-          // Add product — goes to bank directly
-          if (action.product) {
+          // Handle High Alchemy special calculation
+          if (action.type === 'alchemy' && selectedAlchemyItem) {
+            const alchItem = itemsData[selectedAlchemyItem.itemId]
+            if (alchItem && typeof alchItem.shopValue === 'number') {
+              // Calculate coins based on shop value: <100k = 1.5x, >=100k = 1.1x
+              const alchValue = alchItem.shopValue >= 100000
+                ? Math.floor(alchItem.shopValue * 1.1)
+                : Math.floor(alchItem.shopValue * 1.5)
+
+              // Remove the alchemized item from inventory
+              const alchemyItemIdx = newInv.indexOf(selectedAlchemyItem)
+              if (alchemyItemIdx !== -1) {
+                if (selectedAlchemyItem.quantity > 1) {
+                  newInv[alchemyItemIdx] = { ...selectedAlchemyItem, quantity: selectedAlchemyItem.quantity - 1 }
+                } else {
+                  newInv[alchemyItemIdx] = null
+                }
+              }
+
+              // Add coins to bank
+              updateBankDirect({ coins: alchValue })
+              updateInventory(newInv)
+              addToast(`Alchemized ${alchItem.name} for ${alchValue.toLocaleString()} coins`, 'success')
+            }
+          } else if (action.product) {
+            // Add product — goes to bank directly
             const qty = action.productQty || 1
             updateBankDirect({ [action.product]: qty })
           }
+
           // Still update inventory if materials were consumed
           if (action.materials) updateInventory(newInv)
 
@@ -123,6 +176,13 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   }, [skilling?.active, stats, inventory, bank])
 
   const startSkilling = (action) => {
+    // For High Alchemy, show item picker first
+    if (action.type === 'alchemy') {
+      setSelectedAction(action)
+      setShowAlchemyPicker(true)
+      return
+    }
+
     const mult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory)
     const effectiveTicks = Math.max(1, Math.floor(action.ticks * mult))
     const adjustedAction = mult < 1.0 ? { ...action, ticks: effectiveTicks } : action
@@ -131,6 +191,20 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     setSkilling(state)
     // Store original action in task — idle engine will apply tool multiplier separately
     setActiveTask({ type: 'skill', skill: selectedSkill, action, bankingEnabled: skillingBankingEnabled })
+  }
+
+  const startAlchemy = (item) => {
+    if (!selectedAction) return
+    setShowAlchemyPicker(false)
+    setSelectedAlchemyItem(item)
+
+    const mult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory)
+    const effectiveTicks = Math.max(1, Math.floor(selectedAction.ticks * mult))
+    const adjustedAction = mult < 1.0 ? { ...selectedAction, ticks: effectiveTicks } : selectedAction
+    const state = { ...createSkillingState(selectedSkill, adjustedAction), startedAt: Date.now() }
+    setSkilling(state)
+    // Store original action in task — idle engine will apply tool multiplier separately
+    setActiveTask({ type: 'skill', skill: selectedSkill, action: selectedAction, bankingEnabled: skillingBankingEnabled })
   }
 
   const stopSkilling = () => {
@@ -321,6 +395,68 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             )
           })}
         </div>
+
+        {/* High Alchemy item picker modal */}
+        {showAlchemyPicker && selectedAction && (
+          <Modal onClose={() => { setShowAlchemyPicker(false); setSelectedAction(null); }}>
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">Select item to Alchemize</h3>
+              <button
+                onClick={() => { setShowAlchemyPicker(false); setSelectedAction(null); }}
+                class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
+                title="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mb-3">
+              Shop value &lt; 100k: ×1.5 | Shop value ≥ 100k: ×1.1
+            </div>
+
+            <div class="space-y-2 max-h-96 overflow-y-auto">
+              {inventory.map((slot, idx) => {
+                if (!slot) return null
+                const item = itemsData[slot.itemId]
+                if (!item || item.stackable === false && slot.quantity > 1) {
+                  // Skip if not stackable but quantity > 1 (only show first instance)
+                  return null
+                }
+                const alchValue = item.shopValue >= 100000
+                  ? Math.floor(item.shopValue * 1.1)
+                  : Math.floor(item.shopValue * 1.5)
+                return (
+                  <button
+                    key={`${idx}-${slot.itemId}`}
+                    onClick={() => startAlchemy(slot)}
+                    class="w-full p-3 rounded-lg border bg-[#1a1a1a] border-[#2a4a2a] active:bg-[#2a3a2a] transition-colors text-left"
+                  >
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-2 flex-1">
+                        <span class="text-lg">{item.icon}</span>
+                        <div>
+                          <div class="text-sm font-semibold text-[var(--color-parchment)]">{item.name}</div>
+                          <div class="text-[10px] text-[var(--color-parchment)] opacity-60">
+                            Shop: {item.shopValue.toLocaleString()}gp
+                          </div>
+                        </div>
+                      </div>
+                      <div class="text-right">
+                        <div class="text-sm font-semibold text-[var(--color-gold)]">{alchValue.toLocaleString()}</div>
+                        <div class="text-[10px] text-[var(--color-parchment)] opacity-60">coins</div>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })}
+              {inventory.every(s => !s) && (
+                <div class="text-center py-4 text-[var(--color-parchment)] opacity-50">
+                  No items in inventory
+                </div>
+              )}
+            </div>
+          </Modal>
+        )}
       </div>
     )
   }

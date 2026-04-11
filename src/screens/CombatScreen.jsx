@@ -11,6 +11,7 @@ import { getCombatType, equipItem } from '../engine/equipment.js'
 import monstersData from '../data/monsters.json'
 import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
+import spellsData from '../data/spells.json'
 import { SCREENS } from '../utils/constants.js'
 
 const COMBAT_CATEGORIES = [
@@ -69,7 +70,7 @@ const MONSTER_ICONS = {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlocked }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell } = useGame()
 
   const [combat, setCombat] = useState(null)
   const [log, setLog] = useState([])
@@ -79,6 +80,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
   const [showPrayerModal, setShowPrayerModal] = useState(false)
   const [showPotionModal, setShowPotionModal] = useState(false)
   const [showEquipmentModal, setShowEquipmentModal] = useState(false)
+  const [showSpellModal, setShowSpellModal] = useState(false)
 
   const combatRef = useRef(null)
   const hpRef = useRef(currentHP)
@@ -133,7 +135,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
         playerStats.strength = Math.floor(playerStats.strength * 1.15)
       }
 
-      const { combatState, events } = processCombatTick(state, playerStats, equipmentRef.current, itemsData, prayersData)
+      const { combatState, events } = processCombatTick(state, playerStats, equipmentRef.current, itemsData, prayersData, inventoryRef.current)
       combatRef.current = combatState
       setCombat({ ...combatState })
 
@@ -223,6 +225,31 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
             }
           }
         }
+        if (ev.type === 'noRunesForSpell') {
+          setLog(prev => [...prev.slice(-20), {
+            text: `Not enough runes for ${ev.spellName}`,
+            type: 'miss',
+            time: Date.now()
+          }])
+        }
+        if (state.runesConsumed && ev.type === 'playerHit' && ev.damage >= 0) {
+          // Consume runes when spell successfully casts
+          const newInv = [...inventoryRef.current]
+          for (const [runeId, qty] of Object.entries(state.runesConsumed)) {
+            let remaining = qty
+            for (let i = 0; i < newInv.length && remaining > 0; i++) {
+              if (newInv[i]?.itemId === runeId) {
+                const consumed = Math.min(newInv[i].quantity, remaining)
+                newInv[i] = { ...newInv[i], quantity: newInv[i].quantity - consumed }
+                if (newInv[i].quantity === 0) newInv[i] = null
+                remaining -= consumed
+              }
+            }
+          }
+          updateInventory(newInv)
+          inventoryRef.current = newInv
+          state.runesConsumed = null // Clear so we don't consume again
+        }
         if (ev.type === 'monsterDeath') {
           setKillCount(k => k + 1)
 
@@ -288,7 +315,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
       }
     }
     const combatType = getCombatType(equipment, itemsData)
-    const state = createCombatState(monster, combatType, combatStance)
+    const spell = combatType === 'magic' && activeCombatSpell ? spellsData[activeCombatSpell.id] : null
+    const state = createCombatState(monster, combatType, combatStance, spell)
     // Reset potion and special attack energy on new fight
     state.specialAttackEnergy = 100
     state.activePotion = null
@@ -296,13 +324,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
     setCombat(state)
     setKillCount(0)
     setFightStartedAt(Date.now())
-    setLog([{ text: `Fighting ${monster.name}...`, type: 'info', time: Date.now() }])
+    const spellName = spell ? ` with ${spell.name}` : ''
+    setLog([{ text: `Fighting ${monster.name}${spellName}...`, type: 'info', time: Date.now() }])
     setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot })
   }
 
   const continueFight = (monster) => {
     const combatType = getCombatType(equipment, itemsData)
-    const state = createCombatState(monster, combatType, combatStance)
+    const spell = combatType === 'magic' && activeCombatSpell ? spellsData[activeCombatSpell.id] : null
+    const state = createCombatState(monster, combatType, combatStance, spell)
     // Reset potion and special attack energy on new fight
     state.specialAttackEnergy = 100
     state.activePotion = null
@@ -751,8 +781,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
                 🧪 Potion
               </button>
             </div>
-            {/* Special attack and Prayer buttons */}
-            <div class="grid grid-cols-2 gap-2">
+            {/* Special attack, Cast, and Prayer buttons */}
+            <div class="grid grid-cols-3 gap-2">
               {(() => {
                 const weaponEntry = equipment?.weapon
                 const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
@@ -766,7 +796,23 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
                     class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
                     style={canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
                   >
-                    ⚡ {hasSpec ? `Special (${weapon.specialAttack.energyCost}%)` : 'No Spec'}
+                    ⚡ {hasSpec ? `Spec` : 'No Spec'}
+                  </button>
+                )
+              })()}
+              {(() => {
+                const weaponEntry = equipment?.weapon
+                const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
+                const isMagic = weapon && (weapon.attackStyle === 'magic' || weapon.attackBonus?.magic > 0)
+                const magicLevel = getLevelFromXP(stats.magic?.xp || 0)
+                return (
+                  <button
+                    onClick={() => isMagic && setShowSpellModal(true)}
+                    disabled={!isMagic}
+                    class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${isMagic ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
+                    style={isMagic ? 'background:linear-gradient(135deg,#1a2a3a,#2a3a5a);border:1px solid rgba(100,150,200,0.35);color:#a8d8ff' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
+                  >
+                    🔮 Cast
                   </button>
                 )
               })()}
@@ -950,6 +996,57 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
                 )
               })
             })()}
+          </div>
+        </Modal>
+      )}
+
+      {/* Spell modal */}
+      {showSpellModal && (
+        <Modal onClose={() => setShowSpellModal(false)}>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">Select Spell</h3>
+            <button
+              onClick={() => setShowSpellModal(false)}
+              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
+              title="Close"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="space-y-2 max-h-96 overflow-y-auto">
+            {Object.values(spellsData).map(spell => {
+              const magicLevel = getLevelFromXP(stats.magic?.xp || 0)
+              const canCast = magicLevel >= spell.levelReq
+              const isActive = activeCombatSpell?.id === spell.id
+              return (
+                <button
+                  key={spell.id}
+                  onClick={() => { if (canCast) { updateActiveCombatSpell({ id: spell.id, name: spell.name, baseDamage: spell.baseDamage }); setShowSpellModal(false); } }}
+                  disabled={!canCast}
+                  class={`w-full p-3 rounded-lg border transition-colors ${
+                    isActive
+                      ? 'bg-[#1a2a3a] border-[#2a5a7a]'
+                      : canCast
+                        ? 'bg-[#1a1a2a] border-[#2a2a4a] active:bg-[#2a2a3a]'
+                        : 'bg-[#111] border-[#1a1a1a] opacity-40'
+                  }`}
+                >
+                  <div class="flex items-center justify-between">
+                    <div class="text-left flex-1">
+                      <div class="text-sm font-semibold text-[var(--color-parchment)]">🔮 {spell.name}</div>
+                      <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                        {spell.tier ? `${spell.tier.charAt(0).toUpperCase() + spell.tier.slice(1)} · ` : ''}Damage {spell.baseDamage}
+                      </div>
+                      <div class="text-[9px] text-[var(--color-gold-dim)] mt-0.5">Lv {spell.levelReq}</div>
+                    </div>
+                    {isActive && (
+                      <span class="text-base text-[#a8d8ff]">✓</span>
+                    )}
+                  </div>
+                </button>
+              )
+            })}
           </div>
         </Modal>
       )}

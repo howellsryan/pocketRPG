@@ -42,7 +42,7 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
  * Returns { combatState, events[] }
  * events: { type: 'playerHit'|'monsterHit'|'monsterDeath'|'playerDeath'|'xp'|'levelUp', ... }
  */
-export function processCombatTick(combatState, playerStats, equipment, itemsData, prayersData = {}) {
+export function processCombatTick(combatState, playerStats, equipment, itemsData, prayersData = {}, inventory = []) {
   const state = { ...combatState }
   const events = []
   state.tickCount++
@@ -172,18 +172,42 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
         xpSkills.hitpoints = Math.floor(damage * HP_XP_PER_DAMAGE)
       }
     } else if (state.combatType === 'magic' && state.spell) {
-      const effMag = effectiveMagic(boostedPlayerStats.magic)
-      const atkRoll = maxAttackRoll(effMag, bonuses.attackBonus.magic || 0)
-      const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0)
-      const acc = hitChance(atkRoll, defRoll)
-      const maxHit = magicMaxHit(state.spell.baseDamage, bonuses.otherBonus.magicDamage)
-      damage = rollDamage(acc, maxHit)
+      // Check if player has required runes
+      let hasRunes = true
+      if (state.spell.runeReq) {
+        for (const [runeId, qty] of Object.entries(state.spell.runeReq)) {
+          const runeCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === runeId ? (slot?.quantity || 1) : 0), 0)
+          if (runeCount < qty) {
+            hasRunes = false
+            break
+          }
+        }
+      }
 
-      // Magic always grants base spell XP on cast
-      xpSkills.magic = (state.spell.baseXP || 0)
-      if (damage > 0) {
-        xpSkills.magic += damage * MAGIC_XP_PER_DAMAGE
-        xpSkills.hitpoints = Math.floor(damage * HP_XP_PER_DAMAGE)
+      // Only cast if runes are available
+      if (hasRunes) {
+        const effMag = effectiveMagic(boostedPlayerStats.magic)
+        const atkRoll = maxAttackRoll(effMag, bonuses.attackBonus.magic || 0)
+        const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0)
+        const acc = hitChance(atkRoll, defRoll)
+        const maxHit = magicMaxHit(state.spell.baseDamage, bonuses.otherBonus.magicDamage)
+        damage = rollDamage(acc, maxHit)
+
+        // Track which runes to consume
+        if (state.spell.runeReq) {
+          state.runesConsumed = { ...state.spell.runeReq }
+        }
+
+        // Magic always grants base spell XP on cast
+        xpSkills.magic = (state.spell.baseXP || 0)
+        if (damage > 0) {
+          xpSkills.magic += damage * MAGIC_XP_PER_DAMAGE
+          xpSkills.hitpoints = Math.floor(damage * HP_XP_PER_DAMAGE)
+        }
+      } else {
+        // No runes - no damage, no XP
+        damage = 0
+        events.push({ type: 'noRunesForSpell', spellName: state.spell.name })
       }
     }
 
