@@ -179,6 +179,7 @@ const SHOPS = [
       { id: 'nature_rune',    name: 'Nature rune',    icon: '🍀', price: 200,  stackable: true,  desc: 'Alchemy and binding spells.' },
       { id: 'law_rune',       name: 'Law rune',       icon: '⚖️', price: 200,  stackable: true,  desc: 'Teleportation spells.' },
       { id: 'cosmic_rune',    name: 'Cosmic rune',    icon: '✨', price: 200,  stackable: true,  desc: 'Enchantment spells.' },
+      { id: 'astral_rune',    name: 'Astral rune',    icon: '✨', price: 190,  stackable: true,  desc: 'Teleportation & utility spells.' },
       { id: 'death_rune',     name: 'Death rune',     icon: '💀', price: 310,  stackable: true,  desc: 'High-level combat spells.' },
     ],
   },
