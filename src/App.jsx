@@ -305,10 +305,12 @@ function GameApp() {
         if (xp > 0) grantXP(skill, xp)
       }
     }
-    if ((task.type === 'combat' || task.type === 'skill' || task.type === 'gather') && sim.finalInventory) {
+    if (sim.finalInventory) {
       updateInventory(sim.finalInventory)
-      if (sim.lootBanked && Object.keys(sim.lootBanked).length > 0) {
-        updateBankDirect(sim.lootBanked)
+      // combat uses lootBanked; skill/gather use itemsBanked (pure bank-trip items, not end-state inventory)
+      const banked = sim.lootBanked || sim.itemsBanked
+      if (banked && Object.keys(banked).length > 0) {
+        updateBankDirect(banked)
       }
     } else if (sim.itemsGained) {
       updateBankDirect(sim.itemsGained)

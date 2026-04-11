@@ -82,6 +82,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
 
   const xpGained = {}
   const itemsGained = {}
+  const itemsBanked = {}
   const itemsDropped = {}
   const newInv = [...inventory]
 
@@ -152,6 +153,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
             const newQty = newInv[i].quantity - startingQty
             if (newQty > 0) {
               itemsGained[newInv[i].itemId] = (itemsGained[newInv[i].itemId] || 0) + newQty
+              itemsBanked[newInv[i].itemId] = (itemsBanked[newInv[i].itemId] || 0) + newQty
             }
             newInv[i] = null
           }
@@ -218,7 +220,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
     }
   }
 
-  return { xpGained, itemsGained, itemsConsumed, itemsDropped, actions, skill: task.skill, actionName: task.action.name, finalInventory: newInv }
+  return { xpGained, itemsGained, itemsBanked, itemsConsumed, itemsDropped, actions, skill: task.skill, actionName: task.action.name, finalInventory: newInv }
 }
 
 /**
@@ -244,6 +246,7 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
   const bankDelayTicks = Math.ceil(getAgilityBankDelayFromStats(stats) / TICK_MS)
 
   const itemsGained = {}
+  const itemsBanked = {}
   const itemsDropped = {}
   const newInv = [...inventory]
   let remainingTicks = totalTicks
@@ -302,6 +305,7 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
         const newQty = newInv[i].quantity - startingQty
         if (newQty > 0) {
           itemsGained[newInv[i].itemId] = (itemsGained[newInv[i].itemId] || 0) + newQty
+          itemsBanked[newInv[i].itemId] = (itemsBanked[newInv[i].itemId] || 0) + newQty
         }
         newInv[i] = null
       }
@@ -318,7 +322,7 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
     }
   }
 
-  return { itemsGained, itemsDropped, actions: actionsCompleted, actionName: task.gatherTask.name, finalInventory: newInv }
+  return { itemsGained, itemsBanked, itemsDropped, actions: actionsCompleted, actionName: task.gatherTask.name, finalInventory: newInv }
 }
 
 /**
