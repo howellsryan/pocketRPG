@@ -135,6 +135,10 @@ function GameApp() {
               if (xp > 0) grantXP(skill, xp)
             }
           }
+          // Apply slayer XP from combat simulation
+          if (savedTask.type === 'combat' && sim.slayerXpGained > 0) {
+            grantXP('slayer', sim.slayerXpGained)
+          }
           // Apply items
           if (savedTask.type === 'combat' && sim.finalInventory) {
             updateInventory(sim.finalInventory)
@@ -160,6 +164,7 @@ function GameApp() {
           if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
             if (sim.slayerTaskUpdate.completed) {
               await saveSetting('slayerTask', null)
+              addToast('💀 Slayer task completed!', 'levelup')
             } else {
               await saveSetting('slayerTask', sim.slayerTaskUpdate)
             }
@@ -314,6 +319,10 @@ function GameApp() {
         if (xp > 0) grantXP(skill, xp)
       }
     }
+    // Apply slayer XP from combat simulation
+    if (task.type === 'combat' && sim.slayerXpGained > 0) {
+      grantXP('slayer', sim.slayerXpGained)
+    }
     if (sim.finalInventory) {
       updateInventory(sim.finalInventory)
       // combat uses lootBanked; skill/gather use itemsBanked (pure bank-trip items, not end-state inventory)
@@ -336,7 +345,12 @@ function GameApp() {
     }
     // Update slayer task if present
     if (task.type === 'combat' && sim.slayerTaskUpdate) {
-      setSlayerTask(sim.slayerTaskUpdate.completed ? null : sim.slayerTaskUpdate)
+      if (sim.slayerTaskUpdate.completed) {
+        setSlayerTask(null)
+        addToast('💀 Slayer task completed!', 'levelup')
+      } else {
+        setSlayerTask(sim.slayerTaskUpdate)
+      }
     }
 
     setIdleResult({ elapsedMs: ONE_HOUR_MS, task, ...sim })
@@ -482,10 +496,16 @@ function GameApp() {
                     const hasXp = xpEntries.length > 0
                     const hasMonstersKilled = idleResult.task?.type === 'combat' && idleResult.monstersKilled > 0
                     const hasSlayerXp = idleResult.slayerXpGained > 0
+                    const taskCompleted = idleResult.slayerTaskUpdate?.completed
 
-                    return (hasXp || hasMonstersKilled || hasSlayerXp) ? (
+                    return (hasXp || hasMonstersKilled || hasSlayerXp || taskCompleted) ? (
                       <div style={{ marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' }}>
                         <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>📊 Summary</div>
+                        {taskCompleted && (
+                          <div style={{ marginBottom: '8px', padding: '8px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '6px', borderLeft: '3px solid #d4af37' }}>
+                            <div style={{ fontSize: '13px', color: '#d4af37', fontWeight: 'bold' }}>💀 Slayer Task Complete!</div>
+                          </div>
+                        )}
                         {hasMonstersKilled && (
                           <div style={{ marginBottom: '6px' }}>
                             <div style={{ fontSize: '13px', color: '#e8d5b0' }}>🗡️ Monsters Slain</div>
