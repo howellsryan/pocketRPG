@@ -10,6 +10,8 @@ export default function InventoryScreen() {
   const { inventory, equipment, stats, bank, updateInventory, updateEquipment, updateBank, updateHP, currentHP, getMaxHP, addToast, itemsData } = useGame()
   const [selected, setSelected] = useState(null) // { slotIndex, slot, item }
   const [showSpecInfo, setShowSpecInfo] = useState(false)
+  const [bankQuantityMode, setBankQuantityMode] = useState(null) // 'stackable' | 'nonStackable' | null
+  const [bankQuantityInput, setBankQuantityInput] = useState('')
 
   const handleSlotClick = (slot, item, index) => {
     const idx = inventory.indexOf(slot)
@@ -187,6 +189,26 @@ export default function InventoryScreen() {
     setSelected(null)
   }
 
+  const handleBankQuantitySubmit = () => {
+    if (!bankQuantityInput || !selected) return
+    const qty = parseInt(bankQuantityInput, 10)
+    if (isNaN(qty) || qty <= 0) {
+      addToast('Invalid quantity', 'error')
+      return
+    }
+
+    // For stackable, check against slot quantity; for non-stackable, check against sameItemCount
+    const maxQty = bankQuantityMode === 'stackable' ? selected.slot.quantity : sameItemCount
+    if (qty > maxQty) {
+      addToast(`Only ${maxQty} available`, 'error')
+      return
+    }
+
+    handleDeposit(qty)
+    setBankQuantityMode(null)
+    setBankQuantityInput('')
+  }
+
   const free = freeSlots(inventory)
 
   // Deposit all inventory items to bank
@@ -326,42 +348,64 @@ export default function InventoryScreen() {
             <div class="border-t border-[#333] pt-2 mt-1">
               <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold">Bank</p>
               {(selected.item.stackable || selected.slot.noted) ? (
-                <div class="grid grid-cols-3 gap-2">
-                  {[1, 5, 10].map(qty => (
-                    <button key={qty} onClick={() => handleDeposit(qty)}
-                      disabled={selected.slot.quantity < qty}
-                      class={`py-2 rounded-lg text-white font-semibold text-sm ${selected.slot.quantity < qty ? 'bg-[#222] opacity-30' : 'bg-[var(--color-emerald-mid)] active:opacity-80'}`}>
-                      Bank {qty}
+                <div>
+                  <div class="grid grid-cols-3 gap-2 mb-2">
+                    {[1, 5, 10].map(qty => (
+                      <button key={qty} onClick={() => handleDeposit(qty)}
+                        disabled={selected.slot.quantity < qty}
+                        class={`py-2 rounded-lg text-white font-semibold text-sm ${selected.slot.quantity < qty ? 'bg-[#222] opacity-30' : 'bg-[var(--color-emerald-mid)] active:opacity-80'}`}>
+                        Bank {qty}
+                      </button>
+                    ))}
+                  </div>
+                  <div class="grid grid-cols-2 gap-2">
+                    <button onClick={() => handleDeposit()}
+                      class="py-2 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80">
+                      Bank All
                     </button>
-                  ))}
-                  <button onClick={() => handleDeposit()}
-                    class="py-2 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80 col-span-3">
-                    Bank All ({selected.slot.quantity})
-                  </button>
+                    <button onClick={() => {
+                      setBankQuantityMode('stackable')
+                      setBankQuantityInput('')
+                    }}
+                      class="py-2 rounded-lg bg-[var(--color-emerald)] text-white font-semibold text-sm active:opacity-80">
+                      Bank X
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <div class="grid grid-cols-3 gap-2">
-                  <button onClick={() => handleDeposit(1)}
-                    class="py-2 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80">
-                    Bank 1
-                  </button>
-                  {sameItemCount >= 5 && (
-                    <button onClick={() => handleDeposit(5)}
+                <div>
+                  <div class="grid grid-cols-3 gap-2 mb-2">
+                    <button onClick={() => handleDeposit(1)}
                       class="py-2 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80">
-                      Bank 5
+                      Bank 1
                     </button>
-                  )}
-                  {sameItemCount >= 10 && (
-                    <button onClick={() => handleDeposit(10)}
-                      class="py-2 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80">
-                      Bank 10
-                    </button>
-                  )}
+                    {sameItemCount >= 5 && (
+                      <button onClick={() => handleDeposit(5)}
+                        class="py-2 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80">
+                        Bank 5
+                      </button>
+                    )}
+                    {sameItemCount >= 10 && (
+                      <button onClick={() => handleDeposit(10)}
+                        class="py-2 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80">
+                        Bank 10
+                      </button>
+                    )}
+                  </div>
                   {sameItemCount > 1 && (
-                    <button onClick={() => handleDeposit(sameItemCount)}
-                      class={`py-2 rounded-lg bg-[var(--color-gold-dim)] text-white font-semibold text-sm active:opacity-80 ${sameItemCount >= 10 ? 'col-span-3' : sameItemCount >= 5 ? 'col-span-1' : 'col-span-2'}`}>
-                      Bank All ({sameItemCount})
-                    </button>
+                    <div class="grid grid-cols-2 gap-2">
+                      <button onClick={() => handleDeposit(sameItemCount)}
+                        class="py-2 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80">
+                        Bank All
+                      </button>
+                      <button onClick={() => {
+                        setBankQuantityMode('nonStackable')
+                        setBankQuantityInput('')
+                      }}
+                        class="py-2 rounded-lg bg-[var(--color-emerald)] text-white font-semibold text-sm active:opacity-80">
+                        Bank X
+                      </button>
+                    </div>
                   )}
                 </div>
               )}
@@ -416,6 +460,39 @@ export default function InventoryScreen() {
           </div>
         </Modal>
       )}
+
+      {/* ── Bank quantity input modal ──────────────────────────────────── */}
+      {bankQuantityMode && selected && (() => {
+        const maxQty = bankQuantityMode === 'stackable' ? selected.slot.quantity : sameItemCount
+        const title = `Bank ${selected.item.name}`
+
+        return (
+          <Modal title={title} onClose={() => { setBankQuantityMode(null); setBankQuantityInput('') }}>
+            <div class="space-y-3">
+              <div>
+                <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1 uppercase tracking-wider">Available: {maxQty}</p>
+                <input
+                  type="number"
+                  value={bankQuantityInput}
+                  onInput={(e) => setBankQuantityInput(e.target.value)}
+                  min="1"
+                  max={maxQty}
+                  placeholder="Enter quantity"
+                  class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-gold)]"
+                  autoFocus
+                />
+              </div>
+              <button
+                onClick={handleBankQuantitySubmit}
+                disabled={!bankQuantityInput || isNaN(parseInt(bankQuantityInput, 10)) || parseInt(bankQuantityInput, 10) <= 0}
+                class="w-full py-2.5 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80"
+              >
+                Bank {bankQuantityInput || '0'}
+              </button>
+            </div>
+          </Modal>
+        )
+      })()}
     </div>
   )
 }
