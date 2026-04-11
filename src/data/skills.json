@@ -99,12 +99,12 @@
           },
           {
             "itemId": "uncut_dragonstone",
-            "chance": 0.12,
+            "chance": 0.01,
             "quantity": 1
           },
           {
             "itemId": "uncut_onyx",
-            "chance": 0.05,
+            "chance": 0.001,
             "quantity": 1
           }
         ]
