@@ -17,6 +17,7 @@ const sourceFiles = [
   'engine/equipment.js',
   'engine/inventory.js',
   'engine/agility.js',
+  'engine/runes.js',
   'engine/combat.js',
   'engine/skilling.js',
   'engine/idleEngine.js',
