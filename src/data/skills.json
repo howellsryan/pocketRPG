@@ -74,6 +74,40 @@
         "ticks": 9,
         "xp": 125,
         "product": "runite_ore"
+      },
+      {
+        "id": "gem_mining",
+        "name": "Mine gems",
+        "level": 75,
+        "ticks": 20,
+        "xp": 65,
+        "dropTable": [
+          {
+            "itemId": "uncut_sapphire",
+            "chance": 0.35,
+            "quantity": 1
+          },
+          {
+            "itemId": "uncut_ruby",
+            "chance": 0.28,
+            "quantity": 1
+          },
+          {
+            "itemId": "uncut_diamond",
+            "chance": 0.20,
+            "quantity": 1
+          },
+          {
+            "itemId": "uncut_dragonstone",
+            "chance": 0.01,
+            "quantity": 1
+          },
+          {
+            "itemId": "uncut_onyx",
+            "chance": 0.001,
+            "quantity": 1
+          }
+        ]
       }
     ]
   },
@@ -1240,6 +1274,28 @@
         }
       },
       {
+        "id": "cut_dragonstone",
+        "name": "Cut dragonstone",
+        "level": 55,
+        "ticks": 3,
+        "xp": 137,
+        "product": "dragonstone",
+        "materials": {
+          "uncut_dragonstone": 1
+        }
+      },
+      {
+        "id": "cut_onyx",
+        "name": "Cut onyx",
+        "level": 72,
+        "ticks": 3,
+        "xp": 167,
+        "product": "onyx",
+        "materials": {
+          "uncut_onyx": 1
+        }
+      },
+      {
         "id": "ruby_amulet",
         "name": "String ruby amulet",
         "level": 50,
@@ -1293,6 +1349,30 @@
         "product": "diamond_amulet",
         "materials": {
           "diamond": 1,
+          "gold_bar": 1
+        }
+      },
+      {
+        "id": "dragonstone_amulet",
+        "name": "String dragonstone amulet",
+        "level": 80,
+        "ticks": 4,
+        "xp": 150,
+        "product": "dragonstone_amulet",
+        "materials": {
+          "dragonstone": 1,
+          "gold_bar": 1
+        }
+      },
+      {
+        "id": "onyx_amulet",
+        "name": "String onyx amulet",
+        "level": 90,
+        "ticks": 4,
+        "xp": 165,
+        "product": "onyx_amulet",
+        "materials": {
+          "onyx": 1,
           "gold_bar": 1
         }
       }
@@ -1686,7 +1766,8 @@
         "ticks": 3,
         "xp": 17,
         "type": "enchant_jewel",
-        "product": "sapphire_ring",
+        "product": "amulet_of_magic",
+        "itemReq": ["sapphire_amulet"],
         "runeReq": {
           "cosmic_rune": 1,
           "water_rune": 1
@@ -1699,7 +1780,8 @@
         "ticks": 3,
         "xp": 37,
         "type": "enchant_jewel",
-        "product": "emerald_ring",
+        "product": "emerald_amulet",
+        "itemReq": ["emerald_amulet"],
         "runeReq": {
           "cosmic_rune": 1,
           "air_rune": 1
@@ -1712,7 +1794,8 @@
         "ticks": 3,
         "xp": 59,
         "type": "enchant_jewel",
-        "product": "ruby_ring",
+        "product": "amulet_of_strength",
+        "itemReq": ["ruby_amulet"],
         "runeReq": {
           "cosmic_rune": 1,
           "fire_rune": 1
@@ -1725,10 +1808,39 @@
         "ticks": 3,
         "xp": 67,
         "type": "enchant_jewel",
-        "product": "diamond_ring",
+        "product": "amulet_of_power",
+        "itemReq": ["diamond_amulet"],
         "runeReq": {
           "cosmic_rune": 1,
           "earth_rune": 1
+        }
+      },
+      {
+        "id": "enchant_dragonstone",
+        "name": "Enchant Dragonstone",
+        "level": 68,
+        "ticks": 3,
+        "xp": 78,
+        "type": "enchant_jewel",
+        "product": "amulet_of_glory",
+        "itemReq": ["dragonstone_amulet"],
+        "runeReq": {
+          "cosmic_rune": 1,
+          "fire_rune": 1
+        }
+      },
+      {
+        "id": "enchant_onyx",
+        "name": "Enchant Onyx",
+        "level": 87,
+        "ticks": 3,
+        "xp": 97,
+        "type": "enchant_jewel",
+        "product": "amulet_of_fury",
+        "itemReq": ["onyx_amulet"],
+        "runeReq": {
+          "cosmic_rune": 1,
+          "water_rune": 1
         }
       },
       {

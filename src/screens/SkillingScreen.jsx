@@ -6,6 +6,7 @@ import { SKILL_ICONS, STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_
 import { getLevelFromXP } from '../engine/experience.js'
 import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getToolSpeedMultiplier, hasToolForSkill } from '../engine/skilling.js'
 import { addItem, removeItem, countItem } from '../engine/inventory.js'
+import { hasRequiredRunes, getRunesToConsume } from '../engine/runes.js'
 import { onTick } from '../engine/tick.js'
 import { formatNumber } from '../utils/helpers.js'
 import skillsData from '../data/skills.json'
@@ -70,21 +71,16 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
 
           // Check and consume runes (for magic spells)
           if (action.runeReq) {
-            let hasRunes = true
-            for (const [runeId, qty] of Object.entries(action.runeReq)) {
-              const invCount = countItem(newInv, runeId)
-              const bankCount = bank[runeId]?.quantity || 0
-              if (invCount + bankCount < qty) { hasRunes = false; break }
-            }
-            if (!hasRunes) {
+            if (!hasRequiredRunes(action.runeReq, newInv, bank, equipment, itemsData)) {
               skillingRef.current = { ...skillingState, active: false, stopped: true }
               setSkilling({ ...skillingState, active: false, stopped: true })
               addToast('Out of runes!', 'error')
               return
             }
-            // Remove runes — consume from inventory first, then bank
+            // Remove runes that need to be consumed (excluding those provided by staff)
+            const runesToConsume = getRunesToConsume(action.runeReq, equipment, itemsData)
             const bankUpdates = {}
-            for (const [runeId, qty] of Object.entries(action.runeReq)) {
+            for (const [runeId, qty] of Object.entries(runesToConsume)) {
               const invCount = countItem(newInv, runeId)
               const fromInv = Math.min(invCount, qty)
               const fromBank = qty - fromInv
@@ -159,6 +155,18 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             // Add product — goes to bank directly
             const qty = action.productQty || 1
             updateBankDirect({ [action.product]: qty })
+          } else if (action.dropTable) {
+            // Roll drops from drop table
+            const bankUpdates = {}
+            for (const drop of action.dropTable) {
+              if (Math.random() < drop.chance) {
+                const qty = Array.isArray(drop.quantity)
+                  ? Math.floor(Math.random() * (drop.quantity[1] - drop.quantity[0] + 1)) + drop.quantity[0]
+                  : drop.quantity
+                bankUpdates[drop.itemId] = (bankUpdates[drop.itemId] || 0) + qty
+              }
+            }
+            if (Object.keys(bankUpdates).length > 0) updateBankDirect(bankUpdates)
           }
 
           // Still update inventory if materials were consumed
@@ -350,9 +358,13 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             const hasMats = !action.materials || Object.entries(action.materials).every(
               ([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty
             )
+            const hasRunes = hasRequiredRunes(action.runeReq, inventory, bank, equipment, itemsData)
             const needsTool = ['mining', 'woodcutting', 'fishing'].includes(selectedSkill)
             const hasTool = !needsTool || hasToolForSkill(selectedSkill, equipment, inventory, itemsData, stats)
-            const canStart = available && hasMats && hasTool
+            const hasItems = !action.itemReq || action.itemReq.some(
+              id => (countItem(inventory, id) + (bank[id]?.quantity || 0)) > 0
+            )
+            const canStart = available && hasMats && hasRunes && hasTool && hasItems
             return (
               <div key={action.id} class="flex gap-2 items-stretch">
                 <button
@@ -377,10 +389,29 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                           {selectedSkill === 'mining' ? '⚒️ No pickaxe' : selectedSkill === 'woodcutting' ? '🪓 No axe' : '🎣 No rod'}
                         </span>
                       )}
+                      {action.itemReq && !hasItems && (
+                        <span class="block text-[#ff6b6b] mt-1">
+                          ✨ Needs: {action.itemReq.map(id => itemsData[id]?.name || id).join(' or ')}
+                        </span>
+                      )}
+                      {action.runeReq && !hasRunes && (
+                        <span class="block text-[#ff6b6b] mt-1">
+                          🔮 Missing runes (or equip staff)
+                        </span>
+                      )}
                     </div>
                   </div>
                   {action.product && (
                     <span class="text-[10px] text-[var(--color-gold-dim)]">→ {itemsData[action.product]?.name || action.product}</span>
+                  )}
+                  {action.dropTable && (
+                    <div class="text-right flex flex-col gap-0.5">
+                      {action.dropTable.map(drop => (
+                        <div key={drop.itemId} class="text-[9px] text-[var(--color-gold-dim)]">
+                          {Math.round(drop.chance * 100)}% {itemsData[drop.itemId]?.name || drop.itemId}
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </button>
                 <button

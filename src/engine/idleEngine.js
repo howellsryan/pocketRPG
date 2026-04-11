@@ -12,10 +12,28 @@ import {
 } from './formulas.js'
 import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getCombatType } from './equipment.js'
 import { getToolSpeedMultiplier } from './skilling.js'
+import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE } from '../utils/constants.js'
 import { getAgilityBankDelayFromStats, simulateIdleAgility } from './agility.js'
 
 const TICK_MS = 600
+
+/**
+ * Roll drops from a drop table (used for mining gems, etc.)
+ * Returns object of { itemId: quantity }
+ */
+function rollDropTableOnce(dropTable) {
+  const drops = {}
+  for (const drop of dropTable) {
+    if (Math.random() < drop.chance) {
+      const qty = Array.isArray(drop.quantity)
+        ? Math.floor(Math.random() * (drop.quantity[1] - drop.quantity[0] + 1)) + drop.quantity[0]
+        : drop.quantity
+      drops[drop.itemId] = (drops[drop.itemId] || 0) + qty
+    }
+  }
+  return drops
+}
 
 /**
  * Format elapsed milliseconds into a human-readable duration string.
@@ -84,17 +102,19 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
   // Cap actions to available runes (for magic skilling)
   if (task.action.runeReq) {
     let maxFromRunes = Infinity
-    for (const [runeId, qtyPerAction] of Object.entries(task.action.runeReq)) {
+    const runesToConsume = getRunesToConsume(task.action.runeReq, equipment, itemsData)
+
+    for (const [runeId, qtyPerAction] of Object.entries(runesToConsume)) {
       const invCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === runeId ? (slot?.quantity || 0) : 0), 0)
       const bankCount = (bank && bank[runeId]) ? bank[runeId].quantity : 0
       const possible = Math.floor((invCount + bankCount) / qtyPerAction)
       if (possible < maxFromRunes) maxFromRunes = possible
     }
-    if (maxFromRunes === 0) return null
+    if (maxFromRunes === 0 && Object.keys(runesToConsume).length > 0) return null
     actions = Math.min(actions, maxFromRunes)
 
-    // Record consumed runes
-    for (const [runeId, qtyPerAction] of Object.entries(task.action.runeReq)) {
+    // Record consumed runes (only those not provided by staff)
+    for (const [runeId, qtyPerAction] of Object.entries(runesToConsume)) {
       itemsConsumed[runeId] = qtyPerAction * actions
     }
   }
@@ -112,7 +132,8 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
 
   // Consume runes from inventory (for magic skilling)
   if (task.action.runeReq) {
-    for (const [runeId, qtyPerAction] of Object.entries(task.action.runeReq)) {
+    const runesToConsume = getRunesToConsume(task.action.runeReq, equipment, itemsData)
+    for (const [runeId, qtyPerAction] of Object.entries(runesToConsume)) {
       let remaining = qtyPerAction * actions
       for (let i = 0; i < newInv.length && remaining > 0; i++) {
         if (newInv[i]?.itemId === runeId) {
@@ -125,8 +146,117 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
     }
   }
 
+  // Handle drop table (for actions with multiple possible products like gem mining)
+  if (task.action.dropTable) {
+    const bankingEnabled = task.bankingEnabled || false
+
+    // Track starting inventory state
+    const startingInvState = {}
+    for (const slot of newInv) {
+      if (!slot) continue
+      startingInvState[slot.itemId] = (startingInvState[slot.itemId] || 0) + slot.quantity
+    }
+
+    if (bankingEnabled) {
+      const bankDelayTicks = Math.ceil(getAgilityBankDelayFromStats(stats) / TICK_MS)
+      let remainingTicks = totalTicks
+      let actionsCompleted = 0
+
+      while (remainingTicks >= actionTicks && actionsCompleted < actions) {
+        remainingTicks -= actionTicks
+        actionsCompleted++
+
+        // Roll drops and add to inventory
+        const drops = rollDropTableOnce(task.action.dropTable)
+        for (const [itemId, qty] of Object.entries(drops)) {
+          const item = itemsData[itemId]
+          const stackable = item?.stackable || false
+
+          if (stackable) {
+            const existingIdx = newInv.findIndex(s => s && s.itemId === itemId)
+            if (existingIdx !== -1) {
+              newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + qty }
+            } else {
+              const emptyIdx = newInv.indexOf(null)
+              if (emptyIdx !== -1) {
+                newInv[emptyIdx] = { itemId, quantity: qty }
+              } else {
+                itemsDropped[itemId] = (itemsDropped[itemId] || 0) + qty
+              }
+            }
+          } else {
+            for (let q = 0; q < qty; q++) {
+              const emptyIdx = newInv.indexOf(null)
+              if (emptyIdx !== -1) {
+                newInv[emptyIdx] = { itemId, quantity: 1 }
+              } else {
+                itemsDropped[itemId] = (itemsDropped[itemId] || 0) + 1
+              }
+            }
+          }
+        }
+
+        // Auto-bank trip if inventory full
+        if (newInv.indexOf(null) === -1) {
+          if (remainingTicks < bankDelayTicks) break
+          remainingTicks -= bankDelayTicks
+          for (let i = 0; i < newInv.length; i++) {
+            if (!newInv[i]) continue
+            itemsBanked[newInv[i].itemId] = (itemsBanked[newInv[i].itemId] || 0) + newInv[i].quantity
+            newInv[i] = null
+          }
+        }
+      }
+
+      // Compute itemsGained
+      const totalAccumulated = { ...itemsBanked }
+      for (const slot of newInv) {
+        if (!slot) continue
+        totalAccumulated[slot.itemId] = (totalAccumulated[slot.itemId] || 0) + slot.quantity
+      }
+      for (const [itemId, qty] of Object.entries(totalAccumulated)) {
+        const netGain = qty - (startingInvState[itemId] || 0)
+        if (netGain > 0) itemsGained[itemId] = netGain
+      }
+    } else {
+      // Banking disabled: items fill inventory, excess is dropped
+      for (let a = 0; a < actions; a++) {
+        const drops = rollDropTableOnce(task.action.dropTable)
+        for (const [itemId, qty] of Object.entries(drops)) {
+          const item = itemsData[itemId]
+          const stackable = item?.stackable || false
+
+          if (stackable) {
+            const existingIdx = newInv.findIndex(s => s && s.itemId === itemId)
+            if (existingIdx !== -1) {
+              newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + qty }
+              itemsGained[itemId] = (itemsGained[itemId] || 0) + qty
+            } else {
+              const emptyIdx = newInv.indexOf(null)
+              if (emptyIdx !== -1) {
+                newInv[emptyIdx] = { itemId, quantity: qty }
+                itemsGained[itemId] = (itemsGained[itemId] || 0) + qty
+              } else {
+                itemsDropped[itemId] = (itemsDropped[itemId] || 0) + qty
+              }
+            }
+          } else {
+            for (let q = 0; q < qty; q++) {
+              const emptyIdx = newInv.indexOf(null)
+              if (emptyIdx !== -1) {
+                newInv[emptyIdx] = { itemId, quantity: 1 }
+                itemsGained[itemId] = (itemsGained[itemId] || 0) + 1
+              } else {
+                itemsDropped[itemId] = (itemsDropped[itemId] || 0) + 1
+              }
+            }
+          }
+        }
+      }
+    }
+  }
   // Handle product placement based on bankingEnabled
-  if (task.action.product) {
+  else if (task.action.product) {
     const bankingEnabled = task.bankingEnabled || false
     const product = task.action.product
     const qtyPerAction = task.action.productQty || 1
@@ -490,7 +620,8 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   // Pre-calculate how many kills are possible given available runes (inventory + bank)
   let maxKillsFromRunes = Infinity
   if (combatType === 'magic' && task.spell?.runeReq && hitsNeeded < Infinity) {
-    for (const [runeId, qtyPerCast] of Object.entries(task.spell.runeReq)) {
+    const runesToConsume = getRunesToConsume(task.spell.runeReq, equipment, itemsData)
+    for (const [runeId, qtyPerCast] of Object.entries(runesToConsume)) {
       const invCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === runeId ? (slot?.quantity || 0) : 0), 0)
       const bankCount = (bank && bank[runeId]) ? bank[runeId].quantity : 0
       const runesPerKill = qtyPerCast * hitsNeeded
@@ -597,7 +728,8 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   // Deduct runes for magic combat: consume from inventory first, track bank overflow
   const runesConsumed = {}
   if (combatType === 'magic' && task.spell?.runeReq && hitsNeeded < Infinity && monstersKilled > 0) {
-    for (const [runeId, qtyPerCast] of Object.entries(task.spell.runeReq)) {
+    const runesToConsume = getRunesToConsume(task.spell.runeReq, equipment, itemsData)
+    for (const [runeId, qtyPerCast] of Object.entries(runesToConsume)) {
       let remaining = qtyPerCast * hitsNeeded * monstersKilled
       for (let i = 0; i < newInv.length && remaining > 0; i++) {
         if (newInv[i]?.itemId === runeId) {

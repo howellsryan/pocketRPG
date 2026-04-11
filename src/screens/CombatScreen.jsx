@@ -1042,7 +1042,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
               return (
                 <button
                   key={spell.id}
-                  onClick={() => { if (canCast) { updateActiveCombatSpell({ id: spell.id, name: spell.name, baseDamage: spell.baseDamage }); setShowSpellModal(false); } }}
+                  onClick={() => { if (canCast) { updateActiveCombatSpell({ id: spell.id, name: spell.name, baseDamage: spell.baseDamage }); addToast(`Spell changed to ${spell.name}`, 'info'); setShowSpellModal(false); } }}
                   disabled={!canCast}
                   class={`w-full p-3 rounded-lg border transition-colors ${
                     isActive

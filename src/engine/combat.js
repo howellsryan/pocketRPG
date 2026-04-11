@@ -6,6 +6,7 @@ import {
 } from './formulas.js'
 import { getEquipmentBonuses, getAttackSpeed, getAttackStyle } from './equipment.js'
 import { getLevelFromXP } from './experience.js'
+import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE, EAT_TICK_COST } from '../utils/constants.js'
 import { randInt } from '../utils/helpers.js'
 
@@ -172,17 +173,8 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
         xpSkills.hitpoints = Math.floor(damage * HP_XP_PER_DAMAGE)
       }
     } else if (state.combatType === 'magic' && state.spell) {
-      // Check if player has required runes
-      let hasRunes = true
-      if (state.spell.runeReq) {
-        for (const [runeId, qty] of Object.entries(state.spell.runeReq)) {
-          const runeCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === runeId ? (slot?.quantity || 1) : 0), 0)
-          if (runeCount < qty) {
-            hasRunes = false
-            break
-          }
-        }
-      }
+      // Check if player has required runes (considering equipped staffs)
+      const hasRunes = hasRequiredRunes(state.spell.runeReq, inventory, {}, equipment, itemsData)
 
       // Only cast if runes are available
       if (hasRunes) {
@@ -193,9 +185,9 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
         const maxHit = magicMaxHit(state.spell.baseDamage, bonuses.otherBonus.magicDamage)
         damage = rollDamage(acc, maxHit)
 
-        // Track which runes to consume
+        // Track which runes to consume (excluding those provided by staff)
         if (state.spell.runeReq) {
-          state.runesConsumed = { ...state.spell.runeReq }
+          state.runesConsumed = getRunesToConsume(state.spell.runeReq, equipment, itemsData)
         }
 
         // Magic always grants base spell XP on cast
