@@ -13462,19 +13462,22 @@ function idleRollDrops(monster) {
 }
 /**
  * Simulate idle combat.
- * Returns { xpGained, lootGained, lootLost, lootBanked, monstersKilled, finalInventory }
+ * Returns { xpGained, lootGained, lootLost, lootBanked, monstersKilled, finalInventory, slayerXpGained, slayerTaskUpdate }
  *
  * lootGained  — newly gained items only (difference from starting inventory)
  * lootLost    — items discarded due to full inventory (bankingEnabled = false)
  * lootBanked  — items banked during auto-bank trips (bankingEnabled = true)
+ * slayerXpGained — slayer XP earned from monsters on-task
+ * slayerTaskUpdate — updated slayer task with new monstersRemaining, or null if task complete
  *
  * When task.bankingEnabled is true, the simulation deducts one agility-scaled bank
  * delay per full-inventory trip instead of losing items to the floor.
  *
  * inventory: current inventory array (28 slots)
  * itemsData: items lookup
+ * slayerTask: optional current slayer task (if not on-task, will be null)
  */
-function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsData) {
+function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsData, slayerTask = null) {
     if (!task || !task.monster)
         return null;
     const monster = task.monster;
@@ -13540,10 +13543,17 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
     const lootBanked = {};
     const xpGained = {};
     let monstersKilled = 0;
+    let monstersKilledOnTask = 0;
+    let slayerXpGained = 0;
     let remainingTicks = totalTicks;
     while (remainingTicks >= ticksPerCycle) {
         remainingTicks -= ticksPerCycle;
         monstersKilled++;
+        // Check if this kill counts toward slayer task
+        if (slayerTask && slayerTask.monsterId === monster.id && slayerTask.monstersRemaining > 0) {
+            monstersKilledOnTask++;
+            slayerXpGained += monster.hitpoints; // Slayer XP = monster HP
+        }
         // XP for this kill
         for (const [skill, xp] of Object.entries(xpPerKill)) {
             xpGained[skill] = (xpGained[skill] || 0) + xp;
@@ -13627,7 +13637,20 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
             lootGained[slot.itemId] = deltaQty;
         }
     }
-    return { xpGained, lootGained, lootLost, lootBanked, monstersKilled, finalInventory: newInv };
+    // Calculate slayer task update
+    let slayerTaskUpdate = null;
+    if (slayerTask && monstersKilledOnTask > 0) {
+        const newRemaining = Math.max(0, slayerTask.monstersRemaining - monstersKilledOnTask);
+        if (newRemaining <= 0) {
+            // Task complete
+            slayerTaskUpdate = { ...slayerTask, monstersRemaining: 0, completed: true };
+        }
+        else {
+            // Task in progress
+            slayerTaskUpdate = { ...slayerTask, monstersRemaining: newRemaining };
+        }
+    }
+    return { xpGained, lootGained, lootLost, lootBanked, monstersKilled, finalInventory: newInv, slayerXpGained, slayerTaskUpdate };
 }
 
 // ── engine/tick.js ──
@@ -14233,7 +14256,7 @@ function GameProvider({ children }) {
                     sim = simulateIdleGather(savedTask, elapsedMs, inv, s, itemsData);
                 }
                 else if (savedTask.type === 'combat') {
-                    sim = simulateIdleCombat(savedTask, elapsedMs, s, eq, inv, itemsData);
+                    sim = simulateIdleCombat(savedTask, elapsedMs, s, eq, inv, itemsData, savedSlayerTask);
                 }
                 else if (savedTask.type === 'agility') {
                     sim = simulateIdleAgility(savedTask, elapsedMs);
@@ -14246,6 +14269,13 @@ function GameProvider({ children }) {
                                 const newXP = Math.min((s[skill].xp || 0) + Math.floor(xp), 200000000);
                                 s[skill] = { ...s[skill], xp: newXP, level: getLevelFromXP(newXP) };
                             }
+                        }
+                    }
+                    // Apply slayer XP from combat simulation
+                    if (savedTask.type === 'combat' && sim.slayerXpGained > 0) {
+                        if (s.slayer) {
+                            const newXP = Math.min((s.slayer.xp || 0) + Math.floor(sim.slayerXpGained), 200000000);
+                            s.slayer = { ...s.slayer, xp: newXP, level: getLevelFromXP(newXP) };
                         }
                     }
                     // Deduct consumed materials from bank
@@ -14323,6 +14353,17 @@ function GameProvider({ children }) {
                     else {
                         await saveBank(b);
                     }
+                    // Persist slayer task update if present
+                    if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
+                        if (sim.slayerTaskUpdate.completed) {
+                            // Task complete — clear it
+                            await saveSetting('slayerTask', null);
+                        }
+                        else {
+                            // Task in progress — update monstersRemaining
+                            await saveSetting('slayerTask', sim.slayerTaskUpdate);
+                        }
+                    }
                     idleResult = { elapsedMs, task: savedTask, ...sim };
                 }
             }
@@ -14338,7 +14379,11 @@ function GameProvider({ children }) {
         setBankConfig(savedBankConfig ?? { tabs: [], itemTabMap: {} });
         setUnlockedFeatures(new Set(savedUnlocks || []));
         setActiveTaskState(savedTask ?? null);
-        setSlayerTaskState(savedSlayerTask ?? null);
+        // Update slayer task if idle simulation modified it
+        const finalSlayerTask = idleResult && idleResult.slayerTaskUpdate
+            ? (idleResult.slayerTaskUpdate.completed ? null : idleResult.slayerTaskUpdate)
+            : (savedSlayerTask ?? null);
+        setSlayerTaskState(finalSlayerTask);
         setSlayerPointsState(savedSlayerPoints ?? 0);
         const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10;
         setCurrentHP(savedHP != null ? Math.min(savedHP, hpLevel) : hpLevel);

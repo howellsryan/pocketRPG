@@ -65,7 +65,7 @@ export function GameProvider({ children }) {
         } else if (savedTask.type === 'gather') {
           sim = simulateIdleGather(savedTask, elapsedMs, inv, s, itemsData)
         } else if (savedTask.type === 'combat') {
-          sim = simulateIdleCombat(savedTask, elapsedMs, s, eq, inv, itemsData)
+          sim = simulateIdleCombat(savedTask, elapsedMs, s, eq, inv, itemsData, savedSlayerTask)
         } else if (savedTask.type === 'agility') {
           sim = simulateIdleAgility(savedTask, elapsedMs)
         }
@@ -78,6 +78,13 @@ export function GameProvider({ children }) {
                 const newXP = Math.min((s[skill].xp || 0) + Math.floor(xp), 200000000)
                 s[skill] = { ...s[skill], xp: newXP, level: getLevelFromXP(newXP) }
               }
+            }
+          }
+          // Apply slayer XP from combat simulation
+          if (savedTask.type === 'combat' && sim.slayerXpGained > 0) {
+            if (s.slayer) {
+              const newXP = Math.min((s.slayer.xp || 0) + Math.floor(sim.slayerXpGained), 200000000)
+              s.slayer = { ...s.slayer, xp: newXP, level: getLevelFromXP(newXP) }
             }
           }
           // Deduct consumed materials from bank
@@ -145,6 +152,16 @@ export function GameProvider({ children }) {
           } else {
             await saveBank(b)
           }
+          // Persist slayer task update if present
+          if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
+            if (sim.slayerTaskUpdate.completed) {
+              // Task complete — clear it
+              await saveSetting('slayerTask', null)
+            } else {
+              // Task in progress — update monstersRemaining
+              await saveSetting('slayerTask', sim.slayerTaskUpdate)
+            }
+          }
           idleResult = { elapsedMs, task: savedTask, ...sim }
         }
       }
@@ -161,7 +178,11 @@ export function GameProvider({ children }) {
     setBankConfig(savedBankConfig ?? { tabs: [], itemTabMap: {} })
     setUnlockedFeatures(new Set(savedUnlocks || []))
     setActiveTaskState(savedTask ?? null)
-    setSlayerTaskState(savedSlayerTask ?? null)
+    // Update slayer task if idle simulation modified it
+    const finalSlayerTask = idleResult && idleResult.slayerTaskUpdate
+      ? (idleResult.slayerTaskUpdate.completed ? null : idleResult.slayerTaskUpdate)
+      : (savedSlayerTask ?? null)
+    setSlayerTaskState(finalSlayerTask)
     setSlayerPointsState(savedSlayerPoints ?? 0)
     const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
     setCurrentHP(savedHP != null ? Math.min(savedHP, hpLevel) : hpLevel)
