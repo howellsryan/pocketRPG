@@ -16370,7 +16370,9 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                 return;
             }
         }
-        const combatType = getCombatType(equipment, itemsData);
+        const weaponItem = equipment?.weapon ? itemsData[equipment.weapon.itemId] : null;
+        const isMagicWeapon = weaponItem && (weaponItem.attackStyle === 'magic' || (weaponItem.attackBonus?.magic || 0) > 0);
+        const combatType = (isMagicWeapon && activeCombatSpell) ? 'magic' : getCombatType(equipment, itemsData);
         const spell = combatType === 'magic' && activeCombatSpell ? spellsData[activeCombatSpell.id] : null;
         const state = createCombatState(monster, combatType, combatStance, spell);
         // Reset potion and special attack energy on new fight
@@ -16385,7 +16387,9 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
         setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot });
     };
     const continueFight = (monster) => {
-        const combatType = getCombatType(equipment, itemsData);
+        const weaponItem = equipment?.weapon ? itemsData[equipment.weapon.itemId] : null;
+        const isMagicWeapon = weaponItem && (weaponItem.attackStyle === 'magic' || (weaponItem.attackBonus?.magic || 0) > 0);
+        const combatType = (isMagicWeapon && activeCombatSpell) ? 'magic' : getCombatType(equipment, itemsData);
         const spell = combatType === 'magic' && activeCombatSpell ? spellsData[activeCombatSpell.id] : null;
         const state = createCombatState(monster, combatType, combatStance, spell);
         // Reset potion and special attack energy on new fight
@@ -17390,7 +17394,7 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
     const skillXP = stats[selectedSkill]?.xp || 0;
     const skillLevel = getLevelFromXP(skillXP);
     const actions = skillData ? getAvailableActions(skillData.actions, skillXP) : [];
-    const allActions = skillData?.actions || [];
+    const allActions = [...(skillData?.actions || [])].sort((a, b) => a.level - b.level);
     const toolMult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory);
     if (!skilling) {
         return (h("div", { class: "h-full overflow-y-auto p-4" },

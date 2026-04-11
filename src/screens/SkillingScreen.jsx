@@ -314,7 +314,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   const skillXP = stats[selectedSkill]?.xp || 0
   const skillLevel = getLevelFromXP(skillXP)
   const actions = skillData ? getAvailableActions(skillData.actions, skillXP) : []
-  const allActions = skillData?.actions || []
+  const allActions = [...(skillData?.actions || [])].sort((a, b) => a.level - b.level)
   const toolMult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory)
 
   if (!skilling) {

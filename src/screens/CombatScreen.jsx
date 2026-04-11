@@ -314,7 +314,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
         return
       }
     }
-    const combatType = getCombatType(equipment, itemsData)
+    const weaponItem = equipment?.weapon ? itemsData[equipment.weapon.itemId] : null
+    const isMagicWeapon = weaponItem && (weaponItem.attackStyle === 'magic' || (weaponItem.attackBonus?.magic || 0) > 0)
+    const combatType = (isMagicWeapon && activeCombatSpell) ? 'magic' : getCombatType(equipment, itemsData)
     const spell = combatType === 'magic' && activeCombatSpell ? spellsData[activeCombatSpell.id] : null
     const state = createCombatState(monster, combatType, combatStance, spell)
     // Reset potion and special attack energy on new fight
@@ -330,7 +332,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
   }
 
   const continueFight = (monster) => {
-    const combatType = getCombatType(equipment, itemsData)
+    const weaponItem = equipment?.weapon ? itemsData[equipment.weapon.itemId] : null
+    const isMagicWeapon = weaponItem && (weaponItem.attackStyle === 'magic' || (weaponItem.attackBonus?.magic || 0) > 0)
+    const combatType = (isMagicWeapon && activeCombatSpell) ? 'magic' : getCombatType(equipment, itemsData)
     const spell = combatType === 'magic' && activeCombatSpell ? spellsData[activeCombatSpell.id] : null
     const state = createCombatState(monster, combatType, combatStance, spell)
     // Reset potion and special attack energy on new fight
