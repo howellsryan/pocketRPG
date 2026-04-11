@@ -232,10 +232,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
             time: Date.now()
           }])
         }
-        if (state.runesConsumed && ev.type === 'playerHit' && ev.damage >= 0) {
+        if (combatRef.current.runesConsumed && ev.type === 'playerHit' && ev.damage > 0) {
           // Consume runes when spell successfully casts
           const newInv = [...inventoryRef.current]
-          for (const [runeId, qty] of Object.entries(state.runesConsumed)) {
+          for (const [runeId, qty] of Object.entries(combatRef.current.runesConsumed)) {
             let remaining = qty
             for (let i = 0; i < newInv.length && remaining > 0; i++) {
               if (newInv[i]?.itemId === runeId) {
@@ -248,7 +248,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
           }
           updateInventory(newInv)
           inventoryRef.current = newInv
-          state.runesConsumed = null // Clear so we don't consume again
+          combatRef.current.runesConsumed = null // Clear so we don't consume again
         }
         if (ev.type === 'monsterDeath') {
           setKillCount(k => k + 1)
