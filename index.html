@@ -18336,7 +18336,7 @@ function EquipmentScreen() {
 
 
 function GameApp() {
-    const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures } = useGame();
+    const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask } = useGame();
     const [screen, setScreen] = useState(SCREENS.HOME);
     const [gameReady, setGameReady] = useState(false);
     const [showNewGame, setShowNewGame] = useState(false);
@@ -18423,11 +18423,12 @@ function GameApp() {
                         return;
                     }
                     // Re-read latest stats/equipment/inventory/bank from DB to avoid stale state
-                    const [freshStats, freshInv, freshEq, freshBank] = await Promise.all([
+                    const [freshStats, freshInv, freshEq, freshBank, freshSlayerTask] = await Promise.all([
                         getAllStats(),
                         getInventory(),
                         getEquipment(),
                         getBank(),
+                        getSetting('slayerTask'),
                     ]);
                     let sim = null;
                     if (savedTask.type === 'skill')
@@ -18435,7 +18436,7 @@ function GameApp() {
                     if (savedTask.type === 'gather')
                         sim = simulateIdleGather(savedTask, elapsedMs);
                     if (savedTask.type === 'combat')
-                        sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current);
+                        sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask);
                     if (savedTask.type === 'agility')
                         sim = simulateIdleAgility(savedTask, elapsedMs);
                     // Always show the modal — even if sim is null (e.g. <1 action completed)
@@ -18471,6 +18472,15 @@ function GameApp() {
                             negated[itemId] = -qty;
                         }
                         updateBankDirect(negated);
+                    }
+                    // Persist slayer task update if present
+                    if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
+                        if (sim.slayerTaskUpdate.completed) {
+                            await saveSetting('slayerTask', null);
+                        }
+                        else {
+                            await saveSetting('slayerTask', sim.slayerTaskUpdate);
+                        }
                     }
                     setIdleResult({ elapsedMs, task: savedTask, ...sim });
                 }
@@ -18604,8 +18614,8 @@ function GameApp() {
             return;
         }
         const ONE_HOUR_MS = 3600000;
-        const [freshStats, freshInv, freshEq, freshBank] = await Promise.all([
-            getAllStats(), getInventory(), getEquipment(), getBank(),
+        const [freshStats, freshInv, freshEq, freshBank, freshSlayerTask] = await Promise.all([
+            getAllStats(), getInventory(), getEquipment(), getBank(), getSetting('slayerTask'),
         ]);
         let sim = null;
         if (task.type === 'skill')
@@ -18613,7 +18623,7 @@ function GameApp() {
         if (task.type === 'gather')
             sim = simulateIdleGather(task, ONE_HOUR_MS, freshInv, freshStats, itemsDataRef.current);
         if (task.type === 'combat')
-            sim = simulateIdleCombat(task, ONE_HOUR_MS, freshStats, freshEq, freshInv, itemsDataRef.current);
+            sim = simulateIdleCombat(task, ONE_HOUR_MS, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask);
         if (task.type === 'agility')
             sim = simulateIdleAgility(task, ONE_HOUR_MS);
         if (!sim) {
@@ -18646,6 +18656,10 @@ function GameApp() {
                 negated[itemId] = -qty;
             }
             updateBankDirect(negated);
+        }
+        // Update slayer task if present
+        if (task.type === 'combat' && sim.slayerTaskUpdate) {
+            setSlayerTask(sim.slayerTaskUpdate.completed ? null : sim.slayerTaskUpdate);
         }
         setIdleResult({ elapsedMs: ONE_HOUR_MS, task, ...sim });
         // Show skip hour completion toast
@@ -18729,29 +18743,64 @@ function GameApp() {
                 h("div", { style: { padding: '16px', maxHeight: '55vh', overflowY: 'auto' } }, (() => {
                     const hrs = idleResult.elapsedMs / 3600000;
                     const perHr = (n) => hrs > 0 ? Math.round(n / hrs).toLocaleString() : '—';
-                    return (h(Fragment, null, (() => {
-                        const merged = {};
-                        for (const src of [idleResult.lootGained, idleResult.lootBanked, idleResult.lootLost, idleResult.itemsGained]) {
-                            if (!src)
-                                continue;
-                            for (const [itemId, qty] of Object.entries(src)) {
-                                if (qty > 0)
-                                    merged[itemId] = (merged[itemId] || 0) + qty;
+                    const SKILL_ICONS = {
+                        attack: '⚔️', strength: '💪', defence: '🛡️', hitpoints: '❤️',
+                        ranged: '🏹', magic: '🔮', prayer: '🙏',
+                        mining: '⛏️', woodcutting: '🪓', fishing: '🎣', farming: '🌾', hunter: '🪤',
+                        smithing: '🔨', cooking: '🍳', crafting: '✂️', fletching: '🏹', herblore: '🧪', runecraft: '🔴',
+                        agility: '🏃', thieving: '🗝️', slayer: '💀', firemaking: '🔥', construction: '🏠'
+                    };
+                    return (h(Fragment, null,
+                        (() => {
+                            const xpEntries = idleResult.xpGained ? Object.entries(idleResult.xpGained).filter(([_, xp]) => xp > 0) : [];
+                            const hasXp = xpEntries.length > 0;
+                            const hasMonstersKilled = idleResult.task?.type === 'combat' && idleResult.monstersKilled > 0;
+                            const hasSlayerXp = idleResult.slayerXpGained > 0;
+                            return (hasXp || hasMonstersKilled || hasSlayerXp) ? (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' } },
+                                h("div", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' } }, "\uD83D\uDCCA Summary"),
+                                hasMonstersKilled && (h("div", { style: { marginBottom: '6px' } },
+                                    h("div", { style: { fontSize: '13px', color: '#e8d5b0' } }, "\uD83D\uDDE1\uFE0F Monsters Slain"),
+                                    h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' } },
+                                        h("span", null, idleResult.monstersKilled.toLocaleString()),
+                                        h("span", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.45 } },
+                                            "/hr ",
+                                            perHr(idleResult.monstersKilled))))),
+                                xpEntries.map(([skill, xp]) => (h("div", { key: skill, style: { marginBottom: '4px' } },
+                                    h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' } },
+                                        h("span", null,
+                                            SKILL_ICONS[skill] || '⭐',
+                                            " ",
+                                            skill.charAt(0).toUpperCase() + skill.slice(1)),
+                                        h("span", { style: { color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' } },
+                                            "+",
+                                            Math.floor(xp).toLocaleString())),
+                                    h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8d5b0', opacity: 0.45 } },
+                                        h("span", null, "/hr"),
+                                        h("span", { style: { fontFamily: 'monospace' } }, perHr(xp)))))))) : null;
+                        })(),
+                        (() => {
+                            const merged = {};
+                            for (const src of [idleResult.lootGained, idleResult.lootBanked, idleResult.lootLost, idleResult.itemsGained]) {
+                                if (!src)
+                                    continue;
+                                for (const [itemId, qty] of Object.entries(src)) {
+                                    if (qty > 0)
+                                        merged[itemId] = (merged[itemId] || 0) + qty;
+                                }
                             }
-                        }
-                        const entries = Object.entries(merged);
-                        return entries.length > 0 ? (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' } },
-                            h("div", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' } }, "\uD83C\uDF92 Loot"),
-                            entries.map(([itemId, qty]) => (h("div", { key: itemId, style: { marginBottom: '4px' } },
-                                h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' } },
-                                    h("span", { style: { textTransform: 'capitalize' } }, itemId.replace(/_/g, ' ')),
-                                    h("span", { style: { color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' } },
-                                        "\u00D7",
-                                        qty.toLocaleString())),
-                                h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8d5b0', opacity: 0.45 } },
-                                    h("span", null, "/hr"),
-                                    h("span", { style: { fontFamily: 'monospace' } }, perHr(qty)))))))) : null;
-                    })()));
+                            const entries = Object.entries(merged);
+                            return entries.length > 0 ? (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' } },
+                                h("div", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' } }, "\uD83C\uDF92 Loot"),
+                                entries.map(([itemId, qty]) => (h("div", { key: itemId, style: { marginBottom: '4px' } },
+                                    h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' } },
+                                        h("span", { style: { textTransform: 'capitalize' } }, itemId.replace(/_/g, ' ')),
+                                        h("span", { style: { color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' } },
+                                            "\u00D7",
+                                            qty.toLocaleString())),
+                                    h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8d5b0', opacity: 0.45 } },
+                                        h("span", null, "/hr"),
+                                        h("span", { style: { fontFamily: 'monospace' } }, perHr(qty)))))))) : null;
+                        })()));
                 })()),
                 h("div", { style: { padding: '12px 16px', borderTop: '1px solid #222' } },
                     h("button", { onClick: () => setIdleResult(null), style: { width: '100%', padding: '13px', borderRadius: '12px', background: 'linear-gradient(135deg, #b8940e, #d4af37)', color: '#0f0f0f', fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '14px', border: 'none', cursor: 'pointer' } }, "Continue Adventure"))))),
