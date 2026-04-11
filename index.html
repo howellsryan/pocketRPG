@@ -16155,7 +16155,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
             // Add to empty slot
             const emptyIdx = newInv.findIndex(s => s === null);
             if (emptyIdx !== -1) {
-                newInv[emptyIdx] = unequipped;
+                newInv[emptyIdx] = { ...unequipped, quantity: unequipped.quantity || 1 };
             }
         }
         updateInventory(newInv);
@@ -16338,7 +16338,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
             h("div", { class: "grid grid-cols-2 gap-2" },
                 h("button", { onClick: handleEat, class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\uD83C\uDF56 Eat"),
                 h("button", { onClick: () => setShowPotionModal(true), class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\uD83E\uDDEA Potion")),
-            h("div", { class: "grid grid-cols-3 gap-2" },
+            h("div", { class: "grid grid-cols-2 gap-2" },
                 (() => {
                     const weaponEntry = equipment?.weapon;
                     const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null;
@@ -16349,9 +16349,11 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                         "\u26A1 ",
                         hasSpec ? `Special (${weapon.specialAttack.energyCost}%)` : 'No Spec'));
                 })(),
-                h("button", { onClick: () => setShowEquipmentModal(true), class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#2a2a3a,#3a3a5a);border:1px solid rgba(150,150,200,0.35);color:#a8a8d8" }, "\u2699\uFE0F Gear"),
                 h("button", { onClick: () => setShowPrayerModal(true), class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\uD83D\uDE4F Prayer")),
-            skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "w-full py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\u23ED\uFE0F Skip 1h"))))),
+            h("div", { class: "grid grid-cols-2 gap-2" },
+                h("button", { onClick: () => setShowEquipmentModal(true), class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#2a2a3a,#3a3a5a);border:1px solid rgba(150,150,200,0.35);color:#a8a8d8" }, "\u2699\uFE0F Gear"),
+                skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\u23ED\uFE0F Skip 1h")),
+                !skipHourUnlocked && (h("div", { class: "py-2.5 rounded-lg font-semibold text-sm", style: "background:#1a1a1a;border:1px solid #2a2a2a;color:#888" })))))),
         showPrayerModal && (h(Modal, { onClose: () => setShowPrayerModal(false) },
             h("div", { class: "flex items-center justify-between mb-3" },
                 h("h3", { class: "font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]" }, "Choose Prayer"),

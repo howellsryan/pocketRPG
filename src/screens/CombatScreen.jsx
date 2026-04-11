@@ -458,7 +458,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
       // Add to empty slot
       const emptyIdx = newInv.findIndex(s => s === null)
       if (emptyIdx !== -1) {
-        newInv[emptyIdx] = unequipped
+        newInv[emptyIdx] = { ...unequipped, quantity: unequipped.quantity || 1 }
       }
     }
 
@@ -751,8 +751,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
                 🧪 Potion
               </button>
             </div>
-            {/* Special attack, Prayer, and Equipment buttons */}
-            <div class="grid grid-cols-3 gap-2">
+            {/* Special attack and Prayer buttons */}
+            <div class="grid grid-cols-2 gap-2">
               {(() => {
                 const weaponEntry = equipment?.weapon
                 const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
@@ -770,25 +770,30 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
                   </button>
                 )
               })()}
-              <button onClick={() => setShowEquipmentModal(true)}
-                class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
-                style="background:linear-gradient(135deg,#2a2a3a,#3a3a5a);border:1px solid rgba(150,150,200,0.35);color:#a8a8d8">
-                ⚙️ Gear
-              </button>
               <button onClick={() => setShowPrayerModal(true)}
                 class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
                 style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
                 🙏 Prayer
               </button>
             </div>
-            {/* Skip 1h */}
-            {skipHourUnlocked && (
-              <button onClick={onSkipHour}
-                class="w-full py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
-                style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
-                ⏭️ Skip 1h
+            {/* Gear and Skip 1h buttons */}
+            <div class="grid grid-cols-2 gap-2">
+              <button onClick={() => setShowEquipmentModal(true)}
+                class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
+                style="background:linear-gradient(135deg,#2a2a3a,#3a3a5a);border:1px solid rgba(150,150,200,0.35);color:#a8a8d8">
+                ⚙️ Gear
               </button>
-            )}
+              {skipHourUnlocked && (
+                <button onClick={onSkipHour}
+                  class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
+                  style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
+                  ⏭️ Skip 1h
+                </button>
+              )}
+              {!skipHourUnlocked && (
+                <div class="py-2.5 rounded-lg font-semibold text-sm" style="background:#1a1a1a;border:1px solid #2a2a2a;color:#888"></div>
+              )}
+            </div>
           </>
         )}
       </div>
