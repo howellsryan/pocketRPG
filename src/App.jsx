@@ -120,7 +120,7 @@ function GameApp() {
           let sim = null
           if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank)
           if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs)
-          if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask)
+          if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank)
           if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
 
           // Always show the modal — even if sim is null (e.g. <1 action completed)
@@ -156,6 +156,14 @@ function GameApp() {
           if (sim.itemsConsumed && Object.keys(sim.itemsConsumed).length > 0) {
             const negated = {}
             for (const [itemId, qty] of Object.entries(sim.itemsConsumed)) {
+              negated[itemId] = -qty
+            }
+            updateBankDirect(negated)
+          }
+          // Deduct runes consumed from bank (inventory portion already reflected in finalInventory)
+          if (sim.runesConsumed && Object.keys(sim.runesConsumed).length > 0) {
+            const negated = {}
+            for (const [itemId, qty] of Object.entries(sim.runesConsumed)) {
               negated[itemId] = -qty
             }
             updateBankDirect(negated)
@@ -306,7 +314,7 @@ function GameApp() {
     let sim = null
     if (task.type === 'skill')   sim = simulateIdleSkilling(task, ONE_HOUR_MS, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
     if (task.type === 'gather')  sim = simulateIdleGather(task, ONE_HOUR_MS, freshInv, freshStats, itemsDataRef.current)
-    if (task.type === 'combat')  sim = simulateIdleCombat(task, ONE_HOUR_MS, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask)
+    if (task.type === 'combat')  sim = simulateIdleCombat(task, ONE_HOUR_MS, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank)
     if (task.type === 'agility') sim = simulateIdleAgility(task, ONE_HOUR_MS)
 
     if (!sim) {
@@ -339,6 +347,14 @@ function GameApp() {
     if (sim.itemsConsumed && Object.keys(sim.itemsConsumed).length > 0) {
       const negated = {}
       for (const [itemId, qty] of Object.entries(sim.itemsConsumed)) {
+        negated[itemId] = -qty
+      }
+      updateBankDirect(negated)
+    }
+    // Deduct runes consumed from bank (inventory portion already reflected in finalInventory)
+    if (sim.runesConsumed && Object.keys(sim.runesConsumed).length > 0) {
+      const negated = {}
+      for (const [itemId, qty] of Object.entries(sim.runesConsumed)) {
         negated[itemId] = -qty
       }
       updateBankDirect(negated)

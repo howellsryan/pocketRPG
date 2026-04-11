@@ -329,7 +329,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
     setFightStartedAt(Date.now())
     const spellName = spell ? ` with ${spell.name}` : ''
     setLog([{ text: `Fighting ${monster.name}${spellName}...`, type: 'info', time: Date.now() }])
-    setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot })
+    setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot, spell: spell || null })
   }
 
   const continueFight = (monster) => {
@@ -341,7 +341,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
     state.activePotion = null
     state.potionDuration = 0
     setCombat(state)
-    setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot })
+    setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot, spell: spell || null })
   }
 
   const stopAndBack = () => {
