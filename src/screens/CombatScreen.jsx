@@ -100,6 +100,23 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
   useEffect(() => { slayerTaskRef.current = slayerTask }, [slayerTask])
   useEffect(() => { slayerPointsRef.current = slayerPoints }, [slayerPoints])
 
+  // Update spell in active combat if changed mid-fight
+  useEffect(() => {
+    if (!combatRef.current || !combatRef.current.active) return
+    const newCombatType = getCombatType(equipmentRef.current, itemsData)
+    const newSpell = newCombatType === 'magic' && activeCombatSpell ? spellsData[activeCombatSpell.id] : null
+    // Update combat state to use the new spell/combat type
+    if (combatRef.current.combatType !== newCombatType ||
+        (newCombatType === 'magic' && combatRef.current.spell?.id !== activeCombatSpell?.id)) {
+      combatRef.current = {
+        ...combatRef.current,
+        combatType: newCombatType,
+        spell: newSpell
+      }
+      setCombat({ ...combatRef.current })
+    }
+  }, [activeCombatSpell, equipment])
+
   // Auto-start fight from home shortcut
   useEffect(() => {
     if (initialMonsterId && !hasAutoStarted.current && !combat) {

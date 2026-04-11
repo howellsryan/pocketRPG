@@ -13519,6 +13519,24 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
             itemsConsumed[itemId] = qtyPerAction * actions;
         }
     }
+    // Cap actions to available runes (for magic skilling)
+    if (task.action.runeReq) {
+        let maxFromRunes = Infinity;
+        for (const [runeId, qtyPerAction] of Object.entries(task.action.runeReq)) {
+            const invCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === runeId ? (slot?.quantity || 0) : 0), 0);
+            const bankCount = (bank && bank[runeId]) ? bank[runeId].quantity : 0;
+            const possible = Math.floor((invCount + bankCount) / qtyPerAction);
+            if (possible < maxFromRunes)
+                maxFromRunes = possible;
+        }
+        if (maxFromRunes === 0)
+            return null;
+        actions = Math.min(actions, maxFromRunes);
+        // Record consumed runes
+        for (const [runeId, qtyPerAction] of Object.entries(task.action.runeReq)) {
+            itemsConsumed[runeId] = qtyPerAction * actions;
+        }
+    }
     const xpGained = {};
     const itemsGained = {};
     const itemsBanked = {};
@@ -13528,6 +13546,21 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
     if (xpPer > 0 && task.skill) {
         xpGained[task.skill] = xpPer * actions;
     }
+    // Consume runes from inventory (for magic skilling)
+    if (task.action.runeReq) {
+        for (const [runeId, qtyPerAction] of Object.entries(task.action.runeReq)) {
+            let remaining = qtyPerAction * actions;
+            for (let i = 0; i < newInv.length && remaining > 0; i++) {
+                if (newInv[i]?.itemId === runeId) {
+                    const consumed = Math.min(newInv[i].quantity, remaining);
+                    newInv[i] = { ...newInv[i], quantity: newInv[i].quantity - consumed };
+                    if (newInv[i].quantity === 0)
+                        newInv[i] = null;
+                    remaining -= consumed;
+                }
+            }
+        }
+    }
     // Handle product placement based on bankingEnabled
     if (task.action.product) {
         const bankingEnabled = task.bankingEnabled || false;
@@ -13535,7 +13568,7 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
         const qtyPerAction = task.action.productQty || 1;
         // Track starting inventory state
         const startingInvState = {};
-        for (const slot of inventory) {
+        for (const slot of newInv) {
             if (!slot)
                 continue;
             startingInvState[slot.itemId] = (startingInvState[slot.itemId] || 0) + slot.quantity;
@@ -16205,6 +16238,23 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
     useEffect(() => { equipmentRef.current = equipment; }, [equipment]);
     useEffect(() => { slayerTaskRef.current = slayerTask; }, [slayerTask]);
     useEffect(() => { slayerPointsRef.current = slayerPoints; }, [slayerPoints]);
+    // Update spell in active combat if changed mid-fight
+    useEffect(() => {
+        if (!combatRef.current || !combatRef.current.active)
+            return;
+        const newCombatType = getCombatType(equipmentRef.current, itemsData);
+        const newSpell = newCombatType === 'magic' && activeCombatSpell ? spellsData[activeCombatSpell.id] : null;
+        // Update combat state to use the new spell/combat type
+        if (combatRef.current.combatType !== newCombatType ||
+            (newCombatType === 'magic' && combatRef.current.spell?.id !== activeCombatSpell?.id)) {
+            combatRef.current = {
+                ...combatRef.current,
+                combatType: newCombatType,
+                spell: newSpell
+            };
+            setCombat({ ...combatRef.current });
+        }
+    }, [activeCombatSpell, equipment]);
     // Auto-start fight from home shortcut
     useEffect(() => {
         if (initialMonsterId && !hasAutoStarted.current && !combat) {
@@ -18511,6 +18561,7 @@ function GeneralStoreScreen() {
             addItem(newInv, storeItem.id, 1, storeItem.stackable);
         }
         updateInventory(newInv);
+        addToast(`${storeItem.icon ? storeItem.icon + ' ' : ''}${storeItem.name} ${qty > 1 ? `×${qty}` : ''} purchased!`, 'success');
     };
     const handleUnlock = (unlock) => {
         if (unlockedFeatures.has(unlock.id)) {

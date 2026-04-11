@@ -81,6 +81,24 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
     }
   }
 
+  // Cap actions to available runes (for magic skilling)
+  if (task.action.runeReq) {
+    let maxFromRunes = Infinity
+    for (const [runeId, qtyPerAction] of Object.entries(task.action.runeReq)) {
+      const invCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === runeId ? (slot?.quantity || 0) : 0), 0)
+      const bankCount = (bank && bank[runeId]) ? bank[runeId].quantity : 0
+      const possible = Math.floor((invCount + bankCount) / qtyPerAction)
+      if (possible < maxFromRunes) maxFromRunes = possible
+    }
+    if (maxFromRunes === 0) return null
+    actions = Math.min(actions, maxFromRunes)
+
+    // Record consumed runes
+    for (const [runeId, qtyPerAction] of Object.entries(task.action.runeReq)) {
+      itemsConsumed[runeId] = qtyPerAction * actions
+    }
+  }
+
   const xpGained = {}
   const itemsGained = {}
   const itemsBanked = {}
@@ -92,6 +110,21 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
     xpGained[task.skill] = xpPer * actions
   }
 
+  // Consume runes from inventory (for magic skilling)
+  if (task.action.runeReq) {
+    for (const [runeId, qtyPerAction] of Object.entries(task.action.runeReq)) {
+      let remaining = qtyPerAction * actions
+      for (let i = 0; i < newInv.length && remaining > 0; i++) {
+        if (newInv[i]?.itemId === runeId) {
+          const consumed = Math.min(newInv[i].quantity, remaining)
+          newInv[i] = { ...newInv[i], quantity: newInv[i].quantity - consumed }
+          if (newInv[i].quantity === 0) newInv[i] = null
+          remaining -= consumed
+        }
+      }
+    }
+  }
+
   // Handle product placement based on bankingEnabled
   if (task.action.product) {
     const bankingEnabled = task.bankingEnabled || false
@@ -100,7 +133,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
 
     // Track starting inventory state
     const startingInvState = {}
-    for (const slot of inventory) {
+    for (const slot of newInv) {
       if (!slot) continue
       startingInvState[slot.itemId] = (startingInvState[slot.itemId] || 0) + slot.quantity
     }

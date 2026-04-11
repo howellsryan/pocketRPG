@@ -264,6 +264,7 @@ export default function GeneralStoreScreen() {
       addItem(newInv, storeItem.id, 1, storeItem.stackable)
     }
     updateInventory(newInv)
+    addToast(`${storeItem.icon ? storeItem.icon + ' ' : ''}${storeItem.name} ${qty > 1 ? `×${qty}` : ''} purchased!`, 'success')
   }
 
   const handleUnlock = (unlock) => {
