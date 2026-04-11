@@ -384,6 +384,9 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                       {action.materials && (
                         <span> · Needs: {Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>
                       )}
+                      {action.runeReq && (
+                        <span> · Runes: {Object.entries(action.runeReq).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>
+                      )}
                       {needsTool && !hasTool && (
                         <span class="block text-[#ff6b6b] mt-1">
                           {selectedSkill === 'mining' ? '⚒️ No pickaxe' : selectedSkill === 'woodcutting' ? '🪓 No axe' : '🎣 No rod'}
