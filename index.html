@@ -11907,7 +11907,7 @@ const AUTO_SAVE_DEBOUNCE = 300; // ms
 // Skills list
 const COMBAT_SKILLS = ['attack', 'strength', 'defence', 'hitpoints', 'ranged', 'magic', 'prayer'];
 const GATHERING_SKILLS = ['mining', 'woodcutting', 'fishing', 'farming', 'hunter'];
-const PRODUCTION_SKILLS = ['smithing', 'cooking', 'crafting', 'fletching', 'herblore', 'runecraft'];
+const PRODUCTION_SKILLS = ['smithing', 'cooking', 'crafting', 'fletching', 'herblore', 'runecraft', 'magic'];
 const UTILITY_SKILLS = ['agility', 'thieving', 'slayer', 'firemaking', 'construction'];
 const ALL_SKILLS = [...COMBAT_SKILLS, ...GATHERING_SKILLS, ...PRODUCTION_SKILLS, ...UTILITY_SKILLS];
 const STUB_SKILLS = new Set(['farming', 'hunter', 'runecraft', 'thieving', 'firemaking', 'construction']);
@@ -16291,10 +16291,10 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                             time: Date.now()
                         }]);
                 }
-                if (state.runesConsumed && ev.type === 'playerHit' && ev.damage >= 0) {
+                if (combatRef.current.runesConsumed && ev.type === 'playerHit' && ev.damage > 0) {
                     // Consume runes when spell successfully casts
                     const newInv = [...inventoryRef.current];
-                    for (const [runeId, qty] of Object.entries(state.runesConsumed)) {
+                    for (const [runeId, qty] of Object.entries(combatRef.current.runesConsumed)) {
                         let remaining = qty;
                         for (let i = 0; i < newInv.length && remaining > 0; i++) {
                             if (newInv[i]?.itemId === runeId) {
@@ -16308,7 +16308,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                     }
                     updateInventory(newInv);
                     inventoryRef.current = newInv;
-                    state.runesConsumed = null; // Clear so we don't consume again
+                    combatRef.current.runesConsumed = null; // Clear so we don't consume again
                 }
                 if (ev.type === 'monsterDeath') {
                     setKillCount(k => k + 1);

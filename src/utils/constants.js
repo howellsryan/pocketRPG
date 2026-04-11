@@ -32,7 +32,7 @@ export const AUTO_SAVE_DEBOUNCE = 300 // ms
 // Skills list
 export const COMBAT_SKILLS = ['attack', 'strength', 'defence', 'hitpoints', 'ranged', 'magic', 'prayer']
 export const GATHERING_SKILLS = ['mining', 'woodcutting', 'fishing', 'farming', 'hunter']
-export const PRODUCTION_SKILLS = ['smithing', 'cooking', 'crafting', 'fletching', 'herblore', 'runecraft']
+export const PRODUCTION_SKILLS = ['smithing', 'cooking', 'crafting', 'fletching', 'herblore', 'runecraft', 'magic']
 export const UTILITY_SKILLS = ['agility', 'thieving', 'slayer', 'firemaking', 'construction']
 
 export const ALL_SKILLS = [...COMBAT_SKILLS, ...GATHERING_SKILLS, ...PRODUCTION_SKILLS, ...UTILITY_SKILLS]
