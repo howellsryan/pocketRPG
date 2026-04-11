@@ -93,13 +93,13 @@ export function GameProvider({ children }) {
               }
             }
           }
-          // Apply items to bank (skilling/gather) or inventory (combat)
-          if (savedTask.type === 'combat' && sim.finalInventory) {
+          // Apply items to inventory and bank
+          if ((savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather') && sim.finalInventory) {
             // Use the already-mutated inventory from simulation
             sim.finalInventory.forEach((slot, i) => { inv[i] = slot })
             // Apply any items banked during auto-bank trips
-            if (sim.lootBanked) {
-              for (const [itemId, qty] of Object.entries(sim.lootBanked)) {
+            if (sim.itemsGained) {
+              for (const [itemId, qty] of Object.entries(sim.itemsGained)) {
                 if (qty <= 0) continue
                 if (b[itemId]) {
                   b[itemId] = { ...b[itemId], quantity: b[itemId].quantity + qty }
@@ -137,9 +137,9 @@ export function GameProvider({ children }) {
           }
           // Persist updated stats + bank/inventory to DB
           await saveAllStats(s)
-          if (savedTask.type === 'combat') {
+          if (savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather') {
             await saveInventory(inv)
-            if (sim.lootBanked && Object.keys(sim.lootBanked).length > 0) {
+            if (sim.itemsGained && Object.keys(sim.itemsGained).length > 0) {
               await saveBank(b)
             }
           } else {

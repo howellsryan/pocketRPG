@@ -13185,6 +13185,7 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
     const xpGained = {};
     const itemsGained = {};
     const itemsDropped = {};
+    const newInv = [...inventory];
     const xpPer = task.action.xp || 0;
     if (xpPer > 0 && task.skill) {
         xpGained[task.skill] = xpPer * actions;
@@ -13192,7 +13193,6 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
     // Handle product placement based on bankingEnabled
     if (task.action.product) {
         const bankingEnabled = task.bankingEnabled || false;
-        const newInv = [...inventory];
         const product = task.action.product;
         const qtyPerAction = task.action.productQty || 1;
         // Track starting inventory state
@@ -13318,7 +13318,7 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
             }
         }
     }
-    return { xpGained, itemsGained, itemsConsumed, itemsDropped, actions, skill: task.skill, actionName: task.action.name };
+    return { xpGained, itemsGained, itemsConsumed, itemsDropped, actions, skill: task.skill, actionName: task.action.name, finalInventory: newInv };
 }
 /**
  * Simulate idle gathering.
@@ -13416,7 +13416,7 @@ function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, itemsDa
             itemsGained[slot.itemId] = (itemsGained[slot.itemId] || 0) + deltaQty;
         }
     }
-    return { itemsGained, itemsDropped, actions: actionsCompleted, actionName: task.gatherTask.name };
+    return { itemsGained, itemsDropped, actions: actionsCompleted, actionName: task.gatherTask.name, finalInventory: newInv };
 }
 /**
  * Compute average player DPS against a monster.
@@ -14266,13 +14266,13 @@ function GameProvider({ children }) {
                             }
                         }
                     }
-                    // Apply items to bank (skilling/gather) or inventory (combat)
-                    if (savedTask.type === 'combat' && sim.finalInventory) {
+                    // Apply items to inventory and bank
+                    if ((savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather') && sim.finalInventory) {
                         // Use the already-mutated inventory from simulation
                         sim.finalInventory.forEach((slot, i) => { inv[i] = slot; });
                         // Apply any items banked during auto-bank trips
-                        if (sim.lootBanked) {
-                            for (const [itemId, qty] of Object.entries(sim.lootBanked)) {
+                        if (sim.itemsGained) {
+                            for (const [itemId, qty] of Object.entries(sim.itemsGained)) {
                                 if (qty <= 0)
                                     continue;
                                 if (b[itemId]) {
@@ -14318,9 +14318,9 @@ function GameProvider({ children }) {
                     }
                     // Persist updated stats + bank/inventory to DB
                     await saveAllStats(s);
-                    if (savedTask.type === 'combat') {
+                    if (savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather') {
                         await saveInventory(inv);
-                        if (sim.lootBanked && Object.keys(sim.lootBanked).length > 0) {
+                        if (sim.itemsGained && Object.keys(sim.itemsGained).length > 0) {
                             await saveBank(b);
                         }
                     }
@@ -18452,9 +18452,9 @@ function GameApp() {
         ]);
         let sim = null;
         if (task.type === 'skill')
-            sim = simulateIdleSkilling(task, ONE_HOUR_MS, freshBank, freshEq, freshStats, itemsDataRef.current);
+            sim = simulateIdleSkilling(task, ONE_HOUR_MS, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv);
         if (task.type === 'gather')
-            sim = simulateIdleGather(task, ONE_HOUR_MS);
+            sim = simulateIdleGather(task, ONE_HOUR_MS, freshInv, freshStats, itemsDataRef.current);
         if (task.type === 'combat')
             sim = simulateIdleCombat(task, ONE_HOUR_MS, freshStats, freshEq, freshInv, itemsDataRef.current);
         if (task.type === 'agility')
@@ -18469,7 +18469,7 @@ function GameApp() {
                     grantXP(skill, xp);
             }
         }
-        if (task.type === 'combat' && sim.finalInventory) {
+        if ((task.type === 'combat' || task.type === 'skill' || task.type === 'gather') && sim.finalInventory) {
             updateInventory(sim.finalInventory);
             if (sim.lootBanked && Object.keys(sim.lootBanked).length > 0) {
                 updateBankDirect(sim.lootBanked);

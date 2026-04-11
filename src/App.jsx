@@ -290,8 +290,8 @@ function GameApp() {
     ])
 
     let sim = null
-    if (task.type === 'skill')   sim = simulateIdleSkilling(task, ONE_HOUR_MS, freshBank, freshEq, freshStats, itemsDataRef.current)
-    if (task.type === 'gather')  sim = simulateIdleGather(task, ONE_HOUR_MS)
+    if (task.type === 'skill')   sim = simulateIdleSkilling(task, ONE_HOUR_MS, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
+    if (task.type === 'gather')  sim = simulateIdleGather(task, ONE_HOUR_MS, freshInv, freshStats, itemsDataRef.current)
     if (task.type === 'combat')  sim = simulateIdleCombat(task, ONE_HOUR_MS, freshStats, freshEq, freshInv, itemsDataRef.current)
     if (task.type === 'agility') sim = simulateIdleAgility(task, ONE_HOUR_MS)
 
@@ -305,7 +305,7 @@ function GameApp() {
         if (xp > 0) grantXP(skill, xp)
       }
     }
-    if (task.type === 'combat' && sim.finalInventory) {
+    if ((task.type === 'combat' || task.type === 'skill' || task.type === 'gather') && sim.finalInventory) {
       updateInventory(sim.finalInventory)
       if (sim.lootBanked && Object.keys(sim.lootBanked).length > 0) {
         updateBankDirect(sim.lootBanked)
