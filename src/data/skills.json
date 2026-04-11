@@ -78,7 +78,7 @@
       {
         "id": "gem_mining",
         "name": "Mine gems",
-        "level": 10,
+        "level": 75,
         "ticks": 20,
         "xp": 65,
         "dropTable": [
