@@ -21,6 +21,8 @@ export function getEquippedElementalStaff(equipment, itemsData) {
  */
 export function hasRequiredRunes(runeReq, inventory, bank, equipment, itemsData) {
   if (!runeReq) return true
+  if (!inventory || !Array.isArray(inventory)) return true
+  if (!bank || typeof bank !== 'object') return true
 
   const staff = getEquippedElementalStaff(equipment, itemsData)
   const staffRuneType = staff?.elemental
@@ -47,7 +49,8 @@ export function hasRequiredRunes(runeReq, inventory, bank, equipment, itemsData)
  * @returns {object} filtered runes to consume
  */
 export function getRunesToConsume(runeReq, equipment, itemsData) {
-  if (!runeReq) return {}
+  if (!runeReq || typeof runeReq !== 'object') return {}
+  if (!itemsData || typeof itemsData !== 'object') return runeReq
 
   const staff = getEquippedElementalStaff(equipment, itemsData)
   const staffRuneType = staff?.elemental
