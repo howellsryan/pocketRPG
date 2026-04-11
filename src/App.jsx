@@ -290,8 +290,8 @@ function GameApp() {
     ])
 
     let sim = null
-    if (task.type === 'skill')   sim = simulateIdleSkilling(task, ONE_HOUR_MS, freshBank, freshEq, freshStats, itemsDataRef.current)
-    if (task.type === 'gather')  sim = simulateIdleGather(task, ONE_HOUR_MS)
+    if (task.type === 'skill')   sim = simulateIdleSkilling(task, ONE_HOUR_MS, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
+    if (task.type === 'gather')  sim = simulateIdleGather(task, ONE_HOUR_MS, freshInv, freshStats, itemsDataRef.current)
     if (task.type === 'combat')  sim = simulateIdleCombat(task, ONE_HOUR_MS, freshStats, freshEq, freshInv, itemsDataRef.current)
     if (task.type === 'agility') sim = simulateIdleAgility(task, ONE_HOUR_MS)
 
@@ -305,7 +305,7 @@ function GameApp() {
         if (xp > 0) grantXP(skill, xp)
       }
     }
-    if (task.type === 'combat' && sim.finalInventory) {
+    if ((task.type === 'combat' || task.type === 'skill' || task.type === 'gather') && sim.finalInventory) {
       updateInventory(sim.finalInventory)
       if (sim.lootBanked && Object.keys(sim.lootBanked).length > 0) {
         updateBankDirect(sim.lootBanked)
@@ -325,6 +325,20 @@ function GameApp() {
     }
 
     setIdleResult({ elapsedMs: ONE_HOUR_MS, task, ...sim })
+
+    // Show skip hour completion toast
+    const resultMsg = []
+    if (sim.xpGained && Object.keys(sim.xpGained).length > 0) {
+      const xpTotal = Object.values(sim.xpGained).reduce((a, b) => a + b, 0)
+      if (xpTotal > 0) resultMsg.push(`+${Math.floor(xpTotal).toLocaleString()} XP`)
+    }
+    if (sim.itemsGained && Object.keys(sim.itemsGained).length > 0) {
+      const itemTotal = Object.values(sim.itemsGained).reduce((a, b) => a + b, 0)
+      if (itemTotal > 0) resultMsg.push(`+${itemTotal.toLocaleString()} items`)
+    }
+    if (resultMsg.length > 0) {
+      addToast(`⏭️ Skipped 1h: ${resultMsg.join(', ')}`, 'info')
+    }
   }
 
   // Navigate with optional action data

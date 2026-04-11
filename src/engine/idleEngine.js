@@ -83,6 +83,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
   const xpGained = {}
   const itemsGained = {}
   const itemsDropped = {}
+  const newInv = [...inventory]
 
   const xpPer = task.action.xp || 0
   if (xpPer > 0 && task.skill) {
@@ -92,7 +93,6 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
   // Handle product placement based on bankingEnabled
   if (task.action.product) {
     const bankingEnabled = task.bankingEnabled || false
-    const newInv = [...inventory]
     const product = task.action.product
     const qtyPerAction = task.action.productQty || 1
 
@@ -218,7 +218,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
     }
   }
 
-  return { xpGained, itemsGained, itemsConsumed, itemsDropped, actions, skill: task.skill, actionName: task.action.name }
+  return { xpGained, itemsGained, itemsConsumed, itemsDropped, actions, skill: task.skill, actionName: task.action.name, finalInventory: newInv }
 }
 
 /**
@@ -318,7 +318,7 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
     }
   }
 
-  return { itemsGained, itemsDropped, actions: actionsCompleted, actionName: task.gatherTask.name }
+  return { itemsGained, itemsDropped, actions: actionsCompleted, actionName: task.gatherTask.name, finalInventory: newInv }
 }
 
 /**
