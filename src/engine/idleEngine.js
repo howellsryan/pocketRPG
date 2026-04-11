@@ -142,32 +142,27 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
           }
         }
 
-        // Auto-bank trip if inventory full
+        // Auto-bank trip if inventory full — bank EVERYTHING (like a real trip)
         if (newInv.indexOf(null) === -1) {
           if (remainingTicks < bankDelayTicks) break
           remainingTicks -= bankDelayTicks
           for (let i = 0; i < newInv.length; i++) {
             if (!newInv[i]) continue
-            // Only bank items that are NEW (not starting inventory items)
-            const startingQty = startingInvState[newInv[i].itemId] || 0
-            const newQty = newInv[i].quantity - startingQty
-            if (newQty > 0) {
-              itemsGained[newInv[i].itemId] = (itemsGained[newInv[i].itemId] || 0) + newQty
-              itemsBanked[newInv[i].itemId] = (itemsBanked[newInv[i].itemId] || 0) + newQty
-            }
+            itemsBanked[newInv[i].itemId] = (itemsBanked[newInv[i].itemId] || 0) + newInv[i].quantity
             newInv[i] = null
           }
         }
       }
 
-      // Items still in inventory go to itemsGained
+      // Compute itemsGained = net new items = (all banked + final inventory) - starting inventory
+      const totalAccumulated = { ...itemsBanked }
       for (const slot of newInv) {
         if (!slot) continue
-        const startingQty = startingInvState[slot.itemId] || 0
-        const deltaQty = slot.quantity - startingQty
-        if (deltaQty > 0) {
-          itemsGained[slot.itemId] = (itemsGained[slot.itemId] || 0) + deltaQty
-        }
+        totalAccumulated[slot.itemId] = (totalAccumulated[slot.itemId] || 0) + slot.quantity
+      }
+      for (const [itemId, qty] of Object.entries(totalAccumulated)) {
+        const netGain = qty - (startingInvState[itemId] || 0)
+        if (netGain > 0) itemsGained[itemId] = netGain
       }
     } else {
       // Banking disabled: items fill inventory, excess is dropped (preserves XP/hr, limits items/hr)
@@ -294,32 +289,27 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
       }
     }
 
-    // Auto-bank trip: if inventory is full and banking is enabled, deduct delay and clear
+    // Auto-bank trip: if inventory is full, bank EVERYTHING (like a real trip)
     if (bankingEnabled && newInv.indexOf(null) === -1) {
       if (remainingTicks < bankDelayTicks) break
       remainingTicks -= bankDelayTicks
       for (let i = 0; i < newInv.length; i++) {
         if (!newInv[i]) continue
-        // Only bank items that are NEW (not starting inventory items)
-        const startingQty = startingInvState[newInv[i].itemId] || 0
-        const newQty = newInv[i].quantity - startingQty
-        if (newQty > 0) {
-          itemsGained[newInv[i].itemId] = (itemsGained[newInv[i].itemId] || 0) + newQty
-          itemsBanked[newInv[i].itemId] = (itemsBanked[newInv[i].itemId] || 0) + newQty
-        }
+        itemsBanked[newInv[i].itemId] = (itemsBanked[newInv[i].itemId] || 0) + newInv[i].quantity
         newInv[i] = null
       }
     }
   }
 
-  // Items still in inventory at end go to itemsGained
+  // Compute itemsGained = net new items = (all banked + final inventory) - starting inventory
+  const totalAccumulated = { ...itemsBanked }
   for (const slot of newInv) {
     if (!slot) continue
-    const startingQty = startingInvState[slot.itemId] || 0
-    const deltaQty = slot.quantity - startingQty
-    if (deltaQty > 0) {
-      itemsGained[slot.itemId] = (itemsGained[slot.itemId] || 0) + deltaQty
-    }
+    totalAccumulated[slot.itemId] = (totalAccumulated[slot.itemId] || 0) + slot.quantity
+  }
+  for (const [itemId, qty] of Object.entries(totalAccumulated)) {
+    const netGain = qty - (startingInvState[itemId] || 0)
+    if (netGain > 0) itemsGained[itemId] = netGain
   }
 
   return { itemsGained, itemsBanked, itemsDropped, actions: actionsCompleted, actionName: task.gatherTask.name, finalInventory: newInv }
