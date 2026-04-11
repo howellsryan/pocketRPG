@@ -1645,5 +1645,128 @@
         }
       }
     ]
+  },
+  "magic": {
+    "id": "magic",
+    "name": "Magic",
+    "actions": [
+      {
+        "id": "high_alch",
+        "name": "High Alchemy",
+        "level": 55,
+        "ticks": 5,
+        "xp": 65,
+        "type": "alchemy",
+        "runeReq": {
+          "nature_rune": 1,
+          "fire_rune": 5
+        }
+      },
+      {
+        "id": "superheat",
+        "name": "Superheat Item",
+        "level": 43,
+        "ticks": 5,
+        "xp": 53,
+        "type": "superheat",
+        "runeReq": {
+          "nature_rune": 1,
+          "fire_rune": 4
+        }
+      },
+      {
+        "id": "enchant_sapphire",
+        "name": "Enchant Sapphire",
+        "level": 7,
+        "ticks": 3,
+        "xp": 17,
+        "type": "enchant_jewel",
+        "product": "sapphire_ring",
+        "runeReq": {
+          "cosmic_rune": 1,
+          "water_rune": 1
+        }
+      },
+      {
+        "id": "enchant_emerald",
+        "name": "Enchant Emerald",
+        "level": 27,
+        "ticks": 3,
+        "xp": 37,
+        "type": "enchant_jewel",
+        "product": "emerald_ring",
+        "runeReq": {
+          "cosmic_rune": 1,
+          "air_rune": 1
+        }
+      },
+      {
+        "id": "enchant_ruby",
+        "name": "Enchant Ruby",
+        "level": 49,
+        "ticks": 3,
+        "xp": 59,
+        "type": "enchant_jewel",
+        "product": "ruby_ring",
+        "runeReq": {
+          "cosmic_rune": 1,
+          "fire_rune": 1
+        }
+      },
+      {
+        "id": "enchant_diamond",
+        "name": "Enchant Diamond",
+        "level": 57,
+        "ticks": 3,
+        "xp": 67,
+        "type": "enchant_jewel",
+        "product": "diamond_ring",
+        "runeReq": {
+          "cosmic_rune": 1,
+          "earth_rune": 1
+        }
+      },
+      {
+        "id": "spin_flax",
+        "name": "Spin Flax",
+        "level": 76,
+        "ticks": 5,
+        "xp": 75,
+        "type": "spin_flax",
+        "product": "bowstring",
+        "runeReq": {
+          "nature_rune": 1,
+          "astral_rune": 2,
+          "air_rune": 5
+        }
+      },
+      {
+        "id": "tan_leather",
+        "name": "Tan Leather",
+        "level": 78,
+        "ticks": 5,
+        "xp": 81,
+        "type": "tan_leather",
+        "product": "leather",
+        "runeReq": {
+          "nature_rune": 1,
+          "astral_rune": 2,
+          "fire_rune": 5
+        }
+      },
+      {
+        "id": "plank_make",
+        "name": "Plank Make",
+        "level": 86,
+        "ticks": 3,
+        "xp": 90,
+        "type": "plank_make",
+        "runeReq": {
+          "nature_rune": 1,
+          "astral_rune": 2,
+          "earth_rune": 15
+        }
+      }
+    ]
   }
 }

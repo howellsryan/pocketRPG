@@ -26,6 +26,7 @@ export function GameProvider({ children }) {
   const [unlockedFeatures, setUnlockedFeatures] = useState(new Set())
   const [slayerTask, setSlayerTaskState] = useState(null)
   const [slayerPoints, setSlayerPointsState] = useState(0)
+  const [activeCombatSpell, setActiveCombatSpellState] = useState(null)
   const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false })
 
   // Refs to hold latest state for the debounced auto-save
@@ -49,6 +50,7 @@ export function GameProvider({ children }) {
     // lastTick and activeTask live in localStorage — synchronous, survives iOS background freeze
     const savedLastTick = (() => { const v = localStorage.getItem('pocketrpg_lastTick'); return v ? parseInt(v, 10) : null })()
     const savedTask = (() => { try { return JSON.parse(localStorage.getItem('pocketrpg_activeTask')) } catch { return null } })()
+    const savedActiveCombatSpell = (() => { try { return JSON.parse(localStorage.getItem('pocketrpg_activeCombatSpell')) } catch { return null } })()
 
     // ── Idle simulation (runs on raw DB data, before state is set) ──
     let idleResult = null
@@ -184,6 +186,7 @@ export function GameProvider({ children }) {
       : (savedSlayerTask ?? null)
     setSlayerTaskState(finalSlayerTask)
     setSlayerPointsState(savedSlayerPoints ?? 0)
+    setActiveCombatSpellState(savedActiveCombatSpell ?? null)
     const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
     setCurrentHP(savedHP != null ? Math.min(savedHP, hpLevel) : hpLevel)
     setLoaded(true)
@@ -284,6 +287,11 @@ export function GameProvider({ children }) {
     saveSetting('combatStance', stance)
   }, [])
 
+  const updateActiveCombatSpell = useCallback((spell) => {
+    setActiveCombatSpellState(spell)
+    localStorage.setItem('pocketrpg_activeCombatSpell', JSON.stringify(spell))
+  }, [])
+
   const updateAutoBankLoot = useCallback((enabled) => {
     setAutoBankLootState(enabled)
     saveSetting('autoBankLoot', enabled)
@@ -369,6 +377,7 @@ export function GameProvider({ children }) {
     homeShortcuts, combatStance, activeTask, autoBankLoot, bankConfig,
     unlockedFeatures, unlockFeature,
     slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints,
+    activeCombatSpell, updateActiveCombatSpell,
     loadGame, grantXP, updateInventory, updateEquipment, updateBank,
     updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,
     markDirty, itemsData, updateHomeShortcuts, updateCombatStance,

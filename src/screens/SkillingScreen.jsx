@@ -62,9 +62,35 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
 
       for (const ev of events) {
         if (ev.type === 'actionComplete') {
-          // Check materials
+          // Check materials and runes
           const action = ev.action
           const newInv = [...inventory]
+
+          // Check and consume runes (for magic spells)
+          if (action.runeReq) {
+            let hasRunes = true
+            for (const [runeId, qty] of Object.entries(action.runeReq)) {
+              const invCount = countItem(newInv, runeId)
+              const bankCount = bank[runeId]?.quantity || 0
+              if (invCount + bankCount < qty) { hasRunes = false; break }
+            }
+            if (!hasRunes) {
+              skillingRef.current = { ...skillingState, active: false, stopped: true }
+              setSkilling({ ...skillingState, active: false, stopped: true })
+              addToast('Out of runes!', 'error')
+              return
+            }
+            // Remove runes — consume from inventory first, then bank
+            const bankUpdates = {}
+            for (const [runeId, qty] of Object.entries(action.runeReq)) {
+              const invCount = countItem(newInv, runeId)
+              const fromInv = Math.min(invCount, qty)
+              const fromBank = qty - fromInv
+              if (fromInv > 0) removeItem(newInv, runeId, fromInv)
+              if (fromBank > 0) bankUpdates[runeId] = -fromBank
+            }
+            if (Object.keys(bankUpdates).length > 0) updateBankDirect(bankUpdates)
+          }
 
           if (action.materials) {
             let hasMats = true

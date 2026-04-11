@@ -6347,6 +6347,198 @@ const itemsData = {
     },
     "shopValue": 500,
     "icon": "🔱"
+  },
+  "air_rune": {
+    "id": "air_rune",
+    "name": "Air rune",
+    "type": "rune",
+    "stackable": true,
+    "shopValue": 3,
+    "icon": "💨"
+  },
+  "water_rune": {
+    "id": "water_rune",
+    "name": "Water rune",
+    "type": "rune",
+    "stackable": true,
+    "shopValue": 4,
+    "icon": "💧"
+  },
+  "earth_rune": {
+    "id": "earth_rune",
+    "name": "Earth rune",
+    "type": "rune",
+    "stackable": true,
+    "shopValue": 4,
+    "icon": "🪨"
+  },
+  "fire_rune": {
+    "id": "fire_rune",
+    "name": "Fire rune",
+    "type": "rune",
+    "stackable": true,
+    "shopValue": 6,
+    "icon": "🔥"
+  },
+  "nature_rune": {
+    "id": "nature_rune",
+    "name": "Nature rune",
+    "type": "rune",
+    "stackable": true,
+    "shopValue": 100,
+    "icon": "🍃"
+  },
+  "cosmic_rune": {
+    "id": "cosmic_rune",
+    "name": "Cosmic rune",
+    "type": "rune",
+    "stackable": true,
+    "shopValue": 125,
+    "icon": "⭐"
+  },
+  "astral_rune": {
+    "id": "astral_rune",
+    "name": "Astral rune",
+    "type": "rune",
+    "stackable": true,
+    "shopValue": 190,
+    "icon": "✨"
+  },
+  "leather": {
+    "id": "leather",
+    "name": "Leather",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 100,
+    "icon": "🧥"
+  },
+  "flax": {
+    "id": "flax",
+    "name": "Flax",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 30,
+    "icon": "🌾"
+  },
+  "bowstring": {
+    "id": "bowstring",
+    "name": "Bowstring",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 100,
+    "icon": "🔗"
+  },
+  "sapphire_ring": {
+    "id": "sapphire_ring",
+    "name": "Sapphire ring",
+    "type": "armour",
+    "slot": "ring",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "shopValue": 500,
+    "icon": "💍"
+  },
+  "emerald_ring": {
+    "id": "emerald_ring",
+    "name": "Emerald ring",
+    "type": "armour",
+    "slot": "ring",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "shopValue": 750,
+    "icon": "💍"
+  },
+  "ruby_ring": {
+    "id": "ruby_ring",
+    "name": "Ruby ring",
+    "type": "armour",
+    "slot": "ring",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "shopValue": 1000,
+    "icon": "💍"
+  },
+  "diamond_ring": {
+    "id": "diamond_ring",
+    "name": "Diamond ring",
+    "type": "armour",
+    "slot": "ring",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "shopValue": 1500,
+    "icon": "💍"
   }
 };
 const monstersData = {
@@ -11319,6 +11511,129 @@ const skillsData = {
         }
       }
     ]
+  },
+  "magic": {
+    "id": "magic",
+    "name": "Magic",
+    "actions": [
+      {
+        "id": "high_alch",
+        "name": "High Alchemy",
+        "level": 55,
+        "ticks": 5,
+        "xp": 65,
+        "type": "alchemy",
+        "runeReq": {
+          "nature_rune": 1,
+          "fire_rune": 5
+        }
+      },
+      {
+        "id": "superheat",
+        "name": "Superheat Item",
+        "level": 43,
+        "ticks": 5,
+        "xp": 53,
+        "type": "superheat",
+        "runeReq": {
+          "nature_rune": 1,
+          "fire_rune": 4
+        }
+      },
+      {
+        "id": "enchant_sapphire",
+        "name": "Enchant Sapphire",
+        "level": 7,
+        "ticks": 3,
+        "xp": 17,
+        "type": "enchant_jewel",
+        "product": "sapphire_ring",
+        "runeReq": {
+          "cosmic_rune": 1,
+          "water_rune": 1
+        }
+      },
+      {
+        "id": "enchant_emerald",
+        "name": "Enchant Emerald",
+        "level": 27,
+        "ticks": 3,
+        "xp": 37,
+        "type": "enchant_jewel",
+        "product": "emerald_ring",
+        "runeReq": {
+          "cosmic_rune": 1,
+          "air_rune": 1
+        }
+      },
+      {
+        "id": "enchant_ruby",
+        "name": "Enchant Ruby",
+        "level": 49,
+        "ticks": 3,
+        "xp": 59,
+        "type": "enchant_jewel",
+        "product": "ruby_ring",
+        "runeReq": {
+          "cosmic_rune": 1,
+          "fire_rune": 1
+        }
+      },
+      {
+        "id": "enchant_diamond",
+        "name": "Enchant Diamond",
+        "level": 57,
+        "ticks": 3,
+        "xp": 67,
+        "type": "enchant_jewel",
+        "product": "diamond_ring",
+        "runeReq": {
+          "cosmic_rune": 1,
+          "earth_rune": 1
+        }
+      },
+      {
+        "id": "spin_flax",
+        "name": "Spin Flax",
+        "level": 76,
+        "ticks": 5,
+        "xp": 75,
+        "type": "spin_flax",
+        "product": "bowstring",
+        "runeReq": {
+          "nature_rune": 1,
+          "astral_rune": 2,
+          "air_rune": 5
+        }
+      },
+      {
+        "id": "tan_leather",
+        "name": "Tan Leather",
+        "level": 78,
+        "ticks": 5,
+        "xp": 81,
+        "type": "tan_leather",
+        "product": "leather",
+        "runeReq": {
+          "nature_rune": 1,
+          "astral_rune": 2,
+          "fire_rune": 5
+        }
+      },
+      {
+        "id": "plank_make",
+        "name": "Plank Make",
+        "level": 86,
+        "ticks": 3,
+        "xp": 90,
+        "type": "plank_make",
+        "runeReq": {
+          "nature_rune": 1,
+          "astral_rune": 2,
+          "earth_rune": 15
+        }
+      }
+    ]
   }
 };
 const spellsData = {
@@ -14214,6 +14529,7 @@ function GameProvider({ children }) {
     const [unlockedFeatures, setUnlockedFeatures] = useState(new Set());
     const [slayerTask, setSlayerTaskState] = useState(null);
     const [slayerPoints, setSlayerPointsState] = useState(0);
+    const [activeCombatSpell, setActiveCombatSpellState] = useState(null);
     const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false });
     // Refs to hold latest state for the debounced auto-save
     const stateRef = useRef({ stats: {}, inventory: new Array(28).fill(null), equipment: {}, bank: {}, player: null });
@@ -14235,6 +14551,12 @@ function GameProvider({ children }) {
         const savedLastTick = (() => { const v = localStorage.getItem('pocketrpg_lastTick'); return v ? parseInt(v, 10) : null; })();
         const savedTask = (() => { try {
             return JSON.parse(localStorage.getItem('pocketrpg_activeTask'));
+        }
+        catch {
+            return null;
+        } })();
+        const savedActiveCombatSpell = (() => { try {
+            return JSON.parse(localStorage.getItem('pocketrpg_activeCombatSpell'));
         }
         catch {
             return null;
@@ -14385,6 +14707,7 @@ function GameProvider({ children }) {
             : (savedSlayerTask ?? null);
         setSlayerTaskState(finalSlayerTask);
         setSlayerPointsState(savedSlayerPoints ?? 0);
+        setActiveCombatSpellState(savedActiveCombatSpell ?? null);
         const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10;
         setCurrentHP(savedHP != null ? Math.min(savedHP, hpLevel) : hpLevel);
         setLoaded(true);
@@ -14475,6 +14798,10 @@ function GameProvider({ children }) {
         setCombatStanceState(stance);
         saveSetting('combatStance', stance);
     }, []);
+    const updateActiveCombatSpell = useCallback((spell) => {
+        setActiveCombatSpellState(spell);
+        localStorage.setItem('pocketrpg_activeCombatSpell', JSON.stringify(spell));
+    }, []);
     const updateAutoBankLoot = useCallback((enabled) => {
         setAutoBankLootState(enabled);
         saveSetting('autoBankLoot', enabled);
@@ -14554,6 +14881,7 @@ function GameProvider({ children }) {
         homeShortcuts, combatStance, activeTask, autoBankLoot, bankConfig,
         unlockedFeatures, unlockFeature,
         slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints,
+        activeCombatSpell, updateActiveCombatSpell,
         loadGame, grantXP, updateInventory, updateEquipment, updateBank,
         updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,
         markDirty, itemsData, updateHomeShortcuts, updateCombatStance,
@@ -15730,6 +16058,7 @@ function BankScreen() {
 
 
 
+
 const COMBAT_CATEGORIES = [
     {
         key: 'training',
@@ -15784,7 +16113,7 @@ const MONSTER_ICONS = {
     crazy_archaeologist: '📜', king_black_dragon: '👑'
 };
 function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlocked }) {
-    const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints } = useGame();
+    const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell } = useGame();
     const [combat, setCombat] = useState(null);
     const [log, setLog] = useState([]);
     const [killCount, setKillCount] = useState(0);
@@ -15793,6 +16122,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
     const [showPrayerModal, setShowPrayerModal] = useState(false);
     const [showPotionModal, setShowPotionModal] = useState(false);
     const [showEquipmentModal, setShowEquipmentModal] = useState(false);
+    const [showSpellModal, setShowSpellModal] = useState(false);
     const combatRef = useRef(null);
     const hpRef = useRef(currentHP);
     const hasAutoStarted = useRef(false);
@@ -15993,7 +16323,8 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
             }
         }
         const combatType = getCombatType(equipment, itemsData);
-        const state = createCombatState(monster, combatType, combatStance);
+        const spell = combatType === 'magic' && activeCombatSpell ? spellsData[activeCombatSpell.id] : null;
+        const state = createCombatState(monster, combatType, combatStance, spell);
         // Reset potion and special attack energy on new fight
         state.specialAttackEnergy = 100;
         state.activePotion = null;
@@ -16001,12 +16332,14 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
         setCombat(state);
         setKillCount(0);
         setFightStartedAt(Date.now());
-        setLog([{ text: `Fighting ${monster.name}...`, type: 'info', time: Date.now() }]);
+        const spellName = spell ? ` with ${spell.name}` : '';
+        setLog([{ text: `Fighting ${monster.name}${spellName}...`, type: 'info', time: Date.now() }]);
         setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot });
     };
     const continueFight = (monster) => {
         const combatType = getCombatType(equipment, itemsData);
-        const state = createCombatState(monster, combatType, combatStance);
+        const spell = combatType === 'magic' && activeCombatSpell ? spellsData[activeCombatSpell.id] : null;
+        const state = createCombatState(monster, combatType, combatStance, spell);
         // Reset potion and special attack energy on new fight
         state.specialAttackEnergy = 100;
         state.activePotion = null;
@@ -16338,7 +16671,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
             h("div", { class: "grid grid-cols-2 gap-2" },
                 h("button", { onClick: handleEat, class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\uD83C\uDF56 Eat"),
                 h("button", { onClick: () => setShowPotionModal(true), class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\uD83E\uDDEA Potion")),
-            h("div", { class: "grid grid-cols-2 gap-2" },
+            h("div", { class: "grid grid-cols-3 gap-2" },
                 (() => {
                     const weaponEntry = equipment?.weapon;
                     const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null;
@@ -16347,7 +16680,14 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                     const canSpec = hasSpec && energy >= weapon.specialAttack.energyCost;
                     return (h("button", { onClick: canSpec ? handleSpecialAttack : undefined, disabled: !canSpec, class: `py-2.5 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`, style: canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888' },
                         "\u26A1 ",
-                        hasSpec ? `Special (${weapon.specialAttack.energyCost}%)` : 'No Spec'));
+                        hasSpec ? `Spec` : 'No Spec'));
+                })(),
+                (() => {
+                    const weaponEntry = equipment?.weapon;
+                    const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null;
+                    const isMagic = weapon && (weapon.attackStyle === 'magic' || weapon.attackBonus?.magic > 0);
+                    const magicLevel = getLevelFromXP(stats.magic?.xp || 0);
+                    return (h("button", { onClick: () => isMagic && setShowSpellModal(true), disabled: !isMagic, class: `py-2.5 rounded-lg font-semibold text-sm transition-opacity ${isMagic ? 'active:opacity-80' : 'opacity-40 cursor-default'}`, style: isMagic ? 'background:linear-gradient(135deg,#1a2a3a,#2a3a5a);border:1px solid rgba(100,150,200,0.35);color:#a8d8ff' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888' }, "\uD83D\uDD2E Cast"));
                 })(),
                 h("button", { onClick: () => setShowPrayerModal(true), class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\uD83D\uDE4F Prayer")),
             h("div", { class: "grid grid-cols-2 gap-2" },
@@ -16447,6 +16787,33 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                                     slot.quantity)))));
                 });
             })()))),
+        showSpellModal && (h(Modal, { onClose: () => setShowSpellModal(false) },
+            h("div", { class: "flex items-center justify-between mb-3" },
+                h("h3", { class: "font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]" }, "Select Spell"),
+                h("button", { onClick: () => setShowSpellModal(false), class: "w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors", title: "Close" }, "\u2715")),
+            h("div", { class: "space-y-2 max-h-96 overflow-y-auto" }, Object.values(spellsData).map(spell => {
+                const magicLevel = getLevelFromXP(stats.magic?.xp || 0);
+                const canCast = magicLevel >= spell.levelReq;
+                const isActive = activeCombatSpell?.id === spell.id;
+                return (h("button", { key: spell.id, onClick: () => canCast && updateActiveCombatSpell({ id: spell.id, name: spell.name, baseDamage: spell.baseDamage }) && setShowSpellModal(false), disabled: !canCast, class: `w-full p-3 rounded-lg border transition-colors ${isActive
+                        ? 'bg-[#1a2a3a] border-[#2a5a7a]'
+                        : canCast
+                            ? 'bg-[#1a1a2a] border-[#2a2a4a] active:bg-[#2a2a3a]'
+                            : 'bg-[#111] border-[#1a1a1a] opacity-40'}` },
+                    h("div", { class: "flex items-center justify-between" },
+                        h("div", { class: "text-left flex-1" },
+                            h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" },
+                                "\uD83D\uDD2E ",
+                                spell.name),
+                            h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5" },
+                                spell.tier ? `${spell.tier.charAt(0).toUpperCase() + spell.tier.slice(1)} · ` : '',
+                                "Damage ",
+                                spell.baseDamage),
+                            h("div", { class: "text-[9px] text-[var(--color-gold-dim)] mt-0.5" },
+                                "Lv ",
+                                spell.levelReq)),
+                        isActive && (h("span", { class: "text-base text-[#a8d8ff]" }, "\u2713")))));
+            })))),
         showEquipmentModal && (h(Modal, { onClose: () => setShowEquipmentModal(false) },
             h("div", { class: "flex items-center justify-between mb-3" },
                 h("h3", { class: "font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]" }, "Swap Gear"),
@@ -16741,9 +17108,40 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
             skillingRef.current = skillingState;
             for (const ev of events) {
                 if (ev.type === 'actionComplete') {
-                    // Check materials
+                    // Check materials and runes
                     const action = ev.action;
                     const newInv = [...inventory];
+                    // Check and consume runes (for magic spells)
+                    if (action.runeReq) {
+                        let hasRunes = true;
+                        for (const [runeId, qty] of Object.entries(action.runeReq)) {
+                            const invCount = countItem(newInv, runeId);
+                            const bankCount = bank[runeId]?.quantity || 0;
+                            if (invCount + bankCount < qty) {
+                                hasRunes = false;
+                                break;
+                            }
+                        }
+                        if (!hasRunes) {
+                            skillingRef.current = { ...skillingState, active: false, stopped: true };
+                            setSkilling({ ...skillingState, active: false, stopped: true });
+                            addToast('Out of runes!', 'error');
+                            return;
+                        }
+                        // Remove runes — consume from inventory first, then bank
+                        const bankUpdates = {};
+                        for (const [runeId, qty] of Object.entries(action.runeReq)) {
+                            const invCount = countItem(newInv, runeId);
+                            const fromInv = Math.min(invCount, qty);
+                            const fromBank = qty - fromInv;
+                            if (fromInv > 0)
+                                removeItem(newInv, runeId, fromInv);
+                            if (fromBank > 0)
+                                bankUpdates[runeId] = -fromBank;
+                        }
+                        if (Object.keys(bankUpdates).length > 0)
+                            updateBankDirect(bankUpdates);
+                    }
                     if (action.materials) {
                         let hasMats = true;
                         for (const [matId, qty] of Object.entries(action.materials)) {
