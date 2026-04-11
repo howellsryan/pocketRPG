@@ -129,7 +129,8 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     const state = { ...createSkillingState(selectedSkill, adjustedAction), startedAt: Date.now() }
     setSelectedAction(action)
     setSkilling(state)
-    setActiveTask({ type: 'skill', skill: selectedSkill, action: adjustedAction, bankingEnabled: skillingBankingEnabled })
+    // Store original action in task — idle engine will apply tool multiplier separately
+    setActiveTask({ type: 'skill', skill: selectedSkill, action, bankingEnabled: skillingBankingEnabled })
   }
 
   const stopSkilling = () => {
@@ -161,7 +162,8 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
           }
           setSelectedAction(adjustedAction)
           setSkilling(state)
-          setActiveTask({ type: 'skill', skill: initialSkillId, action: adjustedAction })
+          // Store original action in task — idle engine will apply tool multiplier separately
+          setActiveTask({ type: 'skill', skill: initialSkillId, action })
         }
       }
     }

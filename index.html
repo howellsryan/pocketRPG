@@ -13158,8 +13158,8 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
         return null;
     const totalTicks = Math.floor(elapsedMs / TICK_MS);
     // Apply tool speed multiplier (e.g. mithril axe for woodcutting)
-    // Note: inventory not available during idle simulation, so tools must be equipped
-    const toolMult = getToolSpeedMultiplier(task.skill, equipment, itemsData, stats, []);
+    // Use provided inventory to check for tools; prefer equipped tools if available
+    const toolMult = getToolSpeedMultiplier(task.skill, equipment, itemsData, stats, inventory);
     const actionTicks = Math.max(1, Math.floor(task.action.ticks * toolMult));
     let actions = Math.floor(totalTicks / actionTicks);
     if (actions <= 0)
@@ -16808,7 +16808,8 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
         const state = { ...createSkillingState(selectedSkill, adjustedAction), startedAt: Date.now() };
         setSelectedAction(action);
         setSkilling(state);
-        setActiveTask({ type: 'skill', skill: selectedSkill, action: adjustedAction, bankingEnabled: skillingBankingEnabled });
+        // Store original action in task — idle engine will apply tool multiplier separately
+        setActiveTask({ type: 'skill', skill: selectedSkill, action, bankingEnabled: skillingBankingEnabled });
     };
     const stopSkilling = () => {
         if (skillingRef.current) {
@@ -16838,7 +16839,8 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
                     }
                     setSelectedAction(adjustedAction);
                     setSkilling(state);
-                    setActiveTask({ type: 'skill', skill: initialSkillId, action: adjustedAction });
+                    // Store original action in task — idle engine will apply tool multiplier separately
+                    setActiveTask({ type: 'skill', skill: initialSkillId, action });
                 }
             }
         }
