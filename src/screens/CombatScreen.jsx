@@ -135,7 +135,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
         playerStats.strength = Math.floor(playerStats.strength * 1.15)
       }
 
-      const { combatState, events } = processCombatTick(state, playerStats, equipmentRef.current, itemsData, prayersData)
+      const { combatState, events } = processCombatTick(state, playerStats, equipmentRef.current, itemsData, prayersData, inventoryRef.current)
       combatRef.current = combatState
       setCombat({ ...combatState })
 
@@ -224,6 +224,31 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
               if (xp > 0) grantXP(skill, xp)
             }
           }
+        }
+        if (ev.type === 'noRunesForSpell') {
+          setLog(prev => [...prev.slice(-20), {
+            text: `Not enough runes for ${ev.spellName}`,
+            type: 'miss',
+            time: Date.now()
+          }])
+        }
+        if (state.runesConsumed && ev.type === 'playerHit' && ev.damage >= 0) {
+          // Consume runes when spell successfully casts
+          const newInv = [...inventoryRef.current]
+          for (const [runeId, qty] of Object.entries(state.runesConsumed)) {
+            let remaining = qty
+            for (let i = 0; i < newInv.length && remaining > 0; i++) {
+              if (newInv[i]?.itemId === runeId) {
+                const consumed = Math.min(newInv[i].quantity, remaining)
+                newInv[i] = { ...newInv[i], quantity: newInv[i].quantity - consumed }
+                if (newInv[i].quantity === 0) newInv[i] = null
+                remaining -= consumed
+              }
+            }
+          }
+          updateInventory(newInv)
+          inventoryRef.current = newInv
+          state.runesConsumed = null // Clear so we don't consume again
         }
         if (ev.type === 'monsterDeath') {
           setKillCount(k => k + 1)

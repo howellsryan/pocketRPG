@@ -11636,22 +11636,22 @@ const skillsData = {
   }
 };
 const spellsData = {
-  "wind_strike": { "id": "wind_strike", "name": "Wind Strike", "baseDamage": 2, "levelReq": 1, "baseXP": 5, "tier": "strike" },
-  "water_strike": { "id": "water_strike", "name": "Water Strike", "baseDamage": 4, "levelReq": 5, "baseXP": 7, "tier": "strike" },
-  "earth_strike": { "id": "earth_strike", "name": "Earth Strike", "baseDamage": 6, "levelReq": 9, "baseXP": 9, "tier": "strike" },
-  "fire_strike": { "id": "fire_strike", "name": "Fire Strike", "baseDamage": 8, "levelReq": 13, "baseXP": 11, "tier": "strike" },
-  "wind_bolt": { "id": "wind_bolt", "name": "Wind Bolt", "baseDamage": 9, "levelReq": 17, "baseXP": 13, "tier": "bolt" },
-  "water_bolt": { "id": "water_bolt", "name": "Water Bolt", "baseDamage": 10, "levelReq": 23, "baseXP": 16, "tier": "bolt" },
-  "earth_bolt": { "id": "earth_bolt", "name": "Earth Bolt", "baseDamage": 11, "levelReq": 29, "baseXP": 19, "tier": "bolt" },
-  "fire_bolt": { "id": "fire_bolt", "name": "Fire Bolt", "baseDamage": 12, "levelReq": 35, "baseXP": 22, "tier": "bolt" },
-  "wind_blast": { "id": "wind_blast", "name": "Wind Blast", "baseDamage": 13, "levelReq": 41, "baseXP": 25, "tier": "blast" },
-  "water_blast": { "id": "water_blast", "name": "Water Blast", "baseDamage": 14, "levelReq": 47, "baseXP": 28, "tier": "blast" },
-  "earth_blast": { "id": "earth_blast", "name": "Earth Blast", "baseDamage": 15, "levelReq": 53, "baseXP": 31, "tier": "blast" },
-  "fire_blast": { "id": "fire_blast", "name": "Fire Blast", "baseDamage": 16, "levelReq": 59, "baseXP": 34, "tier": "blast" },
-  "wind_wave": { "id": "wind_wave", "name": "Wind Wave", "baseDamage": 17, "levelReq": 62, "baseXP": 36, "tier": "wave" },
-  "water_wave": { "id": "water_wave", "name": "Water Wave", "baseDamage": 18, "levelReq": 65, "baseXP": 37, "tier": "wave" },
-  "earth_wave": { "id": "earth_wave", "name": "Earth Wave", "baseDamage": 19, "levelReq": 70, "baseXP": 40, "tier": "wave" },
-  "fire_wave": { "id": "fire_wave", "name": "Fire Wave", "baseDamage": 20, "levelReq": 75, "baseXP": 42, "tier": "wave" }
+  "wind_strike": { "id": "wind_strike", "name": "Wind Strike", "baseDamage": 2, "levelReq": 1, "baseXP": 5, "tier": "strike", "runeReq": { "air_rune": 1 } },
+  "water_strike": { "id": "water_strike", "name": "Water Strike", "baseDamage": 4, "levelReq": 5, "baseXP": 7, "tier": "strike", "runeReq": { "water_rune": 1, "air_rune": 1 } },
+  "earth_strike": { "id": "earth_strike", "name": "Earth Strike", "baseDamage": 6, "levelReq": 9, "baseXP": 9, "tier": "strike", "runeReq": { "earth_rune": 1, "air_rune": 1 } },
+  "fire_strike": { "id": "fire_strike", "name": "Fire Strike", "baseDamage": 8, "levelReq": 13, "baseXP": 11, "tier": "strike", "runeReq": { "fire_rune": 3, "air_rune": 1 } },
+  "wind_bolt": { "id": "wind_bolt", "name": "Wind Bolt", "baseDamage": 9, "levelReq": 17, "baseXP": 13, "tier": "bolt", "runeReq": { "air_rune": 2 } },
+  "water_bolt": { "id": "water_bolt", "name": "Water Bolt", "baseDamage": 10, "levelReq": 23, "baseXP": 16, "tier": "bolt", "runeReq": { "water_rune": 2, "air_rune": 2 } },
+  "earth_bolt": { "id": "earth_bolt", "name": "Earth Bolt", "baseDamage": 11, "levelReq": 29, "baseXP": 19, "tier": "bolt", "runeReq": { "earth_rune": 2, "air_rune": 2 } },
+  "fire_bolt": { "id": "fire_bolt", "name": "Fire Bolt", "baseDamage": 12, "levelReq": 35, "baseXP": 22, "tier": "bolt", "runeReq": { "fire_rune": 5, "air_rune": 2 } },
+  "wind_blast": { "id": "wind_blast", "name": "Wind Blast", "baseDamage": 13, "levelReq": 41, "baseXP": 25, "tier": "blast", "runeReq": { "air_rune": 3 } },
+  "water_blast": { "id": "water_blast", "name": "Water Blast", "baseDamage": 14, "levelReq": 47, "baseXP": 28, "tier": "blast", "runeReq": { "water_rune": 3, "air_rune": 3 } },
+  "earth_blast": { "id": "earth_blast", "name": "Earth Blast", "baseDamage": 15, "levelReq": 53, "baseXP": 31, "tier": "blast", "runeReq": { "earth_rune": 3, "air_rune": 3 } },
+  "fire_blast": { "id": "fire_blast", "name": "Fire Blast", "baseDamage": 16, "levelReq": 59, "baseXP": 34, "tier": "blast", "runeReq": { "fire_rune": 5, "air_rune": 3 } },
+  "wind_wave": { "id": "wind_wave", "name": "Wind Wave", "baseDamage": 17, "levelReq": 62, "baseXP": 36, "tier": "wave", "runeReq": { "air_rune": 5 } },
+  "water_wave": { "id": "water_wave", "name": "Water Wave", "baseDamage": 18, "levelReq": 65, "baseXP": 37, "tier": "wave", "runeReq": { "water_rune": 5, "air_rune": 5 } },
+  "earth_wave": { "id": "earth_wave", "name": "Earth Wave", "baseDamage": 19, "levelReq": 70, "baseXP": 40, "tier": "wave", "runeReq": { "earth_rune": 5, "air_rune": 5 } },
+  "fire_wave": { "id": "fire_wave", "name": "Fire Wave", "baseDamage": 20, "levelReq": 75, "baseXP": 42, "tier": "wave", "runeReq": { "fire_rune": 7, "air_rune": 5 } }
 }
 ;
 const prayersData = {
@@ -12584,7 +12584,7 @@ function createCombatState(monster, combatType = 'melee', stance = 'accurate', s
  * Returns { combatState, events[] }
  * events: { type: 'playerHit'|'monsterHit'|'monsterDeath'|'playerDeath'|'xp'|'levelUp', ... }
  */
-function processCombatTick(combatState, playerStats, equipment, itemsData, prayersData = {}) {
+function processCombatTick(combatState, playerStats, equipment, itemsData, prayersData = {}, inventory = []) {
     const state = { ...combatState };
     const events = [];
     state.tickCount++;
@@ -12715,17 +12715,40 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
             }
         }
         else if (state.combatType === 'magic' && state.spell) {
-            const effMag = effectiveMagic(boostedPlayerStats.magic);
-            const atkRoll = maxAttackRoll(effMag, bonuses.attackBonus.magic || 0);
-            const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0);
-            const acc = hitChance(atkRoll, defRoll);
-            const maxHit = magicMaxHit(state.spell.baseDamage, bonuses.otherBonus.magicDamage);
-            damage = rollDamage(acc, maxHit);
-            // Magic always grants base spell XP on cast
-            xpSkills.magic = (state.spell.baseXP || 0);
-            if (damage > 0) {
-                xpSkills.magic += damage * MAGIC_XP_PER_DAMAGE;
-                xpSkills.hitpoints = Math.floor(damage * HP_XP_PER_DAMAGE);
+            // Check if player has required runes
+            let hasRunes = true;
+            if (state.spell.runeReq) {
+                for (const [runeId, qty] of Object.entries(state.spell.runeReq)) {
+                    const runeCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === runeId ? (slot?.quantity || 1) : 0), 0);
+                    if (runeCount < qty) {
+                        hasRunes = false;
+                        break;
+                    }
+                }
+            }
+            // Only cast if runes are available
+            if (hasRunes) {
+                const effMag = effectiveMagic(boostedPlayerStats.magic);
+                const atkRoll = maxAttackRoll(effMag, bonuses.attackBonus.magic || 0);
+                const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0);
+                const acc = hitChance(atkRoll, defRoll);
+                const maxHit = magicMaxHit(state.spell.baseDamage, bonuses.otherBonus.magicDamage);
+                damage = rollDamage(acc, maxHit);
+                // Track which runes to consume
+                if (state.spell.runeReq) {
+                    state.runesConsumed = { ...state.spell.runeReq };
+                }
+                // Magic always grants base spell XP on cast
+                xpSkills.magic = (state.spell.baseXP || 0);
+                if (damage > 0) {
+                    xpSkills.magic += damage * MAGIC_XP_PER_DAMAGE;
+                    xpSkills.hitpoints = Math.floor(damage * HP_XP_PER_DAMAGE);
+                }
+            }
+            else {
+                // No runes - no damage, no XP
+                damage = 0;
+                events.push({ type: 'noRunesForSpell', spellName: state.spell.name });
             }
         }
         const actualDamage = Math.min(damage, Math.max(0, monster.currentHP));
@@ -16171,7 +16194,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                 playerStats.attack = Math.floor(playerStats.attack * 1.15);
                 playerStats.strength = Math.floor(playerStats.strength * 1.15);
             }
-            const { combatState, events } = processCombatTick(state, playerStats, equipmentRef.current, itemsData, prayersData);
+            const { combatState, events } = processCombatTick(state, playerStats, equipmentRef.current, itemsData, prayersData, inventoryRef.current);
             combatRef.current = combatState;
             setCombat({ ...combatState });
             for (const ev of events) {
@@ -16260,6 +16283,32 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                                 grantXP(skill, xp);
                         }
                     }
+                }
+                if (ev.type === 'noRunesForSpell') {
+                    setLog(prev => [...prev.slice(-20), {
+                            text: `Not enough runes for ${ev.spellName}`,
+                            type: 'miss',
+                            time: Date.now()
+                        }]);
+                }
+                if (state.runesConsumed && ev.type === 'playerHit' && ev.damage >= 0) {
+                    // Consume runes when spell successfully casts
+                    const newInv = [...inventoryRef.current];
+                    for (const [runeId, qty] of Object.entries(state.runesConsumed)) {
+                        let remaining = qty;
+                        for (let i = 0; i < newInv.length && remaining > 0; i++) {
+                            if (newInv[i]?.itemId === runeId) {
+                                const consumed = Math.min(newInv[i].quantity, remaining);
+                                newInv[i] = { ...newInv[i], quantity: newInv[i].quantity - consumed };
+                                if (newInv[i].quantity === 0)
+                                    newInv[i] = null;
+                                remaining -= consumed;
+                            }
+                        }
+                    }
+                    updateInventory(newInv);
+                    inventoryRef.current = newInv;
+                    state.runesConsumed = null; // Clear so we don't consume again
                 }
                 if (ev.type === 'monsterDeath') {
                     setKillCount(k => k + 1);
