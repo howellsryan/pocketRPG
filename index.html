@@ -18806,7 +18806,18 @@ function GameApp() {
                                             Math.floor(xp).toLocaleString())),
                                     h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8d5b0', opacity: 0.45 } },
                                         h("span", null, "/hr"),
-                                        h("span", { style: { fontFamily: 'monospace' } }, perHr(xp)))))))) : null;
+                                        h("span", { style: { fontFamily: 'monospace' } }, perHr(xp)))))),
+                                hasSlayerXp && (h("div", { style: { marginBottom: '4px' } },
+                                    h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' } },
+                                        h("span", null,
+                                            SKILL_ICONS.slayer,
+                                            " Slayer"),
+                                        h("span", { style: { color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' } },
+                                            "+",
+                                            Math.floor(idleResult.slayerXpGained).toLocaleString())),
+                                    h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8d5b0', opacity: 0.45 } },
+                                        h("span", null, "/hr"),
+                                        h("span", { style: { fontFamily: 'monospace' } }, perHr(idleResult.slayerXpGained))))))) : null;
                         })(),
                         (() => {
                             const merged = {};
