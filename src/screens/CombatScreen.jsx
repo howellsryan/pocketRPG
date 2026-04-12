@@ -301,7 +301,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
             type: 'formChange',
             time: Date.now()
           }])
-          addToast(`${ev.icon || '🐍'} ${monsterName}: ${ev.displayName} form — weak to ${ev.weakness}`, 'info')
+          addToast(`${ev.icon || '🐍'} ${monsterName}: ${ev.displayName} form`, 'info')
         }
         if (combatRef.current.runesConsumed && ev.type === 'playerHit' && ev.damage > 0) {
           // Consume runes when spell successfully casts
@@ -765,7 +765,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
             {combat.monster.name}
             {combat.monster.multiForm && combat.monster.currentForm && combat.monster.forms?.[combat.monster.currentForm] && (
               <span class="ml-2 text-[10px] font-[var(--font-mono)] text-purple-300">
-                {combat.monster.forms[combat.monster.currentForm].icon} {combat.monster.forms[combat.monster.currentForm].displayName} — weak to {combat.monster.forms[combat.monster.currentForm].weakness}
+                {combat.monster.forms[combat.monster.currentForm].icon} {combat.monster.forms[combat.monster.currentForm].displayName}
               </span>
             )}
           </span>
