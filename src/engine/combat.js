@@ -407,7 +407,11 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
         }
       }
 
-      events.push({ type: 'monsterHit', damage, playerHP: playerStats.currentHP - damage })
+      if (damage === 0 && acc < 1.0) {
+        events.push({ type: 'monsterMiss', playerHP: playerStats.currentHP })
+      } else {
+        events.push({ type: 'monsterHit', damage, playerHP: playerStats.currentHP - damage })
+      }
     }
 
     state.monsterAttackTimer = monster.attackSpeed || 4

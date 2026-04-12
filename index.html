@@ -13650,7 +13650,12 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
                     // Silently fail if prayer application fails
                 }
             }
-            events.push({ type: 'monsterHit', damage, playerHP: playerStats.currentHP - damage });
+            if (damage === 0 && acc < 1.0) {
+                events.push({ type: 'monsterMiss', playerHP: playerStats.currentHP });
+            }
+            else {
+                events.push({ type: 'monsterHit', damage, playerHP: playerStats.currentHP - damage });
+            }
         }
         state.monsterAttackTimer = monster.attackSpeed || 4;
         // ── Multi-form switch check (e.g. Zulrah) ──
@@ -17387,6 +17392,13 @@ function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange })
                         updateHP(getMaxHP());
                         hpRef.current = getMaxHP();
                     }
+                }
+                if (ev.type === 'monsterMiss') {
+                    setLog(prev => [...prev.slice(-20), {
+                            text: `${state.monster.name} misses!`,
+                            type: 'heal',
+                            time: Date.now()
+                        }]);
                 }
                 if (ev.type === 'dragonfireHit') {
                     const newHP = Math.max(0, hpRef.current - ev.damage);
