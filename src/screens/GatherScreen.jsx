@@ -184,6 +184,17 @@ const GATHER_TASKS = [
     materials: { empty_birds_nest: 1 },
     category: 'fields',
   },
+  {
+    id: 'collect_wine_of_zamorak',
+    name: 'Collect Wine of Zamorak',
+    icon: '🍷',
+    description: 'Collect bottles of Wine of Zamorak. Used in herblore to make ranging potions.',
+    ticks: 5,
+    product: 'wine_of_zamorak',
+    qty: 1,
+    stackable: true,
+    category: 'fields',
+  },
 ]
 
 const CATEGORIES = [
