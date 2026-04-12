@@ -238,6 +238,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
             hpRef.current = getMaxHP()
           }
         }
+        if (ev.type === 'monsterMiss') {
+          setLog(prev => [...prev.slice(-20), {
+            text: `${state.monster.name} misses!`,
+            type: 'heal',
+            time: Date.now()
+          }])
+        }
         if (ev.type === 'dragonfireHit') {
           const newHP = Math.max(0, hpRef.current - ev.damage)
           updateHP(newHP)
