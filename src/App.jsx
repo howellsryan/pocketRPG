@@ -418,6 +418,16 @@ function GameApp() {
                 }
 
                 return (<>
+                  {/* Boss Combat Warning */}
+                  {idleResult.task?.type === 'combat' && idleResult.task.monster?.boss && (
+                    <div style={{ marginBottom: '12px', padding: '10px', background: 'rgba(220, 53, 69, 0.15)', borderRadius: '10px', borderLeft: '3px solid #dc3545' }}>
+                      <div style={{ fontSize: '12px', color: '#ff6b6b', fontWeight: 'bold', marginBottom: '4px' }}>⚠️ Boss Combat</div>
+                      <div style={{ fontSize: '11px', color: '#ff8787', lineHeight: '1.4' }}>
+                        Bosses cannot be fought while idle. You must actively kill this boss in combat. Return to the fight to continue!
+                      </div>
+                    </div>
+                  )}
+
                   {/* XP Gained Summary */}
                   {(() => {
                     const xpEntries = idleResult.xpGained ? Object.entries(idleResult.xpGained).filter(([_, xp]) => xp > 0) : []

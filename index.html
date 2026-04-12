@@ -14287,6 +14287,9 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
     if (!task || !task.monster)
         return null;
     const monster = task.monster;
+    // Bosses cannot be idle-fought; require active combat
+    if (monster.boss)
+        return null;
     const totalTicks = Math.floor(elapsedMs / TICK_MS);
     if (totalTicks <= 0)
         return null;
@@ -19753,6 +19756,9 @@ function GameApp() {
                         agility: '🏃', thieving: '🗝️', slayer: '💀', firemaking: '🔥', construction: '🏠'
                     };
                     return (h(Fragment, null,
+                        idleResult.task?.type === 'combat' && idleResult.task.monster?.boss && (h("div", { style: { marginBottom: '12px', padding: '10px', background: 'rgba(220, 53, 69, 0.15)', borderRadius: '10px', borderLeft: '3px solid #dc3545' } },
+                            h("div", { style: { fontSize: '12px', color: '#ff6b6b', fontWeight: 'bold', marginBottom: '4px' } }, "\u26A0\uFE0F Boss Combat"),
+                            h("div", { style: { fontSize: '11px', color: '#ff8787', lineHeight: '1.4' } }, "Bosses cannot be fought while idle. You must actively kill this boss in combat. Return to the fight to continue!"))),
                         (() => {
                             const xpEntries = idleResult.xpGained ? Object.entries(idleResult.xpGained).filter(([_, xp]) => xp > 0) : [];
                             const hasXp = xpEntries.length > 0;
