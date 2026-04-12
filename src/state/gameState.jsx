@@ -113,14 +113,14 @@ export function GameProvider({ children }) {
             // Use the already-mutated inventory from simulation
             sim.finalInventory.forEach((slot, i) => { inv[i] = slot })
             // Apply any items banked during auto-bank trips
-            if (sim.itemsGained) {
-              for (const [itemId, qty] of Object.entries(sim.itemsGained)) {
-                if (qty <= 0) continue
-                if (b[itemId]) {
-                  b[itemId] = { ...b[itemId], quantity: b[itemId].quantity + qty }
-                } else {
-                  b[itemId] = { itemId, quantity: qty }
-                }
+            // Combat uses lootBanked, skill/gather use itemsBanked
+            const bankedItems = sim.lootBanked || sim.itemsBanked || {}
+            for (const [itemId, qty] of Object.entries(bankedItems)) {
+              if (qty <= 0) continue
+              if (b[itemId]) {
+                b[itemId] = { ...b[itemId], quantity: b[itemId].quantity + qty }
+              } else {
+                b[itemId] = { itemId, quantity: qty }
               }
             }
           } else if (savedTask.type === 'agility' && sim.coinsGained > 0) {
@@ -154,7 +154,9 @@ export function GameProvider({ children }) {
           await saveAllStats(s)
           if (savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather') {
             await saveInventory(inv)
-            if (sim.itemsGained && Object.keys(sim.itemsGained).length > 0) {
+            // Save bank if items were banked during auto-bank trips
+            const bankedItems = sim.lootBanked || sim.itemsBanked || {}
+            if (Object.keys(bankedItems).length > 0) {
               await saveBank(b)
             }
           } else {
