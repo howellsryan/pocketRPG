@@ -6766,6 +6766,35 @@ const itemsData = {
     },
     "shopValue": 0,
     "icon": "🪖"
+  },
+  "fire_cape": {
+    "id": "fire_cape",
+    "name": "Fire cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 11,
+      "slash": 11,
+      "crush": 11,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 11,
+      "slash": 11,
+      "crush": 11,
+      "magic": 11,
+      "ranged": 11
+    },
+    "otherBonus": {
+      "meleeStrength": 4,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 0,
+    "icon": "🔥"
   }
 };
 const monstersData = {
@@ -10252,6 +10281,90 @@ const monstersData = {
         "itemId": "uncut_onyx",
         "quantity": 1,
         "chance": 0.004
+      }
+    ]
+  },
+  "jad": {
+    "id": "jad",
+    "name": "TzKal-Zuk (Jad)",
+    "boss": true,
+    "combatLevel": 702,
+    "hitpoints": 250,
+    "slayerXP": 25250,
+    "stats": {
+      "attack": 960,
+      "strength": 960,
+      "defence": 480,
+      "magic": 480,
+      "ranged": 960
+    },
+    "attackSpeed": 8,
+    "attackStyle": "melee",
+    "attackBonus": 100,
+    "strengthBonus": 100,
+    "defenceBonus": {
+      "stab": 100,
+      "slash": 100,
+      "crush": 100,
+      "magic": 100,
+      "ranged": 100
+    },
+    "multiForm": true,
+    "formSwitchMin": 2,
+    "formSwitchMax": 5,
+    "initialForm": "melee",
+    "forms": {
+      "melee": {
+        "displayName": "Melee Phase",
+        "icon": "⚔️",
+        "attackStyle": "melee",
+        "maxHit": 97,
+        "attackBonus": 100,
+        "strengthBonus": 100,
+        "defenceBonus": {
+          "stab": 100,
+          "slash": 100,
+          "crush": 100,
+          "magic": 100,
+          "ranged": 100
+        }
+      },
+      "ranged": {
+        "displayName": "Ranged Phase",
+        "icon": "🏹",
+        "attackStyle": "ranged",
+        "maxHit": 97,
+        "attackBonus": 100,
+        "strengthBonus": 100,
+        "defenceBonus": {
+          "stab": 100,
+          "slash": 100,
+          "crush": 100,
+          "magic": 100,
+          "ranged": 100
+        }
+      },
+      "magic": {
+        "displayName": "Magic Phase",
+        "icon": "✨",
+        "attackStyle": "magic",
+        "maxHit": 97,
+        "attackBonus": 100,
+        "strengthBonus": 100,
+        "defenceBonus": {
+          "stab": 100,
+          "slash": 100,
+          "crush": 100,
+          "magic": 100,
+          "ranged": 100
+        }
+      }
+    },
+    "drops": [
+      {
+        "itemId": "fire_cape",
+        "quantity": 1,
+        "chance": 1
       }
     ]
   }
@@ -14826,7 +14939,7 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
         // Check if this kill counts toward slayer task — cap at total task count
         if (slayerTask && slayerTask.monsterId === monster.id && monstersKilledOnTask < slayerTask.monstersRemaining) {
             monstersKilledOnTask++;
-            slayerXpGained += monster.hitpoints; // Slayer XP = monster HP
+            slayerXpGained += monster.slayerXP || monster.hitpoints; // Slayer XP = custom field or monster HP
         }
         // XP for this kill
         for (const [skill, xp] of Object.entries(xpPerKill)) {
@@ -18680,6 +18793,7 @@ const SLAYER_MASTERS = [
             { id: 'commander_zilyana', boss: true },
             { id: 'kril_tsutsaroth', boss: true },
             { id: 'kreearra', boss: true },
+            { id: 'jad', boss: true },
         ],
     },
     {
@@ -18702,6 +18816,7 @@ const SLAYER_MASTERS = [
             { id: 'commander_zilyana', boss: true },
             { id: 'kril_tsutsaroth', boss: true },
             { id: 'kreearra', boss: true },
+            { id: 'jad', boss: true },
         ],
     },
 ];
@@ -18728,7 +18843,7 @@ const SLAYER_MONSTER_ICONS = {
     sand_crab: '🦀', dark_wizard: '🧙‍♂️', giant_spider: '🕷️', hill_giant: '👊',
     moss_giant: '🌿', green_dragon: '🐉', lesser_demon: '👿', abyssal_demon: '😈',
     general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
-    dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
+    dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹', jad: '🔥',
 };
 function SlayerScreen({ onBack }) {
     const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast } = useGame();
@@ -18775,8 +18890,15 @@ function SlayerScreen({ onBack }) {
     const assignTask = (master, monsterId, isBoss) => {
         const monsterData = monstersData[monsterId];
         const monsterName = monsterData?.name || monsterId.replace(/_/g, ' ');
-        const taskRange = isBoss ? (master.bossTaskRange || [20, 50]) : master.taskRange;
-        const totalCount = randRange(taskRange[0], taskRange[1]);
+        // Jad always has a single-kill task
+        let totalCount;
+        if (monsterId === 'jad') {
+            totalCount = 1;
+        }
+        else {
+            const taskRange = isBoss ? (master.bossTaskRange || [20, 50]) : master.taskRange;
+            totalCount = randRange(taskRange[0], taskRange[1]);
+        }
         const task = {
             monsterId,
             monsterName,

@@ -6666,5 +6666,34 @@
     },
     "shopValue": 0,
     "icon": "🪖"
+  },
+  "fire_cape": {
+    "id": "fire_cape",
+    "name": "Fire cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 11,
+      "slash": 11,
+      "crush": 11,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 11,
+      "slash": 11,
+      "crush": 11,
+      "magic": 11,
+      "ranged": 11
+    },
+    "otherBonus": {
+      "meleeStrength": 4,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 0,
+    "icon": "🔥"
   }
 }

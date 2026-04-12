@@ -77,6 +77,7 @@ const SLAYER_MASTERS = [
       { id: 'commander_zilyana', boss: true },
       { id: 'kril_tsutsaroth', boss: true },
       { id: 'kreearra', boss: true },
+      { id: 'jad', boss: true },
     ],
   },
   {
@@ -99,6 +100,7 @@ const SLAYER_MASTERS = [
       { id: 'commander_zilyana', boss: true },
       { id: 'kril_tsutsaroth', boss: true },
       { id: 'kreearra', boss: true },
+      { id: 'jad', boss: true },
     ],
   },
 ]
@@ -129,7 +131,7 @@ const SLAYER_MONSTER_ICONS = {
   sand_crab: '🦀', dark_wizard: '🧙‍♂️', giant_spider: '🕷️', hill_giant: '👊',
   moss_giant: '🌿', green_dragon: '🐉', lesser_demon: '👿', abyssal_demon: '😈',
   general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
-  dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
+  dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹', jad: '🔥',
 }
 
 export default function SlayerScreen({ onBack }) {
@@ -183,8 +185,15 @@ export default function SlayerScreen({ onBack }) {
   const assignTask = (master, monsterId, isBoss) => {
     const monsterData = monstersData[monsterId]
     const monsterName = monsterData?.name || monsterId.replace(/_/g, ' ')
-    const taskRange = isBoss ? (master.bossTaskRange || [20, 50]) : master.taskRange
-    const totalCount = randRange(taskRange[0], taskRange[1])
+
+    // Jad always has a single-kill task
+    let totalCount
+    if (monsterId === 'jad') {
+      totalCount = 1
+    } else {
+      const taskRange = isBoss ? (master.bossTaskRange || [20, 50]) : master.taskRange
+      totalCount = randRange(taskRange[0], taskRange[1])
+    }
 
     const task = {
       monsterId,
