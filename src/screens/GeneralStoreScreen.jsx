@@ -5,15 +5,7 @@ import { getLevelFromXP } from '../engine/experience.js'
 
 // ── UNLOCK DEFINITIONS ───────────────────────────────────────────────────────
 
-const UNLOCKS = [
-  {
-    id: 'skip_hour',
-    name: 'Skip 1 Hour',
-    icon: '⏭️',
-    price: 10_000_000,
-    desc: 'Instantly simulate 1 hour of active task progress. Repeatable. Does not work during boss fights.',
-  },
-]
+const UNLOCKS = []
 
 const UNLOCK_TAB = { id: 'unlocks', label: '🔓', title: 'Unlocks', desc: 'Permanent features & upgrades. One-time purchases.' }
 

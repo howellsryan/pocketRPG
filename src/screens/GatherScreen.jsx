@@ -204,7 +204,7 @@ const ITEM_NAMES = {
   empty_birds_nest: 'Empty bird\'s nest',
 }
 
-export default function GatherScreen({ initialTaskId, idleResult, onSkipHour, skipHourUnlocked }) {
+export default function GatherScreen({ initialTaskId, idleResult }) {
   const { inventory, bank, updateInventory, updateBankDirect, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask } = useGame()
   const [category, setCategory] = useState('all')
   const [activeTask, setLocalTask] = useState(null)
@@ -394,14 +394,6 @@ export default function GatherScreen({ initialTaskId, idleResult, onSkipHour, sk
           </div>
         </div>
 
-        {/* Skip 1h */}
-        {skipHourUnlocked && (
-          <button onClick={onSkipHour}
-            class="w-full py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
-            style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0;margin-top:12px;flex-shrink:0">
-            ⏭️ Skip 1h
-          </button>
-        )}
       </div>
     )
   }

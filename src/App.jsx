@@ -297,94 +297,6 @@ function GameApp() {
     }
   }
 
-  // Skip 1 hour — simulate 1 hour of the current active task
-  const handleSkipHour = async () => {
-    const task = activeTaskRef.current
-    if (!task) return
-    if (task.type === 'combat' && task.monster?.boss) {
-      addToast('Cannot skip time during a boss fight.', 'error')
-      return
-    }
-
-    const ONE_HOUR_MS = 3_600_000
-    const [freshStats, freshInv, freshEq, freshBank, freshSlayerTask] = await Promise.all([
-      getAllStats(), getInventory(), getEquipment(), getBank(), getSetting('slayerTask'),
-    ])
-
-    let sim = null
-    if (task.type === 'skill')   sim = simulateIdleSkilling(task, ONE_HOUR_MS, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
-    if (task.type === 'gather')  sim = simulateIdleGather(task, ONE_HOUR_MS, freshInv, freshStats, itemsDataRef.current)
-    if (task.type === 'combat')  sim = simulateIdleCombat(task, ONE_HOUR_MS, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank)
-    if (task.type === 'agility') sim = simulateIdleAgility(task, ONE_HOUR_MS)
-
-    if (!sim) {
-      addToast('Nothing to skip — no materials or progress possible.', 'info')
-      return
-    }
-
-    if (sim.xpGained) {
-      for (const [skill, xp] of Object.entries(sim.xpGained)) {
-        if (xp > 0) grantXP(skill, xp)
-      }
-    }
-    // Apply slayer XP from combat simulation
-    if (task.type === 'combat' && sim.slayerXpGained > 0) {
-      grantXP('slayer', sim.slayerXpGained)
-    }
-    if (sim.finalInventory) {
-      updateInventory(sim.finalInventory)
-      // combat uses lootBanked; skill/gather use itemsBanked (pure bank-trip items, not end-state inventory)
-      const banked = sim.lootBanked || sim.itemsBanked
-      if (banked && Object.keys(banked).length > 0) {
-        updateBankDirect(banked)
-      }
-    } else if (sim.itemsGained) {
-      updateBankDirect(sim.itemsGained)
-    }
-    if (task.type === 'agility' && sim.coinsGained > 0) {
-      updateBankDirect({ coins: sim.coinsGained })
-    }
-    if (sim.itemsConsumed && Object.keys(sim.itemsConsumed).length > 0) {
-      const negated = {}
-      for (const [itemId, qty] of Object.entries(sim.itemsConsumed)) {
-        negated[itemId] = -qty
-      }
-      updateBankDirect(negated)
-    }
-    // Deduct runes consumed from bank (inventory portion already reflected in finalInventory)
-    if (sim.runesConsumed && Object.keys(sim.runesConsumed).length > 0) {
-      const negated = {}
-      for (const [itemId, qty] of Object.entries(sim.runesConsumed)) {
-        negated[itemId] = -qty
-      }
-      updateBankDirect(negated)
-    }
-    // Update slayer task if present
-    if (task.type === 'combat' && sim.slayerTaskUpdate) {
-      if (sim.slayerTaskUpdate.completed) {
-        setSlayerTask(null)
-        addToast('💀 Slayer task completed!', 'levelup')
-      } else {
-        setSlayerTask(sim.slayerTaskUpdate)
-      }
-    }
-
-    setIdleResult({ elapsedMs: ONE_HOUR_MS, task, ...sim })
-
-    // Show skip hour completion toast
-    const resultMsg = []
-    if (sim.xpGained && Object.keys(sim.xpGained).length > 0) {
-      const xpTotal = Object.values(sim.xpGained).reduce((a, b) => a + b, 0)
-      if (xpTotal > 0) resultMsg.push(`+${Math.floor(xpTotal).toLocaleString()} XP`)
-    }
-    if (sim.itemsGained && Object.keys(sim.itemsGained).length > 0) {
-      const itemTotal = Object.values(sim.itemsGained).reduce((a, b) => a + b, 0)
-      if (itemTotal > 0) resultMsg.push(`+${itemTotal.toLocaleString()} items`)
-    }
-    if (resultMsg.length > 0) {
-      addToast(`⏭️ Skipped 1h: ${resultMsg.join(', ')}`, 'info')
-    }
-  }
 
   // Navigate with optional action data
   const navigate = (scr, data) => {
@@ -454,9 +366,9 @@ function GameApp() {
       case SCREENS.INVENTORY: return <InventoryScreen />
       case SCREENS.EQUIPMENT: return <EquipmentScreen />
       case SCREENS.BANK:      return <BankScreen />
-      case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} onSkipHour={handleSkipHour} skipHourUnlocked={unlockedFeatures?.has('skip_hour')} />
-      case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} idleResult={idleResult} onSkipHour={handleSkipHour} skipHourUnlocked={unlockedFeatures?.has('skip_hour')} />
-      case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} onSkipHour={handleSkipHour} skipHourUnlocked={unlockedFeatures?.has('skip_hour')} />
+      case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} />
+      case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} idleResult={idleResult} />
+      case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} />
       case SCREENS.AGILITY:   return <AgilityScreen initialActionId={actionData?.actionId} />
       case SCREENS.STORE:     return <GeneralStoreScreen />
       default:                return <HomeScreen onNavigate={navigate} onSaveMenu={() => setShowSaveMenu(true)} />
