@@ -403,8 +403,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
     const state = createCombatState(monster, combatType, combatStance, spell)
     // Reset potion and special attack energy on new fight
     state.specialAttackEnergy = 100
-    state.activePotion = null
-    state.potionDuration = 0
+    state.activePotions = {}
     setCombat(state)
     setKillCount(0)
     setFightStartedAt(Date.now())
@@ -419,8 +418,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
     const state = createCombatState(monster, combatType, combatStance, spell)
     // Reset potion and special attack energy on new fight
     state.specialAttackEnergy = 100
-    state.activePotion = null
-    state.potionDuration = 0
+    state.activePotions = {}
     setCombat(state)
     setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot, spell: spell || null })
   }
@@ -497,6 +495,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
     const potion = itemsData[potionItemId]
     if (!potion) return
 
+    // Check if a potion with the same effect type is already active
+    const hasPotionOfType = Object.keys(combatRef.current.activePotions).some(existingId => {
+      const existingPotion = itemsData[existingId]
+      return existingPotion && existingPotion.effect === potion.effect
+    })
+    if (hasPotionOfType) {
+      addToast(`${potion.name} effect is already active`, 'error')
+      return
+    }
+
     // Remove potion from inventory
     if (newInv[potionIdx].quantity > 1) {
       newInv[potionIdx] = { ...newInv[potionIdx], quantity: newInv[potionIdx].quantity - 1 }
@@ -508,12 +516,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
 
     // Apply potion effect to combat state
     const newState = { ...combatRef.current }
+    newState.activePotions = { ...newState.activePotions }
 
     // Duration: 300 ticks = 300 * 0.6s = 180s = 3 minutes
     const durationTicks = (potion.duration || 300) / 0.6  // Convert seconds to ticks
-    newState.activePotion = potionItemId
-    newState.activePotionStartTick = newState.tickCount
-    newState.potionDuration = durationTicks
+    newState.activePotions[potionItemId] = durationTicks
 
     // HP potions heal immediately
     if (potion.effect === 'hp') {
@@ -523,7 +530,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
       updateHP(newHP)
       hpRef.current = newHP
       setLog(prev => [...prev.slice(-20), {
-        text: `Drank ${potion.name}, healed ${newHP - hpRef.current + healing} HP`,
+        text: `Drank ${potion.name}, healed ${healing} HP`,
         type: 'heal',
         time: Date.now()
       }])
@@ -806,12 +813,34 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
         </div>
       )}
 
-      {/* Inventory slots indicator */}
-      <div class="mb-2 bg-[#111] rounded-lg px-3 py-1.5 flex items-center justify-between">
-        <span class="text-[10px] text-[var(--color-parchment)] opacity-50">🎒 Inventory</span>
-        <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40">
-          {freeSlots(inventory)}/28 free
-        </span>
+      {/* Inventory slots indicator with active potion boosts */}
+      <div class="mb-2 bg-[#111] rounded-lg px-3 py-1.5">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-[10px] text-[var(--color-parchment)] opacity-50">🎒 Inventory</span>
+          <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40">
+            {freeSlots(inventory)}/28 free
+          </span>
+        </div>
+        {Object.keys(combat?.activePotions || {}).length > 0 && (
+          <div class="text-[8px] text-[var(--color-gold)] opacity-75">
+            {Object.keys(combat.activePotions).map(potionId => {
+              const potion = itemsData[potionId]
+              if (!potion) return null
+              const boosts = []
+              if (potion.effect === 'attack') boosts.push(`+${potion.boost} Atk`)
+              if (potion.effect === 'strength') boosts.push(`+${potion.boost} Str`)
+              if (potion.effect === 'defence') boosts.push(`+${potion.boost} Def`)
+              if (potion.effect === 'ranged') boosts.push(`+${potion.boost} Rng`)
+              if (potion.effect === 'magic') boosts.push(`+${potion.boost} Mag`)
+              if (potion.effect === 'combat') boosts.push(`+${potion.boost} All`)
+              return (
+                <div key={potionId} class="opacity-75">
+                  {potion.icon} {boosts.join(', ')}
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* Scale-charged weapon charges display */}

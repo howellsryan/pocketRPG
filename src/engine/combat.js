@@ -49,9 +49,7 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     specialAttackQueued: false,  // flag to fire special attack on next available tick
     activeProtectionPrayer: null,  // one protection prayer, reset on each new fight
     activeCombatPrayer: null,      // one combat enhancing prayer, reset on each new fight
-    activePotion: null,            // active potion item ID
-    activePotionStartTick: 0,      // tick when potion was applied
-    potionDuration: 0              // duration in ticks remaining for active potion
+    activePotions: {}              // { potionItemId: durationInTicks } - multiple different potion types allowed
   }
 }
 
@@ -91,9 +89,15 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   if (state.eatCooldown > 0) state.eatCooldown--
   if (state.potionCooldown > 0) state.potionCooldown--
 
-  // Decrement potion duration
-  if (state.potionDuration > 0) state.potionDuration--
-  if (state.potionDuration <= 0) state.activePotion = null
+  // Decrement potion durations and remove expired potions
+  for (const [potionId, duration] of Object.entries(state.activePotions)) {
+    if (duration > 0) {
+      state.activePotions[potionId] = duration - 1
+    }
+    if (state.activePotions[potionId] <= 0) {
+      delete state.activePotions[potionId]
+    }
+  }
 
   // Apply prayer bonuses to player stats from both active prayers
   let boostedPlayerStats = playerStats
@@ -106,11 +110,13 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     }
   }
 
-  // Apply potion bonuses to player stats
-  if (state.activePotion && itemsData && typeof itemsData === 'object') {
-    const potionItem = itemsData[state.activePotion]
-    if (potionItem) {
-      boostedPlayerStats = applyPotionBonuses(boostedPlayerStats, potionItem) || boostedPlayerStats
+  // Apply potion bonuses to player stats from all active potions
+  if (Object.keys(state.activePotions).length > 0 && itemsData && typeof itemsData === 'object') {
+    for (const potionId of Object.keys(state.activePotions)) {
+      const potionItem = itemsData[potionId]
+      if (potionItem) {
+        boostedPlayerStats = applyPotionBonuses(boostedPlayerStats, potionItem) || boostedPlayerStats
+      }
     }
   }
 
