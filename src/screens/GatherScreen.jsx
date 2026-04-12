@@ -199,7 +199,7 @@ const GATHER_TASKS = [
     id: 'pick_limpwurt_root',
     name: 'Pick Limpwurt Root',
     icon: '🌿',
-    description: 'Harvest limpwurt roots from the swamp. Used in herblore to make antipoisons.',
+    description: 'Harvest limpwurt roots from the swamp. Used in herblore to make super strength potions.',
     ticks: 3,
     product: 'limpwurt_root',
     qty: 1,
@@ -412,7 +412,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
 
           {/* Banking delay note */}
           <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textAlign: 'center', maxWidth: '280px' }}>
-            ⏳ Items go to inventory first. Auto-banks when full. Banking delay scales with Agility level.
+            ⏳ Items go directly to your bank. Banking delay scales with Agility level.
           </div>
         </div>
 

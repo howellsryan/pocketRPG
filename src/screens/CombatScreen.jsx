@@ -704,7 +704,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
                     const slayLocked = slayReq && slayLvl < slayReq
                     const isOnTask = slayerTask?.monsterId === monster.id
                     return (
-                    <div key={monster.id} class="flex gap-2 items-stretch">
+                    <div key={monster.id} class="flex gap-2 items-center">
                       <button
                         onClick={() => !slayLocked && startFight(monster)}
                         disabled={slayLocked}
@@ -739,7 +739,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
                       </button>
                       <button
                         onClick={() => setSelectedMonsterInfo(monster)}
-                        class="px-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5"
+                        class="flex-shrink-0 px-3 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5"
                         title="View Monster Info"
                       >
                         <span class="text-base">ℹ️</span>
@@ -747,7 +747,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
                       </button>
                       <button
                         onClick={() => handleAddToHome(monster)}
-                        class="px-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5"
+                        class="flex-shrink-0 px-3 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5"
                         title="Add to Home Screen"
                       >
                         <span class="text-base">🏠</span>
@@ -981,7 +981,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
           <div class="space-y-4 max-h-96 overflow-y-auto">
             {/* Protection Prayers */}
             <div>
-              <div class="flex flex-col gap-2">
+              <div class="grid grid-cols-3 gap-2">
                 {Object.values(prayersData)
                   .filter(p => p.bonusType === 'protection')
                   .map(prayer => {
@@ -994,7 +994,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
                         key={prayer.id}
                         onClick={() => canUse && handlePrayer(prayer.id)}
                         disabled={!canUse}
-                        class={`w-full p-3 rounded-lg border transition-colors ${
+                        class={`p-3 rounded-lg border transition-colors flex flex-col items-center justify-between ${
                           isActive
                             ? 'bg-[#2a4a2a] border-[#4a8a4a]'
                             : canUse
@@ -1002,15 +1002,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
                               : 'bg-[#111] border-[#1a1a1a] opacity-40'
                         }`}
                       >
-                        <div class="flex items-center justify-between">
-                          <div class="text-left">
-                            <div class="text-[10px] text-[var(--color-parchment)] opacity-60">{prayer.icon} Protect from {protectType}</div>
-                            <div class="text-[9px] text-[var(--color-gold-dim)] mt-0.5">Lv {prayer.level}</div>
-                          </div>
-                          {isActive && (
-                            <span class="text-base text-[var(--color-hp-green)]">✓</span>
-                          )}
+                        <div class="text-center flex-1 flex flex-col items-center justify-center">
+                          <div class="text-[10px] text-[var(--color-parchment)] opacity-60">{prayer.icon}</div>
+                          <div class="text-[8px] text-[var(--color-parchment)] opacity-60 mt-1 line-clamp-2">Protect from {protectType}</div>
+                          <div class="text-[8px] text-[var(--color-gold-dim)] mt-1">Lv {prayer.level}</div>
                         </div>
+                        {isActive && (
+                          <span class="text-base text-[var(--color-hp-green)] mt-1">✓</span>
+                        )}
                       </button>
                     )
                   })}
