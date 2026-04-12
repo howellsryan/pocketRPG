@@ -17984,28 +17984,29 @@ function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange })
                     }))),
                 h("div", null,
                     h("h4", { class: "text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70" }, "Combat"),
-                    h("div", { class: "space-y-2" }, Object.values(prayersData)
+                    h("div", { class: "grid grid-cols-2 gap-2" }, Object.values(prayersData)
                         .filter(p => p.bonusType !== 'protection')
+                        .sort((a, b) => b.level - a.level)
                         .map(prayer => {
                         const prayerLevel = getLevelFromXP(stats.prayer?.xp || 0);
                         const canUse = prayerLevel >= prayer.level;
                         const isActive = combat?.activeCombatPrayer === prayer.id;
-                        return (h("button", { key: prayer.id, onClick: () => canUse && handlePrayer(prayer.id), disabled: !canUse, class: `w-full p-3 rounded-lg border transition-colors ${isActive
+                        return (h("button", { key: prayer.id, onClick: () => canUse && handlePrayer(prayer.id), disabled: !canUse, class: `p-3 rounded-lg border transition-colors ${isActive
                                 ? 'bg-[#2a3a1a] border-[#4a8a2a]'
                                 : canUse
                                     ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
                                     : 'bg-[#111] border-[#1a1a1a] opacity-40'}` },
-                            h("div", { class: "flex items-center justify-between" },
-                                h("div", { class: "text-left" },
+                            h("div", { class: "flex flex-col items-start justify-between h-full" },
+                                h("div", { class: "text-left flex-1" },
                                     h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" },
                                         prayer.icon,
                                         " ",
                                         prayer.name),
-                                    h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60" }, prayer.description),
-                                    h("div", { class: "text-[9px] text-[var(--color-gold-dim)] mt-0.5" },
+                                    h("div", { class: "text-[9px] text-[var(--color-parchment)] opacity-60 line-clamp-2" }, prayer.description),
+                                    h("div", { class: "text-[8px] text-[var(--color-gold-dim)] mt-0.5" },
                                         "Lv ",
                                         prayer.level)),
-                                isActive && (h("span", { class: "text-base text-[var(--color-hp-green)]" }, "\u2713")))));
+                                isActive && (h("span", { class: "text-base text-[var(--color-hp-green)] mt-1" }, "\u2713")))));
                     })))))),
         showPotionModal && (h(Modal, { onClose: () => setShowPotionModal(false) },
             h("div", { class: "flex items-center justify-between mb-3" },
@@ -18115,24 +18116,21 @@ function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange })
                         return null;
                     return (h("div", { key: slotKey },
                         h("h4", { class: "text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70" }, slotLabels[slotKey]),
-                        h("div", { class: "space-y-2" }, slotGroups[slotKey].map(slot => {
+                        h("div", { class: "grid grid-cols-3 gap-2" }, slotGroups[slotKey].map(slot => {
                             const item = itemsData[slot.itemId];
                             const equipped = equipmentRef.current[item.slot]?.itemId === item.id;
-                            return (h("button", { key: `${slot.itemId}-${inventoryRef.current.indexOf(slot)}`, onClick: () => handleEquipItem(slot.itemId), class: `w-full p-3 rounded-lg border transition-colors ${equipped
+                            return (h("button", { key: `${slot.itemId}-${inventoryRef.current.indexOf(slot)}`, onClick: () => handleEquipItem(slot.itemId), class: `p-3 rounded-lg border transition-colors h-full flex flex-col ${equipped
                                     ? 'bg-[#2a3a2a] border-[#4a8a4a]'
                                     : 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'}` },
-                                h("div", { class: "flex items-center justify-between" },
+                                h("div", { class: "flex flex-col justify-between h-full" },
                                     h("div", { class: "text-left flex-1" },
-                                        h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" },
-                                            item.icon,
-                                            " ",
-                                            item.name),
-                                        h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5" },
-                                            item.type === 'weapon' && item.attackStyle && `${item.attackStyle} · ${item.attackSpeed}s`,
+                                        h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, item.icon),
+                                        h("div", { class: "text-[9px] text-[var(--color-parchment)] font-semibold mt-1 line-clamp-2" }, item.name),
+                                        h("div", { class: "text-[8px] text-[var(--color-parchment)] opacity-60 mt-0.5" },
+                                            item.type === 'weapon' && item.attackStyle && `${item.attackStyle}`,
                                             item.type === 'armour' && 'Armour',
-                                            item.type === 'shield' && 'Shield'),
-                                        item.requirements && Object.entries(item.requirements).length > 0 && (h("div", { class: "text-[9px] text-[var(--color-gold-dim)] mt-0.5" }, Object.entries(item.requirements).map(([skill, level]) => `${skill} ${level}`).join(' · ')))),
-                                    equipped && (h("span", { class: "text-base text-[var(--color-hp-green)] flex-shrink-0 ml-2" }, "\u2713")))));
+                                            item.type === 'shield' && 'Shield')),
+                                    equipped && (h("span", { class: "text-base text-[var(--color-hp-green)] mt-1" }, "\u2713")))));
                         }))));
                 });
             })())))));

@@ -1012,9 +1012,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
             {/* Combat Enhancement Prayers */}
             <div>
               <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Combat</h4>
-              <div class="space-y-2">
+              <div class="grid grid-cols-2 gap-2">
                 {Object.values(prayersData)
                   .filter(p => p.bonusType !== 'protection')
+                  .sort((a, b) => b.level - a.level)
                   .map(prayer => {
                     const prayerLevel = getLevelFromXP(stats.prayer?.xp || 0)
                     const canUse = prayerLevel >= prayer.level
@@ -1024,7 +1025,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
                         key={prayer.id}
                         onClick={() => canUse && handlePrayer(prayer.id)}
                         disabled={!canUse}
-                        class={`w-full p-3 rounded-lg border transition-colors ${
+                        class={`p-3 rounded-lg border transition-colors ${
                           isActive
                             ? 'bg-[#2a3a1a] border-[#4a8a2a]'
                             : canUse
@@ -1032,14 +1033,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
                               : 'bg-[#111] border-[#1a1a1a] opacity-40'
                         }`}
                       >
-                        <div class="flex items-center justify-between">
-                          <div class="text-left">
+                        <div class="flex flex-col items-start justify-between h-full">
+                          <div class="text-left flex-1">
                             <div class="text-sm font-semibold text-[var(--color-parchment)]">{prayer.icon} {prayer.name}</div>
-                            <div class="text-[10px] text-[var(--color-parchment)] opacity-60">{prayer.description}</div>
-                            <div class="text-[9px] text-[var(--color-gold-dim)] mt-0.5">Lv {prayer.level}</div>
+                            <div class="text-[9px] text-[var(--color-parchment)] opacity-60 line-clamp-2">{prayer.description}</div>
+                            <div class="text-[8px] text-[var(--color-gold-dim)] mt-0.5">Lv {prayer.level}</div>
                           </div>
                           {isActive && (
-                            <span class="text-base text-[var(--color-hp-green)]">✓</span>
+                            <span class="text-base text-[var(--color-hp-green)] mt-1">✓</span>
                           )}
                         </div>
                       </button>
@@ -1222,7 +1223,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
                     <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">
                       {slotLabels[slotKey]}
                     </h4>
-                    <div class="space-y-2">
+                    <div class="grid grid-cols-3 gap-2">
                       {slotGroups[slotKey].map(slot => {
                         const item = itemsData[slot.itemId]
                         const equipped = equipmentRef.current[item.slot]?.itemId === item.id
@@ -1230,30 +1231,28 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
                           <button
                             key={`${slot.itemId}-${inventoryRef.current.indexOf(slot)}`}
                             onClick={() => handleEquipItem(slot.itemId)}
-                            class={`w-full p-3 rounded-lg border transition-colors ${
+                            class={`p-3 rounded-lg border transition-colors h-full flex flex-col ${
                               equipped
                                 ? 'bg-[#2a3a2a] border-[#4a8a4a]'
                                 : 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
                             }`}
                           >
-                            <div class="flex items-center justify-between">
+                            <div class="flex flex-col justify-between h-full">
                               <div class="text-left flex-1">
                                 <div class="text-sm font-semibold text-[var(--color-parchment)]">
-                                  {item.icon} {item.name}
+                                  {item.icon}
                                 </div>
-                                <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                                  {item.type === 'weapon' && item.attackStyle && `${item.attackStyle} · ${item.attackSpeed}s`}
+                                <div class="text-[9px] text-[var(--color-parchment)] font-semibold mt-1 line-clamp-2">
+                                  {item.name}
+                                </div>
+                                <div class="text-[8px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                                  {item.type === 'weapon' && item.attackStyle && `${item.attackStyle}`}
                                   {item.type === 'armour' && 'Armour'}
                                   {item.type === 'shield' && 'Shield'}
                                 </div>
-                                {item.requirements && Object.entries(item.requirements).length > 0 && (
-                                  <div class="text-[9px] text-[var(--color-gold-dim)] mt-0.5">
-                                    {Object.entries(item.requirements).map(([skill, level]) => `${skill} ${level}`).join(' · ')}
-                                  </div>
-                                )}
                               </div>
                               {equipped && (
-                                <span class="text-base text-[var(--color-hp-green)] flex-shrink-0 ml-2">✓</span>
+                                <span class="text-base text-[var(--color-hp-green)] mt-1">✓</span>
                               )}
                             </div>
                           </button>
