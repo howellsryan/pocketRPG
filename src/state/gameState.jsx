@@ -102,6 +102,12 @@ export function GameProvider({ children }) {
               }
             }
           }
+          // Deduct scale charges consumed by the equipped weapon during idle combat
+          if (savedTask.type === 'combat' && sim.chargesConsumed > 0 && eq.weapon) {
+            const remaining = Math.max(0, (eq.weapon.charges || 0) - sim.chargesConsumed)
+            eq.weapon = { ...eq.weapon, charges: remaining }
+            await saveEquipment(eq)
+          }
           // Apply items to inventory and bank
           if ((savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather') && sim.finalInventory) {
             // Use the already-mutated inventory from simulation

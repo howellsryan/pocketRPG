@@ -36,14 +36,17 @@ export default function InventoryScreen() {
 
     const newEquip = { ...equipment }
     const newInv = [...inventory]
+    const sourceSlot = newInv[slotIndex]
     newInv[slotIndex] = null
 
-    const result = equipItem(newEquip, item)
+    const result = equipItem(newEquip, item, itemsData, sourceSlot)
     if (result.equipped) {
       for (const unequipped of result.unequipped) {
         const empty = newInv.indexOf(null)
         if (empty !== -1 && unequipped) {
-          newInv[empty] = { itemId: unequipped.itemId, quantity: 1 }
+          const invEntry = { itemId: unequipped.itemId, quantity: 1 }
+          if (unequipped.charges && unequipped.charges > 0) invEntry.charges = unequipped.charges
+          newInv[empty] = invEntry
         }
       }
       updateEquipment(newEquip)

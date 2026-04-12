@@ -3319,5 +3319,170 @@
         "chance": 0.2
       }
     ]
+  },
+  "zulrah": {
+    "id": "zulrah",
+    "name": "Zulrah",
+    "boss": true,
+    "combatLevel": 725,
+    "hitpoints": 500,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 300,
+      "magic": 300,
+      "ranged": 300
+    },
+    "attackSpeed": 3,
+    "attackStyle": "ranged",
+    "attackBonus": 50,
+    "strengthBonus": 50,
+    "defenceBonus": {
+      "stab": -45,
+      "slash": -45,
+      "crush": -45,
+      "magic": 0,
+      "ranged": 50
+    },
+    "multiForm": true,
+    "formSwitchMin": 1,
+    "formSwitchMax": 5,
+    "initialForm": "ranged",
+    "forms": {
+      "ranged": {
+        "displayName": "Serpentine",
+        "icon": "🟢",
+        "attackStyle": "ranged",
+        "weakness": "melee",
+        "maxHit": 41,
+        "attackBonus": 50,
+        "strengthBonus": 50,
+        "defenceBonus": {
+          "stab": -45,
+          "slash": -45,
+          "crush": -45,
+          "magic": 200,
+          "ranged": 50
+        }
+      },
+      "magic": {
+        "displayName": "Tanzanite",
+        "icon": "🔵",
+        "attackStyle": "magic",
+        "weakness": "ranged",
+        "maxHit": 41,
+        "attackBonus": 50,
+        "strengthBonus": 50,
+        "defenceBonus": {
+          "stab": 200,
+          "slash": 200,
+          "crush": 200,
+          "magic": 300,
+          "ranged": -45
+        }
+      },
+      "melee": {
+        "displayName": "Magma",
+        "icon": "🔴",
+        "attackStyle": "magic",
+        "weakness": "magic",
+        "maxHit": 41,
+        "attackBonus": 50,
+        "strengthBonus": 50,
+        "defenceBonus": {
+          "stab": 200,
+          "slash": 200,
+          "crush": 200,
+          "magic": -45,
+          "ranged": 300
+        }
+      }
+    },
+    "drops": [
+      {
+        "itemId": "zulrah_scales",
+        "quantity": [
+          150,
+          500
+        ],
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          3000,
+          15000
+        ],
+        "chance": 0.8
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          20,
+          50
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          20,
+          50
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          30,
+          80
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          2,
+          5
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "dragon_bones",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "toxic_blowpipe",
+        "quantity": 1,
+        "chance": 0.004
+      },
+      {
+        "itemId": "trident_of_the_swamp",
+        "quantity": 1,
+        "chance": 0.004
+      },
+      {
+        "itemId": "serpentine_helm",
+        "quantity": 1,
+        "chance": 0.004
+      },
+      {
+        "itemId": "uncut_onyx",
+        "quantity": 1,
+        "chance": 0.004
+      }
+    ]
   }
 }

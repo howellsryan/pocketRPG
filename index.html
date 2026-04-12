@@ -6650,6 +6650,122 @@ const itemsData = {
     "stackable": true,
     "shopValue": 150,
     "icon": "🪵"
+  },
+  "zulrah_scales": {
+    "id": "zulrah_scales",
+    "name": "Zulrah's scales",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 200,
+    "icon": "🐍"
+  },
+  "toxic_blowpipe": {
+    "id": "toxic_blowpipe",
+    "name": "Toxic blowpipe",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "scaleCharged": true,
+    "attackSpeed": 3,
+    "attackStyle": "ranged",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 60
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 40,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 75
+    },
+    "specialAttack": {
+      "type": "toxic_siphon",
+      "energyCost": 50,
+      "description": "Toxic Siphon: Guaranteed hit at 150% max hit. Heals you for half the damage dealt."
+    },
+    "shopValue": 0,
+    "icon": "🎋"
+  },
+  "trident_of_the_swamp": {
+    "id": "trident_of_the_swamp",
+    "name": "Trident of the swamp",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "scaleCharged": true,
+    "poweredStaff": true,
+    "poweredStaffBaseDamage": 34,
+    "attackSpeed": 3,
+    "attackStyle": "magic",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 25,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 75
+    },
+    "shopValue": 0,
+    "icon": "🔱"
+  },
+  "serpentine_helm": {
+    "id": "serpentine_helm",
+    "name": "Serpentine helm",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 52,
+      "slash": 55,
+      "crush": 58,
+      "magic": -1,
+      "ranged": 53
+    },
+    "otherBonus": {
+      "meleeStrength": 5,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 75
+    },
+    "shopValue": 0,
+    "icon": "🪖"
   }
 };
 const monstersData = {
@@ -9973,6 +10089,171 @@ const monstersData = {
         "chance": 0.2
       }
     ]
+  },
+  "zulrah": {
+    "id": "zulrah",
+    "name": "Zulrah",
+    "boss": true,
+    "combatLevel": 725,
+    "hitpoints": 500,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 300,
+      "magic": 300,
+      "ranged": 300
+    },
+    "attackSpeed": 3,
+    "attackStyle": "ranged",
+    "attackBonus": 50,
+    "strengthBonus": 50,
+    "defenceBonus": {
+      "stab": -45,
+      "slash": -45,
+      "crush": -45,
+      "magic": 0,
+      "ranged": 50
+    },
+    "multiForm": true,
+    "formSwitchMin": 1,
+    "formSwitchMax": 5,
+    "initialForm": "ranged",
+    "forms": {
+      "ranged": {
+        "displayName": "Serpentine",
+        "icon": "🟢",
+        "attackStyle": "ranged",
+        "weakness": "melee",
+        "maxHit": 41,
+        "attackBonus": 50,
+        "strengthBonus": 50,
+        "defenceBonus": {
+          "stab": -45,
+          "slash": -45,
+          "crush": -45,
+          "magic": 200,
+          "ranged": 50
+        }
+      },
+      "magic": {
+        "displayName": "Tanzanite",
+        "icon": "🔵",
+        "attackStyle": "magic",
+        "weakness": "ranged",
+        "maxHit": 41,
+        "attackBonus": 50,
+        "strengthBonus": 50,
+        "defenceBonus": {
+          "stab": 200,
+          "slash": 200,
+          "crush": 200,
+          "magic": 300,
+          "ranged": -45
+        }
+      },
+      "melee": {
+        "displayName": "Magma",
+        "icon": "🔴",
+        "attackStyle": "magic",
+        "weakness": "magic",
+        "maxHit": 41,
+        "attackBonus": 50,
+        "strengthBonus": 50,
+        "defenceBonus": {
+          "stab": 200,
+          "slash": 200,
+          "crush": 200,
+          "magic": -45,
+          "ranged": 300
+        }
+      }
+    },
+    "drops": [
+      {
+        "itemId": "zulrah_scales",
+        "quantity": [
+          150,
+          500
+        ],
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          3000,
+          15000
+        ],
+        "chance": 0.8
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          20,
+          50
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          20,
+          50
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          30,
+          80
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          2,
+          5
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "dragon_bones",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "toxic_blowpipe",
+        "quantity": 1,
+        "chance": 0.004
+      },
+      {
+        "itemId": "trident_of_the_swamp",
+        "quantity": 1,
+        "chance": 0.004
+      },
+      {
+        "itemId": "serpentine_helm",
+        "quantity": 1,
+        "chance": 0.004
+      },
+      {
+        "itemId": "uncut_onyx",
+        "quantity": 1,
+        "chance": 0.004
+      }
+    ]
   }
 };
 const skillsData = {
@@ -12469,8 +12750,12 @@ function isAmmoCompatible(equipment, ammoItemData, itemsData) {
 /**
  * Equip an item. Returns { equipped: true, unequipped: [] } or { equipped: false, reason }
  * Handles 2H weapon / shield conflicts and ammo-weapon type validation.
+ *
+ * The optional `sourceSlot` argument is the inventory slot being equipped from;
+ * its `charges` (if any) carry over to the equipment entry so that scale-charged
+ * weapons don't lose their charges when re-equipped.
  */
-function equipItem(equipment, itemData, itemsData) {
+function equipItem(equipment, itemData, itemsData, sourceSlot) {
     const slot = itemData.slot;
     if (!slot || !EQUIPMENT_SLOTS.includes(slot))
         return { equipped: false, unequipped: [] };
@@ -12501,10 +12786,15 @@ function equipItem(equipment, itemData, itemsData) {
     if (equipment[slot]) {
         unequipped.push(equipment[slot]);
     }
-    equipment[slot] = {
+    const entry = {
         itemId: itemData.id,
         _twoHanded: itemData.twoHanded || false
     };
+    // Preserve charges from the inventory slot for scale-charged weapons
+    if (sourceSlot && sourceSlot.charges && sourceSlot.charges > 0) {
+        entry.charges = sourceSlot.charges;
+    }
+    equipment[slot] = entry;
     return { equipped: true, unequipped };
 }
 /**
@@ -12859,9 +13149,25 @@ function countRune(runeId, inventory, equipment, itemsData) {
  * Create a new combat state
  */
 function createCombatState(monster, combatType = 'melee', stance = 'accurate', spell = null) {
+    // Apply initial form for multi-form bosses (e.g. Zulrah)
+    let preparedMonster = { ...monster, currentHP: monster.hitpoints };
+    if (monster.multiForm && monster.forms) {
+        const formKey = monster.initialForm || Object.keys(monster.forms)[0];
+        const form = monster.forms[formKey];
+        if (form) {
+            preparedMonster.currentForm = formKey;
+            preparedMonster.formAttackCount = 0;
+            preparedMonster.formSwitchThreshold = randomFormSwitchThreshold(monster);
+            preparedMonster.attackStyle = form.attackStyle;
+            preparedMonster.attackBonus = form.attackBonus ?? monster.attackBonus ?? 0;
+            preparedMonster.strengthBonus = form.strengthBonus ?? monster.strengthBonus ?? 0;
+            preparedMonster.defenceBonus = { ...form.defenceBonus };
+            preparedMonster.formMaxHit = form.maxHit;
+        }
+    }
     return {
         active: true,
-        monster: { ...monster, currentHP: monster.hitpoints },
+        monster: preparedMonster,
         combatType, // 'melee', 'ranged', 'magic'
         stance, // 'accurate', 'aggressive', 'controlled', 'defensive', 'rapid', 'longrange'
         spell, // spell object for magic combat
@@ -12881,6 +13187,25 @@ function createCombatState(monster, combatType = 'melee', stance = 'accurate', s
         activePotionStartTick: 0, // tick when potion was applied
         potionDuration: 0 // duration in ticks remaining for active potion
     };
+}
+/**
+ * Pick a random number of attacks (within formSwitchMin..formSwitchMax)
+ * that a multi-form monster will use before switching forms.
+ */
+function randomFormSwitchThreshold(monster) {
+    const min = monster.formSwitchMin || 1;
+    const max = monster.formSwitchMax || 5;
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+/**
+ * Pick a random form different from the current one.
+ */
+function pickNextForm(monster) {
+    const keys = Object.keys(monster.forms || {});
+    if (keys.length <= 1)
+        return monster.currentForm;
+    const others = keys.filter(k => k !== monster.currentForm);
+    return others[Math.floor(Math.random() * others.length)];
 }
 /**
  * Process one combat tick.
@@ -12926,6 +13251,12 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
     const weaponSpeed = getAttackSpeed(equipment, itemsData);
     const weaponStyle = getAttackStyle(equipment, itemsData);
     const monster = state.monster;
+    // Look up equipped weapon + scale-charge info for this tick
+    const equippedWeaponEntry = equipment?.weapon;
+    const equippedWeapon = equippedWeaponEntry ? itemsData[equippedWeaponEntry.itemId] : null;
+    const weaponIsScaleCharged = !!equippedWeapon?.scaleCharged;
+    const weaponIsPoweredStaff = !!equippedWeapon?.poweredStaff;
+    const weaponCharges = equippedWeaponEntry?.charges || 0;
     // ── Player Attack ──
     if (state.playerAttackTimer <= 0 && state.eatCooldown <= 0) {
         // Check if special attack is queued
@@ -12993,6 +13324,18 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
             }
         }
         else if (state.combatType === 'ranged') {
+            // Scale-charged weapons (e.g. Toxic blowpipe) require charges, not ammo
+            if (weaponIsScaleCharged) {
+                if (weaponCharges <= 0) {
+                    events.push({ type: 'noCharges', itemId: equippedWeaponEntry.itemId });
+                    let speed = weaponSpeed;
+                    if (state.stance === 'rapid')
+                        speed = Math.max(1, speed - 1);
+                    state.playerAttackTimer = speed;
+                    state.monster = monster;
+                    return { combatState: state, events };
+                }
+            }
             const styleBonus = getRangedStyleBonus(state.stance);
             const effRng = effectiveRanged(boostedPlayerStats.ranged, 0, 1.0, styleBonus);
             const maxHit = rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength);
@@ -13000,10 +13343,16 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
             const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus.ranged || 0);
             const acc = hitChance(atkRoll, defRoll);
             damage = rollDamage(acc, maxHit);
-            // Consume one bolt/arrow per shot
-            const equippedAmmo = equipment && equipment.ammo;
-            if (equippedAmmo) {
-                events.push({ type: 'consumeAmmo', itemId: equippedAmmo.itemId, qty: 1 });
+            if (weaponIsScaleCharged) {
+                // Consume one scale charge per shot
+                events.push({ type: 'consumeCharge', qty: 1 });
+            }
+            else {
+                // Consume one bolt/arrow per shot
+                const equippedAmmo = equipment && equipment.ammo;
+                if (equippedAmmo) {
+                    events.push({ type: 'consumeAmmo', itemId: equippedAmmo.itemId, qty: 1 });
+                }
             }
             if (damage > 0) {
                 if (state.stance === 'longrange') {
@@ -13014,6 +13363,35 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
                 else {
                     xpSkills.ranged = damage * RANGED_XP_PER_DAMAGE;
                 }
+                xpSkills.hitpoints = Math.floor(damage * HP_XP_PER_DAMAGE);
+            }
+        }
+        else if (state.combatType === 'magic' && weaponIsPoweredStaff) {
+            // Powered staff path (e.g. Trident of the swamp): no spell, no runes — scale charged.
+            if (weaponIsScaleCharged) {
+                if (weaponCharges <= 0) {
+                    events.push({ type: 'noCharges', itemId: equippedWeaponEntry.itemId });
+                    let speed = weaponSpeed;
+                    state.playerAttackTimer = speed;
+                    state.monster = monster;
+                    return { combatState: state, events };
+                }
+            }
+            const effMag = effectiveMagic(boostedPlayerStats.magic);
+            const atkRoll = maxAttackRoll(effMag, bonuses.attackBonus.magic || 0);
+            const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0);
+            const acc = hitChance(atkRoll, defRoll);
+            // Max hit scales with magic level: base at level 75, +1 per 3 levels above.
+            // At 75 = 24, at 99 = 32, at 123 = 39 (matches OSRS trident formulas approx).
+            const magicLevel = boostedPlayerStats.magic || 1;
+            const baseDamage = Math.max(1, Math.floor(magicLevel / 3) + 9);
+            const maxHit = magicMaxHit(baseDamage, bonuses.otherBonus.magicDamage);
+            damage = rollDamage(acc, maxHit);
+            if (weaponIsScaleCharged) {
+                events.push({ type: 'consumeCharge', qty: 1 });
+            }
+            if (damage > 0) {
+                xpSkills.magic = damage * MAGIC_XP_PER_DAMAGE;
                 xpSkills.hitpoints = Math.floor(damage * HP_XP_PER_DAMAGE);
             }
         }
@@ -13126,14 +13504,21 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
             }
         }
         else {
-            const monsterEffAtk = (monster.stats.attack + 9);
+            // For multi-form bosses, use the form's declared attack style
+            if (monster.multiForm && monster.currentForm && monster.forms?.[monster.currentForm]) {
+                effectiveAttackStyle = monster.forms[monster.currentForm].attackStyle || effectiveAttackStyle;
+            }
+            const monsterEffAtk = ((monster.stats.magic || monster.stats.attack || 1) + 9);
             const monsterAtkRoll = monsterEffAtk * ((monster.attackBonus || 0) + 64);
             const playerDefLevel = boostedPlayerStats.defence;
             const styleBonuses = getMeleeStyleBonuses(state.stance);
             const effDef = Math.floor(playerDefLevel) + styleBonuses.defenceStyleBonus + 8;
             const defRoll = effDef * ((bonuses.defenceBonus[effectiveAttackStyle] || bonuses.defenceBonus.crush || 0) + 64);
             const acc = hitChance(monsterAtkRoll, defRoll);
-            const monsterMaxHit = Math.floor(0.5 + (monster.stats.strength + 8) * ((monster.strengthBonus || 0) + 64) / 640);
+            // Multi-form monsters may declare an explicit max hit per form
+            const monsterMaxHit = monster.formMaxHit != null
+                ? monster.formMaxHit
+                : Math.floor(0.5 + (monster.stats.strength + 8) * ((monster.strengthBonus || 0) + 64) / 640);
             damage = rollDamage(acc, monsterMaxHit);
             // Apply protection prayer damage reduction if active and matches attack style
             if (state.activeProtectionPrayer && prayersData && typeof prayersData === 'object' && prayersData[state.activeProtectionPrayer]) {
@@ -13153,6 +13538,36 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
             events.push({ type: 'monsterHit', damage, playerHP: playerStats.currentHP - damage });
         }
         state.monsterAttackTimer = monster.attackSpeed || 4;
+        // ── Multi-form switch check (e.g. Zulrah) ──
+        if (monster.multiForm && monster.forms) {
+            monster.formAttackCount = (monster.formAttackCount || 0) + 1;
+            if (monster.formAttackCount >= (monster.formSwitchThreshold || 3)) {
+                const previousForm = monster.currentForm;
+                const nextKey = pickNextForm(monster);
+                const nextForm = monster.forms[nextKey];
+                if (nextForm) {
+                    monster.currentForm = nextKey;
+                    monster.attackStyle = nextForm.attackStyle;
+                    monster.attackBonus = nextForm.attackBonus ?? monster.attackBonus;
+                    monster.strengthBonus = nextForm.strengthBonus ?? monster.strengthBonus;
+                    monster.defenceBonus = { ...nextForm.defenceBonus };
+                    monster.formMaxHit = nextForm.maxHit;
+                    monster.formAttackCount = 0;
+                    monster.formSwitchThreshold = randomFormSwitchThreshold(monster);
+                    // Skip one attack cycle after a form change so the player can adapt
+                    state.monsterAttackTimer = (monster.attackSpeed || 4) * 2;
+                    events.push({
+                        type: 'formChange',
+                        previousForm,
+                        currentForm: nextKey,
+                        displayName: nextForm.displayName || nextKey,
+                        icon: nextForm.icon || '',
+                        attackStyle: nextForm.attackStyle,
+                        weakness: nextForm.weakness
+                    });
+                }
+            }
+        }
     }
     state.monster = monster;
     return { combatState: state, events };
@@ -13492,6 +13907,24 @@ function applySpecialAttack(combatState, playerStats, equipment, itemsData) {
             _accXP(state, xpSkills);
             events.push({ type: 'xp', xpSkills });
             events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'pebble_shot', monsterHP: monster.currentHP });
+            break;
+        }
+        case 'toxic_siphon': {
+            // Toxic Blowpipe — guaranteed 150% max hit ranged attack, heals for half damage dealt.
+            // Also consumes one scale charge (like a normal blowpipe shot).
+            const styleBonus = getRangedStyleBonus(state.stance);
+            const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus);
+            const maxHit = Math.floor(rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength) * 1.5);
+            const damage = randInt(1, Math.max(1, maxHit));
+            const actual = Math.min(damage, Math.max(0, monster.currentHP));
+            monster.currentHP -= actual;
+            const healAmount = Math.floor(actual / 2);
+            const xpSkills = { ranged: actual * RANGED_XP_PER_DAMAGE, hitpoints: Math.floor(actual * HP_XP_PER_DAMAGE) };
+            _accXP(state, xpSkills);
+            events.push({ type: 'xp', xpSkills });
+            events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'toxic_siphon', healAmount, monsterHP: monster.currentHP });
+            // Consume one scale charge on spec — emit so the UI decrements charges.
+            events.push({ type: 'consumeCharge', qty: 1 });
             break;
         }
         case 'shove': {
@@ -14358,6 +14791,19 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
             }
         }
     }
+    // Scale-charged weapons consume one charge per attack. Cap kills to what the
+    // currently loaded charges allow — charges cannot be refilled mid-idle.
+    const weaponEntry = equipment?.weapon;
+    const weaponItem = weaponEntry ? itemsData[weaponEntry.itemId] : null;
+    const weaponScaleCharged = !!weaponItem?.scaleCharged;
+    const startingCharges = weaponEntry?.charges || 0;
+    let maxKillsFromCharges = Infinity;
+    if (weaponScaleCharged && hitsNeeded < Infinity) {
+        // Scale-charged weapons only fire ranged or powered-staff magic attacks
+        if (combatType === 'ranged' || combatType === 'magic') {
+            maxKillsFromCharges = Math.floor(startingCharges / hitsNeeded);
+        }
+    }
     // Track starting inventory state for delta calculation
     const startingInvState = {};
     for (const slot of inventory) {
@@ -14374,7 +14820,7 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
     let monstersKilledOnTask = 0;
     let slayerXpGained = 0;
     let remainingTicks = totalTicks;
-    while (remainingTicks >= ticksPerCycle && monstersKilled < maxKillsFromRunes) {
+    while (remainingTicks >= ticksPerCycle && monstersKilled < maxKillsFromRunes && monstersKilled < maxKillsFromCharges) {
         remainingTicks -= ticksPerCycle;
         monstersKilled++;
         // Check if this kill counts toward slayer task — cap at total task count
@@ -14497,7 +14943,11 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
             slayerTaskUpdate = { ...slayerTask, monstersRemaining: newRemaining };
         }
     }
-    return { xpGained, lootGained, lootLost, lootBanked, runesConsumed, monstersKilled, monstersKilledOnTask, finalInventory: newInv, slayerXpGained, slayerTaskUpdate };
+    // Track scale charges consumed by the weapon during idle combat
+    const chargesConsumed = weaponScaleCharged && hitsNeeded < Infinity
+        ? Math.min(startingCharges, hitsNeeded * monstersKilled)
+        : 0;
+    return { xpGained, lootGained, lootLost, lootBanked, runesConsumed, monstersKilled, monstersKilledOnTask, finalInventory: newInv, slayerXpGained, slayerTaskUpdate, chargesConsumed };
 }
 
 // ── engine/tick.js ──
@@ -15145,6 +15595,12 @@ function GameProvider({ children }) {
                                 }
                             }
                         }
+                    }
+                    // Deduct scale charges consumed by the equipped weapon during idle combat
+                    if (savedTask.type === 'combat' && sim.chargesConsumed > 0 && eq.weapon) {
+                        const remaining = Math.max(0, (eq.weapon.charges || 0) - sim.chargesConsumed);
+                        eq.weapon = { ...eq.weapon, charges: remaining };
+                        await saveEquipment(eq);
                     }
                     // Apply items to inventory and bank
                     if ((savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather') && sim.finalInventory) {
@@ -15829,13 +16285,17 @@ function InventoryScreen() {
         }
         const newEquip = { ...equipment };
         const newInv = [...inventory];
+        const sourceSlot = newInv[slotIndex];
         newInv[slotIndex] = null;
-        const result = equipItem(newEquip, item);
+        const result = equipItem(newEquip, item, itemsData, sourceSlot);
         if (result.equipped) {
             for (const unequipped of result.unequipped) {
                 const empty = newInv.indexOf(null);
                 if (empty !== -1 && unequipped) {
-                    newInv[empty] = { itemId: unequipped.itemId, quantity: 1 };
+                    const invEntry = { itemId: unequipped.itemId, quantity: 1 };
+                    if (unequipped.charges && unequipped.charges > 0)
+                        invEntry.charges = unequipped.charges;
+                    newInv[empty] = invEntry;
                 }
             }
             updateEquipment(newEquip);
@@ -16634,6 +17094,12 @@ const COMBAT_CATEGORIES = [
         icon: '🐲',
         ids: ['king_black_dragon'],
     },
+    {
+        key: 'zulrah',
+        label: 'Zulrah',
+        icon: '🐍',
+        ids: ['zulrah'],
+    },
 ];
 const MONSTER_ICONS = {
     chicken: '🐔', goblin: '👺', cow: '🐄', giant_spider: '🕷️',
@@ -16642,7 +17108,7 @@ const MONSTER_ICONS = {
     green_dragon: '🐉', red_dragon: '🔴', lesser_demon: '👿',
     general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
     dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
-    crazy_archaeologist: '📜', king_black_dragon: '👑'
+    crazy_archaeologist: '📜', king_black_dragon: '👑', zulrah: '🐍'
 };
 function CombatScreen({ onNavigate, initialMonsterId }) {
     const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell } = useGame();
@@ -16745,7 +17211,8 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
                         lightning: '⚡ Saradomin\'s Lightning',
                         snapshot: '🏹🏹 Snapshot',
                         pebble_shot: '🎯 Pebble Shot',
-                        shove: '🗡️ Shove (staggered!)'
+                        shove: '🗡️ Shove (staggered!)',
+                        toxic_siphon: `🎋 Toxic Siphon (+${ev.healAmount || 0} HP)`
                     };
                     const label = specLabels[ev.specType] || '⚡ Special Attack';
                     setLog(prev => [...prev.slice(-20), {
@@ -16753,7 +17220,7 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
                             type: 'special',
                             time: Date.now()
                         }]);
-                    if (ev.specType === 'healing_blade' && ev.healAmount > 0) {
+                    if ((ev.specType === 'healing_blade' || ev.specType === 'toxic_siphon') && ev.healAmount > 0) {
                         const maxHP = getMaxHP();
                         const newHP = Math.min(hpRef.current + ev.healAmount, maxHP);
                         updateHP(newHP);
@@ -16817,6 +17284,32 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
                             type: 'miss',
                             time: Date.now()
                         }]);
+                }
+                if (ev.type === 'consumeCharge') {
+                    // Decrement weapon charges on the equipped weapon
+                    const newEq = { ...equipmentRef.current };
+                    const w = newEq.weapon;
+                    if (w && w.charges && w.charges > 0) {
+                        newEq.weapon = { ...w, charges: Math.max(0, w.charges - (ev.qty || 1)) };
+                        equipmentRef.current = newEq;
+                        updateEquipment(newEq);
+                    }
+                }
+                if (ev.type === 'noCharges') {
+                    const item = itemsData[ev.itemId];
+                    setLog(prev => [...prev.slice(-20), {
+                            text: `${item?.name || 'Weapon'} has no charges — use Zulrah's scales to charge it!`,
+                            type: 'miss',
+                            time: Date.now()
+                        }]);
+                }
+                if (ev.type === 'formChange') {
+                    setLog(prev => [...prev.slice(-20), {
+                            text: `${ev.icon || '🐍'} Zulrah shifts into ${ev.displayName} form! Weakness: ${ev.weakness}. It skips its next attack.`,
+                            type: 'formChange',
+                            time: Date.now()
+                        }]);
+                    addToast(`${ev.icon || '🐍'} Zulrah: ${ev.displayName} form — weak to ${ev.weakness}`, 'info');
                 }
                 if (combatRef.current.runesConsumed && ev.type === 'playerHit' && ev.damage > 0) {
                     // Consume runes when spell successfully casts
@@ -16899,7 +17392,9 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
         }
         const combatType = getCombatType(equipment, itemsData);
         const spell = combatType === 'magic' && activeCombatSpell ? spellsData[activeCombatSpell.id] : null;
-        if (combatType === 'magic' && !spell) {
+        const weaponItem = equipment?.weapon ? itemsData[equipment.weapon.itemId] : null;
+        const isPoweredStaff = !!weaponItem?.poweredStaff;
+        if (combatType === 'magic' && !spell && !isPoweredStaff) {
             addToast('No spell selected! Use the 🔮 Cast button to pick a spell.', 'error');
         }
         const state = createCombatState(monster, combatType, combatStance, spell);
@@ -16910,7 +17405,7 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
         setCombat(state);
         setKillCount(0);
         setFightStartedAt(Date.now());
-        const spellName = spell ? ` with ${spell.name}` : '';
+        const spellName = spell ? ` with ${spell.name}` : isPoweredStaff && weaponItem ? ` with ${weaponItem.name}` : '';
         setLog([{ text: `Fighting ${monster.name}${spellName}...`, type: 'info', time: Date.now() }]);
         setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot, spell: spell || null });
     };
@@ -16971,6 +17466,11 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
         const energy = combatRef.current.specialAttackEnergy || 0;
         if (energy < weapon.specialAttack.energyCost)
             return;
+        // Scale-charged weapons must have at least one charge to fire a spec
+        if (weapon.scaleCharged && (weaponEntry.charges || 0) <= 0) {
+            addToast('No charges — use Zulrah\'s scales to charge this weapon.', 'error');
+            return;
+        }
         // Queue the special attack to be fired on next tick (without draining energy yet)
         const newState = {
             ...combatRef.current,
@@ -17042,7 +17542,8 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
             return;
         // Copy equipment to avoid mutating ref directly
         const newEq = { ...equipmentRef.current };
-        const result = equipItem(newEq, itemData, itemsData);
+        const sourceSlot = newInv[itemIdx];
+        const result = equipItem(newEq, itemData, itemsData, sourceSlot);
         if (!result.equipped) {
             addToast('Could not equip item', 'error');
             return;
@@ -17063,10 +17564,13 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
                     continue;
                 }
             }
-            // Add to empty slot
+            // Add to empty slot, preserving any charges the unequipped item had
             const emptyIdx = newInv.findIndex(s => s === null);
             if (emptyIdx !== -1) {
-                newInv[emptyIdx] = { ...unequipped, quantity: unequipped.quantity || 1 };
+                const invEntry = { itemId: unequipped.itemId, quantity: unequipped.quantity || 1 };
+                if (unequipped.charges && unequipped.charges > 0)
+                    invEntry.charges = unequipped.charges;
+                newInv[emptyIdx] = invEntry;
             }
         }
         updateInventory(newInv);
@@ -17190,7 +17694,14 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
         h("button", { onClick: stopAndBack, class: "text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1" }, "\u2190 Back"),
         h("div", { class: "mb-3" },
             h("div", { class: "flex items-center justify-between mb-1" },
-                h("span", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, combat.monster.name),
+                h("span", { class: "text-sm font-semibold text-[var(--color-parchment)]" },
+                    combat.monster.name,
+                    combat.monster.multiForm && combat.monster.currentForm && combat.monster.forms?.[combat.monster.currentForm] && (h("span", { class: "ml-2 text-[10px] font-[var(--font-mono)] text-purple-300" },
+                        combat.monster.forms[combat.monster.currentForm].icon,
+                        " ",
+                        combat.monster.forms[combat.monster.currentForm].displayName,
+                        " \u2014 weak to ",
+                        combat.monster.forms[combat.monster.currentForm].weakness))),
                 h("span", { class: "text-[10px] font-[var(--font-mono)] text-[var(--color-blood-light)]" },
                     "CB ",
                     combat.monster.combatLevel)),
@@ -17210,6 +17721,21 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
             h("span", { class: "text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40" },
                 freeSlots(inventory),
                 "/28 free")),
+        (() => {
+            const weaponEntry = equipment?.weapon;
+            const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null;
+            if (!weapon?.scaleCharged)
+                return null;
+            const charges = weaponEntry.charges || 0;
+            return (h("div", { class: "mb-2 bg-[#111] rounded-lg px-3 py-2" },
+                h("div", { class: "flex items-center justify-between" },
+                    h("span", { class: "text-[10px] text-green-400 font-semibold" },
+                        "\uD83D\uDC0D ",
+                        weapon.name,
+                        " charges"),
+                    h("span", { class: `text-[10px] font-[var(--font-mono)] ${charges === 0 ? 'text-red-400' : 'text-green-400'}` }, charges)),
+                h("div", { class: "text-[9px] text-[var(--color-parchment)] opacity-40 mt-0.5" }, "1 Zulrah's scale = 1 attack \u00B7 Charge via Equipment screen")));
+        })(),
         (() => {
             const weaponEntry = equipment?.weapon;
             const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null;
@@ -17236,8 +17762,9 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
                         entry.type === 'heal' ? 'text-[var(--color-hp-green)]' :
                             entry.type === 'dragonfire' ? 'text-orange-400' :
                                 entry.type === 'special' ? 'text-yellow-300' :
-                                    entry.type === 'victory' ? 'text-[var(--color-gold)]' :
-                                        'text-[var(--color-parchment)] opacity-50'}` }, entry.text)))),
+                                    entry.type === 'formChange' ? 'text-purple-300' :
+                                        entry.type === 'victory' ? 'text-[var(--color-gold)]' :
+                                            'text-[var(--color-parchment)] opacity-50'}` }, entry.text)))),
         fightStartedAt && (h("div", { class: "flex-shrink-0 flex justify-between bg-[#111] rounded-lg px-3 py-2 mb-2 text-[11px]" },
             h("span", { class: "text-[var(--color-parchment)] opacity-50" }, "Kills"),
             h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, killCount),
@@ -19206,6 +19733,7 @@ function GeneralStoreScreen() {
 
 
 
+const SCALE_ITEM_ID = 'zulrah_scales';
 const EQ_SLOT_LABELS = {
     head: '🪖', cape: '🧣', neck: '📿', ammo: '🏹',
     weapon: '🗡️', body: '👕', shield: '🛡️',
@@ -19243,13 +19771,21 @@ function EquipmentScreen() {
     const { equipment, inventory, updateEquipment, updateInventory, addToast, itemsData } = useGame();
     const [selected, setSelected] = useState(null); // { slot, item }
     const [showSpecInfo, setShowSpecInfo] = useState(false);
+    const [chargeInput, setChargeInput] = useState('');
     const handleSelect = (slotName, item) => {
         setSelected({ slot: slotName, item });
         setShowSpecInfo(false);
+        setChargeInput('');
     };
     const handleUnequip = () => {
         if (!selected)
             return;
+        const newEq = { ...equipment };
+        const removed = newEq[selected.slot];
+        if (!removed) {
+            setSelected(null);
+            return;
+        }
         const newInv = [...inventory];
         const empty = newInv.indexOf(null);
         if (empty === -1) {
@@ -19257,14 +19793,86 @@ function EquipmentScreen() {
             setSelected(null);
             return;
         }
-        const newEq = { ...equipment };
-        const removed = unequipSlot(newEq, selected.slot);
-        if (removed) {
-            newInv[empty] = { itemId: removed.itemId, quantity: 1 };
-            updateEquipment(newEq);
-            updateInventory(newInv);
-        }
+        // Preserve charges on unequip so we can re-equip without losing them
+        const invEntry = { itemId: removed.itemId, quantity: 1 };
+        if (removed.charges && removed.charges > 0)
+            invEntry.charges = removed.charges;
+        newEq[selected.slot] = null;
+        newInv[empty] = invEntry;
+        updateEquipment(newEq);
+        updateInventory(newInv);
         setSelected(null);
+    };
+    // Count available Zulrah scales in inventory
+    const scaleCount = inventory.reduce((sum, s) => sum + (s && s.itemId === SCALE_ITEM_ID ? s.quantity : 0), 0);
+    const handleChargeWeapon = (qty) => {
+        if (!selected)
+            return;
+        const equipSlotName = selected.slot;
+        const weaponEntry = equipment[equipSlotName];
+        if (!weaponEntry)
+            return;
+        const item = itemsData[weaponEntry.itemId];
+        if (!item?.scaleCharged)
+            return;
+        const actualQty = Math.min(qty, scaleCount);
+        if (actualQty <= 0) {
+            addToast('No Zulrah scales in inventory', 'error');
+            return;
+        }
+        // Remove scales from inventory
+        const newInv = [...inventory];
+        let remaining = actualQty;
+        for (let i = 0; i < newInv.length && remaining > 0; i++) {
+            if (newInv[i]?.itemId === SCALE_ITEM_ID) {
+                const take = Math.min(newInv[i].quantity, remaining);
+                newInv[i] = { ...newInv[i], quantity: newInv[i].quantity - take };
+                if (newInv[i].quantity <= 0)
+                    newInv[i] = null;
+                remaining -= take;
+            }
+        }
+        // Add charges to equipped weapon
+        const newEq = { ...equipment };
+        const currentCharges = weaponEntry.charges || 0;
+        newEq[equipSlotName] = { ...weaponEntry, charges: currentCharges + actualQty };
+        updateInventory(newInv);
+        updateEquipment(newEq);
+        addToast(`Charged ${item.name} with ${actualQty} scales`, 'info');
+        setChargeInput('');
+    };
+    const handleUnchargeWeapon = () => {
+        if (!selected)
+            return;
+        const equipSlotName = selected.slot;
+        const weaponEntry = equipment[equipSlotName];
+        if (!weaponEntry)
+            return;
+        const item = itemsData[weaponEntry.itemId];
+        if (!item?.scaleCharged)
+            return;
+        const charges = weaponEntry.charges || 0;
+        if (charges <= 0)
+            return;
+        // Return all charges as scales to inventory
+        const newInv = [...inventory];
+        const existingIdx = newInv.findIndex(s => s && s.itemId === SCALE_ITEM_ID);
+        if (existingIdx !== -1) {
+            newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + charges };
+        }
+        else {
+            const empty = newInv.indexOf(null);
+            if (empty === -1) {
+                addToast('Inventory full — cannot uncharge', 'error');
+                return;
+            }
+            newInv[empty] = { itemId: SCALE_ITEM_ID, quantity: charges };
+        }
+        const newEq = { ...equipment };
+        newEq[equipSlotName] = { ...weaponEntry, charges: 0 };
+        updateInventory(newInv);
+        updateEquipment(newEq);
+        addToast(`Uncharged ${item.name}, recovered ${charges} scales`, 'info');
     };
     const bonuses = getEquipmentBonuses(equipment, itemsData);
     // Paperdoll grid layout:
@@ -19357,6 +19965,59 @@ function EquipmentScreen() {
                     selected.item.requirements && Object.entries(selected.item.requirements).length > 0 && (h("p", null,
                         "Requires: ",
                         Object.entries(selected.item.requirements).map(([s, l]) => `${s} ${l}`).join(', ')))),
+                selected.item.scaleCharged && (() => {
+                    const currentCharges = equipment[selected.slot]?.charges || 0;
+                    const parsedInput = parseInt(chargeInput, 10);
+                    const customQty = Number.isFinite(parsedInput) && parsedInput > 0 ? parsedInput : 0;
+                    return (h("div", { style: { background: '#111', borderRadius: '8px', border: '1px solid #1a3a2a', padding: '12px' } },
+                        h("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' } },
+                            h("span", { style: { fontSize: '12px', fontWeight: '600', color: '#4ade80' } }, "\uD83D\uDC0D Scale Charges"),
+                            h("span", { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', color: '#e8d5b0' } },
+                                currentCharges,
+                                " / \u221E")),
+                        h("div", { style: { fontSize: '10px', color: '#e8d5b0', opacity: 0.5, marginBottom: '8px' } },
+                            "Scales in inventory: ",
+                            scaleCount),
+                        h("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px', marginBottom: '6px' } },
+                            h("button", { onClick: () => handleChargeWeapon(10), disabled: scaleCount <= 0, style: {
+                                    padding: '8px', borderRadius: '6px', background: scaleCount > 0 ? '#1a4a2a' : '#222',
+                                    color: scaleCount > 0 ? '#4ade80' : '#555', fontSize: '11px', fontWeight: '600',
+                                    border: 'none', cursor: scaleCount > 0 ? 'pointer' : 'not-allowed'
+                                } }, "+10"),
+                            h("button", { onClick: () => handleChargeWeapon(100), disabled: scaleCount <= 0, style: {
+                                    padding: '8px', borderRadius: '6px', background: scaleCount > 0 ? '#1a4a2a' : '#222',
+                                    color: scaleCount > 0 ? '#4ade80' : '#555', fontSize: '11px', fontWeight: '600',
+                                    border: 'none', cursor: scaleCount > 0 ? 'pointer' : 'not-allowed'
+                                } }, "+100"),
+                            h("button", { onClick: () => handleChargeWeapon(scaleCount), disabled: scaleCount <= 0, style: {
+                                    padding: '8px', borderRadius: '6px', background: scaleCount > 0 ? '#1a4a2a' : '#222',
+                                    color: scaleCount > 0 ? '#4ade80' : '#555', fontSize: '11px', fontWeight: '600',
+                                    border: 'none', cursor: scaleCount > 0 ? 'pointer' : 'not-allowed'
+                                } }, "+All")),
+                        h("div", { style: { display: 'flex', gap: '4px', marginBottom: '6px' } },
+                            h("input", { type: "number", min: "1", value: chargeInput, onInput: (e) => setChargeInput(e.currentTarget.value), placeholder: "Custom amount", style: {
+                                    flex: 1, padding: '8px', borderRadius: '6px', background: '#0a0a0a',
+                                    border: '1px solid #222', color: '#e8d5b0', fontSize: '11px',
+                                    fontFamily: 'JetBrains Mono, monospace'
+                                } }),
+                            h("button", { onClick: () => handleChargeWeapon(customQty), disabled: customQty <= 0 || scaleCount <= 0, style: {
+                                    padding: '8px 12px', borderRadius: '6px',
+                                    background: customQty > 0 && scaleCount > 0 ? '#1a4a2a' : '#222',
+                                    color: customQty > 0 && scaleCount > 0 ? '#4ade80' : '#555',
+                                    fontSize: '11px', fontWeight: '600', border: 'none',
+                                    cursor: customQty > 0 && scaleCount > 0 ? 'pointer' : 'not-allowed'
+                                } }, "Charge")),
+                        h("button", { onClick: handleUnchargeWeapon, disabled: currentCharges <= 0, style: {
+                                width: '100%', padding: '8px', borderRadius: '6px',
+                                background: currentCharges > 0 ? '#3a1a1a' : '#222',
+                                color: currentCharges > 0 ? '#f87171' : '#555',
+                                fontSize: '11px', fontWeight: '600', border: 'none',
+                                cursor: currentCharges > 0 ? 'pointer' : 'not-allowed'
+                            } },
+                            "Uncharge (recover ",
+                            currentCharges,
+                            " scales)")));
+                })(),
                 selected.item.specialAttack && (h("div", { style: { background: '#111', borderRadius: '8px', border: '1px solid #3a2a00', overflow: 'hidden' } },
                     h("button", { onClick: () => setShowSpecInfo(v => !v), style: {
                             width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',

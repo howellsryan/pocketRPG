@@ -6550,5 +6550,121 @@
     "stackable": true,
     "shopValue": 150,
     "icon": "🪵"
+  },
+  "zulrah_scales": {
+    "id": "zulrah_scales",
+    "name": "Zulrah's scales",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 200,
+    "icon": "🐍"
+  },
+  "toxic_blowpipe": {
+    "id": "toxic_blowpipe",
+    "name": "Toxic blowpipe",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "scaleCharged": true,
+    "attackSpeed": 3,
+    "attackStyle": "ranged",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 60
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 40,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 75
+    },
+    "specialAttack": {
+      "type": "toxic_siphon",
+      "energyCost": 50,
+      "description": "Toxic Siphon: Guaranteed hit at 150% max hit. Heals you for half the damage dealt."
+    },
+    "shopValue": 0,
+    "icon": "🎋"
+  },
+  "trident_of_the_swamp": {
+    "id": "trident_of_the_swamp",
+    "name": "Trident of the swamp",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "scaleCharged": true,
+    "poweredStaff": true,
+    "poweredStaffBaseDamage": 34,
+    "attackSpeed": 3,
+    "attackStyle": "magic",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 25,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 75
+    },
+    "shopValue": 0,
+    "icon": "🔱"
+  },
+  "serpentine_helm": {
+    "id": "serpentine_helm",
+    "name": "Serpentine helm",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 52,
+      "slash": 55,
+      "crush": 58,
+      "magic": -1,
+      "ranged": 53
+    },
+    "otherBonus": {
+      "meleeStrength": 5,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 75
+    },
+    "shopValue": 0,
+    "icon": "🪖"
   }
 }

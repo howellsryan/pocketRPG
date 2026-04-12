@@ -633,6 +633,20 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     }
   }
 
+  // Scale-charged weapons consume one charge per attack. Cap kills to what the
+  // currently loaded charges allow — charges cannot be refilled mid-idle.
+  const weaponEntry = equipment?.weapon
+  const weaponItem = weaponEntry ? itemsData[weaponEntry.itemId] : null
+  const weaponScaleCharged = !!weaponItem?.scaleCharged
+  const startingCharges = weaponEntry?.charges || 0
+  let maxKillsFromCharges = Infinity
+  if (weaponScaleCharged && hitsNeeded < Infinity) {
+    // Scale-charged weapons only fire ranged or powered-staff magic attacks
+    if (combatType === 'ranged' || combatType === 'magic') {
+      maxKillsFromCharges = Math.floor(startingCharges / hitsNeeded)
+    }
+  }
+
   // Track starting inventory state for delta calculation
   const startingInvState = {}
   for (const slot of inventory) {
@@ -650,7 +664,7 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   let slayerXpGained = 0
   let remainingTicks = totalTicks
 
-  while (remainingTicks >= ticksPerCycle && monstersKilled < maxKillsFromRunes) {
+  while (remainingTicks >= ticksPerCycle && monstersKilled < maxKillsFromRunes && monstersKilled < maxKillsFromCharges) {
     remainingTicks -= ticksPerCycle
     monstersKilled++
 
@@ -769,5 +783,10 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     }
   }
 
-  return { xpGained, lootGained, lootLost, lootBanked, runesConsumed, monstersKilled, monstersKilledOnTask, finalInventory: newInv, slayerXpGained, slayerTaskUpdate }
+  // Track scale charges consumed by the weapon during idle combat
+  const chargesConsumed = weaponScaleCharged && hitsNeeded < Infinity
+    ? Math.min(startingCharges, hitsNeeded * monstersKilled)
+    : 0
+
+  return { xpGained, lootGained, lootLost, lootBanked, runesConsumed, monstersKilled, monstersKilledOnTask, finalInventory: newInv, slayerXpGained, slayerTaskUpdate, chargesConsumed }
 }

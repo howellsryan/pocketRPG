@@ -14,9 +14,25 @@ import { randInt } from '../utils/helpers.js'
  * Create a new combat state
  */
 export function createCombatState(monster, combatType = 'melee', stance = 'accurate', spell = null) {
+  // Apply initial form for multi-form bosses (e.g. Zulrah)
+  let preparedMonster = { ...monster, currentHP: monster.hitpoints }
+  if (monster.multiForm && monster.forms) {
+    const formKey = monster.initialForm || Object.keys(monster.forms)[0]
+    const form = monster.forms[formKey]
+    if (form) {
+      preparedMonster.currentForm = formKey
+      preparedMonster.formAttackCount = 0
+      preparedMonster.formSwitchThreshold = randomFormSwitchThreshold(monster)
+      preparedMonster.attackStyle = form.attackStyle
+      preparedMonster.attackBonus = form.attackBonus ?? monster.attackBonus ?? 0
+      preparedMonster.strengthBonus = form.strengthBonus ?? monster.strengthBonus ?? 0
+      preparedMonster.defenceBonus = { ...form.defenceBonus }
+      preparedMonster.formMaxHit = form.maxHit
+    }
+  }
   return {
     active: true,
-    monster: { ...monster, currentHP: monster.hitpoints },
+    monster: preparedMonster,
     combatType,      // 'melee', 'ranged', 'magic'
     stance,          // 'accurate', 'aggressive', 'controlled', 'defensive', 'rapid', 'longrange'
     spell,           // spell object for magic combat
@@ -36,6 +52,26 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     activePotionStartTick: 0,      // tick when potion was applied
     potionDuration: 0              // duration in ticks remaining for active potion
   }
+}
+
+/**
+ * Pick a random number of attacks (within formSwitchMin..formSwitchMax)
+ * that a multi-form monster will use before switching forms.
+ */
+function randomFormSwitchThreshold(monster) {
+  const min = monster.formSwitchMin || 1
+  const max = monster.formSwitchMax || 5
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
+/**
+ * Pick a random form different from the current one.
+ */
+function pickNextForm(monster) {
+  const keys = Object.keys(monster.forms || {})
+  if (keys.length <= 1) return monster.currentForm
+  const others = keys.filter(k => k !== monster.currentForm)
+  return others[Math.floor(Math.random() * others.length)]
 }
 
 /**
@@ -81,6 +117,12 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   const weaponSpeed = getAttackSpeed(equipment, itemsData)
   const weaponStyle = getAttackStyle(equipment, itemsData)
   const monster = state.monster
+  // Look up equipped weapon + scale-charge info for this tick
+  const equippedWeaponEntry = equipment?.weapon
+  const equippedWeapon = equippedWeaponEntry ? itemsData[equippedWeaponEntry.itemId] : null
+  const weaponIsScaleCharged = !!equippedWeapon?.scaleCharged
+  const weaponIsPoweredStaff = !!equippedWeapon?.poweredStaff
+  const weaponCharges = equippedWeaponEntry?.charges || 0
 
   // ── Player Attack ──
   if (state.playerAttackTimer <= 0 && state.eatCooldown <= 0) {
@@ -148,6 +190,18 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
         xpSkills.hitpoints = Math.floor(damage * HP_XP_PER_DAMAGE)
       }
     } else if (state.combatType === 'ranged') {
+      // Scale-charged weapons (e.g. Toxic blowpipe) require charges, not ammo
+      if (weaponIsScaleCharged) {
+        if (weaponCharges <= 0) {
+          events.push({ type: 'noCharges', itemId: equippedWeaponEntry.itemId })
+          let speed = weaponSpeed
+          if (state.stance === 'rapid') speed = Math.max(1, speed - 1)
+          state.playerAttackTimer = speed
+          state.monster = monster
+          return { combatState: state, events }
+        }
+      }
+
       const styleBonus = getRangedStyleBonus(state.stance)
       const effRng = effectiveRanged(boostedPlayerStats.ranged, 0, 1.0, styleBonus)
       const maxHit = rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength)
@@ -156,10 +210,15 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const acc = hitChance(atkRoll, defRoll)
       damage = rollDamage(acc, maxHit)
 
-      // Consume one bolt/arrow per shot
-      const equippedAmmo = equipment && equipment.ammo
-      if (equippedAmmo) {
-        events.push({ type: 'consumeAmmo', itemId: equippedAmmo.itemId, qty: 1 })
+      if (weaponIsScaleCharged) {
+        // Consume one scale charge per shot
+        events.push({ type: 'consumeCharge', qty: 1 })
+      } else {
+        // Consume one bolt/arrow per shot
+        const equippedAmmo = equipment && equipment.ammo
+        if (equippedAmmo) {
+          events.push({ type: 'consumeAmmo', itemId: equippedAmmo.itemId, qty: 1 })
+        }
       }
 
       if (damage > 0) {
@@ -170,6 +229,37 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
         } else {
           xpSkills.ranged = damage * RANGED_XP_PER_DAMAGE
         }
+        xpSkills.hitpoints = Math.floor(damage * HP_XP_PER_DAMAGE)
+      }
+    } else if (state.combatType === 'magic' && weaponIsPoweredStaff) {
+      // Powered staff path (e.g. Trident of the swamp): no spell, no runes — scale charged.
+      if (weaponIsScaleCharged) {
+        if (weaponCharges <= 0) {
+          events.push({ type: 'noCharges', itemId: equippedWeaponEntry.itemId })
+          let speed = weaponSpeed
+          state.playerAttackTimer = speed
+          state.monster = monster
+          return { combatState: state, events }
+        }
+      }
+
+      const effMag = effectiveMagic(boostedPlayerStats.magic)
+      const atkRoll = maxAttackRoll(effMag, bonuses.attackBonus.magic || 0)
+      const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      // Max hit scales with magic level: base at level 75, +1 per 3 levels above.
+      // At 75 = 24, at 99 = 32, at 123 = 39 (matches OSRS trident formulas approx).
+      const magicLevel = boostedPlayerStats.magic || 1
+      const baseDamage = Math.max(1, Math.floor(magicLevel / 3) + 9)
+      const maxHit = magicMaxHit(baseDamage, bonuses.otherBonus.magicDamage)
+      damage = rollDamage(acc, maxHit)
+
+      if (weaponIsScaleCharged) {
+        events.push({ type: 'consumeCharge', qty: 1 })
+      }
+
+      if (damage > 0) {
+        xpSkills.magic = damage * MAGIC_XP_PER_DAMAGE
         xpSkills.hitpoints = Math.floor(damage * HP_XP_PER_DAMAGE)
       }
     } else if (state.combatType === 'magic' && state.spell) {
@@ -284,14 +374,21 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
         events.push({ type: 'dragonfireHit', damage, playerHP: playerStats.currentHP - damage })
       }
     } else {
-      const monsterEffAtk = (monster.stats.attack + 9)
+      // For multi-form bosses, use the form's declared attack style
+      if (monster.multiForm && monster.currentForm && monster.forms?.[monster.currentForm]) {
+        effectiveAttackStyle = monster.forms[monster.currentForm].attackStyle || effectiveAttackStyle
+      }
+      const monsterEffAtk = ((monster.stats.magic || monster.stats.attack || 1) + 9)
       const monsterAtkRoll = monsterEffAtk * ((monster.attackBonus || 0) + 64)
       const playerDefLevel = boostedPlayerStats.defence
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effDef = Math.floor(playerDefLevel) + styleBonuses.defenceStyleBonus + 8
       const defRoll = effDef * ((bonuses.defenceBonus[effectiveAttackStyle] || bonuses.defenceBonus.crush || 0) + 64)
       const acc = hitChance(monsterAtkRoll, defRoll)
-      const monsterMaxHit = Math.floor(0.5 + (monster.stats.strength + 8) * ((monster.strengthBonus || 0) + 64) / 640)
+      // Multi-form monsters may declare an explicit max hit per form
+      const monsterMaxHit = monster.formMaxHit != null
+        ? monster.formMaxHit
+        : Math.floor(0.5 + (monster.stats.strength + 8) * ((monster.strengthBonus || 0) + 64) / 640)
       damage = rollDamage(acc, monsterMaxHit)
 
       // Apply protection prayer damage reduction if active and matches attack style
@@ -313,6 +410,37 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     }
 
     state.monsterAttackTimer = monster.attackSpeed || 4
+
+    // ── Multi-form switch check (e.g. Zulrah) ──
+    if (monster.multiForm && monster.forms) {
+      monster.formAttackCount = (monster.formAttackCount || 0) + 1
+      if (monster.formAttackCount >= (monster.formSwitchThreshold || 3)) {
+        const previousForm = monster.currentForm
+        const nextKey = pickNextForm(monster)
+        const nextForm = monster.forms[nextKey]
+        if (nextForm) {
+          monster.currentForm = nextKey
+          monster.attackStyle = nextForm.attackStyle
+          monster.attackBonus = nextForm.attackBonus ?? monster.attackBonus
+          monster.strengthBonus = nextForm.strengthBonus ?? monster.strengthBonus
+          monster.defenceBonus = { ...nextForm.defenceBonus }
+          monster.formMaxHit = nextForm.maxHit
+          monster.formAttackCount = 0
+          monster.formSwitchThreshold = randomFormSwitchThreshold(monster)
+          // Skip one attack cycle after a form change so the player can adapt
+          state.monsterAttackTimer = (monster.attackSpeed || 4) * 2
+          events.push({
+            type: 'formChange',
+            previousForm,
+            currentForm: nextKey,
+            displayName: nextForm.displayName || nextKey,
+            icon: nextForm.icon || '',
+            attackStyle: nextForm.attackStyle,
+            weakness: nextForm.weakness
+          })
+        }
+      }
+    }
   }
 
   state.monster = monster
@@ -664,6 +792,25 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       _accXP(state, xpSkills)
       events.push({ type: 'xp', xpSkills })
       events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'pebble_shot', monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'toxic_siphon': {
+      // Toxic Blowpipe — guaranteed 150% max hit ranged attack, heals for half damage dealt.
+      // Also consumes one scale charge (like a normal blowpipe shot).
+      const styleBonus = getRangedStyleBonus(state.stance)
+      const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
+      const maxHit = Math.floor(rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength) * 1.5)
+      const damage = randInt(1, Math.max(1, maxHit))
+      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const healAmount = Math.floor(actual / 2)
+      const xpSkills = { ranged: actual * RANGED_XP_PER_DAMAGE, hitpoints: Math.floor(actual * HP_XP_PER_DAMAGE) }
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'toxic_siphon', healAmount, monsterHP: monster.currentHP })
+      // Consume one scale charge on spec — emit so the UI decrements charges.
+      events.push({ type: 'consumeCharge', qty: 1 })
       break
     }
 
