@@ -16641,7 +16641,7 @@ const MONSTER_ICONS = {
     dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
     crazy_archaeologist: '📜', king_black_dragon: '👑'
 };
-function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlocked }) {
+function CombatScreen({ onNavigate, initialMonsterId }) {
     const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell } = useGame();
     const [combat, setCombat] = useState(null);
     const [log, setLog] = useState([]);
@@ -17265,10 +17265,8 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
                     return (h("button", { onClick: () => isMagic && setShowSpellModal(true), disabled: !isMagic, class: `py-2.5 rounded-lg font-semibold text-sm transition-opacity ${isMagic ? 'active:opacity-80' : 'opacity-40 cursor-default'}`, style: isMagic ? 'background:linear-gradient(135deg,#1a2a3a,#2a3a5a);border:1px solid rgba(100,150,200,0.35);color:#a8d8ff' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888' }, "\uD83D\uDD2E Cast"));
                 })(),
                 h("button", { onClick: () => setShowPrayerModal(true), class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\uD83D\uDE4F Prayer")),
-            h("div", { class: "grid grid-cols-2 gap-2" },
-                h("button", { onClick: () => setShowEquipmentModal(true), class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#2a2a3a,#3a3a5a);border:1px solid rgba(150,150,200,0.35);color:#a8a8d8" }, "\u2699\uFE0F Gear"),
-                skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\u23ED\uFE0F Skip 1h")),
-                !skipHourUnlocked && (h("div", { class: "py-2.5 rounded-lg font-semibold text-sm", style: "background:#1a1a1a;border:1px solid #2a2a2a;color:#888" })))))),
+            h("div", { class: "grid grid-cols-1 gap-2" },
+                h("button", { onClick: () => setShowEquipmentModal(true), class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#2a2a3a,#3a3a5a);border:1px solid rgba(150,150,200,0.35);color:#a8a8d8" }, "\u2699\uFE0F Gear"))))),
         showPrayerModal && (h(Modal, { onClose: () => setShowPrayerModal(false) },
             h("div", { class: "flex items-center justify-between mb-3" },
                 h("h3", { class: "font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]" }, "Choose Prayer"),
@@ -17465,7 +17463,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlock
 
 
 const agilityData = skillsData.agility;
-function AgilityScreen({ initialActionId, onBack, onSkipHour, skipHourUnlocked }) {
+function AgilityScreen({ initialActionId, onBack }) {
     const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask } = useGame();
     const agilityLevel = getLevelFromXP(stats.agility?.xp || 0);
     const agilityXP = stats.agility?.xp || 0;
@@ -17635,8 +17633,7 @@ function AgilityScreen({ initialActionId, onBack, onSkipHour, skipHourUnlocked }
                         formatBankDelay(bankDelay),
                         " delay")))),
         h("div", { class: "flex-shrink-0 flex gap-2 mt-3" },
-            h("button", { onClick: stopCourse, class: "flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80" }, "\u2190 Stop & Back"),
-            skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "flex-1 py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\u23ED\uFE0F Skip 1h")))));
+            h("button", { onClick: stopCourse, class: "flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80" }, "\u2190 Stop & Back"))));
 }
 
 // ── screens/SkillingScreen.js ──
@@ -17659,7 +17656,7 @@ function AgilityScreen({ initialActionId, onBack, onSkipHour, skipHourUnlocked }
 const SPECIAL_SKILLS = ['agility', 'prayer', 'slayer'];
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0);
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS];
-function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHour, skipHourUnlocked }) {
+function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
     const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask, activeTask } = useGame();
     const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null);
     const [selectedAction, setSelectedAction] = useState(null);
@@ -17671,7 +17668,7 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
     const hasAutoStarted = useRef(false);
     // If agility is selected, delegate to AgilityScreen (special screen for agility only)
     if (selectedSkill === 'agility') {
-        return (h(AgilityScreen, { initialActionId: initialActionId, onBack: () => setSelectedSkill(null), onSkipHour: onSkipHour, skipHourUnlocked: skipHourUnlocked }));
+        return (h(AgilityScreen, { initialActionId: initialActionId, onBack: () => setSelectedSkill(null) }));
     }
     // If slayer is selected, delegate to SlayerScreen
     if (selectedSkill === 'slayer') {
@@ -18064,8 +18061,7 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult, onSkipHou
                 h("label", { htmlFor: "skill-banking", style: { fontSize: '12px', color: '#e8d5b0', opacity: 0.7, cursor: 'pointer' } }, "Auto-bank items (may reduce XP/hr)")),
             skillingBankingEnabled && (h("div", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.5 } }, "\u23F3 Items go to inventory first. Auto-banks when full. Banking delay scales with Agility level."))),
         h("div", { class: "flex-shrink-0 flex gap-2 mt-3" },
-            h("button", { onClick: stopSkilling, class: "flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80" }, "\u2190 Stop & Back"),
-            skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "flex-1 py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\u23ED\uFE0F Skip 1h")))));
+            h("button", { onClick: stopSkilling, class: "flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80" }, "\u2190 Stop & Back"))));
 }
 
 // ── screens/SlayerScreen.js ──
@@ -18525,7 +18521,7 @@ const ITEM_NAMES = {
     potato_cactus: 'Potato cactus', crushed_birds_nest: 'Crushed bird\'s nest',
     empty_birds_nest: 'Empty bird\'s nest',
 };
-function GatherScreen({ initialTaskId, idleResult, onSkipHour, skipHourUnlocked }) {
+function GatherScreen({ initialTaskId, idleResult }) {
     const { inventory, bank, updateInventory, updateBankDirect, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask } = useGame();
     const [category, setCategory] = useState('all');
     const [activeTask, setLocalTask] = useState(null);
@@ -18688,8 +18684,7 @@ function GatherScreen({ initialTaskId, idleResult, onSkipHour, skipHourUnlocked 
                             h("span", { style: { fontSize: '13px', color: '#e8d5b0', opacity: 0.6 } }, "Items banked/hr"),
                             h("span", { style: { fontFamily: 'monospace', color: '#d4af37', fontWeight: 'bold' } }, elapsedHrs > 0 ? perHour.toLocaleString() : '—'))));
                 })()),
-                h("div", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textAlign: 'center', maxWidth: '280px' } }, "\u23F3 Items go to inventory first. Auto-banks when full. Banking delay scales with Agility level.")),
-            skipHourUnlocked && (h("button", { onClick: onSkipHour, class: "w-full py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0;margin-top:12px;flex-shrink:0" }, "\u23ED\uFE0F Skip 1h"))));
+                h("div", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textAlign: 'center', maxWidth: '280px' } }, "\u23F3 Items go to inventory first. Auto-banks when full. Banking delay scales with Agility level."))));
     }
     // Task picker
     return (h("div", { style: { height: '100%', display: 'flex', flexDirection: 'column' } },
@@ -18766,15 +18761,7 @@ function GatherScreen({ initialTaskId, idleResult, onSkipHour, skipHourUnlocked 
 
 
 // ── UNLOCK DEFINITIONS ───────────────────────────────────────────────────────
-const UNLOCKS = [
-    {
-        id: 'skip_hour',
-        name: 'Skip 1 Hour',
-        icon: '⏭️',
-        price: 10000000,
-        desc: 'Instantly simulate 1 hour of active task progress. Repeatable. Does not work during boss fights.',
-    },
-];
+const UNLOCKS = [];
 const UNLOCK_TAB = { id: 'unlocks', label: '🔓', title: 'Unlocks', desc: 'Permanent features & upgrades. One-time purchases.' };
 // ── SLAYER SHOP ──────────────────────────────────────────────────────────────
 const SLAYER_SHOP_TAB = { id: 'slayer', label: '💀', title: 'Slayer Reward Shop', desc: 'Spend slayer points earned from completing tasks. Requires slayer level to purchase.' };
@@ -19693,98 +19680,6 @@ function GameApp() {
             addToast(`Import failed: ${err.message}`, 'error');
         }
     }
-    // Skip 1 hour — simulate 1 hour of the current active task
-    const handleSkipHour = async () => {
-        const task = activeTaskRef.current;
-        if (!task)
-            return;
-        if (task.type === 'combat' && task.monster?.boss) {
-            addToast('Cannot skip time during a boss fight.', 'error');
-            return;
-        }
-        const ONE_HOUR_MS = 3600000;
-        const [freshStats, freshInv, freshEq, freshBank, freshSlayerTask] = await Promise.all([
-            getAllStats(), getInventory(), getEquipment(), getBank(), getSetting('slayerTask'),
-        ]);
-        let sim = null;
-        if (task.type === 'skill')
-            sim = simulateIdleSkilling(task, ONE_HOUR_MS, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv);
-        if (task.type === 'gather')
-            sim = simulateIdleGather(task, ONE_HOUR_MS, freshInv, freshStats, itemsDataRef.current);
-        if (task.type === 'combat')
-            sim = simulateIdleCombat(task, ONE_HOUR_MS, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank);
-        if (task.type === 'agility')
-            sim = simulateIdleAgility(task, ONE_HOUR_MS);
-        if (!sim) {
-            addToast('Nothing to skip — no materials or progress possible.', 'info');
-            return;
-        }
-        if (sim.xpGained) {
-            for (const [skill, xp] of Object.entries(sim.xpGained)) {
-                if (xp > 0)
-                    grantXP(skill, xp);
-            }
-        }
-        // Apply slayer XP from combat simulation
-        if (task.type === 'combat' && sim.slayerXpGained > 0) {
-            grantXP('slayer', sim.slayerXpGained);
-        }
-        if (sim.finalInventory) {
-            updateInventory(sim.finalInventory);
-            // combat uses lootBanked; skill/gather use itemsBanked (pure bank-trip items, not end-state inventory)
-            const banked = sim.lootBanked || sim.itemsBanked;
-            if (banked && Object.keys(banked).length > 0) {
-                updateBankDirect(banked);
-            }
-        }
-        else if (sim.itemsGained) {
-            updateBankDirect(sim.itemsGained);
-        }
-        if (task.type === 'agility' && sim.coinsGained > 0) {
-            updateBankDirect({ coins: sim.coinsGained });
-        }
-        if (sim.itemsConsumed && Object.keys(sim.itemsConsumed).length > 0) {
-            const negated = {};
-            for (const [itemId, qty] of Object.entries(sim.itemsConsumed)) {
-                negated[itemId] = -qty;
-            }
-            updateBankDirect(negated);
-        }
-        // Deduct runes consumed from bank (inventory portion already reflected in finalInventory)
-        if (sim.runesConsumed && Object.keys(sim.runesConsumed).length > 0) {
-            const negated = {};
-            for (const [itemId, qty] of Object.entries(sim.runesConsumed)) {
-                negated[itemId] = -qty;
-            }
-            updateBankDirect(negated);
-        }
-        // Update slayer task if present
-        if (task.type === 'combat' && sim.slayerTaskUpdate) {
-            if (sim.slayerTaskUpdate.completed) {
-                setSlayerTask(null);
-                addToast('💀 Slayer task completed!', 'levelup');
-            }
-            else {
-                setSlayerTask(sim.slayerTaskUpdate);
-            }
-        }
-        setIdleResult({ elapsedMs: ONE_HOUR_MS, task, ...sim });
-        // Show skip hour completion toast
-        const resultMsg = [];
-        if (sim.xpGained && Object.keys(sim.xpGained).length > 0) {
-            const xpTotal = Object.values(sim.xpGained).reduce((a, b) => a + b, 0);
-            if (xpTotal > 0)
-                resultMsg.push(`+${Math.floor(xpTotal).toLocaleString()} XP`);
-        }
-        if (sim.itemsGained && Object.keys(sim.itemsGained).length > 0) {
-            const itemTotal = Object.values(sim.itemsGained).reduce((a, b) => a + b, 0);
-            if (itemTotal > 0)
-                resultMsg.push(`+${itemTotal.toLocaleString()} items`);
-        }
-        if (resultMsg.length > 0) {
-            addToast(`⏭️ Skipped 1h: ${resultMsg.join(', ')}`, 'info');
-        }
-    };
     // Navigate with optional action data
     const navigate = (scr, data) => {
         // Navigating away stops any active task and clears localStorage idle-engine
@@ -19823,9 +19718,9 @@ function GameApp() {
             case SCREENS.INVENTORY: return h(InventoryScreen, null);
             case SCREENS.EQUIPMENT: return h(EquipmentScreen, null);
             case SCREENS.BANK: return h(BankScreen, null);
-            case SCREENS.COMBAT: return h(CombatScreen, { onNavigate: navigate, initialMonsterId: actionData?.monsterId, onSkipHour: handleSkipHour, skipHourUnlocked: unlockedFeatures?.has('skip_hour') });
-            case SCREENS.SKILLS: return h(SkillingScreen, { initialSkillId: actionData?.skillId, initialActionId: actionData?.actionId, idleResult: idleResult, onSkipHour: handleSkipHour, skipHourUnlocked: unlockedFeatures?.has('skip_hour') });
-            case SCREENS.GATHER: return h(GatherScreen, { initialTaskId: actionData?.gatherTaskId, idleResult: idleResult, onSkipHour: handleSkipHour, skipHourUnlocked: unlockedFeatures?.has('skip_hour') });
+            case SCREENS.COMBAT: return h(CombatScreen, { onNavigate: navigate, initialMonsterId: actionData?.monsterId });
+            case SCREENS.SKILLS: return h(SkillingScreen, { initialSkillId: actionData?.skillId, initialActionId: actionData?.actionId, idleResult: idleResult });
+            case SCREENS.GATHER: return h(GatherScreen, { initialTaskId: actionData?.gatherTaskId, idleResult: idleResult });
             case SCREENS.AGILITY: return h(AgilityScreen, { initialActionId: actionData?.actionId });
             case SCREENS.STORE: return h(GeneralStoreScreen, null);
             default: return h(HomeScreen, { onNavigate: navigate, onSaveMenu: () => setShowSaveMenu(true) });

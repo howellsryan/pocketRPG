@@ -69,7 +69,7 @@ const MONSTER_ICONS = {
   crazy_archaeologist: '📜', king_black_dragon: '👑'
 }
 
-export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour, skipHourUnlocked }) {
+export default function CombatScreen({ onNavigate, initialMonsterId }) {
   const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell } = useGame()
 
   const [combat, setCombat] = useState(null)
@@ -842,23 +842,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onSkipHour,
                 🙏 Prayer
               </button>
             </div>
-            {/* Gear and Skip 1h buttons */}
-            <div class="grid grid-cols-2 gap-2">
+            {/* Gear button */}
+            <div class="grid grid-cols-1 gap-2">
               <button onClick={() => setShowEquipmentModal(true)}
                 class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
                 style="background:linear-gradient(135deg,#2a2a3a,#3a3a5a);border:1px solid rgba(150,150,200,0.35);color:#a8a8d8">
                 ⚙️ Gear
               </button>
-              {skipHourUnlocked && (
-                <button onClick={onSkipHour}
-                  class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
-                  style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
-                  ⏭️ Skip 1h
-                </button>
-              )}
-              {!skipHourUnlocked && (
-                <div class="py-2.5 rounded-lg font-semibold text-sm" style="background:#1a1a1a;border:1px solid #2a2a2a;color:#888"></div>
-              )}
             </div>
           </>
         )}

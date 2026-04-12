@@ -9,7 +9,7 @@ import skillsData from '../data/skills.json'
 
 const agilityData = skillsData.agility
 
-export default function AgilityScreen({ initialActionId, onBack, onSkipHour, skipHourUnlocked }) {
+export default function AgilityScreen({ initialActionId, onBack }) {
   const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask } = useGame()
 
   const agilityLevel = getLevelFromXP(stats.agility?.xp || 0)
@@ -222,19 +222,12 @@ export default function AgilityScreen({ initialActionId, onBack, onSkipHour, ski
         </div>
       </div>
 
-      {/* Stop & Back / Skip 1h */}
+      {/* Stop & Back */}
       <div class="flex-shrink-0 flex gap-2 mt-3">
         <button onClick={stopCourse}
           class="flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80">
           ← Stop &amp; Back
         </button>
-        {skipHourUnlocked && (
-          <button onClick={onSkipHour}
-            class="flex-1 py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
-            style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
-            ⏭️ Skip 1h
-          </button>
-        )}
       </div>
     </div>
   )
