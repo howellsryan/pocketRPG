@@ -17812,7 +17812,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange })
                         const slayReq = monster.slayerRequirement;
                         const slayLocked = slayReq && slayLvl < slayReq;
                         const isOnTask = slayerTask?.monsterId === monster.id;
-                        return (h("div", { key: monster.id, class: "flex gap-2 items-stretch" },
+                        return (h("div", { key: monster.id, class: "flex gap-2 items-center" },
                             h("button", { onClick: () => !slayLocked && startFight(monster), disabled: slayLocked, class: `flex-1 flex items-center justify-between p-3 rounded-xl border transition-colors
                           ${isOnTask ? 'bg-[#1a1a08] border-[#3a3a10]' :
                                     slayLocked ? 'bg-[#111] border-[#1a1a1a] opacity-50' :
@@ -17841,10 +17841,10 @@ function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange })
                                     isOnTask && (h("div", { class: "text-[9px] text-yellow-400 font-mono mt-0.5" },
                                         slayerTask.monstersRemaining,
                                         " left")))),
-                            h("button", { onClick: () => setSelectedMonsterInfo(monster), class: "px-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5", title: "View Monster Info" },
+                            h("button", { onClick: () => setSelectedMonsterInfo(monster), class: "flex-shrink-0 px-3 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5", title: "View Monster Info" },
                                 h("span", { class: "text-base" }, "\u2139\uFE0F"),
                                 h("span", { class: "text-[8px] text-[var(--color-parchment)] opacity-50" }, "Info")),
-                            h("button", { onClick: () => handleAddToHome(monster), class: "px-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5", title: "Add to Home Screen" },
+                            h("button", { onClick: () => handleAddToHome(monster), class: "flex-shrink-0 px-3 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5", title: "Add to Home Screen" },
                                 h("span", { class: "text-base" }, "\uD83C\uDFE0"),
                                 h("span", { class: "text-[8px] text-[var(--color-parchment)] opacity-50" }, "Add"))));
                     }))));

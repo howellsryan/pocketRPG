@@ -704,7 +704,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
                     const slayLocked = slayReq && slayLvl < slayReq
                     const isOnTask = slayerTask?.monsterId === monster.id
                     return (
-                    <div key={monster.id} class="flex gap-2 items-stretch">
+                    <div key={monster.id} class="flex gap-2 items-center">
                       <button
                         onClick={() => !slayLocked && startFight(monster)}
                         disabled={slayLocked}
@@ -739,7 +739,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
                       </button>
                       <button
                         onClick={() => setSelectedMonsterInfo(monster)}
-                        class="px-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5"
+                        class="flex-shrink-0 px-3 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5"
                         title="View Monster Info"
                       >
                         <span class="text-base">ℹ️</span>
@@ -747,7 +747,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
                       </button>
                       <button
                         onClick={() => handleAddToHome(monster)}
-                        class="px-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5"
+                        class="flex-shrink-0 px-3 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5"
                         title="Add to Home Screen"
                       >
                         <span class="text-base">🏠</span>
