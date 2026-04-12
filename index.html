@@ -10115,8 +10115,8 @@ const monstersData = {
       "ranged": 50
     },
     "multiForm": true,
-    "formSwitchMin": 1,
-    "formSwitchMax": 5,
+    "formSwitchMin": 3,
+    "formSwitchMax": 7,
     "initialForm": "ranged",
     "forms": {
       "ranged": {
@@ -17130,6 +17130,7 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
     const equipmentRef = useRef(equipment);
     const slayerTaskRef = useRef(slayerTask);
     const slayerPointsRef = useRef(slayerPoints);
+    const logRef = useRef(null);
     useEffect(() => { hpRef.current = currentHP; }, [currentHP]);
     useEffect(() => { inventoryRef.current = inventory; }, [inventory]);
     useEffect(() => { bankRef.current = bank; }, [bank]);
@@ -17137,6 +17138,12 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
     useEffect(() => { equipmentRef.current = equipment; }, [equipment]);
     useEffect(() => { slayerTaskRef.current = slayerTask; }, [slayerTask]);
     useEffect(() => { slayerPointsRef.current = slayerPoints; }, [slayerPoints]);
+    // Auto-scroll log to bottom on new messages
+    useEffect(() => {
+        if (logRef.current) {
+            logRef.current.scrollTop = logRef.current.scrollHeight;
+        }
+    }, [log]);
     // Update spell in active combat if changed mid-fight
     useEffect(() => {
         if (!combatRef.current || !combatRef.current.active)
@@ -17305,7 +17312,7 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
                 }
                 if (ev.type === 'formChange') {
                     setLog(prev => [...prev.slice(-20), {
-                            text: `${ev.icon || '🐍'} Zulrah shifts into ${ev.displayName} form! Weakness: ${ev.weakness}. It skips its next attack.`,
+                            text: `${ev.icon || '🐍'} Zulrah shifts into ${ev.displayName}`,
                             type: 'formChange',
                             time: Date.now()
                         }]);
@@ -17755,7 +17762,7 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
                     weapon.specialAttack.energyCost,
                     "% cost \u00B7 refills on kill")));
         })(),
-        h("div", { class: "flex-1 bg-[#111] rounded-lg border border-[#222] p-2 overflow-y-auto mb-2 min-h-[100px]" }, log.map((entry, i) => (h("div", { key: i, class: `text-[11px] font-[var(--font-mono)] py-0.5
+        h("div", { ref: logRef, class: "flex-1 bg-[#111] rounded-lg border border-[#222] p-2 overflow-y-auto mb-2 min-h-[100px]" }, log.map((entry, i) => (h("div", { key: i, class: `text-[11px] font-[var(--font-mono)] py-0.5
             ${entry.type === 'hit' ? 'text-[var(--color-emerald-light)]' :
                 entry.type === 'miss' ? 'text-[var(--color-parchment)] opacity-30' :
                     entry.type === 'enemy' ? 'text-[var(--color-blood-light)]' :

@@ -97,6 +97,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId }) {
   const equipmentRef = useRef(equipment)
   const slayerTaskRef = useRef(slayerTask)
   const slayerPointsRef = useRef(slayerPoints)
+  const logRef = useRef(null)
 
   useEffect(() => { hpRef.current = currentHP }, [currentHP])
   useEffect(() => { inventoryRef.current = inventory }, [inventory])
@@ -105,6 +106,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId }) {
   useEffect(() => { equipmentRef.current = equipment }, [equipment])
   useEffect(() => { slayerTaskRef.current = slayerTask }, [slayerTask])
   useEffect(() => { slayerPointsRef.current = slayerPoints }, [slayerPoints])
+
+  // Auto-scroll log to bottom on new messages
+  useEffect(() => {
+    if (logRef.current) {
+      logRef.current.scrollTop = logRef.current.scrollHeight
+    }
+  }, [log])
 
   // Update spell in active combat if changed mid-fight
   useEffect(() => {
@@ -276,7 +284,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId }) {
         }
         if (ev.type === 'formChange') {
           setLog(prev => [...prev.slice(-20), {
-            text: `${ev.icon || '🐍'} Zulrah shifts into ${ev.displayName} form! Weakness: ${ev.weakness}. It skips its next attack.`,
+            text: `${ev.icon || '🐍'} Zulrah shifts into ${ev.displayName}`,
             type: 'formChange',
             time: Date.now()
           }])
@@ -825,7 +833,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId }) {
       })()}
 
       {/* Combat log */}
-      <div class="flex-1 bg-[#111] rounded-lg border border-[#222] p-2 overflow-y-auto mb-2 min-h-[100px]">
+      <div ref={logRef} class="flex-1 bg-[#111] rounded-lg border border-[#222] p-2 overflow-y-auto mb-2 min-h-[100px]">
         {log.map((entry, i) => (
           <div key={i} class={`text-[11px] font-[var(--font-mono)] py-0.5
             ${entry.type === 'hit' ? 'text-[var(--color-emerald-light)]' :
