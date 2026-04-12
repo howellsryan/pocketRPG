@@ -81,7 +81,7 @@ const MONSTER_ICONS = {
   crazy_archaeologist: '📜', king_black_dragon: '👑', zulrah: '🐍', jad: '🌋'
 }
 
-export default function CombatScreen({ onNavigate, initialMonsterId }) {
+export default function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange }) {
   const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell } = useGame()
 
   const [combat, setCombat] = useState(null)
@@ -145,6 +145,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId }) {
       if (monster) startFight(monster)
     }
   }, [initialMonsterId])
+
+  // Update boss fight status in parent
+  useEffect(() => {
+    const isBossFight = combat?.active && combat?.monster?.boss === true
+    onBossFightStatusChange?.(isBossFight)
+  }, [combat?.active, combat?.monster?.boss, onBossFightStatusChange])
 
   // Tick listener for combat
   useEffect(() => {
