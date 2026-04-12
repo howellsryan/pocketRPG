@@ -3484,5 +3484,89 @@
         "chance": 0.004
       }
     ]
+  },
+  "jad": {
+    "id": "jad",
+    "name": "TzKal-Zuk (Jad)",
+    "boss": true,
+    "combatLevel": 702,
+    "hitpoints": 250,
+    "slayerXP": 25250,
+    "stats": {
+      "attack": 960,
+      "strength": 960,
+      "defence": 480,
+      "magic": 480,
+      "ranged": 960
+    },
+    "attackSpeed": 8,
+    "attackStyle": "melee",
+    "attackBonus": 100,
+    "strengthBonus": 100,
+    "defenceBonus": {
+      "stab": 100,
+      "slash": 100,
+      "crush": 100,
+      "magic": 100,
+      "ranged": 100
+    },
+    "multiForm": true,
+    "formSwitchMin": 2,
+    "formSwitchMax": 5,
+    "initialForm": "melee",
+    "forms": {
+      "melee": {
+        "displayName": "Melee Phase",
+        "icon": "⚔️",
+        "attackStyle": "melee",
+        "maxHit": 97,
+        "attackBonus": 100,
+        "strengthBonus": 100,
+        "defenceBonus": {
+          "stab": 100,
+          "slash": 100,
+          "crush": 100,
+          "magic": 100,
+          "ranged": 100
+        }
+      },
+      "ranged": {
+        "displayName": "Ranged Phase",
+        "icon": "🏹",
+        "attackStyle": "ranged",
+        "maxHit": 97,
+        "attackBonus": 100,
+        "strengthBonus": 100,
+        "defenceBonus": {
+          "stab": 100,
+          "slash": 100,
+          "crush": 100,
+          "magic": 100,
+          "ranged": 100
+        }
+      },
+      "magic": {
+        "displayName": "Magic Phase",
+        "icon": "✨",
+        "attackStyle": "magic",
+        "maxHit": 97,
+        "attackBonus": 100,
+        "strengthBonus": 100,
+        "defenceBonus": {
+          "stab": 100,
+          "slash": 100,
+          "crush": 100,
+          "magic": 100,
+          "ranged": 100
+        }
+      }
+    },
+    "drops": [
+      {
+        "itemId": "fire_cape",
+        "quantity": 1,
+        "chance": 1
+      }
+    ]
   }
 }
