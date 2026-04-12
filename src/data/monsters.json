@@ -3514,11 +3514,12 @@
     "formSwitchMin": 2,
     "formSwitchMax": 5,
     "initialForm": "melee",
+    "randomFormEveryAttack": true,
     "forms": {
       "melee": {
         "displayName": "Melee Phase",
         "icon": "⚔️",
-        "attackStyle": "melee",
+        "attackStyle": "crush",
         "maxHit": 97,
         "attackBonus": 100,
         "strengthBonus": 100,
