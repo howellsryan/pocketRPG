@@ -3345,8 +3345,8 @@
       "ranged": 50
     },
     "multiForm": true,
-    "formSwitchMin": 1,
-    "formSwitchMax": 5,
+    "formSwitchMin": 3,
+    "formSwitchMax": 7,
     "initialForm": "ranged",
     "forms": {
       "ranged": {
