@@ -22,7 +22,8 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     if (form) {
       preparedMonster.currentForm = formKey
       preparedMonster.formAttackCount = 0
-      preparedMonster.formSwitchThreshold = randomFormSwitchThreshold(monster)
+      // For per-attack randomization, always switch after 1 attack
+      preparedMonster.formSwitchThreshold = monster.randomFormEveryAttack ? 1 : randomFormSwitchThreshold(monster)
       preparedMonster.attackStyle = form.attackStyle
       preparedMonster.attackBonus = form.attackBonus ?? monster.attackBonus ?? 0
       preparedMonster.strengthBonus = form.strengthBonus ?? monster.strengthBonus ?? 0
@@ -426,7 +427,8 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
           monster.defenceBonus = { ...nextForm.defenceBonus }
           monster.formMaxHit = nextForm.maxHit
           monster.formAttackCount = 0
-          monster.formSwitchThreshold = randomFormSwitchThreshold(monster)
+          // For per-attack randomization, keep threshold at 1; otherwise randomize
+          monster.formSwitchThreshold = monster.randomFormEveryAttack ? 1 : randomFormSwitchThreshold(monster)
           // Skip one attack cycle after a form change so the player can adapt
           state.monsterAttackTimer = (monster.attackSpeed || 4) * 2
           events.push({
@@ -436,7 +438,8 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
             displayName: nextForm.displayName || nextKey,
             icon: nextForm.icon || '',
             attackStyle: nextForm.attackStyle,
-            weakness: nextForm.weakness
+            weakness: nextForm.weakness,
+            monsterName: monster.name
           })
         }
       }

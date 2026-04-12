@@ -289,12 +289,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId }) {
           }])
         }
         if (ev.type === 'formChange') {
+          const monsterName = ev.monsterName || 'Monster'
           setLog(prev => [...prev.slice(-20), {
-            text: `${ev.icon || '🐍'} Zulrah shifts into ${ev.displayName}`,
+            text: `${ev.icon || '🐍'} ${monsterName} shifts into ${ev.displayName}`,
             type: 'formChange',
             time: Date.now()
           }])
-          addToast(`${ev.icon || '🐍'} Zulrah: ${ev.displayName} form — weak to ${ev.weakness}`, 'info')
+          addToast(`${ev.icon || '🐍'} ${monsterName}: ${ev.displayName} form — weak to ${ev.weakness}`, 'info')
         }
         if (combatRef.current.runesConsumed && ev.type === 'playerHit' && ev.damage > 0) {
           // Consume runes when spell successfully casts
