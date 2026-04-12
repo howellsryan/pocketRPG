@@ -57,6 +57,12 @@ const COMBAT_CATEGORIES = [
     icon: '🐲',
     ids: ['king_black_dragon'],
   },
+  {
+    key: 'zulrah',
+    label: 'Zulrah',
+    icon: '🐍',
+    ids: ['zulrah'],
+  },
 ]
 
 const MONSTER_ICONS = {
@@ -66,7 +72,7 @@ const MONSTER_ICONS = {
   green_dragon: '🐉', red_dragon: '🔴', lesser_demon: '👿',
   general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
   dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
-  crazy_archaeologist: '📜', king_black_dragon: '👑'
+  crazy_archaeologist: '📜', king_black_dragon: '👑', zulrah: '🐍'
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId }) {
@@ -177,7 +183,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId }) {
             lightning: '⚡ Saradomin\'s Lightning',
             snapshot: '🏹🏹 Snapshot',
             pebble_shot: '🎯 Pebble Shot',
-            shove: '🗡️ Shove (staggered!)'
+            shove: '🗡️ Shove (staggered!)',
+            toxic_siphon: `🎋 Toxic Siphon (+${ev.healAmount || 0} HP)`
           }
           const label = specLabels[ev.specType] || '⚡ Special Attack'
           setLog(prev => [...prev.slice(-20), {
@@ -185,7 +192,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId }) {
             type: 'special',
             time: Date.now()
           }])
-          if (ev.specType === 'healing_blade' && ev.healAmount > 0) {
+          if ((ev.specType === 'healing_blade' || ev.specType === 'toxic_siphon') && ev.healAmount > 0) {
             const maxHP = getMaxHP()
             const newHP = Math.min(hpRef.current + ev.healAmount, maxHP)
             updateHP(newHP)
@@ -248,6 +255,32 @@ export default function CombatScreen({ onNavigate, initialMonsterId }) {
             type: 'miss',
             time: Date.now()
           }])
+        }
+        if (ev.type === 'consumeCharge') {
+          // Decrement weapon charges on the equipped weapon
+          const newEq = { ...equipmentRef.current }
+          const w = newEq.weapon
+          if (w && w.charges && w.charges > 0) {
+            newEq.weapon = { ...w, charges: Math.max(0, w.charges - (ev.qty || 1)) }
+            equipmentRef.current = newEq
+            updateEquipment(newEq)
+          }
+        }
+        if (ev.type === 'noCharges') {
+          const item = itemsData[ev.itemId]
+          setLog(prev => [...prev.slice(-20), {
+            text: `${item?.name || 'Weapon'} has no charges — use Zulrah's scales to charge it!`,
+            type: 'miss',
+            time: Date.now()
+          }])
+        }
+        if (ev.type === 'formChange') {
+          setLog(prev => [...prev.slice(-20), {
+            text: `${ev.icon || '🐍'} Zulrah shifts into ${ev.displayName} form! Weakness: ${ev.weakness}. It skips its next attack.`,
+            type: 'formChange',
+            time: Date.now()
+          }])
+          addToast(`${ev.icon || '🐍'} Zulrah: ${ev.displayName} form — weak to ${ev.weakness}`, 'info')
         }
         if (combatRef.current.runesConsumed && ev.type === 'playerHit' && ev.damage > 0) {
           // Consume runes when spell successfully casts
@@ -333,7 +366,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId }) {
     }
     const combatType = getCombatType(equipment, itemsData)
     const spell = combatType === 'magic' && activeCombatSpell ? spellsData[activeCombatSpell.id] : null
-    if (combatType === 'magic' && !spell) {
+    const weaponItem = equipment?.weapon ? itemsData[equipment.weapon.itemId] : null
+    const isPoweredStaff = !!weaponItem?.poweredStaff
+    if (combatType === 'magic' && !spell && !isPoweredStaff) {
       addToast('No spell selected! Use the 🔮 Cast button to pick a spell.', 'error')
     }
     const state = createCombatState(monster, combatType, combatStance, spell)
@@ -344,7 +379,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId }) {
     setCombat(state)
     setKillCount(0)
     setFightStartedAt(Date.now())
-    const spellName = spell ? ` with ${spell.name}` : ''
+    const spellName = spell ? ` with ${spell.name}` : isPoweredStaff && weaponItem ? ` with ${weaponItem.name}` : ''
     setLog([{ text: `Fighting ${monster.name}${spellName}...`, type: 'info', time: Date.now() }])
     setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot, spell: spell || null })
   }
@@ -407,6 +442,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId }) {
 
     const energy = combatRef.current.specialAttackEnergy || 0
     if (energy < weapon.specialAttack.energyCost) return
+
+    // Scale-charged weapons must have at least one charge to fire a spec
+    if (weapon.scaleCharged && (weaponEntry.charges || 0) <= 0) {
+      addToast('No charges — use Zulrah\'s scales to charge this weapon.', 'error')
+      return
+    }
 
     // Queue the special attack to be fired on next tick (without draining energy yet)
     const newState = {
@@ -482,7 +523,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId }) {
 
     // Copy equipment to avoid mutating ref directly
     const newEq = { ...equipmentRef.current }
-    const result = equipItem(newEq, itemData, itemsData)
+    const sourceSlot = newInv[itemIdx]
+    const result = equipItem(newEq, itemData, itemsData, sourceSlot)
 
     if (!result.equipped) {
       addToast('Could not equip item', 'error')
@@ -505,10 +547,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId }) {
           continue
         }
       }
-      // Add to empty slot
+      // Add to empty slot, preserving any charges the unequipped item had
       const emptyIdx = newInv.findIndex(s => s === null)
       if (emptyIdx !== -1) {
-        newInv[emptyIdx] = { ...unequipped, quantity: unequipped.quantity || 1 }
+        const invEntry = { itemId: unequipped.itemId, quantity: unequipped.quantity || 1 }
+        if (unequipped.charges && unequipped.charges > 0) invEntry.charges = unequipped.charges
+        newInv[emptyIdx] = invEntry
       }
     }
 
@@ -696,7 +740,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId }) {
       {/* Monster HP */}
       <div class="mb-3">
         <div class="flex items-center justify-between mb-1">
-          <span class="text-sm font-semibold text-[var(--color-parchment)]">{combat.monster.name}</span>
+          <span class="text-sm font-semibold text-[var(--color-parchment)]">
+            {combat.monster.name}
+            {combat.monster.multiForm && combat.monster.currentForm && combat.monster.forms?.[combat.monster.currentForm] && (
+              <span class="ml-2 text-[10px] font-[var(--font-mono)] text-purple-300">
+                {combat.monster.forms[combat.monster.currentForm].icon} {combat.monster.forms[combat.monster.currentForm].displayName} — weak to {combat.monster.forms[combat.monster.currentForm].weakness}
+              </span>
+            )}
+          </span>
           <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-blood-light)]">CB {combat.monster.combatLevel}</span>
         </div>
         <HPBar current={Math.max(0, combat.monster.currentHP)} max={combat.monster.hitpoints} size="large" />
@@ -725,6 +776,27 @@ export default function CombatScreen({ onNavigate, initialMonsterId }) {
           {freeSlots(inventory)}/28 free
         </span>
       </div>
+
+      {/* Scale-charged weapon charges display */}
+      {(() => {
+        const weaponEntry = equipment?.weapon
+        const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
+        if (!weapon?.scaleCharged) return null
+        const charges = weaponEntry.charges || 0
+        return (
+          <div class="mb-2 bg-[#111] rounded-lg px-3 py-2">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] text-green-400 font-semibold">🐍 {weapon.name} charges</span>
+              <span class={`text-[10px] font-[var(--font-mono)] ${charges === 0 ? 'text-red-400' : 'text-green-400'}`}>
+                {charges}
+              </span>
+            </div>
+            <div class="text-[9px] text-[var(--color-parchment)] opacity-40 mt-0.5">
+              1 Zulrah's scale = 1 attack · Charge via Equipment screen
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Special attack bar — only shown when equipped weapon has a spec */}
       {(() => {
@@ -762,6 +834,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId }) {
               entry.type === 'heal' ? 'text-[var(--color-hp-green)]' :
               entry.type === 'dragonfire' ? 'text-orange-400' :
               entry.type === 'special' ? 'text-yellow-300' :
+              entry.type === 'formChange' ? 'text-purple-300' :
               entry.type === 'victory' ? 'text-[var(--color-gold)]' :
               'text-[var(--color-parchment)] opacity-50'}`}
           >

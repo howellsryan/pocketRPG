@@ -4,6 +4,8 @@ import { unequipSlot, getEquipmentBonuses } from '../engine/equipment.js'
 import { EQUIPMENT_SLOTS } from '../utils/constants.js'
 import Modal from '../components/Modal.jsx'
 
+const SCALE_ITEM_ID = 'zulrah_scales'
+
 const EQ_SLOT_LABELS = {
   head: '🪖', cape: '🧣', neck: '📿', ammo: '🏹',
   weapon: '🗡️', body: '👕', shield: '🛡️',
@@ -54,14 +56,23 @@ export default function EquipmentScreen() {
   const { equipment, inventory, updateEquipment, updateInventory, addToast, itemsData } = useGame()
   const [selected, setSelected] = useState(null) // { slot, item }
   const [showSpecInfo, setShowSpecInfo] = useState(false)
+  const [chargeInput, setChargeInput] = useState('')
 
   const handleSelect = (slotName, item) => {
     setSelected({ slot: slotName, item })
     setShowSpecInfo(false)
+    setChargeInput('')
   }
 
   const handleUnequip = () => {
     if (!selected) return
+    const newEq = { ...equipment }
+    const removed = newEq[selected.slot]
+    if (!removed) {
+      setSelected(null)
+      return
+    }
+
     const newInv = [...inventory]
     const empty = newInv.indexOf(null)
     if (empty === -1) {
@@ -70,14 +81,87 @@ export default function EquipmentScreen() {
       return
     }
 
-    const newEq = { ...equipment }
-    const removed = unequipSlot(newEq, selected.slot)
-    if (removed) {
-      newInv[empty] = { itemId: removed.itemId, quantity: 1 }
-      updateEquipment(newEq)
-      updateInventory(newInv)
-    }
+    // Preserve charges on unequip so we can re-equip without losing them
+    const invEntry = { itemId: removed.itemId, quantity: 1 }
+    if (removed.charges && removed.charges > 0) invEntry.charges = removed.charges
+    newEq[selected.slot] = null
+    newInv[empty] = invEntry
+    updateEquipment(newEq)
+    updateInventory(newInv)
     setSelected(null)
+  }
+
+  // Count available Zulrah scales in inventory
+  const scaleCount = inventory.reduce((sum, s) => sum + (s && s.itemId === SCALE_ITEM_ID ? s.quantity : 0), 0)
+
+  const handleChargeWeapon = (qty) => {
+    if (!selected) return
+    const equipSlotName = selected.slot
+    const weaponEntry = equipment[equipSlotName]
+    if (!weaponEntry) return
+    const item = itemsData[weaponEntry.itemId]
+    if (!item?.scaleCharged) return
+
+    const actualQty = Math.min(qty, scaleCount)
+    if (actualQty <= 0) {
+      addToast('No Zulrah scales in inventory', 'error')
+      return
+    }
+
+    // Remove scales from inventory
+    const newInv = [...inventory]
+    let remaining = actualQty
+    for (let i = 0; i < newInv.length && remaining > 0; i++) {
+      if (newInv[i]?.itemId === SCALE_ITEM_ID) {
+        const take = Math.min(newInv[i].quantity, remaining)
+        newInv[i] = { ...newInv[i], quantity: newInv[i].quantity - take }
+        if (newInv[i].quantity <= 0) newInv[i] = null
+        remaining -= take
+      }
+    }
+
+    // Add charges to equipped weapon
+    const newEq = { ...equipment }
+    const currentCharges = weaponEntry.charges || 0
+    newEq[equipSlotName] = { ...weaponEntry, charges: currentCharges + actualQty }
+
+    updateInventory(newInv)
+    updateEquipment(newEq)
+    addToast(`Charged ${item.name} with ${actualQty} scales`, 'info')
+    setChargeInput('')
+  }
+
+  const handleUnchargeWeapon = () => {
+    if (!selected) return
+    const equipSlotName = selected.slot
+    const weaponEntry = equipment[equipSlotName]
+    if (!weaponEntry) return
+    const item = itemsData[weaponEntry.itemId]
+    if (!item?.scaleCharged) return
+
+    const charges = weaponEntry.charges || 0
+    if (charges <= 0) return
+
+    // Return all charges as scales to inventory
+    const newInv = [...inventory]
+    const existingIdx = newInv.findIndex(s => s && s.itemId === SCALE_ITEM_ID)
+    if (existingIdx !== -1) {
+      newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + charges }
+    } else {
+      const empty = newInv.indexOf(null)
+      if (empty === -1) {
+        addToast('Inventory full — cannot uncharge', 'error')
+        return
+      }
+      newInv[empty] = { itemId: SCALE_ITEM_ID, quantity: charges }
+    }
+
+    const newEq = { ...equipment }
+    newEq[equipSlotName] = { ...weaponEntry, charges: 0 }
+
+    updateInventory(newInv)
+    updateEquipment(newEq)
+    addToast(`Uncharged ${item.name}, recovered ${charges} scales`, 'info')
   }
 
   const bonuses = getEquipmentBonuses(equipment, itemsData)
@@ -210,6 +294,101 @@ export default function EquipmentScreen() {
                 <p>Requires: {Object.entries(selected.item.requirements).map(([s, l]) => `${s} ${l}`).join(', ')}</p>
               )}
             </div>
+
+            {/* Scale charges panel */}
+            {selected.item.scaleCharged && (() => {
+              const currentCharges = equipment[selected.slot]?.charges || 0
+              const parsedInput = parseInt(chargeInput, 10)
+              const customQty = Number.isFinite(parsedInput) && parsedInput > 0 ? parsedInput : 0
+              return (
+                <div style={{ background: '#111', borderRadius: '8px', border: '1px solid #1a3a2a', padding: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: '600', color: '#4ade80' }}>🐍 Scale Charges</span>
+                    <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', color: '#e8d5b0' }}>
+                      {currentCharges} / ∞
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.5, marginBottom: '8px' }}>
+                    Scales in inventory: {scaleCount}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px', marginBottom: '6px' }}>
+                    <button
+                      onClick={() => handleChargeWeapon(10)}
+                      disabled={scaleCount <= 0}
+                      style={{
+                        padding: '8px', borderRadius: '6px', background: scaleCount > 0 ? '#1a4a2a' : '#222',
+                        color: scaleCount > 0 ? '#4ade80' : '#555', fontSize: '11px', fontWeight: '600',
+                        border: 'none', cursor: scaleCount > 0 ? 'pointer' : 'not-allowed'
+                      }}
+                    >
+                      +10
+                    </button>
+                    <button
+                      onClick={() => handleChargeWeapon(100)}
+                      disabled={scaleCount <= 0}
+                      style={{
+                        padding: '8px', borderRadius: '6px', background: scaleCount > 0 ? '#1a4a2a' : '#222',
+                        color: scaleCount > 0 ? '#4ade80' : '#555', fontSize: '11px', fontWeight: '600',
+                        border: 'none', cursor: scaleCount > 0 ? 'pointer' : 'not-allowed'
+                      }}
+                    >
+                      +100
+                    </button>
+                    <button
+                      onClick={() => handleChargeWeapon(scaleCount)}
+                      disabled={scaleCount <= 0}
+                      style={{
+                        padding: '8px', borderRadius: '6px', background: scaleCount > 0 ? '#1a4a2a' : '#222',
+                        color: scaleCount > 0 ? '#4ade80' : '#555', fontSize: '11px', fontWeight: '600',
+                        border: 'none', cursor: scaleCount > 0 ? 'pointer' : 'not-allowed'
+                      }}
+                    >
+                      +All
+                    </button>
+                  </div>
+                  <div style={{ display: 'flex', gap: '4px', marginBottom: '6px' }}>
+                    <input
+                      type="number"
+                      min="1"
+                      value={chargeInput}
+                      onInput={(e) => setChargeInput(e.currentTarget.value)}
+                      placeholder="Custom amount"
+                      style={{
+                        flex: 1, padding: '8px', borderRadius: '6px', background: '#0a0a0a',
+                        border: '1px solid #222', color: '#e8d5b0', fontSize: '11px',
+                        fontFamily: 'JetBrains Mono, monospace'
+                      }}
+                    />
+                    <button
+                      onClick={() => handleChargeWeapon(customQty)}
+                      disabled={customQty <= 0 || scaleCount <= 0}
+                      style={{
+                        padding: '8px 12px', borderRadius: '6px',
+                        background: customQty > 0 && scaleCount > 0 ? '#1a4a2a' : '#222',
+                        color: customQty > 0 && scaleCount > 0 ? '#4ade80' : '#555',
+                        fontSize: '11px', fontWeight: '600', border: 'none',
+                        cursor: customQty > 0 && scaleCount > 0 ? 'pointer' : 'not-allowed'
+                      }}
+                    >
+                      Charge
+                    </button>
+                  </div>
+                  <button
+                    onClick={handleUnchargeWeapon}
+                    disabled={currentCharges <= 0}
+                    style={{
+                      width: '100%', padding: '8px', borderRadius: '6px',
+                      background: currentCharges > 0 ? '#3a1a1a' : '#222',
+                      color: currentCharges > 0 ? '#f87171' : '#555',
+                      fontSize: '11px', fontWeight: '600', border: 'none',
+                      cursor: currentCharges > 0 ? 'pointer' : 'not-allowed'
+                    }}
+                  >
+                    Uncharge (recover {currentCharges} scales)
+                  </button>
+                </div>
+              )
+            })()}
 
             {/* Special attack info */}
             {selected.item.specialAttack && (

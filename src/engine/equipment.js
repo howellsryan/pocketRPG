@@ -26,8 +26,12 @@ export function isAmmoCompatible(equipment, ammoItemData, itemsData) {
 /**
  * Equip an item. Returns { equipped: true, unequipped: [] } or { equipped: false, reason }
  * Handles 2H weapon / shield conflicts and ammo-weapon type validation.
+ *
+ * The optional `sourceSlot` argument is the inventory slot being equipped from;
+ * its `charges` (if any) carry over to the equipment entry so that scale-charged
+ * weapons don't lose their charges when re-equipped.
  */
-export function equipItem(equipment, itemData, itemsData) {
+export function equipItem(equipment, itemData, itemsData, sourceSlot) {
   const slot = itemData.slot
   if (!slot || !EQUIPMENT_SLOTS.includes(slot)) return { equipped: false, unequipped: [] }
 
@@ -63,10 +67,15 @@ export function equipItem(equipment, itemData, itemsData) {
     unequipped.push(equipment[slot])
   }
 
-  equipment[slot] = {
+  const entry = {
     itemId: itemData.id,
     _twoHanded: itemData.twoHanded || false
   }
+  // Preserve charges from the inventory slot for scale-charged weapons
+  if (sourceSlot && sourceSlot.charges && sourceSlot.charges > 0) {
+    entry.charges = sourceSlot.charges
+  }
+  equipment[slot] = entry
 
   return { equipped: true, unequipped }
 }
