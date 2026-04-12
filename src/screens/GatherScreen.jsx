@@ -195,6 +195,17 @@ const GATHER_TASKS = [
     stackable: true,
     category: 'fields',
   },
+  {
+    id: 'pick_limpwurt_root',
+    name: 'Pick Limpwurt Root',
+    icon: '🌿',
+    description: 'Harvest limpwurt roots from the swamp. Used in herblore to make antipoisons.',
+    ticks: 3,
+    product: 'limpwurt_root',
+    qty: 1,
+    stackable: true,
+    category: 'fields',
+  },
 ]
 
 const CATEGORIES = [
@@ -212,7 +223,7 @@ const ITEM_NAMES = {
   pot: 'Pot', eye_of_newt: 'Eye of newt', white_berries: 'White berries',
   snape_grass: 'Snape grass', red_spiders_eggs: 'Red spiders\' eggs',
   potato_cactus: 'Potato cactus', crushed_birds_nest: 'Crushed bird\'s nest',
-  empty_birds_nest: 'Empty bird\'s nest',
+  empty_birds_nest: 'Empty bird\'s nest', limpwurt_root: 'Limpwurt root',
 }
 
 export default function GatherScreen({ initialTaskId, idleResult }) {
