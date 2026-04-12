@@ -556,6 +556,8 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   if (!task || !task.monster) return null
 
   const monster = task.monster
+  // Bosses cannot be idle-fought; require active combat
+  if (monster.boss) return null
   const totalTicks = Math.floor(elapsedMs / TICK_MS)
   if (totalTicks <= 0) return null
 
