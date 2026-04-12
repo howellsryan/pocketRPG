@@ -16182,9 +16182,16 @@ const tabs = [
     { id: SCREENS.COMBAT, label: 'Combat', icon: '⚔️' },
     { id: SCREENS.SKILLS, label: 'Skills', icon: '🔨' },
 ];
-function BottomNav({ active, onNavigate }) {
+function BottomNav({ active, onNavigate, isInBossFight, onDisabledClick }) {
     return (h("nav", { style: { flexShrink: 0, background: '#111', borderTop: '1px solid #333', paddingBottom: 'env(safe-area-inset-bottom)' } },
-        h("div", { style: { display: 'flex', alignItems: 'center', height: '52px' } }, tabs.map(tab => (h("button", { key: tab.id, onClick: () => onNavigate(tab.id), style: {
+        h("div", { style: { display: 'flex', alignItems: 'center', height: '52px' } }, tabs.map(tab => (h("button", { key: tab.id, onClick: () => {
+                if (isInBossFight) {
+                    onDisabledClick?.();
+                }
+                else {
+                    onNavigate(tab.id);
+                }
+            }, disabled: isInBossFight, style: {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -16194,8 +16201,8 @@ function BottomNav({ active, onNavigate }) {
                 border: 'none',
                 background: 'transparent',
                 color: active === tab.id ? '#d4af37' : '#e8d5b0',
-                opacity: active === tab.id ? 1 : 0.45,
-                cursor: 'pointer',
+                opacity: isInBossFight ? 0.2 : active === tab.id ? 1 : 0.45,
+                cursor: isInBossFight ? 'not-allowed' : 'pointer',
                 padding: 0,
                 transition: 'opacity 0.1s',
             } },
@@ -17229,7 +17236,7 @@ const MONSTER_ICONS = {
     dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
     crazy_archaeologist: '📜', king_black_dragon: '👑', zulrah: '🐍', jad: '🌋'
 };
-function CombatScreen({ onNavigate, initialMonsterId }) {
+function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange }) {
     const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell } = useGame();
     const [combat, setCombat] = useState(null);
     const [log, setLog] = useState([]);
@@ -17289,6 +17296,11 @@ function CombatScreen({ onNavigate, initialMonsterId }) {
                 startFight(monster);
         }
     }, [initialMonsterId]);
+    // Update boss fight status in parent
+    useEffect(() => {
+        const isBossFight = combat?.active && combat?.monster?.boss === true;
+        onBossFightStatusChange?.(isBossFight);
+    }, [combat?.active, combat?.monster?.boss, onBossFightStatusChange]);
     // Tick listener for combat
     useEffect(() => {
         if (!combat || !combat.active)
@@ -20218,6 +20230,7 @@ function GameApp() {
     const [activity, setActivity] = useState(null);
     const [idleResult, setIdleResult] = useState(null); // { elapsedMs, task, xpGained, itemsGained, lootLost, monstersKilled }
     const [actionData, setActionData] = useState(null); // { monsterId, gatherTaskId, skillId, actionId }
+    const [isInBossFight, setIsInBossFight] = useState(false); // Track if currently in a boss fight
     // Refs for tick-based systems
     const hpRegenCounter = useRef(0);
     const snapshotCounter = useRef(99); // Start at 99 so first snapshot fires after 1 tick
@@ -20528,7 +20541,7 @@ function GameApp() {
             case SCREENS.INVENTORY: return h(InventoryScreen, null);
             case SCREENS.EQUIPMENT: return h(EquipmentScreen, null);
             case SCREENS.BANK: return h(BankScreen, null);
-            case SCREENS.COMBAT: return h(CombatScreen, { onNavigate: navigate, initialMonsterId: actionData?.monsterId });
+            case SCREENS.COMBAT: return h(CombatScreen, { onNavigate: navigate, initialMonsterId: actionData?.monsterId, onBossFightStatusChange: setIsInBossFight });
             case SCREENS.SKILLS: return h(SkillingScreen, { initialSkillId: actionData?.skillId, initialActionId: actionData?.actionId, idleResult: idleResult });
             case SCREENS.GATHER: return h(GatherScreen, { initialTaskId: actionData?.gatherTaskId, idleResult: idleResult });
             case SCREENS.AGILITY: return h(AgilityScreen, { initialActionId: actionData?.actionId });
@@ -20540,7 +20553,7 @@ function GameApp() {
         h(Header, { activity: activity }),
         h(ToastContainer, null),
         h("main", { style: { flex: 1, overflow: 'hidden' } }, renderScreen()),
-        h(BottomNav, { active: screen, onNavigate: (s) => navigate(s) }),
+        h(BottomNav, { active: screen, onNavigate: (s) => navigate(s), isInBossFight: isInBossFight, onDisabledClick: () => addToast('⚔️ Cannot navigate during boss fight!', 'warning') }),
         idleResult && (h("div", { style: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' } },
             h("div", { style: { width: '100%', maxWidth: '380px', background: '#1a1a1a', borderRadius: '20px', border: '1px solid #333', overflow: 'hidden' } },
                 h("div", { style: { background: 'linear-gradient(135deg, #1d3a2a, #2a1a0a)', padding: '20px 20px 16px', borderBottom: '1px solid #333' } },

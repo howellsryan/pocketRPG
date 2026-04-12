@@ -31,6 +31,7 @@ function GameApp() {
   const [activity, setActivity] = useState(null)
   const [idleResult, setIdleResult] = useState(null) // { elapsedMs, task, xpGained, itemsGained, lootLost, monstersKilled }
   const [actionData, setActionData] = useState(null) // { monsterId, gatherTaskId, skillId, actionId }
+  const [isInBossFight, setIsInBossFight] = useState(false) // Track if currently in a boss fight
 
   // Refs for tick-based systems
   const hpRegenCounter = useRef(0)
@@ -366,7 +367,7 @@ function GameApp() {
       case SCREENS.INVENTORY: return <InventoryScreen />
       case SCREENS.EQUIPMENT: return <EquipmentScreen />
       case SCREENS.BANK:      return <BankScreen />
-      case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} />
+      case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} onBossFightStatusChange={setIsInBossFight} />
       case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} idleResult={idleResult} />
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} />
       case SCREENS.AGILITY:   return <AgilityScreen initialActionId={actionData?.actionId} />
@@ -382,7 +383,12 @@ function GameApp() {
       <main style={{ flex: 1, overflow: 'hidden' }}>
         {renderScreen()}
       </main>
-      <BottomNav active={screen} onNavigate={(s) => navigate(s)} />
+      <BottomNav
+        active={screen}
+        onNavigate={(s) => navigate(s)}
+        isInBossFight={isInBossFight}
+        onDisabledClick={() => addToast('⚔️ Cannot navigate during boss fight!', 'warning')}
+      />
 
       {/* Idle Result Modal */}
       {idleResult && (
