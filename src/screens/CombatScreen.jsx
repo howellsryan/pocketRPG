@@ -93,6 +93,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
   const [showPotionModal, setShowPotionModal] = useState(false)
   const [showEquipmentModal, setShowEquipmentModal] = useState(false)
   const [showSpellModal, setShowSpellModal] = useState(false)
+  const [selectedMonsterInfo, setSelectedMonsterInfo] = useState(null)
 
   const combatRef = useRef(null)
   const hpRef = useRef(currentHP)
@@ -737,6 +738,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
                         </div>
                       </button>
                       <button
+                        onClick={() => setSelectedMonsterInfo(monster)}
+                        class="px-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5"
+                        title="View Monster Info"
+                      >
+                        <span class="text-base">ℹ️</span>
+                        <span class="text-[8px] text-[var(--color-parchment)] opacity-50">Info</span>
+                      </button>
+                      <button
                         onClick={() => handleAddToHome(monster)}
                         class="px-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5"
                         title="Add to Home Screen"
@@ -972,14 +981,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
           <div class="space-y-4 max-h-96 overflow-y-auto">
             {/* Protection Prayers */}
             <div>
-              <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Protection</h4>
-              <div class="space-y-2">
+              <div class="flex flex-col gap-2">
                 {Object.values(prayersData)
                   .filter(p => p.bonusType === 'protection')
                   .map(prayer => {
                     const prayerLevel = getLevelFromXP(stats.prayer?.xp || 0)
                     const canUse = prayerLevel >= prayer.level
                     const isActive = combat?.activeProtectionPrayer === prayer.id
+                    const protectType = prayer.style === 'magic' ? 'Magic' : prayer.style === 'ranged' ? 'Ranged' : 'Melee'
                     return (
                       <button
                         key={prayer.id}
@@ -995,8 +1004,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
                       >
                         <div class="flex items-center justify-between">
                           <div class="text-left">
-                            <div class="text-sm font-semibold text-[var(--color-parchment)]">{prayer.icon} {prayer.name}</div>
-                            <div class="text-[10px] text-[var(--color-parchment)] opacity-60">{prayer.description}</div>
+                            <div class="text-[10px] text-[var(--color-parchment)] opacity-60">{prayer.icon} Protect from {protectType}</div>
                             <div class="text-[9px] text-[var(--color-gold-dim)] mt-0.5">Lv {prayer.level}</div>
                           </div>
                           {isActive && (
@@ -1263,6 +1271,126 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
                 )
               })
             })()}
+          </div>
+        </Modal>
+      )}
+
+      {/* Monster Info Modal */}
+      {selectedMonsterInfo && (
+        <Modal onClose={() => setSelectedMonsterInfo(null)}>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">
+              {MONSTER_ICONS[selectedMonsterInfo.id] || '👹'} {selectedMonsterInfo.name}
+            </h3>
+            <button
+              onClick={() => setSelectedMonsterInfo(null)}
+              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
+              title="Close"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="space-y-4 max-h-96 overflow-y-auto">
+            {/* Combat Stats */}
+            <div>
+              <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Combat Stats</h4>
+              <div class="bg-[#111] rounded-lg p-3 space-y-1">
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
+                  <span>Combat Level</span>
+                  <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{selectedMonsterInfo.combatLevel}</span>
+                </div>
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
+                  <span>HP</span>
+                  <span class="font-[var(--font-mono)] text-[var(--color-hp-green)]">{selectedMonsterInfo.hitpoints}</span>
+                </div>
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
+                  <span>Attack</span>
+                  <span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.attack}</span>
+                </div>
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
+                  <span>Strength</span>
+                  <span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.strength}</span>
+                </div>
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
+                  <span>Defence</span>
+                  <span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.defence}</span>
+                </div>
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
+                  <span>Magic</span>
+                  <span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.magic}</span>
+                </div>
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
+                  <span>Ranged</span>
+                  <span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.ranged}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Defence Bonuses */}
+            <div>
+              <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Defence Bonuses</h4>
+              <div class="bg-[#111] rounded-lg p-3 space-y-1">
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
+                  <span>Stab</span>
+                  <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus.stab >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {selectedMonsterInfo.defenceBonus.stab >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus.stab}
+                  </span>
+                </div>
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
+                  <span>Slash</span>
+                  <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus.slash >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {selectedMonsterInfo.defenceBonus.slash >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus.slash}
+                  </span>
+                </div>
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
+                  <span>Crush</span>
+                  <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus.crush >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {selectedMonsterInfo.defenceBonus.crush >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus.crush}
+                  </span>
+                </div>
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
+                  <span>Magic</span>
+                  <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus.magic >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {selectedMonsterInfo.defenceBonus.magic >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus.magic}
+                  </span>
+                </div>
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]">
+                  <span>Ranged</span>
+                  <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus.ranged >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {selectedMonsterInfo.defenceBonus.ranged >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus.ranged}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Drops */}
+            {selectedMonsterInfo.drops && selectedMonsterInfo.drops.length > 0 && (
+              <div>
+                <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Drops</h4>
+                <div class="space-y-1">
+                  {selectedMonsterInfo.drops.map(drop => {
+                    const item = itemsData[drop.itemId]
+                    const percentage = (drop.chance * 100).toFixed(1)
+                    return (
+                      <div key={drop.itemId} class="bg-[#111] rounded-lg p-2">
+                        <div class="flex items-start justify-between gap-2">
+                          <div class="text-left flex-1 min-w-0">
+                            <div class="text-[11px] font-semibold text-[var(--color-parchment)]">
+                              {item?.icon || '📦'} {item?.name || drop.itemId}
+                            </div>
+                            <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                              {drop.chance === 1 ? 'Always' : `${percentage}%`}
+                              {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </Modal>
       )}
