@@ -10313,11 +10313,12 @@ const monstersData = {
     "formSwitchMin": 2,
     "formSwitchMax": 5,
     "initialForm": "melee",
+    "randomFormEveryAttack": true,
     "forms": {
       "melee": {
         "displayName": "Melee Phase",
         "icon": "⚔️",
-        "attackStyle": "melee",
+        "attackStyle": "crush",
         "maxHit": 97,
         "attackBonus": 100,
         "strengthBonus": 100,
@@ -13270,7 +13271,8 @@ function createCombatState(monster, combatType = 'melee', stance = 'accurate', s
         if (form) {
             preparedMonster.currentForm = formKey;
             preparedMonster.formAttackCount = 0;
-            preparedMonster.formSwitchThreshold = randomFormSwitchThreshold(monster);
+            // For per-attack randomization, always switch after 1 attack
+            preparedMonster.formSwitchThreshold = monster.randomFormEveryAttack ? 1 : randomFormSwitchThreshold(monster);
             preparedMonster.attackStyle = form.attackStyle;
             preparedMonster.attackBonus = form.attackBonus ?? monster.attackBonus ?? 0;
             preparedMonster.strengthBonus = form.strengthBonus ?? monster.strengthBonus ?? 0;
@@ -13666,7 +13668,8 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
                     monster.defenceBonus = { ...nextForm.defenceBonus };
                     monster.formMaxHit = nextForm.maxHit;
                     monster.formAttackCount = 0;
-                    monster.formSwitchThreshold = randomFormSwitchThreshold(monster);
+                    // For per-attack randomization, keep threshold at 1; otherwise randomize
+                    monster.formSwitchThreshold = monster.randomFormEveryAttack ? 1 : randomFormSwitchThreshold(monster);
                     // Skip one attack cycle after a form change so the player can adapt
                     state.monsterAttackTimer = (monster.attackSpeed || 4) * 2;
                     events.push({
@@ -13676,7 +13679,8 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
                         displayName: nextForm.displayName || nextKey,
                         icon: nextForm.icon || '',
                         attackStyle: nextForm.attackStyle,
-                        weakness: nextForm.weakness
+                        weakness: nextForm.weakness,
+                        monsterName: monster.name
                     });
                 }
             }
@@ -17442,12 +17446,13 @@ function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange })
                         }]);
                 }
                 if (ev.type === 'formChange') {
+                    const monsterName = ev.monsterName || 'Monster';
                     setLog(prev => [...prev.slice(-20), {
-                            text: `${ev.icon || '🐍'} Zulrah shifts into ${ev.displayName}`,
+                            text: `${ev.icon || '🐍'} ${monsterName} shifts into ${ev.displayName}`,
                             type: 'formChange',
                             time: Date.now()
                         }]);
-                    addToast(`${ev.icon || '🐍'} Zulrah: ${ev.displayName} form — weak to ${ev.weakness}`, 'info');
+                    addToast(`${ev.icon || '🐍'} ${monsterName}: ${ev.displayName} form — weak to ${ev.weakness}`, 'info');
                 }
                 if (combatRef.current.runesConsumed && ev.type === 'playerHit' && ev.damage > 0) {
                     // Consume runes when spell successfully casts
