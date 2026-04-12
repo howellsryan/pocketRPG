@@ -3384,7 +3384,7 @@
       "melee": {
         "displayName": "Magma",
         "icon": "🔴",
-        "attackStyle": "melee",
+        "attackStyle": "crush",
         "weakness": "magic",
         "maxHit": 41,
         "attackBonus": 50,
