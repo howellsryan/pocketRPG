@@ -63,6 +63,12 @@ const COMBAT_CATEGORIES = [
     icon: '🐍',
     ids: ['zulrah'],
   },
+  {
+    key: 'inferno',
+    label: 'Inferno',
+    icon: '🔥',
+    ids: ['jad'],
+  },
 ]
 
 const MONSTER_ICONS = {
@@ -72,7 +78,7 @@ const MONSTER_ICONS = {
   green_dragon: '🐉', red_dragon: '🔴', lesser_demon: '👿',
   general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
   dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
-  crazy_archaeologist: '📜', king_black_dragon: '👑', zulrah: '🐍'
+  crazy_archaeologist: '📜', king_black_dragon: '👑', zulrah: '🐍', jad: '🌋'
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId }) {
