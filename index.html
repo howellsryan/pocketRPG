@@ -17263,6 +17263,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange })
     const [showEquipmentModal, setShowEquipmentModal] = useState(false);
     const [showSpellModal, setShowSpellModal] = useState(false);
     const [selectedMonsterInfo, setSelectedMonsterInfo] = useState(null);
+    const [lootModal, setLootModal] = useState(null);
     const combatRef = useRef(null);
     const hpRef = useRef(currentHP);
     const hasAutoStarted = useRef(false);
@@ -17530,13 +17531,11 @@ function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange })
                             type: 'victory',
                             time: Date.now()
                         }]);
-                    setIsAutoRestarting(true);
-                    setTimeout(() => {
-                        const original = monstersData[state.monster.id];
-                        if (original)
-                            continueFight(original);
-                        setIsAutoRestarting(false);
-                    }, 3000);
+                    // Show loot modal instead of auto-restarting
+                    setLootModal({
+                        monster: state.monster,
+                        loot: ev.loot || []
+                    });
                 }
             }
         });
@@ -18169,6 +18168,35 @@ function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange })
                         }))));
                 });
             })()))),
+        lootModal && (h(Modal, { title: "Loot", onClose: () => setLootModal(null) },
+            h("div", { class: "space-y-4" },
+                h("div", { class: "text-center py-2" },
+                    h("div", { class: "text-4xl mb-2" }, MONSTER_ICONS[lootModal.monster.id] || '👹'),
+                    h("div", { class: "text-lg font-semibold text-[var(--color-gold)]" },
+                        lootModal.monster.name,
+                        " defeated!")),
+                lootModal.loot && lootModal.loot.length > 0 ? (h("div", { class: "space-y-2 max-h-48 overflow-y-auto" }, lootModal.loot.map((drop, idx) => {
+                    const item = itemsData[drop.itemId];
+                    return (h("div", { key: idx, class: "bg-[#111] rounded-lg p-3 flex items-center justify-between" },
+                        h("div", { class: "flex items-center gap-2" },
+                            h("span", { class: "text-2xl" }, item?.icon || '📦'),
+                            h("div", null,
+                                h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, item?.name || drop.itemId),
+                                h("div", { class: "text-xs text-[var(--color-parchment)] opacity-60" },
+                                    "\u00D7",
+                                    drop.quantity)))));
+                }))) : (h("div", { class: "text-center py-4 text-[var(--color-parchment)] opacity-60 text-sm" }, "No loot dropped")),
+                h("div", { class: "grid grid-cols-2 gap-3 pt-2" },
+                    h("button", { onClick: () => {
+                            setLootModal(null);
+                            stopAndBack();
+                        }, class: "py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm border border-[#333]" }, "Run Away"),
+                    h("button", { onClick: () => {
+                            const original = monstersData[lootModal.monster.id];
+                            if (original)
+                                continueFight(original);
+                            setLootModal(null);
+                        }, class: "py-2.5 rounded-lg bg-[var(--color-blood)]/70 text-white font-semibold text-sm" }, "Fight Again"))))),
         selectedMonsterInfo && (h(Modal, { onClose: () => setSelectedMonsterInfo(null) },
             h("div", { class: "flex items-center justify-between mb-3" },
                 h("h3", { class: "font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]" },

@@ -94,6 +94,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
   const [showEquipmentModal, setShowEquipmentModal] = useState(false)
   const [showSpellModal, setShowSpellModal] = useState(false)
   const [selectedMonsterInfo, setSelectedMonsterInfo] = useState(null)
+  const [lootModal, setLootModal] = useState(null)
 
   const combatRef = useRef(null)
   const hpRef = useRef(currentHP)
@@ -368,12 +369,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
             type: 'victory',
             time: Date.now()
           }])
-          setIsAutoRestarting(true)
-          setTimeout(() => {
-            const original = monstersData[state.monster.id]
-            if (original) continueFight(original)
-            setIsAutoRestarting(false)
-          }, 3000)
+          // Show loot modal instead of auto-restarting
+          setLootModal({
+            monster: state.monster,
+            loot: ev.loot || []
+          })
         }
       }
 
@@ -1299,6 +1299,70 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
                 )
               })
             })()}
+          </div>
+        </Modal>
+      )}
+
+      {/* Loot Modal */}
+      {lootModal && (
+        <Modal title="Loot" onClose={() => setLootModal(null)}>
+          <div class="space-y-4">
+            {/* Monster defeated message */}
+            <div class="text-center py-2">
+              <div class="text-4xl mb-2">{MONSTER_ICONS[lootModal.monster.id] || '👹'}</div>
+              <div class="text-lg font-semibold text-[var(--color-gold)]">{lootModal.monster.name} defeated!</div>
+            </div>
+
+            {/* Loot items */}
+            {lootModal.loot && lootModal.loot.length > 0 ? (
+              <div class="space-y-2 max-h-48 overflow-y-auto">
+                {lootModal.loot.map((drop, idx) => {
+                  const item = itemsData[drop.itemId]
+                  return (
+                    <div key={idx} class="bg-[#111] rounded-lg p-3 flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <span class="text-2xl">{item?.icon || '📦'}</span>
+                        <div>
+                          <div class="text-sm font-semibold text-[var(--color-parchment)]">
+                            {item?.name || drop.itemId}
+                          </div>
+                          <div class="text-xs text-[var(--color-parchment)] opacity-60">
+                            ×{drop.quantity}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div class="text-center py-4 text-[var(--color-parchment)] opacity-60 text-sm">
+                No loot dropped
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <div class="grid grid-cols-2 gap-3 pt-2">
+              <button
+                onClick={() => {
+                  setLootModal(null)
+                  stopAndBack()
+                }}
+                class="py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm border border-[#333]"
+              >
+                Run Away
+              </button>
+              <button
+                onClick={() => {
+                  const original = monstersData[lootModal.monster.id]
+                  if (original) continueFight(original)
+                  setLootModal(null)
+                }}
+                class="py-2.5 rounded-lg bg-[var(--color-blood)]/70 text-white font-semibold text-sm"
+              >
+                Fight Again
+              </button>
+            </div>
           </div>
         </Modal>
       )}
