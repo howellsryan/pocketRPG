@@ -165,8 +165,10 @@ export function GameProvider({ children }) {
           // Persist slayer task update if present
           if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
             if (sim.slayerTaskUpdate.completed) {
-              // Task complete — clear it
+              // Task complete — clear it and award points
               await saveSetting('slayerTask', null)
+              const newSlayerPoints = (savedSlayerPoints || 0) + sim.slayerTaskUpdate.pointsOnComplete
+              await saveSetting('slayerPoints', newSlayerPoints)
             } else {
               // Task in progress — update monstersRemaining
               await saveSetting('slayerTask', sim.slayerTaskUpdate)
@@ -193,7 +195,11 @@ export function GameProvider({ children }) {
       ? (idleResult.slayerTaskUpdate.completed ? null : idleResult.slayerTaskUpdate)
       : (savedSlayerTask ?? null)
     setSlayerTaskState(finalSlayerTask)
-    setSlayerPointsState(savedSlayerPoints ?? 0)
+    // Award slayer points if task was completed during idle
+    const slayerPointsEarned = (idleResult && idleResult.slayerTaskUpdate && idleResult.slayerTaskUpdate.completed)
+      ? idleResult.slayerTaskUpdate.pointsOnComplete
+      : 0
+    setSlayerPointsState((savedSlayerPoints ?? 0) + slayerPointsEarned)
     setActiveCombatSpellState(savedActiveCombatSpell ?? null)
     const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
     setCurrentHP(savedHP != null ? Math.min(savedHP, hpLevel) : hpLevel)
