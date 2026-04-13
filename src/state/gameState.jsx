@@ -123,8 +123,8 @@ export function GameProvider({ children }) {
                 b[itemId] = { itemId, quantity: qty }
               }
             }
-          } else if (savedTask.type === 'agility' && sim.coinsGained > 0) {
-            // Agility coins go to inventory (stackable), fall back to bank if full
+          } else if ((savedTask.type === 'agility' || savedTask.type === 'thieving') && sim.coinsGained > 0) {
+            // Agility/Thieving coins go to inventory (stackable), fall back to bank if full
             const coinsSlot = inv.findIndex(s => s && s.itemId === 'coins')
             if (coinsSlot >= 0) {
               inv[coinsSlot] = { ...inv[coinsSlot], quantity: inv[coinsSlot].quantity + sim.coinsGained }
@@ -159,6 +159,10 @@ export function GameProvider({ children }) {
             if (Object.keys(bankedItems).length > 0) {
               await saveBank(b)
             }
+          } else if (savedTask.type === 'agility' || savedTask.type === 'thieving') {
+            // Agility/Thieving may add coins to inventory, so save both
+            await saveInventory(inv)
+            await saveBank(b)
           } else {
             await saveBank(b)
           }
