@@ -128,16 +128,13 @@ export function GameProvider({ children }) {
             }
           } else if ((savedTask.type === 'agility' || savedTask.type === 'thieving') && sim.coinsGained > 0) {
             // Agility/Thieving coins go to inventory (stackable), fall back to bank if full
-            console.log(`[PocketRPG] Adding ${sim.coinsGained} coins from ${savedTask.type}`)
             const coinsSlot = inv.findIndex(s => s && s.itemId === 'coins')
             if (coinsSlot >= 0) {
               inv[coinsSlot] = { ...inv[coinsSlot], quantity: inv[coinsSlot].quantity + sim.coinsGained }
-              console.log(`[PocketRPG] Added coins to inventory slot ${coinsSlot}`)
             } else {
               const emptySlot = inv.findIndex(s => s === null)
               if (emptySlot >= 0) {
                 inv[emptySlot] = { itemId: 'coins', quantity: sim.coinsGained }
-                console.log(`[PocketRPG] Added coins to empty inventory slot ${emptySlot}`)
               } else {
                 // Inventory full — bank overflow
                 if (b['coins']) {
@@ -145,7 +142,6 @@ export function GameProvider({ children }) {
                 } else {
                   b['coins'] = { itemId: 'coins', quantity: sim.coinsGained }
                 }
-                console.log(`[PocketRPG] Inventory full, added coins to bank`)
               }
             }
           } else if (sim.itemsGained) {
