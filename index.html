@@ -13290,6 +13290,71 @@ function simulateIdleAgility(task, elapsedMs) {
     return { xpGained, coinsGained, laps, skill: 'agility', actionName: task.action.name };
 }
 
+// ── engine/thieving.js ──
+/**
+ * Thieving Engine — pure logic for pickpocketing NPCs.
+ * No UI imports.
+ */
+
+/**
+ * Create a thieving state object for a pickpocketing session.
+ */
+function createThievingState(npc) {
+    return {
+        active: true,
+        npc,
+        ticksRemaining: 4, // Each pickpocket takes roughly 4 ticks (2.4 seconds)
+        tickCount: 0
+    };
+}
+/**
+ * Process one tick of thieving.
+ * Returns { thievingState, events[] }
+ * events: { type: 'pickpocketSuccess', xp, coins, npcName } or
+ *         { type: 'pickpocketFailure', npcName }
+ */
+function processThievingTick(thievingState) {
+    const state = { ...thievingState };
+    const events = [];
+    state.tickCount++;
+    state.ticksRemaining--;
+    if (state.ticksRemaining <= 0) {
+        // Calculate success based on level vs requirement
+        // OSRS has a success rate formula, but for simplicity:
+        // success_rate = 1 - (npc_level - player_thieving_level) / 100 (capped at 0-100%)
+        // For now, we'll just make it always succeed for player level >= npc level
+        // TODO: Implement proper OSRS success rates in future
+        events.push({
+            type: 'pickpocketSuccess',
+            xp: state.npc.xp,
+            coins: state.npc.coins || 0,
+            npcName: state.npc.name,
+            // Future: add drops array here for rare items
+            drops: state.npc.drops || []
+        });
+        // Reset for next pickpocket
+        state.ticksRemaining = 4;
+    }
+    return { thievingState: state, events };
+}
+/**
+ * Simulate idle thieving.
+ * Returns { xpGained, coinsGained, actions, skill, actionName }
+ */
+function simulateIdleThieving(task, elapsedMs) {
+    if (!task || !task.npc)
+        return null;
+    const TICK_MS = 600;
+    const TICKS_PER_ACTION = 4; // Each pickpocket takes ~4 ticks
+    const totalTicks = Math.floor(elapsedMs / TICK_MS);
+    const actions = Math.floor(totalTicks / TICKS_PER_ACTION);
+    if (actions <= 0)
+        return null;
+    const xpGained = { thieving: task.npc.xp * actions };
+    const coinsGained = (task.npc.coins || 0) * actions;
+    return { xpGained, coinsGained, actions, skill: 'thieving', actionName: task.npc.name };
+}
+
 // ── engine/runes.js ──
 /**
  * Get the elemental staff equipped by the player (if any)
@@ -18571,6 +18636,180 @@ function AgilityScreen({ initialActionId, onBack }) {
                         " delay")))),
         h("div", { class: "flex-shrink-0 flex gap-2 mt-3" },
             h("button", { onClick: stopCourse, class: "flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80" }, "\u2190 Stop & Back"))));
+}
+
+// ── screens/ThievingScreen.js ──
+
+
+
+
+
+
+
+
+const thievingData = skillsData.thieving;
+function ThievingScreen({ initialNpcId, onBack }) {
+    const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask } = useGame();
+    const thievingLevel = getLevelFromXP(stats.thieving?.xp || 0);
+    const thievingXP = stats.thieving?.xp || 0;
+    const [thieving, setThieving] = useState(null);
+    const thievingRef = useRef(null);
+    const inventoryRef = useRef(inventory);
+    const hasAutoStarted = useRef(false);
+    // Keep inventoryRef current
+    useEffect(() => { inventoryRef.current = inventory; }, [inventory]);
+    // Auto-start from shortcut
+    useEffect(() => {
+        if (initialNpcId && !hasAutoStarted.current && !thieving) {
+            hasAutoStarted.current = true;
+            const npc = thievingData.npcs.find(n => n.id === initialNpcId);
+            if (npc && thievingLevel >= npc.level)
+                startThieving(npc);
+        }
+    }, [initialNpcId]);
+    // Tick listener
+    useEffect(() => {
+        if (!thieving || !thieving.active)
+            return;
+        thievingRef.current = thieving;
+        const unsub = onTick(() => {
+            const state = thievingRef.current;
+            if (!state || !state.active)
+                return;
+            const { thievingState, events } = processThievingTick(state);
+            thievingRef.current = thievingState;
+            for (const ev of events) {
+                if (ev.type === 'pickpocketSuccess') {
+                    grantXP('thieving', ev.xp);
+                    // Add coins to inventory or bank
+                    if (ev.coins > 0) {
+                        const currentInv = [...(inventoryRef.current)];
+                        const coinsSlotIdx = currentInv.findIndex(s => s && s.itemId === 'coins');
+                        if (coinsSlotIdx >= 0) {
+                            currentInv[coinsSlotIdx] = { ...currentInv[coinsSlotIdx], quantity: currentInv[coinsSlotIdx].quantity + ev.coins };
+                            updateInventory(currentInv);
+                        }
+                        else {
+                            const emptyIdx = currentInv.findIndex(s => s === null);
+                            if (emptyIdx >= 0) {
+                                currentInv[emptyIdx] = { itemId: 'coins', quantity: ev.coins };
+                                updateInventory(currentInv);
+                            }
+                            else {
+                                updateBankDirect({ coins: ev.coins });
+                            }
+                        }
+                    }
+                    // Update session totals
+                    thievingRef.current = {
+                        ...thievingRef.current,
+                        totalPickpockets: (thievingRef.current.totalPickpockets || 0) + 1,
+                        totalXP: (thievingRef.current.totalXP || 0) + ev.xp,
+                        totalCoins: (thievingRef.current.totalCoins || 0) + ev.coins
+                    };
+                }
+            }
+            setThieving({ ...thievingRef.current });
+        });
+        return unsub;
+    }, [thieving?.active]);
+    const startThieving = (npc) => {
+        const state = {
+            ...createThievingState(npc),
+            totalPickpockets: 0,
+            totalXP: 0,
+            totalCoins: 0,
+            startedAt: Date.now()
+        };
+        setThieving(state);
+        thievingRef.current = state;
+        setActiveTask({ type: 'thieving', npc });
+        addToast(`Started pickpocketing ${npc.name}`, 'info');
+    };
+    const stopThieving = () => {
+        setThieving(null);
+        thievingRef.current = null;
+        setActiveTask(null);
+        if (onBack)
+            onBack();
+    };
+    // NPC picker
+    if (!thieving) {
+        return (h("div", { class: "h-full overflow-y-auto p-4" },
+            onBack && (h("button", { onClick: onBack, class: "text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1" }, "\u2190 Skills")),
+            h("div", { class: "flex items-center justify-between mb-1" },
+                h("h2", { class: "font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider" }, "Thieving Targets"),
+                h("span", { class: "text-xs font-[var(--font-mono)] text-[var(--color-gold)]" },
+                    "Lv ",
+                    thievingLevel)),
+            h("div", { class: "mb-3 bg-[#111] rounded-lg px-3 py-2 text-[11px] text-[var(--color-parchment)] opacity-60 flex items-center gap-2" },
+                h("span", null, "\uD83D\uDDDD\uFE0F"),
+                h("span", null, "Pickpocket targets to earn coins and experience")),
+            h("div", { class: "space-y-2" }, thievingData.npcs.map(npc => {
+                const available = thievingLevel >= npc.level;
+                return (h("button", { key: npc.id, onClick: () => available && startThieving(npc), disabled: !available, class: `w-full flex items-between justify-between p-3 rounded-xl border transition-colors text-left
+                  ${available
+                        ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
+                        : 'bg-[#111] border-[#1a1a1a] opacity-40'}` },
+                    h("div", { class: "flex-1" },
+                        h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, npc.name),
+                        h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5" },
+                            "Lv ",
+                            npc.level,
+                            " \u00B7 ",
+                            npc.xp,
+                            " XP \u00B7 \uD83E\uDE99 ",
+                            npc.coins,
+                            " coins"),
+                        h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40" }, npc.description)),
+                    h("div", { class: "text-right ml-3 flex flex-col justify-center" },
+                        h("div", { class: "text-xs font-[var(--font-mono)] text-[var(--color-gold)]" },
+                            "\uD83E\uDE99 ",
+                            npc.coins.toLocaleString()),
+                        h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-30" }, "per pocket"))));
+            }))));
+    }
+    // Active pickpocketing
+    const progress = thieving.active
+        ? 1 - (thieving.ticksRemaining / 4)
+        : 0;
+    const elapsed = thieving.startedAt ? Date.now() - thieving.startedAt : 0;
+    const pickpocketsPerHr = elapsed > 5000 && thieving.totalPickpockets > 0
+        ? Math.round(thieving.totalPickpockets / (elapsed / 3600000))
+        : null;
+    const xpPerHr = elapsed > 5000 && thieving.totalXP > 0
+        ? Math.round(thieving.totalXP / (elapsed / 3600000))
+        : null;
+    return (h("div", { class: "h-full flex flex-col p-4" },
+        h("div", { class: "flex-1 flex flex-col items-center justify-center" },
+            h("span", { class: "text-4xl mb-2" }, "\uD83D\uDDDD\uFE0F"),
+            h("h2", { class: "font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)] mb-1" }, thieving.npc.name),
+            h("div", { class: "text-xs text-[var(--color-parchment)] opacity-40 mb-4" }, thieving.npc.description),
+            h("div", { class: "w-full max-w-xs mb-4" },
+                h(ProgressBar, { value: progress, max: 1, height: "h-4", color: "var(--color-gold)", showText: true })),
+            h("div", { class: "bg-[#111] rounded-lg p-3 w-full max-w-xs space-y-1.5" },
+                h("div", { class: "flex justify-between text-sm" },
+                    h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "Pickpockets completed"),
+                    h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, thieving.totalPickpockets)),
+                h("div", { class: "flex justify-between text-sm" },
+                    h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "Pickpockets/hr"),
+                    h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, pickpocketsPerHr ? pickpocketsPerHr.toLocaleString() : '—')),
+                h("div", { class: "flex justify-between text-sm" },
+                    h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "XP gained"),
+                    h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, formatNumber(thieving.totalXP))),
+                h("div", { class: "flex justify-between text-sm" },
+                    h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "XP/hr"),
+                    h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, xpPerHr ? formatNumber(xpPerHr) : '—')),
+                h("div", { class: "flex justify-between text-sm" },
+                    h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "Coins earned"),
+                    h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" },
+                        "\uD83E\uDE99 ",
+                        thieving.totalCoins.toLocaleString())),
+                h("div", { class: "flex justify-between text-sm" },
+                    h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "Coins/hr"),
+                    h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, xpPerHr ? `🪙 ${Math.round(thieving.totalCoins / (elapsed / 3600000)).toLocaleString()}` : '—')))),
+        h("div", { class: "flex-shrink-0 flex gap-2 mt-3" },
+            h("button", { onClick: stopThieving, class: "flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80" }, "\u2190 Stop & Back"))));
 }
 
 // ── screens/SkillingScreen.js ──
