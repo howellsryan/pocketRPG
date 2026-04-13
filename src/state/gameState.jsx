@@ -3,6 +3,7 @@ import { useState, useContext, useCallback, useEffect, useRef } from 'preact/hoo
 import { getAllStats, getInventory, getEquipment, getBank, getPlayer, saveAllStats, saveInventory, saveEquipment, saveBank, savePlayer, getSetting, saveSetting } from '../db/stores.js'
 import { getLevelFromXP, clampXP } from '../engine/experience.js'
 import { simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility } from '../engine/idleEngine.js'
+import { simulateIdleThieving } from '../engine/thieving.js'
 import { ALL_SKILLS, MAX_XP, AUTO_SAVE_DEBOUNCE } from '../utils/constants.js'
 import { debounce } from '../utils/helpers.js'
 import itemsData from '../data/items.json'
@@ -70,6 +71,8 @@ export function GameProvider({ children }) {
           sim = simulateIdleCombat(savedTask, elapsedMs, s, eq, inv, itemsData, savedSlayerTask)
         } else if (savedTask.type === 'agility') {
           sim = simulateIdleAgility(savedTask, elapsedMs)
+        } else if (savedTask.type === 'thieving') {
+          sim = simulateIdleThieving(savedTask, elapsedMs)
         }
 
         if (sim) {

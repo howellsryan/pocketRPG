@@ -15799,6 +15799,7 @@ async function restoreFromLocalStorage() {
 
 
 
+
 const GameContext = createContext(null);
 function GameProvider({ children }) {
     const [loaded, setLoaded] = useState(false);
@@ -15870,6 +15871,9 @@ function GameProvider({ children }) {
                 }
                 else if (savedTask.type === 'agility') {
                     sim = simulateIdleAgility(savedTask, elapsedMs);
+                }
+                else if (savedTask.type === 'thieving') {
+                    sim = simulateIdleThieving(savedTask, elapsedMs);
                 }
                 if (sim) {
                     // Apply XP directly to raw stats object
