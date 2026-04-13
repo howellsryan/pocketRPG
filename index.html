@@ -5487,6 +5487,19 @@ const itemsData = {
     "shopValue": 99000,
     "icon": "🎗️"
   },
+  "thieving_cape": {
+    "id": "thieving_cape",
+    "name": "Thieving cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
+    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
+    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
+    "requirements": { "thieving": 99 },
+    "shopValue": 99000,
+    "icon": "🎗️"
+  },
   "rune_sword": {
     "id": "rune_sword",
     "name": "Rune sword",
@@ -12253,6 +12266,108 @@ const skillsData = {
         }
       }
     ]
+  },
+  "thieving": {
+    "id": "thieving",
+    "name": "Thieving",
+    "npcs": [
+      {
+        "id": "man",
+        "name": "Pickpocket Man",
+        "level": 1,
+        "xp": 8,
+        "coins": 3,
+        "description": "Common traveller in towns. Easy target with minimal rewards."
+      },
+      {
+        "id": "woman",
+        "name": "Pickpocket Woman",
+        "level": 1,
+        "xp": 8,
+        "coins": 3,
+        "description": "Common traveller in towns. Easy target with minimal rewards."
+      },
+      {
+        "id": "cake_stall",
+        "name": "Pickpocket Cake Stall",
+        "level": 5,
+        "xp": 16,
+        "coins": 8,
+        "description": "Steal from unattended cake stalls. Better rewards than basic NPCs."
+      },
+      {
+        "id": "farmer",
+        "name": "Pickpocket Farmer",
+        "level": 10,
+        "xp": 14,
+        "coins": 10,
+        "description": "Agricultural workers. Slightly better than townspeople."
+      },
+      {
+        "id": "gardener",
+        "name": "Pickpocket Gardener",
+        "level": 10,
+        "xp": 14,
+        "coins": 12,
+        "description": "Tend to gardens in various locations. Profitable early-level target."
+      },
+      {
+        "id": "guard",
+        "name": "Pickpocket Guard",
+        "level": 40,
+        "xp": 46,
+        "coins": 30,
+        "description": "Armoured guards. Dangerous targets. Significant coin rewards."
+      },
+      {
+        "id": "baker",
+        "name": "Pickpocket Baker",
+        "level": 40,
+        "xp": 40,
+        "coins": 20,
+        "description": "Work in bakeries across the realm. Good XP for the level."
+      },
+      {
+        "id": "master_farmer",
+        "name": "Pickpocket Master Farmer",
+        "level": 38,
+        "xp": 43,
+        "coins": 50,
+        "description": "Highly profitable due to seed drops. Best early-level money maker."
+      },
+      {
+        "id": "knight",
+        "name": "Pickpocket Knight",
+        "level": 55,
+        "xp": 83,
+        "coins": 80,
+        "description": "Well-armed knights. High XP and coin rewards."
+      },
+      {
+        "id": "ardougne_knight",
+        "name": "Pickpocket Ardougne Knight",
+        "level": 55,
+        "xp": 83,
+        "coins": 100,
+        "description": "Elite city guard. Excellent experience and profit."
+      },
+      {
+        "id": "vyre",
+        "name": "Pickpocket Vyre",
+        "level": 82,
+        "xp": 137,
+        "coins": 200,
+        "description": "Mysterious Vyre people. High risk, high reward endgame target."
+      },
+      {
+        "id": "elf",
+        "name": "Pickpocket Elf",
+        "level": 85,
+        "xp": 150,
+        "coins": 250,
+        "description": "Magical forest dwellers. Ultimate pickpocketing challenge with massive rewards."
+      }
+    ]
   }
 };
 const spellsData = {
@@ -12530,7 +12645,7 @@ const GATHERING_SKILLS = ['mining', 'woodcutting', 'fishing', 'farming', 'hunter
 const PRODUCTION_SKILLS = ['smithing', 'cooking', 'crafting', 'fletching', 'herblore', 'runecraft', 'magic'];
 const UTILITY_SKILLS = ['agility', 'thieving', 'slayer', 'firemaking', 'construction'];
 const ALL_SKILLS = [...COMBAT_SKILLS, ...GATHERING_SKILLS, ...PRODUCTION_SKILLS, ...UTILITY_SKILLS];
-const STUB_SKILLS = new Set(['farming', 'hunter', 'runecraft', 'thieving', 'firemaking', 'construction']);
+const STUB_SKILLS = new Set(['farming', 'hunter', 'runecraft', 'firemaking', 'construction']);
 // Agility banking: delay in ms at level 1 and level 99
 const AGILITY_BANK_DELAY_LV1_MS = 5 * 60 * 1000; // 5 minutes
 const AGILITY_BANK_DELAY_LV99_MS = 10 * 1000; // 10 seconds
@@ -18474,8 +18589,9 @@ function AgilityScreen({ initialActionId, onBack }) {
 
 
 
-// Agility, Prayer, and Slayer are special skills shown here in the Skills tab
-const SPECIAL_SKILLS = ['agility', 'prayer', 'slayer'];
+
+// Agility, Prayer, Thieving, and Slayer are special skills shown here in the Skills tab
+const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'slayer'];
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0);
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS];
 function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
@@ -18495,6 +18611,10 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
     // If slayer is selected, delegate to SlayerScreen
     if (selectedSkill === 'slayer') {
         return (h(SlayerScreen, { onBack: () => setSelectedSkill(null) }));
+    }
+    // If thieving is selected, delegate to ThievingScreen
+    if (selectedSkill === 'thieving') {
+        return (h(ThievingScreen, { initialNpcId: initialActionId, onBack: () => setSelectedSkill(null) }));
     }
     // Tick listener
     useEffect(() => {
@@ -19801,6 +19921,7 @@ const SHOPS = [
             { id: 'crafting_cape', name: 'Crafting cape', icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Crafting 99. Def +9 all styles.', requiresSkill: 'crafting', requiresLevel: 99 },
             { id: 'herblore_cape', name: 'Herblore cape', icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Herblore 99. Def +9 all styles.', requiresSkill: 'herblore', requiresLevel: 99 },
             { id: 'agility_cape', name: 'Agility cape', icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Agility 99. Def +9 all styles.', requiresSkill: 'agility', requiresLevel: 99 },
+            { id: 'thieving_cape', name: 'Thieving cape', icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Thieving 99. Def +9 all styles.', requiresSkill: 'thieving', requiresLevel: 99 },
         ],
     },
 ];
@@ -20385,6 +20506,7 @@ function EquipmentScreen() {
 
 
 
+
 function GameApp() {
     const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask } = useGame();
     const [screen, setScreen] = useState(SCREENS.HOME);
@@ -20490,6 +20612,8 @@ function GameApp() {
                         sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank);
                     if (savedTask.type === 'agility')
                         sim = simulateIdleAgility(savedTask, elapsedMs);
+                    if (savedTask.type === 'thieving')
+                        sim = simulateIdleThieving(savedTask, elapsedMs);
                     // Always show the modal — even if sim is null (e.g. <1 action completed)
                     if (!sim) {
                         setIdleResult({ elapsedMs, task: savedTask });
@@ -20519,6 +20643,10 @@ function GameApp() {
                     }
                     // Apply agility coin reward directly to bank
                     if (savedTask.type === 'agility' && sim.coinsGained > 0) {
+                        updateBankDirect({ coins: sim.coinsGained });
+                    }
+                    // Apply thieving coin reward directly to bank
+                    if (savedTask.type === 'thieving' && sim.coinsGained > 0) {
                         updateBankDirect({ coins: sim.coinsGained });
                     }
                     // Deduct consumed materials from bank

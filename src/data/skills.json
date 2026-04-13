@@ -1881,5 +1881,107 @@
         }
       }
     ]
+  },
+  "thieving": {
+    "id": "thieving",
+    "name": "Thieving",
+    "npcs": [
+      {
+        "id": "man",
+        "name": "Pickpocket Man",
+        "level": 1,
+        "xp": 8,
+        "coins": 3,
+        "description": "Common traveller in towns. Easy target with minimal rewards."
+      },
+      {
+        "id": "woman",
+        "name": "Pickpocket Woman",
+        "level": 1,
+        "xp": 8,
+        "coins": 3,
+        "description": "Common traveller in towns. Easy target with minimal rewards."
+      },
+      {
+        "id": "cake_stall",
+        "name": "Pickpocket Cake Stall",
+        "level": 5,
+        "xp": 16,
+        "coins": 8,
+        "description": "Steal from unattended cake stalls. Better rewards than basic NPCs."
+      },
+      {
+        "id": "farmer",
+        "name": "Pickpocket Farmer",
+        "level": 10,
+        "xp": 14,
+        "coins": 10,
+        "description": "Agricultural workers. Slightly better than townspeople."
+      },
+      {
+        "id": "gardener",
+        "name": "Pickpocket Gardener",
+        "level": 10,
+        "xp": 14,
+        "coins": 12,
+        "description": "Tend to gardens in various locations. Profitable early-level target."
+      },
+      {
+        "id": "guard",
+        "name": "Pickpocket Guard",
+        "level": 40,
+        "xp": 46,
+        "coins": 30,
+        "description": "Armoured guards. Dangerous targets. Significant coin rewards."
+      },
+      {
+        "id": "baker",
+        "name": "Pickpocket Baker",
+        "level": 40,
+        "xp": 40,
+        "coins": 20,
+        "description": "Work in bakeries across the realm. Good XP for the level."
+      },
+      {
+        "id": "master_farmer",
+        "name": "Pickpocket Master Farmer",
+        "level": 38,
+        "xp": 43,
+        "coins": 50,
+        "description": "Highly profitable due to seed drops. Best early-level money maker."
+      },
+      {
+        "id": "knight",
+        "name": "Pickpocket Knight",
+        "level": 55,
+        "xp": 83,
+        "coins": 80,
+        "description": "Well-armed knights. High XP and coin rewards."
+      },
+      {
+        "id": "ardougne_knight",
+        "name": "Pickpocket Ardougne Knight",
+        "level": 55,
+        "xp": 83,
+        "coins": 100,
+        "description": "Elite city guard. Excellent experience and profit."
+      },
+      {
+        "id": "vyre",
+        "name": "Pickpocket Vyre",
+        "level": 82,
+        "xp": 137,
+        "coins": 200,
+        "description": "Mysterious Vyre people. High risk, high reward endgame target."
+      },
+      {
+        "id": "elf",
+        "name": "Pickpocket Elf",
+        "level": 85,
+        "xp": 150,
+        "coins": 250,
+        "description": "Magical forest dwellers. Ultimate pickpocketing challenge with massive rewards."
+      }
+    ]
   }
 }

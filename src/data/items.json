@@ -5387,6 +5387,19 @@
     "shopValue": 99000,
     "icon": "🎗️"
   },
+  "thieving_cape": {
+    "id": "thieving_cape",
+    "name": "Thieving cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
+    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
+    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
+    "requirements": { "thieving": 99 },
+    "shopValue": 99000,
+    "icon": "🎗️"
+  },
   "rune_sword": {
     "id": "rune_sword",
     "name": "Rune sword",
