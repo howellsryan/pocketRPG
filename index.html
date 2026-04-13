@@ -13342,16 +13342,22 @@ function processThievingTick(thievingState) {
  * Returns { xpGained, coinsGained, actions, skill, actionName }
  */
 function simulateIdleThieving(task, elapsedMs) {
-    if (!task || !task.npc)
+    if (!task || !task.npc) {
+        console.log('[PocketRPG] simulateIdleThieving: no task or npc', task);
         return null;
+    }
     const TICK_MS = 600;
     const TICKS_PER_ACTION = 4; // Each pickpocket takes ~4 ticks
     const totalTicks = Math.floor(elapsedMs / TICK_MS);
     const actions = Math.floor(totalTicks / TICKS_PER_ACTION);
-    if (actions <= 0)
+    console.log(`[PocketRPG] simulateIdleThieving: elapsedMs=${elapsedMs}, totalTicks=${totalTicks}, actions=${actions}`);
+    if (actions <= 0) {
+        console.log('[PocketRPG] simulateIdleThieving: actions <= 0, returning null');
         return null;
+    }
     const xpGained = { thieving: task.npc.xp * actions };
     const coinsGained = (task.npc.coins || 0) * actions;
+    console.log(`[PocketRPG] simulateIdleThieving: npc=${task.npc.name}, xp=${xpGained.thieving}, coins=${coinsGained}`);
     return { xpGained, coinsGained, actions, skill: 'thieving', actionName: task.npc.name };
 }
 
@@ -15932,14 +15938,17 @@ function GameProvider({ children }) {
                     }
                     else if ((savedTask.type === 'agility' || savedTask.type === 'thieving') && sim.coinsGained > 0) {
                         // Agility/Thieving coins go to inventory (stackable), fall back to bank if full
+                        console.log(`[PocketRPG] Adding ${sim.coinsGained} coins from ${savedTask.type}`);
                         const coinsSlot = inv.findIndex(s => s && s.itemId === 'coins');
                         if (coinsSlot >= 0) {
                             inv[coinsSlot] = { ...inv[coinsSlot], quantity: inv[coinsSlot].quantity + sim.coinsGained };
+                            console.log(`[PocketRPG] Added coins to inventory slot ${coinsSlot}`);
                         }
                         else {
                             const emptySlot = inv.findIndex(s => s === null);
                             if (emptySlot >= 0) {
                                 inv[emptySlot] = { itemId: 'coins', quantity: sim.coinsGained };
+                                console.log(`[PocketRPG] Added coins to empty inventory slot ${emptySlot}`);
                             }
                             else {
                                 // Inventory full — bank overflow
@@ -15949,6 +15958,7 @@ function GameProvider({ children }) {
                                 else {
                                     b['coins'] = { itemId: 'coins', quantity: sim.coinsGained };
                                 }
+                                console.log(`[PocketRPG] Inventory full, added coins to bank`);
                             }
                         }
                     }

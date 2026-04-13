@@ -57,17 +57,27 @@ export function processThievingTick(thievingState) {
  * Returns { xpGained, coinsGained, actions, skill, actionName }
  */
 export function simulateIdleThieving(task, elapsedMs) {
-  if (!task || !task.npc) return null
+  if (!task || !task.npc) {
+    console.log('[PocketRPG] simulateIdleThieving: no task or npc', task)
+    return null
+  }
 
   const TICK_MS = 600
   const TICKS_PER_ACTION = 4 // Each pickpocket takes ~4 ticks
   const totalTicks = Math.floor(elapsedMs / TICK_MS)
   const actions = Math.floor(totalTicks / TICKS_PER_ACTION)
 
-  if (actions <= 0) return null
+  console.log(`[PocketRPG] simulateIdleThieving: elapsedMs=${elapsedMs}, totalTicks=${totalTicks}, actions=${actions}`)
+
+  if (actions <= 0) {
+    console.log('[PocketRPG] simulateIdleThieving: actions <= 0, returning null')
+    return null
+  }
 
   const xpGained = { thieving: task.npc.xp * actions }
   const coinsGained = (task.npc.coins || 0) * actions
+
+  console.log(`[PocketRPG] simulateIdleThieving: npc=${task.npc.name}, xp=${xpGained.thieving}, coins=${coinsGained}`)
 
   return { xpGained, coinsGained, actions, skill: 'thieving', actionName: task.npc.name }
 }
