@@ -413,7 +413,9 @@ function GameApp() {
                 <p style={{ fontSize: '11px', color: '#e8d5b0', textAlign: 'center', opacity: 0.5, marginTop: '4px' }}>
                   {idleResult.task.type === 'combat' ? `Fighting ${idleResult.task.monster?.name}` :
                    idleResult.task.type === 'skill' ? `Training ${idleResult.task.skill}` :
-                   idleResult.task.type === 'gather' ? idleResult.task.gatherTask?.name : ''}
+                   idleResult.task.type === 'gather' ? idleResult.task.gatherTask?.name :
+                   idleResult.task.type === 'thieving' ? `Pickpocketing ${idleResult.task.npc?.name}` :
+                   idleResult.task.type === 'agility' ? `Training agility` : ''}
                 </p>
               )}
             </div>
@@ -503,6 +505,23 @@ function GameApp() {
                       </div>
                     ) : null
                   })()}
+
+                  {/* Coins earned — agility/thieving specific */}
+                  {idleResult.coinsGained > 0 && (
+                    <div style={{ marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' }}>
+                      <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>💰 Coins</div>
+                      <div style={{ marginBottom: '4px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' }}>
+                          <span>Coins Earned</span>
+                          <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>🪙 {idleResult.coinsGained.toLocaleString()}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8d5b0', opacity: 0.45 }}>
+                          <span>/hr</span>
+                          <span style={{ fontFamily: 'monospace' }}>{perHr(idleResult.coinsGained)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Loot gained — drop table results only */}
                   {(() => {

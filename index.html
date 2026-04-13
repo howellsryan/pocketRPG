@@ -21113,7 +21113,9 @@ function GameApp() {
                         formatIdleTime(idleResult.elapsedMs)),
                     idleResult.task && (h("p", { style: { fontSize: '11px', color: '#e8d5b0', textAlign: 'center', opacity: 0.5, marginTop: '4px' } }, idleResult.task.type === 'combat' ? `Fighting ${idleResult.task.monster?.name}` :
                         idleResult.task.type === 'skill' ? `Training ${idleResult.task.skill}` :
-                            idleResult.task.type === 'gather' ? idleResult.task.gatherTask?.name : ''))),
+                            idleResult.task.type === 'gather' ? idleResult.task.gatherTask?.name :
+                                idleResult.task.type === 'thieving' ? `Pickpocketing ${idleResult.task.npc?.name}` :
+                                    idleResult.task.type === 'agility' ? `Training agility` : ''))),
                 h("div", { style: { padding: '16px', maxHeight: '55vh', overflowY: 'auto' } }, (() => {
                     const hrs = idleResult.elapsedMs / 3600000;
                     const perHr = (n) => hrs > 0 ? Math.round(n / hrs).toLocaleString() : '—';
@@ -21181,6 +21183,17 @@ function GameApp() {
                                         h("span", null, "/hr"),
                                         h("span", { style: { fontFamily: 'monospace' } }, perHr(idleResult.slayerXpGained))))))) : null;
                         })(),
+                        idleResult.coinsGained > 0 && (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' } },
+                            h("div", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' } }, "\uD83D\uDCB0 Coins"),
+                            h("div", { style: { marginBottom: '4px' } },
+                                h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' } },
+                                    h("span", null, "Coins Earned"),
+                                    h("span", { style: { color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' } },
+                                        "\uD83E\uDE99 ",
+                                        idleResult.coinsGained.toLocaleString())),
+                                h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8d5b0', opacity: 0.45 } },
+                                    h("span", null, "/hr"),
+                                    h("span", { style: { fontFamily: 'monospace' } }, perHr(idleResult.coinsGained)))))),
                         (() => {
                             const merged = {};
                             for (const src of [idleResult.lootGained, idleResult.lootBanked, idleResult.lootLost, idleResult.itemsGained]) {
