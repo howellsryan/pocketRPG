@@ -19,6 +19,7 @@ import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEqu
 import { startTicks, stopTicks, onTick } from './engine/tick.js'
 import { exportSave, importSave, snapshotToLocalStorage, restoreFromLocalStorage } from './db/saveload.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility } from './engine/idleEngine.js'
+import { simulateIdleThieving } from './engine/thieving.js'
 import { getLevelFromXP } from './engine/experience.js'
 
 function GameApp() {
@@ -123,6 +124,7 @@ function GameApp() {
           if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current)
           if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank)
           if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
+          if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
 
           // Always show the modal — even if sim is null (e.g. <1 action completed)
           if (!sim) {
@@ -152,6 +154,10 @@ function GameApp() {
           }
           // Apply agility coin reward directly to bank
           if (savedTask.type === 'agility' && sim.coinsGained > 0) {
+            updateBankDirect({ coins: sim.coinsGained })
+          }
+          // Apply thieving coin reward directly to bank
+          if (savedTask.type === 'thieving' && sim.coinsGained > 0) {
             updateBankDirect({ coins: sim.coinsGained })
           }
           // Deduct consumed materials from bank

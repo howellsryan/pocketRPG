@@ -197,6 +197,7 @@ const SHOPS = [
       { id: 'crafting_cape',    name: 'Crafting cape',    icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Crafting 99. Def +9 all styles.', requiresSkill: 'crafting',    requiresLevel: 99 },
       { id: 'herblore_cape',    name: 'Herblore cape',    icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Herblore 99. Def +9 all styles.', requiresSkill: 'herblore',    requiresLevel: 99 },
       { id: 'agility_cape',     name: 'Agility cape',     icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Agility 99. Def +9 all styles.', requiresSkill: 'agility',     requiresLevel: 99 },
+      { id: 'thieving_cape',    name: 'Thieving cape',    icon: '🎗️', price: 99000, stackable: false, desc: 'Requires Thieving 99. Def +9 all styles.', requiresSkill: 'thieving',    requiresLevel: 99 },
     ],
   },
 ]

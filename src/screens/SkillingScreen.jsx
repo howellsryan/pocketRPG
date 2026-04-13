@@ -13,9 +13,10 @@ import skillsData from '../data/skills.json'
 import itemsData from '../data/items.json'
 import AgilityScreen from './AgilityScreen.jsx'
 import SlayerScreen from './SlayerScreen.jsx'
+import ThievingScreen from './ThievingScreen.jsx'
 
-// Agility, Prayer, and Slayer are special skills shown here in the Skills tab
-const SPECIAL_SKILLS = ['agility', 'prayer', 'slayer']
+// Agility, Prayer, Thieving, and Slayer are special skills shown here in the Skills tab
+const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'slayer']
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0)
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS]
 
@@ -44,6 +45,16 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   if (selectedSkill === 'slayer') {
     return (
       <SlayerScreen
+        onBack={() => setSelectedSkill(null)}
+      />
+    )
+  }
+
+  // If thieving is selected, delegate to ThievingScreen
+  if (selectedSkill === 'thieving') {
+    return (
+      <ThievingScreen
+        initialNpcId={initialActionId}
         onBack={() => setSelectedSkill(null)}
       />
     )
