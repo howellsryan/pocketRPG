@@ -6744,7 +6744,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "defence": 85
+      "defence": 70
     },
     "shopValue": 0,
     "icon": "🪖"
@@ -6776,7 +6776,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "defence": 90
+      "defence": 70
     },
     "shopValue": 0,
     "icon": "🛡️"
@@ -6808,7 +6808,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "defence": 88
+      "defence": 70
     },
     "shopValue": 0,
     "icon": "🩳"
@@ -6840,7 +6840,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "mining": 85
+      "mining": 70
     },
     "shopValue": 0,
     "icon": "⛏️"
@@ -6872,7 +6872,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "woodcutting": 85
+      "woodcutting": 70
     },
     "shopValue": 0,
     "icon": "🪓"
@@ -6907,7 +6907,7 @@
       "magicDamage": 0
     },
     "requirements": {
-      "ranged": 85
+      "ranged": 75
     },
     "shopValue": 0,
     "icon": "🏹"
@@ -6942,8 +6942,8 @@
       "magicDamage": 0
     },
     "requirements": {
-      "attack": 85,
-      "strength": 85
+      "attack": 75,
+      "strength": 75
     },
     "shopValue": 0,
     "icon": "🗡️"
