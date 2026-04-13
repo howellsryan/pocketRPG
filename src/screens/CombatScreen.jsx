@@ -1348,7 +1348,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
                   setLootModal(null)
                   stopAndBack()
                 }}
-                class="py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm border border-[#333]"
+                style="background:#1a1a1a;border:1px solid #2a2a2a;color:#888"
+                class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
               >
                 Run Away
               </button>
@@ -1358,7 +1359,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
                   if (original) continueFight(original)
                   setLootModal(null)
                 }}
-                class="py-2.5 rounded-lg bg-[var(--color-blood)]/70 text-white font-semibold text-sm"
+                style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0"
+                class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
               >
                 Fight Again
               </button>
