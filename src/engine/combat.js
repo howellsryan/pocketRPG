@@ -49,7 +49,8 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     specialAttackQueued: false,  // flag to fire special attack on next available tick
     activeProtectionPrayer: null,  // one protection prayer, reset on each new fight
     activeCombatPrayer: null,      // one combat enhancing prayer, reset on each new fight
-    activePotions: {}              // { potionItemId: durationInTicks } - multiple different potion types allowed
+    activePotions: {},             // { potionItemId: durationInTicks } - multiple different potion types allowed
+    doubleKillCount: 0             // tracks how many times a requiresDoubleKill boss has been defeated
   }
 }
 
@@ -64,13 +65,62 @@ function randomFormSwitchThreshold(monster) {
 }
 
 /**
- * Pick a random form different from the current one.
+ * Pick the next form. If formCycleOrder is defined, cycles in order;
+ * otherwise picks a random form different from the current one.
  */
 function pickNextForm(monster) {
   const keys = Object.keys(monster.forms || {})
   if (keys.length <= 1) return monster.currentForm
+  if (monster.formCycleOrder && Array.isArray(monster.formCycleOrder)) {
+    const cycle = monster.formCycleOrder
+    const idx = cycle.indexOf(monster.currentForm)
+    return cycle[(idx + 1) % cycle.length]
+  }
   const others = keys.filter(k => k !== monster.currentForm)
   return others[Math.floor(Math.random() * others.length)]
+}
+
+/**
+ * Handle monster death. Supports double-kill requirement (e.g. Olm).
+ * Returns true if the monster truly died (combat ends), false if it regenerated (combat continues).
+ */
+function checkMonsterDeath(state, monster, events) {
+  if (monster.currentHP > 0) return false
+  monster.currentHP = 0
+
+  if (monster.requiresDoubleKill && (state.doubleKillCount || 0) < 1) {
+    // First kill — boss regenerates for round 2
+    state.doubleKillCount = (state.doubleKillCount || 0) + 1
+    monster.currentHP = monster.hitpoints
+    // Reset forms to initial state
+    if (monster.multiForm && monster.forms) {
+      const formKey = monster.initialForm || Object.keys(monster.forms)[0]
+      const form = monster.forms[formKey]
+      if (form) {
+        monster.currentForm = formKey
+        monster.formAttackCount = 0
+        monster.formSwitchThreshold = monster.randomFormEveryAttack ? 1 : randomFormSwitchThreshold(monster)
+        monster.attackStyle = form.attackStyle
+        monster.attackBonus = form.attackBonus ?? monster.attackBonus
+        monster.strengthBonus = form.strengthBonus ?? monster.strengthBonus
+        monster.defenceBonus = { ...form.defenceBonus }
+        monster.formMaxHit = form.maxHit
+      }
+    }
+    // 5-tick (~3s at 600ms/tick) pause before either side attacks
+    state.playerAttackTimer = 5
+    state.monsterAttackTimer = 5
+    state.specialAttackEnergy = 100  // Refill spec bar for second phase
+    events.push({ type: 'bossPhaseReset', killsCompleted: state.doubleKillCount, killsNeeded: 2, monsterName: monster.name })
+    return false
+  }
+
+  // True death
+  state.active = false
+  state.specialAttackEnergy = 100
+  state.loot = rollDrops(monster)
+  events.push({ type: 'monsterDeath', loot: state.loot, xpGained: { ...state.xpGained } })
+  return true
 }
 
 /**
@@ -152,17 +202,18 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
             }
             Object.assign(state, newState)
             state.specialAttackQueued = false
-            // Reset attack timer for next action
-            let speed = weaponSpeed
-            if (state.combatType === 'ranged' && state.stance === 'rapid') speed = Math.max(1, speed - 1)
-            state.playerAttackTimer = speed
-            // Check monster death
-            if (state.monster.currentHP <= 0) {
-              state.monster.currentHP = 0
-              state.active = false
-              state.specialAttackEnergy = 100
-              state.loot = rollDrops(state.monster)
-              events.push({ type: 'monsterDeath', loot: state.loot, xpGained: { ...state.xpGained } })
+            // If a boss phase reset occurred, timers are already set — don't override them
+            const hadPhaseReset = specEvents.some(ev => ev.type === 'bossPhaseReset')
+            if (!hadPhaseReset) {
+              let speed = weaponSpeed
+              if (state.combatType === 'ranged' && state.stance === 'rapid') speed = Math.max(1, speed - 1)
+              state.playerAttackTimer = speed
+            }
+            // Return if combat ended (death) or phase reset
+            if (!state.active || state.monster.currentHP <= 0) {
+              if (state.active && state.monster.currentHP <= 0) {
+                checkMonsterDeath(state, state.monster, events)
+              }
               return { combatState: state, events }
             }
             return { combatState: state, events }
@@ -211,8 +262,26 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
 
       const styleBonus = getRangedStyleBonus(state.stance)
       const effRng = effectiveRanged(boostedPlayerStats.ranged, 0, 1.0, styleBonus)
-      const maxHit = rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength)
-      const atkRoll = maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0)
+      let maxHit = rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength)
+      let atkRoll = maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0)
+
+      // Dragon Hunter Crossbow: +30% accuracy and damage vs dragon-type monsters
+      if (equippedWeapon?.dragonHunter && monster.isDragon) {
+        atkRoll = Math.floor(atkRoll * 1.3)
+        maxHit = Math.floor(maxHit * 1.3)
+      }
+
+      // Twisted Bow: scales accuracy and damage with target's magic level (OSRS formula, capped at M=250)
+      if (equippedWeapon?.scalesWithMagic) {
+        const M = Math.min(250, Math.max(1, monster.stats?.magic || 1))
+        const accInner = Math.floor(3 * M / 10) - 100
+        const dmgInner = Math.floor(3 * M / 10) - 140
+        const accMult = Math.min(140, Math.max(0, 140 + Math.floor((3 * M - 10) / 100) - Math.floor(accInner * accInner / 100))) / 100
+        const dmgMult = Math.min(250, Math.max(0, 250 + Math.floor((3 * M - 14) / 100) - Math.floor(dmgInner * dmgInner / 100))) / 100
+        atkRoll = Math.floor(atkRoll * accMult)
+        maxHit = Math.floor(maxHit * dmgMult)
+      }
+
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus.ranged || 0)
       const acc = hitChance(atkRoll, defRoll)
       damage = rollDamage(acc, maxHit)
@@ -333,14 +402,12 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     if (state.combatType === 'ranged' && state.stance === 'rapid') speed = Math.max(1, speed - 1)
     state.playerAttackTimer = speed
 
-    // Check monster death
+    // Check monster death (handles double-kill bosses like Olm)
     if (monster.currentHP <= 0) {
-      monster.currentHP = 0
-      state.active = false
-      state.specialAttackEnergy = 100  // regenerate spec bar on kill
-      // Roll drops
-      state.loot = rollDrops(monster)
-      events.push({ type: 'monsterDeath', loot: state.loot, xpGained: { ...state.xpGained } })
+      state.monster = monster
+      const died = checkMonsterDeath(state, monster, events)
+      if (died) return { combatState: state, events }
+      // Boss regenerated — skip monster attack this tick, timers already set
       return { combatState: state, events }
     }
   }
@@ -847,17 +914,49 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       break
     }
 
+    case 'slice_and_dice': {
+      // Dragon Claws — four cascading hits: 100%, 50%, 25%, and 25% of max hit
+      const styleBonuses = getMeleeStyleBonuses(state.stance)
+      const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
+      const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
+      const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
+      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      const h1 = rollDamage(acc, maxHit)
+      const h2 = Math.floor(h1 / 2)
+      const h3 = Math.floor(h2 / 2)
+      const h4 = Math.max(h1 > 0 ? 1 : 0, h3)
+      const hits = [h1, h2, h3, h4]
+      const rawTotal = h1 + h2 + h3 + h4
+      const actual = Math.min(rawTotal, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const xpSkills = _meleeXP(state.stance, actual)
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits, totalDamage: actual, specType: 'slice_and_dice', monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'lunge': {
+      // Dinh's Bulwark — guaranteed 40–64 damage, ignoring all combat calculations
+      const damage = randInt(40, 64)
+      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const xpSkills = _meleeXP(state.stance, actual)
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'lunge', monsterHP: monster.currentHP })
+      break
+    }
+
     default:
       return { combatState, events: [] }
   }
 
-  // Check monster death from special attack
+  // Check monster death from special attack (handles double-kill bosses like Olm)
   if (monster.currentHP <= 0) {
-    monster.currentHP = 0
-    state.active = false
-    state.specialAttackEnergy = 100
-    state.loot = rollDrops(monster)
-    events.push({ type: 'monsterDeath', loot: state.loot, xpGained: { ...state.xpGained } })
+    checkMonsterDeath(state, monster, events)
   }
 
   state.monster = monster
