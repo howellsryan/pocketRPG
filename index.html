@@ -887,12 +887,12 @@ const itemsData = {
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 10,
+      "meleeStrength": 8,
       "rangedStrength": 0,
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 2025,
+    "shopValue": 1000,
     "icon": "📿"
   },
   "amulet_of_power": {
@@ -902,21 +902,21 @@ const itemsData = {
     "slot": "neck",
     "stackable": false,
     "attackBonus": {
-      "stab": 6,
-      "slash": 6,
-      "crush": 6,
-      "magic": 6,
-      "ranged": 6
+      "stab": 2,
+      "slash": 2,
+      "crush": 2,
+      "magic": 2,
+      "ranged": 2
     },
     "defenceBonus": {
-      "stab": 6,
-      "slash": 6,
-      "crush": 6,
-      "magic": 6,
-      "ranged": 6
+      "stab": 2,
+      "slash": 2,
+      "crush": 2,
+      "magic": 2,
+      "ranged": 2
     },
     "otherBonus": {
-      "meleeStrength": 6,
+      "meleeStrength": 2,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -1880,64 +1880,6 @@ const itemsData = {
     },
     "requirements": {},
     "shopValue": 900,
-    "icon": "📿"
-  },
-  "amulet_of_strength": {
-    "id": "amulet_of_strength",
-    "name": "Amulet of strength",
-    "type": "armour",
-    "slot": "neck",
-    "stackable": false,
-    "attackBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
-    },
-    "defenceBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
-    },
-    "otherBonus": {
-      "meleeStrength": 8,
-      "rangedStrength": 0,
-      "magicDamage": 0
-    },
-    "requirements": {},
-    "shopValue": 1000,
-    "icon": "📿"
-  },
-  "amulet_of_power": {
-    "id": "amulet_of_power",
-    "name": "Amulet of power",
-    "type": "armour",
-    "slot": "neck",
-    "stackable": false,
-    "attackBonus": {
-      "stab": 2,
-      "slash": 2,
-      "crush": 2,
-      "magic": 2,
-      "ranged": 2
-    },
-    "defenceBonus": {
-      "stab": 2,
-      "slash": 2,
-      "crush": 2,
-      "magic": 2,
-      "ranged": 2
-    },
-    "otherBonus": {
-      "meleeStrength": 2,
-      "rangedStrength": 0,
-      "magicDamage": 0
-    },
-    "requirements": {},
-    "shopValue": 4725,
     "icon": "📿"
   },
   "amulet_of_glory": {
@@ -4628,33 +4570,33 @@ const itemsData = {
   "air_rune": {
     "id": "air_rune",
     "name": "Air rune",
-    "type": "resource",
+    "type": "rune",
     "stackable": true,
-    "shopValue": 17,
+    "shopValue": 3,
     "icon": "💨"
   },
   "water_rune": {
     "id": "water_rune",
     "name": "Water rune",
-    "type": "resource",
+    "type": "rune",
     "stackable": true,
-    "shopValue": 17,
+    "shopValue": 4,
     "icon": "💧"
   },
   "earth_rune": {
     "id": "earth_rune",
     "name": "Earth rune",
-    "type": "resource",
+    "type": "rune",
     "stackable": true,
-    "shopValue": 17,
-    "icon": "🌍"
+    "shopValue": 4,
+    "icon": "🪨"
   },
   "fire_rune": {
     "id": "fire_rune",
     "name": "Fire rune",
-    "type": "resource",
+    "type": "rune",
     "stackable": true,
-    "shopValue": 17,
+    "shopValue": 6,
     "icon": "🔥"
   },
   "mind_rune": {
@@ -4692,10 +4634,10 @@ const itemsData = {
   "nature_rune": {
     "id": "nature_rune",
     "name": "Nature rune",
-    "type": "resource",
+    "type": "rune",
     "stackable": true,
-    "shopValue": 200,
-    "icon": "🍀"
+    "shopValue": 100,
+    "icon": "🍃"
   },
   "law_rune": {
     "id": "law_rune",
@@ -4708,10 +4650,10 @@ const itemsData = {
   "cosmic_rune": {
     "id": "cosmic_rune",
     "name": "Cosmic rune",
-    "type": "resource",
+    "type": "rune",
     "stackable": true,
-    "shopValue": 200,
-    "icon": "✨"
+    "shopValue": 125,
+    "icon": "⭐"
   },
   "bronze_chainbody": {
     "id": "bronze_chainbody",
@@ -5285,10 +5227,28 @@ const itemsData = {
     "type": "armour",
     "slot": "cape",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "attack": 99 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 9,
+      "slash": 9,
+      "crush": 9,
+      "magic": 9,
+      "ranged": 9
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 99
+    },
     "shopValue": 99000,
     "icon": "🎗️"
   },
@@ -5298,10 +5258,28 @@ const itemsData = {
     "type": "armour",
     "slot": "cape",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "strength": 99 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 9,
+      "slash": 9,
+      "crush": 9,
+      "magic": 9,
+      "ranged": 9
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "strength": 99
+    },
     "shopValue": 99000,
     "icon": "🎗️"
   },
@@ -5311,10 +5289,28 @@ const itemsData = {
     "type": "armour",
     "slot": "cape",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "defence": 99 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 9,
+      "slash": 9,
+      "crush": 9,
+      "magic": 9,
+      "ranged": 9
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 99
+    },
     "shopValue": 99000,
     "icon": "🎗️"
   },
@@ -5324,10 +5320,28 @@ const itemsData = {
     "type": "armour",
     "slot": "cape",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "hitpoints": 99 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 9,
+      "slash": 9,
+      "crush": 9,
+      "magic": 9,
+      "ranged": 9
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "hitpoints": 99
+    },
     "shopValue": 99000,
     "icon": "🎗️"
   },
@@ -5337,10 +5351,28 @@ const itemsData = {
     "type": "armour",
     "slot": "cape",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "ranged": 99 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 9,
+      "slash": 9,
+      "crush": 9,
+      "magic": 9,
+      "ranged": 9
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 99
+    },
     "shopValue": 99000,
     "icon": "🎗️"
   },
@@ -5350,10 +5382,28 @@ const itemsData = {
     "type": "armour",
     "slot": "cape",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "magic": 99 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 9,
+      "slash": 9,
+      "crush": 9,
+      "magic": 9,
+      "ranged": 9
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 99
+    },
     "shopValue": 99000,
     "icon": "🎗️"
   },
@@ -5363,10 +5413,28 @@ const itemsData = {
     "type": "armour",
     "slot": "cape",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "prayer": 99 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 9,
+      "slash": 9,
+      "crush": 9,
+      "magic": 9,
+      "ranged": 9
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "prayer": 99
+    },
     "shopValue": 99000,
     "icon": "🎗️"
   },
@@ -5376,10 +5444,28 @@ const itemsData = {
     "type": "armour",
     "slot": "cape",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "mining": 99 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 9,
+      "slash": 9,
+      "crush": 9,
+      "magic": 9,
+      "ranged": 9
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "mining": 99
+    },
     "shopValue": 99000,
     "icon": "🎗️"
   },
@@ -5389,10 +5475,28 @@ const itemsData = {
     "type": "armour",
     "slot": "cape",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "woodcutting": 99 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 9,
+      "slash": 9,
+      "crush": 9,
+      "magic": 9,
+      "ranged": 9
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "woodcutting": 99
+    },
     "shopValue": 99000,
     "icon": "🎗️"
   },
@@ -5402,10 +5506,28 @@ const itemsData = {
     "type": "armour",
     "slot": "cape",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "fishing": 99 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 9,
+      "slash": 9,
+      "crush": 9,
+      "magic": 9,
+      "ranged": 9
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "fishing": 99
+    },
     "shopValue": 99000,
     "icon": "🎗️"
   },
@@ -5415,10 +5537,28 @@ const itemsData = {
     "type": "armour",
     "slot": "cape",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "smithing": 99 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 9,
+      "slash": 9,
+      "crush": 9,
+      "magic": 9,
+      "ranged": 9
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "smithing": 99
+    },
     "shopValue": 99000,
     "icon": "🎗️"
   },
@@ -5428,10 +5568,28 @@ const itemsData = {
     "type": "armour",
     "slot": "cape",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "cooking": 99 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 9,
+      "slash": 9,
+      "crush": 9,
+      "magic": 9,
+      "ranged": 9
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "cooking": 99
+    },
     "shopValue": 99000,
     "icon": "🎗️"
   },
@@ -5441,10 +5599,28 @@ const itemsData = {
     "type": "armour",
     "slot": "cape",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "fletching": 99 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 9,
+      "slash": 9,
+      "crush": 9,
+      "magic": 9,
+      "ranged": 9
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "fletching": 99
+    },
     "shopValue": 99000,
     "icon": "🎗️"
   },
@@ -5454,10 +5630,28 @@ const itemsData = {
     "type": "armour",
     "slot": "cape",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "crafting": 99 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 9,
+      "slash": 9,
+      "crush": 9,
+      "magic": 9,
+      "ranged": 9
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "crafting": 99
+    },
     "shopValue": 99000,
     "icon": "🎗️"
   },
@@ -5467,10 +5661,28 @@ const itemsData = {
     "type": "armour",
     "slot": "cape",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "herblore": 99 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 9,
+      "slash": 9,
+      "crush": 9,
+      "magic": 9,
+      "ranged": 9
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "herblore": 99
+    },
     "shopValue": 99000,
     "icon": "🎗️"
   },
@@ -5480,10 +5692,28 @@ const itemsData = {
     "type": "armour",
     "slot": "cape",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "agility": 99 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 9,
+      "slash": 9,
+      "crush": 9,
+      "magic": 9,
+      "ranged": 9
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "agility": 99
+    },
     "shopValue": 99000,
     "icon": "🎗️"
   },
@@ -5493,10 +5723,28 @@ const itemsData = {
     "type": "armour",
     "slot": "cape",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 9, "slash": 9, "crush": 9, "magic": 9, "ranged": 9 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "thieving": 99 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 9,
+      "slash": 9,
+      "crush": 9,
+      "magic": 9,
+      "ranged": 9
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "thieving": 99
+    },
     "shopValue": 99000,
     "icon": "🎗️"
   },
@@ -5509,10 +5757,28 @@ const itemsData = {
     "stackable": false,
     "attackSpeed": 4,
     "attackStyle": "slash",
-    "attackBonus": { "stab": 12, "slash": 46, "crush": -2, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "otherBonus": { "meleeStrength": 44, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "attack": 40 },
+    "attackBonus": {
+      "stab": 12,
+      "slash": 46,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 44,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 40
+    },
     "shopValue": 20928,
     "icon": "⚔️"
   },
@@ -5525,10 +5791,28 @@ const itemsData = {
     "stackable": false,
     "attackSpeed": 6,
     "attackStyle": "slash",
-    "attackBonus": { "stab": 0, "slash": 101, "crush": 80, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "otherBonus": { "meleeStrength": 80, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "attack": 40 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 101,
+      "crush": 80,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 80,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 40
+    },
     "shopValue": 37856,
     "icon": "🗡️"
   },
@@ -5538,10 +5822,28 @@ const itemsData = {
     "type": "armour",
     "slot": "legs",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": -21, "ranged": -11 },
-    "defenceBonus": { "stab": 51, "slash": 49, "crush": 47, "magic": -4, "ranged": 49 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "defence": 40 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -21,
+      "ranged": -11
+    },
+    "defenceBonus": {
+      "stab": 51,
+      "slash": 49,
+      "crush": 47,
+      "magic": -4,
+      "ranged": 49
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 40
+    },
     "shopValue": 38400,
     "icon": "🦵"
   },
@@ -5555,10 +5857,28 @@ const itemsData = {
     "attackSpeed": 5,
     "attackStyle": "ranged",
     "ammoType": "bolt",
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 90 },
-    "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 42, "magicDamage": 0 },
-    "requirements": { "ranged": 61 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 90
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 42,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 61
+    },
     "shopValue": 9408,
     "icon": "🏹"
   },
@@ -5587,10 +5907,28 @@ const itemsData = {
     "stackable": false,
     "attackSpeed": 6,
     "attackStyle": "slash",
-    "attackBonus": { "stab": 0, "slash": 132, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "otherBonus": { "meleeStrength": 132, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "attack": 75 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 132,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 132,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 75
+    },
     "specialAttack": {
       "type": "warstrike",
       "energyCost": 50,
@@ -5608,10 +5946,28 @@ const itemsData = {
     "stackable": false,
     "attackSpeed": 6,
     "attackStyle": "slash",
-    "attackBonus": { "stab": 0, "slash": 132, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "otherBonus": { "meleeStrength": 132, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "attack": 75 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 132,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 132,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 75
+    },
     "specialAttack": {
       "type": "judgement",
       "energyCost": 50,
@@ -5629,10 +5985,28 @@ const itemsData = {
     "stackable": false,
     "attackSpeed": 6,
     "attackStyle": "slash",
-    "attackBonus": { "stab": 0, "slash": 132, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "otherBonus": { "meleeStrength": 132, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "attack": 75 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 132,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 132,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 75
+    },
     "specialAttack": {
       "type": "healing_blade",
       "energyCost": 50,
@@ -5651,10 +6025,28 @@ const itemsData = {
     "stackable": false,
     "attackSpeed": 6,
     "attackStyle": "slash",
-    "attackBonus": { "stab": 0, "slash": 132, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "otherBonus": { "meleeStrength": 132, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "attack": 75 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 132,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 132,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 75
+    },
     "specialAttack": {
       "type": "freeze",
       "energyCost": 50,
@@ -5670,10 +6062,28 @@ const itemsData = {
     "type": "armour",
     "slot": "body",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": -30, "ranged": -15 },
-    "defenceBonus": { "stab": 122, "slash": 120, "crush": 112, "magic": -6, "ranged": 120 },
-    "otherBonus": { "meleeStrength": 4, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "defence": 65 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -30,
+      "ranged": -15
+    },
+    "defenceBonus": {
+      "stab": 122,
+      "slash": 120,
+      "crush": 112,
+      "magic": -6,
+      "ranged": 120
+    },
+    "otherBonus": {
+      "meleeStrength": 4,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 65
+    },
     "shopValue": 2500000,
     "icon": "🛡️"
   },
@@ -5683,10 +6093,28 @@ const itemsData = {
     "type": "armour",
     "slot": "legs",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": -21, "ranged": -11 },
-    "defenceBonus": { "stab": 85, "slash": 81, "crush": 83, "magic": -4, "ranged": 81 },
-    "otherBonus": { "meleeStrength": 2, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "defence": 65 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -21,
+      "ranged": -11
+    },
+    "defenceBonus": {
+      "stab": 85,
+      "slash": 81,
+      "crush": 83,
+      "magic": -4,
+      "ranged": 81
+    },
+    "otherBonus": {
+      "meleeStrength": 2,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 65
+    },
     "shopValue": 3000000,
     "icon": "🦵"
   },
@@ -5696,10 +6124,28 @@ const itemsData = {
     "type": "armour",
     "slot": "boots",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": -1, "ranged": -1 },
-    "defenceBonus": { "stab": 6, "slash": 6, "crush": 7, "magic": -1, "ranged": 6 },
-    "otherBonus": { "meleeStrength": 4, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "defence": 65 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -1,
+      "ranged": -1
+    },
+    "defenceBonus": {
+      "stab": 6,
+      "slash": 6,
+      "crush": 7,
+      "magic": -1,
+      "ranged": 6
+    },
+    "otherBonus": {
+      "meleeStrength": 4,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 65
+    },
     "shopValue": 200000,
     "icon": "👢"
   },
@@ -5717,10 +6163,29 @@ const itemsData = {
     "type": "armour",
     "slot": "head",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": -5, "ranged": 10 },
-    "defenceBonus": { "stab": 10, "slash": 9, "crush": 8, "magic": -5, "ranged": 11 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 1, "magicDamage": 0 },
-    "requirements": { "ranged": 70, "defence": 70 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -5,
+      "ranged": 10
+    },
+    "defenceBonus": {
+      "stab": 10,
+      "slash": 9,
+      "crush": 8,
+      "magic": -5,
+      "ranged": 11
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 1,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 70,
+      "defence": 70
+    },
     "shopValue": 1500000,
     "icon": "⛑️"
   },
@@ -5730,10 +6195,29 @@ const itemsData = {
     "type": "armour",
     "slot": "body",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": -15, "ranged": 33 },
-    "defenceBonus": { "stab": 33, "slash": 36, "crush": 20, "magic": -5, "ranged": 40 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 4, "magicDamage": 0 },
-    "requirements": { "ranged": 70, "defence": 70 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -15,
+      "ranged": 33
+    },
+    "defenceBonus": {
+      "stab": 33,
+      "slash": 36,
+      "crush": 20,
+      "magic": -5,
+      "ranged": 40
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 4,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 70,
+      "defence": 70
+    },
     "shopValue": 5000000,
     "icon": "🛡️"
   },
@@ -5743,10 +6227,29 @@ const itemsData = {
     "type": "armour",
     "slot": "legs",
     "stackable": false,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": -10, "ranged": 20 },
-    "defenceBonus": { "stab": 24, "slash": 26, "crush": 23, "magic": -5, "ranged": 28 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 3, "magicDamage": 0 },
-    "requirements": { "ranged": 70, "defence": 70 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -10,
+      "ranged": 20
+    },
+    "defenceBonus": {
+      "stab": 24,
+      "slash": 26,
+      "crush": 23,
+      "magic": -5,
+      "ranged": 28
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 3,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 70,
+      "defence": 70
+    },
     "shopValue": 4000000,
     "icon": "🦵"
   },
@@ -5767,10 +6270,28 @@ const itemsData = {
     "stackable": false,
     "attackSpeed": 4,
     "attackStyle": "slash",
-    "attackBonus": { "stab": 18, "slash": 38, "crush": -2, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "otherBonus": { "meleeStrength": 82, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "attack": 70 },
+    "attackBonus": {
+      "stab": 18,
+      "slash": 38,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 82,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 70
+    },
     "specialAttack": {
       "type": "lightning",
       "energyCost": 100,
@@ -5798,10 +6319,28 @@ const itemsData = {
     "attackSpeed": 5,
     "attackStyle": "ranged",
     "ammoType": "bolt",
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 100 },
-    "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 90, "magicDamage": 0 },
-    "requirements": { "ranged": 70 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 100
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 90,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 70
+    },
     "specialAttack": {
       "type": "pebble_shot",
       "energyCost": 40,
@@ -5819,10 +6358,28 @@ const itemsData = {
     "stackable": false,
     "attackSpeed": 4,
     "attackStyle": "stab",
-    "attackBonus": { "stab": 85, "slash": 65, "crush": 25, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 4, "slash": 4, "crush": 4, "magic": 0, "ranged": 0 },
-    "otherBonus": { "meleeStrength": 75, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "attack": 70 },
+    "attackBonus": {
+      "stab": 85,
+      "slash": 65,
+      "crush": 25,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 4,
+      "slash": 4,
+      "crush": 4,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 75,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 70
+    },
     "specialAttack": {
       "type": "shove",
       "energyCost": 25,
@@ -5840,10 +6397,29 @@ const itemsData = {
     "stackable": false,
     "attackSpeed": 5,
     "attackStyle": "magic",
-    "attackBonus": { "stab": 13, "slash": 45, "crush": 25, "magic": 17, "ranged": 0 },
-    "defenceBonus": { "stab": 3, "slash": 3, "crush": 3, "magic": 3, "ranged": 0 },
-    "otherBonus": { "meleeStrength": 84, "rangedStrength": 0, "magicDamage": 15 },
-    "requirements": { "attack": 75, "magic": 75 },
+    "attackBonus": {
+      "stab": 13,
+      "slash": 45,
+      "crush": 25,
+      "magic": 17,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 3,
+      "slash": 3,
+      "crush": 3,
+      "magic": 3,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 84,
+      "rangedStrength": 0,
+      "magicDamage": 15
+    },
+    "requirements": {
+      "attack": 75,
+      "magic": 75
+    },
     "shopValue": 1500000,
     "icon": "🪄"
   },
@@ -6576,54 +7152,6 @@ const itemsData = {
     "shopValue": 500,
     "icon": "🔱"
   },
-  "air_rune": {
-    "id": "air_rune",
-    "name": "Air rune",
-    "type": "rune",
-    "stackable": true,
-    "shopValue": 3,
-    "icon": "💨"
-  },
-  "water_rune": {
-    "id": "water_rune",
-    "name": "Water rune",
-    "type": "rune",
-    "stackable": true,
-    "shopValue": 4,
-    "icon": "💧"
-  },
-  "earth_rune": {
-    "id": "earth_rune",
-    "name": "Earth rune",
-    "type": "rune",
-    "stackable": true,
-    "shopValue": 4,
-    "icon": "🪨"
-  },
-  "fire_rune": {
-    "id": "fire_rune",
-    "name": "Fire rune",
-    "type": "rune",
-    "stackable": true,
-    "shopValue": 6,
-    "icon": "🔥"
-  },
-  "nature_rune": {
-    "id": "nature_rune",
-    "name": "Nature rune",
-    "type": "rune",
-    "stackable": true,
-    "shopValue": 100,
-    "icon": "🍃"
-  },
-  "cosmic_rune": {
-    "id": "cosmic_rune",
-    "name": "Cosmic rune",
-    "type": "rune",
-    "stackable": true,
-    "shopValue": 125,
-    "icon": "⭐"
-  },
   "astral_rune": {
     "id": "astral_rune",
     "name": "Astral rune",
@@ -6709,7 +7237,7 @@ const itemsData = {
       "energyCost": 50,
       "description": "Toxic Siphon: Guaranteed hit at 150% max hit. Heals you for half the damage dealt."
     },
-    "shopValue": 0,
+    "shopValue": 25000000,
     "icon": "🎋"
   },
   "trident_of_the_swamp": {
@@ -6746,7 +7274,7 @@ const itemsData = {
     "requirements": {
       "magic": 75
     },
-    "shopValue": 0,
+    "shopValue": 25000000,
     "icon": "🔱"
   },
   "serpentine_helm": {
@@ -6777,7 +7305,7 @@ const itemsData = {
     "requirements": {
       "defence": 75
     },
-    "shopValue": 0,
+    "shopValue": 25000000,
     "icon": "🪖"
   },
   "fire_cape": {
@@ -6847,7 +7375,7 @@ const itemsData = {
     "requirements": {
       "defence": 70
     },
-    "shopValue": 0,
+    "shopValue": 7500000,
     "icon": "🪖"
   },
   "crystal_plate_body": {
@@ -6879,7 +7407,7 @@ const itemsData = {
     "requirements": {
       "defence": 70
     },
-    "shopValue": 0,
+    "shopValue": 7500000,
     "icon": "🛡️"
   },
   "crystal_platelegs": {
@@ -6911,7 +7439,7 @@ const itemsData = {
     "requirements": {
       "defence": 70
     },
-    "shopValue": 0,
+    "shopValue": 7500000,
     "icon": "🩳"
   },
   "crystal_pickaxe": {
@@ -6943,7 +7471,7 @@ const itemsData = {
     "requirements": {
       "mining": 70
     },
-    "shopValue": 0,
+    "shopValue": 7500000,
     "icon": "⛏️"
   },
   "crystal_axe": {
@@ -6975,7 +7503,7 @@ const itemsData = {
     "requirements": {
       "woodcutting": 70
     },
-    "shopValue": 0,
+    "shopValue": 7500000,
     "icon": "🪓"
   },
   "bow_of_faerdhinen": {
@@ -7010,7 +7538,7 @@ const itemsData = {
     "requirements": {
       "ranged": 75
     },
-    "shopValue": 0,
+    "shopValue": 100000000,
     "icon": "🏹"
   },
   "blade_of_saeldor": {
@@ -7046,10 +7574,11 @@ const itemsData = {
       "attack": 75,
       "strength": 75
     },
-    "shopValue": 0,
+    "shopValue": 100000000,
     "icon": "🗡️"
   }
-};
+}
+;
 const monstersData = {
   "chicken": {
     "id": "chicken",
