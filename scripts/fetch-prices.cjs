@@ -127,8 +127,9 @@ async function updatePrices() {
     console.log(`\n✅ Updated ${path.relative(process.cwd(), ITEMS_JSON_PATH)}`);
 
   } catch (error) {
-    console.error('❌ Error fetching prices:', error.message);
-    process.exit(1);
+    console.warn('⚠️  Could not fetch OSRS prices:', error.message);
+    console.warn('    Using cached items.json prices instead.\n');
+    // Don't exit with error — allow build to continue with cached prices
   }
 }
 
