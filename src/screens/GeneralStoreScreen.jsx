@@ -233,10 +233,10 @@ export default function GeneralStoreScreen() {
                 <input
                   type="number"
                   min="1"
-                  max="9999"
+                  max={Number.MAX_SAFE_INTEGER}
                   value={buyQty}
                   onInput={(e) => {
-                    const val = Math.max(1, Math.min(9999, parseInt(e.target.value) || 1))
+                    const val = Math.max(1, Math.min(Number.MAX_SAFE_INTEGER, parseInt(e.target.value) || 1))
                     setBuyQty(val)
                   }}
                   style={{
@@ -253,7 +253,7 @@ export default function GeneralStoreScreen() {
                   }}
                 />
                 <button
-                  onClick={() => setBuyQty(Math.min(9999, buyQty + 1))}
+                  onClick={() => setBuyQty(Math.min(Number.MAX_SAFE_INTEGER, buyQty + 1))}
                   style={{
                     width: '32px',
                     height: '32px',

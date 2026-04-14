@@ -12,7 +12,7 @@
     "name": "Bones",
     "type": "resource",
     "stackable": false,
-    "shopValue": 2,
+    "shopValue": 5,
     "icon": "🦴"
   },
   "feathers": {
@@ -20,7 +20,7 @@
     "name": "Feathers",
     "type": "resource",
     "stackable": true,
-    "shopValue": 3,
+    "shopValue": 8,
     "icon": "🪶"
   },
   "cowhide": {
@@ -28,7 +28,7 @@
     "name": "Cowhide",
     "type": "resource",
     "stackable": false,
-    "shopValue": 41,
+    "shopValue": 111,
     "icon": "🐄"
   },
   "bronze_dagger": {
@@ -62,7 +62,7 @@
     "requirements": {
       "attack": 1
     },
-    "shopValue": 35,
+    "shopValue": 18,
     "icon": "🗡️"
   },
   "bronze_scimitar": {
@@ -96,7 +96,7 @@
     "requirements": {
       "attack": 1
     },
-    "shopValue": 64,
+    "shopValue": 31,
     "icon": "⚔️"
   },
   "iron_scimitar": {
@@ -130,7 +130,7 @@
     "requirements": {
       "attack": 1
     },
-    "shopValue": 168,
+    "shopValue": 80,
     "icon": "⚔️"
   },
   "steel_scimitar": {
@@ -164,7 +164,7 @@
     "requirements": {
       "attack": 5
     },
-    "shopValue": 640,
+    "shopValue": 190,
     "icon": "⚔️"
   },
   "mithril_scimitar": {
@@ -198,7 +198,7 @@
     "requirements": {
       "attack": 20
     },
-    "shopValue": 1560,
+    "shopValue": 626,
     "icon": "⚔️"
   },
   "adamant_scimitar": {
@@ -232,7 +232,7 @@
     "requirements": {
       "attack": 30
     },
-    "shopValue": 3840,
+    "shopValue": 2069,
     "icon": "⚔️"
   },
   "rune_scimitar": {
@@ -266,7 +266,7 @@
     "requirements": {
       "attack": 40
     },
-    "shopValue": 15360,
+    "shopValue": 16502,
     "icon": "⚔️"
   },
   "bronze_spear": {
@@ -552,7 +552,7 @@
     "requirements": {
       "defence": 1
     },
-    "shopValue": 84,
+    "shopValue": 76,
     "icon": "⛑️"
   },
   "iron_platebody": {
@@ -2261,7 +2261,7 @@
       "magicDamage": 0
     },
     "toolFor": "woodcutting",
-    "speedMultiplier": 1.0,
+    "speedMultiplier": 1,
     "requirements": {
       "woodcutting": 1
     },
@@ -2477,7 +2477,7 @@
       "magicDamage": 0
     },
     "toolFor": "mining",
-    "speedMultiplier": 1.0,
+    "speedMultiplier": 1,
     "requirements": {
       "mining": 1
     },
@@ -2725,7 +2725,7 @@
     "requirements": {
       "attack": 1
     },
-    "shopValue": 45,
+    "shopValue": 24,
     "icon": "🗡️"
   },
   "steel_dagger": {
@@ -2759,7 +2759,7 @@
     "requirements": {
       "attack": 5
     },
-    "shopValue": 175,
+    "shopValue": 41,
     "icon": "🗡️"
   },
   "mithril_dagger": {
@@ -2793,7 +2793,7 @@
     "requirements": {
       "attack": 20
     },
-    "shopValue": 585,
+    "shopValue": 128,
     "icon": "🗡️"
   },
   "adamant_dagger": {
@@ -2827,7 +2827,7 @@
     "requirements": {
       "attack": 30
     },
-    "shopValue": 1248,
+    "shopValue": 356,
     "icon": "🗡️"
   },
   "bronze_sword": {
@@ -3430,7 +3430,7 @@
     "requirements": {
       "defence": 5
     },
-    "shopValue": 400,
+    "shopValue": 316,
     "icon": "⛑️"
   },
   "steel_platebody": {
@@ -3554,7 +3554,7 @@
     "requirements": {
       "defence": 20
     },
-    "shopValue": 1040,
+    "shopValue": 982,
     "icon": "⛑️"
   },
   "mithril_platebody": {
@@ -3678,7 +3678,7 @@
     "requirements": {
       "defence": 30
     },
-    "shopValue": 2304,
+    "shopValue": 2715,
     "icon": "⛑️"
   },
   "adamant_platebody": {
@@ -4472,7 +4472,7 @@
     "name": "Air rune",
     "type": "rune",
     "stackable": true,
-    "shopValue": 3,
+    "shopValue": 7,
     "icon": "💨"
   },
   "water_rune": {
@@ -4480,7 +4480,7 @@
     "name": "Water rune",
     "type": "rune",
     "stackable": true,
-    "shopValue": 4,
+    "shopValue": 6,
     "icon": "💧"
   },
   "earth_rune": {
@@ -4488,7 +4488,7 @@
     "name": "Earth rune",
     "type": "rune",
     "stackable": true,
-    "shopValue": 4,
+    "shopValue": 8,
     "icon": "🪨"
   },
   "fire_rune": {
@@ -4496,7 +4496,7 @@
     "name": "Fire rune",
     "type": "rune",
     "stackable": true,
-    "shopValue": 6,
+    "shopValue": 7,
     "icon": "🔥"
   },
   "mind_rune": {
@@ -4504,7 +4504,7 @@
     "name": "Mind rune",
     "type": "resource",
     "stackable": true,
-    "shopValue": 17,
+    "shopValue": 11,
     "icon": "🧠"
   },
   "body_rune": {
@@ -4512,7 +4512,7 @@
     "name": "Body rune",
     "type": "resource",
     "stackable": true,
-    "shopValue": 16,
+    "shopValue": 12,
     "icon": "🫀"
   },
   "chaos_rune": {
@@ -4520,7 +4520,7 @@
     "name": "Chaos rune",
     "type": "resource",
     "stackable": true,
-    "shopValue": 140,
+    "shopValue": 163,
     "icon": "💜"
   },
   "death_rune": {
@@ -4552,7 +4552,7 @@
     "name": "Cosmic rune",
     "type": "rune",
     "stackable": true,
-    "shopValue": 125,
+    "shopValue": 201,
     "icon": "⭐"
   },
   "bronze_chainbody": {
@@ -4707,7 +4707,7 @@
     "requirements": {
       "defence": 40
     },
-    "shopValue": 20160,
+    "shopValue": 19765,
     "icon": "⛑️"
   },
   "rune_platebody": {
@@ -4871,7 +4871,7 @@
     "name": "Soul rune",
     "type": "resource",
     "stackable": true,
-    "shopValue": 250,
+    "shopValue": 264,
     "icon": "🔵"
   },
   "limpwurt_root": {
@@ -6937,7 +6937,7 @@
       "magicDamage": 0
     },
     "toolFor": "fishing",
-    "speedMultiplier": 1.0,
+    "speedMultiplier": 1,
     "requirements": {
       "fishing": 1
     },
