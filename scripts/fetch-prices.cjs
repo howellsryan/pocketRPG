@@ -55,57 +55,79 @@ async function updatePrices() {
   console.log('📥 Fetching OSRS prices and mapping from wiki API...\n');
 
   try {
-    // Fetch both mapping (ID → name) and prices (ID → price)
+    // Fetch both mapping (array of { id, name, ... }) and prices ({ data: { id: { high, low, ... } } })
     console.log('   Fetching item mapping and prices...');
     const mappingData = await fetchJSON(OSRS_MAPPING_API);
     const pricesData = await fetchJSON(OSRS_PRICES_API);
 
-    const osrsMapping = mappingData.data || {};  // ID → { name, examine, ... }
-    const osrsPrices = pricesData.data || {};     // ID → { price, ... }
+    // The /mapping endpoint returns a plain JSON array of item objects, NOT an object
+    // wrapped with `data`. Build an ID → name lookup from the array.
+    const mappingArray = Array.isArray(mappingData) ? mappingData : (mappingData.data || []);
+    const osrsNameById = {};
+    for (const entry of mappingArray) {
+      if (entry && entry.id != null && entry.name) {
+        osrsNameById[String(entry.id)] = entry.name;
+      }
+    }
 
-    console.log(`   Mapping has ${Object.keys(osrsMapping).length} items`);
+    // The /latest endpoint returns { data: { "<id>": { high, low, highTime, lowTime } } }
+    const osrsPrices = pricesData.data || {};
+
+    console.log(`   Mapping has ${mappingArray.length} items (${Object.keys(osrsNameById).length} with names)`);
     console.log(`   Prices has ${Object.keys(osrsPrices).length} items`);
 
     // Debug: Show a sample mapping entry
-    const firstMappingId = Object.keys(osrsMapping)[0];
-    if (firstMappingId) {
-      console.log(`   Sample mapping entry (ID ${firstMappingId}):`, JSON.stringify(osrsMapping[firstMappingId]).substring(0, 100));
+    if (mappingArray.length > 0) {
+      console.log(`   Sample mapping entry:`, JSON.stringify(mappingArray[0]).substring(0, 150));
     }
 
     // Debug: Show a sample price entry
     const firstPriceId = Object.keys(osrsPrices)[0];
     if (firstPriceId) {
-      console.log(`   Sample price entry (ID ${firstPriceId}):`, JSON.stringify(osrsPrices[firstPriceId]).substring(0, 100));
+      console.log(`   Sample price entry (ID ${firstPriceId}):`, JSON.stringify(osrsPrices[firstPriceId]).substring(0, 150));
     }
 
-    // Build a name-to-price lookup map
-    console.log(`📊 Building OSRS price lookup from ${Object.keys(osrsPrices).length} prices...\n`);
+    // Build a name-to-price lookup map by joining prices against mapping by ID.
+    console.log(`\n📊 Building OSRS price lookup from ${Object.keys(osrsPrices).length} prices...\n`);
 
     const osrsPricesByName = {};
     const osrsNames = []; // For debugging
-    let itemsWithoutName = 0;
+    let pricesWithoutMapping = 0;
+    let pricesWithoutValue = 0;
 
     Object.entries(osrsPrices).forEach(([id, priceData]) => {
-      // Get the item name from mapping using the ID
-      const itemMapping = osrsMapping[id];
-      if (!itemMapping) {
-        return; // No mapping for this ID
-      }
-
-      // Check what fields are available
-      const rawName = itemMapping.name || itemMapping.examine || id;
-      if (!itemMapping.name) {
-        itemsWithoutName++;
+      const itemName = osrsNameById[id];
+      if (!itemName) {
+        pricesWithoutMapping++;
         return;
       }
 
-      const name = normalizeName(itemMapping.name);
-      const price = priceData.price || 0;
+      // The GE API gives us `high` (latest buy) and `low` (latest sell) offers.
+      // Use the midpoint when both are present, otherwise fall back to whichever
+      // side we have. Items with no recent trades are skipped.
+      const high = typeof priceData.high === 'number' ? priceData.high : null;
+      const low = typeof priceData.low === 'number' ? priceData.low : null;
+      let price = 0;
+      if (high != null && low != null) {
+        price = Math.floor((high + low) / 2);
+      } else if (high != null) {
+        price = high;
+      } else if (low != null) {
+        price = low;
+      }
+
+      if (price <= 0) {
+        pricesWithoutValue++;
+        return;
+      }
+
+      const name = normalizeName(itemName);
       osrsPricesByName[name] = price;
       osrsNames.push(name);
     });
 
-    console.log(`   Items in mapping without 'name' field: ${itemsWithoutName}`);
+    console.log(`   Price entries with no mapping match: ${pricesWithoutMapping}`);
+    console.log(`   Price entries with no high/low value: ${pricesWithoutValue}`);
 
     // Debug: Show sample of OSRS names
     console.log(`📋 Sample OSRS item names (first 10):`);
