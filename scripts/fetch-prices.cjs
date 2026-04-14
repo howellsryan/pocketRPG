@@ -76,22 +76,8 @@ async function updatePrices() {
     console.log(`   Mapping has ${mappingArray.length} items (${Object.keys(osrsNameById).length} with names)`);
     console.log(`   Prices has ${Object.keys(osrsPrices).length} items`);
 
-    // Debug: Show a sample mapping entry
-    if (mappingArray.length > 0) {
-      console.log(`   Sample mapping entry:`, JSON.stringify(mappingArray[0]).substring(0, 150));
-    }
-
-    // Debug: Show a sample price entry
-    const firstPriceId = Object.keys(osrsPrices)[0];
-    if (firstPriceId) {
-      console.log(`   Sample price entry (ID ${firstPriceId}):`, JSON.stringify(osrsPrices[firstPriceId]).substring(0, 150));
-    }
-
     // Build a name-to-price lookup map by joining prices against mapping by ID.
-    console.log(`\n📊 Building OSRS price lookup from ${Object.keys(osrsPrices).length} prices...\n`);
-
     const osrsPricesByName = {};
-    const osrsNames = []; // For debugging
     let pricesWithoutMapping = 0;
     let pricesWithoutValue = 0;
 
@@ -121,18 +107,11 @@ async function updatePrices() {
         return;
       }
 
-      const name = normalizeName(itemName);
-      osrsPricesByName[name] = price;
-      osrsNames.push(name);
+      osrsPricesByName[normalizeName(itemName)] = price;
     });
 
     console.log(`   Price entries with no mapping match: ${pricesWithoutMapping}`);
     console.log(`   Price entries with no high/low value: ${pricesWithoutValue}`);
-
-    // Debug: Show sample of OSRS names
-    console.log(`📋 Sample OSRS item names (first 10):`);
-    osrsNames.slice(0, 10).forEach(name => console.log(`     - "${name}"`));
-    console.log('');
 
     // Load our items.json (source of truth)
     const itemsJSON = fs.readFileSync(ITEMS_JSON_PATH, 'utf-8');
@@ -140,15 +119,9 @@ async function updatePrices() {
 
     console.log(`✅ Loaded ${Object.keys(itemsData).length} items from items.json\n`);
 
-    // Debug: Show what we're looking for
-    console.log(`🔍 Sample items we're looking for (first 10):`);
-    const ourItems = Object.entries(itemsData).filter(([_, item]) => !item.isUntradeable && item.type !== 'currency');
-    ourItems.slice(0, 10).forEach(([_, item]) => console.log(`     - "${normalizeName(item.name)}"`));
-    console.log(`\n🔍 Matching items and updating prices...\n`);
-
     let updated = 0;
-    let notFound = [];
-    const changes = [];
+    let changed = 0;
+    const notFound = [];
 
     // Loop through OUR items.json (single source of truth)
     // and try to find matches in OSRS prices
@@ -166,48 +139,23 @@ async function updatePrices() {
         const newPrice = Math.floor(osrsPrice);
         item.shopValue = newPrice;
         updated++;
-
         if (oldPrice !== newPrice) {
-          changes.push({
-            name: item.name,
-            old: oldPrice,
-            new: newPrice
-          });
+          changed++;
         }
-      } else if (!item.isUntradeable && item.type !== 'currency') {
+      } else {
         notFound.push(item.name);
-        // Debug: Show first few items not found with their normalized names
-        if (notFound.length <= 5) {
-          console.log(`   ❌ Not found: "${item.name}" (normalized: "${normalized}")`);
-        }
       }
     });
 
-    // Print changes
-    if (changes.length > 0) {
-      console.log('💰 Price Updates:\n');
-      changes.slice(0, 20).forEach(change => {
-        const diff = change.new - change.old;
-        const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
-        console.log(`  ${change.name}`);
-        console.log(`    ${change.old} → ${change.new} (${diffStr})\n`);
-      });
-      if (changes.length > 20) {
-        console.log(`  ... and ${changes.length - 20} more items\n`);
-      }
-    }
-
     console.log(`\n📊 Summary:`);
     console.log(`  ✅ Updated: ${updated} items`);
-    console.log(`  📝 Price changes: ${changes.length} items`);
+    console.log(`  📝 Price changes: ${changed} items`);
 
     if (notFound.length > 0) {
       console.log(`  ⚠️  Not found in OSRS: ${notFound.length} items`);
       console.log(`\n    These items kept their current prices:`);
-      notFound.slice(0, 10).forEach(name => console.log(`      - ${name}`));
-      if (notFound.length > 10) {
-        console.log(`      ... and ${notFound.length - 10} more`);
-      }
+      notFound.sort((a, b) => a.localeCompare(b));
+      notFound.forEach(name => console.log(`      - ${name}`));
     }
 
     // Write back to items.json
