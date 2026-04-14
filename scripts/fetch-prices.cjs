@@ -68,16 +68,29 @@ async function updatePrices() {
 
     const osrsPricesByName = {};
     const osrsNames = []; // For debugging
+    let itemsWithoutName = 0;
+
     Object.entries(osrsPrices).forEach(([id, priceData]) => {
       // Get the item name from mapping using the ID
       const itemMapping = osrsMapping[id];
-      if (itemMapping && itemMapping.name) {
-        const name = normalizeName(itemMapping.name);
-        const price = priceData.price || 0;
-        osrsPricesByName[name] = price;
-        osrsNames.push(name);
+      if (!itemMapping) {
+        return; // No mapping for this ID
       }
+
+      // Check what fields are available
+      const rawName = itemMapping.name || itemMapping.examine || id;
+      if (!itemMapping.name) {
+        itemsWithoutName++;
+        return;
+      }
+
+      const name = normalizeName(itemMapping.name);
+      const price = priceData.price || 0;
+      osrsPricesByName[name] = price;
+      osrsNames.push(name);
     });
+
+    console.log(`   Items in mapping without 'name' field: ${itemsWithoutName}`);
 
     // Debug: Show sample of OSRS names
     console.log(`📋 Sample OSRS item names (first 10):`);
@@ -126,6 +139,10 @@ async function updatePrices() {
         }
       } else if (!item.isUntradeable && item.type !== 'currency') {
         notFound.push(item.name);
+        // Debug: Show first few items not found with their normalized names
+        if (notFound.length <= 5) {
+          console.log(`   ❌ Not found: "${item.name}" (normalized: "${normalized}")`);
+        }
       }
     });
 
