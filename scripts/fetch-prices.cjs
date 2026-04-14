@@ -13,8 +13,9 @@ const fs = require('fs');
 const https = require('https');
 const path = require('path');
 
-// OSRS Wiki Prices API endpoint
+// OSRS Wiki Prices API endpoints
 // Docs: https://prices.runescape.wiki/api/v1/osrs/mapping
+const OSRS_MAPPING_API = 'https://prices.runescape.wiki/api/v1/osrs/mapping';
 const OSRS_PRICES_API = 'https://prices.runescape.wiki/api/v1/osrs/latest';
 const ITEMS_JSON_PATH = path.join(__dirname, '../src/data/items.json');
 
@@ -51,20 +52,29 @@ function normalizeName(name) {
 }
 
 async function updatePrices() {
-  console.log('📥 Fetching OSRS prices from wiki API...\n');
+  console.log('📥 Fetching OSRS prices and mapping from wiki API...\n');
 
   try {
-    const osrsData = await fetchJSON(OSRS_PRICES_API);
-    const osrsItems = osrsData.data || {};
+    // Fetch both mapping (ID → name) and prices (ID → price)
+    console.log('   Fetching item mapping and prices...');
+    const mappingData = await fetchJSON(OSRS_MAPPING_API);
+    const pricesData = await fetchJSON(OSRS_PRICES_API);
 
-    // Build a name-to-price lookup map from OSRS data
-    console.log(`📊 Building OSRS price lookup from ${Object.keys(osrsItems).length} items...\n`);
+    const osrsMapping = mappingData.data || {};  // ID → { name, examine, ... }
+    const osrsPrices = pricesData.data || {};     // ID → { price, ... }
+
+    // Build a name-to-price lookup map
+    console.log(`📊 Building OSRS price lookup from ${Object.keys(osrsPrices).length} prices...\n`);
 
     const osrsPricesByName = {};
-    Object.entries(osrsItems).forEach(([id, itemData]) => {
-      const name = normalizeName(itemData.name || '');
-      const price = itemData.price || 0;
-      osrsPricesByName[name] = price;
+    Object.entries(osrsPrices).forEach(([id, priceData]) => {
+      // Get the item name from mapping using the ID
+      const itemMapping = osrsMapping[id];
+      if (itemMapping && itemMapping.name) {
+        const name = normalizeName(itemMapping.name);
+        const price = priceData.price || 0;
+        osrsPricesByName[name] = price;
+      }
     });
 
     // Load our items.json (source of truth)
