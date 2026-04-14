@@ -6807,7 +6807,8 @@ const itemsData = {
     },
     "requirements": {},
     "shopValue": 0,
-    "icon": "🔥"
+    "icon": "🔥",
+    "isUntradeable": true
   },
   "crystal_shards": {
     "id": "crystal_shards",
@@ -20637,10 +20638,10 @@ function GeneralStoreScreen() {
     const [selectedItem, setSelectedItem] = useState(null); // item being purchased
     const [buyQty, setBuyQty] = useState(1);
     const coins = countItem(inventory, 'coins');
-    // Get all purchasable items (items with shopValue > 0)
+    // Get all purchasable items (items with shopValue > 0 and not untradeable)
     const getAvailableItems = () => {
         return Object.entries(itemsData)
-            .filter(([_, item]) => item.shopValue > 0)
+            .filter(([_, item]) => item.shopValue > 0 && !item.isUntradeable)
             .map(([id, item]) => ({ ...item, id }));
     };
     // Search items by name
