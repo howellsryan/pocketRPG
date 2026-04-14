@@ -63,6 +63,21 @@ async function updatePrices() {
     const osrsMapping = mappingData.data || {};  // ID → { name, examine, ... }
     const osrsPrices = pricesData.data || {};     // ID → { price, ... }
 
+    console.log(`   Mapping has ${Object.keys(osrsMapping).length} items`);
+    console.log(`   Prices has ${Object.keys(osrsPrices).length} items`);
+
+    // Debug: Show a sample mapping entry
+    const firstMappingId = Object.keys(osrsMapping)[0];
+    if (firstMappingId) {
+      console.log(`   Sample mapping entry (ID ${firstMappingId}):`, JSON.stringify(osrsMapping[firstMappingId]).substring(0, 100));
+    }
+
+    // Debug: Show a sample price entry
+    const firstPriceId = Object.keys(osrsPrices)[0];
+    if (firstPriceId) {
+      console.log(`   Sample price entry (ID ${firstPriceId}):`, JSON.stringify(osrsPrices[firstPriceId]).substring(0, 100));
+    }
+
     // Build a name-to-price lookup map
     console.log(`📊 Building OSRS price lookup from ${Object.keys(osrsPrices).length} prices...\n`);
 
