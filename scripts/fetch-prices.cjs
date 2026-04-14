@@ -13,19 +13,31 @@ const fs = require('fs');
 const https = require('https');
 const path = require('path');
 
-const OSRS_PRICES_API = 'https://prices.runescape.wiki/osrs/api/v2/latest';
+// OSRS Wiki Prices API endpoint
+// Docs: https://prices.runescape.wiki/osrs/
+const OSRS_PRICES_API = 'https://prices.runescape.wiki/api/v2/latest';
 const ITEMS_JSON_PATH = path.join(__dirname, '../src/data/items.json');
 
 async function fetchJSON(url) {
   return new Promise((resolve, reject) => {
-    https.get(url, (res) => {
+    const options = {
+      headers: {
+        'User-Agent': 'PocketRPG (https://github.com/howellsryan/pocketRPG)'
+      }
+    };
+
+    https.get(url, options, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
         try {
+          if (res.statusCode !== 200) {
+            reject(new Error(`HTTP ${res.statusCode}: ${data.substring(0, 100)}`));
+            return;
+          }
           resolve(JSON.parse(data));
         } catch (e) {
-          reject(e);
+          reject(new Error(`JSON Parse Error: ${e.message}. Response: ${data.substring(0, 100)}`));
         }
       });
     }).on('error', reject);
