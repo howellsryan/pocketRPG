@@ -12,10 +12,10 @@ export default function GeneralStoreScreen() {
 
   const coins = countItem(inventory, 'coins')
 
-  // Get all purchasable items (items with shopValue > 0 and not untradeable)
+  // Get all purchasable items (all tradeable items)
   const getAvailableItems = () => {
     return Object.entries(itemsData)
-      .filter(([_, item]) => item.shopValue > 0 && !item.isUntradeable)
+      .filter(([_, item]) => !item.isUntradeable)
       .map(([id, item]) => ({ ...item, id }))
   }
 
