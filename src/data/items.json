@@ -18,7 +18,7 @@
   },
   "feathers": {
     "id": "feathers",
-    "name": "Feathers",
+    "name": "Feather",
     "type": "resource",
     "stackable": true,
     "shopValue": 8,
@@ -984,6 +984,7 @@
     "name": "Burnt food",
     "type": "junk",
     "stackable": false,
+    "isUntradeable": true,
     "shopValue": 1,
     "icon": "🔥"
   },
@@ -1205,7 +1206,7 @@
   },
   "nettles": {
     "id": "nettles",
-    "name": "Nettles",
+    "name": "Nettle",
     "type": "resource",
     "stackable": false,
     "shopValue": 1,
@@ -4150,7 +4151,7 @@
   },
   "bronze_bolts": {
     "id": "bronze_bolts",
-    "name": "Bronze bolts",
+    "name": "Bronze bolt",
     "type": "ammo",
     "slot": "ammo",
     "stackable": true,
@@ -4165,7 +4166,7 @@
   },
   "iron_bolts": {
     "id": "iron_bolts",
-    "name": "Iron bolts",
+    "name": "Iron bolt",
     "type": "ammo",
     "slot": "ammo",
     "stackable": true,
@@ -4180,7 +4181,7 @@
   },
   "steel_bolts": {
     "id": "steel_bolts",
-    "name": "Steel bolts",
+    "name": "Steel bolt",
     "type": "ammo",
     "slot": "ammo",
     "stackable": true,
@@ -4195,7 +4196,7 @@
   },
   "mithril_bolts": {
     "id": "mithril_bolts",
-    "name": "Mithril bolts",
+    "name": "Mithril bolt",
     "type": "ammo",
     "slot": "ammo",
     "stackable": true,
@@ -4210,7 +4211,7 @@
   },
   "adamant_bolts": {
     "id": "adamant_bolts",
-    "name": "Adamant bolts",
+    "name": "Adamant bolt",
     "type": "ammo",
     "slot": "ammo",
     "stackable": true,
@@ -4225,7 +4226,7 @@
   },
   "rune_bolts": {
     "id": "rune_bolts",
-    "name": "Rune bolts",
+    "name": "Rune bolt",
     "type": "ammo",
     "slot": "ammo",
     "stackable": true,
@@ -4240,7 +4241,7 @@
   },
   "bronze_bolt_heads": {
     "id": "bronze_bolt_heads",
-    "name": "Bronze bolt heads",
+    "name": "Bronze bolt head",
     "type": "resource",
     "stackable": true,
     "shopValue": 1,
@@ -4248,7 +4249,7 @@
   },
   "iron_bolt_heads": {
     "id": "iron_bolt_heads",
-    "name": "Iron bolt heads",
+    "name": "Iron bolt head",
     "type": "resource",
     "stackable": true,
     "shopValue": 2,
@@ -4256,7 +4257,7 @@
   },
   "steel_bolt_heads": {
     "id": "steel_bolt_heads",
-    "name": "Steel bolt heads",
+    "name": "Steel bolt head",
     "type": "resource",
     "stackable": true,
     "shopValue": 4,
@@ -4264,7 +4265,7 @@
   },
   "mithril_bolt_heads": {
     "id": "mithril_bolt_heads",
-    "name": "Mithril bolt heads",
+    "name": "Mithril bolt head",
     "type": "resource",
     "stackable": true,
     "shopValue": 7,
@@ -4272,7 +4273,7 @@
   },
   "adamant_bolt_heads": {
     "id": "adamant_bolt_heads",
-    "name": "Adamant bolt heads",
+    "name": "Adamant bolt head",
     "type": "resource",
     "stackable": true,
     "shopValue": 10,
@@ -4280,7 +4281,7 @@
   },
   "rune_bolt_heads": {
     "id": "rune_bolt_heads",
-    "name": "Rune bolt heads",
+    "name": "Rune bolt head",
     "type": "resource",
     "stackable": true,
     "shopValue": 35,
@@ -5128,6 +5129,7 @@
     "type": "armour",
     "slot": "cape",
     "stackable": false,
+    "isUntradeable": true,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -5159,6 +5161,7 @@
     "type": "armour",
     "slot": "cape",
     "stackable": false,
+    "isUntradeable": true,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -5190,6 +5193,7 @@
     "type": "armour",
     "slot": "cape",
     "stackable": false,
+    "isUntradeable": true,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -5221,6 +5225,7 @@
     "type": "armour",
     "slot": "cape",
     "stackable": false,
+    "isUntradeable": true,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -5252,6 +5257,7 @@
     "type": "armour",
     "slot": "cape",
     "stackable": false,
+    "isUntradeable": true,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -5283,6 +5289,7 @@
     "type": "armour",
     "slot": "cape",
     "stackable": false,
+    "isUntradeable": true,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -5314,6 +5321,7 @@
     "type": "armour",
     "slot": "cape",
     "stackable": false,
+    "isUntradeable": true,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -5345,6 +5353,7 @@
     "type": "armour",
     "slot": "cape",
     "stackable": false,
+    "isUntradeable": true,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -5376,6 +5385,7 @@
     "type": "armour",
     "slot": "cape",
     "stackable": false,
+    "isUntradeable": true,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -5407,6 +5417,7 @@
     "type": "armour",
     "slot": "cape",
     "stackable": false,
+    "isUntradeable": true,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -5438,6 +5449,7 @@
     "type": "armour",
     "slot": "cape",
     "stackable": false,
+    "isUntradeable": true,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -5469,6 +5481,7 @@
     "type": "armour",
     "slot": "cape",
     "stackable": false,
+    "isUntradeable": true,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -5500,6 +5513,7 @@
     "type": "armour",
     "slot": "cape",
     "stackable": false,
+    "isUntradeable": true,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -5531,6 +5545,7 @@
     "type": "armour",
     "slot": "cape",
     "stackable": false,
+    "isUntradeable": true,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -5562,6 +5577,7 @@
     "type": "armour",
     "slot": "cape",
     "stackable": false,
+    "isUntradeable": true,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -5593,6 +5609,7 @@
     "type": "armour",
     "slot": "cape",
     "stackable": false,
+    "isUntradeable": true,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -5624,6 +5641,7 @@
     "type": "armour",
     "slot": "cape",
     "stackable": false,
+    "isUntradeable": true,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -5788,6 +5806,7 @@
     "name": "Godsword shard",
     "type": "resource",
     "stackable": false,
+    "isUntradeable": true,
     "shopValue": 65000,
     "icon": "🔩"
   },
@@ -6334,7 +6353,7 @@
   },
   "dagganoth_bones": {
     "id": "dagganoth_bones",
-    "name": "Dagganoth bones",
+    "name": "Dagannoth bones",
     "type": "resource",
     "stackable": false,
     "shopValue": 12500,
@@ -7088,7 +7107,7 @@
   },
   "planks": {
     "id": "planks",
-    "name": "Planks",
+    "name": "Plank",
     "type": "resource",
     "stackable": true,
     "shopValue": 150,

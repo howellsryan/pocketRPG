@@ -2748,7 +2748,7 @@
   },
   "dagganoth_rex": {
     "id": "dagganoth_rex",
-    "name": "Dagganoth Rex",
+    "name": "Dagannoth Rex",
     "boss": true,
     "combatLevel": 303,
     "hitpoints": 150,
@@ -2886,7 +2886,7 @@
   },
   "dagganoth_prime": {
     "id": "dagganoth_prime",
-    "name": "Dagganoth Prime",
+    "name": "Dagannoth Prime",
     "boss": true,
     "combatLevel": 303,
     "hitpoints": 150,
@@ -3019,7 +3019,7 @@
   },
   "dagganoth_supreme": {
     "id": "dagganoth_supreme",
-    "name": "Dagganoth Supreme",
+    "name": "Dagannoth Supreme",
     "boss": true,
     "combatLevel": 303,
     "hitpoints": 150,
