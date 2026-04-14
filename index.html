@@ -5177,7 +5177,7 @@ const itemsData = {
     "twoHanded": false,
     "stackable": false,
     "attackSpeed": 4,
-    "attackStyle": "stab",
+    "attackStyle": "slash",
     "attackBonus": {
       "stab": 40,
       "slash": 25,
@@ -10384,7 +10384,7 @@ const monstersData = {
       "magic": 300,
       "ranged": 300
     },
-    "attackSpeed": 3,
+    "attackSpeed": 5,
     "attackStyle": "ranged",
     "attackBonus": 50,
     "strengthBonus": 50,
@@ -10517,12 +10517,12 @@ const monstersData = {
       {
         "itemId": "toxic_blowpipe",
         "quantity": 1,
-        "chance": 0.004
+        "chance": 1
       },
       {
         "itemId": "trident_of_the_swamp",
         "quantity": 1,
-        "chance": 0.004
+        "chance": 1
       },
       {
         "itemId": "serpentine_helm",
@@ -18344,9 +18344,11 @@ function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange })
         const combatType = getCombatType(equipment, itemsData);
         const spell = combatType === 'magic' && activeCombatSpell ? spellsData[activeCombatSpell.id] : null;
         const state = createCombatState(monster, combatType, combatStance, spell);
-        // Reset special attack energy on kill; preserve active potions so they last their full 5 minutes
+        // Reset special attack energy on kill; preserve active potions and prayers so they last their full duration
         state.specialAttackEnergy = 100;
         state.activePotions = combatRef.current ? { ...combatRef.current.activePotions } : {};
+        state.activeProtectionPrayer = combatRef.current?.activeProtectionPrayer ?? null;
+        state.activeCombatPrayer = combatRef.current?.activeCombatPrayer ?? null;
         setCombat(state);
         setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot, spell: spell || null });
     };
@@ -18755,7 +18757,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange })
                 (() => {
                     const weaponEntry = equipment?.weapon;
                     const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null;
-                    const isMagic = weapon && (weapon.attackStyle === 'magic' || weapon.attackBonus?.magic > 0);
+                    const isMagic = weapon?.attackStyle === 'magic';
                     const magicLevel = getLevelFromXP(stats.magic?.xp || 0);
                     return (h("button", { onClick: () => isMagic && setShowSpellModal(true), disabled: !isMagic, class: `py-2.5 rounded-lg font-semibold text-sm transition-opacity ${isMagic ? 'active:opacity-80' : 'opacity-40 cursor-default'}`, style: isMagic ? 'background:linear-gradient(135deg,#1a2a3a,#2a3a5a);border:1px solid rgba(100,150,200,0.35);color:#a8d8ff' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888' }, "\uD83D\uDD2E Cast"));
                 })(),

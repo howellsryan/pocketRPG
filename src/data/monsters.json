@@ -3333,7 +3333,7 @@
       "magic": 300,
       "ranged": 300
     },
-    "attackSpeed": 3,
+    "attackSpeed": 5,
     "attackStyle": "ranged",
     "attackBonus": 50,
     "strengthBonus": 50,
@@ -3466,12 +3466,12 @@
       {
         "itemId": "toxic_blowpipe",
         "quantity": 1,
-        "chance": 0.004
+        "chance": 1
       },
       {
         "itemId": "trident_of_the_swamp",
         "quantity": 1,
-        "chance": 0.004
+        "chance": 1
       },
       {
         "itemId": "serpentine_helm",

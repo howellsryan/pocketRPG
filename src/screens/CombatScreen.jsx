@@ -438,9 +438,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
     const combatType = getCombatType(equipment, itemsData)
     const spell = combatType === 'magic' && activeCombatSpell ? spellsData[activeCombatSpell.id] : null
     const state = createCombatState(monster, combatType, combatStance, spell)
-    // Reset special attack energy on kill; preserve active potions so they last their full 5 minutes
+    // Reset special attack energy on kill; preserve active potions and prayers so they last their full duration
     state.specialAttackEnergy = 100
     state.activePotions = combatRef.current ? { ...combatRef.current.activePotions } : {}
+    state.activeProtectionPrayer = combatRef.current?.activeProtectionPrayer ?? null
+    state.activeCombatPrayer = combatRef.current?.activeCombatPrayer ?? null
     setCombat(state)
     setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot, spell: spell || null })
   }
@@ -987,7 +989,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
               {(() => {
                 const weaponEntry = equipment?.weapon
                 const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
-                const isMagic = weapon && (weapon.attackStyle === 'magic' || weapon.attackBonus?.magic > 0)
+                const isMagic = weapon?.attackStyle === 'magic'
                 const magicLevel = getLevelFromXP(stats.magic?.xp || 0)
                 return (
                   <button
