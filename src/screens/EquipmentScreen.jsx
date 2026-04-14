@@ -25,6 +25,7 @@ function EquipSlot({ slotName, equipment, itemsData, onSelect }) {
   const entry = equipment[slotName]
   const item = entry ? itemsData[entry.itemId] : null
   const isEmpty = !item
+  const charges = entry?.charges || 0
 
   return (
     <button
@@ -41,6 +42,14 @@ function EquipSlot({ slotName, equipment, itemsData, onSelect }) {
       <span style={{ fontSize: item ? '18px' : '14px' }}>
         {item ? (item.icon || '📦') : EQ_SLOT_LABELS[slotName]}
       </span>
+      {charges > 0 && (
+        <span style={{
+          position: 'absolute', bottom: '2px', right: '2px',
+          fontSize: '8px', color: '#4ade80', fontWeight: 'bold'
+        }}>
+          ⚡
+        </span>
+      )}
       <span style={{
         fontSize: '7px', color: item ? '#e8d5b0' : '#555',
         textAlign: 'center', marginTop: '2px', fontWeight: item ? '600' : '400',

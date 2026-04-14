@@ -16853,6 +16853,7 @@ function ItemSlot({ slot, onClick, size = 'normal', showName = false, highlight 
         ${highlight ? 'ring-1 ring-[var(--color-gold)]' : ''}` },
         h("span", { class: size === 'small' ? 'text-sm' : 'text-lg' }, emoji),
         slot.noted && (h("span", { class: "absolute top-0 left-0.5 text-[8px]" }, "\uD83D\uDCDC")),
+        slot.charges && slot.charges > 0 && (h("span", { class: "absolute bottom-0 left-0.5 text-[7px] font-bold text-[var(--color-emerald)]" }, "\u26A1")),
         slot.quantity > 1 && (() => {
             const { text, isM } = formatQuantity(slot.quantity);
             return (h("span", { class: `absolute top-0 right-0.5 text-[8px] font-[var(--font-mono)] font-bold ${isM ? 'text-[var(--color-emerald)]' : 'text-[var(--color-gold)]'}` }, text));
@@ -17149,6 +17150,8 @@ function InventoryScreen() {
     const [showSpecInfo, setShowSpecInfo] = useState(false);
     const [bankQuantityMode, setBankQuantityMode] = useState(null); // 'stackable' | 'nonStackable' | null
     const [bankQuantityInput, setBankQuantityInput] = useState('');
+    const [chargeInput, setChargeInput] = useState('');
+    const [showChargeModal, setShowChargeModal] = useState(false);
     const handleSlotClick = (slot, item, index) => {
         const idx = inventory.indexOf(slot);
         setSelected({ slotIndex: idx >= 0 ? idx : index, slot, item });
@@ -17218,6 +17221,39 @@ function InventoryScreen() {
         newInv[selected.slotIndex] = null;
         updateInventory(newInv);
         setSelected(null);
+    };
+    const handleChargeWeapon = (qty) => {
+        if (!selected)
+            return;
+        const { slotIndex, slot, item } = selected;
+        // Check if weapon is scale-charged
+        if (!item.scaleCharged) {
+            addToast('This weapon cannot be charged', 'error');
+            return;
+        }
+        // Find Zulrah scales in inventory
+        const scalesIdx = inventory.findIndex(s => s && s.itemId === 'zulrah_scales');
+        if (scalesIdx === -1) {
+            addToast('No Zulrah scales in inventory', 'error');
+            return;
+        }
+        const scales = inventory[scalesIdx];
+        const chargeQty = Math.min(qty, scales.quantity);
+        const newInv = [...inventory];
+        const newSlot = { ...slot, charges: (slot.charges || 0) + chargeQty };
+        newInv[slotIndex] = newSlot;
+        // Remove scales from inventory
+        if (scales.quantity <= chargeQty) {
+            newInv[scalesIdx] = null;
+        }
+        else {
+            newInv[scalesIdx] = { ...scales, quantity: scales.quantity - chargeQty };
+        }
+        updateInventory(newInv);
+        setSelected({ ...selected, slot: newSlot });
+        addToast(`Charged ${item.name} with ${chargeQty} scales (${newSlot.charges} total)`, 'info');
+        setShowChargeModal(false);
+        setChargeInput('');
     };
     // Deposit to bank — stackable: deposit all; non-stackable: show qty picker
     const handleDeposit = (qty) => {
@@ -17410,7 +17446,10 @@ function InventoryScreen() {
                             selected.item.attackStyle),
                         selected.item.otherBonus?.meleeStrength > 0 && h("p", null,
                             "Strength bonus: +",
-                            selected.item.otherBonus.meleeStrength))),
+                            selected.item.otherBonus.meleeStrength),
+                        selected.item.scaleCharged && (h("p", { class: "mt-1" },
+                            "\u26A1 Charges: ",
+                            h("span", { class: "text-[var(--color-emerald)] font-bold" }, selected.slot.charges || 0))))),
                     selected.item.requirements && Object.entries(selected.item.requirements).length > 0 && (h("p", { class: "mt-1" },
                         "Requires: ",
                         Object.entries(selected.item.requirements).map(([s, l]) => `${s} ${l}`).join(', '))),
@@ -17436,6 +17475,7 @@ function InventoryScreen() {
                 h("div", { class: "grid grid-cols-2 gap-2" },
                     (selected.item.slot) && !selected.slot.noted && (h("button", { onClick: handleEquip, class: "py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80" }, "Equip")),
                     selected.item.type === 'food' && !selected.slot.noted && (h("button", { onClick: handleEat, class: "py-2.5 rounded-lg bg-[var(--color-emerald)] text-white font-semibold text-sm active:opacity-80" }, "Eat")),
+                    selected.item.scaleCharged && !selected.slot.noted && (h("button", { onClick: () => setShowChargeModal(true), class: "py-2.5 rounded-lg bg-[#1a3a3a] text-[var(--color-emerald)] font-semibold text-sm active:opacity-80 border border-[var(--color-emerald)]/30" }, "Charge \u26A1")),
                     h("button", { onClick: handleDrop, class: "py-2.5 rounded-lg bg-[var(--color-blood-mid)] text-white font-semibold text-sm active:opacity-80" }, "Drop")),
                 h("div", { class: "border-t border-[#333] pt-2 mt-1" },
                     h("p", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold" }, "Bank"),
@@ -17495,6 +17535,28 @@ function InventoryScreen() {
                     h("button", { onClick: handleBankQuantitySubmit, disabled: !bankQuantityInput || isNaN(parseInt(bankQuantityInput, 10)) || parseInt(bankQuantityInput, 10) <= 0, class: "w-full py-2.5 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80" },
                         "Bank ",
                         bankQuantityInput || '0'))));
+        })(),
+        showChargeModal && selected && (() => {
+            const scalesInInv = inventory.find(s => s && s.itemId === 'zulrah_scales');
+            const availableScales = scalesInInv?.quantity || 0;
+            const currentCharges = selected.slot.charges || 0;
+            return (h(Modal, { title: `Charge ${selected.item.name}`, onClose: () => { setShowChargeModal(false); setChargeInput(''); } },
+                h("div", { class: "space-y-3" },
+                    h("div", { class: "bg-[#111] rounded-lg p-3 text-sm text-[var(--color-parchment)] opacity-70" },
+                        h("p", null,
+                            "Current charges: ",
+                            h("span", { class: "text-[var(--color-emerald)] font-bold" }, currentCharges)),
+                        h("p", null,
+                            "Scales available: ",
+                            h("span", { class: "text-[var(--color-gold)] font-bold" }, availableScales))),
+                    h("div", null,
+                        h("p", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mb-1 uppercase tracking-wider" }, "Add scales"),
+                        h("input", { type: "number", value: chargeInput, onInput: (e) => setChargeInput(e.target.value), min: "1", max: availableScales, placeholder: "Enter scales to add", class: "w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-emerald)]", autoFocus: true })),
+                    availableScales === 0 && (h("p", { class: "text-[10px] text-[var(--color-blood)] text-center" }, "You need Zulrah scales to charge this weapon")),
+                    h("button", { onClick: () => handleChargeWeapon(parseInt(chargeInput, 10)), disabled: availableScales === 0 || !chargeInput || isNaN(parseInt(chargeInput, 10)) || parseInt(chargeInput, 10) <= 0, class: "w-full py-2.5 rounded-lg bg-[#1a3a3a] text-[var(--color-emerald)] font-semibold text-sm active:opacity-80 border border-[var(--color-emerald)]/30 disabled:opacity-40 disabled:cursor-default" },
+                        "Add ",
+                        chargeInput || '0',
+                        " Scales"))));
         })()));
 }
 
@@ -21030,6 +21092,7 @@ function EquipSlot({ slotName, equipment, itemsData, onSelect }) {
     const entry = equipment[slotName];
     const item = entry ? itemsData[entry.itemId] : null;
     const isEmpty = !item;
+    const charges = entry?.charges || 0;
     return (h("button", { onClick: () => { if (item)
             onSelect(slotName, item); }, style: {
             width: '56px', height: '56px', borderRadius: '10px',
@@ -21040,6 +21103,10 @@ function EquipSlot({ slotName, equipment, itemsData, onSelect }) {
             opacity: isEmpty ? 0.4 : 1,
         } },
         h("span", { style: { fontSize: item ? '18px' : '14px' } }, item ? (item.icon || '📦') : EQ_SLOT_LABELS[slotName]),
+        charges > 0 && (h("span", { style: {
+                position: 'absolute', bottom: '2px', right: '2px',
+                fontSize: '8px', color: '#4ade80', fontWeight: 'bold'
+            } }, "\u26A1")),
         h("span", { style: {
                 fontSize: '7px', color: item ? '#e8d5b0' : '#555',
                 textAlign: 'center', marginTop: '2px', fontWeight: item ? '600' : '400',
