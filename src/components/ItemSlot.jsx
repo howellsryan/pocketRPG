@@ -38,6 +38,9 @@ export default function ItemSlot({ slot, onClick, size = 'normal', showName = fa
       {slot.noted && (
         <span class="absolute top-0 left-0.5 text-[8px]">📜</span>
       )}
+      {slot.charges && slot.charges > 0 && (
+        <span class="absolute bottom-0 left-0.5 text-[7px] font-bold text-[var(--color-emerald)]">⚡</span>
+      )}
       {slot.quantity > 1 && (() => {
         const { text, isM } = formatQuantity(slot.quantity)
         return (

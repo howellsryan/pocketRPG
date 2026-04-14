@@ -12,6 +12,8 @@ export default function InventoryScreen() {
   const [showSpecInfo, setShowSpecInfo] = useState(false)
   const [bankQuantityMode, setBankQuantityMode] = useState(null) // 'stackable' | 'nonStackable' | null
   const [bankQuantityInput, setBankQuantityInput] = useState('')
+  const [chargeInput, setChargeInput] = useState('')
+  const [showChargeModal, setShowChargeModal] = useState(false)
 
   const handleSlotClick = (slot, item, index) => {
     const idx = inventory.indexOf(slot)
@@ -84,6 +86,43 @@ export default function InventoryScreen() {
     newInv[selected.slotIndex] = null
     updateInventory(newInv)
     setSelected(null)
+  }
+
+  const handleChargeWeapon = (qty) => {
+    if (!selected) return
+    const { slotIndex, slot, item } = selected
+
+    // Check if weapon is scale-charged
+    if (!item.scaleCharged) {
+      addToast('This weapon cannot be charged', 'error')
+      return
+    }
+
+    // Find Zulrah scales in inventory
+    const scalesIdx = inventory.findIndex(s => s && s.itemId === 'zulrah_scales')
+    if (scalesIdx === -1) {
+      addToast('No Zulrah scales in inventory', 'error')
+      return
+    }
+
+    const scales = inventory[scalesIdx]
+    const chargeQty = Math.min(qty, scales.quantity)
+    const newInv = [...inventory]
+    const newSlot = { ...slot, charges: (slot.charges || 0) + chargeQty }
+    newInv[slotIndex] = newSlot
+
+    // Remove scales from inventory
+    if (scales.quantity <= chargeQty) {
+      newInv[scalesIdx] = null
+    } else {
+      newInv[scalesIdx] = { ...scales, quantity: scales.quantity - chargeQty }
+    }
+
+    updateInventory(newInv)
+    setSelected({ ...selected, slot: newSlot })
+    addToast(`Charged ${item.name} with ${chargeQty} scales (${newSlot.charges} total)`, 'info')
+    setShowChargeModal(false)
+    setChargeInput('')
   }
 
   // Deposit to bank — stackable: deposit all; non-stackable: show qty picker
@@ -293,6 +332,9 @@ export default function InventoryScreen() {
                   <p>Attack speed: {selected.item.attackSpeed} ticks</p>
                   <p>Style: {selected.item.attackStyle}</p>
                   {selected.item.otherBonus?.meleeStrength > 0 && <p>Strength bonus: +{selected.item.otherBonus.meleeStrength}</p>}
+                  {selected.item.scaleCharged && (
+                    <p class="mt-1">⚡ Charges: <span class="text-[var(--color-emerald)] font-bold">{selected.slot.charges || 0}</span></p>
+                  )}
                 </div>
               )}
               {selected.item.requirements && Object.entries(selected.item.requirements).length > 0 && (
@@ -339,6 +381,12 @@ export default function InventoryScreen() {
                 <button onClick={handleEat}
                   class="py-2.5 rounded-lg bg-[var(--color-emerald)] text-white font-semibold text-sm active:opacity-80">
                   Eat
+                </button>
+              )}
+              {selected.item.scaleCharged && !selected.slot.noted && (
+                <button onClick={() => setShowChargeModal(true)}
+                  class="py-2.5 rounded-lg bg-[#1a3a3a] text-[var(--color-emerald)] font-semibold text-sm active:opacity-80 border border-[var(--color-emerald)]/30">
+                  Charge ⚡
                 </button>
               )}
               <button onClick={handleDrop}
@@ -491,6 +539,47 @@ export default function InventoryScreen() {
                 class="w-full py-2.5 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80"
               >
                 Bank {bankQuantityInput || '0'}
+              </button>
+            </div>
+          </Modal>
+        )
+      })()}
+
+      {/* ── Charge weapon modal ──────────────────────────────────────── */}
+      {showChargeModal && selected && (() => {
+        const scalesInInv = inventory.find(s => s && s.itemId === 'zulrah_scales')
+        const availableScales = scalesInInv?.quantity || 0
+        const currentCharges = selected.slot.charges || 0
+
+        return (
+          <Modal title={`Charge ${selected.item.name}`} onClose={() => { setShowChargeModal(false); setChargeInput('') }}>
+            <div class="space-y-3">
+              <div class="bg-[#111] rounded-lg p-3 text-sm text-[var(--color-parchment)] opacity-70">
+                <p>Current charges: <span class="text-[var(--color-emerald)] font-bold">{currentCharges}</span></p>
+                <p>Scales available: <span class="text-[var(--color-gold)] font-bold">{availableScales}</span></p>
+              </div>
+              <div>
+                <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1 uppercase tracking-wider">Add scales</p>
+                <input
+                  type="number"
+                  value={chargeInput}
+                  onInput={(e) => setChargeInput(e.target.value)}
+                  min="1"
+                  max={availableScales}
+                  placeholder="Enter scales to add"
+                  class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-emerald)]"
+                  autoFocus
+                />
+              </div>
+              {availableScales === 0 && (
+                <p class="text-[10px] text-[var(--color-blood)] text-center">You need Zulrah scales to charge this weapon</p>
+              )}
+              <button
+                onClick={() => handleChargeWeapon(parseInt(chargeInput, 10))}
+                disabled={availableScales === 0 || !chargeInput || isNaN(parseInt(chargeInput, 10)) || parseInt(chargeInput, 10) <= 0}
+                class="w-full py-2.5 rounded-lg bg-[#1a3a3a] text-[var(--color-emerald)] font-semibold text-sm active:opacity-80 border border-[var(--color-emerald)]/30 disabled:opacity-40 disabled:cursor-default"
+              >
+                Add {chargeInput || '0'} Scales
               </button>
             </div>
           </Modal>
