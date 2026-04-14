@@ -694,15 +694,18 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     for (const drop of idleRollDrops(monster)) {
       const item = itemsData[drop.itemId]
       const stackable = item?.stackable || false
+      const isNoted = ['bones', 'big_bones', 'dragon_bones', 'dagganoth_bones'].includes(drop.itemId)
 
       if (stackable) {
-        const existingIdx = newInv.findIndex(s => s && s.itemId === drop.itemId)
+        const existingIdx = newInv.findIndex(s => s && s.itemId === drop.itemId && s.noted === isNoted)
         if (existingIdx !== -1) {
           newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + drop.quantity }
         } else {
           const emptyIdx = newInv.indexOf(null)
           if (emptyIdx !== -1) {
-            newInv[emptyIdx] = { itemId: drop.itemId, quantity: drop.quantity }
+            const slot = { itemId: drop.itemId, quantity: drop.quantity }
+            if (isNoted) slot.noted = true
+            newInv[emptyIdx] = slot
           } else {
             if (bankingEnabled) lootBanked[drop.itemId] = (lootBanked[drop.itemId] || 0) + drop.quantity
             else                lootLost[drop.itemId]   = (lootLost[drop.itemId]   || 0) + drop.quantity

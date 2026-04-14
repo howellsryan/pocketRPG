@@ -379,9 +379,27 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
             const newInv = [...inventoryRef.current]
             for (const drop of ev.loot) {
               const item = itemsData[drop.itemId]
-              const added = addItem(newInv, drop.itemId, drop.quantity, item?.stackable || false)
-              if (added) {
+              const stackable = item?.stackable || false
+              const isNoted = ['bones', 'big_bones', 'dragon_bones', 'dagganoth_bones'].includes(drop.itemId)
+
+              if (stackable) {
+                const existingIdx = newInv.findIndex(s => s && s.itemId === drop.itemId && s.noted === isNoted)
+                if (existingIdx !== -1) {
+                  newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + drop.quantity }
+                } else {
+                  const emptyIdx = newInv.indexOf(null)
+                  if (emptyIdx !== -1) {
+                    const slot = { itemId: drop.itemId, quantity: drop.quantity }
+                    if (isNoted) slot.noted = true
+                    newInv[emptyIdx] = slot
+                  }
+                }
                 addToast(`Loot: ${item?.name || drop.itemId} ×${drop.quantity}`, 'drop')
+              } else {
+                const added = addItem(newInv, drop.itemId, drop.quantity, false)
+                if (added) {
+                  addToast(`Loot: ${item?.name || drop.itemId} ×${drop.quantity}`, 'drop')
+                }
               }
             }
             updateInventory(newInv)
