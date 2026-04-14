@@ -69,6 +69,12 @@ const COMBAT_CATEGORIES = [
     icon: '🔥',
     ids: ['jad'],
   },
+  {
+    key: 'corrupted_gauntlet',
+    label: 'Corrupted Gauntlet',
+    icon: '⚡',
+    ids: ['corrupted_gauntlet'],
+  },
 ]
 
 const MONSTER_ICONS = {
@@ -78,7 +84,7 @@ const MONSTER_ICONS = {
   green_dragon: '🐉', red_dragon: '🔴', lesser_demon: '👿',
   general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
   dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
-  crazy_archaeologist: '📜', king_black_dragon: '👑', zulrah: '🐍', jad: '🌋'
+  crazy_archaeologist: '📜', king_black_dragon: '👑', zulrah: '🐍', jad: '🌋', corrupted_gauntlet: '⚡'
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange }) {
