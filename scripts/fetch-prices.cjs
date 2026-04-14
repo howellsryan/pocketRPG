@@ -6,7 +6,7 @@
  * in items.json for any items that match (by name).
  *
  * Usage:
- *   node scripts/fetch-osrs-prices.cjs
+ *   node scripts/fetch-prices.cjs
  */
 
 const fs = require('fs');
