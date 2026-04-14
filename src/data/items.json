@@ -5,7 +5,8 @@
     "type": "currency",
     "stackable": true,
     "shopValue": 0,
-    "icon": "🪙"
+    "icon": "🪙",
+    "isUntradeable": true
   },
   "bones": {
     "id": "bones",
@@ -1512,7 +1513,7 @@
     "name": "Uncut dragonstone",
     "type": "resource",
     "stackable": false,
-    "shopValue": 2100,
+    "shopValue": 21000,
     "icon": "💎"
   },
   "uncut_onyx": {
@@ -1520,7 +1521,7 @@
     "name": "Uncut onyx",
     "type": "resource",
     "stackable": false,
-    "shopValue": 2400,
+    "shopValue": 4500000,
     "icon": "💎"
   },
   "sapphire": {
@@ -1560,7 +1561,7 @@
     "name": "Dragonstone",
     "type": "resource",
     "stackable": false,
-    "shopValue": 3500,
+    "shopValue": 21000,
     "icon": "💎"
   },
   "onyx": {
@@ -1568,7 +1569,7 @@
     "name": "Onyx",
     "type": "resource",
     "stackable": false,
-    "shopValue": 4000,
+    "shopValue": 4500000,
     "icon": "💎"
   },
   "gold_bar": {
@@ -1721,7 +1722,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 6600,
+    "shopValue": 21000,
     "icon": "📿"
   },
   "onyx_amulet": {
@@ -1750,7 +1751,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 7500,
+    "shopValue": 4500000,
     "icon": "📿"
   },
   "amulet_of_magic": {
@@ -1837,7 +1838,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 7500,
+    "shopValue": 4500000,
     "icon": "📿"
   },
   "gold_amulet": {
@@ -4950,7 +4951,7 @@
       "energyCost": 50,
       "description": "Energy Drain: Lashes at the target — if it connects, the creature is stunned for one attack cycle, skipping its next hit."
     },
-    "shopValue": 1500000,
+    "shopValue": 3500000,
     "icon": "🪱"
   },
   "black_wizard_hat": {
@@ -5834,7 +5835,7 @@
       "energyCost": 50,
       "description": "Warstrike: A crushing blow that deals damage and permanently weakens the target's defences for the rest of the fight by the amount of damage dealt."
     },
-    "shopValue": 4500000,
+    "shopValue": 15000000,
     "icon": "⚔️"
   },
   "armadyl_godsword": {
@@ -5873,7 +5874,7 @@
       "energyCost": 50,
       "description": "The Judgement: A devastating strike rolled at 125% accuracy and capable of hitting up to 125% of your normal max damage."
     },
-    "shopValue": 8500000,
+    "shopValue": 15000000,
     "icon": "⚔️"
   },
   "saradomin_godsword": {
@@ -5913,7 +5914,7 @@
       "minHeal": 10,
       "description": "Healing Blade: Strikes with divine power, restoring your HP by half the damage dealt (minimum 10 HP healed)."
     },
-    "shopValue": 2500000,
+    "shopValue": 15000000,
     "icon": "⚔️"
   },
   "zamorak_godsword": {
@@ -5953,7 +5954,7 @@
       "stunTicks": 33,
       "description": "Ice Cleave: Strikes with chaotic energy, dealing damage and freezing the target for ~20 seconds (33 ticks), preventing it from attacking."
     },
-    "shopValue": 2500000,
+    "shopValue": 10000000,
     "icon": "⚔️"
   },
   "bandos_chestplate": {
@@ -5984,7 +5985,7 @@
     "requirements": {
       "defence": 65
     },
-    "shopValue": 2500000,
+    "shopValue": 25000000,
     "icon": "🛡️"
   },
   "bandos_tassets": {
@@ -6015,7 +6016,7 @@
     "requirements": {
       "defence": 65
     },
-    "shopValue": 3000000,
+    "shopValue": 30000000,
     "icon": "🦵"
   },
   "bandos_boots": {
@@ -6054,7 +6055,7 @@
     "name": "Bandos hilt",
     "type": "resource",
     "stackable": false,
-    "shopValue": 4000000,
+    "shopValue": 15000000,
     "icon": "⚔️"
   },
   "armadyl_helmet": {
@@ -6086,7 +6087,7 @@
       "ranged": 70,
       "defence": 70
     },
-    "shopValue": 1500000,
+    "shopValue": 5500000,
     "icon": "⛑️"
   },
   "armadyl_chestplate": {
@@ -6118,7 +6119,7 @@
       "ranged": 70,
       "defence": 70
     },
-    "shopValue": 5000000,
+    "shopValue": 50000000,
     "icon": "🛡️"
   },
   "armadyl_chainskirt": {
@@ -6150,7 +6151,7 @@
       "ranged": 70,
       "defence": 70
     },
-    "shopValue": 4000000,
+    "shopValue": 40000000,
     "icon": "🦵"
   },
   "armadyl_hilt": {
@@ -6158,7 +6159,7 @@
     "name": "Armadyl hilt",
     "type": "resource",
     "stackable": false,
-    "shopValue": 8000000,
+    "shopValue": 15000000,
     "icon": "⚔️"
   },
   "saradomin_sword": {
@@ -6206,7 +6207,7 @@
     "name": "Saradomin hilt",
     "type": "resource",
     "stackable": false,
-    "shopValue": 2000000,
+    "shopValue": 15000000,
     "icon": "⚔️"
   },
   "armadyl_crossbow": {
@@ -6246,7 +6247,7 @@
       "energyCost": 40,
       "description": "Pebble Shot: Fires a bolt that never misses, dealing up to 125% of your normal ranged max hit."
     },
-    "shopValue": 2500000,
+    "shopValue": 25000000,
     "icon": "🏹"
   },
   "zamorak_spear": {
@@ -6285,7 +6286,7 @@
       "energyCost": 25,
       "description": "Shove: A powerful stab rolled at 175% accuracy that staggers the target, skipping their next 2 attacks."
     },
-    "shopValue": 300000,
+    "shopValue": 7500000,
     "icon": "🗡️"
   },
   "staff_of_the_dead": {
@@ -6320,7 +6321,7 @@
       "attack": 75,
       "magic": 75
     },
-    "shopValue": 1500000,
+    "shopValue": 15000000,
     "icon": "🪄"
   },
   "zamorak_hilt": {
@@ -6328,7 +6329,7 @@
     "name": "Zamorak hilt",
     "type": "resource",
     "stackable": false,
-    "shopValue": 2000000,
+    "shopValue": 10000000,
     "icon": "⚔️"
   },
   "dagganoth_bones": {
@@ -6336,7 +6337,7 @@
     "name": "Dagganoth bones",
     "type": "resource",
     "stackable": false,
-    "shopValue": 5000,
+    "shopValue": 12500,
     "icon": "🦴"
   },
   "berserker_ring": {
@@ -6365,7 +6366,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 100000,
+    "shopValue": 7500000,
     "icon": "💍"
   },
   "seers_ring": {
@@ -6394,7 +6395,7 @@
       "magicDamage": 12
     },
     "requirements": {},
-    "shopValue": 100000,
+    "shopValue": 4500000,
     "icon": "💍"
   },
   "archers_ring": {
@@ -6423,7 +6424,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 100000,
+    "shopValue": 7500000,
     "icon": "💍"
   },
   "warriors_ring": {
@@ -6486,7 +6487,7 @@
     "requirements": {
       "attack": 60
     },
-    "shopValue": 350000,
+    "shopValue": 3500000,
     "icon": "⚔️"
   },
   "slayer_helmet": {
@@ -6519,7 +6520,8 @@
     },
     "requirements": {
       "slayer": 20
-    }
+    },
+    "isUntradeable": true
   },
   "guam_leaf": {
     "id": "guam_leaf",
@@ -6825,7 +6827,7 @@
     "name": "Super combat potion",
     "type": "potion",
     "stackable": true,
-    "shopValue": 800,
+    "shopValue": 7500,
     "icon": "🧪",
     "effect": "combat",
     "boost": 18,
@@ -6865,7 +6867,7 @@
       "attack": 60,
       "mining": 60
     },
-    "shopValue": 100000,
+    "shopValue": 10000000,
     "icon": "⛏️"
   },
   "draconic_visage": {
@@ -6873,7 +6875,7 @@
     "name": "Draconic visage",
     "type": "resource",
     "stackable": false,
-    "shopValue": 50000,
+    "shopValue": 25000000,
     "icon": "🐉"
   },
   "dragonfire_shield": {
@@ -6905,7 +6907,7 @@
     "requirements": {
       "defence": 75
     },
-    "shopValue": 500000,
+    "shopValue": 25000000,
     "icon": "🛡️"
   },
   "fishing_net": {
@@ -7244,7 +7246,8 @@
     "type": "resource",
     "stackable": true,
     "shopValue": 0,
-    "icon": "💎"
+    "icon": "💎",
+    "isUntradeable": true
   },
   "crystal_helmet": {
     "id": "crystal_helmet",
