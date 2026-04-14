@@ -88,7 +88,7 @@ const MONSTER_ICONS = {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts } = useGame()
 
   const [combat, setCombat] = useState(null)
   const [log, setLog] = useState([])
@@ -111,6 +111,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
   const equipmentRef = useRef(equipment)
   const slayerTaskRef = useRef(slayerTask)
   const slayerPointsRef = useRef(slayerPoints)
+  const bossKillCountsRef = useRef(bossKillCounts)
   const logRef = useRef(null)
 
   useEffect(() => { hpRef.current = currentHP }, [currentHP])
@@ -120,6 +121,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
   useEffect(() => { equipmentRef.current = equipment }, [equipment])
   useEffect(() => { slayerTaskRef.current = slayerTask }, [slayerTask])
   useEffect(() => { slayerPointsRef.current = slayerPoints }, [slayerPoints])
+  useEffect(() => { bossKillCountsRef.current = bossKillCounts }, [bossKillCounts])
 
   // Auto-scroll log to bottom on new messages
   useEffect(() => {
@@ -339,6 +341,20 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
         if (ev.type === 'monsterDeath') {
           setKillCount(k => k + 1)
 
+          // Boss kill count tracking
+          if (state.monster.boss) {
+            const monsterId = state.monster.id
+            const newKC = (bossKillCountsRef.current[monsterId] || 0) + 1
+            const updatedCounts = { ...bossKillCountsRef.current, [monsterId]: newKC }
+            bossKillCountsRef.current = updatedCounts
+            updateBossKillCounts(updatedCounts)
+            setLog(prev => [...prev.slice(-20), {
+              text: `👑 ${state.monster.name} KC: ${newKC.toLocaleString()}`,
+              type: 'victory',
+              time: Date.now()
+            }])
+          }
+
           // Slayer task tracking
           const task = slayerTaskRef.current
           if (task && task.monsterId === state.monster.id) {
@@ -407,9 +423,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
       addToast('No spell selected! Use the 🔮 Cast button to pick a spell.', 'error')
     }
     const state = createCombatState(monster, combatType, combatStance, spell)
-    // Reset potion and special attack energy on new fight
+    // Reset special attack energy on new fight; preserve active potions so they last their full 5 minutes
     state.specialAttackEnergy = 100
-    state.activePotions = {}
+    state.activePotions = combatRef.current ? { ...combatRef.current.activePotions } : {}
     setCombat(state)
     setKillCount(0)
     setFightStartedAt(Date.now())
@@ -422,9 +438,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
     const combatType = getCombatType(equipment, itemsData)
     const spell = combatType === 'magic' && activeCombatSpell ? spellsData[activeCombatSpell.id] : null
     const state = createCombatState(monster, combatType, combatStance, spell)
-    // Reset potion and special attack energy on new fight
+    // Reset special attack energy on kill; preserve active potions so they last their full 5 minutes
     state.specialAttackEnergy = 100
-    state.activePotions = {}
+    state.activePotions = combatRef.current ? { ...combatRef.current.activePotions } : {}
     setCombat(state)
     setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot, spell: spell || null })
   }
@@ -747,6 +763,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
                           <div class="text-xs font-[var(--font-mono)] text-[var(--color-blood-light)]">CB {monster.combatLevel}</div>
                           {isOnTask && (
                             <div class="text-[9px] text-yellow-400 font-mono mt-0.5">{slayerTask.monstersRemaining} left</div>
+                          )}
+                          {monster.boss && bossKillCounts[monster.id] > 0 && (
+                            <div class="text-[9px] text-yellow-400 font-mono mt-0.5">KC: {bossKillCounts[monster.id].toLocaleString()}</div>
                           )}
                         </div>
                       </button>

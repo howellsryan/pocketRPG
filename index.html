@@ -14015,7 +14015,7 @@ function createCombatState(monster, combatType = 'melee', stance = 'accurate', s
         stance, // 'accurate', 'aggressive', 'controlled', 'defensive', 'rapid', 'longrange'
         spell, // spell object for magic combat
         playerAttackTimer: 0,
-        monsterAttackTimer: 0,
+        monsterAttackTimer: preparedMonster.attackSpeed || 4, // 1-attack delay so player always gets first hit
         eatCooldown: 0,
         potionCooldown: 0,
         log: [], // combat log entries
@@ -16367,6 +16367,7 @@ function GameProvider({ children }) {
     const [slayerTask, setSlayerTaskState] = useState(null);
     const [slayerPoints, setSlayerPointsState] = useState(0);
     const [activeCombatSpell, setActiveCombatSpellState] = useState(null);
+    const [bossKillCounts, setBossKillCountsState] = useState({});
     const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false });
     // Refs to hold latest state for the debounced auto-save
     const stateRef = useRef({ stats: {}, inventory: new Array(28).fill(null), equipment: {}, bank: {}, player: null });
@@ -16378,11 +16379,11 @@ function GameProvider({ children }) {
     useEffect(() => { stateRef.current.player = player; }, [player]);
     // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
     const loadGame = useCallback(async () => {
-        const [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints] = await Promise.all([
+        const [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedBossKillCounts] = await Promise.all([
             getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
             getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
             getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
-            getSetting('slayerTask'), getSetting('slayerPoints')
+            getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('bossKillCounts')
         ]);
         // lastTick and activeTask live in localStorage — synchronous, survives iOS background freeze
         const savedLastTick = (() => { const v = localStorage.getItem('pocketrpg_lastTick'); return v ? parseInt(v, 10) : null; })();
@@ -16567,6 +16568,7 @@ function GameProvider({ children }) {
             : 0;
         setSlayerPointsState((savedSlayerPoints ?? 0) + slayerPointsEarned);
         setActiveCombatSpellState(savedActiveCombatSpell ?? null);
+        setBossKillCountsState(savedBossKillCounts ?? {});
         const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10;
         setCurrentHP(savedHP != null ? Math.min(savedHP, hpLevel) : hpLevel);
         setLoaded(true);
@@ -16696,6 +16698,10 @@ function GameProvider({ children }) {
         setSlayerPointsState(points);
         saveSetting('slayerPoints', points);
     }, []);
+    const updateBossKillCounts = useCallback((counts) => {
+        setBossKillCountsState(counts);
+        saveSetting('bossKillCounts', counts);
+    }, []);
     // Direct bank update without inventory changes (for skill/gather item routing)
     const updateBankDirect = useCallback((itemUpdates) => {
         setBank(prev => {
@@ -16741,6 +16747,7 @@ function GameProvider({ children }) {
         unlockedFeatures, unlockFeature,
         slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints,
         activeCombatSpell, updateActiveCombatSpell,
+        bossKillCounts, updateBossKillCounts,
         loadGame, grantXP, updateInventory, updateEquipment, updateBank,
         updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,
         markDirty, itemsData, updateHomeShortcuts, updateCombatStance,
@@ -18001,7 +18008,7 @@ const MONSTER_ICONS = {
     crazy_archaeologist: '📜', king_black_dragon: '👑', zulrah: '🐍', jad: '🌋', corrupted_gauntlet: '⚡'
 };
 function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange }) {
-    const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell } = useGame();
+    const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts } = useGame();
     const [combat, setCombat] = useState(null);
     const [log, setLog] = useState([]);
     const [killCount, setKillCount] = useState(0);
@@ -18022,6 +18029,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange })
     const equipmentRef = useRef(equipment);
     const slayerTaskRef = useRef(slayerTask);
     const slayerPointsRef = useRef(slayerPoints);
+    const bossKillCountsRef = useRef(bossKillCounts);
     const logRef = useRef(null);
     useEffect(() => { hpRef.current = currentHP; }, [currentHP]);
     useEffect(() => { inventoryRef.current = inventory; }, [inventory]);
@@ -18030,6 +18038,7 @@ function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange })
     useEffect(() => { equipmentRef.current = equipment; }, [equipment]);
     useEffect(() => { slayerTaskRef.current = slayerTask; }, [slayerTask]);
     useEffect(() => { slayerPointsRef.current = slayerPoints; }, [slayerPoints]);
+    useEffect(() => { bossKillCountsRef.current = bossKillCounts; }, [bossKillCounts]);
     // Auto-scroll log to bottom on new messages
     useEffect(() => {
         if (logRef.current) {
@@ -18244,6 +18253,19 @@ function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange })
                 }
                 if (ev.type === 'monsterDeath') {
                     setKillCount(k => k + 1);
+                    // Boss kill count tracking
+                    if (state.monster.boss) {
+                        const monsterId = state.monster.id;
+                        const newKC = (bossKillCountsRef.current[monsterId] || 0) + 1;
+                        const updatedCounts = { ...bossKillCountsRef.current, [monsterId]: newKC };
+                        bossKillCountsRef.current = updatedCounts;
+                        updateBossKillCounts(updatedCounts);
+                        setLog(prev => [...prev.slice(-20), {
+                                text: `👑 ${state.monster.name} KC: ${newKC.toLocaleString()}`,
+                                type: 'victory',
+                                time: Date.now()
+                            }]);
+                    }
                     // Slayer task tracking
                     const task = slayerTaskRef.current;
                     if (task && task.monsterId === state.monster.id) {
@@ -18308,9 +18330,9 @@ function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange })
             addToast('No spell selected! Use the 🔮 Cast button to pick a spell.', 'error');
         }
         const state = createCombatState(monster, combatType, combatStance, spell);
-        // Reset potion and special attack energy on new fight
+        // Reset special attack energy on new fight; preserve active potions so they last their full 5 minutes
         state.specialAttackEnergy = 100;
-        state.activePotions = {};
+        state.activePotions = combatRef.current ? { ...combatRef.current.activePotions } : {};
         setCombat(state);
         setKillCount(0);
         setFightStartedAt(Date.now());
@@ -18322,9 +18344,9 @@ function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange })
         const combatType = getCombatType(equipment, itemsData);
         const spell = combatType === 'magic' && activeCombatSpell ? spellsData[activeCombatSpell.id] : null;
         const state = createCombatState(monster, combatType, combatStance, spell);
-        // Reset potion and special attack energy on new fight
+        // Reset special attack energy on kill; preserve active potions so they last their full 5 minutes
         state.specialAttackEnergy = 100;
-        state.activePotions = {};
+        state.activePotions = combatRef.current ? { ...combatRef.current.activePotions } : {};
         setCombat(state);
         setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot, spell: spell || null });
     };
@@ -18598,7 +18620,10 @@ function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange })
                                         monster.combatLevel),
                                     isOnTask && (h("div", { class: "text-[9px] text-yellow-400 font-mono mt-0.5" },
                                         slayerTask.monstersRemaining,
-                                        " left")))),
+                                        " left")),
+                                    monster.boss && bossKillCounts[monster.id] > 0 && (h("div", { class: "text-[9px] text-yellow-400 font-mono mt-0.5" },
+                                        "KC: ",
+                                        bossKillCounts[monster.id].toLocaleString())))),
                             h("button", { onClick: () => setSelectedMonsterInfo(monster), class: "flex-shrink-0 px-3 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5", title: "View Monster Info" },
                                 h("span", { class: "text-base" }, "\u2139\uFE0F"),
                                 h("span", { class: "text-[8px] text-[var(--color-parchment)] opacity-50" }, "Info")),

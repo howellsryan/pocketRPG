@@ -28,6 +28,7 @@ export function GameProvider({ children }) {
   const [slayerTask, setSlayerTaskState] = useState(null)
   const [slayerPoints, setSlayerPointsState] = useState(0)
   const [activeCombatSpell, setActiveCombatSpellState] = useState(null)
+  const [bossKillCounts, setBossKillCountsState] = useState({})
   const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false })
 
   // Refs to hold latest state for the debounced auto-save
@@ -42,11 +43,11 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    const [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints] = await Promise.all([
+    const [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedBossKillCounts] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
-      getSetting('slayerTask'), getSetting('slayerPoints')
+      getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('bossKillCounts')
     ])
     // lastTick and activeTask live in localStorage — synchronous, survives iOS background freeze
     const savedLastTick = (() => { const v = localStorage.getItem('pocketrpg_lastTick'); return v ? parseInt(v, 10) : null })()
@@ -208,6 +209,7 @@ export function GameProvider({ children }) {
       : 0
     setSlayerPointsState((savedSlayerPoints ?? 0) + slayerPointsEarned)
     setActiveCombatSpellState(savedActiveCombatSpell ?? null)
+    setBossKillCountsState(savedBossKillCounts ?? {})
     const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
     setCurrentHP(savedHP != null ? Math.min(savedHP, hpLevel) : hpLevel)
     setLoaded(true)
@@ -353,6 +355,11 @@ export function GameProvider({ children }) {
     saveSetting('slayerPoints', points)
   }, [])
 
+  const updateBossKillCounts = useCallback((counts) => {
+    setBossKillCountsState(counts)
+    saveSetting('bossKillCounts', counts)
+  }, [])
+
   // Direct bank update without inventory changes (for skill/gather item routing)
   const updateBankDirect = useCallback((itemUpdates) => {
     setBank(prev => {
@@ -399,6 +406,7 @@ export function GameProvider({ children }) {
     unlockedFeatures, unlockFeature,
     slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints,
     activeCombatSpell, updateActiveCombatSpell,
+    bossKillCounts, updateBossKillCounts,
     loadGame, grantXP, updateInventory, updateEquipment, updateBank,
     updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,
     markDirty, itemsData, updateHomeShortcuts, updateCombatStance,
