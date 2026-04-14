@@ -6707,7 +6707,8 @@
     },
     "requirements": {},
     "shopValue": 0,
-    "icon": "🔥"
+    "icon": "🔥",
+    "isUntradeable": true
   },
   "crystal_shards": {
     "id": "crystal_shards",
