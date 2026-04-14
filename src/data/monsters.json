@@ -3569,5 +3569,314 @@
         "chance": 1
       }
     ]
+  },
+  "corrupted_gauntlet": {
+    "id": "corrupted_gauntlet",
+    "name": "Corrupted Gauntlet",
+    "boss": true,
+    "combatLevel": 894,
+    "hitpoints": 1000,
+    "stats": {
+      "attack": 240,
+      "strength": 240,
+      "defence": 240,
+      "magic": 240,
+      "ranged": 240
+    },
+    "attackSpeed": 5,
+    "attackStyle": "crush",
+    "attackBonus": 0,
+    "strengthBonus": 112,
+    "defenceBonus": {
+      "stab": 20,
+      "slash": 20,
+      "crush": 20,
+      "magic": 20,
+      "ranged": 20
+    },
+    "multiForm": true,
+    "formSwitchMin": 3,
+    "formSwitchMax": 7,
+    "initialForm": "melee",
+    "forms": {
+      "melee": {
+        "displayName": "Melee Phase",
+        "icon": "⚔️",
+        "attackStyle": "crush",
+        "weakness": "magic",
+        "maxHit": 68,
+        "attackBonus": 0,
+        "strengthBonus": 112,
+        "defenceBonus": {
+          "stab": 20,
+          "slash": 20,
+          "crush": 20,
+          "magic": -50,
+          "ranged": 20
+        }
+      },
+      "ranged": {
+        "displayName": "Ranged Phase",
+        "icon": "🏹",
+        "attackStyle": "ranged",
+        "weakness": "melee",
+        "maxHit": 68,
+        "attackBonus": 0,
+        "strengthBonus": 112,
+        "defenceBonus": {
+          "stab": -50,
+          "slash": -50,
+          "crush": -50,
+          "magic": 20,
+          "ranged": 20
+        }
+      },
+      "magic": {
+        "displayName": "Magic Phase",
+        "icon": "✨",
+        "attackStyle": "magic",
+        "weakness": "ranged",
+        "maxHit": 68,
+        "attackBonus": 0,
+        "strengthBonus": 112,
+        "defenceBonus": {
+          "stab": 20,
+          "slash": 20,
+          "crush": 20,
+          "magic": 20,
+          "ranged": -50
+        }
+      }
+    },
+    "drops": [
+      {
+        "itemId": "crystal_shards",
+        "quantity": [
+          100,
+          500
+        ],
+        "chance": 1
+      },
+      {
+        "itemId": "uncut_onyx",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "crystal_pickaxe",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "crystal_axe",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "crystal_helmet",
+        "quantity": 1,
+        "chance": 0.004
+      },
+      {
+        "itemId": "crystal_plate_body",
+        "quantity": 1,
+        "chance": 0.004
+      },
+      {
+        "itemId": "crystal_platelegs",
+        "quantity": 1,
+        "chance": 0.004
+      },
+      {
+        "itemId": "bow_of_faerdhinen",
+        "quantity": 1,
+        "chance": 0.004
+      },
+      {
+        "itemId": "blade_of_saeldor",
+        "quantity": 1,
+        "chance": 0.004
+      },
+      {
+        "itemId": "uncut_sapphire",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "uncut_emerald",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "uncut_ruby",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.16
+      },
+      {
+        "itemId": "uncut_diamond",
+        "quantity": [
+          3,
+          10
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "uncut_dragonstone",
+        "quantity": [
+          2,
+          8
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          5,
+          25
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          5,
+          25
+        ],
+        "chance": 0.24
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": [
+          5,
+          25
+        ],
+        "chance": 0.22
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": [
+          5,
+          25
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": [
+          5,
+          25
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": [
+          5,
+          25
+        ],
+        "chance": 0.16
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          3,
+          15
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": [
+          3,
+          12
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          5000,
+          100000
+        ],
+        "chance": 0.7
+      },
+      {
+        "itemId": "dragon_bones",
+        "quantity": 50,
+        "chance": 0.25
+      },
+      {
+        "itemId": "daganoth_bones",
+        "quantity": 50,
+        "chance": 0.2
+      },
+      {
+        "itemId": "dragon_dagger",
+        "quantity": 1,
+        "chance": 0.15
+      },
+      {
+        "itemId": "dragon_scimitar",
+        "quantity": 1,
+        "chance": 0.12
+      },
+      {
+        "itemId": "rune_full_helm",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "rune_platebody",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.16
+      },
+      {
+        "itemId": "rune_platelegs",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.14
+      },
+      {
+        "itemId": "rune_med_helm",
+        "quantity": [
+          1,
+          3
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          100,
+          500
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          100,
+          500
+        ],
+        "chance": 0.18
+      }
+    ]
   }
 }

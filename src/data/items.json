@@ -6708,5 +6708,244 @@
     "requirements": {},
     "shopValue": 0,
     "icon": "🔥"
+  },
+  "crystal_shards": {
+    "id": "crystal_shards",
+    "name": "Crystal shards",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 0,
+    "icon": "💎"
+  },
+  "crystal_helmet": {
+    "id": "crystal_helmet",
+    "name": "Crystal helmet",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "scaleCharged": true,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 15,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 75,
+      "slash": 80,
+      "crush": 85,
+      "magic": 45,
+      "ranged": 75
+    },
+    "otherBonus": {
+      "meleeStrength": 5,
+      "rangedStrength": 5,
+      "magicDamage": 5
+    },
+    "requirements": {
+      "defence": 70
+    },
+    "shopValue": 0,
+    "icon": "🪖"
+  },
+  "crystal_plate_body": {
+    "id": "crystal_plate_body",
+    "name": "Crystal plate body",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "scaleCharged": true,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 15,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 120,
+      "slash": 125,
+      "crush": 130,
+      "magic": 60,
+      "ranged": 120
+    },
+    "otherBonus": {
+      "meleeStrength": 10,
+      "rangedStrength": 10,
+      "magicDamage": 10
+    },
+    "requirements": {
+      "defence": 70
+    },
+    "shopValue": 0,
+    "icon": "🛡️"
+  },
+  "crystal_platelegs": {
+    "id": "crystal_platelegs",
+    "name": "Crystal platelegs",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "scaleCharged": true,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 10,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 90,
+      "slash": 95,
+      "crush": 100,
+      "magic": 40,
+      "ranged": 90
+    },
+    "otherBonus": {
+      "meleeStrength": 7,
+      "rangedStrength": 7,
+      "magicDamage": 7
+    },
+    "requirements": {
+      "defence": 70
+    },
+    "shopValue": 0,
+    "icon": "🩳"
+  },
+  "crystal_pickaxe": {
+    "id": "crystal_pickaxe",
+    "name": "Crystal pickaxe",
+    "type": "tool",
+    "slot": "weapon",
+    "stackable": false,
+    "scaleCharged": true,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "mining": 70
+    },
+    "shopValue": 0,
+    "icon": "⛏️"
+  },
+  "crystal_axe": {
+    "id": "crystal_axe",
+    "name": "Crystal axe",
+    "type": "tool",
+    "slot": "weapon",
+    "stackable": false,
+    "scaleCharged": true,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "woodcutting": 70
+    },
+    "shopValue": 0,
+    "icon": "🪓"
+  },
+  "bow_of_faerdhinen": {
+    "id": "bow_of_faerdhinen",
+    "name": "Bow of Faerdhinen",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "scaleCharged": true,
+    "attackSpeed": 3,
+    "attackStyle": "ranged",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 120
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 30
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 100,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 75
+    },
+    "shopValue": 0,
+    "icon": "🏹"
+  },
+  "blade_of_saeldor": {
+    "id": "blade_of_saeldor",
+    "name": "Blade of Saeldor",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "scaleCharged": true,
+    "attackSpeed": 3,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 100,
+      "slash": 120,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 50,
+      "slash": 50,
+      "crush": 30,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 110,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 75,
+      "strength": 75
+    },
+    "shopValue": 0,
+    "icon": "🗡️"
   }
 }

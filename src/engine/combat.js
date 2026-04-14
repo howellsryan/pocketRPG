@@ -439,8 +439,8 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
           monster.formAttackCount = 0
           // For per-attack randomization, keep threshold at 1; otherwise randomize
           monster.formSwitchThreshold = monster.randomFormEveryAttack ? 1 : randomFormSwitchThreshold(monster)
-          // Skip one attack cycle after a form change so the player can adapt
-          state.monsterAttackTimer = (monster.attackSpeed || 4) * 2
+          // Delay next attack by one cycle after a form change so the player can adapt
+          state.monsterAttackTimer = (monster.attackSpeed || 4)
           events.push({
             type: 'formChange',
             previousForm,
