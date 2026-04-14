@@ -14,8 +14,8 @@ const https = require('https');
 const path = require('path');
 
 // OSRS Wiki Prices API endpoint
-// Docs: https://prices.runescape.wiki/osrs/
-const OSRS_PRICES_API = 'https://prices.runescape.wiki/osrs/latest';
+// Docs: https://prices.runescape.wiki/api/v1/osrs/mapping
+const OSRS_PRICES_API = 'https://prices.runescape.wiki/api/v1/osrs/latest';
 const ITEMS_JSON_PATH = path.join(__dirname, '../src/data/items.json');
 
 async function fetchJSON(url) {
