@@ -67,6 +67,7 @@ async function updatePrices() {
     console.log(`📊 Building OSRS price lookup from ${Object.keys(osrsPrices).length} prices...\n`);
 
     const osrsPricesByName = {};
+    const osrsNames = []; // For debugging
     Object.entries(osrsPrices).forEach(([id, priceData]) => {
       // Get the item name from mapping using the ID
       const itemMapping = osrsMapping[id];
@@ -74,15 +75,26 @@ async function updatePrices() {
         const name = normalizeName(itemMapping.name);
         const price = priceData.price || 0;
         osrsPricesByName[name] = price;
+        osrsNames.push(name);
       }
     });
+
+    // Debug: Show sample of OSRS names
+    console.log(`📋 Sample OSRS item names (first 10):`);
+    osrsNames.slice(0, 10).forEach(name => console.log(`     - "${name}"`));
+    console.log('');
 
     // Load our items.json (source of truth)
     const itemsJSON = fs.readFileSync(ITEMS_JSON_PATH, 'utf-8');
     const itemsData = JSON.parse(itemsJSON);
 
     console.log(`✅ Loaded ${Object.keys(itemsData).length} items from items.json\n`);
-    console.log('🔍 Matching items and updating prices...\n');
+
+    // Debug: Show what we're looking for
+    console.log(`🔍 Sample items we're looking for (first 10):`);
+    const ourItems = Object.entries(itemsData).filter(([_, item]) => !item.isUntradeable && item.type !== 'currency');
+    ourItems.slice(0, 10).forEach(([_, item]) => console.log(`     - "${normalizeName(item.name)}"`));
+    console.log(`\n🔍 Matching items and updating prices...\n`);
 
     let updated = 0;
     let notFound = [];
