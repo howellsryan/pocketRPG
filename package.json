@@ -10,7 +10,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "fetch-prices": "node scripts/fetch-prices.cjs",
-    "rebuild": "npm run fetch-prices && tsc --project tsconfig.build.json && node build_single.cjs",
+    "rebuild": "tsc --project tsconfig.build.json && node build_single.cjs",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
   },
