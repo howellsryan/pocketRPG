@@ -81,6 +81,12 @@ const COMBAT_CATEGORIES = [
     icon: '🐊',
     ids: ['olm'],
   },
+  {
+    key: 'ape_atoll',
+    label: 'Ape Atoll',
+    icon: '🦍',
+    ids: ['demonic_gorilla'],
+  },
 ]
 
 const MONSTER_ICONS = {
@@ -90,7 +96,7 @@ const MONSTER_ICONS = {
   green_dragon: '🐉', red_dragon: '🔴', lesser_demon: '👿',
   general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
   dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
-  crazy_archaeologist: '📜', king_black_dragon: '👑', zulrah: '🐍', jad: '🌋', corrupted_gauntlet: '⚡', olm: '🐊'
+  crazy_archaeologist: '📜', king_black_dragon: '👑', zulrah: '🐍', jad: '🌋', corrupted_gauntlet: '⚡', olm: '🐊', demonic_gorilla: '🦍'
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange }) {
