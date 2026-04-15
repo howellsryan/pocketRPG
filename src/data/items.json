@@ -8094,5 +8094,67 @@
     "requirements": {},
     "shopValue": 19165061,
     "icon": "💍"
+  },
+  "zenyte_shard": {
+    "id": "zenyte_shard",
+    "name": "Zenyte shard",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 19500000,
+    "icon": "🔮"
+  },
+  "heavy_ballista": {
+    "id": "heavy_ballista",
+    "name": "Heavy ballista",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 7,
+    "attackStyle": "ranged",
+    "ammoType": "javelin",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 110
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 125,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 75
+    },
+    "shopValue": 35000000,
+    "icon": "🏹"
+  },
+  "javelin": {
+    "id": "javelin",
+    "name": "Javelin",
+    "type": "ammo",
+    "stackable": true,
+    "ammoType": "javelin",
+    "shopValue": 5,
+    "icon": "🏹"
+  },
+  "dragon_javelin": {
+    "id": "dragon_javelin",
+    "name": "Dragon javelin",
+    "type": "ammo",
+    "stackable": true,
+    "ammoType": "javelin",
+    "rangedStrength": 150,
+    "shopValue": 1400,
+    "icon": "🏹"
   }
 }

@@ -3959,5 +3959,96 @@
       { "itemId": "kodai_wand", "quantity": 1, "chance": 0.0290 },
       { "itemId": "twisted_bow", "quantity": 1, "chance": 0.0290 }
     ]
+  },
+  "demonic_gorilla": {
+    "id": "demonic_gorilla",
+    "name": "Demonic Gorilla",
+    "boss": true,
+    "combatLevel": 275,
+    "hitpoints": 205,
+    "stats": {
+      "attack": 195,
+      "strength": 200,
+      "defence": 195,
+      "magic": 275,
+      "ranged": 380
+    },
+    "attackSpeed": 5,
+    "attackStyle": "crush",
+    "attackBonus": 195,
+    "strengthBonus": 200,
+    "defenceBonus": {
+      "stab": 80,
+      "slash": 80,
+      "crush": 80,
+      "magic": 80,
+      "ranged": 80
+    },
+    "multiForm": true,
+    "formSwitchMin": 2,
+    "formSwitchMax": 5,
+    "initialForm": "melee",
+    "formCycleOrder": ["melee", "ranged", "magic"],
+    "forms": {
+      "melee": {
+        "displayName": "Melee Phase",
+        "icon": "🦍",
+        "attackStyle": "crush",
+        "immunity": "melee",
+        "maxHit": 30,
+        "attackBonus": 195,
+        "strengthBonus": 200,
+        "defenceBonus": {
+          "stab": 9999,
+          "slash": 9999,
+          "crush": 9999,
+          "magic": 20,
+          "ranged": 20
+        }
+      },
+      "ranged": {
+        "displayName": "Ranged Phase",
+        "icon": "🏹",
+        "attackStyle": "ranged",
+        "immunity": "ranged",
+        "maxHit": 30,
+        "attackBonus": 380,
+        "strengthBonus": 0,
+        "defenceBonus": {
+          "stab": 20,
+          "slash": 20,
+          "crush": 20,
+          "magic": 20,
+          "ranged": 9999
+        }
+      },
+      "magic": {
+        "displayName": "Magic Phase",
+        "icon": "✨",
+        "attackStyle": "magic",
+        "immunity": "magic",
+        "maxHit": 30,
+        "attackBonus": 275,
+        "strengthBonus": 0,
+        "defenceBonus": {
+          "stab": 20,
+          "slash": 20,
+          "crush": 20,
+          "magic": 9999,
+          "ranged": 20
+        }
+      }
+    },
+    "drops": [
+      { "itemId": "coins", "quantity": [2000, 4000], "chance": 1.0 },
+      { "itemId": "ranarr_weed", "quantity": [1, 3], "chance": 0.4 },
+      { "itemId": "snapdragon", "quantity": 1, "chance": 0.15 },
+      { "itemId": "death_rune", "quantity": [10, 20], "chance": 0.35 },
+      { "itemId": "blood_rune", "quantity": [10, 15], "chance": 0.2 },
+      { "itemId": "soul_rune", "quantity": [5, 10], "chance": 0.15 },
+      { "itemId": "dragon_bones", "quantity": 1, "chance": 0.5 },
+      { "itemId": "zenyte_shard", "quantity": 1, "chance": 0.00333 },
+      { "itemId": "heavy_ballista", "quantity": 1, "chance": 0.005 }
+    ]
   }
 }

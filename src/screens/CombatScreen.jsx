@@ -319,14 +319,23 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
             time: Date.now()
           }])
         }
+        if (ev.type === 'immuneHit') {
+          const immunityLabel = ev.immunity === 'melee' ? 'melee' : ev.immunity === 'ranged' ? 'ranged' : 'magic'
+          setLog(prev => [...prev.slice(-20), {
+            text: `🛡️ ${ev.monsterName || 'Monster'} is immune to ${immunityLabel}!`,
+            type: 'miss',
+            time: Date.now()
+          }])
+        }
         if (ev.type === 'formChange') {
           const monsterName = ev.monsterName || 'Monster'
+          const immunityNote = ev.immunity ? ` (immune to ${ev.immunity})` : ''
           setLog(prev => [...prev.slice(-20), {
-            text: `${ev.icon || '🐍'} ${monsterName} shifts into ${ev.displayName}`,
+            text: `${ev.icon || '🐍'} ${monsterName} shifts into ${ev.displayName}${immunityNote}`,
             type: 'formChange',
             time: Date.now()
           }])
-          addToast(`${ev.icon || '🐍'} ${monsterName}: ${ev.displayName} form`, 'info')
+          addToast(`${ev.icon || '🐍'} ${monsterName}: ${ev.displayName} form${immunityNote}`, 'info')
         }
         if (ev.type === 'bossPhaseReset') {
           const name = ev.monsterName || 'Boss'
@@ -832,11 +841,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
         <div class="flex items-center justify-between mb-1">
           <span class="text-sm font-semibold text-[var(--color-parchment)]">
             {combat.monster.name}
-            {combat.monster.multiForm && combat.monster.currentForm && combat.monster.forms?.[combat.monster.currentForm] && (
-              <span class="ml-2 text-[10px] font-[var(--font-mono)] text-purple-300">
-                {combat.monster.forms[combat.monster.currentForm].icon} {combat.monster.forms[combat.monster.currentForm].displayName}
-              </span>
-            )}
+            {combat.monster.multiForm && combat.monster.currentForm && combat.monster.forms?.[combat.monster.currentForm] && (() => {
+              const form = combat.monster.forms[combat.monster.currentForm]
+              return (
+                <span class="ml-2 text-[10px] font-[var(--font-mono)] text-purple-300">
+                  {form.icon} {form.displayName}{form.immunity ? ` · 🛡️ immune to ${form.immunity}` : ''}
+                </span>
+              )
+            })()}
           </span>
           <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-blood-light)]">CB {combat.monster.combatLevel}</span>
         </div>
