@@ -67,8 +67,8 @@ describe('The Great Olm Boss', () => {
       expect(olm.randomFormEveryAttack).toBe(true)
     })
 
-    it('should cycle phases in order: magic → melee → ranged', () => {
-      expect(olm.formCycleOrder).toEqual(['magic', 'melee', 'ranged'])
+    it('should not have a fixed cycle order (random phases)', () => {
+      expect(olm.formCycleOrder).toBeUndefined()
     })
 
     it('each phase should have max hit of 30', () => {
@@ -108,8 +108,8 @@ describe('The Great Olm Boss', () => {
     })
   })
 
-  describe('Ordered Phase Cycling', () => {
-    it('should cycle magic → melee → ranged → magic in order', () => {
+  describe('Random Phase Switching', () => {
+    it('should switch to a random phase on each monster attack', () => {
       const state = createCombatState(olm, 'ranged', 'accurate')
       expect(state.monster.currentForm).toBe('magic')
 
@@ -117,25 +117,25 @@ describe('The Great Olm Boss', () => {
       const playerStats = { attack: 99, strength: 99, defence: 99, ranged: 99, magic: 99, hitpoints: 99, currentHP: 99 }
       const emptyEquipment = { weapon: null, shield: null, head: null, body: null, legs: null, feet: null, hands: null, cape: null, neck: null, ring: null, ammo: null }
 
-      // After first monster attack — form should switch to melee
+      // After first monster attack — form should switch to a random phase
       let result = processCombatTick(state, playerStats, emptyEquipment, itemsData)
       let s = result.combatState
       // Manually advance monsterAttackTimer to trigger attack
       s.monsterAttackTimer = 0
       result = processCombatTick(s, playerStats, emptyEquipment, itemsData)
-      expect(result.combatState.monster.currentForm).toBe('melee')
+      expect(['magic', 'melee', 'ranged']).toContain(result.combatState.monster.currentForm)
 
-      // After second monster attack — form should switch to ranged
+      // After second monster attack — form should switch to another random phase
       s = result.combatState
       s.monsterAttackTimer = 0
       result = processCombatTick(s, playerStats, emptyEquipment, itemsData)
-      expect(result.combatState.monster.currentForm).toBe('ranged')
+      expect(['magic', 'melee', 'ranged']).toContain(result.combatState.monster.currentForm)
 
-      // After third monster attack — form should cycle back to magic
+      // After third monster attack — form should switch to another random phase (could be the same as previous)
       s = result.combatState
       s.monsterAttackTimer = 0
       result = processCombatTick(s, playerStats, emptyEquipment, itemsData)
-      expect(result.combatState.monster.currentForm).toBe('magic')
+      expect(['magic', 'melee', 'ranged']).toContain(result.combatState.monster.currentForm)
     })
   })
 
