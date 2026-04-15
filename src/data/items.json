@@ -1573,6 +1573,22 @@
     "shopValue": 2485090,
     "icon": "💎"
   },
+  "uncut_zenyte": {
+    "id": "uncut_zenyte",
+    "name": "Uncut zenyte",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 13500000,
+    "icon": "💎"
+  },
+  "zenyte": {
+    "id": "zenyte",
+    "name": "Zenyte",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 13400000,
+    "icon": "💎"
+  },
   "gold_bar": {
     "id": "gold_bar",
     "name": "Gold bar",
@@ -7846,5 +7862,237 @@
     },
     "shopValue": 1563888888,
     "icon": "🏹"
+  },
+  "zenyte_amulet": {
+    "id": "zenyte_amulet",
+    "name": "Zenyte amulet",
+    "type": "armour",
+    "slot": "neck",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 13500000,
+    "icon": "📿"
+  },
+  "zenyte_bracelet": {
+    "id": "zenyte_bracelet",
+    "name": "Zenyte bracelet",
+    "type": "armour",
+    "slot": "gloves",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 13500000,
+    "icon": "📿"
+  },
+  "zenyte_necklace": {
+    "id": "zenyte_necklace",
+    "name": "Zenyte necklace",
+    "type": "armour",
+    "slot": "neck",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 13500000,
+    "icon": "📿"
+  },
+  "zenyte_ring": {
+    "id": "zenyte_ring",
+    "name": "Zenyte ring",
+    "type": "armour",
+    "slot": "ring",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 13500000,
+    "icon": "💍"
+  },
+  "amulet_of_torture": {
+    "id": "amulet_of_torture",
+    "name": "Amulet of torture",
+    "type": "armour",
+    "slot": "neck",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 15,
+      "slash": 15,
+      "crush": 15,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 10,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 65000000,
+    "icon": "📿"
+  },
+  "tormented_bracelet": {
+    "id": "tormented_bracelet",
+    "name": "Tormented bracelet",
+    "type": "armour",
+    "slot": "gloves",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 10,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 5
+    },
+    "requirements": {},
+    "shopValue": 35000000,
+    "icon": "📿"
+  },
+  "necklace_of_anguish": {
+    "id": "necklace_of_anguish",
+    "name": "Necklace of anguish",
+    "type": "armour",
+    "slot": "neck",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 15
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 5,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 40000000,
+    "icon": "📿"
+  },
+  "ring_of_suffering": {
+    "id": "ring_of_suffering",
+    "name": "Ring of suffering",
+    "type": "armour",
+    "slot": "ring",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": 10,
+      "ranged": 10
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 60000000,
+    "icon": "💍"
   }
 }

@@ -1296,6 +1296,17 @@
         }
       },
       {
+        "id": "cut_zenyte",
+        "name": "Cut zenyte",
+        "level": 89,
+        "ticks": 3,
+        "xp": 200,
+        "product": "zenyte",
+        "materials": {
+          "uncut_zenyte": 1
+        }
+      },
+      {
         "id": "ruby_amulet",
         "name": "String ruby amulet",
         "level": 50,
@@ -1373,6 +1384,54 @@
         "product": "onyx_amulet",
         "materials": {
           "onyx": 1,
+          "gold_bar": 1
+        }
+      },
+      {
+        "id": "zenyte_amulet",
+        "name": "String zenyte amulet",
+        "level": 98,
+        "ticks": 4,
+        "xp": 200,
+        "product": "zenyte_amulet",
+        "materials": {
+          "zenyte": 1,
+          "gold_bar": 1
+        }
+      },
+      {
+        "id": "zenyte_bracelet",
+        "name": "Craft zenyte bracelet",
+        "level": 98,
+        "ticks": 4,
+        "xp": 200,
+        "product": "zenyte_bracelet",
+        "materials": {
+          "zenyte": 1,
+          "gold_bar": 1
+        }
+      },
+      {
+        "id": "zenyte_necklace",
+        "name": "String zenyte necklace",
+        "level": 98,
+        "ticks": 4,
+        "xp": 200,
+        "product": "zenyte_necklace",
+        "materials": {
+          "zenyte": 1,
+          "gold_bar": 1
+        }
+      },
+      {
+        "id": "zenyte_ring",
+        "name": "Craft zenyte ring",
+        "level": 98,
+        "ticks": 4,
+        "xp": 200,
+        "product": "zenyte_ring",
+        "materials": {
+          "zenyte": 1,
           "gold_bar": 1
         }
       }
@@ -1827,6 +1886,66 @@
         "runeReq": {
           "cosmic_rune": 1,
           "water_rune": 1
+        }
+      },
+      {
+        "id": "enchant_zenyte_amulet",
+        "name": "Enchant Zenyte Amulet",
+        "level": 93,
+        "ticks": 3,
+        "xp": 110,
+        "type": "enchant_jewel",
+        "product": "amulet_of_torture",
+        "itemReq": ["zenyte_amulet"],
+        "runeReq": {
+          "cosmic_rune": 1,
+          "soul_rune": 20,
+          "blood_rune": 20
+        }
+      },
+      {
+        "id": "enchant_zenyte_bracelet",
+        "name": "Enchant Zenyte Bracelet",
+        "level": 93,
+        "ticks": 3,
+        "xp": 110,
+        "type": "enchant_jewel",
+        "product": "tormented_bracelet",
+        "itemReq": ["zenyte_bracelet"],
+        "runeReq": {
+          "cosmic_rune": 1,
+          "soul_rune": 20,
+          "blood_rune": 20
+        }
+      },
+      {
+        "id": "enchant_zenyte_necklace",
+        "name": "Enchant Zenyte Necklace",
+        "level": 93,
+        "ticks": 3,
+        "xp": 110,
+        "type": "enchant_jewel",
+        "product": "necklace_of_anguish",
+        "itemReq": ["zenyte_necklace"],
+        "runeReq": {
+          "cosmic_rune": 1,
+          "soul_rune": 20,
+          "blood_rune": 20
+        }
+      },
+      {
+        "id": "enchant_zenyte_ring",
+        "name": "Enchant Zenyte Ring",
+        "level": 93,
+        "ticks": 3,
+        "xp": 110,
+        "type": "enchant_jewel",
+        "product": "ring_of_suffering",
+        "itemReq": ["zenyte_ring"],
+        "runeReq": {
+          "cosmic_rune": 1,
+          "soul_rune": 20,
+          "blood_rune": 20
         }
       },
       {
