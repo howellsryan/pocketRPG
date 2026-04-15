@@ -344,7 +344,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
             type: 'formChange',
             time: Date.now()
           }])
-          addToast(`${name} regenerates! (${ev.killsCompleted}/${ev.killsNeeded})`, 'info')
         }
         if (combatRef.current.runesConsumed && ev.type === 'playerHit' && ev.damage > 0) {
           // Consume runes when spell successfully casts
@@ -684,7 +683,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
 
     combatRef.current = newState
     setCombat(newState)
-    addToast(`${prayer.icon} ${prayer.name}`, 'info')
   }
 
   const handleAddToHome = (monster) => {
