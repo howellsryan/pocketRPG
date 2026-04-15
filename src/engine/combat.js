@@ -80,6 +80,15 @@ function pickNextForm(monster) {
 }
 
 /**
+ * Returns the immunity type ('melee', 'ranged', 'magic') of the monster's current form,
+ * or null if the current form has no immunity. Used for phase-based bosses like Demonic Gorilla.
+ */
+function getFormImmunity(monster) {
+  if (!monster.multiForm || !monster.currentForm || !monster.forms) return null
+  return monster.forms[monster.currentForm]?.immunity || null
+}
+
+/**
  * Handle monster death. Supports double-kill requirement (e.g. Olm).
  * Returns true if the monster truly died (combat ends), false if it regenerated (combat continues).
  */
@@ -194,6 +203,18 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
           if (currentEnergy >= weapon.specialAttack.energyCost) {
             // Drain energy when special attack actually fires
             state.specialAttackEnergy = Math.max(0, currentEnergy - weapon.specialAttack.energyCost)
+            // Check form immunity before firing (e.g. Demonic Gorilla)
+            const specImmunity = getFormImmunity(monster)
+            if (specImmunity && specImmunity === state.combatType) {
+              // Energy drained but attack is fully blocked — consistent with normal spec early-return
+              state.specialAttackQueued = false
+              events.push({ type: 'immuneHit', immunity: specImmunity, monsterName: monster.name })
+              let speed = weaponSpeed
+              if (state.combatType === 'ranged' && state.stance === 'rapid') speed = Math.max(1, speed - 1)
+              state.playerAttackTimer = speed
+              state.monster = monster
+              return { combatState: state, events }
+            }
             const { combatState: newState, events: specEvents } = applySpecialAttack(state, playerStats, equipment, itemsData)
             // Merge events from special attack
             for (const ev of specEvents) {
@@ -368,9 +389,21 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       }
     }
 
+    // ── Form Immunity Check (e.g. Demonic Gorilla) ──
+    const formImmunity = getFormImmunity(monster)
+    const isImmune = !!formImmunity && formImmunity === state.combatType
+    if (isImmune) {
+      damage = 0
+      xpSkills = {}
+    }
+
     const actualDamage = Math.min(damage, Math.max(0, monster.currentHP))
     monster.currentHP -= actualDamage
-    events.push({ type: 'playerHit', damage: actualDamage, monsterHP: monster.currentHP })
+    if (isImmune) {
+      events.push({ type: 'immuneHit', immunity: formImmunity, monsterName: monster.name })
+    } else {
+      events.push({ type: 'playerHit', damage: actualDamage, monsterHP: monster.currentHP })
+    }
 
     // Recompute xpSkills based on actualDamage to avoid overkill XP
     if (actualDamage !== damage && actualDamage >= 0) {
@@ -515,6 +548,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
             icon: nextForm.icon || '',
             attackStyle: nextForm.attackStyle,
             weakness: nextForm.weakness,
+            immunity: nextForm.immunity,
             monsterName: monster.name
           })
         }
@@ -532,12 +566,17 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
 function rollDrops(monster) {
   if (!monster.drops) return []
   const loot = []
+  const rolls = monster.dropRolls || 1
   for (const drop of monster.drops) {
-    if (Math.random() < drop.chance) {
-      const qty = Array.isArray(drop.quantity)
-        ? Math.floor(Math.random() * (drop.quantity[1] - drop.quantity[0] + 1)) + drop.quantity[0]
-        : drop.quantity
-      loot.push({ itemId: drop.itemId, quantity: qty })
+    // Always drops (chance === 1.0) are rolled once regardless of dropRolls
+    const timesToRoll = (drop.chance >= 1.0) ? 1 : rolls
+    for (let r = 0; r < timesToRoll; r++) {
+      if (Math.random() < drop.chance) {
+        const qty = Array.isArray(drop.quantity)
+          ? Math.floor(Math.random() * (drop.quantity[1] - drop.quantity[0] + 1)) + drop.quantity[0]
+          : drop.quantity
+        loot.push({ itemId: drop.itemId, quantity: qty, ...(drop.noted ? { noted: true } : {}) })
+      }
     }
   }
   return loot
