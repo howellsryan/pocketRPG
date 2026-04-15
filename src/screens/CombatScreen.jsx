@@ -75,6 +75,12 @@ const COMBAT_CATEGORIES = [
     icon: '⚡',
     ids: ['corrupted_gauntlet'],
   },
+  {
+    key: 'olm',
+    label: 'Olm',
+    icon: '🐊',
+    ids: ['olm'],
+  },
 ]
 
 const MONSTER_ICONS = {
