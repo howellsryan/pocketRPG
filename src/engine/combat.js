@@ -66,7 +66,7 @@ function randomFormSwitchThreshold(monster) {
 
 /**
  * Pick the next form. If formCycleOrder is defined, cycles in order;
- * otherwise picks a random form different from the current one.
+ * otherwise picks a random form (including possibly the current one).
  */
 function pickNextForm(monster) {
   const keys = Object.keys(monster.forms || {})
@@ -76,8 +76,7 @@ function pickNextForm(monster) {
     const idx = cycle.indexOf(monster.currentForm)
     return cycle[(idx + 1) % cycle.length]
   }
-  const others = keys.filter(k => k !== monster.currentForm)
-  return others[Math.floor(Math.random() * others.length)]
+  return keys[Math.floor(Math.random() * keys.length)]
 }
 
 /**

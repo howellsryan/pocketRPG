@@ -3908,7 +3908,6 @@
     },
     "multiForm": true,
     "randomFormEveryAttack": true,
-    "formCycleOrder": ["magic", "melee", "ranged"],
     "initialForm": "magic",
     "forms": {
       "magic": {
@@ -3922,7 +3921,7 @@
         "defenceBonus": { "stab": 200, "slash": 200, "crush": 200, "magic": 200, "ranged": 0 }
       },
       "melee": {
-        "displayName": "Left Hand",
+        "displayName": "Melee Hand",
         "icon": "✊",
         "attackStyle": "crush",
         "weakness": "ranged",
@@ -3932,7 +3931,7 @@
         "defenceBonus": { "stab": 200, "slash": 200, "crush": 200, "magic": 200, "ranged": 0 }
       },
       "ranged": {
-        "displayName": "Crystal Phase",
+        "displayName": "Ranged Phase",
         "icon": "💎",
         "attackStyle": "ranged",
         "weakness": "ranged",
