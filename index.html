@@ -19477,9 +19477,9 @@ function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange })
             }
         }
         const combatType = getCombatType(equipment, itemsData);
-        const spell = combatType === 'magic' && activeCombatSpell ? spellsData[activeCombatSpell.id] : null;
         const weaponItem = equipment?.weapon ? itemsData[equipment.weapon.itemId] : null;
         const isPoweredStaff = !!weaponItem?.poweredStaff;
+        const spell = combatType === 'magic' && activeCombatSpell && !isPoweredStaff ? spellsData[activeCombatSpell.id] : null;
         if (combatType === 'magic' && !spell && !isPoweredStaff) {
             addToast('No spell selected! Use the 🔮 Cast button to pick a spell.', 'error');
         }
@@ -19496,7 +19496,9 @@ function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange })
     };
     const continueFight = (monster) => {
         const combatType = getCombatType(equipment, itemsData);
-        const spell = combatType === 'magic' && activeCombatSpell ? spellsData[activeCombatSpell.id] : null;
+        const weaponItem = equipment?.weapon ? itemsData[equipment.weapon.itemId] : null;
+        const isPoweredStaff = !!weaponItem?.poweredStaff;
+        const spell = combatType === 'magic' && activeCombatSpell && !isPoweredStaff ? spellsData[activeCombatSpell.id] : null;
         const state = createCombatState(monster, combatType, combatStance, spell);
         // Reset special attack energy on kill; preserve active potions and prayers so they last their full duration
         state.specialAttackEnergy = 100;
