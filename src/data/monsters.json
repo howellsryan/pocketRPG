@@ -2426,6 +2426,7 @@
   "green_dragon": {
     "id": "green_dragon",
     "name": "Green Dragon",
+    "isDragon": true,
     "combatLevel": 79,
     "hitpoints": 75,
     "stats": {
@@ -3240,6 +3241,7 @@
     "id": "king_black_dragon",
     "name": "King Black Dragon",
     "boss": true,
+    "isDragon": true,
     "combatLevel": 276,
     "hitpoints": 150,
     "stats": {
@@ -3877,6 +3879,86 @@
         ],
         "chance": 0.18
       }
+    ]
+  },
+  "olm": {
+    "id": "olm",
+    "name": "The Great Olm",
+    "boss": true,
+    "requiresDoubleKill": true,
+    "combatLevel": 1000,
+    "hitpoints": 800,
+    "stats": {
+      "attack": 250,
+      "strength": 250,
+      "defence": 150,
+      "magic": 250,
+      "ranged": 250
+    },
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": 250,
+    "strengthBonus": 250,
+    "defenceBonus": {
+      "stab": 200,
+      "slash": 200,
+      "crush": 200,
+      "magic": 200,
+      "ranged": 0
+    },
+    "multiForm": true,
+    "randomFormEveryAttack": true,
+    "formCycleOrder": ["magic", "melee", "ranged"],
+    "initialForm": "magic",
+    "forms": {
+      "magic": {
+        "displayName": "Magic Hand",
+        "icon": "🔮",
+        "attackStyle": "magic",
+        "weakness": "ranged",
+        "maxHit": 30,
+        "attackBonus": 250,
+        "strengthBonus": 250,
+        "defenceBonus": { "stab": 200, "slash": 200, "crush": 200, "magic": 200, "ranged": 0 }
+      },
+      "melee": {
+        "displayName": "Left Hand",
+        "icon": "✊",
+        "attackStyle": "crush",
+        "weakness": "ranged",
+        "maxHit": 30,
+        "attackBonus": 250,
+        "strengthBonus": 250,
+        "defenceBonus": { "stab": 200, "slash": 200, "crush": 200, "magic": 200, "ranged": 0 }
+      },
+      "ranged": {
+        "displayName": "Crystal Phase",
+        "icon": "💎",
+        "attackStyle": "ranged",
+        "weakness": "ranged",
+        "maxHit": 30,
+        "attackBonus": 250,
+        "strengthBonus": 250,
+        "defenceBonus": { "stab": 200, "slash": 200, "crush": 200, "magic": 200, "ranged": 0 }
+      }
+    },
+    "drops": [
+      { "itemId": "coins", "quantity": [50000, 150000], "chance": 1.0 },
+      { "itemId": "dragon_bones", "quantity": [5, 15], "chance": 0.6 },
+      { "itemId": "death_rune", "quantity": [100, 250], "chance": 0.4 },
+      { "itemId": "blood_rune", "quantity": [100, 200], "chance": 0.35 },
+      { "itemId": "soul_rune", "quantity": [50, 150], "chance": 0.3 },
+      { "itemId": "snapdragon", "quantity": [10, 30], "chance": 0.25 },
+      { "itemId": "twisted_buckler", "quantity": 1, "chance": 0.0580 },
+      { "itemId": "dragon_hunter_crossbow", "quantity": 1, "chance": 0.0580 },
+      { "itemId": "dinhs_bulwark", "quantity": 1, "chance": 0.0435 },
+      { "itemId": "ancestral_hat", "quantity": 1, "chance": 0.0435 },
+      { "itemId": "ancestral_robe_top", "quantity": 1, "chance": 0.0435 },
+      { "itemId": "ancestral_robe_bottom", "quantity": 1, "chance": 0.0435 },
+      { "itemId": "dragon_claws", "quantity": 1, "chance": 0.0435 },
+      { "itemId": "elder_maul", "quantity": 1, "chance": 0.0290 },
+      { "itemId": "kodai_wand", "quantity": 1, "chance": 0.0290 },
+      { "itemId": "twisted_bow", "quantity": 1, "chance": 0.0290 }
     ]
   }
 }

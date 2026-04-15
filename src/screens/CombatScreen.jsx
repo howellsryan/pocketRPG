@@ -84,7 +84,7 @@ const MONSTER_ICONS = {
   green_dragon: '🐉', red_dragon: '🔴', lesser_demon: '👿',
   general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
   dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
-  crazy_archaeologist: '📜', king_black_dragon: '👑', zulrah: '🐍', jad: '🌋', corrupted_gauntlet: '⚡'
+  crazy_archaeologist: '📜', king_black_dragon: '👑', zulrah: '🐍', jad: '🌋', corrupted_gauntlet: '⚡', olm: '🐊'
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange }) {
@@ -214,7 +214,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
             snapshot: '🏹🏹 Snapshot',
             pebble_shot: '🎯 Pebble Shot',
             shove: '🗡️ Shove (staggered!)',
-            toxic_siphon: `🎋 Toxic Siphon (+${ev.healAmount || 0} HP)`
+            toxic_siphon: `🎋 Toxic Siphon (+${ev.healAmount || 0} HP)`,
+            slice_and_dice: '🦀🦀🦀🦀 Slice and Dice',
+            lunge: '🔰 The Block'
           }
           const label = specLabels[ev.specType] || '⚡ Special Attack'
           setLog(prev => [...prev.slice(-20), {
@@ -319,6 +321,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
             time: Date.now()
           }])
           addToast(`${ev.icon || '🐍'} ${monsterName}: ${ev.displayName} form`, 'info')
+        }
+        if (ev.type === 'bossPhaseReset') {
+          const name = ev.monsterName || 'Boss'
+          setLog(prev => [...prev.slice(-20), {
+            text: `💀 ${name} defeated! (${ev.killsCompleted}/${ev.killsNeeded}) — regenerating...`,
+            type: 'formChange',
+            time: Date.now()
+          }])
+          addToast(`${name} regenerates! (${ev.killsCompleted}/${ev.killsNeeded})`, 'info')
         }
         if (combatRef.current.runesConsumed && ev.type === 'playerHit' && ev.damage > 0) {
           // Consume runes when spell successfully casts
