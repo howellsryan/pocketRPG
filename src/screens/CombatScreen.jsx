@@ -405,9 +405,23 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
             const newInv = [...inventoryRef.current]
             for (const drop of ev.loot) {
               const item = itemsData[drop.itemId]
-              const added = addItem(newInv, drop.itemId, drop.quantity, item?.stackable || false)
+              let added = false
+              if (drop.noted) {
+                // Noted drops stack separately from regular stacks (noted: true on slot)
+                const existingIdx = newInv.findIndex(s => s && s.itemId === drop.itemId && s.noted)
+                if (existingIdx !== -1) {
+                  newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + drop.quantity }
+                  added = true
+                } else {
+                  const empty = newInv.indexOf(null)
+                  if (empty !== -1) { newInv[empty] = { itemId: drop.itemId, quantity: drop.quantity, noted: true }; added = true }
+                }
+              } else {
+                added = addItem(newInv, drop.itemId, drop.quantity, item?.stackable || false)
+              }
               if (added) {
-                addToast(`Loot: ${item?.name || drop.itemId} ×${drop.quantity}`, 'drop')
+                const noteTag = drop.noted ? ' (noted)' : ''
+                addToast(`Loot: ${item?.name || drop.itemId} ×${drop.quantity}${noteTag}`, 'drop')
               }
             }
             updateInventory(newInv)

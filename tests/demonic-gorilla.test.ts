@@ -211,8 +211,15 @@ describe('Demonic Gorilla', () => {
       expect(coinDrop.chance).toBe(1.0)
     })
 
-    it('should have zenyte_shard as a rare drop (~1/300)', () => {
-      const zenyteDrop = gorilla.drops.find((d: any) => d.itemId === 'zenyte_shard')
+    it('should always drop dragon bones as noted', () => {
+      const bonesDrop = gorilla.drops.find((d: any) => d.itemId === 'dragon_bones')
+      expect(bonesDrop).toBeDefined()
+      expect(bonesDrop.chance).toBe(1.0)
+      expect(bonesDrop.noted).toBe(true)
+    })
+
+    it('should have uncut_zenyte as a rare drop (~1/300 per roll)', () => {
+      const zenyteDrop = gorilla.drops.find((d: any) => d.itemId === 'uncut_zenyte')
       expect(zenyteDrop).toBeDefined()
       expect(zenyteDrop.chance).toBeLessThan(0.01)
     })
@@ -222,12 +229,16 @@ describe('Demonic Gorilla', () => {
       expect(ballistaDrop).toBeDefined()
       expect(ballistaDrop.chance).toBeLessThan(0.01)
     })
+
+    it('should have dropRolls of 2 (effectively halving rare drop rates)', () => {
+      expect((gorilla as any).dropRolls).toBe(2)
+    })
   })
 
   describe('New Items', () => {
-    it('zenyte_shard should exist in items data', () => {
-      expect((itemsData as any)['zenyte_shard']).toBeDefined()
-      expect((itemsData as any)['zenyte_shard'].name).toBe('Zenyte shard')
+    it('uncut_zenyte should exist in items data', () => {
+      expect((itemsData as any)['uncut_zenyte']).toBeDefined()
+      expect((itemsData as any)['uncut_zenyte'].name).toBe('Uncut zenyte')
     })
 
     it('heavy_ballista should exist in items data', () => {

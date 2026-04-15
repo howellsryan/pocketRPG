@@ -566,12 +566,17 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
 function rollDrops(monster) {
   if (!monster.drops) return []
   const loot = []
+  const rolls = monster.dropRolls || 1
   for (const drop of monster.drops) {
-    if (Math.random() < drop.chance) {
-      const qty = Array.isArray(drop.quantity)
-        ? Math.floor(Math.random() * (drop.quantity[1] - drop.quantity[0] + 1)) + drop.quantity[0]
-        : drop.quantity
-      loot.push({ itemId: drop.itemId, quantity: qty })
+    // Always drops (chance === 1.0) are rolled once regardless of dropRolls
+    const timesToRoll = (drop.chance >= 1.0) ? 1 : rolls
+    for (let r = 0; r < timesToRoll; r++) {
+      if (Math.random() < drop.chance) {
+        const qty = Array.isArray(drop.quantity)
+          ? Math.floor(Math.random() * (drop.quantity[1] - drop.quantity[0] + 1)) + drop.quantity[0]
+          : drop.quantity
+        loot.push({ itemId: drop.itemId, quantity: qty, ...(drop.noted ? { noted: true } : {}) })
+      }
     }
   }
   return loot

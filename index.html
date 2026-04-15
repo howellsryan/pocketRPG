@@ -12300,15 +12300,16 @@ const monstersData = {
         }
       }
     },
+    "dropRolls": 2,
     "drops": [
       { "itemId": "coins", "quantity": [2000, 4000], "chance": 1.0 },
+      { "itemId": "dragon_bones", "quantity": 1, "chance": 1.0, "noted": true },
       { "itemId": "ranarr_weed", "quantity": [1, 3], "chance": 0.4 },
       { "itemId": "snapdragon", "quantity": 1, "chance": 0.15 },
       { "itemId": "death_rune", "quantity": [10, 20], "chance": 0.35 },
       { "itemId": "blood_rune", "quantity": [10, 15], "chance": 0.2 },
       { "itemId": "soul_rune", "quantity": [5, 10], "chance": 0.15 },
-      { "itemId": "dragon_bones", "quantity": 1, "chance": 0.5 },
-      { "itemId": "zenyte_shard", "quantity": 1, "chance": 0.00333 },
+      { "itemId": "uncut_zenyte", "quantity": 1, "chance": 0.00333 },
       { "itemId": "heavy_ballista", "quantity": 1, "chance": 0.005 }
     ]
   }
@@ -16031,12 +16032,17 @@ function rollDrops(monster) {
     if (!monster.drops)
         return [];
     const loot = [];
+    const rolls = monster.dropRolls || 1;
     for (const drop of monster.drops) {
-        if (Math.random() < drop.chance) {
-            const qty = Array.isArray(drop.quantity)
-                ? Math.floor(Math.random() * (drop.quantity[1] - drop.quantity[0] + 1)) + drop.quantity[0]
-                : drop.quantity;
-            loot.push({ itemId: drop.itemId, quantity: qty });
+        // Always drops (chance === 1.0) are rolled once regardless of dropRolls
+        const timesToRoll = (drop.chance >= 1.0) ? 1 : rolls;
+        for (let r = 0; r < timesToRoll; r++) {
+            if (Math.random() < drop.chance) {
+                const qty = Array.isArray(drop.quantity)
+                    ? Math.floor(Math.random() * (drop.quantity[1] - drop.quantity[0] + 1)) + drop.quantity[0]
+                    : drop.quantity;
+                loot.push({ itemId: drop.itemId, quantity: qty, ...(drop.noted ? { noted: true } : {}) });
+            }
         }
     }
     return loot;
@@ -20006,9 +20012,28 @@ function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange })
                         const newInv = [...inventoryRef.current];
                         for (const drop of ev.loot) {
                             const item = itemsData[drop.itemId];
-                            const added = addItem(newInv, drop.itemId, drop.quantity, item?.stackable || false);
+                            let added = false;
+                            if (drop.noted) {
+                                // Noted drops stack separately from regular stacks (noted: true on slot)
+                                const existingIdx = newInv.findIndex(s => s && s.itemId === drop.itemId && s.noted);
+                                if (existingIdx !== -1) {
+                                    newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + drop.quantity };
+                                    added = true;
+                                }
+                                else {
+                                    const empty = newInv.indexOf(null);
+                                    if (empty !== -1) {
+                                        newInv[empty] = { itemId: drop.itemId, quantity: drop.quantity, noted: true };
+                                        added = true;
+                                    }
+                                }
+                            }
+                            else {
+                                added = addItem(newInv, drop.itemId, drop.quantity, item?.stackable || false);
+                            }
                             if (added) {
-                                addToast(`Loot: ${item?.name || drop.itemId} ×${drop.quantity}`, 'drop');
+                                const noteTag = drop.noted ? ' (noted)' : '';
+                                addToast(`Loot: ${item?.name || drop.itemId} ×${drop.quantity}${noteTag}`, 'drop');
                             }
                         }
                         updateInventory(newInv);

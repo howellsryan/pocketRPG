@@ -4039,15 +4039,16 @@
         }
       }
     },
+    "dropRolls": 2,
     "drops": [
       { "itemId": "coins", "quantity": [2000, 4000], "chance": 1.0 },
+      { "itemId": "dragon_bones", "quantity": 1, "chance": 1.0, "noted": true },
       { "itemId": "ranarr_weed", "quantity": [1, 3], "chance": 0.4 },
       { "itemId": "snapdragon", "quantity": 1, "chance": 0.15 },
       { "itemId": "death_rune", "quantity": [10, 20], "chance": 0.35 },
       { "itemId": "blood_rune", "quantity": [10, 15], "chance": 0.2 },
       { "itemId": "soul_rune", "quantity": [5, 10], "chance": 0.15 },
-      { "itemId": "dragon_bones", "quantity": 1, "chance": 0.5 },
-      { "itemId": "zenyte_shard", "quantity": 1, "chance": 0.00333 },
+      { "itemId": "uncut_zenyte", "quantity": 1, "chance": 0.00333 },
       { "itemId": "heavy_ballista", "quantity": 1, "chance": 0.005 }
     ]
   }
