@@ -8156,5 +8156,37 @@
     "rangedStrength": 150,
     "shopValue": 753,
     "icon": "🏹"
+  },
+  "zaryte_vambraces": {
+    "id": "zaryte_vambraces",
+    "name": "Zaryte vambraces",
+    "type": "armour",
+    "slot": "gloves",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 18
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 2,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 80,
+      "defence": 45
+    },
+    "shopValue": 2500000,
+    "icon": "🧤"
   }
 }
