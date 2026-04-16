@@ -338,7 +338,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
             type: 'formChange',
             time: Date.now()
           }])
-          addToast(`${ev.icon || '🐍'} ${monsterName}: ${ev.displayName} form${immunityNote}`, 'info')
+          const phaseChangeMonsters = ['olm', 'zulrah', 'jad', 'demonic_gorilla', 'maiden_of_sugadinti', 'pestilent_bloat', 'nylocas_vasilias', 'sotetseg', 'xarpus', 'verzik_vitur']
+          if (!phaseChangeMonsters.includes(state.monster.id)) {
+            addToast(`${ev.icon || '🐍'} ${monsterName}: ${ev.displayName} form${immunityNote}`, 'info')
+          }
         }
         if (ev.type === 'bossPhaseReset') {
           const name = ev.monsterName || 'Boss'
@@ -354,7 +357,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
             type: 'formChange',
             time: Date.now()
           }])
-          addToast(`${ev.icon || '🩸'} ${ev.monsterName}: ${ev.displayName}`, 'info')
         }
         if (ev.type === 'raidBossDefeated') {
           setLog(prev => [...prev.slice(-20), {
@@ -369,7 +371,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
             type: 'raid',
             time: Date.now()
           }])
-          addToast(`🩸 Next boss: ${ev.nextBossName} (${ev.bossIndex + 1}/${ev.totalBosses})`, 'info')
         }
         if (ev.type === 'raidComplete') {
           setLog(prev => [...prev.slice(-20), {
@@ -470,10 +471,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
                 }
               } else {
                 added = addItem(newInv, drop.itemId, drop.quantity, item?.stackable || false)
-              }
-              if (added) {
-                const noteTag = drop.noted ? ' (noted)' : ''
-                addToast(`Loot: ${item?.name || drop.itemId} ×${drop.quantity}${noteTag}`, 'drop')
               }
             }
             updateInventory(newInv)
@@ -1541,15 +1538,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
               <div class="space-y-2 max-h-48 overflow-y-auto">
                 {lootModal.loot.map((drop, idx) => {
                   const item = itemsData[drop.itemId]
+                  const isHighValue = item && item.shopValue > 1000000
                   return (
-                    <div key={idx} class="bg-[#111] rounded-lg p-3 flex items-center justify-between">
+                    <div key={idx} class={`rounded-lg p-3 flex items-center justify-between ${isHighValue ? 'bg-purple-900 bg-opacity-30 border border-purple-500' : 'bg-[#111]'}`}>
                       <div class="flex items-center gap-2">
                         <span class="text-2xl">{item?.icon || '📦'}</span>
                         <div>
-                          <div class="text-sm font-semibold text-[var(--color-parchment)]">
+                          <div class={`text-sm font-semibold ${isHighValue ? 'text-purple-300' : 'text-[var(--color-parchment)]'}`}>
                             {item?.name || drop.itemId}
                           </div>
-                          <div class="text-xs text-[var(--color-parchment)] opacity-60">
+                          <div class={`text-xs ${isHighValue ? 'text-purple-300 opacity-80' : 'text-[var(--color-parchment)] opacity-60'}`}>
                             ×{drop.quantity}
                           </div>
                         </div>
