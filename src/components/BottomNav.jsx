@@ -8,6 +8,7 @@ const tabs = [
   { id: SCREENS.BANK,      label: 'Bank',    icon: '🏦' },
   { id: SCREENS.STORE,     label: 'Store',   icon: '🪙' },
   { id: SCREENS.GATHER,    label: 'Gather',  icon: '🌿' },
+  { id: SCREENS.FARMING,   label: 'Farm',    icon: '🌾' },
   { id: SCREENS.COMBAT,    label: 'Combat',  icon: '⚔️' },
   { id: SCREENS.SKILLS,    label: 'Skills',  icon: '🔨' },
 ]

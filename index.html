@@ -16117,6 +16117,7 @@ const SCREENS = {
     SKILLS: 'skills',
     GATHER: 'gather',
     AGILITY: 'agility',
+    FARMING: 'farming',
     STORE: 'store'
 };
 
@@ -20314,6 +20315,7 @@ const tabs = [
     { id: SCREENS.BANK, label: 'Bank', icon: '🏦' },
     { id: SCREENS.STORE, label: 'Store', icon: '🪙' },
     { id: SCREENS.GATHER, label: 'Gather', icon: '🌿' },
+    { id: SCREENS.FARMING, label: 'Farm', icon: '🌾' },
     { id: SCREENS.COMBAT, label: 'Combat', icon: '⚔️' },
     { id: SCREENS.SKILLS, label: 'Skills', icon: '🔨' },
 ];
@@ -25242,6 +25244,7 @@ function EquipmentScreen() {
 
 
 
+
 function GameApp() {
     const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints } = useGame();
     const [screen, setScreen] = useState(SCREENS.HOME);
@@ -25575,6 +25578,7 @@ function GameApp() {
             case SCREENS.SKILLS: return h(SkillingScreen, { initialSkillId: actionData?.skillId, initialActionId: actionData?.actionId, idleResult: idleResult });
             case SCREENS.GATHER: return h(GatherScreen, { initialTaskId: actionData?.gatherTaskId, idleResult: idleResult });
             case SCREENS.AGILITY: return h(AgilityScreen, { initialActionId: actionData?.actionId });
+            case SCREENS.FARMING: return h(FarmingScreen, null);
             case SCREENS.STORE: return h(GeneralStoreScreen, null);
             default: return h(HomeScreen, { onNavigate: navigate, onSaveMenu: () => setShowSaveMenu(true) });
         }

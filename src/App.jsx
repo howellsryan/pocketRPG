@@ -11,6 +11,7 @@ import CombatScreen from './screens/CombatScreen.jsx'
 import SkillingScreen from './screens/SkillingScreen.jsx'
 import GatherScreen from './screens/GatherScreen.jsx'
 import AgilityScreen from './screens/AgilityScreen.jsx'
+import FarmingScreen from './screens/FarmingScreen.jsx'
 import GeneralStoreScreen from './screens/GeneralStoreScreen.jsx'
 import EquipmentScreen from './screens/EquipmentScreen.jsx'
 import { SCREENS } from './utils/constants.js'
@@ -379,6 +380,7 @@ function GameApp() {
       case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} idleResult={idleResult} />
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} />
       case SCREENS.AGILITY:   return <AgilityScreen initialActionId={actionData?.actionId} />
+      case SCREENS.FARMING:   return <FarmingScreen />
       case SCREENS.STORE:     return <GeneralStoreScreen />
       default:                return <HomeScreen onNavigate={navigate} onSaveMenu={() => setShowSaveMenu(true)} />
     }
