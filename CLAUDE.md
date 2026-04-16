@@ -22,6 +22,7 @@ node build_single.cjs               # Concatenate + inline into index.html
    - **Engine/State files** → Add to `sourceFiles` array in `build_single.cjs`
    - **UI screens** → Add to `sourceFiles` array in `build_single.cjs`
    - **JSON data files** → Add to `readSrc()` call AND inline data section in `build_single.cjs`
+ * **No Duplicate Top-Level Names**: All source files concatenate into one `<script>`, so top-level `const`/`let`/`function` names share a single scope. Never declare the same module-level identifier in two files — it will throw `Identifier has already been declared` at parse time and cause a black screen on load.
 ## 4. WORKFLOW (Claude Code)
  1. Make source changes in src/.
  2. Rebuild: tsc --project tsconfig.build.json && node build_single.cjs.
