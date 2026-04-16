@@ -96,7 +96,7 @@ const MONSTER_ICONS = {
   sotetseg: '🔮', xarpus: '☠️', verzik_vitur: '👑'
 }
 
-export default function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange }) {
+export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFightStatusChange }) {
   const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts } = useGame()
 
   const [combat, setCombat] = useState(null)
@@ -109,6 +109,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
   const [showEquipmentModal, setShowEquipmentModal] = useState(false)
   const [showSpellModal, setShowSpellModal] = useState(false)
   const [selectedMonsterInfo, setSelectedMonsterInfo] = useState(null)
+  const [selectedRaidInfo, setSelectedRaidInfo] = useState(null)
   const [lootModal, setLootModal] = useState(null)
 
   const combatRef = useRef(null)
@@ -164,6 +165,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
       if (monster) startFight(monster)
     }
   }, [initialMonsterId])
+
+  useEffect(() => {
+    if (initialRaidId && !hasAutoStarted.current && !combat) {
+      hasAutoStarted.current = true
+      const raid = raidsData[initialRaidId]
+      if (raid) startRaid(raid)
+    }
+  }, [initialRaidId])
 
   // Update boss fight status in parent
   useEffect(() => {
@@ -788,11 +797,36 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
     addToast(`${icon} ${shortcut.label} added to Home!`, 'info')
   }
 
+  const handleAddRaidToHome = (raid) => {
+    const shortcut = {
+      label: `Run ${raid.name}`,
+      icon: raid.icon,
+      screen: SCREENS.COMBAT,
+      raidId: raid.id
+    }
+    const current = homeShortcuts ?? [
+      { label: 'Fight Monsters', icon: '⚔️', screen: SCREENS.COMBAT },
+      { label: 'Train Skills', icon: '🔨', screen: SCREENS.SKILLS },
+      { label: 'Gather Resources', icon: '🌿', screen: SCREENS.GATHER },
+      { label: 'Open Bank', icon: '🏦', screen: SCREENS.BANK },
+      { label: 'View Stats', icon: '📊', screen: SCREENS.STATS },
+      { label: 'Inventory', icon: '🎒', screen: SCREENS.INVENTORY },
+    ]
+    const alreadyExists = current.some(s => s.label === shortcut.label)
+    if (alreadyExists) {
+      addToast(`Already on home screen!`, 'info')
+      return
+    }
+    updateHomeShortcuts([...current, shortcut])
+    addToast(`${raid.icon} ${shortcut.label} added to Home!`, 'info')
+  }
+
   const agilityLevel = getLevelFromXP(stats.agility?.xp || 0)
   const bankDelayMs = getAgilityBankDelayMs(agilityLevel)
   // Monster picker
   if (!combat) {
     return (
+      <>
       <div class="h-full overflow-y-auto p-4">
         <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider mb-3">
           Choose a Monster
@@ -924,27 +958,41 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
             {Object.values(raidsData).map(raid => {
               const bosses = raid.bosses.map(id => monstersData[id]).filter(Boolean)
               return (
-                <div key={raid.id} class="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl overflow-hidden">
+                <div key={raid.id} class="flex gap-2 items-center">
                   <button
                     onClick={() => startRaid(raid)}
-                    class="w-full p-3 active:bg-[#222] transition-colors text-left"
+                    class="flex-1 p-3 rounded-xl border bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222] transition-colors text-left"
                   >
-                    <div class="flex items-center justify-between mb-2">
-                      <div class="flex items-center gap-2">
-                        <span class="text-2xl">{raid.icon}</span>
-                        <div>
-                          <div class="text-sm font-semibold text-[var(--color-parchment)]">{raid.name}</div>
-                          <div class="text-[10px] text-[var(--color-parchment)] opacity-40">{raid.description}</div>
-                        </div>
+                    <div class="flex items-center gap-2 mb-2">
+                      <span class="text-2xl">{raid.icon}</span>
+                      <div>
+                        <div class="text-sm font-semibold text-[var(--color-parchment)]">{raid.name}</div>
+                        <div class="text-[10px] text-[var(--color-parchment)] opacity-40">{raid.description}</div>
                       </div>
                     </div>
-                    <div class="flex flex-wrap gap-1 mt-1">
-                      {bosses.map((boss, i) => (
+                    <div class="flex flex-wrap gap-1">
+                      {bosses.map((boss) => (
                         <span key={boss.id} class="text-[9px] bg-[#111] text-[var(--color-parchment)] opacity-60 px-1.5 py-0.5 rounded">
                           {MONSTER_ICONS[boss.id] || '👹'} {boss.name}
                         </span>
                       ))}
                     </div>
+                  </button>
+                  <button
+                    onClick={() => setSelectedRaidInfo(raid)}
+                    class="flex-shrink-0 px-3 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5"
+                    title="View Raid Info"
+                  >
+                    <span class="text-base">ℹ️</span>
+                    <span class="text-[8px] text-[var(--color-parchment)] opacity-50">Info</span>
+                  </button>
+                  <button
+                    onClick={() => handleAddRaidToHome(raid)}
+                    class="flex-shrink-0 px-3 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5"
+                    title="Add to Home Screen"
+                  >
+                    <span class="text-base">🏠</span>
+                    <span class="text-[8px] text-[var(--color-parchment)] opacity-50">Add</span>
                   </button>
                 </div>
               )
@@ -952,6 +1000,156 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
           </div>
         </div>
       </div>
+
+      {/* Monster Info Modal — shown from picker view */}
+      {selectedMonsterInfo && (
+        <Modal onClose={() => setSelectedMonsterInfo(null)}>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">
+              {MONSTER_ICONS[selectedMonsterInfo.id] || '👹'} {selectedMonsterInfo.name}
+            </h3>
+            <button
+              onClick={() => setSelectedMonsterInfo(null)}
+              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
+              title="Close"
+            >
+              ✕
+            </button>
+          </div>
+          <div class="space-y-4 max-h-96 overflow-y-auto">
+            <div>
+              <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Combat Stats</h4>
+              <div class="bg-[#111] rounded-lg p-3 space-y-1">
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Combat Level</span><span class="font-[var(--font-mono)] text-[var(--color-gold)]">{selectedMonsterInfo.combatLevel}</span></div>
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>HP</span><span class="font-[var(--font-mono)] text-[var(--color-hp-green)]">{selectedMonsterInfo.hitpoints}</span></div>
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Attack</span><span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.attack}</span></div>
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Strength</span><span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.strength}</span></div>
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Defence</span><span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.defence}</span></div>
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Magic</span><span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.magic}</span></div>
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Ranged</span><span class="font-[var(--font-mono)]">{selectedMonsterInfo.stats.ranged}</span></div>
+              </div>
+            </div>
+            <div>
+              <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Defence Bonuses</h4>
+              <div class="bg-[#111] rounded-lg p-3 space-y-1">
+                {['stab', 'slash', 'crush', 'magic', 'ranged'].map(style => (
+                  <div key={style} class="flex justify-between text-[11px] text-[var(--color-parchment)]">
+                    <span class="capitalize">{style}</span>
+                    <span class={`font-[var(--font-mono)] ${selectedMonsterInfo.defenceBonus[style] >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {selectedMonsterInfo.defenceBonus[style] >= 0 ? '+' : ''}{selectedMonsterInfo.defenceBonus[style]}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {selectedMonsterInfo.drops && selectedMonsterInfo.drops.length > 0 && (
+              <div>
+                <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Drops</h4>
+                <div class="space-y-1">
+                  {selectedMonsterInfo.drops.map(drop => {
+                    const item = itemsData[drop.itemId]
+                    const percentage = (drop.chance * 100).toFixed(1)
+                    return (
+                      <div key={drop.itemId} class="bg-[#111] rounded-lg p-2">
+                        <div class="flex items-start justify-between gap-2">
+                          <div class="text-left flex-1 min-w-0">
+                            <div class="text-[11px] font-semibold text-[var(--color-parchment)]">{item?.icon || '📦'} {item?.name || drop.itemId}</div>
+                            <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
+                              {drop.chance === 1 ? 'Always' : `${percentage}%`}
+                              {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
+
+      {/* Raid Info Modal */}
+      {selectedRaidInfo && (
+        <Modal onClose={() => setSelectedRaidInfo(null)}>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">
+              {selectedRaidInfo.icon} {selectedRaidInfo.name}
+            </h3>
+            <button
+              onClick={() => setSelectedRaidInfo(null)}
+              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
+              title="Close"
+            >
+              ✕
+            </button>
+          </div>
+          <div class="space-y-4 max-h-96 overflow-y-auto">
+            <div>
+              <p class="text-[11px] text-[var(--color-parchment)] opacity-60 mb-3">{selectedRaidInfo.description}</p>
+            </div>
+            <div>
+              <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Bosses</h4>
+              <div class="space-y-1">
+                {selectedRaidInfo.bosses.map((bossId, i) => {
+                  const boss = monstersData[bossId]
+                  if (!boss) return null
+                  return (
+                    <div key={bossId} class="bg-[#111] rounded-lg p-2 flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <span class="text-base">{MONSTER_ICONS[bossId] || '👹'}</span>
+                        <div>
+                          <div class="text-[11px] font-semibold text-[var(--color-parchment)]">{i + 1}. {boss.name}</div>
+                          <div class="text-[9px] text-[var(--color-parchment)] opacity-50">HP {boss.hitpoints} · CB {boss.combatLevel}</div>
+                        </div>
+                      </div>
+                      <span class="text-[9px] text-[var(--color-parchment)] opacity-40 font-[var(--font-mono)]">CB {boss.combatLevel}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+            {selectedRaidInfo.rewards && (
+              <div>
+                <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Rewards</h4>
+                <div class="space-y-1">
+                  {selectedRaidInfo.rewards.always?.map(drop => {
+                    const item = itemsData[drop.itemId]
+                    return (
+                      <div key={drop.itemId} class="bg-[#111] rounded-lg p-2 flex items-center justify-between">
+                        <div class="text-[11px] text-[var(--color-parchment)]">{item?.icon || '📦'} {item?.name || drop.itemId}</div>
+                        <div class="text-[9px] text-[var(--color-parchment)] opacity-50">
+                          {drop.chance === 1 ? 'Always' : `${(drop.chance * 100).toFixed(0)}%`}
+                          {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]}` : ` · ${drop.quantity}`}
+                        </div>
+                      </div>
+                    )
+                  })}
+                  {selectedRaidInfo.rewards.unique && (
+                    <div class="bg-[#1a1208] border border-[#3a2a10] rounded-lg p-2 mt-1">
+                      <div class="text-[10px] font-semibold text-[var(--color-gold)] mb-1">
+                        ✨ Unique Drop ({(selectedRaidInfo.rewards.unique.chance * 100).toFixed(1)}% chance)
+                      </div>
+                      <div class="space-y-0.5">
+                        {selectedRaidInfo.rewards.unique.items.map(u => {
+                          const item = itemsData[u.itemId]
+                          return (
+                            <div key={u.itemId} class="text-[10px] text-[var(--color-parchment)] opacity-70">
+                              {item?.icon || '🎁'} {item?.name || u.itemId}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
+      </>
     )
   }
 

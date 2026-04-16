@@ -48,6 +48,7 @@ export default function HomeScreen({ onNavigate, onSaveMenu }) {
     // Navigate to screen with optional action data
     onNavigate(sc.screen, {
       monsterId: sc.monsterId,
+      raidId: sc.raidId,
       gatherTaskId: sc.gatherTaskId,
       skillId: sc.skillId,
       actionId: sc.actionId
