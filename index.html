@@ -16117,7 +16117,6 @@ const SCREENS = {
     SKILLS: 'skills',
     GATHER: 'gather',
     AGILITY: 'agility',
-    FARMING: 'farming',
     STORE: 'store'
 };
 
@@ -20315,7 +20314,6 @@ const tabs = [
     { id: SCREENS.BANK, label: 'Bank', icon: '🏦' },
     { id: SCREENS.STORE, label: 'Store', icon: '🪙' },
     { id: SCREENS.GATHER, label: 'Gather', icon: '🌿' },
-    { id: SCREENS.FARMING, label: 'Farm', icon: '🌾' },
     { id: SCREENS.COMBAT, label: 'Combat', icon: '⚔️' },
     { id: SCREENS.SKILLS, label: 'Skills', icon: '🔨' },
 ];
@@ -23507,8 +23505,9 @@ function ThievingScreen({ initialNpcId, onBack }) {
 
 
 
-// Agility, Prayer, Thieving, and Slayer are special skills shown here in the Skills tab
-const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'slayer'];
+
+// Agility, Prayer, Thieving, Slayer, and Farming are special skills shown here in the Skills tab
+const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'slayer', 'farming'];
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0);
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS];
 function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
@@ -23531,6 +23530,10 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
     // If thieving is selected, delegate to ThievingScreen
     if (selectedSkill === 'thieving') {
         return (h(ThievingScreen, { initialNpcId: initialActionId, onBack: () => setSelectedSkill(null) }));
+    }
+    // If farming is selected, delegate to FarmingScreen
+    if (selectedSkill === 'farming') {
+        return (h(FarmingScreen, { onBack: () => setSelectedSkill(null) }));
     }
     // Tick listener
     useEffect(() => {
@@ -25239,7 +25242,6 @@ function EquipmentScreen() {
 
 
 
-
 function GameApp() {
     const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints } = useGame();
     const [screen, setScreen] = useState(SCREENS.HOME);
@@ -25573,7 +25575,6 @@ function GameApp() {
             case SCREENS.SKILLS: return h(SkillingScreen, { initialSkillId: actionData?.skillId, initialActionId: actionData?.actionId, idleResult: idleResult });
             case SCREENS.GATHER: return h(GatherScreen, { initialTaskId: actionData?.gatherTaskId, idleResult: idleResult });
             case SCREENS.AGILITY: return h(AgilityScreen, { initialActionId: actionData?.actionId });
-            case SCREENS.FARMING: return h(FarmingScreen, null);
             case SCREENS.STORE: return h(GeneralStoreScreen, null);
             default: return h(HomeScreen, { onNavigate: navigate, onSaveMenu: () => setShowSaveMenu(true) });
         }
