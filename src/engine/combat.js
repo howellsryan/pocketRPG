@@ -15,22 +15,7 @@ import { randInt } from '../utils/helpers.js'
  */
 export function createCombatState(monster, combatType = 'melee', stance = 'accurate', spell = null) {
   // Apply initial form for multi-form bosses (e.g. Zulrah)
-  let preparedMonster = { ...monster, currentHP: monster.hitpoints }
-  if (monster.multiForm && monster.forms) {
-    const formKey = monster.initialForm || Object.keys(monster.forms)[0]
-    const form = monster.forms[formKey]
-    if (form) {
-      preparedMonster.currentForm = formKey
-      preparedMonster.formAttackCount = 0
-      // For per-attack randomization, always switch after 1 attack
-      preparedMonster.formSwitchThreshold = monster.randomFormEveryAttack ? 1 : randomFormSwitchThreshold(monster)
-      preparedMonster.attackStyle = form.attackStyle
-      preparedMonster.attackBonus = form.attackBonus ?? monster.attackBonus ?? 0
-      preparedMonster.strengthBonus = form.strengthBonus ?? monster.strengthBonus ?? 0
-      preparedMonster.defenceBonus = { ...form.defenceBonus }
-      preparedMonster.formMaxHit = form.maxHit
-    }
-  }
+  let preparedMonster = prepareMonster(monster)
   return {
     active: true,
     monster: preparedMonster,
@@ -50,8 +35,54 @@ export function createCombatState(monster, combatType = 'melee', stance = 'accur
     activeProtectionPrayer: null,  // one protection prayer, reset on each new fight
     activeCombatPrayer: null,      // one combat enhancing prayer, reset on each new fight
     activePotions: {},             // { potionItemId: durationInTicks } - multiple different potion types allowed
-    doubleKillCount: 0             // tracks how many times a requiresDoubleKill boss has been defeated
+    doubleKillCount: 0,            // tracks how many times a requiresDoubleKill boss has been defeated
+    raid: null                     // raid state: { raidId, bosses[], currentBossIndex, monstersData }
   }
+}
+
+/**
+ * Prepare a monster for combat (apply initial form, set currentHP).
+ */
+function prepareMonster(monster) {
+  let preparedMonster = { ...monster, currentHP: monster.hitpoints }
+  if (monster.multiForm && monster.forms) {
+    const formKey = monster.initialForm || Object.keys(monster.forms)[0]
+    const form = monster.forms[formKey]
+    if (form) {
+      preparedMonster.currentForm = formKey
+      preparedMonster.formAttackCount = 0
+      preparedMonster.formSwitchThreshold = monster.randomFormEveryAttack ? 1 : randomFormSwitchThreshold(monster)
+      preparedMonster.attackStyle = form.attackStyle
+      preparedMonster.attackBonus = form.attackBonus ?? monster.attackBonus ?? 0
+      preparedMonster.strengthBonus = form.strengthBonus ?? monster.strengthBonus ?? 0
+      preparedMonster.defenceBonus = { ...form.defenceBonus }
+      preparedMonster.formMaxHit = form.maxHit
+      // Verzik phased boss: use first form's phaseHP as starting HP
+      if (monster.verzikPhased && form.phaseHP) {
+        preparedMonster.hitpoints = form.phaseHP
+        preparedMonster.currentHP = form.phaseHP
+      }
+    }
+  }
+  return preparedMonster
+}
+
+/**
+ * Create a combat state for a raid (sequential boss fights).
+ */
+export function createRaidCombatState(raidData, monstersData, combatType = 'melee', stance = 'accurate', spell = null) {
+  const firstBossId = raidData.bosses[0]
+  const firstBoss = monstersData[firstBossId]
+  if (!firstBoss) return null
+  const state = createCombatState(firstBoss, combatType, stance, spell)
+  state.raid = {
+    raidId: raidData.id,
+    bosses: raidData.bosses,
+    currentBossIndex: 0,
+    monstersData,
+    rewards: raidData.rewards
+  }
+  return state
 }
 
 /**
@@ -89,12 +120,49 @@ function getFormImmunity(monster) {
 }
 
 /**
- * Handle monster death. Supports double-kill requirement (e.g. Olm).
- * Returns true if the monster truly died (combat ends), false if it regenerated (combat continues).
+ * Handle monster death. Supports double-kill requirement (e.g. Olm), Verzik phased boss, and raid boss advancement.
+ * Returns true if the monster truly died (combat ends), false if it regenerated/advanced (combat continues).
  */
 function checkMonsterDeath(state, monster, events) {
   if (monster.currentHP > 0) return false
   monster.currentHP = 0
+
+  // Verzik phased boss: advance to next phase instead of dying
+  if (monster.verzikPhased && monster.multiForm && monster.forms) {
+    const formOrder = monster.formCycleOrder || Object.keys(monster.forms)
+    const currentIdx = formOrder.indexOf(monster.currentForm)
+    const nextIdx = currentIdx + 1
+    if (nextIdx < formOrder.length) {
+      const nextKey = formOrder[nextIdx]
+      const nextForm = monster.forms[nextKey]
+      if (nextForm) {
+        monster.currentForm = nextKey
+        monster.attackStyle = nextForm.attackStyle
+        monster.attackBonus = nextForm.attackBonus ?? monster.attackBonus
+        monster.strengthBonus = nextForm.strengthBonus ?? monster.strengthBonus
+        monster.defenceBonus = { ...nextForm.defenceBonus }
+        monster.formMaxHit = nextForm.maxHit
+        monster.formAttackCount = 0
+        monster.formSwitchThreshold = 9999
+        // Set HP to this phase's phaseHP
+        const phaseHP = nextForm.phaseHP || monster.hitpoints
+        monster.currentHP = phaseHP
+        monster.hitpoints = phaseHP
+        state.playerAttackTimer = 5
+        state.monsterAttackTimer = 5
+        state.specialAttackEnergy = 100
+        events.push({
+          type: 'verzikPhaseChange',
+          phase: nextKey,
+          displayName: nextForm.displayName,
+          icon: nextForm.icon,
+          monsterName: monster.name
+        })
+        return false
+      }
+    }
+    // Fell through — final phase dead, continue to true death below
+  }
 
   if (monster.requiresDoubleKill && (state.doubleKillCount || 0) < 1) {
     // First kill — boss regenerates for round 2
@@ -123,7 +191,49 @@ function checkMonsterDeath(state, monster, events) {
     return false
   }
 
-  // True death
+  // ── Raid boss advancement ──
+  if (state.raid) {
+    const raid = state.raid
+    const nextIdx = raid.currentBossIndex + 1
+    events.push({
+      type: 'raidBossDefeated',
+      bossId: monster.id,
+      bossName: monster.name,
+      bossIndex: raid.currentBossIndex,
+      totalBosses: raid.bosses.length
+    })
+    if (nextIdx < raid.bosses.length) {
+      // Advance to next raid boss — carry over HP, potions, prayers, XP
+      const nextBossId = raid.bosses[nextIdx]
+      const nextBossData = raid.monstersData[nextBossId]
+      if (nextBossData) {
+        const nextMonster = prepareMonster(nextBossData)
+        state.monster = nextMonster
+        state.raid = { ...raid, currentBossIndex: nextIdx }
+        state.doubleKillCount = 0
+        state.playerAttackTimer = 5
+        state.monsterAttackTimer = 5
+        state.specialAttackEnergy = 100
+        events.push({
+          type: 'raidBossAdvance',
+          nextBossId,
+          nextBossName: nextMonster.name,
+          bossIndex: nextIdx,
+          totalBosses: raid.bosses.length
+        })
+        return false
+      }
+    }
+    // Final raid boss died — roll raid rewards
+    state.active = false
+    state.specialAttackEnergy = 100
+    state.loot = rollRaidRewards(raid.rewards)
+    events.push({ type: 'raidComplete', raidId: raid.raidId, loot: state.loot, xpGained: { ...state.xpGained } })
+    events.push({ type: 'monsterDeath', loot: state.loot, xpGained: { ...state.xpGained } })
+    return true
+  }
+
+  // True death (non-raid)
   state.active = false
   state.specialAttackEnergy = 100
   state.loot = rollDrops(monster)
@@ -248,6 +358,16 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     let xpSkills = {}
 
     if (state.combatType === 'melee') {
+      // Scythe of vitur: requires charges for melee attacks
+      if (equippedWeapon?.scaleCharged && equippedWeapon?.scythePassive) {
+        if (weaponCharges <= 0) {
+          events.push({ type: 'noCharges', itemId: equippedWeaponEntry.itemId })
+          state.playerAttackTimer = weaponSpeed
+          state.monster = monster
+          return { combatState: state, events }
+        }
+      }
+
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(boostedPlayerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
       const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
@@ -256,6 +376,19 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       damage = rollDamage(acc, maxHit)
+
+      // Scythe of vitur passive: 3 hits at 100%, 50%, 25% max hit
+      if (equippedWeapon?.scythePassive && damage > 0) {
+        const hit2 = rollDamage(acc, Math.floor(maxHit * 0.5))
+        const hit3 = rollDamage(acc, Math.floor(maxHit * 0.25))
+        damage += hit2 + hit3
+        events.push({ type: 'scythePassive', hits: [damage - hit2 - hit3, hit2, hit3] })
+      }
+
+      // Consume one charge per scythe swing
+      if (equippedWeapon?.scaleCharged && equippedWeapon?.scythePassive) {
+        events.push({ type: 'consumeCharge', qty: 1 })
+      }
 
       if (damage > 0) {
         const xpSkill = getMeleeXPSkill(state.stance)
@@ -352,6 +485,12 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
 
       if (weaponIsScaleCharged) {
         events.push({ type: 'consumeCharge', qty: 1 })
+      }
+
+      // Sanguinesti staff passive: 1/6 chance to heal for half damage dealt
+      if (equippedWeapon?.sangPassive && damage > 0 && Math.random() < (1 / 6)) {
+        const healAmount = Math.max(1, Math.floor(damage / 2))
+        events.push({ type: 'sangHeal', healAmount, damage })
       }
 
       if (damage > 0) {
@@ -576,6 +715,39 @@ function rollDrops(monster) {
           ? Math.floor(Math.random() * (drop.quantity[1] - drop.quantity[0] + 1)) + drop.quantity[0]
           : drop.quantity
         loot.push({ itemId: drop.itemId, quantity: qty, ...(drop.noted ? { noted: true } : {}) })
+      }
+    }
+  }
+  return loot
+}
+
+/**
+ * Roll raid rewards (always drops + unique chance with weighted selection).
+ */
+function rollRaidRewards(rewards) {
+  if (!rewards) return []
+  const loot = []
+  // Roll always/standard drops
+  if (rewards.always) {
+    for (const drop of rewards.always) {
+      if (Math.random() < drop.chance) {
+        const qty = Array.isArray(drop.quantity)
+          ? Math.floor(Math.random() * (drop.quantity[1] - drop.quantity[0] + 1)) + drop.quantity[0]
+          : drop.quantity
+        loot.push({ itemId: drop.itemId, quantity: qty })
+      }
+    }
+  }
+  // Roll for a unique item
+  if (rewards.unique && Math.random() < rewards.unique.chance) {
+    const items = rewards.unique.items
+    const totalWeight = items.reduce((sum, i) => sum + i.weight, 0)
+    let roll = Math.random() * totalWeight
+    for (const item of items) {
+      roll -= item.weight
+      if (roll <= 0) {
+        loot.push({ itemId: item.itemId, quantity: 1 })
+        break
       }
     }
   }

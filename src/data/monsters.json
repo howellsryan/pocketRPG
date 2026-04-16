@@ -4051,5 +4051,301 @@
       { "itemId": "uncut_zenyte", "quantity": 1, "chance": 0.00333 },
       { "itemId": "heavy_ballista", "quantity": 1, "chance": 0.005 }
     ]
+  },
+  "maiden_of_sugadinti": {
+    "id": "maiden_of_sugadinti",
+    "name": "The Maiden of Sugadinti",
+    "boss": true,
+    "raidBoss": true,
+    "combatLevel": 940,
+    "hitpoints": 2625,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 200,
+      "magic": 350,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "magic",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "maxHit": 36,
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "drops": []
+  },
+  "pestilent_bloat": {
+    "id": "pestilent_bloat",
+    "name": "Pestilent Bloat",
+    "boss": true,
+    "raidBoss": true,
+    "combatLevel": 870,
+    "hitpoints": 1500,
+    "stats": {
+      "attack": 100,
+      "strength": 100,
+      "defence": 100,
+      "magic": 75,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": 100,
+    "strengthBonus": 100,
+    "maxHit": 30,
+    "defenceBonus": {
+      "stab": 20,
+      "slash": -20,
+      "crush": 20,
+      "magic": 100,
+      "ranged": 100
+    },
+    "drops": []
+  },
+  "nylocas_vasilias": {
+    "id": "nylocas_vasilias",
+    "name": "Nylocas Vasilias",
+    "boss": true,
+    "raidBoss": true,
+    "combatLevel": 800,
+    "hitpoints": 1875,
+    "stats": {
+      "attack": 400,
+      "strength": 350,
+      "defence": 50,
+      "magic": 400,
+      "ranged": 400
+    },
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": 50,
+    "strengthBonus": 50,
+    "defenceBonus": {
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": 10,
+      "ranged": 10
+    },
+    "multiForm": true,
+    "formSwitchMin": 3,
+    "formSwitchMax": 5,
+    "initialForm": "melee",
+    "formCycleOrder": ["melee", "magic", "ranged"],
+    "forms": {
+      "melee": {
+        "displayName": "Melee Phase",
+        "icon": "⚪",
+        "attackStyle": "crush",
+        "immunity": "melee",
+        "maxHit": 70,
+        "attackBonus": 50,
+        "strengthBonus": 50,
+        "defenceBonus": {
+          "stab": 9999,
+          "slash": 9999,
+          "crush": 9999,
+          "magic": 10,
+          "ranged": 10
+        }
+      },
+      "magic": {
+        "displayName": "Magic Phase",
+        "icon": "🔵",
+        "attackStyle": "magic",
+        "immunity": "magic",
+        "maxHit": 70,
+        "attackBonus": 400,
+        "strengthBonus": 0,
+        "defenceBonus": {
+          "stab": 10,
+          "slash": 10,
+          "crush": 10,
+          "magic": 9999,
+          "ranged": 10
+        }
+      },
+      "ranged": {
+        "displayName": "Ranged Phase",
+        "icon": "🟢",
+        "attackStyle": "ranged",
+        "immunity": "ranged",
+        "maxHit": 70,
+        "attackBonus": 400,
+        "strengthBonus": 0,
+        "defenceBonus": {
+          "stab": 10,
+          "slash": 10,
+          "crush": 10,
+          "magic": 10,
+          "ranged": 9999
+        }
+      }
+    },
+    "drops": []
+  },
+  "sotetseg": {
+    "id": "sotetseg",
+    "name": "Sotetseg",
+    "boss": true,
+    "raidBoss": true,
+    "combatLevel": 995,
+    "hitpoints": 3000,
+    "stats": {
+      "attack": 250,
+      "strength": 200,
+      "defence": 200,
+      "magic": 250,
+      "ranged": 250
+    },
+    "attackSpeed": 5,
+    "attackStyle": "crush",
+    "attackBonus": 200,
+    "strengthBonus": 200,
+    "defenceBonus": {
+      "stab": 150,
+      "slash": 150,
+      "crush": 150,
+      "magic": 150,
+      "ranged": 0
+    },
+    "multiForm": true,
+    "randomFormEveryAttack": true,
+    "initialForm": "magic",
+    "forms": {
+      "magic": {
+        "displayName": "Magic Phase",
+        "icon": "🔮",
+        "attackStyle": "magic",
+        "weakness": "ranged",
+        "maxHit": 50,
+        "attackBonus": 250,
+        "strengthBonus": 200,
+        "defenceBonus": { "stab": 150, "slash": 150, "crush": 150, "magic": 150, "ranged": 0 }
+      },
+      "melee": {
+        "displayName": "Melee Phase",
+        "icon": "✊",
+        "attackStyle": "crush",
+        "weakness": "ranged",
+        "maxHit": 45,
+        "attackBonus": 250,
+        "strengthBonus": 200,
+        "defenceBonus": { "stab": 150, "slash": 150, "crush": 150, "magic": 150, "ranged": 0 }
+      },
+      "ranged": {
+        "displayName": "Ranged Phase",
+        "icon": "💎",
+        "attackStyle": "ranged",
+        "weakness": "ranged",
+        "maxHit": 50,
+        "attackBonus": 250,
+        "strengthBonus": 200,
+        "defenceBonus": { "stab": 150, "slash": 150, "crush": 150, "magic": 150, "ranged": 0 }
+      }
+    },
+    "drops": []
+  },
+  "xarpus": {
+    "id": "xarpus",
+    "name": "Xarpus",
+    "boss": true,
+    "raidBoss": true,
+    "combatLevel": 960,
+    "hitpoints": 2250,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 250,
+      "magic": 1,
+      "ranged": 200
+    },
+    "attackSpeed": 4,
+    "attackStyle": "ranged",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "maxHit": 50,
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 160
+    },
+    "drops": []
+  },
+  "verzik_vitur": {
+    "id": "verzik_vitur",
+    "name": "Verzik Vitur",
+    "boss": true,
+    "raidBoss": true,
+    "combatLevel": 1040,
+    "hitpoints": 2000,
+    "stats": {
+      "attack": 200,
+      "strength": 200,
+      "defence": 200,
+      "magic": 200,
+      "ranged": 200
+    },
+    "attackSpeed": 4,
+    "attackStyle": "magic",
+    "attackBonus": 200,
+    "strengthBonus": 200,
+    "defenceBonus": {
+      "stab": 50,
+      "slash": 50,
+      "crush": 50,
+      "magic": 100,
+      "ranged": 100
+    },
+    "multiForm": true,
+    "initialForm": "phase1",
+    "formCycleOrder": ["phase1", "phase2", "phase3"],
+    "formSwitchMin": 9999,
+    "formSwitchMax": 9999,
+    "forms": {
+      "phase1": {
+        "displayName": "Phase 1 — Throne",
+        "icon": "👑",
+        "attackStyle": "magic",
+        "weakness": "melee",
+        "maxHit": 30,
+        "attackBonus": 100,
+        "strengthBonus": 100,
+        "defenceBonus": { "stab": 50, "slash": 50, "crush": 50, "magic": 200, "ranged": 230 },
+        "phaseHP": 2000
+      },
+      "phase2": {
+        "displayName": "Phase 2 — Spider",
+        "icon": "🕷️",
+        "attackStyle": "magic",
+        "weakness": "slash",
+        "maxHit": 68,
+        "attackBonus": 200,
+        "strengthBonus": 200,
+        "defenceBonus": { "stab": 50, "slash": 30, "crush": 50, "magic": 100, "ranged": 230 },
+        "phaseHP": 3250
+      },
+      "phase3": {
+        "displayName": "Phase 3 — True Form",
+        "icon": "🩸",
+        "attackStyle": "crush",
+        "weakness": "slash",
+        "maxHit": 78,
+        "attackBonus": 250,
+        "strengthBonus": 250,
+        "defenceBonus": { "stab": 50, "slash": 30, "crush": 50, "magic": 100, "ranged": 100 },
+        "phaseHP": 2500
+      }
+    },
+    "verzikPhased": true,
+    "drops": []
   }
 }

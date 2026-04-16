@@ -1,0 +1,38 @@
+{
+  "theatre_of_blood": {
+    "id": "theatre_of_blood",
+    "name": "Theatre of Blood",
+    "icon": "🩸",
+    "description": "Fight through six deadly bosses in Verzik's theatre. Defeat them all to claim your reward.",
+    "bosses": [
+      "maiden_of_sugadinti",
+      "pestilent_bloat",
+      "nylocas_vasilias",
+      "sotetseg",
+      "xarpus",
+      "verzik_vitur"
+    ],
+    "rewards": {
+      "always": [
+        { "itemId": "coins", "quantity": [100000, 300000], "chance": 1.0 },
+        { "itemId": "blood_rune", "quantity": [150, 300], "chance": 1.0 },
+        { "itemId": "death_rune", "quantity": [100, 250], "chance": 0.8 },
+        { "itemId": "soul_rune", "quantity": [50, 150], "chance": 0.6 },
+        { "itemId": "snapdragon", "quantity": [5, 15], "chance": 0.5 },
+        { "itemId": "ranarr_weed", "quantity": [5, 20], "chance": 0.5 }
+      ],
+      "unique": {
+        "chance": 0.1099,
+        "items": [
+          { "itemId": "avernic_defender", "weight": 8 },
+          { "itemId": "ghrazi_rapier", "weight": 2 },
+          { "itemId": "sanguinesti_staff", "weight": 2 },
+          { "itemId": "justiciar_faceguard", "weight": 2 },
+          { "itemId": "justiciar_chestguard", "weight": 2 },
+          { "itemId": "justiciar_legguards", "weight": 2 },
+          { "itemId": "scythe_of_vitur", "weight": 1 }
+        ]
+      }
+    }
+  }
+}

@@ -8188,5 +8188,241 @@
     },
     "shopValue": 75949999,
     "icon": "🧤"
+  },
+  "ghrazi_rapier": {
+    "id": "ghrazi_rapier",
+    "name": "Ghrazi rapier",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 94,
+      "slash": 55,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 89,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 80
+    },
+    "shopValue": 150000000,
+    "icon": "🗡️"
+  },
+  "scythe_of_vitur": {
+    "id": "scythe_of_vitur",
+    "name": "Scythe of vitur",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "scaleCharged": true,
+    "scythePassive": true,
+    "attackSpeed": 5,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 70,
+      "slash": 125,
+      "crush": 30,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 4,
+      "crush": 10,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 75,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 80,
+      "strength": 90
+    },
+    "shopValue": 300000000,
+    "icon": "🌙"
+  },
+  "sanguinesti_staff": {
+    "id": "sanguinesti_staff",
+    "name": "Sanguinesti staff",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "scaleCharged": true,
+    "poweredStaff": true,
+    "sangPassive": true,
+    "attackSpeed": 4,
+    "attackStyle": "magic",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 25,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 15,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 82
+    },
+    "shopValue": 150000000,
+    "icon": "🩸"
+  },
+  "avernic_defender": {
+    "id": "avernic_defender",
+    "name": "Avernic defender",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 30,
+      "slash": 29,
+      "crush": 28,
+      "magic": -5,
+      "ranged": -4
+    },
+    "defenceBonus": {
+      "stab": 65,
+      "slash": 63,
+      "crush": 67,
+      "magic": -3,
+      "ranged": 60
+    },
+    "otherBonus": {
+      "meleeStrength": 8,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 70,
+      "defence": 70
+    },
+    "shopValue": 80000000,
+    "icon": "🛡️"
+  },
+  "justiciar_faceguard": {
+    "id": "justiciar_faceguard",
+    "name": "Justiciar faceguard",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -6,
+      "ranged": -2
+    },
+    "defenceBonus": {
+      "stab": 60,
+      "slash": 62,
+      "crush": 59,
+      "magic": -4,
+      "ranged": 54
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "prayer": 1
+    },
+    "requirements": {
+      "defence": 75
+    },
+    "shopValue": 50000000,
+    "icon": "⛑️"
+  },
+  "justiciar_chestguard": {
+    "id": "justiciar_chestguard",
+    "name": "Justiciar chestguard",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -16,
+      "ranged": -7
+    },
+    "defenceBonus": {
+      "stab": 132,
+      "slash": 120,
+      "crush": 123,
+      "magic": -16,
+      "ranged": 142
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "prayer": 4
+    },
+    "requirements": {
+      "defence": 75
+    },
+    "shopValue": 75000000,
+    "icon": "🦺"
+  },
+  "justiciar_legguards": {
+    "id": "justiciar_legguards",
+    "name": "Justiciar legguards",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -12,
+      "ranged": -4
+    },
+    "defenceBonus": {
+      "stab": 59,
+      "slash": 54,
+      "crush": 55,
+      "magic": -12,
+      "ranged": 61
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "prayer": 3
+    },
+    "requirements": {
+      "defence": 75
+    },
+    "shopValue": 50000000,
+    "icon": "🩲"
   }
 }

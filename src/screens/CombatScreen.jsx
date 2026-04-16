@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import Modal from '../components/Modal.jsx'
 import HPBar from '../components/HPBar.jsx'
-import { createCombatState, processCombatTick, applyEat, applySpecialAttack } from '../engine/combat.js'
+import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applySpecialAttack } from '../engine/combat.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick } from '../engine/tick.js'
@@ -12,6 +12,7 @@ import monstersData from '../data/monsters.json'
 import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
 import spellsData from '../data/spells.json'
+import raidsData from '../data/raids.json'
 import { SCREENS } from '../utils/constants.js'
 
 const COMBAT_CATEGORIES = [
@@ -90,7 +91,9 @@ const MONSTER_ICONS = {
   green_dragon: '🐉', red_dragon: '🔴', lesser_demon: '👿',
   general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
   dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
-  crazy_archaeologist: '📜', king_black_dragon: '👑', zulrah: '🐍', jad: '🌋', corrupted_gauntlet: '⚡', olm: '🐊'
+  crazy_archaeologist: '📜', king_black_dragon: '👑', zulrah: '🐍', jad: '🌋', corrupted_gauntlet: '⚡', olm: '🐊',
+  maiden_of_sugadinti: '🩸', pestilent_bloat: '🤢', nylocas_vasilias: '🕷️',
+  sotetseg: '🔮', xarpus: '☠️', verzik_vitur: '👑'
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange }) {
@@ -345,6 +348,56 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
             time: Date.now()
           }])
         }
+        if (ev.type === 'verzikPhaseChange') {
+          setLog(prev => [...prev.slice(-20), {
+            text: `${ev.icon || '🩸'} ${ev.monsterName} enters ${ev.displayName}!`,
+            type: 'formChange',
+            time: Date.now()
+          }])
+          addToast(`${ev.icon || '🩸'} ${ev.monsterName}: ${ev.displayName}`, 'info')
+        }
+        if (ev.type === 'raidBossDefeated') {
+          setLog(prev => [...prev.slice(-20), {
+            text: `🩸 ${ev.bossName} defeated! (${ev.bossIndex + 1}/${ev.totalBosses})`,
+            type: 'victory',
+            time: Date.now()
+          }])
+        }
+        if (ev.type === 'raidBossAdvance') {
+          setLog(prev => [...prev.slice(-20), {
+            text: `⚔️ Boss ${ev.bossIndex + 1}/${ev.totalBosses}: ${ev.nextBossName}`,
+            type: 'raid',
+            time: Date.now()
+          }])
+          addToast(`🩸 Next boss: ${ev.nextBossName} (${ev.bossIndex + 1}/${ev.totalBosses})`, 'info')
+        }
+        if (ev.type === 'raidComplete') {
+          setLog(prev => [...prev.slice(-20), {
+            text: `🏆 Raid complete!`,
+            type: 'raid',
+            time: Date.now()
+          }])
+          addToast('🏆 Raid complete! Check your loot!', 'levelup')
+        }
+        if (ev.type === 'scythePassive') {
+          setLog(prev => [...prev.slice(-20), {
+            text: `🌙 Scythe hits: ${ev.hits.join(' + ')} = ${ev.hits.reduce((a, b) => a + b, 0)}`,
+            type: 'hit',
+            time: Date.now()
+          }])
+        }
+        if (ev.type === 'sangHeal') {
+          // Heal the player from sanguinesti staff passive
+          const maxHP = getMaxHP()
+          const newHP = Math.min(hpRef.current + ev.healAmount, maxHP)
+          updateHP(newHP)
+          hpRef.current = newHP
+          setLog(prev => [...prev.slice(-20), {
+            text: `🩸 Sanguinesti staff heals ${ev.healAmount} HP`,
+            type: 'heal',
+            time: Date.now()
+          }])
+        }
         if (combatRef.current.runesConsumed && ev.type === 'playerHit' && ev.damage > 0) {
           // Consume runes when spell successfully casts
           const newInv = [...inventoryRef.current]
@@ -431,9 +484,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
             time: Date.now()
           }])
           // Show loot modal instead of auto-restarting
+          const raidId = state.raid?.raidId || null
           setLootModal({
             monster: state.monster,
-            loot: ev.loot || []
+            loot: ev.loot || [],
+            raidId
           })
         }
       }
@@ -471,6 +526,32 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
     const spellName = spell ? ` with ${spell.name}` : isPoweredStaff && weaponItem ? ` with ${weaponItem.name}` : ''
     setLog([{ text: `Fighting ${monster.name}${spellName}...`, type: 'info', time: Date.now() }])
     setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot, spell: spell || null })
+  }
+
+  const startRaid = (raidData) => {
+    const combatType = getCombatType(equipment, itemsData)
+    const weaponItem = equipment?.weapon ? itemsData[equipment.weapon.itemId] : null
+    const isPoweredStaff = !!weaponItem?.poweredStaff
+    const spell = combatType === 'magic' && activeCombatSpell && !isPoweredStaff ? spellsData[activeCombatSpell.id] : null
+    if (combatType === 'magic' && !spell && !isPoweredStaff) {
+      addToast('No spell selected! Use the 🔮 Cast button to pick a spell.', 'error')
+    }
+    const state = createRaidCombatState(raidData, monstersData, combatType, combatStance, spell)
+    if (!state) {
+      addToast('Failed to start raid — missing boss data', 'error')
+      return
+    }
+    state.specialAttackEnergy = 100
+    state.activePotions = combatRef.current ? { ...combatRef.current.activePotions } : {}
+    setCombat(state)
+    setKillCount(0)
+    setFightStartedAt(Date.now())
+    const firstBoss = monstersData[raidData.bosses[0]]
+    setLog([
+      { text: `🩸 ${raidData.name} — Raid started!`, type: 'raid', time: Date.now() },
+      { text: `Boss 1/${raidData.bosses.length}: ${firstBoss?.name || 'Unknown'}`, type: 'info', time: Date.now() }
+    ])
+    setActiveTask({ type: 'combat', monster: firstBoss, stance: combatStance, bankingEnabled: false, spell: spell || null })
   }
 
   const continueFight = (monster) => {
@@ -835,6 +916,44 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
             )
           })}
         </div>
+
+        {/* Raids Section */}
+        <div class="mt-6">
+          <div class="flex items-center gap-2 mb-3 px-1">
+            <span class="text-base">🏆</span>
+            <span class="text-xs font-semibold text-[var(--color-gold)] uppercase tracking-wider">Raids</span>
+          </div>
+          <div class="space-y-2">
+            {Object.values(raidsData).map(raid => {
+              const bosses = raid.bosses.map(id => monstersData[id]).filter(Boolean)
+              return (
+                <div key={raid.id} class="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl overflow-hidden">
+                  <button
+                    onClick={() => startRaid(raid)}
+                    class="w-full p-3 active:bg-[#222] transition-colors text-left"
+                  >
+                    <div class="flex items-center justify-between mb-2">
+                      <div class="flex items-center gap-2">
+                        <span class="text-2xl">{raid.icon}</span>
+                        <div>
+                          <div class="text-sm font-semibold text-[var(--color-parchment)]">{raid.name}</div>
+                          <div class="text-[10px] text-[var(--color-parchment)] opacity-40">{raid.description}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="flex flex-wrap gap-1 mt-1">
+                      {bosses.map((boss, i) => (
+                        <span key={boss.id} class="text-[9px] bg-[#111] text-[var(--color-parchment)] opacity-60 px-1.5 py-0.5 rounded">
+                          {MONSTER_ICONS[boss.id] || '👹'} {boss.name}
+                        </span>
+                      ))}
+                    </div>
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        </div>
       </div>
     )
   }
@@ -866,6 +985,31 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
         </div>
         <HPBar current={Math.max(0, combat.monster.currentHP)} max={combat.monster.hitpoints} size="large" />
       </div>
+
+      {/* Raid progress indicator */}
+      {combat.raid && (
+        <div class="mb-2 bg-[#111] border border-[#2a2a2a] rounded-lg px-3 py-2">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[10px] font-semibold text-[var(--color-gold)]">🩸 {raidsData[combat.raid.raidId]?.name || 'Raid'}</span>
+            <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-60">
+              Boss {combat.raid.currentBossIndex + 1}/{combat.raid.bosses.length}
+            </span>
+          </div>
+          <div class="flex gap-1">
+            {combat.raid.bosses.map((bossId, i) => (
+              <div
+                key={bossId}
+                class={`flex-1 h-1.5 rounded-full ${
+                  i < combat.raid.currentBossIndex ? 'bg-[var(--color-hp-green)]' :
+                  i === combat.raid.currentBossIndex ? 'bg-[var(--color-gold)]' :
+                  'bg-[#333]'
+                }`}
+                title={monstersData[bossId]?.name || bossId}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Player HP */}
       <div class="mb-2">
@@ -1375,12 +1519,21 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
 
       {/* Loot Modal */}
       {lootModal && (
-        <Modal title="Loot" onClose={() => setLootModal(null)}>
+        <Modal title={lootModal.raidId ? '🏆 Raid Complete' : 'Loot'} onClose={() => setLootModal(null)}>
           <div class="space-y-4">
-            {/* Monster defeated message */}
+            {/* Header message */}
             <div class="text-center py-2">
-              <div class="text-4xl mb-2">{MONSTER_ICONS[lootModal.monster.id] || '👹'}</div>
-              <div class="text-lg font-semibold text-[var(--color-gold)]">{lootModal.monster.name} defeated!</div>
+              {lootModal.raidId ? (
+                <>
+                  <div class="text-4xl mb-2">🏆</div>
+                  <div class="text-lg font-semibold text-[var(--color-gold)]">{raidsData[lootModal.raidId]?.name || 'Raid'} complete!</div>
+                </>
+              ) : (
+                <>
+                  <div class="text-4xl mb-2">{MONSTER_ICONS[lootModal.monster.id] || '👹'}</div>
+                  <div class="text-lg font-semibold text-[var(--color-gold)]">{lootModal.monster.name} defeated!</div>
+                </>
+              )}
             </div>
 
             {/* Loot items */}
@@ -1421,18 +1574,23 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
                 style="background:#1a1a1a;border:1px solid #2a2a2a;color:#888"
                 class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
               >
-                Run Away
+                {lootModal.raidId ? 'Leave' : 'Run Away'}
               </button>
               <button
                 onClick={() => {
-                  const original = monstersData[lootModal.monster.id]
-                  if (original) continueFight(original)
+                  if (lootModal.raidId) {
+                    const raid = raidsData[lootModal.raidId]
+                    if (raid) startRaid(raid)
+                  } else {
+                    const original = monstersData[lootModal.monster.id]
+                    if (original) continueFight(original)
+                  }
                   setLootModal(null)
                 }}
                 style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0"
                 class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
               >
-                Fight Again
+                {lootModal.raidId ? 'Raid Again' : 'Fight Again'}
               </button>
             </div>
           </div>
