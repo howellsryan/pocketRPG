@@ -15,9 +15,10 @@ import AgilityScreen from './AgilityScreen.jsx'
 import SlayerScreen from './SlayerScreen.jsx'
 import ThievingScreen from './ThievingScreen.jsx'
 import FarmingScreen from './FarmingScreen.jsx'
+import ConstructionScreen from './ConstructionScreen.jsx'
 
-// Agility, Prayer, Thieving, Slayer, and Farming are special skills shown here in the Skills tab
-const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'slayer', 'farming']
+// Agility, Prayer, Thieving, Slayer, Farming, and Construction are special skills shown here in the Skills tab
+const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'slayer', 'farming', 'construction']
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0)
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS]
 
@@ -64,6 +65,15 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   if (selectedSkill === 'farming') {
     return (
       <FarmingScreen
+        onBack={() => setSelectedSkill(null)}
+      />
+    )
+  }
+
+  // If construction is selected, delegate to ConstructionScreen
+  if (selectedSkill === 'construction') {
+    return (
+      <ConstructionScreen
         onBack={() => setSelectedSkill(null)}
       />
     )

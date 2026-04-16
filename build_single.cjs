@@ -47,6 +47,7 @@ const sourceFiles = [
   'screens/FarmPatchView.js',
   'screens/ThievingScreen.js',
   'screens/SkillingScreen.js',
+  'screens/ConstructionScreen.js',
   'screens/SlayerScreen.js',
   'screens/GatherScreen.js',
   'screens/GeneralStoreScreen.js',

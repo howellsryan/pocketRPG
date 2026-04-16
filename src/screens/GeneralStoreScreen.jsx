@@ -5,12 +5,15 @@ import Modal from '../components/Modal.jsx'
 
 // ── COMPONENT ───────────────────────────────────────────────────────────────
 export default function GeneralStoreScreen() {
-  const { inventory, updateInventory, addToast, itemsData } = useGame()
+  const { inventory, bank, updateInventory, updateBankDirect, addToast, itemsData, unlockedFeatures } = useGame()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedItem, setSelectedItem] = useState(null) // item being purchased
   const [buyQty, setBuyQty] = useState(1)
 
-  const coins = countItem(inventory, 'coins')
+  const hasMoneyPurse = unlockedFeatures.has('money_purse')
+  const coinsInInv = countItem(inventory, 'coins')
+  const coinsInBank = bank['coins']?.quantity || 0
+  const coins = hasMoneyPurse ? coinsInInv + coinsInBank : coinsInInv
 
   // Get all purchasable items (all tradeable items)
   const getAvailableItems = () => {
@@ -82,8 +85,11 @@ export default function GeneralStoreScreen() {
       }
     }
 
-    // Remove coins
-    removeItem(newInv, 'coins', totalCost)
+    // Remove coins: inventory first, then bank (if money purse unlocked)
+    const fromInv = Math.min(coinsInInv, totalCost)
+    if (fromInv > 0) removeItem(newInv, 'coins', fromInv)
+    const fromBank = totalCost - fromInv
+    if (fromBank > 0 && hasMoneyPurse) updateBankDirect({ coins: -fromBank })
     updateInventory(newInv)
 
     addToast(`${selectedItem.icon || '📦'} ${selectedItem.name} ${buyQty > 1 ? `×${buyQty}` : ''} purchased!`, 'success')
@@ -102,7 +108,7 @@ export default function GeneralStoreScreen() {
             General Store
           </h2>
           <span style={{ fontSize: '11px', color: '#d4af37', fontFamily: 'monospace' }}>
-            🪙 {coins.toLocaleString()}
+            🪙 {coins.toLocaleString()}{hasMoneyPurse ? ' 👛' : ''}
           </span>
         </div>
 
