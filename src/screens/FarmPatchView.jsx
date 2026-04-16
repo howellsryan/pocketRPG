@@ -86,9 +86,9 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="bg-gradient-to-r from-green-700 to-green-600 text-white p-4 flex items-center gap-2">
-        <button onClick={onBack} className="text-xl">←</button>
-        <h1 className="text-xl font-bold flex-1">{location?.name}</h1>
+      <div style={{ background: 'linear-gradient(135deg, var(--color-emerald-mid), var(--color-emerald))', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'var(--color-gold-light)', fontSize: '20px', cursor: 'pointer' }}>←</button>
+        <h1 style={{ fontSize: '18px', fontWeight: 'bold', flex: 1, color: 'var(--color-gold-light)' }}>{location?.name}</h1>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -109,26 +109,44 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
 
       {selectedPatch && (
         <Modal onClose={() => setSelectedPatch(null)}>
-          <div className="bg-white rounded-lg p-6 space-y-4">
-            <h2 className="text-xl font-bold">
+          <div style={{ background: 'var(--color-void-lighter)', borderRadius: '8px', padding: '20px', gap: '16px', display: 'flex', flexDirection: 'column' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--color-gold-light)' }}>
               {selectedPatch.type.replace(/([A-Z])/g, ' $1').trim()} Patch
             </h2>
 
             {!selectedPatch.patch?.cropId ? (
               <>
-                <p className="text-gray-700">Select a crop to plant:</p>
-                <div className="max-h-64 overflow-y-auto space-y-2">
+                <p style={{ color: 'var(--color-parchment)', opacity: 0.8 }}>Select a crop to plant:</p>
+                <div style={{ maxHeight: '256px', overflowY: 'auto', gap: '8px', display: 'flex', flexDirection: 'column' }}>
                   {getAvailableCrops(selectedPatch.type, farmingLevel).map(crop => (
                     <button
                       key={crop.id}
                       onClick={() => handlePlantCrop(crop.id)}
-                      className="w-full bg-green-50 hover:bg-green-100 border border-green-300 rounded p-3 text-left transition"
+                      style={{
+                        width: '100%',
+                        background: 'var(--color-void)',
+                        border: '1px solid var(--color-void-border)',
+                        borderRadius: '6px',
+                        padding: '10px',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        color: 'var(--color-parchment)',
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.borderColor = 'var(--color-emerald-light)';
+                        e.currentTarget.style.background = 'var(--color-void-lighter)';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.borderColor = 'var(--color-void-border)';
+                        e.currentTarget.style.background = 'var(--color-void)';
+                      }}
                     >
-                      <div className="font-bold text-green-900">{crop.icon} {crop.name}</div>
-                      <div className="text-sm text-green-700">
+                      <div style={{ fontWeight: '600', color: 'var(--color-gold-light)' }}>{crop.icon} {crop.name}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--color-parchment)', opacity: 0.7, marginTop: '4px' }}>
                         {crop.plantXp} xp to plant, {crop.harvestXp} xp to harvest
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div style={{ fontSize: '11px', color: 'var(--color-parchment)', opacity: 0.5, marginTop: '2px' }}>
                         Growth: {formatGrowthTime(crop.growthTimeMs)}
                       </div>
                     </button>
@@ -144,7 +162,25 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
 
             <button
               onClick={() => setSelectedPatch(null)}
-              className="w-full bg-gray-300 hover:bg-gray-400 text-gray-900 font-bold py-2 rounded transition"
+              style={{
+                width: '100%',
+                background: 'var(--color-void)',
+                border: '1px solid var(--color-void-border)',
+                color: 'var(--color-parchment)',
+                fontWeight: '600',
+                padding: '10px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = 'var(--color-parchment)';
+                e.currentTarget.style.opacity = '0.8';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = 'var(--color-void-border)';
+                e.currentTarget.style.opacity = '1';
+              }}
             >
               Close
             </button>
@@ -178,18 +214,37 @@ function PatchCard({ patchData, onClick, farmingLevel }) {
   return (
     <button
       onClick={onClick}
-      className="w-full bg-gray-50 hover:bg-gray-100 border border-gray-300 rounded p-3 text-left transition"
+      style={{
+        width: '100%',
+        background: 'var(--color-void-lighter)',
+        border: '1px solid var(--color-void-border)',
+        borderRadius: '8px',
+        padding: '12px',
+        textAlign: 'left',
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.borderColor = 'var(--color-emerald-light)';
+        e.currentTarget.style.background = 'var(--color-void-lighter)';
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.borderColor = 'var(--color-void-border)';
+        e.currentTarget.style.background = 'var(--color-void-lighter)';
+      }}
     >
-      <div className="flex items-center justify-between">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div className="font-bold text-gray-900">
+          <div style={{ fontWeight: '600', color: 'var(--color-gold-light)' }}>
             {crop?.icon} {crop?.name || type.replace(/([A-Z])/g, ' $1').trim()}
           </div>
-          <div className={`text-sm font-bold ${statusColor}`}>{statusText}</div>
+          <div style={{ fontSize: '13px', fontWeight: '600', color: statusColor === 'text-green-600' ? 'var(--color-emerald-light)' : statusColor === 'text-blue-600' ? 'var(--color-mana-light)' : 'var(--color-parchment)' }}>{statusText}</div>
         </div>
       </div>
       {patch && crop && (
-        <ProgressBar value={progressValue} className="mt-2" />
+        <div style={{ marginTop: '8px' }}>
+          <ProgressBar value={progressValue} />
+        </div>
       )}
     </button>
   )
@@ -206,30 +261,49 @@ function PatchDetails({ patch, onHarvest }) {
 
   return (
     <>
-      <div className="bg-blue-50 border border-blue-200 rounded p-4 space-y-2">
-        <div className="font-bold text-blue-900">
+      <div style={{ background: 'var(--color-void)', border: '1px solid var(--color-mana)', borderRadius: '6px', padding: '12px', gap: '8px', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ fontWeight: '600', color: 'var(--color-mana-light)' }}>
           {crop.icon} {crop.name}
         </div>
-        <div className="text-sm text-blue-700">
+        <div style={{ fontSize: '13px', color: 'var(--color-parchment)', opacity: 0.8 }}>
           <p>Planted XP: {crop.plantXp}</p>
           <p>Harvest XP: {crop.harvestXp}</p>
         </div>
-        <div className="text-sm font-bold text-blue-900">
+        <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--color-mana-light)' }}>
           Stage: {patch.stage}/4
         </div>
       </div>
 
       {patch.stage < 4 ? (
-        <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
-          <div className="text-sm text-yellow-900">
+        <div style={{ background: 'var(--color-void)', border: '1px solid var(--color-gold-dim)', borderRadius: '6px', padding: '10px', gap: '8px', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ fontSize: '13px', color: 'var(--color-gold-light)' }}>
             Time remaining: {minutes}m {seconds}s
           </div>
-          <ProgressBar value={getGrowthProgress(patch)} className="mt-2" />
+          <ProgressBar value={getGrowthProgress(patch)} />
         </div>
       ) : (
         <button
           onClick={onHarvest}
-          className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded transition"
+          style={{
+            width: '100%',
+            background: 'var(--color-emerald-mid)',
+            border: '1px solid var(--color-emerald-light)',
+            color: 'var(--color-gold-light)',
+            fontWeight: '600',
+            padding: '12px',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            fontSize: '14px',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = 'var(--color-emerald-light)';
+            e.currentTarget.style.color = 'var(--color-void)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = 'var(--color-emerald-mid)';
+            e.currentTarget.style.color = 'var(--color-gold-light)';
+          }}
         >
           🌾 Harvest
         </button>
