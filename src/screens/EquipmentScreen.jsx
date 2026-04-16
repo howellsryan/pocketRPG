@@ -91,7 +91,8 @@ export default function EquipmentScreen() {
     }
 
     // Preserve charges on unequip so we can re-equip without losing them
-    const invEntry = { itemId: removed.itemId, quantity: 1 }
+    // For ammo, restore the original quantity that was stored when equipped
+    const invEntry = { itemId: removed.itemId, quantity: removed.quantity || 1 }
     if (removed.charges && removed.charges > 0) invEntry.charges = removed.charges
     newEq[selected.slot] = null
     newInv[empty] = invEntry
