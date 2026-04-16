@@ -1,34 +1,37 @@
 import farmingData from '../data/farming.json'
 
-export default function FarmLocationPicker({ farmingLevel, onSelectLocation }) {
+export default function FarmLocationPicker({ farmingLevel, onSelectLocation, onBack }) {
   return (
-    <div className="flex flex-col h-full">
-      <div style={{ background: 'var(--color-emerald-mid)', padding: '16px' }}>
-        <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--color-gold)', marginBottom: '4px' }}>🌿 Farming</h1>
-        <p style={{ fontSize: '13px', color: 'var(--color-parchment-dark)' }}>Level: {farmingLevel}</p>
+    <div class="h-full overflow-y-auto p-4">
+      {onBack && (
+        <button onClick={onBack} class="text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1">
+          ← Skills
+        </button>
+      )}
+      <div class="flex items-center justify-between mb-1">
+        <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider">
+          Farming Locations
+        </h2>
+        <span class="text-xs font-[var(--font-mono)] text-[var(--color-gold)]">Lv {farmingLevel}</span>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+      <div class="mb-3 bg-[#111] rounded-lg px-3 py-2 text-[11px] text-[var(--color-parchment)] opacity-60 flex items-center gap-2">
+        <span>🌾</span>
+        <span>Plant seeds at farms and harvest crops over time</span>
+      </div>
+
+      <div class="space-y-2">
         {farmingData.locations.map(location => (
           <button
             key={location.id}
             onClick={() => onSelectLocation(location.id)}
-            style={{
-              width: '100%',
-              background: 'var(--color-void-lighter)',
-              border: '1px solid var(--color-void-border)',
-              borderRadius: '8px',
-              padding: '12px',
-              textAlign: 'left',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-            }}
-            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--color-emerald-light)'}
-            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--color-void-border)'}
+            class="w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]"
           >
-            <div style={{ fontWeight: '600', color: 'var(--color-gold-light)' }}>{location.name}</div>
-            <div style={{ fontSize: '12px', color: 'var(--color-parchment)', opacity: 0.7, marginTop: '4px' }}>
-              {location.patches.map(p => `${p.count}x ${p.type}`).join(', ')}
+            <div class="flex-1">
+              <div class="text-sm font-semibold text-[var(--color-parchment)]">{location.name}</div>
+              <div class="text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5">
+                {location.patches.map(p => `${p.count}× ${p.type}`).join(' · ')}
+              </div>
             </div>
           </button>
         ))}
