@@ -66,6 +66,5 @@ export const SCREENS = {
   SKILLS: 'skills',
   GATHER: 'gather',
   AGILITY: 'agility',
-  FARMING: 'farming',
   STORE: 'store'
 }
