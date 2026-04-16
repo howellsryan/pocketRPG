@@ -14,11 +14,13 @@ export function formatNumber(n) {
 
 /**
  * Format an item quantity for display.
- * >= 10,000,000 → e.g. "956M" (isM: true, shown in green)
- * >= 100,000    → e.g. "105k" (isM: false, shown in gold)
- * otherwise     → plain number string
+ * >= 1,000,000,000 → e.g. "82B" (isM: true, shown in green)
+ * >= 10,000,000    → e.g. "956M" (isM: true, shown in green)
+ * >= 100,000       → e.g. "105k" (isM: false, shown in gold)
+ * otherwise        → plain number string
  */
 export function formatQuantity(n) {
+  if (n >= 1_000_000_000) return { text: `${Math.floor(n / 1_000_000_000)}B`, isM: true }
   if (n >= 10_000_000) return { text: `${Math.floor(n / 1_000_000)}M`, isM: true }
   if (n >= 100_000) return { text: `${Math.floor(n / 1_000)}k`, isM: false }
   return { text: String(n), isM: false }

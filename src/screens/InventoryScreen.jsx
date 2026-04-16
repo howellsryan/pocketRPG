@@ -141,27 +141,69 @@ export default function InventoryScreen() {
       return
     }
 
-    // Return scales to inventory
+    // Collect total charges from ALL instances of this item in inventory, equipped, and bank
+    let totalCharges = 0
+
+    // Count charges in inventory
     const newInv = [...inventory]
+    for (let i = 0; i < newInv.length; i++) {
+      if (newInv[i] && newInv[i].itemId === item.id && newInv[i].charges > 0) {
+        totalCharges += newInv[i].charges
+      }
+    }
+
+    // Count charges in equipped slot
+    const newEquip = { ...equipment }
+    for (const slotName of Object.keys(newEquip)) {
+      if (newEquip[slotName] && newEquip[slotName].itemId === item.id && newEquip[slotName].charges > 0) {
+        totalCharges += newEquip[slotName].charges
+      }
+    }
+
+    // Count charges in bank
+    const newBank = { ...bank }
+    if (newBank[item.id] && newBank[item.id].charges > 0) {
+      totalCharges += newBank[item.id].charges
+    }
+
+    // Remove charges from all instances
+    for (let i = 0; i < newInv.length; i++) {
+      if (newInv[i] && newInv[i].itemId === item.id && newInv[i].charges > 0) {
+        newInv[i] = { ...newInv[i], charges: 0 }
+      }
+    }
+
+    for (const slotName of Object.keys(newEquip)) {
+      if (newEquip[slotName] && newEquip[slotName].itemId === item.id && newEquip[slotName].charges > 0) {
+        newEquip[slotName] = { ...newEquip[slotName], charges: 0 }
+      }
+    }
+
+    if (newBank[item.id] && newBank[item.id].charges > 0) {
+      newBank[item.id] = { ...newBank[item.id], charges: 0 }
+    }
+
+    // Return scales to inventory
     const existingIdx = newInv.findIndex(s => s && s.itemId === 'zulrah_scales')
     if (existingIdx !== -1) {
-      newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + charges }
+      newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + totalCharges }
     } else {
       const empty = newInv.indexOf(null)
       if (empty === -1) {
         addToast('Inventory full — cannot uncharge', 'error')
         return
       }
-      newInv[empty] = { itemId: 'zulrah_scales', quantity: charges }
+      newInv[empty] = { itemId: 'zulrah_scales', quantity: totalCharges }
     }
 
-    // Remove charges from weapon
-    const newSlot = { ...slot, charges: 0 }
-    newInv[slotIndex] = newSlot
-
     updateInventory(newInv)
-    setSelected({ ...selected, slot: newSlot })
-    addToast(`Uncharged ${item.name}, recovered ${charges} scales`, 'info')
+    updateEquipment(newEquip)
+    updateBank(newBank)
+
+    // Update selected with the uncharged slot
+    const updatedSlot = { ...slot, charges: 0 }
+    setSelected({ ...selected, slot: updatedSlot })
+    addToast(`Uncharged ${item.name}, recovered ${totalCharges} scales`, 'info')
   }
 
   // Deposit to bank — stackable: deposit all; non-stackable: show qty picker

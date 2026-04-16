@@ -28,7 +28,7 @@ export default function GeneralStoreScreen() {
     return available.filter(item => item.name.toLowerCase().includes(lower))
   }
 
-  const modifiedPrice = (basePrice) => Math.floor(basePrice * 1.5)
+  const modifiedPrice = (basePrice) => Math.floor(basePrice * 1.1)
 
   const handleBuy = () => {
     if (!selectedItem) return
