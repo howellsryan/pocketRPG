@@ -4195,7 +4195,6 @@
     "name": "Sotetseg",
     "boss": true,
     "raidBoss": true,
-    "requiresDoubleKill": true,
     "combatLevel": 995,
     "hitpoints": 3000,
     "stats": {
