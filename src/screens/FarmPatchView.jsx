@@ -86,9 +86,9 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
 
   return (
     <div className="flex flex-col h-full">
-      <div style={{ background: 'linear-gradient(135deg, var(--color-emerald-mid), var(--color-emerald))', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'var(--color-gold-light)', fontSize: '20px', cursor: 'pointer' }}>←</button>
-        <h1 style={{ fontSize: '18px', fontWeight: 'bold', flex: 1, color: 'var(--color-gold-light)' }}>{location?.name}</h1>
+      <div style={{ background: 'var(--color-emerald-mid)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'var(--color-gold)', fontSize: '20px', cursor: 'pointer' }}>←</button>
+        <h1 style={{ fontSize: '18px', fontWeight: 'bold', flex: 1, color: 'var(--color-gold)' }}>{location?.name}</h1>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
