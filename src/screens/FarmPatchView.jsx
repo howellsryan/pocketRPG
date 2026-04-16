@@ -6,7 +6,7 @@ import ProgressBar from '../components/ProgressBar.jsx'
 import Modal from '../components/Modal.jsx'
 import farmingData from '../data/farming.json'
 
-const patchTypeLabels = {
+const patchViewTypeLabels = {
   herb: 'Herb Patch',
   tree: 'Tree Patch',
   fruitTree: 'Fruit Tree Patch'
@@ -96,7 +96,7 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
         <span class="text-xs font-[var(--font-mono)] text-[var(--color-gold)]">Lv {farmingLevel}</span>
       </div>
       <p class="text-xs text-[var(--color-parchment)] opacity-40 mb-3">
-        {location?.patches.map(p => `${p.count}× ${patchTypeLabels[p.type]}`).join(' · ')}
+        {location?.patches.map(p => `${p.count}× ${patchViewTypeLabels[p.type]}`).join(' · ')}
       </p>
 
       <div class="space-y-2">
@@ -111,7 +111,7 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
 
       {selectedPatch && (
         <Modal
-          title={patchTypeLabels[selectedPatch.type]}
+          title={patchViewTypeLabels[selectedPatch.type]}
           onClose={() => setSelectedPatch(null)}
         >
           {isEmpty ? (
@@ -179,7 +179,7 @@ function PatchCard({ patchData, onClick }) {
     }
   }
 
-  const typeLabel = patchTypeLabels[type]
+  const typeLabel = patchViewTypeLabels[type]
 
   return (
     <button
