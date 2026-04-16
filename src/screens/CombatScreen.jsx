@@ -338,7 +338,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
             type: 'formChange',
             time: Date.now()
           }])
-          // Suppress toasts for phase-change monsters: olm, zulrah, jad, demonic_gorilla, theatre of blood
           const phaseChangeMonsters = ['olm', 'zulrah', 'jad', 'demonic_gorilla', 'maiden_of_sugadinti', 'pestilent_bloat', 'nylocas_vasilias', 'sotetseg', 'xarpus', 'verzik_vitur']
           if (!phaseChangeMonsters.includes(state.monster.id)) {
             addToast(`${ev.icon || '🐍'} ${monsterName}: ${ev.displayName} form${immunityNote}`, 'info')
@@ -351,7 +350,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
             type: 'formChange',
             time: Date.now()
           }])
-          // Toast suppressed for phase-change bosses
         }
         if (ev.type === 'verzikPhaseChange') {
           setLog(prev => [...prev.slice(-20), {
@@ -359,7 +357,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
             type: 'formChange',
             time: Date.now()
           }])
-          // Toast suppressed for theatre of blood monsters
         }
         if (ev.type === 'raidBossDefeated') {
           setLog(prev => [...prev.slice(-20), {
@@ -374,7 +371,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
             type: 'raid',
             time: Date.now()
           }])
-          // Toast suppressed for raid boss phases
         }
         if (ev.type === 'raidComplete') {
           setLog(prev => [...prev.slice(-20), {
