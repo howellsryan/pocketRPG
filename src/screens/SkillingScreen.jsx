@@ -25,7 +25,6 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
   const [selectedAction, setSelectedAction] = useState(null)
   const [skilling, setSkilling] = useState(null)
-  const [skillingBankingEnabled, setSkillingBankingEnabled] = useState(false) // Banking toggle for skilling
   const [selectedAlchemyItem, setSelectedAlchemyItem] = useState(null) // Track selected item for High Alchemy
   const [showAlchemyPicker, setShowAlchemyPicker] = useState(false) // Show item picker for alchemy
   const skillingRef = useRef(null)
@@ -207,7 +206,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     setSelectedAction(action)
     setSkilling(state)
     // Store original action in task — idle engine will apply tool multiplier separately
-    setActiveTask({ type: 'skill', skill: selectedSkill, action, bankingEnabled: skillingBankingEnabled })
+    setActiveTask({ type: 'skill', skill: selectedSkill, action, bankingEnabled: true })
   }
 
   const startAlchemy = (item) => {
@@ -221,7 +220,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     const state = { ...createSkillingState(selectedSkill, adjustedAction), startedAt: Date.now() }
     setSkilling(state)
     // Store original action in task — idle engine will apply tool multiplier separately
-    setActiveTask({ type: 'skill', skill: selectedSkill, action: selectedAction, bankingEnabled: skillingBankingEnabled })
+    setActiveTask({ type: 'skill', skill: selectedSkill, action: selectedAction, bankingEnabled: true })
   }
 
   const stopSkilling = () => {
@@ -348,19 +347,6 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
         <p class="text-xs text-[var(--color-parchment)] opacity-40 mb-3">Level {skillLevel}</p>
 
         {/* Banking toggle for skilling */}
-        <div class="flex items-center gap-2 mb-3 p-2 rounded-lg bg-[#111]">
-          <input
-            type="checkbox"
-            id="skill-banking-picker"
-            checked={skillingBankingEnabled}
-            onChange={(e) => setSkillingBankingEnabled(e.target.checked)}
-            style={{ cursor: 'pointer' }}
-          />
-          <label htmlFor="skill-banking-picker" style={{ fontSize: '12px', color: '#e8d5b0', opacity: 0.7, cursor: 'pointer' }}>
-            Auto-bank items
-          </label>
-        </div>
-
         <div class="space-y-2">
           {allActions.map(action => {
             const available = action.level <= skillLevel
@@ -550,30 +536,6 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             </span>
           </div>
         </div>
-      </div>
-
-      {/* Banking toggle & note */}
-      <div class="flex-shrink-0 mt-4 space-y-2">
-        <div class="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="skill-banking"
-            checked={skillingBankingEnabled}
-            onChange={(e) => {
-              setSkillingBankingEnabled(e.target.checked)
-              if (activeTask) setActiveTask({ ...activeTask, bankingEnabled: e.target.checked })
-            }}
-            style={{ cursor: 'pointer' }}
-          />
-          <label htmlFor="skill-banking" style={{ fontSize: '12px', color: '#e8d5b0', opacity: 0.7, cursor: 'pointer' }}>
-            Auto-bank items (may reduce XP/hr)
-          </label>
-        </div>
-        {skillingBankingEnabled && (
-          <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5 }}>
-            ⏳ Items go to inventory first. Auto-banks when full. Banking delay scales with Agility level.
-          </div>
-        )}
       </div>
 
       {/* Stop & Back */}
