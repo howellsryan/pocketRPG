@@ -2006,6 +2006,24 @@
     "shopValue": 72,
     "icon": "🏹"
   },
+  "dragon_arrow": {
+    "id": "dragon_arrow",
+    "name": "Dragon arrow",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "arrow",
+    "requirements": {
+      "ranged": 60
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 60,
+      "magicDamage": 0
+    },
+    "shopValue": 150,
+    "icon": "🏹"
+  },
   "shortbow_u": {
     "id": "shortbow_u",
     "name": "Shortbow (u)",
