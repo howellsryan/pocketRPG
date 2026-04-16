@@ -23134,6 +23134,11 @@ function FarmLocationPicker({ farmingLevel, onSelectLocation, onBack }) {
 
 
 
+const patchTypeLabels = {
+    herb: 'Herb Patch',
+    tree: 'Tree Patch',
+    fruitTree: 'Fruit Tree Patch'
+};
 function FarmPatchView({ locationId, farmingLevel, onBack }) {
     const { inventory, farming, updateFarming, grantXP, removeFromInventory, addToBank, addToast } = useGame();
     const location = farmingData.locations.find(l => l.id === locationId);
@@ -23202,9 +23207,9 @@ function FarmPatchView({ locationId, farmingLevel, onBack }) {
             h("span", { class: "text-xs font-[var(--font-mono)] text-[var(--color-gold)]" },
                 "Lv ",
                 farmingLevel)),
-        h("p", { class: "text-xs text-[var(--color-parchment)] opacity-40 mb-3" }, location?.patches.map(p => `${p.count}× ${p.type}`).join(' · ')),
+        h("p", { class: "text-xs text-[var(--color-parchment)] opacity-40 mb-3" }, location?.patches.map(p => `${p.count}× ${patchTypeLabels[p.type]}`).join(' · ')),
         h("div", { class: "space-y-2" }, patchStates.map(patchData => (h(PatchCard, { key: patchData.patchId, patchData: patchData, onClick: () => setSelectedPatch(patchData) })))),
-        selectedPatch && (h(Modal, { title: `${selectedPatch.type.replace(/([A-Z])/g, ' $1').trim()} Patch`, onClose: () => setSelectedPatch(null) }, isEmpty ? (h(Fragment, null,
+        selectedPatch && (h(Modal, { title: patchTypeLabels[selectedPatch.type], onClose: () => setSelectedPatch(null) }, isEmpty ? (h(Fragment, null,
             h("div", { class: "mb-3 bg-[#111] rounded-lg px-3 py-2 text-[11px] text-[var(--color-parchment)] opacity-60 flex items-center gap-2" },
                 h("span", null, "\uD83C\uDF31"),
                 h("span", null, "Select a seed to plant in this patch")),
@@ -23246,7 +23251,7 @@ function PatchCard({ patchData, onClick }) {
             progressValue = getGrowthProgress(patch);
         }
     }
-    const typeLabel = type.replace(/([A-Z])/g, ' $1').trim();
+    const typeLabel = patchTypeLabels[type];
     return (h("button", { onClick: onClick, class: "w-full p-3 rounded-xl border transition-colors text-left bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]" },
         h("div", { class: "flex items-center justify-between" },
             h("div", { class: "flex-1" },
