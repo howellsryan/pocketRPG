@@ -4051,5 +4051,31 @@
       { "itemId": "uncut_zenyte", "quantity": 1, "chance": 0.00333 },
       { "itemId": "heavy_ballista", "quantity": 1, "chance": 0.005 }
     ]
+  },
+  "theatre_of_blood": {
+    "id": "theatre_of_blood",
+    "name": "Theatre of Blood",
+    "combatLevel": 420,
+    "isRaid": true,
+    "hitpoints": 1,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 1,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "drops": []
   }
 }

@@ -81,6 +81,12 @@ const COMBAT_CATEGORIES = [
     icon: '🐊',
     ids: ['olm'],
   },
+  {
+    key: 'raids',
+    label: 'Raids',
+    icon: '🏰',
+    ids: ['theatre_of_blood'],
+  },
 ]
 
 const MONSTER_ICONS = {
@@ -90,7 +96,8 @@ const MONSTER_ICONS = {
   green_dragon: '🐉', red_dragon: '🔴', lesser_demon: '👿',
   general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
   dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
-  crazy_archaeologist: '📜', king_black_dragon: '👑', zulrah: '🐍', jad: '🌋', corrupted_gauntlet: '⚡', olm: '🐊'
+  crazy_archaeologist: '📜', king_black_dragon: '👑', zulrah: '🐍', jad: '🌋', corrupted_gauntlet: '⚡', olm: '🐊',
+  theatre_of_blood: '🏰'
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, onBossFightStatusChange }) {
@@ -774,6 +781,53 @@ export default function CombatScreen({ onNavigate, initialMonsterId, onBossFight
                     const slayReq = monster.slayerRequirement
                     const slayLocked = slayReq && slayLvl < slayReq
                     const isOnTask = slayerTask?.monsterId === monster.id
+                    const isRaid = monster.id === 'theatre_of_blood'
+
+                    if (isRaid) {
+                      return (
+                        <div key={monster.id} class="flex gap-2 items-center">
+                          <button
+                            onClick={() => startFight(monster)}
+                            class="flex-1 flex items-center justify-between p-3 rounded-xl border transition-colors bg-gradient-to-r from-[#2a1a3a] to-[#3a2a4a] border-[#5a3a7a] active:from-[#3a2a4a] active:to-[#4a3a5a]"
+                          >
+                            <div class="flex items-center gap-3">
+                              <span class="text-2xl">🏰</span>
+                              <div class="text-left">
+                                <div class="flex items-center gap-1.5">
+                                  <span class="text-sm font-semibold text-[var(--color-gold)]">{monster.name}</span>
+                                </div>
+                                <div class="text-[10px] text-[var(--color-parchment)] opacity-40">
+                                  Sequential raid with 6 bosses
+                                </div>
+                              </div>
+                            </div>
+                            <div class="text-right">
+                              <div class="text-xs font-[var(--font-mono)] text-[var(--color-gold)]">Raid</div>
+                              {bossKillCounts[monster.id] > 0 && (
+                                <div class="text-[9px] text-yellow-400 font-mono mt-0.5">KC: {bossKillCounts[monster.id].toLocaleString()}</div>
+                              )}
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setSelectedMonsterInfo(monster)}
+                            class="flex-shrink-0 px-3 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5"
+                            title="View Raid Info"
+                          >
+                            <span class="text-base">ℹ️</span>
+                            <span class="text-[8px] text-[var(--color-parchment)] opacity-50">Info</span>
+                          </button>
+                          <button
+                            onClick={() => handleAddToHome(monster)}
+                            class="flex-shrink-0 px-3 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5"
+                            title="Add to Home Screen"
+                          >
+                            <span class="text-base">🏠</span>
+                            <span class="text-[8px] text-[var(--color-parchment)] opacity-50">Add</span>
+                          </button>
+                        </div>
+                      )
+                    }
+
                     return (
                     <div key={monster.id} class="flex gap-2 items-center">
                       <button
