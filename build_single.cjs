@@ -23,6 +23,7 @@ const sourceFiles = [
   'engine/skilling.js',
   'engine/idleEngine.js',
   'engine/tick.js',
+  'engine/farming.js',
   'db/database.js',
   'db/stores.js',
   'db/saveload.js',
@@ -41,6 +42,9 @@ const sourceFiles = [
   'screens/BankScreen.js',
   'screens/CombatScreen.js',
   'screens/AgilityScreen.js',
+  'screens/FarmingScreen.js',
+  'screens/FarmLocationPicker.js',
+  'screens/FarmPatchView.js',
   'screens/ThievingScreen.js',
   'screens/SkillingScreen.js',
   'screens/SlayerScreen.js',
@@ -79,6 +83,7 @@ const skillsJSON = readSrc('data/skills.json');
 const spellsJSON = readSrc('data/spells.json');
 const prayersJSON = readSrc('data/prayers.json');
 const raidsJSON = readSrc('data/raids.json');
+const farmingJSON = readSrc('data/farming.json');
 
 // Concatenate all JS
 let allJS = '';
@@ -123,6 +128,7 @@ const skillsData = ${skillsJSON};
 const spellsData = ${spellsJSON};
 const prayersData = ${prayersJSON};
 const raidsData = ${raidsJSON};
+const farmingData = ${farmingJSON};
 
 ${allJS}
 

@@ -2178,5 +2178,10 @@
         }
       }
     ]
+  },
+  "farming": {
+    "id": "farming",
+    "name": "Farming",
+    "actions": []
   }
 }

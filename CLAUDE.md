@@ -18,6 +18,10 @@ node build_single.cjs               # Concatenate + inline into index.html
 
 ```
  * **Artifact Rule**: **index.html** is an automated output. Never edit it manually.
+ * **Build Script Updates**: When adding new source files:
+   - **Engine/State files** → Add to `sourceFiles` array in `build_single.cjs`
+   - **UI screens** → Add to `sourceFiles` array in `build_single.cjs`
+   - **JSON data files** → Add to `readSrc()` call AND inline data section in `build_single.cjs`
 ## 4. WORKFLOW (Claude Code)
  1. Make source changes in src/.
  2. Rebuild: tsc --project tsconfig.build.json && node build_single.cjs.

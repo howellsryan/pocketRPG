@@ -29,6 +29,7 @@ export function GameProvider({ children }) {
   const [slayerPoints, setSlayerPointsState] = useState(0)
   const [activeCombatSpell, setActiveCombatSpellState] = useState(null)
   const [bossKillCounts, setBossKillCountsState] = useState({})
+  const [farming, setFarmingState] = useState({ patchesById: {} })
   const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false })
 
   // Refs to hold latest state for the debounced auto-save
@@ -43,11 +44,11 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    const [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedBossKillCounts] = await Promise.all([
+    const [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedBossKillCounts, savedFarming] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
-      getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('bossKillCounts')
+      getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('bossKillCounts'), getSetting('farming')
     ])
     // lastTick and activeTask live in localStorage — synchronous, survives iOS background freeze
     const savedLastTick = (() => { const v = localStorage.getItem('pocketrpg_lastTick'); return v ? parseInt(v, 10) : null })()
@@ -210,6 +211,7 @@ export function GameProvider({ children }) {
     setSlayerPointsState((savedSlayerPoints ?? 0) + slayerPointsEarned)
     setActiveCombatSpellState(savedActiveCombatSpell ?? null)
     setBossKillCountsState(savedBossKillCounts ?? {})
+    setFarmingState(savedFarming ?? { patchesById: {} })
     const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
     setCurrentHP(savedHP != null ? Math.min(savedHP, hpLevel) : hpLevel)
     setLoaded(true)
@@ -283,6 +285,35 @@ export function GameProvider({ children }) {
   const updateBank = useCallback((newBank) => {
     setBank({ ...newBank })
     markDirty('bank')
+  }, [markDirty])
+
+  const removeFromInventory = useCallback((slotIndex, qty = 1) => {
+    setInventory(prev => {
+      const next = [...prev]
+      if (next[slotIndex]) {
+        const newQty = next[slotIndex].quantity - qty
+        if (newQty <= 0) {
+          next[slotIndex] = null
+        } else {
+          next[slotIndex] = { ...next[slotIndex], quantity: newQty }
+        }
+      }
+      markDirty('inventory')
+      return next
+    })
+  }, [markDirty])
+
+  const addToBank = useCallback((itemId, qty) => {
+    setBank(prev => {
+      const next = { ...prev }
+      if (next[itemId]) {
+        next[itemId] = { ...next[itemId], quantity: next[itemId].quantity + qty }
+      } else {
+        next[itemId] = { itemId, quantity: qty }
+      }
+      markDirty('bank')
+      return next
+    })
   }, [markDirty])
 
   const updateHP = useCallback((hp) => {
@@ -360,6 +391,11 @@ export function GameProvider({ children }) {
     saveSetting('bossKillCounts', counts)
   }, [])
 
+  const updateFarming = useCallback((farmingState) => {
+    setFarmingState(farmingState)
+    saveSetting('farming', farmingState)
+  }, [])
+
   // Direct bank update without inventory changes (for skill/gather item routing)
   const updateBankDirect = useCallback((itemUpdates) => {
     setBank(prev => {
@@ -407,7 +443,9 @@ export function GameProvider({ children }) {
     slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints,
     activeCombatSpell, updateActiveCombatSpell,
     bossKillCounts, updateBossKillCounts,
+    farming, updateFarming,
     loadGame, grantXP, updateInventory, updateEquipment, updateBank,
+    removeFromInventory, addToBank,
     updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,
     markDirty, itemsData, updateHomeShortcuts, updateCombatStance,
     setActiveTask, updateBankDirect, getSnapshot, updateAutoBankLoot, updateBankConfig
