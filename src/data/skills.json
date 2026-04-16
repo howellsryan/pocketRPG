@@ -2102,5 +2102,81 @@
         "description": "Magical forest dwellers. Ultimate pickpocketing challenge with massive rewards."
       }
     ]
+  },
+  "firemaking": {
+    "id": "firemaking",
+    "name": "Firemaking",
+    "actions": [
+      {
+        "id": "normal_logs",
+        "name": "Burn logs",
+        "level": 1,
+        "ticks": 1,
+        "xp": 40,
+        "materials": {
+          "logs": 1
+        }
+      },
+      {
+        "id": "oak_logs",
+        "name": "Burn oak logs",
+        "level": 15,
+        "ticks": 1,
+        "xp": 60,
+        "materials": {
+          "oak_logs": 1
+        }
+      },
+      {
+        "id": "willow_logs",
+        "name": "Burn willow logs",
+        "level": 30,
+        "ticks": 1,
+        "xp": 90,
+        "materials": {
+          "willow_logs": 1
+        }
+      },
+      {
+        "id": "maple_logs",
+        "name": "Burn maple logs",
+        "level": 45,
+        "ticks": 1,
+        "xp": 135,
+        "materials": {
+          "maple_logs": 1
+        }
+      },
+      {
+        "id": "yew_logs",
+        "name": "Burn yew logs",
+        "level": 60,
+        "ticks": 1,
+        "xp": 203,
+        "materials": {
+          "yew_logs": 1
+        }
+      },
+      {
+        "id": "magic_logs",
+        "name": "Burn magic logs",
+        "level": 75,
+        "ticks": 1,
+        "xp": 304,
+        "materials": {
+          "magic_logs": 1
+        }
+      },
+      {
+        "id": "redwood_logs",
+        "name": "Burn redwood logs",
+        "level": 90,
+        "ticks": 1,
+        "xp": 350,
+        "materials": {
+          "redwood_logs": 1
+        }
+      }
+    ]
   }
 }
