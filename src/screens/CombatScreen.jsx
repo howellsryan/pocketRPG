@@ -97,7 +97,7 @@ const MONSTER_ICONS = {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFightStatusChange }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, autoBankLoot, updateAutoBankLoot, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts } = useGame()
 
   const [combat, setCombat] = useState(null)
   const [log, setLog] = useState([])
@@ -531,7 +531,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     setFightStartedAt(Date.now())
     const spellName = spell ? ` with ${spell.name}` : isPoweredStaff && weaponItem ? ` with ${weaponItem.name}` : ''
     setLog([{ text: `Fighting ${monster.name}${spellName}...`, type: 'info', time: Date.now() }])
-    setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot, spell: spell || null })
+    setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: true, spell: spell || null })
   }
 
   const startRaid = (raidData) => {
@@ -572,7 +572,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     state.activeProtectionPrayer = combatRef.current?.activeProtectionPrayer ?? null
     state.activeCombatPrayer = combatRef.current?.activeCombatPrayer ?? null
     setCombat(state)
-    setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: autoBankLoot, spell: spell || null })
+    setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: true, spell: spell || null })
   }
 
   const stopAndBack = () => {
@@ -844,25 +844,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               {s}
             </button>
           ))}
-        </div>
-
-        {/* Banking toggle — idle only, persisted */}
-        <div class="mb-3 bg-[#111] rounded-lg px-3 py-2.5 flex items-center justify-between">
-          <div>
-            <div class="text-xs font-semibold text-[var(--color-parchment)]">🏦 Auto-Bank Loot (Idle)</div>
-            <div class="text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5">
-              {autoBankLoot
-                ? `${formatBankDelay(bankDelayMs)} delay (Agility lv ${agilityLevel})`
-                : 'Off — loot stays in inventory'}
-            </div>
-          </div>
-          <button
-            onClick={() => updateAutoBankLoot(!autoBankLoot)}
-            class={`relative flex-shrink-0 w-12 h-7 rounded-full transition-colors duration-200 ${autoBankLoot ? 'bg-[var(--color-gold-dim)]' : 'bg-[#333]'}`}
-            style="min-width:48px"
-          >
-            <span class={`absolute top-[3px] left-[3px] w-[22px] h-[22px] bg-white rounded-full shadow-md transition-transform duration-200 ${autoBankLoot ? 'translate-x-[20px]' : 'translate-x-0'}`} />
-          </button>
         </div>
 
         <div class="space-y-4">
