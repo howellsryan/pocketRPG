@@ -1445,7 +1445,7 @@
         "id": "attack_potion",
         "name": "Make attack potion",
         "level": 1,
-        "ticks": 4,
+        "ticks": 3,
         "xp": 25,
         "product": "attack_potion",
         "materials": {
@@ -1457,7 +1457,7 @@
         "id": "strength_potion",
         "name": "Make strength potion",
         "level": 12,
-        "ticks": 4,
+        "ticks": 3,
         "xp": 40,
         "product": "strength_potion",
         "materials": {
@@ -1469,7 +1469,7 @@
         "id": "defence_potion",
         "name": "Make defence potion",
         "level": 30,
-        "ticks": 4,
+        "ticks": 3,
         "xp": 55,
         "product": "defence_potion",
         "materials": {
@@ -1481,7 +1481,7 @@
         "id": "combat_potion",
         "name": "Make combat potion",
         "level": 36,
-        "ticks": 4,
+        "ticks": 3,
         "xp": 70,
         "product": "combat_potion",
         "materials": {
@@ -1493,7 +1493,7 @@
         "id": "prayer_potion",
         "name": "Make prayer potion",
         "level": 38,
-        "ticks": 4,
+        "ticks": 3,
         "xp": 75,
         "product": "prayer_potion",
         "materials": {
@@ -1505,7 +1505,7 @@
         "id": "super_attack",
         "name": "Make super attack",
         "level": 45,
-        "ticks": 4,
+        "ticks": 3,
         "xp": 90,
         "product": "super_attack",
         "materials": {
@@ -1517,7 +1517,7 @@
         "id": "super_strength",
         "name": "Make super strength",
         "level": 55,
-        "ticks": 4,
+        "ticks": 3,
         "xp": 110,
         "product": "super_strength",
         "materials": {
@@ -1529,7 +1529,7 @@
         "id": "super_restore",
         "name": "Make super restore",
         "level": 63,
-        "ticks": 4,
+        "ticks": 3,
         "xp": 130,
         "product": "super_restore",
         "materials": {
@@ -1541,7 +1541,7 @@
         "id": "super_defence",
         "name": "Make super defence",
         "level": 66,
-        "ticks": 4,
+        "ticks": 3,
         "xp": 140,
         "product": "super_defence",
         "materials": {
@@ -1553,7 +1553,7 @@
         "id": "ranging_potion",
         "name": "Make ranging potion",
         "level": 72,
-        "ticks": 4,
+        "ticks": 3,
         "xp": 160,
         "product": "ranging_potion",
         "materials": {
@@ -1565,7 +1565,7 @@
         "id": "magic_potion",
         "name": "Make magic potion",
         "level": 76,
-        "ticks": 4,
+        "ticks": 3,
         "xp": 180,
         "product": "magic_potion",
         "materials": {
@@ -1577,7 +1577,7 @@
         "id": "saradomin_brew",
         "name": "Make saradomin brew",
         "level": 81,
-        "ticks": 4,
+        "ticks": 3,
         "xp": 200,
         "product": "saradomin_brew",
         "materials": {
@@ -1589,7 +1589,7 @@
         "id": "super_combat_potion",
         "name": "Make super combat potion",
         "level": 90,
-        "ticks": 4,
+        "ticks": 3,
         "xp": 250,
         "product": "super_combat_potion",
         "materials": {
