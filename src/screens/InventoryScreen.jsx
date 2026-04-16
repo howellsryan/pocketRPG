@@ -46,7 +46,7 @@ export default function InventoryScreen() {
       for (const unequipped of result.unequipped) {
         const empty = newInv.indexOf(null)
         if (empty !== -1 && unequipped) {
-          const invEntry = { itemId: unequipped.itemId, quantity: 1 }
+          const invEntry = { itemId: unequipped.itemId, quantity: unequipped.quantity || 1 }
           if (unequipped.charges && unequipped.charges > 0) invEntry.charges = unequipped.charges
           newInv[empty] = invEntry
         }

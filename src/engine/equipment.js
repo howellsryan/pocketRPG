@@ -30,6 +30,7 @@ export function isAmmoCompatible(equipment, ammoItemData, itemsData) {
  * The optional `sourceSlot` argument is the inventory slot being equipped from;
  * its `charges` (if any) carry over to the equipment entry so that scale-charged
  * weapons don't lose their charges when re-equipped.
+ * For ammo, `sourceSlot.quantity` is preserved so ammo quantity is maintained.
  */
 export function equipItem(equipment, itemData, itemsData, sourceSlot) {
   const slot = itemData.slot
@@ -74,6 +75,10 @@ export function equipItem(equipment, itemData, itemsData, sourceSlot) {
   // Preserve charges from the inventory slot for scale-charged weapons
   if (sourceSlot && sourceSlot.charges && sourceSlot.charges > 0) {
     entry.charges = sourceSlot.charges
+  }
+  // Preserve quantity for ammo
+  if (slot === 'ammo' && sourceSlot && sourceSlot.quantity) {
+    entry.quantity = sourceSlot.quantity
   }
   equipment[slot] = entry
 
