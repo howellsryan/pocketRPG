@@ -136,8 +136,14 @@ export default function InventoryScreen() {
       const newBank = { ...bank }
       if (newBank[slot.itemId]) {
         newBank[slot.itemId] = { ...newBank[slot.itemId], quantity: newBank[slot.itemId].quantity + actualQty }
+        // Preserve charges if the item being deposited has them
+        if (slot.charges && slot.charges > 0) {
+          newBank[slot.itemId] = { ...newBank[slot.itemId], charges: (newBank[slot.itemId].charges || 0) + slot.charges }
+        }
       } else {
-        newBank[slot.itemId] = { itemId: slot.itemId, quantity: actualQty }
+        const bankEntry = { itemId: slot.itemId, quantity: actualQty }
+        if (slot.charges && slot.charges > 0) bankEntry.charges = slot.charges
+        newBank[slot.itemId] = bankEntry
       }
       const newInv = [...inventory]
       if (actualQty >= slot.quantity) {
@@ -163,8 +169,14 @@ export default function InventoryScreen() {
       if (deposited > 0) {
         if (newBank[slot.itemId]) {
           newBank[slot.itemId] = { ...newBank[slot.itemId], quantity: newBank[slot.itemId].quantity + deposited }
+          // Preserve charges if the item being deposited has them
+          if (slot.charges && slot.charges > 0) {
+            newBank[slot.itemId] = { ...newBank[slot.itemId], charges: (newBank[slot.itemId].charges || 0) + slot.charges }
+          }
         } else {
-          newBank[slot.itemId] = { itemId: slot.itemId, quantity: deposited }
+          const bankEntry = { itemId: slot.itemId, quantity: deposited }
+          if (slot.charges && slot.charges > 0) bankEntry.charges = slot.charges
+          newBank[slot.itemId] = bankEntry
         }
         updateInventory(newInv)
         updateBank(newBank)
@@ -262,11 +274,17 @@ export default function InventoryScreen() {
     for (let i = 0; i < newInv.length; i++) {
       const slot = newInv[i]
       if (!slot) continue
-      const { itemId, quantity } = slot
+      const { itemId, quantity, charges } = slot
       if (newBank[itemId]) {
         newBank[itemId] = { ...newBank[itemId], quantity: newBank[itemId].quantity + quantity }
+        // Preserve charges if the item being deposited has them
+        if (charges && charges > 0) {
+          newBank[itemId] = { ...newBank[itemId], charges: (newBank[itemId].charges || 0) + charges }
+        }
       } else {
-        newBank[itemId] = { itemId, quantity }
+        const bankEntry = { itemId, quantity }
+        if (charges && charges > 0) bankEntry.charges = charges
+        newBank[itemId] = bankEntry
       }
       newInv[i] = null
       deposited++
