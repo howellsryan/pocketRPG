@@ -125,6 +125,45 @@ export default function InventoryScreen() {
     setChargeInput('')
   }
 
+  const handleUnchargeWeapon = () => {
+    if (!selected) return
+    const { slotIndex, slot, item } = selected
+
+    // Check if weapon is scale-charged
+    if (!item.scaleCharged) {
+      addToast('This weapon cannot be uncharged', 'error')
+      return
+    }
+
+    const charges = slot.charges || 0
+    if (charges <= 0) {
+      addToast('This weapon has no charges', 'error')
+      return
+    }
+
+    // Return scales to inventory
+    const newInv = [...inventory]
+    const existingIdx = newInv.findIndex(s => s && s.itemId === 'zulrah_scales')
+    if (existingIdx !== -1) {
+      newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + charges }
+    } else {
+      const empty = newInv.indexOf(null)
+      if (empty === -1) {
+        addToast('Inventory full — cannot uncharge', 'error')
+        return
+      }
+      newInv[empty] = { itemId: 'zulrah_scales', quantity: charges }
+    }
+
+    // Remove charges from weapon
+    const newSlot = { ...slot, charges: 0 }
+    newInv[slotIndex] = newSlot
+
+    updateInventory(newInv)
+    setSelected({ ...selected, slot: newSlot })
+    addToast(`Uncharged ${item.name}, recovered ${charges} scales`, 'info')
+  }
+
   // Deposit to bank — stackable: deposit all; non-stackable: show qty picker
   const handleDeposit = (qty) => {
     if (!selected) return
@@ -388,29 +427,37 @@ export default function InventoryScreen() {
             )}
 
             {/* Action buttons */}
-            <div class="grid grid-cols-2 gap-2">
-              {(selected.item.slot) && !selected.slot.noted && (
-                <button onClick={handleEquip}
-                  class="py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80">
-                  Equip
+            <div class="grid gap-2">
+              <div class="grid grid-cols-2 gap-2">
+                {(selected.item.slot) && !selected.slot.noted && (
+                  <button onClick={handleEquip}
+                    class="py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80">
+                    Equip
+                  </button>
+                )}
+                {selected.item.type === 'food' && !selected.slot.noted && (
+                  <button onClick={handleEat}
+                    class="py-2.5 rounded-lg bg-[var(--color-emerald)] text-white font-semibold text-sm active:opacity-80">
+                    Eat
+                  </button>
+                )}
+                {selected.item.scaleCharged && !selected.slot.noted && (
+                  <button onClick={() => setShowChargeModal(true)}
+                    class="py-2.5 rounded-lg bg-[#1a3a3a] text-[var(--color-emerald)] font-semibold text-sm active:opacity-80 border border-[var(--color-emerald)]/30">
+                    Charge ⚡
+                  </button>
+                )}
+                <button onClick={handleDrop}
+                  class="py-2.5 rounded-lg bg-[var(--color-blood-mid)] text-white font-semibold text-sm active:opacity-80">
+                  Drop
+                </button>
+              </div>
+              {selected.item.scaleCharged && !selected.slot.noted && (selected.slot.charges || 0) > 0 && (
+                <button onClick={handleUnchargeWeapon}
+                  class="w-full py-2.5 rounded-lg bg-[#3a1a1a] text-[var(--color-blood)] font-semibold text-sm active:opacity-80 border border-[var(--color-blood)]/30">
+                  Uncharge ({selected.slot.charges} scales)
                 </button>
               )}
-              {selected.item.type === 'food' && !selected.slot.noted && (
-                <button onClick={handleEat}
-                  class="py-2.5 rounded-lg bg-[var(--color-emerald)] text-white font-semibold text-sm active:opacity-80">
-                  Eat
-                </button>
-              )}
-              {selected.item.scaleCharged && !selected.slot.noted && (
-                <button onClick={() => setShowChargeModal(true)}
-                  class="py-2.5 rounded-lg bg-[#1a3a3a] text-[var(--color-emerald)] font-semibold text-sm active:opacity-80 border border-[var(--color-emerald)]/30">
-                  Charge ⚡
-                </button>
-              )}
-              <button onClick={handleDrop}
-                class="py-2.5 rounded-lg bg-[var(--color-blood-mid)] text-white font-semibold text-sm active:opacity-80">
-                Drop
-              </button>
             </div>
 
             {/* Bank deposit section */}

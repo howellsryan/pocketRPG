@@ -128,6 +128,46 @@ export default function BankScreen() {
     setQuantityInput('')
   }
 
+  const handleUnchargeItem = () => {
+    if (!selectedId) return
+    const bankEntry = bank[selectedId]
+    if (!bankEntry) return
+    const item = itemsData[selectedId]
+    if (!item?.scaleCharged) {
+      addToast('This item cannot be uncharged', 'error')
+      return
+    }
+
+    const charges = bankEntry.charges || 0
+    if (charges <= 0) {
+      addToast('This item has no charges', 'error')
+      return
+    }
+
+    // Return scales to inventory
+    const newInv = [...inventory]
+    const existingIdx = newInv.findIndex(s => s && s.itemId === 'zulrah_scales')
+    if (existingIdx !== -1) {
+      newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + charges }
+    } else {
+      const empty = newInv.indexOf(null)
+      if (empty === -1) {
+        addToast('Inventory full — cannot uncharge', 'error')
+        return
+      }
+      newInv[empty] = { itemId: 'zulrah_scales', quantity: charges }
+    }
+
+    // Remove charges from bank entry
+    const newBank = { ...bank }
+    newBank[selectedId] = { ...bankEntry, charges: 0 }
+
+    updateInventory(newInv)
+    updateBank(newBank)
+    addToast(`Uncharged ${item.name}, recovered ${charges} scales`, 'info')
+    setSelectedId(null)
+  }
+
   // ── Tab management ───────────────────────────────────────────────────────────
   const addTab = () => {
     if (tabs.length >= MAX_TABS) return
@@ -513,6 +553,22 @@ export default function BankScreen() {
                   </button>
                 ))}
               </div>
+
+              {/* Uncharge button for scale-charged items */}
+              {(() => {
+                const item = itemsData[selected.itemId]
+                if (item?.scaleCharged && (selected.charges || 0) > 0) {
+                  return (
+                    <button
+                      onClick={handleUnchargeItem}
+                      class="w-full py-2.5 rounded-lg bg-[#3a1a1a] text-[var(--color-blood)] font-semibold text-sm active:opacity-80 border border-[var(--color-blood)]/30"
+                    >
+                      Uncharge ({selected.charges} scales)
+                    </button>
+                  )
+                }
+                return null
+              })()}
 
               {/* Take All + Take X buttons (50/50) */}
               <div class="grid grid-cols-2 gap-2">
