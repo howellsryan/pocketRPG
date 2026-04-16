@@ -3,9 +3,9 @@ import farmingData from '../data/farming.json'
 export default function FarmLocationPicker({ farmingLevel, onSelectLocation }) {
   return (
     <div className="flex flex-col h-full">
-      <div style={{ background: 'linear-gradient(135deg, var(--color-emerald-mid), var(--color-emerald))', padding: '16px' }}>
-        <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--color-gold-light)', marginBottom: '4px' }}>🌿 Farming</h1>
-        <p style={{ fontSize: '13px', color: 'var(--color-parchment)', opacity: 0.8 }}>Level: {farmingLevel}</p>
+      <div style={{ background: 'var(--color-emerald-mid)', padding: '16px' }}>
+        <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--color-gold)', marginBottom: '4px' }}>🌿 Farming</h1>
+        <p style={{ fontSize: '13px', color: 'var(--color-parchment-dark)' }}>Level: {farmingLevel}</p>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-2">
