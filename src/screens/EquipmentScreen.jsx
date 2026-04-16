@@ -62,7 +62,7 @@ function EquipSlot({ slotName, equipment, itemsData, onSelect }) {
 }
 
 export default function EquipmentScreen() {
-  const { equipment, inventory, updateEquipment, updateInventory, addToast, itemsData } = useGame()
+  const { equipment, inventory, bank, updateEquipment, updateInventory, updateBank, addToast, itemsData } = useGame()
   const [selected, setSelected] = useState(null) // { slot, item }
   const [showSpecInfo, setShowSpecInfo] = useState(false)
   const [chargeInput, setChargeInput] = useState('')
@@ -151,26 +151,67 @@ export default function EquipmentScreen() {
     const charges = weaponEntry.charges || 0
     if (charges <= 0) return
 
-    // Return all charges as scales to inventory
+    // Collect total charges from ALL instances of this item in inventory, equipped, and bank
+    let totalCharges = 0
+
+    // Count charges in inventory
     const newInv = [...inventory]
+    for (let i = 0; i < newInv.length; i++) {
+      if (newInv[i] && newInv[i].itemId === weaponEntry.itemId && newInv[i].charges > 0) {
+        totalCharges += newInv[i].charges
+      }
+    }
+
+    // Count charges in equipped slots
+    const newEq = { ...equipment }
+    for (const slotName of Object.keys(newEq)) {
+      if (newEq[slotName] && newEq[slotName].itemId === weaponEntry.itemId && newEq[slotName].charges > 0) {
+        totalCharges += newEq[slotName].charges
+      }
+    }
+
+    // Count charges in bank
+    const newBank = { ...bank }
+    if (newBank[weaponEntry.itemId] && newBank[weaponEntry.itemId].charges > 0) {
+      totalCharges += newBank[weaponEntry.itemId].charges
+    }
+
+    // Remove charges from all instances in inventory
+    for (let i = 0; i < newInv.length; i++) {
+      if (newInv[i] && newInv[i].itemId === weaponEntry.itemId && newInv[i].charges > 0) {
+        newInv[i] = { ...newInv[i], charges: 0 }
+      }
+    }
+
+    // Remove charges from all equipped instances
+    for (const slotName of Object.keys(newEq)) {
+      if (newEq[slotName] && newEq[slotName].itemId === weaponEntry.itemId && newEq[slotName].charges > 0) {
+        newEq[slotName] = { ...newEq[slotName], charges: 0 }
+      }
+    }
+
+    // Remove charges from bank
+    if (newBank[weaponEntry.itemId] && newBank[weaponEntry.itemId].charges > 0) {
+      newBank[weaponEntry.itemId] = { ...newBank[weaponEntry.itemId], charges: 0 }
+    }
+
+    // Return all charges as scales to inventory
     const existingIdx = newInv.findIndex(s => s && s.itemId === SCALE_ITEM_ID)
     if (existingIdx !== -1) {
-      newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + charges }
+      newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + totalCharges }
     } else {
       const empty = newInv.indexOf(null)
       if (empty === -1) {
         addToast('Inventory full — cannot uncharge', 'error')
         return
       }
-      newInv[empty] = { itemId: SCALE_ITEM_ID, quantity: charges }
+      newInv[empty] = { itemId: SCALE_ITEM_ID, quantity: totalCharges }
     }
-
-    const newEq = { ...equipment }
-    newEq[equipSlotName] = { ...weaponEntry, charges: 0 }
 
     updateInventory(newInv)
     updateEquipment(newEq)
-    addToast(`Uncharged ${item.name}, recovered ${charges} scales`, 'info')
+    updateBank(newBank)
+    addToast(`Uncharged ${item.name}, recovered ${totalCharges} scales`, 'info')
   }
 
   const bonuses = getEquipmentBonuses(equipment, itemsData)
