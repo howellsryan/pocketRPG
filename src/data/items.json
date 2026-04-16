@@ -8630,5 +8630,253 @@
     "shopValue": 5000000000,
     "overridePrice": true,
     "icon": "🎩"
+  },
+  "guam_seed": {
+    "id": "guam_seed",
+    "name": "Guam seed",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 10,
+    "icon": "🌱"
+  },
+  "marrentill_seed": {
+    "id": "marrentill_seed",
+    "name": "Marrentill seed",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 20,
+    "icon": "🌱"
+  },
+  "tarromin_seed": {
+    "id": "tarromin_seed",
+    "name": "Tarromin seed",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 30,
+    "icon": "🌱"
+  },
+  "basil_seed": {
+    "id": "basil_seed",
+    "name": "Basil seed",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 40,
+    "icon": "🌱"
+  },
+  "sagewort_seed": {
+    "id": "sagewort_seed",
+    "name": "Sagewort seed",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 50,
+    "icon": "🌱"
+  },
+  "gout_tuber_seed": {
+    "id": "gout_tuber_seed",
+    "name": "Gout tuber seed",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 60,
+    "icon": "🌱"
+  },
+  "ranarr_seed": {
+    "id": "ranarr_seed",
+    "name": "Ranarr seed",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 100,
+    "icon": "🌱"
+  },
+  "oak_sapling": {
+    "id": "oak_sapling",
+    "name": "Oak sapling",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 15,
+    "icon": "🌱"
+  },
+  "willow_sapling": {
+    "id": "willow_sapling",
+    "name": "Willow sapling",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 35,
+    "icon": "🌱"
+  },
+  "maple_sapling": {
+    "id": "maple_sapling",
+    "name": "Maple sapling",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 60,
+    "icon": "🌱"
+  },
+  "yew_sapling": {
+    "id": "yew_sapling",
+    "name": "Yew sapling",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 150,
+    "icon": "🌱"
+  },
+  "magic_sapling": {
+    "id": "magic_sapling",
+    "name": "Magic sapling",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 300,
+    "icon": "🌱"
+  },
+  "apple_sapling": {
+    "id": "apple_sapling",
+    "name": "Apple sapling",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 50,
+    "icon": "🌱"
+  },
+  "banana_sapling": {
+    "id": "banana_sapling",
+    "name": "Banana sapling",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 80,
+    "icon": "🌱"
+  },
+  "orange_sapling": {
+    "id": "orange_sapling",
+    "name": "Orange sapling",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 100,
+    "icon": "🌱"
+  },
+  "curry_sapling": {
+    "id": "curry_sapling",
+    "name": "Curry sapling",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 120,
+    "icon": "🌱"
+  },
+  "papaya_sapling": {
+    "id": "papaya_sapling",
+    "name": "Papaya sapling",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 200,
+    "icon": "🌱"
+  },
+  "palm_sapling": {
+    "id": "palm_sapling",
+    "name": "Palm sapling",
+    "type": "seed",
+    "stackable": true,
+    "shopValue": 400,
+    "icon": "🌱"
+  },
+  "guam_leaf": {
+    "id": "guam_leaf",
+    "name": "Guam leaf",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 7,
+    "icon": "🌿"
+  },
+  "marrentill": {
+    "id": "marrentill",
+    "name": "Marrentill",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 12,
+    "icon": "🌿"
+  },
+  "tarromin": {
+    "id": "tarromin",
+    "name": "Tarromin",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 15,
+    "icon": "🌿"
+  },
+  "basil": {
+    "id": "basil",
+    "name": "Basil",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 30,
+    "icon": "🌱"
+  },
+  "sagewort": {
+    "id": "sagewort",
+    "name": "Sagewort",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 50,
+    "icon": "🌿"
+  },
+  "gout_tuber": {
+    "id": "gout_tuber",
+    "name": "Gout tuber",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 60,
+    "icon": "🥔"
+  },
+  "ranarr_weed": {
+    "id": "ranarr_weed",
+    "name": "Ranarr weed",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 100,
+    "icon": "🌿"
+  },
+  "apple": {
+    "id": "apple",
+    "name": "Apple",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 8,
+    "icon": "🍎"
+  },
+  "banana": {
+    "id": "banana",
+    "name": "Banana",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 5,
+    "icon": "🍌"
+  },
+  "orange": {
+    "id": "orange",
+    "name": "Orange",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 10,
+    "icon": "🍊"
+  },
+  "curry_leaf": {
+    "id": "curry_leaf",
+    "name": "Curry leaf",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 25,
+    "icon": "🌿"
+  },
+  "papaya_fruit": {
+    "id": "papaya_fruit",
+    "name": "Papaya fruit",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 35,
+    "icon": "🧡"
+  },
+  "palm_fruit": {
+    "id": "palm_fruit",
+    "name": "Palm fruit",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 50,
+    "icon": "🌴"
   }
 }

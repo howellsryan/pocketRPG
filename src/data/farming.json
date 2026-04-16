@@ -1,0 +1,258 @@
+{
+  "herbs": [
+    {
+      "id": "guam_seed",
+      "cropId": "guam_leaf",
+      "name": "Guam",
+      "level": 1,
+      "plantXp": 11,
+      "harvestXp": 12.5,
+      "growthTimeMs": 4800000,
+      "icon": "🌱"
+    },
+    {
+      "id": "marrentill_seed",
+      "cropId": "marrentill",
+      "name": "Marrentill",
+      "level": 14,
+      "plantXp": 14,
+      "harvestXp": 16,
+      "growthTimeMs": 4800000,
+      "icon": "🌿"
+    },
+    {
+      "id": "tarromin_seed",
+      "cropId": "tarromin",
+      "name": "Tarromin",
+      "level": 19,
+      "plantXp": 17,
+      "harvestXp": 19.5,
+      "growthTimeMs": 4800000,
+      "icon": "🌿"
+    },
+    {
+      "id": "basil_seed",
+      "cropId": "basil",
+      "name": "Basil",
+      "level": 25,
+      "plantXp": 23,
+      "harvestXp": 26,
+      "growthTimeMs": 4800000,
+      "icon": "🌱"
+    },
+    {
+      "id": "sagewort_seed",
+      "cropId": "sagewort",
+      "name": "Sagewort",
+      "level": 32,
+      "plantXp": 30,
+      "harvestXp": 34.5,
+      "growthTimeMs": 4800000,
+      "icon": "🌿"
+    },
+    {
+      "id": "gout_tuber_seed",
+      "cropId": "gout_tuber",
+      "name": "Gout tuber",
+      "level": 36,
+      "plantXp": 35,
+      "harvestXp": 40,
+      "growthTimeMs": 4800000,
+      "icon": "🥔"
+    },
+    {
+      "id": "ranarr_seed",
+      "cropId": "ranarr_weed",
+      "name": "Ranarr",
+      "level": 52,
+      "plantXp": 64,
+      "harvestXp": 73.5,
+      "growthTimeMs": 4800000,
+      "icon": "🌿"
+    }
+  ],
+  "trees": [
+    {
+      "id": "oak_sapling",
+      "cropId": "oak_logs",
+      "name": "Oak",
+      "level": 15,
+      "plantXp": 14,
+      "harvestXp": 45,
+      "growthTimeMs": 28800000,
+      "icon": "🌲"
+    },
+    {
+      "id": "willow_sapling",
+      "cropId": "willow_logs",
+      "name": "Willow",
+      "level": 30,
+      "plantXp": 27,
+      "harvestXp": 81.5,
+      "growthTimeMs": 28800000,
+      "icon": "🌳"
+    },
+    {
+      "id": "maple_sapling",
+      "cropId": "maple_logs",
+      "name": "Maple",
+      "level": 45,
+      "plantXp": 45,
+      "harvestXp": 135.5,
+      "growthTimeMs": 28800000,
+      "icon": "🌳"
+    },
+    {
+      "id": "yew_sapling",
+      "cropId": "yew_logs",
+      "name": "Yew",
+      "level": 60,
+      "plantXp": 81,
+      "harvestXp": 243.5,
+      "growthTimeMs": 28800000,
+      "icon": "🌳"
+    },
+    {
+      "id": "magic_sapling",
+      "cropId": "magic_logs",
+      "name": "Magic",
+      "level": 75,
+      "plantXp": 145,
+      "harvestXp": 437.5,
+      "growthTimeMs": 28800000,
+      "icon": "🌳"
+    }
+  ],
+  "fruitTrees": [
+    {
+      "id": "apple_sapling",
+      "cropId": "apple",
+      "name": "Apple",
+      "level": 27,
+      "plantXp": 22.5,
+      "harvestXp": 28.5,
+      "growthTimeMs": 57600000,
+      "fruitRegrowMs": 2400000,
+      "fruitLimit": 6,
+      "icon": "🍎"
+    },
+    {
+      "id": "banana_sapling",
+      "cropId": "banana",
+      "name": "Banana",
+      "level": 33,
+      "plantXp": 32.5,
+      "harvestXp": 41,
+      "growthTimeMs": 57600000,
+      "fruitRegrowMs": 2400000,
+      "fruitLimit": 6,
+      "icon": "🍌"
+    },
+    {
+      "id": "orange_sapling",
+      "cropId": "orange",
+      "name": "Orange",
+      "level": 39,
+      "plantXp": 39.5,
+      "harvestXp": 49.5,
+      "growthTimeMs": 57600000,
+      "fruitRegrowMs": 2400000,
+      "fruitLimit": 6,
+      "icon": "🍊"
+    },
+    {
+      "id": "curry_sapling",
+      "cropId": "curry_leaf",
+      "name": "Curry",
+      "level": 42,
+      "plantXp": 42.5,
+      "harvestXp": 53.5,
+      "growthTimeMs": 57600000,
+      "fruitRegrowMs": 2400000,
+      "fruitLimit": 6,
+      "icon": "🌿"
+    },
+    {
+      "id": "papaya_sapling",
+      "cropId": "papaya_fruit",
+      "name": "Papaya",
+      "level": 57,
+      "plantXp": 81,
+      "harvestXp": 102,
+      "growthTimeMs": 57600000,
+      "fruitRegrowMs": 2400000,
+      "fruitLimit": 6,
+      "icon": "🧡"
+    },
+    {
+      "id": "palm_sapling",
+      "cropId": "palm_fruit",
+      "name": "Palm",
+      "level": 68,
+      "plantXp": 110,
+      "harvestXp": 138.5,
+      "growthTimeMs": 57600000,
+      "fruitRegrowMs": 2400000,
+      "fruitLimit": 6,
+      "icon": "🌴"
+    }
+  ],
+  "locations": [
+    {
+      "id": "falador",
+      "name": "Falador Farm",
+      "patches": [
+        { "type": "herb", "count": 1 },
+        { "type": "tree", "count": 2 }
+      ]
+    },
+    {
+      "id": "taverley",
+      "name": "Taverley Farm",
+      "patches": [
+        { "type": "herb", "count": 1 },
+        { "type": "tree", "count": 2 }
+      ]
+    },
+    {
+      "id": "ardougne",
+      "name": "Ardougne Farm",
+      "patches": [
+        { "type": "herb", "count": 1 },
+        { "type": "tree", "count": 2 }
+      ]
+    },
+    {
+      "id": "catherby",
+      "name": "Catherby Farm",
+      "patches": [
+        { "type": "herb", "count": 1 },
+        { "type": "tree", "count": 2 },
+        { "type": "fruitTree", "count": 2 }
+      ]
+    },
+    {
+      "id": "hosidius",
+      "name": "Hosidius Farm",
+      "patches": [
+        { "type": "herb", "count": 1, "minLevel": 65 },
+        { "type": "tree", "count": 2 },
+        { "type": "fruitTree", "count": 1 }
+      ]
+    },
+    {
+      "id": "gnome",
+      "name": "Tree Gnome Stronghold",
+      "patches": [
+        { "type": "fruitTree", "count": 2 }
+      ]
+    },
+    {
+      "id": "brimhaven",
+      "name": "Brimhaven Farm",
+      "patches": [
+        { "type": "fruitTree", "count": 2 }
+      ]
+    }
+  ]
+}
