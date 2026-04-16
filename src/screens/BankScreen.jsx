@@ -79,6 +79,8 @@ export default function BankScreen() {
         if (empty === -1) { addToast('Inventory full', 'error'); return }
         const slot = { itemId, quantity: qty }
         if (asNote) slot.noted = true
+        // Preserve charges from bank entry
+        if (bankEntry.charges && bankEntry.charges > 0) slot.charges = bankEntry.charges
         newInv[empty] = slot
         actualWithdrawn = qty
       }
@@ -86,15 +88,23 @@ export default function BankScreen() {
       for (let i = 0; i < qty; i++) {
         const empty = newInv.indexOf(null)
         if (empty === -1) break
-        newInv[empty] = { itemId, quantity: 1 }
+        const slot = { itemId, quantity: 1 }
+        // Preserve charges from bank entry
+        if (bankEntry.charges && bankEntry.charges > 0) slot.charges = bankEntry.charges
+        newInv[empty] = slot
         actualWithdrawn++
       }
       if (actualWithdrawn === 0) { addToast('Inventory full', 'error'); return }
     }
 
     const newBank = { ...bank }
-    newBank[itemId] = { ...bankEntry, quantity: bankEntry.quantity - actualWithdrawn }
-    if (newBank[itemId].quantity <= 0) delete newBank[itemId]
+    const updatedEntry = { ...bankEntry, quantity: bankEntry.quantity - actualWithdrawn }
+    // For non-stackable items with charges, clear charges when quantity reaches 0
+    if (updatedEntry.quantity <= 0) {
+      delete newBank[itemId]
+    } else {
+      newBank[itemId] = updatedEntry
+    }
 
     updateInventory(newInv)
     updateBank(newBank)
