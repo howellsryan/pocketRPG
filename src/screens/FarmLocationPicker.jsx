@@ -1,5 +1,11 @@
 import farmingData from '../data/farming.json'
 
+const patchTypeLabels = {
+  herb: 'Herb Patch',
+  tree: 'Tree Patch',
+  fruitTree: 'Fruit Tree Patch'
+}
+
 export default function FarmLocationPicker({ farmingLevel, onSelectLocation, onBack }) {
   return (
     <div class="h-full overflow-y-auto p-4">
@@ -30,7 +36,7 @@ export default function FarmLocationPicker({ farmingLevel, onSelectLocation, onB
             <div class="flex-1">
               <div class="text-sm font-semibold text-[var(--color-parchment)]">{location.name}</div>
               <div class="text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5">
-                {location.patches.map(p => `${p.count}× ${p.type}`).join(' · ')}
+                {location.patches.map(p => `${p.count}× ${patchTypeLabels[p.type]}`).join(' · ')}
               </div>
             </div>
           </button>
