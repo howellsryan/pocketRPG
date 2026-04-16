@@ -1140,6 +1140,14 @@
     "shopValue": 913,
     "icon": "🪵"
   },
+  "redwood_logs": {
+    "id": "redwood_logs",
+    "name": "Redwood logs",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 2200,
+    "icon": "🪵"
+  },
   "bucket_of_sand": {
     "id": "bucket_of_sand",
     "name": "Bucket of sand",
