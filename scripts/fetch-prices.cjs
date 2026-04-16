@@ -127,7 +127,7 @@ async function updatePrices() {
     // and try to find matches in OSRS prices
     Object.entries(itemsData).forEach(([itemId, item]) => {
       // Skip items that shouldn't have OSRS prices
-      if (item.isUntradeable || item.type === 'currency') {
+      if (item.isUntradeable || item.type === 'currency' || item.overridePrice) {
         return;
       }
 
