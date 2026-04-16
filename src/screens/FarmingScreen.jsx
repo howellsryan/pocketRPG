@@ -1,12 +1,10 @@
 import { useState } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
-import farmingData from '../data/farming.json'
-import { getAvailableCrops, getPatchesForLocation, formatGrowthTime } from '../engine/farming.ts'
 import FarmLocationPicker from '../screens/FarmLocationPicker.jsx'
 import FarmPatchView from '../screens/FarmPatchView.jsx'
 
-export default function FarmingScreen() {
+export default function FarmingScreen({ onBack }) {
   const { stats } = useGame()
   const farmingLevel = getLevelFromXP(stats.farming?.xp || 0)
 
@@ -26,6 +24,7 @@ export default function FarmingScreen() {
     <FarmLocationPicker
       farmingLevel={farmingLevel}
       onSelectLocation={setSelectedLocation}
+      onBack={onBack}
     />
   )
 }

@@ -1,24 +1,22 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
-import { getPatchesForLocation, getAvailableCrops, getCropDef, formatGrowthTime, getGrowthProgress, getStageLabel } from '../engine/farming.ts'
+import { getPatchesForLocation, getAvailableCrops, getCropDef, formatGrowthTime, getGrowthProgress, getStageLabel, plantCrop, harvestCrop } from '../engine/farming.ts'
 import { onTick } from '../engine/tick.js'
 import ProgressBar from '../components/ProgressBar.jsx'
 import Modal from '../components/Modal.jsx'
 import farmingData from '../data/farming.json'
 
 export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
-  const { stats, inventory, farming, updateFarming, grantXP, removeFromInventory, addToBank, addToast } = useGame()
+  const { inventory, farming, updateFarming, grantXP, removeFromInventory, addToBank, addToast } = useGame()
 
   const location = farmingData.locations.find(l => l.id === locationId)
   const [patchStates, setPatchStates] = useState([])
   const [selectedPatch, setSelectedPatch] = useState(null)
-  const [showPlantModal, setShowPlantModal] = useState(false)
   const patchesRef = useRef(patchStates)
 
   useEffect(() => {
     if (farming) {
-      const patches = getPatchesForLocation(farming, locationId)
-      setPatchStates(patches)
+      setPatchStates(getPatchesForLocation(farming, locationId))
     }
   }, [farming, locationId])
 
@@ -29,10 +27,7 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
   // Tick listener for growth
   useEffect(() => {
     const unsub = onTick(() => {
-      setPatchStates(current => {
-        const patches = getPatchesForLocation(farming, locationId)
-        return patches
-      })
+      setPatchStates(getPatchesForLocation(farming, locationId))
     })
     return unsub
   }, [farming, locationId])
@@ -41,20 +36,17 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
     const crop = getCropDef(seedId)
     if (!crop) return
 
-    // Check level
     if (farmingLevel < crop.level) {
       addToast(`Need ${crop.level} Farming`, 'error')
       return
     }
 
-    // Check inventory for seed
     const seedSlot = inventory.findIndex(s => s && s.itemId === seedId)
     if (seedSlot < 0) {
       addToast(`Need ${crop.name} seed`, 'error')
       return
     }
 
-    // Plant
     const result = plantCrop(farming, selectedPatch.patchId, seedId)
     if (!result) {
       addToast('Failed to plant', 'error')
@@ -65,7 +57,6 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
     removeFromInventory(seedSlot, 1)
     grantXP('farming', result.plantXp)
     addToast(`Planted ${result.cropName}`, 'success')
-    setShowPlantModal(false)
     setSelectedPatch(null)
   }
 
@@ -84,166 +75,122 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
     setSelectedPatch(null)
   }
 
-  return (
-    <div className="flex flex-col h-full">
-      <div style={{ background: 'var(--color-emerald-mid)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'var(--color-gold)', fontSize: '20px', cursor: 'pointer' }}>←</button>
-        <h1 style={{ fontSize: '18px', fontWeight: 'bold', flex: 1, color: 'var(--color-gold)' }}>{location?.name}</h1>
-      </div>
+  const isEmpty = selectedPatch && !selectedPatch.patch?.cropId
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {patchStates.map((patchData, idx) => (
+  return (
+    <div class="h-full overflow-y-auto p-4">
+      <button onClick={onBack} class="text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1">
+        ← Farms
+      </button>
+
+      <div class="flex items-center justify-between mb-1">
+        <h2 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] capitalize">
+          🌾 {location?.name}
+        </h2>
+        <span class="text-xs font-[var(--font-mono)] text-[var(--color-gold)]">Lv {farmingLevel}</span>
+      </div>
+      <p class="text-xs text-[var(--color-parchment)] opacity-40 mb-3">
+        {location?.patches.map(p => `${p.count}× ${p.type}`).join(' · ')}
+      </p>
+
+      <div class="space-y-2">
+        {patchStates.map(patchData => (
           <PatchCard
             key={patchData.patchId}
             patchData={patchData}
-            onClick={() => {
-              setSelectedPatch(patchData)
-              if (!patchData.patch?.cropId) {
-                setShowPlantModal(true)
-              }
-            }}
-            farmingLevel={farmingLevel}
+            onClick={() => setSelectedPatch(patchData)}
           />
         ))}
       </div>
 
       {selectedPatch && (
-        <Modal onClose={() => setSelectedPatch(null)}>
-          <div style={{ background: 'var(--color-void-lighter)', borderRadius: '8px', padding: '20px', gap: '16px', display: 'flex', flexDirection: 'column' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--color-gold-light)' }}>
-              {selectedPatch.type.replace(/([A-Z])/g, ' $1').trim()} Patch
-            </h2>
-
-            {!selectedPatch.patch?.cropId ? (
-              <>
-                <p style={{ color: 'var(--color-parchment)', opacity: 0.8 }}>Select a crop to plant:</p>
-                <div style={{ maxHeight: '256px', overflowY: 'auto', gap: '8px', display: 'flex', flexDirection: 'column' }}>
-                  {getAvailableCrops(selectedPatch.type, farmingLevel).map(crop => (
-                    <button
-                      key={crop.id}
-                      onClick={() => handlePlantCrop(crop.id)}
-                      style={{
-                        width: '100%',
-                        background: 'var(--color-void)',
-                        border: '1px solid var(--color-void-border)',
-                        borderRadius: '6px',
-                        padding: '10px',
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        color: 'var(--color-parchment)',
-                      }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.borderColor = 'var(--color-emerald-light)';
-                        e.currentTarget.style.background = 'var(--color-void-lighter)';
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.borderColor = 'var(--color-void-border)';
-                        e.currentTarget.style.background = 'var(--color-void)';
-                      }}
-                    >
-                      <div style={{ fontWeight: '600', color: 'var(--color-gold-light)' }}>{crop.icon} {crop.name}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--color-parchment)', opacity: 0.7, marginTop: '4px' }}>
-                        {crop.plantXp} xp to plant, {crop.harvestXp} xp to harvest
+        <Modal
+          title={`${selectedPatch.type.replace(/([A-Z])/g, ' $1').trim()} Patch`}
+          onClose={() => setSelectedPatch(null)}
+        >
+          {isEmpty ? (
+            <>
+              <div class="mb-3 bg-[#111] rounded-lg px-3 py-2 text-[11px] text-[var(--color-parchment)] opacity-60 flex items-center gap-2">
+                <span>🌱</span>
+                <span>Select a seed to plant in this patch</span>
+              </div>
+              <div class="space-y-2">
+                {getAvailableCrops(selectedPatch.type, farmingLevel).map(crop => (
+                  <button
+                    key={crop.id}
+                    onClick={() => handlePlantCrop(crop.id)}
+                    class="w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]"
+                  >
+                    <div class="flex-1">
+                      <div class="text-sm font-semibold text-[var(--color-parchment)]">
+                        {crop.icon} {crop.name}
                       </div>
-                      <div style={{ fontSize: '11px', color: 'var(--color-parchment)', opacity: 0.5, marginTop: '2px' }}>
+                      <div class="text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5">
+                        Lv {crop.level} · {crop.plantXp} XP plant · {crop.harvestXp} XP harvest
+                      </div>
+                      <div class="text-[10px] text-[var(--color-parchment)] opacity-40">
                         Growth: {formatGrowthTime(crop.growthTimeMs)}
                       </div>
-                    </button>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <PatchDetails
-                patch={selectedPatch.patch}
-                onHarvest={handleHarvest}
-              />
-            )}
-
-            <button
-              onClick={() => setSelectedPatch(null)}
-              style={{
-                width: '100%',
-                background: 'var(--color-void)',
-                border: '1px solid var(--color-void-border)',
-                color: 'var(--color-parchment)',
-                fontWeight: '600',
-                padding: '10px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.borderColor = 'var(--color-parchment)';
-                e.currentTarget.style.opacity = '0.8';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.borderColor = 'var(--color-void-border)';
-                e.currentTarget.style.opacity = '1';
-              }}
-            >
-              Close
-            </button>
-          </div>
+                    </div>
+                  </button>
+                ))}
+                {getAvailableCrops(selectedPatch.type, farmingLevel).length === 0 && (
+                  <div class="text-center py-4 text-xs text-[var(--color-parchment)] opacity-50">
+                    No seeds available at your level
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <PatchDetails
+              patch={selectedPatch.patch}
+              onHarvest={handleHarvest}
+            />
+          )}
         </Modal>
       )}
     </div>
   )
 }
 
-function PatchCard({ patchData, onClick, farmingLevel }) {
+function PatchCard({ patchData, onClick }) {
   const { patch, type } = patchData
   const crop = patch?.cropId ? getCropDef(patch.cropId) : null
 
   let statusText = 'Empty'
-  let statusColor = 'text-gray-500'
+  let statusColor = 'text-[var(--color-parchment)] opacity-40'
   let progressValue = 0
 
   if (patch && crop) {
     if (patch.stage >= 4) {
       statusText = 'Ready to harvest'
-      statusColor = 'text-green-600'
+      statusColor = 'text-[var(--color-gold)]'
       progressValue = 100
     } else {
       statusText = getStageLabel(patch.stage, 4)
-      statusColor = 'text-blue-600'
+      statusColor = 'text-[var(--color-parchment)] opacity-60'
       progressValue = getGrowthProgress(patch)
     }
   }
 
+  const typeLabel = type.replace(/([A-Z])/g, ' $1').trim()
+
   return (
     <button
       onClick={onClick}
-      style={{
-        width: '100%',
-        background: 'var(--color-void-lighter)',
-        border: '1px solid var(--color-void-border)',
-        borderRadius: '8px',
-        padding: '12px',
-        textAlign: 'left',
-        cursor: 'pointer',
-        transition: 'all 0.2s',
-      }}
-      onMouseEnter={e => {
-        e.currentTarget.style.borderColor = 'var(--color-emerald-light)';
-        e.currentTarget.style.background = 'var(--color-void-lighter)';
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.borderColor = 'var(--color-void-border)';
-        e.currentTarget.style.background = 'var(--color-void-lighter)';
-      }}
+      class="w-full p-3 rounded-xl border transition-colors text-left bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]"
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <div style={{ fontWeight: '600', color: 'var(--color-gold-light)' }}>
-            {crop?.icon} {crop?.name || type.replace(/([A-Z])/g, ' $1').trim()}
+      <div class="flex items-center justify-between">
+        <div class="flex-1">
+          <div class="text-sm font-semibold text-[var(--color-parchment)] capitalize">
+            {crop ? `${crop.icon} ${crop.name}` : typeLabel}
           </div>
-          <div style={{ fontSize: '13px', fontWeight: '600', color: statusColor === 'text-green-600' ? 'var(--color-emerald-light)' : statusColor === 'text-blue-600' ? 'var(--color-mana-light)' : 'var(--color-parchment)' }}>{statusText}</div>
+          <div class={`text-[10px] mt-0.5 ${statusColor}`}>{statusText}</div>
         </div>
       </div>
       {patch && crop && (
-        <div style={{ marginTop: '8px' }}>
-          <ProgressBar value={progressValue} />
+        <div class="mt-2">
+          <ProgressBar value={progressValue} max={100} height="h-2" color="var(--color-gold)" />
         </div>
       )}
     </button>
@@ -258,59 +205,45 @@ function PatchDetails({ patch, onHarvest }) {
   const timeRemaining = Math.max(0, patch.readyAt - now)
   const minutes = Math.floor(timeRemaining / 60000)
   const seconds = Math.floor((timeRemaining % 60000) / 1000)
+  const ready = patch.stage >= 4
 
   return (
-    <>
-      <div style={{ background: 'var(--color-void)', border: '1px solid var(--color-mana)', borderRadius: '6px', padding: '12px', gap: '8px', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ fontWeight: '600', color: 'var(--color-mana-light)' }}>
-          {crop.icon} {crop.name}
+    <div class="space-y-3">
+      <div class="bg-[#111] rounded-lg p-3 space-y-1.5">
+        <div class="flex justify-between text-sm">
+          <span class="text-[var(--color-parchment)] opacity-60">Crop</span>
+          <span class="font-semibold text-[var(--color-gold)]">{crop.icon} {crop.name}</span>
         </div>
-        <div style={{ fontSize: '13px', color: 'var(--color-parchment)', opacity: 0.8 }}>
-          <p>Planted XP: {crop.plantXp}</p>
-          <p>Harvest XP: {crop.harvestXp}</p>
+        <div class="flex justify-between text-sm">
+          <span class="text-[var(--color-parchment)] opacity-60">Stage</span>
+          <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{patch.stage}/4</span>
         </div>
-        <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--color-mana-light)' }}>
-          Stage: {patch.stage}/4
+        <div class="flex justify-between text-sm">
+          <span class="text-[var(--color-parchment)] opacity-60">Plant XP</span>
+          <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{crop.plantXp}</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-[var(--color-parchment)] opacity-60">Harvest XP</span>
+          <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{crop.harvestXp}</span>
         </div>
       </div>
 
-      {patch.stage < 4 ? (
-        <div style={{ background: 'var(--color-void)', border: '1px solid var(--color-gold-dim)', borderRadius: '6px', padding: '10px', gap: '8px', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ fontSize: '13px', color: 'var(--color-gold-light)' }}>
-            Time remaining: {minutes}m {seconds}s
+      {!ready ? (
+        <div class="bg-[#111] rounded-lg p-3 space-y-2">
+          <div class="flex justify-between text-sm">
+            <span class="text-[var(--color-parchment)] opacity-60">Time remaining</span>
+            <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{minutes}m {seconds}s</span>
           </div>
-          <ProgressBar value={getGrowthProgress(patch)} />
+          <ProgressBar value={getGrowthProgress(patch)} max={100} height="h-2" color="var(--color-gold)" />
         </div>
       ) : (
         <button
           onClick={onHarvest}
-          style={{
-            width: '100%',
-            background: 'var(--color-emerald-mid)',
-            border: '1px solid var(--color-emerald-light)',
-            color: 'var(--color-gold-light)',
-            fontWeight: '600',
-            padding: '12px',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-            fontSize: '14px',
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = 'var(--color-emerald-light)';
-            e.currentTarget.style.color = 'var(--color-void)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = 'var(--color-emerald-mid)';
-            e.currentTarget.style.color = 'var(--color-gold-light)';
-          }}
+          class="w-full py-2.5 rounded-lg bg-[var(--color-gold)] text-[#111] font-semibold text-sm active:opacity-80"
         >
           🌾 Harvest
         </button>
       )}
-    </>
+    </div>
   )
 }
-
-// Import functions from engine — these will be called on successful action
-import { plantCrop, harvestCrop } from '../engine/farming.ts'
