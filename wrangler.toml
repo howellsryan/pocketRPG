@@ -14,3 +14,5 @@ APP_BASE_URL = "https://pocketrpg.pages.dev"
 #   JWT_SECRET             — random 32+ byte string used to sign session JWTs
 #   GITHUB_CLIENT_ID       — from GitHub OAuth App
 #   GITHUB_CLIENT_SECRET   — from GitHub OAuth App
+#   GOOGLE_CLIENT_ID       — from Google Cloud OAuth 2.0 Client
+#   GOOGLE_CLIENT_SECRET   — from Google Cloud OAuth 2.0 Client

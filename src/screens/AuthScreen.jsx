@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'preact/hooks'
-import { api, startGitHubLogin, setCharacter, getToken, clearAuth } from '../cloud/api.js'
+import { api, startGitHubLogin, startGoogleLogin, setCharacter, getToken, clearAuth } from '../cloud/api.js'
 import { resetSyncState } from '../cloud/sync.js'
 
 // Three internal modes:
@@ -72,15 +72,18 @@ export default function AuthScreen({ onCloudReady, onPlayOffline }) {
     return (
       <Wrap>
         <Title />
-        <p style={subtitle}>Log in with GitHub to sync your save across browsers, or play offline on this device only.</p>
+        <p style={subtitle}>Log in to sync your save across browsers, or play offline on this device only.</p>
         <button onClick={startGitHubLogin} style={primaryBtn}>
           🐙 Login with GitHub
+        </button>
+        <button onClick={startGoogleLogin} style={googleBtn}>
+          <span style={googleG}>G</span> Login with Google
         </button>
         <button onClick={onPlayOffline} style={ghostBtn}>
           Play Offline
         </button>
         <p style={{ ...subtitle, fontSize: '10px', marginTop: '20px', opacity: 0.4 }}>
-          Offline saves stay on this browser only. Log in later from the save menu to migrate.
+          Offline saves stay on this browser only. Log in later from the save menu to migrate. GitHub and Google accounts are kept separate — signing in with a different provider gives you a different character roster.
         </p>
       </Wrap>
     )
@@ -118,7 +121,7 @@ export default function AuthScreen({ onCloudReady, onPlayOffline }) {
           </button>
           {identity && (
             <button onClick={handleSignOut} style={ghostBtn}>
-              🚪 Log out of GitHub
+              🚪 Log out{identity.provider ? ` of ${providerLabel(identity.provider)}` : ''}
             </button>
           )}
         </>
@@ -180,6 +183,14 @@ function SectionLabel({ children }) {
 
 const subtitle = { fontSize: '12px', color: '#e8d5b0', opacity: 0.7, textAlign: 'center', marginBottom: '16px', lineHeight: 1.5 }
 const primaryBtn = { width: '100%', padding: '14px', borderRadius: '12px', background: 'linear-gradient(135deg, #b8940e, #d4af37)', color: '#0f0f0f', fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '14px', letterSpacing: '0.05em', border: 'none', cursor: 'pointer', marginBottom: '10px' }
+const googleBtn = { width: '100%', padding: '13px', borderRadius: '12px', background: '#ffffff', color: '#1f1f1f', fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '14px', letterSpacing: '0.05em', border: 'none', cursor: 'pointer', marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }
+const googleG = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', borderRadius: '50%', background: 'conic-gradient(from -45deg, #ea4335 0 25%, #fbbc05 25% 50%, #34a853 50% 75%, #4285f4 75% 100%)', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: '13px', lineHeight: 1 }
+
+function providerLabel(provider) {
+  if (provider === 'github') return 'GitHub'
+  if (provider === 'google') return 'Google'
+  return provider.charAt(0).toUpperCase() + provider.slice(1)
+}
 const secondaryBtn = { width: '100%', padding: '13px', borderRadius: '12px', background: '#2a2a2a', border: '1px solid #3a3a3a', color: '#e8d5b0', fontSize: '13px', fontWeight: '600', cursor: 'pointer', marginBottom: '10px' }
 const ghostBtn = { width: '100%', padding: '12px', borderRadius: '12px', background: 'transparent', border: '1px solid #2a2a2a', color: '#e8d5b0', opacity: 0.7, fontSize: '13px', cursor: 'pointer' }
 const charRowBtn = { width: '100%', padding: '12px 14px', borderRadius: '10px', background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#e8d5b0', textAlign: 'left', cursor: 'pointer' }

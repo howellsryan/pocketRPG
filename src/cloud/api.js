@@ -108,3 +108,7 @@ export const api = {
 export function startGitHubLogin() {
   window.location.href = '/api/auth/github'
 }
+
+export function startGoogleLogin() {
+  window.location.href = '/api/auth/google'
+}
