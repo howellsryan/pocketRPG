@@ -63,6 +63,7 @@ node build_single.cjs               # Concatenate + inline into index.html
  * **Rounding**: Always use Math.floor().
  * **UI**: 44×44px minimum tap targets. Fixed Header/Footer with a scrollable body.
  * **Styles**: Tailwind CDN is used; do not use /N opacity modifiers. Use solid CSS variables.
+ * **Styling Rule**: Prefer Tailwind utility classes + CSS variables over inline `style={{}}`. See §15 for the shared component library and the inline-vs-utility decision rule.
 ## 12. TEST SUITE
  * **Command**: Run npm test for the Vitest suite.
  * **File**: pocketrpg_test.ts covers core logic only. Avoid UI testing.
@@ -176,3 +177,41 @@ When adding a new weapon from OSRS, **always check if it has a special attack on
   "lightningMax": 16  // for lightning
 }
 ```
+
+---
+
+## 15. STYLING & SHARED COMPONENTS
+
+### Design Decision: Utility Classes > Inline `style={{}}`
+
+All reusable components **must** be built on Tailwind utility classes and the CSS variables defined in `index.html` (`--color-parchment`, `--color-gold`, `--color-void-light`, `--font-display`, etc.). Raw hex like `#111` or `#e8d5b0` should live in CSS variables, not component code.
+
+#### When to use inline `style={{}}`
+Only for values that are genuinely **dynamic per render**:
+  - Animated or computed widths/heights (`width: ${pct}%`)
+  - Colors interpolated from state (e.g. HP bar colour based on `hpPct`)
+  - One-off gradient backgrounds that don't justify a CSS variable
+  - Animation delays / durations tied to data
+
+#### When to use Tailwind classes
+Everything else — all static colours, borders, radii, padding, typography, flex/grid layout. If you catch yourself repeating the same `style={{}}` object in more than one screen, extract it to a shared component or a CSS variable.
+
+### Shared Component Library (`src/components/`)
+
+| Component | When to use |
+|-----------|-------------|
+| `Card`     | Outer surface panel (paperdoll, bonus summary, task rows). Dark background, rounded-xl, border. |
+| `Panel`    | Inner surface inside a card or modal (item preview, price info, stat rows). Darker than Card. |
+| `Button`   | Any clickable button. Variants: `primary` (gold), `secondary` (neutral), `danger` (red), `success` (green), `ghost`. Sizes: `sm`, `md`, `lg`. |
+| `SectionHeader` | Small uppercase Cinzel label for section titles ("Bonuses", "Equipment", "Gather Resources"). Sizes: `sm`, `md`, `lg`. |
+| `Modal`    | Full-screen modal with backdrop + header + scrollable body. |
+| `ProgressBar` | Animated progress bar — `value`, `max`, `color`, optional `label`/`showText`. |
+| `ItemSlot` | Inventory/bank slot with type-coloured border and quantity badge. |
+| `HPBar`, `SkillBadge`, `Header`, `BottomNav`, `Toast` | Screen-specific fixtures. |
+
+### Rules when adding new screens
+1. **Reach for `Card` / `Panel` / `Button` / `SectionHeader` first.** Don't reinvent a dark-background-with-border container inline.
+2. **Colours come from CSS variables.** Use `bg-[var(--color-void-light)]`, `text-[var(--color-gold)]`, `border-[var(--color-void-border)]` etc.
+3. **If a pattern appears 3+ times, extract it.** Either a new shared component or a new CSS variable in `index.html`.
+4. **New shared components must be registered in `build_single.cjs`** under `sourceFiles`, between the existing `components/*.js` entries and the screens.
+5. **Button styling is never bespoke.** If you need a new variant (e.g. warning orange), add it to `Button.jsx`'s `VARIANTS` map rather than styling a raw `<button>`.

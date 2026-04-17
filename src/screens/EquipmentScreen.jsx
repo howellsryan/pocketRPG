@@ -3,6 +3,10 @@ import { useGame } from '../state/gameState.jsx'
 import { unequipSlot, getEquipmentBonuses } from '../engine/equipment.js'
 import { EQUIPMENT_SLOTS } from '../utils/constants.js'
 import Modal from '../components/Modal.jsx'
+import Card from '../components/Card.jsx'
+import Panel from '../components/Panel.jsx'
+import Button from '../components/Button.jsx'
+import SectionHeader from '../components/SectionHeader.jsx'
 
 const SCALE_ITEM_ID = 'zulrah_scales'
 
@@ -27,34 +31,23 @@ function EquipSlot({ slotName, equipment, itemsData, onSelect }) {
   const isEmpty = !item
   const charges = entry?.charges || 0
 
+  const bgClass = isEmpty ? 'bg-[#111] border-[#222] opacity-40' : 'bg-[var(--color-void-light)] border-[#444]'
+  const cursorClass = item ? 'cursor-pointer' : 'cursor-default'
+
   return (
     <button
       onClick={() => { if (item) onSelect(slotName, item) }}
-      style={{
-        width: '56px', height: '56px', borderRadius: '10px',
-        background: isEmpty ? '#111' : '#1a1a1a',
-        border: `1px solid ${isEmpty ? '#222' : '#444'}`,
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        cursor: item ? 'pointer' : 'default', position: 'relative',
-        opacity: isEmpty ? 0.4 : 1,
-      }}
+      class={`w-14 h-14 rounded-[10px] border flex flex-col items-center justify-center relative ${bgClass} ${cursorClass}`}
     >
       <span style={{ fontSize: item ? '18px' : '14px' }}>
         {item ? (item.icon || '📦') : EQ_SLOT_LABELS[slotName]}
       </span>
       {charges > 0 && (
-        <span style={{
-          position: 'absolute', bottom: '2px', right: '2px',
-          fontSize: '8px', color: '#4ade80', fontWeight: 'bold'
-        }}>
-          ⚡
-        </span>
+        <span class="absolute bottom-[2px] right-[2px] text-[8px] text-[#4ade80] font-bold">⚡</span>
       )}
-      <span style={{
-        fontSize: '7px', color: item ? '#e8d5b0' : '#555',
-        textAlign: 'center', marginTop: '2px', fontWeight: item ? '600' : '400',
-        maxWidth: '52px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-      }}>
+      <span
+        class={`text-[7px] text-center mt-[2px] max-w-[52px] overflow-hidden text-ellipsis whitespace-nowrap ${item ? 'text-[var(--color-parchment)] font-semibold' : 'text-[#555]'}`}
+      >
         {item ? item.name : EQ_SLOT_NAMES[slotName]}
       </span>
     </button>
@@ -223,73 +216,53 @@ export default function EquipmentScreen() {
   //   Row 2:  [weapon] [body] [shield]
   //   Row 3:  [legs]
   //   Row 4:  [gloves] [boots] [ring]
+  const slotProps = { equipment, itemsData, onSelect: handleSelect }
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto', padding: '16px' }}>
-      <h2 style={{
-        fontFamily: 'Cinzel, serif', fontSize: '11px', fontWeight: 'bold',
-        color: '#e8d5b0', opacity: 0.6, textTransform: 'uppercase',
-        letterSpacing: '0.1em', marginBottom: '12px'
-      }}>Equipment</h2>
+    <div class="h-full overflow-y-auto p-4">
+      <SectionHeader className="mb-3">Equipment</SectionHeader>
 
       {/* Paperdoll */}
-      <div style={{
-        background: 'linear-gradient(135deg, #141414, #0f0f0f)',
-        borderRadius: '14px', border: '1px solid #2a2a2a',
-        padding: '16px', marginBottom: '16px',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px'
-      }}>
-        {/* Row 0: Head */}
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <EquipSlot slotName="head" equipment={equipment} itemsData={itemsData} onSelect={handleSelect} />
+      <Card
+        padding="p-4"
+        className="mb-4 flex flex-col items-center gap-[6px]"
+        style={{ background: 'linear-gradient(135deg, #141414, #0f0f0f)' }}
+      >
+        <div class="flex justify-center">
+          <EquipSlot slotName="head" {...slotProps} />
         </div>
-
-        {/* Row 1: Cape / Neck / Ammo */}
-        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
-          <EquipSlot slotName="cape" equipment={equipment} itemsData={itemsData} onSelect={handleSelect} />
-          <EquipSlot slotName="neck" equipment={equipment} itemsData={itemsData} onSelect={handleSelect} />
-          <EquipSlot slotName="ammo" equipment={equipment} itemsData={itemsData} onSelect={handleSelect} />
+        <div class="flex gap-[6px] justify-center">
+          <EquipSlot slotName="cape" {...slotProps} />
+          <EquipSlot slotName="neck" {...slotProps} />
+          <EquipSlot slotName="ammo" {...slotProps} />
         </div>
-
-        {/* Row 2: Weapon / Body / Shield */}
-        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
-          <EquipSlot slotName="weapon" equipment={equipment} itemsData={itemsData} onSelect={handleSelect} />
-          <EquipSlot slotName="body" equipment={equipment} itemsData={itemsData} onSelect={handleSelect} />
-          <EquipSlot slotName="shield" equipment={equipment} itemsData={itemsData} onSelect={handleSelect} />
+        <div class="flex gap-[6px] justify-center">
+          <EquipSlot slotName="weapon" {...slotProps} />
+          <EquipSlot slotName="body" {...slotProps} />
+          <EquipSlot slotName="shield" {...slotProps} />
         </div>
-
-        {/* Row 3: Legs */}
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <EquipSlot slotName="legs" equipment={equipment} itemsData={itemsData} onSelect={handleSelect} />
+        <div class="flex justify-center">
+          <EquipSlot slotName="legs" {...slotProps} />
         </div>
-
-        {/* Row 4: Gloves / Boots / Ring */}
-        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
-          <EquipSlot slotName="gloves" equipment={equipment} itemsData={itemsData} onSelect={handleSelect} />
-          <EquipSlot slotName="boots" equipment={equipment} itemsData={itemsData} onSelect={handleSelect} />
-          <EquipSlot slotName="ring" equipment={equipment} itemsData={itemsData} onSelect={handleSelect} />
+        <div class="flex gap-[6px] justify-center">
+          <EquipSlot slotName="gloves" {...slotProps} />
+          <EquipSlot slotName="boots" {...slotProps} />
+          <EquipSlot slotName="ring" {...slotProps} />
         </div>
-      </div>
+      </Card>
 
       {/* Bonuses summary */}
-      <div style={{
-        background: '#141414', borderRadius: '12px', border: '1px solid #2a2a2a',
-        padding: '12px'
-      }}>
-        <h3 style={{
-          fontFamily: 'Cinzel, serif', fontSize: '10px', fontWeight: 'bold',
-          color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase',
-          letterSpacing: '0.1em', marginBottom: '8px'
-        }}>Bonuses</h3>
+      <Card>
+        <SectionHeader size="sm" className="mb-2 opacity-50">Bonuses</SectionHeader>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '11px' }}>
+        <div class="grid grid-cols-2 gap-2 text-[11px]">
           {/* Attack bonuses */}
           <div>
-            <div style={{ fontSize: '9px', color: '#e8d5b0', opacity: 0.4, marginBottom: '4px', fontWeight: 'bold', textTransform: 'uppercase' }}>Attack</div>
+            <SectionHeader size="sm" className="mb-1 opacity-40">Attack</SectionHeader>
             {Object.entries(bonuses.attackBonus).map(([k, v]) => (
-              <div key={k} style={{ display: 'flex', justifyContent: 'space-between', color: '#e8d5b0', opacity: 0.7, padding: '1px 0' }}>
-                <span style={{ textTransform: 'capitalize' }}>{k}</span>
-                <span style={{ fontFamily: 'JetBrains Mono, monospace', color: v > 0 ? '#27ae60' : v < 0 ? '#c0392b' : '#555' }}>
+              <div key={k} class="flex justify-between text-[var(--color-parchment)] opacity-70 py-[1px]">
+                <span class="capitalize">{k}</span>
+                <span class="font-[var(--font-mono)]" style={{ color: v > 0 ? '#27ae60' : v < 0 ? '#c0392b' : '#555' }}>
                   {v > 0 ? '+' : ''}{v}
                 </span>
               </div>
@@ -298,11 +271,11 @@ export default function EquipmentScreen() {
 
           {/* Defence bonuses */}
           <div>
-            <div style={{ fontSize: '9px', color: '#e8d5b0', opacity: 0.4, marginBottom: '4px', fontWeight: 'bold', textTransform: 'uppercase' }}>Defence</div>
+            <SectionHeader size="sm" className="mb-1 opacity-40">Defence</SectionHeader>
             {Object.entries(bonuses.defenceBonus).map(([k, v]) => (
-              <div key={k} style={{ display: 'flex', justifyContent: 'space-between', color: '#e8d5b0', opacity: 0.7, padding: '1px 0' }}>
-                <span style={{ textTransform: 'capitalize' }}>{k}</span>
-                <span style={{ fontFamily: 'JetBrains Mono, monospace', color: v > 0 ? '#27ae60' : v < 0 ? '#c0392b' : '#555' }}>
+              <div key={k} class="flex justify-between text-[var(--color-parchment)] opacity-70 py-[1px]">
+                <span class="capitalize">{k}</span>
+                <span class="font-[var(--font-mono)]" style={{ color: v > 0 ? '#27ae60' : v < 0 ? '#c0392b' : '#555' }}>
                   {v > 0 ? '+' : ''}{v}
                 </span>
               </div>
@@ -311,15 +284,15 @@ export default function EquipmentScreen() {
         </div>
 
         {/* Other bonuses */}
-        <div style={{ borderTop: '1px solid #222', marginTop: '8px', paddingTop: '8px' }}>
-          <div style={{ fontSize: '9px', color: '#e8d5b0', opacity: 0.4, marginBottom: '4px', fontWeight: 'bold', textTransform: 'uppercase' }}>Other</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px', fontSize: '11px' }}>
+        <div class="border-t border-[#222] mt-2 pt-2">
+          <SectionHeader size="sm" className="mb-1 opacity-40">Other</SectionHeader>
+          <div class="grid grid-cols-3 gap-1 text-[11px]">
             {Object.entries(bonuses.otherBonus).map(([k, v]) => {
               const label = k === 'meleeStrength' ? 'Str' : k === 'rangedStrength' ? 'Rng Str' : 'Mag %'
               return (
-                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', color: '#e8d5b0', opacity: 0.7 }}>
+                <div key={k} class="flex justify-between text-[var(--color-parchment)] opacity-70">
                   <span>{label}</span>
-                  <span style={{ fontFamily: 'JetBrains Mono, monospace', color: v > 0 ? '#27ae60' : '#555' }}>
+                  <span class="font-[var(--font-mono)]" style={{ color: v > 0 ? '#27ae60' : '#555' }}>
                     {v > 0 ? '+' : ''}{v}
                   </span>
                 </div>
@@ -327,16 +300,13 @@ export default function EquipmentScreen() {
             })}
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Unequip modal */}
       {selected && (
         <Modal title={selected.item.name} onClose={() => setSelected(null)}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{
-              background: '#111', borderRadius: '8px', padding: '12px',
-              fontSize: '12px', color: '#e8d5b0', opacity: 0.7
-            }}>
+          <div class="flex flex-col gap-2">
+            <Panel className="text-[12px] text-[var(--color-parchment)] opacity-70">
               <p>Slot: {EQ_SLOT_NAMES[selected.slot]}</p>
               {selected.item.attackSpeed && <p>Attack speed: {selected.item.attackSpeed} ticks</p>}
               {selected.item.attackStyle && <p>Style: {selected.item.attackStyle}</p>}
@@ -344,7 +314,7 @@ export default function EquipmentScreen() {
               {selected.item.requirements && Object.entries(selected.item.requirements).length > 0 && (
                 <p>Requires: {Object.entries(selected.item.requirements).map(([s, l]) => `${s} ${l}`).join(', ')}</p>
               )}
-            </div>
+            </Panel>
 
             {/* Scale charges panel */}
             {selected.item.scaleCharged && (() => {
@@ -352,131 +322,73 @@ export default function EquipmentScreen() {
               const parsedInput = parseInt(chargeInput, 10)
               const customQty = Number.isFinite(parsedInput) && parsedInput > 0 ? parsedInput : 0
               return (
-                <div style={{ background: '#111', borderRadius: '8px', border: '1px solid #1a3a2a', padding: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '12px', fontWeight: '600', color: '#4ade80' }}>🐍 Scale Charges</span>
-                    <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', color: '#e8d5b0' }}>
+                <Panel className="border-[#1a3a2a]">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-[12px] font-semibold text-[#4ade80]">🐍 Scale Charges</span>
+                    <span class="font-[var(--font-mono)] text-[12px] text-[var(--color-parchment)]">
                       {currentCharges} / ∞
                     </span>
                   </div>
-                  <div style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.5, marginBottom: '8px' }}>
+                  <div class="text-[10px] text-[var(--color-parchment)] opacity-50 mb-2">
                     Scales in inventory: {scaleCount}
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px', marginBottom: '6px' }}>
-                    <button
-                      onClick={() => handleChargeWeapon(10)}
-                      disabled={scaleCount <= 0}
-                      style={{
-                        padding: '8px', borderRadius: '6px', background: scaleCount > 0 ? '#1a4a2a' : '#222',
-                        color: scaleCount > 0 ? '#4ade80' : '#555', fontSize: '11px', fontWeight: '600',
-                        border: 'none', cursor: scaleCount > 0 ? 'pointer' : 'not-allowed'
-                      }}
-                    >
-                      +10
-                    </button>
-                    <button
-                      onClick={() => handleChargeWeapon(100)}
-                      disabled={scaleCount <= 0}
-                      style={{
-                        padding: '8px', borderRadius: '6px', background: scaleCount > 0 ? '#1a4a2a' : '#222',
-                        color: scaleCount > 0 ? '#4ade80' : '#555', fontSize: '11px', fontWeight: '600',
-                        border: 'none', cursor: scaleCount > 0 ? 'pointer' : 'not-allowed'
-                      }}
-                    >
-                      +100
-                    </button>
-                    <button
-                      onClick={() => handleChargeWeapon(scaleCount)}
-                      disabled={scaleCount <= 0}
-                      style={{
-                        padding: '8px', borderRadius: '6px', background: scaleCount > 0 ? '#1a4a2a' : '#222',
-                        color: scaleCount > 0 ? '#4ade80' : '#555', fontSize: '11px', fontWeight: '600',
-                        border: 'none', cursor: scaleCount > 0 ? 'pointer' : 'not-allowed'
-                      }}
-                    >
-                      +All
-                    </button>
+                  <div class="grid grid-cols-3 gap-1 mb-[6px]">
+                    <Button variant="success" size="sm" disabled={scaleCount <= 0} onClick={() => handleChargeWeapon(10)}>+10</Button>
+                    <Button variant="success" size="sm" disabled={scaleCount <= 0} onClick={() => handleChargeWeapon(100)}>+100</Button>
+                    <Button variant="success" size="sm" disabled={scaleCount <= 0} onClick={() => handleChargeWeapon(scaleCount)}>+All</Button>
                   </div>
-                  <div style={{ display: 'flex', gap: '4px', marginBottom: '6px' }}>
+                  <div class="flex gap-1 mb-[6px]">
                     <input
                       type="number"
                       min="1"
                       value={chargeInput}
                       onInput={(e) => setChargeInput(e.currentTarget.value)}
                       placeholder="Custom amount"
-                      style={{
-                        flex: 1, padding: '8px', borderRadius: '6px', background: '#0a0a0a',
-                        border: '1px solid #222', color: '#e8d5b0', fontSize: '11px',
-                        fontFamily: 'JetBrains Mono, monospace'
-                      }}
+                      class="flex-1 px-2 py-2 rounded-md bg-[#0a0a0a] border border-[#222] text-[var(--color-parchment)] text-[11px] font-[var(--font-mono)]"
                     />
-                    <button
-                      onClick={() => handleChargeWeapon(customQty)}
-                      disabled={customQty <= 0 || scaleCount <= 0}
-                      style={{
-                        padding: '8px 12px', borderRadius: '6px',
-                        background: customQty > 0 && scaleCount > 0 ? '#1a4a2a' : '#222',
-                        color: customQty > 0 && scaleCount > 0 ? '#4ade80' : '#555',
-                        fontSize: '11px', fontWeight: '600', border: 'none',
-                        cursor: customQty > 0 && scaleCount > 0 ? 'pointer' : 'not-allowed'
-                      }}
-                    >
+                    <Button variant="success" size="md" disabled={customQty <= 0 || scaleCount <= 0} onClick={() => handleChargeWeapon(customQty)}>
                       Charge
-                    </button>
+                    </Button>
                   </div>
-                  <button
-                    onClick={handleUnchargeWeapon}
+                  <Button
+                    variant="danger"
+                    size="md"
                     disabled={currentCharges <= 0}
-                    style={{
-                      width: '100%', padding: '8px', borderRadius: '6px',
-                      background: currentCharges > 0 ? '#3a1a1a' : '#222',
-                      color: currentCharges > 0 ? '#f87171' : '#555',
-                      fontSize: '11px', fontWeight: '600', border: 'none',
-                      cursor: currentCharges > 0 ? 'pointer' : 'not-allowed'
-                    }}
+                    onClick={handleUnchargeWeapon}
+                    className="w-full"
                   >
                     Uncharge (recover {currentCharges} scales)
-                  </button>
-                </div>
+                  </Button>
+                </Panel>
               )
             })()}
 
             {/* Special attack info */}
             {selected.item.specialAttack && (
-              <div style={{ background: '#111', borderRadius: '8px', border: '1px solid #3a2a00', overflow: 'hidden' }}>
+              <Panel padding="p-0" className="border-[#3a2a00] overflow-hidden">
                 <button
                   onClick={() => setShowSpecInfo(v => !v)}
-                  style={{
-                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '8px 12px', background: 'transparent', border: 'none', cursor: 'pointer'
-                  }}
+                  class="w-full flex items-center justify-between px-3 py-2 bg-transparent border-0 cursor-pointer"
                 >
-                  <span style={{ fontSize: '12px', fontWeight: '600', color: '#eab308' }}>⚡ Special Attack</span>
-                  <span style={{ fontSize: '10px', color: '#78530a' }}>{showSpecInfo ? '▲' : '▼'} {selected.item.specialAttack.energyCost}% energy</span>
+                  <span class="text-[12px] font-semibold text-[#eab308]">⚡ Special Attack</span>
+                  <span class="text-[10px] text-[#78530a]">{showSpecInfo ? '▲' : '▼'} {selected.item.specialAttack.energyCost}% energy</span>
                 </button>
                 {showSpecInfo && (
-                  <div style={{ padding: '0 12px 12px', borderTop: '1px solid #3a2a00' }}>
-                    <p style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.7, marginTop: '8px', lineHeight: '1.5' }}>
+                  <div class="px-3 pb-3 border-t border-[#3a2a00]">
+                    <p class="text-[11px] text-[var(--color-parchment)] opacity-70 mt-2 leading-relaxed">
                       {selected.item.specialAttack.description}
                     </p>
-                    <p style={{ fontSize: '10px', color: '#78530a', marginTop: '4px' }}>
+                    <p class="text-[10px] text-[#78530a] mt-1">
                       Bar refills to 100% on each monster kill.
                     </p>
                   </div>
                 )}
-              </div>
+              </Panel>
             )}
 
-            <button
-              onClick={handleUnequip}
-              style={{
-                padding: '12px', borderRadius: '10px',
-                background: '#8b1a1a', color: 'white',
-                fontWeight: '600', fontSize: '14px', border: 'none', cursor: 'pointer'
-              }}
-            >
+            <Button variant="danger" size="lg" onClick={handleUnequip} className="w-full">
               Unequip
-            </button>
+            </Button>
           </div>
         </Modal>
       )}
