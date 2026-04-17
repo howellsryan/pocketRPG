@@ -1,28 +1,7 @@
 import { getDB, deleteDB } from './database.js'
-import { fnv1a } from '../utils/helpers.js'
 import { INVENTORY_SIZE } from '../utils/constants.js'
 
 const SAVE_VERSION = 1
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Pure helpers — shared by localStorage snapshot and the Cloudflare cloud-save
-// sync.
-// ─────────────────────────────────────────────────────────────────────────────
-
-export function encodeSaveData(data) {
-  const json = JSON.stringify(data)
-  const hash = fnv1a(json)
-  const payload = JSON.stringify({ hash, data: json })
-  const base64 = btoa(unescape(encodeURIComponent(payload)))
-  return { base64, hash }
-}
-
-export function decodeSaveBase64(base64) {
-  const decoded = decodeURIComponent(escape(atob(base64)))
-  const { hash, data: json } = JSON.parse(decoded)
-  if (fnv1a(json) !== hash) throw new Error('Save integrity check failed')
-  return { hash, data: JSON.parse(json) }
-}
 
 // Build a save payload object from live in-memory game state. Used by the
 // 60s tick snapshot and the cloud-sync push.
@@ -116,9 +95,9 @@ export async function wipeLocalSave() {
 export function snapshotToLocalStorage(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts) {
   try {
     const data = buildSavePayloadFromState(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts)
-    const { base64 } = encodeSaveData(data)
-    localStorage.setItem('pocketrpg_backup', base64)
-    console.log('[PocketRPG] Snapshot saved to localStorage, size:', base64.length)
+    const json = JSON.stringify(data)
+    localStorage.setItem('pocketrpg_backup', json)
+    console.log('[PocketRPG] Snapshot saved to localStorage, size:', json.length)
   } catch (err) {
     console.warn('[PocketRPG] Backup snapshot failed:', err)
   }
@@ -126,9 +105,9 @@ export function snapshotToLocalStorage(player, stats, inventory, bank, equipment
 
 export async function restoreFromLocalStorage() {
   try {
-    const encoded = localStorage.getItem('pocketrpg_backup')
-    if (!encoded) return null
-    const { data } = decodeSaveBase64(encoded)
+    const json = localStorage.getItem('pocketrpg_backup')
+    if (!json) return null
+    const data = JSON.parse(json)
     await applySavePayload(data)
     console.log('[PocketRPG] Restored from localStorage backup, timestamp:', data.timestamp)
     return data
