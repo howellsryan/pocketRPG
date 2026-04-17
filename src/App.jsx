@@ -375,8 +375,9 @@ function GameApp() {
         if (idleResult) setIdleResult(idleResult)
         addToast('💾 Save restored from backup!', 'info')
       } else {
-        // No backup either — start a new game silently. Cloud users inherit
-        // their character's username; offline users get a generic default.
+        // No backup either — start a new game silently. Cloud users reuse
+        // their AuthScreen username as the in-game player name; offline
+        // users default to 'Adventurer'.
         await startNewGame()
       }
     } catch (err2) {
