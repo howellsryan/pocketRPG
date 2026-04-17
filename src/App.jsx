@@ -29,8 +29,6 @@ function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints } = useGame()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [gameReady, setGameReady] = useState(false)
-  const [showNewGame, setShowNewGame] = useState(false)
-  const [playerName, setPlayerName] = useState('')
   const [activity, setActivity] = useState(null)
   const [idleResult, setIdleResult] = useState(null) // { elapsedMs, task, xpGained, itemsGained, lootLost, monstersKilled }
   const [actionData, setActionData] = useState(null) // { monsterId, gatherTaskId, skillId, actionId }
@@ -377,40 +375,25 @@ function GameApp() {
         if (idleResult) setIdleResult(idleResult)
         addToast('💾 Save restored from backup!', 'info')
       } else {
-        // No backup either — start a new game. Cloud users already picked a
-        // character username in AuthScreen, so reuse it as the in-game player
-        // name (no second prompt). Offline users still get the name form.
-        await startNewGameOrPrompt()
+        // No backup either — start a new game silently. Cloud users reuse
+        // their AuthScreen username as the in-game player name; offline
+        // users default to 'Adventurer'.
+        await startNewGame()
       }
     } catch (err2) {
       console.error('[PocketRPG] Backup restore failed:', err2)
-      await startNewGameOrPrompt()
+      await startNewGame()
     }
   }
 
-  async function startNewGameOrPrompt() {
-    const cloudName = getCharacterName()
-    if (cloudName) {
-      await initNewGame(cloudName)
-      const charId = getCharacterId()
-      if (charId) setLocalCharacterId(charId)
-      await loadGame()
-      setGameReady(true)
-    } else {
-      setShowNewGame(true)
-    }
-  }
-
-  async function handleNewGame(e) {
-    e.preventDefault()
-    const name = playerName.trim() || 'Adventurer'
+  async function startNewGame() {
+    const name = getCharacterName() || 'Adventurer'
     await initNewGame(name)
     // Stamp IDB ownership so the next boot knows these rows belong to the
     // selected character (only applies when signed in — offline leaves null).
     const charId = getCharacterId()
     if (charId) setLocalCharacterId(charId)
     await loadGame()
-    setShowNewGame(false)
     setGameReady(true)
   }
 
@@ -482,40 +465,6 @@ function GameApp() {
     return (
       <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f0f0f' }}>
         <div style={{ fontFamily: 'Cinzel, serif', fontSize: '20px', color: '#d4af37' }}>Loading…</div>
-      </div>
-    )
-  }
-
-  // New game screen (offline only — cloud users reuse their AuthScreen username)
-  if (showNewGame) {
-    return (
-      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', background: '#0f0f0f' }}>
-        <div style={{ width: '100%', maxWidth: '360px' }}>
-          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-            <h1 style={{ fontFamily: 'Cinzel, serif', fontSize: '28px', fontWeight: '900', color: '#d4af37', letterSpacing: '0.05em' }}>PocketRPG</h1>
-            <p style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.35, marginTop: '4px', fontFamily: 'Nunito, sans-serif' }}>A mobile tick-based idle fantasy RPG</p>
-          </div>
-
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontSize: '11px', color: '#e8d5b0', opacity: 0.6, marginBottom: '6px', fontWeight: '600' }}>Character Name</label>
-            <input
-              type="text"
-              value={playerName}
-              onInput={(e) => setPlayerName(e.target.value)}
-              placeholder="Enter your name..."
-              maxLength={16}
-              style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333', color: '#e8d5b0', fontSize: '14px', fontFamily: 'Nunito, sans-serif', boxSizing: 'border-box', outline: 'none' }}
-            />
-          </div>
-
-          <button
-            onClick={handleNewGame}
-            style={{ width: '100%', padding: '14px', borderRadius: '12px', background: 'linear-gradient(135deg, #b8940e, #d4af37)', color: '#0f0f0f', fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '15px', letterSpacing: '0.05em', border: 'none', cursor: 'pointer' }}
-          >
-            Begin Adventure
-          </button>
-
-        </div>
       </div>
     )
   }
