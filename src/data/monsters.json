@@ -3885,6 +3885,7 @@
     "id": "olm",
     "name": "The Great Olm",
     "boss": true,
+    "raidBoss": true,
     "requiresDoubleKill": true,
     "combatLevel": 1000,
     "hitpoints": 800,
@@ -3941,24 +3942,7 @@
         "defenceBonus": { "stab": 200, "slash": 200, "crush": 200, "magic": 200, "ranged": 0 }
       }
     },
-    "drops": [
-      { "itemId": "coins", "quantity": [50000, 150000], "chance": 1.0 },
-      { "itemId": "dragon_bones", "quantity": [5, 15], "chance": 0.6 },
-      { "itemId": "death_rune", "quantity": [100, 250], "chance": 0.4 },
-      { "itemId": "blood_rune", "quantity": [100, 200], "chance": 0.35 },
-      { "itemId": "soul_rune", "quantity": [50, 150], "chance": 0.3 },
-      { "itemId": "snapdragon", "quantity": [10, 30], "chance": 0.25 },
-      { "itemId": "twisted_buckler", "quantity": 1, "chance": 0.0580 },
-      { "itemId": "dragon_hunter_crossbow", "quantity": 1, "chance": 0.0580 },
-      { "itemId": "dinhs_bulwark", "quantity": 1, "chance": 0.0435 },
-      { "itemId": "ancestral_hat", "quantity": 1, "chance": 0.0435 },
-      { "itemId": "ancestral_robe_top", "quantity": 1, "chance": 0.0435 },
-      { "itemId": "ancestral_robe_bottom", "quantity": 1, "chance": 0.0435 },
-      { "itemId": "dragon_claws", "quantity": 1, "chance": 0.0435 },
-      { "itemId": "elder_maul", "quantity": 1, "chance": 0.0290 },
-      { "itemId": "kodai_wand", "quantity": 1, "chance": 0.0290 },
-      { "itemId": "twisted_bow", "quantity": 1, "chance": 0.0290 }
-    ]
+    "drops": []
   },
   "demonic_gorilla": {
     "id": "demonic_gorilla",
@@ -4346,6 +4330,134 @@
       }
     },
     "verzikPhased": true,
+    "drops": []
+  },
+  "tekton": {
+    "id": "tekton",
+    "name": "Tekton",
+    "boss": true,
+    "raidBoss": true,
+    "combatLevel": 149,
+    "hitpoints": 500,
+    "stats": {
+      "attack": 132,
+      "strength": 153,
+      "defence": 140,
+      "magic": 50,
+      "ranged": 1
+    },
+    "attackSpeed": 5,
+    "attackStyle": "crush",
+    "attackBonus": 130,
+    "strengthBonus": 150,
+    "maxHit": 52,
+    "defenceBonus": {
+      "stab": 80,
+      "slash": 80,
+      "crush": 60,
+      "magic": 20,
+      "ranged": 80
+    },
+    "drops": []
+  },
+  "vespula": {
+    "id": "vespula",
+    "name": "Vespula",
+    "boss": true,
+    "raidBoss": true,
+    "combatLevel": 202,
+    "hitpoints": 400,
+    "stats": {
+      "attack": 100,
+      "strength": 120,
+      "defence": 90,
+      "magic": 90,
+      "ranged": 160
+    },
+    "attackSpeed": 4,
+    "attackStyle": "ranged",
+    "attackBonus": 100,
+    "strengthBonus": 120,
+    "defenceBonus": {
+      "stab": 40,
+      "slash": 40,
+      "crush": 40,
+      "magic": 60,
+      "ranged": 30
+    },
+    "multiForm": true,
+    "randomFormEveryAttack": true,
+    "initialForm": "ranged",
+    "forms": {
+      "ranged": {
+        "displayName": "Flying Phase",
+        "icon": "🦟",
+        "attackStyle": "ranged",
+        "maxHit": 24,
+        "attackBonus": 100,
+        "strengthBonus": 120,
+        "defenceBonus": { "stab": 40, "slash": 40, "crush": 40, "magic": 60, "ranged": 30 }
+      },
+      "melee": {
+        "displayName": "Grounded Phase",
+        "icon": "🪲",
+        "attackStyle": "crush",
+        "maxHit": 20,
+        "attackBonus": 90,
+        "strengthBonus": 110,
+        "defenceBonus": { "stab": 40, "slash": 40, "crush": 40, "magic": 60, "ranged": 30 }
+      }
+    },
+    "drops": []
+  },
+  "muttadile": {
+    "id": "muttadile",
+    "name": "Muttadile",
+    "boss": true,
+    "raidBoss": true,
+    "combatLevel": 170,
+    "hitpoints": 450,
+    "stats": {
+      "attack": 130,
+      "strength": 130,
+      "defence": 120,
+      "magic": 150,
+      "ranged": 80
+    },
+    "attackSpeed": 4,
+    "attackStyle": "crush",
+    "attackBonus": 120,
+    "strengthBonus": 130,
+    "defenceBonus": {
+      "stab": 60,
+      "slash": 60,
+      "crush": 60,
+      "magic": 40,
+      "ranged": 60
+    },
+    "multiForm": true,
+    "randomFormEveryAttack": true,
+    "initialForm": "melee",
+    "forms": {
+      "melee": {
+        "displayName": "Melee Chomp",
+        "icon": "🦷",
+        "attackStyle": "crush",
+        "maxHit": 38,
+        "attackBonus": 120,
+        "strengthBonus": 130,
+        "defenceBonus": { "stab": 60, "slash": 60, "crush": 60, "magic": 40, "ranged": 60 }
+      },
+      "magic": {
+        "displayName": "Magic Spit",
+        "icon": "💧",
+        "attackStyle": "magic",
+        "maxHit": 32,
+        "attackBonus": 150,
+        "strengthBonus": 130,
+        "defenceBonus": { "stab": 60, "slash": 60, "crush": 60, "magic": 40, "ranged": 60 }
+      }
+    },
     "drops": []
   }
 }
