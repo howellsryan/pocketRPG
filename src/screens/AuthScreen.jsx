@@ -2,15 +2,17 @@ import { useState, useEffect } from 'preact/hooks'
 import { api, startGitHubLogin, startGoogleLogin, setCharacter, getToken, clearAuth } from '../cloud/api.js'
 import { resetSyncState } from '../cloud/sync.js'
 
-// Two internal modes:
-//   login      — no token, show GitHub/Google login + offline option
-//   characters — token present, listing characters, picking or auto-creating
+// Three internal modes:
+//   login      — no token, show GitHub login + offline option
+//   characters — token present, listing characters, picking or creating
+//   create     — submitting a new character username
 export default function AuthScreen({ onCloudReady, onPlayOffline }) {
   const [mode, setMode] = useState(getToken() ? 'characters' : 'login')
   const [identity, setIdentity] = useState(null)
   const [characters, setCharacters] = useState(null)
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [newName, setNewName] = useState('')
 
   useEffect(() => {
     if (mode === 'characters') refreshCharacters()
@@ -22,13 +24,7 @@ export default function AuthScreen({ onCloudReady, onPlayOffline }) {
     try {
       const [meRes, listRes] = await Promise.all([api.me(), api.listCharacters()])
       setIdentity(meRes.identity)
-      const chars = listRes.characters || []
-      setCharacters(chars)
-      // No characters yet — auto-create one silently using the OAuth displayName
-      // so signing in for the first time doesn't stall on a name-entry form.
-      if (chars.length === 0) {
-        await autoCreateAndSelect(meRes.identity?.displayName)
-      }
+      setCharacters(listRes.characters || [])
     } catch (err) {
       if (err.status === 401) {
         clearAuth()
@@ -47,30 +43,19 @@ export default function AuthScreen({ onCloudReady, onPlayOffline }) {
     onCloudReady(ch)
   }
 
-  // Auto-create a character using the OAuth identity's display name, sanitised
-  // to match the server's username rules (3–16 chars, [A-Za-z0-9_-]). On
-  // collision (username taken/reserved) we retry with a random suffix.
-  async function autoCreateAndSelect(displayName) {
+  async function handleCreate(e) {
+    e.preventDefault()
     setError(null)
-    const base = sanitizeUsername(displayName) || 'Adventurer'
-    let attempt = base
-    for (let i = 0; i < 6; i++) {
-      try {
-        const res = await api.createCharacter(attempt)
-        selectCharacter(res.character)
-        return
-      } catch (err) {
-        if (err.status === 409) {
-          // Username taken/reserved — try a suffixed variant (truncate base to fit).
-          const suffix = String(Math.floor(1000 + Math.random() * 9000))
-          attempt = base.slice(0, 16 - suffix.length) + suffix
-          continue
-        }
-        setError(err.message)
-        return
-      }
+    const name = newName.trim()
+    if (!name) return
+    setBusy(true)
+    try {
+      const res = await api.createCharacter(name)
+      selectCharacter(res.character)
+    } catch (err) {
+      setError(err.message)
+      setBusy(false)
     }
-    setError('Could not auto-create a character. Please try again.')
   }
 
   function handleSignOut() {
@@ -104,7 +89,9 @@ export default function AuthScreen({ onCloudReady, onPlayOffline }) {
     )
   }
 
-  // mode === 'characters'
+  // mode === 'characters' or 'create'
+  const showCreate = mode === 'create' || (characters && characters.length === 0)
+
   return (
     <Wrap>
       <Title />
@@ -114,9 +101,9 @@ export default function AuthScreen({ onCloudReady, onPlayOffline }) {
         </p>
       )}
 
-      {busy && <p style={subtitle}>Loading…</p>}
+      {busy && !characters && <p style={subtitle}>Loading…</p>}
 
-      {!busy && characters && characters.length > 0 && (
+      {!showCreate && characters && characters.length > 0 && (
         <>
           <SectionLabel>Choose a character</SectionLabel>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
@@ -129,10 +116,7 @@ export default function AuthScreen({ onCloudReady, onPlayOffline }) {
               </button>
             ))}
           </div>
-          <button
-            onClick={() => { setBusy(true); autoCreateAndSelect(identity?.displayName).finally(() => setBusy(false)) }}
-            style={secondaryBtn}
-          >
+          <button onClick={() => { setMode('create'); setNewName('') }} style={secondaryBtn}>
             ➕ Create New Character
           </button>
           {identity && (
@@ -143,18 +127,35 @@ export default function AuthScreen({ onCloudReady, onPlayOffline }) {
         </>
       )}
 
+      {showCreate && (
+        <form onSubmit={handleCreate}>
+          <SectionLabel>Create a character</SectionLabel>
+          <input
+            type="text"
+            value={newName}
+            onInput={(e) => setNewName(e.target.value)}
+            placeholder="Username (3–16 chars)"
+            maxLength={16}
+            autoFocus
+            style={input}
+          />
+          <p style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.45, margin: '6px 0 14px' }}>
+            Letters, numbers, _ and - only. Names are unique forever and cannot be changed.
+          </p>
+          <button type="submit" disabled={busy || newName.trim().length < 3} style={primaryBtn}>
+            {busy ? 'Creating…' : 'Create Character'}
+          </button>
+          {characters && characters.length > 0 && (
+            <button type="button" onClick={() => setMode('characters')} style={ghostBtn}>
+              Back
+            </button>
+          )}
+        </form>
+      )}
+
       {error && <p style={errorText}>{error}</p>}
     </Wrap>
   )
-}
-
-// Strip anything the server's username regex would reject and clamp length.
-// Returns '' when there's nothing usable left; caller falls back to a default.
-function sanitizeUsername(raw) {
-  if (!raw) return ''
-  const cleaned = String(raw).replace(/[^A-Za-z0-9_-]/g, '').slice(0, 16)
-  if (cleaned.length < 3) return ''
-  return cleaned
 }
 
 // ── Styled helpers (kept inline to avoid coupling to component library during boot) ──
@@ -193,4 +194,5 @@ function providerLabel(provider) {
 const secondaryBtn = { width: '100%', padding: '13px', borderRadius: '12px', background: '#2a2a2a', border: '1px solid #3a3a3a', color: '#e8d5b0', fontSize: '13px', fontWeight: '600', cursor: 'pointer', marginBottom: '10px' }
 const ghostBtn = { width: '100%', padding: '12px', borderRadius: '12px', background: 'transparent', border: '1px solid #2a2a2a', color: '#e8d5b0', opacity: 0.7, fontSize: '13px', cursor: 'pointer' }
 const charRowBtn = { width: '100%', padding: '12px 14px', borderRadius: '10px', background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#e8d5b0', textAlign: 'left', cursor: 'pointer' }
+const input = { width: '100%', padding: '12px 16px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333', color: '#e8d5b0', fontSize: '14px', fontFamily: 'Nunito, sans-serif', boxSizing: 'border-box', outline: 'none' }
 const errorText = { color: '#ff6b6b', fontSize: '12px', marginTop: '12px', textAlign: 'center' }
