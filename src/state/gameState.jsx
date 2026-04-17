@@ -442,7 +442,9 @@ export function GameProvider({ children }) {
     bank: stateRef.current.bank,
     equipment: stateRef.current.equipment,
     bankConfig: bankConfig,
-  }), [bankConfig])
+    homeShortcuts,
+    bossKillCounts,
+  }), [bankConfig, homeShortcuts, bossKillCounts])
 
   const value = {
     loaded, player, stats, inventory, equipment, bank, currentHP, toasts,

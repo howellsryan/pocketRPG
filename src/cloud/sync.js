@@ -32,7 +32,7 @@ async function flushNow() {
   pendingSnapshot = null
   inFlight = true
   try {
-    const data = buildSavePayloadFromState(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig)
+    const data = buildSavePayloadFromState(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig, snap.homeShortcuts, snap.bossKillCounts)
     const { base64, hash } = encodeSaveData(data)
     if (hash === lastPushedHash) return
     const res = await api.putSave(base64, hash)
