@@ -18,7 +18,7 @@ import { hasSave, closeDB } from './db/database.js'
 import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
 import { startTicks, stopTicks, onTick } from './engine/tick.js'
 import { exportSave, importSave, snapshotToLocalStorage, restoreFromLocalStorage } from './db/saveload.js'
-import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility } from './engine/idleEngine.js'
+import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
 import { simulateIdleThieving } from './engine/thieving.js'
 import { getLevelFromXP } from './engine/experience.js'
 
@@ -132,6 +132,15 @@ function GameApp() {
             return
           }
 
+          // Apply HP regeneration during idle
+          const hpRegenSim = simulateIdleHPRegen(elapsedMs)
+          if (hpRegenSim.hpRegen > 0) {
+            const maxHP = getLevelFromXP(freshStats.hitpoints?.xp || 0)
+            const restoredHP = Math.min(currentHP + hpRegenSim.hpRegen, maxHP)
+            sim.hpRestored = hpRegenSim.hpRegen
+            sim.hpAfterRegen = restoredHP
+          }
+
           // Apply XP
           if (sim.xpGained) {
             for (const [skill, xp] of Object.entries(sim.xpGained)) {
@@ -185,6 +194,11 @@ function GameApp() {
             } else {
               await saveSetting('slayerTask', sim.slayerTaskUpdate)
             }
+          }
+
+          // Update HP from regen if applicable
+          if (sim.hpAfterRegen !== undefined) {
+            updateHP(sim.hpAfterRegen)
           }
 
           setIdleResult({ elapsedMs, task: savedTask, ...sim })
