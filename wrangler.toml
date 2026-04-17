@@ -5,7 +5,7 @@ pages_build_output_dir = "."
 [[d1_databases]]
 binding = "DB"
 database_name = "pocketrpg"
-database_id = "REPLACE_WITH_REAL_D1_ID"
+database_id = "439e810b-8dce-4697-94c2-a7392520ad8f"
 
 [vars]
 APP_BASE_URL = "https://pocketrpg.pages.dev"
