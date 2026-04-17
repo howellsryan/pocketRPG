@@ -1,4 +1,41 @@
 {
+  "chambers_of_xeric": {
+    "id": "chambers_of_xeric",
+    "name": "Chambers of Xeric",
+    "icon": "🏛️",
+    "description": "Delve into Xeric's mountain stronghold. Defeat Tekton, Vespula, the Muttadile and Great Olm to claim your reward.",
+    "bosses": [
+      "tekton",
+      "vespula",
+      "muttadile",
+      "olm"
+    ],
+    "rewards": {
+      "always": [
+        { "itemId": "coins", "quantity": [50000, 150000], "chance": 1.0 },
+        { "itemId": "dragon_bones", "quantity": [5, 15], "chance": 0.6 },
+        { "itemId": "death_rune", "quantity": [100, 250], "chance": 0.4 },
+        { "itemId": "blood_rune", "quantity": [100, 200], "chance": 0.35 },
+        { "itemId": "soul_rune", "quantity": [50, 150], "chance": 0.3 },
+        { "itemId": "snapdragon", "quantity": [10, 30], "chance": 0.25 }
+      ],
+      "unique": {
+        "chance": 0.15,
+        "items": [
+          { "itemId": "twisted_buckler", "weight": 8 },
+          { "itemId": "dragon_hunter_crossbow", "weight": 8 },
+          { "itemId": "dinhs_bulwark", "weight": 6 },
+          { "itemId": "ancestral_hat", "weight": 6 },
+          { "itemId": "ancestral_robe_top", "weight": 6 },
+          { "itemId": "ancestral_robe_bottom", "weight": 6 },
+          { "itemId": "dragon_claws", "weight": 6 },
+          { "itemId": "elder_maul", "weight": 4 },
+          { "itemId": "kodai_wand", "weight": 4 },
+          { "itemId": "twisted_bow", "weight": 2 }
+        ]
+      }
+    }
+  },
   "theatre_of_blood": {
     "id": "theatre_of_blood",
     "name": "Theatre of Blood",

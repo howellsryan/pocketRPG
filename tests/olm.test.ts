@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createCombatState, processCombatTick } from '../src/engine/combat.js'
 import itemsData from '../src/data/items.json'
 import monstersData from '../src/data/monsters.json'
+import raidsData from '../src/data/raids.json'
 
 const olm = monstersData['olm']
 
@@ -213,39 +214,39 @@ describe('The Great Olm Boss', () => {
   })
 
   describe('Drop Table', () => {
-    it('should always drop coins', () => {
-      const coinsDrop = olm.drops.find((d: any) => d.itemId === 'coins')
+    const cox = (raidsData as any)['chambers_of_xeric']
+
+    it('olm standalone drops should be empty (loot comes from CoX raid)', () => {
+      expect(olm.drops).toHaveLength(0)
+    })
+
+    it('CoX raid should always drop coins', () => {
+      const coinsDrop = cox.rewards.always.find((d: any) => d.itemId === 'coins')
       expect(coinsDrop).toBeDefined()
       expect(coinsDrop.chance).toBe(1.0)
     })
 
-    it('should have all 10 unique drops', () => {
+    it('CoX raid should have all 10 unique drops', () => {
       const uniques = [
         'twisted_buckler', 'dragon_hunter_crossbow',
         'dinhs_bulwark', 'ancestral_hat', 'ancestral_robe_top', 'ancestral_robe_bottom', 'dragon_claws',
         'elder_maul', 'kodai_wand', 'twisted_bow'
       ]
       for (const itemId of uniques) {
-        const drop = olm.drops.find((d: any) => d.itemId === itemId)
-        expect(drop).toBeDefined()
-        expect(drop.quantity).toBe(1)
+        const entry = cox.rewards.unique.items.find((d: any) => d.itemId === itemId)
+        expect(entry).toBeDefined()
+        expect(entry.weight).toBeGreaterThan(0)
       }
     })
 
-    it('twisted buckler and dragon hunter crossbow should have ~1/17.25 drop rate', () => {
-      const buckler = olm.drops.find((d: any) => d.itemId === 'twisted_buckler')
-      const dhcb = olm.drops.find((d: any) => d.itemId === 'dragon_hunter_crossbow')
-      expect(buckler.chance).toBeCloseTo(0.058, 2)
-      expect(dhcb.chance).toBeCloseTo(0.058, 2)
+    it('twisted buckler and dragon hunter crossbow should have higher weight than twisted bow', () => {
+      const buckler = cox.rewards.unique.items.find((d: any) => d.itemId === 'twisted_buckler')
+      const tbow = cox.rewards.unique.items.find((d: any) => d.itemId === 'twisted_bow')
+      expect(buckler.weight).toBeGreaterThan(tbow.weight)
     })
 
-    it('twisted bow, elder maul, and kodai wand should have ~1/34.5 drop rate', () => {
-      const tbow = olm.drops.find((d: any) => d.itemId === 'twisted_bow')
-      const maul = olm.drops.find((d: any) => d.itemId === 'elder_maul')
-      const wand = olm.drops.find((d: any) => d.itemId === 'kodai_wand')
-      expect(tbow.chance).toBeCloseTo(0.029, 2)
-      expect(maul.chance).toBeCloseTo(0.029, 2)
-      expect(wand.chance).toBeCloseTo(0.029, 2)
+    it('CoX unique chance should be 15%', () => {
+      expect(cox.rewards.unique.chance).toBeCloseTo(0.15, 2)
     })
   })
 })

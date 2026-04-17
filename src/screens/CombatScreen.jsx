@@ -76,12 +76,6 @@ const COMBAT_CATEGORIES = [
     icon: '⚡',
     ids: ['corrupted_gauntlet'],
   },
-  {
-    key: 'olm',
-    label: 'Olm',
-    icon: '🐊',
-    ids: ['olm'],
-  },
 ]
 
 const MONSTER_ICONS = {
@@ -91,7 +85,8 @@ const MONSTER_ICONS = {
   green_dragon: '🐉', red_dragon: '🔴', lesser_demon: '👿',
   general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
   dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
-  crazy_archaeologist: '📜', king_black_dragon: '👑', zulrah: '🐍', jad: '🌋', corrupted_gauntlet: '⚡', olm: '🐊',
+  crazy_archaeologist: '📜', king_black_dragon: '👑', zulrah: '🐍', jad: '🌋', corrupted_gauntlet: '⚡',
+  tekton: '🔨', vespula: '🦟', muttadile: '🦷', olm: '🏛️',
   maiden_of_sugadinti: '🩸', pestilent_bloat: '🤢', nylocas_vasilias: '🕷️',
   sotetseg: '🔮', xarpus: '☠️', verzik_vitur: '👑'
 }
@@ -376,7 +371,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             type: 'formChange',
             time: Date.now()
           }])
-          const phaseChangeMonsters = ['olm', 'zulrah', 'jad', 'demonic_gorilla', 'maiden_of_sugadinti', 'pestilent_bloat', 'nylocas_vasilias', 'sotetseg', 'xarpus', 'verzik_vitur']
+          const phaseChangeMonsters = ['olm', 'zulrah', 'jad', 'demonic_gorilla', 'maiden_of_sugadinti', 'pestilent_bloat', 'nylocas_vasilias', 'sotetseg', 'xarpus', 'verzik_vitur', 'vespula', 'muttadile']
           if (!phaseChangeMonsters.includes(state.monster.id)) {
             addToast(`${ev.icon || '🐍'} ${monsterName}: ${ev.displayName} form${immunityNote}`, 'info')
           }
@@ -1195,7 +1190,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {combat.raid && (
         <div class="mb-2 bg-[#111] border border-[#2a2a2a] rounded-lg px-3 py-2">
           <div class="flex items-center justify-between mb-1.5">
-            <span class="text-[10px] font-semibold text-[var(--color-gold)]">🩸 {raidsData[combat.raid.raidId]?.name || 'Raid'}</span>
+            <span class="text-[10px] font-semibold text-[var(--color-gold)]">{raidsData[combat.raid.raidId]?.icon} {raidsData[combat.raid.raidId]?.name || 'Raid'}</span>
             <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-60">
               Boss {combat.raid.currentBossIndex + 1}/{combat.raid.bosses.length}
             </span>
