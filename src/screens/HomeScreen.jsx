@@ -15,7 +15,7 @@ const DEFAULT_SHORTCUTS = [
   { label: 'Equipment', icon: '🛡️', screen: SCREENS.EQUIPMENT },
 ]
 
-export default function HomeScreen({ onNavigate, onSaveMenu }) {
+export default function HomeScreen({ onNavigate, onLogout }) {
   const { player, stats, homeShortcuts, updateHomeShortcuts } = useGame()
   const [removeConfirm, setRemoveConfirm] = useState(null)
 
@@ -69,10 +69,10 @@ export default function HomeScreen({ onNavigate, onSaveMenu }) {
           </div>
         </div>
         <button
-          onClick={onSaveMenu}
+          onClick={onLogout}
           style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #333', borderRadius: '8px', padding: '6px 10px', fontSize: '11px', color: '#e8d5b0', opacity: 0.7, cursor: 'pointer' }}
         >
-          💾 Save
+          🚪 Logout
         </button>
       </div>
 

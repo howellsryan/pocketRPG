@@ -94,8 +94,7 @@ export default function AuthScreen({ onCloudReady, onPlayOffline }) {
       <Title />
       {identity && (
         <p style={subtitle}>
-          Signed in as <strong style={{ color: '#d4af37' }}>{identity.displayName}</strong>{' '}
-          <button onClick={handleSignOut} style={linkBtn}>(sign out)</button>
+          Signed in as <strong style={{ color: '#d4af37' }}>{identity.displayName}</strong>
         </p>
       )}
 
@@ -117,6 +116,11 @@ export default function AuthScreen({ onCloudReady, onPlayOffline }) {
           <button onClick={() => { setMode('create'); setNewName('') }} style={secondaryBtn}>
             ➕ Create New Character
           </button>
+          {identity && (
+            <button onClick={handleSignOut} style={ghostBtn}>
+              🚪 Log out of GitHub
+            </button>
+          )}
         </>
       )}
 
@@ -178,7 +182,6 @@ const subtitle = { fontSize: '12px', color: '#e8d5b0', opacity: 0.7, textAlign: 
 const primaryBtn = { width: '100%', padding: '14px', borderRadius: '12px', background: 'linear-gradient(135deg, #b8940e, #d4af37)', color: '#0f0f0f', fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '14px', letterSpacing: '0.05em', border: 'none', cursor: 'pointer', marginBottom: '10px' }
 const secondaryBtn = { width: '100%', padding: '13px', borderRadius: '12px', background: '#2a2a2a', border: '1px solid #3a3a3a', color: '#e8d5b0', fontSize: '13px', fontWeight: '600', cursor: 'pointer', marginBottom: '10px' }
 const ghostBtn = { width: '100%', padding: '12px', borderRadius: '12px', background: 'transparent', border: '1px solid #2a2a2a', color: '#e8d5b0', opacity: 0.7, fontSize: '13px', cursor: 'pointer' }
-const linkBtn = { background: 'transparent', border: 'none', color: '#7bb3f0', fontSize: '11px', cursor: 'pointer', padding: 0 }
 const charRowBtn = { width: '100%', padding: '12px 14px', borderRadius: '10px', background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#e8d5b0', textAlign: 'left', cursor: 'pointer' }
 const input = { width: '100%', padding: '12px 16px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333', color: '#e8d5b0', fontSize: '14px', fontFamily: 'Nunito, sans-serif', boxSizing: 'border-box', outline: 'none' }
 const errorText = { color: '#ff6b6b', fontSize: '12px', marginTop: '12px', textAlign: 'center' }
