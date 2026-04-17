@@ -99,9 +99,9 @@ export const api = {
     body: JSON.stringify({ username }),
   }),
   getSave: () => request('/api/save'),
-  putSave: (base64, hash) => request('/api/save', {
+  putSave: (save_data, hash) => request('/api/save', {
     method: 'PUT',
-    body: JSON.stringify({ base64, hash }),
+    body: JSON.stringify({ save_data, hash }),
   }),
 }
 

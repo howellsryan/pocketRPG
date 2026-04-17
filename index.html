@@ -19840,9 +19840,9 @@ const api = {
         body: JSON.stringify({ username }),
     }),
     getSave: () => request('/api/save'),
-    putSave: (base64, hash) => request('/api/save', {
+    putSave: (save_data, hash) => request('/api/save', {
         method: 'PUT',
-        body: JSON.stringify({ base64, hash }),
+        body: JSON.stringify({ save_data, hash }),
     }),
 };
 function startGitHubLogin() {
@@ -19858,6 +19858,7 @@ function startGoogleLogin() {
 // successful push.
 
 
+
 const PUSH_DEBOUNCE_MS = 60000;
 // Grace window for clock skew between this client and the cloud server when
 // deciding whether the cloud copy is meaningfully newer than our last push.
@@ -19869,6 +19870,18 @@ let pendingSnapshot = null;
 let inFlight = false;
 function canSync() {
     return !!getToken() && !!getCharacterId();
+}
+// Decode a save response from the API, handling both the new JSON format
+// (save_data field) and the legacy base64 format for existing rows.
+function decodeSaveResponse({ save_data, base64, hash }) {
+    if (save_data !== undefined) {
+        if (fnv1a(save_data) !== hash)
+            throw new Error('Cloud save integrity check failed');
+        return { data: JSON.parse(save_data), hash };
+    }
+    // Legacy base64 row — decode client-side (hash is embedded inside the blob)
+    const decoded = decodeSaveBase64(base64);
+    return { data: decoded.data, hash: decoded.hash };
 }
 async function flushNow() {
     pendingTimer = null;
@@ -19884,14 +19897,15 @@ async function flushNow() {
     inFlight = true;
     try {
         const data = buildSavePayloadFromState(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig, snap.homeShortcuts, snap.bossKillCounts);
-        const { base64, hash } = encodeSaveData(data);
+        const json = JSON.stringify(data);
+        const hash = fnv1a(json);
         if (hash === lastPushedHash)
             return;
-        const res = await api.putSave(base64, hash);
+        const res = await api.putSave(json, hash);
         lastPushedHash = hash;
         if (res?.updatedAt)
             lastPushedAt = res.updatedAt;
-        console.log('[PocketRPG] Cloud save pushed, size:', base64.length);
+        console.log('[PocketRPG] Cloud save pushed, size:', json.length);
     }
     catch (err) {
         console.warn('[PocketRPG] Cloud push failed:', err.message);
@@ -19926,16 +19940,16 @@ async function pushNow(snapshot) {
     await flushNow();
 }
 // Public: pull the cloud save for the selected character.
-// Returns { applied, payload, base64, updatedAt } or { applied: false, ... }.
+// Returns { applied, payload, hash, updatedAt } or { applied: false }.
 async function pullSave() {
     if (!canSync())
         return { applied: false };
     const res = await api.getSave();
     if (!res || !res.save)
         return { applied: false };
-    const { base64, updatedAt } = res.save;
-    const { data } = decodeSaveBase64(base64);
-    return { applied: false, payload: data, base64, updatedAt };
+    const { updatedAt } = res.save;
+    const { data, hash } = decodeSaveResponse(res.save);
+    return { applied: false, payload: data, hash, updatedAt };
 }
 // Public: check if the cloud copy is meaningfully newer than the last save we
 // pushed/applied. Used by the visibility handler before running idle simulation
@@ -19948,21 +19962,20 @@ async function checkCloudNewer() {
     const res = await api.getSave();
     if (!res || !res.save)
         return null;
-    const { base64, hash, updatedAt } = res.save;
-    if (hash === lastPushedHash)
+    const { hash: serverHash, updatedAt } = res.save;
+    if (serverHash === lastPushedHash)
         return null;
     if (updatedAt <= lastPushedAt + FRESHNESS_GRACE_MS)
         return null;
-    const { data } = decodeSaveBase64(base64);
-    return { payload: data, base64, updatedAt };
+    const { data, hash } = decodeSaveResponse(res.save);
+    return { payload: data, hash, updatedAt };
 }
 // Public: apply a previously-pulled cloud save to IDB. Caller decides whether
 // to do this based on conflict-resolution UX.
-async function applyCloudSave(payload, base64, updatedAt) {
+async function applyCloudSave(payload, hash, updatedAt) {
     await applySavePayload(payload);
     // Mark the just-applied save as the last-pushed hash so we don't immediately
     // re-upload identical bytes.
-    const { hash } = decodeSaveBase64(base64);
     lastPushedHash = hash;
     if (updatedAt)
         lastPushedAt = updatedAt;
@@ -25796,7 +25809,7 @@ function GameApp() {
     const [isInBossFight, setIsInBossFight] = useState(false); // Track if currently in a boss fight
     // Cloud auth gate: 'pending' until we resolve, 'auth' if AuthScreen needed, 'ready' to boot game
     const [cloudPhase, setCloudPhase] = useState('pending');
-    const [conflict, setConflict] = useState(null); // { cloudPayload, cloudBase64, cloudUpdatedAt, localUpdatedAt }
+    const [conflict, setConflict] = useState(null); // { cloudPayload, cloudHash, cloudUpdatedAt, localUpdatedAt }
     // Refs for tick-based systems
     const hpRegenCounter = useRef(0);
     const snapshotCounter = useRef(99); // Start at 99 so first snapshot fires after 1 tick
@@ -25880,7 +25893,7 @@ function GameApp() {
                     try {
                         const cloudNewer = await checkCloudNewer();
                         if (cloudNewer) {
-                            await applyCloudSave(cloudNewer.payload, cloudNewer.base64, cloudNewer.updatedAt);
+                            await applyCloudSave(cloudNewer.payload, cloudNewer.hash, cloudNewer.updatedAt);
                             await loadGame();
                             addToast('☁️ Loaded newer save from another session', 'info');
                             setIdleResult({ elapsedMs, task: savedTask, cloudOverride: true });
@@ -26069,13 +26082,13 @@ function GameApp() {
                         const localTs = parseInt(localStorage.getItem('pocketrpg_lastTick'), 10) || 0;
                         if (!localExists) {
                             // Fresh device — apply cloud save straight away
-                            await applyCloudSave(result.payload, result.base64, result.updatedAt);
+                            await applyCloudSave(result.payload, result.hash, result.updatedAt);
                         }
                         else if (result.updatedAt > localTs + 60000) {
                             // Cloud is meaningfully newer — ask the user
                             setConflict({
                                 cloudPayload: result.payload,
-                                cloudBase64: result.base64,
+                                cloudHash: result.hash,
                                 cloudUpdatedAt: result.updatedAt,
                                 localUpdatedAt: localTs,
                             });
@@ -26101,7 +26114,7 @@ function GameApp() {
         if (!conflict)
             return;
         if (useCloud) {
-            await applyCloudSave(conflict.cloudPayload, conflict.cloudBase64, conflict.cloudUpdatedAt);
+            await applyCloudSave(conflict.cloudPayload, conflict.cloudHash, conflict.cloudUpdatedAt);
         }
         setConflict(null);
         setCloudPhase('ready');

@@ -27,10 +27,15 @@ export async function onRequestGet({ request, env }) {
   if (ch.error) return json({ error: ch.error }, ch.status)
 
   const row = await env.DB.prepare(
-    'SELECT base64, hash, updated_at FROM saves WHERE character_id = ?'
+    'SELECT save_data, base64, hash, updated_at FROM saves WHERE character_id = ?'
   ).bind(ch.id).first()
   if (!row) return json({ save: null })
-  return json({ save: { base64: row.base64, hash: row.hash, updatedAt: row.updated_at } })
+
+  // Serve save_data (new JSON format) when available; fall back to base64 for legacy rows.
+  const saveResponse = row.save_data !== null
+    ? { save_data: row.save_data, hash: row.hash, updatedAt: row.updated_at }
+    : { base64: row.base64, hash: row.hash, updatedAt: row.updated_at }
+  return json({ save: saveResponse })
 }
 
 export async function onRequestPut({ request, env }) {
@@ -42,21 +47,23 @@ export async function onRequestPut({ request, env }) {
 
   let body
   try { body = await request.json() } catch { return json({ error: 'Invalid JSON' }, 400) }
-  const base64 = body.base64
+  const save_data = body.save_data
   const hash = body.hash
-  if (typeof base64 !== 'string' || typeof hash !== 'string') {
-    return json({ error: 'Missing base64 or hash' }, 400)
+  if (typeof save_data !== 'string' || typeof hash !== 'string') {
+    return json({ error: 'Missing save_data or hash' }, 400)
   }
-  if (base64.length > MAX_SAVE_BYTES) {
+  if (save_data.length > MAX_SAVE_BYTES) {
     return json({ error: 'Save too large' }, 413)
   }
 
   const now = Date.now()
+  // For new rows: write 'migrated' sentinel to satisfy the legacy base64 NOT NULL constraint.
+  // For existing rows: ON CONFLICT only updates save_data/hash/updated_at, leaving base64 intact.
   await env.DB.prepare(
-    `INSERT INTO saves (character_id, base64, hash, updated_at)
-     VALUES (?, ?, ?, ?)
-     ON CONFLICT(character_id) DO UPDATE SET base64 = excluded.base64, hash = excluded.hash, updated_at = excluded.updated_at`
-  ).bind(ch.id, base64, hash, now).run()
+    `INSERT INTO saves (character_id, save_data, base64, hash, updated_at)
+     VALUES (?, ?, 'migrated', ?, ?)
+     ON CONFLICT(character_id) DO UPDATE SET save_data = excluded.save_data, hash = excluded.hash, updated_at = excluded.updated_at`
+  ).bind(ch.id, save_data, hash, now).run()
 
   return json({ ok: true, updatedAt: now })
 }

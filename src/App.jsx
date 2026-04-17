@@ -35,7 +35,7 @@ function GameApp() {
   const [isInBossFight, setIsInBossFight] = useState(false) // Track if currently in a boss fight
   // Cloud auth gate: 'pending' until we resolve, 'auth' if AuthScreen needed, 'ready' to boot game
   const [cloudPhase, setCloudPhase] = useState('pending')
-  const [conflict, setConflict] = useState(null) // { cloudPayload, cloudBase64, cloudUpdatedAt, localUpdatedAt }
+  const [conflict, setConflict] = useState(null) // { cloudPayload, cloudHash, cloudUpdatedAt, localUpdatedAt }
 
   // Refs for tick-based systems
   const hpRegenCounter = useRef(0)
@@ -115,7 +115,7 @@ function GameApp() {
           try {
             const cloudNewer = await checkCloudNewer()
             if (cloudNewer) {
-              await applyCloudSave(cloudNewer.payload, cloudNewer.base64, cloudNewer.updatedAt)
+              await applyCloudSave(cloudNewer.payload, cloudNewer.hash, cloudNewer.updatedAt)
               await loadGame()
               addToast('☁️ Loaded newer save from another session', 'info')
               setIdleResult({ elapsedMs, task: savedTask, cloudOverride: true })
@@ -307,12 +307,12 @@ function GameApp() {
             const localTs = parseInt(localStorage.getItem('pocketrpg_lastTick'), 10) || 0
             if (!localExists) {
               // Fresh device — apply cloud save straight away
-              await applyCloudSave(result.payload, result.base64, result.updatedAt)
+              await applyCloudSave(result.payload, result.hash, result.updatedAt)
             } else if (result.updatedAt > localTs + 60_000) {
               // Cloud is meaningfully newer — ask the user
               setConflict({
                 cloudPayload: result.payload,
-                cloudBase64: result.base64,
+                cloudHash: result.hash,
                 cloudUpdatedAt: result.updatedAt,
                 localUpdatedAt: localTs,
               })
@@ -337,7 +337,7 @@ function GameApp() {
   async function resolveConflict(useCloud) {
     if (!conflict) return
     if (useCloud) {
-      await applyCloudSave(conflict.cloudPayload, conflict.cloudBase64, conflict.cloudUpdatedAt)
+      await applyCloudSave(conflict.cloudPayload, conflict.cloudHash, conflict.cloudUpdatedAt)
     }
     setConflict(null)
     setCloudPhase('ready')
