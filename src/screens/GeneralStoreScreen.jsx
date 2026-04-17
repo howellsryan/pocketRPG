@@ -108,7 +108,7 @@ export default function GeneralStoreScreen() {
             General Store
           </h2>
           <span style={{ fontSize: '11px', color: '#d4af37', fontFamily: 'monospace' }}>
-            🪙 {coins.toLocaleString()}{hasMoneyPurse ? ' 👛' : ''}
+            🪙 {coins.toLocaleString()}
           </span>
         </div>
 
