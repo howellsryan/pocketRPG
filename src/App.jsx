@@ -356,10 +356,23 @@ function GameApp() {
         await attemptBackupRestore()
       }
     } catch (err) {
-      // IDB connection broken (iOS Safari kills background tabs)
-      console.warn('[PocketRPG] checkSave IDB error, trying backup restore...', err)
+      // IDB connection broken (iOS Safari kills background tabs) — close and reconnect.
+      // The DATA is still there; only the connection handle is dead.
+      console.warn('[PocketRPG] checkSave IDB error, retrying after reconnect...', err)
       closeDB()
       await new Promise(r => setTimeout(r, 300))
+      // Retry before touching backup — avoids wiping valid IDB data with an older snapshot.
+      try {
+        const existsRetry = await hasSave()
+        if (existsRetry) {
+          const idleResult = await loadGame()
+          setGameReady(true)
+          if (idleResult) setIdleResult(idleResult)
+          return
+        }
+      } catch (retryErr) {
+        console.warn('[PocketRPG] IDB retry failed, falling back to backup:', retryErr)
+      }
       await attemptBackupRestore()
     }
   }

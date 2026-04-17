@@ -414,7 +414,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
           </Panel>
 
           <div class="text-[11px] text-[var(--color-parchment)] opacity-50 text-center max-w-[280px]">
-            ⏳ Items go directly to your bank. Banking delay scales with Agility level.
+            ⏳ Items go directly to your bank.
           </div>
         </div>
       </div>
