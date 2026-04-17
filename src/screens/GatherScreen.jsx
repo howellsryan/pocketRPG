@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
+import Card from '../components/Card.jsx'
+import Panel from '../components/Panel.jsx'
+import SectionHeader from '../components/SectionHeader.jsx'
 import { addItem, countItem } from '../engine/inventory.js'
 import { onTick } from '../engine/tick.js'
 import { formatNumber } from '../utils/helpers.js'
@@ -373,131 +376,115 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
   if (activeTask) {
     const { task } = activeTask
     const progress = 1 - activeTask.ticksRemaining / task.ticks
+    const elapsedHrs = activeTask.startedAt ? (Date.now() - activeTask.startedAt) / 3600000 : 0
+    const perHour = elapsedHrs > 0 ? Math.round(activeTask.totalItems / elapsedHrs) : 0
 
     return (
-      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '16px' }}>
+      <div class="h-full flex flex-col p-4">
         {/* Back button */}
-        <button onClick={stopTask}
-          style={{ fontSize: '12px', color: '#c4af7a', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', cursor: 'pointer' }}>
+        <button
+          onClick={stopTask}
+          class="text-[12px] text-[#c4af7a] mb-3 flex items-center gap-1 bg-transparent border-0 cursor-pointer"
+        >
           ← Back
         </button>
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ fontSize: '48px', marginBottom: '8px' }}>{task.icon}</span>
-          <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '18px', fontWeight: 'bold', color: '#d4af37', marginBottom: '4px', textAlign: 'center' }}>
+        <div class="flex-1 flex flex-col items-center justify-center">
+          <span class="text-[48px] mb-2">{task.icon}</span>
+          <h2 class="font-[var(--font-display)] text-[18px] font-bold text-[var(--color-gold)] mb-1 text-center">
             {task.name}
           </h2>
-          <p style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, marginBottom: '16px', textAlign: 'center' }}>{task.description}</p>
+          <p class="text-[11px] text-[var(--color-parchment)] opacity-50 mb-4 text-center">{task.description}</p>
 
-          <div style={{ width: '100%', maxWidth: '280px', marginBottom: '16px' }}>
+          <div class="w-full max-w-[280px] mb-4">
             <ProgressBar value={progress} max={1} height="h-4" color="var(--color-gold)" showText />
           </div>
 
-          <div style={{ background: '#111', borderRadius: '12px', padding: '12px', width: '100%', maxWidth: '280px', marginBottom: '12px' }}>
-            {(() => {
-              const elapsedHrs = activeTask.startedAt ? (Date.now() - activeTask.startedAt) / 3600000 : 0
-              const perHour = elapsedHrs > 0 ? Math.round(activeTask.totalItems / elapsedHrs) : 0
-              return (<>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '13px', color: '#e8d5b0', opacity: 0.6 }}>Items banked</span>
-                  <span style={{ fontFamily: 'monospace', color: '#d4af37', fontWeight: 'bold' }}>{activeTask.totalItems}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '13px', color: '#e8d5b0', opacity: 0.6 }}>Items banked/hr</span>
-                  <span style={{ fontFamily: 'monospace', color: '#d4af37', fontWeight: 'bold' }}>{elapsedHrs > 0 ? perHour.toLocaleString() : '—'}</span>
-                </div>
-              </>)
-            })()}
-          </div>
+          <Panel padding="p-3" className="w-full max-w-[280px] mb-3 rounded-xl">
+            <div class="flex justify-between mb-2">
+              <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Items banked</span>
+              <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">{activeTask.totalItems}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Items banked/hr</span>
+              <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">
+                {elapsedHrs > 0 ? perHour.toLocaleString() : '—'}
+              </span>
+            </div>
+          </Panel>
 
-          {/* Banking delay note */}
-          <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textAlign: 'center', maxWidth: '280px' }}>
+          <div class="text-[11px] text-[var(--color-parchment)] opacity-50 text-center max-w-[280px]">
             ⏳ Items go directly to your bank. Banking delay scales with Agility level.
           </div>
         </div>
-
       </div>
     )
   }
 
   // Task picker
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div class="h-full flex flex-col">
       {/* Header */}
-      <div style={{ padding: '16px 16px 8px', flexShrink: 0 }}>
-        <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '13px', fontWeight: 'bold', color: '#e8d5b0', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px' }}>
-          🌿 Gather Resources
-        </h2>
+      <div class="px-4 pt-4 pb-2 flex-shrink-0">
+        <SectionHeader size="lg" className="mb-[10px]">🌿 Gather Resources</SectionHeader>
 
         {/* Category tabs */}
-        <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
-          {CATEGORIES.map(cat => (
-            <button
-              key={cat.id}
-              onClick={() => setCategory(cat.id)}
-              style={{
-                flexShrink: 0,
-                padding: '5px 12px',
-                borderRadius: '20px',
-                fontSize: '11px',
-                fontWeight: '600',
-                border: category === cat.id ? '1px solid #d4af37' : '1px solid #2a2a2a',
-                background: category === cat.id ? 'rgba(212,175,55,0.15)' : '#1a1a1a',
-                color: category === cat.id ? '#d4af37' : '#e8d5b0',
-                opacity: category === cat.id ? 1 : 0.6,
-              }}
-            >
-              {cat.icon} {cat.label}
-            </button>
-          ))}
+        <div class="flex gap-[6px] overflow-x-auto pb-1">
+          {CATEGORIES.map(cat => {
+            const isActive = category === cat.id
+            const pillClass = isActive
+              ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)] opacity-100'
+              : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setCategory(cat.id)}
+                class={`flex-shrink-0 px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${pillClass}`}
+              >
+                {cat.icon} {cat.label}
+              </button>
+            )
+          })}
         </div>
       </div>
 
       {/* Task list */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px 16px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div class="flex-1 overflow-y-auto px-4 pb-4">
+        <div class="flex flex-col gap-2">
           {visibleTasks.map(task => {
             const hasMats = !task.materials || Object.entries(task.materials).every(
               ([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty
             )
             const invFull = freeSlots(inventory) === 0
+            const enabled = hasMats && !invFull
+            const rowClass = enabled
+              ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
+              : 'bg-[#111] border-[#1a1a1a] opacity-45'
 
             return (
-              <div key={task.id} style={{ display: 'flex', gap: '8px', alignItems: 'stretch' }}>
+              <div key={task.id} class="flex gap-2 items-stretch">
                 <button
-                  onClick={() => hasMats && !invFull && startTask(task)}
-                  disabled={!hasMats || invFull}
-                  style={{
-                    flex: 1,
-                    padding: '12px',
-                    borderRadius: '12px',
-                    border: '1px solid',
-                    borderColor: hasMats && !invFull ? '#2a2a2a' : '#1a1a1a',
-                    background: hasMats && !invFull ? '#1a1a1a' : '#111',
-                    opacity: hasMats && !invFull ? 1 : 0.45,
-                    textAlign: 'left',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                  }}
+                  onClick={() => enabled && startTask(task)}
+                  disabled={!enabled}
+                  class={`flex-1 p-3 rounded-xl border text-left flex items-center gap-3 ${rowClass}`}
                 >
-                  <span style={{ fontSize: '28px', flexShrink: 0 }}>{task.icon}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '13px', fontWeight: '600', color: '#e8d5b0', marginBottom: '4px' }}>{task.name}</div>
-                    <div style={{ fontSize: '10px', color: '#c8a96e', opacity: 0.8 }}>
+                  <span class="text-[28px] flex-shrink-0">{task.icon}</span>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>
+                    <div class="text-[10px] text-[#c8a96e] opacity-80">
                       ⏱ {(task.ticks * 0.6).toFixed(1)}s/action
                       {task.materials && (
-                        <span style={{ color: '#e8d5b0', opacity: 0.5 }}>
+                        <span class="text-[var(--color-parchment)] opacity-50">
                           {' · '}Needs: {Object.entries(task.materials).map(([id, qty]) => `${ITEM_NAMES[id] || id} ×${qty}`).join(', ')}
                         </span>
                       )}
                     </div>
                   </div>
-                  <div style={{ flexShrink: 0, textAlign: 'right' }}>
-                    <div style={{ fontSize: '18px' }}>→</div>
-                    <div style={{ fontSize: '9px', color: '#c8a96e', opacity: 0.7 }}>{ITEM_NAMES[task.product] || task.product}</div>
+                  <div class="flex-shrink-0 text-right">
+                    <div class="text-[18px]">→</div>
+                    <div class="text-[9px] text-[#c8a96e] opacity-70">{ITEM_NAMES[task.product] || task.product}</div>
                     {task.materials && (
-                      <div style={{ fontSize: '9px', color: hasMats ? '#4caf50' : '#e57373', marginTop: '2px' }}>
+                      <div class={`text-[9px] mt-[2px] ${hasMats ? 'text-[#4caf50]' : 'text-[#e57373]'}`}>
                         {hasMats ? '✓ have mats' : '✗ no mats'}
                       </div>
                     )}
@@ -505,23 +492,11 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
                 </button>
                 <button
                   onClick={() => handleAddToHome(task)}
-                  style={{
-                    padding: '0 12px',
-                    borderRadius: '12px',
-                    background: '#1a1a1a',
-                    border: '1px solid #2a2a2a',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '2px',
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                  }}
                   title="Add to Home Screen"
+                  class="px-3 rounded-xl bg-[var(--color-void-light)] border border-[#2a2a2a] flex flex-col items-center justify-center gap-[2px] cursor-pointer flex-shrink-0"
                 >
-                  <span style={{ fontSize: '16px' }}>🏠</span>
-                  <span style={{ fontSize: '8px', color: '#e8d5b0', opacity: 0.5 }}>Add</span>
+                  <span class="text-[16px]">🏠</span>
+                  <span class="text-[8px] text-[var(--color-parchment)] opacity-50">Add</span>
                 </button>
               </div>
             )
