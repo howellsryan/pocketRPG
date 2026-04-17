@@ -3,7 +3,8 @@
 // successful push.
 
 import { api, getToken, getCharacterId, setLocalCharacterId } from './api.js'
-import { encodeSaveData, buildSavePayloadFromState, applySavePayload, decodeSaveBase64 } from '../db/saveload.js'
+import { buildSavePayloadFromState, applySavePayload, decodeSaveBase64 } from '../db/saveload.js'
+import { fnv1a } from '../utils/helpers.js'
 
 const PUSH_DEBOUNCE_MS = 60_000
 // Grace window for clock skew between this client and the cloud server when
@@ -20,6 +21,18 @@ function canSync() {
   return !!getToken() && !!getCharacterId()
 }
 
+// Decode a save response from the API, handling both the new JSON format
+// (save_data field) and the legacy base64 format for existing rows.
+function decodeSaveResponse({ save_data, base64, hash }) {
+  if (save_data !== undefined) {
+    if (fnv1a(save_data) !== hash) throw new Error('Cloud save integrity check failed')
+    return { data: JSON.parse(save_data), hash }
+  }
+  // Legacy base64 row — decode client-side (hash is embedded inside the blob)
+  const decoded = decodeSaveBase64(base64)
+  return { data: decoded.data, hash: decoded.hash }
+}
+
 async function flushNow() {
   pendingTimer = null
   if (!canSync() || !pendingSnapshot) return
@@ -33,12 +46,13 @@ async function flushNow() {
   inFlight = true
   try {
     const data = buildSavePayloadFromState(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig, snap.homeShortcuts, snap.bossKillCounts)
-    const { base64, hash } = encodeSaveData(data)
+    const json = JSON.stringify(data)
+    const hash = fnv1a(json)
     if (hash === lastPushedHash) return
-    const res = await api.putSave(base64, hash)
+    const res = await api.putSave(json, hash)
     lastPushedHash = hash
     if (res?.updatedAt) lastPushedAt = res.updatedAt
-    console.log('[PocketRPG] Cloud save pushed, size:', base64.length)
+    console.log('[PocketRPG] Cloud save pushed, size:', json.length)
   } catch (err) {
     console.warn('[PocketRPG] Cloud push failed:', err.message)
   } finally {
@@ -68,14 +82,14 @@ export async function pushNow(snapshot) {
 }
 
 // Public: pull the cloud save for the selected character.
-// Returns { applied, payload, base64, updatedAt } or { applied: false, ... }.
+// Returns { applied, payload, hash, updatedAt } or { applied: false }.
 export async function pullSave() {
   if (!canSync()) return { applied: false }
   const res = await api.getSave()
   if (!res || !res.save) return { applied: false }
-  const { base64, updatedAt } = res.save
-  const { data } = decodeSaveBase64(base64)
-  return { applied: false, payload: data, base64, updatedAt }
+  const { updatedAt } = res.save
+  const { data, hash } = decodeSaveResponse(res.save)
+  return { applied: false, payload: data, hash, updatedAt }
 }
 
 // Public: check if the cloud copy is meaningfully newer than the last save we
@@ -87,20 +101,19 @@ export async function checkCloudNewer() {
   if (!canSync()) return null
   const res = await api.getSave()
   if (!res || !res.save) return null
-  const { base64, hash, updatedAt } = res.save
-  if (hash === lastPushedHash) return null
+  const { hash: serverHash, updatedAt } = res.save
+  if (serverHash === lastPushedHash) return null
   if (updatedAt <= lastPushedAt + FRESHNESS_GRACE_MS) return null
-  const { data } = decodeSaveBase64(base64)
-  return { payload: data, base64, updatedAt }
+  const { data, hash } = decodeSaveResponse(res.save)
+  return { payload: data, hash, updatedAt }
 }
 
 // Public: apply a previously-pulled cloud save to IDB. Caller decides whether
 // to do this based on conflict-resolution UX.
-export async function applyCloudSave(payload, base64, updatedAt) {
+export async function applyCloudSave(payload, hash, updatedAt) {
   await applySavePayload(payload)
   // Mark the just-applied save as the last-pushed hash so we don't immediately
   // re-upload identical bytes.
-  const { hash } = decodeSaveBase64(base64)
   lastPushedHash = hash
   if (updatedAt) lastPushedAt = updatedAt
   // IDB now holds this character's data — stamp ownership so the next boot
