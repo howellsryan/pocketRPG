@@ -2,7 +2,7 @@
 // and skipped entirely when the encoded save hasn't changed since the last
 // successful push.
 
-import { api, getToken, getCharacterId } from './api.js'
+import { api, getToken, getCharacterId, setLocalCharacterId } from './api.js'
 import { encodeSaveData, buildSavePayloadFromState, applySavePayload, decodeSaveBase64 } from '../db/saveload.js'
 
 const PUSH_DEBOUNCE_MS = 60_000
@@ -103,6 +103,10 @@ export async function applyCloudSave(payload, base64, updatedAt) {
   const { hash } = decodeSaveBase64(base64)
   lastPushedHash = hash
   if (updatedAt) lastPushedAt = updatedAt
+  // IDB now holds this character's data — stamp ownership so the next boot
+  // knows which character these rows belong to.
+  const charId = getCharacterId()
+  if (charId) setLocalCharacterId(charId)
 }
 
 // Reset cached state — call on logout / character switch.

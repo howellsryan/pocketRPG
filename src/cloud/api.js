@@ -4,6 +4,10 @@
 const TOKEN_KEY = 'pocketrpg_cloud_token'
 const CHARACTER_KEY = 'pocketrpg_cloud_character_id'
 const CHARACTER_NAME_KEY = 'pocketrpg_cloud_character_name'
+// Tracks which character's data currently occupies IndexedDB on this device.
+// Used to detect "I switched characters but IDB still holds the old one" and
+// wipe before loading, so characters never bleed into each other.
+const LOCAL_CHARACTER_KEY = 'pocketrpg_local_character_id'
 
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY)
@@ -31,6 +35,16 @@ export function setCharacter(id, username) {
 
 export function getCharacterName() {
   return localStorage.getItem(CHARACTER_NAME_KEY)
+}
+
+export function getLocalCharacterId() {
+  const v = localStorage.getItem(LOCAL_CHARACTER_KEY)
+  return v ? parseInt(v, 10) : null
+}
+
+export function setLocalCharacterId(id) {
+  if (id) localStorage.setItem(LOCAL_CHARACTER_KEY, String(id))
+  else localStorage.removeItem(LOCAL_CHARACTER_KEY)
 }
 
 export function clearAuth() {
