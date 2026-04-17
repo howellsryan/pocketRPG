@@ -20352,14 +20352,14 @@ function Panel({ children, className = '', padding = 'p-3', as: Tag = 'div', ...
 }
 
 // ── components/Button.js ──
-const VARIANTS = {
+const BUTTON_VARIANTS = {
     primary: 'bg-[var(--color-gold)] text-[var(--color-void)] hover:bg-[var(--color-gold-light)] border border-transparent',
     secondary: 'bg-[#222] text-[var(--color-parchment)] border border-[var(--color-void-border)] hover:bg-[#2a2a2a]',
     danger: 'bg-[var(--color-blood)] text-white border border-transparent hover:bg-[var(--color-blood-light)]',
     success: 'bg-[#1a4a2a] text-[#4ade80] border border-transparent hover:bg-[#235a38]',
     ghost: 'bg-transparent text-[var(--color-parchment)] border border-transparent hover:bg-[var(--color-void-light)]',
 };
-const SIZES = {
+const BUTTON_SIZES = {
     sm: 'px-2 py-1 text-xs',
     md: 'px-3 py-2 text-sm',
     lg: 'px-4 py-3 text-sm font-bold',
@@ -20372,14 +20372,14 @@ const SIZES = {
  * Disabled state handled automatically.
  */
 function Button({ variant = 'secondary', size = 'md', disabled = false, className = '', children, ...props }) {
-    const variantClass = VARIANTS[variant] || VARIANTS.secondary;
-    const sizeClass = SIZES[size] || SIZES.md;
+    const variantClass = BUTTON_VARIANTS[variant] || BUTTON_VARIANTS.secondary;
+    const sizeClass = BUTTON_SIZES[size] || BUTTON_SIZES.md;
     const disabledClass = disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer';
     return (h("button", { disabled: disabled, class: `rounded-lg font-semibold transition-colors ${variantClass} ${sizeClass} ${disabledClass} ${className}`, ...props }, children));
 }
 
 // ── components/SectionHeader.js ──
-const SIZES = {
+const SECTION_HEADER_SIZES = {
     sm: 'text-[9px]',
     md: 'text-[11px]',
     lg: 'text-[13px]',
@@ -20389,7 +20389,7 @@ const SIZES = {
  * Replaces the repeated inline `fontFamily: 'Cinzel, serif', fontSize: 11px, opacity: 0.6 ...` pattern.
  */
 function SectionHeader({ children, size = 'md', className = '', as: Tag = 'h3' }) {
-    return (h(Tag, { class: `font-[var(--font-display)] font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider ${SIZES[size] || SIZES.md} ${className}` }, children));
+    return (h(Tag, { class: `font-[var(--font-display)] font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider ${SECTION_HEADER_SIZES[size] || SECTION_HEADER_SIZES.md} ${className}` }, children));
 }
 
 // ── screens/HomeScreen.js ──

@@ -1,4 +1,4 @@
-const VARIANTS = {
+const BUTTON_VARIANTS = {
   primary:   'bg-[var(--color-gold)] text-[var(--color-void)] hover:bg-[var(--color-gold-light)] border border-transparent',
   secondary: 'bg-[#222] text-[var(--color-parchment)] border border-[var(--color-void-border)] hover:bg-[#2a2a2a]',
   danger:    'bg-[var(--color-blood)] text-white border border-transparent hover:bg-[var(--color-blood-light)]',
@@ -6,7 +6,7 @@ const VARIANTS = {
   ghost:     'bg-transparent text-[var(--color-parchment)] border border-transparent hover:bg-[var(--color-void-light)]',
 }
 
-const SIZES = {
+const BUTTON_SIZES = {
   sm: 'px-2 py-1 text-xs',
   md: 'px-3 py-2 text-sm',
   lg: 'px-4 py-3 text-sm font-bold',
@@ -27,8 +27,8 @@ export default function Button({
   children,
   ...props
 }) {
-  const variantClass = VARIANTS[variant] || VARIANTS.secondary
-  const sizeClass = SIZES[size] || SIZES.md
+  const variantClass = BUTTON_VARIANTS[variant] || BUTTON_VARIANTS.secondary
+  const sizeClass = BUTTON_SIZES[size] || BUTTON_SIZES.md
   const disabledClass = disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
   return (
     <button
