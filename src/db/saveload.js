@@ -26,7 +26,7 @@ export function decodeSaveBase64(base64) {
 
 // Build a save payload object from live in-memory game state. Used by the
 // 60s tick snapshot and the cloud-sync push.
-export function buildSavePayloadFromState(player, stats, inventory, bank, equipment) {
+export function buildSavePayloadFromState(player, stats, inventory, bank, equipment, bankConfig) {
   const data = {
     version: SAVE_VERSION,
     timestamp: Date.now(),
@@ -39,6 +39,7 @@ export function buildSavePayloadFromState(player, stats, inventory, bank, equipm
   }
   try { data.settings.activeTask = JSON.parse(localStorage.getItem('pocketrpg_activeTask')) } catch { data.settings.activeTask = null }
   data.settings.lastTick = parseInt(localStorage.getItem('pocketrpg_lastTick'), 10) || data.timestamp
+  if (bankConfig) data.settings.bankConfig = bankConfig
   return data
 }
 
@@ -110,9 +111,9 @@ export async function wipeLocalSave() {
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function snapshotToLocalStorage(player, stats, inventory, bank, equipment) {
+export function snapshotToLocalStorage(player, stats, inventory, bank, equipment, bankConfig) {
   try {
-    const data = buildSavePayloadFromState(player, stats, inventory, bank, equipment)
+    const data = buildSavePayloadFromState(player, stats, inventory, bank, equipment, bankConfig)
     const { base64 } = encodeSaveData(data)
     localStorage.setItem('pocketrpg_backup', base64)
     console.log('[PocketRPG] Snapshot saved to localStorage, size:', base64.length)

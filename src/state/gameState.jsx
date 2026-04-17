@@ -441,7 +441,8 @@ export function GameProvider({ children }) {
     inventory: stateRef.current.inventory,
     bank: stateRef.current.bank,
     equipment: stateRef.current.equipment,
-  }), [])
+    bankConfig: bankConfig,
+  }), [bankConfig])
 
   const value = {
     loaded, player, stats, inventory, equipment, bank, currentHP, toasts,
