@@ -97,7 +97,7 @@ const MONSTER_ICONS = {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFightStatusChange }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, unlockedFeatures } = useGame()
 
   const [combat, setCombat] = useState(null)
   const [log, setLog] = useState([])
@@ -122,6 +122,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const slayerTaskRef = useRef(slayerTask)
   const slayerPointsRef = useRef(slayerPoints)
   const bossKillCountsRef = useRef(bossKillCounts)
+  const unlockedFeaturesRef = useRef(unlockedFeatures)
   const logRef = useRef(null)
 
   useEffect(() => { hpRef.current = currentHP }, [currentHP])
@@ -132,6 +133,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   useEffect(() => { slayerTaskRef.current = slayerTask }, [slayerTask])
   useEffect(() => { slayerPointsRef.current = slayerPoints }, [slayerPoints])
   useEffect(() => { bossKillCountsRef.current = bossKillCounts }, [bossKillCounts])
+  useEffect(() => { unlockedFeaturesRef.current = unlockedFeatures }, [unlockedFeatures])
 
   // Auto-scroll log to bottom on new messages
   useEffect(() => {
@@ -207,6 +209,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       }
 
       const { combatState, events } = processCombatTick(state, playerStats, equipmentRef.current, itemsData, prayersData, inventoryRef.current)
+
+      // Master Rejuvenation: auto-refill spec bar when it hits 0 mid-fight
+      if (combatState.active && combatState.specialAttackEnergy === 0 && unlockedFeaturesRef.current.has('master_rejuvenation')) {
+        combatState.specialAttackEnergy = 100
+      }
+
       combatRef.current = combatState
       setCombat({ ...combatState })
 

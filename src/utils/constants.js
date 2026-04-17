@@ -37,7 +37,7 @@ export const UTILITY_SKILLS = ['agility', 'thieving', 'slayer', 'construction']
 
 export const ALL_SKILLS = [...COMBAT_SKILLS, ...GATHERING_SKILLS, ...PRODUCTION_SKILLS, ...UTILITY_SKILLS]
 
-export const STUB_SKILLS = new Set(['farming', 'hunter', 'runecraft', 'construction'])
+export const STUB_SKILLS = new Set(['farming', 'hunter', 'runecraft'])
 
 // Agility banking: delay in ms at level 1 and level 99
 export const AGILITY_BANK_DELAY_LV1_MS = 5 * 60 * 1000   // 5 minutes

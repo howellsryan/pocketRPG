@@ -8854,5 +8854,29 @@
     "stackable": true,
     "shopValue": 50,
     "icon": "🌴"
+  },
+  "oak_plank": {
+    "id": "oak_plank",
+    "name": "Oak plank",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 250,
+    "icon": "🪵"
+  },
+  "teak_plank": {
+    "id": "teak_plank",
+    "name": "Teak plank",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 500,
+    "icon": "🪵"
+  },
+  "mahogany_plank": {
+    "id": "mahogany_plank",
+    "name": "Mahogany plank",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 1500,
+    "icon": "🪵"
   }
 }
