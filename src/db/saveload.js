@@ -1,12 +1,12 @@
 import { getDB, deleteDB } from './database.js'
 import { fnv1a } from '../utils/helpers.js'
-import { ALL_SKILLS, INVENTORY_SIZE, EQUIPMENT_SLOTS } from '../utils/constants.js'
+import { INVENTORY_SIZE } from '../utils/constants.js'
 
 const SAVE_VERSION = 1
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Pure helpers — shared by file export, localStorage snapshot, and the
-// Cloudflare cloud-save sync.
+// Pure helpers — shared by localStorage snapshot and the Cloudflare cloud-save
+// sync.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function encodeSaveData(data) {
@@ -42,47 +42,8 @@ export function buildSavePayloadFromState(player, stats, inventory, bank, equipm
   return data
 }
 
-// Reads the entire persisted game state from IDB into a payload object.
-async function readSavePayloadFromDB() {
-  const db = await getDB()
-  const data = {
-    version: SAVE_VERSION,
-    timestamp: Date.now(),
-    player: await db.get('player', 'profile'),
-    stats: {},
-    inventory: [],
-    bank: {},
-    equipment: {},
-    settings: {},
-  }
-
-  for (const skill of ALL_SKILLS) {
-    data.stats[skill] = await db.get('stats', skill)
-  }
-
-  for (let i = 0; i < INVENTORY_SIZE; i++) {
-    data.inventory[i] = await db.get('inventory', i) || null
-  }
-
-  const bankKeys = await db.getAllKeys('bank')
-  for (const key of bankKeys) {
-    data.bank[key] = await db.get('bank', key)
-  }
-
-  for (const slot of EQUIPMENT_SLOTS) {
-    data.equipment[slot] = await db.get('equipment', slot) || null
-  }
-
-  const settingKeys = await db.getAllKeys('settings')
-  for (const key of settingKeys) {
-    data.settings[key] = await db.get('settings', key)
-  }
-
-  return data
-}
-
-// Wipe IDB and apply a decoded save payload. Shared by file import,
-// localStorage-backup restore, and cloud-save pull.
+// Wipe IDB and apply a decoded save payload. Shared by localStorage-backup
+// restore and cloud-save pull.
 export async function applySavePayload(data) {
   await deleteDB()
   const db = await getDB()
@@ -137,35 +98,6 @@ export async function applySavePayload(data) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
-
-export async function exportSave() {
-  const data = await readSavePayloadFromDB()
-  const { base64 } = encodeSaveData(data)
-
-  const blob = new Blob([base64], { type: 'application/octet-stream' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `pocketrpg_${data.player?.name || 'save'}_${Date.now()}.pocketrpg`
-  a.click()
-  URL.revokeObjectURL(url)
-}
-
-export async function importSave(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = async (e) => {
-      try {
-        const { data } = decodeSaveBase64(e.target.result)
-        await applySavePayload(data)
-        resolve()
-      } catch (err) {
-        reject(err)
-      }
-    }
-    reader.readAsText(file)
-  })
-}
 
 export function snapshotToLocalStorage(player, stats, inventory, bank, equipment) {
   try {

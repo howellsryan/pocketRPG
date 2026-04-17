@@ -18,9 +18,9 @@ import { SCREENS } from './utils/constants.js'
 import { hasSave, closeDB } from './db/database.js'
 import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
 import { startTicks, stopTicks, onTick } from './engine/tick.js'
-import { exportSave, importSave, snapshotToLocalStorage, restoreFromLocalStorage } from './db/saveload.js'
-import { captureTokenFromHash, getToken, getCharacterId, clearAuth } from './cloud/api.js'
-import { schedulePushSave, pushNow, pullSave, applyCloudSave, resetSyncState } from './cloud/sync.js'
+import { snapshotToLocalStorage, restoreFromLocalStorage } from './db/saveload.js'
+import { captureTokenFromHash, getToken, getCharacterId, setCharacter, clearAuth } from './cloud/api.js'
+import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState } from './cloud/sync.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
 import { simulateIdleThieving } from './engine/thieving.js'
 import { getLevelFromXP } from './engine/experience.js'
@@ -30,7 +30,6 @@ function GameApp() {
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [gameReady, setGameReady] = useState(false)
   const [showNewGame, setShowNewGame] = useState(false)
-  const [showSaveMenu, setShowSaveMenu] = useState(false)
   const [playerName, setPlayerName] = useState('')
   const [activity, setActivity] = useState(null)
   const [idleResult, setIdleResult] = useState(null) // { elapsedMs, task, xpGained, itemsGained, lootLost, monstersKilled }
@@ -111,6 +110,22 @@ function GameApp() {
 
           // Clear the hiddenAt stamp so a second quick return doesn't double-count
           localStorage.removeItem('pocketrpg_hiddenAt')
+
+          // Race-condition guard: another concurrent session may have written
+          // to the cloud while this tab was hidden. If so, take the cloud copy
+          // instead of overwriting it with stale local idle simulation.
+          try {
+            const cloudNewer = await checkCloudNewer()
+            if (cloudNewer) {
+              await applyCloudSave(cloudNewer.payload, cloudNewer.base64, cloudNewer.updatedAt)
+              await loadGame()
+              addToast('☁️ Loaded newer save from another session', 'info')
+              setIdleResult({ elapsedMs, task: savedTask, cloudOverride: true })
+              return
+            }
+          } catch (e) {
+            console.warn('[PocketRPG] Cloud freshness check failed:', e.message)
+          }
 
           // If no active task, still show "Welcome Back" modal with elapsed time
           if (!savedTask) {
@@ -284,7 +299,7 @@ function GameApp() {
             const localTs = parseInt(localStorage.getItem('pocketrpg_lastTick'), 10) || 0
             if (!localExists) {
               // Fresh device — apply cloud save straight away
-              await applyCloudSave(result.payload, result.base64)
+              await applyCloudSave(result.payload, result.base64, result.updatedAt)
             } else if (result.updatedAt > localTs + 60_000) {
               // Cloud is meaningfully newer — ask the user
               setConflict({
@@ -314,7 +329,7 @@ function GameApp() {
   async function resolveConflict(useCloud) {
     if (!conflict) return
     if (useCloud) {
-      await applyCloudSave(conflict.cloudPayload, conflict.cloudBase64)
+      await applyCloudSave(conflict.cloudPayload, conflict.cloudBase64, conflict.cloudUpdatedAt)
     }
     setConflict(null)
     setCloudPhase('ready')
@@ -370,32 +385,19 @@ function GameApp() {
     setGameReady(true)
   }
 
-  async function handleExport() {
-    try {
-      await exportSave()
-      addToast('Save exported!', 'info')
-      setShowSaveMenu(false)
-    } catch (err) {
-      addToast('Export failed', 'error')
-    }
+  // Switch character — flush any pending push, clear character (keep GitHub
+   // token) and bounce back to AuthScreen so the user can pick or create
+   // another character under the same GitHub login.
+  async function handleLogoutToCharacterSelect() {
+    try { await pushNow(getSnapshot()) } catch { /* non-fatal */ }
+    setActiveTask(null)
+    localStorage.removeItem('pocketrpg_activeTask')
+    localStorage.removeItem('pocketrpg_hiddenAt')
+    setCharacter(null)
+    resetSyncState()
+    setGameReady(false)
+    setCloudPhase('auth')
   }
-
-  async function handleImport(e) {
-    const file = e.target?.files?.[0]
-    if (!file) return
-    try {
-      await importSave(file)
-      await loadGame()
-      // Dismiss whichever UI triggered this — new game screen or save menu
-      setShowNewGame(false)
-      setShowSaveMenu(false)
-      setGameReady(true)
-      addToast('Save imported!', 'info')
-    } catch (err) {
-      addToast(`Import failed: ${err.message}`, 'error')
-    }
-  }
-
 
   // Navigate with optional action data
   const navigate = (scr, data) => {
@@ -484,12 +486,6 @@ function GameApp() {
             Begin Adventure
           </button>
 
-          <div style={{ marginTop: '16px', textAlign: 'center' }}>
-            <label style={{ fontSize: '12px', color: '#7bb3f0', cursor: 'pointer' }}>
-              Import existing save
-              <input type="file" accept=".pocketrpg" onChange={handleImport} style={{ display: 'none' }} />
-            </label>
-          </div>
         </div>
       </div>
     )
@@ -509,7 +505,7 @@ function GameApp() {
   // Main game
   const renderScreen = () => {
     switch (screen) {
-      case SCREENS.HOME:      return <HomeScreen onNavigate={navigate} onSaveMenu={() => setShowSaveMenu(true)} />
+      case SCREENS.HOME:      return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} />
       case SCREENS.STATS:     return <StatsScreen />
       case SCREENS.INVENTORY: return <InventoryScreen />
       case SCREENS.EQUIPMENT: return <EquipmentScreen />
@@ -519,7 +515,7 @@ function GameApp() {
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} />
       case SCREENS.AGILITY:   return <AgilityScreen initialActionId={actionData?.actionId} />
       case SCREENS.STORE:     return <GeneralStoreScreen />
-      default:                return <HomeScreen onNavigate={navigate} onSaveMenu={() => setShowSaveMenu(true)} />
+      default:                return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} />
     }
   }
 
@@ -573,6 +569,16 @@ function GameApp() {
                 }
 
                 return (<>
+                  {/* Cloud override notice — another session saved while we were away */}
+                  {idleResult.cloudOverride && (
+                    <div style={{ marginBottom: '12px', padding: '10px', background: 'rgba(123, 179, 240, 0.12)', borderRadius: '10px', borderLeft: '3px solid #7bb3f0' }}>
+                      <div style={{ fontSize: '12px', color: '#7bb3f0', fontWeight: 'bold', marginBottom: '4px' }}>☁️ Cloud Save Loaded</div>
+                      <div style={{ fontSize: '11px', color: '#bcd7f5', lineHeight: '1.4' }}>
+                        Another session of this character saved while you were away. Idle progress on this device was discarded to keep both sessions in sync.
+                      </div>
+                    </div>
+                  )}
+
                   {/* Boss Combat Warning */}
                   {idleResult.task?.type === 'combat' && idleResult.task.monster?.boss && (
                     <div style={{ marginBottom: '12px', padding: '10px', background: 'rgba(220, 53, 69, 0.15)', borderRadius: '10px', borderLeft: '3px solid #dc3545' }}>
@@ -707,40 +713,6 @@ function GameApp() {
         </div>
       )}
 
-      {/* Save/Load overlay */}
-      {showSaveMenu && (
-        <div
-          onClick={() => setShowSaveMenu(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{ width: '100%', background: '#1a1a1a', borderRadius: '20px 20px 0 0', padding: '20px', border: '1px solid #333', borderBottom: 'none' }}
-          >
-            <div style={{ width: '40px', height: '4px', background: '#333', borderRadius: '2px', margin: '0 auto 20px' }} />
-            <h3 style={{ fontFamily: 'Cinzel, serif', fontSize: '15px', color: '#d4af37', textAlign: 'center', marginBottom: '16px' }}>Save & Load</h3>
-
-            <button
-              onClick={handleExport}
-              style={{ width: '100%', padding: '14px', borderRadius: '12px', background: '#2a2a2a', border: '1px solid #3a3a3a', color: '#e8d5b0', fontSize: '14px', fontWeight: '600', marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}
-            >
-              📤 Export Save File
-            </button>
-
-            <label style={{ display: 'block', width: '100%', padding: '14px', borderRadius: '12px', background: '#2a2a2a', border: '1px solid #3a3a3a', color: '#7bb3f0', fontSize: '14px', fontWeight: '600', marginBottom: '10px', textAlign: 'center', cursor: 'pointer', boxSizing: 'border-box' }}>
-              📥 Import Save File
-              <input type="file" accept=".pocketrpg" onChange={handleImport} style={{ display: 'none' }} />
-            </label>
-
-            <button
-              onClick={() => setShowSaveMenu(false)}
-              style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'transparent', border: '1px solid #2a2a2a', color: '#e8d5b0', opacity: 0.5, fontSize: '13px', cursor: 'pointer' }}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
