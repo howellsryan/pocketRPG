@@ -1,0 +1,16 @@
+name = "pocketrpg"
+compatibility_date = "2025-01-01"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "pocketrpg"
+database_id = "REPLACE_WITH_REAL_D1_ID"
+
+[vars]
+APP_BASE_URL = "https://pocketrpg.pages.dev"
+
+# Secrets to set via dashboard or `wrangler pages secret put`:
+#   JWT_SECRET             — random 32+ byte string used to sign session JWTs
+#   GITHUB_CLIENT_ID       — from GitHub OAuth App
+#   GITHUB_CLIENT_SECRET   — from GitHub OAuth App

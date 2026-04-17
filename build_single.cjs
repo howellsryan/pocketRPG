@@ -27,6 +27,8 @@ const sourceFiles = [
   'db/database.js',
   'db/stores.js',
   'db/saveload.js',
+  'cloud/api.js',
+  'cloud/sync.js',
   'state/gameState.js',
   'components/Modal.js',
   'components/HPBar.js',
@@ -56,6 +58,7 @@ const sourceFiles = [
   'screens/GatherScreen.js',
   'screens/GeneralStoreScreen.js',
   'screens/EquipmentScreen.js',
+  'screens/AuthScreen.js',
   'App.js',
 ];
 

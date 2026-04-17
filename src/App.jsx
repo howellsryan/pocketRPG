@@ -13,11 +13,14 @@ import GatherScreen from './screens/GatherScreen.jsx'
 import AgilityScreen from './screens/AgilityScreen.jsx'
 import GeneralStoreScreen from './screens/GeneralStoreScreen.jsx'
 import EquipmentScreen from './screens/EquipmentScreen.jsx'
+import AuthScreen from './screens/AuthScreen.jsx'
 import { SCREENS } from './utils/constants.js'
 import { hasSave, closeDB } from './db/database.js'
 import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
 import { startTicks, stopTicks, onTick } from './engine/tick.js'
 import { exportSave, importSave, snapshotToLocalStorage, restoreFromLocalStorage } from './db/saveload.js'
+import { captureTokenFromHash, getToken, getCharacterId, clearAuth } from './cloud/api.js'
+import { schedulePushSave, pushNow, pullSave, applyCloudSave, resetSyncState } from './cloud/sync.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
 import { simulateIdleThieving } from './engine/thieving.js'
 import { getLevelFromXP } from './engine/experience.js'
@@ -33,6 +36,9 @@ function GameApp() {
   const [idleResult, setIdleResult] = useState(null) // { elapsedMs, task, xpGained, itemsGained, lootLost, monstersKilled }
   const [actionData, setActionData] = useState(null) // { monsterId, gatherTaskId, skillId, actionId }
   const [isInBossFight, setIsInBossFight] = useState(false) // Track if currently in a boss fight
+  // Cloud auth gate: 'pending' until we resolve, 'auth' if AuthScreen needed, 'ready' to boot game
+  const [cloudPhase, setCloudPhase] = useState('pending')
+  const [conflict, setConflict] = useState(null) // { cloudPayload, cloudBase64, cloudUpdatedAt, localUpdatedAt }
 
   // Refs for tick-based systems
   const hpRegenCounter = useRef(0)
@@ -40,7 +46,7 @@ function GameApp() {
   const hiddenAtPerfRef = useRef(null) // performance.now() at hide — monotonic, immune to clock changes
 
   useEffect(() => {
-    checkSave()
+    initCloudAndSave()
   }, [])
 
   useEffect(() => {
@@ -81,6 +87,8 @@ function GameApp() {
         hiddenAtPerfRef.current = performance.now() // monotonic — not affected by clock changes
         localStorage.setItem('pocketrpg_hiddenAt', String(now))
         localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
+        // Flush any pending cloud push before the tab gets suspended.
+        try { pushNow(getSnapshot()) } catch (e) { /* non-fatal */ }
       } else {
         // Page returning to foreground — prefer performance.now() diff (monotonic) over wall-clock
         // to prevent system-time manipulation from granting fake idle progress.
@@ -202,6 +210,8 @@ function GameApp() {
           }
 
           setIdleResult({ elapsedMs, task: savedTask, ...sim })
+          // Push the post-idle state to the cloud (debounced + hash-skipped).
+          schedulePushSave(getSnapshot())
         } catch (err) {
           console.warn('[PocketRPG] Visibility idle error:', err)
           // DB may be stale — force reconnect for next read
@@ -232,6 +242,8 @@ function GameApp() {
         snapshotCounter.current = 0
         const snap = getSnapshot()
         snapshotToLocalStorage(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment)
+        // Cloud sync piggy-backs on the local snapshot cadence (debounced, hash-skipped).
+        schedulePushSave(snap)
       }
       hpRegenCounter.current++
       if (hpRegenCounter.current >= 100) {
@@ -244,6 +256,70 @@ function GameApp() {
     })
     return unsub
   }, [gameReady, currentHP, stats])
+
+  async function initCloudAndSave() {
+    try {
+      // Pull token dropped by OAuth redirect (#token=...) into localStorage + clean URL
+      captureTokenFromHash()
+
+      const offlineMode = localStorage.getItem('pocketrpg_offline_mode') === '1'
+      const hasToken = !!getToken()
+      const hasCharacter = !!getCharacterId()
+
+      if (!hasToken && !offlineMode) {
+        setCloudPhase('auth')
+        return
+      }
+      if (hasToken && !hasCharacter) {
+        setCloudPhase('auth')
+        return
+      }
+
+      if (hasToken && hasCharacter) {
+        // Pull cloud save and decide on conflict before touching local IDB
+        try {
+          const result = await pullSave()
+          if (result && result.payload) {
+            const localExists = await hasSave()
+            const localTs = parseInt(localStorage.getItem('pocketrpg_lastTick'), 10) || 0
+            if (!localExists) {
+              // Fresh device — apply cloud save straight away
+              await applyCloudSave(result.payload, result.base64)
+            } else if (result.updatedAt > localTs + 60_000) {
+              // Cloud is meaningfully newer — ask the user
+              setConflict({
+                cloudPayload: result.payload,
+                cloudBase64: result.base64,
+                cloudUpdatedAt: result.updatedAt,
+                localUpdatedAt: localTs,
+              })
+              return
+            }
+            // else: local is newer or effectively equal — keep local, next push will overwrite cloud
+          }
+        } catch (err) {
+          console.warn('[PocketRPG] Cloud pull failed, continuing with local save:', err.message)
+        }
+      }
+
+      setCloudPhase('ready')
+      await checkSave()
+    } catch (err) {
+      console.warn('[PocketRPG] Cloud init failed, falling back to local:', err)
+      setCloudPhase('ready')
+      await checkSave()
+    }
+  }
+
+  async function resolveConflict(useCloud) {
+    if (!conflict) return
+    if (useCloud) {
+      await applyCloudSave(conflict.cloudPayload, conflict.cloudBase64)
+    }
+    setConflict(null)
+    setCloudPhase('ready')
+    await checkSave()
+  }
 
   async function checkSave() {
     try {
@@ -328,6 +404,55 @@ function GameApp() {
     setActiveTask(null)
     setActionData(data || null)
     setScreen(scr)
+  }
+
+  // Cloud conflict modal — shown while cloudPhase is still resolving
+  if (conflict) {
+    const fmt = (ms) => ms ? new Date(ms).toLocaleString() : '—'
+    return (
+      <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: '#0f0f0f' }}>
+        <div style={{ width: '100%', maxWidth: '380px', background: '#1a1a1a', borderRadius: '20px', border: '1px solid #333', overflow: 'hidden' }}>
+          <div style={{ padding: '20px', borderBottom: '1px solid #333' }}>
+            <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '17px', color: '#d4af37', textAlign: 'center', marginBottom: '8px' }}>Cloud save is newer</h2>
+            <p style={{ fontSize: '12px', color: '#e8d5b0', opacity: 0.7, textAlign: 'center', lineHeight: 1.5 }}>
+              Your cloud save was updated more recently than the save on this device. Which copy do you want to keep?
+            </p>
+          </div>
+          <div style={{ padding: '16px' }}>
+            <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, marginBottom: '4px' }}>☁️ Cloud: {fmt(conflict.cloudUpdatedAt)}</div>
+            <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, marginBottom: '16px' }}>💾 Local: {fmt(conflict.localUpdatedAt)}</div>
+            <button onClick={() => resolveConflict(true)} style={{ width: '100%', padding: '13px', borderRadius: '12px', background: 'linear-gradient(135deg, #b8940e, #d4af37)', color: '#0f0f0f', fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '14px', border: 'none', cursor: 'pointer', marginBottom: '10px' }}>Use Cloud Save</button>
+            <button onClick={() => resolveConflict(false)} style={{ width: '100%', padding: '13px', borderRadius: '12px', background: '#2a2a2a', border: '1px solid #3a3a3a', color: '#e8d5b0', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>Keep Local (overwrites cloud next save)</button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Auth gate — shown before we touch local save
+  if (cloudPhase === 'auth') {
+    return (
+      <AuthScreen
+        onCloudReady={async () => {
+          // After character selection, re-run the full cloud+local boot
+          setCloudPhase('pending')
+          await initCloudAndSave()
+        }}
+        onPlayOffline={() => {
+          localStorage.setItem('pocketrpg_offline_mode', '1')
+          setCloudPhase('ready')
+          checkSave()
+        }}
+      />
+    )
+  }
+
+  if (cloudPhase === 'pending') {
+    return (
+      <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f0f0f' }}>
+        <div style={{ fontFamily: 'Cinzel, serif', fontSize: '20px', color: '#d4af37' }}>Loading…</div>
+      </div>
+    )
   }
 
   // New game screen
