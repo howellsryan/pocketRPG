@@ -2,7 +2,7 @@ import { createContext } from 'preact'
 import { useState, useContext, useCallback, useEffect, useRef } from 'preact/hooks'
 import { getAllStats, getInventory, getEquipment, getBank, getPlayer, saveAllStats, saveInventory, saveEquipment, saveBank, savePlayer, getSetting, saveSetting } from '../db/stores.js'
 import { getLevelFromXP, clampXP } from '../engine/experience.js'
-import { simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility } from '../engine/idleEngine.js'
+import { simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from '../engine/idleEngine.js'
 import { simulateIdleThieving } from '../engine/thieving.js'
 import { ALL_SKILLS, MAX_XP, AUTO_SAVE_DEBOUNCE } from '../utils/constants.js'
 import { debounce } from '../utils/helpers.js'
@@ -78,6 +78,13 @@ export function GameProvider({ children }) {
         }
 
         if (sim) {
+          // Apply HP regeneration during idle
+          const hpRegenSim = simulateIdleHPRegen(elapsedMs)
+          if (hpRegenSim.hpRegen > 0) {
+            const maxHP = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
+            savedHP = Math.min((savedHP != null ? savedHP : maxHP) + hpRegenSim.hpRegen, maxHP)
+            sim.hpRestored = hpRegenSim.hpRegen
+          }
           // Apply XP directly to raw stats object
           if (sim.xpGained) {
             for (const [skill, xp] of Object.entries(sim.xpGained)) {

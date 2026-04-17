@@ -17,6 +17,16 @@ import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_P
 import { getAgilityBankDelayFromStats, simulateIdleAgility } from './agility.js'
 
 const TICK_MS = 600
+const HP_REGEN_INTERVAL_MS = 60000 // 60 seconds per 1 HP
+
+/**
+ * Calculate HP regenerated during idle time.
+ * Returns { hpRegen } where hpRegen is the number of HP points restored.
+ */
+export function simulateIdleHPRegen(elapsedMs) {
+  const hpRegen = Math.floor(elapsedMs / HP_REGEN_INTERVAL_MS)
+  return { hpRegen }
+}
 
 /**
  * Roll drops from a drop table (used for mining gems, etc.)
