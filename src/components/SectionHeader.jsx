@@ -1,4 +1,4 @@
-const SIZES = {
+const SECTION_HEADER_SIZES = {
   sm: 'text-[9px]',
   md: 'text-[11px]',
   lg: 'text-[13px]',
@@ -11,7 +11,7 @@ const SIZES = {
 export default function SectionHeader({ children, size = 'md', className = '', as: Tag = 'h3' }) {
   return (
     <Tag
-      class={`font-[var(--font-display)] font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider ${SIZES[size] || SIZES.md} ${className}`}
+      class={`font-[var(--font-display)] font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider ${SECTION_HEADER_SIZES[size] || SECTION_HEADER_SIZES.md} ${className}`}
     >
       {children}
     </Tag>
