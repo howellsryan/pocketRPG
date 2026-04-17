@@ -15,9 +15,15 @@ const DEFAULT_SHORTCUTS = [
   { label: 'Equipment', icon: '🛡️', screen: SCREENS.EQUIPMENT },
 ]
 
-export default function HomeScreen({ onNavigate, onLogout }) {
+export default function HomeScreen({ onNavigate, onLogout, isCloudAccount }) {
   const { player, stats, homeShortcuts, updateHomeShortcuts } = useGame()
   const [removeConfirm, setRemoveConfirm] = useState(null)
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  async function handleLogout() {
+    setLoggingOut(true)
+    try { await onLogout() } finally { setLoggingOut(false) }
+  }
 
   if (!player) return null
 
@@ -69,10 +75,11 @@ export default function HomeScreen({ onNavigate, onLogout }) {
           </div>
         </div>
         <button
-          onClick={onLogout}
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #333', borderRadius: '8px', padding: '6px 10px', fontSize: '11px', color: '#e8d5b0', opacity: 0.7, cursor: 'pointer' }}
+          onClick={handleLogout}
+          disabled={loggingOut}
+          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #333', borderRadius: '8px', padding: '6px 10px', fontSize: '11px', color: '#e8d5b0', opacity: loggingOut ? 0.4 : 0.7, cursor: loggingOut ? 'default' : 'pointer' }}
         >
-          🚪 Logout
+          {isCloudAccount && loggingOut ? '☁️ Saving...' : '🚪 Logout'}
         </button>
       </div>
 
