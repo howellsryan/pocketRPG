@@ -95,6 +95,17 @@ export async function applySavePayload(data) {
   }
 }
 
+// Wipe everything we persist per-character on the local device. Used when
+// switching to a different character so the new character doesn't inherit
+// IDB rows or idle-engine timers from the previous one.
+export async function wipeLocalSave() {
+  await deleteDB()
+  localStorage.removeItem('pocketrpg_backup')
+  localStorage.removeItem('pocketrpg_lastTick')
+  localStorage.removeItem('pocketrpg_activeTask')
+  localStorage.removeItem('pocketrpg_hiddenAt')
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────

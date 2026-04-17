@@ -18,8 +18,8 @@ import { SCREENS } from './utils/constants.js'
 import { hasSave, closeDB } from './db/database.js'
 import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
 import { startTicks, stopTicks, onTick } from './engine/tick.js'
-import { snapshotToLocalStorage, restoreFromLocalStorage } from './db/saveload.js'
-import { captureTokenFromHash, getToken, getCharacterId, setCharacter, clearAuth } from './cloud/api.js'
+import { snapshotToLocalStorage, restoreFromLocalStorage, wipeLocalSave } from './db/saveload.js'
+import { captureTokenFromHash, getToken, getCharacterId, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId } from './cloud/api.js'
 import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState } from './cloud/sync.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
 import { simulateIdleThieving } from './engine/thieving.js'
@@ -291,6 +291,16 @@ function GameApp() {
       }
 
       if (hasToken && hasCharacter) {
+        // Guard against character-switch leakage: if IDB currently belongs to
+        // a different character, wipe it before loading anything. Otherwise a
+        // newly-created character with no cloud save yet would fall through
+        // to checkSave() and load the previous character's IDB rows.
+        const selectedCharId = getCharacterId()
+        const localCharId = getLocalCharacterId()
+        if (localCharId && localCharId !== selectedCharId) {
+          await wipeLocalSave()
+          resetSyncState()
+        }
         // Pull cloud save and decide on conflict before touching local IDB
         try {
           const result = await pullSave()
@@ -380,6 +390,10 @@ function GameApp() {
     e.preventDefault()
     const name = playerName.trim() || 'Adventurer'
     await initNewGame(name)
+    // Stamp IDB ownership so the next boot knows these rows belong to the
+    // selected character (only applies when signed in — offline leaves null).
+    const charId = getCharacterId()
+    if (charId) setLocalCharacterId(charId)
     await loadGame()
     setShowNewGame(false)
     setGameReady(true)
