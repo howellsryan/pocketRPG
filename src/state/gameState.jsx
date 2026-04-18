@@ -6,6 +6,7 @@ import { simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateI
 import { simulateIdleThieving } from '../engine/thieving.js'
 import { ALL_SKILLS, MAX_XP, AUTO_SAVE_DEBOUNCE } from '../utils/constants.js'
 import { debounce } from '../utils/helpers.js'
+import { fetchIdleState, pushIdleState } from '../cloud/idleState.js'
 import itemsData from '../data/items.json'
 
 const GameContext = createContext(null)
@@ -50,10 +51,26 @@ export function GameProvider({ children }) {
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
       getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('bossKillCounts'), getSetting('farming')
     ])
-    // lastTick and activeTask live in localStorage — synchronous, survives iOS background freeze
-    const savedLastTick = (() => { const v = localStorage.getItem('pocketrpg_lastTick'); return v ? parseInt(v, 10) : null })()
-    const savedTask = (() => { try { return JSON.parse(localStorage.getItem('pocketrpg_activeTask')) } catch { return null } })()
+    // Idle-engine inputs: last active timestamp and last active task.
+    // D1 is authoritative when signed in + online — localStorage is only used
+    // as an offline-mode fallback (and as a backup when the D1 fetch fails).
+    let savedLastTick = (() => { const v = localStorage.getItem('pocketrpg_lastTick'); return v ? parseInt(v, 10) : null })()
+    let savedTask = (() => { try { return JSON.parse(localStorage.getItem('pocketrpg_activeTask')) } catch { return null } })()
     const savedActiveCombatSpell = (() => { try { return JSON.parse(localStorage.getItem('pocketrpg_activeCombatSpell')) } catch { return null } })()
+    try {
+      const cloudIdle = await fetchIdleState()
+      if (cloudIdle && cloudIdle.lastActiveAt) {
+        savedLastTick = cloudIdle.lastActiveAt
+        savedTask = cloudIdle.activeTask ?? null
+        // Keep localStorage mirrors in sync so offline-mode fallback stays
+        // accurate if the user goes offline after this boot.
+        localStorage.setItem('pocketrpg_lastTick', String(cloudIdle.lastActiveAt))
+        if (savedTask) localStorage.setItem('pocketrpg_activeTask', JSON.stringify(savedTask))
+        else           localStorage.removeItem('pocketrpg_activeTask')
+      }
+    } catch (e) {
+      console.warn('[PocketRPG] fetchIdleState failed, using local fallback:', e?.message || e)
+    }
 
     // ── Idle simulation (runs on raw DB data, before state is set) ──
     let idleResult = null
@@ -381,6 +398,9 @@ export function GameProvider({ children }) {
       localStorage.removeItem('pocketrpg_activeTask')
       localStorage.removeItem('pocketrpg_lastTick')
     }
+    // Mirror to D1 so the idle engine picks the right task on next return.
+    // Fire-and-forget — offline-mode / logged-out users are no-ops internally.
+    pushIdleState(task ?? null)
   }, [])
 
   const setSlayerTask = useCallback((task) => {
