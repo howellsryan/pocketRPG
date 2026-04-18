@@ -45,7 +45,7 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    const [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedBossKillCounts, savedFarming] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedBossKillCounts, savedFarming] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
