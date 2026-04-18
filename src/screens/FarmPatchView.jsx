@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
-import { getPatchesForLocation, getAvailableCrops, getCropDef, formatGrowthTime, getGrowthProgress, getStageLabel, plantCrop, harvestCrop } from '../engine/farming.ts'
+import { getPatchesForLocation, getAvailableCrops, getCropDef, formatGrowthTime, getGrowthProgress, getStageLabel, getEffectiveStage, plantCrop, harvestCrop } from '../engine/farming.ts'
 import { onTick } from '../engine/tick.js'
 import ProgressBar from '../components/ProgressBar.jsx'
 import Modal from '../components/Modal.jsx'
@@ -168,12 +168,13 @@ function PatchCard({ patchData, onClick }) {
   let progressValue = 0
 
   if (patch && crop) {
-    if (patch.stage >= 4) {
+    const stage = getEffectiveStage(patch)
+    if (stage >= 4) {
       statusText = 'Ready to harvest'
       statusColor = 'text-[var(--color-gold)]'
       progressValue = 100
     } else {
-      statusText = getStageLabel(patch.stage, 4)
+      statusText = getStageLabel(stage, 4)
       statusColor = 'text-[var(--color-parchment)] opacity-60'
       progressValue = getGrowthProgress(patch)
     }
@@ -211,7 +212,8 @@ function PatchDetails({ patch, onHarvest }) {
   const timeRemaining = Math.max(0, patch.readyAt - now)
   const minutes = Math.floor(timeRemaining / 60000)
   const seconds = Math.floor((timeRemaining % 60000) / 1000)
-  const ready = patch.stage >= 4
+  const stage = getEffectiveStage(patch)
+  const ready = stage >= 4
 
   return (
     <div class="space-y-3">
@@ -222,7 +224,7 @@ function PatchDetails({ patch, onHarvest }) {
         </div>
         <div class="flex justify-between text-sm">
           <span class="text-[var(--color-parchment)] opacity-60">Stage</span>
-          <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{patch.stage}/4</span>
+          <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{stage}/4</span>
         </div>
         <div class="flex justify-between text-sm">
           <span class="text-[var(--color-parchment)] opacity-60">Plant XP</span>

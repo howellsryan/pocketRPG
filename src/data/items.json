@@ -7301,6 +7301,36 @@
     "icon": "🔥",
     "isUntradeable": true
   },
+  "infernal_cape": {
+    "id": "infernal_cape",
+    "name": "Infernal cape",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 12,
+      "slash": 12,
+      "crush": 12,
+      "magic": 1,
+      "ranged": 1
+    },
+    "defenceBonus": {
+      "stab": 12,
+      "slash": 12,
+      "crush": 12,
+      "magic": 12,
+      "ranged": 12
+    },
+    "otherBonus": {
+      "meleeStrength": 8,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 0,
+    "icon": "🌋",
+    "isUntradeable": true
+  },
   "crystal_shards": {
     "id": "crystal_shards",
     "name": "Crystal shards",
