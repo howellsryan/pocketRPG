@@ -4,11 +4,16 @@
 
 import { api, getToken, getCharacterId, setLocalCharacterId } from './api.js'
 import { buildSavePayloadFromState, applySavePayload } from '../db/saveload.js'
+import { withTimeout } from '../utils/helpers.js'
 
 const PUSH_DEBOUNCE_MS = 60_000
 // Grace window for clock skew between this client and the cloud server when
 // deciding whether the cloud copy is meaningfully newer than our last push.
 const FRESHNESS_GRACE_MS = 5_000
+// Hard cap for blocking boot/visibility-time cloud reads. A slow or hung
+// endpoint must never trap the user on the loading screen or prevent the
+// idle-result modal from appearing — we fall back to local state instead.
+const CLOUD_READ_TIMEOUT_MS = 5_000
 
 let lastPushedAt = 0
 let pendingTimer = null
@@ -65,10 +70,12 @@ export async function pushNow(snapshot) {
 }
 
 // Public: pull the cloud save for the selected character.
-// Returns { applied, payload, updatedAt } or { applied: false }.
+// Returns { applied, payload, updatedAt } or { applied: false }. Guarded by
+// a timeout so a slow/hung endpoint can't trap the boot sequence on the
+// "Loading…" screen — we fall back to the local IDB save in that case.
 export async function pullSave() {
   if (!canSync()) return { applied: false }
-  const res = await api.getSave()
+  const res = await withTimeout(api.getSave(), CLOUD_READ_TIMEOUT_MS, null)
   if (!res || !res.save) return { applied: false }
   const { save_data, updatedAt } = res.save
   return { applied: false, payload: JSON.parse(save_data), updatedAt }
@@ -78,10 +85,11 @@ export async function pullSave() {
 // pushed/applied. Used by the visibility handler before running idle simulation
 // — if another concurrent session has saved while this tab was hidden, we want
 // to take that copy instead of overwriting it with stale local idle results.
-// Returns the cloud payload to apply, or null if local is up-to-date.
+// Returns the cloud payload to apply, or null if local is up-to-date. Timed
+// out so a hung request can't block the idle-result modal from showing.
 export async function checkCloudNewer() {
   if (!canSync()) return null
-  const res = await api.getSave()
+  const res = await withTimeout(api.getSave(), CLOUD_READ_TIMEOUT_MS, null)
   if (!res || !res.save) return null
   const { save_data, updatedAt } = res.save
   if (updatedAt <= lastPushedAt + FRESHNESS_GRACE_MS) return null

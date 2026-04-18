@@ -10,6 +10,7 @@
 // D1 fetch fails. Reads prefer D1; writes go to both.
 
 import { api, sendIdleBeacon, getToken, getCharacterId } from './api.js'
+import { withTimeout } from '../utils/helpers.js'
 
 const HEARTBEAT_THROTTLE_MS = 5_000 // don't PUT more than once per 5s
 // Hard cap for the blocking boot-time idle fetch. If D1 is slow / the table
@@ -26,30 +27,6 @@ let pendingHeartbeatTask = undefined // `undefined` = none pending, otherwise ho
 // get `false` and skip the D1 path entirely.
 function canUseCloud() {
   return !!getToken() && !!getCharacterId()
-}
-
-// Race a promise against a timeout; resolves to `fallback` if the promise
-// hasn't settled by then. Never rejects.
-function withTimeout(promise, ms, fallback) {
-  return new Promise(resolve => {
-    let done = false
-    const t = setTimeout(() => {
-      if (done) return
-      done = true
-      console.warn(`[PocketRPG] Idle fetch timed out after ${ms}ms, falling back to local`)
-      resolve(fallback)
-    }, ms)
-    promise.then(
-      v => { if (!done) { done = true; clearTimeout(t); resolve(v) } },
-      err => {
-        if (done) return
-        done = true
-        clearTimeout(t)
-        console.warn('[PocketRPG] Idle fetch failed, falling back to local:', err?.message || err)
-        resolve(fallback)
-      }
-    )
-  })
 }
 
 // Read the authoritative idle state from D1.

@@ -63,6 +63,33 @@ export function debounce(fn, ms) {
 }
 
 /**
+ * Race a promise against a timeout; resolves to `fallback` if the promise
+ * hasn't settled by then. Never rejects. Used to guard boot-time cloud calls
+ * so a slow/hung endpoint can't trap the user on the loading screen.
+ */
+export function withTimeout(promise, ms, fallback) {
+  return new Promise(resolve => {
+    let done = false
+    const t = setTimeout(() => {
+      if (done) return
+      done = true
+      console.warn(`[PocketRPG] Cloud call timed out after ${ms}ms, falling back`)
+      resolve(fallback)
+    }, ms)
+    promise.then(
+      v => { if (!done) { done = true; clearTimeout(t); resolve(v) } },
+      err => {
+        if (done) return
+        done = true
+        clearTimeout(t)
+        console.warn('[PocketRPG] Cloud call failed, falling back:', err?.message || err)
+        resolve(fallback)
+      }
+    )
+  })
+}
+
+/**
  * Calculate combat level from skills
  */
 export function calcCombatLevel(stats) {
