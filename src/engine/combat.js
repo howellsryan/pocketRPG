@@ -293,35 +293,6 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
   const weaponStyle = getAttackStyle(equipment, itemsData)
   const monster = state.monster
 
-  // Inferno-style per-tick phase switch: at the top of each tick, if the monster
-  // has phaseSwitchEveryTick, reroll its form. Players must adapt their gear
-  // continuously. Unlike the per-attack switch below, this fires even when the
-  // monster isn't attacking.
-  if (monster && monster.multiForm && monster.forms && monster.phaseSwitchEveryTick) {
-    const previousForm = monster.currentForm
-    const nextKey = pickNextForm(monster)
-    const nextForm = monster.forms[nextKey]
-    if (nextForm && nextKey !== previousForm) {
-      monster.currentForm = nextKey
-      monster.attackStyle = nextForm.attackStyle
-      monster.attackBonus = nextForm.attackBonus ?? monster.attackBonus
-      monster.strengthBonus = nextForm.strengthBonus ?? monster.strengthBonus
-      monster.defenceBonus = { ...nextForm.defenceBonus }
-      monster.formMaxHit = nextForm.maxHit
-      monster.formAttackCount = 0
-      events.push({
-        type: 'formChange',
-        previousForm,
-        currentForm: nextKey,
-        displayName: nextForm.displayName || nextKey,
-        icon: nextForm.icon || '',
-        attackStyle: nextForm.attackStyle,
-        weakness: nextForm.weakness,
-        immunity: nextForm.immunity,
-        monsterName: monster.name
-      })
-    }
-  }
   // Look up equipped weapon + scale-charge info for this tick
   const equippedWeaponEntry = equipment?.weapon
   const equippedWeapon = equippedWeaponEntry ? itemsData[equippedWeaponEntry.itemId] : null
