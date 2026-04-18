@@ -82,16 +82,20 @@ export function GameProvider({ children }) {
       const elapsedMs = Math.min(Date.now() - savedLastTick, MAX_OFFLINE_MS)
       if (elapsedMs >= 2000) {
         let sim = null
-        if (savedTask.type === 'skill') {
-          sim = simulateIdleSkilling(savedTask, elapsedMs, b, eq, s, itemsData, inv)
-        } else if (savedTask.type === 'gather') {
-          sim = simulateIdleGather(savedTask, elapsedMs, inv, s, itemsData)
-        } else if (savedTask.type === 'combat') {
-          sim = simulateIdleCombat(savedTask, elapsedMs, s, eq, inv, itemsData, savedSlayerTask)
-        } else if (savedTask.type === 'agility') {
-          sim = simulateIdleAgility(savedTask, elapsedMs)
-        } else if (savedTask.type === 'thieving') {
-          sim = simulateIdleThieving(savedTask, elapsedMs)
+        try {
+          if (savedTask.type === 'skill') {
+            sim = simulateIdleSkilling(savedTask, elapsedMs, b, eq, s, itemsData, inv)
+          } else if (savedTask.type === 'gather') {
+            sim = simulateIdleGather(savedTask, elapsedMs, inv, s, itemsData)
+          } else if (savedTask.type === 'combat') {
+            sim = simulateIdleCombat(savedTask, elapsedMs, s, eq, inv, itemsData, savedSlayerTask)
+          } else if (savedTask.type === 'agility') {
+            sim = simulateIdleAgility(savedTask, elapsedMs)
+          } else if (savedTask.type === 'thieving') {
+            sim = simulateIdleThieving(savedTask, elapsedMs)
+          }
+        } catch (simErr) {
+          console.error('[PocketRPG] Idle simulation failed — skipping idle rewards:', simErr)
         }
 
         if (sim) {
