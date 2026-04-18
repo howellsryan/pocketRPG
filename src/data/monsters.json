@@ -3586,7 +3586,7 @@
       "magic": 650,
       "ranged": 1200
     },
-    "attackSpeed": 4,
+    "attackSpeed": 5,
     "attackStyle": "melee",
     "attackBonus": 150,
     "strengthBonus": 150,
