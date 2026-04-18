@@ -115,7 +115,7 @@ function GameApp() {
           try {
             const cloudNewer = await checkCloudNewer()
             if (cloudNewer) {
-              await applyCloudSave(cloudNewer.payload, cloudNewer.hash, cloudNewer.updatedAt)
+              await applyCloudSave(cloudNewer.payload, cloudNewer.updatedAt)
               await loadGame()
               addToast('☁️ Loaded newer save from another session', 'info')
               setIdleResult({ elapsedMs, task: savedTask, cloudOverride: true })
@@ -307,12 +307,11 @@ function GameApp() {
             const localTs = parseInt(localStorage.getItem('pocketrpg_lastTick'), 10) || 0
             if (!localExists) {
               // Fresh device — apply cloud save straight away
-              await applyCloudSave(result.payload, result.hash, result.updatedAt)
+              await applyCloudSave(result.payload, result.updatedAt)
             } else if (result.updatedAt > localTs + 60_000) {
               // Cloud is meaningfully newer — ask the user
               setConflict({
                 cloudPayload: result.payload,
-                cloudHash: result.hash,
                 cloudUpdatedAt: result.updatedAt,
                 localUpdatedAt: localTs,
               })
@@ -337,7 +336,7 @@ function GameApp() {
   async function resolveConflict(useCloud) {
     if (!conflict) return
     if (useCloud) {
-      await applyCloudSave(conflict.cloudPayload, conflict.cloudHash, conflict.cloudUpdatedAt)
+      await applyCloudSave(conflict.cloudPayload, conflict.cloudUpdatedAt)
     }
     setConflict(null)
     setCloudPhase('ready')

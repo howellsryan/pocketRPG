@@ -3,15 +3,13 @@
 // successful push.
 
 import { api, getToken, getCharacterId, setLocalCharacterId } from './api.js'
-import { buildSavePayloadFromState, applySavePayload, decodeSaveBase64 } from '../db/saveload.js'
-import { fnv1a } from '../utils/helpers.js'
+import { buildSavePayloadFromState, applySavePayload } from '../db/saveload.js'
 
 const PUSH_DEBOUNCE_MS = 60_000
 // Grace window for clock skew between this client and the cloud server when
 // deciding whether the cloud copy is meaningfully newer than our last push.
 const FRESHNESS_GRACE_MS = 5_000
 
-let lastPushedHash = null
 let lastPushedAt = 0
 let pendingTimer = null
 let pendingSnapshot = null
@@ -19,18 +17,6 @@ let inFlight = false
 
 function canSync() {
   return !!getToken() && !!getCharacterId()
-}
-
-// Decode a save response from the API, handling both the new JSON format
-// (save_data field) and the legacy base64 format for existing rows.
-function decodeSaveResponse({ save_data, base64, hash }) {
-  if (save_data !== undefined) {
-    if (fnv1a(save_data) !== hash) throw new Error('Cloud save integrity check failed')
-    return { data: JSON.parse(save_data), hash }
-  }
-  // Legacy base64 row — decode client-side (hash is embedded inside the blob)
-  const decoded = decodeSaveBase64(base64)
-  return { data: decoded.data, hash: decoded.hash }
 }
 
 async function flushNow() {
@@ -47,10 +33,7 @@ async function flushNow() {
   try {
     const data = buildSavePayloadFromState(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig, snap.homeShortcuts, snap.bossKillCounts)
     const json = JSON.stringify(data)
-    const hash = fnv1a(json)
-    if (hash === lastPushedHash) return
-    const res = await api.putSave(json, hash)
-    lastPushedHash = hash
+    const res = await api.putSave(json)
     if (res?.updatedAt) lastPushedAt = res.updatedAt
     console.log('[PocketRPG] Cloud save pushed, size:', json.length)
   } catch (err) {
@@ -82,14 +65,13 @@ export async function pushNow(snapshot) {
 }
 
 // Public: pull the cloud save for the selected character.
-// Returns { applied, payload, hash, updatedAt } or { applied: false }.
+// Returns { applied, payload, updatedAt } or { applied: false }.
 export async function pullSave() {
   if (!canSync()) return { applied: false }
   const res = await api.getSave()
   if (!res || !res.save) return { applied: false }
-  const { updatedAt } = res.save
-  const { data, hash } = decodeSaveResponse(res.save)
-  return { applied: false, payload: data, hash, updatedAt }
+  const { save_data, updatedAt } = res.save
+  return { applied: false, payload: JSON.parse(save_data), updatedAt }
 }
 
 // Public: check if the cloud copy is meaningfully newer than the last save we
@@ -101,20 +83,15 @@ export async function checkCloudNewer() {
   if (!canSync()) return null
   const res = await api.getSave()
   if (!res || !res.save) return null
-  const { hash: serverHash, updatedAt } = res.save
-  if (serverHash === lastPushedHash) return null
+  const { save_data, updatedAt } = res.save
   if (updatedAt <= lastPushedAt + FRESHNESS_GRACE_MS) return null
-  const { data, hash } = decodeSaveResponse(res.save)
-  return { payload: data, hash, updatedAt }
+  return { payload: JSON.parse(save_data), updatedAt }
 }
 
 // Public: apply a previously-pulled cloud save to IDB. Caller decides whether
 // to do this based on conflict-resolution UX.
-export async function applyCloudSave(payload, hash, updatedAt) {
+export async function applyCloudSave(payload, updatedAt) {
   await applySavePayload(payload)
-  // Mark the just-applied save as the last-pushed hash so we don't immediately
-  // re-upload identical bytes.
-  lastPushedHash = hash
   if (updatedAt) lastPushedAt = updatedAt
   // IDB now holds this character's data — stamp ownership so the next boot
   // knows which character these rows belong to.
@@ -124,7 +101,6 @@ export async function applyCloudSave(payload, hash, updatedAt) {
 
 // Reset cached state — call on logout / character switch.
 export function resetSyncState() {
-  lastPushedHash = null
   lastPushedAt = 0
   pendingSnapshot = null
   if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }

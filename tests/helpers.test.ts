@@ -6,7 +6,6 @@ import {
   ticksToTime,
   clamp,
   deepClone,
-  fnv1a,
   debounce,
   calcCombatLevel
 } from '../src/utils/helpers.js'
@@ -217,36 +216,6 @@ describe('Helper Utilities', () => {
 
       expect(cloned.data).toBe('test')
       expect(cloned.fn).toBeUndefined() // Functions are lost in JSON.stringify
-    })
-  })
-
-  describe('fnv1a', () => {
-    it('should produce consistent hashes for same input', () => {
-      const hash1 = fnv1a('test')
-      const hash2 = fnv1a('test')
-      expect(hash1).toBe(hash2)
-    })
-
-    it('should produce different hashes for different inputs', () => {
-      const hash1 = fnv1a('test')
-      const hash2 = fnv1a('other')
-      expect(hash1).not.toBe(hash2)
-    })
-
-    it('should produce hex string output', () => {
-      const hash = fnv1a('test')
-      expect(hash).toMatch(/^[0-9a-f]+$/)
-    })
-
-    it('should handle empty strings', () => {
-      const hash = fnv1a('')
-      expect(hash).toBeTruthy()
-    })
-
-    it('should handle long strings', () => {
-      const longStr = 'a'.repeat(1000)
-      const hash = fnv1a(longStr)
-      expect(hash).toMatch(/^[0-9a-f]+$/)
     })
   })
 

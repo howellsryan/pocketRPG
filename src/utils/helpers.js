@@ -52,18 +52,6 @@ export function deepClone(obj) {
 }
 
 /**
- * FNV-1a hash for save integrity
- */
-export function fnv1a(str) {
-  let hash = 0x811c9dc5
-  for (let i = 0; i < str.length; i++) {
-    hash ^= str.charCodeAt(i)
-    hash = Math.imul(hash, 0x01000193)
-  }
-  return (hash >>> 0).toString(16)
-}
-
-/**
  * Debounce a function
  */
 export function debounce(fn, ms) {
