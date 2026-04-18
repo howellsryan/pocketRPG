@@ -3586,7 +3586,7 @@
       "magic": 650,
       "ranged": 1200
     },
-    "attackSpeed": 5,
+    "attackSpeed": 2,
     "attackStyle": "melee",
     "attackBonus": 150,
     "strengthBonus": 150,
@@ -3598,7 +3598,7 @@
       "ranged": 150
     },
     "multiForm": true,
-    "phaseSwitchEveryTick": true,
+    "phaseSwitchEveryAttack": true,
     "formSwitchMin": 1,
     "formSwitchMax": 1,
     "initialForm": "melee",
