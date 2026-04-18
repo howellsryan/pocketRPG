@@ -233,8 +233,20 @@ function GameApp() {
       }
     }
 
+    // beforeunload: safety net for mobile browsers where visibilitychange
+    // doesn't fire reliably before a hard close (iOS Safari, Android Chrome)
+    const handleBeforeUnload = () => {
+      localStorage.setItem('pocketrpg_hiddenAt', String(Date.now()))
+      localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
+      try { pushNow(getSnapshot()) } catch { /* non-fatal */ }
+    }
+
     document.addEventListener('visibilitychange', handleVisibility)
-    return () => document.removeEventListener('visibilitychange', handleVisibility)
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
   }, [gameReady, grantXP, updateInventory, updateBankDirect])
 
   // HP regen tick: once per minute (100 ticks at 600ms = 60s)
