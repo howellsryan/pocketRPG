@@ -8387,6 +8387,7 @@ const itemsData = {
     "twoHanded": true,
     "stackable": false,
     "scaleCharged": true,
+    "chargeItemId": "blood_rune",
     "scythePassive": true,
     "attackSpeed": 5,
     "attackStyle": "slash",
@@ -8424,6 +8425,7 @@ const itemsData = {
     "twoHanded": false,
     "stackable": false,
     "scaleCharged": true,
+    "chargeItemId": "blood_rune",
     "poweredStaff": true,
     "sangPassive": true,
     "attackSpeed": 4,
@@ -21086,10 +21088,11 @@ function InventoryScreen() {
             addToast('This weapon cannot be charged', 'error');
             return;
         }
-        // Find Zulrah scales in inventory
-        const scalesIdx = inventory.findIndex(s => s && s.itemId === 'zulrah_scales');
+        const chargeItemId = item.chargeItemId || 'zulrah_scales';
+        const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId;
+        const scalesIdx = inventory.findIndex(s => s && s.itemId === chargeItemId);
         if (scalesIdx === -1) {
-            addToast('No Zulrah scales in inventory', 'error');
+            addToast(`No ${chargeItemName} in inventory`, 'error');
             return;
         }
         const scales = inventory[scalesIdx];
@@ -21097,7 +21100,6 @@ function InventoryScreen() {
         const newInv = [...inventory];
         const newSlot = { ...slot, charges: (slot.charges || 0) + chargeQty };
         newInv[slotIndex] = newSlot;
-        // Remove scales from inventory
         if (scales.quantity <= chargeQty) {
             newInv[scalesIdx] = null;
         }
@@ -21106,7 +21108,7 @@ function InventoryScreen() {
         }
         updateInventory(newInv);
         setSelected({ ...selected, slot: newSlot });
-        addToast(`Charged ${item.name} with ${chargeQty} scales (${newSlot.charges} total)`, 'info');
+        addToast(`Charged ${item.name} with ${chargeQty} ${chargeItemName} (${newSlot.charges} total)`, 'info');
         setShowChargeModal(false);
         setChargeInput('');
     };
@@ -21159,8 +21161,9 @@ function InventoryScreen() {
         if (newBank[item.id] && newBank[item.id].charges > 0) {
             newBank[item.id] = { ...newBank[item.id], charges: 0 };
         }
-        // Return scales to inventory
-        const existingIdx = newInv.findIndex(s => s && s.itemId === 'zulrah_scales');
+        const chargeItemId = item.chargeItemId || 'zulrah_scales';
+        const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId;
+        const existingIdx = newInv.findIndex(s => s && s.itemId === chargeItemId);
         if (existingIdx !== -1) {
             newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + totalCharges };
         }
@@ -21170,15 +21173,14 @@ function InventoryScreen() {
                 addToast('Inventory full — cannot uncharge', 'error');
                 return;
             }
-            newInv[empty] = { itemId: 'zulrah_scales', quantity: totalCharges };
+            newInv[empty] = { itemId: chargeItemId, quantity: totalCharges };
         }
         updateInventory(newInv);
         updateEquipment(newEquip);
         updateBank(newBank);
-        // Update selected with the uncharged slot
         const updatedSlot = { ...slot, charges: 0 };
         setSelected({ ...selected, slot: updatedSlot });
-        addToast(`Uncharged ${item.name}, recovered ${totalCharges} scales`, 'info');
+        addToast(`Uncharged ${item.name}, recovered ${totalCharges} ${chargeItemName}`, 'info');
     };
     // Deposit to bank — stackable: deposit all; non-stackable: show qty picker
     const handleDeposit = (qty) => {
@@ -21424,10 +21426,16 @@ function InventoryScreen() {
                         selected.item.type === 'food' && !selected.slot.noted && (h("button", { onClick: handleEat, class: "py-2.5 rounded-lg bg-[var(--color-emerald)] text-white font-semibold text-sm active:opacity-80" }, "Eat")),
                         selected.item.scaleCharged && !selected.slot.noted && (h("button", { onClick: () => setShowChargeModal(true), class: "py-2.5 rounded-lg bg-[#1a3a3a] text-[var(--color-emerald)] font-semibold text-sm active:opacity-80 border border-[var(--color-emerald)]/30" }, "Charge \u26A1")),
                         h("button", { onClick: handleDrop, class: "py-2.5 rounded-lg bg-[var(--color-blood-mid)] text-white font-semibold text-sm active:opacity-80" }, "Drop")),
-                    selected.item.scaleCharged && !selected.slot.noted && (selected.slot.charges || 0) > 0 && (h("button", { onClick: handleUnchargeWeapon, class: "w-full py-2.5 rounded-lg bg-[#3a1a1a] text-[var(--color-blood)] font-semibold text-sm active:opacity-80 border border-[var(--color-blood)]/30" },
-                        "Uncharge (",
-                        selected.slot.charges,
-                        " scales)"))),
+                    selected.item.scaleCharged && !selected.slot.noted && (selected.slot.charges || 0) > 0 && (() => {
+                        const chargeItemId = selected.item.chargeItemId || 'zulrah_scales';
+                        const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId;
+                        return (h("button", { onClick: handleUnchargeWeapon, class: "w-full py-2.5 rounded-lg bg-[#3a1a1a] text-[var(--color-blood)] font-semibold text-sm active:opacity-80 border border-[var(--color-blood)]/30" },
+                            "Uncharge (",
+                            selected.slot.charges,
+                            " ",
+                            chargeItemName,
+                            ")"));
+                    })()),
                 h("div", { class: "border-t border-[#333] pt-2 mt-1" },
                     h("p", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold" }, "Bank"),
                     (selected.item.stackable || selected.slot.noted) ? (h("div", null,
@@ -21488,7 +21496,9 @@ function InventoryScreen() {
                         bankQuantityInput || '0'))));
         })(),
         showChargeModal && selected && (() => {
-            const scalesInInv = inventory.find(s => s && s.itemId === 'zulrah_scales');
+            const chargeItemId = selected.item.chargeItemId || 'zulrah_scales';
+            const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId;
+            const scalesInInv = inventory.find(s => s && s.itemId === chargeItemId);
             const availableScales = scalesInInv?.quantity || 0;
             const currentCharges = selected.slot.charges || 0;
             return (h(Modal, { title: `Charge ${selected.item.name}`, onClose: () => { setShowChargeModal(false); setChargeInput(''); } },
@@ -21498,16 +21508,23 @@ function InventoryScreen() {
                             "Current charges: ",
                             h("span", { class: "text-[var(--color-emerald)] font-bold" }, currentCharges)),
                         h("p", null,
-                            "Scales available: ",
+                            chargeItemName,
+                            " available: ",
                             h("span", { class: "text-[var(--color-gold)] font-bold" }, availableScales))),
                     h("div", null,
-                        h("p", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mb-1 uppercase tracking-wider" }, "Add scales"),
-                        h("input", { type: "number", value: chargeInput, onInput: (e) => setChargeInput(e.target.value), min: "1", max: availableScales, placeholder: "Enter scales to add", class: "w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-emerald)]", autoFocus: true })),
-                    availableScales === 0 && (h("p", { class: "text-[10px] text-[var(--color-blood)] text-center" }, "You need Zulrah scales to charge this weapon")),
+                        h("p", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mb-1 uppercase tracking-wider" },
+                            "Add ",
+                            chargeItemName),
+                        h("input", { type: "number", value: chargeInput, onInput: (e) => setChargeInput(e.target.value), min: "1", max: availableScales, placeholder: `Enter ${chargeItemName} to add`, class: "w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-emerald)]", autoFocus: true })),
+                    availableScales === 0 && (h("p", { class: "text-[10px] text-[var(--color-blood)] text-center" },
+                        "You need ",
+                        chargeItemName,
+                        " to charge this weapon")),
                     h("button", { onClick: () => handleChargeWeapon(parseInt(chargeInput, 10)), disabled: availableScales === 0 || !chargeInput || isNaN(parseInt(chargeInput, 10)) || parseInt(chargeInput, 10) <= 0, class: "w-full py-2.5 rounded-lg bg-[#1a3a3a] text-[var(--color-emerald)] font-semibold text-sm active:opacity-80 border border-[var(--color-emerald)]/30 disabled:opacity-40 disabled:cursor-default" },
                         "Add ",
                         chargeInput || '0',
-                        " Scales"))));
+                        " ",
+                        chargeItemName))));
         })()));
 }
 
@@ -22294,8 +22311,10 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFight
                 }
                 if (ev.type === 'noCharges') {
                     const item = itemsData[ev.itemId];
+                    const chargeItemId = item?.chargeItemId || 'zulrah_scales';
+                    const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId;
                     setLog(prev => [...prev.slice(-20), {
-                            text: `${item?.name || 'Weapon'} has no charges — use Zulrah's scales to charge it!`,
+                            text: `${item?.name || 'Weapon'} has no charges — use ${chargeItemName} to charge it!`,
                             type: 'miss',
                             time: Date.now()
                         }]);
@@ -22589,7 +22608,9 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFight
             return;
         // Scale-charged weapons must have at least one charge to fire a spec
         if (weapon.scaleCharged && (weaponEntry.charges || 0) <= 0) {
-            addToast('No charges — use Zulrah\'s scales to charge this weapon.', 'error');
+            const chargeItemId = weapon.chargeItemId || 'zulrah_scales';
+            const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId;
+            addToast(`No charges — use ${chargeItemName} to charge this weapon.`, 'error');
             return;
         }
         // Queue the special attack to be fired on next tick (without draining energy yet)
@@ -23054,14 +23075,21 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFight
             if (!weapon?.scaleCharged)
                 return null;
             const charges = weaponEntry.charges || 0;
+            const chargeItemId = weapon.chargeItemId || 'zulrah_scales';
+            const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId;
+            const chargeIcon = chargeItemId === 'blood_rune' ? '🩸' : '🐍';
             return (h("div", { class: "mb-2 bg-[#111] rounded-lg px-3 py-2" },
                 h("div", { class: "flex items-center justify-between" },
                     h("span", { class: "text-[10px] text-green-400 font-semibold" },
-                        "\uD83D\uDC0D ",
+                        chargeIcon,
+                        " ",
                         weapon.name,
                         " charges"),
                     h("span", { class: `text-[10px] font-[var(--font-mono)] ${charges === 0 ? 'text-red-400' : 'text-green-400'}` }, charges)),
-                h("div", { class: "text-[9px] text-[var(--color-parchment)] opacity-40 mt-0.5" }, "1 Zulrah's scale = 1 attack \u00B7 Charge via Equipment screen")));
+                h("div", { class: "text-[9px] text-[var(--color-parchment)] opacity-40 mt-0.5" },
+                    "1 ",
+                    chargeItemName,
+                    " = 1 attack \u00B7 Charge via Equipment screen")));
         })(),
         (() => {
             const weaponEntry = equipment?.weapon;
@@ -25431,7 +25459,7 @@ function GeneralStoreScreen() {
 
 
 
-const SCALE_ITEM_ID = 'zulrah_scales';
+const DEFAULT_CHARGE_ITEM_ID = 'zulrah_scales';
 const EQ_SLOT_LABELS = {
     head: '🪖', cape: '🧣', neck: '📿', ammo: '🏹',
     weapon: '🗡️', body: '👕', shield: '🛡️',
@@ -25495,8 +25523,12 @@ function EquipmentScreen() {
         updateInventory(newInv);
         setSelected(null);
     };
-    // Count available Zulrah scales in inventory
-    const scaleCount = inventory.reduce((sum, s) => sum + (s && s.itemId === SCALE_ITEM_ID ? s.quantity : 0), 0);
+    const selectedWeaponEntry = selected ? equipment[selected.slot] : null;
+    const selectedChargeItemId = selectedWeaponEntry && itemsData[selectedWeaponEntry.itemId]
+        ? (itemsData[selectedWeaponEntry.itemId].chargeItemId || DEFAULT_CHARGE_ITEM_ID)
+        : DEFAULT_CHARGE_ITEM_ID;
+    const selectedChargeItemName = itemsData[selectedChargeItemId]?.name || selectedChargeItemId;
+    const scaleCount = inventory.reduce((sum, s) => sum + (s && s.itemId === selectedChargeItemId ? s.quantity : 0), 0);
     const handleChargeWeapon = (qty) => {
         if (!selected)
             return;
@@ -25507,16 +25539,18 @@ function EquipmentScreen() {
         const item = itemsData[weaponEntry.itemId];
         if (!item?.scaleCharged)
             return;
-        const actualQty = Math.min(qty, scaleCount);
+        const chargeItemId = item.chargeItemId || DEFAULT_CHARGE_ITEM_ID;
+        const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId;
+        const availableQty = inventory.reduce((sum, s) => sum + (s && s.itemId === chargeItemId ? s.quantity : 0), 0);
+        const actualQty = Math.min(qty, availableQty);
         if (actualQty <= 0) {
-            addToast('No Zulrah scales in inventory', 'error');
+            addToast(`No ${chargeItemName} in inventory`, 'error');
             return;
         }
-        // Remove scales from inventory
         const newInv = [...inventory];
         let remaining = actualQty;
         for (let i = 0; i < newInv.length && remaining > 0; i++) {
-            if (newInv[i]?.itemId === SCALE_ITEM_ID) {
+            if (newInv[i]?.itemId === chargeItemId) {
                 const take = Math.min(newInv[i].quantity, remaining);
                 newInv[i] = { ...newInv[i], quantity: newInv[i].quantity - take };
                 if (newInv[i].quantity <= 0)
@@ -25524,13 +25558,12 @@ function EquipmentScreen() {
                 remaining -= take;
             }
         }
-        // Add charges to equipped weapon
         const newEq = { ...equipment };
         const currentCharges = weaponEntry.charges || 0;
         newEq[equipSlotName] = { ...weaponEntry, charges: currentCharges + actualQty };
         updateInventory(newInv);
         updateEquipment(newEq);
-        addToast(`Charged ${item.name} with ${actualQty} scales`, 'info');
+        addToast(`Charged ${item.name} with ${actualQty} ${chargeItemName}`, 'info');
         setChargeInput('');
     };
     const handleUnchargeWeapon = () => {
@@ -25583,8 +25616,9 @@ function EquipmentScreen() {
         if (newBank[weaponEntry.itemId] && newBank[weaponEntry.itemId].charges > 0) {
             newBank[weaponEntry.itemId] = { ...newBank[weaponEntry.itemId], charges: 0 };
         }
-        // Return all charges as scales to inventory
-        const existingIdx = newInv.findIndex(s => s && s.itemId === SCALE_ITEM_ID);
+        const chargeItemId = item.chargeItemId || DEFAULT_CHARGE_ITEM_ID;
+        const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId;
+        const existingIdx = newInv.findIndex(s => s && s.itemId === chargeItemId);
         if (existingIdx !== -1) {
             newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + totalCharges };
         }
@@ -25594,12 +25628,12 @@ function EquipmentScreen() {
                 addToast('Inventory full — cannot uncharge', 'error');
                 return;
             }
-            newInv[empty] = { itemId: SCALE_ITEM_ID, quantity: totalCharges };
+            newInv[empty] = { itemId: chargeItemId, quantity: totalCharges };
         }
         updateInventory(newInv);
         updateEquipment(newEq);
         updateBank(newBank);
-        addToast(`Uncharged ${item.name}, recovered ${totalCharges} scales`, 'info');
+        addToast(`Uncharged ${item.name}, recovered ${totalCharges} ${chargeItemName}`, 'info');
     };
     const bonuses = getEquipmentBonuses(equipment, itemsData);
     // Paperdoll grid layout:
@@ -25678,14 +25712,22 @@ function EquipmentScreen() {
                     const currentCharges = equipment[selected.slot]?.charges || 0;
                     const parsedInput = parseInt(chargeInput, 10);
                     const customQty = Number.isFinite(parsedInput) && parsedInput > 0 ? parsedInput : 0;
+                    const chargeItemId = selected.item.chargeItemId || DEFAULT_CHARGE_ITEM_ID;
+                    const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId;
+                    const chargeIcon = chargeItemId === 'blood_rune' ? '🩸' : '🐍';
                     return (h(Panel, { className: "border-[#1a3a2a]" },
                         h("div", { class: "flex items-center justify-between mb-2" },
-                            h("span", { class: "text-[12px] font-semibold text-[#4ade80]" }, "\uD83D\uDC0D Scale Charges"),
+                            h("span", { class: "text-[12px] font-semibold text-[#4ade80]" },
+                                chargeIcon,
+                                " ",
+                                chargeItemName,
+                                " Charges"),
                             h("span", { class: "font-[var(--font-mono)] text-[12px] text-[var(--color-parchment)]" },
                                 currentCharges,
                                 " / \u221E")),
                         h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-50 mb-2" },
-                            "Scales in inventory: ",
+                            chargeItemName,
+                            " in inventory: ",
                             scaleCount),
                         h("div", { class: "grid grid-cols-3 gap-1 mb-[6px]" },
                             h(Button, { variant: "success", size: "sm", disabled: scaleCount <= 0, onClick: () => handleChargeWeapon(10) }, "+10"),
@@ -25697,7 +25739,9 @@ function EquipmentScreen() {
                         h(Button, { variant: "danger", size: "md", disabled: currentCharges <= 0, onClick: handleUnchargeWeapon, className: "w-full" },
                             "Uncharge (recover ",
                             currentCharges,
-                            " scales)")));
+                            " ",
+                            chargeItemName,
+                            ")")));
                 })(),
                 selected.item.specialAttack && (h(Panel, { padding: "p-0", className: "border-[#3a2a00] overflow-hidden" },
                     h("button", { onClick: () => setShowSpecInfo(v => !v), class: "w-full flex items-center justify-between px-3 py-2 bg-transparent border-0 cursor-pointer" },

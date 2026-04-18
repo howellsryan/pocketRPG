@@ -98,10 +98,11 @@ export default function InventoryScreen() {
       return
     }
 
-    // Find Zulrah scales in inventory
-    const scalesIdx = inventory.findIndex(s => s && s.itemId === 'zulrah_scales')
+    const chargeItemId = item.chargeItemId || 'zulrah_scales'
+    const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
+    const scalesIdx = inventory.findIndex(s => s && s.itemId === chargeItemId)
     if (scalesIdx === -1) {
-      addToast('No Zulrah scales in inventory', 'error')
+      addToast(`No ${chargeItemName} in inventory`, 'error')
       return
     }
 
@@ -111,7 +112,6 @@ export default function InventoryScreen() {
     const newSlot = { ...slot, charges: (slot.charges || 0) + chargeQty }
     newInv[slotIndex] = newSlot
 
-    // Remove scales from inventory
     if (scales.quantity <= chargeQty) {
       newInv[scalesIdx] = null
     } else {
@@ -120,7 +120,7 @@ export default function InventoryScreen() {
 
     updateInventory(newInv)
     setSelected({ ...selected, slot: newSlot })
-    addToast(`Charged ${item.name} with ${chargeQty} scales (${newSlot.charges} total)`, 'info')
+    addToast(`Charged ${item.name} with ${chargeQty} ${chargeItemName} (${newSlot.charges} total)`, 'info')
     setShowChargeModal(false)
     setChargeInput('')
   }
@@ -183,8 +183,9 @@ export default function InventoryScreen() {
       newBank[item.id] = { ...newBank[item.id], charges: 0 }
     }
 
-    // Return scales to inventory
-    const existingIdx = newInv.findIndex(s => s && s.itemId === 'zulrah_scales')
+    const chargeItemId = item.chargeItemId || 'zulrah_scales'
+    const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
+    const existingIdx = newInv.findIndex(s => s && s.itemId === chargeItemId)
     if (existingIdx !== -1) {
       newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + totalCharges }
     } else {
@@ -193,17 +194,16 @@ export default function InventoryScreen() {
         addToast('Inventory full — cannot uncharge', 'error')
         return
       }
-      newInv[empty] = { itemId: 'zulrah_scales', quantity: totalCharges }
+      newInv[empty] = { itemId: chargeItemId, quantity: totalCharges }
     }
 
     updateInventory(newInv)
     updateEquipment(newEquip)
     updateBank(newBank)
 
-    // Update selected with the uncharged slot
     const updatedSlot = { ...slot, charges: 0 }
     setSelected({ ...selected, slot: updatedSlot })
-    addToast(`Uncharged ${item.name}, recovered ${totalCharges} scales`, 'info')
+    addToast(`Uncharged ${item.name}, recovered ${totalCharges} ${chargeItemName}`, 'info')
   }
 
   // Deposit to bank — stackable: deposit all; non-stackable: show qty picker
@@ -494,12 +494,16 @@ export default function InventoryScreen() {
                   Drop
                 </button>
               </div>
-              {selected.item.scaleCharged && !selected.slot.noted && (selected.slot.charges || 0) > 0 && (
-                <button onClick={handleUnchargeWeapon}
-                  class="w-full py-2.5 rounded-lg bg-[#3a1a1a] text-[var(--color-blood)] font-semibold text-sm active:opacity-80 border border-[var(--color-blood)]/30">
-                  Uncharge ({selected.slot.charges} scales)
-                </button>
-              )}
+              {selected.item.scaleCharged && !selected.slot.noted && (selected.slot.charges || 0) > 0 && (() => {
+                const chargeItemId = selected.item.chargeItemId || 'zulrah_scales'
+                const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
+                return (
+                  <button onClick={handleUnchargeWeapon}
+                    class="w-full py-2.5 rounded-lg bg-[#3a1a1a] text-[var(--color-blood)] font-semibold text-sm active:opacity-80 border border-[var(--color-blood)]/30">
+                    Uncharge ({selected.slot.charges} {chargeItemName})
+                  </button>
+                )
+              })()}
             </div>
 
             {/* Bank deposit section */}
@@ -654,7 +658,9 @@ export default function InventoryScreen() {
 
       {/* ── Charge weapon modal ──────────────────────────────────────── */}
       {showChargeModal && selected && (() => {
-        const scalesInInv = inventory.find(s => s && s.itemId === 'zulrah_scales')
+        const chargeItemId = selected.item.chargeItemId || 'zulrah_scales'
+        const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
+        const scalesInInv = inventory.find(s => s && s.itemId === chargeItemId)
         const availableScales = scalesInInv?.quantity || 0
         const currentCharges = selected.slot.charges || 0
 
@@ -663,30 +669,30 @@ export default function InventoryScreen() {
             <div class="space-y-3">
               <div class="bg-[#111] rounded-lg p-3 text-sm text-[var(--color-parchment)] opacity-70">
                 <p>Current charges: <span class="text-[var(--color-emerald)] font-bold">{currentCharges}</span></p>
-                <p>Scales available: <span class="text-[var(--color-gold)] font-bold">{availableScales}</span></p>
+                <p>{chargeItemName} available: <span class="text-[var(--color-gold)] font-bold">{availableScales}</span></p>
               </div>
               <div>
-                <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1 uppercase tracking-wider">Add scales</p>
+                <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1 uppercase tracking-wider">Add {chargeItemName}</p>
                 <input
                   type="number"
                   value={chargeInput}
                   onInput={(e) => setChargeInput(e.target.value)}
                   min="1"
                   max={availableScales}
-                  placeholder="Enter scales to add"
+                  placeholder={`Enter ${chargeItemName} to add`}
                   class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)] outline-none focus:border-[var(--color-emerald)]"
                   autoFocus
                 />
               </div>
               {availableScales === 0 && (
-                <p class="text-[10px] text-[var(--color-blood)] text-center">You need Zulrah scales to charge this weapon</p>
+                <p class="text-[10px] text-[var(--color-blood)] text-center">You need {chargeItemName} to charge this weapon</p>
               )}
               <button
                 onClick={() => handleChargeWeapon(parseInt(chargeInput, 10))}
                 disabled={availableScales === 0 || !chargeInput || isNaN(parseInt(chargeInput, 10)) || parseInt(chargeInput, 10) <= 0}
                 class="w-full py-2.5 rounded-lg bg-[#1a3a3a] text-[var(--color-emerald)] font-semibold text-sm active:opacity-80 border border-[var(--color-emerald)]/30 disabled:opacity-40 disabled:cursor-default"
               >
-                Add {chargeInput || '0'} Scales
+                Add {chargeInput || '0'} {chargeItemName}
               </button>
             </div>
           </Modal>

@@ -358,8 +358,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         }
         if (ev.type === 'noCharges') {
           const item = itemsData[ev.itemId]
+          const chargeItemId = item?.chargeItemId || 'zulrah_scales'
+          const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
           setLog(prev => [...prev.slice(-20), {
-            text: `${item?.name || 'Weapon'} has no charges — use Zulrah's scales to charge it!`,
+            text: `${item?.name || 'Weapon'} has no charges — use ${chargeItemName} to charge it!`,
             type: 'miss',
             time: Date.now()
           }])
@@ -657,7 +659,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
     // Scale-charged weapons must have at least one charge to fire a spec
     if (weapon.scaleCharged && (weaponEntry.charges || 0) <= 0) {
-      addToast('No charges — use Zulrah\'s scales to charge this weapon.', 'error')
+      const chargeItemId = weapon.chargeItemId || 'zulrah_scales'
+      const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
+      addToast(`No charges — use ${chargeItemName} to charge this weapon.`, 'error')
       return
     }
 
@@ -1272,16 +1276,19 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
         if (!weapon?.scaleCharged) return null
         const charges = weaponEntry.charges || 0
+        const chargeItemId = weapon.chargeItemId || 'zulrah_scales'
+        const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
+        const chargeIcon = chargeItemId === 'blood_rune' ? '🩸' : '🐍'
         return (
           <div class="mb-2 bg-[#111] rounded-lg px-3 py-2">
             <div class="flex items-center justify-between">
-              <span class="text-[10px] text-green-400 font-semibold">🐍 {weapon.name} charges</span>
+              <span class="text-[10px] text-green-400 font-semibold">{chargeIcon} {weapon.name} charges</span>
               <span class={`text-[10px] font-[var(--font-mono)] ${charges === 0 ? 'text-red-400' : 'text-green-400'}`}>
                 {charges}
               </span>
             </div>
             <div class="text-[9px] text-[var(--color-parchment)] opacity-40 mt-0.5">
-              1 Zulrah's scale = 1 attack · Charge via Equipment screen
+              1 {chargeItemName} = 1 attack · Charge via Equipment screen
             </div>
           </div>
         )
