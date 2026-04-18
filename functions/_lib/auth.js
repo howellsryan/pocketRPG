@@ -11,7 +11,7 @@ export async function requireAuth(request, env) {
 
 export function json(body, status = 200, extraHeaders = {}) {
   return new Response(
-    JSON.stringify(body, (_k, v) => typeof v === 'bigint' ? Number(v) : v),
+    JSON.stringify(body, (_k, v) => typeof v === 'bigint' ? v.toString() : v),
     { status, headers: { 'Content-Type': 'application/json', ...extraHeaders } },
-  )
+  );
 }
