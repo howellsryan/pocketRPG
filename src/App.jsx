@@ -21,6 +21,7 @@ import { startTicks, stopTicks, onTick } from './engine/tick.js'
 import { snapshotToLocalStorage, restoreFromLocalStorage, wipeLocalSave } from './db/saveload.js'
 import { captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId } from './cloud/api.js'
 import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState } from './cloud/sync.js'
+import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
 import { simulateIdleThieving } from './engine/thieving.js'
 import { getLevelFromXP } from './engine/experience.js'
@@ -40,6 +41,7 @@ function GameApp() {
   // Refs for tick-based systems
   const hpRegenCounter = useRef(0)
   const snapshotCounter = useRef(99) // Start at 99 so first snapshot fires after 1 tick
+  const idleHeartbeatCounter = useRef(49) // 50 ticks = ~30s — first heartbeat ~600ms after load
   const hiddenAtPerfRef = useRef(null) // performance.now() at hide — monotonic, immune to clock changes
 
   useEffect(() => {
@@ -86,21 +88,41 @@ function GameApp() {
         localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
         // Flush any pending cloud push before the tab gets suspended.
         try { pushNow(getSnapshot()) } catch (e) { /* non-fatal */ }
+        // Beacon the idle state to D1 — server stamps last_active_at on its
+        // own clock so elapsed time on return is server-authoritative.
+        try { beaconIdleState(activeTaskRef.current) } catch (e) { /* non-fatal */ }
       } else {
         // Page returning to foreground — prefer performance.now() diff (monotonic) over wall-clock
         // to prevent system-time manipulation from granting fake idle progress.
         try {
           const rawHiddenAt = localStorage.getItem('pocketrpg_hiddenAt')
-          const savedTask = (() => { try { return JSON.parse(localStorage.getItem('pocketrpg_activeTask')) } catch { return null } })()
+          const localSavedTask = (() => { try { return JSON.parse(localStorage.getItem('pocketrpg_activeTask')) } catch { return null } })()
           if (!rawHiddenAt) return
           const hiddenAt = parseInt(rawHiddenAt, 10)
           const perfNow = performance.now()
+          // Prefer the D1 row for the task when available — it's the
+          // authoritative source and survives multi-tab / multi-device
+          // edge cases where another session may have changed the task.
+          let savedTask = localSavedTask
+          let cloudLastActiveAt = null
+          try {
+            const cloudIdle = await fetchIdleState()
+            if (cloudIdle) {
+              if (cloudIdle.activeTask !== undefined) savedTask = cloudIdle.activeTask
+              cloudLastActiveAt = cloudIdle.lastActiveAt || null
+            }
+          } catch (e) { /* fall back to local */ }
           let elapsedMs
           if (hiddenAtPerfRef.current !== null && perfNow >= hiddenAtPerfRef.current) {
             // Same session: use monotonic clock — immune to system time changes
             elapsedMs = Math.floor(perfNow - hiddenAtPerfRef.current)
+          } else if (cloudLastActiveAt) {
+            // New session, cloud knows when we last checked in — server-stamped
+            // timestamp is immune to local clock manipulation within the
+            // accuracy of the client's Date.now(). Still cap at 24h.
+            elapsedMs = Math.min(Date.now() - cloudLastActiveAt, 24 * 60 * 60 * 1000)
           } else {
-            // New session (page reloaded while hidden): fall back to wall-clock, capped at 24h
+            // No cloud state — fall back to wall-clock, capped at 24h
             elapsedMs = Math.min(Date.now() - hiddenAt, 24 * 60 * 60 * 1000)
           }
           hiddenAtPerfRef.current = null
@@ -239,6 +261,8 @@ function GameApp() {
       localStorage.setItem('pocketrpg_hiddenAt', String(Date.now()))
       localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
       try { pushNow(getSnapshot()) } catch { /* non-fatal */ }
+      // sendBeacon survives tab-close where a regular fetch would be killed.
+      try { beaconIdleState(activeTaskRef.current) } catch { /* non-fatal */ }
     }
 
     document.addEventListener('visibilitychange', handleVisibility)
@@ -269,6 +293,14 @@ function GameApp() {
         snapshotToLocalStorage(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig, snap.homeShortcuts, snap.bossKillCounts)
         // Cloud sync piggy-backs on the local snapshot cadence (debounced, hash-skipped).
         schedulePushSave(snap)
+      }
+      // Idle heartbeat: ~30s cadence. Server stamps last_active_at on write,
+      // so this keeps the "last seen" timestamp fresh even if the tab dies
+      // suddenly (beacon on hide/unload is the other half).
+      idleHeartbeatCounter.current++
+      if (idleHeartbeatCounter.current >= 50) {
+        idleHeartbeatCounter.current = 0
+        heartbeatIdleState(activeTaskRef.current)
       }
       hpRegenCounter.current++
       if (hpRegenCounter.current >= 100) {
@@ -431,6 +463,7 @@ function GameApp() {
     localStorage.removeItem('pocketrpg_hiddenAt')
     setCharacter(null)
     resetSyncState()
+    resetIdleStateSync()
     setGameReady(false)
     setCloudPhase('auth')
   }

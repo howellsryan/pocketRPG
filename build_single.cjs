@@ -28,6 +28,7 @@ const sourceFiles = [
   'db/stores.js',
   'db/saveload.js',
   'cloud/api.js',
+  'cloud/idleState.js',
   'cloud/sync.js',
   'state/gameState.js',
   'components/Modal.js',

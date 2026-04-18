@@ -103,6 +103,33 @@ export const api = {
     method: 'PUT',
     body: JSON.stringify({ save_data }),
   }),
+  getIdle: () => request('/api/idle'),
+  putIdle: (activeTask) => request('/api/idle', {
+    method: 'PUT',
+    body: JSON.stringify({ active_task: activeTask == null ? null : JSON.stringify(activeTask) }),
+  }),
+}
+
+// Fire-and-forget idle state write via navigator.sendBeacon. Survives tab
+// hide / page unload on mobile where a regular fetch would be cancelled.
+// Returns true if the beacon was queued, false otherwise (caller should fall
+// back to api.putIdle in that case).
+export function sendIdleBeacon(activeTask) {
+  try {
+    if (typeof navigator === 'undefined' || typeof navigator.sendBeacon !== 'function') return false
+    const token = getToken()
+    const characterId = getCharacterId()
+    if (!token || !characterId) return false
+    const body = JSON.stringify({
+      token,
+      character_id: characterId,
+      active_task: activeTask == null ? null : JSON.stringify(activeTask),
+    })
+    const blob = new Blob([body], { type: 'application/json' })
+    return navigator.sendBeacon('/api/idle', blob)
+  } catch {
+    return false
+  }
 }
 
 export function startGitHubLogin() {
