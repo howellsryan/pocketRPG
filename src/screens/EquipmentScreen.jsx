@@ -8,7 +8,7 @@ import Panel from '../components/Panel.jsx'
 import Button from '../components/Button.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
 
-const SCALE_ITEM_ID = 'zulrah_scales'
+const DEFAULT_CHARGE_ITEM_ID = 'zulrah_scales'
 
 const EQ_SLOT_LABELS = {
   head: '🪖', cape: '🧣', neck: '📿', ammo: '🏹',
@@ -94,8 +94,13 @@ export default function EquipmentScreen() {
     setSelected(null)
   }
 
-  // Count available Zulrah scales in inventory
-  const scaleCount = inventory.reduce((sum, s) => sum + (s && s.itemId === SCALE_ITEM_ID ? s.quantity : 0), 0)
+  const selectedWeaponEntry = selected ? equipment[selected.slot] : null
+  const selectedChargeItemId = selectedWeaponEntry && itemsData[selectedWeaponEntry.itemId]
+    ? (itemsData[selectedWeaponEntry.itemId].chargeItemId || DEFAULT_CHARGE_ITEM_ID)
+    : DEFAULT_CHARGE_ITEM_ID
+  const selectedChargeItemName = itemsData[selectedChargeItemId]?.name || selectedChargeItemId
+
+  const scaleCount = inventory.reduce((sum, s) => sum + (s && s.itemId === selectedChargeItemId ? s.quantity : 0), 0)
 
   const handleChargeWeapon = (qty) => {
     if (!selected) return
@@ -105,17 +110,19 @@ export default function EquipmentScreen() {
     const item = itemsData[weaponEntry.itemId]
     if (!item?.scaleCharged) return
 
-    const actualQty = Math.min(qty, scaleCount)
+    const chargeItemId = item.chargeItemId || DEFAULT_CHARGE_ITEM_ID
+    const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
+    const availableQty = inventory.reduce((sum, s) => sum + (s && s.itemId === chargeItemId ? s.quantity : 0), 0)
+    const actualQty = Math.min(qty, availableQty)
     if (actualQty <= 0) {
-      addToast('No Zulrah scales in inventory', 'error')
+      addToast(`No ${chargeItemName} in inventory`, 'error')
       return
     }
 
-    // Remove scales from inventory
     const newInv = [...inventory]
     let remaining = actualQty
     for (let i = 0; i < newInv.length && remaining > 0; i++) {
-      if (newInv[i]?.itemId === SCALE_ITEM_ID) {
+      if (newInv[i]?.itemId === chargeItemId) {
         const take = Math.min(newInv[i].quantity, remaining)
         newInv[i] = { ...newInv[i], quantity: newInv[i].quantity - take }
         if (newInv[i].quantity <= 0) newInv[i] = null
@@ -123,14 +130,13 @@ export default function EquipmentScreen() {
       }
     }
 
-    // Add charges to equipped weapon
     const newEq = { ...equipment }
     const currentCharges = weaponEntry.charges || 0
     newEq[equipSlotName] = { ...weaponEntry, charges: currentCharges + actualQty }
 
     updateInventory(newInv)
     updateEquipment(newEq)
-    addToast(`Charged ${item.name} with ${actualQty} scales`, 'info')
+    addToast(`Charged ${item.name} with ${actualQty} ${chargeItemName}`, 'info')
     setChargeInput('')
   }
 
@@ -189,8 +195,9 @@ export default function EquipmentScreen() {
       newBank[weaponEntry.itemId] = { ...newBank[weaponEntry.itemId], charges: 0 }
     }
 
-    // Return all charges as scales to inventory
-    const existingIdx = newInv.findIndex(s => s && s.itemId === SCALE_ITEM_ID)
+    const chargeItemId = item.chargeItemId || DEFAULT_CHARGE_ITEM_ID
+    const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
+    const existingIdx = newInv.findIndex(s => s && s.itemId === chargeItemId)
     if (existingIdx !== -1) {
       newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + totalCharges }
     } else {
@@ -199,13 +206,13 @@ export default function EquipmentScreen() {
         addToast('Inventory full — cannot uncharge', 'error')
         return
       }
-      newInv[empty] = { itemId: SCALE_ITEM_ID, quantity: totalCharges }
+      newInv[empty] = { itemId: chargeItemId, quantity: totalCharges }
     }
 
     updateInventory(newInv)
     updateEquipment(newEq)
     updateBank(newBank)
-    addToast(`Uncharged ${item.name}, recovered ${totalCharges} scales`, 'info')
+    addToast(`Uncharged ${item.name}, recovered ${totalCharges} ${chargeItemName}`, 'info')
   }
 
   const bonuses = getEquipmentBonuses(equipment, itemsData)
@@ -321,16 +328,19 @@ export default function EquipmentScreen() {
               const currentCharges = equipment[selected.slot]?.charges || 0
               const parsedInput = parseInt(chargeInput, 10)
               const customQty = Number.isFinite(parsedInput) && parsedInput > 0 ? parsedInput : 0
+              const chargeItemId = selected.item.chargeItemId || DEFAULT_CHARGE_ITEM_ID
+              const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
+              const chargeIcon = chargeItemId === 'blood_rune' ? '🩸' : '🐍'
               return (
                 <Panel className="border-[#1a3a2a]">
                   <div class="flex items-center justify-between mb-2">
-                    <span class="text-[12px] font-semibold text-[#4ade80]">🐍 Scale Charges</span>
+                    <span class="text-[12px] font-semibold text-[#4ade80]">{chargeIcon} {chargeItemName} Charges</span>
                     <span class="font-[var(--font-mono)] text-[12px] text-[var(--color-parchment)]">
                       {currentCharges} / ∞
                     </span>
                   </div>
                   <div class="text-[10px] text-[var(--color-parchment)] opacity-50 mb-2">
-                    Scales in inventory: {scaleCount}
+                    {chargeItemName} in inventory: {scaleCount}
                   </div>
                   <div class="grid grid-cols-3 gap-1 mb-[6px]">
                     <Button variant="success" size="sm" disabled={scaleCount <= 0} onClick={() => handleChargeWeapon(10)}>+10</Button>
@@ -357,7 +367,7 @@ export default function EquipmentScreen() {
                     onClick={handleUnchargeWeapon}
                     className="w-full"
                   >
-                    Uncharge (recover {currentCharges} scales)
+                    Uncharge (recover {currentCharges} {chargeItemName})
                   </Button>
                 </Panel>
               )

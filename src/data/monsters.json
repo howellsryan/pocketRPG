@@ -3572,6 +3572,91 @@
       }
     ]
   },
+  "inferno": {
+    "id": "inferno",
+    "name": "The Inferno (TzKal-Zuk)",
+    "boss": true,
+    "combatLevel": 1400,
+    "hitpoints": 600,
+    "slayerXP": 60000,
+    "stats": {
+      "attack": 1200,
+      "strength": 1200,
+      "defence": 650,
+      "magic": 650,
+      "ranged": 1200
+    },
+    "attackSpeed": 4,
+    "attackStyle": "melee",
+    "attackBonus": 150,
+    "strengthBonus": 150,
+    "defenceBonus": {
+      "stab": 150,
+      "slash": 150,
+      "crush": 150,
+      "magic": 150,
+      "ranged": 150
+    },
+    "multiForm": true,
+    "phaseSwitchEveryTick": true,
+    "formSwitchMin": 1,
+    "formSwitchMax": 1,
+    "initialForm": "melee",
+    "forms": {
+      "melee": {
+        "displayName": "Melee Phase",
+        "icon": "⚔️",
+        "attackStyle": "crush",
+        "maxHit": 130,
+        "attackBonus": 150,
+        "strengthBonus": 150,
+        "defenceBonus": {
+          "stab": 150,
+          "slash": 150,
+          "crush": 150,
+          "magic": 150,
+          "ranged": 150
+        }
+      },
+      "ranged": {
+        "displayName": "Ranged Phase",
+        "icon": "🏹",
+        "attackStyle": "ranged",
+        "maxHit": 130,
+        "attackBonus": 150,
+        "strengthBonus": 150,
+        "defenceBonus": {
+          "stab": 150,
+          "slash": 150,
+          "crush": 150,
+          "magic": 150,
+          "ranged": 150
+        }
+      },
+      "magic": {
+        "displayName": "Magic Phase",
+        "icon": "✨",
+        "attackStyle": "magic",
+        "maxHit": 130,
+        "attackBonus": 150,
+        "strengthBonus": 150,
+        "defenceBonus": {
+          "stab": 150,
+          "slash": 150,
+          "crush": 150,
+          "magic": 150,
+          "ranged": 150
+        }
+      }
+    },
+    "drops": [
+      {
+        "itemId": "infernal_cape",
+        "quantity": 1,
+        "chance": 1
+      }
+    ]
+  },
   "corrupted_gauntlet": {
     "id": "corrupted_gauntlet",
     "name": "Corrupted Gauntlet",

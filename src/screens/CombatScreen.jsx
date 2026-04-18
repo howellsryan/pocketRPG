@@ -65,10 +65,16 @@ const COMBAT_CATEGORIES = [
     ids: ['zulrah'],
   },
   {
-    key: 'inferno',
-    label: 'Inferno',
+    key: 'fight_caves',
+    label: 'Fight Caves',
     icon: '🔥',
     ids: ['jad'],
+  },
+  {
+    key: 'inferno',
+    label: 'The Inferno',
+    icon: '🌋',
+    ids: ['inferno'],
   },
   {
     key: 'corrupted_gauntlet',
@@ -85,7 +91,7 @@ const MONSTER_ICONS = {
   green_dragon: '🐉', red_dragon: '🔴', lesser_demon: '👿',
   general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
   dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
-  crazy_archaeologist: '📜', king_black_dragon: '👑', zulrah: '🐍', jad: '🌋', corrupted_gauntlet: '⚡',
+  crazy_archaeologist: '📜', king_black_dragon: '👑', zulrah: '🐍', jad: '🌋', inferno: '🌋', corrupted_gauntlet: '⚡',
   tekton: '🔨', vespula: '🦟', muttadile: '🦷', olm: '🏛️',
   maiden_of_sugadinti: '🩸', pestilent_bloat: '🤢', nylocas_vasilias: '🕷️',
   sotetseg: '🔮', xarpus: '☠️', verzik_vitur: '👑'
@@ -141,10 +147,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   useEffect(() => {
     if (!combatRef.current || !combatRef.current.active) return
     const newCombatType = getCombatType(equipmentRef.current, itemsData)
-    const newSpell = newCombatType === 'magic' && activeCombatSpell ? spellsData[activeCombatSpell.id] : null
+    const weaponItem = equipmentRef.current?.weapon ? itemsData[equipmentRef.current.weapon.itemId] : null
+    const isPoweredStaff = !!weaponItem?.poweredStaff
+    const newSpell = newCombatType === 'magic' && activeCombatSpell && !isPoweredStaff ? spellsData[activeCombatSpell.id] : null
+    const effectiveSpellId = isPoweredStaff ? null : activeCombatSpell?.id
     // Update combat state to use the new spell/combat type
     if (combatRef.current.combatType !== newCombatType ||
-        (newCombatType === 'magic' && combatRef.current.spell?.id !== activeCombatSpell?.id)) {
+        (newCombatType === 'magic' && combatRef.current.spell?.id !== effectiveSpellId)) {
       combatRef.current = {
         ...combatRef.current,
         combatType: newCombatType,
@@ -349,8 +358,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         }
         if (ev.type === 'noCharges') {
           const item = itemsData[ev.itemId]
+          const chargeItemId = item?.chargeItemId || 'zulrah_scales'
+          const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
           setLog(prev => [...prev.slice(-20), {
-            text: `${item?.name || 'Weapon'} has no charges — use Zulrah's scales to charge it!`,
+            text: `${item?.name || 'Weapon'} has no charges — use ${chargeItemName} to charge it!`,
             type: 'miss',
             time: Date.now()
           }])
@@ -371,7 +382,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             type: 'formChange',
             time: Date.now()
           }])
-          const phaseChangeMonsters = ['olm', 'zulrah', 'jad', 'demonic_gorilla', 'maiden_of_sugadinti', 'pestilent_bloat', 'nylocas_vasilias', 'sotetseg', 'xarpus', 'verzik_vitur', 'vespula', 'muttadile']
+          const phaseChangeMonsters = ['olm', 'zulrah', 'jad', 'inferno', 'demonic_gorilla', 'maiden_of_sugadinti', 'pestilent_bloat', 'nylocas_vasilias', 'sotetseg', 'xarpus', 'verzik_vitur', 'vespula', 'muttadile']
           if (!phaseChangeMonsters.includes(state.monster.id)) {
             addToast(`${ev.icon || '🐍'} ${monsterName}: ${ev.displayName} form${immunityNote}`, 'info')
           }
@@ -648,7 +659,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
     // Scale-charged weapons must have at least one charge to fire a spec
     if (weapon.scaleCharged && (weaponEntry.charges || 0) <= 0) {
-      addToast('No charges — use Zulrah\'s scales to charge this weapon.', 'error')
+      const chargeItemId = weapon.chargeItemId || 'zulrah_scales'
+      const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
+      addToast(`No charges — use ${chargeItemName} to charge this weapon.`, 'error')
       return
     }
 
@@ -1263,16 +1276,19 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
         if (!weapon?.scaleCharged) return null
         const charges = weaponEntry.charges || 0
+        const chargeItemId = weapon.chargeItemId || 'zulrah_scales'
+        const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
+        const chargeIcon = chargeItemId === 'blood_rune' ? '🩸' : '🐍'
         return (
           <div class="mb-2 bg-[#111] rounded-lg px-3 py-2">
             <div class="flex items-center justify-between">
-              <span class="text-[10px] text-green-400 font-semibold">🐍 {weapon.name} charges</span>
+              <span class="text-[10px] text-green-400 font-semibold">{chargeIcon} {weapon.name} charges</span>
               <span class={`text-[10px] font-[var(--font-mono)] ${charges === 0 ? 'text-red-400' : 'text-green-400'}`}>
                 {charges}
               </span>
             </div>
             <div class="text-[9px] text-[var(--color-parchment)] opacity-40 mt-0.5">
-              1 Zulrah's scale = 1 attack · Charge via Equipment screen
+              1 {chargeItemName} = 1 attack · Charge via Equipment screen
             </div>
           </div>
         )
@@ -1627,7 +1643,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             </button>
           </div>
 
-          <div class="space-y-4 max-h-96 overflow-y-auto">
+          <div class="max-h-96 overflow-y-auto">
             {(() => {
               const equipment_items = inventoryRef.current
                 .filter(slot => slot && itemsData[slot.itemId]?.slot)
@@ -1640,78 +1656,43 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 )
               }
 
-              // Group by slot
-              const slotGroups = {}
-              equipment_items.forEach(slot => {
-                const item = itemsData[slot.itemId]
-                const itemSlot = item.slot
-                if (!slotGroups[itemSlot]) {
-                  slotGroups[itemSlot] = []
-                }
-                slotGroups[itemSlot].push(slot)
-              })
-
+              // Sort items by slot order so related gear clusters together
+              // without needing visible section headers.
               const slotOrder = ['weapon', 'shield', 'head', 'body', 'legs', 'gloves', 'boots', 'cape', 'neck', 'ring', 'ammo']
-              const slotLabels = {
-                weapon: '⚔️ Weapon',
-                shield: '🛡️ Shield',
-                head: '👑 Head',
-                body: '👕 Body',
-                legs: '👖 Legs',
-                gloves: '🧤 Gloves',
-                boots: '👢 Boots',
-                cape: '🧥 Cape',
-                neck: '📿 Neck',
-                ring: '💍 Ring',
-                ammo: '🏹 Ammo'
-              }
-
-              return slotOrder.map(slotKey => {
-                if (!slotGroups[slotKey]) return null
-                return (
-                  <div key={slotKey}>
-                    <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">
-                      {slotLabels[slotKey]}
-                    </h4>
-                    <div class="grid grid-cols-3 gap-2">
-                      {slotGroups[slotKey].map(slot => {
-                        const item = itemsData[slot.itemId]
-                        const equipped = equipmentRef.current[item.slot]?.itemId === item.id
-                        return (
-                          <button
-                            key={`${slot.itemId}-${inventoryRef.current.indexOf(slot)}`}
-                            onClick={() => handleEquipItem(slot.itemId)}
-                            class={`p-3 rounded-lg border transition-colors h-full flex flex-col ${
-                              equipped
-                                ? 'bg-[#2a3a2a] border-[#4a8a4a]'
-                                : 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
-                            }`}
-                          >
-                            <div class="flex flex-col justify-between h-full">
-                              <div class="text-left flex-1">
-                                <div class="text-sm font-semibold text-[var(--color-parchment)]">
-                                  {item.icon}
-                                </div>
-                                <div class="text-[9px] text-[var(--color-parchment)] font-semibold mt-1 line-clamp-2">
-                                  {item.name}
-                                </div>
-                                <div class="text-[8px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                                  {item.type === 'weapon' && item.attackStyle && `${item.attackStyle}`}
-                                  {item.type === 'armour' && 'Armour'}
-                                  {item.type === 'shield' && 'Shield'}
-                                </div>
-                              </div>
-                              {equipped && (
-                                <span class="text-base text-[var(--color-hp-green)] mt-1">✓</span>
-                              )}
-                            </div>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )
+              const slotRank = Object.fromEntries(slotOrder.map((s, i) => [s, i]))
+              const sortedItems = [...equipment_items].sort((a, b) => {
+                const sa = slotRank[itemsData[a.itemId].slot] ?? 99
+                const sb = slotRank[itemsData[b.itemId].slot] ?? 99
+                return sa - sb
               })
+
+              return (
+                <div class="grid grid-cols-4 gap-1.5">
+                  {sortedItems.map(slot => {
+                    const item = itemsData[slot.itemId]
+                    const equipped = equipmentRef.current[item.slot]?.itemId === item.id
+                    return (
+                      <button
+                        key={`${slot.itemId}-${inventoryRef.current.indexOf(slot)}`}
+                        onClick={() => handleEquipItem(slot.itemId)}
+                        class={`p-1.5 rounded-lg border transition-colors flex flex-col items-center ${
+                          equipped
+                            ? 'bg-[#2a3a2a] border-[#4a8a4a]'
+                            : 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
+                        }`}
+                      >
+                        <div class="text-lg leading-none">{item.icon}</div>
+                        <div class="text-[8px] text-[var(--color-parchment)] font-semibold mt-0.5 line-clamp-2 text-center leading-tight">
+                          {item.name}
+                        </div>
+                        {equipped && (
+                          <span class="text-[10px] text-[var(--color-hp-green)] mt-0.5">✓</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              )
             })()}
           </div>
         </Modal>

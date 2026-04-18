@@ -44,6 +44,21 @@ export function getCropDef(seedId: string): CropDef | null {
   return null
 }
 
+/**
+ * Stage is derived from elapsed wall-clock time since planting — no ticks
+ * required, so growth works offline and during idle. Each of 4 stages takes
+ * growthTimeMs / 4 of real time; stage 4 = harvestable.
+ */
+export function getEffectiveStage(patch: FarmingPatch | null | undefined): number {
+  if (!patch || !patch.cropId) return 1
+  const crop = getCropDef(patch.cropId)
+  if (!crop) return patch.stage || 1
+  const elapsed = Date.now() - patch.plantedAt
+  const perStage = crop.growthTimeMs / 4
+  if (perStage <= 0) return 4
+  return Math.max(1, Math.min(4, 1 + Math.floor(elapsed / perStage)))
+}
+
 export function plantCrop(
   state: FarmingState,
   patchId: string,
@@ -74,7 +89,8 @@ export function harvestCrop(
   patchId: string
 ): { state: FarmingState; harvestXp: number; cropId: string; quantity: number } | null {
   const patch = state.patchesById[patchId]
-  if (!patch || !patch.cropId || patch.stage < 4) return null
+  if (!patch || !patch.cropId) return null
+  if (getEffectiveStage(patch) < 4) return null
 
   const crop = getCropDef(patch.cropId)
   if (!crop) return null
@@ -91,29 +107,8 @@ export function harvestCrop(
 }
 
 export function processFarmingTick(state: FarmingState): FarmingState {
-  const now = Date.now()
-  const newState = { ...state, patchesById: { ...state.patchesById } }
-
-  for (const [patchId, patch] of Object.entries(newState.patchesById)) {
-    if (!patch.cropId) continue
-
-    // If ready time hasn't passed, do nothing
-    if (now < patch.readyAt) continue
-
-    // Advance stage
-    if (patch.stage < 4) {
-      const crop = getCropDef(patch.cropId)
-      if (crop) {
-        newState.patchesById[patchId] = {
-          ...patch,
-          stage: patch.stage + 1,
-          readyAt: now + crop.growthTimeMs
-        }
-      }
-    }
-  }
-
-  return newState
+  // Stage is derived from elapsed time — no state mutation needed here.
+  return state
 }
 
 export function getPatchesForLocation(

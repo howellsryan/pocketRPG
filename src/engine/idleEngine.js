@@ -507,9 +507,14 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
     atkRoll = maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0)
     defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus.ranged || 0)
   } else if (combatType === 'magic') {
-    if (!spell) return { avgDmgPerHit: 0, weaponSpeed, acc: 0, combatType }
+    const weaponEntry = equipment?.weapon
+    const weaponItem = weaponEntry ? itemsData[weaponEntry.itemId] : null
+    const isPoweredStaff = !!weaponItem?.poweredStaff
+    if (!spell && !isPoweredStaff) return { avgDmgPerHit: 0, weaponSpeed, acc: 0, combatType }
     const effMag = effectiveMagic(playerStats.magic || 1)
-    maxHit = magicMaxHit(spell.baseDamage, bonuses.otherBonus.magicDamage || 0)
+    // Powered staffs (Sanguinesti, Trident) scale max hit with magic level: floor(magic/3)+9.
+    const baseDamage = spell ? spell.baseDamage : Math.max(1, Math.floor((playerStats.magic || 1) / 3) + 9)
+    maxHit = magicMaxHit(baseDamage, bonuses.otherBonus.magicDamage || 0)
     atkRoll = maxAttackRoll(effMag, bonuses.attackBonus.magic || 0)
     defRoll = monsterMagicDefenceRoll(monster.stats.magic || 1, monster.stats.defence, monster.defenceBonus?.magic || 0)
   } else {
@@ -651,10 +656,9 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   const startingCharges = weaponEntry?.charges || 0
   let maxKillsFromCharges = Infinity
   if (weaponScaleCharged && hitsNeeded < Infinity) {
-    // Scale-charged weapons only fire ranged or powered-staff magic attacks
-    if (combatType === 'ranged' || combatType === 'magic') {
-      maxKillsFromCharges = Math.floor(startingCharges / hitsNeeded)
-    }
+    // Scale-charged weapons (ranged, powered-staff magic, scythe melee) consume
+    // one scale per swing — cap idle kills to what loaded charges allow.
+    maxKillsFromCharges = Math.floor(startingCharges / hitsNeeded)
   }
 
   // Track starting inventory state for delta calculation
