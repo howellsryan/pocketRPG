@@ -3598,7 +3598,7 @@
       "ranged": 150
     },
     "multiForm": true,
-    "phaseSwitchEveryAttack": true,
+    "randomFormEveryAttack": true,
     "formSwitchMin": 1,
     "formSwitchMax": 1,
     "initialForm": "melee",

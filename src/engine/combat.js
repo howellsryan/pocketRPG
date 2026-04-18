@@ -51,7 +51,7 @@ function prepareMonster(monster) {
     if (form) {
       preparedMonster.currentForm = formKey
       preparedMonster.formAttackCount = 0
-      preparedMonster.formSwitchThreshold = (monster.randomFormEveryAttack || monster.phaseSwitchEveryAttack) ? 1 : randomFormSwitchThreshold(monster)
+      preparedMonster.formSwitchThreshold = monster.randomFormEveryAttack ? 1 : randomFormSwitchThreshold(monster)
       preparedMonster.attackStyle = form.attackStyle
       preparedMonster.attackBonus = form.attackBonus ?? monster.attackBonus ?? 0
       preparedMonster.strengthBonus = form.strengthBonus ?? monster.strengthBonus ?? 0
@@ -677,7 +677,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
           monster.formMaxHit = nextForm.maxHit
           monster.formAttackCount = 0
           // For per-attack randomization, keep threshold at 1; otherwise randomize
-          monster.formSwitchThreshold = (monster.randomFormEveryAttack || monster.phaseSwitchEveryAttack) ? 1 : randomFormSwitchThreshold(monster)
+          monster.formSwitchThreshold = monster.randomFormEveryAttack ? 1 : randomFormSwitchThreshold(monster)
           // Delay next attack by one cycle after a form change so the player can adapt
           state.monsterAttackTimer = (monster.attackSpeed || 4)
           events.push({
