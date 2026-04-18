@@ -12,6 +12,10 @@
 import { api, sendIdleBeacon, getToken, getCharacterId } from './api.js'
 
 const HEARTBEAT_THROTTLE_MS = 5_000 // don't PUT more than once per 5s
+// Hard cap for the blocking boot-time idle fetch. If D1 is slow / the table
+// doesn't exist yet / the Pages Function hangs, we don't want to trap the
+// user on the loading screen — fall back to the localStorage mirror instead.
+const FETCH_TIMEOUT_MS = 3_000
 
 let lastHeartbeatAt = 0
 let heartbeatInFlight = false
@@ -24,18 +28,39 @@ function canUseCloud() {
   return !!getToken() && !!getCharacterId()
 }
 
+// Race a promise against a timeout; resolves to `fallback` if the promise
+// hasn't settled by then. Never rejects.
+function withTimeout(promise, ms, fallback) {
+  return new Promise(resolve => {
+    let done = false
+    const t = setTimeout(() => {
+      if (done) return
+      done = true
+      console.warn(`[PocketRPG] Idle fetch timed out after ${ms}ms, falling back to local`)
+      resolve(fallback)
+    }, ms)
+    promise.then(
+      v => { if (!done) { done = true; clearTimeout(t); resolve(v) } },
+      err => {
+        if (done) return
+        done = true
+        clearTimeout(t)
+        console.warn('[PocketRPG] Idle fetch failed, falling back to local:', err?.message || err)
+        resolve(fallback)
+      }
+    )
+  })
+}
+
 // Read the authoritative idle state from D1.
-// Returns { lastActiveAt, activeTask } or null when no row exists / offline.
+// Returns { lastActiveAt, activeTask } or null when no row exists / offline /
+// the request times out. Always resolves within FETCH_TIMEOUT_MS so the boot
+// loader can't get trapped here.
 export async function fetchIdleState() {
   if (!canUseCloud()) return null
-  try {
-    const res = await api.getIdle()
-    if (!res || !res.idle) return null
-    return { lastActiveAt: res.idle.lastActiveAt, activeTask: res.idle.activeTask ?? null }
-  } catch (err) {
-    console.warn('[PocketRPG] Idle fetch failed, falling back to local:', err.message)
-    return null
-  }
+  const res = await withTimeout(api.getIdle(), FETCH_TIMEOUT_MS, null)
+  if (!res || !res.idle) return null
+  return { lastActiveAt: res.idle.lastActiveAt, activeTask: res.idle.activeTask ?? null }
 }
 
 // Write the current active task to D1. Server stamps last_active_at with its
