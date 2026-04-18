@@ -42,6 +42,7 @@ const sourceFiles = [
   'components/Panel.js',
   'components/Button.js',
   'components/SectionHeader.js',
+  'components/BonusDisplay.js',
   'screens/HomeScreen.js',
   'screens/StatsScreen.js',
   'screens/InventoryScreen.js',

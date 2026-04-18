@@ -6509,7 +6509,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 16,
+      "meleeStrength": 4,
       "rangedStrength": 0,
       "magicDamage": 0
     },

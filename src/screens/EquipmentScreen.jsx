@@ -7,6 +7,7 @@ import Card from '../components/Card.jsx'
 import Panel from '../components/Panel.jsx'
 import Button from '../components/Button.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
+import BonusDisplay from '../components/BonusDisplay.jsx'
 
 const DEFAULT_CHARGE_ITEM_ID = 'zulrah_scales'
 
@@ -313,14 +314,16 @@ export default function EquipmentScreen() {
       {selected && (
         <Modal title={selected.item.name} onClose={() => setSelected(null)}>
           <div class="flex flex-col gap-2">
-            <Panel className="text-[12px] text-[var(--color-parchment)] opacity-70">
-              <p>Slot: {EQ_SLOT_NAMES[selected.slot]}</p>
-              {selected.item.attackSpeed && <p>Attack speed: {selected.item.attackSpeed} ticks</p>}
-              {selected.item.attackStyle && <p>Style: {selected.item.attackStyle}</p>}
-              {selected.item.otherBonus?.meleeStrength > 0 && <p>Strength bonus: +{selected.item.otherBonus.meleeStrength}</p>}
-              {selected.item.requirements && Object.entries(selected.item.requirements).length > 0 && (
-                <p>Requires: {Object.entries(selected.item.requirements).map(([s, l]) => `${s} ${l}`).join(', ')}</p>
-              )}
+            <Panel className="text-[12px] text-[var(--color-parchment)] opacity-70 space-y-3">
+              <div>
+                <p>Slot: {EQ_SLOT_NAMES[selected.slot]}</p>
+                {selected.item.attackSpeed && <p>Attack speed: {selected.item.attackSpeed} ticks</p>}
+                {selected.item.attackStyle && <p>Style: {selected.item.attackStyle}</p>}
+                {selected.item.requirements && Object.entries(selected.item.requirements).length > 0 && (
+                  <p>Requires: {Object.entries(selected.item.requirements).map(([s, l]) => `${s} ${l}`).join(', ')}</p>
+                )}
+              </div>
+              <BonusDisplay item={selected.item} />
             </Panel>
 
             {/* Scale charges panel */}
