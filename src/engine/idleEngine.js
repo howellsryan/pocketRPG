@@ -505,7 +505,7 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
     const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
     maxHit = rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength)
     atkRoll = maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0)
-    defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus.ranged || 0)
+    defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus?.ranged || 0)
   } else if (combatType === 'magic') {
     const weaponEntry = equipment?.weapon
     const weaponItem = weaponEntry ? itemsData[weaponEntry.itemId] : null
