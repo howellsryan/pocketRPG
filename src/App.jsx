@@ -231,11 +231,11 @@ function GameApp() {
           // Persist slayer task update if present
           if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
             if (sim.slayerTaskUpdate.completed) {
-              await saveSetting('slayerTask', null)
+              setSlayerTask(null)
               updateSlayerPoints(slayerPoints + sim.slayerTaskUpdate.pointsOnComplete)
               addToast('💀 Slayer task completed!', 'levelup')
             } else {
-              await saveSetting('slayerTask', sim.slayerTaskUpdate)
+              setSlayerTask(sim.slayerTaskUpdate)
             }
           }
 

@@ -120,19 +120,6 @@ export default function HomeScreen({ onNavigate, onLogout, isCloudAccount }) {
         )}
       </div>
 
-      {/* Combat stats */}
-      <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '11px', fontWeight: 'bold', color: '#e8d5b0', marginBottom: '8px', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-        Combat Stats
-      </h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' }}>
-        {[['attack','⚔️'],['strength','💪'],['defence','🛡️'],['hitpoints','❤️'],['ranged','🏹'],['magic','✨'],['prayer','🙏']].map(([skill, icon]) => (
-          <div key={skill} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px', borderRadius: '10px', background: '#1a1a1a', border: '1px solid #2a2a2a' }}>
-            <span style={{ fontSize: '16px' }}>{icon}</span>
-            <span style={{ fontSize: '18px', fontFamily: 'monospace', fontWeight: 'bold', color: '#d4af37' }}>{levels[skill] || 1}</span>
-            <span style={{ fontSize: '8px', color: '#e8d5b0', opacity: 0.4, textTransform: 'uppercase' }}>{skill.slice(0,3)}</span>
-          </div>
-        ))}
-      </div>
 
       {/* Remove confirmation modal */}
       {removeConfirm && (
