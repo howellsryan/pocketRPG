@@ -59,6 +59,12 @@ const COMBAT_CATEGORIES = [
     ids: ['king_black_dragon'],
   },
   {
+    key: 'metal_dragons',
+    label: 'Metal Dragons',
+    icon: '🐲',
+    ids: ['adamant_dragon', 'rune_dragon'],
+  },
+  {
     key: 'zulrah',
     label: 'Zulrah',
     icon: '🐍',
@@ -88,7 +94,7 @@ const MONSTER_ICONS = {
   chicken: '🐔', goblin: '👺', cow: '🐄', giant_spider: '🕷️',
   rock_crab: '🦀', sand_crab: '🦀', hill_giant: '👊', moss_giant: '🌿',
   wizard: '🧙', dark_wizard: '🧙‍♂️', abyssal_demon: '😈',
-  green_dragon: '🐉', red_dragon: '🔴', lesser_demon: '👿',
+  green_dragon: '🐉', red_dragon: '🔴', adamant_dragon: '⚔️', rune_dragon: '🛡️', lesser_demon: '👿',
   general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
   dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
   crazy_archaeologist: '📜', king_black_dragon: '👑', zulrah: '🐍', jad: '🌋', inferno: '🌋', corrupted_gauntlet: '⚡',
@@ -442,6 +448,39 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             type: 'heal',
             time: Date.now()
           }])
+        }
+        if (ev.type === 'boltProc') {
+          const labels = {
+            blood_forfeit: '🩸 Blood Forfeit',
+            armour_piercing: '💠 Armour Piercing',
+            dragons_breath: '🔥 Dragon\'s Breath',
+            life_leech: '🖤 Life Leech'
+          }
+          const label = labels[ev.procType] || '⚡ Bolt Proc'
+          if (ev.blocked) {
+            setLog(prev => [...prev.slice(-20), {
+              text: `${label} blocked by ${ev.monsterName || 'target'}!`,
+              type: 'miss',
+              time: Date.now()
+            }])
+          } else {
+            setLog(prev => [...prev.slice(-20), {
+              text: `${label}: ${ev.damage} dmg${ev.healAmount ? ` (+${ev.healAmount} HP)` : ''}${ev.selfDamage ? ` (−${ev.selfDamage} HP)` : ''}`,
+              type: 'special',
+              time: Date.now()
+            }])
+            if (ev.healAmount > 0) {
+              const maxHP = getMaxHP()
+              const newHP = Math.min(hpRef.current + ev.healAmount, maxHP)
+              updateHP(newHP)
+              hpRef.current = newHP
+            }
+            if (ev.selfDamage > 0) {
+              const newHP = Math.max(1, hpRef.current - ev.selfDamage)
+              updateHP(newHP)
+              hpRef.current = newHP
+            }
+          }
         }
         if (combatRef.current.runesConsumed && ev.type === 'playerHit' && ev.damage > 0) {
           // Consume runes when spell successfully casts

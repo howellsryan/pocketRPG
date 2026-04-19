@@ -507,72 +507,72 @@
         }
       },
       {
-        "id": "smith_bronze_bolt_heads",
-        "name": "Smith bronze bolt heads (10)",
+        "id": "smith_bronze_bolts_unf",
+        "name": "Smith bronze bolts (unf) (10)",
         "level": 9,
         "ticks": 4,
         "xp": 13,
-        "product": "bronze_bolt_heads",
+        "product": "bronze_bolts_unf",
         "productQty": 10,
         "materials": {
           "bronze_bar": 1
         }
       },
       {
-        "id": "smith_iron_bolt_heads",
-        "name": "Smith iron bolt heads (10)",
+        "id": "smith_iron_bolts_unf",
+        "name": "Smith iron bolts (unf) (10)",
         "level": 18,
         "ticks": 4,
         "xp": 25,
-        "product": "iron_bolt_heads",
+        "product": "iron_bolts_unf",
         "productQty": 10,
         "materials": {
           "iron_bar": 1
         }
       },
       {
-        "id": "smith_steel_bolt_heads",
-        "name": "Smith steel bolt heads (10)",
+        "id": "smith_steel_bolts_unf",
+        "name": "Smith steel bolts (unf) (10)",
         "level": 33,
         "ticks": 4,
         "xp": 38,
-        "product": "steel_bolt_heads",
+        "product": "steel_bolts_unf",
         "productQty": 10,
         "materials": {
           "steel_bar": 1
         }
       },
       {
-        "id": "smith_mithril_bolt_heads",
-        "name": "Smith mithril bolt heads (10)",
+        "id": "smith_mithril_bolts_unf",
+        "name": "Smith mithril bolts (unf) (10)",
         "level": 53,
         "ticks": 4,
         "xp": 50,
-        "product": "mithril_bolt_heads",
+        "product": "mithril_bolts_unf",
         "productQty": 10,
         "materials": {
           "mithril_bar": 1
         }
       },
       {
-        "id": "smith_adamant_bolt_heads",
-        "name": "Smith adamant bolt heads (10)",
+        "id": "smith_adamant_bolts_unf",
+        "name": "Smith adamant bolts (unf) (10)",
         "level": 73,
         "ticks": 4,
         "xp": 63,
-        "product": "adamant_bolt_heads",
+        "product": "adamant_bolts_unf",
         "productQty": 10,
         "materials": {
           "adamant_bar": 1
         }
       },
       {
-        "id": "smith_rune_bolt_heads",
-        "name": "Smith rune bolt heads (10)",
+        "id": "smith_runite_bolts_unf",
+        "name": "Smith runite bolts (unf) (10)",
         "level": 88,
         "ticks": 4,
         "xp": 75,
-        "product": "rune_bolt_heads",
+        "product": "runite_bolts_unf",
         "productQty": 10,
         "materials": {
           "rune_bar": 1
@@ -1008,7 +1008,7 @@
         "productQty": 10,
         "materials": {
           "feathers": 10,
-          "bronze_bolt_heads": 10
+          "bronze_bolts_unf": 10
         }
       },
       {
@@ -1021,7 +1021,7 @@
         "productQty": 10,
         "materials": {
           "feathers": 10,
-          "iron_bolt_heads": 10
+          "iron_bolts_unf": 10
         }
       },
       {
@@ -1034,7 +1034,7 @@
         "productQty": 10,
         "materials": {
           "feathers": 10,
-          "steel_bolt_heads": 10
+          "steel_bolts_unf": 10
         }
       },
       {
@@ -1047,7 +1047,7 @@
         "productQty": 10,
         "materials": {
           "feathers": 10,
-          "mithril_bolt_heads": 10
+          "mithril_bolts_unf": 10
         }
       },
       {
@@ -1060,20 +1060,185 @@
         "productQty": 10,
         "materials": {
           "feathers": 10,
-          "adamant_bolt_heads": 10
+          "adamant_bolts_unf": 10
         }
       },
       {
-        "id": "make_rune_bolts",
-        "name": "Make rune bolts (10)",
+        "id": "make_runite_bolts",
+        "name": "Make runite bolts (10)",
         "level": 69,
         "ticks": 3,
         "xp": 100,
-        "product": "rune_bolts",
+        "product": "runite_bolts",
         "productQty": 10,
         "materials": {
           "feathers": 10,
-          "rune_bolt_heads": 10
+          "runite_bolts_unf": 10
+        }
+      },
+      {
+        "id": "make_dragon_bolts",
+        "name": "Make dragon bolts (10)",
+        "level": 84,
+        "ticks": 3,
+        "xp": 120,
+        "product": "dragon_bolts",
+        "productQty": 10,
+        "materials": {
+          "feathers": 10,
+          "dragon_bolts_unf": 10
+        }
+      },
+      {
+        "id": "cut_ruby_bolt_tips",
+        "name": "Cut ruby bolt tips (12)",
+        "level": 63,
+        "ticks": 2,
+        "xp": 6,
+        "product": "ruby_bolt_tips",
+        "productQty": 12,
+        "materials": {
+          "ruby": 1
+        }
+      },
+      {
+        "id": "cut_diamond_bolt_tips",
+        "name": "Cut diamond bolt tips (12)",
+        "level": 65,
+        "ticks": 2,
+        "xp": 7,
+        "product": "diamond_bolt_tips",
+        "productQty": 12,
+        "materials": {
+          "diamond": 1
+        }
+      },
+      {
+        "id": "cut_dragonstone_bolt_tips",
+        "name": "Cut dragonstone bolt tips (12)",
+        "level": 71,
+        "ticks": 2,
+        "xp": 8,
+        "product": "dragonstone_bolt_tips",
+        "productQty": 12,
+        "materials": {
+          "dragonstone": 1
+        }
+      },
+      {
+        "id": "cut_onyx_bolt_tips",
+        "name": "Cut onyx bolt tips (12)",
+        "level": 73,
+        "ticks": 2,
+        "xp": 9,
+        "product": "onyx_bolt_tips",
+        "productQty": 12,
+        "materials": {
+          "onyx": 1
+        }
+      },
+      {
+        "id": "tip_ruby_bolts",
+        "name": "Tip ruby bolts (10)",
+        "level": 63,
+        "ticks": 3,
+        "xp": 63,
+        "product": "ruby_bolts",
+        "productQty": 10,
+        "materials": {
+          "adamant_bolts": 10,
+          "ruby_bolt_tips": 10
+        }
+      },
+      {
+        "id": "tip_diamond_bolts",
+        "name": "Tip diamond bolts (10)",
+        "level": 65,
+        "ticks": 3,
+        "xp": 70,
+        "product": "diamond_bolts",
+        "productQty": 10,
+        "materials": {
+          "adamant_bolts": 10,
+          "diamond_bolt_tips": 10
+        }
+      },
+      {
+        "id": "tip_dragonstone_bolts",
+        "name": "Tip dragonstone bolts (10)",
+        "level": 71,
+        "ticks": 3,
+        "xp": 82,
+        "product": "dragonstone_bolts",
+        "productQty": 10,
+        "materials": {
+          "runite_bolts": 10,
+          "dragonstone_bolt_tips": 10
+        }
+      },
+      {
+        "id": "tip_onyx_bolts",
+        "name": "Tip onyx bolts (10)",
+        "level": 73,
+        "ticks": 3,
+        "xp": 94,
+        "product": "onyx_bolts",
+        "productQty": 10,
+        "materials": {
+          "runite_bolts": 10,
+          "onyx_bolt_tips": 10
+        }
+      },
+      {
+        "id": "tip_ruby_dragon_bolts",
+        "name": "Tip ruby dragon bolts (10)",
+        "level": 84,
+        "ticks": 3,
+        "xp": 70,
+        "product": "ruby_dragon_bolts",
+        "productQty": 10,
+        "materials": {
+          "dragon_bolts": 10,
+          "ruby_bolt_tips": 10
+        }
+      },
+      {
+        "id": "tip_diamond_dragon_bolts",
+        "name": "Tip diamond dragon bolts (10)",
+        "level": 84,
+        "ticks": 3,
+        "xp": 75,
+        "product": "diamond_dragon_bolts",
+        "productQty": 10,
+        "materials": {
+          "dragon_bolts": 10,
+          "diamond_bolt_tips": 10
+        }
+      },
+      {
+        "id": "tip_dragonstone_dragon_bolts",
+        "name": "Tip dragonstone dragon bolts (10)",
+        "level": 84,
+        "ticks": 3,
+        "xp": 90,
+        "product": "dragonstone_dragon_bolts",
+        "productQty": 10,
+        "materials": {
+          "dragon_bolts": 10,
+          "dragonstone_bolt_tips": 10
+        }
+      },
+      {
+        "id": "tip_onyx_dragon_bolts",
+        "name": "Tip onyx dragon bolts (10)",
+        "level": 84,
+        "ticks": 3,
+        "xp": 100,
+        "product": "onyx_dragon_bolts",
+        "productQty": 10,
+        "materials": {
+          "dragon_bolts": 10,
+          "onyx_bolt_tips": 10
         }
       }
     ]
@@ -1946,6 +2111,150 @@
           "cosmic_rune": 1,
           "soul_rune": 20,
           "blood_rune": 20
+        }
+      },
+      {
+        "id": "enchant_ruby_bolts",
+        "name": "Enchant Ruby Bolts (10)",
+        "level": 49,
+        "ticks": 3,
+        "xp": 59,
+        "type": "enchant_bolts",
+        "product": "ruby_bolts_e",
+        "productQty": 10,
+        "materials": {
+          "ruby_bolts": 10
+        },
+        "runeReq": {
+          "cosmic_rune": 1,
+          "blood_rune": 1,
+          "fire_rune": 5
+        }
+      },
+      {
+        "id": "enchant_ruby_dragon_bolts",
+        "name": "Enchant Ruby Dragon Bolts (10)",
+        "level": 49,
+        "ticks": 3,
+        "xp": 59,
+        "type": "enchant_bolts",
+        "product": "ruby_dragon_bolts_e",
+        "productQty": 10,
+        "materials": {
+          "ruby_dragon_bolts": 10
+        },
+        "runeReq": {
+          "cosmic_rune": 1,
+          "blood_rune": 1,
+          "fire_rune": 5
+        }
+      },
+      {
+        "id": "enchant_diamond_bolts",
+        "name": "Enchant Diamond Bolts (10)",
+        "level": 57,
+        "ticks": 3,
+        "xp": 67,
+        "type": "enchant_bolts",
+        "product": "diamond_bolts_e",
+        "productQty": 10,
+        "materials": {
+          "diamond_bolts": 10
+        },
+        "runeReq": {
+          "cosmic_rune": 1,
+          "law_rune": 1,
+          "earth_rune": 10
+        }
+      },
+      {
+        "id": "enchant_diamond_dragon_bolts",
+        "name": "Enchant Diamond Dragon Bolts (10)",
+        "level": 57,
+        "ticks": 3,
+        "xp": 67,
+        "type": "enchant_bolts",
+        "product": "diamond_dragon_bolts_e",
+        "productQty": 10,
+        "materials": {
+          "diamond_dragon_bolts": 10
+        },
+        "runeReq": {
+          "cosmic_rune": 1,
+          "law_rune": 1,
+          "earth_rune": 10
+        }
+      },
+      {
+        "id": "enchant_dragonstone_bolts",
+        "name": "Enchant Dragonstone Bolts (10)",
+        "level": 68,
+        "ticks": 3,
+        "xp": 78,
+        "type": "enchant_bolts",
+        "product": "dragonstone_bolts_e",
+        "productQty": 10,
+        "materials": {
+          "dragonstone_bolts": 10
+        },
+        "runeReq": {
+          "cosmic_rune": 1,
+          "soul_rune": 1,
+          "earth_rune": 15
+        }
+      },
+      {
+        "id": "enchant_dragonstone_dragon_bolts",
+        "name": "Enchant Dragonstone Dragon Bolts (10)",
+        "level": 68,
+        "ticks": 3,
+        "xp": 78,
+        "type": "enchant_bolts",
+        "product": "dragonstone_dragon_bolts_e",
+        "productQty": 10,
+        "materials": {
+          "dragonstone_dragon_bolts": 10
+        },
+        "runeReq": {
+          "cosmic_rune": 1,
+          "soul_rune": 1,
+          "earth_rune": 15
+        }
+      },
+      {
+        "id": "enchant_onyx_bolts",
+        "name": "Enchant Onyx Bolts (10)",
+        "level": 87,
+        "ticks": 3,
+        "xp": 97,
+        "type": "enchant_bolts",
+        "product": "onyx_bolts_e",
+        "productQty": 10,
+        "materials": {
+          "onyx_bolts": 10
+        },
+        "runeReq": {
+          "cosmic_rune": 1,
+          "death_rune": 1,
+          "fire_rune": 20
+        }
+      },
+      {
+        "id": "enchant_onyx_dragon_bolts",
+        "name": "Enchant Onyx Dragon Bolts (10)",
+        "level": 87,
+        "ticks": 3,
+        "xp": 97,
+        "type": "enchant_bolts",
+        "product": "onyx_dragon_bolts_e",
+        "productQty": 10,
+        "materials": {
+          "onyx_dragon_bolts": 10
+        },
+        "runeReq": {
+          "cosmic_rune": 1,
+          "death_rune": 1,
+          "fire_rune": 20
         }
       },
       {

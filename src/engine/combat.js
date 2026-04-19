@@ -440,6 +440,60 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const acc = hitChance(atkRoll, defRoll)
       damage = rollDamage(acc, maxHit)
 
+      // ── Enchanted bolt procs (ruby/diamond/dragonstone/onyx e) ──
+      let boltProcEvent = null
+      let boltHealAmount = 0
+      let boltSelfDamage = 0
+      if (!weaponIsScaleCharged) {
+        const equippedAmmoEntry = equipment && equipment.ammo
+        const ammoItem = equippedAmmoEntry ? itemsData[equippedAmmoEntry.itemId] : null
+        const proc = ammoItem?.boltProc
+        if (proc && Math.random() < (proc.chance || 0)) {
+          switch (proc.type) {
+            case 'blood_forfeit': {
+              // Hits 20% of target's current HP, deals 10% of player's current HP to self
+              if (monster.currentHP > 0) {
+                damage = Math.max(1, Math.floor(monster.currentHP * 0.2))
+                const playerHP = playerStats.currentHP || 0
+                boltSelfDamage = Math.floor(playerHP * 0.1)
+                boltProcEvent = { type: 'boltProc', procType: 'blood_forfeit', damage, selfDamage: boltSelfDamage }
+              }
+              break
+            }
+            case 'armour_piercing': {
+              // 115% max hit, ignore all defence (guaranteed accuracy)
+              const piercedMax = Math.floor(maxHit * 1.15)
+              damage = Math.max(1, Math.floor(Math.random() * (piercedMax + 1)))
+              boltProcEvent = { type: 'boltProc', procType: 'armour_piercing', damage }
+              break
+            }
+            case 'dragons_breath': {
+              // +45% damage — does not work on dragons / fire-immune targets
+              if (monster.isDragon || monster.fireImmune) {
+                boltProcEvent = { type: 'boltProc', procType: 'dragons_breath', damage: 0, blocked: true, monsterName: monster.name }
+              } else {
+                const burnMax = Math.floor(maxHit * 1.45)
+                damage = Math.max(damage, Math.floor(Math.random() * (burnMax + 1)))
+                boltProcEvent = { type: 'boltProc', procType: 'dragons_breath', damage }
+              }
+              break
+            }
+            case 'life_leech': {
+              // +20% damage, heal 25% of damage dealt. Undead immune.
+              if (monster.undead) {
+                boltProcEvent = { type: 'boltProc', procType: 'life_leech', damage: 0, blocked: true, monsterName: monster.name }
+              } else {
+                const leechMax = Math.floor(maxHit * 1.20)
+                damage = Math.max(damage, Math.floor(Math.random() * (leechMax + 1)))
+                boltHealAmount = Math.floor(damage * 0.25)
+                boltProcEvent = { type: 'boltProc', procType: 'life_leech', damage, healAmount: boltHealAmount }
+              }
+              break
+            }
+          }
+        }
+      }
+
       if (weaponIsScaleCharged) {
         // Consume one scale charge per shot
         events.push({ type: 'consumeCharge', qty: 1 })
@@ -449,6 +503,10 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
         if (equippedAmmo) {
           events.push({ type: 'consumeAmmo', itemId: equippedAmmo.itemId, qty: 1 })
         }
+      }
+
+      if (boltProcEvent) {
+        events.push(boltProcEvent)
       }
 
       if (damage > 0) {
