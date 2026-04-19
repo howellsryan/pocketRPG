@@ -1,0 +1,276 @@
+{
+  "cooks_apprentice": {
+    "id": "cooks_apprentice",
+    "name": "Cook's Apprentice",
+    "difficulty": "Novice",
+    "description": "The Lumbridge cook needs flour and sand for tonight's feast. Help him out.",
+    "narrative": [
+      "A panicked cook stops you outside the castle kitchen. 'The Duke's feast is in a few hours and I'm out of supplies! Bring me flour and a bucket of sand — I beg you!'"
+    ],
+    "prerequisites": [],
+    "objectives": [
+      { "type": "deliver", "itemId": "pot_of_flour", "quantity": 5, "label": "Deliver 5 Pot of Flour" },
+      { "type": "deliver", "itemId": "bucket_of_sand", "quantity": 2, "label": "Deliver 2 Bucket of Sand" }
+    ],
+    "rewards": {
+      "xp": [{ "skill": "cooking", "amount": 300 }],
+      "coins": 500,
+      "questPoints": 1
+    }
+  },
+
+  "dorics_errand": {
+    "id": "dorics_errand",
+    "name": "Doric's Errand",
+    "difficulty": "Novice",
+    "description": "The dwarven smith Doric is out of ore. Deliver what he needs and he'll share his forge.",
+    "narrative": [
+      "Doric leans on his anvil. 'Laddie, I've run dry. Fetch me clay, copper, and iron and ye can use this forge whenever ye like.'"
+    ],
+    "prerequisites": [],
+    "objectives": [
+      { "type": "deliver", "itemId": "clay",        "quantity": 6, "label": "Deliver 6 Clay" },
+      { "type": "deliver", "itemId": "copper_ore",  "quantity": 4, "label": "Deliver 4 Copper Ore" },
+      { "type": "deliver", "itemId": "iron_ore",    "quantity": 2, "label": "Deliver 2 Iron Ore" }
+    ],
+    "rewards": {
+      "xp": [{ "skill": "mining", "amount": 1300 }],
+      "coins": 180,
+      "questPoints": 1
+    }
+  },
+
+  "feathered_fortune": {
+    "id": "feathered_fortune",
+    "name": "Feathered Fortune",
+    "difficulty": "Novice",
+    "description": "A fletcher's apprentice needs chicken feathers — a LOT of them.",
+    "narrative": [
+      "A twitchy fletcher shoves a basket at you. 'Feathers. Lots. Now. No questions.'"
+    ],
+    "prerequisites": [],
+    "objectives": [
+      { "type": "deliver", "itemId": "feathers", "quantity": 100, "label": "Deliver 100 Feathers" }
+    ],
+    "rewards": {
+      "xp": [{ "skill": "fletching", "amount": 400 }],
+      "coins": 250,
+      "questPoints": 1
+    }
+  },
+
+  "bone_voyage": {
+    "id": "bone_voyage",
+    "name": "Bone Voyage",
+    "difficulty": "Novice",
+    "description": "The monk at Edgeville monastery wants to offer a great tribute at the altar.",
+    "narrative": [
+      "The elderly monk bows his head. 'Bring bones. Many bones. The Saradomin hears prayers paid in bone.'"
+    ],
+    "prerequisites": [],
+    "objectives": [
+      { "type": "deliver", "itemId": "bones", "quantity": 50, "label": "Deliver 50 Bones" }
+    ],
+    "rewards": {
+      "xp": [{ "skill": "prayer", "amount": 750 }],
+      "coins": 100,
+      "questPoints": 1
+    }
+  },
+
+  "chicken_menace": {
+    "id": "chicken_menace",
+    "name": "The Chicken Menace",
+    "difficulty": "Novice",
+    "description": "A farmer's chickens have gone feral. Thin the flock.",
+    "narrative": [
+      "The farmer points a shaking finger at the coop. 'They're not chickens anymore. They're MONSTERS. Cull twenty-five.'"
+    ],
+    "prerequisites": [],
+    "objectives": [
+      { "type": "kill", "monsterId": "chicken", "quantity": 25, "label": "Slay 25 Chickens" }
+    ],
+    "rewards": {
+      "xp": [{ "skill": "attack", "amount": 200 }],
+      "coins": 100,
+      "questPoints": 1
+    }
+  },
+
+  "goblin_menace": {
+    "id": "goblin_menace",
+    "name": "The Goblin Menace",
+    "difficulty": "Novice",
+    "description": "Goblins have been raiding caravans near the crossroads. Cut them down.",
+    "narrative": [
+      "A weary guardsman spits into the fire. 'Fifteen of the green wretches. Then we can get goods moving again.'"
+    ],
+    "prerequisites": ["chicken_menace"],
+    "objectives": [
+      { "type": "kill", "monsterId": "goblin", "quantity": 15, "label": "Slay 15 Goblins" }
+    ],
+    "rewards": {
+      "xp": [
+        { "skill": "attack",   "amount": 400 },
+        { "skill": "strength", "amount": 400 }
+      ],
+      "coins": 300,
+      "questPoints": 1
+    }
+  },
+
+  "mad_cow_affair": {
+    "id": "mad_cow_affair",
+    "name": "The Mad Cow Affair",
+    "difficulty": "Novice",
+    "description": "Something in the water has driven the herd mad. Put them down for the farmer.",
+    "narrative": [
+      "Blood on the grass. Hoofprints on the barn roof. The farmer doesn't even look up. 'Twenty head. Mercy killing.'"
+    ],
+    "prerequisites": ["chicken_menace"],
+    "objectives": [
+      { "type": "kill",    "monsterId": "cow",    "quantity": 20, "label": "Slay 20 Cows" },
+      { "type": "deliver", "itemId":    "cowhide", "quantity": 10, "label": "Return 10 Cowhides" }
+    ],
+    "rewards": {
+      "xp": [
+        { "skill": "defence",  "amount": 600 },
+        { "skill": "crafting", "amount": 200 }
+      ],
+      "coins": 250,
+      "questPoints": 1
+    }
+  },
+
+  "eight_legged_problem": {
+    "id": "eight_legged_problem",
+    "name": "An Eight-Legged Problem",
+    "difficulty": "Intermediate",
+    "description": "Giant spiders have overrun an old mineshaft. Clear them out.",
+    "narrative": [
+      "Cobwebs as thick as rope. Something skitters in the dark. The mine foreman hands you a torch and a short sword. 'Ten of them. Don't look up.'"
+    ],
+    "prerequisites": ["goblin_menace"],
+    "requirements": {
+      "skills": [{ "skill": "attack", "level": 20 }]
+    },
+    "objectives": [
+      { "type": "kill", "monsterId": "giant_spider", "quantity": 10, "label": "Slay 10 Giant Spiders" }
+    ],
+    "rewards": {
+      "xp": [
+        { "skill": "attack",   "amount": 1200 },
+        { "skill": "strength", "amount": 1200 }
+      ],
+      "coins": 800,
+      "questPoints": 2
+    }
+  },
+
+  "giant_problem": {
+    "id": "giant_problem",
+    "name": "A Giant Problem",
+    "difficulty": "Intermediate",
+    "description": "Hill giants have been smashing watchtowers in the hills. Break them before they break the kingdom.",
+    "narrative": [
+      "A broken watchtower lies in splinters. Footprints the size of shields lead into the hills. The captain looks at you. 'Five. Bring me the big bones as proof.'"
+    ],
+    "prerequisites": ["eight_legged_problem"],
+    "requirements": {
+      "skills": [{ "skill": "attack", "level": 25 }]
+    },
+    "objectives": [
+      { "type": "kill",    "monsterId": "hill_giant", "quantity": 5, "label": "Slay 5 Hill Giants" },
+      { "type": "deliver", "itemId":    "big_bones",  "quantity": 5, "label": "Return 5 Big Bones" }
+    ],
+    "rewards": {
+      "xp": [
+        { "skill": "strength", "amount": 2000 },
+        { "skill": "defence",  "amount": 1500 }
+      ],
+      "items": [{ "itemId": "steel_bar", "quantity": 5 }],
+      "coins": 1200,
+      "questPoints": 2
+    }
+  },
+
+  "wizards_homework": {
+    "id": "wizards_homework",
+    "name": "The Wizard's Homework",
+    "difficulty": "Intermediate",
+    "description": "A wizard has lost a duel to his apprentice. Help him even the score.",
+    "narrative": [
+      "The wizard's hat is singed. 'One of my own students bested me. Cull the dark wizards gathering at the stone circle — and bring me an iron bar while you're at it, for, ah… reasons.'"
+    ],
+    "prerequisites": [],
+    "requirements": {
+      "skills": [{ "skill": "magic", "level": 15 }]
+    },
+    "objectives": [
+      { "type": "kill",    "monsterId": "dark_wizard", "quantity": 8, "label": "Slay 8 Dark Wizards" },
+      { "type": "deliver", "itemId":    "iron_bar",    "quantity": 3, "label": "Deliver 3 Iron Bars" }
+    ],
+    "rewards": {
+      "xp": [{ "skill": "magic", "amount": 2500 }],
+      "coins": 900,
+      "questPoints": 2
+    }
+  },
+
+  "dragon_slayer": {
+    "id": "dragon_slayer",
+    "name": "Dragon Slayer",
+    "difficulty": "Experienced",
+    "description": "Only a true hero can face a dragon. Prove yourself worthy.",
+    "narrative": [
+      "Smoke over the kingdom. Villages burning. The champions' guild opens its doors to you alone. 'Bring it a shield of the ancients. Then bring us its hide.'"
+    ],
+    "prerequisites": ["giant_problem"],
+    "requirements": {
+      "skills": [{ "skill": "attack", "level": 40 }],
+      "items":  [{ "itemId": "anti_dragon_shield", "quantity": 1 }]
+    },
+    "objectives": [
+      { "type": "kill",    "monsterId": "green_dragon",     "quantity": 1, "label": "Slay a Green Dragon" },
+      { "type": "deliver", "itemId":    "green_dragonhide", "quantity": 1, "label": "Return Green Dragonhide" }
+    ],
+    "rewards": {
+      "xp": [
+        { "skill": "strength", "amount": 18650 },
+        { "skill": "defence",  "amount": 18650 }
+      ],
+      "items": [{ "itemId": "dragon_bones", "quantity": 2 }],
+      "coins": 5000,
+      "questPoints": 3
+    }
+  },
+
+  "champion_of_champions": {
+    "id": "champion_of_champions",
+    "name": "Champion of Champions",
+    "difficulty": "Master",
+    "description": "The champions' guild only tests those who have truly mastered combat. Reach peak form in every melee discipline.",
+    "narrative": [
+      "The guildmaster looks you up and down. 'The weapon is nothing. The fighter is everything. Come back when your strength, attack, and defence each sit at 50.'"
+    ],
+    "prerequisites": ["dragon_slayer"],
+    "requirements": {
+      "skills": [
+        { "skill": "attack",   "level": 50 },
+        { "skill": "strength", "level": 50 },
+        { "skill": "defence",  "level": 50 }
+      ]
+    },
+    "objectives": [
+      { "type": "level", "skill": "attack",   "level": 50, "label": "Reach Attack 50" },
+      { "type": "level", "skill": "strength", "level": 50, "label": "Reach Strength 50" },
+      { "type": "level", "skill": "defence",  "level": 50, "label": "Reach Defence 50" }
+    ],
+    "rewards": {
+      "xp": [{ "skill": "hitpoints", "amount": 10000 }],
+      "items": [{ "itemId": "steel_bar", "quantity": 20 }],
+      "coins": 10000,
+      "questPoints": 5
+    }
+  }
+}

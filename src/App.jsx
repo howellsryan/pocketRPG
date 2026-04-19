@@ -14,6 +14,7 @@ import AgilityScreen from './screens/AgilityScreen.jsx'
 import GeneralStoreScreen from './screens/GeneralStoreScreen.jsx'
 import EquipmentScreen from './screens/EquipmentScreen.jsx'
 import AuthScreen from './screens/AuthScreen.jsx'
+import QuestScreen from './screens/QuestScreen.jsx'
 import { SCREENS } from './utils/constants.js'
 import { hasSave, closeDB } from './db/database.js'
 import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
@@ -27,7 +28,7 @@ import { simulateIdleThieving } from './engine/thieving.js'
 import { getLevelFromXP } from './engine/experience.js'
 
 function GameApp() {
-  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints } = useGame()
+  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints, addMonsterKills } = useGame()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [gameReady, setGameReady] = useState(false)
   const [activity, setActivity] = useState(null)
@@ -193,6 +194,10 @@ function GameApp() {
           // Apply slayer XP from combat simulation
           if (savedTask.type === 'combat' && sim.slayerXpGained > 0) {
             grantXP('slayer', sim.slayerXpGained)
+          }
+          // Quest kill tracking — every idle-killed monster counts
+          if (savedTask.type === 'combat' && sim.monstersKilled > 0 && savedTask.monster?.id) {
+            addMonsterKills({ [savedTask.monster.id]: sim.monstersKilled })
           }
           // Apply items
           if ((savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather') && sim.finalInventory) {
@@ -550,6 +555,7 @@ function GameApp() {
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} />
       case SCREENS.AGILITY:   return <AgilityScreen initialActionId={actionData?.actionId} />
       case SCREENS.STORE:     return <GeneralStoreScreen />
+      case SCREENS.QUESTS:    return <QuestScreen />
       default:                return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} isCloudAccount={!!getToken() && !!getCharacterId()} />
     }
   }

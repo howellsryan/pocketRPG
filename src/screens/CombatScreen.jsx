@@ -104,7 +104,7 @@ const MONSTER_ICONS = {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFightStatusChange }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, unlockedFeatures } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, unlockedFeatures, incrementMonsterKill } = useGame()
 
   const [combat, setCombat] = useState(null)
   const [log, setLog] = useState([])
@@ -502,6 +502,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         }
         if (ev.type === 'monsterDeath') {
           setKillCount(k => k + 1)
+
+          // Quest kill tracking (every monster, not just bosses)
+          incrementMonsterKill(state.monster.id)
 
           // Boss kill count tracking
           if (state.monster.boss) {

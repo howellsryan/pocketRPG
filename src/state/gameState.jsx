@@ -8,6 +8,8 @@ import { ALL_SKILLS, MAX_XP, AUTO_SAVE_DEBOUNCE } from '../utils/constants.js'
 import { debounce } from '../utils/helpers.js'
 import { fetchIdleState, pushIdleState } from '../cloud/idleState.js'
 import itemsData from '../data/items.json'
+import questsData from '../data/quests.json'
+import { QUEST_STATUS, consumeDeliverables, canCompleteQuest, areObjectivesComplete, getQuestStatus } from '../engine/quests.js'
 
 const GameContext = createContext(null)
 
@@ -31,6 +33,9 @@ export function GameProvider({ children }) {
   const [activeCombatSpell, setActiveCombatSpellState] = useState(null)
   const [bossKillCounts, setBossKillCountsState] = useState({})
   const [farming, setFarmingState] = useState({ patchesById: {} })
+  const [quests, setQuestsState] = useState({})
+  const [monsterKillCounts, setMonsterKillCountsState] = useState({})
+  const [questKillStartCounts, setQuestKillStartCountsState] = useState({})
   const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false })
 
   // Refs to hold latest state for the debounced auto-save
@@ -45,11 +50,12 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedBossKillCounts, savedFarming] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedBossKillCounts, savedFarming, savedQuests, savedMonsterKillCounts, savedQuestKillStartCounts] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
-      getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('bossKillCounts'), getSetting('farming')
+      getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('bossKillCounts'), getSetting('farming'),
+      getSetting('quests'), getSetting('monsterKillCounts'), getSetting('questKillStartCounts')
     ])
     // Idle-engine inputs: last active timestamp and last active task.
     // D1 is authoritative when signed in + online — localStorage is only used
@@ -121,6 +127,13 @@ export function GameProvider({ children }) {
               const newXP = Math.min((s.slayer.xp || 0) + Math.floor(sim.slayerXpGained), 200000000)
               s.slayer = { ...s.slayer, xp: newXP, level: getLevelFromXP(newXP) }
             }
+          }
+          // Quest kill tracking — apply idle-killed monsters to the persisted counter
+          if (savedTask.type === 'combat' && sim.monstersKilled > 0 && savedTask.monster?.id) {
+            const existing = savedMonsterKillCounts || {}
+            const monsterId = savedTask.monster.id
+            savedMonsterKillCounts = { ...existing, [monsterId]: (existing[monsterId] || 0) + sim.monstersKilled }
+            await saveSetting('monsterKillCounts', savedMonsterKillCounts)
           }
           // Deduct consumed materials from bank
           if (sim.itemsConsumed) {
@@ -240,6 +253,9 @@ export function GameProvider({ children }) {
     setActiveCombatSpellState(savedActiveCombatSpell ?? null)
     setBossKillCountsState(savedBossKillCounts ?? {})
     setFarmingState(savedFarming ?? { patchesById: {} })
+    setQuestsState(savedQuests ?? {})
+    setMonsterKillCountsState(savedMonsterKillCounts ?? {})
+    setQuestKillStartCountsState(savedQuestKillStartCounts ?? {})
     const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
     setCurrentHP(savedHP != null ? Math.min(savedHP, hpLevel) : hpLevel)
     setLoaded(true)
@@ -427,6 +443,129 @@ export function GameProvider({ children }) {
     saveSetting('farming', farmingState)
   }, [])
 
+  // ── Quests ──
+  const startQuest = useCallback((questId) => {
+    const quest = questsData[questId]
+    if (!quest) return
+    // Snapshot current kill counts for any kill objectives so only future
+    // kills count toward this quest's progress.
+    setQuestKillStartCountsState(prev => {
+      const snapshot = { ...(prev[questId] || {}) }
+      for (const obj of quest.objectives) {
+        if (obj.type === 'kill') {
+          snapshot[obj.monsterId] = monsterKillCounts[obj.monsterId] || 0
+        }
+      }
+      const next = { ...prev, [questId]: snapshot }
+      saveSetting('questKillStartCounts', next)
+      return next
+    })
+    setQuestsState(prev => {
+      const next = { ...prev, [questId]: QUEST_STATUS.IN_PROGRESS }
+      saveSetting('quests', next)
+      return next
+    })
+  }, [monsterKillCounts])
+
+  const incrementMonsterKill = useCallback((monsterId) => {
+    if (!monsterId) return
+    setMonsterKillCountsState(prev => {
+      const next = { ...prev, [monsterId]: (prev[monsterId] || 0) + 1 }
+      saveSetting('monsterKillCounts', next)
+      return next
+    })
+  }, [])
+
+  const addMonsterKills = useCallback((counts) => {
+    if (!counts) return
+    const entries = Object.entries(counts).filter(([, n]) => n > 0)
+    if (entries.length === 0) return
+    setMonsterKillCountsState(prev => {
+      const next = { ...prev }
+      for (const [id, n] of entries) next[id] = (next[id] || 0) + n
+      saveSetting('monsterKillCounts', next)
+      return next
+    })
+  }, [])
+
+  const completeQuest = useCallback((questId) => {
+    const quest = questsData[questId]
+    if (!quest) return { ok: false, reason: 'unknown quest' }
+    if (quests[questId] === QUEST_STATUS.COMPLETED) return { ok: false, reason: 'already completed' }
+    // Build kill progress map (delta since quest started) for validation
+    const start = questKillStartCounts[questId] || {}
+    const killProgress = {}
+    for (const obj of quest.objectives) {
+      if (obj.type === 'kill') {
+        killProgress[obj.monsterId] = Math.max(0, (monsterKillCounts[obj.monsterId] || 0) - (start[obj.monsterId] || 0))
+      }
+    }
+    const ctx = {
+      stats: stateRef.current.stats,
+      bank: stateRef.current.bank,
+      inventory: stateRef.current.inventory,
+      monsterKillCounts,
+      killProgress,
+    }
+    if (!areObjectivesComplete(quest, ctx)) return { ok: false, reason: 'objectives not met' }
+
+    // Consume delivered items
+    const { bank: newBank, inventory: newInv } = consumeDeliverables(quest, stateRef.current.bank, stateRef.current.inventory)
+    setBank(newBank); dirty.current.bank = true
+    setInventory(newInv); dirty.current.inventory = true
+
+    // Grant XP rewards
+    if (quest.rewards?.xp) {
+      for (const { skill, amount } of quest.rewards.xp) {
+        grantXP(skill, amount)
+      }
+    }
+    // Grant coins — route to inventory stack, else empty slot, else bank
+    const coinReward = quest.rewards?.coins || 0
+    if (coinReward > 0) {
+      const invCopy = [...stateRef.current.inventory]
+      const coinsIdx = invCopy.findIndex(s => s && s.itemId === 'coins' && !s.noted)
+      if (coinsIdx >= 0) {
+        invCopy[coinsIdx] = { ...invCopy[coinsIdx], quantity: invCopy[coinsIdx].quantity + coinReward }
+        setInventory(invCopy); dirty.current.inventory = true
+      } else {
+        const empty = invCopy.findIndex(s => s === null)
+        if (empty >= 0) {
+          invCopy[empty] = { itemId: 'coins', quantity: coinReward }
+          setInventory(invCopy); dirty.current.inventory = true
+        } else {
+          setBank(prev => {
+            const out = { ...prev }
+            out['coins'] = { itemId: 'coins', quantity: (out['coins']?.quantity || 0) + coinReward }
+            return out
+          })
+          dirty.current.bank = true
+        }
+      }
+    }
+    // Grant item rewards — go to bank
+    if (quest.rewards?.items) {
+      setBank(prev => {
+        const out = { ...prev }
+        for (const { itemId, quantity } of quest.rewards.items) {
+          out[itemId] = { itemId, quantity: (out[itemId]?.quantity || 0) + quantity }
+        }
+        return out
+      })
+      dirty.current.bank = true
+    }
+
+    // Mark completed
+    setQuestsState(prev => {
+      const next = { ...prev, [questId]: QUEST_STATUS.COMPLETED }
+      saveSetting('quests', next)
+      return next
+    })
+    autoSave()
+    addToast(`🎉 Quest Complete: ${quest.name}`, 'levelup', '📜')
+    return { ok: true, quest }
+  }, [quests, monsterKillCounts, questKillStartCounts, grantXP, autoSave])
+
   // Direct bank update without inventory changes (for skill/gather item routing)
   const updateBankDirect = useCallback((itemUpdates) => {
     setBank(prev => {
@@ -478,6 +617,8 @@ export function GameProvider({ children }) {
     activeCombatSpell, updateActiveCombatSpell,
     bossKillCounts, updateBossKillCounts,
     farming, updateFarming,
+    quests, questsData, monsterKillCounts, questKillStartCounts,
+    startQuest, completeQuest, incrementMonsterKill, addMonsterKills,
     loadGame, grantXP, updateInventory, updateEquipment, updateBank,
     removeFromInventory, addToBank,
     updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,

@@ -66,5 +66,6 @@ export const SCREENS = {
   SKILLS: 'skills',
   GATHER: 'gather',
   AGILITY: 'agility',
-  STORE: 'store'
+  STORE: 'store',
+  QUESTS: 'quests'
 }

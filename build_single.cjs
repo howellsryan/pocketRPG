@@ -21,6 +21,7 @@ const sourceFiles = [
   'engine/runes.js',
   'engine/combat.js',
   'engine/skilling.js',
+  'engine/quests.js',
   'engine/idleEngine.js',
   'engine/tick.js',
   'engine/farming.js',
@@ -61,6 +62,7 @@ const sourceFiles = [
   'screens/GeneralStoreScreen.js',
   'screens/EquipmentScreen.js',
   'screens/AuthScreen.js',
+  'screens/QuestScreen.js',
   'App.js',
 ];
 
@@ -94,6 +96,7 @@ const spellsJSON = readSrc('data/spells.json');
 const prayersJSON = readSrc('data/prayers.json');
 const raidsJSON = readSrc('data/raids.json');
 const farmingJSON = readSrc('data/farming.json');
+const questsJSON = readSrc('data/quests.json');
 
 // Concatenate all JS
 let allJS = '';
@@ -139,6 +142,7 @@ const spellsData = ${spellsJSON};
 const prayersData = ${prayersJSON};
 const raidsData = ${raidsJSON};
 const farmingData = ${farmingJSON};
+const questsData = ${questsJSON};
 
 ${allJS}
 

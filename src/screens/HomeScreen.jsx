@@ -9,6 +9,7 @@ const DEFAULT_SHORTCUTS = [
   { label: 'Fight Monsters', icon: '⚔️', screen: SCREENS.COMBAT },
   { label: 'Train Skills', icon: '🔨', screen: SCREENS.SKILLS },
   { label: 'Gather Resources', icon: '🌿', screen: SCREENS.GATHER },
+  { label: 'Quest Journal', icon: '📜', screen: SCREENS.QUESTS },
   { label: 'Open Bank', icon: '🏦', screen: SCREENS.BANK },
   { label: 'View Stats', icon: '📊', screen: SCREENS.STATS },
   { label: 'Inventory', icon: '🎒', screen: SCREENS.INVENTORY },
