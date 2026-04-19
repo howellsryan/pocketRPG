@@ -4266,64 +4266,417 @@
     "shopValue": 159,
     "icon": "🔩"
   },
-  "rune_bolts": {
-    "id": "rune_bolts",
-    "name": "Rune bolt",
+  "runite_bolts": {
+    "id": "runite_bolts",
+    "name": "Runite bolt",
     "type": "ammo",
     "slot": "ammo",
     "stackable": true,
     "ammoKind": "bolt",
+    "requirements": { "ranged": 61 },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 69,
+      "rangedStrength": 100,
       "magicDamage": 0
     },
     "shopValue": 42,
     "icon": "🔩"
   },
-  "bronze_bolt_heads": {
-    "id": "bronze_bolt_heads",
-    "name": "Bronze bolt head",
+  "dragon_bolts_unf": {
+    "id": "dragon_bolts_unf",
+    "name": "Dragon bolt (unf)",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 400,
+    "icon": "🔩"
+  },
+  "dragon_bolts": {
+    "id": "dragon_bolts",
+    "name": "Dragon bolt",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "requirements": { "ranged": 64 },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 122,
+      "magicDamage": 0
+    },
+    "shopValue": 1200,
+    "icon": "🔩"
+  },
+  "ruby_bolt_tips": {
+    "id": "ruby_bolt_tips",
+    "name": "Ruby bolt tips",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 165,
+    "icon": "💎"
+  },
+  "diamond_bolt_tips": {
+    "id": "diamond_bolt_tips",
+    "name": "Diamond bolt tips",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 290,
+    "icon": "💎"
+  },
+  "dragonstone_bolt_tips": {
+    "id": "dragonstone_bolt_tips",
+    "name": "Dragonstone bolt tips",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 1850,
+    "icon": "💎"
+  },
+  "onyx_bolt_tips": {
+    "id": "onyx_bolt_tips",
+    "name": "Onyx bolt tips",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 7450,
+    "icon": "💎"
+  },
+  "ruby_bolts": {
+    "id": "ruby_bolts",
+    "name": "Ruby bolt",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "requirements": { "ranged": 46 },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 63,
+      "magicDamage": 0
+    },
+    "shopValue": 280,
+    "icon": "🔩"
+  },
+  "ruby_bolts_e": {
+    "id": "ruby_bolts_e",
+    "name": "Ruby bolt (e)",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "requirements": { "ranged": 46 },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 63,
+      "magicDamage": 0
+    },
+    "boltProc": {
+      "type": "blood_forfeit",
+      "chance": 0.06,
+      "description": "Blood Forfeit — 6%: deals 20% of target's current HP, costs 10% of your HP."
+    },
+    "shopValue": 500,
+    "icon": "🩸"
+  },
+  "diamond_bolts": {
+    "id": "diamond_bolts",
+    "name": "Diamond bolt",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "requirements": { "ranged": 56 },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 65,
+      "magicDamage": 0
+    },
+    "shopValue": 380,
+    "icon": "🔩"
+  },
+  "diamond_bolts_e": {
+    "id": "diamond_bolts_e",
+    "name": "Diamond bolt (e)",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "requirements": { "ranged": 56 },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 65,
+      "magicDamage": 0
+    },
+    "boltProc": {
+      "type": "armour_piercing",
+      "chance": 0.10,
+      "description": "Armour Piercing — 10%: +15% damage and ignores all defence."
+    },
+    "shopValue": 700,
+    "icon": "💠"
+  },
+  "dragonstone_bolts": {
+    "id": "dragonstone_bolts",
+    "name": "Dragonstone bolt",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "requirements": { "ranged": 61 },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 105,
+      "magicDamage": 0
+    },
+    "shopValue": 1900,
+    "icon": "🔩"
+  },
+  "dragonstone_bolts_e": {
+    "id": "dragonstone_bolts_e",
+    "name": "Dragonstone bolt (e)",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "requirements": { "ranged": 61 },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 105,
+      "magicDamage": 0
+    },
+    "boltProc": {
+      "type": "dragons_breath",
+      "chance": 0.06,
+      "description": "Dragon's Breath — 6%: +45% damage. Does not work on dragons or fire-immune targets."
+    },
+    "shopValue": 2600,
+    "icon": "🔥"
+  },
+  "onyx_bolts": {
+    "id": "onyx_bolts",
+    "name": "Onyx bolt",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "requirements": { "ranged": 61 },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 115,
+      "magicDamage": 0
+    },
+    "shopValue": 7500,
+    "icon": "🔩"
+  },
+  "onyx_bolts_e": {
+    "id": "onyx_bolts_e",
+    "name": "Onyx bolt (e)",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "requirements": { "ranged": 61 },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 115,
+      "magicDamage": 0
+    },
+    "boltProc": {
+      "type": "life_leech",
+      "chance": 0.11,
+      "description": "Life Leech — 11%: +20% damage, heal 25% of damage dealt."
+    },
+    "shopValue": 9500,
+    "icon": "🖤"
+  },
+  "ruby_dragon_bolts": {
+    "id": "ruby_dragon_bolts",
+    "name": "Ruby dragon bolt",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "requirements": { "ranged": 64 },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 117,
+      "magicDamage": 0
+    },
+    "shopValue": 1400,
+    "icon": "🔩"
+  },
+  "ruby_dragon_bolts_e": {
+    "id": "ruby_dragon_bolts_e",
+    "name": "Ruby dragon bolt (e)",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "requirements": { "ranged": 64 },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 117,
+      "magicDamage": 0
+    },
+    "boltProc": {
+      "type": "blood_forfeit",
+      "chance": 0.06,
+      "description": "Blood Forfeit — 6%: deals 20% of target's current HP, costs 10% of your HP."
+    },
+    "shopValue": 2200,
+    "icon": "🩸"
+  },
+  "diamond_dragon_bolts": {
+    "id": "diamond_dragon_bolts",
+    "name": "Diamond dragon bolt",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "requirements": { "ranged": 64 },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 119,
+      "magicDamage": 0
+    },
+    "shopValue": 1500,
+    "icon": "🔩"
+  },
+  "diamond_dragon_bolts_e": {
+    "id": "diamond_dragon_bolts_e",
+    "name": "Diamond dragon bolt (e)",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "requirements": { "ranged": 64 },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 119,
+      "magicDamage": 0
+    },
+    "boltProc": {
+      "type": "armour_piercing",
+      "chance": 0.10,
+      "description": "Armour Piercing — 10%: +15% damage and ignores all defence."
+    },
+    "shopValue": 2400,
+    "icon": "💠"
+  },
+  "dragonstone_dragon_bolts": {
+    "id": "dragonstone_dragon_bolts",
+    "name": "Dragonstone dragon bolt",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "requirements": { "ranged": 64 },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 125,
+      "magicDamage": 0
+    },
+    "shopValue": 3600,
+    "icon": "🔩"
+  },
+  "dragonstone_dragon_bolts_e": {
+    "id": "dragonstone_dragon_bolts_e",
+    "name": "Dragonstone dragon bolt (e)",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "requirements": { "ranged": 64 },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 125,
+      "magicDamage": 0
+    },
+    "boltProc": {
+      "type": "dragons_breath",
+      "chance": 0.06,
+      "description": "Dragon's Breath — 6%: +45% damage. Does not work on dragons or fire-immune targets."
+    },
+    "shopValue": 4800,
+    "icon": "🔥"
+  },
+  "onyx_dragon_bolts": {
+    "id": "onyx_dragon_bolts",
+    "name": "Onyx dragon bolt",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "requirements": { "ranged": 64 },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 135,
+      "magicDamage": 0
+    },
+    "shopValue": 8800,
+    "icon": "🔩"
+  },
+  "onyx_dragon_bolts_e": {
+    "id": "onyx_dragon_bolts_e",
+    "name": "Onyx dragon bolt (e)",
+    "type": "ammo",
+    "slot": "ammo",
+    "stackable": true,
+    "ammoKind": "bolt",
+    "requirements": { "ranged": 64 },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 135,
+      "magicDamage": 0
+    },
+    "boltProc": {
+      "type": "life_leech",
+      "chance": 0.11,
+      "description": "Life Leech — 11%: +20% damage, heal 25% of damage dealt."
+    },
+    "shopValue": 11500,
+    "icon": "🖤"
+  },
+  "bronze_bolts_unf": {
+    "id": "bronze_bolts_unf",
+    "name": "Bronze bolt (unf)",
     "type": "resource",
     "stackable": true,
     "shopValue": 1,
     "icon": "🔩"
   },
-  "iron_bolt_heads": {
-    "id": "iron_bolt_heads",
-    "name": "Iron bolt head",
+  "iron_bolts_unf": {
+    "id": "iron_bolts_unf",
+    "name": "Iron bolt (unf)",
     "type": "resource",
     "stackable": true,
     "shopValue": 2,
     "icon": "🔩"
   },
-  "steel_bolt_heads": {
-    "id": "steel_bolt_heads",
-    "name": "Steel bolt head",
+  "steel_bolts_unf": {
+    "id": "steel_bolts_unf",
+    "name": "Steel bolt (unf)",
     "type": "resource",
     "stackable": true,
     "shopValue": 4,
     "icon": "🔩"
   },
-  "mithril_bolt_heads": {
-    "id": "mithril_bolt_heads",
-    "name": "Mithril bolt head",
+  "mithril_bolts_unf": {
+    "id": "mithril_bolts_unf",
+    "name": "Mithril bolt (unf)",
     "type": "resource",
     "stackable": true,
     "shopValue": 7,
     "icon": "🔩"
   },
-  "adamant_bolt_heads": {
-    "id": "adamant_bolt_heads",
-    "name": "Adamant bolt head",
+  "adamant_bolts_unf": {
+    "id": "adamant_bolts_unf",
+    "name": "Adamant bolt (unf)",
     "type": "resource",
     "stackable": true,
     "shopValue": 10,
     "icon": "🔩"
   },
-  "rune_bolt_heads": {
-    "id": "rune_bolt_heads",
-    "name": "Rune bolt head",
+  "runite_bolts_unf": {
+    "id": "runite_bolts_unf",
+    "name": "Runite bolt (unf)",
     "type": "resource",
     "stackable": true,
     "shopValue": 35,

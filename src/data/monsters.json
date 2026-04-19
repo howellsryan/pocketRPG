@@ -3322,6 +3322,296 @@
       }
     ]
   },
+  "adamant_dragon": {
+    "id": "adamant_dragon",
+    "name": "Adamant Dragon",
+    "isDragon": true,
+    "combatLevel": 338,
+    "hitpoints": 240,
+    "stats": {
+      "attack": 180,
+      "strength": 180,
+      "defence": 250,
+      "magic": 140,
+      "ranged": 180
+    },
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackStyles": ["melee", "ranged"],
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 100,
+      "slash": 90,
+      "crush": 90,
+      "magic": 30,
+      "ranged": 90
+    },
+    "specialAttack": "dragonfire",
+    "dragonfireDamage": 44,
+    "drops": [
+      {
+        "itemId": "dragon_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "rune_bar",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          10000,
+          30000
+        ],
+        "chance": 0.5
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          30,
+          60
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          30,
+          60
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "soul_rune",
+        "quantity": [
+          20,
+          40
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          40,
+          80
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": [
+          20,
+          40
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "runite_ore",
+        "quantity": [
+          2,
+          4
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "dragon_full_helm",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "dragon_chainbody",
+        "quantity": 1,
+        "chance": 0.015
+      },
+      {
+        "itemId": "dragon_platelegs",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "dragon_plateskirt",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "dragon_kiteshield",
+        "quantity": 1,
+        "chance": 0.015
+      },
+      {
+        "itemId": "dragon_longsword",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "onyx_bolt_tips",
+        "quantity": 50,
+        "chance": 0.04
+      },
+      {
+        "itemId": "uncut_onyx",
+        "quantity": 1,
+        "chance": 0.001
+      },
+      {
+        "itemId": "draconic_visage",
+        "quantity": 1,
+        "chance": 0.001
+      }
+    ]
+  },
+  "rune_dragon": {
+    "id": "rune_dragon",
+    "name": "Rune Dragon",
+    "isDragon": true,
+    "combatLevel": 380,
+    "hitpoints": 330,
+    "stats": {
+      "attack": 220,
+      "strength": 220,
+      "defence": 260,
+      "magic": 150,
+      "ranged": 220
+    },
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackStyles": ["melee", "ranged"],
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 110,
+      "slash": 100,
+      "crush": 100,
+      "magic": 40,
+      "ranged": 100
+    },
+    "specialAttack": "dragonfire",
+    "dragonfireDamage": 50,
+    "drops": [
+      {
+        "itemId": "dragon_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "rune_bar",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          15000,
+          45000
+        ],
+        "chance": 0.5
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          40,
+          80
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          40,
+          80
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "soul_rune",
+        "quantity": [
+          30,
+          60
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "law_rune",
+        "quantity": [
+          20,
+          40
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": [
+          30,
+          60
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "runite_ore",
+        "quantity": [
+          3,
+          6
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "dragon_full_helm",
+        "quantity": 1,
+        "chance": 0.025
+      },
+      {
+        "itemId": "dragon_chainbody",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "dragon_platelegs",
+        "quantity": 1,
+        "chance": 0.025
+      },
+      {
+        "itemId": "dragon_plateskirt",
+        "quantity": 1,
+        "chance": 0.025
+      },
+      {
+        "itemId": "dragon_kiteshield",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "dragon_longsword",
+        "quantity": 1,
+        "chance": 0.025
+      },
+      {
+        "itemId": "dragon_javelin",
+        "quantity": [
+          15,
+          30
+        ],
+        "chance": 0.03
+      },
+      {
+        "itemId": "onyx_bolt_tips",
+        "quantity": 50,
+        "chance": 0.04
+      },
+      {
+        "itemId": "uncut_onyx",
+        "quantity": 1,
+        "chance": 0.001
+      },
+      {
+        "itemId": "draconic_visage",
+        "quantity": 1,
+        "chance": 0.001
+      }
+    ]
+  },
   "zulrah": {
     "id": "zulrah",
     "name": "Zulrah",
