@@ -42,7 +42,10 @@
     "durationSeconds": 4500,
     "coinReward": 25000,
     "xpReward": {
-      "attack": 35000
+      "attack": 8750,
+      "strength": 8750,
+      "defence": 8750,
+      "hitpoints": 8750
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -58,7 +61,8 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "slayer": 500,
+      "farming": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -74,7 +78,8 @@
     "durationSeconds": 900,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "attack": 500,
+      "strength": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -90,7 +95,8 @@
     "durationSeconds": 1350,
     "coinReward": 5000,
     "xpReward": {
-      "attack": 5000
+      "crafting": 2500,
+      "herblore": 2500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -306,7 +312,7 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "thieving": 1000
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -324,7 +330,8 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "attack": 500,
+      "hitpoints": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -362,7 +369,8 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "agility": 500,
+      "woodcutting": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -405,7 +413,8 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "agility": 500,
+      "hitpoints": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -421,7 +430,7 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "prayer": 1000
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -463,7 +472,8 @@
     "durationSeconds": 4500,
     "coinReward": 25000,
     "xpReward": {
-      "attack": 35000
+      "slayer": 17500,
+      "thieving": 17500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -482,7 +492,7 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "cooking": 1000
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -521,7 +531,8 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "fishing": 500,
+      "agility": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -569,7 +580,8 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "agility": 500,
+      "attack": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -635,7 +647,8 @@
     "durationSeconds": 900,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "attack": 500,
+      "strength": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -759,7 +772,8 @@
     "durationSeconds": 3600,
     "coinReward": 10000,
     "xpReward": {
-      "attack": 12500
+      "strength": 6250,
+      "defence": 6250
     },
     "itemUnlocks": [
       "anti_dragon_shield"
@@ -818,7 +832,10 @@
     "durationSeconds": 1500,
     "coinReward": 25000,
     "xpReward": {
-      "attack": 35000
+      "attack": 8750,
+      "strength": 8750,
+      "defence": 8750,
+      "hitpoints": 8750
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -837,7 +854,7 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "herblore": 1000
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -853,7 +870,7 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "ranged": 1000
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -997,7 +1014,7 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "crafting": 1000
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -1013,7 +1030,8 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "magic": 500,
+      "prayer": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -1029,7 +1047,8 @@
     "durationSeconds": 1800,
     "coinReward": 10000,
     "xpReward": {
-      "attack": 12500
+      "farming": 6250,
+      "crafting": 6250
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -1094,7 +1113,8 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "attack": 500,
+      "strength": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -1171,7 +1191,7 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "cooking": 1000
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -1229,7 +1249,7 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "crafting": 1000
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -1245,7 +1265,7 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "herblore": 1000
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -1311,7 +1331,7 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "thieving": 1000
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -1394,7 +1414,8 @@
     "durationSeconds": 1350,
     "coinReward": 5000,
     "xpReward": {
-      "attack": 5000
+      "prayer": 2500,
+      "crafting": 2500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -1412,7 +1433,7 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "magic": 1000
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -1685,7 +1706,8 @@
     "durationSeconds": 1350,
     "coinReward": 5000,
     "xpReward": {
-      "attack": 5000
+      "crafting": 2500,
+      "prayer": 2500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -1703,7 +1725,8 @@
     "durationSeconds": 1350,
     "coinReward": 5000,
     "xpReward": {
-      "attack": 5000
+      "magic": 2500,
+      "attack": 2500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -1719,7 +1742,7 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "crafting": 1000
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -1735,7 +1758,8 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "woodcutting": 500,
+      "cooking": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -1751,7 +1775,10 @@
     "durationSeconds": 9000,
     "coinReward": 25000,
     "xpReward": {
-      "attack": 35000
+      "attack": 8750,
+      "strength": 8750,
+      "defence": 8750,
+      "hitpoints": 8750
     },
     "itemUnlocks": [
       "dragon_scimitar"
@@ -1848,7 +1875,9 @@
     "durationSeconds": 9000,
     "coinReward": 25000,
     "xpReward": {
-      "attack": 35000
+      "magic": 11667,
+      "ranged": 11667,
+      "agility": 11666
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -1866,7 +1895,7 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "crafting": 1000
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -1905,7 +1934,8 @@
     "durationSeconds": 900,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "prayer": 500,
+      "crafting": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -2042,7 +2072,8 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "thieving": 500,
+      "fishing": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -2058,7 +2089,7 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "crafting": 1000
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -2074,7 +2105,7 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "prayer": 1000
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -2090,7 +2121,8 @@
     "durationSeconds": 900,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "thieving": 500,
+      "crafting": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -2106,7 +2138,8 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "prayer": 500,
+      "slayer": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -2144,7 +2177,8 @@
     "durationSeconds": 1350,
     "coinReward": 5000,
     "xpReward": {
-      "attack": 5000
+      "thieving": 2500,
+      "agility": 2500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -2202,7 +2236,8 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "prayer": 500,
+      "defence": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -2243,7 +2278,7 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "crafting": 1000
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -2259,7 +2294,8 @@
     "durationSeconds": 600,
     "coinReward": 10000,
     "xpReward": {
-      "attack": 12500
+      "crafting": 6250,
+      "prayer": 6250
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -2329,7 +2365,7 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "runecraft": 1000
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -2345,7 +2381,8 @@
     "durationSeconds": 450,
     "coinReward": 5000,
     "xpReward": {
-      "attack": 5000
+      "strength": 2500,
+      "thieving": 2500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -2447,7 +2484,8 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "farming": 500,
+      "firemaking": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -2463,7 +2501,7 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "crafting": 1000
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -2479,7 +2517,8 @@
     "durationSeconds": 900,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "attack": 500,
+      "defence": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -2550,7 +2589,8 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "agility": 500,
+      "fishing": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -2875,7 +2915,8 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "crafting": 500,
+      "smithing": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -3155,7 +3196,7 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "prayer": 1000
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -3171,7 +3212,8 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "farming": 500,
+      "fishing": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -3207,7 +3249,8 @@
     "durationSeconds": 1350,
     "coinReward": 5000,
     "xpReward": {
-      "attack": 5000
+      "woodcutting": 2500,
+      "mining": 2500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -3244,7 +3287,8 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "attack": 500,
+      "strength": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -3318,7 +3362,8 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "agility": 500,
+      "thieving": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -3356,7 +3401,8 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "attack": 500,
+      "strength": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -3372,7 +3418,7 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "agility": 1000
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -3388,7 +3434,8 @@
     "durationSeconds": 2700,
     "coinReward": 5000,
     "xpReward": {
-      "attack": 5000
+      "thieving": 2500,
+      "slayer": 2500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -3434,7 +3481,8 @@
     "durationSeconds": 1350,
     "coinReward": 5000,
     "xpReward": {
-      "attack": 5000
+      "attack": 2500,
+      "strength": 2500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -3509,7 +3557,8 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "hitpoints": 500,
+      "crafting": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -3525,7 +3574,7 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "magic": 1000
     },
     "itemUnlocks": [],
     "skillRequirements": {},
@@ -3541,7 +3590,8 @@
     "durationSeconds": 300,
     "coinReward": 1000,
     "xpReward": {
-      "attack": 1000
+      "thieving": 500,
+      "woodcutting": 500
     },
     "itemUnlocks": [],
     "skillRequirements": {},

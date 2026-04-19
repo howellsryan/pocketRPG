@@ -52,16 +52,29 @@ function slug(name) {
     .replace(/^_+|_+$/g, '')
 }
 
-function firstThreeColumns(line) {
-  // Name, complexity, duration never contain commas, so the first 3
-  // comma-separated tokens are deterministic. Duration may be "Very Long"
-  // which contains a space but no comma.
+function firstFourColumns(line) {
+  // Name, complexity, duration, and xp_rewards never contain commas, so the
+  // first 4 comma-separated tokens are deterministic.
+  // xp_rewards uses `skill=amount` pairs separated by spaces (no commas).
+  // Duration may be "Very Long" which contains a space but no comma.
   const parts = line.split(',')
   const name = parts[0].trim()
   const complexity = parts[1].trim()
   const duration = parts[2].trim()
-  const rest = parts.slice(3).join(',')
-  return { name, complexity, duration, rest }
+  const xpRewardsRaw = parts[3].trim()
+  const rest = parts.slice(4).join(',')
+  return { name, complexity, duration, xpRewardsRaw, rest }
+}
+
+function parseXpRewards(raw) {
+  if (!raw || raw === 'None') return null
+  const rewards = {}
+  const rx = /(\w+)=(\d+)/g
+  let m
+  while ((m = rx.exec(raw)) !== null) {
+    rewards[m[1].toLowerCase()] = parseInt(m[2], 10)
+  }
+  return Object.keys(rewards).length > 0 ? rewards : null
 }
 
 function extractSkillRequirements(rest) {
@@ -131,7 +144,7 @@ function build() {
   const validSlugToName = new Map()
   const rowBuffers = []
   for (const line of lines) {
-    const cols = firstThreeColumns(line)
+    const cols = firstFourColumns(line)
     if (!cols.name) continue
     const id = slug(cols.name)
     if (validSlugToName.has(id)) continue // dedupe
@@ -142,7 +155,7 @@ function build() {
   // Pass 2: full records
   const quests = []
   for (const row of rowBuffers) {
-    const { id, name, complexity, duration, rest } = row
+    const { id, name, complexity, duration, xpRewardsRaw, rest } = row
     const baseMin = LENGTH_BASE_MIN[duration]
     const mult = COMPLEXITY_MULT[complexity]
     if (!baseMin || !mult) {
@@ -156,13 +169,21 @@ function build() {
     const itemUnlocks = extractItemUnlocks(rest)
 
     const totalXp = XP_REWARD[complexity]
-    const xpReward = {}
-    const skillKeys = Object.keys(reqs.skills)
-    if (skillKeys.length > 0) {
-      const per = Math.floor(totalXp / skillKeys.length)
-      for (const k of skillKeys) xpReward[k] = per
+    // Explicit xp_rewards column takes priority; fall back to splitting evenly
+    // among required skills; last resort is hitpoints.
+    const explicitXp = parseXpRewards(xpRewardsRaw)
+    let xpReward
+    if (explicitXp) {
+      xpReward = explicitXp
     } else {
-      xpReward.attack = totalXp
+      xpReward = {}
+      const skillKeys = Object.keys(reqs.skills)
+      if (skillKeys.length > 0) {
+        const per = Math.floor(totalXp / skillKeys.length)
+        for (const k of skillKeys) xpReward[k] = per
+      } else {
+        xpReward.hitpoints = totalXp
+      }
     }
 
     quests.push({
