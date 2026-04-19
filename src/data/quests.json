@@ -1,0 +1,3578 @@
+[
+  {
+    "id": "a_kingdom_divided",
+    "name": "A Kingdom Divided",
+    "complexity": "Master",
+    "length": "Long",
+    "durationSeconds": 9000,
+    "coinReward": 25000,
+    "xpReward": {
+      "agility": 4375,
+      "thieving": 4375,
+      "woodcutting": 4375,
+      "smithing": 4375,
+      "mining": 4375,
+      "herblore": 4375,
+      "crafting": 4375,
+      "magic": 4375
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 54,
+      "thieving": 52,
+      "woodcutting": 52,
+      "smithing": 50,
+      "mining": 50,
+      "herblore": 42,
+      "crafting": 42,
+      "magic": 38
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "tale_of_the_righteous",
+      "the_forsaken_tower"
+    ]
+  },
+  {
+    "id": "a_night_at_the_theatre",
+    "name": "A Night at the Theatre",
+    "complexity": "Master",
+    "length": "Medium",
+    "durationSeconds": 4500,
+    "coinReward": 25000,
+    "xpReward": {
+      "attack": 35000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "a_porcine_of_interest",
+    "name": "A Porcine of Interest",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "a_souls_bane",
+    "name": "A Soul's Bane",
+    "complexity": "Novice",
+    "length": "Medium",
+    "durationSeconds": 900,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "a_tail_of_two_cats",
+    "name": "A Tail of Two Cats",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "attack": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "icthlarins_little_helper"
+    ]
+  },
+  {
+    "id": "a_taste_of_hope",
+    "name": "A Taste of Hope",
+    "complexity": "Experienced",
+    "length": "Medium",
+    "durationSeconds": 1800,
+    "coinReward": 10000,
+    "xpReward": {
+      "crafting": 2500,
+      "agility": 2500,
+      "attack": 2500,
+      "herblore": 2500,
+      "slayer": 2500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "crafting": 48,
+      "agility": 45,
+      "attack": 40,
+      "herblore": 40,
+      "slayer": 38
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "darkness_of_hallowvale"
+    ]
+  },
+  {
+    "id": "animal_magnetism",
+    "name": "Animal Magnetism",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "slayer": 1250,
+      "crafting": 1250,
+      "ranged": 1250,
+      "woodcutting": 1250
+    },
+    "itemUnlocks": [
+      "avas_accumulator"
+    ],
+    "skillRequirements": {
+      "slayer": 18,
+      "crafting": 19,
+      "ranged": 30,
+      "woodcutting": 35
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "ernest_the_chicken",
+      "the_restless_ghost",
+      "priest_in_peril"
+    ]
+  },
+  {
+    "id": "another_slice_of_h_a_m",
+    "name": "Another Slice of H.A.M.",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "attack": 2500,
+      "prayer": 2500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "attack": 15,
+      "prayer": 25
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "death_to_the_dorgeshuun",
+      "the_giant_dwarf",
+      "the_dig_site"
+    ]
+  },
+  {
+    "id": "at_first_light",
+    "name": "At First Light",
+    "complexity": "Experienced",
+    "length": "Short",
+    "durationSeconds": 600,
+    "coinReward": 10000,
+    "xpReward": {
+      "hunter": 4166,
+      "herblore": 4166,
+      "construction": 4166
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "hunter": 46,
+      "herblore": 30,
+      "construction": 27
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "children_of_the_sun",
+      "eagles_peak"
+    ]
+  },
+  {
+    "id": "below_ice_mountain",
+    "name": "Below Ice Mountain",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "mining": 500,
+      "smithing": 500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "mining": 16,
+      "smithing": 10
+    },
+    "questPointRequirement": 16,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "beneath_cursed_sands",
+    "name": "Beneath Cursed Sands",
+    "complexity": "Master",
+    "length": "Long",
+    "durationSeconds": 9000,
+    "coinReward": 25000,
+    "xpReward": {
+      "agility": 11666,
+      "crafting": 11666,
+      "firemaking": 11666
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 62,
+      "crafting": 55,
+      "firemaking": 55
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "contact"
+    ]
+  },
+  {
+    "id": "between_a_rock",
+    "name": "Between a Rock...",
+    "complexity": "Experienced",
+    "length": "Medium",
+    "durationSeconds": 1800,
+    "coinReward": 10000,
+    "xpReward": {
+      "defence": 4166,
+      "mining": 4166,
+      "smithing": 4166
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "defence": 30,
+      "mining": 40,
+      "smithing": 50
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "fishing_contest",
+      "dwarf_cannon"
+    ]
+  },
+  {
+    "id": "big_chompy_bird_hunting",
+    "name": "Big Chompy Bird Hunting",
+    "complexity": "Intermediate",
+    "length": "Short",
+    "durationSeconds": 450,
+    "coinReward": 5000,
+    "xpReward": {
+      "fletching": 1666,
+      "cooking": 1666,
+      "ranged": 1666
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "fletching": 5,
+      "cooking": 30,
+      "ranged": 30
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "biohazard",
+    "name": "Biohazard",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "plague_city"
+    ]
+  },
+  {
+    "id": "black_knights_fortress",
+    "name": "Black Knights' Fortress",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 12,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "blood_runs_deep",
+    "name": "Blood Runs Deep",
+    "complexity": "Master",
+    "length": "Medium",
+    "durationSeconds": 4500,
+    "coinReward": 25000,
+    "xpReward": {
+      "attack": 17500,
+      "strength": 17500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "attack": 75,
+      "strength": 75
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "dream_mentor"
+    ]
+  },
+  {
+    "id": "bone_voyage",
+    "name": "Bone Voyage",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "the_dig_site"
+    ]
+  },
+  {
+    "id": "cabin_fever",
+    "name": "Cabin Fever",
+    "complexity": "Experienced",
+    "length": "Medium",
+    "durationSeconds": 1800,
+    "coinReward": 10000,
+    "xpReward": {
+      "agility": 4166,
+      "crafting": 4166,
+      "smithing": 4166
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 42,
+      "crafting": 45,
+      "smithing": 50
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "pirates_treasure",
+      "rum_deal"
+    ]
+  },
+  {
+    "id": "children_of_the_sun",
+    "name": "Children of the Sun",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "clock_tower",
+    "name": "Clock Tower",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "cold_war",
+    "name": "Cold War",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "hunter": 1000,
+      "agility": 1000,
+      "crafting": 1000,
+      "construction": 1000,
+      "thieving": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "hunter": 10,
+      "agility": 30,
+      "crafting": 30,
+      "construction": 34,
+      "thieving": 15
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "contact",
+    "name": "Contact!",
+    "complexity": "Master",
+    "length": "Medium",
+    "durationSeconds": 4500,
+    "coinReward": 25000,
+    "xpReward": {
+      "attack": 35000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "icthlarins_little_helper",
+      "prince_ali_rescue"
+    ]
+  },
+  {
+    "id": "cooks_assistant",
+    "name": "Cook's Assistant",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "creature_of_fenkenstrain",
+    "name": "Creature of Fenkenstrain",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "crafting": 2500,
+      "thieving": 2500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "crafting": 20,
+      "thieving": 25
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "the_restless_ghost",
+      "priest_in_peril"
+    ]
+  },
+  {
+    "id": "current_affairs",
+    "name": "Current Affairs",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "darkness_of_hallowvale",
+    "name": "Darkness of Hallowvale",
+    "complexity": "Intermediate",
+    "length": "Long",
+    "durationSeconds": 2700,
+    "coinReward": 5000,
+    "xpReward": {
+      "construction": 714,
+      "mining": 714,
+      "thieving": 714,
+      "agility": 714,
+      "crafting": 714,
+      "magic": 714,
+      "strength": 714
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "construction": 5,
+      "mining": 20,
+      "thieving": 22,
+      "agility": 26,
+      "crafting": 32,
+      "magic": 33,
+      "strength": 40
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "in_aid_of_the_myreque"
+    ]
+  },
+  {
+    "id": "death_plateau",
+    "name": "Death Plateau",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "death_to_the_dorgeshuun",
+    "name": "Death to the Dorgeshuun",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "agility": 2500,
+      "thieving": 2500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 23,
+      "thieving": 23
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "the_lost_tribe"
+    ]
+  },
+  {
+    "id": "defender_of_varrock",
+    "name": "Defender of Varrock",
+    "complexity": "Experienced",
+    "length": "Medium",
+    "durationSeconds": 1800,
+    "coinReward": 10000,
+    "xpReward": {
+      "hunter": 3125,
+      "smithing": 3125,
+      "agility": 3125,
+      "thieving": 3125
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "hunter": 55,
+      "smithing": 52,
+      "agility": 50,
+      "thieving": 50
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "the_garden_of_death",
+      "shield_of_arrav",
+      "family_crest"
+    ]
+  },
+  {
+    "id": "demon_slayer",
+    "name": "Demon Slayer",
+    "complexity": "Novice",
+    "length": "Medium",
+    "durationSeconds": 900,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "desert_treasure_i",
+    "name": "Desert Treasure I",
+    "complexity": "Master",
+    "length": "Very Long",
+    "durationSeconds": 18000,
+    "coinReward": 25000,
+    "xpReward": {
+      "thieving": 8750,
+      "firemaking": 8750,
+      "magic": 8750,
+      "slayer": 8750
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "thieving": 53,
+      "firemaking": 50,
+      "magic": 50,
+      "slayer": 10
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "the_tourist_trap",
+      "priest_in_peril",
+      "temple_of_ikov",
+      "the_dig_site"
+    ]
+  },
+  {
+    "id": "desert_treasure_ii_the_fallen_empire",
+    "name": "Desert Treasure II - The Fallen Empire",
+    "complexity": "Grandmaster",
+    "length": "Very Long",
+    "durationSeconds": 36000,
+    "coinReward": 50000,
+    "xpReward": {
+      "firemaking": 12500,
+      "magic": 12500,
+      "thieving": 12500,
+      "herblore": 12500,
+      "runecraft": 12500,
+      "construction": 12500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "firemaking": 75,
+      "magic": 75,
+      "thieving": 70,
+      "herblore": 62,
+      "runecraft": 60,
+      "construction": 60
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "secrets_of_the_north",
+      "the_garden_of_death",
+      "below_ice_mountain",
+      "desert_treasure_i",
+      "temple_of_the_eye",
+      "enakhras_lament"
+    ]
+  },
+  {
+    "id": "devious_minds",
+    "name": "Devious Minds",
+    "complexity": "Experienced",
+    "length": "Short",
+    "durationSeconds": 600,
+    "coinReward": 10000,
+    "xpReward": {
+      "smithing": 4166,
+      "fletching": 4166,
+      "runecraft": 4166
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "smithing": 65,
+      "fletching": 50,
+      "runecraft": 50
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "troll_stronghold",
+      "dorics_quest",
+      "wanted"
+    ]
+  },
+  {
+    "id": "dorics_quest",
+    "name": "Doric's Quest",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "mining": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "mining": 15
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "dragon_slayer_i",
+    "name": "Dragon Slayer I",
+    "complexity": "Experienced",
+    "length": "Long",
+    "durationSeconds": 3600,
+    "coinReward": 10000,
+    "xpReward": {
+      "attack": 12500
+    },
+    "itemUnlocks": [
+      "anti_dragon_shield"
+    ],
+    "skillRequirements": {},
+    "questPointRequirement": 32,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "dragon_slayer_ii",
+    "name": "Dragon Slayer II",
+    "complexity": "Grandmaster",
+    "length": "Very Long",
+    "durationSeconds": 36000,
+    "coinReward": 50000,
+    "xpReward": {
+      "magic": 9375,
+      "smithing": 9375,
+      "mining": 9375,
+      "crafting": 9375,
+      "agility": 9375,
+      "thieving": 9375,
+      "construction": 9375,
+      "hitpoints": 9375
+    },
+    "itemUnlocks": [
+      "avas_assembler"
+    ],
+    "skillRequirements": {
+      "magic": 75,
+      "smithing": 70,
+      "mining": 68,
+      "crafting": 62,
+      "agility": 60,
+      "thieving": 60,
+      "construction": 50,
+      "hitpoints": 50
+    },
+    "questPointRequirement": 200,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "a_tail_of_two_cats",
+      "animal_magnetism",
+      "legends_quest",
+      "dream_mentor",
+      "bone_voyage",
+      "ghosts_ahoy"
+    ]
+  },
+  {
+    "id": "dream_mentor",
+    "name": "Dream Mentor",
+    "complexity": "Master",
+    "length": "Short",
+    "durationSeconds": 1500,
+    "coinReward": 25000,
+    "xpReward": {
+      "attack": 35000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 85,
+    "questRequirements": [
+      "lunar_diplomacy",
+      "eadgars_ruse"
+    ]
+  },
+  {
+    "id": "druidic_ritual",
+    "name": "Druidic Ritual",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "dwarf_cannon",
+    "name": "Dwarf Cannon",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "eadgars_ruse",
+    "name": "Eadgar's Ruse",
+    "complexity": "Experienced",
+    "length": "Medium",
+    "durationSeconds": 1800,
+    "coinReward": 10000,
+    "xpReward": {
+      "herblore": 12500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "herblore": 31
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "troll_stronghold"
+    ]
+  },
+  {
+    "id": "eagles_peak",
+    "name": "Eagles' Peak",
+    "complexity": "Novice",
+    "length": "Medium",
+    "durationSeconds": 900,
+    "coinReward": 1000,
+    "xpReward": {
+      "hunter": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "hunter": 27
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "elemental_workshop_i",
+    "name": "Elemental Workshop I",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "mining": 333,
+      "smithing": 333,
+      "crafting": 333
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "mining": 20,
+      "smithing": 20,
+      "crafting": 20
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "elemental_workshop_ii",
+    "name": "Elemental Workshop II",
+    "complexity": "Intermediate",
+    "length": "Short",
+    "durationSeconds": 450,
+    "coinReward": 5000,
+    "xpReward": {
+      "smithing": 2500,
+      "magic": 2500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "smithing": 30,
+      "magic": 20
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "elemental_workshop_i"
+    ]
+  },
+  {
+    "id": "enakhras_lament",
+    "name": "Enakhra's Lament",
+    "complexity": "Experienced",
+    "length": "Medium",
+    "durationSeconds": 1800,
+    "coinReward": 10000,
+    "xpReward": {
+      "crafting": 3125,
+      "firemaking": 3125,
+      "prayer": 3125,
+      "magic": 3125
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "crafting": 50,
+      "firemaking": 45,
+      "prayer": 43,
+      "magic": 39
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "enlightened_journey",
+    "name": "Enlightened Journey",
+    "complexity": "Intermediate",
+    "length": "Short",
+    "durationSeconds": 450,
+    "coinReward": 5000,
+    "xpReward": {
+      "firemaking": 1666,
+      "farming": 1666,
+      "crafting": 1666
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "firemaking": 20,
+      "farming": 30,
+      "crafting": 36
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "ernest_the_chicken",
+    "name": "Ernest the Chicken",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "ethos_of_arceuus",
+    "name": "Ethos of Arceuus",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "fairytale_i_growing_pains",
+    "name": "Fairytale I - Growing Pains",
+    "complexity": "Experienced",
+    "length": "Medium",
+    "durationSeconds": 1800,
+    "coinReward": 10000,
+    "xpReward": {
+      "attack": 12500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "nature_spirit",
+      "lost_city"
+    ]
+  },
+  {
+    "id": "fairytale_ii_cure_a_queen",
+    "name": "Fairytale II - Cure a Queen",
+    "complexity": "Experienced",
+    "length": "Short",
+    "durationSeconds": 600,
+    "coinReward": 10000,
+    "xpReward": {
+      "thieving": 4166,
+      "farming": 4166,
+      "herblore": 4166
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "thieving": 40,
+      "farming": 49,
+      "herblore": 57
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "family_crest",
+    "name": "Family Crest",
+    "complexity": "Experienced",
+    "length": "Medium",
+    "durationSeconds": 1800,
+    "coinReward": 10000,
+    "xpReward": {
+      "mining": 3125,
+      "smithing": 3125,
+      "crafting": 3125,
+      "magic": 3125
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "mining": 40,
+      "smithing": 40,
+      "crafting": 40,
+      "magic": 59
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "fight_arena",
+    "name": "Fight Arena",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "fishing_contest",
+    "name": "Fishing Contest",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "fishing": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "fishing": 10
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "forgettable_tale",
+    "name": "Forgettable Tale...",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "cooking": 2500,
+      "farming": 2500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "cooking": 22,
+      "farming": 17
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "fishing_contest",
+      "the_giant_dwarf"
+    ]
+  },
+  {
+    "id": "garden_of_tranquillity",
+    "name": "Garden of Tranquillity",
+    "complexity": "Intermediate",
+    "length": "Long",
+    "durationSeconds": 2700,
+    "coinReward": 5000,
+    "xpReward": {
+      "farming": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "farming": 25
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "creature_of_fenkenstrain"
+    ]
+  },
+  {
+    "id": "gertrudes_cat",
+    "name": "Gertrude's Cat",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "getting_ahead",
+    "name": "Getting Ahead",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "crafting": 500,
+      "construction": 500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "crafting": 30,
+      "construction": 26
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "ghosts_ahoy",
+    "name": "Ghosts Ahoy",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "agility": 2500,
+      "cooking": 2500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 25,
+      "cooking": 20
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "priest_in_peril"
+    ]
+  },
+  {
+    "id": "goblin_diplomacy",
+    "name": "Goblin Diplomacy",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "goodbye_grubby",
+    "name": "Goodbye Grubby",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "grim_tales",
+    "name": "Grim Tales",
+    "complexity": "Master",
+    "length": "Medium",
+    "durationSeconds": 4500,
+    "coinReward": 25000,
+    "xpReward": {
+      "woodcutting": 7000,
+      "thieving": 7000,
+      "herblore": 7000,
+      "farming": 7000,
+      "agility": 7000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "woodcutting": 71,
+      "thieving": 58,
+      "herblore": 52,
+      "farming": 45,
+      "agility": 59
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "witchs_house"
+    ]
+  },
+  {
+    "id": "haunted_mine",
+    "name": "Haunted Mine",
+    "complexity": "Experienced",
+    "length": "Medium",
+    "durationSeconds": 1800,
+    "coinReward": 10000,
+    "xpReward": {
+      "agility": 6250,
+      "crafting": 6250
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 15,
+      "crafting": 35
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "priest_in_peril"
+    ]
+  },
+  {
+    "id": "hazeel_cult",
+    "name": "Hazeel Cult",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "heroes_quest",
+    "name": "Heroes' Quest",
+    "complexity": "Experienced",
+    "length": "Long",
+    "durationSeconds": 3600,
+    "coinReward": 10000,
+    "xpReward": {
+      "cooking": 3125,
+      "fishing": 3125,
+      "mining": 3125,
+      "herblore": 3125
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "cooking": 53,
+      "fishing": 53,
+      "mining": 50,
+      "herblore": 25
+    },
+    "questPointRequirement": 55,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "merlins_crystal",
+      "dragon_slayer_i",
+      "shield_of_arrav",
+      "lost_city"
+    ]
+  },
+  {
+    "id": "holy_grail",
+    "name": "Holy Grail",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "attack": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "attack": 20
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "merlins_crystal"
+    ]
+  },
+  {
+    "id": "horror_from_the_deep",
+    "name": "Horror from the Deep",
+    "complexity": "Experienced",
+    "length": "Short",
+    "durationSeconds": 600,
+    "coinReward": 10000,
+    "xpReward": {
+      "agility": 12500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 35
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "icthlarins_little_helper",
+    "name": "Icthlarin's Little Helper",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "attack": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "gertrudes_cat"
+    ]
+  },
+  {
+    "id": "imp_catcher",
+    "name": "Imp Catcher",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "in_aid_of_the_myreque",
+    "name": "In Aid of the Myreque",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "crafting": 1666,
+      "mining": 1666,
+      "magic": 1666
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "crafting": 25,
+      "mining": 15,
+      "magic": 7
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "in_search_of_the_myreque"
+    ]
+  },
+  {
+    "id": "in_search_of_the_myreque",
+    "name": "In Search of the Myreque",
+    "complexity": "Intermediate",
+    "length": "Short",
+    "durationSeconds": 450,
+    "coinReward": 5000,
+    "xpReward": {
+      "agility": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 25
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "nature_spirit"
+    ]
+  },
+  {
+    "id": "jungle_potion",
+    "name": "Jungle Potion",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "herblore": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "herblore": 3
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "druidic_ritual"
+    ]
+  },
+  {
+    "id": "kings_ransom",
+    "name": "King's Ransom",
+    "complexity": "Experienced",
+    "length": "Medium",
+    "durationSeconds": 1800,
+    "coinReward": 10000,
+    "xpReward": {
+      "defence": 6250,
+      "magic": 6250
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "defence": 65,
+      "magic": 45
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "black_knights_fortress",
+      "one_small_favour",
+      "murder_mystery",
+      "holy_grail"
+    ]
+  },
+  {
+    "id": "lair_of_tarn_razorlor",
+    "name": "Lair of Tarn Razorlor",
+    "complexity": "Experienced",
+    "length": "Short",
+    "durationSeconds": 600,
+    "coinReward": 10000,
+    "xpReward": {
+      "slayer": 12500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "slayer": 50
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "haunted_mine"
+    ]
+  },
+  {
+    "id": "land_of_the_goblins",
+    "name": "Land of the Goblins",
+    "complexity": "Experienced",
+    "length": "Medium",
+    "durationSeconds": 1800,
+    "coinReward": 10000,
+    "xpReward": {
+      "agility": 3125,
+      "fishing": 3125,
+      "thieving": 3125,
+      "herblore": 3125
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 38,
+      "fishing": 40,
+      "thieving": 45,
+      "herblore": 48
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "another_slice_of_h_a_m"
+    ]
+  },
+  {
+    "id": "legends_quest",
+    "name": "Legends' Quest",
+    "complexity": "Master",
+    "length": "Very Long",
+    "durationSeconds": 18000,
+    "coinReward": 25000,
+    "xpReward": {
+      "agility": 3888,
+      "crafting": 3888,
+      "smithing": 3888,
+      "woodcutting": 3888,
+      "prayer": 3888,
+      "magic": 3888,
+      "thieving": 3888,
+      "mining": 3888,
+      "herblore": 3888
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 50,
+      "crafting": 50,
+      "smithing": 50,
+      "woodcutting": 50,
+      "prayer": 50,
+      "magic": 50,
+      "thieving": 50,
+      "mining": 50,
+      "herblore": 50
+    },
+    "questPointRequirement": 107,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "underground_pass",
+      "waterfall_quest",
+      "heroes_quest",
+      "shilo_village",
+      "family_crest"
+    ]
+  },
+  {
+    "id": "lost_city",
+    "name": "Lost City",
+    "complexity": "Experienced",
+    "length": "Short",
+    "durationSeconds": 600,
+    "coinReward": 10000,
+    "xpReward": {
+      "crafting": 6250,
+      "woodcutting": 6250
+    },
+    "itemUnlocks": [
+      "dragon_dagger"
+    ],
+    "skillRequirements": {
+      "crafting": 31,
+      "woodcutting": 36
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "lunar_diplomacy",
+    "name": "Lunar Diplomacy",
+    "complexity": "Experienced",
+    "length": "Long",
+    "durationSeconds": 3600,
+    "coinReward": 10000,
+    "xpReward": {
+      "crafting": 2083,
+      "mining": 2083,
+      "woodcutting": 2083,
+      "firemaking": 2083,
+      "herblore": 2083,
+      "magic": 2083
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "crafting": 61,
+      "mining": 60,
+      "woodcutting": 55,
+      "firemaking": 49,
+      "herblore": 5,
+      "magic": 65
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "the_fremennik_trials",
+      "shilo_village",
+      "lost_city"
+    ]
+  },
+  {
+    "id": "making_friends_with_my_arm",
+    "name": "Making Friends with My Arm",
+    "complexity": "Master",
+    "length": "Medium",
+    "durationSeconds": 4500,
+    "coinReward": 25000,
+    "xpReward": {
+      "agility": 8750,
+      "firemaking": 8750,
+      "mining": 8750,
+      "construction": 8750
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 68,
+      "firemaking": 66,
+      "mining": 72,
+      "construction": 35
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "my_arms_big_adventure",
+      "romeo_juliet",
+      "cold_war"
+    ]
+  },
+  {
+    "id": "making_history",
+    "name": "Making History",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "attack": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "priest_in_peril"
+    ]
+  },
+  {
+    "id": "merlins_crystal",
+    "name": "Merlin's Crystal",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "attack": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "misthalin_mystery",
+    "name": "Misthalin Mystery",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "monks_friend",
+    "name": "Monk's Friend",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "monkey_madness_i",
+    "name": "Monkey Madness I",
+    "complexity": "Master",
+    "length": "Long",
+    "durationSeconds": 9000,
+    "coinReward": 25000,
+    "xpReward": {
+      "attack": 35000
+    },
+    "itemUnlocks": [
+      "dragon_scimitar"
+    ],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "tree_gnome_village",
+      "the_grand_tree"
+    ]
+  },
+  {
+    "id": "monkey_madness_ii",
+    "name": "Monkey Madness II",
+    "complexity": "Grandmaster",
+    "length": "Very Long",
+    "durationSeconds": 36000,
+    "coinReward": 50000,
+    "xpReward": {
+      "crafting": 12500,
+      "agility": 12500,
+      "hunter": 12500,
+      "thieving": 12500,
+      "firemaking": 12500,
+      "slayer": 12500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "crafting": 70,
+      "agility": 69,
+      "hunter": 60,
+      "thieving": 55,
+      "firemaking": 60,
+      "slayer": 60
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "the_eyes_of_glouphrie",
+      "enlightened_journey",
+      "recipe_for_disaster",
+      "monkey_madness_i",
+      "troll_stronghold",
+      "watchtower"
+    ]
+  },
+  {
+    "id": "mountain_daughter",
+    "name": "Mountain Daughter",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "agility": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 20
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "mournings_end_part_i",
+    "name": "Mourning's End Part I",
+    "complexity": "Master",
+    "length": "Long",
+    "durationSeconds": 9000,
+    "coinReward": 25000,
+    "xpReward": {
+      "ranged": 17500,
+      "thieving": 17500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "ranged": 60,
+      "thieving": 50
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "big_chompy_bird_hunting",
+      "roving_elves"
+    ]
+  },
+  {
+    "id": "mournings_end_part_ii",
+    "name": "Mourning's End Part II",
+    "complexity": "Master",
+    "length": "Long",
+    "durationSeconds": 9000,
+    "coinReward": 25000,
+    "xpReward": {
+      "attack": 35000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "mournings_end_part_i"
+    ]
+  },
+  {
+    "id": "murder_mystery",
+    "name": "Murder Mystery",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "my_arms_big_adventure",
+    "name": "My Arm's Big Adventure",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "farming": 2500,
+      "herblore": 2500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "farming": 60,
+      "herblore": 10
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "eadgars_ruse",
+      "the_feud"
+    ]
+  },
+  {
+    "id": "nature_spirit",
+    "name": "Nature Spirit",
+    "complexity": "Novice",
+    "length": "Medium",
+    "durationSeconds": 900,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "priest_in_peril"
+    ]
+  },
+  {
+    "id": "observatory_quest",
+    "name": "Observatory Quest",
+    "complexity": "Novice",
+    "length": "Medium",
+    "durationSeconds": 900,
+    "coinReward": 1000,
+    "xpReward": {
+      "crafting": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "crafting": 10
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "olafs_quest",
+    "name": "Olaf's Quest",
+    "complexity": "Intermediate",
+    "length": "Short",
+    "durationSeconds": 450,
+    "coinReward": 5000,
+    "xpReward": {
+      "firemaking": 2500,
+      "woodcutting": 2500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "firemaking": 40,
+      "woodcutting": 50
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "one_small_favour",
+    "name": "One Small Favour",
+    "complexity": "Experienced",
+    "length": "Very Long",
+    "durationSeconds": 7200,
+    "coinReward": 10000,
+    "xpReward": {
+      "agility": 3125,
+      "crafting": 3125,
+      "herblore": 3125,
+      "smithing": 3125
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 36,
+      "crafting": 25,
+      "herblore": 18,
+      "smithing": 30
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "rune_mysteries",
+      "shilo_village"
+    ]
+  },
+  {
+    "id": "path_of_glouphrie",
+    "name": "Path of Glouphrie",
+    "complexity": "Experienced",
+    "length": "Medium",
+    "durationSeconds": 1800,
+    "coinReward": 10000,
+    "xpReward": {
+      "strength": 2500,
+      "slayer": 2500,
+      "thieving": 2500,
+      "ranged": 2500,
+      "agility": 2500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "strength": 60,
+      "slayer": 56,
+      "thieving": 56,
+      "ranged": 47,
+      "agility": 45
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "the_eyes_of_glouphrie"
+    ]
+  },
+  {
+    "id": "perilous_moons",
+    "name": "Perilous Moons",
+    "complexity": "Master",
+    "length": "Medium",
+    "durationSeconds": 4500,
+    "coinReward": 25000,
+    "xpReward": {
+      "slayer": 8750,
+      "fishing": 8750,
+      "hunter": 8750,
+      "runecraft": 8750
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "slayer": 48,
+      "fishing": 20,
+      "hunter": 20,
+      "runecraft": 20
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 75,
+    "questRequirements": [
+      "twilights_promise"
+    ]
+  },
+  {
+    "id": "pirates_treasure",
+    "name": "Pirate's Treasure",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "plague_city",
+    "name": "Plague City",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "priest_in_peril",
+    "name": "Priest in Peril",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "prince_ali_rescue",
+    "name": "Prince Ali Rescue",
+    "complexity": "Novice",
+    "length": "Medium",
+    "durationSeconds": 900,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "rag_and_bone_man_i",
+    "name": "Rag and Bone Man I",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "rag_and_bone_man_ii",
+    "name": "Rag and Bone Man II",
+    "complexity": "Intermediate",
+    "length": "Long",
+    "durationSeconds": 2700,
+    "coinReward": 5000,
+    "xpReward": {
+      "slayer": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "slayer": 40
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "creature_of_fenkenstrain",
+      "rag_and_bone_man_i",
+      "zogre_flesh_eaters"
+    ]
+  },
+  {
+    "id": "ratcatchers",
+    "name": "Ratcatchers",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "attack": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "icthlarins_little_helper",
+      "gertrudes_cat"
+    ]
+  },
+  {
+    "id": "recipe_for_disaster",
+    "name": "Recipe for Disaster",
+    "complexity": "Special",
+    "length": "Very Long",
+    "durationSeconds": 36000,
+    "coinReward": 50000,
+    "xpReward": {
+      "cooking": 12500,
+      "agility": 12500,
+      "mining": 12500,
+      "thieving": 12500,
+      "magic": 12500,
+      "smithing": 12500
+    },
+    "itemUnlocks": [
+      "barrows_gloves"
+    ],
+    "skillRequirements": {
+      "cooking": 70,
+      "agility": 48,
+      "mining": 50,
+      "thieving": 53,
+      "magic": 59,
+      "smithing": 40
+    },
+    "questPointRequirement": 175,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "horror_from_the_deep",
+      "shadow_of_the_storm",
+      "desert_treasure_i",
+      "cooks_assistant",
+      "goblin_diplomacy",
+      "fishing_contest",
+      "gertrudes_cat",
+      "legends_quest"
+    ]
+  },
+  {
+    "id": "recruitment_drive",
+    "name": "Recruitment Drive",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 12,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "black_knights_fortress",
+      "druidic_ritual"
+    ]
+  },
+  {
+    "id": "regicide",
+    "name": "Regicide",
+    "complexity": "Master",
+    "length": "Long",
+    "durationSeconds": 9000,
+    "coinReward": 25000,
+    "xpReward": {
+      "agility": 17500,
+      "crafting": 17500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 56,
+      "crafting": 10
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "underground_pass"
+    ]
+  },
+  {
+    "id": "romeo_juliet",
+    "name": "Romeo & Juliet",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "roving_elves",
+    "name": "Roving Elves",
+    "complexity": "Experienced",
+    "length": "Short",
+    "durationSeconds": 600,
+    "coinReward": 10000,
+    "xpReward": {
+      "attack": 12500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "waterfall_quest",
+      "regicide"
+    ]
+  },
+  {
+    "id": "royal_trouble",
+    "name": "Royal Trouble",
+    "complexity": "Experienced",
+    "length": "Medium",
+    "durationSeconds": 1800,
+    "coinReward": 10000,
+    "xpReward": {
+      "agility": 6250,
+      "slayer": 6250
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 40,
+      "slayer": 40
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "throne_of_miscellania"
+    ]
+  },
+  {
+    "id": "rum_deal",
+    "name": "Rum Deal",
+    "complexity": "Experienced",
+    "length": "Medium",
+    "durationSeconds": 1800,
+    "coinReward": 10000,
+    "xpReward": {
+      "crafting": 2500,
+      "farming": 2500,
+      "prayer": 2500,
+      "slayer": 2500,
+      "fishing": 2500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "crafting": 42,
+      "farming": 40,
+      "prayer": 47,
+      "slayer": 42,
+      "fishing": 40
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "zogre_flesh_eaters",
+      "priest_in_peril"
+    ]
+  },
+  {
+    "id": "rune_mysteries",
+    "name": "Rune Mysteries",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "scorpion_catcher",
+    "name": "Scorpion Catcher",
+    "complexity": "Intermediate",
+    "length": "Short",
+    "durationSeconds": 450,
+    "coinReward": 5000,
+    "xpReward": {
+      "attack": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "sea_slug",
+    "name": "Sea Slug",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "firemaking": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "firemaking": 30
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "secrets_of_the_north",
+    "name": "Secrets of the North",
+    "complexity": "Master",
+    "length": "Medium",
+    "durationSeconds": 4500,
+    "coinReward": 25000,
+    "xpReward": {
+      "agility": 11666,
+      "thieving": 11666,
+      "hunter": 11666
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 69,
+      "thieving": 64,
+      "hunter": 56
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "making_history",
+      "hazeel_cult"
+    ]
+  },
+  {
+    "id": "shades_of_mortton",
+    "name": "Shades of Mort'ton",
+    "complexity": "Intermediate",
+    "length": "Short",
+    "durationSeconds": 450,
+    "coinReward": 5000,
+    "xpReward": {
+      "crafting": 1666,
+      "herblore": 1666,
+      "firemaking": 1666
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "crafting": 20,
+      "herblore": 15,
+      "firemaking": 5
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "shadow_of_the_storm",
+    "name": "Shadow of the Storm",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "crafting": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "crafting": 30
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "demon_slayer",
+      "the_golem"
+    ]
+  },
+  {
+    "id": "sheep_herder",
+    "name": "Sheep Herder",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "sheep_shearer",
+    "name": "Sheep Shearer",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "shield_of_arrav",
+    "name": "Shield of Arrav",
+    "complexity": "Novice",
+    "length": "Medium",
+    "durationSeconds": 900,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "shilo_village",
+    "name": "Shilo Village",
+    "complexity": "Experienced",
+    "length": "Medium",
+    "durationSeconds": 1800,
+    "coinReward": 10000,
+    "xpReward": {
+      "agility": 6250,
+      "crafting": 6250
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 32,
+      "crafting": 20
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "jungle_potion"
+    ]
+  },
+  {
+    "id": "sins_of_the_father",
+    "name": "Sins of the Father",
+    "complexity": "Master",
+    "length": "Long",
+    "durationSeconds": 9000,
+    "coinReward": 25000,
+    "xpReward": {
+      "woodcutting": 5000,
+      "fletching": 5000,
+      "crafting": 5000,
+      "agility": 5000,
+      "slayer": 5000,
+      "smithing": 5000,
+      "magic": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "woodcutting": 62,
+      "fletching": 60,
+      "crafting": 56,
+      "agility": 52,
+      "slayer": 50,
+      "smithing": 50,
+      "magic": 49
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "a_taste_of_hope",
+      "vampyre_slayer"
+    ]
+  },
+  {
+    "id": "skipping_stones",
+    "name": "Skipping Stones",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "sleeping_giants",
+    "name": "Sleeping Giants",
+    "complexity": "Intermediate",
+    "length": "Short",
+    "durationSeconds": 450,
+    "coinReward": 5000,
+    "xpReward": {
+      "smithing": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "smithing": 15
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "song_of_the_elves",
+    "name": "Song of the Elves",
+    "complexity": "Grandmaster",
+    "length": "Very Long",
+    "durationSeconds": 36000,
+    "coinReward": 50000,
+    "xpReward": {
+      "agility": 9375,
+      "construction": 9375,
+      "farming": 9375,
+      "herblore": 9375,
+      "hunter": 9375,
+      "mining": 9375,
+      "smithing": 9375,
+      "woodcutting": 9375
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 70,
+      "construction": 70,
+      "farming": 70,
+      "herblore": 70,
+      "hunter": 70,
+      "mining": 70,
+      "smithing": 70,
+      "woodcutting": 70
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "mournings_end_part_ii",
+      "the_eyes_of_glouphrie",
+      "enakhras_lament",
+      "making_history"
+    ]
+  },
+  {
+    "id": "spirits_of_the_elid",
+    "name": "Spirits of the Elid",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "magic": 1250,
+      "ranged": 1250,
+      "mining": 1250,
+      "thieving": 1250
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "magic": 33,
+      "ranged": 37,
+      "mining": 37,
+      "thieving": 37
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "swan_song",
+    "name": "Swan Song",
+    "complexity": "Master",
+    "length": "Medium",
+    "durationSeconds": 4500,
+    "coinReward": 25000,
+    "xpReward": {
+      "magic": 5833,
+      "cooking": 5833,
+      "fishing": 5833,
+      "smithing": 5833,
+      "firemaking": 5833,
+      "crafting": 5833
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "magic": 66,
+      "cooking": 62,
+      "fishing": 62,
+      "smithing": 45,
+      "firemaking": 42,
+      "crafting": 40
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "garden_of_tranquillity",
+      "one_small_favour"
+    ]
+  },
+  {
+    "id": "tai_bwo_wannai_trio",
+    "name": "Tai Bwo Wannai Trio",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "agility": 1666,
+      "cooking": 1666,
+      "fishing": 1666
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 15,
+      "cooking": 30,
+      "fishing": 5
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "jungle_potion"
+    ]
+  },
+  {
+    "id": "tale_of_the_righteous",
+    "name": "Tale of the Righteous",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "strength": 500,
+      "mining": 500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "strength": 16,
+      "mining": 10
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "tears_of_guthix",
+    "name": "Tears of Guthix",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "firemaking": 333,
+      "crafting": 333,
+      "mining": 333
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "firemaking": 49,
+      "crafting": 20,
+      "mining": 20
+    },
+    "questPointRequirement": 43,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "temple_of_ikov",
+    "name": "Temple of Ikov",
+    "complexity": "Experienced",
+    "length": "Medium",
+    "durationSeconds": 1800,
+    "coinReward": 10000,
+    "xpReward": {
+      "thieving": 6250,
+      "ranged": 6250
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "thieving": 42,
+      "ranged": 40
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "temple_of_the_eye",
+    "name": "Temple of the Eye",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "runecraft": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "runecraft": 10
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "the_curse_of_arrav",
+    "name": "The Curse of Arrav",
+    "complexity": "Master",
+    "length": "Medium",
+    "durationSeconds": 4500,
+    "coinReward": 25000,
+    "xpReward": {
+      "mining": 5833,
+      "ranged": 5833,
+      "thieving": 5833,
+      "agility": 5833,
+      "strength": 5833,
+      "slayer": 5833
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "mining": 64,
+      "ranged": 62,
+      "thieving": 62,
+      "agility": 61,
+      "strength": 58,
+      "slayer": 37
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "defender_of_varrock",
+      "troll_romance"
+    ]
+  },
+  {
+    "id": "the_dig_site",
+    "name": "The Dig Site",
+    "complexity": "Intermediate",
+    "length": "Long",
+    "durationSeconds": 2700,
+    "coinReward": 5000,
+    "xpReward": {
+      "agility": 1666,
+      "herblore": 1666,
+      "thieving": 1666
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 10,
+      "herblore": 10,
+      "thieving": 25
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "the_eyes_of_glouphrie",
+    "name": "The Eyes of Glouphrie",
+    "complexity": "Intermediate",
+    "length": "Short",
+    "durationSeconds": 450,
+    "coinReward": 5000,
+    "xpReward": {
+      "construction": 1666,
+      "magic": 1666,
+      "runecraft": 1666
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "construction": 5,
+      "magic": 46,
+      "runecraft": 22
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "the_grand_tree"
+    ]
+  },
+  {
+    "id": "the_feud",
+    "name": "The Feud",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "thieving": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "thieving": 30
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "the_forsaken_tower",
+    "name": "The Forsaken Tower",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "the_fremennik_exiles",
+    "name": "The Fremennik Exiles",
+    "complexity": "Master",
+    "length": "Long",
+    "durationSeconds": 9000,
+    "coinReward": 25000,
+    "xpReward": {
+      "crafting": 7000,
+      "slayer": 7000,
+      "smithing": 7000,
+      "fishing": 7000,
+      "runecraft": 7000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "crafting": 65,
+      "slayer": 60,
+      "smithing": 60,
+      "fishing": 60,
+      "runecraft": 55
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "the_fremennik_isles",
+      "mountain_daughter",
+      "lunar_diplomacy",
+      "heroes_quest"
+    ]
+  },
+  {
+    "id": "the_fremennik_isles",
+    "name": "The Fremennik Isles",
+    "complexity": "Experienced",
+    "length": "Long",
+    "durationSeconds": 3600,
+    "coinReward": 10000,
+    "xpReward": {
+      "construction": 3125,
+      "agility": 3125,
+      "crafting": 3125,
+      "woodcutting": 3125
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "construction": 20,
+      "agility": 40,
+      "crafting": 46,
+      "woodcutting": 56
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "the_fremennik_trials"
+    ]
+  },
+  {
+    "id": "the_fremennik_trials",
+    "name": "The Fremennik Trials",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "crafting": 1666,
+      "fletching": 1666,
+      "woodcutting": 1666
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "crafting": 40,
+      "fletching": 40,
+      "woodcutting": 25
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "the_garden_of_death",
+    "name": "The Garden of Death",
+    "complexity": "Intermediate",
+    "length": "Short",
+    "durationSeconds": 450,
+    "coinReward": 5000,
+    "xpReward": {
+      "farming": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "farming": 20
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "the_giant_dwarf",
+    "name": "The Giant Dwarf",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "crafting": 1250,
+      "firemaking": 1250,
+      "magic": 1250,
+      "thieving": 1250
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "crafting": 12,
+      "firemaking": 16,
+      "magic": 14,
+      "thieving": 12
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "the_golem",
+    "name": "The Golem",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "crafting": 2500,
+      "thieving": 2500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "crafting": 20,
+      "thieving": 25
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "the_grand_tree",
+    "name": "The Grand Tree",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "agility": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 25
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "the_hand_in_the_sand",
+    "name": "The Hand in the Sand",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "crafting": 2500,
+      "thieving": 2500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "crafting": 49,
+      "thieving": 17
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "the_heart_of_darkness",
+    "name": "The Heart of Darkness",
+    "complexity": "Master",
+    "length": "Long",
+    "durationSeconds": 9000,
+    "coinReward": 25000,
+    "xpReward": {
+      "agility": 11666,
+      "thieving": 11666,
+      "slayer": 11666
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 60,
+      "thieving": 55,
+      "slayer": 52
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "children_of_the_sun",
+      "twilights_promise"
+    ]
+  },
+  {
+    "id": "the_knights_sword",
+    "name": "The Knight's Sword",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "mining": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "mining": 10
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "the_lost_tribe",
+    "name": "The Lost Tribe",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "agility": 1666,
+      "mining": 1666,
+      "thieving": 1666
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 13,
+      "mining": 17,
+      "thieving": 13
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "goblin_diplomacy"
+    ]
+  },
+  {
+    "id": "the_queen_of_thieves",
+    "name": "The Queen of Thieves",
+    "complexity": "Intermediate",
+    "length": "Short",
+    "durationSeconds": 450,
+    "coinReward": 5000,
+    "xpReward": {
+      "thieving": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "thieving": 20
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "the_restless_ghost",
+    "name": "The Restless Ghost",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "the_ribbiting_tale_of_a_lily_pad_laborer",
+    "name": "The Ribbiting Tale of a Lily Pad Laborer",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "the_tourist_trap",
+    "name": "The Tourist Trap",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "fletching": 2500,
+      "smithing": 2500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "fletching": 10,
+      "smithing": 20
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "throne_of_miscellania",
+    "name": "Throne of Miscellania",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "attack": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "the_giant_dwarf",
+      "heroes_quest"
+    ]
+  },
+  {
+    "id": "tower_of_life",
+    "name": "Tower of Life",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "construction": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "construction": 10
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "tree_gnome_village",
+    "name": "Tree Gnome Village",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "tribal_totem",
+    "name": "Tribal Totem",
+    "complexity": "Intermediate",
+    "length": "Short",
+    "durationSeconds": 450,
+    "coinReward": 5000,
+    "xpReward": {
+      "thieving": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "thieving": 21
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "troll_romance",
+    "name": "Troll Romance",
+    "complexity": "Experienced",
+    "length": "Medium",
+    "durationSeconds": 1800,
+    "coinReward": 10000,
+    "xpReward": {
+      "agility": 12500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 28
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "troll_stronghold"
+    ]
+  },
+  {
+    "id": "troll_stronghold",
+    "name": "Troll Stronghold",
+    "complexity": "Experienced",
+    "length": "Medium",
+    "durationSeconds": 1800,
+    "coinReward": 10000,
+    "xpReward": {
+      "agility": 12500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 15
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "death_plateau"
+    ]
+  },
+  {
+    "id": "twilights_promise",
+    "name": "Twilight's Promise",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "children_of_the_sun"
+    ]
+  },
+  {
+    "id": "underground_pass",
+    "name": "Underground Pass",
+    "complexity": "Experienced",
+    "length": "Very Long",
+    "durationSeconds": 7200,
+    "coinReward": 10000,
+    "xpReward": {
+      "agility": 12500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "agility": 25
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "biohazard"
+    ]
+  },
+  {
+    "id": "vampyre_slayer",
+    "name": "Vampyre Slayer",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "walking_the_dog",
+    "name": "Walking the Dog",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "wanted",
+    "name": "Wanted!",
+    "complexity": "Intermediate",
+    "length": "Long",
+    "durationSeconds": 2700,
+    "coinReward": 5000,
+    "xpReward": {
+      "attack": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 33,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "recruitment_drive",
+      "priest_in_peril",
+      "the_lost_tribe"
+    ]
+  },
+  {
+    "id": "watchtower",
+    "name": "Watchtower",
+    "complexity": "Intermediate",
+    "length": "Long",
+    "durationSeconds": 2700,
+    "coinReward": 5000,
+    "xpReward": {
+      "magic": 1000,
+      "thieving": 1000,
+      "agility": 1000,
+      "herblore": 1000,
+      "mining": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "magic": 15,
+      "thieving": 15,
+      "agility": 25,
+      "herblore": 14,
+      "mining": 40
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "waterfall_quest",
+    "name": "Waterfall Quest",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "attack": 5000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "what_lies_below",
+    "name": "What Lies Below",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "runecraft": 2500,
+      "mining": 2500
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "runecraft": 35,
+      "mining": 42
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "while_guthix_sleeps",
+    "name": "While Guthix Sleeps",
+    "complexity": "Grandmaster",
+    "length": "Very Long",
+    "durationSeconds": 36000,
+    "coinReward": 50000,
+    "xpReward": {
+      "thieving": 10714,
+      "firemaking": 10714,
+      "magic": 10714,
+      "agility": 10714,
+      "farming": 10714,
+      "herblore": 10714,
+      "hunter": 10714
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "thieving": 75,
+      "firemaking": 75,
+      "magic": 75,
+      "agility": 71,
+      "farming": 70,
+      "herblore": 70,
+      "hunter": 65
+    },
+    "questPointRequirement": 270,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "mournings_end_part_ii",
+      "defender_of_varrock",
+      "recipe_for_disaster",
+      "path_of_glouphrie",
+      "legends_quest",
+      "kings_ransom",
+      "dream_mentor",
+      "swan_song"
+    ]
+  },
+  {
+    "id": "witchs_house",
+    "name": "Witch's House",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "witchs_potion",
+    "name": "Witch's Potion",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "x_marks_the_spot",
+    "name": "X Marks the Spot",
+    "complexity": "Novice",
+    "length": "Short",
+    "durationSeconds": 300,
+    "coinReward": 1000,
+    "xpReward": {
+      "attack": 1000
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {},
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": []
+  },
+  {
+    "id": "zogre_flesh_eaters",
+    "name": "Zogre Flesh Eaters",
+    "complexity": "Intermediate",
+    "length": "Medium",
+    "durationSeconds": 1350,
+    "coinReward": 5000,
+    "xpReward": {
+      "herblore": 1250,
+      "ranged": 1250,
+      "fletching": 1250,
+      "smithing": 1250
+    },
+    "itemUnlocks": [],
+    "skillRequirements": {
+      "herblore": 8,
+      "ranged": 30,
+      "fletching": 30,
+      "smithing": 4
+    },
+    "questPointRequirement": 0,
+    "combatLevelRequirement": 0,
+    "questRequirements": [
+      "jungle_potion"
+    ]
+  }
+]

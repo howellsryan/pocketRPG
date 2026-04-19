@@ -10,6 +10,7 @@ const tabs = [
   { id: SCREENS.GATHER,    label: 'Gather',  icon: '🌿' },
   { id: SCREENS.COMBAT,    label: 'Combat',  icon: '⚔️' },
   { id: SCREENS.SKILLS,    label: 'Skills',  icon: '🔨' },
+  { id: SCREENS.QUESTS,    label: 'Quests',  icon: '📜' },
 ]
 
 export default function BottomNav({ active, onNavigate, isInBossFight, onDisabledClick }) {

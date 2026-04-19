@@ -4,6 +4,7 @@ import { getAllStats, getInventory, getEquipment, getBank, getPlayer, saveAllSta
 import { getLevelFromXP, clampXP } from '../engine/experience.js'
 import { simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from '../engine/idleEngine.js'
 import { simulateIdleThieving } from '../engine/thieving.js'
+import { simulateIdleQuest } from '../engine/quests.js'
 import { ALL_SKILLS, MAX_XP, AUTO_SAVE_DEBOUNCE } from '../utils/constants.js'
 import { debounce } from '../utils/helpers.js'
 import { fetchIdleState, pushIdleState } from '../cloud/idleState.js'
@@ -31,6 +32,7 @@ export function GameProvider({ children }) {
   const [activeCombatSpell, setActiveCombatSpellState] = useState(null)
   const [bossKillCounts, setBossKillCountsState] = useState({})
   const [farming, setFarmingState] = useState({ patchesById: {} })
+  const [completedQuests, setCompletedQuestsState] = useState(new Set())
   const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false })
 
   // Refs to hold latest state for the debounced auto-save
@@ -45,11 +47,12 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedBossKillCounts, savedFarming] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedBossKillCounts, savedFarming, savedCompletedQuests] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
-      getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('bossKillCounts'), getSetting('farming')
+      getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('bossKillCounts'), getSetting('farming'),
+      getSetting('completedQuests')
     ])
     // Idle-engine inputs: last active timestamp and last active task.
     // D1 is authoritative when signed in + online — localStorage is only used
@@ -93,6 +96,8 @@ export function GameProvider({ children }) {
             sim = simulateIdleAgility(savedTask, elapsedMs)
           } else if (savedTask.type === 'thieving') {
             sim = simulateIdleThieving(savedTask, elapsedMs)
+          } else if (savedTask.type === 'quest') {
+            sim = simulateIdleQuest(savedTask, elapsedMs)
           }
         } catch (simErr) {
           console.error('[PocketRPG] Idle simulation failed — skipping idle rewards:', simErr)
@@ -211,6 +216,29 @@ export function GameProvider({ children }) {
               await saveSetting('slayerTask', sim.slayerTaskUpdate)
             }
           }
+
+          // Quest sim handling: award coins to bank, persist completion,
+          // and either drop the task (completed) or restart it with the
+          // remaining ticks (still running).
+          if (savedTask.type === 'quest') {
+            if (sim.coinsGained > 0) {
+              if (b.coins) b.coins = { ...b.coins, quantity: b.coins.quantity + sim.coinsGained }
+              else b.coins = { itemId: 'coins', quantity: sim.coinsGained }
+              await saveBank(b)
+            }
+            if (sim.completed) {
+              const merged = new Set(savedCompletedQuests || [])
+              merged.add(sim.quest.id)
+              await saveSetting('completedQuests', [...merged])
+              savedCompletedQuests = [...merged]
+              savedTask = null
+              localStorage.removeItem('pocketrpg_activeTask')
+            } else {
+              // Still running — store remaining ticks so the next session resumes
+              savedTask = { ...savedTask, ticksRemaining: sim.ticksRemaining }
+              localStorage.setItem('pocketrpg_activeTask', JSON.stringify(savedTask))
+            }
+          }
           idleResult = { elapsedMs, task: savedTask, ...sim }
         }
       }
@@ -240,6 +268,7 @@ export function GameProvider({ children }) {
     setActiveCombatSpellState(savedActiveCombatSpell ?? null)
     setBossKillCountsState(savedBossKillCounts ?? {})
     setFarmingState(savedFarming ?? { patchesById: {} })
+    setCompletedQuestsState(new Set(savedCompletedQuests || []))
     const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
     setCurrentHP(savedHP != null ? Math.min(savedHP, hpLevel) : hpLevel)
     setLoaded(true)
@@ -427,6 +456,16 @@ export function GameProvider({ children }) {
     saveSetting('farming', farmingState)
   }, [])
 
+  const completeQuest = useCallback((questId) => {
+    setCompletedQuestsState(prev => {
+      if (prev.has(questId)) return prev
+      const next = new Set(prev)
+      next.add(questId)
+      saveSetting('completedQuests', [...next])
+      return next
+    })
+  }, [])
+
   // Direct bank update without inventory changes (for skill/gather item routing)
   const updateBankDirect = useCallback((itemUpdates) => {
     setBank(prev => {
@@ -478,6 +517,7 @@ export function GameProvider({ children }) {
     activeCombatSpell, updateActiveCombatSpell,
     bossKillCounts, updateBossKillCounts,
     farming, updateFarming,
+    completedQuests, completeQuest,
     loadGame, grantXP, updateInventory, updateEquipment, updateBank,
     removeFromInventory, addToBank,
     updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,

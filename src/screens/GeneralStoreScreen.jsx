@@ -7,10 +7,11 @@ import Button from '../components/Button.jsx'
 
 // ── COMPONENT ───────────────────────────────────────────────────────────────
 export default function GeneralStoreScreen() {
-  const { inventory, bank, updateInventory, updateBankDirect, addToast, itemsData, unlockedFeatures } = useGame()
+  const { inventory, bank, updateInventory, updateBankDirect, addToast, itemsData, unlockedFeatures, completedQuests } = useGame()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedItem, setSelectedItem] = useState(null) // item being purchased
   const [buyQty, setBuyQty] = useState(1)
+  const [activeTab, setActiveTab] = useState('general') // 'general' | 'quest'
 
   const hasMoneyPurse = unlockedFeatures.has('money_purse')
   const coinsInInv = countItem(inventory, 'coins')
@@ -18,6 +19,11 @@ export default function GeneralStoreScreen() {
   const coins = hasMoneyPurse ? coinsInInv + coinsInBank : coinsInInv
 
   const getAvailableItems = () => {
+    if (activeTab === 'quest') {
+      return Object.entries(itemsData)
+        .filter(([_, item]) => item.isUntradeable && item.questUnlock && completedQuests.has(item.questUnlock))
+        .map(([id, item]) => ({ ...item, id }))
+    }
     return Object.entries(itemsData)
       .filter(([_, item]) => !item.isUntradeable)
       .map(([id, item]) => ({ ...item, id }))
@@ -101,11 +107,35 @@ export default function GeneralStoreScreen() {
       <div class="px-4 pt-3 pb-3 flex-shrink-0">
         <div class="flex justify-between items-baseline mb-3">
           <h2 class="font-[var(--font-display)] text-[15px] font-bold text-[var(--color-gold)] m-0">
-            General Store
+            {activeTab === 'quest' ? 'Quest Shop' : 'General Store'}
           </h2>
           <span class="text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]">
             🪙 {coins.toLocaleString()}
           </span>
+        </div>
+
+        {/* ── TAB SWITCHER ── */}
+        <div class="flex gap-2 mb-3">
+          <button
+            onClick={() => { setActiveTab('general'); setSearchTerm('') }}
+            class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
+              activeTab === 'general'
+                ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
+                : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
+            }`}
+          >
+            🪙 General
+          </button>
+          <button
+            onClick={() => { setActiveTab('quest'); setSearchTerm('') }}
+            class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
+              activeTab === 'quest'
+                ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
+                : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
+            }`}
+          >
+            📜 Quest Shop
+          </button>
         </div>
 
         {/* ── SEARCH INPUT ── */}
@@ -122,7 +152,11 @@ export default function GeneralStoreScreen() {
       <div class="flex-1 overflow-y-auto px-4 pb-20">
         {searchResults.length === 0 ? (
           <div class="py-10 px-4 text-center text-[#888] text-[12px]">
-            {searchTerm ? 'No items found.' : 'Search for items to buy.'}
+            {searchTerm
+              ? 'No items found.'
+              : activeTab === 'quest'
+                ? 'Complete quests to unlock special items here.'
+                : 'Search for items to buy.'}
           </div>
         ) : (
           <div class="flex flex-col gap-2 pt-3">

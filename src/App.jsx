@@ -13,6 +13,7 @@ import GatherScreen from './screens/GatherScreen.jsx'
 import AgilityScreen from './screens/AgilityScreen.jsx'
 import GeneralStoreScreen from './screens/GeneralStoreScreen.jsx'
 import EquipmentScreen from './screens/EquipmentScreen.jsx'
+import QuestsScreen from './screens/QuestsScreen.jsx'
 import AuthScreen from './screens/AuthScreen.jsx'
 import { SCREENS } from './utils/constants.js'
 import { hasSave, closeDB } from './db/database.js'
@@ -24,10 +25,11 @@ import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, r
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
 import { simulateIdleThieving } from './engine/thieving.js'
+import { simulateIdleQuest } from './engine/quests.js'
 import { getLevelFromXP } from './engine/experience.js'
 
 function GameApp() {
-  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints } = useGame()
+  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints, completeQuest } = useGame()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [gameReady, setGameReady] = useState(false)
   const [activity, setActivity] = useState(null)
@@ -168,6 +170,7 @@ function GameApp() {
           if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank)
           if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
           if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
+          if (savedTask.type === 'quest') sim = simulateIdleQuest(savedTask, elapsedMs)
 
           // Always show the modal — even if sim is null (e.g. <1 action completed)
           if (!sim) {
@@ -211,6 +214,18 @@ function GameApp() {
           // Apply thieving coin reward directly to bank
           if (savedTask.type === 'thieving' && sim.coinsGained > 0) {
             updateBankDirect({ coins: sim.coinsGained })
+          }
+          // Quest finalisation — coins to bank, completion persisted, task cleared
+          if (savedTask.type === 'quest') {
+            if (sim.coinsGained > 0) updateBankDirect({ coins: sim.coinsGained })
+            if (sim.completed) {
+              completeQuest(sim.quest.id)
+              setActiveTask(null)
+              addToast(`📜 Quest complete: ${sim.quest.name}`, 'levelup', '🏆')
+            } else {
+              // Persist remaining ticks so the in-progress quest resumes
+              setActiveTask({ ...savedTask, ticksRemaining: sim.ticksRemaining })
+            }
           }
           // Deduct consumed materials from bank
           if (sim.itemsConsumed && Object.keys(sim.itemsConsumed).length > 0) {
@@ -308,6 +323,23 @@ function GameApp() {
         const maxHP = getMaxHP()
         if (currentHP < maxHP) {
           updateHP(Math.min(currentHP + 1, maxHP))
+        }
+      }
+
+      // Quest tick — runs at the App level so quests progress on any screen
+      const task = activeTaskRef.current
+      if (task && task.type === 'quest' && task.quest) {
+        const remaining = (task.ticksRemaining ?? task.totalTicks) - 1
+        if (remaining <= 0) {
+          for (const [skill, xp] of Object.entries(task.quest.xpReward || {})) {
+            if (xp > 0) grantXP(skill, xp)
+          }
+          if (task.quest.coinReward > 0) updateBankDirect({ coins: task.quest.coinReward })
+          completeQuest(task.quest.id)
+          setActiveTask(null)
+          addToast(`📜 Quest complete: ${task.quest.name}`, 'levelup', '🏆')
+        } else {
+          setActiveTask({ ...task, ticksRemaining: remaining })
         }
       }
     })
@@ -470,9 +502,12 @@ function GameApp() {
 
   // Navigate with optional action data
   const navigate = (scr, data) => {
-    // Navigating away stops any active task and clears localStorage idle-engine
-    // keys so the idle engine won't re-process a task that was stopped/cancelled.
-    setActiveTask(null)
+    // Navigating away stops any active screen-bound task (skilling, gathering,
+    // combat, agility, thieving) and clears the idle-engine keys so it won't
+    // re-process a cancelled task. Quests run in the background — preserve them.
+    if (activeTask?.type !== 'quest') {
+      setActiveTask(null)
+    }
     setActionData(data || null)
     setScreen(scr)
   }
@@ -550,6 +585,7 @@ function GameApp() {
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} />
       case SCREENS.AGILITY:   return <AgilityScreen initialActionId={actionData?.actionId} />
       case SCREENS.STORE:     return <GeneralStoreScreen />
+      case SCREENS.QUESTS:    return <QuestsScreen />
       default:                return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} isCloudAccount={!!getToken() && !!getCharacterId()} />
     }
   }
@@ -585,7 +621,8 @@ function GameApp() {
                    idleResult.task.type === 'skill' ? `Training ${idleResult.task.skill}` :
                    idleResult.task.type === 'gather' ? idleResult.task.gatherTask?.name :
                    idleResult.task.type === 'thieving' ? `Pickpocketing ${idleResult.task.npc?.name}` :
-                   idleResult.task.type === 'agility' ? `Training agility` : ''}
+                   idleResult.task.type === 'agility' ? `Training agility` :
+                   idleResult.task.type === 'quest' ? `${idleResult.completed ? '✅ Completed' : '⏳ On quest'}: ${idleResult.task.quest?.name}` : ''}
                 </p>
               )}
             </div>

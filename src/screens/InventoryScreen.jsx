@@ -7,7 +7,7 @@ import { equipItem } from '../engine/equipment.js'
 import { getLevelFromXP } from '../engine/experience.js'
 
 export default function InventoryScreen() {
-  const { inventory, equipment, stats, bank, updateInventory, updateEquipment, updateBank, updateHP, currentHP, getMaxHP, addToast, itemsData } = useGame()
+  const { inventory, equipment, stats, bank, updateInventory, updateEquipment, updateBank, updateHP, currentHP, getMaxHP, addToast, itemsData, completedQuests } = useGame()
   const [selected, setSelected] = useState(null) // { slotIndex, slot, item }
   const [showSpecInfo, setShowSpecInfo] = useState(false)
   const [bankQuantityMode, setBankQuantityMode] = useState(null) // 'stackable' | 'nonStackable' | null
@@ -24,6 +24,12 @@ export default function InventoryScreen() {
   const handleEquip = () => {
     if (!selected) return
     const { slotIndex, item } = selected
+
+    if (item.questUnlock && !completedQuests.has(item.questUnlock)) {
+      addToast(`Complete quest to equip: ${item.questUnlock.replace(/_/g, ' ')}`, 'error')
+      setSelected(null)
+      return
+    }
 
     if (item.requirements) {
       for (const [skill, level] of Object.entries(item.requirements)) {
