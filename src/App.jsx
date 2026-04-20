@@ -25,11 +25,11 @@ import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, r
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
 import { simulateIdleThieving } from './engine/thieving.js'
-import { simulateIdleQuest } from './engine/quests.js'
+import { simulateIdleQuest, createQuestState } from './engine/quests.js'
 import { getLevelFromXP } from './engine/experience.js'
 
 function GameApp() {
-  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints, completeQuest } = useGame()
+  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints, completeQuest, questQueue, removeFromQuestQueue } = useGame()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [gameReady, setGameReady] = useState(false)
   const [activity, setActivity] = useState(null)
@@ -56,6 +56,39 @@ function GameApp() {
       else if (xp > 0) fixed[skill] = xp
     }
     return { fixed, choices }
+  }
+
+  // Handle quest completion with queue cascading
+  function handleQuestCompletion(quest, xpReward, coinReward) {
+    // Award rewards
+    const { fixed, choices } = splitXpRewards(xpReward)
+    for (const [skill, xp] of Object.entries(fixed)) grantXP(skill, xp)
+    if (coinReward > 0) updateBankDirect({ coins: coinReward })
+
+    // Remove from queue first
+    removeFromQuestQueue(quest.id)
+
+    // Check if there are more quests in queue
+    const remainingQueue = questQueue.filter(q => q.id !== quest.id)
+    if (remainingQueue.length > 0) {
+      // Auto-start next quest
+      const nextQuest = remainingQueue[0]
+      const state = createQuestState(nextQuest)
+      setActiveTask({
+        type: 'quest',
+        quest: nextQuest,
+        totalTicks: state.totalTicks,
+        ticksRemaining: state.ticksRemaining,
+        startedAt: state.startedAt,
+      })
+      addToast(`📜 Started: ${nextQuest.name}`, 'info')
+    } else {
+      // Queue is empty, close modal
+      setActiveTask(null)
+    }
+
+    // Finalise the completed quest (show choice modal if needed)
+    finaliseQuest(quest.id, quest.name, choices)
   }
 
   // Finalise a completed quest: show choice modal if needed, else complete immediately
@@ -102,9 +135,11 @@ function GameApp() {
   const equipmentRef = useRef(equipment)
   const inventoryRef = useRef(inventory)
   const itemsDataRef = useRef(itemsData)
+  const questQueueRef = useRef(questQueue)
   useEffect(() => { statsRef.current = stats }, [stats])
   useEffect(() => { equipmentRef.current = equipment }, [equipment])
   useEffect(() => { inventoryRef.current = inventory }, [inventory])
+  useEffect(() => { questQueueRef.current = questQueue }, [questQueue])
 
   // visibilitychange: stamp on hide, run idle on return
   useEffect(() => {
@@ -249,7 +284,25 @@ function GameApp() {
             if (sim.coinsGained > 0) updateBankDirect({ coins: sim.coinsGained })
             if (sim.completed) {
               const { choices } = splitXpRewards(sim.xpGained)
-              setActiveTask(null)
+              // Check if there are more quests in the queue
+              const savedQuestQueue = await getSetting('questQueue') || []
+              const remainingQueue = savedQuestQueue.filter(q => q.id !== sim.quest.id)
+
+              if (remainingQueue.length > 0) {
+                // Auto-start next quest in the queue
+                const nextQuest = remainingQueue[0]
+                const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
+                setActiveTask({
+                  type: 'quest',
+                  quest: nextQuest,
+                  totalTicks: nextTotalTicks,
+                  ticksRemaining: nextTotalTicks,
+                  startedAt: Date.now(),
+                })
+              } else {
+                // Queue is empty
+                setActiveTask(null)
+              }
               finaliseQuest(sim.quest.id, sim.quest.name, choices)
             } else {
               // Persist remaining ticks so the in-progress quest resumes
@@ -360,18 +413,14 @@ function GameApp() {
       if (task && task.type === 'quest' && task.quest) {
         const remaining = (task.ticksRemaining ?? task.totalTicks) - 1
         if (remaining <= 0) {
-          const { fixed, choices } = splitXpRewards(task.quest.xpReward)
-          for (const [skill, xp] of Object.entries(fixed)) grantXP(skill, xp)
-          if (task.quest.coinReward > 0) updateBankDirect({ coins: task.quest.coinReward })
-          setActiveTask(null)
-          finaliseQuest(task.quest.id, task.quest.name, choices)
+          handleQuestCompletion(task.quest, task.quest.xpReward, task.quest.coinReward)
         } else {
           setActiveTask({ ...task, ticksRemaining: remaining })
         }
       }
     })
     return unsub
-  }, [gameReady, currentHP, stats])
+  }, [gameReady, currentHP, stats, questQueue])
 
   async function initCloudAndSave() {
     try {

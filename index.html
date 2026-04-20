@@ -25111,6 +25111,7 @@ function GameProvider({ children }) {
     const [bossKillCounts, setBossKillCountsState] = useState({});
     const [farming, setFarmingState] = useState({ patchesById: {} });
     const [completedQuests, setCompletedQuestsState] = useState(new Set());
+    const [questQueue, setQuestQueueState] = useState([]);
     const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false });
     // Refs to hold latest state for the debounced auto-save
     const stateRef = useRef({ stats: {}, inventory: new Array(28).fill(null), equipment: {}, bank: {}, player: null });
@@ -25122,12 +25123,12 @@ function GameProvider({ children }) {
     useEffect(() => { stateRef.current.player = player; }, [player]);
     // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
     const loadGame = useCallback(async () => {
-        let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedBossKillCounts, savedFarming, savedCompletedQuests] = await Promise.all([
+        let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedBossKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue] = await Promise.all([
             getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
             getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
             getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
             getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('bossKillCounts'), getSetting('farming'),
-            getSetting('completedQuests')
+            getSetting('completedQuests'), getSetting('questQueue')
         ]);
         // Idle-engine inputs: last active timestamp and last active task.
         // D1 is authoritative when signed in + online — localStorage is only used
@@ -25374,6 +25375,7 @@ function GameProvider({ children }) {
         setBossKillCountsState(savedBossKillCounts ?? {});
         setFarmingState(savedFarming ?? { patchesById: {} });
         setCompletedQuestsState(new Set(savedCompletedQuests || []));
+        setQuestQueueState(savedQuestQueue ?? []);
         const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10;
         setCurrentHP(savedHP != null ? Math.min(savedHP, hpLevel) : hpLevel);
         setLoaded(true);
@@ -25553,6 +25555,28 @@ function GameProvider({ children }) {
             return next;
         });
     }, []);
+    const addQuestToQueue = useCallback((quest) => {
+        setQuestQueueState(prev => {
+            const next = [...prev, quest];
+            saveSetting('questQueue', next);
+            return next;
+        });
+    }, []);
+    const removeFromQuestQueue = useCallback((questId) => {
+        setQuestQueueState(prev => {
+            const next = prev.filter(q => q.id !== questId);
+            saveSetting('questQueue', next);
+            return next;
+        });
+    }, []);
+    const clearQuestQueue = useCallback(() => {
+        setQuestQueueState([]);
+        saveSetting('questQueue', []);
+    }, []);
+    const updateQuestQueue = useCallback((newQueue) => {
+        setQuestQueueState(newQueue);
+        saveSetting('questQueue', newQueue);
+    }, []);
     // Direct bank update without inventory changes (for skill/gather item routing)
     const updateBankDirect = useCallback((itemUpdates) => {
         setBank(prev => {
@@ -25604,6 +25628,7 @@ function GameProvider({ children }) {
         bossKillCounts, updateBossKillCounts,
         farming, updateFarming,
         completedQuests, completeQuest,
+        questQueue, addQuestToQueue, removeFromQuestQueue, clearQuestQueue, updateQuestQueue,
         loadGame, grantXP, updateInventory, updateEquipment, updateBank,
         removeFromInventory, addToBank,
         updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,
@@ -30998,9 +31023,10 @@ const COMPLEXITY_ORDER = {
     Novice: 1, Intermediate: 2, Experienced: 3, Master: 4, Grandmaster: 5, Special: 6,
 };
 function QuestsScreen() {
-    const { stats, completedQuests, activeTask, setActiveTask, addToast, itemsData, } = useGame();
+    const { stats, completedQuests, activeTask, setActiveTask, addToast, itemsData, questQueue, addQuestToQueue, removeFromQuestQueue, updateQuestQueue, } = useGame();
     const [hideCompleted, setHideCompleted] = useState(false);
     const [selectedQuest, setSelectedQuest] = useState(null);
+    const [showQueue, setShowQueue] = useState(false);
     const startQuest = (quest) => {
         const state = createQuestState(quest);
         setActiveTask({
@@ -31013,9 +31039,24 @@ function QuestsScreen() {
         setSelectedQuest(null);
         addToast(`📜 Started: ${quest.name}`, 'info');
     };
+    const addToQueue = (quest) => {
+        addQuestToQueue(quest);
+        setSelectedQuest(null);
+        addToast(`📜 Queued: ${quest.name}`, 'info');
+    };
     const abandonQuest = () => {
         setActiveTask(null);
         addToast('Quest abandoned', 'info');
+    };
+    const removeQuestFromQueue = (questId) => {
+        removeFromQuestQueue(questId);
+        addToast('Removed from queue', 'info');
+    };
+    const reorderQueue = (fromIndex, toIndex) => {
+        const newQueue = [...questQueue];
+        const [removed] = newQueue.splice(fromIndex, 1);
+        newQueue.splice(toIndex, 0, removed);
+        updateQuestQueue(newQueue);
     };
     const sortedQuests = [...questsData].sort((a, b) => {
         const ca = COMPLEXITY_ORDER[a.complexity] || 99;
@@ -31035,8 +31076,16 @@ function QuestsScreen() {
         const ticksRemaining = activeTask.ticksRemaining ?? totalTicks;
         const progress = 1 - ticksRemaining / totalTicks;
         const remainingSec = Math.ceil(ticksRemaining * 0.6);
+        const questPosition = questQueue.length > 0 ? 1 : 0;
+        const totalInQueue = questQueue.length + 1;
         return (h("div", { class: "h-full flex flex-col p-4" },
-            h("button", { onClick: abandonQuest, class: "text-[12px] text-[#c4af7a] mb-3 flex items-center gap-1 bg-transparent border-0 cursor-pointer self-start" }, "\u2190 Abandon Quest"),
+            h("div", { class: "flex justify-between items-center mb-3" },
+                h("button", { onClick: abandonQuest, class: "text-[12px] text-[#c4af7a] flex items-center gap-1 bg-transparent border-0 cursor-pointer" }, "\u2190 Abandon Quest"),
+                questQueue.length > 0 && (h("span", { class: "text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]" },
+                    "Quest ",
+                    questPosition,
+                    "/",
+                    totalInQueue))),
             h("div", { class: "flex-1 flex flex-col items-center justify-center" },
                 h("span", { class: "text-[48px] mb-2" }, "\uD83D\uDCDC"),
                 h("h2", { class: "font-[var(--font-display)] text-[18px] font-bold text-[var(--color-gold)] mb-1 text-center" }, quest.name),
@@ -31069,10 +31118,25 @@ function QuestsScreen() {
                     " \u00B7 ",
                     totalQp,
                     " QP")),
-            h("button", { onClick: () => setHideCompleted(v => !v), class: `px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${hideCompleted
-                    ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
-                    : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'}` }, hideCompleted ? '✓ Hiding completed' : 'Show all')),
+            h("div", { class: "flex gap-2" },
+                h("button", { onClick: () => setHideCompleted(v => !v), class: `px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${hideCompleted
+                        ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
+                        : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'}` }, hideCompleted ? '✓ Hiding completed' : 'Show all'),
+                questQueue.length > 0 && (h("button", { onClick: () => setShowQueue(v => !v), class: "px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]" },
+                    "\uD83D\uDD17 Queue (",
+                    questQueue.length,
+                    ")")))),
         h("div", { class: "flex-1 overflow-y-auto px-4 pb-4" },
+            showQueue && questQueue.length > 0 && (h("div", { class: "flex flex-col gap-2 pt-2 mb-4" },
+                h(SectionHeader, { size: "sm" }, "\uD83D\uDCCB Quest Queue"),
+                questQueue.map((quest, idx) => (h("div", { key: quest.id, class: "p-3 rounded-xl bg-[var(--color-void-light)] border border-[#2a2a2a] flex items-center justify-between gap-2" },
+                    h("div", { class: "flex-1 min-w-0" },
+                        h("div", { class: "text-[13px] font-semibold text-[var(--color-parchment)]" },
+                            idx + 1,
+                            ". ",
+                            quest.name),
+                        h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60" }, formatQuestDuration(quest.durationSeconds))),
+                    h("button", { onClick: () => removeQuestFromQueue(quest.id), class: "text-[12px] text-[#e57373] bg-transparent border-0 cursor-pointer flex-shrink-0" }, "\u2715")))))),
             h("div", { class: "flex flex-col gap-2 pt-2" },
                 visibleQuests.map(quest => {
                     const completed = completedQuests.has(quest.id);
@@ -31093,10 +31157,10 @@ function QuestsScreen() {
                         h("div", { class: "flex-shrink-0 text-[18px] text-[var(--color-parchment)] opacity-40" }, "\u2192")));
                 }),
                 visibleQuests.length === 0 && (h("div", { class: "py-10 text-center text-[#888] text-[12px]" }, "No quests to show.")))),
-        selectedQuest && (h(QuestDetailsModal, { quest: selectedQuest, stats: stats, completedQuests: completedQuests, itemsData: itemsData, onClose: () => setSelectedQuest(null), onStart: startQuest }))));
+        selectedQuest && (h(QuestDetailsModal, { quest: selectedQuest, stats: stats, completedQuests: completedQuests, itemsData: itemsData, onClose: () => setSelectedQuest(null), onStart: startQuest, onAddToQueue: addToQueue, isInQueue: questQueue.some(q => q.id === selectedQuest.id) }))));
 }
 // ──────────────────────────────────────────────────────────────────────────────
-function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, onStart }) {
+function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, onStart, onAddToQueue, isInQueue }) {
     const completed = completedQuests.has(quest.id);
     const elig = checkQuestEligibility(quest, stats, completedQuests, questsData);
     const skillEntries = Object.entries(quest.skillRequirements || {});
@@ -31142,9 +31206,11 @@ function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, 
                         const ok = completedQuests.has(pid);
                         return (h(RequirementRow, { key: pid, label: `Quest: ${prereq ? prereq.name : pid}`, ok: ok }));
                     })))),
-            h("div", { class: "flex gap-2" },
-                h(Button, { variant: "secondary", size: "lg", onClick: onClose, className: "flex-1" }, "Close"),
-                !completed && (h(Button, { variant: "primary", size: "lg", disabled: !elig.eligible, onClick: () => onStart(quest), className: "flex-1" }, elig.eligible ? 'Begin Quest' : 'Locked'))))));
+            h("div", { class: "flex flex-col gap-2" },
+                h("div", { class: "flex gap-2" },
+                    h(Button, { variant: "secondary", size: "lg", onClick: onClose, className: "flex-1" }, "Close"),
+                    !completed && (h(Button, { variant: "primary", size: "lg", disabled: !elig.eligible, onClick: () => onStart(quest), className: "flex-1" }, elig.eligible ? 'Begin Quest' : 'Locked'))),
+                !completed && (h(Button, { variant: isInQueue ? 'secondary' : 'ghost', size: "lg", disabled: !elig.eligible || isInQueue, onClick: () => onAddToQueue(quest), className: "w-full" }, isInQueue ? '✓ In Queue' : '🔗 Add to Queue'))))));
 }
 function RequirementRow({ label, ok }) {
     return (h("div", { class: `flex items-center gap-2 ${ok ? 'text-[#4ade80]' : 'text-[#e57373]'}` },
@@ -31318,7 +31384,7 @@ const errorText = { color: '#ff6b6b', fontSize: '12px', marginTop: '12px', textA
 
 
 function GameApp() {
-    const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints, completeQuest } = useGame();
+    const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints, completeQuest, questQueue, removeFromQuestQueue } = useGame();
     const [screen, setScreen] = useState(SCREENS.HOME);
     const [gameReady, setGameReady] = useState(false);
     const [activity, setActivity] = useState(null);
@@ -31345,6 +31411,38 @@ function GameApp() {
                 fixed[skill] = xp;
         }
         return { fixed, choices };
+    }
+    // Handle quest completion with queue cascading
+    function handleQuestCompletion(quest, xpReward, coinReward) {
+        // Award rewards
+        const { fixed, choices } = splitXpRewards(xpReward);
+        for (const [skill, xp] of Object.entries(fixed))
+            grantXP(skill, xp);
+        if (coinReward > 0)
+            updateBankDirect({ coins: coinReward });
+        // Remove from queue first
+        removeFromQuestQueue(quest.id);
+        // Check if there are more quests in queue
+        const remainingQueue = questQueue.filter(q => q.id !== quest.id);
+        if (remainingQueue.length > 0) {
+            // Auto-start next quest
+            const nextQuest = remainingQueue[0];
+            const state = createQuestState(nextQuest);
+            setActiveTask({
+                type: 'quest',
+                quest: nextQuest,
+                totalTicks: state.totalTicks,
+                ticksRemaining: state.ticksRemaining,
+                startedAt: state.startedAt,
+            });
+            addToast(`📜 Started: ${nextQuest.name}`, 'info');
+        }
+        else {
+            // Queue is empty, close modal
+            setActiveTask(null);
+        }
+        // Finalise the completed quest (show choice modal if needed)
+        finaliseQuest(quest.id, quest.name, choices);
     }
     // Finalise a completed quest: show choice modal if needed, else complete immediately
     function finaliseQuest(questId, questName, choices) {
@@ -31387,9 +31485,11 @@ function GameApp() {
     const equipmentRef = useRef(equipment);
     const inventoryRef = useRef(inventory);
     const itemsDataRef = useRef(itemsData);
+    const questQueueRef = useRef(questQueue);
     useEffect(() => { statsRef.current = stats; }, [stats]);
     useEffect(() => { equipmentRef.current = equipment; }, [equipment]);
     useEffect(() => { inventoryRef.current = inventory; }, [inventory]);
+    useEffect(() => { questQueueRef.current = questQueue; }, [questQueue]);
     // visibilitychange: stamp on hide, run idle on return
     useEffect(() => {
         if (!gameReady)
@@ -31553,7 +31653,25 @@ function GameApp() {
                             updateBankDirect({ coins: sim.coinsGained });
                         if (sim.completed) {
                             const { choices } = splitXpRewards(sim.xpGained);
-                            setActiveTask(null);
+                            // Check if there are more quests in the queue
+                            const savedQuestQueue = await getSetting('questQueue') || [];
+                            const remainingQueue = savedQuestQueue.filter(q => q.id !== sim.quest.id);
+                            if (remainingQueue.length > 0) {
+                                // Auto-start next quest in the queue
+                                const nextQuest = remainingQueue[0];
+                                const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600);
+                                setActiveTask({
+                                    type: 'quest',
+                                    quest: nextQuest,
+                                    totalTicks: nextTotalTicks,
+                                    ticksRemaining: nextTotalTicks,
+                                    startedAt: Date.now(),
+                                });
+                            }
+                            else {
+                                // Queue is empty
+                                setActiveTask(null);
+                            }
                             finaliseQuest(sim.quest.id, sim.quest.name, choices);
                         }
                         else {
@@ -31668,13 +31786,7 @@ function GameApp() {
             if (task && task.type === 'quest' && task.quest) {
                 const remaining = (task.ticksRemaining ?? task.totalTicks) - 1;
                 if (remaining <= 0) {
-                    const { fixed, choices } = splitXpRewards(task.quest.xpReward);
-                    for (const [skill, xp] of Object.entries(fixed))
-                        grantXP(skill, xp);
-                    if (task.quest.coinReward > 0)
-                        updateBankDirect({ coins: task.quest.coinReward });
-                    setActiveTask(null);
-                    finaliseQuest(task.quest.id, task.quest.name, choices);
+                    handleQuestCompletion(task.quest, task.quest.xpReward, task.quest.coinReward);
                 }
                 else {
                     setActiveTask({ ...task, ticksRemaining: remaining });
@@ -31682,7 +31794,7 @@ function GameApp() {
             }
         });
         return unsub;
-    }, [gameReady, currentHP, stats]);
+    }, [gameReady, currentHP, stats, questQueue]);
     async function initCloudAndSave() {
         try {
             // Pull token dropped by OAuth redirect (#token=...) into localStorage + clean URL

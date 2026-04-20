@@ -27,11 +27,12 @@ const COMPLEXITY_ORDER = {
 export default function QuestsScreen() {
   const {
     stats, completedQuests, activeTask, setActiveTask,
-    addToast, itemsData,
+    addToast, itemsData, questQueue, addQuestToQueue, removeFromQuestQueue, updateQuestQueue,
   } = useGame()
 
   const [hideCompleted, setHideCompleted] = useState(false)
   const [selectedQuest, setSelectedQuest] = useState(null)
+  const [showQueue, setShowQueue] = useState(false)
 
   const startQuest = (quest) => {
     const state = createQuestState(quest)
@@ -46,9 +47,27 @@ export default function QuestsScreen() {
     addToast(`📜 Started: ${quest.name}`, 'info')
   }
 
+  const addToQueue = (quest) => {
+    addQuestToQueue(quest)
+    setSelectedQuest(null)
+    addToast(`📜 Queued: ${quest.name}`, 'info')
+  }
+
   const abandonQuest = () => {
     setActiveTask(null)
     addToast('Quest abandoned', 'info')
+  }
+
+  const removeQuestFromQueue = (questId) => {
+    removeFromQuestQueue(questId)
+    addToast('Removed from queue', 'info')
+  }
+
+  const reorderQueue = (fromIndex, toIndex) => {
+    const newQueue = [...questQueue]
+    const [removed] = newQueue.splice(fromIndex, 1)
+    newQueue.splice(toIndex, 0, removed)
+    updateQuestQueue(newQueue)
   }
 
   const sortedQuests = [...questsData].sort((a, b) => {
@@ -71,15 +90,24 @@ export default function QuestsScreen() {
     const ticksRemaining = activeTask.ticksRemaining ?? totalTicks
     const progress = 1 - ticksRemaining / totalTicks
     const remainingSec = Math.ceil(ticksRemaining * 0.6)
+    const questPosition = questQueue.length > 0 ? 1 : 0
+    const totalInQueue = questQueue.length + 1
 
     return (
       <div class="h-full flex flex-col p-4">
-        <button
-          onClick={abandonQuest}
-          class="text-[12px] text-[#c4af7a] mb-3 flex items-center gap-1 bg-transparent border-0 cursor-pointer self-start"
-        >
-          ← Abandon Quest
-        </button>
+        <div class="flex justify-between items-center mb-3">
+          <button
+            onClick={abandonQuest}
+            class="text-[12px] text-[#c4af7a] flex items-center gap-1 bg-transparent border-0 cursor-pointer"
+          >
+            ← Abandon Quest
+          </button>
+          {questQueue.length > 0 && (
+            <span class="text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]">
+              Quest {questPosition}/{totalInQueue}
+            </span>
+          )}
+        </div>
 
         <div class="flex-1 flex flex-col items-center justify-center">
           <span class="text-[48px] mb-2">📜</span>
@@ -134,19 +162,53 @@ export default function QuestsScreen() {
           </span>
         </div>
 
-        <button
-          onClick={() => setHideCompleted(v => !v)}
-          class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
-            hideCompleted
-              ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
-              : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
-          }`}
-        >
-          {hideCompleted ? '✓ Hiding completed' : 'Show all'}
-        </button>
+        <div class="flex gap-2">
+          <button
+            onClick={() => setHideCompleted(v => !v)}
+            class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
+              hideCompleted
+                ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
+                : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
+            }`}
+          >
+            {hideCompleted ? '✓ Hiding completed' : 'Show all'}
+          </button>
+          {questQueue.length > 0 && (
+            <button
+              onClick={() => setShowQueue(v => !v)}
+              class="px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]"
+            >
+              🔗 Queue ({questQueue.length})
+            </button>
+          )}
+        </div>
       </div>
 
       <div class="flex-1 overflow-y-auto px-4 pb-4">
+        {showQueue && questQueue.length > 0 && (
+          <div class="flex flex-col gap-2 pt-2 mb-4">
+            <SectionHeader size="sm">📋 Quest Queue</SectionHeader>
+            {questQueue.map((quest, idx) => (
+              <div key={quest.id} class="p-3 rounded-xl bg-[var(--color-void-light)] border border-[#2a2a2a] flex items-center justify-between gap-2">
+                <div class="flex-1 min-w-0">
+                  <div class="text-[13px] font-semibold text-[var(--color-parchment)]">
+                    {idx + 1}. {quest.name}
+                  </div>
+                  <div class="text-[10px] text-[var(--color-parchment)] opacity-60">
+                    {formatQuestDuration(quest.durationSeconds)}
+                  </div>
+                </div>
+                <button
+                  onClick={() => removeQuestFromQueue(quest.id)}
+                  class="text-[12px] text-[#e57373] bg-transparent border-0 cursor-pointer flex-shrink-0"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div class="flex flex-col gap-2 pt-2">
           {visibleQuests.map(quest => {
             const completed = completedQuests.has(quest.id)
@@ -207,6 +269,8 @@ export default function QuestsScreen() {
           itemsData={itemsData}
           onClose={() => setSelectedQuest(null)}
           onStart={startQuest}
+          onAddToQueue={addToQueue}
+          isInQueue={questQueue.some(q => q.id === selectedQuest.id)}
         />
       )}
     </div>
@@ -215,7 +279,7 @@ export default function QuestsScreen() {
 
 // ──────────────────────────────────────────────────────────────────────────────
 
-function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, onStart }) {
+function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, onStart, onAddToQueue, isInQueue }) {
   const completed = completedQuests.has(quest.id)
   const elig = checkQuestEligibility(quest, stats, completedQuests, questsData)
   const skillEntries = Object.entries(quest.skillRequirements || {})
@@ -297,19 +361,32 @@ function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, 
           </Panel>
         )}
 
-        <div class="flex gap-2">
-          <Button variant="secondary" size="lg" onClick={onClose} className="flex-1">
-            Close
-          </Button>
+        <div class="flex flex-col gap-2">
+          <div class="flex gap-2">
+            <Button variant="secondary" size="lg" onClick={onClose} className="flex-1">
+              Close
+            </Button>
+            {!completed && (
+              <Button
+                variant="primary"
+                size="lg"
+                disabled={!elig.eligible}
+                onClick={() => onStart(quest)}
+                className="flex-1"
+              >
+                {elig.eligible ? 'Begin Quest' : 'Locked'}
+              </Button>
+            )}
+          </div>
           {!completed && (
             <Button
-              variant="primary"
+              variant={isInQueue ? 'secondary' : 'ghost'}
               size="lg"
-              disabled={!elig.eligible}
-              onClick={() => onStart(quest)}
-              className="flex-1"
+              disabled={!elig.eligible || isInQueue}
+              onClick={() => onAddToQueue(quest)}
+              className="w-full"
             >
-              {elig.eligible ? 'Begin Quest' : 'Locked'}
+              {isInQueue ? '✓ In Queue' : '🔗 Add to Queue'}
             </Button>
           )}
         </div>

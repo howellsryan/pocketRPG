@@ -33,6 +33,7 @@ export function GameProvider({ children }) {
   const [bossKillCounts, setBossKillCountsState] = useState({})
   const [farming, setFarmingState] = useState({ patchesById: {} })
   const [completedQuests, setCompletedQuestsState] = useState(new Set())
+  const [questQueue, setQuestQueueState] = useState([])
   const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false })
 
   // Refs to hold latest state for the debounced auto-save
@@ -47,12 +48,12 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedBossKillCounts, savedFarming, savedCompletedQuests] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedBossKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
       getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('bossKillCounts'), getSetting('farming'),
-      getSetting('completedQuests')
+      getSetting('completedQuests'), getSetting('questQueue')
     ])
     // Idle-engine inputs: last active timestamp and last active task.
     // D1 is authoritative when signed in + online — localStorage is only used
@@ -269,6 +270,7 @@ export function GameProvider({ children }) {
     setBossKillCountsState(savedBossKillCounts ?? {})
     setFarmingState(savedFarming ?? { patchesById: {} })
     setCompletedQuestsState(new Set(savedCompletedQuests || []))
+    setQuestQueueState(savedQuestQueue ?? [])
     const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
     setCurrentHP(savedHP != null ? Math.min(savedHP, hpLevel) : hpLevel)
     setLoaded(true)
@@ -466,6 +468,32 @@ export function GameProvider({ children }) {
     })
   }, [])
 
+  const addQuestToQueue = useCallback((quest) => {
+    setQuestQueueState(prev => {
+      const next = [...prev, quest]
+      saveSetting('questQueue', next)
+      return next
+    })
+  }, [])
+
+  const removeFromQuestQueue = useCallback((questId) => {
+    setQuestQueueState(prev => {
+      const next = prev.filter(q => q.id !== questId)
+      saveSetting('questQueue', next)
+      return next
+    })
+  }, [])
+
+  const clearQuestQueue = useCallback(() => {
+    setQuestQueueState([])
+    saveSetting('questQueue', [])
+  }, [])
+
+  const updateQuestQueue = useCallback((newQueue) => {
+    setQuestQueueState(newQueue)
+    saveSetting('questQueue', newQueue)
+  }, [])
+
   // Direct bank update without inventory changes (for skill/gather item routing)
   const updateBankDirect = useCallback((itemUpdates) => {
     setBank(prev => {
@@ -518,6 +546,7 @@ export function GameProvider({ children }) {
     bossKillCounts, updateBossKillCounts,
     farming, updateFarming,
     completedQuests, completeQuest,
+    questQueue, addQuestToQueue, removeFromQuestQueue, clearQuestQueue, updateQuestQueue,
     loadGame, grantXP, updateInventory, updateEquipment, updateBank,
     removeFromInventory, addToBank,
     updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,
