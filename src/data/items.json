@@ -9428,7 +9428,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 1200,
+    "shopValue": 55000,
     "icon": "👢"
   },
   "crystal_bow": {
@@ -9465,7 +9465,7 @@
     },
     "questUnlock": "roving_elves",
     "isUntradeable": true,
-    "shopValue": 1800000,
+    "shopValue": 300000,
     "icon": "🏹"
   },
   "crystal_shield": {
@@ -9500,7 +9500,7 @@
       "agility": 50,
       "defence": 70
     },
-    "shopValue": 1800000,
+    "shopValue": 300000,
     "icon": "🛡️"
   },
   "halo": {
@@ -9533,6 +9533,6 @@
     },
     "requirements": {},
     "shopValue": 2000000,
-    "icon": "✨"
+    "icon": "😇"
   }
 }
