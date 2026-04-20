@@ -25456,30 +25456,65 @@ function GameProvider({ children }) {
                             await saveSetting('slayerTask', sim.slayerTaskUpdate);
                         }
                     }
-                    // Quest sim handling: award coins to bank, persist completion,
-                    // and either drop the task (completed) or restart it with the
-                    // remaining ticks (still running).
+                    // Quest sim handling: cascade through queue if quests complete
                     if (savedTask.type === 'quest') {
-                        if (sim.coinsGained > 0) {
-                            if (b.coins)
-                                b.coins = { ...b.coins, quantity: b.coins.quantity + sim.coinsGained };
-                            else
-                                b.coins = { itemId: 'coins', quantity: sim.coinsGained };
-                            await saveBank(b);
-                        }
-                        if (sim.completed) {
+                        let currentQuest = savedTask.quest;
+                        let currentSim = sim;
+                        let remainingElapsedMs = elapsedMs;
+                        let savedQuestQueue = savedQuestQueue || [];
+                        // Cascade through completed quests
+                        while (currentSim && currentSim.completed && remainingElapsedMs > 0) {
+                            if (currentSim.coinsGained > 0) {
+                                if (b.coins)
+                                    b.coins = { ...b.coins, quantity: b.coins.quantity + currentSim.coinsGained };
+                                else
+                                    b.coins = { itemId: 'coins', quantity: currentSim.coinsGained };
+                            }
                             const merged = new Set(savedCompletedQuests || []);
-                            merged.add(sim.quest.id);
+                            merged.add(currentQuest.id);
                             await saveSetting('completedQuests', [...merged]);
                             savedCompletedQuests = [...merged];
-                            savedTask = null;
-                            localStorage.removeItem('pocketrpg_activeTask');
+                            // Remove from queue
+                            savedQuestQueue = savedQuestQueue.filter(q => q.id !== currentQuest.id);
+                            if (savedQuestQueue.length === 0) {
+                                // Queue empty
+                                savedTask = null;
+                                localStorage.removeItem('pocketrpg_activeTask');
+                                break;
+                            }
+                            // Simulate next quest with remaining time
+                            const nextQuest = savedQuestQueue[0];
+                            const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600);
+                            const nextTask = { type: 'quest', quest: nextQuest, totalTicks: nextTotalTicks, ticksRemaining: nextTotalTicks };
+                            currentSim = simulateIdleQuest(nextTask, remainingElapsedMs);
+                            if (currentSim) {
+                                remainingElapsedMs -= currentSim.ticksUsed * 600;
+                                currentQuest = nextQuest;
+                            }
+                            else {
+                                // Couldn't simulate, set as active for next session
+                                savedTask = nextTask;
+                                localStorage.setItem('pocketrpg_activeTask', JSON.stringify(savedTask));
+                                break;
+                            }
                         }
-                        else {
-                            // Still running — store remaining ticks so the next session resumes
-                            savedTask = { ...savedTask, ticksRemaining: sim.ticksRemaining };
-                            localStorage.setItem('pocketrpg_activeTask', JSON.stringify(savedTask));
+                        // Finalize: if we have remaining in-progress quest, persist it
+                        if (!currentSim || !currentSim.completed) {
+                            if (savedQuestQueue.length > 0 && currentSim) {
+                                // In-progress quest from queue
+                                const nextQuest = savedQuestQueue[0];
+                                const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600);
+                                savedTask = { type: 'quest', quest: nextQuest, totalTicks: nextTotalTicks, ticksRemaining: currentSim.ticksRemaining };
+                                localStorage.setItem('pocketrpg_activeTask', JSON.stringify(savedTask));
+                            }
+                            else if (currentSim && !currentSim.completed && savedQuestQueue.length === 0) {
+                                // Original quest still in progress, no queue
+                                savedTask = { ...savedTask, ticksRemaining: currentSim.ticksRemaining };
+                                localStorage.setItem('pocketrpg_activeTask', JSON.stringify(savedTask));
+                            }
                         }
+                        // Save bank if coins were awarded
+                        await saveBank(b);
                     }
                     idleResult = { elapsedMs, task: savedTask, ...sim };
                 }
@@ -31782,18 +31817,40 @@ function GameApp() {
                     if (savedTask.type === 'thieving' && sim.coinsGained > 0) {
                         updateBankDirect({ coins: sim.coinsGained });
                     }
-                    // Quest finalisation — coins to bank, completion persisted, task cleared
+                    // Quest finalisation — cascade through queue if quests complete
                     if (savedTask.type === 'quest') {
                         if (sim.coinsGained > 0)
                             updateBankDirect({ coins: sim.coinsGained });
-                        if (sim.completed) {
-                            const { choices } = splitXpRewards(sim.xpGained);
-                            // Check if there are more quests in the queue
-                            const savedQuestQueue = await getSetting('questQueue') || [];
-                            const remainingQueue = savedQuestQueue.filter(q => q.id !== sim.quest.id);
-                            if (remainingQueue.length > 0) {
-                                // Auto-start next quest in the queue
-                                const nextQuest = remainingQueue[0];
+                        let currentQuest = savedTask.quest;
+                        let currentSim = sim;
+                        let remainingElapsedMs = elapsedMs;
+                        let savedQuestQueue = await getSetting('questQueue') || [];
+                        // Cascade through completed quests in the queue
+                        while (currentSim && currentSim.completed && remainingElapsedMs > 0) {
+                            const { choices } = splitXpRewards(currentQuest.xpReward);
+                            finaliseQuest(currentQuest.id, currentQuest.name, choices);
+                            // Remove completed quest from queue
+                            savedQuestQueue = savedQuestQueue.filter(q => q.id !== currentQuest.id);
+                            if (savedQuestQueue.length === 0) {
+                                // Queue is empty
+                                setActiveTask(null);
+                                break;
+                            }
+                            // Continue with next quest
+                            const nextQuest = savedQuestQueue[0];
+                            const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600);
+                            const nextTask = { type: 'quest', quest: nextQuest, totalTicks: nextTotalTicks, ticksRemaining: nextTotalTicks };
+                            // Simulate next quest with remaining time
+                            currentSim = simulateIdleQuest(nextTask, remainingElapsedMs);
+                            if (currentSim) {
+                                remainingElapsedMs -= currentSim.ticksUsed * 600;
+                                currentQuest = nextQuest;
+                                if (currentSim.completed && currentSim.coinsGained > 0) {
+                                    updateBankDirect({ coins: currentSim.coinsGained });
+                                }
+                            }
+                            else {
+                                // Couldn't simulate next quest, set it as active
                                 const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600);
                                 setActiveTask({
                                     type: 'quest',
@@ -31802,16 +31859,27 @@ function GameApp() {
                                     ticksRemaining: nextTotalTicks,
                                     startedAt: Date.now(),
                                 });
+                                break;
                             }
-                            else {
-                                // Queue is empty
-                                setActiveTask(null);
-                            }
-                            finaliseQuest(sim.quest.id, sim.quest.name, choices);
                         }
-                        else {
-                            // Persist remaining ticks so the in-progress quest resumes
-                            setActiveTask({ ...savedTask, ticksRemaining: sim.ticksRemaining });
+                        // If we exit the loop without clearing queue, set in-progress quest as active
+                        if (!currentSim || !currentSim.completed) {
+                            if (savedQuestQueue.length > 0) {
+                                const nextQuest = savedQuestQueue[0];
+                                const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600);
+                                const remainingTicks = currentSim ? currentSim.ticksRemaining : nextTotalTicks;
+                                setActiveTask({
+                                    type: 'quest',
+                                    quest: nextQuest,
+                                    totalTicks: nextTotalTicks,
+                                    ticksRemaining: remainingTicks,
+                                    startedAt: Date.now(),
+                                });
+                            }
+                            else if (currentSim && !currentSim.completed) {
+                                // Current quest in progress
+                                setActiveTask({ ...savedTask, ticksRemaining: currentSim.ticksRemaining });
+                            }
                         }
                     }
                     // Deduct consumed materials from bank

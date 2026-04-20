@@ -279,18 +279,44 @@ function GameApp() {
           if (savedTask.type === 'thieving' && sim.coinsGained > 0) {
             updateBankDirect({ coins: sim.coinsGained })
           }
-          // Quest finalisation — coins to bank, completion persisted, task cleared
+          // Quest finalisation — cascade through queue if quests complete
           if (savedTask.type === 'quest') {
             if (sim.coinsGained > 0) updateBankDirect({ coins: sim.coinsGained })
-            if (sim.completed) {
-              const { choices } = splitXpRewards(sim.xpGained)
-              // Check if there are more quests in the queue
-              const savedQuestQueue = await getSetting('questQueue') || []
-              const remainingQueue = savedQuestQueue.filter(q => q.id !== sim.quest.id)
 
-              if (remainingQueue.length > 0) {
-                // Auto-start next quest in the queue
-                const nextQuest = remainingQueue[0]
+            let currentQuest = savedTask.quest
+            let currentSim = sim
+            let remainingElapsedMs = elapsedMs
+            let savedQuestQueue = await getSetting('questQueue') || []
+
+            // Cascade through completed quests in the queue
+            while (currentSim && currentSim.completed && remainingElapsedMs > 0) {
+              const { choices } = splitXpRewards(currentQuest.xpReward)
+              finaliseQuest(currentQuest.id, currentQuest.name, choices)
+
+              // Remove completed quest from queue
+              savedQuestQueue = savedQuestQueue.filter(q => q.id !== currentQuest.id)
+
+              if (savedQuestQueue.length === 0) {
+                // Queue is empty
+                setActiveTask(null)
+                break
+              }
+
+              // Continue with next quest
+              const nextQuest = savedQuestQueue[0]
+              const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
+              const nextTask = { type: 'quest', quest: nextQuest, totalTicks: nextTotalTicks, ticksRemaining: nextTotalTicks }
+
+              // Simulate next quest with remaining time
+              currentSim = simulateIdleQuest(nextTask, remainingElapsedMs)
+              if (currentSim) {
+                remainingElapsedMs -= currentSim.ticksUsed * 600
+                currentQuest = nextQuest
+                if (currentSim.completed && currentSim.coinsGained > 0) {
+                  updateBankDirect({ coins: currentSim.coinsGained })
+                }
+              } else {
+                // Couldn't simulate next quest, set it as active
                 const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
                 setActiveTask({
                   type: 'quest',
@@ -299,14 +325,27 @@ function GameApp() {
                   ticksRemaining: nextTotalTicks,
                   startedAt: Date.now(),
                 })
-              } else {
-                // Queue is empty
-                setActiveTask(null)
+                break
               }
-              finaliseQuest(sim.quest.id, sim.quest.name, choices)
-            } else {
-              // Persist remaining ticks so the in-progress quest resumes
-              setActiveTask({ ...savedTask, ticksRemaining: sim.ticksRemaining })
+            }
+
+            // If we exit the loop without clearing queue, set in-progress quest as active
+            if (!currentSim || !currentSim.completed) {
+              if (savedQuestQueue.length > 0) {
+                const nextQuest = savedQuestQueue[0]
+                const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
+                const remainingTicks = currentSim ? currentSim.ticksRemaining : nextTotalTicks
+                setActiveTask({
+                  type: 'quest',
+                  quest: nextQuest,
+                  totalTicks: nextTotalTicks,
+                  ticksRemaining: remainingTicks,
+                  startedAt: Date.now(),
+                })
+              } else if (currentSim && !currentSim.completed) {
+                // Current quest in progress
+                setActiveTask({ ...savedTask, ticksRemaining: currentSim.ticksRemaining })
+              }
             }
           }
           // Deduct consumed materials from bank
