@@ -65,11 +65,12 @@ function GameApp() {
     for (const [skill, xp] of Object.entries(fixed)) grantXP(skill, xp)
     if (coinReward > 0) updateBankDirect({ coins: coinReward })
 
-    // Remove from queue first
+    // Check if there are more quests in queue BEFORE removing
+    const remainingQueue = questQueue.filter(q => q.id !== quest.id)
+
+    // Remove from queue
     removeFromQuestQueue(quest.id)
 
-    // Check if there are more quests in queue
-    const remainingQueue = questQueue.filter(q => q.id !== quest.id)
     if (remainingQueue.length > 0) {
       // Auto-start next quest
       const nextQuest = remainingQueue[0]
