@@ -220,65 +220,75 @@ export function GameProvider({ children }) {
 
           // Quest sim handling: cascade through queue if quests complete
           if (savedTask.type === 'quest') {
-            let currentQuest = savedTask.quest
-            let currentSim = sim
-            let remainingElapsedMs = elapsedMs
-            let savedQuestQueue = savedQuestQueue || []
-
-            // Cascade through completed quests
-            while (currentSim && currentSim.completed && remainingElapsedMs > 0) {
-              if (currentSim.coinsGained > 0) {
-                if (b.coins) b.coins = { ...b.coins, quantity: b.coins.quantity + currentSim.coinsGained }
-                else b.coins = { itemId: 'coins', quantity: currentSim.coinsGained }
-              }
+            // Original quest completed
+            if (sim.completed) {
               const merged = new Set(savedCompletedQuests || [])
-              merged.add(currentQuest.id)
+              merged.add(savedTask.quest.id)
               await saveSetting('completedQuests', [...merged])
               savedCompletedQuests = [...merged]
-
-              // Remove from queue
-              savedQuestQueue = savedQuestQueue.filter(q => q.id !== currentQuest.id)
-
-              if (savedQuestQueue.length === 0) {
-                // Queue empty
-                savedTask = null
-                localStorage.removeItem('pocketrpg_activeTask')
-                break
+              if (sim.coinsGained > 0) {
+                if (b.coins) b.coins = { ...b.coins, quantity: b.coins.quantity + sim.coinsGained }
+                else b.coins = { itemId: 'coins', quantity: sim.coinsGained }
               }
+            }
 
-              // Simulate next quest with remaining time
-              const nextQuest = savedQuestQueue[0]
+            let remainingElapsedMs = sim.completed ? (elapsedMs - (sim.ticksUsed * 600)) : 0
+            let queueToProcess = savedQuestQueue || []
+
+            // Cascade through queue while time remains
+            while (queueToProcess.length > 0 && remainingElapsedMs > 0) {
+              const nextQuest = queueToProcess[0]
               const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
               const nextTask = { type: 'quest', quest: nextQuest, totalTicks: nextTotalTicks, ticksRemaining: nextTotalTicks }
-              currentSim = simulateIdleQuest(nextTask, remainingElapsedMs)
 
-              if (currentSim) {
-                remainingElapsedMs -= currentSim.ticksUsed * 600
-                currentQuest = nextQuest
+              const nextSim = simulateIdleQuest(nextTask, remainingElapsedMs)
+              if (!nextSim) break
+
+              remainingElapsedMs -= nextSim.ticksUsed * 600
+
+              if (nextSim.completed) {
+                // Quest completed, award and remove from queue
+                if (nextSim.coinsGained > 0) {
+                  if (b.coins) b.coins = { ...b.coins, quantity: b.coins.quantity + nextSim.coinsGained }
+                  else b.coins = { itemId: 'coins', quantity: nextSim.coinsGained }
+                }
+                const merged = new Set(savedCompletedQuests || [])
+                merged.add(nextQuest.id)
+                await saveSetting('completedQuests', [...merged])
+                savedCompletedQuests = [...merged]
+                queueToProcess = queueToProcess.slice(1)
               } else {
-                // Couldn't simulate, set as active for next session
-                savedTask = nextTask
+                // Quest in progress, persist it
+                const ticksRemaining = nextSim.ticksRemaining
+                savedTask = {
+                  type: 'quest',
+                  quest: nextQuest,
+                  totalTicks: nextTotalTicks,
+                  ticksRemaining: ticksRemaining,
+                }
                 localStorage.setItem('pocketrpg_activeTask', JSON.stringify(savedTask))
                 break
               }
             }
 
-            // Finalize: if we have remaining in-progress quest, persist it
-            if (!currentSim || !currentSim.completed) {
-              if (savedQuestQueue.length > 0 && currentSim) {
-                // In-progress quest from queue
-                const nextQuest = savedQuestQueue[0]
-                const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
-                savedTask = { type: 'quest', quest: nextQuest, totalTicks: nextTotalTicks, ticksRemaining: currentSim.ticksRemaining }
-                localStorage.setItem('pocketrpg_activeTask', JSON.stringify(savedTask))
-              } else if (currentSim && !currentSim.completed && savedQuestQueue.length === 0) {
-                // Original quest still in progress, no queue
-                savedTask = { ...savedTask, ticksRemaining: currentSim.ticksRemaining }
-                localStorage.setItem('pocketrpg_activeTask', JSON.stringify(savedTask))
+            // If queue is empty, clear task
+            if (queueToProcess.length === 0) {
+              savedTask = null
+              localStorage.removeItem('pocketrpg_activeTask')
+            } else if (sim.completed && queueToProcess.length > 0) {
+              // Queue has items, set first as active
+              const nextQuest = queueToProcess[0]
+              const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
+              savedTask = {
+                type: 'quest',
+                quest: nextQuest,
+                totalTicks: nextTotalTicks,
+                ticksRemaining: nextTotalTicks,
               }
+              localStorage.setItem('pocketrpg_activeTask', JSON.stringify(savedTask))
             }
 
-            // Save bank if coins were awarded
+            // Save bank
             await saveBank(b)
           }
           idleResult = { elapsedMs, task: savedTask, ...sim }
