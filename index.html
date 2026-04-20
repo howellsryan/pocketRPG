@@ -31228,6 +31228,13 @@ function QuestsScreen() {
         newQueue.splice(toIndex, 0, removed);
         updateQuestQueue(newQueue);
     };
+    const startQueue = () => {
+        if (questQueue.length === 0)
+            return;
+        const firstQuest = questQueue[0];
+        startQuest(firstQuest);
+        addToast(`Queue started. ${firstQuest.name} started first.`, 'info');
+    };
     const sortedQuests = [...questsData].sort((a, b) => {
         const ca = COMPLEXITY_ORDER[a.complexity] || 99;
         const cb = COMPLEXITY_ORDER[b.complexity] || 99;
@@ -31288,14 +31295,16 @@ function QuestsScreen() {
                     " \u00B7 ",
                     totalQp,
                     " QP")),
-            h("div", { class: "flex gap-2" },
-                h("button", { onClick: () => setHideCompleted(v => !v), class: `px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${hideCompleted
-                        ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
-                        : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'}` }, hideCompleted ? '✓ Hiding completed' : 'Show all'),
-                questQueue.length > 0 && (h("button", { onClick: () => setShowQueue(v => !v), class: "px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]" },
-                    "\uD83D\uDD17 Queue (",
-                    questQueue.length,
-                    ")")))),
+            h("div", { class: "flex gap-2 justify-between items-center" },
+                h("div", { class: "flex gap-2" },
+                    h("button", { onClick: () => setHideCompleted(v => !v), class: `px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${hideCompleted
+                            ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
+                            : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'}` }, hideCompleted ? '✓ Hiding completed' : 'Show all'),
+                    questQueue.length > 0 && (h("button", { onClick: () => setShowQueue(v => !v), class: "px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]" },
+                        "\uD83D\uDD17 Queue (",
+                        questQueue.length,
+                        ")"))),
+                questQueue.length > 0 && (h(Button, { variant: "success", size: "sm", onClick: startQueue }, "\u25B6\uFE0F Begin Queue")))),
         h("div", { class: "flex-1 overflow-y-auto px-4 pb-4" },
             showQueue && questQueue.length > 0 && (h("div", { class: "flex flex-col gap-2 pt-2 mb-4" },
                 h(SectionHeader, { size: "sm" }, "\uD83D\uDCCB Quest Queue"),

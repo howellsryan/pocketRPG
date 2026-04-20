@@ -70,6 +70,13 @@ export default function QuestsScreen() {
     updateQuestQueue(newQueue)
   }
 
+  const startQueue = () => {
+    if (questQueue.length === 0) return
+    const firstQuest = questQueue[0]
+    startQuest(firstQuest)
+    addToast(`Queue started. ${firstQuest.name} started first.`, 'info')
+  }
+
   const sortedQuests = [...questsData].sort((a, b) => {
     const ca = COMPLEXITY_ORDER[a.complexity] || 99
     const cb = COMPLEXITY_ORDER[b.complexity] || 99
@@ -162,24 +169,35 @@ export default function QuestsScreen() {
           </span>
         </div>
 
-        <div class="flex gap-2">
-          <button
-            onClick={() => setHideCompleted(v => !v)}
-            class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
-              hideCompleted
-                ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
-                : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
-            }`}
-          >
-            {hideCompleted ? '✓ Hiding completed' : 'Show all'}
-          </button>
-          {questQueue.length > 0 && (
+        <div class="flex gap-2 justify-between items-center">
+          <div class="flex gap-2">
             <button
-              onClick={() => setShowQueue(v => !v)}
-              class="px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]"
+              onClick={() => setHideCompleted(v => !v)}
+              class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
+                hideCompleted
+                  ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
+                  : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
+              }`}
             >
-              🔗 Queue ({questQueue.length})
+              {hideCompleted ? '✓ Hiding completed' : 'Show all'}
             </button>
+            {questQueue.length > 0 && (
+              <button
+                onClick={() => setShowQueue(v => !v)}
+                class="px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]"
+              >
+                🔗 Queue ({questQueue.length})
+              </button>
+            )}
+          </div>
+          {questQueue.length > 0 && (
+            <Button
+              variant="success"
+              size="sm"
+              onClick={startQueue}
+            >
+              ▶️ Begin Queue
+            </Button>
           )}
         </div>
       </div>
