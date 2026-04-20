@@ -29,14 +29,14 @@ import { simulateIdleQuest, createQuestState } from './engine/quests.js'
 import { getLevelFromXP } from './engine/experience.js'
 
 function GameApp() {
-  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints, completeQuest, questQueue, removeFromQuestQueue } = useGame()
+  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints, completeQuest, questQueue, removeFromQuestQueue, updateQuestQueue } = useGame()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [gameReady, setGameReady] = useState(false)
   const [activity, setActivity] = useState(null)
   const [idleResult, setIdleResult] = useState(null) // { elapsedMs, task, xpGained, itemsGained, lootLost, monstersKilled }
   const [actionData, setActionData] = useState(null) // { monsterId, gatherTaskId, skillId, actionId }
   const [isInBossFight, setIsInBossFight] = useState(false) // Track if currently in a boss fight
-  const [pendingXpChoices, setPendingXpChoices] = useState(null) // { rewards, questId, questName }
+  const [pendingXpChoices, setPendingXpChoices] = useState([]) // [{ rewards, questId, questName }, ...]
   // Cloud auth gate: 'pending' until we resolve, 'auth' if AuthScreen needed, 'ready' to boot game
   const [cloudPhase, setCloudPhase] = useState('pending')
   const [conflict, setConflict] = useState(null) // { cloudPayload, cloudHash, cloudUpdatedAt, localUpdatedAt }
@@ -65,15 +65,13 @@ function GameApp() {
     for (const [skill, xp] of Object.entries(fixed)) grantXP(skill, xp)
     if (coinReward > 0) updateBankDirect({ coins: coinReward })
 
-    // Check if there are more quests in queue BEFORE removing
-    const remainingQueue = questQueue.filter(q => q.id !== quest.id)
-
-    // Remove from queue
-    removeFromQuestQueue(quest.id)
-
-    if (remainingQueue.length > 0) {
-      // Auto-start next quest
-      const nextQuest = remainingQueue[0]
+    // The completed quest was already removed from the queue when it was
+    // started, so the queue holds the next quests to run. Pop the next one
+    // off and promote it to the active task.
+    const currentQueue = questQueueRef.current || []
+    if (currentQueue.length > 0) {
+      const nextQuest = currentQueue[0]
+      updateQuestQueue(currentQueue.slice(1))
       const state = createQuestState(nextQuest)
       setActiveTask({
         type: 'quest',
@@ -84,7 +82,6 @@ function GameApp() {
       })
       addToast(`📜 Started: ${nextQuest.name}`, 'info')
     } else {
-      // Queue is empty, close modal
       setActiveTask(null)
     }
 
@@ -95,7 +92,7 @@ function GameApp() {
   // Finalise a completed quest: show choice modal if needed, else complete immediately
   function finaliseQuest(questId, questName, choices) {
     if (choices.length > 0) {
-      setPendingXpChoices({ rewards: choices, questId, questName })
+      setPendingXpChoices(prev => [...prev, { rewards: choices, questId, questName }])
     } else {
       completeQuest(questId)
       addToast(`📜 Quest complete: ${questName}`, 'levelup', '🏆')
@@ -104,9 +101,14 @@ function GameApp() {
 
   function handleXpChoiceComplete(chosen) {
     for (const { skill, xp } of chosen) grantXP(skill, xp)
-    completeQuest(pendingXpChoices.questId)
-    addToast(`📜 Quest complete: ${pendingXpChoices.questName}`, 'levelup', '🏆')
-    setPendingXpChoices(null)
+    setPendingXpChoices(prev => {
+      const head = prev[0]
+      if (head) {
+        completeQuest(head.questId)
+        addToast(`📜 Quest complete: ${head.questName}`, 'levelup', '🏆')
+      }
+      return prev.slice(1)
+    })
   }
 
   useEffect(() => {
@@ -288,40 +290,34 @@ function GameApp() {
             const completedQuests = []
             const aggregatedXp = {}
             let totalCoinsGained = sim.coinsGained || 0
+            let workingQueue = [...(questQueueRef.current || [])]
+            let remainingElapsedMs = elapsedMs - (sim.ticksUsed * 600)
+            let finalTask = null
 
-            // Original quest completed - add to results
             if (sim.completed) {
+              // Original quest completed — track rewards
               completedQuests.push(savedTask.quest)
               for (const [skill, xp] of Object.entries(savedTask.quest.xpReward || {})) {
                 aggregatedXp[skill] = (aggregatedXp[skill] || 0) + xp
               }
               const { choices } = splitXpRewards(savedTask.quest.xpReward)
               finaliseQuest(savedTask.quest.id, savedTask.quest.name, choices)
-            }
-
-            // Only cascade if original quest completed
-            if (sim.completed) {
-              let remainingElapsedMs = elapsedMs - (sim.ticksUsed * 600)
-              let questQueue = await getSetting('questQueue') || []
 
               // Cascade through queue while time remains
-              while (questQueue.length > 0 && remainingElapsedMs > 0) {
-                const nextQuest = questQueue[0]
+              while (workingQueue.length > 0 && remainingElapsedMs > 0) {
+                const nextQuest = workingQueue[0]
                 const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
                 const nextTask = {
                   type: 'quest',
                   quest: nextQuest,
                   totalTicks: nextTotalTicks,
-                  ticksRemaining: nextTotalTicks
+                  ticksRemaining: nextTotalTicks,
                 }
-
                 const nextSim = simulateIdleQuest(nextTask, remainingElapsedMs)
                 if (!nextSim) break
-
                 remainingElapsedMs -= nextSim.ticksUsed * 600
 
                 if (nextSim.completed) {
-                  // Quest completed, track it and remove from queue
                   if (nextSim.coinsGained > 0) {
                     updateBankDirect({ coins: nextSim.coinsGained })
                     totalCoinsGained += nextSim.coinsGained
@@ -330,43 +326,49 @@ function GameApp() {
                   for (const [skill, xp] of Object.entries(nextQuest.xpReward || {})) {
                     aggregatedXp[skill] = (aggregatedXp[skill] || 0) + xp
                   }
-                  const { choices } = splitXpRewards(nextQuest.xpReward)
-                  finaliseQuest(nextQuest.id, nextQuest.name, choices)
-
-                  // Remove this quest from queue in settings
-                  await saveSetting('questQueue', questQueue.slice(1))
-                  questQueue = questQueue.slice(1)
+                  // Grant fixed XP immediately; choice rewards queued via finaliseQuest
+                  const { fixed: nextFixed, choices: nextChoices } = splitXpRewards(nextQuest.xpReward)
+                  for (const [skill, xp] of Object.entries(nextFixed)) grantXP(skill, xp)
+                  finaliseQuest(nextQuest.id, nextQuest.name, nextChoices)
+                  workingQueue = workingQueue.slice(1)
                 } else {
-                  // Quest in progress - set as active and stop
-                  setActiveTask({
+                  // Partial progress — this quest becomes the active one
+                  finalTask = {
                     type: 'quest',
                     quest: nextQuest,
                     totalTicks: nextTotalTicks,
                     ticksRemaining: nextSim.ticksRemaining,
                     startedAt: Date.now(),
-                  })
+                  }
+                  workingQueue = workingQueue.slice(1)
                   break
                 }
               }
 
-              // After cascade, check if queue is empty
-              if (questQueue.length === 0) {
-                setActiveTask(null)
-              } else if (questQueue.length > 0) {
-                // Queue has remaining items, set first as active
-                const nextQuest = questQueue[0]
+              // No partial quest mid-cascade, but queue still has items: promote head to active
+              if (!finalTask && workingQueue.length > 0) {
+                const nextQuest = workingQueue[0]
                 const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
-                setActiveTask({
+                finalTask = {
                   type: 'quest',
                   quest: nextQuest,
                   totalTicks: nextTotalTicks,
                   ticksRemaining: nextTotalTicks,
                   startedAt: Date.now(),
-                })
+                }
+                workingQueue = workingQueue.slice(1)
+              }
+            } else {
+              // Original quest still running — persist updated progress
+              finalTask = {
+                ...savedTask,
+                ticksRemaining: sim.ticksRemaining,
               }
             }
 
-            // Store completed quests info for idle result display
+            setActiveTask(finalTask)
+            updateQuestQueue(workingQueue)
+
             if (completedQuests.length > 0) {
               sim.completedQuests = completedQuests
               sim.aggregatedXpReward = aggregatedXp
@@ -565,7 +567,12 @@ function GameApp() {
       if (exists) {
         const idleResult = await loadGame()
         setGameReady(true)
-        if (idleResult) setIdleResult(idleResult)
+        if (idleResult) {
+          setIdleResult(idleResult)
+          if (idleResult.pendingChoices?.length > 0) {
+            setPendingXpChoices(prev => [...prev, ...idleResult.pendingChoices])
+          }
+        }
       } else {
         // No IDB save — check localStorage backup before giving up
         await attemptBackupRestore()
@@ -582,7 +589,12 @@ function GameApp() {
         if (existsRetry) {
           const idleResult = await loadGame()
           setGameReady(true)
-          if (idleResult) setIdleResult(idleResult)
+          if (idleResult) {
+            setIdleResult(idleResult)
+            if (idleResult.pendingChoices?.length > 0) {
+              setPendingXpChoices(prev => [...prev, ...idleResult.pendingChoices])
+            }
+          }
           return
         }
       } catch (retryErr) {
@@ -600,7 +612,12 @@ function GameApp() {
         console.log('[PocketRPG] Backup restore succeeded, loading...')
         const idleResult = await loadGame()
         setGameReady(true)
-        if (idleResult) setIdleResult(idleResult)
+        if (idleResult) {
+          setIdleResult(idleResult)
+          if (idleResult.pendingChoices?.length > 0) {
+            setPendingXpChoices(prev => [...prev, ...idleResult.pendingChoices])
+          }
+        }
         addToast('💾 Save restored from backup!', 'info')
       } else {
         // No backup either — start a new game silently. Cloud users reuse
@@ -950,10 +967,11 @@ function GameApp() {
         </div>
       )}
 
-      {pendingXpChoices && (
+      {pendingXpChoices.length > 0 && (
         <QuestXpChoiceModal
-          rewards={pendingXpChoices.rewards}
-          questName={pendingXpChoices.questName}
+          key={pendingXpChoices[0].questId}
+          rewards={pendingXpChoices[0].rewards}
+          questName={pendingXpChoices[0].questName}
           stats={stats}
           onComplete={handleXpChoiceComplete}
         />
