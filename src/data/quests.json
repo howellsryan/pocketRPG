@@ -662,7 +662,7 @@
     "durationSeconds": 36000,
     "coinReward": 50000,
     "xpReward": {
-      "tome_of_experience": 300000
+      "any": 300000
     },
     "itemUnlocks": [],
     "skillRequirements": {
