@@ -43,6 +43,10 @@ export default function QuestsScreen() {
       ticksRemaining: state.ticksRemaining,
       startedAt: state.startedAt,
     })
+    // Remove from queue if it was queued
+    if (questQueue.some(q => q.id === quest.id)) {
+      removeFromQuestQueue(quest.id)
+    }
     setSelectedQuest(null)
     addToast(`📜 Started: ${quest.name}`, 'info')
   }
