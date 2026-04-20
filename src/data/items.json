@@ -9399,5 +9399,140 @@
     },
     "shopValue": 4500,
     "icon": "🏹"
+  },
+  "climbing_boots": {
+    "id": "climbing_boots",
+    "name": "Climbing boots",
+    "type": "armour",
+    "slot": "boots",
+    "stackable": false,
+    "isUntradeable": true,
+    "questUnlock": "death_plateau",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 2,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 55000,
+    "icon": "👢"
+  },
+  "crystal_bow": {
+    "id": "crystal_bow",
+    "name": "Crystal bow",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "ranged",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 100
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 78,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "agility": 50,
+      "ranged": 70
+    },
+    "questUnlock": "roving_elves",
+    "isUntradeable": true,
+    "shopValue": 300000,
+    "icon": "🏹"
+  },
+  "crystal_shield": {
+    "id": "crystal_shield",
+    "name": "Crystal shield",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "isUntradeable": true,
+    "questUnlock": "roving_elves",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 75,
+      "slash": 75,
+      "crush": 75,
+      "magic": 20,
+      "ranged": 100
+    },
+    "otherBonus": {
+      "meleeStrength": 2,
+      "rangedStrength": 2,
+      "magicDamage": 0,
+      "prayer": 2
+    },
+    "requirements": {
+      "agility": 50,
+      "defence": 70
+    },
+    "shopValue": 300000,
+    "icon": "🛡️"
+  },
+  "halo": {
+    "id": "halo",
+    "name": "Halo",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "isUntradeable": true,
+    "questUnlock": "enlightened_journey",
+    "attackBonus": {
+      "stab": 25,
+      "slash": 25,
+      "crush": 25,
+      "magic": 25,
+      "ranged": 25
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 4,
+      "rangedStrength": 4,
+      "magicDamage": 4,
+      "prayer": 10
+    },
+    "requirements": {},
+    "shopValue": 2000000,
+    "icon": "😇"
   }
 }
