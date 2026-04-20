@@ -380,7 +380,7 @@ function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, 
           </div>
           {!completed && (
             <Button
-              variant={isInQueue ? 'secondary' : 'ghost'}
+              variant={isInQueue ? 'secondary' : 'success'}
               size="lg"
               disabled={!elig.eligible || isInQueue}
               onClick={() => onAddToQueue(quest)}

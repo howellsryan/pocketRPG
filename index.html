@@ -31345,7 +31345,7 @@ function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, 
                 h("div", { class: "flex gap-2" },
                     h(Button, { variant: "secondary", size: "lg", onClick: onClose, className: "flex-1" }, "Close"),
                     !completed && (h(Button, { variant: "primary", size: "lg", disabled: !elig.eligible, onClick: () => onStart(quest), className: "flex-1" }, elig.eligible ? 'Begin Quest' : 'Locked'))),
-                !completed && (h(Button, { variant: isInQueue ? 'secondary' : 'ghost', size: "lg", disabled: !elig.eligible || isInQueue, onClick: () => onAddToQueue(quest), className: "w-full" }, isInQueue ? '✓ In Queue' : '🔗 Add to Queue'))))));
+                !completed && (h(Button, { variant: isInQueue ? 'secondary' : 'success', size: "lg", disabled: !elig.eligible || isInQueue, onClick: () => onAddToQueue(quest), className: "w-full" }, isInQueue ? '✓ In Queue' : '🔗 Add to Queue'))))));
 }
 function RequirementRow({ label, ok }) {
     return (h("div", { class: `flex items-center gap-2 ${ok ? 'text-[#4ade80]' : 'text-[#e57373]'}` },
