@@ -29,6 +29,9 @@ export const COOKING_BURN_BASE_CHANCE = 0.5 // 50% at minimum level, scales down
 // Auto-save
 export const AUTO_SAVE_DEBOUNCE = 300 // ms
 
+// Quests
+export const QUEST_QUEUE_MAX = 3
+
 // Skills list
 export const COMBAT_SKILLS = ['attack', 'strength', 'defence', 'hitpoints', 'ranged', 'magic', 'prayer']
 export const GATHERING_SKILLS = ['mining', 'woodcutting', 'fishing', 'farming', 'hunter']

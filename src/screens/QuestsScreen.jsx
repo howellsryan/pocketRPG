@@ -9,6 +9,7 @@ import {
   createQuestState, checkQuestEligibility,
   getQuestPointsEarned, formatQuestDuration,
 } from '../engine/quests.js'
+import { QUEST_QUEUE_MAX } from '../utils/constants.js'
 import questsData from '../data/quests.json'
 
 const COMPLEXITY_COLORS = {
@@ -52,6 +53,10 @@ export default function QuestsScreen() {
   }
 
   const addToQueue = (quest) => {
+    if (questQueue.length >= QUEST_QUEUE_MAX) {
+      addToast(`Queue is full (max ${QUEST_QUEUE_MAX})`, 'warning')
+      return
+    }
     addQuestToQueue(quest)
     setSelectedQuest(null)
     addToast(`📜 Queued: ${quest.name}`, 'info')
@@ -101,8 +106,6 @@ export default function QuestsScreen() {
     const ticksRemaining = activeTask.ticksRemaining ?? totalTicks
     const progress = 1 - ticksRemaining / totalTicks
     const remainingSec = Math.ceil(ticksRemaining * 0.6)
-    const questPosition = questQueue.length > 0 ? 1 : 0
-    const totalInQueue = questQueue.length + 1
 
     return (
       <div class="h-full flex flex-col p-4">
@@ -115,7 +118,7 @@ export default function QuestsScreen() {
           </button>
           {questQueue.length > 0 && (
             <span class="text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]">
-              Quest {questPosition}/{totalInQueue}
+              🔗 Queue ({questQueue.length})
             </span>
           )}
         </div>
@@ -293,6 +296,7 @@ export default function QuestsScreen() {
           onStart={startQuest}
           onAddToQueue={addToQueue}
           isInQueue={questQueue.some(q => q.id === selectedQuest.id)}
+          queueFull={questQueue.length >= QUEST_QUEUE_MAX}
         />
       )}
     </div>
@@ -301,7 +305,7 @@ export default function QuestsScreen() {
 
 // ──────────────────────────────────────────────────────────────────────────────
 
-function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, onStart, onAddToQueue, isInQueue }) {
+function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, onStart, onAddToQueue, isInQueue, queueFull }) {
   const completed = completedQuests.has(quest.id)
   const elig = checkQuestEligibility(quest, stats, completedQuests, questsData)
   const skillEntries = Object.entries(quest.skillRequirements || {})
@@ -404,11 +408,11 @@ function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, 
             <Button
               variant={isInQueue ? 'secondary' : 'success'}
               size="lg"
-              disabled={!elig.eligible || isInQueue}
+              disabled={!elig.eligible || isInQueue || (queueFull && !isInQueue)}
               onClick={() => onAddToQueue(quest)}
               className="w-full"
             >
-              {isInQueue ? '✓ In Queue' : '🔗 Add to Queue'}
+              {isInQueue ? '✓ In Queue' : queueFull ? `Queue Full (${QUEST_QUEUE_MAX}/${QUEST_QUEUE_MAX})` : '🔗 Add to Queue'}
             </Button>
           )}
         </div>
