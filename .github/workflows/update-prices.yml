@@ -1,9 +1,6 @@
 name: Update OSRS Prices
 
 on:
-  push:
-    branches:
-      - main
   schedule:
     # Run daily at midnight UTC to keep prices fresh
     - cron: '0 0 * * *'
