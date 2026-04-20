@@ -9534,5 +9534,769 @@
     "requirements": {},
     "shopValue": 2000000,
     "icon": "😇"
+  },
+  "ahrims_hood": {
+    "id": "ahrims_hood",
+    "name": "Ahrim's hood",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 6,
+      "ranged": -2
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 6,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 70
+    },
+    "shopValue": 50000,
+    "icon": "👑"
+  },
+  "ahrims_robetop": {
+    "id": "ahrims_robetop",
+    "name": "Ahrim's robetop",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 30,
+      "ranged": -10
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 30,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 70
+    },
+    "shopValue": 50000,
+    "icon": "🥼"
+  },
+  "ahrims_robeskirt": {
+    "id": "ahrims_robeskirt",
+    "name": "Ahrim's robeskirt",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 22,
+      "ranged": -7
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 22,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 70
+    },
+    "shopValue": 50000,
+    "icon": "👖"
+  },
+  "ahrims_staff": {
+    "id": "ahrims_staff",
+    "name": "Ahrim's staff",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "magic",
+    "attackBonus": {
+      "stab": 12,
+      "slash": -1,
+      "crush": 65,
+      "magic": 15,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 2,
+      "slash": 3,
+      "crush": 1,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 68,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 70
+    },
+    "shopValue": 50000,
+    "icon": "🧙"
+  },
+  "dharoks_helm": {
+    "id": "dharoks_helm",
+    "name": "Dharok's helm",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -6,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 45,
+      "slash": 48,
+      "crush": 44,
+      "magic": -1,
+      "ranged": 51
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 70
+    },
+    "shopValue": 50000,
+    "icon": "👑"
+  },
+  "dharoks_platebody": {
+    "id": "dharoks_platebody",
+    "name": "Dharok's platebody",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -30,
+      "ranged": -10
+    },
+    "defenceBonus": {
+      "stab": 122,
+      "slash": 120,
+      "crush": 107,
+      "magic": -6,
+      "ranged": 132
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 70
+    },
+    "shopValue": 50000,
+    "icon": "🥼"
+  },
+  "dharoks_platelegs": {
+    "id": "dharoks_platelegs",
+    "name": "Dharok's platelegs",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -21,
+      "ranged": -7
+    },
+    "defenceBonus": {
+      "stab": 85,
+      "slash": 82,
+      "crush": 77,
+      "magic": -4,
+      "ranged": 92
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 70
+    },
+    "shopValue": 50000,
+    "icon": "👖"
+  },
+  "dharoks_greataxe": {
+    "id": "dharoks_greataxe",
+    "name": "Dharok's greataxe",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 7,
+    "attackStyle": "crush",
+    "attackBonus": {
+      "stab": -4,
+      "slash": 103,
+      "crush": 95,
+      "magic": -10,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 105,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "barrowsDharokBonus": true
+    },
+    "requirements": {
+      "attack": 70
+    },
+    "shopValue": 50000,
+    "icon": "🪓"
+  },
+  "guthans_helm": {
+    "id": "guthans_helm",
+    "name": "Guthan's helm",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -6,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 55,
+      "slash": 58,
+      "crush": 54,
+      "magic": -1,
+      "ranged": 62
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 70
+    },
+    "shopValue": 50000,
+    "icon": "👑"
+  },
+  "guthans_platebody": {
+    "id": "guthans_platebody",
+    "name": "Guthan's platebody",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -30,
+      "ranged": -10
+    },
+    "defenceBonus": {
+      "stab": 122,
+      "slash": 120,
+      "crush": 107,
+      "magic": -6,
+      "ranged": 132
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 70
+    },
+    "shopValue": 50000,
+    "icon": "🥼"
+  },
+  "guthans_chainskirt": {
+    "id": "guthans_chainskirt",
+    "name": "Guthan's chainskirt",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -21,
+      "ranged": -7
+    },
+    "defenceBonus": {
+      "stab": 85,
+      "slash": 82,
+      "crush": 77,
+      "magic": -4,
+      "ranged": 92
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 70
+    },
+    "shopValue": 50000,
+    "icon": "👖"
+  },
+  "guthans_warspear": {
+    "id": "guthans_warspear",
+    "name": "Guthan's warspear",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 75,
+      "slash": 75,
+      "crush": 75,
+      "magic": -10,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 7,
+      "slash": 8,
+      "crush": 10,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 75,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "barrowsGuthanBonus": true
+    },
+    "requirements": {
+      "attack": 70
+    },
+    "shopValue": 50000,
+    "icon": "⛏️"
+  },
+  "karils_coif": {
+    "id": "karils_coif",
+    "name": "Karil's coif",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -1,
+      "ranged": 7
+    },
+    "defenceBonus": {
+      "stab": 1,
+      "slash": 2,
+      "crush": 2,
+      "magic": 7,
+      "ranged": 7
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 70
+    },
+    "shopValue": 50000,
+    "icon": "👒"
+  },
+  "karils_leathertop": {
+    "id": "karils_leathertop",
+    "name": "Karil's leathertop",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -10,
+      "ranged": 30
+    },
+    "defenceBonus": {
+      "stab": 47,
+      "slash": 42,
+      "crush": 50,
+      "magic": 65,
+      "ranged": 30
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 70
+    },
+    "shopValue": 50000,
+    "icon": "🥼"
+  },
+  "karils_leatherskirt": {
+    "id": "karils_leatherskirt",
+    "name": "Karil's leatherskirt",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -7,
+      "ranged": 17
+    },
+    "defenceBonus": {
+      "stab": 26,
+      "slash": 24,
+      "crush": 28,
+      "magic": 35,
+      "ranged": 17
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 70
+    },
+    "shopValue": 50000,
+    "icon": "👖"
+  },
+  "karils_crossbow": {
+    "id": "karils_crossbow",
+    "name": "Karil's crossbow",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 3,
+    "attackStyle": "ranged",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 84
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 70
+    },
+    "shopValue": 50000,
+    "icon": "🏹"
+  },
+  "torags_helm": {
+    "id": "torags_helm",
+    "name": "Torag's helm",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -6,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 50,
+      "slash": 52,
+      "crush": 48,
+      "magic": -1,
+      "ranged": 57
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 70
+    },
+    "shopValue": 50000,
+    "icon": "👑"
+  },
+  "torags_platebody": {
+    "id": "torags_platebody",
+    "name": "Torag's platebody",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -30,
+      "ranged": -10
+    },
+    "defenceBonus": {
+      "stab": 122,
+      "slash": 120,
+      "crush": 107,
+      "magic": -6,
+      "ranged": 132
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 70
+    },
+    "shopValue": 50000,
+    "icon": "🥼"
+  },
+  "torags_platelegs": {
+    "id": "torags_platelegs",
+    "name": "Torag's platelegs",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -21,
+      "ranged": -7
+    },
+    "defenceBonus": {
+      "stab": 85,
+      "slash": 82,
+      "crush": 77,
+      "magic": -4,
+      "ranged": 92
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 70
+    },
+    "shopValue": 50000,
+    "icon": "👖"
+  },
+  "torags_hammers": {
+    "id": "torags_hammers",
+    "name": "Torag's hammers",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "crush",
+    "attackBonus": {
+      "stab": -4,
+      "slash": -4,
+      "crush": 92,
+      "magic": -11,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 72,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 70
+    },
+    "shopValue": 50000,
+    "icon": "🔨"
+  },
+  "veracs_helm": {
+    "id": "veracs_helm",
+    "name": "Verac's helm",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -6,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 52,
+      "slash": 55,
+      "crush": 54,
+      "magic": 3,
+      "ranged": 56
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 70
+    },
+    "shopValue": 50000,
+    "icon": "👑"
+  },
+  "veracs_brassard": {
+    "id": "veracs_brassard",
+    "name": "Verac's brassard",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -30,
+      "ranged": -10
+    },
+    "defenceBonus": {
+      "stab": 82,
+      "slash": 85,
+      "crush": 84,
+      "magic": 5,
+      "ranged": 80
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 70
+    },
+    "shopValue": 50000,
+    "icon": "🥼"
+  },
+  "veracs_plateskirt": {
+    "id": "veracs_plateskirt",
+    "name": "Verac's plateskirt",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -21,
+      "ranged": -7
+    },
+    "defenceBonus": {
+      "stab": 85,
+      "slash": 82,
+      "crush": 77,
+      "magic": 4,
+      "ranged": 92
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 70
+    },
+    "shopValue": 50000,
+    "icon": "👖"
+  },
+  "veracs_flail": {
+    "id": "veracs_flail",
+    "name": "Verac's flail",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "crush",
+    "attackBonus": {
+      "stab": 68,
+      "slash": -2,
+      "crush": 82,
+      "magic": -11,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 6
+    },
+    "otherBonus": {
+      "meleeStrength": 72,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 70
+    },
+    "shopValue": 50000,
+    "icon": "⚒️"
   }
 }

@@ -449,6 +449,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             time: Date.now()
           }])
         }
+        if (ev.type === 'guthanHeal') {
+          // Heal the player from Guthan set bonus
+          const maxHP = getMaxHP()
+          const newHP = Math.min(hpRef.current + ev.healAmount, maxHP)
+          updateHP(newHP)
+          hpRef.current = newHP
+          setLog(prev => [...prev.slice(-20), {
+            text: `💚 Guthan's Blessing heals ${ev.healAmount} HP`,
+            type: 'heal',
+            time: Date.now()
+          }])
+        }
         if (ev.type === 'boltProc') {
           const labels = {
             blood_forfeit: '🩸 Blood Forfeit',

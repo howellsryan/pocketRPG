@@ -4834,5 +4834,191 @@
       }
     },
     "drops": []
+  },
+  "arim_the_blighted": {
+    "id": "arim_the_blighted",
+    "name": "Arim the Blighted",
+    "combatLevel": 115,
+    "hitpoints": 100,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 100,
+      "magic": 110,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "magic",
+    "attackBonus": 55,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 20,
+      "slash": 20,
+      "crush": 20,
+      "magic": 50,
+      "ranged": 40
+    },
+    "drops": [
+      { "itemId": "ahrims_hood", "quantity": 1, "chance": 0.223 },
+      { "itemId": "ahrims_robetop", "quantity": 1, "chance": 0.223 },
+      { "itemId": "ahrims_robeskirt", "quantity": 1, "chance": 0.223 },
+      { "itemId": "ahrims_staff", "quantity": 1, "chance": 0.223 },
+      { "itemId": "coins", "quantity": [100, 300], "chance": 1 }
+    ]
+  },
+  "dharok_the_wretched": {
+    "id": "dharok_the_wretched",
+    "name": "Dharok the Wretched",
+    "combatLevel": 115,
+    "hitpoints": 100,
+    "stats": {
+      "attack": 110,
+      "strength": 110,
+      "defence": 100,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 5,
+    "attackStyle": "crush",
+    "attackBonus": 105,
+    "strengthBonus": 105,
+    "defenceBonus": {
+      "stab": 50,
+      "slash": 50,
+      "crush": 60,
+      "magic": 20,
+      "ranged": 40
+    },
+    "drops": [
+      { "itemId": "dharoks_helm", "quantity": 1, "chance": 0.223 },
+      { "itemId": "dharoks_platebody", "quantity": 1, "chance": 0.223 },
+      { "itemId": "dharoks_platelegs", "quantity": 1, "chance": 0.223 },
+      { "itemId": "dharoks_greataxe", "quantity": 1, "chance": 0.223 },
+      { "itemId": "coins", "quantity": [100, 300], "chance": 1 }
+    ]
+  },
+  "guthan_the_infested": {
+    "id": "guthan_the_infested",
+    "name": "Guthan the Infested",
+    "combatLevel": 115,
+    "hitpoints": 100,
+    "stats": {
+      "attack": 110,
+      "strength": 110,
+      "defence": 100,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 5,
+    "attackStyle": "stab",
+    "attackBonus": 105,
+    "strengthBonus": 105,
+    "defenceBonus": {
+      "stab": 60,
+      "slash": 50,
+      "crush": 50,
+      "magic": 20,
+      "ranged": 40
+    },
+    "drops": [
+      { "itemId": "guthans_helm", "quantity": 1, "chance": 0.223 },
+      { "itemId": "guthans_platebody", "quantity": 1, "chance": 0.223 },
+      { "itemId": "guthans_chainskirt", "quantity": 1, "chance": 0.223 },
+      { "itemId": "guthans_warspear", "quantity": 1, "chance": 0.223 },
+      { "itemId": "coins", "quantity": [100, 300], "chance": 1 }
+    ]
+  },
+  "karil_the_tainted": {
+    "id": "karil_the_tainted",
+    "name": "Karil the Tainted",
+    "combatLevel": 115,
+    "hitpoints": 100,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 100,
+      "magic": 1,
+      "ranged": 110
+    },
+    "attackSpeed": 3,
+    "attackStyle": "ranged",
+    "attackBonus": 63,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 40,
+      "slash": 40,
+      "crush": 20,
+      "magic": 20,
+      "ranged": 50
+    },
+    "drops": [
+      { "itemId": "karils_coif", "quantity": 1, "chance": 0.223 },
+      { "itemId": "karils_leathertop", "quantity": 1, "chance": 0.223 },
+      { "itemId": "karils_leatherskirt", "quantity": 1, "chance": 0.223 },
+      { "itemId": "karils_crossbow", "quantity": 1, "chance": 0.223 },
+      { "itemId": "coins", "quantity": [100, 300], "chance": 1 }
+    ]
+  },
+  "torag_the_corrupted": {
+    "id": "torag_the_corrupted",
+    "name": "Torag the Corrupted",
+    "combatLevel": 115,
+    "hitpoints": 100,
+    "stats": {
+      "attack": 110,
+      "strength": 110,
+      "defence": 100,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 5,
+    "attackStyle": "crush",
+    "attackBonus": 105,
+    "strengthBonus": 105,
+    "defenceBonus": {
+      "stab": 50,
+      "slash": 50,
+      "crush": 60,
+      "magic": 20,
+      "ranged": 40
+    },
+    "drops": [
+      { "itemId": "torags_helm", "quantity": 1, "chance": 0.223 },
+      { "itemId": "torags_platebody", "quantity": 1, "chance": 0.223 },
+      { "itemId": "torags_platelegs", "quantity": 1, "chance": 0.223 },
+      { "itemId": "torags_hammers", "quantity": 1, "chance": 0.223 },
+      { "itemId": "coins", "quantity": [100, 300], "chance": 1 }
+    ]
+  },
+  "verac_the_defiled": {
+    "id": "verac_the_defiled",
+    "name": "Verac the Defiled",
+    "combatLevel": 115,
+    "hitpoints": 100,
+    "stats": {
+      "attack": 110,
+      "strength": 110,
+      "defence": 100,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 5,
+    "attackStyle": "crush",
+    "attackBonus": 105,
+    "strengthBonus": 105,
+    "defenceBonus": {
+      "stab": 50,
+      "slash": 50,
+      "crush": 60,
+      "magic": 20,
+      "ranged": 40
+    },
+    "drops": [
+      { "itemId": "veracs_helm", "quantity": 1, "chance": 0.223 },
+      { "itemId": "veracs_brassard", "quantity": 1, "chance": 0.223 },
+      { "itemId": "veracs_plateskirt", "quantity": 1, "chance": 0.223 },
+      { "itemId": "veracs_flail", "quantity": 1, "chance": 0.223 },
+      { "itemId": "coins", "quantity": [100, 300], "chance": 1 }
+    ]
   }
 }
