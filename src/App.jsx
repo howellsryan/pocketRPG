@@ -284,8 +284,18 @@ function GameApp() {
           if (savedTask.type === 'quest') {
             if (sim.coinsGained > 0) updateBankDirect({ coins: sim.coinsGained })
 
+            // Track all completed quests for idle result display
+            const completedQuests = []
+            const aggregatedXp = {}
+            let totalCoinsGained = sim.coinsGained || 0
+
             // Original quest completed
             if (sim.completed) {
+              completedQuests.push(savedTask.quest)
+              // Aggregate XP from original quest
+              for (const [skill, xp] of Object.entries(savedTask.quest.xpReward || {})) {
+                aggregatedXp[skill] = (aggregatedXp[skill] || 0) + xp
+              }
               const { choices } = splitXpRewards(savedTask.quest.xpReward)
               finaliseQuest(savedTask.quest.id, savedTask.quest.name, choices)
             }
@@ -306,7 +316,15 @@ function GameApp() {
 
               if (nextSim.completed) {
                 // Quest completed, award and remove from queue
-                if (nextSim.coinsGained > 0) updateBankDirect({ coins: nextSim.coinsGained })
+                if (nextSim.coinsGained > 0) {
+                  updateBankDirect({ coins: nextSim.coinsGained })
+                  totalCoinsGained += nextSim.coinsGained
+                }
+                completedQuests.push(nextQuest)
+                // Aggregate XP from this quest
+                for (const [skill, xp] of Object.entries(nextQuest.xpReward || {})) {
+                  aggregatedXp[skill] = (aggregatedXp[skill] || 0) + xp
+                }
                 const { choices } = splitXpRewards(nextQuest.xpReward)
                 finaliseQuest(nextQuest.id, nextQuest.name, choices)
                 questQueue = questQueue.slice(1)
@@ -338,6 +356,13 @@ function GameApp() {
                 ticksRemaining: nextTotalTicks,
                 startedAt: Date.now(),
               })
+            }
+
+            // Store completed quests info for idle result display
+            if (completedQuests.length > 0) {
+              sim.completedQuests = completedQuests
+              sim.aggregatedXpReward = aggregatedXp
+              if (totalCoinsGained > 0) sim.coinsGained = totalCoinsGained
             }
           }
           // Deduct consumed materials from bank
@@ -729,7 +754,7 @@ function GameApp() {
                    idleResult.task.type === 'gather' ? idleResult.task.gatherTask?.name :
                    idleResult.task.type === 'thieving' ? `Pickpocketing ${idleResult.task.npc?.name}` :
                    idleResult.task.type === 'agility' ? `Training agility` :
-                   idleResult.task.type === 'quest' ? `${idleResult.completed ? '✅ Completed' : '⏳ On quest'}: ${idleResult.task.quest?.name}` : ''}
+                   idleResult.task.type === 'quest' ? `${idleResult.completedQuests?.length > 1 ? `✅ ${idleResult.completedQuests.length} Quests Completed` : (idleResult.completed ? '✅ Completed' : '⏳ On quest')}: ${idleResult.completedQuests?.length > 0 ? idleResult.completedQuests[0].name : idleResult.task.quest?.name}` : ''}
                 </p>
               )}
             </div>
@@ -768,9 +793,34 @@ function GameApp() {
                     </div>
                   )}
 
+                  {/* Quests Completed */}
+                  {idleResult.completedQuests && idleResult.completedQuests.length > 0 && (
+                    <div style={{ marginBottom: '12px', padding: '10px', background: '#1a3a2a', borderRadius: '10px', borderLeft: '3px solid #4ade80' }}>
+                      <div style={{ fontSize: '12px', color: '#4ade80', fontWeight: 'bold', marginBottom: '8px' }}>📜 Quests Completed ({idleResult.completedQuests.length})</div>
+                      {idleResult.completedQuests.map((quest) => (
+                        <div key={quest.id} style={{ marginBottom: '8px', padding: '6px', background: 'rgba(74, 222, 128, 0.1)', borderRadius: '6px' }}>
+                          <div style={{ fontSize: '12px', color: '#e8d5b0' }}>{quest.name}</div>
+                        </div>
+                      ))}
+                      {idleResult.aggregatedXpReward && Object.entries(idleResult.aggregatedXpReward).filter(([_, xp]) => xp > 0).length > 0 && (
+                        <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(74, 222, 128, 0.2)' }}>
+                          <div style={{ fontSize: '11px', color: '#4ade80', fontWeight: 'bold', marginBottom: '4px' }}>Total XP Rewards:</div>
+                          {Object.entries(idleResult.aggregatedXpReward).filter(([_, xp]) => xp > 0).map(([skill, xp]) => (
+                            <div key={skill} style={{ fontSize: '11px', color: '#d4af37', display: 'flex', justifyContent: 'space-between' }}>
+                              <span>{skill.charAt(0).toUpperCase() + skill.slice(1)}</span>
+                              <span>+{Math.floor(xp).toLocaleString()}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* XP Gained Summary */}
                   {(() => {
-                    const xpEntries = idleResult.xpGained ? Object.entries(idleResult.xpGained).filter(([_, xp]) => xp > 0) : []
+                    // Use aggregated XP from completed quests if available, otherwise use xpGained
+                    const xpSource = idleResult.aggregatedXpReward || idleResult.xpGained
+                    const xpEntries = xpSource ? Object.entries(xpSource).filter(([_, xp]) => xp > 0) : []
                     const hasXp = xpEntries.length > 0
                     const hasMonstersKilled = idleResult.task?.type === 'combat' && idleResult.monstersKilled > 0
                     const hasSlayerXp = idleResult.slayerXpGained > 0
