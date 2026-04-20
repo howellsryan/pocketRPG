@@ -101,9 +101,6 @@ export default function QuestsScreen() {
     const ticksRemaining = activeTask.ticksRemaining ?? totalTicks
     const progress = 1 - ticksRemaining / totalTicks
     const remainingSec = Math.ceil(ticksRemaining * 0.6)
-    const questPosition = questQueue.length > 0 ? 1 : 0
-    const totalInQueue = questQueue.length + 1
-
     return (
       <div class="h-full flex flex-col p-4">
         <div class="flex justify-between items-center mb-3">
@@ -115,7 +112,7 @@ export default function QuestsScreen() {
           </button>
           {questQueue.length > 0 && (
             <span class="text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]">
-              Quest {questPosition}/{totalInQueue}
+              Queue ({questQueue.length})
             </span>
           )}
         </div>

@@ -82,6 +82,7 @@ function GameApp() {
         ticksRemaining: state.ticksRemaining,
         startedAt: state.startedAt,
       })
+      removeFromQuestQueue(nextQuest.id)
       addToast(`📜 Started: ${nextQuest.name}`, 'info')
     } else {
       // Queue is empty, close modal
