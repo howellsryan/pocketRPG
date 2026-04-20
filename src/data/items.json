@@ -5344,6 +5344,7 @@
     "requirements": {
       "defence": 1
     },
+    "questUnlock": "dragon_slayer_i",
     "shopValue": 374,
     "icon": "🛡️"
   },
@@ -5480,6 +5481,7 @@
       "energyCost": 25,
       "description": "Puncture: Strikes twice in rapid succession, each hit capable of dealing up to 115% of your normal max hit."
     },
+    "questUnlock": "lost_city",
     "shopValue": 17142,
     "icon": "🗡️"
   },
@@ -5519,6 +5521,7 @@
       "energyCost": 55,
       "description": "Sever: A precise strike that completely bypasses the target's defences, rolling against zero defence."
     },
+    "questUnlock": "monkey_madness_i",
     "shopValue": 60340,
     "icon": "⚔️"
   },
@@ -9299,5 +9302,102 @@
     "stackable": true,
     "shopValue": 2111,
     "icon": "🪵"
+  },
+  "barrows_gloves": {
+    "id": "barrows_gloves",
+    "name": "Barrows gloves",
+    "type": "armour",
+    "slot": "gloves",
+    "stackable": false,
+    "isUntradeable": true,
+    "questUnlock": "recipe_for_disaster",
+    "attackBonus": {
+      "stab": 12,
+      "slash": 12,
+      "crush": 12,
+      "magic": 6,
+      "ranged": 12
+    },
+    "defenceBonus": {
+      "stab": 12,
+      "slash": 12,
+      "crush": 12,
+      "magic": 6,
+      "ranged": 12
+    },
+    "otherBonus": {
+      "meleeStrength": 12,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 130000,
+    "icon": "🧤"
+  },
+  "avas_assembler": {
+    "id": "avas_assembler",
+    "name": "Ava's assembler",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "isUntradeable": true,
+    "questUnlock": "dragon_slayer_ii",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 8
+    },
+    "defenceBonus": {
+      "stab": 1,
+      "slash": 1,
+      "crush": 1,
+      "magic": 1,
+      "ranged": 1
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 50
+    },
+    "shopValue": 75000,
+    "icon": "🎯"
+  },
+  "avas_accumulator": {
+    "id": "avas_accumulator",
+    "name": "Ava's accumulator",
+    "type": "armour",
+    "slot": "cape",
+    "stackable": false,
+    "isUntradeable": true,
+    "questUnlock": "animal_magnetism",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 4
+    },
+    "defenceBonus": {
+      "stab": 1,
+      "slash": 1,
+      "crush": 1,
+      "magic": 1,
+      "ranged": 1
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 50
+    },
+    "shopValue": 4500,
+    "icon": "🏹"
   }
 }

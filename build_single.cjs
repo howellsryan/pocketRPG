@@ -24,6 +24,7 @@ const sourceFiles = [
   'engine/idleEngine.js',
   'engine/tick.js',
   'engine/farming.js',
+  'engine/quests.js',
   'db/database.js',
   'db/stores.js',
   'db/saveload.js',
@@ -44,6 +45,7 @@ const sourceFiles = [
   'components/Button.js',
   'components/SectionHeader.js',
   'components/BonusDisplay.js',
+  'components/QuestXpChoiceModal.js',
   'screens/HomeScreen.js',
   'screens/StatsScreen.js',
   'screens/InventoryScreen.js',
@@ -60,6 +62,7 @@ const sourceFiles = [
   'screens/GatherScreen.js',
   'screens/GeneralStoreScreen.js',
   'screens/EquipmentScreen.js',
+  'screens/QuestsScreen.js',
   'screens/AuthScreen.js',
   'App.js',
 ];
@@ -94,6 +97,7 @@ const spellsJSON = readSrc('data/spells.json');
 const prayersJSON = readSrc('data/prayers.json');
 const raidsJSON = readSrc('data/raids.json');
 const farmingJSON = readSrc('data/farming.json');
+const questsJSON = readSrc('data/quests.json');
 
 // Concatenate all JS
 let allJS = '';
@@ -139,6 +143,7 @@ const spellsData = ${spellsJSON};
 const prayersData = ${prayersJSON};
 const raidsData = ${raidsJSON};
 const farmingData = ${farmingJSON};
+const questsData = ${questsJSON};
 
 ${allJS}
 

@@ -104,7 +104,7 @@ const MONSTER_ICONS = {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFightStatusChange }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, unlockedFeatures } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, unlockedFeatures, completedQuests } = useGame()
 
   const [combat, setCombat] = useState(null)
   const [log, setLog] = useState([])
@@ -784,6 +784,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
     const itemData = itemsData[itemId]
     if (!itemData || !itemData.slot) return
+
+    if (itemData.questUnlock && !completedQuests.has(itemData.questUnlock)) {
+      addToast(`Complete quest to equip: ${itemData.questUnlock.replace(/_/g, ' ')}`, 'error')
+      return
+    }
 
     // Copy equipment to avoid mutating ref directly
     const newEq = { ...equipmentRef.current }

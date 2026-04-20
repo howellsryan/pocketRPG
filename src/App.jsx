@@ -13,6 +13,7 @@ import GatherScreen from './screens/GatherScreen.jsx'
 import AgilityScreen from './screens/AgilityScreen.jsx'
 import GeneralStoreScreen from './screens/GeneralStoreScreen.jsx'
 import EquipmentScreen from './screens/EquipmentScreen.jsx'
+import QuestsScreen from './screens/QuestsScreen.jsx'
 import AuthScreen from './screens/AuthScreen.jsx'
 import { SCREENS } from './utils/constants.js'
 import { hasSave, closeDB } from './db/database.js'
@@ -24,16 +25,18 @@ import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, r
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
 import { simulateIdleThieving } from './engine/thieving.js'
+import { simulateIdleQuest } from './engine/quests.js'
 import { getLevelFromXP } from './engine/experience.js'
 
 function GameApp() {
-  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints } = useGame()
+  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints, completeQuest } = useGame()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [gameReady, setGameReady] = useState(false)
   const [activity, setActivity] = useState(null)
   const [idleResult, setIdleResult] = useState(null) // { elapsedMs, task, xpGained, itemsGained, lootLost, monstersKilled }
   const [actionData, setActionData] = useState(null) // { monsterId, gatherTaskId, skillId, actionId }
   const [isInBossFight, setIsInBossFight] = useState(false) // Track if currently in a boss fight
+  const [pendingXpChoices, setPendingXpChoices] = useState(null) // { rewards, questId, questName }
   // Cloud auth gate: 'pending' until we resolve, 'auth' if AuthScreen needed, 'ready' to boot game
   const [cloudPhase, setCloudPhase] = useState('pending')
   const [conflict, setConflict] = useState(null) // { cloudPayload, cloudHash, cloudUpdatedAt, localUpdatedAt }
@@ -43,6 +46,34 @@ function GameApp() {
   const snapshotCounter = useRef(99) // Start at 99 so first snapshot fires after 1 tick
   const idleHeartbeatCounter = useRef(49) // 50 ticks = ~30s — first heartbeat ~600ms after load
   const hiddenAtPerfRef = useRef(null) // performance.now() at hide — monotonic, immune to clock changes
+
+  // Split xpReward into immediate grants and player-choice rewards (combat / any)
+  function splitXpRewards(xpReward) {
+    const fixed = {}
+    const choices = []
+    for (const [skill, xp] of Object.entries(xpReward || {})) {
+      if (skill === 'combat' || skill === 'any') choices.push({ type: skill, amount: xp })
+      else if (xp > 0) fixed[skill] = xp
+    }
+    return { fixed, choices }
+  }
+
+  // Finalise a completed quest: show choice modal if needed, else complete immediately
+  function finaliseQuest(questId, questName, choices) {
+    if (choices.length > 0) {
+      setPendingXpChoices({ rewards: choices, questId, questName })
+    } else {
+      completeQuest(questId)
+      addToast(`📜 Quest complete: ${questName}`, 'levelup', '🏆')
+    }
+  }
+
+  function handleXpChoiceComplete(chosen) {
+    for (const { skill, xp } of chosen) grantXP(skill, xp)
+    completeQuest(pendingXpChoices.questId)
+    addToast(`📜 Quest complete: ${pendingXpChoices.questName}`, 'levelup', '🏆')
+    setPendingXpChoices(null)
+  }
 
   useEffect(() => {
     initCloudAndSave()
@@ -168,6 +199,7 @@ function GameApp() {
           if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank)
           if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
           if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
+          if (savedTask.type === 'quest') sim = simulateIdleQuest(savedTask, elapsedMs)
 
           // Always show the modal — even if sim is null (e.g. <1 action completed)
           if (!sim) {
@@ -184,10 +216,10 @@ function GameApp() {
             sim.hpAfterRegen = restoredHP
           }
 
-          // Apply XP
+          // Apply XP (skip combat/any — those require player choice via modal)
           if (sim.xpGained) {
             for (const [skill, xp] of Object.entries(sim.xpGained)) {
-              if (xp > 0) grantXP(skill, xp)
+              if (skill !== 'combat' && skill !== 'any' && xp > 0) grantXP(skill, xp)
             }
           }
           // Apply slayer XP from combat simulation
@@ -211,6 +243,18 @@ function GameApp() {
           // Apply thieving coin reward directly to bank
           if (savedTask.type === 'thieving' && sim.coinsGained > 0) {
             updateBankDirect({ coins: sim.coinsGained })
+          }
+          // Quest finalisation — coins to bank, completion persisted, task cleared
+          if (savedTask.type === 'quest') {
+            if (sim.coinsGained > 0) updateBankDirect({ coins: sim.coinsGained })
+            if (sim.completed) {
+              const { choices } = splitXpRewards(sim.xpGained)
+              setActiveTask(null)
+              finaliseQuest(sim.quest.id, sim.quest.name, choices)
+            } else {
+              // Persist remaining ticks so the in-progress quest resumes
+              setActiveTask({ ...savedTask, ticksRemaining: sim.ticksRemaining })
+            }
           }
           // Deduct consumed materials from bank
           if (sim.itemsConsumed && Object.keys(sim.itemsConsumed).length > 0) {
@@ -308,6 +352,21 @@ function GameApp() {
         const maxHP = getMaxHP()
         if (currentHP < maxHP) {
           updateHP(Math.min(currentHP + 1, maxHP))
+        }
+      }
+
+      // Quest tick — runs at the App level so quests progress on any screen
+      const task = activeTaskRef.current
+      if (task && task.type === 'quest' && task.quest) {
+        const remaining = (task.ticksRemaining ?? task.totalTicks) - 1
+        if (remaining <= 0) {
+          const { fixed, choices } = splitXpRewards(task.quest.xpReward)
+          for (const [skill, xp] of Object.entries(fixed)) grantXP(skill, xp)
+          if (task.quest.coinReward > 0) updateBankDirect({ coins: task.quest.coinReward })
+          setActiveTask(null)
+          finaliseQuest(task.quest.id, task.quest.name, choices)
+        } else {
+          setActiveTask({ ...task, ticksRemaining: remaining })
         }
       }
     })
@@ -470,9 +529,12 @@ function GameApp() {
 
   // Navigate with optional action data
   const navigate = (scr, data) => {
-    // Navigating away stops any active task and clears localStorage idle-engine
-    // keys so the idle engine won't re-process a task that was stopped/cancelled.
-    setActiveTask(null)
+    // Navigating away stops any active screen-bound task (skilling, gathering,
+    // combat, agility, thieving) and clears the idle-engine keys so it won't
+    // re-process a cancelled task. Quests run in the background — preserve them.
+    if (activeTask?.type !== 'quest') {
+      setActiveTask(null)
+    }
     setActionData(data || null)
     setScreen(scr)
   }
@@ -550,6 +612,7 @@ function GameApp() {
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} />
       case SCREENS.AGILITY:   return <AgilityScreen initialActionId={actionData?.actionId} />
       case SCREENS.STORE:     return <GeneralStoreScreen />
+      case SCREENS.QUESTS:    return <QuestsScreen />
       default:                return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} isCloudAccount={!!getToken() && !!getCharacterId()} />
     }
   }
@@ -585,7 +648,8 @@ function GameApp() {
                    idleResult.task.type === 'skill' ? `Training ${idleResult.task.skill}` :
                    idleResult.task.type === 'gather' ? idleResult.task.gatherTask?.name :
                    idleResult.task.type === 'thieving' ? `Pickpocketing ${idleResult.task.npc?.name}` :
-                   idleResult.task.type === 'agility' ? `Training agility` : ''}
+                   idleResult.task.type === 'agility' ? `Training agility` :
+                   idleResult.task.type === 'quest' ? `${idleResult.completed ? '✅ Completed' : '⏳ On quest'}: ${idleResult.task.quest?.name}` : ''}
                 </p>
               )}
             </div>
@@ -748,6 +812,14 @@ function GameApp() {
         </div>
       )}
 
+      {pendingXpChoices && (
+        <QuestXpChoiceModal
+          rewards={pendingXpChoices.rewards}
+          questName={pendingXpChoices.questName}
+          stats={stats}
+          onComplete={handleXpChoiceComplete}
+        />
+      )}
     </div>
   )
 }
