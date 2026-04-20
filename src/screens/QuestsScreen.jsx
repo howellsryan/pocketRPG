@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks'
+import { useState, useEffect } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import Panel from '../components/Panel.jsx'
 import Button from '../components/Button.jsx'
@@ -101,8 +101,7 @@ export default function QuestsScreen() {
     const ticksRemaining = activeTask.ticksRemaining ?? totalTicks
     const progress = 1 - ticksRemaining / totalTicks
     const remainingSec = Math.ceil(ticksRemaining * 0.6)
-    const questPosition = questQueue.length > 0 ? 1 : 0
-    const totalInQueue = questQueue.length + 1
+    const queueLength = questQueue.length
 
     return (
       <div class="h-full flex flex-col p-4">
@@ -113,9 +112,9 @@ export default function QuestsScreen() {
           >
             ← Abandon Quest
           </button>
-          {questQueue.length > 0 && (
+          {queueLength > 0 && (
             <span class="text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]">
-              Quest {questPosition}/{totalInQueue}
+              Queue({queueLength})
             </span>
           )}
         </div>
@@ -289,9 +288,11 @@ export default function QuestsScreen() {
           stats={stats}
           completedQuests={completedQuests}
           itemsData={itemsData}
+          questQueue={questQueue}
           onClose={() => setSelectedQuest(null)}
           onStart={startQuest}
           onAddToQueue={addToQueue}
+          removeFromQueue={removeQuestFromQueue}
           isInQueue={questQueue.some(q => q.id === selectedQuest.id)}
         />
       )}
@@ -301,7 +302,17 @@ export default function QuestsScreen() {
 
 // ──────────────────────────────────────────────────────────────────────────────
 
-function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, onStart, onAddToQueue, isInQueue }) {
+function QuestDetailsModal({ quest, stats, completedQuests, itemsData, questQueue, onClose, onStart, onAddToQueue, removeFromQueue, isInQueue }) {
+  // Failsafe: clean up any completed quests from the queue when modal opens
+  useEffect(() => {
+    if (questQueue && questQueue.length > 0) {
+      const completedInQueue = questQueue.filter(q => completedQuests.has(q.id))
+      if (completedInQueue.length > 0) {
+        completedInQueue.forEach(q => removeFromQueue(q.id))
+      }
+    }
+  }, [])
+
   const completed = completedQuests.has(quest.id)
   const elig = checkQuestEligibility(quest, stats, completedQuests, questsData)
   const skillEntries = Object.entries(quest.skillRequirements || {})
