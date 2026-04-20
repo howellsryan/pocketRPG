@@ -36,6 +36,7 @@ function GameApp() {
   const [idleResult, setIdleResult] = useState(null) // { elapsedMs, task, xpGained, itemsGained, lootLost, monstersKilled }
   const [actionData, setActionData] = useState(null) // { monsterId, gatherTaskId, skillId, actionId }
   const [isInBossFight, setIsInBossFight] = useState(false) // Track if currently in a boss fight
+  const [pendingXpChoices, setPendingXpChoices] = useState(null) // { rewards, questId, questName }
   // Cloud auth gate: 'pending' until we resolve, 'auth' if AuthScreen needed, 'ready' to boot game
   const [cloudPhase, setCloudPhase] = useState('pending')
   const [conflict, setConflict] = useState(null) // { cloudPayload, cloudHash, cloudUpdatedAt, localUpdatedAt }
@@ -45,6 +46,34 @@ function GameApp() {
   const snapshotCounter = useRef(99) // Start at 99 so first snapshot fires after 1 tick
   const idleHeartbeatCounter = useRef(49) // 50 ticks = ~30s — first heartbeat ~600ms after load
   const hiddenAtPerfRef = useRef(null) // performance.now() at hide — monotonic, immune to clock changes
+
+  // Split xpReward into immediate grants and player-choice rewards (combat / any)
+  function splitXpRewards(xpReward) {
+    const fixed = {}
+    const choices = []
+    for (const [skill, xp] of Object.entries(xpReward || {})) {
+      if (skill === 'combat' || skill === 'any') choices.push({ type: skill, amount: xp })
+      else if (xp > 0) fixed[skill] = xp
+    }
+    return { fixed, choices }
+  }
+
+  // Finalise a completed quest: show choice modal if needed, else complete immediately
+  function finaliseQuest(questId, questName, choices) {
+    if (choices.length > 0) {
+      setPendingXpChoices({ rewards: choices, questId, questName })
+    } else {
+      completeQuest(questId)
+      addToast(`📜 Quest complete: ${questName}`, 'levelup', '🏆')
+    }
+  }
+
+  function handleXpChoiceComplete(chosen) {
+    for (const { skill, xp } of chosen) grantXP(skill, xp)
+    completeQuest(pendingXpChoices.questId)
+    addToast(`📜 Quest complete: ${pendingXpChoices.questName}`, 'levelup', '🏆')
+    setPendingXpChoices(null)
+  }
 
   useEffect(() => {
     initCloudAndSave()
@@ -187,10 +216,10 @@ function GameApp() {
             sim.hpAfterRegen = restoredHP
           }
 
-          // Apply XP
+          // Apply XP (skip combat/any — those require player choice via modal)
           if (sim.xpGained) {
             for (const [skill, xp] of Object.entries(sim.xpGained)) {
-              if (xp > 0) grantXP(skill, xp)
+              if (skill !== 'combat' && skill !== 'any' && xp > 0) grantXP(skill, xp)
             }
           }
           // Apply slayer XP from combat simulation
@@ -219,9 +248,9 @@ function GameApp() {
           if (savedTask.type === 'quest') {
             if (sim.coinsGained > 0) updateBankDirect({ coins: sim.coinsGained })
             if (sim.completed) {
-              completeQuest(sim.quest.id)
+              const { choices } = splitXpRewards(sim.xpGained)
               setActiveTask(null)
-              addToast(`📜 Quest complete: ${sim.quest.name}`, 'levelup', '🏆')
+              finaliseQuest(sim.quest.id, sim.quest.name, choices)
             } else {
               // Persist remaining ticks so the in-progress quest resumes
               setActiveTask({ ...savedTask, ticksRemaining: sim.ticksRemaining })
@@ -331,13 +360,11 @@ function GameApp() {
       if (task && task.type === 'quest' && task.quest) {
         const remaining = (task.ticksRemaining ?? task.totalTicks) - 1
         if (remaining <= 0) {
-          for (const [skill, xp] of Object.entries(task.quest.xpReward || {})) {
-            if (xp > 0) grantXP(skill, xp)
-          }
+          const { fixed, choices } = splitXpRewards(task.quest.xpReward)
+          for (const [skill, xp] of Object.entries(fixed)) grantXP(skill, xp)
           if (task.quest.coinReward > 0) updateBankDirect({ coins: task.quest.coinReward })
-          completeQuest(task.quest.id)
           setActiveTask(null)
-          addToast(`📜 Quest complete: ${task.quest.name}`, 'levelup', '🏆')
+          finaliseQuest(task.quest.id, task.quest.name, choices)
         } else {
           setActiveTask({ ...task, ticksRemaining: remaining })
         }
@@ -785,6 +812,14 @@ function GameApp() {
         </div>
       )}
 
+      {pendingXpChoices && (
+        <QuestXpChoiceModal
+          rewards={pendingXpChoices.rewards}
+          questName={pendingXpChoices.questName}
+          stats={stats}
+          onComplete={handleXpChoiceComplete}
+        />
+      )}
     </div>
   )
 }
