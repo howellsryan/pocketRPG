@@ -9,10 +9,10 @@ import { formatNumber } from '../utils/helpers.js'
 import itemsData from '../data/items.json'
 
 const BUILDING_ACTIONS = [
-  { id: 'build_plank', name: 'Build with Plank', level: 1, ticks: 2, xp: 29, material: 'planks' },
-  { id: 'build_oak_plank', name: 'Build with Oak Plank', level: 15, ticks: 2, xp: 60, material: 'oak_plank' },
-  { id: 'build_teak_plank', name: 'Build with Teak Plank', level: 35, ticks: 2, xp: 90, material: 'teak_plank' },
-  { id: 'build_mahogany_plank', name: 'Build with Mahogany Plank', level: 70, ticks: 2, xp: 140, material: 'mahogany_plank' },
+  { id: 'build_plank', name: 'Build with Plank', level: 1, ticks: 2, xp: 29, materials: { planks: 1 } },
+  { id: 'build_oak_plank', name: 'Build with Oak Plank', level: 15, ticks: 2, xp: 60, materials: { oak_plank: 1 } },
+  { id: 'build_teak_plank', name: 'Build with Teak Plank', level: 35, ticks: 2, xp: 90, materials: { teak_plank: 1 } },
+  { id: 'build_mahogany_plank', name: 'Build with Mahogany Plank', level: 70, ticks: 2, xp: 140, materials: { mahogany_plank: 1 } },
 ]
 
 const UNLOCKABLES = [
@@ -77,23 +77,33 @@ export default function ConstructionScreen({ onBack }) {
 
       for (const ev of events) {
         if (ev.type === 'actionComplete') {
-          const matId = ev.action.material
+          const materialsObj = ev.action.materials
+          const matId = Object.keys(materialsObj)[0]
+          const qtyNeeded = materialsObj[matId]
           const curInv = [...inventoryRef.current]
           const invCount = countItem(curInv, matId)
           const bankCount = bankRef.current[matId]?.quantity || 0
 
-          if (invCount + bankCount < 1) {
+          if (invCount + bankCount < qtyNeeded) {
             skillingRef.current = { ...skillingState, active: false, stopped: true }
             setSkilling({ ...skillingState, active: false, stopped: true })
             addToast(`Out of ${itemsData[matId]?.name || matId}!`, 'error')
             return
           }
 
-          if (invCount > 0) {
-            removeItem(curInv, matId, 1)
+          if (invCount >= qtyNeeded) {
+            removeItem(curInv, matId, qtyNeeded)
             updateInventory(curInv)
           } else {
-            updateBankDirect({ [matId]: -1 })
+            const fromInv = invCount > 0 ? invCount : 0
+            const fromBank = qtyNeeded - fromInv
+            if (fromInv > 0) {
+              removeItem(curInv, matId, fromInv)
+              updateInventory(curInv)
+            }
+            if (fromBank > 0) {
+              updateBankDirect({ [matId]: -fromBank })
+            }
           }
 
           grantXP('construction', ev.xp)
@@ -169,10 +179,12 @@ export default function ConstructionScreen({ onBack }) {
       <div class="space-y-2 mb-6">
         {BUILDING_ACTIONS.map(action => {
           const available = action.level <= constructionLevel
-          const matId = action.material
+          const materialsObj = action.materials
+          const matId = Object.keys(materialsObj)[0]
+          const qtyPerAction = materialsObj[matId]
           const matName = itemsData[matId]?.name || matId
           const totalMats = countItem(inventory, matId) + (bank[matId]?.quantity || 0)
-          const hasMats = totalMats >= 1
+          const hasMats = totalMats >= qtyPerAction
           const canStart = available && hasMats
 
           return (
