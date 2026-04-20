@@ -29,7 +29,7 @@ import { simulateIdleQuest, createQuestState } from './engine/quests.js'
 import { getLevelFromXP } from './engine/experience.js'
 
 function GameApp() {
-  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints, completeQuest, questQueue, removeFromQuestQueue } = useGame()
+  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints, completeQuest, questQueue, removeFromQuestQueue, updateQuestQueue } = useGame()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [gameReady, setGameReady] = useState(false)
   const [activity, setActivity] = useState(null)
@@ -283,62 +283,57 @@ function GameApp() {
           }
           // Quest finalisation — cascade through queue if quests complete
           if (savedTask.type === 'quest') {
-            if (sim.coinsGained > 0) updateBankDirect({ coins: sim.coinsGained })
-
-            // Track all completed quests for idle result display
-            const completedQuests = []
+            const completedQuestsList = []
             const aggregatedXp = {}
-            let totalCoinsGained = sim.coinsGained || 0
+            let totalCoinsGained = 0
 
-            // Original quest completed - add to results
             if (sim.completed) {
-              completedQuests.push(savedTask.quest)
+              if (sim.coinsGained > 0) {
+                updateBankDirect({ coins: sim.coinsGained })
+                totalCoinsGained += sim.coinsGained
+              }
+              completedQuestsList.push(savedTask.quest)
               for (const [skill, xp] of Object.entries(savedTask.quest.xpReward || {})) {
                 aggregatedXp[skill] = (aggregatedXp[skill] || 0) + xp
               }
               const { choices } = splitXpRewards(savedTask.quest.xpReward)
               finaliseQuest(savedTask.quest.id, savedTask.quest.name, choices)
-            }
 
-            // Only cascade if original quest completed
-            if (sim.completed) {
+              // Cascade through queue with remaining idle time
               let remainingElapsedMs = elapsedMs - (sim.ticksUsed * 600)
-              let questQueue = await getSetting('questQueue') || []
+              let remainingQueue = await getSetting('questQueue') || []
+              let partialQuestActive = false
 
-              // Cascade through queue while time remains
-              while (questQueue.length > 0 && remainingElapsedMs > 0) {
-                const nextQuest = questQueue[0]
+              while (remainingQueue.length > 0 && remainingElapsedMs > 0) {
+                const nextQuest = remainingQueue[0]
                 const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
                 const nextTask = {
                   type: 'quest',
                   quest: nextQuest,
                   totalTicks: nextTotalTicks,
-                  ticksRemaining: nextTotalTicks
+                  ticksRemaining: nextTotalTicks,
                 }
 
                 const nextSim = simulateIdleQuest(nextTask, remainingElapsedMs)
-                if (!nextSim) break
+                if (!nextSim || nextSim.ticksUsed === 0) break
 
                 remainingElapsedMs -= nextSim.ticksUsed * 600
 
                 if (nextSim.completed) {
-                  // Quest completed, track it and remove from queue
                   if (nextSim.coinsGained > 0) {
                     updateBankDirect({ coins: nextSim.coinsGained })
                     totalCoinsGained += nextSim.coinsGained
                   }
-                  completedQuests.push(nextQuest)
+                  completedQuestsList.push(nextQuest)
                   for (const [skill, xp] of Object.entries(nextQuest.xpReward || {})) {
                     aggregatedXp[skill] = (aggregatedXp[skill] || 0) + xp
                   }
                   const { choices } = splitXpRewards(nextQuest.xpReward)
                   finaliseQuest(nextQuest.id, nextQuest.name, choices)
-
-                  // Remove this quest from queue in settings
-                  await saveSetting('questQueue', questQueue.slice(1))
-                  questQueue = questQueue.slice(1)
+                  remainingQueue = remainingQueue.slice(1)
+                  await saveSetting('questQueue', remainingQueue)
                 } else {
-                  // Quest in progress - set as active and stop
+                  // Partial completion: this quest is now active — remove from queue
                   setActiveTask({
                     type: 'quest',
                     quest: nextQuest,
@@ -346,30 +341,41 @@ function GameApp() {
                     ticksRemaining: nextSim.ticksRemaining,
                     startedAt: Date.now(),
                   })
+                  remainingQueue = remainingQueue.slice(1)
+                  await saveSetting('questQueue', remainingQueue)
+                  partialQuestActive = true
                   break
                 }
               }
 
-              // After cascade, check if queue is empty
-              if (questQueue.length === 0) {
-                setActiveTask(null)
-              } else if (questQueue.length > 0) {
-                // Queue has remaining items, set first as active
-                const nextQuest = questQueue[0]
-                const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
-                setActiveTask({
-                  type: 'quest',
-                  quest: nextQuest,
-                  totalTicks: nextTotalTicks,
-                  ticksRemaining: nextTotalTicks,
-                  startedAt: Date.now(),
-                })
+              if (!partialQuestActive) {
+                if (remainingQueue.length === 0) {
+                  setActiveTask(null)
+                } else {
+                  // Idle time used up exactly — start next queued quest with full ticks
+                  const nextQuest = remainingQueue[0]
+                  const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
+                  setActiveTask({
+                    type: 'quest',
+                    quest: nextQuest,
+                    totalTicks: nextTotalTicks,
+                    ticksRemaining: nextTotalTicks,
+                    startedAt: Date.now(),
+                  })
+                  remainingQueue = remainingQueue.slice(1)
+                  await saveSetting('questQueue', remainingQueue)
+                }
               }
+
+              // Sync React state with what's now persisted to DB
+              updateQuestQueue(remainingQueue)
+            } else {
+              // Quest still in progress — advance activeTask to correct remaining ticks
+              setActiveTask({ ...savedTask, ticksRemaining: sim.ticksRemaining })
             }
 
-            // Store completed quests info for idle result display
-            if (completedQuests.length > 0) {
-              sim.completedQuests = completedQuests
+            if (completedQuestsList.length > 0) {
+              sim.completedQuests = completedQuestsList
               sim.aggregatedXpReward = aggregatedXp
               if (totalCoinsGained > 0) sim.coinsGained = totalCoinsGained
             }
