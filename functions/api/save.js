@@ -44,10 +44,10 @@ export async function onRequestPut({ request, env }) {
   let body
   try { body = await request.json() } catch { return json({ error: 'Invalid JSON' }, 400) }
   const save_data = body.save_data
-  if (typeof save_data !== 'string') {
+  if (save_data !== null && typeof save_data !== 'string') {
     return json({ error: 'Missing save_data' }, 400)
   }
-  if (save_data.length > MAX_SAVE_BYTES) {
+  if (save_data && save_data.length > MAX_SAVE_BYTES) {
     return json({ error: 'Save too large' }, 413)
   }
 
