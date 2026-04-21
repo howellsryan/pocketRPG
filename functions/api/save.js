@@ -70,3 +70,16 @@ export async function onRequestPut({ request, env }) {
 
   return json({ ok: true, updatedAt: now })
 }
+
+// Hard-delete the saves row for this character. Used on One-Life death so
+// nothing remains for the client to pull back on next login.
+export async function onRequestDelete({ request, env }) {
+  const auth = await requireAuth(request, env)
+  if (auth.error) return json({ error: auth.error }, auth.status)
+
+  const ch = await getCharacterId(request, env, auth.identity.id)
+  if (ch.error) return json({ error: ch.error }, ch.status)
+
+  await env.DB.prepare('DELETE FROM saves WHERE character_id = ?').bind(ch.id).run()
+  return json({ ok: true })
+}

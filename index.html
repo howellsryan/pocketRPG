@@ -26504,6 +26504,8 @@ const api = {
         method: 'PUT',
         body: JSON.stringify({ active_task: activeTask == null ? null : JSON.stringify(activeTask) }),
     }),
+    deleteSave: () => request('/api/save', { method: 'DELETE' }),
+    deleteIdle: () => request('/api/idle', { method: 'DELETE' }),
 };
 // Fire-and-forget idle state write via navigator.sendBeacon. Survives tab
 // hide / page unload on mobile where a regular fetch would be cancelled.
@@ -28967,6 +28969,7 @@ function BankScreen() {
 
 
 
+
 const COMBAT_CATEGORIES = [
     {
         key: 'training',
@@ -29053,6 +29056,41 @@ const MONSTER_ICONS = {
     maiden_of_sugadinti: '🩸', pestilent_bloat: '🤢', nylocas_vasilias: '🕷️',
     sotetseg: '🔮', xarpus: '☠️', verzik_vitur: '👑'
 };
+// Nuke every trace of the current character so a One-Life death cannot be
+// revived by re-logging. Deletes the cloud saves row, the cloud idle-state
+// row, the local IndexedDB database, and every per-character localStorage key.
+// Best-effort on each step — we always fall through to clearAuth + reload.
+async function performOneLifeReset() {
+    if (getToken()) {
+        try {
+            await api.deleteSave();
+        }
+        catch (err) {
+            console.error('Failed to delete cloud save:', err);
+        }
+        try {
+            await api.deleteIdle();
+        }
+        catch (err) {
+            console.error('Failed to delete cloud idle state:', err);
+        }
+    }
+    try {
+        closeDB();
+        await wipeLocalSave();
+    }
+    catch (err) {
+        console.error('Failed to wipe local save:', err);
+    }
+    // wipeLocalSave() covers backup/lastTick/activeTask/hiddenAt. Mop up the rest.
+    try {
+        localStorage.removeItem('pocketrpg_activeCombatSpell');
+        localStorage.removeItem('pocketrpg_offline_mode');
+        setLocalCharacterId(null);
+    }
+    catch { /* ignore */ }
+    clearAuth();
+}
 function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFightStatusChange }) {
     const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife } = useGame();
     const [combat, setCombat] = useState(null);
@@ -29225,19 +29263,7 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFight
                         if (isOneLife) {
                             addToast('you died! Restarting your account…', 'error');
                             setTimeout(async () => {
-                                try {
-                                    if (getToken()) {
-                                        // Cloud account: wipe cloud save
-                                        await api.putSave(null).catch(() => { });
-                                    }
-                                    else {
-                                        // Offline account: wipe local database
-                                        closeDB();
-                                        await deleteDB();
-                                    }
-                                }
-                                catch { }
-                                clearAuth();
+                                await performOneLifeReset();
                                 window.location.href = '/';
                             }, 2000);
                         }
@@ -29270,19 +29296,7 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFight
                         if (isOneLife) {
                             addToast('you died! Restarting your account…', 'error');
                             setTimeout(async () => {
-                                try {
-                                    if (getToken()) {
-                                        // Cloud account: wipe cloud save
-                                        await api.putSave(null).catch(() => { });
-                                    }
-                                    else {
-                                        // Offline account: wipe local database
-                                        closeDB();
-                                        await deleteDB();
-                                    }
-                                }
-                                catch { }
-                                clearAuth();
+                                await performOneLifeReset();
                                 window.location.href = '/';
                             }, 2000);
                         }

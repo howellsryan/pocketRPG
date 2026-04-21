@@ -8,8 +8,9 @@ import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
 import { getCombatType, equipItem } from '../engine/equipment.js'
-import { api, clearAuth, getToken } from '../cloud/api.js'
-import { deleteDB, closeDB } from '../db/database.js'
+import { api, clearAuth, getToken, setLocalCharacterId } from '../cloud/api.js'
+import { closeDB } from '../db/database.js'
+import { wipeLocalSave } from '../db/saveload.js'
 import monstersData from '../data/monsters.json'
 import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
@@ -103,6 +104,28 @@ const MONSTER_ICONS = {
   tekton: '🔨', vespula: '🦟', muttadile: '🦷', olm: '🏛️',
   maiden_of_sugadinti: '🩸', pestilent_bloat: '🤢', nylocas_vasilias: '🕷️',
   sotetseg: '🔮', xarpus: '☠️', verzik_vitur: '👑'
+}
+
+// Nuke every trace of the current character so a One-Life death cannot be
+// revived by re-logging. Deletes the cloud saves row, the cloud idle-state
+// row, the local IndexedDB database, and every per-character localStorage key.
+// Best-effort on each step — we always fall through to clearAuth + reload.
+async function performOneLifeReset() {
+  if (getToken()) {
+    try { await api.deleteSave() } catch (err) { console.error('Failed to delete cloud save:', err) }
+    try { await api.deleteIdle() } catch (err) { console.error('Failed to delete cloud idle state:', err) }
+  }
+  try {
+    closeDB()
+    await wipeLocalSave()
+  } catch (err) { console.error('Failed to wipe local save:', err) }
+  // wipeLocalSave() covers backup/lastTick/activeTask/hiddenAt. Mop up the rest.
+  try {
+    localStorage.removeItem('pocketrpg_activeCombatSpell')
+    localStorage.removeItem('pocketrpg_offline_mode')
+    setLocalCharacterId(null)
+  } catch { /* ignore */ }
+  clearAuth()
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFightStatusChange }) {
@@ -288,21 +311,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             if (isOneLife) {
               addToast('you died! Restarting your account…', 'error')
               setTimeout(async () => {
-                try {
-                  if (getToken()) {
-                    // Cloud account: wipe cloud save
-                    await api.putSave(null).catch(err => {
-                      console.error('Failed to wipe cloud save:', err)
-                    })
-                  } else {
-                    // Offline account: wipe local database
-                    closeDB()
-                    await deleteDB()
-                  }
-                } catch (err) {
-                  console.error('Error during one-life reset:', err)
-                }
-                clearAuth()
+                await performOneLifeReset()
                 window.location.href = '/'
               }, 2000)
             } else {
@@ -334,21 +343,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             if (isOneLife) {
               addToast('you died! Restarting your account…', 'error')
               setTimeout(async () => {
-                try {
-                  if (getToken()) {
-                    // Cloud account: wipe cloud save
-                    await api.putSave(null).catch(err => {
-                      console.error('Failed to wipe cloud save:', err)
-                    })
-                  } else {
-                    // Offline account: wipe local database
-                    closeDB()
-                    await deleteDB()
-                  }
-                } catch (err) {
-                  console.error('Error during one-life reset:', err)
-                }
-                clearAuth()
+                await performOneLifeReset()
                 window.location.href = '/'
               }, 2000)
             } else {
