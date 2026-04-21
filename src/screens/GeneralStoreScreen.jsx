@@ -21,13 +21,20 @@ export default function GeneralStoreScreen() {
   const coins = hasMoneyPurse ? coinsInInv + coinsInBank : coinsInInv
 
   // Get all distinct item types (excluding quest items and untradeable items)
-  // For ironman players, do not show type filters — only "all" general store items
+  // For ironman players, only show types from isGeneralStore items
   const getItemTypes = () => {
-    if (isIronman) return []
     const types = new Set()
     Object.values(itemsData).forEach(item => {
       if (!item.questUnlock && !item.isUntradeable) {
-        types.add(item.type)
+        if (isIronman) {
+          // Ironman: only include types from isGeneralStore items
+          if (item.isGeneralStore) {
+            types.add(item.type)
+          }
+        } else {
+          // Non-ironman: include all non-quest items
+          types.add(item.type)
+        }
       }
     })
     return Array.from(types).sort()
@@ -62,10 +69,14 @@ export default function GeneralStoreScreen() {
         })
         .map(([id, item]) => ({ ...item, id }))
     }
-    // For type-based tabs (non-ironman only), show only items of that type that aren't quest items or untradeable
-    if (isIronman) return []
+    // For type-based tabs, show only items of that type that aren't quest items or untradeable
+    // For ironman, additionally filter to only isGeneralStore items
     return Object.entries(itemsData)
-      .filter(([_, item]) => !item.questUnlock && !item.isUntradeable && item.type === activeTab)
+      .filter(([_, item]) => {
+        if (item.questUnlock || item.isUntradeable || item.type !== activeTab) return false
+        if (isIronman) return item.isGeneralStore
+        return true
+      })
       .map(([id, item]) => ({ ...item, id }))
   }
 
