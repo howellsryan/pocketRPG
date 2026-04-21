@@ -651,8 +651,8 @@ function GameApp() {
     setOfflineCreating(true)
     try {
       await startNewGame(offlineIsIronman, 'Adventurer')
-      // startNewGame sets gameReady and transitions to the game
-      // No need to manually reset offlineCreating as the screen will unmount
+      // Transition from auth_offline to ready now that game is initialized
+      setCloudPhase('ready')
     } catch (err) {
       console.error('Failed to create offline character:', err)
       addToast(`Failed to create character: ${err.message}`, 'error')

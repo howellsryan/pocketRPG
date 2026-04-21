@@ -122,7 +122,8 @@ const itemsData = {
     "type": "resource",
     "stackable": true,
     "shopValue": 2,
-    "icon": "🪶"
+    "icon": "🪶",
+    "isGeneralStore": true
   },
   "cowhide": {
     "id": "cowhide",
@@ -33425,8 +33426,8 @@ function GameApp() {
         setOfflineCreating(true);
         try {
             await startNewGame(offlineIsIronman, 'Adventurer');
-            // startNewGame sets gameReady and transitions to the game
-            // No need to manually reset offlineCreating as the screen will unmount
+            // Transition from auth_offline to ready now that game is initialized
+            setCloudPhase('ready');
         }
         catch (err) {
             console.error('Failed to create offline character:', err);
