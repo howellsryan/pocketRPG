@@ -40,7 +40,6 @@ function GameApp() {
   // Cloud auth gate: 'pending' until we resolve, 'auth' if AuthScreen needed, 'auth_offline' for offline creation, 'ready' to boot game
   const [cloudPhase, setCloudPhase] = useState('pending')
   const [conflict, setConflict] = useState(null) // { cloudPayload, cloudHash, cloudUpdatedAt, localUpdatedAt }
-  const [offlineCharName, setOfflineCharName] = useState('')
   const [offlineIsIronman, setOfflineIsIronman] = useState(false)
   const [offlineCreating, setOfflineCreating] = useState(false)
 
@@ -647,11 +646,9 @@ function GameApp() {
 
   async function handleOfflineCharacterCreate(e) {
     e.preventDefault()
-    const name = offlineCharName.trim()
-    if (!name || name.length < 3 || name.length > 16) return
     setOfflineCreating(true)
     try {
-      await startNewGame(offlineIsIronman, name)
+      await startNewGame(offlineIsIronman, 'Adventurer')
     } catch (err) {
       console.error('Failed to create offline character:', err)
       addToast('Failed to create character. Please try again.', 'error')
@@ -711,7 +708,6 @@ function GameApp() {
 
   // Offline character creation
   if (cloudPhase === 'auth_offline') {
-    const USERNAME_RE = /^[A-Za-z0-9_-]{3,16}$/
     return (
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', background: '#0f0f0f' }}>
         <div style={{ width: '100%', maxWidth: '380px' }}>
@@ -721,18 +717,15 @@ function GameApp() {
           </div>
 
           <form onSubmit={handleOfflineCharacterCreate}>
-            <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '8px' }}>Create a character</div>
+            <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '8px' }}>Character</div>
             <input
               type="text"
-              value={offlineCharName}
-              onInput={(e) => setOfflineCharName(e.target.value)}
-              placeholder="Username (3–16 chars)"
-              maxLength={16}
-              autoFocus
-              style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333', color: '#e8d5b0', fontSize: '14px', fontFamily: 'Nunito, sans-serif', boxSizing: 'border-box', outline: 'none', marginBottom: '6px' }}
+              value="Adventurer"
+              disabled
+              style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', background: '#0f0f0f', border: '1px solid #2a2a2a', color: '#e8d5b0', fontSize: '14px', fontFamily: 'Nunito, sans-serif', boxSizing: 'border-box', outline: 'none', marginBottom: '6px', opacity: 0.6, cursor: 'not-allowed' }}
             />
             <p style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.45, margin: '6px 0 14px' }}>
-              Letters, numbers, _ and - only.
+              Offline characters use the name "Adventurer"
             </p>
 
             {/* Ironman Mode Toggle */}
@@ -753,10 +746,10 @@ function GameApp() {
               </label>
             </div>
 
-            <button type="submit" disabled={offlineCreating || !USERNAME_RE.test(offlineCharName)} style={{ width: '100%', padding: '14px', borderRadius: '12px', background: 'linear-gradient(135deg, #b8940e, #d4af37)', color: '#0f0f0f', fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '14px', letterSpacing: '0.05em', border: 'none', cursor: offlineCreating || !USERNAME_RE.test(offlineCharName) ? 'not-allowed' : 'pointer', opacity: offlineCreating || !USERNAME_RE.test(offlineCharName) ? 0.6 : 1, marginBottom: '10px' }}>
-              {offlineCreating ? 'Creating…' : 'Create Character'}
+            <button type="submit" disabled={offlineCreating} style={{ width: '100%', padding: '14px', borderRadius: '12px', background: 'linear-gradient(135deg, #b8940e, #d4af37)', color: '#0f0f0f', fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '14px', letterSpacing: '0.05em', border: 'none', cursor: offlineCreating ? 'not-allowed' : 'pointer', opacity: offlineCreating ? 0.6 : 1, marginBottom: '10px' }}>
+              {offlineCreating ? 'Creating…' : 'Start Adventure'}
             </button>
-            <button type="button" onClick={() => setCloudPhase('auth')} disabled={offlineCreating} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'transparent', border: '1px solid #2a2a2a', color: '#e8d5b0', opacity: 0.7, fontSize: '13px', cursor: 'pointer' }}>
+            <button type="button" onClick={() => setCloudPhase('auth')} disabled={offlineCreating} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'transparent', border: '1px solid #2a2a2a', color: '#e8d5b0', opacity: 0.7, fontSize: '13px', cursor: offlineCreating ? 'not-allowed' : 'pointer' }}>
               Back to Login
             </button>
           </form>
