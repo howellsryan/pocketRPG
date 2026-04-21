@@ -37,9 +37,12 @@ function GameApp() {
   const [actionData, setActionData] = useState(null) // { monsterId, gatherTaskId, skillId, actionId }
   const [isInBossFight, setIsInBossFight] = useState(false) // Track if currently in a boss fight
   const [pendingXpChoices, setPendingXpChoices] = useState([]) // [{ rewards, questId, questName }, ...]
-  // Cloud auth gate: 'pending' until we resolve, 'auth' if AuthScreen needed, 'ready' to boot game
+  // Cloud auth gate: 'pending' until we resolve, 'auth' if AuthScreen needed, 'auth_offline' for offline creation, 'ready' to boot game
   const [cloudPhase, setCloudPhase] = useState('pending')
   const [conflict, setConflict] = useState(null) // { cloudPayload, cloudHash, cloudUpdatedAt, localUpdatedAt }
+  const [offlineCharName, setOfflineCharName] = useState('')
+  const [offlineIsIronman, setOfflineIsIronman] = useState(false)
+  const [offlineCreating, setOfflineCreating] = useState(false)
 
   // Refs for tick-based systems
   const hpRegenCounter = useRef(0)
@@ -631,8 +634,8 @@ function GameApp() {
     }
   }
 
-  async function startNewGame(isIronman = false) {
-    const name = getCharacterName() || 'Adventurer'
+  async function startNewGame(isIronman = false, playerName = null) {
+    const name = playerName || getCharacterName() || 'Adventurer'
     await initNewGame(name, isIronman)
     // Stamp IDB ownership so the next boot knows these rows belong to the
     // selected character (only applies when signed in — offline leaves null).
@@ -640,6 +643,20 @@ function GameApp() {
     if (charId) setLocalCharacterId(charId)
     await loadGame()
     setGameReady(true)
+  }
+
+  async function handleOfflineCharacterCreate(e) {
+    e.preventDefault()
+    const name = offlineCharName.trim()
+    if (!name || name.length < 3 || name.length > 16) return
+    setOfflineCreating(true)
+    try {
+      await startNewGame(offlineIsIronman, name)
+    } catch (err) {
+      console.error('Failed to create offline character:', err)
+      addToast('Failed to create character. Please try again.', 'error')
+      setOfflineCreating(false)
+    }
   }
 
   // Switch character — flush any pending push, clear character (keep GitHub
@@ -692,6 +709,62 @@ function GameApp() {
     )
   }
 
+  // Offline character creation
+  if (cloudPhase === 'auth_offline') {
+    const USERNAME_RE = /^[A-Za-z0-9_-]{3,16}$/
+    return (
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', background: '#0f0f0f' }}>
+        <div style={{ width: '100%', maxWidth: '380px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+            <h1 style={{ fontFamily: 'Cinzel, serif', fontSize: '28px', fontWeight: '900', color: '#d4af37', letterSpacing: '0.05em' }}>PocketRPG</h1>
+            <p style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.35, marginTop: '4px', fontFamily: 'Nunito, sans-serif' }}>Offline Mode</p>
+          </div>
+
+          <form onSubmit={handleOfflineCharacterCreate}>
+            <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '8px' }}>Create a character</div>
+            <input
+              type="text"
+              value={offlineCharName}
+              onInput={(e) => setOfflineCharName(e.target.value)}
+              placeholder="Username (3–16 chars)"
+              maxLength={16}
+              autoFocus
+              style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333', color: '#e8d5b0', fontSize: '14px', fontFamily: 'Nunito, sans-serif', boxSizing: 'border-box', outline: 'none', marginBottom: '6px' }}
+            />
+            <p style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.45, margin: '6px 0 14px' }}>
+              Letters, numbers, _ and - only.
+            </p>
+
+            {/* Ironman Mode Toggle */}
+            <div style={{ marginBottom: '14px', padding: '12px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', margin: 0 }}>
+                <input
+                  type="checkbox"
+                  checked={offlineIsIronman}
+                  onChange={(e) => setOfflineIsIronman(e.target.checked)}
+                  style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                />
+                <div>
+                  <div style={{ fontSize: '13px', color: '#d4af37', fontWeight: 'bold' }}>⚔️ Ironman Mode</div>
+                  <div style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.6, marginTop: '2px' }}>
+                    Limited shop access. Can only buy general and quest items.
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            <button type="submit" disabled={offlineCreating || !USERNAME_RE.test(offlineCharName)} style={{ width: '100%', padding: '14px', borderRadius: '12px', background: 'linear-gradient(135deg, #b8940e, #d4af37)', color: '#0f0f0f', fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '14px', letterSpacing: '0.05em', border: 'none', cursor: offlineCreating || !USERNAME_RE.test(offlineCharName) ? 'not-allowed' : 'pointer', opacity: offlineCreating || !USERNAME_RE.test(offlineCharName) ? 0.6 : 1, marginBottom: '10px' }}>
+              {offlineCreating ? 'Creating…' : 'Create Character'}
+            </button>
+            <button type="button" onClick={() => setCloudPhase('auth')} disabled={offlineCreating} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'transparent', border: '1px solid #2a2a2a', color: '#e8d5b0', opacity: 0.7, fontSize: '13px', cursor: 'pointer' }}>
+              Back to Login
+            </button>
+          </form>
+        </div>
+      </div>
+    )
+  }
+
   // Auth gate — shown before we touch local save
   if (cloudPhase === 'auth') {
     return (
@@ -703,8 +776,7 @@ function GameApp() {
         }}
         onPlayOffline={() => {
           localStorage.setItem('pocketrpg_offline_mode', '1')
-          setCloudPhase('ready')
-          checkSave()
+          setCloudPhase('auth_offline')
         }}
       />
     )
