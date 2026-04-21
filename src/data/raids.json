@@ -71,5 +71,56 @@
         ]
       }
     }
+  },
+  "barrows_brothers": {
+    "id": "barrows_brothers",
+    "name": "Barrows Brothers",
+    "icon": "⚰️",
+    "description": "Descend into the Barrows crypt and defeat all six brothers to claim their treasures.",
+    "bosses": [
+      "arim_the_blighted",
+      "dharok_the_wretched",
+      "guthan_the_infested",
+      "karil_the_tainted",
+      "torag_the_corrupted",
+      "verac_the_defiled"
+    ],
+    "rewards": {
+      "always": [
+        { "itemId": "coins", "quantity": [10000, 50000], "chance": 1.0 },
+        { "itemId": "death_rune", "quantity": [50, 750], "chance": 0.6 },
+        { "itemId": "blood_rune", "quantity": [30, 500], "chance": 0.5 },
+        { "itemId": "soul_rune", "quantity": [20, 500], "chance": 0.4 }
+      ],
+      "unique": {
+        "chance": 0.25,
+        "items": [
+          { "itemId": "ahrims_hood", "weight": 1 },
+          { "itemId": "ahrims_robetop", "weight": 1 },
+          { "itemId": "ahrims_robeskirt", "weight": 1 },
+          { "itemId": "ahrims_staff", "weight": 1 },
+          { "itemId": "dharoks_helm", "weight": 1 },
+          { "itemId": "dharoks_platebody", "weight": 1 },
+          { "itemId": "dharoks_platelegs", "weight": 1 },
+          { "itemId": "dharoks_greataxe", "weight": 1 },
+          { "itemId": "guthans_helm", "weight": 1 },
+          { "itemId": "guthans_platebody", "weight": 1 },
+          { "itemId": "guthans_chainskirt", "weight": 1 },
+          { "itemId": "guthans_warspear", "weight": 1 },
+          { "itemId": "karils_coif", "weight": 1 },
+          { "itemId": "karils_leathertop", "weight": 1 },
+          { "itemId": "karils_leatherskirt", "weight": 1 },
+          { "itemId": "karils_crossbow", "weight": 1 },
+          { "itemId": "torags_helm", "weight": 1 },
+          { "itemId": "torags_platebody", "weight": 1 },
+          { "itemId": "torags_platelegs", "weight": 1 },
+          { "itemId": "torags_hammers", "weight": 1 },
+          { "itemId": "veracs_helm", "weight": 1 },
+          { "itemId": "veracs_brassard", "weight": 1 },
+          { "itemId": "veracs_plateskirt", "weight": 1 },
+          { "itemId": "veracs_flail", "weight": 1 }
+        ]
+      }
+    }
   }
 }

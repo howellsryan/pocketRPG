@@ -242,6 +242,34 @@ function checkMonsterDeath(state, monster, events) {
 }
 
 /**
+ * Check if player is wearing full Dharok set
+ */
+function hasFullDharokSet(equipment, itemsData) {
+  if (!equipment || !itemsData) return false
+  const dharokItems = ['dharoks_helm', 'dharoks_platebody', 'dharoks_platelegs', 'dharoks_greataxe']
+  return dharokItems.every(itemId => {
+    for (const [, slot] of Object.entries(equipment)) {
+      if (slot && slot.itemId === itemId) return true
+    }
+    return false
+  })
+}
+
+/**
+ * Check if player is wearing full Guthan set
+ */
+function hasFullGuthanSet(equipment, itemsData) {
+  if (!equipment || !itemsData) return false
+  const guthanItems = ['guthans_helm', 'guthans_platebody', 'guthans_chainskirt', 'guthans_warspear']
+  return guthanItems.every(itemId => {
+    for (const [, slot] of Object.entries(equipment)) {
+      if (slot && slot.itemId === itemId) return true
+    }
+    return false
+  })
+}
+
+/**
  * Process one combat tick.
  * Returns { combatState, events[] }
  * events: { type: 'playerHit'|'monsterHit'|'monsterDeath'|'playerDeath'|'xp'|'levelUp', ... }
@@ -595,12 +623,31 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       xpSkills = {}
     }
 
+    // ── Dharok Set Bonus ──
+    if (!isImmune && damage > 0 && hasFullDharokSet(equipment, itemsData)) {
+      const maxHP = playerStats.maxHP || playerStats.hitpoints || 100
+      const currentHP = playerStats.currentHP || maxHP
+      const lostHP = maxHP - currentHP
+      const dharokMultiplier = 1 + (lostHP / maxHP) * (currentHP / maxHP)
+      damage = Math.floor(damage * dharokMultiplier)
+    }
+
     const actualDamage = Math.min(damage, Math.max(0, monster.currentHP))
     monster.currentHP -= actualDamage
+
+    // ── Guthan Set Bonus: 25% chance to heal for 100% of damage dealt ──
+    let guthanHealAmount = 0
+    if (!isImmune && actualDamage > 0 && hasFullGuthanSet(equipment, itemsData) && Math.random() < 0.25) {
+      guthanHealAmount = actualDamage
+    }
+
     if (isImmune) {
       events.push({ type: 'immuneHit', immunity: formImmunity, monsterName: monster.name })
     } else {
       events.push({ type: 'playerHit', damage: actualDamage, monsterHP: monster.currentHP })
+      if (guthanHealAmount > 0) {
+        events.push({ type: 'guthanHeal', healAmount: guthanHealAmount })
+      }
     }
 
     // Recompute xpSkills based on actualDamage to avoid overkill XP
