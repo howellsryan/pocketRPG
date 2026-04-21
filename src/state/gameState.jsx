@@ -642,7 +642,9 @@ export function GameProvider({ children }) {
     bankConfig: bankConfig,
     homeShortcuts,
     bossKillCounts,
-  }), [bankConfig, homeShortcuts, bossKillCounts])
+    completedQuests,
+    questQueue,
+  }), [bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue])
 
   const value = {
     loaded, player, stats, inventory, equipment, bank, currentHP, toasts,

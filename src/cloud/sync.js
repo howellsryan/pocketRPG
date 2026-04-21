@@ -36,7 +36,7 @@ async function flushNow() {
   pendingSnapshot = null
   inFlight = true
   try {
-    const data = buildSavePayloadFromState(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig, snap.homeShortcuts, snap.bossKillCounts)
+    const data = buildSavePayloadFromState(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig, snap.homeShortcuts, snap.bossKillCounts, snap.completedQuests, snap.questQueue)
     const json = JSON.stringify(data)
     const res = await api.putSave(json)
     if (res?.updatedAt) lastPushedAt = res.updatedAt
