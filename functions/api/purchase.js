@@ -1,10 +1,5 @@
 import { requireAuth, json } from '../_lib/auth.js'
-
-// Untradeable items that cannot be purchased (mirrors isUntradeable flag from src/data/items.json)
-// Items like coins are system items and cannot be bought through the shop
-const UNTRADEABLE_ITEMS = new Set([
-  'coins',
-])
+import itemsData from '../../src/data/items.json' assert { type: 'json' }
 
 export async function onRequestPost({ request, env }) {
   const auth = await requireAuth(request, env)
@@ -30,18 +25,23 @@ export async function onRequestPost({ request, env }) {
       return json({ error: 'Character not found' }, 404)
     }
 
-    // Prevent purchasing untradeable items (these shouldn't be in shop anyway)
-    if (UNTRADEABLE_ITEMS.has(item_id)) {
+    // Verify item exists and get its properties
+    const item = itemsData[item_id]
+    if (!item) {
+      return json({ error: 'Item not found' }, 404)
+    }
+
+    // Prevent purchasing untradeable items
+    if (item.isUntradeable) {
       return json({ error: 'This item cannot be purchased' }, 400)
     }
 
     // If character is ironman, enforce stricter item restrictions
     // Ironman can purchase: quest items (questUnlock) and general store items
-    // They cannot purchase: specialty shop items or untradeable items
+    // They cannot purchase: untradeable items (already blocked above)
     if (character.is_ironman) {
-      // The main restriction is already handled above (no untradeable items)
-      // Additional specialty restrictions can be added here as needed
-      // For now, the frontend validates questUnlock status and the backend validates ironman status
+      // Quest items and general store items are allowed
+      // Untradeable items are already blocked above
     }
 
     // Purchase validation passed
