@@ -33217,12 +33217,7 @@ function AuthScreen({ onCloudReady, onPlayOffline }) {
         setBusy(true);
         try {
             const res = await api.createCharacter(name, isIronman, isOneLife);
-            // Ensure flags are stored with the character, using form values as source of truth
-            // in case the API response doesn't include them
-            const character = res.character;
-            character.is_ironman = isIronman;
-            character.is_one_life = isOneLife;
-            selectCharacter(character);
+            selectCharacter(res.character);
         }
         catch (err) {
             setError(err.message);
