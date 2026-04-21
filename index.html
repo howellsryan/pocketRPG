@@ -25994,6 +25994,10 @@ const api = {
         method: 'POST',
         body: JSON.stringify({ username, is_ironman: isIronman }),
     }),
+    validatePurchase: (itemId, quantity = 1) => request('/api/purchase', {
+        method: 'POST',
+        body: JSON.stringify({ item_id: itemId, quantity }),
+    }),
     getSave: () => request('/api/save'),
     putSave: (save_data) => request('/api/save', {
         method: 'PUT',
@@ -31830,6 +31834,7 @@ function GatherScreen({ initialTaskId, idleResult }) {
 
 
 
+
 // ── COMPONENT ───────────────────────────────────────────────────────────────
 function GeneralStoreScreen() {
     const { inventory, bank, updateInventory, updateBankDirect, addToast, itemsData, unlockedFeatures, completedQuests, isIronman } = useGame();
@@ -31894,7 +31899,7 @@ function GeneralStoreScreen() {
         return available.filter(item => item.name.toLowerCase().includes(lower));
     };
     const modifiedPrice = (basePrice) => Math.floor(basePrice * 1.1);
-    const handleBuy = () => {
+    const handleBuy = async () => {
         if (!selectedItem)
             return;
         // Prevent purchasing locked quest items
@@ -31907,6 +31912,21 @@ function GeneralStoreScreen() {
         if (coins < totalCost) {
             addToast(`Need ${totalCost.toLocaleString()} coins — you have ${coins.toLocaleString()}.`, 'error');
             return;
+        }
+        // Validate purchase with backend (required for cloud accounts)
+        if (getToken() && getCharacterId()) {
+            try {
+                await api.validatePurchase(selectedItem.id, buyQty);
+            }
+            catch (err) {
+                if (err.status === 403) {
+                    addToast('⚠️ This item is not available to your character type.', 'error');
+                }
+                else {
+                    addToast(`Purchase validation failed: ${err.message}`, 'error');
+                }
+                return;
+            }
         }
         const newInv = [...inventory];
         if (buyQty > 1) {

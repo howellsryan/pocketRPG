@@ -98,6 +98,10 @@ export const api = {
     method: 'POST',
     body: JSON.stringify({ username, is_ironman: isIronman }),
   }),
+  validatePurchase: (itemId, quantity = 1) => request('/api/purchase', {
+    method: 'POST',
+    body: JSON.stringify({ item_id: itemId, quantity }),
+  }),
   getSave: () => request('/api/save'),
   putSave: (save_data) => request('/api/save', {
     method: 'PUT',

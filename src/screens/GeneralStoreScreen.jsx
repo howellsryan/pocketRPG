@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import { countItem, removeItem, freeSlots } from '../engine/inventory.js'
+import { api, getToken, getCharacterId } from '../cloud/api.js'
 import Modal from '../components/Modal.jsx'
 import Panel from '../components/Panel.jsx'
 import Button from '../components/Button.jsx'
@@ -75,7 +76,7 @@ export default function GeneralStoreScreen() {
 
   const modifiedPrice = (basePrice) => Math.floor(basePrice * 1.1)
 
-  const handleBuy = () => {
+  const handleBuy = async () => {
     if (!selectedItem) return
 
     // Prevent purchasing locked quest items
@@ -90,6 +91,20 @@ export default function GeneralStoreScreen() {
     if (coins < totalCost) {
       addToast(`Need ${totalCost.toLocaleString()} coins — you have ${coins.toLocaleString()}.`, 'error')
       return
+    }
+
+    // Validate purchase with backend (required for cloud accounts)
+    if (getToken() && getCharacterId()) {
+      try {
+        await api.validatePurchase(selectedItem.id, buyQty)
+      } catch (err) {
+        if (err.status === 403) {
+          addToast('⚠️ This item is not available to your character type.', 'error')
+        } else {
+          addToast(`Purchase validation failed: ${err.message}`, 'error')
+        }
+        return
+      }
     }
 
     const newInv = [...inventory]
