@@ -87,6 +87,23 @@ export async function onRequestPut({ request, env }) {
   return json({ ok: true, lastActiveAt: now, updatedAt: now })
 }
 
+// Hard-delete the idle-state row for this character. Used on One-Life death so
+// the engine can't resume a task or last-active timestamp on next login.
+export async function onRequestDelete({ request, env }) {
+  const auth = await requireAuth(request, env)
+  if (auth.error) return json({ error: auth.error }, auth.status)
+
+  const characterId = getCharacterIdFromHeaders(request)
+  if (characterId === null) return json({ error: 'Missing X-Character-Id header' }, 400)
+
+  if (!(await assertCharacterOwned(env, characterId, auth.identity.id))) {
+    return json({ error: 'Character not found' }, 404)
+  }
+
+  await env.DB.prepare('DELETE FROM character_idle_state WHERE character_id = ?').bind(characterId).run()
+  return json({ ok: true })
+}
+
 // Beacon path: navigator.sendBeacon can't set custom headers, so we accept
 // the session token and character id as body fields. Same write semantics as
 // PUT — server stamps last_active_at with its own clock.

@@ -126,6 +126,8 @@ export const api = {
     method: 'PUT',
     body: JSON.stringify({ active_task: activeTask == null ? null : JSON.stringify(activeTask) }),
   }),
+  deleteSave: () => request('/api/save', { method: 'DELETE' }),
+  deleteIdle: () => request('/api/idle', { method: 'DELETE' }),
 }
 
 // Fire-and-forget idle state write via navigator.sendBeacon. Survives tab
