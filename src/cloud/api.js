@@ -27,8 +27,8 @@ export function setCharacter(id, username, isIronman = null, isOneLife = null) {
   if (id) {
     localStorage.setItem(CHARACTER_KEY, String(id))
     if (username) localStorage.setItem(CHARACTER_NAME_KEY, username)
-    if (isIronman !== null) localStorage.setItem('pocketrpg_ironman_mode', String(isIronman))
-    if (isOneLife !== null) localStorage.setItem('pocketrpg_one_life_mode', String(isOneLife))
+    if (isIronman != null) localStorage.setItem('pocketrpg_ironman_mode', String(isIronman))
+    if (isOneLife != null) localStorage.setItem('pocketrpg_one_life_mode', String(isOneLife))
   } else {
     localStorage.removeItem(CHARACTER_KEY)
     localStorage.removeItem(CHARACTER_NAME_KEY)
