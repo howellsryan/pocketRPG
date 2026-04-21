@@ -670,7 +670,8 @@ export function GameProvider({ children }) {
     updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,
     markDirty, itemsData, updateHomeShortcuts, updateCombatStance,
     setActiveTask, updateBankDirect, getSnapshot, updateAutoBankLoot, updateBankConfig,
-    isIronman: player?.is_ironman || false
+    isIronman: player?.is_ironman || false,
+    isOneLife: player?.is_one_life || false
   }
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>

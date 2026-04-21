@@ -14,6 +14,7 @@ export default function AuthScreen({ onCloudReady, onPlayOffline }) {
   const [busy, setBusy] = useState(false)
   const [newName, setNewName] = useState('')
   const [isIronman, setIsIronman] = useState(false)
+  const [isOneLife, setIsOneLife] = useState(false)
 
   useEffect(() => {
     if (mode === 'characters') refreshCharacters()
@@ -40,7 +41,7 @@ export default function AuthScreen({ onCloudReady, onPlayOffline }) {
 
   function selectCharacter(ch) {
     resetSyncState()
-    setCharacter(ch.id, ch.username, ch.is_ironman)
+    setCharacter(ch.id, ch.username, ch.is_ironman, ch.is_one_life)
     onCloudReady(ch)
   }
 
@@ -51,7 +52,7 @@ export default function AuthScreen({ onCloudReady, onPlayOffline }) {
     if (!name) return
     setBusy(true)
     try {
-      const res = await api.createCharacter(name, isIronman)
+      const res = await api.createCharacter(name, isIronman, isOneLife)
       selectCharacter(res.character)
     } catch (err) {
       setError(err.message)
@@ -157,6 +158,24 @@ export default function AuthScreen({ onCloudReady, onPlayOffline }) {
                 <div style={{ fontSize: '13px', color: '#d4af37', fontWeight: 'bold' }}>⚔️ Ironman Mode</div>
                 <div style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.6, marginTop: '2px' }}>
                   Limited shop access. Can only buy general and quest items.
+                </div>
+              </div>
+            </label>
+          </div>
+
+          {/* One Life Mode Toggle */}
+          <div style={{ marginBottom: '14px', padding: '12px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', margin: 0 }}>
+              <input
+                type="checkbox"
+                checked={isOneLife}
+                onChange={(e) => setIsOneLife(e.target.checked)}
+                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+              />
+              <div>
+                <div style={{ fontSize: '13px', color: '#d4af37', fontWeight: 'bold' }}>☠️ One Life Mode</div>
+                <div style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.6, marginTop: '2px' }}>
+                  Die once and your account is permanently deleted. Works with or without Ironman.
                 </div>
               </div>
             </label>

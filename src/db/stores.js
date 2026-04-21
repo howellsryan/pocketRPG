@@ -131,13 +131,14 @@ export async function saveSetting(key, value) {
 
 // ── New Game Initialization ──
 
-export async function initNewGame(playerName, isIronman = false) {
+export async function initNewGame(playerName, isIronman = false, isOneLife = false) {
   const db = await getDB()
 
   // Player profile
   await db.put('player', {
     name: playerName,
     is_ironman: isIronman,
+    is_one_life: isOneLife,
     created: Date.now(),
     totalPlayTime: 0
   }, 'profile')

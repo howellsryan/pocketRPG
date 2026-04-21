@@ -26206,12 +26206,13 @@ async function saveSetting(key, value) {
     return db.put('settings', { key, value }, key);
 }
 // ── New Game Initialization ──
-async function initNewGame(playerName, isIronman = false) {
+async function initNewGame(playerName, isIronman = false, isOneLife = false) {
     const db = await getDB();
     // Player profile
     await db.put('player', {
         name: playerName,
         is_ironman: isIronman,
+        is_one_life: isOneLife,
         created: Date.now(),
         totalPlayTime: 0
     }, 'profile');
@@ -26398,22 +26399,29 @@ function getCharacterId() {
     const v = localStorage.getItem(CHARACTER_KEY);
     return v ? parseInt(v, 10) : null;
 }
-function setCharacter(id, username, isIronman = null) {
+function setCharacter(id, username, isIronman = null, isOneLife = null) {
     if (id) {
         localStorage.setItem(CHARACTER_KEY, String(id));
         if (username)
             localStorage.setItem(CHARACTER_NAME_KEY, username);
         if (isIronman !== null)
             localStorage.setItem('pocketrpg_ironman_mode', String(isIronman));
+        if (isOneLife !== null)
+            localStorage.setItem('pocketrpg_one_life_mode', String(isOneLife));
     }
     else {
         localStorage.removeItem(CHARACTER_KEY);
         localStorage.removeItem(CHARACTER_NAME_KEY);
         localStorage.removeItem('pocketrpg_ironman_mode');
+        localStorage.removeItem('pocketrpg_one_life_mode');
     }
 }
 function getIronmanMode() {
     const v = localStorage.getItem('pocketrpg_ironman_mode');
+    return v === 'true';
+}
+function getOneLifeMode() {
+    const v = localStorage.getItem('pocketrpg_one_life_mode');
     return v === 'true';
 }
 function getCharacterName() {
@@ -26478,9 +26486,9 @@ async function request(path, options = {}) {
 const api = {
     me: () => request('/api/auth/me'),
     listCharacters: () => request('/api/characters'),
-    createCharacter: (username, isIronman = false) => request('/api/characters', {
+    createCharacter: (username, isIronman = false, isOneLife = false) => request('/api/characters', {
         method: 'POST',
-        body: JSON.stringify({ username, is_ironman: isIronman }),
+        body: JSON.stringify({ username, is_ironman: isIronman, is_one_life: isOneLife }),
     }),
     validatePurchase: (itemId, quantity = 1) => request('/api/purchase', {
         method: 'POST',
@@ -27427,7 +27435,8 @@ function GameProvider({ children }) {
         updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,
         markDirty, itemsData, updateHomeShortcuts, updateCombatStance,
         setActiveTask, updateBankDirect, getSnapshot, updateAutoBankLoot, updateBankConfig,
-        isIronman: player?.is_ironman || false
+        isIronman: player?.is_ironman || false,
+        isOneLife: player?.is_one_life || false
     };
     return h(GameContext.Provider, { value: value }, children);
 }
@@ -28956,6 +28965,8 @@ function BankScreen() {
 
 
 
+
+
 const COMBAT_CATEGORIES = [
     {
         key: 'training',
@@ -29043,7 +29054,7 @@ const MONSTER_ICONS = {
     sotetseg: '🔮', xarpus: '☠️', verzik_vitur: '👑'
 };
 function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFightStatusChange }) {
-    const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests } = useGame();
+    const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife } = useGame();
     const [combat, setCombat] = useState(null);
     const [log, setLog] = useState([]);
     const [killCount, setKillCount] = useState(0);
@@ -29210,10 +29221,31 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFight
                     }
                     if (newHP <= 0) {
                         setCombat(prev => ({ ...prev, active: false }));
-                        addToast('You died!', 'error');
                         setActiveTask(null);
-                        updateHP(getMaxHP());
-                        hpRef.current = getMaxHP();
+                        if (isOneLife) {
+                            addToast('you died! Restarting your account…', 'error');
+                            setTimeout(async () => {
+                                try {
+                                    if (getToken()) {
+                                        // Cloud account: wipe cloud save
+                                        await api.putSave(null).catch(() => { });
+                                    }
+                                    else {
+                                        // Offline account: wipe local database
+                                        closeDB();
+                                        await deleteDB();
+                                    }
+                                }
+                                catch { }
+                                clearAuth();
+                                window.location.href = '/';
+                            }, 2000);
+                        }
+                        else {
+                            addToast('You died!', 'error');
+                            updateHP(getMaxHP());
+                            hpRef.current = getMaxHP();
+                        }
                     }
                 }
                 if (ev.type === 'monsterMiss') {
@@ -29234,10 +29266,31 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFight
                         }]);
                     if (newHP <= 0) {
                         setCombat(prev => ({ ...prev, active: false }));
-                        addToast('Incinerated by dragonfire!', 'error');
                         setActiveTask(null);
-                        updateHP(getMaxHP());
-                        hpRef.current = getMaxHP();
+                        if (isOneLife) {
+                            addToast('you died! Restarting your account…', 'error');
+                            setTimeout(async () => {
+                                try {
+                                    if (getToken()) {
+                                        // Cloud account: wipe cloud save
+                                        await api.putSave(null).catch(() => { });
+                                    }
+                                    else {
+                                        // Offline account: wipe local database
+                                        closeDB();
+                                        await deleteDB();
+                                    }
+                                }
+                                catch { }
+                                clearAuth();
+                                window.location.href = '/';
+                            }, 2000);
+                        }
+                        else {
+                            addToast('Incinerated by dragonfire!', 'error');
+                            updateHP(getMaxHP());
+                            hpRef.current = getMaxHP();
+                        }
                     }
                 }
                 if (ev.type === 'dragonfireBlocked') {
@@ -33124,6 +33177,7 @@ function AuthScreen({ onCloudReady, onPlayOffline }) {
     const [busy, setBusy] = useState(false);
     const [newName, setNewName] = useState('');
     const [isIronman, setIsIronman] = useState(false);
+    const [isOneLife, setIsOneLife] = useState(false);
     useEffect(() => {
         if (mode === 'characters')
             refreshCharacters();
@@ -33151,7 +33205,7 @@ function AuthScreen({ onCloudReady, onPlayOffline }) {
     }
     function selectCharacter(ch) {
         resetSyncState();
-        setCharacter(ch.id, ch.username, ch.is_ironman);
+        setCharacter(ch.id, ch.username, ch.is_ironman, ch.is_one_life);
         onCloudReady(ch);
     }
     async function handleCreate(e) {
@@ -33162,7 +33216,7 @@ function AuthScreen({ onCloudReady, onPlayOffline }) {
             return;
         setBusy(true);
         try {
-            const res = await api.createCharacter(name, isIronman);
+            const res = await api.createCharacter(name, isIronman, isOneLife);
             selectCharacter(res.character);
         }
         catch (err) {
@@ -33216,6 +33270,12 @@ function AuthScreen({ onCloudReady, onPlayOffline }) {
                     h("div", null,
                         h("div", { style: { fontSize: '13px', color: '#d4af37', fontWeight: 'bold' } }, "\u2694\uFE0F Ironman Mode"),
                         h("div", { style: { fontSize: '10px', color: '#e8d5b0', opacity: 0.6, marginTop: '2px' } }, "Limited shop access. Can only buy general and quest items.")))),
+            h("div", { style: { marginBottom: '14px', padding: '12px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333' } },
+                h("label", { style: { display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', margin: 0 } },
+                    h("input", { type: "checkbox", checked: isOneLife, onChange: (e) => setIsOneLife(e.target.checked), style: { width: '18px', height: '18px', cursor: 'pointer' } }),
+                    h("div", null,
+                        h("div", { style: { fontSize: '13px', color: '#d4af37', fontWeight: 'bold' } }, "\u2620\uFE0F One Life Mode"),
+                        h("div", { style: { fontSize: '10px', color: '#e8d5b0', opacity: 0.6, marginTop: '2px' } }, "Die once and your account is permanently deleted. Works with or without Ironman.")))),
             h("button", { type: "submit", disabled: busy || newName.trim().length < 3, style: primaryBtn }, busy ? 'Creating…' : 'Create Character'),
             characters && characters.length > 0 && (h("button", { type: "button", onClick: () => setMode('characters'), style: ghostBtn }, "Back")))),
         error && h("p", { style: errorText }, error)));
@@ -33293,6 +33353,7 @@ function GameApp() {
     const [cloudPhase, setCloudPhase] = useState('pending');
     const [conflict, setConflict] = useState(null); // { cloudPayload, cloudHash, cloudUpdatedAt, localUpdatedAt }
     const [offlineIsIronman, setOfflineIsIronman] = useState(false);
+    const [offlineIsOneLife, setOfflineIsOneLife] = useState(false);
     const [offlineCreating, setOfflineCreating] = useState(false);
     // Refs for tick-based systems
     const hpRegenCounter = useRef(0);
@@ -33902,11 +33963,13 @@ function GameApp() {
             await startNewGame();
         }
     }
-    async function startNewGame(isIronman = null, playerName = null) {
+    async function startNewGame(isIronman = null, playerName = null, isOneLife = null) {
         const name = playerName || getCharacterName() || 'Adventurer';
         // If isIronman not explicitly provided, check if it was stored (cloud character)
         const finalIsIronman = isIronman !== null ? isIronman : getIronmanMode();
-        await initNewGame(name, finalIsIronman);
+        // If isOneLife not explicitly provided, check if it was stored (cloud character)
+        const finalIsOneLife = isOneLife !== null ? isOneLife : getOneLifeMode();
+        await initNewGame(name, finalIsIronman, finalIsOneLife);
         // Stamp IDB ownership so the next boot knows these rows belong to the
         // selected character (only applies when signed in — offline leaves null).
         const charId = getCharacterId();
@@ -33919,7 +33982,7 @@ function GameApp() {
         e.preventDefault();
         setOfflineCreating(true);
         try {
-            await startNewGame(offlineIsIronman, 'Adventurer');
+            await startNewGame(offlineIsIronman, 'Adventurer', offlineIsOneLife);
             // Transition from auth_offline to ready now that game is initialized
             setCloudPhase('ready');
         }
@@ -33992,6 +34055,12 @@ function GameApp() {
                             h("div", null,
                                 h("div", { style: { fontSize: '13px', color: '#d4af37', fontWeight: 'bold' } }, "\u2694\uFE0F Ironman Mode"),
                                 h("div", { style: { fontSize: '10px', color: '#e8d5b0', opacity: 0.6, marginTop: '2px' } }, "Limited shop access. Can only buy general and quest items.")))),
+                    h("div", { style: { marginBottom: '14px', padding: '12px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333' } },
+                        h("label", { style: { display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', margin: 0 } },
+                            h("input", { type: "checkbox", checked: offlineIsOneLife, onChange: (e) => setOfflineIsOneLife(e.target.checked), style: { width: '18px', height: '18px', cursor: 'pointer' } }),
+                            h("div", null,
+                                h("div", { style: { fontSize: '13px', color: '#d4af37', fontWeight: 'bold' } }, "\u2620\uFE0F One Life Mode"),
+                                h("div", { style: { fontSize: '10px', color: '#e8d5b0', opacity: 0.6, marginTop: '2px' } }, "Die once and your account is permanently deleted. Works with or without Ironman.")))),
                     h("button", { type: "submit", disabled: offlineCreating, style: { width: '100%', padding: '14px', borderRadius: '12px', background: 'linear-gradient(135deg, #b8940e, #d4af37)', color: '#0f0f0f', fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '14px', letterSpacing: '0.05em', border: 'none', cursor: offlineCreating ? 'not-allowed' : 'pointer', opacity: offlineCreating ? 0.6 : 1, marginBottom: '10px' } }, offlineCreating ? 'Creating…' : 'Start Adventure'),
                     h("button", { type: "button", onClick: () => setCloudPhase('auth'), disabled: offlineCreating, style: { width: '100%', padding: '12px', borderRadius: '12px', background: 'transparent', border: '1px solid #2a2a2a', color: '#e8d5b0', opacity: 0.7, fontSize: '13px', cursor: offlineCreating ? 'not-allowed' : 'pointer' } }, "Back to Login")))));
     }
