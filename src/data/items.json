@@ -279,7 +279,7 @@
     },
     "shopValue": 14957,
     "icon": "\u2694\ufe0f",
-    "isGeneralStore": true
+    "isGeneralStore": false
   },
   "bronze_spear": {
     "id": "bronze_spear",
@@ -914,7 +914,7 @@
     "burnStopLevel": 74,
     "shopValue": 146,
     "icon": "\ud83e\udd9e",
-    "isGeneralStore": true
+    "isGeneralStore": false
   },
   "lobster": {
     "id": "lobster",
@@ -938,7 +938,7 @@
     "burnStopLevel": 86,
     "shopValue": 211,
     "icon": "\ud83d\udc1f",
-    "isGeneralStore": true
+    "isGeneralStore": false
   },
   "swordfish": {
     "id": "swordfish",
@@ -973,7 +973,7 @@
     "eatTicks": 3,
     "shopValue": 758,
     "icon": "\ud83e\udd88",
-    "isGeneralStore": true
+    "isGeneralStore": false
   },
   "raw_chicken": {
     "id": "raw_chicken",
@@ -997,7 +997,7 @@
     "eatTicks": 3,
     "shopValue": 51,
     "icon": "\ud83c\udf57",
-    "isGeneralStore": true
+    "isGeneralStore": false
   },
   "raw_beef": {
     "id": "raw_beef",
@@ -1021,7 +1021,7 @@
     "eatTicks": 3,
     "shopValue": 61,
     "icon": "\ud83e\udd69",
-    "isGeneralStore": true
+    "isGeneralStore": false
   },
   "burnt_food": {
     "id": "burnt_food",
@@ -6526,7 +6526,7 @@
     },
     "shopValue": 9053,
     "icon": "\ud83c\udff9",
-    "isGeneralStore": true
+    "isGeneralStore": false
   },
   "godsword_shard": {
     "id": "godsword_shard",
@@ -7755,7 +7755,7 @@
     },
     "shopValue": 50,
     "icon": "\ud83d\udd78\ufe0f",
-    "isGeneralStore": false
+    "isGeneralStore": true
   },
   "fishing_rod": {
     "id": "fishing_rod",
@@ -7829,7 +7829,7 @@
     },
     "shopValue": 200,
     "icon": "\ud83e\udea4",
-    "isGeneralStore": false
+    "isGeneralStore": true
   },
   "harpoon": {
     "id": "harpoon",
