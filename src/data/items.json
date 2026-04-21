@@ -5196,7 +5196,7 @@
   "chaos_rune": {
     "id": "chaos_rune",
     "name": "Chaos rune",
-    "type": "resource",
+    "type": "Rune",
     "stackable": true,
     "shopValue": 106,
     "icon": "💜",
@@ -5205,7 +5205,7 @@
   "death_rune": {
     "id": "death_rune",
     "name": "Death rune",
-    "type": "resource",
+    "type": "Rune",
     "stackable": true,
     "shopValue": 190,
     "icon": "💀",
@@ -5223,7 +5223,7 @@
   "law_rune": {
     "id": "law_rune",
     "name": "Law rune",
-    "type": "resource",
+    "type": "Rune",
     "stackable": true,
     "shopValue": 123,
     "icon": "⚖️",
@@ -5556,7 +5556,7 @@
   "blood_rune": {
     "id": "blood_rune",
     "name": "Blood rune",
-    "type": "resource",
+    "type": "Rune",
     "stackable": true,
     "shopValue": 285,
     "icon": "🔴",
@@ -5565,7 +5565,7 @@
   "soul_rune": {
     "id": "soul_rune",
     "name": "Soul rune",
-    "type": "resource",
+    "type": "Rune",
     "stackable": true,
     "shopValue": 366,
     "icon": "🔵",
