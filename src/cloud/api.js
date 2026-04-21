@@ -23,14 +23,21 @@ export function getCharacterId() {
   return v ? parseInt(v, 10) : null
 }
 
-export function setCharacter(id, username) {
+export function setCharacter(id, username, isIronman = null) {
   if (id) {
     localStorage.setItem(CHARACTER_KEY, String(id))
     if (username) localStorage.setItem(CHARACTER_NAME_KEY, username)
+    if (isIronman !== null) localStorage.setItem('pocketrpg_ironman_mode', String(isIronman))
   } else {
     localStorage.removeItem(CHARACTER_KEY)
     localStorage.removeItem(CHARACTER_NAME_KEY)
+    localStorage.removeItem('pocketrpg_ironman_mode')
   }
+}
+
+export function getIronmanMode() {
+  const v = localStorage.getItem('pocketrpg_ironman_mode')
+  return v === 'true'
 }
 
 export function getCharacterName() {
@@ -94,9 +101,13 @@ async function request(path, options = {}) {
 export const api = {
   me: () => request('/api/auth/me'),
   listCharacters: () => request('/api/characters'),
-  createCharacter: (username) => request('/api/characters', {
+  createCharacter: (username, isIronman = false) => request('/api/characters', {
     method: 'POST',
-    body: JSON.stringify({ username }),
+    body: JSON.stringify({ username, is_ironman: isIronman }),
+  }),
+  validatePurchase: (itemId, quantity = 1) => request('/api/purchase', {
+    method: 'POST',
+    body: JSON.stringify({ item_id: itemId, quantity }),
   }),
   getSave: () => request('/api/save'),
   putSave: (save_data) => request('/api/save', {

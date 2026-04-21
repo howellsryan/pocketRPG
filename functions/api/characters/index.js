@@ -7,7 +7,7 @@ export async function onRequestGet({ request, env }) {
   if (auth.error) return json({ error: auth.error }, auth.status)
 
   const rows = await env.DB.prepare(
-    `SELECT c.id, c.username, c.created_at, s.updated_at AS save_updated_at
+    `SELECT c.id, c.username, c.is_ironman, c.created_at, s.updated_at AS save_updated_at
      FROM characters c
      LEFT JOIN saves s ON s.character_id = c.id
      WHERE c.owner_id = ? AND c.deleted_at IS NULL
@@ -24,6 +24,7 @@ export async function onRequestPost({ request, env }) {
   let body
   try { body = await request.json() } catch { return json({ error: 'Invalid JSON' }, 400) }
   const username = (body.username || '').trim()
+  const isIronman = body.is_ironman === true
 
   if (!USERNAME_RE.test(username)) {
     return json({ error: 'Username must be 3–16 chars, letters/digits/_/- only' }, 400)
@@ -43,12 +44,13 @@ export async function onRequestPost({ request, env }) {
   const now = Date.now()
   try {
     const insert = await env.DB.prepare(
-      'INSERT INTO characters (owner_id, username, created_at) VALUES (?, ?, ?)'
-    ).bind(auth.identity.id, username, now).run()
+      'INSERT INTO characters (owner_id, username, is_ironman, created_at) VALUES (?, ?, ?, ?)'
+    ).bind(auth.identity.id, username, isIronman ? 1 : 0, now).run()
     return json({
       character: {
         id: insert.meta.last_row_id,
         username,
+        is_ironman: isIronman,
         created_at: now,
         save_updated_at: null,
       },

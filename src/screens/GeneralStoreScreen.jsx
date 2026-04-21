@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import { countItem, removeItem, freeSlots } from '../engine/inventory.js'
+import { api, getToken, getCharacterId } from '../cloud/api.js'
 import Modal from '../components/Modal.jsx'
 import Panel from '../components/Panel.jsx'
 import Button from '../components/Button.jsx'
@@ -8,7 +9,7 @@ import questsData from '../data/quests.json'
 
 // ── COMPONENT ───────────────────────────────────────────────────────────────
 export default function GeneralStoreScreen() {
-  const { inventory, bank, updateInventory, updateBankDirect, addToast, itemsData, unlockedFeatures, completedQuests } = useGame()
+  const { inventory, bank, updateInventory, updateBankDirect, addToast, itemsData, unlockedFeatures, completedQuests, isIronman } = useGame()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedItem, setSelectedItem] = useState(null) // item being purchased
   const [buyQty, setBuyQty] = useState(1)
@@ -19,8 +20,10 @@ export default function GeneralStoreScreen() {
   const coinsInBank = bank['coins']?.quantity || 0
   const coins = hasMoneyPurse ? coinsInInv + coinsInBank : coinsInInv
 
-  // Get all distinct item types (excluding quest items)
+  // Get all distinct item types (excluding quest items and untradeable items)
+  // For ironman players, do not show type filters — only "all" general store items
   const getItemTypes = () => {
+    if (isIronman) return []
     const types = new Set()
     Object.values(itemsData).forEach(item => {
       if (!item.questUnlock && !item.isUntradeable) {
@@ -49,10 +52,18 @@ export default function GeneralStoreScreen() {
     }
     if (activeTab === 'all') {
       return Object.entries(itemsData)
-        .filter(([_, item]) => !item.questUnlock && !item.isUntradeable)
+        .filter(([_, item]) => {
+          // Ironman: only show general store items
+          if (isIronman) {
+            return item.isGeneralStore
+          }
+          // Non-ironman: show all non-quest items
+          return !item.questUnlock && !item.isUntradeable
+        })
         .map(([id, item]) => ({ ...item, id }))
     }
-    // For type-based tabs, show only items of that type that aren't quest items or untradeable
+    // For type-based tabs (non-ironman only), show only items of that type that aren't quest items or untradeable
+    if (isIronman) return []
     return Object.entries(itemsData)
       .filter(([_, item]) => !item.questUnlock && !item.isUntradeable && item.type === activeTab)
       .map(([id, item]) => ({ ...item, id }))
@@ -67,7 +78,7 @@ export default function GeneralStoreScreen() {
 
   const modifiedPrice = (basePrice) => Math.floor(basePrice * 1.1)
 
-  const handleBuy = () => {
+  const handleBuy = async () => {
     if (!selectedItem) return
 
     // Prevent purchasing locked quest items
@@ -82,6 +93,20 @@ export default function GeneralStoreScreen() {
     if (coins < totalCost) {
       addToast(`Need ${totalCost.toLocaleString()} coins — you have ${coins.toLocaleString()}.`, 'error')
       return
+    }
+
+    // Validate purchase with backend (required for cloud accounts)
+    if (getToken() && getCharacterId()) {
+      try {
+        await api.validatePurchase(selectedItem.id, buyQty)
+      } catch (err) {
+        if (err.status === 403) {
+          addToast('⚠️ This item is not available to your character type.', 'error')
+        } else {
+          addToast(`Purchase validation failed: ${err.message}`, 'error')
+        }
+        return
+      }
     }
 
     const newInv = [...inventory]
@@ -143,11 +168,22 @@ export default function GeneralStoreScreen() {
         <div class="flex justify-between items-baseline mb-3">
           <h2 class="font-[var(--font-display)] text-[15px] font-bold text-[var(--color-gold)] m-0">
             {activeTab === 'quest_items' ? 'Quest Items' : 'Store'}
+            {isIronman && <span class="text-[12px] font-normal text-[var(--color-parchment)] opacity-60 ml-2">(Ironman)</span>}
           </h2>
           <span class="text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]">
             🪙 {coins.toLocaleString()}
           </span>
         </div>
+
+        {/* Ironman restrictions notice */}
+        {isIronman && (
+          <div class="mb-3 p-2 rounded-lg bg-[rgba(212,175,55,0.1)] border border-[var(--color-gold)] border-opacity-30">
+            <div class="text-[10px] text-[var(--color-gold)] font-semibold">⚔️ Limited Shop Access</div>
+            <div class="text-[9px] text-[var(--color-parchment)] opacity-70 mt-1">
+              Only general store and quest items available.
+            </div>
+          </div>
+        )}
 
         {/* ── TAB SWITCHER ── */}
         <div class="flex gap-2 mb-3 overflow-x-auto pb-2">
