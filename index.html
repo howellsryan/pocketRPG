@@ -26404,9 +26404,9 @@ function setCharacter(id, username, isIronman = null, isOneLife = null) {
         localStorage.setItem(CHARACTER_KEY, String(id));
         if (username)
             localStorage.setItem(CHARACTER_NAME_KEY, username);
-        if (isIronman !== null)
+        if (isIronman != null)
             localStorage.setItem('pocketrpg_ironman_mode', String(isIronman));
-        if (isOneLife !== null)
+        if (isOneLife != null)
             localStorage.setItem('pocketrpg_one_life_mode', String(isOneLife));
     }
     else {
@@ -33217,7 +33217,12 @@ function AuthScreen({ onCloudReady, onPlayOffline }) {
         setBusy(true);
         try {
             const res = await api.createCharacter(name, isIronman, isOneLife);
-            selectCharacter(res.character);
+            // Ensure flags are stored with the character, using form values as source of truth
+            // in case the API response doesn't include them
+            const character = res.character;
+            character.is_ironman = isIronman;
+            character.is_one_life = isOneLife;
+            selectCharacter(character);
         }
         catch (err) {
             setError(err.message);
