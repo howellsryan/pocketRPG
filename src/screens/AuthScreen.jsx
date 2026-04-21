@@ -51,8 +51,10 @@ export default function AuthScreen({ onCloudReady, onPlayOffline }) {
     const name = newName.trim()
     if (!name) return
     setBusy(true)
+    console.log('[AuthScreen] Creating character:', { name, isIronman, isOneLife })
     try {
       const res = await api.createCharacter(name, isIronman, isOneLife)
+      console.log('[AuthScreen] Character created:', res.character, 'Form values were:', { isIronman, isOneLife })
       // Ensure flags are stored with the character, using form values as source of truth
       // in case the API response doesn't include them
       const character = res.character
