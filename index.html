@@ -28966,6 +28966,7 @@ function BankScreen() {
 
 
 
+
 const COMBAT_CATEGORIES = [
     {
         key: 'training',
@@ -29223,11 +29224,19 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFight
                         setActiveTask(null);
                         if (isOneLife) {
                             addToast('you died! Restarting your account…', 'error');
-                            try {
-                                api.putSave(null).catch(() => { });
-                            }
-                            catch { }
-                            setTimeout(() => {
+                            setTimeout(async () => {
+                                try {
+                                    if (getToken()) {
+                                        // Cloud account: wipe cloud save
+                                        await api.putSave(null).catch(() => { });
+                                    }
+                                    else {
+                                        // Offline account: wipe local database
+                                        closeDB();
+                                        await deleteDB();
+                                    }
+                                }
+                                catch { }
                                 clearAuth();
                                 window.location.href = '/';
                             }, 2000);
@@ -29260,11 +29269,19 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFight
                         setActiveTask(null);
                         if (isOneLife) {
                             addToast('you died! Restarting your account…', 'error');
-                            try {
-                                api.putSave(null).catch(() => { });
-                            }
-                            catch { }
-                            setTimeout(() => {
+                            setTimeout(async () => {
+                                try {
+                                    if (getToken()) {
+                                        // Cloud account: wipe cloud save
+                                        await api.putSave(null).catch(() => { });
+                                    }
+                                    else {
+                                        // Offline account: wipe local database
+                                        closeDB();
+                                        await deleteDB();
+                                    }
+                                }
+                                catch { }
                                 clearAuth();
                                 window.location.href = '/';
                             }, 2000);

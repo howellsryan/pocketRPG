@@ -8,7 +8,8 @@ import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
 import { getCombatType, equipItem } from '../engine/equipment.js'
-import { api, clearAuth } from '../cloud/api.js'
+import { api, clearAuth, getToken } from '../cloud/api.js'
+import { deleteDB, closeDB } from '../db/database.js'
 import monstersData from '../data/monsters.json'
 import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
@@ -286,10 +287,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             setActiveTask(null)
             if (isOneLife) {
               addToast('you died! Restarting your account…', 'error')
-              try {
-                api.putSave(null).catch(() => {})
-              } catch {}
-              setTimeout(() => {
+              setTimeout(async () => {
+                try {
+                  if (getToken()) {
+                    // Cloud account: wipe cloud save
+                    await api.putSave(null).catch(() => {})
+                  } else {
+                    // Offline account: wipe local database
+                    closeDB()
+                    await deleteDB()
+                  }
+                } catch {}
                 clearAuth()
                 window.location.href = '/'
               }, 2000)
@@ -321,10 +329,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             setActiveTask(null)
             if (isOneLife) {
               addToast('you died! Restarting your account…', 'error')
-              try {
-                api.putSave(null).catch(() => {})
-              } catch {}
-              setTimeout(() => {
+              setTimeout(async () => {
+                try {
+                  if (getToken()) {
+                    // Cloud account: wipe cloud save
+                    await api.putSave(null).catch(() => {})
+                  } else {
+                    // Offline account: wipe local database
+                    closeDB()
+                    await deleteDB()
+                  }
+                } catch {}
                 clearAuth()
                 window.location.href = '/'
               }, 2000)
