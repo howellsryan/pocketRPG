@@ -22,7 +22,8 @@
     "type": "resource",
     "stackable": true,
     "shopValue": 2,
-    "icon": "🪶"
+    "icon": "🪶",
+    "generalStore": true
   },
   "cowhide": {
     "id": "cowhide",
