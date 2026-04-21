@@ -9563,7 +9563,7 @@
     "requirements": {
       "magic": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "👑"
   },
   "ahrims_robetop": {
@@ -9594,7 +9594,7 @@
     "requirements": {
       "magic": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "🥼"
   },
   "ahrims_robeskirt": {
@@ -9625,7 +9625,7 @@
     "requirements": {
       "magic": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "👖"
   },
   "ahrims_staff": {
@@ -9659,7 +9659,7 @@
     "requirements": {
       "magic": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "🧙"
   },
   "dharoks_helm": {
@@ -9690,7 +9690,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "👑"
   },
   "dharoks_platebody": {
@@ -9721,7 +9721,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "🥼"
   },
   "dharoks_platelegs": {
@@ -9752,7 +9752,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "👖"
   },
   "dharoks_greataxe": {
@@ -9787,7 +9787,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "🪓"
   },
   "guthans_helm": {
@@ -9818,7 +9818,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "👑"
   },
   "guthans_platebody": {
@@ -9849,7 +9849,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "🥼"
   },
   "guthans_chainskirt": {
@@ -9880,7 +9880,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "👖"
   },
   "guthans_warspear": {
@@ -9915,7 +9915,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "⛏️"
   },
   "karils_coif": {
@@ -9946,7 +9946,7 @@
     "requirements": {
       "ranged": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "👒"
   },
   "karils_leathertop": {
@@ -9977,7 +9977,7 @@
     "requirements": {
       "ranged": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "🥼"
   },
   "karils_leatherskirt": {
@@ -10008,7 +10008,7 @@
     "requirements": {
       "ranged": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "👖"
   },
   "karils_crossbow": {
@@ -10042,7 +10042,7 @@
     "requirements": {
       "ranged": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "🏹"
   },
   "torags_helm": {
@@ -10073,7 +10073,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "👑"
   },
   "torags_platebody": {
@@ -10104,7 +10104,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "🥼"
   },
   "torags_platelegs": {
@@ -10135,7 +10135,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "👖"
   },
   "torags_hammers": {
@@ -10169,7 +10169,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "🔨"
   },
   "veracs_helm": {
@@ -10200,7 +10200,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "👑"
   },
   "veracs_brassard": {
@@ -10231,7 +10231,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "🥼"
   },
   "veracs_plateskirt": {
@@ -10262,7 +10262,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "👖"
   },
   "veracs_flail": {
@@ -10296,7 +10296,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 50000,
+    "shopValue": 2500000,
     "icon": "⚒️"
   }
 }
