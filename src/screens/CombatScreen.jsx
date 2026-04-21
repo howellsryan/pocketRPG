@@ -1232,8 +1232,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     <div class="h-full flex flex-col p-4">
       {/* Back button */}
       <button onClick={stopAndBack}
-        style="background:#1a1a1a;border:1px solid #2a2a2a;color:#888"
-        class="text-xs mb-3 py-2.5 rounded-lg font-semibold flex items-center gap-1 justify-center active:opacity-80">
+        class="text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1">
         ← Back
       </button>
 
