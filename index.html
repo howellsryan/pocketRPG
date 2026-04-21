@@ -26786,6 +26786,7 @@ function GameProvider({ children }) {
     const [slayerPoints, setSlayerPointsState] = useState(0);
     const [activeCombatSpell, setActiveCombatSpellState] = useState(null);
     const [bossKillCounts, setBossKillCountsState] = useState({});
+    const [raidKillCounts, setRaidKillCountsState] = useState({});
     const [farming, setFarmingState] = useState({ patchesById: {} });
     const [completedQuests, setCompletedQuestsState] = useState(new Set());
     const [questQueue, setQuestQueueState] = useState([]);
@@ -26800,11 +26801,11 @@ function GameProvider({ children }) {
     useEffect(() => { stateRef.current.player = player; }, [player]);
     // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
     const loadGame = useCallback(async () => {
-        let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedBossKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue] = await Promise.all([
+        let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue] = await Promise.all([
             getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
             getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
             getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
-            getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('bossKillCounts'), getSetting('farming'),
+            getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
             getSetting('completedQuests'), getSetting('questQueue')
         ]);
         // Idle-engine inputs: last active timestamp and last active task.
@@ -27151,6 +27152,7 @@ function GameProvider({ children }) {
         setSlayerPointsState((savedSlayerPoints ?? 0) + slayerPointsEarned);
         setActiveCombatSpellState(savedActiveCombatSpell ?? null);
         setBossKillCountsState(savedBossKillCounts ?? {});
+        setRaidKillCountsState(savedRaidKillCounts ?? {});
         setFarmingState(savedFarming ?? { patchesById: {} });
         setCompletedQuestsState(new Set(savedCompletedQuests || []));
         setQuestQueueState(savedQuestQueue ?? []);
@@ -27319,6 +27321,10 @@ function GameProvider({ children }) {
         setBossKillCountsState(counts);
         saveSetting('bossKillCounts', counts);
     }, []);
+    const updateRaidKillCounts = useCallback((counts) => {
+        setRaidKillCountsState(counts);
+        saveSetting('raidKillCounts', counts);
+    }, []);
     const updateFarming = useCallback((farmingState) => {
         setFarmingState(farmingState);
         saveSetting('farming', farmingState);
@@ -27401,9 +27407,10 @@ function GameProvider({ children }) {
         bankConfig: bankConfig,
         homeShortcuts,
         bossKillCounts,
+        raidKillCounts,
         completedQuests,
         questQueue,
-    }), [bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue]);
+    }), [bankConfig, homeShortcuts, bossKillCounts, raidKillCounts, completedQuests, questQueue]);
     const value = {
         loaded, player, stats, inventory, equipment, bank, currentHP, toasts,
         homeShortcuts, combatStance, activeTask, autoBankLoot, bankConfig,
@@ -27411,6 +27418,7 @@ function GameProvider({ children }) {
         slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints,
         activeCombatSpell, updateActiveCombatSpell,
         bossKillCounts, updateBossKillCounts,
+        raidKillCounts, updateRaidKillCounts,
         farming, updateFarming,
         completedQuests, completeQuest,
         questQueue, addQuestToQueue, removeFromQuestQueue, clearQuestQueue, updateQuestQueue,
@@ -29035,7 +29043,7 @@ const MONSTER_ICONS = {
     sotetseg: '🔮', xarpus: '☠️', verzik_vitur: '👑'
 };
 function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFightStatusChange }) {
-    const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, unlockedFeatures, completedQuests } = useGame();
+    const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests } = useGame();
     const [combat, setCombat] = useState(null);
     const [log, setLog] = useState([]);
     const [killCount, setKillCount] = useState(0);
@@ -29058,6 +29066,7 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFight
     const slayerTaskRef = useRef(slayerTask);
     const slayerPointsRef = useRef(slayerPoints);
     const bossKillCountsRef = useRef(bossKillCounts);
+    const raidKillCountsRef = useRef(raidKillCounts);
     const unlockedFeaturesRef = useRef(unlockedFeatures);
     const logRef = useRef(null);
     useEffect(() => { hpRef.current = currentHP; }, [currentHP]);
@@ -29068,6 +29077,7 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFight
     useEffect(() => { slayerTaskRef.current = slayerTask; }, [slayerTask]);
     useEffect(() => { slayerPointsRef.current = slayerPoints; }, [slayerPoints]);
     useEffect(() => { bossKillCountsRef.current = bossKillCounts; }, [bossKillCounts]);
+    useEffect(() => { raidKillCountsRef.current = raidKillCounts; }, [raidKillCounts]);
     useEffect(() => { unlockedFeaturesRef.current = unlockedFeatures; }, [unlockedFeatures]);
     // Auto-scroll log to bottom on new messages
     useEffect(() => {
@@ -29351,6 +29361,14 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFight
                             time: Date.now()
                         }]);
                     addToast('🏆 Raid complete! Check your loot!', 'levelup');
+                    // Track raid KC
+                    if (ev.raidId && state.raid) {
+                        const raidId = ev.raidId;
+                        const newKC = (raidKillCountsRef.current[raidId] || 0) + 1;
+                        const updatedCounts = { ...raidKillCountsRef.current, [raidId]: newKC };
+                        raidKillCountsRef.current = updatedCounts;
+                        updateRaidKillCounts(updatedCounts);
+                    }
                 }
                 if (ev.type === 'scythePassive') {
                     setLog(prev => [...prev.slice(-20), {
@@ -29891,16 +29909,20 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFight
                     h("div", { class: "space-y-2" }, Object.values(raidsData).map(raid => {
                         const bosses = raid.bosses.map(id => monstersData[id]).filter(Boolean);
                         return (h("div", { key: raid.id, class: "flex gap-2 items-center" },
-                            h("button", { onClick: () => startRaid(raid), class: "flex-1 p-3 rounded-xl border bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222] transition-colors text-left" },
-                                h("div", { class: "flex items-center gap-2 mb-2" },
-                                    h("span", { class: "text-2xl" }, raid.icon),
-                                    h("div", null,
-                                        h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, raid.name),
-                                        h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40" }, raid.description))),
-                                h("div", { class: "flex flex-wrap gap-1" }, bosses.map((boss) => (h("span", { key: boss.id, class: "text-[9px] bg-[#111] text-[var(--color-parchment)] opacity-60 px-1.5 py-0.5 rounded" },
-                                    MONSTER_ICONS[boss.id] || '👹',
-                                    " ",
-                                    boss.name))))),
+                            h("button", { onClick: () => startRaid(raid), class: "flex-1 p-3 rounded-xl border bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222] transition-colors text-left flex items-center justify-between" },
+                                h("div", { class: "flex-1" },
+                                    h("div", { class: "flex items-center gap-2 mb-2" },
+                                        h("span", { class: "text-2xl" }, raid.icon),
+                                        h("div", null,
+                                            h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, raid.name),
+                                            h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40" }, raid.description))),
+                                    h("div", { class: "flex flex-wrap gap-1" }, bosses.map((boss) => (h("span", { key: boss.id, class: "text-[9px] bg-[#111] text-[var(--color-parchment)] opacity-60 px-1.5 py-0.5 rounded" },
+                                        MONSTER_ICONS[boss.id] || '👹',
+                                        " ",
+                                        boss.name))))),
+                                raidKillCounts[raid.id] > 0 && (h("div", { class: "text-[9px] text-yellow-400 font-mono ml-2 flex-shrink-0" },
+                                    "KC: ",
+                                    raidKillCounts[raid.id].toLocaleString()))),
                             h("button", { onClick: () => setSelectedRaidInfo(raid), class: "flex-shrink-0 px-3 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5", title: "View Raid Info" },
                                 h("span", { class: "text-base" }, "\u2139\uFE0F"),
                                 h("span", { class: "text-[8px] text-[var(--color-parchment)] opacity-50" }, "Info")),
