@@ -1232,7 +1232,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     <div class="h-full flex flex-col p-4">
       {/* Back button */}
       <button onClick={stopAndBack}
-        class="text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1">
+        style="background:#1a1a1a;border:1px solid #2a2a2a;color:#888"
+        class="text-xs mb-3 py-2.5 rounded-lg font-semibold flex items-center gap-1 justify-center active:opacity-80">
         ← Back
       </button>
 
@@ -1326,29 +1327,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         )}
       </div>
 
-      {/* Scale-charged weapon charges display */}
-      {(() => {
-        const weaponEntry = equipment?.weapon
-        const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
-        if (!weapon?.scaleCharged) return null
-        const charges = weaponEntry.charges || 0
-        const chargeItemId = weapon.chargeItemId || 'zulrah_scales'
-        const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
-        const chargeIcon = chargeItemId === 'blood_rune' ? '🩸' : '🐍'
-        return (
-          <div class="mb-2 bg-[#111] rounded-lg px-3 py-2">
-            <div class="flex items-center justify-between">
-              <span class="text-[10px] text-green-400 font-semibold">{chargeIcon} {weapon.name} charges</span>
-              <span class={`text-[10px] font-[var(--font-mono)] ${charges === 0 ? 'text-red-400' : 'text-green-400'}`}>
-                {charges}
-              </span>
-            </div>
-            <div class="text-[9px] text-[var(--color-parchment)] opacity-40 mt-0.5">
-              1 {chargeItemName} = 1 attack · Charge via Equipment screen
-            </div>
-          </div>
-        )
-      })()}
 
       {/* Special attack bar — only shown when equipped weapon has a spec */}
       {(() => {
@@ -1414,7 +1392,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         {combat.active && !isAutoRestarting && (
           <>
             {/* Primary combat actions */}
-            <div class="grid grid-cols-2 gap-2">
+            <div class="grid grid-cols-3 gap-2">
               <button onClick={handleEat}
                 class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
                 style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
@@ -1424,6 +1402,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
                 style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
                 🧪 Potion
+              </button>
+              <button onClick={() => setShowEquipmentModal(true)}
+                class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
+                style="background:linear-gradient(135deg,#2a2a3a,#3a3a5a);border:1px solid rgba(150,150,200,0.35);color:#a8a8d8">
+                ⚙️ Gear
               </button>
             </div>
             {/* Special attack, Cast, and Prayer buttons */}
@@ -1465,14 +1448,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
                 style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
                 🙏 Prayer
-              </button>
-            </div>
-            {/* Gear button */}
-            <div class="grid grid-cols-1 gap-2">
-              <button onClick={() => setShowEquipmentModal(true)}
-                class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
-                style="background:linear-gradient(135deg,#2a2a3a,#3a3a5a);border:1px solid rgba(150,150,200,0.35);color:#a8a8d8">
-                ⚙️ Gear
               </button>
             </div>
           </>
