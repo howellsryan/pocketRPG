@@ -37,11 +37,13 @@ export async function onRequestPost({ request, env }) {
     }
 
     // If character is ironman, enforce stricter item restrictions
-    // Ironman can purchase: quest items (questUnlock) and general store items
-    // They cannot purchase: untradeable items (already blocked above)
+    // Ironman can only purchase: general store items and quest items
     if (character.is_ironman) {
-      // Quest items and general store items are allowed
-      // Untradeable items are already blocked above
+      const isQuestItem = !!item.questUnlock
+      const isGeneralStoreItem = item.isGeneralStore
+      if (!isQuestItem && !isGeneralStoreItem) {
+        return json({ error: 'This item is not available to Ironman characters', code: 'IRONMAN_RESTRICTED' }, 403)
+      }
     }
 
     // Purchase validation passed

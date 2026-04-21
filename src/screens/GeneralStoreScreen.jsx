@@ -51,17 +51,19 @@ export default function GeneralStoreScreen() {
         })
     }
     if (activeTab === 'all') {
-      const baseFilter = Object.entries(itemsData)
-        .filter(([_, item]) => !item.questUnlock && !item.isUntradeable)
+      return Object.entries(itemsData)
+        .filter(([_, item]) => {
+          // Ironman: only show general store items
+          if (isIronman) {
+            return item.isGeneralStore
+          }
+          // Non-ironman: show all non-quest items
+          return !item.questUnlock && !item.isUntradeable
+        })
         .map(([id, item]) => ({ ...item, id }))
-      // For ironman players, only show general store items (no specialty shop categories)
-      if (isIronman) {
-        return baseFilter
-      }
-      return baseFilter
     }
     // For type-based tabs (non-ironman only), show only items of that type that aren't quest items or untradeable
-    if (isIronman) return [] // Ironman can't access type tabs
+    if (isIronman) return []
     return Object.entries(itemsData)
       .filter(([_, item]) => !item.questUnlock && !item.isUntradeable && item.type === activeTab)
       .map(([id, item]) => ({ ...item, id }))
