@@ -8,7 +8,7 @@ import questsData from '../data/quests.json'
 
 // ── COMPONENT ───────────────────────────────────────────────────────────────
 export default function GeneralStoreScreen() {
-  const { inventory, bank, updateInventory, updateBankDirect, addToast, itemsData, unlockedFeatures, completedQuests } = useGame()
+  const { inventory, bank, updateInventory, updateBankDirect, addToast, itemsData, unlockedFeatures, completedQuests, isIronman } = useGame()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedItem, setSelectedItem] = useState(null) // item being purchased
   const [buyQty, setBuyQty] = useState(1)
@@ -19,8 +19,10 @@ export default function GeneralStoreScreen() {
   const coinsInBank = bank['coins']?.quantity || 0
   const coins = hasMoneyPurse ? coinsInInv + coinsInBank : coinsInInv
 
-  // Get all distinct item types (excluding quest items)
+  // Get all distinct item types (excluding quest items and untradeable items)
+  // For ironman players, do not show type filters — only "all" general store items
   const getItemTypes = () => {
+    if (isIronman) return []
     const types = new Set()
     Object.values(itemsData).forEach(item => {
       if (!item.questUnlock && !item.isUntradeable) {
@@ -48,11 +50,17 @@ export default function GeneralStoreScreen() {
         })
     }
     if (activeTab === 'all') {
-      return Object.entries(itemsData)
+      const baseFilter = Object.entries(itemsData)
         .filter(([_, item]) => !item.questUnlock && !item.isUntradeable)
         .map(([id, item]) => ({ ...item, id }))
+      // For ironman players, only show general store items (no specialty shop categories)
+      if (isIronman) {
+        return baseFilter
+      }
+      return baseFilter
     }
-    // For type-based tabs, show only items of that type that aren't quest items or untradeable
+    // For type-based tabs (non-ironman only), show only items of that type that aren't quest items or untradeable
+    if (isIronman) return [] // Ironman can't access type tabs
     return Object.entries(itemsData)
       .filter(([_, item]) => !item.questUnlock && !item.isUntradeable && item.type === activeTab)
       .map(([id, item]) => ({ ...item, id }))
@@ -143,11 +151,22 @@ export default function GeneralStoreScreen() {
         <div class="flex justify-between items-baseline mb-3">
           <h2 class="font-[var(--font-display)] text-[15px] font-bold text-[var(--color-gold)] m-0">
             {activeTab === 'quest_items' ? 'Quest Items' : 'Store'}
+            {isIronman && <span class="text-[12px] font-normal text-[var(--color-parchment)] opacity-60 ml-2">(Ironman)</span>}
           </h2>
           <span class="text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]">
             🪙 {coins.toLocaleString()}
           </span>
         </div>
+
+        {/* Ironman restrictions notice */}
+        {isIronman && (
+          <div class="mb-3 p-2 rounded-lg bg-[rgba(212,175,55,0.1)] border border-[var(--color-gold)] border-opacity-30">
+            <div class="text-[10px] text-[var(--color-gold)] font-semibold">⚔️ Limited Shop Access</div>
+            <div class="text-[9px] text-[var(--color-parchment)] opacity-70 mt-1">
+              Only general store and quest items available.
+            </div>
+          </div>
+        )}
 
         {/* ── TAB SWITCHER ── */}
         <div class="flex gap-2 mb-3 overflow-x-auto pb-2">

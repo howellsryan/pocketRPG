@@ -631,9 +631,9 @@ function GameApp() {
     }
   }
 
-  async function startNewGame() {
+  async function startNewGame(isIronman = false) {
     const name = getCharacterName() || 'Adventurer'
-    await initNewGame(name)
+    await initNewGame(name, isIronman)
     // Stamp IDB ownership so the next boot knows these rows belong to the
     // selected character (only applies when signed in — offline leaves null).
     const charId = getCharacterId()

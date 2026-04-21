@@ -25729,11 +25729,12 @@ async function saveSetting(key, value) {
     return db.put('settings', { key, value }, key);
 }
 // ── New Game Initialization ──
-async function initNewGame(playerName) {
+async function initNewGame(playerName, isIronman = false) {
     const db = await getDB();
     // Player profile
     await db.put('player', {
         name: playerName,
+        is_ironman: isIronman,
         created: Date.now(),
         totalPlayTime: 0
     }, 'profile');
@@ -25989,9 +25990,9 @@ async function request(path, options = {}) {
 const api = {
     me: () => request('/api/auth/me'),
     listCharacters: () => request('/api/characters'),
-    createCharacter: (username) => request('/api/characters', {
+    createCharacter: (username, isIronman = false) => request('/api/characters', {
         method: 'POST',
-        body: JSON.stringify({ username }),
+        body: JSON.stringify({ username, is_ironman: isIronman }),
     }),
     getSave: () => request('/api/save'),
     putSave: (save_data) => request('/api/save', {
@@ -26923,7 +26924,8 @@ function GameProvider({ children }) {
         removeFromInventory, addToBank,
         updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,
         markDirty, itemsData, updateHomeShortcuts, updateCombatStance,
-        setActiveTask, updateBankDirect, getSnapshot, updateAutoBankLoot, updateBankConfig
+        setActiveTask, updateBankDirect, getSnapshot, updateAutoBankLoot, updateBankConfig,
+        isIronman: player?.is_ironman || false
     };
     return h(GameContext.Provider, { value: value }, children);
 }
@@ -31830,7 +31832,7 @@ function GatherScreen({ initialTaskId, idleResult }) {
 
 // ── COMPONENT ───────────────────────────────────────────────────────────────
 function GeneralStoreScreen() {
-    const { inventory, bank, updateInventory, updateBankDirect, addToast, itemsData, unlockedFeatures, completedQuests } = useGame();
+    const { inventory, bank, updateInventory, updateBankDirect, addToast, itemsData, unlockedFeatures, completedQuests, isIronman } = useGame();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedItem, setSelectedItem] = useState(null); // item being purchased
     const [buyQty, setBuyQty] = useState(1);
@@ -31839,8 +31841,11 @@ function GeneralStoreScreen() {
     const coinsInInv = countItem(inventory, 'coins');
     const coinsInBank = bank['coins']?.quantity || 0;
     const coins = hasMoneyPurse ? coinsInInv + coinsInBank : coinsInInv;
-    // Get all distinct item types (excluding quest items)
+    // Get all distinct item types (excluding quest items and untradeable items)
+    // For ironman players, do not show type filters — only "all" general store items
     const getItemTypes = () => {
+        if (isIronman)
+            return [];
         const types = new Set();
         Object.values(itemsData).forEach(item => {
             if (!item.questUnlock && !item.isUntradeable) {
@@ -31865,11 +31870,18 @@ function GeneralStoreScreen() {
             });
         }
         if (activeTab === 'all') {
-            return Object.entries(itemsData)
+            const baseFilter = Object.entries(itemsData)
                 .filter(([_, item]) => !item.questUnlock && !item.isUntradeable)
                 .map(([id, item]) => ({ ...item, id }));
+            // For ironman players, only show general store items (no specialty shop categories)
+            if (isIronman) {
+                return baseFilter;
+            }
+            return baseFilter;
         }
-        // For type-based tabs, show only items of that type that aren't quest items or untradeable
+        // For type-based tabs (non-ironman only), show only items of that type that aren't quest items or untradeable
+        if (isIronman)
+            return []; // Ironman can't access type tabs
         return Object.entries(itemsData)
             .filter(([_, item]) => !item.questUnlock && !item.isUntradeable && item.type === activeTab)
             .map(([id, item]) => ({ ...item, id }));
@@ -31952,10 +31964,15 @@ function GeneralStoreScreen() {
     return (h("div", { class: "h-full flex flex-col overflow-hidden" },
         h("div", { class: "px-4 pt-3 pb-3 flex-shrink-0" },
             h("div", { class: "flex justify-between items-baseline mb-3" },
-                h("h2", { class: "font-[var(--font-display)] text-[15px] font-bold text-[var(--color-gold)] m-0" }, activeTab === 'quest_items' ? 'Quest Items' : 'Store'),
+                h("h2", { class: "font-[var(--font-display)] text-[15px] font-bold text-[var(--color-gold)] m-0" },
+                    activeTab === 'quest_items' ? 'Quest Items' : 'Store',
+                    isIronman && h("span", { class: "text-[12px] font-normal text-[var(--color-parchment)] opacity-60 ml-2" }, "(Ironman)")),
                 h("span", { class: "text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]" },
                     "\uD83E\uDE99 ",
                     coins.toLocaleString())),
+            isIronman && (h("div", { class: "mb-3 p-2 rounded-lg bg-[rgba(212,175,55,0.1)] border border-[var(--color-gold)] border-opacity-30" },
+                h("div", { class: "text-[10px] text-[var(--color-gold)] font-semibold" }, "\u2694\uFE0F Limited Shop Access"),
+                h("div", { class: "text-[9px] text-[var(--color-parchment)] opacity-70 mt-1" }, "Only general store and quest items available."))),
             h("div", { class: "flex gap-2 mb-3 overflow-x-auto pb-2" },
                 h("button", { onClick: () => { setActiveTab('all'); setSearchTerm(''); }, class: `px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border whitespace-nowrap flex-shrink-0 ${activeTab === 'all'
                         ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
@@ -32584,6 +32601,7 @@ function AuthScreen({ onCloudReady, onPlayOffline }) {
     const [error, setError] = useState(null);
     const [busy, setBusy] = useState(false);
     const [newName, setNewName] = useState('');
+    const [isIronman, setIsIronman] = useState(false);
     useEffect(() => {
         if (mode === 'characters')
             refreshCharacters();
@@ -32622,7 +32640,7 @@ function AuthScreen({ onCloudReady, onPlayOffline }) {
             return;
         setBusy(true);
         try {
-            const res = await api.createCharacter(name);
+            const res = await api.createCharacter(name, isIronman);
             selectCharacter(res.character);
         }
         catch (err) {
@@ -32670,6 +32688,12 @@ function AuthScreen({ onCloudReady, onPlayOffline }) {
             h(SectionLabel, null, "Create a character"),
             h("input", { type: "text", value: newName, onInput: (e) => setNewName(e.target.value), placeholder: "Username (3\u201316 chars)", maxLength: 16, autoFocus: true, style: input }),
             h("p", { style: { fontSize: '10px', color: '#e8d5b0', opacity: 0.45, margin: '6px 0 14px' } }, "Letters, numbers, _ and - only. Names are unique forever and cannot be changed."),
+            h("div", { style: { marginBottom: '14px', padding: '12px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333' } },
+                h("label", { style: { display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', margin: 0 } },
+                    h("input", { type: "checkbox", checked: isIronman, onChange: (e) => setIsIronman(e.target.checked), style: { width: '18px', height: '18px', cursor: 'pointer' } }),
+                    h("div", null,
+                        h("div", { style: { fontSize: '13px', color: '#d4af37', fontWeight: 'bold' } }, "\u2694\uFE0F Ironman Mode"),
+                        h("div", { style: { fontSize: '10px', color: '#e8d5b0', opacity: 0.6, marginTop: '2px' } }, "Limited shop access. Can only buy general and quest items.")))),
             h("button", { type: "submit", disabled: busy || newName.trim().length < 3, style: primaryBtn }, busy ? 'Creating…' : 'Create Character'),
             characters && characters.length > 0 && (h("button", { type: "button", onClick: () => setMode('characters'), style: ghostBtn }, "Back")))),
         error && h("p", { style: errorText }, error)));
@@ -33354,9 +33378,9 @@ function GameApp() {
             await startNewGame();
         }
     }
-    async function startNewGame() {
+    async function startNewGame(isIronman = false) {
         const name = getCharacterName() || 'Adventurer';
-        await initNewGame(name);
+        await initNewGame(name, isIronman);
         // Stamp IDB ownership so the next boot knows these rows belong to the
         // selected character (only applies when signed in — offline leaves null).
         const charId = getCharacterId();

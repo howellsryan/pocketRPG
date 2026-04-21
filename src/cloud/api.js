@@ -94,9 +94,9 @@ async function request(path, options = {}) {
 export const api = {
   me: () => request('/api/auth/me'),
   listCharacters: () => request('/api/characters'),
-  createCharacter: (username) => request('/api/characters', {
+  createCharacter: (username, isIronman = false) => request('/api/characters', {
     method: 'POST',
-    body: JSON.stringify({ username }),
+    body: JSON.stringify({ username, is_ironman: isIronman }),
   }),
   getSave: () => request('/api/save'),
   putSave: (save_data) => request('/api/save', {

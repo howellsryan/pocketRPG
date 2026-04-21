@@ -13,6 +13,7 @@ export default function AuthScreen({ onCloudReady, onPlayOffline }) {
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
   const [newName, setNewName] = useState('')
+  const [isIronman, setIsIronman] = useState(false)
 
   useEffect(() => {
     if (mode === 'characters') refreshCharacters()
@@ -50,7 +51,7 @@ export default function AuthScreen({ onCloudReady, onPlayOffline }) {
     if (!name) return
     setBusy(true)
     try {
-      const res = await api.createCharacter(name)
+      const res = await api.createCharacter(name, isIronman)
       selectCharacter(res.character)
     } catch (err) {
       setError(err.message)
@@ -142,6 +143,25 @@ export default function AuthScreen({ onCloudReady, onPlayOffline }) {
           <p style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.45, margin: '6px 0 14px' }}>
             Letters, numbers, _ and - only. Names are unique forever and cannot be changed.
           </p>
+
+          {/* Ironman Mode Toggle */}
+          <div style={{ marginBottom: '14px', padding: '12px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', margin: 0 }}>
+              <input
+                type="checkbox"
+                checked={isIronman}
+                onChange={(e) => setIsIronman(e.target.checked)}
+                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+              />
+              <div>
+                <div style={{ fontSize: '13px', color: '#d4af37', fontWeight: 'bold' }}>⚔️ Ironman Mode</div>
+                <div style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.6, marginTop: '2px' }}>
+                  Limited shop access. Can only buy general and quest items.
+                </div>
+              </div>
+            </label>
+          </div>
+
           <button type="submit" disabled={busy || newName.trim().length < 3} style={primaryBtn}>
             {busy ? 'Creating…' : 'Create Character'}
           </button>
