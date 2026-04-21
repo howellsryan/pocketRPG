@@ -104,7 +104,7 @@ const MONSTER_ICONS = {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFightStatusChange }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, unlockedFeatures, completedQuests } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests } = useGame()
 
   const [combat, setCombat] = useState(null)
   const [log, setLog] = useState([])
@@ -129,6 +129,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const slayerTaskRef = useRef(slayerTask)
   const slayerPointsRef = useRef(slayerPoints)
   const bossKillCountsRef = useRef(bossKillCounts)
+  const raidKillCountsRef = useRef(raidKillCounts)
   const unlockedFeaturesRef = useRef(unlockedFeatures)
   const logRef = useRef(null)
 
@@ -140,6 +141,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   useEffect(() => { slayerTaskRef.current = slayerTask }, [slayerTask])
   useEffect(() => { slayerPointsRef.current = slayerPoints }, [slayerPoints])
   useEffect(() => { bossKillCountsRef.current = bossKillCounts }, [bossKillCounts])
+  useEffect(() => { raidKillCountsRef.current = raidKillCounts }, [raidKillCounts])
   useEffect(() => { unlockedFeaturesRef.current = unlockedFeatures }, [unlockedFeatures])
 
   // Auto-scroll log to bottom on new messages
@@ -429,6 +431,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             time: Date.now()
           }])
           addToast('🏆 Raid complete! Check your loot!', 'levelup')
+          // Track raid KC
+          if (ev.raidId && state.raid) {
+            const raidId = ev.raidId
+            const newKC = (raidKillCountsRef.current[raidId] || 0) + 1
+            const updatedCounts = { ...raidKillCountsRef.current, [raidId]: newKC }
+            raidKillCountsRef.current = updatedCounts
+            updateRaidKillCounts(updatedCounts)
+          }
         }
         if (ev.type === 'scythePassive') {
           setLog(prev => [...prev.slice(-20), {
@@ -1035,22 +1045,27 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 <div key={raid.id} class="flex gap-2 items-center">
                   <button
                     onClick={() => startRaid(raid)}
-                    class="flex-1 p-3 rounded-xl border bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222] transition-colors text-left"
+                    class="flex-1 p-3 rounded-xl border bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222] transition-colors text-left flex items-center justify-between"
                   >
-                    <div class="flex items-center gap-2 mb-2">
-                      <span class="text-2xl">{raid.icon}</span>
-                      <div>
-                        <div class="text-sm font-semibold text-[var(--color-parchment)]">{raid.name}</div>
-                        <div class="text-[10px] text-[var(--color-parchment)] opacity-40">{raid.description}</div>
+                    <div class="flex-1">
+                      <div class="flex items-center gap-2 mb-2">
+                        <span class="text-2xl">{raid.icon}</span>
+                        <div>
+                          <div class="text-sm font-semibold text-[var(--color-parchment)]">{raid.name}</div>
+                          <div class="text-[10px] text-[var(--color-parchment)] opacity-40">{raid.description}</div>
+                        </div>
+                      </div>
+                      <div class="flex flex-wrap gap-1">
+                        {bosses.map((boss) => (
+                          <span key={boss.id} class="text-[9px] bg-[#111] text-[var(--color-parchment)] opacity-60 px-1.5 py-0.5 rounded">
+                            {MONSTER_ICONS[boss.id] || '👹'} {boss.name}
+                          </span>
+                        ))}
                       </div>
                     </div>
-                    <div class="flex flex-wrap gap-1">
-                      {bosses.map((boss) => (
-                        <span key={boss.id} class="text-[9px] bg-[#111] text-[var(--color-parchment)] opacity-60 px-1.5 py-0.5 rounded">
-                          {MONSTER_ICONS[boss.id] || '👹'} {boss.name}
-                        </span>
-                      ))}
-                    </div>
+                    {raidKillCounts[raid.id] > 0 && (
+                      <div class="text-[9px] text-yellow-400 font-mono ml-2 flex-shrink-0">KC: {raidKillCounts[raid.id].toLocaleString()}</div>
+                    )}
                   </button>
                   <button
                     onClick={() => setSelectedRaidInfo(raid)}
