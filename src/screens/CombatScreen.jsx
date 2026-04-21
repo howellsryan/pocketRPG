@@ -8,6 +8,7 @@ import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
 import { getCombatType, equipItem } from '../engine/equipment.js'
+import { api, clearAuth } from '../cloud/api.js'
 import monstersData from '../data/monsters.json'
 import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
@@ -104,7 +105,7 @@ const MONSTER_ICONS = {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFightStatusChange }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife } = useGame()
 
   const [combat, setCombat] = useState(null)
   const [log, setLog] = useState([])
@@ -282,10 +283,21 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           }
           if (newHP <= 0) {
             setCombat(prev => ({ ...prev, active: false }))
-            addToast('You died!', 'error')
             setActiveTask(null)
-            updateHP(getMaxHP())
-            hpRef.current = getMaxHP()
+            if (isOneLife) {
+              addToast('you died! Restarting your account…', 'error')
+              try {
+                api.putSave(null).catch(() => {})
+              } catch {}
+              setTimeout(() => {
+                clearAuth()
+                window.location.href = '/'
+              }, 2000)
+            } else {
+              addToast('You died!', 'error')
+              updateHP(getMaxHP())
+              hpRef.current = getMaxHP()
+            }
           }
         }
         if (ev.type === 'monsterMiss') {
@@ -306,10 +318,21 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           }])
           if (newHP <= 0) {
             setCombat(prev => ({ ...prev, active: false }))
-            addToast('Incinerated by dragonfire!', 'error')
             setActiveTask(null)
-            updateHP(getMaxHP())
-            hpRef.current = getMaxHP()
+            if (isOneLife) {
+              addToast('you died! Restarting your account…', 'error')
+              try {
+                api.putSave(null).catch(() => {})
+              } catch {}
+              setTimeout(() => {
+                clearAuth()
+                window.location.href = '/'
+              }, 2000)
+            } else {
+              addToast('Incinerated by dragonfire!', 'error')
+              updateHP(getMaxHP())
+              hpRef.current = getMaxHP()
+            }
           }
         }
         if (ev.type === 'dragonfireBlocked') {

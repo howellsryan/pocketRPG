@@ -23,20 +23,27 @@ export function getCharacterId() {
   return v ? parseInt(v, 10) : null
 }
 
-export function setCharacter(id, username, isIronman = null) {
+export function setCharacter(id, username, isIronman = null, isOneLife = null) {
   if (id) {
     localStorage.setItem(CHARACTER_KEY, String(id))
     if (username) localStorage.setItem(CHARACTER_NAME_KEY, username)
     if (isIronman !== null) localStorage.setItem('pocketrpg_ironman_mode', String(isIronman))
+    if (isOneLife !== null) localStorage.setItem('pocketrpg_one_life_mode', String(isOneLife))
   } else {
     localStorage.removeItem(CHARACTER_KEY)
     localStorage.removeItem(CHARACTER_NAME_KEY)
     localStorage.removeItem('pocketrpg_ironman_mode')
+    localStorage.removeItem('pocketrpg_one_life_mode')
   }
 }
 
 export function getIronmanMode() {
   const v = localStorage.getItem('pocketrpg_ironman_mode')
+  return v === 'true'
+}
+
+export function getOneLifeMode() {
+  const v = localStorage.getItem('pocketrpg_one_life_mode')
   return v === 'true'
 }
 
@@ -101,9 +108,9 @@ async function request(path, options = {}) {
 export const api = {
   me: () => request('/api/auth/me'),
   listCharacters: () => request('/api/characters'),
-  createCharacter: (username, isIronman = false) => request('/api/characters', {
+  createCharacter: (username, isIronman = false, isOneLife = false) => request('/api/characters', {
     method: 'POST',
-    body: JSON.stringify({ username, is_ironman: isIronman }),
+    body: JSON.stringify({ username, is_ironman: isIronman, is_one_life: isOneLife }),
   }),
   validatePurchase: (itemId, quantity = 1) => request('/api/purchase', {
     method: 'POST',

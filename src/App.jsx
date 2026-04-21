@@ -20,7 +20,7 @@ import { hasSave, closeDB } from './db/database.js'
 import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
 import { startTicks, stopTicks, onTick } from './engine/tick.js'
 import { snapshotToLocalStorage, restoreFromLocalStorage, wipeLocalSave } from './db/saveload.js'
-import { captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode } from './cloud/api.js'
+import { captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode } from './cloud/api.js'
 import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState } from './cloud/sync.js'
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
@@ -633,11 +633,13 @@ function GameApp() {
     }
   }
 
-  async function startNewGame(isIronman = null, playerName = null) {
+  async function startNewGame(isIronman = null, playerName = null, isOneLife = null) {
     const name = playerName || getCharacterName() || 'Adventurer'
     // If isIronman not explicitly provided, check if it was stored (cloud character)
     const finalIsIronman = isIronman !== null ? isIronman : getIronmanMode()
-    await initNewGame(name, finalIsIronman)
+    // If isOneLife not explicitly provided, check if it was stored (cloud character)
+    const finalIsOneLife = isOneLife !== null ? isOneLife : getOneLifeMode()
+    await initNewGame(name, finalIsIronman, finalIsOneLife)
     // Stamp IDB ownership so the next boot knows these rows belong to the
     // selected character (only applies when signed in — offline leaves null).
     const charId = getCharacterId()
