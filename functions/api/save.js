@@ -52,11 +52,21 @@ export async function onRequestPut({ request, env }) {
   }
 
   const now = Date.now()
-  await env.DB.prepare(
-    `INSERT INTO saves (character_id, save_data, updated_at)
-     VALUES (?, ?, ?)
-     ON CONFLICT(character_id) DO UPDATE SET save_data = excluded.save_data, updated_at = excluded.updated_at`
-  ).bind(ch.id, save_data, now).run()
+  // For new saves, insert. For existing saves, update.
+  // This explicitly handles NULL values for one-life account clearing.
+  const existing = await env.DB.prepare(
+    'SELECT 1 FROM saves WHERE character_id = ?'
+  ).bind(ch.id).first()
+
+  if (existing) {
+    await env.DB.prepare(
+      'UPDATE saves SET save_data = ?, updated_at = ? WHERE character_id = ?'
+    ).bind(save_data, now, ch.id).run()
+  } else {
+    await env.DB.prepare(
+      'INSERT INTO saves (character_id, save_data, updated_at) VALUES (?, ?, ?)'
+    ).bind(ch.id, save_data, now).run()
+  }
 
   return json({ ok: true, updatedAt: now })
 }
