@@ -88,12 +88,12 @@
     "rewards": {
       "always": [
         { "itemId": "coins", "quantity": [10000, 50000], "chance": 1.0 },
-        { "itemId": "death_rune", "quantity": [50, 100], "chance": 0.6 },
-        { "itemId": "blood_rune", "quantity": [30, 60], "chance": 0.5 },
-        { "itemId": "soul_rune", "quantity": [20, 40], "chance": 0.4 }
+        { "itemId": "death_rune", "quantity": [50, 750], "chance": 0.6 },
+        { "itemId": "blood_rune", "quantity": [30, 500], "chance": 0.5 },
+        { "itemId": "soul_rune", "quantity": [20, 500], "chance": 0.4 }
       ],
       "unique": {
-        "chance": 0.22,
+        "chance": 0.25,
         "items": [
           { "itemId": "ahrims_hood", "weight": 1 },
           { "itemId": "ahrims_robetop", "weight": 1 },
