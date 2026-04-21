@@ -124,7 +124,7 @@ function GameApp() {
       // Do an immediate snapshot so localStorage backup exists from the start
       const snap = getSnapshot()
       if (snap.player) {
-        snapshotToLocalStorage(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig, snap.homeShortcuts, snap.bossKillCounts)
+        snapshotToLocalStorage(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig, snap.homeShortcuts, snap.bossKillCounts, snap.completedQuests, snap.questQueue)
       }
       startTicks()
       return () => stopTicks()
@@ -455,7 +455,7 @@ function GameApp() {
       if (snapshotCounter.current >= 100) {
         snapshotCounter.current = 0
         const snap = getSnapshot()
-        snapshotToLocalStorage(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig, snap.homeShortcuts, snap.bossKillCounts)
+        snapshotToLocalStorage(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig, snap.homeShortcuts, snap.bossKillCounts, snap.completedQuests, snap.questQueue)
         // Cloud sync piggy-backs on the local snapshot cadence (debounced, hash-skipped).
         schedulePushSave(snap)
       }
