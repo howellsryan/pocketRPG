@@ -40,7 +40,7 @@ export default function AuthScreen({ onCloudReady, onPlayOffline }) {
 
   function selectCharacter(ch) {
     resetSyncState()
-    setCharacter(ch.id, ch.username)
+    setCharacter(ch.id, ch.username, ch.is_ironman)
     onCloudReady(ch)
   }
 

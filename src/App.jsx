@@ -20,7 +20,7 @@ import { hasSave, closeDB } from './db/database.js'
 import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
 import { startTicks, stopTicks, onTick } from './engine/tick.js'
 import { snapshotToLocalStorage, restoreFromLocalStorage, wipeLocalSave } from './db/saveload.js'
-import { captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId } from './cloud/api.js'
+import { captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode } from './cloud/api.js'
 import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState } from './cloud/sync.js'
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
@@ -633,9 +633,11 @@ function GameApp() {
     }
   }
 
-  async function startNewGame(isIronman = false, playerName = null) {
+  async function startNewGame(isIronman = null, playerName = null) {
     const name = playerName || getCharacterName() || 'Adventurer'
-    await initNewGame(name, isIronman)
+    // If isIronman not explicitly provided, check if it was stored (cloud character)
+    const finalIsIronman = isIronman !== null ? isIronman : getIronmanMode()
+    await initNewGame(name, finalIsIronman)
     // Stamp IDB ownership so the next boot knows these rows belong to the
     // selected character (only applies when signed in — offline leaves null).
     const charId = getCharacterId()
@@ -649,9 +651,11 @@ function GameApp() {
     setOfflineCreating(true)
     try {
       await startNewGame(offlineIsIronman, 'Adventurer')
+      // startNewGame sets gameReady and transitions to the game
+      // No need to manually reset offlineCreating as the screen will unmount
     } catch (err) {
       console.error('Failed to create offline character:', err)
-      addToast('Failed to create character. Please try again.', 'error')
+      addToast(`Failed to create character: ${err.message}`, 'error')
       setOfflineCreating(false)
     }
   }

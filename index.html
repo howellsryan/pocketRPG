@@ -25917,16 +25917,23 @@ function getCharacterId() {
     const v = localStorage.getItem(CHARACTER_KEY);
     return v ? parseInt(v, 10) : null;
 }
-function setCharacter(id, username) {
+function setCharacter(id, username, isIronman = null) {
     if (id) {
         localStorage.setItem(CHARACTER_KEY, String(id));
         if (username)
             localStorage.setItem(CHARACTER_NAME_KEY, username);
+        if (isIronman !== null)
+            localStorage.setItem('pocketrpg_ironman_mode', String(isIronman));
     }
     else {
         localStorage.removeItem(CHARACTER_KEY);
         localStorage.removeItem(CHARACTER_NAME_KEY);
+        localStorage.removeItem('pocketrpg_ironman_mode');
     }
+}
+function getIronmanMode() {
+    const v = localStorage.getItem('pocketrpg_ironman_mode');
+    return v === 'true';
 }
 function getCharacterName() {
     return localStorage.getItem(CHARACTER_NAME_KEY);
@@ -32649,7 +32656,7 @@ function AuthScreen({ onCloudReady, onPlayOffline }) {
     }
     function selectCharacter(ch) {
         resetSyncState();
-        setCharacter(ch.id, ch.username);
+        setCharacter(ch.id, ch.username, ch.is_ironman);
         onCloudReady(ch);
     }
     async function handleCreate(e) {
@@ -33400,9 +33407,11 @@ function GameApp() {
             await startNewGame();
         }
     }
-    async function startNewGame(isIronman = false, playerName = null) {
+    async function startNewGame(isIronman = null, playerName = null) {
         const name = playerName || getCharacterName() || 'Adventurer';
-        await initNewGame(name, isIronman);
+        // If isIronman not explicitly provided, check if it was stored (cloud character)
+        const finalIsIronman = isIronman !== null ? isIronman : getIronmanMode();
+        await initNewGame(name, finalIsIronman);
         // Stamp IDB ownership so the next boot knows these rows belong to the
         // selected character (only applies when signed in — offline leaves null).
         const charId = getCharacterId();
@@ -33416,10 +33425,12 @@ function GameApp() {
         setOfflineCreating(true);
         try {
             await startNewGame(offlineIsIronman, 'Adventurer');
+            // startNewGame sets gameReady and transitions to the game
+            // No need to manually reset offlineCreating as the screen will unmount
         }
         catch (err) {
             console.error('Failed to create offline character:', err);
-            addToast('Failed to create character. Please try again.', 'error');
+            addToast(`Failed to create character: ${err.message}`, 'error');
             setOfflineCreating(false);
         }
     }
