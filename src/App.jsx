@@ -41,6 +41,7 @@ function GameApp() {
   const [cloudPhase, setCloudPhase] = useState('pending')
   const [conflict, setConflict] = useState(null) // { cloudPayload, cloudHash, cloudUpdatedAt, localUpdatedAt }
   const [offlineIsIronman, setOfflineIsIronman] = useState(false)
+  const [offlineIsOneLife, setOfflineIsOneLife] = useState(false)
   const [offlineCreating, setOfflineCreating] = useState(false)
 
   // Refs for tick-based systems
@@ -652,7 +653,7 @@ function GameApp() {
     e.preventDefault()
     setOfflineCreating(true)
     try {
-      await startNewGame(offlineIsIronman, 'Adventurer')
+      await startNewGame(offlineIsIronman, 'Adventurer', offlineIsOneLife)
       // Transition from auth_offline to ready now that game is initialized
       setCloudPhase('ready')
     } catch (err) {
@@ -747,6 +748,24 @@ function GameApp() {
                   <div style={{ fontSize: '13px', color: '#d4af37', fontWeight: 'bold' }}>⚔️ Ironman Mode</div>
                   <div style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.6, marginTop: '2px' }}>
                     Limited shop access. Can only buy general and quest items.
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            {/* One Life Mode Toggle */}
+            <div style={{ marginBottom: '14px', padding: '12px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', margin: 0 }}>
+                <input
+                  type="checkbox"
+                  checked={offlineIsOneLife}
+                  onChange={(e) => setOfflineIsOneLife(e.target.checked)}
+                  style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                />
+                <div>
+                  <div style={{ fontSize: '13px', color: '#d4af37', fontWeight: 'bold' }}>☠️ One Life Mode</div>
+                  <div style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.6, marginTop: '2px' }}>
+                    Die once and your account is permanently deleted. Works with or without Ironman.
                   </div>
                 </div>
               </label>
