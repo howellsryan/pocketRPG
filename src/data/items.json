@@ -23,7 +23,7 @@
     "stackable": true,
     "shopValue": 2,
     "icon": "🪶",
-    "generalStore": true
+    "isGeneralStore": true
   },
   "cowhide": {
     "id": "cowhide",
