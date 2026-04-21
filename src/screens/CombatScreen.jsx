@@ -291,13 +291,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 try {
                   if (getToken()) {
                     // Cloud account: wipe cloud save
-                    await api.putSave(null).catch(() => {})
+                    await api.putSave(null).catch(err => {
+                      console.error('Failed to wipe cloud save:', err)
+                    })
                   } else {
                     // Offline account: wipe local database
                     closeDB()
                     await deleteDB()
                   }
-                } catch {}
+                } catch (err) {
+                  console.error('Error during one-life reset:', err)
+                }
                 clearAuth()
                 window.location.href = '/'
               }, 2000)
@@ -333,13 +337,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 try {
                   if (getToken()) {
                     // Cloud account: wipe cloud save
-                    await api.putSave(null).catch(() => {})
+                    await api.putSave(null).catch(err => {
+                      console.error('Failed to wipe cloud save:', err)
+                    })
                   } else {
                     // Offline account: wipe local database
                     closeDB()
                     await deleteDB()
                   }
-                } catch {}
+                } catch (err) {
+                  console.error('Error during one-life reset:', err)
+                }
                 clearAuth()
                 window.location.href = '/'
               }, 2000)
