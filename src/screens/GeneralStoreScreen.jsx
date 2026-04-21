@@ -12,7 +12,7 @@ export default function GeneralStoreScreen() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedItem, setSelectedItem] = useState(null) // item being purchased
   const [buyQty, setBuyQty] = useState(1)
-  const [activeTab, setActiveTab] = useState('quest_items') // 'quest_items' | type-based filters
+  const [activeTab, setActiveTab] = useState('all') // 'all' | 'quest_items' | type-based filters
 
   const hasMoneyPurse = unlockedFeatures.has('money_purse')
   const coinsInInv = countItem(inventory, 'coins')
@@ -46,6 +46,11 @@ export default function GeneralStoreScreen() {
           const isUnlocked = completedQuests.has(item.questUnlock)
           return { ...item, id, isUnlocked, unlockedBy: item.questUnlock }
         })
+    }
+    if (activeTab === 'all') {
+      return Object.entries(itemsData)
+        .filter(([_, item]) => !item.questUnlock && !item.isUntradeable)
+        .map(([id, item]) => ({ ...item, id }))
     }
     // For type-based tabs, show only items of that type that aren't quest items or untradeable
     return Object.entries(itemsData)
@@ -137,7 +142,7 @@ export default function GeneralStoreScreen() {
       <div class="px-4 pt-3 pb-3 flex-shrink-0">
         <div class="flex justify-between items-baseline mb-3">
           <h2 class="font-[var(--font-display)] text-[15px] font-bold text-[var(--color-gold)] m-0">
-            {activeTab === 'quest_items' ? 'Quest Items' : 'General Store'}
+            {activeTab === 'quest_items' ? 'Quest Items' : 'Store'}
           </h2>
           <span class="text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]">
             🪙 {coins.toLocaleString()}
@@ -146,6 +151,16 @@ export default function GeneralStoreScreen() {
 
         {/* ── TAB SWITCHER ── */}
         <div class="flex gap-2 mb-3 overflow-x-auto pb-2">
+          <button
+            onClick={() => { setActiveTab('all'); setSearchTerm('') }}
+            class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border whitespace-nowrap flex-shrink-0 ${
+              activeTab === 'all'
+                ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
+                : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
+            }`}
+          >
+            🪙 All
+          </button>
           <button
             onClick={() => { setActiveTab('quest_items'); setSearchTerm('') }}
             class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border whitespace-nowrap flex-shrink-0 ${
@@ -189,7 +204,9 @@ export default function GeneralStoreScreen() {
               ? 'No items found.'
               : activeTab === 'quest_items'
                 ? 'Complete quests to unlock items here.'
-                : 'No items in this category.'}
+                : activeTab === 'all'
+                  ? 'No items to buy.'
+                  : 'No items in this category.'}
           </div>
         ) : (
           <div class="flex flex-col gap-2 pt-3">
