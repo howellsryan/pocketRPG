@@ -513,7 +513,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   // Active skilling modal
   const activeMult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory)
   const progress = skilling.active
-    ? 1 - (skilling.ticksRemaining / skilling.action.ticks)
+    ? Math.min(1, (skilling.action.ticks - skilling.ticksRemaining) / skilling.action.ticks)
     : 0
 
   return (
