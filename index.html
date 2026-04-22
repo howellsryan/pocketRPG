@@ -34471,7 +34471,12 @@ function GameApp() {
         }
     }
     async function startNewGame(isIronman = null, playerName = null, isOneLife = null) {
-        const name = playerName || getCharacterName() || 'Adventurer';
+        let name = playerName || getCharacterName();
+        // If still no name but we have a cloud character, that's a fallback error.
+        // In normal flow, setCharacter() should have already set CHARACTER_NAME_KEY before startNewGame() is called.
+        if (!name && !getCharacterId()) {
+            name = 'Adventurer';
+        }
         // If isIronman not explicitly provided, check if it was stored (cloud character)
         const finalIsIronman = isIronman !== null ? isIronman : getIronmanMode();
         // If isOneLife not explicitly provided, check if it was stored (cloud character)
