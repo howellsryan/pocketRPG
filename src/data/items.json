@@ -10163,7 +10163,6 @@
     "slot": "head",
     "stackable": false,
     "isUntradeable": true,
-    "questUnlock": "enlightened_journey",
     "attackBonus": {
       "stab": 25,
       "slash": 25,
@@ -11107,7 +11106,7 @@
       "defence": 45
     },
     "shopValue": 0,
-    "icon": "👒",
+    "icon": "🪖",
     "isGeneralStore": false,
     "IsUntradeable": true
   }
