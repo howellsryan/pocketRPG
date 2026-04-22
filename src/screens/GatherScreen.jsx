@@ -198,9 +198,6 @@ const CATEGORIES = [
 ]
 
 const TICKS_PER_HOUR = 6000 // 3600s / 0.6s per tick
-// TEMP: all minigame grinds shortened to ~10s for preview-branch testing. Revert
-// to TICKS_PER_HOUR * hours before shipping.
-const TEST_TICKS = 17 // ≈ 10.2s at 600ms/tick
 
 const MINIGAME_TASKS = [
   {
@@ -209,7 +206,7 @@ const MINIGAME_TASKS = [
     icon: '👕',
     description: 'Run Barbarian Assault until you earn a Fighter Torso.',
     hours: 5,
-    ticks: TEST_TICKS,
+    ticks: 5 * TICKS_PER_HOUR,
     product: 'fighter_torso',
     qty: 1,
     minigame: 'barbarian_assault',
@@ -221,7 +218,7 @@ const MINIGAME_TASKS = [
     icon: '🪖',
     description: 'Run Barbarian Assault until you earn a Fighter Hat.',
     hours: 2,
-    ticks: TEST_TICKS,
+    ticks: 2 * TICKS_PER_HOUR,
     product: 'fighter_hat',
     qty: 1,
     minigame: 'barbarian_assault',
@@ -233,7 +230,7 @@ const MINIGAME_TASKS = [
     icon: '🛡️',
     description: 'Slay Cyclopes in the Warriors\' Guild basement until one drops a Rune Defender.',
     hours: 3,
-    ticks: TEST_TICKS,
+    ticks: 3 * TICKS_PER_HOUR,
     product: 'rune_defender',
     qty: 1,
     minigame: 'warriors_guild',
@@ -245,7 +242,7 @@ const MINIGAME_TASKS = [
     icon: '🛡️',
     description: 'Slay Cyclopes wielding your Rune Defender until one drops a Dragon Defender.',
     hours: 2,
-    ticks: TEST_TICKS,
+    ticks: 2 * TICKS_PER_HOUR,
     product: 'dragon_defender',
     qty: 1,
     minigame: 'warriors_guild',
@@ -258,7 +255,7 @@ const MINIGAME_TASKS = [
     icon: '😇',
     description: 'Play Castle Wars matches until you can purchase a Halo.',
     hours: 3,
-    ticks: TEST_TICKS,
+    ticks: 3 * TICKS_PER_HOUR,
     product: 'halo',
     qty: 1,
     minigame: 'castle_wars',
@@ -655,7 +652,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
                           <div class="flex-1 min-w-0">
                             <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>
                             <div class="text-[10px] text-[#c8a96e] opacity-80">
-                              ⏱ {formatRemaining(task.ticks * 0.6)} total
+                              ⏱ {formatHours(task.hours)} total
                               {task.requiresItem && (
                                 <span class={`${missingReq ? 'text-[#e57373]' : 'text-[var(--color-parchment)] opacity-50'}`}>
                                   {' · '}Needs: {ITEM_NAMES[task.requiresItem] || task.requiresItem}
