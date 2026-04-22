@@ -65,11 +65,8 @@ export function processSkillingTick(skillingState) {
 
   if (!state.active || state.stopped) return { skillingState: state, events }
 
-  // If we just completed an action, reset for the next one
-  if (state.justCompleted) {
-    state.ticksRemaining = state.action.ticks
-    state.justCompleted = false
-  } else {
+  // Only decrement if not in justCompleted state
+  if (!state.justCompleted) {
     state.ticksRemaining--
   }
 
@@ -87,6 +84,10 @@ export function processSkillingTick(skillingState) {
     })
 
     state.justCompleted = true
+  } else if (state.justCompleted) {
+    // Previous tick was completion, now reset for next action
+    state.ticksRemaining = state.action.ticks
+    state.justCompleted = false
   }
 
   return { skillingState: state, events }

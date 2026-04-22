@@ -25066,12 +25066,8 @@ function processSkillingTick(skillingState) {
     const events = [];
     if (!state.active || state.stopped)
         return { skillingState: state, events };
-    // If we just completed an action, reset for the next one
-    if (state.justCompleted) {
-        state.ticksRemaining = state.action.ticks;
-        state.justCompleted = false;
-    }
-    else {
+    // Only decrement if not in justCompleted state
+    if (!state.justCompleted) {
         state.ticksRemaining--;
     }
     if (state.ticksRemaining <= 0) {
@@ -25086,6 +25082,11 @@ function processSkillingTick(skillingState) {
             product: state.action.product || null
         });
         state.justCompleted = true;
+    }
+    else if (state.justCompleted) {
+        // Previous tick was completion, now reset for next action
+        state.ticksRemaining = state.action.ticks;
+        state.justCompleted = false;
     }
     return { skillingState: state, events };
 }
