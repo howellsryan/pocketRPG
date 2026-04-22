@@ -320,7 +320,18 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
       const state = taskRef.current
       if (!state || state.stopped) return
 
-      const next = { ...state, ticksRemaining: state.ticksRemaining - 1 }
+      // Handle reset from previous completion tick
+      let ticksRemaining = state.ticksRemaining
+      let justCompleted = state.justCompleted || false
+
+      if (justCompleted) {
+        ticksRemaining = state.task.ticks
+        justCompleted = false
+      } else {
+        ticksRemaining--
+      }
+
+      const next = { ...state, ticksRemaining, justCompleted }
 
       if (next.ticksRemaining <= 0) {
         // Action complete — check materials
@@ -378,9 +389,9 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
 
         const updated = {
           ...next,
-          ticksRemaining: task.ticks,
           totalDone: next.totalDone + 1,
           totalItems: next.totalItems + task.qty,
+          justCompleted: true,
         }
         taskRef.current = updated
         setLocalTask(updated)
@@ -405,6 +416,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
       totalItems: idleItems,
       startedAt: Date.now(),
       stopped: false,
+      justCompleted: false,
     }
     taskRef.current = newState
     setLocalTask(newState)

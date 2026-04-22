@@ -25066,15 +25066,12 @@ function processSkillingTick(skillingState) {
     const events = [];
     if (!state.active || state.stopped)
         return { skillingState: state, events };
-    // If we just completed an action, reset for the next one and clear the flag
-    // (don't decrement on this tick so progress bar shows 0% for new action)
-    let shouldDecrement = true;
+    // If we just completed an action, reset for the next one
     if (state.justCompleted) {
         state.ticksRemaining = state.action.ticks;
         state.justCompleted = false;
-        shouldDecrement = false;
     }
-    if (shouldDecrement) {
+    else {
         state.ticksRemaining--;
     }
     if (state.ticksRemaining <= 0) {
@@ -32618,7 +32615,17 @@ function GatherScreen({ initialTaskId, idleResult }) {
             const state = taskRef.current;
             if (!state || state.stopped)
                 return;
-            const next = { ...state, ticksRemaining: state.ticksRemaining - 1 };
+            // Handle reset from previous completion tick
+            let ticksRemaining = state.ticksRemaining;
+            let justCompleted = state.justCompleted || false;
+            if (justCompleted) {
+                ticksRemaining = state.task.ticks;
+                justCompleted = false;
+            }
+            else {
+                ticksRemaining--;
+            }
+            const next = { ...state, ticksRemaining, justCompleted };
             if (next.ticksRemaining <= 0) {
                 // Action complete — check materials
                 const task = next.task;
@@ -32678,9 +32685,9 @@ function GatherScreen({ initialTaskId, idleResult }) {
                 }
                 const updated = {
                     ...next,
-                    ticksRemaining: task.ticks,
                     totalDone: next.totalDone + 1,
                     totalItems: next.totalItems + task.qty,
+                    justCompleted: true,
                 };
                 taskRef.current = updated;
                 setLocalTask(updated);
@@ -32704,6 +32711,7 @@ function GatherScreen({ initialTaskId, idleResult }) {
             totalItems: idleItems,
             startedAt: Date.now(),
             stopped: false,
+            justCompleted: false,
         };
         taskRef.current = newState;
         setLocalTask(newState);

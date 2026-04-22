@@ -65,16 +65,11 @@ export function processSkillingTick(skillingState) {
 
   if (!state.active || state.stopped) return { skillingState: state, events }
 
-  // If we just completed an action, reset for the next one and clear the flag
-  // (don't decrement on this tick so progress bar shows 0% for new action)
-  let shouldDecrement = true
+  // If we just completed an action, reset for the next one
   if (state.justCompleted) {
     state.ticksRemaining = state.action.ticks
     state.justCompleted = false
-    shouldDecrement = false
-  }
-
-  if (shouldDecrement) {
+  } else {
     state.ticksRemaining--
   }
 
