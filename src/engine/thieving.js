@@ -13,7 +13,8 @@ export function createThievingState(npc) {
     active: true,
     npc,
     ticksRemaining: 4, // Each pickpocket takes roughly 4 ticks (2.4 seconds)
-    tickCount: 0
+    tickCount: 0,
+    justCompleted: false
   }
 }
 
@@ -27,7 +28,11 @@ export function processThievingTick(thievingState) {
   const state = { ...thievingState }
   const events = []
   state.tickCount++
-  state.ticksRemaining--
+
+  // Only decrement if not in justCompleted state
+  if (!state.justCompleted) {
+    state.ticksRemaining--
+  }
 
   if (state.ticksRemaining <= 0) {
     // Calculate success based on level vs requirement
@@ -45,8 +50,11 @@ export function processThievingTick(thievingState) {
       drops: state.npc.drops || []
     })
 
-    // Reset for next pickpocket
+    state.justCompleted = true
+  } else if (state.justCompleted) {
+    // Previous tick was completion, now reset for next pickpocket
     state.ticksRemaining = 4
+    state.justCompleted = false
   }
 
   return { thievingState: state, events }
