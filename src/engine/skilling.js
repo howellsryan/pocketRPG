@@ -65,13 +65,13 @@ export function processSkillingTick(skillingState) {
 
   if (!state.active || state.stopped) return { skillingState: state, events }
 
-  // If we just completed an action, reset for the next one and clear the flag
+  // Check justCompleted FIRST to reset before checking for new completion
   if (state.justCompleted) {
     state.ticksRemaining = state.action.ticks
     state.justCompleted = false
+  } else {
+    state.ticksRemaining--
   }
-
-  state.ticksRemaining--
 
   if (state.ticksRemaining <= 0) {
     // Action completed — mark for reset on next tick so progress bar shows 100%
