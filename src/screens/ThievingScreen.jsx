@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
+import { getActionProgress } from '../hooks/useActionTick.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createThievingState, processThievingTick } from '../engine/thieving.js'
 import { onTick } from '../engine/tick.js'
@@ -159,9 +160,7 @@ export default function ThievingScreen({ initialNpcId, onBack }) {
   }
 
   // Active pickpocketing
-  const progress = thieving.active
-    ? 1 - (thieving.ticksRemaining / 4)
-    : 0
+  const progress = getActionProgress(thieving.active, thieving.ticksRemaining, 4)
   const elapsed = thieving.startedAt ? Date.now() - thieving.startedAt : 0
   const pickpocketsPerHr = elapsed > 5000 && thieving.totalPickpockets > 0
     ? Math.round(thieving.totalPickpockets / (elapsed / 3_600_000))

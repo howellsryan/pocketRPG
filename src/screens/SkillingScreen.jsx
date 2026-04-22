@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import Modal from '../components/Modal.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
+import { getActionProgress } from '../hooks/useActionTick.js'
 import { SKILL_ICONS, STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS } from '../utils/constants.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getToolSpeedMultiplier, hasToolForSkill } from '../engine/skilling.js'
@@ -512,9 +513,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
 
   // Active skilling modal
   const activeMult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory)
-  const progress = skilling.active
-    ? 1 - (skilling.ticksRemaining / skilling.action.ticks)
-    : 0
+  const progress = getActionProgress(skilling.active, skilling.ticksRemaining, skilling.action.ticks)
 
   return (
     <div class="h-full flex flex-col p-4">

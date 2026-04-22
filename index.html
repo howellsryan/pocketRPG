@@ -23060,6 +23060,22 @@ function calcCombatLevel(stats) {
     return Math.floor(base + Math.max(melee, range, mage));
 }
 
+// ── hooks/useActionTick.js ──
+/**
+ * Calculate progress for any action-based activity (0-1)
+ * Used by skilling, gathering, thieving, agility, etc.
+ *
+ * @param {boolean} active - Whether the action is active
+ * @param {number} ticksRemaining - Ticks left in current action
+ * @param {number} totalTicks - Total ticks for the action
+ * @returns {number} Progress 0-1, or 0 if not active
+ */
+function getActionProgress(active, ticksRemaining, totalTicks) {
+    if (!active)
+        return 0;
+    return Math.min(1, Math.max(0, (totalTicks - ticksRemaining) / totalTicks));
+}
+
 // ── engine/experience.js ──
 
 // Pre-compute XP table using exact level formula
@@ -23615,7 +23631,8 @@ function createThievingState(npc) {
         active: true,
         npc,
         ticksRemaining: 4, // Each pickpocket takes roughly 4 ticks (2.4 seconds)
-        tickCount: 0
+        tickCount: 0,
+        justCompleted: false
     };
 }
 /**
@@ -23628,7 +23645,14 @@ function processThievingTick(thievingState) {
     const state = { ...thievingState };
     const events = [];
     state.tickCount++;
-    state.ticksRemaining--;
+    // Check justCompleted FIRST to reset before checking for new completion
+    if (state.justCompleted) {
+        state.ticksRemaining = 4;
+        state.justCompleted = false;
+    }
+    else {
+        state.ticksRemaining--;
+    }
     if (state.ticksRemaining <= 0) {
         // Calculate success based on level vs requirement
         // OSRS has a success rate formula, but for simplicity:
@@ -23643,8 +23667,7 @@ function processThievingTick(thievingState) {
             // Future: add drops array here for rare items
             drops: state.npc.drops || []
         });
-        // Reset for next pickpocket
-        state.ticksRemaining = 4;
+        state.justCompleted = true;
     }
     return { thievingState: state, events };
 }
@@ -25052,7 +25075,8 @@ function createSkillingState(skill, action) {
         ticksRemaining: action.ticks,
         totalActions: 0,
         totalXP: 0,
-        stopped: false
+        stopped: false,
+        justCompleted: false // flag to delay reset to next tick
     };
 }
 /**
@@ -25065,9 +25089,16 @@ function processSkillingTick(skillingState) {
     const events = [];
     if (!state.active || state.stopped)
         return { skillingState: state, events };
-    state.ticksRemaining--;
+    // Check justCompleted FIRST to reset before checking for new completion
+    if (state.justCompleted) {
+        state.ticksRemaining = state.action.ticks;
+        state.justCompleted = false;
+    }
+    else {
+        state.ticksRemaining--;
+    }
     if (state.ticksRemaining <= 0) {
-        // Action completed
+        // Action completed — mark for reset on next tick so progress bar shows 100%
         state.totalActions++;
         state.totalXP += state.action.xp;
         events.push({
@@ -25077,8 +25108,7 @@ function processSkillingTick(skillingState) {
             xp: state.action.xp,
             product: state.action.product || null
         });
-        // Reset for next action
-        state.ticksRemaining = state.action.ticks;
+        state.justCompleted = true;
     }
     return { skillingState: state, events };
 }
@@ -31245,6 +31275,7 @@ function PatchDetails({ patch, onHarvest }) {
 
 
 
+
 const thievingData = skillsData.thieving;
 function ThievingScreen({ initialNpcId, onBack }) {
     const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask } = useGame();
@@ -31368,9 +31399,7 @@ function ThievingScreen({ initialNpcId, onBack }) {
             }))));
     }
     // Active pickpocketing
-    const progress = thieving.active
-        ? 1 - (thieving.ticksRemaining / 4)
-        : 0;
+    const progress = getActionProgress(thieving.active, thieving.ticksRemaining, 4);
     const elapsed = thieving.startedAt ? Date.now() - thieving.startedAt : 0;
     const pickpocketsPerHr = elapsed > 5000 && thieving.totalPickpockets > 0
         ? Math.round(thieving.totalPickpockets / (elapsed / 3600000))
@@ -31411,6 +31440,7 @@ function ThievingScreen({ initialNpcId, onBack }) {
 }
 
 // ── screens/SkillingScreen.js ──
+
 
 
 
@@ -31810,9 +31840,7 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
     }
     // Active skilling modal
     const activeMult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory);
-    const progress = skilling.active
-        ? 1 - (skilling.ticksRemaining / skilling.action.ticks)
-        : 0;
+    const progress = getActionProgress(skilling.active, skilling.ticksRemaining, skilling.action.ticks);
     return (h("div", { class: "h-full flex flex-col p-4" },
         h("div", { class: "flex-1 flex flex-col items-center justify-center" },
             h("span", { class: "text-4xl mb-2" }, SKILL_ICONS[selectedSkill]),
@@ -32304,6 +32332,7 @@ function SlayerScreen({ onBack }) {
 
 
 
+
 /**
  * Gathering tasks — no skill level required, just time-based resource collection.
  * Inspired by activities like picking flax, collecting sand, etc.
@@ -32608,7 +32637,17 @@ function GatherScreen({ initialTaskId, idleResult }) {
             const state = taskRef.current;
             if (!state || state.stopped)
                 return;
-            const next = { ...state, ticksRemaining: state.ticksRemaining - 1 };
+            // Handle reset from previous completion tick
+            let ticksRemaining = state.ticksRemaining;
+            let justCompleted = state.justCompleted || false;
+            if (justCompleted) {
+                ticksRemaining = state.task.ticks;
+                justCompleted = false;
+            }
+            else {
+                ticksRemaining--;
+            }
+            const next = { ...state, ticksRemaining, justCompleted };
             if (next.ticksRemaining <= 0) {
                 // Action complete — check materials
                 const task = next.task;
@@ -32668,9 +32707,9 @@ function GatherScreen({ initialTaskId, idleResult }) {
                 }
                 const updated = {
                     ...next,
-                    ticksRemaining: task.ticks,
                     totalDone: next.totalDone + 1,
                     totalItems: next.totalItems + task.qty,
+                    justCompleted: true,
                 };
                 taskRef.current = updated;
                 setLocalTask(updated);
@@ -32694,6 +32733,7 @@ function GatherScreen({ initialTaskId, idleResult }) {
             totalItems: idleItems,
             startedAt: Date.now(),
             stopped: false,
+            justCompleted: false,
         };
         taskRef.current = newState;
         setLocalTask(newState);
@@ -32742,7 +32782,7 @@ function GatherScreen({ initialTaskId, idleResult }) {
     // Active gathering modal
     if (activeTask) {
         const { task } = activeTask;
-        const progress = 1 - activeTask.ticksRemaining / task.ticks;
+        const progress = getActionProgress(true, activeTask.ticksRemaining, task.ticks);
         const elapsedHrs = activeTask.startedAt ? (Date.now() - activeTask.startedAt) / 3600000 : 0;
         const perHour = elapsedHrs > 0 ? Math.round(activeTask.totalItems / elapsedHrs) : 0;
         const remainingSeconds = activeTask.ticksRemaining * 0.6;
