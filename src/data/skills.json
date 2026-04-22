@@ -2315,16 +2315,8 @@
     "name": "Thieving",
     "npcs": [
       {
-        "id": "man",
-        "name": "Pickpocket Man",
-        "level": 1,
-        "xp": 8,
-        "coins": 3,
-        "description": "Common traveller in towns. Easy target with minimal rewards."
-      },
-      {
-        "id": "woman",
-        "name": "Pickpocket Woman",
+        "id": "villager",
+        "name": "Pickpocket Villager",
         "level": 1,
         "xp": 8,
         "coins": 3,
