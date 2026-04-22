@@ -5796,6 +5796,206 @@
     "icon": "⚔️",
     "isGeneralStore": true
   },
+  "dragon_longsword": {
+    "id": "dragon_longsword",
+    "name": "Dragon longsword",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 25,
+      "slash": 69,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 1,
+      "crush": 2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 69,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 60
+    },
+    "questUnlock": "lost_city",
+    "shopValue": 60000,
+    "icon": "⚔️",
+    "isGeneralStore": false
+  },
+  "dragon_full_helm": {
+    "id": "dragon_full_helm",
+    "name": "Dragon full helm",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -1,
+      "ranged": -1
+    },
+    "defenceBonus": {
+      "stab": 45,
+      "slash": 48,
+      "crush": 41,
+      "magic": -1,
+      "ranged": 45
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 60
+    },
+    "shopValue": 150000,
+    "icon": "⛑️",
+    "isGeneralStore": false
+  },
+  "dragon_chainbody": {
+    "id": "dragon_chainbody",
+    "name": "Dragon chainbody",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -15,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 58,
+      "slash": 47,
+      "crush": 64,
+      "magic": -3,
+      "ranged": 65
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 60
+    },
+    "questUnlock": "dragon_slayer_i",
+    "shopValue": 260000,
+    "icon": "🔗",
+    "isGeneralStore": false
+  },
+  "dragon_platelegs": {
+    "id": "dragon_platelegs",
+    "name": "Dragon platelegs",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -21,
+      "ranged": -11
+    },
+    "defenceBonus": {
+      "stab": 68,
+      "slash": 66,
+      "crush": 63,
+      "magic": -4,
+      "ranged": 65
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 60
+    },
+    "questUnlock": "dragon_slayer_i",
+    "shopValue": 162000,
+    "icon": "🦵",
+    "isGeneralStore": false
+  },
+  "dragon_plateskirt": {
+    "id": "dragon_plateskirt",
+    "name": "Dragon plateskirt",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -21,
+      "ranged": -11
+    },
+    "defenceBonus": {
+      "stab": 68,
+      "slash": 66,
+      "crush": 63,
+      "magic": -4,
+      "ranged": 65
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 60
+    },
+    "questUnlock": "dragon_slayer_i",
+    "shopValue": 162000,
+    "icon": "🦵",
+    "isGeneralStore": false
+  },
+  "dragon_kiteshield": {
+    "id": "dragon_kiteshield",
+    "name": "Dragon kiteshield",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -8,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 55,
+      "slash": 58,
+      "crush": 52,
+      "magic": -6,
+      "ranged": 53
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 60
+    },
+    "questUnlock": "dragon_slayer_i",
+    "shopValue": 750000,
+    "icon": "🛡️",
+    "isGeneralStore": false
+  },
   "berserker_helm": {
     "id": "berserker_helm",
     "name": "Berserker helm",
