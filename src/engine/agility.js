@@ -63,7 +63,7 @@ export function processAgilityTick(agilityState) {
   
   // Check justCompleted FIRST to reset before checking for new completion
   if (state.justCompleted) {
-    state.ticksRemaining = 4
+    state.ticksRemaining = state.action.ticks
     state.justCompleted = false
   } else {
     state.ticksRemaining--
