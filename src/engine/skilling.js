@@ -49,7 +49,8 @@ export function createSkillingState(skill, action) {
     ticksRemaining: action.ticks,
     totalActions: 0,
     totalXP: 0,
-    stopped: false
+    stopped: false,
+    justCompleted: false  // flag to delay reset to next tick
   }
 }
 
@@ -64,10 +65,16 @@ export function processSkillingTick(skillingState) {
 
   if (!state.active || state.stopped) return { skillingState: state, events }
 
+  // If we just completed an action, reset for the next one and clear the flag
+  if (state.justCompleted) {
+    state.ticksRemaining = state.action.ticks
+    state.justCompleted = false
+  }
+
   state.ticksRemaining--
 
   if (state.ticksRemaining <= 0) {
-    // Action completed
+    // Action completed — mark for reset on next tick so progress bar shows 100%
     state.totalActions++
     state.totalXP += state.action.xp
 
@@ -79,8 +86,7 @@ export function processSkillingTick(skillingState) {
       product: state.action.product || null
     })
 
-    // Reset for next action
-    state.ticksRemaining = state.action.ticks
+    state.justCompleted = true
   }
 
   return { skillingState: state, events }
