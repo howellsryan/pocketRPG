@@ -1692,6 +1692,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mt-0.5">
                         {spell.tier ? `${spell.tier.charAt(0).toUpperCase() + spell.tier.slice(1)} · ` : ''}Damage {spell.baseDamage}
                       </div>
+                      {spell.runeReq && Object.entries(spell.runeReq).length > 0 && (
+                        <div class="text-[9px] text-[var(--color-gold-dim)] mt-0.5">
+                          Runes: {Object.entries(spell.runeReq).map(([runeId, qty]) => `${qty}x ${runeId.split('_')[0].charAt(0).toUpperCase() + runeId.split('_')[0].slice(1)}`).join(', ')}
+                        </div>
+                      )}
                       <div class="text-[9px] text-[var(--color-gold-dim)] mt-0.5">Lv {spell.levelReq}</div>
                     </div>
                     {isActive && (

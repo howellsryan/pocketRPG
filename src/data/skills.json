@@ -2315,16 +2315,8 @@
     "name": "Thieving",
     "npcs": [
       {
-        "id": "man",
-        "name": "Pickpocket Man",
-        "level": 1,
-        "xp": 8,
-        "coins": 3,
-        "description": "Common traveller in towns. Easy target with minimal rewards."
-      },
-      {
-        "id": "woman",
-        "name": "Pickpocket Woman",
+        "id": "villager",
+        "name": "Pickpocket Villager",
         "level": 1,
         "xp": 8,
         "coins": 3,
@@ -2355,17 +2347,9 @@
         "description": "Tend to gardens in various locations. Profitable early-level target."
       },
       {
-        "id": "guard",
-        "name": "Pickpocket Guard",
-        "level": 40,
-        "xp": 46,
-        "coins": 30,
-        "description": "Armoured guards. Dangerous targets. Significant coin rewards."
-      },
-      {
         "id": "baker",
         "name": "Pickpocket Baker",
-        "level": 40,
+        "level": 25,
         "xp": 40,
         "coins": 20,
         "description": "Work in bakeries across the realm. Good XP for the level."
@@ -2379,6 +2363,14 @@
         "description": "Highly profitable due to seed drops. Best early-level money maker."
       },
       {
+        "id": "guard",
+        "name": "Pickpocket Guard",
+        "level": 40,
+        "xp": 46,
+        "coins": 30,
+        "description": "Armoured guards. Dangerous targets. Significant coin rewards."
+      },
+      {
         "id": "knight",
         "name": "Pickpocket Knight",
         "level": 55,
@@ -2389,8 +2381,8 @@
       {
         "id": "ardougne_knight",
         "name": "Pickpocket Ardougne Knight",
-        "level": 55,
-        "xp": 83,
+        "level": 65,
+        "xp": 100,
         "coins": 100,
         "description": "Elite city guard. Excellent experience and profit."
       },

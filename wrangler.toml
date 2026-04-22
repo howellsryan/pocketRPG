@@ -16,3 +16,9 @@ APP_BASE_URL = "https://pocketrpg.pages.dev"
 #   GITHUB_CLIENT_SECRET   — from GitHub OAuth App
 #   GOOGLE_CLIENT_ID       — from Google Cloud OAuth 2.0 Client
 #   GOOGLE_CLIENT_SECRET   — from Google Cloud OAuth 2.0 Client
+
+[env.preview]
+d1_databases = [
+  { binding = "DB", database_name = "pocketrpg-preview", database_id = "59233295-f492-4113-94da-90034d84a6a4" }
+]
+vars = { APP_BASE_URL = "https://preview.pocketrpg.pages.dev" }

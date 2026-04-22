@@ -11206,7 +11206,7 @@ const itemsData = {
       "defence": 45
     },
     "shopValue": 0,
-    "icon": "👒",
+    "icon": "🪖",
     "isGeneralStore": false,
     "IsUntradeable": true
   }
@@ -18553,16 +18553,8 @@ const skillsData = {
     "name": "Thieving",
     "npcs": [
       {
-        "id": "man",
-        "name": "Pickpocket Man",
-        "level": 1,
-        "xp": 8,
-        "coins": 3,
-        "description": "Common traveller in towns. Easy target with minimal rewards."
-      },
-      {
-        "id": "woman",
-        "name": "Pickpocket Woman",
+        "id": "villager",
+        "name": "Pickpocket Villager",
         "level": 1,
         "xp": 8,
         "coins": 3,
@@ -18593,17 +18585,9 @@ const skillsData = {
         "description": "Tend to gardens in various locations. Profitable early-level target."
       },
       {
-        "id": "guard",
-        "name": "Pickpocket Guard",
-        "level": 40,
-        "xp": 46,
-        "coins": 30,
-        "description": "Armoured guards. Dangerous targets. Significant coin rewards."
-      },
-      {
         "id": "baker",
         "name": "Pickpocket Baker",
-        "level": 40,
+        "level": 25,
         "xp": 40,
         "coins": 20,
         "description": "Work in bakeries across the realm. Good XP for the level."
@@ -18617,6 +18601,14 @@ const skillsData = {
         "description": "Highly profitable due to seed drops. Best early-level money maker."
       },
       {
+        "id": "guard",
+        "name": "Pickpocket Guard",
+        "level": 40,
+        "xp": 46,
+        "coins": 30,
+        "description": "Armoured guards. Dangerous targets. Significant coin rewards."
+      },
+      {
         "id": "knight",
         "name": "Pickpocket Knight",
         "level": 55,
@@ -18627,8 +18619,8 @@ const skillsData = {
       {
         "id": "ardougne_knight",
         "name": "Pickpocket Ardougne Knight",
-        "level": 55,
-        "xp": 83,
+        "level": 65,
+        "xp": 100,
         "coins": 100,
         "description": "Elite city guard. Excellent experience and profit."
       },
@@ -30689,6 +30681,9 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFight
                                 spell.tier ? `${spell.tier.charAt(0).toUpperCase() + spell.tier.slice(1)} · ` : '',
                                 "Damage ",
                                 spell.baseDamage),
+                            spell.runeReq && Object.entries(spell.runeReq).length > 0 && (h("div", { class: "text-[9px] text-[var(--color-gold-dim)] mt-0.5" },
+                                "Runes: ",
+                                Object.entries(spell.runeReq).map(([runeId, qty]) => `${qty}x ${runeId.split('_')[0].charAt(0).toUpperCase() + runeId.split('_')[0].slice(1)}`).join(', '))),
                             h("div", { class: "text-[9px] text-[var(--color-gold-dim)] mt-0.5" },
                                 "Lv ",
                                 spell.levelReq)),
@@ -34476,7 +34471,12 @@ function GameApp() {
         }
     }
     async function startNewGame(isIronman = null, playerName = null, isOneLife = null) {
-        const name = playerName || getCharacterName() || 'Adventurer';
+        let name = playerName || getCharacterName();
+        // If still no name but we have a cloud character, that's a fallback error.
+        // In normal flow, setCharacter() should have already set CHARACTER_NAME_KEY before startNewGame() is called.
+        if (!name && !getCharacterId()) {
+            name = 'Adventurer';
+        }
         // If isIronman not explicitly provided, check if it was stored (cloud character)
         const finalIsIronman = isIronman !== null ? isIronman : getIronmanMode();
         // If isOneLife not explicitly provided, check if it was stored (cloud character)
