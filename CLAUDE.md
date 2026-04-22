@@ -27,7 +27,7 @@ node build_single.cjs               # Concatenate + inline into index.html
  1. Make source changes in src/.
  2. Rebuild: tsc --project tsconfig.build.json && node build_single.cjs.
  3. Commit source and rebuilt index.html together.
- 4. **PR Rule**: When creating pull requests, **always target the `preview` branch, never `main`**.
+ 4. **PR Rule**: When creating pull requests, **always target the `preview` branch by default. **.
 ## 5. XP & LEVELING
  * **Progression**: 1–99.
  * **XP Formula**: totalXP(L) = floor(sum(x=1 to L-1) of floor(x + 300 * 2^(x/7)) / 4).
