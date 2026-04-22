@@ -1081,27 +1081,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           </div>
           <div class="space-y-2">
             {Object.values(raidsData).map(raid => {
-              const bosses = raid.bosses.map(id => monstersData[id]).filter(Boolean)
               return (
                 <div key={raid.id} class="flex gap-2 items-center">
                   <button
                     onClick={() => startRaid(raid)}
                     class="flex-1 p-3 rounded-xl border bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222] transition-colors text-left flex items-center justify-between"
                   >
-                    <div class="flex-1">
-                      <div class="flex items-center gap-2 mb-2">
-                        <span class="text-2xl">{raid.icon}</span>
-                        <div>
-                          <div class="text-sm font-semibold text-[var(--color-parchment)]">{raid.name}</div>
-                          <div class="text-[10px] text-[var(--color-parchment)] opacity-40">{raid.description}</div>
-                        </div>
-                      </div>
-                      <div class="flex flex-wrap gap-1">
-                        {bosses.map((boss) => (
-                          <span key={boss.id} class="text-[9px] bg-[#111] text-[var(--color-parchment)] opacity-60 px-1.5 py-0.5 rounded">
-                            {MONSTER_ICONS[boss.id] || '👹'} {boss.name}
-                          </span>
-                        ))}
+                    <div class="flex-1 flex items-center gap-2">
+                      <span class="text-2xl">{raid.icon}</span>
+                      <div>
+                        <div class="text-sm font-semibold text-[var(--color-parchment)]">{raid.name}</div>
+                        <div class="text-[10px] text-[var(--color-parchment)] opacity-40">{raid.description}</div>
                       </div>
                     </div>
                     {raidKillCounts[raid.id] > 0 && (
