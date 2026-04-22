@@ -29,8 +29,11 @@ export function processThievingTick(thievingState) {
   const events = []
   state.tickCount++
 
-  // Only decrement if not in justCompleted state
-  if (!state.justCompleted) {
+  // Check justCompleted FIRST to reset before checking for new completion
+  if (state.justCompleted) {
+    state.ticksRemaining = 4
+    state.justCompleted = false
+  } else {
     state.ticksRemaining--
   }
 
@@ -51,10 +54,6 @@ export function processThievingTick(thievingState) {
     })
 
     state.justCompleted = true
-  } else if (state.justCompleted) {
-    // Previous tick was completion, now reset for next pickpocket
-    state.ticksRemaining = 4
-    state.justCompleted = false
   }
 
   return { thievingState: state, events }

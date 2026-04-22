@@ -23645,8 +23645,12 @@ function processThievingTick(thievingState) {
     const state = { ...thievingState };
     const events = [];
     state.tickCount++;
-    // Only decrement if not in justCompleted state
-    if (!state.justCompleted) {
+    // Check justCompleted FIRST to reset before checking for new completion
+    if (state.justCompleted) {
+        state.ticksRemaining = 4;
+        state.justCompleted = false;
+    }
+    else {
         state.ticksRemaining--;
     }
     if (state.ticksRemaining <= 0) {
@@ -23664,11 +23668,6 @@ function processThievingTick(thievingState) {
             drops: state.npc.drops || []
         });
         state.justCompleted = true;
-    }
-    else if (state.justCompleted) {
-        // Previous tick was completion, now reset for next pickpocket
-        state.ticksRemaining = 4;
-        state.justCompleted = false;
     }
     return { thievingState: state, events };
 }
@@ -25090,8 +25089,12 @@ function processSkillingTick(skillingState) {
     const events = [];
     if (!state.active || state.stopped)
         return { skillingState: state, events };
-    // Only decrement if not in justCompleted state
-    if (!state.justCompleted) {
+    // Check justCompleted FIRST to reset before checking for new completion
+    if (state.justCompleted) {
+        state.ticksRemaining = state.action.ticks;
+        state.justCompleted = false;
+    }
+    else {
         state.ticksRemaining--;
     }
     if (state.ticksRemaining <= 0) {
@@ -25106,11 +25109,6 @@ function processSkillingTick(skillingState) {
             product: state.action.product || null
         });
         state.justCompleted = true;
-    }
-    else if (state.justCompleted) {
-        // Previous tick was completion, now reset for next action
-        state.ticksRemaining = state.action.ticks;
-        state.justCompleted = false;
     }
     return { skillingState: state, events };
 }
