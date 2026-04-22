@@ -4,6 +4,7 @@ import ProgressBar from '../components/ProgressBar.jsx'
 import Card from '../components/Card.jsx'
 import Panel from '../components/Panel.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
+import { getActionProgress } from '../hooks/useActionTick.js'
 import { addItem, countItem, freeSlots } from '../engine/inventory.js'
 import { onTick } from '../engine/tick.js'
 import { formatNumber } from '../utils/helpers.js'
@@ -468,7 +469,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
   // Active gathering modal
   if (activeTask) {
     const { task } = activeTask
-    const progress = 1 - activeTask.ticksRemaining / task.ticks
+    const progress = getActionProgress(true, activeTask.ticksRemaining, task.ticks)
     const elapsedHrs = activeTask.startedAt ? (Date.now() - activeTask.startedAt) / 3600000 : 0
     const perHour = elapsedHrs > 0 ? Math.round(activeTask.totalItems / elapsedHrs) : 0
     const remainingSeconds = activeTask.ticksRemaining * 0.6
