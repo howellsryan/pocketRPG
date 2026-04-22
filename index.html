@@ -31811,7 +31811,7 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
     // Active skilling modal
     const activeMult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory);
     const progress = skilling.active
-        ? 1 - (skilling.ticksRemaining / skilling.action.ticks)
+        ? Math.min(1, (skilling.action.ticks - skilling.ticksRemaining) / skilling.action.ticks)
         : 0;
     return (h("div", { class: "h-full flex flex-col p-4" },
         h("div", { class: "flex-1 flex flex-col items-center justify-center" },
