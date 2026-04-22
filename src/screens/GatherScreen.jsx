@@ -4,7 +4,7 @@ import ProgressBar from '../components/ProgressBar.jsx'
 import Card from '../components/Card.jsx'
 import Panel from '../components/Panel.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
-import { addItem, countItem } from '../engine/inventory.js'
+import { addItem, countItem, freeSlots } from '../engine/inventory.js'
 import { onTick } from '../engine/tick.js'
 import { formatNumber } from '../utils/helpers.js'
 import { SCREENS } from '../utils/constants.js'
@@ -12,6 +12,9 @@ import { SCREENS } from '../utils/constants.js'
 /**
  * Gathering tasks — no skill level required, just time-based resource collection.
  * Inspired by activities like picking flax, collecting sand, etc.
+ *
+ * Also hosts long-running Minigame grinds (Barbarian Assault, Warriors Guild,
+ * Castle Wars) which award a single untradeable reward after hours of idling.
  */
 
 const GATHER_TASKS = [
@@ -194,6 +197,78 @@ const CATEGORIES = [
   { id: 'town', label: 'Town', icon: '🏘️' },
 ]
 
+const TICKS_PER_HOUR = 6000 // 3600s / 0.6s per tick
+
+const MINIGAME_TASKS = [
+  {
+    id: 'ba_fighter_torso',
+    name: 'Grind for Fighter Torso',
+    icon: '👕',
+    description: 'Run Barbarian Assault until you earn a Fighter Torso.',
+    hours: 5,
+    ticks: 5 * TICKS_PER_HOUR,
+    product: 'fighter_torso',
+    qty: 1,
+    minigame: 'barbarian_assault',
+    oneShot: true,
+  },
+  {
+    id: 'ba_fighter_hat',
+    name: 'Grind for Fighter Hat',
+    icon: '🪖',
+    description: 'Run Barbarian Assault until you earn a Fighter Hat.',
+    hours: 2,
+    ticks: 2 * TICKS_PER_HOUR,
+    product: 'fighter_hat',
+    qty: 1,
+    minigame: 'barbarian_assault',
+    oneShot: true,
+  },
+  {
+    id: 'wg_rune_defender',
+    name: 'Grind for Rune Defender',
+    icon: '🛡️',
+    description: 'Slay Cyclopes in the Warriors\' Guild basement until one drops a Rune Defender.',
+    hours: 3,
+    ticks: 3 * TICKS_PER_HOUR,
+    product: 'rune_defender',
+    qty: 1,
+    minigame: 'warriors_guild',
+    oneShot: true,
+  },
+  {
+    id: 'wg_dragon_defender',
+    name: 'Grind for Dragon Defender',
+    icon: '🛡️',
+    description: 'Slay Cyclopes wielding your Rune Defender until one drops a Dragon Defender.',
+    hours: 2,
+    ticks: 2 * TICKS_PER_HOUR,
+    product: 'dragon_defender',
+    qty: 1,
+    minigame: 'warriors_guild',
+    requiresItem: 'rune_defender',
+    oneShot: true,
+  },
+  {
+    id: 'cw_halo',
+    name: 'Grind for Halo',
+    icon: '😇',
+    description: 'Play Castle Wars matches until you can purchase a Halo.',
+    hours: 3,
+    ticks: 3 * TICKS_PER_HOUR,
+    product: 'halo',
+    qty: 1,
+    minigame: 'castle_wars',
+    oneShot: true,
+  },
+]
+
+const MINIGAMES = [
+  { id: 'barbarian_assault', label: 'Barbarian Assault', icon: '⚔️' },
+  { id: 'warriors_guild', label: 'Warriors\' Guild', icon: '🏛️' },
+  { id: 'castle_wars', label: 'Castle Wars', icon: '🏰' },
+]
+
 const ITEM_NAMES = {
   flax: 'Flax', bucket_of_sand: 'Bucket of sand', giant_seaweed: 'Seaweed',
   clay: 'Clay', soft_clay: 'Soft clay', wheat: 'Wheat', pot_of_flour: 'Pot of flour',
@@ -203,10 +278,30 @@ const ITEM_NAMES = {
   snape_grass: 'Snape grass', red_spiders_eggs: 'Red spiders\' eggs',
   potato_cactus: 'Potato cactus', crushed_birds_nest: 'Crushed bird\'s nest',
   empty_birds_nest: 'Empty bird\'s nest', limpwurt_root: 'Limpwurt root',
+  fighter_torso: 'Fighter torso', fighter_hat: 'Fighter hat',
+  rune_defender: 'Rune defender', dragon_defender: 'Dragon defender',
+  halo: 'Halo',
+}
+
+function hasItemAnywhere(itemId, inventory, bank, equipment) {
+  if (countItem(inventory, itemId) > 0) return true
+  if (bank?.[itemId]?.quantity > 0) return true
+  if (equipment) {
+    for (const slot of Object.values(equipment)) {
+      if (slot && slot.itemId === itemId) return true
+    }
+  }
+  return false
+}
+
+function formatHours(hours) {
+  if (hours === Math.floor(hours)) return `${hours}h`
+  return `${hours.toFixed(1)}h`
 }
 
 export default function GatherScreen({ initialTaskId, idleResult }) {
-  const { inventory, bank, updateInventory, updateBankDirect, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask } = useGame()
+  const { inventory, bank, equipment, updateInventory, updateBankDirect, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask } = useGame()
+  const [section, setSection] = useState('resources')
   const [category, setCategory] = useState('all')
   const [activeTask, setLocalTask] = useState(null)
   const taskRef = useRef(null)
@@ -272,6 +367,15 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
         // Update inventory only if materials were consumed
         if (task.materials) updateInventory(newInv)
 
+        if (task.oneShot) {
+          // Minigame grind — award once then stop.
+          addToast(`${task.icon} ${ITEM_NAMES[task.product] || task.product} banked!`, 'success')
+          taskRef.current = { ...next, stopped: true }
+          setLocalTask(null)
+          setActiveTask(null)
+          return
+        }
+
         const updated = {
           ...next,
           ticksRemaining: task.ticks,
@@ -319,6 +423,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
     if (initialTaskId && !hasAutoStarted.current && !activeTask) {
       hasAutoStarted.current = true
       const task = GATHER_TASKS.find(t => t.id === initialTaskId)
+        || MINIGAME_TASKS.find(t => t.id === initialTaskId)
       if (task) startTask(task, true)
     }
   }, [initialTaskId])
@@ -354,6 +459,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
     const progress = 1 - activeTask.ticksRemaining / task.ticks
     const elapsedHrs = activeTask.startedAt ? (Date.now() - activeTask.startedAt) / 3600000 : 0
     const perHour = elapsedHrs > 0 ? Math.round(activeTask.totalItems / elapsedHrs) : 0
+    const remainingSeconds = activeTask.ticksRemaining * 0.6
 
     return (
       <div class="h-full flex flex-col p-4">
@@ -376,21 +482,38 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
             <ProgressBar value={progress} max={1} height="h-4" color="var(--color-gold)" showText />
           </div>
 
-          <Panel padding="p-3" className="w-full max-w-[280px] mb-3 rounded-xl">
-            <div class="flex justify-between mb-2">
-              <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Items banked</span>
-              <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">{activeTask.totalItems}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Items banked/hr</span>
-              <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">
-                {elapsedHrs > 0 ? perHour.toLocaleString() : '—'}
-              </span>
-            </div>
-          </Panel>
+          {task.oneShot ? (
+            <Panel padding="p-3" className="w-full max-w-[280px] mb-3 rounded-xl">
+              <div class="flex justify-between mb-2">
+                <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Reward</span>
+                <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">{ITEM_NAMES[task.product] || task.product}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Time remaining</span>
+                <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">
+                  {formatRemaining(remainingSeconds)}
+                </span>
+              </div>
+            </Panel>
+          ) : (
+            <Panel padding="p-3" className="w-full max-w-[280px] mb-3 rounded-xl">
+              <div class="flex justify-between mb-2">
+                <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Items banked</span>
+                <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">{activeTask.totalItems}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Items banked/hr</span>
+                <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">
+                  {elapsedHrs > 0 ? perHour.toLocaleString() : '—'}
+                </span>
+              </div>
+            </Panel>
+          )}
 
           <div class="text-[11px] text-[var(--color-parchment)] opacity-50 text-center max-w-[280px]">
-            ⏳ Items go directly to your bank.
+            {task.oneShot
+              ? '⏳ Reward goes directly to your bank on completion.'
+              : '⏳ Items go directly to your bank.'}
           </div>
         </div>
       </div>
@@ -402,83 +525,173 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
     <div class="h-full flex flex-col">
       {/* Header */}
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
-        <SectionHeader size="lg" className="mb-[10px]">🌿 Gather Resources</SectionHeader>
+        <SectionHeader size="lg" className="mb-[10px]">🌿 Gathers</SectionHeader>
 
-        {/* Category tabs */}
-        <div class="flex gap-[6px] overflow-x-auto pb-1">
-          {CATEGORIES.map(cat => {
-            const isActive = category === cat.id
+        {/* Section tabs: Resources vs Minigame */}
+        <div class="flex gap-[6px] mb-2">
+          {[
+            { id: 'resources', label: 'Resources', icon: '🌿' },
+            { id: 'minigame', label: 'Minigame', icon: '🎮' },
+          ].map(sec => {
+            const isActive = section === sec.id
             const pillClass = isActive
               ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)] opacity-100'
               : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
             return (
               <button
-                key={cat.id}
-                onClick={() => setCategory(cat.id)}
-                class={`flex-shrink-0 px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${pillClass}`}
+                key={sec.id}
+                onClick={() => setSection(sec.id)}
+                class={`flex-1 px-3 py-[7px] rounded-[20px] text-[12px] font-semibold border ${pillClass}`}
               >
-                {cat.icon} {cat.label}
+                {sec.icon} {sec.label}
               </button>
             )
           })}
         </div>
+
+        {/* Category tabs (only in resources view) */}
+        {section === 'resources' && (
+          <div class="flex gap-[6px] overflow-x-auto pb-1">
+            {CATEGORIES.map(cat => {
+              const isActive = category === cat.id
+              const pillClass = isActive
+                ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)] opacity-100'
+                : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setCategory(cat.id)}
+                  class={`flex-shrink-0 px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${pillClass}`}
+                >
+                  {cat.icon} {cat.label}
+                </button>
+              )
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Task list */}
+      {/* Body */}
       <div class="flex-1 overflow-y-auto px-4 pb-4">
-        <div class="flex flex-col gap-2">
-          {visibleTasks.map(task => {
-            const hasMats = !task.materials || Object.entries(task.materials).every(
-              ([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty
-            )
-            const invFull = freeSlots(inventory) === 0
-            const enabled = hasMats && !invFull
-            const rowClass = enabled
-              ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
-              : 'bg-[#111] border-[#1a1a1a] opacity-45'
+        {section === 'resources' ? (
+          <div class="flex flex-col gap-2">
+            {visibleTasks.map(task => {
+              const hasMats = !task.materials || Object.entries(task.materials).every(
+                ([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty
+              )
+              const invFull = freeSlots(inventory) === 0
+              const enabled = hasMats && !invFull
+              const rowClass = enabled
+                ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
+                : 'bg-[#111] border-[#1a1a1a] opacity-45'
 
-            return (
-              <div key={task.id} class="flex gap-2 items-stretch">
-                <button
-                  onClick={() => enabled && startTask(task)}
-                  disabled={!enabled}
-                  class={`flex-1 p-3 rounded-xl border text-left flex items-center gap-3 ${rowClass}`}
-                >
-                  <span class="text-[28px] flex-shrink-0">{task.icon}</span>
-                  <div class="flex-1 min-w-0">
-                    <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>
-                    <div class="text-[10px] text-[#c8a96e] opacity-80">
-                      ⏱ {(task.ticks * 0.6).toFixed(1)}s/action
+              return (
+                <div key={task.id} class="flex gap-2 items-stretch">
+                  <button
+                    onClick={() => enabled && startTask(task)}
+                    disabled={!enabled}
+                    class={`flex-1 p-3 rounded-xl border text-left flex items-center gap-3 ${rowClass}`}
+                  >
+                    <span class="text-[28px] flex-shrink-0">{task.icon}</span>
+                    <div class="flex-1 min-w-0">
+                      <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>
+                      <div class="text-[10px] text-[#c8a96e] opacity-80">
+                        ⏱ {(task.ticks * 0.6).toFixed(1)}s/action
+                        {task.materials && (
+                          <span class="text-[var(--color-parchment)] opacity-50">
+                            {' · '}Needs: {Object.entries(task.materials).map(([id, qty]) => `${ITEM_NAMES[id] || id} ×${qty}`).join(', ')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div class="flex-shrink-0 text-right">
+                      <div class="text-[18px]">→</div>
+                      <div class="text-[9px] text-[#c8a96e] opacity-70">{ITEM_NAMES[task.product] || task.product}</div>
                       {task.materials && (
-                        <span class="text-[var(--color-parchment)] opacity-50">
-                          {' · '}Needs: {Object.entries(task.materials).map(([id, qty]) => `${ITEM_NAMES[id] || id} ×${qty}`).join(', ')}
-                        </span>
+                        <div class={`text-[9px] mt-[2px] ${hasMats ? 'text-[#4caf50]' : 'text-[#e57373]'}`}>
+                          {hasMats ? '✓ have mats' : '✗ no mats'}
+                        </div>
                       )}
                     </div>
-                  </div>
-                  <div class="flex-shrink-0 text-right">
-                    <div class="text-[18px]">→</div>
-                    <div class="text-[9px] text-[#c8a96e] opacity-70">{ITEM_NAMES[task.product] || task.product}</div>
-                    {task.materials && (
-                      <div class={`text-[9px] mt-[2px] ${hasMats ? 'text-[#4caf50]' : 'text-[#e57373]'}`}>
-                        {hasMats ? '✓ have mats' : '✗ no mats'}
+                  </button>
+                  <button
+                    onClick={() => handleAddToHome(task)}
+                    title="Add to Home Screen"
+                    class="px-3 rounded-xl bg-[var(--color-void-light)] border border-[#2a2a2a] flex flex-col items-center justify-center gap-[2px] cursor-pointer flex-shrink-0"
+                  >
+                    <span class="text-[16px]">🏠</span>
+                    <span class="text-[8px] text-[var(--color-parchment)] opacity-50">Add</span>
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div class="flex flex-col gap-4">
+            {MINIGAMES.map(mg => {
+              const tasks = MINIGAME_TASKS.filter(t => t.minigame === mg.id)
+              if (tasks.length === 0) return null
+              return (
+                <div key={mg.id} class="flex flex-col gap-2">
+                  <SectionHeader size="sm">{mg.icon} {mg.label}</SectionHeader>
+                  {tasks.map(task => {
+                    const missingReq = task.requiresItem && !hasItemAnywhere(task.requiresItem, inventory, bank, equipment)
+                    const enabled = !missingReq
+                    const rowClass = enabled
+                      ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
+                      : 'bg-[#111] border-[#1a1a1a] opacity-45'
+
+                    return (
+                      <div key={task.id} class="flex gap-2 items-stretch">
+                        <button
+                          onClick={() => enabled && startTask(task)}
+                          disabled={!enabled}
+                          class={`flex-1 p-3 rounded-xl border text-left flex items-center gap-3 ${rowClass}`}
+                        >
+                          <span class="text-[28px] flex-shrink-0">{task.icon}</span>
+                          <div class="flex-1 min-w-0">
+                            <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>
+                            <div class="text-[10px] text-[#c8a96e] opacity-80">
+                              ⏱ {formatHours(task.hours)} total
+                              {task.requiresItem && (
+                                <span class={`${missingReq ? 'text-[#e57373]' : 'text-[var(--color-parchment)] opacity-50'}`}>
+                                  {' · '}Needs: {ITEM_NAMES[task.requiresItem] || task.requiresItem}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div class="flex-shrink-0 text-right">
+                            <div class="text-[18px]">→</div>
+                            <div class="text-[9px] text-[#c8a96e] opacity-70">{ITEM_NAMES[task.product] || task.product}</div>
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => handleAddToHome(task)}
+                          title="Add to Home Screen"
+                          class="px-3 rounded-xl bg-[var(--color-void-light)] border border-[#2a2a2a] flex flex-col items-center justify-center gap-[2px] cursor-pointer flex-shrink-0"
+                        >
+                          <span class="text-[16px]">🏠</span>
+                          <span class="text-[8px] text-[var(--color-parchment)] opacity-50">Add</span>
+                        </button>
                       </div>
-                    )}
-                  </div>
-                </button>
-                <button
-                  onClick={() => handleAddToHome(task)}
-                  title="Add to Home Screen"
-                  class="px-3 rounded-xl bg-[var(--color-void-light)] border border-[#2a2a2a] flex flex-col items-center justify-center gap-[2px] cursor-pointer flex-shrink-0"
-                >
-                  <span class="text-[16px]">🏠</span>
-                  <span class="text-[8px] text-[var(--color-parchment)] opacity-50">Add</span>
-                </button>
-              </div>
-            )
-          })}
-        </div>
+                    )
+                  })}
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )
+}
+
+function formatRemaining(totalSeconds) {
+  const s = Math.max(0, Math.floor(totalSeconds))
+  const hrs = Math.floor(s / 3600)
+  const mins = Math.floor((s % 3600) / 60)
+  const secs = s % 60
+  if (hrs > 0) return `${hrs}h ${mins}m`
+  if (mins > 0) return `${mins}m ${secs}s`
+  return `${secs}s`
 }
