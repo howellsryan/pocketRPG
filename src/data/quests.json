@@ -1208,9 +1208,7 @@
       "crafting": 1000
     },
     "itemUnlocks": [],
-    "skillRequirements": {
-      "crafting": 200
-    },
+    "skillRequirements": {},
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": []
