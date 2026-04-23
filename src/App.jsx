@@ -754,16 +754,27 @@ function GameApp() {
     setScreen(scr)
   }
 
-  // Skip 1 hour handler — simulate idle time and reduce credits
+  // Skip 1 hour handler — validate with server first, then simulate idle time
   async function handleSkip1h() {
-    if (!isCloudAccount || credits < 1) {
-      addToast('Not enough credits for skip!', 'error')
+    if (!isCloudAccount) {
+      addToast('Skip only available for cloud accounts!', 'error')
       return
     }
 
-    const elapsedMs = 3600000 // 1 hour in milliseconds
-
     try {
+      // Call server to validate credit and deduct atomically
+      const result = await api.skipHour()
+      if (!result.ok) {
+        addToast('Server error processing skip!', 'error')
+        return
+      }
+
+      // Server confirmed and deducted 1 credit — update local credits state
+      setCredits(result.credits_remaining)
+      addToast('⏭️ Skipped 1 hour!', 'success')
+
+      const elapsedMs = 3600000 // 1 hour in milliseconds
+
       // Re-read latest stats/equipment/inventory/bank to avoid stale state
       const [freshStats, freshInv, freshEq, freshBank, freshSlayerTask] = await Promise.all([
         getAllStats(),
@@ -863,7 +874,6 @@ function GameApp() {
             })
           }
 
-          addToast('⏭️ Skipped 1 hour!', 'success')
         }
       } else {
         // No active task — just apply HP regen
@@ -873,15 +883,13 @@ function GameApp() {
           const restoredHP = Math.min(currentHP + hpRegenSim.hpRegen, maxHP)
           updateHP(restoredHP)
         }
-        addToast('⏭️ Skipped 1 hour!', 'success')
       }
 
-      // Deduct 1 credit and save
-      setCredits(credits - 1)
+      // Save the updated game state to cloud
       schedulePushSave(getSnapshot())
     } catch (err) {
       console.error('[PocketRPG] Skip 1h error:', err)
-      addToast('Error during skip!', 'error')
+      addToast(err.message || 'Error during skip!', 'error')
     }
   }
 
