@@ -27943,7 +27943,7 @@ function ToastContainer() {
 
 
 
-function Header({ activity }) {
+function Header({ activity, credits = 0, isCloudAccount = false }) {
     const { player, stats, currentHP, getMaxHP } = useGame();
     if (!player)
         return null;
@@ -27965,7 +27965,7 @@ function Header({ activity }) {
     });
     const totalLevel = Object.values(levels).reduce((s, l) => s + l, 0);
     return (h("header", { class: "flex-shrink-0 bg-[#111] border-b border-[#333] px-3 py-2" },
-        h("div", { class: "flex items-center justify-between" },
+        h("div", { class: "flex items-center justify-between gap-2" },
             h("div", { class: "flex items-center gap-2 min-w-0" },
                 h("span", { class: "font-[var(--font-display)] text-sm font-bold text-[var(--color-gold)] truncate" }, player.name),
                 h("span", { class: "text-[10px] text-[var(--color-parchment)] opacity-60 whitespace-nowrap" },
@@ -27973,7 +27973,12 @@ function Header({ activity }) {
                     combatLevel,
                     " \u00B7 Total ",
                     totalLevel)),
-            h("div", { class: "flex items-center gap-1.5 ml-2" },
+            isCloudAccount && (h("div", { class: "flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#1a1030] border border-[#5a2a7a] whitespace-nowrap" },
+                h("span", { class: "text-[10px]" }, "\uD83D\uDC8E"),
+                h("span", { class: "text-[10px] font-[var(--font-mono)] font-bold text-[#e879f9]" },
+                    "Credits: ",
+                    credits.toLocaleString()))),
+            h("div", { class: "flex items-center gap-1.5" },
                 h("span", { class: "text-xs" }, "\u2764\uFE0F"),
                 h("div", { class: "w-20 h-3 bg-[#222] rounded-full overflow-hidden border border-[#444]" },
                     h("div", { class: "h-full rounded-full transition-all duration-300", style: { width: `${hpPct}%`, backgroundColor: hpColor } })),
@@ -33927,6 +33932,10 @@ function GameApp() {
     const [removeAds, setRemoveAds] = useState(false);
     const [identityId, setIdentityId] = useState(null);
     const [stripeLinks, setStripeLinks] = useState({});
+    const [credits, setCredits] = useState(0);
+    // Set on mount if Stripe redirected back with a payment query/path — drives the
+    // post-checkout thank-you toast + credits refresh once the game is ready.
+    const paymentReturnRef = useRef(false);
     // Refs for tick-based systems
     const hpRegenCounter = useRef(0);
     const snapshotCounter = useRef(99); // Start at 99 so first snapshot fires after 1 tick
@@ -33998,8 +34007,51 @@ function GameApp() {
         });
     }
     useEffect(() => {
+        // Detect Stripe post-checkout redirect (path or query contains "payment")
+        // and strip it from the URL before routing decisions run.
+        try {
+            const url = new URL(window.location.href);
+            const pathHit = /\/payment\b/i.test(url.pathname);
+            const queryHit = url.searchParams.has('payment') || /(^|[?&])payment(=|&|$)/i.test(url.search);
+            if (pathHit || queryHit) {
+                paymentReturnRef.current = true;
+                url.searchParams.delete('payment');
+                const cleanPath = url.pathname.replace(/\/payment\/?$/i, '/') || '/';
+                history.replaceState(null, '', cleanPath + (url.searchParams.toString() ? `?${url.searchParams}` : '') + url.hash);
+            }
+        }
+        catch { /* non-fatal */ }
         initCloudAndSave();
     }, []);
+    // Refresh /me — used after a Stripe purchase so the credit balance reflects
+    // whatever the webhook has added to the character row.
+    async function refreshMe() {
+        try {
+            const meData = await api.me();
+            if (meData?.identity) {
+                setRemoveAds(meData.identity.remove_ads === true);
+                setIdentityId(meData.identity.id);
+            }
+            if (meData?.stripe_links)
+                setStripeLinks(meData.stripe_links);
+            if (meData?.character)
+                setCredits(meData.character.credits ?? 0);
+        }
+        catch { /* non-fatal */ }
+    }
+    // Once the game is ready and a payment redirect was detected, show the
+    // thank-you toast and re-pull credits a couple of times to ride out webhook
+    // latency between Stripe and our worker.
+    useEffect(() => {
+        if (!gameReady || !paymentReturnRef.current)
+            return;
+        paymentReturnRef.current = false;
+        addToast('Thank you for your purchase!', 'levelup', '🎉');
+        refreshMe();
+        const t1 = setTimeout(refreshMe, 3000);
+        const t2 = setTimeout(refreshMe, 8000);
+        return () => { clearTimeout(t1); clearTimeout(t2); };
+    }, [gameReady]);
     useEffect(() => {
         if (gameReady) {
             // Immediately stamp lastTick so idle engine has a baseline if user closes tab
@@ -34407,7 +34459,8 @@ function GameApp() {
                 return;
             }
             if (hasToken && hasCharacter) {
-                // Fetch remove-ads status and Stripe payment links (non-fatal if unavailable)
+                // Fetch remove-ads status, Stripe payment links, and character credits
+                // (non-fatal if unavailable — shop buttons / Credits pill stay hidden).
                 try {
                     const meData = await api.me();
                     if (meData?.identity) {
@@ -34416,6 +34469,8 @@ function GameApp() {
                     }
                     if (meData?.stripe_links)
                         setStripeLinks(meData.stripe_links);
+                    if (meData?.character)
+                        setCredits(meData.character.credits ?? 0);
                 }
                 catch { /* hide buttons on error — non-fatal */ }
                 // Guard against character-switch leakage: if IDB currently belongs to
@@ -34691,7 +34746,7 @@ function GameApp() {
         }
     };
     return (h("div", { style: { height: '100%', display: 'flex', flexDirection: 'column' } },
-        h(Header, { activity: activity }),
+        h(Header, { activity: activity, credits: credits, isCloudAccount: !!getToken() && !!getCharacterId() }),
         h(ToastContainer, null),
         h("main", { style: { flex: 1, overflow: 'hidden' } }, renderScreen()),
         h(BottomNav, { active: screen, onNavigate: (s) => navigate(s), isInBossFight: isInBossFight, onDisabledClick: () => addToast('⚔️ Cannot navigate during boss fight!', 'warning') }),

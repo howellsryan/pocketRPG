@@ -2,7 +2,7 @@ import { useGame } from '../state/gameState.jsx'
 import { calcCombatLevel } from '../utils/helpers.js'
 import { getLevelFromXP } from '../engine/experience.js'
 
-export default function Header({ activity }) {
+export default function Header({ activity, credits = 0, isCloudAccount = false }) {
   const { player, stats, currentHP, getMaxHP } = useGame()
   if (!player) return null
 
@@ -28,7 +28,7 @@ export default function Header({ activity }) {
 
   return (
     <header class="flex-shrink-0 bg-[#111] border-b border-[#333] px-3 py-2">
-      <div class="flex items-center justify-between">
+      <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-2 min-w-0">
           <span class="font-[var(--font-display)] text-sm font-bold text-[var(--color-gold)] truncate">
             {player.name}
@@ -38,8 +38,18 @@ export default function Header({ activity }) {
           </span>
         </div>
 
+        {/* Credits pill — cloud accounts only */}
+        {isCloudAccount && (
+          <div class="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#1a1030] border border-[#5a2a7a] whitespace-nowrap">
+            <span class="text-[10px]">💎</span>
+            <span class="text-[10px] font-[var(--font-mono)] font-bold text-[#e879f9]">
+              Credits: {credits.toLocaleString()}
+            </span>
+          </div>
+        )}
+
         {/* HP bar */}
-        <div class="flex items-center gap-1.5 ml-2">
+        <div class="flex items-center gap-1.5">
           <span class="text-xs">❤️</span>
           <div class="w-20 h-3 bg-[#222] rounded-full overflow-hidden border border-[#444]">
             <div
