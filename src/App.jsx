@@ -767,12 +767,6 @@ function GameApp() {
       return
     }
 
-    // Check if currently idling a oneShot minigame — must be completed as a unit
-    if (activeTaskRef.current?.type === 'gather' && activeTaskRef.current?.gatherTask?.oneShot) {
-      addToast('Cannot skip minigames!', 'error')
-      return
-    }
-
     try {
       // Call server to validate credit and deduct atomically
       const result = await api.skipHour()
@@ -801,12 +795,38 @@ function GameApp() {
         const savedTask = activeTaskRef.current
         let sim = null
 
-        if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
-        if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current)
-        if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank)
-        if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
-        if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
-        if (savedTask.type === 'quest') sim = simulateIdleQuest(savedTask, elapsedMs)
+        // Special handling for oneShot minigames — reduce remaining time
+        if (savedTask.type === 'gather' && savedTask.gatherTask?.oneShot) {
+          const TICKS_PER_HOUR = 6000
+          const ticksInOneHour = TICKS_PER_HOUR
+          const ticksRemaining = Math.max(0, savedTask.gatherTask.ticks - ticksInOneHour)
+
+          if (ticksRemaining <= 0) {
+            // Minigame completed — award item and clear task
+            updateBankDirect({ [savedTask.gatherTask.product]: savedTask.gatherTask.qty || 1 })
+            setActiveTask(null)
+            idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true, minigameItem: savedTask.gatherTask.product }
+            sim = { itemsGained: { [savedTask.gatherTask.product]: savedTask.gatherTask.qty || 1 } }
+          } else {
+            // Minigame still ongoing — update remaining time and show progress
+            const updatedTask = { ...savedTask, gatherTask: { ...savedTask.gatherTask, ticks: ticksRemaining } }
+            setActiveTask(updatedTask)
+            idleResultData = {
+              elapsedMs,
+              task: updatedTask,
+              minigameTimeReduced: true,
+              hoursRemaining: Math.ceil(ticksRemaining / TICKS_PER_HOUR)
+            }
+            sim = { minigameTimeReduced: true }
+          }
+        } else {
+          if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
+          if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current)
+          if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank)
+          if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
+          if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
+          if (savedTask.type === 'quest') sim = simulateIdleQuest(savedTask, elapsedMs)
+        }
 
         if (sim) {
           // Apply HP regeneration during idle
