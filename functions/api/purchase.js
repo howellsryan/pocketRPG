@@ -32,7 +32,7 @@ export async function onRequestPost({ request, env }) {
     }
 
     // Prevent purchasing untradeable items
-    if (item.isUntradeable) {
+    if (item.isUntradeable && !item.isQuestItem) {
       return json({ error: 'This item cannot be purchased' }, 400)
     }
 
