@@ -301,7 +301,7 @@ function formatHours(hours) {
 }
 
 export default function GatherScreen({ initialTaskId, idleResult }) {
-  const { inventory, bank, equipment, updateInventory, updateBankDirect, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask } = useGame()
+  const { inventory, bank, equipment, updateInventory, updateBankDirect, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask, activeTask: globalActiveTask } = useGame()
   const [section, setSection] = useState('resources')
   const [category, setCategory] = useState('all')
   const [activeTask, setLocalTask] = useState(null)
@@ -311,6 +311,23 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
   const visibleTasks = category === 'all'
     ? GATHER_TASKS
     : GATHER_TASKS.filter(t => t.category === category)
+
+  // Sync local activeTask state when global activeTask changes (e.g., from skip 1h)
+  useEffect(() => {
+    if (globalActiveTask?.type === 'gather' && globalActiveTask?.gatherTask) {
+      // Update the existing activeTask with new gatherTask data (may have ticks updated from skip)
+      setLocalTask(prev => {
+        if (prev && prev.task.id === globalActiveTask.gatherTask.id) {
+          return {
+            ...prev,
+            task: globalActiveTask.gatherTask,
+            ticksRemaining: globalActiveTask.gatherTask.ticks
+          }
+        }
+        return prev
+      })
+    }
+  }, [globalActiveTask?.gatherTask?.ticks])
 
   // Tick listener
   useEffect(() => {

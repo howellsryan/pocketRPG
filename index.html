@@ -32641,7 +32641,7 @@ function formatHours(hours) {
     return `${hours.toFixed(1)}h`;
 }
 function GatherScreen({ initialTaskId, idleResult }) {
-    const { inventory, bank, equipment, updateInventory, updateBankDirect, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask } = useGame();
+    const { inventory, bank, equipment, updateInventory, updateBankDirect, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask, activeTask: globalActiveTask } = useGame();
     const [section, setSection] = useState('resources');
     const [category, setCategory] = useState('all');
     const [activeTask, setLocalTask] = useState(null);
@@ -32650,6 +32650,22 @@ function GatherScreen({ initialTaskId, idleResult }) {
     const visibleTasks = category === 'all'
         ? GATHER_TASKS
         : GATHER_TASKS.filter(t => t.category === category);
+    // Sync local activeTask state when global activeTask changes (e.g., from skip 1h)
+    useEffect(() => {
+        if (globalActiveTask?.type === 'gather' && globalActiveTask?.gatherTask) {
+            // Update the existing activeTask with new gatherTask data (may have ticks updated from skip)
+            setLocalTask(prev => {
+                if (prev && prev.task.id === globalActiveTask.gatherTask.id) {
+                    return {
+                        ...prev,
+                        task: globalActiveTask.gatherTask,
+                        ticksRemaining: globalActiveTask.gatherTask.ticks
+                    };
+                }
+                return prev;
+            });
+        }
+    }, [globalActiveTask?.gatherTask?.ticks]);
     // Tick listener
     useEffect(() => {
         if (!activeTask)
@@ -34651,8 +34667,10 @@ function GameApp() {
     const navigate = (scr, data) => {
         // Navigating away stops any active screen-bound task (skilling, gathering,
         // combat, agility, thieving) and clears the idle-engine keys so it won't
-        // re-process a cancelled task. Quests run in the background — preserve them.
-        if (activeTask?.type !== 'quest') {
+        // re-process a cancelled task. Quests and minigames run in the background — preserve them.
+        const isMinigame = activeTask?.type === 'gather' && activeTask?.gatherTask?.oneShot;
+        const shouldPreserve = activeTask?.type === 'quest' || isMinigame;
+        if (!shouldPreserve) {
             setActiveTask(null);
         }
         setActionData(data || null);
