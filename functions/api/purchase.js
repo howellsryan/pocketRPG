@@ -34,7 +34,7 @@ export async function onRequestPost({ request, env }) {
     const isQuestItem = !!item.questUnlock
     
     // Prevent purchasing untradeable items
-    if (item.isUntradeable && isQuestItem) {
+    if (item.isUntradeable && !isQuestItem) {
       return json({ error: 'This item cannot be purchased' }, 400)
     }
 
