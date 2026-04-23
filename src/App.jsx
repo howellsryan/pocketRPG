@@ -46,6 +46,10 @@ function GameApp() {
   const [removeAds, setRemoveAds] = useState(false)
   const [identityId, setIdentityId] = useState(null)
   const [stripeLinks, setStripeLinks] = useState({})
+  const [credits, setCredits] = useState(0)
+  // Set on mount if Stripe redirected back with a payment query/path — drives the
+  // post-checkout thank-you toast + credits refresh once the game is ready.
+  const paymentReturnRef = useRef(false)
 
   // Refs for tick-based systems
   const hpRegenCounter = useRef(0)
@@ -118,8 +122,48 @@ function GameApp() {
   }
 
   useEffect(() => {
+    // Detect Stripe post-checkout redirect (path or query contains "payment")
+    // and strip it from the URL before routing decisions run.
+    try {
+      const url = new URL(window.location.href)
+      const pathHit = /\/payment\b/i.test(url.pathname)
+      const queryHit = url.searchParams.has('payment') || /(^|[?&])payment(=|&|$)/i.test(url.search)
+      if (pathHit || queryHit) {
+        paymentReturnRef.current = true
+        url.searchParams.delete('payment')
+        const cleanPath = url.pathname.replace(/\/payment\/?$/i, '/') || '/'
+        history.replaceState(null, '', cleanPath + (url.searchParams.toString() ? `?${url.searchParams}` : '') + url.hash)
+      }
+    } catch { /* non-fatal */ }
     initCloudAndSave()
   }, [])
+
+  // Refresh /me — used after a Stripe purchase so the credit balance reflects
+  // whatever the webhook has added to the character row.
+  async function refreshMe() {
+    try {
+      const meData = await api.me()
+      if (meData?.identity) {
+        setRemoveAds(meData.identity.remove_ads === true)
+        setIdentityId(meData.identity.id)
+      }
+      if (meData?.stripe_links) setStripeLinks(meData.stripe_links)
+      if (meData?.character) setCredits(meData.character.credits ?? 0)
+    } catch { /* non-fatal */ }
+  }
+
+  // Once the game is ready and a payment redirect was detected, show the
+  // thank-you toast and re-pull credits a couple of times to ride out webhook
+  // latency between Stripe and our worker.
+  useEffect(() => {
+    if (!gameReady || !paymentReturnRef.current) return
+    paymentReturnRef.current = false
+    addToast('Thank you for your purchase!', 'levelup', '🎉')
+    refreshMe()
+    const t1 = setTimeout(refreshMe, 3000)
+    const t2 = setTimeout(refreshMe, 8000)
+    return () => { clearTimeout(t1); clearTimeout(t2) }
+  }, [gameReady])
 
   useEffect(() => {
     if (gameReady) {
@@ -513,7 +557,8 @@ function GameApp() {
       }
 
       if (hasToken && hasCharacter) {
-        // Fetch remove-ads status and Stripe payment links (non-fatal if unavailable)
+        // Fetch remove-ads status, Stripe payment links, and character credits
+        // (non-fatal if unavailable — shop buttons / Credits pill stay hidden).
         try {
           const meData = await api.me()
           if (meData?.identity) {
@@ -521,6 +566,7 @@ function GameApp() {
             setIdentityId(meData.identity.id)
           }
           if (meData?.stripe_links) setStripeLinks(meData.stripe_links)
+          if (meData?.character) setCredits(meData.character.credits ?? 0)
         } catch { /* hide buttons on error — non-fatal */ }
 
         // Guard against character-switch leakage: if IDB currently belongs to
@@ -857,7 +903,7 @@ function GameApp() {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Header activity={activity} />
+      <Header activity={activity} credits={credits} isCloudAccount={!!getToken() && !!getCharacterId()} />
       <ToastContainer />
       <main style={{ flex: 1, overflow: 'hidden' }}>
         {renderScreen()}
