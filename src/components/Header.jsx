@@ -18,7 +18,7 @@ export default function Header({ activity, credits = 0, isCloudAccount = false, 
         <div class="flex items-center gap-2">
           <button
             onClick={handleSkip}
-            class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#1a2a1a] border border-[#3a5a3a] hover:border-[#5a8a5a] transition-colors text-[10px] font-semibold text-[var(--color-parchment)] whitespace-nowrap"
+            class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1a2a1a] border border-[#3a5a3a] hover:border-[#5a8a5a] transition-colors text-[10px] font-semibold text-[var(--color-parchment)] whitespace-nowrap"
             title="Skip 1 hour (requires 1 credit)"
           >
             <span>⏭️</span>

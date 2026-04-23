@@ -27965,7 +27965,7 @@ function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null
     return (h("header", { class: "flex-shrink-0 bg-[#111] border-b border-[#333] px-3 py-2" },
         h("div", { class: "flex items-center justify-between gap-2" },
             h("div", { class: "flex items-center gap-2" },
-                h("button", { onClick: handleSkip, class: "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#1a2a1a] border border-[#3a5a3a] hover:border-[#5a8a5a] transition-colors text-[10px] font-semibold text-[var(--color-parchment)] whitespace-nowrap", title: "Skip 1 hour (requires 1 credit)" },
+                h("button", { onClick: handleSkip, class: "flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1a2a1a] border border-[#3a5a3a] hover:border-[#5a8a5a] transition-colors text-[10px] font-semibold text-[var(--color-parchment)] whitespace-nowrap", title: "Skip 1 hour (requires 1 credit)" },
                     h("span", null, "\u23ED\uFE0F"),
                     h("span", null, "Skip 1h"))),
             isCloudAccount && (h("div", { class: "flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#1a1030] border border-[#5a2a7a] whitespace-nowrap" },
@@ -34667,6 +34667,11 @@ function GameApp() {
         // Check if currently idling a boss — bosses cannot be skipped
         if (activeTaskRef.current?.type === 'combat' && activeTaskRef.current?.monster?.boss) {
             addToast('Cannot skip boss fights!', 'error');
+            return;
+        }
+        // Check if currently idling a oneShot minigame — must be completed as a unit
+        if (activeTaskRef.current?.type === 'gather' && activeTaskRef.current?.gatherTask?.oneShot) {
+            addToast('Cannot skip minigames!', 'error');
             return;
         }
         try {

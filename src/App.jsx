@@ -767,6 +767,12 @@ function GameApp() {
       return
     }
 
+    // Check if currently idling a oneShot minigame — must be completed as a unit
+    if (activeTaskRef.current?.type === 'gather' && activeTaskRef.current?.gatherTask?.oneShot) {
+      addToast('Cannot skip minigames!', 'error')
+      return
+    }
+
     try {
       // Call server to validate credit and deduct atomically
       const result = await api.skipHour()
