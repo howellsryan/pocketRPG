@@ -4,4 +4,4 @@ ALTER TABLE oauth_identities ADD COLUMN remove_ads INTEGER NOT NULL DEFAULT 0;
 
 -- Add credits balance to characters
 -- Per-character credit balance for upcoming features
-ALTER TABLE characters ADD COLUMN credits INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE characters ADD COLUMN credits INTEGER NOT NULL DEFAULT 10;
