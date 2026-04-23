@@ -45,7 +45,7 @@ function GameApp() {
   const [offlineCreating, setOfflineCreating] = useState(false)
   const [removeAds, setRemoveAds] = useState(false)
   const [identityId, setIdentityId] = useState(null)
-  const [paymentLinkUrl, setPaymentLinkUrl] = useState(null)
+  const [stripeLinks, setStripeLinks] = useState({})
 
   // Refs for tick-based systems
   const hpRegenCounter = useRef(0)
@@ -513,15 +513,15 @@ function GameApp() {
       }
 
       if (hasToken && hasCharacter) {
-        // Fetch remove-ads status and Stripe payment link URL (non-fatal if unavailable)
+        // Fetch remove-ads status and Stripe payment links (non-fatal if unavailable)
         try {
           const meData = await api.me()
           if (meData?.identity) {
             setRemoveAds(meData.identity.remove_ads === true)
             setIdentityId(meData.identity.id)
-            setPaymentLinkUrl(meData.stripe_payment_link_url || null)
           }
-        } catch { /* hide button on error — non-fatal */ }
+          if (meData?.stripe_links) setStripeLinks(meData.stripe_links)
+        } catch { /* hide buttons on error — non-fatal */ }
 
         // Guard against character-switch leakage: if IDB currently belongs to
         // a different character, wipe it before loading anything. Otherwise a
@@ -840,7 +840,7 @@ function GameApp() {
   // Main game
   const renderScreen = () => {
     switch (screen) {
-      case SCREENS.HOME:      return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} isCloudAccount={!!getToken() && !!getCharacterId()} removeAds={removeAds} identityId={identityId} paymentLinkUrl={paymentLinkUrl} />
+      case SCREENS.HOME:      return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} isCloudAccount={!!getToken() && !!getCharacterId()} removeAds={removeAds} identityId={identityId} characterId={getCharacterId()} stripeLinks={stripeLinks} />
       case SCREENS.STATS:     return <StatsScreen />
       case SCREENS.INVENTORY: return <InventoryScreen />
       case SCREENS.EQUIPMENT: return <EquipmentScreen />

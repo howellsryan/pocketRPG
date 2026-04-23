@@ -9,9 +9,12 @@ database_id = "439e810b-8dce-4697-94c2-a7392520ad8f"
 
 [vars]
 APP_BASE_URL = "https://pocketrpg.pages.dev"
-# Stripe payment link URL for the "Remove Ads" purchase (live environment)
-# Set to your live Stripe payment link, e.g. https://buy.stripe.com/xxxxx
-STRIPE_PAYMENT_LINK_URL = ""
+# Stripe payment link URLs — swap for live links in production, test links in preview
+# Each link must have metadata configured in the Stripe dashboard (see webhook docs below)
+STRIPE_PAYMENT_LINK_REMOVE_ADS   = ""   # metadata: { type: "remove_ads" }
+STRIPE_PAYMENT_LINK_CREDITS_10   = ""   # metadata: { type: "credits", amount: "10" }
+STRIPE_PAYMENT_LINK_CREDITS_100  = ""   # metadata: { type: "credits", amount: "100" }
+STRIPE_PAYMENT_LINK_CREDITS_1000 = ""   # metadata: { type: "credits", amount: "1000" }
 
 # Secrets to set via dashboard or `wrangler pages secret put`:
 #   JWT_SECRET              — random 32+ byte string used to sign session JWTs
@@ -25,6 +28,6 @@ STRIPE_PAYMENT_LINK_URL = ""
 d1_databases = [
   { binding = "DB", database_name = "pocketrpg-preview", database_id = "59233295-f492-4113-94da-90034d84a6a4" }
 ]
-vars = { APP_BASE_URL = "https://preview.pocketrpg.pages.dev", STRIPE_PAYMENT_LINK_URL = "" }
+vars = { APP_BASE_URL = "https://preview.pocketrpg.pages.dev", STRIPE_PAYMENT_LINK_REMOVE_ADS = "", STRIPE_PAYMENT_LINK_CREDITS_10 = "", STRIPE_PAYMENT_LINK_CREDITS_100 = "", STRIPE_PAYMENT_LINK_CREDITS_1000 = "" }
 # Secrets for preview environment (set via `wrangler pages secret put --env preview`):
 #   STRIPE_WEBHOOK_SECRET   — Stripe webhook signing secret (whsec_...), test environment

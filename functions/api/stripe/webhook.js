@@ -47,11 +47,22 @@ export async function onRequestPost({ request, env }) {
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data?.object
-    const identityId = session?.client_reference_id
-    if (identityId) {
+    const refId = session?.client_reference_id
+    const type = session?.metadata?.type        // 'remove_ads' | 'credits'
+    const amount = parseInt(session?.metadata?.amount || '0', 10)
+
+    if (!refId || !type) return json({ received: true })
+
+    if (type === 'remove_ads') {
+      // refId is an oauth_identities.id — grants removal for all characters on the account
       await env.DB.prepare(
         'UPDATE oauth_identities SET remove_ads = 1 WHERE id = ?',
-      ).bind(identityId).run()
+      ).bind(refId).run()
+    } else if (type === 'credits' && amount > 0) {
+      // refId is a characters.id — credits are per-character
+      await env.DB.prepare(
+        'UPDATE characters SET credits = credits + ? WHERE id = ?',
+      ).bind(amount, refId).run()
     }
   }
 

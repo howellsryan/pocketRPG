@@ -28188,7 +28188,7 @@ const DEFAULT_SHORTCUTS = [
     { label: 'Inventory', icon: '🎒', screen: SCREENS.INVENTORY },
     { label: 'Equipment', icon: '🛡️', screen: SCREENS.EQUIPMENT },
 ];
-function HomeScreen({ onNavigate, onLogout, isCloudAccount, removeAds, identityId, paymentLinkUrl }) {
+function HomeScreen({ onNavigate, onLogout, isCloudAccount, removeAds, identityId, characterId, stripeLinks }) {
     const { player, stats, homeShortcuts, updateHomeShortcuts } = useGame();
     const [removeConfirm, setRemoveConfirm] = useState(null);
     const [loggingOut, setLoggingOut] = useState(false);
@@ -28246,12 +28246,22 @@ function HomeScreen({ onNavigate, onLogout, isCloudAccount, removeAds, identityI
                         "\uD83D\uDCCA Total ",
                         totalLevel))),
             h("button", { onClick: handleLogout, disabled: loggingOut, style: { background: 'rgba(255,255,255,0.05)', border: '1px solid #333', borderRadius: '8px', padding: '6px 10px', fontSize: '11px', color: '#e8d5b0', opacity: loggingOut ? 0.4 : 0.7, cursor: loggingOut ? 'default' : 'pointer' } }, isCloudAccount && loggingOut ? '☁️ Saving...' : '🚪 Logout')),
-        isCloudAccount && !removeAds && paymentLinkUrl && (h("a", { href: `${paymentLinkUrl}?client_reference_id=${identityId}`, style: { display: 'block', textDecoration: 'none', background: 'linear-gradient(135deg, #0f1f0f, #1a2f1a)', borderRadius: '14px', border: '1px solid #2a5a2a', padding: '14px 16px', marginBottom: '16px' } },
-            h("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } },
-                h("div", null,
-                    h("div", { style: { fontFamily: 'Cinzel, serif', fontSize: '13px', fontWeight: 'bold', color: '#4ade80', marginBottom: '3px' } }, "\u2728 Remove Ads Forever"),
-                    h("div", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.6 } }, "One-time purchase \u00B7 All characters included")),
-                h("div", { style: { fontSize: '12px', fontWeight: 'bold', color: '#4ade80', whiteSpace: 'nowrap', marginLeft: '12px' } }, "Buy Now \u2192")))),
+        isCloudAccount && (stripeLinks?.remove_ads || stripeLinks?.credits_10 || stripeLinks?.credits_100 || stripeLinks?.credits_1000) && (h("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '16px' } },
+            removeAds ? (h("div", { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 4px', borderRadius: '12px', background: '#111', border: '1px solid #2a2a2a', minHeight: '64px' } },
+                h("div", { style: { fontSize: '16px', marginBottom: '2px' } }, "\u2705"),
+                h("div", { style: { fontSize: '9px', color: '#4ade80', fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2 } }, "Ad-Free"))) : stripeLinks?.remove_ads ? (h("a", { href: `${stripeLinks.remove_ads}?client_reference_id=${identityId}`, style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 4px', borderRadius: '12px', background: 'linear-gradient(135deg, #0f1f0f, #1a2f1a)', border: '1px solid #2a5a2a', textDecoration: 'none', minHeight: '64px', cursor: 'pointer' } },
+                h("div", { style: { fontSize: '16px', marginBottom: '2px' } }, "\u2728"),
+                h("div", { style: { fontSize: '9px', color: '#4ade80', fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2 } }, "No Ads"),
+                h("div", { style: { fontSize: '8px', color: '#e8d5b0', opacity: 0.5, textAlign: 'center', marginTop: '2px', lineHeight: 1.2 } }, "Forever"))) : (h("div", { style: { minHeight: '64px' } })),
+            stripeLinks?.credits_10 && (h("a", { href: `${stripeLinks.credits_10}?client_reference_id=${characterId}`, style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 4px', borderRadius: '12px', background: 'linear-gradient(135deg, #0f0f1f, #1a1a2f)', border: '1px solid #2a2a5a', textDecoration: 'none', minHeight: '64px', cursor: 'pointer' } },
+                h("div", { style: { fontSize: '14px', fontWeight: 'bold', color: '#a78bfa', marginBottom: '2px' } }, "10"),
+                h("div", { style: { fontSize: '9px', color: '#a78bfa', fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2 } }, "Credits"))),
+            stripeLinks?.credits_100 && (h("a", { href: `${stripeLinks.credits_100}?client_reference_id=${characterId}`, style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 4px', borderRadius: '12px', background: 'linear-gradient(135deg, #0f0f1f, #1a1a2f)', border: '1px solid #2a2a5a', textDecoration: 'none', minHeight: '64px', cursor: 'pointer' } },
+                h("div", { style: { fontSize: '14px', fontWeight: 'bold', color: '#a78bfa', marginBottom: '2px' } }, "100"),
+                h("div", { style: { fontSize: '9px', color: '#a78bfa', fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2 } }, "Credits"))),
+            stripeLinks?.credits_1000 && (h("a", { href: `${stripeLinks.credits_1000}?client_reference_id=${characterId}`, style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 4px', borderRadius: '12px', background: 'linear-gradient(135deg, #1a0f1f, #2f1a3a)', border: '1px solid #5a2a7a', textDecoration: 'none', minHeight: '64px', cursor: 'pointer' } },
+                h("div", { style: { fontSize: '14px', fontWeight: 'bold', color: '#e879f9', marginBottom: '2px' } }, "1K"),
+                h("div", { style: { fontSize: '9px', color: '#e879f9', fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2 } }, "Credits"))))),
         h("h2", { style: { fontFamily: 'Cinzel, serif', fontSize: '11px', fontWeight: 'bold', color: '#e8d5b0', marginBottom: '8px', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.1em' } }, "Quick Actions"),
         h("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' } },
             shortcuts.map((sc, i) => (h("div", { key: i, style: { position: 'relative' } },
@@ -33916,7 +33926,7 @@ function GameApp() {
     const [offlineCreating, setOfflineCreating] = useState(false);
     const [removeAds, setRemoveAds] = useState(false);
     const [identityId, setIdentityId] = useState(null);
-    const [paymentLinkUrl, setPaymentLinkUrl] = useState(null);
+    const [stripeLinks, setStripeLinks] = useState({});
     // Refs for tick-based systems
     const hpRegenCounter = useRef(0);
     const snapshotCounter = useRef(99); // Start at 99 so first snapshot fires after 1 tick
@@ -34397,16 +34407,17 @@ function GameApp() {
                 return;
             }
             if (hasToken && hasCharacter) {
-                // Fetch remove-ads status and Stripe payment link URL (non-fatal if unavailable)
+                // Fetch remove-ads status and Stripe payment links (non-fatal if unavailable)
                 try {
                     const meData = await api.me();
                     if (meData?.identity) {
                         setRemoveAds(meData.identity.remove_ads === true);
                         setIdentityId(meData.identity.id);
-                        setPaymentLinkUrl(meData.stripe_payment_link_url || null);
                     }
+                    if (meData?.stripe_links)
+                        setStripeLinks(meData.stripe_links);
                 }
-                catch { /* hide button on error — non-fatal */ }
+                catch { /* hide buttons on error — non-fatal */ }
                 // Guard against character-switch leakage: if IDB currently belongs to
                 // a different character, wipe it before loading anything. Otherwise a
                 // newly-created character with no cloud save yet would fall through
@@ -34665,7 +34676,7 @@ function GameApp() {
     // Main game
     const renderScreen = () => {
         switch (screen) {
-            case SCREENS.HOME: return h(HomeScreen, { onNavigate: navigate, onLogout: handleLogoutToCharacterSelect, isCloudAccount: !!getToken() && !!getCharacterId(), removeAds: removeAds, identityId: identityId, paymentLinkUrl: paymentLinkUrl });
+            case SCREENS.HOME: return h(HomeScreen, { onNavigate: navigate, onLogout: handleLogoutToCharacterSelect, isCloudAccount: !!getToken() && !!getCharacterId(), removeAds: removeAds, identityId: identityId, characterId: getCharacterId(), stripeLinks: stripeLinks });
             case SCREENS.STATS: return h(StatsScreen, null);
             case SCREENS.INVENTORY: return h(InventoryScreen, null);
             case SCREENS.EQUIPMENT: return h(EquipmentScreen, null);

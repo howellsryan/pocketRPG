@@ -15,7 +15,7 @@ const DEFAULT_SHORTCUTS = [
   { label: 'Equipment', icon: '🛡️', screen: SCREENS.EQUIPMENT },
 ]
 
-export default function HomeScreen({ onNavigate, onLogout, isCloudAccount, removeAds, identityId, paymentLinkUrl }) {
+export default function HomeScreen({ onNavigate, onLogout, isCloudAccount, removeAds, identityId, characterId, stripeLinks }) {
   const { player, stats, homeShortcuts, updateHomeShortcuts } = useGame()
   const [removeConfirm, setRemoveConfirm] = useState(null)
   const [loggingOut, setLoggingOut] = useState(false)
@@ -83,26 +83,63 @@ export default function HomeScreen({ onNavigate, onLogout, isCloudAccount, remov
         </button>
       </div>
 
-      {/* Remove Ads — only shown to cloud users who haven't paid yet */}
-      {isCloudAccount && !removeAds && paymentLinkUrl && (
-        <a
-          href={`${paymentLinkUrl}?client_reference_id=${identityId}`}
-          style={{ display: 'block', textDecoration: 'none', background: 'linear-gradient(135deg, #0f1f0f, #1a2f1a)', borderRadius: '14px', border: '1px solid #2a5a2a', padding: '14px 16px', marginBottom: '16px' }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontFamily: 'Cinzel, serif', fontSize: '13px', fontWeight: 'bold', color: '#4ade80', marginBottom: '3px' }}>
-                ✨ Remove Ads Forever
-              </div>
-              <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.6 }}>
-                One-time purchase · All characters included
-              </div>
+      {/* Purchase row — only shown to cloud accounts when at least one link is configured */}
+      {isCloudAccount && (stripeLinks?.remove_ads || stripeLinks?.credits_10 || stripeLinks?.credits_100 || stripeLinks?.credits_1000) && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '16px' }}>
+
+          {/* Remove Ads slot */}
+          {removeAds ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 4px', borderRadius: '12px', background: '#111', border: '1px solid #2a2a2a', minHeight: '64px' }}>
+              <div style={{ fontSize: '16px', marginBottom: '2px' }}>✅</div>
+              <div style={{ fontSize: '9px', color: '#4ade80', fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2 }}>Ad-Free</div>
             </div>
-            <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#4ade80', whiteSpace: 'nowrap', marginLeft: '12px' }}>
-              Buy Now →
-            </div>
-          </div>
-        </a>
+          ) : stripeLinks?.remove_ads ? (
+            <a
+              href={`${stripeLinks.remove_ads}?client_reference_id=${identityId}`}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 4px', borderRadius: '12px', background: 'linear-gradient(135deg, #0f1f0f, #1a2f1a)', border: '1px solid #2a5a2a', textDecoration: 'none', minHeight: '64px', cursor: 'pointer' }}
+            >
+              <div style={{ fontSize: '16px', marginBottom: '2px' }}>✨</div>
+              <div style={{ fontSize: '9px', color: '#4ade80', fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2 }}>No Ads</div>
+              <div style={{ fontSize: '8px', color: '#e8d5b0', opacity: 0.5, textAlign: 'center', marginTop: '2px', lineHeight: 1.2 }}>Forever</div>
+            </a>
+          ) : (
+            <div style={{ minHeight: '64px' }} />
+          )}
+
+          {/* Buy 10 Credits */}
+          {stripeLinks?.credits_10 && (
+            <a
+              href={`${stripeLinks.credits_10}?client_reference_id=${characterId}`}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 4px', borderRadius: '12px', background: 'linear-gradient(135deg, #0f0f1f, #1a1a2f)', border: '1px solid #2a2a5a', textDecoration: 'none', minHeight: '64px', cursor: 'pointer' }}
+            >
+              <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#a78bfa', marginBottom: '2px' }}>10</div>
+              <div style={{ fontSize: '9px', color: '#a78bfa', fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2 }}>Credits</div>
+            </a>
+          )}
+
+          {/* Buy 100 Credits */}
+          {stripeLinks?.credits_100 && (
+            <a
+              href={`${stripeLinks.credits_100}?client_reference_id=${characterId}`}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 4px', borderRadius: '12px', background: 'linear-gradient(135deg, #0f0f1f, #1a1a2f)', border: '1px solid #2a2a5a', textDecoration: 'none', minHeight: '64px', cursor: 'pointer' }}
+            >
+              <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#a78bfa', marginBottom: '2px' }}>100</div>
+              <div style={{ fontSize: '9px', color: '#a78bfa', fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2 }}>Credits</div>
+            </a>
+          )}
+
+          {/* Buy 1000 Credits */}
+          {stripeLinks?.credits_1000 && (
+            <a
+              href={`${stripeLinks.credits_1000}?client_reference_id=${characterId}`}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 4px', borderRadius: '12px', background: 'linear-gradient(135deg, #1a0f1f, #2f1a3a)', border: '1px solid #5a2a7a', textDecoration: 'none', minHeight: '64px', cursor: 'pointer' }}
+            >
+              <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#e879f9', marginBottom: '2px' }}>1K</div>
+              <div style={{ fontSize: '9px', color: '#e879f9', fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2 }}>Credits</div>
+            </a>
+          )}
+
+        </div>
       )}
 
       {/* Quick actions */}

@@ -14,6 +14,11 @@ export async function onRequestGet({ request, env }) {
       ...auth.identity,
       remove_ads: row?.remove_ads === 1,
     },
-    stripe_payment_link_url: env.STRIPE_PAYMENT_LINK_URL || null,
+    stripe_links: {
+      remove_ads:   env.STRIPE_PAYMENT_LINK_REMOVE_ADS   || null,
+      credits_10:   env.STRIPE_PAYMENT_LINK_CREDITS_10   || null,
+      credits_100:  env.STRIPE_PAYMENT_LINK_CREDITS_100  || null,
+      credits_1000: env.STRIPE_PAYMENT_LINK_CREDITS_1000 || null,
+    },
   })
 }
