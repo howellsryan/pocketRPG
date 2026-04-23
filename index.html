@@ -34667,8 +34667,8 @@ function GameApp() {
             }
             // Server confirmed and deducted 1 credit — update local credits state
             setCredits(result.credits_remaining);
-            addToast('⏭️ Skipped 1 hour!', 'success');
             const elapsedMs = 3600000; // 1 hour in milliseconds
+            let idleResultData = { elapsedMs, task: activeTaskRef.current };
             // Re-read latest stats/equipment/inventory/bank to avoid stale state
             const [freshStats, freshInv, freshEq, freshBank, freshSlayerTask] = await Promise.all([
                 getAllStats(),
@@ -34736,11 +34736,18 @@ function GameApp() {
                     if (savedTask.type === 'quest') {
                         if (sim.coinsGained > 0)
                             updateBankDirect({ coins: sim.coinsGained });
+                        const completedQuests = [];
+                        const aggregatedXp = {};
+                        let totalCoinsGained = sim.coinsGained || 0;
                         let workingQueue = [...(questQueueRef.current || [])];
                         let remainingElapsedMs = elapsedMs - (sim.ticksUsed * 600);
                         let finalTask = null;
                         if (sim.completed) {
-                            // Original quest completed
+                            // Original quest completed — track for modal
+                            completedQuests.push(savedTask.quest);
+                            for (const [skill, xp] of Object.entries(savedTask.quest.xpReward || {})) {
+                                aggregatedXp[skill] = (aggregatedXp[skill] || 0) + xp;
+                            }
                             const { choices } = splitXpRewards(savedTask.quest.xpReward);
                             finaliseQuest(savedTask.quest.id, savedTask.quest.name, choices);
                             // Cascade through queue while time remains
@@ -34760,6 +34767,11 @@ function GameApp() {
                                 if (nextSim.completed) {
                                     if (nextSim.coinsGained > 0) {
                                         updateBankDirect({ coins: nextSim.coinsGained });
+                                        totalCoinsGained += nextSim.coinsGained;
+                                    }
+                                    completedQuests.push(nextQuest);
+                                    for (const [skill, xp] of Object.entries(nextQuest.xpReward || {})) {
+                                        aggregatedXp[skill] = (aggregatedXp[skill] || 0) + xp;
                                     }
                                     const { fixed: nextFixed, choices: nextChoices } = splitXpRewards(nextQuest.xpReward);
                                     for (const [skill, xp] of Object.entries(nextFixed))
@@ -34803,6 +34815,13 @@ function GameApp() {
                         }
                         setActiveTask(finalTask);
                         updateQuestQueue(workingQueue);
+                        // Add quest data to idle result
+                        if (completedQuests.length > 0) {
+                            idleResultData.completedQuests = completedQuests;
+                            idleResultData.aggregatedXpReward = aggregatedXp;
+                            if (totalCoinsGained > 0)
+                                idleResultData.coinsGained = totalCoinsGained;
+                        }
                     }
                     else if (sim.ticksRemaining !== undefined) {
                         // Non-quest task — update progress if partial
@@ -34810,6 +34829,10 @@ function GameApp() {
                             ...savedTask,
                             ticksRemaining: sim.ticksRemaining,
                         });
+                    }
+                    // Merge simulation data into idle result
+                    if (sim) {
+                        idleResultData = { ...idleResultData, ...sim };
                     }
                     // Deduct consumed materials from bank
                     if (sim.itemsConsumed && Object.keys(sim.itemsConsumed).length > 0) {
@@ -34853,6 +34876,8 @@ function GameApp() {
                     updateHP(restoredHP);
                 }
             }
+            // Show idle result modal with skip summary
+            setIdleResult(idleResultData);
             // Save the updated game state to cloud
             schedulePushSave(getSnapshot());
         }
