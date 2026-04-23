@@ -9,16 +9,22 @@ database_id = "439e810b-8dce-4697-94c2-a7392520ad8f"
 
 [vars]
 APP_BASE_URL = "https://pocketrpg.pages.dev"
+# Stripe payment link URL for the "Remove Ads" purchase (live environment)
+# Set to your live Stripe payment link, e.g. https://buy.stripe.com/xxxxx
+STRIPE_PAYMENT_LINK_URL = ""
 
 # Secrets to set via dashboard or `wrangler pages secret put`:
-#   JWT_SECRET             — random 32+ byte string used to sign session JWTs
-#   GITHUB_CLIENT_ID       — from GitHub OAuth App
-#   GITHUB_CLIENT_SECRET   — from GitHub OAuth App
-#   GOOGLE_CLIENT_ID       — from Google Cloud OAuth 2.0 Client
-#   GOOGLE_CLIENT_SECRET   — from Google Cloud OAuth 2.0 Client
+#   JWT_SECRET              — random 32+ byte string used to sign session JWTs
+#   GITHUB_CLIENT_ID        — from GitHub OAuth App
+#   GITHUB_CLIENT_SECRET    — from GitHub OAuth App
+#   GOOGLE_CLIENT_ID        — from Google Cloud OAuth 2.0 Client
+#   GOOGLE_CLIENT_SECRET    — from Google Cloud OAuth 2.0 Client
+#   STRIPE_WEBHOOK_SECRET   — Stripe webhook signing secret (whsec_...), live environment
 
 [env.preview]
 d1_databases = [
   { binding = "DB", database_name = "pocketrpg-preview", database_id = "59233295-f492-4113-94da-90034d84a6a4" }
 ]
-vars = { APP_BASE_URL = "https://preview.pocketrpg.pages.dev" }
+vars = { APP_BASE_URL = "https://preview.pocketrpg.pages.dev", STRIPE_PAYMENT_LINK_URL = "" }
+# Secrets for preview environment (set via `wrangler pages secret put --env preview`):
+#   STRIPE_WEBHOOK_SECRET   — Stripe webhook signing secret (whsec_...), test environment

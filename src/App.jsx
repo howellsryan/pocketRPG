@@ -20,7 +20,7 @@ import { hasSave, closeDB } from './db/database.js'
 import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
 import { startTicks, stopTicks, onTick } from './engine/tick.js'
 import { snapshotToLocalStorage, restoreFromLocalStorage, wipeLocalSave } from './db/saveload.js'
-import { captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode } from './cloud/api.js'
+import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode } from './cloud/api.js'
 import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState } from './cloud/sync.js'
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
@@ -43,6 +43,9 @@ function GameApp() {
   const [offlineIsIronman, setOfflineIsIronman] = useState(false)
   const [offlineIsOneLife, setOfflineIsOneLife] = useState(false)
   const [offlineCreating, setOfflineCreating] = useState(false)
+  const [removeAds, setRemoveAds] = useState(false)
+  const [identityId, setIdentityId] = useState(null)
+  const [paymentLinkUrl, setPaymentLinkUrl] = useState(null)
 
   // Refs for tick-based systems
   const hpRegenCounter = useRef(0)
@@ -510,6 +513,16 @@ function GameApp() {
       }
 
       if (hasToken && hasCharacter) {
+        // Fetch remove-ads status and Stripe payment link URL (non-fatal if unavailable)
+        try {
+          const meData = await api.me()
+          if (meData?.identity) {
+            setRemoveAds(meData.identity.remove_ads === true)
+            setIdentityId(meData.identity.id)
+            setPaymentLinkUrl(meData.stripe_payment_link_url || null)
+          }
+        } catch { /* hide button on error — non-fatal */ }
+
         // Guard against character-switch leakage: if IDB currently belongs to
         // a different character, wipe it before loading anything. Otherwise a
         // newly-created character with no cloud save yet would fall through
@@ -827,7 +840,7 @@ function GameApp() {
   // Main game
   const renderScreen = () => {
     switch (screen) {
-      case SCREENS.HOME:      return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} isCloudAccount={!!getToken() && !!getCharacterId()} />
+      case SCREENS.HOME:      return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} isCloudAccount={!!getToken() && !!getCharacterId()} removeAds={removeAds} identityId={identityId} paymentLinkUrl={paymentLinkUrl} />
       case SCREENS.STATS:     return <StatsScreen />
       case SCREENS.INVENTORY: return <InventoryScreen />
       case SCREENS.EQUIPMENT: return <EquipmentScreen />

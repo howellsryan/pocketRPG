@@ -15,7 +15,7 @@ const DEFAULT_SHORTCUTS = [
   { label: 'Equipment', icon: '🛡️', screen: SCREENS.EQUIPMENT },
 ]
 
-export default function HomeScreen({ onNavigate, onLogout, isCloudAccount }) {
+export default function HomeScreen({ onNavigate, onLogout, isCloudAccount, removeAds, identityId, paymentLinkUrl }) {
   const { player, stats, homeShortcuts, updateHomeShortcuts } = useGame()
   const [removeConfirm, setRemoveConfirm] = useState(null)
   const [loggingOut, setLoggingOut] = useState(false)
@@ -82,6 +82,28 @@ export default function HomeScreen({ onNavigate, onLogout, isCloudAccount }) {
           {isCloudAccount && loggingOut ? '☁️ Saving...' : '🚪 Logout'}
         </button>
       </div>
+
+      {/* Remove Ads — only shown to cloud users who haven't paid yet */}
+      {isCloudAccount && !removeAds && paymentLinkUrl && (
+        <a
+          href={`${paymentLinkUrl}?client_reference_id=${identityId}`}
+          style={{ display: 'block', textDecoration: 'none', background: 'linear-gradient(135deg, #0f1f0f, #1a2f1a)', borderRadius: '14px', border: '1px solid #2a5a2a', padding: '14px 16px', marginBottom: '16px' }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontFamily: 'Cinzel, serif', fontSize: '13px', fontWeight: 'bold', color: '#4ade80', marginBottom: '3px' }}>
+                ✨ Remove Ads Forever
+              </div>
+              <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.6 }}>
+                One-time purchase · All characters included
+              </div>
+            </div>
+            <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#4ade80', whiteSpace: 'nowrap', marginLeft: '12px' }}>
+              Buy Now →
+            </div>
+          </div>
+        </a>
+      )}
 
       {/* Quick actions */}
       <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '11px', fontWeight: 'bold', color: '#e8d5b0', marginBottom: '8px', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
