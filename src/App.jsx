@@ -834,6 +834,85 @@ function GameApp() {
           if (savedTask.type === 'thieving' && sim.coinsGained > 0) {
             updateBankDirect({ coins: sim.coinsGained })
           }
+          // Quest cascade — complete quests while time remains
+          if (savedTask.type === 'quest') {
+            if (sim.coinsGained > 0) updateBankDirect({ coins: sim.coinsGained })
+
+            let workingQueue = [...(questQueueRef.current || [])]
+            let remainingElapsedMs = elapsedMs - (sim.ticksUsed * 600)
+            let finalTask = null
+
+            if (sim.completed) {
+              // Original quest completed
+              const { choices } = splitXpRewards(savedTask.quest.xpReward)
+              finaliseQuest(savedTask.quest.id, savedTask.quest.name, choices)
+
+              // Cascade through queue while time remains
+              while (workingQueue.length > 0 && remainingElapsedMs > 0) {
+                const nextQuest = workingQueue[0]
+                const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
+                const nextTask = {
+                  type: 'quest',
+                  quest: nextQuest,
+                  totalTicks: nextTotalTicks,
+                  ticksRemaining: nextTotalTicks,
+                }
+                const nextSim = simulateIdleQuest(nextTask, remainingElapsedMs)
+                if (!nextSim) break
+                remainingElapsedMs -= nextSim.ticksUsed * 600
+
+                if (nextSim.completed) {
+                  if (nextSim.coinsGained > 0) {
+                    updateBankDirect({ coins: nextSim.coinsGained })
+                  }
+                  const { fixed: nextFixed, choices: nextChoices } = splitXpRewards(nextQuest.xpReward)
+                  for (const [skill, xp] of Object.entries(nextFixed)) grantXP(skill, xp)
+                  finaliseQuest(nextQuest.id, nextQuest.name, nextChoices)
+                  workingQueue = workingQueue.slice(1)
+                } else {
+                  // Partial progress — this quest becomes the active one
+                  finalTask = {
+                    type: 'quest',
+                    quest: nextQuest,
+                    totalTicks: nextTotalTicks,
+                    ticksRemaining: nextSim.ticksRemaining,
+                    startedAt: Date.now(),
+                  }
+                  workingQueue = workingQueue.slice(1)
+                  break
+                }
+              }
+
+              // No partial quest mid-cascade, but queue still has items: promote head to active
+              if (!finalTask && workingQueue.length > 0) {
+                const nextQuest = workingQueue[0]
+                const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
+                finalTask = {
+                  type: 'quest',
+                  quest: nextQuest,
+                  totalTicks: nextTotalTicks,
+                  ticksRemaining: nextTotalTicks,
+                  startedAt: Date.now(),
+                }
+                workingQueue = workingQueue.slice(1)
+              }
+            } else {
+              // Original quest still running — persist updated progress
+              finalTask = {
+                ...savedTask,
+                ticksRemaining: sim.ticksRemaining,
+              }
+            }
+
+            setActiveTask(finalTask)
+            updateQuestQueue(workingQueue)
+          } else if (sim.ticksRemaining !== undefined) {
+            // Non-quest task — update progress if partial
+            setActiveTask({
+              ...savedTask,
+              ticksRemaining: sim.ticksRemaining,
+            })
+          }
           // Deduct consumed materials from bank
           if (sim.itemsConsumed && Object.keys(sim.itemsConsumed).length > 0) {
             const negated = {}
@@ -865,15 +944,6 @@ function GameApp() {
           if (sim.hpAfterRegen !== undefined) {
             updateHP(sim.hpAfterRegen)
           }
-
-          // Update active task progress
-          if (sim.ticksRemaining !== undefined) {
-            setActiveTask({
-              ...savedTask,
-              ticksRemaining: sim.ticksRemaining,
-            })
-          }
-
         }
       } else {
         // No active task — just apply HP regen
