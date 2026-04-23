@@ -754,6 +754,137 @@ function GameApp() {
     setScreen(scr)
   }
 
+  // Skip 1 hour handler — simulate idle time and reduce credits
+  async function handleSkip1h() {
+    if (!isCloudAccount || credits < 1) {
+      addToast('Not enough credits for skip!', 'error')
+      return
+    }
+
+    const elapsedMs = 3600000 // 1 hour in milliseconds
+
+    try {
+      // Re-read latest stats/equipment/inventory/bank to avoid stale state
+      const [freshStats, freshInv, freshEq, freshBank, freshSlayerTask] = await Promise.all([
+        getAllStats(),
+        getInventory(),
+        getEquipment(),
+        getBank(),
+        getSetting('slayerTask'),
+      ])
+
+      // If there's an active task, simulate it for 1 hour
+      if (activeTaskRef.current) {
+        const savedTask = activeTaskRef.current
+        let sim = null
+
+        if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
+        if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current)
+        if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank)
+        if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
+        if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
+        if (savedTask.type === 'quest') sim = simulateIdleQuest(savedTask, elapsedMs)
+
+        if (sim) {
+          // Apply HP regeneration during idle
+          const hpRegenSim = simulateIdleHPRegen(elapsedMs)
+          if (hpRegenSim.hpRegen > 0) {
+            const maxHP = getLevelFromXP(freshStats.hitpoints?.xp || 0)
+            const restoredHP = Math.min(currentHP + hpRegenSim.hpRegen, maxHP)
+            sim.hpRestored = hpRegenSim.hpRegen
+            sim.hpAfterRegen = restoredHP
+          }
+
+          // Apply XP (skip combat/any — those require player choice via modal)
+          if (sim.xpGained) {
+            for (const [skill, xp] of Object.entries(sim.xpGained)) {
+              if (skill !== 'combat' && skill !== 'any' && xp > 0) grantXP(skill, xp)
+            }
+          }
+          // Apply slayer XP from combat simulation
+          if (savedTask.type === 'combat' && sim.slayerXpGained > 0) {
+            grantXP('slayer', sim.slayerXpGained)
+          }
+          // Apply items
+          if ((savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather') && sim.finalInventory) {
+            updateInventory(sim.finalInventory)
+            const bankedItems = sim.lootBanked || sim.itemsBanked || {}
+            if (Object.keys(bankedItems).length > 0) {
+              updateBankDirect(bankedItems)
+            }
+          } else if (sim.itemsGained) {
+            updateBankDirect(sim.itemsGained)
+          }
+          // Apply agility coin reward directly to bank
+          if (savedTask.type === 'agility' && sim.coinsGained > 0) {
+            updateBankDirect({ coins: sim.coinsGained })
+          }
+          // Apply thieving coin reward directly to bank
+          if (savedTask.type === 'thieving' && sim.coinsGained > 0) {
+            updateBankDirect({ coins: sim.coinsGained })
+          }
+          // Deduct consumed materials from bank
+          if (sim.itemsConsumed && Object.keys(sim.itemsConsumed).length > 0) {
+            const negated = {}
+            for (const [itemId, qty] of Object.entries(sim.itemsConsumed)) {
+              negated[itemId] = -qty
+            }
+            updateBankDirect(negated)
+          }
+          // Deduct runes consumed from bank
+          if (sim.runesConsumed && Object.keys(sim.runesConsumed).length > 0) {
+            const negated = {}
+            for (const [itemId, qty] of Object.entries(sim.runesConsumed)) {
+              negated[itemId] = -qty
+            }
+            updateBankDirect(negated)
+          }
+          // Persist slayer task update if present
+          if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
+            if (sim.slayerTaskUpdate.completed) {
+              setSlayerTask(null)
+              updateSlayerPoints(slayerPoints + sim.slayerTaskUpdate.pointsOnComplete)
+              addToast('💀 Slayer task completed!', 'levelup')
+            } else {
+              setSlayerTask(sim.slayerTaskUpdate)
+            }
+          }
+
+          // Update HP from regen if applicable
+          if (sim.hpAfterRegen !== undefined) {
+            updateHP(sim.hpAfterRegen)
+          }
+
+          // Update active task progress
+          if (sim.ticksRemaining !== undefined) {
+            setActiveTask({
+              ...savedTask,
+              ticksRemaining: sim.ticksRemaining,
+            })
+          }
+
+          addToast('⏭️ Skipped 1 hour!', 'success')
+        }
+      } else {
+        // No active task — just apply HP regen
+        const hpRegenSim = simulateIdleHPRegen(elapsedMs)
+        if (hpRegenSim.hpRegen > 0) {
+          const maxHP = getLevelFromXP(freshStats.hitpoints?.xp || 0)
+          const restoredHP = Math.min(currentHP + hpRegenSim.hpRegen, maxHP)
+          updateHP(restoredHP)
+        }
+        addToast('⏭️ Skipped 1 hour!', 'success')
+      }
+
+      // Deduct 1 credit and save
+      setCredits(credits - 1)
+      schedulePushSave(getSnapshot())
+    } catch (err) {
+      console.error('[PocketRPG] Skip 1h error:', err)
+      addToast('Error during skip!', 'error')
+    }
+  }
+
   // Cloud conflict modal — shown while cloudPhase is still resolving
   if (conflict) {
     const fmt = (ms) => ms ? new Date(ms).toLocaleString() : '—'
@@ -901,9 +1032,11 @@ function GameApp() {
     }
   }
 
+  const isCloudAccount = !!getToken() && !!getCharacterId()
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Header activity={activity} credits={credits} isCloudAccount={!!getToken() && !!getCharacterId()} />
+      <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} />
       <ToastContainer />
       <main style={{ flex: 1, overflow: 'hidden' }}>
         {renderScreen()}
