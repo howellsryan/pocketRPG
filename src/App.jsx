@@ -761,6 +761,12 @@ function GameApp() {
       return
     }
 
+    // Check if currently idling a boss — bosses cannot be skipped
+    if (activeTaskRef.current?.type === 'combat' && activeTaskRef.current?.monster?.boss) {
+      addToast('Cannot skip boss fights!', 'error')
+      return
+    }
+
     try {
       // Call server to validate credit and deduct atomically
       const result = await api.skipHour()
