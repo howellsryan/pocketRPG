@@ -16052,6 +16052,7 @@ const monstersData = {
   "arim_the_blighted": {
     "id": "arim_the_blighted",
     "name": "Arim the Blighted",
+    "boss": true,
     "combatLevel": 115,
     "hitpoints": 100,
     "stats": {
@@ -16083,6 +16084,7 @@ const monstersData = {
   "dharok_the_wretched": {
     "id": "dharok_the_wretched",
     "name": "Dharok the Wretched",
+    "boss": true,
     "combatLevel": 115,
     "hitpoints": 100,
     "stats": {
@@ -16114,6 +16116,7 @@ const monstersData = {
   "guthan_the_infested": {
     "id": "guthan_the_infested",
     "name": "Guthan the Infested",
+    "boss": true,
     "combatLevel": 115,
     "hitpoints": 100,
     "stats": {
@@ -16145,6 +16148,7 @@ const monstersData = {
   "karil_the_tainted": {
     "id": "karil_the_tainted",
     "name": "Karil the Tainted",
+    "boss": true,
     "combatLevel": 115,
     "hitpoints": 100,
     "stats": {
@@ -16176,6 +16180,7 @@ const monstersData = {
   "torag_the_corrupted": {
     "id": "torag_the_corrupted",
     "name": "Torag the Corrupted",
+    "boss": true,
     "combatLevel": 115,
     "hitpoints": 100,
     "stats": {
@@ -16207,6 +16212,7 @@ const monstersData = {
   "verac_the_defiled": {
     "id": "verac_the_defiled",
     "name": "Verac the Defiled",
+    "boss": true,
     "combatLevel": 115,
     "hitpoints": 100,
     "stats": {
@@ -34656,6 +34662,11 @@ function GameApp() {
     async function handleSkip1h() {
         if (!isCloudAccount) {
             addToast('Skip only available for cloud accounts!', 'error');
+            return;
+        }
+        // Check if currently idling a boss — bosses cannot be skipped
+        if (activeTaskRef.current?.type === 'combat' && activeTaskRef.current?.monster?.boss) {
+            addToast('Cannot skip boss fights!', 'error');
             return;
         }
         try {
