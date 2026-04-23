@@ -30,16 +30,17 @@ export async function onRequestPost({ request, env }) {
     if (!item) {
       return json({ error: 'Item not found' }, 404)
     }
-
+    
+    const isQuestItem = !!item.questUnlock
+    
     // Prevent purchasing untradeable items
-    if (item.isUntradeable && !item.isQuestItem) {
+    if (item.isUntradeable && isQuestItem) {
       return json({ error: 'This item cannot be purchased' }, 400)
     }
 
     // If character is ironman, enforce stricter item restrictions
     // Ironman can only purchase: general store items and quest items
     if (character.is_ironman) {
-      const isQuestItem = !!item.questUnlock
       const isGeneralStoreItem = item.isGeneralStore
       if (!isQuestItem && !isGeneralStoreItem) {
         return json({ error: 'This item is not available to Ironman characters', code: 'IRONMAN_RESTRICTED' }, 403)
