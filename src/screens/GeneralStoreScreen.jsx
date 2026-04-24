@@ -8,7 +8,7 @@ import Button from '../components/Button.jsx'
 import questsData from '../data/quests.json'
 
 // ── COMPONENT ───────────────────────────────────────────────────────────────
-export default function GeneralStoreScreen() {
+export default function GeneralStoreScreen({ onBuyCredits }) {
   const { inventory, bank, updateInventory, updateBankDirect, addToast, itemsData, unlockedFeatures, completedQuests, isIronman } = useGame()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedItem, setSelectedItem] = useState(null) // item being purchased
@@ -102,7 +102,8 @@ export default function GeneralStoreScreen() {
     const totalCost = price * buyQty
 
     if (coins < totalCost) {
-      addToast(`Need ${totalCost.toLocaleString()} coins — you have ${coins.toLocaleString()}.`, 'error')
+      addToast('Insufficient funds, buy some more credits', 'error')
+      if (onBuyCredits) onBuyCredits()
       return
     }
 
