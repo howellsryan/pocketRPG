@@ -128,7 +128,7 @@ async function performOneLifeReset() {
   clearAuth()
 }
 
-export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFightStatusChange }) {
+export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange }) {
   const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife } = useGame()
 
   const [combat, setCombat] = useState(null)
@@ -213,11 +213,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     }
   }, [initialRaidId])
 
-  // Update boss fight status in parent
+  // Update combat status in parent
   useEffect(() => {
-    const isBossFight = combat?.active && combat?.monster?.boss === true
-    onBossFightStatusChange?.(isBossFight)
-  }, [combat?.active, combat?.monster?.boss, onBossFightStatusChange])
+    const isActive = combat?.active === true
+    onCombatStatusChange?.(isActive)
+  }, [combat?.active, onCombatStatusChange])
 
   // Tick listener for combat
   useEffect(() => {

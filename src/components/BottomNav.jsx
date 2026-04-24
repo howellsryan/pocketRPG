@@ -13,7 +13,7 @@ const tabs = [
   { id: SCREENS.QUESTS,    label: 'Quests',  icon: '📜' },
 ]
 
-export default function BottomNav({ active, onNavigate, isInBossFight, onDisabledClick }) {
+export default function BottomNav({ active, onNavigate, isInCombat, onDisabledClick }) {
   return (
     <nav
       class="flex-shrink-0 bg-[#111] border-t border-[var(--color-void-border)]"
@@ -22,14 +22,14 @@ export default function BottomNav({ active, onNavigate, isInBossFight, onDisable
       <div class="flex items-center h-[52px]">
         {tabs.map(tab => {
           const isActive = active === tab.id
-          const opacity = isInBossFight ? 'opacity-20' : isActive ? 'opacity-100' : 'opacity-45'
+          const opacity = isInCombat ? 'opacity-20' : isActive ? 'opacity-100' : 'opacity-45'
           const color = isActive ? 'text-[var(--color-gold)]' : 'text-[var(--color-parchment)]'
-          const cursor = isInBossFight ? 'cursor-not-allowed' : 'cursor-pointer'
+          const cursor = isInCombat ? 'cursor-not-allowed' : 'cursor-pointer'
           return (
             <button
               key={tab.id}
-              onClick={() => { if (isInBossFight) onDisabledClick?.(); else onNavigate(tab.id) }}
-              disabled={isInBossFight}
+              onClick={() => { if (isInCombat) onDisabledClick?.(); else onNavigate(tab.id) }}
+              disabled={isInCombat}
               class={`flex flex-col items-center justify-center flex-1 h-full bg-transparent border-0 p-0 transition-opacity ${color} ${opacity} ${cursor}`}
             >
               <span class="text-[16px] leading-none">{tab.icon}</span>

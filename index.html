@@ -25794,9 +25794,8 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
     if (!task || !task.monster)
         return null;
     const monster = task.monster;
-    // Bosses cannot be idle-fought; require active combat
-    if (monster.boss)
-        return null;
+    // All combat scenarios cannot be idle-fought; require active combat
+    return null;
     const totalTicks = Math.floor(elapsedMs / TICK_MS);
     if (totalTicks <= 0)
         return null;
@@ -28002,17 +28001,17 @@ const tabs = [
     { id: SCREENS.SKILLS, label: 'Skills', icon: '🔨' },
     { id: SCREENS.QUESTS, label: 'Quests', icon: '📜' },
 ];
-function BottomNav({ active, onNavigate, isInBossFight, onDisabledClick }) {
+function BottomNav({ active, onNavigate, isInCombat, onDisabledClick }) {
     return (h("nav", { class: "flex-shrink-0 bg-[#111] border-t border-[var(--color-void-border)]", style: { paddingBottom: 'env(safe-area-inset-bottom)' } },
         h("div", { class: "flex items-center h-[52px]" }, tabs.map(tab => {
             const isActive = active === tab.id;
-            const opacity = isInBossFight ? 'opacity-20' : isActive ? 'opacity-100' : 'opacity-45';
+            const opacity = isInCombat ? 'opacity-20' : isActive ? 'opacity-100' : 'opacity-45';
             const color = isActive ? 'text-[var(--color-gold)]' : 'text-[var(--color-parchment)]';
-            const cursor = isInBossFight ? 'cursor-not-allowed' : 'cursor-pointer';
-            return (h("button", { key: tab.id, onClick: () => { if (isInBossFight)
+            const cursor = isInCombat ? 'cursor-not-allowed' : 'cursor-pointer';
+            return (h("button", { key: tab.id, onClick: () => { if (isInCombat)
                     onDisabledClick?.();
                 else
-                    onNavigate(tab.id); }, disabled: isInBossFight, class: `flex flex-col items-center justify-center flex-1 h-full bg-transparent border-0 p-0 transition-opacity ${color} ${opacity} ${cursor}` },
+                    onNavigate(tab.id); }, disabled: isInCombat, class: `flex flex-col items-center justify-center flex-1 h-full bg-transparent border-0 p-0 transition-opacity ${color} ${opacity} ${cursor}` },
                 h("span", { class: "text-[16px] leading-none" }, tab.icon),
                 h("span", { class: "text-[9px] font-semibold mt-[2px] font-[var(--font-body)]" }, tab.label)));
         }))));
@@ -28271,16 +28270,6 @@ function HomeScreen({ onNavigate, onLogout, isCloudAccount, removeAds, identityI
                         "\uD83D\uDCCA Total ",
                         totalLevel))),
             h("button", { onClick: handleLogout, disabled: loggingOut, style: { background: 'rgba(255,255,255,0.05)', border: '1px solid #333', borderRadius: '8px', padding: '6px 10px', fontSize: '11px', color: '#e8d5b0', opacity: loggingOut ? 0.4 : 0.7, cursor: loggingOut ? 'default' : 'pointer' } }, isCloudAccount && loggingOut ? '☁️ Saving...' : '🚪 Logout')),
-        isCloudAccount && (stripeLinks?.remove_ads || stripeLinks?.credits_10 || stripeLinks?.credits_100 || stripeLinks?.credits_1000) && (h("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '16px' } },
-            stripeLinks?.credits_10 && (h("a", { href: `${stripeLinks.credits_10}?client_reference_id=${characterId}`, style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 4px', borderRadius: '12px', background: 'linear-gradient(135deg, #0f0f1f, #1a1a2f)', border: '1px solid #2a2a5a', textDecoration: 'none', minHeight: '64px', cursor: 'pointer' } },
-                h("div", { style: { fontSize: '14px', fontWeight: 'bold', color: '#a78bfa', marginBottom: '2px' } }, "10"),
-                h("div", { style: { fontSize: '9px', color: '#a78bfa', fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2 } }, "Credits"))),
-            stripeLinks?.credits_100 && (h("a", { href: `${stripeLinks.credits_100}?client_reference_id=${characterId}`, style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 4px', borderRadius: '12px', background: 'linear-gradient(135deg, #0f0f1f, #1a1a2f)', border: '1px solid #2a2a5a', textDecoration: 'none', minHeight: '64px', cursor: 'pointer' } },
-                h("div", { style: { fontSize: '14px', fontWeight: 'bold', color: '#a78bfa', marginBottom: '2px' } }, "100"),
-                h("div", { style: { fontSize: '9px', color: '#a78bfa', fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2 } }, "Credits"))),
-            stripeLinks?.credits_1000 && (h("a", { href: `${stripeLinks.credits_1000}?client_reference_id=${characterId}`, style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 4px', borderRadius: '12px', background: 'linear-gradient(135deg, #1a0f1f, #2f1a3a)', border: '1px solid #5a2a7a', textDecoration: 'none', minHeight: '64px', cursor: 'pointer' } },
-                h("div", { style: { fontSize: '14px', fontWeight: 'bold', color: '#e879f9', marginBottom: '2px' } }, "1K"),
-                h("div", { style: { fontSize: '9px', color: '#e879f9', fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2 } }, "Credits"))))),
         h("h2", { style: { fontFamily: 'Cinzel, serif', fontSize: '11px', fontWeight: 'bold', color: '#e8d5b0', marginBottom: '8px', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.1em' } }, "Quick Actions"),
         h("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' } },
             shortcuts.map((sc, i) => (h("div", { key: i, style: { position: 'relative' } },
@@ -29488,7 +29477,7 @@ async function performOneLifeReset() {
     catch { /* ignore */ }
     clearAuth();
 }
-function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFightStatusChange }) {
+function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange }) {
     const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife } = useGame();
     const [combat, setCombat] = useState(null);
     const [log, setLog] = useState([]);
@@ -29568,11 +29557,11 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onBossFight
                 startRaid(raid);
         }
     }, [initialRaidId]);
-    // Update boss fight status in parent
+    // Update combat status in parent
     useEffect(() => {
-        const isBossFight = combat?.active && combat?.monster?.boss === true;
-        onBossFightStatusChange?.(isBossFight);
-    }, [combat?.active, combat?.monster?.boss, onBossFightStatusChange]);
+        const isActive = combat?.active === true;
+        onCombatStatusChange?.(isActive);
+    }, [combat?.active, onCombatStatusChange]);
     // Tick listener for combat
     useEffect(() => {
         if (!combat || !combat.active)
@@ -33973,7 +33962,7 @@ function GameApp() {
     const [activity, setActivity] = useState(null);
     const [idleResult, setIdleResult] = useState(null); // { elapsedMs, task, xpGained, itemsGained, lootLost, monstersKilled }
     const [actionData, setActionData] = useState(null); // { monsterId, gatherTaskId, skillId, actionId }
-    const [isInBossFight, setIsInBossFight] = useState(false); // Track if currently in a boss fight
+    const [isInCombat, setIsInCombat] = useState(false); // Track if currently in combat
     const [pendingXpChoices, setPendingXpChoices] = useState([]); // [{ rewards, questId, questName }, ...]
     // Cloud auth gate: 'pending' until we resolve, 'auth' if AuthScreen needed, 'auth_offline' for offline creation, 'ready' to boot game
     const [cloudPhase, setCloudPhase] = useState('pending');
@@ -34755,9 +34744,9 @@ function GameApp() {
             addToast('Skip only available for cloud accounts!', 'error');
             return;
         }
-        // Check if currently idling a boss — bosses cannot be skipped
-        if (activeTaskRef.current?.type === 'combat' && activeTaskRef.current?.monster?.boss) {
-            addToast('Cannot skip boss fights!', 'error');
+        // Check if currently in combat — all combat cannot be skipped
+        if (activeTaskRef.current?.type === 'combat') {
+            addToast('Cannot skip combat!', 'error');
             return;
         }
         try {
@@ -35106,7 +35095,7 @@ function GameApp() {
         h(ToastContainer, null),
         h("main", { style: { flex: 1, overflow: 'hidden' } }, renderScreen()),
         showBuyCreditsModal && isCloudAccount && (h(BuyCreditsModal, { onClose: () => setShowBuyCreditsModal(false), identityId: identityId, characterId: getCharacterId(), stripeLinks: stripeLinks })),
-        h(BottomNav, { active: screen, onNavigate: (s) => navigate(s), isInBossFight: isInBossFight, onDisabledClick: () => addToast('⚔️ Cannot navigate during boss fight!', 'warning') }),
+        h(BottomNav, { active: screen, onNavigate: (s) => navigate(s), isInCombat: isInCombat, onDisabledClick: () => addToast('⚔️ Cannot navigate during combat!', 'warning') }),
         idleResult && (h("div", { style: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' } },
             h("div", { style: { width: '100%', maxWidth: '380px', background: '#1a1a1a', borderRadius: '20px', border: '1px solid #333', overflow: 'hidden' } },
                 h("div", { style: { background: 'linear-gradient(135deg, #1d3a2a, #2a1a0a)', padding: '20px 20px 16px', borderBottom: '1px solid #333' } },
@@ -35135,9 +35124,9 @@ function GameApp() {
                         idleResult.cloudOverride && (h("div", { style: { marginBottom: '12px', padding: '10px', background: 'rgba(123, 179, 240, 0.12)', borderRadius: '10px', borderLeft: '3px solid #7bb3f0' } },
                             h("div", { style: { fontSize: '12px', color: '#7bb3f0', fontWeight: 'bold', marginBottom: '4px' } }, "\u2601\uFE0F Cloud Save Loaded"),
                             h("div", { style: { fontSize: '11px', color: '#bcd7f5', lineHeight: '1.4' } }, "Another session of this character saved while you were away. Idle progress on this device was discarded to keep both sessions in sync."))),
-                        idleResult.task?.type === 'combat' && idleResult.task.monster?.boss && (h("div", { style: { marginBottom: '12px', padding: '10px', background: 'rgba(220, 53, 69, 0.15)', borderRadius: '10px', borderLeft: '3px solid #dc3545' } },
-                            h("div", { style: { fontSize: '12px', color: '#ff6b6b', fontWeight: 'bold', marginBottom: '4px' } }, "\u26A0\uFE0F Boss Combat"),
-                            h("div", { style: { fontSize: '11px', color: '#ff8787', lineHeight: '1.4' } }, "Bosses cannot be fought while idle. You must actively kill this boss in combat. Return to the fight to continue!"))),
+                        idleResult.task?.type === 'combat' && (h("div", { style: { marginBottom: '12px', padding: '10px', background: 'rgba(220, 53, 69, 0.15)', borderRadius: '10px', borderLeft: '3px solid #dc3545' } },
+                            h("div", { style: { fontSize: '12px', color: '#ff6b6b', fontWeight: 'bold', marginBottom: '4px' } }, "\u26A0\uFE0F Combat Active"),
+                            h("div", { style: { fontSize: '11px', color: '#ff8787', lineHeight: '1.4' } }, "Combat cannot be fought while idle. You must actively fight in combat. Return to the fight to continue!"))),
                         idleResult.completedQuests && idleResult.completedQuests.length > 0 && (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#1a3a2a', borderRadius: '10px', borderLeft: '3px solid #4ade80' } },
                             h("div", { style: { fontSize: '12px', color: '#4ade80', fontWeight: 'bold', marginBottom: '8px' } },
                                 "\uD83D\uDCDC Quests Completed (",

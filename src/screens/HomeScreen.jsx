@@ -83,47 +83,6 @@ export default function HomeScreen({ onNavigate, onLogout, isCloudAccount, remov
         </button>
       </div>
 
-      {/* Purchase row — only shown to cloud accounts when at least one link is configured */}
-      {isCloudAccount && (stripeLinks?.remove_ads || stripeLinks?.credits_10 || stripeLinks?.credits_100 || stripeLinks?.credits_1000) && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '16px' }}>
-
-          {/* Remove Ads slot — hidden for now */}
-
-          {/* Buy 10 Credits */}
-          {stripeLinks?.credits_10 && (
-            <a
-              href={`${stripeLinks.credits_10}?client_reference_id=${characterId}`}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 4px', borderRadius: '12px', background: 'linear-gradient(135deg, #0f0f1f, #1a1a2f)', border: '1px solid #2a2a5a', textDecoration: 'none', minHeight: '64px', cursor: 'pointer' }}
-            >
-              <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#a78bfa', marginBottom: '2px' }}>10</div>
-              <div style={{ fontSize: '9px', color: '#a78bfa', fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2 }}>Credits</div>
-            </a>
-          )}
-
-          {/* Buy 100 Credits */}
-          {stripeLinks?.credits_100 && (
-            <a
-              href={`${stripeLinks.credits_100}?client_reference_id=${characterId}`}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 4px', borderRadius: '12px', background: 'linear-gradient(135deg, #0f0f1f, #1a1a2f)', border: '1px solid #2a2a5a', textDecoration: 'none', minHeight: '64px', cursor: 'pointer' }}
-            >
-              <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#a78bfa', marginBottom: '2px' }}>100</div>
-              <div style={{ fontSize: '9px', color: '#a78bfa', fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2 }}>Credits</div>
-            </a>
-          )}
-
-          {/* Buy 1000 Credits */}
-          {stripeLinks?.credits_1000 && (
-            <a
-              href={`${stripeLinks.credits_1000}?client_reference_id=${characterId}`}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 4px', borderRadius: '12px', background: 'linear-gradient(135deg, #1a0f1f, #2f1a3a)', border: '1px solid #5a2a7a', textDecoration: 'none', minHeight: '64px', cursor: 'pointer' }}
-            >
-              <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#e879f9', marginBottom: '2px' }}>1K</div>
-              <div style={{ fontSize: '9px', color: '#e879f9', fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2 }}>Credits</div>
-            </a>
-          )}
-
-        </div>
-      )}
 
       {/* Quick actions */}
       <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '11px', fontWeight: 'bold', color: '#e8d5b0', marginBottom: '8px', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
