@@ -159,8 +159,30 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
               const fromBank = qty - fromInv
               if (fromInv > 0) removeItem(newInv, matId, fromInv)
               if (fromBank > 0) bankUpdates[matId] = -fromBank
+              // Track consumed materials
+              skillingState.consumedMaterials[matId] = (skillingState.consumedMaterials[matId] || 0) + qty
             }
             if (Object.keys(bankUpdates).length > 0) updateBankDirect(bankUpdates)
+
+            // After consuming, check if we can do ANOTHER action
+            let canContinue = true
+            for (const [matId, qtyNeeded] of Object.entries(action.materials)) {
+              const invCount = countItem(newInv, matId)
+              const bankCount = bankRef.current[matId]?.quantity || 0
+              const totalConsumed = skillingState.consumedMaterials[matId] || 0
+              const totalAvailable = inventoryRef.current.reduce((sum, slot) => sum + (slot?.itemId === matId ? (slot?.quantity || 0) : 0), 0) + (bankRef.current[matId]?.quantity || 0)
+              const projectedAfterConsume = totalAvailable - totalConsumed - qtyNeeded
+              if (projectedAfterConsume < 0) {
+                canContinue = false
+                break
+              }
+            }
+            if (!canContinue) {
+              skillingRef.current = { ...skillingState, active: false, stopped: true }
+              setSkilling({ ...skillingState, active: false, stopped: true })
+              addToast('Out of materials!', 'error')
+              return
+            }
           }
 
           // Handle cooking burn

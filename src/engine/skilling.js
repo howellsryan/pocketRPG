@@ -50,7 +50,8 @@ export function createSkillingState(skill, action) {
     totalActions: 0,
     totalXP: 0,
     stopped: false,
-    justCompleted: false  // flag to delay reset to next tick
+    justCompleted: false,  // flag to delay reset to next tick
+    consumedMaterials: {}  // track consumed materials locally
   }
 }
 
