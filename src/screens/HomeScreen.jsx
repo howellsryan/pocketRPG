@@ -87,24 +87,7 @@ export default function HomeScreen({ onNavigate, onLogout, isCloudAccount, remov
       {isCloudAccount && (stripeLinks?.remove_ads || stripeLinks?.credits_10 || stripeLinks?.credits_100 || stripeLinks?.credits_1000) && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '16px' }}>
 
-          {/* Remove Ads slot */}
-          {removeAds ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 4px', borderRadius: '12px', background: '#111', border: '1px solid #2a2a2a', minHeight: '64px' }}>
-              <div style={{ fontSize: '16px', marginBottom: '2px' }}>✅</div>
-              <div style={{ fontSize: '9px', color: '#4ade80', fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2 }}>Ad-Free</div>
-            </div>
-          ) : stripeLinks?.remove_ads ? (
-            <a
-              href={`${stripeLinks.remove_ads}?client_reference_id=${identityId}`}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 4px', borderRadius: '12px', background: 'linear-gradient(135deg, #0f1f0f, #1a2f1a)', border: '1px solid #2a5a2a', textDecoration: 'none', minHeight: '64px', cursor: 'pointer' }}
-            >
-              <div style={{ fontSize: '16px', marginBottom: '2px' }}>✨</div>
-              <div style={{ fontSize: '9px', color: '#4ade80', fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2 }}>No Ads</div>
-              <div style={{ fontSize: '8px', color: '#e8d5b0', opacity: 0.5, textAlign: 'center', marginTop: '2px', lineHeight: 1.2 }}>Forever</div>
-            </a>
-          ) : (
-            <div style={{ minHeight: '64px' }} />
-          )}
+          {/* Remove Ads slot — hidden for now */}
 
           {/* Buy 10 Credits */}
           {stripeLinks?.credits_10 && (

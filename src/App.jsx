@@ -3,6 +3,7 @@ import { GameProvider, useGame } from './state/gameState.jsx'
 import BottomNav from './components/BottomNav.jsx'
 import Header from './components/Header.jsx'
 import ToastContainer from './components/Toast.jsx'
+import BuyCreditsModal from './components/BuyCreditsModal.jsx'
 import HomeScreen from './screens/HomeScreen.jsx'
 import StatsScreen from './screens/StatsScreen.jsx'
 import InventoryScreen from './screens/InventoryScreen.jsx'
@@ -47,6 +48,7 @@ function GameApp() {
   const [identityId, setIdentityId] = useState(null)
   const [stripeLinks, setStripeLinks] = useState({})
   const [credits, setCredits] = useState(0)
+  const [showBuyCreditsModal, setShowBuyCreditsModal] = useState(false)
   // Set on mount if Stripe redirected back with a payment query/path — drives the
   // post-checkout thank-you toast + credits refresh once the game is ready.
   const paymentReturnRef = useRef(false)
@@ -1186,6 +1188,7 @@ function GameApp() {
 
   // Main game
   const renderScreen = () => {
+    const handleBuyCredits = () => setShowBuyCreditsModal(true)
     switch (screen) {
       case SCREENS.HOME:      return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} isCloudAccount={!!getToken() && !!getCharacterId()} removeAds={removeAds} identityId={identityId} characterId={getCharacterId()} stripeLinks={stripeLinks} />
       case SCREENS.STATS:     return <StatsScreen />
@@ -1196,7 +1199,7 @@ function GameApp() {
       case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} idleResult={idleResult} />
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} />
       case SCREENS.AGILITY:   return <AgilityScreen initialActionId={actionData?.actionId} />
-      case SCREENS.STORE:     return <GeneralStoreScreen />
+      case SCREENS.STORE:     return <GeneralStoreScreen onBuyCredits={handleBuyCredits} />
       case SCREENS.QUESTS:    return <QuestsScreen />
       default:                return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} isCloudAccount={!!getToken() && !!getCharacterId()} />
     }
@@ -1206,11 +1209,21 @@ function GameApp() {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} />
+      <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} />
       <ToastContainer />
       <main style={{ flex: 1, overflow: 'hidden' }}>
         {renderScreen()}
       </main>
+
+      {/* Buy Credits Modal */}
+      {showBuyCreditsModal && isCloudAccount && (
+        <BuyCreditsModal
+          onClose={() => setShowBuyCreditsModal(false)}
+          identityId={identityId}
+          characterId={getCharacterId()}
+          stripeLinks={stripeLinks}
+        />
+      )}
       <BottomNav
         active={screen}
         onNavigate={(s) => navigate(s)}
