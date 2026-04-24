@@ -363,6 +363,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
                   <Button variant="secondary" size="md" onClick={() => setBuyQty(Math.max(1, buyQty - 1))} className="w-8 h-8 p-0 flex items-center justify-center text-base">−</Button>
                   <input
                     type="number"
+                    min="1"
                     max={Number.MAX_SAFE_INTEGER}
                     value={buyQty}
                     onInput={(e) => {
