@@ -24,7 +24,7 @@ const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => 
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS]
 
 export default function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
-  const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask, activeTask } = useGame()
+  const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, activeTask } = useGame()
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
   const [selectedAction, setSelectedAction] = useState(null)
   const [skilling, setSkilling] = useState(null)
@@ -280,30 +280,6 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     }
   }, [initialSkillId, initialActionId])
 
-  const handleAddToHome = (skill, action) => {
-    const shortcut = {
-      label: action.name,
-      icon: SKILL_ICONS[skill] || '🔨',
-      screen: SCREENS.SKILLS,
-      skillId: skill,
-      actionId: action.id
-    }
-    const current = homeShortcuts ?? [
-      { label: 'Fight Monsters', icon: '⚔️', screen: SCREENS.COMBAT },
-      { label: 'Train Skills', icon: '🔨', screen: SCREENS.SKILLS },
-      { label: 'Gather Resources', icon: '🌿', screen: SCREENS.GATHER },
-      { label: 'Open Bank', icon: '🏦', screen: SCREENS.BANK },
-      { label: 'View Stats', icon: '📊', screen: SCREENS.STATS },
-      { label: 'Inventory', icon: '🎒', screen: SCREENS.INVENTORY },
-    ]
-    const alreadyExists = current.some(s => s.label === shortcut.label)
-    if (alreadyExists) {
-      addToast('Already on home screen!', 'info')
-      return
-    }
-    updateHomeShortcuts([...current, shortcut])
-    addToast(`${shortcut.icon} ${action.name} added to Home!`, 'info')
-  }
 
   // Skill picker
   if (!selectedSkill) {
@@ -382,66 +358,57 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             )
             const canStart = available && hasMats && hasRunes && hasTool && hasItems
             return (
-              <div key={action.id} class="flex gap-2 items-stretch">
-                <button
-                  onClick={() => canStart && startSkilling(action)}
-                  disabled={!canStart}
-                  class={`flex-1 flex items-center justify-between p-3 rounded-xl border transition-colors
-                    ${canStart
-                      ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
-                      : 'bg-[#111] border-[#1a1a1a] opacity-40'}`}
-                >
-                  <div class="text-left">
-                    <div class="text-sm font-semibold text-[var(--color-parchment)]">{action.name}</div>
-                    <div class="text-[10px] text-[var(--color-parchment)] opacity-40">
-                      Lv {action.level} · {action.xp} XP · {toolMult < 1.0
-                        ? <><span class="line-through">{(action.ticks * 0.6).toFixed(1)}s</span> <span class="text-[var(--color-gold)] opacity-100">{(Math.max(1, Math.floor(action.ticks * toolMult)) * 0.6).toFixed(1)}s</span></>
-                        : `${(action.ticks * 0.6).toFixed(1)}s`}
-                      {action.materials && (
-                        <span> · Needs: {Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>
-                      )}
-                      {action.runeReq && (
-                        <span> · Runes: {Object.entries(action.runeReq).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>
-                      )}
-                      {needsTool && !hasTool && (
-                        <span class="block text-[#ff6b6b] mt-1">
-                          {selectedSkill === 'mining' ? '⚒️ No pickaxe' : selectedSkill === 'woodcutting' ? '🪓 No axe' : '🎣 No rod'}
-                        </span>
-                      )}
-                      {action.itemReq && !hasItems && (
-                        <span class="block text-[#ff6b6b] mt-1">
-                          ✨ Needs: {action.itemReq.map(id => itemsData[id]?.name || id).join(' or ')}
-                        </span>
-                      )}
-                      {action.runeReq && !hasRunes && (
-                        <span class="block text-[#ff6b6b] mt-1">
-                          🔮 Missing runes (or equip staff)
-                        </span>
-                      )}
-                    </div>
+              <button
+                key={action.id}
+                onClick={() => canStart && startSkilling(action)}
+                disabled={!canStart}
+                class={`flex items-center justify-between p-3 rounded-xl border transition-colors
+                  ${canStart
+                    ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
+                    : 'bg-[#111] border-[#1a1a1a] opacity-40'}`}
+              >
+                <div class="text-left">
+                  <div class="text-sm font-semibold text-[var(--color-parchment)]">{action.name}</div>
+                  <div class="text-[10px] text-[var(--color-parchment)] opacity-40">
+                    Lv {action.level} · {action.xp} XP · {toolMult < 1.0
+                      ? <><span class="line-through">{(action.ticks * 0.6).toFixed(1)}s</span> <span class="text-[var(--color-gold)] opacity-100">{(Math.max(1, Math.floor(action.ticks * toolMult)) * 0.6).toFixed(1)}s</span></>
+                      : `${(action.ticks * 0.6).toFixed(1)}s`}
+                    {action.materials && (
+                      <span> · Needs: {Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>
+                    )}
+                    {action.runeReq && (
+                      <span> · Runes: {Object.entries(action.runeReq).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>
+                    )}
+                    {needsTool && !hasTool && (
+                      <span class="block text-[#ff6b6b] mt-1">
+                        {selectedSkill === 'mining' ? '⚒️ No pickaxe' : selectedSkill === 'woodcutting' ? '🪓 No axe' : '🎣 No rod'}
+                      </span>
+                    )}
+                    {action.itemReq && !hasItems && (
+                      <span class="block text-[#ff6b6b] mt-1">
+                        ✨ Needs: {action.itemReq.map(id => itemsData[id]?.name || id).join(' or ')}
+                      </span>
+                    )}
+                    {action.runeReq && !hasRunes && (
+                      <span class="block text-[#ff6b6b] mt-1">
+                        🔮 Missing runes (or equip staff)
+                      </span>
+                    )}
                   </div>
-                  {action.product && (
-                    <span class="text-[10px] text-[var(--color-gold-dim)]">→ {itemsData[action.product]?.name || action.product}</span>
-                  )}
-                  {action.dropTable && (
-                    <div class="text-right flex flex-col gap-0.5">
-                      {action.dropTable.map(drop => (
-                        <div key={drop.itemId} class="text-[9px] text-[var(--color-gold-dim)]">
-                          {Math.round(drop.chance * 100)}% {itemsData[drop.itemId]?.name || drop.itemId}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </button>
-                <button
-                  onClick={() => handleAddToHome(selectedSkill, action)}
-                  class="px-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5"
-                  title="Add to Home Screen"
-                >
-                  <span class="text-base">🏠</span>
-                  <span class="text-[8px] text-[var(--color-parchment)] opacity-50">Add</span>
-                </button>
-              </div>
+                </div>
+                {action.product && (
+                  <span class="text-[10px] text-[var(--color-gold-dim)]">→ {itemsData[action.product]?.name || action.product}</span>
+                )}
+                {action.dropTable && (
+                  <div class="text-right flex flex-col gap-0.5">
+                    {action.dropTable.map(drop => (
+                      <div key={drop.itemId} class="text-[9px] text-[var(--color-gold-dim)]">
+                        {Math.round(drop.chance * 100)}% {itemsData[drop.itemId]?.name || drop.itemId}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </button>
             )
           })}
         </div>

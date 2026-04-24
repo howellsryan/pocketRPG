@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks'
+import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import Panel from '../components/Panel.jsx'
 import Button from '../components/Button.jsx'
@@ -10,7 +10,10 @@ import {
   getQuestPointsEarned, formatQuestDuration,
 } from '../engine/quests.js'
 import { QUEST_QUEUE_MAX } from '../utils/constants.js'
+import { onTick } from '../engine/tick.js'
+import { countItem } from '../engine/inventory.js'
 import questsData from '../data/quests.json'
+import minigamesData from '../data/minigames.json'
 
 const COMPLEXITY_COLORS = {
   Novice:        '#7fbf7f',
@@ -27,13 +30,17 @@ const COMPLEXITY_ORDER = {
 
 export default function QuestsScreen() {
   const {
-    stats, completedQuests, activeTask, setActiveTask,
-    addToast, itemsData, questQueue, addQuestToQueue, removeFromQuestQueue, updateQuestQueue,
+    stats, completedQuests, activeTask, setActiveTask, inventory, bank, equipment,
+    updateInventory, updateBankDirect, addToast, itemsData, questQueue, addQuestToQueue, removeFromQuestQueue, updateQuestQueue,
   } = useGame()
 
   const [hideCompleted, setHideCompleted] = useState(false)
   const [selectedQuest, setSelectedQuest] = useState(null)
   const [showQueue, setShowQueue] = useState(false)
+  const [section, setSection] = useState('quests')
+  const [minigameTask, setMinigameTask] = useState(null)
+  const taskRef = useRef(null)
+  const hasAutoStarted = useRef(false)
 
   const startQuest = (quest) => {
     const state = createQuestState(quest)
@@ -86,6 +93,75 @@ export default function QuestsScreen() {
     addToast(`Queue started. ${firstQuest.name} started first.`, 'info')
   }
 
+  const startMinigame = (task) => {
+    const newState = {
+      task,
+      ticksRemaining: task.ticks,
+      startedAt: Date.now(),
+      stopped: false,
+    }
+    taskRef.current = newState
+    setMinigameTask(newState)
+    setActiveTask({
+      type: 'minigame',
+      minigameTask: task,
+      bankingEnabled: true,
+      totalTicks: task.ticks,
+      ticksRemaining: task.ticks,
+      startedAt: Date.now(),
+    })
+  }
+
+  const stopMinigame = () => {
+    if (taskRef.current) taskRef.current = { ...taskRef.current, stopped: true }
+    setMinigameTask(null)
+    setActiveTask(null)
+  }
+
+  const hasItemAnywhere = (itemId) => {
+    if (countItem(inventory, itemId) > 0) return true
+    if (bank?.[itemId]?.quantity > 0) return true
+    if (equipment) {
+      for (const slot of Object.values(equipment)) {
+        if (slot && slot.itemId === itemId) return true
+      }
+    }
+    return false
+  }
+
+  const formatHours = (hours) => {
+    if (hours === Math.floor(hours)) return `${hours}h`
+    return `${hours.toFixed(1)}h`
+  }
+
+  useEffect(() => {
+    if (!minigameTask) return
+    taskRef.current = minigameTask
+
+    const unsub = onTick(() => {
+      const state = taskRef.current
+      if (!state || state.stopped) return
+
+      let ticksRemaining = state.ticksRemaining - 1
+
+      if (ticksRemaining <= 0) {
+        const task = state.task
+        addToast(`${task.icon} ${minigamesData.itemNames[task.product] || task.product} banked!`, 'success')
+        updateBankDirect({ [task.product]: task.qty || 1 })
+        taskRef.current = { ...state, stopped: true }
+        setMinigameTask(null)
+        setActiveTask(null)
+        return
+      }
+
+      const next = { ...state, ticksRemaining }
+      taskRef.current = next
+      setMinigameTask(next)
+    })
+
+    return unsub
+  }, [minigameTask])
+
   const sortedQuests = [...questsData].sort((a, b) => {
     const ca = COMPLEXITY_ORDER[a.complexity] || 99
     const cb = COMPLEXITY_ORDER[b.complexity] || 99
@@ -99,6 +175,60 @@ export default function QuestsScreen() {
 
   const totalQp = getQuestPointsEarned(completedQuests, questsData)
   const completedCount = completedQuests.size
+
+  // Check if we have a minigame running in the background
+  const isGlobalMinigame = activeTask?.type === 'minigame'
+  const currentMinigameTask = minigameTask || (isGlobalMinigame ? { task: activeTask.minigameTask, ticksRemaining: activeTask.ticksRemaining } : null)
+
+  // Handle active minigame (either local or global background task)
+  if (currentMinigameTask) {
+    const task = currentMinigameTask.task
+    const totalTicks = task.ticks
+    const ticksRemaining = currentMinigameTask.ticksRemaining
+    const progress = totalTicks > 0 ? 1 - ticksRemaining / totalTicks : 0
+    const remainingSeconds = ticksRemaining * 0.6
+
+    return (
+      <div class="h-full flex flex-col p-4">
+        {/* Back button */}
+        <button
+          onClick={stopMinigame}
+          class="text-[12px] text-[#c4af7a] mb-3 flex items-center gap-1 bg-transparent border-0 cursor-pointer"
+        >
+          ← Abandon
+        </button>
+
+        <div class="flex-1 flex flex-col items-center justify-center">
+          <span class="text-[48px] mb-2">{task.icon}</span>
+          <h2 class="font-[var(--font-display)] text-[18px] font-bold text-[var(--color-gold)] mb-1 text-center">
+            {task.name}
+          </h2>
+          <p class="text-[11px] text-[var(--color-parchment)] opacity-50 mb-4 text-center">{task.description}</p>
+
+          <div class="w-full max-w-[280px] mb-4">
+            <ProgressBar value={progress} max={1} height="h-4" color="var(--color-gold)" showText />
+          </div>
+
+          <Panel padding="p-3" className="w-full max-w-[280px] mb-3 rounded-xl">
+            <div class="flex justify-between">
+              <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Reward</span>
+              <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">{minigamesData.itemNames[task.product] || task.product}</span>
+            </div>
+            <div class="flex justify-between mt-2">
+              <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Time remaining</span>
+              <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">
+                {Math.ceil(remainingSeconds / 60)}m
+              </span>
+            </div>
+          </Panel>
+
+          <div class="text-[11px] text-[var(--color-parchment)] opacity-50 text-center max-w-[280px]">
+            ⏳ Minigame runs in the background — feel free to switch screens. Reward is banked on completion.
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // ── Active quest view (App.jsx ticks the quest; we just render state) ──────
   if (activeTask?.type === 'quest' && activeTask.quest) {
@@ -176,113 +306,187 @@ export default function QuestsScreen() {
           </span>
         </div>
 
-        <div class="flex gap-2 justify-between items-center">
-          <div class="flex gap-2">
-            <button
-              onClick={() => setHideCompleted(v => !v)}
-              class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
-                hideCompleted
-                  ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
-                  : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
-              }`}
-            >
-              {hideCompleted ? '✓ Hiding completed' : 'Show all'}
-            </button>
-            {questQueue.length > 0 && (
-              <button
-                onClick={() => setShowQueue(v => !v)}
-                class="px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]"
-              >
-                🔗 Queue ({questQueue.length})
-              </button>
-            )}
-          </div>
-          {questQueue.length > 0 && (
-            <Button
-              variant="success"
-              size="sm"
-              onClick={startQueue}
-            >
-              ▶️ Begin Queue
-            </Button>
-          )}
-        </div>
-      </div>
-
-      <div class="flex-1 overflow-y-auto px-4 pb-4">
-        {showQueue && questQueue.length > 0 && (
-          <div class="flex flex-col gap-2 pt-2 mb-4">
-            <SectionHeader size="sm">📋 Quest Queue</SectionHeader>
-            {questQueue.map((quest, idx) => (
-              <div key={quest.id} class="p-3 rounded-xl bg-[var(--color-void-light)] border border-[#2a2a2a] flex items-center justify-between gap-2">
-                <div class="flex-1 min-w-0">
-                  <div class="text-[13px] font-semibold text-[var(--color-parchment)]">
-                    {idx + 1}. {quest.name}
-                  </div>
-                  <div class="text-[10px] text-[var(--color-parchment)] opacity-60">
-                    {formatQuestDuration(quest.durationSeconds)}
-                  </div>
-                </div>
-                <button
-                  onClick={() => removeQuestFromQueue(quest.id)}
-                  class="text-[12px] text-[#e57373] bg-transparent border-0 cursor-pointer flex-shrink-0"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div class="flex flex-col gap-2 pt-2">
-          {visibleQuests.map(quest => {
-            const completed = completedQuests.has(quest.id)
-            const elig = checkQuestEligibility(quest, stats, completedQuests, questsData)
-            const complexityColor = COMPLEXITY_COLORS[quest.complexity] || '#888'
-
+        {/* Section tabs: Quests vs Minigames */}
+        <div class="flex gap-[6px] mb-2">
+          {[
+            { id: 'quests', label: 'Quests', icon: '📜' },
+            { id: 'minigames', label: 'Minigames', icon: '🎮' },
+          ].map(sec => {
+            const isActive = section === sec.id
+            const pillClass = isActive
+              ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)] opacity-100'
+              : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
             return (
               <button
-                key={quest.id}
-                onClick={() => setSelectedQuest(quest)}
-                class={`p-3 rounded-xl border text-left flex items-center gap-3 ${
-                  completed
-                    ? 'bg-[rgba(74,222,128,0.06)] border-[rgba(74,222,128,0.2)]'
-                    : elig.eligible
-                      ? 'bg-[var(--color-void-light)] border-[#2a2a2a]'
-                      : 'bg-[#111] border-[#1a1a1a] opacity-70'
-                }`}
+                key={sec.id}
+                onClick={() => setSection(sec.id)}
+                class={`flex-1 px-3 py-[7px] rounded-[20px] text-[12px] font-semibold border ${pillClass}`}
               >
-                <span class="text-[24px] flex-shrink-0">
-                  {completed ? '✅' : '📜'}
-                </span>
-                <div class="flex-1 min-w-0">
-                  <div
-                    class={`text-[13px] font-semibold ${
-                      completed ? 'text-[#4ade80]' : 'text-[var(--color-parchment)]'
-                    }`}
-                  >
-                    {quest.name}
-                  </div>
-                  <div class="text-[10px] flex items-center gap-2 mt-[2px]">
-                    <span style={{ color: complexityColor }}>{quest.complexity}</span>
-                    <span class="text-[var(--color-parchment)] opacity-50">·</span>
-                    <span class="text-[var(--color-parchment)] opacity-60">
-                      {formatQuestDuration(quest.durationSeconds)}
-                    </span>
-                  </div>
-                </div>
-                <div class="flex-shrink-0 text-[18px] text-[var(--color-parchment)] opacity-40">
-                  →
-                </div>
+                {sec.icon} {sec.label}
               </button>
             )
           })}
-          {visibleQuests.length === 0 && (
-            <div class="py-10 text-center text-[#888] text-[12px]">
-              No quests to show.
-            </div>
-          )}
         </div>
+
+        {section === 'quests' && (
+          <div class="flex gap-2 justify-between items-center">
+            <div class="flex gap-2">
+              <button
+                onClick={() => setHideCompleted(v => !v)}
+                class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
+                  hideCompleted
+                    ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
+                    : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
+                }`}
+              >
+                {hideCompleted ? '✓ Hiding completed' : 'Show all'}
+              </button>
+              {questQueue.length > 0 && (
+                <button
+                  onClick={() => setShowQueue(v => !v)}
+                  class="px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]"
+                >
+                  🔗 Queue ({questQueue.length})
+                </button>
+              )}
+            </div>
+            {questQueue.length > 0 && (
+              <Button
+                variant="success"
+                size="sm"
+                onClick={startQueue}
+              >
+                ▶️ Begin Queue
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div class="flex-1 overflow-y-auto px-4 pb-4">
+        {section === 'quests' && (
+          <div class="flex flex-col gap-2">
+            {showQueue && questQueue.length > 0 && (
+              <div class="flex flex-col gap-2 pt-2 mb-4">
+                <SectionHeader size="sm">📋 Quest Queue</SectionHeader>
+                {questQueue.map((quest, idx) => (
+                  <div key={quest.id} class="p-3 rounded-xl bg-[var(--color-void-light)] border border-[#2a2a2a] flex items-center justify-between gap-2">
+                    <div class="flex-1 min-w-0">
+                      <div class="text-[13px] font-semibold text-[var(--color-parchment)]">
+                        {idx + 1}. {quest.name}
+                      </div>
+                      <div class="text-[10px] text-[var(--color-parchment)] opacity-60">
+                        {formatQuestDuration(quest.durationSeconds)}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => removeQuestFromQueue(quest.id)}
+                      class="text-[12px] text-[#e57373] bg-transparent border-0 cursor-pointer flex-shrink-0"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {visibleQuests.map(quest => {
+              const completed = completedQuests.has(quest.id)
+              const elig = checkQuestEligibility(quest, stats, completedQuests, questsData)
+              const complexityColor = COMPLEXITY_COLORS[quest.complexity] || '#888'
+
+              return (
+                <button
+                  key={quest.id}
+                  onClick={() => setSelectedQuest(quest)}
+                  class={`p-3 rounded-xl border text-left flex items-center gap-3 ${
+                    completed
+                      ? 'bg-[rgba(74,222,128,0.06)] border-[rgba(74,222,128,0.2)]'
+                      : elig.eligible
+                        ? 'bg-[var(--color-void-light)] border-[#2a2a2a]'
+                        : 'bg-[#111] border-[#1a1a1a] opacity-70'
+                  }`}
+                >
+                  <span class="text-[24px] flex-shrink-0">
+                    {completed ? '✅' : '📜'}
+                  </span>
+                  <div class="flex-1 min-w-0">
+                    <div
+                      class={`text-[13px] font-semibold ${
+                        completed ? 'text-[#4ade80]' : 'text-[var(--color-parchment)]'
+                      }`}
+                    >
+                      {quest.name}
+                    </div>
+                    <div class="text-[10px] flex items-center gap-2 mt-[2px]">
+                      <span style={{ color: complexityColor }}>{quest.complexity}</span>
+                      <span class="text-[var(--color-parchment)] opacity-50">·</span>
+                      <span class="text-[var(--color-parchment)] opacity-60">
+                        {formatQuestDuration(quest.durationSeconds)}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="flex-shrink-0 text-[18px] text-[var(--color-parchment)] opacity-40">
+                    →
+                  </div>
+                </button>
+              )
+            })}
+
+            {visibleQuests.length === 0 && (
+              <div class="py-10 text-center text-[#888] text-[12px]">
+                No quests to show.
+              </div>
+            )}
+          </div>
+        )}
+
+        {section === 'minigames' && (
+          <div class="flex flex-col gap-4">
+            {minigamesData.minigames.map(mg => {
+              const tasks = minigamesData.tasks.filter(t => t.minigame === mg.id)
+              if (tasks.length === 0) return null
+              return (
+                <div key={mg.id} class="flex flex-col gap-2">
+                  <SectionHeader size="sm">{mg.icon} {mg.label}</SectionHeader>
+                  {tasks.map(task => {
+                    const missingReq = task.requiresItem && !hasItemAnywhere(task.requiresItem)
+                    const enabled = !missingReq
+                    const rowClass = enabled
+                      ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
+                      : 'bg-[#111] border-[#1a1a1a] opacity-45'
+
+                    return (
+                      <button
+                        key={task.id}
+                        onClick={() => enabled && startMinigame(task)}
+                        disabled={!enabled}
+                        class={`p-3 rounded-xl border text-left flex items-center gap-3 ${rowClass}`}
+                      >
+                        <span class="text-[28px] flex-shrink-0">{task.icon}</span>
+                        <div class="flex-1 min-w-0">
+                          <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>
+                          <div class="text-[10px] text-[#c8a96e] opacity-80">
+                            ⏱ {formatHours(task.hours)} total
+                            {task.requiresItem && (
+                              <span class={`${missingReq ? 'text-[#e57373]' : 'text-[var(--color-parchment)] opacity-50'}`}>
+                                {' · '}Needs: {minigamesData.itemNames[task.requiresItem] || task.requiresItem}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div class="flex-shrink-0 text-right">
+                          <div class="text-[18px]">→</div>
+                          <div class="text-[9px] text-[#c8a96e] opacity-70">{minigamesData.itemNames[task.product] || task.product}</div>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* ── Quest details modal ── */}
