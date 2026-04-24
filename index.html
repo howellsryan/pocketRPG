@@ -27987,14 +27987,12 @@ function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null
 
 const tabs = [
     { id: SCREENS.HOME, label: 'Home', icon: '🏠' },
-    { id: SCREENS.STATS, label: 'Stats', icon: '📊' },
     { id: SCREENS.INVENTORY, label: 'Items', icon: '🎒' },
     { id: SCREENS.EQUIPMENT, label: 'Equip', icon: '🛡️' },
     { id: SCREENS.BANK, label: 'Bank', icon: '🏦' },
     { id: SCREENS.STORE, label: 'Store', icon: '🪙' },
     { id: SCREENS.GATHER, label: 'Gather', icon: '🌿' },
     { id: SCREENS.COMBAT, label: 'Combat', icon: '⚔️' },
-    { id: SCREENS.SKILLS, label: 'Skills', icon: '🔨' },
     { id: SCREENS.QUESTS, label: 'Quests', icon: '📜' },
 ];
 function BottomNav({ active, onNavigate, isInCombat, onDisabledClick }) {
@@ -28199,19 +28197,15 @@ function BuyCreditsModal({ onClose, identityId, characterId, stripeLinks }) {
 
 
 
-const DEFAULT_SHORTCUTS = [
-    { label: 'Fight Monsters', icon: '⚔️', screen: SCREENS.COMBAT },
-    { label: 'Train Skills', icon: '🔨', screen: SCREENS.SKILLS },
-    { label: 'Gather Resources', icon: '🌿', screen: SCREENS.GATHER },
-    { label: 'Open Bank', icon: '🏦', screen: SCREENS.BANK },
-    { label: 'View Stats', icon: '📊', screen: SCREENS.STATS },
-    { label: 'Inventory', icon: '🎒', screen: SCREENS.INVENTORY },
-    { label: 'Equipment', icon: '🛡️', screen: SCREENS.EQUIPMENT },
-];
+
+
+
 function HomeScreen({ onNavigate, onLogout, isCloudAccount, removeAds, identityId, characterId, stripeLinks }) {
-    const { player, stats, homeShortcuts, updateHomeShortcuts } = useGame();
-    const [removeConfirm, setRemoveConfirm] = useState(null);
+    const { player, stats, setActiveTask, equipment, inventory, itemsData } = useGame();
     const [loggingOut, setLoggingOut] = useState(false);
+    const [selectedSkill, setSelectedSkill] = useState(null);
+    const [selectedSkillDetail, setSelectedSkillDetail] = useState(null);
+    const [viewSection, setViewSection] = useState('overview');
     async function handleLogout() {
         setLoggingOut(true);
         try {
@@ -28228,71 +28222,112 @@ function HomeScreen({ onNavigate, onLogout, isCloudAccount, removeAds, identityI
         levels[skill] = data.level || getLevelFromXP(data.xp);
     }
     const totalLevel = Object.values(levels).reduce((s, l) => s + l, 0);
+    const totalXP = Object.values(stats).reduce((s, d) => s + d.xp, 0);
     const combatLevel = calcCombatLevel({
         attack: levels.attack || 1, strength: levels.strength || 1,
         defence: levels.defence || 1, hitpoints: levels.hitpoints || 10,
         prayer: levels.prayer || 1, ranged: levels.ranged || 1, magic: levels.magic || 1
     });
-    const shortcuts = homeShortcuts ?? DEFAULT_SHORTCUTS;
-    const handleRemove = (sc) => {
-        setRemoveConfirm(sc);
+    const selectedSkillData = selectedSkillDetail ? stats[selectedSkillDetail] : null;
+    const selLevel = selectedSkillData ? (selectedSkillData.level || getLevelFromXP(selectedSkillData.xp)) : 0;
+    const selProgress = selectedSkillData ? getLevelProgress(selectedSkillData.xp) : 0;
+    const selToNext = selectedSkillData ? getXPToNextLevel(selectedSkillData.xp) : 0;
+    const handleSkillSelect = (skill) => {
+        setSelectedSkill(skill);
+        setSelectedSkillDetail(skill);
     };
-    const confirmRemove = () => {
-        const next = shortcuts.filter(s => !(s.screen === removeConfirm.screen && s.label === removeConfirm.label));
-        updateHomeShortcuts(next);
-        setRemoveConfirm(null);
+    const startSkillFromHome = (skillId, actionId) => {
+        onNavigate(SCREENS.HOME, { skillId, actionId, fromHome: true });
     };
-    const handleShortcutClick = (sc) => {
-        // Navigate to screen with optional action data
-        onNavigate(sc.screen, {
-            monsterId: sc.monsterId,
-            raidId: sc.raidId,
-            gatherTaskId: sc.gatherTaskId,
-            skillId: sc.skillId,
-            actionId: sc.actionId
-        });
-    };
-    return (h("div", { style: { height: '100%', overflowY: 'auto', padding: '16px' } },
-        h("div", { style: { background: 'linear-gradient(135deg, #1a1a1a, #0f0f0f)', borderRadius: '14px', border: '1px solid #333', padding: '16px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' } },
-            h("div", null,
-                h("h1", { style: { fontFamily: 'Cinzel, serif', fontSize: '18px', fontWeight: 'bold', color: '#d4af37', marginBottom: '4px' } },
-                    "Welcome, ",
-                    player.name),
-                h("div", { style: { display: 'flex', gap: '16px', fontSize: '13px', color: '#e8d5b0', opacity: 0.7 } },
-                    h("span", null,
-                        "\u2694\uFE0F Combat ",
-                        combatLevel),
-                    h("span", null,
-                        "\uD83D\uDCCA Total ",
-                        totalLevel))),
-            h("button", { onClick: handleLogout, disabled: loggingOut, style: { background: 'rgba(255,255,255,0.05)', border: '1px solid #333', borderRadius: '8px', padding: '6px 10px', fontSize: '11px', color: '#e8d5b0', opacity: loggingOut ? 0.4 : 0.7, cursor: loggingOut ? 'default' : 'pointer' } }, isCloudAccount && loggingOut ? '☁️ Saving...' : '🚪 Logout')),
-        h("h2", { style: { fontFamily: 'Cinzel, serif', fontSize: '11px', fontWeight: 'bold', color: '#e8d5b0', marginBottom: '8px', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.1em' } }, "Quick Actions"),
-        h("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' } },
-            shortcuts.map((sc, i) => (h("div", { key: i, style: { position: 'relative' } },
-                h("button", { onClick: () => handleShortcutClick(sc), style: { display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', paddingRight: '28px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #2a2a2a', cursor: 'pointer', width: '100%' } },
-                    h("span", { style: { fontSize: '20px' } }, sc.icon),
-                    h("span", { style: { fontSize: '13px', fontWeight: '600', color: '#e8d5b0', textAlign: 'left' } }, sc.label)),
-                h("button", { onClick: (e) => { e.stopPropagation(); handleRemove(sc); }, style: {
-                        position: 'absolute', top: '4px', right: '4px',
-                        width: '20px', height: '20px', borderRadius: '50%',
-                        background: 'rgba(180,40,40,0.85)', border: 'none',
-                        color: '#fff', fontSize: '10px', lineHeight: '1',
-                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        zIndex: 2
-                    }, "aria-label": `Remove ${sc.label}` }, "\u2715")))),
-            shortcuts.length === 0 && (h("div", { style: { gridColumn: '1/-1', textAlign: 'center', padding: '24px', color: '#e8d5b0', opacity: 0.3, fontSize: '13px' } }, "No shortcuts. Add them from the monster or skill screens."))),
-        removeConfirm && (h(Modal, { title: "Remove Shortcut", onClose: () => setRemoveConfirm(null) },
-            h("div", { class: "space-y-4 text-center" },
-                h("p", { class: "text-[var(--color-parchment)] text-sm opacity-70" },
-                    "Remove ",
-                    h("span", { class: "text-[var(--color-gold)] font-semibold" },
-                        removeConfirm.icon,
-                        " ",
-                        removeConfirm.label),
-                    " from your home screen?"),
-                h("div", { class: "grid grid-cols-2 gap-3" },
-                    h("button", { onClick: () => setRemoveConfirm(null), class: "py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm border border-[#333]" }, "Cancel"),
-                    h("button", { onClick: confirmRemove, class: "py-2.5 rounded-lg bg-[var(--color-blood)]/70 text-white font-semibold text-sm" }, "Remove")))))));
+    function SkillGroup({ title, skills }) {
+        return (h("div", { class: "mb-4" },
+            h("h3", { class: "text-[10px] font-bold text-[var(--color-parchment)] opacity-40 uppercase tracking-widest mb-1.5" }, title),
+            h("div", { class: "grid grid-cols-2 gap-1.5" }, skills.map(skill => {
+                const data = stats[skill] || { xp: 0, level: 1 };
+                return (h(SkillBadge, { key: skill, skill: skill, xp: data.xp, level: data.level || getLevelFromXP(data.xp), onClick: handleSkillSelect }));
+            }))));
+    }
+    return (h("div", { class: "h-full flex flex-col" },
+        h("div", { class: "px-4 pt-4 pb-2 flex-shrink-0" },
+            h("div", { style: { background: 'linear-gradient(135deg, #1a1a1a, #0f0f0f)', borderRadius: '14px', border: '1px solid #333', padding: '16px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' } },
+                h("div", null,
+                    h("h1", { style: { fontFamily: 'Cinzel, serif', fontSize: '18px', fontWeight: 'bold', color: '#d4af37', marginBottom: '4px' } },
+                        "Welcome, ",
+                        player.name),
+                    h("div", { style: { display: 'flex', gap: '16px', fontSize: '13px', color: '#e8d5b0', opacity: 0.7 } },
+                        h("span", null,
+                            "\u2694\uFE0F Combat ",
+                            combatLevel),
+                        h("span", null,
+                            "\uD83D\uDCCA Total ",
+                            totalLevel))),
+                h("button", { onClick: handleLogout, disabled: loggingOut, style: { background: 'rgba(255,255,255,0.05)', border: '1px solid #333', borderRadius: '8px', padding: '6px 10px', fontSize: '11px', color: '#e8d5b0', opacity: loggingOut ? 0.4 : 0.7, cursor: loggingOut ? 'default' : 'pointer' } }, isCloudAccount && loggingOut ? '☁️ Saving...' : '🚪 Logout')),
+            h("div", { class: "flex gap-2" }, [
+                { id: 'overview', label: 'Overview', icon: '📋' },
+                { id: 'stats', label: 'Stats', icon: '📊' },
+                { id: 'skills', label: 'Skills', icon: '🔨' },
+            ].map(sec => {
+                const isActive = viewSection === sec.id;
+                const tabClass = isActive
+                    ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
+                    : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60';
+                return (h("button", { key: sec.id, onClick: () => setViewSection(sec.id), class: `flex-1 px-3 py-2 rounded-lg text-xs font-semibold border transition-colors ${tabClass}` },
+                    sec.icon,
+                    " ",
+                    sec.label));
+            }))),
+        h("div", { class: "flex-1 overflow-y-auto px-4 pb-4" },
+            viewSection === 'overview' && (h("div", null,
+                h("div", { class: "py-4 space-y-3" },
+                    h("div", { class: "flex justify-between items-center bg-[#1a1a1a] rounded-lg p-3 border border-[#2a2a2a]" },
+                        h("span", { class: "text-sm text-[var(--color-parchment)] opacity-60" }, "Combat Level"),
+                        h("span", { class: "font-[var(--font-mono)] text-lg font-bold text-[var(--color-gold)]" }, combatLevel)),
+                    h("div", { class: "flex justify-between items-center bg-[#1a1a1a] rounded-lg p-3 border border-[#2a2a2a]" },
+                        h("span", { class: "text-sm text-[var(--color-parchment)] opacity-60" }, "Total Level"),
+                        h("span", { class: "font-[var(--font-mono)] text-lg font-bold text-[var(--color-gold)]" }, totalLevel)),
+                    h("div", { class: "flex justify-between items-center bg-[#1a1a1a] rounded-lg p-3 border border-[#2a2a2a]" },
+                        h("span", { class: "text-sm text-[var(--color-parchment)] opacity-60" }, "Total XP"),
+                        h("span", { class: "font-[var(--font-mono)] text-lg font-bold text-[var(--color-gold)]" }, formatNumber(totalXP)))))),
+            viewSection === 'stats' && (h("div", { class: "py-4" },
+                h("div", { class: "flex justify-between items-center mb-3 px-1" },
+                    h("span", { class: "text-xs text-[var(--color-parchment)] opacity-60" },
+                        "Total Level: ",
+                        h("span", { class: "font-[var(--font-mono)] font-bold text-[var(--color-gold)]" }, totalLevel)),
+                    h("span", { class: "text-xs text-[var(--color-parchment)] opacity-60" },
+                        "Total XP: ",
+                        h("span", { class: "font-[var(--font-mono)] font-bold text-[var(--color-gold)]" }, formatNumber(totalXP)))),
+                h(SkillGroup, { title: "Combat", skills: COMBAT_SKILLS }),
+                h(SkillGroup, { title: "Gathering", skills: GATHERING_SKILLS }),
+                h(SkillGroup, { title: "Production", skills: PRODUCTION_SKILLS }),
+                h(SkillGroup, { title: "Utility", skills: UTILITY_SKILLS }))),
+            viewSection === 'skills' && (h("div", { class: "py-4" },
+                h(SkillGroup, { title: "Combat", skills: COMBAT_SKILLS }),
+                h(SkillGroup, { title: "Gathering", skills: GATHERING_SKILLS }),
+                h(SkillGroup, { title: "Production", skills: PRODUCTION_SKILLS }),
+                h(SkillGroup, { title: "Utility", skills: UTILITY_SKILLS })))),
+        selectedSkillDetail && selectedSkillData && (h(Modal, { title: `${SKILL_ICONS[selectedSkillDetail]} ${selectedSkillDetail.charAt(0).toUpperCase() + selectedSkillDetail.slice(1)}`, onClose: () => setSelectedSkillDetail(null) },
+            h("div", { class: "space-y-3" },
+                h("div", { class: "text-center" },
+                    h("div", { class: "text-4xl font-[var(--font-mono)] font-bold text-[var(--color-gold)]" }, selLevel),
+                    h("div", { class: "text-xs text-[var(--color-parchment)] opacity-50 mt-1" }, "Current Level")),
+                h("div", { class: "bg-[#111] rounded-lg p-3 space-y-2" },
+                    h("div", { class: "flex justify-between text-sm" },
+                        h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "Total XP"),
+                        h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, formatNumber(selectedSkillData.xp))),
+                    h("div", { class: "flex justify-between text-sm" },
+                        h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "XP to next level"),
+                        h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, selLevel >= 99 ? 'MAX' : formatNumber(selToNext))),
+                    h("div", { class: "flex justify-between text-sm" },
+                        h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "Progress"),
+                        h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" },
+                            (selProgress * 100).toFixed(1),
+                            "%"))),
+                STUB_SKILLS.has(selectedSkillDetail) && (h("div", { class: "text-xs text-center text-[var(--color-parchment)] opacity-40 italic" }, "This skill is not yet trainable \u2014 coming soon!")),
+                selectedSkillDetail === 'agility' && (h("div", { class: "bg-[#111] rounded-lg p-3" },
+                    h("div", { class: "flex justify-between text-sm" },
+                        h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "\uD83C\uDFE6 Bank delay"),
+                        h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, formatBankDelay(getAgilityBankDelayMs(selLevel)))),
+                    h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-30 mt-1" }, "Time to bank a full inventory during combat"))))))));
 }
 
 // ── screens/StatsScreen.js ──
@@ -31490,7 +31525,7 @@ const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'slayer', 'farming', 'c
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0);
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS];
 function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
-    const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask, activeTask } = useGame();
+    const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, activeTask } = useGame();
     const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null);
     const [selectedAction, setSelectedAction] = useState(null);
     const [skilling, setSkilling] = useState(null);
@@ -31715,30 +31750,6 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
             }
         }
     }, [initialSkillId, initialActionId]);
-    const handleAddToHome = (skill, action) => {
-        const shortcut = {
-            label: action.name,
-            icon: SKILL_ICONS[skill] || '🔨',
-            screen: SCREENS.SKILLS,
-            skillId: skill,
-            actionId: action.id
-        };
-        const current = homeShortcuts ?? [
-            { label: 'Fight Monsters', icon: '⚔️', screen: SCREENS.COMBAT },
-            { label: 'Train Skills', icon: '🔨', screen: SCREENS.SKILLS },
-            { label: 'Gather Resources', icon: '🌿', screen: SCREENS.GATHER },
-            { label: 'Open Bank', icon: '🏦', screen: SCREENS.BANK },
-            { label: 'View Stats', icon: '📊', screen: SCREENS.STATS },
-            { label: 'Inventory', icon: '🎒', screen: SCREENS.INVENTORY },
-        ];
-        const alreadyExists = current.some(s => s.label === shortcut.label);
-        if (alreadyExists) {
-            addToast('Already on home screen!', 'info');
-            return;
-        }
-        updateHomeShortcuts([...current, shortcut]);
-        addToast(`${shortcut.icon} ${action.name} added to Home!`, 'info');
-    };
     // Skill picker
     if (!selectedSkill) {
         return (h("div", { class: "h-full overflow-y-auto p-4" },
@@ -31786,50 +31797,46 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
                 const hasTool = !needsTool || hasToolForSkill(selectedSkill, equipment, inventory, itemsData, stats);
                 const hasItems = !action.itemReq || action.itemReq.some(id => (countItem(inventory, id) + (bank[id]?.quantity || 0)) > 0);
                 const canStart = available && hasMats && hasRunes && hasTool && hasItems;
-                return (h("div", { key: action.id, class: "flex gap-2 items-stretch" },
-                    h("button", { onClick: () => canStart && startSkilling(action), disabled: !canStart, class: `flex-1 flex items-center justify-between p-3 rounded-xl border transition-colors
-                    ${canStart
-                            ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
-                            : 'bg-[#111] border-[#1a1a1a] opacity-40'}` },
-                        h("div", { class: "text-left" },
-                            h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, action.name),
-                            h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40" },
-                                "Lv ",
-                                action.level,
-                                " \u00B7 ",
-                                action.xp,
-                                " XP \u00B7 ",
-                                toolMult < 1.0
-                                    ? h(Fragment, null,
-                                        h("span", { class: "line-through" },
-                                            (action.ticks * 0.6).toFixed(1),
-                                            "s"),
-                                        " ",
-                                        h("span", { class: "text-[var(--color-gold)] opacity-100" },
-                                            (Math.max(1, Math.floor(action.ticks * toolMult)) * 0.6).toFixed(1),
-                                            "s"))
-                                    : `${(action.ticks * 0.6).toFixed(1)}s`,
-                                action.materials && (h("span", null,
-                                    " \u00B7 Needs: ",
-                                    Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', '))),
-                                action.runeReq && (h("span", null,
-                                    " \u00B7 Runes: ",
-                                    Object.entries(action.runeReq).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', '))),
-                                needsTool && !hasTool && (h("span", { class: "block text-[#ff6b6b] mt-1" }, selectedSkill === 'mining' ? '⚒️ No pickaxe' : selectedSkill === 'woodcutting' ? '🪓 No axe' : '🎣 No rod')),
-                                action.itemReq && !hasItems && (h("span", { class: "block text-[#ff6b6b] mt-1" },
-                                    "\u2728 Needs: ",
-                                    action.itemReq.map(id => itemsData[id]?.name || id).join(' or '))),
-                                action.runeReq && !hasRunes && (h("span", { class: "block text-[#ff6b6b] mt-1" }, "\uD83D\uDD2E Missing runes (or equip staff)")))),
-                        action.product && (h("span", { class: "text-[10px] text-[var(--color-gold-dim)]" },
-                            "\u2192 ",
-                            itemsData[action.product]?.name || action.product)),
-                        action.dropTable && (h("div", { class: "text-right flex flex-col gap-0.5" }, action.dropTable.map(drop => (h("div", { key: drop.itemId, class: "text-[9px] text-[var(--color-gold-dim)]" },
-                            Math.round(drop.chance * 100),
-                            "% ",
-                            itemsData[drop.itemId]?.name || drop.itemId)))))),
-                    h("button", { onClick: () => handleAddToHome(selectedSkill, action), class: "px-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5", title: "Add to Home Screen" },
-                        h("span", { class: "text-base" }, "\uD83C\uDFE0"),
-                        h("span", { class: "text-[8px] text-[var(--color-parchment)] opacity-50" }, "Add"))));
+                return (h("button", { key: action.id, onClick: () => canStart && startSkilling(action), disabled: !canStart, class: `flex items-center justify-between p-3 rounded-xl border transition-colors
+                  ${canStart
+                        ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
+                        : 'bg-[#111] border-[#1a1a1a] opacity-40'}` },
+                    h("div", { class: "text-left" },
+                        h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, action.name),
+                        h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40" },
+                            "Lv ",
+                            action.level,
+                            " \u00B7 ",
+                            action.xp,
+                            " XP \u00B7 ",
+                            toolMult < 1.0
+                                ? h(Fragment, null,
+                                    h("span", { class: "line-through" },
+                                        (action.ticks * 0.6).toFixed(1),
+                                        "s"),
+                                    " ",
+                                    h("span", { class: "text-[var(--color-gold)] opacity-100" },
+                                        (Math.max(1, Math.floor(action.ticks * toolMult)) * 0.6).toFixed(1),
+                                        "s"))
+                                : `${(action.ticks * 0.6).toFixed(1)}s`,
+                            action.materials && (h("span", null,
+                                " \u00B7 Needs: ",
+                                Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', '))),
+                            action.runeReq && (h("span", null,
+                                " \u00B7 Runes: ",
+                                Object.entries(action.runeReq).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', '))),
+                            needsTool && !hasTool && (h("span", { class: "block text-[#ff6b6b] mt-1" }, selectedSkill === 'mining' ? '⚒️ No pickaxe' : selectedSkill === 'woodcutting' ? '🪓 No axe' : '🎣 No rod')),
+                            action.itemReq && !hasItems && (h("span", { class: "block text-[#ff6b6b] mt-1" },
+                                "\u2728 Needs: ",
+                                action.itemReq.map(id => itemsData[id]?.name || id).join(' or '))),
+                            action.runeReq && !hasRunes && (h("span", { class: "block text-[#ff6b6b] mt-1" }, "\uD83D\uDD2E Missing runes (or equip staff)")))),
+                    action.product && (h("span", { class: "text-[10px] text-[var(--color-gold-dim)]" },
+                        "\u2192 ",
+                        itemsData[action.product]?.name || action.product)),
+                    action.dropTable && (h("div", { class: "text-right flex flex-col gap-0.5" }, action.dropTable.map(drop => (h("div", { key: drop.itemId, class: "text-[9px] text-[var(--color-gold-dim)]" },
+                        Math.round(drop.chance * 100),
+                        "% ",
+                        itemsData[drop.itemId]?.name || drop.itemId)))))));
             })),
             showAlchemyPicker && selectedAction && (h(Modal, { onClose: () => { setShowAlchemyPicker(false); setSelectedAction(null); } },
                 h("div", { class: "flex items-center justify-between mb-3" },
@@ -32645,8 +32652,7 @@ function formatHours(hours) {
     return `${hours.toFixed(1)}h`;
 }
 function GatherScreen({ initialTaskId, idleResult }) {
-    const { inventory, bank, equipment, updateInventory, updateBankDirect, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask, activeTask: globalActiveTask } = useGame();
-    const [section, setSection] = useState('resources');
+    const { inventory, bank, equipment, updateInventory, updateBankDirect, addToast, setActiveTask, activeTask: globalActiveTask } = useGame();
     const [category, setCategory] = useState('all');
     const [activeTask, setLocalTask] = useState(null);
     const taskRef = useRef(null);
@@ -32805,29 +32811,6 @@ function GatherScreen({ initialTaskId, idleResult }) {
                 startTask(task, true);
         }
     }, [initialTaskId]);
-    const handleAddToHome = (task) => {
-        const shortcut = {
-            label: task.name,
-            icon: task.icon,
-            screen: SCREENS.GATHER,
-            gatherTaskId: task.id
-        };
-        const current = homeShortcuts ?? [
-            { label: 'Fight Monsters', icon: '⚔️', screen: SCREENS.COMBAT },
-            { label: 'Train Skills', icon: '🔨', screen: SCREENS.SKILLS },
-            { label: 'Gather Resources', icon: '🌿', screen: SCREENS.GATHER },
-            { label: 'Open Bank', icon: '🏦', screen: SCREENS.BANK },
-            { label: 'View Stats', icon: '📊', screen: SCREENS.STATS },
-            { label: 'Inventory', icon: '🎒', screen: SCREENS.INVENTORY },
-        ];
-        const alreadyExists = current.some(s => s.label === shortcut.label);
-        if (alreadyExists) {
-            addToast('Already on home screen!', 'info');
-            return;
-        }
-        updateHomeShortcuts([...current, shortcut]);
-        addToast(`${task.icon} ${task.name} added to Home!`, 'info');
-    };
     // Active gathering modal — show if we have a local task OR a global minigame
     // that was started earlier (allows the user to leave and return to the screen
     // without losing progress).
@@ -32875,21 +32858,8 @@ function GatherScreen({ initialTaskId, idleResult }) {
     // Task picker
     return (h("div", { class: "h-full flex flex-col" },
         h("div", { class: "px-4 pt-4 pb-2 flex-shrink-0" },
-            h(SectionHeader, { size: "lg", className: "mb-[10px]" }, "\uD83C\uDF3F Gathers"),
-            h("div", { class: "flex gap-[6px] mb-2" }, [
-                { id: 'resources', label: 'Resources', icon: '🌿' },
-                { id: 'minigame', label: 'Minigame', icon: '🎮' },
-            ].map(sec => {
-                const isActive = section === sec.id;
-                const pillClass = isActive
-                    ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)] opacity-100'
-                    : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60';
-                return (h("button", { key: sec.id, onClick: () => setSection(sec.id), class: `flex-1 px-3 py-[7px] rounded-[20px] text-[12px] font-semibold border ${pillClass}` },
-                    sec.icon,
-                    " ",
-                    sec.label));
-            })),
-            section === 'resources' && (h("div", { class: "flex gap-[6px] overflow-x-auto pb-1" }, CATEGORIES.map(cat => {
+            h(SectionHeader, { size: "lg", className: "mb-[10px]" }, "\uD83C\uDF3F Gather"),
+            h("div", { class: "flex gap-[6px] overflow-x-auto pb-1" }, CATEGORIES.map(cat => {
                 const isActive = category === cat.id;
                 const pillClass = isActive
                     ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)] opacity-100'
@@ -32898,16 +32868,16 @@ function GatherScreen({ initialTaskId, idleResult }) {
                     cat.icon,
                     " ",
                     cat.label));
-            })))),
-        h("div", { class: "flex-1 overflow-y-auto px-4 pb-4" }, section === 'resources' ? (h("div", { class: "flex flex-col gap-2" }, visibleTasks.map(task => {
-            const hasMats = !task.materials || Object.entries(task.materials).every(([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty);
-            const invFull = freeSlots(inventory) === 0;
-            const enabled = hasMats && !invFull;
-            const rowClass = enabled
-                ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
-                : 'bg-[#111] border-[#1a1a1a] opacity-45';
-            return (h("div", { key: task.id, class: "flex gap-2 items-stretch" },
-                h("button", { onClick: () => enabled && startTask(task), disabled: !enabled, class: `flex-1 p-3 rounded-xl border text-left flex items-center gap-3 ${rowClass}` },
+            }))),
+        h("div", { class: "flex-1 overflow-y-auto px-4 pb-4" },
+            h("div", { class: "flex flex-col gap-2" }, visibleTasks.map(task => {
+                const hasMats = !task.materials || Object.entries(task.materials).every(([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty);
+                const invFull = freeSlots(inventory) === 0;
+                const enabled = hasMats && !invFull;
+                const rowClass = enabled
+                    ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
+                    : 'bg-[#111] border-[#1a1a1a] opacity-45';
+                return (h("button", { key: task.id, onClick: () => enabled && startTask(task), disabled: !enabled, class: `p-3 rounded-xl border text-left flex items-center gap-3 ${rowClass}` },
                     h("span", { class: "text-[28px] flex-shrink-0" }, task.icon),
                     h("div", { class: "flex-1 min-w-0" },
                         h("div", { class: "text-[13px] font-semibold text-[var(--color-parchment)] mb-1" }, task.name),
@@ -32922,46 +32892,8 @@ function GatherScreen({ initialTaskId, idleResult }) {
                     h("div", { class: "flex-shrink-0 text-right" },
                         h("div", { class: "text-[18px]" }, "\u2192"),
                         h("div", { class: "text-[9px] text-[#c8a96e] opacity-70" }, ITEM_NAMES[task.product] || task.product),
-                        task.materials && (h("div", { class: `text-[9px] mt-[2px] ${hasMats ? 'text-[#4caf50]' : 'text-[#e57373]'}` }, hasMats ? '✓ have mats' : '✗ no mats')))),
-                h("button", { onClick: () => handleAddToHome(task), title: "Add to Home Screen", class: "px-3 rounded-xl bg-[var(--color-void-light)] border border-[#2a2a2a] flex flex-col items-center justify-center gap-[2px] cursor-pointer flex-shrink-0" },
-                    h("span", { class: "text-[16px]" }, "\uD83C\uDFE0"),
-                    h("span", { class: "text-[8px] text-[var(--color-parchment)] opacity-50" }, "Add"))));
-        }))) : (h("div", { class: "flex flex-col gap-4" }, MINIGAMES.map(mg => {
-            const tasks = MINIGAME_TASKS.filter(t => t.minigame === mg.id);
-            if (tasks.length === 0)
-                return null;
-            return (h("div", { key: mg.id, class: "flex flex-col gap-2" },
-                h(SectionHeader, { size: "sm" },
-                    mg.icon,
-                    " ",
-                    mg.label),
-                tasks.map(task => {
-                    const missingReq = task.requiresItem && !hasItemAnywhere(task.requiresItem, inventory, bank, equipment);
-                    const enabled = !missingReq;
-                    const rowClass = enabled
-                        ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
-                        : 'bg-[#111] border-[#1a1a1a] opacity-45';
-                    return (h("div", { key: task.id, class: "flex gap-2 items-stretch" },
-                        h("button", { onClick: () => enabled && startTask(task), disabled: !enabled, class: `flex-1 p-3 rounded-xl border text-left flex items-center gap-3 ${rowClass}` },
-                            h("span", { class: "text-[28px] flex-shrink-0" }, task.icon),
-                            h("div", { class: "flex-1 min-w-0" },
-                                h("div", { class: "text-[13px] font-semibold text-[var(--color-parchment)] mb-1" }, task.name),
-                                h("div", { class: "text-[10px] text-[#c8a96e] opacity-80" },
-                                    "\u23F1 ",
-                                    formatHours(task.hours),
-                                    " total",
-                                    task.requiresItem && (h("span", { class: `${missingReq ? 'text-[#e57373]' : 'text-[var(--color-parchment)] opacity-50'}` },
-                                        ' · ',
-                                        "Needs: ",
-                                        ITEM_NAMES[task.requiresItem] || task.requiresItem)))),
-                            h("div", { class: "flex-shrink-0 text-right" },
-                                h("div", { class: "text-[18px]" }, "\u2192"),
-                                h("div", { class: "text-[9px] text-[#c8a96e] opacity-70" }, ITEM_NAMES[task.product] || task.product))),
-                        h("button", { onClick: () => handleAddToHome(task), title: "Add to Home Screen", class: "px-3 rounded-xl bg-[var(--color-void-light)] border border-[#2a2a2a] flex flex-col items-center justify-center gap-[2px] cursor-pointer flex-shrink-0" },
-                            h("span", { class: "text-[16px]" }, "\uD83C\uDFE0"),
-                            h("span", { class: "text-[8px] text-[var(--color-parchment)] opacity-50" }, "Add"))));
-                })));
-        }))))));
+                        task.materials && (h("div", { class: `text-[9px] mt-[2px] ${hasMats ? 'text-[#4caf50]' : 'text-[#e57373]'}` }, hasMats ? '✓ have mats' : '✗ no mats')))));
+            })))));
 }
 function formatRemaining(totalSeconds) {
     const s = Math.max(0, Math.floor(totalSeconds));
@@ -33550,6 +33482,82 @@ function EquipmentScreen() {
 
 
 
+
+
+const TICKS_PER_HOUR = 6000;
+const MINIGAME_TASKS = [
+    {
+        id: 'ba_fighter_torso',
+        name: 'Grind for Fighter Torso',
+        icon: '👕',
+        description: 'Run Barbarian Assault until you earn a Fighter Torso.',
+        hours: 5,
+        ticks: 5 * TICKS_PER_HOUR,
+        product: 'fighter_torso',
+        qty: 1,
+        minigame: 'barbarian_assault',
+        oneShot: true,
+    },
+    {
+        id: 'ba_fighter_hat',
+        name: 'Grind for Fighter Hat',
+        icon: '🪖',
+        description: 'Run Barbarian Assault until you earn a Fighter Hat.',
+        hours: 2,
+        ticks: 2 * TICKS_PER_HOUR,
+        product: 'fighter_hat',
+        qty: 1,
+        minigame: 'barbarian_assault',
+        oneShot: true,
+    },
+    {
+        id: 'wg_rune_defender',
+        name: 'Grind for Rune Defender',
+        icon: '🛡️',
+        description: 'Slay Cyclopes in the Warriors\' Guild basement until one drops a Rune Defender.',
+        hours: 3,
+        ticks: 3 * TICKS_PER_HOUR,
+        product: 'rune_defender',
+        qty: 1,
+        minigame: 'warriors_guild',
+        oneShot: true,
+    },
+    {
+        id: 'wg_dragon_defender',
+        name: 'Grind for Dragon Defender',
+        icon: '🛡️',
+        description: 'Slay Cyclopes wielding your Rune Defender until one drops a Dragon Defender.',
+        hours: 2,
+        ticks: 2 * TICKS_PER_HOUR,
+        product: 'dragon_defender',
+        qty: 1,
+        minigame: 'warriors_guild',
+        requiresItem: 'rune_defender',
+        oneShot: true,
+    },
+    {
+        id: 'cw_halo',
+        name: 'Grind for Halo',
+        icon: '😇',
+        description: 'Play Castle Wars matches until you can purchase a Halo.',
+        hours: 3,
+        ticks: 3 * TICKS_PER_HOUR,
+        product: 'halo',
+        qty: 1,
+        minigame: 'castle_wars',
+        oneShot: true,
+    },
+];
+const MINIGAMES = [
+    { id: 'barbarian_assault', label: 'Barbarian Assault', icon: '⚔️' },
+    { id: 'warriors_guild', label: 'Warriors\' Guild', icon: '🏛️' },
+    { id: 'castle_wars', label: 'Castle Wars', icon: '🏰' },
+];
+const ITEM_NAMES = {
+    fighter_torso: 'Fighter torso', fighter_hat: 'Fighter hat',
+    rune_defender: 'Rune defender', dragon_defender: 'Dragon defender',
+    halo: 'Halo',
+};
 const COMPLEXITY_COLORS = {
     Novice: '#7fbf7f',
     Intermediate: '#7bb3f0',
@@ -33562,10 +33570,14 @@ const COMPLEXITY_ORDER = {
     Novice: 1, Intermediate: 2, Experienced: 3, Master: 4, Grandmaster: 5, Special: 6,
 };
 function QuestsScreen() {
-    const { stats, completedQuests, activeTask, setActiveTask, addToast, itemsData, questQueue, addQuestToQueue, removeFromQuestQueue, updateQuestQueue, } = useGame();
+    const { stats, completedQuests, activeTask, setActiveTask, inventory, bank, equipment, updateInventory, updateBankDirect, addToast, itemsData, questQueue, addQuestToQueue, removeFromQuestQueue, updateQuestQueue, } = useGame();
     const [hideCompleted, setHideCompleted] = useState(false);
     const [selectedQuest, setSelectedQuest] = useState(null);
     const [showQueue, setShowQueue] = useState(false);
+    const [section, setSection] = useState('quests');
+    const [minigameTask, setMinigameTask] = useState(null);
+    const taskRef = useRef(null);
+    const hasAutoStarted = useRef(false);
     const startQuest = (quest) => {
         const state = createQuestState(quest);
         setActiveTask({
@@ -33612,6 +33624,72 @@ function QuestsScreen() {
         startQuest(firstQuest);
         addToast(`Queue started. ${firstQuest.name} started first.`, 'info');
     };
+    const startMinigame = (task) => {
+        const newState = {
+            task,
+            ticksRemaining: task.ticks,
+            startedAt: Date.now(),
+            stopped: false,
+        };
+        taskRef.current = newState;
+        setMinigameTask(newState);
+        setActiveTask({
+            type: 'minigame',
+            minigameTask: task,
+            bankingEnabled: true,
+            totalTicks: task.ticks,
+            ticksRemaining: task.ticks,
+            startedAt: Date.now(),
+        });
+    };
+    const stopMinigame = () => {
+        if (taskRef.current)
+            taskRef.current = { ...taskRef.current, stopped: true };
+        setMinigameTask(null);
+        setActiveTask(null);
+    };
+    const hasItemAnywhere = (itemId) => {
+        if (countItem(inventory, itemId) > 0)
+            return true;
+        if (bank?.[itemId]?.quantity > 0)
+            return true;
+        if (equipment) {
+            for (const slot of Object.values(equipment)) {
+                if (slot && slot.itemId === itemId)
+                    return true;
+            }
+        }
+        return false;
+    };
+    const formatHours = (hours) => {
+        if (hours === Math.floor(hours))
+            return `${hours}h`;
+        return `${hours.toFixed(1)}h`;
+    };
+    useEffect(() => {
+        if (!minigameTask)
+            return;
+        taskRef.current = minigameTask;
+        const unsub = onTick(() => {
+            const state = taskRef.current;
+            if (!state || state.stopped)
+                return;
+            let ticksRemaining = state.ticksRemaining - 1;
+            if (ticksRemaining <= 0) {
+                const task = state.task;
+                addToast(`${task.icon} ${ITEM_NAMES[task.product] || task.product} banked!`, 'success');
+                updateBankDirect({ [task.product]: task.qty || 1 });
+                taskRef.current = { ...state, stopped: true };
+                setMinigameTask(null);
+                setActiveTask(null);
+                return;
+            }
+            const next = { ...state, ticksRemaining };
+            taskRef.current = next;
+            setMinigameTask(next);
+        });
+        return unsub;
+    }, [minigameTask]);
     const sortedQuests = [...questsData].sort((a, b) => {
         const ca = COMPLEXITY_ORDER[a.complexity] || 99;
         const cb = COMPLEXITY_ORDER[b.complexity] || 99;
@@ -33658,6 +33736,31 @@ function QuestsScreen() {
                 h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-50 text-center max-w-[280px]" }, "\u23F3 Quests run in the background \u2014 feel free to switch screens."))));
     }
     // ── Quest list ──────────────────────────────────────────────────────────────
+    if (minigameTask) {
+        const task = minigameTask.task;
+        const totalTicks = task.ticks;
+        const ticksRemaining = minigameTask.ticksRemaining;
+        const progress = totalTicks > 0 ? 1 - ticksRemaining / totalTicks : 0;
+        const remainingSeconds = ticksRemaining * 0.6;
+        return (h("div", { class: "h-full flex flex-col p-4" },
+            h("button", { onClick: stopMinigame, class: "text-[12px] text-[#c4af7a] mb-3 flex items-center gap-1 bg-transparent border-0 cursor-pointer" }, "\u2190 Abandon"),
+            h("div", { class: "flex-1 flex flex-col items-center justify-center" },
+                h("span", { class: "text-[48px] mb-2" }, task.icon),
+                h("h2", { class: "font-[var(--font-display)] text-[18px] font-bold text-[var(--color-gold)] mb-1 text-center" }, task.name),
+                h("p", { class: "text-[11px] text-[var(--color-parchment)] opacity-50 mb-4 text-center" }, task.description),
+                h("div", { class: "w-full max-w-[280px] mb-4" },
+                    h(ProgressBar, { value: progress, max: 1, height: "h-4", color: "var(--color-gold)", showText: true })),
+                h(Panel, { padding: "p-3", className: "w-full max-w-[280px] mb-3 rounded-xl" },
+                    h("div", { class: "flex justify-between" },
+                        h("span", { class: "text-[13px] text-[var(--color-parchment)] opacity-60" }, "Reward"),
+                        h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)] font-bold" }, ITEM_NAMES[task.product] || task.product)),
+                    h("div", { class: "flex justify-between mt-2" },
+                        h("span", { class: "text-[13px] text-[var(--color-parchment)] opacity-60" }, "Time remaining"),
+                        h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)] font-bold" },
+                            Math.ceil(remainingSeconds / 60),
+                            "m"))),
+                h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-50 text-center max-w-[280px]" }, "\u23F3 Minigame runs in the background \u2014 feel free to switch screens. Reward is banked on completion."))));
+    }
     return (h("div", { class: "h-full flex flex-col" },
         h("div", { class: "px-4 pt-4 pb-2 flex-shrink-0" },
             h("div", { class: "flex justify-between items-baseline mb-2" },
@@ -33669,7 +33772,20 @@ function QuestsScreen() {
                     " \u00B7 ",
                     totalQp,
                     " QP")),
-            h("div", { class: "flex gap-2 justify-between items-center" },
+            h("div", { class: "flex gap-[6px] mb-2" }, [
+                { id: 'quests', label: 'Quests', icon: '📜' },
+                { id: 'minigames', label: 'Minigames', icon: '🎮' },
+            ].map(sec => {
+                const isActive = section === sec.id;
+                const pillClass = isActive
+                    ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)] opacity-100'
+                    : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60';
+                return (h("button", { key: sec.id, onClick: () => setSection(sec.id), class: `flex-1 px-3 py-[7px] rounded-[20px] text-[12px] font-semibold border ${pillClass}` },
+                    sec.icon,
+                    " ",
+                    sec.label));
+            })),
+            section === 'quests' && (h("div", { class: "flex gap-2 justify-between items-center" },
                 h("div", { class: "flex gap-2" },
                     h("button", { onClick: () => setHideCompleted(v => !v), class: `px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${hideCompleted
                             ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
@@ -33678,19 +33794,19 @@ function QuestsScreen() {
                         "\uD83D\uDD17 Queue (",
                         questQueue.length,
                         ")"))),
-                questQueue.length > 0 && (h(Button, { variant: "success", size: "sm", onClick: startQueue }, "\u25B6\uFE0F Begin Queue")))),
+                questQueue.length > 0 && (h(Button, { variant: "success", size: "sm", onClick: startQueue }, "\u25B6\uFE0F Begin Queue"))))),
         h("div", { class: "flex-1 overflow-y-auto px-4 pb-4" },
-            showQueue && questQueue.length > 0 && (h("div", { class: "flex flex-col gap-2 pt-2 mb-4" },
-                h(SectionHeader, { size: "sm" }, "\uD83D\uDCCB Quest Queue"),
-                questQueue.map((quest, idx) => (h("div", { key: quest.id, class: "p-3 rounded-xl bg-[var(--color-void-light)] border border-[#2a2a2a] flex items-center justify-between gap-2" },
-                    h("div", { class: "flex-1 min-w-0" },
-                        h("div", { class: "text-[13px] font-semibold text-[var(--color-parchment)]" },
-                            idx + 1,
-                            ". ",
-                            quest.name),
-                        h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60" }, formatQuestDuration(quest.durationSeconds))),
-                    h("button", { onClick: () => removeQuestFromQueue(quest.id), class: "text-[12px] text-[#e57373] bg-transparent border-0 cursor-pointer flex-shrink-0" }, "\u2715")))))),
-            h("div", { class: "flex flex-col gap-2 pt-2" },
+            section === 'quests' && (h("div", { class: "flex flex-col gap-2" },
+                showQueue && questQueue.length > 0 && (h("div", { class: "flex flex-col gap-2 pt-2 mb-4" },
+                    h(SectionHeader, { size: "sm" }, "\uD83D\uDCCB Quest Queue"),
+                    questQueue.map((quest, idx) => (h("div", { key: quest.id, class: "p-3 rounded-xl bg-[var(--color-void-light)] border border-[#2a2a2a] flex items-center justify-between gap-2" },
+                        h("div", { class: "flex-1 min-w-0" },
+                            h("div", { class: "text-[13px] font-semibold text-[var(--color-parchment)]" },
+                                idx + 1,
+                                ". ",
+                                quest.name),
+                            h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60" }, formatQuestDuration(quest.durationSeconds))),
+                        h("button", { onClick: () => removeQuestFromQueue(quest.id), class: "text-[12px] text-[#e57373] bg-transparent border-0 cursor-pointer flex-shrink-0" }, "\u2715")))))),
                 visibleQuests.map(quest => {
                     const completed = completedQuests.has(quest.id);
                     const elig = checkQuestEligibility(quest, stats, completedQuests, questsData);
@@ -33710,6 +33826,38 @@ function QuestsScreen() {
                         h("div", { class: "flex-shrink-0 text-[18px] text-[var(--color-parchment)] opacity-40" }, "\u2192")));
                 }),
                 visibleQuests.length === 0 && (h("div", { class: "py-10 text-center text-[#888] text-[12px]" }, "No quests to show.")))),
+            section === 'minigames' && (h("div", { class: "flex flex-col gap-4" }, MINIGAMES.map(mg => {
+                const tasks = MINIGAME_TASKS.filter(t => t.minigame === mg.id);
+                if (tasks.length === 0)
+                    return null;
+                return (h("div", { key: mg.id, class: "flex flex-col gap-2" },
+                    h(SectionHeader, { size: "sm" },
+                        mg.icon,
+                        " ",
+                        mg.label),
+                    tasks.map(task => {
+                        const missingReq = task.requiresItem && !hasItemAnywhere(task.requiresItem);
+                        const enabled = !missingReq;
+                        const rowClass = enabled
+                            ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
+                            : 'bg-[#111] border-[#1a1a1a] opacity-45';
+                        return (h("button", { key: task.id, onClick: () => enabled && startMinigame(task), disabled: !enabled, class: `p-3 rounded-xl border text-left flex items-center gap-3 ${rowClass}` },
+                            h("span", { class: "text-[28px] flex-shrink-0" }, task.icon),
+                            h("div", { class: "flex-1 min-w-0" },
+                                h("div", { class: "text-[13px] font-semibold text-[var(--color-parchment)] mb-1" }, task.name),
+                                h("div", { class: "text-[10px] text-[#c8a96e] opacity-80" },
+                                    "\u23F1 ",
+                                    formatHours(task.hours),
+                                    " total",
+                                    task.requiresItem && (h("span", { class: `${missingReq ? 'text-[#e57373]' : 'text-[var(--color-parchment)] opacity-50'}` },
+                                        ' · ',
+                                        "Needs: ",
+                                        ITEM_NAMES[task.requiresItem] || task.requiresItem)))),
+                            h("div", { class: "flex-shrink-0 text-right" },
+                                h("div", { class: "text-[18px]" }, "\u2192"),
+                                h("div", { class: "text-[9px] text-[#c8a96e] opacity-70" }, ITEM_NAMES[task.product] || task.product))));
+                    })));
+            })))),
         selectedQuest && (h(QuestDetailsModal, { quest: selectedQuest, stats: stats, completedQuests: completedQuests, itemsData: itemsData, onClose: () => setSelectedQuest(null), onStart: startQuest, onAddToQueue: addToQueue, isInQueue: questQueue.some(q => q.id === selectedQuest.id), queueFull: questQueue.length >= QUEST_QUEUE_MAX }))));
 }
 // ──────────────────────────────────────────────────────────────────────────────

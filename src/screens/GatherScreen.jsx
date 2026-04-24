@@ -301,8 +301,7 @@ function formatHours(hours) {
 }
 
 export default function GatherScreen({ initialTaskId, idleResult }) {
-  const { inventory, bank, equipment, updateInventory, updateBankDirect, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask, activeTask: globalActiveTask } = useGame()
-  const [section, setSection] = useState('resources')
+  const { inventory, bank, equipment, updateInventory, updateBankDirect, addToast, setActiveTask, activeTask: globalActiveTask } = useGame()
   const [category, setCategory] = useState('all')
   const [activeTask, setLocalTask] = useState(null)
   const taskRef = useRef(null)
@@ -463,29 +462,6 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
   }, [initialTaskId])
 
 
-  const handleAddToHome = (task) => {
-    const shortcut = {
-      label: task.name,
-      icon: task.icon,
-      screen: SCREENS.GATHER,
-      gatherTaskId: task.id
-    }
-    const current = homeShortcuts ?? [
-      { label: 'Fight Monsters', icon: '⚔️', screen: SCREENS.COMBAT },
-      { label: 'Train Skills', icon: '🔨', screen: SCREENS.SKILLS },
-      { label: 'Gather Resources', icon: '🌿', screen: SCREENS.GATHER },
-      { label: 'Open Bank', icon: '🏦', screen: SCREENS.BANK },
-      { label: 'View Stats', icon: '📊', screen: SCREENS.STATS },
-      { label: 'Inventory', icon: '🎒', screen: SCREENS.INVENTORY },
-    ]
-    const alreadyExists = current.some(s => s.label === shortcut.label)
-    if (alreadyExists) {
-      addToast('Already on home screen!', 'info')
-      return
-    }
-    updateHomeShortcuts([...current, shortcut])
-    addToast(`${task.icon} ${task.name} added to Home!`, 'info')
-  }
 
   // Active gathering modal — show if we have a local task OR a global minigame
   // that was started earlier (allows the user to leave and return to the screen
@@ -571,162 +547,74 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
     <div class="h-full flex flex-col">
       {/* Header */}
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
-        <SectionHeader size="lg" className="mb-[10px]">🌿 Gathers</SectionHeader>
+        <SectionHeader size="lg" className="mb-[10px]">🌿 Gather</SectionHeader>
 
-        {/* Section tabs: Resources vs Minigame */}
-        <div class="flex gap-[6px] mb-2">
-          {[
-            { id: 'resources', label: 'Resources', icon: '🌿' },
-            { id: 'minigame', label: 'Minigame', icon: '🎮' },
-          ].map(sec => {
-            const isActive = section === sec.id
+
+        {/* Category tabs */}
+        <div class="flex gap-[6px] overflow-x-auto pb-1">
+          {CATEGORIES.map(cat => {
+            const isActive = category === cat.id
             const pillClass = isActive
               ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)] opacity-100'
               : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
             return (
               <button
-                key={sec.id}
-                onClick={() => setSection(sec.id)}
-                class={`flex-1 px-3 py-[7px] rounded-[20px] text-[12px] font-semibold border ${pillClass}`}
+                key={cat.id}
+                onClick={() => setCategory(cat.id)}
+                class={`flex-shrink-0 px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${pillClass}`}
               >
-                {sec.icon} {sec.label}
+                {cat.icon} {cat.label}
               </button>
             )
           })}
         </div>
-
-        {/* Category tabs (only in resources view) */}
-        {section === 'resources' && (
-          <div class="flex gap-[6px] overflow-x-auto pb-1">
-            {CATEGORIES.map(cat => {
-              const isActive = category === cat.id
-              const pillClass = isActive
-                ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)] opacity-100'
-                : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setCategory(cat.id)}
-                  class={`flex-shrink-0 px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${pillClass}`}
-                >
-                  {cat.icon} {cat.label}
-                </button>
-              )
-            })}
-          </div>
-        )}
       </div>
 
       {/* Body */}
       <div class="flex-1 overflow-y-auto px-4 pb-4">
-        {section === 'resources' ? (
-          <div class="flex flex-col gap-2">
-            {visibleTasks.map(task => {
-              const hasMats = !task.materials || Object.entries(task.materials).every(
-                ([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty
-              )
-              const invFull = freeSlots(inventory) === 0
-              const enabled = hasMats && !invFull
-              const rowClass = enabled
-                ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
-                : 'bg-[#111] border-[#1a1a1a] opacity-45'
+        <div class="flex flex-col gap-2">
+          {visibleTasks.map(task => {
+            const hasMats = !task.materials || Object.entries(task.materials).every(
+              ([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty
+            )
+            const invFull = freeSlots(inventory) === 0
+            const enabled = hasMats && !invFull
+            const rowClass = enabled
+              ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
+              : 'bg-[#111] border-[#1a1a1a] opacity-45'
 
-              return (
-                <div key={task.id} class="flex gap-2 items-stretch">
-                  <button
-                    onClick={() => enabled && startTask(task)}
-                    disabled={!enabled}
-                    class={`flex-1 p-3 rounded-xl border text-left flex items-center gap-3 ${rowClass}`}
-                  >
-                    <span class="text-[28px] flex-shrink-0">{task.icon}</span>
-                    <div class="flex-1 min-w-0">
-                      <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>
-                      <div class="text-[10px] text-[#c8a96e] opacity-80">
-                        ⏱ {(task.ticks * 0.6).toFixed(1)}s/action
-                        {task.materials && (
-                          <span class="text-[var(--color-parchment)] opacity-50">
-                            {' · '}Needs: {Object.entries(task.materials).map(([id, qty]) => `${ITEM_NAMES[id] || id} ×${qty}`).join(', ')}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div class="flex-shrink-0 text-right">
-                      <div class="text-[18px]">→</div>
-                      <div class="text-[9px] text-[#c8a96e] opacity-70">{ITEM_NAMES[task.product] || task.product}</div>
-                      {task.materials && (
-                        <div class={`text-[9px] mt-[2px] ${hasMats ? 'text-[#4caf50]' : 'text-[#e57373]'}`}>
-                          {hasMats ? '✓ have mats' : '✗ no mats'}
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => handleAddToHome(task)}
-                    title="Add to Home Screen"
-                    class="px-3 rounded-xl bg-[var(--color-void-light)] border border-[#2a2a2a] flex flex-col items-center justify-center gap-[2px] cursor-pointer flex-shrink-0"
-                  >
-                    <span class="text-[16px]">🏠</span>
-                    <span class="text-[8px] text-[var(--color-parchment)] opacity-50">Add</span>
-                  </button>
+            return (
+              <button
+                key={task.id}
+                onClick={() => enabled && startTask(task)}
+                disabled={!enabled}
+                class={`p-3 rounded-xl border text-left flex items-center gap-3 ${rowClass}`}
+              >
+                <span class="text-[28px] flex-shrink-0">{task.icon}</span>
+                <div class="flex-1 min-w-0">
+                  <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>
+                  <div class="text-[10px] text-[#c8a96e] opacity-80">
+                    ⏱ {(task.ticks * 0.6).toFixed(1)}s/action
+                    {task.materials && (
+                      <span class="text-[var(--color-parchment)] opacity-50">
+                        {' · '}Needs: {Object.entries(task.materials).map(([id, qty]) => `${ITEM_NAMES[id] || id} ×${qty}`).join(', ')}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              )
-            })}
-          </div>
-        ) : (
-          <div class="flex flex-col gap-4">
-            {MINIGAMES.map(mg => {
-              const tasks = MINIGAME_TASKS.filter(t => t.minigame === mg.id)
-              if (tasks.length === 0) return null
-              return (
-                <div key={mg.id} class="flex flex-col gap-2">
-                  <SectionHeader size="sm">{mg.icon} {mg.label}</SectionHeader>
-                  {tasks.map(task => {
-                    const missingReq = task.requiresItem && !hasItemAnywhere(task.requiresItem, inventory, bank, equipment)
-                    const enabled = !missingReq
-                    const rowClass = enabled
-                      ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
-                      : 'bg-[#111] border-[#1a1a1a] opacity-45'
-
-                    return (
-                      <div key={task.id} class="flex gap-2 items-stretch">
-                        <button
-                          onClick={() => enabled && startTask(task)}
-                          disabled={!enabled}
-                          class={`flex-1 p-3 rounded-xl border text-left flex items-center gap-3 ${rowClass}`}
-                        >
-                          <span class="text-[28px] flex-shrink-0">{task.icon}</span>
-                          <div class="flex-1 min-w-0">
-                            <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>
-                            <div class="text-[10px] text-[#c8a96e] opacity-80">
-                              ⏱ {formatHours(task.hours)} total
-                              {task.requiresItem && (
-                                <span class={`${missingReq ? 'text-[#e57373]' : 'text-[var(--color-parchment)] opacity-50'}`}>
-                                  {' · '}Needs: {ITEM_NAMES[task.requiresItem] || task.requiresItem}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div class="flex-shrink-0 text-right">
-                            <div class="text-[18px]">→</div>
-                            <div class="text-[9px] text-[#c8a96e] opacity-70">{ITEM_NAMES[task.product] || task.product}</div>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => handleAddToHome(task)}
-                          title="Add to Home Screen"
-                          class="px-3 rounded-xl bg-[var(--color-void-light)] border border-[#2a2a2a] flex flex-col items-center justify-center gap-[2px] cursor-pointer flex-shrink-0"
-                        >
-                          <span class="text-[16px]">🏠</span>
-                          <span class="text-[8px] text-[var(--color-parchment)] opacity-50">Add</span>
-                        </button>
-                      </div>
-                    )
-                  })}
+                <div class="flex-shrink-0 text-right">
+                  <div class="text-[18px]">→</div>
+                  <div class="text-[9px] text-[#c8a96e] opacity-70">{ITEM_NAMES[task.product] || task.product}</div>
+                  {task.materials && (
+                    <div class={`text-[9px] mt-[2px] ${hasMats ? 'text-[#4caf50]' : 'text-[#e57373]'}`}>
+                      {hasMats ? '✓ have mats' : '✗ no mats'}
+                    </div>
+                  )}
                 </div>
-              )
-            })}
-          </div>
-        )}
+              </button>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
