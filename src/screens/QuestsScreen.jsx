@@ -252,6 +252,60 @@ export default function QuestsScreen() {
   const totalQp = getQuestPointsEarned(completedQuests, questsData)
   const completedCount = completedQuests.size
 
+  // Check if we have a minigame running in the background
+  const isGlobalMinigame = activeTask?.type === 'minigame'
+  const currentMinigameTask = minigameTask || (isGlobalMinigame ? { task: activeTask.minigameTask, ticksRemaining: activeTask.ticksRemaining } : null)
+
+  // Handle active minigame (either local or global background task)
+  if (currentMinigameTask) {
+    const task = currentMinigameTask.task
+    const totalTicks = task.ticks
+    const ticksRemaining = currentMinigameTask.ticksRemaining
+    const progress = totalTicks > 0 ? 1 - ticksRemaining / totalTicks : 0
+    const remainingSeconds = ticksRemaining * 0.6
+
+    return (
+      <div class="h-full flex flex-col p-4">
+        {/* Back button */}
+        <button
+          onClick={stopMinigame}
+          class="text-[12px] text-[#c4af7a] mb-3 flex items-center gap-1 bg-transparent border-0 cursor-pointer"
+        >
+          ← Abandon
+        </button>
+
+        <div class="flex-1 flex flex-col items-center justify-center">
+          <span class="text-[48px] mb-2">{task.icon}</span>
+          <h2 class="font-[var(--font-display)] text-[18px] font-bold text-[var(--color-gold)] mb-1 text-center">
+            {task.name}
+          </h2>
+          <p class="text-[11px] text-[var(--color-parchment)] opacity-50 mb-4 text-center">{task.description}</p>
+
+          <div class="w-full max-w-[280px] mb-4">
+            <ProgressBar value={progress} max={1} height="h-4" color="var(--color-gold)" showText />
+          </div>
+
+          <Panel padding="p-3" className="w-full max-w-[280px] mb-3 rounded-xl">
+            <div class="flex justify-between">
+              <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Reward</span>
+              <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">{ITEM_NAMES[task.product] || task.product}</span>
+            </div>
+            <div class="flex justify-between mt-2">
+              <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Time remaining</span>
+              <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">
+                {Math.ceil(remainingSeconds / 60)}m
+              </span>
+            </div>
+          </Panel>
+
+          <div class="text-[11px] text-[var(--color-parchment)] opacity-50 text-center max-w-[280px]">
+            ⏳ Minigame runs in the background — feel free to switch screens. Reward is banked on completion.
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // ── Active quest view (App.jsx ticks the quest; we just render state) ──────
   if (activeTask?.type === 'quest' && activeTask.quest) {
     const { quest, totalTicks } = activeTask
@@ -318,55 +372,6 @@ export default function QuestsScreen() {
   }
 
   // ── Quest list ──────────────────────────────────────────────────────────────
-  if (minigameTask) {
-    const task = minigameTask.task
-    const totalTicks = task.ticks
-    const ticksRemaining = minigameTask.ticksRemaining
-    const progress = totalTicks > 0 ? 1 - ticksRemaining / totalTicks : 0
-    const remainingSeconds = ticksRemaining * 0.6
-
-    return (
-      <div class="h-full flex flex-col p-4">
-        {/* Back button */}
-        <button
-          onClick={stopMinigame}
-          class="text-[12px] text-[#c4af7a] mb-3 flex items-center gap-1 bg-transparent border-0 cursor-pointer"
-        >
-          ← Abandon
-        </button>
-
-        <div class="flex-1 flex flex-col items-center justify-center">
-          <span class="text-[48px] mb-2">{task.icon}</span>
-          <h2 class="font-[var(--font-display)] text-[18px] font-bold text-[var(--color-gold)] mb-1 text-center">
-            {task.name}
-          </h2>
-          <p class="text-[11px] text-[var(--color-parchment)] opacity-50 mb-4 text-center">{task.description}</p>
-
-          <div class="w-full max-w-[280px] mb-4">
-            <ProgressBar value={progress} max={1} height="h-4" color="var(--color-gold)" showText />
-          </div>
-
-          <Panel padding="p-3" className="w-full max-w-[280px] mb-3 rounded-xl">
-            <div class="flex justify-between">
-              <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Reward</span>
-              <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">{ITEM_NAMES[task.product] || task.product}</span>
-            </div>
-            <div class="flex justify-between mt-2">
-              <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Time remaining</span>
-              <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">
-                {Math.ceil(remainingSeconds / 60)}m
-              </span>
-            </div>
-          </Panel>
-
-          <div class="text-[11px] text-[var(--color-parchment)] opacity-50 text-center max-w-[280px]">
-            ⏳ Minigame runs in the background — feel free to switch screens. Reward is banked on completion.
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div class="h-full flex flex-col">
       <div class="px-4 pt-4 pb-2 flex-shrink-0">

@@ -33702,6 +33702,35 @@ function QuestsScreen() {
         : sortedQuests;
     const totalQp = getQuestPointsEarned(completedQuests, questsData);
     const completedCount = completedQuests.size;
+    // Check if we have a minigame running in the background
+    const isGlobalMinigame = activeTask?.type === 'minigame';
+    const currentMinigameTask = minigameTask || (isGlobalMinigame ? { task: activeTask.minigameTask, ticksRemaining: activeTask.ticksRemaining } : null);
+    // Handle active minigame (either local or global background task)
+    if (currentMinigameTask) {
+        const task = currentMinigameTask.task;
+        const totalTicks = task.ticks;
+        const ticksRemaining = currentMinigameTask.ticksRemaining;
+        const progress = totalTicks > 0 ? 1 - ticksRemaining / totalTicks : 0;
+        const remainingSeconds = ticksRemaining * 0.6;
+        return (h("div", { class: "h-full flex flex-col p-4" },
+            h("button", { onClick: stopMinigame, class: "text-[12px] text-[#c4af7a] mb-3 flex items-center gap-1 bg-transparent border-0 cursor-pointer" }, "\u2190 Abandon"),
+            h("div", { class: "flex-1 flex flex-col items-center justify-center" },
+                h("span", { class: "text-[48px] mb-2" }, task.icon),
+                h("h2", { class: "font-[var(--font-display)] text-[18px] font-bold text-[var(--color-gold)] mb-1 text-center" }, task.name),
+                h("p", { class: "text-[11px] text-[var(--color-parchment)] opacity-50 mb-4 text-center" }, task.description),
+                h("div", { class: "w-full max-w-[280px] mb-4" },
+                    h(ProgressBar, { value: progress, max: 1, height: "h-4", color: "var(--color-gold)", showText: true })),
+                h(Panel, { padding: "p-3", className: "w-full max-w-[280px] mb-3 rounded-xl" },
+                    h("div", { class: "flex justify-between" },
+                        h("span", { class: "text-[13px] text-[var(--color-parchment)] opacity-60" }, "Reward"),
+                        h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)] font-bold" }, ITEM_NAMES[task.product] || task.product)),
+                    h("div", { class: "flex justify-between mt-2" },
+                        h("span", { class: "text-[13px] text-[var(--color-parchment)] opacity-60" }, "Time remaining"),
+                        h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)] font-bold" },
+                            Math.ceil(remainingSeconds / 60),
+                            "m"))),
+                h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-50 text-center max-w-[280px]" }, "\u23F3 Minigame runs in the background \u2014 feel free to switch screens. Reward is banked on completion."))));
+    }
     // ── Active quest view (App.jsx ticks the quest; we just render state) ──────
     if (activeTask?.type === 'quest' && activeTask.quest) {
         const { quest, totalTicks } = activeTask;
@@ -33736,31 +33765,6 @@ function QuestsScreen() {
                 h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-50 text-center max-w-[280px]" }, "\u23F3 Quests run in the background \u2014 feel free to switch screens."))));
     }
     // ── Quest list ──────────────────────────────────────────────────────────────
-    if (minigameTask) {
-        const task = minigameTask.task;
-        const totalTicks = task.ticks;
-        const ticksRemaining = minigameTask.ticksRemaining;
-        const progress = totalTicks > 0 ? 1 - ticksRemaining / totalTicks : 0;
-        const remainingSeconds = ticksRemaining * 0.6;
-        return (h("div", { class: "h-full flex flex-col p-4" },
-            h("button", { onClick: stopMinigame, class: "text-[12px] text-[#c4af7a] mb-3 flex items-center gap-1 bg-transparent border-0 cursor-pointer" }, "\u2190 Abandon"),
-            h("div", { class: "flex-1 flex flex-col items-center justify-center" },
-                h("span", { class: "text-[48px] mb-2" }, task.icon),
-                h("h2", { class: "font-[var(--font-display)] text-[18px] font-bold text-[var(--color-gold)] mb-1 text-center" }, task.name),
-                h("p", { class: "text-[11px] text-[var(--color-parchment)] opacity-50 mb-4 text-center" }, task.description),
-                h("div", { class: "w-full max-w-[280px] mb-4" },
-                    h(ProgressBar, { value: progress, max: 1, height: "h-4", color: "var(--color-gold)", showText: true })),
-                h(Panel, { padding: "p-3", className: "w-full max-w-[280px] mb-3 rounded-xl" },
-                    h("div", { class: "flex justify-between" },
-                        h("span", { class: "text-[13px] text-[var(--color-parchment)] opacity-60" }, "Reward"),
-                        h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)] font-bold" }, ITEM_NAMES[task.product] || task.product)),
-                    h("div", { class: "flex justify-between mt-2" },
-                        h("span", { class: "text-[13px] text-[var(--color-parchment)] opacity-60" }, "Time remaining"),
-                        h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)] font-bold" },
-                            Math.ceil(remainingSeconds / 60),
-                            "m"))),
-                h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-50 text-center max-w-[280px]" }, "\u23F3 Minigame runs in the background \u2014 feel free to switch screens. Reward is banked on completion."))));
-    }
     return (h("div", { class: "h-full flex flex-col" },
         h("div", { class: "px-4 pt-4 pb-2 flex-shrink-0" },
             h("div", { class: "flex justify-between items-baseline mb-2" },
@@ -34874,8 +34878,8 @@ function GameApp() {
         // Navigating away stops any active screen-bound task (skilling, gathering,
         // combat, agility, thieving) and clears the idle-engine keys so it won't
         // re-process a cancelled task. Quests and minigames run in the background — preserve them.
-        const isMinigame = activeTask?.type === 'gather' && activeTask?.gatherTask?.oneShot;
-        const shouldPreserve = activeTask?.type === 'quest' || isMinigame;
+        const isGatherMinigame = activeTask?.type === 'gather' && activeTask?.gatherTask?.oneShot;
+        const shouldPreserve = activeTask?.type === 'quest' || activeTask?.type === 'minigame' || isGatherMinigame;
         if (!shouldPreserve) {
             setActiveTask(null);
         }
