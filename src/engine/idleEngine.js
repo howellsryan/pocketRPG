@@ -571,8 +571,8 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   if (!task || !task.monster) return null
 
   const monster = task.monster
-  // All combat scenarios cannot be idle-fought; require active combat
-  return null
+  // Block boss and raid fights; allow normal monsters to idle
+  if (monster.boss === true || task.raid === true) return null
   const totalTicks = Math.floor(elapsedMs / TICK_MS)
   if (totalTicks <= 0) return null
 
