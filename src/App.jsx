@@ -15,6 +15,7 @@ import AgilityScreen from './screens/AgilityScreen.jsx'
 import GeneralStoreScreen from './screens/GeneralStoreScreen.jsx'
 import EquipmentScreen from './screens/EquipmentScreen.jsx'
 import QuestsScreen from './screens/QuestsScreen.jsx'
+import LeaderboardScreen from './screens/LeaderboardScreen.jsx'
 import AuthScreen from './screens/AuthScreen.jsx'
 import { SCREENS } from './utils/constants.js'
 import { hasSave, closeDB } from './db/database.js'
@@ -1255,10 +1256,11 @@ function GameApp() {
       case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onCombatStatusChange={setIsInCombat} />
       case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} idleResult={idleResult} />
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} />
-      case SCREENS.AGILITY:   return <AgilityScreen initialActionId={actionData?.actionId} />
-      case SCREENS.STORE:     return <GeneralStoreScreen />
-      case SCREENS.QUESTS:    return <QuestsScreen />
-      default:                return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} isCloudAccount={!!getToken() && !!getCharacterId()} />
+      case SCREENS.AGILITY:     return <AgilityScreen initialActionId={actionData?.actionId} />
+      case SCREENS.STORE:       return <GeneralStoreScreen />
+      case SCREENS.QUESTS:      return <QuestsScreen />
+      case SCREENS.LEADERBOARD: return <LeaderboardScreen />
+      default:                  return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} isCloudAccount={!!getToken() && !!getCharacterId()} />
     }
   }
 

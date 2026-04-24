@@ -1370,9 +1370,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               if (potion.effect === 'ranged') boosts.push(`+${potion.boost} Rng`)
               if (potion.effect === 'magic') boosts.push(`+${potion.boost} Mag`)
               if (potion.effect === 'combat') boosts.push(`+${potion.boost} All`)
+              const remainingTicks = combat.activePotions[potionId] || 0
+              const remainingSeconds = Math.ceil(remainingTicks * 0.6)
               return (
                 <div key={potionId} class="opacity-75">
-                  {potion.icon} {boosts.join(', ')}
+                  {potion.icon} {boosts.join(', ')} · {remainingSeconds}s
                 </div>
               )
             })}
