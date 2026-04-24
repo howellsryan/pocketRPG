@@ -1216,8 +1216,8 @@ function GameApp() {
       <BottomNav
         active={screen}
         onNavigate={(s) => navigate(s)}
-        isInBossFight={isInBossFight}
-        onDisabledClick={() => addToast('⚔️ Cannot navigate during boss fight!', 'warning')}
+        isInCombat={isInCombat}
+        onDisabledClick={() => addToast('⚔️ Cannot navigate during combat!', 'warning')}
       />
 
       {/* Idle Result Modal */}
