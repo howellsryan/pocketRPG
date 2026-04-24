@@ -124,16 +124,30 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
     const newInv = [...inventory]
 
     if (buyQty > 1) {
-      const existing = newInv.findIndex(s => s && s.itemId === selectedItem.id && s.noted)
-      if (existing !== -1) {
-        newInv[existing] = { ...newInv[existing], quantity: newInv[existing].quantity + buyQty }
-      } else {
-        const empty = newInv.indexOf(null)
-        if (empty === -1) {
-          addToast('Not enough inventory space.', 'error')
-          return
+      if (selectedItem.stackable) {
+        const existing = newInv.findIndex(s => s && s.itemId === selectedItem.id && !s.noted)
+        if (existing !== -1) {
+          newInv[existing] = { ...newInv[existing], quantity: newInv[existing].quantity + buyQty }
+        } else {
+          const empty = newInv.indexOf(null)
+          if (empty === -1) {
+            addToast('Not enough inventory space.', 'error')
+            return
+          }
+          newInv[empty] = { itemId: selectedItem.id, quantity: buyQty }
         }
-        newInv[empty] = { itemId: selectedItem.id, quantity: buyQty, noted: true }
+      } else {
+        const existing = newInv.findIndex(s => s && s.itemId === selectedItem.id && s.noted)
+        if (existing !== -1) {
+          newInv[existing] = { ...newInv[existing], quantity: newInv[existing].quantity + buyQty }
+        } else {
+          const empty = newInv.indexOf(null)
+          if (empty === -1) {
+            addToast('Not enough inventory space.', 'error')
+            return
+          }
+          newInv[empty] = { itemId: selectedItem.id, quantity: buyQty, noted: true }
+        }
       }
     } else {
       if (selectedItem.stackable) {
@@ -353,14 +367,16 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
                     max={Number.MAX_SAFE_INTEGER}
                     value={buyQty}
                     onInput={(e) => {
-                      const val = Math.max(1, Math.min(Number.MAX_SAFE_INTEGER, parseInt(e.target.value) || 1))
-                      setBuyQty(val)
+                      const parsed = parseInt(e.target.value)
+                      if (!isNaN(parsed)) {
+                        setBuyQty(Math.max(1, Math.min(Number.MAX_SAFE_INTEGER, parsed)))
+                      }
                     }}
                     class="flex-1 h-8 rounded-md bg-[#111] border border-[var(--color-void-border)] text-[var(--color-parchment)] text-[13px] font-[var(--font-mono)] text-center outline-none"
                   />
                   <Button variant="secondary" size="md" onClick={() => setBuyQty(Math.min(Number.MAX_SAFE_INTEGER, buyQty + 1))} className="w-8 h-8 p-0 flex items-center justify-center text-base">+</Button>
                 </div>
-                {buyQty > 1 && (
+                {buyQty > 1 && !selectedItem.stackable && (
                   <div class="text-[10px] text-[#888] mt-1">
                     💡 Buying {buyQty} items will be delivered as noted (stackable)
                   </div>

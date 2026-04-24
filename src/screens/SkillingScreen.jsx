@@ -23,6 +23,19 @@ const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'slayer', 'farming', 'c
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0)
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS]
 
+// Calculate remaining actions based on available materials
+function calculateRemainingActions(action, inventory, bank) {
+  if (!action.materials) return null
+  let minAvailable = Infinity
+  for (const [matId, qtyNeeded] of Object.entries(action.materials)) {
+    const invCount = countItem(inventory, matId)
+    const bankCount = bank[matId]?.quantity || 0
+    const available = Math.floor((invCount + bankCount) / qtyNeeded)
+    minAvailable = Math.min(minAvailable, available)
+  }
+  return minAvailable === Infinity ? null : minAvailable
+}
+
 export default function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
   const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, activeTask } = useGame()
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
@@ -32,6 +45,12 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   const [showAlchemyPicker, setShowAlchemyPicker] = useState(false) // Show item picker for alchemy
   const skillingRef = useRef(null)
   const hasAutoStarted = useRef(false)
+  const inventoryRef = useRef(inventory)
+  const bankRef = useRef(bank)
+
+  // Keep refs in sync with React state
+  useEffect(() => { inventoryRef.current = inventory }, [inventory])
+  useEffect(() => { bankRef.current = bank }, [bank])
 
   // If agility is selected, delegate to AgilityScreen (special screen for agility only)
   if (selectedSkill === 'agility') {
@@ -96,11 +115,11 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
         if (ev.type === 'actionComplete') {
           // Check materials and runes
           const action = ev.action
-          const newInv = [...inventory]
+          const newInv = [...inventoryRef.current]
 
           // Check and consume runes (for magic spells)
           if (action.runeReq) {
-            if (!hasRequiredRunes(action.runeReq, newInv, bank, equipment, itemsData)) {
+            if (!hasRequiredRunes(action.runeReq, newInv, bankRef.current, equipment, itemsData)) {
               skillingRef.current = { ...skillingState, active: false, stopped: true }
               setSkilling({ ...skillingState, active: false, stopped: true })
               addToast('Out of runes!', 'error')
@@ -123,7 +142,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             let hasMats = true
             for (const [matId, qty] of Object.entries(action.materials)) {
               const invCount = countItem(newInv, matId)
-              const bankCount = bank[matId]?.quantity || 0
+              const bankCount = bankRef.current[matId]?.quantity || 0
               if (invCount + bankCount < qty) { hasMats = false; break }
             }
             if (!hasMats) {
@@ -140,8 +159,30 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
               const fromBank = qty - fromInv
               if (fromInv > 0) removeItem(newInv, matId, fromInv)
               if (fromBank > 0) bankUpdates[matId] = -fromBank
+              // Track consumed materials
+              skillingState.consumedMaterials[matId] = (skillingState.consumedMaterials[matId] || 0) + qty
             }
             if (Object.keys(bankUpdates).length > 0) updateBankDirect(bankUpdates)
+
+            // After consuming, check if we can do ANOTHER action
+            let canContinue = true
+            for (const [matId, qtyNeeded] of Object.entries(action.materials)) {
+              const invCount = countItem(newInv, matId)
+              const bankCount = bankRef.current[matId]?.quantity || 0
+              const totalConsumed = skillingState.consumedMaterials[matId] || 0
+              const totalAvailable = inventoryRef.current.reduce((sum, slot) => sum + (slot?.itemId === matId ? (slot?.quantity || 0) : 0), 0) + (bankRef.current[matId]?.quantity || 0)
+              const projectedAfterConsume = totalAvailable - totalConsumed - qtyNeeded
+              if (projectedAfterConsume < 0) {
+                canContinue = false
+                break
+              }
+            }
+            if (!canContinue) {
+              skillingRef.current = { ...skillingState, active: false, stopped: true }
+              setSkilling({ ...skillingState, active: false, stopped: true })
+              addToast('Out of materials!', 'error')
+              return
+            }
           }
 
           // Handle cooking burn
@@ -362,7 +403,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                 key={action.id}
                 onClick={() => canStart && startSkilling(action)}
                 disabled={!canStart}
-                class={`flex items-center justify-between p-3 rounded-xl border transition-colors
+                class={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors
                   ${canStart
                     ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
                     : 'bg-[#111] border-[#1a1a1a] opacity-40'}`}
@@ -373,6 +414,10 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                     Lv {action.level} · {action.xp} XP · {toolMult < 1.0
                       ? <><span class="line-through">{(action.ticks * 0.6).toFixed(1)}s</span> <span class="text-[var(--color-gold)] opacity-100">{(Math.max(1, Math.floor(action.ticks * toolMult)) * 0.6).toFixed(1)}s</span></>
                       : `${(action.ticks * 0.6).toFixed(1)}s`}
+                    {(() => {
+                      const remaining = calculateRemainingActions(action, inventory, bank)
+                      return remaining !== null ? <span class="text-[var(--color-gold)]"> · {remaining.toLocaleString()} actions</span> : null
+                    })()}
                     {action.materials && (
                       <span> · Needs: {Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>
                     )}
