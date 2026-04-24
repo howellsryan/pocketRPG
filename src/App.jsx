@@ -778,8 +778,8 @@ function GameApp() {
     // Navigating away stops any active screen-bound task (skilling, gathering,
     // combat, agility, thieving) and clears the idle-engine keys so it won't
     // re-process a cancelled task. Quests and minigames run in the background — preserve them.
-    const isMinigame = activeTask?.type === 'gather' && activeTask?.gatherTask?.oneShot
-    const shouldPreserve = activeTask?.type === 'quest' || isMinigame
+    const isGatherMinigame = activeTask?.type === 'gather' && activeTask?.gatherTask?.oneShot
+    const shouldPreserve = activeTask?.type === 'quest' || activeTask?.type === 'minigame' || isGatherMinigame
     if (!shouldPreserve) {
       setActiveTask(null)
     }

@@ -7,7 +7,7 @@ import SkillBadge from '../components/SkillBadge.jsx'
 import { useState } from 'preact/hooks'
 import Modal from '../components/Modal.jsx'
 
-function SkillGroup({ title, skills, stats, onSelect }) {
+function StatsSkillGroup({ title, skills, stats, onSelect }) {
   return (
     <div class="mb-4">
       <h3 class="text-[10px] font-bold text-[var(--color-parchment)] opacity-40 uppercase tracking-widest mb-1.5">
@@ -55,10 +55,10 @@ export default function StatsScreen() {
         </span>
       </div>
 
-      <SkillGroup title="Combat" skills={COMBAT_SKILLS} stats={stats} onSelect={setSelectedSkill} />
-      <SkillGroup title="Gathering" skills={GATHERING_SKILLS} stats={stats} onSelect={setSelectedSkill} />
-      <SkillGroup title="Production" skills={PRODUCTION_SKILLS} stats={stats} onSelect={setSelectedSkill} />
-      <SkillGroup title="Utility" skills={UTILITY_SKILLS} stats={stats} onSelect={setSelectedSkill} />
+      <StatsSkillGroup title="Combat" skills={COMBAT_SKILLS} stats={stats} onSelect={setSelectedSkill} />
+      <StatsSkillGroup title="Gathering" skills={GATHERING_SKILLS} stats={stats} onSelect={setSelectedSkill} />
+      <StatsSkillGroup title="Production" skills={PRODUCTION_SKILLS} stats={stats} onSelect={setSelectedSkill} />
+      <StatsSkillGroup title="Utility" skills={UTILITY_SKILLS} stats={stats} onSelect={setSelectedSkill} />
 
       {/* Skill detail modal */}
       {selectedSkill && selected && (

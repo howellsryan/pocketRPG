@@ -2,7 +2,6 @@ import { SCREENS } from '../utils/constants.js'
 
 const tabs = [
   { id: SCREENS.HOME,      label: 'Home',    icon: '🏠' },
-  { id: SCREENS.STATS,     label: 'Stats',   icon: '📊' },
   { id: SCREENS.INVENTORY, label: 'Items',   icon: '🎒' },
   { id: SCREENS.EQUIPMENT, label: 'Equip',   icon: '🛡️' },
   { id: SCREENS.BANK,      label: 'Bank',    icon: '🏦' },
