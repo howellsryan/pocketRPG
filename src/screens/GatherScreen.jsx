@@ -508,8 +508,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
             const hasMats = !task.materials || Object.entries(task.materials).every(
               ([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty
             )
-            const invFull = freeSlots(inventory) === 0
-            const enabled = hasMats && !invFull
+            const enabled = hasMats
             const rowClass = enabled
               ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
               : 'bg-[#111] border-[#1a1a1a] opacity-45'
