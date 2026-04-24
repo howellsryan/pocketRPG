@@ -800,6 +800,12 @@ function GameApp() {
       return
     }
 
+    // Check if there's an active task — prevent wasting credits
+    if (!activeTaskRef.current) {
+      addToast('Nothing to skip — start a task first!', 'error')
+      return
+    }
+
     try {
       // Call server to validate credit and deduct atomically
       const result = await api.skipHour()
