@@ -29,6 +29,35 @@ import { simulateIdleThieving } from './engine/thieving.js'
 import { simulateIdleQuest, createQuestState } from './engine/quests.js'
 import { getLevelFromXP } from './engine/experience.js'
 
+// ── Clock-rollback watermark ────────────────────────────────────────────────
+// We persist the highest Date.now() we've ever observed. If the device clock
+// later reports a value below the watermark, the user rolled it backwards —
+// we cap the elapsed-idle window to zero in that case. This is a best-effort
+// offline-only defence; cloud-connected users get stronger protection via the
+// server-stamped (serverNow - lastActiveAt) anchor returned by /api/idle.
+const CLOCK_WATERMARK_KEY = 'pocketrpg_maxObservedAt'
+
+function readMaxObservedAt() {
+  const raw = localStorage.getItem(CLOCK_WATERMARK_KEY)
+  const n = raw ? parseInt(raw, 10) : 0
+  return Number.isFinite(n) ? n : 0
+}
+
+function updateMaxObservedAt(now) {
+  const prev = readMaxObservedAt()
+  if (now > prev) localStorage.setItem(CLOCK_WATERMARK_KEY, String(now))
+}
+
+// If the wall clock currently reads less than the highest value we've seen,
+// the user moved their device clock backwards — elapsed calculations that
+// depend on Date.now() can't be trusted, so collapse them to zero.
+function clampByClockWatermark(elapsedMs) {
+  if (elapsedMs <= 0) return 0
+  const watermark = readMaxObservedAt()
+  if (watermark > 0 && Date.now() < watermark) return 0
+  return elapsedMs
+}
+
 function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints, completeQuest, questQueue, removeFromQuestQueue, updateQuestQueue } = useGame()
   const [screen, setScreen] = useState(SCREENS.HOME)
@@ -170,7 +199,9 @@ function GameApp() {
   useEffect(() => {
     if (gameReady) {
       // Immediately stamp lastTick so idle engine has a baseline if user closes tab
-      localStorage.setItem('pocketrpg_lastTick', String(Date.now()))
+      const bootNow = Date.now()
+      localStorage.setItem('pocketrpg_lastTick', String(bootNow))
+      updateMaxObservedAt(bootNow)
       // Do an immediate snapshot so localStorage backup exists from the start
       const snap = getSnapshot()
       if (snap.player) {
@@ -206,6 +237,10 @@ function GameApp() {
         const now = Date.now()
         hiddenAtPerfRef.current = performance.now() // monotonic — not affected by clock changes
         localStorage.setItem('pocketrpg_hiddenAt', String(now))
+        // Bump the clock-rollback watermark — if the user advances the system
+        // clock, hides the tab, then rolls it back, we'll catch the negative
+        // delta on return and clamp elapsed to 0.
+        updateMaxObservedAt(now)
         localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
         // Flush any pending cloud push before the tab gets suspended.
         try { pushNow(getSnapshot()) } catch (e) { /* non-fatal */ }
@@ -226,25 +261,36 @@ function GameApp() {
           // edge cases where another session may have changed the task.
           let savedTask = localSavedTask
           let cloudLastActiveAt = null
+          let cloudServerNow = null
           try {
             const cloudIdle = await fetchIdleState()
             if (cloudIdle) {
               if (cloudIdle.activeTask !== undefined) savedTask = cloudIdle.activeTask
               cloudLastActiveAt = cloudIdle.lastActiveAt || null
+              cloudServerNow = cloudIdle.serverNow || null
             }
           } catch (e) { /* fall back to local */ }
           let elapsedMs
           if (hiddenAtPerfRef.current !== null && perfNow >= hiddenAtPerfRef.current) {
             // Same session: use monotonic clock — immune to system time changes
             elapsedMs = Math.floor(perfNow - hiddenAtPerfRef.current)
+          } else if (cloudServerNow && cloudLastActiveAt) {
+            // New session + cloud: both endpoints are server-stamped so this
+            // elapsed is immune to the user changing their device clock.
+            elapsedMs = Math.min(Math.max(0, cloudServerNow - cloudLastActiveAt), 24 * 60 * 60 * 1000)
           } else if (cloudLastActiveAt) {
-            // New session, cloud knows when we last checked in — server-stamped
-            // timestamp is immune to local clock manipulation within the
-            // accuracy of the client's Date.now(). Still cap at 24h.
-            elapsedMs = Math.min(Date.now() - cloudLastActiveAt, 24 * 60 * 60 * 1000)
+            // Cloud knows lastActiveAt but didn't return serverNow (older
+            // deployment). We still prefer the server-stamped anchor, but the
+            // endpoint (Date.now()) is client-controlled — cross-check against
+            // the clock-rollback watermark before trusting it.
+            elapsedMs = Math.min(Math.max(0, Date.now() - cloudLastActiveAt), 24 * 60 * 60 * 1000)
+            elapsedMs = clampByClockWatermark(elapsedMs)
           } else {
-            // No cloud state — fall back to wall-clock, capped at 24h
-            elapsedMs = Math.min(Date.now() - hiddenAt, 24 * 60 * 60 * 1000)
+            // No cloud state — wall-clock only. Clamp against our max-observed
+            // watermark so a player who rolls the device clock backwards can't
+            // resurrect old progress, then cap at 24h.
+            elapsedMs = Math.min(Math.max(0, Date.now() - hiddenAt), 24 * 60 * 60 * 1000)
+            elapsedMs = clampByClockWatermark(elapsedMs)
           }
           hiddenAtPerfRef.current = null
           if (elapsedMs < 2000) return
@@ -487,7 +533,9 @@ function GameApp() {
     // beforeunload: safety net for mobile browsers where visibilitychange
     // doesn't fire reliably before a hard close (iOS Safari, Android Chrome)
     const handleBeforeUnload = () => {
-      localStorage.setItem('pocketrpg_hiddenAt', String(Date.now()))
+      const now = Date.now()
+      localStorage.setItem('pocketrpg_hiddenAt', String(now))
+      updateMaxObservedAt(now)
       localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
       try { pushNow(getSnapshot()) } catch { /* non-fatal */ }
       // sendBeacon survives tab-close where a regular fetch would be killed.
@@ -509,6 +557,10 @@ function GameApp() {
       // Sync localStorage stamp — completes in same call stack, safe from iOS freeze
       const now = Date.now()
       localStorage.setItem('pocketrpg_lastTick', String(now))
+      // Bump the max-observed-wall-clock watermark every tick. On return from a
+      // suspended tab we compare Date.now() against this; if it dropped, the
+      // device clock rolled backwards and we can't trust idle elapsed math.
+      updateMaxObservedAt(now)
       if (activeTaskRef.current) {
         localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
       }

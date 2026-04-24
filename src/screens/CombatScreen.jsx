@@ -7,7 +7,7 @@ import { getLevelFromXP } from '../engine/experience.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
-import { getCombatType, equipItem } from '../engine/equipment.js'
+import { getCombatType, equipItem, checkEquipRequirements } from '../engine/equipment.js'
 import { api, clearAuth, getToken, setLocalCharacterId } from '../cloud/api.js'
 import { closeDB } from '../db/database.js'
 import { wipeLocalSave } from '../db/saveload.js'
@@ -848,8 +848,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     const itemData = itemsData[itemId]
     if (!itemData || !itemData.slot) return
 
-    if (itemData.questUnlock && !completedQuests.has(itemData.questUnlock)) {
-      addToast(`Complete quest to equip: ${itemData.questUnlock.replace(/_/g, ' ')}`, 'error')
+    // Combat gear tab must enforce the same level/quest gates as the inventory
+    // screen — otherwise the player can swap into mid-combat gear they haven't
+    // unlocked (e.g. a Dragon scimitar at Attack 1).
+    const reqError = checkEquipRequirements(itemData, statsRef.current, completedQuests)
+    if (reqError) {
+      if (reqError.reason === 'quest') {
+        addToast(`Complete quest to equip: ${reqError.questUnlock.replace(/_/g, ' ')}`, 'error')
+      } else {
+        addToast(`Need ${reqError.skill} level ${reqError.required} to equip`, 'error')
+      }
       return
     }
 

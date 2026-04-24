@@ -23357,6 +23357,32 @@ function getPotionBonus(potionType, baseLevel) {
 
 // ── engine/equipment.js ──
 
+
+/**
+ * Validate that the player meets an item's equip requirements.
+ * Returns null if OK, or a { reason, ... } descriptor so callers can show a
+ * precise toast. Keeping this in the engine makes every equip path (inventory
+ * screen, combat screen gear tab, any future UI) share the same gate — no
+ * screen can forget to check and let the player equip gear they haven't
+ * earned.
+ *
+ *   reason === 'quest' → { reason, questUnlock }
+ *   reason === 'skill' → { reason, skill, required, current }
+ */
+function checkEquipRequirements(itemData, stats, completedQuests) {
+    if (itemData?.questUnlock && !(completedQuests && completedQuests.has && completedQuests.has(itemData.questUnlock))) {
+        return { reason: 'quest', questUnlock: itemData.questUnlock };
+    }
+    if (itemData?.requirements) {
+        for (const [skill, level] of Object.entries(itemData.requirements)) {
+            const playerLevel = stats && stats[skill] ? getLevelFromXP(stats[skill].xp) : 1;
+            if (playerLevel < level) {
+                return { reason: 'skill', skill, required: level, current: playerLevel };
+            }
+        }
+    }
+    return null;
+}
 /**
  * Create empty equipment set
  */
@@ -26790,6 +26816,10 @@ async function wipeLocalSave() {
     localStorage.removeItem('pocketrpg_lastTick');
     localStorage.removeItem('pocketrpg_activeTask');
     localStorage.removeItem('pocketrpg_hiddenAt');
+    // Reset the clock-rollback watermark on character switch so the new
+    // character doesn't inherit a future-looking timestamp from the previous
+    // one (which would perpetually flag legitimate progress as rolled-back).
+    localStorage.removeItem('pocketrpg_maxObservedAt');
 }
 // ─────────────────────────────────────────────────────────────────────────────
 // Public API
@@ -27015,16 +27045,26 @@ function canUseCloud() {
     return !!getToken() && !!getCharacterId();
 }
 // Read the authoritative idle state from D1.
-// Returns { lastActiveAt, activeTask } or null when no row exists / offline /
-// the request times out. Always resolves within FETCH_TIMEOUT_MS so the boot
-// loader can't get trapped here.
+// Returns { lastActiveAt, activeTask, serverNow } or null when no row exists /
+// offline / the request times out. Always resolves within FETCH_TIMEOUT_MS so
+// the boot loader can't get trapped here. `serverNow` is the worker's
+// Date.now() at response time — callers should prefer it over the local
+// wall clock when computing elapsed idle time, since the local clock is
+// user-manipulable.
 async function fetchIdleState() {
     if (!canUseCloud())
         return null;
     const res = await withTimeout(api.getIdle(), FETCH_TIMEOUT_MS, null);
-    if (!res || !res.idle)
+    if (!res)
         return null;
-    return { lastActiveAt: res.idle.lastActiveAt, activeTask: res.idle.activeTask ?? null };
+    const serverNow = typeof res.serverNow === 'number' ? res.serverNow : null;
+    if (!res.idle)
+        return serverNow ? { lastActiveAt: null, activeTask: null, serverNow } : null;
+    return {
+        lastActiveAt: res.idle.lastActiveAt,
+        activeTask: res.idle.activeTask ?? null,
+        serverNow,
+    };
 }
 // Write the current active task to D1. Server stamps last_active_at with its
 // own clock — the `task` argument just controls what task JSON is stored.
@@ -28460,20 +28500,16 @@ function InventoryScreen() {
         if (!selected)
             return;
         const { slotIndex, item } = selected;
-        if (item.questUnlock && !completedQuests.has(item.questUnlock)) {
-            addToast(`Complete quest to equip: ${item.questUnlock.replace(/_/g, ' ')}`, 'error');
+        const reqError = checkEquipRequirements(item, stats, completedQuests);
+        if (reqError) {
+            if (reqError.reason === 'quest') {
+                addToast(`Complete quest to equip: ${reqError.questUnlock.replace(/_/g, ' ')}`, 'error');
+            }
+            else {
+                addToast(`Need ${reqError.skill} level ${reqError.required} to equip`, 'error');
+            }
             setSelected(null);
             return;
-        }
-        if (item.requirements) {
-            for (const [skill, level] of Object.entries(item.requirements)) {
-                const playerLevel = stats[skill] ? getLevelFromXP(stats[skill].xp) : 1;
-                if (playerLevel < level) {
-                    addToast(`Need ${skill} level ${level} to equip`, 'error');
-                    setSelected(null);
-                    return;
-                }
-            }
         }
         const newEquip = { ...equipment };
         const newInv = [...inventory];
@@ -28663,13 +28699,15 @@ function InventoryScreen() {
             setSelected(null);
         }
         else {
-            // Non-stackable: deposit qty of same itemId across inventory
+            // Non-stackable: deposit qty of same itemId (non-noted only — the user
+            // clicked a non-noted slot). Matching on itemId alone would also null
+            // out any noted stack with the same id, wiping that stack's quantity.
             const depositQty = qty || 1;
             const newBank = { ...bank };
             const newInv = [...inventory];
             let deposited = 0;
             for (let i = 0; i < newInv.length && deposited < depositQty; i++) {
-                if (newInv[i] && newInv[i].itemId === slot.itemId) {
+                if (newInv[i] && newInv[i].itemId === slot.itemId && !newInv[i].noted) {
                     newInv[i] = null;
                     deposited++;
                 }
@@ -28698,6 +28736,8 @@ function InventoryScreen() {
         if (!selected)
             return;
         const { slot, item } = selected;
+        // Noted items can't be used but can still be sold at the underlying item's
+        // shop value. The price lookup is the same for both forms.
         const price = item.shopValue || 0;
         if (price <= 0) {
             addToast('This item has no value', 'error');
@@ -28705,9 +28745,14 @@ function InventoryScreen() {
             return;
         }
         const newInv = [...inventory];
+        // Match the exact form the user interacted with. Without this, selling a
+        // noted stack could drain the non-noted slot (or vice-versa), duplicating
+        // value because both forms share itemId but noted stacks hold many more
+        // units per slot than non-noted ones.
+        const isNoted = !!slot.noted;
         if (item.stackable || slot.noted) {
             const actualQty = Math.min(qty, slot.quantity);
-            const idx = newInv.findIndex(s => s && s.itemId === slot.itemId);
+            const idx = newInv.findIndex(s => s && s.itemId === slot.itemId && !!s.noted === isNoted);
             if (idx === -1)
                 return;
             if (newInv[idx].quantity <= actualQty) {
@@ -28731,11 +28776,11 @@ function InventoryScreen() {
             addToast(`Sold ${actualQty} × ${item.name} for ${totalGold} gp`, 'info');
         }
         else {
-            // Non-stackable: sell qty across inventory
+            // Non-stackable: sell qty across inventory (only from the same noted form)
             const sellQty = qty || 1;
             let sold = 0;
             for (let i = 0; i < newInv.length && sold < sellQty; i++) {
-                if (newInv[i] && newInv[i].itemId === slot.itemId) {
+                if (newInv[i] && newInv[i].itemId === slot.itemId && !!newInv[i].noted === isNoted) {
                     newInv[i] = null;
                     sold++;
                 }
@@ -30255,8 +30300,17 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
         const itemData = itemsData[itemId];
         if (!itemData || !itemData.slot)
             return;
-        if (itemData.questUnlock && !completedQuests.has(itemData.questUnlock)) {
-            addToast(`Complete quest to equip: ${itemData.questUnlock.replace(/_/g, ' ')}`, 'error');
+        // Combat gear tab must enforce the same level/quest gates as the inventory
+        // screen — otherwise the player can swap into mid-combat gear they haven't
+        // unlocked (e.g. a Dragon scimitar at Attack 1).
+        const reqError = checkEquipRequirements(itemData, statsRef.current, completedQuests);
+        if (reqError) {
+            if (reqError.reason === 'quest') {
+                addToast(`Complete quest to equip: ${reqError.questUnlock.replace(/_/g, ' ')}`, 'error');
+            }
+            else {
+                addToast(`Need ${reqError.skill} level ${reqError.required} to equip`, 'error');
+            }
             return;
         }
         // Copy equipment to avoid mutating ref directly
@@ -34005,6 +34059,34 @@ const errorText = { color: '#ff6b6b', fontSize: '12px', marginTop: '12px', textA
 
 
 
+// ── Clock-rollback watermark ────────────────────────────────────────────────
+// We persist the highest Date.now() we've ever observed. If the device clock
+// later reports a value below the watermark, the user rolled it backwards —
+// we cap the elapsed-idle window to zero in that case. This is a best-effort
+// offline-only defence; cloud-connected users get stronger protection via the
+// server-stamped (serverNow - lastActiveAt) anchor returned by /api/idle.
+const CLOCK_WATERMARK_KEY = 'pocketrpg_maxObservedAt';
+function readMaxObservedAt() {
+    const raw = localStorage.getItem(CLOCK_WATERMARK_KEY);
+    const n = raw ? parseInt(raw, 10) : 0;
+    return Number.isFinite(n) ? n : 0;
+}
+function updateMaxObservedAt(now) {
+    const prev = readMaxObservedAt();
+    if (now > prev)
+        localStorage.setItem(CLOCK_WATERMARK_KEY, String(now));
+}
+// If the wall clock currently reads less than the highest value we've seen,
+// the user moved their device clock backwards — elapsed calculations that
+// depend on Date.now() can't be trusted, so collapse them to zero.
+function clampByClockWatermark(elapsedMs) {
+    if (elapsedMs <= 0)
+        return 0;
+    const watermark = readMaxObservedAt();
+    if (watermark > 0 && Date.now() < watermark)
+        return 0;
+    return elapsedMs;
+}
 function GameApp() {
     const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints, completeQuest, questQueue, removeFromQuestQueue, updateQuestQueue } = useGame();
     const [screen, setScreen] = useState(SCREENS.HOME);
@@ -34147,7 +34229,9 @@ function GameApp() {
     useEffect(() => {
         if (gameReady) {
             // Immediately stamp lastTick so idle engine has a baseline if user closes tab
-            localStorage.setItem('pocketrpg_lastTick', String(Date.now()));
+            const bootNow = Date.now();
+            localStorage.setItem('pocketrpg_lastTick', String(bootNow));
+            updateMaxObservedAt(bootNow);
             // Do an immediate snapshot so localStorage backup exists from the start
             const snap = getSnapshot();
             if (snap.player) {
@@ -34180,6 +34264,10 @@ function GameApp() {
                 const now = Date.now();
                 hiddenAtPerfRef.current = performance.now(); // monotonic — not affected by clock changes
                 localStorage.setItem('pocketrpg_hiddenAt', String(now));
+                // Bump the clock-rollback watermark — if the user advances the system
+                // clock, hides the tab, then rolls it back, we'll catch the negative
+                // delta on return and clamp elapsed to 0.
+                updateMaxObservedAt(now);
                 localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current));
                 // Flush any pending cloud push before the tab gets suspended.
                 try {
@@ -34213,12 +34301,14 @@ function GameApp() {
                     // edge cases where another session may have changed the task.
                     let savedTask = localSavedTask;
                     let cloudLastActiveAt = null;
+                    let cloudServerNow = null;
                     try {
                         const cloudIdle = await fetchIdleState();
                         if (cloudIdle) {
                             if (cloudIdle.activeTask !== undefined)
                                 savedTask = cloudIdle.activeTask;
                             cloudLastActiveAt = cloudIdle.lastActiveAt || null;
+                            cloudServerNow = cloudIdle.serverNow || null;
                         }
                     }
                     catch (e) { /* fall back to local */ }
@@ -34227,15 +34317,25 @@ function GameApp() {
                         // Same session: use monotonic clock — immune to system time changes
                         elapsedMs = Math.floor(perfNow - hiddenAtPerfRef.current);
                     }
+                    else if (cloudServerNow && cloudLastActiveAt) {
+                        // New session + cloud: both endpoints are server-stamped so this
+                        // elapsed is immune to the user changing their device clock.
+                        elapsedMs = Math.min(Math.max(0, cloudServerNow - cloudLastActiveAt), 24 * 60 * 60 * 1000);
+                    }
                     else if (cloudLastActiveAt) {
-                        // New session, cloud knows when we last checked in — server-stamped
-                        // timestamp is immune to local clock manipulation within the
-                        // accuracy of the client's Date.now(). Still cap at 24h.
-                        elapsedMs = Math.min(Date.now() - cloudLastActiveAt, 24 * 60 * 60 * 1000);
+                        // Cloud knows lastActiveAt but didn't return serverNow (older
+                        // deployment). We still prefer the server-stamped anchor, but the
+                        // endpoint (Date.now()) is client-controlled — cross-check against
+                        // the clock-rollback watermark before trusting it.
+                        elapsedMs = Math.min(Math.max(0, Date.now() - cloudLastActiveAt), 24 * 60 * 60 * 1000);
+                        elapsedMs = clampByClockWatermark(elapsedMs);
                     }
                     else {
-                        // No cloud state — fall back to wall-clock, capped at 24h
-                        elapsedMs = Math.min(Date.now() - hiddenAt, 24 * 60 * 60 * 1000);
+                        // No cloud state — wall-clock only. Clamp against our max-observed
+                        // watermark so a player who rolls the device clock backwards can't
+                        // resurrect old progress, then cap at 24h.
+                        elapsedMs = Math.min(Math.max(0, Date.now() - hiddenAt), 24 * 60 * 60 * 1000);
+                        elapsedMs = clampByClockWatermark(elapsedMs);
                     }
                     hiddenAtPerfRef.current = null;
                     if (elapsedMs < 2000)
@@ -34480,7 +34580,9 @@ function GameApp() {
         // beforeunload: safety net for mobile browsers where visibilitychange
         // doesn't fire reliably before a hard close (iOS Safari, Android Chrome)
         const handleBeforeUnload = () => {
-            localStorage.setItem('pocketrpg_hiddenAt', String(Date.now()));
+            const now = Date.now();
+            localStorage.setItem('pocketrpg_hiddenAt', String(now));
+            updateMaxObservedAt(now);
             localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current));
             try {
                 pushNow(getSnapshot());
@@ -34507,6 +34609,10 @@ function GameApp() {
             // Sync localStorage stamp — completes in same call stack, safe from iOS freeze
             const now = Date.now();
             localStorage.setItem('pocketrpg_lastTick', String(now));
+            // Bump the max-observed-wall-clock watermark every tick. On return from a
+            // suspended tab we compare Date.now() against this; if it dropped, the
+            // device clock rolled backwards and we can't trust idle elapsed math.
+            updateMaxObservedAt(now);
             if (activeTaskRef.current) {
                 localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current));
             }

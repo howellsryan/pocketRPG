@@ -30,14 +30,23 @@ function canUseCloud() {
 }
 
 // Read the authoritative idle state from D1.
-// Returns { lastActiveAt, activeTask } or null when no row exists / offline /
-// the request times out. Always resolves within FETCH_TIMEOUT_MS so the boot
-// loader can't get trapped here.
+// Returns { lastActiveAt, activeTask, serverNow } or null when no row exists /
+// offline / the request times out. Always resolves within FETCH_TIMEOUT_MS so
+// the boot loader can't get trapped here. `serverNow` is the worker's
+// Date.now() at response time — callers should prefer it over the local
+// wall clock when computing elapsed idle time, since the local clock is
+// user-manipulable.
 export async function fetchIdleState() {
   if (!canUseCloud()) return null
   const res = await withTimeout(api.getIdle(), FETCH_TIMEOUT_MS, null)
-  if (!res || !res.idle) return null
-  return { lastActiveAt: res.idle.lastActiveAt, activeTask: res.idle.activeTask ?? null }
+  if (!res) return null
+  const serverNow = typeof res.serverNow === 'number' ? res.serverNow : null
+  if (!res.idle) return serverNow ? { lastActiveAt: null, activeTask: null, serverNow } : null
+  return {
+    lastActiveAt: res.idle.lastActiveAt,
+    activeTask: res.idle.activeTask ?? null,
+    serverNow,
+  }
 }
 
 // Write the current active task to D1. Server stamps last_active_at with its
