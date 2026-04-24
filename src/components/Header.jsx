@@ -1,45 +1,43 @@
 import { useGame } from '../state/gameState.jsx'
-import { calcCombatLevel } from '../utils/helpers.js'
-import { getLevelFromXP } from '../engine/experience.js'
 
-export default function Header({ activity }) {
-  const { player, stats, currentHP, getMaxHP } = useGame()
+export default function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null }) {
+  const { player, currentHP, getMaxHP } = useGame()
   if (!player) return null
 
   const maxHP = getMaxHP()
   const hpPct = maxHP > 0 ? (currentHP / maxHP) * 100 : 0
   const hpColor = hpPct > 50 ? 'var(--color-hp-green)' : hpPct > 25 ? 'var(--color-hp-yellow)' : 'var(--color-hp-red)'
 
-  const levels = {}
-  for (const [skill, data] of Object.entries(stats)) {
-    levels[skill] = data.level || getLevelFromXP(data.xp)
+  const handleSkip = () => {
+    if (onSkip1h) onSkip1h()
   }
-  const combatLevel = calcCombatLevel({
-    attack: levels.attack || 1,
-    strength: levels.strength || 1,
-    defence: levels.defence || 1,
-    hitpoints: levels.hitpoints || 10,
-    prayer: levels.prayer || 1,
-    ranged: levels.ranged || 1,
-    magic: levels.magic || 1
-  })
-
-  const totalLevel = Object.values(levels).reduce((s, l) => s + l, 0)
 
   return (
     <header class="flex-shrink-0 bg-[#111] border-b border-[#333] px-3 py-2">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2 min-w-0">
-          <span class="font-[var(--font-display)] text-sm font-bold text-[var(--color-gold)] truncate">
-            {player.name}
-          </span>
-          <span class="text-[10px] text-[var(--color-parchment)] opacity-60 whitespace-nowrap">
-            CB {combatLevel} · Total {totalLevel}
-          </span>
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <button
+            onClick={handleSkip}
+            class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1a2a1a] border border-[#3a5a3a] hover:border-[#5a8a5a] transition-colors text-[10px] font-semibold text-[var(--color-parchment)] whitespace-nowrap"
+            title="Skip 1 hour (requires 1 credit)"
+          >
+            <span>⏭️</span>
+            <span>Skip 1h</span>
+          </button>
         </div>
 
+        {/* Credits pill — cloud accounts only */}
+        {isCloudAccount && (
+          <div class="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#1a1030] border border-[#5a2a7a] whitespace-nowrap">
+            <span class="text-[10px]">💎</span>
+            <span class="text-[10px] font-[var(--font-mono)] font-bold text-[#e879f9]">
+              Credits: {credits.toLocaleString()}
+            </span>
+          </div>
+        )}
+
         {/* HP bar */}
-        <div class="flex items-center gap-1.5 ml-2">
+        <div class="flex items-center gap-1.5">
           <span class="text-xs">❤️</span>
           <div class="w-20 h-3 bg-[#222] rounded-full overflow-hidden border border-[#444]">
             <div

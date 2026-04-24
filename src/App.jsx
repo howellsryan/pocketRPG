@@ -20,7 +20,7 @@ import { hasSave, closeDB } from './db/database.js'
 import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
 import { startTicks, stopTicks, onTick } from './engine/tick.js'
 import { snapshotToLocalStorage, restoreFromLocalStorage, wipeLocalSave } from './db/saveload.js'
-import { captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode } from './cloud/api.js'
+import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode } from './cloud/api.js'
 import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState } from './cloud/sync.js'
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
@@ -43,6 +43,13 @@ function GameApp() {
   const [offlineIsIronman, setOfflineIsIronman] = useState(false)
   const [offlineIsOneLife, setOfflineIsOneLife] = useState(false)
   const [offlineCreating, setOfflineCreating] = useState(false)
+  const [removeAds, setRemoveAds] = useState(false)
+  const [identityId, setIdentityId] = useState(null)
+  const [stripeLinks, setStripeLinks] = useState({})
+  const [credits, setCredits] = useState(0)
+  // Set on mount if Stripe redirected back with a payment query/path — drives the
+  // post-checkout thank-you toast + credits refresh once the game is ready.
+  const paymentReturnRef = useRef(false)
 
   // Refs for tick-based systems
   const hpRegenCounter = useRef(0)
@@ -115,8 +122,48 @@ function GameApp() {
   }
 
   useEffect(() => {
+    // Detect Stripe post-checkout redirect (path or query contains "payment")
+    // and strip it from the URL before routing decisions run.
+    try {
+      const url = new URL(window.location.href)
+      const pathHit = /\/payment\b/i.test(url.pathname)
+      const queryHit = url.searchParams.has('payment') || /(^|[?&])payment(=|&|$)/i.test(url.search)
+      if (pathHit || queryHit) {
+        paymentReturnRef.current = true
+        url.searchParams.delete('payment')
+        const cleanPath = url.pathname.replace(/\/payment\/?$/i, '/') || '/'
+        history.replaceState(null, '', cleanPath + (url.searchParams.toString() ? `?${url.searchParams}` : '') + url.hash)
+      }
+    } catch { /* non-fatal */ }
     initCloudAndSave()
   }, [])
+
+  // Refresh /me — used after a Stripe purchase so the credit balance reflects
+  // whatever the webhook has added to the character row.
+  async function refreshMe() {
+    try {
+      const meData = await api.me()
+      if (meData?.identity) {
+        setRemoveAds(meData.identity.remove_ads === true)
+        setIdentityId(meData.identity.id)
+      }
+      if (meData?.stripe_links) setStripeLinks(meData.stripe_links)
+      if (meData?.character) setCredits(meData.character.credits ?? 0)
+    } catch { /* non-fatal */ }
+  }
+
+  // Once the game is ready and a payment redirect was detected, show the
+  // thank-you toast and re-pull credits a couple of times to ride out webhook
+  // latency between Stripe and our worker.
+  useEffect(() => {
+    if (!gameReady || !paymentReturnRef.current) return
+    paymentReturnRef.current = false
+    addToast('Thank you for your purchase!', 'levelup', '🎉')
+    refreshMe()
+    const t1 = setTimeout(refreshMe, 3000)
+    const t2 = setTimeout(refreshMe, 8000)
+    return () => { clearTimeout(t1); clearTimeout(t2) }
+  }, [gameReady])
 
   useEffect(() => {
     if (gameReady) {
@@ -235,12 +282,26 @@ function GameApp() {
           ])
 
           let sim = null
-          if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
-          if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current)
-          if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank)
-          if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
-          if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
-          if (savedTask.type === 'quest') sim = simulateIdleQuest(savedTask, elapsedMs)
+          // OneShot minigames — reduce remaining time while away; complete if timer reached 0.
+          if (savedTask.type === 'gather' && savedTask.gatherTask?.oneShot) {
+            const elapsedTicks = Math.floor(elapsedMs / 600)
+            const totalTicks = savedTask.totalTicks ?? savedTask.gatherTask.ticks
+            const prevRemaining = savedTask.ticksRemaining ?? totalTicks
+            const newRemaining = Math.max(0, prevRemaining - elapsedTicks)
+            if (newRemaining <= 0) {
+              updateBankDirect({ [savedTask.gatherTask.product]: savedTask.gatherTask.qty || 1 })
+              setActiveTask(null)
+              sim = { itemsGained: { [savedTask.gatherTask.product]: savedTask.gatherTask.qty || 1 }, minigameCompleted: true }
+            } else {
+              setActiveTask({ ...savedTask, totalTicks, ticksRemaining: newRemaining })
+              sim = { minigameTimeReduced: true, hoursRemaining: Math.ceil(newRemaining / 6000) }
+            }
+          } else if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
+          else if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current)
+          else if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank)
+          else if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
+          else if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
+          else if (savedTask.type === 'quest') sim = simulateIdleQuest(savedTask, elapsedMs)
 
           // Always show the modal — even if sim is null (e.g. <1 action completed)
           if (!sim) {
@@ -487,6 +548,21 @@ function GameApp() {
           setActiveTask({ ...task, ticksRemaining: remaining })
         }
       }
+
+      // Minigame (one-shot gather) tick — progresses on any screen
+      if (task && task.type === 'gather' && task.gatherTask?.oneShot) {
+        const total = task.totalTicks ?? task.gatherTask.ticks
+        const remaining = (task.ticksRemaining ?? total) - 1
+        if (remaining <= 0) {
+          const product = task.gatherTask.product
+          const qty = task.gatherTask.qty || 1
+          updateBankDirect({ [product]: qty })
+          addToast(`${task.gatherTask.icon || '🎮'} ${task.gatherTask.name} complete!`, 'levelup', '🏆')
+          setActiveTask(null)
+        } else {
+          setActiveTask({ ...task, ticksRemaining: remaining, totalTicks: total })
+        }
+      }
     })
     return unsub
   }, [gameReady, currentHP, stats, questQueue])
@@ -510,6 +586,18 @@ function GameApp() {
       }
 
       if (hasToken && hasCharacter) {
+        // Fetch remove-ads status, Stripe payment links, and character credits
+        // (non-fatal if unavailable — shop buttons / Credits pill stay hidden).
+        try {
+          const meData = await api.me()
+          if (meData?.identity) {
+            setRemoveAds(meData.identity.remove_ads === true)
+            setIdentityId(meData.identity.id)
+          }
+          if (meData?.stripe_links) setStripeLinks(meData.stripe_links)
+          if (meData?.character) setCredits(meData.character.credits ?? 0)
+        } catch { /* hide buttons on error — non-fatal */ }
+
         // Guard against character-switch leakage: if IDB currently belongs to
         // a different character, wipe it before loading anything. Otherwise a
         // newly-created character with no cloud save yet would fall through
@@ -687,12 +775,284 @@ function GameApp() {
   const navigate = (scr, data) => {
     // Navigating away stops any active screen-bound task (skilling, gathering,
     // combat, agility, thieving) and clears the idle-engine keys so it won't
-    // re-process a cancelled task. Quests run in the background — preserve them.
-    if (activeTask?.type !== 'quest') {
+    // re-process a cancelled task. Quests and minigames run in the background — preserve them.
+    const isMinigame = activeTask?.type === 'gather' && activeTask?.gatherTask?.oneShot
+    const shouldPreserve = activeTask?.type === 'quest' || isMinigame
+    if (!shouldPreserve) {
       setActiveTask(null)
     }
     setActionData(data || null)
     setScreen(scr)
+  }
+
+  // Skip 1 hour handler — validate with server first, then simulate idle time
+  async function handleSkip1h() {
+    if (!isCloudAccount) {
+      addToast('Skip only available for cloud accounts!', 'error')
+      return
+    }
+
+    // Check if currently idling a boss — bosses cannot be skipped
+    if (activeTaskRef.current?.type === 'combat' && activeTaskRef.current?.monster?.boss) {
+      addToast('Cannot skip boss fights!', 'error')
+      return
+    }
+
+    try {
+      // Call server to validate credit and deduct atomically
+      const result = await api.skipHour()
+      if (!result.ok) {
+        addToast('Server error processing skip!', 'error')
+        return
+      }
+
+      // Server confirmed and deducted 1 credit — update local credits state
+      setCredits(result.credits_remaining)
+
+      const elapsedMs = 3600000 // 1 hour in milliseconds
+      let idleResultData = { elapsedMs, task: activeTaskRef.current }
+
+      // Re-read latest stats/equipment/inventory/bank to avoid stale state
+      const [freshStats, freshInv, freshEq, freshBank, freshSlayerTask] = await Promise.all([
+        getAllStats(),
+        getInventory(),
+        getEquipment(),
+        getBank(),
+        getSetting('slayerTask'),
+      ])
+
+      // If there's an active task, simulate it for 1 hour
+      if (activeTaskRef.current) {
+        const savedTask = activeTaskRef.current
+        let sim = null
+
+        // Special handling for oneShot minigames — reduce remaining time
+        if (savedTask.type === 'gather' && savedTask.gatherTask?.oneShot) {
+          const TICKS_PER_HOUR = 6000
+          const ticksInOneHour = TICKS_PER_HOUR
+          const totalTicks = savedTask.totalTicks ?? savedTask.gatherTask.ticks
+          const prevRemaining = savedTask.ticksRemaining ?? totalTicks
+          const ticksRemaining = Math.max(0, prevRemaining - ticksInOneHour)
+
+          if (ticksRemaining <= 0) {
+            // Minigame completed — award item and clear task
+            updateBankDirect({ [savedTask.gatherTask.product]: savedTask.gatherTask.qty || 1 })
+            setActiveTask(null)
+            idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true, minigameItem: savedTask.gatherTask.product }
+            sim = { itemsGained: { [savedTask.gatherTask.product]: savedTask.gatherTask.qty || 1 } }
+          } else {
+            // Minigame still ongoing — update remaining time and show progress
+            const updatedTask = { ...savedTask, totalTicks, ticksRemaining }
+            setActiveTask(updatedTask)
+            idleResultData = {
+              elapsedMs,
+              task: updatedTask,
+              minigameTimeReduced: true,
+              hoursRemaining: Math.ceil(ticksRemaining / TICKS_PER_HOUR)
+            }
+            sim = { minigameTimeReduced: true }
+          }
+        } else {
+          if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
+          if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current)
+          if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank)
+          if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
+          if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
+          if (savedTask.type === 'quest') sim = simulateIdleQuest(savedTask, elapsedMs)
+        }
+
+        if (sim) {
+          // Apply HP regeneration during idle
+          const hpRegenSim = simulateIdleHPRegen(elapsedMs)
+          if (hpRegenSim.hpRegen > 0) {
+            const maxHP = getLevelFromXP(freshStats.hitpoints?.xp || 0)
+            const restoredHP = Math.min(currentHP + hpRegenSim.hpRegen, maxHP)
+            sim.hpRestored = hpRegenSim.hpRegen
+            sim.hpAfterRegen = restoredHP
+          }
+
+          // Apply XP (skip combat/any — those require player choice via modal)
+          if (sim.xpGained) {
+            for (const [skill, xp] of Object.entries(sim.xpGained)) {
+              if (skill !== 'combat' && skill !== 'any' && xp > 0) grantXP(skill, xp)
+            }
+          }
+          // Apply slayer XP from combat simulation
+          if (savedTask.type === 'combat' && sim.slayerXpGained > 0) {
+            grantXP('slayer', sim.slayerXpGained)
+          }
+          // Apply items
+          if ((savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather') && sim.finalInventory) {
+            updateInventory(sim.finalInventory)
+            const bankedItems = sim.lootBanked || sim.itemsBanked || {}
+            if (Object.keys(bankedItems).length > 0) {
+              updateBankDirect(bankedItems)
+            }
+          } else if (sim.itemsGained) {
+            updateBankDirect(sim.itemsGained)
+          }
+          // Apply agility coin reward directly to bank
+          if (savedTask.type === 'agility' && sim.coinsGained > 0) {
+            updateBankDirect({ coins: sim.coinsGained })
+          }
+          // Apply thieving coin reward directly to bank
+          if (savedTask.type === 'thieving' && sim.coinsGained > 0) {
+            updateBankDirect({ coins: sim.coinsGained })
+          }
+          // Quest cascade — complete quests while time remains
+          if (savedTask.type === 'quest') {
+            if (sim.coinsGained > 0) updateBankDirect({ coins: sim.coinsGained })
+
+            const completedQuests = []
+            const aggregatedXp = {}
+            let totalCoinsGained = sim.coinsGained || 0
+            let workingQueue = [...(questQueueRef.current || [])]
+            let remainingElapsedMs = elapsedMs - (sim.ticksUsed * 600)
+            let finalTask = null
+
+            if (sim.completed) {
+              // Original quest completed — track for modal
+              completedQuests.push(savedTask.quest)
+              for (const [skill, xp] of Object.entries(savedTask.quest.xpReward || {})) {
+                aggregatedXp[skill] = (aggregatedXp[skill] || 0) + xp
+              }
+              const { choices } = splitXpRewards(savedTask.quest.xpReward)
+              finaliseQuest(savedTask.quest.id, savedTask.quest.name, choices)
+
+              // Cascade through queue while time remains
+              while (workingQueue.length > 0 && remainingElapsedMs > 0) {
+                const nextQuest = workingQueue[0]
+                const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
+                const nextTask = {
+                  type: 'quest',
+                  quest: nextQuest,
+                  totalTicks: nextTotalTicks,
+                  ticksRemaining: nextTotalTicks,
+                }
+                const nextSim = simulateIdleQuest(nextTask, remainingElapsedMs)
+                if (!nextSim) break
+                remainingElapsedMs -= nextSim.ticksUsed * 600
+
+                if (nextSim.completed) {
+                  if (nextSim.coinsGained > 0) {
+                    updateBankDirect({ coins: nextSim.coinsGained })
+                    totalCoinsGained += nextSim.coinsGained
+                  }
+                  completedQuests.push(nextQuest)
+                  for (const [skill, xp] of Object.entries(nextQuest.xpReward || {})) {
+                    aggregatedXp[skill] = (aggregatedXp[skill] || 0) + xp
+                  }
+                  const { fixed: nextFixed, choices: nextChoices } = splitXpRewards(nextQuest.xpReward)
+                  for (const [skill, xp] of Object.entries(nextFixed)) grantXP(skill, xp)
+                  finaliseQuest(nextQuest.id, nextQuest.name, nextChoices)
+                  workingQueue = workingQueue.slice(1)
+                } else {
+                  // Partial progress — this quest becomes the active one
+                  finalTask = {
+                    type: 'quest',
+                    quest: nextQuest,
+                    totalTicks: nextTotalTicks,
+                    ticksRemaining: nextSim.ticksRemaining,
+                    startedAt: Date.now(),
+                  }
+                  workingQueue = workingQueue.slice(1)
+                  break
+                }
+              }
+
+              // No partial quest mid-cascade, but queue still has items: promote head to active
+              if (!finalTask && workingQueue.length > 0) {
+                const nextQuest = workingQueue[0]
+                const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
+                finalTask = {
+                  type: 'quest',
+                  quest: nextQuest,
+                  totalTicks: nextTotalTicks,
+                  ticksRemaining: nextTotalTicks,
+                  startedAt: Date.now(),
+                }
+                workingQueue = workingQueue.slice(1)
+              }
+            } else {
+              // Original quest still running — persist updated progress
+              finalTask = {
+                ...savedTask,
+                ticksRemaining: sim.ticksRemaining,
+              }
+            }
+
+            setActiveTask(finalTask)
+            updateQuestQueue(workingQueue)
+
+            // Add quest data to idle result
+            if (completedQuests.length > 0) {
+              idleResultData.completedQuests = completedQuests
+              idleResultData.aggregatedXpReward = aggregatedXp
+              if (totalCoinsGained > 0) idleResultData.coinsGained = totalCoinsGained
+            }
+          } else if (sim.ticksRemaining !== undefined) {
+            // Non-quest task — update progress if partial
+            setActiveTask({
+              ...savedTask,
+              ticksRemaining: sim.ticksRemaining,
+            })
+          }
+
+          // Merge simulation data into idle result
+          if (sim) {
+            idleResultData = { ...idleResultData, ...sim }
+          }
+          // Deduct consumed materials from bank
+          if (sim.itemsConsumed && Object.keys(sim.itemsConsumed).length > 0) {
+            const negated = {}
+            for (const [itemId, qty] of Object.entries(sim.itemsConsumed)) {
+              negated[itemId] = -qty
+            }
+            updateBankDirect(negated)
+          }
+          // Deduct runes consumed from bank
+          if (sim.runesConsumed && Object.keys(sim.runesConsumed).length > 0) {
+            const negated = {}
+            for (const [itemId, qty] of Object.entries(sim.runesConsumed)) {
+              negated[itemId] = -qty
+            }
+            updateBankDirect(negated)
+          }
+          // Persist slayer task update if present
+          if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
+            if (sim.slayerTaskUpdate.completed) {
+              setSlayerTask(null)
+              updateSlayerPoints(slayerPoints + sim.slayerTaskUpdate.pointsOnComplete)
+              addToast('💀 Slayer task completed!', 'levelup')
+            } else {
+              setSlayerTask(sim.slayerTaskUpdate)
+            }
+          }
+
+          // Update HP from regen if applicable
+          if (sim.hpAfterRegen !== undefined) {
+            updateHP(sim.hpAfterRegen)
+          }
+        }
+      } else {
+        // No active task — just apply HP regen
+        const hpRegenSim = simulateIdleHPRegen(elapsedMs)
+        if (hpRegenSim.hpRegen > 0) {
+          const maxHP = getLevelFromXP(freshStats.hitpoints?.xp || 0)
+          const restoredHP = Math.min(currentHP + hpRegenSim.hpRegen, maxHP)
+          updateHP(restoredHP)
+        }
+      }
+
+      // Show idle result modal with skip summary
+      setIdleResult(idleResultData)
+
+      // Save the updated game state to cloud
+      schedulePushSave(getSnapshot())
+    } catch (err) {
+      console.error('[PocketRPG] Skip 1h error:', err)
+      addToast(err.message || 'Error during skip!', 'error')
+    }
   }
 
   // Cloud conflict modal — shown while cloudPhase is still resolving
@@ -827,7 +1187,7 @@ function GameApp() {
   // Main game
   const renderScreen = () => {
     switch (screen) {
-      case SCREENS.HOME:      return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} isCloudAccount={!!getToken() && !!getCharacterId()} />
+      case SCREENS.HOME:      return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} isCloudAccount={!!getToken() && !!getCharacterId()} removeAds={removeAds} identityId={identityId} characterId={getCharacterId()} stripeLinks={stripeLinks} />
       case SCREENS.STATS:     return <StatsScreen />
       case SCREENS.INVENTORY: return <InventoryScreen />
       case SCREENS.EQUIPMENT: return <EquipmentScreen />
@@ -842,9 +1202,11 @@ function GameApp() {
     }
   }
 
+  const isCloudAccount = !!getToken() && !!getCharacterId()
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Header activity={activity} />
+      <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} />
       <ToastContainer />
       <main style={{ flex: 1, overflow: 'hidden' }}>
         {renderScreen()}

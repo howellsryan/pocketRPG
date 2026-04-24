@@ -116,6 +116,10 @@ export const api = {
     method: 'POST',
     body: JSON.stringify({ item_id: itemId, quantity }),
   }),
+  skipHour: () => request('/api/skip-hour', {
+    method: 'POST',
+    body: JSON.stringify({}),
+  }),
   getSave: () => request('/api/save'),
   putSave: (save_data) => request('/api/save', {
     method: 'PUT',

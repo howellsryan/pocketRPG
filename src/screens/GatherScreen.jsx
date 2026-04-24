@@ -301,7 +301,7 @@ function formatHours(hours) {
 }
 
 export default function GatherScreen({ initialTaskId, idleResult }) {
-  const { inventory, bank, equipment, updateInventory, updateBankDirect, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask } = useGame()
+  const { inventory, bank, equipment, updateInventory, updateBankDirect, addToast, homeShortcuts, updateHomeShortcuts, setActiveTask, activeTask: globalActiveTask } = useGame()
   const [section, setSection] = useState('resources')
   const [category, setCategory] = useState('all')
   const [activeTask, setLocalTask] = useState(null)
@@ -312,9 +312,11 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
     ? GATHER_TASKS
     : GATHER_TASKS.filter(t => t.category === category)
 
-  // Tick listener
+  // Tick listener — oneShot minigames are ticked by the App so they run
+  // on any screen. Resource gathers stay local.
   useEffect(() => {
     if (!activeTask) return
+    if (activeTask.task?.oneShot) return
     taskRef.current = activeTask
 
     const unsub = onTick(() => {
@@ -421,8 +423,21 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
     }
     taskRef.current = newState
     setLocalTask(newState)
-    // Gathering always has bankingEnabled = true (auto-bank enabled)
-    setActiveTask({ type: 'gather', gatherTask: task, bankingEnabled: true })
+    // Gathering always has bankingEnabled = true (auto-bank enabled).
+    // OneShot minigames persist progress on the global activeTask so they
+    // continue ticking at the App level after the user leaves this screen.
+    if (task.oneShot) {
+      setActiveTask({
+        type: 'gather',
+        gatherTask: task,
+        bankingEnabled: true,
+        totalTicks: task.ticks,
+        ticksRemaining: task.ticks,
+        startedAt: Date.now(),
+      })
+    } else {
+      setActiveTask({ type: 'gather', gatherTask: task, bankingEnabled: true })
+    }
   }
 
   const stopTask = () => {
@@ -435,6 +450,12 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
   useEffect(() => {
     if (initialTaskId && !hasAutoStarted.current && !activeTask) {
       hasAutoStarted.current = true
+      // Don't restart a minigame that's already running in the background.
+      if (globalActiveTask?.type === 'gather'
+          && globalActiveTask?.gatherTask?.id === initialTaskId
+          && globalActiveTask?.gatherTask?.oneShot) {
+        return
+      }
       const task = GATHER_TASKS.find(t => t.id === initialTaskId)
         || MINIGAME_TASKS.find(t => t.id === initialTaskId)
       if (task) startTask(task, true)
@@ -466,13 +487,25 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
     addToast(`${task.icon} ${task.name} added to Home!`, 'info')
   }
 
-  // Active gathering modal
-  if (activeTask) {
-    const { task } = activeTask
-    const progress = getActionProgress(true, activeTask.ticksRemaining, task.ticks)
-    const elapsedHrs = activeTask.startedAt ? (Date.now() - activeTask.startedAt) / 3600000 : 0
+  // Active gathering modal — show if we have a local task OR a global minigame
+  // that was started earlier (allows the user to leave and return to the screen
+  // without losing progress).
+  const isGlobalMinigame = globalActiveTask?.type === 'gather' && globalActiveTask?.gatherTask?.oneShot
+  if (activeTask || isGlobalMinigame) {
+    const task = activeTask?.task || globalActiveTask.gatherTask
+    const isOneShot = !!task.oneShot
+    const totalTicks = isOneShot
+      ? (globalActiveTask?.totalTicks ?? task.ticks)
+      : task.ticks
+    const ticksRemaining = isOneShot
+      ? (globalActiveTask?.ticksRemaining ?? totalTicks)
+      : activeTask.ticksRemaining
+    const progress = isOneShot
+      ? (totalTicks > 0 ? 1 - ticksRemaining / totalTicks : 0)
+      : getActionProgress(true, activeTask.ticksRemaining, task.ticks)
+    const elapsedHrs = activeTask?.startedAt ? (Date.now() - activeTask.startedAt) / 3600000 : 0
     const perHour = elapsedHrs > 0 ? Math.round(activeTask.totalItems / elapsedHrs) : 0
-    const remainingSeconds = activeTask.ticksRemaining * 0.6
+    const remainingSeconds = ticksRemaining * 0.6
 
     return (
       <div class="h-full flex flex-col p-4">
@@ -481,7 +514,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
           onClick={stopTask}
           class="text-[12px] text-[#c4af7a] mb-3 flex items-center gap-1 bg-transparent border-0 cursor-pointer"
         >
-          ← Back
+          {isOneShot ? '← Abandon' : '← Back'}
         </button>
 
         <div class="flex-1 flex flex-col items-center justify-center">
@@ -525,7 +558,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
 
           <div class="text-[11px] text-[var(--color-parchment)] opacity-50 text-center max-w-[280px]">
             {task.oneShot
-              ? '⏳ Reward goes directly to your bank on completion.'
+              ? '⏳ Minigame runs in the background — feel free to switch screens. Reward is banked on completion.'
               : '⏳ Items go directly to your bank.'}
           </div>
         </div>
