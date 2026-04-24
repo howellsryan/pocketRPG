@@ -846,9 +846,9 @@ function GameApp() {
       return
     }
 
-    // Check if currently in combat — all combat cannot be skipped
-    if (activeTaskRef.current?.type === 'combat') {
-      addToast('Cannot skip combat!', 'error')
+    // Check if currently in boss/raid combat — bosses and raids cannot be skipped
+    if (activeTaskRef.current?.type === 'combat' && (activeTaskRef.current?.monster?.boss === true || activeTaskRef.current?.raid === true)) {
+      addToast('Cannot skip boss/raid combat!', 'error')
       return
     }
 
@@ -1325,12 +1325,12 @@ function GameApp() {
                     </div>
                   )}
 
-                  {/* Combat Warning */}
-                  {idleResult.task?.type === 'combat' && (
+                  {/* Boss/Raid Warning */}
+                  {idleResult.task?.type === 'combat' && (idleResult.task?.monster?.boss === true || idleResult.task?.raid === true) && (
                     <div style={{ marginBottom: '12px', padding: '10px', background: 'rgba(220, 53, 69, 0.15)', borderRadius: '10px', borderLeft: '3px solid #dc3545' }}>
-                      <div style={{ fontSize: '12px', color: '#ff6b6b', fontWeight: 'bold', marginBottom: '4px' }}>⚠️ Combat Active</div>
+                      <div style={{ fontSize: '12px', color: '#ff6b6b', fontWeight: 'bold', marginBottom: '4px' }}>⚠️ Boss/Raid Active</div>
                       <div style={{ fontSize: '11px', color: '#ff8787', lineHeight: '1.4' }}>
-                        Combat cannot be fought while idle. You must actively fight. Return to the fight to continue!
+                        Boss and raid fights cannot be fought while idle. You must actively fight. Return to the fight to continue!
                       </div>
                     </div>
                   )}
