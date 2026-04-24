@@ -27950,7 +27950,7 @@ function ToastContainer() {
 
 // ── components/Header.js ──
 
-function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null }) {
+function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null, onBuyCredits = null }) {
     const { player, currentHP, getMaxHP } = useGame();
     if (!player)
         return null;
@@ -27961,13 +27961,17 @@ function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null
         if (onSkip1h)
             onSkip1h();
     };
+    const handleCreditsClick = () => {
+        if (onBuyCredits)
+            onBuyCredits();
+    };
     return (h("header", { class: "flex-shrink-0 bg-[#111] border-b border-[#333] px-3 py-2" },
         h("div", { class: "flex items-center justify-between gap-2" },
             h("div", { class: "flex items-center gap-2" },
                 h("button", { onClick: handleSkip, class: "flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1a2a1a] border border-[#3a5a3a] hover:border-[#5a8a5a] transition-colors text-[10px] font-semibold text-[var(--color-parchment)] whitespace-nowrap", title: "Skip 1 hour (requires 1 credit)" },
                     h("span", null, "\u23ED\uFE0F"),
                     h("span", null, "Skip 1h"))),
-            isCloudAccount && (h("div", { class: "flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#1a1030] border border-[#5a2a7a] whitespace-nowrap" },
+            isCloudAccount && (h("button", { onClick: handleCreditsClick, class: "flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#1a1030] border border-[#5a2a7a] whitespace-nowrap hover:border-[#7a3a9a] transition-colors cursor-pointer bg-opacity-90 hover:bg-opacity-100" },
                 h("span", { class: "text-[10px]" }, "\uD83D\uDC8E"),
                 h("span", { class: "text-[10px] font-[var(--font-mono)] font-bold text-[#e879f9]" },
                     "Credits: ",
@@ -33950,6 +33954,7 @@ const errorText = { color: '#ff6b6b', fontSize: '12px', marginTop: '12px', textA
 
 
 
+
 function GameApp() {
     const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints, completeQuest, questQueue, removeFromQuestQueue, updateQuestQueue } = useGame();
     const [screen, setScreen] = useState(SCREENS.HOME);
@@ -33957,7 +33962,7 @@ function GameApp() {
     const [activity, setActivity] = useState(null);
     const [idleResult, setIdleResult] = useState(null); // { elapsedMs, task, xpGained, itemsGained, lootLost, monstersKilled }
     const [actionData, setActionData] = useState(null); // { monsterId, gatherTaskId, skillId, actionId }
-    const [isInBossFight, setIsInBossFight] = useState(false); // Track if currently in a boss fight
+    const [isInCombat, setIsInCombat] = useState(false); // Track if currently in combat
     const [pendingXpChoices, setPendingXpChoices] = useState([]); // [{ rewards, questId, questName }, ...]
     // Cloud auth gate: 'pending' until we resolve, 'auth' if AuthScreen needed, 'auth_offline' for offline creation, 'ready' to boot game
     const [cloudPhase, setCloudPhase] = useState('pending');
@@ -33969,6 +33974,7 @@ function GameApp() {
     const [identityId, setIdentityId] = useState(null);
     const [stripeLinks, setStripeLinks] = useState({});
     const [credits, setCredits] = useState(0);
+    const [showBuyCreditsModal, setShowBuyCreditsModal] = useState(false);
     // Set on mount if Stripe redirected back with a payment query/path — drives the
     // post-checkout thank-you toast + credits refresh once the game is ready.
     const paymentReturnRef = useRef(false);
@@ -35073,7 +35079,7 @@ function GameApp() {
             case SCREENS.INVENTORY: return h(InventoryScreen, null);
             case SCREENS.EQUIPMENT: return h(EquipmentScreen, null);
             case SCREENS.BANK: return h(BankScreen, null);
-            case SCREENS.COMBAT: return h(CombatScreen, { onNavigate: navigate, initialMonsterId: actionData?.monsterId, initialRaidId: actionData?.raidId, onBossFightStatusChange: setIsInBossFight });
+            case SCREENS.COMBAT: return h(CombatScreen, { onNavigate: navigate, initialMonsterId: actionData?.monsterId, initialRaidId: actionData?.raidId, onCombatStatusChange: setIsInCombat });
             case SCREENS.SKILLS: return h(SkillingScreen, { initialSkillId: actionData?.skillId, initialActionId: actionData?.actionId, idleResult: idleResult });
             case SCREENS.GATHER: return h(GatherScreen, { initialTaskId: actionData?.gatherTaskId, idleResult: idleResult });
             case SCREENS.AGILITY: return h(AgilityScreen, { initialActionId: actionData?.actionId });
@@ -35084,7 +35090,7 @@ function GameApp() {
     };
     const isCloudAccount = !!getToken() && !!getCharacterId();
     return (h("div", { style: { height: '100%', display: 'flex', flexDirection: 'column' } },
-        h(Header, { activity: activity, credits: credits, isCloudAccount: isCloudAccount, onSkip1h: isCloudAccount ? handleSkip1h : null }),
+        h(Header, { activity: activity, credits: credits, isCloudAccount: isCloudAccount, onSkip1h: isCloudAccount ? handleSkip1h : null, onBuyCredits: () => setShowBuyCreditsModal(true) }),
         h(ToastContainer, null),
         h("main", { style: { flex: 1, overflow: 'hidden' } }, renderScreen()),
         h(BottomNav, { active: screen, onNavigate: (s) => navigate(s), isInBossFight: isInBossFight, onDisabledClick: () => addToast('⚔️ Cannot navigate during boss fight!', 'warning') }),
@@ -35225,6 +35231,7 @@ function GameApp() {
                 })()),
                 h("div", { style: { padding: '12px 16px', borderTop: '1px solid #222' } },
                     h("button", { onClick: () => setIdleResult(null), style: { width: '100%', padding: '13px', borderRadius: '12px', background: 'linear-gradient(135deg, #b8940e, #d4af37)', color: '#0f0f0f', fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '14px', border: 'none', cursor: 'pointer' } }, "Continue Adventure"))))),
+        showBuyCreditsModal && isCloudAccount && (h(BuyCreditsModal, { onClose: () => setShowBuyCreditsModal(false), identityId: identityId, characterId: getCharacterId(), stripeLinks: stripeLinks })),
         pendingXpChoices.length > 0 && (h(QuestXpChoiceModal, { key: pendingXpChoices[0].questId, rewards: pendingXpChoices[0].rewards, questName: pendingXpChoices[0].questName, stats: stats, onComplete: handleXpChoiceComplete }))));
 }
 function App() {

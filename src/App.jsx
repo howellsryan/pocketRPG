@@ -3,6 +3,7 @@ import { GameProvider, useGame } from './state/gameState.jsx'
 import BottomNav from './components/BottomNav.jsx'
 import Header from './components/Header.jsx'
 import ToastContainer from './components/Toast.jsx'
+import BuyCreditsModal from './components/BuyCreditsModal.jsx'
 import HomeScreen from './screens/HomeScreen.jsx'
 import StatsScreen from './screens/StatsScreen.jsx'
 import InventoryScreen from './screens/InventoryScreen.jsx'
@@ -35,7 +36,7 @@ function GameApp() {
   const [activity, setActivity] = useState(null)
   const [idleResult, setIdleResult] = useState(null) // { elapsedMs, task, xpGained, itemsGained, lootLost, monstersKilled }
   const [actionData, setActionData] = useState(null) // { monsterId, gatherTaskId, skillId, actionId }
-  const [isInBossFight, setIsInBossFight] = useState(false) // Track if currently in a boss fight
+  const [isInCombat, setIsInCombat] = useState(false) // Track if currently in combat
   const [pendingXpChoices, setPendingXpChoices] = useState([]) // [{ rewards, questId, questName }, ...]
   // Cloud auth gate: 'pending' until we resolve, 'auth' if AuthScreen needed, 'auth_offline' for offline creation, 'ready' to boot game
   const [cloudPhase, setCloudPhase] = useState('pending')
@@ -47,6 +48,7 @@ function GameApp() {
   const [identityId, setIdentityId] = useState(null)
   const [stripeLinks, setStripeLinks] = useState({})
   const [credits, setCredits] = useState(0)
+  const [showBuyCreditsModal, setShowBuyCreditsModal] = useState(false)
   // Set on mount if Stripe redirected back with a payment query/path — drives the
   // post-checkout thank-you toast + credits refresh once the game is ready.
   const paymentReturnRef = useRef(false)
@@ -1192,7 +1194,7 @@ function GameApp() {
       case SCREENS.INVENTORY: return <InventoryScreen />
       case SCREENS.EQUIPMENT: return <EquipmentScreen />
       case SCREENS.BANK:      return <BankScreen />
-      case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onBossFightStatusChange={setIsInBossFight} />
+      case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onCombatStatusChange={setIsInCombat} />
       case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} idleResult={idleResult} />
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} />
       case SCREENS.AGILITY:   return <AgilityScreen initialActionId={actionData?.actionId} />
@@ -1206,7 +1208,7 @@ function GameApp() {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} />
+      <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} />
       <ToastContainer />
       <main style={{ flex: 1, overflow: 'hidden' }}>
         {renderScreen()}
@@ -1422,6 +1424,15 @@ function GameApp() {
             </div>
           </div>
         </div>
+      )}
+
+      {showBuyCreditsModal && isCloudAccount && (
+        <BuyCreditsModal
+          onClose={() => setShowBuyCreditsModal(false)}
+          identityId={identityId}
+          characterId={getCharacterId()}
+          stripeLinks={stripeLinks}
+        />
       )}
 
       {pendingXpChoices.length > 0 && (
