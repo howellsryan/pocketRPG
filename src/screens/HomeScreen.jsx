@@ -10,7 +10,6 @@ import SkillBadge from '../components/SkillBadge.jsx'
 export default function HomeScreen({ onNavigate, onLogout, isCloudAccount, removeAds, identityId, characterId, stripeLinks }) {
   const { player, stats, setActiveTask, equipment, inventory, itemsData } = useGame()
   const [loggingOut, setLoggingOut] = useState(false)
-  const [viewSection, setViewSection] = useState('overview')
   const [selectedSkillDetail, setSelectedSkillDetail] = useState(null)
 
   async function handleLogout() {
@@ -87,67 +86,24 @@ export default function HomeScreen({ onNavigate, onLogout, isCloudAccount, remov
             {isCloudAccount && loggingOut ? '☁️ Saving...' : '🚪 Logout'}
           </button>
         </div>
-
-        {/* Section tabs */}
-        <div class="flex gap-2">
-          {[
-            { id: 'overview', label: 'Overview', icon: '📋' },
-            { id: 'stats', label: 'Stats', icon: '📊' },
-          ].map(sec => {
-            const isActive = viewSection === sec.id
-            const tabClass = isActive
-              ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
-              : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
-            return (
-              <button
-                key={sec.id}
-                onClick={() => setViewSection(sec.id)}
-                class={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold border transition-colors ${tabClass}`}
-              >
-                {sec.icon} {sec.label}
-              </button>
-            )
-          })}
-        </div>
       </div>
 
       {/* Content area */}
       <div class="flex-1 overflow-y-auto px-4 pb-4">
-        {viewSection === 'overview' && (
-          <div>
-            <div class="py-4 space-y-3">
-              <div class="flex justify-between items-center bg-[#1a1a1a] rounded-lg p-3 border border-[#2a2a2a]">
-                <span class="text-sm text-[var(--color-parchment)] opacity-60">Combat Level</span>
-                <span class="font-[var(--font-mono)] text-lg font-bold text-[var(--color-gold)]">{combatLevel}</span>
-              </div>
-              <div class="flex justify-between items-center bg-[#1a1a1a] rounded-lg p-3 border border-[#2a2a2a]">
-                <span class="text-sm text-[var(--color-parchment)] opacity-60">Total Level</span>
-                <span class="font-[var(--font-mono)] text-lg font-bold text-[var(--color-gold)]">{totalLevel}</span>
-              </div>
-              <div class="flex justify-between items-center bg-[#1a1a1a] rounded-lg p-3 border border-[#2a2a2a]">
-                <span class="text-sm text-[var(--color-parchment)] opacity-60">Total XP</span>
-                <span class="font-[var(--font-mono)] text-lg font-bold text-[var(--color-gold)]">{formatNumber(totalXP)}</span>
-              </div>
-            </div>
+        <div class="py-4">
+          <div class="flex justify-between items-center mb-3 px-1">
+            <span class="text-xs text-[var(--color-parchment)] opacity-60">
+              Total Level: <span class="font-[var(--font-mono)] font-bold text-[var(--color-gold)]">{totalLevel}</span>
+            </span>
+            <span class="text-xs text-[var(--color-parchment)] opacity-60">
+              Total XP: <span class="font-[var(--font-mono)] font-bold text-[var(--color-gold)]">{formatNumber(totalXP)}</span>
+            </span>
           </div>
-        )}
-
-        {viewSection === 'stats' && (
-          <div class="py-4">
-            <div class="flex justify-between items-center mb-3 px-1">
-              <span class="text-xs text-[var(--color-parchment)] opacity-60">
-                Total Level: <span class="font-[var(--font-mono)] font-bold text-[var(--color-gold)]">{totalLevel}</span>
-              </span>
-              <span class="text-xs text-[var(--color-parchment)] opacity-60">
-                Total XP: <span class="font-[var(--font-mono)] font-bold text-[var(--color-gold)]">{formatNumber(totalXP)}</span>
-              </span>
-            </div>
-            <SkillGroup title="Combat" skills={COMBAT_SKILLS} />
-            <SkillGroup title="Gathering" skills={GATHERING_SKILLS} />
-            <SkillGroup title="Production" skills={PRODUCTION_SKILLS} />
-            <SkillGroup title="Utility" skills={UTILITY_SKILLS} />
-          </div>
-        )}
+          <SkillGroup title="Combat" skills={COMBAT_SKILLS} />
+          <SkillGroup title="Gathering" skills={GATHERING_SKILLS} />
+          <SkillGroup title="Production" skills={PRODUCTION_SKILLS} />
+          <SkillGroup title="Utility" skills={UTILITY_SKILLS} />
+        </div>
       </div>
 
       {/* Skill detail modal */}

@@ -28281,7 +28281,6 @@ function BuyCreditsModal({ onClose, identityId, characterId, stripeLinks }) {
 function HomeScreen({ onNavigate, onLogout, isCloudAccount, removeAds, identityId, characterId, stripeLinks }) {
     const { player, stats, setActiveTask, equipment, inventory, itemsData } = useGame();
     const [loggingOut, setLoggingOut] = useState(false);
-    const [viewSection, setViewSection] = useState('overview');
     const [selectedSkillDetail, setSelectedSkillDetail] = useState(null);
     async function handleLogout() {
         setLoggingOut(true);
@@ -28334,33 +28333,9 @@ function HomeScreen({ onNavigate, onLogout, isCloudAccount, removeAds, identityI
                         h("span", null,
                             "\uD83D\uDCCA Total ",
                             totalLevel))),
-                h("button", { onClick: handleLogout, disabled: loggingOut, style: { background: 'rgba(255,255,255,0.05)', border: '1px solid #333', borderRadius: '8px', padding: '6px 10px', fontSize: '11px', color: '#e8d5b0', opacity: loggingOut ? 0.4 : 0.7, cursor: loggingOut ? 'default' : 'pointer' } }, isCloudAccount && loggingOut ? '☁️ Saving...' : '🚪 Logout')),
-            h("div", { class: "flex gap-2" }, [
-                { id: 'overview', label: 'Overview', icon: '📋' },
-                { id: 'stats', label: 'Stats', icon: '📊' },
-            ].map(sec => {
-                const isActive = viewSection === sec.id;
-                const tabClass = isActive
-                    ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
-                    : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60';
-                return (h("button", { key: sec.id, onClick: () => setViewSection(sec.id), class: `flex-1 px-3 py-2 rounded-lg text-xs font-semibold border transition-colors ${tabClass}` },
-                    sec.icon,
-                    " ",
-                    sec.label));
-            }))),
+                h("button", { onClick: handleLogout, disabled: loggingOut, style: { background: 'rgba(255,255,255,0.05)', border: '1px solid #333', borderRadius: '8px', padding: '6px 10px', fontSize: '11px', color: '#e8d5b0', opacity: loggingOut ? 0.4 : 0.7, cursor: loggingOut ? 'default' : 'pointer' } }, isCloudAccount && loggingOut ? '☁️ Saving...' : '🚪 Logout'))),
         h("div", { class: "flex-1 overflow-y-auto px-4 pb-4" },
-            viewSection === 'overview' && (h("div", null,
-                h("div", { class: "py-4 space-y-3" },
-                    h("div", { class: "flex justify-between items-center bg-[#1a1a1a] rounded-lg p-3 border border-[#2a2a2a]" },
-                        h("span", { class: "text-sm text-[var(--color-parchment)] opacity-60" }, "Combat Level"),
-                        h("span", { class: "font-[var(--font-mono)] text-lg font-bold text-[var(--color-gold)]" }, combatLevel)),
-                    h("div", { class: "flex justify-between items-center bg-[#1a1a1a] rounded-lg p-3 border border-[#2a2a2a]" },
-                        h("span", { class: "text-sm text-[var(--color-parchment)] opacity-60" }, "Total Level"),
-                        h("span", { class: "font-[var(--font-mono)] text-lg font-bold text-[var(--color-gold)]" }, totalLevel)),
-                    h("div", { class: "flex justify-between items-center bg-[#1a1a1a] rounded-lg p-3 border border-[#2a2a2a]" },
-                        h("span", { class: "text-sm text-[var(--color-parchment)] opacity-60" }, "Total XP"),
-                        h("span", { class: "font-[var(--font-mono)] text-lg font-bold text-[var(--color-gold)]" }, formatNumber(totalXP)))))),
-            viewSection === 'stats' && (h("div", { class: "py-4" },
+            h("div", { class: "py-4" },
                 h("div", { class: "flex justify-between items-center mb-3 px-1" },
                     h("span", { class: "text-xs text-[var(--color-parchment)] opacity-60" },
                         "Total Level: ",
@@ -28371,7 +28346,7 @@ function HomeScreen({ onNavigate, onLogout, isCloudAccount, removeAds, identityI
                 h(SkillGroup, { title: "Combat", skills: COMBAT_SKILLS }),
                 h(SkillGroup, { title: "Gathering", skills: GATHERING_SKILLS }),
                 h(SkillGroup, { title: "Production", skills: PRODUCTION_SKILLS }),
-                h(SkillGroup, { title: "Utility", skills: UTILITY_SKILLS })))),
+                h(SkillGroup, { title: "Utility", skills: UTILITY_SKILLS }))),
         selectedSkillDetail && selectedSkillData && (h(Modal, { title: `${SKILL_ICONS[selectedSkillDetail]} ${selectedSkillDetail.charAt(0).toUpperCase() + selectedSkillDetail.slice(1)}`, onClose: () => setSelectedSkillDetail(null) },
             h("div", { class: "space-y-3" },
                 h("div", { class: "text-center" },
