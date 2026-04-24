@@ -28339,7 +28339,7 @@ function HomeScreen({ onNavigate, onLogout, isCloudAccount, removeAds, identityI
 
 
 
-function SkillGroup({ title, skills, stats, onSelect }) {
+function StatsSkillGroup({ title, skills, stats, onSelect }) {
     return (h("div", { class: "mb-4" },
         h("h3", { class: "text-[10px] font-bold text-[var(--color-parchment)] opacity-40 uppercase tracking-widest mb-1.5" }, title),
         h("div", { class: "grid grid-cols-2 gap-1.5" }, skills.map(skill => {
@@ -28364,10 +28364,10 @@ function StatsScreen() {
             h("span", { class: "text-xs text-[var(--color-parchment)] opacity-60" },
                 "Total XP: ",
                 h("span", { class: "font-[var(--font-mono)] font-bold text-[var(--color-gold)]" }, formatNumber(totalXP)))),
-        h(SkillGroup, { title: "Combat", skills: COMBAT_SKILLS, stats: stats, onSelect: setSelectedSkill }),
-        h(SkillGroup, { title: "Gathering", skills: GATHERING_SKILLS, stats: stats, onSelect: setSelectedSkill }),
-        h(SkillGroup, { title: "Production", skills: PRODUCTION_SKILLS, stats: stats, onSelect: setSelectedSkill }),
-        h(SkillGroup, { title: "Utility", skills: UTILITY_SKILLS, stats: stats, onSelect: setSelectedSkill }),
+        h(StatsSkillGroup, { title: "Combat", skills: COMBAT_SKILLS, stats: stats, onSelect: setSelectedSkill }),
+        h(StatsSkillGroup, { title: "Gathering", skills: GATHERING_SKILLS, stats: stats, onSelect: setSelectedSkill }),
+        h(StatsSkillGroup, { title: "Production", skills: PRODUCTION_SKILLS, stats: stats, onSelect: setSelectedSkill }),
+        h(StatsSkillGroup, { title: "Utility", skills: UTILITY_SKILLS, stats: stats, onSelect: setSelectedSkill }),
         selectedSkill && selected && (h(Modal, { title: `${SKILL_ICONS[selectedSkill]} ${selectedSkill.charAt(0).toUpperCase() + selectedSkill.slice(1)}`, onClose: () => setSelectedSkill(null) },
             h("div", { class: "space-y-3" },
                 h("div", { class: "text-center" },
