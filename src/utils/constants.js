@@ -70,5 +70,6 @@ export const SCREENS = {
   GATHER: 'gather',
   AGILITY: 'agility',
   STORE: 'store',
-  QUESTS: 'quests'
+  QUESTS: 'quests',
+  LEADERBOARD: 'leaderboard'
 }
