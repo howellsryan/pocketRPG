@@ -3,6 +3,7 @@ import { GameProvider, useGame } from './state/gameState.jsx'
 import BottomNav from './components/BottomNav.jsx'
 import Header from './components/Header.jsx'
 import ToastContainer from './components/Toast.jsx'
+import BuyCreditsModal from './components/BuyCreditsModal.jsx'
 import HomeScreen from './screens/HomeScreen.jsx'
 import StatsScreen from './screens/StatsScreen.jsx'
 import InventoryScreen from './screens/InventoryScreen.jsx'
@@ -35,7 +36,7 @@ function GameApp() {
   const [activity, setActivity] = useState(null)
   const [idleResult, setIdleResult] = useState(null) // { elapsedMs, task, xpGained, itemsGained, lootLost, monstersKilled }
   const [actionData, setActionData] = useState(null) // { monsterId, gatherTaskId, skillId, actionId }
-  const [isInBossFight, setIsInBossFight] = useState(false) // Track if currently in a boss fight
+  const [isInCombat, setIsInCombat] = useState(false) // Track if currently in combat
   const [pendingXpChoices, setPendingXpChoices] = useState([]) // [{ rewards, questId, questName }, ...]
   // Cloud auth gate: 'pending' until we resolve, 'auth' if AuthScreen needed, 'auth_offline' for offline creation, 'ready' to boot game
   const [cloudPhase, setCloudPhase] = useState('pending')
@@ -47,6 +48,7 @@ function GameApp() {
   const [identityId, setIdentityId] = useState(null)
   const [stripeLinks, setStripeLinks] = useState({})
   const [credits, setCredits] = useState(0)
+  const [showBuyCreditsModal, setShowBuyCreditsModal] = useState(false)
   // Set on mount if Stripe redirected back with a payment query/path — drives the
   // post-checkout thank-you toast + credits refresh once the game is ready.
   const paymentReturnRef = useRef(false)
@@ -792,9 +794,15 @@ function GameApp() {
       return
     }
 
-    // Check if currently idling a boss — bosses cannot be skipped
-    if (activeTaskRef.current?.type === 'combat' && activeTaskRef.current?.monster?.boss) {
-      addToast('Cannot skip boss fights!', 'error')
+    // Check if currently in combat — all combat cannot be skipped
+    if (activeTaskRef.current?.type === 'combat') {
+      addToast('Cannot skip combat!', 'error')
+      return
+    }
+
+    // Check if there's an active task — prevent wasting credits
+    if (!activeTaskRef.current) {
+      addToast('Nothing to skip — start a task first!', 'error')
       return
     }
 
@@ -1192,7 +1200,7 @@ function GameApp() {
       case SCREENS.INVENTORY: return <InventoryScreen />
       case SCREENS.EQUIPMENT: return <EquipmentScreen />
       case SCREENS.BANK:      return <BankScreen />
-      case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onBossFightStatusChange={setIsInBossFight} />
+      case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onCombatStatusChange={setIsInCombat} />
       case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} idleResult={idleResult} />
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} />
       case SCREENS.AGILITY:   return <AgilityScreen initialActionId={actionData?.actionId} />
@@ -1206,7 +1214,7 @@ function GameApp() {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} />
+      <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} />
       <ToastContainer />
       <main style={{ flex: 1, overflow: 'hidden' }}>
         {renderScreen()}
@@ -1214,8 +1222,8 @@ function GameApp() {
       <BottomNav
         active={screen}
         onNavigate={(s) => navigate(s)}
-        isInBossFight={isInBossFight}
-        onDisabledClick={() => addToast('⚔️ Cannot navigate during boss fight!', 'warning')}
+        isInCombat={isInCombat}
+        onDisabledClick={() => addToast('⚔️ Cannot navigate during combat!', 'warning')}
       />
 
       {/* Idle Result Modal */}
@@ -1265,12 +1273,12 @@ function GameApp() {
                     </div>
                   )}
 
-                  {/* Boss Combat Warning */}
-                  {idleResult.task?.type === 'combat' && idleResult.task.monster?.boss && (
+                  {/* Combat Warning */}
+                  {idleResult.task?.type === 'combat' && (
                     <div style={{ marginBottom: '12px', padding: '10px', background: 'rgba(220, 53, 69, 0.15)', borderRadius: '10px', borderLeft: '3px solid #dc3545' }}>
-                      <div style={{ fontSize: '12px', color: '#ff6b6b', fontWeight: 'bold', marginBottom: '4px' }}>⚠️ Boss Combat</div>
+                      <div style={{ fontSize: '12px', color: '#ff6b6b', fontWeight: 'bold', marginBottom: '4px' }}>⚠️ Combat Active</div>
                       <div style={{ fontSize: '11px', color: '#ff8787', lineHeight: '1.4' }}>
-                        Bosses cannot be fought while idle. You must actively kill this boss in combat. Return to the fight to continue!
+                        Combat cannot be fought while idle. You must actively fight. Return to the fight to continue!
                       </div>
                     </div>
                   )}
@@ -1422,6 +1430,15 @@ function GameApp() {
             </div>
           </div>
         </div>
+      )}
+
+      {showBuyCreditsModal && isCloudAccount && (
+        <BuyCreditsModal
+          onClose={() => setShowBuyCreditsModal(false)}
+          identityId={identityId}
+          characterId={getCharacterId()}
+          stripeLinks={stripeLinks}
+        />
       )}
 
       {pendingXpChoices.length > 0 && (

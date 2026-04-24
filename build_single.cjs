@@ -47,6 +47,7 @@ const sourceFiles = [
   'components/SectionHeader.js',
   'components/BonusDisplay.js',
   'components/QuestXpChoiceModal.js',
+  'components/BuyCreditsModal.js',
   'screens/HomeScreen.js',
   'screens/StatsScreen.js',
   'screens/InventoryScreen.js',
