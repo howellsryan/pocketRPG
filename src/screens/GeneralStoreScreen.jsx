@@ -367,8 +367,10 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
                     max={Number.MAX_SAFE_INTEGER}
                     value={buyQty}
                     onInput={(e) => {
-                      const val = Math.max(1, Math.min(Number.MAX_SAFE_INTEGER, parseInt(e.target.value) || 1))
-                      setBuyQty(val)
+                      const parsed = parseInt(e.target.value)
+                      if (!isNaN(parsed)) {
+                        setBuyQty(Math.max(1, Math.min(Number.MAX_SAFE_INTEGER, parsed)))
+                      }
                     }}
                     class="flex-1 h-8 rounded-md bg-[#111] border border-[var(--color-void-border)] text-[var(--color-parchment)] text-[13px] font-[var(--font-mono)] text-center outline-none"
                   />
