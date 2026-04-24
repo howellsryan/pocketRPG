@@ -45,6 +45,12 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   const [showAlchemyPicker, setShowAlchemyPicker] = useState(false) // Show item picker for alchemy
   const skillingRef = useRef(null)
   const hasAutoStarted = useRef(false)
+  const inventoryRef = useRef(inventory)
+  const bankRef = useRef(bank)
+
+  // Keep refs in sync with React state
+  useEffect(() => { inventoryRef.current = inventory }, [inventory])
+  useEffect(() => { bankRef.current = bank }, [bank])
 
   // If agility is selected, delegate to AgilityScreen (special screen for agility only)
   if (selectedSkill === 'agility') {
@@ -109,11 +115,11 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
         if (ev.type === 'actionComplete') {
           // Check materials and runes
           const action = ev.action
-          const newInv = [...inventory]
+          const newInv = [...inventoryRef.current]
 
           // Check and consume runes (for magic spells)
           if (action.runeReq) {
-            if (!hasRequiredRunes(action.runeReq, newInv, bank, equipment, itemsData)) {
+            if (!hasRequiredRunes(action.runeReq, newInv, bankRef.current, equipment, itemsData)) {
               skillingRef.current = { ...skillingState, active: false, stopped: true }
               setSkilling({ ...skillingState, active: false, stopped: true })
               addToast('Out of runes!', 'error')
@@ -136,7 +142,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             let hasMats = true
             for (const [matId, qty] of Object.entries(action.materials)) {
               const invCount = countItem(newInv, matId)
-              const bankCount = bank[matId]?.quantity || 0
+              const bankCount = bankRef.current[matId]?.quantity || 0
               if (invCount + bankCount < qty) { hasMats = false; break }
             }
             if (!hasMats) {
