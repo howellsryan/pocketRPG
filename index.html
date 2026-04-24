@@ -33220,7 +33220,7 @@ function GeneralStoreScreen({ onBuyCredits }) {
                                 setBuyQty(val);
                             }, class: "flex-1 h-8 rounded-md bg-[#111] border border-[var(--color-void-border)] text-[var(--color-parchment)] text-[13px] font-[var(--font-mono)] text-center outline-none" }),
                         h(Button, { variant: "secondary", size: "md", onClick: () => setBuyQty(Math.min(Number.MAX_SAFE_INTEGER, buyQty + 1)), className: "w-8 h-8 p-0 flex items-center justify-center text-base" }, "+")),
-                    buyQty > 1 && (h("div", { class: "text-[10px] text-[#888] mt-1" },
+                    buyQty > 1 && !selectedItem.stackable && (h("div", { class: "text-[10px] text-[#888] mt-1" },
                         "\uD83D\uDCA1 Buying ",
                         buyQty,
                         " items will be delivered as noted (stackable)")))) : null,

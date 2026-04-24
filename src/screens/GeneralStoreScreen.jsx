@@ -374,7 +374,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
                   />
                   <Button variant="secondary" size="md" onClick={() => setBuyQty(Math.min(Number.MAX_SAFE_INTEGER, buyQty + 1))} className="w-8 h-8 p-0 flex items-center justify-center text-base">+</Button>
                 </div>
-                {buyQty > 1 && (
+                {buyQty > 1 && !selectedItem.stackable && (
                   <div class="text-[10px] text-[#888] mt-1">
                     💡 Buying {buyQty} items will be delivered as noted (stackable)
                   </div>
