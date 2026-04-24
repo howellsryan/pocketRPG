@@ -13,83 +13,7 @@ import { QUEST_QUEUE_MAX } from '../utils/constants.js'
 import { onTick } from '../engine/tick.js'
 import { countItem } from '../engine/inventory.js'
 import questsData from '../data/quests.json'
-
-const TICKS_PER_HOUR = 6000
-const MINIGAME_TASKS = [
-  {
-    id: 'ba_fighter_torso',
-    name: 'Grind for Fighter Torso',
-    icon: '👕',
-    description: 'Run Barbarian Assault until you earn a Fighter Torso.',
-    hours: 5,
-    ticks: 5 * TICKS_PER_HOUR,
-    product: 'fighter_torso',
-    qty: 1,
-    minigame: 'barbarian_assault',
-    oneShot: true,
-  },
-  {
-    id: 'ba_fighter_hat',
-    name: 'Grind for Fighter Hat',
-    icon: '🪖',
-    description: 'Run Barbarian Assault until you earn a Fighter Hat.',
-    hours: 2,
-    ticks: 2 * TICKS_PER_HOUR,
-    product: 'fighter_hat',
-    qty: 1,
-    minigame: 'barbarian_assault',
-    oneShot: true,
-  },
-  {
-    id: 'wg_rune_defender',
-    name: 'Grind for Rune Defender',
-    icon: '🛡️',
-    description: 'Slay Cyclopes in the Warriors\' Guild basement until one drops a Rune Defender.',
-    hours: 3,
-    ticks: 3 * TICKS_PER_HOUR,
-    product: 'rune_defender',
-    qty: 1,
-    minigame: 'warriors_guild',
-    oneShot: true,
-  },
-  {
-    id: 'wg_dragon_defender',
-    name: 'Grind for Dragon Defender',
-    icon: '🛡️',
-    description: 'Slay Cyclopes wielding your Rune Defender until one drops a Dragon Defender.',
-    hours: 2,
-    ticks: 2 * TICKS_PER_HOUR,
-    product: 'dragon_defender',
-    qty: 1,
-    minigame: 'warriors_guild',
-    requiresItem: 'rune_defender',
-    oneShot: true,
-  },
-  {
-    id: 'cw_halo',
-    name: 'Grind for Halo',
-    icon: '😇',
-    description: 'Play Castle Wars matches until you can purchase a Halo.',
-    hours: 3,
-    ticks: 3 * TICKS_PER_HOUR,
-    product: 'halo',
-    qty: 1,
-    minigame: 'castle_wars',
-    oneShot: true,
-  },
-]
-
-const MINIGAMES = [
-  { id: 'barbarian_assault', label: 'Barbarian Assault', icon: '⚔️' },
-  { id: 'warriors_guild', label: 'Warriors\' Guild', icon: '🏛️' },
-  { id: 'castle_wars', label: 'Castle Wars', icon: '🏰' },
-]
-
-const ITEM_NAMES = {
-  fighter_torso: 'Fighter torso', fighter_hat: 'Fighter hat',
-  rune_defender: 'Rune defender', dragon_defender: 'Dragon defender',
-  halo: 'Halo',
-}
+import minigamesData from '../data/minigames.json'
 
 const COMPLEXITY_COLORS = {
   Novice:        '#7fbf7f',
@@ -222,7 +146,7 @@ export default function QuestsScreen() {
 
       if (ticksRemaining <= 0) {
         const task = state.task
-        addToast(`${task.icon} ${ITEM_NAMES[task.product] || task.product} banked!`, 'success')
+        addToast(`${task.icon} ${minigamesData.itemNames[task.product] || task.product} banked!`, 'success')
         updateBankDirect({ [task.product]: task.qty || 1 })
         taskRef.current = { ...state, stopped: true }
         setMinigameTask(null)
@@ -288,7 +212,7 @@ export default function QuestsScreen() {
           <Panel padding="p-3" className="w-full max-w-[280px] mb-3 rounded-xl">
             <div class="flex justify-between">
               <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Reward</span>
-              <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">{ITEM_NAMES[task.product] || task.product}</span>
+              <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">{minigamesData.itemNames[task.product] || task.product}</span>
             </div>
             <div class="flex justify-between mt-2">
               <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Time remaining</span>
@@ -519,8 +443,8 @@ export default function QuestsScreen() {
 
         {section === 'minigames' && (
           <div class="flex flex-col gap-4">
-            {MINIGAMES.map(mg => {
-              const tasks = MINIGAME_TASKS.filter(t => t.minigame === mg.id)
+            {minigamesData.minigames.map(mg => {
+              const tasks = minigamesData.tasks.filter(t => t.minigame === mg.id)
               if (tasks.length === 0) return null
               return (
                 <div key={mg.id} class="flex flex-col gap-2">
@@ -546,14 +470,14 @@ export default function QuestsScreen() {
                             ⏱ {formatHours(task.hours)} total
                             {task.requiresItem && (
                               <span class={`${missingReq ? 'text-[#e57373]' : 'text-[var(--color-parchment)] opacity-50'}`}>
-                                {' · '}Needs: {ITEM_NAMES[task.requiresItem] || task.requiresItem}
+                                {' · '}Needs: {minigamesData.itemNames[task.requiresItem] || task.requiresItem}
                               </span>
                             )}
                           </div>
                         </div>
                         <div class="flex-shrink-0 text-right">
                           <div class="text-[18px]">→</div>
-                          <div class="text-[9px] text-[#c8a96e] opacity-70">{ITEM_NAMES[task.product] || task.product}</div>
+                          <div class="text-[9px] text-[#c8a96e] opacity-70">{minigamesData.itemNames[task.product] || task.product}</div>
                         </div>
                       </button>
                     )

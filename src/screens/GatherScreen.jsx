@@ -9,6 +9,7 @@ import { addItem, countItem, freeSlots } from '../engine/inventory.js'
 import { onTick } from '../engine/tick.js'
 import { formatNumber } from '../utils/helpers.js'
 import { SCREENS } from '../utils/constants.js'
+import minigamesData from '../data/minigames.json'
 
 /**
  * Gathering tasks — no skill level required, just time-based resource collection.
@@ -200,76 +201,8 @@ const CATEGORIES = [
 
 const TICKS_PER_HOUR = 6000 // 3600s / 0.6s per tick
 
-const MINIGAME_TASKS = [
-  {
-    id: 'ba_fighter_torso',
-    name: 'Grind for Fighter Torso',
-    icon: '👕',
-    description: 'Run Barbarian Assault until you earn a Fighter Torso.',
-    hours: 5,
-    ticks: 5 * TICKS_PER_HOUR,
-    product: 'fighter_torso',
-    qty: 1,
-    minigame: 'barbarian_assault',
-    oneShot: true,
-  },
-  {
-    id: 'ba_fighter_hat',
-    name: 'Grind for Fighter Hat',
-    icon: '🪖',
-    description: 'Run Barbarian Assault until you earn a Fighter Hat.',
-    hours: 2,
-    ticks: 2 * TICKS_PER_HOUR,
-    product: 'fighter_hat',
-    qty: 1,
-    minigame: 'barbarian_assault',
-    oneShot: true,
-  },
-  {
-    id: 'wg_rune_defender',
-    name: 'Grind for Rune Defender',
-    icon: '🛡️',
-    description: 'Slay Cyclopes in the Warriors\' Guild basement until one drops a Rune Defender.',
-    hours: 3,
-    ticks: 3 * TICKS_PER_HOUR,
-    product: 'rune_defender',
-    qty: 1,
-    minigame: 'warriors_guild',
-    oneShot: true,
-  },
-  {
-    id: 'wg_dragon_defender',
-    name: 'Grind for Dragon Defender',
-    icon: '🛡️',
-    description: 'Slay Cyclopes wielding your Rune Defender until one drops a Dragon Defender.',
-    hours: 2,
-    ticks: 2 * TICKS_PER_HOUR,
-    product: 'dragon_defender',
-    qty: 1,
-    minigame: 'warriors_guild',
-    requiresItem: 'rune_defender',
-    oneShot: true,
-  },
-  {
-    id: 'cw_halo',
-    name: 'Grind for Halo',
-    icon: '😇',
-    description: 'Play Castle Wars matches until you can purchase a Halo.',
-    hours: 3,
-    ticks: 3 * TICKS_PER_HOUR,
-    product: 'halo',
-    qty: 1,
-    minigame: 'castle_wars',
-    oneShot: true,
-  },
-]
-
-const MINIGAMES = [
-  { id: 'barbarian_assault', label: 'Barbarian Assault', icon: '⚔️' },
-  { id: 'warriors_guild', label: 'Warriors\' Guild', icon: '🏛️' },
-  { id: 'castle_wars', label: 'Castle Wars', icon: '🏰' },
-]
-
+const MINIGAME_TASKS = minigamesData.tasks
+const MINIGAMES = minigamesData.minigames
 const ITEM_NAMES = {
   flax: 'Flax', bucket_of_sand: 'Bucket of sand', giant_seaweed: 'Seaweed',
   clay: 'Clay', soft_clay: 'Soft clay', wheat: 'Wheat', pot_of_flour: 'Pot of flour',
@@ -279,9 +212,7 @@ const ITEM_NAMES = {
   snape_grass: 'Snape grass', red_spiders_eggs: 'Red spiders\' eggs',
   potato_cactus: 'Potato cactus', crushed_birds_nest: 'Crushed bird\'s nest',
   empty_birds_nest: 'Empty bird\'s nest', limpwurt_root: 'Limpwurt root',
-  fighter_torso: 'Fighter torso', fighter_hat: 'Fighter hat',
-  rune_defender: 'Rune defender', dragon_defender: 'Dragon defender',
-  halo: 'Halo',
+  ...minigamesData.itemNames,
 }
 
 function hasItemAnywhere(itemId, inventory, bank, equipment) {

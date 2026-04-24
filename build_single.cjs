@@ -100,6 +100,7 @@ const prayersJSON = readSrc('data/prayers.json');
 const raidsJSON = readSrc('data/raids.json');
 const farmingJSON = readSrc('data/farming.json');
 const questsJSON = readSrc('data/quests.json');
+const minigamesJSON = readSrc('data/minigames.json');
 
 // Concatenate all JS
 let allJS = '';
@@ -146,6 +147,7 @@ const prayersData = ${prayersJSON};
 const raidsData = ${raidsJSON};
 const farmingData = ${farmingJSON};
 const questsData = ${questsJSON};
+const minigamesData = ${minigamesJSON};
 
 ${allJS}
 
