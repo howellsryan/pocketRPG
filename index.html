@@ -28276,10 +28276,13 @@ function BuyCreditsModal({ onClose, identityId, characterId, stripeLinks }) {
 
 
 
+
+
 function HomeScreen({ onNavigate, onLogout, isCloudAccount, removeAds, identityId, characterId, stripeLinks }) {
     const { player, stats, setActiveTask, equipment, inventory, itemsData } = useGame();
     const [loggingOut, setLoggingOut] = useState(false);
     const [viewSection, setViewSection] = useState('overview');
+    const [selectedSkillDetail, setSelectedSkillDetail] = useState(null);
     async function handleLogout() {
         setLoggingOut(true);
         try {
@@ -28302,6 +28305,21 @@ function HomeScreen({ onNavigate, onLogout, isCloudAccount, removeAds, identityI
         defence: levels.defence || 1, hitpoints: levels.hitpoints || 10,
         prayer: levels.prayer || 1, ranged: levels.ranged || 1, magic: levels.magic || 1
     });
+    const selectedSkillData = selectedSkillDetail ? stats[selectedSkillDetail] : null;
+    const selLevel = selectedSkillData ? (selectedSkillData.level || getLevelFromXP(selectedSkillData.xp)) : 0;
+    const selProgress = selectedSkillData ? getLevelProgress(selectedSkillData.xp) : 0;
+    const selToNext = selectedSkillData ? getXPToNextLevel(selectedSkillData.xp) : 0;
+    const handleSkillSelect = (skill) => {
+        setSelectedSkillDetail(skill);
+    };
+    function SkillGroup({ title, skills }) {
+        return (h("div", { class: "mb-4" },
+            h("h3", { class: "text-[10px] font-bold text-[var(--color-parchment)] opacity-40 uppercase tracking-widest mb-1.5" }, title),
+            h("div", { class: "grid grid-cols-2 gap-1.5" }, skills.map(skill => {
+                const data = stats[skill] || { xp: 0, level: 1 };
+                return (h(SkillBadge, { key: skill, skill: skill, xp: data.xp, level: data.level || getLevelFromXP(data.xp), onClick: handleSkillSelect }));
+            }))));
+    }
     return (h("div", { class: "h-full flex flex-col" },
         h("div", { class: "px-4 pt-4 pb-2 flex-shrink-0" },
             h("div", { style: { background: 'linear-gradient(135deg, #1a1a1a, #0f0f0f)', borderRadius: '14px', border: '1px solid #333', padding: '16px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' } },
@@ -28349,7 +28367,34 @@ function HomeScreen({ onNavigate, onLogout, isCloudAccount, removeAds, identityI
                         h("span", { class: "font-[var(--font-mono)] font-bold text-[var(--color-gold)]" }, totalLevel)),
                     h("span", { class: "text-xs text-[var(--color-parchment)] opacity-60" },
                         "Total XP: ",
-                        h("span", { class: "font-[var(--font-mono)] font-bold text-[var(--color-gold)]" }, formatNumber(totalXP)))))))));
+                        h("span", { class: "font-[var(--font-mono)] font-bold text-[var(--color-gold)]" }, formatNumber(totalXP)))),
+                h(SkillGroup, { title: "Combat", skills: COMBAT_SKILLS }),
+                h(SkillGroup, { title: "Gathering", skills: GATHERING_SKILLS }),
+                h(SkillGroup, { title: "Production", skills: PRODUCTION_SKILLS }),
+                h(SkillGroup, { title: "Utility", skills: UTILITY_SKILLS })))),
+        selectedSkillDetail && selectedSkillData && (h(Modal, { title: `${SKILL_ICONS[selectedSkillDetail]} ${selectedSkillDetail.charAt(0).toUpperCase() + selectedSkillDetail.slice(1)}`, onClose: () => setSelectedSkillDetail(null) },
+            h("div", { class: "space-y-3" },
+                h("div", { class: "text-center" },
+                    h("div", { class: "text-4xl font-[var(--font-mono)] font-bold text-[var(--color-gold)]" }, selLevel),
+                    h("div", { class: "text-xs text-[var(--color-parchment)] opacity-50 mt-1" }, "Current Level")),
+                h("div", { class: "bg-[#111] rounded-lg p-3 space-y-2" },
+                    h("div", { class: "flex justify-between text-sm" },
+                        h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "Total XP"),
+                        h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, formatNumber(selectedSkillData.xp))),
+                    h("div", { class: "flex justify-between text-sm" },
+                        h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "XP to next level"),
+                        h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, selLevel >= 99 ? 'MAX' : formatNumber(selToNext))),
+                    h("div", { class: "flex justify-between text-sm" },
+                        h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "Progress"),
+                        h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" },
+                            (selProgress * 100).toFixed(1),
+                            "%"))),
+                STUB_SKILLS.has(selectedSkillDetail) && (h("div", { class: "text-xs text-center text-[var(--color-parchment)] opacity-40 italic" }, "This skill is not yet trainable \u2014 coming soon!")),
+                selectedSkillDetail === 'agility' && (h("div", { class: "bg-[#111] rounded-lg p-3" },
+                    h("div", { class: "flex justify-between text-sm" },
+                        h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "\uD83C\uDFE6 Bank delay"),
+                        h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, formatBankDelay(getAgilityBankDelayMs(selLevel)))),
+                    h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-30 mt-1" }, "Time to bank a full inventory during combat"))))))));
 }
 
 // ── screens/StatsScreen.js ──
