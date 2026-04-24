@@ -32650,25 +32650,12 @@ function GatherScreen({ initialTaskId, idleResult }) {
     const visibleTasks = category === 'all'
         ? GATHER_TASKS
         : GATHER_TASKS.filter(t => t.category === category);
-    // Sync local activeTask state when global activeTask changes (e.g., from skip 1h)
-    useEffect(() => {
-        if (globalActiveTask?.type === 'gather' && globalActiveTask?.gatherTask) {
-            // Update the existing activeTask with new gatherTask data (may have ticks updated from skip)
-            setLocalTask(prev => {
-                if (prev && prev.task.id === globalActiveTask.gatherTask.id) {
-                    return {
-                        ...prev,
-                        task: globalActiveTask.gatherTask,
-                        ticksRemaining: globalActiveTask.gatherTask.ticks
-                    };
-                }
-                return prev;
-            });
-        }
-    }, [globalActiveTask?.gatherTask?.ticks]);
-    // Tick listener
+    // Tick listener — oneShot minigames are ticked by the App so they run
+    // on any screen. Resource gathers stay local.
     useEffect(() => {
         if (!activeTask)
+            return;
+        if (activeTask.task?.oneShot)
             return;
         taskRef.current = activeTask;
         const unsub = onTick(() => {
@@ -32775,8 +32762,22 @@ function GatherScreen({ initialTaskId, idleResult }) {
         };
         taskRef.current = newState;
         setLocalTask(newState);
-        // Gathering always has bankingEnabled = true (auto-bank enabled)
-        setActiveTask({ type: 'gather', gatherTask: task, bankingEnabled: true });
+        // Gathering always has bankingEnabled = true (auto-bank enabled).
+        // OneShot minigames persist progress on the global activeTask so they
+        // continue ticking at the App level after the user leaves this screen.
+        if (task.oneShot) {
+            setActiveTask({
+                type: 'gather',
+                gatherTask: task,
+                bankingEnabled: true,
+                totalTicks: task.ticks,
+                ticksRemaining: task.ticks,
+                startedAt: Date.now(),
+            });
+        }
+        else {
+            setActiveTask({ type: 'gather', gatherTask: task, bankingEnabled: true });
+        }
     };
     const stopTask = () => {
         if (taskRef.current)
@@ -32788,6 +32789,12 @@ function GatherScreen({ initialTaskId, idleResult }) {
     useEffect(() => {
         if (initialTaskId && !hasAutoStarted.current && !activeTask) {
             hasAutoStarted.current = true;
+            // Don't restart a minigame that's already running in the background.
+            if (globalActiveTask?.type === 'gather'
+                && globalActiveTask?.gatherTask?.id === initialTaskId
+                && globalActiveTask?.gatherTask?.oneShot) {
+                return;
+            }
             const task = GATHER_TASKS.find(t => t.id === initialTaskId)
                 || MINIGAME_TASKS.find(t => t.id === initialTaskId);
             if (task)
@@ -32817,15 +32824,27 @@ function GatherScreen({ initialTaskId, idleResult }) {
         updateHomeShortcuts([...current, shortcut]);
         addToast(`${task.icon} ${task.name} added to Home!`, 'info');
     };
-    // Active gathering modal
-    if (activeTask) {
-        const { task } = activeTask;
-        const progress = getActionProgress(true, activeTask.ticksRemaining, task.ticks);
-        const elapsedHrs = activeTask.startedAt ? (Date.now() - activeTask.startedAt) / 3600000 : 0;
+    // Active gathering modal — show if we have a local task OR a global minigame
+    // that was started earlier (allows the user to leave and return to the screen
+    // without losing progress).
+    const isGlobalMinigame = globalActiveTask?.type === 'gather' && globalActiveTask?.gatherTask?.oneShot;
+    if (activeTask || isGlobalMinigame) {
+        const task = activeTask?.task || globalActiveTask.gatherTask;
+        const isOneShot = !!task.oneShot;
+        const totalTicks = isOneShot
+            ? (globalActiveTask?.totalTicks ?? task.ticks)
+            : task.ticks;
+        const ticksRemaining = isOneShot
+            ? (globalActiveTask?.ticksRemaining ?? totalTicks)
+            : activeTask.ticksRemaining;
+        const progress = isOneShot
+            ? (totalTicks > 0 ? 1 - ticksRemaining / totalTicks : 0)
+            : getActionProgress(true, activeTask.ticksRemaining, task.ticks);
+        const elapsedHrs = activeTask?.startedAt ? (Date.now() - activeTask.startedAt) / 3600000 : 0;
         const perHour = elapsedHrs > 0 ? Math.round(activeTask.totalItems / elapsedHrs) : 0;
-        const remainingSeconds = activeTask.ticksRemaining * 0.6;
+        const remainingSeconds = ticksRemaining * 0.6;
         return (h("div", { class: "h-full flex flex-col p-4" },
-            h("button", { onClick: stopTask, class: "text-[12px] text-[#c4af7a] mb-3 flex items-center gap-1 bg-transparent border-0 cursor-pointer" }, "\u2190 Back"),
+            h("button", { onClick: stopTask, class: "text-[12px] text-[#c4af7a] mb-3 flex items-center gap-1 bg-transparent border-0 cursor-pointer" }, isOneShot ? '← Abandon' : '← Back'),
             h("div", { class: "flex-1 flex flex-col items-center justify-center" },
                 h("span", { class: "text-[48px] mb-2" }, task.icon),
                 h("h2", { class: "font-[var(--font-display)] text-[18px] font-bold text-[var(--color-gold)] mb-1 text-center" }, task.name),
@@ -32846,7 +32865,7 @@ function GatherScreen({ initialTaskId, idleResult }) {
                         h("span", { class: "text-[13px] text-[var(--color-parchment)] opacity-60" }, "Items banked/hr"),
                         h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)] font-bold" }, elapsedHrs > 0 ? perHour.toLocaleString() : '—')))),
                 h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-50 text-center max-w-[280px]" }, task.oneShot
-                    ? '⏳ Reward goes directly to your bank on completion.'
+                    ? '⏳ Minigame runs in the background — feel free to switch screens. Reward is banked on completion.'
                     : '⏳ Items go directly to your bank.'))));
     }
     // Task picker
@@ -34191,17 +34210,33 @@ function GameApp() {
                         getSetting('slayerTask'),
                     ]);
                     let sim = null;
-                    if (savedTask.type === 'skill')
+                    // OneShot minigames — reduce remaining time while away; complete if timer reached 0.
+                    if (savedTask.type === 'gather' && savedTask.gatherTask?.oneShot) {
+                        const elapsedTicks = Math.floor(elapsedMs / 600);
+                        const totalTicks = savedTask.totalTicks ?? savedTask.gatherTask.ticks;
+                        const prevRemaining = savedTask.ticksRemaining ?? totalTicks;
+                        const newRemaining = Math.max(0, prevRemaining - elapsedTicks);
+                        if (newRemaining <= 0) {
+                            updateBankDirect({ [savedTask.gatherTask.product]: savedTask.gatherTask.qty || 1 });
+                            setActiveTask(null);
+                            sim = { itemsGained: { [savedTask.gatherTask.product]: savedTask.gatherTask.qty || 1 }, minigameCompleted: true };
+                        }
+                        else {
+                            setActiveTask({ ...savedTask, totalTicks, ticksRemaining: newRemaining });
+                            sim = { minigameTimeReduced: true, hoursRemaining: Math.ceil(newRemaining / 6000) };
+                        }
+                    }
+                    else if (savedTask.type === 'skill')
                         sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv);
-                    if (savedTask.type === 'gather')
+                    else if (savedTask.type === 'gather')
                         sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current);
-                    if (savedTask.type === 'combat')
+                    else if (savedTask.type === 'combat')
                         sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank);
-                    if (savedTask.type === 'agility')
+                    else if (savedTask.type === 'agility')
                         sim = simulateIdleAgility(savedTask, elapsedMs);
-                    if (savedTask.type === 'thieving')
+                    else if (savedTask.type === 'thieving')
                         sim = simulateIdleThieving(savedTask, elapsedMs);
-                    if (savedTask.type === 'quest')
+                    else if (savedTask.type === 'quest')
                         sim = simulateIdleQuest(savedTask, elapsedMs);
                     // Always show the modal — even if sim is null (e.g. <1 action completed)
                     if (!sim) {
@@ -34449,6 +34484,21 @@ function GameApp() {
                 }
                 else {
                     setActiveTask({ ...task, ticksRemaining: remaining });
+                }
+            }
+            // Minigame (one-shot gather) tick — progresses on any screen
+            if (task && task.type === 'gather' && task.gatherTask?.oneShot) {
+                const total = task.totalTicks ?? task.gatherTask.ticks;
+                const remaining = (task.ticksRemaining ?? total) - 1;
+                if (remaining <= 0) {
+                    const product = task.gatherTask.product;
+                    const qty = task.gatherTask.qty || 1;
+                    updateBankDirect({ [product]: qty });
+                    addToast(`${task.gatherTask.icon || '🎮'} ${task.gatherTask.name} complete!`, 'levelup', '🏆');
+                    setActiveTask(null);
+                }
+                else {
+                    setActiveTask({ ...task, ticksRemaining: remaining, totalTicks: total });
                 }
             }
         });
@@ -34714,7 +34764,9 @@ function GameApp() {
                 if (savedTask.type === 'gather' && savedTask.gatherTask?.oneShot) {
                     const TICKS_PER_HOUR = 6000;
                     const ticksInOneHour = TICKS_PER_HOUR;
-                    const ticksRemaining = Math.max(0, savedTask.gatherTask.ticks - ticksInOneHour);
+                    const totalTicks = savedTask.totalTicks ?? savedTask.gatherTask.ticks;
+                    const prevRemaining = savedTask.ticksRemaining ?? totalTicks;
+                    const ticksRemaining = Math.max(0, prevRemaining - ticksInOneHour);
                     if (ticksRemaining <= 0) {
                         // Minigame completed — award item and clear task
                         updateBankDirect({ [savedTask.gatherTask.product]: savedTask.gatherTask.qty || 1 });
@@ -34724,7 +34776,7 @@ function GameApp() {
                     }
                     else {
                         // Minigame still ongoing — update remaining time and show progress
-                        const updatedTask = { ...savedTask, gatherTask: { ...savedTask.gatherTask, ticks: ticksRemaining } };
+                        const updatedTask = { ...savedTask, totalTicks, ticksRemaining };
                         setActiveTask(updatedTask);
                         idleResultData = {
                             elapsedMs,

@@ -282,12 +282,26 @@ function GameApp() {
           ])
 
           let sim = null
-          if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
-          if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current)
-          if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank)
-          if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
-          if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
-          if (savedTask.type === 'quest') sim = simulateIdleQuest(savedTask, elapsedMs)
+          // OneShot minigames — reduce remaining time while away; complete if timer reached 0.
+          if (savedTask.type === 'gather' && savedTask.gatherTask?.oneShot) {
+            const elapsedTicks = Math.floor(elapsedMs / 600)
+            const totalTicks = savedTask.totalTicks ?? savedTask.gatherTask.ticks
+            const prevRemaining = savedTask.ticksRemaining ?? totalTicks
+            const newRemaining = Math.max(0, prevRemaining - elapsedTicks)
+            if (newRemaining <= 0) {
+              updateBankDirect({ [savedTask.gatherTask.product]: savedTask.gatherTask.qty || 1 })
+              setActiveTask(null)
+              sim = { itemsGained: { [savedTask.gatherTask.product]: savedTask.gatherTask.qty || 1 }, minigameCompleted: true }
+            } else {
+              setActiveTask({ ...savedTask, totalTicks, ticksRemaining: newRemaining })
+              sim = { minigameTimeReduced: true, hoursRemaining: Math.ceil(newRemaining / 6000) }
+            }
+          } else if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
+          else if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current)
+          else if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank)
+          else if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
+          else if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
+          else if (savedTask.type === 'quest') sim = simulateIdleQuest(savedTask, elapsedMs)
 
           // Always show the modal — even if sim is null (e.g. <1 action completed)
           if (!sim) {
@@ -532,6 +546,21 @@ function GameApp() {
           handleQuestCompletion(task.quest, task.quest.xpReward, task.quest.coinReward)
         } else {
           setActiveTask({ ...task, ticksRemaining: remaining })
+        }
+      }
+
+      // Minigame (one-shot gather) tick — progresses on any screen
+      if (task && task.type === 'gather' && task.gatherTask?.oneShot) {
+        const total = task.totalTicks ?? task.gatherTask.ticks
+        const remaining = (task.ticksRemaining ?? total) - 1
+        if (remaining <= 0) {
+          const product = task.gatherTask.product
+          const qty = task.gatherTask.qty || 1
+          updateBankDirect({ [product]: qty })
+          addToast(`${task.gatherTask.icon || '🎮'} ${task.gatherTask.name} complete!`, 'levelup', '🏆')
+          setActiveTask(null)
+        } else {
+          setActiveTask({ ...task, ticksRemaining: remaining, totalTicks: total })
         }
       }
     })
@@ -801,7 +830,9 @@ function GameApp() {
         if (savedTask.type === 'gather' && savedTask.gatherTask?.oneShot) {
           const TICKS_PER_HOUR = 6000
           const ticksInOneHour = TICKS_PER_HOUR
-          const ticksRemaining = Math.max(0, savedTask.gatherTask.ticks - ticksInOneHour)
+          const totalTicks = savedTask.totalTicks ?? savedTask.gatherTask.ticks
+          const prevRemaining = savedTask.ticksRemaining ?? totalTicks
+          const ticksRemaining = Math.max(0, prevRemaining - ticksInOneHour)
 
           if (ticksRemaining <= 0) {
             // Minigame completed — award item and clear task
@@ -811,7 +842,7 @@ function GameApp() {
             sim = { itemsGained: { [savedTask.gatherTask.product]: savedTask.gatherTask.qty || 1 } }
           } else {
             // Minigame still ongoing — update remaining time and show progress
-            const updatedTask = { ...savedTask, gatherTask: { ...savedTask.gatherTask, ticks: ticksRemaining } }
+            const updatedTask = { ...savedTask, totalTicks, ticksRemaining }
             setActiveTask(updatedTask)
             idleResultData = {
               elapsedMs,
