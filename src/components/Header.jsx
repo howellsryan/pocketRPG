@@ -1,6 +1,6 @@
 import { useGame } from '../state/gameState.jsx'
 
-export default function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null, onBuyCredits = null }) {
+export default function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null }) {
   const { player, currentHP, getMaxHP } = useGame()
   if (!player) return null
 
@@ -10,10 +10,6 @@ export default function Header({ activity, credits = 0, isCloudAccount = false, 
 
   const handleSkip = () => {
     if (onSkip1h) onSkip1h()
-  }
-
-  const handleCreditsClick = () => {
-    if (onBuyCredits) onBuyCredits()
   }
 
   return (
@@ -32,15 +28,12 @@ export default function Header({ activity, credits = 0, isCloudAccount = false, 
 
         {/* Credits pill — cloud accounts only */}
         {isCloudAccount && (
-          <button
-            onClick={handleCreditsClick}
-            class="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#1a1030] border border-[#5a2a7a] whitespace-nowrap hover:border-[#7a3a9a] transition-colors cursor-pointer bg-opacity-90 hover:bg-opacity-100"
-          >
+          <div class="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#1a1030] border border-[#5a2a7a] whitespace-nowrap">
             <span class="text-[10px]">💎</span>
             <span class="text-[10px] font-[var(--font-mono)] font-bold text-[#e879f9]">
               Credits: {credits.toLocaleString()}
             </span>
-          </button>
+          </div>
         )}
 
         {/* HP bar */}

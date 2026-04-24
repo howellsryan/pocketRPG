@@ -27950,7 +27950,7 @@ function ToastContainer() {
 
 // ── components/Header.js ──
 
-function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null, onBuyCredits = null }) {
+function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null }) {
     const { player, currentHP, getMaxHP } = useGame();
     if (!player)
         return null;
@@ -27961,17 +27961,13 @@ function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null
         if (onSkip1h)
             onSkip1h();
     };
-    const handleCreditsClick = () => {
-        if (onBuyCredits)
-            onBuyCredits();
-    };
     return (h("header", { class: "flex-shrink-0 bg-[#111] border-b border-[#333] px-3 py-2" },
         h("div", { class: "flex items-center justify-between gap-2" },
             h("div", { class: "flex items-center gap-2" },
                 h("button", { onClick: handleSkip, class: "flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1a2a1a] border border-[#3a5a3a] hover:border-[#5a8a5a] transition-colors text-[10px] font-semibold text-[var(--color-parchment)] whitespace-nowrap", title: "Skip 1 hour (requires 1 credit)" },
                     h("span", null, "\u23ED\uFE0F"),
                     h("span", null, "Skip 1h"))),
-            isCloudAccount && (h("button", { onClick: handleCreditsClick, class: "flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#1a1030] border border-[#5a2a7a] whitespace-nowrap hover:border-[#7a3a9a] transition-colors cursor-pointer bg-opacity-90 hover:bg-opacity-100" },
+            isCloudAccount && (h("div", { class: "flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#1a1030] border border-[#5a2a7a] whitespace-nowrap" },
                 h("span", { class: "text-[10px]" }, "\uD83D\uDC8E"),
                 h("span", { class: "text-[10px] font-[var(--font-mono)] font-bold text-[#e879f9]" },
                     "Credits: ",
@@ -33954,7 +33950,6 @@ const errorText = { color: '#ff6b6b', fontSize: '12px', marginTop: '12px', textA
 
 
 
-
 function GameApp() {
     const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints, completeQuest, questQueue, removeFromQuestQueue, updateQuestQueue } = useGame();
     const [screen, setScreen] = useState(SCREENS.HOME);
@@ -33962,7 +33957,7 @@ function GameApp() {
     const [activity, setActivity] = useState(null);
     const [idleResult, setIdleResult] = useState(null); // { elapsedMs, task, xpGained, itemsGained, lootLost, monstersKilled }
     const [actionData, setActionData] = useState(null); // { monsterId, gatherTaskId, skillId, actionId }
-    const [isInCombat, setIsInCombat] = useState(false); // Track if currently in combat
+    const [isInBossFight, setIsInBossFight] = useState(false); // Track if currently in a boss fight
     const [pendingXpChoices, setPendingXpChoices] = useState([]); // [{ rewards, questId, questName }, ...]
     // Cloud auth gate: 'pending' until we resolve, 'auth' if AuthScreen needed, 'auth_offline' for offline creation, 'ready' to boot game
     const [cloudPhase, setCloudPhase] = useState('pending');
@@ -33974,7 +33969,6 @@ function GameApp() {
     const [identityId, setIdentityId] = useState(null);
     const [stripeLinks, setStripeLinks] = useState({});
     const [credits, setCredits] = useState(0);
-    const [showBuyCreditsModal, setShowBuyCreditsModal] = useState(false);
     // Set on mount if Stripe redirected back with a payment query/path — drives the
     // post-checkout thank-you toast + credits refresh once the game is ready.
     const paymentReturnRef = useRef(false);
@@ -34744,9 +34738,9 @@ function GameApp() {
             addToast('Skip only available for cloud accounts!', 'error');
             return;
         }
-        // Check if currently in combat — all combat cannot be skipped
-        if (activeTaskRef.current?.type === 'combat') {
-            addToast('Cannot skip combat!', 'error');
+        // Check if currently idling a boss — bosses cannot be skipped
+        if (activeTaskRef.current?.type === 'combat' && activeTaskRef.current?.monster?.boss) {
+            addToast('Cannot skip boss fights!', 'error');
             return;
         }
         try {
@@ -35073,7 +35067,6 @@ function GameApp() {
     }
     // Main game
     const renderScreen = () => {
-        const handleBuyCredits = () => setShowBuyCreditsModal(true);
         switch (screen) {
             case SCREENS.HOME: return h(HomeScreen, { onNavigate: navigate, onLogout: handleLogoutToCharacterSelect, isCloudAccount: !!getToken() && !!getCharacterId(), removeAds: removeAds, identityId: identityId, characterId: getCharacterId(), stripeLinks: stripeLinks });
             case SCREENS.STATS: return h(StatsScreen, null);
@@ -35084,18 +35077,17 @@ function GameApp() {
             case SCREENS.SKILLS: return h(SkillingScreen, { initialSkillId: actionData?.skillId, initialActionId: actionData?.actionId, idleResult: idleResult });
             case SCREENS.GATHER: return h(GatherScreen, { initialTaskId: actionData?.gatherTaskId, idleResult: idleResult });
             case SCREENS.AGILITY: return h(AgilityScreen, { initialActionId: actionData?.actionId });
-            case SCREENS.STORE: return h(GeneralStoreScreen, { onBuyCredits: handleBuyCredits });
+            case SCREENS.STORE: return h(GeneralStoreScreen, null);
             case SCREENS.QUESTS: return h(QuestsScreen, null);
             default: return h(HomeScreen, { onNavigate: navigate, onLogout: handleLogoutToCharacterSelect, isCloudAccount: !!getToken() && !!getCharacterId() });
         }
     };
     const isCloudAccount = !!getToken() && !!getCharacterId();
     return (h("div", { style: { height: '100%', display: 'flex', flexDirection: 'column' } },
-        h(Header, { activity: activity, credits: credits, isCloudAccount: isCloudAccount, onSkip1h: isCloudAccount ? handleSkip1h : null, onBuyCredits: () => setShowBuyCreditsModal(true) }),
+        h(Header, { activity: activity, credits: credits, isCloudAccount: isCloudAccount, onSkip1h: isCloudAccount ? handleSkip1h : null }),
         h(ToastContainer, null),
         h("main", { style: { flex: 1, overflow: 'hidden' } }, renderScreen()),
-        showBuyCreditsModal && isCloudAccount && (h(BuyCreditsModal, { onClose: () => setShowBuyCreditsModal(false), identityId: identityId, characterId: getCharacterId(), stripeLinks: stripeLinks })),
-        h(BottomNav, { active: screen, onNavigate: (s) => navigate(s), isInCombat: isInCombat, onDisabledClick: () => addToast('⚔️ Cannot navigate during combat!', 'warning') }),
+        h(BottomNav, { active: screen, onNavigate: (s) => navigate(s), isInBossFight: isInBossFight, onDisabledClick: () => addToast('⚔️ Cannot navigate during boss fight!', 'warning') }),
         idleResult && (h("div", { style: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' } },
             h("div", { style: { width: '100%', maxWidth: '380px', background: '#1a1a1a', borderRadius: '20px', border: '1px solid #333', overflow: 'hidden' } },
                 h("div", { style: { background: 'linear-gradient(135deg, #1d3a2a, #2a1a0a)', padding: '20px 20px 16px', borderBottom: '1px solid #333' } },
@@ -35124,9 +35116,9 @@ function GameApp() {
                         idleResult.cloudOverride && (h("div", { style: { marginBottom: '12px', padding: '10px', background: 'rgba(123, 179, 240, 0.12)', borderRadius: '10px', borderLeft: '3px solid #7bb3f0' } },
                             h("div", { style: { fontSize: '12px', color: '#7bb3f0', fontWeight: 'bold', marginBottom: '4px' } }, "\u2601\uFE0F Cloud Save Loaded"),
                             h("div", { style: { fontSize: '11px', color: '#bcd7f5', lineHeight: '1.4' } }, "Another session of this character saved while you were away. Idle progress on this device was discarded to keep both sessions in sync."))),
-                        idleResult.task?.type === 'combat' && (h("div", { style: { marginBottom: '12px', padding: '10px', background: 'rgba(220, 53, 69, 0.15)', borderRadius: '10px', borderLeft: '3px solid #dc3545' } },
-                            h("div", { style: { fontSize: '12px', color: '#ff6b6b', fontWeight: 'bold', marginBottom: '4px' } }, "\u26A0\uFE0F Combat Active"),
-                            h("div", { style: { fontSize: '11px', color: '#ff8787', lineHeight: '1.4' } }, "Combat cannot be fought while idle. You must actively fight in combat. Return to the fight to continue!"))),
+                        idleResult.task?.type === 'combat' && idleResult.task.monster?.boss && (h("div", { style: { marginBottom: '12px', padding: '10px', background: 'rgba(220, 53, 69, 0.15)', borderRadius: '10px', borderLeft: '3px solid #dc3545' } },
+                            h("div", { style: { fontSize: '12px', color: '#ff6b6b', fontWeight: 'bold', marginBottom: '4px' } }, "\u26A0\uFE0F Boss Combat"),
+                            h("div", { style: { fontSize: '11px', color: '#ff8787', lineHeight: '1.4' } }, "Bosses cannot be fought while idle. You must actively kill this boss in combat. Return to the fight to continue!"))),
                         idleResult.completedQuests && idleResult.completedQuests.length > 0 && (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#1a3a2a', borderRadius: '10px', borderLeft: '3px solid #4ade80' } },
                             h("div", { style: { fontSize: '12px', color: '#4ade80', fontWeight: 'bold', marginBottom: '8px' } },
                                 "\uD83D\uDCDC Quests Completed (",
