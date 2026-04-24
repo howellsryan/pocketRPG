@@ -11109,5 +11109,1055 @@
     "icon": "🪖",
     "isGeneralStore": false,
     "IsUntradeable": true
+  },
+  "clue_scroll_medium": {
+    "id": "clue_scroll_medium",
+    "name": "Clue scroll (medium)",
+    "type": "quest",
+    "stackable": true,
+    "shopValue": 1,
+    "icon": "📜",
+    "isGeneralStore": false,
+    "isUntradeable": true
+  },
+  "clue_scroll_hard": {
+    "id": "clue_scroll_hard",
+    "name": "Clue scroll (hard)",
+    "type": "quest",
+    "stackable": true,
+    "shopValue": 1,
+    "icon": "📜",
+    "isGeneralStore": false,
+    "isUntradeable": true
+  },
+  "clue_scroll_elite": {
+    "id": "clue_scroll_elite",
+    "name": "Clue scroll (elite)",
+    "type": "quest",
+    "stackable": true,
+    "shopValue": 1,
+    "icon": "📜",
+    "isGeneralStore": false,
+    "isUntradeable": true
+  },
+  "clue_scroll_master": {
+    "id": "clue_scroll_master",
+    "name": "Clue scroll (master)",
+    "type": "quest",
+    "stackable": true,
+    "shopValue": 1,
+    "icon": "📜",
+    "isGeneralStore": false,
+    "isUntradeable": true
+  },
+  "mithril_plateskirt": {
+    "id": "mithril_plateskirt",
+    "name": "Mithril plateskirt",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 0,
+    "icon": "📦",
+    "isGeneralStore": false
+  },
+  "adamant_plateskirt": {
+    "id": "adamant_plateskirt",
+    "name": "Adamant plateskirt",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 0,
+    "icon": "📦",
+    "isGeneralStore": false
+  },
+  "purple_sweets": {
+    "id": "purple_sweets",
+    "name": "Purple sweets",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 0,
+    "icon": "🍬",
+    "isGeneralStore": false
+  },
+  "dragon_mace": {
+    "id": "dragon_mace",
+    "name": "Dragon mace",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 0,
+    "icon": "🔨",
+    "isGeneralStore": false
+  },
+  "battlestaff": {
+    "id": "battlestaff",
+    "name": "Battlestaff",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 0,
+    "icon": "🪄",
+    "isGeneralStore": false
+  },
+  "manta_ray": {
+    "id": "manta_ray",
+    "name": "Manta ray",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 0,
+    "icon": "🐟",
+    "isGeneralStore": false
+  },
+  "dragon_battleaxe": {
+    "id": "dragon_battleaxe",
+    "name": "Dragon battleaxe",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 0,
+    "icon": "📦",
+    "isGeneralStore": false
+  },
+  "dragon_bolt": {
+    "id": "dragon_bolt",
+    "name": "Dragon bolt",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 0,
+    "icon": "⚙️",
+    "isGeneralStore": false
+  },
+  "anglerfish": {
+    "id": "anglerfish",
+    "name": "Anglerfish",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 0,
+    "icon": "🐟",
+    "isGeneralStore": false
+  },
+  "ranger_boots": {
+    "id": "ranger_boots",
+    "name": "Ranger boots",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👢",
+    "isGeneralStore": false,
+    "slot": "boots"
+  },
+  "wizard_boots": {
+    "id": "wizard_boots",
+    "name": "Wizard boots",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👢",
+    "isGeneralStore": false,
+    "slot": "boots"
+  },
+  "holy_sandals": {
+    "id": "holy_sandals",
+    "name": "Holy sandals",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👢",
+    "isGeneralStore": false,
+    "slot": "boots"
+  },
+  "spiked_manacles": {
+    "id": "spiked_manacles",
+    "name": "Spiked manacles",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👢",
+    "isGeneralStore": false,
+    "slot": "boots"
+  },
+  "climbing_boots_g": {
+    "id": "climbing_boots_g",
+    "name": "Climbing boots (g)",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👢",
+    "isGeneralStore": false,
+    "slot": "boots"
+  },
+  "saradomin_dhide_body": {
+    "id": "saradomin_dhide_body",
+    "name": "Saradomin d'hide body",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👔",
+    "isGeneralStore": false,
+    "slot": "body"
+  },
+  "saradomin_dhide_chaps": {
+    "id": "saradomin_dhide_chaps",
+    "name": "Saradomin d'hide chaps",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🩳",
+    "isGeneralStore": false,
+    "slot": "legs"
+  },
+  "saradomin_dhide_boots": {
+    "id": "saradomin_dhide_boots",
+    "name": "Saradomin d'hide boots",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👢",
+    "isGeneralStore": false,
+    "slot": "boots"
+  },
+  "saradomin_dhide_bracers": {
+    "id": "saradomin_dhide_bracers",
+    "name": "Saradomin d'hide bracers",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🤲",
+    "isGeneralStore": false,
+    "slot": "hands"
+  },
+  "saradomin_coif": {
+    "id": "saradomin_coif",
+    "name": "Saradomin coif",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🪖",
+    "isGeneralStore": false,
+    "slot": "head"
+  },
+  "saradomin_stole": {
+    "id": "saradomin_stole",
+    "name": "Saradomin stole",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "📿",
+    "isGeneralStore": false,
+    "slot": "neck"
+  },
+  "guthix_dhide_body": {
+    "id": "guthix_dhide_body",
+    "name": "Guthix d'hide body",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👔",
+    "isGeneralStore": false,
+    "slot": "body"
+  },
+  "guthix_dhide_chaps": {
+    "id": "guthix_dhide_chaps",
+    "name": "Guthix d'hide chaps",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🩳",
+    "isGeneralStore": false,
+    "slot": "legs"
+  },
+  "guthix_dhide_boots": {
+    "id": "guthix_dhide_boots",
+    "name": "Guthix d'hide boots",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👢",
+    "isGeneralStore": false,
+    "slot": "boots"
+  },
+  "guthix_dhide_bracers": {
+    "id": "guthix_dhide_bracers",
+    "name": "Guthix d'hide bracers",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🤲",
+    "isGeneralStore": false,
+    "slot": "hands"
+  },
+  "guthix_coif": {
+    "id": "guthix_coif",
+    "name": "Guthix coif",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🪖",
+    "isGeneralStore": false,
+    "slot": "head"
+  },
+  "guthix_stole": {
+    "id": "guthix_stole",
+    "name": "Guthix stole",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "📿",
+    "isGeneralStore": false,
+    "slot": "neck"
+  },
+  "zamorak_dhide_body": {
+    "id": "zamorak_dhide_body",
+    "name": "Zamorak d'hide body",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👔",
+    "isGeneralStore": false,
+    "slot": "body"
+  },
+  "zamorak_dhide_chaps": {
+    "id": "zamorak_dhide_chaps",
+    "name": "Zamorak d'hide chaps",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🩳",
+    "isGeneralStore": false,
+    "slot": "legs"
+  },
+  "zamorak_dhide_boots": {
+    "id": "zamorak_dhide_boots",
+    "name": "Zamorak d'hide boots",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👢",
+    "isGeneralStore": false,
+    "slot": "boots"
+  },
+  "zamorak_dhide_bracers": {
+    "id": "zamorak_dhide_bracers",
+    "name": "Zamorak d'hide bracers",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🤲",
+    "isGeneralStore": false,
+    "slot": "hands"
+  },
+  "zamorak_coif": {
+    "id": "zamorak_coif",
+    "name": "Zamorak coif",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🪖",
+    "isGeneralStore": false,
+    "slot": "head"
+  },
+  "zamorak_stole": {
+    "id": "zamorak_stole",
+    "name": "Zamorak stole",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "📿",
+    "isGeneralStore": false,
+    "slot": "neck"
+  },
+  "ancient_dhide_body": {
+    "id": "ancient_dhide_body",
+    "name": "Ancient d'hide body",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👔",
+    "isGeneralStore": false,
+    "slot": "body"
+  },
+  "ancient_dhide_chaps": {
+    "id": "ancient_dhide_chaps",
+    "name": "Ancient d'hide chaps",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🩳",
+    "isGeneralStore": false,
+    "slot": "legs"
+  },
+  "ancient_dhide_boots": {
+    "id": "ancient_dhide_boots",
+    "name": "Ancient d'hide boots",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👢",
+    "isGeneralStore": false,
+    "slot": "boots"
+  },
+  "ancient_dhide_bracers": {
+    "id": "ancient_dhide_bracers",
+    "name": "Ancient d'hide bracers",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🤲",
+    "isGeneralStore": false,
+    "slot": "hands"
+  },
+  "ancient_coif": {
+    "id": "ancient_coif",
+    "name": "Ancient coif",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🪖",
+    "isGeneralStore": false,
+    "slot": "head"
+  },
+  "ancient_stole": {
+    "id": "ancient_stole",
+    "name": "Ancient stole",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "📿",
+    "isGeneralStore": false,
+    "slot": "neck"
+  },
+  "armadyl_dhide_body": {
+    "id": "armadyl_dhide_body",
+    "name": "Armadyl d'hide body",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👔",
+    "isGeneralStore": false,
+    "slot": "body"
+  },
+  "armadyl_dhide_chaps": {
+    "id": "armadyl_dhide_chaps",
+    "name": "Armadyl d'hide chaps",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🩳",
+    "isGeneralStore": false,
+    "slot": "legs"
+  },
+  "armadyl_dhide_boots": {
+    "id": "armadyl_dhide_boots",
+    "name": "Armadyl d'hide boots",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👢",
+    "isGeneralStore": false,
+    "slot": "boots"
+  },
+  "armadyl_dhide_bracers": {
+    "id": "armadyl_dhide_bracers",
+    "name": "Armadyl d'hide bracers",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🤲",
+    "isGeneralStore": false,
+    "slot": "hands"
+  },
+  "armadyl_coif": {
+    "id": "armadyl_coif",
+    "name": "Armadyl coif",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🪖",
+    "isGeneralStore": false,
+    "slot": "head"
+  },
+  "armadyl_stole": {
+    "id": "armadyl_stole",
+    "name": "Armadyl stole",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "📿",
+    "isGeneralStore": false,
+    "slot": "neck"
+  },
+  "bandos_dhide_body": {
+    "id": "bandos_dhide_body",
+    "name": "Bandos d'hide body",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👔",
+    "isGeneralStore": false,
+    "slot": "body"
+  },
+  "bandos_dhide_chaps": {
+    "id": "bandos_dhide_chaps",
+    "name": "Bandos d'hide chaps",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🩳",
+    "isGeneralStore": false,
+    "slot": "legs"
+  },
+  "bandos_dhide_boots": {
+    "id": "bandos_dhide_boots",
+    "name": "Bandos d'hide boots",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👢",
+    "isGeneralStore": false,
+    "slot": "boots"
+  },
+  "bandos_dhide_bracers": {
+    "id": "bandos_dhide_bracers",
+    "name": "Bandos d'hide bracers",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🤲",
+    "isGeneralStore": false,
+    "slot": "hands"
+  },
+  "bandos_coif": {
+    "id": "bandos_coif",
+    "name": "Bandos coif",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🪖",
+    "isGeneralStore": false,
+    "slot": "head"
+  },
+  "bandos_stole": {
+    "id": "bandos_stole",
+    "name": "Bandos stole",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "📿",
+    "isGeneralStore": false,
+    "slot": "neck"
+  },
+  "black_dhide_body": {
+    "id": "black_dhide_body",
+    "name": "Black d'hide body",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👔",
+    "isGeneralStore": false,
+    "slot": "body"
+  },
+  "black_dhide_chaps": {
+    "id": "black_dhide_chaps",
+    "name": "Black d'hide chaps",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🩳",
+    "isGeneralStore": false,
+    "slot": "legs"
+  },
+  "robin_hood_hat": {
+    "id": "robin_hood_hat",
+    "name": "Robin hood hat",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🪖",
+    "isGeneralStore": false,
+    "slot": "head"
+  },
+  "amulet_of_glory_t": {
+    "id": "amulet_of_glory_t",
+    "name": "Amulet of glory (t)",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "📿",
+    "isGeneralStore": false,
+    "slot": "neck"
+  },
+  "3rd_age_full_helm": {
+    "id": "3rd_age_full_helm",
+    "name": "3rd age full helm",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🪖",
+    "isGeneralStore": false,
+    "slot": "head"
+  },
+  "3rd_age_platebody": {
+    "id": "3rd_age_platebody",
+    "name": "3rd age platebody",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👔",
+    "isGeneralStore": false,
+    "slot": "body"
+  },
+  "3rd_age_platelegs": {
+    "id": "3rd_age_platelegs",
+    "name": "3rd age platelegs",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🩳",
+    "isGeneralStore": false,
+    "slot": "legs"
+  },
+  "3rd_age_plateskirt": {
+    "id": "3rd_age_plateskirt",
+    "name": "3rd age plateskirt",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🩳",
+    "isGeneralStore": false,
+    "slot": "legs"
+  },
+  "3rd_age_kiteshield": {
+    "id": "3rd_age_kiteshield",
+    "name": "3rd age kiteshield",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🛡️",
+    "isGeneralStore": false,
+    "slot": "shield"
+  },
+  "3rd_age_range_coif": {
+    "id": "3rd_age_range_coif",
+    "name": "3rd age range coif",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🪖",
+    "isGeneralStore": false,
+    "slot": "head"
+  },
+  "3rd_age_range_top": {
+    "id": "3rd_age_range_top",
+    "name": "3rd age range top",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👔",
+    "isGeneralStore": false,
+    "slot": "body"
+  },
+  "3rd_age_range_legs": {
+    "id": "3rd_age_range_legs",
+    "name": "3rd age range legs",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🩳",
+    "isGeneralStore": false,
+    "slot": "legs"
+  },
+  "3rd_age_vambraces": {
+    "id": "3rd_age_vambraces",
+    "name": "3rd age vambraces",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🤲",
+    "isGeneralStore": false,
+    "slot": "hands"
+  },
+  "3rd_age_mage_hat": {
+    "id": "3rd_age_mage_hat",
+    "name": "3rd age mage hat",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🪖",
+    "isGeneralStore": false,
+    "slot": "head"
+  },
+  "3rd_age_robe_top": {
+    "id": "3rd_age_robe_top",
+    "name": "3rd age robe top",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👔",
+    "isGeneralStore": false,
+    "slot": "body"
+  },
+  "3rd_age_robe_legs": {
+    "id": "3rd_age_robe_legs",
+    "name": "3rd age robe legs",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🩳",
+    "isGeneralStore": false,
+    "slot": "legs"
+  },
+  "3rd_age_amulet": {
+    "id": "3rd_age_amulet",
+    "name": "3rd age amulet",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "📿",
+    "isGeneralStore": false,
+    "slot": "neck"
+  },
+  "3rd_age_longsword": {
+    "id": "3rd_age_longsword",
+    "name": "3rd age longsword",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "⚔️",
+    "isGeneralStore": false,
+    "slot": "weapon"
+  },
+  "3rd_age_bow": {
+    "id": "3rd_age_bow",
+    "name": "3rd age bow",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "⚔️",
+    "isGeneralStore": false,
+    "slot": "weapon"
+  },
+  "3rd_age_wand": {
+    "id": "3rd_age_wand",
+    "name": "3rd age wand",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "⚔️",
+    "isGeneralStore": false,
+    "slot": "weapon"
+  },
+  "3rd_age_cloak": {
+    "id": "3rd_age_cloak",
+    "name": "3rd age cloak",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🧥",
+    "isGeneralStore": false,
+    "slot": "cape"
+  },
+  "saradomin_dhide_shield": {
+    "id": "saradomin_dhide_shield",
+    "name": "Saradomin d'hide shield",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🛡️",
+    "isGeneralStore": false,
+    "slot": "shield"
+  },
+  "guthix_dhide_shield": {
+    "id": "guthix_dhide_shield",
+    "name": "Guthix d'hide shield",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🛡️",
+    "isGeneralStore": false,
+    "slot": "shield"
+  },
+  "zamorak_dhide_shield": {
+    "id": "zamorak_dhide_shield",
+    "name": "Zamorak d'hide shield",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🛡️",
+    "isGeneralStore": false,
+    "slot": "shield"
+  },
+  "ancient_dhide_shield": {
+    "id": "ancient_dhide_shield",
+    "name": "Ancient d'hide shield",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🛡️",
+    "isGeneralStore": false,
+    "slot": "shield"
+  },
+  "armadyl_dhide_shield": {
+    "id": "armadyl_dhide_shield",
+    "name": "Armadyl d'hide shield",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🛡️",
+    "isGeneralStore": false,
+    "slot": "shield"
+  },
+  "bandos_dhide_shield": {
+    "id": "bandos_dhide_shield",
+    "name": "Bandos d'hide shield",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🛡️",
+    "isGeneralStore": false,
+    "slot": "shield"
+  },
+  "holy_blessing": {
+    "id": "holy_blessing",
+    "name": "Holy blessing",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🏹",
+    "isGeneralStore": false,
+    "slot": "ammo"
+  },
+  "peace_blessing": {
+    "id": "peace_blessing",
+    "name": "Peace blessing",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🏹",
+    "isGeneralStore": false,
+    "slot": "ammo"
+  },
+  "unholy_blessing": {
+    "id": "unholy_blessing",
+    "name": "Unholy blessing",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🏹",
+    "isGeneralStore": false,
+    "slot": "ammo"
+  },
+  "honorable_blessing": {
+    "id": "honorable_blessing",
+    "name": "Honorable blessing",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🏹",
+    "isGeneralStore": false,
+    "slot": "ammo"
+  },
+  "war_blessing": {
+    "id": "war_blessing",
+    "name": "War blessing",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🏹",
+    "isGeneralStore": false,
+    "slot": "ammo"
+  },
+  "ancient_blessing": {
+    "id": "ancient_blessing",
+    "name": "Ancient blessing",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🏹",
+    "isGeneralStore": false,
+    "slot": "ammo"
+  },
+  "rangers_tunic": {
+    "id": "rangers_tunic",
+    "name": "Rangers' tunic",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👔",
+    "isGeneralStore": false,
+    "slot": "body"
+  },
+  "holy_wraps": {
+    "id": "holy_wraps",
+    "name": "Holy wraps",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🤲",
+    "isGeneralStore": false,
+    "slot": "hands"
+  },
+  "3rd_age_druidic_robe_top": {
+    "id": "3rd_age_druidic_robe_top",
+    "name": "3rd age druidic robe top",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👔",
+    "isGeneralStore": false,
+    "slot": "body"
+  },
+  "3rd_age_druidic_robe_bottoms": {
+    "id": "3rd_age_druidic_robe_bottoms",
+    "name": "3rd age druidic robe bottoms",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🩳",
+    "isGeneralStore": false,
+    "slot": "legs"
+  },
+  "3rd_age_druidic_cloak": {
+    "id": "3rd_age_druidic_cloak",
+    "name": "3rd age druidic cloak",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🧥",
+    "isGeneralStore": false,
+    "slot": "cape"
+  },
+  "3rd_age_druidic_staff": {
+    "id": "3rd_age_druidic_staff",
+    "name": "3rd age druidic staff",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "⚔️",
+    "isGeneralStore": false,
+    "slot": "weapon"
+  },
+  "3rd_age_pickaxe": {
+    "id": "3rd_age_pickaxe",
+    "name": "3rd age pickaxe",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "⚔️",
+    "isGeneralStore": false,
+    "slot": "weapon"
+  },
+  "3rd_age_axe": {
+    "id": "3rd_age_axe",
+    "name": "3rd age axe",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "⚔️",
+    "isGeneralStore": false,
+    "slot": "weapon"
+  },
+  "gilded_pickaxe": {
+    "id": "gilded_pickaxe",
+    "name": "Gilded pickaxe",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "⚔️",
+    "isGeneralStore": false,
+    "slot": "weapon"
+  },
+  "gilded_axe": {
+    "id": "gilded_axe",
+    "name": "Gilded axe",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "⚔️",
+    "isGeneralStore": false,
+    "slot": "weapon"
+  },
+  "gilded_spade": {
+    "id": "gilded_spade",
+    "name": "Gilded spade",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "⚔️",
+    "isGeneralStore": false,
+    "slot": "weapon"
+  },
+  "fancy_tiara": {
+    "id": "fancy_tiara",
+    "name": "Fancy tiara",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🪖",
+    "isGeneralStore": false,
+    "slot": "head"
+  },
+  "saradomin_mitre": {
+    "id": "saradomin_mitre",
+    "name": "Saradomin mitre",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🪖",
+    "isGeneralStore": false,
+    "slot": "head"
+  },
+  "guthix_mitre": {
+    "id": "guthix_mitre",
+    "name": "Guthix mitre",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🪖",
+    "isGeneralStore": false,
+    "slot": "head"
+  },
+  "zamorak_mitre": {
+    "id": "zamorak_mitre",
+    "name": "Zamorak mitre",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🪖",
+    "isGeneralStore": false,
+    "slot": "head"
+  },
+  "ancient_mitre": {
+    "id": "ancient_mitre",
+    "name": "Ancient mitre",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🪖",
+    "isGeneralStore": false,
+    "slot": "head"
+  },
+  "armadyl_mitre": {
+    "id": "armadyl_mitre",
+    "name": "Armadyl mitre",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🪖",
+    "isGeneralStore": false,
+    "slot": "head"
+  },
+  "bandos_mitre": {
+    "id": "bandos_mitre",
+    "name": "Bandos mitre",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "🪖",
+    "isGeneralStore": false,
+    "slot": "head"
+  },
+  "wrath_rune": {
+    "id": "wrath_rune",
+    "name": "Wrath rune",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 0,
+    "icon": "📦",
+    "isGeneralStore": false
   }
 }

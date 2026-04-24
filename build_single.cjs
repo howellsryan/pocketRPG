@@ -26,6 +26,7 @@ const sourceFiles = [
   'engine/tick.js',
   'engine/farming.js',
   'engine/quests.js',
+  'engine/clueScrolls.js',
   'db/database.js',
   'db/stores.js',
   'db/saveload.js',
@@ -102,6 +103,7 @@ const raidsJSON = readSrc('data/raids.json');
 const farmingJSON = readSrc('data/farming.json');
 const questsJSON = readSrc('data/quests.json');
 const minigamesJSON = readSrc('data/minigames.json');
+const cluesJSON = readSrc('data/clues.json');
 
 // Concatenate all JS
 let allJS = '';
@@ -149,6 +151,7 @@ const raidsData = ${raidsJSON};
 const farmingData = ${farmingJSON};
 const questsData = ${questsJSON};
 const minigamesData = ${minigamesJSON};
+const cluesData = ${cluesJSON};
 
 ${allJS}
 
