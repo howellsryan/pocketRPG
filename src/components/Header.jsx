@@ -12,10 +12,6 @@ export default function Header({ activity, credits = 0, isCloudAccount = false, 
     if (onSkip1h) onSkip1h()
   }
 
-  const handleCreditsClick = () => {
-    if (onBuyCredits) onBuyCredits()
-  }
-
   return (
     <header class="flex-shrink-0 bg-[#111] border-b border-[#333] px-3 py-2">
       <div class="flex items-center justify-between gap-2">
@@ -33,7 +29,7 @@ export default function Header({ activity, credits = 0, isCloudAccount = false, 
         {/* Credits pill — cloud accounts only */}
         {isCloudAccount && (
           <button
-            onClick={handleCreditsClick}
+            onClick={() => onBuyCredits?.()}
             class="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#1a1030] border border-[#5a2a7a] whitespace-nowrap hover:border-[#7a3a9a] transition-colors cursor-pointer bg-opacity-90 hover:bg-opacity-100"
           >
             <span class="text-[10px]">💎</span>

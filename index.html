@@ -27961,17 +27961,13 @@ function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null
         if (onSkip1h)
             onSkip1h();
     };
-    const handleCreditsClick = () => {
-        if (onBuyCredits)
-            onBuyCredits();
-    };
     return (h("header", { class: "flex-shrink-0 bg-[#111] border-b border-[#333] px-3 py-2" },
         h("div", { class: "flex items-center justify-between gap-2" },
             h("div", { class: "flex items-center gap-2" },
                 h("button", { onClick: handleSkip, class: "flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1a2a1a] border border-[#3a5a3a] hover:border-[#5a8a5a] transition-colors text-[10px] font-semibold text-[var(--color-parchment)] whitespace-nowrap", title: "Skip 1 hour (requires 1 credit)" },
                     h("span", null, "\u23ED\uFE0F"),
                     h("span", null, "Skip 1h"))),
-            isCloudAccount && (h("button", { onClick: handleCreditsClick, class: "flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#1a1030] border border-[#5a2a7a] whitespace-nowrap hover:border-[#7a3a9a] transition-colors cursor-pointer bg-opacity-90 hover:bg-opacity-100" },
+            isCloudAccount && (h("button", { onClick: () => onBuyCredits?.(), class: "flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#1a1030] border border-[#5a2a7a] whitespace-nowrap hover:border-[#7a3a9a] transition-colors cursor-pointer bg-opacity-90 hover:bg-opacity-100" },
                 h("span", { class: "text-[10px]" }, "\uD83D\uDC8E"),
                 h("span", { class: "text-[10px] font-[var(--font-mono)] font-bold text-[#e879f9]" },
                     "Credits: ",
