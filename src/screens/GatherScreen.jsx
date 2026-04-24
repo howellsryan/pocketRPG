@@ -239,9 +239,6 @@ const GATHER_TASKS = [
 
 const CATEGORIES = [
   { id: 'all', label: 'All', icon: '📋' },
-  { id: 'fields', label: 'Fields', icon: '🌿' },
-  { id: 'beach', label: 'Beach', icon: '🌊' },
-  { id: 'town', label: 'Town', icon: '🏘️' },
   { id: 'clues', label: 'Clues', icon: '📜' },
 ]
 
