@@ -3,7 +3,7 @@ import { useGame } from '../state/gameState.jsx'
 import ItemSlot from '../components/ItemSlot.jsx'
 import Modal from '../components/Modal.jsx'
 import { freeSlots, countItem } from '../engine/inventory.js'
-import { equipItem } from '../engine/equipment.js'
+import { equipItem, checkEquipRequirements } from '../engine/equipment.js'
 import { getLevelFromXP } from '../engine/experience.js'
 
 export default function InventoryScreen() {
@@ -25,21 +25,15 @@ export default function InventoryScreen() {
     if (!selected) return
     const { slotIndex, item } = selected
 
-    if (item.questUnlock && !completedQuests.has(item.questUnlock)) {
-      addToast(`Complete quest to equip: ${item.questUnlock.replace(/_/g, ' ')}`, 'error')
+    const reqError = checkEquipRequirements(item, stats, completedQuests)
+    if (reqError) {
+      if (reqError.reason === 'quest') {
+        addToast(`Complete quest to equip: ${reqError.questUnlock.replace(/_/g, ' ')}`, 'error')
+      } else {
+        addToast(`Need ${reqError.skill} level ${reqError.required} to equip`, 'error')
+      }
       setSelected(null)
       return
-    }
-
-    if (item.requirements) {
-      for (const [skill, level] of Object.entries(item.requirements)) {
-        const playerLevel = stats[skill] ? getLevelFromXP(stats[skill].xp) : 1
-        if (playerLevel < level) {
-          addToast(`Need ${skill} level ${level} to equip`, 'error')
-          setSelected(null)
-          return
-        }
-      }
     }
 
     const newEquip = { ...equipment }
@@ -242,13 +236,15 @@ export default function InventoryScreen() {
       updateBank(newBank)
       setSelected(null)
     } else {
-      // Non-stackable: deposit qty of same itemId across inventory
+      // Non-stackable: deposit qty of same itemId (non-noted only — the user
+      // clicked a non-noted slot). Matching on itemId alone would also null
+      // out any noted stack with the same id, wiping that stack's quantity.
       const depositQty = qty || 1
       const newBank = { ...bank }
       const newInv = [...inventory]
       let deposited = 0
       for (let i = 0; i < newInv.length && deposited < depositQty; i++) {
-        if (newInv[i] && newInv[i].itemId === slot.itemId) {
+        if (newInv[i] && newInv[i].itemId === slot.itemId && !newInv[i].noted) {
           newInv[i] = null
           deposited++
         }
@@ -275,6 +271,8 @@ export default function InventoryScreen() {
   const handleSell = (qty) => {
     if (!selected) return
     const { slot, item } = selected
+    // Noted items can't be used but can still be sold at the underlying item's
+    // shop value. The price lookup is the same for both forms.
     const price = item.shopValue || 0
     if (price <= 0) {
       addToast('This item has no value', 'error')
@@ -283,10 +281,15 @@ export default function InventoryScreen() {
     }
 
     const newInv = [...inventory]
+    // Match the exact form the user interacted with. Without this, selling a
+    // noted stack could drain the non-noted slot (or vice-versa), duplicating
+    // value because both forms share itemId but noted stacks hold many more
+    // units per slot than non-noted ones.
+    const isNoted = !!slot.noted
 
     if (item.stackable || slot.noted) {
       const actualQty = Math.min(qty, slot.quantity)
-      const idx = newInv.findIndex(s => s && s.itemId === slot.itemId)
+      const idx = newInv.findIndex(s => s && s.itemId === slot.itemId && !!s.noted === isNoted)
       if (idx === -1) return
       if (newInv[idx].quantity <= actualQty) {
         newInv[idx] = null
@@ -305,11 +308,11 @@ export default function InventoryScreen() {
       updateInventory(newInv)
       addToast(`Sold ${actualQty} × ${item.name} for ${totalGold} gp`, 'info')
     } else {
-      // Non-stackable: sell qty across inventory
+      // Non-stackable: sell qty across inventory (only from the same noted form)
       const sellQty = qty || 1
       let sold = 0
       for (let i = 0; i < newInv.length && sold < sellQty; i++) {
-        if (newInv[i] && newInv[i].itemId === slot.itemId) {
+        if (newInv[i] && newInv[i].itemId === slot.itemId && !!newInv[i].noted === isNoted) {
           newInv[i] = null
           sold++
         }
