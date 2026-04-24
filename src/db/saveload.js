@@ -88,6 +88,10 @@ export async function wipeLocalSave() {
   localStorage.removeItem('pocketrpg_lastTick')
   localStorage.removeItem('pocketrpg_activeTask')
   localStorage.removeItem('pocketrpg_hiddenAt')
+  // Reset the clock-rollback watermark on character switch so the new
+  // character doesn't inherit a future-looking timestamp from the previous
+  // one (which would perpetually flag legitimate progress as rolled-back).
+  localStorage.removeItem('pocketrpg_maxObservedAt')
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

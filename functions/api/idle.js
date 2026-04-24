@@ -55,7 +55,12 @@ export async function onRequestGet({ request, env }) {
   const row = await env.DB.prepare(
     'SELECT last_active_at, active_task, updated_at FROM character_idle_state WHERE character_id = ?'
   ).bind(characterId).first()
-  if (!row) return json({ idle: null })
+  // Always return the server's current time. The client uses
+  // (serverNow - lastActiveAt) as the authoritative elapsed-since-active
+  // window for offline idle progress so a player changing their device clock
+  // can't inflate idle rewards.
+  const serverNow = Date.now()
+  if (!row) return json({ idle: null, serverNow })
 
   return json({
     idle: {
@@ -63,6 +68,7 @@ export async function onRequestGet({ request, env }) {
       activeTask: row.active_task ? JSON.parse(row.active_task) : null,
       updatedAt: row.updated_at,
     },
+    serverNow,
   })
 }
 

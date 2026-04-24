@@ -1,4 +1,31 @@
 import { EQUIPMENT_SLOTS } from '../utils/constants.js'
+import { getLevelFromXP } from './experience.js'
+
+/**
+ * Validate that the player meets an item's equip requirements.
+ * Returns null if OK, or a { reason, ... } descriptor so callers can show a
+ * precise toast. Keeping this in the engine makes every equip path (inventory
+ * screen, combat screen gear tab, any future UI) share the same gate — no
+ * screen can forget to check and let the player equip gear they haven't
+ * earned.
+ *
+ *   reason === 'quest' → { reason, questUnlock }
+ *   reason === 'skill' → { reason, skill, required, current }
+ */
+export function checkEquipRequirements(itemData, stats, completedQuests) {
+  if (itemData?.questUnlock && !(completedQuests && completedQuests.has && completedQuests.has(itemData.questUnlock))) {
+    return { reason: 'quest', questUnlock: itemData.questUnlock }
+  }
+  if (itemData?.requirements) {
+    for (const [skill, level] of Object.entries(itemData.requirements)) {
+      const playerLevel = stats && stats[skill] ? getLevelFromXP(stats[skill].xp) : 1
+      if (playerLevel < level) {
+        return { reason: 'skill', skill, required: level, current: playerLevel }
+      }
+    }
+  }
+  return null
+}
 
 /**
  * Create empty equipment set
