@@ -124,16 +124,30 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
     const newInv = [...inventory]
 
     if (buyQty > 1) {
-      const existing = newInv.findIndex(s => s && s.itemId === selectedItem.id && s.noted)
-      if (existing !== -1) {
-        newInv[existing] = { ...newInv[existing], quantity: newInv[existing].quantity + buyQty }
-      } else {
-        const empty = newInv.indexOf(null)
-        if (empty === -1) {
-          addToast('Not enough inventory space.', 'error')
-          return
+      if (selectedItem.stackable) {
+        const existing = newInv.findIndex(s => s && s.itemId === selectedItem.id && !s.noted)
+        if (existing !== -1) {
+          newInv[existing] = { ...newInv[existing], quantity: newInv[existing].quantity + buyQty }
+        } else {
+          const empty = newInv.indexOf(null)
+          if (empty === -1) {
+            addToast('Not enough inventory space.', 'error')
+            return
+          }
+          newInv[empty] = { itemId: selectedItem.id, quantity: buyQty }
         }
-        newInv[empty] = { itemId: selectedItem.id, quantity: buyQty, noted: true }
+      } else {
+        const existing = newInv.findIndex(s => s && s.itemId === selectedItem.id && s.noted)
+        if (existing !== -1) {
+          newInv[existing] = { ...newInv[existing], quantity: newInv[existing].quantity + buyQty }
+        } else {
+          const empty = newInv.indexOf(null)
+          if (empty === -1) {
+            addToast('Not enough inventory space.', 'error')
+            return
+          }
+          newInv[empty] = { itemId: selectedItem.id, quantity: buyQty, noted: true }
+        }
       }
     } else {
       if (selectedItem.stackable) {

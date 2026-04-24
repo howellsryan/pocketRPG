@@ -25898,8 +25898,9 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
     if (!task || !task.monster)
         return null;
     const monster = task.monster;
-    // All combat scenarios cannot be idle-fought; require active combat
-    return null;
+    // Block boss and raid fights; allow normal monsters to idle
+    if (monster.boss === true || task.raid === true)
+        return null;
     const totalTicks = Math.floor(elapsedMs / TICK_MS);
     if (totalTicks <= 0)
         return null;
@@ -31620,6 +31621,19 @@ function ThievingScreen({ initialNpcId, onBack }) {
 const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'slayer', 'farming', 'construction'];
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0);
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS];
+// Calculate remaining actions based on available materials
+function calculateRemainingActions(action, inventory, bank) {
+    if (!action.materials)
+        return null;
+    let minAvailable = Infinity;
+    for (const [matId, qtyNeeded] of Object.entries(action.materials)) {
+        const invCount = countItem(inventory, matId);
+        const bankCount = bank[matId]?.quantity || 0;
+        const available = Math.floor((invCount + bankCount) / qtyNeeded);
+        minAvailable = Math.min(minAvailable, available);
+    }
+    return minAvailable === Infinity ? null : minAvailable;
+}
 function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
     const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, activeTask } = useGame();
     const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null);
@@ -31893,7 +31907,7 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
                 const hasTool = !needsTool || hasToolForSkill(selectedSkill, equipment, inventory, itemsData, stats);
                 const hasItems = !action.itemReq || action.itemReq.some(id => (countItem(inventory, id) + (bank[id]?.quantity || 0)) > 0);
                 const canStart = available && hasMats && hasRunes && hasTool && hasItems;
-                return (h("button", { key: action.id, onClick: () => canStart && startSkilling(action), disabled: !canStart, class: `flex items-center justify-between p-3 rounded-xl border transition-colors
+                return (h("button", { key: action.id, onClick: () => canStart && startSkilling(action), disabled: !canStart, class: `w-full flex items-center justify-between p-3 rounded-xl border transition-colors
                   ${canStart
                         ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
                         : 'bg-[#111] border-[#1a1a1a] opacity-40'}` },
@@ -31915,6 +31929,13 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
                                         (Math.max(1, Math.floor(action.ticks * toolMult)) * 0.6).toFixed(1),
                                         "s"))
                                 : `${(action.ticks * 0.6).toFixed(1)}s`,
+                            (() => {
+                                const remaining = calculateRemainingActions(action, inventory, bank);
+                                return remaining !== null ? h("span", { class: "text-[var(--color-gold)]" },
+                                    " \u00B7 ",
+                                    remaining.toLocaleString(),
+                                    " actions") : null;
+                            })(),
                             action.materials && (h("span", null,
                                 " \u00B7 Needs: ",
                                 Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', '))),
@@ -33056,17 +33077,33 @@ function GeneralStoreScreen({ onBuyCredits }) {
         }
         const newInv = [...inventory];
         if (buyQty > 1) {
-            const existing = newInv.findIndex(s => s && s.itemId === selectedItem.id && s.noted);
-            if (existing !== -1) {
-                newInv[existing] = { ...newInv[existing], quantity: newInv[existing].quantity + buyQty };
+            if (selectedItem.stackable) {
+                const existing = newInv.findIndex(s => s && s.itemId === selectedItem.id && !s.noted);
+                if (existing !== -1) {
+                    newInv[existing] = { ...newInv[existing], quantity: newInv[existing].quantity + buyQty };
+                }
+                else {
+                    const empty = newInv.indexOf(null);
+                    if (empty === -1) {
+                        addToast('Not enough inventory space.', 'error');
+                        return;
+                    }
+                    newInv[empty] = { itemId: selectedItem.id, quantity: buyQty };
+                }
             }
             else {
-                const empty = newInv.indexOf(null);
-                if (empty === -1) {
-                    addToast('Not enough inventory space.', 'error');
-                    return;
+                const existing = newInv.findIndex(s => s && s.itemId === selectedItem.id && s.noted);
+                if (existing !== -1) {
+                    newInv[existing] = { ...newInv[existing], quantity: newInv[existing].quantity + buyQty };
                 }
-                newInv[empty] = { itemId: selectedItem.id, quantity: buyQty, noted: true };
+                else {
+                    const empty = newInv.indexOf(null);
+                    if (empty === -1) {
+                        addToast('Not enough inventory space.', 'error');
+                        return;
+                    }
+                    newInv[empty] = { itemId: selectedItem.id, quantity: buyQty, noted: true };
+                }
             }
         }
         else {

@@ -23,6 +23,19 @@ const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'slayer', 'farming', 'c
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0)
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS]
 
+// Calculate remaining actions based on available materials
+function calculateRemainingActions(action, inventory, bank) {
+  if (!action.materials) return null
+  let minAvailable = Infinity
+  for (const [matId, qtyNeeded] of Object.entries(action.materials)) {
+    const invCount = countItem(inventory, matId)
+    const bankCount = bank[matId]?.quantity || 0
+    const available = Math.floor((invCount + bankCount) / qtyNeeded)
+    minAvailable = Math.min(minAvailable, available)
+  }
+  return minAvailable === Infinity ? null : minAvailable
+}
+
 export default function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
   const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, activeTask } = useGame()
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
@@ -362,7 +375,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                 key={action.id}
                 onClick={() => canStart && startSkilling(action)}
                 disabled={!canStart}
-                class={`flex items-center justify-between p-3 rounded-xl border transition-colors
+                class={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors
                   ${canStart
                     ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
                     : 'bg-[#111] border-[#1a1a1a] opacity-40'}`}
@@ -373,6 +386,10 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                     Lv {action.level} · {action.xp} XP · {toolMult < 1.0
                       ? <><span class="line-through">{(action.ticks * 0.6).toFixed(1)}s</span> <span class="text-[var(--color-gold)] opacity-100">{(Math.max(1, Math.floor(action.ticks * toolMult)) * 0.6).toFixed(1)}s</span></>
                       : `${(action.ticks * 0.6).toFixed(1)}s`}
+                    {(() => {
+                      const remaining = calculateRemainingActions(action, inventory, bank)
+                      return remaining !== null ? <span class="text-[var(--color-gold)]"> · {remaining.toLocaleString()} actions</span> : null
+                    })()}
                     {action.materials && (
                       <span> · Needs: {Object.entries(action.materials).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>
                     )}
