@@ -3,6 +3,7 @@ import { useGame } from '../state/gameState.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import Card from '../components/Card.jsx'
 import Panel from '../components/Panel.jsx'
+import Modal from '../components/Modal.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { addItem, countItem, freeSlots } from '../engine/inventory.js'
@@ -10,6 +11,7 @@ import { onTick } from '../engine/tick.js'
 import { formatNumber } from '../utils/helpers.js'
 import { SCREENS } from '../utils/constants.js'
 import minigamesData from '../data/minigames.json'
+import cluesData from '../data/clues.json'
 import { rollClueRewards } from '../engine/clueScrolls.js'
 
 /**
@@ -277,9 +279,10 @@ function formatHours(hours) {
 }
 
 export default function GatherScreen({ initialTaskId, idleResult }) {
-  const { inventory, bank, equipment, updateInventory, updateBankDirect, addToast, setActiveTask, activeTask: globalActiveTask } = useGame()
+  const { inventory, bank, equipment, updateInventory, updateBankDirect, addToast, setActiveTask, activeTask: globalActiveTask, itemsData } = useGame()
   const [category, setCategory] = useState('all')
   const [activeTask, setLocalTask] = useState(null)
+  const [infoTask, setInfoTask] = useState(null)
   const taskRef = useRef(null)
   const hasAutoStarted = useRef(false)
 
@@ -303,6 +306,19 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
       let justCompleted = state.justCompleted || false
 
       if (justCompleted) {
+        // For clue tasks, ensure another scroll is available before
+        // starting the next cycle — otherwise the player would idle
+        // through a full action only to finish empty-handed.
+        if (state.task.isClue) {
+          const scrollCount = bank?.[state.task.requiresItem]?.quantity || 0
+          if (scrollCount <= 0) {
+            taskRef.current = { ...state, stopped: true }
+            setLocalTask(null)
+            setActiveTask(null)
+            addToast(`No ${ITEM_NAMES[state.task.requiresItem] || state.task.requiresItem} left.`, 'info')
+            return
+          }
+        }
         ticksRemaining = state.task.ticks
         justCompleted = false
       } else {
@@ -588,39 +604,131 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
               : 'bg-[#111] border-[#1a1a1a] opacity-45'
 
             return (
-              <button
+              <div
                 key={task.id}
-                onClick={() => enabled && startTask(task)}
-                disabled={!enabled}
-                class={`p-3 rounded-xl border text-left flex items-center gap-3 ${rowClass}`}
+                class={`p-3 rounded-xl border flex items-center gap-3 ${rowClass}`}
               >
-                <span class="text-[28px] flex-shrink-0">{task.icon}</span>
-                <div class="flex-1 min-w-0">
-                  <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>
-                  <div class="text-[10px] text-[#c8a96e] opacity-80">
-                    ⏱ {(task.ticks * 0.6).toFixed(1)}s/action
-                    {task.materials && (
-                      <span class="text-[var(--color-parchment)] opacity-50">
-                        {' · '}Needs: {Object.entries(task.materials).map(([id, qty]) => `${ITEM_NAMES[id] || id} ×${qty}`).join(', ')}
-                      </span>
+                <button
+                  onClick={() => enabled && startTask(task)}
+                  disabled={!enabled}
+                  class="flex-1 min-w-0 flex items-center gap-3 text-left bg-transparent border-0 p-0 disabled:cursor-not-allowed"
+                >
+                  <span class="text-[28px] flex-shrink-0">{task.icon}</span>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>
+                    <div class="text-[10px] text-[#c8a96e] opacity-80">
+                      ⏱ {(task.ticks * 0.6).toFixed(1)}s/action
+                      {task.materials && (
+                        <span class="text-[var(--color-parchment)] opacity-50">
+                          {' · '}Needs: {Object.entries(task.materials).map(([id, qty]) => `${ITEM_NAMES[id] || id} ×${qty}`).join(', ')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div class="flex-shrink-0 text-right">
+                    <div class="text-[18px]">→</div>
+                    <div class="text-[9px] text-[#c8a96e] opacity-70">{task.isClue ? 'Rewards' : ITEM_NAMES[task.product] || task.product}</div>
+                    {(task.materials || task.requiresItem) && (
+                      <div class={`text-[9px] mt-[2px] ${enabled ? 'text-[#4caf50]' : 'text-[#e57373]'}`}>
+                        {enabled ? '✓ ready' : '✗ need item'}
+                      </div>
                     )}
                   </div>
-                </div>
-                <div class="flex-shrink-0 text-right">
-                  <div class="text-[18px]">→</div>
-                  <div class="text-[9px] text-[#c8a96e] opacity-70">{task.isClue ? 'Rewards' : ITEM_NAMES[task.product] || task.product}</div>
-                  {(task.materials || task.requiresItem) && (
-                    <div class={`text-[9px] mt-[2px] ${enabled ? 'text-[#4caf50]' : 'text-[#e57373]'}`}>
-                      {enabled ? '✓ ready' : '✗ need item'}
-                    </div>
-                  )}
-                </div>
-              </button>
+                </button>
+                {task.isClue && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setInfoTask(task) }}
+                    aria-label="Drop rates"
+                    class="flex-shrink-0 w-9 h-9 rounded-full border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[14px] font-bold flex items-center justify-center active:opacity-70"
+                  >
+                    ⓘ
+                  </button>
+                )}
+              </div>
             )
           })}
         </div>
       </div>
+
+      {infoTask && (
+        <ClueDropRatesModal
+          task={infoTask}
+          itemsData={itemsData}
+          onClose={() => setInfoTask(null)}
+        />
+      )}
     </div>
+  )
+}
+
+function formatChance(pct) {
+  if (pct >= 1) return `${pct.toFixed(2)}%`
+  if (pct >= 0.05) return `${pct.toFixed(3)}%`
+  if (pct <= 0) return '—'
+  // Per-roll odds < 0.05% — display as "1 in N" for readability
+  const oneIn = Math.round(100 / pct)
+  return `1 in ${oneIn.toLocaleString()}`
+}
+
+function rarityBand(pct) {
+  if (pct >= 1) return 'common'
+  if (pct >= 0.05) return 'uncommon'
+  return 'rare'
+}
+
+function ClueDropRatesModal({ task, itemsData, onClose }) {
+  const data = cluesData[task.clueLevel]
+  if (!data) return null
+
+  const totalWeight = data.rewards.reduce((s, r) => s + r.weight, 0)
+  const groups = { common: [], uncommon: [], rare: [] }
+  for (const r of data.rewards) {
+    const pct = totalWeight > 0 ? (100 * r.weight) / totalWeight : 0
+    const item = itemsData?.[r.itemId]
+    const name = item?.name || ITEM_NAMES[r.itemId] || r.itemId
+    const icon = item?.icon || '•'
+    groups[rarityBand(pct)].push({ itemId: r.itemId, name, icon, pct })
+  }
+  for (const key of Object.keys(groups)) {
+    groups[key].sort((a, b) => b.pct - a.pct || a.name.localeCompare(b.name))
+  }
+
+  const tierLabel = task.clueLevel.charAt(0).toUpperCase() + task.clueLevel.slice(1)
+  const bandLabels = {
+    common: { label: 'Common', color: '#86efac' },
+    uncommon: { label: 'Uncommon', color: '#fcd34d' },
+    rare: { label: 'Rare', color: '#a78bfa' },
+  }
+
+  return (
+    <Modal title={`${task.icon} ${tierLabel} Clue — Drop Rates`} onClose={onClose}>
+      <p class="text-[11px] text-[var(--color-parchment)] opacity-60 mb-3">
+        Each completed clue rolls 1–4 reward slots. Percentages below are the chance per slot.
+      </p>
+      {Object.entries(groups).map(([band, rows]) => rows.length === 0 ? null : (
+        <div key={band} class="mb-4">
+          <div
+            class="text-[10px] font-bold uppercase tracking-wider mb-1"
+            style={{ color: bandLabels[band].color }}
+          >
+            {bandLabels[band].label} ({rows.length})
+          </div>
+          <Panel padding="p-2" className="rounded-lg">
+            {rows.map(r => (
+              <div key={r.itemId} class="flex items-center justify-between py-[3px] text-[12px]">
+                <span class="flex items-center gap-2 text-[var(--color-parchment)] truncate">
+                  <span class="text-[14px] flex-shrink-0">{r.icon}</span>
+                  <span class="truncate">{r.name}</span>
+                </span>
+                <span class="font-[var(--font-mono)] text-[var(--color-gold)] flex-shrink-0 ml-2">
+                  {formatChance(r.pct)}
+                </span>
+              </div>
+            ))}
+          </Panel>
+        </div>
+      ))}
+    </Modal>
   )
 }
 
