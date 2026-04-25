@@ -28843,6 +28843,7 @@ function hasToolForSkill(skill, equipment, inventory, itemsData, stats = {}) {
 
 
 
+
 const TICK_MS = 600;
 const HP_REGEN_INTERVAL_MS = 60000; // 60 seconds per 1 HP
 /**
@@ -29228,7 +29229,7 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
  * stats: player stats for agility-based bank delay
  * itemsData: items lookup for stackable/non-stackable determination
  */
-function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, itemsData = {}) {
+function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, itemsData = {}, bank = {}) {
     if (!task || !task.gatherTask)
         return null;
     const totalTicks = Math.floor(elapsedMs / TICK_MS);
@@ -29236,6 +29237,32 @@ function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, itemsDa
     const actions = Math.floor(totalTicks / actionTicks);
     if (actions <= 0)
         return null;
+    // Clue scroll tasks roll a reward table per completion and consume one
+    // scroll from the bank. Rewards go directly to the bank; inventory is
+    // untouched (matches the live tick handler in GatherScreen).
+    if (task.gatherTask.isClue) {
+        const requiredItem = task.gatherTask.requiresItem;
+        const clueLevel = task.gatherTask.clueLevel;
+        const available = bank?.[requiredItem]?.quantity || 0;
+        const completable = Math.min(actions, available);
+        if (completable <= 0) {
+            return { itemsGained: {}, itemsBanked: {}, itemsConsumed: {}, actions: 0, actionName: task.gatherTask.name };
+        }
+        const itemsBanked = {};
+        for (let i = 0; i < completable; i++) {
+            const rewards = rollClueRewards(clueLevel);
+            for (const r of rewards) {
+                itemsBanked[r.itemId] = (itemsBanked[r.itemId] || 0) + r.quantity;
+            }
+        }
+        return {
+            itemsGained: { ...itemsBanked },
+            itemsBanked,
+            itemsConsumed: { [requiredItem]: completable },
+            actions: completable,
+            actionName: task.gatherTask.name,
+        };
+    }
     // Gather always has banking enabled
     const bankingEnabled = true;
     const bankDelayTicks = Math.ceil(getAgilityBankDelayFromStats(stats) / TICK_MS);
@@ -38121,7 +38148,7 @@ function GameApp() {
                     else if (savedTask.type === 'skill')
                         sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv);
                     else if (savedTask.type === 'gather')
-                        sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current);
+                        sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank);
                     else if (savedTask.type === 'combat')
                         sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank);
                     else if (savedTask.type === 'agility')
@@ -38694,7 +38721,7 @@ function GameApp() {
                     if (savedTask.type === 'skill')
                         sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv);
                     if (savedTask.type === 'gather')
-                        sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current);
+                        sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank);
                     if (savedTask.type === 'combat')
                         sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank);
                     if (savedTask.type === 'agility')

@@ -15,6 +15,7 @@ import { getToolSpeedMultiplier } from './skilling.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE } from '../utils/constants.js'
 import { getAgilityBankDelayFromStats, simulateIdleAgility } from './agility.js'
+import { rollClueRewards } from './clueScrolls.js'
 
 const TICK_MS = 600
 const HP_REGEN_INTERVAL_MS = 60000 // 60 seconds per 1 HP
@@ -402,13 +403,42 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
  * stats: player stats for agility-based bank delay
  * itemsData: items lookup for stackable/non-stackable determination
  */
-export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, itemsData = {}) {
+export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, itemsData = {}, bank = {}) {
   if (!task || !task.gatherTask) return null
 
   const totalTicks = Math.floor(elapsedMs / TICK_MS)
   const actionTicks = task.gatherTask.ticks
   const actions = Math.floor(totalTicks / actionTicks)
   if (actions <= 0) return null
+
+  // Clue scroll tasks roll a reward table per completion and consume one
+  // scroll from the bank. Rewards go directly to the bank; inventory is
+  // untouched (matches the live tick handler in GatherScreen).
+  if (task.gatherTask.isClue) {
+    const requiredItem = task.gatherTask.requiresItem
+    const clueLevel = task.gatherTask.clueLevel
+    const available = bank?.[requiredItem]?.quantity || 0
+    const completable = Math.min(actions, available)
+    if (completable <= 0) {
+      return { itemsGained: {}, itemsBanked: {}, itemsConsumed: {}, actions: 0, actionName: task.gatherTask.name }
+    }
+
+    const itemsBanked = {}
+    for (let i = 0; i < completable; i++) {
+      const rewards = rollClueRewards(clueLevel)
+      for (const r of rewards) {
+        itemsBanked[r.itemId] = (itemsBanked[r.itemId] || 0) + r.quantity
+      }
+    }
+
+    return {
+      itemsGained: { ...itemsBanked },
+      itemsBanked,
+      itemsConsumed: { [requiredItem]: completable },
+      actions: completable,
+      actionName: task.gatherTask.name,
+    }
+  }
 
   // Gather always has banking enabled
   const bankingEnabled = true
