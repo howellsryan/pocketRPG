@@ -1337,6 +1337,26 @@ function GameApp() {
                     </div>
                   )}
 
+                  {/* Minigame Progress */}
+                  {idleResult.minigameTimeReduced && (
+                    <div style={{ marginBottom: '12px', padding: '10px', background: '#1a3a2a', borderRadius: '10px', borderLeft: '3px solid #4ade80' }}>
+                      <div style={{ fontSize: '12px', color: '#4ade80', fontWeight: 'bold', marginBottom: '6px' }}>🎮 Minigame Progress</div>
+                      <div style={{ fontSize: '12px', color: '#e8d5b0', marginBottom: '4px' }}>{idleResult.task?.gatherTask?.name}</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' }}>
+                        <span>Time Remaining</span>
+                        <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>{idleResult.hoursRemaining}h</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Minigame Completed */}
+                  {idleResult.minigameCompleted && (
+                    <div style={{ marginBottom: '12px', padding: '10px', background: '#1a3a2a', borderRadius: '10px', borderLeft: '3px solid #4ade80' }}>
+                      <div style={{ fontSize: '12px', color: '#4ade80', fontWeight: 'bold', marginBottom: '6px' }}>✅ Minigame Complete!</div>
+                      <div style={{ fontSize: '12px', color: '#e8d5b0' }}>{idleResult.task?.gatherTask?.name}</div>
+                    </div>
+                  )}
+
                   {/* Quests Completed */}
                   {idleResult.completedQuests && idleResult.completedQuests.length > 0 && (
                     <div style={{ marginBottom: '12px', padding: '10px', background: '#1a3a2a', borderRadius: '10px', borderLeft: '3px solid #4ade80' }}>
