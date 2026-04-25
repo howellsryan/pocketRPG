@@ -1213,6 +1213,24 @@
     "icon": "🪵",
     "isGeneralStore": false
   },
+  "teak_logs": {
+    "id": "teak_logs",
+    "name": "Teak logs",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 145,
+    "icon": "🪵",
+    "isGeneralStore": false
+  },
+  "mahogany_logs": {
+    "id": "mahogany_logs",
+    "name": "Mahogany logs",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 300,
+    "icon": "🪵",
+    "isGeneralStore": false
+  },
   "bucket_of_sand": {
     "id": "bucket_of_sand",
     "name": "Bucket of sand",
@@ -7456,8 +7474,10 @@
       "magicDamage": 0
     },
     "requirements": {
-      "attack": 60
+      "attack": 60,
+      "woodcutting": 60
     },
+    "toolFor": "woodcutting",
     "shopValue": 85785,
     "icon": "⚔️",
     "isGeneralStore": false

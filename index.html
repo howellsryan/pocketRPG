@@ -1313,6 +1313,24 @@ const itemsData = {
     "icon": "🪵",
     "isGeneralStore": false
   },
+  "teak_logs": {
+    "id": "teak_logs",
+    "name": "Teak logs",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 145,
+    "icon": "🪵",
+    "isGeneralStore": false
+  },
+  "mahogany_logs": {
+    "id": "mahogany_logs",
+    "name": "Mahogany logs",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 300,
+    "icon": "🪵",
+    "isGeneralStore": false
+  },
   "bucket_of_sand": {
     "id": "bucket_of_sand",
     "name": "Bucket of sand",
@@ -7556,8 +7574,10 @@ const itemsData = {
       "magicDamage": 0
     },
     "requirements": {
-      "attack": 60
+      "attack": 60,
+      "woodcutting": 60
     },
+    "toolFor": "woodcutting",
     "shopValue": 85785,
     "icon": "⚔️",
     "isGeneralStore": false
@@ -20089,6 +20109,22 @@ const skillsData = {
         "ticks": 8,
         "xp": 175,
         "product": "yew_logs"
+      },
+      {
+        "id": "teak",
+        "name": "Chop teak",
+        "level": 35,
+        "ticks": 7,
+        "xp": 85,
+        "product": "teak_logs"
+      },
+      {
+        "id": "mahogany",
+        "name": "Chop mahogany",
+        "level": 50,
+        "ticks": 8,
+        "xp": 157,
+        "product": "mahogany_logs"
       },
       {
         "id": "magic",
@@ -37883,6 +37919,58 @@ const GATHER_TASKS = [
         category: 'fields',
     },
     {
+        id: 'convert_log_to_plank',
+        name: 'Convert Logs → Planks',
+        icon: '🪵',
+        description: 'Convert logs into planks at the sawmill. Costs 25gp per action.',
+        ticks: 1,
+        product: 'planks',
+        qty: 1,
+        stackable: true,
+        materials: { logs: 1 },
+        gpCost: 25,
+        category: 'fields',
+    },
+    {
+        id: 'convert_oak_log_to_plank',
+        name: 'Convert Oak Logs → Oak Planks',
+        icon: '🪵',
+        description: 'Convert oak logs into oak planks at the sawmill. Costs 50gp per action.',
+        ticks: 1,
+        product: 'oak_plank',
+        qty: 1,
+        stackable: true,
+        materials: { oak_logs: 1 },
+        gpCost: 50,
+        category: 'fields',
+    },
+    {
+        id: 'convert_teak_log_to_plank',
+        name: 'Convert Teak Logs → Teak Planks',
+        icon: '🪵',
+        description: 'Convert teak logs into teak planks at the sawmill. Costs 75gp per action.',
+        ticks: 1,
+        product: 'teak_plank',
+        qty: 1,
+        stackable: true,
+        materials: { teak_logs: 1 },
+        gpCost: 75,
+        category: 'fields',
+    },
+    {
+        id: 'convert_mahogany_log_to_plank',
+        name: 'Convert Mahogany Logs → Mahogany Planks',
+        icon: '🪵',
+        description: 'Convert mahogany logs into mahogany planks at the sawmill. Costs 100gp per action.',
+        ticks: 1,
+        product: 'mahogany_plank',
+        qty: 1,
+        stackable: true,
+        materials: { mahogany_logs: 1 },
+        gpCost: 100,
+        category: 'fields',
+    },
+    {
         id: 'complete_medium_clue',
         name: 'Complete Medium Clue',
         icon: '📜',
@@ -37943,6 +38031,8 @@ const ITEM_NAMES = {
     snape_grass: 'Snape grass', red_spiders_eggs: 'Red spiders\' eggs',
     potato_cactus: 'Potato cactus', crushed_birds_nest: 'Crushed bird\'s nest',
     empty_birds_nest: 'Empty bird\'s nest', limpwurt_root: 'Limpwurt root',
+    logs: 'Logs', oak_logs: 'Oak logs', teak_logs: 'Teak logs', mahogany_logs: 'Mahogany logs',
+    planks: 'Plank', oak_plank: 'Oak plank', teak_plank: 'Teak plank', mahogany_plank: 'Mahogany plank',
     clue_scroll_medium: 'Clue scroll (medium)', clue_scroll_hard: 'Clue scroll (hard)',
     clue_scroll_elite: 'Clue scroll (elite)', clue_scroll_master: 'Clue scroll (master)',
     ...minigamesData.itemNames,
@@ -38012,9 +38102,22 @@ function GatherScreen({ initialTaskId, idleResult }) {
             }
             const next = { ...state, ticksRemaining, justCompleted };
             if (next.ticksRemaining <= 0) {
-                // Action complete — check materials
+                // Action complete — check materials and GP cost
                 const task = next.task;
                 const newInv = [...inventory];
+                const bankUpdates = {};
+                let inventoryModified = false;
+                // Check if there are enough coins for GP cost
+                if (task.gpCost) {
+                    const invCoins = countItem(newInv, 'coins');
+                    const bankCoins = bank.coins?.quantity || 0;
+                    if (invCoins + bankCoins < task.gpCost) {
+                        taskRef.current = { ...next, stopped: true };
+                        setLocalTask(null);
+                        addToast('Not enough coins!', 'error');
+                        return;
+                    }
+                }
                 if (task.materials) {
                     let hasMats = true;
                     for (const [id, qty] of Object.entries(task.materials)) {
@@ -38032,7 +38135,6 @@ function GatherScreen({ initialTaskId, idleResult }) {
                         return;
                     }
                     // Remove materials — consume from inventory first, then bank
-                    const bankUpdates = {};
                     for (const [id, qty] of Object.entries(task.materials)) {
                         const invCount = countItem(newInv, id);
                         const fromInv = Math.min(invCount, qty);
@@ -38046,15 +38148,40 @@ function GatherScreen({ initialTaskId, idleResult }) {
                                     rem -= take;
                                     if (newInv[i].quantity <= 0)
                                         newInv[i] = null;
+                                    inventoryModified = true;
                                 }
                             }
                         }
                         if (fromBank > 0)
                             bankUpdates[id] = -fromBank;
                     }
-                    if (Object.keys(bankUpdates).length > 0)
-                        updateBankDirect(bankUpdates);
                 }
+                // Consume GP cost from inventory first, then bank
+                if (task.gpCost) {
+                    const invCoins = countItem(newInv, 'coins');
+                    const fromInv = Math.min(invCoins, task.gpCost);
+                    const fromBank = task.gpCost - fromInv;
+                    if (fromInv > 0) {
+                        let rem = fromInv;
+                        for (let i = 0; i < newInv.length && rem > 0; i++) {
+                            if (newInv[i] && newInv[i].itemId === 'coins') {
+                                const take = Math.min(newInv[i].quantity, rem);
+                                newInv[i] = { ...newInv[i], quantity: newInv[i].quantity - take };
+                                rem -= take;
+                                if (newInv[i].quantity <= 0)
+                                    newInv[i] = null;
+                                inventoryModified = true;
+                            }
+                        }
+                    }
+                    if (fromBank > 0)
+                        bankUpdates.coins = (bankUpdates.coins || 0) - fromBank;
+                }
+                // Update bank and inventory
+                if (Object.keys(bankUpdates).length > 0)
+                    updateBankDirect(bankUpdates);
+                if (inventoryModified)
+                    updateInventory(newInv);
                 // Handle clue scrolls (roll rewards and consume scroll)
                 if (task.isClue) {
                     const rewards = rollClueRewards(task.clueLevel);
@@ -38071,9 +38198,6 @@ function GatherScreen({ initialTaskId, idleResult }) {
                     // Add product to bank directly
                     updateBankDirect({ [task.product]: task.qty || 1 });
                 }
-                // Update inventory only if materials were consumed
-                if (task.materials)
-                    updateInventory(newInv);
                 if (task.oneShot) {
                     // Minigame grind — award once then stop.
                     addToast(`${task.icon} ${ITEM_NAMES[task.product] || task.product} banked!`, 'success');
