@@ -592,7 +592,7 @@
       {
         "id": "make_bandos_godsword",
         "name": "Attach Bandos hilt",
-        "level": 1,
+        "level": 80,
         "ticks": 2,
         "xp": 0,
         "product": "bandos_godsword",
@@ -604,7 +604,7 @@
       {
         "id": "make_armadyl_godsword",
         "name": "Attach Armadyl hilt",
-        "level": 1,
+        "level": 80,
         "ticks": 2,
         "xp": 0,
         "product": "armadyl_godsword",
@@ -616,7 +616,7 @@
       {
         "id": "make_saradomin_godsword",
         "name": "Attach Saradomin hilt",
-        "level": 1,
+        "level": 80,
         "ticks": 2,
         "xp": 0,
         "product": "saradomin_godsword",
@@ -628,7 +628,7 @@
       {
         "id": "make_zamorak_godsword",
         "name": "Attach Zamorak hilt",
-        "level": 1,
+        "level": 80,
         "ticks": 2,
         "xp": 0,
         "product": "zamorak_godsword",
@@ -2513,10 +2513,10 @@
         "rewardTables": [
           {
             "rewards": [
-              { "itemId": "staff_of_air", "quantity": 1, "chance": 0.25 },
-              { "itemId": "staff_of_fire", "quantity": 1, "chance": 0.25 },
-              { "itemId": "staff_of_water", "quantity": 1, "chance": 0.25 },
-              { "itemId": "staff_of_earth", "quantity": 1, "chance": 0.25 },
+              { "itemId": "staff_of_air", "quantity": 1, "chance": 0.05 },
+              { "itemId": "staff_of_fire", "quantity": 1, "chance": 0.05 },
+              { "itemId": "staff_of_water", "quantity": 1, "chance": 0.05 },
+              { "itemId": "staff_of_earth", "quantity": 1, "chance": 0.05 },
               { "itemId": "mind_rune", "quantity": [20, 40], "chance": 0.15 },
               { "itemId": "chaos_rune", "quantity": [10, 20], "chance": 0.15 },
               { "itemId": "air_rune", "quantity": [30, 50], "chance": 0.15 },
@@ -2537,14 +2537,14 @@
         "rewardTables": [
           {
             "rewards": [
-              { "itemId": "amulet_of_strength", "quantity": 1, "chance": 0.15 },
-              { "itemId": "amulet_of_power", "quantity": 1, "chance": 0.15 },
-              { "itemId": "amulet_of_magic", "quantity": 1, "chance": 0.15 },
-              { "itemId": "amulet_of_glory", "quantity": 1, "chance": 0.15 },
-              { "itemId": "sapphire", "quantity": 1, "chance": 0.1 },
-              { "itemId": "emerald", "quantity": 1, "chance": 0.1 },
-              { "itemId": "ruby", "quantity": 1, "chance": 0.1 },
-              { "itemId": "diamond", "quantity": 1, "chance": 0.1 },
+              { "itemId": "amulet_of_strength", "quantity": 1, "chance": 0.05 },
+              { "itemId": "amulet_of_power", "quantity": 1, "chance": 0.05 },
+              { "itemId": "amulet_of_magic", "quantity": 1, "chance": 0.05 },
+              { "itemId": "amulet_of_glory", "quantity": 1, "chance": 0.01 },
+              { "itemId": "sapphire", "quantity": 1, "chance": 0.2 },
+              { "itemId": "emerald", "quantity": 1, "chance": 0.2 },
+              { "itemId": "ruby", "quantity": 1, "chance": 0.2 },
+              { "itemId": "diamond", "quantity": 1, "chance": 0.2 },
               { "itemId": "dragonstone", "quantity": 1, "chance": 0.05 }
             ]
           }
