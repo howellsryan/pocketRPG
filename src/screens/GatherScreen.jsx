@@ -10,6 +10,7 @@ import { onTick } from '../engine/tick.js'
 import { formatNumber } from '../utils/helpers.js'
 import { SCREENS } from '../utils/constants.js'
 import minigamesData from '../data/minigames.json'
+import { rollClueRewards } from '../engine/clueScrolls.js'
 
 /**
  * Gathering tasks — no skill level required, just time-based resource collection.
@@ -190,13 +191,55 @@ const GATHER_TASKS = [
     stackable: true,
     category: 'fields',
   },
+  {
+    id: 'complete_medium_clue',
+    name: 'Complete Medium Clue',
+    icon: '📜',
+    description: 'Solve a medium clue scroll for treasure rewards.',
+    ticks: 500,
+    requiresItem: 'clue_scroll_medium',
+    isClue: true,
+    clueLevel: 'medium',
+    category: 'clues',
+  },
+  {
+    id: 'complete_hard_clue',
+    name: 'Complete Hard Clue',
+    icon: '📜',
+    description: 'Solve a hard clue scroll for treasure rewards.',
+    ticks: 1500,
+    requiresItem: 'clue_scroll_hard',
+    isClue: true,
+    clueLevel: 'hard',
+    category: 'clues',
+  },
+  {
+    id: 'complete_elite_clue',
+    name: 'Complete Elite Clue',
+    icon: '📜',
+    description: 'Solve an elite clue scroll for treasure rewards.',
+    ticks: 3000,
+    requiresItem: 'clue_scroll_elite',
+    isClue: true,
+    clueLevel: 'elite',
+    category: 'clues',
+  },
+  {
+    id: 'complete_master_clue',
+    name: 'Complete Master Clue',
+    icon: '📜',
+    description: 'Solve a master clue scroll for treasure rewards.',
+    ticks: 6000,
+    requiresItem: 'clue_scroll_master',
+    isClue: true,
+    clueLevel: 'master',
+    category: 'clues',
+  },
 ]
 
 const CATEGORIES = [
   { id: 'all', label: 'All', icon: '📋' },
-  { id: 'fields', label: 'Fields', icon: '🌿' },
-  { id: 'beach', label: 'Beach', icon: '🌊' },
-  { id: 'town', label: 'Town', icon: '🏘️' },
+  { id: 'clues', label: 'Clues', icon: '📜' },
 ]
 
 const TICKS_PER_HOUR = 6000 // 3600s / 0.6s per tick
@@ -212,6 +255,8 @@ const ITEM_NAMES = {
   snape_grass: 'Snape grass', red_spiders_eggs: 'Red spiders\' eggs',
   potato_cactus: 'Potato cactus', crushed_birds_nest: 'Crushed bird\'s nest',
   empty_birds_nest: 'Empty bird\'s nest', limpwurt_root: 'Limpwurt root',
+  clue_scroll_medium: 'Clue scroll (medium)', clue_scroll_hard: 'Clue scroll (hard)',
+  clue_scroll_elite: 'Clue scroll (elite)', clue_scroll_master: 'Clue scroll (master)',
   ...minigamesData.itemNames,
 }
 
@@ -306,8 +351,21 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
           if (Object.keys(bankUpdates).length > 0) updateBankDirect(bankUpdates)
         }
 
-        // Add product to bank directly
-        updateBankDirect({ [task.product]: task.qty || 1 })
+        // Handle clue scrolls (roll rewards and consume scroll)
+        if (task.isClue) {
+          const rewards = rollClueRewards(task.clueLevel)
+          const bankUpdates = {}
+          for (const reward of rewards) {
+            bankUpdates[reward.itemId] = reward.quantity
+          }
+          bankUpdates[task.requiresItem] = -1
+          updateBankDirect(bankUpdates)
+          const rewardNames = rewards.map(r => `${ITEM_NAMES[r.itemId] || r.itemId} ×${r.quantity}`).join(', ')
+          addToast(`${task.icon} Rewards: ${rewardNames}`, 'success')
+        } else {
+          // Add product to bank directly
+          updateBankDirect({ [task.product]: task.qty || 1 })
+        }
         // Update inventory only if materials were consumed
         if (task.materials) updateInventory(newInv)
 
@@ -435,7 +493,20 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
             <ProgressBar value={progress} max={1} height="h-4" color="var(--color-gold)" showText />
           </div>
 
-          {task.oneShot ? (
+          {task.isClue ? (
+            <Panel padding="p-3" className="w-full max-w-[280px] mb-3 rounded-xl">
+              <div class="flex justify-between mb-2">
+                <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Clue Required</span>
+                <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">{ITEM_NAMES[task.requiresItem] || task.requiresItem}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Time remaining</span>
+                <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">
+                  {formatRemaining(remainingSeconds)}
+                </span>
+              </div>
+            </Panel>
+          ) : task.oneShot ? (
             <Panel padding="p-3" className="w-full max-w-[280px] mb-3 rounded-xl">
               <div class="flex justify-between mb-2">
                 <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Reward</span>
@@ -464,7 +535,9 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
           )}
 
           <div class="text-[11px] text-[var(--color-parchment)] opacity-50 text-center max-w-[280px]">
-            {task.oneShot
+            {task.isClue
+              ? '⏳ Solving clue... 1–4 rewards will be banked on completion.'
+              : task.oneShot
               ? '⏳ Minigame runs in the background — feel free to switch screens. Reward is banked on completion.'
               : '⏳ Items go directly to your bank.'}
           </div>
@@ -508,7 +581,8 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
             const hasMats = !task.materials || Object.entries(task.materials).every(
               ([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty
             )
-            const enabled = hasMats
+            const hasRequiredItem = !task.requiresItem || ((bank[task.requiresItem]?.quantity || 0) > 0)
+            const enabled = hasMats && hasRequiredItem
             const rowClass = enabled
               ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
               : 'bg-[#111] border-[#1a1a1a] opacity-45'
@@ -534,10 +608,10 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
                 </div>
                 <div class="flex-shrink-0 text-right">
                   <div class="text-[18px]">→</div>
-                  <div class="text-[9px] text-[#c8a96e] opacity-70">{ITEM_NAMES[task.product] || task.product}</div>
-                  {task.materials && (
-                    <div class={`text-[9px] mt-[2px] ${hasMats ? 'text-[#4caf50]' : 'text-[#e57373]'}`}>
-                      {hasMats ? '✓ have mats' : '✗ no mats'}
+                  <div class="text-[9px] text-[#c8a96e] opacity-70">{task.isClue ? 'Rewards' : ITEM_NAMES[task.product] || task.product}</div>
+                  {(task.materials || task.requiresItem) && (
+                    <div class={`text-[9px] mt-[2px] ${enabled ? 'text-[#4caf50]' : 'text-[#e57373]'}`}>
+                      {enabled ? '✓ ready' : '✗ need item'}
                     </div>
                   )}
                 </div>
