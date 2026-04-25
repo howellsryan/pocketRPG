@@ -157,6 +157,29 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
     }
   }
 
+  // Handle alchemy (converts items to coins)
+  let coinsGained = 0
+  if (task.action.type === 'alchemy' && task.selectedAlchemyItem) {
+    const alchItem = itemsData[task.selectedAlchemyItem.itemId]
+    if (alchItem && typeof alchItem.shopValue === 'number') {
+      const coinsPerAction = alchItem.shopValue >= 100000
+        ? Math.floor(alchItem.shopValue * 1.1)
+        : Math.floor(alchItem.shopValue * 1.5)
+      coinsGained = coinsPerAction * actions
+
+      // Consume the alchemized items from inventory
+      let remaining = actions
+      for (let i = 0; i < newInv.length && remaining > 0; i++) {
+        if (newInv[i]?.itemId === task.selectedAlchemyItem.itemId) {
+          const consumed = Math.min(newInv[i].quantity, remaining)
+          newInv[i] = { ...newInv[i], quantity: newInv[i].quantity - consumed }
+          if (newInv[i].quantity === 0) newInv[i] = null
+          remaining -= consumed
+        }
+      }
+    }
+  }
+
   // Handle drop table (for actions with multiple possible products like gem mining)
   if (task.action.dropTable) {
     const bankingEnabled = task.bankingEnabled || false
@@ -390,7 +413,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
     }
   }
 
-  return { xpGained, itemsGained, itemsBanked, itemsConsumed, itemsDropped, actions, skill: task.skill, actionName: task.action.name, finalInventory: newInv }
+  return { xpGained, itemsGained, itemsBanked, itemsConsumed, itemsDropped, actions, skill: task.skill, actionName: task.action.name, finalInventory: newInv, coinsGained }
 }
 
 /**
