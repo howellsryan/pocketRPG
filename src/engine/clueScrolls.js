@@ -5,9 +5,9 @@ function weightedRandom(rewards) {
   let random = Math.random() * totalWeight
   for (const item of rewards) {
     random -= item.weight
-    if (random <= 0) return item.itemId
+    if (random <= 0) return item
   }
-  return rewards[rewards.length - 1].itemId
+  return rewards[rewards.length - 1]
 }
 
 export function rollClueRewards(clueLevel) {
@@ -18,13 +18,13 @@ export function rollClueRewards(clueLevel) {
   const rewards = []
 
   for (let i = 0; i < numRewards; i++) {
-    const itemId = weightedRandom(clueData.rewards)
-    const existingReward = rewards.find(r => r.itemId === itemId)
+    const rewardItem = weightedRandom(clueData.rewards)
+    const existingReward = rewards.find(r => r.itemId === rewardItem.itemId)
 
     if (existingReward) {
-      existingReward.quantity += 1
+      existingReward.quantity += rewardItem.quantity
     } else {
-      rewards.push({ itemId, quantity: 1 })
+      rewards.push({ itemId: rewardItem.itemId, quantity: rewardItem.quantity })
     }
   }
 
