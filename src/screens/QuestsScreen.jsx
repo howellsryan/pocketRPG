@@ -10,7 +10,6 @@ import {
   getQuestPointsEarned, formatQuestDuration,
 } from '../engine/quests.js'
 import { QUEST_QUEUE_MAX } from '../utils/constants.js'
-import { onTick } from '../engine/tick.js'
 import { countItem } from '../engine/inventory.js'
 import questsData from '../data/quests.json'
 import minigamesData from '../data/minigames.json'
@@ -31,15 +30,13 @@ const COMPLEXITY_ORDER = {
 export default function QuestsScreen() {
   const {
     stats, completedQuests, activeTask, setActiveTask, inventory, bank, equipment,
-    updateInventory, updateBankDirect, addToast, itemsData, questQueue, addQuestToQueue, removeFromQuestQueue, updateQuestQueue,
+    addToast, itemsData, questQueue, addQuestToQueue, removeFromQuestQueue, updateQuestQueue,
   } = useGame()
 
   const [hideCompleted, setHideCompleted] = useState(false)
   const [selectedQuest, setSelectedQuest] = useState(null)
   const [showQueue, setShowQueue] = useState(false)
   const [section, setSection] = useState('quests')
-  const [minigameTask, setMinigameTask] = useState(null)
-  const taskRef = useRef(null)
   const hasAutoStarted = useRef(false)
 
   const startQuest = (quest) => {
@@ -94,14 +91,6 @@ export default function QuestsScreen() {
   }
 
   const startMinigame = (task) => {
-    const newState = {
-      task,
-      ticksRemaining: task.ticks,
-      startedAt: Date.now(),
-      stopped: false,
-    }
-    taskRef.current = newState
-    setMinigameTask(newState)
     setActiveTask({
       type: 'minigame',
       minigameTask: task,
@@ -113,8 +102,6 @@ export default function QuestsScreen() {
   }
 
   const stopMinigame = () => {
-    if (taskRef.current) taskRef.current = { ...taskRef.current, stopped: true }
-    setMinigameTask(null)
     setActiveTask(null)
   }
 
@@ -134,34 +121,6 @@ export default function QuestsScreen() {
     return `${hours.toFixed(1)}h`
   }
 
-  useEffect(() => {
-    if (!minigameTask) return
-    taskRef.current = minigameTask
-
-    const unsub = onTick(() => {
-      const state = taskRef.current
-      if (!state || state.stopped) return
-
-      let ticksRemaining = state.ticksRemaining - 1
-
-      if (ticksRemaining <= 0) {
-        const task = state.task
-        addToast(`${task.icon} ${minigamesData.itemNames[task.product] || task.product} banked!`, 'success')
-        updateBankDirect({ [task.product]: task.qty || 1 })
-        taskRef.current = { ...state, stopped: true }
-        setMinigameTask(null)
-        setActiveTask(null)
-        return
-      }
-
-      const next = { ...state, ticksRemaining }
-      taskRef.current = next
-      setMinigameTask(next)
-    })
-
-    return unsub
-  }, [minigameTask])
-
   const sortedQuests = [...questsData].sort((a, b) => {
     const ca = COMPLEXITY_ORDER[a.complexity] || 99
     const cb = COMPLEXITY_ORDER[b.complexity] || 99
@@ -176,15 +135,14 @@ export default function QuestsScreen() {
   const totalQp = getQuestPointsEarned(completedQuests, questsData)
   const completedCount = completedQuests.size
 
-  // Check if we have a minigame running in the background
+  // App.jsx ticks type:'minigame' tasks on every screen — read progress from global state
   const isGlobalMinigame = activeTask?.type === 'minigame'
-  const currentMinigameTask = minigameTask || (isGlobalMinigame ? { task: activeTask.minigameTask, ticksRemaining: activeTask.ticksRemaining } : null)
 
-  // Handle active minigame (either local or global background task)
-  if (currentMinigameTask) {
-    const task = currentMinigameTask.task
-    const totalTicks = task.ticks
-    const ticksRemaining = currentMinigameTask.ticksRemaining
+  // Handle active minigame
+  if (isGlobalMinigame) {
+    const task = activeTask.minigameTask
+    const totalTicks = activeTask.totalTicks ?? task.ticks
+    const ticksRemaining = activeTask.ticksRemaining ?? totalTicks
     const progress = totalTicks > 0 ? 1 - ticksRemaining / totalTicks : 0
     const remainingSeconds = ticksRemaining * 0.6
 

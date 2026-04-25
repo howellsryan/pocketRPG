@@ -445,6 +445,17 @@ export default function InventoryScreen() {
                   )}
                 </div>
               )}
+              {selected.item.type === 'armour' && (
+                <div class="space-y-1">
+                  {(selected.item.attackBonus?.ranged > 0 || selected.item.attackBonus?.magic > 0) && (
+                    <>
+                      {selected.item.attackBonus.ranged > 0 && <p>Ranged: +{selected.item.attackBonus.ranged}</p>}
+                      {selected.item.attackBonus.magic > 0 && <p>Magic: +{selected.item.attackBonus.magic}</p>}
+                    </>
+                  )}
+                  {selected.item.otherBonus?.prayer > 0 && <p>Prayer: +{selected.item.otherBonus.prayer}</p>}
+                </div>
+              )}
               {selected.item.requirements && Object.entries(selected.item.requirements).length > 0 && (
                 <p class="mt-1">Requires: {Object.entries(selected.item.requirements).map(([s, l]) => `${s} ${l}`).join(', ')}</p>
               )}

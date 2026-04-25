@@ -1,198 +1,682 @@
 {
   "medium": {
     "rewards": [
-      { "itemId": "air_rune", "weight": 1 },
-      { "itemId": "fire_rune", "weight": 1 },
-      { "itemId": "water_rune", "weight": 1 },
-      { "itemId": "earth_rune", "weight": 1 },
-      { "itemId": "mind_rune", "weight": 1 },
-      { "itemId": "chaos_rune", "weight": 1 },
-      { "itemId": "law_rune", "weight": 1 },
-      { "itemId": "nature_rune", "weight": 1 },
-      { "itemId": "mithril_platebody", "weight": 0.3 },
-      { "itemId": "mithril_platelegs", "weight": 0.3 },
-      { "itemId": "mithril_plateskirt", "weight": 0.3 },
-      { "itemId": "mithril_full_helm", "weight": 0.3 },
-      { "itemId": "mithril_kiteshield", "weight": 0.3 },
-      { "itemId": "adamant_platebody", "weight": 0.3 },
-      { "itemId": "adamant_platelegs", "weight": 0.3 },
-      { "itemId": "adamant_plateskirt", "weight": 0.3 },
-      { "itemId": "adamant_full_helm", "weight": 0.3 },
-      { "itemId": "adamant_kiteshield", "weight": 0.3 },
-      { "itemId": "adamant_scimitar", "weight": 0.3 },
-      { "itemId": "adamant_longsword", "weight": 0.3 },
-      { "itemId": "purple_sweets", "weight": 0.6 },
-      { "itemId": "ranger_boots", "weight": 0.001 },
-      { "itemId": "wizard_boots", "weight": 0.001 },
-      { "itemId": "holy_sandals", "weight": 0.001 },
-      { "itemId": "spiked_manacles", "weight": 0.001 },
-      { "itemId": "climbing_boots_g", "weight": 0.001 },
-      { "itemId": "saradomin_mitre", "weight": 0.001 },
-      { "itemId": "guthix_mitre", "weight": 0.001 },
-      { "itemId": "zamorak_mitre", "weight": 0.001 },
-      { "itemId": "ancient_mitre", "weight": 0.001 },
-      { "itemId": "armadyl_mitre", "weight": 0.001 },
-      { "itemId": "bandos_mitre", "weight": 0.001 }
+      {
+        "itemId": "air_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "fire_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "water_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "earth_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "mind_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "chaos_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "law_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "nature_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "mithril_platebody",
+        "weight": 0.3
+      },
+      {
+        "itemId": "mithril_platelegs",
+        "weight": 0.3
+      },
+      {
+        "itemId": "mithril_plateskirt",
+        "weight": 0.3
+      },
+      {
+        "itemId": "mithril_full_helm",
+        "weight": 0.3
+      },
+      {
+        "itemId": "mithril_kiteshield",
+        "weight": 0.3
+      },
+      {
+        "itemId": "adamant_platebody",
+        "weight": 0.3
+      },
+      {
+        "itemId": "adamant_platelegs",
+        "weight": 0.3
+      },
+      {
+        "itemId": "adamant_plateskirt",
+        "weight": 0.3
+      },
+      {
+        "itemId": "adamant_full_helm",
+        "weight": 0.3
+      },
+      {
+        "itemId": "adamant_kiteshield",
+        "weight": 0.3
+      },
+      {
+        "itemId": "adamant_scimitar",
+        "weight": 0.3
+      },
+      {
+        "itemId": "adamant_longsword",
+        "weight": 0.3
+      },
+      {
+        "itemId": "purple_sweets",
+        "weight": 0.6
+      },
+      {
+        "itemId": "ranger_boots",
+        "weight": 0.01
+      },
+      {
+        "itemId": "wizard_boots",
+        "weight": 0.01
+      },
+      {
+        "itemId": "holy_sandals",
+        "weight": 0.01
+      },
+      {
+        "itemId": "spiked_manacles",
+        "weight": 0.01
+      },
+      {
+        "itemId": "climbing_boots_g",
+        "weight": 0.01
+      },
+      {
+        "itemId": "saradomin_mitre",
+        "weight": 0.01
+      },
+      {
+        "itemId": "guthix_mitre",
+        "weight": 0.01
+      },
+      {
+        "itemId": "zamorak_mitre",
+        "weight": 0.01
+      },
+      {
+        "itemId": "ancient_mitre",
+        "weight": 0.01
+      },
+      {
+        "itemId": "armadyl_mitre",
+        "weight": 0.01
+      },
+      {
+        "itemId": "bandos_mitre",
+        "weight": 0.01
+      },
+      {
+        "itemId": "holy_blessing",
+        "weight": 0.005
+      },
+      {
+        "itemId": "peace_blessing",
+        "weight": 0.005
+      },
+      {
+        "itemId": "unholy_blessing",
+        "weight": 0.005
+      },
+      {
+        "itemId": "honorable_blessing",
+        "weight": 0.005
+      },
+      {
+        "itemId": "war_blessing",
+        "weight": 0.005
+      },
+      {
+        "itemId": "ancient_blessing",
+        "weight": 0.005
+      },
+      {
+        "itemId": "saradomin_stole",
+        "weight": 0.005
+      },
+      {
+        "itemId": "guthix_stole",
+        "weight": 0.005
+      },
+      {
+        "itemId": "zamorak_stole",
+        "weight": 0.005
+      },
+      {
+        "itemId": "ancient_stole",
+        "weight": 0.005
+      },
+      {
+        "itemId": "armadyl_stole",
+        "weight": 0.005
+      },
+      {
+        "itemId": "bandos_stole",
+        "weight": 0.005
+      },
+      {
+        "itemId": "robin_hood_hat",
+        "weight": 0.005
+      }
     ]
   },
   "hard": {
     "rewards": [
-      { "itemId": "death_rune", "weight": 1 },
-      { "itemId": "blood_rune", "weight": 1 },
-      { "itemId": "cosmic_rune", "weight": 1 },
-      { "itemId": "astral_rune", "weight": 1 },
-      { "itemId": "air_rune", "weight": 1 },
-      { "itemId": "fire_rune", "weight": 1 },
-      { "itemId": "water_rune", "weight": 1 },
-      { "itemId": "earth_rune", "weight": 1 },
-      { "itemId": "mind_rune", "weight": 1 },
-      { "itemId": "chaos_rune", "weight": 1 },
-      { "itemId": "law_rune", "weight": 1 },
-      { "itemId": "nature_rune", "weight": 1 },
-      { "itemId": "rune_platebody", "weight": 0.25 },
-      { "itemId": "rune_platelegs", "weight": 0.25 },
-      { "itemId": "rune_plateskirt", "weight": 0.25 },
-      { "itemId": "rune_full_helm", "weight": 0.25 },
-      { "itemId": "rune_kiteshield", "weight": 0.25 },
-      { "itemId": "black_dhide_body", "weight": 0.25 },
-      { "itemId": "black_dhide_chaps", "weight": 0.25 },
-      { "itemId": "shark", "weight": 0.4 },
-      { "itemId": "saradomin_dhide_body", "weight": 0.0008 },
-      { "itemId": "saradomin_dhide_chaps", "weight": 0.0008 },
-      { "itemId": "saradomin_dhide_boots", "weight": 0.0008 },
-      { "itemId": "saradomin_dhide_bracers", "weight": 0.0008 },
-      { "itemId": "saradomin_coif", "weight": 0.0008 },
-      { "itemId": "saradomin_stole", "weight": 0.0008 },
-      { "itemId": "guthix_dhide_body", "weight": 0.0008 },
-      { "itemId": "guthix_dhide_chaps", "weight": 0.0008 },
-      { "itemId": "guthix_dhide_boots", "weight": 0.0008 },
-      { "itemId": "guthix_dhide_bracers", "weight": 0.0008 },
-      { "itemId": "guthix_coif", "weight": 0.0008 },
-      { "itemId": "guthix_stole", "weight": 0.0008 },
-      { "itemId": "zamorak_dhide_body", "weight": 0.0008 },
-      { "itemId": "zamorak_dhide_chaps", "weight": 0.0008 },
-      { "itemId": "zamorak_dhide_boots", "weight": 0.0008 },
-      { "itemId": "zamorak_dhide_bracers", "weight": 0.0008 },
-      { "itemId": "zamorak_coif", "weight": 0.0008 },
-      { "itemId": "zamorak_stole", "weight": 0.0008 },
-      { "itemId": "ancient_dhide_body", "weight": 0.0008 },
-      { "itemId": "ancient_dhide_chaps", "weight": 0.0008 },
-      { "itemId": "ancient_dhide_boots", "weight": 0.0008 },
-      { "itemId": "ancient_dhide_bracers", "weight": 0.0008 },
-      { "itemId": "ancient_coif", "weight": 0.0008 },
-      { "itemId": "ancient_stole", "weight": 0.0008 },
-      { "itemId": "armadyl_dhide_body", "weight": 0.0008 },
-      { "itemId": "armadyl_dhide_chaps", "weight": 0.0008 },
-      { "itemId": "armadyl_dhide_boots", "weight": 0.0008 },
-      { "itemId": "armadyl_dhide_bracers", "weight": 0.0008 },
-      { "itemId": "armadyl_coif", "weight": 0.0008 },
-      { "itemId": "armadyl_stole", "weight": 0.0008 },
-      { "itemId": "bandos_dhide_body", "weight": 0.0008 },
-      { "itemId": "bandos_dhide_chaps", "weight": 0.0008 },
-      { "itemId": "bandos_dhide_boots", "weight": 0.0008 },
-      { "itemId": "bandos_dhide_bracers", "weight": 0.0008 },
-      { "itemId": "bandos_coif", "weight": 0.0008 },
-      { "itemId": "bandos_stole", "weight": 0.0008 },
-      { "itemId": "robin_hood_hat", "weight": 0.0008 },
-      { "itemId": "amulet_of_glory_t", "weight": 0.0008 },
-      { "itemId": "3rd_age_full_helm", "weight": 0.000005 },
-      { "itemId": "3rd_age_platebody", "weight": 0.000005 },
-      { "itemId": "3rd_age_platelegs", "weight": 0.000005 },
-      { "itemId": "3rd_age_plateskirt", "weight": 0.000005 },
-      { "itemId": "3rd_age_kiteshield", "weight": 0.000005 },
-      { "itemId": "3rd_age_range_coif", "weight": 0.000005 },
-      { "itemId": "3rd_age_range_top", "weight": 0.000005 },
-      { "itemId": "3rd_age_range_legs", "weight": 0.000005 },
-      { "itemId": "3rd_age_vambraces", "weight": 0.000005 },
-      { "itemId": "3rd_age_mage_hat", "weight": 0.000005 },
-      { "itemId": "3rd_age_robe_top", "weight": 0.000005 },
-      { "itemId": "3rd_age_robe_legs", "weight": 0.000005 },
-      { "itemId": "3rd_age_amulet", "weight": 0.000005 },
-      { "itemId": "saradomin_dhide_shield", "weight": 0.0008 },
-      { "itemId": "guthix_dhide_shield", "weight": 0.0008 },
-      { "itemId": "zamorak_dhide_shield", "weight": 0.0008 },
-      { "itemId": "ancient_dhide_shield", "weight": 0.0008 },
-      { "itemId": "armadyl_dhide_shield", "weight": 0.0008 },
-      { "itemId": "bandos_dhide_shield", "weight": 0.0008 },
-      { "itemId": "holy_blessing", "weight": 0.002 },
-      { "itemId": "peace_blessing", "weight": 0.002 },
-      { "itemId": "unholy_blessing", "weight": 0.002 },
-      { "itemId": "honorable_blessing", "weight": 0.002 },
-      { "itemId": "war_blessing", "weight": 0.002 },
-      { "itemId": "ancient_blessing", "weight": 0.002 }
+      {
+        "itemId": "death_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "blood_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "cosmic_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "astral_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "air_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "fire_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "water_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "earth_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "mind_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "chaos_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "law_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "nature_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "rune_platebody",
+        "weight": 0.25
+      },
+      {
+        "itemId": "rune_platelegs",
+        "weight": 0.25
+      },
+      {
+        "itemId": "rune_plateskirt",
+        "weight": 0.25
+      },
+      {
+        "itemId": "rune_full_helm",
+        "weight": 0.25
+      },
+      {
+        "itemId": "rune_kiteshield",
+        "weight": 0.25
+      },
+      {
+        "itemId": "black_dhide_body",
+        "weight": 0.25
+      },
+      {
+        "itemId": "black_dhide_chaps",
+        "weight": 0.25
+      },
+      {
+        "itemId": "shark",
+        "weight": 0.4
+      },
+      {
+        "itemId": "saradomin_dhide_body",
+        "weight": 0.005
+      },
+      {
+        "itemId": "saradomin_dhide_chaps",
+        "weight": 0.005
+      },
+      {
+        "itemId": "saradomin_dhide_boots",
+        "weight": 0.005
+      },
+      {
+        "itemId": "saradomin_dhide_bracers",
+        "weight": 0.005
+      },
+      {
+        "itemId": "saradomin_coif",
+        "weight": 0.005
+      },
+      {
+        "itemId": "guthix_dhide_body",
+        "weight": 0.005
+      },
+      {
+        "itemId": "guthix_dhide_chaps",
+        "weight": 0.005
+      },
+      {
+        "itemId": "guthix_dhide_boots",
+        "weight": 0.005
+      },
+      {
+        "itemId": "guthix_dhide_bracers",
+        "weight": 0.005
+      },
+      {
+        "itemId": "guthix_coif",
+        "weight": 0.005
+      },
+      {
+        "itemId": "zamorak_dhide_body",
+        "weight": 0.005
+      },
+      {
+        "itemId": "zamorak_dhide_chaps",
+        "weight": 0.005
+      },
+      {
+        "itemId": "zamorak_dhide_boots",
+        "weight": 0.005
+      },
+      {
+        "itemId": "zamorak_dhide_bracers",
+        "weight": 0.005
+      },
+      {
+        "itemId": "zamorak_coif",
+        "weight": 0.005
+      },
+      {
+        "itemId": "ancient_dhide_body",
+        "weight": 0.005
+      },
+      {
+        "itemId": "ancient_dhide_chaps",
+        "weight": 0.005
+      },
+      {
+        "itemId": "ancient_dhide_boots",
+        "weight": 0.005
+      },
+      {
+        "itemId": "ancient_dhide_bracers",
+        "weight": 0.005
+      },
+      {
+        "itemId": "ancient_coif",
+        "weight": 0.005
+      },
+      {
+        "itemId": "armadyl_dhide_body",
+        "weight": 0.005
+      },
+      {
+        "itemId": "armadyl_dhide_chaps",
+        "weight": 0.005
+      },
+      {
+        "itemId": "armadyl_dhide_boots",
+        "weight": 0.005
+      },
+      {
+        "itemId": "armadyl_dhide_bracers",
+        "weight": 0.005
+      },
+      {
+        "itemId": "armadyl_coif",
+        "weight": 0.005
+      },
+      {
+        "itemId": "bandos_dhide_body",
+        "weight": 0.005
+      },
+      {
+        "itemId": "bandos_dhide_chaps",
+        "weight": 0.005
+      },
+      {
+        "itemId": "bandos_dhide_boots",
+        "weight": 0.005
+      },
+      {
+        "itemId": "bandos_dhide_bracers",
+        "weight": 0.005
+      },
+      {
+        "itemId": "bandos_coif",
+        "weight": 0.005
+      },
+      {
+        "itemId": "amulet_of_glory_t",
+        "weight": 0.005
+      },
+      {
+        "itemId": "3rd_age_full_helm",
+        "weight": 0.0002
+      },
+      {
+        "itemId": "3rd_age_platebody",
+        "weight": 0.0002
+      },
+      {
+        "itemId": "3rd_age_platelegs",
+        "weight": 0.0002
+      },
+      {
+        "itemId": "3rd_age_plateskirt",
+        "weight": 0.0002
+      },
+      {
+        "itemId": "3rd_age_kiteshield",
+        "weight": 0.0002
+      },
+      {
+        "itemId": "3rd_age_range_coif",
+        "weight": 0.0002
+      },
+      {
+        "itemId": "3rd_age_range_top",
+        "weight": 0.0002
+      },
+      {
+        "itemId": "3rd_age_range_legs",
+        "weight": 0.0002
+      },
+      {
+        "itemId": "3rd_age_vambraces",
+        "weight": 0.0002
+      },
+      {
+        "itemId": "3rd_age_mage_hat",
+        "weight": 0.0002
+      },
+      {
+        "itemId": "3rd_age_robe_top",
+        "weight": 0.0002
+      },
+      {
+        "itemId": "3rd_age_robe_legs",
+        "weight": 0.0002
+      },
+      {
+        "itemId": "3rd_age_amulet",
+        "weight": 0.0002
+      },
+      {
+        "itemId": "saradomin_dhide_shield",
+        "weight": 0.005
+      },
+      {
+        "itemId": "guthix_dhide_shield",
+        "weight": 0.005
+      },
+      {
+        "itemId": "zamorak_dhide_shield",
+        "weight": 0.005
+      },
+      {
+        "itemId": "ancient_dhide_shield",
+        "weight": 0.005
+      },
+      {
+        "itemId": "armadyl_dhide_shield",
+        "weight": 0.005
+      },
+      {
+        "itemId": "bandos_dhide_shield",
+        "weight": 0.005
+      }
     ]
   },
   "elite": {
     "rewards": [
-      { "itemId": "soul_rune", "weight": 1 },
-      { "itemId": "death_rune", "weight": 1 },
-      { "itemId": "blood_rune", "weight": 1 },
-      { "itemId": "cosmic_rune", "weight": 1 },
-      { "itemId": "astral_rune", "weight": 1 },
-      { "itemId": "air_rune", "weight": 1 },
-      { "itemId": "fire_rune", "weight": 1 },
-      { "itemId": "water_rune", "weight": 1 },
-      { "itemId": "earth_rune", "weight": 1 },
-      { "itemId": "mind_rune", "weight": 1 },
-      { "itemId": "chaos_rune", "weight": 1 },
-      { "itemId": "law_rune", "weight": 1 },
-      { "itemId": "nature_rune", "weight": 1 },
-      { "itemId": "dragon_dagger", "weight": 0.2 },
-      { "itemId": "dragon_mace", "weight": 0.2 },
-      { "itemId": "battlestaff", "weight": 0.2 },
-      { "itemId": "oak_plank", "weight": 0.3 },
-      { "itemId": "teak_plank", "weight": 0.3 },
-      { "itemId": "mahogany_plank", "weight": 0.3 },
-      { "itemId": "coal", "weight": 0.25 },
-      { "itemId": "gold_ore", "weight": 0.25 },
-      { "itemId": "wine_of_zamorak", "weight": 0.3 },
-      { "itemId": "manta_ray", "weight": 0.4 },
-      { "itemId": "rangers_tunic", "weight": 0.001 },
-      { "itemId": "holy_wraps", "weight": 0.001 },
-      { "itemId": "3rd_age_longsword", "weight": 0.000002 },
-      { "itemId": "3rd_age_bow", "weight": 0.000002 },
-      { "itemId": "3rd_age_wand", "weight": 0.000002 },
-      { "itemId": "3rd_age_cloak", "weight": 0.000002 }
+      {
+        "itemId": "soul_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "death_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "blood_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "cosmic_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "astral_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "air_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "fire_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "water_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "earth_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "mind_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "chaos_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "law_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "nature_rune",
+        "weight": 1
+      },
+      {
+        "itemId": "dragon_dagger",
+        "weight": 0.2
+      },
+      {
+        "itemId": "dragon_mace",
+        "weight": 0.2
+      },
+      {
+        "itemId": "battlestaff",
+        "weight": 0.2
+      },
+      {
+        "itemId": "oak_plank",
+        "weight": 0.3
+      },
+      {
+        "itemId": "teak_plank",
+        "weight": 0.3
+      },
+      {
+        "itemId": "mahogany_plank",
+        "weight": 0.3
+      },
+      {
+        "itemId": "coal",
+        "weight": 0.25
+      },
+      {
+        "itemId": "gold_ore",
+        "weight": 0.25
+      },
+      {
+        "itemId": "wine_of_zamorak",
+        "weight": 0.3
+      },
+      {
+        "itemId": "manta_ray",
+        "weight": 0.4
+      },
+      {
+        "itemId": "rangers_tunic",
+        "weight": 0.01
+      },
+      {
+        "itemId": "holy_wraps",
+        "weight": 0.01
+      },
+      {
+        "itemId": "3rd_age_longsword",
+        "weight": 0.0002
+      },
+      {
+        "itemId": "3rd_age_bow",
+        "weight": 0.0002
+      },
+      {
+        "itemId": "3rd_age_wand",
+        "weight": 0.0002
+      },
+      {
+        "itemId": "3rd_age_cloak",
+        "weight": 0.0002
+      }
     ]
   },
   "master": {
     "rewards": [
-      { "itemId": "wrath_rune", "weight": 1 },
-      { "itemId": "soul_rune", "weight": 1 },
-      { "itemId": "death_rune", "weight": 1 },
-      { "itemId": "blood_rune", "weight": 1 },
-      { "itemId": "cosmic_rune", "weight": 1 },
-      { "itemId": "astral_rune", "weight": 1 },
-      { "itemId": "air_rune", "weight": 1 },
-      { "itemId": "fire_rune", "weight": 1 },
-      { "itemId": "water_rune", "weight": 1 },
-      { "itemId": "earth_rune", "weight": 1 },
-      { "itemId": "mind_rune", "weight": 1 },
-      { "itemId": "chaos_rune", "weight": 1 },
-      { "itemId": "law_rune", "weight": 1 },
-      { "itemId": "nature_rune", "weight": 1 },
-      { "itemId": "dragon_longsword", "weight": 0.15 },
-      { "itemId": "dragon_battleaxe", "weight": 0.15 },
-      { "itemId": "dragon_scimitar", "weight": 0.15 },
-      { "itemId": "onyx_bolts_e", "weight": 0.15 },
-      { "itemId": "dragon_arrow", "weight": 0.2 },
-      { "itemId": "dragon_bolt", "weight": 0.2 },
-      { "itemId": "runite_ore", "weight": 0.2 },
-      { "itemId": "magic_logs", "weight": 0.2 },
-      { "itemId": "anglerfish", "weight": 0.35 },
-      { "itemId": "torstol", "weight": 0.2 },
-      { "itemId": "ranarr_weed", "weight": 0.2 },
-      { "itemId": "snapdragon", "weight": 0.2 },
-      { "itemId": "3rd_age_druidic_robe_top", "weight": 0.000003 },
-      { "itemId": "3rd_age_druidic_robe_bottoms", "weight": 0.000003 },
-      { "itemId": "3rd_age_druidic_cloak", "weight": 0.000003 },
-      { "itemId": "3rd_age_druidic_staff", "weight": 0.000003 },
-      { "itemId": "3rd_age_pickaxe", "weight": 0.000003 },
-      { "itemId": "3rd_age_axe", "weight": 0.000003 },
-      { "itemId": "gilded_pickaxe", "weight": 0.000003 },
-      { "itemId": "gilded_axe", "weight": 0.000003 },
-      { "itemId": "gilded_spade", "weight": 0.000003 },
-      { "itemId": "fancy_tiara", "weight": 0.000001 }
+      {
+        "itemId": "dragon_longsword",
+        "weight": 0.3
+      },
+      {
+        "itemId": "dragon_battleaxe",
+        "weight": 0.3
+      },
+      {
+        "itemId": "dragon_scimitar",
+        "weight": 0.3
+      },
+      {
+        "itemId": "onyx_bolts_e",
+        "weight": 0.3
+      },
+      {
+        "itemId": "dragon_arrow",
+        "weight": 0.4
+      },
+      {
+        "itemId": "dragon_bolt",
+        "weight": 0.4
+      },
+      {
+        "itemId": "runite_ore",
+        "weight": 0.4
+      },
+      {
+        "itemId": "magic_logs",
+        "weight": 0.4
+      },
+      {
+        "itemId": "anglerfish",
+        "weight": 0.35
+      },
+      {
+        "itemId": "torstol",
+        "weight": 0.4
+      },
+      {
+        "itemId": "ranarr_weed",
+        "weight": 0.4
+      },
+      {
+        "itemId": "snapdragon",
+        "weight": 0.4
+      },
+      {
+        "itemId": "3rd_age_druidic_robe_top",
+        "weight": 0.0002
+      },
+      {
+        "itemId": "3rd_age_druidic_robe_bottoms",
+        "weight": 0.0002
+      },
+      {
+        "itemId": "3rd_age_druidic_cloak",
+        "weight": 0.0002
+      },
+      {
+        "itemId": "3rd_age_druidic_staff",
+        "weight": 0.0002
+      },
+      {
+        "itemId": "3rd_age_pickaxe",
+        "weight": 0.0002
+      },
+      {
+        "itemId": "3rd_age_axe",
+        "weight": 0.0002
+      },
+      {
+        "itemId": "gilded_pickaxe",
+        "weight": 0.001
+      },
+      {
+        "itemId": "gilded_axe",
+        "weight": 0.001
+      },
+      {
+        "itemId": "gilded_spade",
+        "weight": 0.001
+      },
+      {
+        "itemId": "fancy_tiara",
+        "weight": 0.001
+      }
     ]
   }
 }

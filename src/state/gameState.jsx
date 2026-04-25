@@ -91,7 +91,7 @@ export function GameProvider({ children }) {
           if (savedTask.type === 'skill') {
             sim = simulateIdleSkilling(savedTask, elapsedMs, b, eq, s, itemsData, inv)
           } else if (savedTask.type === 'gather') {
-            sim = simulateIdleGather(savedTask, elapsedMs, inv, s, itemsData)
+            sim = simulateIdleGather(savedTask, elapsedMs, inv, s, itemsData, b)
           } else if (savedTask.type === 'combat') {
             sim = simulateIdleCombat(savedTask, elapsedMs, s, eq, inv, itemsData, savedSlayerTask)
           } else if (savedTask.type === 'agility') {
