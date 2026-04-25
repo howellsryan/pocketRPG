@@ -28371,21 +28371,45 @@ function processHunterTick(hunterState) {
 }
 function rollHunterRewards(action) {
     const results = [];
-    if (!action.rewardTables)
+    if (!action.rewardTables || action.rewardTables.length === 0)
         return results;
-    for (const table of action.rewardTables) {
-        const roll = Math.random();
-        let cumulative = 0;
-        for (const reward of table.rewards) {
-            cumulative += reward.chance;
-            if (roll <= cumulative) {
-                results.push({
-                    itemId: reward.itemId,
-                    quantity: typeof reward.quantity === 'object'
-                        ? Math.floor(Math.random() * (reward.quantity[1] - reward.quantity[0] + 1)) + reward.quantity[0]
-                        : reward.quantity
-                });
-                break;
+    // Always roll main reward table (index 0)
+    const mainTable = action.rewardTables[0];
+    const mainRoll = Math.random();
+    let cumulative = 0;
+    for (const reward of mainTable.rewards) {
+        cumulative += reward.chance;
+        if (mainRoll <= cumulative) {
+            results.push({
+                itemId: reward.itemId,
+                quantity: typeof reward.quantity === 'object'
+                    ? Math.floor(Math.random() * (reward.quantity[1] - reward.quantity[0] + 1)) + reward.quantity[0]
+                    : reward.quantity
+            });
+            break;
+        }
+    }
+    // Roll rare tables only if rarity check passes
+    for (let i = 1; i < action.rewardTables.length; i++) {
+        const table = action.rewardTables[i];
+        if (!table.rarity)
+            continue;
+        const rarityCheck = Math.random();
+        const rarityChance = 1 / table.rarity;
+        if (rarityCheck <= rarityChance) {
+            const rareRoll = Math.random();
+            let rareCumulative = 0;
+            for (const reward of table.rewards) {
+                rareCumulative += reward.chance;
+                if (rareRoll <= rareCumulative) {
+                    results.push({
+                        itemId: reward.itemId,
+                        quantity: typeof reward.quantity === 'object'
+                            ? Math.floor(Math.random() * (reward.quantity[1] - reward.quantity[0] + 1)) + reward.quantity[0]
+                            : reward.quantity
+                    });
+                    break;
+                }
             }
         }
     }
