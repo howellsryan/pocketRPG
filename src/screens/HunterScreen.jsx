@@ -105,6 +105,7 @@ export default function HunterScreen({ initialActionId, onBack }) {
 
   if (!hunter) {
     return (
+      <>
       <div class="h-full overflow-y-auto p-4">
         {onBack && (
           <button onClick={onBack} class="text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1">
@@ -139,7 +140,7 @@ export default function HunterScreen({ initialActionId, onBack }) {
                   <div class="flex-1">
                     <div class="text-sm font-semibold text-[var(--color-parchment)]">{action.name}</div>
                     <div class="text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5">
-                      Lv {action.level} · {action.xp} XP · {action.ticks * 0.6}s
+                      Lv {action.level} · {action.xp} XP
                     </div>
                     <div class="text-[10px] text-[var(--color-parchment)] opacity-40">{action.description}</div>
                   </div>
@@ -157,6 +158,97 @@ export default function HunterScreen({ initialActionId, onBack }) {
           })}
         </div>
       </div>
+
+      {selectedActionInfo && (
+        <Modal onClose={() => setSelectedActionInfo(null)}>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">
+              🎯 {selectedActionInfo.name}
+            </h3>
+            <button
+              onClick={() => setSelectedActionInfo(null)}
+              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
+              title="Close"
+            >
+              ✕
+            </button>
+          </div>
+          <div class="space-y-4 max-h-96 overflow-y-auto">
+            <div>
+              <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Action Info</h4>
+              <div class="bg-[#111] rounded-lg p-3 space-y-1">
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Level Required</span><span class="font-[var(--font-mono)] text-[var(--color-gold)]">{selectedActionInfo.level}</span></div>
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>XP Granted</span><span class="font-[var(--font-mono)] text-[var(--color-gold)]">{selectedActionInfo.xp}</span></div>
+                <div class="flex justify-between text-[11px] text-[var(--color-parchment)]"><span>Time per Action</span><span class="font-[var(--font-mono)] text-[var(--color-gold)]">{(selectedActionInfo.ticks * 0.6).toFixed(1)}s</span></div>
+              </div>
+            </div>
+
+            {selectedActionInfo.rewardTables && selectedActionInfo.rewardTables.length > 0 && (
+              <div>
+                <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Reward Table {selectedActionInfo.rewardTables.length > 1 ? `(Main)` : ''}</h4>
+                <div class="bg-[#111] rounded-lg p-3 space-y-1.5">
+                  {selectedActionInfo.rewardTables[0].rewards.map((reward, idx) => {
+                    const itemData = items[reward.itemId]
+                    const chance = (reward.chance * 100).toFixed(2)
+                    const quantityStr = typeof reward.quantity === 'object'
+                      ? `${reward.quantity[0]}–${reward.quantity[1]}`
+                      : reward.quantity
+                    return (
+                      <div key={idx} class="flex justify-between text-[11px] text-[var(--color-parchment)]">
+                        <span>{itemData?.name || reward.itemId}</span>
+                        <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{chance}% ({quantityStr})</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {selectedActionInfo.rewardTables && selectedActionInfo.rewardTables.length > 1 && (
+              <div>
+                <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Rare Reward Table (1/{selectedActionInfo.rewardTables[1].rarity || 'Unknown'})</h4>
+                <div class="bg-[#111] rounded-lg p-3 space-y-1.5">
+                  {selectedActionInfo.rewardTables[1].rewards.map((reward, idx) => {
+                    const itemData = items[reward.itemId]
+                    const chance = (reward.chance * 100).toFixed(2)
+                    const quantityStr = typeof reward.quantity === 'object'
+                      ? `${reward.quantity[0]}–${reward.quantity[1]}`
+                      : reward.quantity
+                    return (
+                      <div key={idx} class="flex justify-between text-[11px] text-[var(--color-parchment)]">
+                        <span>{itemData?.name || reward.itemId}</span>
+                        <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{chance}% ({quantityStr})</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {selectedActionInfo.rewardTables && selectedActionInfo.rewardTables.length > 2 && (
+              <div>
+                <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Very Rare Reward Table (1/{selectedActionInfo.rewardTables[2].rarity || 'Unknown'})</h4>
+                <div class="bg-[#111] rounded-lg p-3 space-y-1.5">
+                  {selectedActionInfo.rewardTables[2].rewards.map((reward, idx) => {
+                    const itemData = items[reward.itemId]
+                    const chance = (reward.chance * 100).toFixed(2)
+                    const quantityStr = typeof reward.quantity === 'object'
+                      ? `${reward.quantity[0]}–${reward.quantity[1]}`
+                      : reward.quantity
+                    return (
+                      <div key={idx} class="flex justify-between text-[11px] text-[var(--color-parchment)]">
+                        <span>{itemData?.name || reward.itemId}</span>
+                        <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{chance}% ({quantityStr})</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
+      </>
     )
   }
 

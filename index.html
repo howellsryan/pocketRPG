@@ -36431,36 +36431,112 @@ function HunterScreen({ initialActionId, onBack }) {
             onBack();
     };
     if (!hunter) {
-        return (h("div", { class: "h-full overflow-y-auto p-4" },
-            onBack && (h("button", { onClick: onBack, class: "text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1" }, "\u2190 Skills")),
-            h("div", { class: "flex items-center justify-between mb-1" },
-                h("h2", { class: "font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider" }, "Hunting Actions"),
-                h("span", { class: "text-xs font-[var(--font-mono)] text-[var(--color-gold)]" },
-                    "Lv ",
-                    hunterLevel)),
-            h("div", { class: "mb-3 bg-[#111] rounded-lg px-3 py-2 text-[11px] text-[var(--color-parchment)] opacity-60 flex items-center gap-2" },
-                h("span", null, "\uD83C\uDFAF"),
-                h("span", null, "Hunt creatures and NPCs to earn items and experience")),
-            h("div", { class: "space-y-2" }, hunterData.actions.map(action => {
-                const available = hunterLevel >= action.level;
-                return (h("div", { key: action.id, class: "flex gap-2 items-center" },
-                    h("button", { onClick: () => available && startHunting(action), disabled: !available, class: `flex-1 flex items-between justify-between p-3 rounded-xl border transition-colors text-left
+        return (h(Fragment, null,
+            h("div", { class: "h-full overflow-y-auto p-4" },
+                onBack && (h("button", { onClick: onBack, class: "text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1" }, "\u2190 Skills")),
+                h("div", { class: "flex items-center justify-between mb-1" },
+                    h("h2", { class: "font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider" }, "Hunting Actions"),
+                    h("span", { class: "text-xs font-[var(--font-mono)] text-[var(--color-gold)]" },
+                        "Lv ",
+                        hunterLevel)),
+                h("div", { class: "mb-3 bg-[#111] rounded-lg px-3 py-2 text-[11px] text-[var(--color-parchment)] opacity-60 flex items-center gap-2" },
+                    h("span", null, "\uD83C\uDFAF"),
+                    h("span", null, "Hunt creatures and NPCs to earn items and experience")),
+                h("div", { class: "space-y-2" }, hunterData.actions.map(action => {
+                    const available = hunterLevel >= action.level;
+                    return (h("div", { key: action.id, class: "flex gap-2 items-center" },
+                        h("button", { onClick: () => available && startHunting(action), disabled: !available, class: `flex-1 flex items-between justify-between p-3 rounded-xl border transition-colors text-left
                     ${available
-                            ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
-                            : 'bg-[#111] border-[#1a1a1a] opacity-40'}` },
-                        h("div", { class: "flex-1" },
-                            h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, action.name),
-                            h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5" },
-                                "Lv ",
-                                action.level,
-                                " \u00B7 ",
-                                action.xp,
-                                " XP \u00B7 ",
-                                action.ticks * 0.6,
-                                "s"),
-                            h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40" }, action.description))),
-                    h("button", { onClick: () => setSelectedActionInfo(action), "aria-label": "Action info", class: "flex-shrink-0 w-9 h-9 rounded-full border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[14px] font-bold flex items-center justify-center active:opacity-70", title: "View Action Info" }, "\u24D8")));
-            }))));
+                                ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
+                                : 'bg-[#111] border-[#1a1a1a] opacity-40'}` },
+                            h("div", { class: "flex-1" },
+                                h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, action.name),
+                                h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5" },
+                                    "Lv ",
+                                    action.level,
+                                    " \u00B7 ",
+                                    action.xp,
+                                    " XP"),
+                                h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40" }, action.description))),
+                        h("button", { onClick: () => setSelectedActionInfo(action), "aria-label": "Action info", class: "flex-shrink-0 w-9 h-9 rounded-full border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[14px] font-bold flex items-center justify-center active:opacity-70", title: "View Action Info" }, "\u24D8")));
+                }))),
+            selectedActionInfo && (h(Modal, { onClose: () => setSelectedActionInfo(null) },
+                h("div", { class: "flex items-center justify-between mb-3" },
+                    h("h3", { class: "font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]" },
+                        "\uD83C\uDFAF ",
+                        selectedActionInfo.name),
+                    h("button", { onClick: () => setSelectedActionInfo(null), class: "w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors", title: "Close" }, "\u2715")),
+                h("div", { class: "space-y-4 max-h-96 overflow-y-auto" },
+                    h("div", null,
+                        h("h4", { class: "text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70" }, "Action Info"),
+                        h("div", { class: "bg-[#111] rounded-lg p-3 space-y-1" },
+                            h("div", { class: "flex justify-between text-[11px] text-[var(--color-parchment)]" },
+                                h("span", null, "Level Required"),
+                                h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, selectedActionInfo.level)),
+                            h("div", { class: "flex justify-between text-[11px] text-[var(--color-parchment)]" },
+                                h("span", null, "XP Granted"),
+                                h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, selectedActionInfo.xp)),
+                            h("div", { class: "flex justify-between text-[11px] text-[var(--color-parchment)]" },
+                                h("span", null, "Time per Action"),
+                                h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" },
+                                    (selectedActionInfo.ticks * 0.6).toFixed(1),
+                                    "s")))),
+                    selectedActionInfo.rewardTables && selectedActionInfo.rewardTables.length > 0 && (h("div", null,
+                        h("h4", { class: "text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70" },
+                            "Reward Table ",
+                            selectedActionInfo.rewardTables.length > 1 ? `(Main)` : ''),
+                        h("div", { class: "bg-[#111] rounded-lg p-3 space-y-1.5" }, selectedActionInfo.rewardTables[0].rewards.map((reward, idx) => {
+                            const itemData = items[reward.itemId];
+                            const chance = (reward.chance * 100).toFixed(2);
+                            const quantityStr = typeof reward.quantity === 'object'
+                                ? `${reward.quantity[0]}–${reward.quantity[1]}`
+                                : reward.quantity;
+                            return (h("div", { key: idx, class: "flex justify-between text-[11px] text-[var(--color-parchment)]" },
+                                h("span", null, itemData?.name || reward.itemId),
+                                h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" },
+                                    chance,
+                                    "% (",
+                                    quantityStr,
+                                    ")")));
+                        })))),
+                    selectedActionInfo.rewardTables && selectedActionInfo.rewardTables.length > 1 && (h("div", null,
+                        h("h4", { class: "text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70" },
+                            "Rare Reward Table (1/",
+                            selectedActionInfo.rewardTables[1].rarity || 'Unknown',
+                            ")"),
+                        h("div", { class: "bg-[#111] rounded-lg p-3 space-y-1.5" }, selectedActionInfo.rewardTables[1].rewards.map((reward, idx) => {
+                            const itemData = items[reward.itemId];
+                            const chance = (reward.chance * 100).toFixed(2);
+                            const quantityStr = typeof reward.quantity === 'object'
+                                ? `${reward.quantity[0]}–${reward.quantity[1]}`
+                                : reward.quantity;
+                            return (h("div", { key: idx, class: "flex justify-between text-[11px] text-[var(--color-parchment)]" },
+                                h("span", null, itemData?.name || reward.itemId),
+                                h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" },
+                                    chance,
+                                    "% (",
+                                    quantityStr,
+                                    ")")));
+                        })))),
+                    selectedActionInfo.rewardTables && selectedActionInfo.rewardTables.length > 2 && (h("div", null,
+                        h("h4", { class: "text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70" },
+                            "Very Rare Reward Table (1/",
+                            selectedActionInfo.rewardTables[2].rarity || 'Unknown',
+                            ")"),
+                        h("div", { class: "bg-[#111] rounded-lg p-3 space-y-1.5" }, selectedActionInfo.rewardTables[2].rewards.map((reward, idx) => {
+                            const itemData = items[reward.itemId];
+                            const chance = (reward.chance * 100).toFixed(2);
+                            const quantityStr = typeof reward.quantity === 'object'
+                                ? `${reward.quantity[0]}–${reward.quantity[1]}`
+                                : reward.quantity;
+                            return (h("div", { key: idx, class: "flex justify-between text-[11px] text-[var(--color-parchment)]" },
+                                h("span", null, itemData?.name || reward.itemId),
+                                h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" },
+                                    chance,
+                                    "% (",
+                                    quantityStr,
+                                    ")")));
+                        })))))))));
     }
     const progress = getActionProgress(hunter.active, hunter.ticksRemaining, hunter.action.ticks);
     const elapsed = hunter.startedAt ? Date.now() - hunter.startedAt : 0;
