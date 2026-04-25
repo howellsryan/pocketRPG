@@ -49,6 +49,17 @@ export const AGILITY_BANK_DELAY_LV99_MS = 10 * 1000        // 10 seconds
 // Equipment slots
 export const EQUIPMENT_SLOTS = ['head', 'body', 'legs', 'weapon', 'shield', 'gloves', 'boots', 'cape', 'neck', 'ring', 'ammo']
 
+// Format drop chance as "1 in X" or percentage
+export function formatDropChance(chance) {
+  if (chance === 1) return 'Always'
+  if (chance >= 0.01) return `${(chance * 100).toFixed(1)}%`
+  if (chance > 0) {
+    const oneIn = Math.round(1 / chance)
+    return `1 in ${oneIn.toLocaleString()}`
+  }
+  return '—'
+}
+
 // Skill icons (emoji for MVP)
 export const SKILL_ICONS = {
   attack: '⚔️', strength: '💪', defence: '🛡️', hitpoints: '❤️',
