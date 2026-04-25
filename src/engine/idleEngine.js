@@ -431,7 +431,7 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
 
   const totalTicks = Math.floor(elapsedMs / TICK_MS)
   const actionTicks = task.gatherTask.ticks
-  const actions = Math.floor(totalTicks / actionTicks)
+  let actions = Math.floor(totalTicks / actionTicks)
   if (actions <= 0) return null
 
   // Clue scroll tasks roll a reward table per completion and consume one
@@ -460,6 +460,25 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
       itemsConsumed: { [requiredItem]: completable },
       actions: completable,
       actionName: task.gatherTask.name,
+    }
+  }
+
+  const itemsConsumed = {}
+
+  // Cap actions to available materials in bank
+  if (task.gatherTask.materials) {
+    let maxFromMaterials = Infinity
+    for (const [itemId, qtyPerAction] of Object.entries(task.gatherTask.materials)) {
+      const available = (bank && bank[itemId]) ? bank[itemId].quantity : 0
+      const possible = Math.floor(available / qtyPerAction)
+      if (possible < maxFromMaterials) maxFromMaterials = possible
+    }
+    if (maxFromMaterials === 0) return null
+    actions = Math.min(actions, maxFromMaterials)
+
+    // Record consumed materials
+    for (const [itemId, qtyPerAction] of Object.entries(task.gatherTask.materials)) {
+      itemsConsumed[itemId] = qtyPerAction * actions
     }
   }
 
@@ -539,7 +558,7 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
     if (netGain > 0) itemsGained[itemId] = netGain
   }
 
-  return { itemsGained, itemsBanked, itemsDropped, actions: actionsCompleted, actionName: task.gatherTask.name, finalInventory: newInv }
+  return { itemsGained, itemsBanked, itemsDropped, itemsConsumed, actions: actionsCompleted, actionName: task.gatherTask.name, finalInventory: newInv }
 }
 
 /**
