@@ -410,6 +410,10 @@ function GameApp() {
           if (savedTask.type === 'thieving' && sim.coinsGained > 0) {
             updateBankDirect({ coins: sim.coinsGained })
           }
+          // Apply alchemy coin reward directly to bank
+          if (savedTask.type === 'skill' && savedTask.action?.type === 'alchemy' && sim.coinsGained > 0) {
+            updateBankDirect({ coins: sim.coinsGained })
+          }
           // Apply hunter rewards directly to bank
           if (savedTask.type === 'hunter' && sim.rewards && sim.rewards.length > 0) {
             const bankedItems = {}
@@ -1021,6 +1025,10 @@ function GameApp() {
           }
           // Apply thieving coin reward directly to bank
           if (savedTask.type === 'thieving' && sim.coinsGained > 0) {
+            updateBankDirect({ coins: sim.coinsGained })
+          }
+          // Apply alchemy coin reward directly to bank
+          if (savedTask.type === 'skill' && savedTask.action?.type === 'alchemy' && sim.coinsGained > 0) {
             updateBankDirect({ coins: sim.coinsGained })
           }
           // Apply hunter rewards directly to bank

@@ -23330,7 +23330,7 @@ const questsData = [
     "durationSeconds": 1800,
     "coinReward": 10000,
     "xpReward": {
-      "tome_of_experience": 7500
+      "any": 7500
     },
     "itemUnlocks": [],
     "skillRequirements": {
@@ -30319,6 +30319,28 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
             }
         }
     }
+    // Handle alchemy (converts items to coins)
+    let coinsGained = 0;
+    if (task.action.type === 'alchemy' && task.selectedAlchemyItem) {
+        const alchItem = itemsData[task.selectedAlchemyItem.itemId];
+        if (alchItem && typeof alchItem.shopValue === 'number') {
+            const coinsPerAction = alchItem.shopValue >= 100000
+                ? Math.floor(alchItem.shopValue * 1.1)
+                : Math.floor(alchItem.shopValue * 1.5);
+            coinsGained = coinsPerAction * actions;
+            // Consume the alchemized items from inventory
+            let remaining = actions;
+            for (let i = 0; i < newInv.length && remaining > 0; i++) {
+                if (newInv[i]?.itemId === task.selectedAlchemyItem.itemId) {
+                    const consumed = Math.min(newInv[i].quantity, remaining);
+                    newInv[i] = { ...newInv[i], quantity: newInv[i].quantity - consumed };
+                    if (newInv[i].quantity === 0)
+                        newInv[i] = null;
+                    remaining -= consumed;
+                }
+            }
+        }
+    }
     // Handle drop table (for actions with multiple possible products like gem mining)
     if (task.action.dropTable) {
         const bankingEnabled = task.bankingEnabled || false;
@@ -30559,7 +30581,7 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
             }
         }
     }
-    return { xpGained, itemsGained, itemsBanked, itemsConsumed, itemsDropped, actions, skill: task.skill, actionName: task.action.name, finalInventory: newInv };
+    return { xpGained, itemsGained, itemsBanked, itemsConsumed, itemsDropped, actions, skill: task.skill, actionName: task.action.name, finalInventory: newInv, coinsGained };
 }
 /**
  * Simulate idle gathering.
@@ -37142,7 +37164,7 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
         const state = { ...createSkillingState(selectedSkill, adjustedAction), startedAt: Date.now() };
         setSkilling(state);
         // Store original action in task — idle engine will apply tool multiplier separately
-        setActiveTask({ type: 'skill', skill: selectedSkill, action: selectedAction, bankingEnabled: true });
+        setActiveTask({ type: 'skill', skill: selectedSkill, action: selectedAction, bankingEnabled: true, selectedAlchemyItem: item });
     };
     const stopSkilling = () => {
         if (skillingRef.current) {
@@ -40074,6 +40096,10 @@ function GameApp() {
                     if (savedTask.type === 'thieving' && sim.coinsGained > 0) {
                         updateBankDirect({ coins: sim.coinsGained });
                     }
+                    // Apply alchemy coin reward directly to bank
+                    if (savedTask.type === 'skill' && savedTask.action?.type === 'alchemy' && sim.coinsGained > 0) {
+                        updateBankDirect({ coins: sim.coinsGained });
+                    }
                     // Apply hunter rewards directly to bank
                     if (savedTask.type === 'hunter' && sim.rewards && sim.rewards.length > 0) {
                         const bankedItems = {};
@@ -40694,6 +40720,10 @@ function GameApp() {
                     }
                     // Apply thieving coin reward directly to bank
                     if (savedTask.type === 'thieving' && sim.coinsGained > 0) {
+                        updateBankDirect({ coins: sim.coinsGained });
+                    }
+                    // Apply alchemy coin reward directly to bank
+                    if (savedTask.type === 'skill' && savedTask.action?.type === 'alchemy' && sim.coinsGained > 0) {
                         updateBankDirect({ coins: sim.coinsGained });
                     }
                     // Apply hunter rewards directly to bank
