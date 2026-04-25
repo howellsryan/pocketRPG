@@ -36366,6 +36366,19 @@ function GatherScreen({ initialTaskId, idleResult }) {
             let ticksRemaining = state.ticksRemaining;
             let justCompleted = state.justCompleted || false;
             if (justCompleted) {
+                // For clue tasks, ensure another scroll is available before
+                // starting the next cycle — otherwise the player would idle
+                // through a full action only to finish empty-handed.
+                if (state.task.isClue) {
+                    const scrollCount = bank?.[state.task.requiresItem]?.quantity || 0;
+                    if (scrollCount <= 0) {
+                        taskRef.current = { ...state, stopped: true };
+                        setLocalTask(null);
+                        setActiveTask(null);
+                        addToast(`No ${ITEM_NAMES[state.task.requiresItem] || state.task.requiresItem} left.`, 'info');
+                        return;
+                    }
+                }
                 ticksRemaining = state.task.ticks;
                 justCompleted = false;
             }
