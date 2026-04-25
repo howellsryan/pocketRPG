@@ -37953,7 +37953,8 @@ function ClueDropRatesModal({ task, itemsData, onClose }) {
         const item = itemsData?.[r.itemId];
         const name = item?.name || ITEM_NAMES[r.itemId] || r.itemId;
         const icon = item?.icon || '•';
-        groups[rarityBand(pct)].push({ itemId: r.itemId, name, icon, pct });
+        const reqs = item?.requirements;
+        groups[rarityBand(pct)].push({ itemId: r.itemId, name, icon, pct, reqs });
     }
     for (const key of Object.keys(groups)) {
         groups[key].sort((a, b) => b.pct - a.pct || a.name.localeCompare(b.name));
@@ -37964,6 +37965,14 @@ function ClueDropRatesModal({ task, itemsData, onClose }) {
         uncommon: { label: 'Uncommon', color: '#fcd34d' },
         rare: { label: 'Rare', color: '#a78bfa' },
     };
+    // Helper to format requirements
+    const formatReqs = (reqs) => {
+        if (!reqs)
+            return null;
+        return Object.entries(reqs)
+            .map(([skill, level]) => `${level} ${skill.charAt(0).toUpperCase() + skill.slice(1)}`)
+            .join(', ');
+    };
     return (h(Modal, { title: `${task.icon} ${tierLabel} Clue — Drop Rates`, onClose: onClose },
         h("p", { class: "text-[11px] text-[var(--color-parchment)] opacity-60 mb-3" }, "Each completed clue rolls 1\u20134 reward slots. Percentages below are the chance per slot."),
         Object.entries(groups).map(([band, rows]) => rows.length === 0 ? null : (h("div", { key: band, class: "mb-4" },
@@ -37973,9 +37982,11 @@ function ClueDropRatesModal({ task, itemsData, onClose }) {
                 rows.length,
                 ")"),
             h(Panel, { padding: "p-2", className: "rounded-lg" }, rows.map(r => (h("div", { key: r.itemId, class: "flex items-center justify-between py-[3px] text-[12px]" },
-                h("span", { class: "flex items-center gap-2 text-[var(--color-parchment)] truncate" },
+                h("div", { class: "flex items-center gap-2 text-[var(--color-parchment)] truncate flex-1" },
                     h("span", { class: "text-[14px] flex-shrink-0" }, r.icon),
-                    h("span", { class: "truncate" }, r.name)),
+                    h("div", { class: "truncate flex-1" },
+                        h("div", { class: "truncate" }, r.name),
+                        r.reqs && (h("div", { class: "text-[10px] opacity-60 truncate" }, formatReqs(r.reqs))))),
                 h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)] flex-shrink-0 ml-2" }, formatChance(r.pct)))))))))));
 }
 function formatRemaining(totalSeconds) {
