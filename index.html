@@ -36427,8 +36427,6 @@ function HunterScreen({ initialActionId, onBack }) {
         setHunter(null);
         hunterRef.current = null;
         setActiveTask(null);
-        if (onBack)
-            onBack();
     };
     if (!hunter) {
         return (h(Fragment, null,

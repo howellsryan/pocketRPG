@@ -100,7 +100,6 @@ export default function HunterScreen({ initialActionId, onBack }) {
     setHunter(null)
     hunterRef.current = null
     setActiveTask(null)
-    if (onBack) onBack()
   }
 
   if (!hunter) {
