@@ -39836,6 +39836,32 @@ function GameApp() {
                                         merged[itemId] = (merged[itemId] || 0) + qty;
                                 }
                             }
+                            const clueScrollCount = Object.entries(merged).reduce((sum, [itemId, qty]) => {
+                                if (itemId.includes('clue'))
+                                    return sum + qty;
+                                return sum;
+                            }, 0);
+                            return clueScrollCount > 0 ? (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' } },
+                                h("div", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' } }, "\uD83D\uDCDC Clue Scrolls"),
+                                h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' } },
+                                    h("span", null, "Completed"),
+                                    h("span", { style: { color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' } },
+                                        "\u00D7",
+                                        clueScrollCount.toLocaleString())),
+                                h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8d5b0', opacity: 0.45 } },
+                                    h("span", null, "/hr"),
+                                    h("span", { style: { fontFamily: 'monospace' } }, perHr(clueScrollCount))))) : null;
+                        })(),
+                        (() => {
+                            const merged = {};
+                            for (const src of [idleResult.lootGained, idleResult.lootBanked, idleResult.lootLost, idleResult.itemsGained]) {
+                                if (!src)
+                                    continue;
+                                for (const [itemId, qty] of Object.entries(src)) {
+                                    if (qty > 0)
+                                        merged[itemId] = (merged[itemId] || 0) + qty;
+                                }
+                            }
                             const entries = Object.entries(merged);
                             return entries.length > 0 ? (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' } },
                                 h("div", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' } }, "\uD83C\uDF92 Loot"),
