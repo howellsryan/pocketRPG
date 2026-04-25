@@ -643,14 +643,35 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   const getSlayerLevel = () => getLevelFromXP(stats.slayer?.xp || 0)
 
+  const checkBossRequirements = (monster) => {
+    const slayLvl = getSlayerLevel()
+    if (monster.slayerRequirement && slayLvl < monster.slayerRequirement) {
+      return { locked: true, reason: `Need Slayer level ${monster.slayerRequirement} to fight ${monster.name}` }
+    }
+    if (monster.id === 'corrupted_gauntlet' && !completedQuests.has('song_of_the_elves')) {
+      return { locked: true, reason: 'Complete Song of the Elves to fight Corrupted Gauntlet' }
+    }
+    if (monster.id === 'inferno' && (!bossKillCounts['jad'] || bossKillCounts['jad'] < 1)) {
+      return { locked: true, reason: 'Defeat TzTok-Jad first to unlock The Inferno' }
+    }
+    if ((monster.id === 'adamant_dragon' || monster.id === 'rune_dragon') && !completedQuests.has('dragon_slayer_ii')) {
+      return { locked: true, reason: 'Complete Dragon Slayer II to fight Metal Dragons' }
+    }
+    return { locked: false }
+  }
+
+  const checkRaidRequirements = (raid) => {
+    if (raid.id === 'theatre_of_blood' && !completedQuests.has('a_night_at_the_theatre')) {
+      return { locked: true, reason: 'Complete A Night at the Theatre to access Theatre of Blood' }
+    }
+    return { locked: false }
+  }
+
   const startFight = (monster) => {
-    // Check slayer requirement
-    if (monster.slayerRequirement) {
-      const slayLvl = getSlayerLevel()
-      if (slayLvl < monster.slayerRequirement) {
-        addToast(`Need Slayer level ${monster.slayerRequirement} to fight ${monster.name}`, 'error')
-        return
-      }
+    const req = checkBossRequirements(monster)
+    if (req.locked) {
+      addToast(req.reason, 'error')
+      return
     }
     const combatType = getCombatType(equipment, itemsData)
     const weaponItem = equipment?.weapon ? itemsData[equipment.weapon.itemId] : null
@@ -672,6 +693,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   }
 
   const startRaid = (raidData) => {
+    const req = checkRaidRequirements(raidData)
+    if (req.locked) {
+      addToast(req.reason, 'error')
+      return
+    }
     const combatType = getCombatType(equipment, itemsData)
     const weaponItem = equipment?.weapon ? itemsData[equipment.weapon.itemId] : null
     const isPoweredStaff = !!weaponItem?.poweredStaff
@@ -1018,15 +1044,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     const slayLvl = getSlayerLevel()
                     const slayReq = monster.slayerRequirement
                     const slayLocked = slayReq && slayLvl < slayReq
+                    const bossReq = checkBossRequirements(monster)
+                    const isLocked = slayLocked || bossReq.locked
                     const isOnTask = slayerTask?.monsterId === monster.id
                     return (
-                    <div key={monster.id} class="flex gap-2 items-center">
+                    <div key={monster.id} class="flex gap-2 items-center" title={isLocked ? (bossReq.locked ? bossReq.reason : '') : ''}>
                       <button
-                        onClick={() => !slayLocked && startFight(monster)}
-                        disabled={slayLocked}
+                        onClick={() => !isLocked && startFight(monster)}
+                        disabled={isLocked}
+                        title={isLocked && bossReq.locked ? bossReq.reason : ''}
                         class={`flex-1 flex items-center justify-between p-3 rounded-xl border transition-colors
                           ${isOnTask ? 'bg-[#1a1a08] border-[#3a3a10]' :
-                            slayLocked ? 'bg-[#111] border-[#1a1a1a] opacity-50' :
+                            isLocked ? 'bg-[#111] border-[#1a1a1a] opacity-50' :
                             'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'}`}
                       >
                         <div class="flex items-center gap-3">
@@ -1042,6 +1071,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                             {slayReq && (
                               <div class={`text-[9px] font-semibold ${slayLocked ? 'text-[var(--color-blood-light)]' : 'text-[var(--color-hp-green)]'}`}>
                                 💀 Slayer {slayReq}{slayLocked ? ` (you: ${slayLvl})` : ' ✓'}
+                              </div>
+                            )}
+                            {bossReq.locked && !slayLocked && (
+                              <div class="text-[9px] font-semibold text-[var(--color-blood-light)]">
+                                🔒 {monster.id === 'corrupted_gauntlet' ? 'Song of the Elves' :
+                                     monster.id === 'inferno' ? 'Defeat TzTok-Jad' :
+                                     (monster.id === 'adamant_dragon' || monster.id === 'rune_dragon') ? 'Dragon Slayer II' : 'Locked'}
                               </div>
                             )}
                           </div>
@@ -1081,17 +1117,22 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           </div>
           <div class="space-y-2">
             {Object.values(raidsData).map(raid => {
+              const raidReq = checkRaidRequirements(raid)
+              const isRaidLocked = raidReq.locked
               return (
-                <div key={raid.id} class="flex gap-2 items-center">
+                <div key={raid.id} class="flex gap-2 items-center" title={isRaidLocked ? raidReq.reason : ''}>
                   <button
-                    onClick={() => startRaid(raid)}
-                    class="flex-1 p-3 rounded-xl border bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222] transition-colors text-left flex items-center justify-between"
+                    onClick={() => !isRaidLocked && startRaid(raid)}
+                    disabled={isRaidLocked}
+                    title={isRaidLocked ? raidReq.reason : ''}
+                    class={`flex-1 p-3 rounded-xl border transition-colors text-left flex items-center justify-between
+                      ${isRaidLocked ? 'bg-[#111] border-[#1a1a1a] opacity-50' : 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'}`}
                   >
                     <div class="flex-1 flex items-center gap-2">
                       <span class="text-2xl">{raid.icon}</span>
                       <div>
                         <div class="text-sm font-semibold text-[var(--color-parchment)]">{raid.name}</div>
-                        <div class="text-[10px] text-[var(--color-parchment)] opacity-40">{raid.description}</div>
+                        <div class={`text-[10px] ${isRaidLocked ? 'text-[var(--color-blood-light)]' : 'text-[var(--color-parchment)]'} opacity-40`}>{isRaidLocked ? '🔒 ' + raidReq.reason : raid.description}</div>
                       </div>
                     </div>
                     {raidKillCounts[raid.id] > 0 && (
