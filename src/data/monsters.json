@@ -91,42 +91,27 @@
       },
       {
         "itemId": "snapdragon",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.05
       },
       {
         "itemId": "cadantine",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.04
       },
       {
         "itemId": "dwarf_weed",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.03
       },
       {
         "itemId": "lantadyme",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
         "itemId": "toadflax",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.005
       },
       {
@@ -228,42 +213,27 @@
       },
       {
         "itemId": "snapdragon",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.05
       },
       {
         "itemId": "cadantine",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.04
       },
       {
         "itemId": "dwarf_weed",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.03
       },
       {
         "itemId": "lantadyme",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
         "itemId": "toadflax",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.005
       },
       {
@@ -362,42 +332,27 @@
       },
       {
         "itemId": "snapdragon",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.05
       },
       {
         "itemId": "cadantine",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.04
       },
       {
         "itemId": "dwarf_weed",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.03
       },
       {
         "itemId": "lantadyme",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
         "itemId": "toadflax",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.005
       },
       {
@@ -494,42 +449,27 @@
       },
       {
         "itemId": "snapdragon",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.05
       },
       {
         "itemId": "cadantine",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.04
       },
       {
         "itemId": "dwarf_weed",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.03
       },
       {
         "itemId": "lantadyme",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
         "itemId": "toadflax",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.005
       },
       {
@@ -631,42 +571,27 @@
       },
       {
         "itemId": "snapdragon",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.05
       },
       {
         "itemId": "cadantine",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.04
       },
       {
         "itemId": "dwarf_weed",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.03
       },
       {
         "itemId": "lantadyme",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
         "itemId": "toadflax",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.005
       },
       {
@@ -715,10 +640,7 @@
       },
       {
         "itemId": "iron_ore",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.1
       },
       {
@@ -781,42 +703,27 @@
       },
       {
         "itemId": "snapdragon",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.05
       },
       {
         "itemId": "cadantine",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.04
       },
       {
         "itemId": "dwarf_weed",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.03
       },
       {
         "itemId": "lantadyme",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
         "itemId": "toadflax",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.005
       },
       {
@@ -865,10 +772,7 @@
       },
       {
         "itemId": "iron_ore",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.12
       },
       {
@@ -931,42 +835,27 @@
       },
       {
         "itemId": "snapdragon",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.05
       },
       {
         "itemId": "cadantine",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.04
       },
       {
         "itemId": "dwarf_weed",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.03
       },
       {
         "itemId": "lantadyme",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
         "itemId": "toadflax",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.005
       },
       {
@@ -1015,10 +904,7 @@
       },
       {
         "itemId": "limpwurt_root",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.1
       },
       {
@@ -1111,42 +997,27 @@
       },
       {
         "itemId": "snapdragon",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.05
       },
       {
         "itemId": "cadantine",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.04
       },
       {
         "itemId": "dwarf_weed",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.03
       },
       {
         "itemId": "lantadyme",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
         "itemId": "toadflax",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.005
       },
       {
@@ -1195,10 +1066,7 @@
       },
       {
         "itemId": "limpwurt_root",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.1
       },
       {
@@ -1300,42 +1168,27 @@
       },
       {
         "itemId": "snapdragon",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.05
       },
       {
         "itemId": "cadantine",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.04
       },
       {
         "itemId": "dwarf_weed",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.03
       },
       {
         "itemId": "lantadyme",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
         "itemId": "toadflax",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.005
       },
       {
@@ -1511,42 +1364,27 @@
       },
       {
         "itemId": "snapdragon",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.05
       },
       {
         "itemId": "cadantine",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.04
       },
       {
         "itemId": "dwarf_weed",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.03
       },
       {
         "itemId": "lantadyme",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
         "itemId": "toadflax",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.005
       },
       {
@@ -1755,42 +1593,27 @@
       },
       {
         "itemId": "snapdragon",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.05
       },
       {
         "itemId": "cadantine",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.04
       },
       {
         "itemId": "dwarf_weed",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.03
       },
       {
         "itemId": "lantadyme",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
         "itemId": "toadflax",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.005
       },
       {
@@ -1937,42 +1760,27 @@
       },
       {
         "itemId": "snapdragon",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.05
       },
       {
         "itemId": "cadantine",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.04
       },
       {
         "itemId": "dwarf_weed",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.03
       },
       {
         "itemId": "lantadyme",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
         "itemId": "toadflax",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.005
       },
       {
@@ -2081,18 +1889,12 @@
       },
       {
         "itemId": "bandos_hilt",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.00197
       },
       {
         "itemId": "godsword_shard",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.00393
       },
       {
@@ -2145,42 +1947,27 @@
       },
       {
         "itemId": "snapdragon",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.05
       },
       {
         "itemId": "cadantine",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.04
       },
       {
         "itemId": "dwarf_weed",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.03
       },
       {
         "itemId": "lantadyme",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
         "itemId": "toadflax",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.005
       },
       {
@@ -2274,18 +2061,12 @@
       },
       {
         "itemId": "saradomin_hilt",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.00197
       },
       {
         "itemId": "godsword_shard",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.00393
       },
       {
@@ -2338,42 +2119,27 @@
       },
       {
         "itemId": "snapdragon",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.05
       },
       {
         "itemId": "cadantine",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.04
       },
       {
         "itemId": "dwarf_weed",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.03
       },
       {
         "itemId": "lantadyme",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
         "itemId": "toadflax",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.005
       },
       {
@@ -2472,18 +2238,12 @@
       },
       {
         "itemId": "zamorak_hilt",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.00197
       },
       {
         "itemId": "godsword_shard",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.00393
       },
       {
@@ -2536,42 +2296,27 @@
       },
       {
         "itemId": "snapdragon",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.05
       },
       {
         "itemId": "cadantine",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.04
       },
       {
         "itemId": "dwarf_weed",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.03
       },
       {
         "itemId": "lantadyme",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
         "itemId": "toadflax",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.005
       },
       {
@@ -2670,18 +2415,12 @@
       },
       {
         "itemId": "armadyl_hilt",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.00197
       },
       {
         "itemId": "godsword_shard",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.00393
       },
       {
@@ -2734,42 +2473,27 @@
       },
       {
         "itemId": "snapdragon",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.05
       },
       {
         "itemId": "cadantine",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.04
       },
       {
         "itemId": "dwarf_weed",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.03
       },
       {
         "itemId": "lantadyme",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
         "itemId": "toadflax",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.005
       },
       {
@@ -2813,10 +2537,7 @@
       },
       {
         "itemId": "green_dragonhide",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 1
       },
       {
@@ -2921,42 +2642,27 @@
       },
       {
         "itemId": "snapdragon",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.05
       },
       {
         "itemId": "cadantine",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.04
       },
       {
         "itemId": "dwarf_weed",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.03
       },
       {
         "itemId": "lantadyme",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
         "itemId": "toadflax",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.005
       },
       {
@@ -2999,10 +2705,7 @@
       },
       {
         "itemId": "red_dhide",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 1
       },
       {
@@ -3104,42 +2807,27 @@
       },
       {
         "itemId": "snapdragon",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.05
       },
       {
         "itemId": "cadantine",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.04
       },
       {
         "itemId": "dwarf_weed",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.03
       },
       {
         "itemId": "lantadyme",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
         "itemId": "toadflax",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.005
       },
       {
@@ -3176,10 +2864,7 @@
     "drops": [
       {
         "itemId": "dagganoth_bones",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 1
       },
       {
@@ -3265,42 +2950,27 @@
       },
       {
         "itemId": "snapdragon",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.05
       },
       {
         "itemId": "cadantine",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.04
       },
       {
         "itemId": "dwarf_weed",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.03
       },
       {
         "itemId": "lantadyme",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
         "itemId": "toadflax",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.005
       },
       {
@@ -3337,10 +3007,7 @@
     "drops": [
       {
         "itemId": "dagganoth_bones",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 1
       },
       {
@@ -3421,42 +3088,27 @@
       },
       {
         "itemId": "snapdragon",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.05
       },
       {
         "itemId": "cadantine",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.04
       },
       {
         "itemId": "dwarf_weed",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.03
       },
       {
         "itemId": "lantadyme",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
         "itemId": "toadflax",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.005
       },
       {
@@ -3493,10 +3145,7 @@
     "drops": [
       {
         "itemId": "dagganoth_bones",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 1
       },
       {
@@ -3577,42 +3226,27 @@
       },
       {
         "itemId": "snapdragon",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.05
       },
       {
         "itemId": "cadantine",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.04
       },
       {
         "itemId": "dwarf_weed",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.03
       },
       {
         "itemId": "lantadyme",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
         "itemId": "toadflax",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.005
       },
       {
@@ -3756,10 +3390,7 @@
       },
       {
         "itemId": "draconic_visage",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.0005
       },
       {
@@ -3847,10 +3478,7 @@
       },
       {
         "itemId": "rune_bar",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 1
       },
       {
@@ -3946,18 +3574,12 @@
       },
       {
         "itemId": "uncut_onyx",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.001
       },
       {
         "itemId": "draconic_visage",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.001
       },
       {
@@ -4005,10 +3627,7 @@
       },
       {
         "itemId": "rune_bar",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 1
       },
       {
@@ -4112,18 +3731,12 @@
       },
       {
         "itemId": "uncut_onyx",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.001
       },
       {
         "itemId": "draconic_visage",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.001
       },
       {
@@ -4293,10 +3906,7 @@
       },
       {
         "itemId": "uncut_onyx",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.004
       },
       {
@@ -4575,26 +4185,17 @@
       },
       {
         "itemId": "uncut_onyx",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
         "itemId": "crystal_pickaxe",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
         "itemId": "crystal_axe",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.01
       },
       {
@@ -5005,10 +4606,7 @@
       },
       {
         "itemId": "snapdragon",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.15
       },
       {
@@ -5037,10 +4635,7 @@
       },
       {
         "itemId": "uncut_zenyte",
-        "quantity": [
-          50,
-          500
-        ],
+        "quantity": 1,
         "chance": 0.00333
       },
       {

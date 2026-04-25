@@ -11279,7 +11279,9 @@
       "magicDamage": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "40 Ranged"
+    "requirements": {
+      "ranged": 40
+    }
   },
   "wizard_boots": {
     "id": "wizard_boots",
@@ -11310,7 +11312,10 @@
       "magicDamage": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "20 Magic, 20 Defence"
+    "requirements": {
+      "magic": 20,
+      "defence": 20
+    }
   },
   "holy_sandals": {
     "id": "holy_sandals",
@@ -11339,7 +11344,9 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "40 Prayer"
+    "requirements": {
+      "prayer": 40
+    }
   },
   "spiked_manacles": {
     "id": "spiked_manacles",
@@ -11396,7 +11403,9 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "20 Defence"
+    "requirements": {
+      "defence": 20
+    }
   },
   "saradomin_dhide_body": {
     "id": "saradomin_dhide_body",
@@ -11428,7 +11437,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "saradomin_dhide_chaps": {
     "id": "saradomin_dhide_chaps",
@@ -11460,7 +11472,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "saradomin_dhide_boots": {
     "id": "saradomin_dhide_boots",
@@ -11492,7 +11507,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "saradomin_dhide_bracers": {
     "id": "saradomin_dhide_bracers",
@@ -11524,7 +11542,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "saradomin_coif": {
     "id": "saradomin_coif",
@@ -11553,7 +11574,10 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "saradomin_stole": {
     "id": "saradomin_stole",
@@ -11582,7 +11606,9 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "60 Prayer"
+    "requirements": {
+      "prayer": 60
+    }
   },
   "guthix_dhide_body": {
     "id": "guthix_dhide_body",
@@ -11614,7 +11640,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "guthix_dhide_chaps": {
     "id": "guthix_dhide_chaps",
@@ -11646,7 +11675,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "guthix_dhide_boots": {
     "id": "guthix_dhide_boots",
@@ -11678,7 +11710,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "guthix_dhide_bracers": {
     "id": "guthix_dhide_bracers",
@@ -11710,7 +11745,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "guthix_coif": {
     "id": "guthix_coif",
@@ -11739,7 +11777,10 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "guthix_stole": {
     "id": "guthix_stole",
@@ -11768,7 +11809,9 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "60 Prayer"
+    "requirements": {
+      "prayer": 60
+    }
   },
   "zamorak_dhide_body": {
     "id": "zamorak_dhide_body",
@@ -11800,7 +11843,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "zamorak_dhide_chaps": {
     "id": "zamorak_dhide_chaps",
@@ -11832,7 +11878,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "zamorak_dhide_boots": {
     "id": "zamorak_dhide_boots",
@@ -11864,7 +11913,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "zamorak_dhide_bracers": {
     "id": "zamorak_dhide_bracers",
@@ -11896,7 +11948,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "zamorak_coif": {
     "id": "zamorak_coif",
@@ -11925,7 +11980,10 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "zamorak_stole": {
     "id": "zamorak_stole",
@@ -11954,7 +12012,9 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "60 Prayer"
+    "requirements": {
+      "prayer": 60
+    }
   },
   "ancient_dhide_body": {
     "id": "ancient_dhide_body",
@@ -11986,7 +12046,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "ancient_dhide_chaps": {
     "id": "ancient_dhide_chaps",
@@ -12018,7 +12081,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "ancient_dhide_boots": {
     "id": "ancient_dhide_boots",
@@ -12050,7 +12116,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "ancient_dhide_bracers": {
     "id": "ancient_dhide_bracers",
@@ -12082,7 +12151,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "ancient_coif": {
     "id": "ancient_coif",
@@ -12111,7 +12183,10 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "ancient_stole": {
     "id": "ancient_stole",
@@ -12140,7 +12215,9 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "60 Prayer"
+    "requirements": {
+      "prayer": 60
+    }
   },
   "armadyl_dhide_body": {
     "id": "armadyl_dhide_body",
@@ -12172,7 +12249,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "armadyl_dhide_chaps": {
     "id": "armadyl_dhide_chaps",
@@ -12204,7 +12284,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "armadyl_dhide_boots": {
     "id": "armadyl_dhide_boots",
@@ -12236,7 +12319,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "armadyl_dhide_bracers": {
     "id": "armadyl_dhide_bracers",
@@ -12268,7 +12354,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "armadyl_coif": {
     "id": "armadyl_coif",
@@ -12297,7 +12386,10 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "armadyl_stole": {
     "id": "armadyl_stole",
@@ -12326,7 +12418,9 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "60 Prayer"
+    "requirements": {
+      "prayer": 60
+    }
   },
   "bandos_dhide_body": {
     "id": "bandos_dhide_body",
@@ -12358,7 +12452,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "bandos_dhide_chaps": {
     "id": "bandos_dhide_chaps",
@@ -12390,7 +12487,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "bandos_dhide_boots": {
     "id": "bandos_dhide_boots",
@@ -12422,7 +12522,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "bandos_dhide_bracers": {
     "id": "bandos_dhide_bracers",
@@ -12454,7 +12557,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "bandos_coif": {
     "id": "bandos_coif",
@@ -12483,7 +12589,10 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "bandos_stole": {
     "id": "bandos_stole",
@@ -12512,7 +12621,9 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "60 Prayer"
+    "requirements": {
+      "prayer": 60
+    }
   },
   "black_dhide_body": {
     "id": "black_dhide_body",
@@ -12601,7 +12712,9 @@
       "magicDamage": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "40 Ranged"
+    "requirements": {
+      "ranged": 40
+    }
   },
   "amulet_of_glory_t": {
     "id": "amulet_of_glory_t",
@@ -12661,7 +12774,9 @@
       "magicDamage": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "65 Defence"
+    "requirements": {
+      "defence": 65
+    }
   },
   "3rd_age_platebody": {
     "id": "3rd_age_platebody",
@@ -12692,7 +12807,9 @@
       "magicDamage": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "65 Defence"
+    "requirements": {
+      "defence": 65
+    }
   },
   "3rd_age_platelegs": {
     "id": "3rd_age_platelegs",
@@ -12723,7 +12840,9 @@
       "magicDamage": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "65 Defence"
+    "requirements": {
+      "defence": 65
+    }
   },
   "3rd_age_plateskirt": {
     "id": "3rd_age_plateskirt",
@@ -12754,7 +12873,9 @@
       "magicDamage": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "65 Defence"
+    "requirements": {
+      "defence": 65
+    }
   },
   "3rd_age_kiteshield": {
     "id": "3rd_age_kiteshield",
@@ -12785,7 +12906,9 @@
       "magicDamage": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "65 Defence"
+    "requirements": {
+      "defence": 65
+    }
   },
   "3rd_age_range_coif": {
     "id": "3rd_age_range_coif",
@@ -12816,7 +12939,10 @@
       "magicDamage": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "65 Ranged, 45 Defence"
+    "requirements": {
+      "ranged": 65,
+      "defence": 45
+    }
   },
   "3rd_age_range_top": {
     "id": "3rd_age_range_top",
@@ -12847,7 +12973,10 @@
       "magicDamage": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "65 Ranged, 45 Defence"
+    "requirements": {
+      "ranged": 65,
+      "defence": 45
+    }
   },
   "3rd_age_range_legs": {
     "id": "3rd_age_range_legs",
@@ -12878,7 +13007,10 @@
       "magicDamage": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "65 Ranged, 45 Defence"
+    "requirements": {
+      "ranged": 65,
+      "defence": 45
+    }
   },
   "3rd_age_vambraces": {
     "id": "3rd_age_vambraces",
@@ -12909,7 +13041,10 @@
       "magicDamage": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "65 Ranged, 45 Defence"
+    "requirements": {
+      "ranged": 65,
+      "defence": 45
+    }
   },
   "3rd_age_mage_hat": {
     "id": "3rd_age_mage_hat",
@@ -12940,7 +13075,10 @@
       "magicDamage": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "65 Magic, 45 Defence"
+    "requirements": {
+      "magic": 65,
+      "defence": 45
+    }
   },
   "3rd_age_robe_top": {
     "id": "3rd_age_robe_top",
@@ -12971,7 +13109,10 @@
       "magicDamage": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "65 Magic, 45 Defence"
+    "requirements": {
+      "magic": 65,
+      "defence": 45
+    }
   },
   "3rd_age_robe_legs": {
     "id": "3rd_age_robe_legs",
@@ -13002,7 +13143,10 @@
       "magicDamage": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "65 Magic, 45 Defence"
+    "requirements": {
+      "magic": 65,
+      "defence": 45
+    }
   },
   "3rd_age_amulet": {
     "id": "3rd_age_amulet",
@@ -13033,7 +13177,10 @@
       "magicDamage": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Magic, 70 Defence"
+    "requirements": {
+      "magic": 70,
+      "defence": 70
+    }
   },
   "3rd_age_longsword": {
     "id": "3rd_age_longsword",
@@ -13062,7 +13209,9 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "65 Attack"
+    "requirements": {
+      "attack": 65
+    }
   },
   "3rd_age_bow": {
     "id": "3rd_age_bow",
@@ -13091,7 +13240,9 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "65 Ranged"
+    "requirements": {
+      "ranged": 65
+    }
   },
   "3rd_age_wand": {
     "id": "3rd_age_wand",
@@ -13122,7 +13273,9 @@
       "magicDamage": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "65 Magic"
+    "requirements": {
+      "magic": 65
+    }
   },
   "3rd_age_cloak": {
     "id": "3rd_age_cloak",
@@ -13151,7 +13304,9 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "65 Prayer"
+    "requirements": {
+      "prayer": 65
+    }
   },
   "saradomin_dhide_shield": {
     "id": "saradomin_dhide_shield",
@@ -13183,7 +13338,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "guthix_dhide_shield": {
     "id": "guthix_dhide_shield",
@@ -13215,7 +13373,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "zamorak_dhide_shield": {
     "id": "zamorak_dhide_shield",
@@ -13247,7 +13408,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "ancient_dhide_shield": {
     "id": "ancient_dhide_shield",
@@ -13279,7 +13443,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "armadyl_dhide_shield": {
     "id": "armadyl_dhide_shield",
@@ -13311,7 +13478,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "bandos_dhide_shield": {
     "id": "bandos_dhide_shield",
@@ -13343,7 +13513,10 @@
       "prayer": 1
     },
     "isUntradeable": true,
-    "levelRequirements": "70 Ranged, 40 Defence"
+    "requirements": {
+      "ranged": 70,
+      "defence": 40
+    }
   },
   "holy_blessing": {
     "id": "holy_blessing",
@@ -13542,7 +13715,9 @@
       "magicDamage": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "40 Ranged"
+    "requirements": {
+      "ranged": 40
+    }
   },
   "holy_wraps": {
     "id": "holy_wraps",
@@ -13571,7 +13746,9 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "40 Prayer"
+    "requirements": {
+      "prayer": 40
+    }
   },
   "3rd_age_druidic_robe_top": {
     "id": "3rd_age_druidic_robe_top",
@@ -13600,7 +13777,10 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "65 Magic, 65 Prayer"
+    "requirements": {
+      "magic": 65,
+      "prayer": 65
+    }
   },
   "3rd_age_druidic_robe_bottoms": {
     "id": "3rd_age_druidic_robe_bottoms",
@@ -13629,7 +13809,10 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "65 Magic, 65 Prayer"
+    "requirements": {
+      "magic": 65,
+      "prayer": 65
+    }
   },
   "3rd_age_druidic_cloak": {
     "id": "3rd_age_druidic_cloak",
@@ -13658,7 +13841,9 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "65 Prayer"
+    "requirements": {
+      "prayer": 65
+    }
   },
   "3rd_age_druidic_staff": {
     "id": "3rd_age_druidic_staff",
@@ -13687,7 +13872,10 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "65 Magic, 65 Prayer"
+    "requirements": {
+      "magic": 65,
+      "prayer": 65
+    }
   },
   "3rd_age_pickaxe": {
     "id": "3rd_age_pickaxe",
@@ -13717,7 +13905,10 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "65 Attack, 61 Mining"
+    "requirements": {
+      "attack": 65,
+      "mining": 61
+    }
   },
   "3rd_age_axe": {
     "id": "3rd_age_axe",
@@ -13747,7 +13938,10 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "65 Attack, 61 Woodcutting"
+    "requirements": {
+      "attack": 65,
+      "woodcutting": 61
+    }
   },
   "gilded_pickaxe": {
     "id": "gilded_pickaxe",
@@ -13776,7 +13970,10 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "60 Attack, 61 Mining"
+    "requirements": {
+      "attack": 60,
+      "mining": 61
+    }
   },
   "gilded_axe": {
     "id": "gilded_axe",
@@ -13805,7 +14002,10 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "60 Attack, 61 Woodcutting"
+    "requirements": {
+      "attack": 60,
+      "woodcutting": 61
+    }
   },
   "gilded_spade": {
     "id": "gilded_spade",
@@ -13892,7 +14092,10 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "40 Prayer, 40 Magic"
+    "requirements": {
+      "prayer": 40,
+      "magic": 40
+    }
   },
   "guthix_mitre": {
     "id": "guthix_mitre",
@@ -13921,7 +14124,10 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "40 Prayer, 40 Magic"
+    "requirements": {
+      "prayer": 40,
+      "magic": 40
+    }
   },
   "zamorak_mitre": {
     "id": "zamorak_mitre",
@@ -13950,7 +14156,10 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "40 Prayer, 40 Magic"
+    "requirements": {
+      "prayer": 40,
+      "magic": 40
+    }
   },
   "ancient_mitre": {
     "id": "ancient_mitre",
@@ -13979,7 +14188,10 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "40 Prayer, 40 Magic"
+    "requirements": {
+      "prayer": 40,
+      "magic": 40
+    }
   },
   "armadyl_mitre": {
     "id": "armadyl_mitre",
@@ -14008,7 +14220,10 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "40 Prayer, 40 Magic"
+    "requirements": {
+      "prayer": 40,
+      "magic": 40
+    }
   },
   "bandos_mitre": {
     "id": "bandos_mitre",
@@ -14037,7 +14252,10 @@
       "ranged": 0
     },
     "isUntradeable": true,
-    "levelRequirements": "40 Prayer, 40 Magic"
+    "requirements": {
+      "prayer": 40,
+      "magic": 40
+    }
   },
   "wrath_rune": {
     "id": "wrath_rune",
