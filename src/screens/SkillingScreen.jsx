@@ -293,7 +293,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     const state = { ...createSkillingState(selectedSkill, adjustedAction), startedAt: Date.now() }
     setSkilling(state)
     // Store original action in task — idle engine will apply tool multiplier separately
-    setActiveTask({ type: 'skill', skill: selectedSkill, action: selectedAction, bankingEnabled: true })
+    setActiveTask({ type: 'skill', skill: selectedSkill, action: selectedAction, bankingEnabled: true, selectedAlchemyItem: item })
   }
 
   const stopSkilling = () => {
