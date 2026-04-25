@@ -1058,19 +1058,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       </button>
                       <button
                         onClick={() => setSelectedMonsterInfo(monster)}
-                        class="flex-shrink-0 px-3 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5"
+                        aria-label="Monster info"
+                        class="flex-shrink-0 w-9 h-9 rounded-full border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[14px] font-bold flex items-center justify-center active:opacity-70"
                         title="View Monster Info"
                       >
-                        <span class="text-base">ℹ️</span>
-                        <span class="text-[8px] text-[var(--color-parchment)] opacity-50">Info</span>
-                      </button>
-                      <button
-                        onClick={() => handleAddToHome(monster)}
-                        class="flex-shrink-0 px-3 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5"
-                        title="Add to Home Screen"
-                      >
-                        <span class="text-base">🏠</span>
-                        <span class="text-[8px] text-[var(--color-parchment)] opacity-50">Add</span>
+                        ⓘ
                       </button>
                     </div>
                     )
@@ -1108,19 +1100,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   </button>
                   <button
                     onClick={() => setSelectedRaidInfo(raid)}
-                    class="flex-shrink-0 px-3 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5"
+                    aria-label="Raid info"
+                    class="flex-shrink-0 w-9 h-9 rounded-full border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[14px] font-bold flex items-center justify-center active:opacity-70"
                     title="View Raid Info"
                   >
-                    <span class="text-base">ℹ️</span>
-                    <span class="text-[8px] text-[var(--color-parchment)] opacity-50">Info</span>
-                  </button>
-                  <button
-                    onClick={() => handleAddRaidToHome(raid)}
-                    class="flex-shrink-0 px-3 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] active:bg-[#222] transition-colors flex flex-col items-center justify-center gap-0.5"
-                    title="Add to Home Screen"
-                  >
-                    <span class="text-base">🏠</span>
-                    <span class="text-[8px] text-[var(--color-parchment)] opacity-50">Add</span>
+                    ⓘ
                   </button>
                 </div>
               )
