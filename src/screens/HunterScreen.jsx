@@ -48,26 +48,9 @@ export default function HunterScreen({ initialActionId, onBack }) {
         if (ev.type === 'hunterSuccess') {
           grantXP('hunter', ev.xp)
 
-          const currentInv = [...(inventoryRef.current)]
-
           for (const reward of ev.rewards) {
-            let itemSlot = currentInv.find(s => s && s.itemId === reward.itemId)
-
-            if (itemSlot) {
-              itemSlot = { ...itemSlot, quantity: itemSlot.quantity + reward.quantity }
-              const idx = currentInv.findIndex(s => s && s.itemId === reward.itemId)
-              currentInv[idx] = itemSlot
-            } else {
-              const emptyIdx = currentInv.findIndex(s => s === null)
-              if (emptyIdx >= 0) {
-                currentInv[emptyIdx] = { itemId: reward.itemId, quantity: reward.quantity }
-              } else {
-                updateBankDirect({ [reward.itemId]: reward.quantity })
-              }
-            }
+            updateBankDirect({ [reward.itemId]: reward.quantity })
           }
-
-          updateInventory(currentInv)
 
           hunterRef.current = {
             ...hunterRef.current,

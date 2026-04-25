@@ -185,29 +185,12 @@ export function GameProvider({ children }) {
               }
             }
           } else if (savedTask.type === 'hunter' && sim.rewards && sim.rewards.length > 0) {
-            // Hunter rewards go to inventory, fall back to bank if full
+            // Hunter rewards go directly to bank
             for (const reward of sim.rewards) {
-              let placed = false
-              // Try to stack with existing slot
-              const stackIdx = inv.findIndex(s => s && s.itemId === reward.itemId)
-              if (stackIdx >= 0) {
-                inv[stackIdx] = { ...inv[stackIdx], quantity: inv[stackIdx].quantity + reward.quantity }
-                placed = true
+              if (b[reward.itemId]) {
+                b[reward.itemId] = { ...b[reward.itemId], quantity: b[reward.itemId].quantity + reward.quantity }
               } else {
-                // Try to use empty slot
-                const emptyIdx = inv.findIndex(s => s === null)
-                if (emptyIdx >= 0) {
-                  inv[emptyIdx] = { itemId: reward.itemId, quantity: reward.quantity }
-                  placed = true
-                }
-              }
-              // If not placed in inventory, send to bank
-              if (!placed) {
-                if (b[reward.itemId]) {
-                  b[reward.itemId] = { ...b[reward.itemId], quantity: b[reward.itemId].quantity + reward.quantity }
-                } else {
-                  b[reward.itemId] = { itemId: reward.itemId, quantity: reward.quantity }
-                }
+                b[reward.itemId] = { itemId: reward.itemId, quantity: reward.quantity }
               }
             }
           } else if (sim.itemsGained) {
@@ -228,9 +211,12 @@ export function GameProvider({ children }) {
             if (Object.keys(bankedItems).length > 0) {
               await saveBank(b)
             }
-          } else if (savedTask.type === 'agility' || savedTask.type === 'thieving' || savedTask.type === 'hunter') {
-            // Agility/Thieving/Hunter may add items to inventory, so save both
+          } else if (savedTask.type === 'agility' || savedTask.type === 'thieving') {
+            // Agility/Thieving may add coins to inventory, so save both
             await saveInventory(inv)
+            await saveBank(b)
+          } else if (savedTask.type === 'hunter') {
+            // Hunter puts all rewards in bank
             await saveBank(b)
           } else {
             await saveBank(b)
