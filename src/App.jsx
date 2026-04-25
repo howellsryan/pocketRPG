@@ -27,6 +27,7 @@ import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, r
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
 import { simulateIdleThieving } from './engine/thieving.js'
+import { simulateIdleHunting } from './engine/hunter.js'
 import { simulateIdleQuest, createQuestState } from './engine/quests.js'
 import { getLevelFromXP } from './engine/experience.js'
 
@@ -363,6 +364,7 @@ function GameApp() {
           else if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank)
           else if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
           else if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
+          else if (savedTask.type === 'hunter') sim = simulateIdleHunting(savedTask, elapsedMs)
           else if (savedTask.type === 'quest') sim = simulateIdleQuest(savedTask, elapsedMs)
 
           // Always show the modal — even if sim is null (e.g. <1 action completed)
@@ -407,6 +409,18 @@ function GameApp() {
           // Apply thieving coin reward directly to bank
           if (savedTask.type === 'thieving' && sim.coinsGained > 0) {
             updateBankDirect({ coins: sim.coinsGained })
+          }
+          // Apply hunter rewards directly to bank
+          if (savedTask.type === 'hunter' && sim.rewards && sim.rewards.length > 0) {
+            const bankedItems = {}
+            for (const reward of sim.rewards) {
+              if (bankedItems[reward.itemId]) {
+                bankedItems[reward.itemId] += reward.quantity
+              } else {
+                bankedItems[reward.itemId] = reward.quantity
+              }
+            }
+            updateBankDirect(bankedItems)
           }
           // Quest finalisation — cascade through queue if quests complete
           if (savedTask.type === 'quest') {
@@ -1007,6 +1021,18 @@ function GameApp() {
           // Apply thieving coin reward directly to bank
           if (savedTask.type === 'thieving' && sim.coinsGained > 0) {
             updateBankDirect({ coins: sim.coinsGained })
+          }
+          // Apply hunter rewards directly to bank
+          if (savedTask.type === 'hunter' && sim.rewards && sim.rewards.length > 0) {
+            const bankedItems = {}
+            for (const reward of sim.rewards) {
+              if (bankedItems[reward.itemId]) {
+                bankedItems[reward.itemId] += reward.quantity
+              } else {
+                bankedItems[reward.itemId] = reward.quantity
+              }
+            }
+            updateBankDirect(bankedItems)
           }
           // Quest cascade — complete quests while time remains
           if (savedTask.type === 'quest') {
