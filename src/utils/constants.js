@@ -36,7 +36,7 @@ export const QUEST_QUEUE_MAX = 3
 export const COMBAT_SKILLS = ['attack', 'strength', 'defence', 'hitpoints', 'ranged', 'magic', 'prayer']
 export const GATHERING_SKILLS = ['mining', 'woodcutting', 'fishing', 'farming']
 export const PRODUCTION_SKILLS = ['smithing', 'cooking', 'crafting', 'fletching', 'herblore', 'runecraft', 'magic', 'firemaking']
-export const UTILITY_SKILLS = ['agility', 'thieving', 'slayer', 'construction']
+export const UTILITY_SKILLS = ['agility', 'thieving', 'hunter', 'slayer', 'construction']
 
 export const ALL_SKILLS = [...COMBAT_SKILLS, ...GATHERING_SKILLS, ...PRODUCTION_SKILLS, ...UTILITY_SKILLS]
 
