@@ -1443,14 +1443,7 @@ function GameApp() {
 
                   {/* Clue scrolls completed */}
                   {(() => {
-                    const merged = {}
-                    for (const src of [idleResult.lootGained, idleResult.lootBanked, idleResult.lootLost, idleResult.itemsGained]) {
-                      if (!src) continue
-                      for (const [itemId, qty] of Object.entries(src)) {
-                        if (qty > 0) merged[itemId] = (merged[itemId] || 0) + qty
-                      }
-                    }
-                    const clueScrollCount = Object.entries(merged).reduce((sum, [itemId, qty]) => {
+                    const clueScrollCount = Object.entries(idleResult.itemsConsumed || {}).reduce((sum, [itemId, qty]) => {
                       if (itemId.includes('clue')) return sum + qty
                       return sum
                     }, 0)
