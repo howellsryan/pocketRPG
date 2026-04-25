@@ -15,11 +15,12 @@ import itemsData from '../data/items.json'
 import AgilityScreen from './AgilityScreen.jsx'
 import SlayerScreen from './SlayerScreen.jsx'
 import ThievingScreen from './ThievingScreen.jsx'
+import HunterScreen from './HunterScreen.jsx'
 import FarmingScreen from './FarmingScreen.jsx'
 import ConstructionScreen from './ConstructionScreen.jsx'
 
-// Agility, Prayer, Thieving, Slayer, Farming, and Construction are special skills shown here in the Skills tab
-const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'slayer', 'farming', 'construction']
+// Agility, Prayer, Thieving, Hunter, Slayer, Farming, and Construction are special skills shown here in the Skills tab
+const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'hunter', 'slayer', 'farming', 'construction']
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0)
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS]
 
@@ -76,6 +77,16 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     return (
       <ThievingScreen
         initialNpcId={initialActionId}
+        onBack={() => setSelectedSkill(null)}
+      />
+    )
+  }
+
+  // If hunter is selected, delegate to HunterScreen
+  if (selectedSkill === 'hunter') {
+    return (
+      <HunterScreen
+        initialActionId={initialActionId}
         onBack={() => setSelectedSkill(null)}
       />
     )
