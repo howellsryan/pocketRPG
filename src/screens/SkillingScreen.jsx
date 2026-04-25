@@ -3,7 +3,7 @@ import { useGame } from '../state/gameState.jsx'
 import Modal from '../components/Modal.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
-import { SKILL_ICONS, STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS } from '../utils/constants.js'
+import { SKILL_ICONS, STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS, formatDropChance } from '../utils/constants.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getToolSpeedMultiplier, hasToolForSkill } from '../engine/skilling.js'
 import { addItem, removeItem, countItem } from '../engine/inventory.js'
@@ -448,7 +448,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                   <div class="text-right flex flex-col gap-0.5">
                     {action.dropTable.map(drop => (
                       <div key={drop.itemId} class="text-[9px] text-[var(--color-gold-dim)]">
-                        {Math.round(drop.chance * 100)}% {itemsData[drop.itemId]?.name || drop.itemId}
+                        {formatDropChance(drop.chance)} {itemsData[drop.itemId]?.name || drop.itemId}
                       </div>
                     ))}
                   </div>

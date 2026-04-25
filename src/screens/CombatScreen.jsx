@@ -16,7 +16,7 @@ import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
 import spellsData from '../data/spells.json'
 import raidsData from '../data/raids.json'
-import { SCREENS } from '../utils/constants.js'
+import { SCREENS, formatDropChance } from '../utils/constants.js'
 
 const COMBAT_CATEGORIES = [
   {
@@ -1176,14 +1176,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 <div class="space-y-1">
                   {selectedMonsterInfo.drops.map(drop => {
                     const item = itemsData[drop.itemId]
-                    const percentage = (drop.chance * 100).toFixed(1)
                     return (
                       <div key={drop.itemId} class="bg-[#111] rounded-lg p-2">
                         <div class="flex items-start justify-between gap-2">
                           <div class="text-left flex-1 min-w-0">
                             <div class="text-[11px] font-semibold text-[var(--color-parchment)]">{item?.icon || '📦'} {item?.name || drop.itemId}</div>
                             <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                              {drop.chance === 1 ? 'Always' : `${percentage}%`}
+                              {formatDropChance(drop.chance)}
                               {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
                             </div>
                           </div>
@@ -1248,7 +1247,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       <div key={drop.itemId} class="bg-[#111] rounded-lg p-2 flex items-center justify-between">
                         <div class="text-[11px] text-[var(--color-parchment)]">{item?.icon || '📦'} {item?.name || drop.itemId}</div>
                         <div class="text-[9px] text-[var(--color-parchment)] opacity-50">
-                          {drop.chance === 1 ? 'Always' : `${(drop.chance * 100).toFixed(0)}%`}
+                          {formatDropChance(drop.chance)}
                           {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]}` : ` · ${drop.quantity}`}
                         </div>
                       </div>
@@ -1966,7 +1965,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 <div class="space-y-1">
                   {selectedMonsterInfo.drops.map(drop => {
                     const item = itemsData[drop.itemId]
-                    const percentage = (drop.chance * 100).toFixed(1)
                     return (
                       <div key={drop.itemId} class="bg-[#111] rounded-lg p-2">
                         <div class="flex items-start justify-between gap-2">
@@ -1975,7 +1973,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                               {item?.icon || '📦'} {item?.name || drop.itemId}
                             </div>
                             <div class="text-[9px] text-[var(--color-parchment)] opacity-60 mt-0.5">
-                              {drop.chance === 1 ? 'Always' : `${percentage}%`}
+                              {formatDropChance(drop.chance)}
                               {Array.isArray(drop.quantity) ? ` · ${drop.quantity[0]}–${drop.quantity[1]} ea` : ` · ${drop.quantity}`}
                             </div>
                           </div>
