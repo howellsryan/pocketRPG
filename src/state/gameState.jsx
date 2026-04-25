@@ -4,6 +4,7 @@ import { getAllStats, getInventory, getEquipment, getBank, getPlayer, saveAllSta
 import { getLevelFromXP, clampXP } from '../engine/experience.js'
 import { simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from '../engine/idleEngine.js'
 import { simulateIdleThieving } from '../engine/thieving.js'
+import { simulateIdleHunting } from '../engine/hunter.js'
 import { simulateIdleQuest } from '../engine/quests.js'
 import { ALL_SKILLS, MAX_XP, AUTO_SAVE_DEBOUNCE, QUEST_QUEUE_MAX } from '../utils/constants.js'
 import { debounce } from '../utils/helpers.js'
@@ -98,6 +99,8 @@ export function GameProvider({ children }) {
             sim = simulateIdleAgility(savedTask, elapsedMs)
           } else if (savedTask.type === 'thieving') {
             sim = simulateIdleThieving(savedTask, elapsedMs)
+          } else if (savedTask.type === 'hunter') {
+            sim = simulateIdleHunting(savedTask, elapsedMs)
           } else if (savedTask.type === 'quest') {
             sim = simulateIdleQuest(savedTask, elapsedMs)
           }
@@ -181,6 +184,15 @@ export function GameProvider({ children }) {
                 }
               }
             }
+          } else if (savedTask.type === 'hunter' && sim.rewards && sim.rewards.length > 0) {
+            // Hunter rewards go directly to bank
+            for (const reward of sim.rewards) {
+              if (b[reward.itemId]) {
+                b[reward.itemId] = { ...b[reward.itemId], quantity: b[reward.itemId].quantity + reward.quantity }
+              } else {
+                b[reward.itemId] = { itemId: reward.itemId, quantity: reward.quantity }
+              }
+            }
           } else if (sim.itemsGained) {
             for (const [itemId, qty] of Object.entries(sim.itemsGained)) {
               if (b[itemId]) {
@@ -202,6 +214,9 @@ export function GameProvider({ children }) {
           } else if (savedTask.type === 'agility' || savedTask.type === 'thieving') {
             // Agility/Thieving may add coins to inventory, so save both
             await saveInventory(inv)
+            await saveBank(b)
+          } else if (savedTask.type === 'hunter') {
+            // Hunter puts all rewards in bank
             await saveBank(b)
           } else {
             await saveBank(b)
