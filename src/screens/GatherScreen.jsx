@@ -687,7 +687,8 @@ function ClueDropRatesModal({ task, itemsData, onClose }) {
     const item = itemsData?.[r.itemId]
     const name = item?.name || ITEM_NAMES[r.itemId] || r.itemId
     const icon = item?.icon || '•'
-    groups[rarityBand(pct)].push({ itemId: r.itemId, name, icon, pct })
+    const reqs = item?.requirements
+    groups[rarityBand(pct)].push({ itemId: r.itemId, name, icon, pct, reqs })
   }
   for (const key of Object.keys(groups)) {
     groups[key].sort((a, b) => b.pct - a.pct || a.name.localeCompare(b.name))
@@ -698,6 +699,14 @@ function ClueDropRatesModal({ task, itemsData, onClose }) {
     common: { label: 'Common', color: '#86efac' },
     uncommon: { label: 'Uncommon', color: '#fcd34d' },
     rare: { label: 'Rare', color: '#a78bfa' },
+  }
+
+  // Helper to format requirements
+  const formatReqs = (reqs) => {
+    if (!reqs) return null
+    return Object.entries(reqs)
+      .map(([skill, level]) => `${level} ${skill.charAt(0).toUpperCase() + skill.slice(1)}`)
+      .join(', ')
   }
 
   return (
@@ -716,10 +725,17 @@ function ClueDropRatesModal({ task, itemsData, onClose }) {
           <Panel padding="p-2" className="rounded-lg">
             {rows.map(r => (
               <div key={r.itemId} class="flex items-center justify-between py-[3px] text-[12px]">
-                <span class="flex items-center gap-2 text-[var(--color-parchment)] truncate">
+                <div class="flex items-center gap-2 text-[var(--color-parchment)] truncate flex-1">
                   <span class="text-[14px] flex-shrink-0">{r.icon}</span>
-                  <span class="truncate">{r.name}</span>
-                </span>
+                  <div class="truncate flex-1">
+                    <div class="truncate">{r.name}</div>
+                    {r.reqs && (
+                      <div class="text-[10px] opacity-60 truncate">
+                        {formatReqs(r.reqs)}
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <span class="font-[var(--font-mono)] text-[var(--color-gold)] flex-shrink-0 ml-2">
                   {formatChance(r.pct)}
                 </span>
