@@ -8,11 +8,12 @@ import { createHunterState, processHunterTick } from '../engine/hunter.js'
 import { onTick } from '../engine/tick.js'
 import { formatNumber } from '../utils/helpers.js'
 import skillsData from '../data/skills.json'
+import itemsData from '../data/items.json'
 
 const hunterData = skillsData.hunter
 
 export default function HunterScreen({ initialActionId, onBack }) {
-  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask, items } = useGame()
+  const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask } = useGame()
 
   const hunterLevel = getLevelFromXP(stats.hunter?.xp || 0)
   const hunterXP = stats.hunter?.xp || 0
@@ -170,7 +171,7 @@ export default function HunterScreen({ initialActionId, onBack }) {
                 <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Reward Table {selectedActionInfo.rewardTables.length > 1 ? `(Main)` : ''}</h4>
                 <div class="bg-[#111] rounded-lg p-3 space-y-1.5">
                   {selectedActionInfo.rewardTables[0].rewards.map((reward, idx) => {
-                    const itemData = items?.[reward.itemId]
+                    const itemData = itemsData[reward.itemId]
                     const chance = (reward.chance * 100).toFixed(2)
                     const quantityStr = typeof reward.quantity === 'object'
                       ? `${reward.quantity[0]}–${reward.quantity[1]}`
@@ -191,7 +192,7 @@ export default function HunterScreen({ initialActionId, onBack }) {
                 <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Rare Reward Table (1/{selectedActionInfo.rewardTables[1].rarity || 'Unknown'})</h4>
                 <div class="bg-[#111] rounded-lg p-3 space-y-1.5">
                   {selectedActionInfo.rewardTables[1].rewards.map((reward, idx) => {
-                    const itemData = items?.[reward.itemId]
+                    const itemData = itemsData[reward.itemId]
                     const chance = (reward.chance * 100).toFixed(2)
                     const quantityStr = typeof reward.quantity === 'object'
                       ? `${reward.quantity[0]}–${reward.quantity[1]}`
@@ -212,7 +213,7 @@ export default function HunterScreen({ initialActionId, onBack }) {
                 <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Very Rare Reward Table (1/{selectedActionInfo.rewardTables[2].rarity || 'Unknown'})</h4>
                 <div class="bg-[#111] rounded-lg p-3 space-y-1.5">
                   {selectedActionInfo.rewardTables[2].rewards.map((reward, idx) => {
-                    const itemData = items?.[reward.itemId]
+                    const itemData = itemsData[reward.itemId]
                     const chance = (reward.chance * 100).toFixed(2)
                     const quantityStr = typeof reward.quantity === 'object'
                       ? `${reward.quantity[0]}–${reward.quantity[1]}`
