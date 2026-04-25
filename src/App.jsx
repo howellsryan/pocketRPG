@@ -981,6 +981,7 @@ function GameApp() {
           if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank)
           if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
           if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
+          if (savedTask.type === 'hunter') sim = simulateIdleHunting(savedTask, elapsedMs)
           if (savedTask.type === 'quest') sim = simulateIdleQuest(savedTask, elapsedMs)
         }
 
