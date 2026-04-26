@@ -9049,9 +9049,9 @@
     "slot": "neck",
     "stackable": false,
     "attackBonus": {
-      "stab": 15,
-      "slash": 15,
-      "crush": 15,
+      "stab": 30,
+      "slash": 30,
+      "crush": 30,
       "magic": 0,
       "ranged": 0
     },
@@ -9063,7 +9063,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 10,
+      "meleeStrength": 25,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -9082,7 +9082,7 @@
       "stab": 0,
       "slash": 0,
       "crush": 0,
-      "magic": 10,
+      "magic": 30,
       "ranged": 0
     },
     "defenceBonus": {
@@ -9095,7 +9095,7 @@
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
-      "magicDamage": 5
+      "magicDamage": 25
     },
     "requirements": {},
     "shopValue": 19872937,
@@ -9113,7 +9113,7 @@
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 15
+      "ranged": 30
     },
     "defenceBonus": {
       "stab": 0,
@@ -9124,7 +9124,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 5,
+      "rangedStrength": 25,
       "magicDamage": 0
     },
     "requirements": {},
@@ -9146,11 +9146,11 @@
       "ranged": 0
     },
     "defenceBonus": {
-      "stab": 10,
-      "slash": 10,
-      "crush": 10,
-      "magic": 10,
-      "ranged": 10
+      "stab": 50,
+      "slash": 50,
+      "crush": 50,
+      "magic": 50,
+      "ranged": 50
     },
     "otherBonus": {
       "meleeStrength": 0,
@@ -9186,7 +9186,7 @@
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 110
+      "ranged": 185
     },
     "defenceBonus": {
       "stab": 0,
@@ -9197,7 +9197,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 125,
+      "rangedStrength": 165,
       "magicDamage": 0
     },
     "requirements": {
