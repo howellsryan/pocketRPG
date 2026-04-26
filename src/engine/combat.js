@@ -1272,7 +1272,10 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
     checkMonsterDeath(state, monster, events)
   }
 
-  state.monster = monster
+  // Only update monster if it's still alive — checkMonsterDeath may have changed it for raid advancement
+  if (monster.currentHP > 0) {
+    state.monster = monster
+  }
   return { combatState: state, events }
 }
 
