@@ -29078,11 +29078,8 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
                                 speed = Math.max(1, speed - 1);
                             state.playerAttackTimer = speed;
                         }
-                        // Return if combat ended (death) or phase reset
-                        if (!state.active || state.monster.currentHP <= 0) {
-                            if (state.active && state.monster.currentHP <= 0) {
-                                checkMonsterDeath(state, state.monster, events);
-                            }
+                        // Don't call checkMonsterDeath again — applySpecialAttack already did it
+                        if (!state.active) {
                             return { combatState: state, events };
                         }
                         return { combatState: state, events };
@@ -30258,11 +30255,13 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
     if (actions <= 0)
         return null;
     const itemsConsumed = {};
-    // Cap actions to available materials in bank
+    // Cap actions to available materials (check both inventory and bank)
     if (task.action.materials) {
         let maxFromMaterials = Infinity;
         for (const [itemId, qtyPerAction] of Object.entries(task.action.materials)) {
-            const available = (bank && bank[itemId]) ? bank[itemId].quantity : 0;
+            const invCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === itemId ? (slot?.quantity || 0) : 0), 0);
+            const bankCount = (bank && bank[itemId]) ? bank[itemId].quantity : 0;
+            const available = invCount + bankCount;
             const possible = Math.floor(available / qtyPerAction);
             if (possible < maxFromMaterials)
                 maxFromMaterials = possible;
@@ -30628,11 +30627,13 @@ function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, itemsDa
         };
     }
     const itemsConsumed = {};
-    // Cap actions to available materials in bank
+    // Cap actions to available materials (check both inventory and bank)
     if (task.gatherTask.materials) {
         let maxFromMaterials = Infinity;
         for (const [itemId, qtyPerAction] of Object.entries(task.gatherTask.materials)) {
-            const available = (bank && bank[itemId]) ? bank[itemId].quantity : 0;
+            const invCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === itemId ? (slot?.quantity || 0) : 0), 0);
+            const bankCount = (bank && bank[itemId]) ? bank[itemId].quantity : 0;
+            const available = invCount + bankCount;
             const possible = Math.floor(available / qtyPerAction);
             if (possible < maxFromMaterials)
                 maxFromMaterials = possible;
