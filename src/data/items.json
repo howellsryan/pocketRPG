@@ -14274,6 +14274,77 @@
 			"magic": 40
 		}
 	},
+	"gloves_of_slaughter": {
+		"id": "gloves_of_slaughter”,
+		"name": "Gloves of Slaughter",
+		"type": "armour",
+		"stackable": false,
+		"shopValue": 65000000,
+		"icon": "🥊",
+		"isGeneralStore": false,
+		"slot": "gloves",
+		"attackBonus": {
+			"stab": 20,
+			"slash": 20,
+			"crush": 20,
+			"magic": 20,
+			"ranged": 20
+		},
+		"otherBonus": {
+			"meleeStrength": 10,
+			"rangedStrength": 10,
+			"magicDamage": 10
+		},
+		"defenceBonus": {
+			"stab": 0,
+			"slash": 0,
+			"crush": 0,
+			"magic": 0,
+			"ranged": 0
+		},
+		"isUntradeable": false,
+		"requirements": {
+			"slayer": 85,
+			"ranged": 85,
+			"magic": 85,
+			"strength": 85
+		}
+	}, 
+      "slayer_defender": {
+		"id": "slayer_defender”,
+		"name": "Slayer Defender",
+		"type": "armour",
+		"stackable": false,
+		"shopValue": 35000000,
+		"icon": "🛡️",
+		"isGeneralStore": false,
+		"slot": "shield",
+		"attackBonus": {
+			"stab": 15,
+			"slash": 15,
+			"crush": 15,
+			"magic": 0,
+			"ranged": 0,
+		},
+		"otherBonus": {
+			"meleeStrength": 10,
+			"rangedStrength": 0,
+			"magicDamage": 0
+		},
+		"defenceBonus": {
+			"stab": -10,
+			"slash": -10,
+			"crush": -10,
+			"magic": -10,
+			"ranged": -10
+		},
+		"isUntradeable": false,
+		"requirements": {
+			"slayer": 85,
+			"attack": 50,
+			"strength": 85
+		}
+	}, 
 	"wrath_rune": {
 		"id": "wrath_rune",
 		"name": "Wrath rune",
