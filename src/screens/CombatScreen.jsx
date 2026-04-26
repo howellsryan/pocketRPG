@@ -583,8 +583,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           // Slayer task tracking
           const task = slayerTaskRef.current
           if (task && task.monsterId === state.monster.id) {
-            // Grant slayer XP equal to monster's hitpoints
-            grantXP('slayer', state.monster.hitpoints)
+            slayerXpGained += (state.monster.slayerXP || state.monster.hitpoints) * 2
             const newRemaining = task.monstersRemaining - 1
             if (newRemaining <= 0) {
               // Task complete!
