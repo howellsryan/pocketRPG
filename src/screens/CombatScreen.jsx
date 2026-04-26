@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
+import { usePvp } from '../state/pvpState.jsx'
+import PvpLobbyModal from './PvpLobbyModal.jsx'
 import Modal from '../components/Modal.jsx'
 import HPBar from '../components/HPBar.jsx'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applySpecialAttack } from '../engine/combat.js'
@@ -129,7 +131,9 @@ async function performOneLifeReset() {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot } = useGame()
+  const pvp = usePvp()
+  const [showPvpLobby, setShowPvpLobby] = useState(false)
 
   const [combat, setCombat] = useState(null)
   const [log, setLog] = useState([])
@@ -1152,7 +1156,31 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             })}
           </div>
         </div>
+
+        {/* PvP entry — hidden for ironman / one-life accounts. */}
+        {!isIronman && !isOneLife && (
+          <div class="mt-6 pb-2">
+            <button
+              onClick={() => setShowPvpLobby(true)}
+              class="w-full p-3 rounded-xl border border-[var(--color-blood)] bg-[#2a1010] text-[var(--color-blood-light)] active:bg-[#3a1818] transition-colors flex items-center justify-center gap-2"
+              title="Player vs Player"
+            >
+              <span class="text-lg">☠️</span>
+              <span class="text-sm font-bold tracking-wider">PvP — Player vs Player</span>
+            </button>
+            <div class="text-[9px] text-[var(--color-parchment)] opacity-40 mt-1.5 text-center px-2">
+              On death, your tradeable inventory + equipped gear go to the winner. Untradeables stay with you.
+            </div>
+          </div>
+        )}
       </div>
+
+      {showPvpLobby && (
+        <PvpLobbyModal
+          onClose={() => setShowPvpLobby(false)}
+          getSnapshot={getSnapshot}
+        />
+      )}
 
       {/* Monster Info Modal — shown from picker view */}
       {selectedMonsterInfo && (

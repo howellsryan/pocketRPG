@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { GameProvider, useGame } from './state/gameState.jsx'
+import { PvpProvider } from './state/pvpState.jsx'
 import BottomNav from './components/BottomNav.jsx'
 import Header from './components/Header.jsx'
 import ToastContainer from './components/Toast.jsx'
@@ -1670,7 +1671,9 @@ function GameApp() {
 export default function App() {
   return (
     <GameProvider>
-      <GameApp />
+      <PvpProvider>
+        <GameApp />
+      </PvpProvider>
     </GameProvider>
   )
 }

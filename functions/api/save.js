@@ -1,4 +1,5 @@
 import { requireAuth, json } from '../_lib/auth.js'
+import { assertNotInActiveMatch, sweepStaleRows } from '../_lib/pvp.js'
 
 const MAX_SAVE_BYTES = 256 * 1024 // 256 KB ceiling — current saves are well under this
 
@@ -40,6 +41,13 @@ export async function onRequestPut({ request, env }) {
 
   const ch = await getCharacterId(request, env, auth.identity.id)
   if (ch.error) return json({ error: ch.error }, ch.status)
+
+  // PvP inventory lock: refuse local-client saves while a match is active.
+  // Also sweep stale rows here — high-traffic endpoint, cheap indexed deletes.
+  const lock = await assertNotInActiveMatch(env, ch.id)
+  if (lock) return lock
+  // Fire-and-forget sweep; failures are logged inside sweepStaleRows.
+  sweepStaleRows(env).catch(() => {})
 
   let body
   try { body = await request.json() } catch { return json({ error: 'Invalid JSON' }, 400) }
