@@ -1,3 +1,4 @@
+
 {
   "mining": {
     "id": "mining",
@@ -1810,7 +1811,7 @@
         "name": "Al Kharid Rooftop",
         "level": 20,
         "ticks": 35,
-        "xp": 180,
+        "xp": 175,
         "coinReward": 50,
         "description": "Desert rooftop course in Al Kharid"
       },
@@ -1819,7 +1820,7 @@
         "name": "Varrock Rooftop",
         "level": 30,
         "ticks": 33,
-        "xp": 238,
+        "xp": 190,
         "coinReward": 90,
         "description": "Rooftop agility course through Varrock"
       },
@@ -1846,7 +1847,7 @@
         "name": "Seers' Village Rooftop",
         "level": 60,
         "ticks": 25,
-        "xp": 570,
+        "xp": 500,
         "coinReward": 300,
         "description": "Agility course over the rooftops of Seers' Village"
       },
@@ -1855,8 +1856,8 @@
         "name": "Pollnivneach Rooftop",
         "level": 70,
         "ticks": 23,
-        "xp": 890,
-        "coinReward": 420,
+        "xp": 550,
+        "coinReward": 350,
         "description": "Challenging desert rooftop course in Pollnivneach"
       },
       {
@@ -1864,8 +1865,8 @@
         "name": "Rellekka Rooftop",
         "level": 80,
         "ticks": 20,
-        "xp": 780,
-        "coinReward": 560,
+        "xp": 600,
+        "coinReward": 400,
         "description": "Rugged northern rooftop course in Rellekka"
       },
       {
@@ -1873,8 +1874,8 @@
         "name": "Ardougne Rooftop",
         "level": 90,
         "ticks": 18,
-        "xp": 793,
-        "coinReward": 750,
+        "xp": 700,
+        "coinReward": 500,
         "description": "Elite rooftop course in the grand city of Ardougne"
       }
     ]
@@ -2342,7 +2343,7 @@
         "name": "Pickpocket Cake Stall",
         "level": 5,
         "xp": 16,
-        "coins": 8,
+        "coins": 5,
         "description": "Steal from unattended cake stalls. Better rewards than basic NPCs."
       },
       {
@@ -2350,7 +2351,7 @@
         "name": "Pickpocket Farmer",
         "level": 10,
         "xp": 14,
-        "coins": 10,
+        "coins": 8,
         "description": "Agricultural workers. Slightly better than townspeople."
       },
       {
@@ -2358,7 +2359,7 @@
         "name": "Pickpocket Gardener",
         "level": 10,
         "xp": 14,
-        "coins": 12,
+        "coins": 10,
         "description": "Tend to gardens in various locations. Profitable early-level target."
       },
       {
@@ -2366,7 +2367,7 @@
         "name": "Pickpocket Baker",
         "level": 25,
         "xp": 40,
-        "coins": 20,
+        "coins": 15,
         "description": "Work in bakeries across the realm. Good XP for the level."
       },
       {
@@ -2374,15 +2375,15 @@
         "name": "Pickpocket Master Farmer",
         "level": 38,
         "xp": 43,
-        "coins": 50,
-        "description": "Highly profitable due to seed drops. Best early-level money maker."
+        "coins": 20,
+        "description": "A simple man who cares about plants."
       },
       {
         "id": "guard",
         "name": "Pickpocket Guard",
         "level": 40,
         "xp": 46,
-        "coins": 30,
+        "coins": 25,
         "description": "Armoured guards. Dangerous targets. Significant coin rewards."
       },
       {
@@ -2390,7 +2391,7 @@
         "name": "Pickpocket Knight",
         "level": 55,
         "xp": 83,
-        "coins": 80,
+        "coins": 50,
         "description": "Well-armed knights. High XP and coin rewards."
       },
       {
@@ -2398,7 +2399,7 @@
         "name": "Pickpocket Ardougne Knight",
         "level": 65,
         "xp": 100,
-        "coins": 100,
+        "coins": 75,
         "description": "Elite city guard. Excellent experience and profit."
       },
       {
@@ -2406,7 +2407,7 @@
         "name": "Pickpocket Vyre",
         "level": 82,
         "xp": 137,
-        "coins": 200,
+        "coins": 100,
         "description": "Mysterious Vyre people. High risk, high reward endgame target."
       },
       {
@@ -2414,7 +2415,7 @@
         "name": "Pickpocket Elf",
         "level": 85,
         "xp": 150,
-        "coins": 250,
+        "coins": 150,
         "description": "Magical forest dwellers. Ultimate pickpocketing challenge with massive rewards."
       }
     ]
@@ -2508,13 +2509,13 @@
         "id": "hunt_cow",
         "name": "Hunt Cow",
         "level": 1,
-        "ticks": 3,
-        "xp": 50,
+        "ticks": 20,
+        "xp": 150,
         "description": "A small, docile creature. Good for beginners.",
         "rewardTables": [
           {
             "rewards": [
-              { "itemId": "cowhide", "quantity": 5, "chance": 1.0 }
+              { "itemId": "cowhide", "quantity": 1, "chance": 1.0 }
             ]
           }
         ]
@@ -2523,8 +2524,8 @@
         "id": "hunt_wizard",
         "name": "Hunt Wizard",
         "level": 15,
-        "ticks": 3,
-        "xp": 100,
+        "ticks": 20,
+        "xp": 300,
         "description": "A spell-casting NPC. Drops magical staves and runes.",
         "rewardTables": [
           {
@@ -2547,8 +2548,8 @@
         "id": "hunt_jeweller",
         "name": "Hunt Jeweller",
         "level": 35,
-        "ticks": 3,
-        "xp": 150,
+        "ticks": 20,
+        "xp": 500,
         "description": "A crafter of fine jewellery. Drops gems and amulets.",
         "rewardTables": [
           {
@@ -2570,8 +2571,8 @@
         "id": "hunt_merchant",
         "name": "Hunt Merchant",
         "level": 50,
-        "ticks": 3,
-        "xp": 210,
+        "ticks": 20,
+        "xp": 800,
         "description": "A travelling trader carrying coins.",
         "rewardTables": [
           {
@@ -2585,16 +2586,16 @@
         "id": "hunt_grim_reaper",
         "name": "Hunt Grim Reaper",
         "level": 60,
-        "ticks": 3,
-        "xp": 250,
+        "ticks": 20,
+        "xp": 1000,
         "description": "A skeletal collector of bones.",
         "rewardTables": [
           {
             "rewards": [
-              { "itemId": "bones", "quantity": 1, "chance": 0.25 },
-              { "itemId": "big_bones", "quantity": 1, "chance": 0.25 },
-              { "itemId": "dragon_bones", "quantity": 1, "chance": 0.25 },
-              { "itemId": "dagganoth_bones", "quantity": 1, "chance": 0.25 }
+              { "itemId": "bones", "quantity": 1, "chance": 0.40 },
+              { "itemId": "big_bones", "quantity": 1, "chance": 0.30 },
+              { "itemId": "dragon_bones", "quantity": 1, "chance": 0.20 },
+              { "itemId": "dagganoth_bones", "quantity": 1, "chance": 0.10}
             ]
           }
         ]
@@ -2603,8 +2604,8 @@
         "id": "hunt_master_trader",
         "name": "Hunt Master Trader",
         "level": 85,
-        "ticks": 10,
-        "xp": 1000,
+        "ticks": 20,
+        "xp": 1500,
         "description": "An elite merchant with rare treasures.",
         "rewardTables": [
           {
