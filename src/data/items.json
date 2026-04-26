@@ -1,3 +1,4 @@
+
 {
   "coins": {
     "id": "coins",
@@ -11252,15 +11253,6 @@
     "icon": "📦",
     "isGeneralStore": false
   },
-  "dragon_bolt": {
-    "id": "dragon_bolt",
-    "name": "Dragon bolt",
-    "type": "resource",
-    "stackable": true,
-    "shopValue": 0,
-    "icon": "⚙️",
-    "isGeneralStore": false
-  },
   "anglerfish": {
     "id": "anglerfish",
     "name": "Anglerfish",
@@ -11284,7 +11276,7 @@
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 5
+      "ranged": 10
     },
     "defenceBonus": {
       "stab": 0,
@@ -11295,7 +11287,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 0,
+      "rangedStrength": 5,
       "magicDamage": 0
     },
     "isUntradeable": true,
@@ -11316,7 +11308,7 @@
       "stab": 0,
       "slash": 0,
       "crush": 0,
-      "magic": 4,
+      "magic": 10,
       "ranged": 0
     },
     "defenceBonus": {
@@ -11329,12 +11321,11 @@
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
-      "magicDamage": 0
+      "magicDamage": 5
     },
     "isUntradeable": true,
     "requirements": {
-      "magic": 20,
-      "defence": 20
+      "magic": 20
     }
   },
   "holy_sandals": {
@@ -11378,12 +11369,12 @@
     "isGeneralStore": false,
     "slot": "boots",
     "otherBonus": {
-      "meleeStrength": 4
+      "meleeStrength": 8
     },
     "attackBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
       "magic": 0,
       "ranged": 0
     },
@@ -11476,25 +11467,24 @@
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 17
+      "ranged": 35
     },
     "defenceBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": 30,
+      "ranged": 10
     },
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
       "magicDamage": 0,
-      "prayer": 1
+      "prayer": 5
     },
     "isUntradeable": true,
     "requirements": {
-      "ranged": 70,
-      "defence": 40
+      "ranged": 70
     }
   },
   "saradomin_dhide_boots": {
@@ -11679,25 +11669,24 @@
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 17
+      "ranged": 35
     },
     "defenceBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": 30,
+      "ranged": 10
     },
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
       "magicDamage": 0,
-      "prayer": 1
+      "prayer": 5
     },
     "isUntradeable": true,
     "requirements": {
-      "ranged": 70,
-      "defence": 40
+      "ranged": 70
     }
   },
   "guthix_dhide_boots": {
@@ -11882,25 +11871,24 @@
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 17
+      "ranged": 35
     },
     "defenceBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": 30,
+      "ranged": 10
     },
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
       "magicDamage": 0,
-      "prayer": 1
+      "prayer": 5
     },
     "isUntradeable": true,
     "requirements": {
-      "ranged": 70,
-      "defence": 40
+      "ranged": 70
     }
   },
   "zamorak_dhide_boots": {
@@ -12085,25 +12073,24 @@
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 17
+      "ranged": 35
     },
     "defenceBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": 30,
+      "ranged": 10
     },
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
       "magicDamage": 0,
-      "prayer": 1
+      "prayer": 5
     },
     "isUntradeable": true,
     "requirements": {
-      "ranged": 70,
-      "defence": 40
+      "ranged": 70
     }
   },
   "ancient_dhide_boots": {
@@ -12288,25 +12275,24 @@
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 17
+      "ranged": 35
     },
     "defenceBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": 30,
+      "ranged": 10
     },
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
       "magicDamage": 0,
-      "prayer": 1
+      "prayer": 5
     },
     "isUntradeable": true,
     "requirements": {
-      "ranged": 70,
-      "defence": 40
+      "ranged": 70
     }
   },
   "armadyl_dhide_boots": {
@@ -12491,25 +12477,24 @@
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 17
+      "ranged": 35
     },
     "defenceBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": 30,
+      "ranged": 10
     },
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
       "magicDamage": 0,
-      "prayer": 1
+      "prayer": 5
     },
     "isUntradeable": true,
     "requirements": {
-      "ranged": 70,
-      "defence": 40
+      "ranged": 70
     }
   },
   "bandos_dhide_boots": {
@@ -12658,20 +12643,24 @@
       "stab": 0,
       "slash": 0,
       "crush": 0,
-      "magic": 0,
-      "ranged": 30
+      "magic": -20,
+      "ranged": 45
     },
     "defenceBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
+      "stab": 20,
+      "slash": 20,
+      "crush": 20,
+      "magic": 50,
+      "ranged": 20
     },
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
       "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 70,
+      “defence”: 40
     }
   },
   "black_dhide_chaps": {
@@ -12687,20 +12676,23 @@
       "stab": 0,
       "slash": 0,
       "crush": 0,
-      "magic": 0,
-      "ranged": 17
+      "magic": -20,
+      "ranged": 30
     },
     "defenceBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
+      "stab": 10,
+      "slash": 10,
+      "crush": 10,
+      "magic": 50,
+      "ranged":10
     },
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
       "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 70
     }
   },
   "robin_hood_hat": {
@@ -12717,7 +12709,7 @@
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 8
+      "ranged": 25
     },
     "defenceBonus": {
       "stab": 0,
@@ -12728,7 +12720,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 0,
+      "rangedStrength": 10,
       "magicDamage": 0
     },
     "isUntradeable": true,
