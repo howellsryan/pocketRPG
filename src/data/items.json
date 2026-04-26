@@ -1,3 +1,4 @@
+
 {
   "coins": {
     "id": "coins",
@@ -11027,7 +11028,7 @@
     "shopValue": 0,
     "icon": "👕",
     "isGeneralStore": false,
-    "IsUntradeable": true
+    "isUntradeable": true
   },
   "rune_defender": {
     "id": "rune_defender",
@@ -11061,7 +11062,7 @@
     "shopValue": 0,
     "icon": "🛡️",
     "isGeneralStore": false,
-    "IsUntradeable": true
+    "isUntradeable": true
   },
   "dragon_defender": {
     "id": "dragon_defender",
@@ -11128,7 +11129,7 @@
     "shopValue": 0,
     "icon": "🪖",
     "isGeneralStore": false,
-    "IsUntradeable": true
+    "isUntradeable": true
   },
   "clue_scroll_medium": {
     "id": "clue_scroll_medium",
