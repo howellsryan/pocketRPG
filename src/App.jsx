@@ -27,6 +27,7 @@ import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, r
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
 import { simulateIdleThieving } from './engine/thieving.js'
+import { simulateIdleHunting } from './engine/hunter.js'
 import { simulateIdleQuest, createQuestState } from './engine/quests.js'
 import { getLevelFromXP } from './engine/experience.js'
 
@@ -340,7 +341,20 @@ function GameApp() {
             if (newRemaining <= 0) {
               updateBankDirect({ [savedTask.gatherTask.product]: savedTask.gatherTask.qty || 1 })
               setActiveTask(null)
-              sim = { itemsGained: { [savedTask.gatherTask.product]: savedTask.gatherTask.qty || 1 }, minigameCompleted: true }
+              sim = { minigameCompleted: true }
+            } else {
+              setActiveTask({ ...savedTask, totalTicks, ticksRemaining: newRemaining })
+              sim = { minigameTimeReduced: true, hoursRemaining: Math.ceil(newRemaining / 6000) }
+            }
+          } else if (savedTask.type === 'minigame' && savedTask.minigameTask) {
+            const elapsedTicks = Math.floor(elapsedMs / 600)
+            const totalTicks = savedTask.totalTicks ?? savedTask.minigameTask.ticks
+            const prevRemaining = savedTask.ticksRemaining ?? totalTicks
+            const newRemaining = Math.max(0, prevRemaining - elapsedTicks)
+            if (newRemaining <= 0) {
+              updateBankDirect({ [savedTask.minigameTask.product]: savedTask.minigameTask.qty || 1 })
+              setActiveTask(null)
+              sim = { minigameCompleted: true }
             } else {
               setActiveTask({ ...savedTask, totalTicks, ticksRemaining: newRemaining })
               sim = { minigameTimeReduced: true, hoursRemaining: Math.ceil(newRemaining / 6000) }
@@ -350,6 +364,7 @@ function GameApp() {
           else if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank)
           else if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
           else if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
+          else if (savedTask.type === 'hunter') sim = simulateIdleHunting(savedTask, elapsedMs)
           else if (savedTask.type === 'quest') sim = simulateIdleQuest(savedTask, elapsedMs)
 
           // Always show the modal — even if sim is null (e.g. <1 action completed)
@@ -394,6 +409,22 @@ function GameApp() {
           // Apply thieving coin reward directly to bank
           if (savedTask.type === 'thieving' && sim.coinsGained > 0) {
             updateBankDirect({ coins: sim.coinsGained })
+          }
+          // Apply alchemy coin reward directly to bank
+          if (savedTask.type === 'skill' && savedTask.action?.type === 'alchemy' && sim.coinsGained > 0) {
+            updateBankDirect({ coins: sim.coinsGained })
+          }
+          // Apply hunter rewards directly to bank
+          if (savedTask.type === 'hunter' && sim.rewards && sim.rewards.length > 0) {
+            const bankedItems = {}
+            for (const reward of sim.rewards) {
+              if (bankedItems[reward.itemId]) {
+                bankedItems[reward.itemId] += reward.quantity
+              } else {
+                bankedItems[reward.itemId] = reward.quantity
+              }
+            }
+            updateBankDirect(bankedItems)
           }
           // Quest finalisation — cascade through queue if quests complete
           if (savedTask.type === 'quest') {
@@ -613,6 +644,20 @@ function GameApp() {
           const qty = task.gatherTask.qty || 1
           updateBankDirect({ [product]: qty })
           addToast(`${task.gatherTask.icon || '🎮'} ${task.gatherTask.name} complete!`, 'levelup', '🏆')
+          setActiveTask(null)
+        } else {
+          setActiveTask({ ...task, ticksRemaining: remaining, totalTicks: total })
+        }
+      }
+
+      // QuestsScreen minigame tick — also progresses on any screen
+      if (task && task.type === 'minigame' && task.minigameTask) {
+        const total = task.totalTicks ?? task.minigameTask.ticks
+        const remaining = (task.ticksRemaining ?? total) - 1
+        if (remaining <= 0) {
+          const mgTask = task.minigameTask
+          updateBankDirect({ [mgTask.product]: mgTask.qty || 1 })
+          addToast(`${mgTask.icon || '🎮'} ${mgTask.name} complete!`, 'levelup', '🏆')
           setActiveTask(null)
         } else {
           setActiveTask({ ...task, ticksRemaining: remaining, totalTicks: total })
@@ -899,10 +944,31 @@ function GameApp() {
             // Minigame completed — award item and clear task
             updateBankDirect({ [savedTask.gatherTask.product]: savedTask.gatherTask.qty || 1 })
             setActiveTask(null)
-            idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true, minigameItem: savedTask.gatherTask.product }
-            sim = { itemsGained: { [savedTask.gatherTask.product]: savedTask.gatherTask.qty || 1 } }
+            idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true }
+            sim = {}
           } else {
             // Minigame still ongoing — update remaining time and show progress
+            const updatedTask = { ...savedTask, totalTicks, ticksRemaining }
+            setActiveTask(updatedTask)
+            idleResultData = {
+              elapsedMs,
+              task: updatedTask,
+              minigameTimeReduced: true,
+              hoursRemaining: Math.ceil(ticksRemaining / TICKS_PER_HOUR)
+            }
+            sim = { minigameTimeReduced: true }
+          }
+        } else if (savedTask.type === 'minigame' && savedTask.minigameTask) {
+          const TICKS_PER_HOUR = 6000
+          const totalTicks = savedTask.totalTicks ?? savedTask.minigameTask.ticks
+          const prevRemaining = savedTask.ticksRemaining ?? totalTicks
+          const ticksRemaining = Math.max(0, prevRemaining - TICKS_PER_HOUR)
+          if (ticksRemaining <= 0) {
+            updateBankDirect({ [savedTask.minigameTask.product]: savedTask.minigameTask.qty || 1 })
+            setActiveTask(null)
+            idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true }
+            sim = {}
+          } else {
             const updatedTask = { ...savedTask, totalTicks, ticksRemaining }
             setActiveTask(updatedTask)
             idleResultData = {
@@ -919,6 +985,7 @@ function GameApp() {
           if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank)
           if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
           if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
+          if (savedTask.type === 'hunter') sim = simulateIdleHunting(savedTask, elapsedMs)
           if (savedTask.type === 'quest') sim = simulateIdleQuest(savedTask, elapsedMs)
         }
 
@@ -959,6 +1026,22 @@ function GameApp() {
           // Apply thieving coin reward directly to bank
           if (savedTask.type === 'thieving' && sim.coinsGained > 0) {
             updateBankDirect({ coins: sim.coinsGained })
+          }
+          // Apply alchemy coin reward directly to bank
+          if (savedTask.type === 'skill' && savedTask.action?.type === 'alchemy' && sim.coinsGained > 0) {
+            updateBankDirect({ coins: sim.coinsGained })
+          }
+          // Apply hunter rewards directly to bank
+          if (savedTask.type === 'hunter' && sim.rewards && sim.rewards.length > 0) {
+            const bankedItems = {}
+            for (const reward of sim.rewards) {
+              if (bankedItems[reward.itemId]) {
+                bankedItems[reward.itemId] += reward.quantity
+              } else {
+                bankedItems[reward.itemId] = reward.quantity
+              }
+            }
+            updateBankDirect(bankedItems)
           }
           // Quest cascade — complete quests while time remains
           if (savedTask.type === 'quest') {
@@ -1296,8 +1379,10 @@ function GameApp() {
                   {idleResult.task.type === 'combat' ? `Fighting ${idleResult.task.monster?.name}` :
                    idleResult.task.type === 'skill' ? `Training ${idleResult.task.skill}` :
                    idleResult.task.type === 'gather' ? idleResult.task.gatherTask?.name :
+                   idleResult.task.type === 'minigame' ? idleResult.task.minigameTask?.name :
                    idleResult.task.type === 'thieving' ? `Pickpocketing ${idleResult.task.npc?.name}` :
                    idleResult.task.type === 'agility' ? `Training agility` :
+                   idleResult.task.type === 'hunter' ? `${idleResult.task.action?.name}` :
                    idleResult.task.type === 'quest' ? `${idleResult.completedQuests?.length > 1 ? `✅ ${idleResult.completedQuests.length} Quests Completed` : (idleResult.completed ? '✅ Completed' : '⏳ On quest')}: ${idleResult.completedQuests?.length > 0 ? idleResult.completedQuests[0].name : idleResult.task.quest?.name}` : ''}
                 </p>
               )}
@@ -1334,6 +1419,26 @@ function GameApp() {
                       <div style={{ fontSize: '11px', color: '#ff8787', lineHeight: '1.4' }}>
                         Boss and raid fights cannot be fought while idle. You must actively fight. Return to the fight to continue!
                       </div>
+                    </div>
+                  )}
+
+                  {/* Minigame Progress */}
+                  {idleResult.minigameTimeReduced && (
+                    <div style={{ marginBottom: '12px', padding: '10px', background: '#1a3a2a', borderRadius: '10px', borderLeft: '3px solid #4ade80' }}>
+                      <div style={{ fontSize: '12px', color: '#4ade80', fontWeight: 'bold', marginBottom: '6px' }}>🎮 Minigame Progress</div>
+                      <div style={{ fontSize: '12px', color: '#e8d5b0', marginBottom: '4px' }}>{idleResult.task?.gatherTask?.name || idleResult.task?.minigameTask?.name}</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' }}>
+                        <span>Time Remaining</span>
+                        <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>{idleResult.hoursRemaining}h</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Minigame Completed */}
+                  {idleResult.minigameCompleted && (
+                    <div style={{ marginBottom: '12px', padding: '10px', background: '#1a3a2a', borderRadius: '10px', borderLeft: '3px solid #4ade80' }}>
+                      <div style={{ fontSize: '12px', color: '#4ade80', fontWeight: 'bold', marginBottom: '6px' }}>✅ Minigame Complete!</div>
+                      <div style={{ fontSize: '12px', color: '#e8d5b0' }}>{idleResult.task?.gatherTask?.name || idleResult.task?.minigameTask?.name}</div>
                     </div>
                   )}
 
@@ -1440,6 +1545,60 @@ function GameApp() {
                       </div>
                     </div>
                   )}
+
+                  {/* Hunter loot */}
+                  {idleResult.task?.type === 'hunter' && idleResult.rewards && idleResult.rewards.length > 0 && (() => {
+                    const itemsByName = {}
+                    for (const reward of idleResult.rewards) {
+                      const itemData = itemsDataRef.current?.[reward.itemId]
+                      const name = itemData?.name || reward.itemId
+                      if (itemsByName[name]) {
+                        itemsByName[name] += reward.quantity
+                      } else {
+                        itemsByName[name] = reward.quantity
+                      }
+                    }
+                    const rewards = Object.entries(itemsByName)
+                    return rewards.length > 0 ? (
+                      <div style={{ marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' }}>
+                        <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>🎯 Loot</div>
+                        {rewards.slice(0, 8).map(([name, qty]) => (
+                          <div key={name} style={{ marginBottom: '4px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' }}>
+                              <span>{name}</span>
+                              <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>× {qty.toLocaleString()}</span>
+                            </div>
+                          </div>
+                        ))}
+                        {rewards.length > 8 && (
+                          <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid rgba(212, 175, 55, 0.2)', fontSize: '11px', color: '#d4af37' }}>
+                            +{rewards.length - 8} more items
+                          </div>
+                        )}
+                      </div>
+                    ) : null
+                  })()}
+
+                  {/* Clue scrolls completed */}
+                  {(() => {
+                    const clueScrollCount = Object.entries(idleResult.itemsConsumed || {}).reduce((sum, [itemId, qty]) => {
+                      if (itemId.includes('clue')) return sum + qty
+                      return sum
+                    }, 0)
+                    return clueScrollCount > 0 ? (
+                      <div style={{ marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' }}>
+                        <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>📜 Clue Scrolls</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' }}>
+                          <span>Completed</span>
+                          <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>×{clueScrollCount.toLocaleString()}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8d5b0', opacity: 0.45 }}>
+                          <span>/hr</span>
+                          <span style={{ fontFamily: 'monospace' }}>{perHr(clueScrollCount)}</span>
+                        </div>
+                      </div>
+                    ) : null
+                  })()}
 
                   {/* Loot gained — drop table results only */}
                   {(() => {

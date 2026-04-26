@@ -34,13 +34,13 @@ export const QUEST_QUEUE_MAX = 3
 
 // Skills list
 export const COMBAT_SKILLS = ['attack', 'strength', 'defence', 'hitpoints', 'ranged', 'magic', 'prayer']
-export const GATHERING_SKILLS = ['mining', 'woodcutting', 'fishing', 'farming', 'hunter']
+export const GATHERING_SKILLS = ['mining', 'woodcutting', 'fishing', 'farming']
 export const PRODUCTION_SKILLS = ['smithing', 'cooking', 'crafting', 'fletching', 'herblore', 'runecraft', 'magic', 'firemaking']
-export const UTILITY_SKILLS = ['agility', 'thieving', 'slayer', 'construction']
+export const UTILITY_SKILLS = ['agility', 'thieving', 'hunter', 'slayer', 'construction']
 
 export const ALL_SKILLS = [...COMBAT_SKILLS, ...GATHERING_SKILLS, ...PRODUCTION_SKILLS, ...UTILITY_SKILLS]
 
-export const STUB_SKILLS = new Set(['farming', 'hunter', 'runecraft'])
+export const STUB_SKILLS = new Set(['farming', 'runecraft'])
 
 // Agility banking: delay in ms at level 1 and level 99
 export const AGILITY_BANK_DELAY_LV1_MS = 5 * 60 * 1000   // 5 minutes
@@ -48,6 +48,17 @@ export const AGILITY_BANK_DELAY_LV99_MS = 10 * 1000        // 10 seconds
 
 // Equipment slots
 export const EQUIPMENT_SLOTS = ['head', 'body', 'legs', 'weapon', 'shield', 'gloves', 'boots', 'cape', 'neck', 'ring', 'ammo']
+
+// Format drop chance as "1 in X" or percentage
+export function formatDropChance(chance) {
+  if (chance === 1) return 'Always'
+  if (chance >= 0.01) return `${(chance * 100).toFixed(1)}%`
+  if (chance > 0) {
+    const oneIn = Math.round(1 / chance)
+    return `1 in ${oneIn.toLocaleString()}`
+  }
+  return '—'
+}
 
 // Skill icons (emoji for MVP)
 export const SKILL_ICONS = {

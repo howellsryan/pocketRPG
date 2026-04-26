@@ -103,7 +103,7 @@
     "durationSeconds": 1800,
     "coinReward": 10000,
     "xpReward": {
-      "tome_of_experience": 7500
+      "any": 7500
     },
     "itemUnlocks": [],
     "skillRequirements": {

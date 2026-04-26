@@ -3,7 +3,7 @@ import { useGame } from '../state/gameState.jsx'
 import Modal from '../components/Modal.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
-import { SKILL_ICONS, STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS } from '../utils/constants.js'
+import { SKILL_ICONS, STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS, formatDropChance } from '../utils/constants.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getToolSpeedMultiplier, hasToolForSkill } from '../engine/skilling.js'
 import { addItem, removeItem, countItem } from '../engine/inventory.js'
@@ -15,11 +15,12 @@ import itemsData from '../data/items.json'
 import AgilityScreen from './AgilityScreen.jsx'
 import SlayerScreen from './SlayerScreen.jsx'
 import ThievingScreen from './ThievingScreen.jsx'
+import HunterScreen from './HunterScreen.jsx'
 import FarmingScreen from './FarmingScreen.jsx'
 import ConstructionScreen from './ConstructionScreen.jsx'
 
-// Agility, Prayer, Thieving, Slayer, Farming, and Construction are special skills shown here in the Skills tab
-const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'slayer', 'farming', 'construction']
+// Agility, Prayer, Thieving, Hunter, Slayer, Farming, and Construction are special skills shown here in the Skills tab
+const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'hunter', 'slayer', 'farming', 'construction']
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0)
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS]
 
@@ -76,6 +77,16 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     return (
       <ThievingScreen
         initialNpcId={initialActionId}
+        onBack={() => setSelectedSkill(null)}
+      />
+    )
+  }
+
+  // If hunter is selected, delegate to HunterScreen
+  if (selectedSkill === 'hunter') {
+    return (
+      <HunterScreen
+        initialActionId={initialActionId}
         onBack={() => setSelectedSkill(null)}
       />
     )
@@ -282,7 +293,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     const state = { ...createSkillingState(selectedSkill, adjustedAction), startedAt: Date.now() }
     setSkilling(state)
     // Store original action in task — idle engine will apply tool multiplier separately
-    setActiveTask({ type: 'skill', skill: selectedSkill, action: selectedAction, bankingEnabled: true })
+    setActiveTask({ type: 'skill', skill: selectedSkill, action: selectedAction, bankingEnabled: true, selectedAlchemyItem: item })
   }
 
   const stopSkilling = () => {
@@ -448,7 +459,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                   <div class="text-right flex flex-col gap-0.5">
                     {action.dropTable.map(drop => (
                       <div key={drop.itemId} class="text-[9px] text-[var(--color-gold-dim)]">
-                        {Math.round(drop.chance * 100)}% {itemsData[drop.itemId]?.name || drop.itemId}
+                        {formatDropChance(drop.chance)} {itemsData[drop.itemId]?.name || drop.itemId}
                       </div>
                     ))}
                   </div>
