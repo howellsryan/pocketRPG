@@ -368,11 +368,8 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
               if (state.combatType === 'ranged' && state.stance === 'rapid') speed = Math.max(1, speed - 1)
               state.playerAttackTimer = speed
             }
-            // Return if combat ended (death) or phase reset
-            if (!state.active || state.monster.currentHP <= 0) {
-              if (state.active && state.monster.currentHP <= 0) {
-                checkMonsterDeath(state, state.monster, events)
-              }
+            // Don't call checkMonsterDeath again — applySpecialAttack already did it
+            if (!state.active) {
               return { combatState: state, events }
             }
             return { combatState: state, events }
@@ -1275,7 +1272,10 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
     checkMonsterDeath(state, monster, events)
   }
 
-  state.monster = monster
+  // Only update monster if it's still alive — checkMonsterDeath may have changed it for raid advancement
+  if (monster.currentHP > 0) {
+    state.monster = monster
+  }
   return { combatState: state, events }
 }
 
