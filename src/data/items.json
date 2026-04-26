@@ -14324,7 +14324,7 @@
 			"slash": 15,
 			"crush": 15,
 			"magic": 0,
-			"ranged": 0,
+			"ranged": 0
 		},
 		"otherBonus": {
 			"meleeStrength": 10,
