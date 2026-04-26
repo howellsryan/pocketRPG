@@ -27987,6 +27987,26 @@ function maxDefenceRoll(defenceLevel, styleDefenceBonus) {
     return (defenceLevel + 9) * (styleDefenceBonus + 64);
 }
 /**
+ * Calculate effective defence level for a player. Mirrors effectiveAttack —
+ * `+ 8` base instead of the `+ 9` baked into maxDefenceRoll, with stance
+ * defence bonus and prayer multiplier on top.
+ *
+ * Used in PvP (both sides are players) and inside processCombatTick's
+ * monster-attack branch, where the player's defence already follows this
+ * pattern (see combat.js line ~733). Extracted so PvP can reuse it.
+ */
+function effectiveDefence(defenceLevel, potionBonus = 0, prayerMult = 1.0, styleBonus = 0) {
+    return Math.floor((defenceLevel + potionBonus) * prayerMult) + styleBonus + 8;
+}
+/**
+ * Player defence roll: effectiveDef * (equipmentDefenceBonus + 64).
+ * Same shape as maxAttackRoll — kept as a separate name for readability
+ * at call sites.
+ */
+function playerDefenceRoll(effectiveDef, equipmentDefenceBonus) {
+    return effectiveDef * (equipmentDefenceBonus + 64);
+}
+/**
  * Calculate hit chance (accuracy) from attack and defence rolls
  */
 function hitChance(atkRoll, defRoll) {
@@ -29975,6 +29995,526 @@ function _accXP(state, xpSkills) {
     for (const [skill, xp] of Object.entries(xpSkills)) {
         state.xpGained[skill] = (state.xpGained[skill] || 0) + xp;
     }
+}
+
+// ── engine/combatant.js ──
+// PvP Combatant shape and pure builders.
+//
+// A Combatant is a self-contained snapshot of one player's combat-relevant
+// state. Two Combatants + the items lookup are everything pvpEngine needs
+// to advance one tick of a fight. The shape deliberately mirrors what
+// processCombatTick already reads off `playerStats + equipment + inventory`,
+// so the same engine helpers (effectiveStrength, maxAttackRoll, etc.) can
+// drive both sides without rewriting.
+//
+// Phase 2A note: this file does NOT touch combat.js. PvE's existing engine
+// keeps its current shape and tests stay green. Phase 2B's pvpEngine.js
+// composes Combatants + combatPrimitives.js into the symmetric tick loop.
+//
+// ──────────────────────────────────────────────────────────────────────
+// Combatant shape (JSDoc — pure JS file, no TS)
+// ──────────────────────────────────────────────────────────────────────
+//
+// /** @typedef {{
+//   characterId: number,
+//   username: string,
+//
+//   // Base stats from save (skill XP → level)
+//   stats: {
+//     attack: number, strength: number, defence: number, hitpoints: number,
+//     ranged: number, magic: number, prayer: number,
+//   },
+//   maxHP: number,
+//   currentHP: number,
+//
+//   // 11-slot equipment + 28-slot inventory (mirror of EQUIPMENT_SLOTS / INVENTORY_SIZE)
+//   equipment: Record<EquipSlot, EquippedItem | null>,
+//   inventory: Array<InventorySlot | null>,
+//
+//   // Combat configuration
+//   combatType: 'melee' | 'ranged' | 'magic',
+//   stance: 'accurate' | 'aggressive' | 'controlled' | 'defensive' | 'rapid' | 'longrange',
+//   spell: { id: string, baseDamage: number, baseXP: number, runeReq: object } | null,
+//
+//   // Per-combatant runtime state (mutated each tick by the engine)
+//   attackTimer: number,        // ticks until next swing; 0 = ready
+//   eatCooldown: number,        // ticks during which no attack can fire
+//   potionCooldown: number,     // ticks during which no potion can be drunk
+//   activeCombatPrayer: string | null,
+//   activeProtectionPrayer: null,  // disabled in v1 — stays null
+//   activePotions: Record<string, number>,  // { potionItemId: ticksRemaining }
+//   specialAttackEnergy: number,  // 0..100, starts at 100, no regen
+//   specialAttackQueued: boolean,
+//
+//   // Set when a forfeit intent is processed; the engine produces a
+//   // terminal {winner, loser, reason: 'forfeit'} on the next tick.
+//   forfeited: boolean,
+// }} Combatant */
+//
+// ──────────────────────────────────────────────────────────────────────
+// Equipped/Inventory item shapes (mirror existing PvE code)
+// ──────────────────────────────────────────────────────────────────────
+//
+// EquippedItem: { itemId, _twoHanded?: boolean, charges?: number, quantity?: number (ammo only) }
+// InventorySlot: { itemId, quantity, charges?, noted?: boolean }
+//
+// Quantity for non-stackable items is always 1; stackables use real counts.
+
+
+/** Spec energy at match start. PvP rule: starts at 100, no regen during match. */
+const PVP_INITIAL_SPEC_ENERGY = 100;
+/** Maximum HP for a hitpoints level (10HP at L10, +1 per level). */
+function getMaxHPFromLevel(hitpointsLevel) {
+    // Mirrors src/state/gameState.jsx getMaxHP(): hp level == HP itself,
+    // with floor of 10 HP at level 10. We just trust the level value;
+    // it can never legally fall below 10 because that's the start level.
+    return Math.max(10, hitpointsLevel);
+}
+/**
+ * Compute the player's current combat type purely from the equipped weapon.
+ * Mirrors src/engine/equipment.js getCombatType — duplicated here so
+ * Combatant builders don't pull the equipment.js module's full surface.
+ */
+function combatTypeFromEquipment(equipment, itemsData) {
+    const weaponEntry = equipment?.weapon;
+    if (!weaponEntry)
+        return 'melee';
+    const weapon = itemsData[weaponEntry.itemId];
+    if (!weapon)
+        return 'melee';
+    const style = weapon.attackStyle || 'crush';
+    if (style === 'ranged')
+        return 'ranged';
+    if (style === 'magic')
+        return 'magic';
+    return 'melee';
+}
+/**
+ * Build a Combatant from a player's persisted state. Pure: takes already-
+ * loaded stats / equipment / inventory and returns a fresh snapshot.
+ *
+ * The server constructs both combatants from each character's `saves.save_data`
+ * at match start (Phase 3). The client constructs its own combatant locally
+ * for optimistic UI, but the server's snapshot is authoritative.
+ */
+function buildPlayerCombatant({ characterId, username, stats, equipment, inventory, currentHP, maxHP, stance = 'accurate', spell = null, combatType, itemsData, }) {
+    // Resolve combat type if the caller didn't supply one explicitly.
+    const resolvedCombatType = combatType || combatTypeFromEquipment(equipment, itemsData);
+    // Normalise stats — everything we expose is a level (not raw XP) so the
+    // engine never has to call getLevelFromXP at runtime per tick.
+    const lvl = (skill) => {
+        const xp = stats?.[skill]?.xp;
+        if (typeof xp === 'number')
+            return getLevelFromXP(xp);
+        if (typeof stats?.[skill]?.level === 'number')
+            return stats[skill].level;
+        return 1;
+    };
+    const normalised = {
+        attack: lvl('attack'),
+        strength: lvl('strength'),
+        defence: lvl('defence'),
+        hitpoints: lvl('hitpoints'),
+        ranged: lvl('ranged'),
+        magic: lvl('magic'),
+        prayer: lvl('prayer'),
+    };
+    const resolvedMaxHP = maxHP ?? getMaxHPFromLevel(normalised.hitpoints);
+    const resolvedCurrentHP = currentHP ?? resolvedMaxHP;
+    // Defensive copies — the engine will mutate these freely on its own
+    // copy of the Combatant; we never want the caller's original arrays
+    // to bleed in.
+    const equipmentCopy = {};
+    for (const slot of EQUIPMENT_SLOTS) {
+        equipmentCopy[slot] = equipment?.[slot] ? { ...equipment[slot] } : null;
+    }
+    const invCopy = new Array(INVENTORY_SIZE).fill(null);
+    if (Array.isArray(inventory)) {
+        for (let i = 0; i < INVENTORY_SIZE; i++) {
+            const slot = inventory[i];
+            if (slot)
+                invCopy[i] = { ...slot };
+        }
+    }
+    return {
+        characterId,
+        username,
+        stats: normalised,
+        maxHP: resolvedMaxHP,
+        currentHP: resolvedCurrentHP,
+        equipment: equipmentCopy,
+        inventory: invCopy,
+        combatType: resolvedCombatType,
+        stance,
+        spell,
+        // Runtime state. PvP rule: both sides start with attackTimer=0 (no
+        // monster-style 1-tick handicap), tiebreaks resolved by lower
+        // characterId in the engine.
+        attackTimer: 0,
+        eatCooldown: 0,
+        potionCooldown: 0,
+        activeCombatPrayer: null,
+        activeProtectionPrayer: null, // protection prayers disabled in v1
+        activePotions: {},
+        specialAttackEnergy: PVP_INITIAL_SPEC_ENERGY,
+        specialAttackQueued: false,
+        forfeited: false,
+    };
+}
+/**
+ * Look up the level of a skill on a Combatant. Convenience wrapper to
+ * avoid the engine sprinkling combatant.stats[skill] everywhere.
+ */
+function getCombatantSkill(combatant, skill) {
+    return combatant?.stats?.[skill] ?? 1;
+}
+
+// ── engine/combatPrimitives.js ──
+// Symmetric attack/defence rollers for PvP combat.
+//
+// These are pure functions that take an attacker and defender Combatant
+// and return a hit result. They compose the building blocks already in
+// formulas.js (effectiveAttack, maxAttackRoll, hitChance, rollDamage)
+// with the new effectiveDefence/playerDefenceRoll added in Phase 2A.
+//
+// PvE uses its own engine (src/engine/combat.js) untouched; that engine
+// already inlines these calculations against monster shapes. Phase 2B's
+// pvpEngine.js will compose these rollers into a symmetric tick.
+//
+// Each roller returns:
+//   {
+//     hit: boolean,           // true if the swing connected (damage > 0 OR a 0-roll on a hit)
+//     damage: number,         // raw rolled damage before HP cap
+//     accuracy: number,       // computed hit chance for logs / debug
+//     maxHit: number,         // max possible damage for this swing
+//     attackRoll: number,     // for debugging / replay
+//     defenceRoll: number,
+//   }
+//
+// Random rolls go through formulas.js's rollDamage (Math.random under the
+// hood) so behaviour matches existing PvE tests for free.
+
+
+// ── Helpers ─────────────────────────────────────────────────────────────
+/**
+ * Resolve an attacker's "weapon style" for melee: the bonus key on
+ * defender.equipment defenceBonus that matches the attacker's swing.
+ * Mirrors getAttackStyle() — duplicated for clarity at call sites.
+ */
+function attackStyleFor(attackerEquipment, itemsData) {
+    return getAttackStyle(attackerEquipment, itemsData);
+}
+/**
+ * Resolve the defender's equipment defence bonus for a given attack style.
+ * Returns 0 if the slot is empty or the style key is missing.
+ */
+function defenderDefenceBonus(defenderEquipment, style, itemsData) {
+    const bonuses = getEquipmentBonuses(defenderEquipment, itemsData);
+    return bonuses.defenceBonus[style] || 0;
+}
+// ── Melee ───────────────────────────────────────────────────────────────
+/**
+ * Roll a melee attack. Both sides use player formulas (effectiveAttack /
+ * effectiveDefence) — this is the symmetric calculation the asymmetric
+ * PvE engine doesn't expose directly.
+ *
+ * The attacker's stance contributes attack and strength bonuses; the
+ * defender's stance contributes their defence bonus. Prayer/potion-
+ * boosted stat values must already be baked into combatant.stats by the
+ * caller (the engine applies these per-tick before calling here).
+ */
+function rollMeleeAttack(attacker, defender, itemsData) {
+    const atkBonuses = getEquipmentBonuses(attacker.equipment, itemsData);
+    const style = attackStyleFor(attacker.equipment, itemsData);
+    const atkStance = getMeleeStyleBonuses(attacker.stance);
+    const defStance = getMeleeStyleBonuses(defender.stance);
+    const effStr = effectiveStrength(attacker.stats.strength, 0, 1.0, atkStance.strengthStyleBonus);
+    const maxHit = meleeMaxHit(effStr, atkBonuses.otherBonus.meleeStrength);
+    const effAtk = effectiveAttack(attacker.stats.attack, 0, 1.0, atkStance.attackStyleBonus);
+    const atkRoll = maxAttackRoll(effAtk, atkBonuses.attackBonus[style] || 0);
+    const effDef = effectiveDefence(defender.stats.defence, 0, 1.0, defStance.defenceStyleBonus);
+    const defRoll = playerDefenceRoll(effDef, defenderDefenceBonus(defender.equipment, style, itemsData));
+    const accuracy = hitChance(atkRoll, defRoll);
+    const damage = rollDamage(accuracy, maxHit);
+    return {
+        hit: damage > 0,
+        damage,
+        accuracy,
+        maxHit,
+        attackRoll: atkRoll,
+        defenceRoll: defRoll,
+        style,
+    };
+}
+// ── Ranged ──────────────────────────────────────────────────────────────
+function rollRangedAttack(attacker, defender, itemsData) {
+    const atkBonuses = getEquipmentBonuses(attacker.equipment, itemsData);
+    const defStance = getMeleeStyleBonuses(defender.stance);
+    const styleBonus = getRangedStyleBonus(attacker.stance);
+    const effRng = effectiveRanged(attacker.stats.ranged, 0, 1.0, styleBonus);
+    const maxHit = rangedMaxHit(effRng, atkBonuses.otherBonus.rangedStrength);
+    const atkRoll = maxAttackRoll(effRng, atkBonuses.attackBonus.ranged || 0);
+    const effDef = effectiveDefence(defender.stats.defence, 0, 1.0, defStance.defenceStyleBonus);
+    const defRoll = playerDefenceRoll(effDef, defenderDefenceBonus(defender.equipment, 'ranged', itemsData));
+    const accuracy = hitChance(atkRoll, defRoll);
+    const damage = rollDamage(accuracy, maxHit);
+    return {
+        hit: damage > 0,
+        damage,
+        accuracy,
+        maxHit,
+        attackRoll: atkRoll,
+        defenceRoll: defRoll,
+        style: 'ranged',
+    };
+}
+// ── Magic ───────────────────────────────────────────────────────────────
+/**
+ * Magic attack roll. Defender's magic defence is the OSRS-style mix of
+ * 70% magic level + 30% defence level for monsters; for players, OSRS
+ * uses 100% magic level. We use the player formula here since both sides
+ * are players.
+ *
+ * Either pass `spell` (object with baseDamage, baseXP, runeReq) for a
+ * standard spell cast, or pass it as null when using a powered staff —
+ * in which case the caller is expected to provide a maxHit override
+ * since powered staves scale differently.
+ */
+function rollMagicAttack(attacker, defender, itemsData, opts = {}) {
+    const { spell = attacker.spell, maxHitOverride = null } = opts;
+    const atkBonuses = getEquipmentBonuses(attacker.equipment, itemsData);
+    const defBonuses = getEquipmentBonuses(defender.equipment, itemsData);
+    const effMag = effectiveMagic(attacker.stats.magic);
+    const atkRoll = maxAttackRoll(effMag, atkBonuses.attackBonus.magic || 0);
+    // Player magic defence: effective magic level + magic defence equipment.
+    // We use effectiveDefence(magicLevel) — for player vs player, magic
+    // defence is dominated by the magic level itself, not the defence stat.
+    // (OSRS PvP: magic def = 70% magic + 30% defence. We follow that here
+    // because it's the well-tested formula and it preserves the feel.)
+    const playerMagicDefLevel = Math.floor(defender.stats.magic * 0.7) + Math.floor(defender.stats.defence * 0.3);
+    const effMagDef = effectiveDefence(playerMagicDefLevel);
+    const defRoll = playerDefenceRoll(effMagDef, defBonuses.defenceBonus.magic || 0);
+    let maxHit;
+    if (typeof maxHitOverride === 'number') {
+        maxHit = magicMaxHit(maxHitOverride, atkBonuses.otherBonus.magicDamage);
+    }
+    else if (spell) {
+        maxHit = magicMaxHit(spell.baseDamage, atkBonuses.otherBonus.magicDamage);
+    }
+    else {
+        // No spell, no override — caller is misusing the API. Bail with 0.
+        return { hit: false, damage: 0, accuracy: 0, maxHit: 0, attackRoll: atkRoll, defenceRoll: defRoll, style: 'magic' };
+    }
+    const accuracy = hitChance(atkRoll, defRoll);
+    const damage = rollDamage(accuracy, maxHit);
+    return {
+        hit: damage > 0,
+        damage,
+        accuracy,
+        maxHit,
+        attackRoll: atkRoll,
+        defenceRoll: defRoll,
+        style: 'magic',
+    };
+}
+
+// ── engine/lootTransfer.js ──
+// Loot transfer on PvP death.
+//
+// Pure functions, no side effects on input. The PvP engine calls these
+// when a Combatant hits 0 HP (or forfeits). The server then writes the
+// resulting state back to D1 in an atomic batch — but the actual item-
+// shuffling math lives here so it's testable in isolation.
+//
+// Rules (from the design plan):
+//   - Tradeable items (equipment + inventory) transfer to the winner's bank.
+//   - Untradeable items stay with the loser. Equipped untradeables stay
+//     equipped on the loser (they don't migrate to inventory). Untradeable
+//     inventory items stay in their original inventory slot.
+//   - COINS are special-cased: items.json flags 'coins' as isUntradeable
+//     for the general-store engine, but in PvP they ALWAYS transfer.
+//   - Charges (scale-charged weapons) and ammo quantity carry through.
+//   - Bank-overflow: tradeable pile sorted by shopValue DESC, fed into
+//     winner's bank slot-by-slot. Discarded remainder is reported to the
+//     UI as a toast ("Bank full — N items lost").
+
+const COINS_ID = 'coins';
+/**
+ * Returns true if the item should transfer to the winner. Coins are an
+ * explicit override on isUntradeable.
+ */
+function isPvpTradeable(itemId, itemsData) {
+    if (itemId === COINS_ID)
+        return true;
+    const def = itemsData?.[itemId];
+    if (!def)
+        return false;
+    return !def.isUntradeable;
+}
+/**
+ * Split a loser's inventory + equipment into the pile that transfers
+ * (tradeable) and what stays behind (untradeable, in original positions).
+ *
+ * Input is treated as immutable — the function returns fresh objects/arrays.
+ *
+ * Returns:
+ *   {
+ *     transfer: Array<LootEntry>,                  // pile heading to the winner
+ *     remainingInventory: Array<InventorySlot|null>, // loser's new inventory (28 slots)
+ *     remainingEquipment: Record<EquipSlot, EquippedItem|null>, // loser's new equipment
+ *   }
+ *
+ * LootEntry has the shape { itemId, quantity, charges?, fromSlot: 'equipment.<slot>' | 'inventory.<i>' }
+ * — the source slot is preserved purely for debugging / replay; the
+ * winner's bank doesn't care about it.
+ */
+function splitInventoryByTradeable(inventory, equipment, itemsData) {
+    const transfer = [];
+    const remainingInventory = new Array(inventory?.length || 0).fill(null);
+    const remainingEquipment = {};
+    // Walk equipment slots first so the transfer pile is naturally
+    // ordered "equipped → inventory" (cosmetic; the sort by shopValue
+    // overrides this for the bank fill).
+    if (equipment && typeof equipment === 'object') {
+        for (const [slot, entry] of Object.entries(equipment)) {
+            if (!entry) {
+                remainingEquipment[slot] = null;
+                continue;
+            }
+            if (isPvpTradeable(entry.itemId, itemsData)) {
+                transfer.push({
+                    itemId: entry.itemId,
+                    quantity: entry.quantity || 1, // ammo carries quantity; everything else is qty 1
+                    charges: entry.charges,
+                    fromSlot: `equipment.${slot}`,
+                });
+                remainingEquipment[slot] = null;
+            }
+            else {
+                // Equipped untradeable: stays equipped on the loser.
+                remainingEquipment[slot] = { ...entry };
+            }
+        }
+    }
+    if (Array.isArray(inventory)) {
+        for (let i = 0; i < inventory.length; i++) {
+            const slot = inventory[i];
+            if (!slot)
+                continue;
+            if (isPvpTradeable(slot.itemId, itemsData)) {
+                transfer.push({
+                    itemId: slot.itemId,
+                    quantity: slot.quantity || 1,
+                    charges: slot.charges,
+                    fromSlot: `inventory.${i}`,
+                });
+                // remainingInventory[i] stays null (cleared)
+            }
+            else {
+                // Untradeable inventory items keep their slot index.
+                remainingInventory[i] = { ...slot };
+            }
+        }
+    }
+    return { transfer, remainingInventory, remainingEquipment };
+}
+/**
+ * Sort a tradeable pile by shopValue DESC so the winner gets the most
+ * valuable items first if their bank fills up. Items missing a shopValue
+ * sort to the end (treated as 0).
+ */
+function sortLootByValueDesc(transfer, itemsData) {
+    return [...transfer].sort((a, b) => {
+        const va = itemsData[a.itemId]?.shopValue || 0;
+        const vb = itemsData[b.itemId]?.shopValue || 0;
+        return vb - va;
+    });
+}
+/**
+ * Fill the winner's bank with the sorted loot pile. Returns added/dropped
+ * partitions plus the resulting bank object.
+ *
+ * Bank shape: Record<itemId, { itemId, quantity, charges? }>
+ *   - Stackable items merge into the existing key.
+ *   - Non-stackable items: each unique itemId is one bank entry; a second
+ *     stack of the same non-stackable id collides with the existing one.
+ *     For Phase 4 we pick the conservative behaviour: if an existing
+ *     non-stackable bank entry has charges, reject the merge and DROP the
+ *     incoming item (otherwise we'd lose the existing charges silently).
+ *     If neither has charges, we increment quantity (existing PocketRPG
+ *     bank semantics — multiple of the same non-stackable can stack in
+ *     the bank as one entry with quantity > 1).
+ *   - BANK_SIZE caps the number of distinct itemIds (default 500).
+ */
+function fillBank(initialBank, sortedLoot, itemsData, bankSize = BANK_SIZE) {
+    // Defensive shallow copy so callers' bank object isn't mutated.
+    const bank = { ...initialBank };
+    for (const k of Object.keys(bank))
+        bank[k] = { ...bank[k] };
+    const added = [];
+    const dropped = [];
+    let droppedValue = 0;
+    for (const item of sortedLoot) {
+        const def = itemsData[item.itemId];
+        const stackable = !!def?.stackable;
+        const existing = bank[item.itemId];
+        const slotsUsed = Object.keys(bank).length;
+        if (existing) {
+            // Same itemId already in bank.
+            if (stackable) {
+                existing.quantity = (existing.quantity || 0) + (item.quantity || 1);
+                added.push(item);
+                continue;
+            }
+            // Non-stackable collision: charges-bearing items can't merge safely.
+            if (existing.charges != null || item.charges != null) {
+                dropped.push(item);
+                droppedValue += (def?.shopValue || 0) * (item.quantity || 1);
+                continue;
+            }
+            existing.quantity = (existing.quantity || 1) + (item.quantity || 1);
+            added.push(item);
+            continue;
+        }
+        // New itemId — needs a free bank slot.
+        if (slotsUsed >= bankSize) {
+            dropped.push(item);
+            droppedValue += (def?.shopValue || 0) * (item.quantity || 1);
+            continue;
+        }
+        bank[item.itemId] = {
+            itemId: item.itemId,
+            quantity: item.quantity || 1,
+            ...(item.charges != null ? { charges: item.charges } : {}),
+        };
+        added.push(item);
+    }
+    return { bank, added, dropped, droppedValue };
+}
+/**
+ * Convenience wrapper: split + sort + fill in one call. Returns the full
+ * picture the engine needs to emit a 'matchEnd' event and persist back
+ * to saves.save_data for both characters.
+ */
+function applyLootTransfer({ loserInventory, loserEquipment, winnerBank, itemsData, bankSize = BANK_SIZE, }) {
+    const { transfer, remainingInventory, remainingEquipment } = splitInventoryByTradeable(loserInventory, loserEquipment, itemsData);
+    const sorted = sortLootByValueDesc(transfer, itemsData);
+    const fill = fillBank(winnerBank, sorted, itemsData, bankSize);
+    return {
+        loser: {
+            inventory: remainingInventory,
+            equipment: remainingEquipment,
+        },
+        winner: {
+            bank: fill.bank,
+        },
+        summary: {
+            transferCount: transfer.length,
+            added: fill.added,
+            dropped: fill.dropped,
+            droppedValue: fill.droppedValue,
+        },
+    };
 }
 
 // ── engine/skilling.js ──

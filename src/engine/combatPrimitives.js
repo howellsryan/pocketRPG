@@ -1,0 +1,173 @@
+// Symmetric attack/defence rollers for PvP combat.
+//
+// These are pure functions that take an attacker and defender Combatant
+// and return a hit result. They compose the building blocks already in
+// formulas.js (effectiveAttack, maxAttackRoll, hitChance, rollDamage)
+// with the new effectiveDefence/playerDefenceRoll added in Phase 2A.
+//
+// PvE uses its own engine (src/engine/combat.js) untouched; that engine
+// already inlines these calculations against monster shapes. Phase 2B's
+// pvpEngine.js will compose these rollers into a symmetric tick.
+//
+// Each roller returns:
+//   {
+//     hit: boolean,           // true if the swing connected (damage > 0 OR a 0-roll on a hit)
+//     damage: number,         // raw rolled damage before HP cap
+//     accuracy: number,       // computed hit chance for logs / debug
+//     maxHit: number,         // max possible damage for this swing
+//     attackRoll: number,     // for debugging / replay
+//     defenceRoll: number,
+//   }
+//
+// Random rolls go through formulas.js's rollDamage (Math.random under the
+// hood) so behaviour matches existing PvE tests for free.
+
+import {
+  effectiveStrength, effectiveAttack, effectiveRanged, effectiveMagic,
+  meleeMaxHit, rangedMaxHit, magicMaxHit,
+  maxAttackRoll, hitChance, rollDamage,
+  getMeleeStyleBonuses, getRangedStyleBonus,
+  effectiveDefence, playerDefenceRoll,
+} from './formulas.js'
+import { getEquipmentBonuses, getAttackStyle } from './equipment.js'
+
+// ── Helpers ─────────────────────────────────────────────────────────────
+
+/**
+ * Resolve an attacker's "weapon style" for melee: the bonus key on
+ * defender.equipment defenceBonus that matches the attacker's swing.
+ * Mirrors getAttackStyle() — duplicated for clarity at call sites.
+ */
+function attackStyleFor(attackerEquipment, itemsData) {
+  return getAttackStyle(attackerEquipment, itemsData)
+}
+
+/**
+ * Resolve the defender's equipment defence bonus for a given attack style.
+ * Returns 0 if the slot is empty or the style key is missing.
+ */
+function defenderDefenceBonus(defenderEquipment, style, itemsData) {
+  const bonuses = getEquipmentBonuses(defenderEquipment, itemsData)
+  return bonuses.defenceBonus[style] || 0
+}
+
+// ── Melee ───────────────────────────────────────────────────────────────
+
+/**
+ * Roll a melee attack. Both sides use player formulas (effectiveAttack /
+ * effectiveDefence) — this is the symmetric calculation the asymmetric
+ * PvE engine doesn't expose directly.
+ *
+ * The attacker's stance contributes attack and strength bonuses; the
+ * defender's stance contributes their defence bonus. Prayer/potion-
+ * boosted stat values must already be baked into combatant.stats by the
+ * caller (the engine applies these per-tick before calling here).
+ */
+export function rollMeleeAttack(attacker, defender, itemsData) {
+  const atkBonuses = getEquipmentBonuses(attacker.equipment, itemsData)
+  const style = attackStyleFor(attacker.equipment, itemsData)
+  const atkStance = getMeleeStyleBonuses(attacker.stance)
+  const defStance = getMeleeStyleBonuses(defender.stance)
+
+  const effStr = effectiveStrength(attacker.stats.strength, 0, 1.0, atkStance.strengthStyleBonus)
+  const maxHit = meleeMaxHit(effStr, atkBonuses.otherBonus.meleeStrength)
+
+  const effAtk = effectiveAttack(attacker.stats.attack, 0, 1.0, atkStance.attackStyleBonus)
+  const atkRoll = maxAttackRoll(effAtk, atkBonuses.attackBonus[style] || 0)
+
+  const effDef = effectiveDefence(defender.stats.defence, 0, 1.0, defStance.defenceStyleBonus)
+  const defRoll = playerDefenceRoll(effDef, defenderDefenceBonus(defender.equipment, style, itemsData))
+
+  const accuracy = hitChance(atkRoll, defRoll)
+  const damage = rollDamage(accuracy, maxHit)
+  return {
+    hit: damage > 0,
+    damage,
+    accuracy,
+    maxHit,
+    attackRoll: atkRoll,
+    defenceRoll: defRoll,
+    style,
+  }
+}
+
+// ── Ranged ──────────────────────────────────────────────────────────────
+
+export function rollRangedAttack(attacker, defender, itemsData) {
+  const atkBonuses = getEquipmentBonuses(attacker.equipment, itemsData)
+  const defStance = getMeleeStyleBonuses(defender.stance)
+  const styleBonus = getRangedStyleBonus(attacker.stance)
+
+  const effRng = effectiveRanged(attacker.stats.ranged, 0, 1.0, styleBonus)
+  const maxHit = rangedMaxHit(effRng, atkBonuses.otherBonus.rangedStrength)
+
+  const atkRoll = maxAttackRoll(effRng, atkBonuses.attackBonus.ranged || 0)
+
+  const effDef = effectiveDefence(defender.stats.defence, 0, 1.0, defStance.defenceStyleBonus)
+  const defRoll = playerDefenceRoll(effDef, defenderDefenceBonus(defender.equipment, 'ranged', itemsData))
+
+  const accuracy = hitChance(atkRoll, defRoll)
+  const damage = rollDamage(accuracy, maxHit)
+  return {
+    hit: damage > 0,
+    damage,
+    accuracy,
+    maxHit,
+    attackRoll: atkRoll,
+    defenceRoll: defRoll,
+    style: 'ranged',
+  }
+}
+
+// ── Magic ───────────────────────────────────────────────────────────────
+
+/**
+ * Magic attack roll. Defender's magic defence is the OSRS-style mix of
+ * 70% magic level + 30% defence level for monsters; for players, OSRS
+ * uses 100% magic level. We use the player formula here since both sides
+ * are players.
+ *
+ * Either pass `spell` (object with baseDamage, baseXP, runeReq) for a
+ * standard spell cast, or pass it as null when using a powered staff —
+ * in which case the caller is expected to provide a maxHit override
+ * since powered staves scale differently.
+ */
+export function rollMagicAttack(attacker, defender, itemsData, opts = {}) {
+  const { spell = attacker.spell, maxHitOverride = null } = opts
+  const atkBonuses = getEquipmentBonuses(attacker.equipment, itemsData)
+  const defBonuses = getEquipmentBonuses(defender.equipment, itemsData)
+
+  const effMag = effectiveMagic(attacker.stats.magic)
+  const atkRoll = maxAttackRoll(effMag, atkBonuses.attackBonus.magic || 0)
+
+  // Player magic defence: effective magic level + magic defence equipment.
+  // We use effectiveDefence(magicLevel) — for player vs player, magic
+  // defence is dominated by the magic level itself, not the defence stat.
+  // (OSRS PvP: magic def = 70% magic + 30% defence. We follow that here
+  // because it's the well-tested formula and it preserves the feel.)
+  const playerMagicDefLevel = Math.floor(defender.stats.magic * 0.7) + Math.floor(defender.stats.defence * 0.3)
+  const effMagDef = effectiveDefence(playerMagicDefLevel)
+  const defRoll = playerDefenceRoll(effMagDef, defBonuses.defenceBonus.magic || 0)
+
+  let maxHit
+  if (typeof maxHitOverride === 'number') {
+    maxHit = magicMaxHit(maxHitOverride, atkBonuses.otherBonus.magicDamage)
+  } else if (spell) {
+    maxHit = magicMaxHit(spell.baseDamage, atkBonuses.otherBonus.magicDamage)
+  } else {
+    // No spell, no override — caller is misusing the API. Bail with 0.
+    return { hit: false, damage: 0, accuracy: 0, maxHit: 0, attackRoll: atkRoll, defenceRoll: defRoll, style: 'magic' }
+  }
+
+  const accuracy = hitChance(atkRoll, defRoll)
+  const damage = rollDamage(accuracy, maxHit)
+  return {
+    hit: damage > 0,
+    damage,
+    accuracy,
+    maxHit,
+    attackRoll: atkRoll,
+    defenceRoll: defRoll,
+    style: 'magic',
+  }
+}
