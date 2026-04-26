@@ -14275,7 +14275,7 @@
 		}
 	},
 	"gloves_of_slaughter": {
-		"id": "gloves_of_slaughter”,
+		"id": "gloves_of_slaughter",
 		"name": "Gloves of Slaughter",
 		"type": "armour",
 		"stackable": false,
@@ -14311,7 +14311,7 @@
 		}
 	}, 
       "slayer_defender": {
-		"id": "slayer_defender”,
+		"id": "slayer_defender",
 		"name": "Slayer Defender",
 		"type": "armour",
 		"stackable": false,
