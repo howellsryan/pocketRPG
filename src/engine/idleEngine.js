@@ -757,7 +757,7 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     // Check if this kill counts toward slayer task — cap at total task count
     if (slayerTask && slayerTask.monsterId === monster.id && monstersKilledOnTask < slayerTask.monstersRemaining) {
       monstersKilledOnTask++
-      slayerXpGained += monster.slayerXP || monster.hitpoints // Slayer XP = custom field or monster HP
+      slayerXpGained += (monster.slayerXP || monster.hitpoints) * 2
     }
 
     // XP for this kill
