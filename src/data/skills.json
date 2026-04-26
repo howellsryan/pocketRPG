@@ -2632,8 +2632,8 @@
           },
           {
             "rewards": [
-              { "itemId": "uncut_onyx", "quantity": 1, "chance": 0.5 },
-              { "itemId": "uncut_zenyte", "quantity": 1, "chance": 0.5 }
+              { "itemId": "uncut_onyx", "quantity": 1, "chance": 0.1 },
+              { "itemId": "uncut_zenyte", "quantity": 1, "chance": 0.05 }
             ],
             "rarity": 1500
           }
