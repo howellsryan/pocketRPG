@@ -21,8 +21,16 @@ let pendingTimer = null
 let pendingSnapshot = null
 let inFlight = false
 
+function isPvpSaveSyncBlocked() {
+  try {
+    return localStorage.getItem('pocketrpg_pvp_sync_block') === '1'
+  } catch {
+    return false
+  }
+}
+
 function canSync() {
-  return !!getToken() && !!getCharacterId()
+  return !!getToken() && !!getCharacterId() && !isPvpSaveSyncBlocked()
 }
 
 async function flushNow() {

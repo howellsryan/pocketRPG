@@ -22,11 +22,19 @@ let lastHeartbeatAt = 0
 let heartbeatInFlight = false
 let pendingHeartbeatTask = undefined // `undefined` = none pending, otherwise holds latest task
 
+function isPvpIdleSyncBlocked() {
+  try {
+    return localStorage.getItem('pocketrpg_pvp_sync_block') === '1'
+  } catch {
+    return false
+  }
+}
+
 // True when we have both a session token and a selected character — the only
 // case where the cloud idle row is meaningful. Offline-mode callers always
 // get `false` and skip the D1 path entirely.
 function canUseCloud() {
-  return !!getToken() && !!getCharacterId()
+  return !!getToken() && !!getCharacterId() && !isPvpIdleSyncBlocked()
 }
 
 // Read the authoritative idle state from D1.

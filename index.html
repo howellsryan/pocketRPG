@@ -32977,11 +32977,19 @@ const FETCH_TIMEOUT_MS = 3000;
 let lastHeartbeatAt = 0;
 let heartbeatInFlight = false;
 let pendingHeartbeatTask = undefined; // `undefined` = none pending, otherwise holds latest task
+function isPvpIdleSyncBlocked() {
+    try {
+        return localStorage.getItem('pocketrpg_pvp_sync_block') === '1';
+    }
+    catch {
+        return false;
+    }
+}
 // True when we have both a session token and a selected character — the only
 // case where the cloud idle row is meaningful. Offline-mode callers always
 // get `false` and skip the D1 path entirely.
 function canUseCloud() {
-    return !!getToken() && !!getCharacterId();
+    return !!getToken() && !!getCharacterId() && !isPvpIdleSyncBlocked();
 }
 // Read the authoritative idle state from D1.
 // Returns { lastActiveAt, activeTask, serverNow } or null when no row exists /
@@ -33086,8 +33094,16 @@ let lastPushedAt = 0;
 let pendingTimer = null;
 let pendingSnapshot = null;
 let inFlight = false;
+function isPvpSaveSyncBlocked() {
+    try {
+        return localStorage.getItem('pocketrpg_pvp_sync_block') === '1';
+    }
+    catch {
+        return false;
+    }
+}
 function canSync() {
-    return !!getToken() && !!getCharacterId();
+    return !!getToken() && !!getCharacterId() && !isPvpSaveSyncBlocked();
 }
 async function flushNow() {
     pendingTimer = null;
@@ -33987,19 +34003,53 @@ function useGame() {
 
 
 const PvpContext = createContext(null);
+const PVP_MATCH_KEY = 'pocketrpg_pvp_active_match_id';
+const PVP_SYNC_BLOCK_KEY = 'pocketrpg_pvp_sync_block';
+function readBootMatchId() {
+    try {
+        const raw = localStorage.getItem(PVP_MATCH_KEY);
+        const parsed = Number(raw);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+    }
+    catch {
+        return null;
+    }
+}
+function writePvpLocalState(matchId) {
+    try {
+        if (Number.isFinite(matchId) && matchId > 0) {
+            localStorage.setItem(PVP_MATCH_KEY, String(matchId));
+            localStorage.setItem(PVP_SYNC_BLOCK_KEY, '1');
+        }
+        else {
+            localStorage.removeItem(PVP_MATCH_KEY);
+            localStorage.removeItem(PVP_SYNC_BLOCK_KEY);
+        }
+    }
+    catch {
+        // localStorage can fail in private mode; state still lives in-memory.
+    }
+}
 function PvpProvider({ children }) {
-    const [phase, setPhase] = useState('idle');
-    const [activeMatchId, setActiveMatchId] = useState(null);
-    const openLobby = useCallback(() => setPhase('waiting'), []);
+    const bootMatchId = readBootMatchId();
+    const [phase, setPhase] = useState(bootMatchId ? 'in_match' : 'idle');
+    const [activeMatchId, setActiveMatchId] = useState(bootMatchId);
+    const openLobby = useCallback(() => {
+        writePvpLocalState(null);
+        setPhase('waiting');
+    }, []);
     const closeLobby = useCallback(() => {
+        writePvpLocalState(null);
         setPhase('idle');
         setActiveMatchId(null);
     }, []);
     const enterMatch = useCallback((matchId) => {
+        writePvpLocalState(matchId);
         setPhase('in_match');
         setActiveMatchId(matchId);
     }, []);
     const leaveMatch = useCallback(() => {
+        writePvpLocalState(null);
         setPhase('idle');
         setActiveMatchId(null);
     }, []);
@@ -35597,6 +35647,7 @@ function BankScreen() {
 
 const POLL_MS = 2500; // light enough to be cheap, fast enough to feel live in the lobby
 const SAVE_HEARTBEAT_MS = 3000;
+const LOBBY_PVP_SYNC_BLOCK_KEY = 'pocketrpg_pvp_sync_block';
 // PvP Lobby Modal — Phase 1 surface.
 // Two tabs: Waiting Room (CB-filtered list of opponents) and Invitations
 // (incoming + outgoing pending). Joining the lobby tab posts to the
@@ -35778,6 +35829,10 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
             // our true inventory. Phase 3 server will reject stale saves; we
             // do this proactively so the round-trip succeeds first time.
             await pushLobbySnapshot(true);
+            try {
+                localStorage.setItem(LOBBY_PVP_SYNC_BLOCK_KEY, '1');
+            }
+            catch { /* best-effort */ }
             let res;
             try {
                 res = await pvpApi.acceptInvitation(inviteId);
@@ -35803,6 +35858,10 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
         }
         catch (err) {
             addToast(err.body?.error || err.message, 'error');
+            try {
+                localStorage.removeItem(LOBBY_PVP_SYNC_BLOCK_KEY);
+            }
+            catch { /* best-effort */ }
         }
         finally {
             acceptingInvite.current = false;
@@ -35931,6 +35990,8 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
 const POLL_VISIBLE_MS = 600;
 const POLL_HIDDEN_MS = 1500;
 const NO_POLL_WARNING_MS = 5000;
+const MATCH_BOOT_GRACE_MS = 8000;
+const MATCH_BOOT_RETRY_MS = 500;
 function prettifyEvent(evt, selfId) {
     if (!evt)
         return null;
@@ -36063,6 +36124,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
     useEffect(() => {
         let active = true;
         let pollMs = hiddenMode ? POLL_HIDDEN_MS : POLL_VISIBLE_MS;
+        const bootDeadline = Date.now() + MATCH_BOOT_GRACE_MS;
         const scheduleNext = () => {
             if (!active || !mounted.current)
                 return;
@@ -36072,16 +36134,27 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
             }, pollMs);
         };
         (async () => {
-            try {
-                await refreshFromServer();
-                if (!active || !mounted.current)
+            while (active && mounted.current) {
+                try {
+                    await refreshFromServer();
+                    if (!active || !mounted.current)
+                        return;
+                    pollMs = hiddenMode ? POLL_HIDDEN_MS : POLL_VISIBLE_MS;
+                    scheduleNext();
                     return;
-                pollMs = hiddenMode ? POLL_HIDDEN_MS : POLL_VISIBLE_MS;
-                scheduleNext();
-            }
-            catch (err) {
-                addToast?.(err.body?.error || err.message, 'error');
-                await onExit?.();
+                }
+                catch (err) {
+                    const code = err?.body?.error || err?.message;
+                    const transientBootError = (code === 'match_not_found' || code === 'match_not_active') && Date.now() < bootDeadline;
+                    if (transientBootError) {
+                        await new Promise(resolve => setTimeout(resolve, MATCH_BOOT_RETRY_MS));
+                        continue;
+                    }
+                    setLoading(false);
+                    addToast?.(code || 'Failed to load PvP match', 'error');
+                    await onExit?.();
+                    return;
+                }
             }
         })();
         return () => {

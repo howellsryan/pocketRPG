@@ -17,21 +17,54 @@ import { createContext } from 'preact'
 import { useState, useContext, useCallback } from 'preact/hooks'
 
 const PvpContext = createContext(null)
+const PVP_MATCH_KEY = 'pocketrpg_pvp_active_match_id'
+const PVP_SYNC_BLOCK_KEY = 'pocketrpg_pvp_sync_block'
+
+function readBootMatchId() {
+  try {
+    const raw = localStorage.getItem(PVP_MATCH_KEY)
+    const parsed = Number(raw)
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+function writePvpLocalState(matchId) {
+  try {
+    if (Number.isFinite(matchId) && matchId > 0) {
+      localStorage.setItem(PVP_MATCH_KEY, String(matchId))
+      localStorage.setItem(PVP_SYNC_BLOCK_KEY, '1')
+    } else {
+      localStorage.removeItem(PVP_MATCH_KEY)
+      localStorage.removeItem(PVP_SYNC_BLOCK_KEY)
+    }
+  } catch {
+    // localStorage can fail in private mode; state still lives in-memory.
+  }
+}
 
 export function PvpProvider({ children }) {
-  const [phase, setPhase] = useState('idle')
-  const [activeMatchId, setActiveMatchId] = useState(null)
+  const bootMatchId = readBootMatchId()
+  const [phase, setPhase] = useState(bootMatchId ? 'in_match' : 'idle')
+  const [activeMatchId, setActiveMatchId] = useState(bootMatchId)
 
-  const openLobby = useCallback(() => setPhase('waiting'), [])
+  const openLobby = useCallback(() => {
+    writePvpLocalState(null)
+    setPhase('waiting')
+  }, [])
   const closeLobby = useCallback(() => {
+    writePvpLocalState(null)
     setPhase('idle')
     setActiveMatchId(null)
   }, [])
   const enterMatch = useCallback((matchId) => {
+    writePvpLocalState(matchId)
     setPhase('in_match')
     setActiveMatchId(matchId)
   }, [])
   const leaveMatch = useCallback(() => {
+    writePvpLocalState(null)
     setPhase('idle')
     setActiveMatchId(null)
   }, [])
