@@ -58,6 +58,37 @@ function attackSnapshot(attacker, defender, itemsData) {
   return rollMeleeAttack(attacker, defender, itemsData)
 }
 
+function resolveSwing(attacker, defender, itemsData, events) {
+  const weapon = itemsData?.[attacker?.equipment?.weapon?.itemId]
+  const spec = weapon?.specialAttack
+  const queued = !!attacker.specialAttackQueued
+  attacker.specialAttackQueued = false
+
+  if (!queued || !spec) {
+    return attackSnapshot(attacker, defender, itemsData)
+  }
+
+  const energyCost = Math.max(0, Number(spec.energyCost) || 0)
+  const currentEnergy = Math.max(0, Number(attacker.specialAttackEnergy) || 0)
+  if (currentEnergy < energyCost) {
+    events.push({ type: 'spec_failed', characterId: attacker.characterId, reason: 'insufficient_energy' })
+    return attackSnapshot(attacker, defender, itemsData)
+  }
+
+  attacker.specialAttackEnergy = Math.max(0, currentEnergy - energyCost)
+
+  // PvP v1: consume queue + energy server-authoritatively. We keep the
+  // combat math deterministic by applying the same attack roll path and
+  // annotate the event for UI/logging.
+  const swing = attackSnapshot(attacker, defender, itemsData)
+  return {
+    ...swing,
+    special: true,
+    specType: spec.type || 'special',
+    energyCost,
+  }
+}
+
 function terminalResult(next, winnerId, loserId, reason, events) {
   return {
     stateNext: next,
@@ -233,8 +264,8 @@ export function processPvpTick(state, intents, itemsData) {
   const leftCanAttack = left.hp > 0 && left.attackTimer === 0 && left.eatCooldown === 0
   const rightCanAttack = right.hp > 0 && right.attackTimer === 0 && right.eatCooldown === 0
 
-  const leftSwing = leftCanAttack ? attackSnapshot(left, right, itemsData) : null
-  const rightSwing = rightCanAttack ? attackSnapshot(right, left, itemsData) : null
+  const leftSwing = leftCanAttack ? resolveSwing(left, right, itemsData, events) : null
+  const rightSwing = rightCanAttack ? resolveSwing(right, left, itemsData, events) : null
 
   const leftDamage = leftSwing ? Math.max(0, Math.min(right.hp, leftSwing.damage || 0)) : 0
   const rightDamage = rightSwing ? Math.max(0, Math.min(left.hp, rightSwing.damage || 0)) : 0

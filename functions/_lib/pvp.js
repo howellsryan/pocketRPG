@@ -27,6 +27,23 @@ export async function assertNotInActiveMatch(env, characterId) {
       409,
     )
   }
+
+  // Defence in depth for any stale/null active_match_id rows:
+  // enforce "character not present in any active pvp_matches row"
+  // across BOTH columns.
+  const activeRow = await env.DB.prepare(
+    `SELECT id
+       FROM pvp_matches
+      WHERE status = 'active'
+        AND (character_a = ? OR character_b = ?)
+      LIMIT 1`
+  ).bind(characterId, characterId).first()
+  if (activeRow?.id) {
+    return json(
+      { error: 'character_in_active_match', match_id: activeRow.id },
+      409,
+    )
+  }
   return null
 }
 

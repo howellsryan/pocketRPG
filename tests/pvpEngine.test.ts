@@ -96,4 +96,36 @@ describe('pvpEngine phase 2B contract', () => {
 
     expect(out.stateNext.recentEvents.length).toBeLessThanOrEqual(20)
   })
+
+  it('consumes special energy when a queued special fires', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+
+    const specItems: any = {
+      ...items,
+      dragon_dagger: {
+        id: 'dragon_dagger',
+        slot: 'weapon',
+        attackStyle: 'stab',
+        attackSpeed: 4,
+        attackBonus: { stab: 40, slash: 40, crush: -4, magic: 0, ranged: 0 },
+        defenceBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
+        otherBonus: { meleeStrength: 40, rangedStrength: 0, magicDamage: 0 },
+        specialAttack: { type: 'double_hit', energyCost: 25 },
+      },
+    }
+
+    const a = buildPlayer({
+      characterId: 1,
+      equipment: { weapon: { itemId: 'dragon_dagger' } },
+    })
+    const b = buildPlayer({ characterId: 2 })
+    const state = createPvpState(a, b, 0)
+
+    const out = processPvpTick(state, [
+      { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'queue_special' } },
+    ], specItems)
+
+    expect(out.stateNext.combatants['1'].specialAttackEnergy).toBe(75)
+    expect(out.events.some((e: any) => e.type === 'attack' && e.special === true)).toBe(true)
+  })
 })

@@ -7,6 +7,8 @@ import { useGame } from '../state/gameState.jsx'
 import { usePvp } from '../state/pvpState.jsx'
 import { pvpApi } from '../cloud/pvp.js'
 import { pushNow } from '../cloud/sync.js'
+import { api } from '../cloud/api.js'
+import { pauseTicks } from '../engine/tick.js'
 
 const POLL_MS = 2500   // light enough to be cheap, fast enough to feel live in the lobby
 
@@ -137,7 +139,17 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
       // do this proactively so the round-trip succeeds first time.
       const snapshot = getSnapshot ? getSnapshot() : null
       if (snapshot) await pushNow(snapshot)
-      const res = await pvpApi.acceptInvitation(inviteId)
+      let res
+      try {
+        res = await pvpApi.acceptInvitation(inviteId)
+      } catch (err) {
+        if (err?.body?.error === 'stale_save') {
+          if (snapshot) await pushNow(snapshot)
+          res = await pvpApi.acceptInvitation(inviteId)
+        } else {
+          throw err
+        }
+      }
       if (res.phase1_stub) {
         addToast('PvP combat coming soon — match accepted but no fight will start yet.', 'info')
         // Phase 1 stub: just clean up and close.
@@ -145,6 +157,9 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
         onClose?.()
         return
       }
+      pauseTicks()
+      try { await api.deleteIdle() } catch { /* best-effort */ }
+      try { localStorage.removeItem('pocketrpg_activeTask') } catch { /* best-effort */ }
       addToast(`Match accepted vs ${fromUsername}`, 'info')
       enterMatch(res.match_id)
       onClose?.()
