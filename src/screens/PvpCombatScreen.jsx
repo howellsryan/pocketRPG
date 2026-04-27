@@ -79,12 +79,15 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   }, [])
 
   const refreshFromServer = async () => {
-    const res = await pvpApi.getMatch(matchId, latestTick.current)
+    const sinceTick = latestTick.current > 0 ? latestTick.current : null
+    const res = await pvpApi.getMatch(matchId, sinceTick)
     if (!mounted.current) return
     setMatchMeta(res?.match || null)
     if (res.state_changed && res.state) {
       setState(res.state)
       latestTick.current = res.state.tick || 0
+    } else if (res?.match?.current_tick != null) {
+      latestTick.current = Number(res.match.current_tick) || latestTick.current
     }
     lastPollOkAt.current = Date.now()
     setStaleWarning(false)
