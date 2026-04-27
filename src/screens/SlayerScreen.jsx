@@ -66,9 +66,9 @@ const SLAYER_MASTERS = [
     location: 'Tree Gnome Stronghold',
     icon: '🌿',
     combatReq: 85,
-    slayerReq: 0,
+    slayerReq: 70,
     pointsPerTask: 12,
-    description: 'Elite tasks including God Wars Dungeon bosses. Requires combat 85.',
+    description: 'Elite tasks including God Wars Dungeon bosses. Requires combat 85, slayer 70.',
     taskRange: [150, 400],
     bossTaskRange: [5, 25],
     monsterPool: [

@@ -564,17 +564,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           combatRef.current.runesConsumed = null // Clear so we don't consume again
         }
         if (ev.type === 'monsterDeath') {
+          const defeatedMonster = ev.monster || state.monster
           setKillCount(k => k + 1)
 
           // Boss kill count tracking
-          if (state.monster.boss) {
-            const monsterId = state.monster.id
+          if (defeatedMonster?.boss) {
+            const monsterId = defeatedMonster.id
             const newKC = (bossKillCountsRef.current[monsterId] || 0) + 1
             const updatedCounts = { ...bossKillCountsRef.current, [monsterId]: newKC }
             bossKillCountsRef.current = updatedCounts
             updateBossKillCounts(updatedCounts)
             setLog(prev => [...prev.slice(-20), {
-              text: `👑 ${state.monster.name} KC: ${newKC.toLocaleString()}`,
+              text: `👑 ${defeatedMonster.name} KC: ${newKC.toLocaleString()}`,
               type: 'victory',
               time: Date.now()
             }])
@@ -582,8 +583,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
           // Slayer task tracking
           const task = slayerTaskRef.current
-          if (task && task.monsterId === state.monster.id) {
-            slayerXpGained += (state.monster.slayerXP || state.monster.hitpoints) * 2
+          if (task && defeatedMonster && task.monsterId === defeatedMonster.id) {
+            slayerXpGained += (defeatedMonster.slayerXP || defeatedMonster.hitpoints || state.monster.hitpoints) * 2
             const newRemaining = task.monstersRemaining - 1
             if (newRemaining <= 0) {
               // Task complete!
@@ -621,14 +622,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             updateInventory(newInv)
           }
           setLog(prev => [...prev.slice(-20), {
-            text: `${state.monster.name} defeated!`,
+            text: `${defeatedMonster?.name || state.monster.name} defeated!`,
             type: 'victory',
             time: Date.now()
           }])
           // Show loot modal instead of auto-restarting
           const raidId = state.raid?.raidId || null
           setLootModal({
-            monster: state.monster,
+            monster: defeatedMonster || state.monster,
             loot: ev.loot || [],
             raidId
           })
