@@ -106,7 +106,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
       const msg = err.body?.error || err.message
       if (msg === 'match_not_found' || msg === 'match_not_active') {
         addToast?.('Match has ended.', 'info')
-        onExit?.()
+        await onExit?.()
         return
       }
       if (Date.now() - lastPollOkAt.current > NO_POLL_WARNING_MS) {
@@ -124,7 +124,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
         pollTimer.current = setInterval(runTick, hiddenMode ? POLL_HIDDEN_MS : POLL_VISIBLE_MS)
       } catch (err) {
         addToast?.(err.body?.error || err.message, 'error')
-        onExit?.()
+        await onExit?.()
       }
     })()
 
@@ -242,7 +242,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
               <div class="text-[11px] text-[var(--color-parchment)] opacity-80">Dropped (bank full): {endModal.loot.dropped?.length || 0}</div>
               <div class="text-[11px] text-[var(--color-parchment)] opacity-80">Dropped value: {Math.floor((endModal.loot.droppedValue || 0) / 1000000)}M gp</div>
             </Card>
-            <Button variant="primary" className="w-full" onClick={onExit}>Return to PvE</Button>
+            <Button variant="primary" className="w-full" onClick={async () => { await onExit?.() }}>Return to PvE</Button>
           </div>
         </Modal>
       )}

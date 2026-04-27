@@ -4,12 +4,12 @@ import { readOwnedActiveMatch, itemsData, readCharacterSave, applyCombatantToSav
 import { processPvpTick } from '../../../../../src/engine/pvpEngine.js'
 import { applyLootTransfer } from '../../../../../src/engine/lootTransfer.js'
 
-async function markAppliedIntents(env, intentIds) {
-  if (!intentIds.length) return
+function appliedIntentsStatement(env, intentIds) {
+  if (!intentIds.length) return null
   const ids = intentIds.map(() => '?').join(',')
-  await env.DB.prepare(
+  return env.DB.prepare(
     `UPDATE pvp_intents SET applied = 1 WHERE id IN (${ids})`
-  ).bind(...intentIds).run()
+  ).bind(...intentIds)
 }
 
 function parseMatchState(match) {
@@ -50,44 +50,44 @@ async function finalizeTerminalMatch(env, match, stateNext, terminal, appliedInt
     const winnerJson = JSON.stringify(winnerSnapshot)
     const loserJson = JSON.stringify(loserSnapshot)
 
-    const winnerUpdate = await env.DB.prepare(
-      'UPDATE saves SET save_data = ?, updated_at = ? WHERE character_id = ? AND updated_at = ?'
-    ).bind(winnerJson, now, winnerId, winnerSave.updatedAt).run()
-
-    const loserUpdate = await env.DB.prepare(
-      'UPDATE saves SET save_data = ?, updated_at = ? WHERE character_id = ? AND updated_at = ?'
-    ).bind(loserJson, now, loserId, loserSave.updatedAt).run()
-
-    if (winnerUpdate.meta.changes !== 1 || loserUpdate.meta.changes !== 1) {
-      continue
-    }
-
-    await env.DB.batch([
+    const writes = [
+      env.DB.prepare(
+        'UPDATE saves SET save_data = ?, updated_at = ? WHERE character_id = ? AND updated_at = ?'
+      ).bind(winnerJson, now, winnerId, winnerSave.updatedAt),
+      env.DB.prepare(
+        'UPDATE saves SET save_data = ?, updated_at = ? WHERE character_id = ? AND updated_at = ?'
+      ).bind(loserJson, now, loserId, loserSave.updatedAt),
       env.DB.prepare(
         `UPDATE pvp_matches
             SET status = 'completed', ended_at = ?, winner_character_id = ?,
                 current_tick = ?, state_json = ?, last_tick_at = ?
-          WHERE id = ? AND status = 'active'`
-      ).bind(now, winnerId, stateNext.tick || 0, JSON.stringify(stateNext), now, match.id),
+          WHERE id = ? AND status = 'active' AND current_tick = ?`
+      ).bind(now, winnerId, stateNext.tick || 0, JSON.stringify(stateNext), now, match.id, match.current_tick),
       env.DB.prepare(
         'UPDATE characters SET active_match_id = NULL WHERE id IN (?, ?) AND active_match_id = ?'
       ).bind(match.character_a, match.character_b, match.id),
-    ])
+    ]
+    const markIntents = appliedIntentsStatement(env, appliedIntentIds)
+    if (markIntents) writes.push(markIntents)
+    const [winnerUpdate, loserUpdate, matchUpdate] = await env.DB.batch(writes)
 
-    await markAppliedIntents(env, appliedIntentIds)
-
+    if (winnerUpdate.meta.changes !== 1 || loserUpdate.meta.changes !== 1 || matchUpdate.meta.changes !== 1) {
+      continue
+    }
     return { ok: true, loot }
   }
 
-  await env.DB.batch([
+  const abortWrites = [
     env.DB.prepare(
       "UPDATE pvp_matches SET status = 'aborted', ended_at = ?, state_json = ?, last_tick_at = ? WHERE id = ? AND status = 'active'"
     ).bind(now, JSON.stringify(stateNext), now, match.id),
     env.DB.prepare(
       'UPDATE characters SET active_match_id = NULL WHERE id IN (?, ?) AND active_match_id = ?'
     ).bind(match.character_a, match.character_b, match.id),
-  ])
-  await markAppliedIntents(env, appliedIntentIds)
+  ]
+  const abortMarkIntents = appliedIntentsStatement(env, appliedIntentIds)
+  if (abortMarkIntents) abortWrites.push(abortMarkIntents)
+  await env.DB.batch(abortWrites)
 
   return { ok: false, reason: 'save_conflict' }
 }
@@ -159,19 +159,22 @@ export async function onRequestPost({ request, env, params }) {
   }
 
   const stateJson = JSON.stringify(out.stateNext)
-  const updateRes = await env.DB.prepare(
-    `UPDATE pvp_matches
-        SET state_json = ?, current_tick = ?, last_tick_at = ?
-      WHERE id = ? AND status = 'active' AND current_tick = ?`
-  ).bind(stateJson, out.stateNext.tick || 0, now, matchId, match.current_tick).run()
+  const writes = [
+    env.DB.prepare(
+      `UPDATE pvp_matches
+          SET state_json = ?, current_tick = ?, last_tick_at = ?
+        WHERE id = ? AND status = 'active' AND current_tick = ?`
+    ).bind(stateJson, out.stateNext.tick || 0, now, matchId, match.current_tick),
+  ]
+  const markIntents = appliedIntentsStatement(env, appliedIntentIds)
+  if (markIntents) writes.push(markIntents)
+  const [updateRes] = await env.DB.batch(writes)
 
   if (updateRes.meta.changes === 0) {
     const current = await readOwnedActiveMatch(env, matchId, ch.id)
     if (current.error) return json({ error: current.error }, current.status)
     return json({ ok: true, advanced: false, current_tick: current.row.current_tick })
   }
-
-  await markAppliedIntents(env, appliedIntentIds)
 
   return json({
     ok: true,
