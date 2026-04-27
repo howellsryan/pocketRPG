@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { GameProvider, useGame } from './state/gameState.jsx'
-import { PvpProvider } from './state/pvpState.jsx'
+import { PvpProvider, usePvp } from './state/pvpState.jsx'
 import BottomNav from './components/BottomNav.jsx'
 import Header from './components/Header.jsx'
 import ToastContainer from './components/Toast.jsx'
@@ -21,7 +21,7 @@ import AuthScreen from './screens/AuthScreen.jsx'
 import { SCREENS } from './utils/constants.js'
 import { hasSave, closeDB } from './db/database.js'
 import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
-import { startTicks, stopTicks, onTick } from './engine/tick.js'
+import { startTicks, stopTicks, onTick, pauseTicks } from './engine/tick.js'
 import { snapshotToLocalStorage, restoreFromLocalStorage, wipeLocalSave } from './db/saveload.js'
 import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode } from './cloud/api.js'
 import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState } from './cloud/sync.js'
@@ -31,6 +31,7 @@ import { simulateIdleThieving } from './engine/thieving.js'
 import { simulateIdleHunting } from './engine/hunter.js'
 import { simulateIdleQuest, createQuestState } from './engine/quests.js'
 import { getLevelFromXP } from './engine/experience.js'
+import { pvpApi } from './cloud/pvp.js'
 
 // ── Clock-rollback watermark ────────────────────────────────────────────────
 // We persist the highest Date.now() we've ever observed. If the device clock
@@ -63,6 +64,7 @@ function clampByClockWatermark(elapsedMs) {
 
 function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints, completeQuest, questQueue, removeFromQuestQueue, updateQuestQueue } = useGame()
+  const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [gameReady, setGameReady] = useState(false)
   const [activity, setActivity] = useState(null)
@@ -84,12 +86,54 @@ function GameApp() {
   // Set on mount if Stripe redirected back with a payment query/path — drives the
   // post-checkout thank-you toast + credits refresh once the game is ready.
   const paymentReturnRef = useRef(false)
+  const pvpReconnectBusyRef = useRef(false)
 
   // Refs for tick-based systems
   const hpRegenCounter = useRef(0)
   const snapshotCounter = useRef(99) // Start at 99 so first snapshot fires after 1 tick
   const idleHeartbeatCounter = useRef(49) // 50 ticks = ~30s — first heartbeat ~600ms after load
   const hiddenAtPerfRef = useRef(null) // performance.now() at hide — monotonic, immune to clock changes
+
+  // Global PvP route/overlay guard:
+  // - if an active match exists server-side, enter PvP from any screen.
+  // - when in match, force Combat screen and dismiss idle modal overlays.
+  useEffect(() => {
+    if (pvp.phase !== 'in_match') return
+    setScreen(SCREENS.COMBAT)
+    setActionData(null)
+    setIdleResult(null)
+    pauseTicks()
+    try { localStorage.removeItem('pocketrpg_activeTask') } catch { /* ignore */ }
+  }, [pvp.phase])
+
+  useEffect(() => {
+    let cancelled = false
+    const reconnectActiveMatch = async () => {
+      if (cancelled || pvp.phase === 'in_match' || pvpReconnectBusyRef.current) return
+      if (!getToken() || !getCharacterId()) return
+      pvpReconnectBusyRef.current = true
+      try {
+        const res = await pvpApi.listInvitations()
+        const activeMatchId = Number(res?.active_match_id)
+        if (cancelled || !Number.isFinite(activeMatchId) || activeMatchId <= 0) return
+        pvp.enterMatch(activeMatchId)
+      } catch {
+        // best-effort reconnect only
+      } finally {
+        pvpReconnectBusyRef.current = false
+      }
+    }
+
+    reconnectActiveMatch()
+    const onVisible = () => {
+      if (!document.hidden) reconnectActiveMatch()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      cancelled = true
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [pvp.phase, pvp.enterMatch])
 
   // Split xpReward into immediate grants and player-choice rewards (combat / any)
   function splitXpRewards(xpReward) {
@@ -1372,7 +1416,7 @@ function GameApp() {
       />
 
       {/* Idle Result Modal */}
-      {idleResult && (
+      {idleResult && pvp.phase !== 'in_match' && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <div style={{ width: '100%', maxWidth: '380px', background: '#1a1a1a', borderRadius: '20px', border: '1px solid #333', overflow: 'hidden' }}>
             {/* Header */}
