@@ -15,7 +15,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
   const [buyQty, setBuyQty] = useState(1)
   const [activeTab, setActiveTab] = useState('all') // 'all' | 'quest_items' | type-based filters
 
-  const hasMoneyPurse = unlockedFeatures.has('money_purse')
+  const hasMoneyPurse = unlockedFeatures.has('money_purse') || unlockedFeatures.has('coin_purse')
   const coinsInInv = countItem(inventory, 'coins')
   const coinsInBank = bank['coins']?.quantity || 0
   const coins = hasMoneyPurse ? coinsInInv + coinsInBank : coinsInInv
