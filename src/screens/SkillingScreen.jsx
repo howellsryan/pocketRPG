@@ -221,7 +221,11 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
           if (action.type === 'alchemy' && selectedAlchemyItem) {
             const alchItem = itemsData[selectedAlchemyItem.itemId]
             if (alchItem && typeof alchItem.shopValue === 'number') {
-              const alchemyItemIdx = newInv.findIndex(slot => slot?.itemId === selectedAlchemyItem.itemId && (slot?.quantity || 0) > 0)
+              const alchemyItemIdx = newInv.findIndex(slot =>
+                slot?.itemId === selectedAlchemyItem.itemId &&
+                !!slot?.noted === !!selectedAlchemyItem.noted &&
+                (slot?.quantity || 0) > 0
+              )
               if (alchemyItemIdx === -1) {
                 skillingRef.current = { ...skillingState, active: false, stopped: true }
                 setSkilling(null)
@@ -509,7 +513,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
               {inventory.map((slot, idx) => {
                 if (!slot) return null
                 const item = itemsData[slot.itemId]
-                if (!item || item.stackable === false && slot.quantity > 1) {
+                if (!item || (item.stackable === false && slot.quantity > 1 && !slot.noted)) {
                   // Skip if not stackable but quantity > 1 (only show first instance)
                   return null
                 }

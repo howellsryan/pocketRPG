@@ -125,7 +125,12 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
   // Cap alchemy actions to available selected item in inventory
   if (task.action.type === 'alchemy' && task.selectedAlchemyItem?.itemId) {
     const availableAlchItems = inventory.reduce(
-      (sum, slot) => sum + (slot?.itemId === task.selectedAlchemyItem.itemId ? (slot?.quantity || 0) : 0),
+      (sum, slot) => sum + (
+        slot?.itemId === task.selectedAlchemyItem.itemId &&
+        !!slot?.noted === !!task.selectedAlchemyItem.noted
+          ? (slot?.quantity || 0)
+          : 0
+      ),
       0
     )
     if (availableAlchItems <= 0) return null
@@ -185,7 +190,10 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
       // Consume the alchemized items from inventory
       let remaining = actions
       for (let i = 0; i < newInv.length && remaining > 0; i++) {
-        if (newInv[i]?.itemId === task.selectedAlchemyItem.itemId) {
+        if (
+          newInv[i]?.itemId === task.selectedAlchemyItem.itemId &&
+          !!newInv[i]?.noted === !!task.selectedAlchemyItem.noted
+        ) {
           const consumed = Math.min(newInv[i].quantity, remaining)
           newInv[i] = { ...newInv[i], quantity: newInv[i].quantity - consumed }
           if (newInv[i].quantity === 0) newInv[i] = null

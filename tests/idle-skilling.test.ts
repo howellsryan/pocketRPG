@@ -40,4 +40,30 @@ describe('simulateIdleSkilling (alchemy)', () => {
     expect(sim?.coinsGained).toBe(48_000)
     expect(sim?.itemsConsumed.nature_rune).toBe(2)
   })
+
+  it('can alch noted items and only consumes the selected noted form', () => {
+    const sim = simulateIdleSkilling(
+      {
+        skill: 'magic',
+        action: { name: 'High Alchemy', type: 'alchemy', ticks: 5, xp: 65, runeReq: { nature_rune: 1 } },
+        selectedAlchemyItem: { itemId: 'adamant_platebody', noted: true }
+      } as any,
+      60_000,
+      { nature_rune: { quantity: 100 } } as any,
+      {} as any,
+      {} as any,
+      { adamant_platebody: { shopValue: 16000 } } as any,
+      [
+        { itemId: 'adamant_platebody', quantity: 3, noted: true },
+        { itemId: 'adamant_platebody', quantity: 1, noted: false },
+        ...Array(26).fill(null)
+      ] as any
+    )
+
+    expect(sim).toBeTruthy()
+    expect(sim?.actions).toBe(3)
+    expect(sim?.coinsGained).toBe(72_000)
+    expect(sim?.finalInventory[0]).toBeNull()
+    expect(sim?.finalInventory[1]).toEqual({ itemId: 'adamant_platebody', quantity: 1, noted: false })
+  })
 })
