@@ -296,7 +296,9 @@ function GameApp() {
         }
         // Beacon the idle state to D1 — server stamps last_active_at on its
         // own clock so elapsed time on return is server-authoritative.
-        try { beaconIdleState(activeTaskRef.current) } catch (e) { /* non-fatal */ }
+        if (!isInPvpMatch) {
+          try { beaconIdleState(activeTaskRef.current) } catch (e) { /* non-fatal */ }
+        }
       } else {
         // Page returning to foreground — prefer performance.now() diff (monotonic) over wall-clock
         // to prevent system-time manipulation from granting fake idle progress.
@@ -624,7 +626,9 @@ function GameApp() {
         try { pushNow(getSnapshot()) } catch { /* non-fatal */ }
       }
       // sendBeacon survives tab-close where a regular fetch would be killed.
-      try { beaconIdleState(activeTaskRef.current) } catch { /* non-fatal */ }
+      if (!isInPvpMatch) {
+        try { beaconIdleState(activeTaskRef.current) } catch { /* non-fatal */ }
+      }
     }
 
     document.addEventListener('visibilitychange', handleVisibility)
@@ -666,7 +670,7 @@ function GameApp() {
       idleHeartbeatCounter.current++
       if (idleHeartbeatCounter.current >= 50) {
         idleHeartbeatCounter.current = 0
-        heartbeatIdleState(activeTaskRef.current)
+        if (!isInPvpMatch) heartbeatIdleState(activeTaskRef.current)
       }
       hpRegenCounter.current++
       if (hpRegenCounter.current >= 100) {
