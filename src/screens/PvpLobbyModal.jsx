@@ -34,6 +34,19 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
   const [joined, setJoined] = useState(false)
   const mounted = useRef(true)
   const pollTimer = useRef(null)
+  const launchedMatch = useRef(false)
+
+  const launchMatch = useCallback(async (matchId, toastMsg = null) => {
+    const parsed = Number(matchId)
+    if (!Number.isFinite(parsed) || parsed <= 0 || launchedMatch.current) return
+    launchedMatch.current = true
+    pauseTicks()
+    try { await api.deleteIdle() } catch { /* best-effort */ }
+    try { localStorage.removeItem('pocketrpg_activeTask') } catch { /* best-effort */ }
+    if (toastMsg) addToast(toastMsg, 'info')
+    enterMatch(parsed)
+    onClose?.()
+  }, [addToast, enterMatch, onClose])
 
   // We force a synchronous cloud-save push BEFORE joining the waiting
   // room so the server's view of our inventory is fresh. This closes the
@@ -72,6 +85,10 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
         incoming: invitesRes.incoming || [],
         outgoing: invitesRes.outgoing || [],
       })
+      if (invitesRes.active_match_id) {
+        await launchMatch(invitesRes.active_match_id, 'PvP match ready — entering combat.')
+        return
+      }
       // Heartbeat the waiting room while we're joined so the row doesn't
       // get GC'd by the server's 30s sweep.
       if (joined) {
@@ -82,7 +99,7 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
       // Don't spam toasts — only set inline error.
       setError(err.body?.error || err.message)
     }
-  }, [joined])
+  }, [joined, launchMatch])
 
   // Boot: ironman / one-life accounts should never have reached this
   // modal but defend in depth — close immediately if they did.
@@ -131,7 +148,7 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
     }
   }
 
-  const handleAccept = async (inviteId, fromUsername) => {
+  const handleAccept = useCallback(async (inviteId, fromUsername) => {
     setBusy(true)
     try {
       // Force a fresh save push BEFORE accepting so the server snapshots
@@ -157,18 +174,14 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
         onClose?.()
         return
       }
-      pauseTicks()
-      try { await api.deleteIdle() } catch { /* best-effort */ }
-      try { localStorage.removeItem('pocketrpg_activeTask') } catch { /* best-effort */ }
-      addToast(`Match accepted vs ${fromUsername}`, 'info')
-      enterMatch(res.match_id)
-      onClose?.()
+      const acceptedMatchId = res.match_id ?? res.matchId ?? res.match?.id
+      await launchMatch(acceptedMatchId, `Match accepted vs ${fromUsername}`)
     } catch (err) {
       addToast(err.body?.error || err.message, 'error')
     } finally {
       if (mounted.current) setBusy(false)
     }
-  }
+  }, [addToast, closeLobby, getSnapshot, launchMatch, onClose])
 
   const handleDecline = async (inviteId) => {
     setBusy(true)
