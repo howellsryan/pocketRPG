@@ -50,4 +50,17 @@ export const pvpApi = {
   acceptInvitation: (id) => pvpRequest(`/api/pvp/invitations/${id}/accept`, { method: 'POST', body: '{}' }),
   declineInvitation: (id) => pvpRequest(`/api/pvp/invitations/${id}/decline`, { method: 'POST', body: '{}' }),
   cancelInvitation: (id) => pvpRequest(`/api/pvp/invitations/${id}`, { method: 'DELETE' }),
+
+  // Match loop (Phase 3)
+  getMatch: (id, sinceTick = null) => {
+    const q = Number.isFinite(sinceTick) ? `?since_tick=${sinceTick}` : ''
+    return pvpRequest(`/api/pvp/match/${id}${q}`)
+  },
+  postIntent: (id, tickNumber, action) => pvpRequest(`/api/pvp/match/${id}/intent`, {
+    method: 'POST',
+    body: JSON.stringify({ tick_number: tickNumber, action }),
+  }),
+  tickMatch: (id) => pvpRequest(`/api/pvp/match/${id}/tick`, { method: 'POST', body: '{}' }),
+  forfeitMatch: (id) => pvpRequest(`/api/pvp/match/${id}/forfeit`, { method: 'POST', body: '{}' }),
+
 }
