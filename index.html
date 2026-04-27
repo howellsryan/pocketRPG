@@ -33081,6 +33081,7 @@ const FRESHNESS_GRACE_MS = 5000;
 // endpoint must never trap the user on the loading screen or prevent the
 // idle-result modal from appearing — we fall back to local state instead.
 const CLOUD_READ_TIMEOUT_MS = 5000;
+const ACTIVE_MATCH_RETRY_MS = 5000;
 let lastPushedAt = 0;
 let pendingTimer = null;
 let pendingSnapshot = null;
@@ -33109,6 +33110,15 @@ async function flushNow() {
         console.log('[PocketRPG] Cloud save pushed, size:', json.length);
     }
     catch (err) {
+        // While a PvP match is active, /api/save intentionally returns:
+        //   409 { error: 'character_in_active_match' }
+        // Keep the latest snapshot queued and retry shortly after so we don't
+        // spam warnings every minute and we resume syncing automatically on exit.
+        if (err?.status === 409 && err?.message === 'character_in_active_match') {
+            pendingSnapshot = snap;
+            schedulePush(snap, ACTIVE_MATCH_RETRY_MS);
+            return;
+        }
         console.warn('[PocketRPG] Cloud push failed:', err.message);
     }
     finally {
@@ -41541,6 +41551,7 @@ function GameApp() {
     // post-checkout thank-you toast + credits refresh once the game is ready.
     const paymentReturnRef = useRef(false);
     const pvpReconnectBusyRef = useRef(false);
+    const isInPvpMatch = pvp.phase === 'in_match';
     // Refs for tick-based systems
     const hpRegenCounter = useRef(0);
     const snapshotCounter = useRef(99); // Start at 99 so first snapshot fires after 1 tick
@@ -41749,10 +41760,12 @@ function GameApp() {
                 updateMaxObservedAt(now);
                 localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current));
                 // Flush any pending cloud push before the tab gets suspended.
-                try {
-                    pushNow(getSnapshot());
+                if (!isInPvpMatch) {
+                    try {
+                        pushNow(getSnapshot());
+                    }
+                    catch (e) { /* non-fatal */ }
                 }
-                catch (e) { /* non-fatal */ }
                 // Beacon the idle state to D1 — server stamps last_active_at on its
                 // own clock so elapsed time on return is server-authoritative.
                 try {
@@ -42084,7 +42097,8 @@ function GameApp() {
                     }
                     setIdleResult({ elapsedMs, task: savedTask, ...sim });
                     // Push the post-idle state to the cloud (debounced + hash-skipped).
-                    schedulePushSave(getSnapshot());
+                    if (!isInPvpMatch)
+                        schedulePushSave(getSnapshot());
                 }
                 catch (err) {
                     console.warn('[PocketRPG] Visibility idle error:', err);
@@ -42100,10 +42114,12 @@ function GameApp() {
             localStorage.setItem('pocketrpg_hiddenAt', String(now));
             updateMaxObservedAt(now);
             localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current));
-            try {
-                pushNow(getSnapshot());
+            if (!isInPvpMatch) {
+                try {
+                    pushNow(getSnapshot());
+                }
+                catch { /* non-fatal */ }
             }
-            catch { /* non-fatal */ }
             // sendBeacon survives tab-close where a regular fetch would be killed.
             try {
                 beaconIdleState(activeTaskRef.current);
@@ -42116,7 +42132,7 @@ function GameApp() {
             document.removeEventListener('visibilitychange', handleVisibility);
             window.removeEventListener('beforeunload', handleBeforeUnload);
         };
-    }, [gameReady, grantXP, updateInventory, updateBankDirect]);
+    }, [gameReady, grantXP, updateInventory, updateBankDirect, isInPvpMatch]);
     // HP regen tick: once per minute (100 ticks at 600ms = 60s)
     useEffect(() => {
         if (!gameReady)
@@ -42141,7 +42157,8 @@ function GameApp() {
                 const snap = getSnapshot();
                 snapshotToLocalStorage(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig, snap.homeShortcuts, snap.bossKillCounts, snap.completedQuests, snap.questQueue);
                 // Cloud sync piggy-backs on the local snapshot cadence (debounced, hash-skipped).
-                schedulePushSave(snap);
+                if (!isInPvpMatch)
+                    schedulePushSave(snap);
             }
             // Idle heartbeat: ~30s cadence. Server stamps last_active_at on write,
             // so this keeps the "last seen" timestamp fresh even if the tab dies
@@ -42201,7 +42218,7 @@ function GameApp() {
             }
         });
         return unsub;
-    }, [gameReady, currentHP, stats, questQueue]);
+    }, [gameReady, currentHP, stats, questQueue, isInPvpMatch]);
     async function initCloudAndSave() {
         try {
             // Pull token dropped by OAuth redirect (#token=...) into localStorage + clean URL
@@ -42398,10 +42415,12 @@ function GameApp() {
     // token) and bounce back to AuthScreen so the user can pick or create
     // another character under the same GitHub login.
     async function handleLogoutToCharacterSelect() {
-        try {
-            await pushNow(getSnapshot());
+        if (!isInPvpMatch) {
+            try {
+                await pushNow(getSnapshot());
+            }
+            catch { /* non-fatal */ }
         }
-        catch { /* non-fatal */ }
         setActiveTask(null);
         localStorage.removeItem('pocketrpg_activeTask');
         localStorage.removeItem('pocketrpg_hiddenAt');
@@ -42737,7 +42756,8 @@ function GameApp() {
             // Show idle result modal with skip summary
             setIdleResult(idleResultData);
             // Save the updated game state to cloud
-            schedulePushSave(getSnapshot());
+            if (!isInPvpMatch)
+                schedulePushSave(getSnapshot());
         }
         catch (err) {
             console.error('[PocketRPG] Skip 1h error:', err);

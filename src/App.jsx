@@ -87,6 +87,7 @@ function GameApp() {
   // post-checkout thank-you toast + credits refresh once the game is ready.
   const paymentReturnRef = useRef(false)
   const pvpReconnectBusyRef = useRef(false)
+  const isInPvpMatch = pvp.phase === 'in_match'
 
   // Refs for tick-based systems
   const hpRegenCounter = useRef(0)
@@ -290,7 +291,9 @@ function GameApp() {
         updateMaxObservedAt(now)
         localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
         // Flush any pending cloud push before the tab gets suspended.
-        try { pushNow(getSnapshot()) } catch (e) { /* non-fatal */ }
+        if (!isInPvpMatch) {
+          try { pushNow(getSnapshot()) } catch (e) { /* non-fatal */ }
+        }
         // Beacon the idle state to D1 — server stamps last_active_at on its
         // own clock so elapsed time on return is server-authoritative.
         try { beaconIdleState(activeTaskRef.current) } catch (e) { /* non-fatal */ }
@@ -601,7 +604,7 @@ function GameApp() {
 
           setIdleResult({ elapsedMs, task: savedTask, ...sim })
           // Push the post-idle state to the cloud (debounced + hash-skipped).
-          schedulePushSave(getSnapshot())
+          if (!isInPvpMatch) schedulePushSave(getSnapshot())
         } catch (err) {
           console.warn('[PocketRPG] Visibility idle error:', err)
           // DB may be stale — force reconnect for next read
@@ -617,7 +620,9 @@ function GameApp() {
       localStorage.setItem('pocketrpg_hiddenAt', String(now))
       updateMaxObservedAt(now)
       localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
-      try { pushNow(getSnapshot()) } catch { /* non-fatal */ }
+      if (!isInPvpMatch) {
+        try { pushNow(getSnapshot()) } catch { /* non-fatal */ }
+      }
       // sendBeacon survives tab-close where a regular fetch would be killed.
       try { beaconIdleState(activeTaskRef.current) } catch { /* non-fatal */ }
     }
@@ -628,7 +633,7 @@ function GameApp() {
       document.removeEventListener('visibilitychange', handleVisibility)
       window.removeEventListener('beforeunload', handleBeforeUnload)
     }
-  }, [gameReady, grantXP, updateInventory, updateBankDirect])
+  }, [gameReady, grantXP, updateInventory, updateBankDirect, isInPvpMatch])
 
   // HP regen tick: once per minute (100 ticks at 600ms = 60s)
   useEffect(() => {
@@ -653,7 +658,7 @@ function GameApp() {
         const snap = getSnapshot()
         snapshotToLocalStorage(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig, snap.homeShortcuts, snap.bossKillCounts, snap.completedQuests, snap.questQueue)
         // Cloud sync piggy-backs on the local snapshot cadence (debounced, hash-skipped).
-        schedulePushSave(snap)
+        if (!isInPvpMatch) schedulePushSave(snap)
       }
       // Idle heartbeat: ~30s cadence. Server stamps last_active_at on write,
       // so this keeps the "last seen" timestamp fresh even if the tab dies
@@ -713,7 +718,7 @@ function GameApp() {
       }
     })
     return unsub
-  }, [gameReady, currentHP, stats, questQueue])
+  }, [gameReady, currentHP, stats, questQueue, isInPvpMatch])
 
   async function initCloudAndSave() {
     try {
@@ -908,7 +913,9 @@ function GameApp() {
    // token) and bounce back to AuthScreen so the user can pick or create
    // another character under the same GitHub login.
   async function handleLogoutToCharacterSelect() {
-    try { await pushNow(getSnapshot()) } catch { /* non-fatal */ }
+    if (!isInPvpMatch) {
+      try { await pushNow(getSnapshot()) } catch { /* non-fatal */ }
+    }
     setActiveTask(null)
     localStorage.removeItem('pocketrpg_activeTask')
     localStorage.removeItem('pocketrpg_hiddenAt')
@@ -1244,7 +1251,7 @@ function GameApp() {
       setIdleResult(idleResultData)
 
       // Save the updated game state to cloud
-      schedulePushSave(getSnapshot())
+      if (!isInPvpMatch) schedulePushSave(getSnapshot())
     } catch (err) {
       console.error('[PocketRPG] Skip 1h error:', err)
       addToast(err.message || 'Error during skip!', 'error')

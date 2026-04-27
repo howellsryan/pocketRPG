@@ -14,6 +14,7 @@ const FRESHNESS_GRACE_MS = 5_000
 // endpoint must never trap the user on the loading screen or prevent the
 // idle-result modal from appearing — we fall back to local state instead.
 const CLOUD_READ_TIMEOUT_MS = 5_000
+const ACTIVE_MATCH_RETRY_MS = 5_000
 
 let lastPushedAt = 0
 let pendingTimer = null
@@ -42,6 +43,15 @@ async function flushNow() {
     if (res?.updatedAt) lastPushedAt = res.updatedAt
     console.log('[PocketRPG] Cloud save pushed, size:', json.length)
   } catch (err) {
+    // While a PvP match is active, /api/save intentionally returns:
+    //   409 { error: 'character_in_active_match' }
+    // Keep the latest snapshot queued and retry shortly after so we don't
+    // spam warnings every minute and we resume syncing automatically on exit.
+    if (err?.status === 409 && err?.message === 'character_in_active_match') {
+      pendingSnapshot = snap
+      schedulePush(snap, ACTIVE_MATCH_RETRY_MS)
+      return
+    }
     console.warn('[PocketRPG] Cloud push failed:', err.message)
   } finally {
     inFlight = false
