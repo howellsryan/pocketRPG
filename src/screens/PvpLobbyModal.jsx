@@ -36,6 +36,7 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
   const mounted = useRef(true)
   const pollTimer = useRef(null)
   const launchedMatch = useRef(false)
+  const acceptingInvite = useRef(false)
   const lastSavePushAt = useRef(0)
 
   const pushLobbySnapshot = useCallback(async (force = false) => {
@@ -47,15 +48,16 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
     lastSavePushAt.current = now
   }, [getSnapshot])
 
-  const launchMatch = useCallback(async (matchId, toastMsg = null) => {
+  const launchMatch = useCallback((matchId, toastMsg = null) => {
     const parsed = Number(matchId)
     if (!Number.isFinite(parsed) || parsed <= 0 || launchedMatch.current) return
     launchedMatch.current = true
     pauseTicks()
-    try { await api.deleteIdle() } catch { /* best-effort */ }
     try { localStorage.removeItem('pocketrpg_activeTask') } catch { /* best-effort */ }
     if (toastMsg) addToast(toastMsg, 'info')
     enterMatch(parsed)
+    // Never block match entry on best-effort cleanup calls.
+    api.deleteIdle().catch(() => {})
     onClose?.()
   }, [addToast, enterMatch, onClose])
 
@@ -82,6 +84,7 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
   }, [addToast, pushLobbySnapshot])
 
   const refresh = useCallback(async () => {
+    if (launchedMatch.current || acceptingInvite.current) return
     try {
       try {
         await pushLobbySnapshot(false)
@@ -165,6 +168,11 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
 
   const handleAccept = useCallback(async (inviteId, fromUsername) => {
     setBusy(true)
+    acceptingInvite.current = true
+    if (pollTimer.current) {
+      clearInterval(pollTimer.current)
+      pollTimer.current = null
+    }
     try {
       // Force a fresh save push BEFORE accepting so the server snapshots
       // our true inventory. Phase 3 server will reject stale saves; we
@@ -193,9 +201,13 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
     } catch (err) {
       addToast(err.body?.error || err.message, 'error')
     } finally {
+      acceptingInvite.current = false
+      if (mounted.current && joined && !launchedMatch.current && !pollTimer.current) {
+        pollTimer.current = setInterval(refresh, POLL_MS)
+      }
       if (mounted.current) setBusy(false)
     }
-  }, [addToast, closeLobby, launchMatch, onClose, pushLobbySnapshot])
+  }, [addToast, closeLobby, joined, launchMatch, onClose, pushLobbySnapshot, refresh])
 
   const handleDecline = async (inviteId) => {
     setBusy(true)
