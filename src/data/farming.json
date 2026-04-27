@@ -78,8 +78,8 @@
       "name": "Oak",
       "level": 15,
       "plantXp": 14,
-      "harvestXp": 45,
-      "growthTimeMs": 28800000,
+      "harvestXp": 4500,
+      "growthTimeMs": 8800000,
       "icon": "🌲"
     },
     {
@@ -88,8 +88,8 @@
       "name": "Willow",
       "level": 30,
       "plantXp": 27,
-      "harvestXp": 81.5,
-      "growthTimeMs": 28800000,
+      "harvestXp": 8150,
+      "growthTimeMs": 8800000,
       "icon": "🌳"
     },
     {
@@ -98,8 +98,8 @@
       "name": "Maple",
       "level": 45,
       "plantXp": 45,
-      "harvestXp": 135.5,
-      "growthTimeMs": 28800000,
+      "harvestXp": 13500,
+      "growthTimeMs": 8800000,
       "icon": "🌳"
     },
     {
@@ -108,8 +108,8 @@
       "name": "Yew",
       "level": 60,
       "plantXp": 81,
-      "harvestXp": 243.5,
-      "growthTimeMs": 28800000,
+      "harvestXp": 24000,
+      "growthTimeMs": 8800000,
       "icon": "🌳"
     },
     {
@@ -118,8 +118,8 @@
       "name": "Magic",
       "level": 75,
       "plantXp": 145,
-      "harvestXp": 437.5,
-      "growthTimeMs": 28800000,
+      "harvestXp": 43700,
+      "growthTimeMs": 8800000,
       "icon": "🌳"
     }
   ],
@@ -142,8 +142,8 @@
       "name": "Banana",
       "level": 33,
       "plantXp": 32.5,
-      "harvestXp": 41,
-      "growthTimeMs": 57600000,
+      "harvestXp": 4100,
+      "growthTimeMs": 7600000,
       "fruitRegrowMs": 2400000,
       "fruitLimit": 6,
       "icon": "🍌"
@@ -154,8 +154,8 @@
       "name": "Orange",
       "level": 39,
       "plantXp": 39.5,
-      "harvestXp": 49.5,
-      "growthTimeMs": 57600000,
+      "harvestXp": 4900,
+      "growthTimeMs": 7600000,
       "fruitRegrowMs": 2400000,
       "fruitLimit": 6,
       "icon": "🍊"
@@ -166,8 +166,8 @@
       "name": "Curry",
       "level": 42,
       "plantXp": 42.5,
-      "harvestXp": 53.5,
-      "growthTimeMs": 57600000,
+      "harvestXp": 5300,
+      "growthTimeMs": 7600000,
       "fruitRegrowMs": 2400000,
       "fruitLimit": 6,
       "icon": "🌿"
@@ -178,8 +178,8 @@
       "name": "Papaya",
       "level": 57,
       "plantXp": 81,
-      "harvestXp": 102,
-      "growthTimeMs": 57600000,
+      "harvestXp": 10200,
+      "growthTimeMs": 7600000,
       "fruitRegrowMs": 2400000,
       "fruitLimit": 6,
       "icon": "🧡"
@@ -190,8 +190,8 @@
       "name": "Palm",
       "level": 68,
       "plantXp": 110,
-      "harvestXp": 138.5,
-      "growthTimeMs": 57600000,
+      "harvestXp": 13800,
+      "growthTimeMs": 7600000,
       "fruitRegrowMs": 2400000,
       "fruitLimit": 6,
       "icon": "🌴"

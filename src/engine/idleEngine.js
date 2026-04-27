@@ -104,10 +104,6 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
     if (maxFromMaterials === 0) return null
     actions = Math.min(actions, maxFromMaterials)
 
-    // Record consumed materials
-    for (const [itemId, qtyPerAction] of Object.entries(task.action.materials)) {
-      itemsConsumed[itemId] = qtyPerAction * actions
-    }
   }
 
   // Cap actions to available runes (for magic skilling)
@@ -124,7 +120,31 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
     if (maxFromRunes === 0 && Object.keys(runesToConsume).length > 0) return null
     actions = Math.min(actions, maxFromRunes)
 
-    // Record consumed runes (only those not provided by staff)
+  }
+
+  // Cap alchemy actions to available selected item in inventory
+  if (task.action.type === 'alchemy' && task.selectedAlchemyItem?.itemId) {
+    const availableAlchItems = inventory.reduce(
+      (sum, slot) => sum + (
+        slot?.itemId === task.selectedAlchemyItem.itemId &&
+        !!slot?.noted === !!task.selectedAlchemyItem.noted
+          ? (slot?.quantity || 0)
+          : 0
+      ),
+      0
+    )
+    if (availableAlchItems <= 0) return null
+    actions = Math.min(actions, availableAlchItems)
+  }
+
+  // Record consumed materials/runes using final action count after all caps
+  if (task.action.materials) {
+    for (const [itemId, qtyPerAction] of Object.entries(task.action.materials)) {
+      itemsConsumed[itemId] = qtyPerAction * actions
+    }
+  }
+  if (task.action.runeReq) {
+    const runesToConsume = getRunesToConsume(task.action.runeReq, equipment, itemsData)
     for (const [runeId, qtyPerAction] of Object.entries(runesToConsume)) {
       itemsConsumed[runeId] = qtyPerAction * actions
     }
@@ -170,7 +190,10 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
       // Consume the alchemized items from inventory
       let remaining = actions
       for (let i = 0; i < newInv.length && remaining > 0; i++) {
-        if (newInv[i]?.itemId === task.selectedAlchemyItem.itemId) {
+        if (
+          newInv[i]?.itemId === task.selectedAlchemyItem.itemId &&
+          !!newInv[i]?.noted === !!task.selectedAlchemyItem.noted
+        ) {
           const consumed = Math.min(newInv[i].quantity, remaining)
           newInv[i] = { ...newInv[i], quantity: newInv[i].quantity - consumed }
           if (newInv[i].quantity === 0) newInv[i] = null
@@ -680,6 +703,8 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   // Auto-bank setup
   const bankingEnabled = task.bankingEnabled || false
   const bankDelayTicks = Math.ceil(getAgilityBankDelayFromStats(stats) / TICK_MS)
+  const weaponEntry = equipment?.weapon
+  const weaponItem = weaponEntry ? itemsData[weaponEntry.itemId] : null
 
   // XP per kill (assumes player deals exactly monster.hitpoints damage per kill)
   let xpPerKill = {}
@@ -691,12 +716,16 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     } else {
       xpPerKill.ranged = Math.floor(monster.hitpoints * RANGED_XP_PER_DAMAGE)
     }
-  } else if (combatType === 'magic' && task.spell) {
-    // Base spell XP per cast (hitsNeeded casts to kill) plus 2 XP per damage dealt
-    xpPerKill.magic = Math.floor(
-      (hitsNeeded < Infinity ? hitsNeeded : 0) * (task.spell.baseXP || 0) +
-      monster.hitpoints * MAGIC_XP_PER_DAMAGE
-    )
+  } else if (combatType === 'magic') {
+    const isPoweredStaff = !!weaponItem?.poweredStaff
+    if (task.spell || isPoweredStaff) {
+      // Spellcasting: base spell XP per cast + damage XP.
+      // Powered staves: no spell selected, only damage XP (same as active combat).
+      const baseSpellXp = task.spell
+        ? (hitsNeeded < Infinity ? hitsNeeded : 0) * (task.spell.baseXP || 0)
+        : 0
+      xpPerKill.magic = Math.floor(baseSpellXp + monster.hitpoints * MAGIC_XP_PER_DAMAGE)
+    }
   } else {
     // Melee
     const xpSkill = task.stance === 'aggressive' ? 'strength'
@@ -722,8 +751,6 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
 
   // Scale-charged weapons consume one charge per attack. Cap kills to what the
   // currently loaded charges allow — charges cannot be refilled mid-idle.
-  const weaponEntry = equipment?.weapon
-  const weaponItem = weaponEntry ? itemsData[weaponEntry.itemId] : null
   const weaponScaleCharged = !!weaponItem?.scaleCharged
   const startingCharges = weaponEntry?.charges || 0
   let maxKillsFromCharges = Infinity
@@ -757,7 +784,7 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     // Check if this kill counts toward slayer task — cap at total task count
     if (slayerTask && slayerTask.monsterId === monster.id && monstersKilledOnTask < slayerTask.monstersRemaining) {
       monstersKilledOnTask++
-      slayerXpGained += monster.slayerXP || monster.hitpoints // Slayer XP = custom field or monster HP
+      slayerXpGained += (monster.slayerXP || monster.hitpoints) * 2
     }
 
     // XP for this kill

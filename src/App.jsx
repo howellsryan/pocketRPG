@@ -370,6 +370,9 @@ function GameApp() {
 
           // Always show the modal — even if sim is null (e.g. <1 action completed)
           if (!sim) {
+            if (savedTask.type === 'skill' && (savedTask.action?.type === 'alchemy' || savedTask.action?.materials || savedTask.action?.runeReq)) {
+              setActiveTask(null)
+            }
             setIdleResult({ elapsedMs, task: savedTask })
             return
           }
@@ -990,7 +993,11 @@ function GameApp() {
           if (savedTask.type === 'quest') sim = simulateIdleQuest(savedTask, elapsedMs)
         }
 
-        if (sim) {
+        if (!sim) {
+          if (savedTask.type === 'skill' && (savedTask.action?.type === 'alchemy' || savedTask.action?.materials || savedTask.action?.runeReq)) {
+            setActiveTask(null)
+          }
+        } else {
           // Apply HP regeneration during idle
           const hpRegenSim = simulateIdleHPRegen(elapsedMs)
           if (hpRegenSim.hpRegen > 0) {
