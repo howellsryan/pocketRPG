@@ -8,6 +8,7 @@ import Modal from '../components/Modal.jsx'
 import { pvpApi } from '../cloud/pvp.js'
 import itemsData from '../data/items.json'
 import { getCharacterId } from '../cloud/api.js'
+import { normalizePvpState } from '../engine/pvpState.js'
 
 const POLL_VISIBLE_MS = 600
 const POLL_HIDDEN_MS = 1500
@@ -86,8 +87,11 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     if (!mounted.current) return
     setMatchMeta(res?.match || null)
     if (res.state_changed && res.state) {
-      setState(res.state)
-      latestTick.current = res.state.tick || 0
+      const normalizedState = normalizePvpState(res.state)
+      if (normalizedState) {
+        setState(normalizedState)
+        latestTick.current = normalizedState.tick || 0
+      }
     } else if (res?.match?.current_tick != null) {
       latestTick.current = Number(res.match.current_tick) || latestTick.current
     }
@@ -110,8 +114,11 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
       if (!mounted.current) return
 
       if (tickRes.state) {
-        setState(tickRes.state)
-        latestTick.current = tickRes.state.tick || latestTick.current
+        const normalizedState = normalizePvpState(tickRes.state)
+        if (normalizedState) {
+          setState(normalizedState)
+          latestTick.current = normalizedState.tick || latestTick.current
+        }
       }
       lastPollOkAt.current = Date.now()
       setStaleWarning(false)
@@ -183,7 +190,8 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     }
   }, [matchId, hiddenMode])
 
-  const recentLines = (state?.recentEvents || []).slice(-6).map((evt) => prettifyEvent(evt, selfId)).filter(Boolean)
+  const safeRecentEvents = Array.isArray(state?.recentEvents) ? state.recentEvents : []
+  const recentLines = safeRecentEvents.slice(-6).map((evt) => prettifyEvent(evt, selfId)).filter(Boolean)
 
   const queueAction = (action) => {
     setPendingAction(action)
