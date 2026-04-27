@@ -20,7 +20,7 @@ const POLL_MS = 2500   // light enough to be cheap, fast enough to feel live in 
 // transitioning into combat.
 export default function PvpLobbyModal({ onClose, getSnapshot }) {
   const { addToast, isIronman, isOneLife } = useGame()
-  const { closeLobby } = usePvp()
+  const { closeLobby, enterMatch } = usePvp()
 
   const [tab, setTab] = useState('waiting')
   const [myCB, setMyCB] = useState(null)
@@ -145,9 +145,8 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
         onClose?.()
         return
       }
-      // Phase 3+: would transition to in_match here.
       addToast(`Match accepted vs ${fromUsername}`, 'info')
-      closeLobby()
+      enterMatch(res.match_id)
       onClose?.()
     } catch (err) {
       addToast(err.body?.error || err.message, 'error')
