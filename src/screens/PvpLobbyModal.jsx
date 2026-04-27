@@ -11,6 +11,7 @@ import { api } from '../cloud/api.js'
 import { pauseTicks } from '../engine/tick.js'
 
 const POLL_MS = 2500   // light enough to be cheap, fast enough to feel live in the lobby
+const SAVE_HEARTBEAT_MS = 3000
 
 // PvP Lobby Modal — Phase 1 surface.
 // Two tabs: Waiting Room (CB-filtered list of opponents) and Invitations
@@ -35,6 +36,16 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
   const mounted = useRef(true)
   const pollTimer = useRef(null)
   const launchedMatch = useRef(false)
+  const lastSavePushAt = useRef(0)
+
+  const pushLobbySnapshot = useCallback(async (force = false) => {
+    const now = Date.now()
+    if (!force && now - lastSavePushAt.current < SAVE_HEARTBEAT_MS) return
+    const snapshot = getSnapshot ? getSnapshot() : null
+    if (!snapshot) return
+    await pushNow(snapshot)
+    lastSavePushAt.current = now
+  }, [getSnapshot])
 
   const launchMatch = useCallback(async (matchId, toastMsg = null) => {
     const parsed = Number(matchId)
@@ -55,8 +66,7 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
     setBusy(true)
     setError(null)
     try {
-      const snapshot = getSnapshot ? getSnapshot() : null
-      if (snapshot) await pushNow(snapshot)
+      await pushLobbySnapshot(true)
       const res = await pvpApi.joinWaiting()
       if (!mounted.current) return
       setJoined(true)
@@ -69,10 +79,15 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
     } finally {
       if (mounted.current) setBusy(false)
     }
-  }, [addToast, getSnapshot])
+  }, [addToast, pushLobbySnapshot])
 
   const refresh = useCallback(async () => {
     try {
+      try {
+        await pushLobbySnapshot(false)
+      } catch {
+        // save heartbeat is best-effort; lobby polling should continue
+      }
       const [waitingRes, invitesRes] = await Promise.all([
         pvpApi.listWaiting(),
         pvpApi.listInvitations(),
@@ -99,7 +114,7 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
       // Don't spam toasts — only set inline error.
       setError(err.body?.error || err.message)
     }
-  }, [joined, launchMatch])
+  }, [joined, launchMatch, pushLobbySnapshot])
 
   // Boot: ironman / one-life accounts should never have reached this
   // modal but defend in depth — close immediately if they did.
@@ -154,14 +169,13 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
       // Force a fresh save push BEFORE accepting so the server snapshots
       // our true inventory. Phase 3 server will reject stale saves; we
       // do this proactively so the round-trip succeeds first time.
-      const snapshot = getSnapshot ? getSnapshot() : null
-      if (snapshot) await pushNow(snapshot)
+      await pushLobbySnapshot(true)
       let res
       try {
         res = await pvpApi.acceptInvitation(inviteId)
       } catch (err) {
         if (err?.body?.error === 'stale_save') {
-          if (snapshot) await pushNow(snapshot)
+          await pushLobbySnapshot(true)
           res = await pvpApi.acceptInvitation(inviteId)
         } else {
           throw err
@@ -181,7 +195,7 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
     } finally {
       if (mounted.current) setBusy(false)
     }
-  }, [addToast, closeLobby, getSnapshot, launchMatch, onClose])
+  }, [addToast, closeLobby, launchMatch, onClose, pushLobbySnapshot])
 
   const handleDecline = async (inviteId) => {
     setBusy(true)
