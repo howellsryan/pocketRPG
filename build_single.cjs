@@ -61,6 +61,7 @@ const sourceFiles = [
   'screens/InventoryScreen.js',
   'screens/BankScreen.js',
   'screens/PvpLobbyModal.js',
+  'screens/PvpCombatScreen.js',
   'screens/CombatScreen.js',
   'screens/AgilityScreen.js',
   'screens/FarmingScreen.js',

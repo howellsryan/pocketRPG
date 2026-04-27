@@ -31,6 +31,10 @@ export function PvpProvider({ children }) {
     setPhase('in_match')
     setActiveMatchId(matchId)
   }, [])
+  const leaveMatch = useCallback(() => {
+    setPhase('idle')
+    setActiveMatchId(null)
+  }, [])
 
   const value = {
     phase,
@@ -38,6 +42,7 @@ export function PvpProvider({ children }) {
     openLobby,
     closeLobby,
     enterMatch,
+    leaveMatch,
     setPhase,
   }
 

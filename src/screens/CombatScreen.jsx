@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import { usePvp } from '../state/pvpState.jsx'
 import PvpLobbyModal from './PvpLobbyModal.jsx'
+import PvpCombatScreen from './PvpCombatScreen.jsx'
 import Modal from '../components/Modal.jsx'
 import HPBar from '../components/HPBar.jsx'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applySpecialAttack } from '../engine/combat.js'
@@ -161,6 +162,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const raidKillCountsRef = useRef(raidKillCounts)
   const unlockedFeaturesRef = useRef(unlockedFeatures)
   const logRef = useRef(null)
+
+  useEffect(() => {
+    if (pvp.phase === 'in_match' && combat?.active) {
+      setCombat(null)
+    }
+  }, [pvp.phase])
 
   useEffect(() => { hpRef.current = currentHP }, [currentHP])
   useEffect(() => { inventoryRef.current = inventory }, [inventory])
@@ -1329,6 +1336,19 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </Modal>
       )}
       </>
+    )
+  }
+
+  if (pvp.phase === 'in_match' && pvp.activeMatchId) {
+    return (
+      <PvpCombatScreen
+        matchId={pvp.activeMatchId}
+        addToast={addToast}
+        onExit={() => {
+          pvp.leaveMatch()
+          setShowPvpLobby(false)
+        }}
+      />
     )
   }
 
