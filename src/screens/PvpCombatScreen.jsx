@@ -30,6 +30,7 @@ function prettifyEvent(evt, selfId) {
 export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const [state, setState] = useState(null)
   const [matchMeta, setMatchMeta] = useState(null)
+  const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [pendingAction, setPendingAction] = useState(null)
   const [endModal, setEndModal] = useState(null)
@@ -39,14 +40,27 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const selfId = useMemo(() => parseInt(getCharacterId(), 10), [])
   const pollTimer = useRef(null)
   const mounted = useRef(true)
+  const tickInFlight = useRef(false)
+  const pendingActionRef = useRef(null)
   const lastPollOkAt = useRef(0)
   const latestTick = useRef(0)
 
+  useEffect(() => {
+    pendingActionRef.current = pendingAction
+  }, [pendingAction])
+
+  const toArray = (value) => {
+    if (Array.isArray(value)) return value
+    if (!value || typeof value !== 'object') return []
+    return Object.values(value)
+  }
+
   const pair = useMemo(() => {
     if (!state?.combatants) return { self: null, opp: null }
-    const combatants = Object.values(state.combatants)
-    const self = combatants.find(c => Number(c.characterId) === selfId) || null
-    const opp = combatants.find(c => Number(c.characterId) !== selfId) || null
+    const combatants = toArray(state.combatants)
+    const getId = (c) => Number(c?.characterId ?? c?.character_id)
+    const self = combatants.find(c => getId(c) === selfId) || null
+    const opp = combatants.find(c => getId(c) !== selfId) || null
     return { self, opp }
   }, [state, selfId])
 
@@ -54,7 +68,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     mounted.current = true
     return () => {
       mounted.current = false
-      if (pollTimer.current) clearInterval(pollTimer.current)
+      if (pollTimer.current) clearTimeout(pollTimer.current)
     }
   }, [])
 
@@ -67,19 +81,24 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const refreshFromServer = async () => {
     const res = await pvpApi.getMatch(matchId, latestTick.current)
     if (!mounted.current) return
-    setMatchMeta(res.match)
+    setMatchMeta(res?.match || null)
     if (res.state_changed && res.state) {
       setState(res.state)
       latestTick.current = res.state.tick || 0
     }
     lastPollOkAt.current = Date.now()
     setStaleWarning(false)
+    setLoading(false)
   }
 
   const runTick = async () => {
+    if (tickInFlight.current) return
+    tickInFlight.current = true
     try {
-      if (pendingAction) {
-        await pvpApi.postIntent(matchId, latestTick.current, pendingAction)
+      const action = pendingActionRef.current
+      if (action) {
+        await pvpApi.postIntent(matchId, latestTick.current, action)
+        pendingActionRef.current = null
         setPendingAction(null)
       }
       const tickRes = await pvpApi.tickMatch(matchId)
@@ -99,7 +118,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
           reason: tickRes.terminal.reason,
           loot: tickRes.loot || { added: [], dropped: [], droppedValue: 0 },
         })
-        if (pollTimer.current) clearInterval(pollTimer.current)
+        if (pollTimer.current) clearTimeout(pollTimer.current)
       }
     } catch (err) {
       if (!mounted.current) return
@@ -112,16 +131,29 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
       if (Date.now() - lastPollOkAt.current > NO_POLL_WARNING_MS) {
         setStaleWarning(true)
       }
+    } finally {
+      tickInFlight.current = false
     }
   }
 
   useEffect(() => {
     let active = true
+    let pollMs = hiddenMode ? POLL_HIDDEN_MS : POLL_VISIBLE_MS
+
+    const scheduleNext = () => {
+      if (!active || !mounted.current) return
+      pollTimer.current = setTimeout(async () => {
+        await runTick()
+        scheduleNext()
+      }, pollMs)
+    }
+
     ;(async () => {
       try {
         await refreshFromServer()
         if (!active || !mounted.current) return
-        pollTimer.current = setInterval(runTick, hiddenMode ? POLL_HIDDEN_MS : POLL_VISIBLE_MS)
+        pollMs = hiddenMode ? POLL_HIDDEN_MS : POLL_VISIBLE_MS
+        scheduleNext()
       } catch (err) {
         addToast?.(err.body?.error || err.message, 'error')
         await onExit?.()
@@ -130,7 +162,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
     return () => {
       active = false
-      if (pollTimer.current) clearInterval(pollTimer.current)
+      if (pollTimer.current) clearTimeout(pollTimer.current)
     }
   }, [matchId, hiddenMode])
 
@@ -142,13 +174,19 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     setTimeout(() => setBusy(false), 220)
   }
 
-  const foodSlots = (pair.self?.inventory || [])
+  const foodSlots = toArray(pair.self?.inventory)
     .map((slot, idx) => ({ slot, idx }))
     .filter(({ slot }) => slot && itemsData[slot.itemId]?.heal)
     .slice(0, 4)
 
   return (
     <div class="p-3 space-y-3">
+      {loading && (
+        <Card className="border-[var(--color-gold-dim)] bg-[var(--color-void-light)]">
+          <div class="text-[11px] text-[var(--color-gold)]">Connecting to PvP match…</div>
+        </Card>
+      )}
+
       {hiddenMode && (
         <Card className="border-[var(--color-gold-dim)] bg-[var(--color-void-light)]">
           <div class="text-[11px] text-[var(--color-gold)]">⚠️ Keep this tab open for smooth PvP updates.</div>
