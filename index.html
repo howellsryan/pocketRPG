@@ -35607,6 +35607,26 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
     const [joined, setJoined] = useState(false);
     const mounted = useRef(true);
     const pollTimer = useRef(null);
+    const launchedMatch = useRef(false);
+    const launchMatch = useCallback(async (matchId, toastMsg = null) => {
+        const parsed = Number(matchId);
+        if (!Number.isFinite(parsed) || parsed <= 0 || launchedMatch.current)
+            return;
+        launchedMatch.current = true;
+        pauseTicks();
+        try {
+            await api.deleteIdle();
+        }
+        catch { /* best-effort */ }
+        try {
+            localStorage.removeItem('pocketrpg_activeTask');
+        }
+        catch { /* best-effort */ }
+        if (toastMsg)
+            addToast(toastMsg, 'info');
+        enterMatch(parsed);
+        onClose?.();
+    }, [addToast, enterMatch, onClose]);
     // We force a synchronous cloud-save push BEFORE joining the waiting
     // room so the server's view of our inventory is fresh. This closes the
     // 60s save-debounce desync window flagged in the planning review.
@@ -35650,6 +35670,10 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
                 incoming: invitesRes.incoming || [],
                 outgoing: invitesRes.outgoing || [],
             });
+            if (invitesRes.active_match_id) {
+                await launchMatch(invitesRes.active_match_id, 'PvP match ready — entering combat.');
+                return;
+            }
             // Heartbeat the waiting room while we're joined so the row doesn't
             // get GC'd by the server's 30s sweep.
             if (joined) {
@@ -35665,7 +35689,7 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
             // Don't spam toasts — only set inline error.
             setError(err.body?.error || err.message);
         }
-    }, [joined]);
+    }, [joined, launchMatch]);
     // Boot: ironman / one-life accounts should never have reached this
     // modal but defend in depth — close immediately if they did.
     useEffect(() => {
@@ -35715,7 +35739,7 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
                 setBusy(false);
         }
     };
-    const handleAccept = async (inviteId, fromUsername) => {
+    const handleAccept = useCallback(async (inviteId, fromUsername) => {
         setBusy(true);
         try {
             // Force a fresh save push BEFORE accepting so the server snapshots
@@ -35745,18 +35769,8 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
                 onClose?.();
                 return;
             }
-            pauseTicks();
-            try {
-                await api.deleteIdle();
-            }
-            catch { /* best-effort */ }
-            try {
-                localStorage.removeItem('pocketrpg_activeTask');
-            }
-            catch { /* best-effort */ }
-            addToast(`Match accepted vs ${fromUsername}`, 'info');
-            enterMatch(res.match_id);
-            onClose?.();
+            const acceptedMatchId = res.match_id ?? res.matchId ?? res.match?.id;
+            await launchMatch(acceptedMatchId, `Match accepted vs ${fromUsername}`);
         }
         catch (err) {
             addToast(err.body?.error || err.message, 'error');
@@ -35765,7 +35779,7 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
             if (mounted.current)
                 setBusy(false);
         }
-    };
+    }, [addToast, closeLobby, getSnapshot, launchMatch, onClose]);
     const handleDecline = async (inviteId) => {
         setBusy(true);
         try {
@@ -37087,6 +37101,23 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
     };
     const agilityLevel = getLevelFromXP(stats.agility?.xp || 0);
     const bankDelayMs = getAgilityBankDelayMs(agilityLevel);
+    if (pvp.phase === 'in_match' && pvp.activeMatchId) {
+        return (h(PvpCombatScreen, { matchId: pvp.activeMatchId, addToast: addToast, onExit: async () => {
+                resumeTicks();
+                try {
+                    const pulled = await pullSave();
+                    if (pulled?.payload) {
+                        await applyCloudSave(pulled.payload, pulled.updatedAt);
+                        await loadGame();
+                    }
+                }
+                catch (err) {
+                    console.warn('[PocketRPG] PvP post-match cloud pull failed:', err?.message || err);
+                }
+                pvp.leaveMatch();
+                setShowPvpLobby(false);
+            } }));
+    }
     // Monster picker
     if (!combat) {
         return (h(Fragment, null,
@@ -37290,23 +37321,6 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                                         " ",
                                         item?.name || u.itemId));
                                 }))))))))))));
-    }
-    if (pvp.phase === 'in_match' && pvp.activeMatchId) {
-        return (h(PvpCombatScreen, { matchId: pvp.activeMatchId, addToast: addToast, onExit: async () => {
-                resumeTicks();
-                try {
-                    const pulled = await pullSave();
-                    if (pulled?.payload) {
-                        await applyCloudSave(pulled.payload, pulled.updatedAt);
-                        await loadGame();
-                    }
-                }
-                catch (err) {
-                    console.warn('[PocketRPG] PvP post-match cloud pull failed:', err?.message || err);
-                }
-                pvp.leaveMatch();
-                setShowPvpLobby(false);
-            } }));
     }
     // Combat view
     return (h("div", { class: "h-full flex flex-col p-4" },

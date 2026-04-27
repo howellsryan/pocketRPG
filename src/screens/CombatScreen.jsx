@@ -1012,6 +1012,30 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   const agilityLevel = getLevelFromXP(stats.agility?.xp || 0)
   const bankDelayMs = getAgilityBankDelayMs(agilityLevel)
+
+  if (pvp.phase === 'in_match' && pvp.activeMatchId) {
+    return (
+      <PvpCombatScreen
+        matchId={pvp.activeMatchId}
+        addToast={addToast}
+        onExit={async () => {
+          resumeTicks()
+          try {
+            const pulled = await pullSave()
+            if (pulled?.payload) {
+              await applyCloudSave(pulled.payload, pulled.updatedAt)
+              await loadGame()
+            }
+          } catch (err) {
+            console.warn('[PocketRPG] PvP post-match cloud pull failed:', err?.message || err)
+          }
+          pvp.leaveMatch()
+          setShowPvpLobby(false)
+        }}
+      />
+    )
+  }
+
   // Monster picker
   if (!combat) {
     return (
@@ -1337,29 +1361,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </Modal>
       )}
       </>
-    )
-  }
-
-  if (pvp.phase === 'in_match' && pvp.activeMatchId) {
-    return (
-      <PvpCombatScreen
-        matchId={pvp.activeMatchId}
-        addToast={addToast}
-        onExit={async () => {
-          resumeTicks()
-          try {
-            const pulled = await pullSave()
-            if (pulled?.payload) {
-              await applyCloudSave(pulled.payload, pulled.updatedAt)
-              await loadGame()
-            }
-          } catch (err) {
-            console.warn('[PocketRPG] PvP post-match cloud pull failed:', err?.message || err)
-          }
-          pvp.leaveMatch()
-          setShowPvpLobby(false)
-        }}
-      />
     )
   }
 

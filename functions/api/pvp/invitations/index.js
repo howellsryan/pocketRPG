@@ -26,6 +26,10 @@ export async function onRequestGet({ request, env }) {
   if (ch.error) return json({ error: ch.error }, ch.status)
   await sweepStaleRows(env)
 
+  const activeRow = await env.DB.prepare(
+    'SELECT active_match_id FROM characters WHERE id = ?'
+  ).bind(ch.id).first()
+
   // List in/out pending invites with the other character's username + CB
   // for nice rendering. We filter to status='pending' only — declined and
   // accepted rows are bookkeeping for the engine, not user-facing.
@@ -54,6 +58,7 @@ export async function onRequestGet({ request, env }) {
   return json({
     incoming: incoming.results || [],
     outgoing: outgoing.results || [],
+    active_match_id: activeRow?.active_match_id || null,
   })
 }
 
