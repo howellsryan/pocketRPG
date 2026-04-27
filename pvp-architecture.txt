@@ -1,0 +1,343 @@
+PvP System — Plan v2 (Lockdown)
+Rewritten to incorporate all 5 BLOCKERs and 21 HIGH/MEDIUM findings from review. Items I disagreed with from the review (CPU budget, JWT scope) are not adopted. Ready for your sign-off.
+
+What changed from v1
+Engine work re-scoped into refactor (2A) + symmetric build (2B).
+Coins special-cased so they transfer despite isUntradeable: true flag.
+D1 concurrency made explicit: optimistic WHERE current_tick = ? + env.DB.batch() everywhere.
+No-scheduler problem solved with sweep-on-poll and sweep on /api/save.
+Save desync closed with synchronous pushNow() on lobby join + invite accept and a 5s freshness gate server-side.
+Save lockout extended to /api/idle and /api/purchase.
+CB matchmaking made symmetric — both sides must be within ±10.
+Engine spec now lists every weapon's PvP behaviour explicitly.
+Per-combatant state (eat/potion cooldowns, attack timers, prayers, potions, spec) codified.
+Forfeit = death with full loot transfer.
+New columns/indexes for fast "in match?" lookups, deterministic intent ordering, and one-active-match enforcement.
+Realism check on latency: polling-only v1 is "near-real-time" (600–1500ms stale on mobile), not "real-time". Phase 6 (DO + WebSocket) reframed as a planned upgrade rather than optional.
+Locked decisions
+From the original Q&A
+Lobby visibility filtered to caller's CB ±10 inclusive — and the same check applied on invite send, both sides.
+Invitations only between waiting-room participants.
+Same-OAuth alts may fight each other. (Acknowledged: this enables wealth laundering between owned characters; explicit user choice.)
+Ironman + One-Life characters fully blocked. Server enforces; client also hides.
+Coins transfer to winner — even though items.json marks them isUntradeable: true. Special-cased in the loot splitter.
+Bank overflow: tradeable loot sorted by shopValue DESC, fed slot-by-slot, remainder discarded with toast "Bank full — N items lost (worth Mgp)".
+No spectating, no replays, no historical match data.
+No fight-pair cooldown, no anti-grief — opt-in invite is the gate.
+New from review
+Forfeit = death. Full loot transfer runs on forfeit, identical to HP=0 death. Modal copy reflects this.
+Spec energy starts at 100 at match start, no regen during match, no refill on opponent death.
+Equipment-swap timer rule: attackTimer = max(currentTimer, newWeaponSpeed). Prevents swap-to-faster-weapon exploits.
+Equipped untradeables stay equipped on loser (not moved to inventory). Tradeable equipment and tradeable inventory transfer to winner.
+Charges and ammo quantity carry through loot transfer (Toxic blowpipe scales, Trident charges, ammo stack sizes).
+Reconnect: on PvpCombatScreen mount, state is rebuilt from GET /api/pvp/match/:id — no trust in local cache.
+Architecture
+Server-authoritative. Engine runs server-side. Clients submit intents tagged with tick_number; server applies them and writes a new state snapshot.
+Transport v1: HTTP polling. Both clients hit POST /api/pvp/match/:id/tick ~every 600ms. Tick advancement uses optimistic concurrency — the UPDATE includes WHERE current_tick = ?. If meta.changes === 0, the other side advanced first; client re-reads and continues.
+Transport v2 (planned, not optional): Durable Object + WebSocket. Required for sub-100ms latency and a real "real-time feel" on mobile. Same engine, same schema, swap only the transport.
+Pure-logic engine. New src/engine/pvpEngine.js, dual-import (client UI + server Pages Functions). Imports nothing from cloud/*, db/*, or any side-effecting module.
+Inventory lock during match. Normal PUT /api/save, PUT /api/idle, and POST /api/purchase are all rejected for any character whose active_match_id is set. All inventory mutation during the match happens inside the match's state_json and is written back to saves atomically at match end.
+Database — migrations/0008_pvp.sql
+-- Add fast "is this character in an active match?" lookup
+ALTER TABLE characters ADD COLUMN active_match_id INTEGER REFERENCES pvp_matches(id);
+
+CREATE TABLE pvp_waiting_room (
+  character_id   INTEGER PRIMARY KEY REFERENCES characters(id),
+  combat_level   INTEGER NOT NULL,
+  joined_at      INTEGER NOT NULL,
+  last_seen_at   INTEGER NOT NULL
+);
+CREATE INDEX idx_pvp_waiting_combat ON pvp_waiting_room(combat_level);
+
+CREATE TABLE pvp_invitations (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  from_character  INTEGER NOT NULL REFERENCES characters(id),
+  to_character    INTEGER NOT NULL REFERENCES characters(id),
+  status          TEXT NOT NULL,    -- 'pending'|'accepted'|'declined'|'expired'
+  created_at      INTEGER NOT NULL,
+  responded_at    INTEGER,
+  match_id        INTEGER REFERENCES pvp_matches(id)
+);
+-- Only one pending invite per directed pair; unique key drops `status` so
+-- repeat matches between the same pair after a decline/accept stay possible.
+CREATE UNIQUE INDEX idx_pvp_invitations_pending
+  ON pvp_invitations(from_character, to_character) WHERE status = 'pending';
+CREATE INDEX idx_pvp_invitations_to_pending
+  ON pvp_invitations(to_character) WHERE status = 'pending';
+
+CREATE TABLE pvp_matches (
+  id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+  character_a         INTEGER NOT NULL REFERENCES characters(id),
+  character_b         INTEGER NOT NULL REFERENCES characters(id),
+  status              TEXT NOT NULL,        -- 'active'|'completed'|'aborted'
+  started_at          INTEGER NOT NULL,
+  ended_at            INTEGER,
+  winner_character_id INTEGER REFERENCES characters(id),
+  current_tick        INTEGER NOT NULL DEFAULT 0,
+  state_json          TEXT NOT NULL,
+  last_tick_at        INTEGER NOT NULL
+);
+-- Enforce that a character can only be in one active match at a time.
+CREATE UNIQUE INDEX idx_pvp_matches_one_active_a
+  ON pvp_matches(character_a) WHERE status = 'active';
+CREATE UNIQUE INDEX idx_pvp_matches_one_active_b
+  ON pvp_matches(character_b) WHERE status = 'active';
+
+CREATE TABLE pvp_intents (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  match_id        INTEGER NOT NULL REFERENCES pvp_matches(id),
+  character_id    INTEGER NOT NULL REFERENCES characters(id),
+  tick_number     INTEGER NOT NULL,
+  character_seq   INTEGER NOT NULL,         -- per-character monotonic sequence; deterministic ordering
+  action_json     TEXT NOT NULL,
+  created_at      INTEGER NOT NULL,
+  applied         INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX idx_pvp_intents_match_tick
+  ON pvp_intents(match_id, tick_number, character_id, character_seq) WHERE applied = 0;
+Cleanup policy: sweep-on-poll inside every PvP endpoint AND inside PUT /api/save:
+
+DELETE FROM pvp_waiting_room WHERE last_seen_at < now - 30000
+UPDATE pvp_matches SET status='aborted', ended_at=? WHERE status='active' AND last_tick_at < now - 15000 (and matching active_match_id clears on characters)
+DELETE FROM pvp_matches WHERE status != 'active' AND ended_at < now - 86400000 (24h)
+DELETE FROM pvp_intents WHERE match_id IN (SELECT id FROM pvp_matches WHERE status != 'active' AND ended_at < now - 3600000) (1h)
+Server endpoints — functions/api/pvp/
+POST   /api/pvp/waiting                join + heartbeat (rejects ironman/onelife with 403)
+DELETE /api/pvp/waiting                leave
+GET    /api/pvp/waiting                list (CB ±10, excludes self/ironman/onelife/in-match)
+POST   /api/pvp/invitations            send (validates target in waiting room, CB band BOTH SIDES, neither in active match, neither ironman/onelife)
+GET    /api/pvp/invitations            list pending in/out
+POST   /api/pvp/invitations/:id/accept atomic: create match, set active_match_id on both characters, remove both from waiting room, validate freshness
+POST   /api/pvp/invitations/:id/decline
+GET    /api/pvp/match/:id              ?since_tick=N for delta polling
+POST   /api/pvp/match/:id/intent       { tick_number, action }
+POST   /api/pvp/match/:id/tick         advance with optimistic concurrency
+POST   /api/pvp/match/:id/forfeit      same loot path as death
+All gated by requireAuth + character-ownership check. Match endpoints additionally verify caller is character_a or character_b.
+
+POST /api/pvp/invitations/:id/accept flow:
+
+Validate inviter and invitee both exist, not ironman/onelife, neither in active match.
+Validate saves.updated_at is ≤ 5000ms stale for both characters. If not, return 409 { error: 'stale_save', forCharacters: [...] } so the client can pushNow() and retry.
+Read both characters' full saves.save_data for the inventory snapshot.
+env.DB.batch([...]):
+INSERT pvp_matches with initial state_json (computed from both saves).
+UPDATE characters SET active_match_id = ? for both.
+UPDATE pvp_invitations to accepted.
+DELETE both from pvp_waiting_room.
+Return { match_id }.
+POST /api/pvp/match/:id/tick flow:
+
+Sweep stale matches/waiting rows (cheap, indexed deletes).
+SELECT match WHERE id = ? AND status = 'active' AND (character_a = caller OR character_b = caller).
+Read state_json. SELECT all pvp_intents WHERE match_id = ? AND tick_number <= current_tick + 1 AND applied = 0 ORDER BY tick_number ASC, character_id ASC, character_seq ASC.
+Run processPvpTick(state, intents) → { stateNext, events, terminal }.
+If terminal, run loot transfer (see below) inside the same batch:
+env.DB.batch([...]) containing: UPDATE both saves.save_data WHERE updated_at = ? (optimistic guard against concurrent local-client save), UPDATE pvp_matches to completed, UPDATE both characters.active_match_id = NULL, UPDATE intents SET applied = 1. If any guard mismatches, retry once; on second failure, abort match without loot transfer and log.
+Otherwise (non-terminal): env.DB.batch([UPDATE pvp_matches SET state_json = ?, current_tick = ?, last_tick_at = ? WHERE id = ? AND current_tick = ?, UPDATE pvp_intents SET applied = 1 WHERE id IN (...)]).
+If the match UPDATE returns meta.changes === 0, the other client advanced; re-read and return current state without further work.
+Engine — src/engine/pvpEngine.js
+Combatant interface
+{
+  characterId: number,
+  username: string,
+  combatLevel: number,
+  hp: number,
+  maxHP: number,
+  stats: { attack, strength, defence, hitpoints, ranged, magic, prayer },
+  equipment: { head, body, legs, weapon, shield, gloves, boots, cape, neck, ring, ammo },
+  inventory: Array<{ itemId, quantity, charges? } | null>,    // 28 slots
+  attackTimer: number,
+  eatCooldown: number,
+  potionCooldown: number,
+  activeCombatPrayer: string | null,    // protection prayers disabled in v1
+  activePotions: { [potionId]: ticksRemaining },
+  specialAttackEnergy: number,
+  specialAttackQueued: boolean,
+  combatType: 'melee' | 'ranged' | 'magic',
+  stance: 'accurate' | 'aggressive' | 'defensive' | 'controlled' | 'rapid' | 'longrange',
+  spell: SpellRef | null
+}
+Match state shape (state_json)
+{
+  tick: number,
+  startedAt: number,
+  combatants: { [characterId]: Combatant },
+  recentEvents: Array<Event>,    // last 20 only; older trimmed
+  rngSeed: number                // for any tied-randomness — see below
+}
+Tick processor contract
+processPvpTick(state, intents) -> {
+  stateNext,
+  events,         // for clients to render
+  terminal        // null | { winner, loser, reason: 'death' | 'forfeit' }
+}
+Order of operations within a tick
+Apply all queued intents in order: tick_number ASC, character_id ASC, character_seq ASC. Intents apply before attack resolution: equip swaps, prayer toggles, potion drinks, food eats, special-attack queue flag. (Forfeit intents short-circuit and produce a terminal immediately.)
+Decrement timers/cooldowns, expire potions, recompute boosted stats per combatant.
+Both attacks resolve simultaneously this tick if both attack timers are 0. Damage to opponent is computed from each combatant's snapshot at the start of step 3 — neither gets to "see" the other's hit before resolving its own. This is the cleanest deterministic rule and also makes the engine commutative.
+If both die in the same tick, lower characterId is declared winner by tiebreak.
+Reset attack timers per the relevant weapon speed (and rapid stance).
+Trim recentEvents to last 20.
+If either combatant HP ≤ 0 → terminal.
+Per-weapon PvP rules (explicit)
+Mechanic	PvE rule	PvP rule
+Dragonfire	33% proc, 50 dmg, blocked by anti-dragon	Disabled — Combatant has no specialAttack field
+Multi-form bosses (Zulrah, Olm, Verzik, Demonic Gorilla, etc.)	Form switching, immunity	Impossible — no multiForm on Combatant
+Twisted Bow magic scaling	Caps at M=250	Caps at M=99 (player magic level)
+Sanguinesti staff heal	1/6 chance to heal half damage	Same — works
+Scythe of Vitur passive	3 hits at 100/50/25%	Same — works
+Dharok set bonus	Damage scales with missing HP	Same — works
+Guthan set heal	25% chance heal-on-hit	Same — works
+Bolt: blood_forfeit	20% target HP, 10% self	Same — works (now self-damages player)
+Bolt: armour_piercing	115% max, ignore defence	Same — works
+Bolt: dragons_breath	+45% damage, blocked vs dragons/fire-immune	Always +45% — players are never dragons or fire-immune
+Bolt: life_leech	+20% damage, heal 25%, blocked vs undead	Always works — players are never undead
+Spec: double_hit / zero_defence / stun / judgement / healing_blade / freeze / lightning / snapshot / pebble_shot / shove / warstrike	Per CLAUDE.md §14	Same — work
+Powered staff (Trident, etc.)	Magic damage scales with magic level, consumes charges	Same — works
+Magic spell rune consumption	Decremented from inventory	Decremented from state.combatants[X].inventory — server applies inside state_json
+Ammo (arrows, bolts)	Decremented from equipment.ammo.quantity	Same — works inside state.combatants[X].equipment.ammo
+Auto-eat / auto-restart on kill	Yes in PvE	No — match ends on kill, no auto-restart
+Eat cooldown / potion cooldown	Per fight	Per combatant, persisted in Combatant shape
+Spec energy	Starts 0, refills on kill	Starts 100, no regen, no refill on opponent death
+Initial attack timer	Player 0, monster attackSpeed	Both 0; tiebreak by characterId on simultaneous swing
+Equipment swap mid-match	Allowed in PvE between fights	Allowed; attackTimer = max(currentTimer, newWeaponSpeed)
+Protection prayers	Active	Disabled in v1 — engine ignores any activeProtectionPrayer field
+Intent action types
+{ type: 'eat', inventorySlot: number }
+{ type: 'drink_potion', inventorySlot: number }
+{ type: 'equip', inventorySlot: number }
+{ type: 'unequip', equipmentSlot: string }
+{ type: 'queue_special' }
+{ type: 'toggle_prayer', prayerId: string }     // protection prayers rejected server-side
+{ type: 'change_stance', stance: string }
+{ type: 'change_combat_spell', spellId: string }
+{ type: 'forfeit' }
+Server validates each intent against state.combatants[characterId] (e.g. food slot still contains food, prayer level high enough, runes available for spell change).
+
+Loot transfer
+Pseudocode, runs as part of the tick batch on terminal:
+
+on terminal(winner, loser):
+  loserItems = []
+  // 1. Tradeable equipment slots → pile (preserve charges/quantity metadata)
+  for slot in EQUIPMENT_SLOTS:
+    item = loser.equipment[slot]
+    if item is null: continue
+    if item.itemId == 'coins' OR not items[item.itemId].isUntradeable:
+      loserItems.push({ ...item })          // includes charges, quantity, _twoHanded
+      loser.equipment[slot] = null
+    // else: equipped untradeable stays equipped
+  // 2. Tradeable inventory → pile
+  for i in 0..27:
+    slot = loser.inventory[i]
+    if slot is null: continue
+    if slot.itemId == 'coins' OR not items[slot.itemId].isUntradeable:
+      loserItems.push({ ...slot })
+      loser.inventory[i] = null
+    // else: untradeable stays in inventory
+  // 3. Sort by shopValue DESC (most valuable first)
+  loserItems.sort((a, b) => items[b.itemId].shopValue - items[a.itemId].shopValue)
+  // 4. Add to winner's bank slot-by-slot until full
+  added = []
+  dropped = []
+  droppedValue = 0
+  for item in loserItems:
+    if winner.bank.tryAdd(item):     // respects 500-slot cap, stacks where appropriate
+      added.push(item)
+    else:
+      dropped.push(item)
+      droppedValue += items[item.itemId].shopValue * (item.quantity || 1)
+  // 5. Build event for end-of-match modal
+  events.push({
+    type: 'matchEnd',
+    winner: winner.characterId,
+    loser: loser.characterId,
+    reason: terminal.reason,
+    loot: { added, dropped, droppedValue }
+  })
+Coins handling is the explicit special case in step 1 and step 2.
+
+Client structure
+File	Purpose	Registered in build_single.cjs
+src/cloud/pvp.js	Fetch wrapper for PvP endpoints	Yes (after cloud/sync.js)
+src/state/pvpState.jsx	Context: `idle	waiting
+src/engine/pvpEngine.js	Pure-logic processor + loot helpers	Yes (after combat.js); also imported directly by functions/api/pvp/*.js
+src/screens/PvpLobbyModal.jsx	Two tabs (Waiting Room / Invitations); warning banner; ironman/onelife hide	Yes (after CombatScreen.js)
+src/screens/PvpCombatScreen.jsx	Opponent paperdoll + HP up top; own HP/spec/inventory at bottom; action buttons; "Keep tab open" banner	Yes (after PvpLobbyModal.js)
+☠️ PvP button at the bottom of CombatScreen's monster picker. Hidden when is_ironman || is_one_life. Clicking opens PvpLobbyModal. On accept inside the modal, pvpState transitions to in_match and the screen swaps to PvpCombatScreen.
+
+Client lifecycle hooks
+On lobby join: pushNow(currentSnapshot) and await; only POST /waiting on success.
+On invite accept: pushNow() and await; if server returns 409 stale_save, pushNow() again, retry once. After accept: pauseTicks(), api.deleteIdle(), clear localStorage.pocketrpg_activeTask.
+On match end: pull cloud GET /api/save to refresh local IDB with the post-match inventory, resumeTicks(), navigate back to CombatScreen with end-of-match modal showing added + dropped lists.
+On PvpCombatScreen mount: GET /api/pvp/match/:id to rebuild state — never trust local cache for opponent state.
+Polling: GET /api/pvp/match/:id?since_tick=N every 600ms while visible. On tab hidden, fall back to longer interval (1500ms) and show "Keep this tab open" banner. If no successful poll for 5s, render forfeit warning to player.
+Save lockout — defence in depth
+functions/_lib/auth.js gets a new helper:
+
+export async function assertNotInActiveMatch(env, characterId) {
+  const row = await env.DB.prepare(
+    'SELECT active_match_id FROM characters WHERE id = ?'
+  ).bind(characterId).first()
+  if (row?.active_match_id) {
+    return { error: 'character_in_active_match', status: 409, matchId: row.active_match_id }
+  }
+  return null
+}
+Called from:
+
+PUT /api/save (functions/api/save.js)
+PUT /api/idle (functions/api/idle.js)
+POST /api/idle (beacon path, same file)
+POST /api/purchase (functions/api/purchase.js)
+POST /api/skip-hour (functions/api/skip-hour.js) — for safety
+The PvP match endpoints themselves are exempt. Optimistic guards on saves.updated_at provide a second layer in case of a stale lock.
+
+Phased build order
+Phase 1 — Lobby foundation (no engine, no combat)
+Migration 0008_pvp.sql — full schema as above.
+src/cloud/pvp.js, src/state/pvpState.jsx.
+functions/api/pvp/waiting/* and functions/api/pvp/invitations/* (no match/* yet).
+assertNotInActiveMatch helper integrated into existing endpoints (no-op until matches exist, but wired now).
+☠️ PvP button + <PvpLobbyModal>. Two characters can find each other (CB ±10 both sides), heartbeat, send/accept/decline invites.
+Stub: invitation accept creates a pvp_matches row but immediately marks it aborted (since no engine yet) and toasts "PvP combat coming soon". Inventory lock is exercised even in the stub.
+Tests: lobby visibility correctness, CB ±10 symmetry, ironman/onelife rejection, stale waiting-room cleanup, invite uniqueness.
+Phase 2A — PvE engine refactor (no PvP-specific code)
+Refactor src/engine/combat.js to use a generic Combatant interface for both player and target. PvE wrapper processCombatTick(state, playerStats, equipment, ...) preserved as thin adapter that builds a Combatant for the player and a Combatant-compatible monster shape.
+Every existing PvE Vitest test green. No behavioural change.
+All 1,300 lines re-read line by line; document weapon-by-weapon edge cases as we go.
+Phase 2B — Symmetric PvP engine
+src/engine/pvpEngine.js — processPvpTick, applyIntent, loot helpers.
+Per-weapon PvP rule table (above) implemented and tested.
+Vitest cases: melee vs melee, melee vs ranged, ranged vs magic, magic vs melee, all 11 specs, stuns, freezes, eat/drink/equip/unequip intents, simultaneous death tiebreak, equip-swap timer rule, spec-energy semantics, rune consumption from state inventory, ammo decrement, charges decrement, loot split with all edge cases (coins, equipped untradeable, charges metadata, bank overflow).
+Phase 3 — Server match loop
+Migration extension or in-place: matches/intents tables (already in 0008).
+functions/api/pvp/match/* endpoints with optimistic concurrency on current_tick.
+Sweep-on-poll for stale waiting-room rows and stuck matches.
+Sweep also wired into PUT /api/save for safety.
+Loot writeback in atomic env.DB.batch() with WHERE updated_at = ? guards and one-retry policy.
+Forfeit handler routed through the same loot path.
+Phase 4 — PvP combat UI
+<PvpCombatScreen> paperdoll, polling, intent posting, end-of-match modal showing added + dropped loot.
+"Keep this tab open" banner when hidden, 5s no-poll forfeit warning.
+Reconnect: rebuild state from GET /api/pvp/match/:id on mount.
+Hook invitation accept → mount PvpCombatScreen.
+Phase 5 — Polish and ship
+tsc --project tsconfig.build.json && node build_single.cjs to rebuild index.html.
+Add §16 to CLAUDE.md documenting PvP rules.
+PR to preview branch (per CLAUDE.md §4).
+Manual smoke test on preview environment with two characters.
+Phase 6 — Latency upgrade (planned)
+Move match loop to a Durable Object behind a Worker (or Pages Function proxying to a Worker that hosts the DO).
+Replace /match/:id/tick polling with WebSocket push.
+Engine, schema, and all Phase 1–5 client UI unchanged.
+Acknowledged: v1 PvP on mobile will feel "near-real-time" (600–1500ms stale), not real-time. Phase 6 is required for a polished feel, not optional.
+What's consciously deferred or skipped
+Spectating, replays, match history.
+Anti-grief cooldowns / fight-pair limits.
+Username search, friends list, party system.
+Same-OAuth alt fight blocking (explicit user choice).
+Protection prayers in PvP.
+Cron-based match cleanup (substituted with sweep-on-poll).
+Miniflare-based integration tests of cross-character flows (manual testing on preview only for v1).
