@@ -680,6 +680,8 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   // Auto-bank setup
   const bankingEnabled = task.bankingEnabled || false
   const bankDelayTicks = Math.ceil(getAgilityBankDelayFromStats(stats) / TICK_MS)
+  const weaponEntry = equipment?.weapon
+  const weaponItem = weaponEntry ? itemsData[weaponEntry.itemId] : null
 
   // XP per kill (assumes player deals exactly monster.hitpoints damage per kill)
   let xpPerKill = {}
@@ -691,12 +693,16 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     } else {
       xpPerKill.ranged = Math.floor(monster.hitpoints * RANGED_XP_PER_DAMAGE)
     }
-  } else if (combatType === 'magic' && task.spell) {
-    // Base spell XP per cast (hitsNeeded casts to kill) plus 2 XP per damage dealt
-    xpPerKill.magic = Math.floor(
-      (hitsNeeded < Infinity ? hitsNeeded : 0) * (task.spell.baseXP || 0) +
-      monster.hitpoints * MAGIC_XP_PER_DAMAGE
-    )
+  } else if (combatType === 'magic') {
+    const isPoweredStaff = !!weaponItem?.poweredStaff
+    if (task.spell || isPoweredStaff) {
+      // Spellcasting: base spell XP per cast + damage XP.
+      // Powered staves: no spell selected, only damage XP (same as active combat).
+      const baseSpellXp = task.spell
+        ? (hitsNeeded < Infinity ? hitsNeeded : 0) * (task.spell.baseXP || 0)
+        : 0
+      xpPerKill.magic = Math.floor(baseSpellXp + monster.hitpoints * MAGIC_XP_PER_DAMAGE)
+    }
   } else {
     // Melee
     const xpSkill = task.stance === 'aggressive' ? 'strength'
@@ -722,8 +728,6 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
 
   // Scale-charged weapons consume one charge per attack. Cap kills to what the
   // currently loaded charges allow — charges cannot be refilled mid-idle.
-  const weaponEntry = equipment?.weapon
-  const weaponItem = weaponEntry ? itemsData[weaponEntry.itemId] : null
   const weaponScaleCharged = !!weaponItem?.scaleCharged
   const startingCharges = weaponEntry?.charges || 0
   let maxKillsFromCharges = Infinity
