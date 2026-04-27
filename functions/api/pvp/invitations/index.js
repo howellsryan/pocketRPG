@@ -24,6 +24,7 @@ export async function onRequestGet({ request, env }) {
 
   const ch = await getOwnedCharacter(request, env, auth.identity.id)
   if (ch.error) return json({ error: ch.error }, ch.status)
+  await sweepStaleRows(env)
 
   // List in/out pending invites with the other character's username + CB
   // for nice rendering. We filter to status='pending' only — declined and

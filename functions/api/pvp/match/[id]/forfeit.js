@@ -1,5 +1,5 @@
 import { requireAuth, json } from '../../../../_lib/auth.js'
-import { getOwnedCharacter } from '../../../../_lib/pvp.js'
+import { getOwnedCharacter, sweepStaleRows } from '../../../../_lib/pvp.js'
 
 // Forfeit is represented as a normal intent consumed by the tick endpoint.
 // We set tick_number = current_tick so the next /tick call resolves it
@@ -13,6 +13,7 @@ export async function onRequestPost({ request, env, params }) {
 
   const matchId = parseInt(params.id, 10)
   if (!Number.isFinite(matchId)) return json({ error: 'Invalid match id' }, 400)
+  await sweepStaleRows(env)
 
   const match = await env.DB.prepare(
     `SELECT id, status, current_tick

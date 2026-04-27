@@ -90,27 +90,66 @@ export async function onRequestPost({ request, env, params }) {
   const state = createPvpState(aCombatant, bCombatant, now, Math.floor(Math.random() * 2_147_483_647))
 
   try {
+    // One-active-match invariant across BOTH columns (character_a and
+    // character_b). The partial unique indexes are per-column, so we
+    // enforce the cross-column rule here at write time too.
     const insertRes = await env.DB.prepare(
       `INSERT INTO pvp_matches
          (character_a, character_b, status, started_at, current_tick, state_json, last_tick_at)
-       VALUES (?, ?, 'active', ?, 0, ?, ?)`
-    ).bind(invite.from_character, invite.to_character, now, JSON.stringify(state), now).run()
+       SELECT ?, ?, 'active', ?, 0, ?, ?
+       WHERE NOT EXISTS (
+         SELECT 1 FROM pvp_matches
+          WHERE status = 'active'
+            AND (character_a IN (?, ?) OR character_b IN (?, ?))
+       )`
+    ).bind(
+      invite.from_character,
+      invite.to_character,
+      now,
+      JSON.stringify(state),
+      now,
+      invite.from_character,
+      invite.to_character,
+      invite.from_character,
+      invite.to_character,
+    ).run()
+
+    if (insertRes.meta.changes !== 1) {
+      return json({ error: 'character_in_active_match' }, 409)
+    }
 
     const matchId = insertRes.meta.last_row_id
 
-    await env.DB.batch([
-      env.DB.prepare(
-        `UPDATE characters SET active_match_id = ?
-          WHERE id IN (?, ?) AND active_match_id IS NULL`
-      ).bind(matchId, invite.from_character, invite.to_character),
-      env.DB.prepare(
-        `UPDATE pvp_invitations SET status = 'accepted', responded_at = ?, match_id = ?
-          WHERE id = ? AND status = 'pending'`
-      ).bind(now, matchId, inviteId),
-      env.DB.prepare(
-        'DELETE FROM pvp_waiting_room WHERE character_id IN (?, ?)'
-      ).bind(invite.from_character, invite.to_character),
-    ])
+    const lockRows = await env.DB.prepare(
+      `UPDATE characters SET active_match_id = ?
+        WHERE id IN (?, ?) AND active_match_id IS NULL`
+    ).bind(matchId, invite.from_character, invite.to_character).run()
+    if (lockRows.meta.changes !== 2) {
+      await env.DB.prepare(
+        "UPDATE pvp_matches SET status = 'aborted', ended_at = ? WHERE id = ? AND status = 'active'"
+      ).bind(now, matchId).run()
+      return json({ error: 'character_in_active_match' }, 409)
+    }
+
+    const inviteUpdate = await env.DB.prepare(
+      `UPDATE pvp_invitations SET status = 'accepted', responded_at = ?, match_id = ?
+        WHERE id = ? AND status = 'pending'`
+    ).bind(now, matchId, inviteId).run()
+    if (inviteUpdate.meta.changes !== 1) {
+      await env.DB.batch([
+        env.DB.prepare(
+          "UPDATE pvp_matches SET status = 'aborted', ended_at = ? WHERE id = ? AND status = 'active'"
+        ).bind(now, matchId),
+        env.DB.prepare(
+          'UPDATE characters SET active_match_id = NULL WHERE id IN (?, ?) AND active_match_id = ?'
+        ).bind(invite.from_character, invite.to_character, matchId),
+      ])
+      return json({ error: 'invitation_not_pending' }, 409)
+    }
+
+    await env.DB.prepare(
+      'DELETE FROM pvp_waiting_room WHERE character_id IN (?, ?)'
+    ).bind(invite.from_character, invite.to_character).run()
 
     return json({ ok: true, match_id: matchId })
   } catch (err) {
