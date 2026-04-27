@@ -12,6 +12,8 @@ import { getCharacterId } from '../cloud/api.js'
 const POLL_VISIBLE_MS = 600
 const POLL_HIDDEN_MS = 1500
 const NO_POLL_WARNING_MS = 5000
+const MATCH_BOOT_GRACE_MS = 8000
+const MATCH_BOOT_RETRY_MS = 500
 
 function prettifyEvent(evt, selfId) {
   if (!evt) return null
@@ -142,6 +144,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   useEffect(() => {
     let active = true
     let pollMs = hiddenMode ? POLL_HIDDEN_MS : POLL_VISIBLE_MS
+    const bootDeadline = Date.now() + MATCH_BOOT_GRACE_MS
 
     const scheduleNext = () => {
       if (!active || !mounted.current) return
@@ -152,14 +155,25 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     }
 
     ;(async () => {
-      try {
-        await refreshFromServer()
-        if (!active || !mounted.current) return
-        pollMs = hiddenMode ? POLL_HIDDEN_MS : POLL_VISIBLE_MS
-        scheduleNext()
-      } catch (err) {
-        addToast?.(err.body?.error || err.message, 'error')
-        await onExit?.()
+      while (active && mounted.current) {
+        try {
+          await refreshFromServer()
+          if (!active || !mounted.current) return
+          pollMs = hiddenMode ? POLL_HIDDEN_MS : POLL_VISIBLE_MS
+          scheduleNext()
+          return
+        } catch (err) {
+          const code = err?.body?.error || err?.message
+          const transientBootError = (code === 'match_not_found' || code === 'match_not_active') && Date.now() < bootDeadline
+          if (transientBootError) {
+            await new Promise(resolve => setTimeout(resolve, MATCH_BOOT_RETRY_MS))
+            continue
+          }
+          setLoading(false)
+          addToast?.(code || 'Failed to load PvP match', 'error')
+          await onExit?.()
+          return
+        }
       }
     })()
 

@@ -12,6 +12,7 @@ import { pauseTicks } from '../engine/tick.js'
 
 const POLL_MS = 2500   // light enough to be cheap, fast enough to feel live in the lobby
 const SAVE_HEARTBEAT_MS = 3000
+const LOBBY_PVP_SYNC_BLOCK_KEY = 'pocketrpg_pvp_sync_block'
 
 // PvP Lobby Modal — Phase 1 surface.
 // Two tabs: Waiting Room (CB-filtered list of opponents) and Invitations
@@ -177,6 +178,7 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
       // our true inventory. Phase 3 server will reject stale saves; we
       // do this proactively so the round-trip succeeds first time.
       await pushLobbySnapshot(true)
+      try { localStorage.setItem(LOBBY_PVP_SYNC_BLOCK_KEY, '1') } catch { /* best-effort */ }
       let res
       try {
         res = await pvpApi.acceptInvitation(inviteId)
@@ -199,6 +201,7 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
       await launchMatch(acceptedMatchId, `Match accepted vs ${fromUsername}`)
     } catch (err) {
       addToast(err.body?.error || err.message, 'error')
+      try { localStorage.removeItem(LOBBY_PVP_SYNC_BLOCK_KEY) } catch { /* best-effort */ }
     } finally {
       acceptingInvite.current = false
       if (mounted.current && joined && !launchedMatch.current && !pollTimer.current) {
