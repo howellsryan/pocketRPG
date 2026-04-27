@@ -169,3 +169,11 @@ Everything else — all static colours, borders, radii, padding, typography, fle
 - Equipped untradeables stay equipped on the loser; untradeable inventory also stays.
 - Coins transfer even though they are flagged untradeable in item data.
 - Winner bank overflow drops excess loot; dropped value is surfaced in match-end messaging.
+
+## 15. SINGLE-FILE BUILD SAFETY (DUPLICATE IDENTIFIERS)
+- `index.html` is produced by concatenating transpiled files via `build_single.cjs`, so top-level names must be globally unique.
+- Before committing any change that can affect the bundled output, run:
+  - `npm run rebuild`
+  - `node --check tmp_module_check.mjs` on the extracted module script from `index.html` (or an equivalent duplicate-identifier syntax check).
+- Treat `SyntaxError: Identifier '<name>' has already been declared` as a release-blocking error and rename the conflicting top-level declaration.
+- Prefer importing shared helpers from `src/utils/helpers.js` instead of redefining common names (for example, random integer helpers).
