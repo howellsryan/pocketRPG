@@ -1,7 +1,14 @@
 export function normalizePvpState(rawState) {
+  if (typeof rawState === 'string') {
+    try {
+      rawState = JSON.parse(rawState)
+    } catch {
+      return null
+    }
+  }
   if (!rawState || typeof rawState !== 'object') return null
 
-  const rawCombatants = rawState.combatants
+  const rawCombatants = parseMaybeJson(rawState.combatants)
   const combatants = {}
 
   if (Array.isArray(rawCombatants)) {
@@ -31,11 +38,12 @@ export function normalizePvpState(rawState) {
 }
 
 function normalizeCombatant(rawCombatant) {
+  rawCombatant = parseMaybeJson(rawCombatant)
   if (!rawCombatant || typeof rawCombatant !== 'object') return null
   const characterId = Number(rawCombatant.characterId ?? rawCombatant.character_id)
   if (!Number.isFinite(characterId) || characterId <= 0) return null
 
-  const normalizedInventory = normalizeInventory(rawCombatant.inventory)
+  const normalizedInventory = normalizeInventory(parseMaybeJson(rawCombatant.inventory))
 
   return {
     ...rawCombatant,
@@ -56,6 +64,7 @@ function normalizeInventory(rawInventory) {
 }
 
 function normalizeSlot(rawSlot) {
+  rawSlot = parseMaybeJson(rawSlot)
   if (!rawSlot || typeof rawSlot !== 'object') return null
   const itemId = rawSlot.itemId ?? rawSlot.item_id
   if (!itemId) return null
@@ -64,5 +73,18 @@ function normalizeSlot(rawSlot) {
     ...rawSlot,
     itemId,
     quantity: Number.isFinite(quantity) && quantity > 0 ? Math.floor(quantity) : 1,
+  }
+}
+
+function parseMaybeJson(value) {
+  if (typeof value !== 'string') return value
+  const trimmed = value.trim()
+  if (!trimmed) return value
+  const first = trimmed[0]
+  if (first !== '{' && first !== '[') return value
+  try {
+    return JSON.parse(trimmed)
+  } catch {
+    return value
   }
 }

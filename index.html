@@ -36279,6 +36279,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
 
 
 
+
 const COMBAT_CATEGORIES = [
     {
         key: 'training',
@@ -36365,6 +36366,22 @@ const MONSTER_ICONS = {
     maiden_of_sugadinti: '🩸', pestilent_bloat: '🤢', nylocas_vasilias: '🕷️',
     sotetseg: '🔮', xarpus: '☠️', verzik_vitur: '👑'
 };
+class PvpCombatErrorBoundary extends Component {
+    constructor(props) {
+        super(props);
+        this.state = { crashed: false };
+    }
+    componentDidCatch(error) {
+        console.error('[PocketRPG] PvP combat render crashed:', error);
+        this.setState({ crashed: true });
+        this.props.onCrash?.(error);
+    }
+    render(props, state) {
+        if (state.crashed)
+            return null;
+        return props.children;
+    }
+}
 // Nuke every trace of the current character so a One-Life death cannot be
 // revived by re-logging. Deletes the cloud saves row, the cloud idle-state
 // row, the local IndexedDB database, and every per-character localStorage key.
@@ -37285,21 +37302,27 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
     const agilityLevel = getLevelFromXP(stats.agility?.xp || 0);
     const bankDelayMs = getAgilityBankDelayMs(agilityLevel);
     if (pvp.phase === 'in_match' && pvp.activeMatchId) {
-        return (h(PvpCombatScreen, { matchId: pvp.activeMatchId, addToast: addToast, onExit: async () => {
+        return (h(PvpCombatErrorBoundary, { onCrash: async () => {
+                addToast('PvP match view crashed — returning to PvE.', 'error');
                 resumeTicks();
-                try {
-                    const pulled = await pullSave();
-                    if (pulled?.payload) {
-                        await applyCloudSave(pulled.payload, pulled.updatedAt);
-                        await loadGame();
-                    }
-                }
-                catch (err) {
-                    console.warn('[PocketRPG] PvP post-match cloud pull failed:', err?.message || err);
-                }
                 pvp.leaveMatch();
                 setShowPvpLobby(false);
-            } }));
+            } },
+            h(PvpCombatScreen, { matchId: pvp.activeMatchId, addToast: addToast, onExit: async () => {
+                    resumeTicks();
+                    try {
+                        const pulled = await pullSave();
+                        if (pulled?.payload) {
+                            await applyCloudSave(pulled.payload, pulled.updatedAt);
+                            await loadGame();
+                        }
+                    }
+                    catch (err) {
+                        console.warn('[PocketRPG] PvP post-match cloud pull failed:', err?.message || err);
+                    }
+                    pvp.leaveMatch();
+                    setShowPvpLobby(false);
+                } })));
     }
     // Monster picker
     if (!combat) {
