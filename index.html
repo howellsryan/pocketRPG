@@ -35586,6 +35586,7 @@ function BankScreen() {
 
 
 const POLL_MS = 2500; // light enough to be cheap, fast enough to feel live in the lobby
+const SAVE_HEARTBEAT_MS = 3000;
 // PvP Lobby Modal — Phase 1 surface.
 // Two tabs: Waiting Room (CB-filtered list of opponents) and Invitations
 // (incoming + outgoing pending). Joining the lobby tab posts to the
@@ -35608,6 +35609,17 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
     const mounted = useRef(true);
     const pollTimer = useRef(null);
     const launchedMatch = useRef(false);
+    const lastSavePushAt = useRef(0);
+    const pushLobbySnapshot = useCallback(async (force = false) => {
+        const now = Date.now();
+        if (!force && now - lastSavePushAt.current < SAVE_HEARTBEAT_MS)
+            return;
+        const snapshot = getSnapshot ? getSnapshot() : null;
+        if (!snapshot)
+            return;
+        await pushNow(snapshot);
+        lastSavePushAt.current = now;
+    }, [getSnapshot]);
     const launchMatch = useCallback(async (matchId, toastMsg = null) => {
         const parsed = Number(matchId);
         if (!Number.isFinite(parsed) || parsed <= 0 || launchedMatch.current)
@@ -35634,9 +35646,7 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
         setBusy(true);
         setError(null);
         try {
-            const snapshot = getSnapshot ? getSnapshot() : null;
-            if (snapshot)
-                await pushNow(snapshot);
+            await pushLobbySnapshot(true);
             const res = await pvpApi.joinWaiting();
             if (!mounted.current)
                 return;
@@ -35654,9 +35664,15 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
             if (mounted.current)
                 setBusy(false);
         }
-    }, [addToast, getSnapshot]);
+    }, [addToast, pushLobbySnapshot]);
     const refresh = useCallback(async () => {
         try {
+            try {
+                await pushLobbySnapshot(false);
+            }
+            catch {
+                // save heartbeat is best-effort; lobby polling should continue
+            }
             const [waitingRes, invitesRes] = await Promise.all([
                 pvpApi.listWaiting(),
                 pvpApi.listInvitations(),
@@ -35689,7 +35705,7 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
             // Don't spam toasts — only set inline error.
             setError(err.body?.error || err.message);
         }
-    }, [joined, launchMatch]);
+    }, [joined, launchMatch, pushLobbySnapshot]);
     // Boot: ironman / one-life accounts should never have reached this
     // modal but defend in depth — close immediately if they did.
     useEffect(() => {
@@ -35745,17 +35761,14 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
             // Force a fresh save push BEFORE accepting so the server snapshots
             // our true inventory. Phase 3 server will reject stale saves; we
             // do this proactively so the round-trip succeeds first time.
-            const snapshot = getSnapshot ? getSnapshot() : null;
-            if (snapshot)
-                await pushNow(snapshot);
+            await pushLobbySnapshot(true);
             let res;
             try {
                 res = await pvpApi.acceptInvitation(inviteId);
             }
             catch (err) {
                 if (err?.body?.error === 'stale_save') {
-                    if (snapshot)
-                        await pushNow(snapshot);
+                    await pushLobbySnapshot(true);
                     res = await pvpApi.acceptInvitation(inviteId);
                 }
                 else {
@@ -35779,7 +35792,7 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
             if (mounted.current)
                 setBusy(false);
         }
-    }, [addToast, closeLobby, getSnapshot, launchMatch, onClose]);
+    }, [addToast, closeLobby, launchMatch, onClose, pushLobbySnapshot]);
     const handleDecline = async (inviteId) => {
         setBusy(true);
         try {
@@ -36125,6 +36138,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
 
 
 
+
 const COMBAT_CATEGORIES = [
     {
         key: 'training',
@@ -36280,6 +36294,35 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
             setCombat(null);
         }
     }, [pvp.phase]);
+    useEffect(() => {
+        let cancelled = false;
+        const reconnectToActiveMatch = async () => {
+            if (pvp.phase === 'in_match')
+                return;
+            try {
+                const invitesRes = await pvpApi.listInvitations();
+                const activeMatchId = Number(invitesRes?.active_match_id);
+                if (cancelled || !Number.isFinite(activeMatchId) || activeMatchId <= 0)
+                    return;
+                setShowPvpLobby(false);
+                pauseTicks();
+                pvp.enterMatch(activeMatchId);
+            }
+            catch {
+                // best-effort reconnect check
+            }
+        };
+        reconnectToActiveMatch();
+        const onVisible = () => {
+            if (!document.hidden)
+                reconnectToActiveMatch();
+        };
+        document.addEventListener('visibilitychange', onVisible);
+        return () => {
+            cancelled = true;
+            document.removeEventListener('visibilitychange', onVisible);
+        };
+    }, [pvp.phase, pvp.enterMatch]);
     useEffect(() => { hpRef.current = currentHP; }, [currentHP]);
     useEffect(() => { inventoryRef.current = inventory; }, [inventory]);
     useEffect(() => { bankRef.current = bank; }, [bank]);

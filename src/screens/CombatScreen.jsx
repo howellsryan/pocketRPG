@@ -8,11 +8,12 @@ import HPBar from '../components/HPBar.jsx'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applySpecialAttack } from '../engine/combat.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
-import { onTick, resumeTicks } from '../engine/tick.js'
+import { onTick, pauseTicks, resumeTicks } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
 import { getCombatType, equipItem, checkEquipRequirements } from '../engine/equipment.js'
 import { api, clearAuth, getToken, setLocalCharacterId } from '../cloud/api.js'
 import { pullSave, applyCloudSave } from '../cloud/sync.js'
+import { pvpApi } from '../cloud/pvp.js'
 import { closeDB } from '../db/database.js'
 import { wipeLocalSave } from '../db/saveload.js'
 import monstersData from '../data/monsters.json'
@@ -169,6 +170,35 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       setCombat(null)
     }
   }, [pvp.phase])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const reconnectToActiveMatch = async () => {
+      if (pvp.phase === 'in_match') return
+      try {
+        const invitesRes = await pvpApi.listInvitations()
+        const activeMatchId = Number(invitesRes?.active_match_id)
+        if (cancelled || !Number.isFinite(activeMatchId) || activeMatchId <= 0) return
+        setShowPvpLobby(false)
+        pauseTicks()
+        pvp.enterMatch(activeMatchId)
+      } catch {
+        // best-effort reconnect check
+      }
+    }
+
+    reconnectToActiveMatch()
+    const onVisible = () => {
+      if (!document.hidden) reconnectToActiveMatch()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+
+    return () => {
+      cancelled = true
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [pvp.phase, pvp.enterMatch])
 
   useEffect(() => { hpRef.current = currentHP }, [currentHP])
   useEffect(() => { inventoryRef.current = inventory }, [inventory])
