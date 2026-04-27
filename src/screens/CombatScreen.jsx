@@ -1,3 +1,4 @@
+import { Component } from 'preact'
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import { usePvp } from '../state/pvpState.jsx'
@@ -109,6 +110,24 @@ const MONSTER_ICONS = {
   tekton: '🔨', vespula: '🦟', muttadile: '🦷', olm: '🏛️',
   maiden_of_sugadinti: '🩸', pestilent_bloat: '🤢', nylocas_vasilias: '🕷️',
   sotetseg: '🔮', xarpus: '☠️', verzik_vitur: '👑'
+}
+
+class PvpCombatErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { crashed: false }
+  }
+
+  componentDidCatch(error) {
+    console.error('[PocketRPG] PvP combat render crashed:', error)
+    this.setState({ crashed: true })
+    this.props.onCrash?.(error)
+  }
+
+  render(props, state) {
+    if (state.crashed) return null
+    return props.children
+  }
 }
 
 // Nuke every trace of the current character so a One-Life death cannot be
@@ -1045,24 +1064,33 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   if (pvp.phase === 'in_match' && pvp.activeMatchId) {
     return (
-      <PvpCombatScreen
-        matchId={pvp.activeMatchId}
-        addToast={addToast}
-        onExit={async () => {
+      <PvpCombatErrorBoundary
+        onCrash={async () => {
+          addToast('PvP match view crashed — returning to PvE.', 'error')
           resumeTicks()
-          try {
-            const pulled = await pullSave()
-            if (pulled?.payload) {
-              await applyCloudSave(pulled.payload, pulled.updatedAt)
-              await loadGame()
-            }
-          } catch (err) {
-            console.warn('[PocketRPG] PvP post-match cloud pull failed:', err?.message || err)
-          }
           pvp.leaveMatch()
           setShowPvpLobby(false)
         }}
-      />
+      >
+        <PvpCombatScreen
+          matchId={pvp.activeMatchId}
+          addToast={addToast}
+          onExit={async () => {
+            resumeTicks()
+            try {
+              const pulled = await pullSave()
+              if (pulled?.payload) {
+                await applyCloudSave(pulled.payload, pulled.updatedAt)
+                await loadGame()
+              }
+            } catch (err) {
+              console.warn('[PocketRPG] PvP post-match cloud pull failed:', err?.message || err)
+            }
+            pvp.leaveMatch()
+            setShowPvpLobby(false)
+          }}
+        />
+      </PvpCombatErrorBoundary>
     )
   }
 

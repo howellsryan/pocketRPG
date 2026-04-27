@@ -41,4 +41,23 @@ describe('normalizePvpState', () => {
 
     expect(Object.keys(state?.combatants || {})).toEqual(['5'])
   })
+
+  it('parses stringified state blobs from legacy match rows', () => {
+    const state = normalizePvpState(JSON.stringify({
+      tick: 2,
+      recent_events: [],
+      combatants: JSON.stringify([
+        {
+          character_id: 10,
+          current_hp: 8,
+          max_hp: 10,
+          inventory: JSON.stringify([{ item_id: 'shark', quantity: 1 }]),
+        },
+      ]),
+    }))
+
+    expect(state?.tick).toBe(2)
+    expect(state?.combatants?.['10']?.hp).toBe(8)
+    expect(state?.combatants?.['10']?.inventory?.[0]?.itemId).toBe('shark')
+  })
 })
