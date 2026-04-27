@@ -132,7 +132,10 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
           if (action.runeReq) {
             if (!hasRequiredRunes(action.runeReq, newInv, bankRef.current, equipment, itemsData)) {
               skillingRef.current = { ...skillingState, active: false, stopped: true }
-              setSkilling({ ...skillingState, active: false, stopped: true })
+              setSkilling(null)
+              setSelectedAction(null)
+              setSelectedAlchemyItem(null)
+              setActiveTask(null)
               addToast('Out of runes!', 'error')
               return
             }
@@ -158,7 +161,10 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             }
             if (!hasMats) {
               skillingRef.current = { ...skillingState, active: false, stopped: true }
-              setSkilling({ ...skillingState, active: false, stopped: true })
+              setSkilling(null)
+              setSelectedAction(null)
+              setSelectedAlchemyItem(null)
+              setActiveTask(null)
               addToast('Out of materials!', 'error')
               return
             }
@@ -190,7 +196,10 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             }
             if (!canContinue) {
               skillingRef.current = { ...skillingState, active: false, stopped: true }
-              setSkilling({ ...skillingState, active: false, stopped: true })
+              setSkilling(null)
+              setSelectedAction(null)
+              setSelectedAlchemyItem(null)
+              setActiveTask(null)
               addToast('Out of materials!', 'error')
               return
             }
@@ -212,19 +221,27 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
           if (action.type === 'alchemy' && selectedAlchemyItem) {
             const alchItem = itemsData[selectedAlchemyItem.itemId]
             if (alchItem && typeof alchItem.shopValue === 'number') {
+              const alchemyItemIdx = newInv.findIndex(slot => slot?.itemId === selectedAlchemyItem.itemId && (slot?.quantity || 0) > 0)
+              if (alchemyItemIdx === -1) {
+                skillingRef.current = { ...skillingState, active: false, stopped: true }
+                setSkilling(null)
+                setSelectedAction(null)
+                setSelectedAlchemyItem(null)
+                setActiveTask(null)
+                addToast('Out of items to alchemize!', 'error')
+                return
+              }
+
               // Calculate coins based on shop value: <100k = 1.5x, >=100k = 1.1x
               const alchValue = alchItem.shopValue >= 100000
                 ? Math.floor(alchItem.shopValue * 1.1)
                 : Math.floor(alchItem.shopValue * 1.5)
 
               // Remove the alchemized item from inventory
-              const alchemyItemIdx = newInv.indexOf(selectedAlchemyItem)
-              if (alchemyItemIdx !== -1) {
-                if (selectedAlchemyItem.quantity > 1) {
-                  newInv[alchemyItemIdx] = { ...selectedAlchemyItem, quantity: selectedAlchemyItem.quantity - 1 }
-                } else {
-                  newInv[alchemyItemIdx] = null
-                }
+              if (newInv[alchemyItemIdx].quantity > 1) {
+                newInv[alchemyItemIdx] = { ...newInv[alchemyItemIdx], quantity: newInv[alchemyItemIdx].quantity - 1 }
+              } else {
+                newInv[alchemyItemIdx] = null
               }
 
               // Add coins to bank
@@ -302,6 +319,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     }
     setSkilling(null)
     setSelectedAction(null)
+    setSelectedAlchemyItem(null)
     setActiveTask(null)
   }
 

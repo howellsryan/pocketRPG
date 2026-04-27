@@ -104,10 +104,6 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
     if (maxFromMaterials === 0) return null
     actions = Math.min(actions, maxFromMaterials)
 
-    // Record consumed materials
-    for (const [itemId, qtyPerAction] of Object.entries(task.action.materials)) {
-      itemsConsumed[itemId] = qtyPerAction * actions
-    }
   }
 
   // Cap actions to available runes (for magic skilling)
@@ -124,7 +120,26 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
     if (maxFromRunes === 0 && Object.keys(runesToConsume).length > 0) return null
     actions = Math.min(actions, maxFromRunes)
 
-    // Record consumed runes (only those not provided by staff)
+  }
+
+  // Cap alchemy actions to available selected item in inventory
+  if (task.action.type === 'alchemy' && task.selectedAlchemyItem?.itemId) {
+    const availableAlchItems = inventory.reduce(
+      (sum, slot) => sum + (slot?.itemId === task.selectedAlchemyItem.itemId ? (slot?.quantity || 0) : 0),
+      0
+    )
+    if (availableAlchItems <= 0) return null
+    actions = Math.min(actions, availableAlchItems)
+  }
+
+  // Record consumed materials/runes using final action count after all caps
+  if (task.action.materials) {
+    for (const [itemId, qtyPerAction] of Object.entries(task.action.materials)) {
+      itemsConsumed[itemId] = qtyPerAction * actions
+    }
+  }
+  if (task.action.runeReq) {
+    const runesToConsume = getRunesToConsume(task.action.runeReq, equipment, itemsData)
     for (const [runeId, qtyPerAction] of Object.entries(runesToConsume)) {
       itemsConsumed[runeId] = qtyPerAction * actions
     }
