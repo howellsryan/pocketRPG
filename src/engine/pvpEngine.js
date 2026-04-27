@@ -58,7 +58,7 @@ function attackSnapshot(attacker, defender, itemsData) {
   return rollMeleeAttack(attacker, defender, itemsData)
 }
 
-function randInt(min, max) {
+function pvpRandInt(min, max) {
   const lo = Math.ceil(Math.min(min, max))
   const hi = Math.floor(Math.max(min, max))
   return lo + Math.floor(Math.random() * (hi - lo + 1))
@@ -121,7 +121,7 @@ function resolveSwing(attacker, defender, itemsData, events) {
       defender.stats = { ...(defender.stats || {}), defence: Math.max(1, (defender.stats?.defence || 1) - swing.damage) }
     }
   } else if (spec.type === 'lightning') {
-    const lightning = randInt(1, spec.lightningMax || 16)
+    const lightning = pvpRandInt(1, spec.lightningMax || 16)
     swing.damage = (swing.damage || 0) + lightning
     swing.hit = swing.damage > 0
     swing.lightning = lightning
@@ -137,7 +137,7 @@ function resolveSwing(attacker, defender, itemsData, events) {
     }
   } else if (spec.type === 'pebble_shot') {
     const max = Math.max(1, Math.floor((swing.maxHit || 1) * 1.25))
-    swing.damage = randInt(1, max)
+    swing.damage = pvpRandInt(1, max)
     swing.maxHit = max
     swing.hit = true
   }

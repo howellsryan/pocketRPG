@@ -30437,6 +30437,102 @@ function attackSnapshot(attacker, defender, itemsData) {
         return rollMagicAttack(attacker, defender, itemsData);
     return rollMeleeAttack(attacker, defender, itemsData);
 }
+function pvpRandInt(min, max) {
+    const lo = Math.ceil(Math.min(min, max));
+    const hi = Math.floor(Math.max(min, max));
+    return lo + Math.floor(Math.random() * (hi - lo + 1));
+}
+function scaledSwing(swing, scale) {
+    const maxHit = Math.max(0, Math.floor((swing?.maxHit || 0) * scale));
+    const damage = swing.hit ? Math.max(0, Math.floor((swing.damage || 0) * scale)) : 0;
+    return { ...swing, maxHit, damage, hit: damage > 0 };
+}
+function resolveSwing(attacker, defender, itemsData, events) {
+    const weapon = itemsData?.[attacker?.equipment?.weapon?.itemId];
+    const spec = weapon?.specialAttack;
+    const queued = !!attacker.specialAttackQueued;
+    attacker.specialAttackQueued = false;
+    if (!queued || !spec) {
+        return attackSnapshot(attacker, defender, itemsData);
+    }
+    const energyCost = Math.max(0, Number(spec.energyCost) || 0);
+    const currentEnergy = Math.max(0, Number(attacker.specialAttackEnergy) || 0);
+    if (currentEnergy < energyCost) {
+        events.push({ type: 'spec_failed', characterId: attacker.characterId, reason: 'insufficient_energy' });
+        return attackSnapshot(attacker, defender, itemsData);
+    }
+    attacker.specialAttackEnergy = Math.max(0, currentEnergy - energyCost);
+    let swing = attackSnapshot(attacker, defender, itemsData);
+    if (spec.type === 'double_hit') {
+        const second = scaledSwing(attackSnapshot(attacker, defender, itemsData), 1.15);
+        swing = scaledSwing(swing, 1.15);
+        swing.damage = (swing.damage || 0) + (second.damage || 0);
+        swing.hit = swing.damage > 0;
+        swing.hits = [swing.damage - second.damage, second.damage];
+    }
+    else if (spec.type === 'zero_defence') {
+        const defenceBypass = {
+            ...defender,
+            stats: { ...(defender.stats || {}), defence: 1 },
+            equipment: {},
+        };
+        swing = attackSnapshot(attacker, defenceBypass, itemsData);
+    }
+    else if (spec.type === 'judgement') {
+        swing = scaledSwing(swing, 1.25);
+    }
+    else if (spec.type === 'healing_blade') {
+        const healAmount = Math.max(spec.minHeal || 10, Math.floor((swing.damage || 0) / 2));
+        attacker.hp = Math.min(attacker.maxHP || attacker.hp || 0, (attacker.hp || 0) + healAmount);
+        swing.healAmount = healAmount;
+    }
+    else if (spec.type === 'freeze') {
+        if ((swing.damage || 0) > 0)
+            defender.attackTimer = (defender.attackTimer || 0) + (spec.stunTicks || 33);
+    }
+    else if (spec.type === 'stun') {
+        if ((swing.damage || 0) > 0)
+            defender.attackTimer = (defender.attackTimer || 0) + rapidAdjustedSpeed(defender, itemsData);
+    }
+    else if (spec.type === 'shove') {
+        if ((swing.damage || 0) > 0)
+            defender.attackTimer = (defender.attackTimer || 0) + (rapidAdjustedSpeed(defender, itemsData) * 2);
+    }
+    else if (spec.type === 'warstrike') {
+        if ((swing.damage || 0) > 0) {
+            defender.stats = { ...(defender.stats || {}), defence: Math.max(1, (defender.stats?.defence || 1) - swing.damage) };
+        }
+    }
+    else if (spec.type === 'lightning') {
+        const lightning = pvpRandInt(1, spec.lightningMax || 16);
+        swing.damage = (swing.damage || 0) + lightning;
+        swing.hit = swing.damage > 0;
+        swing.lightning = lightning;
+    }
+    else if (spec.type === 'snapshot') {
+        const first = scaledSwing(attackSnapshot(attacker, defender, itemsData), 0.75);
+        const second = scaledSwing(attackSnapshot(attacker, defender, itemsData), 0.75);
+        swing = {
+            ...first,
+            hit: (first.damage || 0) + (second.damage || 0) > 0,
+            damage: (first.damage || 0) + (second.damage || 0),
+            hits: [first.damage || 0, second.damage || 0],
+            maxHit: (first.maxHit || 0) + (second.maxHit || 0),
+        };
+    }
+    else if (spec.type === 'pebble_shot') {
+        const max = Math.max(1, Math.floor((swing.maxHit || 1) * 1.25));
+        swing.damage = pvpRandInt(1, max);
+        swing.maxHit = max;
+        swing.hit = true;
+    }
+    return {
+        ...swing,
+        special: true,
+        specType: spec.type || 'special',
+        energyCost,
+    };
+}
 function terminalResult(next, winnerId, loserId, reason, events) {
     return {
         stateNext: next,
@@ -30611,8 +30707,8 @@ function processPvpTick(state, intents, itemsData) {
     // 3) simultaneous attacks (snapshot first, apply after)
     const leftCanAttack = left.hp > 0 && left.attackTimer === 0 && left.eatCooldown === 0;
     const rightCanAttack = right.hp > 0 && right.attackTimer === 0 && right.eatCooldown === 0;
-    const leftSwing = leftCanAttack ? attackSnapshot(left, right, itemsData) : null;
-    const rightSwing = rightCanAttack ? attackSnapshot(right, left, itemsData) : null;
+    const leftSwing = leftCanAttack ? resolveSwing(left, right, itemsData, events) : null;
+    const rightSwing = rightCanAttack ? resolveSwing(right, left, itemsData, events) : null;
     const leftDamage = leftSwing ? Math.max(0, Math.min(right.hp, leftSwing.damage || 0)) : 0;
     const rightDamage = rightSwing ? Math.max(0, Math.min(left.hp, rightSwing.damage || 0)) : 0;
     if (leftSwing) {
@@ -35487,6 +35583,8 @@ function BankScreen() {
 
 
 
+
+
 const POLL_MS = 2500; // light enough to be cheap, fast enough to feel live in the lobby
 // PvP Lobby Modal — Phase 1 surface.
 // Two tabs: Waiting Room (CB-filtered list of opponents) and Invitations
@@ -35626,7 +35724,20 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
             const snapshot = getSnapshot ? getSnapshot() : null;
             if (snapshot)
                 await pushNow(snapshot);
-            const res = await pvpApi.acceptInvitation(inviteId);
+            let res;
+            try {
+                res = await pvpApi.acceptInvitation(inviteId);
+            }
+            catch (err) {
+                if (err?.body?.error === 'stale_save') {
+                    if (snapshot)
+                        await pushNow(snapshot);
+                    res = await pvpApi.acceptInvitation(inviteId);
+                }
+                else {
+                    throw err;
+                }
+            }
             if (res.phase1_stub) {
                 addToast('PvP combat coming soon — match accepted but no fight will start yet.', 'info');
                 // Phase 1 stub: just clean up and close.
@@ -35634,6 +35745,15 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
                 onClose?.();
                 return;
             }
+            pauseTicks();
+            try {
+                await api.deleteIdle();
+            }
+            catch { /* best-effort */ }
+            try {
+                localStorage.removeItem('pocketrpg_activeTask');
+            }
+            catch { /* best-effort */ }
             addToast(`Match accepted vs ${fromUsername}`, 'info');
             enterMatch(res.match_id);
             onClose?.();
@@ -35858,7 +35978,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
             const msg = err.body?.error || err.message;
             if (msg === 'match_not_found' || msg === 'match_not_active') {
                 addToast?.('Match has ended.', 'info');
-                onExit?.();
+                await onExit?.();
                 return;
             }
             if (Date.now() - lastPollOkAt.current > NO_POLL_WARNING_MS) {
@@ -35877,7 +35997,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
             }
             catch (err) {
                 addToast?.(err.body?.error || err.message, 'error');
-                onExit?.();
+                await onExit?.();
             }
         })();
         return () => {
@@ -35964,10 +36084,11 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
                         "Dropped value: ",
                         Math.floor((endModal.loot.droppedValue || 0) / 1000000),
                         "M gp")),
-                h(Button, { variant: "primary", className: "w-full", onClick: onExit }, "Return to PvE"))))));
+                h(Button, { variant: "primary", className: "w-full", onClick: async () => { await onExit?.(); } }, "Return to PvE"))))));
 }
 
 // ── screens/CombatScreen.js ──
+
 
 
 
@@ -36112,7 +36233,7 @@ async function performOneLifeReset() {
     clearAuth();
 }
 function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange }) {
-    const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot } = useGame();
+    const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame } = useGame();
     const pvp = usePvp();
     const [showPvpLobby, setShowPvpLobby] = useState(false);
     const [combat, setCombat] = useState(null);
@@ -37171,7 +37292,18 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                                 }))))))))))));
     }
     if (pvp.phase === 'in_match' && pvp.activeMatchId) {
-        return (h(PvpCombatScreen, { matchId: pvp.activeMatchId, addToast: addToast, onExit: () => {
+        return (h(PvpCombatScreen, { matchId: pvp.activeMatchId, addToast: addToast, onExit: async () => {
+                resumeTicks();
+                try {
+                    const pulled = await pullSave();
+                    if (pulled?.payload) {
+                        await applyCloudSave(pulled.payload, pulled.updatedAt);
+                        await loadGame();
+                    }
+                }
+                catch (err) {
+                    console.warn('[PocketRPG] PvP post-match cloud pull failed:', err?.message || err);
+                }
                 pvp.leaveMatch();
                 setShowPvpLobby(false);
             } }));
