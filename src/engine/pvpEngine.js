@@ -58,6 +58,18 @@ function attackSnapshot(attacker, defender, itemsData) {
   return rollMeleeAttack(attacker, defender, itemsData)
 }
 
+function randInt(min, max) {
+  const lo = Math.ceil(Math.min(min, max))
+  const hi = Math.floor(Math.max(min, max))
+  return lo + Math.floor(Math.random() * (hi - lo + 1))
+}
+
+function scaledSwing(swing, scale) {
+  const maxHit = Math.max(0, Math.floor((swing?.maxHit || 0) * scale))
+  const damage = swing.hit ? Math.max(0, Math.floor((swing.damage || 0) * scale)) : 0
+  return { ...swing, maxHit, damage, hit: damage > 0 }
+}
+
 function resolveSwing(attacker, defender, itemsData, events) {
   const weapon = itemsData?.[attacker?.equipment?.weapon?.itemId]
   const spec = weapon?.specialAttack
@@ -77,10 +89,59 @@ function resolveSwing(attacker, defender, itemsData, events) {
 
   attacker.specialAttackEnergy = Math.max(0, currentEnergy - energyCost)
 
-  // PvP v1: consume queue + energy server-authoritatively. We keep the
-  // combat math deterministic by applying the same attack roll path and
-  // annotate the event for UI/logging.
-  const swing = attackSnapshot(attacker, defender, itemsData)
+  let swing = attackSnapshot(attacker, defender, itemsData)
+
+  if (spec.type === 'double_hit') {
+    const second = scaledSwing(attackSnapshot(attacker, defender, itemsData), 1.15)
+    swing = scaledSwing(swing, 1.15)
+    swing.damage = (swing.damage || 0) + (second.damage || 0)
+    swing.hit = swing.damage > 0
+    swing.hits = [swing.damage - second.damage, second.damage]
+  } else if (spec.type === 'zero_defence') {
+    const defenceBypass = {
+      ...defender,
+      stats: { ...(defender.stats || {}), defence: 1 },
+      equipment: {},
+    }
+    swing = attackSnapshot(attacker, defenceBypass, itemsData)
+  } else if (spec.type === 'judgement') {
+    swing = scaledSwing(swing, 1.25)
+  } else if (spec.type === 'healing_blade') {
+    const healAmount = Math.max(spec.minHeal || 10, Math.floor((swing.damage || 0) / 2))
+    attacker.hp = Math.min(attacker.maxHP || attacker.hp || 0, (attacker.hp || 0) + healAmount)
+    swing.healAmount = healAmount
+  } else if (spec.type === 'freeze') {
+    if ((swing.damage || 0) > 0) defender.attackTimer = (defender.attackTimer || 0) + (spec.stunTicks || 33)
+  } else if (spec.type === 'stun') {
+    if ((swing.damage || 0) > 0) defender.attackTimer = (defender.attackTimer || 0) + rapidAdjustedSpeed(defender, itemsData)
+  } else if (spec.type === 'shove') {
+    if ((swing.damage || 0) > 0) defender.attackTimer = (defender.attackTimer || 0) + (rapidAdjustedSpeed(defender, itemsData) * 2)
+  } else if (spec.type === 'warstrike') {
+    if ((swing.damage || 0) > 0) {
+      defender.stats = { ...(defender.stats || {}), defence: Math.max(1, (defender.stats?.defence || 1) - swing.damage) }
+    }
+  } else if (spec.type === 'lightning') {
+    const lightning = randInt(1, spec.lightningMax || 16)
+    swing.damage = (swing.damage || 0) + lightning
+    swing.hit = swing.damage > 0
+    swing.lightning = lightning
+  } else if (spec.type === 'snapshot') {
+    const first = scaledSwing(attackSnapshot(attacker, defender, itemsData), 0.75)
+    const second = scaledSwing(attackSnapshot(attacker, defender, itemsData), 0.75)
+    swing = {
+      ...first,
+      hit: (first.damage || 0) + (second.damage || 0) > 0,
+      damage: (first.damage || 0) + (second.damage || 0),
+      hits: [first.damage || 0, second.damage || 0],
+      maxHit: (first.maxHit || 0) + (second.maxHit || 0),
+    }
+  } else if (spec.type === 'pebble_shot') {
+    const max = Math.max(1, Math.floor((swing.maxHit || 1) * 1.25))
+    swing.damage = randInt(1, max)
+    swing.maxHit = max
+    swing.hit = true
+  }
+
   return {
     ...swing,
     special: true,

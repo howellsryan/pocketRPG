@@ -8,10 +8,11 @@ import HPBar from '../components/HPBar.jsx'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applySpecialAttack } from '../engine/combat.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
-import { onTick } from '../engine/tick.js'
+import { onTick, resumeTicks } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
 import { getCombatType, equipItem, checkEquipRequirements } from '../engine/equipment.js'
 import { api, clearAuth, getToken, setLocalCharacterId } from '../cloud/api.js'
+import { pullSave, applyCloudSave } from '../cloud/sync.js'
 import { closeDB } from '../db/database.js'
 import { wipeLocalSave } from '../db/saveload.js'
 import monstersData from '../data/monsters.json'
@@ -132,7 +133,7 @@ async function performOneLifeReset() {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame } = useGame()
   const pvp = usePvp()
   const [showPvpLobby, setShowPvpLobby] = useState(false)
 
@@ -1344,7 +1345,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       <PvpCombatScreen
         matchId={pvp.activeMatchId}
         addToast={addToast}
-        onExit={() => {
+        onExit={async () => {
+          resumeTicks()
+          try {
+            const pulled = await pullSave()
+            if (pulled?.payload) {
+              await applyCloudSave(pulled.payload, pulled.updatedAt)
+              await loadGame()
+            }
+          } catch (err) {
+            console.warn('[PocketRPG] PvP post-match cloud pull failed:', err?.message || err)
+          }
           pvp.leaveMatch()
           setShowPvpLobby(false)
         }}
