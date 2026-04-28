@@ -9,7 +9,7 @@ const items = {
     defenceBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
     otherBonus: { meleeStrength: 82, rangedStrength: 0, magicDamage: 0 },
   },
-  shark: { id: 'shark', heal: 20, stackable: false },
+  shark: { id: 'shark', heals: 20, stackable: false },
 }
 
 function buildPlayer(overrides: any = {}) {
@@ -82,6 +82,21 @@ describe('pvpEngine phase 2B contract', () => {
 
     expect(out.events.some(e => e.type === 'eat')).toBe(true)
     expect(out.stateNext.combatants['1'].hp).toBeGreaterThan(0)
+  })
+
+  it('uses heals field value for PvP eat intent', () => {
+    const a = buildPlayer({ characterId: 1, currentHP: 10, maxHP: 99, inventory: [{ itemId: 'shark', quantity: 1 }] })
+    const b = buildPlayer({ characterId: 2, currentHP: 99 })
+    const state = createPvpState(a, b, 0)
+    state.combatants['1'].attackTimer = 99
+    state.combatants['2'].attackTimer = 99
+
+    const out = processPvpTick(state, [
+      { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'eat', inventorySlot: 0 } },
+    ], items)
+
+    expect(out.stateNext.combatants['1'].hp).toBe(30)
+    expect(out.events.find((e: any) => e.type === 'eat')?.heal).toBe(20)
   })
 
   it('trims recentEvents to the latest 20 entries', () => {
