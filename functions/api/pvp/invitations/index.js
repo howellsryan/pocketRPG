@@ -15,6 +15,8 @@
 import { requireAuth, json } from '../../../_lib/auth.js'
 import { getOwnedCharacter, sweepStaleRows, assertNotInActiveMatch } from '../../../_lib/pvp.js'
 import { readCombatLevel } from '../../../_lib/combatLevel.js'
+import { itemsData, readCharacterSave } from '../../../_lib/pvpMatch.js'
+import { calculatePvpRiskValues } from '../../../../src/engine/pvpRisk.js'
 
 const CB_BAND = 10
 
@@ -55,9 +57,57 @@ export async function onRequestGet({ request, env }) {
    ORDER BY i.created_at ASC`
   ).bind(ch.id).all()
 
+  const incomingWithRisk = await Promise.all((incoming.results || []).map(async (row) => {
+    try {
+      const save = await readCharacterSave(env, row.from_character)
+      const risk = calculatePvpRiskValues({
+        inventory: save?.payload?.inventory,
+        equipment: save?.payload?.equipment,
+        itemsData,
+      })
+      return {
+        ...row,
+        from_inventory_shop_value: risk.inventoryShopValue,
+        from_equipment_shop_value: risk.equipmentShopValue,
+        from_total_shop_value: risk.totalShopValue,
+      }
+    } catch {
+      return {
+        ...row,
+        from_inventory_shop_value: 0,
+        from_equipment_shop_value: 0,
+        from_total_shop_value: 0,
+      }
+    }
+  }))
+
+  const outgoingWithRisk = await Promise.all((outgoing.results || []).map(async (row) => {
+    try {
+      const save = await readCharacterSave(env, row.to_character)
+      const risk = calculatePvpRiskValues({
+        inventory: save?.payload?.inventory,
+        equipment: save?.payload?.equipment,
+        itemsData,
+      })
+      return {
+        ...row,
+        to_inventory_shop_value: risk.inventoryShopValue,
+        to_equipment_shop_value: risk.equipmentShopValue,
+        to_total_shop_value: risk.totalShopValue,
+      }
+    } catch {
+      return {
+        ...row,
+        to_inventory_shop_value: 0,
+        to_equipment_shop_value: 0,
+        to_total_shop_value: 0,
+      }
+    }
+  }))
+
   return json({
-    incoming: incoming.results || [],
-    outgoing: outgoing.results || [],
+    incoming: incomingWithRisk,
+    outgoing: outgoingWithRisk,
     active_match_id: activeRow?.active_match_id || null,
   })
 }

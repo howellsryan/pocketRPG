@@ -7,15 +7,18 @@ import ItemSlot from '../components/ItemSlot.jsx'
 import Modal from '../components/Modal.jsx'
 import { pvpApi } from '../cloud/pvp.js'
 import itemsData from '../data/items.json'
+import prayersData from '../data/prayers.json'
 import { getCharacterId } from '../cloud/api.js'
 import { normalizePvpState } from '../engine/pvpState.js'
 import { isPvpFoodItem } from '../engine/pvpFood.js'
+import { isPvpCombatPotion } from '../engine/pvpPotions.js'
 
 const POLL_VISIBLE_MS = 600
 const POLL_HIDDEN_MS = 1500
 const NO_POLL_WARNING_MS = 5000
 const MATCH_BOOT_GRACE_MS = 8000
 const MATCH_BOOT_RETRY_MS = 500
+const PVP_SCREEN_PROTECTION_PRAYER_IDS = new Set(['protection_from_magic', 'protection_from_missiles', 'protection_from_melee'])
 
 function prettifyEvent(evt, selfId) {
   if (!evt) return null
@@ -279,6 +282,15 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     .filter(({ slot }) => slot && isPvpFoodItem(itemsData[slot.itemId]))
     .slice(0, 4)
 
+  const availablePrayers = Object.values(prayersData || {})
+    .filter((prayer) => prayer && prayer.bonusType !== 'protection' && !PVP_SCREEN_PROTECTION_PRAYER_IDS.has(prayer.id))
+    .filter((prayer) => (pair.self?.stats?.prayer || 1) >= (prayer.level || 1))
+
+  const potionSlots = toArray(pair.self?.inventory)
+    .map((slot, idx) => ({ slot, idx, item: slot ? itemsData?.[slot.itemId] : null }))
+    .filter(({ slot, item }) => slot && item && isPvpCombatPotion(item))
+    .slice(0, 6)
+
   return (
     <div class="p-3 space-y-3">
       {loading && (
@@ -376,6 +388,45 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
             <div key={`${slot.itemId}-${idx}`} onClick={() => queueAction({ type: 'eat', inventorySlot: idx })}>
               <ItemSlot slot={slot} size="small" />
             </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card>
+        <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Combat Prayers</div>
+        <div class="flex gap-2 flex-wrap">
+          {availablePrayers.length === 0 && <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No PvP-usable prayers unlocked.</div>}
+          {availablePrayers.map((prayer) => {
+            const active = pair.self?.activeCombatPrayer === prayer.id
+            return (
+              <Button
+                key={prayer.id}
+                variant={active ? 'primary' : 'secondary'}
+                size="sm"
+                disabled={busy}
+                onClick={() => queueAction({ type: 'toggle_prayer', prayerId: prayer.id })}
+              >
+                {prayer.icon || '✨'} {prayer.name}
+              </Button>
+            )
+          })}
+        </div>
+      </Card>
+
+      <Card>
+        <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Quick Potions</div>
+        <div class="flex gap-2 flex-wrap">
+          {potionSlots.length === 0 && <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No combat potions in inventory.</div>}
+          {potionSlots.map(({ slot, idx, item }) => (
+            <Button
+              key={`${slot.itemId}-${idx}`}
+              variant="secondary"
+              size="sm"
+              disabled={busy}
+              onClick={() => queueAction({ type: 'drink_potion', inventorySlot: idx })}
+            >
+              {(item?.icon || '🧪')} {item?.name || slot.itemId} {Number(slot?.quantity || 0) > 1 ? `x${slot.quantity}` : ''}
+            </Button>
           ))}
         </div>
       </Card>

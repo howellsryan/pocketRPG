@@ -2,9 +2,12 @@ import { requireAuth, json } from '../../../../_lib/auth.js'
 import { getOwnedCharacter, sweepStaleRows } from '../../../../_lib/pvp.js'
 import { readOwnedActiveMatch, itemsData } from '../../../../_lib/pvpMatch.js'
 import { isPvpFoodItem } from '../../../../../src/engine/pvpFood.js'
+import { isPvpCombatPotion } from '../../../../../src/engine/pvpPotions.js'
 import spellsData from '../../../../../src/data/spells.json' assert { type: 'json' }
+import prayersData from '../../../../../src/data/prayers.json' assert { type: 'json' }
 
 const VALID_STANCES = new Set(['accurate', 'aggressive', 'defensive', 'controlled', 'rapid', 'longrange'])
+const PROTECTION_PRAYER_IDS = new Set(['protection_from_magic', 'protection_from_missiles', 'protection_from_melee'])
 
 function getItemCount(inventory, itemId) {
   let count = 0
@@ -46,8 +49,16 @@ export function validateIntentAction(state, characterId, action) {
   }
 
   if (action.type === 'toggle_prayer') {
-    if (typeof action.prayerId !== 'string' || action.prayerId.startsWith('protect_')) {
+    if (typeof action.prayerId !== 'string') {
       return { ok: false, error: 'invalid_prayer' }
+    }
+    const prayer = prayersData?.[action.prayerId]
+    if (!prayer) return { ok: false, error: 'invalid_prayer' }
+    if (prayer.bonusType === 'protection' || PROTECTION_PRAYER_IDS.has(action.prayerId)) {
+      return { ok: false, error: 'protection_prayer_disabled' }
+    }
+    if ((combatant?.stats?.prayer || 1) < (prayer.level || 1)) {
+      return { ok: false, error: 'insufficient_prayer_level' }
     }
     return { ok: true }
   }
@@ -63,7 +74,7 @@ export function validateIntentAction(state, characterId, action) {
     if (!item) return { ok: false, error: 'unknown_item' }
     if (action.type === 'equip') return item.slot ? { ok: true } : { ok: false, error: 'item_not_equippable' }
     if (action.type === 'eat') return isPvpFoodItem(item) ? { ok: true } : { ok: false, error: 'item_not_food' }
-    return item.id?.includes('potion') ? { ok: true } : { ok: false, error: 'item_not_potion' }
+    return isPvpCombatPotion(item) ? { ok: true } : { ok: false, error: 'item_not_potion' }
   }
 
   if (action.type === 'unequip') {

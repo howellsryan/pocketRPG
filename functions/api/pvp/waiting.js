@@ -13,6 +13,8 @@
 import { requireAuth, json } from '../../_lib/auth.js'
 import { getOwnedCharacter, sweepStaleRows, assertNotInActiveMatch } from '../../_lib/pvp.js'
 import { readCombatLevel } from '../../_lib/combatLevel.js'
+import { itemsData, readCharacterSave } from '../../_lib/pvpMatch.js'
+import { calculatePvpRiskValues } from '../../../src/engine/pvpRisk.js'
 
 const CB_BAND = 10
 
@@ -102,10 +104,32 @@ export async function onRequestGet({ request, env }) {
   return json({
     my_combat_level: myCB,
     band: { lo, hi },
-    waiting: (rows.results || []).map(r => ({
-      character_id: r.character_id,
-      username: r.username,
-      combat_level: r.combat_level,
+    waiting: await Promise.all((rows.results || []).map(async (r) => {
+      try {
+        const save = await readCharacterSave(env, r.character_id)
+        const risk = calculatePvpRiskValues({
+          inventory: save?.payload?.inventory,
+          equipment: save?.payload?.equipment,
+          itemsData,
+        })
+        return {
+          character_id: r.character_id,
+          username: r.username,
+          combat_level: r.combat_level,
+          inventory_shop_value: risk.inventoryShopValue,
+          equipment_shop_value: risk.equipmentShopValue,
+          total_shop_value: risk.totalShopValue,
+        }
+      } catch {
+        return {
+          character_id: r.character_id,
+          username: r.username,
+          combat_level: r.combat_level,
+          inventory_shop_value: 0,
+          equipment_shop_value: 0,
+          total_shop_value: 0,
+        }
+      }
     })),
   })
 }

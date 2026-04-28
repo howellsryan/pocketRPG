@@ -7,8 +7,11 @@ import { addItem } from './inventory.js'
 import { equipItem, unequipSlot, getAttackSpeed } from './equipment.js'
 import { rollMeleeAttack, rollRangedAttack, rollMagicAttack } from './combatPrimitives.js'
 import { getPvpHealAmount } from './pvpFood.js'
+import prayersData from '../data/prayers.json'
+import { isPvpCombatPotion } from './pvpPotions.js'
 
 const VALID_STANCES = new Set(['accurate', 'aggressive', 'defensive', 'controlled', 'rapid', 'longrange'])
+const PVP_ENGINE_PROTECTION_PRAYER_IDS = new Set(['protection_from_magic', 'protection_from_missiles', 'protection_from_melee'])
 
 function cloneCombatant(c) {
   return {
@@ -178,8 +181,9 @@ function applyIntent(combatant, intentAction, itemsData, events) {
   }
 
   if (intentAction.type === 'toggle_prayer') {
-    // Protection prayers intentionally disabled in PvP v1.
-    if (typeof intentAction.prayerId === 'string' && !intentAction.prayerId.startsWith('protect_')) {
+    const prayer = prayersData?.[intentAction.prayerId]
+    const isProtectionPrayer = prayer?.bonusType === 'protection' || PVP_ENGINE_PROTECTION_PRAYER_IDS.has(intentAction.prayerId)
+    if (typeof intentAction.prayerId === 'string' && prayer && !isProtectionPrayer) {
       combatant.activeCombatPrayer = combatant.activeCombatPrayer === intentAction.prayerId ? null : intentAction.prayerId
     }
     return
@@ -234,7 +238,7 @@ function applyIntent(combatant, intentAction, itemsData, events) {
     if ((combatant.potionCooldown || 0) > 0 || typeof i !== 'number') return
     const slot = combatant.inventory[i]
     const item = slot ? itemsData?.[slot.itemId] : null
-    if (!slot || !item || !item.id?.includes('potion')) return
+    if (!slot || !item || !isPvpCombatPotion(item)) return
     combatant.activePotions[item.id] = Math.max(combatant.activePotions[item.id] || 0, 100)
     combatant.potionCooldown = 3
     slot.quantity -= 1

@@ -30,6 +30,7 @@ import {
   effectiveDefence, playerDefenceRoll,
 } from './formulas.js'
 import { getEquipmentBonuses, getAttackStyle } from './equipment.js'
+import { getPvpCombatModifiers } from './pvpCombatModifiers.js'
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
@@ -68,14 +69,31 @@ export function rollMeleeAttack(attacker, defender, itemsData) {
   const style = attackStyleFor(attacker.equipment, itemsData)
   const atkStance = getMeleeStyleBonuses(attacker.stance)
   const defStance = getMeleeStyleBonuses(defender.stance)
+  const atkMods = getPvpCombatModifiers(attacker)
+  const defMods = getPvpCombatModifiers(defender)
 
-  const effStr = effectiveStrength(attacker.stats.strength, 0, 1.0, atkStance.strengthStyleBonus)
+  const effStr = effectiveStrength(
+    attacker.stats.strength,
+    atkMods.potions.strength,
+    atkMods.prayer.strength,
+    atkStance.strengthStyleBonus,
+  )
   const maxHit = meleeMaxHit(effStr, atkBonuses.otherBonus.meleeStrength)
 
-  const effAtk = effectiveAttack(attacker.stats.attack, 0, 1.0, atkStance.attackStyleBonus)
+  const effAtk = effectiveAttack(
+    attacker.stats.attack,
+    atkMods.potions.attack,
+    atkMods.prayer.attack,
+    atkStance.attackStyleBonus,
+  )
   const atkRoll = maxAttackRoll(effAtk, atkBonuses.attackBonus[style] || 0)
 
-  const effDef = effectiveDefence(defender.stats.defence, 0, 1.0, defStance.defenceStyleBonus)
+  const effDef = effectiveDefence(
+    defender.stats.defence,
+    defMods.potions.defence,
+    defMods.prayer.defence,
+    defStance.defenceStyleBonus,
+  )
   const defRoll = playerDefenceRoll(effDef, defenderDefenceBonus(defender.equipment, style, itemsData))
 
   const accuracy = hitChance(atkRoll, defRoll)
@@ -97,13 +115,21 @@ export function rollRangedAttack(attacker, defender, itemsData) {
   const atkBonuses = getEquipmentBonuses(attacker.equipment, itemsData)
   const defStance = getMeleeStyleBonuses(defender.stance)
   const styleBonus = getRangedStyleBonus(attacker.stance)
+  const atkMods = getPvpCombatModifiers(attacker)
+  const defMods = getPvpCombatModifiers(defender)
 
-  const effRng = effectiveRanged(attacker.stats.ranged, 0, 1.0, styleBonus)
-  const maxHit = rangedMaxHit(effRng, atkBonuses.otherBonus.rangedStrength)
+  const effRngAttack = effectiveRanged(attacker.stats.ranged, atkMods.potions.ranged, atkMods.prayer.ranged, styleBonus)
+  const effRngStrength = effectiveRanged(attacker.stats.ranged, atkMods.potions.ranged, atkMods.prayer.rangedStrength, styleBonus)
+  const maxHit = rangedMaxHit(effRngStrength, atkBonuses.otherBonus.rangedStrength)
 
-  const atkRoll = maxAttackRoll(effRng, atkBonuses.attackBonus.ranged || 0)
+  const atkRoll = maxAttackRoll(effRngAttack, atkBonuses.attackBonus.ranged || 0)
 
-  const effDef = effectiveDefence(defender.stats.defence, 0, 1.0, defStance.defenceStyleBonus)
+  const effDef = effectiveDefence(
+    defender.stats.defence,
+    defMods.potions.defence,
+    defMods.prayer.defence,
+    defStance.defenceStyleBonus,
+  )
   const defRoll = playerDefenceRoll(effDef, defenderDefenceBonus(defender.equipment, 'ranged', itemsData))
 
   const accuracy = hitChance(atkRoll, defRoll)
@@ -136,8 +162,10 @@ export function rollMagicAttack(attacker, defender, itemsData, opts = {}) {
   const { spell = attacker.spell, maxHitOverride = null } = opts
   const atkBonuses = getEquipmentBonuses(attacker.equipment, itemsData)
   const defBonuses = getEquipmentBonuses(defender.equipment, itemsData)
+  const atkMods = getPvpCombatModifiers(attacker)
+  const defMods = getPvpCombatModifiers(defender)
 
-  const effMag = effectiveMagic(attacker.stats.magic)
+  const effMag = effectiveMagic(attacker.stats.magic, atkMods.potions.magic, atkMods.prayer.magic)
   const atkRoll = maxAttackRoll(effMag, atkBonuses.attackBonus.magic || 0)
 
   // Player magic defence: effective magic level + magic defence equipment.
@@ -145,7 +173,8 @@ export function rollMagicAttack(attacker, defender, itemsData, opts = {}) {
   // defence is dominated by the magic level itself, not the defence stat.
   // (OSRS PvP: magic def = 70% magic + 30% defence. We follow that here
   // because it's the well-tested formula and it preserves the feel.)
-  const playerMagicDefLevel = Math.floor(defender.stats.magic * 0.7) + Math.floor(defender.stats.defence * 0.3)
+  const effectiveDefenceLevel = Math.floor((defender.stats.defence + defMods.potions.defence) * defMods.prayer.defence)
+  const playerMagicDefLevel = Math.floor(defender.stats.magic * 0.7) + Math.floor(effectiveDefenceLevel * 0.3)
   const effMagDef = effectiveDefence(playerMagicDefLevel)
   const defRoll = playerDefenceRoll(effMagDef, defBonuses.defenceBonus.magic || 0)
 

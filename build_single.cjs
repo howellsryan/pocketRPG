@@ -12,6 +12,7 @@ function readSrc(rel) { return fs.readFileSync(path.join(SRC, rel), 'utf-8'); }
 const sourceFiles = [
   'utils/constants.js',
   'utils/helpers.js',
+  'utils/formatters.js',
   'hooks/useActionTick.js',
   'engine/experience.js',
   'engine/formulas.js',
@@ -24,6 +25,9 @@ const sourceFiles = [
   'engine/combat.js',
   'engine/combatant.js',
   'engine/combatPrimitives.js',
+  'engine/pvpPotions.js',
+  'engine/pvpCombatModifiers.js',
+  'engine/pvpRisk.js',
   'engine/pvpState.js',
   'engine/pvpFood.js',
   'engine/pvpEngine.js',

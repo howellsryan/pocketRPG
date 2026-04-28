@@ -27934,6 +27934,29 @@ function calcCombatLevel(stats) {
     return Math.floor(base + Math.max(melee, range, mage));
 }
 
+// ── utils/formatters.js ──
+function formatCompactCoins(value) {
+    const num = Number(value);
+    if (!Number.isFinite(num))
+        return '0';
+    const abs = Math.abs(num);
+    const sign = num < 0 ? '-' : '';
+    if (abs < 1000)
+        return `${Math.floor(num)}`;
+    const formatUnit = (divisor, suffix) => {
+        const scaled = abs / divisor;
+        const useDecimal = scaled < 10 && Math.floor(scaled) !== scaled;
+        const shown = useDecimal ? Math.floor(scaled * 10) / 10 : Math.floor(scaled);
+        const formatted = useDecimal ? shown.toFixed(1).replace(/\.0$/, '') : String(shown);
+        return `${sign}${formatted}${suffix}`;
+    };
+    if (abs >= 1000000000)
+        return formatUnit(1000000000, 'b');
+    if (abs >= 1000000)
+        return formatUnit(1000000, 'M');
+    return formatUnit(1000, 'k');
+}
+
 // ── hooks/useActionTick.js ──
 /**
  * Calculate progress for any action-based activity (0-1)
@@ -29024,14 +29047,24 @@ function checkMonsterDeath(state, monster, events) {
         state.specialAttackEnergy = 100;
         state.loot = rollRaidRewards(raid.rewards);
         events.push({ type: 'raidComplete', raidId: raid.raidId, loot: state.loot, xpGained: { ...state.xpGained } });
-        events.push({ type: 'monsterDeath', loot: state.loot, xpGained: { ...state.xpGained } });
+        events.push({
+            type: 'monsterDeath',
+            monster: { id: monster.id, name: monster.name, boss: monster.boss === true },
+            loot: state.loot,
+            xpGained: { ...state.xpGained }
+        });
         return true;
     }
     // True death (non-raid)
     state.active = false;
     state.specialAttackEnergy = 100;
     state.loot = rollDrops(monster);
-    events.push({ type: 'monsterDeath', loot: state.loot, xpGained: { ...state.xpGained } });
+    events.push({
+        type: 'monsterDeath',
+        monster: { id: monster.id, name: monster.name, boss: monster.boss === true },
+        loot: state.loot,
+        xpGained: { ...state.xpGained }
+    });
     return true;
 }
 /**
@@ -30259,6 +30292,7 @@ function getCombatantSkill(combatant, skill) {
 // hood) so behaviour matches existing PvE tests for free.
 
 
+
 // ── Helpers ─────────────────────────────────────────────────────────────
 /**
  * Resolve an attacker's "weapon style" for melee: the bonus key on
@@ -30292,11 +30326,13 @@ function rollMeleeAttack(attacker, defender, itemsData) {
     const style = attackStyleFor(attacker.equipment, itemsData);
     const atkStance = getMeleeStyleBonuses(attacker.stance);
     const defStance = getMeleeStyleBonuses(defender.stance);
-    const effStr = effectiveStrength(attacker.stats.strength, 0, 1.0, atkStance.strengthStyleBonus);
+    const atkMods = getPvpCombatModifiers(attacker);
+    const defMods = getPvpCombatModifiers(defender);
+    const effStr = effectiveStrength(attacker.stats.strength, atkMods.potions.strength, atkMods.prayer.strength, atkStance.strengthStyleBonus);
     const maxHit = meleeMaxHit(effStr, atkBonuses.otherBonus.meleeStrength);
-    const effAtk = effectiveAttack(attacker.stats.attack, 0, 1.0, atkStance.attackStyleBonus);
+    const effAtk = effectiveAttack(attacker.stats.attack, atkMods.potions.attack, atkMods.prayer.attack, atkStance.attackStyleBonus);
     const atkRoll = maxAttackRoll(effAtk, atkBonuses.attackBonus[style] || 0);
-    const effDef = effectiveDefence(defender.stats.defence, 0, 1.0, defStance.defenceStyleBonus);
+    const effDef = effectiveDefence(defender.stats.defence, defMods.potions.defence, defMods.prayer.defence, defStance.defenceStyleBonus);
     const defRoll = playerDefenceRoll(effDef, defenderDefenceBonus(defender.equipment, style, itemsData));
     const accuracy = hitChance(atkRoll, defRoll);
     const damage = rollDamage(accuracy, maxHit);
@@ -30315,10 +30351,13 @@ function rollRangedAttack(attacker, defender, itemsData) {
     const atkBonuses = getEquipmentBonuses(attacker.equipment, itemsData);
     const defStance = getMeleeStyleBonuses(defender.stance);
     const styleBonus = getRangedStyleBonus(attacker.stance);
-    const effRng = effectiveRanged(attacker.stats.ranged, 0, 1.0, styleBonus);
-    const maxHit = rangedMaxHit(effRng, atkBonuses.otherBonus.rangedStrength);
-    const atkRoll = maxAttackRoll(effRng, atkBonuses.attackBonus.ranged || 0);
-    const effDef = effectiveDefence(defender.stats.defence, 0, 1.0, defStance.defenceStyleBonus);
+    const atkMods = getPvpCombatModifiers(attacker);
+    const defMods = getPvpCombatModifiers(defender);
+    const effRngAttack = effectiveRanged(attacker.stats.ranged, atkMods.potions.ranged, atkMods.prayer.ranged, styleBonus);
+    const effRngStrength = effectiveRanged(attacker.stats.ranged, atkMods.potions.ranged, atkMods.prayer.rangedStrength, styleBonus);
+    const maxHit = rangedMaxHit(effRngStrength, atkBonuses.otherBonus.rangedStrength);
+    const atkRoll = maxAttackRoll(effRngAttack, atkBonuses.attackBonus.ranged || 0);
+    const effDef = effectiveDefence(defender.stats.defence, defMods.potions.defence, defMods.prayer.defence, defStance.defenceStyleBonus);
     const defRoll = playerDefenceRoll(effDef, defenderDefenceBonus(defender.equipment, 'ranged', itemsData));
     const accuracy = hitChance(atkRoll, defRoll);
     const damage = rollDamage(accuracy, maxHit);
@@ -30348,14 +30387,17 @@ function rollMagicAttack(attacker, defender, itemsData, opts = {}) {
     const { spell = attacker.spell, maxHitOverride = null } = opts;
     const atkBonuses = getEquipmentBonuses(attacker.equipment, itemsData);
     const defBonuses = getEquipmentBonuses(defender.equipment, itemsData);
-    const effMag = effectiveMagic(attacker.stats.magic);
+    const atkMods = getPvpCombatModifiers(attacker);
+    const defMods = getPvpCombatModifiers(defender);
+    const effMag = effectiveMagic(attacker.stats.magic, atkMods.potions.magic, atkMods.prayer.magic);
     const atkRoll = maxAttackRoll(effMag, atkBonuses.attackBonus.magic || 0);
     // Player magic defence: effective magic level + magic defence equipment.
     // We use effectiveDefence(magicLevel) — for player vs player, magic
     // defence is dominated by the magic level itself, not the defence stat.
     // (OSRS PvP: magic def = 70% magic + 30% defence. We follow that here
     // because it's the well-tested formula and it preserves the feel.)
-    const playerMagicDefLevel = Math.floor(defender.stats.magic * 0.7) + Math.floor(defender.stats.defence * 0.3);
+    const effectiveDefenceLevel = Math.floor((defender.stats.defence + defMods.potions.defence) * defMods.prayer.defence);
+    const playerMagicDefLevel = Math.floor(defender.stats.magic * 0.7) + Math.floor(effectiveDefenceLevel * 0.3);
     const effMagDef = effectiveDefence(playerMagicDefLevel);
     const defRoll = playerDefenceRoll(effMagDef, defBonuses.defenceBonus.magic || 0);
     let maxHit;
@@ -30379,6 +30421,160 @@ function rollMagicAttack(attacker, defender, itemsData, opts = {}) {
         attackRoll: atkRoll,
         defenceRoll: defRoll,
         style: 'magic',
+    };
+}
+
+// ── engine/pvpPotions.js ──
+
+const BASE_PVP_COMBAT_POTIONS = {
+    attack_potion: { attack: 'attack_potion' },
+    strength_potion: { strength: 'strength_potion' },
+    defence_potion: { defence: 'defence_potion' },
+    ranging_potion: { ranged: 'ranging_potion' },
+    super_attack: { attack: 'super_attack' },
+    super_strength: { strength: 'super_strength' },
+    super_defence: { defence: 'super_defence' },
+    combat_potion: { attack: 'attack_potion', strength: 'strength_potion' },
+    super_combat_potion: { attack: 'super_attack', strength: 'super_strength', defence: 'super_defence' },
+};
+function normalizePotionId(itemOrId) {
+    const raw = typeof itemOrId === 'string' ? itemOrId : itemOrId?.id;
+    if (typeof raw !== 'string')
+        return null;
+    const lower = raw.toLowerCase();
+    if (BASE_PVP_COMBAT_POTIONS[lower])
+        return lower;
+    const strippedDose = lower.replace(/[_\s-]?\(?\d+\)?$/, '');
+    if (BASE_PVP_COMBAT_POTIONS[strippedDose])
+        return strippedDose;
+    return null;
+}
+function isPvpCombatPotion(itemOrId) {
+    return !!normalizePotionId(itemOrId);
+}
+function getPvpPotionBoosts(activePotions, baseStats) {
+    const boosts = { attack: 0, strength: 0, defence: 0, ranged: 0, magic: 0 };
+    if (!activePotions || typeof activePotions !== 'object')
+        return boosts;
+    for (const [rawId, ticks] of Object.entries(activePotions)) {
+        if ((ticks || 0) <= 0)
+            continue;
+        const potionId = normalizePotionId(rawId);
+        if (!potionId)
+            continue;
+        const mapping = BASE_PVP_COMBAT_POTIONS[potionId] || {};
+        for (const [stat, formulaPotionType] of Object.entries(mapping)) {
+            const baseLevel = Number(baseStats?.[stat]) || 1;
+            boosts[stat] = Math.max(boosts[stat], getPotionBonus(formulaPotionType, baseLevel));
+        }
+    }
+    return boosts;
+}
+
+// ── engine/pvpCombatModifiers.js ──
+
+
+const PVP_MODIFIERS_PROTECTION_PRAYER_IDS = new Set([
+    'protection_from_magic',
+    'protection_from_missiles',
+    'protection_from_melee',
+]);
+function isProtectionPrayer(prayer) {
+    return prayer?.bonusType === 'protection' || PVP_MODIFIERS_PROTECTION_PRAYER_IDS.has(prayer?.id);
+}
+function getPrayerMultipliers(prayerId) {
+    const out = {
+        attack: 1.0,
+        strength: 1.0,
+        defence: 1.0,
+        ranged: 1.0,
+        rangedStrength: 1.0,
+        magic: 1.0,
+    };
+    const prayer = prayersData?.[prayerId];
+    if (!prayer || isProtectionPrayer(prayer))
+        return out;
+    if (prayer.bonusType === 'stat') {
+        const mult = 1 + ((Number(prayer.boostPercent) || 0) / 100);
+        if (prayer.stat === 'attack')
+            out.attack = mult;
+        if (prayer.stat === 'strength')
+            out.strength = mult;
+        if (prayer.stat === 'defence')
+            out.defence = mult;
+        if (prayer.stat === 'ranged') {
+            out.ranged = mult;
+            out.rangedStrength = mult;
+        }
+        if (prayer.stat === 'magic')
+            out.magic = mult;
+        return out;
+    }
+    if (prayer.bonusType === 'multi_stat' && prayer.stats) {
+        const stats = prayer.stats;
+        if (stats.attack != null)
+            out.attack = 1 + (Number(stats.attack) / 100);
+        if (stats.strength != null)
+            out.strength = 1 + (Number(stats.strength) / 100);
+        if (stats.defence != null)
+            out.defence = 1 + (Number(stats.defence) / 100);
+        if (stats.ranged != null)
+            out.ranged = 1 + (Number(stats.ranged) / 100);
+        if (stats.ranged_strength != null)
+            out.rangedStrength = 1 + (Number(stats.ranged_strength) / 100);
+        if (stats.magic != null)
+            out.magic = 1 + (Number(stats.magic) / 100);
+    }
+    return out;
+}
+function getPvpCombatModifiers(combatant) {
+    const prayer = getPrayerMultipliers(combatant?.activeCombatPrayer);
+    const potions = getPvpPotionBoosts(combatant?.activePotions, combatant?.stats || {});
+    return { prayer, potions };
+}
+
+// ── engine/pvpRisk.js ──
+function toStacks(value) {
+    if (Array.isArray(value))
+        return value;
+    if (!value || typeof value !== 'object')
+        return [];
+    return Object.values(value);
+}
+function quantityOf(stack) {
+    const qty = Number(stack?.quantity);
+    if (!Number.isFinite(qty) || qty <= 0)
+        return 1;
+    return Math.floor(qty);
+}
+function isLootableTradeable(item, itemId) {
+    if (!item || typeof item !== 'object')
+        return false;
+    if (itemId === 'coins')
+        return true;
+    return !!item.tradeable;
+}
+function getItemShopValue(itemStack, itemsData) {
+    const itemId = itemStack?.itemId;
+    if (!itemId || !itemsData)
+        return 0;
+    const item = itemsData[itemId];
+    if (!isLootableTradeable(item, itemId))
+        return 0;
+    const shopValue = Number(item.shopValue);
+    if (!Number.isFinite(shopValue) || shopValue <= 0)
+        return 0;
+    return Math.floor(shopValue) * quantityOf(itemStack);
+}
+function calculatePvpRiskValues({ inventory, equipment, itemsData }) {
+    const invStacks = toStacks(inventory);
+    const eqStacks = toStacks(equipment);
+    const inventoryShopValue = invStacks.reduce((sum, stack) => sum + getItemShopValue(stack, itemsData), 0);
+    const equipmentShopValue = eqStacks.reduce((sum, stack) => sum + getItemShopValue(stack, itemsData), 0);
+    return {
+        inventoryShopValue,
+        equipmentShopValue,
+        totalShopValue: inventoryShopValue + equipmentShopValue,
     };
 }
 
@@ -30499,7 +30695,10 @@ function isPvpFoodItem(item) {
 
 
 
+
+
 const VALID_STANCES = new Set(['accurate', 'aggressive', 'defensive', 'controlled', 'rapid', 'longrange']);
+const PVP_ENGINE_PROTECTION_PRAYER_IDS = new Set(['protection_from_magic', 'protection_from_missiles', 'protection_from_melee']);
 function cloneCombatant(c) {
     return {
         ...c,
@@ -30666,8 +30865,9 @@ function applyIntent(combatant, intentAction, itemsData, events) {
         return;
     }
     if (intentAction.type === 'toggle_prayer') {
-        // Protection prayers intentionally disabled in PvP v1.
-        if (typeof intentAction.prayerId === 'string' && !intentAction.prayerId.startsWith('protect_')) {
+        const prayer = prayersData?.[intentAction.prayerId];
+        const isProtectionPrayer = prayer?.bonusType === 'protection' || PVP_ENGINE_PROTECTION_PRAYER_IDS.has(intentAction.prayerId);
+        if (typeof intentAction.prayerId === 'string' && prayer && !isProtectionPrayer) {
             combatant.activeCombatPrayer = combatant.activeCombatPrayer === intentAction.prayerId ? null : intentAction.prayerId;
         }
         return;
@@ -30726,7 +30926,7 @@ function applyIntent(combatant, intentAction, itemsData, events) {
             return;
         const slot = combatant.inventory[i];
         const item = slot ? itemsData?.[slot.itemId] : null;
-        if (!slot || !item || !item.id?.includes('potion'))
+        if (!slot || !item || !isPvpCombatPotion(item))
             return;
         combatant.activePotions[item.id] = Math.max(combatant.activePotions[item.id] || 0, 100);
         combatant.potionCooldown = 3;
@@ -35787,6 +35987,7 @@ function BankScreen() {
 
 
 
+
 const POLL_MS = 2500; // light enough to be cheap, fast enough to feel live in the lobby
 const SAVE_HEARTBEAT_MS = 3000;
 const LOBBY_PVP_SYNC_BLOCK_KEY = 'pocketrpg_pvp_sync_block';
@@ -36110,12 +36311,11 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
             waiting.length === 0 && (h(Card, { className: "text-center text-[11px] text-[var(--color-parchment)] opacity-50 py-6" }, "No one in your CB band right now. Wait for someone to join, or come back later.")),
             h("div", { class: "space-y-1.5" }, waiting.map(p => {
                 const alreadyInvited = invitations.outgoing.some(o => o.to_character === p.character_id);
+                const riskLine = `CB ${p.combat_level} · Gear ${formatCompactCoins(p.equipment_shop_value)} · Inv ${formatCompactCoins(p.inventory_shop_value)} · Risk ${formatCompactCoins(p.total_shop_value)}`;
                 return (h(Card, { key: p.character_id, className: "flex items-center justify-between", padding: "p-2.5" },
                     h("div", null,
                         h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, p.username),
-                        h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-50" },
-                            "CB ",
-                            p.combat_level)),
+                        h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-50" }, riskLine)),
                     h(Button, { variant: alreadyInvited ? 'secondary' : 'primary', size: "sm", disabled: busy || alreadyInvited, onClick: () => handleInvite(p.character_id, p.username) }, alreadyInvited ? 'Invited' : '⚔️ Invite')));
             })))),
         tab === 'invitations' && (h("div", { class: "space-y-4" },
@@ -36127,7 +36327,13 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
                         h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, inv.from_username),
                         h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-50" },
                             "CB ",
-                            inv.from_combat_level)),
+                            inv.from_combat_level,
+                            " \u00B7 Gear ",
+                            formatCompactCoins(inv.from_equipment_shop_value),
+                            " \u00B7 Inv ",
+                            formatCompactCoins(inv.from_inventory_shop_value),
+                            " \u00B7 Risk ",
+                            formatCompactCoins(inv.from_total_shop_value))),
                     h("div", { class: "flex gap-1.5" },
                         h(Button, { variant: "success", size: "sm", disabled: busy, onClick: () => handleAccept(inv.id, inv.from_username) }, "Accept"),
                         h(Button, { variant: "danger", size: "sm", disabled: busy, onClick: () => handleDecline(inv.id) }, "Decline"))))))),
@@ -36140,6 +36346,12 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
                         h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-50" },
                             "CB ",
                             inv.to_combat_level,
+                            " \u00B7 Gear ",
+                            formatCompactCoins(inv.to_equipment_shop_value),
+                            " \u00B7 Inv ",
+                            formatCompactCoins(inv.to_inventory_shop_value),
+                            " \u00B7 Risk ",
+                            formatCompactCoins(inv.to_total_shop_value),
                             " \u00B7 waiting for response\u2026")),
                     h(Button, { variant: "ghost", size: "sm", disabled: busy, onClick: () => handleCancel(inv.id) }, "Cancel")))))))),
         error && (h("div", { class: "mt-3 text-[10px] text-[var(--color-blood-light)] opacity-70 text-center" }, error))));
@@ -36158,11 +36370,14 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
 
 
 
+
+
 const POLL_VISIBLE_MS = 600;
 const POLL_HIDDEN_MS = 1500;
 const NO_POLL_WARNING_MS = 5000;
 const MATCH_BOOT_GRACE_MS = 8000;
 const MATCH_BOOT_RETRY_MS = 500;
+const PVP_SCREEN_PROTECTION_PRAYER_IDS = new Set(['protection_from_magic', 'protection_from_missiles', 'protection_from_melee']);
 function prettifyEvent(evt, selfId) {
     if (!evt)
         return null;
@@ -36426,6 +36641,13 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
         .map((slot, idx) => ({ slot, idx }))
         .filter(({ slot }) => slot && isPvpFoodItem(itemsData[slot.itemId]))
         .slice(0, 4);
+    const availablePrayers = Object.values(prayersData || {})
+        .filter((prayer) => prayer && prayer.bonusType !== 'protection' && !PVP_SCREEN_PROTECTION_PRAYER_IDS.has(prayer.id))
+        .filter((prayer) => (pair.self?.stats?.prayer || 1) >= (prayer.level || 1));
+    const potionSlots = toArray(pair.self?.inventory)
+        .map((slot, idx) => ({ slot, idx, item: slot ? itemsData?.[slot.itemId] : null }))
+        .filter(({ slot, item }) => slot && item && isPvpCombatPotion(item))
+        .slice(0, 6);
     return (h("div", { class: "p-3 space-y-3" },
         loading && (h(Card, { className: "border-[var(--color-gold-dim)] bg-[var(--color-void-light)]" },
             h("div", { class: "text-[11px] text-[var(--color-gold)]" }, "Connecting to PvP match\u2026"))),
@@ -36484,6 +36706,27 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
                 foodSlots.length === 0 && h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60" }, "No food in inventory."),
                 foodSlots.map(({ slot, idx }) => (h("div", { key: `${slot.itemId}-${idx}`, onClick: () => queueAction({ type: 'eat', inventorySlot: idx }) },
                     h(ItemSlot, { slot: slot, size: "small" })))))),
+        h(Card, null,
+            h("div", { class: "text-xs font-semibold text-[var(--color-gold)] mb-2" }, "Combat Prayers"),
+            h("div", { class: "flex gap-2 flex-wrap" },
+                availablePrayers.length === 0 && h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60" }, "No PvP-usable prayers unlocked."),
+                availablePrayers.map((prayer) => {
+                    const active = pair.self?.activeCombatPrayer === prayer.id;
+                    return (h(Button, { key: prayer.id, variant: active ? 'primary' : 'secondary', size: "sm", disabled: busy, onClick: () => queueAction({ type: 'toggle_prayer', prayerId: prayer.id }) },
+                        prayer.icon || '✨',
+                        " ",
+                        prayer.name));
+                }))),
+        h(Card, null,
+            h("div", { class: "text-xs font-semibold text-[var(--color-gold)] mb-2" }, "Quick Potions"),
+            h("div", { class: "flex gap-2 flex-wrap" },
+                potionSlots.length === 0 && h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60" }, "No combat potions in inventory."),
+                potionSlots.map(({ slot, idx, item }) => (h(Button, { key: `${slot.itemId}-${idx}`, variant: "secondary", size: "sm", disabled: busy, onClick: () => queueAction({ type: 'drink_potion', inventorySlot: idx }) },
+                    (item?.icon || '🧪'),
+                    " ",
+                    item?.name || slot.itemId,
+                    " ",
+                    Number(slot?.quantity || 0) > 1 ? `x${slot.quantity}` : ''))))),
         h(Panel, null,
             h("div", { class: "text-xs font-semibold text-[var(--color-gold)] mb-1" }, "Recent actions"),
             h("div", { class: "space-y-1 max-h-24 overflow-y-auto" },
@@ -37170,24 +37413,25 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                     combatRef.current.runesConsumed = null; // Clear so we don't consume again
                 }
                 if (ev.type === 'monsterDeath') {
+                    const defeatedMonster = ev.monster || state.monster;
                     setKillCount(k => k + 1);
                     // Boss kill count tracking
-                    if (state.monster.boss) {
-                        const monsterId = state.monster.id;
+                    if (defeatedMonster?.boss) {
+                        const monsterId = defeatedMonster.id;
                         const newKC = (bossKillCountsRef.current[monsterId] || 0) + 1;
                         const updatedCounts = { ...bossKillCountsRef.current, [monsterId]: newKC };
                         bossKillCountsRef.current = updatedCounts;
                         updateBossKillCounts(updatedCounts);
                         setLog(prev => [...prev.slice(-20), {
-                                text: `👑 ${state.monster.name} KC: ${newKC.toLocaleString()}`,
+                                text: `👑 ${defeatedMonster.name} KC: ${newKC.toLocaleString()}`,
                                 type: 'victory',
                                 time: Date.now()
                             }]);
                     }
                     // Slayer task tracking
                     const task = slayerTaskRef.current;
-                    if (task && task.monsterId === state.monster.id) {
-                        slayerXpGained += (state.monster.slayerXP || state.monster.hitpoints) * 2;
+                    if (task && defeatedMonster && task.monsterId === defeatedMonster.id) {
+                        slayerXpGained += (defeatedMonster.slayerXP || defeatedMonster.hitpoints || state.monster.hitpoints) * 2;
                         const newRemaining = task.monstersRemaining - 1;
                         if (newRemaining <= 0) {
                             // Task complete!
@@ -37230,14 +37474,14 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                         updateInventory(newInv);
                     }
                     setLog(prev => [...prev.slice(-20), {
-                            text: `${state.monster.name} defeated!`,
+                            text: `${defeatedMonster?.name || state.monster.name} defeated!`,
                             type: 'victory',
                             time: Date.now()
                         }]);
                     // Show loot modal instead of auto-restarting
                     const raidId = state.raid?.raidId || null;
                     setLootModal({
-                        monster: state.monster,
+                        monster: defeatedMonster || state.monster,
                         loot: ev.loot || [],
                         raidId
                     });
@@ -39855,9 +40099,9 @@ const SLAYER_MASTERS = [
         location: 'Tree Gnome Stronghold',
         icon: '🌿',
         combatReq: 85,
-        slayerReq: 0,
+        slayerReq: 70,
         pointsPerTask: 12,
-        description: 'Elite tasks including God Wars Dungeon bosses. Requires combat 85.',
+        description: 'Elite tasks including God Wars Dungeon bosses. Requires combat 85, slayer 70.',
         taskRange: [150, 400],
         bossTaskRange: [5, 25],
         monsterPool: [
