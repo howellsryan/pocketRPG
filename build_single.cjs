@@ -149,7 +149,7 @@ ${css}
 <div id="app"></div>
 <script type="module">
 import { h, render, Fragment, createContext, Component } from 'https://esm.sh/preact@10.25.4';
-import { useState, useEffect, useRef, useCallback, useContext } from 'https://esm.sh/preact@10.25.4/hooks';
+import { useState, useEffect, useRef, useMemo, useCallback, useContext } from 'https://esm.sh/preact@10.25.4/hooks';
 import { openDB } from 'https://esm.sh/idb@8.0.2';
 
 // ── Inline JSON Data ──
