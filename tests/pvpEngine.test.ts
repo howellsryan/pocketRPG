@@ -103,6 +103,28 @@ describe('pvpEngine phase 2B contract', () => {
     expect(out.events.find((e: any) => e.type === 'eat')?.heal).toBe(20)
   })
 
+  it('eating delays the next player attack timer by weapon speed', () => {
+    const a = buildPlayer({
+      characterId: 1,
+      currentHP: 10,
+      maxHP: 99,
+      inventory: [{ itemId: 'shark', quantity: 1 }],
+    })
+    const b = buildPlayer({ characterId: 2, currentHP: 99 })
+
+    const state = createPvpState(a, b, 0)
+    state.combatants['1'].attackTimer = 0
+    state.combatants['2'].attackTimer = 99
+
+    const out = processPvpTick(state, [
+      { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'eat', inventorySlot: 0 } },
+    ], items)
+
+    expect(out.events.some((e: any) => e.type === 'eat')).toBe(true)
+    expect(out.events.some((e: any) => e.type === 'attack' && e.attackerCharacterId === 1)).toBe(false)
+    expect(out.stateNext.combatants['1'].attackTimer).toBe(4)
+  })
+
   it('trims recentEvents to the latest 20 entries', () => {
     const a = buildPlayer({ characterId: 1 })
     const b = buildPlayer({ characterId: 2 })

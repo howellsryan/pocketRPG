@@ -227,6 +227,13 @@ function applyIntent(combatant, intentAction, itemsData, events) {
     if (!slot || healAmount <= 0) return
     combatant.hp = Math.min(combatant.maxHP, combatant.hp + healAmount)
     combatant.eatCooldown = 3
+
+    // Eating should delay the next swing. Timers are decremented later in
+    // this same processPvpTick call, so use speed + 1 here to persist as
+    // full weapon speed after the global decrement step.
+    const foodDelay = rapidAdjustedSpeed(combatant, itemsData) + 1
+    combatant.attackTimer = Math.max(combatant.attackTimer || 0, foodDelay)
+
     slot.quantity -= 1
     if (slot.quantity <= 0) combatant.inventory[i] = null
     events.push({ type: 'eat', characterId: combatant.characterId, itemId: item.id, heal: healAmount })

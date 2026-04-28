@@ -134,6 +134,7 @@ describe('fillBank', () => {
     expect(result.added).toHaveLength(0)
     expect(result.dropped).toHaveLength(1)
     expect(result.dropped[0].itemId).toBe('rune_scimitar')
+    expect(result.addedValue).toBe(0)
     expect(result.droppedValue).toBe(25_000)
   })
 
@@ -155,6 +156,7 @@ describe('fillBank', () => {
       { itemId: 'abyssal_whip', quantity: 1 },    // 1,500,000
     ], items, 500)
     expect(result.dropped).toHaveLength(2)
+    expect(result.addedValue).toBe(0)
     expect(result.droppedValue).toBe(1_525_000)
   })
 })
@@ -191,6 +193,10 @@ describe('applyLootTransfer (end-to-end)', () => {
     expect(result.winner.bank.dragon_arrow.quantity).toBe(200)
     expect(result.summary.dropped).toHaveLength(0)
     expect(result.summary.transferCount).toBe(4)
+    expect(result.summary.bankedValue).toBe(1_850_020)
+    expect(result.summary.addedValue).toBe(1_850_020)
+    expect(result.summary.totalRiskValue).toBe(1_850_020)
+    expect(result.summary.droppedValue).toBe(0)
   })
 
   it('reports overflow when winner bank is full', () => {
@@ -207,6 +213,8 @@ describe('applyLootTransfer (end-to-end)', () => {
 
     expect(result.summary.added).toHaveLength(0)
     expect(result.summary.dropped).toHaveLength(1)
+    expect(result.summary.bankedValue).toBe(0)
+    expect(result.summary.totalRiskValue).toBe(1_500_000)
     expect(result.summary.droppedValue).toBe(1_500_000)
     expect(result.loser.equipment.weapon).toBeNull()    // loser still loses it
   })
