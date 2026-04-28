@@ -115,17 +115,38 @@ const MONSTER_ICONS = {
 class PvpCombatErrorBoundary extends Component {
   constructor(props) {
     super(props)
-    this.state = { crashed: false }
+    this.state = { hasError: false, message: '' }
   }
 
-  componentDidCatch(error) {
-    console.error('[PocketRPG] PvP combat render crashed:', error)
-    this.setState({ crashed: true })
-    this.props.onCrash?.(error)
+  componentDidUpdate(prevProps) {
+    if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
+      this.setState({ hasError: false, message: '' })
+    }
+  }
+
+  static getDerivedStateFromError(error) {
+    return {
+      hasError: true,
+      message: error?.message || String(error || 'Unknown PvP render error'),
+    }
+  }
+
+  componentDidCatch(error, info) {
+    console.error('[PocketRPG][PvP] combat screen render failed', error, info)
+    this.props.onCrash?.(error, info)
+  }
+
+  reset = () => {
+    this.setState({ hasError: false, message: '' })
   }
 
   render(props, state) {
-    if (state.crashed) return null
+    if (state.hasError) {
+      if (typeof props.fallback === 'function') {
+        return props.fallback({ reset: this.reset, message: state.message })
+      }
+      return null
+    }
     return props.children
   }
 }
@@ -1063,39 +1084,94 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   const agilityLevel = getLevelFromXP(stats.agility?.xp || 0)
   const bankDelayMs = getAgilityBankDelayMs(agilityLevel)
+  const finalizePvpExit = async () => {
+    pvpCrashHandledRef.current = false
+    resumeTicks()
+    try {
+      const pulled = await pullSave()
+      if (pulled?.payload) {
+        await applyCloudSave(pulled.payload, pulled.updatedAt)
+        await loadGame()
+      }
+    } catch (err) {
+      console.warn('[PocketRPG] PvP post-match cloud pull failed:', err?.message || err)
+    }
+    pvp.leaveMatch()
+    setShowPvpLobby(false)
+  }
+
+  const handleRecoveryForfeit = async (reset) => {
+    try {
+      await pvpApi.forfeitMatch(pvp.activeMatchId)
+      addToast('Forfeit queued. Resolving...', 'info')
+      pvpCrashHandledRef.current = false
+      reset()
+    } catch (err) {
+      const code = err?.body?.error || err?.message
+      if (code === 'match_not_found' || code === 'match_not_active') {
+        try {
+          const invites = await pvpApi.listInvitations()
+          const activeMatchId = Number(invites?.active_match_id)
+          if (!Number.isFinite(activeMatchId) || activeMatchId <= 0) {
+            addToast('Match already ended.', 'info')
+            await finalizePvpExit()
+            return
+          }
+        } catch {
+          // fall through to generic error toast
+        }
+      }
+      addToast(err.body?.error || err.message, 'error')
+    }
+  }
 
   if (pvp.phase === 'in_match' && pvp.activeMatchId) {
     return (
       <PvpCombatErrorBoundary
+        resetKey={pvp.activeMatchId}
         onCrash={async (error) => {
           if (pvpCrashHandledRef.current) return
           pvpCrashHandledRef.current = true
-          console.error('[PocketRPG] Handling PvP crash fallback:', error?.message || error)
-          addToast('PvP match view crashed — returning to PvE.', 'error')
-          resumeTicks()
-          pvp.blockReconnectFor?.(15000)
-          pvp.leaveMatch()
-          setShowPvpLobby(false)
+          console.error('[PocketRPG][PvP] Match view crashed; keeping recovery mode active:', error?.message || error)
+          addToast('PvP match view failed. Use retry or forfeit.', 'error')
         }}
+        fallback={({ reset, message }) => (
+          <div className="p-3">
+            <Card className="border-[var(--color-blood)] bg-[#2a1010]">
+              <div class="text-sm font-bold text-[var(--color-blood-light)]">PvP match view failed to render</div>
+              <div class="text-[11px] text-[var(--color-parchment)] opacity-70 mt-1">
+                The server still has you in an active PvP match. Do not return to PvE.
+              </div>
+              {message && (
+                <p className="text-xs text-red-200 break-words mt-2">
+                  {message}
+                </p>
+              )}
+              <div class="flex gap-2 mt-3">
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    pvpCrashHandledRef.current = false
+                    reset()
+                  }}
+                >
+                  Retry PvP screen
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={() => handleRecoveryForfeit(reset)}
+                >
+                  Forfeit
+                </Button>
+              </div>
+            </Card>
+          </div>
+        )}
       >
         <PvpCombatScreen
           matchId={pvp.activeMatchId}
           addToast={addToast}
-          onExit={async () => {
-            pvpCrashHandledRef.current = false
-            resumeTicks()
-            try {
-              const pulled = await pullSave()
-              if (pulled?.payload) {
-                await applyCloudSave(pulled.payload, pulled.updatedAt)
-                await loadGame()
-              }
-            } catch (err) {
-              console.warn('[PocketRPG] PvP post-match cloud pull failed:', err?.message || err)
-            }
-            pvp.leaveMatch()
-            setShowPvpLobby(false)
-          }}
+          onExit={finalizePvpExit}
         />
       </PvpCombatErrorBoundary>
     )
