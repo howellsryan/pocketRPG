@@ -452,10 +452,11 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
       <Card>
         <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Combat actions</div>
-        <div class="grid grid-cols-1 gap-2">
+        <div class="flex gap-2">
           <Button
             variant="primary"
             size="md"
+            className="w-1/4"
             disabled={busy || !specialReady}
             onClick={() => queueAction({ type: 'queue_special' })}
           >
@@ -464,6 +465,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
           <Button
             variant={actionPanel === 'prayer' ? 'primary' : 'secondary'}
             size="md"
+            className="w-1/4"
             disabled={busy}
             onClick={() => setActionPanel(actionPanel === 'prayer' ? null : 'prayer')}
           >
@@ -472,6 +474,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
           <Button
             variant={actionPanel === 'potion' ? 'primary' : 'secondary'}
             size="md"
+            className="w-1/4"
             disabled={busy}
             onClick={() => setActionPanel(actionPanel === 'potion' ? null : 'potion')}
           >
@@ -480,6 +483,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
           <Button
             variant={actionPanel === 'gear' ? 'primary' : 'secondary'}
             size="md"
+            className="w-1/4"
             disabled={busy}
             onClick={() => setActionPanel(actionPanel === 'gear' ? null : 'gear')}
           >
