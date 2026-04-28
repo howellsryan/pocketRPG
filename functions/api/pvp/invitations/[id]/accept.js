@@ -4,7 +4,7 @@
 //
 // Atomic flow:
 //   - validate pending invitation + account restrictions + CB band
-//   - require both saves to be fresh (<= 5s old)
+//   - require both saves to be fresh (<= 15s old)
 //   - build canonical initial PvP state from both save snapshots
 //   - INSERT active pvp_matches row
 //   - set both characters.active_match_id to the new match
@@ -17,7 +17,7 @@ import { createPvpState } from '../../../../../src/engine/pvpEngine.js'
 import { buildCombatantFromSave, readCharacterSave } from '../../../../_lib/pvpMatch.js'
 
 const CB_BAND = 10
-const STALE_SAVE_MS = 5_000
+const STALE_SAVE_MS = 15_000
 
 export async function onRequestPost({ request, env, params }) {
   const auth = await requireAuth(request, env)
@@ -35,6 +35,31 @@ export async function onRequestPost({ request, env, params }) {
 
   await sweepStaleRows(env)
 
+  if (ch.active_match_id) {
+    console.log('[PocketRPG][PvP] accept idempotent already_in_match:', { characterId: ch.id, matchId: ch.active_match_id })
+    return json({ ok: true, already_in_match: true, match_id: ch.active_match_id })
+  }
+
+  const inviteAnyStatus = await env.DB.prepare(
+    `SELECT i.id, i.from_character, i.to_character, i.status, i.match_id,
+            ca.username AS from_username,
+            cb.username AS to_username,
+            ca.is_ironman AS from_ironman, ca.is_one_life AS from_one_life,
+            ca.active_match_id AS from_active_match,
+            cb.is_ironman AS to_ironman, cb.is_one_life AS to_one_life,
+            cb.active_match_id AS to_active_match
+       FROM pvp_invitations i
+       JOIN characters ca ON ca.id = i.from_character
+       JOIN characters cb ON cb.id = i.to_character
+      WHERE i.id = ? AND i.to_character = ?`
+  ).bind(inviteId, ch.id).first()
+
+  if (!inviteAnyStatus) return json({ error: 'Invitation not found' }, 404)
+  if (inviteAnyStatus.status === 'accepted' && inviteAnyStatus.match_id) {
+    console.log('[PocketRPG][PvP] accept idempotent already_accepted:', { invitationId: inviteId, matchId: inviteAnyStatus.match_id })
+    return json({ ok: true, already_accepted: true, match_id: inviteAnyStatus.match_id })
+  }
+
   const invite = await env.DB.prepare(
     `SELECT i.id, i.from_character, i.to_character, i.status,
             ca.username AS from_username,
@@ -49,12 +74,23 @@ export async function onRequestPost({ request, env, params }) {
       WHERE i.id = ? AND i.to_character = ? AND i.status = 'pending'`
   ).bind(inviteId, ch.id).first()
 
-  if (!invite) return json({ error: 'Invitation not found' }, 404)
+  if (!invite) return json({ error: 'invitation_not_pending' }, 409)
   if (invite.from_ironman || invite.from_one_life || invite.to_ironman || invite.to_one_life) {
     return json({ error: 'pvp_not_allowed_for_account_type' }, 403)
   }
   if (invite.from_active_match || invite.to_active_match) {
-    return json({ error: 'character_in_active_match' }, 409)
+    const knownMatchId = invite.to_active_match || invite.from_active_match || null
+    const sameMatch = invite.from_active_match && invite.to_active_match && invite.from_active_match === invite.to_active_match
+    if (sameMatch || invite.to_active_match) {
+      console.log('[PocketRPG][PvP] accept fast-path active match:', {
+        invitationId: inviteId,
+        fromCharacter: invite.from_character,
+        toCharacter: invite.to_character,
+        matchId: knownMatchId,
+      })
+      return json({ ok: true, already_in_match: true, match_id: knownMatchId })
+    }
+    return json({ error: 'character_in_active_match', match_id: knownMatchId }, 409)
   }
 
   const fromCB = await readCombatLevel(env, invite.from_character)
@@ -74,7 +110,21 @@ export async function onRequestPost({ request, env, params }) {
   if (now - fromSave.updatedAt > STALE_SAVE_MS) staleCharacters.push(invite.from_character)
   if (now - toSave.updatedAt > STALE_SAVE_MS) staleCharacters.push(invite.to_character)
   if (staleCharacters.length) {
-    return json({ error: 'stale_save', forCharacters: staleCharacters }, 409)
+    console.log('[PocketRPG][PvP] accept stale save:', {
+      invitationId: inviteId,
+      staleCharacters,
+      now,
+      fromUpdatedAt: fromSave.updatedAt,
+      toUpdatedAt: toSave.updatedAt,
+    })
+    return json({
+      error: 'stale_save',
+      forCharacters: staleCharacters,
+      server_now: now,
+      stale_save_ms: STALE_SAVE_MS,
+      from_updated_at: fromSave.updatedAt,
+      to_updated_at: toSave.updatedAt,
+    }, 409)
   }
 
   const aCombatant = buildCombatantFromSave({
@@ -119,6 +169,7 @@ export async function onRequestPost({ request, env, params }) {
     }
 
     const matchId = insertRes.meta.last_row_id
+    console.log('[PocketRPG][PvP] accept created match:', { invitationId: inviteId, matchId })
 
     const lockRows = await env.DB.prepare(
       `UPDATE characters SET active_match_id = ?
@@ -128,7 +179,7 @@ export async function onRequestPost({ request, env, params }) {
       await env.DB.prepare(
         "UPDATE pvp_matches SET status = 'aborted', ended_at = ? WHERE id = ? AND status = 'active'"
       ).bind(now, matchId).run()
-      return json({ error: 'character_in_active_match' }, 409)
+      return json({ error: 'character_in_active_match', match_id: matchId }, 409)
     }
 
     const inviteUpdate = await env.DB.prepare(

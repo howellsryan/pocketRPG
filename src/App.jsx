@@ -137,6 +137,21 @@ function GameApp() {
     }
   }, [pvp.phase, pvp.enterMatch, pvp.canAutoReconnect])
 
+  useEffect(() => {
+    const onActiveMatchConflict = (event) => {
+      const matchId = Number(event?.detail?.matchId)
+      if (!Number.isFinite(matchId) || matchId <= 0) return
+      addToast('Server reports an active PvP match — entering combat.', 'info')
+      pauseTicks()
+      setScreen(SCREENS.COMBAT)
+      setActionData(null)
+      setIdleResult(null)
+      pvp.enterMatch(matchId)
+    }
+    window.addEventListener('pocketrpg:pvp-active-match', onActiveMatchConflict)
+    return () => window.removeEventListener('pocketrpg:pvp-active-match', onActiveMatchConflict)
+  }, [addToast, pvp.enterMatch])
+
   // Split xpReward into immediate grants and player-choice rewards (combat / any)
   function splitXpRewards(xpReward) {
     const fixed = {}

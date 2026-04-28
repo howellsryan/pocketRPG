@@ -118,14 +118,29 @@ class PvpCombatErrorBoundary extends Component {
     this.state = { crashed: false }
   }
 
+  componentDidUpdate(prevProps) {
+    if (prevProps.resetKey !== this.props.resetKey && this.state.crashed) {
+      this.setState({ crashed: false })
+    }
+  }
+
   componentDidCatch(error) {
     console.error('[PocketRPG] PvP combat render crashed:', error)
     this.setState({ crashed: true })
     this.props.onCrash?.(error)
   }
 
+  reset = () => {
+    this.setState({ crashed: false })
+  }
+
   render(props, state) {
-    if (state.crashed) return null
+    if (state.crashed) {
+      if (typeof props.fallback === 'function') {
+        return props.fallback({ reset: this.reset })
+      }
+      return null
+    }
     return props.children
   }
 }
@@ -1067,16 +1082,49 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   if (pvp.phase === 'in_match' && pvp.activeMatchId) {
     return (
       <PvpCombatErrorBoundary
+        resetKey={pvp.activeMatchId}
         onCrash={async (error) => {
           if (pvpCrashHandledRef.current) return
           pvpCrashHandledRef.current = true
-          console.error('[PocketRPG] Handling PvP crash fallback:', error?.message || error)
-          addToast('PvP match view crashed — returning to PvE.', 'error')
-          resumeTicks()
-          pvp.blockReconnectFor?.(15000)
-          pvp.leaveMatch()
-          setShowPvpLobby(false)
+          console.error('[PocketRPG][PvP] Match view crashed; keeping recovery mode active:', error?.message || error)
+          addToast('PvP match view failed. Use retry or forfeit.', 'error')
         }}
+        fallback={({ reset }) => (
+          <div className="p-3">
+            <Card className="border-[var(--color-blood)] bg-[#2a1010]">
+              <div class="text-sm font-bold text-[var(--color-blood-light)]">PvP match view failed to render</div>
+              <div class="text-[11px] text-[var(--color-parchment)] opacity-70 mt-1">
+                The server still has you in an active PvP match. Do not return to PvE.
+              </div>
+              <div class="flex gap-2 mt-3">
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    pvpCrashHandledRef.current = false
+                    reset()
+                  }}
+                >
+                  Retry PvP screen
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={async () => {
+                    try {
+                      await pvpApi.forfeitMatch(pvp.activeMatchId)
+                      addToast('Forfeit queued. Resolving...', 'info')
+                      pvpCrashHandledRef.current = false
+                      reset()
+                    } catch (err) {
+                      addToast(err.body?.error || err.message, 'error')
+                    }
+                  }}
+                >
+                  Forfeit
+                </Button>
+              </div>
+            </Card>
+          </div>
+        )}
       >
         <PvpCombatScreen
           matchId={pvp.activeMatchId}

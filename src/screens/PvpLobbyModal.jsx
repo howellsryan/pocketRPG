@@ -7,7 +7,7 @@ import { useGame } from '../state/gameState.jsx'
 import { usePvp } from '../state/pvpState.jsx'
 import { pvpApi } from '../cloud/pvp.js'
 import { pushNow } from '../cloud/sync.js'
-import { api } from '../cloud/api.js'
+import { api, getCharacterId } from '../cloud/api.js'
 import { pauseTicks } from '../engine/tick.js'
 
 const POLL_MS = 2500   // light enough to be cheap, fast enough to feel live in the lobby
@@ -24,7 +24,7 @@ const LOBBY_PVP_SYNC_BLOCK_KEY = 'pocketrpg_pvp_sync_block'
 // transitioning into combat.
 export default function PvpLobbyModal({ onClose, getSnapshot }) {
   const { addToast, isIronman, isOneLife } = useGame()
-  const { closeLobby, enterMatch } = usePvp()
+  const { enterMatch } = usePvp()
 
   const [tab, setTab] = useState('waiting')
   const [myCB, setMyCB] = useState(null)
@@ -175,30 +175,58 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
       pollTimer.current = null
     }
     try {
+      const myCharacterId = Number(getCharacterId())
       // Force a fresh save push BEFORE accepting so the server snapshots
       // our true inventory. Phase 3 server will reject stale saves; we
       // do this proactively so the round-trip succeeds first time.
       await pushLobbySnapshot(true)
-      try { localStorage.setItem(LOBBY_PVP_SYNC_BLOCK_KEY, '1') } catch { /* best-effort */ }
+      console.log('[PocketRPG][PvP] Accepting invitation:', { inviteId, fromUsername, myCharacterId })
       let res
       try {
         res = await pvpApi.acceptInvitation(inviteId)
       } catch (err) {
-        if (err?.body?.error === 'stale_save') {
-          await pushLobbySnapshot(true)
-          res = await pvpApi.acceptInvitation(inviteId)
-        } else {
+        const code = err?.body?.error
+        if (code === 'stale_save') {
+          console.log('[PocketRPG][PvP] accept stale_save:', err?.body || null)
+          const staleCharacters = Array.isArray(err?.body?.forCharacters) ? err.body.forCharacters : []
+          const staleNumbers = staleCharacters.map(Number)
+          if (!staleNumbers.length || staleNumbers.includes(myCharacterId)) {
+            await pushLobbySnapshot(true)
+            res = await pvpApi.acceptInvitation(inviteId)
+          } else {
+            addToast('Opponent save is stale. Ask them to keep the PvP lobby open, then try again.', 'error')
+            await refresh()
+            return
+          }
+        } else if (code === 'character_in_active_match') {
+          console.log('[PocketRPG][PvP] accept character_in_active_match:', err?.body || null)
+          const directId = err?.body?.match_id ?? err?.body?.matchId ?? err?.body?.active_match_id
+          let activeId = directId
+          if (!activeId) {
+            try {
+              const invites = await pvpApi.listInvitations()
+              activeId = invites?.active_match_id
+            } catch { /* best-effort */ }
+          }
+          if (activeId) {
+            await launchMatch(activeId, 'Active PvP match found — entering combat.')
+            return
+          }
           throw err
         }
+        throw err
       }
+      console.log('[PocketRPG][PvP] accept response:', res || null)
       if (res.phase1_stub) {
-        addToast('PvP combat coming soon — match accepted but no fight will start yet.', 'info')
-        // Phase 1 stub: just clean up and close.
-        closeLobby()
-        onClose?.()
+        addToast('PvP accept returned legacy phase1_stub. Cannot enter PvP combat on this deployment.', 'error')
         return
       }
-      const acceptedMatchId = res.match_id ?? res.matchId ?? res.match?.id
+      const acceptedMatchId = res?.match_id ?? res?.matchId ?? res?.match?.id ?? res?.active_match_id
+      console.log('[PocketRPG][PvP] accepted match id:', acceptedMatchId)
+      if (!acceptedMatchId) {
+        addToast('Accept succeeded but no match id was returned. Please retry from invitations.', 'error')
+        return
+      }
       await launchMatch(acceptedMatchId, `Match accepted vs ${fromUsername}`)
     } catch (err) {
       addToast(err.body?.error || err.message, 'error')
@@ -210,7 +238,7 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
       }
       if (mounted.current) setBusy(false)
     }
-  }, [addToast, closeLobby, joined, launchMatch, onClose, pushLobbySnapshot, refresh])
+  }, [addToast, joined, launchMatch, pushLobbySnapshot, refresh])
 
   const handleDecline = async (inviteId) => {
     setBusy(true)

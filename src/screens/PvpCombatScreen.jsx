@@ -34,6 +34,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const [state, setState] = useState(null)
   const [matchMeta, setMatchMeta] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [bootstrapError, setBootstrapError] = useState(null)
   const [busy, setBusy] = useState(false)
   const [pendingAction, setPendingAction] = useState(null)
   const [endModal, setEndModal] = useState(null)
@@ -47,7 +48,6 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const pendingActionRef = useRef(null)
   const lastPollOkAt = useRef(0)
   const latestTick = useRef(0)
-  const exitHandled = useRef(false)
   const fatalNotified = useRef(false)
 
   useEffect(() => {
@@ -83,12 +83,6 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     return () => document.removeEventListener('visibilitychange', onVisibility)
   }, [])
 
-  const exitOnce = async () => {
-    if (exitHandled.current) return
-    exitHandled.current = true
-    await onExit?.()
-  }
-
   const notifyFatalOnce = (message, err = null) => {
     if (fatalNotified.current) return
     fatalNotified.current = true
@@ -96,8 +90,22 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     if (err) console.error('[PocketRPG] PvP fatal screen error:', err)
   }
 
+  const confirmNoActiveMatch = async () => {
+    try {
+      const invites = await pvpApi.listInvitations()
+      const activeMatchId = Number(invites?.active_match_id)
+      if (Number.isFinite(activeMatchId) && activeMatchId > 0) {
+        return false
+      }
+    } catch {
+      return false
+    }
+    return true
+  }
+
   const refreshFromServer = async () => {
     const sinceTick = latestTick.current > 0 ? latestTick.current : null
+    setBootstrapError(null)
     const res = await pvpApi.getMatch(matchId, sinceTick)
     if (!mounted.current) return
     setMatchMeta(res?.match || null)
@@ -151,8 +159,15 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
       if (!mounted.current) return
       const msg = err.body?.error || err.message
       if (msg === 'match_not_found' || msg === 'match_not_active') {
-        addToast?.('Match has ended.', 'info')
-        await exitOnce()
+        console.warn('[PocketRPG][PvP] tickMatch reported inactive match; checking server active_match_id before exit:', err?.body || null)
+        const noActiveMatch = await confirmNoActiveMatch()
+        if (noActiveMatch) {
+          addToast?.('Match has ended.', 'info')
+          await onExit?.()
+          return
+        }
+        setBootstrapError('Server still reports an active PvP match. Retry to reconnect.')
+        setLoading(false)
         return
       }
       if (Date.now() - lastPollOkAt.current > NO_POLL_WARNING_MS) {
@@ -177,6 +192,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     }
 
     ;(async () => {
+      console.log('[PocketRPG][PvP] PvpCombatScreen mount with match id:', matchId)
       while (active && mounted.current) {
         try {
           await refreshFromServer()
@@ -191,9 +207,21 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
             await new Promise(resolve => setTimeout(resolve, MATCH_BOOT_RETRY_MS))
             continue
           }
+          console.error('[PocketRPG][PvP] getMatch bootstrap failure:', err?.body || err)
           setLoading(false)
-          notifyFatalOnce(code || 'Failed to load PvP match', err)
-          await exitOnce()
+          let recoveryMessage = code || 'Failed to load PvP match'
+          if (code === 'match_not_found' || code === 'match_not_active') {
+            const noActiveMatch = await confirmNoActiveMatch()
+            if (noActiveMatch) {
+              addToast?.('Match has ended.', 'info')
+              await onExit?.()
+              return
+            }
+            recoveryMessage = 'Server still reports an active PvP match. Retry to reconnect.'
+          }
+          setBootstrapError(recoveryMessage)
+          console.log('[PocketRPG][PvP] entering recovery mode instead of exiting PvE fallback')
+          notifyFatalOnce(recoveryMessage, err)
           return
         }
       }
@@ -224,6 +252,43 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
       {loading && (
         <Card className="border-[var(--color-gold-dim)] bg-[var(--color-void-light)]">
           <div class="text-[11px] text-[var(--color-gold)]">Connecting to PvP match…</div>
+        </Card>
+      )}
+
+      {bootstrapError && (
+        <Card className="border-[var(--color-blood)] bg-[#2a1010]">
+          <div class="text-xs font-semibold text-[var(--color-blood-light)]">PvP connection error</div>
+          <div class="text-[11px] text-[var(--color-parchment)] opacity-80 mt-1">{bootstrapError}</div>
+          <div class="flex flex-wrap gap-2 mt-3">
+            <Button variant="primary" size="sm" onClick={() => { setLoading(true); refreshFromServer().catch((err) => {
+              console.error('[PocketRPG][PvP] recovery retry failed:', err?.body || err)
+              const msg = err?.body?.error || err?.message || 'Retry failed'
+              setBootstrapError(msg)
+              setLoading(false)
+            }) }}>Retry</Button>
+            <Button variant="secondary" size="sm" onClick={() => { setLoading(true); refreshFromServer().catch((err) => {
+              console.error('[PocketRPG][PvP] recovery reconnect failed:', err?.body || err)
+              const msg = err?.body?.error || err?.message || 'Reconnect failed'
+              setBootstrapError(msg)
+              setLoading(false)
+            }) }}>Reconnect</Button>
+            <Button
+              variant="danger"
+              size="sm"
+              disabled={!matchId}
+              onClick={async () => {
+                try {
+                  await pvpApi.forfeitMatch(matchId)
+                  addToast?.('Forfeit queued. Resolving...', 'info')
+                  setBootstrapError(null)
+                } catch (err) {
+                  addToast?.(err.body?.error || err.message, 'error')
+                }
+              }}
+            >
+              Forfeit
+            </Button>
+          </div>
         </Card>
       )}
 

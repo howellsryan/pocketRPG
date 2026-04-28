@@ -100,6 +100,7 @@ async function request(path, options = {}) {
   if (!res.ok) {
     const err = new Error(body?.error || `Request failed (${res.status})`)
     err.status = res.status
+    err.body = body
     throw err
   }
   return body
