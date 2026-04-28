@@ -38,7 +38,9 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const [busy, setBusy] = useState(false)
   const [pendingAction, setPendingAction] = useState(null)
   const [endModal, setEndModal] = useState(null)
-  const [hiddenMode, setHiddenMode] = useState(document.hidden)
+  const [hiddenMode, setHiddenMode] = useState(() => (
+    typeof document !== 'undefined' ? document.hidden : false
+  ))
   const [staleWarning, setStaleWarning] = useState(false)
 
   const selfId = useMemo(() => parseInt(getCharacterId(), 10), [])
@@ -78,9 +80,12 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   }, [])
 
   useEffect(() => {
+    if (typeof document === 'undefined') return undefined
     const onVisibility = () => setHiddenMode(document.hidden)
     document.addEventListener('visibilitychange', onVisibility)
-    return () => document.removeEventListener('visibilitychange', onVisibility)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
   }, [])
 
   const notifyFatalOnce = (message, err = null) => {
