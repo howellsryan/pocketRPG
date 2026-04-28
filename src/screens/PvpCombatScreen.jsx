@@ -9,6 +9,7 @@ import { pvpApi } from '../cloud/pvp.js'
 import itemsData from '../data/items.json'
 import { getCharacterId } from '../cloud/api.js'
 import { normalizePvpState } from '../engine/pvpState.js'
+import { isPvpFoodItem } from '../engine/pvpFood.js'
 
 const POLL_VISIBLE_MS = 600
 const POLL_HIDDEN_MS = 1500
@@ -174,10 +175,15 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
       if (tickRes.terminal) {
         const youWon = Number(tickRes.terminal.winner) === selfId
+        const writebackOk = tickRes.terminal_writeback !== false
+        if (!writebackOk) {
+          console.error('[PocketRPG][PvP] terminal writeback failed', tickRes)
+        }
         setEndModal({
           youWon,
           reason: tickRes.terminal.reason,
-          loot: tickRes.loot || { added: [], dropped: [], droppedValue: 0 },
+          writebackOk,
+          loot: writebackOk ? (tickRes.loot || { added: [], dropped: [], droppedValue: 0 }) : null,
         })
         if (pollTimer.current) clearTimeout(pollTimer.current)
       }
@@ -270,7 +276,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
   const foodSlots = toArray(pair.self?.inventory)
     .map((slot, idx) => ({ slot, idx }))
-    .filter(({ slot }) => slot && itemsData[slot.itemId]?.heal)
+    .filter(({ slot }) => slot && isPvpFoodItem(itemsData[slot.itemId]))
     .slice(0, 4)
 
   return (
@@ -385,18 +391,36 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
       </Panel>
 
       {endModal && (
-        <Modal title={endModal.youWon ? '🏆 Victory' : '☠️ Defeat'} onClose={onExit}>
+        <Modal
+          title={endModal.writebackOk ? (endModal.youWon ? '🏆 Victory' : '☠️ Defeat') : '⚠️ PvP sync recovery required'}
+          onClose={endModal.writebackOk ? onExit : () => {}}
+        >
           <div class="space-y-3">
             <div class="text-sm text-[var(--color-parchment)]">
               {endModal.youWon ? 'You won the duel.' : 'You were defeated.'} ({endModal.reason})
             </div>
-            <Card>
-              <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Loot transferred to winner</div>
-              <div class="text-[11px] text-[var(--color-parchment)] opacity-80">Added: {endModal.loot.added?.length || 0} item stacks</div>
-              <div class="text-[11px] text-[var(--color-parchment)] opacity-80">Dropped (bank full): {endModal.loot.dropped?.length || 0}</div>
-              <div class="text-[11px] text-[var(--color-parchment)] opacity-80">Dropped value: {Math.floor((endModal.loot.droppedValue || 0) / 1000000)}M gp</div>
-            </Card>
-            <Button variant="primary" className="w-full" onClick={async () => { await onExit?.() }}>Return to PvE</Button>
+            {endModal.writebackOk ? (
+              <>
+                <Card>
+                  <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Loot transferred to winner</div>
+                  <div class="text-[11px] text-[var(--color-parchment)] opacity-80">Added: {endModal.loot.added?.length || 0} item stacks</div>
+                  <div class="text-[11px] text-[var(--color-parchment)] opacity-80">Dropped (bank full): {endModal.loot.dropped?.length || 0}</div>
+                  <div class="text-[11px] text-[var(--color-parchment)] opacity-80">Dropped value: {Math.floor((endModal.loot.droppedValue || 0) / 1000000)}M gp</div>
+                </Card>
+                <Button variant="primary" className="w-full" onClick={async () => { await onExit?.() }}>Return to PvE</Button>
+              </>
+            ) : (
+              <Card className="border-[var(--color-blood)] bg-[#2a1010]">
+                <div class="text-xs font-semibold text-[var(--color-blood-light)]">Match ended, but loot writeback failed.</div>
+                <div class="text-[11px] text-[var(--color-parchment)] opacity-80 mt-1">
+                  Do not return to PvE yet. Retry or reconnect to refresh server state and avoid stale inventory/bank data.
+                </div>
+                <div class="flex flex-wrap gap-2 mt-3">
+                  <Button variant="primary" size="sm" onClick={() => { setLoading(true); refreshFromServer().catch(() => setLoading(false)) }}>Retry</Button>
+                  <Button variant="secondary" size="sm" onClick={() => { setLoading(true); refreshFromServer().catch(() => setLoading(false)) }}>Reconnect</Button>
+                </div>
+              </Card>
+            )}
           </div>
         </Modal>
       )}

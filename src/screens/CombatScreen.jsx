@@ -1086,17 +1086,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const bankDelayMs = getAgilityBankDelayMs(agilityLevel)
   const finalizePvpExit = async () => {
     pvpCrashHandledRef.current = false
-    resumeTicks()
+    pvp.leaveMatch()
     try {
       const pulled = await pullSave()
       if (pulled?.payload) {
         await applyCloudSave(pulled.payload, pulled.updatedAt)
-        await loadGame()
       }
+      await loadGame()
     } catch (err) {
       console.warn('[PocketRPG] PvP post-match cloud pull failed:', err?.message || err)
     }
-    pvp.leaveMatch()
+    resumeTicks()
     setShowPvpLobby(false)
   }
 

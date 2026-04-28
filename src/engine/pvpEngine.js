@@ -6,6 +6,7 @@
 import { addItem } from './inventory.js'
 import { equipItem, unequipSlot, getAttackSpeed } from './equipment.js'
 import { rollMeleeAttack, rollRangedAttack, rollMagicAttack } from './combatPrimitives.js'
+import { getPvpHealAmount } from './pvpFood.js'
 
 const VALID_STANCES = new Set(['accurate', 'aggressive', 'defensive', 'controlled', 'rapid', 'longrange'])
 
@@ -218,12 +219,13 @@ function applyIntent(combatant, intentAction, itemsData, events) {
     if ((combatant.eatCooldown || 0) > 0 || typeof i !== 'number') return
     const slot = combatant.inventory[i]
     const item = slot ? itemsData?.[slot.itemId] : null
-    if (!slot || !item?.heal) return
-    combatant.hp = Math.min(combatant.maxHP, combatant.hp + item.heal)
+    const healAmount = getPvpHealAmount(item)
+    if (!slot || healAmount <= 0) return
+    combatant.hp = Math.min(combatant.maxHP, combatant.hp + healAmount)
     combatant.eatCooldown = 3
     slot.quantity -= 1
     if (slot.quantity <= 0) combatant.inventory[i] = null
-    events.push({ type: 'eat', characterId: combatant.characterId, itemId: item.id, heal: item.heal })
+    events.push({ type: 'eat', characterId: combatant.characterId, itemId: item.id, heal: healAmount })
     return
   }
 

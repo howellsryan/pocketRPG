@@ -1,6 +1,7 @@
 import { requireAuth, json } from '../../../../_lib/auth.js'
 import { getOwnedCharacter, sweepStaleRows } from '../../../../_lib/pvp.js'
 import { readOwnedActiveMatch, itemsData } from '../../../../_lib/pvpMatch.js'
+import { isPvpFoodItem } from '../../../../../src/engine/pvpFood.js'
 import spellsData from '../../../../../src/data/spells.json' assert { type: 'json' }
 
 const VALID_STANCES = new Set(['accurate', 'aggressive', 'defensive', 'controlled', 'rapid', 'longrange'])
@@ -21,7 +22,7 @@ function hasRequiredRunes(inventory, runeReq) {
   return true
 }
 
-function validateIntentAction(state, characterId, action) {
+export function validateIntentAction(state, characterId, action) {
   const combatant = state?.combatants?.[String(characterId)]
   if (!combatant || !action || typeof action !== 'object') {
     return { ok: false, error: 'invalid_action' }
@@ -61,7 +62,7 @@ function validateIntentAction(state, characterId, action) {
     const item = itemsData?.[slot.itemId]
     if (!item) return { ok: false, error: 'unknown_item' }
     if (action.type === 'equip') return item.slot ? { ok: true } : { ok: false, error: 'item_not_equippable' }
-    if (action.type === 'eat') return item.heal ? { ok: true } : { ok: false, error: 'item_not_food' }
+    if (action.type === 'eat') return isPvpFoodItem(item) ? { ok: true } : { ok: false, error: 'item_not_food' }
     return item.id?.includes('potion') ? { ok: true } : { ok: false, error: 'item_not_potion' }
   }
 

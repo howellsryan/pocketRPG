@@ -30479,11 +30479,23 @@ function parseMaybeJson(value) {
     }
 }
 
+// ── engine/pvpFood.js ──
+function getPvpHealAmount(item) {
+    const healAmount = Number(item?.heals ?? item?.heal ?? 0);
+    if (!Number.isFinite(healAmount))
+        return 0;
+    return Math.max(0, Math.floor(healAmount));
+}
+function isPvpFoodItem(item) {
+    return getPvpHealAmount(item) > 0;
+}
+
 // ── engine/pvpEngine.js ──
 // PvP match tick loop (Phase 2B).
 //
 // Pure logic: no DB/network/UI imports. Server and client can both execute
 // this module on the same input and get identical results.
+
 
 
 
@@ -30697,14 +30709,15 @@ function applyIntent(combatant, intentAction, itemsData, events) {
             return;
         const slot = combatant.inventory[i];
         const item = slot ? itemsData?.[slot.itemId] : null;
-        if (!slot || !item?.heal)
+        const healAmount = getPvpHealAmount(item);
+        if (!slot || healAmount <= 0)
             return;
-        combatant.hp = Math.min(combatant.maxHP, combatant.hp + item.heal);
+        combatant.hp = Math.min(combatant.maxHP, combatant.hp + healAmount);
         combatant.eatCooldown = 3;
         slot.quantity -= 1;
         if (slot.quantity <= 0)
             combatant.inventory[i] = null;
-        events.push({ type: 'eat', characterId: combatant.characterId, itemId: item.id, heal: item.heal });
+        events.push({ type: 'eat', characterId: combatant.characterId, itemId: item.id, heal: healAmount });
         return;
     }
     if (intentAction.type === 'drink_potion') {
@@ -36144,6 +36157,7 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
 
 
 
+
 const POLL_VISIBLE_MS = 600;
 const POLL_HIDDEN_MS = 1500;
 const NO_POLL_WARNING_MS = 5000;
@@ -36308,10 +36322,15 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
             setStaleWarning(false);
             if (tickRes.terminal) {
                 const youWon = Number(tickRes.terminal.winner) === selfId;
+                const writebackOk = tickRes.terminal_writeback !== false;
+                if (!writebackOk) {
+                    console.error('[PocketRPG][PvP] terminal writeback failed', tickRes);
+                }
                 setEndModal({
                     youWon,
                     reason: tickRes.terminal.reason,
-                    loot: tickRes.loot || { added: [], dropped: [], droppedValue: 0 },
+                    writebackOk,
+                    loot: writebackOk ? (tickRes.loot || { added: [], dropped: [], droppedValue: 0 }) : null,
                 });
                 if (pollTimer.current)
                     clearTimeout(pollTimer.current);
@@ -36405,7 +36424,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
     };
     const foodSlots = toArray(pair.self?.inventory)
         .map((slot, idx) => ({ slot, idx }))
-        .filter(({ slot }) => slot && itemsData[slot.itemId]?.heal)
+        .filter(({ slot }) => slot && isPvpFoodItem(itemsData[slot.itemId]))
         .slice(0, 4);
     return (h("div", { class: "p-3 space-y-3" },
         loading && (h(Card, { className: "border-[var(--color-gold-dim)] bg-[var(--color-void-light)]" },
@@ -36472,27 +36491,33 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
                 recentLines.map((line, i) => (h("div", { key: i, class: "text-[11px] text-[var(--color-parchment)] opacity-80" },
                     "\u2022 ",
                     line))))),
-        endModal && (h(Modal, { title: endModal.youWon ? '🏆 Victory' : '☠️ Defeat', onClose: onExit },
+        endModal && (h(Modal, { title: endModal.writebackOk ? (endModal.youWon ? '🏆 Victory' : '☠️ Defeat') : '⚠️ PvP sync recovery required', onClose: endModal.writebackOk ? onExit : () => { } },
             h("div", { class: "space-y-3" },
                 h("div", { class: "text-sm text-[var(--color-parchment)]" },
                     endModal.youWon ? 'You won the duel.' : 'You were defeated.',
                     " (",
                     endModal.reason,
                     ")"),
-                h(Card, null,
-                    h("div", { class: "text-xs font-semibold text-[var(--color-gold)] mb-2" }, "Loot transferred to winner"),
-                    h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-80" },
-                        "Added: ",
-                        endModal.loot.added?.length || 0,
-                        " item stacks"),
-                    h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-80" },
-                        "Dropped (bank full): ",
-                        endModal.loot.dropped?.length || 0),
-                    h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-80" },
-                        "Dropped value: ",
-                        Math.floor((endModal.loot.droppedValue || 0) / 1000000),
-                        "M gp")),
-                h(Button, { variant: "primary", className: "w-full", onClick: async () => { await onExit?.(); } }, "Return to PvE"))))));
+                endModal.writebackOk ? (h(Fragment, null,
+                    h(Card, null,
+                        h("div", { class: "text-xs font-semibold text-[var(--color-gold)] mb-2" }, "Loot transferred to winner"),
+                        h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-80" },
+                            "Added: ",
+                            endModal.loot.added?.length || 0,
+                            " item stacks"),
+                        h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-80" },
+                            "Dropped (bank full): ",
+                            endModal.loot.dropped?.length || 0),
+                        h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-80" },
+                            "Dropped value: ",
+                            Math.floor((endModal.loot.droppedValue || 0) / 1000000),
+                            "M gp")),
+                    h(Button, { variant: "primary", className: "w-full", onClick: async () => { await onExit?.(); } }, "Return to PvE"))) : (h(Card, { className: "border-[var(--color-blood)] bg-[#2a1010]" },
+                    h("div", { class: "text-xs font-semibold text-[var(--color-blood-light)]" }, "Match ended, but loot writeback failed."),
+                    h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-80 mt-1" }, "Do not return to PvE yet. Retry or reconnect to refresh server state and avoid stale inventory/bank data."),
+                    h("div", { class: "flex flex-wrap gap-2 mt-3" },
+                        h(Button, { variant: "primary", size: "sm", onClick: () => { setLoading(true); refreshFromServer().catch(() => setLoading(false)); } }, "Retry"),
+                        h(Button, { variant: "secondary", size: "sm", onClick: () => { setLoading(true); refreshFromServer().catch(() => setLoading(false)); } }, "Reconnect")))))))));
 }
 
 // ── screens/CombatScreen.js ──
@@ -37564,18 +37589,18 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
     const bankDelayMs = getAgilityBankDelayMs(agilityLevel);
     const finalizePvpExit = async () => {
         pvpCrashHandledRef.current = false;
-        resumeTicks();
+        pvp.leaveMatch();
         try {
             const pulled = await pullSave();
             if (pulled?.payload) {
                 await applyCloudSave(pulled.payload, pulled.updatedAt);
-                await loadGame();
             }
+            await loadGame();
         }
         catch (err) {
             console.warn('[PocketRPG] PvP post-match cloud pull failed:', err?.message || err);
         }
-        pvp.leaveMatch();
+        resumeTicks();
         setShowPvpLobby(false);
     };
     const handleRecoveryForfeit = async (reset) => {

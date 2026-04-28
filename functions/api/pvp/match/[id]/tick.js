@@ -145,6 +145,14 @@ export async function onRequestPost({ request, env, params }) {
 
   if (out.terminal) {
     const terminal = await finalizeTerminalMatch(env, match, out.stateNext, out.terminal, appliedIntentIds)
+    if (!terminal.ok) {
+      console.error('[PocketRPG][PvP] terminal writeback failed', {
+        matchId: match.id,
+        winnerId: out.terminal.winner,
+        loserId: out.terminal.loser,
+        reason: terminal.reason,
+      })
+    }
 
     return json({
       ok: true,
