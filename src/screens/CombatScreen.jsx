@@ -178,6 +178,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const statsRef = useRef(stats)
   const equipmentRef = useRef(equipment)
   const slayerTaskRef = useRef(slayerTask)
+  const pvpCrashHandledRef = useRef(false)
   const slayerPointsRef = useRef(slayerPoints)
   const bossKillCountsRef = useRef(bossKillCounts)
   const raidKillCountsRef = useRef(raidKillCounts)
@@ -195,6 +196,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
     const reconnectToActiveMatch = async () => {
       if (pvp.phase === 'in_match') return
+      if (!pvp.canAutoReconnect) return
       try {
         const invitesRes = await pvpApi.listInvitations()
         const activeMatchId = Number(invitesRes?.active_match_id)
@@ -217,7 +219,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       cancelled = true
       document.removeEventListener('visibilitychange', onVisible)
     }
-  }, [pvp.phase, pvp.enterMatch])
+  }, [pvp.phase, pvp.enterMatch, pvp.canAutoReconnect])
 
   useEffect(() => { hpRef.current = currentHP }, [currentHP])
   useEffect(() => { inventoryRef.current = inventory }, [inventory])
@@ -1065,9 +1067,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   if (pvp.phase === 'in_match' && pvp.activeMatchId) {
     return (
       <PvpCombatErrorBoundary
-        onCrash={async () => {
+        onCrash={async (error) => {
+          if (pvpCrashHandledRef.current) return
+          pvpCrashHandledRef.current = true
+          console.error('[PocketRPG] Handling PvP crash fallback:', error?.message || error)
           addToast('PvP match view crashed — returning to PvE.', 'error')
           resumeTicks()
+          pvp.blockReconnectFor?.(15000)
           pvp.leaveMatch()
           setShowPvpLobby(false)
         }}
@@ -1076,6 +1082,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           matchId={pvp.activeMatchId}
           addToast={addToast}
           onExit={async () => {
+            pvpCrashHandledRef.current = false
             resumeTicks()
             try {
               const pulled = await pullSave()

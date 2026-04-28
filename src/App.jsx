@@ -111,6 +111,7 @@ function GameApp() {
     let cancelled = false
     const reconnectActiveMatch = async () => {
       if (cancelled || pvp.phase === 'in_match' || pvpReconnectBusyRef.current) return
+      if (!pvp.canAutoReconnect) return
       if (!getToken() || !getCharacterId()) return
       pvpReconnectBusyRef.current = true
       try {
@@ -134,7 +135,7 @@ function GameApp() {
       cancelled = true
       document.removeEventListener('visibilitychange', onVisible)
     }
-  }, [pvp.phase, pvp.enterMatch])
+  }, [pvp.phase, pvp.enterMatch, pvp.canAutoReconnect])
 
   // Split xpReward into immediate grants and player-choice rewards (combat / any)
   function splitXpRewards(xpReward) {
