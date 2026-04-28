@@ -13,7 +13,7 @@ function quantityOf(stack) {
 function isLootableTradeable(item, itemId) {
   if (!item || typeof item !== 'object') return false
   if (itemId === 'coins') return true
-  return !!item.tradeable
+  return !item.isUntradeable
 }
 
 export function getItemShopValue(itemStack, itemsData) {
@@ -21,6 +21,7 @@ export function getItemShopValue(itemStack, itemsData) {
   if (!itemId || !itemsData) return 0
   const item = itemsData[itemId]
   if (!isLootableTradeable(item, itemId)) return 0
+  if (itemId === 'coins') return quantityOf(itemStack)
   const shopValue = Number(item.shopValue)
   if (!Number.isFinite(shopValue) || shopValue <= 0) return 0
   return Math.floor(shopValue) * quantityOf(itemStack)

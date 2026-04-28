@@ -87,7 +87,9 @@ function GameApp() {
   // post-checkout thank-you toast + credits refresh once the game is ready.
   const paymentReturnRef = useRef(false)
   const pvpReconnectBusyRef = useRef(false)
+  const prevPvpPhaseRef = useRef(pvp.phase)
   const isInPvpMatch = pvp.phase === 'in_match'
+  const [suppressIdleModalUntil, setSuppressIdleModalUntil] = useState(0)
 
   // Refs for tick-based systems
   const hpRegenCounter = useRef(0)
@@ -105,6 +107,19 @@ function GameApp() {
     setIdleResult(null)
     pauseTicks()
     try { localStorage.removeItem('pocketrpg_activeTask') } catch { /* ignore */ }
+  }, [pvp.phase])
+
+  useEffect(() => {
+    const prevPhase = prevPvpPhaseRef.current
+    if (prevPhase === 'in_match' && pvp.phase !== 'in_match') {
+      setIdleResult(null)
+      setSuppressIdleModalUntil(Date.now() + 15000)
+      try {
+        localStorage.removeItem('pocketrpg_hiddenAt')
+        localStorage.removeItem('pocketrpg_activeTask')
+      } catch { /* ignore */ }
+    }
+    prevPvpPhaseRef.current = pvp.phase
   }, [pvp.phase])
 
   useEffect(() => {
@@ -327,6 +342,7 @@ function GameApp() {
           try { beaconIdleState(activeTaskRef.current) } catch (e) { /* non-fatal */ }
         }
       } else {
+        if (isInPvpMatch) return
         // Page returning to foreground — prefer performance.now() diff (monotonic) over wall-clock
         // to prevent system-time manipulation from granting fake idle progress.
         try {
@@ -1454,7 +1470,7 @@ function GameApp() {
       />
 
       {/* Idle Result Modal */}
-      {idleResult && pvp.phase !== 'in_match' && (
+      {idleResult && pvp.phase !== 'in_match' && Date.now() >= suppressIdleModalUntil && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <div style={{ width: '100%', maxWidth: '380px', background: '#1a1a1a', borderRadius: '20px', border: '1px solid #333', overflow: 'hidden' }}>
             {/* Header */}

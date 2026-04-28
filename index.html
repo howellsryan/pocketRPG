@@ -30552,7 +30552,7 @@ function isLootableTradeable(item, itemId) {
         return false;
     if (itemId === 'coins')
         return true;
-    return !!item.tradeable;
+    return !item.isUntradeable;
 }
 function getItemShopValue(itemStack, itemsData) {
     const itemId = itemStack?.itemId;
@@ -30561,6 +30561,8 @@ function getItemShopValue(itemStack, itemsData) {
     const item = itemsData[itemId];
     if (!isLootableTradeable(item, itemId))
         return 0;
+    if (itemId === 'coins')
+        return quantityOf(itemStack);
     const shopValue = Number(item.shopValue);
     if (!Number.isFinite(shopValue) || shopValue <= 0)
         return 0;
@@ -30627,11 +30629,13 @@ function normalizeCombatant(rawCombatant) {
     if (!Number.isFinite(characterId) || characterId <= 0)
         return null;
     const normalizedInventory = normalizeInventory(parseMaybeJson(rawCombatant.inventory));
+    const maxHP = readPositiveInt(rawCombatant.maxHP, rawCombatant.max_hp, rawCombatant.player?.maxHP, rawCombatant.player?.max_hp, rawCombatant.stats?.hitpoints, rawCombatant.currentHP, rawCombatant.current_hp, 10);
+    const hp = readPositiveInt(rawCombatant.hp, rawCombatant.currentHP, rawCombatant.current_hp, rawCombatant.player?.currentHP, rawCombatant.player?.current_hp, maxHP);
     return {
         ...rawCombatant,
         characterId,
-        maxHP: Number(rawCombatant.maxHP ?? rawCombatant.max_hp ?? rawCombatant.currentHP ?? rawCombatant.current_hp ?? 1) || 1,
-        hp: Number(rawCombatant.hp ?? rawCombatant.currentHP ?? rawCombatant.current_hp ?? 0) || 0,
+        maxHP,
+        hp,
         specialAttackEnergy: Number(rawCombatant.specialAttackEnergy ?? rawCombatant.special_attack_energy ?? 0) || 0,
         inventory: normalizedInventory,
     };
@@ -30673,6 +30677,14 @@ function parseMaybeJson(value) {
     catch {
         return value;
     }
+}
+function readPositiveInt(...values) {
+    for (const value of values) {
+        const parsed = Number(value);
+        if (Number.isFinite(parsed) && parsed > 0)
+            return Math.floor(parsed);
+    }
+    return 1;
 }
 
 // ── engine/pvpFood.js ──
@@ -42234,7 +42246,9 @@ function GameApp() {
     // post-checkout thank-you toast + credits refresh once the game is ready.
     const paymentReturnRef = useRef(false);
     const pvpReconnectBusyRef = useRef(false);
+    const prevPvpPhaseRef = useRef(pvp.phase);
     const isInPvpMatch = pvp.phase === 'in_match';
+    const [suppressIdleModalUntil, setSuppressIdleModalUntil] = useState(0);
     // Refs for tick-based systems
     const hpRegenCounter = useRef(0);
     const snapshotCounter = useRef(99); // Start at 99 so first snapshot fires after 1 tick
@@ -42254,6 +42268,19 @@ function GameApp() {
             localStorage.removeItem('pocketrpg_activeTask');
         }
         catch { /* ignore */ }
+    }, [pvp.phase]);
+    useEffect(() => {
+        const prevPhase = prevPvpPhaseRef.current;
+        if (prevPhase === 'in_match' && pvp.phase !== 'in_match') {
+            setIdleResult(null);
+            setSuppressIdleModalUntil(Date.now() + 15000);
+            try {
+                localStorage.removeItem('pocketrpg_hiddenAt');
+                localStorage.removeItem('pocketrpg_activeTask');
+            }
+            catch { /* ignore */ }
+        }
+        prevPvpPhaseRef.current = pvp.phase;
     }, [pvp.phase]);
     useEffect(() => {
         let cancelled = false;
@@ -42488,6 +42515,8 @@ function GameApp() {
                 }
             }
             else {
+                if (isInPvpMatch)
+                    return;
                 // Page returning to foreground — prefer performance.now() diff (monotonic) over wall-clock
                 // to prevent system-time manipulation from granting fake idle progress.
                 try {
@@ -43570,7 +43599,7 @@ function GameApp() {
         h(ToastContainer, null),
         h("main", { style: { flex: 1, overflow: 'hidden' } }, renderScreen()),
         h(BottomNav, { active: screen, onNavigate: (s) => navigate(s), isInCombat: isInCombat, onDisabledClick: () => addToast('⚔️ Cannot navigate during combat!', 'warning') }),
-        idleResult && pvp.phase !== 'in_match' && (h("div", { style: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' } },
+        idleResult && pvp.phase !== 'in_match' && Date.now() >= suppressIdleModalUntil && (h("div", { style: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' } },
             h("div", { style: { width: '100%', maxWidth: '380px', background: '#1a1a1a', borderRadius: '20px', border: '1px solid #333', overflow: 'hidden' } },
                 h("div", { style: { background: 'linear-gradient(135deg, #1d3a2a, #2a1a0a)', padding: '20px 20px 16px', borderBottom: '1px solid #333' } },
                     h("div", { style: { fontSize: '28px', textAlign: 'center', marginBottom: '6px' } }, "\uD83D\uDCA4"),

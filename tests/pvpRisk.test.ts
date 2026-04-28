@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { calculatePvpRiskValues, getItemShopValue } from '../src/engine/pvpRisk.js'
 
 const itemsData: any = {
-  coins: { id: 'coins', tradeable: false, shopValue: 1 },
-  whip: { id: 'whip', tradeable: true, shopValue: 1_500_000 },
-  shark: { id: 'shark', tradeable: true, shopValue: 900 },
-  fire_cape: { id: 'fire_cape', tradeable: false, shopValue: 50_000 },
+  coins: { id: 'coins', isUntradeable: true, shopValue: 0 },
+  whip: { id: 'whip', shopValue: 1_500_000 },
+  shark: { id: 'shark', shopValue: 900 },
+  fire_cape: { id: 'fire_cape', isUntradeable: true, shopValue: 50_000 },
 }
 
 describe('pvpRisk', () => {

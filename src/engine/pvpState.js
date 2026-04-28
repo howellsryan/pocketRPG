@@ -44,12 +44,30 @@ function normalizeCombatant(rawCombatant) {
   if (!Number.isFinite(characterId) || characterId <= 0) return null
 
   const normalizedInventory = normalizeInventory(parseMaybeJson(rawCombatant.inventory))
+  const maxHP = readPositiveInt(
+    rawCombatant.maxHP,
+    rawCombatant.max_hp,
+    rawCombatant.player?.maxHP,
+    rawCombatant.player?.max_hp,
+    rawCombatant.stats?.hitpoints,
+    rawCombatant.currentHP,
+    rawCombatant.current_hp,
+    10,
+  )
+  const hp = readPositiveInt(
+    rawCombatant.hp,
+    rawCombatant.currentHP,
+    rawCombatant.current_hp,
+    rawCombatant.player?.currentHP,
+    rawCombatant.player?.current_hp,
+    maxHP,
+  )
 
   return {
     ...rawCombatant,
     characterId,
-    maxHP: Number(rawCombatant.maxHP ?? rawCombatant.max_hp ?? rawCombatant.currentHP ?? rawCombatant.current_hp ?? 1) || 1,
-    hp: Number(rawCombatant.hp ?? rawCombatant.currentHP ?? rawCombatant.current_hp ?? 0) || 0,
+    maxHP,
+    hp,
     specialAttackEnergy: Number(rawCombatant.specialAttackEnergy ?? rawCombatant.special_attack_energy ?? 0) || 0,
     inventory: normalizedInventory,
   }
@@ -87,4 +105,12 @@ function parseMaybeJson(value) {
   } catch {
     return value
   }
+}
+
+function readPositiveInt(...values) {
+  for (const value of values) {
+    const parsed = Number(value)
+    if (Number.isFinite(parsed) && parsed > 0) return Math.floor(parsed)
+  }
+  return 1
 }
