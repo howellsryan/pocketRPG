@@ -25,6 +25,7 @@ const sourceFiles = [
   'engine/combatant.js',
   'engine/combatPrimitives.js',
   'engine/pvpState.js',
+  'engine/pvpFood.js',
   'engine/pvpEngine.js',
   'engine/lootTransfer.js',
   'engine/skilling.js',

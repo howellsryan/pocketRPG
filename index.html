@@ -30479,6 +30479,17 @@ function parseMaybeJson(value) {
     }
 }
 
+// ── engine/pvpFood.js ──
+function getPvpHealAmount(item) {
+    const healAmount = Number(item?.heals ?? item?.heal ?? 0);
+    if (!Number.isFinite(healAmount))
+        return 0;
+    return Math.max(0, Math.floor(healAmount));
+}
+function isPvpFoodItem(item) {
+    return getPvpHealAmount(item) > 0;
+}
+
 // ── engine/pvpEngine.js ──
 // PvP match tick loop (Phase 2B).
 //
