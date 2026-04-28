@@ -34034,6 +34034,7 @@ function PvpProvider({ children }) {
     const bootMatchId = readBootMatchId();
     const [phase, setPhase] = useState(bootMatchId ? 'in_match' : 'idle');
     const [activeMatchId, setActiveMatchId] = useState(bootMatchId);
+    const [reconnectBlockedUntil, setReconnectBlockedUntil] = useState(0);
     const openLobby = useCallback(() => {
         writePvpLocalState(null);
         setPhase('waiting');
@@ -34053,6 +34054,16 @@ function PvpProvider({ children }) {
         setPhase('idle');
         setActiveMatchId(null);
     }, []);
+    const blockReconnectFor = useCallback((ms = 0) => {
+        const parsed = Number(ms);
+        const safeMs = Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0;
+        if (safeMs <= 0) {
+            setReconnectBlockedUntil(0);
+            return;
+        }
+        setReconnectBlockedUntil(Date.now() + safeMs);
+    }, []);
+    const canAutoReconnect = reconnectBlockedUntil <= Date.now();
     const value = {
         phase,
         activeMatchId,
@@ -34060,6 +34071,8 @@ function PvpProvider({ children }) {
         closeLobby,
         enterMatch,
         leaveMatch,
+        blockReconnectFor,
+        canAutoReconnect,
         setPhase,
     };
     return h(PvpContext.Provider, { value: value }, children);
@@ -36025,6 +36038,8 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
     const pendingActionRef = useRef(null);
     const lastPollOkAt = useRef(0);
     const latestTick = useRef(0);
+    const exitHandled = useRef(false);
+    const fatalNotified = useRef(false);
     useEffect(() => {
         pendingActionRef.current = pendingAction;
     }, [pendingAction]);
@@ -36057,6 +36072,21 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
         document.addEventListener('visibilitychange', onVisibility);
         return () => document.removeEventListener('visibilitychange', onVisibility);
     }, []);
+    const exitOnce = async () => {
+        if (exitHandled.current)
+            return;
+        exitHandled.current = true;
+        await onExit?.();
+    };
+    const notifyFatalOnce = (message, err = null) => {
+        if (fatalNotified.current)
+            return;
+        fatalNotified.current = true;
+        if (message)
+            addToast?.(message, 'error');
+        if (err)
+            console.error('[PocketRPG] PvP fatal screen error:', err);
+    };
     const refreshFromServer = async () => {
         const sinceTick = latestTick.current > 0 ? latestTick.current : null;
         const res = await pvpApi.getMatch(matchId, sinceTick);
@@ -36117,7 +36147,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
             const msg = err.body?.error || err.message;
             if (msg === 'match_not_found' || msg === 'match_not_active') {
                 addToast?.('Match has ended.', 'info');
-                await onExit?.();
+                await exitOnce();
                 return;
             }
             if (Date.now() - lastPollOkAt.current > NO_POLL_WARNING_MS) {
@@ -36158,8 +36188,8 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
                         continue;
                     }
                     setLoading(false);
-                    addToast?.(code || 'Failed to load PvP match', 'error');
-                    await onExit?.();
+                    notifyFatalOnce(code || 'Failed to load PvP match', err);
+                    await exitOnce();
                     return;
                 }
             }
@@ -36441,6 +36471,7 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
     const statsRef = useRef(stats);
     const equipmentRef = useRef(equipment);
     const slayerTaskRef = useRef(slayerTask);
+    const pvpCrashHandledRef = useRef(false);
     const slayerPointsRef = useRef(slayerPoints);
     const bossKillCountsRef = useRef(bossKillCounts);
     const raidKillCountsRef = useRef(raidKillCounts);
@@ -36455,6 +36486,8 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
         let cancelled = false;
         const reconnectToActiveMatch = async () => {
             if (pvp.phase === 'in_match')
+                return;
+            if (!pvp.canAutoReconnect)
                 return;
             try {
                 const invitesRes = await pvpApi.listInvitations();
@@ -36479,7 +36512,7 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
             cancelled = true;
             document.removeEventListener('visibilitychange', onVisible);
         };
-    }, [pvp.phase, pvp.enterMatch]);
+    }, [pvp.phase, pvp.enterMatch, pvp.canAutoReconnect]);
     useEffect(() => { hpRef.current = currentHP; }, [currentHP]);
     useEffect(() => { inventoryRef.current = inventory; }, [inventory]);
     useEffect(() => { bankRef.current = bank; }, [bank]);
@@ -37302,13 +37335,19 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
     const agilityLevel = getLevelFromXP(stats.agility?.xp || 0);
     const bankDelayMs = getAgilityBankDelayMs(agilityLevel);
     if (pvp.phase === 'in_match' && pvp.activeMatchId) {
-        return (h(PvpCombatErrorBoundary, { onCrash: async () => {
+        return (h(PvpCombatErrorBoundary, { onCrash: async (error) => {
+                if (pvpCrashHandledRef.current)
+                    return;
+                pvpCrashHandledRef.current = true;
+                console.error('[PocketRPG] Handling PvP crash fallback:', error?.message || error);
                 addToast('PvP match view crashed — returning to PvE.', 'error');
                 resumeTicks();
+                pvp.blockReconnectFor?.(15000);
                 pvp.leaveMatch();
                 setShowPvpLobby(false);
             } },
             h(PvpCombatScreen, { matchId: pvp.activeMatchId, addToast: addToast, onExit: async () => {
+                    pvpCrashHandledRef.current = false;
                     resumeTicks();
                     try {
                         const pulled = await pullSave();
@@ -41691,6 +41730,8 @@ function GameApp() {
         const reconnectActiveMatch = async () => {
             if (cancelled || pvp.phase === 'in_match' || pvpReconnectBusyRef.current)
                 return;
+            if (!pvp.canAutoReconnect)
+                return;
             if (!getToken() || !getCharacterId())
                 return;
             pvpReconnectBusyRef.current = true;
@@ -41718,7 +41759,7 @@ function GameApp() {
             cancelled = true;
             document.removeEventListener('visibilitychange', onVisible);
         };
-    }, [pvp.phase, pvp.enterMatch]);
+    }, [pvp.phase, pvp.enterMatch, pvp.canAutoReconnect]);
     // Split xpReward into immediate grants and player-choice rewards (combat / any)
     function splitXpRewards(xpReward) {
         const fixed = {};

@@ -48,6 +48,7 @@ export function PvpProvider({ children }) {
   const bootMatchId = readBootMatchId()
   const [phase, setPhase] = useState(bootMatchId ? 'in_match' : 'idle')
   const [activeMatchId, setActiveMatchId] = useState(bootMatchId)
+  const [reconnectBlockedUntil, setReconnectBlockedUntil] = useState(0)
 
   const openLobby = useCallback(() => {
     writePvpLocalState(null)
@@ -68,6 +69,16 @@ export function PvpProvider({ children }) {
     setPhase('idle')
     setActiveMatchId(null)
   }, [])
+  const blockReconnectFor = useCallback((ms = 0) => {
+    const parsed = Number(ms)
+    const safeMs = Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0
+    if (safeMs <= 0) {
+      setReconnectBlockedUntil(0)
+      return
+    }
+    setReconnectBlockedUntil(Date.now() + safeMs)
+  }, [])
+  const canAutoReconnect = reconnectBlockedUntil <= Date.now()
 
   const value = {
     phase,
@@ -76,6 +87,8 @@ export function PvpProvider({ children }) {
     closeLobby,
     enterMatch,
     leaveMatch,
+    blockReconnectFor,
+    canAutoReconnect,
     setPhase,
   }
 

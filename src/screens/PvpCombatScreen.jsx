@@ -47,6 +47,8 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const pendingActionRef = useRef(null)
   const lastPollOkAt = useRef(0)
   const latestTick = useRef(0)
+  const exitHandled = useRef(false)
+  const fatalNotified = useRef(false)
 
   useEffect(() => {
     pendingActionRef.current = pendingAction
@@ -80,6 +82,19 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     document.addEventListener('visibilitychange', onVisibility)
     return () => document.removeEventListener('visibilitychange', onVisibility)
   }, [])
+
+  const exitOnce = async () => {
+    if (exitHandled.current) return
+    exitHandled.current = true
+    await onExit?.()
+  }
+
+  const notifyFatalOnce = (message, err = null) => {
+    if (fatalNotified.current) return
+    fatalNotified.current = true
+    if (message) addToast?.(message, 'error')
+    if (err) console.error('[PocketRPG] PvP fatal screen error:', err)
+  }
 
   const refreshFromServer = async () => {
     const sinceTick = latestTick.current > 0 ? latestTick.current : null
@@ -137,7 +152,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
       const msg = err.body?.error || err.message
       if (msg === 'match_not_found' || msg === 'match_not_active') {
         addToast?.('Match has ended.', 'info')
-        await onExit?.()
+        await exitOnce()
         return
       }
       if (Date.now() - lastPollOkAt.current > NO_POLL_WARNING_MS) {
@@ -177,8 +192,8 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
             continue
           }
           setLoading(false)
-          addToast?.(code || 'Failed to load PvP match', 'error')
-          await onExit?.()
+          notifyFatalOnce(code || 'Failed to load PvP match', err)
+          await exitOnce()
           return
         }
       }
