@@ -4,6 +4,20 @@ import { readOwnedActiveMatch, itemsData, readCharacterSave, applyCombatantToSav
 import { processPvpTick } from '../../../../../src/engine/pvpEngine.js'
 import { applyLootTransfer } from '../../../../../src/engine/lootTransfer.js'
 
+const PVP_TICK_MS = 600
+const PVP_TICK_GRACE_MS = 75
+
+export function shouldAdvancePvpTick(now, lastTickAt) {
+  const safeNow = Number(now) || 0
+  const safeLastTickAt = Number(lastTickAt) || 0
+  if (safeLastTickAt <= 0) return { advance: true, nextTickAt: safeNow + PVP_TICK_MS }
+  const nextTickAt = safeLastTickAt + PVP_TICK_MS
+  return {
+    advance: safeNow + PVP_TICK_GRACE_MS >= nextTickAt,
+    nextTickAt,
+  }
+}
+
 function appliedIntentsStatement(env, intentIds) {
   if (!intentIds.length) return null
   const ids = intentIds.map(() => '?').join(',')
@@ -112,6 +126,19 @@ export async function onRequestPost({ request, env, params }) {
 
   const state = parseMatchState(match)
   if (!state) return json({ error: 'invalid_match_state' }, 500)
+  const now = Date.now()
+  const pacing = shouldAdvancePvpTick(now, match.last_tick_at)
+  if (!pacing.advance) {
+    return json({
+      ok: true,
+      advanced: false,
+      terminal: null,
+      state: null,
+      events: [],
+      current_tick: match.current_tick,
+      next_tick_at: pacing.nextTickAt,
+    })
+  }
 
   const intentsRows = await env.DB.prepare(
     `SELECT id, character_id, tick_number, character_seq, action_json
@@ -141,7 +168,6 @@ export async function onRequestPost({ request, env, params }) {
   }
 
   const out = processPvpTick(state, intents, itemsData)
-  const now = Date.now()
 
   if (out.terminal) {
     const terminal = await finalizeTerminalMatch(env, match, out.stateNext, out.terminal, appliedIntentIds)
@@ -181,7 +207,12 @@ export async function onRequestPost({ request, env, params }) {
   if (updateRes.meta.changes === 0) {
     const current = await readOwnedActiveMatch(env, matchId, ch.id)
     if (current.error) return json({ error: current.error }, current.status)
-    return json({ ok: true, advanced: false, current_tick: current.row.current_tick })
+    return json({
+      ok: true,
+      advanced: false,
+      current_tick: current.row.current_tick,
+      next_tick_at: (Number(current.row.last_tick_at) || Date.now()) + PVP_TICK_MS,
+    })
   }
 
   return json({

@@ -7,15 +7,18 @@ import ItemSlot from '../components/ItemSlot.jsx'
 import Modal from '../components/Modal.jsx'
 import { pvpApi } from '../cloud/pvp.js'
 import itemsData from '../data/items.json'
+import prayersData from '../data/prayers.json'
 import { getCharacterId } from '../cloud/api.js'
 import { normalizePvpState } from '../engine/pvpState.js'
 import { isPvpFoodItem } from '../engine/pvpFood.js'
+import { isPvpCombatPotion } from '../engine/pvpPotions.js'
 
 const POLL_VISIBLE_MS = 600
 const POLL_HIDDEN_MS = 1500
 const NO_POLL_WARNING_MS = 5000
 const MATCH_BOOT_GRACE_MS = 8000
 const MATCH_BOOT_RETRY_MS = 500
+const PVP_SCREEN_PROTECTION_PRAYER_IDS = new Set(['protection_from_magic', 'protection_from_missiles', 'protection_from_melee'])
 
 function prettifyEvent(evt, selfId) {
   if (!evt) return null
@@ -52,10 +55,16 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const lastPollOkAt = useRef(0)
   const latestTick = useRef(0)
   const fatalNotified = useRef(false)
+  const terminalHandledRef = useRef(false)
+  const endModalOpenRef = useRef(false)
 
   useEffect(() => {
     pendingActionRef.current = pendingAction
   }, [pendingAction])
+
+  useEffect(() => {
+    endModalOpenRef.current = !!endModal
+  }, [endModal])
 
   const toArray = (value) => {
     if (Array.isArray(value)) return value
@@ -74,6 +83,8 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
   useEffect(() => {
     mounted.current = true
+    terminalHandledRef.current = false
+    endModalOpenRef.current = false
     return () => {
       mounted.current = false
       if (pollTimer.current) clearTimeout(pollTimer.current)
@@ -151,9 +162,11 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   }
 
   const runTick = async () => {
-    if (tickInFlight.current) return
+    if (terminalHandledRef.current) return false
+    if (tickInFlight.current) return true
     tickInFlight.current = true
     try {
+      if (terminalHandledRef.current) return false
       const action = pendingActionRef.current
       if (action) {
         await pvpApi.postIntent(matchId, latestTick.current, action)
@@ -161,7 +174,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
         setPendingAction(null)
       }
       const tickRes = await pvpApi.tickMatch(matchId)
-      if (!mounted.current) return
+      if (!mounted.current) return false
 
       if (tickRes.state) {
         const normalizedState = normalizePvpState(tickRes.state)
@@ -174,6 +187,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
       setStaleWarning(false)
 
       if (tickRes.terminal) {
+        terminalHandledRef.current = true
         const youWon = Number(tickRes.terminal.winner) === selfId
         const writebackOk = tickRes.terminal_writeback !== false
         if (!writebackOk) {
@@ -186,25 +200,31 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
           loot: writebackOk ? (tickRes.loot || { added: [], dropped: [], droppedValue: 0 }) : null,
         })
         if (pollTimer.current) clearTimeout(pollTimer.current)
+        return false
       }
+      return true
     } catch (err) {
-      if (!mounted.current) return
+      if (!mounted.current) return false
       const msg = err.body?.error || err.message
+      if ((msg === 'match_not_found' || msg === 'match_not_active') && (terminalHandledRef.current || endModalOpenRef.current)) {
+        return false
+      }
       if (msg === 'match_not_found' || msg === 'match_not_active') {
         console.warn('[PocketRPG][PvP] tickMatch reported inactive match; checking server active_match_id before exit:', err?.body || null)
         const noActiveMatch = await confirmNoActiveMatch()
         if (noActiveMatch) {
           addToast?.('Match has ended.', 'info')
           await onExit?.()
-          return
+          return false
         }
         setBootstrapError('Server still reports an active PvP match. Retry to reconnect.')
         setLoading(false)
-        return
+        return false
       }
       if (Date.now() - lastPollOkAt.current > NO_POLL_WARNING_MS) {
         setStaleWarning(true)
       }
+      return true
     } finally {
       tickInFlight.current = false
     }
@@ -218,8 +238,8 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     const scheduleNext = () => {
       if (!active || !mounted.current) return
       pollTimer.current = setTimeout(async () => {
-        await runTick()
-        scheduleNext()
+        const shouldContinue = await runTick()
+        if (shouldContinue !== false) scheduleNext()
       }, pollMs)
     }
 
@@ -269,6 +289,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const recentLines = safeRecentEvents.slice(-6).map((evt) => prettifyEvent(evt, selfId)).filter(Boolean)
 
   const queueAction = (action) => {
+    if (terminalHandledRef.current || endModalOpenRef.current) return
     setPendingAction(action)
     setBusy(true)
     setTimeout(() => setBusy(false), 220)
@@ -278,6 +299,15 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     .map((slot, idx) => ({ slot, idx }))
     .filter(({ slot }) => slot && isPvpFoodItem(itemsData[slot.itemId]))
     .slice(0, 4)
+
+  const availablePrayers = Object.values(prayersData || {})
+    .filter((prayer) => prayer && prayer.bonusType !== 'protection' && !PVP_SCREEN_PROTECTION_PRAYER_IDS.has(prayer.id))
+    .filter((prayer) => (pair.self?.stats?.prayer || 1) >= (prayer.level || 1))
+
+  const potionSlots = toArray(pair.self?.inventory)
+    .map((slot, idx) => ({ slot, idx, item: slot ? itemsData?.[slot.itemId] : null }))
+    .filter(({ slot, item }) => slot && item && isPvpCombatPotion(item))
+    .slice(0, 6)
 
   return (
     <div class="p-3 space-y-3">
@@ -376,6 +406,45 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
             <div key={`${slot.itemId}-${idx}`} onClick={() => queueAction({ type: 'eat', inventorySlot: idx })}>
               <ItemSlot slot={slot} size="small" />
             </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card>
+        <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Combat Prayers</div>
+        <div class="flex gap-2 flex-wrap">
+          {availablePrayers.length === 0 && <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No PvP-usable prayers unlocked.</div>}
+          {availablePrayers.map((prayer) => {
+            const active = pair.self?.activeCombatPrayer === prayer.id
+            return (
+              <Button
+                key={prayer.id}
+                variant={active ? 'primary' : 'secondary'}
+                size="sm"
+                disabled={busy}
+                onClick={() => queueAction({ type: 'toggle_prayer', prayerId: prayer.id })}
+              >
+                {prayer.icon || '✨'} {prayer.name}
+              </Button>
+            )
+          })}
+        </div>
+      </Card>
+
+      <Card>
+        <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Quick Potions</div>
+        <div class="flex gap-2 flex-wrap">
+          {potionSlots.length === 0 && <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No combat potions in inventory.</div>}
+          {potionSlots.map(({ slot, idx, item }) => (
+            <Button
+              key={`${slot.itemId}-${idx}`}
+              variant="secondary"
+              size="sm"
+              disabled={busy}
+              onClick={() => queueAction({ type: 'drink_potion', inventorySlot: idx })}
+            >
+              {(item?.icon || '🧪')} {item?.name || slot.itemId} {Number(slot?.quantity || 0) > 1 ? `x${slot.quantity}` : ''}
+            </Button>
           ))}
         </div>
       </Card>

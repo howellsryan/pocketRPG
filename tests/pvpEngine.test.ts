@@ -10,6 +10,10 @@ const items = {
     otherBonus: { meleeStrength: 82, rangedStrength: 0, magicDamage: 0 },
   },
   shark: { id: 'shark', heals: 20, stackable: false },
+  attack_potion: { id: 'attack_potion', type: 'potion' },
+  strength_potion: { id: 'strength_potion', type: 'potion' },
+  defence_potion: { id: 'defence_potion', type: 'potion' },
+  ranging_potion: { id: 'ranging_potion', type: 'potion' },
 }
 
 function buildPlayer(overrides: any = {}) {
@@ -142,5 +146,136 @@ describe('pvpEngine phase 2B contract', () => {
 
     expect(out.stateNext.combatants['1'].specialAttackEnergy).toBe(75)
     expect(out.events.some((e: any) => e.type === 'attack' && e.special === true)).toBe(true)
+  })
+
+  it('applies prayer bonuses without permanently inflating base stats', () => {
+    const a = buildPlayer({ characterId: 1, stance: 'accurate' })
+    const b = buildPlayer({ characterId: 2, stance: 'defensive' })
+    const state = createPvpState(a, b, 0)
+    state.combatants['1'].attackTimer = 0
+    state.combatants['2'].attackTimer = 99
+
+    const plain = processPvpTick(state, [], items)
+    const prayed = processPvpTick(state, [
+      { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'toggle_prayer', prayerId: 'piety' } },
+    ], items)
+
+    const plainAttack = plain.events.find((e: any) => e.type === 'attack')
+    const prayedAttack = prayed.events.find((e: any) => e.type === 'attack')
+    expect(prayedAttack.attackRoll).toBeGreaterThan(plainAttack.attackRoll)
+    expect(prayedAttack.maxHit).toBeGreaterThan(plainAttack.maxHit)
+    expect(state.combatants['1'].stats.attack).toBe(99)
+    expect(state.combatants['1'].stats.strength).toBe(99)
+  })
+
+  it('applies defender defence prayers', () => {
+    const a = buildPlayer({ characterId: 1 })
+    const b = buildPlayer({ characterId: 2, stance: 'defensive' })
+    const state = createPvpState(a, b, 0)
+    state.combatants['2'].attackTimer = 99
+
+    const plain = processPvpTick(state, [], items)
+    const prayedDef = processPvpTick(state, [
+      { tick_number: 1, characterId: 2, characterSeq: 1, action: { type: 'toggle_prayer', prayerId: 'steel_skin' } },
+    ], items)
+
+    const plainAttack = plain.events.find((e: any) => e.type === 'attack')
+    const prayedAttack = prayedDef.events.find((e: any) => e.type === 'attack')
+    expect(prayedAttack.defenceRoll).toBeGreaterThan(plainAttack.defenceRoll)
+  })
+
+  it('applies ranged prayers (rigour) to attack roll and max hit', () => {
+    const rangedItems: any = {
+      ...items,
+      magic_shortbow: {
+        id: 'magic_shortbow',
+        slot: 'weapon',
+        attackStyle: 'ranged',
+        attackSpeed: 4,
+        attackBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 69 },
+        defenceBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
+        otherBonus: { meleeStrength: 0, rangedStrength: 55, magicDamage: 0 },
+      },
+    }
+    const a = buildPlayer({ characterId: 1, combatType: 'ranged', equipment: { weapon: { itemId: 'magic_shortbow' } }, stance: 'accurate' })
+    const b = buildPlayer({ characterId: 2 })
+    const state = createPvpState(a, b, 0)
+    state.combatants['2'].attackTimer = 99
+    const plain = processPvpTick(state, [], rangedItems)
+    const rigour = processPvpTick(state, [
+      { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'toggle_prayer', prayerId: 'rigour' } },
+    ], rangedItems)
+    const a1 = plain.events.find((e: any) => e.type === 'attack')
+    const a2 = rigour.events.find((e: any) => e.type === 'attack')
+    expect(a2.attackRoll).toBeGreaterThan(a1.attackRoll)
+    expect(a2.maxHit).toBeGreaterThan(a1.maxHit)
+  })
+
+  it('applies potion boosts and decrements potion duration', () => {
+    const a = buildPlayer({ characterId: 1, inventory: [{ itemId: 'attack_potion', quantity: 1 }] })
+    const b = buildPlayer({ characterId: 2 })
+    let state = createPvpState(a, b, 0)
+    state.combatants['1'].attackTimer = 99
+    state.combatants['2'].attackTimer = 99
+
+    let out = processPvpTick(state, [
+      { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'drink_potion', inventorySlot: 0 } },
+    ], items)
+    expect(out.events.some((e: any) => e.type === 'drink')).toBe(true)
+    const firstTicks = out.stateNext.combatants['1'].activePotions.attack_potion
+    expect(firstTicks).toBe(99)
+
+    out.stateNext.combatants['1'].attackTimer = 0
+    out.stateNext.combatants['2'].attackTimer = 99
+    const buffed = processPvpTick(out.stateNext, [], items)
+    const buffedAttack = buffed.events.find((e: any) => e.type === 'attack')
+    expect(buffedAttack.attackRoll).toBeGreaterThan(0)
+  })
+
+  it('second prayer toggle disables active prayer', () => {
+    const a = buildPlayer({ characterId: 1 })
+    const b = buildPlayer({ characterId: 2 })
+    let state = createPvpState(a, b, 0)
+    state.combatants['1'].attackTimer = 99
+    state.combatants['2'].attackTimer = 99
+
+    let out = processPvpTick(state, [
+      { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'toggle_prayer', prayerId: 'piety' } },
+    ], items)
+    expect(out.stateNext.combatants['1'].activeCombatPrayer).toBe('piety')
+
+    out = processPvpTick(out.stateNext, [
+      { tick_number: 2, characterId: 1, characterSeq: 2, action: { type: 'toggle_prayer', prayerId: 'piety' } },
+    ], items)
+    expect(out.stateNext.combatants['1'].activeCombatPrayer).toBeNull()
+  })
+
+  it('applies augury to magic attack and defender defence', () => {
+    const mageItems: any = {
+      ...items,
+      trident: {
+        id: 'trident',
+        slot: 'weapon',
+        attackStyle: 'magic',
+        attackSpeed: 4,
+        attackBonus: { stab: 0, slash: 0, crush: 0, magic: 25, ranged: 0 },
+        defenceBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
+        otherBonus: { meleeStrength: 0, rangedStrength: 0, magicDamage: 0 },
+      },
+    }
+    const a = buildPlayer({ characterId: 1, combatType: 'magic', equipment: { weapon: { itemId: 'trident' } }, spell: { id: 'fire_bolt', baseDamage: 12 } as any })
+    const b = buildPlayer({ characterId: 2 })
+    const state = createPvpState(a, b, 0)
+    state.combatants['2'].attackTimer = 99
+
+    const plain = processPvpTick(state, [], mageItems)
+    const augury = processPvpTick(state, [
+      { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'toggle_prayer', prayerId: 'augury' } },
+      { tick_number: 1, characterId: 2, characterSeq: 1, action: { type: 'toggle_prayer', prayerId: 'augury' } },
+    ], mageItems)
+    const a1 = plain.events.find((e: any) => e.type === 'attack')
+    const a2 = augury.events.find((e: any) => e.type === 'attack' && e.attackerCharacterId === 1)
+    expect(a2.attackRoll).toBeGreaterThan(a1.attackRoll)
+    expect(a2.defenceRoll).toBeGreaterThan(a1.defenceRoll)
   })
 })

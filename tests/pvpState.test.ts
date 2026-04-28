@@ -60,4 +60,18 @@ describe('normalizePvpState', () => {
     expect(state?.combatants?.['10']?.hp).toBe(8)
     expect(state?.combatants?.['10']?.inventory?.[0]?.itemId).toBe('shark')
   })
+
+  it('defaults hp to maxHP when hp fields are absent', () => {
+    const state = normalizePvpState({
+      tick: 1,
+      combatants: {
+        '22': {
+          character_id: 22,
+          max_hp: 99,
+        },
+      },
+    })
+    expect(state?.combatants?.['22']?.maxHP).toBe(99)
+    expect(state?.combatants?.['22']?.hp).toBe(99)
+  })
 })

@@ -9,6 +9,7 @@ import { pvpApi } from '../cloud/pvp.js'
 import { pushNow } from '../cloud/sync.js'
 import { api, getCharacterId } from '../cloud/api.js'
 import { pauseTicks } from '../engine/tick.js'
+import { formatCompactCoins } from '../utils/formatters.js'
 
 const POLL_MS = 2500   // light enough to be cheap, fast enough to feel live in the lobby
 const SAVE_HEARTBEAT_MS = 3000
@@ -330,11 +331,12 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
           <div class="space-y-1.5">
             {waiting.map(p => {
               const alreadyInvited = invitations.outgoing.some(o => o.to_character === p.character_id)
+              const riskLine = `CB ${p.combat_level} · Total Risk: ${formatCompactCoins(p.total_shop_value)}`
               return (
                 <Card key={p.character_id} className="flex items-center justify-between" padding="p-2.5">
                   <div>
                     <div class="text-sm font-semibold text-[var(--color-parchment)]">{p.username}</div>
-                    <div class="text-[10px] text-[var(--color-parchment)] opacity-50">CB {p.combat_level}</div>
+                    <div class="text-[10px] text-[var(--color-parchment)] opacity-50">{riskLine}</div>
                   </div>
                   <Button
                     variant={alreadyInvited ? 'secondary' : 'primary'}
@@ -366,7 +368,9 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
                 <Card key={inv.id} className="flex items-center justify-between" padding="p-2.5">
                   <div>
                     <div class="text-sm font-semibold text-[var(--color-parchment)]">{inv.from_username}</div>
-                    <div class="text-[10px] text-[var(--color-parchment)] opacity-50">CB {inv.from_combat_level}</div>
+                    <div class="text-[10px] text-[var(--color-parchment)] opacity-50">
+                      CB {inv.from_combat_level} · Total Risk: {formatCompactCoins(inv.from_total_shop_value)}
+                    </div>
                   </div>
                   <div class="flex gap-1.5">
                     <Button variant="success" size="sm" disabled={busy}
@@ -395,7 +399,9 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
                 <Card key={inv.id} className="flex items-center justify-between" padding="p-2.5">
                   <div>
                     <div class="text-sm font-semibold text-[var(--color-parchment)]">{inv.to_username}</div>
-                    <div class="text-[10px] text-[var(--color-parchment)] opacity-50">CB {inv.to_combat_level} · waiting for response…</div>
+                    <div class="text-[10px] text-[var(--color-parchment)] opacity-50">
+                      CB {inv.to_combat_level} · Total Risk: {formatCompactCoins(inv.to_total_shop_value)} · waiting for response…
+                    </div>
                   </div>
                   <Button variant="ghost" size="sm" disabled={busy}
                     onClick={() => handleCancel(inv.id)}>
