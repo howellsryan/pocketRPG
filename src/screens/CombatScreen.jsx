@@ -115,29 +115,35 @@ const MONSTER_ICONS = {
 class PvpCombatErrorBoundary extends Component {
   constructor(props) {
     super(props)
-    this.state = { crashed: false }
+    this.state = { hasError: false, message: '' }
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.resetKey !== this.props.resetKey && this.state.crashed) {
-      this.setState({ crashed: false })
+    if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
+      this.setState({ hasError: false, message: '' })
     }
   }
 
-  componentDidCatch(error) {
-    console.error('[PocketRPG] PvP combat render crashed:', error)
-    this.setState({ crashed: true })
-    this.props.onCrash?.(error)
+  static getDerivedStateFromError(error) {
+    return {
+      hasError: true,
+      message: error?.message || String(error || 'Unknown PvP render error'),
+    }
+  }
+
+  componentDidCatch(error, info) {
+    console.error('[PocketRPG][PvP] combat screen render failed', error, info)
+    this.props.onCrash?.(error, info)
   }
 
   reset = () => {
-    this.setState({ crashed: false })
+    this.setState({ hasError: false, message: '' })
   }
 
   render(props, state) {
-    if (state.crashed) {
+    if (state.hasError) {
       if (typeof props.fallback === 'function') {
-        return props.fallback({ reset: this.reset })
+        return props.fallback({ reset: this.reset, message: state.message })
       }
       return null
     }
@@ -1129,13 +1135,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           console.error('[PocketRPG][PvP] Match view crashed; keeping recovery mode active:', error?.message || error)
           addToast('PvP match view failed. Use retry or forfeit.', 'error')
         }}
-        fallback={({ reset }) => (
+        fallback={({ reset, message }) => (
           <div className="p-3">
             <Card className="border-[var(--color-blood)] bg-[#2a1010]">
               <div class="text-sm font-bold text-[var(--color-blood-light)]">PvP match view failed to render</div>
               <div class="text-[11px] text-[var(--color-parchment)] opacity-70 mt-1">
                 The server still has you in an active PvP match. Do not return to PvE.
               </div>
+              {message && (
+                <p className="text-xs text-red-200 break-words mt-2">
+                  {message}
+                </p>
+              )}
               <div class="flex gap-2 mt-3">
                 <Button
                   variant="primary"

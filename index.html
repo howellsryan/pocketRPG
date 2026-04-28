@@ -30382,6 +30382,103 @@ function rollMagicAttack(attacker, defender, itemsData, opts = {}) {
     };
 }
 
+// ── engine/pvpState.js ──
+function normalizePvpState(rawState) {
+    if (typeof rawState === 'string') {
+        try {
+            rawState = JSON.parse(rawState);
+        }
+        catch {
+            return null;
+        }
+    }
+    if (!rawState || typeof rawState !== 'object')
+        return null;
+    const rawCombatants = parseMaybeJson(rawState.combatants);
+    const combatants = {};
+    if (Array.isArray(rawCombatants)) {
+        for (const entry of rawCombatants) {
+            const normalized = normalizeCombatant(entry);
+            if (!normalized)
+                continue;
+            combatants[String(normalized.characterId)] = normalized;
+        }
+    }
+    else if (rawCombatants && typeof rawCombatants === 'object') {
+        for (const entry of Object.values(rawCombatants)) {
+            const normalized = normalizeCombatant(entry);
+            if (!normalized)
+                continue;
+            combatants[String(normalized.characterId)] = normalized;
+        }
+    }
+    return {
+        ...rawState,
+        tick: Number.isFinite(Number(rawState.tick)) ? Number(rawState.tick) : 0,
+        recentEvents: Array.isArray(rawState.recentEvents)
+            ? rawState.recentEvents
+            : Array.isArray(rawState.recent_events)
+                ? rawState.recent_events
+                : [],
+        combatants,
+    };
+}
+function normalizeCombatant(rawCombatant) {
+    rawCombatant = parseMaybeJson(rawCombatant);
+    if (!rawCombatant || typeof rawCombatant !== 'object')
+        return null;
+    const characterId = Number(rawCombatant.characterId ?? rawCombatant.character_id);
+    if (!Number.isFinite(characterId) || characterId <= 0)
+        return null;
+    const normalizedInventory = normalizeInventory(parseMaybeJson(rawCombatant.inventory));
+    return {
+        ...rawCombatant,
+        characterId,
+        maxHP: Number(rawCombatant.maxHP ?? rawCombatant.max_hp ?? rawCombatant.currentHP ?? rawCombatant.current_hp ?? 1) || 1,
+        hp: Number(rawCombatant.hp ?? rawCombatant.currentHP ?? rawCombatant.current_hp ?? 0) || 0,
+        specialAttackEnergy: Number(rawCombatant.specialAttackEnergy ?? rawCombatant.special_attack_energy ?? 0) || 0,
+        inventory: normalizedInventory,
+    };
+}
+function normalizeInventory(rawInventory) {
+    if (Array.isArray(rawInventory)) {
+        return rawInventory.map(normalizeSlot);
+    }
+    if (!rawInventory || typeof rawInventory !== 'object')
+        return [];
+    return Object.values(rawInventory).map(normalizeSlot);
+}
+function normalizeSlot(rawSlot) {
+    rawSlot = parseMaybeJson(rawSlot);
+    if (!rawSlot || typeof rawSlot !== 'object')
+        return null;
+    const itemId = rawSlot.itemId ?? rawSlot.item_id;
+    if (!itemId)
+        return null;
+    const quantity = Number(rawSlot.quantity);
+    return {
+        ...rawSlot,
+        itemId,
+        quantity: Number.isFinite(quantity) && quantity > 0 ? Math.floor(quantity) : 1,
+    };
+}
+function parseMaybeJson(value) {
+    if (typeof value !== 'string')
+        return value;
+    const trimmed = value.trim();
+    if (!trimmed)
+        return value;
+    const first = trimmed[0];
+    if (first !== '{' && first !== '[')
+        return value;
+    try {
+        return JSON.parse(trimmed);
+    }
+    catch {
+        return value;
+    }
+}
+
 // ── engine/pvpEngine.js ──
 // PvP match tick loop (Phase 2B).
 //
@@ -36076,7 +36173,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
     const [busy, setBusy] = useState(false);
     const [pendingAction, setPendingAction] = useState(null);
     const [endModal, setEndModal] = useState(null);
-    const [hiddenMode, setHiddenMode] = useState(document.hidden);
+    const [hiddenMode, setHiddenMode] = useState(() => (typeof document !== 'undefined' ? document.hidden : false));
     const [staleWarning, setStaleWarning] = useState(false);
     const selfId = useMemo(() => parseInt(getCharacterId(), 10), []);
     const pollTimer = useRef(null);
@@ -36114,9 +36211,13 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
         };
     }, []);
     useEffect(() => {
+        if (typeof document === 'undefined')
+            return undefined;
         const onVisibility = () => setHiddenMode(document.hidden);
         document.addEventListener('visibilitychange', onVisibility);
-        return () => document.removeEventListener('visibilitychange', onVisibility);
+        return () => {
+            document.removeEventListener('visibilitychange', onVisibility);
+        };
     }, []);
     const notifyFatalOnce = (message, err = null) => {
         if (fatalNotified.current)
@@ -36510,24 +36611,29 @@ class PvpCombatErrorBoundary extends Component {
     constructor(props) {
         super(props);
         this.reset = () => {
-            this.setState({ crashed: false });
+            this.setState({ hasError: false, message: '' });
         };
-        this.state = { crashed: false };
+        this.state = { hasError: false, message: '' };
     }
     componentDidUpdate(prevProps) {
-        if (prevProps.resetKey !== this.props.resetKey && this.state.crashed) {
-            this.setState({ crashed: false });
+        if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
+            this.setState({ hasError: false, message: '' });
         }
     }
-    componentDidCatch(error) {
-        console.error('[PocketRPG] PvP combat render crashed:', error);
-        this.setState({ crashed: true });
-        this.props.onCrash?.(error);
+    static getDerivedStateFromError(error) {
+        return {
+            hasError: true,
+            message: error?.message || String(error || 'Unknown PvP render error'),
+        };
+    }
+    componentDidCatch(error, info) {
+        console.error('[PocketRPG][PvP] combat screen render failed', error, info);
+        this.props.onCrash?.(error, info);
     }
     render(props, state) {
-        if (state.crashed) {
+        if (state.hasError) {
             if (typeof props.fallback === 'function') {
-                return props.fallback({ reset: this.reset });
+                return props.fallback({ reset: this.reset, message: state.message });
             }
             return null;
         }
@@ -37505,10 +37611,11 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                 pvpCrashHandledRef.current = true;
                 console.error('[PocketRPG][PvP] Match view crashed; keeping recovery mode active:', error?.message || error);
                 addToast('PvP match view failed. Use retry or forfeit.', 'error');
-            }, fallback: ({ reset }) => (h("div", { className: "p-3" },
+            }, fallback: ({ reset, message }) => (h("div", { className: "p-3" },
                 h(Card, { className: "border-[var(--color-blood)] bg-[#2a1010]" },
                     h("div", { class: "text-sm font-bold text-[var(--color-blood-light)]" }, "PvP match view failed to render"),
                     h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-70 mt-1" }, "The server still has you in an active PvP match. Do not return to PvE."),
+                    message && (h("p", { className: "text-xs text-red-200 break-words mt-2" }, message)),
                     h("div", { class: "flex gap-2 mt-3" },
                         h(Button, { variant: "primary", onClick: () => {
                                 pvpCrashHandledRef.current = false;
