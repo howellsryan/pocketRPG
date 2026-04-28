@@ -71,6 +71,65 @@ function EquipmentMiniPanel({ title, combatant, align = 'left' }) {
   )
 }
 
+
+function getLootQuantity(entry) {
+  const qty = Number(entry?.quantity)
+  if (!Number.isFinite(qty) || qty <= 0) return 1
+  return Math.floor(qty)
+}
+
+function getLootGroupKey(entry) {
+  return `${entry?.itemId || 'unknown'}::${entry?.charges ?? ''}`
+}
+
+function aggregateLootEntries(entries = []) {
+  const grouped = new Map()
+
+  for (const entry of entries || []) {
+    if (!entry?.itemId) continue
+
+    const key = getLootGroupKey(entry)
+    const qty = getLootQuantity(entry)
+    const existing = grouped.get(key)
+
+    if (existing) {
+      existing.quantity += qty
+      continue
+    }
+
+    grouped.set(key, {
+      ...entry,
+      quantity: qty,
+    })
+  }
+
+  return [...grouped.values()]
+}
+
+function formatLootEntry(entry) {
+  const itemId = entry?.itemId
+  const item = itemsData?.[itemId]
+  const qty = getLootQuantity(entry)
+  const name = item?.name || itemId || 'Unknown item'
+  const charges = entry?.charges != null ? ` (${formatCompactCoins(entry.charges)} charges)` : ''
+
+  if (itemId === 'coins') {
+    return `${formatCompactCoins(qty)} coins`
+  }
+
+  return `${formatCompactCoins(qty)}x ${name}${charges}`
+}
+
+function getLootIcon(entry) {
+  return itemsData?.[entry?.itemId]?.icon || '▫️'
+}
+
+function getEndLootTotal(loot) {
+  const value = Number(loot?.totalRiskValue ?? loot?.bankedValue ?? loot?.addedValue ?? 0)
+  if (!Number.isFinite(value) || value <= 0) return 0
+  return Math.floor(value)
+}
+
 function prettifyEvent(evt, selfId) {
   if (!evt) return null
   if (evt.type === 'attack') {
@@ -190,27 +249,6 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     lastPollOkAt.current = Date.now()
     setStaleWarning(false)
     setLoading(false)
-  }
-
-  const handleForfeit = async () => {
-    try {
-      await pvpApi.forfeitMatch(matchId)
-      addToast?.('Forfeit queued. Resolving...', 'info')
-      setBootstrapError(null)
-    } catch (err) {
-      const code = err?.body?.error || err?.message
-      if (code === 'match_not_found' || code === 'match_not_active') {
-        const noActiveMatch = await confirmNoActiveMatch()
-        if (noActiveMatch) {
-          addToast?.('Match already ended.', 'info')
-          await onExit?.()
-          return
-        }
-        setBootstrapError('Forfeit failed because the match state changed. Retry or reconnect.')
-        return
-      }
-      addToast?.(err.body?.error || err.message, 'error')
-    }
   }
 
   const runTick = async () => {
@@ -370,6 +408,9 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     .map(([slot, entry]) => ({ slot, entry, item: itemsData?.[entry.itemId] }))
 
   const specialReady = (pair.self?.specialAttackEnergy ?? 0) >= 25
+  const endTotalRiskValue = getEndLootTotal(endModal?.loot)
+  const endTotalRiskLabel = `${formatCompactCoins(endTotalRiskValue)} gp`
+  const wonLootRows = aggregateLootEntries(endModal?.loot?.added || [])
 
   return (
     <div
@@ -399,14 +440,6 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
               setBootstrapError(msg)
               setLoading(false)
             }) }}>Reconnect</Button>
-            <Button
-              variant="danger"
-              size="sm"
-              disabled={!matchId}
-              onClick={handleForfeit}
-            >
-              Forfeit
-            </Button>
           </div>
         </Card>
       )}
@@ -419,7 +452,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
       {staleWarning && (
         <Card className="border-[var(--color-blood)] bg-[#2a1010]">
-          <div class="text-[11px] text-[var(--color-blood-light)]">No successful sync for 5s. You may desync — consider forfeiting if this persists.</div>
+          <div class="text-[11px] text-[var(--color-blood-light)]">No successful sync for 5s. You may desync — keep this tab open and reconnect if this persists.</div>
         </Card>
       )}
 
@@ -454,13 +487,14 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
         <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Combat actions</div>
         <div class="flex gap-2">
           <Button
-            variant="primary"
+            variant="secondary"
             size="md"
             className="w-1/4"
             disabled={busy || !specialReady}
             onClick={() => queueAction({ type: 'queue_special' })}
           >
-            ⚡ Spec
+            <span class="text-[var(--color-gold)] mr-1">⚡</span>
+            Spec
           </Button>
           <Button
             variant={actionPanel === 'prayer' ? 'primary' : 'secondary'}
@@ -587,17 +621,6 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
         )}
       </Card>
 
-      <Card>
-        <Button
-          variant="danger"
-          size="md"
-          className="w-full"
-          disabled={busy}
-          onClick={handleForfeit}
-        >
-          🏳️ Forfeit
-        </Button>
-      </Card>
 
       <Panel>
         <div class="text-xs font-semibold text-[var(--color-gold)] mb-1">Recent actions</div>
@@ -615,23 +638,49 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
           onClose={endModal.writebackOk ? onExit : () => {}}
         >
           <div class="space-y-3">
-            <div class="text-sm text-[var(--color-parchment)]">
-              {endModal.youWon ? 'You won the duel.' : 'You were defeated.'} ({endModal.reason})
-            </div>
             {endModal.writebackOk ? (
               <>
-                <Card>
-                  <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Loot transferred to winner</div>
-                  <div class="text-[11px] text-[var(--color-parchment)] opacity-80">
-                    Total risk banked: {formatCompactCoins(endModal.loot.bankedValue || endModal.loot.addedValue || 0)} gp
-                  </div>
-                  <div class="text-[11px] text-[var(--color-parchment)] opacity-80">
-                    Total risk at stake: {formatCompactCoins(endModal.loot.totalRiskValue || 0)} gp
-                  </div>
-                  <div class="text-[11px] text-[var(--color-parchment)] opacity-80">Added: {endModal.loot.added?.length || 0} item stacks</div>
-                  <div class="text-[11px] text-[var(--color-parchment)] opacity-80">Dropped (bank full): {endModal.loot.dropped?.length || 0}</div>
-                  <div class="text-[11px] text-[var(--color-parchment)] opacity-80">Dropped value: {formatCompactCoins(endModal.loot.droppedValue || 0)} gp</div>
-                </Card>
+                <div class="text-sm text-[var(--color-parchment)] leading-snug">
+                  {endModal.youWon ? (
+                    <>
+                      You are Victorious! Your total loot is:{' '}
+                      <span class="font-semibold text-[var(--color-gold)]">{endTotalRiskLabel}</span>.
+                    </>
+                  ) : (
+                    <>
+                      You were defeated for a total of:{' '}
+                      <span class="font-semibold text-[var(--color-gold)]">{endTotalRiskLabel}</span>.
+                    </>
+                  )}
+                </div>
+
+                {endModal.youWon && (
+                  <Card>
+                    <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Items won</div>
+                    <div class="max-h-48 overflow-y-auto overscroll-contain pr-1 space-y-1">
+                      {wonLootRows.length === 0 ? (
+                        <div class="text-[11px] text-[var(--color-parchment)] opacity-60">
+                          No tradeable items were won.
+                        </div>
+                      ) : (
+                        wonLootRows.map((entry) => (
+                          <div
+                            key={getLootGroupKey(entry)}
+                            class="flex items-center justify-between gap-3 rounded-md border border-[var(--color-void-border)] bg-[var(--color-void-light)] px-2 py-1.5"
+                          >
+                            <div class="min-w-0 flex items-center gap-2">
+                              <span class="shrink-0">{getLootIcon(entry)}</span>
+                              <span class="truncate text-[11px] text-[var(--color-parchment)]">
+                                {formatLootEntry(entry)}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </Card>
+                )}
+
                 <Button variant="primary" className="w-full" onClick={async () => { await onExit?.() }}>Return to PvE</Button>
               </>
             ) : (
