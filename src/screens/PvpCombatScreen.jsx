@@ -15,6 +15,7 @@ const POLL_HIDDEN_MS = 1500
 const NO_POLL_WARNING_MS = 5000
 const MATCH_BOOT_GRACE_MS = 8000
 const MATCH_BOOT_RETRY_MS = 500
+const MATCH_FATAL_RETRY_MS = 1500
 
 function prettifyEvent(evt, selfId) {
   if (!evt) return null
@@ -49,6 +50,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const latestTick = useRef(0)
   const exitHandled = useRef(false)
   const fatalNotified = useRef(false)
+  const bootRetrying = useRef(false)
 
   useEffect(() => {
     pendingActionRef.current = pendingAction
@@ -192,6 +194,16 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
             continue
           }
           setLoading(false)
+          if (code === 'match_not_found' || code === 'match_not_active') {
+            // Do not bounce back to PvE immediately after accept; keep trying
+            // so delayed match propagation cannot kick players out of PvP.
+            if (!bootRetrying.current) {
+              bootRetrying.current = true
+              addToast?.('Match is syncing… retrying PvP connection.', 'info')
+            }
+            await new Promise(resolve => setTimeout(resolve, MATCH_FATAL_RETRY_MS))
+            continue
+          }
           notifyFatalOnce(code || 'Failed to load PvP match', err)
           await exitOnce()
           return
