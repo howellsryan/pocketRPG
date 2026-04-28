@@ -55,10 +55,16 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const lastPollOkAt = useRef(0)
   const latestTick = useRef(0)
   const fatalNotified = useRef(false)
+  const terminalHandledRef = useRef(false)
+  const endModalOpenRef = useRef(false)
 
   useEffect(() => {
     pendingActionRef.current = pendingAction
   }, [pendingAction])
+
+  useEffect(() => {
+    endModalOpenRef.current = !!endModal
+  }, [endModal])
 
   const toArray = (value) => {
     if (Array.isArray(value)) return value
@@ -77,6 +83,8 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
   useEffect(() => {
     mounted.current = true
+    terminalHandledRef.current = false
+    endModalOpenRef.current = false
     return () => {
       mounted.current = false
       if (pollTimer.current) clearTimeout(pollTimer.current)
@@ -154,9 +162,11 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   }
 
   const runTick = async () => {
-    if (tickInFlight.current) return
+    if (terminalHandledRef.current) return false
+    if (tickInFlight.current) return true
     tickInFlight.current = true
     try {
+      if (terminalHandledRef.current) return false
       const action = pendingActionRef.current
       if (action) {
         await pvpApi.postIntent(matchId, latestTick.current, action)
@@ -164,7 +174,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
         setPendingAction(null)
       }
       const tickRes = await pvpApi.tickMatch(matchId)
-      if (!mounted.current) return
+      if (!mounted.current) return false
 
       if (tickRes.state) {
         const normalizedState = normalizePvpState(tickRes.state)
@@ -177,6 +187,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
       setStaleWarning(false)
 
       if (tickRes.terminal) {
+        terminalHandledRef.current = true
         const youWon = Number(tickRes.terminal.winner) === selfId
         const writebackOk = tickRes.terminal_writeback !== false
         if (!writebackOk) {
@@ -189,25 +200,31 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
           loot: writebackOk ? (tickRes.loot || { added: [], dropped: [], droppedValue: 0 }) : null,
         })
         if (pollTimer.current) clearTimeout(pollTimer.current)
+        return false
       }
+      return true
     } catch (err) {
-      if (!mounted.current) return
+      if (!mounted.current) return false
       const msg = err.body?.error || err.message
+      if ((msg === 'match_not_found' || msg === 'match_not_active') && (terminalHandledRef.current || endModalOpenRef.current)) {
+        return false
+      }
       if (msg === 'match_not_found' || msg === 'match_not_active') {
         console.warn('[PocketRPG][PvP] tickMatch reported inactive match; checking server active_match_id before exit:', err?.body || null)
         const noActiveMatch = await confirmNoActiveMatch()
         if (noActiveMatch) {
           addToast?.('Match has ended.', 'info')
           await onExit?.()
-          return
+          return false
         }
         setBootstrapError('Server still reports an active PvP match. Retry to reconnect.')
         setLoading(false)
-        return
+        return false
       }
       if (Date.now() - lastPollOkAt.current > NO_POLL_WARNING_MS) {
         setStaleWarning(true)
       }
+      return true
     } finally {
       tickInFlight.current = false
     }
@@ -221,8 +238,8 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     const scheduleNext = () => {
       if (!active || !mounted.current) return
       pollTimer.current = setTimeout(async () => {
-        await runTick()
-        scheduleNext()
+        const shouldContinue = await runTick()
+        if (shouldContinue !== false) scheduleNext()
       }, pollMs)
     }
 
@@ -272,6 +289,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const recentLines = safeRecentEvents.slice(-6).map((evt) => prettifyEvent(evt, selfId)).filter(Boolean)
 
   const queueAction = (action) => {
+    if (terminalHandledRef.current || endModalOpenRef.current) return
     setPendingAction(action)
     setBusy(true)
     setTimeout(() => setBusy(false), 220)

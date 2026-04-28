@@ -331,7 +331,7 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
           <div class="space-y-1.5">
             {waiting.map(p => {
               const alreadyInvited = invitations.outgoing.some(o => o.to_character === p.character_id)
-              const riskLine = `CB ${p.combat_level} · Gear ${formatCompactCoins(p.equipment_shop_value)} · Inv ${formatCompactCoins(p.inventory_shop_value)} · Risk ${formatCompactCoins(p.total_shop_value)}`
+              const riskLine = `CB ${p.combat_level} · Total Risk: ${formatCompactCoins(p.total_shop_value)}`
               return (
                 <Card key={p.character_id} className="flex items-center justify-between" padding="p-2.5">
                   <div>
@@ -369,7 +369,7 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
                   <div>
                     <div class="text-sm font-semibold text-[var(--color-parchment)]">{inv.from_username}</div>
                     <div class="text-[10px] text-[var(--color-parchment)] opacity-50">
-                      CB {inv.from_combat_level} · Gear {formatCompactCoins(inv.from_equipment_shop_value)} · Inv {formatCompactCoins(inv.from_inventory_shop_value)} · Risk {formatCompactCoins(inv.from_total_shop_value)}
+                      CB {inv.from_combat_level} · Total Risk: {formatCompactCoins(inv.from_total_shop_value)}
                     </div>
                   </div>
                   <div class="flex gap-1.5">
@@ -400,7 +400,7 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
                   <div>
                     <div class="text-sm font-semibold text-[var(--color-parchment)]">{inv.to_username}</div>
                     <div class="text-[10px] text-[var(--color-parchment)] opacity-50">
-                      CB {inv.to_combat_level} · Gear {formatCompactCoins(inv.to_equipment_shop_value)} · Inv {formatCompactCoins(inv.to_inventory_shop_value)} · Risk {formatCompactCoins(inv.to_total_shop_value)} · waiting for response…
+                      CB {inv.to_combat_level} · Total Risk: {formatCompactCoins(inv.to_total_shop_value)} · waiting for response…
                     </div>
                   </div>
                   <Button variant="ghost" size="sm" disabled={busy}

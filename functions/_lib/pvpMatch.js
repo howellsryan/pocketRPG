@@ -18,8 +18,9 @@ export function buildCombatantFromSave({ characterId, username, savePayload }) {
     stats: savePayload?.stats || {},
     equipment: savePayload?.equipment || {},
     inventory: savePayload?.inventory || [],
-    currentHP: savePayload?.player?.currentHP,
-    maxHP: savePayload?.player?.maxHP,
+    // PvP duels start from a fresh combat snapshot.
+    // Do not inherit stale PvE/local currentHP from the cloud save, because
+    // a stale 0 HP value can terminally end the match on the first tick.
     stance: 'accurate',
     spell: null,
     itemsData,

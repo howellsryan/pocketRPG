@@ -36323,7 +36323,7 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
             waiting.length === 0 && (h(Card, { className: "text-center text-[11px] text-[var(--color-parchment)] opacity-50 py-6" }, "No one in your CB band right now. Wait for someone to join, or come back later.")),
             h("div", { class: "space-y-1.5" }, waiting.map(p => {
                 const alreadyInvited = invitations.outgoing.some(o => o.to_character === p.character_id);
-                const riskLine = `CB ${p.combat_level} · Gear ${formatCompactCoins(p.equipment_shop_value)} · Inv ${formatCompactCoins(p.inventory_shop_value)} · Risk ${formatCompactCoins(p.total_shop_value)}`;
+                const riskLine = `CB ${p.combat_level} · Total Risk: ${formatCompactCoins(p.total_shop_value)}`;
                 return (h(Card, { key: p.character_id, className: "flex items-center justify-between", padding: "p-2.5" },
                     h("div", null,
                         h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, p.username),
@@ -36340,11 +36340,7 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
                         h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-50" },
                             "CB ",
                             inv.from_combat_level,
-                            " \u00B7 Gear ",
-                            formatCompactCoins(inv.from_equipment_shop_value),
-                            " \u00B7 Inv ",
-                            formatCompactCoins(inv.from_inventory_shop_value),
-                            " \u00B7 Risk ",
+                            " \u00B7 Total Risk: ",
                             formatCompactCoins(inv.from_total_shop_value))),
                     h("div", { class: "flex gap-1.5" },
                         h(Button, { variant: "success", size: "sm", disabled: busy, onClick: () => handleAccept(inv.id, inv.from_username) }, "Accept"),
@@ -36358,11 +36354,7 @@ function PvpLobbyModal({ onClose, getSnapshot }) {
                         h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-50" },
                             "CB ",
                             inv.to_combat_level,
-                            " \u00B7 Gear ",
-                            formatCompactCoins(inv.to_equipment_shop_value),
-                            " \u00B7 Inv ",
-                            formatCompactCoins(inv.to_inventory_shop_value),
-                            " \u00B7 Risk ",
+                            " \u00B7 Total Risk: ",
                             formatCompactCoins(inv.to_total_shop_value),
                             " \u00B7 waiting for response\u2026")),
                     h(Button, { variant: "ghost", size: "sm", disabled: busy, onClick: () => handleCancel(inv.id) }, "Cancel")))))))),
@@ -36424,9 +36416,14 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
     const lastPollOkAt = useRef(0);
     const latestTick = useRef(0);
     const fatalNotified = useRef(false);
+    const terminalHandledRef = useRef(false);
+    const endModalOpenRef = useRef(false);
     useEffect(() => {
         pendingActionRef.current = pendingAction;
     }, [pendingAction]);
+    useEffect(() => {
+        endModalOpenRef.current = !!endModal;
+    }, [endModal]);
     const toArray = (value) => {
         if (Array.isArray(value))
             return value;
@@ -36445,6 +36442,8 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
     }, [state, selfId]);
     useEffect(() => {
         mounted.current = true;
+        terminalHandledRef.current = false;
+        endModalOpenRef.current = false;
         return () => {
             mounted.current = false;
             if (pollTimer.current)
@@ -36525,10 +36524,14 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
         }
     };
     const runTick = async () => {
+        if (terminalHandledRef.current)
+            return false;
         if (tickInFlight.current)
-            return;
+            return true;
         tickInFlight.current = true;
         try {
+            if (terminalHandledRef.current)
+                return false;
             const action = pendingActionRef.current;
             if (action) {
                 await pvpApi.postIntent(matchId, latestTick.current, action);
@@ -36537,7 +36540,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
             }
             const tickRes = await pvpApi.tickMatch(matchId);
             if (!mounted.current)
-                return;
+                return false;
             if (tickRes.state) {
                 const normalizedState = normalizePvpState(tickRes.state);
                 if (normalizedState) {
@@ -36548,6 +36551,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
             lastPollOkAt.current = Date.now();
             setStaleWarning(false);
             if (tickRes.terminal) {
+                terminalHandledRef.current = true;
                 const youWon = Number(tickRes.terminal.winner) === selfId;
                 const writebackOk = tickRes.terminal_writeback !== false;
                 if (!writebackOk) {
@@ -36561,27 +36565,33 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
                 });
                 if (pollTimer.current)
                     clearTimeout(pollTimer.current);
+                return false;
             }
+            return true;
         }
         catch (err) {
             if (!mounted.current)
-                return;
+                return false;
             const msg = err.body?.error || err.message;
+            if ((msg === 'match_not_found' || msg === 'match_not_active') && (terminalHandledRef.current || endModalOpenRef.current)) {
+                return false;
+            }
             if (msg === 'match_not_found' || msg === 'match_not_active') {
                 console.warn('[PocketRPG][PvP] tickMatch reported inactive match; checking server active_match_id before exit:', err?.body || null);
                 const noActiveMatch = await confirmNoActiveMatch();
                 if (noActiveMatch) {
                     addToast?.('Match has ended.', 'info');
                     await onExit?.();
-                    return;
+                    return false;
                 }
                 setBootstrapError('Server still reports an active PvP match. Retry to reconnect.');
                 setLoading(false);
-                return;
+                return false;
             }
             if (Date.now() - lastPollOkAt.current > NO_POLL_WARNING_MS) {
                 setStaleWarning(true);
             }
+            return true;
         }
         finally {
             tickInFlight.current = false;
@@ -36595,8 +36605,9 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
             if (!active || !mounted.current)
                 return;
             pollTimer.current = setTimeout(async () => {
-                await runTick();
-                scheduleNext();
+                const shouldContinue = await runTick();
+                if (shouldContinue !== false)
+                    scheduleNext();
             }, pollMs);
         };
         (async () => {
@@ -36645,6 +36656,8 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
     const safeRecentEvents = Array.isArray(state?.recentEvents) ? state.recentEvents : [];
     const recentLines = safeRecentEvents.slice(-6).map((evt) => prettifyEvent(evt, selfId)).filter(Boolean);
     const queueAction = (action) => {
+        if (terminalHandledRef.current || endModalOpenRef.current)
+            return;
         setPendingAction(action);
         setBusy(true);
         setTimeout(() => setBusy(false), 220);
