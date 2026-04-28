@@ -123,6 +123,27 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     setLoading(false)
   }
 
+  const handleForfeit = async () => {
+    try {
+      await pvpApi.forfeitMatch(matchId)
+      addToast?.('Forfeit queued. Resolving...', 'info')
+      setBootstrapError(null)
+    } catch (err) {
+      const code = err?.body?.error || err?.message
+      if (code === 'match_not_found' || code === 'match_not_active') {
+        const noActiveMatch = await confirmNoActiveMatch()
+        if (noActiveMatch) {
+          addToast?.('Match already ended.', 'info')
+          await onExit?.()
+          return
+        }
+        setBootstrapError('Forfeit failed because the match state changed. Retry or reconnect.')
+        return
+      }
+      addToast?.(err.body?.error || err.message, 'error')
+    }
+  }
+
   const runTick = async () => {
     if (tickInFlight.current) return
     tickInFlight.current = true
@@ -276,15 +297,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
               variant="danger"
               size="sm"
               disabled={!matchId}
-              onClick={async () => {
-                try {
-                  await pvpApi.forfeitMatch(matchId)
-                  addToast?.('Forfeit queued. Resolving...', 'info')
-                  setBootstrapError(null)
-                } catch (err) {
-                  addToast?.(err.body?.error || err.message, 'error')
-                }
-              }}
+              onClick={handleForfeit}
             >
               Forfeit
             </Button>
@@ -337,14 +350,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
             variant="danger"
             size="md"
             disabled={busy}
-            onClick={async () => {
-              try {
-                await pvpApi.forfeitMatch(matchId)
-                addToast?.('Forfeit queued. Resolving...', 'info')
-              } catch (err) {
-                addToast?.(err.body?.error || err.message, 'error')
-              }
-            }}
+            onClick={handleForfeit}
           >
             🏳️ Forfeit
           </Button>

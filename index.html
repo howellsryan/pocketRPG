@@ -32800,6 +32800,14 @@ const CHARACTER_NAME_KEY = 'pocketrpg_cloud_character_name';
 // Used to detect "I switched characters but IDB still holds the old one" and
 // wipe before loading, so characters never bleed into each other.
 const LOCAL_CHARACTER_KEY = 'pocketrpg_local_character_id';
+const ACTIVE_MATCH_EVENT = 'pocketrpg:pvp-active-match';
+function emitActiveMatchConflict(matchId = null) {
+    if (typeof window === 'undefined')
+        return;
+    const parsed = Number(matchId);
+    const safeMatchId = Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+    window.dispatchEvent(new CustomEvent(ACTIVE_MATCH_EVENT, { detail: { matchId: safeMatchId } }));
+}
 function getToken() {
     return localStorage.getItem(TOKEN_KEY);
 }
@@ -32891,6 +32899,9 @@ async function request(path, options = {}) {
     }
     catch { /* non-JSON */ }
     if (!res.ok) {
+        if (res.status === 409 && body?.error === 'character_in_active_match') {
+            emitActiveMatchConflict(body?.match_id ?? body?.matchId ?? body?.active_match_id ?? null);
+        }
         const err = new Error(body?.error || `Request failed (${res.status})`);
         err.status = res.status;
         err.body = body;
@@ -33095,7 +33106,7 @@ let lastPushedAt = 0;
 let pendingTimer = null;
 let pendingSnapshot = null;
 let inFlight = false;
-function emitActiveMatchConflict(matchId) {
+function emitSaveSyncActiveMatchConflict(matchId) {
     const parsed = Number(matchId);
     if (!Number.isFinite(parsed) || parsed <= 0 || typeof window === 'undefined')
         return;
@@ -33138,7 +33149,7 @@ async function flushNow() {
         // Keep the latest snapshot queued and retry shortly after so we don't
         // spam warnings every minute and we resume syncing automatically on exit.
         if (err?.status === 409 && (err?.body?.error === 'character_in_active_match' || err?.message === 'character_in_active_match')) {
-            emitActiveMatchConflict(err?.body?.match_id);
+            emitSaveSyncActiveMatchConflict(err?.body?.match_id);
             pendingSnapshot = snap;
             schedulePush(snap, ACTIVE_MATCH_RETRY_MS);
             return;
@@ -36150,6 +36161,27 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
         setStaleWarning(false);
         setLoading(false);
     };
+    const handleForfeit = async () => {
+        try {
+            await pvpApi.forfeitMatch(matchId);
+            addToast?.('Forfeit queued. Resolving...', 'info');
+            setBootstrapError(null);
+        }
+        catch (err) {
+            const code = err?.body?.error || err?.message;
+            if (code === 'match_not_found' || code === 'match_not_active') {
+                const noActiveMatch = await confirmNoActiveMatch();
+                if (noActiveMatch) {
+                    addToast?.('Match already ended.', 'info');
+                    await onExit?.();
+                    return;
+                }
+                setBootstrapError('Forfeit failed because the match state changed. Retry or reconnect.');
+                return;
+            }
+            addToast?.(err.body?.error || err.message, 'error');
+        }
+    };
     const runTick = async () => {
         if (tickInFlight.current)
             return;
@@ -36299,16 +36331,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
                             setLoading(false);
                         });
                     } }, "Reconnect"),
-                h(Button, { variant: "danger", size: "sm", disabled: !matchId, onClick: async () => {
-                        try {
-                            await pvpApi.forfeitMatch(matchId);
-                            addToast?.('Forfeit queued. Resolving...', 'info');
-                            setBootstrapError(null);
-                        }
-                        catch (err) {
-                            addToast?.(err.body?.error || err.message, 'error');
-                        }
-                    } }, "Forfeit")))),
+                h(Button, { variant: "danger", size: "sm", disabled: !matchId, onClick: handleForfeit }, "Forfeit")))),
         hiddenMode && (h(Card, { className: "border-[var(--color-gold-dim)] bg-[var(--color-void-light)]" },
             h("div", { class: "text-[11px] text-[var(--color-gold)]" }, "\u26A0\uFE0F Keep this tab open for smooth PvP updates."))),
         staleWarning && (h(Card, { className: "border-[var(--color-blood)] bg-[#2a1010]" },
@@ -36334,15 +36357,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
             h(HPBar, { current: pair.self?.hp || 0, max: pair.self?.maxHP || 1, label: "Your HP" }),
             h("div", { class: "grid grid-cols-2 gap-2 mt-3" },
                 h(Button, { variant: "primary", size: "md", disabled: busy || (pair.self?.specialAttackEnergy ?? 0) < 25, onClick: () => queueAction({ type: 'queue_special' }) }, "\u26A1 Special Attack"),
-                h(Button, { variant: "danger", size: "md", disabled: busy, onClick: async () => {
-                        try {
-                            await pvpApi.forfeitMatch(matchId);
-                            addToast?.('Forfeit queued. Resolving...', 'info');
-                        }
-                        catch (err) {
-                            addToast?.(err.body?.error || err.message, 'error');
-                        }
-                    } }, "\uD83C\uDFF3\uFE0F Forfeit"))),
+                h(Button, { variant: "danger", size: "md", disabled: busy, onClick: handleForfeit }, "\uD83C\uDFF3\uFE0F Forfeit"))),
         h(Card, null,
             h("div", { class: "text-xs font-semibold text-[var(--color-gold)] mb-2" }, "Quick Eat"),
             h("div", { class: "flex gap-2 flex-wrap" },
@@ -37441,6 +37456,48 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
     };
     const agilityLevel = getLevelFromXP(stats.agility?.xp || 0);
     const bankDelayMs = getAgilityBankDelayMs(agilityLevel);
+    const finalizePvpExit = async () => {
+        pvpCrashHandledRef.current = false;
+        resumeTicks();
+        try {
+            const pulled = await pullSave();
+            if (pulled?.payload) {
+                await applyCloudSave(pulled.payload, pulled.updatedAt);
+                await loadGame();
+            }
+        }
+        catch (err) {
+            console.warn('[PocketRPG] PvP post-match cloud pull failed:', err?.message || err);
+        }
+        pvp.leaveMatch();
+        setShowPvpLobby(false);
+    };
+    const handleRecoveryForfeit = async (reset) => {
+        try {
+            await pvpApi.forfeitMatch(pvp.activeMatchId);
+            addToast('Forfeit queued. Resolving...', 'info');
+            pvpCrashHandledRef.current = false;
+            reset();
+        }
+        catch (err) {
+            const code = err?.body?.error || err?.message;
+            if (code === 'match_not_found' || code === 'match_not_active') {
+                try {
+                    const invites = await pvpApi.listInvitations();
+                    const activeMatchId = Number(invites?.active_match_id);
+                    if (!Number.isFinite(activeMatchId) || activeMatchId <= 0) {
+                        addToast('Match already ended.', 'info');
+                        await finalizePvpExit();
+                        return;
+                    }
+                }
+                catch {
+                    // fall through to generic error toast
+                }
+            }
+            addToast(err.body?.error || err.message, 'error');
+        }
+    };
     if (pvp.phase === 'in_match' && pvp.activeMatchId) {
         return (h(PvpCombatErrorBoundary, { resetKey: pvp.activeMatchId, onCrash: async (error) => {
                 if (pvpCrashHandledRef.current)
@@ -37457,33 +37514,8 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                                 pvpCrashHandledRef.current = false;
                                 reset();
                             } }, "Retry PvP screen"),
-                        h(Button, { variant: "danger", onClick: async () => {
-                                try {
-                                    await pvpApi.forfeitMatch(pvp.activeMatchId);
-                                    addToast('Forfeit queued. Resolving...', 'info');
-                                    pvpCrashHandledRef.current = false;
-                                    reset();
-                                }
-                                catch (err) {
-                                    addToast(err.body?.error || err.message, 'error');
-                                }
-                            } }, "Forfeit"))))) },
-            h(PvpCombatScreen, { matchId: pvp.activeMatchId, addToast: addToast, onExit: async () => {
-                    pvpCrashHandledRef.current = false;
-                    resumeTicks();
-                    try {
-                        const pulled = await pullSave();
-                        if (pulled?.payload) {
-                            await applyCloudSave(pulled.payload, pulled.updatedAt);
-                            await loadGame();
-                        }
-                    }
-                    catch (err) {
-                        console.warn('[PocketRPG] PvP post-match cloud pull failed:', err?.message || err);
-                    }
-                    pvp.leaveMatch();
-                    setShowPvpLobby(false);
-                } })));
+                        h(Button, { variant: "danger", onClick: () => handleRecoveryForfeit(reset) }, "Forfeit"))))) },
+            h(PvpCombatScreen, { matchId: pvp.activeMatchId, addToast: addToast, onExit: finalizePvpExit })));
     }
     // Monster picker
     if (!combat) {
@@ -41884,15 +41916,27 @@ function GameApp() {
     }, [pvp.phase, pvp.enterMatch, pvp.canAutoReconnect]);
     useEffect(() => {
         const onActiveMatchConflict = (event) => {
-            const matchId = Number(event?.detail?.matchId);
-            if (!Number.isFinite(matchId) || matchId <= 0)
-                return;
-            addToast('Server reports an active PvP match — entering combat.', 'info');
-            pauseTicks();
-            setScreen(SCREENS.COMBAT);
-            setActionData(null);
-            setIdleResult(null);
-            pvp.enterMatch(matchId);
+            const routeToPvp = async () => {
+                let matchId = Number(event?.detail?.matchId);
+                if (!Number.isFinite(matchId) || matchId <= 0) {
+                    try {
+                        const invites = await pvpApi.listInvitations();
+                        matchId = Number(invites?.active_match_id);
+                    }
+                    catch {
+                        matchId = null;
+                    }
+                }
+                if (!Number.isFinite(matchId) || matchId <= 0)
+                    return;
+                addToast('Server reports an active PvP match — entering combat.', 'info');
+                pauseTicks();
+                setScreen(SCREENS.COMBAT);
+                setActionData(null);
+                setIdleResult(null);
+                pvp.enterMatch(matchId);
+            };
+            routeToPvp();
         };
         window.addEventListener('pocketrpg:pvp-active-match', onActiveMatchConflict);
         return () => window.removeEventListener('pocketrpg:pvp-active-match', onActiveMatchConflict);

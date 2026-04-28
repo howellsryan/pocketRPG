@@ -21,7 +21,7 @@ let pendingTimer = null
 let pendingSnapshot = null
 let inFlight = false
 
-function emitActiveMatchConflict(matchId) {
+function emitSaveSyncActiveMatchConflict(matchId) {
   const parsed = Number(matchId)
   if (!Number.isFinite(parsed) || parsed <= 0 || typeof window === 'undefined') return
   window.dispatchEvent(new CustomEvent('pocketrpg:pvp-active-match', { detail: { matchId: parsed } }))
@@ -62,7 +62,7 @@ async function flushNow() {
     // Keep the latest snapshot queued and retry shortly after so we don't
     // spam warnings every minute and we resume syncing automatically on exit.
     if (err?.status === 409 && (err?.body?.error === 'character_in_active_match' || err?.message === 'character_in_active_match')) {
-      emitActiveMatchConflict(err?.body?.match_id)
+      emitSaveSyncActiveMatchConflict(err?.body?.match_id)
       pendingSnapshot = snap
       schedulePush(snap, ACTIVE_MATCH_RETRY_MS)
       return

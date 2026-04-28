@@ -1078,6 +1078,46 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   const agilityLevel = getLevelFromXP(stats.agility?.xp || 0)
   const bankDelayMs = getAgilityBankDelayMs(agilityLevel)
+  const finalizePvpExit = async () => {
+    pvpCrashHandledRef.current = false
+    resumeTicks()
+    try {
+      const pulled = await pullSave()
+      if (pulled?.payload) {
+        await applyCloudSave(pulled.payload, pulled.updatedAt)
+        await loadGame()
+      }
+    } catch (err) {
+      console.warn('[PocketRPG] PvP post-match cloud pull failed:', err?.message || err)
+    }
+    pvp.leaveMatch()
+    setShowPvpLobby(false)
+  }
+
+  const handleRecoveryForfeit = async (reset) => {
+    try {
+      await pvpApi.forfeitMatch(pvp.activeMatchId)
+      addToast('Forfeit queued. Resolving...', 'info')
+      pvpCrashHandledRef.current = false
+      reset()
+    } catch (err) {
+      const code = err?.body?.error || err?.message
+      if (code === 'match_not_found' || code === 'match_not_active') {
+        try {
+          const invites = await pvpApi.listInvitations()
+          const activeMatchId = Number(invites?.active_match_id)
+          if (!Number.isFinite(activeMatchId) || activeMatchId <= 0) {
+            addToast('Match already ended.', 'info')
+            await finalizePvpExit()
+            return
+          }
+        } catch {
+          // fall through to generic error toast
+        }
+      }
+      addToast(err.body?.error || err.message, 'error')
+    }
+  }
 
   if (pvp.phase === 'in_match' && pvp.activeMatchId) {
     return (
@@ -1108,16 +1148,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 </Button>
                 <Button
                   variant="danger"
-                  onClick={async () => {
-                    try {
-                      await pvpApi.forfeitMatch(pvp.activeMatchId)
-                      addToast('Forfeit queued. Resolving...', 'info')
-                      pvpCrashHandledRef.current = false
-                      reset()
-                    } catch (err) {
-                      addToast(err.body?.error || err.message, 'error')
-                    }
-                  }}
+                  onClick={() => handleRecoveryForfeit(reset)}
                 >
                   Forfeit
                 </Button>
@@ -1129,21 +1160,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         <PvpCombatScreen
           matchId={pvp.activeMatchId}
           addToast={addToast}
-          onExit={async () => {
-            pvpCrashHandledRef.current = false
-            resumeTicks()
-            try {
-              const pulled = await pullSave()
-              if (pulled?.payload) {
-                await applyCloudSave(pulled.payload, pulled.updatedAt)
-                await loadGame()
-              }
-            } catch (err) {
-              console.warn('[PocketRPG] PvP post-match cloud pull failed:', err?.message || err)
-            }
-            pvp.leaveMatch()
-            setShowPvpLobby(false)
-          }}
+          onExit={finalizePvpExit}
         />
       </PvpCombatErrorBoundary>
     )
