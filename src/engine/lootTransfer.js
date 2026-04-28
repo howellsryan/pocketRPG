@@ -21,6 +21,15 @@ import { BANK_SIZE } from '../utils/constants.js'
 
 const COINS_ID = 'coins'
 
+function lootEntryValue(entry, itemsData) {
+  if (!entry?.itemId) return 0
+  const qty = Math.max(1, Number(entry.quantity) || 1)
+  if (entry.itemId === COINS_ID) return qty
+  const shopValue = Number(itemsData?.[entry.itemId]?.shopValue)
+  if (!Number.isFinite(shopValue) || shopValue <= 0) return 0
+  return Math.floor(shopValue) * qty
+}
+
 /**
  * Returns true if the item should transfer to the winner. Coins are an
  * explicit override on isUntradeable.
@@ -133,6 +142,7 @@ export function fillBank(initialBank, sortedLoot, itemsData, bankSize = BANK_SIZ
 
   const added = []
   const dropped = []
+  let addedValue = 0
   let droppedValue = 0
 
   for (const item of sortedLoot) {
@@ -140,29 +150,32 @@ export function fillBank(initialBank, sortedLoot, itemsData, bankSize = BANK_SIZ
     const stackable = !!def?.stackable
     const existing = bank[item.itemId]
     const slotsUsed = Object.keys(bank).length
+    const itemValue = lootEntryValue(item, itemsData)
 
     if (existing) {
       // Same itemId already in bank.
       if (stackable) {
         existing.quantity = (existing.quantity || 0) + (item.quantity || 1)
         added.push(item)
+        addedValue += itemValue
         continue
       }
       // Non-stackable collision: charges-bearing items can't merge safely.
       if (existing.charges != null || item.charges != null) {
         dropped.push(item)
-        droppedValue += (def?.shopValue || 0) * (item.quantity || 1)
+        droppedValue += itemValue
         continue
       }
       existing.quantity = (existing.quantity || 1) + (item.quantity || 1)
       added.push(item)
+      addedValue += itemValue
       continue
     }
 
     // New itemId — needs a free bank slot.
     if (slotsUsed >= bankSize) {
       dropped.push(item)
-      droppedValue += (def?.shopValue || 0) * (item.quantity || 1)
+      droppedValue += itemValue
       continue
     }
     bank[item.itemId] = {
@@ -171,9 +184,10 @@ export function fillBank(initialBank, sortedLoot, itemsData, bankSize = BANK_SIZ
       ...(item.charges != null ? { charges: item.charges } : {}),
     }
     added.push(item)
+    addedValue += itemValue
   }
 
-  return { bank, added, dropped, droppedValue }
+  return { bank, added, dropped, addedValue, droppedValue }
 }
 
 /**
@@ -203,7 +217,10 @@ export function applyLootTransfer({
       transferCount: transfer.length,
       added: fill.added,
       dropped: fill.dropped,
+      addedValue: fill.addedValue,
+      bankedValue: fill.addedValue,
       droppedValue: fill.droppedValue,
+      totalRiskValue: sorted.reduce((sum, item) => sum + lootEntryValue(item, itemsData), 0),
     },
   }
 }
