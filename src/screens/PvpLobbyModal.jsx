@@ -51,7 +51,7 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
 
   const launchMatch = useCallback((matchId, toastMsg = null) => {
     const parsed = Number(matchId)
-    if (!Number.isFinite(parsed) || parsed <= 0 || launchedMatch.current) return
+    if (!Number.isFinite(parsed) || parsed <= 0 || launchedMatch.current) return false
     launchedMatch.current = true
     pauseTicks()
     try { localStorage.removeItem('pocketrpg_activeTask') } catch { /* best-effort */ }
@@ -60,6 +60,7 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
     // Never block match entry on best-effort cleanup calls.
     api.deleteIdle().catch(() => {})
     onClose?.()
+    return true
   }, [addToast, enterMatch, onClose])
 
   // We force a synchronous cloud-save push BEFORE joining the waiting
@@ -198,8 +199,15 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
         onClose?.()
         return
       }
-      const acceptedMatchId = res.match_id ?? res.matchId ?? res.match?.id
-      await launchMatch(acceptedMatchId, `Match accepted vs ${fromUsername}`)
+      let acceptedMatchId = res.match_id ?? res.matchId ?? res.match?.id ?? res.active_match_id
+      if (!Number.isFinite(Number(acceptedMatchId)) || Number(acceptedMatchId) <= 0) {
+        const invitesRes = await pvpApi.listInvitations()
+        acceptedMatchId = invitesRes?.active_match_id
+      }
+      const launched = await launchMatch(acceptedMatchId, `Match accepted vs ${fromUsername}`)
+      if (!launched) {
+        throw new Error('Match accepted but no active match id was returned. Please retry.')
+      }
     } catch (err) {
       addToast(err.body?.error || err.message, 'error')
       try { localStorage.removeItem(LOBBY_PVP_SYNC_BLOCK_KEY) } catch { /* best-effort */ }
