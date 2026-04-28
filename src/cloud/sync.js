@@ -14,14 +14,29 @@ const FRESHNESS_GRACE_MS = 5_000
 // endpoint must never trap the user on the loading screen or prevent the
 // idle-result modal from appearing — we fall back to local state instead.
 const CLOUD_READ_TIMEOUT_MS = 5_000
+const ACTIVE_MATCH_RETRY_MS = 5_000
 
 let lastPushedAt = 0
 let pendingTimer = null
 let pendingSnapshot = null
 let inFlight = false
 
+function emitSaveSyncActiveMatchConflict(matchId) {
+  const parsed = Number(matchId)
+  if (!Number.isFinite(parsed) || parsed <= 0 || typeof window === 'undefined') return
+  window.dispatchEvent(new CustomEvent('pocketrpg:pvp-active-match', { detail: { matchId: parsed } }))
+}
+
+function isPvpSaveSyncBlocked() {
+  try {
+    return localStorage.getItem('pocketrpg_pvp_sync_block') === '1'
+  } catch {
+    return false
+  }
+}
+
 function canSync() {
-  return !!getToken() && !!getCharacterId()
+  return !!getToken() && !!getCharacterId() && !isPvpSaveSyncBlocked()
 }
 
 async function flushNow() {
@@ -42,6 +57,16 @@ async function flushNow() {
     if (res?.updatedAt) lastPushedAt = res.updatedAt
     console.log('[PocketRPG] Cloud save pushed, size:', json.length)
   } catch (err) {
+    // While a PvP match is active, /api/save intentionally returns:
+    //   409 { error: 'character_in_active_match' }
+    // Keep the latest snapshot queued and retry shortly after so we don't
+    // spam warnings every minute and we resume syncing automatically on exit.
+    if (err?.status === 409 && (err?.body?.error === 'character_in_active_match' || err?.message === 'character_in_active_match')) {
+      emitSaveSyncActiveMatchConflict(err?.body?.match_id)
+      pendingSnapshot = snap
+      schedulePush(snap, ACTIVE_MATCH_RETRY_MS)
+      return
+    }
     console.warn('[PocketRPG] Cloud push failed:', err.message)
   } finally {
     inFlight = false

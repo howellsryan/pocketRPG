@@ -1,4 +1,5 @@
 import { requireAuth, json } from '../_lib/auth.js'
+import { assertNotInActiveMatch } from '../_lib/pvp.js'
 import itemsData from '../../src/data/items.json' assert { type: 'json' }
 
 export async function onRequestPost({ request, env }) {
@@ -24,6 +25,10 @@ export async function onRequestPost({ request, env }) {
     if (!character) {
       return json({ error: 'Character not found' }, 404)
     }
+
+    // PvP inventory lock: no purchases mid-match.
+    const lock = await assertNotInActiveMatch(env, characterId)
+    if (lock) return lock
 
     // Verify item exists and get its properties
     const item = itemsData[item_id]

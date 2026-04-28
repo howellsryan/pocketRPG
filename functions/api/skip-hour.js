@@ -1,4 +1,5 @@
 import { requireAuth, json } from '../_lib/auth.js'
+import { assertNotInActiveMatch } from '../_lib/pvp.js'
 
 export async function onRequestPost({ request, env }) {
   const auth = await requireAuth(request, env)
@@ -18,6 +19,10 @@ export async function onRequestPost({ request, env }) {
     if (!character) {
       return json({ error: 'Character not found' }, 404)
     }
+
+    // PvP inventory lock: skip-hour mutates idle state, must wait for match end.
+    const lock = await assertNotInActiveMatch(env, characterId)
+    if (lock) return lock
 
     // Verify character has at least 1 credit
     if ((character.credits ?? 0) < 1) {

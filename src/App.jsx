@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { GameProvider, useGame } from './state/gameState.jsx'
+import { PvpProvider, usePvp } from './state/pvpState.jsx'
 import BottomNav from './components/BottomNav.jsx'
 import Header from './components/Header.jsx'
 import ToastContainer from './components/Toast.jsx'
@@ -20,7 +21,7 @@ import AuthScreen from './screens/AuthScreen.jsx'
 import { SCREENS } from './utils/constants.js'
 import { hasSave, closeDB } from './db/database.js'
 import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
-import { startTicks, stopTicks, onTick } from './engine/tick.js'
+import { startTicks, stopTicks, onTick, pauseTicks } from './engine/tick.js'
 import { snapshotToLocalStorage, restoreFromLocalStorage, wipeLocalSave } from './db/saveload.js'
 import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode } from './cloud/api.js'
 import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState } from './cloud/sync.js'
@@ -30,6 +31,7 @@ import { simulateIdleThieving } from './engine/thieving.js'
 import { simulateIdleHunting } from './engine/hunter.js'
 import { simulateIdleQuest, createQuestState } from './engine/quests.js'
 import { getLevelFromXP } from './engine/experience.js'
+import { pvpApi } from './cloud/pvp.js'
 
 // ── Clock-rollback watermark ────────────────────────────────────────────────
 // We persist the highest Date.now() we've ever observed. If the device clock
@@ -62,6 +64,7 @@ function clampByClockWatermark(elapsedMs) {
 
 function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints, completeQuest, questQueue, removeFromQuestQueue, updateQuestQueue } = useGame()
+  const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [gameReady, setGameReady] = useState(false)
   const [activity, setActivity] = useState(null)
@@ -83,12 +86,82 @@ function GameApp() {
   // Set on mount if Stripe redirected back with a payment query/path — drives the
   // post-checkout thank-you toast + credits refresh once the game is ready.
   const paymentReturnRef = useRef(false)
+  const pvpReconnectBusyRef = useRef(false)
+  const isInPvpMatch = pvp.phase === 'in_match'
 
   // Refs for tick-based systems
   const hpRegenCounter = useRef(0)
   const snapshotCounter = useRef(99) // Start at 99 so first snapshot fires after 1 tick
   const idleHeartbeatCounter = useRef(49) // 50 ticks = ~30s — first heartbeat ~600ms after load
   const hiddenAtPerfRef = useRef(null) // performance.now() at hide — monotonic, immune to clock changes
+
+  // Global PvP route/overlay guard:
+  // - if an active match exists server-side, enter PvP from any screen.
+  // - when in match, force Combat screen and dismiss idle modal overlays.
+  useEffect(() => {
+    if (pvp.phase !== 'in_match') return
+    setScreen(SCREENS.COMBAT)
+    setActionData(null)
+    setIdleResult(null)
+    pauseTicks()
+    try { localStorage.removeItem('pocketrpg_activeTask') } catch { /* ignore */ }
+  }, [pvp.phase])
+
+  useEffect(() => {
+    let cancelled = false
+    const reconnectActiveMatch = async () => {
+      if (cancelled || pvp.phase === 'in_match' || pvpReconnectBusyRef.current) return
+      if (!pvp.canAutoReconnect) return
+      if (!getToken() || !getCharacterId()) return
+      pvpReconnectBusyRef.current = true
+      try {
+        const res = await pvpApi.listInvitations()
+        const activeMatchId = Number(res?.active_match_id)
+        if (cancelled || !Number.isFinite(activeMatchId) || activeMatchId <= 0) return
+        pvp.enterMatch(activeMatchId)
+      } catch {
+        // best-effort reconnect only
+      } finally {
+        pvpReconnectBusyRef.current = false
+      }
+    }
+
+    reconnectActiveMatch()
+    const onVisible = () => {
+      if (!document.hidden) reconnectActiveMatch()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      cancelled = true
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [pvp.phase, pvp.enterMatch, pvp.canAutoReconnect])
+
+  useEffect(() => {
+    const onActiveMatchConflict = (event) => {
+      const routeToPvp = async () => {
+        let matchId = Number(event?.detail?.matchId)
+        if (!Number.isFinite(matchId) || matchId <= 0) {
+          try {
+            const invites = await pvpApi.listInvitations()
+            matchId = Number(invites?.active_match_id)
+          } catch {
+            matchId = null
+          }
+        }
+        if (!Number.isFinite(matchId) || matchId <= 0) return
+        addToast('Server reports an active PvP match — entering combat.', 'info')
+        pauseTicks()
+        setScreen(SCREENS.COMBAT)
+        setActionData(null)
+        setIdleResult(null)
+        pvp.enterMatch(matchId)
+      }
+      routeToPvp()
+    }
+    window.addEventListener('pocketrpg:pvp-active-match', onActiveMatchConflict)
+    return () => window.removeEventListener('pocketrpg:pvp-active-match', onActiveMatchConflict)
+  }, [addToast, pvp.enterMatch])
 
   // Split xpReward into immediate grants and player-choice rewards (combat / any)
   function splitXpRewards(xpReward) {
@@ -245,10 +318,14 @@ function GameApp() {
         updateMaxObservedAt(now)
         localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
         // Flush any pending cloud push before the tab gets suspended.
-        try { pushNow(getSnapshot()) } catch (e) { /* non-fatal */ }
+        if (!isInPvpMatch) {
+          try { pushNow(getSnapshot()) } catch (e) { /* non-fatal */ }
+        }
         // Beacon the idle state to D1 — server stamps last_active_at on its
         // own clock so elapsed time on return is server-authoritative.
-        try { beaconIdleState(activeTaskRef.current) } catch (e) { /* non-fatal */ }
+        if (!isInPvpMatch) {
+          try { beaconIdleState(activeTaskRef.current) } catch (e) { /* non-fatal */ }
+        }
       } else {
         // Page returning to foreground — prefer performance.now() diff (monotonic) over wall-clock
         // to prevent system-time manipulation from granting fake idle progress.
@@ -556,7 +633,7 @@ function GameApp() {
 
           setIdleResult({ elapsedMs, task: savedTask, ...sim })
           // Push the post-idle state to the cloud (debounced + hash-skipped).
-          schedulePushSave(getSnapshot())
+          if (!isInPvpMatch) schedulePushSave(getSnapshot())
         } catch (err) {
           console.warn('[PocketRPG] Visibility idle error:', err)
           // DB may be stale — force reconnect for next read
@@ -572,9 +649,13 @@ function GameApp() {
       localStorage.setItem('pocketrpg_hiddenAt', String(now))
       updateMaxObservedAt(now)
       localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
-      try { pushNow(getSnapshot()) } catch { /* non-fatal */ }
+      if (!isInPvpMatch) {
+        try { pushNow(getSnapshot()) } catch { /* non-fatal */ }
+      }
       // sendBeacon survives tab-close where a regular fetch would be killed.
-      try { beaconIdleState(activeTaskRef.current) } catch { /* non-fatal */ }
+      if (!isInPvpMatch) {
+        try { beaconIdleState(activeTaskRef.current) } catch { /* non-fatal */ }
+      }
     }
 
     document.addEventListener('visibilitychange', handleVisibility)
@@ -583,7 +664,7 @@ function GameApp() {
       document.removeEventListener('visibilitychange', handleVisibility)
       window.removeEventListener('beforeunload', handleBeforeUnload)
     }
-  }, [gameReady, grantXP, updateInventory, updateBankDirect])
+  }, [gameReady, grantXP, updateInventory, updateBankDirect, isInPvpMatch])
 
   // HP regen tick: once per minute (100 ticks at 600ms = 60s)
   useEffect(() => {
@@ -608,7 +689,7 @@ function GameApp() {
         const snap = getSnapshot()
         snapshotToLocalStorage(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig, snap.homeShortcuts, snap.bossKillCounts, snap.completedQuests, snap.questQueue)
         // Cloud sync piggy-backs on the local snapshot cadence (debounced, hash-skipped).
-        schedulePushSave(snap)
+        if (!isInPvpMatch) schedulePushSave(snap)
       }
       // Idle heartbeat: ~30s cadence. Server stamps last_active_at on write,
       // so this keeps the "last seen" timestamp fresh even if the tab dies
@@ -616,7 +697,7 @@ function GameApp() {
       idleHeartbeatCounter.current++
       if (idleHeartbeatCounter.current >= 50) {
         idleHeartbeatCounter.current = 0
-        heartbeatIdleState(activeTaskRef.current)
+        if (!isInPvpMatch) heartbeatIdleState(activeTaskRef.current)
       }
       hpRegenCounter.current++
       if (hpRegenCounter.current >= 100) {
@@ -668,7 +749,7 @@ function GameApp() {
       }
     })
     return unsub
-  }, [gameReady, currentHP, stats, questQueue])
+  }, [gameReady, currentHP, stats, questQueue, isInPvpMatch])
 
   async function initCloudAndSave() {
     try {
@@ -863,7 +944,9 @@ function GameApp() {
    // token) and bounce back to AuthScreen so the user can pick or create
    // another character under the same GitHub login.
   async function handleLogoutToCharacterSelect() {
-    try { await pushNow(getSnapshot()) } catch { /* non-fatal */ }
+    if (!isInPvpMatch) {
+      try { await pushNow(getSnapshot()) } catch { /* non-fatal */ }
+    }
     setActiveTask(null)
     localStorage.removeItem('pocketrpg_activeTask')
     localStorage.removeItem('pocketrpg_hiddenAt')
@@ -1199,7 +1282,7 @@ function GameApp() {
       setIdleResult(idleResultData)
 
       // Save the updated game state to cloud
-      schedulePushSave(getSnapshot())
+      if (!isInPvpMatch) schedulePushSave(getSnapshot())
     } catch (err) {
       console.error('[PocketRPG] Skip 1h error:', err)
       addToast(err.message || 'Error during skip!', 'error')
@@ -1371,7 +1454,7 @@ function GameApp() {
       />
 
       {/* Idle Result Modal */}
-      {idleResult && (
+      {idleResult && pvp.phase !== 'in_match' && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <div style={{ width: '100%', maxWidth: '380px', background: '#1a1a1a', borderRadius: '20px', border: '1px solid #333', overflow: 'hidden' }}>
             {/* Header */}
@@ -1677,7 +1760,9 @@ function GameApp() {
 export default function App() {
   return (
     <GameProvider>
-      <GameApp />
+      <PvpProvider>
+        <GameApp />
+      </PvpProvider>
     </GameProvider>
   )
 }
