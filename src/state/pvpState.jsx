@@ -30,6 +30,15 @@ function readBootMatchId() {
   }
 }
 
+
+function clearPvpSyncBlock() {
+  try {
+    localStorage.removeItem(PVP_SYNC_BLOCK_KEY)
+  } catch {
+    // Ignore localStorage failures (private mode, restricted contexts).
+  }
+}
+
 function writePvpLocalState(matchId) {
   try {
     if (Number.isFinite(matchId) && matchId > 0) {
@@ -69,6 +78,9 @@ export function PvpProvider({ children }) {
     setPhase('idle')
     setActiveMatchId(null)
   }, [])
+  const clearSyncBlock = useCallback(() => {
+    clearPvpSyncBlock()
+  }, [])
   const blockReconnectFor = useCallback((ms = 0) => {
     const parsed = Number(ms)
     const safeMs = Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0
@@ -87,6 +99,7 @@ export function PvpProvider({ children }) {
     closeLobby,
     enterMatch,
     leaveMatch,
+    clearSyncBlock,
     blockReconnectFor,
     canAutoReconnect,
     setPhase,

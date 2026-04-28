@@ -9,7 +9,7 @@ const items = {
     defenceBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
     otherBonus: { meleeStrength: 82, rangedStrength: 0, magicDamage: 0 },
   },
-  shark: { id: 'shark', heal: 20, stackable: false },
+  shark: { id: 'shark', heals: 20, stackable: false },
 }
 
 function buildPlayer(overrides: any = {}) {
@@ -80,7 +80,8 @@ describe('pvpEngine phase 2B contract', () => {
       { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'eat', inventorySlot: 0 } },
     ], items)
 
-    expect(out.events.some(e => e.type === 'eat')).toBe(true)
+    const eatEvent = out.events.find((e: any) => e.type === 'eat')
+    expect(eatEvent?.heal).toBe(20)
     expect(out.stateNext.combatants['1'].hp).toBeGreaterThan(0)
   })
 

@@ -1083,16 +1083,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           addToast={addToast}
           onExit={async () => {
             pvpCrashHandledRef.current = false
-            resumeTicks()
+            pvp.clearSyncBlock?.()
             try {
               const pulled = await pullSave()
               if (pulled?.payload) {
                 await applyCloudSave(pulled.payload, pulled.updatedAt)
-                await loadGame()
               }
+              await loadGame()
             } catch (err) {
               console.warn('[PocketRPG] PvP post-match cloud pull failed:', err?.message || err)
             }
+            resumeTicks()
             pvp.leaveMatch()
             setShowPvpLobby(false)
           }}

@@ -5,6 +5,10 @@ import spellsData from '../../../../../src/data/spells.json' assert { type: 'jso
 
 const VALID_STANCES = new Set(['accurate', 'aggressive', 'defensive', 'controlled', 'rapid', 'longrange'])
 
+function getHealAmount(item) {
+  return Number(item?.heals ?? item?.heal ?? 0)
+}
+
 function getItemCount(inventory, itemId) {
   let count = 0
   for (const slot of inventory || []) {
@@ -21,7 +25,7 @@ function hasRequiredRunes(inventory, runeReq) {
   return true
 }
 
-function validateIntentAction(state, characterId, action) {
+export function validateIntentAction(state, characterId, action) {
   const combatant = state?.combatants?.[String(characterId)]
   if (!combatant || !action || typeof action !== 'object') {
     return { ok: false, error: 'invalid_action' }
@@ -61,7 +65,7 @@ function validateIntentAction(state, characterId, action) {
     const item = itemsData?.[slot.itemId]
     if (!item) return { ok: false, error: 'unknown_item' }
     if (action.type === 'equip') return item.slot ? { ok: true } : { ok: false, error: 'item_not_equippable' }
-    if (action.type === 'eat') return item.heal ? { ok: true } : { ok: false, error: 'item_not_food' }
+    if (action.type === 'eat') return getHealAmount(item) > 0 ? { ok: true } : { ok: false, error: 'item_not_food' }
     return item.id?.includes('potion') ? { ok: true } : { ok: false, error: 'item_not_potion' }
   }
 

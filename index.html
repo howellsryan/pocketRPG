@@ -30391,6 +30391,9 @@ function rollMagicAttack(attacker, defender, itemsData, opts = {}) {
 
 
 const VALID_STANCES = new Set(['accurate', 'aggressive', 'defensive', 'controlled', 'rapid', 'longrange']);
+function getItemHealAmount(item) {
+    return Number(item?.heals ?? item?.heal ?? 0);
+}
 function cloneCombatant(c) {
     return {
         ...c,
@@ -30600,14 +30603,15 @@ function applyIntent(combatant, intentAction, itemsData, events) {
             return;
         const slot = combatant.inventory[i];
         const item = slot ? itemsData?.[slot.itemId] : null;
-        if (!slot || !item?.heal)
+        const healAmount = getItemHealAmount(item);
+        if (!slot || healAmount <= 0)
             return;
-        combatant.hp = Math.min(combatant.maxHP, combatant.hp + item.heal);
+        combatant.hp = Math.min(combatant.maxHP, combatant.hp + healAmount);
         combatant.eatCooldown = 3;
         slot.quantity -= 1;
         if (slot.quantity <= 0)
             combatant.inventory[i] = null;
-        events.push({ type: 'eat', characterId: combatant.characterId, itemId: item.id, heal: item.heal });
+        events.push({ type: 'eat', characterId: combatant.characterId, itemId: item.id, heal: healAmount });
         return;
     }
     if (intentAction.type === 'drink_potion') {
@@ -34015,6 +34019,14 @@ function readBootMatchId() {
         return null;
     }
 }
+function clearPvpSyncBlock() {
+    try {
+        localStorage.removeItem(PVP_SYNC_BLOCK_KEY);
+    }
+    catch {
+        // Ignore localStorage failures (private mode, restricted contexts).
+    }
+}
 function writePvpLocalState(matchId) {
     try {
         if (Number.isFinite(matchId) && matchId > 0) {
@@ -34054,6 +34066,9 @@ function PvpProvider({ children }) {
         setPhase('idle');
         setActiveMatchId(null);
     }, []);
+    const clearSyncBlock = useCallback(() => {
+        clearPvpSyncBlock();
+    }, []);
     const blockReconnectFor = useCallback((ms = 0) => {
         const parsed = Number(ms);
         const safeMs = Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0;
@@ -34071,6 +34086,7 @@ function PvpProvider({ children }) {
         closeLobby,
         enterMatch,
         leaveMatch,
+        clearSyncBlock,
         blockReconnectFor,
         canAutoReconnect,
         setPhase,
@@ -36015,6 +36031,21 @@ const NO_POLL_WARNING_MS = 5000;
 const MATCH_BOOT_GRACE_MS = 8000;
 const MATCH_BOOT_RETRY_MS = 500;
 const MATCH_FATAL_RETRY_MS = 1500;
+function getHealAmount(item) {
+    return Number(item?.heals ?? item?.heal ?? 0);
+}
+function getPvpFoodSlots(inventory, lookup, limit = 4) {
+    const slots = Array.isArray(inventory) ? inventory : [];
+    return slots
+        .map((slot, idx) => ({ slot, idx }))
+        .filter(({ slot }) => {
+        if (!slot)
+            return false;
+        const healAmount = getHealAmount(lookup?.[slot.itemId]);
+        return healAmount > 0;
+    })
+        .slice(0, Math.max(0, limit));
+}
 function prettifyEvent(evt, selfId) {
     if (!evt)
         return null;
@@ -36038,6 +36069,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
     const [busy, setBusy] = useState(false);
     const [pendingAction, setPendingAction] = useState(null);
     const [endModal, setEndModal] = useState(null);
+    const [writebackFailure, setWritebackFailure] = useState(null);
     const [hiddenMode, setHiddenMode] = useState(document.hidden);
     const [staleWarning, setStaleWarning] = useState(false);
     const selfId = useMemo(() => parseInt(getCharacterId(), 10), []);
@@ -36141,12 +36173,20 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
             lastPollOkAt.current = Date.now();
             setStaleWarning(false);
             if (tickRes.terminal) {
-                const youWon = Number(tickRes.terminal.winner) === selfId;
-                setEndModal({
-                    youWon,
-                    reason: tickRes.terminal.reason,
-                    loot: tickRes.loot || { added: [], dropped: [], droppedValue: 0 },
-                });
+                if (tickRes.terminal_writeback === false) {
+                    console.error('[PocketRPG][PvP] terminal writeback failed', tickRes);
+                    setWritebackFailure({
+                        reason: tickRes.terminal.reason,
+                    });
+                }
+                else {
+                    const youWon = Number(tickRes.terminal.winner) === selfId;
+                    setEndModal({
+                        youWon,
+                        reason: tickRes.terminal.reason,
+                        loot: tickRes.loot || { added: [], dropped: [], droppedValue: 0 },
+                    });
+                }
                 if (pollTimer.current)
                     clearTimeout(pollTimer.current);
             }
@@ -36227,10 +36267,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
         setBusy(true);
         setTimeout(() => setBusy(false), 220);
     };
-    const foodSlots = toArray(pair.self?.inventory)
-        .map((slot, idx) => ({ slot, idx }))
-        .filter(({ slot }) => slot && itemsData[slot.itemId]?.heal)
-        .slice(0, 4);
+    const foodSlots = getPvpFoodSlots(toArray(pair.self?.inventory), itemsData, 4);
     return (h("div", { class: "p-3 space-y-3" },
         loading && (h(Card, { className: "border-[var(--color-gold-dim)] bg-[var(--color-void-light)]" },
             h("div", { class: "text-[11px] text-[var(--color-gold)]" }, "Connecting to PvP match\u2026"))),
@@ -36281,6 +36318,17 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
                 recentLines.map((line, i) => (h("div", { key: i, class: "text-[11px] text-[var(--color-parchment)] opacity-80" },
                     "\u2022 ",
                     line))))),
+        writebackFailure && (h(Modal, { title: "\u26A0\uFE0F Match Writeback Failed", onClose: () => { } },
+            h("div", { class: "space-y-3" },
+                h(Card, { className: "border-[var(--color-blood)] bg-[#2a1010]" },
+                    h("div", { class: "text-sm text-[var(--color-blood-light)] font-semibold" }, "Match ended, but loot writeback failed."),
+                    h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-80 mt-1" }, "Do not continue to PvE yet. Please reload and reconnect so the client can recover synced PvP results."),
+                    h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-70 mt-2" },
+                        "Reason: ",
+                        writebackFailure.reason || 'unknown')),
+                h(Button, { variant: "danger", className: "w-full", onClick: () => {
+                        window.location.reload();
+                    } }, "Reload & Reconnect")))),
         endModal && (h(Modal, { title: endModal.youWon ? '🏆 Victory' : '☠️ Defeat', onClose: onExit },
             h("div", { class: "space-y-3" },
                 h("div", { class: "text-sm text-[var(--color-parchment)]" },
@@ -37368,17 +37416,18 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
             } },
             h(PvpCombatScreen, { matchId: pvp.activeMatchId, addToast: addToast, onExit: async () => {
                     pvpCrashHandledRef.current = false;
-                    resumeTicks();
+                    pvp.clearSyncBlock?.();
                     try {
                         const pulled = await pullSave();
                         if (pulled?.payload) {
                             await applyCloudSave(pulled.payload, pulled.updatedAt);
-                            await loadGame();
                         }
+                        await loadGame();
                     }
                     catch (err) {
                         console.warn('[PocketRPG] PvP post-match cloud pull failed:', err?.message || err);
                     }
+                    resumeTicks();
                     pvp.leaveMatch();
                     setShowPvpLobby(false);
                 } })));

@@ -17,6 +17,22 @@ const MATCH_BOOT_GRACE_MS = 8000
 const MATCH_BOOT_RETRY_MS = 500
 const MATCH_FATAL_RETRY_MS = 1500
 
+function getHealAmount(item) {
+  return Number(item?.heals ?? item?.heal ?? 0)
+}
+
+export function getPvpFoodSlots(inventory, lookup, limit = 4) {
+  const slots = Array.isArray(inventory) ? inventory : []
+  return slots
+    .map((slot, idx) => ({ slot, idx }))
+    .filter(({ slot }) => {
+      if (!slot) return false
+      const healAmount = getHealAmount(lookup?.[slot.itemId])
+      return healAmount > 0
+    })
+    .slice(0, Math.max(0, limit))
+}
+
 function prettifyEvent(evt, selfId) {
   if (!evt) return null
   if (evt.type === 'attack') {
@@ -38,6 +54,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const [busy, setBusy] = useState(false)
   const [pendingAction, setPendingAction] = useState(null)
   const [endModal, setEndModal] = useState(null)
+  const [writebackFailure, setWritebackFailure] = useState(null)
   const [hiddenMode, setHiddenMode] = useState(document.hidden)
   const [staleWarning, setStaleWarning] = useState(false)
 
@@ -141,12 +158,19 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
       setStaleWarning(false)
 
       if (tickRes.terminal) {
-        const youWon = Number(tickRes.terminal.winner) === selfId
-        setEndModal({
-          youWon,
-          reason: tickRes.terminal.reason,
-          loot: tickRes.loot || { added: [], dropped: [], droppedValue: 0 },
-        })
+        if (tickRes.terminal_writeback === false) {
+          console.error('[PocketRPG][PvP] terminal writeback failed', tickRes)
+          setWritebackFailure({
+            reason: tickRes.terminal.reason,
+          })
+        } else {
+          const youWon = Number(tickRes.terminal.winner) === selfId
+          setEndModal({
+            youWon,
+            reason: tickRes.terminal.reason,
+            loot: tickRes.loot || { added: [], dropped: [], droppedValue: 0 },
+          })
+        }
         if (pollTimer.current) clearTimeout(pollTimer.current)
       }
     } catch (err) {
@@ -226,10 +250,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     setTimeout(() => setBusy(false), 220)
   }
 
-  const foodSlots = toArray(pair.self?.inventory)
-    .map((slot, idx) => ({ slot, idx }))
-    .filter(({ slot }) => slot && itemsData[slot.itemId]?.heal)
-    .slice(0, 4)
+  const foodSlots = getPvpFoodSlots(toArray(pair.self?.inventory), itemsData, 4)
 
   return (
     <div class="p-3 space-y-3">
@@ -319,6 +340,29 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
           ))}
         </div>
       </Panel>
+
+      {writebackFailure && (
+        <Modal title="⚠️ Match Writeback Failed" onClose={() => {}}>
+          <div class="space-y-3">
+            <Card className="border-[var(--color-blood)] bg-[#2a1010]">
+              <div class="text-sm text-[var(--color-blood-light)] font-semibold">Match ended, but loot writeback failed.</div>
+              <div class="text-[11px] text-[var(--color-parchment)] opacity-80 mt-1">
+                Do not continue to PvE yet. Please reload and reconnect so the client can recover synced PvP results.
+              </div>
+              <div class="text-[11px] text-[var(--color-parchment)] opacity-70 mt-2">Reason: {writebackFailure.reason || 'unknown'}</div>
+            </Card>
+            <Button
+              variant="danger"
+              className="w-full"
+              onClick={() => {
+                window.location.reload()
+              }}
+            >
+              Reload & Reconnect
+            </Button>
+          </div>
+        </Modal>
+      )}
 
       {endModal && (
         <Modal title={endModal.youWon ? '🏆 Victory' : '☠️ Defeat'} onClose={onExit}>
