@@ -1790,6 +1790,534 @@
       }
     ]
   },
+  "blood_veld": {
+    "id": "blood_veld",
+    "name": "Blood Veld",
+    "combatLevel": 76,
+    "hitpoints": 75,
+    "slayerRequirement": 50,
+    "slayerXP": 120,
+    "stats": {
+      "attack": 60,
+      "strength": 60,
+      "defence": 50,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": 50,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 30,
+      "ranged": 0
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          50,
+          200
+        ],
+        "chance": 0.7
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          5,
+          12
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          2,
+          6
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          2,
+          5
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "harralander",
+        "quantity": 1,
+        "chance": 0.06
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "rune_med_helm",
+        "quantity": 1,
+        "chance": 0.008
+      },
+      {
+        "itemId": "clue_scroll_master",
+        "quantity": 1,
+        "chance": 0.01
+      }
+    ]
+  },
+  "nechryael": {
+    "id": "nechryael",
+    "name": "Nechryael",
+    "combatLevel": 115,
+    "hitpoints": 105,
+    "slayerRequirement": 80,
+    "slayerXP": 105,
+    "stats": {
+      "attack": 100,
+      "strength": 100,
+      "defence": 80,
+      "magic": 100,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": 75,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 10,
+      "crush": 0,
+      "magic": 25,
+      "ranged": 30
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          150,
+          500
+        ],
+        "chance": 0.75
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          3,
+          8
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          10,
+          25
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "rune_chainbody",
+        "quantity": 1,
+        "chance": 0.012
+      },
+      {
+        "itemId": "adamant_platelegs",
+        "quantity": 1,
+        "chance": 0.025
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "clue_scroll_master",
+        "quantity": 1,
+        "chance": 0.012
+      }
+    ]
+  },
+  "skeletal_wyvern": {
+    "id": "skeletal_wyvern",
+    "name": "Skeletal Wyvern",
+    "combatLevel": 140,
+    "hitpoints": 130,
+    "slayerRequirement": 72,
+    "slayerXP": 210,
+    "stats": {
+      "attack": 80,
+      "strength": 80,
+      "defence": 100,
+      "magic": 100,
+      "ranged": 80
+    },
+    "attackSpeed": 5,
+    "attackStyle": "stab",
+    "attackBonus": 80,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 200,
+      "slash": 200,
+      "crush": 200,
+      "magic": 240,
+      "ranged": 200
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          200,
+          600
+        ],
+        "chance": 0.7
+      },
+      {
+        "itemId": "rune_platelegs",
+        "quantity": 1,
+        "chance": 0.015
+      },
+      {
+        "itemId": "rune_chainbody",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "adamant_platelegs",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          5,
+          12
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          15,
+          35
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "clue_scroll_master",
+        "quantity": 1,
+        "chance": 0.018
+      }
+    ]
+  },
+  "smoke_devil": {
+    "id": "smoke_devil",
+    "name": "Smoke Devil",
+    "combatLevel": 160,
+    "hitpoints": 95,
+    "slayerRequirement": 85,
+    "slayerXP": 124,
+    "stats": {
+      "attack": 152,
+      "strength": 99,
+      "defence": 100,
+      "magic": 80,
+      "ranged": 100
+    },
+    "attackSpeed": 5,
+    "attackStyle": "ranged",
+    "attackBonus": 110,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 50,
+      "slash": 50,
+      "crush": 50,
+      "magic": 60,
+      "ranged": 40
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          300,
+          900
+        ],
+        "chance": 0.85
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          15,
+          40
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": [
+          30,
+          80
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "rune_chainbody",
+        "quantity": 1,
+        "chance": 0.012
+      },
+      {
+        "itemId": "occult_necklace",
+        "quantity": 1,
+        "chance": 0.0015
+      },
+      {
+        "itemId": "clue_scroll_master",
+        "quantity": 1,
+        "chance": 0.015
+      }
+    ]
+  },
+  "kraken": {
+    "id": "kraken",
+    "name": "Kraken",
+    "boss": true,
+    "combatLevel": 291,
+    "hitpoints": 255,
+    "slayerRequirement": 87,
+    "slayerXP": 290,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 100,
+      "magic": 200,
+      "ranged": 1
+    },
+    "attackSpeed": 5,
+    "attackStyle": "magic",
+    "attackBonus": 130,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 90,
+      "ranged": 0
+    },
+    "drops": [
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          1000,
+          3000
+        ],
+        "chance": 1
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          50,
+          100
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          25,
+          60
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          50,
+          120
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          2,
+          4
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "kraken_tentacle",
+        "quantity": 1,
+        "chance": 0.0033
+      },
+      {
+        "itemId": "clue_scroll_master",
+        "quantity": 1,
+        "chance": 0.02
+      }
+    ]
+  },
   "general_graardor": {
     "id": "general_graardor",
     "name": "General Graardor",

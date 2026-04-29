@@ -14353,5 +14353,87 @@
     "shopValue": 328,
     "icon": "📦",
     "isGeneralStore": false
+  },
+  "kraken_tentacle": {
+    "id": "kraken_tentacle",
+    "name": "Kraken tentacle",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 500000,
+    "icon": "🦑",
+    "isGeneralStore": false,
+    "combineWith": "abyssal_whip",
+    "combineResult": "abyssal_tentacle",
+    "combineDescription": "Attach to an Abyssal whip to create an Abyssal tentacle."
+  },
+  "abyssal_tentacle": {
+    "id": "abyssal_tentacle",
+    "name": "Abyssal tentacle",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 90,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 86,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 75
+    },
+    "specialAttack": {
+      "type": "stun",
+      "energyCost": 50,
+      "description": "Energy Drain: Lashes at the target — if it connects, the creature is stunned for one attack cycle, skipping its next hit."
+    },
+    "shopValue": 1714037,
+    "icon": "🦑",
+    "isGeneralStore": false
+  },
+  "occult_necklace": {
+    "id": "occult_necklace",
+    "name": "Occult necklace",
+    "type": "armour",
+    "slot": "neck",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 12,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 10
+    },
+    "requirements": {},
+    "shopValue": 720000,
+    "icon": "📿",
+    "isGeneralStore": false
   }
 }

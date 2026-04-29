@@ -1,6 +1,7 @@
 import { useGame } from '../state/gameState.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
 import monstersData from '../data/monsters.json'
+import itemsData from '../data/items.json'
 
 // OSRS slayer masters — requirements and monster pools from OSRS Wiki
 const SLAYER_MASTERS = [
@@ -43,7 +44,7 @@ const SLAYER_MASTERS = [
     description: 'Assigns mid-level combat tasks. Requires combat 40.',
     taskRange: [70, 160],
     monsterPool: [
-      'moss_giant', 'green_dragon', 'lesser_demon',
+      'moss_giant', 'green_dragon', 'lesser_demon', 'blood_veld',
     ],
   },
   {
@@ -58,6 +59,7 @@ const SLAYER_MASTERS = [
     taskRange: [80, 300],
     monsterPool: [
       'green_dragon', 'lesser_demon', 'abyssal_demon', 'red_dragon',
+      'blood_veld', 'nechryael',
     ],
   },
   {
@@ -77,6 +79,8 @@ const SLAYER_MASTERS = [
       { id: 'dagganoth_prime', boss: true },
       { id: 'dagganoth_supreme', boss: true },
       'red_dragon',
+      'blood_veld', 'nechryael', 'skeletal_wyvern', 'smoke_devil',
+      { id: 'kraken', boss: true },
       { id: 'jad', boss: true },
     ],
   },
@@ -100,8 +104,19 @@ const SLAYER_MASTERS = [
       { id: 'commander_zilyana', boss: true },
       { id: 'kril_tsutsaroth', boss: true },
       { id: 'kreearra', boss: true },
+      'blood_veld', 'nechryael', 'skeletal_wyvern', 'smoke_devil',
+      { id: 'kraken', boss: true },
       { id: 'jad', boss: true },
     ],
+  },
+]
+
+// Items unlockable with slayer points
+const SLAYER_UNLOCKS = [
+  {
+    itemId: 'slayer_helmet',
+    cost: 400,
+    description: 'Combined helmet that boosts damage and accuracy against your assigned slayer task.',
   },
 ]
 
@@ -132,10 +147,11 @@ const SLAYER_MONSTER_ICONS = {
   moss_giant: '🌿', green_dragon: '🐉', lesser_demon: '👿', abyssal_demon: '😈',
   general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
   dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹', jad: '🔥',
+  blood_veld: '🩸', nechryael: '👻', skeletal_wyvern: '🐲', smoke_devil: '💨', kraken: '🦑',
 }
 
 export default function SlayerScreen({ onBack }) {
-  const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast } = useGame()
+  const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, bank, inventory, addToBank } = useGame()
 
   const combatLevel = getPlayerCombatLevel(stats)
   const slayerLevel = getLevelFromXP(stats.slayer?.xp || 0)
@@ -212,6 +228,27 @@ export default function SlayerScreen({ onBack }) {
   const handleCancelTask = () => {
     setSlayerTask(null)
     addToast('Task cancelled. No points awarded.', 'info')
+  }
+
+  const ownsItem = (itemId) => {
+    if (bank?.[itemId]?.quantity > 0) return true
+    return inventory?.some(s => s && s.itemId === itemId) || false
+  }
+
+  const handleUnlock = (unlock) => {
+    const item = itemsData[unlock.itemId]
+    if (!item) return
+    if (ownsItem(unlock.itemId)) {
+      addToast(`You already own a ${item.name}`, 'error')
+      return
+    }
+    if (slayerPoints < unlock.cost) {
+      addToast(`Need ${unlock.cost} slayer points (you have ${slayerPoints})`, 'error')
+      return
+    }
+    updateSlayerPoints(slayerPoints - unlock.cost)
+    addToBank(unlock.itemId, 1)
+    addToast(`🎉 Purchased ${item.name} — sent to bank`, 'info')
   }
 
   const progressPct = slayerTask
@@ -314,6 +351,60 @@ export default function SlayerScreen({ onBack }) {
                 )}
                 {master.combatReq === 0 && (
                   <div class="text-[9px] text-[var(--color-hp-green)]">No req</div>
+                )}
+              </div>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Unlocks — purchasable with slayer points */}
+      <div class="mt-5 mb-2 text-[10px] text-[var(--color-parchment)] opacity-50 uppercase font-bold tracking-wider">
+        Unlocks
+      </div>
+      <div class="space-y-2">
+        {SLAYER_UNLOCKS.map(unlock => {
+          const item = itemsData[unlock.itemId]
+          if (!item) return null
+          const owned = ownsItem(unlock.itemId)
+          const canAfford = slayerPoints >= unlock.cost
+          const disabled = owned || !canAfford
+          return (
+            <button
+              key={unlock.itemId}
+              onClick={() => !disabled && handleUnlock(unlock)}
+              disabled={disabled}
+              class={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left
+                ${!disabled
+                  ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
+                  : 'bg-[#111] border-[#1a1a1a] opacity-50'}`}
+            >
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="text-2xl flex-shrink-0">{item.icon || '🎁'}</span>
+                <div class="min-w-0">
+                  <div class="text-sm font-semibold text-[var(--color-parchment)]">{item.name}</div>
+                  <div class="text-[9px] text-[var(--color-parchment)] opacity-50 mt-0.5 leading-tight">
+                    {unlock.description}
+                  </div>
+                  {item.requirements?.slayer > 0 && (
+                    <div class="text-[9px] text-[var(--color-parchment)] opacity-40 mt-0.5">
+                      Requires Slayer {item.requirements.slayer} to wear
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div class="text-right flex-shrink-0 ml-3 space-y-0.5">
+                {owned ? (
+                  <div class="text-[10px] font-bold text-[var(--color-hp-green)]">Owned</div>
+                ) : (
+                  <>
+                    <div class={`text-[11px] font-[var(--font-mono)] font-bold ${canAfford ? 'text-[var(--color-gold)]' : 'text-[var(--color-blood-light)]'}`}>
+                      {unlock.cost} pts
+                    </div>
+                    <div class="text-[9px] text-[var(--color-parchment)] opacity-40">
+                      {canAfford ? 'Buy' : 'Locked'}
+                    </div>
+                  </>
                 )}
               </div>
             </button>
