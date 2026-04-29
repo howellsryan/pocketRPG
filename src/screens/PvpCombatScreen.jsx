@@ -200,6 +200,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   ))
   const [staleWarning, setStaleWarning] = useState(false)
   const [specialQueuedOverride, setSpecialQueuedOverride] = useState(null)
+  const [prayerQueuedOverride, setPrayerQueuedOverride] = useState(undefined)
 
   const selfId = useMemo(() => parseInt(getCharacterId(), 10), [])
   const pollTimer = useRef(null)
@@ -211,6 +212,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const fatalNotified = useRef(false)
   const terminalHandledRef = useRef(false)
   const endModalOpenRef = useRef(false)
+  const prayerOverrideTimer = useRef(null)
 
   useEffect(() => {
     pendingActionRef.current = pendingAction
@@ -240,6 +242,11 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     ? specialQueuedOverride
     : serverSpecialQueued
 
+  const serverActivePrayerId = pair.self?.activeCombatPrayer || null
+  const visuallyActivePrayerId = prayerQueuedOverride !== undefined
+    ? prayerQueuedOverride
+    : serverActivePrayerId
+
   useEffect(() => {
     if (specialQueuedOverride === null) return
     if (serverSpecialQueued === specialQueuedOverride) {
@@ -248,12 +255,25 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   }, [serverSpecialQueued, specialQueuedOverride])
 
   useEffect(() => {
+    if (prayerQueuedOverride === undefined) return
+
+    if (serverActivePrayerId === prayerQueuedOverride) {
+      setPrayerQueuedOverride(undefined)
+      if (prayerOverrideTimer.current) {
+        clearTimeout(prayerOverrideTimer.current)
+        prayerOverrideTimer.current = null
+      }
+    }
+  }, [serverActivePrayerId, prayerQueuedOverride])
+
+  useEffect(() => {
     mounted.current = true
     terminalHandledRef.current = false
     endModalOpenRef.current = false
     return () => {
       mounted.current = false
       if (pollTimer.current) clearTimeout(pollTimer.current)
+      if (prayerOverrideTimer.current) clearTimeout(prayerOverrideTimer.current)
     }
   }, [])
 
@@ -535,6 +555,61 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const specialEnergy = Math.max(0, Math.floor(Number(pair.self?.specialAttackEnergy ?? 0) || 0))
   const specialCost = equippedSpecial?.energyCost ?? null
 
+  const setTemporaryPrayerOverride = (nextPrayerId) => {
+    setPrayerQueuedOverride(nextPrayerId)
+
+    if (prayerOverrideTimer.current) {
+      clearTimeout(prayerOverrideTimer.current)
+    }
+
+    // If the server rejects or drops the intent, do not leave the UI permanently
+    // optimistic. The next poll will restore the server-backed state.
+    prayerOverrideTimer.current = setTimeout(() => {
+      if (mounted.current) {
+        setPrayerQueuedOverride(undefined)
+      }
+      prayerOverrideTimer.current = null
+    }, 4500)
+  }
+
+  const queuePrayerToggle = (prayerId) => {
+    if (terminalHandledRef.current || endModalOpenRef.current) return
+
+    const currentVisualPrayerId = visuallyActivePrayerId || null
+    const nextPrayerId = currentVisualPrayerId === prayerId ? null : prayerId
+    const intent = { type: 'toggle_prayer', prayerId }
+
+    setTemporaryPrayerOverride(nextPrayerId)
+
+    // If the user taps the same prayer twice before the intent leaves the
+    // browser, cancel the pending toggle and keep the server state unchanged.
+    if (
+      pendingActionRef.current?.type === 'toggle_prayer' &&
+      pendingActionRef.current.prayerId === prayerId &&
+      !tickInFlight.current &&
+      nextPrayerId === serverActivePrayerId
+    ) {
+      pendingActionRef.current = null
+      setPendingAction(null)
+      return
+    }
+
+    // If the user changes their mind before the previous prayer intent is sent,
+    // replace it with the latest requested prayer instead of sending stale UX.
+    if (pendingActionRef.current?.type === 'toggle_prayer' && !tickInFlight.current) {
+      pendingActionRef.current = intent
+      setPendingAction(intent)
+      setTimeout(() => {
+        if (!terminalHandledRef.current && !endModalOpenRef.current && !tickInFlight.current) {
+          runTick()
+        }
+      }, 0)
+      return
+    }
+
+    queueAction(intent, { showBusy: false })
+  }
+
   const toggleSpecialAttack = () => {
     if (terminalHandledRef.current || endModalOpenRef.current) return
 
@@ -642,9 +717,14 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
             Spec{specialCost != null ? ` ${specialEnergy}%` : ''}
           </Button>
           <Button
-            variant={actionPanel === 'prayer' ? 'primary' : 'secondary'}
+            variant={actionPanel === 'prayer' || visuallyActivePrayerId ? 'primary' : 'secondary'}
             size="md"
-            className="w-full transition-none"
+            className={`w-full transition-none ${
+              visuallyActivePrayerId
+                ? '!border-[var(--color-gold)] !bg-[var(--color-gold)] !text-[var(--color-void-dark)]'
+                : ''
+            }`}
+            aria-pressed={!!visuallyActivePrayerId}
             onClick={() => setActionPanel(actionPanel === 'prayer' ? null : 'prayer')}
           >
             🙏 Prayer
@@ -658,14 +738,19 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
             ) : (
               <div class="grid grid-cols-3 gap-2">
                 {availablePrayers.map((prayer) => {
-                  const active = pair.self?.activeCombatPrayer === prayer.id
+                  const active = visuallyActivePrayerId === prayer.id
                   return (
                     <Button
                       key={prayer.id}
                       variant={active ? 'primary' : 'secondary'}
                       size="md"
-                      className="min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight transition-none"
-                      onClick={() => queueAction({ type: 'toggle_prayer', prayerId: prayer.id }, { showBusy: false })}
+                      className={`min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight transition-none ${
+                        active
+                          ? '!border-[var(--color-gold)] !bg-[var(--color-gold)] !text-[var(--color-void-dark)]'
+                          : ''
+                      }`}
+                      aria-pressed={active}
+                      onClick={() => queuePrayerToggle(prayer.id)}
                     >
                       <span class="block truncate">{prayer.icon || '✨'} {prayer.name}</span>
                     </Button>
@@ -692,6 +777,8 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
         <Modal
           title={endModal.writebackOk ? (endModal.youWon ? '🏆 Victory' : '☠️ Defeat') : '⚠️ PvP sync recovery required'}
           onClose={endModal.writebackOk ? onExit : () => {}}
+          fullHeight
+          contentClassName="pb-6"
         >
           <div class="space-y-3">
             {endModal.writebackOk ? (
@@ -713,7 +800,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
                 {endModal.youWon && (
                   <Card>
                     <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Items won</div>
-                    <div class="max-h-48 overflow-y-auto overscroll-contain pr-1 space-y-1">
+                    <div class="max-h-[42dvh] space-y-1 overflow-y-auto pr-1">
                       {wonLootRows.length === 0 ? (
                         <div class="text-[11px] text-[var(--color-parchment)] opacity-60">
                           No tradeable items were won.
@@ -737,7 +824,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
                   </Card>
                 )}
 
-                <Button variant="primary" className="w-full" onClick={async () => { await onExit?.() }}>Return to PvE</Button>
+                <Button variant="primary" size="md" className="mt-3 w-full" onClick={async () => { await onExit?.() }}>Return to PvE</Button>
               </>
             ) : (
               <Card className="border-[var(--color-blood)] bg-[#2a1010]">
