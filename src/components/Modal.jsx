@@ -64,6 +64,7 @@ export default function Modal({
   const dialogSizeStyle = fullHeight
     ? { height: dialogMaxHeight, maxHeight: dialogMaxHeight }
     : { maxHeight: dialogMaxHeight }
+  const contentSizeClass = fullHeight ? 'flex-1' : 'flex-[0_1_auto]'
 
   const modal = (
     <div
@@ -74,7 +75,9 @@ export default function Modal({
         height: viewportHeightValue,
         minHeight: '100svh',
         paddingTop: 'max(8px, env(safe-area-inset-top))',
+        paddingRight: 'max(8px, env(safe-area-inset-right))',
         paddingBottom: 'max(8px, env(safe-area-inset-bottom))',
+        paddingLeft: 'max(8px, env(safe-area-inset-left))',
       }}
     >
       <div
@@ -84,7 +87,7 @@ export default function Modal({
       />
 
       <div
-        class={`relative z-[1] flex w-full flex-col overflow-hidden rounded-t-2xl border border-[#333] bg-[var(--color-void-light)] sm:max-w-lg sm:rounded-2xl ${className}`}
+        class={`relative z-[1] flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[#333] bg-[var(--color-void-light)] ${className}`}
         style={dialogSizeStyle}
         onClick={(e) => e.stopPropagation()}
       >
@@ -105,7 +108,7 @@ export default function Modal({
           </div>
         )}
 
-        <div class={`min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 ${contentClassName}`}>
+        <div class={`min-h-0 ${contentSizeClass} overflow-y-auto overscroll-contain p-4 ${contentClassName}`}>
           {children}
         </div>
       </div>
