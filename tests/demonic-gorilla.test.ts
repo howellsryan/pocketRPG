@@ -250,10 +250,10 @@ describe('Demonic Gorilla', () => {
       expect((itemsData as any)['heavy_ballista'].requirements?.ranged).toBe(75)
     })
 
-    it('heavy_ballista should have +110 ranged attack and +125 ranged strength', () => {
+    it('heavy_ballista should have updated ranged attack and ranged strength bonuses', () => {
       const ballista = (itemsData as any)['heavy_ballista']
-      expect(ballista.attackBonus.ranged).toBe(110)
-      expect(ballista.otherBonus.rangedStrength).toBe(125)
+      expect(ballista.attackBonus.ranged).toBe(185)
+      expect(ballista.otherBonus.rangedStrength).toBe(165)
     })
   })
 })

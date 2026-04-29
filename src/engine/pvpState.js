@@ -69,6 +69,12 @@ function normalizeCombatant(rawCombatant) {
     maxHP,
     hp,
     specialAttackEnergy: Number(rawCombatant.specialAttackEnergy ?? rawCombatant.special_attack_energy ?? 0) || 0,
+    totalPvpKills: readNonNegativeInt(rawCombatant.totalPvpKills, rawCombatant.total_pvp_kills),
+    lastUpdatedTotalPvpKills: readNullablePositiveInt(
+      rawCombatant.lastUpdatedTotalPvpKills,
+      rawCombatant.last_updated_total_pvp_kills,
+    ),
+    pvpRank: readNullablePositiveInt(rawCombatant.pvpRank, rawCombatant.pvp_rank),
     inventory: normalizedInventory,
   }
 }
@@ -113,4 +119,20 @@ function readPositiveInt(...values) {
     if (Number.isFinite(parsed) && parsed > 0) return Math.floor(parsed)
   }
   return 1
+}
+
+function readNonNegativeInt(...values) {
+  for (const value of values) {
+    const parsed = Number(value)
+    if (Number.isFinite(parsed) && parsed >= 0) return Math.floor(parsed)
+  }
+  return 0
+}
+
+function readNullablePositiveInt(...values) {
+  for (const value of values) {
+    const parsed = Number(value)
+    if (Number.isFinite(parsed) && parsed > 0) return Math.floor(parsed)
+  }
+  return null
 }

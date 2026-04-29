@@ -15,6 +15,7 @@ import { getOwnedCharacter, sweepStaleRows } from '../../../../_lib/pvp.js'
 import { readCombatLevel } from '../../../../_lib/combatLevel.js'
 import { createPvpState } from '../../../../../src/engine/pvpEngine.js'
 import { buildCombatantFromSave, readCharacterSave } from '../../../../_lib/pvpMatch.js'
+import { applyPvpRankToCombatant, readCharacterPvpRank } from '../../../../_lib/pvpRanks.js'
 
 const CB_BAND = 10
 const STALE_SAVE_MS = 15_000
@@ -127,16 +128,21 @@ export async function onRequestPost({ request, env, params }) {
     }, 409)
   }
 
-  const aCombatant = buildCombatantFromSave({
+  const [fromRank, toRank] = await Promise.all([
+    readCharacterPvpRank(env, invite.from_character),
+    readCharacterPvpRank(env, invite.to_character),
+  ])
+
+  const aCombatant = applyPvpRankToCombatant(buildCombatantFromSave({
     characterId: invite.from_character,
     username: invite.from_username,
     savePayload: fromSave.payload,
-  })
-  const bCombatant = buildCombatantFromSave({
+  }), fromRank)
+  const bCombatant = applyPvpRankToCombatant(buildCombatantFromSave({
     characterId: invite.to_character,
     username: invite.to_username,
     savePayload: toSave.payload,
-  })
+  }), toRank)
   const state = createPvpState(aCombatant, bCombatant, now, Math.floor(Math.random() * 2_147_483_647))
 
   try {

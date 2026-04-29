@@ -1,5 +1,6 @@
 import itemsData from '../../src/data/items.json' assert { type: 'json' }
 import { buildPlayerCombatant } from '../../src/engine/combatant.js'
+import { getLevelFromXP } from '../../src/engine/experience.js'
 
 function parseSaveRow(row) {
   if (!row?.save_data || typeof row.save_data !== 'string') return null
@@ -63,6 +64,41 @@ export async function readCharacterSave(env, characterId) {
   const parsed = parseSaveRow(row)
   if (!parsed) return null
   return parsed
+}
+
+export const PVP_COMBAT_STAT_KEYS = [
+  'attack',
+  'strength',
+  'defence',
+  'hitpoints',
+  'ranged',
+  'magic',
+  'prayer',
+]
+
+function readStatLevel(statValue) {
+  if (typeof statValue === 'number') {
+    return Number.isFinite(statValue) && statValue > 0 ? Math.floor(statValue) : 1
+  }
+
+  const explicit = Number(statValue?.level ?? statValue?.currentLevel ?? statValue?.current_level)
+  if (Number.isFinite(explicit) && explicit > 0) return Math.floor(explicit)
+
+  const xp = Number(statValue?.xp)
+  if (Number.isFinite(xp) && xp >= 0) return getLevelFromXP(xp)
+
+  return 1
+}
+
+export function readCombatStatLevels(savePayload) {
+  const stats = savePayload?.stats || {}
+  const out = {}
+
+  for (const key of PVP_COMBAT_STAT_KEYS) {
+    out[key] = readStatLevel(stats[key])
+  }
+
+  return out
 }
 
 export { itemsData }

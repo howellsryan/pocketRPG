@@ -14,6 +14,64 @@ import { formatCompactCoins } from '../utils/formatters.js'
 const POLL_MS = 2500   // light enough to be cheap, fast enough to feel live in the lobby
 const SAVE_HEARTBEAT_MS = 3000
 const LOBBY_PVP_SYNC_BLOCK_KEY = 'pocketrpg_pvp_sync_block'
+const COMBAT_STAT_ROWS = [
+  ['attack', 'Attack', '⚔️'],
+  ['strength', 'Strength', '💪'],
+  ['defence', 'Defence', '🛡️'],
+  ['hitpoints', 'Hitpoints', '❤️'],
+  ['ranged', 'Ranged', '🏹'],
+  ['magic', 'Magic', '✨'],
+  ['prayer', 'Prayer', '🙏'],
+]
+
+function normalizeCombatStats(stats) {
+  const out = {}
+  for (const [key] of COMBAT_STAT_ROWS) {
+    const parsed = Number(stats?.[key])
+    out[key] = Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1
+  }
+  return out
+}
+
+function CombatStatsInfoButton({ label, onClick }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={(event) => {
+        event.stopPropagation()
+        onClick?.()
+      }}
+      class="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[var(--color-gold-dim)] bg-[var(--color-void-light)] text-[10px] font-bold text-[var(--color-gold)]"
+    >
+      i
+    </button>
+  )
+}
+
+function CombatStatsModal({ title, stats, onClose }) {
+  const normalized = normalizeCombatStats(stats)
+
+  return (
+    <Modal title={`${title} — Combat Stats`} onClose={onClose}>
+      <div class="grid grid-cols-2 gap-2">
+        {COMBAT_STAT_ROWS.map(([key, label, icon]) => (
+          <div
+            key={key}
+            class="rounded-lg border border-[var(--color-void-border)] bg-[var(--color-void-light)] px-3 py-2"
+          >
+            <div class="text-[10px] uppercase tracking-wide text-[var(--color-parchment)] opacity-60">
+              {icon} {label}
+            </div>
+            <div class="mt-1 font-[var(--font-mono)] text-sm font-bold text-[var(--color-gold)]">
+              {normalized[key]}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Modal>
+  )
+}
 
 // PvP Lobby Modal — Phase 1 surface.
 // Two tabs: Waiting Room (CB-filtered list of opponents) and Invitations
@@ -34,6 +92,7 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
   const [invitations, setInvitations] = useState({ incoming: [], outgoing: [] })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
+  const [statsModal, setStatsModal] = useState(null)
   const [joined, setJoined] = useState(false)
   const mounted = useRef(true)
   const pollTimer = useRef(null)
@@ -267,6 +326,9 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
   }
 
   const incomingCount = invitations.incoming.length
+  const openStatsModal = (title, stats) => {
+    setStatsModal({ title, stats })
+  }
 
   return (
     <Modal title="☠️ PvP — Player vs Player" onClose={onClose}>
@@ -334,8 +396,14 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
               const riskLine = `CB ${p.combat_level} · Total Risk: ${formatCompactCoins(p.total_shop_value)}`
               return (
                 <Card key={p.character_id} className="flex items-center justify-between" padding="p-2.5">
-                  <div>
-                    <div class="text-sm font-semibold text-[var(--color-parchment)]">{p.username}</div>
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-1">
+                      <div class="truncate text-sm font-semibold text-[var(--color-parchment)]">{p.username}</div>
+                      <CombatStatsInfoButton
+                        label={`View ${p.username} combat stats`}
+                        onClick={() => openStatsModal(p.username, p.combat_stats)}
+                      />
+                    </div>
                     <div class="text-[10px] text-[var(--color-parchment)] opacity-50">{riskLine}</div>
                   </div>
                   <Button
@@ -366,8 +434,14 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
             <div class="space-y-1.5">
               {invitations.incoming.map(inv => (
                 <Card key={inv.id} className="flex items-center justify-between" padding="p-2.5">
-                  <div>
-                    <div class="text-sm font-semibold text-[var(--color-parchment)]">{inv.from_username}</div>
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-1">
+                      <div class="truncate text-sm font-semibold text-[var(--color-parchment)]">{inv.from_username}</div>
+                      <CombatStatsInfoButton
+                        label={`View ${inv.from_username} combat stats`}
+                        onClick={() => openStatsModal(inv.from_username, inv.from_combat_stats)}
+                      />
+                    </div>
                     <div class="text-[10px] text-[var(--color-parchment)] opacity-50">
                       CB {inv.from_combat_level} · Total Risk: {formatCompactCoins(inv.from_total_shop_value)}
                     </div>
@@ -397,8 +471,14 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
             <div class="space-y-1.5">
               {invitations.outgoing.map(inv => (
                 <Card key={inv.id} className="flex items-center justify-between" padding="p-2.5">
-                  <div>
-                    <div class="text-sm font-semibold text-[var(--color-parchment)]">{inv.to_username}</div>
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-1">
+                      <div class="truncate text-sm font-semibold text-[var(--color-parchment)]">{inv.to_username}</div>
+                      <CombatStatsInfoButton
+                        label={`View ${inv.to_username} combat stats`}
+                        onClick={() => openStatsModal(inv.to_username, inv.to_combat_stats)}
+                      />
+                    </div>
                     <div class="text-[10px] text-[var(--color-parchment)] opacity-50">
                       CB {inv.to_combat_level} · Total Risk: {formatCompactCoins(inv.to_total_shop_value)} · waiting for response…
                     </div>
@@ -418,6 +498,13 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
         <div class="mt-3 text-[10px] text-[var(--color-blood-light)] opacity-70 text-center">
           {error}
         </div>
+      )}
+      {statsModal && (
+        <CombatStatsModal
+          title={statsModal.title}
+          stats={statsModal.stats}
+          onClose={() => setStatsModal(null)}
+        />
       )}
     </Modal>
   )

@@ -74,4 +74,37 @@ describe('normalizePvpState', () => {
     expect(state?.combatants?.['22']?.maxHP).toBe(99)
     expect(state?.combatants?.['22']?.hp).toBe(99)
   })
+
+  it('normalizes rank/kills from snake_case and camelCase combatants', () => {
+    const state = normalizePvpState({
+      tick: 1,
+      combatants: {
+        '1': {
+          character_id: 1,
+          username: 'Winner',
+          hp: 10,
+          maxHP: 10,
+          inventory: [],
+          total_pvp_kills: 2,
+          last_updated_total_pvp_kills: 1000,
+          pvp_rank: 1,
+        },
+        '2': {
+          characterId: 2,
+          username: 'Unranked',
+          hp: 10,
+          maxHP: 10,
+          inventory: [],
+          totalPvpKills: 0,
+          lastUpdatedTotalPvpKills: null,
+          pvpRank: null,
+        },
+      },
+    })
+
+    expect(state?.combatants['1'].totalPvpKills).toBe(2)
+    expect(state?.combatants['1'].pvpRank).toBe(1)
+    expect(state?.combatants['2'].totalPvpKills).toBe(0)
+    expect(state?.combatants['2'].pvpRank).toBeNull()
+  })
 })
