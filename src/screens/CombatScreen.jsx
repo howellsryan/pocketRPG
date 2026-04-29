@@ -51,7 +51,7 @@ const COMBAT_CATEGORIES = [
   },
   {
     key: 'dagganoth_kings',
-    label: 'Dagganoth Kings',
+    label: 'Dagannoth Kings',
     icon: '👹',
     ids: ['dagganoth_rex', 'dagganoth_prime', 'dagganoth_supreme'],
   },
