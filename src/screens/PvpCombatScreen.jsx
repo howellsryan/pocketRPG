@@ -630,6 +630,11 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const endTotalRiskLabel = `${formatCompactCoins(endTotalRiskValue)} gp`
   const wonLootRows = aggregateLootEntries(endModal?.loot?.added || [])
 
+  const handleCloseEndModal = async () => {
+    setEndModal(null)
+    await onExit?.()
+  }
+
   return (
     <div
       class="h-full min-h-0 overflow-y-auto overscroll-contain p-3 space-y-3 pb-24"
@@ -775,70 +780,69 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
       {endModal && (
         <Modal
-          title={endModal.writebackOk ? (endModal.youWon ? '🏆 Victory' : '☠️ Defeat') : '⚠️ PvP sync recovery required'}
-          onClose={endModal.writebackOk ? onExit : () => {}}
-          fullHeight
-          contentClassName="pb-6"
+          title={endModal.youWon ? '🏆 Victory' : '💀 Defeat'}
+          onClose={handleCloseEndModal}
+          contentClassName="space-y-4"
         >
-          <div class="space-y-3">
-            {endModal.writebackOk ? (
-              <>
-                <div class="text-sm text-[var(--color-parchment)] leading-snug">
-                  {endModal.youWon ? (
-                    <>
-                      You are Victorious! Your total loot is:{' '}
-                      <span class="font-semibold text-[var(--color-gold)]">{endTotalRiskLabel}</span>.
-                    </>
+          {!endModal.writebackOk ? (
+            <div class="rounded-2xl border border-[var(--color-blood)] bg-[#2a1010] p-3 text-sm text-[var(--color-parchment)]">
+              <div class="font-semibold text-[var(--color-blood-light)]">PvP result saved with a warning</div>
+              <div class="mt-1 text-xs opacity-80">
+                The match ended, but the reward writeback did not complete. Please refresh before starting another PvP match.
+              </div>
+            </div>
+          ) : (
+            <>
+              <p class="text-sm leading-relaxed text-[var(--color-parchment)]">
+                {endModal.youWon ? (
+                  <>
+                    You are Victorious! Your total loot is:{' '}
+                    <span class="font-semibold text-[var(--color-gold)]">{endTotalRiskLabel}</span>.
+                  </>
+                ) : (
+                  <>
+                    You were defeated for a total of:{' '}
+                    <span class="font-semibold text-[var(--color-gold)]">{endTotalRiskLabel}</span>.
+                  </>
+                )}
+              </p>
+
+              {endModal.youWon && (
+                <div class="rounded-2xl border border-[#333] bg-[var(--color-void)] p-3">
+                  <div class="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--color-gold)]">
+                    Items won
+                  </div>
+
+                  {wonLootRows.length > 0 ? (
+                    <div class="max-h-[min(38svh,360px)] space-y-2 overflow-y-auto overscroll-contain pr-1">
+                      {wonLootRows.map((entry) => (
+                        <div
+                          key={getLootGroupKey(entry)}
+                          class="flex items-center gap-3 rounded-xl border border-[#333] bg-[var(--color-void-light)] px-3 py-2 text-sm text-[var(--color-parchment)]"
+                        >
+                          <span class="shrink-0 text-xl">{getLootIcon(entry)}</span>
+                          <span class="min-w-0 truncate">{formatLootEntry(entry)}</span>
+                        </div>
+                      ))}
+                    </div>
                   ) : (
-                    <>
-                      You were defeated for a total of:{' '}
-                      <span class="font-semibold text-[var(--color-gold)]">{endTotalRiskLabel}</span>.
-                    </>
+                    <div class="rounded-xl border border-[#333] bg-[var(--color-void-light)] px-3 py-2 text-sm text-[var(--color-parchment)] opacity-70">
+                      No itemised loot was returned by the server.
+                    </div>
                   )}
                 </div>
+              )}
+            </>
+          )}
 
-                {endModal.youWon && (
-                  <Card>
-                    <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Items won</div>
-                    <div class="max-h-[42dvh] space-y-1 overflow-y-auto pr-1">
-                      {wonLootRows.length === 0 ? (
-                        <div class="text-[11px] text-[var(--color-parchment)] opacity-60">
-                          No tradeable items were won.
-                        </div>
-                      ) : (
-                        wonLootRows.map((entry) => (
-                          <div
-                            key={getLootGroupKey(entry)}
-                            class="flex items-center justify-between gap-3 rounded-md border border-[var(--color-void-border)] bg-[var(--color-void-light)] px-2 py-1.5"
-                          >
-                            <div class="min-w-0 flex items-center gap-2">
-                              <span class="shrink-0">{getLootIcon(entry)}</span>
-                              <span class="truncate text-[11px] text-[var(--color-parchment)]">
-                                {formatLootEntry(entry)}
-                              </span>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </Card>
-                )}
-
-                <Button variant="primary" size="md" className="mt-3 w-full" onClick={async () => { await onExit?.() }}>Return to PvE</Button>
-              </>
-            ) : (
-              <Card className="border-[var(--color-blood)] bg-[#2a1010]">
-                <div class="text-xs font-semibold text-[var(--color-blood-light)]">Match ended, but loot writeback failed.</div>
-                <div class="text-[11px] text-[var(--color-parchment)] opacity-80 mt-1">
-                  Do not return to PvE yet. Retry or reconnect to refresh server state and avoid stale inventory/bank data.
-                </div>
-                <div class="flex flex-wrap gap-2 mt-3">
-                  <Button variant="primary" size="sm" onClick={() => { setLoading(true); refreshFromServer().catch(() => setLoading(false)) }}>Retry</Button>
-                  <Button variant="secondary" size="sm" onClick={() => { setLoading(true); refreshFromServer().catch(() => setLoading(false)) }}>Reconnect</Button>
-                </div>
-              </Card>
-            )}
-          </div>
+          <Button
+            variant="primary"
+            size="lg"
+            className="w-full"
+            onClick={handleCloseEndModal}
+          >
+            Return to PvE
+          </Button>
         </Modal>
       )}
     </div>
