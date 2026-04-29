@@ -5,7 +5,6 @@ import { getLevelFromXP, clampXP } from '../engine/experience.js'
 import { simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from '../engine/idleEngine.js'
 import { simulateIdleThieving } from '../engine/thieving.js'
 import { simulateIdleHunting } from '../engine/hunter.js'
-import { simulateIdleQuest } from '../engine/quests.js'
 import { simulateQuestIdleCascade, splitQuestXpRewards } from '../engine/questIdleCascade.js'
 import { ALL_SKILLS, MAX_XP, AUTO_SAVE_DEBOUNCE, QUEST_QUEUE_MAX } from '../utils/constants.js'
 import { debounce } from '../utils/helpers.js'
@@ -86,7 +85,8 @@ export function GameProvider({ children }) {
       // Cap at 24h to limit cross-session clock manipulation; legitimate offline play
       // beyond 24h can use the in-game skip button.
       const MAX_OFFLINE_MS = 24 * 60 * 60 * 1000
-      const elapsedMs = Math.min(Date.now() - savedLastTick, MAX_OFFLINE_MS)
+      const rawElapsedMs = Number(Date.now() - savedLastTick)
+      const elapsedMs = Number.isFinite(rawElapsedMs) ? Math.max(0, Math.min(rawElapsedMs, MAX_OFFLINE_MS)) : 0
       if (elapsedMs >= 2000) {
         let sim = null
         try {
@@ -103,7 +103,7 @@ export function GameProvider({ children }) {
           } else if (savedTask.type === 'hunter') {
             sim = simulateIdleHunting(savedTask, elapsedMs)
           } else if (savedTask.type === 'quest') {
-            sim = simulateIdleQuest(savedTask, elapsedMs)
+            sim = {}
           }
         } catch (simErr) {
           console.error('[PocketRPG] Idle simulation failed — skipping idle rewards:', simErr)
