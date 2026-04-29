@@ -3,6 +3,7 @@ import { getOwnedCharacter, sweepStaleRows } from '../../../../_lib/pvp.js'
 import { readOwnedActiveMatch, itemsData } from '../../../../_lib/pvpMatch.js'
 import { isPvpFoodItem } from '../../../../../src/engine/pvpFood.js'
 import { isPvpCombatPotion } from '../../../../../src/engine/pvpPotions.js'
+import { getEquippedPvpSpecialAttack, hasEnoughPvpSpecialEnergy } from '../../../../../src/engine/pvpSpecialAttacks.js'
 import spellsData from '../../../../../src/data/spells.json' assert { type: 'json' }
 import prayersData from '../../../../../src/data/prayers.json' assert { type: 'json' }
 
@@ -31,7 +32,14 @@ export function validateIntentAction(state, characterId, action) {
     return { ok: false, error: 'invalid_action' }
   }
 
-  if (action.type === 'forfeit' || action.type === 'queue_special') return { ok: true }
+  if (action.type === 'forfeit') return { ok: true }
+
+  if (action.type === 'queue_special') {
+    const equipped = getEquippedPvpSpecialAttack(combatant, itemsData)
+    if (!equipped) return { ok: false, error: 'no_special_attack' }
+    if (!hasEnoughPvpSpecialEnergy(combatant, itemsData)) return { ok: false, error: 'insufficient_special_energy' }
+    return { ok: true }
+  }
 
   if (action.type === 'change_stance') {
     return VALID_STANCES.has(action.stance)

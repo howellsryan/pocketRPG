@@ -40,4 +40,14 @@ describe('PvP intent validation food checks', () => {
     expect(validateIntentAction(stateWithInventory('attack_potion'), 1, { type: 'drink_potion', inventorySlot: 0 })).toEqual({ ok: true })
     expect(validateIntentAction(stateWithInventory('prayer_potion'), 1, { type: 'drink_potion', inventorySlot: 0 })).toEqual({ ok: false, error: 'item_not_potion' })
   })
+
+  it('validates queue_special energy and weapon requirements', () => {
+    const noSpec: any = { combatants: { '1': { characterId: 1, equipment: {}, inventory: [], specialAttackEnergy: 100 } } }
+    expect(validateIntentAction(noSpec, 1, { type: 'queue_special' })).toEqual({ ok: false, error: 'no_special_attack' })
+
+    const withSpec: any = { combatants: { '1': { characterId: 1, equipment: { weapon: { itemId: 'dragon_dagger' } }, inventory: [], specialAttackEnergy: 25 } } }
+    expect(validateIntentAction(withSpec, 1, { type: 'queue_special' })).toEqual({ ok: true })
+    withSpec.combatants['1'].specialAttackEnergy = 24
+    expect(validateIntentAction(withSpec, 1, { type: 'queue_special' })).toEqual({ ok: false, error: 'insufficient_special_energy' })
+  })
 })

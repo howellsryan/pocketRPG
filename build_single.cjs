@@ -30,6 +30,7 @@ const sourceFiles = [
   'engine/pvpRisk.js',
   'engine/pvpState.js',
   'engine/pvpFood.js',
+  'engine/pvpSpecialAttacks.js',
   'engine/pvpEngine.js',
   'engine/lootTransfer.js',
   'engine/skilling.js',

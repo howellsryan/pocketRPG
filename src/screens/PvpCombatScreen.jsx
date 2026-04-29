@@ -10,6 +10,7 @@ import prayersData from '../data/prayers.json'
 import { getCharacterId } from '../cloud/api.js'
 import { normalizePvpState } from '../engine/pvpState.js'
 import { isPvpFoodItem } from '../engine/pvpFood.js'
+import { getEquippedPvpSpecialAttack, getPvpSpecialAttackLabel, hasEnoughPvpSpecialEnergy } from '../engine/pvpSpecialAttacks.js'
 import { isPvpCombatPotion } from '../engine/pvpPotions.js'
 import { calculatePvpRiskValues } from '../engine/pvpRisk.js'
 import { formatCompactCoins } from '../utils/formatters.js'
@@ -155,11 +156,27 @@ function getEndLootTotal(loot) {
   return Math.floor(value)
 }
 
+function formatHitList(hits, totalDamage) {
+  const clean = Array.isArray(hits) && hits.length > 0 ? hits : [totalDamage || 0]
+  return clean.map((hit) => {
+    const value = Math.max(0, Math.floor(Number(hit) || 0))
+    return value > 0 ? String(value) : 'miss'
+  }).join(' + ')
+}
+
 function prettifyEvent(evt, selfId) {
   if (!evt) return null
   if (evt.type === 'attack') {
     const mine = evt.attackerCharacterId === selfId
-    return `${mine ? 'You' : 'Opponent'} hit ${evt.damage} ${evt.hit ? '✓' : '✗'}`
+    const actor = mine ? 'You' : 'Opponent'
+    const totalDamage = Math.max(0, Math.floor(Number(evt.totalDamage ?? evt.damage ?? evt.specialAttack?.totalDamage ?? 0) || 0))
+    if (evt.special || evt.specialAttack) {
+      const specType = evt.specialAttack?.type || evt.specType || 'special'
+      const label = evt.specialAttack?.label || getPvpSpecialAttackLabel(specType)
+      const hits = evt.specialAttack?.hits || evt.hits || [totalDamage]
+      return `${actor} used ${label}: ${formatHitList(hits, totalDamage)} (total ${totalDamage})`
+    }
+    return `${actor} hit ${evt.damage} ${evt.hit ? '✓' : '✗'}`
   }
   if (evt.type === 'eat') {
     return `${evt.characterId === selfId ? 'You' : 'Opponent'} ate +${evt.heal}`
@@ -432,7 +449,10 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     .filter(([, entry]) => !!entry)
     .map(([slot, entry]) => ({ slot, entry, item: itemsData?.[entry.itemId] }))
 
-  const specialReady = (pair.self?.specialAttackEnergy ?? 0) >= 25
+  const equippedSpecial = getEquippedPvpSpecialAttack(pair.self, itemsData)
+  const specialReady = hasEnoughPvpSpecialEnergy(pair.self, itemsData)
+  const specialEnergy = Math.max(0, Math.floor(Number(pair.self?.specialAttackEnergy ?? 0) || 0))
+  const specialCost = equippedSpecial?.energyCost ?? null
   const endTotalRiskValue = getEndLootTotal(endModal?.loot)
   const endTotalRiskLabel = `${formatCompactCoins(endTotalRiskValue)} gp`
   const wonLootRows = aggregateLootEntries(endModal?.loot?.added || [])
@@ -516,10 +536,11 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
             size="md"
             className="w-1/4"
             disabled={busy || !specialReady}
+            title={equippedSpecial ? `Special attack energy: ${specialEnergy}/${specialCost}` : 'No special attack available'}
             onClick={() => queueAction({ type: 'queue_special' })}
           >
             <span class="text-[var(--color-gold)] mr-1">⚡</span>
-            Spec
+            Spec{specialCost != null ? ` ${specialEnergy}%` : ''}
           </Button>
           <Button
             variant={actionPanel === 'prayer' ? 'primary' : 'secondary'}

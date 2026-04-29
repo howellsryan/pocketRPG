@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { buildPlayerCombatant } from '../src/engine/combatant.js'
 import { createPvpState, processPvpTick } from '../src/engine/pvpEngine.js'
+import realItemsData from '../src/data/items.json'
+import { SUPPORTED_PVP_SPECIAL_ATTACK_TYPES } from '../src/engine/pvpSpecialAttacks.js'
 
 const items = {
   abyssal_whip: {
@@ -317,5 +319,19 @@ describe('pvpEngine phase 2B contract', () => {
     const a2 = augury.events.find((e: any) => e.type === 'attack' && e.attackerCharacterId === 1)
     expect(a2.attackRoll).toBeGreaterThan(a1.attackRoll)
     expect(a2.defenceRoll).toBeGreaterThan(a1.defenceRoll)
+  })
+
+  it('starts each PvP combatant at 100 special energy', () => {
+    const a = buildPlayer({ characterId: 1 })
+    const b = buildPlayer({ characterId: 2 })
+    const state = createPvpState(a, b, 0)
+    expect(state.combatants['1'].specialAttackEnergy).toBe(100)
+    expect(state.combatants['2'].specialAttackEnergy).toBe(100)
+  })
+
+  it('supports every item specialAttack type in PvP', () => {
+    const types = new Set(Object.values(realItemsData as any).map((item: any) => item?.specialAttack?.type).filter(Boolean))
+    expect(types.size).toBeGreaterThan(0)
+    for (const type of types) expect(SUPPORTED_PVP_SPECIAL_ATTACK_TYPES.has(type as string)).toBe(true)
   })
 })
