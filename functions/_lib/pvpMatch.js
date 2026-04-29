@@ -47,7 +47,8 @@ export function applyCombatantToSave(savePayload, combatant) {
 
 export async function readOwnedActiveMatch(env, matchId, characterId) {
   const row = await env.DB.prepare(
-    `SELECT id, character_a, character_b, status, current_tick, state_json, last_tick_at
+    `SELECT id, character_a, character_b, status, current_tick, state_json, last_tick_at,
+            winner_character_id, ended_at
        FROM pvp_matches
       WHERE id = ?
         AND (character_a = ? OR character_b = ?)`
