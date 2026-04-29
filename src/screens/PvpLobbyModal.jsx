@@ -24,6 +24,12 @@ const COMBAT_STAT_ROWS = [
   ['prayer', 'Prayer', '🙏'],
 ]
 
+
+function formatLobbyPvpRank(rank) {
+  const parsed = Number(rank)
+  return Number.isFinite(parsed) && parsed > 0 ? `#${Math.floor(parsed)}` : 'Unranked'
+}
+
 function normalizeCombatStats(stats) {
   const out = {}
   for (const [key] of COMBAT_STAT_ROWS) {
@@ -393,8 +399,7 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
           <div class="space-y-1.5">
             {waiting.map(p => {
               const alreadyInvited = invitations.outgoing.some(o => o.to_character === p.character_id)
-              const riskLine = `CB ${p.combat_level} · Total Risk: ${formatCompactCoins(p.total_shop_value)}`
-              return (
+                            return (
                 <Card key={p.character_id} className="flex items-center justify-between" padding="p-2.5">
                   <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-1">
@@ -404,7 +409,7 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
                         onClick={() => openStatsModal(p.username, p.combat_stats)}
                       />
                     </div>
-                    <div class="text-[10px] text-[var(--color-parchment)] opacity-50">{riskLine}</div>
+                    <div class="text-[10px] text-[var(--color-parchment)] opacity-50">CB {p.combat_level} · Total Risk: {formatCompactCoins(p.total_shop_value)} · Rank: {formatLobbyPvpRank(p.pvp_rank)}</div>
                   </div>
                   <Button
                     variant={alreadyInvited ? 'secondary' : 'primary'}
@@ -443,7 +448,7 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
                       />
                     </div>
                     <div class="text-[10px] text-[var(--color-parchment)] opacity-50">
-                      CB {inv.from_combat_level} · Total Risk: {formatCompactCoins(inv.from_total_shop_value)}
+                      CB {inv.from_combat_level} · Total Risk: {formatCompactCoins(inv.from_total_shop_value)} · Rank: {formatLobbyPvpRank(inv.from_pvp_rank)}
                     </div>
                   </div>
                   <div class="flex gap-1.5">
@@ -480,7 +485,7 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
                       />
                     </div>
                     <div class="text-[10px] text-[var(--color-parchment)] opacity-50">
-                      CB {inv.to_combat_level} · Total Risk: {formatCompactCoins(inv.to_total_shop_value)} · waiting for response…
+                      CB {inv.to_combat_level} · Total Risk: {formatCompactCoins(inv.to_total_shop_value)} · Rank: {formatLobbyPvpRank(inv.to_pvp_rank)} · waiting for response…
                     </div>
                   </div>
                   <Button variant="ghost" size="sm" disabled={busy}

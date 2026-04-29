@@ -30,6 +30,7 @@ import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleC
 import { simulateIdleThieving } from './engine/thieving.js'
 import { simulateIdleHunting } from './engine/hunter.js'
 import { simulateIdleQuest, createQuestState } from './engine/quests.js'
+import { simulateQuestIdleCascade, splitQuestXpRewards } from './engine/questIdleCascade.js'
 import { getLevelFromXP } from './engine/experience.js'
 import { pvpApi } from './cloud/pvp.js'
 
@@ -72,6 +73,8 @@ function GameApp() {
   const [actionData, setActionData] = useState(null) // { monsterId, gatherTaskId, skillId, actionId }
   const [isInCombat, setIsInCombat] = useState(false) // Track if currently in combat
   const [pendingXpChoices, setPendingXpChoices] = useState([]) // [{ rewards, questId, questName }, ...]
+  const completedQuestsRef = useRef(completedQuests)
+  const pendingXpChoicesRef = useRef(pendingXpChoices)
   // Cloud auth gate: 'pending' until we resolve, 'auth' if AuthScreen needed, 'auth_offline' for offline creation, 'ready' to boot game
   const [cloudPhase, setCloudPhase] = useState('pending')
   const [conflict, setConflict] = useState(null) // { cloudPayload, cloudHash, cloudUpdatedAt, localUpdatedAt }
@@ -178,21 +181,10 @@ function GameApp() {
     return () => window.removeEventListener('pocketrpg:pvp-active-match', onActiveMatchConflict)
   }, [addToast, pvp.enterMatch])
 
-  // Split xpReward into immediate grants and player-choice rewards (combat / any)
-  function splitXpRewards(xpReward) {
-    const fixed = {}
-    const choices = []
-    for (const [skill, xp] of Object.entries(xpReward || {})) {
-      if (skill === 'combat' || skill === 'any') choices.push({ type: skill, amount: xp })
-      else if (xp > 0) fixed[skill] = xp
-    }
-    return { fixed, choices }
-  }
-
   // Handle quest completion with queue cascading
   function handleQuestCompletion(quest, xpReward, coinReward) {
     // Award rewards
-    const { fixed, choices } = splitXpRewards(xpReward)
+    const { fixed, choices } = splitQuestXpRewards(xpReward)
     for (const [skill, xp] of Object.entries(fixed)) grantXP(skill, xp)
     if (coinReward > 0) updateBankDirect({ coins: coinReward })
 
@@ -236,23 +228,37 @@ function GameApp() {
 
   // Finalise a completed quest: show choice modal if needed, else complete immediately
   function finaliseQuest(questId, questName, choices) {
-    if (choices.length > 0) {
-      setPendingXpChoices(prev => [...prev, { rewards: choices, questId, questName }])
-    } else {
+    const alreadyCompleted = completedQuestsRef.current?.has?.(questId)
+    const alreadyPendingChoice = pendingXpChoicesRef.current?.some?.(p => p.questId === questId)
+
+    if (!alreadyCompleted) {
       completeQuest(questId)
-      addToast(`📜 Quest complete: ${questName}`, 'levelup', '🏆')
+      completedQuestsRef.current = new Set([...(completedQuestsRef.current || []), questId])
     }
+
+    if (choices.length > 0) {
+      if (!alreadyPendingChoice) {
+        const entry = { rewards: choices, questId, questName }
+        pendingXpChoicesRef.current = [...(pendingXpChoicesRef.current || []), entry]
+        setPendingXpChoices(prev => prev.some(p => p.questId === questId) ? prev : [...prev, entry])
+      }
+      return
+    }
+
+    addToast(`📜 Quest complete: ${questName}`, 'levelup', '🏆')
   }
 
   function handleXpChoiceComplete(chosen) {
     for (const { skill, xp } of chosen) grantXP(skill, xp)
+
     setPendingXpChoices(prev => {
       const head = prev[0]
       if (head) {
-        completeQuest(head.questId)
         addToast(`📜 Quest complete: ${head.questName}`, 'levelup', '🏆')
       }
-      return prev.slice(1)
+      const next = prev.slice(1)
+      pendingXpChoicesRef.current = next
+      return next
     })
   }
 
@@ -326,6 +332,8 @@ function GameApp() {
   const inventoryRef = useRef(inventory)
   const itemsDataRef = useRef(itemsData)
   const questQueueRef = useRef(questQueue)
+  useEffect(() => { completedQuestsRef.current = completedQuests }, [completedQuests])
+  useEffect(() => { pendingXpChoicesRef.current = pendingXpChoices }, [pendingXpChoices])
   useEffect(() => { statsRef.current = stats }, [stats])
   useEffect(() => { equipmentRef.current = equipment }, [equipment])
   useEffect(() => { inventoryRef.current = inventory }, [inventory])
@@ -554,7 +562,7 @@ function GameApp() {
               for (const [skill, xp] of Object.entries(savedTask.quest.xpReward || {})) {
                 aggregatedXp[skill] = (aggregatedXp[skill] || 0) + xp
               }
-              const { choices } = splitXpRewards(savedTask.quest.xpReward)
+              const { choices } = splitQuestXpRewards(savedTask.quest.xpReward)
               finaliseQuest(savedTask.quest.id, savedTask.quest.name, choices)
 
               // Cascade through queue while time remains
@@ -581,7 +589,7 @@ function GameApp() {
                     aggregatedXp[skill] = (aggregatedXp[skill] || 0) + xp
                   }
                   // Grant fixed XP immediately; choice rewards queued via finaliseQuest
-                  const { fixed: nextFixed, choices: nextChoices } = splitXpRewards(nextQuest.xpReward)
+                  const { fixed: nextFixed, choices: nextChoices } = splitQuestXpRewards(nextQuest.xpReward)
                   for (const [skill, xp] of Object.entries(nextFixed)) grantXP(skill, xp)
                   finaliseQuest(nextQuest.id, nextQuest.name, nextChoices)
                   workingQueue = workingQueue.slice(1)
