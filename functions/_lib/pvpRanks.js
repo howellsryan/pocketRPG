@@ -15,12 +15,21 @@ export async function readCharacterPvpRank(env, characterId) {
          ROW_NUMBER() OVER (
            ORDER BY
              COALESCE(total_pvp_kills, 0) DESC,
-             last_updated_total_pvp_kills ASC,
+             CASE
+               WHEN COALESCE(total_pvp_kills, 0) > 0
+                    AND last_updated_total_pvp_kills IS NULL
+                 THEN 1
+               ELSE 0
+             END ASC,
+             CASE
+               WHEN COALESCE(total_pvp_kills, 0) > 0
+                 THEN last_updated_total_pvp_kills
+               ELSE NULL
+             END ASC,
              id ASC
          ) AS pvp_rank
        FROM characters
        WHERE deleted_at IS NULL
-         AND COALESCE(total_pvp_kills, 0) > 0
      )
      SELECT
        c.id,
@@ -39,7 +48,7 @@ export async function readCharacterPvpRank(env, characterId) {
   return {
     totalPvpKills,
     lastUpdatedTotalPvpKills: Number.isFinite(rawUpdated) && rawUpdated > 0 ? rawUpdated : null,
-    rank: totalPvpKills > 0 && Number.isFinite(rawRank) && rawRank > 0 ? rawRank : null,
+    rank: Number.isFinite(rawRank) && rawRank > 0 ? Math.floor(rawRank) : null,
   }
 }
 
