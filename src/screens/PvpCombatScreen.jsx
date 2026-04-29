@@ -199,6 +199,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     typeof document !== 'undefined' ? document.hidden : false
   ))
   const [staleWarning, setStaleWarning] = useState(false)
+  const [specialQueuedOverride, setSpecialQueuedOverride] = useState(null)
 
   const selfId = useMemo(() => parseInt(getCharacterId(), 10), [])
   const pollTimer = useRef(null)
@@ -233,6 +234,18 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     const opp = combatants.find(c => getId(c) !== selfId) || null
     return { self, opp }
   }, [state, selfId])
+
+  const serverSpecialQueued = !!pair.self?.specialAttackQueued
+  const specialVisuallyQueued = specialQueuedOverride !== null
+    ? specialQueuedOverride
+    : serverSpecialQueued
+
+  useEffect(() => {
+    if (specialQueuedOverride === null) return
+    if (serverSpecialQueued === specialQueuedOverride) {
+      setSpecialQueuedOverride(null)
+    }
+  }, [serverSpecialQueued, specialQueuedOverride])
 
   useEffect(() => {
     mounted.current = true
@@ -473,15 +486,25 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const safeRecentEvents = Array.isArray(state?.recentEvents) ? state.recentEvents : []
   const recentLines = safeRecentEvents.slice(-6).map((evt) => prettifyEvent(evt, selfId)).filter(Boolean)
 
-  const queueAction = (action) => {
+  const queueAction = (action, options = {}) => {
+    const { showBusy = true, runImmediately = true } = options
     if (terminalHandledRef.current || endModalOpenRef.current) return
+
     pendingActionRef.current = action
     setPendingAction(action)
-    setBusy(true)
-    setTimeout(() => setBusy(false), 220)
-    setTimeout(() => {
-      if (!terminalHandledRef.current && !endModalOpenRef.current && !tickInFlight.current) runTick()
-    }, 0)
+
+    if (showBusy) {
+      setBusy(true)
+      setTimeout(() => {
+        if (mounted.current) setBusy(false)
+      }, 220)
+    }
+
+    if (runImmediately) {
+      setTimeout(() => {
+        if (!terminalHandledRef.current && !endModalOpenRef.current && !tickInFlight.current) runTick()
+      }, 0)
+    }
   }
 
   const foodSlots = toArray(pair.self?.inventory)
@@ -512,18 +535,21 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const specialEnergy = Math.max(0, Math.floor(Number(pair.self?.specialAttackEnergy ?? 0) || 0))
   const specialCost = equippedSpecial?.energyCost ?? null
 
-  const pendingSpecialToggle = pendingAction?.type === 'queue_special'
-  const serverSpecialQueued = !!pair.self?.specialAttackQueued
-  const specialVisuallyQueued = pendingSpecialToggle ? !serverSpecialQueued : serverSpecialQueued
-
   const toggleSpecialAttack = () => {
     if (terminalHandledRef.current || endModalOpenRef.current) return
-    if (pendingActionRef.current?.type === 'queue_special') {
+
+    const nextQueued = !specialVisuallyQueued
+    setSpecialQueuedOverride(nextQueued)
+
+    // If the user double-taps before the intent has left the browser, cancel
+    // the local pending intent and keep this as a pure UI toggle.
+    if (pendingActionRef.current?.type === 'queue_special' && !tickInFlight.current) {
       pendingActionRef.current = null
       setPendingAction(null)
       return
     }
-    queueAction({ type: 'queue_special' })
+
+    queueAction({ type: 'queue_special' }, { showBusy: false })
   }
   const endTotalRiskValue = getEndLootTotal(endModal?.loot)
   const endTotalRiskLabel = `${formatCompactCoins(endTotalRiskValue)} gp`
@@ -618,8 +644,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
           <Button
             variant={actionPanel === 'prayer' ? 'primary' : 'secondary'}
             size="md"
-            className="w-full"
-            disabled={busy}
+            className="w-full transition-none"
             onClick={() => setActionPanel(actionPanel === 'prayer' ? null : 'prayer')}
           >
             🙏 Prayer
@@ -631,11 +656,17 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
             {availablePrayers.length === 0 ? (
               <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No PvP-usable prayers unlocked.</div>
             ) : (
-              <div class="grid grid-cols-4 gap-2">
+              <div class="grid grid-cols-3 gap-2">
                 {availablePrayers.map((prayer) => {
                   const active = pair.self?.activeCombatPrayer === prayer.id
                   return (
-                    <Button key={prayer.id} variant={active ? 'primary' : 'secondary'} size="md" className="min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight" disabled={busy} onClick={() => queueAction({ type: 'toggle_prayer', prayerId: prayer.id })}>
+                    <Button
+                      key={prayer.id}
+                      variant={active ? 'primary' : 'secondary'}
+                      size="md"
+                      className="min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight transition-none"
+                      onClick={() => queueAction({ type: 'toggle_prayer', prayerId: prayer.id }, { showBusy: false })}
+                    >
                       <span class="block truncate">{prayer.icon || '✨'} {prayer.name}</span>
                     </Button>
                   )
