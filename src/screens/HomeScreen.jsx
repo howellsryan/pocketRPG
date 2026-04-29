@@ -100,7 +100,7 @@ export default function HomeScreen({ onNavigate, onLogout, isCloudAccount, remov
             </span>
           </div>
           <SkillGroup title="Combat" skills={COMBAT_SKILLS} />
-          <SkillGroup title="Gathering" skills={GATHERING_SKILLS} />
+          <SkillGroup title="Gathering" skills={GATHERING_SKILLS.filter(s => s !== 'farming')} />
           <SkillGroup title="Production" skills={PRODUCTION_SKILLS} />
           <SkillGroup title="Utility" skills={UTILITY_SKILLS} />
         </div>

@@ -42,79 +42,6 @@
         "chance": 1
       },
       {
-        "itemId": "guam_leaf",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.2
-      },
-      {
-        "itemId": "tarromin",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.15
-      },
-      {
-        "itemId": "ranarr_weed",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.12
-      },
-      {
-        "itemId": "harralander",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.1
-      },
-      {
-        "itemId": "irit_leaf",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.08
-      },
-      {
-        "itemId": "kwuarm",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.06
-      },
-      {
-        "itemId": "snapdragon",
-        "quantity": 1,
-        "chance": 0.05
-      },
-      {
-        "itemId": "cadantine",
-        "quantity": 1,
-        "chance": 0.04
-      },
-      {
-        "itemId": "dwarf_weed",
-        "quantity": 1,
-        "chance": 0.03
-      },
-      {
-        "itemId": "lantadyme",
-        "quantity": 1,
-        "chance": 0.01
-      },
-      {
-        "itemId": "toadflax",
-        "quantity": 1,
-        "chance": 0.005
-      },
-      {
         "itemId": "clue_scroll_medium",
         "quantity": 1,
         "chance": 0.02
@@ -169,7 +96,7 @@
           1,
           2
         ],
-        "chance": 0.2
+        "chance": 0.1
       },
       {
         "itemId": "tarromin",
@@ -177,7 +104,7 @@
           1,
           2
         ],
-        "chance": 0.15
+        "chance": 0.075
       },
       {
         "itemId": "ranarr_weed",
@@ -185,7 +112,7 @@
           1,
           2
         ],
-        "chance": 0.12
+        "chance": 0.06
       },
       {
         "itemId": "harralander",
@@ -193,7 +120,7 @@
           1,
           2
         ],
-        "chance": 0.1
+        "chance": 0.05
       },
       {
         "itemId": "irit_leaf",
@@ -201,7 +128,7 @@
           1,
           2
         ],
-        "chance": 0.08
+        "chance": 0.04
       },
       {
         "itemId": "kwuarm",
@@ -209,32 +136,32 @@
           1,
           2
         ],
-        "chance": 0.06
+        "chance": 0.03
       },
       {
         "itemId": "snapdragon",
         "quantity": 1,
-        "chance": 0.05
+        "chance": 0.025
       },
       {
         "itemId": "cadantine",
         "quantity": 1,
-        "chance": 0.04
+        "chance": 0.02
       },
       {
         "itemId": "dwarf_weed",
         "quantity": 1,
-        "chance": 0.03
+        "chance": 0.015
       },
       {
         "itemId": "lantadyme",
         "quantity": 1,
-        "chance": 0.01
+        "chance": 0.005
       },
       {
         "itemId": "toadflax",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.0025
       },
       {
         "itemId": "clue_scroll_medium",
@@ -281,79 +208,6 @@
         "itemId": "cowhide",
         "quantity": 1,
         "chance": 1
-      },
-      {
-        "itemId": "guam_leaf",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.2
-      },
-      {
-        "itemId": "tarromin",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.15
-      },
-      {
-        "itemId": "ranarr_weed",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.12
-      },
-      {
-        "itemId": "harralander",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.1
-      },
-      {
-        "itemId": "irit_leaf",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.08
-      },
-      {
-        "itemId": "kwuarm",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.06
-      },
-      {
-        "itemId": "snapdragon",
-        "quantity": 1,
-        "chance": 0.05
-      },
-      {
-        "itemId": "cadantine",
-        "quantity": 1,
-        "chance": 0.04
-      },
-      {
-        "itemId": "dwarf_weed",
-        "quantity": 1,
-        "chance": 0.03
-      },
-      {
-        "itemId": "lantadyme",
-        "quantity": 1,
-        "chance": 0.01
-      },
-      {
-        "itemId": "toadflax",
-        "quantity": 1,
-        "chance": 0.005
       },
       {
         "itemId": "clue_scroll_medium",
@@ -405,7 +259,7 @@
           1,
           2
         ],
-        "chance": 0.2
+        "chance": 0.1
       },
       {
         "itemId": "tarromin",
@@ -413,7 +267,7 @@
           1,
           2
         ],
-        "chance": 0.15
+        "chance": 0.075
       },
       {
         "itemId": "ranarr_weed",
@@ -421,7 +275,7 @@
           1,
           2
         ],
-        "chance": 0.12
+        "chance": 0.06
       },
       {
         "itemId": "harralander",
@@ -429,7 +283,7 @@
           1,
           2
         ],
-        "chance": 0.1
+        "chance": 0.05
       },
       {
         "itemId": "irit_leaf",
@@ -437,7 +291,7 @@
           1,
           2
         ],
-        "chance": 0.08
+        "chance": 0.04
       },
       {
         "itemId": "kwuarm",
@@ -445,32 +299,32 @@
           1,
           2
         ],
-        "chance": 0.06
+        "chance": 0.03
       },
       {
         "itemId": "snapdragon",
         "quantity": 1,
-        "chance": 0.05
+        "chance": 0.025
       },
       {
         "itemId": "cadantine",
         "quantity": 1,
-        "chance": 0.04
+        "chance": 0.02
       },
       {
         "itemId": "dwarf_weed",
         "quantity": 1,
-        "chance": 0.03
+        "chance": 0.015
       },
       {
         "itemId": "lantadyme",
         "quantity": 1,
-        "chance": 0.01
+        "chance": 0.005
       },
       {
         "itemId": "toadflax",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.0025
       },
       {
         "itemId": "clue_scroll_medium",
@@ -659,7 +513,7 @@
           1,
           2
         ],
-        "chance": 0.2
+        "chance": 0.1
       },
       {
         "itemId": "tarromin",
@@ -667,7 +521,7 @@
           1,
           2
         ],
-        "chance": 0.15
+        "chance": 0.075
       },
       {
         "itemId": "ranarr_weed",
@@ -675,7 +529,7 @@
           1,
           2
         ],
-        "chance": 0.12
+        "chance": 0.06
       },
       {
         "itemId": "harralander",
@@ -683,7 +537,7 @@
           1,
           2
         ],
-        "chance": 0.1
+        "chance": 0.05
       },
       {
         "itemId": "irit_leaf",
@@ -691,7 +545,7 @@
           1,
           2
         ],
-        "chance": 0.08
+        "chance": 0.04
       },
       {
         "itemId": "kwuarm",
@@ -699,32 +553,32 @@
           1,
           2
         ],
-        "chance": 0.06
+        "chance": 0.03
       },
       {
         "itemId": "snapdragon",
         "quantity": 1,
-        "chance": 0.05
+        "chance": 0.025
       },
       {
         "itemId": "cadantine",
         "quantity": 1,
-        "chance": 0.04
+        "chance": 0.02
       },
       {
         "itemId": "dwarf_weed",
         "quantity": 1,
-        "chance": 0.03
+        "chance": 0.015
       },
       {
         "itemId": "lantadyme",
         "quantity": 1,
-        "chance": 0.01
+        "chance": 0.005
       },
       {
         "itemId": "toadflax",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.0025
       },
       {
         "itemId": "clue_scroll_medium",
@@ -791,7 +645,7 @@
           1,
           2
         ],
-        "chance": 0.2
+        "chance": 0.1
       },
       {
         "itemId": "tarromin",
@@ -799,7 +653,7 @@
           1,
           2
         ],
-        "chance": 0.15
+        "chance": 0.075
       },
       {
         "itemId": "ranarr_weed",
@@ -807,7 +661,7 @@
           1,
           2
         ],
-        "chance": 0.12
+        "chance": 0.06
       },
       {
         "itemId": "harralander",
@@ -815,7 +669,7 @@
           1,
           2
         ],
-        "chance": 0.1
+        "chance": 0.05
       },
       {
         "itemId": "irit_leaf",
@@ -823,7 +677,7 @@
           1,
           2
         ],
-        "chance": 0.08
+        "chance": 0.04
       },
       {
         "itemId": "kwuarm",
@@ -831,32 +685,32 @@
           1,
           2
         ],
-        "chance": 0.06
+        "chance": 0.03
       },
       {
         "itemId": "snapdragon",
         "quantity": 1,
-        "chance": 0.05
+        "chance": 0.025
       },
       {
         "itemId": "cadantine",
         "quantity": 1,
-        "chance": 0.04
+        "chance": 0.02
       },
       {
         "itemId": "dwarf_weed",
         "quantity": 1,
-        "chance": 0.03
+        "chance": 0.015
       },
       {
         "itemId": "lantadyme",
         "quantity": 1,
-        "chance": 0.01
+        "chance": 0.005
       },
       {
         "itemId": "toadflax",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.0025
       },
       {
         "itemId": "clue_scroll_medium",
@@ -953,7 +807,7 @@
           1,
           2
         ],
-        "chance": 0.2
+        "chance": 0.1
       },
       {
         "itemId": "tarromin",
@@ -961,7 +815,7 @@
           1,
           2
         ],
-        "chance": 0.15
+        "chance": 0.075
       },
       {
         "itemId": "ranarr_weed",
@@ -969,7 +823,7 @@
           1,
           2
         ],
-        "chance": 0.12
+        "chance": 0.06
       },
       {
         "itemId": "harralander",
@@ -977,7 +831,7 @@
           1,
           2
         ],
-        "chance": 0.1
+        "chance": 0.05
       },
       {
         "itemId": "irit_leaf",
@@ -985,7 +839,7 @@
           1,
           2
         ],
-        "chance": 0.08
+        "chance": 0.04
       },
       {
         "itemId": "kwuarm",
@@ -993,32 +847,32 @@
           1,
           2
         ],
-        "chance": 0.06
+        "chance": 0.03
       },
       {
         "itemId": "snapdragon",
         "quantity": 1,
-        "chance": 0.05
+        "chance": 0.025
       },
       {
         "itemId": "cadantine",
         "quantity": 1,
-        "chance": 0.04
+        "chance": 0.02
       },
       {
         "itemId": "dwarf_weed",
         "quantity": 1,
-        "chance": 0.03
+        "chance": 0.015
       },
       {
         "itemId": "lantadyme",
         "quantity": 1,
-        "chance": 0.01
+        "chance": 0.005
       },
       {
         "itemId": "toadflax",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.0025
       },
       {
         "itemId": "clue_scroll_medium",
@@ -1124,7 +978,7 @@
           1,
           2
         ],
-        "chance": 0.2
+        "chance": 0.1
       },
       {
         "itemId": "tarromin",
@@ -1132,7 +986,7 @@
           1,
           2
         ],
-        "chance": 0.15
+        "chance": 0.075
       },
       {
         "itemId": "ranarr_weed",
@@ -1140,7 +994,7 @@
           1,
           2
         ],
-        "chance": 0.12
+        "chance": 0.06
       },
       {
         "itemId": "harralander",
@@ -1148,7 +1002,7 @@
           1,
           2
         ],
-        "chance": 0.1
+        "chance": 0.05
       },
       {
         "itemId": "irit_leaf",
@@ -1156,7 +1010,7 @@
           1,
           2
         ],
-        "chance": 0.08
+        "chance": 0.04
       },
       {
         "itemId": "kwuarm",
@@ -1164,32 +1018,32 @@
           1,
           2
         ],
-        "chance": 0.06
+        "chance": 0.03
       },
       {
         "itemId": "snapdragon",
         "quantity": 1,
-        "chance": 0.05
+        "chance": 0.025
       },
       {
         "itemId": "cadantine",
         "quantity": 1,
-        "chance": 0.04
+        "chance": 0.02
       },
       {
         "itemId": "dwarf_weed",
         "quantity": 1,
-        "chance": 0.03
+        "chance": 0.015
       },
       {
         "itemId": "lantadyme",
         "quantity": 1,
-        "chance": 0.01
+        "chance": 0.005
       },
       {
         "itemId": "toadflax",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.0025
       },
       {
         "itemId": "clue_scroll_hard",
@@ -1320,7 +1174,7 @@
           1,
           2
         ],
-        "chance": 0.2
+        "chance": 0.1
       },
       {
         "itemId": "tarromin",
@@ -1328,7 +1182,7 @@
           1,
           2
         ],
-        "chance": 0.15
+        "chance": 0.075
       },
       {
         "itemId": "ranarr_weed",
@@ -1336,7 +1190,7 @@
           1,
           2
         ],
-        "chance": 0.12
+        "chance": 0.06
       },
       {
         "itemId": "harralander",
@@ -1344,7 +1198,7 @@
           1,
           2
         ],
-        "chance": 0.1
+        "chance": 0.05
       },
       {
         "itemId": "irit_leaf",
@@ -1352,7 +1206,7 @@
           1,
           2
         ],
-        "chance": 0.08
+        "chance": 0.04
       },
       {
         "itemId": "kwuarm",
@@ -1360,32 +1214,32 @@
           1,
           2
         ],
-        "chance": 0.06
+        "chance": 0.03
       },
       {
         "itemId": "snapdragon",
         "quantity": 1,
-        "chance": 0.05
+        "chance": 0.025
       },
       {
         "itemId": "cadantine",
         "quantity": 1,
-        "chance": 0.04
+        "chance": 0.02
       },
       {
         "itemId": "dwarf_weed",
         "quantity": 1,
-        "chance": 0.03
+        "chance": 0.015
       },
       {
         "itemId": "lantadyme",
         "quantity": 1,
-        "chance": 0.01
+        "chance": 0.005
       },
       {
         "itemId": "toadflax",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.0025
       },
       {
         "itemId": "clue_scroll_medium",
@@ -1549,7 +1403,7 @@
           1,
           2
         ],
-        "chance": 0.2
+        "chance": 0.1
       },
       {
         "itemId": "tarromin",
@@ -1557,7 +1411,7 @@
           1,
           2
         ],
-        "chance": 0.15
+        "chance": 0.075
       },
       {
         "itemId": "ranarr_weed",
@@ -1565,7 +1419,7 @@
           1,
           2
         ],
-        "chance": 0.12
+        "chance": 0.06
       },
       {
         "itemId": "harralander",
@@ -1573,7 +1427,7 @@
           1,
           2
         ],
-        "chance": 0.1
+        "chance": 0.05
       },
       {
         "itemId": "irit_leaf",
@@ -1581,7 +1435,7 @@
           1,
           2
         ],
-        "chance": 0.08
+        "chance": 0.04
       },
       {
         "itemId": "kwuarm",
@@ -1589,32 +1443,32 @@
           1,
           2
         ],
-        "chance": 0.06
+        "chance": 0.03
       },
       {
         "itemId": "snapdragon",
         "quantity": 1,
-        "chance": 0.05
+        "chance": 0.025
       },
       {
         "itemId": "cadantine",
         "quantity": 1,
-        "chance": 0.04
+        "chance": 0.02
       },
       {
         "itemId": "dwarf_weed",
         "quantity": 1,
-        "chance": 0.03
+        "chance": 0.015
       },
       {
         "itemId": "lantadyme",
         "quantity": 1,
-        "chance": 0.01
+        "chance": 0.005
       },
       {
         "itemId": "toadflax",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.0025
       },
       {
         "itemId": "clue_scroll_medium",

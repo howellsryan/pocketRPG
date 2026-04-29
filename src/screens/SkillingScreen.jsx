@@ -19,8 +19,9 @@ import HunterScreen from './HunterScreen.jsx'
 import FarmingScreen from './FarmingScreen.jsx'
 import ConstructionScreen from './ConstructionScreen.jsx'
 
-// Agility, Prayer, Thieving, Hunter, Slayer, Farming, and Construction are special skills shown here in the Skills tab
-const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'hunter', 'slayer', 'farming', 'construction']
+// Agility, Prayer, Thieving, Hunter, Slayer, and Construction are special skills shown here in the Skills tab
+// (farming is silently hidden from display; logic remains intact)
+const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'hunter', 'slayer', 'construction']
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0)
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS]
 
