@@ -34,12 +34,100 @@ function parseMatchState(match) {
   }
 }
 
-async function finalizeTerminalMatch(env, match, stateNext, terminal, appliedIntentIds) {
-  const now = Date.now()
+function terminalSaveWritebackStatement(env, {
+  match,
+  winnerId,
+  loserId,
+  winnerJson,
+  loserJson,
+  winnerUpdatedAt,
+  loserUpdatedAt,
+  now,
+}) {
+  return env.DB.prepare(
+    `WITH precondition(ok) AS MATERIALIZED (
+       SELECT CASE WHEN
+         (
+           SELECT COUNT(*)
+             FROM saves
+            WHERE (character_id = ? AND updated_at = ?)
+               OR (character_id = ? AND updated_at = ?)
+         ) = 2
+         AND EXISTS (
+           SELECT 1
+             FROM pvp_matches
+            WHERE id = ?
+              AND status = 'active'
+              AND current_tick = ?
+         )
+       THEN 1 ELSE 0 END
+     )
+     UPDATE saves
+        SET save_data = CASE character_id
+              WHEN ? THEN ?
+              WHEN ? THEN ?
+              ELSE save_data
+            END,
+            updated_at = ?
+      WHERE character_id IN (?, ?)
+        AND (SELECT ok FROM precondition) = 1`
+  ).bind(
+    winnerId, winnerUpdatedAt,
+    loserId, loserUpdatedAt,
+    match.id, match.current_tick,
+    winnerId, winnerJson,
+    loserId, loserJson,
+    now,
+    winnerId, loserId,
+  )
+}
+
+function completedMatchGuardSql() {
+  return `EXISTS (
+    SELECT 1
+      FROM pvp_matches
+     WHERE id = ?
+       AND status = 'completed'
+       AND ended_at = ?
+       AND winner_character_id = ?
+  )`
+}
+
+function completedMatchCleanupStatements(env, { matchId, endedAt, winnerId }) {
+  const completedGuard = completedMatchGuardSql()
+  return [
+    env.DB.prepare(
+      `UPDATE pvp_invitations
+          SET match_id = NULL
+        WHERE match_id = ?
+          AND ${completedGuard}`
+    ).bind(matchId, matchId, endedAt, winnerId),
+    env.DB.prepare(
+      `DELETE FROM pvp_intents
+        WHERE match_id = ?
+          AND ${completedGuard}`
+    ).bind(matchId, matchId, endedAt, winnerId),
+    env.DB.prepare(
+      `DELETE FROM pvp_matches
+        WHERE id = ?
+          AND status = 'completed'
+          AND ended_at = ?
+          AND winner_character_id = ?
+          AND NOT EXISTS (
+            SELECT 1
+              FROM characters
+             WHERE active_match_id = ?
+          )`
+    ).bind(matchId, endedAt, winnerId, matchId),
+  ]
+}
+
+async function finalizeTerminalMatch(env, match, stateNext, terminal, _appliedIntentIds) {
   const winnerId = terminal.winner
   const loserId = terminal.loser
 
   for (let attempt = 0; attempt < 2; attempt++) {
+    const now = Date.now()
     const winnerSave = await readCharacterSave(env, winnerId)
     const loserSave = await readCharacterSave(env, loserId)
     if (!winnerSave || !loserSave) return { ok: false, reason: 'missing_save' }
@@ -63,56 +151,120 @@ async function finalizeTerminalMatch(env, match, stateNext, terminal, appliedInt
 
     const winnerJson = JSON.stringify(winnerSnapshot)
     const loserJson = JSON.stringify(loserSnapshot)
+    const stateJson = JSON.stringify(stateNext)
+    const completedGuard = completedMatchGuardSql()
 
     const writes = [
-      env.DB.prepare(
-        'UPDATE saves SET save_data = ?, updated_at = ? WHERE character_id = ? AND updated_at = ?'
-      ).bind(winnerJson, now, winnerId, winnerSave.updatedAt),
-      env.DB.prepare(
-        'UPDATE saves SET save_data = ?, updated_at = ? WHERE character_id = ? AND updated_at = ?'
-      ).bind(loserJson, now, loserId, loserSave.updatedAt),
+      terminalSaveWritebackStatement(env, {
+        match,
+        winnerId,
+        loserId,
+        winnerJson,
+        loserJson,
+        winnerUpdatedAt: winnerSave.updatedAt,
+        loserUpdatedAt: loserSave.updatedAt,
+        now,
+      }),
       env.DB.prepare(
         `UPDATE pvp_matches
-            SET status = 'completed', ended_at = ?, winner_character_id = ?,
-                current_tick = ?, state_json = ?, last_tick_at = ?
-          WHERE id = ? AND status = 'active' AND current_tick = ?`
-      ).bind(now, winnerId, stateNext.tick || 0, JSON.stringify(stateNext), now, match.id, match.current_tick),
+            SET status = 'completed',
+                ended_at = ?,
+                winner_character_id = ?,
+                current_tick = ?,
+                state_json = ?,
+                last_tick_at = ?
+          WHERE id = ?
+            AND status = 'active'
+            AND current_tick = ?
+            AND EXISTS (
+              SELECT 1 FROM saves
+               WHERE character_id = ?
+                 AND updated_at = ?
+            )
+            AND EXISTS (
+              SELECT 1 FROM saves
+               WHERE character_id = ?
+                 AND updated_at = ?
+            )`
+      ).bind(now, winnerId, stateNext.tick || 0, stateJson, now, match.id, match.current_tick, winnerId, now, loserId, now),
       env.DB.prepare(
-        'UPDATE characters SET active_match_id = NULL WHERE id IN (?, ?) AND active_match_id = ?'
-      ).bind(match.character_a, match.character_b, match.id),
+        `UPDATE characters
+            SET active_match_id = NULL
+          WHERE id IN (?, ?)
+            AND active_match_id = ?
+            AND ${completedGuard}`
+      ).bind(match.character_a, match.character_b, match.id, match.id, now, winnerId),
+      env.DB.prepare(
+        `UPDATE characters
+            SET total_pvp_kills = COALESCE(total_pvp_kills, 0) + 1,
+                last_updated_total_pvp_kills = ?
+          WHERE id = ?
+            AND ${completedGuard}`
+      ).bind(now, winnerId, match.id, now, winnerId),
+      ...completedMatchCleanupStatements(env, { matchId: match.id, endedAt: now, winnerId }),
     ]
-    const markIntents = appliedIntentsStatement(env, appliedIntentIds)
-    if (markIntents) writes.push(markIntents)
-    writes.push(env.DB.prepare(
-      `UPDATE characters
-          SET total_pvp_kills = COALESCE(total_pvp_kills, 0) + 1,
-              last_updated_total_pvp_kills = ?
-        WHERE id = ?
-          AND EXISTS (
-            SELECT 1 FROM pvp_matches
-             WHERE id = ?
-               AND status = 'completed'
-               AND winner_character_id = ?
-               AND ended_at = ?
-          )`
-    ).bind(now, winnerId, match.id, winnerId, now))
-    const batchResults = await env.DB.batch(writes)
-    const winnerUpdate = batchResults[0]
-    const loserUpdate = batchResults[1]
-    const matchUpdate = batchResults[2]
-    const killUpdate = batchResults[batchResults.length - 1]
+    let batchResults
+    try {
+      batchResults = await env.DB.batch(writes)
+    } catch (e) {
+      console.error('[PocketRPG][PvP] terminal batch failed', { matchId: match.id, winnerId, loserId, error: e?.message || e })
+      return { ok: false, reason: 'terminal_batch_failed' }
+    }
 
-    if (
-      winnerUpdate.meta.changes !== 1 ||
-      loserUpdate.meta.changes !== 1 ||
-      matchUpdate.meta.changes !== 1 ||
-      killUpdate.meta.changes !== 1
-    ) {
+    const saveUpdate = batchResults[0]
+    const matchUpdate = batchResults[1]
+    const activeClear = batchResults[2]
+    const killUpdate = batchResults[3]
+    const invitationClear = batchResults[4]
+    const intentsDelete = batchResults[5]
+    const matchDelete = batchResults[6]
+
+    const noTerminalWritesApplied =
+      (saveUpdate?.meta?.changes || 0) === 0 &&
+      (matchUpdate?.meta?.changes || 0) === 0 &&
+      (activeClear?.meta?.changes || 0) === 0 &&
+      (killUpdate?.meta?.changes || 0) === 0 &&
+      (matchDelete?.meta?.changes || 0) === 0
+
+    if (noTerminalWritesApplied) {
       continue
     }
-    return { ok: true, loot }
+
+    const criticalOk =
+      saveUpdate?.meta?.changes === 2 &&
+      matchUpdate?.meta?.changes === 1 &&
+      activeClear?.meta?.changes === 2 &&
+      killUpdate?.meta?.changes === 1 &&
+      matchDelete?.meta?.changes === 1
+
+    if (!criticalOk) {
+      console.error('[PocketRPG][PvP] terminal finalisation had unexpected write counts', {
+        matchId: match.id,
+        winnerId,
+        loserId,
+        saveChanges: saveUpdate?.meta?.changes,
+        matchChanges: matchUpdate?.meta?.changes,
+        activeClearChanges: activeClear?.meta?.changes,
+        killChanges: killUpdate?.meta?.changes,
+        invitationClearChanges: invitationClear?.meta?.changes,
+        intentsDeleteChanges: intentsDelete?.meta?.changes,
+        matchDeleteChanges: matchDelete?.meta?.changes,
+      })
+      return { ok: false, reason: 'terminal_write_count_mismatch', endedAt: now }
+    }
+    return {
+      ok: true,
+      loot,
+      endedAt: now,
+      cleanup: {
+        invitationsCleared: invitationClear?.meta?.changes || 0,
+        intentsDeleted: intentsDelete?.meta?.changes || 0,
+        matchDeleted: matchDelete?.meta?.changes || 0,
+      },
+    }
   }
 
+  const now = Date.now()
   const abortWrites = [
     env.DB.prepare(
       "UPDATE pvp_matches SET status = 'aborted', ended_at = ?, state_json = ?, last_tick_at = ? WHERE id = ? AND status = 'active'"
@@ -120,12 +272,31 @@ async function finalizeTerminalMatch(env, match, stateNext, terminal, appliedInt
     env.DB.prepare(
       'UPDATE characters SET active_match_id = NULL WHERE id IN (?, ?) AND active_match_id = ?'
     ).bind(match.character_a, match.character_b, match.id),
+    env.DB.prepare(
+      'UPDATE pvp_invitations SET match_id = NULL WHERE match_id = ?'
+    ).bind(match.id),
+    env.DB.prepare(
+      'DELETE FROM pvp_intents WHERE match_id = ?'
+    ).bind(match.id),
+    env.DB.prepare(
+      `DELETE FROM pvp_matches
+        WHERE id = ?
+          AND status = 'aborted'
+          AND ended_at = ?
+          AND NOT EXISTS (
+            SELECT 1
+              FROM characters
+             WHERE active_match_id = ?
+          )`
+    ).bind(match.id, now, match.id),
   ]
-  const abortMarkIntents = appliedIntentsStatement(env, appliedIntentIds)
-  if (abortMarkIntents) abortWrites.push(abortMarkIntents)
-  await env.DB.batch(abortWrites)
+  try {
+    await env.DB.batch(abortWrites)
+  } catch (e) {
+    console.error('[PocketRPG][PvP] abort cleanup failed', { matchId: match.id, error: e?.message || e })
+  }
 
-  return { ok: false, reason: 'save_conflict' }
+  return { ok: false, reason: 'save_conflict', endedAt: now }
 }
 
 export async function onRequestPost({ request, env, params }) {
@@ -210,7 +381,8 @@ export async function onRequestPost({ request, env, params }) {
       state: out.stateNext,
       events: out.events,
       loot: terminal.loot?.summary || null,
-      ended_at: now,
+      ended_at: terminal.endedAt || Date.now(),
+      cleanup: terminal.cleanup || null,
     })
   }
 

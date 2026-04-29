@@ -74,6 +74,22 @@ export async function sweepStaleRows(env) {
   }
 
   try {
+    await env.DB.prepare(
+      `UPDATE characters
+          SET active_match_id = NULL
+        WHERE active_match_id IS NOT NULL
+          AND NOT EXISTS (
+            SELECT 1
+              FROM pvp_matches
+             WHERE pvp_matches.id = characters.active_match_id
+               AND pvp_matches.status = 'active'
+          )`
+    ).run()
+  } catch (e) {
+    console.error('[pvp.sweep] stale active_match_id cleanup failed:', e?.message || e)
+  }
+
+  try {
     // Find stalled active matches first, so we can clear the matching
     // active_match_id columns on characters in the same pass.
     const stalled = await env.DB.prepare(
@@ -88,6 +104,23 @@ export async function sweepStaleRows(env) {
         env.DB.prepare(
           'UPDATE characters SET active_match_id = NULL WHERE id IN (?, ?) AND active_match_id = ?'
         ).bind(m.character_a, m.character_b, m.id),
+        env.DB.prepare(
+          'UPDATE pvp_invitations SET match_id = NULL WHERE match_id = ?'
+        ).bind(m.id),
+        env.DB.prepare(
+          'DELETE FROM pvp_intents WHERE match_id = ?'
+        ).bind(m.id),
+        env.DB.prepare(
+          `DELETE FROM pvp_matches
+            WHERE id = ?
+              AND status = 'aborted'
+              AND ended_at = ?
+              AND NOT EXISTS (
+                SELECT 1
+                  FROM characters
+                 WHERE active_match_id = ?
+              )`
+        ).bind(m.id, now, m.id),
       ])
     }
   } catch (e) {
@@ -114,10 +147,36 @@ export async function sweepStaleRows(env) {
     const intentRetention = now - 3_600_000   // 1h
     await env.DB.batch([
       env.DB.prepare(
-        "DELETE FROM pvp_intents WHERE match_id IN (SELECT id FROM pvp_matches WHERE status != 'active' AND ended_at IS NOT NULL AND ended_at < ?)"
+        `UPDATE pvp_invitations
+            SET match_id = NULL
+          WHERE match_id IN (
+            SELECT id
+              FROM pvp_matches
+             WHERE status != 'active'
+               AND ended_at IS NOT NULL
+               AND ended_at < ?
+          )`
+      ).bind(matchRetention),
+      env.DB.prepare(
+        `DELETE FROM pvp_intents
+          WHERE match_id IN (
+            SELECT id
+              FROM pvp_matches
+             WHERE status != 'active'
+               AND ended_at IS NOT NULL
+               AND ended_at < ?
+          )`
       ).bind(intentRetention),
       env.DB.prepare(
-        "DELETE FROM pvp_matches WHERE status != 'active' AND ended_at IS NOT NULL AND ended_at < ?"
+        `DELETE FROM pvp_matches
+          WHERE status != 'active'
+            AND ended_at IS NOT NULL
+            AND ended_at < ?
+            AND NOT EXISTS (
+              SELECT 1
+                FROM characters
+               WHERE active_match_id = pvp_matches.id
+            )`
       ).bind(matchRetention),
     ])
   } catch (e) {
