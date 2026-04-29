@@ -49,11 +49,28 @@ function CombatStatsInfoButton({ label, onClick }) {
   )
 }
 
-function CombatStatsModal({ title, stats, onClose }) {
+function formatRankLabel(rank) {
+  const parsed = Number(rank)
+  return Number.isFinite(parsed) && parsed > 0 ? `#${Math.floor(parsed)}` : 'No Rank'
+}
+
+function readNonNegativeInt(value) {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed) : 0
+}
+
+function CombatStatsModal({ title, stats, rank, totalPvpKills, onClose }) {
   const normalized = normalizeCombatStats(stats)
+  const rankLabel = formatRankLabel(rank)
+  const kills = readNonNegativeInt(totalPvpKills)
 
   return (
     <Modal title={`${title} — Combat Stats`} onClose={onClose}>
+      <div class="mb-2 rounded-lg border border-[var(--color-void-border)] bg-[var(--color-void-light)] px-3 py-2 text-[11px] text-[var(--color-parchment)]">
+        <span class="font-semibold text-[var(--color-gold)]">Rank:</span> {rankLabel}
+        <span class="opacity-60"> · </span>
+        <span class="font-semibold text-[var(--color-gold)]">PvP Kills:</span> {kills}
+      </div>
       <div class="grid grid-cols-2 gap-2">
         {COMBAT_STAT_ROWS.map(([key, label, icon]) => (
           <div
@@ -326,8 +343,8 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
   }
 
   const incomingCount = invitations.incoming.length
-  const openStatsModal = (title, stats) => {
-    setStatsModal({ title, stats })
+  const openStatsModal = (title, stats, rank, totalPvpKills) => {
+    setStatsModal({ title, stats, rank, totalPvpKills })
   }
 
   return (
@@ -401,7 +418,7 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
                       <div class="truncate text-sm font-semibold text-[var(--color-parchment)]">{p.username}</div>
                       <CombatStatsInfoButton
                         label={`View ${p.username} combat stats`}
-                        onClick={() => openStatsModal(p.username, p.combat_stats)}
+                        onClick={() => openStatsModal(p.username, p.combat_stats, p.pvp_rank, p.total_pvp_kills)}
                       />
                     </div>
                     <div class="text-[10px] text-[var(--color-parchment)] opacity-50">{riskLine}</div>
@@ -439,7 +456,12 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
                       <div class="truncate text-sm font-semibold text-[var(--color-parchment)]">{inv.from_username}</div>
                       <CombatStatsInfoButton
                         label={`View ${inv.from_username} combat stats`}
-                        onClick={() => openStatsModal(inv.from_username, inv.from_combat_stats)}
+                        onClick={() => openStatsModal(
+                          inv.from_username,
+                          inv.from_combat_stats,
+                          inv.from_pvp_rank,
+                          inv.from_total_pvp_kills,
+                        )}
                       />
                     </div>
                     <div class="text-[10px] text-[var(--color-parchment)] opacity-50">
@@ -476,7 +498,12 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
                       <div class="truncate text-sm font-semibold text-[var(--color-parchment)]">{inv.to_username}</div>
                       <CombatStatsInfoButton
                         label={`View ${inv.to_username} combat stats`}
-                        onClick={() => openStatsModal(inv.to_username, inv.to_combat_stats)}
+                        onClick={() => openStatsModal(
+                          inv.to_username,
+                          inv.to_combat_stats,
+                          inv.to_pvp_rank,
+                          inv.to_total_pvp_kills,
+                        )}
                       />
                     </div>
                     <div class="text-[10px] text-[var(--color-parchment)] opacity-50">
@@ -503,6 +530,8 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
         <CombatStatsModal
           title={statsModal.title}
           stats={statsModal.stats}
+          rank={statsModal.rank}
+          totalPvpKills={statsModal.totalPvpKills}
           onClose={() => setStatsModal(null)}
         />
       )}
