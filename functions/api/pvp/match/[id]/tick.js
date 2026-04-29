@@ -3,6 +3,7 @@ import { getOwnedCharacter, sweepStaleRows } from '../../../../_lib/pvp.js'
 import { readOwnedActiveMatch, itemsData, readCharacterSave, applyCombatantToSave } from '../../../../_lib/pvpMatch.js'
 import { processPvpTick } from '../../../../../src/engine/pvpEngine.js'
 import { applyLootTransfer } from '../../../../../src/engine/lootTransfer.js'
+import { appendPvpEndSummaryToState, createPvpEndSummary } from '../../../../../src/engine/pvpEndSummary.js'
 
 const PVP_TICK_MS = 600
 const PVP_TICK_GRACE_MS = 75
@@ -61,8 +62,17 @@ async function finalizeTerminalMatch(env, match, stateNext, terminal, appliedInt
     loserSnapshot.inventory = loot.loser.inventory
     loserSnapshot.equipment = loot.loser.equipment
 
+    const endSummary = createPvpEndSummary({
+      terminal,
+      loot: loot.summary,
+      endedAt: now,
+      writebackOk: true,
+    })
+    const finalState = appendPvpEndSummaryToState(stateNext, endSummary)
+
     const winnerJson = JSON.stringify(winnerSnapshot)
     const loserJson = JSON.stringify(loserSnapshot)
+    const finalStateJson = JSON.stringify(finalState)
 
     const writes = [
       env.DB.prepare(
@@ -76,7 +86,7 @@ async function finalizeTerminalMatch(env, match, stateNext, terminal, appliedInt
             SET status = 'completed', ended_at = ?, winner_character_id = ?,
                 current_tick = ?, state_json = ?, last_tick_at = ?
           WHERE id = ? AND status = 'active' AND current_tick = ?`
-      ).bind(now, winnerId, stateNext.tick || 0, JSON.stringify(stateNext), now, match.id, match.current_tick),
+      ).bind(now, winnerId, finalState.tick || 0, finalStateJson, now, match.id, match.current_tick),
       env.DB.prepare(
         'UPDATE characters SET active_match_id = NULL WHERE id IN (?, ?) AND active_match_id = ?'
       ).bind(match.character_a, match.character_b, match.id),
@@ -110,7 +120,7 @@ async function finalizeTerminalMatch(env, match, stateNext, terminal, appliedInt
     ) {
       continue
     }
-    return { ok: true, loot }
+    return { ok: true, loot, state: finalState, endSummary }
   }
 
   const abortWrites = [
@@ -192,25 +202,26 @@ export async function onRequestPost({ request, env, params }) {
   const out = processPvpTick(state, intents, itemsData)
 
   if (out.terminal) {
-    const terminal = await finalizeTerminalMatch(env, match, out.stateNext, out.terminal, appliedIntentIds)
-    if (!terminal.ok) {
+    const terminalWrite = await finalizeTerminalMatch(env, match, out.stateNext, out.terminal, appliedIntentIds)
+    if (!terminalWrite.ok) {
       console.error('[PocketRPG][PvP] terminal writeback failed', {
         matchId: match.id,
         winnerId: out.terminal.winner,
         loserId: out.terminal.loser,
-        reason: terminal.reason,
+        reason: terminalWrite.reason,
       })
     }
 
     return json({
       ok: true,
       advanced: true,
-      terminal: out.terminal,
-      terminal_writeback: terminal.ok,
-      state: out.stateNext,
+      terminal: terminalWrite.endSummary?.terminal || out.terminal,
+      terminal_writeback: terminalWrite.ok,
+      end_summary: terminalWrite.endSummary || null,
+      state: terminalWrite.state || out.stateNext,
       events: out.events,
-      loot: terminal.loot?.summary || null,
-      ended_at: now,
+      loot: terminalWrite.loot?.summary || null,
+      ended_at: terminalWrite.endSummary?.endedAt || now,
     })
   }
 

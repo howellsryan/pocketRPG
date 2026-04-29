@@ -30723,7 +30723,7 @@ const PVP_SPECIAL_ATTACK_LABELS = {
     pebble_shot: '🎯 Pebble Shot',
     shove: '🗡️ Shove',
     toxic_siphon: '🎋 Toxic Siphon',
-    slice_and_dice: '🦀🦀🦀🦀 Slice and Dice',
+    slice_and_dice: '🦀 Slice and Dice',
     lunge: '🔰 The Block',
 };
 const SUPPORTED_PVP_SPECIAL_ATTACK_TYPES = new Set(Object.keys(PVP_SPECIAL_ATTACK_LABELS));
@@ -30935,7 +30935,7 @@ function applyIntent(combatant, intentAction, itemsData, events) {
         return;
     }
     if (intentAction.type === 'queue_special') {
-        combatant.specialAttackQueued = true;
+        combatant.specialAttackQueued = !combatant.specialAttackQueued;
         return;
     }
     if (intentAction.type === 'toggle_prayer') {
@@ -36724,6 +36724,53 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
         }
         return true;
     };
+    const buildEndModalFromResponse = (res) => {
+        const summary = res?.end_summary || (res?.terminal ? {
+            terminal: res.terminal,
+            loot: res.loot || null,
+            writebackOk: res.terminal_writeback !== false,
+            endedAt: res.ended_at,
+        } : null);
+        const terminal = summary?.terminal;
+        if (!terminal)
+            return null;
+        const youWon = Number(terminal.winner) === selfId;
+        const writebackOk = summary.writebackOk !== false && res?.terminal_writeback !== false;
+        return { youWon, reason: terminal.reason || 'death', writebackOk, loot: writebackOk ? (summary.loot || res?.loot || { added: [], dropped: [], droppedValue: 0, bankedValue: 0, addedValue: 0, totalRiskValue: 0 }) : null };
+    };
+    const openEndModalFromResponse = (res) => {
+        const modal = buildEndModalFromResponse(res);
+        if (!modal)
+            return false;
+        terminalHandledRef.current = true;
+        setEndModal(modal);
+        setLoading(false);
+        setBootstrapError(null);
+        setStaleWarning(false);
+        if (pollTimer.current)
+            clearTimeout(pollTimer.current);
+        return true;
+    };
+    const recoverCompletedMatch = async () => {
+        try {
+            const res = await pvpApi.getMatch(matchId, null);
+            if (!mounted.current)
+                return false;
+            setMatchMeta(res?.match || null);
+            if (res?.state) {
+                const normalizedState = normalizePvpState(res.state);
+                if (normalizedState) {
+                    setState(normalizedState);
+                    latestTick.current = normalizedState.tick || latestTick.current;
+                }
+            }
+            return openEndModalFromResponse(res);
+        }
+        catch (err) {
+            console.warn('[PocketRPG][PvP] completed match recovery failed:', err?.body || err);
+            return false;
+        }
+    };
     const refreshFromServer = async () => {
         const sinceTick = latestTick.current > 0 ? latestTick.current : null;
         setBootstrapError(null);
@@ -36744,6 +36791,8 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
         lastPollOkAt.current = Date.now();
         setStaleWarning(false);
         setLoading(false);
+        if (openEndModalFromResponse(res))
+            return;
     };
     const runTick = async () => {
         if (terminalHandledRef.current)
@@ -36773,20 +36822,22 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
             lastPollOkAt.current = Date.now();
             setStaleWarning(false);
             if (tickRes.terminal) {
-                terminalHandledRef.current = true;
-                const youWon = Number(tickRes.terminal.winner) === selfId;
-                const writebackOk = tickRes.terminal_writeback !== false;
-                if (!writebackOk) {
-                    console.error('[PocketRPG][PvP] terminal writeback failed', tickRes);
+                if (!openEndModalFromResponse(tickRes)) {
+                    terminalHandledRef.current = true;
+                    const youWon = Number(tickRes.terminal.winner) === selfId;
+                    const writebackOk = tickRes.terminal_writeback !== false;
+                    if (!writebackOk) {
+                        console.error('[PocketRPG][PvP] terminal writeback failed', tickRes);
+                    }
+                    setEndModal({
+                        youWon,
+                        reason: tickRes.terminal.reason,
+                        writebackOk,
+                        loot: writebackOk ? (tickRes.loot || { added: [], dropped: [], droppedValue: 0, bankedValue: 0, totalRiskValue: 0 }) : null,
+                    });
+                    if (pollTimer.current)
+                        clearTimeout(pollTimer.current);
                 }
-                setEndModal({
-                    youWon,
-                    reason: tickRes.terminal.reason,
-                    writebackOk,
-                    loot: writebackOk ? (tickRes.loot || { added: [], dropped: [], droppedValue: 0, bankedValue: 0, totalRiskValue: 0 }) : null,
-                });
-                if (pollTimer.current)
-                    clearTimeout(pollTimer.current);
                 return false;
             }
             return true;
@@ -36799,6 +36850,9 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
                 return false;
             }
             if (msg === 'match_not_found' || msg === 'match_not_active') {
+                const recovered = await recoverCompletedMatch();
+                if (recovered)
+                    return false;
                 console.warn('[PocketRPG][PvP] tickMatch reported inactive match; checking server active_match_id before exit:', err?.body || null);
                 const noActiveMatch = await confirmNoActiveMatch();
                 if (noActiveMatch) {
@@ -36854,6 +36908,9 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
                     setLoading(false);
                     let recoveryMessage = code || 'Failed to load PvP match';
                     if (code === 'match_not_found' || code === 'match_not_active') {
+                        const recovered = await recoverCompletedMatch();
+                        if (recovered)
+                            return;
                         const noActiveMatch = await confirmNoActiveMatch();
                         if (noActiveMatch) {
                             addToast?.('Match has ended.', 'info');
@@ -36880,21 +36937,27 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
     const queueAction = (action) => {
         if (terminalHandledRef.current || endModalOpenRef.current)
             return;
+        pendingActionRef.current = action;
         setPendingAction(action);
         setBusy(true);
         setTimeout(() => setBusy(false), 220);
+        setTimeout(() => {
+            if (!terminalHandledRef.current && !endModalOpenRef.current && !tickInFlight.current)
+                runTick();
+        }, 0);
     };
     const foodSlots = toArray(pair.self?.inventory)
-        .map((slot, idx) => ({ slot, idx }))
-        .filter(({ slot }) => slot && isPvpFoodItem(itemsData[slot.itemId]))
-        .slice(0, 4);
+        .map((slot, idx) => ({ slot, idx, item: slot ? itemsData?.[slot.itemId] : null }))
+        .filter(({ slot, item }) => slot && item && isPvpFoodItem(item))
+        .slice(0, 8);
     const availablePrayers = Object.values(prayersData || {})
         .filter((prayer) => prayer && prayer.bonusType !== 'protection' && !PVP_SCREEN_PROTECTION_PRAYER_IDS.has(prayer.id))
-        .filter((prayer) => (pair.self?.stats?.prayer || 1) >= (prayer.level || 1));
+        .filter((prayer) => (pair.self?.stats?.prayer || 1) >= (prayer.level || 1))
+        .sort((a, b) => (Number(b.level) || 0) - (Number(a.level) || 0));
     const potionSlots = toArray(pair.self?.inventory)
         .map((slot, idx) => ({ slot, idx, item: slot ? itemsData?.[slot.itemId] : null }))
         .filter(({ slot, item }) => slot && item && isPvpCombatPotion(item))
-        .slice(0, 6);
+        .slice(0, 8);
     const equippableSlots = toArray(pair.self?.inventory)
         .map((slot, idx) => ({ slot, idx, item: slot ? itemsData?.[slot.itemId] : null }))
         .filter(({ slot, item }) => slot && item?.slot);
@@ -36948,56 +37011,27 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
             h(EquipmentMiniPanel, { title: "Opponent gear", combatant: pair.opp, align: "left" }),
             h(EquipmentMiniPanel, { title: "Your gear", combatant: pair.self, align: "right" })),
         h(Card, null,
-            h("div", { class: "text-xs font-semibold text-[var(--color-gold)] mb-2" }, "Quick Eat"),
+            h("div", { class: "text-xs font-semibold text-[var(--color-gold)] mb-2" }, "Quick Actions"),
             h("div", { class: "flex gap-2 flex-wrap" },
                 foodSlots.length === 0 && h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60" }, "No food in inventory."),
                 foodSlots.map(({ slot, idx }) => (h("div", { key: `${slot.itemId}-${idx}`, onClick: () => queueAction({ type: 'eat', inventorySlot: idx }) },
                     h(ItemSlot, { slot: slot, size: "small" })))))),
         h(Card, null,
             h("div", { class: "text-xs font-semibold text-[var(--color-gold)] mb-2" }, "Combat actions"),
-            h("div", { class: "flex gap-2" },
-                h(Button, { variant: "secondary", size: "md", className: "w-1/4", disabled: busy || !specialReady, title: equippedSpecial ? `Special attack energy: ${specialEnergy}/${specialCost}` : 'No special attack available', onClick: () => queueAction({ type: 'queue_special' }) },
+            h("div", { class: "grid grid-cols-2 gap-2" },
+                h(Button, { variant: "secondary", size: "md", className: "w-full", disabled: busy || !specialReady, title: equippedSpecial ? `Special attack energy: ${specialEnergy}/${specialCost}` : 'No special attack available', onClick: () => queueAction({ type: 'queue_special' }) },
                     h("span", { class: "text-[var(--color-gold)] mr-1" }, "\u26A1"),
                     "Spec",
                     specialCost != null ? ` ${specialEnergy}%` : ''),
-                h(Button, { variant: actionPanel === 'prayer' ? 'primary' : 'secondary', size: "md", className: "w-1/4", disabled: busy, onClick: () => setActionPanel(actionPanel === 'prayer' ? null : 'prayer') }, "\uD83D\uDE4F Prayer"),
-                h(Button, { variant: actionPanel === 'potion' ? 'primary' : 'secondary', size: "md", className: "w-1/4", disabled: busy, onClick: () => setActionPanel(actionPanel === 'potion' ? null : 'potion') }, "\uD83E\uDDEA Potion"),
-                h(Button, { variant: actionPanel === 'gear' ? 'primary' : 'secondary', size: "md", className: "w-1/4", disabled: busy, onClick: () => setActionPanel(actionPanel === 'gear' ? null : 'gear') }, "\uD83D\uDEE1\uFE0F Gear")),
-            actionPanel === 'prayer' && (h("div", { class: "mt-3 space-y-2" },
-                availablePrayers.length === 0 && (h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60" }, "No PvP-usable prayers unlocked.")),
-                availablePrayers.map((prayer) => {
-                    const active = pair.self?.activeCombatPrayer === prayer.id;
-                    return (h(Button, { key: prayer.id, variant: active ? 'primary' : 'secondary', size: "sm", className: "w-full justify-start", disabled: busy, onClick: () => queueAction({ type: 'toggle_prayer', prayerId: prayer.id }) },
+                h(Button, { variant: actionPanel === 'prayer' ? 'primary' : 'secondary', size: "md", className: "w-full", disabled: busy, onClick: () => setActionPanel(actionPanel === 'prayer' ? null : 'prayer') }, "\uD83D\uDE4F Prayer")),
+            actionPanel === 'prayer' && (h("div", { class: "mt-3" }, availablePrayers.length === 0 ? (h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60" }, "No PvP-usable prayers unlocked.")) : (h("div", { class: "grid grid-cols-4 gap-2" }, availablePrayers.map((prayer) => {
+                const active = pair.self?.activeCombatPrayer === prayer.id;
+                return (h(Button, { key: prayer.id, variant: active ? 'primary' : 'secondary', size: "md", className: "min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight", disabled: busy, onClick: () => queueAction({ type: 'toggle_prayer', prayerId: prayer.id }) },
+                    h("span", { class: "block truncate" },
                         prayer.icon || '✨',
                         " ",
-                        prayer.name));
-                }))),
-            actionPanel === 'potion' && (h("div", { class: "mt-3 space-y-2" },
-                potionSlots.length === 0 && (h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60" }, "No combat potions in inventory.")),
-                potionSlots.map(({ slot, idx, item }) => (h(Button, { key: `${slot.itemId}-${idx}`, variant: "secondary", size: "sm", className: "w-full justify-start", disabled: busy, onClick: () => queueAction({ type: 'drink_potion', inventorySlot: idx }) },
-                    (item?.icon || '🧪'),
-                    " ",
-                    item?.name || slot.itemId,
-                    Number(slot?.quantity || 0) > 1 ? ` x${slot.quantity}` : ''))))),
-            actionPanel === 'gear' && (h("div", { class: "mt-3 space-y-3" },
-                h("div", null,
-                    h("div", { class: "text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-1" }, "Equip from inventory"),
-                    h("div", { class: "space-y-2" },
-                        equippableSlots.length === 0 && (h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60" }, "No equippable items in inventory.")),
-                        equippableSlots.map(({ slot, idx, item }) => (h(Button, { key: `${slot.itemId}-${idx}`, variant: "secondary", size: "sm", className: "w-full justify-start", disabled: busy, onClick: () => queueAction({ type: 'equip', inventorySlot: idx }) },
-                            item?.icon || '🛡️',
-                            " Equip ",
-                            item?.name || slot.itemId))))),
-                h("div", null,
-                    h("div", { class: "text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-1" }, "Unequip current gear"),
-                    h("div", { class: "space-y-2" },
-                        equippedSlots.length === 0 && (h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60" }, "Nothing equipped.")),
-                        equippedSlots.map(({ slot, entry, item }) => (h(Button, { key: `${slot}-${entry.itemId}`, variant: "secondary", size: "sm", className: "w-full justify-start", disabled: busy, onClick: () => queueAction({ type: 'unequip', equipmentSlot: slot }) },
-                            item?.icon || '▫️',
-                            " Unequip ",
-                            slot,
-                            ": ",
-                            item?.name || entry.itemId)))))))),
+                        prayer.name)));
+            })))))),
         h(Panel, null,
             h("div", { class: "text-xs font-semibold text-[var(--color-gold)] mb-1" }, "Recent actions"),
             h("div", { class: "space-y-1 max-h-24 overflow-y-auto" },

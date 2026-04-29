@@ -273,6 +273,52 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     return true
   }
 
+
+  const buildEndModalFromResponse = (res) => {
+    const summary = res?.end_summary || (res?.terminal ? {
+      terminal: res.terminal,
+      loot: res.loot || null,
+      writebackOk: res.terminal_writeback !== false,
+      endedAt: res.ended_at,
+    } : null)
+    const terminal = summary?.terminal
+    if (!terminal) return null
+    const youWon = Number(terminal.winner) === selfId
+    const writebackOk = summary.writebackOk !== false && res?.terminal_writeback !== false
+    return { youWon, reason: terminal.reason || 'death', writebackOk, loot: writebackOk ? (summary.loot || res?.loot || { added: [], dropped: [], droppedValue: 0, bankedValue: 0, addedValue: 0, totalRiskValue: 0 }) : null }
+  }
+
+  const openEndModalFromResponse = (res) => {
+    const modal = buildEndModalFromResponse(res)
+    if (!modal) return false
+    terminalHandledRef.current = true
+    setEndModal(modal)
+    setLoading(false)
+    setBootstrapError(null)
+    setStaleWarning(false)
+    if (pollTimer.current) clearTimeout(pollTimer.current)
+    return true
+  }
+
+  const recoverCompletedMatch = async () => {
+    try {
+      const res = await pvpApi.getMatch(matchId, null)
+      if (!mounted.current) return false
+      setMatchMeta(res?.match || null)
+      if (res?.state) {
+        const normalizedState = normalizePvpState(res.state)
+        if (normalizedState) {
+          setState(normalizedState)
+          latestTick.current = normalizedState.tick || latestTick.current
+        }
+      }
+      return openEndModalFromResponse(res)
+    } catch (err) {
+      console.warn('[PocketRPG][PvP] completed match recovery failed:', err?.body || err)
+      return false
+    }
+  }
+
   const refreshFromServer = async () => {
     const sinceTick = latestTick.current > 0 ? latestTick.current : null
     setBootstrapError(null)
@@ -291,6 +337,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     lastPollOkAt.current = Date.now()
     setStaleWarning(false)
     setLoading(false)
+    if (openEndModalFromResponse(res)) return
   }
 
   const runTick = async () => {
@@ -319,7 +366,8 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
       setStaleWarning(false)
 
       if (tickRes.terminal) {
-        terminalHandledRef.current = true
+        if (!openEndModalFromResponse(tickRes)) {
+          terminalHandledRef.current = true
         const youWon = Number(tickRes.terminal.winner) === selfId
         const writebackOk = tickRes.terminal_writeback !== false
         if (!writebackOk) {
@@ -332,6 +380,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
           loot: writebackOk ? (tickRes.loot || { added: [], dropped: [], droppedValue: 0, bankedValue: 0, totalRiskValue: 0 }) : null,
         })
         if (pollTimer.current) clearTimeout(pollTimer.current)
+        }
         return false
       }
       return true
@@ -342,6 +391,8 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
         return false
       }
       if (msg === 'match_not_found' || msg === 'match_not_active') {
+        const recovered = await recoverCompletedMatch()
+        if (recovered) return false
         console.warn('[PocketRPG][PvP] tickMatch reported inactive match; checking server active_match_id before exit:', err?.body || null)
         const noActiveMatch = await confirmNoActiveMatch()
         if (noActiveMatch) {
@@ -395,6 +446,8 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
           setLoading(false)
           let recoveryMessage = code || 'Failed to load PvP match'
           if (code === 'match_not_found' || code === 'match_not_active') {
+            const recovered = await recoverCompletedMatch()
+            if (recovered) return
             const noActiveMatch = await confirmNoActiveMatch()
             if (noActiveMatch) {
               addToast?.('Match has ended.', 'info')
@@ -422,24 +475,29 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
   const queueAction = (action) => {
     if (terminalHandledRef.current || endModalOpenRef.current) return
+    pendingActionRef.current = action
     setPendingAction(action)
     setBusy(true)
     setTimeout(() => setBusy(false), 220)
+    setTimeout(() => {
+      if (!terminalHandledRef.current && !endModalOpenRef.current && !tickInFlight.current) runTick()
+    }, 0)
   }
 
   const foodSlots = toArray(pair.self?.inventory)
-    .map((slot, idx) => ({ slot, idx }))
-    .filter(({ slot }) => slot && isPvpFoodItem(itemsData[slot.itemId]))
-    .slice(0, 4)
+    .map((slot, idx) => ({ slot, idx, item: slot ? itemsData?.[slot.itemId] : null }))
+    .filter(({ slot, item }) => slot && item && isPvpFoodItem(item))
+    .slice(0, 8)
 
   const availablePrayers = Object.values(prayersData || {})
     .filter((prayer) => prayer && prayer.bonusType !== 'protection' && !PVP_SCREEN_PROTECTION_PRAYER_IDS.has(prayer.id))
     .filter((prayer) => (pair.self?.stats?.prayer || 1) >= (prayer.level || 1))
+    .sort((a, b) => (Number(b.level) || 0) - (Number(a.level) || 0))
 
   const potionSlots = toArray(pair.self?.inventory)
     .map((slot, idx) => ({ slot, idx, item: slot ? itemsData?.[slot.itemId] : null }))
     .filter(({ slot, item }) => slot && item && isPvpCombatPotion(item))
-    .slice(0, 6)
+    .slice(0, 8)
 
   const equippableSlots = toArray(pair.self?.inventory)
     .map((slot, idx) => ({ slot, idx, item: slot ? itemsData?.[slot.itemId] : null }))
@@ -517,7 +575,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
       </div>
 
       <Card>
-        <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Quick Eat</div>
+        <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Quick Actions</div>
         <div class="flex gap-2 flex-wrap">
           {foodSlots.length === 0 && <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No food in inventory.</div>}
           {foodSlots.map(({ slot, idx }) => (
@@ -530,11 +588,11 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
       <Card>
         <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Combat actions</div>
-        <div class="flex gap-2">
+        <div class="grid grid-cols-2 gap-2">
           <Button
             variant="secondary"
             size="md"
-            className="w-1/4"
+            className="w-full"
             disabled={busy || !specialReady}
             title={equippedSpecial ? `Special attack energy: ${specialEnergy}/${specialCost}` : 'No special attack available'}
             onClick={() => queueAction({ type: 'queue_special' })}
@@ -545,124 +603,30 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
           <Button
             variant={actionPanel === 'prayer' ? 'primary' : 'secondary'}
             size="md"
-            className="w-1/4"
+            className="w-full"
             disabled={busy}
             onClick={() => setActionPanel(actionPanel === 'prayer' ? null : 'prayer')}
           >
             🙏 Prayer
           </Button>
-          <Button
-            variant={actionPanel === 'potion' ? 'primary' : 'secondary'}
-            size="md"
-            className="w-1/4"
-            disabled={busy}
-            onClick={() => setActionPanel(actionPanel === 'potion' ? null : 'potion')}
-          >
-            🧪 Potion
-          </Button>
-          <Button
-            variant={actionPanel === 'gear' ? 'primary' : 'secondary'}
-            size="md"
-            className="w-1/4"
-            disabled={busy}
-            onClick={() => setActionPanel(actionPanel === 'gear' ? null : 'gear')}
-          >
-            🛡️ Gear
-          </Button>
         </div>
 
         {actionPanel === 'prayer' && (
-          <div class="mt-3 space-y-2">
-            {availablePrayers.length === 0 && (
-              <div class="text-[11px] text-[var(--color-parchment)] opacity-60">
-                No PvP-usable prayers unlocked.
+          <div class="mt-3">
+            {availablePrayers.length === 0 ? (
+              <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No PvP-usable prayers unlocked.</div>
+            ) : (
+              <div class="grid grid-cols-4 gap-2">
+                {availablePrayers.map((prayer) => {
+                  const active = pair.self?.activeCombatPrayer === prayer.id
+                  return (
+                    <Button key={prayer.id} variant={active ? 'primary' : 'secondary'} size="md" className="min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight" disabled={busy} onClick={() => queueAction({ type: 'toggle_prayer', prayerId: prayer.id })}>
+                      <span class="block truncate">{prayer.icon || '✨'} {prayer.name}</span>
+                    </Button>
+                  )
+                })}
               </div>
             )}
-            {availablePrayers.map((prayer) => {
-              const active = pair.self?.activeCombatPrayer === prayer.id
-              return (
-                <Button
-                  key={prayer.id}
-                  variant={active ? 'primary' : 'secondary'}
-                  size="sm"
-                  className="w-full justify-start"
-                  disabled={busy}
-                  onClick={() => queueAction({ type: 'toggle_prayer', prayerId: prayer.id })}
-                >
-                  {prayer.icon || '✨'} {prayer.name}
-                </Button>
-              )
-            })}
-          </div>
-        )}
-
-        {actionPanel === 'potion' && (
-          <div class="mt-3 space-y-2">
-            {potionSlots.length === 0 && (
-              <div class="text-[11px] text-[var(--color-parchment)] opacity-60">
-                No combat potions in inventory.
-              </div>
-            )}
-            {potionSlots.map(({ slot, idx, item }) => (
-              <Button
-                key={`${slot.itemId}-${idx}`}
-                variant="secondary"
-                size="sm"
-                className="w-full justify-start"
-                disabled={busy}
-                onClick={() => queueAction({ type: 'drink_potion', inventorySlot: idx })}
-              >
-                {(item?.icon || '🧪')} {item?.name || slot.itemId}
-                {Number(slot?.quantity || 0) > 1 ? ` x${slot.quantity}` : ''}
-              </Button>
-            ))}
-          </div>
-        )}
-
-        {actionPanel === 'gear' && (
-          <div class="mt-3 space-y-3">
-            <div>
-              <div class="text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-1">Equip from inventory</div>
-              <div class="space-y-2">
-                {equippableSlots.length === 0 && (
-                  <div class="text-[11px] text-[var(--color-parchment)] opacity-60">
-                    No equippable items in inventory.
-                  </div>
-                )}
-                {equippableSlots.map(({ slot, idx, item }) => (
-                  <Button
-                    key={`${slot.itemId}-${idx}`}
-                    variant="secondary"
-                    size="sm"
-                    className="w-full justify-start"
-                    disabled={busy}
-                    onClick={() => queueAction({ type: 'equip', inventorySlot: idx })}
-                  >
-                    {item?.icon || '🛡️'} Equip {item?.name || slot.itemId}
-                  </Button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <div class="text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-1">Unequip current gear</div>
-              <div class="space-y-2">
-                {equippedSlots.length === 0 && (
-                  <div class="text-[11px] text-[var(--color-parchment)] opacity-60">Nothing equipped.</div>
-                )}
-                {equippedSlots.map(({ slot, entry, item }) => (
-                  <Button
-                    key={`${slot}-${entry.itemId}`}
-                    variant="secondary"
-                    size="sm"
-                    className="w-full justify-start"
-                    disabled={busy}
-                    onClick={() => queueAction({ type: 'unequip', equipmentSlot: slot })}
-                  >
-                    {item?.icon || '▫️'} Unequip {slot}: {item?.name || entry.itemId}
-                  </Button>
-                ))}
-              </div>
-            </div>
           </div>
         )}
       </Card>
