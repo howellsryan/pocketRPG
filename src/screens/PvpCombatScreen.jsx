@@ -576,13 +576,45 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
       <Card>
         <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Quick Actions</div>
-        <div class="flex gap-2 flex-wrap">
-          {foodSlots.length === 0 && <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No food in inventory.</div>}
-          {foodSlots.map(({ slot, idx }) => (
-            <div key={`${slot.itemId}-${idx}`} onClick={() => queueAction({ type: 'eat', inventorySlot: idx })}>
-              <ItemSlot slot={slot} size="small" />
+        <div class="space-y-3">
+          <div>
+            <div class="text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-1">Food</div>
+            <div class="flex gap-2 flex-wrap">
+              {foodSlots.length === 0 && <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No food in inventory.</div>}
+              {foodSlots.map(({ slot, idx }) => (
+                <button
+                  key={`food-${slot.itemId}-${idx}`}
+                  type="button"
+                  class="rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--color-gold)]"
+                  disabled={busy}
+                  onClick={() => queueAction({ type: 'eat', inventorySlot: idx })}
+                >
+                  <ItemSlot slot={slot} size="small" />
+                </button>
+              ))}
             </div>
-          ))}
+          </div>
+
+          <div>
+            <div class="text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-1">Potions</div>
+            <div class="flex gap-2 flex-wrap">
+              {potionSlots.length === 0 && (
+                <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No combat potions in inventory.</div>
+              )}
+              {potionSlots.map(({ slot, idx, item }) => (
+                <button
+                  key={`potion-${slot.itemId}-${idx}`}
+                  type="button"
+                  class="rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--color-gold)]"
+                  disabled={busy}
+                  onClick={() => queueAction({ type: 'drink_potion', inventorySlot: idx })}
+                  title={`Drink ${item?.name || slot.itemId}${Number(slot?.quantity || 0) > 1 ? ` x${slot.quantity}` : ''}`}
+                >
+                  <ItemSlot slot={slot} size="small" />
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </Card>
 
@@ -616,12 +648,12 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
             {availablePrayers.length === 0 ? (
               <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No PvP-usable prayers unlocked.</div>
             ) : (
-              <div class="grid grid-cols-4 gap-2">
+              <div class="grid grid-cols-3 gap-2">
                 {availablePrayers.map((prayer) => {
                   const active = pair.self?.activeCombatPrayer === prayer.id
                   return (
                     <Button key={prayer.id} variant={active ? 'primary' : 'secondary'} size="md" className="min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight" disabled={busy} onClick={() => queueAction({ type: 'toggle_prayer', prayerId: prayer.id })}>
-                      <span class="block truncate">{prayer.icon || '✨'} {prayer.name}</span>
+                      <span class="block">{prayer.icon || '✨'} {prayer.name}</span>
                     </Button>
                   )
                 })}
