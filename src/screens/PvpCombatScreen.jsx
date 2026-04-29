@@ -827,7 +827,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
                     </div>
                   ) : (
                     <div class="rounded-xl border border-[#333] bg-[var(--color-void-light)] px-3 py-2 text-sm text-[var(--color-parchment)] opacity-70">
-                      No itemised loot was returned by the server.
+                      Pick on someone your own size!
                     </div>
                   )}
                 </div>
