@@ -741,7 +741,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
             {availablePrayers.length === 0 ? (
               <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No PvP-usable prayers unlocked.</div>
             ) : (
-              <div class="grid grid-cols-3 gap-2">
+              <div class="grid grid-cols-2 gap-2">
                 {availablePrayers.map((prayer) => {
                   const active = visuallyActivePrayerId === prayer.id
                   return (
