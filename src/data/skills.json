@@ -2610,7 +2610,7 @@
         "rewardTables": [
           {
             "rewards": [
-              { "itemId": "coins", "quantity": [1000, 5000], "chance": 1.0 }
+              { "itemId": "coins", "quantity": [100, 500], "chance": 1.0 }
             ]
           },
           {
