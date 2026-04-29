@@ -108,11 +108,30 @@ export async function sweepStaleRows(env) {
   }
 
   // Long-tail cleanup of completed/aborted match rows + their intents.
-  // Cheap: indexed delete with a bounded range.
+  // Keep retention policy and clear FK-like references before deleting matches.
   try {
     const matchRetention = now - 86_400_000   // 24h
     const intentRetention = now - 3_600_000   // 1h
+
+    // Optional defensive cleanup: if a character lock points at a missing
+    // or non-active match, clear it to avoid stale mutation locks.
+    await env.DB.prepare(
+      `UPDATE characters
+          SET active_match_id = NULL
+        WHERE active_match_id IS NOT NULL
+          AND active_match_id IN (
+            SELECT c.active_match_id
+              FROM characters c
+              LEFT JOIN pvp_matches m ON m.id = c.active_match_id
+             WHERE c.active_match_id IS NOT NULL
+               AND (m.id IS NULL OR m.status != 'active')
+          )`
+    ).run()
+
     await env.DB.batch([
+      env.DB.prepare(
+        "UPDATE pvp_invitations SET match_id = NULL WHERE match_id IN (SELECT id FROM pvp_matches WHERE status != 'active' AND ended_at IS NOT NULL AND ended_at < ?)"
+      ).bind(matchRetention),
       env.DB.prepare(
         "DELETE FROM pvp_intents WHERE match_id IN (SELECT id FROM pvp_matches WHERE status != 'active' AND ended_at IS NOT NULL AND ended_at < ?)"
       ).bind(intentRetention),
@@ -121,7 +140,7 @@ export async function sweepStaleRows(env) {
       ).bind(matchRetention),
     ])
   } catch (e) {
-    console.error('[pvp.sweep] retention cleanup failed:', e?.message || e)
+    console.error('[pvp.sweep] retention cleanup failed (invites/intents/matches):', e?.message || e)
   }
 }
 
