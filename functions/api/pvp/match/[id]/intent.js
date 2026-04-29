@@ -35,6 +35,7 @@ export function validateIntentAction(state, characterId, action) {
   if (action.type === 'forfeit') return { ok: true }
 
   if (action.type === 'queue_special') {
+    if (combatant.specialAttackQueued) return { ok: true }
     const equipped = getEquippedPvpSpecialAttack(combatant, itemsData)
     if (!equipped) return { ok: false, error: 'no_special_attack' }
     if (!hasEnoughPvpSpecialEnergy(combatant, itemsData)) return { ok: false, error: 'insufficient_special_energy' }
