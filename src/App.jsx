@@ -199,25 +199,39 @@ function GameApp() {
     // The completed quest was already removed from the queue when it was
     // started, so the queue holds the next quests to run. Pop the next one
     // off and promote it to the active task.
-    const currentQueue = questQueueRef.current || []
-    if (currentQueue.length > 0) {
-      const nextQuest = currentQueue[0]
-      updateQuestQueue(currentQueue.slice(1))
-      const state = createQuestState(nextQuest)
-      setActiveTask({
-        type: 'quest',
-        quest: nextQuest,
-        totalTicks: state.totalTicks,
-        ticksRemaining: state.ticksRemaining,
-        startedAt: state.startedAt,
-      })
-      addToast(`📜 Started: ${nextQuest.name}`, 'info')
-    } else {
-      setActiveTask(null)
-    }
+    promoteNextQueuedQuestOrClear()
 
     // Finalise the completed quest (show choice modal if needed)
     finaliseQuest(quest.id, quest.name, choices)
+  }
+
+  function clearPersistedActiveTask() {
+    setActiveTask(null)
+    activeTaskRef.current = null
+    try { localStorage.removeItem('pocketrpg_activeTask') } catch { /* best-effort */ }
+  }
+
+  function promoteNextQueuedQuestOrClear() {
+    const currentQueue = questQueueRef.current || []
+    if (currentQueue.length === 0) {
+      clearPersistedActiveTask()
+      return null
+    }
+
+    const nextQuest = currentQueue[0]
+    updateQuestQueue(currentQueue.slice(1))
+    const state = createQuestState(nextQuest)
+    const nextTask = {
+      type: 'quest',
+      quest: nextQuest,
+      totalTicks: state.totalTicks,
+      ticksRemaining: state.ticksRemaining,
+      startedAt: state.startedAt,
+    }
+    setActiveTask(nextTask)
+    activeTaskRef.current = nextTask
+    addToast(`📜 Started: ${nextQuest.name}`, 'info')
+    return nextTask
   }
 
   // Finalise a completed quest: show choice modal if needed, else complete immediately
@@ -1151,94 +1165,25 @@ function GameApp() {
           }
           // Quest cascade — complete quests while time remains
           if (savedTask.type === 'quest') {
-            if (sim.coinsGained > 0) updateBankDirect({ coins: sim.coinsGained })
-
-            const completedQuests = []
-            const aggregatedXp = {}
-            let totalCoinsGained = sim.coinsGained || 0
-            let workingQueue = [...(questQueueRef.current || [])]
-            let remainingElapsedMs = elapsedMs - (sim.ticksUsed * 600)
-            let finalTask = null
-
             if (sim.completed) {
-              // Original quest completed — track for modal
-              completedQuests.push(savedTask.quest)
-              for (const [skill, xp] of Object.entries(savedTask.quest.xpReward || {})) {
-                aggregatedXp[skill] = (aggregatedXp[skill] || 0) + xp
-              }
-              const { choices } = splitXpRewards(savedTask.quest.xpReward)
-              finaliseQuest(savedTask.quest.id, savedTask.quest.name, choices)
-
-              // Cascade through queue while time remains
-              while (workingQueue.length > 0 && remainingElapsedMs > 0) {
-                const nextQuest = workingQueue[0]
-                const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
-                const nextTask = {
-                  type: 'quest',
-                  quest: nextQuest,
-                  totalTicks: nextTotalTicks,
-                  ticksRemaining: nextTotalTicks,
-                }
-                const nextSim = simulateIdleQuest(nextTask, remainingElapsedMs)
-                if (!nextSim) break
-                remainingElapsedMs -= nextSim.ticksUsed * 600
-
-                if (nextSim.completed) {
-                  if (nextSim.coinsGained > 0) {
-                    updateBankDirect({ coins: nextSim.coinsGained })
-                    totalCoinsGained += nextSim.coinsGained
-                  }
-                  completedQuests.push(nextQuest)
-                  for (const [skill, xp] of Object.entries(nextQuest.xpReward || {})) {
-                    aggregatedXp[skill] = (aggregatedXp[skill] || 0) + xp
-                  }
-                  const { fixed: nextFixed, choices: nextChoices } = splitXpRewards(nextQuest.xpReward)
-                  for (const [skill, xp] of Object.entries(nextFixed)) grantXP(skill, xp)
-                  finaliseQuest(nextQuest.id, nextQuest.name, nextChoices)
-                  workingQueue = workingQueue.slice(1)
-                } else {
-                  // Partial progress — this quest becomes the active one
-                  finalTask = {
-                    type: 'quest',
-                    quest: nextQuest,
-                    totalTicks: nextTotalTicks,
-                    ticksRemaining: nextSim.ticksRemaining,
-                    startedAt: Date.now(),
-                  }
-                  workingQueue = workingQueue.slice(1)
-                  break
-                }
-              }
-
-              // No partial quest mid-cascade, but queue still has items: promote head to active
-              if (!finalTask && workingQueue.length > 0) {
-                const nextQuest = workingQueue[0]
-                const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
-                finalTask = {
-                  type: 'quest',
-                  quest: nextQuest,
-                  totalTicks: nextTotalTicks,
-                  ticksRemaining: nextTotalTicks,
-                  startedAt: Date.now(),
-                }
-                workingQueue = workingQueue.slice(1)
-              }
+              const completedQuest = savedTask.quest
+              handleQuestCompletion(
+                completedQuest,
+                completedQuest.xpReward || {},
+                completedQuest.coinReward || 0,
+              )
+              setScreen(SCREENS.QUESTS)
+              setIdleResult(null)
+              addToast(`⏭️ Skipped 1 hour and completed ${completedQuest.name}`, 'levelup', '🏆')
+              idleResultData = null
             } else {
-              // Original quest still running — persist updated progress
-              finalTask = {
+              const updatedTask = {
                 ...savedTask,
                 ticksRemaining: sim.ticksRemaining,
+                startedAt: Date.now(),
               }
-            }
-
-            setActiveTask(finalTask)
-            updateQuestQueue(workingQueue)
-
-            // Add quest data to idle result
-            if (completedQuests.length > 0) {
-              idleResultData.completedQuests = completedQuests
-              idleResultData.aggregatedXpReward = aggregatedXp
-              if (totalCoinsGained > 0) idleResultData.coinsGained = totalCoinsGained
+              setActiveTask(updatedTask)
+              activeTaskRef.current = updatedTask
             }
           } else if (sim.ticksRemaining !== undefined) {
             // Non-quest task — update progress if partial
@@ -1295,7 +1240,7 @@ function GameApp() {
       }
 
       // Show idle result modal with skip summary
-      setIdleResult(idleResultData)
+      if (idleResultData) setIdleResult(idleResultData)
 
       // Save the updated game state to cloud
       if (!isInPvpMatch) schedulePushSave(getSnapshot())

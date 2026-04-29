@@ -11,6 +11,7 @@ import { getCharacterId } from '../cloud/api.js'
 import { normalizePvpState } from '../engine/pvpState.js'
 import { isPvpFoodItem } from '../engine/pvpFood.js'
 import { isPvpCombatPotion } from '../engine/pvpPotions.js'
+import { calculatePvpRiskValues } from '../engine/pvpRisk.js'
 import { formatCompactCoins } from '../utils/formatters.js'
 
 const POLL_VISIBLE_MS = 600
@@ -21,16 +22,37 @@ const MATCH_BOOT_RETRY_MS = 500
 const PVP_SCREEN_PROTECTION_PRAYER_IDS = new Set(['protection_from_magic', 'protection_from_missiles', 'protection_from_melee'])
 const EQUIPMENT_DISPLAY_SLOTS = ['weapon', 'shield', 'head', 'body', 'legs', 'gloves', 'boots', 'cape', 'neck', 'ring', 'ammo']
 
+function getCombatantTotalRisk(combatant) {
+  const risk = calculatePvpRiskValues({
+    inventory: combatant?.inventory,
+    equipment: combatant?.equipment,
+    itemsData,
+  })
+  return Math.max(0, Number(risk.totalShopValue || 0) || 0)
+}
+
+function formatPvpRank(combatant) {
+  const rank = Number(combatant?.pvpRank ?? combatant?.pvp_rank)
+  return Number.isFinite(rank) && rank > 0 ? `#${Math.floor(rank)}` : 'No Rank'
+}
+
 function CompactHpBadge({ label, combatant, align = 'left' }) {
   const current = Math.max(0, Number(combatant?.hp ?? combatant?.currentHP ?? 0) || 0)
   const max = Math.max(1, Number(combatant?.maxHP ?? 1) || 1)
   const pct = Math.max(0, Math.min(100, (current / max) * 100))
+  const totalRisk = getCombatantTotalRisk(combatant)
+  const rankLabel = formatPvpRank(combatant)
 
   return (
     <div class={`min-w-0 ${align === 'right' ? 'text-right' : 'text-left'}`}>
       <div class="text-[10px] uppercase tracking-wide text-[var(--color-parchment)] opacity-60">{label}</div>
       <div class="text-sm font-semibold text-[var(--color-parchment)] truncate">{combatant?.username || '...'}</div>
       <div class="text-[11px] font-[var(--font-mono)] text-[var(--color-gold)]">HP {current}/{max}</div>
+      <div class="text-[10px] text-[var(--color-parchment)] opacity-70">
+        Total Risk: <span class="text-[var(--color-gold)]">{formatCompactCoins(totalRisk)}</span>
+        {' · '}
+        Rank: <span class="text-[var(--color-gold)]">{rankLabel}</span>
+      </div>
       <div class="h-1.5 rounded bg-[var(--color-void)] overflow-hidden mt-1">
         <div class="h-full bg-[var(--color-blood-light)]" style={{ width: `${pct}%` }} />
       </div>
@@ -61,9 +83,12 @@ function EquipmentMiniPanel({ title, combatant, align = 'left' }) {
           <span
             key={`${slot}-${entry.itemId}`}
             title={`${slot}: ${item?.name || entry.itemId}`}
-            class="text-[10px] rounded border border-[var(--color-gold-dim)] px-1.5 py-0.5 bg-[var(--color-void-light)] text-[var(--color-parchment)]"
+            class="inline-flex max-w-full items-center rounded border border-[var(--color-gold-dim)] bg-[var(--color-void-light)] px-1.5 py-0.5 text-[10px] text-[var(--color-parchment)]"
           >
-            {item?.icon || '▫️'} {slot === 'weapon' ? 'Wpn' : slot}
+            <span class="inline-flex max-w-full items-center gap-1 align-middle">
+              <span class="shrink-0">{item?.icon || '▫️'}</span>
+              <span class="truncate">{item?.name || entry.itemId}</span>
+            </span>
           </span>
         ))}
       </div>

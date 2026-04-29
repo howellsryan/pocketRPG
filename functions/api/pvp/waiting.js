@@ -13,7 +13,8 @@
 import { requireAuth, json } from '../../_lib/auth.js'
 import { getOwnedCharacter, sweepStaleRows, assertNotInActiveMatch } from '../../_lib/pvp.js'
 import { readCombatLevel } from '../../_lib/combatLevel.js'
-import { itemsData, readCharacterSave } from '../../_lib/pvpMatch.js'
+import { itemsData, readCharacterSave, readCombatStatLevels } from '../../_lib/pvpMatch.js'
+import { readCharacterPvpRank } from '../../_lib/pvpRanks.js'
 import { calculatePvpRiskValues } from '../../../src/engine/pvpRisk.js'
 
 const CB_BAND = 10
@@ -106,12 +107,17 @@ export async function onRequestGet({ request, env }) {
     band: { lo, hi },
     waiting: await Promise.all((rows.results || []).map(async (r) => {
       try {
-        const save = await readCharacterSave(env, r.character_id)
+        const [save, pvpRank] = await Promise.all([
+          readCharacterSave(env, r.character_id),
+          readCharacterPvpRank(env, r.character_id),
+        ])
+
         const risk = calculatePvpRiskValues({
           inventory: save?.payload?.inventory,
           equipment: save?.payload?.equipment,
           itemsData,
         })
+
         return {
           character_id: r.character_id,
           username: r.username,
@@ -119,6 +125,10 @@ export async function onRequestGet({ request, env }) {
           inventory_shop_value: risk.inventoryShopValue,
           equipment_shop_value: risk.equipmentShopValue,
           total_shop_value: risk.totalShopValue,
+          combat_stats: readCombatStatLevels(save?.payload),
+          total_pvp_kills: pvpRank.totalPvpKills,
+          last_updated_total_pvp_kills: pvpRank.lastUpdatedTotalPvpKills,
+          pvp_rank: pvpRank.rank,
         }
       } catch {
         return {
@@ -128,8 +138,12 @@ export async function onRequestGet({ request, env }) {
           inventory_shop_value: 0,
           equipment_shop_value: 0,
           total_shop_value: 0,
+          combat_stats: readCombatStatLevels(null),
+          total_pvp_kills: 0,
+          last_updated_total_pvp_kills: null,
+          pvp_rank: null,
         }
       }
-    })),
+    }))
   })
 }
