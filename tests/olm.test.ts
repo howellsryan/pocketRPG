@@ -216,8 +216,10 @@ describe('The Great Olm Boss', () => {
   describe('Drop Table', () => {
     const cox = (raidsData as any)['chambers_of_xeric']
 
-    it('olm standalone drops should be empty (loot comes from CoX raid)', () => {
-      expect(olm.drops).toHaveLength(0)
+    it('olm standalone drops should only include the master clue drop', () => {
+      expect(olm.drops).toHaveLength(1)
+      expect(olm.drops[0].itemId).toBe('clue_scroll_master')
+      expect(olm.drops[0].chance).toBe(0.02)
     })
 
     it('CoX raid should always drop coins', () => {

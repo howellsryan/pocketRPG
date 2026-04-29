@@ -83,9 +83,31 @@ async function finalizeTerminalMatch(env, match, stateNext, terminal, appliedInt
     ]
     const markIntents = appliedIntentsStatement(env, appliedIntentIds)
     if (markIntents) writes.push(markIntents)
-    const [winnerUpdate, loserUpdate, matchUpdate] = await env.DB.batch(writes)
+    writes.push(env.DB.prepare(
+      `UPDATE characters
+          SET total_pvp_kills = COALESCE(total_pvp_kills, 0) + 1,
+              last_updated_total_pvp_kills = ?
+        WHERE id = ?
+          AND EXISTS (
+            SELECT 1 FROM pvp_matches
+             WHERE id = ?
+               AND status = 'completed'
+               AND winner_character_id = ?
+               AND ended_at = ?
+          )`
+    ).bind(now, winnerId, match.id, winnerId, now))
+    const batchResults = await env.DB.batch(writes)
+    const winnerUpdate = batchResults[0]
+    const loserUpdate = batchResults[1]
+    const matchUpdate = batchResults[2]
+    const killUpdate = batchResults[batchResults.length - 1]
 
-    if (winnerUpdate.meta.changes !== 1 || loserUpdate.meta.changes !== 1 || matchUpdate.meta.changes !== 1) {
+    if (
+      winnerUpdate.meta.changes !== 1 ||
+      loserUpdate.meta.changes !== 1 ||
+      matchUpdate.meta.changes !== 1 ||
+      killUpdate.meta.changes !== 1
+    ) {
       continue
     }
     return { ok: true, loot }

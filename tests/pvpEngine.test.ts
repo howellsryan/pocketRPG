@@ -170,6 +170,24 @@ describe('pvpEngine phase 2B contract', () => {
     expect(out.events.some((e: any) => e.type === 'attack' && e.special === true)).toBe(true)
   })
 
+  it('preserves PvP rank metadata on match combatants', () => {
+    const a = buildPlayer({ characterId: 1 }) as any
+    const b = buildPlayer({ characterId: 2 }) as any
+    a.totalPvpKills = 2
+    a.lastUpdatedTotalPvpKills = 1000
+    a.pvpRank = 1
+    b.totalPvpKills = 0
+    b.lastUpdatedTotalPvpKills = null
+    b.pvpRank = null
+
+    const state = createPvpState(a, b, 0)
+
+    expect(state.combatants['1'].totalPvpKills).toBe(2)
+    expect(state.combatants['1'].pvpRank).toBe(1)
+    expect(state.combatants['2'].totalPvpKills).toBe(0)
+    expect(state.combatants['2'].pvpRank).toBeNull()
+  })
+
   it('applies prayer bonuses without permanently inflating base stats', () => {
     const a = buildPlayer({ characterId: 1, stance: 'accurate' })
     const b = buildPlayer({ characterId: 2, stance: 'defensive' })
