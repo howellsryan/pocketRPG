@@ -11,7 +11,7 @@ export const PVP_SPECIAL_ATTACK_LABELS = {
   pebble_shot: '🎯 Pebble Shot',
   shove: '🗡️ Shove',
   toxic_siphon: '🎋 Toxic Siphon',
-  slice_and_dice: '🦀🦀🦀🦀 Slice and Dice',
+  slice_and_dice: '🦀 Slice and Dice',
   lunge: '🔰 The Block',
 }
 
