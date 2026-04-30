@@ -38675,6 +38675,7 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                     const defeatedMonsterName = defeatedMonsterData?.name || defeatedMonster?.name || state.monster?.name || 'Monster';
                     const isDefeatedBoss = defeatedMonsterData?.boss === true || defeatedMonster?.boss === true;
                     const killLoot = Array.isArray(ev.loot) ? ev.loot : [];
+                    let slayerXpGained = 0;
                     setKillCount(k => k + 1);
                     // Boss kill count tracking
                     if (isDefeatedBoss && defeatedMonsterId) {
@@ -38698,13 +38699,16 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                             const pts = task.pointsOnComplete;
                             const newPts = slayerPointsRef.current + pts;
                             updateSlayerPoints(newPts);
+                            slayerTaskRef.current = null;
                             setSlayerTask(null);
                             addToast(pts > 0
                                 ? `💀 Slayer task complete! +${pts} points (${newPts} total)`
                                 : '💀 Slayer task complete!', 'levelup');
                         }
                         else {
-                            setSlayerTask({ ...task, monstersRemaining: newRemaining });
+                            const updatedTask = { ...task, monstersRemaining: newRemaining };
+                            slayerTaskRef.current = updatedTask;
+                            setSlayerTask(updatedTask);
                         }
                     }
                     if (killLoot.length > 0) {
