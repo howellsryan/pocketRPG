@@ -11,7 +11,7 @@ import {
   effectiveMagic, monsterMagicDefenceRoll, magicMaxHit
 } from './formulas.js'
 import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getCombatType } from './equipment.js'
-import { getToolSpeedMultiplier } from './skilling.js'
+import { getEffectiveToolActionTicks } from './skilling.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE } from '../utils/constants.js'
 import { getAgilityBankDelayFromStats, simulateIdleAgility } from './agility.js'
@@ -83,10 +83,8 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
 
   const totalTicks = Math.floor(elapsedMs / TICK_MS)
 
-  // Apply tool speed multiplier (e.g. mithril axe for woodcutting)
-  // Use provided inventory to check for tools; prefer equipped tools if available
-  const toolMult = getToolSpeedMultiplier(task.skill, equipment, itemsData, stats, inventory)
-  const actionTicks = Math.max(1, Math.floor(task.action.ticks * toolMult))
+  // Apply the same effective tool timing as active skilling.
+  const actionTicks = getEffectiveToolActionTicks(task.skill, task.action.ticks, equipment, itemsData, stats, inventory)
 
   let actions = Math.floor(totalTicks / actionTicks)
   if (actions <= 0) return null
