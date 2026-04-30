@@ -526,6 +526,22 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
     }
   }, [initialTaskId])
 
+  // If the app-level task is cleared (for example by skip preflight exhaustion),
+  // force-close any local gather action view so the user returns to the picker.
+  useEffect(() => {
+    if (!activeTask) return
+    const globalGatherTask = globalActiveTask?.type === 'gather' ? globalActiveTask.gatherTask : null
+    if (!globalGatherTask) {
+      taskRef.current = null
+      setLocalTask(null)
+      return
+    }
+    if (globalGatherTask.id !== activeTask.task?.id) {
+      taskRef.current = null
+      setLocalTask(null)
+    }
+  }, [globalActiveTask, activeTask])
+
 
 
   // Active gathering modal — show if we have a local task OR a global minigame
