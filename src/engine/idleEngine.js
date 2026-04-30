@@ -16,6 +16,7 @@ import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE } from '../utils/constants.js'
 import { getAgilityBankDelayFromStats, simulateIdleAgility } from './agility.js'
 import { rollClueRewards } from './clueScrolls.js'
+import { resolveSlayerTaskKill } from './slayerTasks.js'
 
 const TICK_MS = 600
 const HP_REGEN_INTERVAL_MS = 60000 // 60 seconds per 1 HP
@@ -788,7 +789,6 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     // Check if this kill counts toward slayer task — cap at total task count
     if (slayerTask && slayerTask.monsterId === monster.id && monstersKilledOnTask < slayerTask.monstersRemaining) {
       monstersKilledOnTask++
-      slayerXpGained += (monster.slayerXP || monster.hitpoints) * 2
     }
 
     // XP for this kill
@@ -889,14 +889,15 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
 
   // Calculate slayer task update
   let slayerTaskUpdate = null
-  if (slayerTask && monstersKilledOnTask > 0) {
-    const newRemaining = Math.max(0, slayerTask.monstersRemaining - monstersKilledOnTask)
-    if (newRemaining <= 0) {
-      // Task complete
-      slayerTaskUpdate = { ...slayerTask, monstersRemaining: 0, completed: true }
-    } else {
-      // Task in progress
-      slayerTaskUpdate = { ...slayerTask, monstersRemaining: newRemaining }
+  if (slayerTask && monster?.id && monstersKilled > 0) {
+    const slayerResult = resolveSlayerTaskKill(slayerTask, monster.id, monstersKilled)
+    if (slayerResult.onTask) {
+      const killsForTask = slayerResult.killsApplied
+      slayerXpGained = ((monster.slayerXP || monster.hitpoints) * 2) * killsForTask
+      slayerTaskUpdate = slayerResult.completed
+        ? { completed: true, pointsOnComplete: slayerResult.pointsAwarded, killsApplied: slayerResult.killsApplied }
+        : slayerResult.task
+      monstersKilledOnTask = killsForTask
     }
   }
 

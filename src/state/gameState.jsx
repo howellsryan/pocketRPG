@@ -237,8 +237,10 @@ export function GameProvider({ children }) {
             if (sim.slayerTaskUpdate.completed) {
               // Task complete — clear it and award points
               await saveSetting('slayerTask', null)
-              const newSlayerPoints = (savedSlayerPoints || 0) + sim.slayerTaskUpdate.pointsOnComplete
+              const points = Math.max(0, Math.floor(Number(sim.slayerTaskUpdate.pointsOnComplete) || 0))
+              const newSlayerPoints = Math.max(0, Math.floor(Number(savedSlayerPoints) || 0)) + points
               await saveSetting('slayerPoints', newSlayerPoints)
+              savedSlayerPoints = newSlayerPoints
             } else {
               // Task in progress — update monstersRemaining
               await saveSetting('slayerTask', sim.slayerTaskUpdate)
@@ -349,11 +351,7 @@ export function GameProvider({ children }) {
       ? (idleResult.slayerTaskUpdate.completed ? null : idleResult.slayerTaskUpdate)
       : (savedSlayerTask ?? null)
     setSlayerTaskState(finalSlayerTask)
-    // Award slayer points if task was completed during idle
-    const slayerPointsEarned = (idleResult && idleResult.slayerTaskUpdate && idleResult.slayerTaskUpdate.completed)
-      ? idleResult.slayerTaskUpdate.pointsOnComplete
-      : 0
-    setSlayerPointsState((savedSlayerPoints ?? 0) + slayerPointsEarned)
+    setSlayerPointsState(savedSlayerPoints ?? 0)
     setActiveCombatSpellState(savedActiveCombatSpell ?? null)
     setBossKillCountsState(savedBossKillCounts ?? {})
     setRaidKillCountsState(savedRaidKillCounts ?? {})
@@ -543,6 +541,17 @@ export function GameProvider({ children }) {
     saveSetting('slayerPoints', points)
   }, [])
 
+  const awardSlayerPoints = useCallback((pointsToAdd) => {
+    const amount = Math.max(0, Math.floor(Number(pointsToAdd) || 0))
+    if (amount <= 0) return
+
+    setSlayerPointsState(prev => {
+      const next = Math.max(0, Math.floor(Number(prev) || 0)) + amount
+      saveSetting('slayerPoints', next)
+      return next
+    })
+  }, [])
+
   const updateBossKillCounts = useCallback((counts) => {
     setBossKillCountsState(counts)
     saveSetting('bossKillCounts', counts)
@@ -693,7 +702,7 @@ export function GameProvider({ children }) {
     loaded, player, stats, inventory, equipment, bank, currentHP, toasts, isSaving,
     homeShortcuts, combatStance, activeTask, autoBankLoot, bankConfig,
     unlockedFeatures, unlockFeature,
-    slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints,
+    slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, awardSlayerPoints,
     activeCombatSpell, updateActiveCombatSpell,
     bossKillCounts, updateBossKillCounts,
     raidKillCounts, updateRaidKillCounts,
