@@ -22,6 +22,7 @@ const sourceFiles = [
   'engine/thieving.js',
   'engine/hunter.js',
   'engine/runes.js',
+  'engine/slayerRewards.js',
   'engine/combat.js',
   'engine/combatant.js',
   'engine/combatPrimitives.js',
