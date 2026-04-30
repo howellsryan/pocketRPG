@@ -65,7 +65,7 @@ function clampByClockWatermark(elapsedMs) {
 }
 
 function GameApp() {
-  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue } = useGame()
+  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [gameReady, setGameReady] = useState(false)
@@ -609,8 +609,10 @@ function GameApp() {
           if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
             if (sim.slayerTaskUpdate.completed) {
               setSlayerTask(null)
-              updateSlayerPoints(slayerPoints + sim.slayerTaskUpdate.pointsOnComplete)
-              addToast('💀 Slayer task completed!', 'levelup')
+              awardSlayerPoints(sim.slayerTaskUpdate.pointsOnComplete)
+              addToast(sim.slayerTaskUpdate.pointsOnComplete > 0
+                ? `💀 Slayer task completed! +${sim.slayerTaskUpdate.pointsOnComplete} points`
+                : '💀 Slayer task completed!', 'levelup')
             } else {
               setSlayerTask(sim.slayerTaskUpdate)
             }
@@ -1161,8 +1163,10 @@ function GameApp() {
           if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
             if (sim.slayerTaskUpdate.completed) {
               setSlayerTask(null)
-              updateSlayerPoints(slayerPoints + sim.slayerTaskUpdate.pointsOnComplete)
-              addToast('💀 Slayer task completed!', 'levelup')
+              awardSlayerPoints(sim.slayerTaskUpdate.pointsOnComplete)
+              addToast(sim.slayerTaskUpdate.pointsOnComplete > 0
+                ? `💀 Slayer task completed! +${sim.slayerTaskUpdate.pointsOnComplete} points`
+                : '💀 Slayer task completed!', 'levelup')
             } else {
               setSlayerTask(sim.slayerTaskUpdate)
             }

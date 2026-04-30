@@ -24,6 +24,7 @@ import spellsData from '../data/spells.json'
 import raidsData from '../data/raids.json'
 import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slayerRewards.js'
+import { resolveSlayerTaskKill } from '../engine/slayerTasks.js'
 import { CRITICAL_SAVE_REASONS, hasCriticalDrop } from '../cloud/criticalSavePolicy.js'
 
 const COMBAT_CATEGORIES = [
@@ -177,7 +178,7 @@ async function performOneLifeReset() {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame } = useGame()
   const pvp = usePvp()
   const [showPvpLobby, setShowPvpLobby] = useState(false)
 
@@ -203,7 +204,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const equipmentRef = useRef(equipment)
   const slayerTaskRef = useRef(slayerTask)
   const pvpCrashHandledRef = useRef(false)
-  const slayerPointsRef = useRef(slayerPoints)
   const bossKillCountsRef = useRef(bossKillCounts)
   const raidKillCountsRef = useRef(raidKillCounts)
   const unlockedFeaturesRef = useRef(unlockedFeatures)
@@ -251,7 +251,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   useEffect(() => { statsRef.current = stats }, [stats])
   useEffect(() => { equipmentRef.current = equipment }, [equipment])
   useEffect(() => { slayerTaskRef.current = slayerTask }, [slayerTask])
-  useEffect(() => { slayerPointsRef.current = slayerPoints }, [slayerPoints])
   useEffect(() => { bossKillCountsRef.current = bossKillCounts }, [bossKillCounts])
   useEffect(() => { raidKillCountsRef.current = raidKillCounts }, [raidKillCounts])
   useEffect(() => { unlockedFeaturesRef.current = unlockedFeatures }, [unlockedFeatures])
@@ -688,21 +687,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 time: Date.now()
               }])
             }
-            const newRemaining = task.monstersRemaining - 1
-            if (newRemaining <= 0) {
-              // Task complete!
-              const pts = task.pointsOnComplete
-              const newPts = slayerPointsRef.current + pts
-              updateSlayerPoints(newPts)
+            const slayerResult = resolveSlayerTaskKill(task, defeatedMonsterId, 1)
+            if (slayerResult.completed) {
               slayerTaskRef.current = null
               setSlayerTask(null)
-              addToast(pts > 0
-                ? `💀 Slayer task complete! +${pts} points (${newPts} total)`
+              awardSlayerPoints(slayerResult.pointsAwarded)
+              addToast(slayerResult.pointsAwarded > 0
+                ? `💀 Slayer task completed! +${slayerResult.pointsAwarded} points`
                 : '💀 Slayer task complete!', 'levelup')
-            } else {
-              const updatedTask = { ...task, monstersRemaining: newRemaining }
-              slayerTaskRef.current = updatedTask
-              setSlayerTask(updatedTask)
+            } else if (slayerResult.onTask) {
+              slayerTaskRef.current = slayerResult.task
+              setSlayerTask(slayerResult.task)
             }
           }
 

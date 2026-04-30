@@ -1,0 +1,63 @@
+import { describe, expect, it } from 'vitest'
+import { resolveSlayerTaskKill } from '../src/engine/slayerTasks.js'
+
+describe('resolveSlayerTaskKill', () => {
+  it('does nothing when the killed monster is not on task', () => {
+    const task = { monsterId: 'goblin', monstersRemaining: 3, pointsOnComplete: 4 }
+    const result = resolveSlayerTaskKill(task, 'cow', 1)
+    expect(result.onTask).toBe(false)
+    expect(result.completed).toBe(false)
+    expect(result.task).toEqual(task)
+    expect(result.killsApplied).toBe(0)
+    expect(result.pointsAwarded).toBe(0)
+  })
+
+  it('decrements an active task without awarding points before completion', () => {
+    const task = { monsterId: 'goblin', monstersRemaining: 3, pointsOnComplete: 4 }
+    const result = resolveSlayerTaskKill(task, 'goblin', 1)
+    expect(result.onTask).toBe(true)
+    expect(result.completed).toBe(false)
+    expect(result.task?.monstersRemaining).toBe(2)
+    expect(result.killsApplied).toBe(1)
+    expect(result.pointsAwarded).toBe(0)
+  })
+
+  it('awards points exactly once when the final kill completes the task', () => {
+    const task = { monsterId: 'goblin', monstersRemaining: 1, pointsOnComplete: 4 }
+    const result = resolveSlayerTaskKill(task, 'goblin', 1)
+    expect(result.onTask).toBe(true)
+    expect(result.completed).toBe(true)
+    expect(result.task).toBe(null)
+    expect(result.killsApplied).toBe(1)
+    expect(result.pointsAwarded).toBe(4)
+  })
+
+  it('caps applied kills to remaining task count during idle overkill', () => {
+    const task = { monsterId: 'goblin', monstersRemaining: 2, pointsOnComplete: 4 }
+    const result = resolveSlayerTaskKill(task, 'goblin', 10)
+    expect(result.onTask).toBe(true)
+    expect(result.completed).toBe(true)
+    expect(result.task).toBe(null)
+    expect(result.killsApplied).toBe(2)
+    expect(result.pointsAwarded).toBe(4)
+  })
+
+  it('completes zero-point tasks without awarding points', () => {
+    const task = { monsterId: 'chicken', monstersRemaining: 1, pointsOnComplete: 0 }
+    const result = resolveSlayerTaskKill(task, 'chicken', 1)
+    expect(result.completed).toBe(true)
+    expect(result.task).toBe(null)
+    expect(result.killsApplied).toBe(1)
+    expect(result.pointsAwarded).toBe(0)
+  })
+
+  it('normalises invalid kill counts without changing the task', () => {
+    const task = { monsterId: 'goblin', monstersRemaining: 3, pointsOnComplete: 4 }
+    const result = resolveSlayerTaskKill(task, 'goblin', -10)
+    expect(result.onTask).toBe(true)
+    expect(result.completed).toBe(false)
+    expect(result.task).toEqual(task)
+    expect(result.killsApplied).toBe(0)
+    expect(result.pointsAwarded).toBe(0)
+  })
+})

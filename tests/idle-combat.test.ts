@@ -49,4 +49,23 @@ describe('simulateIdleCombat', () => {
     expect(sim!.xpGained.attack).toBeUndefined()
     expect(sim!.xpGained.strength).toBeUndefined()
   })
+
+  it('returns completed slayerTaskUpdate with capped task kills and points on idle overkill', () => {
+    const task: any = {
+      stance: 'accurate',
+      monster: { id: 'goblin', name: 'Goblin', hitpoints: 1, stats: { defence: 1 }, defenceBonus: {}, drops: [] }
+    }
+    const stats: any = { attack: { xp: 13_034_431 }, strength: { xp: 13_034_431 }, defence: { xp: 0 } }
+    const sim = simulateIdleCombat(task, 60_000, stats, {}, Array(28).fill(null), {}, {
+      monsterId: 'goblin',
+      monstersRemaining: 2,
+      pointsOnComplete: 4
+    })
+
+    expect(sim).toBeTruthy()
+    expect(sim!.monstersKilled).toBeGreaterThan(2)
+    expect(sim!.monstersKilledOnTask).toBe(2)
+    expect(sim!.slayerTaskUpdate?.completed).toBe(true)
+    expect(sim!.slayerTaskUpdate?.pointsOnComplete).toBe(4)
+  })
 })

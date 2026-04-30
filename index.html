@@ -29319,6 +29319,51 @@ function getSlayerTaskXpForKill(defeatedMonster, currentMonster, monstersData = 
     return Math.floor(baseXp * multiplier);
 }
 
+// ── engine/slayerTasks.js ──
+function resolveSlayerTaskKill(task, monsterId, killCount = 1) {
+    if (!task || !monsterId || task.monsterId !== monsterId) {
+        return {
+            onTask: false,
+            completed: false,
+            task,
+            killsApplied: 0,
+            pointsAwarded: 0,
+        };
+    }
+    const kills = Math.max(0, Math.floor(Number(killCount) || 0));
+    if (kills <= 0) {
+        return {
+            onTask: true,
+            completed: false,
+            task,
+            killsApplied: 0,
+            pointsAwarded: 0,
+        };
+    }
+    const remainingBefore = Math.max(0, Math.floor(Number(task.monstersRemaining) || 0));
+    const killsApplied = Math.min(remainingBefore, kills);
+    const remainingAfter = Math.max(0, remainingBefore - killsApplied);
+    if (remainingAfter <= 0) {
+        return {
+            onTask: true,
+            completed: true,
+            task: null,
+            killsApplied,
+            pointsAwarded: Math.max(0, Math.floor(Number(task.pointsOnComplete) || 0)),
+        };
+    }
+    return {
+        onTask: true,
+        completed: false,
+        task: {
+            ...task,
+            monstersRemaining: remainingAfter,
+        },
+        killsApplied,
+        pointsAwarded: 0,
+    };
+}
+
 // ── engine/combat.js ──
 
 
@@ -32204,6 +32249,7 @@ function hasToolForSkill(skill, equipment, inventory, itemsData, stats = {}) {
 
 
 
+
 const TICK_MS = 600;
 const HP_REGEN_INTERVAL_MS = 60000; // 60 seconds per 1 HP
 /**
@@ -32952,7 +32998,6 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
         // Check if this kill counts toward slayer task — cap at total task count
         if (slayerTask && slayerTask.monsterId === monster.id && monstersKilledOnTask < slayerTask.monstersRemaining) {
             monstersKilledOnTask++;
-            slayerXpGained += (monster.slayerXP || monster.hitpoints) * 2;
         }
         // XP for this kill
         for (const [skill, xp] of Object.entries(xpPerKill)) {
@@ -33058,15 +33103,15 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
     }
     // Calculate slayer task update
     let slayerTaskUpdate = null;
-    if (slayerTask && monstersKilledOnTask > 0) {
-        const newRemaining = Math.max(0, slayerTask.monstersRemaining - monstersKilledOnTask);
-        if (newRemaining <= 0) {
-            // Task complete
-            slayerTaskUpdate = { ...slayerTask, monstersRemaining: 0, completed: true };
-        }
-        else {
-            // Task in progress
-            slayerTaskUpdate = { ...slayerTask, monstersRemaining: newRemaining };
+    if (slayerTask && monster?.id && monstersKilled > 0) {
+        const slayerResult = resolveSlayerTaskKill(slayerTask, monster.id, monstersKilled);
+        if (slayerResult.onTask) {
+            const killsForTask = slayerResult.killsApplied;
+            slayerXpGained = ((monster.slayerXP || monster.hitpoints) * 2) * killsForTask;
+            slayerTaskUpdate = slayerResult.completed
+                ? { completed: true, pointsOnComplete: slayerResult.pointsAwarded, killsApplied: slayerResult.killsApplied }
+                : slayerResult.task;
+            monstersKilledOnTask = killsForTask;
         }
     }
     // Track scale charges consumed by the weapon during idle combat
@@ -34980,8 +35025,10 @@ function GameProvider({ children }) {
                         if (sim.slayerTaskUpdate.completed) {
                             // Task complete — clear it and award points
                             await saveSetting('slayerTask', null);
-                            const newSlayerPoints = (savedSlayerPoints || 0) + sim.slayerTaskUpdate.pointsOnComplete;
+                            const points = Math.max(0, Math.floor(Number(sim.slayerTaskUpdate.pointsOnComplete) || 0));
+                            const newSlayerPoints = Math.max(0, Math.floor(Number(savedSlayerPoints) || 0)) + points;
                             await saveSetting('slayerPoints', newSlayerPoints);
+                            savedSlayerPoints = newSlayerPoints;
                         }
                         else {
                             // Task in progress — update monstersRemaining
@@ -35081,11 +35128,7 @@ function GameProvider({ children }) {
             ? (idleResult.slayerTaskUpdate.completed ? null : idleResult.slayerTaskUpdate)
             : (savedSlayerTask ?? null);
         setSlayerTaskState(finalSlayerTask);
-        // Award slayer points if task was completed during idle
-        const slayerPointsEarned = (idleResult && idleResult.slayerTaskUpdate && idleResult.slayerTaskUpdate.completed)
-            ? idleResult.slayerTaskUpdate.pointsOnComplete
-            : 0;
-        setSlayerPointsState((savedSlayerPoints ?? 0) + slayerPointsEarned);
+        setSlayerPointsState(savedSlayerPoints ?? 0);
         setActiveCombatSpellState(savedActiveCombatSpell ?? null);
         setBossKillCountsState(savedBossKillCounts ?? {});
         setRaidKillCountsState(savedRaidKillCounts ?? {});
@@ -35261,6 +35304,16 @@ function GameProvider({ children }) {
         setSlayerPointsState(points);
         saveSetting('slayerPoints', points);
     }, []);
+    const awardSlayerPoints = useCallback((pointsToAdd) => {
+        const amount = Math.max(0, Math.floor(Number(pointsToAdd) || 0));
+        if (amount <= 0)
+            return;
+        setSlayerPointsState(prev => {
+            const next = Math.max(0, Math.floor(Number(prev) || 0)) + amount;
+            saveSetting('slayerPoints', next);
+            return next;
+        });
+    }, []);
     const updateBossKillCounts = useCallback((counts) => {
         setBossKillCountsState(counts);
         saveSetting('bossKillCounts', counts);
@@ -35404,7 +35457,7 @@ function GameProvider({ children }) {
         loaded, player, stats, inventory, equipment, bank, currentHP, toasts, isSaving,
         homeShortcuts, combatStance, activeTask, autoBankLoot, bankConfig,
         unlockedFeatures, unlockFeature,
-        slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints,
+        slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, awardSlayerPoints,
         activeCombatSpell, updateActiveCombatSpell,
         bossKillCounts, updateBossKillCounts,
         raidKillCounts, updateRaidKillCounts,
@@ -35713,8 +35766,12 @@ function ToastContainer() {
 
 // ── components/Header.js ──
 
+
 function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null, onBuyCredits = null }) {
     const { player, currentHP, getMaxHP, isSaving } = useGame();
+    const [showSaved, setShowSaved] = useState(false);
+    const previousSavingRef = useRef(false);
+    const savedTimeoutRef = useRef(null);
     if (!player)
         return null;
     const maxHP = getMaxHP();
@@ -35724,8 +35781,27 @@ function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null
         if (onSkip1h)
             onSkip1h();
     };
+    useEffect(() => {
+        if (previousSavingRef.current && !isSaving) {
+            setShowSaved(true);
+            if (savedTimeoutRef.current)
+                clearTimeout(savedTimeoutRef.current);
+            savedTimeoutRef.current = setTimeout(() => {
+                setShowSaved(false);
+            }, 3000);
+        }
+        previousSavingRef.current = isSaving;
+    }, [isSaving]);
+    useEffect(() => () => {
+        if (savedTimeoutRef.current)
+            clearTimeout(savedTimeoutRef.current);
+    }, []);
     return (h("header", { class: "relative flex-shrink-0 bg-[#111] border-b border-[#333] px-3 py-2" },
-        h("div", { class: "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" }, isSaving && h("div", { class: "h-3.5 w-3.5 rounded-full border-2 border-[#555] border-t-[var(--color-gold)] animate-spin", "aria-label": "Saving" })),
+        h("div", { class: "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" },
+            isSaving && h("div", { class: "h-3.5 w-3.5 rounded-full border-2 border-[#555] border-t-[var(--color-gold)] animate-spin", "aria-label": "Saving" }),
+            !isSaving && showSaved && (h("div", { class: "flex items-center gap-1 text-[10px] font-semibold text-[var(--color-success)]", "aria-label": "Saved" },
+                h("span", null, "\u2713"),
+                h("span", null, "Saved")))),
         h("div", { class: "flex items-center justify-between gap-2" },
             h("div", { class: "flex items-center gap-1" },
                 h("button", { onClick: handleSkip, class: "flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1a2a1a] border border-[#3a5a3a] hover:border-[#5a8a5a] transition-colors text-[10px] font-semibold text-[var(--color-parchment)] whitespace-nowrap", title: "Skip 1 hour (requires 1 credit)" },
@@ -38371,6 +38447,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
 
 
 
+
 const COMBAT_CATEGORIES = [
     {
         key: 'training',
@@ -38527,7 +38604,7 @@ async function performOneLifeReset() {
     clearAuth();
 }
 function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange }) {
-    const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame } = useGame();
+    const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame } = useGame();
     const pvp = usePvp();
     const [showPvpLobby, setShowPvpLobby] = useState(false);
     const [combat, setCombat] = useState(null);
@@ -38551,7 +38628,6 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
     const equipmentRef = useRef(equipment);
     const slayerTaskRef = useRef(slayerTask);
     const pvpCrashHandledRef = useRef(false);
-    const slayerPointsRef = useRef(slayerPoints);
     const bossKillCountsRef = useRef(bossKillCounts);
     const raidKillCountsRef = useRef(raidKillCounts);
     const unlockedFeaturesRef = useRef(unlockedFeatures);
@@ -38598,7 +38674,6 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
     useEffect(() => { statsRef.current = stats; }, [stats]);
     useEffect(() => { equipmentRef.current = equipment; }, [equipment]);
     useEffect(() => { slayerTaskRef.current = slayerTask; }, [slayerTask]);
-    useEffect(() => { slayerPointsRef.current = slayerPoints; }, [slayerPoints]);
     useEffect(() => { bossKillCountsRef.current = bossKillCounts; }, [bossKillCounts]);
     useEffect(() => { raidKillCountsRef.current = raidKillCounts; }, [raidKillCounts]);
     useEffect(() => { unlockedFeaturesRef.current = unlockedFeatures; }, [unlockedFeatures]);
@@ -39031,22 +39106,18 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                                     time: Date.now()
                                 }]);
                         }
-                        const newRemaining = task.monstersRemaining - 1;
-                        if (newRemaining <= 0) {
-                            // Task complete!
-                            const pts = task.pointsOnComplete;
-                            const newPts = slayerPointsRef.current + pts;
-                            updateSlayerPoints(newPts);
+                        const slayerResult = resolveSlayerTaskKill(task, defeatedMonsterId, 1);
+                        if (slayerResult.completed) {
                             slayerTaskRef.current = null;
                             setSlayerTask(null);
-                            addToast(pts > 0
-                                ? `💀 Slayer task complete! +${pts} points (${newPts} total)`
+                            awardSlayerPoints(slayerResult.pointsAwarded);
+                            addToast(slayerResult.pointsAwarded > 0
+                                ? `💀 Slayer task completed! +${slayerResult.pointsAwarded} points`
                                 : '💀 Slayer task complete!', 'levelup');
                         }
-                        else {
-                            const updatedTask = { ...task, monstersRemaining: newRemaining };
-                            slayerTaskRef.current = updatedTask;
-                            setSlayerTask(updatedTask);
+                        else if (slayerResult.onTask) {
+                            slayerTaskRef.current = slayerResult.task;
+                            setSlayerTask(slayerResult.task);
                         }
                     }
                     if (killLoot.length > 0) {
@@ -43877,7 +43948,7 @@ function clampByClockWatermark(elapsedMs) {
     return elapsedMs;
 }
 function GameApp() {
-    const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue } = useGame();
+    const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue } = useGame();
     const pvp = usePvp();
     const [screen, setScreen] = useState(SCREENS.HOME);
     const [gameReady, setGameReady] = useState(false);
@@ -44445,8 +44516,10 @@ function GameApp() {
                     if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
                         if (sim.slayerTaskUpdate.completed) {
                             setSlayerTask(null);
-                            updateSlayerPoints(slayerPoints + sim.slayerTaskUpdate.pointsOnComplete);
-                            addToast('💀 Slayer task completed!', 'levelup');
+                            awardSlayerPoints(sim.slayerTaskUpdate.pointsOnComplete);
+                            addToast(sim.slayerTaskUpdate.pointsOnComplete > 0
+                                ? `💀 Slayer task completed! +${sim.slayerTaskUpdate.pointsOnComplete} points`
+                                : '💀 Slayer task completed!', 'levelup');
                         }
                         else {
                             setSlayerTask(sim.slayerTaskUpdate);
@@ -45012,8 +45085,10 @@ function GameApp() {
                     if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
                         if (sim.slayerTaskUpdate.completed) {
                             setSlayerTask(null);
-                            updateSlayerPoints(slayerPoints + sim.slayerTaskUpdate.pointsOnComplete);
-                            addToast('💀 Slayer task completed!', 'levelup');
+                            awardSlayerPoints(sim.slayerTaskUpdate.pointsOnComplete);
+                            addToast(sim.slayerTaskUpdate.pointsOnComplete > 0
+                                ? `💀 Slayer task completed! +${sim.slayerTaskUpdate.pointsOnComplete} points`
+                                : '💀 Slayer task completed!', 'levelup');
                         }
                         else {
                             setSlayerTask(sim.slayerTaskUpdate);
