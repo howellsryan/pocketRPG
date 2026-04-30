@@ -1,5 +1,4 @@
 import { TICK_DURATION } from '../utils/constants.js'
-import { simulateIdleQuest } from './quests.js'
 
 function normaliseElapsedMs(elapsedMs) {
   const parsed = Number(elapsedMs)
@@ -13,12 +12,12 @@ function questTotalTicks(quest) {
 
 export function createQueuedQuestTask(quest, ticksRemaining = null, now = Date.now()) {
   const totalTicks = questTotalTicks(quest)
-  const parsedRemaining = Number(ticksRemaining)
+  const parsedRemaining = ticksRemaining == null ? null : Number(ticksRemaining)
   return {
     type: 'quest',
     quest,
     totalTicks,
-    ticksRemaining: Number.isFinite(parsedRemaining)
+    ticksRemaining: parsedRemaining != null && Number.isFinite(parsedRemaining)
       ? Math.max(0, Math.min(totalTicks, Math.floor(parsedRemaining)))
       : totalTicks,
     startedAt: now,
@@ -58,46 +57,46 @@ export function simulateQuestIdleCascade({ activeTask, questQueue = [], elapsedM
     }
   }
 
-  let remainingMs = safeElapsedMs
-  let currentTask = {
-    ...activeTask,
-    totalTicks: activeTask.totalTicks || questTotalTicks(activeTask.quest),
-    ticksRemaining: activeTask.ticksRemaining ?? activeTask.totalTicks ?? questTotalTicks(activeTask.quest),
-  }
+  let remainingTicks = Math.floor(safeElapsedMs / TICK_DURATION)
+  let currentTask = createQueuedQuestTask(
+    activeTask.quest,
+    activeTask.ticksRemaining ?? activeTask.totalTicks ?? questTotalTicks(activeTask.quest),
+    now
+  )
 
-  while (currentTask && remainingMs > 0) {
-    const sim = simulateIdleQuest(currentTask, remainingMs)
-    if (!sim) break
+  while (currentTask && remainingTicks > 0) {
+    const currentRemaining = Math.max(0, Math.floor(Number(currentTask.ticksRemaining) || 0))
+    const ticksUsed = Math.min(currentRemaining, remainingTicks)
+    const nextRemaining = Math.max(0, currentRemaining - ticksUsed)
+    remainingTicks -= ticksUsed
 
-    const ticksUsed = Math.max(0, Number(sim.ticksUsed || 0) || 0)
-    remainingMs = Math.max(0, remainingMs - ticksUsed * TICK_DURATION)
-
-    if (sim.completed) {
-      completed.push({
-        quest: currentTask.quest,
-        xpReward: { ...(currentTask.quest.xpReward || {}) },
-        coinReward: Number(currentTask.quest.coinReward || 0) || 0,
-        itemUnlocks: [...(currentTask.quest.itemUnlocks || [])],
-      })
-
-      const nextQuest = finalQueue.shift()
-      currentTask = nextQuest ? createQueuedQuestTask(nextQuest, null, now) : null
-      continue
+    if (nextRemaining > 0) {
+      currentTask = {
+        ...currentTask,
+        ticksRemaining: nextRemaining,
+        startedAt: now,
+      }
+      break
     }
 
-    currentTask = {
-      ...currentTask,
-      ticksRemaining: sim.ticksRemaining,
-      startedAt: now,
-    }
-    break
+    completed.push({
+      quest: currentTask.quest,
+      xpReward: { ...(currentTask.quest.xpReward || {}) },
+      coinReward: Number(currentTask.quest.coinReward || 0) || 0,
+      itemUnlocks: [...(currentTask.quest.itemUnlocks || [])],
+    })
+
+    const nextQuest = finalQueue.shift()
+    currentTask = nextQuest ? createQueuedQuestTask(nextQuest, null, now) : null
   }
+
+  const elapsedMsUsed = (Math.floor(safeElapsedMs / TICK_DURATION) - remainingTicks) * TICK_DURATION
 
   return {
     completed,
     finalTask: currentTask,
     finalQueue,
-    elapsedMsUsed: safeElapsedMs - remainingMs,
-    elapsedMsRemaining: remainingMs,
+    elapsedMsUsed,
+    elapsedMsRemaining: Math.max(0, safeElapsedMs - elapsedMsUsed),
   }
 }

@@ -675,7 +675,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           // Slayer task tracking
           const task = slayerTaskRef.current
           if (task && defeatedMonsterId && task.monsterId === defeatedMonsterId) {
-            slayerXpGained += getSlayerTaskXpForKill(defeatedMonster, state.monster, monstersData)
+            // Active combat does not flow through the idle-engine slayer XP handler.
+            // Grant XP on the live kill event so active and idle kills stay consistent.
+            const xpForKill = getSlayerTaskXpForKill(defeatedMonster, state.monster, monstersData)
+            slayerXpGained += xpForKill
+            if (xpForKill > 0) {
+              grantXP('slayer', xpForKill)
+              setLog(prev => [...prev.slice(-20), {
+                text: `💀 Slayer XP +${xpForKill.toLocaleString()}`,
+                type: 'xp',
+                time: Date.now()
+              }])
+            }
             const newRemaining = task.monstersRemaining - 1
             if (newRemaining <= 0) {
               // Task complete!

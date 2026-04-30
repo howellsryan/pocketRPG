@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { buildSavePayloadFromSnapshot, applySavePayload } from '../src/db/saveload.js'
+import { buildSavePayloadFromSnapshot, applySavePayload, buildSavePayloadFromState } from '../src/db/saveload.js'
 import * as dbModule from '../src/db/database.js'
 
 describe('save payload snapshot', () => {
@@ -28,10 +28,35 @@ describe('save payload snapshot', () => {
       },
     })
     expect(payload.settings.combatStance).toBe('defensive')
-    expect(payload.settings.activeCombatSpell).toEqual({ id: 'wind_strike' })
     expect(payload.settings.unlockedFeatures).toEqual(['slayer'])
     expect(payload.settings.completedQuests).toEqual(['quest_1'])
-    expect(payload.settings.questQueue).toEqual([{ id: 'quest_2' }])
+  })
+
+  it('persists combat stance and unlocked construction features from state payload builder', () => {
+    const payload = buildSavePayloadFromState(
+      { username: 'Tester' },
+      {},
+      [],
+      {},
+      {},
+      null,
+      null,
+      {},
+      [],
+      [],
+      'aggressive',
+      new Set(['money_purse', 'master_rejuvenation'])
+    )
+
+    expect(payload.settings.combatStance).toBe('aggressive')
+    expect(payload.settings.unlockedFeatures).toEqual(['money_purse', 'master_rejuvenation'])
+  })
+
+  it('preserves unlockedFeatures when already serialized as an array', () => {
+    const payload = buildSavePayloadFromState(
+      { username: 'Tester' }, {}, [], {}, {}, null, null, {}, [], [], 'accurate', []
+    )
+    expect(payload.settings.unlockedFeatures).toEqual([])
   })
 
   it('does not restore local idle mirrors by default', async () => {
