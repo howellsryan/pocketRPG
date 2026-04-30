@@ -470,7 +470,7 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
     const available = bank?.[requiredItem]?.quantity || 0
     const completable = Math.min(actions, available)
     if (completable <= 0) {
-      return { itemsGained: {}, itemsBanked: {}, itemsConsumed: {}, actions: 0, actionName: task.gatherTask.name }
+      return null
     }
 
     const itemsBanked = {}

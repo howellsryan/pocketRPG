@@ -32648,7 +32648,7 @@ function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, itemsDa
         const available = bank?.[requiredItem]?.quantity || 0;
         const completable = Math.min(actions, available);
         if (completable <= 0) {
-            return { itemsGained: {}, itemsBanked: {}, itemsConsumed: {}, actions: 0, actionName: task.gatherTask.name };
+            return null;
         }
         const itemsBanked = {};
         for (let i = 0; i < completable; i++) {
@@ -33426,7 +33426,6 @@ function formatQuestDuration(totalSeconds) {
 
 // ── engine/questIdleCascade.js ──
 
-
 function normaliseElapsedMs(elapsedMs) {
     const parsed = Number(elapsedMs);
     if (!Number.isFinite(parsed) || parsed <= 0)
@@ -33438,12 +33437,12 @@ function questTotalTicks(quest) {
 }
 function createQueuedQuestTask(quest, ticksRemaining = null, now = Date.now()) {
     const totalTicks = questTotalTicks(quest);
-    const parsedRemaining = Number(ticksRemaining);
+    const parsedRemaining = ticksRemaining == null ? null : Number(ticksRemaining);
     return {
         type: 'quest',
         quest,
         totalTicks,
-        ticksRemaining: Number.isFinite(parsedRemaining)
+        ticksRemaining: parsedRemaining != null && Number.isFinite(parsedRemaining)
             ? Math.max(0, Math.min(totalTicks, Math.floor(parsedRemaining)))
             : totalTicks,
         startedAt: now,
@@ -33478,42 +33477,37 @@ function simulateQuestIdleCascade({ activeTask, questQueue = [], elapsedMs, now 
             elapsedMsRemaining: safeElapsedMs,
         };
     }
-    let remainingMs = safeElapsedMs;
-    let currentTask = {
-        ...activeTask,
-        totalTicks: activeTask.totalTicks || questTotalTicks(activeTask.quest),
-        ticksRemaining: activeTask.ticksRemaining ?? activeTask.totalTicks ?? questTotalTicks(activeTask.quest),
-    };
-    while (currentTask && remainingMs > 0) {
-        const sim = simulateIdleQuest(currentTask, remainingMs);
-        if (!sim)
+    let remainingTicks = Math.floor(safeElapsedMs / TICK_DURATION);
+    let currentTask = createQueuedQuestTask(activeTask.quest, activeTask.ticksRemaining ?? activeTask.totalTicks ?? questTotalTicks(activeTask.quest), now);
+    while (currentTask && remainingTicks > 0) {
+        const currentRemaining = Math.max(0, Math.floor(Number(currentTask.ticksRemaining) || 0));
+        const ticksUsed = Math.min(currentRemaining, remainingTicks);
+        const nextRemaining = Math.max(0, currentRemaining - ticksUsed);
+        remainingTicks -= ticksUsed;
+        if (nextRemaining > 0) {
+            currentTask = {
+                ...currentTask,
+                ticksRemaining: nextRemaining,
+                startedAt: now,
+            };
             break;
-        const ticksUsed = Math.max(0, Number(sim.ticksUsed || 0) || 0);
-        remainingMs = Math.max(0, remainingMs - ticksUsed * TICK_DURATION);
-        if (sim.completed) {
-            completed.push({
-                quest: currentTask.quest,
-                xpReward: { ...(currentTask.quest.xpReward || {}) },
-                coinReward: Number(currentTask.quest.coinReward || 0) || 0,
-                itemUnlocks: [...(currentTask.quest.itemUnlocks || [])],
-            });
-            const nextQuest = finalQueue.shift();
-            currentTask = nextQuest ? createQueuedQuestTask(nextQuest, null, now) : null;
-            continue;
         }
-        currentTask = {
-            ...currentTask,
-            ticksRemaining: sim.ticksRemaining,
-            startedAt: now,
-        };
-        break;
+        completed.push({
+            quest: currentTask.quest,
+            xpReward: { ...(currentTask.quest.xpReward || {}) },
+            coinReward: Number(currentTask.quest.coinReward || 0) || 0,
+            itemUnlocks: [...(currentTask.quest.itemUnlocks || [])],
+        });
+        const nextQuest = finalQueue.shift();
+        currentTask = nextQuest ? createQueuedQuestTask(nextQuest, null, now) : null;
     }
+    const elapsedMsUsed = (Math.floor(safeElapsedMs / TICK_DURATION) - remainingTicks) * TICK_DURATION;
     return {
         completed,
         finalTask: currentTask,
         finalQueue,
-        elapsedMsUsed: safeElapsedMs - remainingMs,
-        elapsedMsRemaining: remainingMs,
+        elapsedMsUsed,
+        elapsedMsRemaining: Math.max(0, safeElapsedMs - elapsedMsUsed),
     };
 }
 
@@ -33808,7 +33802,7 @@ async function initNewGame(playerName, isIronman = false, isOneLife = false) {
 const SAVE_VERSION = 1;
 // Build a save payload object from live in-memory game state. Used by the
 // 60s tick snapshot and the cloud-sync push.
-function buildSavePayloadFromState(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue, combatStance) {
+function buildSavePayloadFromState(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue, combatStance, unlockedFeatures) {
     // Legacy wrapper. Prefer buildSavePayloadFromSnapshot() for new call sites.
     return buildSavePayloadFromSnapshot({
         player,
@@ -33823,6 +33817,7 @@ function buildSavePayloadFromState(player, stats, inventory, bank, equipment, ba
             completedQuests,
             questQueue,
             combatStance,
+            unlockedFeatures,
         },
     });
 }
@@ -33919,7 +33914,7 @@ async function wipeLocalSave() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
-function snapshotToLocalStorage(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue, combatStance) {
+function snapshotToLocalStorage(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue, combatStance, unlockedFeatures) {
     // Deprecated durable local backup path.
     void player;
     void stats;
@@ -33932,6 +33927,7 @@ function snapshotToLocalStorage(player, stats, inventory, bank, equipment, bankC
     void completedQuests;
     void questQueue;
     void combatStance;
+    void unlockedFeatures;
 }
 async function restoreFromLocalStorage() {
     try {
@@ -38716,7 +38712,18 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                     // Slayer task tracking
                     const task = slayerTaskRef.current;
                     if (task && defeatedMonsterId && task.monsterId === defeatedMonsterId) {
-                        slayerXpGained += getSlayerTaskXpForKill(defeatedMonster, state.monster, monstersData);
+                        // Active combat does not flow through the idle-engine slayer XP handler.
+                        // Grant XP on the live kill event so active and idle kills stay consistent.
+                        const xpForKill = getSlayerTaskXpForKill(defeatedMonster, state.monster, monstersData);
+                        slayerXpGained += xpForKill;
+                        if (xpForKill > 0) {
+                            grantXP('slayer', xpForKill);
+                            setLog(prev => [...prev.slice(-20), {
+                                    text: `💀 Slayer XP +${xpForKill.toLocaleString()}`,
+                                    type: 'xp',
+                                    time: Date.now()
+                                }]);
+                        }
                         const newRemaining = task.monstersRemaining - 1;
                         if (newRemaining <= 0) {
                             // Task complete!
@@ -43511,6 +43518,7 @@ const errorText = { color: '#ff6b6b', fontSize: '12px', marginTop: '12px', textA
 
 
 
+
 // ── Clock-rollback watermark ────────────────────────────────────────────────
 // We persist the highest Date.now() we've ever observed. If the device clock
 // later reports a value below the watermark, the user rolled it backwards —
@@ -44418,8 +44426,22 @@ function GameApp() {
         setActionData(data || null);
         setScreen(scr);
     };
-    // Skip 1 hour handler — validate with server first, then simulate idle time
+    const isSkippingRef = useRef(false);
+    function clearExhaustedActiveTask(reason) {
+        setActiveTask(null);
+        activeTaskRef.current = null;
+        setActionData(null);
+        try {
+            localStorage.removeItem('pocketrpg_activeTask');
+        }
+        catch { }
+        addToast(reason || 'This action can no longer progress.', 'info');
+    }
+    // Skip 1 hour handler — preflight first, charge only after meaningful outcome exists
     async function handleSkip1h() {
+        if (isSkippingRef.current)
+            return;
+        isSkippingRef.current = true;
         if (!isCloudAccount) {
             addToast('Skip only available for cloud accounts!', 'error');
             return;
@@ -44432,19 +44454,23 @@ function GameApp() {
         // Check if there's an active task — prevent wasting credits
         if (!activeTaskRef.current) {
             addToast('Nothing to skip — start a task first!', 'error');
+            isSkippingRef.current = false;
             return;
         }
         try {
-            // Call server to validate credit and deduct atomically
-            const result = await api.skipHour();
-            if (!result.ok) {
-                addToast('Server error processing skip!', 'error');
+            const task = activeTaskRef.current;
+            const [freshStats, freshInv, freshEq, freshBank, freshSlayerTask] = await Promise.all([
+                getAllStats(), getInventory(), getEquipment(), getBank(), getSetting('slayerTask'),
+            ]);
+            const context = { inventory: freshInv, bank: freshBank, equipment: freshEq, stats: freshStats, itemsData: itemsDataRef.current, slayerTask: freshSlayerTask, questQueue: questQueueRef.current || [], now: Date.now() };
+            const preflight = getSkipPreflight(task, context, SKIP_HOUR_MS);
+            if (!preflight.canSkip) {
+                if (preflight.shouldStopTask)
+                    clearExhaustedActiveTask(preflight.reason);
+                else
+                    addToast(preflight.reason || 'Cannot skip this action right now.', 'info');
                 return;
             }
-            // Server confirmed and deducted 1 credit — update local credits state
-            setCredits(result.credits_remaining);
-            const SKIP_HOUR_MS = 60 * 60 * 1000;
-            const task = activeTaskRef.current;
             if (task?.type === 'quest') {
                 const cascade = simulateQuestIdleCascade({
                     activeTask: task,
@@ -44497,14 +44523,6 @@ function GameApp() {
             }
             const elapsedMs = SKIP_HOUR_MS;
             let idleResultData = { elapsedMs, task: activeTaskRef.current };
-            // Re-read latest stats/equipment/inventory/bank to avoid stale state
-            const [freshStats, freshInv, freshEq, freshBank, freshSlayerTask] = await Promise.all([
-                getAllStats(),
-                getInventory(),
-                getEquipment(),
-                getBank(),
-                getSetting('slayerTask'),
-            ]);
             // If there's an active task, simulate it for 1 hour
             if (activeTaskRef.current) {
                 const savedTask = activeTaskRef.current;
@@ -44687,6 +44705,12 @@ function GameApp() {
                     updateHP(restoredHP);
                 }
             }
+            if (!isChargeableSkipOutcome(task, idleResultData)) {
+                clearExhaustedActiveTask(preflight?.reason || 'No remaining actions available for this activity.');
+                return;
+            }
+            const result = await api.skipHour();
+            setCredits(result?.credits_remaining ?? credits);
             // Show idle result modal with skip summary
             if (idleResultData)
                 setIdleResult(idleResultData);
@@ -44696,7 +44720,16 @@ function GameApp() {
         }
         catch (err) {
             console.error('[PocketRPG] Skip 1h error:', err);
-            addToast(err.message || 'Error during skip!', 'error');
+            if (err?.status === 402) {
+                addToast('You do not have enough credits to skip.', 'error');
+                await refreshMe?.();
+            }
+            else {
+                addToast(err.message || 'Error during skip!', 'error');
+            }
+        }
+        finally {
+            isSkippingRef.current = false;
         }
     }
     // Cloud conflict modal — shown while cloudPhase is still resolving
