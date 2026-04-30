@@ -48,6 +48,7 @@ const sourceFiles = [
   'db/saveload.js',
   'cloud/api.js',
   'cloud/idleState.js',
+  'cloud/criticalSavePolicy.js',
   'cloud/sync.js',
   'cloud/pvp.js',
   'state/gameState.js',
