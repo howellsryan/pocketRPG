@@ -2,7 +2,7 @@ import { getEffectiveToolActionTicks } from './skilling.js'
 import { getRunesToConsume } from './runes.js'
 
 export const SKIP_HOUR_MS = 60 * 60 * 1000
-export const TICK_MS = 600
+const SKIP_TICK_MS = 600
 
 export function countInventoryItem(inventory = [], itemId, predicate = null) {
   return (inventory || []).reduce((sum, slot) => {
@@ -20,7 +20,7 @@ export function countAvailableItem({ inventory = [], bank = {}, equipment = null
   }
   return total
 }
-const totalTicksForElapsed = (elapsedMs) => Math.floor(Math.max(0, elapsedMs) / TICK_MS)
+const totalTicksForElapsed = (elapsedMs) => Math.floor(Math.max(0, elapsedMs) / SKIP_TICK_MS)
 const actionsFromTicks = (elapsedMs, actionTicks) => Math.floor(totalTicksForElapsed(elapsedMs) / Math.max(1, Math.floor(Number(actionTicks) || 0)))
 const valid = (actionCount, kind, reason = '') => ({ canSkip: true, shouldStopTask: false, reason, actionCount: Math.max(0, Math.floor(actionCount || 0)), kind })
 const invalid = (reason, kind, shouldStopTask = true) => ({ canSkip: false, shouldStopTask, reason, actionCount: 0, kind })
