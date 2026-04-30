@@ -10,6 +10,8 @@ import { ALL_SKILLS, MAX_XP, AUTO_SAVE_DEBOUNCE, QUEST_QUEUE_MAX } from '../util
 import { debounce } from '../utils/helpers.js'
 import { fetchIdleState, pushIdleState } from '../cloud/idleState.js'
 import { getToken, getCharacterId } from '../cloud/api.js'
+import { requestCriticalPushSave } from '../cloud/sync.js'
+import { CRITICAL_SAVE_REASONS, detectCountIncreases, detectLevelUps, detectSetGrowth, didNumberIncrease, extractSkillLevels } from '../cloud/criticalSavePolicy.js'
 import itemsData from '../data/items.json'
 
 const GameContext = createContext(null)
@@ -37,10 +39,12 @@ export function GameProvider({ children }) {
   const [farming, setFarmingState] = useState({ patchesById: {} })
   const [completedQuests, setCompletedQuestsState] = useState(new Set())
   const [questQueue, setQuestQueueState] = useState([])
+  const [isSaving, setIsSaving] = useState(false)
   const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false })
 
   // Refs to hold latest state for the debounced auto-save
   const stateRef = useRef({ stats: {}, inventory: new Array(28).fill(null), equipment: {}, bank: {}, player: null })
+  const criticalMilestoneRef = useRef(null)
 
   // Keep refs in sync with state
   useEffect(() => { stateRef.current.stats = stats }, [stats])
@@ -372,8 +376,14 @@ export function GameProvider({ children }) {
     if (d.equipment) promises.push(saveEquipment(s.equipment))
     if (d.bank) promises.push(saveBank(s.bank))
     if (d.player && s.player) promises.push(savePlayer(s.player))
-    await Promise.all(promises)
-    dirty.current = { stats: false, inventory: false, equipment: false, bank: false, player: false }
+    if (promises.length === 0) return
+    setIsSaving(true)
+    try {
+      await Promise.all(promises)
+      dirty.current = { stats: false, inventory: false, equipment: false, bank: false, player: false }
+    } finally {
+      setIsSaving(false)
+    }
   }, AUTO_SAVE_DEBOUNCE), [])
 
   // Mark dirty and trigger save
@@ -645,8 +655,42 @@ export function GameProvider({ children }) {
     },
   }), [currentHP, autoBankLoot, bankConfig, homeShortcuts, combatStance, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, bossKillCounts, raidKillCounts, farming, completedQuests, questQueue])
 
+
+  useEffect(() => {
+    if (!loaded) return
+
+    const current = {
+      levels: extractSkillLevels(stats),
+      bossKillCounts: bossKillCounts || {},
+      raidKillCounts: raidKillCounts || {},
+      completedQuests: new Set(completedQuests || []),
+      unlockedFeatures: new Set(unlockedFeatures || []),
+      slayerPoints: Number(slayerPoints) || 0,
+    }
+
+    const previous = criticalMilestoneRef.current
+    if (!previous) {
+      criticalMilestoneRef.current = current
+      return
+    }
+
+    const reasons = new Set()
+    if (detectLevelUps(previous.levels, stats).length > 0) reasons.add(CRITICAL_SAVE_REASONS.LEVEL_UP)
+    if (detectCountIncreases(previous.bossKillCounts, current.bossKillCounts).length > 0) reasons.add(CRITICAL_SAVE_REASONS.BOSS_KILL)
+    if (detectCountIncreases(previous.raidKillCounts, current.raidKillCounts).length > 0) reasons.add(CRITICAL_SAVE_REASONS.RAID_COMPLETE)
+    if (detectSetGrowth(previous.completedQuests, current.completedQuests).length > 0) reasons.add(CRITICAL_SAVE_REASONS.QUEST_COMPLETE)
+    if (detectSetGrowth(previous.unlockedFeatures, current.unlockedFeatures).length > 0) reasons.add(CRITICAL_SAVE_REASONS.FEATURE_UNLOCK)
+    if (didNumberIncrease(previous.slayerPoints, current.slayerPoints)) reasons.add(CRITICAL_SAVE_REASONS.SLAYER_TASK_COMPLETE)
+
+    criticalMilestoneRef.current = current
+
+    for (const reason of reasons) {
+      requestCriticalPushSave(() => getSnapshot(), reason)
+    }
+  }, [loaded, stats, bossKillCounts, raidKillCounts, completedQuests, unlockedFeatures, slayerPoints, getSnapshot])
+
   const value = {
-    loaded, player, stats, inventory, equipment, bank, currentHP, toasts,
+    loaded, player, stats, inventory, equipment, bank, currentHP, toasts, isSaving,
     homeShortcuts, combatStance, activeTask, autoBankLoot, bankConfig,
     unlockedFeatures, unlockFeature,
     slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints,

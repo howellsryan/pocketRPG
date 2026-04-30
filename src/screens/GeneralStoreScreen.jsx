@@ -6,10 +6,12 @@ import Modal from '../components/Modal.jsx'
 import Panel from '../components/Panel.jsx'
 import Button from '../components/Button.jsx'
 import questsData from '../data/quests.json'
+import { requestCriticalPushSave } from '../cloud/sync.js'
+import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 
 // ── COMPONENT ───────────────────────────────────────────────────────────────
 export default function GeneralStoreScreen({ onBuyCredits }) {
-  const { inventory, bank, updateInventory, updateBankDirect, addToast, itemsData, unlockedFeatures, completedQuests, isIronman } = useGame()
+  const { inventory, bank, updateInventory, updateBankDirect, addToast, itemsData, unlockedFeatures, completedQuests, isIronman, getSnapshot } = useGame()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedItem, setSelectedItem] = useState(null) // item being purchased
   const [buyQty, setBuyQty] = useState(1)
@@ -177,6 +179,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
     const fromBank = totalCost - fromInv
     if (fromBank > 0 && hasMoneyPurse) updateBankDirect({ coins: -fromBank })
     updateInventory(newInv)
+    requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.PURCHASE)
 
     addToast(`${selectedItem.icon || '📦'} ${selectedItem.name} ${buyQty > 1 ? `×${buyQty}` : ''} purchased!`, 'success')
     setSelectedItem(null)

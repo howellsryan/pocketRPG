@@ -13,7 +13,7 @@ import { onTick, pauseTicks, resumeTicks } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
 import { getCombatType, equipItem, checkEquipRequirements } from '../engine/equipment.js'
 import { api, clearAuth, getToken, setLocalCharacterId } from '../cloud/api.js'
-import { pullSave, applyCloudSave } from '../cloud/sync.js'
+import { pullSave, applyCloudSave, requestCriticalPushSave } from '../cloud/sync.js'
 import { pvpApi } from '../cloud/pvp.js'
 import { closeDB } from '../db/database.js'
 import { wipeLocalSave } from '../db/saveload.js'
@@ -24,6 +24,7 @@ import spellsData from '../data/spells.json'
 import raidsData from '../data/raids.json'
 import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slayerRewards.js'
+import { CRITICAL_SAVE_REASONS, hasCriticalDrop } from '../cloud/criticalSavePolicy.js'
 
 const COMBAT_CATEGORIES = [
   {
@@ -725,6 +726,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               }
             }
             updateInventory(newInv)
+          }
+
+          if (hasCriticalDrop(killLoot, defeatedMonsterData, itemsData)) {
+            requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.RARE_DROP)
           }
           setLog(prev => [...prev.slice(-20), {
             text: `${defeatedMonsterName} defeated!`,
