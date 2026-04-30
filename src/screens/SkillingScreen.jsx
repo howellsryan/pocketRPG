@@ -434,6 +434,14 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
               id => (countItem(inventory, id) + (bank[id]?.quantity || 0)) > 0
             )
             const canStart = available && hasMats && hasRunes && hasTool && hasItems
+            const effectiveTicks = getEffectiveToolActionTicks(
+              selectedSkill,
+              action.ticks,
+              equipment,
+              itemsData,
+              stats,
+              inventory,
+            )
             return (
               <button
                 key={action.id}

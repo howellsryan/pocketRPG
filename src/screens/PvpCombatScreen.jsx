@@ -549,6 +549,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const equippedSlots = Object.entries(pair.self?.equipment || {})
     .filter(([, entry]) => !!entry)
     .map(([slot, entry]) => ({ slot, entry, item: itemsData?.[entry.itemId] }))
+  const hasGearActions = equippableSlots.length > 0 || equippedSlots.length > 0
 
   const equippedSpecial = getEquippedPvpSpecialAttack(pair.self, itemsData)
   const specialReady = hasEnoughPvpSpecialEnergy(pair.self, itemsData)
@@ -625,6 +626,22 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     }
 
     queueAction({ type: 'queue_special' }, { showBusy: false })
+  }
+
+  const toggleActionPanel = (panel) => {
+    setActionPanel((current) => (current === panel ? null : panel))
+  }
+
+  const queueGearEquip = (inventorySlot) => {
+    if (terminalHandledRef.current || endModalOpenRef.current) return
+    queueAction({ type: 'equip', inventorySlot }, { showBusy: false })
+    setActionPanel(null)
+  }
+
+  const queueGearUnequip = (equipmentSlot) => {
+    if (terminalHandledRef.current || endModalOpenRef.current) return
+    queueAction({ type: 'unequip', equipmentSlot }, { showBusy: false })
+    setActionPanel(null)
   }
   const endTotalRiskValue = getEndLootTotal(endModal?.loot)
   const endTotalRiskLabel = `${formatCompactCoins(endTotalRiskValue)} gp`
@@ -730,9 +747,27 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
                 : ''
             }`}
             aria-pressed={!!visuallyActivePrayerId}
-            onClick={() => setActionPanel(actionPanel === 'prayer' ? null : 'prayer')}
+            onClick={() => toggleActionPanel('prayer')}
           >
             🙏 Prayer
+          </Button>
+          <Button
+            variant={actionPanel === 'potion' ? 'primary' : 'secondary'}
+            size="md"
+            className="w-full"
+            disabled={busy || potionSlots.length === 0}
+            onClick={() => toggleActionPanel('potion')}
+          >
+            🧪 Potion
+          </Button>
+          <Button
+            variant={actionPanel === 'gear' ? 'primary' : 'secondary'}
+            size="md"
+            className="w-full"
+            disabled={busy || !hasGearActions}
+            onClick={() => toggleActionPanel('gear')}
+          >
+            🛡️ Gear
           </Button>
         </div>
 
@@ -765,7 +800,131 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
             )}
           </div>
         )}
+
+        {actionPanel === 'potion' && (
+          <div class="mt-3">
+            {potionSlots.length === 0 ? (
+              <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No PvP potions in inventory.</div>
+            ) : (
+              <div class="grid grid-cols-2 gap-2">
+                {potionSlots.map(({ slot, idx, item }) => (
+                  <Button
+                    key={`${slot.itemId}-${idx}`}
+                    variant="secondary"
+                    size="md"
+                    className="min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight"
+                    onClick={() => queueAction({ type: 'drink', inventorySlot: idx }, { showBusy: false })}
+                  >
+                    <span class="block truncate">{item?.icon || '🧪'} {item?.name || slot.itemId}</span>
+                  </Button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </Card>
+
+      {actionPanel === 'gear' && (
+        <Modal onClose={() => setActionPanel(null)}>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">
+              Gear
+            </h3>
+            <button
+              onClick={() => setActionPanel(null)}
+              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
+              title="Close"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mb-3">
+            Equip an item from your inventory or unequip current gear. Gear changes are queued and apply on the next PvP tick.
+          </div>
+
+          <div class="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+            <div>
+              <div class="text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-2">
+                Equipped
+              </div>
+
+              {equippedSlots.length === 0 ? (
+                <div class="text-[11px] text-[var(--color-parchment)] opacity-50">
+                  No gear equipped.
+                </div>
+              ) : (
+                <div class="space-y-2">
+                  {equippedSlots.map(({ slot, entry, item }) => (
+                    <button
+                      key={`equipped-${slot}-${entry.itemId}`}
+                      onClick={() => queueGearUnequip(slot)}
+                      class="w-full p-3 rounded-lg border bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222] transition-colors text-left"
+                    >
+                      <div class="flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-2 min-w-0">
+                          <span class="text-lg shrink-0">{item?.icon || '▫️'}</span>
+                          <div class="min-w-0">
+                            <div class="text-sm font-semibold text-[var(--color-parchment)] truncate">
+                              {item?.name || entry.itemId}
+                            </div>
+                            <div class="text-[10px] text-[var(--color-parchment)] opacity-60 capitalize">
+                              {slot}
+                            </div>
+                          </div>
+                        </div>
+                        <span class="text-[10px] text-[var(--color-gold)] shrink-0">
+                          Unequip
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <div class="text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-2">
+                Inventory gear
+              </div>
+
+              {equippableSlots.length === 0 ? (
+                <div class="text-[11px] text-[var(--color-parchment)] opacity-50">
+                  No equippable items in inventory.
+                </div>
+              ) : (
+                <div class="grid grid-cols-1 gap-2">
+                  {equippableSlots.map(({ slot, idx, item }) => (
+                    <button
+                      key={`inventory-gear-${idx}-${slot.itemId}`}
+                      onClick={() => queueGearEquip(idx)}
+                      class="w-full p-3 rounded-lg border bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222] transition-colors text-left"
+                    >
+                      <div class="flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-2 min-w-0">
+                          <ItemSlot slot={slot} size="small" />
+                          <div class="min-w-0">
+                            <div class="text-sm font-semibold text-[var(--color-parchment)] truncate">
+                              {item?.name || slot.itemId}
+                            </div>
+                            <div class="text-[10px] text-[var(--color-parchment)] opacity-60 capitalize">
+                              {item?.slot || 'gear'}
+                              {(slot.quantity || 0) > 1 ? ` · x${slot.quantity}` : ''}
+                            </div>
+                          </div>
+                        </div>
+                        <span class="text-[10px] text-[var(--color-gold)] shrink-0">
+                          Equip
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </Modal>
+      )}
 
 
       <Panel>
