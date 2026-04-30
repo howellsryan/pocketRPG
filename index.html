@@ -38008,6 +38008,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
 
 
 
+
 const COMBAT_CATEGORIES = [
     {
         key: 'training',
@@ -38634,24 +38635,28 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                 }
                 if (ev.type === 'monsterDeath') {
                     const defeatedMonster = ev.monster || state.monster;
+                    const defeatedMonsterData = resolveMonsterRewardData(defeatedMonster, state.monster, monstersData);
+                    const defeatedMonsterId = defeatedMonsterData?.id || defeatedMonster?.id;
+                    const defeatedMonsterName = defeatedMonsterData?.name || defeatedMonster?.name || state.monster?.name || 'Monster';
+                    const isDefeatedBoss = defeatedMonsterData?.boss === true || defeatedMonster?.boss === true;
+                    const killLoot = Array.isArray(ev.loot) ? ev.loot : [];
                     setKillCount(k => k + 1);
                     // Boss kill count tracking
-                    if (defeatedMonster?.boss) {
-                        const monsterId = defeatedMonster.id;
-                        const newKC = (bossKillCountsRef.current[monsterId] || 0) + 1;
-                        const updatedCounts = { ...bossKillCountsRef.current, [monsterId]: newKC };
+                    if (isDefeatedBoss && defeatedMonsterId) {
+                        const newKC = (bossKillCountsRef.current[defeatedMonsterId] || 0) + 1;
+                        const updatedCounts = { ...bossKillCountsRef.current, [defeatedMonsterId]: newKC };
                         bossKillCountsRef.current = updatedCounts;
                         updateBossKillCounts(updatedCounts);
                         setLog(prev => [...prev.slice(-20), {
-                                text: `👑 ${defeatedMonster.name} KC: ${newKC.toLocaleString()}`,
+                                text: `👑 ${defeatedMonsterName} KC: ${newKC.toLocaleString()}`,
                                 type: 'victory',
                                 time: Date.now()
                             }]);
                     }
                     // Slayer task tracking
                     const task = slayerTaskRef.current;
-                    if (task && defeatedMonster && task.monsterId === defeatedMonster.id) {
-                        slayerXpGained += (defeatedMonster.slayerXP || defeatedMonster.hitpoints || state.monster.hitpoints) * 2;
+                    if (task && defeatedMonsterId && task.monsterId === defeatedMonsterId) {
+                        slayerXpGained += getSlayerTaskXpForKill(defeatedMonster, state.monster, monstersData);
                         const newRemaining = task.monstersRemaining - 1;
                         if (newRemaining <= 0) {
                             // Task complete!
@@ -38667,9 +38672,9 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                             setSlayerTask({ ...task, monstersRemaining: newRemaining });
                         }
                     }
-                    if (ev.loot && ev.loot.length > 0) {
+                    if (killLoot.length > 0) {
                         const newInv = [...inventoryRef.current];
-                        for (const drop of ev.loot) {
+                        for (const drop of killLoot) {
                             const item = itemsData[drop.itemId];
                             let added = false;
                             if (drop.noted) {
@@ -38694,15 +38699,17 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                         updateInventory(newInv);
                     }
                     setLog(prev => [...prev.slice(-20), {
-                            text: `${defeatedMonster?.name || state.monster.name} defeated!`,
+                            text: `${defeatedMonsterName} defeated!`,
                             type: 'victory',
                             time: Date.now()
                         }]);
                     // Show loot modal instead of auto-restarting
                     const raidId = state.raid?.raidId || null;
                     setLootModal({
-                        monster: defeatedMonster || state.monster,
-                        loot: ev.loot || [],
+                        monster: defeatedMonsterData,
+                        loot: killLoot,
+                        slayerXpGained,
+                        isBossKill: isDefeatedBoss,
                         raidId
                     });
                 }
