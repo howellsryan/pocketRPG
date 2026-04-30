@@ -335,3 +335,11 @@ describe('pvpEngine phase 2B contract', () => {
     for (const type of types) expect(SUPPORTED_PVP_SPECIAL_ATTACK_TYPES.has(type as string)).toBe(true)
   })
 })
+
+
+it('applies PvP special regen per 30s interval', () => {
+  const state = createPvpState(buildPlayer({ characterId: 1 }), buildPlayer({ characterId: 2 }), 1_000)
+  state.combatants['1'].specialAttackEnergy = 50
+  const out = processPvpTick(state, [], items, 31_000)
+  expect(out.stateNext.combatants['1'].specialAttackEnergy).toBe(60)
+})

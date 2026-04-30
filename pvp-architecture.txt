@@ -26,7 +26,7 @@ No spectating, no replays, no historical match data.
 No fight-pair cooldown, no anti-grief — opt-in invite is the gate.
 New from review
 Forfeit = death. Full loot transfer runs on forfeit, identical to HP=0 death. Modal copy reflects this.
-Spec energy starts at 100 at match start, no regen during match, no refill on opponent death.
+Spec energy starts at 100% at match start and regenerates by 10% every 30 seconds during active match time, capped at 100%.
 Equipment-swap timer rule: attackTimer = max(currentTimer, newWeaponSpeed). Prevents swap-to-faster-weapon exploits.
 Equipped untradeables stay equipped on loser (not moved to inventory). Tradeable equipment and tradeable inventory transfer to winner.
 Charges and ammo quantity carry through loot transfer (Toxic blowpipe scales, Trident charges, ammo stack sizes).

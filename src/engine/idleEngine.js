@@ -451,6 +451,12 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
  */
 export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, itemsData = {}, bank = {}) {
   if (!task || !task.gatherTask) return null
+  if (task.gatherTask.requiresItem && !task.gatherTask.isClue) {
+    const requiredItem = task.gatherTask.requiresItem
+    const invCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === requiredItem ? (slot.quantity || 1) : 0), 0)
+    const bankCount = bank?.[requiredItem]?.quantity || 0
+    if (invCount + bankCount <= 0) return null
+  }
 
   const totalTicks = Math.floor(elapsedMs / TICK_MS)
   const actionTicks = task.gatherTask.ticks

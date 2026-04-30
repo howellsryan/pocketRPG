@@ -1,6 +1,31 @@
 import { getLevelFromXP } from './experience.js'
 import { COOKING_BURN_BASE_CHANCE } from '../utils/constants.js'
 
+
+export const WOODCUTTING_AXE_SPEED_MULTIPLIERS = {
+  bronze_axe: 1.00,
+  iron_axe: 0.98,
+  steel_axe: 0.96,
+  black_axe: 0.94,
+  mithril_axe: 0.92,
+  adamant_axe: 0.90,
+  rune_axe: 0.88,
+  dragon_axe: 0.86,
+  infernal_axe: 0.84,
+  crystal_axe: 0.82,
+  third_age_axe: 0.82,
+  '3rd_age_axe': 0.82,
+}
+
+export function getConfiguredToolSpeedMultiplier(skill, item) {
+  if (!item) return 1.0
+  if (skill === 'woodcutting') {
+    const configured = WOODCUTTING_AXE_SPEED_MULTIPLIERS[item.id]
+    if (configured != null) return configured
+  }
+  return item.speedMultiplier ?? 1.0
+}
+
 /**
  * Returns the tick-speed multiplier for a skill using the best available tool.
  * Checks both equipped weapon and inventory for the highest-tier tool the player
@@ -35,7 +60,7 @@ export function getToolSpeedMultiplier(skill, equipment, itemsData, stats = {}, 
   }
 
   if (!item) return 1.0
-  return item.speedMultiplier ?? 1.0
+  return getConfiguredToolSpeedMultiplier(skill, item)
 }
 
 /**

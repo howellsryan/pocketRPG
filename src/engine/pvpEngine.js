@@ -14,6 +14,9 @@ import {
 
 const VALID_STANCES = new Set(['accurate', 'aggressive', 'defensive', 'controlled', 'rapid', 'longrange'])
 const PVP_ENGINE_PROTECTION_PRAYER_IDS = new Set(['protection_from_magic', 'protection_from_missiles', 'protection_from_melee'])
+export const PVP_SPECIAL_REGEN_INTERVAL_MS = 30_000
+export const PVP_SPECIAL_REGEN_AMOUNT = 10
+export const PVP_MAX_SPECIAL_ATTACK_ENERGY = 100
 
 function cloneCombatant(c) {
   return {
@@ -24,12 +27,41 @@ function cloneCombatant(c) {
     activePotions: { ...(c.activePotions || {}) },
     spell: c.spell ? { ...c.spell } : null,
     specialAttackEnergy: clampPvpSpecialEnergy(c.specialAttackEnergy, 100),
+    specialAttackRegeneratedAt: Number(c.specialAttackRegeneratedAt ?? c.specialAttackRegenAt) || null,
     specialAttackQueued: !!c.specialAttackQueued,
   }
 }
 function cloneState(state) { const combatants = {}; for (const [id, c] of Object.entries(state.combatants || {})) combatants[id] = cloneCombatant(c); return { ...state, combatants, recentEvents: Array.isArray(state.recentEvents) ? [...state.recentEvents] : [] } }
 function asPair(state) { const ids = Object.keys(state.combatants).map(Number).sort((a, b) => a - b); if (ids.length !== 2) throw new Error('pvpEngine requires exactly two combatants'); return [state.combatants[String(ids[0])], state.combatants[String(ids[1])], ids] }
 function clampCooldowns(c) { c.attackTimer = Math.max(0, c.attackTimer || 0); c.eatCooldown = Math.max(0, c.eatCooldown || 0); c.potionCooldown = Math.max(0, c.potionCooldown || 0) }
+function readMsTimestamp(value, fallback) { const parsed = Number(value); return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback }
+export function applyPvpSpecialAttackRegenToCombatant(combatant, now = Date.now()) {
+  if (!combatant) return { changed: false, ticks: 0 }
+  const safeNow = Number(now)
+  if (!Number.isFinite(safeNow) || safeNow <= 0) return { changed: false, ticks: 0 }
+  const currentEnergy = clampPvpSpecialEnergy(combatant.specialAttackEnergy, 0)
+  const previousEnergy = currentEnergy
+  let lastRegeneratedAt = readMsTimestamp(combatant.specialAttackRegeneratedAt ?? combatant.specialAttackRegenAt, safeNow)
+  if (lastRegeneratedAt > safeNow) lastRegeneratedAt = safeNow
+  if (currentEnergy >= PVP_MAX_SPECIAL_ATTACK_ENERGY) {
+    combatant.specialAttackEnergy = PVP_MAX_SPECIAL_ATTACK_ENERGY
+    combatant.specialAttackRegeneratedAt = safeNow
+    return { changed: previousEnergy !== PVP_MAX_SPECIAL_ATTACK_ENERGY, ticks: 0 }
+  }
+  const elapsedMs = safeNow - lastRegeneratedAt
+  const regenTicks = Math.floor(elapsedMs / PVP_SPECIAL_REGEN_INTERVAL_MS)
+  if (regenTicks <= 0) { combatant.specialAttackEnergy = currentEnergy; combatant.specialAttackRegeneratedAt = lastRegeneratedAt; return { changed: false, ticks: 0 } }
+  const nextEnergy = Math.min(PVP_MAX_SPECIAL_ATTACK_ENERGY, currentEnergy + regenTicks * PVP_SPECIAL_REGEN_AMOUNT)
+  combatant.specialAttackEnergy = nextEnergy
+  combatant.specialAttackRegeneratedAt = nextEnergy >= PVP_MAX_SPECIAL_ATTACK_ENERGY ? safeNow : lastRegeneratedAt + regenTicks * PVP_SPECIAL_REGEN_INTERVAL_MS
+  return { changed: nextEnergy !== previousEnergy, ticks: regenTicks }
+}
+export function applyPvpSpecialAttackRegenToState(state, now = Date.now()) {
+  const next = cloneState(state)
+  let changed = false
+  for (const combatant of Object.values(next.combatants || {})) changed = applyPvpSpecialAttackRegenToCombatant(combatant, now).changed || changed
+  return { state: next, changed }
+}
 function rapidAdjustedSpeed(combatant, itemsData) { const base = getAttackSpeed(combatant.equipment, itemsData); return (combatant.combatType === 'ranged' && combatant.stance === 'rapid') ? Math.max(1, base - 1) : base }
 function attackSnapshot(attacker, defender, itemsData) { if (attacker.combatType === 'ranged') return rollRangedAttack(attacker, defender, itemsData); if (attacker.combatType === 'magic') return rollMagicAttack(attacker, defender, itemsData); return rollMeleeAttack(attacker, defender, itemsData) }
 function pvpRandInt(min, max) { const lo = Math.ceil(Math.min(min, max)); const hi = Math.floor(Math.max(min, max)); return lo + Math.floor(Math.random() * (hi - lo + 1)) }
@@ -94,11 +126,12 @@ if (intentAction.type === 'drink_potion') { const i = intentAction.inventorySlot
 export function createPvpState(aCombatant, bCombatant, now = Date.now(), rngSeed = 0) {
   const a = cloneCombatant(aCombatant)
   const b = cloneCombatant(bCombatant)
-  return { tick: 0, startedAt: now, combatants: { [String(a.characterId)]: { ...a, hp: a.hp ?? a.currentHP ?? a.maxHP, attackTimer: a.attackTimer ?? 0, eatCooldown: a.eatCooldown ?? 0, potionCooldown: a.potionCooldown ?? 0, specialAttackEnergy: 100, specialAttackQueued: false }, [String(b.characterId)]: { ...b, hp: b.hp ?? b.currentHP ?? b.maxHP, attackTimer: b.attackTimer ?? 0, eatCooldown: b.eatCooldown ?? 0, potionCooldown: b.potionCooldown ?? 0, specialAttackEnergy: 100, specialAttackQueued: false } }, recentEvents: [], rngSeed }
+  return { tick: 0, startedAt: now, combatants: { [String(a.characterId)]: { ...a, hp: a.hp ?? a.currentHP ?? a.maxHP, attackTimer: a.attackTimer ?? 0, eatCooldown: a.eatCooldown ?? 0, potionCooldown: a.potionCooldown ?? 0, specialAttackEnergy: 100, specialAttackRegeneratedAt: now, specialAttackQueued: false }, [String(b.characterId)]: { ...b, hp: b.hp ?? b.currentHP ?? b.maxHP, attackTimer: b.attackTimer ?? 0, eatCooldown: b.eatCooldown ?? 0, potionCooldown: b.potionCooldown ?? 0, specialAttackEnergy: 100, specialAttackRegeneratedAt: now, specialAttackQueued: false } }, recentEvents: [], rngSeed }
 }
 
-export function processPvpTick(state, intents, itemsData) {
+export function processPvpTick(state, intents, itemsData, now = Date.now()) {
   const next = cloneState(state); const events = []; const [left, right, ids] = asPair(next)
+  for (const c of [left, right]) applyPvpSpecialAttackRegenToCombatant(c, now)
   const orderedIntents = [...(intents || [])].sort((x, y) => ((x.tick_number || 0) - (y.tick_number || 0)) || ((x.characterId || 0) - (y.characterId || 0)) || ((x.characterSeq || 0) - (y.characterSeq || 0)))
   for (const intent of orderedIntents) { const c = next.combatants[String(intent?.characterId)]; if (!c) continue; const action = intent?.action || {}; if (action.type === 'forfeit') { events.push({ type: 'forfeit', characterId: c.characterId }); const opponent = c.characterId === left.characterId ? right : left; next.tick = (next.tick || 0) + 1; next.recentEvents = [...next.recentEvents, ...events].slice(-20); return terminalResult(next, opponent.characterId, c.characterId, 'forfeit', events) } applyIntent(c, action, itemsData, events) }
   for (const c of [left, right]) { c.attackTimer = (c.attackTimer || 0) - 1; c.eatCooldown = (c.eatCooldown || 0) - 1; c.potionCooldown = (c.potionCooldown || 0) - 1; for (const [pid, ticks] of Object.entries(c.activePotions || {})) { c.activePotions[pid] = Math.max(0, (ticks || 0) - 1); if (c.activePotions[pid] <= 0) delete c.activePotions[pid] } clampCooldowns(c) }
@@ -115,4 +148,4 @@ export function processPvpTick(state, intents, itemsData) {
   return { stateNext: next, events, terminal: null }
 }
 
-export function applyPvpTick(state, intents, itemsData) { const out = processPvpTick(state, intents, itemsData); return { state: out.stateNext, events: out.events, terminal: out.terminal } }
+export function applyPvpTick(state, intents, itemsData, now = Date.now()) { const out = processPvpTick(state, intents, itemsData, now); return { state: out.stateNext, events: out.events, terminal: out.terminal } }

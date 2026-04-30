@@ -4,6 +4,7 @@ import { readOwnedActiveMatch, itemsData } from '../../../../_lib/pvpMatch.js'
 import { isPvpFoodItem } from '../../../../../src/engine/pvpFood.js'
 import { isPvpCombatPotion } from '../../../../../src/engine/pvpPotions.js'
 import { getEquippedPvpSpecialAttack, hasEnoughPvpSpecialEnergy } from '../../../../../src/engine/pvpSpecialAttacks.js'
+import { applyPvpSpecialAttackRegenToState } from '../../../../../src/engine/pvpEngine.js'
 import spellsData from '../../../../../src/data/spells.json' assert { type: 'json' }
 import prayersData from '../../../../../src/data/prayers.json' assert { type: 'json' }
 
@@ -129,14 +130,15 @@ export async function onRequestPost({ request, env, params }) {
   if (!body?.action || typeof body.action !== 'object') {
     return json({ error: 'invalid_action' }, 400)
   }
-  const checked = validateIntentAction(state, ch.id, body.action)
+  const now = Date.now()
+  const regen = applyPvpSpecialAttackRegenToState(state, now)
+  const checked = validateIntentAction(regen.state, ch.id, body.action)
   if (!checked.ok) return json({ error: checked.error }, 400)
 
   const maxSeqRow = await env.DB.prepare(
     'SELECT COALESCE(MAX(character_seq), 0) AS max_seq FROM pvp_intents WHERE match_id = ? AND character_id = ?'
   ).bind(matchId, ch.id).first()
   const nextSeq = (maxSeqRow?.max_seq || 0) + 1
-  const now = Date.now()
 
   const insert = await env.DB.prepare(
     `INSERT INTO pvp_intents (match_id, character_id, tick_number, character_seq, action_json, created_at, applied)

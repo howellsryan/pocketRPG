@@ -2,6 +2,20 @@ import itemsData from '../../src/data/items.json' assert { type: 'json' }
 import { buildPlayerCombatant } from '../../src/engine/combatant.js'
 import { getLevelFromXP } from '../../src/engine/experience.js'
 
+
+const VALID_PVP_STANCES = new Set([
+  'accurate',
+  'aggressive',
+  'defensive',
+  'controlled',
+  'rapid',
+  'longrange',
+])
+
+export function normalizePvpCombatStance(value) {
+  return VALID_PVP_STANCES.has(value) ? value : 'accurate'
+}
+
 function parseSaveRow(row) {
   if (!row?.save_data || typeof row.save_data !== 'string') return null
   try {
@@ -22,7 +36,7 @@ export function buildCombatantFromSave({ characterId, username, savePayload }) {
     // PvP duels start from a fresh combat snapshot.
     // Do not inherit stale PvE/local currentHP from the cloud save, because
     // a stale 0 HP value can terminally end the match on the first tick.
-    stance: 'accurate',
+    stance: normalizePvpCombatStance(savePayload?.settings?.combatStance ?? savePayload?.combatStance),
     spell: null,
     itemsData,
   })
@@ -36,6 +50,12 @@ export function applyCombatantToSave(savePayload, combatant) {
   next.equipment = Object.fromEntries(
     Object.entries(combatant?.equipment || {}).map(([slot, item]) => [slot, item ? { ...item } : null]),
   )
+  if (combatant?.stance) {
+    next.settings = {
+      ...(next.settings || {}),
+      combatStance: normalizePvpCombatStance(combatant.stance),
+    }
+  }
   if (next.player && typeof next.player === 'object') {
     next.player = {
       ...next.player,

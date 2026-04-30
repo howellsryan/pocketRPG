@@ -1,6 +1,7 @@
 import { requireAuth, json } from '../../../_lib/auth.js'
 import { getOwnedCharacter, sweepStaleRows } from '../../../_lib/pvp.js'
 import { readOwnedActiveMatch } from '../../../_lib/pvpMatch.js'
+import { applyPvpSpecialAttackRegenToState } from '../../../../src/engine/pvpEngine.js'
 import { readPvpEndSummary } from '../../../../src/engine/pvpEndSummary.js'
 
 export async function onRequestGet({ request, env, params }) {
