@@ -5,7 +5,7 @@ const SAVE_VERSION = 1
 
 // Build a save payload object from live in-memory game state. Used by the
 // 60s tick snapshot and the cloud-sync push.
-export function buildSavePayloadFromState(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue, combatStance) {
+export function buildSavePayloadFromState(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue, combatStance, unlockedFeatures) {
   // Legacy wrapper. Prefer buildSavePayloadFromSnapshot() for new call sites.
   return buildSavePayloadFromSnapshot({
     player,
@@ -20,6 +20,7 @@ export function buildSavePayloadFromState(player, stats, inventory, bank, equipm
       completedQuests,
       questQueue,
       combatStance,
+      unlockedFeatures,
     },
   })
 }
@@ -120,10 +121,10 @@ export async function wipeLocalSave() {
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function snapshotToLocalStorage(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue, combatStance) {
+export function snapshotToLocalStorage(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue, combatStance, unlockedFeatures) {
   // Deprecated durable local backup path.
   void player; void stats; void inventory; void bank; void equipment
-  void bankConfig; void homeShortcuts; void bossKillCounts; void completedQuests; void questQueue; void combatStance
+  void bankConfig; void homeShortcuts; void bossKillCounts; void completedQuests; void questQueue; void combatStance; void unlockedFeatures
 }
 
 export async function restoreFromLocalStorage() {
