@@ -23,6 +23,7 @@ import prayersData from '../data/prayers.json'
 import spellsData from '../data/spells.json'
 import raidsData from '../data/raids.json'
 import { SCREENS, formatDropChance } from '../utils/constants.js'
+import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slayerRewards.js'
 
 const COMBAT_CATEGORIES = [
   {
@@ -650,17 +651,21 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         }
         if (ev.type === 'monsterDeath') {
           const defeatedMonster = ev.monster || state.monster
+          const defeatedMonsterData = resolveMonsterRewardData(defeatedMonster, state.monster, monstersData)
+          const defeatedMonsterId = defeatedMonster?.id || defeatedMonsterData?.id || state.monster?.id
+          const defeatedMonsterName = defeatedMonster?.name || defeatedMonsterData?.name || state.monster?.name || 'Monster'
+          const isDefeatedBoss = defeatedMonster?.boss === true || defeatedMonsterData?.boss === true
+          const killLoot = Array.isArray(ev.loot) ? ev.loot : []
           setKillCount(k => k + 1)
 
           // Boss kill count tracking
-          if (defeatedMonster?.boss) {
-            const monsterId = defeatedMonster.id
-            const newKC = (bossKillCountsRef.current[monsterId] || 0) + 1
-            const updatedCounts = { ...bossKillCountsRef.current, [monsterId]: newKC }
+          if (isDefeatedBoss && defeatedMonsterId) {
+            const newKC = (bossKillCountsRef.current[defeatedMonsterId] || 0) + 1
+            const updatedCounts = { ...bossKillCountsRef.current, [defeatedMonsterId]: newKC }
             bossKillCountsRef.current = updatedCounts
             updateBossKillCounts(updatedCounts)
             setLog(prev => [...prev.slice(-20), {
-              text: `👑 ${defeatedMonster.name} KC: ${newKC.toLocaleString()}`,
+              text: `👑 ${defeatedMonsterName} KC: ${newKC.toLocaleString()}`,
               type: 'victory',
               time: Date.now()
             }])
@@ -668,8 +673,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
           // Slayer task tracking
           const task = slayerTaskRef.current
-          if (task && defeatedMonster && task.monsterId === defeatedMonster.id) {
-            slayerXpGained += (defeatedMonster.slayerXP || defeatedMonster.hitpoints || state.monster.hitpoints) * 2
+          if (task && defeatedMonsterId && task.monsterId === defeatedMonsterId) {
+            slayerXpGained += getSlayerTaskXpForKill(defeatedMonster, state.monster, monstersData)
             const newRemaining = task.monstersRemaining - 1
             if (newRemaining <= 0) {
               // Task complete!
@@ -685,9 +690,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             }
           }
 
-          if (ev.loot && ev.loot.length > 0) {
+          if (killLoot.length > 0) {
             const newInv = [...inventoryRef.current]
-            for (const drop of ev.loot) {
+            for (const drop of killLoot) {
               const item = itemsData[drop.itemId]
               let added = false
               if (drop.noted) {
@@ -707,15 +712,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             updateInventory(newInv)
           }
           setLog(prev => [...prev.slice(-20), {
-            text: `${defeatedMonster?.name || state.monster.name} defeated!`,
+            text: `${defeatedMonsterName} defeated!`,
             type: 'victory',
             time: Date.now()
           }])
-          // Show loot modal instead of auto-restarting
+          // Show loot modal after every combat kill
           const raidId = state.raid?.raidId || null
+          const modalMonster = defeatedMonsterData || defeatedMonster || state.monster || { id: 'unknown_monster', name: defeatedMonsterName }
           setLootModal({
-            monster: defeatedMonster || state.monster,
-            loot: ev.loot || [],
+            monster: modalMonster,
+            loot: killLoot,
+            slayerXpGained,
+            isBossKill: isDefeatedBoss,
             raidId
           })
         }
