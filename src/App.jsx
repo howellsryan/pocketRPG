@@ -24,7 +24,7 @@ import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEqu
 import { startTicks, stopTicks, onTick, pauseTicks } from './engine/tick.js'
 import { wipeLocalSave } from './db/saveload.js'
 import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode } from './cloud/api.js'
-import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState } from './cloud/sync.js'
+import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave } from './cloud/sync.js'
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
 import { simulateIdleThieving } from './engine/thieving.js'
@@ -1195,7 +1195,10 @@ function GameApp() {
       if (idleResultData) setIdleResult(idleResultData)
 
       // Save the updated game state to cloud
-      if (!isInPvpMatch) schedulePushSave(getSnapshot())
+      if (!isInPvpMatch) {
+        schedulePushSave(getSnapshot())
+        requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SKIP_HOUR)
+      }
     } catch (err) {
       console.error('[PocketRPG] Skip 1h error:', err)
       if (err?.status === 402) {

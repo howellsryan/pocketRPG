@@ -3,6 +3,7 @@
 import { api, getToken, getCharacterId, setLocalCharacterId } from './api.js'
 import { buildSavePayloadFromSnapshot, applySavePayload } from '../db/saveload.js'
 import { withTimeout } from '../utils/helpers.js'
+import { CRITICAL_SAVE_COALESCE_MS, normaliseCriticalSaveReason } from './criticalSavePolicy.js'
 
 const PUSH_DEBOUNCE_MS = 60_000
 // Grace window for clock skew between this client and the cloud server when
@@ -18,6 +19,9 @@ let lastPushedAt = 0
 let pendingTimer = null
 let pendingSnapshot = null
 let inFlight = false
+let criticalTimer = null
+let pendingCriticalSnapshotSource = null
+let pendingCriticalReasons = new Set()
 
 function emitSaveSyncActiveMatchConflict(matchId) {
   const parsed = Number(matchId)
@@ -92,6 +96,45 @@ export async function pushNow(snapshot) {
   await flushNow()
 }
 
+
+function resolveSnapshotSource(source) {
+  if (typeof source === 'function') return source()
+  return source
+}
+
+export function requestCriticalPushSave(snapshotOrFactory, reason = 'critical') {
+  if (!canSync()) return false
+  if (!snapshotOrFactory) return false
+
+  pendingCriticalSnapshotSource = snapshotOrFactory
+  pendingCriticalReasons.add(normaliseCriticalSaveReason(reason))
+
+  // Critical milestones should not wait behind the normal 60s autosave timer.
+  if (pendingTimer) {
+    clearTimeout(pendingTimer)
+    pendingTimer = null
+  }
+
+  if (criticalTimer) return true
+
+  criticalTimer = setTimeout(() => {
+    criticalTimer = null
+    const source = pendingCriticalSnapshotSource
+    const reasons = [...pendingCriticalReasons]
+    pendingCriticalSnapshotSource = null
+    pendingCriticalReasons.clear()
+
+    const snapshot = resolveSnapshotSource(source)
+    if (!snapshot) return
+
+    void pushNow(snapshot).catch(err => {
+      console.warn('[PocketRPG] Critical cloud save failed:', err?.message || err, { reasons })
+    })
+  }, CRITICAL_SAVE_COALESCE_MS)
+
+  return true
+}
+
 // Public: pull the cloud save for the selected character.
 // Returns { applied, payload, updatedAt } or { applied: false }. Guarded by
 // a timeout so a slow/hung endpoint can't trap the boot sequence on the
@@ -134,5 +177,8 @@ export async function applyCloudSave(payload, updatedAt) {
 export function resetSyncState() {
   lastPushedAt = 0
   pendingSnapshot = null
+  pendingCriticalSnapshotSource = null
+  pendingCriticalReasons.clear()
   if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }
+  if (criticalTimer) { clearTimeout(criticalTimer); criticalTimer = null }
 }
