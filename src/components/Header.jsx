@@ -1,10 +1,11 @@
 import { useGame } from '../state/gameState.jsx'
 import { useEffect, useRef, useState } from 'preact/hooks'
+import { CLOUD_SAVE_STATUS_EVENT } from '../cloud/sync.js'
 
 export default function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null, onBuyCredits = null }) {
-  const { player, currentHP, getMaxHP, isSaving } = useGame()
-  const [showSaved, setShowSaved] = useState(false)
-  const previousSavingRef = useRef(false)
+  const { player, currentHP, getMaxHP } = useGame()
+  const [cloudStatus, setCloudStatus] = useState('idle')
+  const [showSavedToCloud, setShowSavedToCloud] = useState(false)
   const savedTimeoutRef = useRef(null)
   if (!player) return null
 
@@ -17,15 +18,34 @@ export default function Header({ activity, credits = 0, isCloudAccount = false, 
   }
 
   useEffect(() => {
-    if (previousSavingRef.current && !isSaving) {
-      setShowSaved(true)
-      if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current)
-      savedTimeoutRef.current = setTimeout(() => {
-        setShowSaved(false)
-      }, 3000)
+    const handleCloudSaveStatus = (event) => {
+      const status = event?.detail?.status
+      if (!status) return
+      setCloudStatus(status)
+      if (status === 'saved') {
+        setShowSavedToCloud(true)
+        if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current)
+        savedTimeoutRef.current = setTimeout(() => {
+          setShowSavedToCloud(false)
+          setCloudStatus('idle')
+        }, 3000)
+        return
+      }
+      if (status === 'pending' || status === 'saving') {
+        if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current)
+        setShowSavedToCloud(false)
+      }
+      if (status === 'failed' || status === 'idle') {
+        if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current)
+        setShowSavedToCloud(false)
+      }
     }
-    previousSavingRef.current = isSaving
-  }, [isSaving])
+
+    window.addEventListener(CLOUD_SAVE_STATUS_EVENT, handleCloudSaveStatus)
+    return () => {
+      window.removeEventListener(CLOUD_SAVE_STATUS_EVENT, handleCloudSaveStatus)
+    }
+  }, [])
 
   useEffect(() => () => {
     if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current)
@@ -34,11 +54,11 @@ export default function Header({ activity, credits = 0, isCloudAccount = false, 
   return (
     <header class="relative flex-shrink-0 bg-[#111] border-b border-[#333] px-3 py-2">
       <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-        {isSaving && <div class="h-3.5 w-3.5 rounded-full border-2 border-[#555] border-t-[var(--color-gold)] animate-spin" aria-label="Saving" />}
-        {!isSaving && showSaved && (
-          <div class="flex items-center gap-1 text-[10px] font-semibold text-[var(--color-success)]" aria-label="Saved">
+        {(cloudStatus === 'pending' || cloudStatus === 'saving') && <div class="h-3.5 w-3.5 rounded-full border-2 border-[#555] border-t-[var(--color-gold)] animate-spin" aria-label="Saving to Cloud" />}
+        {cloudStatus === 'saved' && showSavedToCloud && (
+          <div class="flex items-center gap-1 text-[10px] font-semibold text-[var(--color-success)]" aria-label="Saved to Cloud">
             <span>✓</span>
-            <span>Saved</span>
+            <span>Saved to Cloud</span>
           </div>
         )}
       </div>

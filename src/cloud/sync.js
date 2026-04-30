@@ -14,6 +14,7 @@ const FRESHNESS_GRACE_MS = 5_000
 // idle-result modal from appearing — we fall back to local state instead.
 const CLOUD_READ_TIMEOUT_MS = 5_000
 const ACTIVE_MATCH_RETRY_MS = 5_000
+export const CLOUD_SAVE_STATUS_EVENT = 'pocketrpg:cloud-save-status'
 
 let lastPushedAt = 0
 let pendingTimer = null
@@ -22,6 +23,16 @@ let inFlight = false
 let criticalTimer = null
 let pendingCriticalSnapshotSource = null
 let pendingCriticalReasons = new Set()
+
+function emitCloudSaveStatus(status, detail = {}) {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new CustomEvent(CLOUD_SAVE_STATUS_EVENT, {
+    detail: {
+      status,
+      ...detail,
+    },
+  }))
+}
 
 function emitSaveSyncActiveMatchConflict(matchId) {
   const parsed = Number(matchId)
@@ -52,11 +63,13 @@ async function flushNow() {
   const snap = pendingSnapshot
   pendingSnapshot = null
   inFlight = true
+  emitCloudSaveStatus('saving')
   try {
     const data = buildSavePayloadFromSnapshot(snap)
     const json = JSON.stringify(data)
     const res = await api.putSave(json)
     if (res?.updatedAt) lastPushedAt = res.updatedAt
+    emitCloudSaveStatus('saved', { updatedAt: res?.updatedAt || null })
     console.log('[PocketRPG] Cloud save pushed, size:', json.length)
   } catch (err) {
     // While a PvP match is active, /api/save intentionally returns:
@@ -66,9 +79,11 @@ async function flushNow() {
     if (err?.status === 409 && (err?.body?.error === 'character_in_active_match' || err?.message === 'character_in_active_match')) {
       emitSaveSyncActiveMatchConflict(err?.body?.match_id)
       pendingSnapshot = snap
+      emitCloudSaveStatus('pending')
       schedulePush(snap, ACTIVE_MATCH_RETRY_MS)
       return
     }
+    emitCloudSaveStatus('failed', { error: err?.message || 'cloud_save_failed' })
     console.warn('[PocketRPG] Cloud push failed:', err.message)
   } finally {
     inFlight = false
@@ -77,6 +92,7 @@ async function flushNow() {
 
 function schedulePush(snapshot, delay = PUSH_DEBOUNCE_MS) {
   pendingSnapshot = snapshot
+  emitCloudSaveStatus('pending')
   if (pendingTimer) return
   pendingTimer = setTimeout(flushNow, delay)
 }
@@ -108,6 +124,7 @@ export function requestCriticalPushSave(snapshotOrFactory, reason = 'critical') 
 
   pendingCriticalSnapshotSource = snapshotOrFactory
   pendingCriticalReasons.add(normaliseCriticalSaveReason(reason))
+  emitCloudSaveStatus('pending')
 
   // Critical milestones should not wait behind the normal 60s autosave timer.
   if (pendingTimer) {
