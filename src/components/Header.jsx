@@ -1,7 +1,7 @@
 import { useGame } from '../state/gameState.jsx'
 
 export default function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null, onBuyCredits = null }) {
-  const { player, currentHP, getMaxHP } = useGame()
+  const { player, currentHP, getMaxHP, isSaving } = useGame()
   if (!player) return null
 
   const maxHP = getMaxHP()
@@ -13,9 +13,13 @@ export default function Header({ activity, credits = 0, isCloudAccount = false, 
   }
 
   return (
-    <header class="flex-shrink-0 bg-[#111] border-b border-[#333] px-3 py-2">
+    <header class="relative flex-shrink-0 bg-[#111] border-b border-[#333] px-3 py-2">
+      <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+        {isSaving && <div class="h-3.5 w-3.5 rounded-full border-2 border-[#555] border-t-[var(--color-gold)] animate-spin" aria-label="Saving" />}
+      </div>
+
       <div class="flex items-center justify-between gap-2">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1">
           <button
             onClick={handleSkip}
             class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1a2a1a] border border-[#3a5a3a] hover:border-[#5a8a5a] transition-colors text-[10px] font-semibold text-[var(--color-parchment)] whitespace-nowrap"
@@ -24,20 +28,20 @@ export default function Header({ activity, credits = 0, isCloudAccount = false, 
             <span>⏭️</span>
             <span>Skip 1h</span>
           </button>
-        </div>
 
-        {/* Credits pill — cloud accounts only */}
-        {isCloudAccount && (
-          <button
-            onClick={() => onBuyCredits?.()}
-            class="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#1a1030] border border-[#5a2a7a] whitespace-nowrap hover:border-[#7a3a9a] transition-colors cursor-pointer bg-opacity-90 hover:bg-opacity-100"
-          >
-            <span class="text-[10px]">💎</span>
-            <span class="text-[10px] font-[var(--font-mono)] font-bold text-[#e879f9]">
-              Credits: {credits.toLocaleString()}
-            </span>
-          </button>
-        )}
+          {/* Credits pill — cloud accounts only */}
+          {isCloudAccount && (
+            <button
+              onClick={() => onBuyCredits?.()}
+              class="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#1a1030] border border-[#5a2a7a] whitespace-nowrap hover:border-[#7a3a9a] transition-colors cursor-pointer bg-opacity-90 hover:bg-opacity-100"
+            >
+              <span class="text-[10px]">💎</span>
+              <span class="text-[10px] font-[var(--font-mono)] font-bold text-[#e879f9]">
+                {credits.toLocaleString()}
+              </span>
+            </button>
+          )}
+        </div>
 
         {/* HP bar */}
         <div class="flex items-center gap-1.5">

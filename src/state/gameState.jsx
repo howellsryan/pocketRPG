@@ -39,6 +39,7 @@ export function GameProvider({ children }) {
   const [farming, setFarmingState] = useState({ patchesById: {} })
   const [completedQuests, setCompletedQuestsState] = useState(new Set())
   const [questQueue, setQuestQueueState] = useState([])
+  const [isSaving, setIsSaving] = useState(false)
   const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false })
 
   // Refs to hold latest state for the debounced auto-save
@@ -375,8 +376,14 @@ export function GameProvider({ children }) {
     if (d.equipment) promises.push(saveEquipment(s.equipment))
     if (d.bank) promises.push(saveBank(s.bank))
     if (d.player && s.player) promises.push(savePlayer(s.player))
-    await Promise.all(promises)
-    dirty.current = { stats: false, inventory: false, equipment: false, bank: false, player: false }
+    if (promises.length === 0) return
+    setIsSaving(true)
+    try {
+      await Promise.all(promises)
+      dirty.current = { stats: false, inventory: false, equipment: false, bank: false, player: false }
+    } finally {
+      setIsSaving(false)
+    }
   }, AUTO_SAVE_DEBOUNCE), [])
 
   // Mark dirty and trigger save
@@ -683,7 +690,7 @@ export function GameProvider({ children }) {
   }, [loaded, stats, bossKillCounts, raidKillCounts, completedQuests, unlockedFeatures, slayerPoints, getSnapshot])
 
   const value = {
-    loaded, player, stats, inventory, equipment, bank, currentHP, toasts,
+    loaded, player, stats, inventory, equipment, bank, currentHP, toasts, isSaving,
     homeShortcuts, combatStance, activeTask, autoBankLoot, bankConfig,
     unlockedFeatures, unlockFeature,
     slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints,
