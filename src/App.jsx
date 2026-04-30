@@ -33,6 +33,7 @@ import { createQuestState } from './engine/quests.js'
 import { simulateQuestIdleCascade, splitQuestXpRewards } from './engine/questIdleCascade.js'
 import { getLevelFromXP } from './engine/experience.js'
 import { pvpApi } from './cloud/pvp.js'
+import { SKIP_HOUR_MS, getSkipPreflight, isChargeableSkipOutcome } from './engine/skipPreflight.js'
 
 // ── Clock-rollback watermark ────────────────────────────────────────────────
 // We persist the highest Date.now() we've ever observed. If the device clock
@@ -909,8 +910,20 @@ function GameApp() {
     setScreen(scr)
   }
 
-  // Skip 1 hour handler — validate with server first, then simulate idle time
+  const isSkippingRef = useRef(false)
+
+  function clearExhaustedActiveTask(reason) {
+    setActiveTask(null)
+    activeTaskRef.current = null
+    setActionData(null)
+    try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+    addToast(reason || 'This action can no longer progress.', 'info')
+  }
+
+  // Skip 1 hour handler — preflight first, charge only after meaningful outcome exists
   async function handleSkip1h() {
+    if (isSkippingRef.current) return
+    isSkippingRef.current = true
     if (!isCloudAccount) {
       addToast('Skip only available for cloud accounts!', 'error')
       return
@@ -925,22 +938,22 @@ function GameApp() {
     // Check if there's an active task — prevent wasting credits
     if (!activeTaskRef.current) {
       addToast('Nothing to skip — start a task first!', 'error')
+      isSkippingRef.current = false
       return
     }
 
     try {
-      // Call server to validate credit and deduct atomically
-      const result = await api.skipHour()
-      if (!result.ok) {
-        addToast('Server error processing skip!', 'error')
+      const task = activeTaskRef.current
+      const [freshStats, freshInv, freshEq, freshBank, freshSlayerTask] = await Promise.all([
+        getAllStats(), getInventory(), getEquipment(), getBank(), getSetting('slayerTask'),
+      ])
+      const context = { inventory: freshInv, bank: freshBank, equipment: freshEq, stats: freshStats, itemsData: itemsDataRef.current, slayerTask: freshSlayerTask, questQueue: questQueueRef.current || [], now: Date.now() }
+      const preflight = getSkipPreflight(task, context, SKIP_HOUR_MS)
+      if (!preflight.canSkip) {
+        if (preflight.shouldStopTask) clearExhaustedActiveTask(preflight.reason)
+        else addToast(preflight.reason || 'Cannot skip this action right now.', 'info')
         return
       }
-
-      // Server confirmed and deducted 1 credit — update local credits state
-      setCredits(result.credits_remaining)
-
-      const SKIP_HOUR_MS = 60 * 60 * 1000
-      const task = activeTaskRef.current
       if (task?.type === 'quest') {
         const cascade = simulateQuestIdleCascade({
           activeTask: task,
@@ -996,15 +1009,6 @@ function GameApp() {
 
       const elapsedMs = SKIP_HOUR_MS
       let idleResultData = { elapsedMs, task: activeTaskRef.current }
-
-      // Re-read latest stats/equipment/inventory/bank to avoid stale state
-      const [freshStats, freshInv, freshEq, freshBank, freshSlayerTask] = await Promise.all([
-        getAllStats(),
-        getInventory(),
-        getEquipment(),
-        getBank(),
-        getSetting('slayerTask'),
-      ])
 
       // If there's an active task, simulate it for 1 hour
       if (activeTaskRef.current) {
@@ -1179,6 +1183,14 @@ function GameApp() {
         }
       }
 
+      if (!isChargeableSkipOutcome(task, idleResultData)) {
+        clearExhaustedActiveTask(preflight?.reason || 'No remaining actions available for this activity.')
+        return
+      }
+
+      const result = await api.skipHour()
+      setCredits(result?.credits_remaining ?? credits)
+
       // Show idle result modal with skip summary
       if (idleResultData) setIdleResult(idleResultData)
 
@@ -1186,7 +1198,14 @@ function GameApp() {
       if (!isInPvpMatch) schedulePushSave(getSnapshot())
     } catch (err) {
       console.error('[PocketRPG] Skip 1h error:', err)
-      addToast(err.message || 'Error during skip!', 'error')
+      if (err?.status === 402) {
+        addToast('You do not have enough credits to skip.', 'error')
+        await refreshMe?.()
+      } else {
+        addToast(err.message || 'Error during skip!', 'error')
+      }
+    } finally {
+      isSkippingRef.current = false
     }
   }
 
