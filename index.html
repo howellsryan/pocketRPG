@@ -33809,7 +33809,34 @@ const SAVE_VERSION = 1;
 // Build a save payload object from live in-memory game state. Used by the
 // 60s tick snapshot and the cloud-sync push.
 function buildSavePayloadFromState(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue, combatStance) {
-    const data = {
+    // Legacy wrapper. Prefer buildSavePayloadFromSnapshot() for new call sites.
+    return buildSavePayloadFromSnapshot({
+        player,
+        stats,
+        inventory,
+        bank,
+        equipment,
+        settings: {
+            bankConfig,
+            homeShortcuts,
+            bossKillCounts,
+            completedQuests,
+            questQueue,
+            combatStance,
+        },
+    });
+}
+function normaliseSaveSettings(settings = {}) {
+    const next = { ...settings };
+    if (next.unlockedFeatures instanceof Set)
+        next.unlockedFeatures = [...next.unlockedFeatures];
+    if (next.completedQuests instanceof Set)
+        next.completedQuests = [...next.completedQuests];
+    return next;
+}
+function buildSavePayloadFromSnapshot(snapshot) {
+    const { player, stats, inventory, bank, equipment, settings = {} } = snapshot || {};
+    return {
         version: SAVE_VERSION,
         timestamp: Date.now(),
         player,
@@ -33817,32 +33844,13 @@ function buildSavePayloadFromState(player, stats, inventory, bank, equipment, ba
         inventory,
         bank,
         equipment,
-        settings: {},
+        settings: normaliseSaveSettings(settings),
     };
-    try {
-        data.settings.activeTask = JSON.parse(localStorage.getItem('pocketrpg_activeTask'));
-    }
-    catch {
-        data.settings.activeTask = null;
-    }
-    data.settings.lastTick = parseInt(localStorage.getItem('pocketrpg_lastTick'), 10) || data.timestamp;
-    if (bankConfig)
-        data.settings.bankConfig = bankConfig;
-    if (homeShortcuts)
-        data.settings.homeShortcuts = homeShortcuts;
-    if (combatStance)
-        data.settings.combatStance = combatStance;
-    if (bossKillCounts)
-        data.settings.bossKillCounts = bossKillCounts;
-    if (completedQuests)
-        data.settings.completedQuests = completedQuests instanceof Set ? [...completedQuests] : completedQuests;
-    if (questQueue)
-        data.settings.questQueue = questQueue;
-    return data;
 }
 // Wipe IDB and apply a decoded save payload. Shared by localStorage-backup
 // restore and cloud-save pull.
-async function applySavePayload(data) {
+async function applySavePayload(data, options = {}) {
+    const { restoreLocalIdleMirrors = false } = options;
     await deleteDB();
     const db = await getDB();
     if (data.player)
@@ -33882,14 +33890,16 @@ async function applySavePayload(data) {
         await setTx.done;
     }
     // Restore localStorage idle keys so the engine sees the right elapsed window.
-    const savedLastTick = data.settings?.lastTick || data.timestamp;
-    if (savedLastTick)
-        localStorage.setItem('pocketrpg_lastTick', String(savedLastTick));
-    if (data.settings?.activeTask) {
-        localStorage.setItem('pocketrpg_activeTask', JSON.stringify(data.settings.activeTask));
-    }
-    else {
-        localStorage.removeItem('pocketrpg_activeTask');
+    if (restoreLocalIdleMirrors) {
+        const savedLastTick = data.settings?.lastTick || data.timestamp;
+        if (savedLastTick)
+            localStorage.setItem('pocketrpg_lastTick', String(savedLastTick));
+        if (data.settings?.activeTask) {
+            localStorage.setItem('pocketrpg_activeTask', JSON.stringify(data.settings.activeTask));
+        }
+        else {
+            localStorage.removeItem('pocketrpg_activeTask');
+        }
     }
 }
 // Wipe everything we persist per-character on the local device. Used when
@@ -33910,15 +33920,18 @@ async function wipeLocalSave() {
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
 function snapshotToLocalStorage(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue, combatStance) {
-    try {
-        const data = buildSavePayloadFromState(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue, combatStance);
-        const json = JSON.stringify(data);
-        localStorage.setItem('pocketrpg_backup', json);
-        console.log('[PocketRPG] Snapshot saved to localStorage, size:', json.length);
-    }
-    catch (err) {
-        console.warn('[PocketRPG] Backup snapshot failed:', err);
-    }
+    // Deprecated durable local backup path.
+    void player;
+    void stats;
+    void inventory;
+    void bank;
+    void equipment;
+    void bankConfig;
+    void homeShortcuts;
+    void bossKillCounts;
+    void completedQuests;
+    void questQueue;
+    void combatStance;
 }
 async function restoreFromLocalStorage() {
     try {
@@ -34233,9 +34246,7 @@ function resetIdleStateSync() {
 }
 
 // ── cloud/sync.js ──
-// Cloud-save push/pull. Pushes are debounced to once per 60s per character
-// and skipped entirely when the encoded save hasn't changed since the last
-// successful push.
+// Cloud-save push/pull. Pushes are debounced to once per 60s per character.
 
 
 
@@ -34282,7 +34293,7 @@ async function flushNow() {
     pendingSnapshot = null;
     inFlight = true;
     try {
-        const data = buildSavePayloadFromState(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig, snap.homeShortcuts, snap.bossKillCounts, snap.completedQuests, snap.questQueue, snap.combatStance);
+        const data = buildSavePayloadFromSnapshot(snap);
         const json = JSON.stringify(data);
         const res = await api.putSave(json);
         if (res?.updatedAt)
@@ -34364,7 +34375,7 @@ async function checkCloudNewer() {
 // Public: apply a previously-pulled cloud save to IDB. Caller decides whether
 // to do this based on conflict-resolution UX.
 async function applyCloudSave(payload, updatedAt) {
-    await applySavePayload(payload);
+    await applySavePayload(payload, { restoreLocalIdleMirrors: false });
     if (updatedAt)
         lastPushedAt = updatedAt;
     // IDB now holds this character's data — stamp ownership so the next boot
@@ -34462,6 +34473,7 @@ const pvpApi = {
 
 
 
+
 const GameContext = createContext(null);
 function GameProvider({ children }) {
     const [loaded, setLoaded] = useState(false);
@@ -34497,12 +34509,12 @@ function GameProvider({ children }) {
     useEffect(() => { stateRef.current.player = player; }, [player]);
     // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
     const loadGame = useCallback(async () => {
-        let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue] = await Promise.all([
+        let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell] = await Promise.all([
             getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
             getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
             getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
             getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
-            getSetting('completedQuests'), getSetting('questQueue')
+            getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell')
         ]);
         // Idle-engine inputs: last active timestamp and last active task.
         // D1 is authoritative when signed in + online — localStorage is only used
@@ -34514,12 +34526,7 @@ function GameProvider({ children }) {
         catch {
             return null;
         } })();
-        const savedActiveCombatSpell = (() => { try {
-            return JSON.parse(localStorage.getItem('pocketrpg_activeCombatSpell'));
-        }
-        catch {
-            return null;
-        } })();
+        const isCloudCharacter = !!getToken() && !!getCharacterId();
         try {
             const cloudIdle = await fetchIdleState();
             if (cloudIdle && cloudIdle.lastActiveAt) {
@@ -34535,7 +34542,13 @@ function GameProvider({ children }) {
             }
         }
         catch (e) {
-            console.warn('[PocketRPG] fetchIdleState failed, using local fallback:', e?.message || e);
+            if (isCloudCharacter) {
+                savedLastTick = null;
+                savedTask = null;
+            }
+            else {
+                console.warn('[PocketRPG] fetchIdleState failed, using local fallback:', e?.message || e);
+            }
         }
         // ── Idle simulation (runs on raw DB data, before state is set) ──
         let idleResult = null;
@@ -34939,7 +34952,7 @@ function GameProvider({ children }) {
     }, []);
     const updateActiveCombatSpell = useCallback((spell) => {
         setActiveCombatSpellState(spell);
-        localStorage.setItem('pocketrpg_activeCombatSpell', JSON.stringify(spell));
+        saveSetting('activeCombatSpell', spell);
     }, []);
     const updateAutoBankLoot = useCallback((enabled) => {
         setAutoBankLootState(enabled);
@@ -35066,13 +35079,24 @@ function GameProvider({ children }) {
         inventory: stateRef.current.inventory,
         bank: stateRef.current.bank,
         equipment: stateRef.current.equipment,
-        bankConfig: bankConfig,
-        homeShortcuts,
-        bossKillCounts,
-        raidKillCounts,
-        completedQuests,
-        questQueue,
-    }), [bankConfig, homeShortcuts, bossKillCounts, raidKillCounts, completedQuests, questQueue]);
+        settings: {
+            currentHP,
+            autoBankLoot,
+            bankConfig,
+            homeShortcuts,
+            combatStance,
+            unlockedFeatures: [...unlockedFeatures],
+            activeTask,
+            activeCombatSpell,
+            slayerTask,
+            slayerPoints,
+            bossKillCounts,
+            raidKillCounts,
+            farming,
+            completedQuests: [...completedQuests],
+            questQueue,
+        },
+    }), [currentHP, autoBankLoot, bankConfig, homeShortcuts, combatStance, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, bossKillCounts, raidKillCounts, farming, completedQuests, questQueue]);
     const value = {
         loaded, player, stats, inventory, equipment, bank, currentHP, toasts,
         homeShortcuts, combatStance, activeTask, autoBankLoot, bankConfig,
@@ -43529,6 +43553,7 @@ function GameApp() {
     const pendingXpChoicesRef = useRef(pendingXpChoices);
     // Cloud auth gate: 'pending' until we resolve, 'auth' if AuthScreen needed, 'ready' to boot game
     const [cloudPhase, setCloudPhase] = useState('pending');
+    const [cloudLoadError, setCloudLoadError] = useState(null);
     const [conflict, setConflict] = useState(null); // { cloudPayload, cloudHash, cloudUpdatedAt, localUpdatedAt }
     const [removeAds, setRemoveAds] = useState(false);
     const [identityId, setIdentityId] = useState(null);
@@ -43764,11 +43789,6 @@ function GameApp() {
             const bootNow = Date.now();
             localStorage.setItem('pocketrpg_lastTick', String(bootNow));
             updateMaxObservedAt(bootNow);
-            // Do an immediate snapshot so localStorage backup exists from the start
-            const snap = getSnapshot();
-            if (snap.player) {
-                snapshotToLocalStorage(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig, snap.homeShortcuts, snap.bossKillCounts, snap.completedQuests, snap.questQueue);
-            }
             startTicks();
             return () => stopTicks();
         }
@@ -44160,8 +44180,6 @@ function GameApp() {
             snapshotCounter.current++;
             if (snapshotCounter.current >= 100) {
                 snapshotCounter.current = 0;
-                const snap = getSnapshot();
-                snapshotToLocalStorage(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig, snap.homeShortcuts, snap.bossKillCounts, snap.completedQuests, snap.questQueue);
                 // Cloud sync piggy-backs on the local snapshot cadence (debounced, hash-skipped).
                 if (!isInPvpMatch)
                     schedulePushSave(snap);
@@ -44241,6 +44259,7 @@ function GameApp() {
                 return;
             }
             if (hasToken && hasCharacter) {
+                setCloudLoadError(null);
                 // Fetch remove-ads status, Stripe payment links, and character credits
                 // (non-fatal if unavailable — shop buttons / Credits pill stay hidden).
                 try {
@@ -44265,39 +44284,26 @@ function GameApp() {
                     await wipeLocalSave();
                     resetSyncState();
                 }
-                // Pull cloud save and decide on conflict before touching local IDB
-                try {
-                    const result = await pullSave();
-                    if (result && result.payload) {
-                        const localExists = await hasSave();
-                        const localTs = parseInt(localStorage.getItem('pocketrpg_lastTick'), 10) || 0;
-                        if (!localExists) {
-                            // Fresh device — apply cloud save straight away
-                            await applyCloudSave(result.payload, result.updatedAt);
-                        }
-                        else if (result.updatedAt > localTs + 60000) {
-                            // Cloud is meaningfully newer — ask the user
-                            setConflict({
-                                cloudPayload: result.payload,
-                                cloudUpdatedAt: result.updatedAt,
-                                localUpdatedAt: localTs,
-                            });
-                            return;
-                        }
-                        // else: local is newer or effectively equal — keep local, next push will overwrite cloud
-                    }
+                const result = await pullSave();
+                if (result && result.payload) {
+                    await applyCloudSave(result.payload, result.updatedAt);
                 }
-                catch (err) {
-                    console.warn('[PocketRPG] Cloud pull failed, continuing with local save:', err.message);
+                else {
+                    await wipeLocalSave();
+                    await startNewGame(getIronmanMode(), getCharacterName(), getOneLifeMode());
+                    if (!isInPvpMatch)
+                        await pushNow(getSnapshot());
+                    setCloudPhase('ready');
+                    return;
                 }
             }
             setCloudPhase('ready');
             await checkSave();
         }
         catch (err) {
-            console.warn('[PocketRPG] Cloud init failed, falling back to local:', err);
-            setCloudPhase('ready');
-            await checkSave();
+            console.warn('[PocketRPG] Cloud init failed:', err);
+            setCloudLoadError(err?.message || 'Failed to load cloud save');
+            setCloudPhase('auth');
         }
     }
     async function resolveConflict(useCloud) {
@@ -44311,6 +44317,7 @@ function GameApp() {
         await checkSave();
     }
     async function checkSave() {
+        const isCloudCharacter = !!getToken() && !!getCharacterId();
         try {
             const exists = await hasSave();
             if (exists) {
@@ -44324,8 +44331,10 @@ function GameApp() {
                 }
             }
             else {
-                // No IDB save — check localStorage backup before giving up
-                await attemptBackupRestore();
+                if (isCloudCharacter) {
+                    throw new Error('cloud_save_missing_local_cache');
+                }
+                await startNewGame();
             }
         }
         catch (err) {
@@ -44352,34 +44361,8 @@ function GameApp() {
             catch (retryErr) {
                 console.warn('[PocketRPG] IDB retry failed, falling back to backup:', retryErr);
             }
-            await attemptBackupRestore();
-        }
-    }
-    async function attemptBackupRestore() {
-        try {
-            const restored = await restoreFromLocalStorage();
-            if (restored) {
-                // Backup restored to IDB — now load normally (idle engine will run from lastTick)
-                console.log('[PocketRPG] Backup restore succeeded, loading...');
-                const idleResult = await loadGame();
-                setGameReady(true);
-                if (idleResult) {
-                    setIdleResult(idleResult);
-                    if (idleResult.pendingChoices?.length > 0) {
-                        setPendingXpChoices(prev => [...prev, ...idleResult.pendingChoices]);
-                    }
-                }
-                addToast('💾 Save restored from backup!', 'info');
-            }
-            else {
-                // No backup either — start a new game silently. Cloud users reuse
-                // their AuthScreen username as the in-game player name; offline
-                // users default to 'Adventurer'.
-                await startNewGame();
-            }
-        }
-        catch (err2) {
-            console.error('[PocketRPG] Backup restore failed:', err2);
+            if (isCloudCharacter)
+                throw err;
             await startNewGame();
         }
     }
@@ -44736,6 +44719,14 @@ function GameApp() {
     }
     // Auth gate — shown before we touch local save
     if (cloudPhase === 'auth') {
+        if (cloudLoadError) {
+            return (h("div", { className: "min-h-screen flex items-center justify-center bg-[var(--color-void)] text-[var(--color-parchment)] p-4" },
+                h("div", { className: "max-w-md w-full rounded-xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] p-4" },
+                    h("h2", { className: "font-[var(--font-display)] text-[var(--color-gold)] mb-2" }, "Cloud save unavailable"),
+                    h("p", { className: "text-sm mb-4" }, cloudLoadError),
+                    h("button", { onClick: () => { setCloudPhase('pending'); setCloudLoadError(null); initCloudAndSave(); }, className: "w-full mb-2 rounded-lg px-3 py-2 bg-[var(--color-gold)] text-black font-semibold" }, "Retry"),
+                    h("button", { onClick: () => { clearAuth(); setCloudLoadError(null); setCloudPhase('auth'); }, className: "w-full rounded-lg px-3 py-2 border border-[var(--color-void-border)]" }, "Log out"))));
+        }
         return (h(AuthScreen, { onCloudReady: async () => {
                 // After character selection, re-run the full cloud+local boot
                 setCloudPhase('pending');

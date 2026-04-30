@@ -9,6 +9,7 @@ import { simulateQuestIdleCascade, splitQuestXpRewards } from '../engine/questId
 import { ALL_SKILLS, MAX_XP, AUTO_SAVE_DEBOUNCE, QUEST_QUEUE_MAX } from '../utils/constants.js'
 import { debounce } from '../utils/helpers.js'
 import { fetchIdleState, pushIdleState } from '../cloud/idleState.js'
+import { getToken, getCharacterId } from '../cloud/api.js'
 import itemsData from '../data/items.json'
 
 const GameContext = createContext(null)
@@ -50,19 +51,19 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
       getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
-      getSetting('completedQuests'), getSetting('questQueue')
+      getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell')
     ])
     // Idle-engine inputs: last active timestamp and last active task.
     // D1 is authoritative when signed in + online — localStorage is only used
     // as an offline-mode fallback (and as a backup when the D1 fetch fails).
     let savedLastTick = (() => { const v = localStorage.getItem('pocketrpg_lastTick'); return v ? parseInt(v, 10) : null })()
     let savedTask = (() => { try { return JSON.parse(localStorage.getItem('pocketrpg_activeTask')) } catch { return null } })()
-    const savedActiveCombatSpell = (() => { try { return JSON.parse(localStorage.getItem('pocketrpg_activeCombatSpell')) } catch { return null } })()
+    const isCloudCharacter = !!getToken() && !!getCharacterId()
     try {
       const cloudIdle = await fetchIdleState()
       if (cloudIdle && cloudIdle.lastActiveAt) {
@@ -75,7 +76,12 @@ export function GameProvider({ children }) {
         else           localStorage.removeItem('pocketrpg_activeTask')
       }
     } catch (e) {
-      console.warn('[PocketRPG] fetchIdleState failed, using local fallback:', e?.message || e)
+      if (isCloudCharacter) {
+        savedLastTick = null
+        savedTask = null
+      } else {
+        console.warn('[PocketRPG] fetchIdleState failed, using local fallback:', e?.message || e)
+      }
     }
 
     // ── Idle simulation (runs on raw DB data, before state is set) ──
@@ -481,7 +487,7 @@ export function GameProvider({ children }) {
 
   const updateActiveCombatSpell = useCallback((spell) => {
     setActiveCombatSpellState(spell)
-    localStorage.setItem('pocketrpg_activeCombatSpell', JSON.stringify(spell))
+    saveSetting('activeCombatSpell', spell)
   }, [])
 
   const updateAutoBankLoot = useCallback((enabled) => {
@@ -620,13 +626,24 @@ export function GameProvider({ children }) {
     inventory: stateRef.current.inventory,
     bank: stateRef.current.bank,
     equipment: stateRef.current.equipment,
-    bankConfig: bankConfig,
-    homeShortcuts,
-    bossKillCounts,
-    raidKillCounts,
-    completedQuests,
-    questQueue,
-  }), [bankConfig, homeShortcuts, bossKillCounts, raidKillCounts, completedQuests, questQueue])
+    settings: {
+      currentHP,
+      autoBankLoot,
+      bankConfig,
+      homeShortcuts,
+      combatStance,
+      unlockedFeatures: [...unlockedFeatures],
+      activeTask,
+      activeCombatSpell,
+      slayerTask,
+      slayerPoints,
+      bossKillCounts,
+      raidKillCounts,
+      farming,
+      completedQuests: [...completedQuests],
+      questQueue,
+    },
+  }), [currentHP, autoBankLoot, bankConfig, homeShortcuts, combatStance, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, bossKillCounts, raidKillCounts, farming, completedQuests, questQueue])
 
   const value = {
     loaded, player, stats, inventory, equipment, bank, currentHP, toasts,

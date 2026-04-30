@@ -22,7 +22,7 @@ import { SCREENS } from './utils/constants.js'
 import { hasSave, closeDB } from './db/database.js'
 import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
 import { startTicks, stopTicks, onTick, pauseTicks } from './engine/tick.js'
-import { snapshotToLocalStorage, restoreFromLocalStorage, wipeLocalSave } from './db/saveload.js'
+import { wipeLocalSave } from './db/saveload.js'
 import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode } from './cloud/api.js'
 import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState } from './cloud/sync.js'
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
@@ -77,6 +77,7 @@ function GameApp() {
   const pendingXpChoicesRef = useRef(pendingXpChoices)
   // Cloud auth gate: 'pending' until we resolve, 'auth' if AuthScreen needed, 'ready' to boot game
   const [cloudPhase, setCloudPhase] = useState('pending')
+  const [cloudLoadError, setCloudLoadError] = useState(null)
   const [conflict, setConflict] = useState(null) // { cloudPayload, cloudHash, cloudUpdatedAt, localUpdatedAt }
   const [removeAds, setRemoveAds] = useState(false)
   const [identityId, setIdentityId] = useState(null)
@@ -309,11 +310,6 @@ function GameApp() {
       const bootNow = Date.now()
       localStorage.setItem('pocketrpg_lastTick', String(bootNow))
       updateMaxObservedAt(bootNow)
-      // Do an immediate snapshot so localStorage backup exists from the start
-      const snap = getSnapshot()
-      if (snap.player) {
-        snapshotToLocalStorage(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig, snap.homeShortcuts, snap.bossKillCounts, snap.completedQuests, snap.questQueue)
-      }
       startTicks()
       return () => stopTicks()
     }
@@ -679,8 +675,6 @@ function GameApp() {
       snapshotCounter.current++
       if (snapshotCounter.current >= 100) {
         snapshotCounter.current = 0
-        const snap = getSnapshot()
-        snapshotToLocalStorage(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig, snap.homeShortcuts, snap.bossKillCounts, snap.completedQuests, snap.questQueue)
         // Cloud sync piggy-backs on the local snapshot cadence (debounced, hash-skipped).
         if (!isInPvpMatch) schedulePushSave(snap)
       }
@@ -762,6 +756,7 @@ function GameApp() {
       }
 
       if (hasToken && hasCharacter) {
+        setCloudLoadError(null)
         // Fetch remove-ads status, Stripe payment links, and character credits
         // (non-fatal if unavailable — shop buttons / Credits pill stay hidden).
         try {
@@ -784,37 +779,24 @@ function GameApp() {
           await wipeLocalSave()
           resetSyncState()
         }
-        // Pull cloud save and decide on conflict before touching local IDB
-        try {
-          const result = await pullSave()
-          if (result && result.payload) {
-            const localExists = await hasSave()
-            const localTs = parseInt(localStorage.getItem('pocketrpg_lastTick'), 10) || 0
-            if (!localExists) {
-              // Fresh device — apply cloud save straight away
-              await applyCloudSave(result.payload, result.updatedAt)
-            } else if (result.updatedAt > localTs + 60_000) {
-              // Cloud is meaningfully newer — ask the user
-              setConflict({
-                cloudPayload: result.payload,
-                cloudUpdatedAt: result.updatedAt,
-                localUpdatedAt: localTs,
-              })
-              return
-            }
-            // else: local is newer or effectively equal — keep local, next push will overwrite cloud
-          }
-        } catch (err) {
-          console.warn('[PocketRPG] Cloud pull failed, continuing with local save:', err.message)
+        const result = await pullSave()
+        if (result && result.payload) {
+          await applyCloudSave(result.payload, result.updatedAt)
+        } else {
+          await wipeLocalSave()
+          await startNewGame(getIronmanMode(), getCharacterName(), getOneLifeMode())
+          if (!isInPvpMatch) await pushNow(getSnapshot())
+          setCloudPhase('ready')
+          return
         }
       }
 
       setCloudPhase('ready')
       await checkSave()
     } catch (err) {
-      console.warn('[PocketRPG] Cloud init failed, falling back to local:', err)
-      setCloudPhase('ready')
-      await checkSave()
+      console.warn('[PocketRPG] Cloud init failed:', err)
+      setCloudLoadError(err?.message || 'Failed to load cloud save')
+      setCloudPhase('auth')
     }
   }
 
@@ -829,6 +811,7 @@ function GameApp() {
   }
 
   async function checkSave() {
+    const isCloudCharacter = !!getToken() && !!getCharacterId()
     try {
       const exists = await hasSave()
       if (exists) {
@@ -841,8 +824,10 @@ function GameApp() {
           }
         }
       } else {
-        // No IDB save — check localStorage backup before giving up
-        await attemptBackupRestore()
+        if (isCloudCharacter) {
+          throw new Error('cloud_save_missing_local_cache')
+        }
+        await startNewGame()
       }
     } catch (err) {
       // IDB connection broken (iOS Safari kills background tabs) — close and reconnect.
@@ -867,33 +852,7 @@ function GameApp() {
       } catch (retryErr) {
         console.warn('[PocketRPG] IDB retry failed, falling back to backup:', retryErr)
       }
-      await attemptBackupRestore()
-    }
-  }
-
-  async function attemptBackupRestore() {
-    try {
-      const restored = await restoreFromLocalStorage()
-      if (restored) {
-        // Backup restored to IDB — now load normally (idle engine will run from lastTick)
-        console.log('[PocketRPG] Backup restore succeeded, loading...')
-        const idleResult = await loadGame()
-        setGameReady(true)
-        if (idleResult) {
-          setIdleResult(idleResult)
-          if (idleResult.pendingChoices?.length > 0) {
-            setPendingXpChoices(prev => [...prev, ...idleResult.pendingChoices])
-          }
-        }
-        addToast('💾 Save restored from backup!', 'info')
-      } else {
-        // No backup either — start a new game silently. Cloud users reuse
-        // their AuthScreen username as the in-game player name; offline
-        // users default to 'Adventurer'.
-        await startNewGame()
-      }
-    } catch (err2) {
-      console.error('[PocketRPG] Backup restore failed:', err2)
+      if (isCloudCharacter) throw err
       await startNewGame()
     }
   }
@@ -1256,6 +1215,18 @@ function GameApp() {
 
   // Auth gate — shown before we touch local save
   if (cloudPhase === 'auth') {
+    if (cloudLoadError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-[var(--color-void)] text-[var(--color-parchment)] p-4">
+          <div className="max-w-md w-full rounded-xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] p-4">
+            <h2 className="font-[var(--font-display)] text-[var(--color-gold)] mb-2">Cloud save unavailable</h2>
+            <p className="text-sm mb-4">{cloudLoadError}</p>
+            <button onClick={() => { setCloudPhase('pending'); setCloudLoadError(null); initCloudAndSave() }} className="w-full mb-2 rounded-lg px-3 py-2 bg-[var(--color-gold)] text-black font-semibold">Retry</button>
+            <button onClick={() => { clearAuth(); setCloudLoadError(null); setCloudPhase('auth') }} className="w-full rounded-lg px-3 py-2 border border-[var(--color-void-border)]">Log out</button>
+          </div>
+        </div>
+      )
+    }
     return (
       <AuthScreen
         onCloudReady={async () => {
