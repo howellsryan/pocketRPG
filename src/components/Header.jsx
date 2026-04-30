@@ -22,7 +22,7 @@ export default function Header({ activity, credits = 0, isCloudAccount = false, 
       if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current)
       savedTimeoutRef.current = setTimeout(() => {
         setShowSaved(false)
-      }, 1000)
+      }, 3000)
     }
     previousSavingRef.current = isSaving
   }, [isSaving])
