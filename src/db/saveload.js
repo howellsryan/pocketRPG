@@ -6,7 +6,34 @@ const SAVE_VERSION = 1
 // Build a save payload object from live in-memory game state. Used by the
 // 60s tick snapshot and the cloud-sync push.
 export function buildSavePayloadFromState(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue, combatStance) {
-  const data = {
+  // Legacy wrapper. Prefer buildSavePayloadFromSnapshot() for new call sites.
+  return buildSavePayloadFromSnapshot({
+    player,
+    stats,
+    inventory,
+    bank,
+    equipment,
+    settings: {
+      bankConfig,
+      homeShortcuts,
+      bossKillCounts,
+      completedQuests,
+      questQueue,
+      combatStance,
+    },
+  })
+}
+
+function normaliseSaveSettings(settings = {}) {
+  const next = { ...settings }
+  if (next.unlockedFeatures instanceof Set) next.unlockedFeatures = [...next.unlockedFeatures]
+  if (next.completedQuests instanceof Set) next.completedQuests = [...next.completedQuests]
+  return next
+}
+
+export function buildSavePayloadFromSnapshot(snapshot) {
+  const { player, stats, inventory, bank, equipment, settings = {} } = snapshot || {}
+  return {
     version: SAVE_VERSION,
     timestamp: Date.now(),
     player,
@@ -14,22 +41,14 @@ export function buildSavePayloadFromState(player, stats, inventory, bank, equipm
     inventory,
     bank,
     equipment,
-    settings: {},
+    settings: normaliseSaveSettings(settings),
   }
-  try { data.settings.activeTask = JSON.parse(localStorage.getItem('pocketrpg_activeTask')) } catch { data.settings.activeTask = null }
-  data.settings.lastTick = parseInt(localStorage.getItem('pocketrpg_lastTick'), 10) || data.timestamp
-  if (bankConfig) data.settings.bankConfig = bankConfig
-  if (homeShortcuts) data.settings.homeShortcuts = homeShortcuts
-  if (combatStance) data.settings.combatStance = combatStance
-  if (bossKillCounts) data.settings.bossKillCounts = bossKillCounts
-  if (completedQuests) data.settings.completedQuests = completedQuests instanceof Set ? [...completedQuests] : completedQuests
-  if (questQueue) data.settings.questQueue = questQueue
-  return data
 }
 
 // Wipe IDB and apply a decoded save payload. Shared by localStorage-backup
 // restore and cloud-save pull.
-export async function applySavePayload(data) {
+export async function applySavePayload(data, options = {}) {
+  const { restoreLocalIdleMirrors = false } = options
   await deleteDB()
   const db = await getDB()
 
@@ -71,12 +90,14 @@ export async function applySavePayload(data) {
   }
 
   // Restore localStorage idle keys so the engine sees the right elapsed window.
-  const savedLastTick = data.settings?.lastTick || data.timestamp
-  if (savedLastTick) localStorage.setItem('pocketrpg_lastTick', String(savedLastTick))
-  if (data.settings?.activeTask) {
-    localStorage.setItem('pocketrpg_activeTask', JSON.stringify(data.settings.activeTask))
-  } else {
-    localStorage.removeItem('pocketrpg_activeTask')
+  if (restoreLocalIdleMirrors) {
+    const savedLastTick = data.settings?.lastTick || data.timestamp
+    if (savedLastTick) localStorage.setItem('pocketrpg_lastTick', String(savedLastTick))
+    if (data.settings?.activeTask) {
+      localStorage.setItem('pocketrpg_activeTask', JSON.stringify(data.settings.activeTask))
+    } else {
+      localStorage.removeItem('pocketrpg_activeTask')
+    }
   }
 }
 
@@ -100,14 +121,9 @@ export async function wipeLocalSave() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function snapshotToLocalStorage(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue, combatStance) {
-  try {
-    const data = buildSavePayloadFromState(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue, combatStance)
-    const json = JSON.stringify(data)
-    localStorage.setItem('pocketrpg_backup', json)
-    console.log('[PocketRPG] Snapshot saved to localStorage, size:', json.length)
-  } catch (err) {
-    console.warn('[PocketRPG] Backup snapshot failed:', err)
-  }
+  // Deprecated durable local backup path.
+  void player; void stats; void inventory; void bank; void equipment
+  void bankConfig; void homeShortcuts; void bossKillCounts; void completedQuests; void questQueue; void combatStance
 }
 
 export async function restoreFromLocalStorage() {

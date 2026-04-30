@@ -1,9 +1,7 @@
-// Cloud-save push/pull. Pushes are debounced to once per 60s per character
-// and skipped entirely when the encoded save hasn't changed since the last
-// successful push.
+// Cloud-save push/pull. Pushes are debounced to once per 60s per character.
 
 import { api, getToken, getCharacterId, setLocalCharacterId } from './api.js'
-import { buildSavePayloadFromState, applySavePayload } from '../db/saveload.js'
+import { buildSavePayloadFromSnapshot, applySavePayload } from '../db/saveload.js'
 import { withTimeout } from '../utils/helpers.js'
 
 const PUSH_DEBOUNCE_MS = 60_000
@@ -51,7 +49,7 @@ async function flushNow() {
   pendingSnapshot = null
   inFlight = true
   try {
-    const data = buildSavePayloadFromState(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig, snap.homeShortcuts, snap.bossKillCounts, snap.completedQuests, snap.questQueue, snap.combatStance)
+    const data = buildSavePayloadFromSnapshot(snap)
     const json = JSON.stringify(data)
     const res = await api.putSave(json)
     if (res?.updatedAt) lastPushedAt = res.updatedAt
@@ -124,7 +122,7 @@ export async function checkCloudNewer() {
 // Public: apply a previously-pulled cloud save to IDB. Caller decides whether
 // to do this based on conflict-resolution UX.
 export async function applyCloudSave(payload, updatedAt) {
-  await applySavePayload(payload)
+  await applySavePayload(payload, { restoreLocalIdleMirrors: false })
   if (updatedAt) lastPushedAt = updatedAt
   // IDB now holds this character's data — stamp ownership so the next boot
   // knows which character these rows belong to.
