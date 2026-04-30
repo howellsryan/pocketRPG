@@ -1,7 +1,11 @@
 import { useGame } from '../state/gameState.jsx'
+import { useEffect, useRef, useState } from 'preact/hooks'
 
 export default function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null, onBuyCredits = null }) {
   const { player, currentHP, getMaxHP, isSaving } = useGame()
+  const [showSaved, setShowSaved] = useState(false)
+  const previousSavingRef = useRef(false)
+  const savedTimeoutRef = useRef(null)
   if (!player) return null
 
   const maxHP = getMaxHP()
@@ -12,10 +16,31 @@ export default function Header({ activity, credits = 0, isCloudAccount = false, 
     if (onSkip1h) onSkip1h()
   }
 
+  useEffect(() => {
+    if (previousSavingRef.current && !isSaving) {
+      setShowSaved(true)
+      if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current)
+      savedTimeoutRef.current = setTimeout(() => {
+        setShowSaved(false)
+      }, 3000)
+    }
+    previousSavingRef.current = isSaving
+  }, [isSaving])
+
+  useEffect(() => () => {
+    if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current)
+  }, [])
+
   return (
     <header class="relative flex-shrink-0 bg-[#111] border-b border-[#333] px-3 py-2">
       <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
         {isSaving && <div class="h-3.5 w-3.5 rounded-full border-2 border-[#555] border-t-[var(--color-gold)] animate-spin" aria-label="Saving" />}
+        {!isSaving && showSaved && (
+          <div class="flex items-center gap-1 text-[10px] font-semibold text-[var(--color-success)]" aria-label="Saved">
+            <span>✓</span>
+            <span>Saved</span>
+          </div>
+        )}
       </div>
 
       <div class="flex items-center justify-between gap-2">
