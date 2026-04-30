@@ -1,6 +1,57 @@
 import { getLevelFromXP } from './experience.js'
 import { COOKING_BURN_BASE_CHANCE } from '../utils/constants.js'
 
+
+/**
+ * Woodcutting axe speed progression.
+ *
+ * The value is the share of the maximum possible per-action tick reduction.
+ * Maximum reduction is half the base action time, rounded down to game-tick
+ * granularity.
+ */
+export const WOODCUTTING_AXE_REDUCTION_TIERS = {
+  bronze_axe: 0.00,
+  iron_axe: 0.10,
+  steel_axe: 0.20,
+  black_axe: 0.30,
+  mithril_axe: 0.45,
+  adamant_axe: 0.60,
+  rune_axe: 0.75,
+  dragon_axe: 0.88,
+  infernal_axe: 0.94,
+  crystal_axe: 1.00,
+  third_age_axe: 1.00,
+  '3rd_age_axe': 1.00,
+}
+
+/**
+ * Legacy multiplier map retained for callers or item data that still expect a
+ * multiplier. New woodcutting timing should use getEffectiveToolActionTicks().
+ */
+export const WOODCUTTING_AXE_SPEED_MULTIPLIERS = {
+  bronze_axe: 1.00,
+  iron_axe: 0.90,
+  steel_axe: 0.85,
+  black_axe: 0.80,
+  mithril_axe: 0.75,
+  adamant_axe: 0.70,
+  rune_axe: 0.62,
+  dragon_axe: 0.56,
+  infernal_axe: 0.53,
+  crystal_axe: 0.50,
+  third_age_axe: 0.50,
+  '3rd_age_axe': 0.50,
+}
+
+export function getConfiguredToolSpeedMultiplier(skill, item) {
+  if (!item) return 1.0
+  if (skill === 'woodcutting') {
+    const configured = WOODCUTTING_AXE_SPEED_MULTIPLIERS[item.id]
+    if (configured != null) return configured
+  }
+  return item.speedMultiplier ?? 1.0
+}
+
 /**
  * Returns the tick-speed multiplier for a skill using the best available tool.
  * Checks both equipped weapon and inventory for the highest-tier tool the player
@@ -35,7 +86,38 @@ export function getToolSpeedMultiplier(skill, equipment, itemsData, stats = {}, 
   }
 
   if (!item) return 1.0
-  return item.speedMultiplier ?? 1.0
+  return getConfiguredToolSpeedMultiplier(skill, item)
+}
+
+/**
+ * Returns the effective integer action ticks after applying the best available
+ * tool for the skill.
+ */
+export function getEffectiveToolActionTicks(skill, baseTicks, equipment, itemsData, stats = {}, inventory = []) {
+  const safeBaseTicks = Math.max(1, Math.floor(Number(baseTicks) || 1))
+
+  if (skill === 'woodcutting') {
+    const bestTool = findBestToolForSkill(skill, equipment, inventory, itemsData, stats)
+    const tier = bestTool ? WOODCUTTING_AXE_REDUCTION_TIERS[bestTool.id] : null
+
+    if (typeof tier === 'number') {
+      if (tier <= 0) return safeBaseTicks
+
+      const bestPossibleTicks = Math.max(1, Math.floor(safeBaseTicks / 2))
+      const maxReductionTicks = safeBaseTicks - bestPossibleTicks
+
+      if (maxReductionTicks <= 0) return safeBaseTicks
+
+      const reductionTicks = tier >= 1
+        ? maxReductionTicks
+        : Math.max(1, Math.ceil(maxReductionTicks * tier))
+
+      return Math.max(bestPossibleTicks, safeBaseTicks - reductionTicks)
+    }
+  }
+
+  const multiplier = getToolSpeedMultiplier(skill, equipment, itemsData, stats, inventory)
+  return Math.max(1, Math.floor(safeBaseTicks * multiplier))
 }
 
 /**
@@ -173,7 +255,7 @@ export function findBestToolForSkill(skill, equipment, inventory, itemsData, sta
       // Check skill-level requirement
       const reqLevel = item.requirements?.[skill] || 0
       if (playerLevel >= reqLevel) {
-        candidateTools.push({ ...item, tier: reqLevel })
+        candidateTools.push({ ...item, id: equipment.weapon.itemId, tier: reqLevel })
       }
     }
   }
@@ -188,8 +270,8 @@ export function findBestToolForSkill(skill, equipment, inventory, itemsData, sta
     const reqLevel = item.requirements?.[skill] || 0
     if (playerLevel >= reqLevel) {
       // Avoid adding duplicates (e.g., if we already have equipped version)
-      if (!candidateTools.some(t => t.id === item.id)) {
-        candidateTools.push({ ...item, tier: reqLevel })
+      if (!candidateTools.some(t => t.id === slot.itemId)) {
+        candidateTools.push({ ...item, id: slot.itemId, tier: reqLevel })
       }
     }
   }

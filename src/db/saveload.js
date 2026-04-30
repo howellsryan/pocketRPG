@@ -5,7 +5,7 @@ const SAVE_VERSION = 1
 
 // Build a save payload object from live in-memory game state. Used by the
 // 60s tick snapshot and the cloud-sync push.
-export function buildSavePayloadFromState(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue) {
+export function buildSavePayloadFromState(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue, combatStance) {
   const data = {
     version: SAVE_VERSION,
     timestamp: Date.now(),
@@ -20,6 +20,7 @@ export function buildSavePayloadFromState(player, stats, inventory, bank, equipm
   data.settings.lastTick = parseInt(localStorage.getItem('pocketrpg_lastTick'), 10) || data.timestamp
   if (bankConfig) data.settings.bankConfig = bankConfig
   if (homeShortcuts) data.settings.homeShortcuts = homeShortcuts
+  if (combatStance) data.settings.combatStance = combatStance
   if (bossKillCounts) data.settings.bossKillCounts = bossKillCounts
   if (completedQuests) data.settings.completedQuests = completedQuests instanceof Set ? [...completedQuests] : completedQuests
   if (questQueue) data.settings.questQueue = questQueue
@@ -98,9 +99,9 @@ export async function wipeLocalSave() {
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function snapshotToLocalStorage(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue) {
+export function snapshotToLocalStorage(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue, combatStance) {
   try {
-    const data = buildSavePayloadFromState(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue)
+    const data = buildSavePayloadFromState(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue, combatStance)
     const json = JSON.stringify(data)
     localStorage.setItem('pocketrpg_backup', json)
     console.log('[PocketRPG] Snapshot saved to localStorage, size:', json.length)

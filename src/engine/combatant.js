@@ -43,7 +43,8 @@
 //   activeCombatPrayer: string | null,
 //   activeProtectionPrayer: null,  // disabled in v1 — stays null
 //   activePotions: Record<string, number>,  // { potionItemId: ticksRemaining }
-//   specialAttackEnergy: number,  // 0..100, starts at 100, no regen
+//   specialAttackEnergy: number,  // 0..100, starts at 100, regenerates in PvP
+//   specialAttackRegeneratedAt: number, // server ms timestamp of last regen accounting
 //   specialAttackQueued: boolean,
 //
 //   // Set when a forfeit intent is processed; the engine produces a
@@ -63,7 +64,7 @@
 import { getLevelFromXP } from './experience.js'
 import { EQUIPMENT_SLOTS, INVENTORY_SIZE } from '../utils/constants.js'
 
-/** Spec energy at match start. PvP rule: starts at 100, no regen during match. */
+/** Spec energy at match start. PvP rule: starts at 100 and regenerates during match. */
 export const PVP_INITIAL_SPEC_ENERGY = 100
 
 /** Maximum HP for a hitpoints level (10HP at L10, +1 per level). */

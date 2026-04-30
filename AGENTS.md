@@ -158,7 +158,7 @@ Everything else — all static colours, borders, radii, padding, typography, fle
 - Reconnect is always from server state (`GET /api/pvp/match/:id`), never local cache.
 
 ### Combat Rules
-- Special attack energy starts at 100% per match and does not regenerate during match.
+- Special attack energy starts at 100% per match and regenerates by 10 percentage points every 30 seconds during active PvP, capped at 100%.
 - Equipment swap is allowed, but `attackTimer = max(currentTimer, newWeaponSpeed)` to prevent fast-swap abuse.
 - Both combatants can resolve attacks on the same tick; simultaneous deaths are tie-broken by lower `characterId`.
 - Protection prayers are disabled in PvP v1.

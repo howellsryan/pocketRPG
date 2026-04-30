@@ -26,3 +26,20 @@ describe('buildCombatantFromSave', () => {
     expect(combatant.currentHP).toBeGreaterThan(0)
   })
 })
+
+
+it('uses saved combat stance and normalizes invalid values', () => {
+  const defensive = buildCombatantFromSave({
+    characterId: 1,
+    username: 'Tester',
+    savePayload: { settings: { combatStance: 'defensive' }, stats: {}, equipment: {}, inventory: [] },
+  })
+  expect(defensive.stance).toBe('defensive')
+
+  const fallback = buildCombatantFromSave({
+    characterId: 1,
+    username: 'Tester',
+    savePayload: { settings: { combatStance: 'bad' }, stats: {}, equipment: {}, inventory: [] },
+  })
+  expect(fallback.stance).toBe('accurate')
+})

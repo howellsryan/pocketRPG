@@ -14454,6 +14454,88 @@ const itemsData = {
     "shopValue": 328,
     "icon": "📦",
     "isGeneralStore": false
+  },
+  "kraken_tentacle": {
+    "id": "kraken_tentacle",
+    "name": "Kraken tentacle",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 500000,
+    "icon": "🦑",
+    "isGeneralStore": false,
+    "combineWith": "abyssal_whip",
+    "combineResult": "abyssal_tentacle",
+    "combineDescription": "Attach to an Abyssal whip to create an Abyssal tentacle."
+  },
+  "abyssal_tentacle": {
+    "id": "abyssal_tentacle",
+    "name": "Abyssal tentacle",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 90,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 86,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 75
+    },
+    "specialAttack": {
+      "type": "stun",
+      "energyCost": 50,
+      "description": "Energy Drain: Lashes at the target — if it connects, the creature is stunned for one attack cycle, skipping its next hit."
+    },
+    "shopValue": 1714037,
+    "icon": "🦑",
+    "isGeneralStore": false
+  },
+  "occult_necklace": {
+    "id": "occult_necklace",
+    "name": "Occult necklace",
+    "type": "armour",
+    "slot": "neck",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 12,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 10
+    },
+    "requirements": {},
+    "shopValue": 720000,
+    "icon": "📿",
+    "isGeneralStore": false
   }
 }
 ;
@@ -14499,79 +14581,6 @@ const monstersData = {
           15
         ],
         "chance": 1
-      },
-      {
-        "itemId": "guam_leaf",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.2
-      },
-      {
-        "itemId": "tarromin",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.15
-      },
-      {
-        "itemId": "ranarr_weed",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.12
-      },
-      {
-        "itemId": "harralander",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.1
-      },
-      {
-        "itemId": "irit_leaf",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.08
-      },
-      {
-        "itemId": "kwuarm",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.06
-      },
-      {
-        "itemId": "snapdragon",
-        "quantity": 1,
-        "chance": 0.05
-      },
-      {
-        "itemId": "cadantine",
-        "quantity": 1,
-        "chance": 0.04
-      },
-      {
-        "itemId": "dwarf_weed",
-        "quantity": 1,
-        "chance": 0.03
-      },
-      {
-        "itemId": "lantadyme",
-        "quantity": 1,
-        "chance": 0.01
-      },
-      {
-        "itemId": "toadflax",
-        "quantity": 1,
-        "chance": 0.005
       },
       {
         "itemId": "clue_scroll_medium",
@@ -14628,7 +14637,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.2
+        "chance": 0.1
       },
       {
         "itemId": "tarromin",
@@ -14636,7 +14645,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.15
+        "chance": 0.075
       },
       {
         "itemId": "ranarr_weed",
@@ -14644,7 +14653,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.12
+        "chance": 0.06
       },
       {
         "itemId": "harralander",
@@ -14652,7 +14661,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.1
+        "chance": 0.05
       },
       {
         "itemId": "irit_leaf",
@@ -14660,7 +14669,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.08
+        "chance": 0.04
       },
       {
         "itemId": "kwuarm",
@@ -14668,32 +14677,32 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.06
+        "chance": 0.03
       },
       {
         "itemId": "snapdragon",
         "quantity": 1,
-        "chance": 0.05
+        "chance": 0.025
       },
       {
         "itemId": "cadantine",
         "quantity": 1,
-        "chance": 0.04
+        "chance": 0.02
       },
       {
         "itemId": "dwarf_weed",
         "quantity": 1,
-        "chance": 0.03
+        "chance": 0.015
       },
       {
         "itemId": "lantadyme",
         "quantity": 1,
-        "chance": 0.01
+        "chance": 0.005
       },
       {
         "itemId": "toadflax",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.0025
       },
       {
         "itemId": "clue_scroll_medium",
@@ -14740,79 +14749,6 @@ const monstersData = {
         "itemId": "cowhide",
         "quantity": 1,
         "chance": 1
-      },
-      {
-        "itemId": "guam_leaf",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.2
-      },
-      {
-        "itemId": "tarromin",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.15
-      },
-      {
-        "itemId": "ranarr_weed",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.12
-      },
-      {
-        "itemId": "harralander",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.1
-      },
-      {
-        "itemId": "irit_leaf",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.08
-      },
-      {
-        "itemId": "kwuarm",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.06
-      },
-      {
-        "itemId": "snapdragon",
-        "quantity": 1,
-        "chance": 0.05
-      },
-      {
-        "itemId": "cadantine",
-        "quantity": 1,
-        "chance": 0.04
-      },
-      {
-        "itemId": "dwarf_weed",
-        "quantity": 1,
-        "chance": 0.03
-      },
-      {
-        "itemId": "lantadyme",
-        "quantity": 1,
-        "chance": 0.01
-      },
-      {
-        "itemId": "toadflax",
-        "quantity": 1,
-        "chance": 0.005
       },
       {
         "itemId": "clue_scroll_medium",
@@ -14864,7 +14800,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.2
+        "chance": 0.1
       },
       {
         "itemId": "tarromin",
@@ -14872,7 +14808,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.15
+        "chance": 0.075
       },
       {
         "itemId": "ranarr_weed",
@@ -14880,7 +14816,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.12
+        "chance": 0.06
       },
       {
         "itemId": "harralander",
@@ -14888,7 +14824,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.1
+        "chance": 0.05
       },
       {
         "itemId": "irit_leaf",
@@ -14896,7 +14832,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.08
+        "chance": 0.04
       },
       {
         "itemId": "kwuarm",
@@ -14904,32 +14840,32 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.06
+        "chance": 0.03
       },
       {
         "itemId": "snapdragon",
         "quantity": 1,
-        "chance": 0.05
+        "chance": 0.025
       },
       {
         "itemId": "cadantine",
         "quantity": 1,
-        "chance": 0.04
+        "chance": 0.02
       },
       {
         "itemId": "dwarf_weed",
         "quantity": 1,
-        "chance": 0.03
+        "chance": 0.015
       },
       {
         "itemId": "lantadyme",
         "quantity": 1,
-        "chance": 0.01
+        "chance": 0.005
       },
       {
         "itemId": "toadflax",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.0025
       },
       {
         "itemId": "clue_scroll_medium",
@@ -15118,7 +15054,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.2
+        "chance": 0.1
       },
       {
         "itemId": "tarromin",
@@ -15126,7 +15062,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.15
+        "chance": 0.075
       },
       {
         "itemId": "ranarr_weed",
@@ -15134,7 +15070,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.12
+        "chance": 0.06
       },
       {
         "itemId": "harralander",
@@ -15142,7 +15078,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.1
+        "chance": 0.05
       },
       {
         "itemId": "irit_leaf",
@@ -15150,7 +15086,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.08
+        "chance": 0.04
       },
       {
         "itemId": "kwuarm",
@@ -15158,32 +15094,32 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.06
+        "chance": 0.03
       },
       {
         "itemId": "snapdragon",
         "quantity": 1,
-        "chance": 0.05
+        "chance": 0.025
       },
       {
         "itemId": "cadantine",
         "quantity": 1,
-        "chance": 0.04
+        "chance": 0.02
       },
       {
         "itemId": "dwarf_weed",
         "quantity": 1,
-        "chance": 0.03
+        "chance": 0.015
       },
       {
         "itemId": "lantadyme",
         "quantity": 1,
-        "chance": 0.01
+        "chance": 0.005
       },
       {
         "itemId": "toadflax",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.0025
       },
       {
         "itemId": "clue_scroll_medium",
@@ -15250,7 +15186,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.2
+        "chance": 0.1
       },
       {
         "itemId": "tarromin",
@@ -15258,7 +15194,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.15
+        "chance": 0.075
       },
       {
         "itemId": "ranarr_weed",
@@ -15266,7 +15202,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.12
+        "chance": 0.06
       },
       {
         "itemId": "harralander",
@@ -15274,7 +15210,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.1
+        "chance": 0.05
       },
       {
         "itemId": "irit_leaf",
@@ -15282,7 +15218,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.08
+        "chance": 0.04
       },
       {
         "itemId": "kwuarm",
@@ -15290,32 +15226,32 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.06
+        "chance": 0.03
       },
       {
         "itemId": "snapdragon",
         "quantity": 1,
-        "chance": 0.05
+        "chance": 0.025
       },
       {
         "itemId": "cadantine",
         "quantity": 1,
-        "chance": 0.04
+        "chance": 0.02
       },
       {
         "itemId": "dwarf_weed",
         "quantity": 1,
-        "chance": 0.03
+        "chance": 0.015
       },
       {
         "itemId": "lantadyme",
         "quantity": 1,
-        "chance": 0.01
+        "chance": 0.005
       },
       {
         "itemId": "toadflax",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.0025
       },
       {
         "itemId": "clue_scroll_medium",
@@ -15412,7 +15348,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.2
+        "chance": 0.1
       },
       {
         "itemId": "tarromin",
@@ -15420,7 +15356,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.15
+        "chance": 0.075
       },
       {
         "itemId": "ranarr_weed",
@@ -15428,7 +15364,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.12
+        "chance": 0.06
       },
       {
         "itemId": "harralander",
@@ -15436,7 +15372,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.1
+        "chance": 0.05
       },
       {
         "itemId": "irit_leaf",
@@ -15444,7 +15380,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.08
+        "chance": 0.04
       },
       {
         "itemId": "kwuarm",
@@ -15452,32 +15388,32 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.06
+        "chance": 0.03
       },
       {
         "itemId": "snapdragon",
         "quantity": 1,
-        "chance": 0.05
+        "chance": 0.025
       },
       {
         "itemId": "cadantine",
         "quantity": 1,
-        "chance": 0.04
+        "chance": 0.02
       },
       {
         "itemId": "dwarf_weed",
         "quantity": 1,
-        "chance": 0.03
+        "chance": 0.015
       },
       {
         "itemId": "lantadyme",
         "quantity": 1,
-        "chance": 0.01
+        "chance": 0.005
       },
       {
         "itemId": "toadflax",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.0025
       },
       {
         "itemId": "clue_scroll_medium",
@@ -15583,7 +15519,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.2
+        "chance": 0.1
       },
       {
         "itemId": "tarromin",
@@ -15591,7 +15527,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.15
+        "chance": 0.075
       },
       {
         "itemId": "ranarr_weed",
@@ -15599,7 +15535,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.12
+        "chance": 0.06
       },
       {
         "itemId": "harralander",
@@ -15607,7 +15543,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.1
+        "chance": 0.05
       },
       {
         "itemId": "irit_leaf",
@@ -15615,7 +15551,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.08
+        "chance": 0.04
       },
       {
         "itemId": "kwuarm",
@@ -15623,32 +15559,32 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.06
+        "chance": 0.03
       },
       {
         "itemId": "snapdragon",
         "quantity": 1,
-        "chance": 0.05
+        "chance": 0.025
       },
       {
         "itemId": "cadantine",
         "quantity": 1,
-        "chance": 0.04
+        "chance": 0.02
       },
       {
         "itemId": "dwarf_weed",
         "quantity": 1,
-        "chance": 0.03
+        "chance": 0.015
       },
       {
         "itemId": "lantadyme",
         "quantity": 1,
-        "chance": 0.01
+        "chance": 0.005
       },
       {
         "itemId": "toadflax",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.0025
       },
       {
         "itemId": "clue_scroll_hard",
@@ -15779,7 +15715,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.2
+        "chance": 0.1
       },
       {
         "itemId": "tarromin",
@@ -15787,7 +15723,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.15
+        "chance": 0.075
       },
       {
         "itemId": "ranarr_weed",
@@ -15795,7 +15731,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.12
+        "chance": 0.06
       },
       {
         "itemId": "harralander",
@@ -15803,7 +15739,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.1
+        "chance": 0.05
       },
       {
         "itemId": "irit_leaf",
@@ -15811,7 +15747,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.08
+        "chance": 0.04
       },
       {
         "itemId": "kwuarm",
@@ -15819,32 +15755,32 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.06
+        "chance": 0.03
       },
       {
         "itemId": "snapdragon",
         "quantity": 1,
-        "chance": 0.05
+        "chance": 0.025
       },
       {
         "itemId": "cadantine",
         "quantity": 1,
-        "chance": 0.04
+        "chance": 0.02
       },
       {
         "itemId": "dwarf_weed",
         "quantity": 1,
-        "chance": 0.03
+        "chance": 0.015
       },
       {
         "itemId": "lantadyme",
         "quantity": 1,
-        "chance": 0.01
+        "chance": 0.005
       },
       {
         "itemId": "toadflax",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.0025
       },
       {
         "itemId": "clue_scroll_medium",
@@ -16008,7 +15944,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.2
+        "chance": 0.1
       },
       {
         "itemId": "tarromin",
@@ -16016,7 +15952,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.15
+        "chance": 0.075
       },
       {
         "itemId": "ranarr_weed",
@@ -16024,7 +15960,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.12
+        "chance": 0.06
       },
       {
         "itemId": "harralander",
@@ -16032,7 +15968,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.1
+        "chance": 0.05
       },
       {
         "itemId": "irit_leaf",
@@ -16040,7 +15976,7 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.08
+        "chance": 0.04
       },
       {
         "itemId": "kwuarm",
@@ -16048,32 +15984,32 @@ const monstersData = {
           1,
           2
         ],
-        "chance": 0.06
+        "chance": 0.03
       },
       {
         "itemId": "snapdragon",
         "quantity": 1,
-        "chance": 0.05
+        "chance": 0.025
       },
       {
         "itemId": "cadantine",
         "quantity": 1,
-        "chance": 0.04
+        "chance": 0.02
       },
       {
         "itemId": "dwarf_weed",
         "quantity": 1,
-        "chance": 0.03
+        "chance": 0.015
       },
       {
         "itemId": "lantadyme",
         "quantity": 1,
-        "chance": 0.01
+        "chance": 0.005
       },
       {
         "itemId": "toadflax",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.0025
       },
       {
         "itemId": "clue_scroll_medium",
@@ -16243,7 +16179,535 @@ const monstersData = {
         "chance": 0.005
       },
       {
-        "itemId": "clue_scroll_master",
+        "itemId": "clue_scroll_hard",
+        "quantity": 1,
+        "chance": 0.02
+      }
+    ]
+  },
+  "blood_veld": {
+    "id": "blood_veld",
+    "name": "Blood Veld",
+    "combatLevel": 76,
+    "hitpoints": 75,
+    "slayerRequirement": 50,
+    "slayerXP": 120,
+    "stats": {
+      "attack": 60,
+      "strength": 60,
+      "defence": 50,
+      "magic": 1,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": 50,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 30,
+      "ranged": 0
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          50,
+          200
+        ],
+        "chance": 0.7
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          5,
+          12
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          2,
+          6
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          2,
+          5
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "harralander",
+        "quantity": 1,
+        "chance": 0.06
+      },
+      {
+        "itemId": "irit_leaf",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "guam_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "tarromin",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "rune_med_helm",
+        "quantity": 1,
+        "chance": 0.008
+      },
+      {
+        "itemId": "clue_scroll_hard",
+        "quantity": 1,
+        "chance": 0.01
+      }
+    ]
+  },
+  "nechryael": {
+    "id": "nechryael",
+    "name": "Nechryael",
+    "combatLevel": 115,
+    "hitpoints": 105,
+    "slayerRequirement": 80,
+    "slayerXP": 105,
+    "stats": {
+      "attack": 100,
+      "strength": 100,
+      "defence": 80,
+      "magic": 100,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": 75,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 10,
+      "crush": 0,
+      "magic": 25,
+      "ranged": 30
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          150,
+          500
+        ],
+        "chance": 0.75
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          3,
+          8
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          10,
+          25
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "rune_chainbody",
+        "quantity": 1,
+        "chance": 0.012
+      },
+      {
+        "itemId": "adamant_platelegs",
+        "quantity": 1,
+        "chance": 0.025
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cadantine",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "clue_scroll_hard",
+        "quantity": 1,
+        "chance": 0.012
+      }
+    ]
+  },
+  "skeletal_wyvern": {
+    "id": "skeletal_wyvern",
+    "name": "Skeletal Wyvern",
+    "combatLevel": 140,
+    "hitpoints": 130,
+    "slayerRequirement": 72,
+    "slayerXP": 210,
+    "stats": {
+      "attack": 80,
+      "strength": 80,
+      "defence": 100,
+      "magic": 100,
+      "ranged": 80
+    },
+    "attackSpeed": 5,
+    "attackStyle": "stab",
+    "attackBonus": 80,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 200,
+      "slash": 200,
+      "crush": 200,
+      "magic": 240,
+      "ranged": 200
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          200,
+          600
+        ],
+        "chance": 0.7
+      },
+      {
+        "itemId": "rune_platelegs",
+        "quantity": 1,
+        "chance": 0.015
+      },
+      {
+        "itemId": "rune_chainbody",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "adamant_platelegs",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          5,
+          12
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          15,
+          35
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "dwarf_weed",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "clue_scroll_elite",
+        "quantity": 1,
+        "chance": 0.018
+      }
+    ]
+  },
+  "smoke_devil": {
+    "id": "smoke_devil",
+    "name": "Smoke Devil",
+    "combatLevel": 160,
+    "hitpoints": 95,
+    "slayerRequirement": 85,
+    "slayerXP": 124,
+    "stats": {
+      "attack": 152,
+      "strength": 99,
+      "defence": 100,
+      "magic": 80,
+      "ranged": 100
+    },
+    "attackSpeed": 5,
+    "attackStyle": "ranged",
+    "attackBonus": 110,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 50,
+      "slash": 50,
+      "crush": 50,
+      "magic": 60,
+      "ranged": 40
+    },
+    "drops": [
+      {
+        "itemId": "bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          300,
+          900
+        ],
+        "chance": 0.85
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          15,
+          40
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          5,
+          15
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "fire_rune",
+        "quantity": [
+          30,
+          80
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "rune_chainbody",
+        "quantity": 1,
+        "chance": 0.012
+      },
+      {
+        "itemId": "occult_necklace",
+        "quantity": 1,
+        "chance": 0.0015
+      },
+      {
+        "itemId": "clue_scroll_elite",
+        "quantity": 1,
+        "chance": 0.015
+      }
+    ]
+  },
+  "kraken": {
+    "id": "kraken",
+    "name": "Kraken",
+    "boss": true,
+    "combatLevel": 291,
+    "hitpoints": 255,
+    "slayerRequirement": 87,
+    "slayerXP": 290,
+    "stats": {
+      "attack": 1,
+      "strength": 1,
+      "defence": 100,
+      "magic": 200,
+      "ranged": 1
+    },
+    "attackSpeed": 5,
+    "attackStyle": "magic",
+    "attackBonus": 130,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 90,
+      "ranged": 0
+    },
+    "drops": [
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          1000,
+          3000
+        ],
+        "chance": 1
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          50,
+          100
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          25,
+          60
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          50,
+          120
+        ],
+        "chance": 0.18
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": [
+          2,
+          4
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "lantadyme",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "kraken_tentacle",
+        "quantity": 1,
+        "chance": 0.0033
+      },
+      {
+        "itemId": "clue_scroll_elite",
         "quantity": 1,
         "chance": 0.02
       }
@@ -20015,7 +20479,8 @@ const monstersData = {
       }
     ]
   }
-};
+}
+;
 const skillsData = 
 {
   "mining": {
@@ -22628,7 +23093,7 @@ const skillsData =
         "rewardTables": [
           {
             "rewards": [
-              { "itemId": "coins", "quantity": [1000, 5000], "chance": 1.0 }
+              { "itemId": "coins", "quantity": [100, 500], "chance": 1.0 }
             ]
           },
           {
@@ -30133,7 +30598,8 @@ function _accXP(state, xpSkills) {
 //   activeCombatPrayer: string | null,
 //   activeProtectionPrayer: null,  // disabled in v1 — stays null
 //   activePotions: Record<string, number>,  // { potionItemId: ticksRemaining }
-//   specialAttackEnergy: number,  // 0..100, starts at 100, no regen
+//   specialAttackEnergy: number,  // 0..100, starts at 100, regenerates in PvP
+//   specialAttackRegeneratedAt: number, // server ms timestamp of last regen accounting
 //   specialAttackQueued: boolean,
 //
 //   // Set when a forfeit intent is processed; the engine produces a
@@ -30151,7 +30617,7 @@ function _accXP(state, xpSkills) {
 // Quantity for non-stackable items is always 1; stackables use real counts.
 
 
-/** Spec energy at match start. PvP rule: starts at 100, no regen during match. */
+/** Spec energy at match start. PvP rule: starts at 100 and regenerates during match. */
 const PVP_INITIAL_SPEC_ENERGY = 100;
 /** Maximum HP for a hitpoints level (10HP at L10, +1 per level). */
 function getMaxHPFromLevel(hitpointsLevel) {
@@ -30867,6 +31333,9 @@ function readPvpEndSummary(state, match = null) {
 
 const VALID_STANCES = new Set(['accurate', 'aggressive', 'defensive', 'controlled', 'rapid', 'longrange']);
 const PVP_ENGINE_PROTECTION_PRAYER_IDS = new Set(['protection_from_magic', 'protection_from_missiles', 'protection_from_melee']);
+const PVP_SPECIAL_REGEN_INTERVAL_MS = 30000;
+const PVP_SPECIAL_REGEN_AMOUNT = 10;
+const PVP_MAX_SPECIAL_ATTACK_ENERGY = 100;
 function cloneCombatant(c) {
     return {
         ...c,
@@ -30876,6 +31345,7 @@ function cloneCombatant(c) {
         activePotions: { ...(c.activePotions || {}) },
         spell: c.spell ? { ...c.spell } : null,
         specialAttackEnergy: clampPvpSpecialEnergy(c.specialAttackEnergy, 100),
+        specialAttackRegeneratedAt: Number(c.specialAttackRegeneratedAt ?? c.specialAttackRegenAt) || null,
         specialAttackQueued: !!c.specialAttackQueued,
     };
 }
@@ -30884,6 +31354,42 @@ function cloneState(state) { const combatants = {}; for (const [id, c] of Object
 function asPair(state) { const ids = Object.keys(state.combatants).map(Number).sort((a, b) => a - b); if (ids.length !== 2)
     throw new Error('pvpEngine requires exactly two combatants'); return [state.combatants[String(ids[0])], state.combatants[String(ids[1])], ids]; }
 function clampCooldowns(c) { c.attackTimer = Math.max(0, c.attackTimer || 0); c.eatCooldown = Math.max(0, c.eatCooldown || 0); c.potionCooldown = Math.max(0, c.potionCooldown || 0); }
+function readMsTimestamp(value, fallback) { const parsed = Number(value); return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback; }
+function applyPvpSpecialAttackRegenToCombatant(combatant, now = Date.now()) {
+    if (!combatant)
+        return { changed: false, ticks: 0 };
+    const safeNow = Number(now);
+    if (!Number.isFinite(safeNow) || safeNow <= 0)
+        return { changed: false, ticks: 0 };
+    const currentEnergy = clampPvpSpecialEnergy(combatant.specialAttackEnergy, 0);
+    const previousEnergy = currentEnergy;
+    let lastRegeneratedAt = readMsTimestamp(combatant.specialAttackRegeneratedAt ?? combatant.specialAttackRegenAt, safeNow);
+    if (lastRegeneratedAt > safeNow)
+        lastRegeneratedAt = safeNow;
+    if (currentEnergy >= PVP_MAX_SPECIAL_ATTACK_ENERGY) {
+        combatant.specialAttackEnergy = PVP_MAX_SPECIAL_ATTACK_ENERGY;
+        combatant.specialAttackRegeneratedAt = safeNow;
+        return { changed: previousEnergy !== PVP_MAX_SPECIAL_ATTACK_ENERGY, ticks: 0 };
+    }
+    const elapsedMs = safeNow - lastRegeneratedAt;
+    const regenTicks = Math.floor(elapsedMs / PVP_SPECIAL_REGEN_INTERVAL_MS);
+    if (regenTicks <= 0) {
+        combatant.specialAttackEnergy = currentEnergy;
+        combatant.specialAttackRegeneratedAt = lastRegeneratedAt;
+        return { changed: false, ticks: 0 };
+    }
+    const nextEnergy = Math.min(PVP_MAX_SPECIAL_ATTACK_ENERGY, currentEnergy + regenTicks * PVP_SPECIAL_REGEN_AMOUNT);
+    combatant.specialAttackEnergy = nextEnergy;
+    combatant.specialAttackRegeneratedAt = nextEnergy >= PVP_MAX_SPECIAL_ATTACK_ENERGY ? safeNow : lastRegeneratedAt + regenTicks * PVP_SPECIAL_REGEN_INTERVAL_MS;
+    return { changed: nextEnergy !== previousEnergy, ticks: regenTicks };
+}
+function applyPvpSpecialAttackRegenToState(state, now = Date.now()) {
+    const next = cloneState(state);
+    let changed = false;
+    for (const combatant of Object.values(next.combatants || {}))
+        changed = applyPvpSpecialAttackRegenToCombatant(combatant, now).changed || changed;
+    return { state: next, changed };
+}
 function rapidAdjustedSpeed(combatant, itemsData) { const base = getAttackSpeed(combatant.equipment, itemsData); return (combatant.combatType === 'ranged' && combatant.stance === 'rapid') ? Math.max(1, base - 1) : base; }
 function attackSnapshot(attacker, defender, itemsData) { if (attacker.combatType === 'ranged')
     return rollRangedAttack(attacker, defender, itemsData); if (attacker.combatType === 'magic')
@@ -31093,12 +31599,14 @@ function applyIntent(combatant, intentAction, itemsData, events) {
 function createPvpState(aCombatant, bCombatant, now = Date.now(), rngSeed = 0) {
     const a = cloneCombatant(aCombatant);
     const b = cloneCombatant(bCombatant);
-    return { tick: 0, startedAt: now, combatants: { [String(a.characterId)]: { ...a, hp: a.hp ?? a.currentHP ?? a.maxHP, attackTimer: a.attackTimer ?? 0, eatCooldown: a.eatCooldown ?? 0, potionCooldown: a.potionCooldown ?? 0, specialAttackEnergy: 100, specialAttackQueued: false }, [String(b.characterId)]: { ...b, hp: b.hp ?? b.currentHP ?? b.maxHP, attackTimer: b.attackTimer ?? 0, eatCooldown: b.eatCooldown ?? 0, potionCooldown: b.potionCooldown ?? 0, specialAttackEnergy: 100, specialAttackQueued: false } }, recentEvents: [], rngSeed };
+    return { tick: 0, startedAt: now, combatants: { [String(a.characterId)]: { ...a, hp: a.hp ?? a.currentHP ?? a.maxHP, attackTimer: a.attackTimer ?? 0, eatCooldown: a.eatCooldown ?? 0, potionCooldown: a.potionCooldown ?? 0, specialAttackEnergy: 100, specialAttackRegeneratedAt: now, specialAttackQueued: false }, [String(b.characterId)]: { ...b, hp: b.hp ?? b.currentHP ?? b.maxHP, attackTimer: b.attackTimer ?? 0, eatCooldown: b.eatCooldown ?? 0, potionCooldown: b.potionCooldown ?? 0, specialAttackEnergy: 100, specialAttackRegeneratedAt: now, specialAttackQueued: false } }, recentEvents: [], rngSeed };
 }
-function processPvpTick(state, intents, itemsData) {
+function processPvpTick(state, intents, itemsData, now = Date.now()) {
     const next = cloneState(state);
     const events = [];
     const [left, right, ids] = asPair(next);
+    for (const c of [left, right])
+        applyPvpSpecialAttackRegenToCombatant(c, now);
     const orderedIntents = [...(intents || [])].sort((x, y) => ((x.tick_number || 0) - (y.tick_number || 0)) || ((x.characterId || 0) - (y.characterId || 0)) || ((x.characterSeq || 0) - (y.characterSeq || 0)));
     for (const intent of orderedIntents) {
         const c = next.combatants[String(intent?.characterId)];
@@ -31158,7 +31666,7 @@ function processPvpTick(state, intents, itemsData) {
     }
     return { stateNext: next, events, terminal: null };
 }
-function applyPvpTick(state, intents, itemsData) { const out = processPvpTick(state, intents, itemsData); return { state: out.stateNext, events: out.events, terminal: out.terminal }; }
+function applyPvpTick(state, intents, itemsData, now = Date.now()) { const out = processPvpTick(state, intents, itemsData, now); return { state: out.stateNext, events: out.events, terminal: out.terminal }; }
 
 // ── engine/lootTransfer.js ──
 // Loot transfer on PvP death.
@@ -31382,6 +31890,55 @@ function applyLootTransfer({ loserInventory, loserEquipment, winnerBank, itemsDa
 
 
 /**
+ * Woodcutting axe speed progression.
+ *
+ * The value is the share of the maximum possible per-action tick reduction.
+ * Maximum reduction is half the base action time, rounded down to game-tick
+ * granularity.
+ */
+const WOODCUTTING_AXE_REDUCTION_TIERS = {
+    bronze_axe: 0.00,
+    iron_axe: 0.10,
+    steel_axe: 0.20,
+    black_axe: 0.30,
+    mithril_axe: 0.45,
+    adamant_axe: 0.60,
+    rune_axe: 0.75,
+    dragon_axe: 0.88,
+    infernal_axe: 0.94,
+    crystal_axe: 1.00,
+    third_age_axe: 1.00,
+    '3rd_age_axe': 1.00,
+};
+/**
+ * Legacy multiplier map retained for callers or item data that still expect a
+ * multiplier. New woodcutting timing should use getEffectiveToolActionTicks().
+ */
+const WOODCUTTING_AXE_SPEED_MULTIPLIERS = {
+    bronze_axe: 1.00,
+    iron_axe: 0.90,
+    steel_axe: 0.85,
+    black_axe: 0.80,
+    mithril_axe: 0.75,
+    adamant_axe: 0.70,
+    rune_axe: 0.62,
+    dragon_axe: 0.56,
+    infernal_axe: 0.53,
+    crystal_axe: 0.50,
+    third_age_axe: 0.50,
+    '3rd_age_axe': 0.50,
+};
+function getConfiguredToolSpeedMultiplier(skill, item) {
+    if (!item)
+        return 1.0;
+    if (skill === 'woodcutting') {
+        const configured = WOODCUTTING_AXE_SPEED_MULTIPLIERS[item.id];
+        if (configured != null)
+            return configured;
+    }
+    return item.speedMultiplier ?? 1.0;
+}
+/**
  * Returns the tick-speed multiplier for a skill using the best available tool.
  * Checks both equipped weapon and inventory for the highest-tier tool the player
  * has the skill-level requirement for. Only applies if tool has matching toolFor field.
@@ -31416,7 +31973,32 @@ function getToolSpeedMultiplier(skill, equipment, itemsData, stats = {}, invento
     }
     if (!item)
         return 1.0;
-    return item.speedMultiplier ?? 1.0;
+    return getConfiguredToolSpeedMultiplier(skill, item);
+}
+/**
+ * Returns the effective integer action ticks after applying the best available
+ * tool for the skill.
+ */
+function getEffectiveToolActionTicks(skill, baseTicks, equipment, itemsData, stats = {}, inventory = []) {
+    const safeBaseTicks = Math.max(1, Math.floor(Number(baseTicks) || 1));
+    if (skill === 'woodcutting') {
+        const bestTool = findBestToolForSkill(skill, equipment, inventory, itemsData, stats);
+        const tier = bestTool ? WOODCUTTING_AXE_REDUCTION_TIERS[bestTool.id] : null;
+        if (typeof tier === 'number') {
+            if (tier <= 0)
+                return safeBaseTicks;
+            const bestPossibleTicks = Math.max(1, Math.floor(safeBaseTicks / 2));
+            const maxReductionTicks = safeBaseTicks - bestPossibleTicks;
+            if (maxReductionTicks <= 0)
+                return safeBaseTicks;
+            const reductionTicks = tier >= 1
+                ? maxReductionTicks
+                : Math.max(1, Math.ceil(maxReductionTicks * tier));
+            return Math.max(bestPossibleTicks, safeBaseTicks - reductionTicks);
+        }
+    }
+    const multiplier = getToolSpeedMultiplier(skill, equipment, itemsData, stats, inventory);
+    return Math.max(1, Math.floor(safeBaseTicks * multiplier));
 }
 /**
  * Create a skilling session state
@@ -31541,7 +32123,7 @@ function findBestToolForSkill(skill, equipment, inventory, itemsData, stats = {}
             // Check skill-level requirement
             const reqLevel = item.requirements?.[skill] || 0;
             if (playerLevel >= reqLevel) {
-                candidateTools.push({ ...item, tier: reqLevel });
+                candidateTools.push({ ...item, id: equipment.weapon.itemId, tier: reqLevel });
             }
         }
     }
@@ -31556,8 +32138,8 @@ function findBestToolForSkill(skill, equipment, inventory, itemsData, stats = {}
         const reqLevel = item.requirements?.[skill] || 0;
         if (playerLevel >= reqLevel) {
             // Avoid adding duplicates (e.g., if we already have equipped version)
-            if (!candidateTools.some(t => t.id === item.id)) {
-                candidateTools.push({ ...item, tier: reqLevel });
+            if (!candidateTools.some(t => t.id === slot.itemId)) {
+                candidateTools.push({ ...item, id: slot.itemId, tier: reqLevel });
             }
         }
     }
@@ -31651,10 +32233,8 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
     if (!task || !task.action)
         return null;
     const totalTicks = Math.floor(elapsedMs / TICK_MS);
-    // Apply tool speed multiplier (e.g. mithril axe for woodcutting)
-    // Use provided inventory to check for tools; prefer equipped tools if available
-    const toolMult = getToolSpeedMultiplier(task.skill, equipment, itemsData, stats, inventory);
-    const actionTicks = Math.max(1, Math.floor(task.action.ticks * toolMult));
+    // Apply the same effective tool timing as active skilling.
+    const actionTicks = getEffectiveToolActionTicks(task.skill, task.action.ticks, equipment, itemsData, stats, inventory);
     let actions = Math.floor(totalTicks / actionTicks);
     if (actions <= 0)
         return null;
@@ -32012,6 +32592,13 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
 function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, itemsData = {}, bank = {}) {
     if (!task || !task.gatherTask)
         return null;
+    if (task.gatherTask.requiresItem && !task.gatherTask.isClue) {
+        const requiredItem = task.gatherTask.requiresItem;
+        const invCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === requiredItem ? (slot.quantity || 1) : 0), 0);
+        const bankCount = bank?.[requiredItem]?.quantity || 0;
+        if (invCount + bankCount <= 0)
+            return null;
+    }
     const totalTicks = Math.floor(elapsedMs / TICK_MS);
     const actionTicks = task.gatherTask.ticks;
     let actions = Math.floor(totalTicks / actionTicks);
@@ -33186,7 +33773,7 @@ async function initNewGame(playerName, isIronman = false, isOneLife = false) {
 const SAVE_VERSION = 1;
 // Build a save payload object from live in-memory game state. Used by the
 // 60s tick snapshot and the cloud-sync push.
-function buildSavePayloadFromState(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue) {
+function buildSavePayloadFromState(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue, combatStance) {
     const data = {
         version: SAVE_VERSION,
         timestamp: Date.now(),
@@ -33208,6 +33795,8 @@ function buildSavePayloadFromState(player, stats, inventory, bank, equipment, ba
         data.settings.bankConfig = bankConfig;
     if (homeShortcuts)
         data.settings.homeShortcuts = homeShortcuts;
+    if (combatStance)
+        data.settings.combatStance = combatStance;
     if (bossKillCounts)
         data.settings.bossKillCounts = bossKillCounts;
     if (completedQuests)
@@ -33285,9 +33874,9 @@ async function wipeLocalSave() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
-function snapshotToLocalStorage(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue) {
+function snapshotToLocalStorage(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue, combatStance) {
     try {
-        const data = buildSavePayloadFromState(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue);
+        const data = buildSavePayloadFromState(player, stats, inventory, bank, equipment, bankConfig, homeShortcuts, bossKillCounts, completedQuests, questQueue, combatStance);
         const json = JSON.stringify(data);
         localStorage.setItem('pocketrpg_backup', json);
         console.log('[PocketRPG] Snapshot saved to localStorage, size:', json.length);
@@ -33658,7 +34247,7 @@ async function flushNow() {
     pendingSnapshot = null;
     inFlight = true;
     try {
-        const data = buildSavePayloadFromState(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig, snap.homeShortcuts, snap.bossKillCounts, snap.completedQuests, snap.questQueue);
+        const data = buildSavePayloadFromState(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig, snap.homeShortcuts, snap.bossKillCounts, snap.completedQuests, snap.questQueue, snap.combatStance);
         const json = JSON.stringify(data);
         const res = await api.putSave(json);
         if (res?.updatedAt)
@@ -34622,18 +35211,21 @@ function Modal({ title, onClose, children, fullHeight = false, className = '', c
     const dialogSizeStyle = fullHeight
         ? { height: dialogMaxHeight, maxHeight: dialogMaxHeight }
         : { maxHeight: dialogMaxHeight };
+    const contentSizeClass = fullHeight ? 'flex-1' : 'flex-[0_1_auto]';
     const modal = (h("div", { class: "fixed inset-x-0 top-0 z-[1000] isolate flex items-end justify-center overflow-hidden sm:items-center", role: "dialog", "aria-modal": "true", style: {
             height: viewportHeightValue,
             minHeight: '100svh',
             paddingTop: 'max(8px, env(safe-area-inset-top))',
+            paddingRight: 'max(8px, env(safe-area-inset-right))',
             paddingBottom: 'max(8px, env(safe-area-inset-bottom))',
+            paddingLeft: 'max(8px, env(safe-area-inset-left))',
         } },
         h("div", { class: "absolute inset-0 bg-black/80", "aria-hidden": "true", onClick: () => onClose?.() }),
-        h("div", { class: `relative z-[1] flex w-full flex-col overflow-hidden rounded-t-2xl border border-[#333] bg-[var(--color-void-light)] sm:max-w-lg sm:rounded-2xl ${className}`, style: dialogSizeStyle, onClick: (e) => e.stopPropagation() },
+        h("div", { class: `relative z-[1] flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[#333] bg-[var(--color-void-light)] ${className}`, style: dialogSizeStyle, onClick: (e) => e.stopPropagation() },
             title && (h("div", { class: "flex flex-shrink-0 items-center justify-between border-b border-[#333] px-4 py-3" },
                 h("h2", { class: "font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]" }, title),
                 onClose && (h("button", { onClick: onClose, class: "flex h-8 w-8 items-center justify-center rounded-full bg-[#222] text-[var(--color-parchment)] opacity-60 hover:opacity-100 active:bg-[#333]", "aria-label": "Close modal" }, "\u2715")))),
-            h("div", { class: `min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 ${contentClassName}` }, children))));
+            h("div", { class: `min-h-0 ${contentSizeClass} overflow-y-auto overscroll-contain p-4 ${contentClassName}` }, children))));
     if (typeof document === 'undefined' || !document.body)
         return modal;
     return createPortal(modal, document.body);
@@ -35076,7 +35668,7 @@ function HomeScreen({ onNavigate, onLogout, isCloudAccount, removeAds, identityI
                         "Total XP: ",
                         h("span", { class: "font-[var(--font-mono)] font-bold text-[var(--color-gold)]" }, formatNumber(totalXP)))),
                 h(SkillGroup, { title: "Combat", skills: COMBAT_SKILLS }),
-                h(SkillGroup, { title: "Gathering", skills: GATHERING_SKILLS }),
+                h(SkillGroup, { title: "Gathering", skills: GATHERING_SKILLS.filter(s => s !== 'farming') }),
                 h(SkillGroup, { title: "Production", skills: PRODUCTION_SKILLS }),
                 h(SkillGroup, { title: "Utility", skills: UTILITY_SKILLS }))),
         selectedSkillDetail && selectedSkillData && (h(Modal, { title: `${SKILL_ICONS[selectedSkillDetail]} ${selectedSkillDetail.charAt(0).toUpperCase() + selectedSkillDetail.slice(1)}`, onClose: () => setSelectedSkillDetail(null) },
@@ -35252,6 +35844,34 @@ function InventoryScreen() {
         const newInv = [...inventory];
         newInv[selected.slotIndex] = null;
         updateInventory(newInv);
+        setSelected(null);
+    };
+    const handleCombine = () => {
+        if (!selected)
+            return;
+        const { slotIndex, slot, item } = selected;
+        if (slot.noted) {
+            addToast('Cannot combine noted items', 'error');
+            return;
+        }
+        const targetId = item.combineWith;
+        const resultId = item.combineResult;
+        const targetData = itemsData[targetId];
+        const resultData = itemsData[resultId];
+        if (!targetData || !resultData) {
+            addToast('Combine recipe is missing', 'error');
+            return;
+        }
+        const targetIdx = inventory.findIndex((s, i) => s && i !== slotIndex && s.itemId === targetId && !s.noted);
+        if (targetIdx === -1) {
+            addToast(`No ${targetData.name} in inventory`, 'error');
+            return;
+        }
+        const newInv = [...inventory];
+        newInv[slotIndex] = null;
+        newInv[targetIdx] = { itemId: resultId, quantity: 1 };
+        updateInventory(newInv);
+        addToast(`Created ${resultData.name}`, 'info');
         setSelected(null);
     };
     const handleChargeWeapon = (qty) => {
@@ -35651,6 +36271,16 @@ function InventoryScreen() {
                         (selected.item.slot) && !selected.slot.noted && (h("button", { onClick: handleEquip, class: "py-2.5 rounded-lg bg-[var(--color-mana)] text-white font-semibold text-sm active:opacity-80" }, "Equip")),
                         selected.item.type === 'food' && !selected.slot.noted && (h("button", { onClick: handleEat, class: "py-2.5 rounded-lg bg-[var(--color-emerald)] text-white font-semibold text-sm active:opacity-80" }, "Eat")),
                         selected.item.scaleCharged && !selected.slot.noted && (h("button", { onClick: () => setShowChargeModal(true), class: "py-2.5 rounded-lg bg-[#1a3a3a] text-[var(--color-emerald)] font-semibold text-sm active:opacity-80 border border-[var(--color-emerald)]/30" }, "Charge \u26A1")),
+                        selected.item.combineWith && !selected.slot.noted && (() => {
+                            const targetData = itemsData[selected.item.combineWith];
+                            const targetName = targetData?.name || selected.item.combineWith;
+                            const hasTarget = inventory.some((s, i) => s && i !== selected.slotIndex && s.itemId === selected.item.combineWith && !s.noted);
+                            return (h("button", { onClick: handleCombine, disabled: !hasTarget, class: `py-2.5 rounded-lg font-semibold text-sm border ${hasTarget
+                                    ? 'bg-[#2a1a3a] text-[#c084fc] border-[#c084fc]/30 active:opacity-80'
+                                    : 'bg-[#222] text-[var(--color-parchment)] opacity-40 border-transparent cursor-not-allowed'}` },
+                                "Use on ",
+                                targetName));
+                        })(),
                         h("button", { onClick: handleDrop, class: "py-2.5 rounded-lg bg-[var(--color-blood-mid)] text-white font-semibold text-sm active:opacity-80" }, "Drop")),
                     selected.item.scaleCharged && !selected.slot.noted && (selected.slot.charges || 0) > 0 && (() => {
                         const chargeItemId = selected.item.chargeItemId || 'zulrah_scales';
@@ -37138,6 +37768,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
     const equippedSlots = Object.entries(pair.self?.equipment || {})
         .filter(([, entry]) => !!entry)
         .map(([slot, entry]) => ({ slot, entry, item: itemsData?.[entry.itemId] }));
+    const hasGearActions = equippableSlots.length > 0 || equippedSlots.length > 0;
     const equippedSpecial = getEquippedPvpSpecialAttack(pair.self, itemsData);
     const specialReady = hasEnoughPvpSpecialEnergy(pair.self, itemsData);
     const specialEnergy = Math.max(0, Math.floor(Number(pair.self?.specialAttackEnergy ?? 0) || 0));
@@ -37201,9 +37832,28 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
         }
         queueAction({ type: 'queue_special' }, { showBusy: false });
     };
+    const toggleActionPanel = (panel) => {
+        setActionPanel((current) => (current === panel ? null : panel));
+    };
+    const queueGearEquip = (inventorySlot) => {
+        if (terminalHandledRef.current || endModalOpenRef.current)
+            return;
+        queueAction({ type: 'equip', inventorySlot }, { showBusy: false });
+        setActionPanel(null);
+    };
+    const queueGearUnequip = (equipmentSlot) => {
+        if (terminalHandledRef.current || endModalOpenRef.current)
+            return;
+        queueAction({ type: 'unequip', equipmentSlot }, { showBusy: false });
+        setActionPanel(null);
+    };
     const endTotalRiskValue = getEndLootTotal(endModal?.loot);
     const endTotalRiskLabel = `${formatCompactCoins(endTotalRiskValue)} gp`;
     const wonLootRows = aggregateLootEntries(endModal?.loot?.added || []);
+    const handleCloseEndModal = async () => {
+        setEndModal(null);
+        await onExit?.();
+    };
     return (h("div", { class: "h-full min-h-0 overflow-y-auto overscroll-contain p-3 space-y-3 pb-24", style: { maxHeight: 'calc(100vh - 72px)' } },
         loading && (h(Card, { className: "border-[var(--color-gold-dim)] bg-[var(--color-void-light)]" },
             h("div", { class: "text-[11px] text-[var(--color-gold)]" }, "Connecting to PvP match\u2026"))),
@@ -37258,8 +37908,10 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
                     specialCost != null ? ` ${specialEnergy}%` : ''),
                 h(Button, { variant: actionPanel === 'prayer' || visuallyActivePrayerId ? 'primary' : 'secondary', size: "md", className: `w-full transition-none ${visuallyActivePrayerId
                         ? '!border-[var(--color-gold)] !bg-[var(--color-gold)] !text-[var(--color-void-dark)]'
-                        : ''}`, "aria-pressed": !!visuallyActivePrayerId, onClick: () => setActionPanel(actionPanel === 'prayer' ? null : 'prayer') }, "\uD83D\uDE4F Prayer")),
-            actionPanel === 'prayer' && (h("div", { class: "mt-3" }, availablePrayers.length === 0 ? (h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60" }, "No PvP-usable prayers unlocked.")) : (h("div", { class: "grid grid-cols-3 gap-2" }, availablePrayers.map((prayer) => {
+                        : ''}`, "aria-pressed": !!visuallyActivePrayerId, onClick: () => toggleActionPanel('prayer') }, "\uD83D\uDE4F Prayer"),
+                h(Button, { variant: actionPanel === 'potion' ? 'primary' : 'secondary', size: "md", className: "w-full", disabled: busy || potionSlots.length === 0, onClick: () => toggleActionPanel('potion') }, "\uD83E\uDDEA Potion"),
+                h(Button, { variant: actionPanel === 'gear' ? 'primary' : 'secondary', size: "md", className: "w-full", disabled: busy || !hasGearActions, onClick: () => toggleActionPanel('gear') }, "\uD83D\uDEE1\uFE0F Gear")),
+            actionPanel === 'prayer' && (h("div", { class: "mt-3" }, availablePrayers.length === 0 ? (h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60" }, "No PvP-usable prayers unlocked.")) : (h("div", { class: "grid grid-cols-2 gap-2" }, availablePrayers.map((prayer) => {
                 const active = visuallyActivePrayerId === prayer.id;
                 return (h(Button, { key: prayer.id, variant: active ? 'primary' : 'secondary', size: "md", className: `min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight transition-none ${active
                         ? '!border-[var(--color-gold)] !bg-[var(--color-gold)] !text-[var(--color-void-dark)]'
@@ -37268,7 +37920,40 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
                         prayer.icon || '✨',
                         " ",
                         prayer.name)));
-            })))))),
+            }))))),
+            actionPanel === 'potion' && (h("div", { class: "mt-3" }, potionSlots.length === 0 ? (h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60" }, "No PvP potions in inventory.")) : (h("div", { class: "grid grid-cols-2 gap-2" }, potionSlots.map(({ slot, idx, item }) => (h(Button, { key: `${slot.itemId}-${idx}`, variant: "secondary", size: "md", className: "min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight", onClick: () => queueAction({ type: 'drink', inventorySlot: idx }, { showBusy: false }) },
+                h("span", { class: "block truncate" },
+                    item?.icon || '🧪',
+                    " ",
+                    item?.name || slot.itemId))))))))),
+        actionPanel === 'gear' && (h(Modal, { onClose: () => setActionPanel(null) },
+            h("div", { class: "flex items-center justify-between mb-3" },
+                h("h3", { class: "font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]" }, "Gear"),
+                h("button", { onClick: () => setActionPanel(null), class: "w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors", title: "Close" }, "\u2715")),
+            h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60 mb-3" }, "Equip an item from your inventory or unequip current gear. Gear changes are queued and apply on the next PvP tick."),
+            h("div", { class: "space-y-4 max-h-[70vh] overflow-y-auto pr-1" },
+                h("div", null,
+                    h("div", { class: "text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-2" }, "Equipped"),
+                    equippedSlots.length === 0 ? (h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-50" }, "No gear equipped.")) : (h("div", { class: "space-y-2" }, equippedSlots.map(({ slot, entry, item }) => (h("button", { key: `equipped-${slot}-${entry.itemId}`, onClick: () => queueGearUnequip(slot), class: "w-full p-3 rounded-lg border bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222] transition-colors text-left" },
+                        h("div", { class: "flex items-center justify-between gap-3" },
+                            h("div", { class: "flex items-center gap-2 min-w-0" },
+                                h("span", { class: "text-lg shrink-0" }, item?.icon || '▫️'),
+                                h("div", { class: "min-w-0" },
+                                    h("div", { class: "text-sm font-semibold text-[var(--color-parchment)] truncate" }, item?.name || entry.itemId),
+                                    h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60 capitalize" }, slot))),
+                            h("span", { class: "text-[10px] text-[var(--color-gold)] shrink-0" }, "Unequip")))))))),
+                h("div", null,
+                    h("div", { class: "text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-2" }, "Inventory gear"),
+                    equippableSlots.length === 0 ? (h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-50" }, "No equippable items in inventory.")) : (h("div", { class: "grid grid-cols-1 gap-2" }, equippableSlots.map(({ slot, idx, item }) => (h("button", { key: `inventory-gear-${idx}-${slot.itemId}`, onClick: () => queueGearEquip(idx), class: "w-full p-3 rounded-lg border bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222] transition-colors text-left" },
+                        h("div", { class: "flex items-center justify-between gap-3" },
+                            h("div", { class: "flex items-center gap-2 min-w-0" },
+                                h(ItemSlot, { slot: slot, size: "small" }),
+                                h("div", { class: "min-w-0" },
+                                    h("div", { class: "text-sm font-semibold text-[var(--color-parchment)] truncate" }, item?.name || slot.itemId),
+                                    h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60 capitalize" },
+                                        item?.slot || 'gear',
+                                        (slot.quantity || 0) > 1 ? ` · x${slot.quantity}` : ''))),
+                            h("span", { class: "text-[10px] text-[var(--color-gold)] shrink-0" }, "Equip"))))))))))),
         h(Panel, null,
             h("div", { class: "text-xs font-semibold text-[var(--color-gold)] mb-1" }, "Recent actions"),
             h("div", { class: "space-y-1 max-h-24 overflow-y-auto" },
@@ -37276,9 +37961,11 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
                 recentLines.map((line, i) => (h("div", { key: i, class: "text-[11px] text-[var(--color-parchment)] opacity-80" },
                     "\u2022 ",
                     line))))),
-        endModal && (h(Modal, { title: endModal.writebackOk ? (endModal.youWon ? '🏆 Victory' : '☠️ Defeat') : '⚠️ PvP sync recovery required', onClose: endModal.writebackOk ? onExit : () => { }, fullHeight: true, contentClassName: "pb-6" },
-            h("div", { class: "space-y-3" }, endModal.writebackOk ? (h(Fragment, null,
-                h("div", { class: "text-sm text-[var(--color-parchment)] leading-snug" }, endModal.youWon ? (h(Fragment, null,
+        endModal && (h(Modal, { title: endModal.youWon ? '🏆 Victory' : '💀 Defeat', onClose: handleCloseEndModal, contentClassName: "space-y-4" },
+            !endModal.writebackOk ? (h("div", { class: "rounded-2xl border border-[var(--color-blood)] bg-[#2a1010] p-3 text-sm text-[var(--color-parchment)]" },
+                h("div", { class: "font-semibold text-[var(--color-blood-light)]" }, "PvP result saved with a warning"),
+                h("div", { class: "mt-1 text-xs opacity-80" }, "The match ended, but the reward writeback did not complete. Please refresh before starting another PvP match."))) : (h(Fragment, null,
+                h("p", { class: "text-sm leading-relaxed text-[var(--color-parchment)]" }, endModal.youWon ? (h(Fragment, null,
                     "You are Victorious! Your total loot is:",
                     ' ',
                     h("span", { class: "font-semibold text-[var(--color-gold)]" }, endTotalRiskLabel),
@@ -37287,18 +37974,12 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
                     ' ',
                     h("span", { class: "font-semibold text-[var(--color-gold)]" }, endTotalRiskLabel),
                     "."))),
-                endModal.youWon && (h(Card, null,
-                    h("div", { class: "text-xs font-semibold text-[var(--color-gold)] mb-2" }, "Items won"),
-                    h("div", { class: "max-h-[42dvh] space-y-1 overflow-y-auto pr-1" }, wonLootRows.length === 0 ? (h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60" }, "No tradeable items were won.")) : (wonLootRows.map((entry) => (h("div", { key: getLootGroupKey(entry), class: "flex items-center justify-between gap-3 rounded-md border border-[var(--color-void-border)] bg-[var(--color-void-light)] px-2 py-1.5" },
-                        h("div", { class: "min-w-0 flex items-center gap-2" },
-                            h("span", { class: "shrink-0" }, getLootIcon(entry)),
-                            h("span", { class: "truncate text-[11px] text-[var(--color-parchment)]" }, formatLootEntry(entry)))))))))),
-                h(Button, { variant: "primary", size: "md", className: "mt-3 w-full", onClick: async () => { await onExit?.(); } }, "Return to PvE"))) : (h(Card, { className: "border-[var(--color-blood)] bg-[#2a1010]" },
-                h("div", { class: "text-xs font-semibold text-[var(--color-blood-light)]" }, "Match ended, but loot writeback failed."),
-                h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-80 mt-1" }, "Do not return to PvE yet. Retry or reconnect to refresh server state and avoid stale inventory/bank data."),
-                h("div", { class: "flex flex-wrap gap-2 mt-3" },
-                    h(Button, { variant: "primary", size: "sm", onClick: () => { setLoading(true); refreshFromServer().catch(() => setLoading(false)); } }, "Retry"),
-                    h(Button, { variant: "secondary", size: "sm", onClick: () => { setLoading(true); refreshFromServer().catch(() => setLoading(false)); } }, "Reconnect")))))))));
+                endModal.youWon && (h("div", { class: "rounded-2xl border border-[#333] bg-[var(--color-void)] p-3" },
+                    h("div", { class: "mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--color-gold)]" }, "Items won"),
+                    wonLootRows.length > 0 ? (h("div", { class: "max-h-[min(38svh,360px)] space-y-2 overflow-y-auto overscroll-contain pr-1" }, wonLootRows.map((entry) => (h("div", { key: getLootGroupKey(entry), class: "flex items-center gap-3 rounded-xl border border-[#333] bg-[var(--color-void-light)] px-3 py-2 text-sm text-[var(--color-parchment)]" },
+                        h("span", { class: "shrink-0 text-xl" }, getLootIcon(entry)),
+                        h("span", { class: "min-w-0 truncate" }, formatLootEntry(entry))))))) : (h("div", { class: "rounded-xl border border-[#333] bg-[var(--color-void-light)] px-3 py-2 text-sm text-[var(--color-parchment)] opacity-70" }, "Nothing tradeable was dropped!")))))),
+            h(Button, { variant: "primary", size: "lg", className: "w-full", onClick: handleCloseEndModal }, "Return to PvE")))));
 }
 
 // ── screens/CombatScreen.js ──
@@ -37344,7 +38025,7 @@ const COMBAT_CATEGORIES = [
         key: 'slayer',
         label: 'Slayer',
         icon: '💀',
-        ids: ['abyssal_demon'],
+        ids: ['blood_veld', 'skeletal_wyvern', 'nechryael', 'smoke_devil', 'abyssal_demon', 'kraken'],
     },
     {
         key: 'bossing',
@@ -37354,7 +38035,7 @@ const COMBAT_CATEGORIES = [
     },
     {
         key: 'dagganoth_kings',
-        label: 'Dagganoth Kings',
+        label: 'Dagannoth Kings',
         icon: '👹',
         ids: ['dagganoth_rex', 'dagganoth_prime', 'dagganoth_supreme'],
     },
@@ -37405,6 +38086,7 @@ const MONSTER_ICONS = {
     chicken: '🐔', goblin: '👺', cow: '🐄', giant_spider: '🕷️',
     rock_crab: '🦀', sand_crab: '🦀', hill_giant: '👊', moss_giant: '🌿',
     wizard: '🧙', dark_wizard: '🧙‍♂️', abyssal_demon: '😈',
+    blood_veld: '🩸', nechryael: '👻', skeletal_wyvern: '🐲', smoke_devil: '💨', kraken: '🦑',
     green_dragon: '🐉', red_dragon: '🔴', adamant_dragon: '⚔️', rune_dragon: '🛡️', lesser_demon: '👿',
     general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
     dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
@@ -39930,8 +40612,9 @@ function HunterScreen({ initialActionId, onBack }) {
 
 
 
-// Agility, Prayer, Thieving, Hunter, Slayer, Farming, and Construction are special skills shown here in the Skills tab
-const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'hunter', 'slayer', 'farming', 'construction'];
+// Agility, Prayer, Thieving, Hunter, Slayer, and Construction are special skills shown here in the Skills tab
+// (farming is silently hidden from display; logic remains intact)
+const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'hunter', 'slayer', 'construction'];
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0);
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS];
 // Calculate remaining actions based on available materials
@@ -40165,9 +40848,10 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
             setShowAlchemyPicker(true);
             return;
         }
-        const mult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory);
-        const effectiveTicks = Math.max(1, Math.floor(action.ticks * mult));
-        const adjustedAction = mult < 1.0 ? { ...action, ticks: effectiveTicks } : action;
+        const effectiveTicks = getEffectiveToolActionTicks(selectedSkill, action.ticks, equipment, itemsData, stats, inventory);
+        const adjustedAction = effectiveTicks !== action.ticks
+            ? { ...action, ticks: effectiveTicks }
+            : action;
         const state = { ...createSkillingState(selectedSkill, adjustedAction), startedAt: Date.now() };
         setSelectedAction(action);
         setSkilling(state);
@@ -40179,9 +40863,10 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
             return;
         setShowAlchemyPicker(false);
         setSelectedAlchemyItem(item);
-        const mult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory);
-        const effectiveTicks = Math.max(1, Math.floor(selectedAction.ticks * mult));
-        const adjustedAction = mult < 1.0 ? { ...selectedAction, ticks: effectiveTicks } : selectedAction;
+        const effectiveTicks = getEffectiveToolActionTicks(selectedSkill, selectedAction.ticks, equipment, itemsData, stats, inventory);
+        const adjustedAction = effectiveTicks !== selectedAction.ticks
+            ? { ...selectedAction, ticks: effectiveTicks }
+            : selectedAction;
         const state = { ...createSkillingState(selectedSkill, adjustedAction), startedAt: Date.now() };
         setSkilling(state);
         // Store original action in task — idle engine will apply tool multiplier separately
@@ -40205,9 +40890,10 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
                 const action = skill.actions.find(a => a.id === initialActionId);
                 if (action) {
                     setSelectedSkill(initialSkillId);
-                    const mult = getToolSpeedMultiplier(initialSkillId, equipment, itemsData, stats, inventory);
-                    const effectiveTicks = Math.max(1, Math.floor(action.ticks * mult));
-                    const adjustedAction = mult < 1.0 ? { ...action, ticks: effectiveTicks } : action;
+                    const effectiveTicks = getEffectiveToolActionTicks(initialSkillId, action.ticks, equipment, itemsData, stats, inventory);
+                    const adjustedAction = effectiveTicks !== action.ticks
+                        ? { ...action, ticks: effectiveTicks }
+                        : action;
                     const state = { ...createSkillingState(initialSkillId, adjustedAction), startedAt: Date.now() };
                     // Seed totals from idle result so the modal reflects what was gained while away
                     if (idleResult?.task?.type === 'skill' && idleResult.task.skill === initialSkillId) {
@@ -40250,7 +40936,6 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
     const skillLevel = getLevelFromXP(skillXP);
     const actions = skillData ? getAvailableActions(skillData.actions, skillXP) : [];
     const allActions = [...(skillData?.actions || [])].sort((a, b) => a.level - b.level);
-    const toolMult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory);
     if (!skilling) {
         return (h("div", { class: "h-full overflow-y-auto p-4" },
             h("button", { onClick: () => setSelectedSkill(null), class: "text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1" }, "\u2190 Back"),
@@ -40269,6 +40954,7 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
                 const hasTool = !needsTool || hasToolForSkill(selectedSkill, equipment, inventory, itemsData, stats);
                 const hasItems = !action.itemReq || action.itemReq.some(id => (countItem(inventory, id) + (bank[id]?.quantity || 0)) > 0);
                 const canStart = available && hasMats && hasRunes && hasTool && hasItems;
+                const effectiveTicks = getEffectiveToolActionTicks(selectedSkill, action.ticks, equipment, itemsData, stats, inventory);
                 return (h("button", { key: action.id, onClick: () => canStart && startSkilling(action), disabled: !canStart, class: `w-full flex items-center justify-between p-3 rounded-xl border transition-colors
                   ${canStart
                         ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
@@ -40281,14 +40967,14 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
                             " \u00B7 ",
                             action.xp,
                             " XP \u00B7 ",
-                            toolMult < 1.0
+                            effectiveTicks !== action.ticks
                                 ? h(Fragment, null,
                                     h("span", { class: "line-through" },
                                         (action.ticks * 0.6).toFixed(1),
                                         "s"),
                                     " ",
                                     h("span", { class: "text-[var(--color-gold)] opacity-100" },
-                                        (Math.max(1, Math.floor(action.ticks * toolMult)) * 0.6).toFixed(1),
+                                        (effectiveTicks * 0.6).toFixed(1),
                                         "s"))
                                 : `${(action.ticks * 0.6).toFixed(1)}s`,
                             (() => {
@@ -40351,7 +41037,6 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
                     inventory.every(s => !s) && (h("div", { class: "text-center py-4 text-[var(--color-parchment)] opacity-50" }, "No items in inventory")))))));
     }
     // Active skilling modal
-    const activeMult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory);
     const progress = getActionProgress(skilling.active, skilling.ticksRemaining, skilling.action.ticks);
     return (h("div", { class: "h-full flex flex-col p-4" },
         h("div", { class: "flex-1 flex flex-col items-center justify-center" },
@@ -40573,6 +41258,7 @@ function ConstructionScreen({ onBack }) {
 
 
 
+
 // OSRS slayer masters — requirements and monster pools from OSRS Wiki
 const SLAYER_MASTERS = [
     {
@@ -40614,7 +41300,7 @@ const SLAYER_MASTERS = [
         description: 'Assigns mid-level combat tasks. Requires combat 40.',
         taskRange: [70, 160],
         monsterPool: [
-            'moss_giant', 'green_dragon', 'lesser_demon',
+            'moss_giant', 'green_dragon', 'lesser_demon', 'blood_veld',
         ],
     },
     {
@@ -40629,6 +41315,7 @@ const SLAYER_MASTERS = [
         taskRange: [80, 300],
         monsterPool: [
             'green_dragon', 'lesser_demon', 'abyssal_demon', 'red_dragon',
+            'blood_veld', 'nechryael',
         ],
     },
     {
@@ -40648,6 +41335,8 @@ const SLAYER_MASTERS = [
             { id: 'dagganoth_prime', boss: true },
             { id: 'dagganoth_supreme', boss: true },
             'red_dragon',
+            'blood_veld', 'nechryael', 'skeletal_wyvern', 'smoke_devil',
+            { id: 'kraken', boss: true },
             { id: 'jad', boss: true },
         ],
     },
@@ -40671,8 +41360,18 @@ const SLAYER_MASTERS = [
             { id: 'commander_zilyana', boss: true },
             { id: 'kril_tsutsaroth', boss: true },
             { id: 'kreearra', boss: true },
+            'blood_veld', 'nechryael', 'skeletal_wyvern', 'smoke_devil',
+            { id: 'kraken', boss: true },
             { id: 'jad', boss: true },
         ],
+    },
+];
+// Items unlockable with slayer points
+const SLAYER_UNLOCKS = [
+    {
+        itemId: 'slayer_helmet',
+        cost: 400,
+        description: 'Combined helmet that boosts damage and accuracy against your assigned slayer task.',
     },
 ];
 // OSRS combat level formula
@@ -40699,9 +41398,10 @@ const SLAYER_MONSTER_ICONS = {
     moss_giant: '🌿', green_dragon: '🐉', lesser_demon: '👿', abyssal_demon: '😈',
     general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
     dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹', jad: '🔥',
+    blood_veld: '🩸', nechryael: '👻', skeletal_wyvern: '🐲', smoke_devil: '💨', kraken: '🦑',
 };
 function SlayerScreen({ onBack }) {
-    const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast } = useGame();
+    const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, bank, inventory, addToBank } = useGame();
     const combatLevel = getPlayerCombatLevel(stats);
     const slayerLevel = getLevelFromXP(stats.slayer?.xp || 0);
     const handleGetTask = (master) => {
@@ -40770,6 +41470,27 @@ function SlayerScreen({ onBack }) {
         setSlayerTask(null);
         addToast('Task cancelled. No points awarded.', 'info');
     };
+    const ownsItem = (itemId) => {
+        if (bank?.[itemId]?.quantity > 0)
+            return true;
+        return inventory?.some(s => s && s.itemId === itemId) || false;
+    };
+    const handleUnlock = (unlock) => {
+        const item = itemsData[unlock.itemId];
+        if (!item)
+            return;
+        if (ownsItem(unlock.itemId)) {
+            addToast(`You already own a ${item.name}`, 'error');
+            return;
+        }
+        if (slayerPoints < unlock.cost) {
+            addToast(`Need ${unlock.cost} slayer points (you have ${slayerPoints})`, 'error');
+            return;
+        }
+        updateSlayerPoints(slayerPoints - unlock.cost);
+        addToBank(unlock.itemId, 1);
+        addToast(`🎉 Purchased ${item.name} — sent to bank`, 'info');
+    };
     const progressPct = slayerTask
         ? Math.round((1 - slayerTask.monstersRemaining / slayerTask.totalCount) * 100)
         : 0;
@@ -40830,6 +41551,33 @@ function SlayerScreen({ onBack }) {
                         "Slay ",
                         master.slayerReq)),
                     master.combatReq === 0 && (h("div", { class: "text-[9px] text-[var(--color-hp-green)]" }, "No req")))));
+        })),
+        h("div", { class: "mt-5 mb-2 text-[10px] text-[var(--color-parchment)] opacity-50 uppercase font-bold tracking-wider" }, "Unlocks"),
+        h("div", { class: "space-y-2" }, SLAYER_UNLOCKS.map(unlock => {
+            const item = itemsData[unlock.itemId];
+            if (!item)
+                return null;
+            const owned = ownsItem(unlock.itemId);
+            const canAfford = slayerPoints >= unlock.cost;
+            const disabled = owned || !canAfford;
+            return (h("button", { key: unlock.itemId, onClick: () => !disabled && handleUnlock(unlock), disabled: disabled, class: `w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left
+                ${!disabled
+                    ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
+                    : 'bg-[#111] border-[#1a1a1a] opacity-50'}` },
+                h("div", { class: "flex items-center gap-3 min-w-0" },
+                    h("span", { class: "text-2xl flex-shrink-0" }, item.icon || '🎁'),
+                    h("div", { class: "min-w-0" },
+                        h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, item.name),
+                        h("div", { class: "text-[9px] text-[var(--color-parchment)] opacity-50 mt-0.5 leading-tight" }, unlock.description),
+                        item.requirements?.slayer > 0 && (h("div", { class: "text-[9px] text-[var(--color-parchment)] opacity-40 mt-0.5" },
+                            "Requires Slayer ",
+                            item.requirements.slayer,
+                            " to wear")))),
+                h("div", { class: "text-right flex-shrink-0 ml-3 space-y-0.5" }, owned ? (h("div", { class: "text-[10px] font-bold text-[var(--color-hp-green)]" }, "Owned")) : (h(Fragment, null,
+                    h("div", { class: `text-[11px] font-[var(--font-mono)] font-bold ${canAfford ? 'text-[var(--color-gold)]' : 'text-[var(--color-blood-light)]'}` },
+                        unlock.cost,
+                        " pts"),
+                    h("div", { class: "text-[9px] text-[var(--color-parchment)] opacity-40" }, canAfford ? 'Buy' : 'Locked'))))));
         }))));
 }
 
@@ -40872,12 +41620,11 @@ const GATHER_TASKS = [
         id: 'collect_sand',
         name: 'Collect Bucket of Sand',
         icon: '🏖️',
-        description: 'Fill a bucket with sand from the beach. Used with seaweed to make glass.',
+        description: 'Collect sand from the beach. Used with seaweed to make glass.',
         ticks: 3,
         product: 'bucket_of_sand',
         qty: 1,
         stackable: false,
-        materials: { bucket: 1 },
         category: 'beach',
     },
     {
@@ -40890,41 +41637,6 @@ const GATHER_TASKS = [
         qty: 1,
         stackable: false,
         category: 'beach',
-    },
-    {
-        id: 'wet_clay',
-        name: 'Soften Clay',
-        icon: '💧',
-        description: 'Add water to clay to make soft clay. Needed for Crafting moulds.',
-        ticks: 2,
-        product: 'soft_clay',
-        qty: 1,
-        stackable: false,
-        materials: { clay: 1 },
-        category: 'fields',
-    },
-    {
-        id: 'pick_wheat',
-        name: 'Pick Wheat',
-        icon: '🌾',
-        description: 'Harvest wheat from the grain field.',
-        ticks: 3,
-        product: 'wheat',
-        qty: 1,
-        stackable: false,
-        category: 'fields',
-    },
-    {
-        id: 'grind_flour',
-        name: 'Grind Flour',
-        icon: '⚙️',
-        description: 'Grind wheat into a pot of flour at the windmill.',
-        ticks: 5,
-        product: 'pot_of_flour',
-        qty: 1,
-        stackable: false,
-        materials: { wheat: 1, pot: 1 },
-        category: 'fields',
     },
     {
         id: 'burn_seaweed',
@@ -40998,7 +41710,7 @@ const GATHER_TASKS = [
         name: 'Crush Bird\'s Nest → Dust',
         icon: '🪹',
         description: 'Crush an empty bird\'s nest into powder. Used in saradomin brew.',
-        ticks: 2,
+        ticks: 5,
         product: 'crushed_birds_nest',
         qty: 1,
         stackable: true,
@@ -41226,6 +41938,12 @@ function GatherScreen({ initialTaskId, idleResult }) {
                         addToast('Not enough coins!', 'error');
                         return;
                     }
+                }
+                if (task.requiresItem && !task.isClue && !hasItemAnywhere(task.requiresItem, newInv, bank, equipment)) {
+                    taskRef.current = { ...next, stopped: true };
+                    setLocalTask(null);
+                    addToast(`Need ${ITEM_NAMES[task.requiresItem] || task.requiresItem}.`, 'error');
+                    return;
                 }
                 if (task.materials) {
                     let hasMats = true;
@@ -41455,7 +42173,7 @@ function GatherScreen({ initialTaskId, idleResult }) {
         h("div", { class: "flex-1 overflow-y-auto px-4 pb-4" },
             h("div", { class: "flex flex-col gap-2" }, visibleTasks.map(task => {
                 const hasMats = !task.materials || Object.entries(task.materials).every(([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty);
-                const hasRequiredItem = !task.requiresItem || ((bank[task.requiresItem]?.quantity || 0) > 0);
+                const hasRequiredItem = !task.requiresItem || hasItemAnywhere(task.requiresItem, inventory, bank, equipment);
                 const enabled = hasMats && hasRequiredItem;
                 const rowClass = enabled
                     ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
@@ -41469,6 +42187,10 @@ function GatherScreen({ initialTaskId, idleResult }) {
                                 "\u23F1 ",
                                 (task.ticks * 0.6).toFixed(1),
                                 "s/action",
+                                task.requiresItem && !task.isClue && (h("span", { class: "text-[var(--color-parchment)] opacity-50" },
+                                    ' · ',
+                                    "Requires: ",
+                                    ITEM_NAMES[task.requiresItem] || task.requiresItem)),
                                 task.materials && (h("span", { class: "text-[var(--color-parchment)] opacity-50" },
                                     ' · ',
                                     "Needs: ",

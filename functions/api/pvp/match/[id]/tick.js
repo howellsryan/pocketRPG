@@ -199,7 +199,7 @@ export async function onRequestPost({ request, env, params }) {
     }
   }
 
-  const out = processPvpTick(state, intents, itemsData)
+  const out = processPvpTick(state, intents, itemsData, now)
 
   if (out.terminal) {
     const terminalWrite = await finalizeTerminalMatch(env, match, out.stateNext, out.terminal, appliedIntentIds)
