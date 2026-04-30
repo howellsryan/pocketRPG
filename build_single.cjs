@@ -42,6 +42,7 @@ const sourceFiles = [
   'engine/quests.js',
   'engine/questIdleCascade.js',
   'engine/clueScrolls.js',
+  'engine/skipPreflight.js',
   'db/database.js',
   'db/stores.js',
   'db/saveload.js',
