@@ -37,6 +37,28 @@ export function maxDefenceRoll(defenceLevel, styleDefenceBonus) {
 }
 
 /**
+ * Calculate effective defence level for a player. Mirrors effectiveAttack —
+ * `+ 8` base instead of the `+ 9` baked into maxDefenceRoll, with stance
+ * defence bonus and prayer multiplier on top.
+ *
+ * Used in PvP (both sides are players) and inside processCombatTick's
+ * monster-attack branch, where the player's defence already follows this
+ * pattern (see combat.js line ~733). Extracted so PvP can reuse it.
+ */
+export function effectiveDefence(defenceLevel, potionBonus = 0, prayerMult = 1.0, styleBonus = 0) {
+  return Math.floor((defenceLevel + potionBonus) * prayerMult) + styleBonus + 8
+}
+
+/**
+ * Player defence roll: effectiveDef * (equipmentDefenceBonus + 64).
+ * Same shape as maxAttackRoll — kept as a separate name for readability
+ * at call sites.
+ */
+export function playerDefenceRoll(effectiveDef, equipmentDefenceBonus) {
+  return effectiveDef * (equipmentDefenceBonus + 64)
+}
+
+/**
  * Calculate hit chance (accuracy) from attack and defence rolls
  */
 export function hitChance(atkRoll, defRoll) {

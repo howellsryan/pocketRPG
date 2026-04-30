@@ -143,3 +143,37 @@ Everything else — all static colours, borders, radii, padding, typography, fle
 3. **If a pattern appears 3+ times, extract it.** Either a new shared component or a new CSS variable in `index.html`.
 4. **New shared components must be registered in `build_single.cjs`** under `sourceFiles`, between the existing `components/*.js` entries and the screens.
 5. **Button styling is never bespoke.** If you need a new variant (e.g. warning orange), add it to `Button.jsx`'s `VARIANTS` map rather than styling a raw `<button>`.
+
+## 14. PVP (LOCKDOWN SUMMARY)
+### Match Flow
+- PvP is server-authoritative using `/api/pvp/*` endpoints.
+- Players opt in via waiting room and invitations; both players must be within combat level ±10.
+- Ironman and One-Life characters are blocked from all PvP endpoints.
+- `characters.active_match_id` locks save/idle/purchase/skip-hour writes while in an active match.
+
+### Tick + Intents
+- PvP uses the same 600ms game tick cadence.
+- Intents are ordered deterministically by `tick_number`, `character_id`, then `character_seq`.
+- Tick advancement is optimistic-concurrency (`WHERE current_tick = ?`); if another client advanced first, caller re-reads state.
+- Reconnect is always from server state (`GET /api/pvp/match/:id`), never local cache.
+
+### Combat Rules
+- Special attack energy starts at 100% per match and regenerates by 10 percentage points every 30 seconds during active PvP, capped at 100%.
+- Equipment swap is allowed, but `attackTimer = max(currentTimer, newWeaponSpeed)` to prevent fast-swap abuse.
+- Both combatants can resolve attacks on the same tick; simultaneous deaths are tie-broken by lower `characterId`.
+- Protection prayers are disabled in PvP v1.
+
+### Loot + End Conditions
+- Forfeit is treated exactly like death for loot transfer.
+- Tradeable equipment + inventory transfer to winner (including charges/ammo quantities).
+- Equipped untradeables stay equipped on the loser; untradeable inventory also stays.
+- Coins transfer even though they are flagged untradeable in item data.
+- Winner bank overflow drops excess loot; dropped value is surfaced in match-end messaging.
+
+## 15. SINGLE-FILE BUILD SAFETY (DUPLICATE IDENTIFIERS)
+- `index.html` is produced by concatenating transpiled files via `build_single.cjs`, so top-level names must be globally unique.
+- Before committing any change that can affect the bundled output, run:
+  - `npm run rebuild`
+  - `node --check tmp_module_check.mjs` on the extracted module script from `index.html` (or an equivalent duplicate-identifier syntax check).
+- Treat `SyntaxError: Identifier '<name>' has already been declared` as a release-blocking error and rename the conflicting top-level declaration.
+- Prefer importing shared helpers from `src/utils/helpers.js` instead of redefining common names (for example, random integer helpers).

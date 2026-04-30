@@ -17,9 +17,20 @@ export async function onRequestGet({ request, env }) {
   const charId = charIdHeader ? parseInt(charIdHeader, 10) : null
   if (charId) {
     const charRow = await env.DB.prepare(
-      'SELECT id, credits FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL',
+      `SELECT id, credits,
+              COALESCE(total_pvp_kills, 0) AS total_pvp_kills,
+              last_updated_total_pvp_kills
+         FROM characters
+        WHERE id = ? AND owner_id = ? AND deleted_at IS NULL`,
     ).bind(charId, auth.identity.id).first()
-    if (charRow) character = { id: charRow.id, credits: charRow.credits ?? 0 }
+    if (charRow) {
+      character = {
+        id: charRow.id,
+        credits: charRow.credits ?? 0,
+        total_pvp_kills: charRow.total_pvp_kills ?? 0,
+        last_updated_total_pvp_kills: charRow.last_updated_total_pvp_kills ?? null,
+      }
+    }
   }
 
   return json({

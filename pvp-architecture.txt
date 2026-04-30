@@ -26,7 +26,7 @@ No spectating, no replays, no historical match data.
 No fight-pair cooldown, no anti-grief — opt-in invite is the gate.
 New from review
 Forfeit = death. Full loot transfer runs on forfeit, identical to HP=0 death. Modal copy reflects this.
-Spec energy starts at 100 at match start, no regen during match, no refill on opponent death.
+Spec energy starts at 100% at match start and regenerates by 10% every 30 seconds during active match time, capped at 100%.
 Equipment-swap timer rule: attackTimer = max(currentTimer, newWeaponSpeed). Prevents swap-to-faster-weapon exploits.
 Equipped untradeables stay equipped on loser (not moved to inventory). Tradeable equipment and tradeable inventory transfer to winner.
 Charges and ammo quantity carry through loot transfer (Toxic blowpipe scales, Trident charges, ammo stack sizes).
@@ -193,7 +193,7 @@ Bolt: blood_forfeit	20% target HP, 10% self	Same — works (now self-damages pla
 Bolt: armour_piercing	115% max, ignore defence	Same — works
 Bolt: dragons_breath	+45% damage, blocked vs dragons/fire-immune	Always +45% — players are never dragons or fire-immune
 Bolt: life_leech	+20% damage, heal 25%, blocked vs undead	Always works — players are never undead
-Spec: double_hit / zero_defence / stun / judgement / healing_blade / freeze / lightning / snapshot / pebble_shot / shove / warstrike	Per CLAUDE.md §14	Same — work
+Spec: double_hit / zero_defence / stun / judgement / healing_blade / freeze / lightning / snapshot / pebble_shot / shove / warstrike	Per AGENTS.md §12	Same — work
 Powered staff (Trident, etc.)	Magic damage scales with magic level, consumes charges	Same — works
 Magic spell rune consumption	Decremented from inventory	Decremented from state.combatants[X].inventory — server applies inside state_json
 Ammo (arrows, bolts)	Decremented from equipment.ammo.quantity	Same — works inside state.combatants[X].equipment.ammo
@@ -325,8 +325,8 @@ Reconnect: rebuild state from GET /api/pvp/match/:id on mount.
 Hook invitation accept → mount PvpCombatScreen.
 Phase 5 — Polish and ship
 tsc --project tsconfig.build.json && node build_single.cjs to rebuild index.html.
-Add §16 to CLAUDE.md documenting PvP rules.
-PR to preview branch (per CLAUDE.md §4).
+Add a dedicated PvP summary section to AGENTS.md so the live implementation rules are documented in one place.
+PR to preview branch.
 Manual smoke test on preview environment with two characters.
 Phase 6 — Latency upgrade (planned)
 Move match loop to a Durable Object behind a Worker (or Pages Function proxying to a Worker that hosts the DO).

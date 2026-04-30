@@ -5,7 +5,7 @@ import ProgressBar from '../components/ProgressBar.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { SKILL_ICONS, STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS, formatDropChance } from '../utils/constants.js'
 import { getLevelFromXP } from '../engine/experience.js'
-import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getToolSpeedMultiplier, hasToolForSkill } from '../engine/skilling.js'
+import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getEffectiveToolActionTicks, hasToolForSkill } from '../engine/skilling.js'
 import { addItem, removeItem, countItem } from '../engine/inventory.js'
 import { hasRequiredRunes, getRunesToConsume } from '../engine/runes.js'
 import { onTick } from '../engine/tick.js'
@@ -19,8 +19,9 @@ import HunterScreen from './HunterScreen.jsx'
 import FarmingScreen from './FarmingScreen.jsx'
 import ConstructionScreen from './ConstructionScreen.jsx'
 
-// Agility, Prayer, Thieving, Hunter, Slayer, Farming, and Construction are special skills shown here in the Skills tab
-const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'hunter', 'slayer', 'farming', 'construction']
+// Agility, Prayer, Thieving, Hunter, Slayer, and Construction are special skills shown here in the Skills tab
+// (farming is silently hidden from display; logic remains intact)
+const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'hunter', 'slayer', 'construction']
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0)
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS]
 
@@ -293,9 +294,10 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
       return
     }
 
-    const mult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory)
-    const effectiveTicks = Math.max(1, Math.floor(action.ticks * mult))
-    const adjustedAction = mult < 1.0 ? { ...action, ticks: effectiveTicks } : action
+    const effectiveTicks = getEffectiveToolActionTicks(selectedSkill, action.ticks, equipment, itemsData, stats, inventory)
+    const adjustedAction = effectiveTicks !== action.ticks
+      ? { ...action, ticks: effectiveTicks }
+      : action
     const state = { ...createSkillingState(selectedSkill, adjustedAction), startedAt: Date.now() }
     setSelectedAction(action)
     setSkilling(state)
@@ -308,9 +310,10 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     setShowAlchemyPicker(false)
     setSelectedAlchemyItem(item)
 
-    const mult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory)
-    const effectiveTicks = Math.max(1, Math.floor(selectedAction.ticks * mult))
-    const adjustedAction = mult < 1.0 ? { ...selectedAction, ticks: effectiveTicks } : selectedAction
+    const effectiveTicks = getEffectiveToolActionTicks(selectedSkill, selectedAction.ticks, equipment, itemsData, stats, inventory)
+    const adjustedAction = effectiveTicks !== selectedAction.ticks
+      ? { ...selectedAction, ticks: effectiveTicks }
+      : selectedAction
     const state = { ...createSkillingState(selectedSkill, adjustedAction), startedAt: Date.now() }
     setSkilling(state)
     // Store original action in task — idle engine will apply tool multiplier separately
@@ -336,9 +339,10 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
         const action = skill.actions.find(a => a.id === initialActionId)
         if (action) {
           setSelectedSkill(initialSkillId)
-          const mult = getToolSpeedMultiplier(initialSkillId, equipment, itemsData, stats, inventory)
-          const effectiveTicks = Math.max(1, Math.floor(action.ticks * mult))
-          const adjustedAction = mult < 1.0 ? { ...action, ticks: effectiveTicks } : action
+          const effectiveTicks = getEffectiveToolActionTicks(initialSkillId, action.ticks, equipment, itemsData, stats, inventory)
+          const adjustedAction = effectiveTicks !== action.ticks
+            ? { ...action, ticks: effectiveTicks }
+            : action
           const state = { ...createSkillingState(initialSkillId, adjustedAction), startedAt: Date.now() }
           // Seed totals from idle result so the modal reflects what was gained while away
           if (idleResult?.task?.type === 'skill' && idleResult.task.skill === initialSkillId) {
@@ -402,7 +406,6 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   const skillLevel = getLevelFromXP(skillXP)
   const actions = skillData ? getAvailableActions(skillData.actions, skillXP) : []
   const allActions = [...(skillData?.actions || [])].sort((a, b) => a.level - b.level)
-  const toolMult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory)
 
   if (!skilling) {
     return (
@@ -431,6 +434,14 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
               id => (countItem(inventory, id) + (bank[id]?.quantity || 0)) > 0
             )
             const canStart = available && hasMats && hasRunes && hasTool && hasItems
+            const effectiveTicks = getEffectiveToolActionTicks(
+              selectedSkill,
+              action.ticks,
+              equipment,
+              itemsData,
+              stats,
+              inventory,
+            )
             return (
               <button
                 key={action.id}
@@ -444,8 +455,8 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                 <div class="text-left">
                   <div class="text-sm font-semibold text-[var(--color-parchment)]">{action.name}</div>
                   <div class="text-[10px] text-[var(--color-parchment)] opacity-40">
-                    Lv {action.level} · {action.xp} XP · {toolMult < 1.0
-                      ? <><span class="line-through">{(action.ticks * 0.6).toFixed(1)}s</span> <span class="text-[var(--color-gold)] opacity-100">{(Math.max(1, Math.floor(action.ticks * toolMult)) * 0.6).toFixed(1)}s</span></>
+                    Lv {action.level} · {action.xp} XP · {effectiveTicks !== action.ticks
+                      ? <><span class="line-through">{(action.ticks * 0.6).toFixed(1)}s</span> <span class="text-[var(--color-gold)] opacity-100">{(effectiveTicks * 0.6).toFixed(1)}s</span></>
                       : `${(action.ticks * 0.6).toFixed(1)}s`}
                     {(() => {
                       const remaining = calculateRemainingActions(action, inventory, bank)
@@ -557,7 +568,6 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   }
 
   // Active skilling modal
-  const activeMult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory)
   const progress = getActionProgress(skilling.active, skilling.ticksRemaining, skilling.action.ticks)
 
   return (

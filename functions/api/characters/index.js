@@ -7,7 +7,15 @@ export async function onRequestGet({ request, env }) {
   if (auth.error) return json({ error: auth.error }, auth.status)
 
   const rows = await env.DB.prepare(
-    `SELECT c.id, c.username, c.is_ironman, c.is_one_life, c.created_at, s.updated_at AS save_updated_at
+    `SELECT
+      c.id,
+      c.username,
+      c.is_ironman,
+      c.is_one_life,
+      c.created_at,
+      COALESCE(c.total_pvp_kills, 0) AS total_pvp_kills,
+      c.last_updated_total_pvp_kills,
+      s.updated_at AS save_updated_at
      FROM characters c
      LEFT JOIN saves s ON s.character_id = c.id
      WHERE c.owner_id = ? AND c.deleted_at IS NULL
@@ -53,6 +61,8 @@ export async function onRequestPost({ request, env }) {
         username,
         is_ironman: isIronman,
         is_one_life: isOneLife,
+        total_pvp_kills: 0,
+        last_updated_total_pvp_kills: null,
         created_at: now,
         save_updated_at: null,
       },

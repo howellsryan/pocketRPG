@@ -38,12 +38,11 @@ const GATHER_TASKS = [
     id: 'collect_sand',
     name: 'Collect Bucket of Sand',
     icon: '🏖️',
-    description: 'Fill a bucket with sand from the beach. Used with seaweed to make glass.',
+    description: 'Collect sand from the beach. Used with seaweed to make glass.',
     ticks: 3,
     product: 'bucket_of_sand',
     qty: 1,
     stackable: false,
-    materials: { bucket: 1 },
     category: 'beach',
   },
   {
@@ -56,41 +55,6 @@ const GATHER_TASKS = [
     qty: 1,
     stackable: false,
     category: 'beach',
-  },
-  {
-    id: 'wet_clay',
-    name: 'Soften Clay',
-    icon: '💧',
-    description: 'Add water to clay to make soft clay. Needed for Crafting moulds.',
-    ticks: 2,
-    product: 'soft_clay',
-    qty: 1,
-    stackable: false,
-    materials: { clay: 1 },
-    category: 'fields',
-  },
-  {
-    id: 'pick_wheat',
-    name: 'Pick Wheat',
-    icon: '🌾',
-    description: 'Harvest wheat from the grain field.',
-    ticks: 3,
-    product: 'wheat',
-    qty: 1,
-    stackable: false,
-    category: 'fields',
-  },
-  {
-    id: 'grind_flour',
-    name: 'Grind Flour',
-    icon: '⚙️',
-    description: 'Grind wheat into a pot of flour at the windmill.',
-    ticks: 5,
-    product: 'pot_of_flour',
-    qty: 1,
-    stackable: false,
-    materials: { wheat: 1, pot: 1 },
-    category: 'fields',
   },
   {
     id: 'burn_seaweed',
@@ -164,7 +128,7 @@ const GATHER_TASKS = [
     name: 'Crush Bird\'s Nest → Dust',
     icon: '🪹',
     description: 'Crush an empty bird\'s nest into powder. Used in saradomin brew.',
-    ticks: 2,
+    ticks: 5,
     product: 'crushed_birds_nest',
     qty: 1,
     stackable: true,
@@ -398,6 +362,13 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
             addToast('Not enough coins!', 'error')
             return
           }
+        }
+
+        if (task.requiresItem && !task.isClue && !hasItemAnywhere(task.requiresItem, newInv, bank, equipment)) {
+          taskRef.current = { ...next, stopped: true }
+          setLocalTask(null)
+          addToast(`Need ${ITEM_NAMES[task.requiresItem] || task.requiresItem}.`, 'error')
+          return
         }
 
         if (task.materials) {
@@ -686,7 +657,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
             const hasMats = !task.materials || Object.entries(task.materials).every(
               ([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty
             )
-            const hasRequiredItem = !task.requiresItem || ((bank[task.requiresItem]?.quantity || 0) > 0)
+            const hasRequiredItem = !task.requiresItem || hasItemAnywhere(task.requiresItem, inventory, bank, equipment)
             const enabled = hasMats && hasRequiredItem
             const rowClass = enabled
               ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
@@ -707,7 +678,12 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
                     <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>
                     <div class="text-[10px] text-[#c8a96e] opacity-80">
                       ⏱ {(task.ticks * 0.6).toFixed(1)}s/action
-                      {task.materials && (
+                      {task.requiresItem && !task.isClue && (
+                      <span class="text-[var(--color-parchment)] opacity-50">
+                        {' · '}Requires: {ITEM_NAMES[task.requiresItem] || task.requiresItem}
+                      </span>
+                    )}
+                    {task.materials && (
                         <span class="text-[var(--color-parchment)] opacity-50">
                           {' · '}Needs: {Object.entries(task.materials).map(([id, qty]) => `${ITEM_NAMES[id] || id} ×${qty}`).join(', ')}
                         </span>

@@ -46,8 +46,7 @@ export function createAgilityState(action) {
     active: true,
     action,
     ticksRemaining: action.ticks,
-    tickCount: 0,
-    justCompleted: false
+    tickCount: 0
   }
 }
 
@@ -60,14 +59,8 @@ export function processAgilityTick(agilityState) {
   const state = { ...agilityState }
   const events = []
   state.tickCount++
-  
-  // Check justCompleted FIRST to reset before checking for new completion
-  if (state.justCompleted) {
-    state.ticksRemaining = state.action.ticks
-    state.justCompleted = false
-  } else {
-    state.ticksRemaining--
-  }
+
+  state.ticksRemaining--
 
   if (state.ticksRemaining <= 0) {
     events.push({
@@ -76,8 +69,8 @@ export function processAgilityTick(agilityState) {
       coinReward: state.action.coinReward || 0,
       actionName: state.action.name
     })
-    // Reset for next lap
-    state.justCompleted = true
+    // Reset for next lap immediately after completion tick.
+    state.ticksRemaining = state.action.ticks
   }
 
   return { agilityState: state, events }

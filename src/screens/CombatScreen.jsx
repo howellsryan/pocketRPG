@@ -1,14 +1,20 @@
+import { Component } from 'preact'
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
+import { usePvp } from '../state/pvpState.jsx'
+import PvpLobbyModal from './PvpLobbyModal.jsx'
+import PvpCombatScreen from './PvpCombatScreen.jsx'
 import Modal from '../components/Modal.jsx'
 import HPBar from '../components/HPBar.jsx'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applySpecialAttack } from '../engine/combat.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
-import { onTick } from '../engine/tick.js'
+import { onTick, pauseTicks, resumeTicks } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
 import { getCombatType, equipItem, checkEquipRequirements } from '../engine/equipment.js'
 import { api, clearAuth, getToken, setLocalCharacterId } from '../cloud/api.js'
+import { pullSave, applyCloudSave } from '../cloud/sync.js'
+import { pvpApi } from '../cloud/pvp.js'
 import { closeDB } from '../db/database.js'
 import { wipeLocalSave } from '../db/saveload.js'
 import monstersData from '../data/monsters.json'
@@ -35,7 +41,7 @@ const COMBAT_CATEGORIES = [
     key: 'slayer',
     label: 'Slayer',
     icon: '💀',
-    ids: ['abyssal_demon'],
+    ids: ['blood_veld', 'skeletal_wyvern', 'nechryael', 'smoke_devil', 'abyssal_demon', 'kraken'],
   },
   {
     key: 'bossing',
@@ -45,7 +51,7 @@ const COMBAT_CATEGORIES = [
   },
   {
     key: 'dagganoth_kings',
-    label: 'Dagganoth Kings',
+    label: 'Dagannoth Kings',
     icon: '👹',
     ids: ['dagganoth_rex', 'dagganoth_prime', 'dagganoth_supreme'],
   },
@@ -97,6 +103,7 @@ const MONSTER_ICONS = {
   chicken: '🐔', goblin: '👺', cow: '🐄', giant_spider: '🕷️',
   rock_crab: '🦀', sand_crab: '🦀', hill_giant: '👊', moss_giant: '🌿',
   wizard: '🧙', dark_wizard: '🧙‍♂️', abyssal_demon: '😈',
+  blood_veld: '🩸', nechryael: '👻', skeletal_wyvern: '🐲', smoke_devil: '💨', kraken: '🦑',
   green_dragon: '🐉', red_dragon: '🔴', adamant_dragon: '⚔️', rune_dragon: '🛡️', lesser_demon: '👿',
   general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
   dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
@@ -104,6 +111,45 @@ const MONSTER_ICONS = {
   tekton: '🔨', vespula: '🦟', muttadile: '🦷', olm: '🏛️',
   maiden_of_sugadinti: '🩸', pestilent_bloat: '🤢', nylocas_vasilias: '🕷️',
   sotetseg: '🔮', xarpus: '☠️', verzik_vitur: '👑'
+}
+
+class PvpCombatErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false, message: '' }
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
+      this.setState({ hasError: false, message: '' })
+    }
+  }
+
+  static getDerivedStateFromError(error) {
+    return {
+      hasError: true,
+      message: error?.message || String(error || 'Unknown PvP render error'),
+    }
+  }
+
+  componentDidCatch(error, info) {
+    console.error('[PocketRPG][PvP] combat screen render failed', error, info)
+    this.props.onCrash?.(error, info)
+  }
+
+  reset = () => {
+    this.setState({ hasError: false, message: '' })
+  }
+
+  render(props, state) {
+    if (state.hasError) {
+      if (typeof props.fallback === 'function') {
+        return props.fallback({ reset: this.reset, message: state.message })
+      }
+      return null
+    }
+    return props.children
+  }
 }
 
 // Nuke every trace of the current character so a One-Life death cannot be
@@ -129,7 +175,9 @@ async function performOneLifeReset() {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame } = useGame()
+  const pvp = usePvp()
+  const [showPvpLobby, setShowPvpLobby] = useState(false)
 
   const [combat, setCombat] = useState(null)
   const [log, setLog] = useState([])
@@ -152,11 +200,48 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const statsRef = useRef(stats)
   const equipmentRef = useRef(equipment)
   const slayerTaskRef = useRef(slayerTask)
+  const pvpCrashHandledRef = useRef(false)
   const slayerPointsRef = useRef(slayerPoints)
   const bossKillCountsRef = useRef(bossKillCounts)
   const raidKillCountsRef = useRef(raidKillCounts)
   const unlockedFeaturesRef = useRef(unlockedFeatures)
   const logRef = useRef(null)
+
+  useEffect(() => {
+    if (pvp.phase === 'in_match' && combat?.active) {
+      setCombat(null)
+    }
+  }, [pvp.phase])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const reconnectToActiveMatch = async () => {
+      if (pvp.phase === 'in_match') return
+      if (!pvp.canAutoReconnect) return
+      try {
+        const invitesRes = await pvpApi.listInvitations()
+        const activeMatchId = Number(invitesRes?.active_match_id)
+        if (cancelled || !Number.isFinite(activeMatchId) || activeMatchId <= 0) return
+        setShowPvpLobby(false)
+        pauseTicks()
+        pvp.enterMatch(activeMatchId)
+      } catch {
+        // best-effort reconnect check
+      }
+    }
+
+    reconnectToActiveMatch()
+    const onVisible = () => {
+      if (!document.hidden) reconnectToActiveMatch()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+
+    return () => {
+      cancelled = true
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [pvp.phase, pvp.enterMatch, pvp.canAutoReconnect])
 
   useEffect(() => { hpRef.current = currentHP }, [currentHP])
   useEffect(() => { inventoryRef.current = inventory }, [inventory])
@@ -564,17 +649,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           combatRef.current.runesConsumed = null // Clear so we don't consume again
         }
         if (ev.type === 'monsterDeath') {
+          const defeatedMonster = ev.monster || state.monster
           setKillCount(k => k + 1)
 
           // Boss kill count tracking
-          if (state.monster.boss) {
-            const monsterId = state.monster.id
+          if (defeatedMonster?.boss) {
+            const monsterId = defeatedMonster.id
             const newKC = (bossKillCountsRef.current[monsterId] || 0) + 1
             const updatedCounts = { ...bossKillCountsRef.current, [monsterId]: newKC }
             bossKillCountsRef.current = updatedCounts
             updateBossKillCounts(updatedCounts)
             setLog(prev => [...prev.slice(-20), {
-              text: `👑 ${state.monster.name} KC: ${newKC.toLocaleString()}`,
+              text: `👑 ${defeatedMonster.name} KC: ${newKC.toLocaleString()}`,
               type: 'victory',
               time: Date.now()
             }])
@@ -582,8 +668,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
           // Slayer task tracking
           const task = slayerTaskRef.current
-          if (task && task.monsterId === state.monster.id) {
-            slayerXpGained += (state.monster.slayerXP || state.monster.hitpoints) * 2
+          if (task && defeatedMonster && task.monsterId === defeatedMonster.id) {
+            slayerXpGained += (defeatedMonster.slayerXP || defeatedMonster.hitpoints || state.monster.hitpoints) * 2
             const newRemaining = task.monstersRemaining - 1
             if (newRemaining <= 0) {
               // Task complete!
@@ -621,14 +707,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             updateInventory(newInv)
           }
           setLog(prev => [...prev.slice(-20), {
-            text: `${state.monster.name} defeated!`,
+            text: `${defeatedMonster?.name || state.monster.name} defeated!`,
             type: 'victory',
             time: Date.now()
           }])
           // Show loot modal instead of auto-restarting
           const raidId = state.raid?.raidId || null
           setLootModal({
-            monster: state.monster,
+            monster: defeatedMonster || state.monster,
             loot: ev.loot || [],
             raidId
           })
@@ -1000,6 +1086,99 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   const agilityLevel = getLevelFromXP(stats.agility?.xp || 0)
   const bankDelayMs = getAgilityBankDelayMs(agilityLevel)
+  const finalizePvpExit = async () => {
+    pvpCrashHandledRef.current = false
+    pvp.leaveMatch()
+    try {
+      const pulled = await pullSave()
+      if (pulled?.payload) {
+        await applyCloudSave(pulled.payload, pulled.updatedAt)
+      }
+      await loadGame()
+    } catch (err) {
+      console.warn('[PocketRPG] PvP post-match cloud pull failed:', err?.message || err)
+    }
+    resumeTicks()
+    setShowPvpLobby(false)
+  }
+
+  const handleRecoveryForfeit = async (reset) => {
+    try {
+      await pvpApi.forfeitMatch(pvp.activeMatchId)
+      addToast('Forfeit queued. Resolving...', 'info')
+      pvpCrashHandledRef.current = false
+      reset()
+    } catch (err) {
+      const code = err?.body?.error || err?.message
+      if (code === 'match_not_found' || code === 'match_not_active') {
+        try {
+          const invites = await pvpApi.listInvitations()
+          const activeMatchId = Number(invites?.active_match_id)
+          if (!Number.isFinite(activeMatchId) || activeMatchId <= 0) {
+            addToast('Match already ended.', 'info')
+            await finalizePvpExit()
+            return
+          }
+        } catch {
+          // fall through to generic error toast
+        }
+      }
+      addToast(err.body?.error || err.message, 'error')
+    }
+  }
+
+  if (pvp.phase === 'in_match' && pvp.activeMatchId) {
+    return (
+      <PvpCombatErrorBoundary
+        resetKey={pvp.activeMatchId}
+        onCrash={async (error) => {
+          if (pvpCrashHandledRef.current) return
+          pvpCrashHandledRef.current = true
+          console.error('[PocketRPG][PvP] Match view crashed; keeping recovery mode active:', error?.message || error)
+          addToast('PvP match view failed. Use retry or forfeit.', 'error')
+        }}
+        fallback={({ reset, message }) => (
+          <div className="p-3">
+            <Card className="border-[var(--color-blood)] bg-[#2a1010]">
+              <div class="text-sm font-bold text-[var(--color-blood-light)]">PvP match view failed to render</div>
+              <div class="text-[11px] text-[var(--color-parchment)] opacity-70 mt-1">
+                The server still has you in an active PvP match. Do not return to PvE.
+              </div>
+              {message && (
+                <p className="text-xs text-red-200 break-words mt-2">
+                  {message}
+                </p>
+              )}
+              <div class="flex gap-2 mt-3">
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    pvpCrashHandledRef.current = false
+                    reset()
+                  }}
+                >
+                  Retry PvP screen
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={() => handleRecoveryForfeit(reset)}
+                >
+                  Forfeit
+                </Button>
+              </div>
+            </Card>
+          </div>
+        )}
+      >
+        <PvpCombatScreen
+          matchId={pvp.activeMatchId}
+          addToast={addToast}
+          onExit={finalizePvpExit}
+        />
+      </PvpCombatErrorBoundary>
+    )
+  }
+
   // Monster picker
   if (!combat) {
     return (
@@ -1151,7 +1330,31 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             })}
           </div>
         </div>
+
+        {/* PvP entry — hidden for ironman / one-life accounts. */}
+        {!isIronman && !isOneLife && (
+          <div class="mt-6 pb-2">
+            <button
+              onClick={() => setShowPvpLobby(true)}
+              class="w-full p-3 rounded-xl border border-[var(--color-blood)] bg-[#2a1010] text-[var(--color-blood-light)] active:bg-[#3a1818] transition-colors flex items-center justify-center gap-2"
+              title="Player vs Player"
+            >
+              <span class="text-lg">☠️</span>
+              <span class="text-sm font-bold tracking-wider">PvP — Player vs Player</span>
+            </button>
+            <div class="text-[9px] text-[var(--color-parchment)] opacity-40 mt-1.5 text-center px-2">
+              On death, your tradeable inventory + equipped gear go to the winner. Untradeables stay with you.
+            </div>
+          </div>
+        )}
       </div>
+
+      {showPvpLobby && (
+        <PvpLobbyModal
+          onClose={() => setShowPvpLobby(false)}
+          getSnapshot={getSnapshot}
+        />
+      )}
 
       {/* Monster Info Modal — shown from picker view */}
       {selectedMonsterInfo && (

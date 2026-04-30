@@ -12,6 +12,7 @@ function readSrc(rel) { return fs.readFileSync(path.join(SRC, rel), 'utf-8'); }
 const sourceFiles = [
   'utils/constants.js',
   'utils/helpers.js',
+  'utils/formatters.js',
   'hooks/useActionTick.js',
   'engine/experience.js',
   'engine/formulas.js',
@@ -22,11 +23,23 @@ const sourceFiles = [
   'engine/hunter.js',
   'engine/runes.js',
   'engine/combat.js',
+  'engine/combatant.js',
+  'engine/combatPrimitives.js',
+  'engine/pvpPotions.js',
+  'engine/pvpCombatModifiers.js',
+  'engine/pvpRisk.js',
+  'engine/pvpState.js',
+  'engine/pvpFood.js',
+  'engine/pvpSpecialAttacks.js',
+  'engine/pvpEndSummary.js',
+  'engine/pvpEngine.js',
+  'engine/lootTransfer.js',
   'engine/skilling.js',
   'engine/idleEngine.js',
   'engine/tick.js',
   'engine/farming.js',
   'engine/quests.js',
+  'engine/questIdleCascade.js',
   'engine/clueScrolls.js',
   'db/database.js',
   'db/stores.js',
@@ -34,7 +47,9 @@ const sourceFiles = [
   'cloud/api.js',
   'cloud/idleState.js',
   'cloud/sync.js',
+  'cloud/pvp.js',
   'state/gameState.js',
+  'state/pvpState.js',
   'components/Modal.js',
   'components/HPBar.js',
   'components/ProgressBar.js',
@@ -54,6 +69,8 @@ const sourceFiles = [
   'screens/StatsScreen.js',
   'screens/InventoryScreen.js',
   'screens/BankScreen.js',
+  'screens/PvpLobbyModal.js',
+  'screens/PvpCombatScreen.js',
   'screens/CombatScreen.js',
   'screens/AgilityScreen.js',
   'screens/FarmingScreen.js',
@@ -139,8 +156,9 @@ ${css}
 <body>
 <div id="app"></div>
 <script type="module">
-import { h, render, Fragment, createContext } from 'https://esm.sh/preact@10.25.4';
-import { useState, useEffect, useRef, useCallback, useContext } from 'https://esm.sh/preact@10.25.4/hooks';
+import { h, render, Fragment, createContext, Component } from 'https://esm.sh/preact@10.25.4';
+import { createPortal } from 'https://esm.sh/preact@10.25.4/compat';
+import { useState, useEffect, useRef, useMemo, useCallback, useContext } from 'https://esm.sh/preact@10.25.4/hooks';
 import { openDB } from 'https://esm.sh/idb@8.0.2';
 
 // ── Inline JSON Data ──

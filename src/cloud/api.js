@@ -8,6 +8,14 @@ const CHARACTER_NAME_KEY = 'pocketrpg_cloud_character_name'
 // Used to detect "I switched characters but IDB still holds the old one" and
 // wipe before loading, so characters never bleed into each other.
 const LOCAL_CHARACTER_KEY = 'pocketrpg_local_character_id'
+const ACTIVE_MATCH_EVENT = 'pocketrpg:pvp-active-match'
+
+function emitActiveMatchConflict(matchId = null) {
+  if (typeof window === 'undefined') return
+  const parsed = Number(matchId)
+  const safeMatchId = Number.isFinite(parsed) && parsed > 0 ? parsed : null
+  window.dispatchEvent(new CustomEvent(ACTIVE_MATCH_EVENT, { detail: { matchId: safeMatchId } }))
+}
 
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY)
@@ -98,8 +106,12 @@ async function request(path, options = {}) {
   let body = null
   try { body = await res.json() } catch { /* non-JSON */ }
   if (!res.ok) {
+    if (res.status === 409 && body?.error === 'character_in_active_match') {
+      emitActiveMatchConflict(body?.match_id ?? body?.matchId ?? body?.active_match_id ?? null)
+    }
     const err = new Error(body?.error || `Request failed (${res.status})`)
     err.status = res.status
+    err.body = body
     throw err
   }
   return body

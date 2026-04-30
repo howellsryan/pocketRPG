@@ -5,7 +5,7 @@ import { getLevelFromXP, clampXP } from '../engine/experience.js'
 import { simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from '../engine/idleEngine.js'
 import { simulateIdleThieving } from '../engine/thieving.js'
 import { simulateIdleHunting } from '../engine/hunter.js'
-import { simulateIdleQuest } from '../engine/quests.js'
+import { simulateQuestIdleCascade, splitQuestXpRewards } from '../engine/questIdleCascade.js'
 import { ALL_SKILLS, MAX_XP, AUTO_SAVE_DEBOUNCE, QUEST_QUEUE_MAX } from '../utils/constants.js'
 import { debounce } from '../utils/helpers.js'
 import { fetchIdleState, pushIdleState } from '../cloud/idleState.js'
@@ -85,7 +85,8 @@ export function GameProvider({ children }) {
       // Cap at 24h to limit cross-session clock manipulation; legitimate offline play
       // beyond 24h can use the in-game skip button.
       const MAX_OFFLINE_MS = 24 * 60 * 60 * 1000
-      const elapsedMs = Math.min(Date.now() - savedLastTick, MAX_OFFLINE_MS)
+      const rawElapsedMs = Number(Date.now() - savedLastTick)
+      const elapsedMs = Number.isFinite(rawElapsedMs) ? Math.max(0, Math.min(rawElapsedMs, MAX_OFFLINE_MS)) : 0
       if (elapsedMs >= 2000) {
         let sim = null
         try {
@@ -102,7 +103,7 @@ export function GameProvider({ children }) {
           } else if (savedTask.type === 'hunter') {
             sim = simulateIdleHunting(savedTask, elapsedMs)
           } else if (savedTask.type === 'quest') {
-            sim = simulateIdleQuest(savedTask, elapsedMs)
+            sim = {}
           }
         } catch (simErr) {
           console.error('[PocketRPG] Idle simulation failed — skipping idle rewards:', simErr)
@@ -116,8 +117,8 @@ export function GameProvider({ children }) {
             savedHP = Math.min((savedHP != null ? savedHP : maxHP) + hpRegenSim.hpRegen, maxHP)
             sim.hpRestored = hpRegenSim.hpRegen
           }
-          // Apply XP directly to raw stats object
-          if (sim.xpGained) {
+          // Apply XP directly to raw stats object (quest XP handled in cascade branch below)
+          if (savedTask.type !== 'quest' && sim.xpGained) {
             for (const [skill, xp] of Object.entries(sim.xpGained)) {
               if (xp > 0 && s[skill]) {
                 const newXP = Math.min((s[skill].xp || 0) + Math.floor(xp), 200000000)
@@ -234,129 +235,87 @@ export function GameProvider({ children }) {
             }
           }
 
-          // Quest sim handling: cascade through queue if quests complete
+          // Quest sim handling: shared cascade helper for boot/load idle
           if (savedTask.type === 'quest') {
-            let queueToProcess = [...(savedQuestQueue || [])]
-            let nextActiveTask = null
-            const completedQuestsList = []
-            const aggregatedXp = {}
-            const pendingChoices = []
-            let totalCoinsGained = sim.coinsGained || 0
+            const applyQuestCompletionToRawState = async (quest, pendingChoices) => {
+              if (!quest?.id) return
 
-            // Helper: accumulate XP totals + pending choice modals for a quest.
-            // When applyFixed is true the fixed-skill XP is written straight to
-            // the raw stats object (used for cascade quests). For the original
-            // quest it's false because the generic XP block above already
-            // applied sim.xpGained.
-            const collectQuestXp = (questName, questId, xpReward, applyFixed) => {
-              for (const [skill, xp] of Object.entries(xpReward || {})) {
-                aggregatedXp[skill] = (aggregatedXp[skill] || 0) + xp
-                if (skill === 'combat' || skill === 'any') continue
-                if (applyFixed && xp > 0 && s[skill]) {
+              const merged = new Set(savedCompletedQuests || [])
+              if (!merged.has(quest.id)) {
+                merged.add(quest.id)
+                savedCompletedQuests = [...merged]
+                await saveSetting('completedQuests', savedCompletedQuests)
+              }
+
+              const { fixed, choices } = splitQuestXpRewards(quest.xpReward || {})
+
+              for (const [skill, xp] of Object.entries(fixed)) {
+                if (xp > 0 && s[skill]) {
                   const newXP = Math.min((s[skill].xp || 0) + Math.floor(xp), 200000000)
                   s[skill] = { ...s[skill], xp: newXP, level: getLevelFromXP(newXP) }
                 }
               }
-              const choices = []
-              for (const [skill, xp] of Object.entries(xpReward || {})) {
-                if ((skill === 'combat' || skill === 'any') && xp > 0) {
-                  choices.push({ type: skill, amount: xp })
-                }
+
+              const coins = Number(quest.coinReward || 0) || 0
+              if (coins > 0) {
+                if (b.coins) b.coins = { ...b.coins, quantity: b.coins.quantity + coins }
+                else b.coins = { itemId: 'coins', quantity: coins }
               }
+
               if (choices.length > 0) {
-                pendingChoices.push({ rewards: choices, questId, questName })
+                pendingChoices.push({ rewards: choices, questId: quest.id, questName: quest.name })
               }
             }
 
-            if (sim.completed) {
-              // Original quest completed — mark completion + apply coins + XP
-              const merged = new Set(savedCompletedQuests || [])
-              merged.add(savedTask.quest.id)
-              await saveSetting('completedQuests', [...merged])
-              savedCompletedQuests = [...merged]
-              if (sim.coinsGained > 0) {
-                if (b.coins) b.coins = { ...b.coins, quantity: b.coins.quantity + sim.coinsGained }
-                else b.coins = { itemId: 'coins', quantity: sim.coinsGained }
-              }
-              completedQuestsList.push(savedTask.quest)
-              collectQuestXp(savedTask.quest.name, savedTask.quest.id, savedTask.quest.xpReward, false)
+            const cascade = simulateQuestIdleCascade({
+              activeTask: savedTask,
+              questQueue: savedQuestQueue || [],
+              elapsedMs,
+              now: Date.now(),
+            })
 
-              // Cascade through queue while time remains
-              let remainingElapsedMs = elapsedMs - (sim.ticksUsed * 600)
-              while (queueToProcess.length > 0 && remainingElapsedMs > 0) {
-                const nextQuest = queueToProcess[0]
-                const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
-                const nextTask = { type: 'quest', quest: nextQuest, totalTicks: nextTotalTicks, ticksRemaining: nextTotalTicks }
-                const nextSim = simulateIdleQuest(nextTask, remainingElapsedMs)
-                if (!nextSim) break
-                remainingElapsedMs -= nextSim.ticksUsed * 600
+            const completedQuestsList = []
+            const aggregatedXp = {}
+            const pendingChoices = []
+            let totalCoinsGained = 0
 
-                if (nextSim.completed) {
-                  if (nextSim.coinsGained > 0) {
-                    if (b.coins) b.coins = { ...b.coins, quantity: b.coins.quantity + nextSim.coinsGained }
-                    else b.coins = { itemId: 'coins', quantity: nextSim.coinsGained }
-                    totalCoinsGained += nextSim.coinsGained
-                  }
-                  const mergedNext = new Set(savedCompletedQuests || [])
-                  mergedNext.add(nextQuest.id)
-                  await saveSetting('completedQuests', [...mergedNext])
-                  savedCompletedQuests = [...mergedNext]
-                  completedQuestsList.push(nextQuest)
-                  collectQuestXp(nextQuest.name, nextQuest.id, nextQuest.xpReward, true)
-                  queueToProcess = queueToProcess.slice(1)
-                } else {
-                  // Partial progress — this quest becomes the active one
-                  nextActiveTask = {
-                    type: 'quest',
-                    quest: nextQuest,
-                    totalTicks: nextTotalTicks,
-                    ticksRemaining: nextSim.ticksRemaining,
-                  }
-                  queueToProcess = queueToProcess.slice(1)
-                  break
-                }
+            for (const entry of cascade.completed) {
+              const quest = entry.quest
+              completedQuestsList.push(quest)
+
+              for (const [skill, xp] of Object.entries(quest.xpReward || {})) {
+                const amount = Math.floor(Number(xp) || 0)
+                if (amount > 0) aggregatedXp[skill] = (aggregatedXp[skill] || 0) + amount
               }
 
-              // No partial mid-cascade, but queue has more: promote head to active
-              if (!nextActiveTask && queueToProcess.length > 0) {
-                const nextQuest = queueToProcess[0]
-                const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
-                nextActiveTask = {
-                  type: 'quest',
-                  quest: nextQuest,
-                  totalTicks: nextTotalTicks,
-                  ticksRemaining: nextTotalTicks,
-                }
-                queueToProcess = queueToProcess.slice(1)
-              }
+              totalCoinsGained += Number(quest.coinReward || 0) || 0
+              await applyQuestCompletionToRawState(quest, pendingChoices)
+            }
 
-              savedTask = nextActiveTask
-              if (nextActiveTask) {
-                localStorage.setItem('pocketrpg_activeTask', JSON.stringify(nextActiveTask))
-              } else {
-                localStorage.removeItem('pocketrpg_activeTask')
-              }
-            } else {
-              // Original quest still running — persist updated ticks
-              savedTask = { ...savedTask, ticksRemaining: sim.ticksRemaining }
+            savedTask = cascade.finalTask
+            savedQuestQueue = cascade.finalQueue
+
+            if (savedTask) {
               localStorage.setItem('pocketrpg_activeTask', JSON.stringify(savedTask))
+            } else {
+              localStorage.removeItem('pocketrpg_activeTask')
+              localStorage.removeItem('pocketrpg_lastTick')
             }
 
-            // Persist the (possibly) shrunken queue
-            await saveSetting('questQueue', queueToProcess)
-            savedQuestQueue = queueToProcess
+            await saveSetting('questQueue', savedQuestQueue)
 
-            // Save bank
             await saveBank(b)
+            await saveAllStats(s)
 
-            // Attach cascade summary + pending-choice modals to idleResult
-            if (completedQuestsList.length > 0) {
-              sim.completedQuests = completedQuestsList
-              sim.aggregatedXpReward = aggregatedXp
-              if (totalCoinsGained > 0) sim.coinsGained = totalCoinsGained
-            }
-            if (pendingChoices.length > 0) {
-              sim.pendingChoices = pendingChoices
+            sim = {
+              completed: completedQuestsList.length > 0,
+              questCascade: true,
+              completedQuests: completedQuestsList,
+              aggregatedXpReward: aggregatedXp,
+              coinsGained: totalCoinsGained,
+              pendingChoices,
+              ticksUsed: Math.floor(cascade.elapsedMsUsed / 600),
+              ticksRemaining: savedTask?.ticksRemaining ?? 0,
             }
           }
           idleResult = { elapsedMs, task: savedTask, ...sim }

@@ -88,6 +88,39 @@ export default function InventoryScreen() {
     setSelected(null)
   }
 
+  const handleCombine = () => {
+    if (!selected) return
+    const { slotIndex, slot, item } = selected
+    if (slot.noted) {
+      addToast('Cannot combine noted items', 'error')
+      return
+    }
+
+    const targetId = item.combineWith
+    const resultId = item.combineResult
+    const targetData = itemsData[targetId]
+    const resultData = itemsData[resultId]
+    if (!targetData || !resultData) {
+      addToast('Combine recipe is missing', 'error')
+      return
+    }
+
+    const targetIdx = inventory.findIndex(
+      (s, i) => s && i !== slotIndex && s.itemId === targetId && !s.noted
+    )
+    if (targetIdx === -1) {
+      addToast(`No ${targetData.name} in inventory`, 'error')
+      return
+    }
+
+    const newInv = [...inventory]
+    newInv[slotIndex] = null
+    newInv[targetIdx] = { itemId: resultId, quantity: 1 }
+    updateInventory(newInv)
+    addToast(`Created ${resultData.name}`, 'info')
+    setSelected(null)
+  }
+
   const handleChargeWeapon = (qty) => {
     if (!selected) return
     const { slotIndex, slot, item } = selected
@@ -528,6 +561,24 @@ export default function InventoryScreen() {
                     Charge ⚡
                   </button>
                 )}
+                {selected.item.combineWith && !selected.slot.noted && (() => {
+                  const targetData = itemsData[selected.item.combineWith]
+                  const targetName = targetData?.name || selected.item.combineWith
+                  const hasTarget = inventory.some(
+                    (s, i) => s && i !== selected.slotIndex && s.itemId === selected.item.combineWith && !s.noted
+                  )
+                  return (
+                    <button
+                      onClick={handleCombine}
+                      disabled={!hasTarget}
+                      class={`py-2.5 rounded-lg font-semibold text-sm border ${hasTarget
+                        ? 'bg-[#2a1a3a] text-[#c084fc] border-[#c084fc]/30 active:opacity-80'
+                        : 'bg-[#222] text-[var(--color-parchment)] opacity-40 border-transparent cursor-not-allowed'}`}
+                    >
+                      Use on {targetName}
+                    </button>
+                  )
+                })()}
                 <button onClick={handleDrop}
                   class="py-2.5 rounded-lg bg-[var(--color-blood-mid)] text-white font-semibold text-sm active:opacity-80">
                   Drop

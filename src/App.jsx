@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { GameProvider, useGame } from './state/gameState.jsx'
+import { PvpProvider, usePvp } from './state/pvpState.jsx'
 import BottomNav from './components/BottomNav.jsx'
 import Header from './components/Header.jsx'
 import ToastContainer from './components/Toast.jsx'
@@ -20,7 +21,7 @@ import AuthScreen from './screens/AuthScreen.jsx'
 import { SCREENS } from './utils/constants.js'
 import { hasSave, closeDB } from './db/database.js'
 import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
-import { startTicks, stopTicks, onTick } from './engine/tick.js'
+import { startTicks, stopTicks, onTick, pauseTicks } from './engine/tick.js'
 import { snapshotToLocalStorage, restoreFromLocalStorage, wipeLocalSave } from './db/saveload.js'
 import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode } from './cloud/api.js'
 import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState } from './cloud/sync.js'
@@ -28,8 +29,10 @@ import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
 import { simulateIdleThieving } from './engine/thieving.js'
 import { simulateIdleHunting } from './engine/hunter.js'
-import { simulateIdleQuest, createQuestState } from './engine/quests.js'
+import { createQuestState } from './engine/quests.js'
+import { simulateQuestIdleCascade, splitQuestXpRewards } from './engine/questIdleCascade.js'
 import { getLevelFromXP } from './engine/experience.js'
+import { pvpApi } from './cloud/pvp.js'
 
 // ── Clock-rollback watermark ────────────────────────────────────────────────
 // We persist the highest Date.now() we've ever observed. If the device clock
@@ -61,7 +64,8 @@ function clampByClockWatermark(elapsedMs) {
 }
 
 function GameApp() {
-  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints, completeQuest, questQueue, removeFromQuestQueue, updateQuestQueue } = useGame()
+  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, slayerPoints, updateSlayerPoints, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue } = useGame()
+  const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [gameReady, setGameReady] = useState(false)
   const [activity, setActivity] = useState(null)
@@ -69,6 +73,8 @@ function GameApp() {
   const [actionData, setActionData] = useState(null) // { monsterId, gatherTaskId, skillId, actionId }
   const [isInCombat, setIsInCombat] = useState(false) // Track if currently in combat
   const [pendingXpChoices, setPendingXpChoices] = useState([]) // [{ rewards, questId, questName }, ...]
+  const completedQuestsRef = useRef(completedQuests)
+  const pendingXpChoicesRef = useRef(pendingXpChoices)
   // Cloud auth gate: 'pending' until we resolve, 'auth' if AuthScreen needed, 'auth_offline' for offline creation, 'ready' to boot game
   const [cloudPhase, setCloudPhase] = useState('pending')
   const [conflict, setConflict] = useState(null) // { cloudPayload, cloudHash, cloudUpdatedAt, localUpdatedAt }
@@ -83,6 +89,10 @@ function GameApp() {
   // Set on mount if Stripe redirected back with a payment query/path — drives the
   // post-checkout thank-you toast + credits refresh once the game is ready.
   const paymentReturnRef = useRef(false)
+  const pvpReconnectBusyRef = useRef(false)
+  const prevPvpPhaseRef = useRef(pvp.phase)
+  const isInPvpMatch = pvp.phase === 'in_match'
+  const [suppressIdleModalUntil, setSuppressIdleModalUntil] = useState(0)
 
   // Refs for tick-based systems
   const hpRegenCounter = useRef(0)
@@ -90,67 +100,165 @@ function GameApp() {
   const idleHeartbeatCounter = useRef(49) // 50 ticks = ~30s — first heartbeat ~600ms after load
   const hiddenAtPerfRef = useRef(null) // performance.now() at hide — monotonic, immune to clock changes
 
-  // Split xpReward into immediate grants and player-choice rewards (combat / any)
-  function splitXpRewards(xpReward) {
-    const fixed = {}
-    const choices = []
-    for (const [skill, xp] of Object.entries(xpReward || {})) {
-      if (skill === 'combat' || skill === 'any') choices.push({ type: skill, amount: xp })
-      else if (xp > 0) fixed[skill] = xp
+  // Global PvP route/overlay guard:
+  // - if an active match exists server-side, enter PvP from any screen.
+  // - when in match, force Combat screen and dismiss idle modal overlays.
+  useEffect(() => {
+    if (pvp.phase !== 'in_match') return
+    setScreen(SCREENS.COMBAT)
+    setActionData(null)
+    setIdleResult(null)
+    pauseTicks()
+    try { localStorage.removeItem('pocketrpg_activeTask') } catch { /* ignore */ }
+  }, [pvp.phase])
+
+  useEffect(() => {
+    const prevPhase = prevPvpPhaseRef.current
+    if (prevPhase === 'in_match' && pvp.phase !== 'in_match') {
+      setIdleResult(null)
+      setSuppressIdleModalUntil(Date.now() + 15000)
+      try {
+        localStorage.removeItem('pocketrpg_hiddenAt')
+        localStorage.removeItem('pocketrpg_activeTask')
+      } catch { /* ignore */ }
     }
-    return { fixed, choices }
-  }
+    prevPvpPhaseRef.current = pvp.phase
+  }, [pvp.phase])
+
+  useEffect(() => {
+    let cancelled = false
+    const reconnectActiveMatch = async () => {
+      if (cancelled || pvp.phase === 'in_match' || pvpReconnectBusyRef.current) return
+      if (!pvp.canAutoReconnect) return
+      if (!getToken() || !getCharacterId()) return
+      pvpReconnectBusyRef.current = true
+      try {
+        const res = await pvpApi.listInvitations()
+        const activeMatchId = Number(res?.active_match_id)
+        if (cancelled || !Number.isFinite(activeMatchId) || activeMatchId <= 0) return
+        pvp.enterMatch(activeMatchId)
+      } catch {
+        // best-effort reconnect only
+      } finally {
+        pvpReconnectBusyRef.current = false
+      }
+    }
+
+    reconnectActiveMatch()
+    const onVisible = () => {
+      if (!document.hidden) reconnectActiveMatch()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      cancelled = true
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [pvp.phase, pvp.enterMatch, pvp.canAutoReconnect])
+
+  useEffect(() => {
+    const onActiveMatchConflict = (event) => {
+      const routeToPvp = async () => {
+        let matchId = Number(event?.detail?.matchId)
+        if (!Number.isFinite(matchId) || matchId <= 0) {
+          try {
+            const invites = await pvpApi.listInvitations()
+            matchId = Number(invites?.active_match_id)
+          } catch {
+            matchId = null
+          }
+        }
+        if (!Number.isFinite(matchId) || matchId <= 0) return
+        addToast('Server reports an active PvP match — entering combat.', 'info')
+        pauseTicks()
+        setScreen(SCREENS.COMBAT)
+        setActionData(null)
+        setIdleResult(null)
+        pvp.enterMatch(matchId)
+      }
+      routeToPvp()
+    }
+    window.addEventListener('pocketrpg:pvp-active-match', onActiveMatchConflict)
+    return () => window.removeEventListener('pocketrpg:pvp-active-match', onActiveMatchConflict)
+  }, [addToast, pvp.enterMatch])
 
   // Handle quest completion with queue cascading
   function handleQuestCompletion(quest, xpReward, coinReward) {
     // Award rewards
-    const { fixed, choices } = splitXpRewards(xpReward)
+    const { fixed, choices } = splitQuestXpRewards(xpReward)
     for (const [skill, xp] of Object.entries(fixed)) grantXP(skill, xp)
     if (coinReward > 0) updateBankDirect({ coins: coinReward })
 
     // The completed quest was already removed from the queue when it was
     // started, so the queue holds the next quests to run. Pop the next one
     // off and promote it to the active task.
-    const currentQueue = questQueueRef.current || []
-    if (currentQueue.length > 0) {
-      const nextQuest = currentQueue[0]
-      updateQuestQueue(currentQueue.slice(1))
-      const state = createQuestState(nextQuest)
-      setActiveTask({
-        type: 'quest',
-        quest: nextQuest,
-        totalTicks: state.totalTicks,
-        ticksRemaining: state.ticksRemaining,
-        startedAt: state.startedAt,
-      })
-      addToast(`📜 Started: ${nextQuest.name}`, 'info')
-    } else {
-      setActiveTask(null)
-    }
+    promoteNextQueuedQuestOrClear()
 
     // Finalise the completed quest (show choice modal if needed)
     finaliseQuest(quest.id, quest.name, choices)
   }
 
+  function clearPersistedActiveTask() {
+    setActiveTask(null)
+    activeTaskRef.current = null
+    try { localStorage.removeItem('pocketrpg_activeTask') } catch { /* best-effort */ }
+  }
+
+  function promoteNextQueuedQuestOrClear() {
+    const currentQueue = questQueueRef.current || []
+    if (currentQueue.length === 0) {
+      clearPersistedActiveTask()
+      return null
+    }
+
+    const nextQuest = currentQueue[0]
+    updateQuestQueue(currentQueue.slice(1))
+    const state = createQuestState(nextQuest)
+    const nextTask = {
+      type: 'quest',
+      quest: nextQuest,
+      totalTicks: state.totalTicks,
+      ticksRemaining: state.ticksRemaining,
+      startedAt: state.startedAt,
+    }
+    setActiveTask(nextTask)
+    activeTaskRef.current = nextTask
+    addToast(`📜 Started: ${nextQuest.name}`, 'info')
+    return nextTask
+  }
+
   // Finalise a completed quest: show choice modal if needed, else complete immediately
   function finaliseQuest(questId, questName, choices) {
-    if (choices.length > 0) {
-      setPendingXpChoices(prev => [...prev, { rewards: choices, questId, questName }])
-    } else {
+    const alreadyCompleted = completedQuestsRef.current?.has?.(questId)
+    const alreadyPendingChoice = pendingXpChoicesRef.current?.some?.(p => p.questId === questId)
+
+    if (!alreadyCompleted) {
       completeQuest(questId)
-      addToast(`📜 Quest complete: ${questName}`, 'levelup', '🏆')
+      completedQuestsRef.current = new Set([...(completedQuestsRef.current || []), questId])
     }
+
+    if (choices.length > 0) {
+      if (!alreadyPendingChoice) {
+        const entry = { rewards: choices, questId, questName }
+        pendingXpChoicesRef.current = [...(pendingXpChoicesRef.current || []), entry]
+        setPendingXpChoices(prev => prev.some(p => p.questId === questId) ? prev : [...prev, entry])
+      }
+      return
+    }
+
+    addToast(`📜 Quest complete: ${questName}`, 'levelup', '🏆')
   }
 
   function handleXpChoiceComplete(chosen) {
     for (const { skill, xp } of chosen) grantXP(skill, xp)
+
     setPendingXpChoices(prev => {
       const head = prev[0]
       if (head) {
-        completeQuest(head.questId)
         addToast(`📜 Quest complete: ${head.questName}`, 'levelup', '🏆')
       }
-      return prev.slice(1)
+      const next = prev.slice(1)
+      pendingXpChoicesRef.current = next
+      return next
     })
   }
 
@@ -224,6 +332,8 @@ function GameApp() {
   const inventoryRef = useRef(inventory)
   const itemsDataRef = useRef(itemsData)
   const questQueueRef = useRef(questQueue)
+  useEffect(() => { completedQuestsRef.current = completedQuests }, [completedQuests])
+  useEffect(() => { pendingXpChoicesRef.current = pendingXpChoices }, [pendingXpChoices])
   useEffect(() => { statsRef.current = stats }, [stats])
   useEffect(() => { equipmentRef.current = equipment }, [equipment])
   useEffect(() => { inventoryRef.current = inventory }, [inventory])
@@ -245,11 +355,16 @@ function GameApp() {
         updateMaxObservedAt(now)
         localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
         // Flush any pending cloud push before the tab gets suspended.
-        try { pushNow(getSnapshot()) } catch (e) { /* non-fatal */ }
+        if (!isInPvpMatch) {
+          try { pushNow(getSnapshot()) } catch (e) { /* non-fatal */ }
+        }
         // Beacon the idle state to D1 — server stamps last_active_at on its
         // own clock so elapsed time on return is server-authoritative.
-        try { beaconIdleState(activeTaskRef.current) } catch (e) { /* non-fatal */ }
+        if (!isInPvpMatch) {
+          try { beaconIdleState(activeTaskRef.current) } catch (e) { /* non-fatal */ }
+        }
       } else {
+        if (isInPvpMatch) return
         // Page returning to foreground — prefer performance.now() diff (monotonic) over wall-clock
         // to prevent system-time manipulation from granting fake idle progress.
         try {
@@ -365,7 +480,58 @@ function GameApp() {
           else if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
           else if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
           else if (savedTask.type === 'hunter') sim = simulateIdleHunting(savedTask, elapsedMs)
-          else if (savedTask.type === 'quest') sim = simulateIdleQuest(savedTask, elapsedMs)
+
+          if (savedTask.type === 'quest') {
+            const cascade = simulateQuestIdleCascade({
+              activeTask: savedTask,
+              questQueue: questQueueRef.current || [],
+              elapsedMs,
+              now: Date.now(),
+            })
+            const completedQuests = []
+            const aggregatedXpReward = {}
+            let coinsGained = 0
+
+            for (const entry of cascade.completed) {
+              const quest = entry.quest
+              const { fixed, choices } = splitQuestXpRewards(entry.xpReward || quest.xpReward || {})
+              for (const [skill, xp] of Object.entries(fixed)) grantXP(skill, xp)
+              if ((entry.coinReward || 0) > 0) {
+                updateBankDirect({ coins: entry.coinReward })
+                coinsGained += entry.coinReward
+              }
+              finaliseQuest(quest.id, quest.name, choices)
+              completedQuests.push(quest)
+              for (const [skill, xp] of Object.entries(entry.xpReward || quest.xpReward || {})) {
+                const amount = Math.floor(Number(xp) || 0)
+                if (amount > 0) aggregatedXpReward[skill] = (aggregatedXpReward[skill] || 0) + amount
+              }
+            }
+
+            setActiveTask(cascade.finalTask)
+            activeTaskRef.current = cascade.finalTask
+            updateQuestQueue(cascade.finalQueue)
+            questQueueRef.current = cascade.finalQueue
+
+            if (!cascade.finalTask) {
+              localStorage.removeItem('pocketrpg_activeTask')
+              localStorage.removeItem('pocketrpg_lastTick')
+              setScreen(SCREENS.QUESTS)
+            }
+
+            setIdleResult({
+              elapsedMs,
+              task: cascade.finalTask,
+              questCascade: true,
+              completedQuests,
+              aggregatedXpReward,
+              coinsGained,
+              elapsedMsUsed: cascade.elapsedMsUsed,
+              elapsedMsRemaining: cascade.elapsedMsRemaining,
+            })
+            if (!isInPvpMatch) schedulePushSave(getSnapshot())
+            return
+          }
 
           // Always show the modal — even if sim is null (e.g. <1 action completed)
           if (!sim) {
@@ -386,7 +552,7 @@ function GameApp() {
           }
 
           // Apply XP (skip combat/any — those require player choice via modal)
-          if (sim.xpGained) {
+          if (savedTask.type !== 'quest' && sim.xpGained) {
             for (const [skill, xp] of Object.entries(sim.xpGained)) {
               if (skill !== 'combat' && skill !== 'any' && xp > 0) grantXP(skill, xp)
             }
@@ -429,99 +595,6 @@ function GameApp() {
             }
             updateBankDirect(bankedItems)
           }
-          // Quest finalisation — cascade through queue if quests complete
-          if (savedTask.type === 'quest') {
-            if (sim.coinsGained > 0) updateBankDirect({ coins: sim.coinsGained })
-
-            // Track all completed quests for idle result display
-            const completedQuests = []
-            const aggregatedXp = {}
-            let totalCoinsGained = sim.coinsGained || 0
-            let workingQueue = [...(questQueueRef.current || [])]
-            let remainingElapsedMs = elapsedMs - (sim.ticksUsed * 600)
-            let finalTask = null
-
-            if (sim.completed) {
-              // Original quest completed — track rewards
-              completedQuests.push(savedTask.quest)
-              for (const [skill, xp] of Object.entries(savedTask.quest.xpReward || {})) {
-                aggregatedXp[skill] = (aggregatedXp[skill] || 0) + xp
-              }
-              const { choices } = splitXpRewards(savedTask.quest.xpReward)
-              finaliseQuest(savedTask.quest.id, savedTask.quest.name, choices)
-
-              // Cascade through queue while time remains
-              while (workingQueue.length > 0 && remainingElapsedMs > 0) {
-                const nextQuest = workingQueue[0]
-                const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
-                const nextTask = {
-                  type: 'quest',
-                  quest: nextQuest,
-                  totalTicks: nextTotalTicks,
-                  ticksRemaining: nextTotalTicks,
-                }
-                const nextSim = simulateIdleQuest(nextTask, remainingElapsedMs)
-                if (!nextSim) break
-                remainingElapsedMs -= nextSim.ticksUsed * 600
-
-                if (nextSim.completed) {
-                  if (nextSim.coinsGained > 0) {
-                    updateBankDirect({ coins: nextSim.coinsGained })
-                    totalCoinsGained += nextSim.coinsGained
-                  }
-                  completedQuests.push(nextQuest)
-                  for (const [skill, xp] of Object.entries(nextQuest.xpReward || {})) {
-                    aggregatedXp[skill] = (aggregatedXp[skill] || 0) + xp
-                  }
-                  // Grant fixed XP immediately; choice rewards queued via finaliseQuest
-                  const { fixed: nextFixed, choices: nextChoices } = splitXpRewards(nextQuest.xpReward)
-                  for (const [skill, xp] of Object.entries(nextFixed)) grantXP(skill, xp)
-                  finaliseQuest(nextQuest.id, nextQuest.name, nextChoices)
-                  workingQueue = workingQueue.slice(1)
-                } else {
-                  // Partial progress — this quest becomes the active one
-                  finalTask = {
-                    type: 'quest',
-                    quest: nextQuest,
-                    totalTicks: nextTotalTicks,
-                    ticksRemaining: nextSim.ticksRemaining,
-                    startedAt: Date.now(),
-                  }
-                  workingQueue = workingQueue.slice(1)
-                  break
-                }
-              }
-
-              // No partial quest mid-cascade, but queue still has items: promote head to active
-              if (!finalTask && workingQueue.length > 0) {
-                const nextQuest = workingQueue[0]
-                const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
-                finalTask = {
-                  type: 'quest',
-                  quest: nextQuest,
-                  totalTicks: nextTotalTicks,
-                  ticksRemaining: nextTotalTicks,
-                  startedAt: Date.now(),
-                }
-                workingQueue = workingQueue.slice(1)
-              }
-            } else {
-              // Original quest still running — persist updated progress
-              finalTask = {
-                ...savedTask,
-                ticksRemaining: sim.ticksRemaining,
-              }
-            }
-
-            setActiveTask(finalTask)
-            updateQuestQueue(workingQueue)
-
-            if (completedQuests.length > 0) {
-              sim.completedQuests = completedQuests
-              sim.aggregatedXpReward = aggregatedXp
-              if (totalCoinsGained > 0) sim.coinsGained = totalCoinsGained
-            }
-          }
           // Deduct consumed materials from bank
           if (sim.itemsConsumed && Object.keys(sim.itemsConsumed).length > 0) {
             const negated = {}
@@ -556,7 +629,7 @@ function GameApp() {
 
           setIdleResult({ elapsedMs, task: savedTask, ...sim })
           // Push the post-idle state to the cloud (debounced + hash-skipped).
-          schedulePushSave(getSnapshot())
+          if (!isInPvpMatch) schedulePushSave(getSnapshot())
         } catch (err) {
           console.warn('[PocketRPG] Visibility idle error:', err)
           // DB may be stale — force reconnect for next read
@@ -572,9 +645,13 @@ function GameApp() {
       localStorage.setItem('pocketrpg_hiddenAt', String(now))
       updateMaxObservedAt(now)
       localStorage.setItem('pocketrpg_activeTask', JSON.stringify(activeTaskRef.current))
-      try { pushNow(getSnapshot()) } catch { /* non-fatal */ }
+      if (!isInPvpMatch) {
+        try { pushNow(getSnapshot()) } catch { /* non-fatal */ }
+      }
       // sendBeacon survives tab-close where a regular fetch would be killed.
-      try { beaconIdleState(activeTaskRef.current) } catch { /* non-fatal */ }
+      if (!isInPvpMatch) {
+        try { beaconIdleState(activeTaskRef.current) } catch { /* non-fatal */ }
+      }
     }
 
     document.addEventListener('visibilitychange', handleVisibility)
@@ -583,7 +660,7 @@ function GameApp() {
       document.removeEventListener('visibilitychange', handleVisibility)
       window.removeEventListener('beforeunload', handleBeforeUnload)
     }
-  }, [gameReady, grantXP, updateInventory, updateBankDirect])
+  }, [gameReady, grantXP, updateInventory, updateBankDirect, isInPvpMatch])
 
   // HP regen tick: once per minute (100 ticks at 600ms = 60s)
   useEffect(() => {
@@ -608,7 +685,7 @@ function GameApp() {
         const snap = getSnapshot()
         snapshotToLocalStorage(snap.player, snap.stats, snap.inventory, snap.bank, snap.equipment, snap.bankConfig, snap.homeShortcuts, snap.bossKillCounts, snap.completedQuests, snap.questQueue)
         // Cloud sync piggy-backs on the local snapshot cadence (debounced, hash-skipped).
-        schedulePushSave(snap)
+        if (!isInPvpMatch) schedulePushSave(snap)
       }
       // Idle heartbeat: ~30s cadence. Server stamps last_active_at on write,
       // so this keeps the "last seen" timestamp fresh even if the tab dies
@@ -616,7 +693,7 @@ function GameApp() {
       idleHeartbeatCounter.current++
       if (idleHeartbeatCounter.current >= 50) {
         idleHeartbeatCounter.current = 0
-        heartbeatIdleState(activeTaskRef.current)
+        if (!isInPvpMatch) heartbeatIdleState(activeTaskRef.current)
       }
       hpRegenCounter.current++
       if (hpRegenCounter.current >= 100) {
@@ -668,7 +745,7 @@ function GameApp() {
       }
     })
     return unsub
-  }, [gameReady, currentHP, stats, questQueue])
+  }, [gameReady, currentHP, stats, questQueue, isInPvpMatch])
 
   async function initCloudAndSave() {
     try {
@@ -863,7 +940,9 @@ function GameApp() {
    // token) and bounce back to AuthScreen so the user can pick or create
    // another character under the same GitHub login.
   async function handleLogoutToCharacterSelect() {
-    try { await pushNow(getSnapshot()) } catch { /* non-fatal */ }
+    if (!isInPvpMatch) {
+      try { await pushNow(getSnapshot()) } catch { /* non-fatal */ }
+    }
     setActiveTask(null)
     localStorage.removeItem('pocketrpg_activeTask')
     localStorage.removeItem('pocketrpg_hiddenAt')
@@ -918,7 +997,62 @@ function GameApp() {
       // Server confirmed and deducted 1 credit — update local credits state
       setCredits(result.credits_remaining)
 
-      const elapsedMs = 3600000 // 1 hour in milliseconds
+      const SKIP_HOUR_MS = 60 * 60 * 1000
+      const task = activeTaskRef.current
+      if (task?.type === 'quest') {
+        const cascade = simulateQuestIdleCascade({
+          activeTask: task,
+          questQueue: questQueueRef.current || [],
+          elapsedMs: SKIP_HOUR_MS,
+          now: Date.now(),
+        })
+        const completedQuests = []
+        const aggregatedXpReward = {}
+        let coinsGained = 0
+
+        for (const entry of cascade.completed) {
+          const quest = entry.quest
+          const { fixed, choices } = splitQuestXpRewards(entry.xpReward || quest.xpReward || {})
+          for (const [skill, xp] of Object.entries(fixed)) grantXP(skill, xp)
+          if ((entry.coinReward || 0) > 0) {
+            updateBankDirect({ coins: entry.coinReward })
+            coinsGained += entry.coinReward
+          }
+          finaliseQuest(quest.id, quest.name, choices)
+          completedQuests.push(quest)
+          for (const [skill, xp] of Object.entries(entry.xpReward || quest.xpReward || {})) {
+            const amount = Math.floor(Number(xp) || 0)
+            if (amount > 0) aggregatedXpReward[skill] = (aggregatedXpReward[skill] || 0) + amount
+          }
+        }
+
+        setActiveTask(cascade.finalTask)
+        activeTaskRef.current = cascade.finalTask
+        updateQuestQueue(cascade.finalQueue)
+        questQueueRef.current = cascade.finalQueue
+
+        if (!cascade.finalTask) {
+          localStorage.removeItem('pocketrpg_activeTask')
+          localStorage.removeItem('pocketrpg_lastTick')
+          setScreen(SCREENS.QUESTS)
+        }
+
+        setIdleResult({
+          elapsedMs: SKIP_HOUR_MS,
+          task: cascade.finalTask,
+          questCascade: true,
+          completedQuests,
+          aggregatedXpReward,
+          coinsGained,
+          elapsedMsUsed: cascade.elapsedMsUsed,
+          elapsedMsRemaining: cascade.elapsedMsRemaining,
+        })
+        schedulePushSave(getSnapshot())
+        addToast('⏭️ Skipped 1 hour', 'info')
+        return
+      }
+
+      const elapsedMs = SKIP_HOUR_MS
       let idleResultData = { elapsedMs, task: activeTaskRef.current }
 
       // Re-read latest stats/equipment/inventory/bank to avoid stale state
@@ -989,7 +1123,6 @@ function GameApp() {
           if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
           if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
           if (savedTask.type === 'hunter') sim = simulateIdleHunting(savedTask, elapsedMs)
-          if (savedTask.type === 'quest') sim = simulateIdleQuest(savedTask, elapsedMs)
         }
 
         if (!sim) {
@@ -1007,7 +1140,7 @@ function GameApp() {
           }
 
           // Apply XP (skip combat/any — those require player choice via modal)
-          if (sim.xpGained) {
+          if (savedTask.type !== 'quest' && sim.xpGained) {
             for (const [skill, xp] of Object.entries(sim.xpGained)) {
               if (skill !== 'combat' && skill !== 'any' && xp > 0) grantXP(skill, xp)
             }
@@ -1050,98 +1183,7 @@ function GameApp() {
             }
             updateBankDirect(bankedItems)
           }
-          // Quest cascade — complete quests while time remains
-          if (savedTask.type === 'quest') {
-            if (sim.coinsGained > 0) updateBankDirect({ coins: sim.coinsGained })
-
-            const completedQuests = []
-            const aggregatedXp = {}
-            let totalCoinsGained = sim.coinsGained || 0
-            let workingQueue = [...(questQueueRef.current || [])]
-            let remainingElapsedMs = elapsedMs - (sim.ticksUsed * 600)
-            let finalTask = null
-
-            if (sim.completed) {
-              // Original quest completed — track for modal
-              completedQuests.push(savedTask.quest)
-              for (const [skill, xp] of Object.entries(savedTask.quest.xpReward || {})) {
-                aggregatedXp[skill] = (aggregatedXp[skill] || 0) + xp
-              }
-              const { choices } = splitXpRewards(savedTask.quest.xpReward)
-              finaliseQuest(savedTask.quest.id, savedTask.quest.name, choices)
-
-              // Cascade through queue while time remains
-              while (workingQueue.length > 0 && remainingElapsedMs > 0) {
-                const nextQuest = workingQueue[0]
-                const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
-                const nextTask = {
-                  type: 'quest',
-                  quest: nextQuest,
-                  totalTicks: nextTotalTicks,
-                  ticksRemaining: nextTotalTicks,
-                }
-                const nextSim = simulateIdleQuest(nextTask, remainingElapsedMs)
-                if (!nextSim) break
-                remainingElapsedMs -= nextSim.ticksUsed * 600
-
-                if (nextSim.completed) {
-                  if (nextSim.coinsGained > 0) {
-                    updateBankDirect({ coins: nextSim.coinsGained })
-                    totalCoinsGained += nextSim.coinsGained
-                  }
-                  completedQuests.push(nextQuest)
-                  for (const [skill, xp] of Object.entries(nextQuest.xpReward || {})) {
-                    aggregatedXp[skill] = (aggregatedXp[skill] || 0) + xp
-                  }
-                  const { fixed: nextFixed, choices: nextChoices } = splitXpRewards(nextQuest.xpReward)
-                  for (const [skill, xp] of Object.entries(nextFixed)) grantXP(skill, xp)
-                  finaliseQuest(nextQuest.id, nextQuest.name, nextChoices)
-                  workingQueue = workingQueue.slice(1)
-                } else {
-                  // Partial progress — this quest becomes the active one
-                  finalTask = {
-                    type: 'quest',
-                    quest: nextQuest,
-                    totalTicks: nextTotalTicks,
-                    ticksRemaining: nextSim.ticksRemaining,
-                    startedAt: Date.now(),
-                  }
-                  workingQueue = workingQueue.slice(1)
-                  break
-                }
-              }
-
-              // No partial quest mid-cascade, but queue still has items: promote head to active
-              if (!finalTask && workingQueue.length > 0) {
-                const nextQuest = workingQueue[0]
-                const nextTotalTicks = Math.ceil(nextQuest.durationSeconds * 1000 / 600)
-                finalTask = {
-                  type: 'quest',
-                  quest: nextQuest,
-                  totalTicks: nextTotalTicks,
-                  ticksRemaining: nextTotalTicks,
-                  startedAt: Date.now(),
-                }
-                workingQueue = workingQueue.slice(1)
-              }
-            } else {
-              // Original quest still running — persist updated progress
-              finalTask = {
-                ...savedTask,
-                ticksRemaining: sim.ticksRemaining,
-              }
-            }
-
-            setActiveTask(finalTask)
-            updateQuestQueue(workingQueue)
-
-            // Add quest data to idle result
-            if (completedQuests.length > 0) {
-              idleResultData.completedQuests = completedQuests
-              idleResultData.aggregatedXpReward = aggregatedXp
-              if (totalCoinsGained > 0) idleResultData.coinsGained = totalCoinsGained
-            }
-          } else if (sim.ticksRemaining !== undefined) {
+          if (sim.ticksRemaining !== undefined) {
             // Non-quest task — update progress if partial
             setActiveTask({
               ...savedTask,
@@ -1196,10 +1238,10 @@ function GameApp() {
       }
 
       // Show idle result modal with skip summary
-      setIdleResult(idleResultData)
+      if (idleResultData) setIdleResult(idleResultData)
 
       // Save the updated game state to cloud
-      schedulePushSave(getSnapshot())
+      if (!isInPvpMatch) schedulePushSave(getSnapshot())
     } catch (err) {
       console.error('[PocketRPG] Skip 1h error:', err)
       addToast(err.message || 'Error during skip!', 'error')
@@ -1371,7 +1413,7 @@ function GameApp() {
       />
 
       {/* Idle Result Modal */}
-      {idleResult && (
+      {idleResult && pvp.phase !== 'in_match' && Date.now() >= suppressIdleModalUntil && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <div style={{ width: '100%', maxWidth: '380px', background: '#1a1a1a', borderRadius: '20px', border: '1px solid #333', overflow: 'hidden' }}>
             {/* Header */}
@@ -1677,7 +1719,9 @@ function GameApp() {
 export default function App() {
   return (
     <GameProvider>
-      <GameApp />
+      <PvpProvider>
+        <GameApp />
+      </PvpProvider>
     </GameProvider>
   )
 }
