@@ -3,10 +3,10 @@ import { api, startGitHubLogin, startGoogleLogin, setCharacter, getToken, clearA
 import { resetSyncState } from '../cloud/sync.js'
 
 // Three internal modes:
-//   login      — no token, show GitHub login + offline option
+//   login      — no token, show OAuth login options
 //   characters — token present, listing characters, picking or creating
 //   create     — submitting a new character username
-export default function AuthScreen({ onCloudReady, onPlayOffline }) {
+export default function AuthScreen({ onCloudReady }) {
   const [mode, setMode] = useState(getToken() ? 'characters' : 'login')
   const [identity, setIdentity] = useState(null)
   const [characters, setCharacters] = useState(null)
@@ -74,18 +74,15 @@ export default function AuthScreen({ onCloudReady, onPlayOffline }) {
     return (
       <Wrap>
         <Title />
-        <p style={subtitle}>Log in to sync your save across browsers, or play offline on this device only.</p>
+        <p style={subtitle}>Log in to sync your save across browsers.</p>
         <button onClick={startGitHubLogin} style={primaryBtn}>
           🐙 Login with GitHub
         </button>
         <button onClick={startGoogleLogin} style={googleBtn}>
           <span style={googleG}>G</span> Login with Google
         </button>
-        <button onClick={onPlayOffline} style={ghostBtn}>
-          Play Offline
-        </button>
         <p style={{ ...subtitle, fontSize: '10px', marginTop: '20px', opacity: 0.4 }}>
-          Offline saves stay on this browser only. Log in later from the save menu to migrate. GitHub and Google accounts are kept separate — signing in with a different provider gives you a different character roster.
+          GitHub and Google accounts are kept separate — signing in with a different provider gives you a different character roster.
         </p>
       </Wrap>
     )
