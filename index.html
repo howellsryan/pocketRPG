@@ -31889,19 +31889,44 @@ function applyLootTransfer({ loserInventory, loserEquipment, winnerBank, itemsDa
 // ── engine/skilling.js ──
 
 
+/**
+ * Woodcutting axe speed progression.
+ *
+ * The value is the share of the maximum possible per-action tick reduction.
+ * Maximum reduction is half the base action time, rounded down to game-tick
+ * granularity.
+ */
+const WOODCUTTING_AXE_REDUCTION_TIERS = {
+    bronze_axe: 0.00,
+    iron_axe: 0.10,
+    steel_axe: 0.20,
+    black_axe: 0.30,
+    mithril_axe: 0.45,
+    adamant_axe: 0.60,
+    rune_axe: 0.75,
+    dragon_axe: 0.88,
+    infernal_axe: 0.94,
+    crystal_axe: 1.00,
+    third_age_axe: 1.00,
+    '3rd_age_axe': 1.00,
+};
+/**
+ * Legacy multiplier map retained for callers or item data that still expect a
+ * multiplier. New woodcutting timing should use getEffectiveToolActionTicks().
+ */
 const WOODCUTTING_AXE_SPEED_MULTIPLIERS = {
     bronze_axe: 1.00,
-    iron_axe: 0.98,
-    steel_axe: 0.96,
-    black_axe: 0.94,
-    mithril_axe: 0.92,
-    adamant_axe: 0.90,
-    rune_axe: 0.88,
-    dragon_axe: 0.86,
-    infernal_axe: 0.84,
-    crystal_axe: 0.82,
-    third_age_axe: 0.82,
-    '3rd_age_axe': 0.82,
+    iron_axe: 0.90,
+    steel_axe: 0.85,
+    black_axe: 0.80,
+    mithril_axe: 0.75,
+    adamant_axe: 0.70,
+    rune_axe: 0.62,
+    dragon_axe: 0.56,
+    infernal_axe: 0.53,
+    crystal_axe: 0.50,
+    third_age_axe: 0.50,
+    '3rd_age_axe': 0.50,
 };
 function getConfiguredToolSpeedMultiplier(skill, item) {
     if (!item)
@@ -31949,6 +31974,31 @@ function getToolSpeedMultiplier(skill, equipment, itemsData, stats = {}, invento
     if (!item)
         return 1.0;
     return getConfiguredToolSpeedMultiplier(skill, item);
+}
+/**
+ * Returns the effective integer action ticks after applying the best available
+ * tool for the skill.
+ */
+function getEffectiveToolActionTicks(skill, baseTicks, equipment, itemsData, stats = {}, inventory = []) {
+    const safeBaseTicks = Math.max(1, Math.floor(Number(baseTicks) || 1));
+    if (skill === 'woodcutting') {
+        const bestTool = findBestToolForSkill(skill, equipment, inventory, itemsData, stats);
+        const tier = bestTool ? WOODCUTTING_AXE_REDUCTION_TIERS[bestTool.id] : null;
+        if (typeof tier === 'number') {
+            if (tier <= 0)
+                return safeBaseTicks;
+            const bestPossibleTicks = Math.max(1, Math.floor(safeBaseTicks / 2));
+            const maxReductionTicks = safeBaseTicks - bestPossibleTicks;
+            if (maxReductionTicks <= 0)
+                return safeBaseTicks;
+            const reductionTicks = tier >= 1
+                ? maxReductionTicks
+                : Math.max(1, Math.ceil(maxReductionTicks * tier));
+            return Math.max(bestPossibleTicks, safeBaseTicks - reductionTicks);
+        }
+    }
+    const multiplier = getToolSpeedMultiplier(skill, equipment, itemsData, stats, inventory);
+    return Math.max(1, Math.floor(safeBaseTicks * multiplier));
 }
 /**
  * Create a skilling session state
@@ -32073,7 +32123,7 @@ function findBestToolForSkill(skill, equipment, inventory, itemsData, stats = {}
             // Check skill-level requirement
             const reqLevel = item.requirements?.[skill] || 0;
             if (playerLevel >= reqLevel) {
-                candidateTools.push({ ...item, tier: reqLevel });
+                candidateTools.push({ ...item, id: equipment.weapon.itemId, tier: reqLevel });
             }
         }
     }
@@ -32088,8 +32138,8 @@ function findBestToolForSkill(skill, equipment, inventory, itemsData, stats = {}
         const reqLevel = item.requirements?.[skill] || 0;
         if (playerLevel >= reqLevel) {
             // Avoid adding duplicates (e.g., if we already have equipped version)
-            if (!candidateTools.some(t => t.id === item.id)) {
-                candidateTools.push({ ...item, tier: reqLevel });
+            if (!candidateTools.some(t => t.id === slot.itemId)) {
+                candidateTools.push({ ...item, id: slot.itemId, tier: reqLevel });
             }
         }
     }
@@ -32183,10 +32233,8 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
     if (!task || !task.action)
         return null;
     const totalTicks = Math.floor(elapsedMs / TICK_MS);
-    // Apply tool speed multiplier (e.g. mithril axe for woodcutting)
-    // Use provided inventory to check for tools; prefer equipped tools if available
-    const toolMult = getToolSpeedMultiplier(task.skill, equipment, itemsData, stats, inventory);
-    const actionTicks = Math.max(1, Math.floor(task.action.ticks * toolMult));
+    // Apply the same effective tool timing as active skilling.
+    const actionTicks = getEffectiveToolActionTicks(task.skill, task.action.ticks, equipment, itemsData, stats, inventory);
     let actions = Math.floor(totalTicks / actionTicks);
     if (actions <= 0)
         return null;
@@ -40749,9 +40797,10 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
             setShowAlchemyPicker(true);
             return;
         }
-        const mult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory);
-        const effectiveTicks = Math.max(1, Math.floor(action.ticks * mult));
-        const adjustedAction = mult < 1.0 ? { ...action, ticks: effectiveTicks } : action;
+        const effectiveTicks = getEffectiveToolActionTicks(selectedSkill, action.ticks, equipment, itemsData, stats, inventory);
+        const adjustedAction = effectiveTicks !== action.ticks
+            ? { ...action, ticks: effectiveTicks }
+            : action;
         const state = { ...createSkillingState(selectedSkill, adjustedAction), startedAt: Date.now() };
         setSelectedAction(action);
         setSkilling(state);
@@ -40763,9 +40812,10 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
             return;
         setShowAlchemyPicker(false);
         setSelectedAlchemyItem(item);
-        const mult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory);
-        const effectiveTicks = Math.max(1, Math.floor(selectedAction.ticks * mult));
-        const adjustedAction = mult < 1.0 ? { ...selectedAction, ticks: effectiveTicks } : selectedAction;
+        const effectiveTicks = getEffectiveToolActionTicks(selectedSkill, selectedAction.ticks, equipment, itemsData, stats, inventory);
+        const adjustedAction = effectiveTicks !== selectedAction.ticks
+            ? { ...selectedAction, ticks: effectiveTicks }
+            : selectedAction;
         const state = { ...createSkillingState(selectedSkill, adjustedAction), startedAt: Date.now() };
         setSkilling(state);
         // Store original action in task — idle engine will apply tool multiplier separately
@@ -40789,9 +40839,10 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
                 const action = skill.actions.find(a => a.id === initialActionId);
                 if (action) {
                     setSelectedSkill(initialSkillId);
-                    const mult = getToolSpeedMultiplier(initialSkillId, equipment, itemsData, stats, inventory);
-                    const effectiveTicks = Math.max(1, Math.floor(action.ticks * mult));
-                    const adjustedAction = mult < 1.0 ? { ...action, ticks: effectiveTicks } : action;
+                    const effectiveTicks = getEffectiveToolActionTicks(initialSkillId, action.ticks, equipment, itemsData, stats, inventory);
+                    const adjustedAction = effectiveTicks !== action.ticks
+                        ? { ...action, ticks: effectiveTicks }
+                        : action;
                     const state = { ...createSkillingState(initialSkillId, adjustedAction), startedAt: Date.now() };
                     // Seed totals from idle result so the modal reflects what was gained while away
                     if (idleResult?.task?.type === 'skill' && idleResult.task.skill === initialSkillId) {
@@ -40834,7 +40885,6 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
     const skillLevel = getLevelFromXP(skillXP);
     const actions = skillData ? getAvailableActions(skillData.actions, skillXP) : [];
     const allActions = [...(skillData?.actions || [])].sort((a, b) => a.level - b.level);
-    const toolMult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory);
     if (!skilling) {
         return (h("div", { class: "h-full overflow-y-auto p-4" },
             h("button", { onClick: () => setSelectedSkill(null), class: "text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1" }, "\u2190 Back"),
@@ -40865,14 +40915,14 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
                             " \u00B7 ",
                             action.xp,
                             " XP \u00B7 ",
-                            toolMult < 1.0
+                            effectiveTicks !== action.ticks
                                 ? h(Fragment, null,
                                     h("span", { class: "line-through" },
                                         (action.ticks * 0.6).toFixed(1),
                                         "s"),
                                     " ",
                                     h("span", { class: "text-[var(--color-gold)] opacity-100" },
-                                        (Math.max(1, Math.floor(action.ticks * toolMult)) * 0.6).toFixed(1),
+                                        (effectiveTicks * 0.6).toFixed(1),
                                         "s"))
                                 : `${(action.ticks * 0.6).toFixed(1)}s`,
                             (() => {
@@ -40935,7 +40985,6 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
                     inventory.every(s => !s) && (h("div", { class: "text-center py-4 text-[var(--color-parchment)] opacity-50" }, "No items in inventory")))))));
     }
     // Active skilling modal
-    const activeMult = getToolSpeedMultiplier(selectedSkill, equipment, itemsData, stats, inventory);
     const progress = getActionProgress(skilling.active, skilling.ticksRemaining, skilling.action.ticks);
     return (h("div", { class: "h-full flex flex-col p-4" },
         h("div", { class: "flex-1 flex flex-col items-center justify-center" },
@@ -41519,13 +41568,11 @@ const GATHER_TASKS = [
         id: 'collect_sand',
         name: 'Collect Bucket of Sand',
         icon: '🏖️',
-        description: 'Fill a bucket with sand from the beach. Used with seaweed to make glass.',
+        description: 'Collect sand from the beach. Used with seaweed to make glass.',
         ticks: 3,
         product: 'bucket_of_sand',
         qty: 1,
         stackable: false,
-        requiresItem: 'bucket',
-        reusableRequirement: true,
         category: 'beach',
     },
     {
@@ -41611,7 +41658,7 @@ const GATHER_TASKS = [
         name: 'Crush Bird\'s Nest → Dust',
         icon: '🪹',
         description: 'Crush an empty bird\'s nest into powder. Used in saradomin brew.',
-        ticks: 2,
+        ticks: 5,
         product: 'crushed_birds_nest',
         qty: 1,
         stackable: true,
