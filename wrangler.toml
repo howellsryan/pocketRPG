@@ -8,7 +8,7 @@ database_name = "pocketrpg"
 database_id = "439e810b-8dce-4697-94c2-a7392520ad8f"
 
 [vars]
-APP_BASE_URL = "https://pocketrpg.pages.dev"
+APP_BASE_URL = "https://pocketrpg.co.uk"
 
 # Secrets to set via dashboard or `wrangler pages secret put`:
 #   JWT_SECRET                      — random 32+ byte string used to sign session JWTs
