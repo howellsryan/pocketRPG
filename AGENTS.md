@@ -46,10 +46,19 @@ Menu-driven idle/simulation fantasy RPG. 0.6s tick-based engine with a text, ico
  * **UI**: 44×44px minimum tap targets. Fixed Header/Footer with a scrollable body.
  * **Styles**: Tailwind CDN is used; do not use /N opacity modifiers. Use solid CSS variables.
  * **Styling Rule**: Prefer Tailwind utility classes + CSS variables over inline `style={{}}`. See §15 for the shared component library and the inline-vs-utility decision rule.
-## 10. TEST SUITE
- * **Command**: Run npm test for the Vitest suite.
- * **File**: pocketrpg_test.ts covers core logic only. Avoid UI testing.
- * **Requirement**: All tests must pass (green) before committing changes.
+## 10. LOGIC REGRESSION TEST SUITE
+ * **Scope**: Unit tests cover pure game logic only. Avoid UI, DOM, browser, screenshot, and component snapshot testing unless the user explicitly asks.
+ * **Location**: Tests live under `tests/**/*.test.ts`. Shared test builders/helpers may live under `tests/helpers/`.
+ * **Commands**:
+   * `npm test` — one-shot Vitest regression run.
+   * `npm run test:watch` — local watch mode while developing.
+   * `npm run build` — runs the logic regression pack first via `prebuild`, then Vite build.
+   * `npm run rebuild` — TypeScript transpile + `build_single.cjs` single-file output.
+   * `npm run check:single` — syntax-checks the generated single-file module for duplicate identifiers.
+   * `npm run ci` — full required validation before a push.
+ * **Requirement**: Before every commit and before every push, run `npm test`, `npm run build`, `npm run rebuild`, and `npm run check:single` or simply run `npm run ci` when it covers those commands. Do not commit or push with failing tests/build checks.
+ * **Quality bar**: New gameplay logic requires matching logic tests. Regression tests must be deterministic and must not import UI modules.
+
 
 ---
 
