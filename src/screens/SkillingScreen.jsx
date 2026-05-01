@@ -299,6 +299,23 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     return unsub
   }, [skilling?.active, stats, inventory, bank])
 
+  // Keep long-form reward progress in sync with global task progress so idle
+  // simulation and skip-hour updates immediately reflect in this progress bar.
+  useEffect(() => {
+    if (!skilling?.active || skilling.action?.category !== 'reward') return
+    if (activeTask?.type !== 'skill' || activeTask.skill !== selectedSkill) return
+    if (activeTask.action?.id !== skilling.action?.id) return
+    if (typeof activeTask.ticksRemaining !== 'number') return
+    if (activeTask.ticksRemaining === skilling.ticksRemaining) return
+
+    setSkilling((prev) => {
+      if (!prev?.active || prev.action?.id !== skilling.action?.id) return prev
+      const next = { ...prev, ticksRemaining: activeTask.ticksRemaining }
+      skillingRef.current = next
+      return next
+    })
+  }, [activeTask, selectedSkill, skilling])
+
   const startSkilling = (action) => {
     // For High Alchemy, show item picker first
     if (action.type === 'alchemy') {
