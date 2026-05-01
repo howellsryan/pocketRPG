@@ -32911,7 +32911,23 @@ function getDungeoneeringRewardCost(action) {
     const tokenCost = Number(action?.tokenCost);
     if (!Number.isFinite(tokenCost) || tokenCost <= 0)
         return 0;
-    return tokenCost;
+    return Math.floor(tokenCost);
+}
+function normaliseDungeoneeringTokens(value) {
+    return Math.max(0, Math.floor(Number(value) || 0));
+}
+function isDungeoneeringTrainingAction(action) {
+    return !!action && action.category !== 'reward';
+}
+function isDungeoneeringRewardAction(action) {
+    return !!action && action.category === 'reward';
+}
+function canAffordDungeoneeringReward(action, tokenBalance, skillLevel) {
+    const cost = getDungeoneeringRewardCost(action);
+    const levelRequired = Math.max(1, Math.floor(Number(action?.level) || 1));
+    const tokens = normaliseDungeoneeringTokens(tokenBalance);
+    const level = Math.max(1, Math.floor(Number(skillLevel) || 1));
+    return cost > 0 && level >= levelRequired && tokens >= cost;
 }
 
 // ── engine/idleEngine.js ──
@@ -34383,6 +34399,9 @@ function getSkillSkipPreflight(activeTask, context, elapsedMs) {
     const action = activeTask?.action;
     if (!action || !activeTask?.skill)
         return invalid('No skilling action is active.', 'skill');
+    if (activeTask.skill === 'dungeoneering' && action.category === 'reward') {
+        return invalid('Dungeoneering rewards are purchased with tokens, not skipped.', 'skill:dungeoneering-reward', true);
+    }
     // Long-form reward actions partially progress like quests/minigames — allow
     // skip whenever any work remains, regardless of whether the elapsed window
     // is long enough to complete a full action.
@@ -34445,6 +34464,8 @@ function isChargeableSkipOutcome(activeTask, outcome) {
         return !!outcome.minigameCompleted || !!outcome.minigameTimeReduced;
     if (activeTask.type === 'minigame')
         return !!outcome.minigameCompleted || !!outcome.minigameTimeReduced;
+    if (activeTask.type === 'skill' && activeTask.skill === 'dungeoneering' && activeTask.action?.category === 'reward')
+        return false;
     if (activeTask.type === 'skill' && activeTask.action?.category === 'reward')
         return !!outcome.rewardCompleted || !!outcome.rewardTimeReduced;
     if (Number(outcome.actions || 0) > 0)
@@ -35524,6 +35545,7 @@ const pvpApi = {
 
 
 
+
 const GameContext = createContext(null);
 function GameProvider({ children }) {
     const [loaded, setLoaded] = useState(false);
@@ -35542,6 +35564,7 @@ function GameProvider({ children }) {
     const [unlockedFeatures, setUnlockedFeatures] = useState(new Set());
     const [slayerTask, setSlayerTaskState] = useState(null);
     const [slayerPoints, setSlayerPointsState] = useState(0);
+    const [dungeoneeringTokens, setDungeoneeringTokensState] = useState(0);
     const [activeCombatSpell, setActiveCombatSpellState] = useState(null);
     const [bossKillCounts, setBossKillCountsState] = useState({});
     const [raidKillCounts, setRaidKillCountsState] = useState({});
@@ -35553,21 +35576,24 @@ function GameProvider({ children }) {
     // Refs to hold latest state for the debounced auto-save
     const stateRef = useRef({ stats: {}, inventory: new Array(28).fill(null), equipment: {}, bank: {}, player: null });
     const criticalMilestoneRef = useRef(null);
+    const dungeoneeringTokensRef = useRef(0);
     // Keep refs in sync with state
     useEffect(() => { stateRef.current.stats = stats; }, [stats]);
     useEffect(() => { stateRef.current.inventory = inventory; }, [inventory]);
     useEffect(() => { stateRef.current.equipment = equipment; }, [equipment]);
     useEffect(() => { stateRef.current.bank = bank; }, [bank]);
     useEffect(() => { stateRef.current.player = player; }, [player]);
+    useEffect(() => { dungeoneeringTokensRef.current = dungeoneeringTokens; }, [dungeoneeringTokens]);
     // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
     const loadGame = useCallback(async () => {
-        let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell] = await Promise.all([
+        let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell] = await Promise.all([
             getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
             getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
             getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
-            getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
+            getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('dungeoneeringTokens'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
             getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell')
         ]);
+        savedDungeoneeringTokens = normaliseDungeoneeringTokens(savedDungeoneeringTokens);
         // Idle-engine inputs: last active timestamp and last active task.
         // D1 is authoritative when signed in + online — localStorage is only used
         // as an offline-mode fallback (and as a backup when the D1 fetch fails).
@@ -35601,6 +35627,11 @@ function GameProvider({ children }) {
             else {
                 console.warn('[PocketRPG] fetchIdleState failed, using local fallback:', e?.message || e);
             }
+        }
+        if (savedTask?.type === 'skill' && savedTask?.skill === 'dungeoneering' && isDungeoneeringRewardAction(savedTask?.action)) {
+            savedTask = null;
+            localStorage.removeItem('pocketrpg_activeTask');
+            localStorage.removeItem('pocketrpg_lastTick');
         }
         // ── Idle simulation (runs on raw DB data, before state is set) ──
         let idleResult = null;
@@ -35655,6 +35686,10 @@ function GameProvider({ children }) {
                                 s[skill] = { ...s[skill], xp: newXP, level: getLevelFromXP(newXP) };
                             }
                         }
+                    }
+                    if (sim.dungeoneeringTokensGained > 0) {
+                        savedDungeoneeringTokens += normaliseDungeoneeringTokens(sim.dungeoneeringTokensGained);
+                        await saveSetting('dungeoneeringTokens', savedDungeoneeringTokens);
                     }
                     // Apply slayer XP from combat simulation
                     if (savedTask.type === 'combat' && sim.slayerXpGained > 0) {
@@ -35857,16 +35892,10 @@ function GameProvider({ children }) {
                     // Long-form skill reward actions (Dungeoneering equipment unlocks)
                     // partially progress like quests — persist the new ticksRemaining or
                     // clear the task on completion.
-                    if (savedTask?.type === 'skill' && savedTask.action?.category === 'reward') {
-                        if (sim.rewardCompleted) {
-                            savedTask = null;
-                            localStorage.removeItem('pocketrpg_activeTask');
-                            localStorage.removeItem('pocketrpg_lastTick');
-                        }
-                        else if (typeof sim.ticksRemaining === 'number') {
-                            savedTask = { ...savedTask, ticksRemaining: sim.ticksRemaining };
-                            localStorage.setItem('pocketrpg_activeTask', JSON.stringify(savedTask));
-                        }
+                    if (savedTask?.type === 'skill' && savedTask.skill === 'dungeoneering' && isDungeoneeringRewardAction(savedTask.action)) {
+                        savedTask = null;
+                        localStorage.removeItem('pocketrpg_activeTask');
+                        localStorage.removeItem('pocketrpg_lastTick');
                     }
                     idleResult = { elapsedMs, task: savedTask, ...sim };
                 }
@@ -35889,6 +35918,7 @@ function GameProvider({ children }) {
             : (savedSlayerTask ?? null);
         setSlayerTaskState(finalSlayerTask);
         setSlayerPointsState(savedSlayerPoints ?? 0);
+        setDungeoneeringTokensState(savedDungeoneeringTokens);
         setActiveCombatSpellState(savedActiveCombatSpell ?? null);
         setBossKillCountsState(savedBossKillCounts ?? {});
         setRaidKillCountsState(savedRaidKillCounts ?? {});
@@ -35945,7 +35975,7 @@ function GameProvider({ children }) {
                     ranged: '🏹', magic: '🔮', prayer: '🙏',
                     mining: '⛏️', woodcutting: '🪓', fishing: '🎣', farming: '🌾', hunter: '🪤',
                     smithing: '🔨', cooking: '🍳', crafting: '✂️', fletching: '🏹', herblore: '🧪', runecraft: '🔴',
-                    agility: '🏃', thieving: '🗝️', slayer: '💀', firemaking: '🔥', construction: '🏠'
+                    agility: '🏃', thieving: '🗝️', slayer: '💀', firemaking: '🔥', construction: '🏠', dungeoneering: '🏰'
                 };
                 const icon = SKILL_ICONS[skill] || '⭐';
                 const msg = `Congratulations! Your ${skillName} is now ${newLevel}`;
@@ -36074,6 +36104,28 @@ function GameProvider({ children }) {
             return next;
         });
     }, []);
+    const awardDungeoneeringTokens = useCallback((tokensToAdd) => {
+        const amount = normaliseDungeoneeringTokens(tokensToAdd);
+        if (amount <= 0)
+            return;
+        const next = normaliseDungeoneeringTokens(dungeoneeringTokensRef.current + amount);
+        dungeoneeringTokensRef.current = next;
+        setDungeoneeringTokensState(next);
+        saveSetting('dungeoneeringTokens', next);
+    }, []);
+    const trySpendDungeoneeringTokens = useCallback((amountToSpend) => {
+        const amount = normaliseDungeoneeringTokens(amountToSpend);
+        if (amount <= 0)
+            return false;
+        const current = normaliseDungeoneeringTokens(dungeoneeringTokensRef.current);
+        if (current < amount)
+            return false;
+        const next = current - amount;
+        dungeoneeringTokensRef.current = next;
+        setDungeoneeringTokensState(next);
+        saveSetting('dungeoneeringTokens', next);
+        return true;
+    }, []);
     const updateBossKillCounts = useCallback((counts) => {
         setBossKillCountsState(counts);
         saveSetting('bossKillCounts', counts);
@@ -36172,13 +36224,14 @@ function GameProvider({ children }) {
             activeCombatSpell,
             slayerTask,
             slayerPoints,
+            dungeoneeringTokens,
             bossKillCounts,
             raidKillCounts,
             farming,
             completedQuests: [...completedQuests],
             questQueue,
         },
-    }), [currentHP, autoBankLoot, bankConfig, homeShortcuts, combatStance, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, bossKillCounts, raidKillCounts, farming, completedQuests, questQueue]);
+    }), [currentHP, autoBankLoot, bankConfig, homeShortcuts, combatStance, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, questQueue]);
     useEffect(() => {
         if (!loaded)
             return;
@@ -36218,6 +36271,7 @@ function GameProvider({ children }) {
         homeShortcuts, combatStance, activeTask, autoBankLoot, bankConfig,
         unlockedFeatures, unlockFeature,
         slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, awardSlayerPoints,
+        dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens,
         activeCombatSpell, updateActiveCombatSpell,
         bossKillCounts, updateBossKillCounts,
         raidKillCounts, updateRaidKillCounts,
@@ -41852,6 +41906,7 @@ function HunterScreen({ initialActionId, onBack }) {
 
 
 
+
 // Agility, Prayer, Thieving, Hunter, Slayer, Construction, and Dungeoneering are special
 // skills shown here in the Skills tab (farming is silently hidden from display; logic remains intact)
 const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'hunter', 'slayer', 'construction', 'dungeoneering'];
@@ -41884,7 +41939,7 @@ function calculateRemainingActions(action, inventory, bank) {
     return minAvailable === Infinity ? null : minAvailable;
 }
 function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
-    const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, activeTask } = useGame();
+    const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens } = useGame();
     const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null);
     const [selectedAction, setSelectedAction] = useState(null);
     const [skilling, setSkilling] = useState(null);
@@ -42088,6 +42143,13 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
                         updateInventory(newInv);
                     // Grant XP
                     grantXP(state.skill, ev.xp);
+                    if (state.skill === 'dungeoneering' && action.category !== 'reward') {
+                        const tokenReward = calculateDungeoneeringTokensForAction(action);
+                        if (tokenReward > 0) {
+                            awardDungeoneeringTokens(tokenReward);
+                            skillingState.totalDungeoneeringTokens = (skillingState.totalDungeoneeringTokens || 0) + tokenReward;
+                        }
+                    }
                 }
             }
             setSkilling({ ...skillingRef.current });
@@ -42116,6 +42178,22 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
         });
     }, [activeTask, selectedSkill, skilling]);
     const startSkilling = (action) => {
+        if (selectedSkill === 'dungeoneering' && action.category === 'reward') {
+            const currentLevel = getLevelFromXP(stats.dungeoneering?.xp || 0);
+            if (currentLevel < (action.level || 1))
+                return addToast(`Requires Dungeoneering level ${action.level}.`, 'error');
+            const cost = getDungeoneeringRewardCost(action);
+            if (cost <= 0)
+                return addToast('Invalid token cost for this reward.', 'error');
+            const productItem = itemsData[action.product];
+            if (!productItem)
+                return addToast('This reward item is unavailable.', 'error');
+            if (!trySpendDungeoneeringTokens(cost))
+                return addToast(`Need ${formatNumber(cost)} Dungeoneering tokens.`, 'error');
+            updateBankDirect({ [action.product]: action.productQty || 1 });
+            addToast(`Purchased ${productItem.name} for ${formatNumber(cost)} tokens.`, 'success');
+            return;
+        }
         // For High Alchemy, show item picker first
         if (action.type === 'alchemy') {
             setSelectedAction(action);
@@ -42212,6 +42290,8 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
                     if (idleResult?.task?.type === 'skill' && idleResult.task.skill === initialSkillId) {
                         state.totalActions = idleResult.actions || 0;
                         state.totalXP = (idleResult.xpGained?.[initialSkillId] || 0);
+                        if (initialSkillId === 'dungeoneering')
+                            state.totalDungeoneeringTokens = idleResult.dungeoneeringTokensGained || 0;
                     }
                     setSelectedAction(adjustedAction);
                     setSkilling(state);
@@ -42252,10 +42332,14 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
     if (!skilling) {
         return (h("div", { class: "h-full overflow-y-auto p-4" },
             h("button", { onClick: () => setSelectedSkill(null), class: "text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1" }, "\u2190 Back"),
-            h("h2", { class: "font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] mb-1 capitalize" },
-                SKILL_ICONS[selectedSkill],
-                " ",
-                selectedSkill),
+            h("div", { class: "mb-1 flex items-center justify-between" },
+                h("h2", { class: "font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] capitalize" },
+                    SKILL_ICONS[selectedSkill],
+                    " ",
+                    selectedSkill),
+                selectedSkill === 'dungeoneering' && (h("div", { class: "inline-flex rounded-full border border-[var(--color-void-border)] bg-[var(--color-void-light)] px-2 py-1 text-[10px] font-[var(--font-mono)] text-[var(--color-gold)]" },
+                    "Tokens: ",
+                    formatNumber(dungeoneeringTokens)))),
             h("p", { class: "text-xs text-[var(--color-parchment)] opacity-40 mb-3" },
                 "Level ",
                 skillLevel),
@@ -42268,25 +42352,34 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
                     const hasTool = !needsTool || hasToolForSkill(selectedSkill, equipment, inventory, itemsData, stats);
                     const hasItems = !action.itemReq || action.itemReq.some(id => (countItem(inventory, id) + (bank[id]?.quantity || 0)) > 0);
                     const canStart = available && hasMats && hasRunes && hasTool && hasItems;
+                    const isDungeoneeringReward = selectedSkill === 'dungeoneering' && action.category === 'reward';
+                    const rewardCost = isDungeoneeringReward ? getDungeoneeringRewardCost(action) : 0;
+                    const rowEnabled = isDungeoneeringReward
+                        ? canAffordDungeoneeringReward(action, dungeoneeringTokens, skillLevel) && !!itemsData[action.product]
+                        : canStart;
                     const effectiveTicks = getEffectiveToolActionTicks(selectedSkill, action.ticks, equipment, itemsData, stats, inventory);
-                    return (h("button", { key: action.id, onClick: () => canStart && startSkilling(action), disabled: !canStart, class: `w-full flex items-center justify-between p-3 rounded-xl border transition-colors
-                  ${canStart
+                    return (h("button", { key: action.id, onClick: () => rowEnabled && startSkilling(action), disabled: !rowEnabled, class: `w-full flex items-center justify-between p-3 rounded-xl border transition-colors
+                  ${rowEnabled
                             ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
                             : 'bg-[#111] border-[#1a1a1a] opacity-40'}` },
                         h("div", { class: "text-left" },
                             h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, action.name),
                             h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40" },
-                                "Lv ",
-                                action.level,
-                                " \u00B7 ",
-                                action.xp,
-                                " XP \u00B7 ",
-                                effectiveTicks !== action.ticks
-                                    ? h(Fragment, null,
-                                        h("span", { class: "line-through" }, formatActionDuration(action.ticks)),
-                                        " ",
-                                        h("span", { class: "text-[var(--color-gold)] opacity-100" }, formatActionDuration(effectiveTicks)))
-                                    : formatActionDuration(action.ticks),
+                                isDungeoneeringReward
+                                    ? `Lv ${action.level} · Cost: ${formatNumber(rewardCost)} tokens`
+                                    : h(Fragment, null,
+                                        "Lv ",
+                                        action.level,
+                                        " \u00B7 ",
+                                        action.xp,
+                                        " XP \u00B7 ",
+                                        effectiveTicks !== action.ticks
+                                            ? h(Fragment, null,
+                                                h("span", { class: "line-through" }, formatActionDuration(action.ticks)),
+                                                " ",
+                                                h("span", { class: "text-[var(--color-gold)] opacity-100" }, formatActionDuration(effectiveTicks)))
+                                            : formatActionDuration(action.ticks)),
+                                isDungeoneeringReward && rowEnabled === false && (h("span", { class: "block text-[#ff6b6b] mt-1" }, skillLevel < action.level ? `Requires level ${action.level}` : `Need ${formatNumber(rewardCost)} tokens`)),
                                 (() => {
                                     const remaining = calculateRemainingActions(action, inventory, bank);
                                     return remaining !== null ? h("span", { class: "text-[var(--color-gold)]" },
@@ -42381,7 +42474,10 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
                     h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "XP/hr"),
                     h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, skilling.startedAt && (Date.now() - skilling.startedAt) > 5000
                         ? formatNumber(Math.round(skilling.totalXP / ((Date.now() - skilling.startedAt) / 3600000)))
-                        : '—')))),
+                        : '—')),
+                selectedSkill === 'dungeoneering' && (h("div", { class: "flex justify-between text-sm" },
+                    h("span", { class: "text-[var(--color-parchment)] opacity-60" }, "Tokens gained"),
+                    h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, formatNumber(skilling.totalDungeoneeringTokens || 0)))))),
         h("div", { class: "flex-shrink-0 flex gap-2 mt-3" },
             h("button", { onClick: stopSkilling, class: "flex-1 py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80" }, "\u2190 Stop & Back"))));
 }
@@ -44853,7 +44949,7 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
         config.valueOnly && (h("div", { style: { fontSize: '12px', color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold', marginBottom: '6px' } }, config.value))));
 }
 function GameApp() {
-    const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue } = useGame();
+    const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue, awardDungeoneeringTokens } = useGame();
     const pvp = usePvp();
     const [screen, setScreen] = useState(SCREENS.HOME);
     const [gameReady, setGameReady] = useState(false);
@@ -45417,6 +45513,8 @@ function GameApp() {
                         }
                         updateBankDirect(negated);
                     }
+                    if (sim.dungeoneeringTokensGained > 0)
+                        awardDungeoneeringTokens(sim.dungeoneeringTokensGained);
                     // Persist slayer task update if present
                     if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
                         if (sim.slayerTaskUpdate.completed) {
@@ -45991,6 +46089,8 @@ function GameApp() {
                         }
                         updateBankDirect(negated);
                     }
+                    if (sim.dungeoneeringTokensGained > 0)
+                        awardDungeoneeringTokens(sim.dungeoneeringTokensGained);
                     // Persist slayer task update if present
                     if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
                         if (sim.slayerTaskUpdate.completed) {
@@ -46233,6 +46333,13 @@ function GameApp() {
                                         h("span", null, "/hr"),
                                         h("span", { style: { fontFamily: 'monospace' } }, perHr(idleResult.slayerXpGained))))))) : null;
                         })(),
+                        idleResult.dungeoneeringTokensGained > 0 && (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' } },
+                            h("div", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' } }, "\uD83C\uDFF0 Dungeoneering"),
+                            h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' } },
+                                h("span", null, "Tokens Gained"),
+                                h("span", { style: { color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' } },
+                                    "+",
+                                    idleResult.dungeoneeringTokensGained.toLocaleString())))),
                         idleResult.coinsGained > 0 && (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' } },
                             h("div", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' } }, "\uD83D\uDCB0 Coins"),
                             h("div", { style: { marginBottom: '4px' } },
