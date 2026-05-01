@@ -29,4 +29,11 @@ describe('skipPreflight', () => {
     expect(isChargeableSkipOutcome({ type: 'skill' } as any, { actions: 1 })).toBe(true)
     expect(isChargeableSkipOutcome({ type: 'quest' } as any, { questCascade: true, elapsedMsUsed: 10 })).toBe(true)
   })
+  it('blocks dungeoneering reward skips and marks non-chargeable', () => {
+    const task = { type: 'skill', skill: 'dungeoneering', action: { category: 'reward', tokenCost: 300000, ticks: 1 } }
+    const pre = getSkipPreflight(task as any, baseCtx, SKIP_HOUR_MS)
+    expect(pre.canSkip).toBe(false)
+    expect(pre.shouldStopTask).toBe(true)
+    expect(isChargeableSkipOutcome(task as any, { rewardCompleted: true, rewardTimeReduced: true })).toBe(false)
+  })
 })

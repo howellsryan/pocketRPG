@@ -67,3 +67,29 @@ describe('simulateIdleSkilling (alchemy)', () => {
     expect(sim?.finalInventory[1]).toEqual({ itemId: 'adamant_platebody', quantity: 1, noted: false })
   })
 })
+
+describe('simulateIdleSkilling (dungeoneering)', () => {
+  it('awards dungeoneering tokens for training actions', () => {
+    const sim = simulateIdleSkilling(
+      { skill: 'dungeoneering', action: { name: 'Dungeon', ticks: 5, xp: 1000, category: 'training' } } as any,
+      9_000,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      Array(28).fill(null) as any
+    )
+    expect(sim?.actions).toBe(3)
+    expect(sim?.xpGained.dungeoneering).toBe(3000)
+    expect(sim?.dungeoneeringTokensGained).toBe(450)
+  })
+
+  it('does not allow timed idle reward unlocks for dungeoneering', () => {
+    const sim = simulateIdleSkilling(
+      { skill: 'dungeoneering', action: { name: 'Reward', category: 'reward', product: 'chaotic_rapier', tokenCost: 300000, ticks: 9999, xp: 0 } } as any,
+      999_999,
+      {} as any
+    )
+    expect(sim).toBeNull()
+  })
+})

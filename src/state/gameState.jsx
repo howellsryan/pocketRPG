@@ -13,6 +13,7 @@ import { getToken, getCharacterId } from '../cloud/api.js'
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS, detectCountIncreases, detectLevelUps, detectSetGrowth, didNumberIncrease, extractSkillLevels } from '../cloud/criticalSavePolicy.js'
 import itemsData from '../data/items.json'
+import { normaliseDungeoneeringTokens, isDungeoneeringRewardAction } from '../engine/dungeoneeringTokens.js'
 
 const GameContext = createContext(null)
 
@@ -33,6 +34,7 @@ export function GameProvider({ children }) {
   const [unlockedFeatures, setUnlockedFeatures] = useState(new Set())
   const [slayerTask, setSlayerTaskState] = useState(null)
   const [slayerPoints, setSlayerPointsState] = useState(0)
+  const [dungeoneeringTokens, setDungeoneeringTokensState] = useState(0)
   const [activeCombatSpell, setActiveCombatSpellState] = useState(null)
   const [bossKillCounts, setBossKillCountsState] = useState({})
   const [raidKillCounts, setRaidKillCountsState] = useState({})
@@ -45,6 +47,7 @@ export function GameProvider({ children }) {
   // Refs to hold latest state for the debounced auto-save
   const stateRef = useRef({ stats: {}, inventory: new Array(28).fill(null), equipment: {}, bank: {}, player: null })
   const criticalMilestoneRef = useRef(null)
+  const dungeoneeringTokensRef = useRef(0)
 
   // Keep refs in sync with state
   useEffect(() => { stateRef.current.stats = stats }, [stats])
@@ -52,16 +55,18 @@ export function GameProvider({ children }) {
   useEffect(() => { stateRef.current.equipment = equipment }, [equipment])
   useEffect(() => { stateRef.current.bank = bank }, [bank])
   useEffect(() => { stateRef.current.player = player }, [player])
+  useEffect(() => { dungeoneeringTokensRef.current = dungeoneeringTokens }, [dungeoneeringTokens])
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
-      getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
+      getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('dungeoneeringTokens'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
       getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell')
     ])
+    savedDungeoneeringTokens = normaliseDungeoneeringTokens(savedDungeoneeringTokens)
     // Idle-engine inputs: last active timestamp and last active task.
     // D1 is authoritative when signed in + online — localStorage is only used
     // as an offline-mode fallback (and as a backup when the D1 fetch fails).
@@ -86,6 +91,11 @@ export function GameProvider({ children }) {
       } else {
         console.warn('[PocketRPG] fetchIdleState failed, using local fallback:', e?.message || e)
       }
+    }
+    if (savedTask?.type === 'skill' && savedTask?.skill === 'dungeoneering' && isDungeoneeringRewardAction(savedTask?.action)) {
+      savedTask = null
+      localStorage.removeItem('pocketrpg_activeTask')
+      localStorage.removeItem('pocketrpg_lastTick')
     }
 
     // ── Idle simulation (runs on raw DB data, before state is set) ──
@@ -135,6 +145,10 @@ export function GameProvider({ children }) {
                 s[skill] = { ...s[skill], xp: newXP, level: getLevelFromXP(newXP) }
               }
             }
+          }
+          if (sim.dungeoneeringTokensGained > 0) {
+            savedDungeoneeringTokens += normaliseDungeoneeringTokens(sim.dungeoneeringTokensGained)
+            await saveSetting('dungeoneeringTokens', savedDungeoneeringTokens)
           }
           // Apply slayer XP from combat simulation
           if (savedTask.type === 'combat' && sim.slayerXpGained > 0) {
@@ -333,15 +347,10 @@ export function GameProvider({ children }) {
           // Long-form skill reward actions (Dungeoneering equipment unlocks)
           // partially progress like quests — persist the new ticksRemaining or
           // clear the task on completion.
-          if (savedTask?.type === 'skill' && savedTask.action?.category === 'reward') {
-            if (sim.rewardCompleted) {
-              savedTask = null
-              localStorage.removeItem('pocketrpg_activeTask')
-              localStorage.removeItem('pocketrpg_lastTick')
-            } else if (typeof sim.ticksRemaining === 'number') {
-              savedTask = { ...savedTask, ticksRemaining: sim.ticksRemaining }
-              localStorage.setItem('pocketrpg_activeTask', JSON.stringify(savedTask))
-            }
+          if (savedTask?.type === 'skill' && savedTask.skill === 'dungeoneering' && isDungeoneeringRewardAction(savedTask.action)) {
+            savedTask = null
+            localStorage.removeItem('pocketrpg_activeTask')
+            localStorage.removeItem('pocketrpg_lastTick')
           }
           idleResult = { elapsedMs, task: savedTask, ...sim }
         }
@@ -365,6 +374,7 @@ export function GameProvider({ children }) {
       : (savedSlayerTask ?? null)
     setSlayerTaskState(finalSlayerTask)
     setSlayerPointsState(savedSlayerPoints ?? 0)
+    setDungeoneeringTokensState(savedDungeoneeringTokens)
     setActiveCombatSpellState(savedActiveCombatSpell ?? null)
     setBossKillCountsState(savedBossKillCounts ?? {})
     setRaidKillCountsState(savedRaidKillCounts ?? {})
@@ -419,7 +429,7 @@ export function GameProvider({ children }) {
           ranged: '🏹', magic: '🔮', prayer: '🙏',
           mining: '⛏️', woodcutting: '🪓', fishing: '🎣', farming: '🌾', hunter: '🪤',
           smithing: '🔨', cooking: '🍳', crafting: '✂️', fletching: '🏹', herblore: '🧪', runecraft: '🔴',
-          agility: '🏃', thieving: '🗝️', slayer: '💀', firemaking: '🔥', construction: '🏠'
+          agility: '🏃', thieving: '🗝️', slayer: '💀', firemaking: '🔥', construction: '🏠', dungeoneering: '🏰'
         }
         const icon = SKILL_ICONS[skill] || '⭐'
         const msg = `Congratulations! Your ${skillName} is now ${newLevel}`
@@ -565,6 +575,27 @@ export function GameProvider({ children }) {
     })
   }, [])
 
+  const awardDungeoneeringTokens = useCallback((tokensToAdd) => {
+    const amount = normaliseDungeoneeringTokens(tokensToAdd)
+    if (amount <= 0) return
+    const next = normaliseDungeoneeringTokens(dungeoneeringTokensRef.current + amount)
+    dungeoneeringTokensRef.current = next
+    setDungeoneeringTokensState(next)
+    saveSetting('dungeoneeringTokens', next)
+  }, [])
+
+  const trySpendDungeoneeringTokens = useCallback((amountToSpend) => {
+    const amount = normaliseDungeoneeringTokens(amountToSpend)
+    if (amount <= 0) return false
+    const current = normaliseDungeoneeringTokens(dungeoneeringTokensRef.current)
+    if (current < amount) return false
+    const next = current - amount
+    dungeoneeringTokensRef.current = next
+    setDungeoneeringTokensState(next)
+    saveSetting('dungeoneeringTokens', next)
+    return true
+  }, [])
+
   const updateBossKillCounts = useCallback((counts) => {
     setBossKillCountsState(counts)
     saveSetting('bossKillCounts', counts)
@@ -669,13 +700,14 @@ export function GameProvider({ children }) {
       activeCombatSpell,
       slayerTask,
       slayerPoints,
+      dungeoneeringTokens,
       bossKillCounts,
       raidKillCounts,
       farming,
       completedQuests: [...completedQuests],
       questQueue,
     },
-  }), [currentHP, autoBankLoot, bankConfig, homeShortcuts, combatStance, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, bossKillCounts, raidKillCounts, farming, completedQuests, questQueue])
+  }), [currentHP, autoBankLoot, bankConfig, homeShortcuts, combatStance, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, questQueue])
 
 
   useEffect(() => {
@@ -716,6 +748,7 @@ export function GameProvider({ children }) {
     homeShortcuts, combatStance, activeTask, autoBankLoot, bankConfig,
     unlockedFeatures, unlockFeature,
     slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, awardSlayerPoints,
+    dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens,
     activeCombatSpell, updateActiveCombatSpell,
     bossKillCounts, updateBossKillCounts,
     raidKillCounts, updateRaidKillCounts,

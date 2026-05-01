@@ -1,4 +1,3 @@
-
 {
   "mining": {
     "id": "mining",
@@ -95,7 +94,7 @@
           },
           {
             "itemId": "uncut_diamond",
-            "chance": 0.20,
+            "chance": 0.2,
             "quantity": 1
           },
           {
@@ -2007,7 +2006,9 @@
         "xp": 17,
         "type": "enchant_jewel",
         "product": "amulet_of_magic",
-        "itemReq": ["sapphire_amulet"],
+        "itemReq": [
+          "sapphire_amulet"
+        ],
         "runeReq": {
           "cosmic_rune": 1,
           "water_rune": 1
@@ -2021,7 +2022,9 @@
         "xp": 59,
         "type": "enchant_jewel",
         "product": "amulet_of_strength",
-        "itemReq": ["ruby_amulet"],
+        "itemReq": [
+          "ruby_amulet"
+        ],
         "runeReq": {
           "cosmic_rune": 1,
           "fire_rune": 1
@@ -2035,7 +2038,9 @@
         "xp": 67,
         "type": "enchant_jewel",
         "product": "amulet_of_power",
-        "itemReq": ["diamond_amulet"],
+        "itemReq": [
+          "diamond_amulet"
+        ],
         "runeReq": {
           "cosmic_rune": 1,
           "earth_rune": 1
@@ -2049,7 +2054,9 @@
         "xp": 78,
         "type": "enchant_jewel",
         "product": "amulet_of_glory",
-        "itemReq": ["dragonstone_amulet"],
+        "itemReq": [
+          "dragonstone_amulet"
+        ],
         "runeReq": {
           "cosmic_rune": 1,
           "fire_rune": 1
@@ -2063,7 +2070,9 @@
         "xp": 97,
         "type": "enchant_jewel",
         "product": "amulet_of_fury",
-        "itemReq": ["onyx_amulet"],
+        "itemReq": [
+          "onyx_amulet"
+        ],
         "runeReq": {
           "cosmic_rune": 1,
           "water_rune": 1
@@ -2077,7 +2086,9 @@
         "xp": 110,
         "type": "enchant_jewel",
         "product": "amulet_of_torture",
-        "itemReq": ["zenyte_amulet"],
+        "itemReq": [
+          "zenyte_amulet"
+        ],
         "runeReq": {
           "cosmic_rune": 1,
           "soul_rune": 20,
@@ -2092,7 +2103,9 @@
         "xp": 110,
         "type": "enchant_jewel",
         "product": "tormented_bracelet",
-        "itemReq": ["zenyte_bracelet"],
+        "itemReq": [
+          "zenyte_bracelet"
+        ],
         "runeReq": {
           "cosmic_rune": 1,
           "soul_rune": 20,
@@ -2107,7 +2120,9 @@
         "xp": 110,
         "type": "enchant_jewel",
         "product": "necklace_of_anguish",
-        "itemReq": ["zenyte_necklace"],
+        "itemReq": [
+          "zenyte_necklace"
+        ],
         "runeReq": {
           "cosmic_rune": 1,
           "soul_rune": 20,
@@ -2122,7 +2137,9 @@
         "xp": 110,
         "type": "enchant_jewel",
         "product": "ring_of_suffering",
-        "itemReq": ["zenyte_ring"],
+        "itemReq": [
+          "zenyte_ring"
+        ],
         "runeReq": {
           "cosmic_rune": 1,
           "soul_rune": 20,
@@ -2515,7 +2532,11 @@
         "rewardTables": [
           {
             "rewards": [
-              { "itemId": "cowhide", "quantity": 1, "chance": 1.0 }
+              {
+                "itemId": "cowhide",
+                "quantity": 1,
+                "chance": 1.0
+              }
             ]
           }
         ]
@@ -2530,16 +2551,74 @@
         "rewardTables": [
           {
             "rewards": [
-              { "itemId": "staff_of_air", "quantity": 1, "chance": 0.05 },
-              { "itemId": "staff_of_fire", "quantity": 1, "chance": 0.05 },
-              { "itemId": "staff_of_water", "quantity": 1, "chance": 0.05 },
-              { "itemId": "staff_of_earth", "quantity": 1, "chance": 0.05 },
-              { "itemId": "mind_rune", "quantity": [20, 40], "chance": 0.15 },
-              { "itemId": "chaos_rune", "quantity": [10, 20], "chance": 0.15 },
-              { "itemId": "air_rune", "quantity": [30, 50], "chance": 0.15 },
-              { "itemId": "water_rune", "quantity": [30, 50], "chance": 0.15 },
-              { "itemId": "fire_rune", "quantity": [30, 50], "chance": 0.15 },
-              { "itemId": "earth_rune", "quantity": [30, 50], "chance": 0.15 }
+              {
+                "itemId": "staff_of_air",
+                "quantity": 1,
+                "chance": 0.05
+              },
+              {
+                "itemId": "staff_of_fire",
+                "quantity": 1,
+                "chance": 0.05
+              },
+              {
+                "itemId": "staff_of_water",
+                "quantity": 1,
+                "chance": 0.05
+              },
+              {
+                "itemId": "staff_of_earth",
+                "quantity": 1,
+                "chance": 0.05
+              },
+              {
+                "itemId": "mind_rune",
+                "quantity": [
+                  20,
+                  40
+                ],
+                "chance": 0.15
+              },
+              {
+                "itemId": "chaos_rune",
+                "quantity": [
+                  10,
+                  20
+                ],
+                "chance": 0.15
+              },
+              {
+                "itemId": "air_rune",
+                "quantity": [
+                  30,
+                  50
+                ],
+                "chance": 0.15
+              },
+              {
+                "itemId": "water_rune",
+                "quantity": [
+                  30,
+                  50
+                ],
+                "chance": 0.15
+              },
+              {
+                "itemId": "fire_rune",
+                "quantity": [
+                  30,
+                  50
+                ],
+                "chance": 0.15
+              },
+              {
+                "itemId": "earth_rune",
+                "quantity": [
+                  30,
+                  50
+                ],
+                "chance": 0.15
+              }
             ]
           }
         ]
@@ -2554,15 +2633,51 @@
         "rewardTables": [
           {
             "rewards": [
-              { "itemId": "amulet_of_strength", "quantity": 1, "chance": 0.05 },
-              { "itemId": "amulet_of_power", "quantity": 1, "chance": 0.05 },
-              { "itemId": "amulet_of_magic", "quantity": 1, "chance": 0.05 },
-              { "itemId": "amulet_of_glory", "quantity": 1, "chance": 0.01 },
-              { "itemId": "sapphire", "quantity": 1, "chance": 0.2 },
-              { "itemId": "emerald", "quantity": 1, "chance": 0.2 },
-              { "itemId": "ruby", "quantity": 1, "chance": 0.2 },
-              { "itemId": "diamond", "quantity": 1, "chance": 0.2 },
-              { "itemId": "dragonstone", "quantity": 1, "chance": 0.05 }
+              {
+                "itemId": "amulet_of_strength",
+                "quantity": 1,
+                "chance": 0.05
+              },
+              {
+                "itemId": "amulet_of_power",
+                "quantity": 1,
+                "chance": 0.05
+              },
+              {
+                "itemId": "amulet_of_magic",
+                "quantity": 1,
+                "chance": 0.05
+              },
+              {
+                "itemId": "amulet_of_glory",
+                "quantity": 1,
+                "chance": 0.01
+              },
+              {
+                "itemId": "sapphire",
+                "quantity": 1,
+                "chance": 0.2
+              },
+              {
+                "itemId": "emerald",
+                "quantity": 1,
+                "chance": 0.2
+              },
+              {
+                "itemId": "ruby",
+                "quantity": 1,
+                "chance": 0.2
+              },
+              {
+                "itemId": "diamond",
+                "quantity": 1,
+                "chance": 0.2
+              },
+              {
+                "itemId": "dragonstone",
+                "quantity": 1,
+                "chance": 0.05
+              }
             ]
           }
         ]
@@ -2577,7 +2692,14 @@
         "rewardTables": [
           {
             "rewards": [
-              { "itemId": "coins", "quantity": [25, 750], "chance": 1.0 }
+              {
+                "itemId": "coins",
+                "quantity": [
+                  25,
+                  750
+                ],
+                "chance": 1.0
+              }
             ]
           }
         ]
@@ -2592,10 +2714,26 @@
         "rewardTables": [
           {
             "rewards": [
-              { "itemId": "bones", "quantity": 1, "chance": 0.40 },
-              { "itemId": "big_bones", "quantity": 1, "chance": 0.30 },
-              { "itemId": "dragon_bones", "quantity": 1, "chance": 0.20 },
-              { "itemId": "dagganoth_bones", "quantity": 1, "chance": 0.10}
+              {
+                "itemId": "bones",
+                "quantity": 1,
+                "chance": 0.4
+              },
+              {
+                "itemId": "big_bones",
+                "quantity": 1,
+                "chance": 0.3
+              },
+              {
+                "itemId": "dragon_bones",
+                "quantity": 1,
+                "chance": 0.2
+              },
+              {
+                "itemId": "dagganoth_bones",
+                "quantity": 1,
+                "chance": 0.1
+              }
             ]
           }
         ]
@@ -2610,30 +2748,93 @@
         "rewardTables": [
           {
             "rewards": [
-              { "itemId": "coins", "quantity": [100, 500], "chance": 1.0 }
+              {
+                "itemId": "coins",
+                "quantity": [
+                  100,
+                  500
+                ],
+                "chance": 1.0
+              }
             ]
           },
           {
             "rewards": [
-              { "itemId": "dragon_scimitar", "quantity": 1, "chance": 0.090909 },
-              { "itemId": "dragon_platelegs", "quantity": 1, "chance": 0.090909 },
-              { "itemId": "dragon_plateskirt", "quantity": 1, "chance": 0.090909 },
-              { "itemId": "dragon_bones", "quantity": 100, "chance": 0.090909 },
-              { "itemId": "dagganoth_bones", "quantity": 60, "chance": 0.090909 },
-              { "itemId": "onyx_bolts", "quantity": 250, "chance": 0.090909 },
-              { "itemId": "dragon_bolts", "quantity": 250, "chance": 0.090909 },
-              { "itemId": "green_dragonhide", "quantity": 500, "chance": 0.090909 },
-              { "itemId": "zulrah_scales", "quantity": 2500, "chance": 0.090909 },
-              { "itemId": "blood_rune", "quantity": 1000, "chance": 0.090909 },
-              { "itemId": "death_rune", "quantity": 2500, "chance": 0.090909 },
-              { "itemId": "shark", "quantity": 500, "chance": 0.090909 }
+              {
+                "itemId": "dragon_scimitar",
+                "quantity": 1,
+                "chance": 0.090909
+              },
+              {
+                "itemId": "dragon_platelegs",
+                "quantity": 1,
+                "chance": 0.090909
+              },
+              {
+                "itemId": "dragon_plateskirt",
+                "quantity": 1,
+                "chance": 0.090909
+              },
+              {
+                "itemId": "dragon_bones",
+                "quantity": 100,
+                "chance": 0.090909
+              },
+              {
+                "itemId": "dagganoth_bones",
+                "quantity": 60,
+                "chance": 0.090909
+              },
+              {
+                "itemId": "onyx_bolts",
+                "quantity": 250,
+                "chance": 0.090909
+              },
+              {
+                "itemId": "dragon_bolts",
+                "quantity": 250,
+                "chance": 0.090909
+              },
+              {
+                "itemId": "green_dragonhide",
+                "quantity": 500,
+                "chance": 0.090909
+              },
+              {
+                "itemId": "zulrah_scales",
+                "quantity": 2500,
+                "chance": 0.090909
+              },
+              {
+                "itemId": "blood_rune",
+                "quantity": 1000,
+                "chance": 0.090909
+              },
+              {
+                "itemId": "death_rune",
+                "quantity": 2500,
+                "chance": 0.090909
+              },
+              {
+                "itemId": "shark",
+                "quantity": 500,
+                "chance": 0.090909
+              }
             ],
             "rarity": 50
           },
           {
             "rewards": [
-              { "itemId": "uncut_onyx", "quantity": 1, "chance": 0.1 },
-              { "itemId": "uncut_zenyte", "quantity": 1, "chance": 0.05 }
+              {
+                "itemId": "uncut_onyx",
+                "quantity": 1,
+                "chance": 0.1
+              },
+              {
+                "itemId": "uncut_zenyte",
+                "quantity": 1,
+                "chance": 0.05
+              }
             ],
             "rarity": 1500
           }
@@ -2729,73 +2930,81 @@
         "id": "unlock_arcane_necklace",
         "name": "Claim arcane necklace",
         "level": 65,
-        "ticks": 15000,
+        "ticks": 0,
         "xp": 0,
         "product": "arcane_necklace",
-        "category": "reward"
+        "category": "reward",
+        "tokenCost": 65000
       },
       {
         "id": "unlock_chaotic_rapier",
         "name": "Claim chaotic rapier",
         "level": 80,
-        "ticks": 60000,
+        "ticks": 0,
         "xp": 0,
         "product": "chaotic_rapier",
-        "category": "reward"
+        "category": "reward",
+        "tokenCost": 300000
       },
       {
         "id": "unlock_chaotic_longsword",
         "name": "Claim chaotic longsword",
         "level": 80,
-        "ticks": 60000,
+        "ticks": 0,
         "xp": 0,
         "product": "chaotic_longsword",
-        "category": "reward"
+        "category": "reward",
+        "tokenCost": 300000
       },
       {
         "id": "unlock_chaotic_maul",
         "name": "Claim chaotic maul",
         "level": 80,
-        "ticks": 60000,
+        "ticks": 0,
         "xp": 0,
         "product": "chaotic_maul",
-        "category": "reward"
+        "category": "reward",
+        "tokenCost": 300000
       },
       {
         "id": "unlock_chaotic_crossbow",
         "name": "Claim chaotic crossbow",
         "level": 80,
-        "ticks": 60000,
+        "ticks": 0,
         "xp": 0,
         "product": "chaotic_crossbow",
-        "category": "reward"
+        "category": "reward",
+        "tokenCost": 300000
       },
       {
         "id": "unlock_chaotic_staff",
         "name": "Claim chaotic staff",
         "level": 80,
-        "ticks": 60000,
+        "ticks": 0,
         "xp": 0,
         "product": "chaotic_staff",
-        "category": "reward"
+        "category": "reward",
+        "tokenCost": 300000
       },
       {
         "id": "unlock_eagle_eyed_kiteshield",
         "name": "Claim eagle eyed kiteshield",
         "level": 80,
-        "ticks": 60000,
+        "ticks": 0,
         "xp": 0,
         "product": "eagle_eyed_kiteshield",
-        "category": "reward"
+        "category": "reward",
+        "tokenCost": 300000
       },
       {
         "id": "unlock_arcane_kiteshield",
         "name": "Claim arcane kiteshield",
         "level": 80,
-        "ticks": 60000,
+        "ticks": 0,
         "xp": 0,
         "product": "arcane_kiteshield",
-        "category": "reward"
+        "category": "reward",
+        "tokenCost": 300000
       }
     ]
   }

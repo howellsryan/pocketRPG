@@ -20,6 +20,7 @@ describe('save payload snapshot', () => {
         activeCombatSpell: { id: 'wind_strike' },
         slayerTask: { monsterId: 'goblin' },
         slayerPoints: 5,
+        dungeoneeringTokens: 12345,
         bossKillCounts: { dragon: 2 },
         raidKillCounts: { cave: 1 },
         farming: { patchesById: {} },
@@ -30,6 +31,7 @@ describe('save payload snapshot', () => {
     expect(payload.settings.combatStance).toBe('defensive')
     expect(payload.settings.unlockedFeatures).toEqual(['slayer'])
     expect(payload.settings.completedQuests).toEqual(['quest_1'])
+    expect(payload.settings.dungeoneeringTokens).toBe(12345)
   })
 
   it('persists combat stance and unlocked construction features from state payload builder', () => {
