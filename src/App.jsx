@@ -64,6 +64,56 @@ function clampByClockWatermark(elapsedMs) {
   return elapsedMs
 }
 
+function IdleResultProgressCard({ type, idleResult, taskName }) {
+  const configs = {
+    minigame_progress: {
+      title: '🎮 Minigame Progress',
+      label: 'Time Remaining',
+      value: `${idleResult.hoursRemaining}h`,
+      current: Math.max(0, (idleResult.task?.totalHours || 0) - (idleResult.hoursRemaining || 0)),
+      total: idleResult.task?.totalHours || 1,
+    },
+    minigame_complete: {
+      title: '✅ Minigame Complete!',
+      valueOnly: true,
+      value: 'Completed',
+      current: 1,
+      total: 1,
+    },
+    reward_progress: {
+      title: '⏳ Unlock Progress',
+      label: 'Time Remaining',
+      value: formatIdleTime((idleResult.ticksRemaining || 0) * 600),
+      current: Math.max(0, (idleResult.task?.totalTicks || 0) - (idleResult.ticksRemaining || 0)),
+      total: idleResult.task?.totalTicks || idleResult.task?.action?.ticks || 1,
+    },
+    reward_complete: {
+      title: '✅ Unlock Complete!',
+      valueOnly: true,
+      value: 'Completed',
+      current: 1,
+      total: 1,
+    },
+  }
+  const config = configs[type]
+  if (!config) return null
+  return (
+    <div style={{ marginBottom: '12px', padding: '10px', background: '#1a3a2a', borderRadius: '10px', borderLeft: '3px solid #4ade80' }}>
+      <div style={{ fontSize: '12px', color: '#4ade80', fontWeight: 'bold', marginBottom: '6px' }}>{config.title}</div>
+      <div style={{ fontSize: '12px', color: '#e8d5b0', marginBottom: '6px' }}>{taskName}</div>
+      {!config.valueOnly && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0', marginBottom: '6px' }}>
+          <span>{config.label}</span>
+          <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>{config.value}</span>
+        </div>
+      )}
+      {config.valueOnly && (
+        <div style={{ fontSize: '12px', color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold', marginBottom: '6px' }}>{config.value}</div>
+      )}
+    </div>
+  )
+}
+
 function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue } = useGame()
   const pvp = usePvp()
@@ -1131,7 +1181,11 @@ function GameApp() {
             }
             updateBankDirect(bankedItems)
           }
-          if (sim.ticksRemaining !== undefined) {
+          if (sim.rewardCompleted) {
+            // Long-form skill reward (e.g. Dungeoneering equipment unlock)
+            // finished — clear the task so the user can start a new action.
+            setActiveTask(null)
+          } else if (sim.ticksRemaining !== undefined) {
             // Non-quest task — update progress if partial
             setActiveTask({
               ...savedTask,
@@ -1302,6 +1356,14 @@ function GameApp() {
     }
   }
 
+  const closeIdleResultModal = () => {
+    if (idleResult?.rewardCompleted && idleResult?.task?.type === 'skill' && idleResult?.task?.skill === 'dungeoneering') {
+      setScreen(SCREENS.SKILLS)
+      setActionData({ skillId: 'dungeoneering' })
+    }
+    setIdleResult(null)
+  }
+
   const isCloudAccount = !!getToken() && !!getCharacterId()
 
   return (
@@ -1353,7 +1415,7 @@ function GameApp() {
                   ranged: '🏹', magic: '🔮', prayer: '🙏',
                   mining: '⛏️', woodcutting: '🪓', fishing: '🎣', farming: '🌾', hunter: '🪤',
                   smithing: '🔨', cooking: '🍳', crafting: '✂️', fletching: '🏹', herblore: '🧪', runecraft: '🔴',
-                  agility: '🏃', thieving: '🗝️', slayer: '💀', firemaking: '🔥', construction: '🏠'
+                  agility: '🏃', thieving: '🗝️', slayer: '💀', firemaking: '🔥', construction: '🏠', dungeoneering: '🏰'
                 }
 
                 return (<>
@@ -1379,21 +1441,43 @@ function GameApp() {
 
                   {/* Minigame Progress */}
                   {idleResult.minigameTimeReduced && (
-                    <div style={{ marginBottom: '12px', padding: '10px', background: '#1a3a2a', borderRadius: '10px', borderLeft: '3px solid #4ade80' }}>
-                      <div style={{ fontSize: '12px', color: '#4ade80', fontWeight: 'bold', marginBottom: '6px' }}>🎮 Minigame Progress</div>
-                      <div style={{ fontSize: '12px', color: '#e8d5b0', marginBottom: '4px' }}>{idleResult.task?.gatherTask?.name || idleResult.task?.minigameTask?.name}</div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' }}>
-                        <span>Time Remaining</span>
-                        <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>{idleResult.hoursRemaining}h</span>
-                      </div>
-                    </div>
+                    <IdleResultProgressCard
+                      type='minigame_progress'
+                      idleResult={idleResult}
+                      taskName={idleResult.task?.gatherTask?.name || idleResult.task?.minigameTask?.name}
+                    />
                   )}
 
                   {/* Minigame Completed */}
                   {idleResult.minigameCompleted && (
-                    <div style={{ marginBottom: '12px', padding: '10px', background: '#1a3a2a', borderRadius: '10px', borderLeft: '3px solid #4ade80' }}>
-                      <div style={{ fontSize: '12px', color: '#4ade80', fontWeight: 'bold', marginBottom: '6px' }}>✅ Minigame Complete!</div>
-                      <div style={{ fontSize: '12px', color: '#e8d5b0' }}>{idleResult.task?.gatherTask?.name || idleResult.task?.minigameTask?.name}</div>
+                    <IdleResultProgressCard
+                      type='minigame_complete'
+                      idleResult={idleResult}
+                      taskName={idleResult.task?.gatherTask?.name || idleResult.task?.minigameTask?.name}
+                    />
+                  )}
+
+                  {/* Long-form Reward Progress (e.g. unlock actions) */}
+                  {idleResult.rewardTimeReduced && (
+                    <IdleResultProgressCard
+                      type='reward_progress'
+                      idleResult={idleResult}
+                      taskName={idleResult.task?.action?.name || 'Reward action'}
+                    />
+                  )}
+
+                  {idleResult.rewardCompleted && (
+                    <div>
+                      <IdleResultProgressCard
+                        type='reward_complete'
+                        idleResult={idleResult}
+                        taskName={`${idleResult.task?.action?.name || 'Reward action'} completed.`}
+                      />
+                      {idleResult.itemsGained && Object.entries(idleResult.itemsGained).length > 0 && (
+                        <div style={{ marginTop: '-4px', marginBottom: '12px', padding: '0 10px', fontSize: '12px', color: '#d4af37' }}>
+                          🎁 Item achieved: {Object.entries(idleResult.itemsGained).map(([itemId, qty]) => `${itemsData[itemId]?.name || itemId} ×${qty}`).join(', ')}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -1590,7 +1674,7 @@ function GameApp() {
             {/* Footer button */}
             <div style={{ padding: '12px 16px', borderTop: '1px solid #222' }}>
               <button
-                onClick={() => setIdleResult(null)}
+                onClick={closeIdleResultModal}
                 style={{ width: '100%', padding: '13px', borderRadius: '12px', background: 'linear-gradient(135deg, #b8940e, #d4af37)', color: '#0f0f0f', fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '14px', border: 'none', cursor: 'pointer' }}
               >
                 Continue Adventure

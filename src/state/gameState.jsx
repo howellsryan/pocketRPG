@@ -330,6 +330,19 @@ export function GameProvider({ children }) {
               ticksRemaining: savedTask?.ticksRemaining ?? 0,
             }
           }
+          // Long-form skill reward actions (Dungeoneering equipment unlocks)
+          // partially progress like quests — persist the new ticksRemaining or
+          // clear the task on completion.
+          if (savedTask?.type === 'skill' && savedTask.action?.category === 'reward') {
+            if (sim.rewardCompleted) {
+              savedTask = null
+              localStorage.removeItem('pocketrpg_activeTask')
+              localStorage.removeItem('pocketrpg_lastTick')
+            } else if (typeof sim.ticksRemaining === 'number') {
+              savedTask = { ...savedTask, ticksRemaining: sim.ticksRemaining }
+              localStorage.setItem('pocketrpg_activeTask', JSON.stringify(savedTask))
+            }
+          }
           idleResult = { elapsedMs, task: savedTask, ...sim }
         }
       }
