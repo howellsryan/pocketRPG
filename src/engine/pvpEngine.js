@@ -1,5 +1,5 @@
 import { addItem } from './inventory.js'
-import { equipItem, unequipSlot, getAttackSpeed } from './equipment.js'
+import { equipItem, unequipSlot, getAttackSpeed, getRangedAmmoRequirementFailure } from './equipment.js'
 import { rollMeleeAttack, rollRangedAttack, rollMagicAttack } from './combatPrimitives.js'
 import { getPvpHealAmount } from './pvpFood.js'
 import prayersData from '../data/prayers.json'
@@ -65,6 +65,8 @@ export function applyPvpSpecialAttackRegenToState(state, now = Date.now()) {
 function rapidAdjustedSpeed(combatant, itemsData) { const base = getAttackSpeed(combatant.equipment, itemsData); return (combatant.combatType === 'ranged' && combatant.stance === 'rapid') ? Math.max(1, base - 1) : base }
 function attackSnapshot(attacker, defender, itemsData) { if (attacker.combatType === 'ranged') return rollRangedAttack(attacker, defender, itemsData); if (attacker.combatType === 'magic') return rollMagicAttack(attacker, defender, itemsData); return rollMeleeAttack(attacker, defender, itemsData) }
 function pvpRandInt(min, max) { const lo = Math.ceil(Math.min(min, max)); const hi = Math.floor(Math.max(min, max)); return lo + Math.floor(Math.random() * (hi - lo + 1)) }
+function consumeEquippedAmmo(combatant, qty = 1) { const ammo = combatant?.equipment?.ammo; if (!ammo) return false; const currentQty = Number.isFinite(Number(ammo.quantity)) ? Number(ammo.quantity) : 1; const nextQty = Math.max(0, currentQty - qty); combatant.equipment.ammo = nextQty <= 0 ? null : { ...ammo, quantity: nextQty }; return true }
+function rangedAmmoBlockedSwing(attacker, itemsData) { if (attacker?.combatType !== 'ranged') return null; const failure = getRangedAmmoRequirementFailure(attacker.equipment, itemsData); if (!failure) return null; attacker.specialAttackQueued = false; return { blocked: true, ammoFailure: failure, damage: 0 } }
 
 function rollModifiedSwing(attacker, defender, itemsData, opts = {}) {
   const base = attackSnapshot(attacker, defender, itemsData)
@@ -84,6 +86,8 @@ function attachSpecialMetadata(attacker, weapon, spec, energyBefore, energyAfter
 }
 
 function resolveSwing(attacker, defender, itemsData, events) {
+  const ammoBlocked = rangedAmmoBlockedSwing(attacker, itemsData)
+  if (ammoBlocked) return ammoBlocked
   const equipped = getEquippedPvpSpecialAttack(attacker, itemsData)
   const weapon = equipped?.weapon || null
   const spec = equipped?.specialAttack || null
@@ -139,8 +143,10 @@ export function processPvpTick(state, intents, itemsData, now = Date.now()) {
   const rightSwing = (right.hp > 0 && right.attackTimer === 0 && right.eatCooldown === 0) ? resolveSwing(right, left, itemsData, events) : null
   const leftDamage = leftSwing ? Math.max(0, Math.min(right.hp, leftSwing.damage || 0)) : 0
   const rightDamage = rightSwing ? Math.max(0, Math.min(left.hp, rightSwing.damage || 0)) : 0
-  if (leftSwing) { const hits = Array.isArray(leftSwing.hits) ? capHitsToHp(leftSwing.hits, right.hp) : undefined; const totalDamage = hits ? hits.reduce((sum, hit) => sum + hit, 0) : leftDamage; const specialAttack = leftSwing.specialAttack ? { ...leftSwing.specialAttack, hits: hits || [leftDamage], totalDamage } : undefined; events.push({ type: 'attack', attackerCharacterId: left.characterId, defenderCharacterId: right.characterId, ...leftSwing, damage: totalDamage, totalDamage, ...(hits ? { hits } : {}), ...(specialAttack ? { specialAttack } : {}) }); left.attackTimer = rapidAdjustedSpeed(left, itemsData) }
-  if (rightSwing) { const hits = Array.isArray(rightSwing.hits) ? capHitsToHp(rightSwing.hits, left.hp) : undefined; const totalDamage = hits ? hits.reduce((sum, hit) => sum + hit, 0) : rightDamage; const specialAttack = rightSwing.specialAttack ? { ...rightSwing.specialAttack, hits: hits || [rightDamage], totalDamage } : undefined; events.push({ type: 'attack', attackerCharacterId: right.characterId, defenderCharacterId: left.characterId, ...rightSwing, damage: totalDamage, totalDamage, ...(hits ? { hits } : {}), ...(specialAttack ? { specialAttack } : {}) }); right.attackTimer = rapidAdjustedSpeed(right, itemsData) }
+  if (leftSwing?.blocked) { events.push({ type: 'no_ammo', characterId: left.characterId, ...(leftSwing.ammoFailure || {}) }); left.attackTimer = rapidAdjustedSpeed(left, itemsData) }
+  else if (leftSwing) { const hits = Array.isArray(leftSwing.hits) ? capHitsToHp(leftSwing.hits, right.hp) : undefined; const totalDamage = hits ? hits.reduce((sum, hit) => sum + hit, 0) : leftDamage; const specialAttack = leftSwing.specialAttack ? { ...leftSwing.specialAttack, hits: hits || [leftDamage], totalDamage } : undefined; events.push({ type: 'attack', attackerCharacterId: left.characterId, defenderCharacterId: right.characterId, ...leftSwing, damage: totalDamage, totalDamage, ...(hits ? { hits } : {}), ...(specialAttack ? { specialAttack } : {}) }); if (left.combatType === 'ranged') consumeEquippedAmmo(left, 1); left.attackTimer = rapidAdjustedSpeed(left, itemsData) }
+  if (rightSwing?.blocked) { events.push({ type: 'no_ammo', characterId: right.characterId, ...(rightSwing.ammoFailure || {}) }); right.attackTimer = rapidAdjustedSpeed(right, itemsData) }
+  else if (rightSwing) { const hits = Array.isArray(rightSwing.hits) ? capHitsToHp(rightSwing.hits, left.hp) : undefined; const totalDamage = hits ? hits.reduce((sum, hit) => sum + hit, 0) : rightDamage; const specialAttack = rightSwing.specialAttack ? { ...rightSwing.specialAttack, hits: hits || [rightDamage], totalDamage } : undefined; events.push({ type: 'attack', attackerCharacterId: right.characterId, defenderCharacterId: left.characterId, ...rightSwing, damage: totalDamage, totalDamage, ...(hits ? { hits } : {}), ...(specialAttack ? { specialAttack } : {}) }); if (right.combatType === 'ranged') consumeEquippedAmmo(right, 1); right.attackTimer = rapidAdjustedSpeed(right, itemsData) }
   right.hp = Math.max(0, right.hp - leftDamage); left.hp = Math.max(0, left.hp - rightDamage); left.currentHP = left.hp; right.currentHP = right.hp
   next.tick = (next.tick || 0) + 1; next.recentEvents = [...next.recentEvents, ...events].slice(-20)
   const leftDead = left.hp <= 0; const rightDead = right.hp <= 0

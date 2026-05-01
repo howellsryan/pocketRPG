@@ -9305,7 +9305,8 @@ const itemsData = {
     },
     "shopValue": 987546,
     "icon": "🏹",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "requiredAmmoId": "dragon_javelin"
   },
   "javelin": {
     "id": "javelin",
@@ -9322,11 +9323,16 @@ const itemsData = {
     "name": "Dragon javelin",
     "type": "ammo",
     "stackable": true,
-    "ammoType": "javelin",
-    "rangedStrength": 150,
     "shopValue": 771,
     "icon": "🏹",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "slot": "ammo",
+    "ammoKind": "javelin",
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 150,
+      "magicDamage": 0
+    }
   },
   "zaryte_vambraces": {
     "id": "zaryte_vambraces",
@@ -14666,7 +14672,7 @@ const itemsData = {
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 135
+      "ranged": 150
     },
     "defenceBonus": {
       "stab": 0,
@@ -14677,7 +14683,7 @@ const itemsData = {
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 100,
+      "rangedStrength": 90,
       "magicDamage": 0
     },
     "requirements": {
@@ -29362,9 +29368,66 @@ function isAmmoCompatible(equipment, ammoItemData, itemsData) {
     if (!equipment.weapon)
         return true;
     const weapon = itemsData[equipment.weapon.itemId];
-    if (!weapon || !weapon.ammoType || !ammoItemData.ammoKind)
+    if (!weapon)
         return true;
-    return weapon.ammoType === ammoItemData.ammoKind;
+    const ammoKind = ammoItemData?.ammoKind;
+    const requiredAmmoKind = weapon.ammoType;
+    const requiredAmmoIds = normaliseRequiredAmmoIds(weapon);
+    if (!requiredAmmoKind && requiredAmmoIds.length === 0)
+        return true;
+    if (!ammoKind)
+        return false;
+    if (requiredAmmoKind && ammoKind !== requiredAmmoKind)
+        return false;
+    if (requiredAmmoIds.length > 0 && !requiredAmmoIds.includes(ammoItemData.id))
+        return false;
+    return true;
+}
+function getEquippedAmmoQuantity(ammoEntry) {
+    if (!ammoEntry)
+        return 0;
+    const quantity = Number(ammoEntry.quantity);
+    if (!Number.isFinite(quantity))
+        return 1;
+    return quantity;
+}
+function normaliseRequiredAmmoIds(weapon) {
+    if (!weapon)
+        return [];
+    if (Array.isArray(weapon.requiredAmmoIds))
+        return weapon.requiredAmmoIds;
+    if (weapon.requiredAmmoId)
+        return [weapon.requiredAmmoId];
+    return [];
+}
+function getRangedAmmoRequirementFailure(equipment, itemsData) {
+    const weaponEntry = equipment?.weapon;
+    const weapon = weaponEntry?.itemId ? itemsData?.[weaponEntry.itemId] : null;
+    if (!weapon || weapon.attackStyle !== 'ranged')
+        return null;
+    if (weapon.scaleCharged)
+        return null;
+    const requiredAmmoKind = weapon.ammoType;
+    if (!requiredAmmoKind)
+        return null;
+    const ammoEntry = equipment?.ammo;
+    const ammo = ammoEntry?.itemId ? itemsData?.[ammoEntry.itemId] : null;
+    const ammoQuantity = getEquippedAmmoQuantity(ammoEntry);
+    const requiredAmmoIds = normaliseRequiredAmmoIds(weapon);
+    const failureBase = {
+        weaponId: weapon.id,
+        weaponName: weapon.name || weapon.id,
+        requiredAmmoKind,
+        requiredAmmoIds,
+        requiredAmmoName: requiredAmmoIds.length === 1 ? (itemsData?.[requiredAmmoIds[0]]?.name || requiredAmmoIds[0]) : null
+    };
+    if (!ammoEntry || !ammo || ammoQuantity <= 0)
+        return { ...failureBase, reason: 'missing_ammo' };
+    if (ammo.ammoKind !== requiredAmmoKind)
+        return { ...failureBase, actualAmmoId: ammo.id, actualAmmoKind: ammo.ammoKind || null, reason: 'wrong_ammo_type' };
+    if (requiredAmmoIds.length > 0 && !requiredAmmoIds.includes(ammo.id))
+        return { ...failureBase, actualAmmoId: ammo.id, actualAmmoKind: ammo.ammoKind || null, reason: 'wrong_ammo_item' };
+    return null;
 }
 /**
  * Equip an item. Returns { equipped: true, unequipped: [] } or { equipped: false, reason }
@@ -30359,6 +30422,19 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
             if (weaponEntry) {
                 const weapon = itemsData[weaponEntry.itemId];
                 if (weapon?.specialAttack) {
+                    if (state.combatType === 'ranged' && !weapon?.scaleCharged) {
+                        const ammoFailure = getRangedAmmoRequirementFailure(equipment, itemsData);
+                        if (ammoFailure) {
+                            events.push({ type: 'noAmmo', ...ammoFailure });
+                            state.specialAttackQueued = false;
+                            let speed = weaponSpeed;
+                            if (state.stance === 'rapid')
+                                speed = Math.max(1, speed - 1);
+                            state.playerAttackTimer = speed;
+                            state.monster = monster;
+                            return { combatState: state, events };
+                        }
+                    }
                     // Check if we still have enough energy before firing
                     const currentEnergy = state.specialAttackEnergy || 0;
                     if (currentEnergy >= weapon.specialAttack.energyCost) {
@@ -30452,6 +30528,18 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
             if (weaponIsScaleCharged) {
                 if (weaponCharges <= 0) {
                     events.push({ type: 'noCharges', itemId: equippedWeaponEntry.itemId });
+                    let speed = weaponSpeed;
+                    if (state.stance === 'rapid')
+                        speed = Math.max(1, speed - 1);
+                    state.playerAttackTimer = speed;
+                    state.monster = monster;
+                    return { combatState: state, events };
+                }
+            }
+            if (!weaponIsScaleCharged) {
+                const ammoFailure = getRangedAmmoRequirementFailure(equipment, itemsData);
+                if (ammoFailure) {
+                    events.push({ type: 'noAmmo', ...ammoFailure });
                     let speed = weaponSpeed;
                     if (state.stance === 'rapid')
                         speed = Math.max(1, speed - 1);
@@ -32134,6 +32222,11 @@ function attackSnapshot(attacker, defender, itemsData) { if (attacker.combatType
     return rollRangedAttack(attacker, defender, itemsData); if (attacker.combatType === 'magic')
     return rollMagicAttack(attacker, defender, itemsData); return rollMeleeAttack(attacker, defender, itemsData); }
 function pvpRandInt(min, max) { const lo = Math.ceil(Math.min(min, max)); const hi = Math.floor(Math.max(min, max)); return lo + Math.floor(Math.random() * (hi - lo + 1)); }
+function consumeEquippedAmmo(combatant, qty = 1) { const ammo = combatant?.equipment?.ammo; if (!ammo)
+    return false; const currentQty = Number.isFinite(Number(ammo.quantity)) ? Number(ammo.quantity) : 1; const nextQty = Math.max(0, currentQty - qty); combatant.equipment.ammo = nextQty <= 0 ? null : { ...ammo, quantity: nextQty }; return true; }
+function rangedAmmoBlockedSwing(attacker, itemsData) { if (attacker?.combatType !== 'ranged')
+    return null; const failure = getRangedAmmoRequirementFailure(attacker.equipment, itemsData); if (!failure)
+    return null; attacker.specialAttackQueued = false; return { blocked: true, ammoFailure: failure, damage: 0 }; }
 function rollModifiedSwing(attacker, defender, itemsData, opts = {}) {
     const base = attackSnapshot(attacker, defender, itemsData);
     const attackRoll = Math.max(0, Math.floor((base.attackRoll || 0) * (Number(opts.accuracyMultiplier ?? 1) || 1)));
@@ -32151,6 +32244,9 @@ function attachSpecialMetadata(attacker, weapon, spec, energyBefore, energyAfter
     return { ...swing, damage: totalDamage, special: true, specType: spec.type || 'special', energyCost: Math.max(0, Number(spec.energyCost) || 0), hits, totalDamage, specialAttack: buildPvpSpecialAttackMeta({ attacker, weapon, spec, energyBefore, energyAfter, hits, totalDamage, extra }) };
 }
 function resolveSwing(attacker, defender, itemsData, events) {
+    const ammoBlocked = rangedAmmoBlockedSwing(attacker, itemsData);
+    if (ammoBlocked)
+        return ammoBlocked;
     const equipped = getEquippedPvpSpecialAttack(attacker, itemsData);
     const weapon = equipped?.weapon || null;
     const spec = equipped?.specialAttack || null;
@@ -32376,18 +32472,30 @@ function processPvpTick(state, intents, itemsData, now = Date.now()) {
     const rightSwing = (right.hp > 0 && right.attackTimer === 0 && right.eatCooldown === 0) ? resolveSwing(right, left, itemsData, events) : null;
     const leftDamage = leftSwing ? Math.max(0, Math.min(right.hp, leftSwing.damage || 0)) : 0;
     const rightDamage = rightSwing ? Math.max(0, Math.min(left.hp, rightSwing.damage || 0)) : 0;
-    if (leftSwing) {
+    if (leftSwing?.blocked) {
+        events.push({ type: 'no_ammo', characterId: left.characterId, ...(leftSwing.ammoFailure || {}) });
+        left.attackTimer = rapidAdjustedSpeed(left, itemsData);
+    }
+    else if (leftSwing) {
         const hits = Array.isArray(leftSwing.hits) ? capHitsToHp(leftSwing.hits, right.hp) : undefined;
         const totalDamage = hits ? hits.reduce((sum, hit) => sum + hit, 0) : leftDamage;
         const specialAttack = leftSwing.specialAttack ? { ...leftSwing.specialAttack, hits: hits || [leftDamage], totalDamage } : undefined;
         events.push({ type: 'attack', attackerCharacterId: left.characterId, defenderCharacterId: right.characterId, ...leftSwing, damage: totalDamage, totalDamage, ...(hits ? { hits } : {}), ...(specialAttack ? { specialAttack } : {}) });
+        if (left.combatType === 'ranged')
+            consumeEquippedAmmo(left, 1);
         left.attackTimer = rapidAdjustedSpeed(left, itemsData);
     }
-    if (rightSwing) {
+    if (rightSwing?.blocked) {
+        events.push({ type: 'no_ammo', characterId: right.characterId, ...(rightSwing.ammoFailure || {}) });
+        right.attackTimer = rapidAdjustedSpeed(right, itemsData);
+    }
+    else if (rightSwing) {
         const hits = Array.isArray(rightSwing.hits) ? capHitsToHp(rightSwing.hits, left.hp) : undefined;
         const totalDamage = hits ? hits.reduce((sum, hit) => sum + hit, 0) : rightDamage;
         const specialAttack = rightSwing.specialAttack ? { ...rightSwing.specialAttack, hits: hits || [rightDamage], totalDamage } : undefined;
         events.push({ type: 'attack', attackerCharacterId: right.characterId, defenderCharacterId: left.characterId, ...rightSwing, damage: totalDamage, totalDamage, ...(hits ? { hits } : {}), ...(specialAttack ? { specialAttack } : {}) });
+        if (right.combatType === 'ranged')
+            consumeEquippedAmmo(right, 1);
         right.attackTimer = rapidAdjustedSpeed(right, itemsData);
     }
     right.hp = Math.max(0, right.hp - leftDamage);
@@ -39728,8 +39836,9 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                     // Decrement ammo quantity on the equipped ammo
                     const newEq = { ...equipmentRef.current };
                     const ammo = newEq.ammo;
-                    if (ammo && ammo.quantity && ammo.quantity > 0) {
-                        const newQty = Math.max(0, ammo.quantity - (ev.qty || 1));
+                    if (ammo) {
+                        const currentQty = Number.isFinite(Number(ammo.quantity)) ? Number(ammo.quantity) : 1;
+                        const newQty = Math.max(0, currentQty - (ev.qty || 1));
                         if (newQty <= 0) {
                             // Out of ammo
                             newEq.ammo = null;
@@ -39745,6 +39854,15 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                         equipmentRef.current = newEq;
                         updateEquipment(newEq);
                     }
+                }
+                if (ev.type === 'noAmmo') {
+                    const weaponName = ev.weaponName || itemsData[ev.weaponId]?.name || 'Weapon';
+                    const required = ev.requiredAmmoName || ev.requiredAmmoKind || 'compatible ammo';
+                    setLog(prev => [...prev.slice(-20), {
+                            text: `${weaponName} requires ${required} to fire.`,
+                            type: 'miss',
+                            time: Date.now()
+                        }]);
                 }
                 if (ev.type === 'noCharges') {
                     const item = itemsData[ev.itemId];

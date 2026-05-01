@@ -4,7 +4,7 @@ import {
   getMeleeXPSkill, effectiveRanged, rangedMaxHit, getRangedStyleBonus,
   effectiveMagic, monsterMagicDefenceRoll, magicMaxHit
 } from './formulas.js'
-import { getEquipmentBonuses, getAttackSpeed, getAttackStyle } from './equipment.js'
+import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getRangedAmmoRequirementFailure } from './equipment.js'
 import { getLevelFromXP } from './experience.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE, EAT_TICK_COST } from '../utils/constants.js'
@@ -347,6 +347,18 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       if (weaponEntry) {
         const weapon = itemsData[weaponEntry.itemId]
         if (weapon?.specialAttack) {
+          if (state.combatType === 'ranged' && !weapon?.scaleCharged) {
+            const ammoFailure = getRangedAmmoRequirementFailure(equipment, itemsData)
+            if (ammoFailure) {
+              events.push({ type: 'noAmmo', ...ammoFailure })
+              state.specialAttackQueued = false
+              let speed = weaponSpeed
+              if (state.stance === 'rapid') speed = Math.max(1, speed - 1)
+              state.playerAttackTimer = speed
+              state.monster = monster
+              return { combatState: state, events }
+            }
+          }
           // Check if we still have enough energy before firing
           const currentEnergy = state.specialAttackEnergy || 0
           if (currentEnergy >= weapon.specialAttack.energyCost) {
@@ -441,6 +453,17 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       if (weaponIsScaleCharged) {
         if (weaponCharges <= 0) {
           events.push({ type: 'noCharges', itemId: equippedWeaponEntry.itemId })
+          let speed = weaponSpeed
+          if (state.stance === 'rapid') speed = Math.max(1, speed - 1)
+          state.playerAttackTimer = speed
+          state.monster = monster
+          return { combatState: state, events }
+        }
+      }
+      if (!weaponIsScaleCharged) {
+        const ammoFailure = getRangedAmmoRequirementFailure(equipment, itemsData)
+        if (ammoFailure) {
+          events.push({ type: 'noAmmo', ...ammoFailure })
           let speed = weaponSpeed
           if (state.stance === 'rapid') speed = Math.max(1, speed - 1)
           state.playerAttackTimer = speed

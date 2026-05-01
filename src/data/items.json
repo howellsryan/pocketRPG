@@ -9204,7 +9204,8 @@
     },
     "shopValue": 987546,
     "icon": "🏹",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "requiredAmmoId": "dragon_javelin"
   },
   "javelin": {
     "id": "javelin",
@@ -9221,11 +9222,16 @@
     "name": "Dragon javelin",
     "type": "ammo",
     "stackable": true,
-    "ammoType": "javelin",
-    "rangedStrength": 150,
     "shopValue": 771,
     "icon": "🏹",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "slot": "ammo",
+    "ammoKind": "javelin",
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 150,
+      "magicDamage": 0
+    }
   },
   "zaryte_vambraces": {
     "id": "zaryte_vambraces",
@@ -14565,7 +14571,7 @@
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 135
+      "ranged": 150
     },
     "defenceBonus": {
       "stab": 0,
@@ -14576,7 +14582,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 100,
+      "rangedStrength": 90,
       "magicDamage": 0
     },
     "requirements": {
