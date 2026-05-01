@@ -44532,6 +44532,51 @@ function clampByClockWatermark(elapsedMs) {
         return 0;
     return elapsedMs;
 }
+function IdleResultProgressCard({ type, idleResult, taskName }) {
+    const configs = {
+        minigame_progress: {
+            title: '🎮 Minigame Progress',
+            label: 'Time Remaining',
+            value: `${idleResult.hoursRemaining}h`,
+            current: Math.max(0, (idleResult.task?.totalHours || 0) - (idleResult.hoursRemaining || 0)),
+            total: idleResult.task?.totalHours || 1,
+        },
+        minigame_complete: {
+            title: '✅ Minigame Complete!',
+            valueOnly: true,
+            value: 'Completed',
+            current: 1,
+            total: 1,
+        },
+        reward_progress: {
+            title: '⏳ Unlock Progress',
+            label: 'Time Remaining',
+            value: formatIdleTime((idleResult.ticksRemaining || 0) * 600),
+            current: Math.max(0, (idleResult.task?.totalTicks || 0) - (idleResult.ticksRemaining || 0)),
+            total: idleResult.task?.totalTicks || 1,
+        },
+        reward_complete: {
+            title: '✅ Unlock Complete!',
+            valueOnly: true,
+            value: 'Completed',
+            current: 1,
+            total: 1,
+        },
+    };
+    const config = configs[type];
+    if (!config)
+        return null;
+    const progressPct = Math.floor((Math.min(config.current, config.total) / Math.max(config.total, 1)) * 100);
+    return (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#1a3a2a', borderRadius: '10px', borderLeft: '3px solid #4ade80' } },
+        h("div", { style: { fontSize: '12px', color: '#4ade80', fontWeight: 'bold', marginBottom: '6px' } }, config.title),
+        h("div", { style: { fontSize: '12px', color: '#e8d5b0', marginBottom: '6px' } }, taskName),
+        !config.valueOnly && (h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0', marginBottom: '6px' } },
+            h("span", null, config.label),
+            h("span", { style: { color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' } }, config.value))),
+        config.valueOnly && (h("div", { style: { fontSize: '12px', color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold', marginBottom: '6px' } }, config.value)),
+        h("div", { style: { width: '100%', height: '8px', background: '#0f0f0f', borderRadius: '999px', overflow: 'hidden' } },
+            h("div", { style: { width: `${progressPct}%`, height: '100%', background: 'linear-gradient(90deg, #4ade80, #22c55e)' } }))));
+}
 function GameApp() {
     const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue } = useGame();
     const pvp = usePvp();
@@ -45829,17 +45874,14 @@ function GameApp() {
                         idleResult.task?.type === 'combat' && (idleResult.task?.monster?.boss === true || idleResult.task?.raid === true) && (h("div", { style: { marginBottom: '12px', padding: '10px', background: 'rgba(220, 53, 69, 0.15)', borderRadius: '10px', borderLeft: '3px solid #dc3545' } },
                             h("div", { style: { fontSize: '12px', color: '#ff6b6b', fontWeight: 'bold', marginBottom: '4px' } }, "\u26A0\uFE0F Boss/Raid Active"),
                             h("div", { style: { fontSize: '11px', color: '#ff8787', lineHeight: '1.4' } }, "Boss and raid fights cannot be fought while idle. You must actively fight. Return to the fight to continue!"))),
-                        idleResult.minigameTimeReduced && (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#1a3a2a', borderRadius: '10px', borderLeft: '3px solid #4ade80' } },
-                            h("div", { style: { fontSize: '12px', color: '#4ade80', fontWeight: 'bold', marginBottom: '6px' } }, "\uD83C\uDFAE Minigame Progress"),
-                            h("div", { style: { fontSize: '12px', color: '#e8d5b0', marginBottom: '4px' } }, idleResult.task?.gatherTask?.name || idleResult.task?.minigameTask?.name),
-                            h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' } },
-                                h("span", null, "Time Remaining"),
-                                h("span", { style: { color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' } },
-                                    idleResult.hoursRemaining,
-                                    "h")))),
-                        idleResult.minigameCompleted && (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#1a3a2a', borderRadius: '10px', borderLeft: '3px solid #4ade80' } },
-                            h("div", { style: { fontSize: '12px', color: '#4ade80', fontWeight: 'bold', marginBottom: '6px' } }, "\u2705 Minigame Complete!"),
-                            h("div", { style: { fontSize: '12px', color: '#e8d5b0' } }, idleResult.task?.gatherTask?.name || idleResult.task?.minigameTask?.name))),
+                        idleResult.minigameTimeReduced && (h(IdleResultProgressCard, { type: 'minigame_progress', idleResult: idleResult, taskName: idleResult.task?.gatherTask?.name || idleResult.task?.minigameTask?.name })),
+                        idleResult.minigameCompleted && (h(IdleResultProgressCard, { type: 'minigame_complete', idleResult: idleResult, taskName: idleResult.task?.gatherTask?.name || idleResult.task?.minigameTask?.name })),
+                        idleResult.rewardTimeReduced && (h(IdleResultProgressCard, { type: 'reward_progress', idleResult: idleResult, taskName: idleResult.task?.action?.name || 'Reward action' })),
+                        idleResult.rewardCompleted && (h("div", null,
+                            h(IdleResultProgressCard, { type: 'reward_complete', idleResult: idleResult, taskName: `${idleResult.task?.action?.name || 'Reward action'} completed.` }),
+                            idleResult.itemsGained && Object.entries(idleResult.itemsGained).length > 0 && (h("div", { style: { marginTop: '-4px', marginBottom: '12px', padding: '0 10px', fontSize: '12px', color: '#d4af37' } },
+                                "\uD83C\uDF81 Item achieved: ",
+                                Object.entries(idleResult.itemsGained).map(([itemId, qty]) => `${itemsData[itemId]?.name || itemId} ×${qty}`).join(', '))))),
                         idleResult.completedQuests && idleResult.completedQuests.length > 0 && (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#1a3a2a', borderRadius: '10px', borderLeft: '3px solid #4ade80' } },
                             h("div", { style: { fontSize: '12px', color: '#4ade80', fontWeight: 'bold', marginBottom: '8px' } },
                                 "\uD83D\uDCDC Quests Completed (",
