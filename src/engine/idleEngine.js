@@ -17,6 +17,7 @@ import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_P
 import { getAgilityBankDelayFromStats, simulateIdleAgility } from './agility.js'
 import { rollClueRewards } from './clueScrolls.js'
 import { resolveSlayerTaskKill } from './slayerTasks.js'
+import { calculateDungeoneeringTokensForAction } from './dungeoneeringTokens.js'
 
 const TICK_MS = 600
 const HP_REGEN_INTERVAL_MS = 60000 // 60 seconds per 1 HP
@@ -90,6 +91,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
   // window. The task carries its own ticksRemaining; we decrement it by the
   // elapsed tick count and only grant the product on completion.
   if (task.action.category === 'reward') {
+    if (task.skill === 'dungeoneering') return null
     const fullTicks = Math.max(1, Math.floor(Number(task.action.ticks) || 1))
     const prevRemaining = Math.max(0, Math.floor(Number(task.ticksRemaining ?? fullTicks)))
     if (prevRemaining <= 0) return null
@@ -471,7 +473,11 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
     }
   }
 
-  return { xpGained, itemsGained, itemsBanked, itemsConsumed, itemsDropped, actions, skill: task.skill, actionName: task.action.name, finalInventory: newInv, coinsGained }
+  const dungeoneeringTokensGained = task.skill === 'dungeoneering' && task.action?.category !== 'reward'
+    ? calculateDungeoneeringTokensForAction(task.action) * actions
+    : 0
+
+  return { xpGained, itemsGained, itemsBanked, itemsConsumed, itemsDropped, actions, skill: task.skill, actionName: task.action.name, finalInventory: newInv, coinsGained, dungeoneeringTokensGained }
 }
 
 /**
