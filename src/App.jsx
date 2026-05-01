@@ -1401,6 +1401,30 @@ function GameApp() {
                     </div>
                   )}
 
+                  {/* Long-form Reward Progress (e.g. unlock actions) */}
+                  {idleResult.rewardTimeReduced && (
+                    <div style={{ marginBottom: '12px', padding: '10px', background: '#1a3a2a', borderRadius: '10px', borderLeft: '3px solid #4ade80' }}>
+                      <div style={{ fontSize: '12px', color: '#4ade80', fontWeight: 'bold', marginBottom: '6px' }}>⏳ Unlock Progress</div>
+                      <div style={{ fontSize: '12px', color: '#e8d5b0', marginBottom: '4px' }}>{idleResult.task?.action?.name || 'Reward action'}</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' }}>
+                        <span>Time Remaining</span>
+                        <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>{formatIdleTime((idleResult.ticksRemaining || 0) * 600)}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {idleResult.rewardCompleted && (
+                    <div style={{ marginBottom: '12px', padding: '10px', background: '#1a3a2a', borderRadius: '10px', borderLeft: '3px solid #4ade80' }}>
+                      <div style={{ fontSize: '12px', color: '#4ade80', fontWeight: 'bold', marginBottom: '6px' }}>✅ Unlock Complete!</div>
+                      <div style={{ fontSize: '12px', color: '#e8d5b0' }}>{idleResult.task?.action?.name || 'Reward action'} completed.</div>
+                      {idleResult.itemsGained && Object.entries(idleResult.itemsGained).length > 0 && (
+                        <div style={{ marginTop: '6px', fontSize: '12px', color: '#d4af37' }}>
+                          🎁 Item achieved: {Object.entries(idleResult.itemsGained).map(([itemId, qty]) => `${itemsData[itemId]?.name || itemId} ×${qty}`).join(', ')}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Quests Completed */}
                   {idleResult.completedQuests && idleResult.completedQuests.length > 0 && (
                     <div style={{ marginBottom: '12px', padding: '10px', background: '#1a3a2a', borderRadius: '10px', borderLeft: '3px solid #4ade80' }}>
