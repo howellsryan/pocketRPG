@@ -365,6 +365,27 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     setActiveTask({ type: 'skill', skill: selectedSkill, action: selectedAction, bankingEnabled: true, selectedAlchemyItem: item })
   }
 
+
+  // If an idle/skip simulation completed a long-form unlock while this screen
+  // was open, close the active skilling modal so the player returns to the
+  // dungeoneering action list instead of staying on a stale ~90% bar.
+  useEffect(() => {
+    if (!idleResult?.rewardCompleted) return
+    if (idleResult.task?.type !== 'skill') return
+    if (!selectedSkill || idleResult.task.skill !== selectedSkill) return
+
+    setSkilling((prev) => {
+      if (!prev?.active) return prev
+      if (prev.action?.category !== 'reward') return prev
+      const finishedActionId = idleResult.task?.action?.id
+      if (finishedActionId && prev.action?.id !== finishedActionId) return prev
+      skillingRef.current = null
+      return null
+    })
+    setSelectedAction(null)
+    setSelectedAlchemyItem(null)
+  }, [idleResult, selectedSkill])
+
   const stopSkilling = () => {
     if (skillingRef.current) {
       skillingRef.current = { ...skillingRef.current, active: false, stopped: true }
