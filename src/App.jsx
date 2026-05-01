@@ -115,7 +115,7 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
 }
 
 function GameApp() {
-  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue } = useGame()
+  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue, awardDungeoneeringTokens } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [gameReady, setGameReady] = useState(false)
@@ -655,6 +655,8 @@ function GameApp() {
             }
             updateBankDirect(negated)
           }
+          if (sim.dungeoneeringTokensGained > 0) awardDungeoneeringTokens(sim.dungeoneeringTokensGained)
+          if (sim.dungeoneeringTokensGained > 0) awardDungeoneeringTokens(sim.dungeoneeringTokensGained)
           // Persist slayer task update if present
           if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
             if (sim.slayerTaskUpdate.completed) {
@@ -1567,6 +1569,16 @@ function GameApp() {
                       </div>
                     ) : null
                   })()}
+
+                  {idleResult.dungeoneeringTokensGained > 0 && (
+                    <div style={{ marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' }}>
+                      <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>🏰 Dungeoneering</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' }}>
+                        <span>Dungeoneering tokens gained</span>
+                        <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>+{idleResult.dungeoneeringTokensGained.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Coins earned — agility/thieving specific */}
                   {idleResult.coinsGained > 0 && (

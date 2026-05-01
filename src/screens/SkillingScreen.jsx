@@ -10,6 +10,7 @@ import { addItem, removeItem, countItem } from '../engine/inventory.js'
 import { hasRequiredRunes, getRunesToConsume } from '../engine/runes.js'
 import { onTick } from '../engine/tick.js'
 import { formatNumber } from '../utils/helpers.js'
+import { calculateDungeoneeringTokensForAction, getDungeoneeringRewardCost, canAffordDungeoneeringReward } from '../engine/dungeoneeringTokens.js'
 import skillsData from '../data/skills.json'
 import itemsData from '../data/items.json'
 import AgilityScreen from './AgilityScreen.jsx'
@@ -52,7 +53,7 @@ function calculateRemainingActions(action, inventory, bank) {
 }
 
 export default function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
-  const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, activeTask } = useGame()
+  const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens } = useGame()
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
   const [selectedAction, setSelectedAction] = useState(null)
   const [skilling, setSkilling] = useState(null)
@@ -290,6 +291,13 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
 
           // Grant XP
           grantXP(state.skill, ev.xp)
+          if (state.skill === 'dungeoneering' && action.category !== 'reward') {
+            const tokenReward = calculateDungeoneeringTokensForAction(action)
+            if (tokenReward > 0) {
+              awardDungeoneeringTokens(tokenReward)
+              skillingState.totalDungeoneeringTokens = (skillingState.totalDungeoneeringTokens || 0) + tokenReward
+            }
+          }
         }
       }
 
@@ -317,6 +325,18 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   }, [activeTask, selectedSkill, skilling])
 
   const startSkilling = (action) => {
+    if (selectedSkill === 'dungeoneering' && action.category === 'reward') {
+      const currentLevel = getLevelFromXP(stats.dungeoneering?.xp || 0)
+      if (currentLevel < (action.level || 1)) return addToast(`Requires Dungeoneering level ${action.level}.`, 'error')
+      const cost = getDungeoneeringRewardCost(action)
+      if (cost <= 0) return addToast('Invalid token cost for this reward.', 'error')
+      const productItem = itemsData[action.product]
+      if (!productItem) return addToast('This reward item is unavailable.', 'error')
+      if (!trySpendDungeoneeringTokens(cost)) return addToast(`Need ${formatNumber(cost)} Dungeoneering tokens.`, 'error')
+      updateBankDirect({ [action.product]: action.productQty || 1 })
+      addToast(`Purchased ${productItem.name} for ${formatNumber(cost)} tokens.`, 'success')
+      return
+    }
     // For High Alchemy, show item picker first
     if (action.type === 'alchemy') {
       setSelectedAction(action)
@@ -414,6 +434,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
           if (idleResult?.task?.type === 'skill' && idleResult.task.skill === initialSkillId) {
             state.totalActions = idleResult.actions || 0
             state.totalXP = (idleResult.xpGained?.[initialSkillId] || 0)
+            if (initialSkillId === 'dungeoneering') state.totalDungeoneeringTokens = idleResult.dungeoneeringTokensGained || 0
           }
           setSelectedAction(adjustedAction)
           setSkilling(state)
@@ -484,6 +505,11 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
         <h2 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] mb-1 capitalize">
           {SKILL_ICONS[selectedSkill]} {selectedSkill}
         </h2>
+        {selectedSkill === 'dungeoneering' && (
+          <div class="mb-2 inline-flex rounded-full border border-[var(--color-void-border)] bg-[var(--color-void-light)] px-2 py-1 text-[10px] font-[var(--font-mono)] text-[var(--color-gold)]">
+            Tokens: {formatNumber(dungeoneeringTokens)}
+          </div>
+        )}
         <p class="text-xs text-[var(--color-parchment)] opacity-40 mb-3">Level {skillLevel}</p>
 
         {/* Banking toggle for skilling */}
@@ -500,6 +526,11 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
               id => (countItem(inventory, id) + (bank[id]?.quantity || 0)) > 0
             )
             const canStart = available && hasMats && hasRunes && hasTool && hasItems
+            const isDungeoneeringReward = selectedSkill === 'dungeoneering' && action.category === 'reward'
+            const rewardCost = isDungeoneeringReward ? getDungeoneeringRewardCost(action) : 0
+            const rowEnabled = isDungeoneeringReward
+              ? canAffordDungeoneeringReward(action, dungeoneeringTokens, skillLevel) && !!itemsData[action.product]
+              : canStart
             const effectiveTicks = getEffectiveToolActionTicks(
               selectedSkill,
               action.ticks,
@@ -511,19 +542,26 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             return (
               <button
                 key={action.id}
-                onClick={() => canStart && startSkilling(action)}
-                disabled={!canStart}
+                onClick={() => rowEnabled && startSkilling(action)}
+                disabled={!rowEnabled}
                 class={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors
-                  ${canStart
+                  ${rowEnabled
                     ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
                     : 'bg-[#111] border-[#1a1a1a] opacity-40'}`}
               >
                 <div class="text-left">
                   <div class="text-sm font-semibold text-[var(--color-parchment)]">{action.name}</div>
                   <div class="text-[10px] text-[var(--color-parchment)] opacity-40">
-                    Lv {action.level} · {action.xp} XP · {effectiveTicks !== action.ticks
+                    {isDungeoneeringReward
+                      ? `Lv ${action.level} · Cost: ${formatNumber(rewardCost)} tokens`
+                      : <>Lv {action.level} · {action.xp} XP · {effectiveTicks !== action.ticks
                       ? <><span class="line-through">{formatActionDuration(action.ticks)}</span> <span class="text-[var(--color-gold)] opacity-100">{formatActionDuration(effectiveTicks)}</span></>
-                      : formatActionDuration(action.ticks)}
+                      : formatActionDuration(action.ticks)}</>}
+                    {isDungeoneeringReward && rowEnabled === false && (
+                      <span class="block text-[#ff6b6b] mt-1">
+                        {skillLevel < action.level ? `Requires level ${action.level}` : `Need ${formatNumber(rewardCost)} tokens`}
+                      </span>
+                    )}
                     {(() => {
                       const remaining = calculateRemainingActions(action, inventory, bank)
                       return remaining !== null ? <span class="text-[var(--color-gold)]"> · {remaining.toLocaleString()} actions</span> : null
@@ -703,6 +741,12 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                 : '—'}
             </span>
           </div>
+          {selectedSkill === 'dungeoneering' && (
+            <div class="flex justify-between text-sm">
+              <span class="text-[var(--color-parchment)] opacity-60">Tokens gained</span>
+              <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{formatNumber(skilling.totalDungeoneeringTokens || 0)}</span>
+            </div>
+          )}
         </div>
       </div>
 
