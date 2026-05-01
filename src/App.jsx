@@ -85,7 +85,7 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
       label: 'Time Remaining',
       value: formatIdleTime((idleResult.ticksRemaining || 0) * 600),
       current: Math.max(0, (idleResult.task?.totalTicks || 0) - (idleResult.ticksRemaining || 0)),
-      total: idleResult.task?.totalTicks || 1,
+      total: idleResult.task?.totalTicks || idleResult.task?.action?.ticks || 1,
     },
     reward_complete: {
       title: '✅ Unlock Complete!',
@@ -97,7 +97,6 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
   }
   const config = configs[type]
   if (!config) return null
-  const progressPct = Math.floor((Math.min(config.current, config.total) / Math.max(config.total, 1)) * 100)
   return (
     <div style={{ marginBottom: '12px', padding: '10px', background: '#1a3a2a', borderRadius: '10px', borderLeft: '3px solid #4ade80' }}>
       <div style={{ fontSize: '12px', color: '#4ade80', fontWeight: 'bold', marginBottom: '6px' }}>{config.title}</div>
@@ -111,9 +110,6 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
       {config.valueOnly && (
         <div style={{ fontSize: '12px', color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold', marginBottom: '6px' }}>{config.value}</div>
       )}
-      <div style={{ width: '100%', height: '8px', background: '#0f0f0f', borderRadius: '999px', overflow: 'hidden' }}>
-        <div style={{ width: `${progressPct}%`, height: '100%', background: 'linear-gradient(90deg, #4ade80, #22c55e)' }} />
-      </div>
     </div>
   )
 }
@@ -1360,6 +1356,14 @@ function GameApp() {
     }
   }
 
+  const closeIdleResultModal = () => {
+    if (idleResult?.rewardCompleted && idleResult?.task?.type === 'skill' && idleResult?.task?.skill === 'dungeoneering') {
+      setScreen(SCREENS.SKILLS)
+      setActionData({ skillId: 'dungeoneering' })
+    }
+    setIdleResult(null)
+  }
+
   const isCloudAccount = !!getToken() && !!getCharacterId()
 
   return (
@@ -1411,7 +1415,7 @@ function GameApp() {
                   ranged: '🏹', magic: '🔮', prayer: '🙏',
                   mining: '⛏️', woodcutting: '🪓', fishing: '🎣', farming: '🌾', hunter: '🪤',
                   smithing: '🔨', cooking: '🍳', crafting: '✂️', fletching: '🏹', herblore: '🧪', runecraft: '🔴',
-                  agility: '🏃', thieving: '🗝️', slayer: '💀', firemaking: '🔥', construction: '🏠'
+                  agility: '🏃', thieving: '🗝️', slayer: '💀', firemaking: '🔥', construction: '🏠', dungeoneering: '🏰'
                 }
 
                 return (<>
@@ -1670,7 +1674,7 @@ function GameApp() {
             {/* Footer button */}
             <div style={{ padding: '12px 16px', borderTop: '1px solid #222' }}>
               <button
-                onClick={() => setIdleResult(null)}
+                onClick={closeIdleResultModal}
                 style={{ width: '100%', padding: '13px', borderRadius: '12px', background: 'linear-gradient(135deg, #b8940e, #d4af37)', color: '#0f0f0f', fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '14px', border: 'none', cursor: 'pointer' }}
               >
                 Continue Adventure
