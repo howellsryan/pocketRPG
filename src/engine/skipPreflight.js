@@ -59,6 +59,9 @@ function getGatherSkipPreflight(activeTask, context, elapsedMs) {
 function getSkillSkipPreflight(activeTask, context, elapsedMs) {
   const action = activeTask?.action
   if (!action || !activeTask?.skill) return invalid('No skilling action is active.', 'skill')
+  if (activeTask.skill === 'dungeoneering' && action.category === 'reward') {
+    return invalid('Dungeoneering rewards are purchased with tokens, not skipped.', 'skill:dungeoneering-reward', true)
+  }
 
   // Long-form reward actions partially progress like quests/minigames — allow
   // skip whenever any work remains, regardless of whether the elapsed window
@@ -110,6 +113,7 @@ export function isChargeableSkipOutcome(activeTask, outcome) {
   if (activeTask.type === 'quest') return !!outcome.questCascade && (((outcome.completedQuests || []).length > 0) || (outcome.elapsedMsUsed || 0) > 0 || !!outcome.finalTask || !!outcome.task)
   if (activeTask.type === 'gather' && activeTask.gatherTask?.oneShot) return !!outcome.minigameCompleted || !!outcome.minigameTimeReduced
   if (activeTask.type === 'minigame') return !!outcome.minigameCompleted || !!outcome.minigameTimeReduced
+  if (activeTask.type === 'skill' && activeTask.skill === 'dungeoneering' && activeTask.action?.category === 'reward') return false
   if (activeTask.type === 'skill' && activeTask.action?.category === 'reward') return !!outcome.rewardCompleted || !!outcome.rewardTimeReduced
   if (Number(outcome.actions || 0) > 0) return true
   if (Number(outcome.monstersKilled || 0) > 0) return true

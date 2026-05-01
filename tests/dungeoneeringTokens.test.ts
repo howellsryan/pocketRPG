@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import skillsData from '../src/data/skills.json'
 import { getXPForLevel, getLevelFromXP } from '../src/engine/experience.js'
-import { calculateDungeoneeringTokensForXp, calculateDungeoneeringTokensForAction } from '../src/engine/dungeoneeringTokens.js'
+import { calculateDungeoneeringTokensForXp, calculateDungeoneeringTokensForAction, canAffordDungeoneeringReward } from '../src/engine/dungeoneeringTokens.js'
 
 describe('dungeoneering token helpers', () => {
   it('calculates from xp', () => {
@@ -14,6 +14,14 @@ describe('dungeoneering token helpers', () => {
   it('uses action xp safely', () => {
     expect(calculateDungeoneeringTokensForAction({ xp: 2000 } as any)).toBe(300)
     expect(calculateDungeoneeringTokensForAction({ xp: null } as any)).toBe(0)
+  })
+  it('validates reward affordability', () => {
+    const reward = { level: 80, tokenCost: 300000 }
+    expect(canAffordDungeoneeringReward(reward as any, 300000, 80)).toBe(true)
+    expect(canAffordDungeoneeringReward(reward as any, 500000, 99)).toBe(true)
+    expect(canAffordDungeoneeringReward(reward as any, 299999, 80)).toBe(false)
+    expect(canAffordDungeoneeringReward(reward as any, 300000, 79)).toBe(false)
+    expect(canAffordDungeoneeringReward({ level: 80, tokenCost: 0 } as any, 999999, 99)).toBe(false)
   })
 })
 
