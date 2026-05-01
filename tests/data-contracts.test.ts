@@ -5,6 +5,7 @@ import skills from '../src/data/skills.json'
 import quests from '../src/data/quests.json'
 import { applySpecialAttack } from '../src/engine/combat'
 import { getPvpSpecialAttackLabel } from '../src/engine/pvpSpecialAttacks'
+import { ALL_SKILLS } from '../src/utils/constants.js'
 
 const itemIds = new Set(Object.keys(items))
 const KNOWN_MISSING_DROP_ITEMS = new Set(['daganoth_bones'])
@@ -54,6 +55,16 @@ describe('data contracts', () => {
       for (const [skillId, xp] of Object.entries(rewards.xp || {})) {
         expect(typeof skillId).toBe('string')
         expect(Number.isFinite(xp) && Number(xp) > 0, `${questId} bad xp for ${skillId}`).toBe(true)
+      }
+    }
+  })
+
+  it('item requirement keys reference known skills (no typos)', () => {
+    const knownSkills = new Set(ALL_SKILLS)
+    for (const [itemId, item] of Object.entries(items as Record<string, any>)) {
+      const reqs = item?.requirements || {}
+      for (const skill of Object.keys(reqs)) {
+        expect(knownSkills.has(skill), `${itemId} has unknown requirement skill "${skill}"`).toBe(true)
       }
     }
   })

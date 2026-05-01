@@ -2640,5 +2640,163 @@
         ]
       }
     ]
+  },
+  "dungeoneering": {
+    "id": "dungeoneering",
+    "name": "Dungeoneering",
+    "actions": [
+      {
+        "id": "dungeoneering_floor_1",
+        "name": "Clear novice dungeon",
+        "level": 1,
+        "ticks": 500,
+        "xp": 1000,
+        "category": "training"
+      },
+      {
+        "id": "dungeoneering_floor_2",
+        "name": "Clear apprentice dungeon",
+        "level": 10,
+        "ticks": 500,
+        "xp": 2000,
+        "category": "training"
+      },
+      {
+        "id": "dungeoneering_floor_3",
+        "name": "Clear adept dungeon",
+        "level": 20,
+        "ticks": 500,
+        "xp": 3000,
+        "category": "training"
+      },
+      {
+        "id": "dungeoneering_floor_4",
+        "name": "Clear journeyman dungeon",
+        "level": 30,
+        "ticks": 500,
+        "xp": 4000,
+        "category": "training"
+      },
+      {
+        "id": "dungeoneering_floor_5",
+        "name": "Clear expert dungeon",
+        "level": 40,
+        "ticks": 500,
+        "xp": 5000,
+        "category": "training"
+      },
+      {
+        "id": "dungeoneering_floor_6",
+        "name": "Clear veteran dungeon",
+        "level": 50,
+        "ticks": 500,
+        "xp": 6000,
+        "category": "training"
+      },
+      {
+        "id": "dungeoneering_floor_7",
+        "name": "Clear master dungeon",
+        "level": 60,
+        "ticks": 500,
+        "xp": 7000,
+        "category": "training"
+      },
+      {
+        "id": "dungeoneering_floor_8",
+        "name": "Clear grandmaster dungeon",
+        "level": 70,
+        "ticks": 500,
+        "xp": 8000,
+        "category": "training"
+      },
+      {
+        "id": "dungeoneering_floor_9",
+        "name": "Clear legendary dungeon",
+        "level": 80,
+        "ticks": 500,
+        "xp": 9000,
+        "category": "training"
+      },
+      {
+        "id": "dungeoneering_floor_10",
+        "name": "Clear mythic dungeon",
+        "level": 90,
+        "ticks": 500,
+        "xp": 10000,
+        "category": "training"
+      },
+      {
+        "id": "unlock_arcane_necklace",
+        "name": "Claim arcane necklace",
+        "level": 65,
+        "ticks": 15000,
+        "xp": 0,
+        "product": "arcane_necklace",
+        "category": "reward"
+      },
+      {
+        "id": "unlock_chaotic_rapier",
+        "name": "Claim chaotic rapier",
+        "level": 80,
+        "ticks": 60000,
+        "xp": 0,
+        "product": "chaotic_rapier",
+        "category": "reward"
+      },
+      {
+        "id": "unlock_chaotic_longsword",
+        "name": "Claim chaotic longsword",
+        "level": 80,
+        "ticks": 60000,
+        "xp": 0,
+        "product": "chaotic_longsword",
+        "category": "reward"
+      },
+      {
+        "id": "unlock_chaotic_maul",
+        "name": "Claim chaotic maul",
+        "level": 80,
+        "ticks": 60000,
+        "xp": 0,
+        "product": "chaotic_maul",
+        "category": "reward"
+      },
+      {
+        "id": "unlock_chaotic_crossbow",
+        "name": "Claim chaotic crossbow",
+        "level": 80,
+        "ticks": 60000,
+        "xp": 0,
+        "product": "chaotic_crossbow",
+        "category": "reward"
+      },
+      {
+        "id": "unlock_chaotic_staff",
+        "name": "Claim chaotic staff",
+        "level": 80,
+        "ticks": 60000,
+        "xp": 0,
+        "product": "chaotic_staff",
+        "category": "reward"
+      },
+      {
+        "id": "unlock_eagle_eyed_kiteshield",
+        "name": "Claim eagle eyed kiteshield",
+        "level": 80,
+        "ticks": 60000,
+        "xp": 0,
+        "product": "eagle_eyed_kiteshield",
+        "category": "reward"
+      },
+      {
+        "id": "unlock_arcane_kiteshield",
+        "name": "Claim arcane kiteshield",
+        "level": 80,
+        "ticks": 60000,
+        "xp": 0,
+        "product": "arcane_kiteshield",
+        "category": "reward"
+      }
+    ]
   }
 }

@@ -14435,5 +14435,298 @@
     "shopValue": 424603,
     "icon": "📿",
     "isGeneralStore": false
+  },
+  "chaotic_rapier": {
+    "id": "chaotic_rapier",
+    "name": "Chaotic rapier",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "attackBonus": {
+      "stab": 120,
+      "slash": 60,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 110,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 90,
+      "strength": 90,
+      "dungeoneering": 80
+    },
+    "shopValue": 200000,
+    "icon": "🗡️",
+    "isUntradeable": true,
+    "isGeneralStore": false
+  },
+  "chaotic_longsword": {
+    "id": "chaotic_longsword",
+    "name": "Chaotic longsword",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 60,
+      "slash": 130,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 122,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 90,
+      "strength": 90,
+      "dungeoneering": 80
+    },
+    "shopValue": 200000,
+    "icon": "⚔️",
+    "isUntradeable": true,
+    "isGeneralStore": false
+  },
+  "chaotic_maul": {
+    "id": "chaotic_maul",
+    "name": "Chaotic maul",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 6,
+    "attackStyle": "crush",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 170,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 180,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 90,
+      "strength": 90,
+      "dungeoneering": 80
+    },
+    "shopValue": 200000,
+    "icon": "🔨",
+    "isUntradeable": true,
+    "isGeneralStore": false
+  },
+  "chaotic_crossbow": {
+    "id": "chaotic_crossbow",
+    "name": "Chaotic crossbow",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "ranged",
+    "ammoType": "bolt",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 135
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 100,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 90,
+      "dungeoneering": 80
+    },
+    "shopValue": 200000,
+    "icon": "🏹",
+    "isUntradeable": true,
+    "isGeneralStore": false
+  },
+  "chaotic_staff": {
+    "id": "chaotic_staff",
+    "name": "Chaotic staff",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "magic",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 135,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 25
+    },
+    "requirements": {
+      "magic": 90,
+      "dungeoneering": 80
+    },
+    "shopValue": 200000,
+    "icon": "🪄",
+    "isUntradeable": true,
+    "isGeneralStore": false
+  },
+  "arcane_necklace": {
+    "id": "arcane_necklace",
+    "name": "Arcane necklace",
+    "type": "armour",
+    "slot": "neck",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 40,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 15
+    },
+    "requirements": {
+      "magic": 90,
+      "dungeoneering": 65
+    },
+    "shopValue": 100000,
+    "icon": "📿",
+    "isUntradeable": true,
+    "isGeneralStore": false
+  },
+  "eagle_eyed_kiteshield": {
+    "id": "eagle_eyed_kiteshield",
+    "name": "Eagle eyed kiteshield",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 50
+    },
+    "defenceBonus": {
+      "stab": 35,
+      "slash": 35,
+      "crush": 35,
+      "magic": 0,
+      "ranged": 110
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 8,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 70,
+      "ranged": 90,
+      "dungeoneering": 80
+    },
+    "shopValue": 200000,
+    "icon": "🛡️",
+    "isUntradeable": true,
+    "isGeneralStore": false
+  },
+  "arcane_kiteshield": {
+    "id": "arcane_kiteshield",
+    "name": "Arcane kiteshield",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 50,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 35,
+      "slash": 35,
+      "crush": 35,
+      "magic": 110,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 8
+    },
+    "requirements": {
+      "defence": 70,
+      "magic": 90,
+      "dungeoneering": 80
+    },
+    "shopValue": 200000,
+    "icon": "🛡️",
+    "isUntradeable": true,
+    "isGeneralStore": false
   }
 }

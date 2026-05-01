@@ -19,11 +19,24 @@ import HunterScreen from './HunterScreen.jsx'
 import FarmingScreen from './FarmingScreen.jsx'
 import ConstructionScreen from './ConstructionScreen.jsx'
 
-// Agility, Prayer, Thieving, Hunter, Slayer, and Construction are special skills shown here in the Skills tab
-// (farming is silently hidden from display; logic remains intact)
-const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'hunter', 'slayer', 'construction']
+// Agility, Prayer, Thieving, Hunter, Slayer, Construction, and Dungeoneering are special
+// skills shown here in the Skills tab (farming is silently hidden from display; logic remains intact)
+const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'hunter', 'slayer', 'construction', 'dungeoneering']
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0)
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS]
+
+// Format an action duration. Tick is 600ms; short actions show as `Xs`,
+// longer ones (>=60s) show as minutes/hours so 10h doesn't render as 36000s.
+function formatActionDuration(ticks) {
+  const seconds = ticks * 0.6
+  if (seconds < 60) return `${seconds.toFixed(1)}s`
+  if (seconds < 3600) {
+    const mins = seconds / 60
+    return Number.isInteger(mins) ? `${mins}m` : `${mins.toFixed(1)}m`
+  }
+  const hours = seconds / 3600
+  return Number.isInteger(hours) ? `${hours}h` : `${hours.toFixed(1)}h`
+}
 
 // Calculate remaining actions based on available materials
 function calculateRemainingActions(action, inventory, bank) {
@@ -421,8 +434,8 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
         <p class="text-xs text-[var(--color-parchment)] opacity-40 mb-3">Level {skillLevel}</p>
 
         {/* Banking toggle for skilling */}
-        <div class="space-y-2">
-          {allActions.map(action => {
+        {(() => {
+          const renderActionRow = (action) => {
             const available = action.level <= skillLevel
             const hasMats = !action.materials || Object.entries(action.materials).every(
               ([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty
@@ -456,8 +469,8 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                   <div class="text-sm font-semibold text-[var(--color-parchment)]">{action.name}</div>
                   <div class="text-[10px] text-[var(--color-parchment)] opacity-40">
                     Lv {action.level} · {action.xp} XP · {effectiveTicks !== action.ticks
-                      ? <><span class="line-through">{(action.ticks * 0.6).toFixed(1)}s</span> <span class="text-[var(--color-gold)] opacity-100">{(effectiveTicks * 0.6).toFixed(1)}s</span></>
-                      : `${(action.ticks * 0.6).toFixed(1)}s`}
+                      ? <><span class="line-through">{formatActionDuration(action.ticks)}</span> <span class="text-[var(--color-gold)] opacity-100">{formatActionDuration(effectiveTicks)}</span></>
+                      : formatActionDuration(action.ticks)}
                     {(() => {
                       const remaining = calculateRemainingActions(action, inventory, bank)
                       return remaining !== null ? <span class="text-[var(--color-gold)]"> · {remaining.toLocaleString()} actions</span> : null
@@ -499,8 +512,36 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                 )}
               </button>
             )
-          })}
-        </div>
+          }
+
+          if (selectedSkill === 'dungeoneering') {
+            const trainingActions = allActions.filter(a => a.category !== 'reward')
+            const rewardActions = allActions.filter(a => a.category === 'reward')
+            return (
+              <>
+                <div class="space-y-2">
+                  {trainingActions.map(renderActionRow)}
+                </div>
+                {rewardActions.length > 0 && (
+                  <>
+                    <h3 class="font-[var(--font-display)] text-xs font-bold text-[var(--color-gold)] uppercase tracking-wider mt-5 mb-2">
+                      Equipment Unlocks
+                    </h3>
+                    <div class="space-y-2">
+                      {rewardActions.map(renderActionRow)}
+                    </div>
+                  </>
+                )}
+              </>
+            )
+          }
+
+          return (
+            <div class="space-y-2">
+              {allActions.map(renderActionRow)}
+            </div>
+          )
+        })()}
 
         {/* High Alchemy item picker modal */}
         {showAlchemyPicker && selectedAction && (
