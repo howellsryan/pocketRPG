@@ -1131,7 +1131,11 @@ function GameApp() {
             }
             updateBankDirect(bankedItems)
           }
-          if (sim.ticksRemaining !== undefined) {
+          if (sim.rewardCompleted) {
+            // Long-form skill reward (e.g. Dungeoneering equipment unlock)
+            // finished — clear the task so the user can start a new action.
+            setActiveTask(null)
+          } else if (sim.ticksRemaining !== undefined) {
             // Non-quest task — update progress if partial
             setActiveTask({
               ...savedTask,

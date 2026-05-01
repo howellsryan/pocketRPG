@@ -32765,6 +32765,39 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
     if (!task || !task.action)
         return null;
     const totalTicks = Math.floor(elapsedMs / TICK_MS);
+    // Long-form reward actions (e.g. Dungeoneering equipment unlocks) progress
+    // partially, like quests. They have a single action of many thousands of
+    // ticks and should not require a full action to complete in one elapsed
+    // window. The task carries its own ticksRemaining; we decrement it by the
+    // elapsed tick count and only grant the product on completion.
+    if (task.action.category === 'reward') {
+        const fullTicks = Math.max(1, Math.floor(Number(task.action.ticks) || 1));
+        const prevRemaining = Math.max(0, Math.floor(Number(task.ticksRemaining ?? fullTicks)));
+        if (prevRemaining <= 0)
+            return null;
+        const consumed = Math.min(prevRemaining, totalTicks);
+        if (consumed <= 0)
+            return null;
+        const newRemaining = prevRemaining - consumed;
+        const completed = newRemaining <= 0;
+        const product = task.action.product;
+        return {
+            xpGained: {},
+            itemsGained: completed && product ? { [product]: 1 } : {},
+            itemsBanked: completed && product ? { [product]: 1 } : {},
+            itemsConsumed: {},
+            itemsDropped: {},
+            actions: completed ? 1 : 0,
+            skill: task.skill,
+            actionName: task.action.name,
+            finalInventory: inventory,
+            coinsGained: 0,
+            ticksRemaining: completed ? 0 : newRemaining,
+            ticksUsed: consumed,
+            rewardCompleted: completed,
+            rewardTimeReduced: !completed,
+        };
+    }
     // Apply the same effective tool timing as active skilling.
     const actionTicks = getEffectiveToolActionTicks(task.skill, task.action.ticks, equipment, itemsData, stats, inventory);
     let actions = Math.floor(totalTicks / actionTicks);
@@ -34117,6 +34150,16 @@ function getSkillSkipPreflight(activeTask, context, elapsedMs) {
     const action = activeTask?.action;
     if (!action || !activeTask?.skill)
         return invalid('No skilling action is active.', 'skill');
+    // Long-form reward actions partially progress like quests/minigames — allow
+    // skip whenever any work remains, regardless of whether the elapsed window
+    // is long enough to complete a full action.
+    if (action.category === 'reward') {
+        const fullTicks = Math.max(1, Math.floor(Number(action.ticks) || 1));
+        const remaining = Math.max(0, Math.floor(Number(activeTask.ticksRemaining ?? fullTicks)));
+        if (remaining <= 0)
+            return invalid('This reward has already been claimed.', 'skill:reward', true);
+        return valid(1, 'skill:reward');
+    }
     const effectiveTicks = getEffectiveToolActionTicks(activeTask.skill, action.ticks, context.equipment, context.itemsData || {}, context.stats || {}, context.inventory || []);
     let possibleActions = actionsFromTicks(elapsedMs, effectiveTicks);
     if (possibleActions <= 0)
@@ -34169,6 +34212,8 @@ function isChargeableSkipOutcome(activeTask, outcome) {
         return !!outcome.minigameCompleted || !!outcome.minigameTimeReduced;
     if (activeTask.type === 'minigame')
         return !!outcome.minigameCompleted || !!outcome.minigameTimeReduced;
+    if (activeTask.type === 'skill' && activeTask.action?.category === 'reward')
+        return !!outcome.rewardCompleted || !!outcome.rewardTimeReduced;
     if (Number(outcome.actions || 0) > 0)
         return true;
     if (Number(outcome.monstersKilled || 0) > 0)
@@ -35575,6 +35620,20 @@ function GameProvider({ children }) {
                             ticksUsed: Math.floor(cascade.elapsedMsUsed / 600),
                             ticksRemaining: savedTask?.ticksRemaining ?? 0,
                         };
+                    }
+                    // Long-form skill reward actions (Dungeoneering equipment unlocks)
+                    // partially progress like quests — persist the new ticksRemaining or
+                    // clear the task on completion.
+                    if (savedTask?.type === 'skill' && savedTask.action?.category === 'reward') {
+                        if (sim.rewardCompleted) {
+                            savedTask = null;
+                            localStorage.removeItem('pocketrpg_activeTask');
+                            localStorage.removeItem('pocketrpg_lastTick');
+                        }
+                        else if (typeof sim.ticksRemaining === 'number') {
+                            savedTask = { ...savedTask, ticksRemaining: sim.ticksRemaining };
+                            localStorage.setItem('pocketrpg_activeTask', JSON.stringify(savedTask));
+                        }
                     }
                     idleResult = { elapsedMs, task: savedTask, ...sim };
                 }
@@ -41813,11 +41872,26 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
         const adjustedAction = effectiveTicks !== action.ticks
             ? { ...action, ticks: effectiveTicks }
             : action;
+        // Resume long-form reward actions where a previous session left off so the
+        // in-screen progress bar reflects partial idle/skip progress.
+        const isResumableReward = action.category === 'reward'
+            && activeTask?.type === 'skill'
+            && activeTask.skill === selectedSkill
+            && activeTask.action?.id === action.id
+            && typeof activeTask.ticksRemaining === 'number'
+            && activeTask.ticksRemaining > 0
+            && activeTask.ticksRemaining < action.ticks;
         const state = { ...createSkillingState(selectedSkill, adjustedAction), startedAt: Date.now() };
+        if (isResumableReward)
+            state.ticksRemaining = activeTask.ticksRemaining;
         setSelectedAction(action);
         setSkilling(state);
         // Store original action in task — idle engine will apply tool multiplier separately
-        setActiveTask({ type: 'skill', skill: selectedSkill, action, bankingEnabled: true });
+        const newTask = { type: 'skill', skill: selectedSkill, action, bankingEnabled: true };
+        if (action.category === 'reward') {
+            newTask.ticksRemaining = isResumableReward ? activeTask.ticksRemaining : action.ticks;
+        }
+        setActiveTask(newTask);
     };
     const startAlchemy = (item) => {
         if (!selectedAction)
@@ -45565,7 +45639,12 @@ function GameApp() {
                         }
                         updateBankDirect(bankedItems);
                     }
-                    if (sim.ticksRemaining !== undefined) {
+                    if (sim.rewardCompleted) {
+                        // Long-form skill reward (e.g. Dungeoneering equipment unlock)
+                        // finished — clear the task so the user can start a new action.
+                        setActiveTask(null);
+                    }
+                    else if (sim.ticksRemaining !== undefined) {
                         // Non-quest task — update progress if partial
                         setActiveTask({
                             ...savedTask,

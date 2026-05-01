@@ -4,6 +4,8 @@ import items from '../src/data/items.json'
 import { ALL_SKILLS, SKILL_ICONS, STUB_SKILLS, UTILITY_SKILLS } from '../src/utils/constants.js'
 import { getAvailableActions } from '../src/engine/skilling.js'
 import { getXPForLevel } from '../src/engine/experience.js'
+import { simulateIdleSkilling } from '../src/engine/idleEngine.js'
+import { getSkipPreflight, isChargeableSkipOutcome, SKIP_HOUR_MS } from '../src/engine/skipPreflight.js'
 
 const dungeoneering = (skills as Record<string, any>).dungeoneering
 const itemIds = new Set(Object.keys(items as Record<string, any>))
@@ -152,5 +154,78 @@ describe('dungeoneering: action availability gates', () => {
     ]) {
       expect(ids.has(id), `${id} should be available at 80`).toBe(true)
     }
+  })
+})
+
+describe('dungeoneering: reward actions support partial idle progress', () => {
+  const rewardAction = (dungeoneering.actions as any[]).find(
+    (a) => a.id === 'unlock_chaotic_rapier',
+  )
+  const arcaneNeck = (dungeoneering.actions as any[]).find(
+    (a) => a.id === 'unlock_arcane_necklace',
+  )
+
+  it('partial idle reduces ticksRemaining without granting product', () => {
+    const task = {
+      type: 'skill',
+      skill: 'dungeoneering',
+      action: rewardAction,
+      ticksRemaining: rewardAction.ticks, // 60,000
+    }
+    const oneHourMs = SKIP_HOUR_MS // 6,000 ticks
+    const sim = simulateIdleSkilling(task, oneHourMs, {}, {}, {}, items as any, [])
+    expect(sim).not.toBeNull()
+    expect(sim!.actions).toBe(0)
+    expect(sim!.ticksRemaining).toBe(rewardAction.ticks - 6000)
+    expect(sim!.rewardTimeReduced).toBe(true)
+    expect(sim!.rewardCompleted).toBe(false)
+    expect(Object.keys(sim!.itemsBanked || {})).toHaveLength(0)
+  })
+
+  it('completing the action banks the product exactly once', () => {
+    const task = {
+      type: 'skill',
+      skill: 'dungeoneering',
+      action: arcaneNeck,
+      ticksRemaining: 1000, // about 10 minutes left of a 2.5-hour action
+    }
+    const oneHourMs = SKIP_HOUR_MS
+    const sim = simulateIdleSkilling(task, oneHourMs, {}, {}, {}, items as any, [])
+    expect(sim).not.toBeNull()
+    expect(sim!.rewardCompleted).toBe(true)
+    expect(sim!.rewardTimeReduced).toBe(false)
+    expect(sim!.ticksRemaining).toBe(0)
+    expect(sim!.actions).toBe(1)
+    expect(sim!.itemsBanked).toEqual({ arcane_necklace: 1 })
+  })
+
+  it('skip preflight allows reward actions even with no full action completed', () => {
+    const task = {
+      type: 'skill',
+      skill: 'dungeoneering',
+      action: rewardAction, // 60,000 ticks — far longer than a 1h skip
+    }
+    const preflight = getSkipPreflight(task, { itemsData: items as any, inventory: [], bank: {}, equipment: {}, stats: {} }, SKIP_HOUR_MS)
+    expect(preflight.canSkip).toBe(true)
+    expect(preflight.kind).toBe('skill:reward')
+  })
+
+  it('skip preflight blocks reward actions whose ticksRemaining is zero', () => {
+    const task = {
+      type: 'skill',
+      skill: 'dungeoneering',
+      action: rewardAction,
+      ticksRemaining: 0,
+    }
+    const preflight = getSkipPreflight(task, { itemsData: items as any, inventory: [], bank: {}, equipment: {}, stats: {} }, SKIP_HOUR_MS)
+    expect(preflight.canSkip).toBe(false)
+    expect(preflight.shouldStopTask).toBe(true)
+  })
+
+  it('isChargeableSkipOutcome accepts partial reward progress and completion', () => {
+    const task = { type: 'skill', skill: 'dungeoneering', action: rewardAction }
+    expect(isChargeableSkipOutcome(task, { rewardTimeReduced: true })).toBe(true)
+    expect(isChargeableSkipOutcome(task, { rewardCompleted: true })).toBe(true)
+    expect(isChargeableSkipOutcome(task, {})).toBe(false)
   })
 })

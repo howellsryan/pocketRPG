@@ -311,11 +311,26 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     const adjustedAction = effectiveTicks !== action.ticks
       ? { ...action, ticks: effectiveTicks }
       : action
+
+    // Resume long-form reward actions where a previous session left off so the
+    // in-screen progress bar reflects partial idle/skip progress.
+    const isResumableReward = action.category === 'reward'
+      && activeTask?.type === 'skill'
+      && activeTask.skill === selectedSkill
+      && activeTask.action?.id === action.id
+      && typeof activeTask.ticksRemaining === 'number'
+      && activeTask.ticksRemaining > 0
+      && activeTask.ticksRemaining < action.ticks
     const state = { ...createSkillingState(selectedSkill, adjustedAction), startedAt: Date.now() }
+    if (isResumableReward) state.ticksRemaining = activeTask.ticksRemaining
     setSelectedAction(action)
     setSkilling(state)
     // Store original action in task — idle engine will apply tool multiplier separately
-    setActiveTask({ type: 'skill', skill: selectedSkill, action, bankingEnabled: true })
+    const newTask = { type: 'skill', skill: selectedSkill, action, bankingEnabled: true }
+    if (action.category === 'reward') {
+      newTask.ticksRemaining = isResumableReward ? activeTask.ticksRemaining : action.ticks
+    }
+    setActiveTask(newTask)
   }
 
   const startAlchemy = (item) => {

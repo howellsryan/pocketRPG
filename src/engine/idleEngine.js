@@ -84,6 +84,42 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
 
   const totalTicks = Math.floor(elapsedMs / TICK_MS)
 
+  // Long-form reward actions (e.g. Dungeoneering equipment unlocks) progress
+  // partially, like quests. They have a single action of many thousands of
+  // ticks and should not require a full action to complete in one elapsed
+  // window. The task carries its own ticksRemaining; we decrement it by the
+  // elapsed tick count and only grant the product on completion.
+  if (task.action.category === 'reward') {
+    const fullTicks = Math.max(1, Math.floor(Number(task.action.ticks) || 1))
+    const prevRemaining = Math.max(0, Math.floor(Number(task.ticksRemaining ?? fullTicks)))
+    if (prevRemaining <= 0) return null
+
+    const consumed = Math.min(prevRemaining, totalTicks)
+    if (consumed <= 0) return null
+
+    const newRemaining = prevRemaining - consumed
+    const completed = newRemaining <= 0
+    const product = task.action.product
+
+    return {
+      xpGained: {},
+      itemsGained: completed && product ? { [product]: 1 } : {},
+      itemsBanked: completed && product ? { [product]: 1 } : {},
+      itemsConsumed: {},
+      itemsDropped: {},
+      actions: completed ? 1 : 0,
+      skill: task.skill,
+      actionName: task.action.name,
+      finalInventory: inventory,
+      coinsGained: 0,
+      ticksRemaining: completed ? 0 : newRemaining,
+      ticksUsed: consumed,
+      rewardCompleted: completed,
+      rewardTimeReduced: !completed,
+    }
+  }
+
+
   // Apply the same effective tool timing as active skilling.
   const actionTicks = getEffectiveToolActionTicks(task.skill, task.action.ticks, equipment, itemsData, stats, inventory)
 
