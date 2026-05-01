@@ -85,7 +85,7 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
       label: 'Time Remaining',
       value: formatIdleTime((idleResult.ticksRemaining || 0) * 600),
       current: Math.max(0, (idleResult.task?.totalTicks || 0) - (idleResult.ticksRemaining || 0)),
-      total: idleResult.task?.totalTicks || 1,
+      total: idleResult.task?.totalTicks || idleResult.task?.action?.ticks || 1,
     },
     reward_complete: {
       title: '✅ Unlock Complete!',
@@ -1360,6 +1360,14 @@ function GameApp() {
     }
   }
 
+  const closeIdleResultModal = () => {
+    if (idleResult?.rewardCompleted && idleResult?.task?.type === 'skill' && idleResult?.task?.skill === 'dungeoneering') {
+      setScreen(SCREENS.SKILLS)
+      setActionData({ skillId: 'dungeoneering' })
+    }
+    setIdleResult(null)
+  }
+
   const isCloudAccount = !!getToken() && !!getCharacterId()
 
   return (
@@ -1670,7 +1678,7 @@ function GameApp() {
             {/* Footer button */}
             <div style={{ padding: '12px 16px', borderTop: '1px solid #222' }}>
               <button
-                onClick={() => setIdleResult(null)}
+                onClick={closeIdleResultModal}
                 style={{ width: '100%', padding: '13px', borderRadius: '12px', background: 'linear-gradient(135deg, #b8940e, #d4af37)', color: '#0f0f0f', fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '14px', border: 'none', cursor: 'pointer' }}
               >
                 Continue Adventure
