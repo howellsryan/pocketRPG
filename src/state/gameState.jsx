@@ -66,6 +66,7 @@ export function GameProvider({ children }) {
       getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('dungeoneeringTokens'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
       getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell')
     ])
+    savedDungeoneeringTokens = normaliseDungeoneeringTokens(savedDungeoneeringTokens)
     // Idle-engine inputs: last active timestamp and last active task.
     // D1 is authoritative when signed in + online — localStorage is only used
     // as an offline-mode fallback (and as a backup when the D1 fetch fails).
@@ -90,6 +91,11 @@ export function GameProvider({ children }) {
       } else {
         console.warn('[PocketRPG] fetchIdleState failed, using local fallback:', e?.message || e)
       }
+    }
+    if (savedTask?.type === 'skill' && savedTask?.skill === 'dungeoneering' && isDungeoneeringRewardAction(savedTask?.action)) {
+      savedTask = null
+      localStorage.removeItem('pocketrpg_activeTask')
+      localStorage.removeItem('pocketrpg_lastTick')
     }
 
     // ── Idle simulation (runs on raw DB data, before state is set) ──
@@ -764,9 +770,3 @@ export function GameProvider({ children }) {
 export function useGame() {
   return useContext(GameContext)
 }
-    savedDungeoneeringTokens = normaliseDungeoneeringTokens(savedDungeoneeringTokens)
-    if (savedTask?.type === 'skill' && savedTask?.skill === 'dungeoneering' && isDungeoneeringRewardAction(savedTask?.action)) {
-      savedTask = null
-      localStorage.removeItem('pocketrpg_activeTask')
-      localStorage.removeItem('pocketrpg_lastTick')
-    }

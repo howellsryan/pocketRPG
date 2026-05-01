@@ -656,7 +656,6 @@ function GameApp() {
             updateBankDirect(negated)
           }
           if (sim.dungeoneeringTokensGained > 0) awardDungeoneeringTokens(sim.dungeoneeringTokensGained)
-          if (sim.dungeoneeringTokensGained > 0) awardDungeoneeringTokens(sim.dungeoneeringTokensGained)
           // Persist slayer task update if present
           if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
             if (sim.slayerTaskUpdate.completed) {
@@ -1215,6 +1214,7 @@ function GameApp() {
             }
             updateBankDirect(negated)
           }
+          if (sim.dungeoneeringTokensGained > 0) awardDungeoneeringTokens(sim.dungeoneeringTokensGained)
           // Persist slayer task update if present
           if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
             if (sim.slayerTaskUpdate.completed) {

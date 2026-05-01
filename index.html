@@ -35593,6 +35593,7 @@ function GameProvider({ children }) {
             getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('dungeoneeringTokens'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
             getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell')
         ]);
+        savedDungeoneeringTokens = normaliseDungeoneeringTokens(savedDungeoneeringTokens);
         // Idle-engine inputs: last active timestamp and last active task.
         // D1 is authoritative when signed in + online — localStorage is only used
         // as an offline-mode fallback (and as a backup when the D1 fetch fails).
@@ -35626,6 +35627,11 @@ function GameProvider({ children }) {
             else {
                 console.warn('[PocketRPG] fetchIdleState failed, using local fallback:', e?.message || e);
             }
+        }
+        if (savedTask?.type === 'skill' && savedTask?.skill === 'dungeoneering' && isDungeoneeringRewardAction(savedTask?.action)) {
+            savedTask = null;
+            localStorage.removeItem('pocketrpg_activeTask');
+            localStorage.removeItem('pocketrpg_lastTick');
         }
         // ── Idle simulation (runs on raw DB data, before state is set) ──
         let idleResult = null;
@@ -36284,12 +36290,6 @@ function GameProvider({ children }) {
 }
 function useGame() {
     return useContext(GameContext);
-}
-savedDungeoneeringTokens = normaliseDungeoneeringTokens(savedDungeoneeringTokens);
-if (savedTask?.type === 'skill' && savedTask?.skill === 'dungeoneering' && isDungeoneeringRewardAction(savedTask?.action)) {
-    savedTask = null;
-    localStorage.removeItem('pocketrpg_activeTask');
-    localStorage.removeItem('pocketrpg_lastTick');
 }
 
 // ── state/pvpState.js ──
@@ -45514,8 +45514,6 @@ function GameApp() {
                     }
                     if (sim.dungeoneeringTokensGained > 0)
                         awardDungeoneeringTokens(sim.dungeoneeringTokensGained);
-                    if (sim.dungeoneeringTokensGained > 0)
-                        awardDungeoneeringTokens(sim.dungeoneeringTokensGained);
                     // Persist slayer task update if present
                     if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
                         if (sim.slayerTaskUpdate.completed) {
@@ -46090,6 +46088,8 @@ function GameApp() {
                         }
                         updateBankDirect(negated);
                     }
+                    if (sim.dungeoneeringTokensGained > 0)
+                        awardDungeoneeringTokens(sim.dungeoneeringTokensGained);
                     // Persist slayer task update if present
                     if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
                         if (sim.slayerTaskUpdate.completed) {
