@@ -37,6 +37,7 @@ const sourceFiles = [
   'engine/pvpEngine.js',
   'engine/lootTransfer.js',
   'engine/skilling.js',
+  'engine/dungeoneeringTokens.js',
   'engine/idleEngine.js',
   'engine/tick.js',
   'engine/farming.js',
