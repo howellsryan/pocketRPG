@@ -3,8 +3,8 @@ import { useGame } from '../state/gameState.jsx'
 import { countItem, removeItem, freeSlots } from '../engine/inventory.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
 import { getStoreItemTypes, isStoreVisibleItem, getPurchaseRestriction } from '../engine/storeRules.js'
-import Modal from '../components/Modal.jsx'
 import Panel from '../components/Panel.jsx'
+import SharedItemModal from '../components/SharedItemModal.jsx'
 import Button from '../components/Button.jsx'
 import questsData from '../data/quests.json'
 import monstersData from '../data/monsters.json'
@@ -312,7 +312,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
                     isQuestItem && !isUnlocked ? 'text-[#666]' : (canAfford ? 'text-[var(--color-gold)]' : 'text-[#888]')
                   }`}>
                     {isQuestItem && !isUnlocked ? '—' : (isBossUnique ? 'Boss unique' : (isClueReward ? 'Clue reward' : `${price.toLocaleString()} gp`))}
-                    {(isBossUnique || isClueReward) && <div class="text-[10px] text-[var(--color-parchment)] opacity-70 mt-1">{obtainMessage}</div>}
+                    {(isBossUnique || isClueReward) && <div class="text-[10px] text-[var(--color-parchment)] opacity-70 mt-1 break-words leading-tight">{obtainMessage}</div>}
                   </div>
                 </button>
               )
@@ -323,19 +323,12 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
 
       {/* ── PURCHASE MODAL ── */}
       {selectedItem && (
-        <Modal
+        <SharedItemModal
+          item={selectedItem}
           title={`${selectedItem.questUnlock && !selectedItem.isUnlocked ? 'Locked: ' : ''}${selectedItem.name}`}
           onClose={() => { setSelectedItem(null); setBuyQty(1) }}
         >
           <div class="flex flex-col gap-4">
-            {/* Item preview */}
-            <Panel className="flex items-center gap-3">
-              <span class="text-[32px]">{selectedItem.icon || '📦'}</span>
-              <div>
-                <div class="text-[13px] font-semibold text-[var(--color-parchment)]">{selectedItem.name}</div>
-                <div class="text-[11px] text-[#888] mt-[2px]">{selectedItem.type}</div>
-              </div>
-            </Panel>
 
             {/* Quest unlock info */}
             {selectedItem.questUnlock && (
@@ -419,7 +412,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
               )}
             </div>
           </div>
-        </Modal>
+        </SharedItemModal>
       )}
     </div>
   )

@@ -2,12 +2,11 @@ import { useState } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import { unequipSlot, getEquipmentBonuses } from '../engine/equipment.js'
 import { EQUIPMENT_SLOTS } from '../utils/constants.js'
-import Modal from '../components/Modal.jsx'
+import SharedItemModal from '../components/SharedItemModal.jsx'
 import Card from '../components/Card.jsx'
 import Panel from '../components/Panel.jsx'
 import Button from '../components/Button.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
-import BonusDisplay from '../components/BonusDisplay.jsx'
 
 const DEFAULT_CHARGE_ITEM_ID = 'zulrah_scales'
 
@@ -312,19 +311,8 @@ export default function EquipmentScreen() {
 
       {/* Unequip modal */}
       {selected && (
-        <Modal title={selected.item.name} onClose={() => setSelected(null)}>
+        <SharedItemModal item={selected.item} onClose={() => setSelected(null)} extraInfo={<p>Slot: {EQ_SLOT_NAMES[selected.slot]}</p>}>
           <div class="flex flex-col gap-2">
-            <Panel className="text-[12px] text-[var(--color-parchment)] opacity-70 space-y-3">
-              <div>
-                <p>Slot: {EQ_SLOT_NAMES[selected.slot]}</p>
-                {selected.item.attackSpeed && <p>Attack speed: {selected.item.attackSpeed} ticks</p>}
-                {selected.item.attackStyle && <p>Style: {selected.item.attackStyle}</p>}
-                {selected.item.requirements && Object.entries(selected.item.requirements).length > 0 && (
-                  <p>Requires: {Object.entries(selected.item.requirements).map(([s, l]) => `${s} ${l}`).join(', ')}</p>
-                )}
-              </div>
-              <BonusDisplay item={selected.item} />
-            </Panel>
 
             {/* Scale charges panel */}
             {selected.item.scaleCharged && (() => {
@@ -403,7 +391,7 @@ export default function EquipmentScreen() {
               Unequip
             </Button>
           </div>
-        </Modal>
+        </SharedItemModal>
       )}
     </div>
   )

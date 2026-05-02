@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import Modal from '../components/Modal.jsx'
+import SharedItemModal from '../components/SharedItemModal.jsx'
 import { formatQuantity } from '../utils/helpers'
 
 const MAX_TABS = 8
@@ -490,7 +491,7 @@ export default function BankScreen() {
         const currentAssignment = itemTabMap[selected.itemId]
 
         return (
-          <Modal title={selItem?.name || selected.itemId} onClose={() => setSelectedId(null)}>
+          <SharedItemModal item={selItem} quantity={selected.quantity} title={selItem?.name || selected.itemId} onClose={() => setSelectedId(null)}>
             <div class="space-y-3">
 
               {/* Quantity in bank */}
@@ -613,7 +614,7 @@ export default function BankScreen() {
               )}
 
             </div>
-          </Modal>
+          </SharedItemModal>
         )
       })()}
 

@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import ItemSlot from '../components/ItemSlot.jsx'
 import Modal from '../components/Modal.jsx'
+import SharedItemModal from '../components/SharedItemModal.jsx'
 import { freeSlots, countItem } from '../engine/inventory.js'
 import { equipItem, checkEquipRequirements } from '../engine/equipment.js'
 import { getLevelFromXP } from '../engine/experience.js'
@@ -460,10 +461,8 @@ export default function InventoryScreen() {
 
       {/* Item action modal */}
       {selected && (
-        <Modal title={selected.item.name} onClose={() => setSelected(null)}>
+        <SharedItemModal item={selected.item} quantity={selected.slot.quantity} noted={selected.slot.noted} onClose={() => setSelected(null)}>
           <div class="space-y-2">
-            {/* Item info */}
-            <div class="bg-[#111] rounded-lg p-3 text-sm text-[var(--color-parchment)] opacity-70">
               {selected.slot.noted && (
                 <p style={{ color: '#d4a017', fontWeight: '600', marginBottom: '4px' }}>📜 Noted — cannot be used</p>
               )}
@@ -515,8 +514,6 @@ export default function InventoryScreen() {
               {selected.item.shopValue > 0 && (
                 <p class="mt-1">Value: <span class="text-[var(--color-gold)]">{selected.item.shopValue} gp</span></p>
               )}
-            </div>
-
             {/* Special attack info — shown for weapons with a spec */}
             {selected.item.specialAttack && (
               <div class="bg-[#111] rounded-lg border border-yellow-900 overflow-hidden">
@@ -710,7 +707,7 @@ export default function InventoryScreen() {
               </div>
             )}
           </div>
-        </Modal>
+        </SharedItemModal>
       )}
 
       {/* ── Bank quantity input modal ──────────────────────────────────── */}
