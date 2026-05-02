@@ -6,6 +6,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   isPvpTradeable,
+  isPvpCoinReplacementItem,
   splitInventoryByTradeable,
   sortLootByValueDesc,
   fillBank,
@@ -22,6 +23,9 @@ const items = {
   toxic_blowpipe:   { id: 'toxic_blowpipe',   isUntradeable: false,                  shopValue: 5_000_000 },
   dragon_arrow:     { id: 'dragon_arrow',     isUntradeable: false, stackable: true, shopValue: 1500 },
   zulrah_scales:    { id: 'zulrah_scales',    isUntradeable: false, stackable: true, shopValue: 200 },
+  boss_blade:       { id: 'boss_blade',       isUntradeable: false, isBossUnique: true, shopValue: 1_000_000 },
+  boss_relic:       { id: 'boss_relic',       isUntradeable: true,  isBossUnique: true, shopValue: 2_500_000 },
+  clue_scroll_gold: { id: 'clue_scroll_gold', isUntradeable: false, isClueReward: true, shopValue: 250_000, stackable: true },
 }
 
 describe('isPvpTradeable', () => {
@@ -38,6 +42,14 @@ describe('isPvpTradeable', () => {
   })
   it('returns false for unknown items (defensive)', () => {
     expect(isPvpTradeable('not_a_real_item', items)).toBe(false)
+  })
+})
+
+describe('isPvpCoinReplacementItem', () => {
+  it('returns true for boss unique and clue reward items, false for coins', () => {
+    expect(isPvpCoinReplacementItem('boss_blade', items)).toBe(true)
+    expect(isPvpCoinReplacementItem('clue_scroll_gold', items)).toBe(true)
+    expect(isPvpCoinReplacementItem('coins', items)).toBe(false)
   })
 })
 
@@ -91,6 +103,14 @@ describe('splitInventoryByTradeable', () => {
     const { transfer } = splitInventoryByTradeable([], equipment, items)
     expect(transfer[0].itemId).toBe('dragon_arrow')
     expect(transfer[0].quantity).toBe(850)
+  })
+
+  it('converts equipped boss unique into coins and clears loser slot', () => {
+    const equipment = { weapon: { itemId: 'boss_blade' } }
+    const { transfer, remainingEquipment } = splitInventoryByTradeable([], equipment, items)
+    expect(transfer).toHaveLength(1)
+    expect(transfer[0]).toMatchObject({ itemId: 'coins', quantity: 1_000_000, fromSlot: 'equipment.weapon' })
+    expect(remainingEquipment.weapon).toBeNull()
   })
 })
 
@@ -159,6 +179,14 @@ describe('fillBank', () => {
     expect(result.addedValue).toBe(0)
     expect(result.droppedValue).toBe(1_525_000)
   })
+
+  it('always credits coins even when bank is full and coins key is missing', () => {
+    const filler: Record<string, { itemId: string; quantity: number }> = {}
+    for (let i = 0; i < 500; i++) filler[`j_${i}`] = { itemId: `j_${i}`, quantity: 1 }
+    const result = fillBank(filler, [{ itemId: 'coins', quantity: 1_000_000 }], items, 500)
+    expect(result.bank.coins.quantity).toBe(1_000_000)
+    expect(result.dropped).toHaveLength(0)
+  })
 })
 
 describe('applyLootTransfer (end-to-end)', () => {
@@ -217,5 +245,100 @@ describe('applyLootTransfer (end-to-end)', () => {
     expect(result.summary.totalRiskValue).toBe(1_500_000)
     expect(result.summary.droppedValue).toBe(1_500_000)
     expect(result.loser.equipment.weapon).toBeNull()    // loser still loses it
+  })
+
+  it('boss unique equipped item converts to coins and never transfers original item', () => {
+    const result = applyLootTransfer({
+      loserInventory: new Array(28).fill(null),
+      loserEquipment: { weapon: { itemId: 'boss_blade' } },
+      winnerBank: {},
+      itemsData: items,
+    })
+    expect(result.loser.equipment.weapon).toBeNull()
+    expect(result.winner.bank.coins.quantity).toBe(1_000_000)
+    expect(result.winner.bank.boss_blade).toBeUndefined()
+    expect(result.summary.added.some(i => i.itemId === 'boss_blade')).toBe(false)
+    expect(result.summary.added.some(i => i.itemId === 'coins')).toBe(true)
+    expect(result.summary.bankedValue).toBe(1_000_000)
+    expect(result.summary.addedValue).toBe(1_000_000)
+    expect(result.summary.totalRiskValue).toBe(1_000_000)
+  })
+
+  it('boss unique untradeable item still converts to coins', () => {
+    const inv = new Array(28).fill(null)
+    inv[3] = { itemId: 'boss_relic', quantity: 1 }
+    const result = applyLootTransfer({
+      loserInventory: inv,
+      loserEquipment: {},
+      winnerBank: {},
+      itemsData: items,
+    })
+    expect(result.loser.inventory[3]).toBeNull()
+    expect(result.winner.bank.coins.quantity).toBe(2_500_000)
+    expect(result.winner.bank.boss_relic).toBeUndefined()
+  })
+
+  it('clue reward quantity converts to multiplied coin value', () => {
+    const inv = new Array(28).fill(null)
+    inv[1] = { itemId: 'clue_scroll_gold', quantity: 3 }
+    const result = applyLootTransfer({
+      loserInventory: inv,
+      loserEquipment: {},
+      winnerBank: {},
+      itemsData: items,
+    })
+    expect(result.loser.inventory[1]).toBeNull()
+    expect(result.winner.bank.coins.quantity).toBe(750_000)
+    expect(result.winner.bank.clue_scroll_gold).toBeUndefined()
+  })
+
+  it('mixed death pile keeps normal untradeables while converting boss/clue and adding existing coins', () => {
+    const inv = new Array(28).fill(null)
+    inv[0] = { itemId: 'coins', quantity: 10_000 }
+    inv[1] = { itemId: 'rune_scimitar', quantity: 1 }
+    inv[2] = { itemId: 'fire_cape', quantity: 1 }
+    inv[3] = { itemId: 'clue_scroll_gold', quantity: 1 }
+    const eq = { weapon: { itemId: 'boss_blade' } }
+    const result = applyLootTransfer({
+      loserInventory: inv,
+      loserEquipment: eq,
+      winnerBank: {},
+      itemsData: items,
+    })
+    expect(result.loser.inventory[2]).toEqual({ itemId: 'fire_cape', quantity: 1 })
+    expect(result.loser.inventory[0]).toBeNull()
+    expect(result.loser.inventory[1]).toBeNull()
+    expect(result.loser.inventory[3]).toBeNull()
+    expect(result.loser.equipment.weapon).toBeNull()
+    expect(result.winner.bank.rune_scimitar).toBeDefined()
+    expect(result.winner.bank.coins.quantity).toBe(1_260_000)
+    expect(result.summary.added.some(i => i.itemId === 'boss_blade')).toBe(false)
+    expect(result.summary.added.some(i => i.itemId === 'clue_scroll_gold')).toBe(false)
+  })
+
+  it('adds replacement coins for every boss/clue item in the death pile (not just one)', () => {
+    const inv = new Array(28).fill(null)
+    inv[0] = { itemId: 'boss_relic', quantity: 1 }         // 2,500,000
+    inv[1] = { itemId: 'clue_scroll_gold', quantity: 2 }   // 500,000
+    inv[2] = { itemId: 'clue_scroll_gold', quantity: 1 }   // 250,000
+    const eq = {
+      weapon: { itemId: 'boss_blade', quantity: 1 },       // 1,000,000
+    }
+
+    const result = applyLootTransfer({
+      loserInventory: inv,
+      loserEquipment: eq,
+      winnerBank: {},
+      itemsData: items,
+    })
+
+    expect(result.loser.inventory[0]).toBeNull()
+    expect(result.loser.inventory[1]).toBeNull()
+    expect(result.loser.inventory[2]).toBeNull()
+    expect(result.loser.equipment.weapon).toBeNull()
+    expect(result.winner.bank.coins.quantity).toBe(4_250_000)
+    expect(result.summary.bankedValue).toBe(4_250_000)
+    expect(result.summary.totalRiskValue).toBe(4_250_000)
+    expect(result.summary.added.every(i => i.itemId === 'coins')).toBe(true)
   })
 })
