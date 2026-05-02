@@ -315,4 +315,30 @@ describe('applyLootTransfer (end-to-end)', () => {
     expect(result.summary.added.some(i => i.itemId === 'boss_blade')).toBe(false)
     expect(result.summary.added.some(i => i.itemId === 'clue_scroll_gold')).toBe(false)
   })
+
+  it('adds replacement coins for every boss/clue item in the death pile (not just one)', () => {
+    const inv = new Array(28).fill(null)
+    inv[0] = { itemId: 'boss_relic', quantity: 1 }         // 2,500,000
+    inv[1] = { itemId: 'clue_scroll_gold', quantity: 2 }   // 500,000
+    inv[2] = { itemId: 'clue_scroll_gold', quantity: 1 }   // 250,000
+    const eq = {
+      weapon: { itemId: 'boss_blade', quantity: 1 },       // 1,000,000
+    }
+
+    const result = applyLootTransfer({
+      loserInventory: inv,
+      loserEquipment: eq,
+      winnerBank: {},
+      itemsData: items,
+    })
+
+    expect(result.loser.inventory[0]).toBeNull()
+    expect(result.loser.inventory[1]).toBeNull()
+    expect(result.loser.inventory[2]).toBeNull()
+    expect(result.loser.equipment.weapon).toBeNull()
+    expect(result.winner.bank.coins.quantity).toBe(4_250_000)
+    expect(result.summary.bankedValue).toBe(4_250_000)
+    expect(result.summary.totalRiskValue).toBe(4_250_000)
+    expect(result.summary.added.every(i => i.itemId === 'coins')).toBe(true)
+  })
 })
