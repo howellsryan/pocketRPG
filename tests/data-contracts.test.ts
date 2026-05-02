@@ -178,4 +178,12 @@ describe('data contracts', () => {
       ).toBe(true)
     }
   })
+
+  it('boss unique and clue reward items have finite positive shopValue for PvP coin conversion', () => {
+    for (const [itemId, item] of Object.entries(items as Record<string, any>)) {
+      if (!item.isBossUnique && !item.isClueReward) continue
+      const value = Number(item.shopValue)
+      expect(Number.isFinite(value) && value > 0, `${itemId} requires positive finite shopValue`).toBe(true)
+    }
+  })
 })

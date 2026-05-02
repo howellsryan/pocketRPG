@@ -41,6 +41,23 @@ export function isPvpTradeable(itemId, itemsData) {
   return !def.isUntradeable
 }
 
+export function isPvpCoinReplacementItem(itemId, itemsData) {
+  if (!itemId || itemId === COINS_ID) return false
+  const def = itemsData?.[itemId]
+  if (!def) return false
+  return def.isBossUnique === true || def.isClueReward === true
+}
+
+export function getPvpCoinReplacementValue(entry, itemsData) {
+  if (!entry?.itemId) return 0
+  const def = itemsData?.[entry.itemId]
+  if (!def) return 0
+  const shopValue = Number(def.shopValue)
+  const qty = Math.max(1, Number(entry.quantity) || 1)
+  if (!Number.isFinite(shopValue) || shopValue <= 0) return 0
+  return Math.floor(shopValue) * qty
+}
+
 /**
  * Split a loser's inventory + equipment into the pile that transfers
  * (tradeable) and what stays behind (untradeable, in original positions).
@@ -69,7 +86,14 @@ export function splitInventoryByTradeable(inventory, equipment, itemsData) {
   if (equipment && typeof equipment === 'object') {
     for (const [slot, entry] of Object.entries(equipment)) {
       if (!entry) { remainingEquipment[slot] = null; continue }
-      if (isPvpTradeable(entry.itemId, itemsData)) {
+      if (isPvpCoinReplacementItem(entry.itemId, itemsData)) {
+        transfer.push({
+          itemId: COINS_ID,
+          quantity: getPvpCoinReplacementValue(entry, itemsData),
+          fromSlot: `equipment.${slot}`,
+        })
+        remainingEquipment[slot] = null
+      } else if (isPvpTradeable(entry.itemId, itemsData)) {
         transfer.push({
           itemId: entry.itemId,
           quantity: entry.quantity || 1,    // ammo carries quantity; everything else is qty 1
@@ -88,7 +112,13 @@ export function splitInventoryByTradeable(inventory, equipment, itemsData) {
     for (let i = 0; i < inventory.length; i++) {
       const slot = inventory[i]
       if (!slot) continue
-      if (isPvpTradeable(slot.itemId, itemsData)) {
+      if (isPvpCoinReplacementItem(slot.itemId, itemsData)) {
+        transfer.push({
+          itemId: COINS_ID,
+          quantity: getPvpCoinReplacementValue(slot, itemsData),
+          fromSlot: `inventory.${i}`,
+        })
+      } else if (isPvpTradeable(slot.itemId, itemsData)) {
         transfer.push({
           itemId: slot.itemId,
           quantity: slot.quantity || 1,
@@ -167,6 +197,17 @@ export function fillBank(initialBank, sortedLoot, itemsData, bankSize = BANK_SIZ
         continue
       }
       existing.quantity = (existing.quantity || 1) + (item.quantity || 1)
+      added.push(item)
+      addedValue += itemValue
+      continue
+    }
+
+    // Coins are always creditable in PvP loot (never dropped due to slot cap).
+    if (item.itemId === COINS_ID) {
+      bank[COINS_ID] = {
+        itemId: COINS_ID,
+        quantity: (Number(bank[COINS_ID]?.quantity) || 0) + (item.quantity || 1),
+      }
       added.push(item)
       addedValue += itemValue
       continue
