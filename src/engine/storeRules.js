@@ -2,6 +2,10 @@ export function isBossUniqueItem(item) {
   return Boolean(item?.isBossUnique)
 }
 
+export function isClueRewardItem(item) {
+  return Boolean(item?.isClueReward)
+}
+
 export function getPurchaseRestriction(item, { isIronman = false } = {}) {
   if (!item) {
     return { allowed: false, code: 'ITEM_NOT_FOUND', message: 'Item not found' }
@@ -12,6 +16,14 @@ export function getPurchaseRestriction(item, { isIronman = false } = {}) {
       allowed: false,
       code: 'BOSS_UNIQUE_RESTRICTED',
       message: 'Boss unique drops can only be obtained from boss and raid drops.',
+    }
+  }
+
+  if (isClueRewardItem(item)) {
+    return {
+      allowed: false,
+      code: 'CLUE_REWARD_RESTRICTED',
+      message: 'This item can only be obtained from clue scroll rewards.',
     }
   }
 
@@ -38,7 +50,7 @@ export function getPurchaseRestriction(item, { isIronman = false } = {}) {
 
 export function isStoreVisibleItem(item, { isIronman = false, includeQuestItems = true } = {}) {
   if (!item) return false
-  if (isBossUniqueItem(item)) return true
+  if (isBossUniqueItem(item) || isClueRewardItem(item)) return true
 
   const isQuestItem = Boolean(item.questUnlock)
   if (isQuestItem) return includeQuestItems
