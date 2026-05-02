@@ -5672,7 +5672,8 @@
     },
     "shopValue": 1220611,
     "icon": "🪱",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "black_wizard_hat": {
     "id": "black_wizard_hat",
@@ -6805,7 +6806,8 @@
     },
     "shopValue": 19362500,
     "icon": "⚔️",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "armadyl_godsword": {
     "id": "armadyl_godsword",
@@ -6845,7 +6847,8 @@
     },
     "shopValue": 8216651,
     "icon": "⚔️",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "saradomin_godsword": {
     "id": "saradomin_godsword",
@@ -6886,7 +6889,8 @@
     },
     "shopValue": 28896042,
     "icon": "⚔️",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "zamorak_godsword": {
     "id": "zamorak_godsword",
@@ -6927,7 +6931,8 @@
     },
     "shopValue": 19297823,
     "icon": "⚔️",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "bandos_chestplate": {
     "id": "bandos_chestplate",
@@ -6959,7 +6964,8 @@
     },
     "shopValue": 24816670,
     "icon": "🛡️",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "bandos_tassets": {
     "id": "bandos_tassets",
@@ -6991,7 +6997,8 @@
     },
     "shopValue": 16757081,
     "icon": "🦵",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "bandos_boots": {
     "id": "bandos_boots",
@@ -7023,7 +7030,8 @@
     },
     "shopValue": 592990,
     "icon": "👢",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "bandos_hilt": {
     "id": "bandos_hilt",
@@ -7032,7 +7040,8 @@
     "stackable": false,
     "shopValue": 18214461,
     "icon": "⚔️",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "armadyl_helmet": {
     "id": "armadyl_helmet",
@@ -7098,7 +7107,8 @@
     },
     "shopValue": 37972417,
     "icon": "🛡️",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "armadyl_chainskirt": {
     "id": "armadyl_chainskirt",
@@ -7131,7 +7141,8 @@
     },
     "shopValue": 28218432,
     "icon": "🦵",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "armadyl_hilt": {
     "id": "armadyl_hilt",
@@ -7140,7 +7151,8 @@
     "stackable": false,
     "shopValue": 7411703,
     "icon": "⚔️",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "saradomin_sword": {
     "id": "saradomin_sword",
@@ -7181,7 +7193,8 @@
     },
     "shopValue": 173876,
     "icon": "⚔️",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "saradomin_hilt": {
     "id": "saradomin_hilt",
@@ -7190,7 +7203,8 @@
     "stackable": false,
     "shopValue": 26800002,
     "icon": "⚔️",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "armadyl_crossbow": {
     "id": "armadyl_crossbow",
@@ -7231,7 +7245,8 @@
     },
     "shopValue": 32660599,
     "icon": "🏹",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "zamorak_spear": {
     "id": "zamorak_spear",
@@ -7271,7 +7286,8 @@
     },
     "shopValue": 7500000,
     "icon": "🗡️",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "staff_of_the_dead": {
     "id": "staff_of_the_dead",
@@ -7307,7 +7323,8 @@
     },
     "shopValue": 5550000,
     "icon": "🪄",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "zamorak_hilt": {
     "id": "zamorak_hilt",
@@ -7316,7 +7333,8 @@
     "stackable": false,
     "shopValue": 18099819,
     "icon": "⚔️",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "dagganoth_bones": {
     "id": "dagganoth_bones",
@@ -7355,7 +7373,8 @@
     "requirements": {},
     "shopValue": 3431571,
     "icon": "💍",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "seers_ring": {
     "id": "seers_ring",
@@ -7385,7 +7404,8 @@
     "requirements": {},
     "shopValue": 747267,
     "icon": "💍",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "archers_ring": {
     "id": "archers_ring",
@@ -7415,7 +7435,8 @@
     "requirements": {},
     "shopValue": 2861822,
     "icon": "💍",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "warriors_ring": {
     "id": "warriors_ring",
@@ -7445,7 +7466,8 @@
     "requirements": {},
     "shopValue": 100000,
     "icon": "💍",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "dragon_axe": {
     "id": "dragon_axe",
@@ -7482,7 +7504,8 @@
     "toolFor": "woodcutting",
     "shopValue": 86344,
     "icon": "⚔️",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "slayer_helmet": {
     "id": "slayer_helmet",
@@ -7898,7 +7921,8 @@
     },
     "shopValue": 486144,
     "icon": "⛏️",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "draconic_visage": {
     "id": "draconic_visage",
@@ -7907,7 +7931,8 @@
     "stackable": false,
     "shopValue": 3533292,
     "icon": "🐉",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "dragonfire_shield": {
     "id": "dragonfire_shield",
@@ -7940,7 +7965,8 @@
     },
     "shopValue": 3604917,
     "icon": "🛡️",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "fishing_net": {
     "id": "fishing_net",
@@ -8183,7 +8209,8 @@
     },
     "shopValue": 25000000,
     "icon": "🎋",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "trident_of_the_swamp": {
     "id": "trident_of_the_swamp",
@@ -8221,7 +8248,8 @@
     },
     "shopValue": 25000000,
     "icon": "🔱",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "serpentine_helm": {
     "id": "serpentine_helm",
@@ -8253,7 +8281,8 @@
     },
     "shopValue": 25000000,
     "icon": "🪖",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "fire_cape": {
     "id": "fire_cape",
@@ -11154,7 +11183,8 @@
     "shopValue": 0,
     "icon": "🛡️",
     "isGeneralStore": false,
-    "IsUntradeable": true
+    "IsUntradeable": true,
+    "isBossUnique": true
   },
   "fighter_hat": {
     "id": "fighter_hat",
@@ -14423,7 +14453,8 @@
     "isGeneralStore": false,
     "combineWith": "abyssal_whip",
     "combineResult": "abyssal_tentacle",
-    "combineDescription": "Attach to an Abyssal whip to create an Abyssal tentacle."
+    "combineDescription": "Attach to an Abyssal whip to create an Abyssal tentacle.",
+    "isBossUnique": true
   },
   "abyssal_tentacle": {
     "id": "abyssal_tentacle",
@@ -14463,7 +14494,8 @@
     },
     "shopValue": 1714037,
     "icon": "🦑",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "occult_necklace": {
     "id": "occult_necklace",
@@ -14493,7 +14525,8 @@
     "requirements": {},
     "shopValue": 427128,
     "icon": "📿",
-    "isGeneralStore": false
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "chaotic_rapier": {
     "id": "chaotic_rapier",
