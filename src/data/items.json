@@ -11434,11 +11434,10 @@
       "rangedStrength": 5,
       "magicDamage": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "wizard_boots": {
@@ -11469,11 +11468,10 @@
       "rangedStrength": 0,
       "magicDamage": 5
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "magic": 20
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "holy_sandals": {
@@ -11502,11 +11500,10 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "prayer": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "spiked_manacles": {
@@ -11535,8 +11532,7 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
-    "tradeable": true,
+    "isUntradeable": false,
     "isClueReward": true
   },
   "climbing_boots_g": {
@@ -11565,11 +11561,10 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "defence": 20
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "saradomin_dhide_body": {
@@ -11601,12 +11596,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "saradomin_dhide_chaps": {
@@ -11638,11 +11632,10 @@
       "magicDamage": 0,
       "prayer": 5
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "saradomin_dhide_boots": {
@@ -11674,12 +11667,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "saradomin_dhide_bracers": {
@@ -11711,12 +11703,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "saradomin_coif": {
@@ -11745,12 +11736,11 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "saradomin_stole": {
@@ -11779,11 +11769,10 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "prayer": 60
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "guthix_dhide_body": {
@@ -11815,12 +11804,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "guthix_dhide_chaps": {
@@ -11852,11 +11840,10 @@
       "magicDamage": 0,
       "prayer": 5
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "guthix_dhide_boots": {
@@ -11888,12 +11875,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "guthix_dhide_bracers": {
@@ -11925,12 +11911,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "guthix_coif": {
@@ -11959,12 +11944,11 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "guthix_stole": {
@@ -11993,11 +11977,10 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "prayer": 60
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "zamorak_dhide_body": {
@@ -12029,12 +12012,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "zamorak_dhide_chaps": {
@@ -12066,11 +12048,10 @@
       "magicDamage": 0,
       "prayer": 5
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "zamorak_dhide_boots": {
@@ -12102,12 +12083,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "zamorak_dhide_bracers": {
@@ -12139,12 +12119,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "zamorak_coif": {
@@ -12173,12 +12152,11 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "zamorak_stole": {
@@ -12207,11 +12185,10 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "prayer": 60
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "ancient_dhide_body": {
@@ -12243,12 +12220,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "ancient_dhide_chaps": {
@@ -12280,11 +12256,10 @@
       "magicDamage": 0,
       "prayer": 5
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "ancient_dhide_boots": {
@@ -12316,12 +12291,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "ancient_dhide_bracers": {
@@ -12353,12 +12327,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "ancient_coif": {
@@ -12387,12 +12360,11 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "ancient_stole": {
@@ -12421,11 +12393,10 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "prayer": 60
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "armadyl_dhide_body": {
@@ -12457,12 +12428,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "armadyl_dhide_chaps": {
@@ -12494,11 +12464,10 @@
       "magicDamage": 0,
       "prayer": 5
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "armadyl_dhide_boots": {
@@ -12530,12 +12499,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "armadyl_dhide_bracers": {
@@ -12567,12 +12535,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "armadyl_coif": {
@@ -12601,12 +12568,11 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "armadyl_stole": {
@@ -12635,11 +12601,10 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "prayer": 60
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "bandos_dhide_body": {
@@ -12671,12 +12636,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "bandos_dhide_chaps": {
@@ -12708,11 +12672,10 @@
       "magicDamage": 0,
       "prayer": 5
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "bandos_dhide_boots": {
@@ -12744,12 +12707,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "bandos_dhide_bracers": {
@@ -12781,12 +12743,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "bandos_coif": {
@@ -12815,12 +12776,11 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "bandos_stole": {
@@ -12849,11 +12809,10 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "prayer": 60
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "black_dhide_body": {
@@ -12949,11 +12908,10 @@
       "rangedStrength": 10,
       "magicDamage": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "amulet_of_glory_t": {
@@ -12983,8 +12941,7 @@
       "meleeStrength": 6,
       "prayer": 3
     },
-    "isUntradeable": true,
-    "tradeable": true,
+    "isUntradeable": false,
     "isClueReward": true
   },
   "3rd_age_full_helm": {
@@ -13015,11 +12972,10 @@
       "rangedStrength": 0,
       "magicDamage": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "defence": 65
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "3rd_age_platebody": {
@@ -13050,11 +13006,10 @@
       "rangedStrength": 0,
       "magicDamage": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "defence": 65
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "3rd_age_platelegs": {
@@ -13085,11 +13040,10 @@
       "rangedStrength": 0,
       "magicDamage": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "defence": 65
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "3rd_age_plateskirt": {
@@ -13120,11 +13074,10 @@
       "rangedStrength": 0,
       "magicDamage": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "defence": 65
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "3rd_age_kiteshield": {
@@ -13155,11 +13108,10 @@
       "rangedStrength": 0,
       "magicDamage": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "defence": 65
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "3rd_age_range_coif": {
@@ -13190,12 +13142,11 @@
       "rangedStrength": 0,
       "magicDamage": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 65,
       "defence": 45
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "3rd_age_range_top": {
@@ -13226,12 +13177,11 @@
       "rangedStrength": 0,
       "magicDamage": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 65,
       "defence": 45
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "3rd_age_range_legs": {
@@ -13262,12 +13212,11 @@
       "rangedStrength": 0,
       "magicDamage": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 65,
       "defence": 45
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "3rd_age_vambraces": {
@@ -13298,12 +13247,11 @@
       "rangedStrength": 0,
       "magicDamage": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 65,
       "defence": 45
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "3rd_age_mage_hat": {
@@ -13334,12 +13282,11 @@
       "rangedStrength": 0,
       "magicDamage": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "magic": 65,
       "defence": 45
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "3rd_age_robe_top": {
@@ -13370,12 +13317,11 @@
       "rangedStrength": 0,
       "magicDamage": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "magic": 65,
       "defence": 45
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "3rd_age_robe_legs": {
@@ -13406,12 +13352,11 @@
       "rangedStrength": 0,
       "magicDamage": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "magic": 65,
       "defence": 45
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "3rd_age_amulet": {
@@ -13442,12 +13387,11 @@
       "rangedStrength": 0,
       "magicDamage": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "magic": 70,
       "defence": 70
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "3rd_age_longsword": {
@@ -13476,11 +13420,10 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "attack": 65
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "3rd_age_bow": {
@@ -13509,11 +13452,10 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 65
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "3rd_age_wand": {
@@ -13544,11 +13486,10 @@
       "rangedStrength": 0,
       "magicDamage": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "magic": 65
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "3rd_age_cloak": {
@@ -13577,11 +13518,10 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "prayer": 65
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "saradomin_dhide_shield": {
@@ -13613,12 +13553,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "guthix_dhide_shield": {
@@ -13650,12 +13589,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "zamorak_dhide_shield": {
@@ -13687,12 +13625,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "ancient_dhide_shield": {
@@ -13724,12 +13661,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "armadyl_dhide_shield": {
@@ -13761,12 +13697,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "bandos_dhide_shield": {
@@ -13798,12 +13733,11 @@
       "magicDamage": 0,
       "prayer": 1
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 70,
       "defence": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "holy_blessing": {
@@ -13833,8 +13767,7 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
-    "tradeable": true,
+    "isUntradeable": false,
     "isClueReward": true
   },
   "peace_blessing": {
@@ -13864,8 +13797,7 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
-    "tradeable": true,
+    "isUntradeable": false,
     "isClueReward": true
   },
   "unholy_blessing": {
@@ -13895,8 +13827,7 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
-    "tradeable": true,
+    "isUntradeable": false,
     "isClueReward": true
   },
   "honorable_blessing": {
@@ -13926,8 +13857,7 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
-    "tradeable": true,
+    "isUntradeable": false,
     "isClueReward": true
   },
   "war_blessing": {
@@ -13957,8 +13887,7 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
-    "tradeable": true,
+    "isUntradeable": false,
     "isClueReward": true
   },
   "ancient_blessing": {
@@ -13988,8 +13917,7 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
-    "tradeable": true,
+    "isUntradeable": false,
     "isClueReward": true
   },
   "rangers_tunic": {
@@ -14020,11 +13948,10 @@
       "rangedStrength": 0,
       "magicDamage": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "ranged": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "holy_wraps": {
@@ -14053,11 +13980,10 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "prayer": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "3rd_age_druidic_robe_top": {
@@ -14086,12 +14012,11 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "magic": 65,
       "prayer": 65
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "3rd_age_druidic_robe_bottoms": {
@@ -14120,12 +14045,11 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "magic": 65,
       "prayer": 65
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "3rd_age_druidic_cloak": {
@@ -14154,11 +14078,10 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "prayer": 65
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "3rd_age_druidic_staff": {
@@ -14187,12 +14110,11 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "magic": 65,
       "prayer": 65
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "3rd_age_pickaxe": {
@@ -14222,12 +14144,11 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "attack": 65,
       "mining": 61
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "3rd_age_axe": {
@@ -14257,12 +14178,11 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "attack": 65,
       "woodcutting": 61
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "gilded_pickaxe": {
@@ -14291,12 +14211,11 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "attack": 60,
       "mining": 61
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "gilded_axe": {
@@ -14325,12 +14244,11 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "attack": 60,
       "woodcutting": 61
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "gilded_spade": {
@@ -14361,8 +14279,7 @@
       "rangedStrength": 0,
       "magicDamage": 0
     },
-    "isUntradeable": true,
-    "tradeable": true,
+    "isUntradeable": false,
     "isClueReward": true
   },
   "fancy_tiara": {
@@ -14391,8 +14308,7 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
-    "tradeable": true,
+    "isUntradeable": false,
     "isClueReward": true
   },
   "saradomin_mitre": {
@@ -14421,12 +14337,11 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "prayer": 40,
       "magic": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "guthix_mitre": {
@@ -14455,12 +14370,11 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "prayer": 40,
       "magic": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "zamorak_mitre": {
@@ -14489,12 +14403,11 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "prayer": 40,
       "magic": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "ancient_mitre": {
@@ -14523,12 +14436,11 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "prayer": 40,
       "magic": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "armadyl_mitre": {
@@ -14557,12 +14469,11 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "prayer": 40,
       "magic": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "bandos_mitre": {
@@ -14591,12 +14502,11 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
+    "isUntradeable": false,
     "requirements": {
       "prayer": 40,
       "magic": 40
     },
-    "tradeable": true,
     "isClueReward": true
   },
   "gloves_of_slaughter": {

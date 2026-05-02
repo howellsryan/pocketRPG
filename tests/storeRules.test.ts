@@ -47,9 +47,9 @@ describe('store rules', () => {
     expect(types).toContain('boss-only-type')
     expect(types).toContain('clue-only-type')
   })
-  it('allows clue-reward items to remain sellable via tradeable flag', () => {
-    expect(itemsData.ranger_boots.tradeable).toBe(true)
+  it('allows clue-reward items to remain sellable via isUntradeable false', () => {
     expect(itemsData.ranger_boots.isClueReward).toBe(true)
+    expect(itemsData.ranger_boots.isUntradeable).toBe(false)
   })
   it('marks only clue-specific rewards with isClueReward', () => {
     expect(clueRewardUniques.length).toBeGreaterThan(0)

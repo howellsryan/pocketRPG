@@ -192,6 +192,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
     : (isSelectedClueReward ? 'Obtain through clue scroll rewards.' : null)
   const totalCost = selectedItem ? modifiedPrice(selectedItem.shopValue) * buyQty : 0
   const canAffordSelected = selectedItem ? coins >= totalCost : false
+  const isSelectedPurchaseRestricted = Boolean(selectedRestriction && !selectedRestriction.allowed)
 
   return (
     <div class="h-full flex flex-col overflow-hidden">
@@ -312,7 +313,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
                     isQuestItem && !isUnlocked ? 'text-[#666]' : (canAfford ? 'text-[var(--color-gold)]' : 'text-[#888]')
                   }`}>
                     {isQuestItem && !isUnlocked ? '—' : (isBossUnique ? 'Boss unique' : (isClueReward ? 'Clue reward' : `${price.toLocaleString()} gp`))}
-                    {(isBossUnique || isClueReward) && <div class="text-[10px] text-[var(--color-parchment)] opacity-70 mt-1 break-words leading-tight">{obtainMessage}</div>}
+                    {(isBossUnique || isClueReward) && <div class="text-[10px] text-[#888] mt-1 break-words leading-tight">{obtainMessage}</div>}
                   </div>
                 </button>
               )
@@ -345,7 +346,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
 
 
             {selectedObtainMessage && (
-              <Panel className="text-[11px] text-[var(--color-parchment)] opacity-80 border-l-4 border-[var(--color-gold)]">
+              <Panel className="text-[11px] text-[#aaa] border-l-4 border-[#666]">
                 {selectedObtainMessage}
               </Panel>
             )}
@@ -406,7 +407,13 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
                   Locked
                 </Button>
               ) : (
-                <Button variant="primary" size="lg" onClick={handleBuy} disabled={!canAffordSelected} className="flex-1">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onClick={handleBuy}
+                  disabled={!canAffordSelected || isSelectedPurchaseRestricted}
+                  className="flex-1"
+                >
                   Buy
                 </Button>
               )}
