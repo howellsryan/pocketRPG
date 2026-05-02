@@ -109,6 +109,8 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
       } catch (err) {
         if (err.body?.code === 'BOSS_UNIQUE_RESTRICTED') {
           addToast('Boss unique drops can only be obtained from bosses and raids.', 'error')
+        } else if (err.body?.code === 'CLUE_REWARD_RESTRICTED') {
+          addToast('This item can only be obtained from clue scroll rewards.', 'error')
         } else if (err.status === 403) {
           addToast('⚠️ This item is not available to your character type.', 'error')
         } else {
@@ -184,7 +186,10 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
   const searchResults = getSearchResults()
   const selectedRestriction = selectedItem ? getPurchaseRestriction(selectedItem, { isIronman }) : null
   const isSelectedBossUnique = selectedRestriction?.code === 'BOSS_UNIQUE_RESTRICTED'
-  const selectedObtainMessage = selectedItem && isSelectedBossUnique ? formatObtainSourceMessage(selectedItem.id, { itemsData, monstersData, raidsData }) : null
+  const isSelectedClueReward = selectedRestriction?.code === 'CLUE_REWARD_RESTRICTED'
+  const selectedObtainMessage = selectedItem && isSelectedBossUnique
+    ? formatObtainSourceMessage(selectedItem.id, { itemsData, monstersData, raidsData })
+    : (isSelectedClueReward ? 'Obtain through clue scroll rewards.' : null)
   const totalCost = selectedItem ? modifiedPrice(selectedItem.shopValue) * buyQty : 0
   const canAffordSelected = selectedItem ? coins >= totalCost : false
 
@@ -280,7 +285,10 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
               const canAfford = coins >= price
               const restriction = getPurchaseRestriction(item, { isIronman })
               const isBossUnique = restriction.code === 'BOSS_UNIQUE_RESTRICTED'
-              const obtainMessage = isBossUnique ? formatObtainSourceMessage(item.id, { itemsData, monstersData, raidsData }) : null
+              const isClueReward = restriction.code === 'CLUE_REWARD_RESTRICTED'
+              const obtainMessage = isBossUnique
+                ? formatObtainSourceMessage(item.id, { itemsData, monstersData, raidsData })
+                : (isClueReward ? 'Obtain through clue scroll rewards.' : null)
 
               return (
                 <button
@@ -303,8 +311,8 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
                   <div class={`text-right flex-shrink-0 text-[12px] font-[var(--font-mono)] font-bold ${
                     isQuestItem && !isUnlocked ? 'text-[#666]' : (canAfford ? 'text-[var(--color-gold)]' : 'text-[#888]')
                   }`}>
-                    {isQuestItem && !isUnlocked ? '—' : (isBossUnique ? 'Boss unique' : `${price.toLocaleString()} gp`)}
-                    {isBossUnique && <div class="text-[10px] text-[var(--color-parchment)] opacity-70 mt-1">{obtainMessage}</div>}
+                    {isQuestItem && !isUnlocked ? '—' : (isBossUnique ? 'Boss unique' : (isClueReward ? 'Clue reward' : `${price.toLocaleString()} gp`))}
+                    {(isBossUnique || isClueReward) && <div class="text-[10px] text-[var(--color-parchment)] opacity-70 mt-1">{obtainMessage}</div>}
                   </div>
                 </button>
               )
@@ -342,6 +350,12 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
               </Panel>
             )}
 
+
+            {selectedObtainMessage && (
+              <Panel className="text-[11px] text-[var(--color-parchment)] opacity-80 border-l-4 border-[var(--color-gold)]">
+                {selectedObtainMessage}
+              </Panel>
+            )}
             {/* Price info - only show if unlocked */}
             {!selectedItem.questUnlock || selectedItem.isUnlocked ? (
               <Panel>
