@@ -6756,7 +6756,7 @@
     },
     "shopValue": 9563,
     "icon": "🏹",
-    "isGeneralStore": false
+    "isGeneralStore": true
   },
   "godsword_shard": {
     "id": "godsword_shard",

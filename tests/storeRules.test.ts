@@ -34,6 +34,8 @@ describe('store rules', () => {
   it('preserves normal and ironman restrictions', () => {
     expect(getPurchaseRestriction(itemsData.bronze_scimitar, { isIronman: false }).allowed).toBe(true)
     expect(getPurchaseRestriction(itemsData.rune_scimitar, { isIronman: true }).code).toBe('IRONMAN_RESTRICTED')
+    expect(getPurchaseRestriction(itemsData.rune_crossbow, { isIronman: true }).allowed).toBe(true)
+    expect(isStoreVisibleItem(itemsData.rune_crossbow, { isIronman: true })).toBe(true)
   })
   it('type tabs can include restricted-only types', () => {
     const fake = {
