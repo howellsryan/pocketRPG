@@ -1650,7 +1650,6 @@
     "combatLevel": 76,
     "hitpoints": 75,
     "slayerRequirement": 50,
-    "slayerXP": 120,
     "stats": {
       "attack": 60,
       "strength": 60,
@@ -1764,7 +1763,6 @@
     "combatLevel": 115,
     "hitpoints": 105,
     "slayerRequirement": 80,
-    "slayerXP": 105,
     "stats": {
       "attack": 100,
       "strength": 100,
@@ -1867,7 +1865,6 @@
     "combatLevel": 140,
     "hitpoints": 130,
     "slayerRequirement": 72,
-    "slayerXP": 210,
     "stats": {
       "attack": 80,
       "strength": 80,
@@ -1975,7 +1972,6 @@
     "combatLevel": 160,
     "hitpoints": 95,
     "slayerRequirement": 85,
-    "slayerXP": 124,
     "stats": {
       "attack": 152,
       "strength": 99,
@@ -2082,7 +2078,6 @@
     "combatLevel": 291,
     "hitpoints": 255,
     "slayerRequirement": 87,
-    "slayerXP": 290,
     "stats": {
       "attack": 1,
       "strength": 1,
@@ -4304,7 +4299,7 @@
     "boss": true,
     "combatLevel": 702,
     "hitpoints": 250,
-    "slayerXP": 25250,
+    "slayerXP": 10000,
     "stats": {
       "attack": 960,
       "strength": 960,
@@ -4394,7 +4389,7 @@
     "boss": true,
     "combatLevel": 1400,
     "hitpoints": 600,
-    "slayerXP": 60000,
+    "slayerXP": 25000,
     "stats": {
       "attack": 1200,
       "strength": 1200,
