@@ -18,6 +18,7 @@ const sourceFiles = [
   'engine/formulas.js',
   'engine/equipment.js',
   'engine/inventory.js',
+  'engine/storeRules.js',
   'engine/agility.js',
   'engine/thieving.js',
   'engine/hunter.js',

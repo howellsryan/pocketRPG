@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import { countItem, removeItem, freeSlots } from '../engine/inventory.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
+import { getStoreItemTypes, isStoreVisibleItem, getPurchaseRestriction } from '../engine/storeRules.js'
 import Modal from '../components/Modal.jsx'
 import Panel from '../components/Panel.jsx'
 import Button from '../components/Button.jsx'
@@ -22,25 +23,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
   const coinsInBank = bank['coins']?.quantity || 0
   const coins = hasMoneyPurse ? coinsInInv + coinsInBank : coinsInInv
 
-  // Get all distinct item types (excluding quest items and untradeable items)
-  // For ironman players, only show types from isGeneralStore items
-  const getItemTypes = () => {
-    const types = new Set()
-    Object.values(itemsData).forEach(item => {
-      if (!item.questUnlock && !item.isUntradeable) {
-        if (isIronman) {
-          // Ironman: only include types from isGeneralStore items
-          if (item.isGeneralStore) {
-            types.add(item.type)
-          }
-        } else {
-          // Non-ironman: include all non-quest items
-          types.add(item.type)
-        }
-      }
-    })
-    return Array.from(types).sort()
-  }
+  const getItemTypes = () => getStoreItemTypes(itemsData, { isIronman })
 
   const itemTypes = getItemTypes()
 
@@ -53,7 +36,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
   const getAvailableItems = () => {
     if (activeTab === 'quest_items') {
       return Object.entries(itemsData)
-        .filter(([_, item]) => item.questUnlock)
+        .filter(([_, item]) => item.questUnlock && isStoreVisibleItem(item, { isIronman, includeQuestItems: true }))
         .map(([id, item]) => {
           const isUnlocked = completedQuests.has(item.questUnlock)
           return { ...item, id, isUnlocked, unlockedBy: item.questUnlock }
@@ -64,10 +47,10 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
         .filter(([_, item]) => {
           // Ironman: only show general store items
           if (isIronman) {
-            return item.isGeneralStore
+            return !item.questUnlock && isStoreVisibleItem(item, { isIronman, includeQuestItems: false })
           }
           // Non-ironman: show all non-quest items
-          return !item.questUnlock && !item.isUntradeable
+          return !item.questUnlock && isStoreVisibleItem(item, { isIronman, includeQuestItems: false })
         })
         .map(([id, item]) => ({ ...item, id }))
     }
@@ -75,9 +58,8 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
     // For ironman, additionally filter to only isGeneralStore items
     return Object.entries(itemsData)
       .filter(([_, item]) => {
-        if (item.questUnlock || item.isUntradeable || item.type !== activeTab) return false
-        if (isIronman) return item.isGeneralStore
-        return true
+        if (item.type !== activeTab) return false
+        return !item.questUnlock && isStoreVisibleItem(item, { isIronman, includeQuestItems: false })
       })
       .map(([id, item]) => ({ ...item, id }))
   }
@@ -93,6 +75,14 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
 
   const handleBuy = async () => {
     if (!selectedItem) return
+
+    const restriction = getPurchaseRestriction(selectedItem, { isIronman })
+    if (!restriction.allowed) {
+      addToast(restriction.message || 'This item cannot be purchased.', 'error')
+      setSelectedItem(null)
+      setBuyQty(1)
+      return
+    }
 
     // Prevent purchasing locked quest items
     if (selectedItem.questUnlock && !completedQuests.has(selectedItem.questUnlock)) {
@@ -114,7 +104,9 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
       try {
         await api.validatePurchase(selectedItem.id, buyQty)
       } catch (err) {
-        if (err.status === 403) {
+        if (err.body?.code === 'BOSS_UNIQUE_RESTRICTED') {
+          addToast('Boss unique drops can only be obtained from bosses and raids.', 'error')
+        } else if (err.status === 403) {
           addToast('⚠️ This item is not available to your character type.', 'error')
         } else {
           addToast(`Purchase validation failed: ${err.message}`, 'error')

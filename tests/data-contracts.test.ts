@@ -3,6 +3,7 @@ import items from '../src/data/items.json'
 import monsters from '../src/data/monsters.json'
 import skills from '../src/data/skills.json'
 import quests from '../src/data/quests.json'
+import raids from '../src/data/raids.json'
 import { applySpecialAttack } from '../src/engine/combat'
 import { getPvpSpecialAttackLabel } from '../src/engine/pvpSpecialAttacks'
 import { ALL_SKILLS } from '../src/utils/constants.js'
@@ -10,6 +11,28 @@ import { ALL_SKILLS } from '../src/utils/constants.js'
 const itemIds = new Set(Object.keys(items))
 const KNOWN_MISSING_DROP_ITEMS = new Set(['daganoth_bones'])
 
+
+
+const EXPECTED_RAID_UNIQUE_ITEM_IDS = new Set<string>()
+for (const raid of Object.values(raids as Record<string, any>)) {
+  for (const drop of raid?.rewards?.unique?.items || []) {
+    EXPECTED_RAID_UNIQUE_ITEM_IDS.add(drop.itemId)
+  }
+}
+
+const EXPECTED_BOSS_UNIQUE_ITEM_IDS = new Set([
+  ...EXPECTED_RAID_UNIQUE_ITEM_IDS,
+  'blade_of_saeldor',
+  'bow_of_faerdhinen',
+  'crystal_axe',
+  'crystal_helmet',
+  'crystal_pickaxe',
+  'crystal_plate_body',
+  'crystal_platelegs',
+  'heavy_ballista',
+  'uncut_zenyte',
+  'uncut_onyx', // treated as a boss-only unique reward in current drop tables
+])
 describe('data contracts', () => {
   it('item ids match keys and equipment slots are valid when present', () => {
     const validSlots = new Set(['head','cape','neck','ammo','weapon','body','shield','legs','hands','gloves','boots','feet','ring'])
@@ -77,6 +100,36 @@ describe('data contracts', () => {
     for (const type of types) {
       expect(typeof getPvpSpecialAttackLabel(type)).toBe('string')
       expect(() => applySpecialAttack({ specialAttackQueued: false }, {}, { weapon: null }, items as any)).not.toThrow()
+    }
+  })
+
+
+  it('raid unique reward items are marked as boss uniques', () => {
+    for (const itemId of EXPECTED_RAID_UNIQUE_ITEM_IDS) {
+      const item = (items as Record<string, any>)[itemId]
+      expect(item, `${itemId} missing from items.json`).toBeDefined()
+      expect(item.isBossUnique, `${itemId} should be marked isBossUnique`).toBe(true)
+    }
+  })
+
+  it('manually verified boss unique drops are marked as boss uniques', () => {
+    for (const itemId of EXPECTED_BOSS_UNIQUE_ITEM_IDS) {
+      const item = (items as Record<string, any>)[itemId]
+      expect(item, `${itemId} missing from items.json`).toBeDefined()
+      expect(item.isBossUnique, `${itemId} should be marked isBossUnique`).toBe(true)
+    }
+  })
+
+  it('items marked as boss uniques are actual boss or raid unique rewards', () => {
+    const raidUniqueIds = new Set(EXPECTED_RAID_UNIQUE_ITEM_IDS)
+    const knownBossUniqueIds = new Set(EXPECTED_BOSS_UNIQUE_ITEM_IDS)
+
+    for (const [itemId, item] of Object.entries(items as Record<string, any>)) {
+      if (!item.isBossUnique) continue
+      expect(
+        raidUniqueIds.has(itemId) || knownBossUniqueIds.has(itemId),
+        `${itemId} is marked isBossUnique but is not in the verified boss/raid unique list`
+      ).toBe(true)
     }
   })
 })

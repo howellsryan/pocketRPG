@@ -1,6 +1,7 @@
 import { requireAuth, json } from '../_lib/auth.js'
 import { assertNotInActiveMatch } from '../_lib/pvp.js'
 import itemsData from '../../src/data/items.json' assert { type: 'json' }
+import { getPurchaseRestriction } from '../../src/engine/storeRules.js'
 
 export async function onRequestPost({ request, env }) {
   const auth = await requireAuth(request, env)
@@ -33,23 +34,13 @@ export async function onRequestPost({ request, env }) {
     // Verify item exists and get its properties
     const item = itemsData[item_id]
     if (!item) {
-      return json({ error: 'Item not found' }, 404)
-    }
-    
-    const isQuestItem = !!item.questUnlock
-    
-    // Prevent purchasing untradeable items
-    if (item.isUntradeable && !isQuestItem) {
-      return json({ error: 'This item cannot be purchased' }, 400)
+      return json({ error: 'Item not found', code: 'ITEM_NOT_FOUND' }, 404)
     }
 
-    // If character is ironman, enforce stricter item restrictions
-    // Ironman can only purchase: general store items and quest items
-    if (character.is_ironman) {
-      const isGeneralStoreItem = item.isGeneralStore
-      if (!isQuestItem && !isGeneralStoreItem) {
-        return json({ error: 'This item is not available to Ironman characters', code: 'IRONMAN_RESTRICTED' }, 403)
-      }
+    const restriction = getPurchaseRestriction(item, { isIronman: Boolean(character.is_ironman) })
+    if (!restriction.allowed) {
+      const status = restriction.code === 'ITEM_NOT_FOUND' ? 404 : 403
+      return json({ error: restriction.message, code: restriction.code }, status)
     }
 
     // Purchase validation passed
