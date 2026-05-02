@@ -44,7 +44,7 @@ const COMBAT_CATEGORIES = [
     key: 'slayer',
     label: 'Slayer',
     icon: '💀',
-    ids: ['blood_veld', 'skeletal_wyvern', 'nechryael', 'smoke_devil', 'abyssal_demon', 'kraken'],
+    ids: ['blood_veld', 'skeletal_wyvern', 'nechryael', 'smoke_devil', 'abyssal_demon', 'kraken', 'demonic_gorilla'],
   },
   {
     key: 'bossing',
@@ -105,7 +105,7 @@ const COMBAT_CATEGORIES = [
 const MONSTER_ICONS = {
   chicken: '🐔', goblin: '👺', cow: '🐄', giant_spider: '🕷️',
   rock_crab: '🦀', sand_crab: '🦀', hill_giant: '👊', moss_giant: '🌿',
-  wizard: '🧙', dark_wizard: '🧙‍♂️', abyssal_demon: '😈',
+  wizard: '🧙', dark_wizard: '🧙‍♂️', abyssal_demon: '😈', demonic_gorilla: '🦍',
   blood_veld: '🩸', nechryael: '👻', skeletal_wyvern: '🐲', smoke_devil: '💨', kraken: '🦑',
   green_dragon: '🐉', red_dragon: '🔴', adamant_dragon: '⚔️', rune_dragon: '🛡️', lesser_demon: '👿',
   general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
@@ -774,6 +774,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     if ((monster.id === 'adamant_dragon' || monster.id === 'rune_dragon') && !completedQuests.has('dragon_slayer_ii')) {
       return { locked: true, reason: 'Complete Dragon Slayer II to fight Metal Dragons' }
     }
+    if (monster.id === 'demonic_gorilla' && !completedQuests.has('monkey_madness_ii')) {
+      return { locked: true, reason: 'Complete Monkey Madness II to fight Demonic Gorilla' }
+    }
     return { locked: false }
   }
 
@@ -1287,7 +1290,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                               <div class="text-[9px] font-semibold text-[var(--color-blood-light)]">
                                 🔒 {monster.id === 'corrupted_gauntlet' ? 'Song of the Elves' :
                                      monster.id === 'inferno' ? 'Defeat TzTok-Jad' :
-                                     (monster.id === 'adamant_dragon' || monster.id === 'rune_dragon') ? 'Dragon Slayer II' : 'Locked'}
+                                     (monster.id === 'adamant_dragon' || monster.id === 'rune_dragon') ? 'Dragon Slayer II' :
+                                     monster.id === 'demonic_gorilla' ? 'Monkey Madness II' : 'Locked'}
                               </div>
                             )}
                           </div>
