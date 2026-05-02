@@ -1,0 +1,16 @@
+import { describe, expect, it } from 'vitest'
+import itemsData from '../src/data/items.json'
+import { SLAYER_UNLOCKS, getSlayerUnlockPurchaseState } from '../src/engine/slayerUnlocks.js'
+
+describe('slayer unlocks', () => {
+  it('contains expected unlocks and costs', () => {
+    expect(SLAYER_UNLOCKS.find(u => u.itemId === 'slayer_helmet')?.cost).toBe(400)
+    expect(SLAYER_UNLOCKS.find(u => u.itemId === 'slayer_defender')?.cost).toBe(1500)
+    expect(SLAYER_UNLOCKS.find(u => u.itemId === 'gloves_of_slaughter')?.cost).toBe(1500)
+  })
+  it('blocks duplicates and insufficient points', () => {
+    const unlock = SLAYER_UNLOCKS.find(u => u.itemId === 'slayer_defender')!
+    expect(getSlayerUnlockPurchaseState({ unlock, item: (itemsData as any)[unlock.itemId], slayerPoints: 2000, bank: { slayer_defender: { quantity: 1 } }, inventory: [] }).code).toBe('ALREADY_OWNED')
+    expect(getSlayerUnlockPurchaseState({ unlock, item: (itemsData as any)[unlock.itemId], slayerPoints: 10, bank: {}, inventory: [] }).code).toBe('INSUFFICIENT_SLAYER_POINTS')
+  })
+})

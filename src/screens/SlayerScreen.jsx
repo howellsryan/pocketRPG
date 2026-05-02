@@ -2,6 +2,9 @@ import { useGame } from '../state/gameState.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
 import monstersData from '../data/monsters.json'
 import itemsData from '../data/items.json'
+import { SLAYER_UNLOCKS, getSlayerUnlockPurchaseState } from '../engine/slayerUnlocks.js'
+import { requestCriticalPushSave } from '../cloud/sync.js'
+import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 
 // OSRS slayer masters — requirements and monster pools from OSRS Wiki
 const SLAYER_MASTERS = [
@@ -111,15 +114,6 @@ const SLAYER_MASTERS = [
   },
 ]
 
-// Items unlockable with slayer points
-const SLAYER_UNLOCKS = [
-  {
-    itemId: 'slayer_helmet',
-    cost: 400,
-    description: 'Combined helmet that boosts damage and accuracy against your assigned slayer task.',
-  },
-]
-
 // OSRS combat level formula
 function getPlayerCombatLevel(stats) {
   const atk = getLevelFromXP(stats.attack?.xp || 0)
@@ -151,7 +145,7 @@ const SLAYER_MONSTER_ICONS = {
 }
 
 export default function SlayerScreen({ onBack }) {
-  const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, bank, inventory, addToBank } = useGame()
+  const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, bank, inventory, addToBank, getSnapshot } = useGame()
 
   const combatLevel = getPlayerCombatLevel(stats)
   const slayerLevel = getLevelFromXP(stats.slayer?.xp || 0)
@@ -230,24 +224,16 @@ export default function SlayerScreen({ onBack }) {
     addToast('Task cancelled. No points awarded.', 'info')
   }
 
-  const ownsItem = (itemId) => {
-    if (bank?.[itemId]?.quantity > 0) return true
-    return inventory?.some(s => s && s.itemId === itemId) || false
-  }
-
   const handleUnlock = (unlock) => {
     const item = itemsData[unlock.itemId]
-    if (!item) return
-    if (ownsItem(unlock.itemId)) {
-      addToast(`You already own a ${item.name}`, 'error')
-      return
-    }
-    if (slayerPoints < unlock.cost) {
-      addToast(`Need ${unlock.cost} slayer points (you have ${slayerPoints})`, 'error')
+    const purchaseState = getSlayerUnlockPurchaseState({ unlock, item, slayerPoints, bank, inventory })
+    if (!purchaseState.allowed) {
+      addToast(purchaseState.message || 'Unable to purchase unlock', 'error')
       return
     }
     updateSlayerPoints(slayerPoints - unlock.cost)
     addToBank(unlock.itemId, 1)
+    requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.PURCHASE)
     addToast(`🎉 Purchased ${item.name} — sent to bank`, 'info')
   }
 
@@ -399,7 +385,7 @@ export default function SlayerScreen({ onBack }) {
                 ) : (
                   <>
                     <div class={`text-[11px] font-[var(--font-mono)] font-bold ${canAfford ? 'text-[var(--color-gold)]' : 'text-[var(--color-blood-light)]'}`}>
-                      {unlock.cost} pts
+                      {unlock.cost.toLocaleString()} pts
                     </div>
                     <div class="text-[9px] text-[var(--color-parchment)] opacity-40">
                       {canAfford ? 'Buy' : 'Locked'}

@@ -7,6 +7,9 @@ import Modal from '../components/Modal.jsx'
 import Panel from '../components/Panel.jsx'
 import Button from '../components/Button.jsx'
 import questsData from '../data/quests.json'
+import monstersData from '../data/monsters.json'
+import raidsData from '../data/raids.json'
+import { formatObtainSourceMessage } from '../engine/itemSources.js'
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 
@@ -179,6 +182,9 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
   }
 
   const searchResults = getSearchResults()
+  const selectedRestriction = selectedItem ? getPurchaseRestriction(selectedItem, { isIronman }) : null
+  const isSelectedBossUnique = selectedRestriction?.code === 'BOSS_UNIQUE_RESTRICTED'
+  const selectedObtainMessage = selectedItem && isSelectedBossUnique ? formatObtainSourceMessage(selectedItem.id, { itemsData, monstersData, raidsData }) : null
   const totalCost = selectedItem ? modifiedPrice(selectedItem.shopValue) * buyQty : 0
   const canAffordSelected = selectedItem ? coins >= totalCost : false
 
@@ -272,12 +278,15 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
               const isUnlocked = isQuestItem ? item.isUnlocked : true
               const price = isQuestItem && !isUnlocked ? 0 : modifiedPrice(item.shopValue || 0)
               const canAfford = coins >= price
+              const restriction = getPurchaseRestriction(item, { isIronman })
+              const isBossUnique = restriction.code === 'BOSS_UNIQUE_RESTRICTED'
+              const obtainMessage = isBossUnique ? formatObtainSourceMessage(item.id, { itemsData, monstersData, raidsData }) : null
 
               return (
                 <button
                   key={item.id}
                   onClick={() => { setSelectedItem(item); setBuyQty(1) }}
-                  disabled={isQuestItem && !isUnlocked}
+                  disabled={(isQuestItem && !isUnlocked)}
                   class={`p-3 rounded-lg border text-left flex items-center gap-3 transition-colors ${
                     isQuestItem && !isUnlocked
                       ? 'bg-[#1a1a1a] border-[#1a1a1a] cursor-not-allowed opacity-50'
@@ -294,7 +303,8 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
                   <div class={`text-right flex-shrink-0 text-[12px] font-[var(--font-mono)] font-bold ${
                     isQuestItem && !isUnlocked ? 'text-[#666]' : (canAfford ? 'text-[var(--color-gold)]' : 'text-[#888]')
                   }`}>
-                    {isQuestItem && !isUnlocked ? '—' : `${price.toLocaleString()} gp`}
+                    {isQuestItem && !isUnlocked ? '—' : (isBossUnique ? 'Boss unique' : `${price.toLocaleString()} gp`)}
+                    {isBossUnique && <div class="text-[10px] text-[var(--color-parchment)] opacity-70 mt-1">{obtainMessage}</div>}
                   </div>
                 </button>
               )

@@ -9,6 +9,7 @@ import { getLevelFromXP } from './experience.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE, EAT_TICK_COST } from '../utils/constants.js'
 import { randInt } from '../utils/helpers.js'
+import { getSlayerTaskEquipmentBonuses } from './slayerCombatBonuses.js'
 
 /**
  * Create a new combat state
@@ -284,8 +285,8 @@ function hasFullGuthanSet(equipment, itemsData) {
  * Returns { combatState, events[] }
  * events: { type: 'playerHit'|'monsterHit'|'monsterDeath'|'playerDeath'|'xp'|'levelUp', ... }
  */
-export function processCombatTick(combatState, playerStats, equipment, itemsData, prayersData = {}, inventory = []) {
-  const state = { ...combatState }
+export function processCombatTick(combatState, playerStats, equipment, itemsData, prayersData = {}, inventory = [], slayerTask = null) {
+  const state = { ...combatState, slayerTask }
   const events = []
   state.tickCount++
 
@@ -376,7 +377,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
               state.monster = monster
               return { combatState: state, events }
             }
-            const { combatState: newState, events: specEvents } = applySpecialAttack(state, playerStats, equipment, itemsData)
+            const { combatState: newState, events: specEvents } = applySpecialAttack(state, playerStats, equipment, itemsData, slayerTask)
             // Merge events from special attack
             for (const ev of specEvents) {
               events.push(ev)
@@ -402,6 +403,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       state.specialAttackQueued = false
     }
 
+    const slayerEquipmentBonus = getSlayerTaskEquipmentBonuses({ equipment, itemsData, slayerTask, monsterId: monster.id })
     let damage = 0
     let xpSkills = {}
 
@@ -418,9 +420,10 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
 
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(boostedPlayerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-      const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
+      let maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
+      maxHit = Math.floor(maxHit + slayerEquipmentBonus.damageFlat)
       const effAtk = effectiveAttack(boostedPlayerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const atkRoll = maxAttackRoll(effAtk, (bonuses.attackBonus[weaponStyle] || 0) + slayerEquipmentBonus.accuracyFlat)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       damage = rollDamage(acc, maxHit)
@@ -475,7 +478,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const styleBonus = getRangedStyleBonus(state.stance)
       const effRng = effectiveRanged(boostedPlayerStats.ranged, 0, 1.0, styleBonus)
       let maxHit = rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength)
-      let atkRoll = maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0)
+      let atkRoll = maxAttackRoll(effRng, (bonuses.attackBonus.ranged || 0) + slayerEquipmentBonus.accuracyFlat)
 
       // Dragon Hunter Crossbow: +30% accuracy and damage vs dragon-type monsters
       if (equippedWeapon?.dragonHunter && monster.isDragon) {
@@ -496,6 +499,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
 
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus.ranged || 0)
       const acc = hitChance(atkRoll, defRoll)
+      maxHit = Math.floor(maxHit + slayerEquipmentBonus.damageFlat)
       damage = rollDamage(acc, maxHit)
 
       // ── Enchanted bolt procs (ruby/diamond/dragonstone/onyx e) ──
@@ -590,14 +594,14 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       }
 
       const effMag = effectiveMagic(boostedPlayerStats.magic)
-      const atkRoll = maxAttackRoll(effMag, bonuses.attackBonus.magic || 0)
+      const atkRoll = maxAttackRoll(effMag, (bonuses.attackBonus.magic || 0) + slayerEquipmentBonus.accuracyFlat)
       const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0)
       const acc = hitChance(atkRoll, defRoll)
       // Max hit scales with magic level: base at level 75, +1 per 3 levels above.
       // At 75 = 24, at 99 = 32, at 123 = 39 (matches OSRS trident formulas approx).
       const magicLevel = boostedPlayerStats.magic || 1
       const baseDamage = Math.max(1, Math.floor(magicLevel / 3) + 9)
-      const maxHit = magicMaxHit(baseDamage, bonuses.otherBonus.magicDamage)
+      const maxHit = Math.floor(magicMaxHit(baseDamage, bonuses.otherBonus.magicDamage) + slayerEquipmentBonus.damageFlat)
       damage = rollDamage(acc, maxHit)
 
       if (weaponIsScaleCharged) {
@@ -621,10 +625,10 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       // Only cast if runes are available
       if (hasRunes) {
         const effMag = effectiveMagic(boostedPlayerStats.magic)
-        const atkRoll = maxAttackRoll(effMag, bonuses.attackBonus.magic || 0)
+        const atkRoll = maxAttackRoll(effMag, (bonuses.attackBonus.magic || 0) + slayerEquipmentBonus.accuracyFlat)
         const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0)
         const acc = hitChance(atkRoll, defRoll)
-        const maxHit = magicMaxHit(state.spell.baseDamage, bonuses.otherBonus.magicDamage)
+        const maxHit = Math.floor(magicMaxHit(state.spell.baseDamage, bonuses.otherBonus.magicDamage) + slayerEquipmentBonus.damageFlat)
         damage = rollDamage(acc, maxHit)
 
         // Track which runes to consume (excluding those provided by staff)
@@ -1002,7 +1006,7 @@ export function applyPotionBonuses(playerStats, potionItem) {
  * Consumes specialAttackEnergy per the weapon's energyCost.
  * Regenerates to 100 automatically in processCombatTick on monster death.
  */
-export function applySpecialAttack(combatState, playerStats, equipment, itemsData) {
+export function applySpecialAttack(combatState, playerStats, equipment, itemsData, slayerTask = null) {
   const weaponEntry = equipment?.weapon
   if (!weaponEntry) return { combatState, events: [] }
   const weapon = itemsData[weaponEntry.itemId]

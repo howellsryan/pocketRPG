@@ -18,6 +18,7 @@ import { getAgilityBankDelayFromStats, simulateIdleAgility } from './agility.js'
 import { rollClueRewards } from './clueScrolls.js'
 import { resolveSlayerTaskKill } from './slayerTasks.js'
 import { calculateDungeoneeringTokensForAction } from './dungeoneeringTokens.js'
+import { getSlayerTaskEquipmentBonuses } from './slayerCombatBonuses.js'
 
 const TICK_MS = 600
 const HP_REGEN_INTERVAL_MS = 60000 // 60 seconds per 1 HP
@@ -635,8 +636,9 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
  * Compute average player DPS against a monster.
  * Returns { avgDmgPerHit, weaponSpeed, acc, combatType } so callers can use per-hit granularity.
  */
-function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell = null) {
+function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell = null, slayerTask = null) {
   const bonuses = getEquipmentBonuses(equipment, itemsData)
+  const slayerEquipmentBonus = getSlayerTaskEquipmentBonuses({ equipment, itemsData, slayerTask, monsterId: monster.id })
   const weaponSpeed = getAttackSpeed(equipment, itemsData)
   const combatType = getCombatType(equipment, itemsData)
 
@@ -726,7 +728,7 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     magic:    getLevelFromXP(stats.magic?.xp    || 0),
   }
 
-  const { avgDmgPerHit, weaponSpeed, combatType } = avgHitStats(playerStats, equipment, monster, task.stance || 'accurate', itemsData, task.spell || null)
+  const { avgDmgPerHit, weaponSpeed, combatType } = avgHitStats(playerStats, equipment, monster, task.stance || 'accurate', itemsData, task.spell || null, slayerTask)
 
   // Active engine: playerAttackTimer starts at 0, first hit lands on tick 1,
   // then resets to weaponSpeed. So hits land on ticks: 1, 1+W, 1+2W, ...

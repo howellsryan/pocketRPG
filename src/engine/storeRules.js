@@ -38,7 +38,7 @@ export function getPurchaseRestriction(item, { isIronman = false } = {}) {
 
 export function isStoreVisibleItem(item, { isIronman = false, includeQuestItems = true } = {}) {
   if (!item) return false
-  if (isBossUniqueItem(item)) return false
+  if (isBossUniqueItem(item)) return true
 
   const isQuestItem = Boolean(item.questUnlock)
   if (isQuestItem) return includeQuestItems
