@@ -31,6 +31,18 @@ const EXPECTED_BOSS_UNIQUE_ITEM_IDS = new Set([
   'crystal_platelegs',
   'heavy_ballista',
   'uncut_zenyte',
+  'zenyte',
+  'zenyte_amulet',
+  'zenyte_bracelet',
+  'zenyte_necklace',
+  'zenyte_ring',
+  'zenyte_shard',
+  'amulet_of_torture',
+  'tormented_bracelet',
+  'necklace_of_anguish',
+  'ring_of_suffering',
+  'armadyl_helmet',
+  'zaryte_vambraces',
   'uncut_onyx', // treated as a boss-only unique reward in current drop tables
 
   'dragon_defender',

@@ -331,7 +331,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         playerStats.strength = Math.floor(playerStats.strength * 1.15)
       }
 
-      const { combatState, events } = processCombatTick(state, playerStats, equipmentRef.current, itemsData, prayersData, inventoryRef.current)
+      const { combatState, events } = processCombatTick(state, playerStats, equipmentRef.current, itemsData, prayersData, inventoryRef.current, slayerTaskRef.current)
 
       // Master Rejuvenation: auto-refill spec bar when it hits 0 mid-fight
       if (combatState.active && combatState.specialAttackEnergy === 0 && unlockedFeaturesRef.current.has('master_rejuvenation')) {
