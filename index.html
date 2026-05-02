@@ -30527,6 +30527,130 @@ function resolveSlayerTaskKill(task, monsterId, killCount = 1) {
     };
 }
 
+// ── engine/slayerUnlocks.js ──
+const SLAYER_UNLOCKS = [
+    {
+        itemId: 'slayer_helmet',
+        cost: 400,
+        description: 'Combined helmet that boosts damage and accuracy against your assigned slayer task.',
+    },
+    {
+        itemId: 'slayer_defender',
+        cost: 1500,
+        description: 'A Slayer defender that grants +5 accuracy and +5 max damage against your assigned Slayer task.',
+    },
+    {
+        itemId: 'gloves_of_slaughter',
+        cost: 1500,
+        description: 'Slayer gloves that grant +5 accuracy and +5 max damage against your assigned Slayer task.',
+    },
+];
+function ownsItem({ itemId, bank = {}, inventory = [] }) {
+    if (bank?.[itemId]?.quantity > 0)
+        return true;
+    return inventory.some(slot => slot?.itemId === itemId && (slot.quantity ?? 1) > 0);
+}
+function getSlayerUnlockPurchaseState({ unlock, item, slayerPoints, bank, inventory }) {
+    if (!unlock || !item)
+        return { allowed: false, code: 'ITEM_NOT_FOUND', message: 'Item not found' };
+    if (ownsItem({ itemId: unlock.itemId, bank, inventory })) {
+        return { allowed: false, code: 'ALREADY_OWNED', message: `You already own a ${item.name}` };
+    }
+    if (slayerPoints < unlock.cost) {
+        return { allowed: false, code: 'INSUFFICIENT_SLAYER_POINTS', message: `Need ${unlock.cost} slayer points` };
+    }
+    return { allowed: true, code: null, message: null };
+}
+
+// ── engine/slayerCombatBonuses.js ──
+function isOnSlayerTask(slayerTask, monsterId) {
+    return Boolean(slayerTask && monsterId && slayerTask.monsterId === monsterId && Number(slayerTask.monstersRemaining ?? 0) > 0);
+}
+function getSlayerTaskEquipmentBonuses({ equipment = {}, itemsData = {}, slayerTask = null, monsterId = null }) {
+    if (!isOnSlayerTask(slayerTask, monsterId))
+        return { accuracyFlat: 0, damageFlat: 0 };
+    let accuracyFlat = 0;
+    let damageFlat = 0;
+    for (const slot of Object.values(equipment || {})) {
+        if (!slot?.itemId)
+            continue;
+        const other = itemsData[slot.itemId]?.otherBonus || {};
+        accuracyFlat += Math.max(0, Math.floor(Number(other.slayerTaskAccuracyFlat) || 0));
+        damageFlat += Math.max(0, Math.floor(Number(other.slayerTaskDamageFlat) || 0));
+    }
+    return { accuracyFlat, damageFlat };
+}
+
+// ── engine/itemSources.js ──
+
+const titleize = (s = '') => s.split('_').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
+function getRaidRewardSources(itemId, raidsData = {}) {
+    const names = [];
+    for (const raid of Object.values(raidsData || {})) {
+        const uniqueItems = raid?.rewards?.unique?.items || [];
+        if (uniqueItems.some(i => i.itemId === itemId))
+            names.push(raid.name || titleize(raid.id || ''));
+    }
+    return names;
+}
+function getMonsterDropSources(itemId, monstersData = {}) {
+    const names = [];
+    for (const monster of Object.values(monstersData || {})) {
+        if ((monster?.drops || []).some(d => d.itemId === itemId))
+            names.push(monster.name || titleize(monster.id || ''));
+    }
+    return names;
+}
+function getItemIngredientSources(itemId, data = {}, seen = new Set()) {
+    if (!itemId || seen.has(itemId))
+        return [];
+    seen.add(itemId);
+    const { itemsData = {} } = data;
+    const item = itemsData[itemId];
+    if (!item)
+        return [];
+    if (item.obtainSource?.type === 'derived_item' && item.obtainSource.itemId) {
+        return getItemObtainSources(item.obtainSource.itemId, data, seen);
+    }
+    return [];
+}
+function getItemObtainSources(itemId, data = {}, seen = new Set()) {
+    const { itemsData = {}, monstersData = {}, raidsData = {}, slayerUnlocks = SLAYER_UNLOCKS } = data;
+    const item = itemsData[itemId] || {};
+    const raidSources = getRaidRewardSources(itemId, raidsData);
+    if (raidSources.length)
+        return raidSources;
+    const monsterSources = getMonsterDropSources(itemId, monstersData);
+    if (monsterSources.length)
+        return monsterSources;
+    if (item.obtainSource?.type === 'monster_drop' && item.obtainSource.sourceId) {
+        const monster = monstersData[item.obtainSource.sourceId];
+        return [monster?.name || titleize(item.obtainSource.sourceId)];
+    }
+    if (item.obtainSource?.type === 'raid_reward' && item.obtainSource.sourceId) {
+        const raid = raidsData[item.obtainSource.sourceId];
+        return [raid?.name || titleize(item.obtainSource.sourceId)];
+    }
+    if (item.obtainSource?.type === 'derived_item' && item.obtainSource.itemId) {
+        return getItemIngredientSources(itemId, data, seen);
+    }
+    const slayerUnlock = (slayerUnlocks || []).find(x => x.itemId === itemId);
+    if (slayerUnlock)
+        return ['Slayer rewards'];
+    return [];
+}
+function formatObtainSourceMessage(itemId, data) {
+    const raids = getRaidRewardSources(itemId, data?.raidsData);
+    if (raids.length)
+        return `Unlock through ${raids[0]}`;
+    const sources = getItemObtainSources(itemId, data);
+    if (!sources.length)
+        return 'Obtain from boss or raid drops';
+    if (sources.length === 1)
+        return `Obtain from ${sources[0]}`;
+    return `Obtain from ${sources.slice(0, -1).join(', ')}, or ${sources[sources.length - 1]}`;
+}
+
 // ── engine/combat.js ──
 
 
