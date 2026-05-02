@@ -7,7 +7,7 @@
     "shopValue": 0,
     "icon": "🪙",
     "isUntradeable": true,
-    "isGeneralStore": true
+    "isGeneralStore": false
   },
   "bones": {
     "id": "bones",
