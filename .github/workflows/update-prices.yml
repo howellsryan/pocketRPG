@@ -36,6 +36,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "Price Update Bot"
+          git pull
           git add src/data/items.json
           git commit -m "chore: Update OSRS prices from wiki API"
           git push
