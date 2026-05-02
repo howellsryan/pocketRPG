@@ -46,8 +46,53 @@ export function createEquipment() {
 export function isAmmoCompatible(equipment, ammoItemData, itemsData) {
   if (!equipment.weapon) return true
   const weapon = itemsData[equipment.weapon.itemId]
-  if (!weapon || !weapon.ammoType || !ammoItemData.ammoKind) return true
-  return weapon.ammoType === ammoItemData.ammoKind
+  if (!weapon) return true
+  const ammoKind = ammoItemData?.ammoKind
+  const requiredAmmoKind = weapon.ammoType
+  const requiredAmmoIds = normaliseRequiredAmmoIds(weapon)
+  if (!requiredAmmoKind && requiredAmmoIds.length === 0) return true
+  if (!ammoKind) return false
+  if (requiredAmmoKind && ammoKind !== requiredAmmoKind) return false
+  if (requiredAmmoIds.length > 0 && !requiredAmmoIds.includes(ammoItemData.id)) return false
+  return true
+}
+
+function getEquippedAmmoQuantity(ammoEntry) {
+  if (!ammoEntry) return 0
+  const quantity = Number(ammoEntry.quantity)
+  if (!Number.isFinite(quantity)) return 1
+  return quantity
+}
+
+function normaliseRequiredAmmoIds(weapon) {
+  if (!weapon) return []
+  if (Array.isArray(weapon.requiredAmmoIds)) return weapon.requiredAmmoIds
+  if (weapon.requiredAmmoId) return [weapon.requiredAmmoId]
+  return []
+}
+
+export function getRangedAmmoRequirementFailure(equipment, itemsData) {
+  const weaponEntry = equipment?.weapon
+  const weapon = weaponEntry?.itemId ? itemsData?.[weaponEntry.itemId] : null
+  if (!weapon || weapon.attackStyle !== 'ranged') return null
+  if (weapon.scaleCharged) return null
+  const requiredAmmoKind = weapon.ammoType
+  if (!requiredAmmoKind) return null
+  const ammoEntry = equipment?.ammo
+  const ammo = ammoEntry?.itemId ? itemsData?.[ammoEntry.itemId] : null
+  const ammoQuantity = getEquippedAmmoQuantity(ammoEntry)
+  const requiredAmmoIds = normaliseRequiredAmmoIds(weapon)
+  const failureBase = {
+    weaponId: weapon.id,
+    weaponName: weapon.name || weapon.id,
+    requiredAmmoKind,
+    requiredAmmoIds,
+    requiredAmmoName: requiredAmmoIds.length === 1 ? (itemsData?.[requiredAmmoIds[0]]?.name || requiredAmmoIds[0]) : null
+  }
+  if (!ammoEntry || !ammo || ammoQuantity <= 0) return { ...failureBase, reason: 'missing_ammo' }
+  if (ammo.ammoKind !== requiredAmmoKind) return { ...failureBase, actualAmmoId: ammo.id, actualAmmoKind: ammo.ammoKind || null, reason: 'wrong_ammo_type' }
+  if (requiredAmmoIds.length > 0 && !requiredAmmoIds.includes(ammo.id)) return { ...failureBase, actualAmmoId: ammo.id, actualAmmoKind: ammo.ammoKind || null, reason: 'wrong_ammo_item' }
+  return null
 }
 
 /**

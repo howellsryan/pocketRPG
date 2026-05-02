@@ -474,8 +474,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           // Decrement ammo quantity on the equipped ammo
           const newEq = { ...equipmentRef.current }
           const ammo = newEq.ammo
-          if (ammo && ammo.quantity && ammo.quantity > 0) {
-            const newQty = Math.max(0, ammo.quantity - (ev.qty || 1))
+          if (ammo) {
+            const currentQty = Number.isFinite(Number(ammo.quantity)) ? Number(ammo.quantity) : 1
+            const newQty = Math.max(0, currentQty - (ev.qty || 1))
             if (newQty <= 0) {
               // Out of ammo
               newEq.ammo = null
@@ -490,6 +491,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             equipmentRef.current = newEq
             updateEquipment(newEq)
           }
+        }
+        if (ev.type === 'noAmmo') {
+          const weaponName = ev.weaponName || itemsData[ev.weaponId]?.name || 'Weapon'
+          const required = ev.requiredAmmoName || ev.requiredAmmoKind || 'compatible ammo'
+          setLog(prev => [...prev.slice(-20), {
+            text: `${weaponName} requires ${required} to fire.`,
+            type: 'miss',
+            time: Date.now()
+          }])
         }
         if (ev.type === 'noCharges') {
           const item = itemsData[ev.itemId]
