@@ -1885,7 +1885,7 @@
     },
     "drops": [
       {
-        "itemId": "bones",
+        "itemId": "dragon_bones",
         "quantity": 1,
         "chance": 1
       },

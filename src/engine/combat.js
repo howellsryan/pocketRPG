@@ -502,13 +502,16 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       maxHit = Math.floor(maxHit + slayerEquipmentBonus.damageFlat)
       damage = rollDamage(acc, maxHit)
 
+      const equippedAmmoEntry = equipment && equipment.ammo
+      const ammoItem = equippedAmmoEntry ? itemsData[equippedAmmoEntry.itemId] : null
+      const canConsumeEquippedAmmo = Boolean(equippedWeapon?.ammoType && equippedAmmoEntry && !getRangedAmmoRequirementFailure(equipment, itemsData))
+      const canUseEnchantedBolt = canConsumeEquippedAmmo && ammoItem?.ammoKind === 'bolt'
+
       // ── Enchanted bolt procs (ruby/diamond/dragonstone/onyx e) ──
       let boltProcEvent = null
       let boltHealAmount = 0
       let boltSelfDamage = 0
-      if (!weaponIsScaleCharged) {
-        const equippedAmmoEntry = equipment && equipment.ammo
-        const ammoItem = equippedAmmoEntry ? itemsData[equippedAmmoEntry.itemId] : null
+      if (!weaponIsScaleCharged && canUseEnchantedBolt) {
         const proc = ammoItem?.boltProc
         if (proc && Math.random() < (proc.chance || 0)) {
           switch (proc.type) {
@@ -559,12 +562,9 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       if (weaponIsScaleCharged) {
         // Consume one scale charge per shot
         events.push({ type: 'consumeCharge', qty: 1 })
-      } else {
+      } else if (canConsumeEquippedAmmo) {
         // Consume one bolt/arrow per shot
-        const equippedAmmo = equipment && equipment.ammo
-        if (equippedAmmo) {
-          events.push({ type: 'consumeAmmo', itemId: equippedAmmo.itemId, qty: 1 })
-        }
+        events.push({ type: 'consumeAmmo', itemId: equippedAmmoEntry.itemId, qty: 1 })
       }
 
       if (boltProcEvent) {
