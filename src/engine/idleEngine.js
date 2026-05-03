@@ -131,12 +131,13 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
 
   const itemsConsumed = {}
 
-  // Cap actions to available materials in bank
+  // Cap actions to available materials across inventory + bank
   if (task.action.materials) {
     let maxFromMaterials = Infinity
     for (const [itemId, qtyPerAction] of Object.entries(task.action.materials)) {
-      const available = (bank && bank[itemId]) ? bank[itemId].quantity : 0
-      const possible = Math.floor(available / qtyPerAction)
+      const invCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === itemId ? (slot?.quantity || 0) : 0), 0)
+      const bankCount = (bank && bank[itemId]) ? bank[itemId].quantity : 0
+      const possible = Math.floor((invCount + bankCount) / qtyPerAction)
       if (possible < maxFromMaterials) maxFromMaterials = possible
     }
     if (maxFromMaterials === 0) return null
@@ -211,6 +212,26 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
           if (newInv[i].quantity === 0) newInv[i] = null
           remaining -= consumed
         }
+      }
+    }
+  }
+
+  // Consume materials from inventory first, then bank
+  if (task.action.materials) {
+    for (const [itemId, qtyPerAction] of Object.entries(task.action.materials)) {
+      let remaining = qtyPerAction * actions
+      for (let i = 0; i < newInv.length && remaining > 0; i++) {
+        if (newInv[i]?.itemId === itemId) {
+          const consumed = Math.min(newInv[i].quantity, remaining)
+          newInv[i] = { ...newInv[i], quantity: newInv[i].quantity - consumed }
+          if (newInv[i].quantity === 0) newInv[i] = null
+          remaining -= consumed
+        }
+      }
+      if (remaining > 0) {
+        itemsConsumed[itemId] = remaining
+      } else {
+        delete itemsConsumed[itemId]
       }
     }
   }
