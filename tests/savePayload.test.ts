@@ -34,6 +34,46 @@ describe('save payload snapshot', () => {
     expect(payload.settings.dungeoneeringTokens).toBe(12345)
   })
 
+
+  it('preserves slayer null-task completion state and updated points', () => {
+    const payload = buildSavePayloadFromSnapshot({
+      player: { username: 'Tester' },
+      stats: {},
+      inventory: [],
+      bank: {},
+      equipment: {},
+      settings: {
+        slayerTask: null,
+        slayerPoints: 14,
+      },
+    })
+
+    expect(payload.settings.slayerTask).toBe(null)
+    expect(payload.settings.slayerPoints).toBe(14)
+  })
+
+  it('models immediate post-completion snapshot durability', () => {
+    let slayerTaskRef = { monsterId: 'goblin', monstersRemaining: 1, pointsOnComplete: 4 }
+    let slayerPointsRef = 10
+
+    slayerTaskRef = null
+    slayerPointsRef += 4
+
+    const payload = buildSavePayloadFromSnapshot({
+      player: { username: 'Tester' },
+      stats: {},
+      inventory: [],
+      bank: {},
+      equipment: {},
+      settings: {
+        slayerTask: slayerTaskRef,
+        slayerPoints: slayerPointsRef,
+      },
+    })
+
+    expect(payload.settings.slayerTask).toBe(null)
+    expect(payload.settings.slayerPoints).toBe(14)
+  })
   it('persists combat stance and unlocked construction features from state payload builder', () => {
     const payload = buildSavePayloadFromState(
       { username: 'Tester' },

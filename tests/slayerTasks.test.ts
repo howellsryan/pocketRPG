@@ -60,4 +60,14 @@ describe('resolveSlayerTaskKill', () => {
     expect(result.killsApplied).toBe(0)
     expect(result.pointsAwarded).toBe(0)
   })
+
+  it('does not award points when resolving a null task after completion', () => {
+    const completed = resolveSlayerTaskKill({ monsterId: 'goblin', monstersRemaining: 1, pointsOnComplete: 15 }, 'goblin', 1)
+    expect(completed.completed).toBe(true)
+    expect(completed.pointsAwarded).toBe(15)
+    const rerun = resolveSlayerTaskKill(completed.task, 'goblin', 1)
+    expect(rerun.completed).toBe(false)
+    expect(rerun.pointsAwarded).toBe(0)
+  })
+
 })
