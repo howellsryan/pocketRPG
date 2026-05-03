@@ -6021,14 +6021,14 @@
         "chance": 0.10
       },
       {
-        "itemId": "dragon_warhammer",
-        "quantity": 1,
-        "chance": 0.0003333333333333333
-      },
-      {
         "itemId": "rune_chainbody",
         "quantity": 1,
         "chance": 0.05
+      },
+      {
+        "itemId": "dragon_warhammer",
+        "quantity": 1,
+        "chance": 0.0003333333333333333
       }
     ]
   }
