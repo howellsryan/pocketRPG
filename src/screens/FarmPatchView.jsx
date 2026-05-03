@@ -53,7 +53,7 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
       return
     }
 
-    const result = plantCrop(farming, selectedPatch.patchId, seedId)
+    const result = plantCrop(farming, selectedPatch.patchId, seedId, selectedPatch.type)
     if (!result) {
       addToast('Failed to plant', 'error')
       return

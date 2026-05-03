@@ -20,11 +20,11 @@ import HunterScreen from './HunterScreen.jsx'
 import FarmingScreen from './FarmingScreen.jsx'
 import ConstructionScreen from './ConstructionScreen.jsx'
 
-// Agility, Prayer, Thieving, Hunter, Slayer, Construction, and Dungeoneering are special
-// skills shown here in the Skills tab (farming is silently hidden from display; logic remains intact)
+// Agility, Prayer, Thieving, Hunter, Slayer, Construction, Dungeoneering, and
+// Farming are routed to dedicated skill screens in the Skills tab.
 const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'hunter', 'slayer', 'construction', 'dungeoneering']
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0)
-const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS]
+const allSkillsInTab = [...new Set([...trainableSkills, ...SPECIAL_SKILLS, 'farming'])]
 
 // Format an action duration. Tick is 600ms; short actions show as `Xs`,
 // longer ones (>=60s) show as minutes/hours so 10h doesn't render as 36000s.
