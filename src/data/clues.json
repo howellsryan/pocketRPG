@@ -710,6 +710,11 @@
         "quantity": 1
       },
       {
+        "itemId": "freminnik_kilt",
+        "weight": 0.01,
+        "quantity": 1
+      },
+      {
         "itemId": "3rd_age_longsword",
         "weight": 0.0002,
         "quantity": 1
