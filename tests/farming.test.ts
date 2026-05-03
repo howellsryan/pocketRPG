@@ -179,6 +179,16 @@ describe('farming ui helper data', () => {
     expect(getReadyPatchSummaryForLocation(withEmpty, 'falador')).toEqual([])
   })
 
+  it('getReadyPatchSummaryForLocation reports a type when only one of multiple same-type patches is ready', () => {
+    let state = initFarmingState()
+    state = plantCrop(state, 'falador_herb_0', 'guam_seed', 'herb')!.state
+    vi.advanceTimersByTime(getCropDef('guam_seed')!.growthTimeMs + 1)
+    // Plant a second herb at the same farm AFTER time advance so it isn't ready.
+    state = plantCrop(state, 'falador_herb_1', 'guam_seed', 'herb')!.state
+    const ready = getReadyPatchSummaryForLocation(state, 'falador')
+    expect(ready).toEqual([{ type: 'herb', count: 1 }])
+  })
+
   it('getReadyPatchSummaryForLocation groups ready patches by type and does not mutate', () => {
     let state = initFarmingState()
     state = plantCrop(state, 'falador_herb_0', 'guam_seed', 'herb')!.state

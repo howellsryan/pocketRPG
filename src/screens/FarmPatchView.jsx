@@ -62,12 +62,10 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
     updateFarming(result.state)
     removeFromInventory(seedSlot, 1)
     grantXP('farming', result.plantXp)
-    addToast(`Planted ${result.cropName}`, 'success')
     setSelectedPatch(null)
   }
 
   const handleHarvest = () => {
-    const plantedCrop = selectedPatch?.patch?.cropId ? getCropDef(selectedPatch.patch.cropId) : null
     const result = harvestCrop(farming, selectedPatch.patchId)
     if (!result) {
       addToast('Not ready to harvest', 'error')
@@ -77,7 +75,6 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
     updateFarming(result.state)
     grantXP('farming', result.harvestXp)
     addToBank(result.cropId, result.quantity)
-    addToast(`Harvested ${plantedCrop?.name || 'crop'}`, 'success')
     setSelectedPatch(null)
   }
 
