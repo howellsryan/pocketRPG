@@ -180,6 +180,12 @@ export function GameProvider({ children }) {
               }
             }
           }
+          if (savedTask.type === 'combat' && sim.ammoConsumed && eq?.ammo && eq.ammo.itemId === sim.ammoConsumed.itemId) {
+            const remainingAmmo = Math.max(0, (eq.ammo.quantity || 0) - sim.ammoConsumed.quantity)
+            eq.ammo = remainingAmmo > 0 ? { ...eq.ammo, quantity: remainingAmmo } : null
+            await saveEquipment(eq)
+          }
+
           // Deduct scale charges consumed by the equipped weapon during idle combat
           if (savedTask.type === 'combat' && sim.chargesConsumed > 0 && eq.weapon) {
             const remaining = Math.max(0, (eq.weapon.charges || 0) - sim.chargesConsumed)

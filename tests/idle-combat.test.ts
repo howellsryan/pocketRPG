@@ -103,4 +103,39 @@ describe('simulateIdleCombat', () => {
     expect(sim!.monstersKilled).toBeGreaterThan(0)
     expect(sim!.finalInventory[0].quantity).toBe(100)
   })
+
+  it('caps ranged idle kills by equipped ammo and reports ammo consumption', () => {
+    const task: any = {
+      stance: 'accurate',
+      monster: { id: 'goblin', name: 'Goblin', hitpoints: 5, stats: { defence: 1, magic: 1 }, defenceBonus: { ranged: 0 }, drops: [] }
+    }
+    const stats: any = { ranged: { xp: 13_034_431 }, hitpoints: { xp: 13_034_431 } }
+    const equipment: any = { weapon: { itemId: 'rune_crossbow' }, ammo: { itemId: 'bronze_bolt', quantity: 3 } }
+    const itemsData: any = {
+      rune_crossbow: { id: 'rune_crossbow', attackStyle: 'ranged', ammoType: 'bolt', attackSpeed: 5, attackBonus: { ranged: 90 }, defenceBonus: {}, otherBonus: { rangedStrength: 0 } },
+      bronze_bolt: { id: 'bronze_bolt', ammoKind: 'bolt' }
+    }
+
+    const sim = simulateIdleCombat(task, 60_000, stats, equipment, Array(28).fill(null), itemsData)
+    expect(sim).toBeTruthy()
+    expect(sim!.monstersKilled).toBe(3)
+    expect(sim!.ammoConsumed).toEqual({ itemId: 'bronze_bolt', quantity: 3 })
+    expect(sim!.resourceLimited).toBe(true)
+  })
+
+  it('caps powered staff idle kills by weapon charges', () => {
+    const task: any = {
+      stance: 'accurate',
+      monster: { id: 'goblin', name: 'Goblin', hitpoints: 5, stats: { defence: 1, magic: 1 }, defenceBonus: { magic: 0 }, drops: [] }
+    }
+    const stats: any = { magic: { xp: 13_034_431 }, hitpoints: { xp: 13_034_431 } }
+    const equipment: any = { weapon: { itemId: 'trident', charges: 2 } }
+    const itemsData: any = {
+      trident: { id: 'trident', attackStyle: 'magic', poweredStaff: true, scaleCharged: true, attackSpeed: 4, attackBonus: { magic: 25 }, defenceBonus: {}, otherBonus: { magicDamage: 0 } }
+    }
+    const sim = simulateIdleCombat(task, 60_000, stats, equipment, Array(28).fill(null), itemsData)
+    expect(sim!.monstersKilled).toBe(2)
+    expect(sim!.chargesConsumed).toBe(2)
+  })
+
 })

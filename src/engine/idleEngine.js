@@ -809,7 +809,15 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   }
   xpPerKill.hitpoints = Math.floor(monster.hitpoints * HP_XP_PER_DAMAGE)
 
-  // Pre-calculate how many kills are possible given available runes (inventory + bank)
+  // Pre-calculate resource-limited kill caps
+  const attacksPerKill = hitsNeeded < Infinity ? hitsNeeded : 0
+
+  let maxKillsFromAmmo = Infinity
+  if (combatType === 'ranged' && weaponItem?.ammoType) {
+    const ammoQty = Math.max(0, Number(equipment?.ammo?.quantity) || 0)
+    maxKillsFromAmmo = attacksPerKill > 0 ? Math.floor(ammoQty / attacksPerKill) : 0
+  }
+
   let maxKillsFromRunes = Infinity
   if (combatType === 'magic' && task.spell?.runeReq && hitsNeeded < Infinity) {
     const runesToConsume = getRunesToConsume(task.spell.runeReq, equipment, itemsData)
@@ -851,7 +859,9 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   let slayerXpGained = 0
   let remainingTicks = totalTicks
 
-  while (remainingTicks >= ticksPerCycle && monstersKilled < maxKillsFromRunes && monstersKilled < maxKillsFromCharges) {
+  const maxKillsFromResources = Math.min(maxKillsFromAmmo, maxKillsFromRunes, maxKillsFromCharges)
+
+  while (remainingTicks >= ticksPerCycle && monstersKilled < maxKillsFromResources) {
     remainingTicks -= ticksPerCycle
     monstersKilled++
 
@@ -863,17 +873,6 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     // XP for this kill
     for (const [skill, xp] of Object.entries(xpPerKill)) {
       xpGained[skill] = (xpGained[skill] || 0) + xp
-    }
-
-    // Consume ammo for ranged combat (one ammo per kill) only if the weapon uses ammo.
-    if (combatType === 'ranged' && equipment?.ammo && weaponItem?.ammoType) {
-      const ammoSlot = newInv.findIndex(s => s && s.itemId === equipment.ammo.itemId)
-      if (ammoSlot !== -1) {
-        newInv[ammoSlot].quantity -= 1
-        if (newInv[ammoSlot].quantity <= 0) {
-          newInv[ammoSlot] = null
-        }
-      }
     }
 
     // Loot for this kill — place items into inventory, overflow to lost/banked
@@ -970,10 +969,17 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     }
   }
 
-  // Track scale charges consumed by the weapon during idle combat
+  // Track consumed combat resources so callers can mutate equipped state.
+  const ammoConsumed = (combatType === 'ranged' && weaponItem?.ammoType && equipment?.ammo?.itemId && attacksPerKill > 0)
+    ? { itemId: equipment.ammo.itemId, quantity: Math.min(Math.max(0, Number(equipment?.ammo?.quantity) || 0), attacksPerKill * monstersKilled) }
+    : null
+
   const chargesConsumed = weaponScaleCharged && hitsNeeded < Infinity
     ? Math.min(startingCharges, hitsNeeded * monstersKilled)
     : 0
 
-  return { xpGained, lootGained, lootLost, lootBanked, runesConsumed, monstersKilled, monstersKilledOnTask, finalInventory: newInv, slayerXpGained, slayerTaskUpdate, chargesConsumed }
+  const resourceLimited = monstersKilled < Math.floor(totalTicks / ticksPerCycle)
+    && (maxKillsFromResources !== Infinity)
+
+  return { xpGained, lootGained, lootLost, lootBanked, runesConsumed, monstersKilled, monstersKilledOnTask, finalInventory: newInv, slayerXpGained, slayerTaskUpdate, chargesConsumed, ammoConsumed, attacksUsed: attacksPerKill * monstersKilled, resourceLimited }
 }
