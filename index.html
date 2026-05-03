@@ -34693,7 +34693,13 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
         xpPerKill[xpSkill] = Math.floor(monster.hitpoints * MELEE_XP_PER_DAMAGE);
     }
     xpPerKill.hitpoints = Math.floor(monster.hitpoints * HP_XP_PER_DAMAGE);
-    // Pre-calculate how many kills are possible given available runes (inventory + bank)
+    // Pre-calculate resource-limited kill caps
+    const attacksPerKill = hitsNeeded < Infinity ? hitsNeeded : 0;
+    let maxKillsFromAmmo = Infinity;
+    if (combatType === 'ranged' && weaponItem?.ammoType) {
+        const ammoQty = Math.max(0, Number(equipment?.ammo?.quantity) || 0);
+        maxKillsFromAmmo = attacksPerKill > 0 ? Math.floor(ammoQty / attacksPerKill) : 0;
+    }
     let maxKillsFromRunes = Infinity;
     if (combatType === 'magic' && task.spell?.runeReq && hitsNeeded < Infinity) {
         const runesToConsume = getRunesToConsume(task.spell.runeReq, equipment, itemsData);
@@ -34732,7 +34738,8 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
     let monstersKilledOnTask = 0;
     let slayerXpGained = 0;
     let remainingTicks = totalTicks;
-    while (remainingTicks >= ticksPerCycle && monstersKilled < maxKillsFromRunes && monstersKilled < maxKillsFromCharges) {
+    const maxKillsFromResources = Math.min(maxKillsFromAmmo, maxKillsFromRunes, maxKillsFromCharges);
+    while (remainingTicks >= ticksPerCycle && monstersKilled < maxKillsFromResources) {
         remainingTicks -= ticksPerCycle;
         monstersKilled++;
         // Check if this kill counts toward slayer task — cap at total task count
@@ -34742,16 +34749,6 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
         // XP for this kill
         for (const [skill, xp] of Object.entries(xpPerKill)) {
             xpGained[skill] = (xpGained[skill] || 0) + xp;
-        }
-        // Consume ammo for ranged combat (one ammo per kill) only if the weapon uses ammo.
-        if (combatType === 'ranged' && equipment?.ammo && weaponItem?.ammoType) {
-            const ammoSlot = newInv.findIndex(s => s && s.itemId === equipment.ammo.itemId);
-            if (ammoSlot !== -1) {
-                newInv[ammoSlot].quantity -= 1;
-                if (newInv[ammoSlot].quantity <= 0) {
-                    newInv[ammoSlot] = null;
-                }
-            }
         }
         // Loot for this kill — place items into inventory, overflow to lost/banked
         for (const drop of idleRollDrops(monster)) {
@@ -34854,11 +34851,16 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
             monstersKilledOnTask = killsForTask;
         }
     }
-    // Track scale charges consumed by the weapon during idle combat
+    // Track consumed combat resources so callers can mutate equipped state.
+    const ammoConsumed = (combatType === 'ranged' && weaponItem?.ammoType && equipment?.ammo?.itemId && attacksPerKill > 0)
+        ? { itemId: equipment.ammo.itemId, quantity: Math.min(Math.max(0, Number(equipment?.ammo?.quantity) || 0), attacksPerKill * monstersKilled) }
+        : null;
     const chargesConsumed = weaponScaleCharged && hitsNeeded < Infinity
         ? Math.min(startingCharges, hitsNeeded * monstersKilled)
         : 0;
-    return { xpGained, lootGained, lootLost, lootBanked, runesConsumed, monstersKilled, monstersKilledOnTask, finalInventory: newInv, slayerXpGained, slayerTaskUpdate, chargesConsumed };
+    const resourceLimited = monstersKilled < Math.floor(totalTicks / ticksPerCycle)
+        && (maxKillsFromResources !== Infinity);
+    return { xpGained, lootGained, lootLost, lootBanked, runesConsumed, monstersKilled, monstersKilledOnTask, finalInventory: newInv, slayerXpGained, slayerTaskUpdate, chargesConsumed, ammoConsumed, attacksUsed: attacksPerKill * monstersKilled, resourceLimited };
 }
 
 // ── engine/tick.js ──
@@ -36728,6 +36730,11 @@ function GameProvider({ children }) {
                                 }
                             }
                         }
+                    }
+                    if (savedTask.type === 'combat' && sim.ammoConsumed && eq?.ammo && eq.ammo.itemId === sim.ammoConsumed.itemId) {
+                        const remainingAmmo = Math.max(0, (eq.ammo.quantity || 0) - sim.ammoConsumed.quantity);
+                        eq.ammo = remainingAmmo > 0 ? { ...eq.ammo, quantity: remainingAmmo } : null;
+                        await saveEquipment(eq);
                     }
                     // Deduct scale charges consumed by the equipped weapon during idle combat
                     if (savedTask.type === 'combat' && sim.chargesConsumed > 0 && eq.weapon) {
@@ -46578,6 +46585,16 @@ function GameApp() {
                         }
                         updateBankDirect(negated);
                     }
+                    if (savedTask.type === 'combat' && sim.ammoConsumed && freshEq?.ammo && freshEq.ammo.itemId === sim.ammoConsumed.itemId) {
+                        const remainingAmmo = Math.max(0, (freshEq.ammo.quantity || 0) - sim.ammoConsumed.quantity);
+                        freshEq.ammo = remainingAmmo > 0 ? { ...freshEq.ammo, quantity: remainingAmmo } : null;
+                        setEquipment({ ...freshEq });
+                    }
+                    if (savedTask.type === 'combat' && sim.chargesConsumed > 0 && freshEq?.weapon) {
+                        const remainingCharges = Math.max(0, (freshEq.weapon.charges || 0) - sim.chargesConsumed);
+                        freshEq.weapon = { ...freshEq.weapon, charges: remainingCharges };
+                        setEquipment({ ...freshEq });
+                    }
                     // Deduct runes consumed from bank (inventory portion already reflected in finalInventory)
                     if (sim.runesConsumed && Object.keys(sim.runesConsumed).length > 0) {
                         const negated = {};
@@ -47153,6 +47170,16 @@ function GameApp() {
                             negated[itemId] = -qty;
                         }
                         updateBankDirect(negated);
+                    }
+                    if (savedTask.type === 'combat' && sim.ammoConsumed && freshEq?.ammo && freshEq.ammo.itemId === sim.ammoConsumed.itemId) {
+                        const remainingAmmo = Math.max(0, (freshEq.ammo.quantity || 0) - sim.ammoConsumed.quantity);
+                        freshEq.ammo = remainingAmmo > 0 ? { ...freshEq.ammo, quantity: remainingAmmo } : null;
+                        setEquipment({ ...freshEq });
+                    }
+                    if (savedTask.type === 'combat' && sim.chargesConsumed > 0 && freshEq?.weapon) {
+                        const remainingCharges = Math.max(0, (freshEq.weapon.charges || 0) - sim.chargesConsumed);
+                        freshEq.weapon = { ...freshEq.weapon, charges: remainingCharges };
+                        setEquipment({ ...freshEq });
                     }
                     // Deduct runes consumed from bank
                     if (sim.runesConsumed && Object.keys(sim.runesConsumed).length > 0) {

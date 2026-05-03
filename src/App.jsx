@@ -648,6 +648,18 @@ function GameApp() {
             }
             updateBankDirect(negated)
           }
+
+          if (savedTask.type === 'combat' && sim.ammoConsumed && freshEq?.ammo && freshEq.ammo.itemId === sim.ammoConsumed.itemId) {
+            const remainingAmmo = Math.max(0, (freshEq.ammo.quantity || 0) - sim.ammoConsumed.quantity)
+            freshEq.ammo = remainingAmmo > 0 ? { ...freshEq.ammo, quantity: remainingAmmo } : null
+            setEquipment({ ...freshEq })
+          }
+
+          if (savedTask.type === 'combat' && sim.chargesConsumed > 0 && freshEq?.weapon) {
+            const remainingCharges = Math.max(0, (freshEq.weapon.charges || 0) - sim.chargesConsumed)
+            freshEq.weapon = { ...freshEq.weapon, charges: remainingCharges }
+            setEquipment({ ...freshEq })
+          }
           // Deduct runes consumed from bank (inventory portion already reflected in finalInventory)
           if (sim.runesConsumed && Object.keys(sim.runesConsumed).length > 0) {
             const negated = {}
@@ -1206,6 +1218,18 @@ function GameApp() {
               negated[itemId] = -qty
             }
             updateBankDirect(negated)
+          }
+
+          if (savedTask.type === 'combat' && sim.ammoConsumed && freshEq?.ammo && freshEq.ammo.itemId === sim.ammoConsumed.itemId) {
+            const remainingAmmo = Math.max(0, (freshEq.ammo.quantity || 0) - sim.ammoConsumed.quantity)
+            freshEq.ammo = remainingAmmo > 0 ? { ...freshEq.ammo, quantity: remainingAmmo } : null
+            setEquipment({ ...freshEq })
+          }
+
+          if (savedTask.type === 'combat' && sim.chargesConsumed > 0 && freshEq?.weapon) {
+            const remainingCharges = Math.max(0, (freshEq.weapon.charges || 0) - sim.chargesConsumed)
+            freshEq.weapon = { ...freshEq.weapon, charges: remainingCharges }
+            setEquipment({ ...freshEq })
           }
           // Deduct runes consumed from bank
           if (sim.runesConsumed && Object.keys(sim.runesConsumed).length > 0) {
