@@ -1,4 +1,5 @@
 import farmingData from '../data/farming.json'
+import { countItem } from './inventory.js'
 
 export interface FarmingPatch {
   patchId: string
@@ -175,6 +176,45 @@ export function getPatchesForLocation(
 export function getAvailableCrops(type: 'herb' | 'tree' | 'fruitTree', currentLevel: number): CropDef[] {
   const cropList = type === 'herb' ? farmingData.herbs : type === 'tree' ? farmingData.trees : farmingData.fruitTrees
   return cropList.filter(c => currentLevel >= c.level)
+}
+
+export interface PlantableCropOption {
+  crop: CropDef
+  ownedQuantity: number
+  canPlant: boolean
+}
+
+export function getPlantableCropOptions(
+  type: FarmingPatchType,
+  currentLevel: number,
+  inventory: Array<{ itemId: string; quantity: number } | null> | null | undefined
+): PlantableCropOption[] {
+  const safeInventory = Array.isArray(inventory) ? inventory : []
+  return getAvailableCrops(type, currentLevel).map(crop => {
+    const ownedQuantity = countItem(safeInventory, crop.id)
+    return {
+      crop,
+      ownedQuantity,
+      canPlant: ownedQuantity > 0
+    }
+  })
+}
+
+export function getReadyPatchSummaryForLocation(state: FarmingState | null | undefined, locationId: string): Array<{ type: FarmingPatchType; count: number }> {
+  if (!state?.patchesById || !locationId) return []
+
+  const readyCounts = new Map<FarmingPatchType, number>()
+  const patches = getPatchesForLocation(state, locationId)
+  for (const { patch, type } of patches) {
+    if (!patch?.cropId) continue
+    if (getEffectiveStage(patch) < 4) continue
+    const patchType = type as FarmingPatchType
+    readyCounts.set(patchType, (readyCounts.get(patchType) || 0) + 1)
+  }
+
+  return (['herb', 'tree', 'fruitTree'] as const)
+    .filter(type => readyCounts.has(type))
+    .map(type => ({ type, count: readyCounts.get(type) || 0 }))
 }
 
 export function formatGrowthTime(ms: number): string {

@@ -35127,6 +35127,7 @@ function resetTicks() { tickCount = 0; }
 
 // ── engine/farming.js ──
 
+
 function getCropType(seedId) {
     if (farmingData.herbs.some(c => c.id === seedId))
         return 'herb';
@@ -35258,6 +35259,34 @@ function getPatchesForLocation(state, locationId) {
 function getAvailableCrops(type, currentLevel) {
     const cropList = type === 'herb' ? farmingData.herbs : type === 'tree' ? farmingData.trees : farmingData.fruitTrees;
     return cropList.filter(c => currentLevel >= c.level);
+}
+function getPlantableCropOptions(type, currentLevel, inventory) {
+    const safeInventory = Array.isArray(inventory) ? inventory : [];
+    return getAvailableCrops(type, currentLevel).map(crop => {
+        const ownedQuantity = countItem(safeInventory, crop.id);
+        return {
+            crop,
+            ownedQuantity,
+            canPlant: ownedQuantity > 0
+        };
+    });
+}
+function getReadyPatchSummaryForLocation(state, locationId) {
+    if (!state?.patchesById || !locationId)
+        return [];
+    const readyCounts = new Map();
+    const patches = getPatchesForLocation(state, locationId);
+    for (const { patch, type } of patches) {
+        if (!patch?.cropId)
+            continue;
+        if (getEffectiveStage(patch) < 4)
+            continue;
+        const patchType = type;
+        readyCounts.set(patchType, (readyCounts.get(patchType) || 0) + 1);
+    }
+    return ['herb', 'tree', 'fruitTree']
+        .filter(type => readyCounts.has(type))
+        .map(type => ({ type, count: readyCounts.get(type) || 0 }));
 }
 function formatGrowthTime(ms) {
     const minutes = Math.floor(ms / 60000);
@@ -42542,23 +42571,29 @@ function AgilityScreen({ initialActionId, onBack }) {
 
 
 function FarmingScreen({ onBack }) {
-    const { stats } = useGame();
+    const { stats, farming } = useGame();
     const farmingLevel = getLevelFromXP(stats.farming?.xp || 0);
     const [selectedLocation, setSelectedLocation] = useState(null);
     if (selectedLocation) {
         return (h(FarmPatchView, { locationId: selectedLocation, farmingLevel: farmingLevel, onBack: () => setSelectedLocation(null) }));
     }
-    return (h(FarmLocationPicker, { farmingLevel: farmingLevel, onSelectLocation: setSelectedLocation, onBack: onBack }));
+    return (h(FarmLocationPicker, { farmingLevel: farmingLevel, farming: farming, onSelectLocation: setSelectedLocation, onBack: onBack }));
 }
 
 // ── screens/FarmLocationPicker.js ──
+
 
 const patchTypeLabels = {
     herb: 'Herb Patch',
     tree: 'Tree Patch',
     fruitTree: 'Fruit Tree Patch'
 };
-function FarmLocationPicker({ farmingLevel, onSelectLocation, onBack }) {
+const readyTypeLabels = {
+    herb: 'Herb',
+    tree: 'Tree',
+    fruitTree: 'Fruit tree'
+};
+function FarmLocationPicker({ farmingLevel, farming, onSelectLocation, onBack }) {
     return (h("div", { class: "h-full overflow-y-auto p-4" },
         onBack && (h("button", { onClick: onBack, class: "text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1" }, "\u2190 Skills")),
         h("div", { class: "flex items-center justify-between mb-1" },
@@ -42569,10 +42604,17 @@ function FarmLocationPicker({ farmingLevel, onSelectLocation, onBack }) {
         h("div", { class: "mb-3 bg-[#111] rounded-lg px-3 py-2 text-[11px] text-[var(--color-parchment)] opacity-60 flex items-center gap-2" },
             h("span", null, "\uD83C\uDF3E"),
             h("span", null, "Plant seeds at farms and harvest crops over time")),
-        h("div", { class: "space-y-2" }, farmingData.locations.map(location => (h("button", { key: location.id, onClick: () => onSelectLocation(location.id), class: "w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]" },
-            h("div", { class: "flex-1" },
-                h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, location.name),
-                h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5" }, location.patches.map(p => `${p.count}× ${patchTypeLabels[p.type]}`).join(' · ')))))))));
+        h("div", { class: "space-y-2" }, farmingData.locations.map(location => {
+            const readySummary = getReadyPatchSummaryForLocation(farming, location.id);
+            const hasReady = readySummary.length > 0;
+            return (h("button", { key: location.id, onClick: () => onSelectLocation(location.id), class: `w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left active:bg-[#222] ${hasReady ? 'bg-[#201a08] border-[var(--color-gold)]' : 'bg-[#1a1a1a] border-[#2a2a2a]'}` },
+                h("div", { class: "flex-1" },
+                    h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" }, location.name),
+                    h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5" }, location.patches.map(p => `${p.count}× ${patchTypeLabels[p.type]}`).join(' · ')),
+                    hasReady && (h("div", { class: "text-[10px] text-[var(--color-gold)] mt-1 font-semibold" },
+                        "Ready: ",
+                        readySummary.map(({ type, count }) => `${readyTypeLabels[type]} ×${count}`).join(' · '))))));
+        }))));
 }
 
 // ── screens/FarmPatchView.js ──
@@ -42647,6 +42689,7 @@ function FarmPatchView({ locationId, farmingLevel, onBack }) {
         setSelectedPatch(null);
     };
     const isEmpty = selectedPatch && !selectedPatch.patch?.cropId;
+    const plantableOptions = isEmpty ? getPlantableCropOptions(selectedPatch.type, farmingLevel, inventory) : [];
     return (h("div", { class: "h-full overflow-y-auto p-4" },
         h("button", { onClick: onBack, class: "text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1" }, "\u2190 Farms"),
         h("div", { class: "flex items-center justify-between mb-1" },
@@ -42663,7 +42706,9 @@ function FarmPatchView({ locationId, farmingLevel, onBack }) {
                 h("span", null, "\uD83C\uDF31"),
                 h("span", null, "Select a seed to plant in this patch")),
             h("div", { class: "space-y-2" },
-                getAvailableCrops(selectedPatch.type, farmingLevel).map(crop => (h("button", { key: crop.id, onClick: () => handlePlantCrop(crop.id), class: "w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]" },
+                plantableOptions.map(({ crop, ownedQuantity, canPlant }) => (h("button", { key: crop.id, onClick: () => handlePlantCrop(crop.id), class: `w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left active:bg-[#222] ${canPlant
+                        ? 'bg-[#201a08] border-[var(--color-gold)]'
+                        : 'bg-[#1a1a1a] border-[#2a2a2a]'}` },
                     h("div", { class: "flex-1" },
                         h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" },
                             crop.icon,
@@ -42679,8 +42724,11 @@ function FarmPatchView({ locationId, farmingLevel, onBack }) {
                             " XP harvest"),
                         h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40" },
                             "Growth: ",
-                            formatGrowthTime(crop.growthTimeMs)))))),
-                getAvailableCrops(selectedPatch.type, farmingLevel).length === 0 && (h("div", { class: "text-center py-4 text-xs text-[var(--color-parchment)] opacity-50" }, "No seeds available at your level"))))) : (h(PatchDetails, { patch: selectedPatch.patch, onHarvest: handleHarvest }))))));
+                            formatGrowthTime(crop.growthTimeMs))),
+                    h("div", { class: `ml-3 px-2 py-1 rounded text-[10px] font-semibold ${canPlant ? 'bg-[var(--color-gold)] text-[#111]' : 'bg-[#111] text-[var(--color-parchment)] opacity-60'}` },
+                        ownedQuantity,
+                        " owned")))),
+                plantableOptions.length === 0 && (h("div", { class: "text-center py-4 text-xs text-[var(--color-parchment)] opacity-50" }, "No seeds available at your level"))))) : (h(PatchDetails, { patch: selectedPatch.patch, onHarvest: handleHarvest }))))));
 }
 function PatchCard({ patchData, onClick }) {
     const { patch, type } = patchData;
@@ -42702,7 +42750,8 @@ function PatchCard({ patchData, onClick }) {
         }
     }
     const typeLabel = patchViewTypeLabels[type];
-    return (h("button", { onClick: onClick, class: "w-full p-3 rounded-xl border transition-colors text-left bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]" },
+    const ready = !!(patch && crop && getEffectiveStage(patch) >= 4);
+    return (h("button", { onClick: onClick, class: `w-full p-3 rounded-xl border transition-colors text-left active:bg-[#222] ${ready ? 'bg-[#201a08] border-[var(--color-gold)]' : 'bg-[#1a1a1a] border-[#2a2a2a]'}` },
         h("div", { class: "flex items-center justify-between" },
             h("div", { class: "flex-1" },
                 h("div", { class: "text-sm font-semibold text-[var(--color-parchment)] capitalize" }, crop ? `${crop.icon} ${crop.name}` : typeLabel),

@@ -8,6 +8,8 @@ import {
   getEffectiveStage,
   getGrowthProgress,
   advanceFarmingState,
+  getPlantableCropOptions,
+  getReadyPatchSummaryForLocation,
 } from '../src/engine/farming.ts'
 import { GATHERING_SKILLS, STUB_SKILLS } from '../src/utils/constants.js'
 
@@ -122,5 +124,73 @@ describe('farming regression constants', () => {
   it('keeps farming trainable in skill grouping', () => {
     expect(GATHERING_SKILLS).toContain('farming')
     expect(STUB_SKILLS.has('farming')).toBe(false)
+  })
+})
+
+describe('farming ui helper data', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('getPlantableCropOptions marks owned unlocked herb as plantable', () => {
+    const inventory = [{ itemId: 'guam_seed', quantity: 3 }]
+    const options = getPlantableCropOptions('herb', 1, inventory as any)
+    const guam = options.find(option => option.crop.id === 'guam_seed')
+    expect(guam?.canPlant).toBe(true)
+    expect(guam?.ownedQuantity).toBe(3)
+  })
+
+  it('getPlantableCropOptions returns 0 owned when missing', () => {
+    const options = getPlantableCropOptions('herb', 1, [])
+    const guam = options.find(option => option.crop.id === 'guam_seed')
+    expect(guam?.canPlant).toBe(false)
+    expect(guam?.ownedQuantity).toBe(0)
+  })
+
+  it('getPlantableCropOptions counts multiple stacks and respects level gating', () => {
+    const inventory = [{ itemId: 'oak_sapling', quantity: 1 }, { itemId: 'oak_sapling', quantity: 2 }]
+    const lowLevelTree = getPlantableCropOptions('tree', 1, inventory as any)
+    expect(lowLevelTree.find(option => option.crop.id === 'oak_sapling')).toBeUndefined()
+    const treeOptions = getPlantableCropOptions('tree', 15, inventory as any)
+    expect(treeOptions.find(option => option.crop.id === 'oak_sapling')?.ownedQuantity).toBe(3)
+  })
+
+  it('getPlantableCropOptions works for fruit tree saplings', () => {
+    const inventory = [{ itemId: 'apple_sapling', quantity: 1 }]
+    const options = getPlantableCropOptions('fruitTree', 27, inventory as any)
+    expect(options.find(option => option.crop.id === 'apple_sapling')?.canPlant).toBe(true)
+  })
+
+  it('getReadyPatchSummaryForLocation returns empty for missing/unknown/no-ready data', () => {
+    const state = initFarmingState()
+    expect(getReadyPatchSummaryForLocation(state, 'falador').length).toBe(0)
+    expect(getReadyPatchSummaryForLocation(state, 'unknown').length).toBe(0)
+    expect(getReadyPatchSummaryForLocation(null, 'falador').length).toBe(0)
+  })
+
+  it('getReadyPatchSummaryForLocation ignores non-ready and empty patches', () => {
+    const planted = plantCrop(initFarmingState(), 'falador_herb_0', 'guam_seed', 'herb')!
+    const withEmpty = { ...planted.state, patchesById: { ...planted.state.patchesById, falador_herb_1: null as any } }
+    expect(getReadyPatchSummaryForLocation(withEmpty, 'falador')).toEqual([])
+  })
+
+  it('getReadyPatchSummaryForLocation groups ready patches by type and does not mutate', () => {
+    let state = initFarmingState()
+    state = plantCrop(state, 'falador_herb_0', 'guam_seed', 'herb')!.state
+    state = plantCrop(state, 'falador_herb_1', 'guam_seed', 'herb')!.state
+    state = plantCrop(state, 'falador_tree_0', 'oak_sapling', 'tree')!.state
+    state = plantCrop(state, 'catherby_fruitTree_0', 'apple_sapling', 'fruitTree')!.state
+    const snapshot = JSON.parse(JSON.stringify(state))
+    vi.advanceTimersByTime(getCropDef('apple_sapling')!.growthTimeMs + 1)
+    const faladorReady = getReadyPatchSummaryForLocation(state, 'falador')
+    expect(faladorReady).toEqual([{ type: 'herb', count: 1 }, { type: 'tree', count: 1 }])
+    const catherbyReady = getReadyPatchSummaryForLocation(state, 'catherby')
+    expect(catherbyReady).toEqual([{ type: 'fruitTree', count: 1 }])
+    expect(state).toEqual(snapshot)
   })
 })
