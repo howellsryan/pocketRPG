@@ -5963,23 +5963,72 @@
       {
         "itemId": "coins",
         "quantity": [
-          200,
-          1200
+          1000,
+          6000
         ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
         "chance": 1
       },
       {
         "itemId": "rune_arrow",
         "quantity": [
           15,
-          35
+          80
         ],
         "chance": 0.15
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          30,
+          70
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          30,
+          70
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          30,
+          70
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": 5,
+        "chance": 0.10
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 5,
+        "chance": 0.10
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": 5,
+        "chance": 0.10
       },
       {
         "itemId": "dragon_warhammer",
         "quantity": 1,
         "chance": 0.0003333333333333333
+      },
+      {
+        "itemId": "rune_chainbody",
+        "quantity": 1,
+        "chance": 0.05
       }
     ]
   }
