@@ -37,10 +37,17 @@ export function generatePatchId(locationId: string, type: string, index: number)
 }
 
 export function getCropDef(seedId: string): CropDef | null {
-  for (const category of ['herbs', 'trees', 'fruitTrees'] as const) {
-    const crop = farmingData[category].find(c => c.id === seedId)
-    if (crop) return crop as CropDef
-  }
+  return getCropDefWithType(seedId)?.crop || null
+}
+
+
+export function getCropDefWithType(seedId: string): { crop: CropDef; type: 'herb' | 'tree' | 'fruitTree' } | null {
+  const herb = farmingData.herbs.find(c => c.id === seedId)
+  if (herb) return { crop: herb as CropDef, type: 'herb' }
+  const tree = farmingData.trees.find(c => c.id === seedId)
+  if (tree) return { crop: tree as CropDef, type: 'tree' }
+  const fruitTree = farmingData.fruitTrees.find(c => c.id === seedId)
+  if (fruitTree) return { crop: fruitTree as CropDef, type: 'fruitTree' }
   return null
 }
 
@@ -62,16 +69,19 @@ export function getEffectiveStage(patch: FarmingPatch | null | undefined): numbe
 export function plantCrop(
   state: FarmingState,
   patchId: string,
-  seedId: string
+  seedId: string,
+  patchType: 'herb' | 'tree' | 'fruitTree'
 ): { state: FarmingState; plantXp: number; cropName: string } | null {
-  const crop = getCropDef(seedId)
-  if (!crop) return null
+  const withType = getCropDefWithType(seedId)
+  if (!withType) return null
+  const { crop, type } = withType
+  if (type !== patchType) return null
 
   const now = Date.now()
   const patch: FarmingPatch = {
     patchId,
     cropId: seedId,
-    type: crop.fruitRegrowMs ? 'fruitTree' : (seedId.includes('sapling') ? 'tree' : 'herb'),
+    type: patchType,
     stage: 1,
     plantedAt: now,
     readyAt: now + crop.growthTimeMs
@@ -171,4 +181,24 @@ export function getGrowthProgress(patch: FarmingPatch | null): number {
 
 export function getStageLabel(stage: number, maxStage: number = 4): string {
   return `Stage ${stage}/${maxStage}`
+}
+
+
+export function advanceFarmingState(state: FarmingState, elapsedMs: number): FarmingState {
+  if (!state || !state.patchesById || elapsedMs <= 0) return state
+  const patchesById = {} as FarmingState['patchesById']
+  let changed = false
+  for (const [patchId, patch] of Object.entries(state.patchesById)) {
+    if (!patch?.cropId) {
+      patchesById[patchId] = patch
+      continue
+    }
+    changed = true
+    patchesById[patchId] = {
+      ...patch,
+      plantedAt: patch.plantedAt - elapsedMs,
+      readyAt: patch.readyAt - elapsedMs,
+    }
+  }
+  return changed ? { ...state, patchesById } : state
 }

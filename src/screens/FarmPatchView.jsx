@@ -38,7 +38,7 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
     return unsub
   }, [farming, locationId])
 
-  const handlePlantCrop = (seedId) => {
+  const handlePlantCrop = (seedId, patchType) => {
     const crop = getCropDef(seedId)
     if (!crop) return
 
@@ -53,7 +53,7 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
       return
     }
 
-    const result = plantCrop(farming, selectedPatch.patchId, seedId)
+    const result = plantCrop(farming, selectedPatch.patchId, seedId, patchType)
     if (!result) {
       addToast('Failed to plant', 'error')
       return
@@ -121,11 +121,15 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
                 <span>Select a seed to plant in this patch</span>
               </div>
               <div class="space-y-2">
-                {getAvailableCrops(selectedPatch.type, farmingLevel).map(crop => (
+                {getAvailableCrops(selectedPatch.type, farmingLevel).map(crop => {
+                  const seedCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === crop.id ? (slot.quantity || 0) : 0), 0)
+                  const hasSeed = seedCount > 0
+                  return (
                   <button
                     key={crop.id}
-                    onClick={() => handlePlantCrop(crop.id)}
-                    class="w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]"
+                    onClick={() => handlePlantCrop(crop.id, selectedPatch.type)}
+                    disabled={!hasSeed}
+                    class={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left border-[#2a2a2a] ${hasSeed ? 'bg-[#1a1a1a] active:bg-[#222]' : 'bg-[#141414] opacity-50 cursor-not-allowed'}`}
                   >
                     <div class="flex-1">
                       <div class="text-sm font-semibold text-[var(--color-parchment)]">
@@ -137,9 +141,13 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
                       <div class="text-[10px] text-[var(--color-parchment)] opacity-40">
                         Growth: {formatGrowthTime(crop.growthTimeMs)}
                       </div>
+                      <div class="text-[10px] text-[var(--color-parchment)] opacity-40">
+                        Seeds: {seedCount}
+                      </div>
                     </div>
                   </button>
-                ))}
+                  )
+                })}
                 {getAvailableCrops(selectedPatch.type, farmingLevel).length === 0 && (
                   <div class="text-center py-4 text-xs text-[var(--color-parchment)] opacity-50">
                     No seeds available at your level

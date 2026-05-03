@@ -29533,7 +29533,7 @@ const GATHERING_SKILLS = ['mining', 'woodcutting', 'fishing', 'farming'];
 const PRODUCTION_SKILLS = ['smithing', 'cooking', 'crafting', 'fletching', 'herblore', 'runecraft', 'magic', 'firemaking'];
 const UTILITY_SKILLS = ['agility', 'thieving', 'hunter', 'slayer', 'construction', 'dungeoneering'];
 const ALL_SKILLS = [...COMBAT_SKILLS, ...GATHERING_SKILLS, ...PRODUCTION_SKILLS, ...UTILITY_SKILLS];
-const STUB_SKILLS = new Set(['farming', 'runecraft']);
+const STUB_SKILLS = new Set(['runecraft']);
 // Agility banking: delay in ms at level 1 and level 99
 const AGILITY_BANK_DELAY_LV1_MS = 5 * 60 * 1000; // 5 minutes
 const AGILITY_BANK_DELAY_LV99_MS = 10 * 1000; // 10 seconds
@@ -34931,11 +34931,18 @@ function generatePatchId(locationId, type, index) {
     return `${locationId}_${type}_${index}`;
 }
 function getCropDef(seedId) {
-    for (const category of ['herbs', 'trees', 'fruitTrees']) {
-        const crop = farmingData[category].find(c => c.id === seedId);
-        if (crop)
-            return crop;
-    }
+    return getCropDefWithType(seedId)?.crop || null;
+}
+function getCropDefWithType(seedId) {
+    const herb = farmingData.herbs.find(c => c.id === seedId);
+    if (herb)
+        return { crop: herb, type: 'herb' };
+    const tree = farmingData.trees.find(c => c.id === seedId);
+    if (tree)
+        return { crop: tree, type: 'tree' };
+    const fruitTree = farmingData.fruitTrees.find(c => c.id === seedId);
+    if (fruitTree)
+        return { crop: fruitTree, type: 'fruitTree' };
     return null;
 }
 /**
@@ -34955,15 +34962,18 @@ function getEffectiveStage(patch) {
         return 4;
     return Math.max(1, Math.min(4, 1 + Math.floor(elapsed / perStage)));
 }
-function plantCrop(state, patchId, seedId) {
-    const crop = getCropDef(seedId);
-    if (!crop)
+function plantCrop(state, patchId, seedId, patchType) {
+    const withType = getCropDefWithType(seedId);
+    if (!withType)
+        return null;
+    const { crop, type } = withType;
+    if (type !== patchType)
         return null;
     const now = Date.now();
     const patch = {
         patchId,
         cropId: seedId,
-        type: crop.fruitRegrowMs ? 'fruitTree' : (seedId.includes('sapling') ? 'tree' : 'herb'),
+        type: patchType,
         stage: 1,
         plantedAt: now,
         readyAt: now + crop.growthTimeMs
@@ -35048,6 +35058,25 @@ function getGrowthProgress(patch) {
 }
 function getStageLabel(stage, maxStage = 4) {
     return `Stage ${stage}/${maxStage}`;
+}
+function advanceFarmingState(state, elapsedMs) {
+    if (!state || !state.patchesById || elapsedMs <= 0)
+        return state;
+    const patchesById = {};
+    let changed = false;
+    for (const [patchId, patch] of Object.entries(state.patchesById)) {
+        if (!patch?.cropId) {
+            patchesById[patchId] = patch;
+            continue;
+        }
+        changed = true;
+        patchesById[patchId] = {
+            ...patch,
+            plantedAt: patch.plantedAt - elapsedMs,
+            readyAt: patch.readyAt - elapsedMs,
+        };
+    }
+    return changed ? { ...state, patchesById } : state;
 }
 
 // ── engine/quests.js ──
@@ -38020,7 +38049,7 @@ function HomeScreen({ onNavigate, onLogout, isCloudAccount, removeAds, identityI
                         "Total XP: ",
                         h("span", { class: "font-[var(--font-mono)] font-bold text-[var(--color-gold)]" }, formatNumber(totalXP)))),
                 h(SkillGroup, { title: "Combat", skills: COMBAT_SKILLS }),
-                h(SkillGroup, { title: "Gathering", skills: GATHERING_SKILLS.filter(s => s !== 'farming') }),
+                h(SkillGroup, { title: "Gathering", skills: GATHERING_SKILLS }),
                 h(SkillGroup, { title: "Production", skills: PRODUCTION_SKILLS }),
                 h(SkillGroup, { title: "Utility", skills: UTILITY_SKILLS }))),
         selectedSkillDetail && selectedSkillData && (h(Modal, { title: `${SKILL_ICONS[selectedSkillDetail]} ${selectedSkillDetail.charAt(0).toUpperCase() + selectedSkillDetail.slice(1)}`, onClose: () => setSelectedSkillDetail(null) },
@@ -42377,7 +42406,7 @@ function FarmPatchView({ locationId, farmingLevel, onBack }) {
         });
         return unsub;
     }, [farming, locationId]);
-    const handlePlantCrop = (seedId) => {
+    const handlePlantCrop = (seedId, patchType) => {
         const crop = getCropDef(seedId);
         if (!crop)
             return;
@@ -42390,7 +42419,7 @@ function FarmPatchView({ locationId, farmingLevel, onBack }) {
             addToast(`Need ${crop.name} seed`, 'error');
             return;
         }
-        const result = plantCrop(farming, selectedPatch.patchId, seedId);
+        const result = plantCrop(farming, selectedPatch.patchId, seedId, patchType);
         if (!result) {
             addToast('Failed to plant', 'error');
             return;
@@ -42431,23 +42460,30 @@ function FarmPatchView({ locationId, farmingLevel, onBack }) {
                 h("span", null, "\uD83C\uDF31"),
                 h("span", null, "Select a seed to plant in this patch")),
             h("div", { class: "space-y-2" },
-                getAvailableCrops(selectedPatch.type, farmingLevel).map(crop => (h("button", { key: crop.id, onClick: () => handlePlantCrop(crop.id), class: "w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]" },
-                    h("div", { class: "flex-1" },
-                        h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" },
-                            crop.icon,
-                            " ",
-                            crop.name),
-                        h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5" },
-                            "Lv ",
-                            crop.level,
-                            " \u00B7 ",
-                            crop.plantXp,
-                            " XP plant \u00B7 ",
-                            crop.harvestXp,
-                            " XP harvest"),
-                        h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40" },
-                            "Growth: ",
-                            formatGrowthTime(crop.growthTimeMs)))))),
+                getAvailableCrops(selectedPatch.type, farmingLevel).map(crop => {
+                    const seedCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === crop.id ? (slot.quantity || 0) : 0), 0);
+                    const hasSeed = seedCount > 0;
+                    return (h("button", { key: crop.id, onClick: () => handlePlantCrop(crop.id, selectedPatch.type), disabled: !hasSeed, class: `w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left border-[#2a2a2a] ${hasSeed ? 'bg-[#1a1a1a] active:bg-[#222]' : 'bg-[#141414] opacity-50 cursor-not-allowed'}` },
+                        h("div", { class: "flex-1" },
+                            h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" },
+                                crop.icon,
+                                " ",
+                                crop.name),
+                            h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5" },
+                                "Lv ",
+                                crop.level,
+                                " \u00B7 ",
+                                crop.plantXp,
+                                " XP plant \u00B7 ",
+                                crop.harvestXp,
+                                " XP harvest"),
+                            h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40" },
+                                "Growth: ",
+                                formatGrowthTime(crop.growthTimeMs)),
+                            h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-40" },
+                                "Seeds: ",
+                                seedCount))));
+                }),
                 getAvailableCrops(selectedPatch.type, farmingLevel).length === 0 && (h("div", { class: "text-center py-4 text-xs text-[var(--color-parchment)] opacity-50" }, "No seeds available at your level"))))) : (h(PatchDetails, { patch: selectedPatch.patch, onHarvest: handleHarvest }))))));
 }
 function PatchCard({ patchData, onClick }) {
@@ -43007,7 +43043,7 @@ function HunterScreen({ initialActionId, onBack }) {
 
 
 // Agility, Prayer, Thieving, Hunter, Slayer, Construction, and Dungeoneering are special
-// skills shown here in the Skills tab (farming is silently hidden from display; logic remains intact)
+// skills shown here in the Skills tab.
 const SPECIAL_SKILLS = ['agility', 'prayer', 'thieving', 'hunter', 'slayer', 'construction', 'dungeoneering'];
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0);
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS];
@@ -45958,6 +45994,7 @@ const errorText = { color: '#ff6b6b', fontSize: '12px', marginTop: '12px', textA
 
 
 
+
 // ── Clock-rollback watermark ────────────────────────────────────────────────
 // We persist the highest Date.now() we've ever observed. If the device clock
 // later reports a value below the watermark, the user rolled it backwards —
@@ -46029,7 +46066,7 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
         config.valueOnly && (h("div", { style: { fontSize: '12px', color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold', marginBottom: '6px' } }, config.value))));
 }
 function GameApp() {
-    const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue, awardDungeoneeringTokens } = useGame();
+    const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue, awardDungeoneeringTokens, farming, updateFarming } = useGame();
     const pvp = usePvp();
     const [screen, setScreen] = useState(SCREENS.HOME);
     const [gameReady, setGameReady] = useState(false);
@@ -47017,7 +47054,13 @@ function GameApp() {
                 return;
             }
             const elapsedMs = SKIP_HOUR_MS;
-            let idleResultData = { elapsedMs, task: activeTaskRef.current };
+            const farmingAfterSkip = advanceFarmingState(farming, elapsedMs);
+            let advancedFarming = false;
+            if (farmingAfterSkip !== farming) {
+                updateFarming(farmingAfterSkip);
+                advancedFarming = true;
+            }
+            let idleResultData = { elapsedMs, task: activeTaskRef.current, farmingAdvanced: advancedFarming };
             // If there's an active task, simulate it for 1 hour
             if (activeTaskRef.current) {
                 const savedTask = activeTaskRef.current;
