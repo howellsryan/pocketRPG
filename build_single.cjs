@@ -13,6 +13,7 @@ const sourceFiles = [
   'utils/constants.js',
   'utils/helpers.js',
   'utils/formatters.js',
+  'utils/itemValue.js',
   'hooks/useActionTick.js',
   'engine/experience.js',
   'engine/formulas.js',

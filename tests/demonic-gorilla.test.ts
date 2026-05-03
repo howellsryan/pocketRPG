@@ -40,6 +40,10 @@ describe('Demonic Gorilla', () => {
     it('should be flagged as a boss', () => {
       expect(gorilla.boss).toBe(true)
     })
+
+    it('should require slayer level 70', () => {
+      expect(gorilla.slayerRequirement).toBe(70)
+    })
   })
 
   describe('Phase Mechanic', () => {

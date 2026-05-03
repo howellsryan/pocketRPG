@@ -2006,12 +2006,12 @@
         "xp": 17,
         "type": "enchant_jewel",
         "product": "amulet_of_magic",
-        "itemReq": [
-          "sapphire_amulet"
-        ],
         "runeReq": {
           "cosmic_rune": 1,
           "water_rune": 1
+        },
+        "materials": {
+          "sapphire_amulet": 1
         }
       },
       {
@@ -2022,12 +2022,12 @@
         "xp": 59,
         "type": "enchant_jewel",
         "product": "amulet_of_strength",
-        "itemReq": [
-          "ruby_amulet"
-        ],
         "runeReq": {
           "cosmic_rune": 1,
           "fire_rune": 1
+        },
+        "materials": {
+          "ruby_amulet": 1
         }
       },
       {
@@ -2038,12 +2038,12 @@
         "xp": 67,
         "type": "enchant_jewel",
         "product": "amulet_of_power",
-        "itemReq": [
-          "diamond_amulet"
-        ],
         "runeReq": {
           "cosmic_rune": 1,
           "earth_rune": 1
+        },
+        "materials": {
+          "diamond_amulet": 1
         }
       },
       {
@@ -2054,12 +2054,12 @@
         "xp": 78,
         "type": "enchant_jewel",
         "product": "amulet_of_glory",
-        "itemReq": [
-          "dragonstone_amulet"
-        ],
         "runeReq": {
           "cosmic_rune": 1,
           "fire_rune": 1
+        },
+        "materials": {
+          "dragonstone_amulet": 1
         }
       },
       {
@@ -2070,12 +2070,12 @@
         "xp": 97,
         "type": "enchant_jewel",
         "product": "amulet_of_fury",
-        "itemReq": [
-          "onyx_amulet"
-        ],
         "runeReq": {
           "cosmic_rune": 1,
           "water_rune": 1
+        },
+        "materials": {
+          "onyx_amulet": 1
         }
       },
       {
@@ -2086,13 +2086,13 @@
         "xp": 110,
         "type": "enchant_jewel",
         "product": "amulet_of_torture",
-        "itemReq": [
-          "zenyte_amulet"
-        ],
         "runeReq": {
           "cosmic_rune": 1,
           "soul_rune": 20,
           "blood_rune": 20
+        },
+        "materials": {
+          "zenyte_amulet": 1
         }
       },
       {
@@ -2103,13 +2103,13 @@
         "xp": 110,
         "type": "enchant_jewel",
         "product": "tormented_bracelet",
-        "itemReq": [
-          "zenyte_bracelet"
-        ],
         "runeReq": {
           "cosmic_rune": 1,
           "soul_rune": 20,
           "blood_rune": 20
+        },
+        "materials": {
+          "zenyte_bracelet": 1
         }
       },
       {
@@ -2120,13 +2120,13 @@
         "xp": 110,
         "type": "enchant_jewel",
         "product": "necklace_of_anguish",
-        "itemReq": [
-          "zenyte_necklace"
-        ],
         "runeReq": {
           "cosmic_rune": 1,
           "soul_rune": 20,
           "blood_rune": 20
+        },
+        "materials": {
+          "zenyte_necklace": 1
         }
       },
       {
@@ -2137,13 +2137,13 @@
         "xp": 110,
         "type": "enchant_jewel",
         "product": "ring_of_suffering",
-        "itemReq": [
-          "zenyte_ring"
-        ],
         "runeReq": {
           "cosmic_rune": 1,
           "soul_rune": 20,
           "blood_rune": 20
+        },
+        "materials": {
+          "zenyte_ring": 1
         }
       },
       {
