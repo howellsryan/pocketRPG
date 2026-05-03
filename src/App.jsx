@@ -35,6 +35,7 @@ import { getLevelFromXP } from './engine/experience.js'
 import { pvpApi } from './cloud/pvp.js'
 import { SKIP_HOUR_MS, getSkipPreflight, isChargeableSkipOutcome } from './engine/skipPreflight.js'
 import { isHighValueDrop } from './utils/itemValue.js'
+import { advanceFarmingState } from './engine/farming.ts'
 
 // ── Clock-rollback watermark ────────────────────────────────────────────────
 // We persist the highest Date.now() we've ever observed. If the device clock
@@ -116,7 +117,7 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
 }
 
 function GameApp() {
-  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue, awardDungeoneeringTokens } = useGame()
+  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue, awardDungeoneeringTokens, farming, updateFarming } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [gameReady, setGameReady] = useState(false)
@@ -1275,6 +1276,7 @@ function GameApp() {
 
       const result = await api.skipHour()
       setCredits(result?.credits_remaining ?? credits)
+      updateFarming(advanceFarmingState(farming, SKIP_HOUR_MS))
 
       // Show idle result modal with skip summary
       if (idleResultData) setIdleResult(idleResultData)

@@ -27,6 +27,14 @@ export interface CropDef {
   fruitLimit?: number
   icon: string
 }
+export type FarmingPatchType = 'herb' | 'tree' | 'fruitTree'
+
+export function getCropType(seedId: string): FarmingPatchType | null {
+  if (farmingData.herbs.some(c => c.id === seedId)) return 'herb'
+  if (farmingData.trees.some(c => c.id === seedId)) return 'tree'
+  if (farmingData.fruitTrees.some(c => c.id === seedId)) return 'fruitTree'
+  return null
+}
 
 export function initFarmingState(): FarmingState {
   return { patchesById: {} }
@@ -62,16 +70,19 @@ export function getEffectiveStage(patch: FarmingPatch | null | undefined): numbe
 export function plantCrop(
   state: FarmingState,
   patchId: string,
-  seedId: string
+  seedId: string,
+  patchType: FarmingPatchType
 ): { state: FarmingState; plantXp: number; cropName: string } | null {
   const crop = getCropDef(seedId)
   if (!crop) return null
+  const cropType = getCropType(seedId)
+  if (!cropType || cropType !== patchType) return null
 
   const now = Date.now()
   const patch: FarmingPatch = {
     patchId,
     cropId: seedId,
-    type: crop.fruitRegrowMs ? 'fruitTree' : (seedId.includes('sapling') ? 'tree' : 'herb'),
+    type: cropType,
     stage: 1,
     plantedAt: now,
     readyAt: now + crop.growthTimeMs
@@ -109,6 +120,23 @@ export function harvestCrop(
 export function processFarmingTick(state: FarmingState): FarmingState {
   // Stage is derived from elapsed time — no state mutation needed here.
   return state
+}
+
+export function advanceFarmingState(state: FarmingState, elapsedMs: number): FarmingState {
+  if (!state?.patchesById || elapsedMs <= 0) return state
+  const nextPatchesById: FarmingState['patchesById'] = {}
+  for (const [patchId, patch] of Object.entries(state.patchesById)) {
+    if (!patch?.cropId) {
+      nextPatchesById[patchId] = patch
+      continue
+    }
+    nextPatchesById[patchId] = {
+      ...patch,
+      plantedAt: patch.plantedAt - elapsedMs,
+      readyAt: patch.readyAt - elapsedMs,
+    }
+  }
+  return { ...state, patchesById: nextPatchesById }
 }
 
 export function getPatchesForLocation(
