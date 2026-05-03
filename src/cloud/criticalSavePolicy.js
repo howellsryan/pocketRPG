@@ -5,6 +5,7 @@ export const CRITICAL_SAVE_REASONS = Object.freeze({
   RARE_DROP: 'rare_drop',
   QUEST_COMPLETE: 'quest_complete',
   FEATURE_UNLOCK: 'feature_unlock',
+  SLAYER_TASK_CHANGE: 'slayer_task_change',
   SLAYER_TASK_COMPLETE: 'slayer_task_complete',
   PURCHASE: 'purchase',
   SKIP_HOUR: 'skip_hour',

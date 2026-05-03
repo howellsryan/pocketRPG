@@ -15,6 +15,11 @@ import { CRITICAL_SAVE_REASONS, detectCountIncreases, detectLevelUps, detectSetG
 import itemsData from '../data/items.json'
 import { normaliseDungeoneeringTokens, isDungeoneeringRewardAction } from '../engine/dungeoneeringTokens.js'
 
+const normalisePointCurrency = (value) => {
+  const n = Math.floor(Number(value) || 0)
+  return n > 0 ? n : 0
+}
+
 const GameContext = createContext(null)
 
 export function GameProvider({ children }) {
@@ -47,6 +52,8 @@ export function GameProvider({ children }) {
   // Refs to hold latest state for the debounced auto-save
   const stateRef = useRef({ stats: {}, inventory: new Array(28).fill(null), equipment: {}, bank: {}, player: null })
   const criticalMilestoneRef = useRef(null)
+  const slayerTaskRef = useRef(null)
+  const slayerPointsRef = useRef(0)
   const dungeoneeringTokensRef = useRef(0)
 
   // Keep refs in sync with state
@@ -55,6 +62,8 @@ export function GameProvider({ children }) {
   useEffect(() => { stateRef.current.equipment = equipment }, [equipment])
   useEffect(() => { stateRef.current.bank = bank }, [bank])
   useEffect(() => { stateRef.current.player = player }, [player])
+  useEffect(() => { slayerTaskRef.current = slayerTask }, [slayerTask])
+  useEffect(() => { slayerPointsRef.current = normalisePointCurrency(slayerPoints) }, [slayerPoints])
   useEffect(() => { dungeoneeringTokensRef.current = dungeoneeringTokens }, [dungeoneeringTokens])
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
@@ -67,6 +76,7 @@ export function GameProvider({ children }) {
       getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell')
     ])
     savedDungeoneeringTokens = normaliseDungeoneeringTokens(savedDungeoneeringTokens)
+    savedSlayerPoints = normalisePointCurrency(savedSlayerPoints)
     // Idle-engine inputs: last active timestamp and last active task.
     // D1 is authoritative when signed in + online — localStorage is only used
     // as an offline-mode fallback (and as a backup when the D1 fetch fails).
@@ -251,8 +261,8 @@ export function GameProvider({ children }) {
             if (sim.slayerTaskUpdate.completed) {
               // Task complete — clear it and award points
               await saveSetting('slayerTask', null)
-              const points = Math.max(0, Math.floor(Number(sim.slayerTaskUpdate.pointsOnComplete) || 0))
-              const newSlayerPoints = Math.max(0, Math.floor(Number(savedSlayerPoints) || 0)) + points
+              const points = normalisePointCurrency(sim.slayerTaskUpdate.pointsOnComplete)
+              const newSlayerPoints = normalisePointCurrency(savedSlayerPoints) + points
               await saveSetting('slayerPoints', newSlayerPoints)
               savedSlayerPoints = newSlayerPoints
             } else {
@@ -372,8 +382,10 @@ export function GameProvider({ children }) {
     const finalSlayerTask = idleResult && idleResult.slayerTaskUpdate
       ? (idleResult.slayerTaskUpdate.completed ? null : idleResult.slayerTaskUpdate)
       : (savedSlayerTask ?? null)
+    slayerTaskRef.current = finalSlayerTask
+    slayerPointsRef.current = normalisePointCurrency(savedSlayerPoints)
     setSlayerTaskState(finalSlayerTask)
-    setSlayerPointsState(savedSlayerPoints ?? 0)
+    setSlayerPointsState(slayerPointsRef.current)
     setDungeoneeringTokensState(savedDungeoneeringTokens)
     setActiveCombatSpellState(savedActiveCombatSpell ?? null)
     setBossKillCountsState(savedBossKillCounts ?? {})
@@ -555,24 +567,26 @@ export function GameProvider({ children }) {
   }, [])
 
   const setSlayerTask = useCallback((task) => {
+    slayerTaskRef.current = task
     setSlayerTaskState(task)
     saveSetting('slayerTask', task)
   }, [])
 
   const updateSlayerPoints = useCallback((points) => {
-    setSlayerPointsState(points)
-    saveSetting('slayerPoints', points)
+    const next = normalisePointCurrency(points)
+    slayerPointsRef.current = next
+    setSlayerPointsState(next)
+    saveSetting('slayerPoints', next)
   }, [])
 
   const awardSlayerPoints = useCallback((pointsToAdd) => {
-    const amount = Math.max(0, Math.floor(Number(pointsToAdd) || 0))
+    const amount = normalisePointCurrency(pointsToAdd)
     if (amount <= 0) return
 
-    setSlayerPointsState(prev => {
-      const next = Math.max(0, Math.floor(Number(prev) || 0)) + amount
-      saveSetting('slayerPoints', next)
-      return next
-    })
+    const next = normalisePointCurrency(slayerPointsRef.current) + amount
+    slayerPointsRef.current = next
+    setSlayerPointsState(next)
+    saveSetting('slayerPoints', next)
   }, [])
 
   const awardDungeoneeringTokens = useCallback((tokensToAdd) => {
@@ -698,9 +712,9 @@ export function GameProvider({ children }) {
       unlockedFeatures: [...unlockedFeatures],
       activeTask,
       activeCombatSpell,
-      slayerTask,
-      slayerPoints,
-      dungeoneeringTokens,
+      slayerTask: slayerTaskRef.current,
+      slayerPoints: slayerPointsRef.current,
+      dungeoneeringTokens: dungeoneeringTokensRef.current,
       bossKillCounts,
       raidKillCounts,
       farming,

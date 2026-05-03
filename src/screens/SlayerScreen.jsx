@@ -216,11 +216,13 @@ export default function SlayerScreen({ onBack }) {
     }
 
     setSlayerTask(task)
+    requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SLAYER_TASK_CHANGE)
     addToast(`💀 Task: Kill ${totalCount} ${monsterName}`, 'info')
   }
 
   const handleCancelTask = () => {
     setSlayerTask(null)
+    requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SLAYER_TASK_CHANGE)
     addToast('Task cancelled. No points awarded.', 'info')
   }
 

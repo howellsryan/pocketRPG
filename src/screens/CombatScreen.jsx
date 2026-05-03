@@ -702,13 +702,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             if (slayerResult.completed) {
               slayerTaskRef.current = null
               setSlayerTask(null)
-              awardSlayerPoints(slayerResult.pointsAwarded)
+              if (slayerResult.pointsAwarded > 0) {
+                awardSlayerPoints(slayerResult.pointsAwarded)
+              }
+              requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SLAYER_TASK_COMPLETE)
               addToast(slayerResult.pointsAwarded > 0
                 ? `💀 Slayer task completed! +${slayerResult.pointsAwarded} points`
                 : '💀 Slayer task complete!', 'levelup')
             } else if (slayerResult.onTask) {
               slayerTaskRef.current = slayerResult.task
               setSlayerTask(slayerResult.task)
+              requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SLAYER_TASK_CHANGE)
             }
           }
 
