@@ -1,36 +1,16 @@
 import farmingData from '../data/farming.json'
 import { getReadyPatchSummaryForLocation } from '../engine/farming.ts'
 
-const patchTypePhrases = {
-  herb: 'Herb',
-  tree: 'Tree',
-  fruitTree: 'Fruit Tree'
+const patchTypeLabels = {
+  herb: 'Herb Patch',
+  tree: 'Tree Patch',
+  fruitTree: 'Fruit Tree Patch'
 }
 
 const readyTypeLabels = {
   herb: 'Herb',
   tree: 'Tree',
   fruitTree: 'Fruit tree'
-}
-
-function PatchSummaryLine({ patches, readyTypes }) {
-  const mutedClass = 'text-[var(--color-parchment)] opacity-40'
-  return (
-    <div class="text-[10px] mt-0.5">
-      {patches.map((p, i) => {
-        const isReady = readyTypes.has(p.type)
-        const phrase = patchTypePhrases[p.type] || p.type
-        return (
-          <span key={p.type}>
-            {i > 0 && <span class={mutedClass}> · </span>}
-            <span class={mutedClass}>{p.count}× </span>
-            <span class={isReady ? 'text-[var(--color-gold)]' : mutedClass}>{phrase}</span>
-            <span class={mutedClass}> Patch</span>
-          </span>
-        )
-      })}
-    </div>
-  )
 }
 
 export default function FarmLocationPicker({ farmingLevel, farming, onSelectLocation, onBack }) {
@@ -56,7 +36,6 @@ export default function FarmLocationPicker({ farmingLevel, farming, onSelectLoca
       <div class="space-y-2">
         {farmingData.locations.map(location => {
           const readySummary = getReadyPatchSummaryForLocation(farming, location.id)
-          const readyTypes = new Set(readySummary.map(({ type }) => type))
           const hasReady = readySummary.length > 0
           return (
             <button
@@ -68,7 +47,9 @@ export default function FarmLocationPicker({ farmingLevel, farming, onSelectLoca
             >
               <div class="flex-1">
                 <div class="text-sm font-semibold text-[var(--color-parchment)]">{location.name}</div>
-                <PatchSummaryLine patches={location.patches} readyTypes={readyTypes} />
+                <div class="text-[10px] text-[var(--color-parchment)] opacity-40 mt-0.5">
+                  {location.patches.map(p => `${p.count}× ${patchTypeLabels[p.type]}`).join(' · ')}
+                </div>
                 {hasReady && (
                   <div class="text-[10px] text-[var(--color-gold)] mt-1 font-semibold">
                     Ready: {readySummary.map(({ type, count }) => `${readyTypeLabels[type]} ×${count}`).join(' · ')}
