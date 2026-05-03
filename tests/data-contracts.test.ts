@@ -59,6 +59,7 @@ const EXPECTED_BOSS_UNIQUE_ITEM_IDS = new Set([
   'warriors_ring',
   'dragon_axe',
   'dragon_pickaxe',
+  'dragon_warhammer',
   'seers_ring',
   'zamorak_hilt',
   'armadyl_hilt',

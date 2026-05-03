@@ -4154,7 +4154,7 @@
     "forms": {
       "ranged": {
         "displayName": "Serpentine",
-        "icon": "🟢",
+        "icon": "\ud83d\udfe2",
         "attackStyle": "ranged",
         "weakness": "melee",
         "maxHit": 41,
@@ -4170,7 +4170,7 @@
       },
       "magic": {
         "displayName": "Tanzanite",
-        "icon": "🔵",
+        "icon": "\ud83d\udd35",
         "attackStyle": "magic",
         "weakness": "ranged",
         "maxHit": 41,
@@ -4186,7 +4186,7 @@
       },
       "melee": {
         "displayName": "Magma",
-        "icon": "🔴",
+        "icon": "\ud83d\udd34",
         "attackStyle": "crush",
         "weakness": "magic",
         "maxHit": 41,
@@ -4326,7 +4326,7 @@
     "forms": {
       "melee": {
         "displayName": "Melee Phase",
-        "icon": "⚔️",
+        "icon": "\u2694\ufe0f",
         "attackStyle": "crush",
         "maxHit": 97,
         "attackBonus": 100,
@@ -4341,7 +4341,7 @@
       },
       "ranged": {
         "displayName": "Ranged Phase",
-        "icon": "🏹",
+        "icon": "\ud83c\udff9",
         "attackStyle": "ranged",
         "maxHit": 97,
         "attackBonus": 100,
@@ -4356,7 +4356,7 @@
       },
       "magic": {
         "displayName": "Magic Phase",
-        "icon": "✨",
+        "icon": "\u2728",
         "attackStyle": "magic",
         "maxHit": 97,
         "attackBonus": 100,
@@ -4416,7 +4416,7 @@
     "forms": {
       "melee": {
         "displayName": "Melee Phase",
-        "icon": "⚔️",
+        "icon": "\u2694\ufe0f",
         "attackStyle": "crush",
         "maxHit": 130,
         "attackBonus": 150,
@@ -4431,7 +4431,7 @@
       },
       "ranged": {
         "displayName": "Ranged Phase",
-        "icon": "🏹",
+        "icon": "\ud83c\udff9",
         "attackStyle": "ranged",
         "maxHit": 130,
         "attackBonus": 150,
@@ -4446,7 +4446,7 @@
       },
       "magic": {
         "displayName": "Magic Phase",
-        "icon": "✨",
+        "icon": "\u2728",
         "attackStyle": "magic",
         "maxHit": 130,
         "attackBonus": 150,
@@ -4504,7 +4504,7 @@
     "forms": {
       "melee": {
         "displayName": "Melee Phase",
-        "icon": "⚔️",
+        "icon": "\u2694\ufe0f",
         "attackStyle": "crush",
         "weakness": "magic",
         "maxHit": 68,
@@ -4520,7 +4520,7 @@
       },
       "ranged": {
         "displayName": "Ranged Phase",
-        "icon": "🏹",
+        "icon": "\ud83c\udff9",
         "attackStyle": "ranged",
         "weakness": "melee",
         "maxHit": 68,
@@ -4536,7 +4536,7 @@
       },
       "magic": {
         "displayName": "Magic Phase",
-        "icon": "✨",
+        "icon": "\u2728",
         "attackStyle": "magic",
         "weakness": "ranged",
         "maxHit": 68,
@@ -4819,7 +4819,7 @@
     "forms": {
       "magic": {
         "displayName": "Magic Hand",
-        "icon": "🔮",
+        "icon": "\ud83d\udd2e",
         "attackStyle": "magic",
         "weakness": "ranged",
         "maxHit": 30,
@@ -4835,7 +4835,7 @@
       },
       "melee": {
         "displayName": "Melee Hand",
-        "icon": "✊",
+        "icon": "\u270a",
         "attackStyle": "crush",
         "weakness": "ranged",
         "maxHit": 30,
@@ -4851,7 +4851,7 @@
       },
       "ranged": {
         "displayName": "Ranged Phase",
-        "icon": "💎",
+        "icon": "\ud83d\udc8e",
         "attackStyle": "ranged",
         "weakness": "ranged",
         "maxHit": 30,
@@ -4910,7 +4910,7 @@
     "forms": {
       "melee": {
         "displayName": "Melee Phase",
-        "icon": "🦍",
+        "icon": "\ud83e\udd8d",
         "attackStyle": "crush",
         "immunity": "melee",
         "maxHit": 30,
@@ -4926,7 +4926,7 @@
       },
       "ranged": {
         "displayName": "Ranged Phase",
-        "icon": "🏹",
+        "icon": "\ud83c\udff9",
         "attackStyle": "ranged",
         "immunity": "ranged",
         "maxHit": 30,
@@ -4942,7 +4942,7 @@
       },
       "magic": {
         "displayName": "Magic Phase",
-        "icon": "✨",
+        "icon": "\u2728",
         "attackStyle": "magic",
         "immunity": "magic",
         "maxHit": 30,
@@ -5025,7 +5025,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "slayerRequirement": 70
   },
   "maiden_of_sugadinti": {
     "id": "maiden_of_sugadinti",
@@ -5132,7 +5133,7 @@
     "forms": {
       "melee": {
         "displayName": "Melee Phase",
-        "icon": "⚪",
+        "icon": "\u26aa",
         "attackStyle": "crush",
         "immunity": "melee",
         "maxHit": 70,
@@ -5148,7 +5149,7 @@
       },
       "magic": {
         "displayName": "Magic Phase",
-        "icon": "🔵",
+        "icon": "\ud83d\udd35",
         "attackStyle": "magic",
         "immunity": "magic",
         "maxHit": 70,
@@ -5164,7 +5165,7 @@
       },
       "ranged": {
         "displayName": "Ranged Phase",
-        "icon": "🟢",
+        "icon": "\ud83d\udfe2",
         "attackStyle": "ranged",
         "immunity": "ranged",
         "maxHit": 70,
@@ -5218,7 +5219,7 @@
     "forms": {
       "magic": {
         "displayName": "Magic Phase",
-        "icon": "🔮",
+        "icon": "\ud83d\udd2e",
         "attackStyle": "magic",
         "weakness": "ranged",
         "maxHit": 50,
@@ -5234,7 +5235,7 @@
       },
       "melee": {
         "displayName": "Melee Phase",
-        "icon": "✊",
+        "icon": "\u270a",
         "attackStyle": "crush",
         "weakness": "ranged",
         "maxHit": 45,
@@ -5250,7 +5251,7 @@
       },
       "ranged": {
         "displayName": "Ranged Phase",
-        "icon": "💎",
+        "icon": "\ud83d\udc8e",
         "attackStyle": "ranged",
         "weakness": "ranged",
         "maxHit": 50,
@@ -5343,8 +5344,8 @@
     "formSwitchMax": 9999,
     "forms": {
       "phase1": {
-        "displayName": "Phase 1 — Throne",
-        "icon": "👑",
+        "displayName": "Phase 1 \u2014 Throne",
+        "icon": "\ud83d\udc51",
         "attackStyle": "magic",
         "weakness": "melee",
         "maxHit": 30,
@@ -5360,8 +5361,8 @@
         "phaseHP": 2000
       },
       "phase2": {
-        "displayName": "Phase 2 — Spider",
-        "icon": "🕷️",
+        "displayName": "Phase 2 \u2014 Spider",
+        "icon": "\ud83d\udd77\ufe0f",
         "attackStyle": "magic",
         "weakness": "slash",
         "maxHit": 68,
@@ -5377,8 +5378,8 @@
         "phaseHP": 3250
       },
       "phase3": {
-        "displayName": "Phase 3 — True Form",
-        "icon": "🩸",
+        "displayName": "Phase 3 \u2014 True Form",
+        "icon": "\ud83e\ude78",
         "attackStyle": "crush",
         "weakness": "slash",
         "maxHit": 78,
@@ -5468,7 +5469,7 @@
     "forms": {
       "ranged": {
         "displayName": "Flying Phase",
-        "icon": "🦟",
+        "icon": "\ud83e\udd9f",
         "attackStyle": "ranged",
         "maxHit": 24,
         "attackBonus": 100,
@@ -5483,7 +5484,7 @@
       },
       "melee": {
         "displayName": "Grounded Phase",
-        "icon": "🪲",
+        "icon": "\ud83e\udeb2",
         "attackStyle": "crush",
         "maxHit": 20,
         "attackBonus": 90,
@@ -5536,7 +5537,7 @@
     "forms": {
       "melee": {
         "displayName": "Melee Chomp",
-        "icon": "🦷",
+        "icon": "\ud83e\uddb7",
         "attackStyle": "crush",
         "maxHit": 38,
         "attackBonus": 120,
@@ -5551,7 +5552,7 @@
       },
       "magic": {
         "displayName": "Magic Spit",
-        "icon": "💧",
+        "icon": "\ud83d\udca7",
         "attackStyle": "magic",
         "maxHit": 32,
         "attackBonus": 150,
@@ -5930,6 +5931,104 @@
         "itemId": "clue_scroll_master",
         "quantity": 1,
         "chance": 0.02
+      }
+    ]
+  },
+  "lizardman_shaman": {
+    "id": "lizardman_shaman",
+    "name": "Lizardman Shaman",
+    "combatLevel": 150,
+    "hitpoints": 150,
+    "stats": {
+      "attack": 120,
+      "strength": 120,
+      "defence": 140,
+      "magic": 130,
+      "ranged": 120
+    },
+    "attackSpeed": 4,
+    "attackStyle": "ranged",
+    "attackBonus": 45,
+    "strengthBonus": 38,
+    "defenceBonus": {
+      "stab": -10,
+      "slash": 40,
+      "crush": 30,
+      "magic": 50,
+      "ranged": 0
+    },
+    "slayerRequirement": 80,
+    "skippable": true,
+    "drops": [
+      {
+        "itemId": "coins",
+        "quantity": [
+          1000,
+          6000
+        ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "rune_arrow",
+        "quantity": [
+          15,
+          80
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          30,
+          70
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          30,
+          70
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          30,
+          70
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": 5,
+        "chance": 0.10
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 5,
+        "chance": 0.10
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": 5,
+        "chance": 0.10
+      },
+      {
+        "itemId": "rune_chainbody",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "dragon_warhammer",
+        "quantity": 1,
+        "chance": 0.0003333333333333333
       }
     ]
   }

@@ -23,6 +23,7 @@ import prayersData from '../data/prayers.json'
 import spellsData from '../data/spells.json'
 import raidsData from '../data/raids.json'
 import { SCREENS, formatDropChance } from '../utils/constants.js'
+import { isHighValueDrop } from '../utils/itemValue.js'
 import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slayerRewards.js'
 import { resolveSlayerTaskKill } from '../engine/slayerTasks.js'
 import { CRITICAL_SAVE_REASONS, hasCriticalDrop } from '../cloud/criticalSavePolicy.js'
@@ -44,7 +45,7 @@ const COMBAT_CATEGORIES = [
     key: 'slayer',
     label: 'Slayer',
     icon: '💀',
-    ids: ['blood_veld', 'skeletal_wyvern', 'nechryael', 'smoke_devil', 'abyssal_demon', 'kraken', 'demonic_gorilla'],
+    ids: ['blood_veld', 'skeletal_wyvern', 'nechryael', 'smoke_devil', 'abyssal_demon', 'kraken', 'demonic_gorilla', 'lizardman_shaman'],
   },
   {
     key: 'bossing',
@@ -105,7 +106,7 @@ const COMBAT_CATEGORIES = [
 const MONSTER_ICONS = {
   chicken: '🐔', goblin: '👺', cow: '🐄', giant_spider: '🕷️',
   rock_crab: '🦀', sand_crab: '🦀', hill_giant: '👊', moss_giant: '🌿',
-  wizard: '🧙', dark_wizard: '🧙‍♂️', abyssal_demon: '😈', demonic_gorilla: '🦍',
+  wizard: '🧙', dark_wizard: '🧙‍♂️', abyssal_demon: '😈', demonic_gorilla: '🦍', lizardman_shaman: '🦎',
   blood_veld: '🩸', nechryael: '👻', skeletal_wyvern: '🐲', smoke_devil: '💨', kraken: '🦑',
   green_dragon: '🐉', red_dragon: '🔴', adamant_dragon: '⚔️', rune_dragon: '🛡️', lesser_demon: '👿',
   general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
@@ -2075,7 +2076,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               <div class="space-y-2 max-h-48 overflow-y-auto">
                 {lootModal.loot.map((drop, idx) => {
                   const item = itemsData[drop.itemId]
-                  const isHighValue = item && item.shopValue > 1000000
+                  const isHighValue = isHighValueDrop(drop.itemId, drop.quantity, itemsData)
                   return (
                     <div key={idx} class={`rounded-lg p-3 flex items-center justify-between ${isHighValue ? 'bg-purple-900 bg-opacity-30 border border-purple-500' : 'bg-[#111]'}`}>
                       <div class="flex items-center gap-2">

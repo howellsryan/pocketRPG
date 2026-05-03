@@ -34,6 +34,7 @@ import { simulateQuestIdleCascade, splitQuestXpRewards } from './engine/questIdl
 import { getLevelFromXP } from './engine/experience.js'
 import { pvpApi } from './cloud/pvp.js'
 import { SKIP_HOUR_MS, getSkipPreflight, isChargeableSkipOutcome } from './engine/skipPreflight.js'
+import { isHighValueDrop } from './utils/itemValue.js'
 
 // ── Clock-rollback watermark ────────────────────────────────────────────────
 // We persist the highest Date.now() we've ever observed. If the device clock
@@ -1667,7 +1668,7 @@ function GameApp() {
                         {entries.map(([itemId, qty]) => (
                           <div key={itemId} style={{ marginBottom: '4px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' }}>
-                              <span style={{ textTransform: 'capitalize' }}>{itemId.replace(/_/g, ' ')}</span>
+                              <span style={{ textTransform: 'capitalize', color: isHighValueDrop(itemId, qty, itemsData) ? '#c084fc' : '#e8d5b0', fontWeight: isHighValueDrop(itemId, qty, itemsData) ? '700' : '400' }}>{itemId.replace(/_/g, ' ')}</span>
                               <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>×{qty.toLocaleString()}</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8d5b0', opacity: 0.45 }}>
