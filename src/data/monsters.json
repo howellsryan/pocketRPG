@@ -24,7 +24,7 @@
     },
     "drops": [
       {
-        "itemId": "bones",
+        "itemId": "dragon_bones",
         "quantity": 1,
         "chance": 1
       },
@@ -73,7 +73,7 @@
     },
     "drops": [
       {
-        "itemId": "bones",
+        "itemId": "dragon_bones",
         "quantity": 1,
         "chance": 1
       },
@@ -1885,7 +1885,7 @@
     },
     "drops": [
       {
-        "itemId": "bones",
+        "itemId": "dragon_bones",
         "quantity": 1,
         "chance": 1
       },
@@ -6008,17 +6008,17 @@
       {
         "itemId": "ranarr_weed",
         "quantity": 5,
-        "chance": 0.10
+        "chance": 0.1
       },
       {
         "itemId": "snapdragon",
         "quantity": 5,
-        "chance": 0.10
+        "chance": 0.1
       },
       {
         "itemId": "kwuarm",
         "quantity": 5,
-        "chance": 0.10
+        "chance": 0.1
       },
       {
         "itemId": "rune_chainbody",

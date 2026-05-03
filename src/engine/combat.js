@@ -4,7 +4,7 @@ import {
   getMeleeXPSkill, effectiveRanged, rangedMaxHit, getRangedStyleBonus,
   effectiveMagic, monsterMagicDefenceRoll, magicMaxHit
 } from './formulas.js'
-import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getRangedAmmoRequirementFailure } from './equipment.js'
+import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getRangedAmmoRequirementFailure, isRangedAmmoUsableForCurrentWeapon } from './equipment.js'
 import { getLevelFromXP } from './experience.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE, EAT_TICK_COST } from '../utils/constants.js'
@@ -476,8 +476,12 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       }
 
       const styleBonus = getRangedStyleBonus(state.stance)
+      const ammoIsUsable = isRangedAmmoUsableForCurrentWeapon(equipment, itemsData)
+      const equippedAmmo = equipment && equipment.ammo
+      const ammoItem = equippedAmmo?.itemId ? itemsData[equippedAmmo.itemId] : null
       const effRng = effectiveRanged(boostedPlayerStats.ranged, 0, 1.0, styleBonus)
-      let maxHit = rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength)
+      const ammoRangedStrength = ammoIsUsable ? (ammoItem?.otherBonus?.rangedStrength || 0) : 0
+      let maxHit = rangedMaxHit(effRng, (bonuses.otherBonus.rangedStrength || 0) - (ammoItem?.otherBonus?.rangedStrength || 0) + ammoRangedStrength)
       let atkRoll = maxAttackRoll(effRng, (bonuses.attackBonus.ranged || 0) + slayerEquipmentBonus.accuracyFlat)
 
       // Dragon Hunter Crossbow: +30% accuracy and damage vs dragon-type monsters
@@ -506,9 +510,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       let boltProcEvent = null
       let boltHealAmount = 0
       let boltSelfDamage = 0
-      if (!weaponIsScaleCharged) {
-        const equippedAmmoEntry = equipment && equipment.ammo
-        const ammoItem = equippedAmmoEntry ? itemsData[equippedAmmoEntry.itemId] : null
+      if (!weaponIsScaleCharged && ammoIsUsable) {
         const proc = ammoItem?.boltProc
         if (proc && Math.random() < (proc.chance || 0)) {
           switch (proc.type) {
@@ -561,8 +563,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
         events.push({ type: 'consumeCharge', qty: 1 })
       } else {
         // Consume one bolt/arrow per shot
-        const equippedAmmo = equipment && equipment.ammo
-        if (equippedAmmo) {
+        if (ammoIsUsable && equippedAmmo) {
           events.push({ type: 'consumeAmmo', itemId: equippedAmmo.itemId, qty: 1 })
         }
       }

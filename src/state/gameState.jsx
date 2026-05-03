@@ -47,6 +47,7 @@ export function GameProvider({ children }) {
   // Refs to hold latest state for the debounced auto-save
   const stateRef = useRef({ stats: {}, inventory: new Array(28).fill(null), equipment: {}, bank: {}, player: null })
   const criticalMilestoneRef = useRef(null)
+  const lastSavedSlayerTaskRef = useRef(null)
   const dungeoneeringTokensRef = useRef(0)
 
   // Keep refs in sync with state
@@ -742,6 +743,17 @@ export function GameProvider({ children }) {
       requestCriticalPushSave(() => getSnapshot(), reason)
     }
   }, [loaded, stats, bossKillCounts, raidKillCounts, completedQuests, unlockedFeatures, slayerPoints, getSnapshot])
+
+  useEffect(() => {
+    if (!loaded) return
+    const previous = lastSavedSlayerTaskRef.current
+    const current = slayerTask || null
+    const prevJson = JSON.stringify(previous)
+    const currJson = JSON.stringify(current)
+    if (prevJson === currJson) return
+    lastSavedSlayerTaskRef.current = current
+    requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SLAYER_TASK_COMPLETE)
+  }, [loaded, slayerTask, getSnapshot])
 
   const value = {
     loaded, player, stats, inventory, equipment, bank, currentHP, toasts, isSaving,

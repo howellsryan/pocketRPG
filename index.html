@@ -15143,7 +15143,7 @@ const monstersData = {
     },
     "drops": [
       {
-        "itemId": "bones",
+        "itemId": "dragon_bones",
         "quantity": 1,
         "chance": 1
       },
@@ -15192,7 +15192,7 @@ const monstersData = {
     },
     "drops": [
       {
-        "itemId": "bones",
+        "itemId": "dragon_bones",
         "quantity": 1,
         "chance": 1
       },
@@ -17004,7 +17004,7 @@ const monstersData = {
     },
     "drops": [
       {
-        "itemId": "bones",
+        "itemId": "dragon_bones",
         "quantity": 1,
         "chance": 1
       },
@@ -21082,18 +21082,67 @@ const monstersData = {
       {
         "itemId": "coins",
         "quantity": [
-          200,
-          1200
+          1000,
+          6000
         ],
+        "chance": 0.25
+      },
+      {
+        "itemId": "big_bones",
+        "quantity": 1,
         "chance": 1
       },
       {
         "itemId": "rune_arrow",
         "quantity": [
           15,
-          35
+          80
         ],
         "chance": 0.15
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          30,
+          70
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          30,
+          70
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "blood_rune",
+        "quantity": [
+          30,
+          70
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "ranarr_weed",
+        "quantity": 5,
+        "chance": 0.1
+      },
+      {
+        "itemId": "snapdragon",
+        "quantity": 5,
+        "chance": 0.1
+      },
+      {
+        "itemId": "kwuarm",
+        "quantity": 5,
+        "chance": 0.1
+      },
+      {
+        "itemId": "rune_chainbody",
+        "quantity": 1,
+        "chance": 0.05
       },
       {
         "itemId": "dragon_warhammer",
@@ -21102,8 +21151,7 @@ const monstersData = {
       }
     ]
   }
-}
-;
+};
 const skillsData = {
   "mining": {
     "id": "mining",
@@ -30013,6 +30061,10 @@ function getRangedAmmoRequirementFailure(equipment, itemsData) {
         return { ...failureBase, actualAmmoId: ammo.id, actualAmmoKind: ammo.ammoKind || null, reason: 'wrong_ammo_item' };
     return null;
 }
+function isRangedAmmoUsableForCurrentWeapon(equipment, itemsData) {
+    return !getRangedAmmoRequirementFailure(equipment, itemsData)
+        && !!itemsData?.[equipment?.weapon?.itemId]?.ammoType;
+}
 /**
  * Equip an item. Returns { equipped: true, unequipped: [] } or { equipped: false, reason }
  * Handles 2H weapon / shield conflicts and ammo-weapon type validation.
@@ -31326,8 +31378,12 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
                 }
             }
             const styleBonus = getRangedStyleBonus(state.stance);
+            const ammoIsUsable = isRangedAmmoUsableForCurrentWeapon(equipment, itemsData);
+            const equippedAmmo = equipment && equipment.ammo;
+            const ammoItem = equippedAmmo?.itemId ? itemsData[equippedAmmo.itemId] : null;
             const effRng = effectiveRanged(boostedPlayerStats.ranged, 0, 1.0, styleBonus);
-            let maxHit = rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength);
+            const ammoRangedStrength = ammoIsUsable ? (ammoItem?.otherBonus?.rangedStrength || 0) : 0;
+            let maxHit = rangedMaxHit(effRng, (bonuses.otherBonus.rangedStrength || 0) - (ammoItem?.otherBonus?.rangedStrength || 0) + ammoRangedStrength);
             let atkRoll = maxAttackRoll(effRng, (bonuses.attackBonus.ranged || 0) + slayerEquipmentBonus.accuracyFlat);
             // Dragon Hunter Crossbow: +30% accuracy and damage vs dragon-type monsters
             if (equippedWeapon?.dragonHunter && monster.isDragon) {
@@ -31352,9 +31408,7 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
             let boltProcEvent = null;
             let boltHealAmount = 0;
             let boltSelfDamage = 0;
-            if (!weaponIsScaleCharged) {
-                const equippedAmmoEntry = equipment && equipment.ammo;
-                const ammoItem = equippedAmmoEntry ? itemsData[equippedAmmoEntry.itemId] : null;
+            if (!weaponIsScaleCharged && ammoIsUsable) {
                 const proc = ammoItem?.boltProc;
                 if (proc && Math.random() < (proc.chance || 0)) {
                     switch (proc.type) {
@@ -31409,8 +31463,7 @@ function processCombatTick(combatState, playerStats, equipment, itemsData, praye
             }
             else {
                 // Consume one bolt/arrow per shot
-                const equippedAmmo = equipment && equipment.ammo;
-                if (equippedAmmo) {
+                if (ammoIsUsable && equippedAmmo) {
                     events.push({ type: 'consumeAmmo', itemId: equippedAmmo.itemId, qty: 1 });
                 }
             }
@@ -36531,6 +36584,7 @@ function GameProvider({ children }) {
     // Refs to hold latest state for the debounced auto-save
     const stateRef = useRef({ stats: {}, inventory: new Array(28).fill(null), equipment: {}, bank: {}, player: null });
     const criticalMilestoneRef = useRef(null);
+    const lastSavedSlayerTaskRef = useRef(null);
     const dungeoneeringTokensRef = useRef(0);
     // Keep refs in sync with state
     useEffect(() => { stateRef.current.stats = stats; }, [stats]);
@@ -37221,6 +37275,18 @@ function GameProvider({ children }) {
             requestCriticalPushSave(() => getSnapshot(), reason);
         }
     }, [loaded, stats, bossKillCounts, raidKillCounts, completedQuests, unlockedFeatures, slayerPoints, getSnapshot]);
+    useEffect(() => {
+        if (!loaded)
+            return;
+        const previous = lastSavedSlayerTaskRef.current;
+        const current = slayerTask || null;
+        const prevJson = JSON.stringify(previous);
+        const currJson = JSON.stringify(current);
+        if (prevJson === currJson)
+            return;
+        lastSavedSlayerTaskRef.current = current;
+        requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SLAYER_TASK_COMPLETE);
+    }, [loaded, slayerTask, getSnapshot]);
     const value = {
         loaded, player, stats, inventory, equipment, bank, currentHP, toasts, isSaving,
         homeShortcuts, combatStance, activeTask, autoBankLoot, bankConfig,
