@@ -10,7 +10,7 @@ import {
   effectiveRanged, rangedMaxHit, getRangedStyleBonus,
   effectiveMagic, monsterMagicDefenceRoll, magicMaxHit
 } from './formulas.js'
-import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getCombatType } from './equipment.js'
+import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getCombatType, getRangedAmmoRequirementFailure } from './equipment.js'
 import { getEffectiveToolActionTicks } from './skilling.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE } from '../utils/constants.js'
@@ -750,6 +750,10 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   }
 
   const { avgDmgPerHit, weaponSpeed, combatType } = avgHitStats(playerStats, equipment, monster, task.stance || 'accurate', itemsData, task.spell || null, slayerTask)
+  const rangedAmmoFailure = combatType === 'ranged' ? getRangedAmmoRequirementFailure(equipment, itemsData) : null
+  if (rangedAmmoFailure) {
+    return { xpGained: {}, lootGained: {}, monstersKilled: 0, lootLost: {}, lootBanked: {} }
+  }
 
   // Active engine: playerAttackTimer starts at 0, first hit lands on tick 1,
   // then resets to weaponSpeed. So hits land on ticks: 1, 1+W, 1+2W, ...
@@ -861,8 +865,8 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
       xpGained[skill] = (xpGained[skill] || 0) + xp
     }
 
-    // Consume ammo for ranged combat (one ammo per kill)
-    if (combatType === 'ranged' && equipment?.ammo) {
+    // Consume ammo for ranged combat (one ammo per kill) only if the weapon uses ammo.
+    if (combatType === 'ranged' && equipment?.ammo && weaponItem?.ammoType) {
       const ammoSlot = newInv.findIndex(s => s && s.itemId === equipment.ammo.itemId)
       if (ammoSlot !== -1) {
         newInv[ammoSlot].quantity -= 1

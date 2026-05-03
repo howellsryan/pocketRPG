@@ -68,4 +68,39 @@ describe('simulateIdleCombat', () => {
     expect(sim!.slayerTaskUpdate?.completed).toBe(true)
     expect(sim!.slayerTaskUpdate?.pointsOnComplete).toBe(4)
   })
+
+  it('does not idle kill with ranged weapons that require ammo when ammo is missing', () => {
+    const task: any = {
+      stance: 'accurate',
+      monster: { id: 'goblin', name: 'Goblin', hitpoints: 5, stats: { defence: 1, magic: 1 }, defenceBonus: { ranged: 0 }, drops: [] }
+    }
+    const stats: any = { ranged: { xp: 13_034_431 }, hitpoints: { xp: 13_034_431 } }
+    const equipment: any = { weapon: { itemId: 'rune_crossbow' } }
+    const itemsData: any = {
+      rune_crossbow: { id: 'rune_crossbow', attackStyle: 'ranged', ammoType: 'bolt', attackSpeed: 5, attackBonus: { ranged: 90 }, defenceBonus: {}, otherBonus: { rangedStrength: 0 } }
+    }
+
+    const sim = simulateIdleCombat(task, 60_000, stats, equipment, Array(28).fill(null), itemsData)
+    expect(sim).toBeTruthy()
+    expect(sim!.monstersKilled).toBe(0)
+  })
+
+  it('does not idle consume/proc bolts for non-bolt ranged weapons with bolts equipped', () => {
+    const task: any = {
+      stance: 'accurate',
+      monster: { id: 'goblin', name: 'Goblin', hitpoints: 1, stats: { defence: 1, magic: 1 }, defenceBonus: { ranged: 0 }, drops: [] }
+    }
+    const stats: any = { ranged: { xp: 13_034_431 }, hitpoints: { xp: 13_034_431 } }
+    const equipment: any = { weapon: { itemId: 'magic_shortbow' }, ammo: { itemId: 'onyx_bolts_e', quantity: 100 } }
+    const itemsData: any = {
+      magic_shortbow: { id: 'magic_shortbow', attackStyle: 'ranged', attackSpeed: 4, attackBonus: { ranged: 69 }, defenceBonus: {}, otherBonus: { rangedStrength: 0 } },
+      onyx_bolts_e: { id: 'onyx_bolts_e', ammoKind: 'bolt', boltProc: { type: 'life_leech', chance: 1 } }
+    }
+    const inventory = [{ itemId: 'onyx_bolts_e', quantity: 100 }, ...Array(27).fill(null)]
+
+    const sim = simulateIdleCombat(task, 60_000, stats, equipment, inventory, itemsData)
+    expect(sim).toBeTruthy()
+    expect(sim!.monstersKilled).toBeGreaterThan(0)
+    expect(sim!.finalInventory[0].quantity).toBe(100)
+  })
 })
