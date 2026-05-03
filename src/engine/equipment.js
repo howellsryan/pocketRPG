@@ -95,6 +95,11 @@ export function getRangedAmmoRequirementFailure(equipment, itemsData) {
   return null
 }
 
+export function isRangedAmmoUsableForCurrentWeapon(equipment, itemsData) {
+  return !getRangedAmmoRequirementFailure(equipment, itemsData)
+    && !!itemsData?.[equipment?.weapon?.itemId]?.ammoType
+}
+
 /**
  * Equip an item. Returns { equipped: true, unequipped: [] } or { equipped: false, reason }
  * Handles 2H weapon / shield conflicts and ammo-weapon type validation.

@@ -10,7 +10,7 @@ import { ALL_SKILLS, MAX_XP, AUTO_SAVE_DEBOUNCE, QUEST_QUEUE_MAX } from '../util
 import { debounce } from '../utils/helpers.js'
 import { fetchIdleState, pushIdleState } from '../cloud/idleState.js'
 import { getToken, getCharacterId } from '../cloud/api.js'
-import { requestCriticalPushSave } from '../cloud/sync.js'
+import { requestCriticalPushSave, pullSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS, detectCountIncreases, detectLevelUps, detectSetGrowth, didNumberIncrease, extractSkillLevels } from '../cloud/criticalSavePolicy.js'
 import itemsData from '../data/items.json'
 import { normaliseDungeoneeringTokens, isDungeoneeringRewardAction } from '../engine/dungeoneeringTokens.js'
@@ -73,6 +73,24 @@ export function GameProvider({ children }) {
     let savedLastTick = (() => { const v = localStorage.getItem('pocketrpg_lastTick'); return v ? parseInt(v, 10) : null })()
     let savedTask = (() => { try { return JSON.parse(localStorage.getItem('pocketrpg_activeTask')) } catch { return null } })()
     const isCloudCharacter = !!getToken() && !!getCharacterId()
+    if (isCloudCharacter) {
+      try {
+        const cloud = await pullSave()
+        const cloudSettings = cloud?.payload?.settings || null
+        if (cloudSettings) {
+          if (Object.hasOwn(cloudSettings, 'slayerTask')) {
+            savedSlayerTask = cloudSettings.slayerTask ?? null
+            await saveSetting('slayerTask', savedSlayerTask)
+          }
+          if (Object.hasOwn(cloudSettings, 'slayerPoints')) {
+            savedSlayerPoints = Math.max(0, Math.floor(Number(cloudSettings.slayerPoints) || 0))
+            await saveSetting('slayerPoints', savedSlayerPoints)
+          }
+        }
+      } catch (err) {
+        console.warn('[PocketRPG] Failed to hydrate slayer state from cloud save:', err?.message || err)
+      }
+    }
     try {
       const cloudIdle = await fetchIdleState()
       if (cloudIdle && cloudIdle.lastActiveAt) {
