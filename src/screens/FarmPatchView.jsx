@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
-import { getPatchesForLocation, getAvailableCrops, getCropDef, formatGrowthTime, getGrowthProgress, getStageLabel, getEffectiveStage, plantCrop, harvestCrop } from '../engine/farming.ts'
+import { getPatchesForLocation, getPlantableCropOptions, getCropDef, formatGrowthTime, getGrowthProgress, getStageLabel, getEffectiveStage, plantCrop, harvestCrop } from '../engine/farming.ts'
 import { onTick } from '../engine/tick.js'
 import ProgressBar from '../components/ProgressBar.jsx'
 import Modal from '../components/Modal.jsx'
@@ -82,6 +82,7 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
   }
 
   const isEmpty = selectedPatch && !selectedPatch.patch?.cropId
+  const plantableOptions = isEmpty ? getPlantableCropOptions(selectedPatch.type, farmingLevel, inventory) : []
 
   return (
     <div class="h-full overflow-y-auto p-4">
@@ -121,11 +122,15 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
                 <span>Select a seed to plant in this patch</span>
               </div>
               <div class="space-y-2">
-                {getAvailableCrops(selectedPatch.type, farmingLevel).map(crop => (
+                {plantableOptions.map(({ crop, ownedQuantity, canPlant }) => (
                   <button
                     key={crop.id}
                     onClick={() => handlePlantCrop(crop.id)}
-                    class="w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]"
+                    class={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left active:bg-[#222] ${
+                      canPlant
+                        ? 'bg-[#201a08] border-[var(--color-gold)]'
+                        : 'bg-[#1a1a1a] border-[#2a2a2a]'
+                    }`}
                   >
                     <div class="flex-1">
                       <div class="text-sm font-semibold text-[var(--color-parchment)]">
@@ -138,9 +143,12 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
                         Growth: {formatGrowthTime(crop.growthTimeMs)}
                       </div>
                     </div>
+                    <div class={`ml-3 px-2 py-1 rounded text-[10px] font-semibold ${canPlant ? 'bg-[var(--color-gold)] text-[#111]' : 'bg-[#111] text-[var(--color-parchment)] opacity-60'}`}>
+                      {ownedQuantity} owned
+                    </div>
                   </button>
                 ))}
-                {getAvailableCrops(selectedPatch.type, farmingLevel).length === 0 && (
+                {plantableOptions.length === 0 && (
                   <div class="text-center py-4 text-xs text-[var(--color-parchment)] opacity-50">
                     No seeds available at your level
                   </div>
@@ -181,11 +189,14 @@ function PatchCard({ patchData, onClick }) {
   }
 
   const typeLabel = patchViewTypeLabels[type]
+  const ready = !!(patch && crop && getEffectiveStage(patch) >= 4)
 
   return (
     <button
       onClick={onClick}
-      class="w-full p-3 rounded-xl border transition-colors text-left bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]"
+      class={`w-full p-3 rounded-xl border transition-colors text-left active:bg-[#222] ${
+        ready ? 'bg-[#201a08] border-[var(--color-gold)]' : 'bg-[#1a1a1a] border-[#2a2a2a]'
+      }`}
     >
       <div class="flex items-center justify-between">
         <div class="flex-1">
