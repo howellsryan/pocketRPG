@@ -15013,5 +15013,14 @@
         "sourceId": "lizardman_shaman"
       }
     ]
+  },
+  "rune_essence": {
+    "id": "rune_essence",
+    "name": "Rune essence",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 5,
+    "icon": "🪨",
+    "isGeneralStore": true
   }
 }

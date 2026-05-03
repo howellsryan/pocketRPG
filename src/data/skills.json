@@ -28,6 +28,14 @@
         "product": "clay"
       },
       {
+        "id": "rune_essence",
+        "name": "Mine rune essence",
+        "level": 1,
+        "ticks": 4,
+        "xp": 5,
+        "product": "rune_essence"
+      },
+      {
         "id": "iron",
         "name": "Mine iron ore",
         "level": 15,
@@ -2535,7 +2543,7 @@
               {
                 "itemId": "cowhide",
                 "quantity": 1,
-                "chance": 1.0
+                "chance": 1
               }
             ]
           }
@@ -2698,7 +2706,7 @@
                   25,
                   750
                 ],
-                "chance": 1.0
+                "chance": 1
               }
             ]
           }
@@ -2754,7 +2762,7 @@
                   100,
                   500
                 ],
-                "chance": 1.0
+                "chance": 1
               }
             ]
           },
@@ -3005,6 +3013,192 @@
         "product": "arcane_kiteshield",
         "category": "reward",
         "tokenCost": 300000
+      }
+    ]
+  },
+  "runecraft": {
+    "id": "runecraft",
+    "name": "Runecrafting",
+    "actions": [
+      {
+        "id": "craft_air_rune",
+        "name": "Craft air rune",
+        "level": 1,
+        "ticks": 3,
+        "xp": 5,
+        "product": "air_rune",
+        "productQty": 1,
+        "materials": {
+          "rune_essence": 1
+        }
+      },
+      {
+        "id": "craft_mind_rune",
+        "name": "Craft mind rune",
+        "level": 2,
+        "ticks": 3,
+        "xp": 5.5,
+        "product": "mind_rune",
+        "productQty": 1,
+        "materials": {
+          "rune_essence": 1
+        }
+      },
+      {
+        "id": "craft_water_rune",
+        "name": "Craft water rune",
+        "level": 5,
+        "ticks": 3,
+        "xp": 6,
+        "product": "water_rune",
+        "productQty": 1,
+        "materials": {
+          "rune_essence": 1
+        }
+      },
+      {
+        "id": "craft_earth_rune",
+        "name": "Craft earth rune",
+        "level": 9,
+        "ticks": 3,
+        "xp": 6.5,
+        "product": "earth_rune",
+        "productQty": 1,
+        "materials": {
+          "rune_essence": 1
+        }
+      },
+      {
+        "id": "craft_fire_rune",
+        "name": "Craft fire rune",
+        "level": 14,
+        "ticks": 3,
+        "xp": 7,
+        "product": "fire_rune",
+        "productQty": 1,
+        "materials": {
+          "rune_essence": 1
+        }
+      },
+      {
+        "id": "craft_body_rune",
+        "name": "Craft body rune",
+        "level": 20,
+        "ticks": 3,
+        "xp": 7.5,
+        "product": "body_rune",
+        "productQty": 1,
+        "materials": {
+          "rune_essence": 1
+        }
+      },
+      {
+        "id": "craft_cosmic_rune",
+        "name": "Craft cosmic rune",
+        "level": 27,
+        "ticks": 3,
+        "xp": 8,
+        "product": "cosmic_rune",
+        "productQty": 1,
+        "materials": {
+          "rune_essence": 1
+        }
+      },
+      {
+        "id": "craft_chaos_rune",
+        "name": "Craft chaos rune",
+        "level": 35,
+        "ticks": 3,
+        "xp": 8.5,
+        "product": "chaos_rune",
+        "productQty": 1,
+        "materials": {
+          "rune_essence": 1
+        }
+      },
+      {
+        "id": "craft_astral_rune",
+        "name": "Craft astral rune",
+        "level": 40,
+        "ticks": 3,
+        "xp": 8.7,
+        "product": "astral_rune",
+        "productQty": 1,
+        "materials": {
+          "rune_essence": 1
+        }
+      },
+      {
+        "id": "craft_nature_rune",
+        "name": "Craft nature rune",
+        "level": 44,
+        "ticks": 3,
+        "xp": 9,
+        "product": "nature_rune",
+        "productQty": 1,
+        "materials": {
+          "rune_essence": 1
+        }
+      },
+      {
+        "id": "craft_law_rune",
+        "name": "Craft law rune",
+        "level": 54,
+        "ticks": 3,
+        "xp": 9.5,
+        "product": "law_rune",
+        "productQty": 1,
+        "materials": {
+          "rune_essence": 1
+        }
+      },
+      {
+        "id": "craft_death_rune",
+        "name": "Craft death rune",
+        "level": 65,
+        "ticks": 3,
+        "xp": 10,
+        "product": "death_rune",
+        "productQty": 1,
+        "materials": {
+          "rune_essence": 1
+        }
+      },
+      {
+        "id": "craft_blood_rune",
+        "name": "Craft blood rune",
+        "level": 77,
+        "ticks": 3,
+        "xp": 10.5,
+        "product": "blood_rune",
+        "productQty": 1,
+        "materials": {
+          "rune_essence": 1
+        }
+      },
+      {
+        "id": "craft_soul_rune",
+        "name": "Craft soul rune",
+        "level": 90,
+        "ticks": 3,
+        "xp": 11.3,
+        "product": "soul_rune",
+        "productQty": 1,
+        "materials": {
+          "rune_essence": 1
+        }
+      },
+      {
+        "id": "craft_wrath_rune",
+        "name": "Craft wrath rune",
+        "level": 95,
+        "ticks": 3,
+        "xp": 8,
+        "product": "wrath_rune",
+        "productQty": 1,
+        "materials": {
+          "rune_essence": 1
+        }
       }
     ]
   }
