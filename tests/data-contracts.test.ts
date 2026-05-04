@@ -82,8 +82,6 @@ const EXPECTED_BOSS_UNIQUE_ITEM_IDS = new Set([
 
   'dragon_boots',
   'granite_maul',
-  'granite_gloves',
-  'granite_ring',
   'dark_bow',
   'dark_claw',
   'primordial_crystal',

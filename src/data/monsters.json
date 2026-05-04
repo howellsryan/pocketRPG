@@ -6312,16 +6312,6 @@
         "chance": 1
       },
       {
-        "itemId": "granite_gloves",
-        "quantity": 1,
-        "chance": 0.0007
-      },
-      {
-        "itemId": "granite_ring",
-        "quantity": 1,
-        "chance": 0.0007
-      },
-      {
         "itemId": "mystic_robe_top",
         "quantity": 1,
         "chance": 0.0015
@@ -6742,21 +6732,6 @@
         "itemId": "granite_maul",
         "quantity": 1,
         "chance": 0.00075
-      },
-      {
-        "itemId": "granite_helm",
-        "quantity": 1,
-        "chance": 0.012
-      },
-      {
-        "itemId": "granite_legs",
-        "quantity": 1,
-        "chance": 0.001
-      },
-      {
-        "itemId": "granite_shield",
-        "quantity": 1,
-        "chance": 0.0028
       },
       {
         "itemId": "rune_full_helm",
