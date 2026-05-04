@@ -732,7 +732,7 @@ function idleRollDrops(monster) {
  * itemsData: items lookup
  * slayerTask: optional current slayer task (if not on-task, will be null)
  */
-export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsData, slayerTask = null, bank = {}) {
+export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsData, slayerTask = null, bank = {}, idleLoadout = null) {
   if (!task || !task.monster) return null
 
   const monster = task.monster
@@ -858,11 +858,53 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   let monstersKilledOnTask = 0
   let slayerXpGained = 0
   let remainingTicks = totalTicks
+  let elapsedTicksUsed = 0
+  const idleFoodConsumed = {}
+  const idlePotionsConsumed = {}
 
   const maxKillsFromResources = Math.min(maxKillsFromAmmo, maxKillsFromRunes, maxKillsFromCharges)
 
+  // Optional survivability cap for idle/skip: consume configured idle food as HP buffer.
+  const baseHp = Math.max(1, getLevelFromXP(stats.hitpoints?.xp || 0))
+  const loadoutFood = idleLoadout?.food || {}
+  let extraHpBuffer = 0
+  for (const [itemId, qty] of Object.entries(loadoutFood)) {
+    const item = itemsData[itemId]
+    const heal = Math.max(0, Math.floor(Number(item?.foodHeal) || 0))
+    const count = Math.max(0, Math.floor(Number(qty) || 0))
+    if (heal > 0 && count > 0) extraHpBuffer += heal * count
+  }
+  let hpPool = baseHp + extraHpBuffer
+
+  const incomingPerKill = Math.max(0, Math.floor((monster.maxHit || 0) * Math.max(1, hitsNeeded) / 2))
+
   while (remainingTicks >= ticksPerCycle && monstersKilled < maxKillsFromResources) {
+    if (incomingPerKill > 0) {
+      if (hpPool <= incomingPerKill) break
+      hpPool -= incomingPerKill
+      // Greedy accounting of food consumed in order of largest heal first.
+      let damageCoveredByFood = Math.max(0, baseHp + extraHpBuffer - hpPool - baseHp)
+      if (damageCoveredByFood > 0) {
+        const byHeal = Object.entries(loadoutFood)
+          .map(([itemId, qty]) => ({ itemId, qty: Math.max(0, Math.floor(Number(qty) || 0)), heal: Math.max(0, Math.floor(Number(itemsData[itemId]?.foodHeal) || 0)) }))
+          .filter(x => x.heal > 0 && x.qty > 0)
+          .sort((a, b) => b.heal - a.heal)
+        for (const f of byHeal) {
+          const already = idleFoodConsumed[f.itemId] || 0
+          const left = Math.max(0, f.qty - already)
+          if (left <= 0) continue
+          const need = Math.ceil(damageCoveredByFood / f.heal)
+          const take = Math.min(left, need)
+          if (take > 0) {
+            idleFoodConsumed[f.itemId] = already + take
+            damageCoveredByFood = Math.max(0, damageCoveredByFood - (take * f.heal))
+          }
+          if (damageCoveredByFood <= 0) break
+        }
+      }
+    }
     remainingTicks -= ticksPerCycle
+    elapsedTicksUsed += ticksPerCycle
     monstersKilled++
 
     // Check if this kill counts toward slayer task — cap at total task count
@@ -980,6 +1022,27 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
 
   const resourceLimited = monstersKilled < Math.floor(totalTicks / ticksPerCycle)
     && (maxKillsFromResources !== Infinity)
+  const foodConfigured = Object.fromEntries(
+    Object.entries(loadoutFood).map(([itemId, qty]) => [itemId, Math.max(0, Math.floor(Number(qty) || 0))])
+  )
+  const potionConfigured = Object.fromEntries(
+    Object.entries(idleLoadout?.potions || {}).map(([itemId, qty]) => [itemId, Math.max(0, Math.floor(Number(qty) || 0))])
+  )
+  const foodConsumedTotal = Object.values(idleFoodConsumed).reduce((s, v) => s + v, 0)
+  const foodConfiguredTotal = Object.values(foodConfigured).reduce((s, v) => s + v, 0)
+  const potionsConsumedTotal = Object.values(idlePotionsConsumed).reduce((s, v) => s + v, 0)
+  const potionsConfiguredTotal = Object.values(potionConfigured).reduce((s, v) => s + v, 0)
 
-  return { xpGained, lootGained, lootLost, lootBanked, runesConsumed, monstersKilled, monstersKilledOnTask, finalInventory: newInv, slayerXpGained, slayerTaskUpdate, chargesConsumed, ammoConsumed, attacksUsed: attacksPerKill * monstersKilled, resourceLimited }
+  return {
+    xpGained, lootGained, lootLost, lootBanked, runesConsumed, monstersKilled, monstersKilledOnTask, finalInventory: newInv, slayerXpGained, slayerTaskUpdate, chargesConsumed, ammoConsumed, attacksUsed: attacksPerKill * monstersKilled, resourceLimited,
+    elapsedMsUsed: elapsedTicksUsed * TICK_MS,
+    idleFoodConfigured: foodConfigured,
+    idleFoodConsumed,
+    idleFoodConsumedTotal: foodConsumedTotal,
+    idleFoodConfiguredTotal: foodConfiguredTotal,
+    idlePotionsConfigured: potionConfigured,
+    idlePotionsConsumed,
+    idlePotionsConsumedTotal: potionsConsumedTotal,
+    idlePotionsConfiguredTotal: potionsConfiguredTotal,
+  }
 }
