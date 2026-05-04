@@ -13986,6 +13986,37 @@
     },
     "isClueReward": true
   },
+  "freminnik_kilt": {
+    "id": "freminnik_kilt",
+    "name": "Freminnik kilt",
+    "type": "armour",
+    "stackable": false,
+    "shopValue": 1000000,
+    "icon": "🩳",
+    "isGeneralStore": false,
+    "slot": "legs",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 5,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "isUntradeable": false,
+    "isClueReward": true
+  },
   "3rd_age_druidic_robe_top": {
     "id": "3rd_age_druidic_robe_top",
     "name": "3rd age druidic robe top",
