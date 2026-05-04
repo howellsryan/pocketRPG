@@ -78,16 +78,10 @@ const COMBAT_CATEGORIES = [
     ids: ['adamant_dragon', 'rune_dragon'],
   },
   {
-    key: 'zulrah',
-    label: 'Zulrah',
-    icon: '🐍',
-    ids: ['zulrah'],
-  },
-  {
     key: 'fight_caves',
     label: 'Fight Caves',
     icon: '🔥',
-    ids: ['jad'],
+    ids: ['zulrah', 'jad'],
   },
   {
     key: 'inferno',
