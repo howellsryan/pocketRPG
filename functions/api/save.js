@@ -52,6 +52,7 @@ export async function onRequestPut({ request, env }) {
   let body
   try { body = await request.json() } catch { return json({ error: 'Invalid JSON' }, 400) }
   const save_data = body.save_data
+  const credits_used_increment = body.credits_used_increment === 1 ? 1 : 0
   if (save_data !== null && typeof save_data !== 'string') {
     return json({ error: 'Missing save_data' }, 400)
   }
@@ -60,21 +61,20 @@ export async function onRequestPut({ request, env }) {
   }
 
   const now = Date.now()
-  // For new saves, insert. For existing saves, update.
-  // This explicitly handles NULL values for one-life account clearing.
-  const existing = await env.DB.prepare(
-    'SELECT 1 FROM saves WHERE character_id = ?'
-  ).bind(ch.id).first()
-
-  if (existing) {
-    await env.DB.prepare(
-      'UPDATE saves SET save_data = ?, updated_at = ? WHERE character_id = ?'
-    ).bind(save_data, now, ch.id).run()
-  } else {
-    await env.DB.prepare(
-      'INSERT INTO saves (character_id, save_data, updated_at) VALUES (?, ?, ?)'
-    ).bind(ch.id, save_data, now).run()
-  }
+  await env.DB.batch([
+    env.DB.prepare(
+      `INSERT INTO saves (character_id, save_data, updated_at)
+       VALUES (?, ?, ?)
+       ON CONFLICT(character_id) DO UPDATE SET
+         save_data = excluded.save_data,
+         updated_at = excluded.updated_at`
+    ).bind(ch.id, save_data, now),
+    env.DB.prepare(
+      `UPDATE characters
+          SET credits_used = credits_used + ?
+        WHERE id = ? AND owner_id = ? AND deleted_at IS NULL`
+    ).bind(credits_used_increment, ch.id, auth.identity.id),
+  ])
 
   return json({ ok: true, updatedAt: now })
 }
