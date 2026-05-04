@@ -197,6 +197,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const [showSpellModal, setShowSpellModal] = useState(false)
   const [selectedMonsterInfo, setSelectedMonsterInfo] = useState(null)
   const [selectedRaidInfo, setSelectedRaidInfo] = useState(null)
+  const [collapsedSections, setCollapsedSections] = useState(() => ({
+    raids: true,
+    ...Object.fromEntries(COMBAT_CATEGORIES.map(category => [category.key, true])),
+  }))
   const [lootModal, setLootModal] = useState(null)
 
   const combatRef = useRef(null)
@@ -769,6 +773,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   }, [combat?.active])
 
   const getSlayerLevel = () => getLevelFromXP(stats.slayer?.xp || 0)
+  const toggleSection = (sectionKey) => {
+    setCollapsedSections(prev => ({ ...prev, [sectionKey]: !prev[sectionKey] }))
+  }
 
   const checkBossRequirements = (monster) => {
     const slayLvl = getSlayerLevel()
@@ -1252,17 +1259,29 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             const monsters = category.ids
               .map(id => monstersData[id])
               .filter(Boolean)
-              .sort((a, b) => a.combatLevel - b.combatLevel)
+              .sort((a, b) => {
+                if (category.key === 'slayer') {
+                  return (a.slayerRequirement || 0) - (b.slayerRequirement || 0)
+                }
+                return a.combatLevel - b.combatLevel
+              })
+            const isCollapsed = collapsedSections[category.key] ?? true
             return (
               <div key={category.key}>
-                <div class="flex items-center gap-2 mb-2 px-1">
+                <button
+                  type="button"
+                  onClick={() => toggleSection(category.key)}
+                  class="w-full flex items-center gap-2 mb-2 px-1 py-1 text-left rounded-lg active:bg-[#1a1a1a]"
+                >
                   <span class="text-base">{category.icon}</span>
                   <span class="text-xs font-semibold text-[var(--color-parchment)] uppercase tracking-wider opacity-60">{category.label}</span>
+                  <span class="ml-auto text-[10px] text-[var(--color-parchment)] opacity-60">{isCollapsed ? '▶' : '▼'}</span>
                   {monsters.length === 0 && (
                     <span class="text-[10px] text-[var(--color-parchment)] opacity-30 italic">— coming soon</span>
                   )}
-                </div>
-                <div class="space-y-2">
+                </button>
+                {!isCollapsed && (
+                  <div class="space-y-2">
                   {monsters.map(monster => {
                     const slayLvl = getSlayerLevel()
                     const slayReq = monster.slayerRequirement
@@ -1327,7 +1346,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     </div>
                     )
                   })}
-                </div>
+                  </div>
+                )}
               </div>
             )
           })}
@@ -1335,11 +1355,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
         {/* Raids Section */}
         <div class="mt-6">
-          <div class="flex items-center gap-2 mb-3 px-1">
+          <button
+            type="button"
+            onClick={() => toggleSection('raids')}
+            class="w-full flex items-center gap-2 mb-3 px-1 py-1 text-left rounded-lg active:bg-[#1a1a1a]"
+          >
             <span class="text-base">🏆</span>
             <span class="text-xs font-semibold text-[var(--color-gold)] uppercase tracking-wider">Raids</span>
-          </div>
-          <div class="space-y-2">
+            <span class="ml-auto text-[10px] text-[var(--color-parchment)] opacity-60">{(collapsedSections.raids ?? true) ? '▶' : '▼'}</span>
+          </button>
+          {!(collapsedSections.raids ?? true) && (
+            <div class="space-y-2">
             {Object.values(raidsData).map(raid => {
               const raidReq = checkRaidRequirements(raid)
               const isRaidLocked = raidReq.locked
@@ -1374,7 +1400,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 </div>
               )
             })}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* PvP entry — hidden for ironman / one-life accounts. */}
@@ -1463,7 +1490,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       </div>
                     )
                   })}
-                </div>
+                  </div>
               </div>
             )}
           </div>
@@ -2254,7 +2281,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       </div>
                     )
                   })}
-                </div>
+                  </div>
               </div>
             )}
           </div>
