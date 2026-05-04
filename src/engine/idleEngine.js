@@ -861,6 +861,15 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   let elapsedTicksUsed = 0
   const idleFoodConsumed = {}
   const idlePotionsConsumed = {}
+  const loadoutPotions = idleLoadout?.potions || {}
+  const prayerLevel = Math.max(1, getLevelFromXP(stats.prayer?.xp || 0))
+  let prayerPoints = prayerLevel
+  const activeProtectionPrayer = idleLoadout?.prayers?.protection || null
+  const activeCombatPrayer = idleLoadout?.prayers?.combat || null
+  const monsterAtkSpeed = Math.max(1, Math.floor(Number(monster.attackSpeed) || 4))
+  const monsterAttacksPerKill = Math.max(1, Math.floor(ticksPerKill / monsterAtkSpeed))
+  const playerAttacksPerKill = Math.max(1, hitsNeeded)
+  let elapsedMinutes = 0
 
   const maxKillsFromResources = Math.min(maxKillsFromAmmo, maxKillsFromRunes, maxKillsFromCharges)
 
@@ -876,9 +885,51 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   }
   let hpPool = baseHp + extraHpBuffer
 
-  const incomingPerKill = Math.max(0, Math.floor((monster.maxHit || 0) * Math.max(1, hitsNeeded) / 2))
+  const rawIncomingPerKill = Math.max(0, Math.floor((monster.maxHit || 0) * Math.max(1, hitsNeeded) / 2))
 
   while (remainingTicks >= ticksPerCycle && monstersKilled < maxKillsFromResources) {
+    const elapsedMinutesNext = elapsedMinutes + ((ticksPerCycle * TICK_MS) / 60000)
+    const superCombatCfg = Math.max(0, Math.floor(Number(loadoutPotions.super_combat_potion) || 0))
+    const superCombatNeeded = Math.max(0, Math.floor(elapsedMinutesNext / 5) - Math.floor(elapsedMinutes / 5))
+    if (superCombatNeeded > 0 && superCombatCfg > 0) {
+      const already = idlePotionsConsumed.super_combat_potion || 0
+      const available = Math.max(0, superCombatCfg - already)
+      const drink = Math.min(available, superCombatNeeded)
+      if (drink > 0) idlePotionsConsumed.super_combat_potion = already + drink
+    }
+    for (const timedPotionId of ['attack_potion', 'strength_potion', 'ranging_potion', 'magic_potion']) {
+      const cfg = Math.max(0, Math.floor(Number(loadoutPotions[timedPotionId]) || 0))
+      if (cfg <= 0) continue
+      const needed = Math.max(0, Math.floor(elapsedMinutesNext / 5) - Math.floor(elapsedMinutes / 5))
+      if (needed <= 0) continue
+      const already = idlePotionsConsumed[timedPotionId] || 0
+      const available = Math.max(0, cfg - already)
+      const drink = Math.min(available, needed)
+      if (drink > 0) idlePotionsConsumed[timedPotionId] = already + drink
+    }
+
+    const prayerDrainThisKill = (activeCombatPrayer ? playerAttacksPerKill : 0) + (activeProtectionPrayer ? monsterAttacksPerKill : 0)
+    let prayerRestoreLoopGuard = 0
+    while (prayerDrainThisKill > prayerPoints && prayerRestoreLoopGuard < 10000) {
+      prayerRestoreLoopGuard++
+      const ppCfg = Math.max(0, Math.floor(Number(loadoutPotions.prayer_potion) || 0))
+      const srCfg = Math.max(0, Math.floor(Number(loadoutPotions.super_restore) || 0))
+      const usedPp = idlePotionsConsumed.prayer_potion || 0
+      const usedSr = idlePotionsConsumed.super_restore || 0
+      const ppAvailable = Math.max(0, ppCfg - usedPp)
+      const srAvailable = Math.max(0, srCfg - usedSr)
+      if (srAvailable > 0) {
+        idlePotionsConsumed.super_restore = usedSr + 1
+        prayerPoints = Math.min(prayerLevel, prayerPoints + 20)
+      } else if (ppAvailable > 0) {
+        idlePotionsConsumed.prayer_potion = usedPp + 1
+        prayerPoints = Math.min(prayerLevel, prayerPoints + 15)
+      } else break
+    }
+
+    const hasProtectionThisKill = !!activeProtectionPrayer && prayerPoints > 0
+    const incomingPerKill = hasProtectionThisKill && monster.attackStyle === 'melee' ? 0 : rawIncomingPerKill
+
     if (incomingPerKill > 0) {
       if (hpPool <= incomingPerKill) break
       hpPool -= incomingPerKill
@@ -905,6 +956,10 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     }
     remainingTicks -= ticksPerCycle
     elapsedTicksUsed += ticksPerCycle
+    elapsedMinutes = elapsedMinutesNext
+    if (prayerDrainThisKill > 0 && prayerPoints > 0) {
+      prayerPoints = Math.max(0, prayerPoints - prayerDrainThisKill)
+    }
     monstersKilled++
 
     // Check if this kill counts toward slayer task — cap at total task count
