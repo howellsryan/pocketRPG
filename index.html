@@ -15601,7 +15601,7 @@ const itemsData = {
     },
     "specialAttack": {
       "type": "descent_of_darkness",
-      "energyCost": 65,
+      "energyCost": 100,
       "description": "Descent of Darkness: Fires two arrows simultaneously, each hitting up to 150% of your normal max hit."
     },
     "shopValue": 188000,
@@ -15780,18 +15780,55 @@ const itemsData = {
     "isGeneralStore": false,
     "isBossUnique": true
   },
-  "hydra_tail": {
-    "id": "hydra_tail",
-    "name": "Hydra's tail",
+  "hydra_claw": {
+    "id": "hydra_claw",
+    "name": "Hydra claw",
     "type": "resource",
     "stackable": false,
     "shopValue": 4500000,
-    "icon": "🐉",
+    "icon": "🦞",
     "isGeneralStore": false,
     "isBossUnique": true,
-    "combineWith": "abyssal_tentacle",
-    "combineResult": "bonecrusher_necklace",
-    "combineDescription": "Used in advanced crafting recipes."
+    "combineWith": "zamorak_spear",
+    "combineResult": "dragon_hunter_lance",
+    "combineDescription": "Combine with a Zamorak spear to forge a Dragon hunter lance."
+  },
+  "dragon_hunter_lance": {
+    "id": "dragon_hunter_lance",
+    "name": "Dragon hunter lance",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "stab",
+    "dragonHunter": true,
+    "attackBonus": {
+      "stab": 74,
+      "slash": 50,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 85,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 78
+    },
+    "shopValue": 22000000,
+    "icon": "🗡️",
+    "isGeneralStore": false,
+    "isBossUnique": true
   },
   "hydra_bones": {
     "id": "hydra_bones",
@@ -23073,7 +23110,7 @@ const monstersData = {
         "chance": 0.005
       },
       {
-        "itemId": "hydra_tail",
+        "itemId": "hydra_claw",
         "quantity": 1,
         "chance": 0.002
       },

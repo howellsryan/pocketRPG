@@ -94,7 +94,8 @@ const EXPECTED_BOSS_UNIQUE_ITEM_IDS = new Set([
   'pegasian_boots',
   'eternal_boots',
   'hydra_leather',
-  'hydra_tail',
+  'hydra_claw',
+  'dragon_hunter_lance',
   'ferocious_gloves',
 ])
 describe('data contracts', () => {
