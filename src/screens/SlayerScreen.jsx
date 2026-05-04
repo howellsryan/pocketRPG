@@ -154,7 +154,7 @@ const SLAYER_MONSTER_ICONS = {
 }
 
 export default function SlayerScreen({ onBack }) {
-  const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, bank, inventory, addToBank, getSnapshot } = useGame()
+  const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, bank, inventory, addToBank, getSnapshot, slayerTasksCompleted } = useGame()
 
   const combatLevel = getPlayerCombatLevel(stats)
   const slayerLevel = getLevelFromXP(stats.slayer?.xp || 0)
@@ -230,9 +230,15 @@ export default function SlayerScreen({ onBack }) {
   }
 
   const handleCancelTask = () => {
+    const skipCost = 30
+    if (slayerPoints < skipCost) {
+      addToast(`Need ${skipCost} slayer points to skip a task.`, 'error')
+      return
+    }
     setSlayerTask(null)
+    updateSlayerPoints(slayerPoints - skipCost)
     requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SLAYER_TASK_CHANGE)
-    addToast('Task cancelled. No points awarded.', 'info')
+    addToast(`Task skipped for ${skipCost} slayer points.`, 'info')
   }
 
   const handleUnlock = (unlock) => {
@@ -265,7 +271,7 @@ export default function SlayerScreen({ onBack }) {
         💀 Slayer
       </h2>
       <p class="text-xs text-[var(--color-parchment)] opacity-40 mb-3">
-        Level {slayerLevel} · Combat {combatLevel} · {slayerPoints.toLocaleString()} points
+        Level {slayerLevel} · Combat {combatLevel} · {slayerPoints.toLocaleString()} points · {slayerTasksCompleted.toLocaleString()} tasks completed
       </p>
 
       {/* Current task banner */}
@@ -295,7 +301,7 @@ export default function SlayerScreen({ onBack }) {
               onClick={handleCancelTask}
               class="text-[10px] text-[var(--color-parchment)] opacity-40 underline"
             >
-              Cancel (no points)
+              Skip (-30 points)
             </button>
           </div>
         </div>

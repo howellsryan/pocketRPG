@@ -14,6 +14,7 @@ import { requestCriticalPushSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS, detectCountIncreases, detectLevelUps, detectSetGrowth, didNumberIncrease, extractSkillLevels } from '../cloud/criticalSavePolicy.js'
 import itemsData from '../data/items.json'
 import { normaliseDungeoneeringTokens, isDungeoneeringRewardAction } from '../engine/dungeoneeringTokens.js'
+import { getSlayerTaskReward } from '../engine/slayerRewards.js'
 
 const normalisePointCurrency = (value) => {
   const n = Math.floor(Number(value) || 0)
@@ -39,6 +40,7 @@ export function GameProvider({ children }) {
   const [unlockedFeatures, setUnlockedFeatures] = useState(new Set())
   const [slayerTask, setSlayerTaskState] = useState(null)
   const [slayerPoints, setSlayerPointsState] = useState(0)
+  const [slayerTasksCompleted, setSlayerTasksCompletedState] = useState(0)
   const [dungeoneeringTokens, setDungeoneeringTokensState] = useState(0)
   const [activeCombatSpell, setActiveCombatSpellState] = useState(null)
   const [bossKillCounts, setBossKillCountsState] = useState({})
@@ -56,6 +58,7 @@ export function GameProvider({ children }) {
   const slayerTaskRef = useRef(null)
   const slayerPointsRef = useRef(0)
   const dungeoneeringTokensRef = useRef(0)
+  const slayerTasksCompletedRef = useRef(0)
 
   // Keep refs in sync with state
   useEffect(() => { stateRef.current.stats = stats }, [stats])
@@ -66,18 +69,20 @@ export function GameProvider({ children }) {
   useEffect(() => { slayerTaskRef.current = slayerTask }, [slayerTask])
   useEffect(() => { slayerPointsRef.current = normalisePointCurrency(slayerPoints) }, [slayerPoints])
   useEffect(() => { dungeoneeringTokensRef.current = dungeoneeringTokens }, [dungeoneeringTokens])
+  useEffect(() => { slayerTasksCompletedRef.current = Math.max(0, Math.floor(Number(slayerTasksCompleted) || 0)) }, [slayerTasksCompleted])
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
-      getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('dungeoneeringTokens'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
+      getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('slayerTasksCompleted'), getSetting('dungeoneeringTokens'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
       getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems')
     ])
     savedDungeoneeringTokens = normaliseDungeoneeringTokens(savedDungeoneeringTokens)
     savedSlayerPoints = normalisePointCurrency(savedSlayerPoints)
+    savedSlayerTasksCompleted = Math.max(0, Math.floor(Number(savedSlayerTasksCompleted) || 0))
     // Idle-engine inputs: last active timestamp and last active task.
     // D1 is authoritative when signed in + online — localStorage is only used
     // as an offline-mode fallback (and as a backup when the D1 fetch fails).
@@ -268,10 +273,12 @@ export function GameProvider({ children }) {
             if (sim.slayerTaskUpdate.completed) {
               // Task complete — clear it and award points
               await saveSetting('slayerTask', null)
-              const points = normalisePointCurrency(sim.slayerTaskUpdate.pointsOnComplete)
-              const newSlayerPoints = normalisePointCurrency(savedSlayerPoints) + points
+              const reward = getSlayerTaskReward(sim.slayerTaskUpdate.pointsOnComplete, savedSlayerTasksCompleted)
+              const newSlayerPoints = normalisePointCurrency(savedSlayerPoints) + reward.pointsEarned
               await saveSetting('slayerPoints', newSlayerPoints)
+              await saveSetting('slayerTasksCompleted', reward.totalTasks)
               savedSlayerPoints = newSlayerPoints
+              savedSlayerTasksCompleted = reward.totalTasks
             } else {
               // Task in progress — update monstersRemaining
               await saveSetting('slayerTask', sim.slayerTaskUpdate)
@@ -391,8 +398,10 @@ export function GameProvider({ children }) {
       : (savedSlayerTask ?? null)
     slayerTaskRef.current = finalSlayerTask
     slayerPointsRef.current = normalisePointCurrency(savedSlayerPoints)
+    slayerTasksCompletedRef.current = savedSlayerTasksCompleted
     setSlayerTaskState(finalSlayerTask)
     setSlayerPointsState(slayerPointsRef.current)
+    setSlayerTasksCompletedState(slayerTasksCompletedRef.current)
     setDungeoneeringTokensState(savedDungeoneeringTokens)
     setActiveCombatSpellState(savedActiveCombatSpell ?? null)
     setBossKillCountsState(savedBossKillCounts ?? {})
@@ -733,6 +742,7 @@ export function GameProvider({ children }) {
       activeCombatSpell,
       slayerTask: slayerTaskRef.current,
       slayerPoints: slayerPointsRef.current,
+      slayerTasksCompleted: slayerTasksCompletedRef.current,
       dungeoneeringTokens: dungeoneeringTokensRef.current,
       bossKillCounts,
       raidKillCounts,
@@ -741,7 +751,7 @@ export function GameProvider({ children }) {
       unlockedMinigameItems: [...unlockedMinigameItems],
       questQueue,
     },
-  }), [currentHP, autoBankLoot, bankConfig, homeShortcuts, combatStance, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, questQueue])
+  }), [currentHP, autoBankLoot, bankConfig, homeShortcuts, combatStance, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, slayerTasksCompleted, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, questQueue])
 
 
   useEffect(() => {
@@ -782,6 +792,13 @@ export function GameProvider({ children }) {
     homeShortcuts, combatStance, activeTask, autoBankLoot, bankConfig,
     unlockedFeatures, unlockFeature,
     slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, awardSlayerPoints,
+    slayerTasksCompleted,
+    setSlayerTasksCompleted: (n) => {
+      const v = Math.max(0, Math.floor(Number(n) || 0))
+      slayerTasksCompletedRef.current = v
+      setSlayerTasksCompletedState(v)
+      saveSetting('slayerTasksCompleted', v)
+    },
     dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens,
     activeCombatSpell, updateActiveCombatSpell,
     bossKillCounts, updateBossKillCounts,
