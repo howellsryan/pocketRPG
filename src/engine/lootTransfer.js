@@ -7,9 +7,7 @@
 //
 // Rules (from the design plan):
 //   - Tradeable items (equipment + inventory) transfer to the winner's bank.
-//   - Untradeable items stay with the loser. Equipped untradeables stay
-//     equipped on the loser (they don't migrate to inventory). Untradeable
-//     inventory items stay in their original inventory slot.
+//   - Untradeables are lost by the loser and converted to their coin equivalent for the winner.
 //   - COINS are special-cased: items.json flags 'coins' as isUntradeable
 //     for the general-store engine, but in PvP they ALWAYS transfer.
 //   - Charges (scale-charged weapons) and ammo quantity carry through.
@@ -45,14 +43,13 @@ export function isPvpCoinReplacementItem(itemId, itemsData) {
   if (!itemId || itemId === COINS_ID) return false
   const def = itemsData?.[itemId]
   if (!def) return false
-  return def.isBossUnique === true || def.isClueReward === true
+  return def.isUntradeable === true
 }
 
 export function getPvpCoinReplacementValue(entry, itemsData) {
-  if (!entry?.itemId) return 0
+  if (!entry?.itemId || !isPvpCoinReplacementItem(entry.itemId, itemsData)) return 0
   const def = itemsData?.[entry.itemId]
-  if (!def) return 0
-  const shopValue = Number(def.shopValue)
+  const shopValue = Number(def?.shopValue)
   const qty = Math.max(1, Number(entry.quantity) || 1)
   if (!Number.isFinite(shopValue) || shopValue <= 0) return 0
   return Math.floor(shopValue) * qty
@@ -102,8 +99,7 @@ export function splitInventoryByTradeable(inventory, equipment, itemsData) {
         })
         remainingEquipment[slot] = null
       } else {
-        // Equipped untradeable: stays equipped on the loser.
-        remainingEquipment[slot] = { ...entry }
+        remainingEquipment[slot] = null
       }
     }
   }
@@ -127,8 +123,7 @@ export function splitInventoryByTradeable(inventory, equipment, itemsData) {
         })
         // remainingInventory[i] stays null (cleared)
       } else {
-        // Untradeable inventory items keep their slot index.
-        remainingInventory[i] = { ...slot }
+        // Untradeables are always lost on PvP death.
       }
     }
   }

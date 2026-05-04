@@ -117,7 +117,8 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
 }
 
 function GameApp() {
-  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue, awardDungeoneeringTokens, farming, updateFarming } = useGame()
+  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
+    unlockMinigameItem, awardDungeoneeringTokens, farming, updateFarming } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [gameReady, setGameReady] = useState(false)
@@ -501,6 +502,7 @@ function GameApp() {
             const newRemaining = Math.max(0, prevRemaining - elapsedTicks)
             if (newRemaining <= 0) {
               updateBankDirect({ [savedTask.gatherTask.product]: savedTask.gatherTask.qty || 1 })
+              unlockMinigameItem(savedTask.gatherTask.product)
               setActiveTask(null)
               sim = { minigameCompleted: true }
             } else {
@@ -514,6 +516,7 @@ function GameApp() {
             const newRemaining = Math.max(0, prevRemaining - elapsedTicks)
             if (newRemaining <= 0) {
               updateBankDirect({ [savedTask.minigameTask.product]: savedTask.minigameTask.qty || 1 })
+              unlockMinigameItem(savedTask.minigameTask.product)
               setActiveTask(null)
               sim = { minigameCompleted: true }
             } else {
@@ -782,6 +785,7 @@ function GameApp() {
           const product = task.gatherTask.product
           const qty = task.gatherTask.qty || 1
           updateBankDirect({ [product]: qty })
+          unlockMinigameItem(product)
           addToast(`${task.gatherTask.icon || '🎮'} ${task.gatherTask.name} complete!`, 'levelup', '🏆')
           setActiveTask(null)
         } else {
@@ -796,6 +800,7 @@ function GameApp() {
         if (remaining <= 0) {
           const mgTask = task.minigameTask
           updateBankDirect({ [mgTask.product]: mgTask.qty || 1 })
+          unlockMinigameItem(mgTask.product)
           addToast(`${mgTask.icon || '🎮'} ${mgTask.name} complete!`, 'levelup', '🏆')
           setActiveTask(null)
         } else {
@@ -1093,6 +1098,7 @@ function GameApp() {
           if (ticksRemaining <= 0) {
             // Minigame completed — award item and clear task
             updateBankDirect({ [savedTask.gatherTask.product]: savedTask.gatherTask.qty || 1 })
+            unlockMinigameItem(savedTask.gatherTask.product)
             setActiveTask(null)
             idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true }
             sim = {}
@@ -1115,6 +1121,7 @@ function GameApp() {
           const ticksRemaining = Math.max(0, prevRemaining - TICKS_PER_HOUR)
           if (ticksRemaining <= 0) {
             updateBankDirect({ [savedTask.minigameTask.product]: savedTask.minigameTask.qty || 1 })
+            unlockMinigameItem(savedTask.minigameTask.product)
             setActiveTask(null)
             idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true }
             sim = {}
