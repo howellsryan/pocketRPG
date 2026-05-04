@@ -33,13 +33,7 @@ const COMBAT_CATEGORIES = [
     key: 'training',
     label: 'Training',
     icon: '⚔️',
-    ids: ['chicken', 'goblin', 'cow', 'rock_crab', 'sand_crab', 'wizard', 'dark_wizard'],
-  },
-  {
-    key: 'dragons_giants',
-    label: 'Dragons & Giants',
-    icon: '🐉',
-    ids: ['giant_spider', 'hill_giant', 'moss_giant', 'lesser_demon', 'green_dragon', 'red_dragon'],
+    ids: ['chicken', 'goblin', 'cow', 'rock_crab', 'sand_crab', 'wizard', 'dark_wizard', 'giant_spider', 'hill_giant', 'moss_giant', 'lesser_demon'],
   },
   {
     key: 'slayer',
@@ -67,9 +61,9 @@ const COMBAT_CATEGORIES = [
   },
   {
     key: 'dragons_lair',
-    label: 'Dragons & Lair',
+    label: 'Dragons Lair',
     icon: '🐲',
-    ids: ['king_black_dragon', 'adamant_dragon', 'rune_dragon'],
+    ids: ['green_dragon', 'red_dragon', 'king_black_dragon', 'adamant_dragon', 'rune_dragon'],
   },
   {
     key: 'zulrah',
