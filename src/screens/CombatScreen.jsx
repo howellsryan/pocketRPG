@@ -178,6 +178,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const [showPotionModal, setShowPotionModal] = useState(false)
   const [showEquipmentModal, setShowEquipmentModal] = useState(false)
   const [showSpellModal, setShowSpellModal] = useState(false)
+  const [showIdleFoodModal, setShowIdleFoodModal] = useState(false)
+  const [showIdlePotionModal, setShowIdlePotionModal] = useState(false)
+  const [showIdlePrayerModal, setShowIdlePrayerModal] = useState(false)
   const [selectedMonsterInfo, setSelectedMonsterInfo] = useState(null)
   const [selectedRaidInfo, setSelectedRaidInfo] = useState(null)
   const [collapsedSections, setCollapsedSections] = useState(() => ({
@@ -201,31 +204,33 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const logRef = useRef(null)
 
 
-  const configureIdleFood = () => {
-    const itemId = window.prompt('Idle food item id (e.g. shark):', Object.keys(idleLoadout?.food || {})[0] || 'shark')
-    if (!itemId) return
-    const qty = Math.max(0, Math.floor(Number(window.prompt('Idle food quantity:', String(idleLoadout?.food?.[itemId] || 0))) || 0))
+  const IDLE_ALLOWED_POTIONS = ['ranging_potion', 'magic_potion', 'attack_potion', 'strength_potion', 'super_combat_potion', 'prayer_potion', 'super_restore']
+
+  const setIdleFoodQty = (itemId, qty) => {
     const nextFood = { ...(idleLoadout?.food || {}) }
-    if (qty <= 0) delete nextFood[itemId]
-    else nextFood[itemId] = qty
+    const normalized = Math.max(0, Math.floor(Number(qty) || 0))
+    if (normalized <= 0) delete nextFood[itemId]
+    else nextFood[itemId] = normalized
     updateIdleLoadout({ ...(idleLoadout || {}), food: nextFood })
   }
 
-  const configureIdlePotions = () => {
-    const allowed = ['ranging_potion', 'magic_potion', 'attack_potion', 'strength_potion', 'super_combat_potion', 'prayer_potion', 'super_restore']
-    const itemId = window.prompt(`Idle potion item id (${allowed.join(', ')}):`, Object.keys(idleLoadout?.potions || {})[0] || 'super_combat_potion')
-    if (!itemId || !allowed.includes(itemId)) return
-    const qty = Math.max(0, Math.floor(Number(window.prompt('Idle potion quantity:', String(idleLoadout?.potions?.[itemId] || 0))) || 0))
+  const setIdlePotionQty = (itemId, qty) => {
+    if (!IDLE_ALLOWED_POTIONS.includes(itemId)) return
     const nextPotions = { ...(idleLoadout?.potions || {}) }
-    if (qty <= 0) delete nextPotions[itemId]
-    else nextPotions[itemId] = qty
+    const normalized = Math.max(0, Math.floor(Number(qty) || 0))
+    if (normalized <= 0) delete nextPotions[itemId]
+    else nextPotions[itemId] = normalized
     updateIdleLoadout({ ...(idleLoadout || {}), potions: nextPotions })
   }
 
-  const configureIdlePrayers = () => {
-    const protection = window.prompt('Idle protection prayer id (or blank):', idleLoadout?.prayers?.protection || '')
-    const combatPrayer = window.prompt('Idle combat prayer id (or blank):', idleLoadout?.prayers?.combat || '')
-    updateIdleLoadout({ ...(idleLoadout || {}), prayers: { protection: protection || null, combat: combatPrayer || null } })
+  const setIdlePrayer = (type, prayerId) => {
+    updateIdleLoadout({
+      ...(idleLoadout || {}),
+      prayers: {
+        protection: type === 'protection' ? (prayerId || null) : (idleLoadout?.prayers?.protection || null),
+        combat: type === 'combat' ? (prayerId || null) : (idleLoadout?.prayers?.combat || null),
+      },
+    })
   }
 
   useEffect(() => {
@@ -1266,9 +1271,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </div>
 
         <div class="grid grid-cols-3 gap-1.5 mb-3">
-          <button onClick={configureIdleFood} class="py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a2a1a] text-[var(--color-parchment)]">🍖 Idle Eat</button>
-          <button onClick={configureIdlePrayers} class="py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a2a1a] text-[var(--color-parchment)]">🙏 Idle Pray</button>
-          <button onClick={configureIdlePotions} class="py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a2a1a] text-[var(--color-parchment)]">🧪 Idle Potion</button>
+          <button onClick={() => setShowIdleFoodModal(true)} class="py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a2a1a] text-[var(--color-parchment)]">🍖 Idle Eat</button>
+          <button onClick={() => setShowIdlePrayerModal(true)} class="py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a2a1a] text-[var(--color-parchment)]">🙏 Idle Pray</button>
+          <button onClick={() => setShowIdlePotionModal(true)} class="py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a2a1a] text-[var(--color-parchment)]">🧪 Idle Potion</button>
         </div>
 
         <div class="space-y-4">
@@ -1824,6 +1829,55 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           </>
         )}
       </div>
+
+
+      {showIdleFoodModal && (
+        <Modal onClose={() => setShowIdleFoodModal(false)}>
+          <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] mb-3">Idle Eat</h3>
+          <div class="space-y-2 max-h-80 overflow-y-auto">
+            {Object.values(itemsData).filter(i => i?.foodHeal > 0).slice(0, 40).map(item => (
+              <div key={item.id} class="flex items-center justify-between bg-[#111] rounded-lg p-2">
+                <div class="text-xs text-[var(--color-parchment)]">{item.name}</div>
+                <input type="number" min="0" class="w-20 bg-[#1a1a1a] rounded px-2 py-1 text-xs" value={idleLoadout?.food?.[item.id] || 0} onInput={(e) => setIdleFoodQty(item.id, e.target.value)} />
+              </div>
+            ))}
+          </div>
+        </Modal>
+      )}
+
+      {showIdlePotionModal && (
+        <Modal onClose={() => setShowIdlePotionModal(false)}>
+          <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] mb-3">Idle Potion</h3>
+          <div class="space-y-2">
+            {IDLE_ALLOWED_POTIONS.map(itemId => (
+              <div key={itemId} class="flex items-center justify-between bg-[#111] rounded-lg p-2">
+                <div class="text-xs text-[var(--color-parchment)]">{itemsData[itemId]?.name || itemId}</div>
+                <input type="number" min="0" class="w-20 bg-[#1a1a1a] rounded px-2 py-1 text-xs" value={idleLoadout?.potions?.[itemId] || 0} onInput={(e) => setIdlePotionQty(itemId, e.target.value)} />
+              </div>
+            ))}
+          </div>
+        </Modal>
+      )}
+
+      {showIdlePrayerModal && (
+        <Modal onClose={() => setShowIdlePrayerModal(false)}>
+          <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] mb-3">Idle Pray</h3>
+          <div class="text-xs text-[var(--color-gold-dim)] mb-2">Protection</div>
+          <div class="grid grid-cols-2 gap-2 mb-3">
+            <button class="bg-[#111] rounded p-2 text-xs" onClick={() => setIdlePrayer('protection', null)}>None</button>
+            {Object.values(prayersData).filter(p => p.bonusType === 'protection').map(prayer => (
+              <button key={prayer.id} class="bg-[#111] rounded p-2 text-xs" onClick={() => setIdlePrayer('protection', prayer.id)}>{prayer.name}</button>
+            ))}
+          </div>
+          <div class="text-xs text-[var(--color-gold-dim)] mb-2">Combat</div>
+          <div class="grid grid-cols-2 gap-2">
+            <button class="bg-[#111] rounded p-2 text-xs" onClick={() => setIdlePrayer('combat', null)}>None</button>
+            {Object.values(prayersData).filter(p => p.bonusType !== 'protection').map(prayer => (
+              <button key={prayer.id} class="bg-[#111] rounded p-2 text-xs" onClick={() => setIdlePrayer('combat', prayer.id)}>{prayer.name}</button>
+            ))}
+          </div>
+        </Modal>
+      )}
 
       {/* Prayer modal */}
       {showPrayerModal && (
