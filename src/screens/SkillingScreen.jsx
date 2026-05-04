@@ -491,6 +491,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   const skillData = skillsData[selectedSkill]
   const skillXP = stats[selectedSkill]?.xp || 0
   const skillLevel = getLevelFromXP(skillXP)
+  const constructionLevel = getLevelFromXP(stats.construction?.xp || 0)
   const actions = skillData ? getAvailableActions(skillData.actions, skillXP) : []
   const allActions = [...(skillData?.actions || [])].sort((a, b) => a.level - b.level)
 
@@ -517,7 +518,9 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
         {/* Banking toggle for skilling */}
         {(() => {
           const renderActionRow = (action) => {
-            const available = action.level <= skillLevel
+            const requiresGildedAltarConstruction = selectedSkill === 'prayer' && action.id?.startsWith('altar_')
+            const meetsGildedAltarConstruction = !requiresGildedAltarConstruction || constructionLevel >= 75
+            const available = action.level <= skillLevel && meetsGildedAltarConstruction
             const hasMats = !action.materials || Object.entries(action.materials).every(
               ([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty
             )
@@ -587,6 +590,11 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                     {action.runeReq && !hasRunes && (
                       <span class="block text-[#ff6b6b] mt-1">
                         🔮 Missing runes (or equip staff)
+                      </span>
+                    )}
+                    {requiresGildedAltarConstruction && !meetsGildedAltarConstruction && (
+                      <span class="block text-[#ff6b6b] mt-1">
+                        🏠 Requires Construction level 75
                       </span>
                     )}
                   </div>
