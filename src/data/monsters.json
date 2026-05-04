@@ -6963,11 +6963,6 @@
         "chance": 0.0008
       },
       {
-        "itemId": "dark_claw",
-        "quantity": 1,
-        "chance": 0.005
-      },
-      {
         "itemId": "runite_ore",
         "quantity": [
           1,
@@ -7090,11 +7085,6 @@
         "itemId": "eternal_crystal",
         "quantity": 1,
         "chance": 0.001538
-      },
-      {
-        "itemId": "smouldering_stone",
-        "quantity": 1,
-        "chance": 0.000763
       },
       {
         "itemId": "rune_platebody",
