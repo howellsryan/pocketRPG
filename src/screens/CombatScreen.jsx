@@ -165,7 +165,7 @@ async function performOneLifeReset() {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, idleLoadout, updateIdleLoadout, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame } = useGame()
   const pvp = usePvp()
   const [showPvpLobby, setShowPvpLobby] = useState(false)
 
@@ -199,6 +199,34 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const raidKillCountsRef = useRef(raidKillCounts)
   const unlockedFeaturesRef = useRef(unlockedFeatures)
   const logRef = useRef(null)
+
+
+  const configureIdleFood = () => {
+    const itemId = window.prompt('Idle food item id (e.g. shark):', Object.keys(idleLoadout?.food || {})[0] || 'shark')
+    if (!itemId) return
+    const qty = Math.max(0, Math.floor(Number(window.prompt('Idle food quantity:', String(idleLoadout?.food?.[itemId] || 0))) || 0))
+    const nextFood = { ...(idleLoadout?.food || {}) }
+    if (qty <= 0) delete nextFood[itemId]
+    else nextFood[itemId] = qty
+    updateIdleLoadout({ ...(idleLoadout || {}), food: nextFood })
+  }
+
+  const configureIdlePotions = () => {
+    const allowed = ['ranging_potion', 'magic_potion', 'attack_potion', 'strength_potion', 'super_combat_potion', 'prayer_potion', 'super_restore']
+    const itemId = window.prompt(`Idle potion item id (${allowed.join(', ')}):`, Object.keys(idleLoadout?.potions || {})[0] || 'super_combat_potion')
+    if (!itemId || !allowed.includes(itemId)) return
+    const qty = Math.max(0, Math.floor(Number(window.prompt('Idle potion quantity:', String(idleLoadout?.potions?.[itemId] || 0))) || 0))
+    const nextPotions = { ...(idleLoadout?.potions || {}) }
+    if (qty <= 0) delete nextPotions[itemId]
+    else nextPotions[itemId] = qty
+    updateIdleLoadout({ ...(idleLoadout || {}), potions: nextPotions })
+  }
+
+  const configureIdlePrayers = () => {
+    const protection = window.prompt('Idle protection prayer id (or blank):', idleLoadout?.prayers?.protection || '')
+    const combatPrayer = window.prompt('Idle combat prayer id (or blank):', idleLoadout?.prayers?.combat || '')
+    updateIdleLoadout({ ...(idleLoadout || {}), prayers: { protection: protection || null, combat: combatPrayer || null } })
+  }
 
   useEffect(() => {
     if (pvp.phase === 'in_match' && combat?.active) {
@@ -1224,8 +1252,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </h2>
 
         {/* Stance selector */}
-        <div class="flex gap-1.5 mb-3">
-          {['accurate', 'aggressive', 'defensive', 'controlled'].map(s => (
+        <div class="flex gap-1.5 mb-2">
+          {['accurate', 'aggressive', 'defensive'].map(s => (
             <button
               key={s}
               onClick={() => updateCombatStance(s)}
@@ -1235,6 +1263,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               {s}
             </button>
           ))}
+        </div>
+
+        <div class="grid grid-cols-3 gap-1.5 mb-3">
+          <button onClick={configureIdleFood} class="py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a2a1a] text-[var(--color-parchment)]">🍖 Idle Eat</button>
+          <button onClick={configureIdlePrayers} class="py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a2a1a] text-[var(--color-parchment)]">🙏 Idle Pray</button>
+          <button onClick={configureIdlePotions} class="py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a2a1a] text-[var(--color-parchment)]">🧪 Idle Potion</button>
         </div>
 
         <div class="space-y-4">

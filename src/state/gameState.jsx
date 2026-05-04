@@ -43,6 +43,7 @@ export function GameProvider({ children }) {
   const [slayerTasksCompleted, setSlayerTasksCompletedState] = useState(0)
   const [dungeoneeringTokens, setDungeoneeringTokensState] = useState(0)
   const [activeCombatSpell, setActiveCombatSpellState] = useState(null)
+  const [idleLoadout, setIdleLoadoutState] = useState({ food: {}, potions: {}, prayers: { protection: null, combat: null } })
   const [bossKillCounts, setBossKillCountsState] = useState({})
   const [raidKillCounts, setRaidKillCountsState] = useState({})
   const [farming, setFarmingState] = useState({ patchesById: {} })
@@ -73,12 +74,12 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleLoadout] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
       getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('slayerTasksCompleted'), getSetting('dungeoneeringTokens'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
-      getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems')
+      getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems'), getSetting('idleLoadout')
     ])
     savedDungeoneeringTokens = normaliseDungeoneeringTokens(savedDungeoneeringTokens)
     savedSlayerPoints = normalisePointCurrency(savedSlayerPoints)
@@ -404,6 +405,7 @@ export function GameProvider({ children }) {
     setSlayerTasksCompletedState(slayerTasksCompletedRef.current)
     setDungeoneeringTokensState(savedDungeoneeringTokens)
     setActiveCombatSpellState(savedActiveCombatSpell ?? null)
+    setIdleLoadoutState(savedIdleLoadout ?? { food: {}, potions: {}, prayers: { protection: null, combat: null } })
     setBossKillCountsState(savedBossKillCounts ?? {})
     setRaidKillCountsState(savedRaidKillCounts ?? {})
     setFarmingState(savedFarming ?? { patchesById: {} })
@@ -548,6 +550,13 @@ export function GameProvider({ children }) {
   const updateActiveCombatSpell = useCallback((spell) => {
     setActiveCombatSpellState(spell)
     saveSetting('activeCombatSpell', spell)
+  }, [])
+
+
+  const updateIdleLoadout = useCallback((nextLoadout) => {
+    const normalized = nextLoadout ?? { food: {}, potions: {}, prayers: { protection: null, combat: null } }
+    setIdleLoadoutState(normalized)
+    saveSetting('idleLoadout', normalized)
   }, [])
 
   const updateAutoBankLoot = useCallback((enabled) => {
@@ -750,6 +759,7 @@ export function GameProvider({ children }) {
       completedQuests: [...completedQuests],
       unlockedMinigameItems: [...unlockedMinigameItems],
       questQueue,
+      idleLoadout,
     },
   }), [currentHP, autoBankLoot, bankConfig, homeShortcuts, combatStance, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, slayerTasksCompleted, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, questQueue])
 
@@ -800,7 +810,7 @@ export function GameProvider({ children }) {
       saveSetting('slayerTasksCompleted', v)
     },
     dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens,
-    activeCombatSpell, updateActiveCombatSpell,
+    activeCombatSpell, updateActiveCombatSpell, idleLoadout, updateIdleLoadout,
     bossKillCounts, updateBossKillCounts,
     raidKillCounts, updateRaidKillCounts,
     farming, updateFarming,
