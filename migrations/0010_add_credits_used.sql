@@ -1,0 +1,1 @@
+ALTER TABLE characters ADD COLUMN credits_used INTEGER NOT NULL DEFAULT 0;

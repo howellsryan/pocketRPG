@@ -133,9 +133,12 @@ export const api = {
     body: JSON.stringify({}),
   }),
   getSave: () => request('/api/save'),
-  putSave: (save_data) => request('/api/save', {
+  putSave: (save_data, options = {}) => request('/api/save', {
     method: 'PUT',
-    body: JSON.stringify({ save_data }),
+    body: JSON.stringify({
+      save_data,
+      credits_used_increment: options?.creditsUsedIncrement === 1 ? 1 : 0,
+    }),
   }),
   getIdle: () => request('/api/idle'),
   putIdle: (activeTask) => request('/api/idle', {

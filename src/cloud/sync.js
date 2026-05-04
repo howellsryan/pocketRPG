@@ -3,7 +3,7 @@
 import { api, getToken, getCharacterId, setLocalCharacterId } from './api.js'
 import { buildSavePayloadFromSnapshot, applySavePayload } from '../db/saveload.js'
 import { withTimeout } from '../utils/helpers.js'
-import { CRITICAL_SAVE_COALESCE_MS, normaliseCriticalSaveReason } from './criticalSavePolicy.js'
+import { CRITICAL_SAVE_COALESCE_MS, CRITICAL_SAVE_REASONS, normaliseCriticalSaveReason } from './criticalSavePolicy.js'
 
 const PUSH_DEBOUNCE_MS = 60_000
 // Grace window for clock skew between this client and the cloud server when
@@ -19,6 +19,7 @@ export const CLOUD_SAVE_STATUS_EVENT = 'pocketrpg:cloud-save-status'
 let lastPushedAt = 0
 let pendingTimer = null
 let pendingSnapshot = null
+let pendingSaveOptions = {}
 let inFlight = false
 let criticalTimer = null
 let pendingCriticalSnapshotSource = null
@@ -67,7 +68,8 @@ async function flushNow() {
   try {
     const data = buildSavePayloadFromSnapshot(snap)
     const json = JSON.stringify(data)
-    const res = await api.putSave(json)
+    const res = await api.putSave(json, pendingSaveOptions)
+    pendingSaveOptions = {}
     if (res?.updatedAt) lastPushedAt = res.updatedAt
     emitCloudSaveStatus('saved', { updatedAt: res?.updatedAt || null })
     console.log('[PocketRPG] Cloud save pushed, size:', json.length)
@@ -124,6 +126,9 @@ export function requestCriticalPushSave(snapshotOrFactory, reason = 'critical') 
 
   pendingCriticalSnapshotSource = snapshotOrFactory
   pendingCriticalReasons.add(normaliseCriticalSaveReason(reason))
+  if (reason === CRITICAL_SAVE_REASONS.SKIP_HOUR) {
+    pendingSaveOptions.creditsUsedIncrement = 1
+  }
   emitCloudSaveStatus('pending')
 
   // Critical milestones should not wait behind the normal 60s autosave timer.
@@ -194,6 +199,7 @@ export async function applyCloudSave(payload, updatedAt) {
 export function resetSyncState() {
   lastPushedAt = 0
   pendingSnapshot = null
+  pendingSaveOptions = {}
   pendingCriticalSnapshotSource = null
   pendingCriticalReasons.clear()
   if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }
