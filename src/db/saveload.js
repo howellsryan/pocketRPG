@@ -29,6 +29,7 @@ function normaliseSaveSettings(settings = {}) {
   const next = { ...settings }
   if (next.unlockedFeatures instanceof Set) next.unlockedFeatures = [...next.unlockedFeatures]
   if (next.completedQuests instanceof Set) next.completedQuests = [...next.completedQuests]
+  if (next.unlockedMinigameItems instanceof Set) next.unlockedMinigameItems = [...next.unlockedMinigameItems]
   return next
 }
 

@@ -6,7 +6,7 @@ export function isClueRewardItem(item) {
   return Boolean(item?.isClueReward)
 }
 
-export function getPurchaseRestriction(item, { isIronman = false } = {}) {
+export function getPurchaseRestriction(item, { isIronman = false, allowMinigameUnlockPurchase = false } = {}) {
   if (!item) {
     return { allowed: false, code: 'ITEM_NOT_FOUND', message: 'Item not found' }
   }
@@ -28,8 +28,9 @@ export function getPurchaseRestriction(item, { isIronman = false } = {}) {
   }
 
   const isQuestItem = Boolean(item.questUnlock)
+  const isMinigameUnlockItem = allowMinigameUnlockPurchase === true
 
-  if (item.isUntradeable && !isQuestItem) {
+  if (item.isUntradeable && !isQuestItem && !isMinigameUnlockItem) {
     return {
       allowed: false,
       code: 'UNTRADEABLE_RESTRICTED',

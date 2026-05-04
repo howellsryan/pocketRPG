@@ -11239,8 +11239,7 @@
     "shopValue": 35000,
     "icon": "🛡️",
     "isGeneralStore": false,
-    "IsUntradeable": true,
-    "isBossUnique": true
+    "IsUntradeable": true
   },
   "fighter_hat": {
     "id": "fighter_hat",

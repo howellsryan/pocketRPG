@@ -45,7 +45,6 @@ const EXPECTED_BOSS_UNIQUE_ITEM_IDS = new Set([
   'zaryte_vambraces',
   'uncut_onyx', // treated as a boss-only unique reward in current drop tables
 
-  'dragon_defender',
   'kraken_tentacle',
   'abyssal_tentacle',
   'occult_necklace',
