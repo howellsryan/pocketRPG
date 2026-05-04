@@ -86,7 +86,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
   const handleBuy = async () => {
     if (!selectedItem) return
 
-    const restriction = getPurchaseRestriction(selectedItem, { isIronman })
+    const restriction = getPurchaseRestriction(selectedItem, { isIronman, allowMinigameUnlockPurchase: !!selectedItem?.isMinigameItem && unlockedMinigameItems.has(selectedItem.id) })
     if (!restriction.allowed) {
       addToast(restriction.message || 'This item cannot be purchased.', 'error')
       setSelectedItem(null)
@@ -196,7 +196,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
   }
 
   const searchResults = getSearchResults()
-  const selectedRestriction = selectedItem ? getPurchaseRestriction(selectedItem, { isIronman }) : null
+  const selectedRestriction = selectedItem ? getPurchaseRestriction(selectedItem, { isIronman, allowMinigameUnlockPurchase: !!selectedItem?.isMinigameItem && unlockedMinigameItems.has(selectedItem.id) }) : null
   const isSelectedBossUnique = selectedRestriction?.code === 'BOSS_UNIQUE_RESTRICTED'
   const isSelectedClueReward = selectedRestriction?.code === 'CLUE_REWARD_RESTRICTED'
   const selectedObtainMessage = selectedItem && isSelectedBossUnique
@@ -344,13 +344,13 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
       {selectedItem && (
         <SharedItemModal
           item={selectedItem}
-          title={`${selectedItem.questUnlock && !selectedItem.isUnlocked ? 'Locked: ' : ''}${selectedItem.name}`}
+          title={`${(selectedItem.questUnlock || selectedItem.isMinigameItem) && !selectedItem.isUnlocked ? 'Locked: ' : ''}${selectedItem.name}`}
           onClose={() => { setSelectedItem(null); setBuyQty(1) }}
         >
           <div class="flex flex-col gap-4">
 
             {/* Quest unlock info */}
-            {(selectedItem.questUnlock || selectedItem.isMinigameItem) && (
+            {selectedItem.questUnlock && (
               <Panel className={`text-[12px] ${selectedItem.isUnlocked ? 'border-l-4 border-[var(--color-gold)]' : 'border-l-4 border-[#666]'}`}>
                 <div class="text-[11px] font-semibold mb-1 text-[#aaa]">Required Quest:</div>
                 <div class={`text-[13px] font-semibold ${selectedItem.isUnlocked ? 'text-[var(--color-gold)]' : 'text-[#888]'}`}>
