@@ -61,7 +61,7 @@ function CompactHpBadge({ label, combatant, align = 'left' }) {
   )
 }
 
-function EquipmentMiniPanel({ title, combatant, align = 'left' }) {
+function EquipmentMiniPanel({ title, combatant, align = 'left', onUnequipSlot = null }) {
   const equipment = combatant?.equipment || {}
   const equipped = EQUIPMENT_DISPLAY_SLOTS
     .map((slot) => ({ slot, entry: equipment?.[slot], item: equipment?.[slot] ? itemsData[equipment[slot].itemId] : null }))
@@ -84,12 +84,23 @@ function EquipmentMiniPanel({ title, combatant, align = 'left' }) {
           <span
             key={`${slot}-${entry.itemId}`}
             title={`${slot}: ${item?.name || entry.itemId}`}
-            class="inline-flex max-w-full items-center rounded border border-[var(--color-gold-dim)] bg-[var(--color-void-light)] px-1.5 py-0.5 text-[10px] text-[var(--color-parchment)]"
+            class="inline-flex max-w-full items-center rounded border border-[var(--color-gold-dim)] bg-[var(--color-void-light)] px-1.5 py-0.5 text-[10px] text-[var(--color-parchment)] gap-1"
           >
             <span class="inline-flex max-w-full items-center gap-1 align-middle">
               <span class="shrink-0">{item?.icon || '▫️'}</span>
               <span class="truncate">{item?.name || entry.itemId}</span>
             </span>
+            {onUnequipSlot && (
+              <button
+                type="button"
+                onClick={() => onUnequipSlot(slot)}
+                class="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-[9px] leading-none text-[var(--color-parchment)] opacity-70 hover:opacity-100 active:opacity-100"
+                title={`Unequip ${item?.name || entry.itemId}`}
+                aria-label={`Unequip ${item?.name || entry.itemId}`}
+              >
+                ✕
+              </button>
+            )}
           </span>
         ))}
       </div>
@@ -708,7 +719,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
       <div class="grid grid-cols-2 gap-2">
         <EquipmentMiniPanel title="Opponent gear" combatant={pair.opp} align="left" />
-        <EquipmentMiniPanel title="Your gear" combatant={pair.self} align="right" />
+        <EquipmentMiniPanel title="Your gear" combatant={pair.self} align="right" onUnequipSlot={queueGearUnequip} />
       </div>
 
       <Card>
@@ -767,7 +778,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
             disabled={busy || !hasGearActions}
             onClick={() => toggleActionPanel('gear')}
           >
-            🛡️ Gear
+            ⚙️ Gear
           </Button>
         </div>
 
@@ -844,45 +855,6 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
           </div>
 
           <div class="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
-            <div>
-              <div class="text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-2">
-                Equipped
-              </div>
-
-              {equippedSlots.length === 0 ? (
-                <div class="text-[11px] text-[var(--color-parchment)] opacity-50">
-                  No gear equipped.
-                </div>
-              ) : (
-                <div class="space-y-2">
-                  {equippedSlots.map(({ slot, entry, item }) => (
-                    <button
-                      key={`equipped-${slot}-${entry.itemId}`}
-                      onClick={() => queueGearUnequip(slot)}
-                      class="w-full p-3 rounded-lg border bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222] transition-colors text-left"
-                    >
-                      <div class="flex items-center justify-between gap-3">
-                        <div class="flex items-center gap-2 min-w-0">
-                          <span class="text-lg shrink-0">{item?.icon || '▫️'}</span>
-                          <div class="min-w-0">
-                            <div class="text-sm font-semibold text-[var(--color-parchment)] truncate">
-                              {item?.name || entry.itemId}
-                            </div>
-                            <div class="text-[10px] text-[var(--color-parchment)] opacity-60 capitalize">
-                              {slot}
-                            </div>
-                          </div>
-                        </div>
-                        <span class="text-[10px] text-[var(--color-gold)] shrink-0">
-                          Unequip
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
             <div>
               <div class="text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-2">
                 Inventory gear
