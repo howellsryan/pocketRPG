@@ -66,16 +66,10 @@ const COMBAT_CATEGORIES = [
     ids: ['crazy_archaeologist'],
   },
   {
-    key: 'lair',
-    label: 'Lair',
+    key: 'dragons_lair',
+    label: 'Dragons & Lair',
     icon: '🐲',
-    ids: ['king_black_dragon'],
-  },
-  {
-    key: 'metal_dragons',
-    label: 'Metal Dragons',
-    icon: '🐲',
-    ids: ['adamant_dragon', 'rune_dragon'],
+    ids: ['king_black_dragon', 'adamant_dragon', 'rune_dragon'],
   },
   {
     key: 'zulrah',
