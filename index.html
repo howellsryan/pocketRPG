@@ -47019,9 +47019,6 @@ function GeneralStoreScreen({ onBuyCredits }) {
             const restriction = getPurchaseRestriction(item, { isIronman });
             const isBossUnique = restriction.code === 'BOSS_UNIQUE_RESTRICTED';
             const isClueReward = restriction.code === 'CLUE_REWARD_RESTRICTED';
-            const obtainMessage = isBossUnique
-                ? formatObtainSourceMessage(item.id, { itemsData, monstersData, raidsData })
-                : (isClueReward ? 'Obtain through clue scroll rewards.' : null);
             return (h("button", { key: item.id, onClick: () => { setSelectedItem(item); setBuyQty(1); }, disabled: (isQuestItem && !isUnlocked), class: `p-3 rounded-lg border text-left flex items-center gap-3 transition-colors ${isQuestItem && !isUnlocked
                     ? 'bg-[#1a1a1a] border-[#1a1a1a] cursor-not-allowed opacity-50'
                     : 'bg-[var(--color-void-light)] border-[#2a2a2a] cursor-pointer hover:bg-[#222] hover:border-[#333]'}` },
@@ -47031,9 +47028,7 @@ function GeneralStoreScreen({ onBuyCredits }) {
                     isQuestItem && !isUnlocked && (h("div", { class: "text-[10px] text-[#888] mt-1" },
                         "\uD83D\uDD12 ",
                         questMap[item.unlockedBy]))),
-                h("div", { class: `text-right flex-shrink-0 text-[12px] font-[var(--font-mono)] font-bold ${isQuestItem && !isUnlocked ? 'text-[#666]' : (canAfford ? 'text-[var(--color-gold)]' : 'text-[#888]')}` },
-                    isQuestItem && !isUnlocked ? '—' : (isBossUnique ? 'Boss unique' : (isClueReward ? 'Clue reward' : `${price.toLocaleString()} gp`)),
-                    (isBossUnique || isClueReward) && h("div", { class: "text-[10px] text-[#888] mt-1 break-words leading-tight" }, obtainMessage))));
+                h("div", { class: `text-right flex-shrink-0 text-[12px] font-[var(--font-mono)] font-bold ${isQuestItem && !isUnlocked ? 'text-[#666]' : (canAfford ? 'text-[var(--color-gold)]' : 'text-[#888]')}` }, isQuestItem && !isUnlocked ? '—' : (isBossUnique ? 'Boss unique' : (isClueReward ? 'Clue reward' : `${price.toLocaleString()} gp`)))));
         })))),
         selectedItem && (h(SharedItemModal, { item: selectedItem, title: `${selectedItem.questUnlock && !selectedItem.isUnlocked ? 'Locked: ' : ''}${selectedItem.name}`, onClose: () => { setSelectedItem(null); setBuyQty(1); } },
             h("div", { class: "flex flex-col gap-4" },
