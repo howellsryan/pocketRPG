@@ -81,7 +81,9 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
     return available.filter(item => item.name.toLowerCase().includes(lower))
   }
 
+  const MINIGAME_UNLOCK_STORE_PRICE = 4_500_000
   const modifiedPrice = (basePrice) => Math.floor(basePrice * 1.1)
+  const getItemPrice = (item) => item?.isMinigameItem ? MINIGAME_UNLOCK_STORE_PRICE : modifiedPrice(item?.shopValue || 0)
 
   const handleBuy = async () => {
     if (!selectedItem) return
@@ -105,7 +107,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
       return
     }
 
-    const price = modifiedPrice(selectedItem.shopValue)
+    const price = getItemPrice(selectedItem)
     const totalCost = price * buyQty
 
     if (coins < totalCost) {
@@ -202,7 +204,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
   const selectedObtainMessage = selectedItem && isSelectedBossUnique
     ? formatObtainSourceMessage(selectedItem.id, { itemsData, monstersData, raidsData })
     : (isSelectedClueReward ? 'Obtain through clue scroll rewards.' : null)
-  const totalCost = selectedItem ? modifiedPrice(selectedItem.shopValue) * buyQty : 0
+  const totalCost = selectedItem ? getItemPrice(selectedItem) * buyQty : 0
   const canAffordSelected = selectedItem ? coins >= totalCost : false
   const isSelectedPurchaseRestricted = Boolean(selectedRestriction && !selectedRestriction.allowed)
 
@@ -305,7 +307,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
               const isQuestItem = item.questUnlock !== undefined
               const isMinigameItem = item.isMinigameItem === true
               const isUnlocked = isQuestItem || isMinigameItem ? item.isUnlocked : true
-              const price = isQuestItem && !isUnlocked ? 0 : modifiedPrice(item.shopValue || 0)
+              const price = isQuestItem && !isUnlocked ? 0 : getItemPrice(item)
               const canAfford = coins >= price
               const restriction = getPurchaseRestriction(item, { isIronman })
               const isBossUnique = restriction.code === 'BOSS_UNIQUE_RESTRICTED'
@@ -374,7 +376,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
                 <div class="flex justify-between mb-[6px] text-[12px]">
                   <span class="text-[#888]">Price per item:</span>
                   <span class="text-[var(--color-gold)] font-[var(--font-mono)] font-bold">
-                    {modifiedPrice(selectedItem.shopValue).toLocaleString()} gp
+                    {getItemPrice(selectedItem).toLocaleString()} gp
                   </span>
                 </div>
                 <div class="flex justify-between text-[12px]">

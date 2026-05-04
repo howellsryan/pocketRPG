@@ -38,9 +38,9 @@ describe('pvpRisk', () => {
     expect(out.totalShopValue).toBe(100_000)
   })
 
-  it('uses fixed 5m risk for minigame unlock untradeables', () => {
+  it('uses fixed 4.5m risk for minigame unlock untradeables', () => {
     const out = calculatePvpRiskValues({ inventory: [{ itemId: 'dragon_defender', quantity: 1 }], equipment: {}, itemsData })
-    expect(out.totalShopValue).toBe(5_000_000)
+    expect(out.totalShopValue).toBe(4_500_000)
   })
 
   it('handles null and malformed slots defensively', () => {

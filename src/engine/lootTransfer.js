@@ -19,7 +19,7 @@ import { BANK_SIZE } from '../utils/constants.js'
 import minigamesData from '../data/minigames.json'
 
 const COINS_ID = 'coins'
-const MINIGAME_UNLOCK_ITEM_VALUE = 5_000_000
+const MINIGAME_UNLOCK_ITEM_VALUE = 4_500_000
 const MINIGAME_UNLOCK_PRODUCTS = new Set((minigamesData?.tasks || []).map(t => t?.product).filter(Boolean))
 
 function lootEntryValue(entry, itemsData) {

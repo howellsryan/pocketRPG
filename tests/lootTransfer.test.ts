@@ -20,7 +20,7 @@ const items = {
   rune_scimitar:    { id: 'rune_scimitar',    isUntradeable: false,                  shopValue: 25_000 },
   abyssal_whip:     { id: 'abyssal_whip',     isUntradeable: false,                  shopValue: 1_500_000 },
   fire_cape:        { id: 'fire_cape',        isUntradeable: true,                   shopValue: 0 },
-  toxic_blowpipe:   { id: 'toxic_blowpipe',   isUntradeable: false,                  shopValue: 5_000_000 },
+  toxic_blowpipe:   { id: 'toxic_blowpipe',   isUntradeable: false,                  shopValue: 4_500_000 },
   dragon_arrow:     { id: 'dragon_arrow',     isUntradeable: false, stackable: true, shopValue: 1500 },
   zulrah_scales:    { id: 'zulrah_scales',    isUntradeable: false, stackable: true, shopValue: 200 },
   boss_blade:       { id: 'boss_blade',       isUntradeable: false, isBossUnique: true, shopValue: 1_000_000 },
@@ -86,11 +86,11 @@ describe('splitInventoryByTradeable', () => {
 
   it('coins always transfer even from inventory', () => {
     const inv = new Array(28).fill(null)
-    inv[0] = { itemId: 'coins', quantity: 5_000_000 }
+    inv[0] = { itemId: 'coins', quantity: 4_500_000 }
     const { transfer, remainingInventory } = splitInventoryByTradeable(inv, {}, items)
     expect(transfer).toHaveLength(1)
     expect(transfer[0].itemId).toBe('coins')
-    expect(transfer[0].quantity).toBe(5_000_000)
+    expect(transfer[0].quantity).toBe(4_500_000)
     expect(remainingInventory[0]).toBeNull()
   })
 
@@ -278,7 +278,7 @@ describe('applyLootTransfer (end-to-end)', () => {
   })
 
 
-  it('minigame unlock untradeable item uses fixed 5m conversion value', () => {
+  it('minigame unlock untradeable item uses fixed 4.5m conversion value', () => {
     const inv = new Array(28).fill(null)
     inv[3] = { itemId: 'dragon_defender', quantity: 1 }
     const result = applyLootTransfer({
@@ -288,7 +288,7 @@ describe('applyLootTransfer (end-to-end)', () => {
       itemsData: items,
     })
     expect(result.loser.inventory[3]).toBeNull()
-    expect(result.winner.bank.coins.quantity).toBe(5_000_000)
+    expect(result.winner.bank.coins.quantity).toBe(4_500_000)
   })
 
   it('clue reward quantity transfers as item', () => {
