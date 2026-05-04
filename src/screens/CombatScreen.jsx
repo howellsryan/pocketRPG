@@ -26,6 +26,7 @@ import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { isHighValueDrop } from '../utils/itemValue.js'
 import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slayerRewards.js'
 import { resolveSlayerTaskKill } from '../engine/slayerTasks.js'
+import { getSlayerTaskReward } from '../engine/slayerRewards.js'
 import { CRITICAL_SAVE_REASONS, hasCriticalDrop } from '../cloud/criticalSavePolicy.js'
 
 const COMBAT_CATEGORIES = [
@@ -164,7 +165,7 @@ async function performOneLifeReset() {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame } = useGame()
   const pvp = usePvp()
   const [showPvpLobby, setShowPvpLobby] = useState(false)
 
@@ -693,13 +694,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             if (slayerResult.completed) {
               slayerTaskRef.current = null
               setSlayerTask(null)
-              if (slayerResult.pointsAwarded > 0) {
-                awardSlayerPoints(slayerResult.pointsAwarded)
+              const reward = getSlayerTaskReward(slayerResult.pointsAwarded, slayerTasksCompleted)
+              setSlayerTasksCompleted(reward.totalTasks)
+              if (reward.pointsEarned > 0) {
+                awardSlayerPoints(reward.pointsEarned)
               }
               requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SLAYER_TASK_COMPLETE)
-              addToast(slayerResult.pointsAwarded > 0
-                ? `💀 Slayer task completed! +${slayerResult.pointsAwarded} points`
-                : '💀 Slayer task complete!', 'levelup')
+              addToast(`💀 Slayer Task #${reward.totalTasks} Completed - ${reward.pointsEarned.toLocaleString()} points.`, 'levelup')
             } else if (slayerResult.onTask) {
               slayerTaskRef.current = slayerResult.task
               setSlayerTask(slayerResult.task)
