@@ -45,6 +45,7 @@ export function GameProvider({ children }) {
   const [raidKillCounts, setRaidKillCountsState] = useState({})
   const [farming, setFarmingState] = useState({ patchesById: {} })
   const [completedQuests, setCompletedQuestsState] = useState(new Set())
+  const [unlockedMinigameItems, setUnlockedMinigameItemsState] = useState(new Set())
   const [questQueue, setQuestQueueState] = useState([])
   const [isSaving, setIsSaving] = useState(false)
   const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false })
@@ -68,12 +69,12 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
       getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('dungeoneeringTokens'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
-      getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell')
+      getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems')
     ])
     savedDungeoneeringTokens = normaliseDungeoneeringTokens(savedDungeoneeringTokens)
     savedSlayerPoints = normalisePointCurrency(savedSlayerPoints)
@@ -398,6 +399,7 @@ export function GameProvider({ children }) {
     setRaidKillCountsState(savedRaidKillCounts ?? {})
     setFarmingState(savedFarming ?? { patchesById: {} })
     setCompletedQuestsState(new Set(savedCompletedQuests || []))
+    setUnlockedMinigameItemsState(new Set(savedUnlockedMinigameItems || []))
     setQuestQueueState(savedQuestQueue ?? [])
     const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
     setCurrentHP(savedHP != null ? Math.min(savedHP, hpLevel) : hpLevel)
@@ -631,6 +633,17 @@ export function GameProvider({ children }) {
     saveSetting('farming', farmingState)
   }, [])
 
+  const unlockMinigameItem = useCallback((itemId) => {
+    if (!itemId) return
+    setUnlockedMinigameItemsState(prev => {
+      if (prev.has(itemId)) return prev
+      const next = new Set(prev)
+      next.add(itemId)
+      saveSetting('unlockedMinigameItems', [...next])
+      return next
+    })
+  }, [])
+
   const completeQuest = useCallback((questId) => {
     setCompletedQuestsState(prev => {
       if (prev.has(questId)) return prev
@@ -725,9 +738,10 @@ export function GameProvider({ children }) {
       raidKillCounts,
       farming,
       completedQuests: [...completedQuests],
+      unlockedMinigameItems: [...unlockedMinigameItems],
       questQueue,
     },
-  }), [currentHP, autoBankLoot, bankConfig, homeShortcuts, combatStance, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, questQueue])
+  }), [currentHP, autoBankLoot, bankConfig, homeShortcuts, combatStance, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, questQueue])
 
 
   useEffect(() => {
@@ -774,6 +788,7 @@ export function GameProvider({ children }) {
     raidKillCounts, updateRaidKillCounts,
     farming, updateFarming,
     completedQuests, completeQuest,
+    unlockedMinigameItems, unlockMinigameItem,
     questQueue, addQuestToQueue, removeFromQuestQueue, clearQuestQueue, updateQuestQueue,
     loadGame, grantXP, updateInventory, updateEquipment, updateBank,
     removeFromInventory, addToBank,

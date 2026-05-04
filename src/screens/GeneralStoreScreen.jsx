@@ -7,6 +7,7 @@ import Panel from '../components/Panel.jsx'
 import SharedItemModal from '../components/SharedItemModal.jsx'
 import Button from '../components/Button.jsx'
 import questsData from '../data/quests.json'
+import minigamesData from '../data/minigames.json'
 import monstersData from '../data/monsters.json'
 import raidsData from '../data/raids.json'
 import { formatObtainSourceMessage } from '../engine/itemSources.js'
@@ -15,11 +16,11 @@ import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 
 // ── COMPONENT ───────────────────────────────────────────────────────────────
 export default function GeneralStoreScreen({ onBuyCredits }) {
-  const { inventory, bank, updateInventory, updateBankDirect, addToast, itemsData, unlockedFeatures, completedQuests, isIronman, getSnapshot } = useGame()
+  const { inventory, bank, updateInventory, updateBankDirect, addToast, itemsData, unlockedFeatures, completedQuests, unlockedMinigameItems, isIronman, getSnapshot } = useGame()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedItem, setSelectedItem] = useState(null) // item being purchased
   const [buyQty, setBuyQty] = useState(1)
-  const [activeTab, setActiveTab] = useState('all') // 'all' | 'quest_items' | type-based filters
+  const [activeTab, setActiveTab] = useState('all') // 'all' | 'quest_items' | 'minigame_unlocks' | type-based filters
 
   const hasMoneyPurse = unlockedFeatures.has('money_purse')
   const coinsInInv = countItem(inventory, 'coins')
@@ -44,6 +45,12 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
           const isUnlocked = completedQuests.has(item.questUnlock)
           return { ...item, id, isUnlocked, unlockedBy: item.questUnlock }
         })
+    }
+    if (activeTab === 'minigame_unlocks') {
+      const minigameProducts = new Set((minigamesData.tasks || []).map(t => t.product).filter(Boolean))
+      return Object.entries(itemsData)
+        .filter(([id]) => minigameProducts.has(id))
+        .map(([id, item]) => ({ ...item, id, isMinigameItem: true, isUnlocked: unlockedMinigameItems.has(id) }))
     }
     if (activeTab === 'all') {
       return Object.entries(itemsData)
@@ -74,12 +81,14 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
     return available.filter(item => item.name.toLowerCase().includes(lower))
   }
 
+  const MINIGAME_UNLOCK_STORE_PRICE = 4_500_000
   const modifiedPrice = (basePrice) => Math.floor(basePrice * 1.1)
+  const getItemPrice = (item) => item?.isMinigameItem ? MINIGAME_UNLOCK_STORE_PRICE : modifiedPrice(item?.shopValue || 0)
 
   const handleBuy = async () => {
     if (!selectedItem) return
 
-    const restriction = getPurchaseRestriction(selectedItem, { isIronman })
+    const restriction = getPurchaseRestriction(selectedItem, { isIronman, allowMinigameUnlockPurchase: !!selectedItem?.isMinigameItem && unlockedMinigameItems.has(selectedItem.id) })
     if (!restriction.allowed) {
       addToast(restriction.message || 'This item cannot be purchased.', 'error')
       setSelectedItem(null)
@@ -93,7 +102,12 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
       return
     }
 
-    const price = modifiedPrice(selectedItem.shopValue)
+    if (selectedItem.isMinigameItem && !unlockedMinigameItems.has(selectedItem.id)) {
+      addToast('Complete this minigame reward once before purchasing it here.', 'error')
+      return
+    }
+
+    const price = getItemPrice(selectedItem)
     const totalCost = price * buyQty
 
     if (coins < totalCost) {
@@ -105,7 +119,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
     // Validate purchase with backend (required for cloud accounts)
     if (getToken() && getCharacterId()) {
       try {
-        await api.validatePurchase(selectedItem.id, buyQty)
+        await api.validatePurchase(selectedItem.id, buyQty, [...unlockedMinigameItems])
       } catch (err) {
         if (err.body?.code === 'BOSS_UNIQUE_RESTRICTED') {
           addToast('Boss unique drops can only be obtained from bosses and raids.', 'error')
@@ -184,13 +198,13 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
   }
 
   const searchResults = getSearchResults()
-  const selectedRestriction = selectedItem ? getPurchaseRestriction(selectedItem, { isIronman }) : null
+  const selectedRestriction = selectedItem ? getPurchaseRestriction(selectedItem, { isIronman, allowMinigameUnlockPurchase: !!selectedItem?.isMinigameItem && unlockedMinigameItems.has(selectedItem.id) }) : null
   const isSelectedBossUnique = selectedRestriction?.code === 'BOSS_UNIQUE_RESTRICTED'
   const isSelectedClueReward = selectedRestriction?.code === 'CLUE_REWARD_RESTRICTED'
   const selectedObtainMessage = selectedItem && isSelectedBossUnique
     ? formatObtainSourceMessage(selectedItem.id, { itemsData, monstersData, raidsData })
     : (isSelectedClueReward ? 'Obtain through clue scroll rewards.' : null)
-  const totalCost = selectedItem ? modifiedPrice(selectedItem.shopValue) * buyQty : 0
+  const totalCost = selectedItem ? getItemPrice(selectedItem) * buyQty : 0
   const canAffordSelected = selectedItem ? coins >= totalCost : false
   const isSelectedPurchaseRestricted = Boolean(selectedRestriction && !selectedRestriction.allowed)
 
@@ -240,6 +254,16 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
           >
             📜 Quest Items
           </button>
+          <button
+            onClick={() => { setActiveTab('minigame_unlocks'); setSearchTerm('') }}
+            class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border whitespace-nowrap flex-shrink-0 ${
+              activeTab === 'minigame_unlocks'
+                ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
+                : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
+            }`}
+          >
+            🎮 Minigame Unlocks
+          </button>
           {itemTypes.map(type => (
             <button
               key={type}
@@ -281,8 +305,9 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
           <div class="flex flex-col gap-2 pt-3">
             {searchResults.map(item => {
               const isQuestItem = item.questUnlock !== undefined
-              const isUnlocked = isQuestItem ? item.isUnlocked : true
-              const price = isQuestItem && !isUnlocked ? 0 : modifiedPrice(item.shopValue || 0)
+              const isMinigameItem = item.isMinigameItem === true
+              const isUnlocked = isQuestItem || isMinigameItem ? item.isUnlocked : true
+              const price = isQuestItem && !isUnlocked ? 0 : getItemPrice(item)
               const canAfford = coins >= price
               const restriction = getPurchaseRestriction(item, { isIronman })
               const isBossUnique = restriction.code === 'BOSS_UNIQUE_RESTRICTED'
@@ -291,7 +316,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
                 <button
                   key={item.id}
                   onClick={() => { setSelectedItem(item); setBuyQty(1) }}
-                  disabled={(isQuestItem && !isUnlocked)}
+                  disabled={((isQuestItem || isMinigameItem) && !isUnlocked)}
                   class={`p-3 rounded-lg border text-left flex items-center gap-3 transition-colors ${
                     isQuestItem && !isUnlocked
                       ? 'bg-[#1a1a1a] border-[#1a1a1a] cursor-not-allowed opacity-50'
@@ -301,8 +326,8 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
                   <span class="text-2xl leading-none flex-shrink-0">{item.icon || '📦'}</span>
                   <div class="flex-1 min-w-0">
                     <div class="text-[13px] font-semibold text-[var(--color-parchment)]">{item.name}</div>
-                    {isQuestItem && !isUnlocked && (
-                      <div class="text-[10px] text-[#888] mt-1">🔒 {questMap[item.unlockedBy]}</div>
+                    {(isQuestItem || isMinigameItem) && !isUnlocked && (
+                      <div class="text-[10px] text-[#888] mt-1">🔒 {isQuestItem ? questMap[item.unlockedBy] : 'Complete this minigame reward once to unlock purchasing.'}</div>
                     )}
                   </div>
                   <div class={`text-right flex-shrink-0 text-[12px] font-[var(--font-mono)] font-bold ${
@@ -321,7 +346,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
       {selectedItem && (
         <SharedItemModal
           item={selectedItem}
-          title={`${selectedItem.questUnlock && !selectedItem.isUnlocked ? 'Locked: ' : ''}${selectedItem.name}`}
+          title={`${(selectedItem.questUnlock || selectedItem.isMinigameItem) && !selectedItem.isUnlocked ? 'Locked: ' : ''}${selectedItem.name}`}
           onClose={() => { setSelectedItem(null); setBuyQty(1) }}
         >
           <div class="flex flex-col gap-4">
@@ -346,12 +371,12 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
               </Panel>
             )}
             {/* Price info - only show if unlocked */}
-            {!selectedItem.questUnlock || selectedItem.isUnlocked ? (
+            {(!selectedItem.questUnlock && !selectedItem.isMinigameItem) || selectedItem.isUnlocked ? (
               <Panel>
                 <div class="flex justify-between mb-[6px] text-[12px]">
                   <span class="text-[#888]">Price per item:</span>
                   <span class="text-[var(--color-gold)] font-[var(--font-mono)] font-bold">
-                    {modifiedPrice(selectedItem.shopValue).toLocaleString()} gp
+                    {getItemPrice(selectedItem).toLocaleString()} gp
                   </span>
                 </div>
                 <div class="flex justify-between text-[12px]">
@@ -364,7 +389,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
             ) : null}
 
             {/* Quantity selector - only show if not locked */}
-            {!selectedItem.questUnlock || selectedItem.isUnlocked ? (
+            {(!selectedItem.questUnlock && !selectedItem.isMinigameItem) || selectedItem.isUnlocked ? (
               <div class="flex flex-col gap-2">
                 <div class="text-[12px] text-[#888]">Quantity</div>
                 <div class="flex gap-[6px] items-center">
@@ -397,7 +422,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
               <Button variant="secondary" size="lg" onClick={() => { setSelectedItem(null); setBuyQty(1) }} className="flex-1">
                 Cancel
               </Button>
-              {selectedItem.questUnlock && !selectedItem.isUnlocked ? (
+              {(selectedItem.questUnlock || selectedItem.isMinigameItem) && !selectedItem.isUnlocked ? (
                 <Button variant="secondary" size="lg" disabled className="flex-1 opacity-50">
                   Locked
                 </Button>
