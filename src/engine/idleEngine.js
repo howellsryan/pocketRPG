@@ -732,7 +732,7 @@ function idleRollDrops(monster) {
  * itemsData: items lookup
  * slayerTask: optional current slayer task (if not on-task, will be null)
  */
-export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsData, slayerTask = null, bank = {}) {
+export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsData, slayerTask = null, bank = {}, idleLoadout = null) {
   if (!task || !task.monster) return null
 
   const monster = task.monster
@@ -858,11 +858,85 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   let monstersKilledOnTask = 0
   let slayerXpGained = 0
   let remainingTicks = totalTicks
+  let elapsedTicksUsed = 0
+  const idleFoodConsumed = {}
+  const idlePotionsConsumed = {}
+  const loadoutPotions = idleLoadout?.potions || {}
+  const basePrayer = Math.max(1, getLevelFromXP(stats.prayer?.xp || 0))
+  let prayerPoints = basePrayer
+  const activeProtectionPrayer = idleLoadout?.prayers?.protection || null
+  const activeCombatPrayer = idleLoadout?.prayers?.combat || null
+  const monsterAttackSpeed = Math.max(2, Number(monster.attackSpeed || 4))
 
   const maxKillsFromResources = Math.min(maxKillsFromAmmo, maxKillsFromRunes, maxKillsFromCharges)
 
+  // Optional survivability cap for idle/skip: consume configured idle food as HP buffer.
+  const baseHp = Math.max(1, getLevelFromXP(stats.hitpoints?.xp || 0))
+  const loadoutFood = idleLoadout?.food || {}
+  let extraHpBuffer = 0
+  for (const [itemId, qty] of Object.entries(loadoutFood)) {
+    const item = itemsData[itemId]
+    const heal = Math.max(0, Math.floor(Number(item?.foodHeal) || 0))
+    const count = Math.max(0, Math.floor(Number(qty) || 0))
+    if (heal > 0 && count > 0) extraHpBuffer += heal * count
+  }
+  let hpPool = baseHp + extraHpBuffer
+
+  const rawIncomingPerKill = Math.max(0, Math.floor((monster.maxHit || 0) * Math.max(1, hitsNeeded) / 2))
+  const monsterHitsPerKill = Math.max(1, Math.floor(ticksPerKill / monsterAttackSpeed))
+  const playerHitsPerKill = Math.max(1, hitsNeeded)
+  const protectionWorksOnMelee = activeProtectionPrayer === 'protection_from_melee' && (monster.attackStyle === 'melee' || !monster.attackStyle)
+
   while (remainingTicks >= ticksPerCycle && monstersKilled < maxKillsFromResources) {
+    let incomingPerKill = rawIncomingPerKill
+    // Prayer drain model: combat prayers drain on player hit attempts, protection on monster hit attempts.
+    if (activeCombatPrayer) prayerPoints = Math.max(0, prayerPoints - playerHitsPerKill)
+    if (protectionWorksOnMelee) {
+      const drain = Math.min(prayerPoints, monsterHitsPerKill)
+      prayerPoints -= drain
+      if (drain >= monsterHitsPerKill) incomingPerKill = 0
+    }
+    while (prayerPoints <= 0) {
+      const srLeft = Math.max(0, (loadoutPotions.super_restore || 0) - (idlePotionsConsumed.super_restore || 0))
+      const ppLeft = Math.max(0, (loadoutPotions.prayer_potion || 0) - (idlePotionsConsumed.prayer_potion || 0))
+      if (srLeft > 0) {
+        idlePotionsConsumed.super_restore = (idlePotionsConsumed.super_restore || 0) + 1
+        prayerPoints = Math.min(basePrayer, prayerPoints + 20)
+        continue
+      }
+      if (ppLeft > 0) {
+        idlePotionsConsumed.prayer_potion = (idlePotionsConsumed.prayer_potion || 0) + 1
+        prayerPoints = Math.min(basePrayer, prayerPoints + 15)
+        continue
+      }
+      break
+    }
+    if (incomingPerKill > 0) {
+      if (hpPool <= incomingPerKill) break
+      hpPool -= incomingPerKill
+      // Greedy accounting of food consumed in order of largest heal first.
+      let damageCoveredByFood = Math.max(0, baseHp + extraHpBuffer - hpPool - baseHp)
+      if (damageCoveredByFood > 0) {
+        const byHeal = Object.entries(loadoutFood)
+          .map(([itemId, qty]) => ({ itemId, qty: Math.max(0, Math.floor(Number(qty) || 0)), heal: Math.max(0, Math.floor(Number(itemsData[itemId]?.foodHeal) || 0)) }))
+          .filter(x => x.heal > 0 && x.qty > 0)
+          .sort((a, b) => b.heal - a.heal)
+        for (const f of byHeal) {
+          const already = idleFoodConsumed[f.itemId] || 0
+          const left = Math.max(0, f.qty - already)
+          if (left <= 0) continue
+          const need = Math.ceil(damageCoveredByFood / f.heal)
+          const take = Math.min(left, need)
+          if (take > 0) {
+            idleFoodConsumed[f.itemId] = already + take
+            damageCoveredByFood = Math.max(0, damageCoveredByFood - (take * f.heal))
+          }
+          if (damageCoveredByFood <= 0) break
+        }
+      }
+    }
     remainingTicks -= ticksPerCycle
+    elapsedTicksUsed += ticksPerCycle
     monstersKilled++
 
     // Check if this kill counts toward slayer task — cap at total task count
@@ -980,6 +1054,36 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
 
   const resourceLimited = monstersKilled < Math.floor(totalTicks / ticksPerCycle)
     && (maxKillsFromResources !== Infinity)
+  const foodConfigured = Object.fromEntries(
+    Object.entries(loadoutFood).map(([itemId, qty]) => [itemId, Math.max(0, Math.floor(Number(qty) || 0))])
+  )
+  const potionConfigured = Object.fromEntries(
+    Object.entries(idleLoadout?.potions || {}).map(([itemId, qty]) => [itemId, Math.max(0, Math.floor(Number(qty) || 0))])
+  )
+  const combatPotionOrder = ['super_combat_potion', 'ranging_potion', 'magic_potion', 'attack_potion', 'strength_potion']
+  const elapsedMinutes = (elapsedTicksUsed * TICK_MS) / 60000
+  const dosesNeededForUptime = Math.max(0, Math.ceil(elapsedMinutes / 5))
+  for (const potionId of combatPotionOrder) {
+    const configured = potionConfigured[potionId] || 0
+    if (configured <= 0) continue
+    idlePotionsConsumed[potionId] = Math.min(configured, dosesNeededForUptime)
+    break
+  }
+  const foodConsumedTotal = Object.values(idleFoodConsumed).reduce((s, v) => s + v, 0)
+  const foodConfiguredTotal = Object.values(foodConfigured).reduce((s, v) => s + v, 0)
+  const potionsConsumedTotal = Object.values(idlePotionsConsumed).reduce((s, v) => s + v, 0)
+  const potionsConfiguredTotal = Object.values(potionConfigured).reduce((s, v) => s + v, 0)
 
-  return { xpGained, lootGained, lootLost, lootBanked, runesConsumed, monstersKilled, monstersKilledOnTask, finalInventory: newInv, slayerXpGained, slayerTaskUpdate, chargesConsumed, ammoConsumed, attacksUsed: attacksPerKill * monstersKilled, resourceLimited }
+  return {
+    xpGained, lootGained, lootLost, lootBanked, runesConsumed, monstersKilled, monstersKilledOnTask, finalInventory: newInv, slayerXpGained, slayerTaskUpdate, chargesConsumed, ammoConsumed, attacksUsed: attacksPerKill * monstersKilled, resourceLimited,
+    elapsedMsUsed: elapsedTicksUsed * TICK_MS,
+    idleFoodConfigured: foodConfigured,
+    idleFoodConsumed,
+    idleFoodConsumedTotal: foodConsumedTotal,
+    idleFoodConfiguredTotal: foodConfiguredTotal,
+    idlePotionsConfigured: potionConfigured,
+    idlePotionsConsumed,
+    idlePotionsConsumedTotal: potionsConsumedTotal,
+    idlePotionsConfiguredTotal: potionsConfiguredTotal,
+  }
 }
