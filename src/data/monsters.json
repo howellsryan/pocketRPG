@@ -96,7 +96,7 @@
           1,
           2
         ],
-        "chance": 0.1
+        "chance": 0.02
       },
       {
         "itemId": "tarromin",
@@ -104,7 +104,7 @@
           1,
           2
         ],
-        "chance": 0.075
+        "chance": 0.015
       },
       {
         "itemId": "ranarr_weed",
@@ -112,7 +112,7 @@
           1,
           2
         ],
-        "chance": 0.06
+        "chance": 0.012
       },
       {
         "itemId": "harralander",
@@ -120,7 +120,7 @@
           1,
           2
         ],
-        "chance": 0.05
+        "chance": 0.01
       },
       {
         "itemId": "irit_leaf",
@@ -128,7 +128,7 @@
           1,
           2
         ],
-        "chance": 0.04
+        "chance": 0.008
       },
       {
         "itemId": "kwuarm",
@@ -136,32 +136,32 @@
           1,
           2
         ],
-        "chance": 0.03
+        "chance": 0.006
       },
       {
         "itemId": "snapdragon",
         "quantity": 1,
-        "chance": 0.025
+        "chance": 0.005
       },
       {
         "itemId": "cadantine",
         "quantity": 1,
-        "chance": 0.02
+        "chance": 0.004
       },
       {
         "itemId": "dwarf_weed",
         "quantity": 1,
-        "chance": 0.015
+        "chance": 0.003
       },
       {
         "itemId": "lantadyme",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.001
       },
       {
         "itemId": "toadflax",
         "quantity": 1,
-        "chance": 0.0025
+        "chance": 0.0005
       },
       {
         "itemId": "clue_scroll_medium",
@@ -259,7 +259,7 @@
           1,
           2
         ],
-        "chance": 0.1
+        "chance": 0.02
       },
       {
         "itemId": "tarromin",
@@ -267,7 +267,7 @@
           1,
           2
         ],
-        "chance": 0.075
+        "chance": 0.015
       },
       {
         "itemId": "ranarr_weed",
@@ -275,7 +275,7 @@
           1,
           2
         ],
-        "chance": 0.06
+        "chance": 0.012
       },
       {
         "itemId": "harralander",
@@ -283,7 +283,7 @@
           1,
           2
         ],
-        "chance": 0.05
+        "chance": 0.01
       },
       {
         "itemId": "irit_leaf",
@@ -291,7 +291,7 @@
           1,
           2
         ],
-        "chance": 0.04
+        "chance": 0.008
       },
       {
         "itemId": "kwuarm",
@@ -299,32 +299,32 @@
           1,
           2
         ],
-        "chance": 0.03
+        "chance": 0.006
       },
       {
         "itemId": "snapdragon",
         "quantity": 1,
-        "chance": 0.025
+        "chance": 0.005
       },
       {
         "itemId": "cadantine",
         "quantity": 1,
-        "chance": 0.02
+        "chance": 0.004
       },
       {
         "itemId": "dwarf_weed",
         "quantity": 1,
-        "chance": 0.015
+        "chance": 0.003
       },
       {
         "itemId": "lantadyme",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.001
       },
       {
         "itemId": "toadflax",
         "quantity": 1,
-        "chance": 0.0025
+        "chance": 0.0005
       },
       {
         "itemId": "clue_scroll_medium",
@@ -381,7 +381,7 @@
           1,
           2
         ],
-        "chance": 0.2
+        "chance": 0.04
       },
       {
         "itemId": "tarromin",
@@ -389,7 +389,7 @@
           1,
           2
         ],
-        "chance": 0.15
+        "chance": 0.03
       },
       {
         "itemId": "ranarr_weed",
@@ -397,7 +397,7 @@
           1,
           2
         ],
-        "chance": 0.12
+        "chance": 0.024
       },
       {
         "itemId": "harralander",
@@ -405,7 +405,7 @@
           1,
           2
         ],
-        "chance": 0.1
+        "chance": 0.02
       },
       {
         "itemId": "irit_leaf",
@@ -413,7 +413,7 @@
           1,
           2
         ],
-        "chance": 0.08
+        "chance": 0.016
       },
       {
         "itemId": "kwuarm",
@@ -421,32 +421,32 @@
           1,
           2
         ],
-        "chance": 0.06
+        "chance": 0.012
       },
       {
         "itemId": "snapdragon",
         "quantity": 1,
-        "chance": 0.05
+        "chance": 0.01
       },
       {
         "itemId": "cadantine",
         "quantity": 1,
-        "chance": 0.04
+        "chance": 0.008
       },
       {
         "itemId": "dwarf_weed",
         "quantity": 1,
-        "chance": 0.03
+        "chance": 0.006
       },
       {
         "itemId": "lantadyme",
         "quantity": 1,
-        "chance": 0.01
+        "chance": 0.002
       },
       {
         "itemId": "toadflax",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.001
       },
       {
         "itemId": "clue_scroll_elite",
@@ -513,7 +513,7 @@
           1,
           2
         ],
-        "chance": 0.1
+        "chance": 0.02
       },
       {
         "itemId": "tarromin",
@@ -521,7 +521,7 @@
           1,
           2
         ],
-        "chance": 0.075
+        "chance": 0.015
       },
       {
         "itemId": "ranarr_weed",
@@ -529,7 +529,7 @@
           1,
           2
         ],
-        "chance": 0.06
+        "chance": 0.012
       },
       {
         "itemId": "harralander",
@@ -537,7 +537,7 @@
           1,
           2
         ],
-        "chance": 0.05
+        "chance": 0.01
       },
       {
         "itemId": "irit_leaf",
@@ -545,7 +545,7 @@
           1,
           2
         ],
-        "chance": 0.04
+        "chance": 0.008
       },
       {
         "itemId": "kwuarm",
@@ -553,32 +553,32 @@
           1,
           2
         ],
-        "chance": 0.03
+        "chance": 0.006
       },
       {
         "itemId": "snapdragon",
         "quantity": 1,
-        "chance": 0.025
+        "chance": 0.005
       },
       {
         "itemId": "cadantine",
         "quantity": 1,
-        "chance": 0.02
+        "chance": 0.004
       },
       {
         "itemId": "dwarf_weed",
         "quantity": 1,
-        "chance": 0.015
+        "chance": 0.003
       },
       {
         "itemId": "lantadyme",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.001
       },
       {
         "itemId": "toadflax",
         "quantity": 1,
-        "chance": 0.0025
+        "chance": 0.0005
       },
       {
         "itemId": "clue_scroll_medium",
@@ -645,7 +645,7 @@
           1,
           2
         ],
-        "chance": 0.1
+        "chance": 0.02
       },
       {
         "itemId": "tarromin",
@@ -653,7 +653,7 @@
           1,
           2
         ],
-        "chance": 0.075
+        "chance": 0.015
       },
       {
         "itemId": "ranarr_weed",
@@ -661,7 +661,7 @@
           1,
           2
         ],
-        "chance": 0.06
+        "chance": 0.012
       },
       {
         "itemId": "harralander",
@@ -669,7 +669,7 @@
           1,
           2
         ],
-        "chance": 0.05
+        "chance": 0.01
       },
       {
         "itemId": "irit_leaf",
@@ -677,7 +677,7 @@
           1,
           2
         ],
-        "chance": 0.04
+        "chance": 0.008
       },
       {
         "itemId": "kwuarm",
@@ -685,32 +685,32 @@
           1,
           2
         ],
-        "chance": 0.03
+        "chance": 0.006
       },
       {
         "itemId": "snapdragon",
         "quantity": 1,
-        "chance": 0.025
+        "chance": 0.005
       },
       {
         "itemId": "cadantine",
         "quantity": 1,
-        "chance": 0.02
+        "chance": 0.004
       },
       {
         "itemId": "dwarf_weed",
         "quantity": 1,
-        "chance": 0.015
+        "chance": 0.003
       },
       {
         "itemId": "lantadyme",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.001
       },
       {
         "itemId": "toadflax",
         "quantity": 1,
-        "chance": 0.0025
+        "chance": 0.0005
       },
       {
         "itemId": "clue_scroll_medium",
@@ -807,7 +807,7 @@
           1,
           2
         ],
-        "chance": 0.1
+        "chance": 0.02
       },
       {
         "itemId": "tarromin",
@@ -815,7 +815,7 @@
           1,
           2
         ],
-        "chance": 0.075
+        "chance": 0.015
       },
       {
         "itemId": "ranarr_weed",
@@ -823,7 +823,7 @@
           1,
           2
         ],
-        "chance": 0.06
+        "chance": 0.012
       },
       {
         "itemId": "harralander",
@@ -831,7 +831,7 @@
           1,
           2
         ],
-        "chance": 0.05
+        "chance": 0.01
       },
       {
         "itemId": "irit_leaf",
@@ -839,7 +839,7 @@
           1,
           2
         ],
-        "chance": 0.04
+        "chance": 0.008
       },
       {
         "itemId": "kwuarm",
@@ -847,32 +847,32 @@
           1,
           2
         ],
-        "chance": 0.03
+        "chance": 0.006
       },
       {
         "itemId": "snapdragon",
         "quantity": 1,
-        "chance": 0.025
+        "chance": 0.005
       },
       {
         "itemId": "cadantine",
         "quantity": 1,
-        "chance": 0.02
+        "chance": 0.004
       },
       {
         "itemId": "dwarf_weed",
         "quantity": 1,
-        "chance": 0.015
+        "chance": 0.003
       },
       {
         "itemId": "lantadyme",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.001
       },
       {
         "itemId": "toadflax",
         "quantity": 1,
-        "chance": 0.0025
+        "chance": 0.0005
       },
       {
         "itemId": "clue_scroll_medium",
@@ -978,7 +978,7 @@
           1,
           2
         ],
-        "chance": 0.1
+        "chance": 0.02
       },
       {
         "itemId": "tarromin",
@@ -986,7 +986,7 @@
           1,
           2
         ],
-        "chance": 0.075
+        "chance": 0.015
       },
       {
         "itemId": "ranarr_weed",
@@ -994,7 +994,7 @@
           1,
           2
         ],
-        "chance": 0.06
+        "chance": 0.012
       },
       {
         "itemId": "harralander",
@@ -1002,7 +1002,7 @@
           1,
           2
         ],
-        "chance": 0.05
+        "chance": 0.01
       },
       {
         "itemId": "irit_leaf",
@@ -1010,7 +1010,7 @@
           1,
           2
         ],
-        "chance": 0.04
+        "chance": 0.008
       },
       {
         "itemId": "kwuarm",
@@ -1018,32 +1018,32 @@
           1,
           2
         ],
-        "chance": 0.03
+        "chance": 0.006
       },
       {
         "itemId": "snapdragon",
         "quantity": 1,
-        "chance": 0.025
+        "chance": 0.005
       },
       {
         "itemId": "cadantine",
         "quantity": 1,
-        "chance": 0.02
+        "chance": 0.004
       },
       {
         "itemId": "dwarf_weed",
         "quantity": 1,
-        "chance": 0.015
+        "chance": 0.003
       },
       {
         "itemId": "lantadyme",
         "quantity": 1,
-        "chance": 0.005
+        "chance": 0.001
       },
       {
         "itemId": "toadflax",
         "quantity": 1,
-        "chance": 0.0025
+        "chance": 0.0005
       },
       {
         "itemId": "clue_scroll_hard",
@@ -1167,79 +1167,6 @@
         "itemId": "staff",
         "quantity": 1,
         "chance": 0.1
-      },
-      {
-        "itemId": "guam_leaf",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.1
-      },
-      {
-        "itemId": "tarromin",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.075
-      },
-      {
-        "itemId": "ranarr_weed",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.06
-      },
-      {
-        "itemId": "harralander",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.05
-      },
-      {
-        "itemId": "irit_leaf",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.04
-      },
-      {
-        "itemId": "kwuarm",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.03
-      },
-      {
-        "itemId": "snapdragon",
-        "quantity": 1,
-        "chance": 0.025
-      },
-      {
-        "itemId": "cadantine",
-        "quantity": 1,
-        "chance": 0.02
-      },
-      {
-        "itemId": "dwarf_weed",
-        "quantity": 1,
-        "chance": 0.015
-      },
-      {
-        "itemId": "lantadyme",
-        "quantity": 1,
-        "chance": 0.005
-      },
-      {
-        "itemId": "toadflax",
-        "quantity": 1,
-        "chance": 0.0025
       },
       {
         "itemId": "clue_scroll_medium",
@@ -1396,79 +1323,6 @@
         "itemId": "magic_staff",
         "quantity": 1,
         "chance": 0.04
-      },
-      {
-        "itemId": "guam_leaf",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.1
-      },
-      {
-        "itemId": "tarromin",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.075
-      },
-      {
-        "itemId": "ranarr_weed",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.06
-      },
-      {
-        "itemId": "harralander",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.05
-      },
-      {
-        "itemId": "irit_leaf",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.04
-      },
-      {
-        "itemId": "kwuarm",
-        "quantity": [
-          1,
-          2
-        ],
-        "chance": 0.03
-      },
-      {
-        "itemId": "snapdragon",
-        "quantity": 1,
-        "chance": 0.025
-      },
-      {
-        "itemId": "cadantine",
-        "quantity": 1,
-        "chance": 0.02
-      },
-      {
-        "itemId": "dwarf_weed",
-        "quantity": 1,
-        "chance": 0.015
-      },
-      {
-        "itemId": "lantadyme",
-        "quantity": 1,
-        "chance": 0.005
-      },
-      {
-        "itemId": "toadflax",
-        "quantity": 1,
-        "chance": 0.0025
       },
       {
         "itemId": "clue_scroll_medium",
@@ -4154,7 +4008,7 @@
     "forms": {
       "ranged": {
         "displayName": "Serpentine",
-        "icon": "\ud83d\udfe2",
+        "icon": "🟢",
         "attackStyle": "ranged",
         "weakness": "melee",
         "maxHit": 41,
@@ -4170,7 +4024,7 @@
       },
       "magic": {
         "displayName": "Tanzanite",
-        "icon": "\ud83d\udd35",
+        "icon": "🔵",
         "attackStyle": "magic",
         "weakness": "ranged",
         "maxHit": 41,
@@ -4186,7 +4040,7 @@
       },
       "melee": {
         "displayName": "Magma",
-        "icon": "\ud83d\udd34",
+        "icon": "🔴",
         "attackStyle": "crush",
         "weakness": "magic",
         "maxHit": 41,
@@ -4326,7 +4180,7 @@
     "forms": {
       "melee": {
         "displayName": "Melee Phase",
-        "icon": "\u2694\ufe0f",
+        "icon": "⚔️",
         "attackStyle": "crush",
         "maxHit": 97,
         "attackBonus": 100,
@@ -4341,7 +4195,7 @@
       },
       "ranged": {
         "displayName": "Ranged Phase",
-        "icon": "\ud83c\udff9",
+        "icon": "🏹",
         "attackStyle": "ranged",
         "maxHit": 97,
         "attackBonus": 100,
@@ -4356,7 +4210,7 @@
       },
       "magic": {
         "displayName": "Magic Phase",
-        "icon": "\u2728",
+        "icon": "✨",
         "attackStyle": "magic",
         "maxHit": 97,
         "attackBonus": 100,
@@ -4416,7 +4270,7 @@
     "forms": {
       "melee": {
         "displayName": "Melee Phase",
-        "icon": "\u2694\ufe0f",
+        "icon": "⚔️",
         "attackStyle": "crush",
         "maxHit": 130,
         "attackBonus": 150,
@@ -4431,7 +4285,7 @@
       },
       "ranged": {
         "displayName": "Ranged Phase",
-        "icon": "\ud83c\udff9",
+        "icon": "🏹",
         "attackStyle": "ranged",
         "maxHit": 130,
         "attackBonus": 150,
@@ -4446,7 +4300,7 @@
       },
       "magic": {
         "displayName": "Magic Phase",
-        "icon": "\u2728",
+        "icon": "✨",
         "attackStyle": "magic",
         "maxHit": 130,
         "attackBonus": 150,
@@ -4504,7 +4358,7 @@
     "forms": {
       "melee": {
         "displayName": "Melee Phase",
-        "icon": "\u2694\ufe0f",
+        "icon": "⚔️",
         "attackStyle": "crush",
         "weakness": "magic",
         "maxHit": 68,
@@ -4520,7 +4374,7 @@
       },
       "ranged": {
         "displayName": "Ranged Phase",
-        "icon": "\ud83c\udff9",
+        "icon": "🏹",
         "attackStyle": "ranged",
         "weakness": "melee",
         "maxHit": 68,
@@ -4536,7 +4390,7 @@
       },
       "magic": {
         "displayName": "Magic Phase",
-        "icon": "\u2728",
+        "icon": "✨",
         "attackStyle": "magic",
         "weakness": "ranged",
         "maxHit": 68,
@@ -4819,7 +4673,7 @@
     "forms": {
       "magic": {
         "displayName": "Magic Hand",
-        "icon": "\ud83d\udd2e",
+        "icon": "🔮",
         "attackStyle": "magic",
         "weakness": "ranged",
         "maxHit": 30,
@@ -4835,7 +4689,7 @@
       },
       "melee": {
         "displayName": "Melee Hand",
-        "icon": "\u270a",
+        "icon": "✊",
         "attackStyle": "crush",
         "weakness": "ranged",
         "maxHit": 30,
@@ -4851,7 +4705,7 @@
       },
       "ranged": {
         "displayName": "Ranged Phase",
-        "icon": "\ud83d\udc8e",
+        "icon": "💎",
         "attackStyle": "ranged",
         "weakness": "ranged",
         "maxHit": 30,
@@ -4910,7 +4764,7 @@
     "forms": {
       "melee": {
         "displayName": "Melee Phase",
-        "icon": "\ud83e\udd8d",
+        "icon": "🦍",
         "attackStyle": "crush",
         "immunity": "melee",
         "maxHit": 30,
@@ -4926,7 +4780,7 @@
       },
       "ranged": {
         "displayName": "Ranged Phase",
-        "icon": "\ud83c\udff9",
+        "icon": "🏹",
         "attackStyle": "ranged",
         "immunity": "ranged",
         "maxHit": 30,
@@ -4942,7 +4796,7 @@
       },
       "magic": {
         "displayName": "Magic Phase",
-        "icon": "\u2728",
+        "icon": "✨",
         "attackStyle": "magic",
         "immunity": "magic",
         "maxHit": 30,
@@ -5133,7 +4987,7 @@
     "forms": {
       "melee": {
         "displayName": "Melee Phase",
-        "icon": "\u26aa",
+        "icon": "⚪",
         "attackStyle": "crush",
         "immunity": "melee",
         "maxHit": 70,
@@ -5149,7 +5003,7 @@
       },
       "magic": {
         "displayName": "Magic Phase",
-        "icon": "\ud83d\udd35",
+        "icon": "🔵",
         "attackStyle": "magic",
         "immunity": "magic",
         "maxHit": 70,
@@ -5165,7 +5019,7 @@
       },
       "ranged": {
         "displayName": "Ranged Phase",
-        "icon": "\ud83d\udfe2",
+        "icon": "🟢",
         "attackStyle": "ranged",
         "immunity": "ranged",
         "maxHit": 70,
@@ -5219,7 +5073,7 @@
     "forms": {
       "magic": {
         "displayName": "Magic Phase",
-        "icon": "\ud83d\udd2e",
+        "icon": "🔮",
         "attackStyle": "magic",
         "weakness": "ranged",
         "maxHit": 50,
@@ -5235,7 +5089,7 @@
       },
       "melee": {
         "displayName": "Melee Phase",
-        "icon": "\u270a",
+        "icon": "✊",
         "attackStyle": "crush",
         "weakness": "ranged",
         "maxHit": 45,
@@ -5251,7 +5105,7 @@
       },
       "ranged": {
         "displayName": "Ranged Phase",
-        "icon": "\ud83d\udc8e",
+        "icon": "💎",
         "attackStyle": "ranged",
         "weakness": "ranged",
         "maxHit": 50,
@@ -5344,8 +5198,8 @@
     "formSwitchMax": 9999,
     "forms": {
       "phase1": {
-        "displayName": "Phase 1 \u2014 Throne",
-        "icon": "\ud83d\udc51",
+        "displayName": "Phase 1 — Throne",
+        "icon": "👑",
         "attackStyle": "magic",
         "weakness": "melee",
         "maxHit": 30,
@@ -5361,8 +5215,8 @@
         "phaseHP": 2000
       },
       "phase2": {
-        "displayName": "Phase 2 \u2014 Spider",
-        "icon": "\ud83d\udd77\ufe0f",
+        "displayName": "Phase 2 — Spider",
+        "icon": "🕷️",
         "attackStyle": "magic",
         "weakness": "slash",
         "maxHit": 68,
@@ -5378,8 +5232,8 @@
         "phaseHP": 3250
       },
       "phase3": {
-        "displayName": "Phase 3 \u2014 True Form",
-        "icon": "\ud83e\ude78",
+        "displayName": "Phase 3 — True Form",
+        "icon": "🩸",
         "attackStyle": "crush",
         "weakness": "slash",
         "maxHit": 78,
@@ -5469,7 +5323,7 @@
     "forms": {
       "ranged": {
         "displayName": "Flying Phase",
-        "icon": "\ud83e\udd9f",
+        "icon": "🦟",
         "attackStyle": "ranged",
         "maxHit": 24,
         "attackBonus": 100,
@@ -5484,7 +5338,7 @@
       },
       "melee": {
         "displayName": "Grounded Phase",
-        "icon": "\ud83e\udeb2",
+        "icon": "🪲",
         "attackStyle": "crush",
         "maxHit": 20,
         "attackBonus": 90,
@@ -5537,7 +5391,7 @@
     "forms": {
       "melee": {
         "displayName": "Melee Chomp",
-        "icon": "\ud83e\uddb7",
+        "icon": "🦷",
         "attackStyle": "crush",
         "maxHit": 38,
         "attackBonus": 120,
@@ -5552,7 +5406,7 @@
       },
       "magic": {
         "displayName": "Magic Spit",
-        "icon": "\ud83d\udca7",
+        "icon": "💧",
         "attackStyle": "magic",
         "maxHit": 32,
         "attackBonus": 150,
@@ -6008,17 +5862,17 @@
       {
         "itemId": "ranarr_weed",
         "quantity": 5,
-        "chance": 0.10
+        "chance": 0.1
       },
       {
         "itemId": "snapdragon",
         "quantity": 5,
-        "chance": 0.10
+        "chance": 0.1
       },
       {
         "itemId": "kwuarm",
         "quantity": 5,
-        "chance": 0.10
+        "chance": 0.1
       },
       {
         "itemId": "rune_chainbody",
