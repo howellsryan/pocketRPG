@@ -26,6 +26,7 @@ const items = {
   boss_blade:       { id: 'boss_blade',       isUntradeable: false, isBossUnique: true, shopValue: 1_000_000 },
   boss_relic:       { id: 'boss_relic',       isUntradeable: true,  isBossUnique: true, shopValue: 2_500_000 },
   clue_scroll_gold: { id: 'clue_scroll_gold', isUntradeable: false, isClueReward: true, shopValue: 250_000, stackable: true },
+  dragon_defender:  { id: 'dragon_defender',  isUntradeable: true, shopValue: 1 },
 }
 
 describe('isPvpTradeable', () => {
@@ -274,6 +275,20 @@ describe('applyLootTransfer (end-to-end)', () => {
     expect(result.loser.inventory[3]).toBeNull()
     expect(result.winner.bank.coins.quantity).toBe(2_500_000)
     expect(result.winner.bank.boss_relic).toBeUndefined()
+  })
+
+
+  it('minigame unlock untradeable item uses fixed 5m conversion value', () => {
+    const inv = new Array(28).fill(null)
+    inv[3] = { itemId: 'dragon_defender', quantity: 1 }
+    const result = applyLootTransfer({
+      loserInventory: inv,
+      loserEquipment: {},
+      winnerBank: {},
+      itemsData: items,
+    })
+    expect(result.loser.inventory[3]).toBeNull()
+    expect(result.winner.bank.coins.quantity).toBe(5_000_000)
   })
 
   it('clue reward quantity transfers as item', () => {

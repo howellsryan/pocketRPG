@@ -16,8 +16,11 @@
 //     UI as a toast ("Bank full — N items lost").
 
 import { BANK_SIZE } from '../utils/constants.js'
+import minigamesData from '../data/minigames.json'
 
 const COINS_ID = 'coins'
+const MINIGAME_UNLOCK_ITEM_VALUE = 5_000_000
+const MINIGAME_UNLOCK_PRODUCTS = new Set((minigamesData?.tasks || []).map(t => t?.product).filter(Boolean))
 
 function lootEntryValue(entry, itemsData) {
   if (!entry?.itemId) return 0
@@ -49,7 +52,8 @@ export function isPvpCoinReplacementItem(itemId, itemsData) {
 export function getPvpCoinReplacementValue(entry, itemsData) {
   if (!entry?.itemId || !isPvpCoinReplacementItem(entry.itemId, itemsData)) return 0
   const def = itemsData?.[entry.itemId]
-  const shopValue = Number(def?.shopValue)
+  const isMinigameUnlockItem = MINIGAME_UNLOCK_PRODUCTS.has(entry.itemId)
+  const shopValue = isMinigameUnlockItem ? MINIGAME_UNLOCK_ITEM_VALUE : Number(def?.shopValue)
   const qty = Math.max(1, Number(entry.quantity) || 1)
   if (!Number.isFinite(shopValue) || shopValue <= 0) return 0
   return Math.floor(shopValue) * qty
