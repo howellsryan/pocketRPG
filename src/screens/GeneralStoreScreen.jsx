@@ -287,10 +287,6 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
               const restriction = getPurchaseRestriction(item, { isIronman })
               const isBossUnique = restriction.code === 'BOSS_UNIQUE_RESTRICTED'
               const isClueReward = restriction.code === 'CLUE_REWARD_RESTRICTED'
-              const obtainMessage = isBossUnique
-                ? formatObtainSourceMessage(item.id, { itemsData, monstersData, raidsData })
-                : (isClueReward ? 'Obtain through clue scroll rewards.' : null)
-
               return (
                 <button
                   key={item.id}
@@ -313,7 +309,6 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
                     isQuestItem && !isUnlocked ? 'text-[#666]' : (canAfford ? 'text-[var(--color-gold)]' : 'text-[#888]')
                   }`}>
                     {isQuestItem && !isUnlocked ? '—' : (isBossUnique ? 'Boss unique' : (isClueReward ? 'Clue reward' : `${price.toLocaleString()} gp`))}
-                    {(isBossUnique || isClueReward) && <div class="text-[10px] text-[#888] mt-1 break-words leading-tight">{obtainMessage}</div>}
                   </div>
                 </button>
               )
