@@ -15053,5 +15053,688 @@
     "shopValue": 11,
     "icon": "🪨",
     "isGeneralStore": true
+  },
+  "dragon_boots": {
+    "id": "dragon_boots",
+    "name": "Dragon boots",
+    "type": "armour",
+    "slot": "boots",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -3,
+      "ranged": -1
+    },
+    "defenceBonus": {
+      "stab": 16,
+      "slash": 17,
+      "crush": 18,
+      "magic": -3,
+      "ranged": -1
+    },
+    "otherBonus": {
+      "meleeStrength": 4,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 60
+    },
+    "shopValue": 134200,
+    "icon": "👢",
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "mystic_hat": {
+    "id": "mystic_hat",
+    "name": "Mystic hat",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 3,
+      "ranged": -1
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 6,
+      "ranged": -1
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 40,
+      "defence": 20
+    },
+    "shopValue": 60800,
+    "icon": "🎩",
+    "isGeneralStore": false
+  },
+  "mystic_robe_top": {
+    "id": "mystic_robe_top",
+    "name": "Mystic robe top",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 20,
+      "ranged": -10
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 30,
+      "ranged": -10
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 40,
+      "defence": 20
+    },
+    "shopValue": 240800,
+    "icon": "🥷",
+    "isGeneralStore": false
+  },
+  "mystic_robe_bottom": {
+    "id": "mystic_robe_bottom",
+    "name": "Mystic robe bottom",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 15,
+      "ranged": -7
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 25,
+      "ranged": -7
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 40,
+      "defence": 20
+    },
+    "shopValue": 180600,
+    "icon": "👖",
+    "isGeneralStore": false
+  },
+  "mystic_gloves": {
+    "id": "mystic_gloves",
+    "name": "Mystic gloves",
+    "type": "armour",
+    "slot": "gloves",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 3,
+      "ranged": -2
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 5,
+      "ranged": -2
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 40,
+      "defence": 20
+    },
+    "shopValue": 45600,
+    "icon": "🧤",
+    "isGeneralStore": false
+  },
+  "mystic_boots": {
+    "id": "mystic_boots",
+    "name": "Mystic boots",
+    "type": "armour",
+    "slot": "boots",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 3,
+      "ranged": -2
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 5,
+      "ranged": -2
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 40,
+      "defence": 20
+    },
+    "shopValue": 45600,
+    "icon": "👢",
+    "isGeneralStore": false
+  },
+  "granite_maul": {
+    "id": "granite_maul",
+    "name": "Granite maul",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 7,
+    "attackStyle": "crush",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 81,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 79,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 50,
+      "strength": 50
+    },
+    "specialAttack": {
+      "type": "triple_hit",
+      "energyCost": 100,
+      "description": "Quake: Smashes the target three times in a single attack, each strike rolling its own damage."
+    },
+    "shopValue": 36000,
+    "icon": "🔨",
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "granite_helm": {
+    "id": "granite_helm",
+    "name": "Granite helm",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -3,
+      "ranged": -1
+    },
+    "defenceBonus": {
+      "stab": 25,
+      "slash": 25,
+      "crush": 25,
+      "magic": -1,
+      "ranged": 25
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 45,
+      "strength": 50
+    },
+    "shopValue": 23400,
+    "icon": "👑",
+    "isGeneralStore": false
+  },
+  "granite_legs": {
+    "id": "granite_legs",
+    "name": "Granite legs",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -21,
+      "ranged": -7
+    },
+    "defenceBonus": {
+      "stab": 51,
+      "slash": 49,
+      "crush": 47,
+      "magic": -4,
+      "ranged": 56
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 50,
+      "strength": 50
+    },
+    "shopValue": 95000,
+    "icon": "👖",
+    "isGeneralStore": false
+  },
+  "granite_shield": {
+    "id": "granite_shield",
+    "name": "Granite shield",
+    "type": "armour",
+    "slot": "shield",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -6,
+      "ranged": -2
+    },
+    "defenceBonus": {
+      "stab": 50,
+      "slash": 55,
+      "crush": 45,
+      "magic": -1,
+      "ranged": 55
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 50,
+      "strength": 50
+    },
+    "shopValue": 50000,
+    "icon": "🛡️",
+    "isGeneralStore": false
+  },
+  "granite_gloves": {
+    "id": "granite_gloves",
+    "name": "Granite gloves",
+    "type": "armour",
+    "slot": "gloves",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -2,
+      "ranged": -2
+    },
+    "defenceBonus": {
+      "stab": 9,
+      "slash": 9,
+      "crush": 9,
+      "magic": -3,
+      "ranged": 6
+    },
+    "otherBonus": {
+      "meleeStrength": 6,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 50,
+      "strength": 50
+    },
+    "shopValue": 32000,
+    "icon": "🧤",
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "granite_ring": {
+    "id": "granite_ring",
+    "name": "Granite ring",
+    "type": "armour",
+    "slot": "ring",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 1,
+      "slash": 1,
+      "crush": 1,
+      "magic": 0,
+      "ranged": 1
+    },
+    "otherBonus": {
+      "meleeStrength": 4,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {},
+    "shopValue": 18000,
+    "icon": "💍",
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "granite_dust": {
+    "id": "granite_dust",
+    "name": "Granite dust",
+    "type": "resource",
+    "stackable": true,
+    "shopValue": 50,
+    "icon": "🪨",
+    "isGeneralStore": false
+  },
+  "dark_bow": {
+    "id": "dark_bow",
+    "name": "Dark bow",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 9,
+    "attackStyle": "ranged",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 95
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 60
+    },
+    "specialAttack": {
+      "type": "descent_of_darkness",
+      "energyCost": 65,
+      "description": "Descent of Darkness: Fires two arrows simultaneously, each hitting up to 150% of your normal max hit."
+    },
+    "shopValue": 188000,
+    "icon": "🏹",
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "dark_claw": {
+    "id": "dark_claw",
+    "name": "Dark claw",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 75000,
+    "icon": "🦅",
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "primordial_crystal": {
+    "id": "primordial_crystal",
+    "name": "Primordial crystal",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 7000000,
+    "icon": "💎",
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "combineWith": "dragon_boots",
+    "combineResult": "primordial_boots",
+    "combineDescription": "Combine with Dragon boots to forge Primordial boots."
+  },
+  "pegasian_crystal": {
+    "id": "pegasian_crystal",
+    "name": "Pegasian crystal",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 5800000,
+    "icon": "💎",
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "combineWith": "ranger_boots",
+    "combineResult": "pegasian_boots",
+    "combineDescription": "Combine with Ranger boots to forge Pegasian boots."
+  },
+  "eternal_crystal": {
+    "id": "eternal_crystal",
+    "name": "Eternal crystal",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 4900000,
+    "icon": "💎",
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "combineWith": "wizard_boots",
+    "combineResult": "eternal_boots",
+    "combineDescription": "Combine with Wizard boots to forge Eternal boots."
+  },
+  "smouldering_stone": {
+    "id": "smouldering_stone",
+    "name": "Smouldering stone",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 1700000,
+    "icon": "🔥",
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "primordial_boots": {
+    "id": "primordial_boots",
+    "name": "Primordial boots",
+    "type": "armour",
+    "slot": "boots",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -4,
+      "ranged": -1
+    },
+    "defenceBonus": {
+      "stab": 22,
+      "slash": 22,
+      "crush": 22,
+      "magic": -4,
+      "ranged": -1
+    },
+    "otherBonus": {
+      "meleeStrength": 5,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 75,
+      "strength": 75
+    },
+    "shopValue": 8400000,
+    "icon": "👢",
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "pegasian_boots": {
+    "id": "pegasian_boots",
+    "name": "Pegasian boots",
+    "type": "armour",
+    "slot": "boots",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -4,
+      "ranged": 12
+    },
+    "defenceBonus": {
+      "stab": 5,
+      "slash": 5,
+      "crush": 5,
+      "magic": -4,
+      "ranged": 8
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 6,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 75,
+      "ranged": 75
+    },
+    "shopValue": 6800000,
+    "icon": "👢",
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "eternal_boots": {
+    "id": "eternal_boots",
+    "name": "Eternal boots",
+    "type": "armour",
+    "slot": "boots",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 8,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 5,
+      "slash": 5,
+      "crush": 5,
+      "magic": 8,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 75,
+      "magic": 75
+    },
+    "shopValue": 5900000,
+    "icon": "👢",
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "hydra_leather": {
+    "id": "hydra_leather",
+    "name": "Hydra leather",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 1100000,
+    "icon": "🐉",
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "hydra_tail": {
+    "id": "hydra_tail",
+    "name": "Hydra's tail",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 4500000,
+    "icon": "🐉",
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "combineWith": "abyssal_tentacle",
+    "combineResult": "bonecrusher_necklace",
+    "combineDescription": "Used in advanced crafting recipes."
+  },
+  "hydra_bones": {
+    "id": "hydra_bones",
+    "name": "Hydra bones",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 6500,
+    "icon": "🦴",
+    "isGeneralStore": false
+  },
+  "ferocious_gloves": {
+    "id": "ferocious_gloves",
+    "name": "Ferocious gloves",
+    "type": "armour",
+    "slot": "gloves",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 16,
+      "slash": 16,
+      "crush": 16,
+      "magic": -16,
+      "ranged": -16
+    },
+    "defenceBonus": {
+      "stab": 1,
+      "slash": 1,
+      "crush": 1,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 14,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 80,
+      "strength": 80,
+      "defence": 80,
+      "slayer": 95
+    },
+    "shopValue": 10200000,
+    "icon": "🧤",
+    "isGeneralStore": false,
+    "isBossUnique": true
   }
 }

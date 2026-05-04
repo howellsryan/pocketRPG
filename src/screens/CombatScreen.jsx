@@ -45,7 +45,7 @@ const COMBAT_CATEGORIES = [
     key: 'slayer',
     label: 'Slayer',
     icon: '💀',
-    ids: ['blood_veld', 'skeletal_wyvern', 'nechryael', 'smoke_devil', 'abyssal_demon', 'kraken', 'demonic_gorilla', 'lizardman_shaman'],
+    ids: ['banshee', 'aberrant_spectre', 'wyrm', 'spiritual_warrior', 'spiritual_ranger', 'spiritual_mage', 'gargoyle', 'blood_veld', 'skeletal_wyvern', 'nechryael', 'smoke_devil', 'brutal_black_dragon', 'abyssal_demon', 'dark_beast', 'kraken', 'demonic_gorilla', 'lizardman_shaman', 'cerberus', 'hydra'],
   },
   {
     key: 'bossing',
@@ -108,6 +108,9 @@ const MONSTER_ICONS = {
   rock_crab: '🦀', sand_crab: '🦀', hill_giant: '👊', moss_giant: '🌿',
   wizard: '🧙', dark_wizard: '🧙‍♂️', abyssal_demon: '😈', demonic_gorilla: '🦍', lizardman_shaman: '🦎',
   blood_veld: '🩸', nechryael: '👻', skeletal_wyvern: '🐲', smoke_devil: '💨', kraken: '🦑',
+  banshee: '👻', aberrant_spectre: '👁️', wyrm: '🐍', spiritual_warrior: '⚔️',
+  spiritual_ranger: '🏹', spiritual_mage: '🔮', gargoyle: '🗿',
+  brutal_black_dragon: '🐉', dark_beast: '🦇', cerberus: '🐺', hydra: '🐲',
   green_dragon: '🐉', red_dragon: '🔴', adamant_dragon: '⚔️', rune_dragon: '🛡️', lesser_demon: '👿',
   general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
   dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
@@ -366,7 +369,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             shove: '🗡️ Shove (staggered!)',
             toxic_siphon: `🎋 Toxic Siphon (+${ev.healAmount || 0} HP)`,
             slice_and_dice: '🦀🦀🦀🦀 Slice and Dice',
-            lunge: '🔰 The Block'
+            lunge: '🔰 The Block',
+            triple_hit: '🪨🪨🪨 Quake',
+            descent_of_darkness: '🏹🏹 Descent of Darkness'
           }
           const label = specLabels[ev.specType] || '⚡ Special Attack'
           setLog(prev => [...prev.slice(-20), {

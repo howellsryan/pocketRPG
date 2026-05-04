@@ -79,6 +79,23 @@ const EXPECTED_BOSS_UNIQUE_ITEM_IDS = new Set([
   'armadyl_crossbow',
   'zamorak_spear',
   'abyssal_whip',
+
+  'dragon_boots',
+  'granite_maul',
+  'granite_gloves',
+  'granite_ring',
+  'dark_bow',
+  'dark_claw',
+  'primordial_crystal',
+  'pegasian_crystal',
+  'eternal_crystal',
+  'smouldering_stone',
+  'primordial_boots',
+  'pegasian_boots',
+  'eternal_boots',
+  'hydra_leather',
+  'hydra_tail',
+  'ferocious_gloves',
 ])
 describe('data contracts', () => {
   it('item ids match keys and equipment slots are valid when present', () => {

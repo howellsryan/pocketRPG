@@ -1300,6 +1300,45 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       break
     }
 
+    case 'triple_hit': {
+      // Granite Maul — Quake: three rapid crush hits, each rolling its own damage
+      const styleBonuses = getMeleeStyleBonuses(state.stance)
+      const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
+      const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
+      const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
+      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      const hits = [rollDamage(acc, maxHit), rollDamage(acc, maxHit), rollDamage(acc, maxHit)]
+      const rawTotal = hits[0] + hits[1] + hits[2]
+      const actual = Math.min(rawTotal, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const xpSkills = _meleeXP(state.stance, actual)
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits, totalDamage: actual, specType: 'triple_hit', monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'descent_of_darkness': {
+      // Dark Bow — fires two arrows at 150% max hit each
+      const styleBonus = getRangedStyleBonus(state.stance)
+      const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
+      const maxHit = Math.floor(rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength) * 1.5)
+      const atkRoll = maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0)
+      const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus.ranged || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      const hits = [rollDamage(acc, maxHit), rollDamage(acc, maxHit)]
+      const rawTotal = hits[0] + hits[1]
+      const actual = Math.min(rawTotal, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const xpSkills = { ranged: actual * RANGED_XP_PER_DAMAGE, hitpoints: Math.floor(actual * HP_XP_PER_DAMAGE) }
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits, totalDamage: actual, specType: 'descent_of_darkness', monsterHP: monster.currentHP })
+      break
+    }
+
     default:
       return { combatState, events: [] }
   }
