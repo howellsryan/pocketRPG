@@ -40,7 +40,7 @@ describe('runecrafting enablement and data', () => {
       expect(action.materials).toEqual({ rune_essence: 1 })
       expect(action.product).toBe(product)
       expect(action.productQty).toBe(1)
-      expect(action.ticks).toBe(4)
+      expect(action.ticks).toBe(2)
     }
   })
 
