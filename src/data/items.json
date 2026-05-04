@@ -15344,16 +15344,6 @@
     "isGeneralStore": false,
     "isBossUnique": true
   },
-  "dark_claw": {
-    "id": "dark_claw",
-    "name": "Dark claw",
-    "type": "resource",
-    "stackable": false,
-    "shopValue": 75000,
-    "icon": "🦅",
-    "isGeneralStore": false,
-    "isBossUnique": true
-  },
   "primordial_crystal": {
     "id": "primordial_crystal",
     "name": "Primordial crystal",
@@ -15392,16 +15382,6 @@
     "combineWith": "wizard_boots",
     "combineResult": "eternal_boots",
     "combineDescription": "Combine with Wizard boots to forge Eternal boots."
-  },
-  "smouldering_stone": {
-    "id": "smouldering_stone",
-    "name": "Smouldering stone",
-    "type": "resource",
-    "stackable": false,
-    "shopValue": 1700000,
-    "icon": "🔥",
-    "isGeneralStore": false,
-    "isBossUnique": true
   },
   "primordial_boots": {
     "id": "primordial_boots",
