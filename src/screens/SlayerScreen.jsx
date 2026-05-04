@@ -33,7 +33,7 @@ const SLAYER_MASTERS = [
     description: 'Assigns medium-low level monsters. Requires combat 20.',
     taskRange: [60, 130],
     monsterPool: [
-      'dark_wizard', 'giant_spider', 'hill_giant', 'moss_giant',
+      'dark_wizard', 'giant_spider', 'hill_giant', 'moss_giant', 'banshee',
     ],
   },
   {
@@ -48,6 +48,7 @@ const SLAYER_MASTERS = [
     taskRange: [70, 160],
     monsterPool: [
       'moss_giant', 'green_dragon', 'lesser_demon', 'blood_veld',
+      'aberrant_spectre', 'wyrm',
     ],
   },
   {
@@ -62,7 +63,8 @@ const SLAYER_MASTERS = [
     taskRange: [80, 300],
     monsterPool: [
       'green_dragon', 'lesser_demon', 'abyssal_demon', 'red_dragon',
-      'blood_veld', 'nechryael',
+      'blood_veld', 'nechryael', 'aberrant_spectre', 'spiritual_warrior',
+      'spiritual_ranger', 'gargoyle', 'wyrm',
     ],
   },
   {
@@ -83,6 +85,7 @@ const SLAYER_MASTERS = [
       { id: 'dagganoth_supreme', boss: true },
       'red_dragon',
       'blood_veld', 'nechryael', 'skeletal_wyvern', 'smoke_devil',
+      'spiritual_mage', 'gargoyle', 'brutal_black_dragon', 'dark_beast',
       { id: 'kraken', boss: true },
       { id: 'jad', boss: true },
     ],
@@ -108,8 +111,11 @@ const SLAYER_MASTERS = [
       { id: 'kril_tsutsaroth', boss: true },
       { id: 'kreearra', boss: true },
       'blood_veld', 'nechryael', 'skeletal_wyvern', 'smoke_devil',
+      'spiritual_mage', 'gargoyle', 'brutal_black_dragon', 'dark_beast',
       { id: 'kraken', boss: true },
       { id: 'jad', boss: true },
+      { id: 'cerberus', boss: true },
+      { id: 'hydra', boss: true },
     ],
   },
 ]
@@ -142,6 +148,9 @@ const SLAYER_MONSTER_ICONS = {
   general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
   dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹', jad: '🔥',
   blood_veld: '🩸', nechryael: '👻', skeletal_wyvern: '🐲', smoke_devil: '💨', kraken: '🦑',
+  banshee: '👻', aberrant_spectre: '👁️', wyrm: '🐍', spiritual_warrior: '⚔️',
+  spiritual_ranger: '🏹', spiritual_mage: '🔮', gargoyle: '🗿',
+  brutal_black_dragon: '🐉', dark_beast: '🦇', cerberus: '🐺', hydra: '🐲',
 }
 
 export default function SlayerScreen({ onBack }) {

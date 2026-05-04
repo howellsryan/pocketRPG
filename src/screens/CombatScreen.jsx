@@ -33,19 +33,13 @@ const COMBAT_CATEGORIES = [
     key: 'training',
     label: 'Training',
     icon: '⚔️',
-    ids: ['chicken', 'goblin', 'cow', 'rock_crab', 'sand_crab', 'wizard', 'dark_wizard'],
-  },
-  {
-    key: 'dragons_giants',
-    label: 'Dragons & Giants',
-    icon: '🐉',
-    ids: ['giant_spider', 'hill_giant', 'moss_giant', 'lesser_demon', 'green_dragon', 'red_dragon'],
+    ids: ['chicken', 'goblin', 'cow', 'rock_crab', 'sand_crab', 'wizard', 'dark_wizard', 'giant_spider', 'hill_giant', 'moss_giant', 'lesser_demon'],
   },
   {
     key: 'slayer',
     label: 'Slayer',
     icon: '💀',
-    ids: ['blood_veld', 'skeletal_wyvern', 'nechryael', 'smoke_devil', 'abyssal_demon', 'kraken', 'demonic_gorilla', 'lizardman_shaman'],
+    ids: ['banshee', 'aberrant_spectre', 'wyrm', 'spiritual_warrior', 'spiritual_ranger', 'spiritual_mage', 'gargoyle', 'blood_veld', 'skeletal_wyvern', 'nechryael', 'smoke_devil', 'brutal_black_dragon', 'abyssal_demon', 'dark_beast', 'kraken', 'demonic_gorilla', 'lizardman_shaman', 'cerberus', 'hydra'],
   },
   {
     key: 'bossing',
@@ -66,16 +60,10 @@ const COMBAT_CATEGORIES = [
     ids: ['crazy_archaeologist'],
   },
   {
-    key: 'lair',
-    label: 'Lair',
+    key: 'dragons_lair',
+    label: 'Dragons Lair',
     icon: '🐲',
-    ids: ['king_black_dragon'],
-  },
-  {
-    key: 'metal_dragons',
-    label: 'Metal Dragons',
-    icon: '🐲',
-    ids: ['adamant_dragon', 'rune_dragon'],
+    ids: ['green_dragon', 'red_dragon', 'king_black_dragon', 'adamant_dragon', 'rune_dragon'],
   },
   {
     key: 'zulrah',
@@ -87,13 +75,7 @@ const COMBAT_CATEGORIES = [
     key: 'fight_caves',
     label: 'Fight Caves',
     icon: '🔥',
-    ids: ['jad'],
-  },
-  {
-    key: 'inferno',
-    label: 'The Inferno',
-    icon: '🌋',
-    ids: ['inferno'],
+    ids: ['jad', 'inferno'],
   },
   {
     key: 'corrupted_gauntlet',
@@ -108,6 +90,9 @@ const MONSTER_ICONS = {
   rock_crab: '🦀', sand_crab: '🦀', hill_giant: '👊', moss_giant: '🌿',
   wizard: '🧙', dark_wizard: '🧙‍♂️', abyssal_demon: '😈', demonic_gorilla: '🦍', lizardman_shaman: '🦎',
   blood_veld: '🩸', nechryael: '👻', skeletal_wyvern: '🐲', smoke_devil: '💨', kraken: '🦑',
+  banshee: '👻', aberrant_spectre: '👁️', wyrm: '🐍', spiritual_warrior: '⚔️',
+  spiritual_ranger: '🏹', spiritual_mage: '🔮', gargoyle: '🗿',
+  brutal_black_dragon: '🐉', dark_beast: '🦇', cerberus: '🐺', hydra: '🐲',
   green_dragon: '🐉', red_dragon: '🔴', adamant_dragon: '⚔️', rune_dragon: '🛡️', lesser_demon: '👿',
   general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
   dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
@@ -194,6 +179,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const [showSpellModal, setShowSpellModal] = useState(false)
   const [selectedMonsterInfo, setSelectedMonsterInfo] = useState(null)
   const [selectedRaidInfo, setSelectedRaidInfo] = useState(null)
+  const [collapsedSections, setCollapsedSections] = useState(() => ({
+    raids: true,
+    ...Object.fromEntries(COMBAT_CATEGORIES.map(category => [category.key, true])),
+  }))
   const [lootModal, setLootModal] = useState(null)
 
   const combatRef = useRef(null)
@@ -366,7 +355,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             shove: '🗡️ Shove (staggered!)',
             toxic_siphon: `🎋 Toxic Siphon (+${ev.healAmount || 0} HP)`,
             slice_and_dice: '🦀🦀🦀🦀 Slice and Dice',
-            lunge: '🔰 The Block'
+            lunge: '🔰 The Block',
+            triple_hit: '🪨🪨🪨 Quake',
+            descent_of_darkness: '🏹🏹 Descent of Darkness'
           }
           const label = specLabels[ev.specType] || '⚡ Special Attack'
           setLog(prev => [...prev.slice(-20), {
@@ -764,6 +755,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   }, [combat?.active])
 
   const getSlayerLevel = () => getLevelFromXP(stats.slayer?.xp || 0)
+  const toggleSection = (sectionKey) => {
+    setCollapsedSections(prev => ({ ...prev, [sectionKey]: !prev[sectionKey] }))
+  }
 
   const checkBossRequirements = (monster) => {
     const slayLvl = getSlayerLevel()
@@ -1247,17 +1241,29 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             const monsters = category.ids
               .map(id => monstersData[id])
               .filter(Boolean)
-              .sort((a, b) => a.combatLevel - b.combatLevel)
+              .sort((a, b) => {
+                if (category.key === 'slayer') {
+                  return (a.slayerRequirement || 0) - (b.slayerRequirement || 0)
+                }
+                return a.combatLevel - b.combatLevel
+              })
+            const isCollapsed = collapsedSections[category.key] ?? true
             return (
               <div key={category.key}>
-                <div class="flex items-center gap-2 mb-2 px-1">
+                <button
+                  type="button"
+                  onClick={() => toggleSection(category.key)}
+                  class="w-full flex items-center gap-2 mb-2 px-1 py-1 text-left rounded-lg active:bg-[#1a1a1a]"
+                >
                   <span class="text-base">{category.icon}</span>
                   <span class="text-xs font-semibold text-[var(--color-parchment)] uppercase tracking-wider opacity-60">{category.label}</span>
+                  <span class="ml-auto text-[10px] text-[var(--color-parchment)] opacity-60">{isCollapsed ? '▶' : '▼'}</span>
                   {monsters.length === 0 && (
                     <span class="text-[10px] text-[var(--color-parchment)] opacity-30 italic">— coming soon</span>
                   )}
-                </div>
-                <div class="space-y-2">
+                </button>
+                {!isCollapsed && (
+                  <div class="space-y-2">
                   {monsters.map(monster => {
                     const slayLvl = getSlayerLevel()
                     const slayReq = monster.slayerRequirement
@@ -1322,7 +1328,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     </div>
                     )
                   })}
-                </div>
+                  </div>
+                )}
               </div>
             )
           })}
@@ -1330,11 +1337,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
         {/* Raids Section */}
         <div class="mt-6">
-          <div class="flex items-center gap-2 mb-3 px-1">
+          <button
+            type="button"
+            onClick={() => toggleSection('raids')}
+            class="w-full flex items-center gap-2 mb-3 px-1 py-1 text-left rounded-lg active:bg-[#1a1a1a]"
+          >
             <span class="text-base">🏆</span>
             <span class="text-xs font-semibold text-[var(--color-gold)] uppercase tracking-wider">Raids</span>
-          </div>
-          <div class="space-y-2">
+            <span class="ml-auto text-[10px] text-[var(--color-parchment)] opacity-60">{(collapsedSections.raids ?? true) ? '▶' : '▼'}</span>
+          </button>
+          {!(collapsedSections.raids ?? true) && (
+            <div class="space-y-2">
             {Object.values(raidsData).map(raid => {
               const raidReq = checkRaidRequirements(raid)
               const isRaidLocked = raidReq.locked
@@ -1369,7 +1382,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 </div>
               )
             })}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* PvP entry — hidden for ironman / one-life accounts. */}
@@ -1458,7 +1472,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       </div>
                     )
                   })}
-                </div>
+                  </div>
               </div>
             )}
           </div>
@@ -2249,7 +2263,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       </div>
                     )
                   })}
-                </div>
+                  </div>
               </div>
             )}
           </div>
