@@ -29,7 +29,7 @@ const COMPLEXITY_ORDER = {
 
 export default function QuestsScreen() {
   const {
-    stats, completedQuests, activeTask, setActiveTask, inventory, bank, equipment,
+    stats, completedQuests, activeTask, setActiveTask, inventory, bank, equipment, unlockedMinigameItems,
     addToast, itemsData, questQueue, addQuestToQueue, removeFromQuestQueue, updateQuestQueue,
   } = useGame()
 
@@ -409,7 +409,8 @@ export default function QuestsScreen() {
                   <SectionHeader size="sm">{mg.icon} {mg.label}</SectionHeader>
                   {tasks.map(task => {
                     const missingReq = task.requiresItem && !hasItemAnywhere(task.requiresItem)
-                    const enabled = !missingReq
+                    const alreadyUnlocked = unlockedMinigameItems.has(task.product)
+                    const enabled = !missingReq && !alreadyUnlocked
                     const rowClass = enabled
                       ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
                       : 'bg-[#111] border-[#1a1a1a] opacity-45'
@@ -425,6 +426,9 @@ export default function QuestsScreen() {
                         <div class="flex-1 min-w-0">
                           <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>
                           <div class="text-[10px] text-[#c8a96e] opacity-80">
+                            {alreadyUnlocked && <span class="text-[#7a7]">✓ Unlocked in store</span>}
+                            {alreadyUnlocked && task.requiresItem && ' · '}
+
                             ⏱ {formatHours(task.hours)} total
                             {task.requiresItem && (
                               <span class={`${missingReq ? 'text-[#e57373]' : 'text-[var(--color-parchment)] opacity-50'}`}>
@@ -434,7 +438,7 @@ export default function QuestsScreen() {
                           </div>
                         </div>
                         <div class="flex-shrink-0 text-right">
-                          <div class="text-[18px]">→</div>
+                          <div class="text-[18px]">{alreadyUnlocked ? '✓' : '→'}</div>
                           <div class="text-[9px] text-[#c8a96e] opacity-70">{minigamesData.itemNames[task.product] || task.product}</div>
                         </div>
                       </button>

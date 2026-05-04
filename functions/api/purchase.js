@@ -3,6 +3,21 @@ import { assertNotInActiveMatch } from '../_lib/pvp.js'
 import itemsData from '../../src/data/items.json' assert { type: 'json' }
 import { getPurchaseRestriction } from '../../src/engine/storeRules.js'
 
+
+function hasUnlockedMinigameItem(saveDataJson, itemId, bodyUnlocked = []) {
+  if (!itemId) return false
+  if (Array.isArray(bodyUnlocked) && bodyUnlocked.includes(itemId)) return true
+  if (!saveDataJson) return false
+  try {
+    const parsed = JSON.parse(saveDataJson)
+    const unlocked = parsed?.settings?.unlockedMinigameItems
+    return Array.isArray(unlocked) && unlocked.includes(itemId)
+  } catch {
+    return false
+  }
+}
+
+
 export async function onRequestPost({ request, env }) {
   const auth = await requireAuth(request, env)
   if (auth.error) return json({ error: auth.error }, auth.status)
@@ -11,7 +26,7 @@ export async function onRequestPost({ request, env }) {
   try { body = await request.json() } catch { return json({ error: 'Invalid JSON' }, 400) }
 
   const characterId = parseInt(request.headers.get('X-Character-Id') || '0', 10)
-  const { item_id, quantity } = body
+  const { item_id, quantity, unlocked_minigame_items = [] } = body
 
   if (!characterId || !item_id || !quantity || quantity < 1) {
     return json({ error: 'Invalid request parameters' }, 400)
@@ -20,7 +35,7 @@ export async function onRequestPost({ request, env }) {
   try {
     // Verify character exists and belongs to authenticated user
     const character = await env.DB.prepare(
-      'SELECT id, username, is_ironman FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
+      'SELECT c.id, c.username, c.is_ironman, s.save_data FROM characters c LEFT JOIN saves s ON s.character_id = c.id WHERE c.id = ? AND c.owner_id = ? AND c.deleted_at IS NULL'
     ).bind(characterId, auth.identity.id).first()
 
     if (!character) {
@@ -37,7 +52,10 @@ export async function onRequestPost({ request, env }) {
       return json({ error: 'Item not found', code: 'ITEM_NOT_FOUND' }, 404)
     }
 
-    const restriction = getPurchaseRestriction(item, { isIronman: Boolean(character.is_ironman) })
+    const restriction = getPurchaseRestriction(item, {
+      isIronman: Boolean(character.is_ironman),
+      allowMinigameUnlockPurchase: hasUnlockedMinigameItem(character.save_data, item_id, unlocked_minigame_items),
+    })
     if (!restriction.allowed) {
       const status = restriction.code === 'ITEM_NOT_FOUND' ? 404 : 403
       return json({ error: restriction.message, code: restriction.code }, status)
