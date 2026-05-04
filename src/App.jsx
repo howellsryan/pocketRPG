@@ -34,6 +34,7 @@ import { simulateQuestIdleCascade, splitQuestXpRewards } from './engine/questIdl
 import { getLevelFromXP } from './engine/experience.js'
 import { pvpApi } from './cloud/pvp.js'
 import { SKIP_HOUR_MS, getSkipPreflight, isChargeableSkipOutcome } from './engine/skipPreflight.js'
+import { getSlayerTaskReward } from './engine/slayerRewards.js'
 import { isHighValueDrop } from './utils/itemValue.js'
 import { advanceFarmingState } from './engine/farming.ts'
 
@@ -117,7 +118,7 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
 }
 
 function GameApp() {
-  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
+  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
     unlockMinigameItem, awardDungeoneeringTokens, farming, updateFarming } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
@@ -677,10 +678,10 @@ function GameApp() {
           if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
             if (sim.slayerTaskUpdate.completed) {
               setSlayerTask(null)
-              awardSlayerPoints(sim.slayerTaskUpdate.pointsOnComplete)
-              addToast(sim.slayerTaskUpdate.pointsOnComplete > 0
-                ? `💀 Slayer task completed! +${sim.slayerTaskUpdate.pointsOnComplete} points`
-                : '💀 Slayer task completed!', 'levelup')
+              const reward = getSlayerTaskReward(sim.slayerTaskUpdate.pointsOnComplete, slayerTasksCompleted)
+              setSlayerTasksCompleted(reward.totalTasks)
+              awardSlayerPoints(reward.pointsEarned)
+              addToast(`💀 Slayer Task #${reward.totalTasks} Completed - ${reward.pointsEarned.toLocaleString()} points.`, 'levelup')
             } else {
               setSlayerTask(sim.slayerTaskUpdate)
             }
@@ -1252,10 +1253,10 @@ function GameApp() {
           if (savedTask.type === 'combat' && sim.slayerTaskUpdate) {
             if (sim.slayerTaskUpdate.completed) {
               setSlayerTask(null)
-              awardSlayerPoints(sim.slayerTaskUpdate.pointsOnComplete)
-              addToast(sim.slayerTaskUpdate.pointsOnComplete > 0
-                ? `💀 Slayer task completed! +${sim.slayerTaskUpdate.pointsOnComplete} points`
-                : '💀 Slayer task completed!', 'levelup')
+              const reward = getSlayerTaskReward(sim.slayerTaskUpdate.pointsOnComplete, slayerTasksCompleted)
+              setSlayerTasksCompleted(reward.totalTasks)
+              awardSlayerPoints(reward.pointsEarned)
+              addToast(`💀 Slayer Task #${reward.totalTasks} Completed - ${reward.pointsEarned.toLocaleString()} points.`, 'levelup')
             } else {
               setSlayerTask(sim.slayerTaskUpdate)
             }
