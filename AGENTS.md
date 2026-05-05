@@ -78,6 +78,7 @@ Schema:
 
 ## 8) Drops & Data Authoring
 - Before adding a monster drop, ensure every referenced item exists in `src/data/items.json`.
+- **Item Naming**: All item `name` fields must use **Title Case** (each word capitalized), e.g., "Bronze Dagger", "Oak Logs", "Iron Ore".
 - Stackables (coins/runes/arrows): quantity as `[min, max]`.
 - Non-stackable equipment: `quantity: 1`.
 
