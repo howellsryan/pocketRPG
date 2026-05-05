@@ -242,12 +242,12 @@ describe('Demonic Gorilla', () => {
   describe('New Items', () => {
     it('uncut_zenyte should exist in items data', () => {
       expect((itemsData as any)['uncut_zenyte']).toBeDefined()
-      expect((itemsData as any)['uncut_zenyte'].name).toBe('Uncut zenyte')
+      expect((itemsData as any)['uncut_zenyte'].name).toBe('Uncut Zenyte')
     })
 
     it('heavy_ballista should exist in items data', () => {
       expect((itemsData as any)['heavy_ballista']).toBeDefined()
-      expect((itemsData as any)['heavy_ballista'].name).toBe('Heavy ballista')
+      expect((itemsData as any)['heavy_ballista'].name).toBe('Heavy Ballista')
     })
 
     it('heavy_ballista should require level 75 ranged', () => {
