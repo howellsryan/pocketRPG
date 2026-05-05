@@ -48,10 +48,10 @@ describe('dungeoneering: equip requirement gates', () => {
   const completedQuests = new Set<string>()
 
   it('blocks chaotic melee below required attack/strength/dungeoneering', () => {
-    const lowAtk = statsAtLevels({ attack: 89, strength: 90, dungeoneering: 80 })
-    const lowStr = statsAtLevels({ attack: 90, strength: 89, dungeoneering: 80 })
-    const lowDung = statsAtLevels({ attack: 90, strength: 90, dungeoneering: 79 })
-    const ok = statsAtLevels({ attack: 90, strength: 90, dungeoneering: 80 })
+    const lowAtk = statsAtLevels({ attack: 79, strength: 90, dungeoneering: 80 })
+    const lowStr = statsAtLevels({ attack: 80, strength: 89, dungeoneering: 80 })
+    const lowDung = statsAtLevels({ attack: 80, strength: 90, dungeoneering: 79 })
+    const ok = statsAtLevels({ attack: 80, strength: 90, dungeoneering: 80 })
 
     for (const id of ['chaotic_rapier', 'chaotic_longsword', 'chaotic_maul']) {
       expect(checkEquipRequirements(itemsData[id], lowAtk, completedQuests)?.reason).toBe('skill')
