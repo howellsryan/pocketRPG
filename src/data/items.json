@@ -797,7 +797,7 @@
   },
   "amulet_of_strength": {
     "id": "amulet_of_strength",
-    "name": "Amulet Of Strength",
+    "name": "Amulet of Strength",
     "type": "armour",
     "slot": "neck",
     "stackable": false,
@@ -827,7 +827,7 @@
   },
   "amulet_of_power": {
     "id": "amulet_of_power",
-    "name": "Amulet Of Power",
+    "name": "Amulet of Power",
     "type": "armour",
     "slot": "neck",
     "stackable": false,
@@ -1233,7 +1233,7 @@
   },
   "bucket_of_sand": {
     "id": "bucket_of_sand",
-    "name": "Bucket Of Sand",
+    "name": "Bucket of Sand",
     "type": "resource",
     "stackable": false,
     "shopValue": 10,
@@ -1287,7 +1287,7 @@
   },
   "pot_of_flour": {
     "id": "pot_of_flour",
-    "name": "Pot Of Flour",
+    "name": "Pot of Flour",
     "type": "resource",
     "stackable": false,
     "shopValue": 65,
@@ -1918,7 +1918,7 @@
   },
   "amulet_of_magic": {
     "id": "amulet_of_magic",
-    "name": "Amulet Of Magic",
+    "name": "Amulet of Magic",
     "type": "armour",
     "slot": "neck",
     "stackable": false,
@@ -1948,7 +1948,7 @@
   },
   "amulet_of_glory": {
     "id": "amulet_of_glory",
-    "name": "Amulet Of Glory",
+    "name": "Amulet of Glory",
     "type": "armour",
     "slot": "neck",
     "stackable": false,
@@ -1978,7 +1978,7 @@
   },
   "amulet_of_fury": {
     "id": "amulet_of_fury",
-    "name": "Amulet Of Fury",
+    "name": "Amulet of Fury",
     "type": "armour",
     "slot": "neck",
     "stackable": false,
@@ -5026,7 +5026,7 @@
   },
   "staff_of_air": {
     "id": "staff_of_air",
-    "name": "Staff Of Air",
+    "name": "Staff of Air",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": false,
@@ -5062,7 +5062,7 @@
   },
   "staff_of_water": {
     "id": "staff_of_water",
-    "name": "Staff Of Water",
+    "name": "Staff of Water",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": false,
@@ -5098,7 +5098,7 @@
   },
   "staff_of_fire": {
     "id": "staff_of_fire",
-    "name": "Staff Of Fire",
+    "name": "Staff of Fire",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": false,
@@ -5134,7 +5134,7 @@
   },
   "staff_of_earth": {
     "id": "staff_of_earth",
-    "name": "Staff Of Earth",
+    "name": "Staff of Earth",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": false,
@@ -7301,7 +7301,7 @@
   },
   "staff_of_the_dead": {
     "id": "staff_of_the_dead",
-    "name": "Staff Of The Dead",
+    "name": "Staff of the Dead",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": false,
@@ -7661,7 +7661,7 @@
   },
   "eye_of_newt": {
     "id": "eye_of_newt",
-    "name": "Eye Of Newt",
+    "name": "Eye of Newt",
     "type": "resource",
     "stackable": true,
     "shopValue": 5,
@@ -7697,7 +7697,7 @@
   },
   "wine_of_zamorak": {
     "id": "wine_of_zamorak",
-    "name": "Wine Of Zamorak",
+    "name": "Wine of Zamorak",
     "type": "resource",
     "stackable": true,
     "shopValue": 1324,
@@ -8226,7 +8226,7 @@
   },
   "trident_of_the_swamp": {
     "id": "trident_of_the_swamp",
-    "name": "Trident Of The Swamp",
+    "name": "Trident of the Swamp",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": false,
@@ -8540,7 +8540,7 @@
   },
   "bow_of_faerdhinen": {
     "id": "bow_of_faerdhinen",
-    "name": "Bow Of Faerdhinen",
+    "name": "Bow of Faerdhinen",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": true,
@@ -8577,7 +8577,7 @@
   },
   "blade_of_saeldor": {
     "id": "blade_of_saeldor",
-    "name": "Blade Of Saeldor",
+    "name": "Blade of Saeldor",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": false,
@@ -9123,7 +9123,7 @@
   },
   "amulet_of_torture": {
     "id": "amulet_of_torture",
-    "name": "Amulet Of Torture",
+    "name": "Amulet of Torture",
     "type": "armour",
     "slot": "neck",
     "stackable": false,
@@ -9193,7 +9193,7 @@
   },
   "necklace_of_anguish": {
     "id": "necklace_of_anguish",
-    "name": "Necklace Of Anguish",
+    "name": "Necklace of Anguish",
     "type": "armour",
     "slot": "neck",
     "stackable": false,
@@ -9228,7 +9228,7 @@
   },
   "ring_of_suffering": {
     "id": "ring_of_suffering",
-    "name": "Ring Of Suffering",
+    "name": "Ring of Suffering",
     "type": "armour",
     "slot": "ring",
     "stackable": false,
@@ -9413,7 +9413,7 @@
   },
   "scythe_of_vitur": {
     "id": "scythe_of_vitur",
-    "name": "Scythe Of Vitur",
+    "name": "Scythe of Vitur",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": true,
@@ -10126,7 +10126,7 @@
   },
   "avas_assembler": {
     "id": "avas_assembler",
-    "name": "Ava'S Assembler",
+    "name": "Ava's Assembler",
     "type": "armour",
     "slot": "cape",
     "stackable": false,
@@ -10160,7 +10160,7 @@
   },
   "avas_accumulator": {
     "id": "avas_accumulator",
-    "name": "Ava'S Accumulator",
+    "name": "Ava's Accumulator",
     "type": "armour",
     "slot": "cape",
     "stackable": false,
@@ -12917,7 +12917,7 @@
   },
   "amulet_of_glory_t": {
     "id": "amulet_of_glory_t",
-    "name": "Amulet Of Glory (T)",
+    "name": "Amulet of Glory (T)",
     "type": "armour",
     "stackable": false,
     "shopValue": 47221,
@@ -14543,7 +14543,7 @@
   },
   "gloves_of_slaughter": {
     "id": "gloves_of_slaughter",
-    "name": "Gloves Of Slaughter",
+    "name": "Gloves of Slaughter",
     "type": "armour",
     "stackable": false,
     "shopValue": 65000000,
