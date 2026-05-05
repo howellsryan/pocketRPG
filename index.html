@@ -40569,6 +40569,10 @@ function setEntryQuantity(list, itemId, quantity) {
         next.push({ itemId, quantity });
     return next;
 }
+function clampQuantity(value, available) {
+    const parsed = Math.floor(Number(value) || 0);
+    return Math.max(0, Math.min(available, parsed));
+}
 /**
  * Compact configuration UI shared between offline-idle and manual skip.
  * Sets the configured caps; the simulator clamps against real inventory + bank
@@ -40610,8 +40614,10 @@ onClose, inventory = [], bank = {}, itemsData = {}, prayersData = {}, prayerLeve
                 consider(slot.itemId);
         for (const k of Object.keys(bankRef || {}))
             consider(k);
+        for (const entry of safeSetup.food || [])
+            consider(entry.itemId);
         return out.sort((a, b) => getFoodHealAmount(b.item) - getFoodHealAmount(a.item));
-    }, [inventoryRef, bankRef, itemsData]);
+    }, [inventoryRef, bankRef, itemsData, safeSetup.food]);
     const potionCandidates = useMemo(() => {
         const seen = new Set();
         const out = [];
@@ -40635,8 +40641,10 @@ onClose, inventory = [], bank = {}, itemsData = {}, prayersData = {}, prayerLeve
                 consider(slot.itemId);
         for (const k of Object.keys(bankRef || {}))
             consider(k);
+        for (const entry of safeSetup.potions || [])
+            consider(entry.itemId);
         return out;
-    }, [inventoryRef, bankRef, itemsData]);
+    }, [inventoryRef, bankRef, itemsData, safeSetup.potions]);
     function handleQuantityChange(kind, itemId, available, delta) {
         const list = kind === 'food' ? draft.food : draft.potions;
         const current = findEntry(list, itemId)?.quantity || 0;
@@ -40649,6 +40657,17 @@ onClose, inventory = [], bank = {}, itemsData = {}, prayersData = {}, prayerLeve
     function handleSetMax(kind, itemId, available) {
         const list = kind === 'food' ? draft.food : draft.potions;
         const nextList = setEntryQuantity(list, itemId, available);
+        update({ ...draft, [kind === 'food' ? 'food' : 'potions']: nextList });
+    }
+    function handleSetQuantity(kind, itemId, available, value) {
+        const list = kind === 'food' ? draft.food : draft.potions;
+        const next = clampQuantity(value, available);
+        const nextList = setEntryQuantity(list, itemId, next);
+        update({ ...draft, [kind === 'food' ? 'food' : 'potions']: nextList });
+    }
+    function handleRemove(kind, itemId) {
+        const list = kind === 'food' ? draft.food : draft.potions;
+        const nextList = setEntryQuantity(list, itemId, 0);
         update({ ...draft, [kind === 'food' ? 'food' : 'potions']: nextList });
     }
     function handleSelectPrayer(prayerId, kind) {
@@ -40664,13 +40683,13 @@ onClose, inventory = [], bank = {}, itemsData = {}, prayersData = {}, prayerLeve
         update({ ...draft, prayers: valid });
     }
     return (h(Modal, { title: TAB_LABEL[mode] || 'Idle Setup', onClose: onClose },
-        mode === 'food' && (h(FoodSection, { candidates: foodCandidates, itemsData: itemsData, draft: draft, onChange: (itemId, available, delta) => handleQuantityChange('food', itemId, available, delta), onSetMax: (itemId, available) => handleSetMax('food', itemId, available) })),
-        mode === 'potion' && (h(PotionSection, { candidates: potionCandidates, draft: draft, onChange: (itemId, available, delta) => handleQuantityChange('potion', itemId, available, delta), onSetMax: (itemId, available) => handleSetMax('potion', itemId, available) })),
+        mode === 'food' && (h(FoodSection, { candidates: foodCandidates, itemsData: itemsData, draft: draft, onChange: (itemId, available, delta) => handleQuantityChange('food', itemId, available, delta), onSetQuantity: (itemId, available, value) => handleSetQuantity('food', itemId, available, value), onSetMax: (itemId, available) => handleSetMax('food', itemId, available), onRemove: (itemId) => handleRemove('food', itemId) })),
+        mode === 'potion' && (h(PotionSection, { candidates: potionCandidates, draft: draft, onChange: (itemId, available, delta) => handleQuantityChange('potion', itemId, available, delta), onSetQuantity: (itemId, available, value) => handleSetQuantity('potion', itemId, available, value), onSetMax: (itemId, available) => handleSetMax('potion', itemId, available), onRemove: (itemId) => handleRemove('potion', itemId) })),
         mode === 'prayer' && (h(PrayerSection, { prayersData: prayersData, prayerLevel: prayerLevel, draft: draft, onSelect: handleSelectPrayer })),
         h("div", { class: "mt-4 flex justify-end" },
             h(Button, { variant: "primary", onClick: onClose }, "Done"))));
 }
-function FoodSection({ candidates, draft, onChange, onSetMax }) {
+function FoodSection({ candidates, draft, onChange, onSetQuantity, onSetMax, onRemove }) {
     if (candidates.length === 0) {
         return h("div", { class: "text-center py-4 text-[var(--color-parchment)] opacity-60" }, "No food in inventory or bank.");
     }
@@ -40690,12 +40709,13 @@ function FoodSection({ candidates, draft, onChange, onSetMax }) {
                         available)),
                 h("div", { class: "flex items-center gap-1" },
                     h(Button, { size: "sm", variant: "secondary", onClick: () => onChange(itemId, available, -1), disabled: cur <= 0 }, "-"),
-                    h("span", { class: "w-8 text-center font-[var(--font-mono)] text-sm text-[var(--color-gold)]" }, cur),
+                    h("input", { type: "number", min: "0", max: available, value: cur, onInput: (e) => onSetQuantity(itemId, available, e.currentTarget.value), class: "w-12 h-8 text-center rounded border border-[var(--color-void-border)] bg-[var(--color-void)] text-[var(--color-gold)] font-[var(--font-mono)] text-sm" }),
                     h(Button, { size: "sm", variant: "secondary", onClick: () => onChange(itemId, available, +1), disabled: cur >= available }, "+"),
-                    h(Button, { size: "sm", variant: "ghost", onClick: () => onSetMax(itemId, available) }, "Max"))));
+                    h(Button, { size: "sm", variant: "ghost", onClick: () => onSetMax(itemId, available) }, "Max"),
+                    h(Button, { size: "sm", variant: "ghost", onClick: () => onRemove(itemId), disabled: cur <= 0 }, "Clear"))));
         })));
 }
-function PotionSection({ candidates, draft, onChange, onSetMax }) {
+function PotionSection({ candidates, draft, onChange, onSetQuantity, onSetMax, onRemove }) {
     if (candidates.length === 0) {
         return h("div", { class: "text-center py-4 text-[var(--color-parchment)] opacity-60" }, "No idle-compatible potions in inventory or bank.");
     }
@@ -40722,14 +40742,17 @@ function PotionSection({ candidates, draft, onChange, onSetMax }) {
                         available)),
                 h("div", { class: "flex items-center gap-1" },
                     h(Button, { size: "sm", variant: "secondary", onClick: () => onChange(itemId, available, -1), disabled: cur <= 0 }, "-"),
-                    h("span", { class: "w-8 text-center font-[var(--font-mono)] text-sm text-[var(--color-gold)]" }, cur),
+                    h("input", { type: "number", min: "0", max: available, value: cur, onInput: (e) => onSetQuantity(itemId, available, e.currentTarget.value), class: "w-12 h-8 text-center rounded border border-[var(--color-void-border)] bg-[var(--color-void)] text-[var(--color-gold)] font-[var(--font-mono)] text-sm" }),
                     h(Button, { size: "sm", variant: "secondary", onClick: () => onChange(itemId, available, +1), disabled: cur >= available }, "+"),
-                    h(Button, { size: "sm", variant: "ghost", onClick: () => onSetMax(itemId, available) }, "Max"))));
+                    h(Button, { size: "sm", variant: "ghost", onClick: () => onSetMax(itemId, available) }, "Max"),
+                    h(Button, { size: "sm", variant: "ghost", onClick: () => onRemove(itemId), disabled: cur <= 0 }, "Clear"))));
         })));
 }
 function PrayerSection({ prayersData, prayerLevel, draft, onSelect }) {
     const protections = Object.values(prayersData || {}).filter((p) => p.bonusType === 'protection');
-    const combats = Object.values(prayersData || {}).filter((p) => p.bonusType === 'stat' || p.bonusType === 'multi_stat');
+    const combats = Object.values(prayersData || {})
+        .filter((p) => p.bonusType === 'stat' || p.bonusType === 'multi_stat')
+        .sort((a, b) => (a.level || 1) - (b.level || 1));
     const protId = draft.prayers?.protectionPrayerId;
     const cmbId = draft.prayers?.combatPrayerId;
     return (h("div", { class: "space-y-4" },
