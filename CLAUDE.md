@@ -40,6 +40,7 @@ Menu-driven idle/simulation fantasy RPG. 0.6s tick-based engine with a text, ico
  * **Withdraw as Note**: Sets noted: true. Noted items stack but cannot be equipped or eaten.
 ## 8. DATA SCHEMAS (example below, ensure this is followed)
  * **Items**: Located in src/data/items.json.
+   * **Naming Convention**: All item `name` fields must use **Title Case** (each word capitalized), e.g. "Bronze Dagger", "Iron Ore", "Oak Logs". This applies to all new items added.
  * **Monsters**: Located in src/data/monsters.json.
 ## 9. KEY INVARIANTS
  * **Rounding**: Always use Math.floor().
