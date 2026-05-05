@@ -38,6 +38,7 @@ import { pvpApi } from './cloud/pvp.js'
 import { SKIP_HOUR_MS, getSkipPreflight, isChargeableSkipOutcome } from './engine/skipPreflight.js'
 import { getSlayerTaskReward } from './engine/slayerRewards.js'
 import { isHighValueDrop } from './utils/itemValue.js'
+import { computeIdleElapsedMs } from './utils/idleElapsed.js'
 import { advanceFarmingState } from './engine/farming.ts'
 
 // ── Clock-rollback watermark ────────────────────────────────────────────────
@@ -441,28 +442,15 @@ function GameApp() {
               cloudServerNow = cloudIdle.serverNow || null
             }
           } catch (e) { /* fall back to local */ }
-          let elapsedMs
-          if (hiddenAtPerfRef.current !== null && perfNow >= hiddenAtPerfRef.current) {
-            // Same session: use monotonic clock — immune to system time changes
-            elapsedMs = Math.floor(perfNow - hiddenAtPerfRef.current)
-          } else if (cloudServerNow && cloudLastActiveAt) {
-            // New session + cloud: both endpoints are server-stamped so this
-            // elapsed is immune to the user changing their device clock.
-            elapsedMs = Math.min(Math.max(0, cloudServerNow - cloudLastActiveAt), 24 * 60 * 60 * 1000)
-          } else if (cloudLastActiveAt) {
-            // Cloud knows lastActiveAt but didn't return serverNow (older
-            // deployment). We still prefer the server-stamped anchor, but the
-            // endpoint (Date.now()) is client-controlled — cross-check against
-            // the clock-rollback watermark before trusting it.
-            elapsedMs = Math.min(Math.max(0, Date.now() - cloudLastActiveAt), 24 * 60 * 60 * 1000)
-            elapsedMs = clampByClockWatermark(elapsedMs)
-          } else {
-            // No cloud state — wall-clock only. Clamp against our max-observed
-            // watermark so a player who rolls the device clock backwards can't
-            // resurrect old progress, then cap at 24h.
-            elapsedMs = Math.min(Math.max(0, Date.now() - hiddenAt), 24 * 60 * 60 * 1000)
-            elapsedMs = clampByClockWatermark(elapsedMs)
-          }
+          const elapsedMs = computeIdleElapsedMs({
+            now: Date.now(),
+            perfNow,
+            hiddenAt,
+            hiddenAtPerf: hiddenAtPerfRef.current,
+            cloudServerNow,
+            cloudLastActiveAt,
+            clockWatermark: readMaxObservedAt(),
+          })
           hiddenAtPerfRef.current = null
           if (elapsedMs < 2000) return
 

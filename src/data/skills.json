@@ -3025,7 +3025,7 @@
         "name": "Craft air rune",
         "level": 1,
         "ticks": 2,
-        "xp": 5,
+        "xp": 10,
         "product": "air_rune",
         "productQty": 1,
         "materials": {
@@ -3037,7 +3037,7 @@
         "name": "Craft mind rune",
         "level": 2,
         "ticks": 2,
-        "xp": 5.5,
+        "xp": 11,
         "product": "mind_rune",
         "productQty": 1,
         "materials": {
@@ -3049,7 +3049,7 @@
         "name": "Craft water rune",
         "level": 5,
         "ticks": 2,
-        "xp": 6,
+        "xp": 12,
         "product": "water_rune",
         "productQty": 1,
         "materials": {
@@ -3061,7 +3061,7 @@
         "name": "Craft earth rune",
         "level": 9,
         "ticks": 2,
-        "xp": 6.5,
+        "xp": 13,
         "product": "earth_rune",
         "productQty": 1,
         "materials": {
@@ -3073,7 +3073,7 @@
         "name": "Craft fire rune",
         "level": 14,
         "ticks": 2,
-        "xp": 7,
+        "xp": 14,
         "product": "fire_rune",
         "productQty": 1,
         "materials": {
@@ -3085,7 +3085,7 @@
         "name": "Craft body rune",
         "level": 20,
         "ticks": 2,
-        "xp": 7.5,
+        "xp": 15,
         "product": "body_rune",
         "productQty": 1,
         "materials": {
@@ -3097,7 +3097,7 @@
         "name": "Craft cosmic rune",
         "level": 27,
         "ticks": 2,
-        "xp": 8,
+        "xp": 16,
         "product": "cosmic_rune",
         "productQty": 1,
         "materials": {
@@ -3109,7 +3109,7 @@
         "name": "Craft chaos rune",
         "level": 35,
         "ticks": 2,
-        "xp": 8.5,
+        "xp": 17,
         "product": "chaos_rune",
         "productQty": 1,
         "materials": {
@@ -3121,7 +3121,7 @@
         "name": "Craft astral rune",
         "level": 40,
         "ticks": 2,
-        "xp": 8.7,
+        "xp": 17.4,
         "product": "astral_rune",
         "productQty": 1,
         "materials": {
@@ -3133,7 +3133,7 @@
         "name": "Craft nature rune",
         "level": 44,
         "ticks": 2,
-        "xp": 9,
+        "xp": 18,
         "product": "nature_rune",
         "productQty": 1,
         "materials": {
@@ -3145,7 +3145,7 @@
         "name": "Craft law rune",
         "level": 54,
         "ticks": 2,
-        "xp": 9.5,
+        "xp": 19,
         "product": "law_rune",
         "productQty": 1,
         "materials": {
@@ -3157,7 +3157,7 @@
         "name": "Craft death rune",
         "level": 65,
         "ticks": 2,
-        "xp": 10,
+        "xp": 20,
         "product": "death_rune",
         "productQty": 1,
         "materials": {
@@ -3169,7 +3169,7 @@
         "name": "Craft blood rune",
         "level": 77,
         "ticks": 2,
-        "xp": 10.5,
+        "xp": 21,
         "product": "blood_rune",
         "productQty": 1,
         "materials": {
@@ -3181,7 +3181,7 @@
         "name": "Craft soul rune",
         "level": 90,
         "ticks": 2,
-        "xp": 11.3,
+        "xp": 22.6,
         "product": "soul_rune",
         "productQty": 1,
         "materials": {
@@ -3193,7 +3193,7 @@
         "name": "Craft wrath rune",
         "level": 95,
         "ticks": 2,
-        "xp": 8,
+        "xp": 16,
         "product": "wrath_rune",
         "productQty": 1,
         "materials": {

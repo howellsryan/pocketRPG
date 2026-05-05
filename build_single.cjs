@@ -14,6 +14,7 @@ const sourceFiles = [
   'utils/helpers.js',
   'utils/formatters.js',
   'utils/itemValue.js',
+  'utils/idleElapsed.js',
   'hooks/useActionTick.js',
   'engine/experience.js',
   'engine/formulas.js',
