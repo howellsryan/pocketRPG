@@ -1235,7 +1235,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           >
             🍖 Idle Eat
             {idleCombatSetup?.food?.length > 0 && (
-              <span class="ml-1 text-[var(--color-gold)]">({idleCombatSetup.food.reduce((n, e) => n + (e.quantity || 0), 0)})</span>
+              <span class="ml-1 text-[var(--color-gold)]">✓</span>
             )}
           </button>
           <button
@@ -1255,7 +1255,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           >
             🧪 Idle Potion
             {idleCombatSetup?.potions?.length > 0 && (
-              <span class="ml-1 text-[var(--color-gold)]">({idleCombatSetup.potions.reduce((n, e) => n + (e.quantity || 0), 0)})</span>
+              <span class="ml-1 text-[var(--color-gold)]">✓</span>
             )}
           </button>
         </div>
