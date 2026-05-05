@@ -36063,7 +36063,10 @@ function buildAvailableSupplyMap(supplyList, inventory, bank) {
     for (const entry of supplyList) {
         if (!entry?.itemId)
             continue;
-        const configured = Math.max(0, Math.floor(Number(entry.quantity) || 0));
+        const hasExplicitQuantity = entry.quantity != null;
+        const configured = hasExplicitQuantity
+            ? Math.max(0, Math.floor(Number(entry.quantity) || 0))
+            : countAvailable(entry.itemId, inventory, bank);
         if (configured <= 0)
             continue;
         const available = Math.min(configured, countAvailable(entry.itemId, inventory, bank));
@@ -40635,11 +40638,10 @@ function countAcrossInventoryAndBank(itemId, inventory, bank) {
 function findEntry(list, itemId) {
     return (list || []).find((e) => e.itemId === itemId) || null;
 }
-const UNLIMITED_IDLE_SUPPLY_QUANTITY = 200000000;
 function setEntryEnabled(list, itemId, enabled) {
     const next = (list || []).filter((e) => e.itemId !== itemId);
     if (enabled)
-        next.push({ itemId, quantity: UNLIMITED_IDLE_SUPPLY_QUANTITY });
+        next.push({ itemId });
     return next;
 }
 /**
@@ -40716,7 +40718,7 @@ onClose, inventory = [], bank = {}, itemsData = {}, prayersData = {}, prayerLeve
     }, [inventoryRef, bankRef, itemsData, safeSetup.potions]);
     function handleToggleSupply(kind, itemId) {
         const list = kind === 'food' ? draft.food : draft.potions;
-        const selected = (findEntry(list, itemId)?.quantity || 0) > 0;
+        const selected = findEntry(list, itemId) != null;
         const nextList = setEntryEnabled(list, itemId, !selected);
         update({ ...draft, [kind === 'food' ? 'food' : 'potions']: nextList });
     }
@@ -40746,7 +40748,7 @@ function FoodSection({ candidates, draft, onToggle }) {
     return (h("div", { class: "space-y-2" },
         h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60 leading-snug" }, "Pick food the simulator may eat. Selected food is used until it runs out."),
         candidates.map(({ itemId, item, available }) => {
-            const selected = (findEntry(draft.food, itemId)?.quantity || 0) > 0;
+            const selected = findEntry(draft.food, itemId) != null;
             const heal = getFoodHealAmount(item);
             return (h("div", { key: itemId, class: "flex items-center gap-2 p-2 rounded-lg bg-[var(--color-void-light)] border border-[var(--color-void-border)]" },
                 h("span", { class: "text-xl" }, item.icon || '🍖'),
@@ -40759,7 +40761,7 @@ function FoodSection({ candidates, draft, onToggle }) {
                     h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60" },
                         "Own ",
                         available)),
-                h(Button, { size: "sm", variant: selected ? 'ghost' : 'secondary', onClick: () => onToggle(itemId) }, selected ? 'Clear' : 'Use')));
+                h("button", { onClick: () => onToggle(itemId), class: `w-6 h-6 rounded border flex items-center justify-center text-xs ${selected ? 'bg-[var(--color-gold-dim)] border-[var(--color-gold)] text-black' : 'bg-[var(--color-void)] border-[var(--color-void-border)] text-transparent'}`, "aria-label": selected ? `Unselect ${item.name}` : `Select ${item.name}` }, "\u2713")));
         })));
 }
 function PotionSection({ candidates, draft, onToggle }) {
@@ -40769,7 +40771,7 @@ function PotionSection({ candidates, draft, onToggle }) {
     return (h("div", { class: "space-y-2" },
         h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60 leading-snug" }, "Boost potions apply only while supply lasts (5 min per dose). Prayer/Super restores top up the prayer pool when a prayer is active."),
         candidates.map(({ itemId, item, available }) => {
-            const selected = (findEntry(draft.potions, itemId)?.quantity || 0) > 0;
+            const selected = findEntry(draft.potions, itemId) != null;
             let blurb = '';
             if (item.effect === 'combat')
                 blurb = `+${item.boost} combat`;
@@ -40787,7 +40789,7 @@ function PotionSection({ candidates, draft, onToggle }) {
                     h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60" },
                         "Own ",
                         available)),
-                h(Button, { size: "sm", variant: selected ? 'ghost' : 'secondary', onClick: () => onToggle(itemId) }, selected ? 'Clear' : 'Use')));
+                h("button", { onClick: () => onToggle(itemId), class: `w-6 h-6 rounded border flex items-center justify-center text-xs ${selected ? 'bg-[var(--color-gold-dim)] border-[var(--color-gold)] text-black' : 'bg-[var(--color-void)] border-[var(--color-void-border)] text-transparent'}`, "aria-label": selected ? `Unselect ${item.name}` : `Select ${item.name}` }, "\u2713")));
         })));
 }
 function PrayerSection({ prayersData, prayerLevel, draft, onSelect }) {
@@ -44390,19 +44392,13 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                 h("div", { class: "flex gap-1.5 mb-2" },
                     h("button", { onClick: () => setIdleSetupMode('food'), class: "flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a]", title: "Configure food the simulator can use during idle/skip combat" },
                         "\uD83C\uDF56 Idle Eat",
-                        idleCombatSetup?.food?.length > 0 && (h("span", { class: "ml-1 text-[var(--color-gold)]" },
-                            "(",
-                            idleCombatSetup.food.reduce((n, e) => n + (e.quantity || 0), 0),
-                            ")"))),
+                        idleCombatSetup?.food?.length > 0 && (h("span", { class: "ml-1 text-[var(--color-gold)]" }, "\u2713"))),
                     h("button", { onClick: () => setIdleSetupMode('prayer'), class: "flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a]", title: "Configure prayers the simulator should use during idle/skip combat" },
                         "\uD83D\uDE4F Idle Pray",
                         (idleCombatSetup?.prayers?.protectionPrayerId || idleCombatSetup?.prayers?.combatPrayerId) && (h("span", { class: "ml-1 text-[var(--color-gold)]" }, "\u2713"))),
                     h("button", { onClick: () => setIdleSetupMode('potion'), class: "flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a]", title: "Configure potions the simulator can drink during idle/skip combat" },
                         "\uD83E\uDDEA Idle Potion",
-                        idleCombatSetup?.potions?.length > 0 && (h("span", { class: "ml-1 text-[var(--color-gold)]" },
-                            "(",
-                            idleCombatSetup.potions.reduce((n, e) => n + (e.quantity || 0), 0),
-                            ")")))),
+                        idleCombatSetup?.potions?.length > 0 && (h("span", { class: "ml-1 text-[var(--color-gold)]" }, "\u2713")))),
                 h("div", { class: "flex gap-1.5 mb-3" }, ['accurate', 'aggressive', 'defensive'].map(s => (h("button", { key: s, onClick: () => updateCombatStance(s), class: `flex-1 py-1.5 rounded-lg text-[10px] font-semibold capitalize transition-colors
                 ${combatStance === s ? 'bg-[var(--color-gold-dim)] text-white' : 'bg-[#1a1a1a] text-[var(--color-parchment)] opacity-50'}` }, s)))),
                 h("div", { class: "space-y-4" }, COMBAT_CATEGORIES.map(category => {

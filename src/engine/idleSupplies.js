@@ -204,7 +204,10 @@ export function buildAvailableSupplyMap(supplyList, inventory, bank) {
   if (!Array.isArray(supplyList)) return out
   for (const entry of supplyList) {
     if (!entry?.itemId) continue
-    const configured = Math.max(0, Math.floor(Number(entry.quantity) || 0))
+    const hasExplicitQuantity = entry.quantity != null
+    const configured = hasExplicitQuantity
+      ? Math.max(0, Math.floor(Number(entry.quantity) || 0))
+      : countAvailable(entry.itemId, inventory, bank)
     if (configured <= 0) continue
     const available = Math.min(configured, countAvailable(entry.itemId, inventory, bank))
     out[entry.itemId] = { configured, available }

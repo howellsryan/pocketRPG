@@ -28,11 +28,9 @@ function findEntry(list, itemId) {
   return (list || []).find((e) => e.itemId === itemId) || null
 }
 
-const UNLIMITED_IDLE_SUPPLY_QUANTITY = 200_000_000
-
 function setEntryEnabled(list, itemId, enabled) {
   const next = (list || []).filter((e) => e.itemId !== itemId)
-  if (enabled) next.push({ itemId, quantity: UNLIMITED_IDLE_SUPPLY_QUANTITY })
+  if (enabled) next.push({ itemId })
   return next
 }
 
@@ -112,7 +110,7 @@ export default function IdleCombatSetupModal({
 
   function handleToggleSupply(kind, itemId) {
     const list = kind === 'food' ? draft.food : draft.potions
-    const selected = (findEntry(list, itemId)?.quantity || 0) > 0
+    const selected = findEntry(list, itemId) != null
     const nextList = setEntryEnabled(list, itemId, !selected)
     update({ ...draft, [kind === 'food' ? 'food' : 'potions']: nextList })
   }
@@ -174,7 +172,7 @@ function FoodSection({ candidates, draft, onToggle }) {
         Pick food the simulator may eat. Selected food is used until it runs out.
       </div>
       {candidates.map(({ itemId, item, available }) => {
-        const selected = (findEntry(draft.food, itemId)?.quantity || 0) > 0
+        const selected = findEntry(draft.food, itemId) != null
         const heal = getFoodHealAmount(item)
         return (
           <div key={itemId} class="flex items-center gap-2 p-2 rounded-lg bg-[var(--color-void-light)] border border-[var(--color-void-border)]">
@@ -183,7 +181,13 @@ function FoodSection({ candidates, draft, onToggle }) {
               <div class="text-sm text-[var(--color-parchment)]">{item.name} · +{heal} HP</div>
               <div class="text-[10px] text-[var(--color-parchment)] opacity-60">Own {available}</div>
             </div>
-            <Button size="sm" variant={selected ? 'ghost' : 'secondary'} onClick={() => onToggle(itemId)}>{selected ? 'Clear' : 'Use'}</Button>
+            <button
+              onClick={() => onToggle(itemId)}
+              class={`w-6 h-6 rounded border flex items-center justify-center text-xs ${selected ? 'bg-[var(--color-gold-dim)] border-[var(--color-gold)] text-black' : 'bg-[var(--color-void)] border-[var(--color-void-border)] text-transparent'}`}
+              aria-label={selected ? `Unselect ${item.name}` : `Select ${item.name}`}
+            >
+              ✓
+            </button>
           </div>
         )
       })}
@@ -201,7 +205,7 @@ function PotionSection({ candidates, draft, onToggle }) {
         Boost potions apply only while supply lasts (5 min per dose). Prayer/Super restores top up the prayer pool when a prayer is active.
       </div>
       {candidates.map(({ itemId, item, available }) => {
-        const selected = (findEntry(draft.potions, itemId)?.quantity || 0) > 0
+        const selected = findEntry(draft.potions, itemId) != null
         let blurb = ''
         if (item.effect === 'combat') blurb = `+${item.boost} combat`
         else if (item.effect === 'prayer') blurb = `+${item.idlePrayerRestore || 15} prayer`
@@ -213,7 +217,13 @@ function PotionSection({ candidates, draft, onToggle }) {
               <div class="text-sm text-[var(--color-parchment)]">{item.name} · {blurb}</div>
               <div class="text-[10px] text-[var(--color-parchment)] opacity-60">Own {available}</div>
             </div>
-            <Button size="sm" variant={selected ? 'ghost' : 'secondary'} onClick={() => onToggle(itemId)}>{selected ? 'Clear' : 'Use'}</Button>
+            <button
+              onClick={() => onToggle(itemId)}
+              class={`w-6 h-6 rounded border flex items-center justify-center text-xs ${selected ? 'bg-[var(--color-gold-dim)] border-[var(--color-gold)] text-black' : 'bg-[var(--color-void)] border-[var(--color-void-border)] text-transparent'}`}
+              aria-label={selected ? `Unselect ${item.name}` : `Select ${item.name}`}
+            >
+              ✓
+            </button>
           </div>
         )
       })}
