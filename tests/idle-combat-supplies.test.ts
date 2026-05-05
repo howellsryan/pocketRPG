@@ -41,7 +41,7 @@ const ITEMS_FIXTURE: any = {
   shark: { id: 'shark', name: 'Shark', type: 'food', heals: 20, eatTicks: 3 },
   super_combat_potion: {
     id: 'super_combat_potion',
-    name: 'Super combat potion',
+    name: 'Super Combat',
     type: 'potion',
     effect: 'combat',
     boost: 18,

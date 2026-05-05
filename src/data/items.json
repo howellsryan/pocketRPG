@@ -7887,7 +7887,7 @@
   },
   "super_combat_potion": {
     "id": "super_combat_potion",
-    "name": "Super combat potion",
+    "name": "Super Combat",
     "type": "potion",
     "stackable": true,
     "shopValue": 7500,
