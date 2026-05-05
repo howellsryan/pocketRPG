@@ -13,8 +13,10 @@ import { getToken, getCharacterId } from '../cloud/api.js'
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS, detectCountIncreases, detectLevelUps, detectSetGrowth, didNumberIncrease, extractSkillLevels } from '../cloud/criticalSavePolicy.js'
 import itemsData from '../data/items.json'
+import prayersData from '../data/prayers.json'
 import { normaliseDungeoneeringTokens, isDungeoneeringRewardAction } from '../engine/dungeoneeringTokens.js'
 import { getSlayerTaskReward } from '../engine/slayerRewards.js'
+import { defaultIdleCombatSetup, normaliseIdleCombatSetup } from '../engine/idleSupplies.js'
 
 const normalisePointCurrency = (value) => {
   const n = Math.floor(Number(value) || 0)
@@ -34,6 +36,7 @@ export function GameProvider({ children }) {
   const [currentHP, setCurrentHP] = useState(10)
   const [homeShortcuts, setHomeShortcuts] = useState(null) // null = not loaded yet
   const [combatStance, setCombatStanceState] = useState('accurate')
+  const [idleCombatSetup, setIdleCombatSetupState] = useState(() => defaultIdleCombatSetup())
   const [autoBankLoot, setAutoBankLootState] = useState(true)
   const [activeTask, setActiveTaskState] = useState(null)
   const [bankConfig, setBankConfig] = useState({ tabs: [], itemTabMap: {} })
@@ -73,13 +76,15 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
       getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('slayerTasksCompleted'), getSetting('dungeoneeringTokens'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
-      getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems')
+      getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems'),
+      getSetting('idleCombatSetup')
     ])
+    const normalisedIdleCombatSetup = normaliseIdleCombatSetup(savedIdleCombatSetup)
     savedDungeoneeringTokens = normaliseDungeoneeringTokens(savedDungeoneeringTokens)
     savedSlayerPoints = normalisePointCurrency(savedSlayerPoints)
     savedSlayerTasksCompleted = Math.max(0, Math.floor(Number(savedSlayerTasksCompleted) || 0))
@@ -131,7 +136,14 @@ export function GameProvider({ children }) {
           } else if (savedTask.type === 'gather') {
             sim = simulateIdleGather(savedTask, elapsedMs, inv, s, itemsData, b)
           } else if (savedTask.type === 'combat') {
-            sim = simulateIdleCombat(savedTask, elapsedMs, s, eq, inv, itemsData, savedSlayerTask)
+            const idleHpForLoad = savedHP != null ? savedHP : (s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10)
+            sim = simulateIdleCombat(savedTask, elapsedMs, s, eq, inv, itemsData, savedSlayerTask, b, {
+              currentHP: idleHpForLoad,
+              idleFood: normalisedIdleCombatSetup.food,
+              idlePotions: normalisedIdleCombatSetup.potions,
+              idlePrayers: normalisedIdleCombatSetup.prayers,
+              prayersData,
+            })
           } else if (savedTask.type === 'agility') {
             sim = simulateIdleAgility(savedTask, elapsedMs)
           } else if (savedTask.type === 'thieving') {
@@ -146,9 +158,16 @@ export function GameProvider({ children }) {
         }
 
         if (sim) {
-          // Apply HP regeneration during idle
+          // Apply HP regeneration during idle. For combat with active supplies
+          // the simulator's finalHP is authoritative — combat may have stopped
+          // partway through the elapsed window, so we don't want full-session
+          // regen to mask early termination.
           const hpRegenSim = simulateIdleHPRegen(elapsedMs)
-          if (hpRegenSim.hpRegen > 0) {
+          if (savedTask.type === 'combat' && Number.isFinite(Number(sim.finalHP))) {
+            const maxHP = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
+            savedHP = Math.max(1, Math.min(maxHP, Math.floor(Number(sim.finalHP))))
+            sim.hpRestored = 0
+          } else if (hpRegenSim.hpRegen > 0) {
             const maxHP = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
             savedHP = Math.min((savedHP != null ? savedHP : maxHP) + hpRegenSim.hpRegen, maxHP)
             sim.hpRestored = hpRegenSim.hpRegen
@@ -387,7 +406,14 @@ export function GameProvider({ children }) {
     setEquipment(eq)
     setBank({ ...b })
     setHomeShortcuts(shortcuts ?? null)
-    setCombatStanceState(stance ?? 'accurate')
+    const loadedStance = stance === 'controlled' ? 'accurate' : (stance ?? 'accurate')
+    setCombatStanceState(loadedStance)
+    if (stance === 'controlled') {
+      // Migrate the legacy stance forward exactly once so the simulator and UI
+      // never see it again.
+      saveSetting('combatStance', 'accurate')
+    }
+    setIdleCombatSetupState(normalisedIdleCombatSetup)
     setAutoBankLootState(autoBankSetting !== false) // default true
     setBankConfig(savedBankConfig ?? { tabs: [], itemTabMap: {} })
     setUnlockedFeatures(new Set(savedUnlocks || []))
@@ -541,8 +567,17 @@ export function GameProvider({ children }) {
   }, [])
 
   const updateCombatStance = useCallback((stance) => {
-    setCombatStanceState(stance)
-    saveSetting('combatStance', stance)
+    // Drop the legacy `controlled` stance — UI no longer offers it. Saving
+    // `accurate` keeps older saves usable without surfacing a dead option.
+    const next = stance === 'controlled' ? 'accurate' : stance
+    setCombatStanceState(next)
+    saveSetting('combatStance', next)
+  }, [])
+
+  const updateIdleCombatSetup = useCallback((setup) => {
+    const next = normaliseIdleCombatSetup(setup)
+    setIdleCombatSetupState(next)
+    saveSetting('idleCombatSetup', next)
   }, [])
 
   const updateActiveCombatSpell = useCallback((spell) => {
@@ -737,6 +772,7 @@ export function GameProvider({ children }) {
       bankConfig,
       homeShortcuts,
       combatStance,
+      idleCombatSetup,
       unlockedFeatures: [...unlockedFeatures],
       activeTask,
       activeCombatSpell,
@@ -751,7 +787,7 @@ export function GameProvider({ children }) {
       unlockedMinigameItems: [...unlockedMinigameItems],
       questQueue,
     },
-  }), [currentHP, autoBankLoot, bankConfig, homeShortcuts, combatStance, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, slayerTasksCompleted, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, questQueue])
+  }), [currentHP, autoBankLoot, bankConfig, homeShortcuts, combatStance, idleCombatSetup, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, slayerTasksCompleted, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, questQueue])
 
 
   useEffect(() => {
@@ -789,7 +825,8 @@ export function GameProvider({ children }) {
 
   const value = {
     loaded, player, stats, inventory, equipment, bank, currentHP, toasts, isSaving,
-    homeShortcuts, combatStance, activeTask, autoBankLoot, bankConfig,
+    homeShortcuts, combatStance, idleCombatSetup, updateIdleCombatSetup,
+    activeTask, autoBankLoot, bankConfig,
     unlockedFeatures, unlockFeature,
     slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, awardSlayerPoints,
     slayerTasksCompleted,

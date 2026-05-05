@@ -7898,6 +7898,7 @@ const itemsData = {
     "icon": "🧪",
     "effect": "prayer",
     "boost": 32,
+    "idlePrayerRestore": 15,
     "duration": 300,
     "isGeneralStore": false
   },
@@ -7933,6 +7934,7 @@ const itemsData = {
     "shopValue": 500,
     "icon": "🧪",
     "effect": "super_restore",
+    "idlePrayerRestore": 20,
     "duration": 300,
     "isGeneralStore": false
   },
@@ -7986,7 +7988,7 @@ const itemsData = {
   },
   "super_combat_potion": {
     "id": "super_combat_potion",
-    "name": "Super combat potion",
+    "name": "Super Combat",
     "type": "potion",
     "stackable": true,
     "shopValue": 7500,
@@ -35788,11 +35790,236 @@ function canAffordDungeoneeringReward(action, tokenBalance, skillLevel) {
     return cost > 0 && level >= levelRequired && tokens >= cost;
 }
 
+// ── engine/idleSupplies.js ──
+/**
+ * Idle Supplies — pure helpers shared between the Combat screen UI and the
+ * idle-combat simulation. These helpers are deliberately data-driven (read
+ * metadata off the items/prayers JSON) so we don't hard-code item ids inside
+ * the engine simulation.
+ */
+
+const IDLE_SUPPLIES_TICK_MS = 600;
+const POTION_DURATION_TICKS_DEFAULT = 500; // 5 minutes at 600ms/tick
+const BOOST_EFFECTS = new Set(['attack', 'strength', 'defence', 'combat', 'ranged', 'magic']);
+const PRAYER_RESTORE_EFFECTS = new Set(['prayer', 'super_restore']);
+const PRAYER_RESTORE_DEFAULT = {
+    prayer: 15,
+    super_restore: 20,
+};
+function isFoodItem(item) {
+    return !!item && item.type === 'food' && Number(item.heals) > 0;
+}
+function getFoodHealAmount(item) {
+    if (!isFoodItem(item))
+        return 0;
+    return Math.max(0, Math.floor(Number(item.heals) || 0));
+}
+function isPotionItem(item) {
+    return !!item && item.type === 'potion';
+}
+function isBoostPotion(item) {
+    return isPotionItem(item) && BOOST_EFFECTS.has(item.effect);
+}
+function isPrayerRestorePotion(item) {
+    return isPotionItem(item) && PRAYER_RESTORE_EFFECTS.has(item.effect);
+}
+/**
+ * Number of prayer points a single restore potion adds to the session pool.
+ * Falls back to the per-effect default if the item omits explicit metadata.
+ */
+function getPrayerRestoreAmount(item) {
+    if (!isPrayerRestorePotion(item))
+        return 0;
+    if (Number.isFinite(Number(item.idlePrayerRestore))) {
+        return Math.max(0, Math.floor(Number(item.idlePrayerRestore)));
+    }
+    return PRAYER_RESTORE_DEFAULT[item.effect] || 0;
+}
+/**
+ * Boost-potion duration in ticks. Defaults to 500 ticks (5 min) per potion,
+ * or item.duration (seconds) if provided.
+ */
+function getBoostPotionDurationTicks(item) {
+    if (!isBoostPotion(item))
+        return 0;
+    const seconds = Number(item.duration);
+    if (Number.isFinite(seconds) && seconds > 0) {
+        return Math.max(1, Math.floor((seconds * 1000) / IDLE_SUPPLIES_TICK_MS));
+    }
+    return POTION_DURATION_TICKS_DEFAULT;
+}
+/**
+ * Default empty idle-combat setup. Used as the starting value when nothing
+ * has been persisted yet.
+ */
+function defaultIdleCombatSetup() {
+    return {
+        food: [], // [{ itemId, quantity }]
+        potions: [], // [{ itemId, quantity }] — multi-select; first entries consumed first
+        prayers: {
+            protectionPrayerId: null,
+            combatPrayerId: null,
+        },
+    };
+}
+/**
+ * Sanitise a raw setup blob from disk/cloud so unknown fields can't crash the
+ * simulator or UI. Drops invalid entries; clamps quantities to non-negative
+ * integers; ignores duplicate itemIds in the food/potion lists.
+ */
+function normaliseIdleCombatSetup(raw) {
+    const base = defaultIdleCombatSetup();
+    if (!raw || typeof raw !== 'object')
+        return base;
+    const seenFood = new Set();
+    const food = Array.isArray(raw.food) ? raw.food.flatMap((entry) => {
+        if (!entry || typeof entry !== 'object')
+            return [];
+        const itemId = String(entry.itemId || '');
+        const quantity = Math.max(0, Math.floor(Number(entry.quantity) || 0));
+        if (!itemId || quantity <= 0 || seenFood.has(itemId))
+            return [];
+        seenFood.add(itemId);
+        return [{ itemId, quantity }];
+    }) : [];
+    const seenPotion = new Set();
+    const potions = Array.isArray(raw.potions) ? raw.potions.flatMap((entry) => {
+        if (!entry || typeof entry !== 'object')
+            return [];
+        const itemId = String(entry.itemId || '');
+        const quantity = Math.max(0, Math.floor(Number(entry.quantity) || 0));
+        if (!itemId || quantity <= 0 || seenPotion.has(itemId))
+            return [];
+        seenPotion.add(itemId);
+        return [{ itemId, quantity }];
+    }) : [];
+    const prayers = raw.prayers && typeof raw.prayers === 'object' ? raw.prayers : {};
+    const protectionPrayerId = typeof prayers.protectionPrayerId === 'string' ? prayers.protectionPrayerId : null;
+    const combatPrayerId = typeof prayers.combatPrayerId === 'string' ? prayers.combatPrayerId : null;
+    return {
+        food,
+        potions,
+        prayers: { protectionPrayerId, combatPrayerId },
+    };
+}
+/**
+ * Validate a prayer selection against player level and prayer metadata.
+ * Returns { protectionPrayerId, combatPrayerId } with invalid entries dropped.
+ */
+function getValidIdlePrayerSelection(prayers, prayersData, prayerLevel) {
+    const out = { protectionPrayerId: null, combatPrayerId: null };
+    if (!prayers || !prayersData)
+        return out;
+    const lvl = Math.max(1, Math.floor(Number(prayerLevel) || 1));
+    const protId = prayers.protectionPrayerId;
+    if (protId && prayersData[protId]) {
+        const p = prayersData[protId];
+        if (p.bonusType === 'protection' && (p.level || 1) <= lvl) {
+            out.protectionPrayerId = protId;
+        }
+    }
+    const cmbId = prayers.combatPrayerId;
+    if (cmbId && prayersData[cmbId]) {
+        const p = prayersData[cmbId];
+        const isCombatPrayer = p.bonusType === 'stat' || p.bonusType === 'multi_stat';
+        if (isCombatPrayer && (p.level || 1) <= lvl) {
+            out.combatPrayerId = cmbId;
+        }
+    }
+    return out;
+}
+/**
+ * Count how many of `itemId` are available across inventory + bank.
+ */
+function countAvailable(itemId, inventory = [], bank = {}) {
+    if (!itemId)
+        return 0;
+    let n = 0;
+    for (const slot of inventory) {
+        if (slot && slot.itemId === itemId && !slot.noted)
+            n += slot.quantity || 0;
+    }
+    if (bank && bank[itemId])
+        n += bank[itemId].quantity || 0;
+    return n;
+}
+/**
+ * Mutate the inventory + bank deduction map for a given consumption count.
+ * Inventory is mutated in-place (slots become null when emptied); bank
+ * deductions are returned in `bankConsumed` so the caller can apply them.
+ *
+ * Returns the number actually consumed (≤ requested).
+ */
+function consumeFromInventoryThenBank(itemId, requested, inventory, bank, bankConsumed) {
+    let remaining = Math.max(0, Math.floor(requested));
+    if (remaining <= 0)
+        return 0;
+    let consumed = 0;
+    for (let i = 0; i < inventory.length && remaining > 0; i++) {
+        const slot = inventory[i];
+        if (!slot || slot.itemId !== itemId || slot.noted)
+            continue;
+        const take = Math.min(slot.quantity || 0, remaining);
+        if (take <= 0)
+            continue;
+        inventory[i] = { ...slot, quantity: slot.quantity - take };
+        if (inventory[i].quantity <= 0)
+            inventory[i] = null;
+        remaining -= take;
+        consumed += take;
+    }
+    if (remaining > 0 && bank && bank[itemId]) {
+        const have = bank[itemId].quantity || 0;
+        const take = Math.min(have, remaining);
+        if (take > 0) {
+            bankConsumed[itemId] = (bankConsumed[itemId] || 0) + take;
+            remaining -= take;
+            consumed += take;
+        }
+    }
+    return consumed;
+}
+/**
+ * Build a sanitised supply pool keyed by itemId, capped against real
+ * inventory + bank availability. Used by the simulator so configured but
+ * missing supplies never grant a benefit.
+ */
+function buildAvailableSupplyMap(supplyList, inventory, bank) {
+    const out = {};
+    if (!Array.isArray(supplyList))
+        return out;
+    for (const entry of supplyList) {
+        if (!entry?.itemId)
+            continue;
+        const configured = Math.max(0, Math.floor(Number(entry.quantity) || 0));
+        if (configured <= 0)
+            continue;
+        const available = Math.min(configured, countAvailable(entry.itemId, inventory, bank));
+        out[entry.itemId] = { configured, available };
+    }
+    return out;
+}
+/**
+ * Apply boost potion + combat prayer to the base player stats. Both layers
+ * are optional — pass nulls/undefined when the supply has expired.
+ */
+function buildBoostedPlayerStats(baseStats, boostPotionItem, combatPrayerId, prayersData) {
+    let s = { ...baseStats };
+    if (combatPrayerId && prayersData) {
+        s = applyPrayerBonuses(s, combatPrayerId, prayersData) || s;
+    }
+    if (boostPotionItem) {
+        s = applyPotionBonuses(s, boostPotionItem) || s;
+    }
+    return s;
+}
+
 // ── engine/idleEngine.js ──
 /**
  * Idle Engine — calculates what would have happened while the player was away.
  * Pure functions, no UI imports.
  */
+
 
 
 
@@ -36422,6 +36649,60 @@ function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, itemsDa
     return { itemsGained, itemsBanked, itemsDropped, itemsConsumed, actions: actionsCompleted, actionName: task.gatherTask.name, finalInventory: newInv };
 }
 /**
+ * Resolve the monster's effective attack style for incoming-damage estimation.
+ * Multi-style monsters use a deterministic fallback (first listed) so the
+ * idle simulator stays deterministic.
+ */
+function resolveMonsterAttackStyle(monster) {
+    if (!monster)
+        return 'crush';
+    if (monster.attackStyles && Array.isArray(monster.attackStyles) && monster.attackStyles.length > 0) {
+        const first = monster.attackStyles[0];
+        if (first === 'melee')
+            return 'crush';
+        return first;
+    }
+    return monster.attackStyle || 'crush';
+}
+/**
+ * Estimate the average incoming damage per monster attack against the player,
+ * mirroring active-combat formulas so idle and live behave consistently.
+ * Returns { avgDmg, monsterAtkSpeed, attackStyle }.
+ */
+function estimateMonsterIncomingPerAttack(monster, equipment, itemsData, playerStats, stance) {
+    const monsterAtkSpeed = Math.max(1, Math.floor(monster?.attackSpeed || 4));
+    const attackStyle = resolveMonsterAttackStyle(monster);
+    if (!monster)
+        return { avgDmg: 0, monsterAtkSpeed, attackStyle };
+    const bonuses = getEquipmentBonuses(equipment, itemsData);
+    const monsterEffAtk = ((monster.stats?.magic || monster.stats?.attack || 1) + 9);
+    const monsterAtkRoll = monsterEffAtk * ((monster.attackBonus || 0) + 64);
+    const styleBonuses = getMeleeStyleBonuses(stance);
+    const playerDefLevel = Math.max(1, Math.floor(Number(playerStats?.defence) || 1));
+    const effDef = playerDefLevel + styleBonuses.defenceStyleBonus + 8;
+    const defBonus = bonuses.defenceBonus[attackStyle];
+    const defBonusValue = (defBonus !== undefined ? defBonus : (bonuses.defenceBonus.crush || 0));
+    const defRoll = effDef * (defBonusValue + 64);
+    const acc = hitChance(monsterAtkRoll, defRoll);
+    const baseStrength = Math.max(1, Math.floor(Number(monster.stats?.strength) || 1));
+    const monsterMaxHit = monster.formMaxHit != null
+        ? monster.formMaxHit
+        : Math.floor(0.5 + (baseStrength + 8) * ((monster.strengthBonus || 0) + 64) / 640);
+    const avgDmg = Math.max(0, acc * (monsterMaxHit / 2));
+    return { avgDmg, monsterAtkSpeed, attackStyle };
+}
+/**
+ * Returns true when a protection prayer style fully covers a monster attack
+ * style. Mirrors the live-combat helper.
+ */
+function protectionPrayerCovers(prayerStyle, attackStyle) {
+    if (!prayerStyle || !attackStyle)
+        return false;
+    if (prayerStyle === 'melee')
+        return ['crush', 'stab', 'slash'].includes(attackStyle);
+    return prayerStyle === attackStyle;
+}
+/**
  * Compute average player DPS against a monster.
  * Returns { avgDmgPerHit, weaponSpeed, acc, combatType } so callers can use per-hit granularity.
  */
@@ -36498,7 +36779,7 @@ function idleRollDrops(monster) {
  * itemsData: items lookup
  * slayerTask: optional current slayer task (if not on-task, will be null)
  */
-function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsData, slayerTask = null, bank = {}) {
+function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsData, slayerTask = null, bank = {}, options = {}) {
     if (!task || !task.monster)
         return null;
     const monster = task.monster;
@@ -36508,6 +36789,9 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
     const totalTicks = Math.floor(elapsedMs / TICK_MS);
     if (totalTicks <= 0)
         return null;
+    // Normalise legacy 'controlled' stance — no longer offered in the UI.
+    const rawStance = task.stance || 'accurate';
+    const stance = rawStance === 'controlled' ? 'accurate' : rawStance;
     const playerStats = {
         attack: getLevelFromXP(stats.attack?.xp || 0),
         strength: getLevelFromXP(stats.strength?.xp || 0),
@@ -36515,24 +36799,125 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
         ranged: getLevelFromXP(stats.ranged?.xp || 0),
         magic: getLevelFromXP(stats.magic?.xp || 0),
     };
-    const { avgDmgPerHit, weaponSpeed, combatType } = avgHitStats(playerStats, equipment, monster, task.stance || 'accurate', itemsData, task.spell || null, slayerTask);
+    const RESPAWN_TICKS = 2;
+    const prayersData = options.prayersData || null;
+    // ── Idle-supply pre-processing ────────────────────────────────────────────
+    // Configured-vs-available is computed up front against the snapshot of
+    // inventory + bank passed in. The simulation never grants bonuses from
+    // missing supplies and only deducts what was actually consumed.
+    const idleFood = Array.isArray(options.idleFood) ? options.idleFood : [];
+    const idlePotions = Array.isArray(options.idlePotions) ? options.idlePotions : [];
+    const idlePrayersRaw = options.idlePrayers || {};
+    const prayerLevel = Math.max(1, Math.floor(Number(getLevelFromXP(stats.prayer?.xp || 0)) || 1));
+    const idlePrayers = prayersData
+        ? getValidIdlePrayerSelection(idlePrayersRaw, prayersData, prayerLevel)
+        : { protectionPrayerId: null, combatPrayerId: null };
+    const foodAvailableMap = buildAvailableSupplyMap(idleFood, inventory, bank);
+    const potionsAvailableMap = buildAvailableSupplyMap(idlePotions, inventory, bank);
+    // Build ordered queues for food + potions so consumption follows the
+    // player's configured priority. Boost potions and prayer-restore potions
+    // are split because they participate in different supply pools.
+    const foodQueue = [];
+    for (const entry of idleFood) {
+        const avail = foodAvailableMap[entry.itemId]?.available || 0;
+        if (avail <= 0)
+            continue;
+        const item = itemsData?.[entry.itemId];
+        const heal = getFoodHealAmount(item);
+        if (heal <= 0)
+            continue;
+        foodQueue.push({ itemId: entry.itemId, heal, remaining: avail });
+    }
+    const boostQueue = [];
+    const restoreQueue = [];
+    for (const entry of idlePotions) {
+        const avail = potionsAvailableMap[entry.itemId]?.available || 0;
+        if (avail <= 0)
+            continue;
+        const item = itemsData?.[entry.itemId];
+        if (!item)
+            continue;
+        if (isBoostPotion(item)) {
+            boostQueue.push({
+                itemId: entry.itemId,
+                item,
+                durationTicks: getBoostPotionDurationTicks(item),
+                remaining: avail,
+            });
+        }
+        else if (isPrayerRestorePotion(item)) {
+            restoreQueue.push({
+                itemId: entry.itemId,
+                item,
+                restoreAmount: getPrayerRestoreAmount(item),
+                remaining: avail,
+            });
+        }
+    }
+    const foodConsumed = {};
+    const potionsConsumed = {};
+    function consumeFood(maxNeeded = 1) {
+        if (maxNeeded <= 0)
+            return null;
+        while (foodQueue.length > 0 && foodQueue[0].remaining <= 0)
+            foodQueue.shift();
+        const head = foodQueue[0];
+        if (!head)
+            return null;
+        head.remaining--;
+        foodConsumed[head.itemId] = (foodConsumed[head.itemId] || 0) + 1;
+        if (head.remaining <= 0)
+            foodQueue.shift();
+        return head.heal;
+    }
+    function consumeRestorePotion() {
+        while (restoreQueue.length > 0 && restoreQueue[0].remaining <= 0)
+            restoreQueue.shift();
+        const head = restoreQueue[0];
+        if (!head)
+            return 0;
+        head.remaining--;
+        potionsConsumed[head.itemId] = (potionsConsumed[head.itemId] || 0) + 1;
+        if (head.remaining <= 0)
+            restoreQueue.shift();
+        return head.restoreAmount;
+    }
+    function consumeBoostPotion() {
+        while (boostQueue.length > 0 && boostQueue[0].remaining <= 0)
+            boostQueue.shift();
+        const head = boostQueue[0];
+        if (!head)
+            return null;
+        head.remaining--;
+        potionsConsumed[head.itemId] = (potionsConsumed[head.itemId] || 0) + 1;
+        if (head.remaining <= 0)
+            boostQueue.shift();
+        return head;
+    }
+    // ── Per-state combat metrics ─────────────────────────────────────────────
+    // We re-evaluate kill metrics whenever the boost/prayer state flips so the
+    // simulator never applies bonuses that have already expired.
+    function getKillMetricsFor(boostItem, useCombatPrayer) {
+        const layered = buildBoostedPlayerStats(playerStats, boostItem, useCombatPrayer ? idlePrayers.combatPrayerId : null, prayersData);
+        const hitStats = avgHitStats(layered, equipment, monster, stance, itemsData, task.spell || null, slayerTask);
+        const incoming = estimateMonsterIncomingPerAttack(monster, equipment, itemsData, layered, stance);
+        if (!Number.isFinite(hitStats.avgDmgPerHit) || hitStats.avgDmgPerHit <= 0) {
+            return { ...hitStats, hitsNeeded: Infinity, ticksPerKill: Infinity, ticksPerCycle: Infinity, incoming };
+        }
+        const hitsNeeded = Math.ceil(monster.hitpoints / hitStats.avgDmgPerHit);
+        const ticksPerKill = 1 + (hitsNeeded - 1) * hitStats.weaponSpeed;
+        return { ...hitStats, hitsNeeded, ticksPerKill, ticksPerCycle: ticksPerKill + RESPAWN_TICKS, incoming };
+    }
+    // Baseline metrics (used for the resource caps + early outs).
+    const baseMetrics = getKillMetricsFor(null, false);
+    const { avgDmgPerHit, weaponSpeed, combatType } = baseMetrics;
+    const hitsNeeded = baseMetrics.hitsNeeded;
+    const ticksPerKill = baseMetrics.ticksPerKill;
+    const ticksPerCycle = baseMetrics.ticksPerCycle;
     const rangedAmmoFailure = combatType === 'ranged' ? getRangedAmmoRequirementFailure(equipment, itemsData) : null;
     if (rangedAmmoFailure) {
         return { xpGained: {}, lootGained: {}, monstersKilled: 0, lootLost: {}, lootBanked: {} };
     }
-    // Active engine: playerAttackTimer starts at 0, first hit lands on tick 1,
-    // then resets to weaponSpeed. So hits land on ticks: 1, 1+W, 1+2W, ...
-    // Hits needed to kill = ceil(hp / avgDmgPerHit)
-    // Ticks to kill = 1 + (hitsNeeded - 1) * weaponSpeed
-    // After kill: 1200ms respawn = 2 ticks, then playerAttackTimer resets to 0 (continueFight)
-    // so next kill also starts with first hit on tick 1.
-    const hitsNeeded = avgDmgPerHit > 0 ? Math.ceil(monster.hitpoints / avgDmgPerHit) : Infinity;
-    const ticksPerKill = hitsNeeded < Infinity
-        ? 1 + (hitsNeeded - 1) * weaponSpeed
-        : Infinity;
-    // 2 tick respawn gap between kills (1200ms / 600ms per tick)
-    const RESPAWN_TICKS = 2;
-    const ticksPerCycle = ticksPerKill < Infinity ? ticksPerKill + RESPAWN_TICKS : Infinity;
     if (ticksPerCycle === Infinity) {
         return { xpGained: {}, lootGained: {}, monstersKilled: 0, lootLost: {}, lootBanked: {} };
     }
@@ -36544,7 +36929,7 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
     // XP per kill (assumes player deals exactly monster.hitpoints damage per kill)
     let xpPerKill = {};
     if (combatType === 'ranged') {
-        if (task.stance === 'longrange') {
+        if (stance === 'longrange') {
             // Longrange splits ranged and defence XP
             xpPerKill.ranged = Math.floor(monster.hitpoints * (RANGED_XP_PER_DAMAGE / 2));
             xpPerKill.defence = Math.floor(monster.hitpoints * (RANGED_XP_PER_DAMAGE / 2));
@@ -36566,8 +36951,8 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
     }
     else {
         // Melee
-        const xpSkill = task.stance === 'aggressive' ? 'strength'
-            : task.stance === 'defensive' ? 'defence'
+        const xpSkill = stance === 'aggressive' ? 'strength'
+            : stance === 'defensive' ? 'defence'
                 : 'attack';
         xpPerKill[xpSkill] = Math.floor(monster.hitpoints * MELEE_XP_PER_DAMAGE);
     }
@@ -36618,8 +37003,123 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
     let slayerXpGained = 0;
     let remainingTicks = totalTicks;
     const maxKillsFromResources = Math.min(maxKillsFromAmmo, maxKillsFromRunes, maxKillsFromCharges);
-    while (remainingTicks >= ticksPerCycle && monstersKilled < maxKillsFromResources) {
-        remainingTicks -= ticksPerCycle;
+    // ── Supply state ─────────────────────────────────────────────────────────
+    const maxHP = stats.hitpoints ? getLevelFromXP(stats.hitpoints.xp || 0) : 10;
+    const startingHP = Number.isFinite(Number(options.currentHP)) ? Math.max(0, Math.floor(Number(options.currentHP))) : maxHP;
+    let hp = Math.min(maxHP, startingHP);
+    // Prayer pool: starts at the player's current Prayer level only when an
+    // idle prayer is active; otherwise no drain or restore-potion consumption.
+    const idlePrayerActiveInitially = !!(idlePrayers.protectionPrayerId || idlePrayers.combatPrayerId);
+    const prayerPointsStarted = idlePrayerActiveInitially ? prayerLevel : 0;
+    let prayerPool = prayerPointsStarted;
+    let prayerPointsUsed = 0;
+    let prayerPointsRestored = 0;
+    let damageTaken = 0;
+    let damagePreventedByPrayer = 0;
+    let stoppedReason = null;
+    // Active boost potion (one at a time per stack — we drink the next when the
+    // current expires).
+    let activeBoost = null;
+    let boostTicksRemaining = 0;
+    function ensureBoost() {
+        if (activeBoost && boostTicksRemaining > 0)
+            return;
+        const next = consumeBoostPotion();
+        if (next) {
+            activeBoost = next;
+            boostTicksRemaining = next.durationTicks;
+        }
+        else {
+            activeBoost = null;
+            boostTicksRemaining = 0;
+        }
+    }
+    ensureBoost();
+    while (remainingTicks > 0 && monstersKilled < maxKillsFromResources) {
+        if (boostTicksRemaining <= 0) {
+            activeBoost = null;
+            ensureBoost();
+        }
+        const useCombatPrayer = !!idlePrayers.combatPrayerId && prayerPool > 0;
+        const metrics = getKillMetricsFor(activeBoost?.item || null, useCombatPrayer);
+        if (!Number.isFinite(metrics.ticksPerCycle) || metrics.ticksPerCycle === Infinity) {
+            stoppedReason = stoppedReason || 'resource_limited';
+            break;
+        }
+        if (remainingTicks < metrics.ticksPerCycle)
+            break;
+        const playerAttacks = metrics.hitsNeeded;
+        const monsterAttacks = Math.max(0, Math.floor(metrics.ticksPerKill / metrics.incoming.monsterAtkSpeed));
+        const events = playerAttacks + monsterAttacks;
+        // Lock in whether prayer is active for the entire kill: top up from
+        // restore potions if the pool can't cover it. Once prayer is depleted
+        // mid-session it stays off (no idle resurrection).
+        let protectionActive = false;
+        let prayerCoverFraction = 0;
+        if (idlePrayerActiveInitially && events > 0) {
+            while (prayerPool < events && restoreQueue.length > 0) {
+                const restored = consumeRestorePotion();
+                if (restored <= 0)
+                    break;
+                prayerPool += restored;
+                prayerPointsRestored += restored;
+            }
+            if (prayerPool >= events) {
+                protectionActive = !!idlePrayers.protectionPrayerId;
+                prayerPool -= events;
+                prayerPointsUsed += events;
+                prayerCoverFraction = 1;
+            }
+            else if (prayerPool > 0) {
+                // Partial coverage on the way out — protect the first portion of
+                // damage proportionally, then prayer goes dark for the remainder of
+                // the session.
+                prayerCoverFraction = prayerPool / events;
+                protectionActive = !!idlePrayers.protectionPrayerId;
+                prayerPointsUsed += prayerPool;
+                prayerPool = 0;
+            }
+        }
+        // Incoming damage this kill — reduced by protection prayer when active.
+        let dmgFromMonster = monsterAttacks * metrics.incoming.avgDmg;
+        let dmgPrevented = 0;
+        if (protectionActive && prayersData) {
+            const prayer = prayersData[idlePrayers.protectionPrayerId];
+            if (prayer && prayer.bonusType === 'protection' && protectionPrayerCovers(prayer.style, metrics.incoming.attackStyle)) {
+                const reductionPct = Math.max(0, Math.min(100, Number(prayer.damageReductionPercent) || 0));
+                const fullReduction = (dmgFromMonster * reductionPct) / 100;
+                dmgPrevented = fullReduction * prayerCoverFraction;
+                dmgFromMonster = Math.max(0, dmgFromMonster - dmgPrevented);
+            }
+        }
+        // Record prevention up front — the prayer pool drained to make it happen,
+        // so the player gets credit even if combat aborts this kill from HP loss.
+        damagePreventedByPrayer += dmgPrevented;
+        // Eat reactively when HP would drop low; never below 1 (no skip death).
+        hp -= dmgFromMonster;
+        while (hp <= 1 && foodQueue.length > 0) {
+            const heal = consumeFood();
+            if (heal == null)
+                break;
+            hp = Math.min(maxHP, hp + heal);
+        }
+        if (hp <= 0) {
+            // Survivability exhausted — stop early without rewarding this kill.
+            hp = 1;
+            stoppedReason = foodQueue.length === 0 ? 'out_of_food' : 'out_of_hp';
+            break;
+        }
+        damageTaken += Math.max(0, dmgFromMonster);
+        // Advance time for the kill (player attacks + respawn) before applying
+        // boost duration — the boost was active for the length of the kill.
+        const killTicks = metrics.ticksPerCycle;
+        if (boostTicksRemaining > 0) {
+            const boostUsed = Math.min(boostTicksRemaining, killTicks);
+            boostTicksRemaining -= boostUsed;
+            if (boostTicksRemaining <= 0)
+                activeBoost = null;
+        }
+        remainingTicks -= killTicks;
         monstersKilled++;
         // Check if this kill counts toward slayer task — cap at total task count
         if (slayerTask && slayerTask.monsterId === monster.id && monstersKilledOnTask < slayerTask.monstersRemaining) {
@@ -36739,7 +37239,84 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
         : 0;
     const resourceLimited = monstersKilled < Math.floor(totalTicks / ticksPerCycle)
         && (maxKillsFromResources !== Infinity);
-    return { xpGained, lootGained, lootLost, lootBanked, runesConsumed, monstersKilled, monstersKilledOnTask, finalInventory: newInv, slayerXpGained, slayerTaskUpdate, chargesConsumed, ammoConsumed, attacksUsed: attacksPerKill * monstersKilled, resourceLimited };
+    if (resourceLimited && !stoppedReason)
+        stoppedReason = 'resource_limited';
+    if (!stoppedReason)
+        stoppedReason = 'completed_elapsed';
+    const ticksUsed = Math.max(0, totalTicks - remainingTicks);
+    const effectiveElapsedMs = ticksUsed * TICK_MS;
+    // Build idleSupplies report: configured-vs-available so the modal can show
+    // "used / configured-or-available" in a single glance.
+    const supplyReport = {
+        foodConfigured: {},
+        foodAvailable: {},
+        potionsConfigured: {},
+        potionsAvailable: {},
+    };
+    for (const entry of idleFood) {
+        if (!entry?.itemId)
+            continue;
+        supplyReport.foodConfigured[entry.itemId] = (supplyReport.foodConfigured[entry.itemId] || 0) + Math.max(0, Math.floor(Number(entry.quantity) || 0));
+        supplyReport.foodAvailable[entry.itemId] = foodAvailableMap[entry.itemId]?.available || 0;
+    }
+    for (const entry of idlePotions) {
+        if (!entry?.itemId)
+            continue;
+        supplyReport.potionsConfigured[entry.itemId] = (supplyReport.potionsConfigured[entry.itemId] || 0) + Math.max(0, Math.floor(Number(entry.quantity) || 0));
+        supplyReport.potionsAvailable[entry.itemId] = potionsAvailableMap[entry.itemId]?.available || 0;
+    }
+    // Deduct consumed food + potions from the simulated inventory first; any
+    // remainder is reported in itemsConsumed so the caller can also debit the
+    // shared bank.
+    const supplyConsumedTotals = {};
+    for (const [itemId, qty] of Object.entries(foodConsumed)) {
+        if (qty > 0)
+            supplyConsumedTotals[itemId] = (supplyConsumedTotals[itemId] || 0) + qty;
+    }
+    for (const [itemId, qty] of Object.entries(potionsConsumed)) {
+        if (qty > 0)
+            supplyConsumedTotals[itemId] = (supplyConsumedTotals[itemId] || 0) + qty;
+    }
+    const itemsConsumed = {};
+    for (const [itemId, qty] of Object.entries(supplyConsumedTotals)) {
+        let remaining = qty;
+        for (let i = 0; i < newInv.length && remaining > 0; i++) {
+            const slot = newInv[i];
+            if (!slot || slot.itemId !== itemId || slot.noted)
+                continue;
+            const take = Math.min(slot.quantity || 0, remaining);
+            if (take <= 0)
+                continue;
+            newInv[i] = { ...slot, quantity: slot.quantity - take };
+            if (newInv[i].quantity <= 0)
+                newInv[i] = null;
+            remaining -= take;
+        }
+        if (remaining > 0)
+            itemsConsumed[itemId] = remaining;
+    }
+    const finalHP = Math.max(1, Math.min(maxHP, Math.floor(hp)));
+    return {
+        xpGained, lootGained, lootLost, lootBanked, runesConsumed,
+        monstersKilled, monstersKilledOnTask, finalInventory: newInv,
+        slayerXpGained, slayerTaskUpdate, chargesConsumed, ammoConsumed,
+        attacksUsed: attacksPerKill * monstersKilled, resourceLimited,
+        // Idle-supply outputs:
+        effectiveElapsedMs,
+        stoppedReason,
+        finalHP,
+        damageTaken: Math.max(0, Math.floor(damageTaken)),
+        damagePreventedByPrayer: Math.max(0, Math.floor(damagePreventedByPrayer)),
+        foodConsumed,
+        potionsConsumed,
+        itemsConsumed,
+        prayerPointsStarted,
+        prayerPointsRestored,
+        prayerPointsUsed,
+        prayerPointsRemaining: Math.max(0, Math.floor(prayerPool)),
+        idlePrayersUsed: { ...idlePrayers },
+        idleSupplies: supplyReport,
+    };
 }
 
 // ── engine/tick.js ──
@@ -38505,6 +39082,8 @@ const pvpApi = {
 
 
 
+
+
 const normalisePointCurrency = (value) => {
     const n = Math.floor(Number(value) || 0);
     return n > 0 ? n : 0;
@@ -38521,6 +39100,7 @@ function GameProvider({ children }) {
     const [currentHP, setCurrentHP] = useState(10);
     const [homeShortcuts, setHomeShortcuts] = useState(null); // null = not loaded yet
     const [combatStance, setCombatStanceState] = useState('accurate');
+    const [idleCombatSetup, setIdleCombatSetupState] = useState(() => defaultIdleCombatSetup());
     const [autoBankLoot, setAutoBankLootState] = useState(true);
     const [activeTask, setActiveTaskState] = useState(null);
     const [bankConfig, setBankConfig] = useState({ tabs: [], itemTabMap: {} });
@@ -38557,13 +39137,15 @@ function GameProvider({ children }) {
     useEffect(() => { slayerTasksCompletedRef.current = Math.max(0, Math.floor(Number(slayerTasksCompleted) || 0)); }, [slayerTasksCompleted]);
     // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
     const loadGame = useCallback(async () => {
-        let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems] = await Promise.all([
+        let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup] = await Promise.all([
             getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
             getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
             getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
             getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('slayerTasksCompleted'), getSetting('dungeoneeringTokens'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
-            getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems')
+            getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems'),
+            getSetting('idleCombatSetup')
         ]);
+        const normalisedIdleCombatSetup = normaliseIdleCombatSetup(savedIdleCombatSetup);
         savedDungeoneeringTokens = normaliseDungeoneeringTokens(savedDungeoneeringTokens);
         savedSlayerPoints = normalisePointCurrency(savedSlayerPoints);
         savedSlayerTasksCompleted = Math.max(0, Math.floor(Number(savedSlayerTasksCompleted) || 0));
@@ -38625,7 +39207,14 @@ function GameProvider({ children }) {
                         sim = simulateIdleGather(savedTask, elapsedMs, inv, s, itemsData, b);
                     }
                     else if (savedTask.type === 'combat') {
-                        sim = simulateIdleCombat(savedTask, elapsedMs, s, eq, inv, itemsData, savedSlayerTask);
+                        const idleHpForLoad = savedHP != null ? savedHP : (s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10);
+                        sim = simulateIdleCombat(savedTask, elapsedMs, s, eq, inv, itemsData, savedSlayerTask, b, {
+                            currentHP: idleHpForLoad,
+                            idleFood: normalisedIdleCombatSetup.food,
+                            idlePotions: normalisedIdleCombatSetup.potions,
+                            idlePrayers: normalisedIdleCombatSetup.prayers,
+                            prayersData,
+                        });
                     }
                     else if (savedTask.type === 'agility') {
                         sim = simulateIdleAgility(savedTask, elapsedMs);
@@ -38644,9 +39233,17 @@ function GameProvider({ children }) {
                     console.error('[PocketRPG] Idle simulation failed — skipping idle rewards:', simErr);
                 }
                 if (sim) {
-                    // Apply HP regeneration during idle
+                    // Apply HP regeneration during idle. For combat with active supplies
+                    // the simulator's finalHP is authoritative — combat may have stopped
+                    // partway through the elapsed window, so we don't want full-session
+                    // regen to mask early termination.
                     const hpRegenSim = simulateIdleHPRegen(elapsedMs);
-                    if (hpRegenSim.hpRegen > 0) {
+                    if (savedTask.type === 'combat' && Number.isFinite(Number(sim.finalHP))) {
+                        const maxHP = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10;
+                        savedHP = Math.max(1, Math.min(maxHP, Math.floor(Number(sim.finalHP))));
+                        sim.hpRestored = 0;
+                    }
+                    else if (hpRegenSim.hpRegen > 0) {
                         const maxHP = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10;
                         savedHP = Math.min((savedHP != null ? savedHP : maxHP) + hpRegenSim.hpRegen, maxHP);
                         sim.hpRestored = hpRegenSim.hpRegen;
@@ -38887,7 +39484,14 @@ function GameProvider({ children }) {
         setEquipment(eq);
         setBank({ ...b });
         setHomeShortcuts(shortcuts ?? null);
-        setCombatStanceState(stance ?? 'accurate');
+        const loadedStance = stance === 'controlled' ? 'accurate' : (stance ?? 'accurate');
+        setCombatStanceState(loadedStance);
+        if (stance === 'controlled') {
+            // Migrate the legacy stance forward exactly once so the simulator and UI
+            // never see it again.
+            saveSetting('combatStance', 'accurate');
+        }
+        setIdleCombatSetupState(normalisedIdleCombatSetup);
         setAutoBankLootState(autoBankSetting !== false); // default true
         setBankConfig(savedBankConfig ?? { tabs: [], itemTabMap: {} });
         setUnlockedFeatures(new Set(savedUnlocks || []));
@@ -39034,8 +39638,16 @@ function GameProvider({ children }) {
         saveSetting('homeShortcuts', shortcuts);
     }, []);
     const updateCombatStance = useCallback((stance) => {
-        setCombatStanceState(stance);
-        saveSetting('combatStance', stance);
+        // Drop the legacy `controlled` stance — UI no longer offers it. Saving
+        // `accurate` keeps older saves usable without surfacing a dead option.
+        const next = stance === 'controlled' ? 'accurate' : stance;
+        setCombatStanceState(next);
+        saveSetting('combatStance', next);
+    }, []);
+    const updateIdleCombatSetup = useCallback((setup) => {
+        const next = normaliseIdleCombatSetup(setup);
+        setIdleCombatSetupState(next);
+        saveSetting('idleCombatSetup', next);
     }, []);
     const updateActiveCombatSpell = useCallback((spell) => {
         setActiveCombatSpellState(spell);
@@ -39218,6 +39830,7 @@ function GameProvider({ children }) {
             bankConfig,
             homeShortcuts,
             combatStance,
+            idleCombatSetup,
             unlockedFeatures: [...unlockedFeatures],
             activeTask,
             activeCombatSpell,
@@ -39232,7 +39845,7 @@ function GameProvider({ children }) {
             unlockedMinigameItems: [...unlockedMinigameItems],
             questQueue,
         },
-    }), [currentHP, autoBankLoot, bankConfig, homeShortcuts, combatStance, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, slayerTasksCompleted, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, questQueue]);
+    }), [currentHP, autoBankLoot, bankConfig, homeShortcuts, combatStance, idleCombatSetup, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, slayerTasksCompleted, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, questQueue]);
     useEffect(() => {
         if (!loaded)
             return;
@@ -39269,7 +39882,8 @@ function GameProvider({ children }) {
     }, [loaded, stats, bossKillCounts, raidKillCounts, completedQuests, unlockedFeatures, slayerPoints, getSnapshot]);
     const value = {
         loaded, player, stats, inventory, equipment, bank, currentHP, toasts, isSaving,
-        homeShortcuts, combatStance, activeTask, autoBankLoot, bankConfig,
+        homeShortcuts, combatStance, idleCombatSetup, updateIdleCombatSetup,
+        activeTask, autoBankLoot, bankConfig,
         unlockedFeatures, unlockFeature,
         slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, awardSlayerPoints,
         slayerTasksCompleted,
@@ -39924,6 +40538,252 @@ function BuyCreditsModal({ onClose, identityId, characterId, stripeLinks }) {
                     h("div", { class: "text-[11px] opacity-70", style: { color: opt.color } }, opt.label))) : null;
             })),
             h("button", { onClick: onClose, class: "w-full py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm border border-[#333] mt-4" }, "Close"))));
+}
+
+// ── components/IdleCombatSetupModal.js ──
+
+
+
+
+const TAB_LABEL = {
+    food: 'Idle Eat',
+    potion: 'Idle Potion',
+    prayer: 'Idle Pray',
+};
+function countAcrossInventoryAndBank(itemId, inventory, bank) {
+    let n = 0;
+    for (const slot of inventory || []) {
+        if (slot && slot.itemId === itemId && !slot.noted)
+            n += slot.quantity || 0;
+    }
+    if (bank && bank[itemId])
+        n += bank[itemId].quantity || 0;
+    return n;
+}
+function findEntry(list, itemId) {
+    return (list || []).find((e) => e.itemId === itemId) || null;
+}
+function setEntryQuantity(list, itemId, quantity) {
+    const next = (list || []).filter((e) => e.itemId !== itemId);
+    if (quantity > 0)
+        next.push({ itemId, quantity });
+    return next;
+}
+function clampQuantity(value, available) {
+    const parsed = Math.floor(Number(value) || 0);
+    return Math.max(0, Math.min(available, parsed));
+}
+/**
+ * Compact configuration UI shared between offline-idle and manual skip.
+ * Sets the configured caps; the simulator clamps against real inventory + bank
+ * each session, so the player can configure quantities they don't currently
+ * own without breaking anything.
+ */
+function IdleCombatSetupModal({ mode, // 'food' | 'potion' | 'prayer'
+onClose, inventory = [], bank = {}, itemsData = {}, prayersData = {}, prayerLevel = 1, setup, onChange, }) {
+    const safeSetup = useMemo(() => ({
+        food: Array.isArray(setup?.food) ? setup.food : [],
+        potions: Array.isArray(setup?.potions) ? setup.potions : [],
+        prayers: setup?.prayers || { protectionPrayerId: null, combatPrayerId: null },
+    }), [setup]);
+    const [draft, setDraft] = useState(safeSetup);
+    const update = (next) => {
+        setDraft(next);
+        onChange?.(next);
+    };
+    const inventoryRef = inventory;
+    const bankRef = bank;
+    const foodCandidates = useMemo(() => {
+        const seen = new Set();
+        const out = [];
+        const consider = (itemId) => {
+            if (!itemId || seen.has(itemId))
+                return;
+            const item = itemsData?.[itemId];
+            if (!isFoodItem(item))
+                return;
+            seen.add(itemId);
+            out.push({
+                itemId,
+                item,
+                available: countAcrossInventoryAndBank(itemId, inventoryRef, bankRef),
+            });
+        };
+        for (const slot of inventoryRef)
+            if (slot)
+                consider(slot.itemId);
+        for (const k of Object.keys(bankRef || {}))
+            consider(k);
+        for (const entry of safeSetup.food || [])
+            consider(entry.itemId);
+        return out.sort((a, b) => getFoodHealAmount(b.item) - getFoodHealAmount(a.item));
+    }, [inventoryRef, bankRef, itemsData, safeSetup.food]);
+    const potionCandidates = useMemo(() => {
+        const seen = new Set();
+        const out = [];
+        const consider = (itemId) => {
+            if (!itemId || seen.has(itemId))
+                return;
+            const item = itemsData?.[itemId];
+            if (!item)
+                return;
+            if (!(isBoostPotion(item) || isPrayerRestorePotion(item)))
+                return;
+            seen.add(itemId);
+            out.push({
+                itemId,
+                item,
+                available: countAcrossInventoryAndBank(itemId, inventoryRef, bankRef),
+            });
+        };
+        for (const slot of inventoryRef)
+            if (slot)
+                consider(slot.itemId);
+        for (const k of Object.keys(bankRef || {}))
+            consider(k);
+        for (const entry of safeSetup.potions || [])
+            consider(entry.itemId);
+        return out;
+    }, [inventoryRef, bankRef, itemsData, safeSetup.potions]);
+    function handleQuantityChange(kind, itemId, available, delta) {
+        const list = kind === 'food' ? draft.food : draft.potions;
+        const current = findEntry(list, itemId)?.quantity || 0;
+        const next = Math.max(0, Math.min(available, current + delta));
+        if (next === current)
+            return;
+        const nextList = setEntryQuantity(list, itemId, next);
+        update({ ...draft, [kind === 'food' ? 'food' : 'potions']: nextList });
+    }
+    function handleSetMax(kind, itemId, available) {
+        const list = kind === 'food' ? draft.food : draft.potions;
+        const nextList = setEntryQuantity(list, itemId, available);
+        update({ ...draft, [kind === 'food' ? 'food' : 'potions']: nextList });
+    }
+    function handleSetQuantity(kind, itemId, available, value) {
+        const list = kind === 'food' ? draft.food : draft.potions;
+        const next = clampQuantity(value, available);
+        const nextList = setEntryQuantity(list, itemId, next);
+        update({ ...draft, [kind === 'food' ? 'food' : 'potions']: nextList });
+    }
+    function handleRemove(kind, itemId) {
+        const list = kind === 'food' ? draft.food : draft.potions;
+        const nextList = setEntryQuantity(list, itemId, 0);
+        update({ ...draft, [kind === 'food' ? 'food' : 'potions']: nextList });
+    }
+    function handleSelectPrayer(prayerId, kind) {
+        const cur = draft.prayers || {};
+        const next = { ...cur };
+        if (kind === 'protection') {
+            next.protectionPrayerId = cur.protectionPrayerId === prayerId ? null : prayerId;
+        }
+        else {
+            next.combatPrayerId = cur.combatPrayerId === prayerId ? null : prayerId;
+        }
+        const valid = getValidIdlePrayerSelection(next, prayersData, prayerLevel);
+        update({ ...draft, prayers: valid });
+    }
+    return (h(Modal, { title: TAB_LABEL[mode] || 'Idle Setup', onClose: onClose },
+        mode === 'food' && (h(FoodSection, { candidates: foodCandidates, itemsData: itemsData, draft: draft, onChange: (itemId, available, delta) => handleQuantityChange('food', itemId, available, delta), onSetQuantity: (itemId, available, value) => handleSetQuantity('food', itemId, available, value), onSetMax: (itemId, available) => handleSetMax('food', itemId, available), onRemove: (itemId) => handleRemove('food', itemId) })),
+        mode === 'potion' && (h(PotionSection, { candidates: potionCandidates, draft: draft, onChange: (itemId, available, delta) => handleQuantityChange('potion', itemId, available, delta), onSetQuantity: (itemId, available, value) => handleSetQuantity('potion', itemId, available, value), onSetMax: (itemId, available) => handleSetMax('potion', itemId, available), onRemove: (itemId) => handleRemove('potion', itemId) })),
+        mode === 'prayer' && (h(PrayerSection, { prayersData: prayersData, prayerLevel: prayerLevel, draft: draft, onSelect: handleSelectPrayer })),
+        h("div", { class: "mt-4 flex justify-end" },
+            h(Button, { variant: "primary", onClick: onClose }, "Done"))));
+}
+function FoodSection({ candidates, draft, onChange, onSetQuantity, onSetMax, onRemove }) {
+    if (candidates.length === 0) {
+        return h("div", { class: "text-center py-4 text-[var(--color-parchment)] opacity-60" }, "No food in inventory or bank.");
+    }
+    return (h("div", { class: "space-y-2" },
+        h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60 leading-snug" }, "Configure food the simulator may eat. Each fight only consumes what it actually needs, capped against the food you own when the session runs."),
+        candidates.map(({ itemId, item, available }) => {
+            const cur = findEntry(draft.food, itemId)?.quantity || 0;
+            const heal = getFoodHealAmount(item);
+            return (h("div", { key: itemId, class: "flex items-center gap-2 p-2 rounded-lg bg-[var(--color-void-light)] border border-[var(--color-void-border)]" },
+                h("span", { class: "text-xl" }, item.icon || '🍖'),
+                h("div", { class: "flex-1 min-w-0" },
+                    h("div", { class: "text-sm text-[var(--color-parchment)]" }, item.name),
+                    h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60" },
+                        "+",
+                        heal,
+                        " HP \u00B7 own ",
+                        available)),
+                h("div", { class: "flex items-center gap-1" },
+                    h(Button, { size: "sm", variant: "secondary", onClick: () => onChange(itemId, available, -1), disabled: cur <= 0 }, "-"),
+                    h("input", { type: "number", min: "0", max: available, value: cur, onInput: (e) => onSetQuantity(itemId, available, e.currentTarget.value), class: "w-12 h-8 text-center rounded border border-[var(--color-void-border)] bg-[var(--color-void)] text-[var(--color-gold)] font-[var(--font-mono)] text-sm" }),
+                    h(Button, { size: "sm", variant: "secondary", onClick: () => onChange(itemId, available, +1), disabled: cur >= available }, "+"),
+                    h(Button, { size: "sm", variant: "ghost", onClick: () => onSetMax(itemId, available) }, "Max"),
+                    h(Button, { size: "sm", variant: "ghost", onClick: () => onRemove(itemId), disabled: cur <= 0 }, "Clear"))));
+        })));
+}
+function PotionSection({ candidates, draft, onChange, onSetQuantity, onSetMax, onRemove }) {
+    if (candidates.length === 0) {
+        return h("div", { class: "text-center py-4 text-[var(--color-parchment)] opacity-60" }, "No idle-compatible potions in inventory or bank.");
+    }
+    return (h("div", { class: "space-y-2" },
+        h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60 leading-snug" }, "Boost potions apply only while supply lasts (5 min per dose). Prayer/Super restores top up the prayer pool when a prayer is active."),
+        candidates.map(({ itemId, item, available }) => {
+            const cur = findEntry(draft.potions, itemId)?.quantity || 0;
+            let blurb = '';
+            if (item.effect === 'combat')
+                blurb = `+${item.boost} combat`;
+            else if (item.effect === 'prayer')
+                blurb = `+${item.idlePrayerRestore || 15} prayer`;
+            else if (item.effect === 'super_restore')
+                blurb = `+${item.idlePrayerRestore || 20} prayer`;
+            return (h("div", { key: itemId, class: "flex items-center gap-2 p-2 rounded-lg bg-[var(--color-void-light)] border border-[var(--color-void-border)]" },
+                h("span", { class: "text-xl" }, item.icon || '🧪'),
+                h("div", { class: "flex-1 min-w-0" },
+                    h("div", { class: "text-sm text-[var(--color-parchment)]" }, item.name),
+                    h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60" }, blurb)),
+                h("div", { class: "flex items-center gap-1" },
+                    h(Button, { size: "sm", variant: "secondary", onClick: () => onChange(itemId, available, -1), disabled: cur <= 0 }, "-"),
+                    h("input", { type: "number", min: "0", max: available, value: cur, onInput: (e) => onSetQuantity(itemId, available, e.currentTarget.value), class: "w-12 h-8 text-center rounded border border-[var(--color-void-border)] bg-[var(--color-void)] text-[var(--color-gold)] font-[var(--font-mono)] text-sm" }),
+                    h(Button, { size: "sm", variant: "secondary", onClick: () => onChange(itemId, available, +1), disabled: cur >= available }, "+"),
+                    h(Button, { size: "sm", variant: "secondary", onClick: () => onSetMax(itemId, available) }, "All"),
+                    h(Button, { size: "sm", variant: "secondary", onClick: () => onRemove(itemId), disabled: cur <= 0 }, "x"))));
+        })));
+}
+function PrayerSection({ prayersData, prayerLevel, draft, onSelect }) {
+    const protections = Object.values(prayersData || {})
+        .filter((p) => p.bonusType === 'protection')
+        .filter((p) => prayerLevel >= (p.level || 1));
+    const combats = Object.values(prayersData || {})
+        .filter((p) => p.bonusType === 'stat' || p.bonusType === 'multi_stat')
+        .filter((p) => prayerLevel >= (p.level || 1))
+        .sort((a, b) => (b.level || 1) - (a.level || 1));
+    const protId = draft.prayers?.protectionPrayerId;
+    const cmbId = draft.prayers?.combatPrayerId;
+    return (h("div", { class: "space-y-4" },
+        h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60 leading-snug" }, "Pick at most one protection prayer and one combat-boost prayer. Prayer drains 1 point per attack while idle prayer is active."),
+        h("div", null,
+            h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60 mb-1" }, "Protection Prayer"),
+            h("div", { class: "grid grid-cols-3 gap-2" }, protections.map((prayer) => {
+                const isActive = protId === prayer.id;
+                return (h("button", { key: prayer.id, onClick: () => onSelect(prayer.id, 'protection'), class: `p-2 rounded-lg border text-center ${isActive
+                        ? 'bg-[#2a4a2a] border-[#4a8a4a]'
+                        : 'bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[#2a3a2a]'}` },
+                    h("div", { class: "text-base" }, prayer.icon),
+                    h("div", { class: "text-[10px] text-[var(--color-parchment)]" }, prayer.name),
+                    h("div", { class: "text-[9px] text-[var(--color-gold-dim)]" },
+                        "Lv ",
+                        prayer.level)));
+            }))),
+        h("div", null,
+            h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60 mb-1" }, "Combat Prayer"),
+            h("div", { class: "grid grid-cols-2 gap-2" }, combats.map((prayer) => {
+                const isActive = cmbId === prayer.id;
+                return (h("button", { key: prayer.id, onClick: () => onSelect(prayer.id, 'combat'), class: `p-2 rounded-lg border text-left ${isActive
+                        ? 'bg-[#2a3a1a] border-[#4a8a2a]'
+                        : 'bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[#2a3a2a]'}` },
+                    h("div", { class: "text-sm text-[var(--color-parchment)]" },
+                        prayer.icon,
+                        " ",
+                        prayer.name),
+                    h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60 line-clamp-2" }, prayer.description),
+                    h("div", { class: "text-[9px] text-[var(--color-gold-dim)]" },
+                        "Lv ",
+                        prayer.level)));
+            })))));
 }
 
 // ── screens/HomeScreen.js ──
@@ -42338,6 +43198,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
 
 
 
+
 const COMBAT_CATEGORIES = [
     {
         key: 'training',
@@ -42479,7 +43340,7 @@ async function performOneLifeReset() {
     clearAuth();
 }
 function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange }) {
-    const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame } = useGame();
+    const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame } = useGame();
     const pvp = usePvp();
     const [showPvpLobby, setShowPvpLobby] = useState(false);
     const [combat, setCombat] = useState(null);
@@ -42489,6 +43350,7 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
     const [isAutoRestarting, setIsAutoRestarting] = useState(false);
     const [showPrayerModal, setShowPrayerModal] = useState(false);
     const [showPotionModal, setShowPotionModal] = useState(false);
+    const [idleSetupMode, setIdleSetupMode] = useState(null); // 'food' | 'potion' | 'prayer' | null
     const [showEquipmentModal, setShowEquipmentModal] = useState(false);
     const [showSpellModal, setShowSpellModal] = useState(false);
     const [selectedMonsterInfo, setSelectedMonsterInfo] = useState(null);
@@ -43477,7 +44339,23 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
         return (h(Fragment, null,
             h("div", { class: "h-full overflow-y-auto p-4" },
                 h("h2", { class: "font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider mb-3" }, "Choose a Monster"),
-                h("div", { class: "flex gap-1.5 mb-3" }, ['accurate', 'aggressive', 'defensive', 'controlled'].map(s => (h("button", { key: s, onClick: () => updateCombatStance(s), class: `flex-1 py-1.5 rounded-lg text-[10px] font-semibold capitalize transition-colors
+                h("div", { class: "flex gap-1.5 mb-2" },
+                    h("button", { onClick: () => setIdleSetupMode('food'), class: "flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a]", title: "Configure food the simulator can use during idle/skip combat" },
+                        "\uD83C\uDF56 Idle Eat",
+                        idleCombatSetup?.food?.length > 0 && (h("span", { class: "ml-1 text-[var(--color-gold)]" },
+                            "(",
+                            idleCombatSetup.food.reduce((n, e) => n + (e.quantity || 0), 0),
+                            ")"))),
+                    h("button", { onClick: () => setIdleSetupMode('prayer'), class: "flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a]", title: "Configure prayers the simulator should use during idle/skip combat" },
+                        "\uD83D\uDE4F Idle Pray",
+                        (idleCombatSetup?.prayers?.protectionPrayerId || idleCombatSetup?.prayers?.combatPrayerId) && (h("span", { class: "ml-1 text-[var(--color-gold)]" }, "\u2713"))),
+                    h("button", { onClick: () => setIdleSetupMode('potion'), class: "flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a]", title: "Configure potions the simulator can drink during idle/skip combat" },
+                        "\uD83E\uDDEA Idle Potion",
+                        idleCombatSetup?.potions?.length > 0 && (h("span", { class: "ml-1 text-[var(--color-gold)]" },
+                            "(",
+                            idleCombatSetup.potions.reduce((n, e) => n + (e.quantity || 0), 0),
+                            ")")))),
+                h("div", { class: "flex gap-1.5 mb-3" }, ['accurate', 'aggressive', 'defensive'].map(s => (h("button", { key: s, onClick: () => updateCombatStance(s), class: `flex-1 py-1.5 rounded-lg text-[10px] font-semibold capitalize transition-colors
                 ${combatStance === s ? 'bg-[var(--color-gold-dim)] text-white' : 'bg-[#1a1a1a] text-[var(--color-parchment)] opacity-50'}` }, s)))),
                 h("div", { class: "space-y-4" }, COMBAT_CATEGORIES.map(category => {
                     const monsters = category.ids
@@ -43571,6 +44449,7 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                         h("span", { class: "text-sm font-bold tracking-wider" }, "PvP \u2014 Player vs Player")),
                     h("div", { class: "text-[9px] text-[var(--color-parchment)] opacity-40 mt-1.5 text-center px-2" }, "On death, your tradeable inventory + equipped gear go to the winner. Untradeables stay with you.")))),
             showPvpLobby && (h(PvpLobbyModal, { onClose: () => setShowPvpLobby(false), getSnapshot: getSnapshot })),
+            idleSetupMode && (h(IdleCombatSetupModal, { mode: idleSetupMode, onClose: () => setIdleSetupMode(null), inventory: inventory, bank: bank, itemsData: itemsData, prayersData: prayersData, prayerLevel: getLevelFromXP(stats.prayer?.xp || 0), setup: idleCombatSetup, onChange: updateIdleCombatSetup })),
             selectedMonsterInfo && (h(Modal, { onClose: () => setSelectedMonsterInfo(null) },
                 h("div", { class: "flex items-center justify-between mb-3" },
                     h("h3", { class: "font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]" },
@@ -47988,6 +48867,8 @@ const errorText = { color: '#ff6b6b', fontSize: '12px', marginTop: '12px', textA
 
 
 
+
+
 // ── Clock-rollback watermark ────────────────────────────────────────────────
 // We persist the highest Date.now() we've ever observed. If the device clock
 // later reports a value below the watermark, the user rolled it backwards —
@@ -48059,7 +48940,7 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
         config.valueOnly && (h("div", { style: { fontSize: '12px', color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold', marginBottom: '6px' } }, config.value))));
 }
 function GameApp() {
-    const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue, unlockMinigameItem, awardDungeoneeringTokens, farming, updateFarming } = useGame();
+    const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue, unlockMinigameItem, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup } = useGame();
     const pvp = usePvp();
     const [screen, setScreen] = useState(SCREENS.HOME);
     const [gameReady, setGameReady] = useState(false);
@@ -48321,6 +49202,10 @@ function GameApp() {
     const inventoryRef = useRef(inventory);
     const itemsDataRef = useRef(itemsData);
     const questQueueRef = useRef(questQueue);
+    const idleCombatSetupRef = useRef(idleCombatSetup);
+    const currentHPRef = useRef(currentHP);
+    useEffect(() => { idleCombatSetupRef.current = idleCombatSetup; }, [idleCombatSetup]);
+    useEffect(() => { currentHPRef.current = currentHP; }, [currentHP]);
     useEffect(() => { completedQuestsRef.current = completedQuests; }, [completedQuests]);
     useEffect(() => { pendingXpChoicesRef.current = pendingXpChoices; }, [pendingXpChoices]);
     useEffect(() => { statsRef.current = stats; }, [stats]);
@@ -48489,7 +49374,13 @@ function GameApp() {
                     else if (savedTask.type === 'gather')
                         sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank);
                     else if (savedTask.type === 'combat')
-                        sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank);
+                        sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank, {
+                            currentHP: currentHPRef.current ?? getMaxHP(),
+                            idleFood: idleCombatSetupRef.current?.food || [],
+                            idlePotions: idleCombatSetupRef.current?.potions || [],
+                            idlePrayers: idleCombatSetupRef.current?.prayers || {},
+                            prayersData,
+                        });
                     else if (savedTask.type === 'agility')
                         sim = simulateIdleAgility(savedTask, elapsedMs);
                     else if (savedTask.type === 'thieving')
@@ -48554,13 +49445,21 @@ function GameApp() {
                         setIdleResult({ elapsedMs, task: savedTask });
                         return;
                     }
-                    // Apply HP regeneration during idle
-                    const hpRegenSim = simulateIdleHPRegen(elapsedMs);
-                    if (hpRegenSim.hpRegen > 0) {
-                        const maxHP = getLevelFromXP(freshStats.hitpoints?.xp || 0);
-                        const restoredHP = Math.min(currentHP + hpRegenSim.hpRegen, maxHP);
-                        sim.hpRestored = hpRegenSim.hpRegen;
-                        sim.hpAfterRegen = restoredHP;
+                    // Apply HP changes. For combat with active idle supplies the
+                    // simulator's finalHP is authoritative — combat may have stopped
+                    // partway, so we don't overlay full-session HP regen on top.
+                    if (savedTask.type === 'combat' && Number.isFinite(Number(sim.finalHP))) {
+                        sim.hpAfterRegen = Math.max(1, Math.min(getMaxHP(), Math.floor(Number(sim.finalHP))));
+                        sim.hpRestored = 0;
+                    }
+                    else {
+                        const hpRegenSim = simulateIdleHPRegen(elapsedMs);
+                        if (hpRegenSim.hpRegen > 0) {
+                            const maxHP = getLevelFromXP(freshStats.hitpoints?.xp || 0);
+                            const restoredHP = Math.min(currentHP + hpRegenSim.hpRegen, maxHP);
+                            sim.hpRestored = hpRegenSim.hpRegen;
+                            sim.hpAfterRegen = restoredHP;
+                        }
                     }
                     // Apply XP (skip combat/any — those require player choice via modal)
                     if (savedTask.type !== 'quest' && sim.xpGained) {
@@ -49114,7 +50013,13 @@ function GameApp() {
                     if (savedTask.type === 'gather')
                         sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank);
                     if (savedTask.type === 'combat')
-                        sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank);
+                        sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank, {
+                            currentHP: currentHPRef.current ?? getMaxHP(),
+                            idleFood: idleCombatSetupRef.current?.food || [],
+                            idlePotions: idleCombatSetupRef.current?.potions || [],
+                            idlePrayers: idleCombatSetupRef.current?.prayers || {},
+                            prayersData,
+                        });
                     if (savedTask.type === 'agility')
                         sim = simulateIdleAgility(savedTask, elapsedMs);
                     if (savedTask.type === 'thieving')
@@ -49128,13 +50033,21 @@ function GameApp() {
                     }
                 }
                 else {
-                    // Apply HP regeneration during idle
-                    const hpRegenSim = simulateIdleHPRegen(elapsedMs);
-                    if (hpRegenSim.hpRegen > 0) {
-                        const maxHP = getLevelFromXP(freshStats.hitpoints?.xp || 0);
-                        const restoredHP = Math.min(currentHP + hpRegenSim.hpRegen, maxHP);
-                        sim.hpRestored = hpRegenSim.hpRegen;
-                        sim.hpAfterRegen = restoredHP;
+                    // Apply HP changes. Idle combat with active supplies returns
+                    // finalHP (clamped to ≥1, no skip death) — that wins over plain
+                    // idle HP regen so a session that stopped early shows correctly.
+                    if (savedTask.type === 'combat' && Number.isFinite(Number(sim.finalHP))) {
+                        sim.hpAfterRegen = Math.max(1, Math.min(getMaxHP(), Math.floor(Number(sim.finalHP))));
+                        sim.hpRestored = 0;
+                    }
+                    else {
+                        const hpRegenSim = simulateIdleHPRegen(elapsedMs);
+                        if (hpRegenSim.hpRegen > 0) {
+                            const maxHP = getLevelFromXP(freshStats.hitpoints?.xp || 0);
+                            const restoredHP = Math.min(currentHP + hpRegenSim.hpRegen, maxHP);
+                            sim.hpRestored = hpRegenSim.hpRegen;
+                            sim.hpAfterRegen = restoredHP;
+                        }
                     }
                     // Apply XP (skip combat/any — those require player choice via modal)
                     if (savedTask.type !== 'quest' && sim.xpGained) {
@@ -49477,6 +50390,76 @@ function GameApp() {
                                 h("span", { style: { color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' } },
                                     "+",
                                     idleResult.dungeoneeringTokensGained.toLocaleString())))),
+                        idleResult.task?.type === 'combat' && idleResult.idleSupplies && (() => {
+                            const supplies = idleResult.idleSupplies;
+                            const foodEntries = Object.keys(supplies.foodConfigured || {});
+                            const potionEntries = Object.keys(supplies.potionsConfigured || {});
+                            const consumedFood = idleResult.foodConsumed || {};
+                            const consumedPotions = idleResult.potionsConsumed || {};
+                            const stoppedReason = idleResult.stoppedReason;
+                            const effMs = idleResult.effectiveElapsedMs ?? null;
+                            const showShortened = stoppedReason && stoppedReason !== 'completed_elapsed' && effMs != null && effMs < idleResult.elapsedMs;
+                            const reasonLabel = {
+                                out_of_food: 'Ran out of food',
+                                out_of_hp: 'Ran out of HP',
+                                out_of_prayer: 'Ran out of prayer',
+                                out_of_potion: 'Ran out of potions',
+                                resource_limited: 'Out of ammo / runes / charges',
+                            }[stoppedReason] || null;
+                            if (foodEntries.length === 0 && potionEntries.length === 0 && !idleResult.prayerPointsStarted && !showShortened)
+                                return null;
+                            return (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' } },
+                                h("div", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' } }, "\uD83D\uDEE1\uFE0F Idle Supplies"),
+                                showShortened && (h("div", { style: { marginBottom: '6px', fontSize: '11px', color: '#ff8787' } },
+                                    "\u26A0 Combat ran for ",
+                                    formatIdleTime(effMs),
+                                    " of ",
+                                    formatIdleTime(idleResult.elapsedMs),
+                                    reasonLabel ? ` — ${reasonLabel}` : '')),
+                                foodEntries.length > 0 && (h("div", { style: { marginBottom: '4px' } },
+                                    h("div", { style: { fontSize: '11px', color: '#a8d8a8', marginBottom: '2px' } }, "\uD83C\uDF56 Food"),
+                                    foodEntries.map(itemId => {
+                                        const cap = Math.min(supplies.foodConfigured[itemId] || 0, supplies.foodAvailable[itemId] || 0);
+                                        const used = consumedFood[itemId] || 0;
+                                        const name = itemsData[itemId]?.name || itemId;
+                                        return (h("div", { key: itemId, style: { display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#e8d5b0' } },
+                                            h("span", null, name),
+                                            h("span", { style: { fontFamily: 'monospace' } },
+                                                used,
+                                                " / ",
+                                                cap)));
+                                    }))),
+                                potionEntries.length > 0 && (h("div", { style: { marginBottom: '4px' } },
+                                    h("div", { style: { fontSize: '11px', color: '#a8d8a8', marginBottom: '2px' } }, "\uD83E\uDDEA Potions"),
+                                    potionEntries.map(itemId => {
+                                        const cap = Math.min(supplies.potionsConfigured[itemId] || 0, supplies.potionsAvailable[itemId] || 0);
+                                        const used = consumedPotions[itemId] || 0;
+                                        const name = itemsData[itemId]?.name || itemId;
+                                        return (h("div", { key: itemId, style: { display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#e8d5b0' } },
+                                            h("span", null, name),
+                                            h("span", { style: { fontFamily: 'monospace' } },
+                                                used,
+                                                " / ",
+                                                cap)));
+                                    }))),
+                                idleResult.prayerPointsStarted > 0 && (h("div", { style: { marginTop: '6px', paddingTop: '6px', borderTop: '1px solid #222' } },
+                                    h("div", { style: { fontSize: '11px', color: '#a8d8a8', marginBottom: '2px' } }, "\uD83D\uDE4F Prayer"),
+                                    h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#e8d5b0' } },
+                                        h("span", null, "Started / Restored"),
+                                        h("span", { style: { fontFamily: 'monospace' } },
+                                            idleResult.prayerPointsStarted,
+                                            " / +",
+                                            idleResult.prayerPointsRestored || 0)),
+                                    h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#e8d5b0' } },
+                                        h("span", null, "Used / Remaining"),
+                                        h("span", { style: { fontFamily: 'monospace' } },
+                                            idleResult.prayerPointsUsed || 0,
+                                            " / ",
+                                            idleResult.prayerPointsRemaining || 0)),
+                                    idleResult.damagePreventedByPrayer > 0 && (h("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#a8d8a8' } },
+                                        h("span", null, "Damage Prevented"),
+                                        h("span", { style: { fontFamily: 'monospace' } }, idleResult.damagePreventedByPrayer.toLocaleString())))))));
+                        })(),
                         idleResult.coinsGained > 0 && (h("div", { style: { marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' } },
                             h("div", { style: { fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' } }, "\uD83D\uDCB0 Coins"),
                             h("div", { style: { marginBottom: '4px' } },
