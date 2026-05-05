@@ -6,6 +6,7 @@ import PvpLobbyModal from './PvpLobbyModal.jsx'
 import PvpCombatScreen from './PvpCombatScreen.jsx'
 import Modal from '../components/Modal.jsx'
 import HPBar from '../components/HPBar.jsx'
+import IdleCombatSetupModal from '../components/IdleCombatSetupModal.jsx'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applySpecialAttack } from '../engine/combat.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
@@ -165,7 +166,7 @@ async function performOneLifeReset() {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame } = useGame()
   const pvp = usePvp()
   const [showPvpLobby, setShowPvpLobby] = useState(false)
 
@@ -176,6 +177,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const [isAutoRestarting, setIsAutoRestarting] = useState(false)
   const [showPrayerModal, setShowPrayerModal] = useState(false)
   const [showPotionModal, setShowPotionModal] = useState(false)
+  const [idleSetupMode, setIdleSetupMode] = useState(null) // 'food' | 'potion' | 'prayer' | null
   const [showEquipmentModal, setShowEquipmentModal] = useState(false)
   const [showSpellModal, setShowSpellModal] = useState(false)
   const [selectedMonsterInfo, setSelectedMonsterInfo] = useState(null)
@@ -1223,9 +1225,43 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           Choose a Monster
         </h2>
 
+        {/* Idle setup buttons */}
+        <div class="flex gap-1.5 mb-2">
+          <button
+            onClick={() => setIdleSetupMode('food')}
+            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a]"
+            title="Configure food the simulator can use during idle/skip combat"
+          >
+            🍖 Idle Eat
+            {idleCombatSetup?.food?.length > 0 && (
+              <span class="ml-1 text-[var(--color-gold)]">({idleCombatSetup.food.reduce((n, e) => n + (e.quantity || 0), 0)})</span>
+            )}
+          </button>
+          <button
+            onClick={() => setIdleSetupMode('prayer')}
+            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a]"
+            title="Configure prayers the simulator should use during idle/skip combat"
+          >
+            🙏 Idle Pray
+            {(idleCombatSetup?.prayers?.protectionPrayerId || idleCombatSetup?.prayers?.combatPrayerId) && (
+              <span class="ml-1 text-[var(--color-gold)]">✓</span>
+            )}
+          </button>
+          <button
+            onClick={() => setIdleSetupMode('potion')}
+            class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a]"
+            title="Configure potions the simulator can drink during idle/skip combat"
+          >
+            🧪 Idle Potion
+            {idleCombatSetup?.potions?.length > 0 && (
+              <span class="ml-1 text-[var(--color-gold)]">({idleCombatSetup.potions.reduce((n, e) => n + (e.quantity || 0), 0)})</span>
+            )}
+          </button>
+        </div>
+
         {/* Stance selector */}
         <div class="flex gap-1.5 mb-3">
-          {['accurate', 'aggressive', 'defensive', 'controlled'].map(s => (
+          {['accurate', 'aggressive', 'defensive'].map(s => (
             <button
               key={s}
               onClick={() => updateCombatStance(s)}
@@ -1409,6 +1445,21 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         <PvpLobbyModal
           onClose={() => setShowPvpLobby(false)}
           getSnapshot={getSnapshot}
+        />
+      )}
+
+      {/* Idle combat setup */}
+      {idleSetupMode && (
+        <IdleCombatSetupModal
+          mode={idleSetupMode}
+          onClose={() => setIdleSetupMode(null)}
+          inventory={inventory}
+          bank={bank}
+          itemsData={itemsData}
+          prayersData={prayersData}
+          prayerLevel={getLevelFromXP(stats.prayer?.xp || 0)}
+          setup={idleCombatSetup}
+          onChange={updateIdleCombatSetup}
         />
       )}
 

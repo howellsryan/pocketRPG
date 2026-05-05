@@ -7797,6 +7797,7 @@
     "icon": "🧪",
     "effect": "prayer",
     "boost": 32,
+    "idlePrayerRestore": 15,
     "duration": 300,
     "isGeneralStore": false
   },
@@ -7832,6 +7833,7 @@
     "shopValue": 500,
     "icon": "🧪",
     "effect": "super_restore",
+    "idlePrayerRestore": 20,
     "duration": 300,
     "isGeneralStore": false
   },

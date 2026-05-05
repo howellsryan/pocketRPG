@@ -27,6 +27,8 @@ import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, 
 import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave } from './cloud/sync.js'
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
+import { defaultIdleCombatSetup } from './engine/idleSupplies.js'
+import prayersData from './data/prayers.json'
 import { simulateIdleThieving } from './engine/thieving.js'
 import { simulateIdleHunting } from './engine/hunter.js'
 import { createQuestState } from './engine/quests.js'
@@ -119,7 +121,7 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
 
 function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
-    unlockMinigameItem, awardDungeoneeringTokens, farming, updateFarming } = useGame()
+    unlockMinigameItem, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [gameReady, setGameReady] = useState(false)
@@ -380,6 +382,10 @@ function GameApp() {
   const inventoryRef = useRef(inventory)
   const itemsDataRef = useRef(itemsData)
   const questQueueRef = useRef(questQueue)
+  const idleCombatSetupRef = useRef(idleCombatSetup)
+  const currentHPRef = useRef(currentHP)
+  useEffect(() => { idleCombatSetupRef.current = idleCombatSetup }, [idleCombatSetup])
+  useEffect(() => { currentHPRef.current = currentHP }, [currentHP])
   useEffect(() => { completedQuestsRef.current = completedQuests }, [completedQuests])
   useEffect(() => { pendingXpChoicesRef.current = pendingXpChoices }, [pendingXpChoices])
   useEffect(() => { statsRef.current = stats }, [stats])
@@ -526,7 +532,13 @@ function GameApp() {
             }
           } else if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
           else if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
-          else if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank)
+          else if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank, {
+            currentHP: currentHPRef.current ?? getMaxHP(),
+            idleFood: idleCombatSetupRef.current?.food || [],
+            idlePotions: idleCombatSetupRef.current?.potions || [],
+            idlePrayers: idleCombatSetupRef.current?.prayers || {},
+            prayersData,
+          })
           else if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
           else if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
           else if (savedTask.type === 'hunter') sim = simulateIdleHunting(savedTask, elapsedMs)
@@ -592,13 +604,20 @@ function GameApp() {
             return
           }
 
-          // Apply HP regeneration during idle
-          const hpRegenSim = simulateIdleHPRegen(elapsedMs)
-          if (hpRegenSim.hpRegen > 0) {
-            const maxHP = getLevelFromXP(freshStats.hitpoints?.xp || 0)
-            const restoredHP = Math.min(currentHP + hpRegenSim.hpRegen, maxHP)
-            sim.hpRestored = hpRegenSim.hpRegen
-            sim.hpAfterRegen = restoredHP
+          // Apply HP changes. For combat with active idle supplies the
+          // simulator's finalHP is authoritative — combat may have stopped
+          // partway, so we don't overlay full-session HP regen on top.
+          if (savedTask.type === 'combat' && Number.isFinite(Number(sim.finalHP))) {
+            sim.hpAfterRegen = Math.max(1, Math.min(getMaxHP(), Math.floor(Number(sim.finalHP))))
+            sim.hpRestored = 0
+          } else {
+            const hpRegenSim = simulateIdleHPRegen(elapsedMs)
+            if (hpRegenSim.hpRegen > 0) {
+              const maxHP = getLevelFromXP(freshStats.hitpoints?.xp || 0)
+              const restoredHP = Math.min(currentHP + hpRegenSim.hpRegen, maxHP)
+              sim.hpRestored = hpRegenSim.hpRegen
+              sim.hpAfterRegen = restoredHP
+            }
           }
 
           // Apply XP (skip combat/any — those require player choice via modal)
@@ -1140,7 +1159,13 @@ function GameApp() {
         } else {
           if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
           if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
-          if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank)
+          if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank, {
+            currentHP: currentHPRef.current ?? getMaxHP(),
+            idleFood: idleCombatSetupRef.current?.food || [],
+            idlePotions: idleCombatSetupRef.current?.potions || [],
+            idlePrayers: idleCombatSetupRef.current?.prayers || {},
+            prayersData,
+          })
           if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
           if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
           if (savedTask.type === 'hunter') sim = simulateIdleHunting(savedTask, elapsedMs)
@@ -1151,13 +1176,20 @@ function GameApp() {
             setActiveTask(null)
           }
         } else {
-          // Apply HP regeneration during idle
-          const hpRegenSim = simulateIdleHPRegen(elapsedMs)
-          if (hpRegenSim.hpRegen > 0) {
-            const maxHP = getLevelFromXP(freshStats.hitpoints?.xp || 0)
-            const restoredHP = Math.min(currentHP + hpRegenSim.hpRegen, maxHP)
-            sim.hpRestored = hpRegenSim.hpRegen
-            sim.hpAfterRegen = restoredHP
+          // Apply HP changes. Idle combat with active supplies returns
+          // finalHP (clamped to ≥1, no skip death) — that wins over plain
+          // idle HP regen so a session that stopped early shows correctly.
+          if (savedTask.type === 'combat' && Number.isFinite(Number(sim.finalHP))) {
+            sim.hpAfterRegen = Math.max(1, Math.min(getMaxHP(), Math.floor(Number(sim.finalHP))))
+            sim.hpRestored = 0
+          } else {
+            const hpRegenSim = simulateIdleHPRegen(elapsedMs)
+            if (hpRegenSim.hpRegen > 0) {
+              const maxHP = getLevelFromXP(freshStats.hitpoints?.xp || 0)
+              const restoredHP = Math.min(currentHP + hpRegenSim.hpRegen, maxHP)
+              sim.hpRestored = hpRegenSim.hpRegen
+              sim.hpAfterRegen = restoredHP
+            }
           }
 
           // Apply XP (skip combat/any — those require player choice via modal)
@@ -1614,6 +1646,93 @@ function GameApp() {
                       </div>
                     </div>
                   )}
+
+                  {/* Idle combat supply / prayer summary — only shown when an
+                      idle combat supply was configured, so non-combat or unsupplied
+                      sessions stay compact. */}
+                  {idleResult.task?.type === 'combat' && idleResult.idleSupplies && (() => {
+                    const supplies = idleResult.idleSupplies
+                    const foodEntries = Object.keys(supplies.foodConfigured || {})
+                    const potionEntries = Object.keys(supplies.potionsConfigured || {})
+                    const consumedFood = idleResult.foodConsumed || {}
+                    const consumedPotions = idleResult.potionsConsumed || {}
+                    const stoppedReason = idleResult.stoppedReason
+                    const effMs = idleResult.effectiveElapsedMs ?? null
+                    const showShortened = stoppedReason && stoppedReason !== 'completed_elapsed' && effMs != null && effMs < idleResult.elapsedMs
+                    const reasonLabel = {
+                      out_of_food: 'Ran out of food',
+                      out_of_hp: 'Ran out of HP',
+                      out_of_prayer: 'Ran out of prayer',
+                      out_of_potion: 'Ran out of potions',
+                      resource_limited: 'Out of ammo / runes / charges',
+                    }[stoppedReason] || null
+                    if (foodEntries.length === 0 && potionEntries.length === 0 && !idleResult.prayerPointsStarted && !showShortened) return null
+                    return (
+                      <div style={{ marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' }}>
+                        <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>🛡️ Idle Supplies</div>
+
+                        {showShortened && (
+                          <div style={{ marginBottom: '6px', fontSize: '11px', color: '#ff8787' }}>
+                            ⚠ Combat ran for {formatIdleTime(effMs)} of {formatIdleTime(idleResult.elapsedMs)}{reasonLabel ? ` — ${reasonLabel}` : ''}
+                          </div>
+                        )}
+
+                        {foodEntries.length > 0 && (
+                          <div style={{ marginBottom: '4px' }}>
+                            <div style={{ fontSize: '11px', color: '#a8d8a8', marginBottom: '2px' }}>🍖 Food</div>
+                            {foodEntries.map(itemId => {
+                              const cap = Math.min(supplies.foodConfigured[itemId] || 0, supplies.foodAvailable[itemId] || 0)
+                              const used = consumedFood[itemId] || 0
+                              const name = itemsData[itemId]?.name || itemId
+                              return (
+                                <div key={itemId} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#e8d5b0' }}>
+                                  <span>{name}</span>
+                                  <span style={{ fontFamily: 'monospace' }}>{used} / {cap}</span>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
+
+                        {potionEntries.length > 0 && (
+                          <div style={{ marginBottom: '4px' }}>
+                            <div style={{ fontSize: '11px', color: '#a8d8a8', marginBottom: '2px' }}>🧪 Potions</div>
+                            {potionEntries.map(itemId => {
+                              const cap = Math.min(supplies.potionsConfigured[itemId] || 0, supplies.potionsAvailable[itemId] || 0)
+                              const used = consumedPotions[itemId] || 0
+                              const name = itemsData[itemId]?.name || itemId
+                              return (
+                                <div key={itemId} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#e8d5b0' }}>
+                                  <span>{name}</span>
+                                  <span style={{ fontFamily: 'monospace' }}>{used} / {cap}</span>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
+
+                        {idleResult.prayerPointsStarted > 0 && (
+                          <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid #222' }}>
+                            <div style={{ fontSize: '11px', color: '#a8d8a8', marginBottom: '2px' }}>🙏 Prayer</div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#e8d5b0' }}>
+                              <span>Started / Restored</span>
+                              <span style={{ fontFamily: 'monospace' }}>{idleResult.prayerPointsStarted} / +{idleResult.prayerPointsRestored || 0}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#e8d5b0' }}>
+                              <span>Used / Remaining</span>
+                              <span style={{ fontFamily: 'monospace' }}>{idleResult.prayerPointsUsed || 0} / {idleResult.prayerPointsRemaining || 0}</span>
+                            </div>
+                            {idleResult.damagePreventedByPrayer > 0 && (
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#a8d8a8' }}>
+                                <span>Damage Prevented</span>
+                                <span style={{ fontFamily: 'monospace' }}>{idleResult.damagePreventedByPrayer.toLocaleString()}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
 
                   {/* Coins earned — agility/thieving specific */}
                   {idleResult.coinsGained > 0 && (
