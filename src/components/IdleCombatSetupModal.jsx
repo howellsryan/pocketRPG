@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'preact/hooks'
+import { useMemo } from 'preact/hooks'
 import Modal from './Modal.jsx'
 import Button from './Button.jsx'
 import {
@@ -28,15 +28,12 @@ function findEntry(list, itemId) {
   return (list || []).find((e) => e.itemId === itemId) || null
 }
 
-function setEntryQuantity(list, itemId, quantity) {
-  const next = (list || []).filter((e) => e.itemId !== itemId)
-  if (quantity > 0) next.push({ itemId, quantity })
-  return next
-}
+const UNLIMITED_IDLE_SUPPLY_QUANTITY = 200_000_000
 
-function clampQuantity(value, available) {
-  const parsed = Math.floor(Number(value) || 0)
-  return Math.max(0, Math.min(available, parsed))
+function setEntryEnabled(list, itemId, enabled) {
+  const next = (list || []).filter((e) => e.itemId !== itemId)
+  if (enabled) next.push({ itemId, quantity: UNLIMITED_IDLE_SUPPLY_QUANTITY })
+  return next
 }
 
 /**
@@ -62,10 +59,9 @@ export default function IdleCombatSetupModal({
     prayers: setup?.prayers || { protectionPrayerId: null, combatPrayerId: null },
   }), [setup])
 
-  const [draft, setDraft] = useState(safeSetup)
+  const draft = safeSetup
 
   const update = (next) => {
-    setDraft(next)
     onChange?.(next)
   }
 
@@ -113,31 +109,10 @@ export default function IdleCombatSetupModal({
     return out
   }, [inventoryRef, bankRef, itemsData, safeSetup.potions])
 
-  function handleQuantityChange(kind, itemId, available, delta) {
+  function handleToggleSupply(kind, itemId) {
     const list = kind === 'food' ? draft.food : draft.potions
-    const current = findEntry(list, itemId)?.quantity || 0
-    const next = Math.max(0, Math.min(available, current + delta))
-    if (next === current) return
-    const nextList = setEntryQuantity(list, itemId, next)
-    update({ ...draft, [kind === 'food' ? 'food' : 'potions']: nextList })
-  }
-
-  function handleSetMax(kind, itemId, available) {
-    const list = kind === 'food' ? draft.food : draft.potions
-    const nextList = setEntryQuantity(list, itemId, available)
-    update({ ...draft, [kind === 'food' ? 'food' : 'potions']: nextList })
-  }
-
-  function handleSetQuantity(kind, itemId, available, value) {
-    const list = kind === 'food' ? draft.food : draft.potions
-    const next = clampQuantity(value, available)
-    const nextList = setEntryQuantity(list, itemId, next)
-    update({ ...draft, [kind === 'food' ? 'food' : 'potions']: nextList })
-  }
-
-  function handleRemove(kind, itemId) {
-    const list = kind === 'food' ? draft.food : draft.potions
-    const nextList = setEntryQuantity(list, itemId, 0)
+    const selected = (findEntry(list, itemId)?.quantity || 0) > 0
+    const nextList = setEntryEnabled(list, itemId, !selected)
     update({ ...draft, [kind === 'food' ? 'food' : 'potions']: nextList })
   }
 
@@ -160,10 +135,7 @@ export default function IdleCombatSetupModal({
           candidates={foodCandidates}
           itemsData={itemsData}
           draft={draft}
-          onChange={(itemId, available, delta) => handleQuantityChange('food', itemId, available, delta)}
-          onSetQuantity={(itemId, available, value) => handleSetQuantity('food', itemId, available, value)}
-          onSetMax={(itemId, available) => handleSetMax('food', itemId, available)}
-          onRemove={(itemId) => handleRemove('food', itemId)}
+          onToggle={(itemId) => handleToggleSupply('food', itemId)}
         />
       )}
 
@@ -171,10 +143,7 @@ export default function IdleCombatSetupModal({
         <PotionSection
           candidates={potionCandidates}
           draft={draft}
-          onChange={(itemId, available, delta) => handleQuantityChange('potion', itemId, available, delta)}
-          onSetQuantity={(itemId, available, value) => handleSetQuantity('potion', itemId, available, value)}
-          onSetMax={(itemId, available) => handleSetMax('potion', itemId, available)}
-          onRemove={(itemId) => handleRemove('potion', itemId)}
+          onToggle={(itemId) => handleToggleSupply('potion', itemId)}
         />
       )}
 
@@ -194,39 +163,26 @@ export default function IdleCombatSetupModal({
   )
 }
 
-function FoodSection({ candidates, draft, onChange, onSetQuantity, onSetMax, onRemove }) {
+function FoodSection({ candidates, draft, onToggle }) {
   if (candidates.length === 0) {
     return <div class="text-center py-4 text-[var(--color-parchment)] opacity-60">No food in inventory or bank.</div>
   }
   return (
     <div class="space-y-2">
       <div class="text-[11px] text-[var(--color-parchment)] opacity-60 leading-snug">
-        Configure food the simulator may eat. Each fight only consumes what it actually needs, capped against the food you own when the session runs.
+        Pick food the simulator may eat. Selected food is used until it runs out.
       </div>
       {candidates.map(({ itemId, item, available }) => {
-        const cur = findEntry(draft.food, itemId)?.quantity || 0
+        const selected = (findEntry(draft.food, itemId)?.quantity || 0) > 0
         const heal = getFoodHealAmount(item)
         return (
           <div key={itemId} class="flex items-center gap-2 p-2 rounded-lg bg-[var(--color-void-light)] border border-[var(--color-void-border)]">
             <span class="text-xl">{item.icon || '🍖'}</span>
             <div class="flex-1 min-w-0">
-              <div class="text-sm text-[var(--color-parchment)]">{item.name}</div>
-              <div class="text-[10px] text-[var(--color-parchment)] opacity-60">+{heal} HP · own {available}</div>
+              <div class="text-sm text-[var(--color-parchment)]">{item.name} · +{heal} HP</div>
+              <div class="text-[10px] text-[var(--color-parchment)] opacity-60">Own {available}</div>
             </div>
-            <div class="flex items-center gap-1">
-              <Button size="sm" variant="secondary" onClick={() => onChange(itemId, available, -1)} disabled={cur <= 0}>-</Button>
-              <input
-                type="number"
-                min="0"
-                max={available}
-                value={cur}
-                onInput={(e) => onSetQuantity(itemId, available, e.currentTarget.value)}
-                class="w-12 h-8 text-center rounded border border-[var(--color-void-border)] bg-[var(--color-void)] text-[var(--color-gold)] font-[var(--font-mono)] text-sm"
-              />
-              <Button size="sm" variant="secondary" onClick={() => onChange(itemId, available, +1)} disabled={cur >= available}>+</Button>
-              <Button size="sm" variant="ghost" onClick={() => onSetMax(itemId, available)}>Max</Button>
-              <Button size="sm" variant="ghost" onClick={() => onRemove(itemId)} disabled={cur <= 0}>Clear</Button>
-            </div>
+            <Button size="sm" variant={selected ? 'ghost' : 'secondary'} onClick={() => onToggle(itemId)}>{selected ? 'Clear' : 'Use'}</Button>
           </div>
         )
       })}
@@ -234,7 +190,7 @@ function FoodSection({ candidates, draft, onChange, onSetQuantity, onSetMax, onR
   )
 }
 
-function PotionSection({ candidates, draft, onChange, onSetQuantity, onSetMax, onRemove }) {
+function PotionSection({ candidates, draft, onToggle }) {
   if (candidates.length === 0) {
     return <div class="text-center py-4 text-[var(--color-parchment)] opacity-60">No idle-compatible potions in inventory or bank.</div>
   }
@@ -244,7 +200,7 @@ function PotionSection({ candidates, draft, onChange, onSetQuantity, onSetMax, o
         Boost potions apply only while supply lasts (5 min per dose). Prayer/Super restores top up the prayer pool when a prayer is active.
       </div>
       {candidates.map(({ itemId, item, available }) => {
-        const cur = findEntry(draft.potions, itemId)?.quantity || 0
+        const selected = (findEntry(draft.potions, itemId)?.quantity || 0) > 0
         let blurb = ''
         if (item.effect === 'combat') blurb = `+${item.boost} combat`
         else if (item.effect === 'prayer') blurb = `+${item.idlePrayerRestore || 15} prayer`
@@ -253,23 +209,10 @@ function PotionSection({ candidates, draft, onChange, onSetQuantity, onSetMax, o
           <div key={itemId} class="flex items-center gap-2 p-2 rounded-lg bg-[var(--color-void-light)] border border-[var(--color-void-border)]">
             <span class="text-xl">{item.icon || '🧪'}</span>
             <div class="flex-1 min-w-0">
-              <div class="text-sm text-[var(--color-parchment)]">{item.name}</div>
-              <div class="text-[10px] text-[var(--color-parchment)] opacity-60">{blurb}</div>
+              <div class="text-sm text-[var(--color-parchment)]">{item.name} · {blurb}</div>
+              <div class="text-[10px] text-[var(--color-parchment)] opacity-60">Own {available}</div>
             </div>
-            <div class="flex items-center gap-1">
-              <Button size="sm" variant="secondary" onClick={() => onChange(itemId, available, -1)} disabled={cur <= 0}>-</Button>
-              <input
-                type="number"
-                min="0"
-                max={available}
-                value={cur}
-                onInput={(e) => onSetQuantity(itemId, available, e.currentTarget.value)}
-                class="w-12 h-8 text-center rounded border border-[var(--color-void-border)] bg-[var(--color-void)] text-[var(--color-gold)] font-[var(--font-mono)] text-sm"
-              />
-              <Button size="sm" variant="secondary" onClick={() => onChange(itemId, available, +1)} disabled={cur >= available}>+</Button>
-              <Button size="sm" variant="secondary" onClick={() => onSetMax(itemId, available)}>All</Button>
-              <Button size="sm" variant="secondary" onClick={() => onRemove(itemId)} disabled={cur <= 0}>x</Button>
-            </div>
+            <Button size="sm" variant={selected ? 'ghost' : 'secondary'} onClick={() => onToggle(itemId)}>{selected ? 'Clear' : 'Use'}</Button>
           </div>
         )
       })}
