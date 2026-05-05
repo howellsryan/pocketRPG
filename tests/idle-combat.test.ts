@@ -138,4 +138,54 @@ describe('simulateIdleCombat', () => {
     expect(sim!.chargesConsumed).toBe(2)
   })
 
+  it('truncates elapsed idle time when configured food buffer is exhausted', () => {
+    const task: any = {
+      stance: 'accurate',
+      monster: {
+        id: 'ogre',
+        name: 'Ogre',
+        hitpoints: 20,
+        maxHit: 40,
+        attackStyle: 'melee',
+        attackSpeed: 4,
+        stats: { defence: 1, magic: 1 },
+        defenceBonus: { slash: 0 },
+        drops: [],
+      },
+    }
+    const stats: any = {
+      attack: { xp: 13_034_431 },
+      strength: { xp: 13_034_431 },
+      defence: { xp: 13_034_431 },
+      hitpoints: { xp: 13_034_431 },
+      prayer: { xp: 0 },
+    }
+    const sim = simulateIdleCombat(task, 3_600_000, stats, {}, Array(28).fill(null), {
+      shark: { id: 'shark', foodHeal: 20 },
+    }, null, {}, {
+      food: { shark: 2 },
+      potions: {},
+      prayers: { protection: null, combat: null },
+    })
+    expect(sim).toBeTruthy()
+    expect(sim!.elapsedMsUsed).toBeLessThan(3_600_000)
+    expect(sim!.idleFoodConfiguredTotal).toBe(2)
+  })
+
+  it('consumes combat potions at 5-minute cadence for maintained uptime', () => {
+    const task: any = {
+      stance: 'accurate',
+      monster: { id: 'goblin', name: 'Goblin', hitpoints: 2, maxHit: 1, stats: { defence: 1, magic: 1 }, defenceBonus: {}, drops: [] }
+    }
+    const stats: any = { attack: { xp: 13_034_431 }, strength: { xp: 13_034_431 }, defence: { xp: 13_034_431 }, hitpoints: { xp: 13_034_431 }, prayer: { xp: 0 } }
+    const sim = simulateIdleCombat(task, 3_600_000, stats, {}, Array(28).fill(null), {}, null, {}, {
+      food: {},
+      potions: { super_combat_potion: 100 },
+      prayers: { protection: null, combat: null },
+    })
+    expect(sim).toBeTruthy()
+    expect(sim!.idlePotionsConsumed.super_combat_potion).toBe(12)
+    expect(sim!.idlePotionsConfiguredTotal).toBe(100)
+  })
+
 })
