@@ -15140,6 +15140,11 @@ const itemsData =
     "icon": "🔨",
     "isGeneralStore": false,
     "isBossUnique": true,
+    "specialAttack": {
+      "type": "smash",
+      "energyCost": 50,
+      "description": "Smash for 50% additional damage. On a hit, reduces the target's Defence level by 30% of its current value (rounded down). Stacks with itself."
+    },
     "sources": [
       {
         "type": "drop",
@@ -33924,6 +33929,30 @@ function applySpecialAttack(combatState, playerStats, equipment, itemsData, slay
             events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'warstrike', monsterHP: monster.currentHP });
             break;
         }
+        case 'smash': {
+            // Dragon Warhammer — 150% max hit; on hit, reduce target Defence level by 30% (floor of reduction)
+            const styleBonuses = getMeleeStyleBonuses(state.stance);
+            const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus);
+            const maxHit = Math.floor(meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength) * 1.5);
+            const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus);
+            const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0);
+            const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0);
+            const acc = hitChance(atkRoll, defRoll);
+            const damage = rollDamage(acc, maxHit);
+            const actual = Math.min(damage, Math.max(0, monster.currentHP));
+            monster.currentHP -= actual;
+            let defenceReducedBy = 0;
+            if (actual > 0) {
+                const currentDefence = Math.max(0, monster.stats.defence || 0);
+                defenceReducedBy = Math.floor(currentDefence * 0.3);
+                monster.stats.defence = currentDefence - defenceReducedBy;
+            }
+            const xpSkills = _meleeXP(state.stance, actual);
+            _accXP(state, xpSkills);
+            events.push({ type: 'xp', xpSkills });
+            events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'smash', defenceReducedBy, monsterHP: monster.currentHP });
+            break;
+        }
         case 'lightning': {
             // Saradomin Sword — normal melee hit + guaranteed magic lightning hit
             const styleBonuses = getMeleeStyleBonuses(state.stance);
@@ -34748,6 +34777,7 @@ const PVP_SPECIAL_ATTACK_LABELS = {
     healing_blade: '✨ Healing Blade',
     freeze: '❄️ Ice Cleave',
     warstrike: '💥 Warstrike',
+    smash: '🔨 Smash',
     lightning: "⚡ Saradomin's Lightning",
     snapshot: '🏹🏹 Snapshot',
     pebble_shot: '🎯 Pebble Shot',
@@ -35056,6 +35086,15 @@ function resolveSwing(attacker, defender, itemsData, events) {
         if ((swing.damage || 0) > 0) {
             defender.stats = { ...(defender.stats || {}), defence: Math.max(1, (defender.stats?.defence || 1) - swing.damage) };
             extra.defenceReducedBy = swing.damage;
+        }
+    }
+    else if (specType === 'smash') {
+        swing = rollModifiedSwing(attacker, defender, itemsData, { accuracyMultiplier: accMult, maxHitMultiplier: dmgMult || 1.5 });
+        if ((swing.damage || 0) > 0) {
+            const currentDef = Math.max(0, defender.stats?.defence || 0);
+            const reduction = Math.floor(currentDef * 0.3);
+            defender.stats = { ...(defender.stats || {}), defence: Math.max(1, currentDef - reduction) };
+            extra.defenceReducedBy = reduction;
         }
     }
     else if (specType === 'lightning') {
@@ -43548,6 +43587,7 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                         healing_blade: `✨ Healing Blade (+${ev.healAmount} HP)`,
                         freeze: '❄️ Ice Cleave (frozen!)',
                         warstrike: '💥 Warstrike',
+                        smash: ev.defenceReducedBy > 0 ? `🔨 Smash (-${ev.defenceReducedBy} Defence)` : '🔨 Smash',
                         lightning: '⚡ Saradomin\'s Lightning',
                         snapshot: '🏹🏹 Snapshot',
                         pebble_shot: '🎯 Pebble Shot',

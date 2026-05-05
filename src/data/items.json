@@ -15039,6 +15039,11 @@
     "icon": "🔨",
     "isGeneralStore": false,
     "isBossUnique": true,
+    "specialAttack": {
+      "type": "smash",
+      "energyCost": 50,
+      "description": "Smash for 50% additional damage. On a hit, reduces the target's Defence level by 30% of its current value (rounded down). Stacks with itself."
+    },
     "sources": [
       {
         "type": "drop",
