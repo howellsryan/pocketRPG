@@ -7742,7 +7742,7 @@
   },
   "attack_potion": {
     "id": "attack_potion",
-    "name": "Attack potion",
+    "name": "Attack Potion",
     "type": "potion",
     "stackable": true,
     "shopValue": 150,
@@ -7754,7 +7754,7 @@
   },
   "strength_potion": {
     "id": "strength_potion",
-    "name": "Strength potion",
+    "name": "Strength Potion",
     "type": "potion",
     "stackable": true,
     "shopValue": 150,
@@ -7778,7 +7778,7 @@
   },
   "combat_potion": {
     "id": "combat_potion",
-    "name": "Combat potion",
+    "name": "Combat Potion",
     "type": "potion",
     "stackable": true,
     "shopValue": 200,
@@ -7790,7 +7790,7 @@
   },
   "prayer_potion": {
     "id": "prayer_potion",
-    "name": "Prayer potion",
+    "name": "Prayer Potion",
     "type": "potion",
     "stackable": true,
     "shopValue": 200,
@@ -7815,7 +7815,7 @@
   },
   "super_strength": {
     "id": "super_strength",
-    "name": "Super strength",
+    "name": "Super Strength",
     "type": "potion",
     "stackable": true,
     "shopValue": 400,
@@ -7827,7 +7827,7 @@
   },
   "super_restore": {
     "id": "super_restore",
-    "name": "Super restore",
+    "name": "Super Restore",
     "type": "potion",
     "stackable": true,
     "shopValue": 500,
@@ -7839,7 +7839,7 @@
   },
   "super_defence": {
     "id": "super_defence",
-    "name": "Super defence",
+    "name": "Super Defence",
     "type": "potion",
     "stackable": true,
     "shopValue": 400,
@@ -7851,7 +7851,7 @@
   },
   "ranging_potion": {
     "id": "ranging_potion",
-    "name": "Ranging potion",
+    "name": "Ranging Potion",
     "type": "potion",
     "stackable": true,
     "shopValue": 300,
@@ -7863,7 +7863,7 @@
   },
   "magic_potion": {
     "id": "magic_potion",
-    "name": "Magic potion",
+    "name": "Magic Potion",
     "type": "potion",
     "stackable": true,
     "shopValue": 350,
