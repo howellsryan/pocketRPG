@@ -1225,7 +1225,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
         {/* Stance selector */}
         <div class="flex gap-1.5 mb-3">
-          {['accurate', 'aggressive', 'defensive', 'controlled'].map(s => (
+          {['accurate', 'aggressive', 'defensive'].map(s => (
             <button
               key={s}
               onClick={() => updateCombatStance(s)}

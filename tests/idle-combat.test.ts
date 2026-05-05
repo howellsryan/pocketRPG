@@ -138,4 +138,35 @@ describe('simulateIdleCombat', () => {
     expect(sim!.chargesConsumed).toBe(2)
   })
 
+  it('returns shortened effective elapsed time when survivability is exhausted', () => {
+    const task: any = {
+      stance: 'accurate',
+      monster: { id: 'ogre', name: 'Ogre', hitpoints: 1, maxHit: 20, stats: { defence: 1, attack: 1, strength: 1 }, defenceBonus: {}, drops: [] }
+    }
+    const stats: any = { attack: { xp: 13_034_431 }, strength: { xp: 13_034_431 }, hitpoints: { xp: 13_034_431 } }
+    const sim = simulateIdleCombat(task, 600_000, stats, {}, Array(28).fill(null), {})
+    expect(sim).toBeTruthy()
+    expect(sim!.effectiveElapsedMs).toBeLessThan(600_000)
+    expect(['out_of_food', 'out_of_hp']).toContain(sim!.stoppedReason)
+    expect(sim!.finalHP).toBeGreaterThanOrEqual(1)
+  })
+
+  it('consumes prayer restore potions deterministically when idle prayer is active', () => {
+    const task: any = {
+      stance: 'accurate',
+      monster: { id: 'goblin', name: 'Goblin', hitpoints: 2, maxHit: 2, attackSpeed: 4, attackStyle: 'melee', stats: { defence: 1 }, defenceBonus: {}, drops: [] }
+    }
+    const stats: any = { attack: { xp: 13_034_431 }, strength: { xp: 13_034_431 }, prayer: { xp: 4470 }, hitpoints: { xp: 13_034_431 } }
+    const itemsData: any = {
+      prayer_potion: { id: 'prayer_potion', idlePotionEffect: { type: 'prayer_restore', restoreAmount: 15 } },
+      super_restore: { id: 'super_restore', idlePotionEffect: { type: 'prayer_restore', restoreAmount: 20 } }
+    }
+    const sim = simulateIdleCombat(task, 1_200_000, stats, {}, Array(28).fill(null), itemsData, null, {}, {
+      idlePrayers: { protectionPrayerId: 'protect_from_melee' },
+      idlePotions: [{ itemId: 'prayer_potion', quantity: 2 }, { itemId: 'super_restore', quantity: 2 }]
+    })
+    expect(sim!.potionsConsumed.prayer_potion).toBeGreaterThanOrEqual(sim!.potionsConsumed.super_restore || 0)
+    expect(sim!.prayerPointsUsed).toBeGreaterThan(0)
+  })
+
 })

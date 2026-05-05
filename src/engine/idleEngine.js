@@ -715,6 +715,25 @@ function idleRollDrops(monster) {
   return drops
 }
 
+function normaliseIdleSupplyList(list = []) {
+  return Array.isArray(list) ? list.filter(Boolean).map(e => ({
+    itemId: e.itemId,
+    quantity: Math.max(0, Math.floor(Number(e.quantity) || 0))
+  })).filter(e => e.itemId && e.quantity > 0) : []
+}
+
+function getFoodHealAmount(item) {
+  return Math.max(0, Math.floor(Number(item?.healAmount || item?.heal || 0)))
+}
+
+function isPrayerRestorePotion(item) {
+  return item?.idlePotionEffect?.type === 'prayer_restore'
+}
+
+function isBoostPotion(item) {
+  return item?.idlePotionEffect?.type === 'boost'
+}
+
 /**
  * Simulate idle combat.
  * Returns { xpGained, lootGained, lootLost, lootBanked, monstersKilled, finalInventory, slayerXpGained, slayerTaskUpdate }
@@ -732,7 +751,7 @@ function idleRollDrops(monster) {
  * itemsData: items lookup
  * slayerTask: optional current slayer task (if not on-task, will be null)
  */
-export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsData, slayerTask = null, bank = {}) {
+export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsData, slayerTask = null, bank = {}, options = {}) {
   if (!task || !task.monster) return null
 
   const monster = task.monster
@@ -750,6 +769,10 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   }
 
   const { avgDmgPerHit, weaponSpeed, combatType } = avgHitStats(playerStats, equipment, monster, task.stance || 'accurate', itemsData, task.spell || null, slayerTask)
+  const idleFood = normaliseIdleSupplyList(options.idleFood)
+  const idlePotions = normaliseIdleSupplyList(options.idlePotions)
+  const idlePrayers = options.idlePrayers || {}
+  const hasIdlePrayer = !!(idlePrayers.protectionPrayerId || idlePrayers.combatPrayerId)
   const rangedAmmoFailure = combatType === 'ranged' ? getRangedAmmoRequirementFailure(equipment, itemsData) : null
   if (rangedAmmoFailure) {
     return { xpGained: {}, lootGained: {}, monstersKilled: 0, lootLost: {}, lootBanked: {} }
@@ -858,11 +881,74 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   let monstersKilledOnTask = 0
   let slayerXpGained = 0
   let remainingTicks = totalTicks
+  let effectiveTicks = totalTicks
+  let stoppedReason = 'completed_elapsed'
+
+  const maxHP = getLevelFromXP(stats.hitpoints?.xp || 1154)
+  let hpPool = Math.max(1, Math.floor(Number(options.currentHP) || maxHP))
+  const foodConfigured = {}
+  const foodConsumed = {}
+  for (const entry of idleFood) {
+    const item = itemsData[entry.itemId]
+    const configured = entry.quantity
+    const availableInv = inventory.reduce((sum, slot) => sum + (slot?.itemId === entry.itemId ? (slot.quantity || 0) : 0), 0)
+    const availableBank = bank?.[entry.itemId]?.quantity || 0
+    const available = Math.min(configured, availableInv + availableBank)
+    foodConfigured[entry.itemId] = available
+    foodConsumed[entry.itemId] = 0
+    const heal = getFoodHealAmount(item)
+    hpPool += available * heal
+  }
+
+  const prayerPointsStarted = getLevelFromXP(stats.prayer?.xp || 0)
+  let prayerPointsRemaining = prayerPointsStarted
+  let prayerPointsUsed = 0
+  let prayerPointsRestored = 0
+
+  const potionsConfigured = {}
+  const potionsConsumed = {}
+  let boostedTicksRemaining = 0
+  let prayerPotionsRemaining = []
+  for (const entry of idlePotions) {
+    const availableInv = inventory.reduce((sum, slot) => sum + (slot?.itemId === entry.itemId ? (slot.quantity || 0) : 0), 0)
+    const availableBank = bank?.[entry.itemId]?.quantity || 0
+    const available = Math.min(entry.quantity, availableInv + availableBank)
+    potionsConfigured[entry.itemId] = available
+    potionsConsumed[entry.itemId] = 0
+    const item = itemsData[entry.itemId]
+    if (isBoostPotion(item)) boostedTicksRemaining += available * Math.floor((item.idlePotionEffect.durationMs || 300000) / TICK_MS)
+    if (isPrayerRestorePotion(item)) prayerPotionsRemaining.push({ itemId: entry.itemId, restore: item.idlePotionEffect.restoreAmount || 0, remaining: available })
+  }
+  prayerPotionsRemaining.sort((a, b) => a.restore - b.restore) // deterministic: prayer potion then super restore
 
   const maxKillsFromResources = Math.min(maxKillsFromAmmo, maxKillsFromRunes, maxKillsFromCharges)
 
+  const monsterAvgHit = Math.max(0, Math.floor((monster.maxHit || 1) / 2))
   while (remainingTicks >= ticksPerCycle && monstersKilled < maxKillsFromResources) {
+    const thisCyclePrayerDrain = hasIdlePrayer ? Math.max(1, Math.ceil(ticksPerKill / Math.max(1, weaponSpeed)) + Math.ceil(ticksPerKill / Math.max(1, monster.attackSpeed || 4))) : 0
+    if (hasIdlePrayer) {
+      let needed = Math.max(0, thisCyclePrayerDrain - prayerPointsRemaining)
+      while (needed > 0) {
+        const potion = prayerPotionsRemaining.find(p => p.remaining > 0)
+        if (!potion) break
+        potion.remaining--
+        potionsConsumed[potion.itemId] = (potionsConsumed[potion.itemId] || 0) + 1
+        prayerPointsRemaining += potion.restore
+        prayerPointsRestored += potion.restore
+        needed = Math.max(0, thisCyclePrayerDrain - prayerPointsRemaining)
+      }
+      prayerPointsRemaining = Math.max(0, prayerPointsRemaining - thisCyclePrayerDrain)
+      prayerPointsUsed += thisCyclePrayerDrain
+    }
     remainingTicks -= ticksPerCycle
+    const protectionActive = hasIdlePrayer && prayerPointsRemaining > 0 && idlePrayers.protectionPrayerId && ((monster.attackStyle || 'melee') === 'melee')
+    const cycleDamage = protectionActive ? 0 : monsterAvgHit
+    hpPool -= cycleDamage
+    if (hpPool <= 0) {
+      stoppedReason = Object.values(foodConfigured).some(v => v > 0) ? 'out_of_food' : 'out_of_hp'
+      effectiveTicks = totalTicks - remainingTicks
+      break
+    }
     monstersKilled++
 
     // Check if this kill counts toward slayer task — cap at total task count
@@ -980,6 +1066,10 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
 
   const resourceLimited = monstersKilled < Math.floor(totalTicks / ticksPerCycle)
     && (maxKillsFromResources !== Infinity)
+  if (resourceLimited && stoppedReason === 'completed_elapsed') stoppedReason = 'resource_limited'
 
-  return { xpGained, lootGained, lootLost, lootBanked, runesConsumed, monstersKilled, monstersKilledOnTask, finalInventory: newInv, slayerXpGained, slayerTaskUpdate, chargesConsumed, ammoConsumed, attacksUsed: attacksPerKill * monstersKilled, resourceLimited }
+  effectiveTicks = Math.min(effectiveTicks, totalTicks - remainingTicks)
+  const effectiveElapsedMs = Math.max(0, effectiveTicks * TICK_MS)
+
+  return { xpGained, lootGained, lootLost, lootBanked, runesConsumed, monstersKilled, monstersKilledOnTask, finalInventory: newInv, slayerXpGained, slayerTaskUpdate, chargesConsumed, ammoConsumed, attacksUsed: attacksPerKill * monstersKilled, resourceLimited, effectiveElapsedMs, stoppedReason, finalHP: Math.max(1, Math.floor(hpPool)), foodConsumed, potionsConsumed, prayerPointsStarted, prayerPointsRestored, prayerPointsUsed, prayerPointsRemaining, idleSupplies: { foodConfigured, potionsConfigured } }
 }

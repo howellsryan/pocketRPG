@@ -9,6 +9,7 @@ import { simulateQuestIdleCascade, splitQuestXpRewards } from '../engine/questId
 import { ALL_SKILLS, MAX_XP, AUTO_SAVE_DEBOUNCE, QUEST_QUEUE_MAX } from '../utils/constants.js'
 import { debounce } from '../utils/helpers.js'
 import { fetchIdleState, pushIdleState } from '../cloud/idleState.js'
+const normaliseCombatStance = (stance) => (stance === 'controlled' ? 'accurate' : (stance || 'accurate'))
 import { getToken, getCharacterId } from '../cloud/api.js'
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS, detectCountIncreases, detectLevelUps, detectSetGrowth, didNumberIncrease, extractSkillLevels } from '../cloud/criticalSavePolicy.js'
@@ -387,7 +388,7 @@ export function GameProvider({ children }) {
     setEquipment(eq)
     setBank({ ...b })
     setHomeShortcuts(shortcuts ?? null)
-    setCombatStanceState(stance ?? 'accurate')
+    setCombatStanceState(normaliseCombatStance(stance))
     setAutoBankLootState(autoBankSetting !== false) // default true
     setBankConfig(savedBankConfig ?? { tabs: [], itemTabMap: {} })
     setUnlockedFeatures(new Set(savedUnlocks || []))
@@ -541,8 +542,9 @@ export function GameProvider({ children }) {
   }, [])
 
   const updateCombatStance = useCallback((stance) => {
-    setCombatStanceState(stance)
-    saveSetting('combatStance', stance)
+    const nextStance = normaliseCombatStance(stance)
+    setCombatStanceState(nextStance)
+    saveSetting('combatStance', nextStance)
   }, [])
 
   const updateActiveCombatSpell = useCallback((spell) => {
