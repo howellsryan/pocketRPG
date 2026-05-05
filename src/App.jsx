@@ -118,7 +118,7 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
 }
 
 function GameApp() {
-  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
+  const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue, idleLoadout,
     unlockMinigameItem, awardDungeoneeringTokens, farming, updateFarming } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
@@ -526,7 +526,7 @@ function GameApp() {
             }
           } else if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
           else if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
-          else if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank)
+          else if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank, idleLoadout)
           else if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
           else if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
           else if (savedTask.type === 'hunter') sim = simulateIdleHunting(savedTask, elapsedMs)
@@ -1140,7 +1140,7 @@ function GameApp() {
         } else {
           if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
           if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
-          if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank)
+          if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank, idleLoadout)
           if (savedTask.type === 'agility') sim = simulateIdleAgility(savedTask, elapsedMs)
           if (savedTask.type === 'thieving') sim = simulateIdleThieving(savedTask, elapsedMs)
           if (savedTask.type === 'hunter') sim = simulateIdleHunting(savedTask, elapsedMs)
@@ -1218,7 +1218,7 @@ function GameApp() {
 
           // Merge simulation data into idle result
           if (sim) {
-            idleResultData = { ...idleResultData, ...sim }
+            idleResultData = { ...idleResultData, elapsedMs: sim?.elapsedMsUsed || elapsedMs, ...sim }
           }
           // Deduct consumed materials from bank
           if (sim.itemsConsumed && Object.keys(sim.itemsConsumed).length > 0) {
@@ -1604,6 +1604,22 @@ function GameApp() {
                       </div>
                     ) : null
                   })()}
+
+                  {(idleResult.idleFoodConfiguredTotal > 0 || idleResult.idlePotionsConfiguredTotal > 0) && (
+                    <div style={{ marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' }}>
+                      <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>🧰 Idle Consumables</div>
+                      {idleResult.idleFoodConfiguredTotal > 0 && (
+                        <div style={{ fontSize: '13px', color: '#e8d5b0', marginBottom: '4px' }}>
+                          🍖 Food used: <span style={{ color: '#d4af37', fontFamily: 'monospace' }}>{idleResult.idleFoodConsumedTotal || 0}</span> / <span style={{ color: '#d4af37', fontFamily: 'monospace' }}>{idleResult.idleFoodConfiguredTotal}</span>
+                        </div>
+                      )}
+                      {idleResult.idlePotionsConfiguredTotal > 0 && (
+                        <div style={{ fontSize: '13px', color: '#e8d5b0' }}>
+                          🧪 Potions used: <span style={{ color: '#d4af37', fontFamily: 'monospace' }}>{idleResult.idlePotionsConsumedTotal || 0}</span> / <span style={{ color: '#d4af37', fontFamily: 'monospace' }}>{idleResult.idlePotionsConfiguredTotal}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {idleResult.dungeoneeringTokensGained > 0 && (
                     <div style={{ marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' }}>
