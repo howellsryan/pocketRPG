@@ -6,6 +6,7 @@ export const PVP_SPECIAL_ATTACK_LABELS = {
   healing_blade: '✨ Healing Blade',
   freeze: '❄️ Ice Cleave',
   warstrike: '💥 Warstrike',
+  smash: '🔨 Smash',
   lightning: "⚡ Saradomin's Lightning",
   snapshot: '🏹🏹 Snapshot',
   pebble_shot: '🎯 Pebble Shot',

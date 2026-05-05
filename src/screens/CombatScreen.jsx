@@ -352,6 +352,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             healing_blade: `✨ Healing Blade (+${ev.healAmount} HP)`,
             freeze: '❄️ Ice Cleave (frozen!)',
             warstrike: '💥 Warstrike',
+            smash: ev.defenceReducedBy > 0 ? `🔨 Smash (-${ev.defenceReducedBy} Defence)` : '🔨 Smash',
             lightning: '⚡ Saradomin\'s Lightning',
             snapshot: '🏹🏹 Snapshot',
             pebble_shot: '🎯 Pebble Shot',
