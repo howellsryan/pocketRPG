@@ -282,7 +282,7 @@ function PrayerSection({ prayersData, prayerLevel, draft, onSelect }) {
   const protections = Object.values(prayersData || {}).filter((p) => p.bonusType === 'protection')
   const combats = Object.values(prayersData || {})
     .filter((p) => p.bonusType === 'stat' || p.bonusType === 'multi_stat')
-    .sort((a, b) => (a.level || 1) - (b.level || 1))
+    .sort((a, b) => (b.level || 1) - (a.level || 1))
   const protId = draft.prayers?.protectionPrayerId
   const cmbId = draft.prayers?.combatPrayerId
   return (
