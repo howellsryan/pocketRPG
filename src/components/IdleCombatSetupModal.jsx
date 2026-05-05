@@ -246,16 +246,15 @@ function PotionSection({ candidates, draft, onChange, onSetQuantity, onSetMax, o
       {candidates.map(({ itemId, item, available }) => {
         const cur = findEntry(draft.potions, itemId)?.quantity || 0
         let blurb = ''
-        if (item.effect === 'combat') blurb = `+${item.boost} all combat · ${item.duration || 300}s/dose`
-        else if (item.effect === 'prayer') blurb = `Restores ${item.idlePrayerRestore || 15} prayer per dose`
-        else if (item.effect === 'super_restore') blurb = `Restores ${item.idlePrayerRestore || 20} prayer per dose`
-        else if (item.boost) blurb = `+${item.boost} ${item.effect} · ${item.duration || 300}s/dose`
+        if (item.effect === 'combat') blurb = `+${item.boost} combat`
+        else if (item.effect === 'prayer') blurb = `+${item.idlePrayerRestore || 15} prayer`
+        else if (item.effect === 'super_restore') blurb = `+${item.idlePrayerRestore || 20} prayer`
         return (
           <div key={itemId} class="flex items-center gap-2 p-2 rounded-lg bg-[var(--color-void-light)] border border-[var(--color-void-border)]">
             <span class="text-xl">{item.icon || '🧪'}</span>
             <div class="flex-1 min-w-0">
               <div class="text-sm text-[var(--color-parchment)]">{item.name}</div>
-              <div class="text-[10px] text-[var(--color-parchment)] opacity-60">{blurb} · own {available}</div>
+              <div class="text-[10px] text-[var(--color-parchment)] opacity-60">{blurb}</div>
             </div>
             <div class="flex items-center gap-1">
               <Button size="sm" variant="secondary" onClick={() => onChange(itemId, available, -1)} disabled={cur <= 0}>-</Button>
@@ -268,8 +267,8 @@ function PotionSection({ candidates, draft, onChange, onSetQuantity, onSetMax, o
                 class="w-12 h-8 text-center rounded border border-[var(--color-void-border)] bg-[var(--color-void)] text-[var(--color-gold)] font-[var(--font-mono)] text-sm"
               />
               <Button size="sm" variant="secondary" onClick={() => onChange(itemId, available, +1)} disabled={cur >= available}>+</Button>
-              <Button size="sm" variant="ghost" onClick={() => onSetMax(itemId, available)}>Max</Button>
-              <Button size="sm" variant="ghost" onClick={() => onRemove(itemId)} disabled={cur <= 0}>Clear</Button>
+              <Button size="sm" variant="secondary" onClick={() => onSetMax(itemId, available)}>All</Button>
+              <Button size="sm" variant="secondary" onClick={() => onRemove(itemId)} disabled={cur <= 0}>x</Button>
             </div>
           </div>
         )
