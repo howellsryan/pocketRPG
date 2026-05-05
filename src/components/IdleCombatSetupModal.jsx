@@ -279,9 +279,12 @@ function PotionSection({ candidates, draft, onChange, onSetQuantity, onSetMax, o
 }
 
 function PrayerSection({ prayersData, prayerLevel, draft, onSelect }) {
-  const protections = Object.values(prayersData || {}).filter((p) => p.bonusType === 'protection')
+  const protections = Object.values(prayersData || {})
+    .filter((p) => p.bonusType === 'protection')
+    .filter((p) => prayerLevel >= (p.level || 1))
   const combats = Object.values(prayersData || {})
     .filter((p) => p.bonusType === 'stat' || p.bonusType === 'multi_stat')
+    .filter((p) => prayerLevel >= (p.level || 1))
     .sort((a, b) => (b.level || 1) - (a.level || 1))
   const protId = draft.prayers?.protectionPrayerId
   const cmbId = draft.prayers?.combatPrayerId
@@ -295,19 +298,15 @@ function PrayerSection({ prayersData, prayerLevel, draft, onSelect }) {
         <div class="text-[11px] text-[var(--color-parchment)] opacity-60 mb-1">Protection Prayer</div>
         <div class="grid grid-cols-3 gap-2">
           {protections.map((prayer) => {
-            const canUse = prayerLevel >= (prayer.level || 1)
             const isActive = protId === prayer.id
             return (
               <button
                 key={prayer.id}
-                disabled={!canUse}
-                onClick={() => canUse && onSelect(prayer.id, 'protection')}
+                onClick={() => onSelect(prayer.id, 'protection')}
                 class={`p-2 rounded-lg border text-center ${
                   isActive
                     ? 'bg-[#2a4a2a] border-[#4a8a4a]'
-                    : canUse
-                    ? 'bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[#2a3a2a]'
-                    : 'bg-[#111] border-[#1a1a1a] opacity-40'
+                    : 'bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[#2a3a2a]'
                 }`}
               >
                 <div class="text-base">{prayer.icon}</div>
@@ -323,19 +322,15 @@ function PrayerSection({ prayersData, prayerLevel, draft, onSelect }) {
         <div class="text-[11px] text-[var(--color-parchment)] opacity-60 mb-1">Combat Prayer</div>
         <div class="grid grid-cols-2 gap-2">
           {combats.map((prayer) => {
-            const canUse = prayerLevel >= (prayer.level || 1)
             const isActive = cmbId === prayer.id
             return (
               <button
                 key={prayer.id}
-                disabled={!canUse}
-                onClick={() => canUse && onSelect(prayer.id, 'combat')}
+                onClick={() => onSelect(prayer.id, 'combat')}
                 class={`p-2 rounded-lg border text-left ${
                   isActive
                     ? 'bg-[#2a3a1a] border-[#4a8a2a]'
-                    : canUse
-                    ? 'bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[#2a3a2a]'
-                    : 'bg-[#111] border-[#1a1a1a] opacity-40'
+                    : 'bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[#2a3a2a]'
                 }`}
               >
                 <div class="text-sm text-[var(--color-parchment)]">{prayer.icon} {prayer.name}</div>
