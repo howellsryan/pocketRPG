@@ -325,6 +325,7 @@ export default function QuestsScreen() {
       </div>
 
       <TwoPaneLayout
+        showDetailPane={section === 'quests'}
         list={
       <div class="h-full overflow-y-auto px-4 pb-4">
         {section === 'quests' && (

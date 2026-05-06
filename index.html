@@ -40717,10 +40717,10 @@ function ItemDetailPanel({ item, children, quantity, noted, extraInfo }) {
  *           message when nothing is selected so the pane isn't blank.
  *   detailWidthClass: optional override for the detail pane width.
  */
-function TwoPaneLayout({ list, detail, detailWidthClass = 'md:w-[360px] lg:w-[420px]' }) {
+function TwoPaneLayout({ list, detail, detailWidthClass = 'md:w-[360px] lg:w-[420px]', showDetailPane = true }) {
     return (h("div", { class: "flex-1 min-h-0 md:flex md:gap-4 md:overflow-hidden" },
         h("div", { class: "h-full md:flex-1 md:min-w-0 md:overflow-hidden md:flex md:flex-col" }, list),
-        h("aside", { class: `hidden md:flex md:flex-col ${detailWidthClass} md:flex-shrink-0 md:overflow-y-auto md:border-l md:border-[var(--color-void-border)] md:pl-4` }, detail)));
+        showDetailPane && (h("aside", { class: `hidden md:flex md:flex-col ${detailWidthClass} md:flex-shrink-0 md:overflow-y-auto md:border-l md:border-[var(--color-void-border)] md:pl-4` }, detail))));
 }
 
 // ── components/SharedItemModal.js ──
@@ -48752,7 +48752,7 @@ function QuestsScreen() {
                         questQueue.length,
                         ")"))),
                 questQueue.length > 0 && (h(Button, { variant: "success", size: "sm", onClick: startQueue }, "\u25B6\uFE0F Begin Queue"))))),
-        h(TwoPaneLayout, { list: h("div", { class: "h-full overflow-y-auto px-4 pb-4" },
+        h(TwoPaneLayout, { showDetailPane: section === 'quests', list: h("div", { class: "h-full overflow-y-auto px-4 pb-4" },
                 section === 'quests' && (h("div", { class: "flex flex-col gap-2" },
                     showQueue && questQueue.length > 0 && (h("div", { class: "flex flex-col gap-2 pt-2 mb-4" },
                         h(SectionHeader, { size: "sm" }, "\uD83D\uDCCB Quest Queue"),
