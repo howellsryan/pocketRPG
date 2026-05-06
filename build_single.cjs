@@ -85,6 +85,7 @@ const sourceFiles = [
   'components/QuestXpChoiceModal.js',
   'components/BuyCreditsModal.js',
   'components/IdleCombatSetupModal.js',
+  'components/EquipmentPaperdoll.js',
   'screens/HomeScreen.js',
   'screens/StatsScreen.js',
   'screens/InventoryScreen.js',

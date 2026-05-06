@@ -41029,6 +41029,65 @@ function PrayerSection({ prayersData, prayerLevel, draft, onSelect }) {
             })))));
 }
 
+// ── components/EquipmentPaperdoll.js ──
+
+const EQ_SLOT_LABELS = {
+    head: '🪖', cape: '🧣', neck: '📿', ammo: '🏹',
+    weapon: '🗡️', body: '👕', shield: '🛡️',
+    legs: '👖', gloves: '🧤', boots: '👢', ring: '💍'
+};
+const EQ_SLOT_NAMES = {
+    head: 'Head', cape: 'Cape', neck: 'Neck', ammo: 'Ammo',
+    weapon: 'Weapon', body: 'Body', shield: 'Shield',
+    legs: 'Legs', gloves: 'Gloves', boots: 'Boots', ring: 'Ring'
+};
+const SIZE_PRESETS = {
+    sm: { box: 'w-11 h-11', icon: '14px', label: 'text-[6px] max-w-[40px]', emptyIcon: '12px', gap: 'gap-[4px]' },
+    md: { box: 'w-14 h-14', icon: '18px', label: 'text-[7px] max-w-[52px]', emptyIcon: '14px', gap: 'gap-[6px]' }
+};
+function EquipSlot({ slotName, equipment, itemsData, onSelect, size = 'md' }) {
+    const entry = equipment[slotName];
+    const item = entry ? itemsData[entry.itemId] : null;
+    const isEmpty = !item;
+    const charges = entry?.charges || 0;
+    const preset = SIZE_PRESETS[size] || SIZE_PRESETS.md;
+    const bgClass = isEmpty ? 'bg-[#111] border-[#222] opacity-40' : 'bg-[var(--color-void-light)] border-[#444]';
+    const cursorClass = item ? 'cursor-pointer' : 'cursor-default';
+    return (h("button", { onClick: () => { if (item && onSelect)
+            onSelect(slotName, item); }, class: `${preset.box} rounded-[10px] border flex flex-col items-center justify-center relative ${bgClass} ${cursorClass}` },
+        h("span", { style: { fontSize: item ? preset.icon : preset.emptyIcon } }, item ? (item.icon || '📦') : EQ_SLOT_LABELS[slotName]),
+        charges > 0 && (h("span", { class: "absolute bottom-[2px] right-[2px] text-[8px] text-[#4ade80] font-bold" }, "\u26A1")),
+        h("span", { class: `${preset.label} text-center mt-[2px] overflow-hidden text-ellipsis whitespace-nowrap ${item ? 'text-[var(--color-parchment)] font-semibold' : 'text-[#555]'}` }, item ? item.name : EQ_SLOT_NAMES[slotName])));
+}
+/**
+ * Visual equipment paperdoll. Renders the 5-row slot layout used by the
+ * Equipment screen. Click any equipped slot to fire onSelect(slotName, item).
+ */
+function EquipmentPaperdoll({ equipment, itemsData, onSelect, size = 'md', className = '', asCard = true }) {
+    const slotProps = { equipment, itemsData, onSelect, size };
+    const preset = SIZE_PRESETS[size] || SIZE_PRESETS.md;
+    const grid = (h("div", { class: `flex flex-col items-center ${preset.gap} ${className}` },
+        h("div", { class: "flex justify-center" },
+            h(EquipSlot, { slotName: "head", ...slotProps })),
+        h("div", { class: `flex ${preset.gap} justify-center` },
+            h(EquipSlot, { slotName: "cape", ...slotProps }),
+            h(EquipSlot, { slotName: "neck", ...slotProps }),
+            h(EquipSlot, { slotName: "ammo", ...slotProps })),
+        h("div", { class: `flex ${preset.gap} justify-center` },
+            h(EquipSlot, { slotName: "weapon", ...slotProps }),
+            h(EquipSlot, { slotName: "body", ...slotProps }),
+            h(EquipSlot, { slotName: "shield", ...slotProps })),
+        h("div", { class: "flex justify-center" },
+            h(EquipSlot, { slotName: "legs", ...slotProps })),
+        h("div", { class: `flex ${preset.gap} justify-center` },
+            h(EquipSlot, { slotName: "gloves", ...slotProps }),
+            h(EquipSlot, { slotName: "boots", ...slotProps }),
+            h(EquipSlot, { slotName: "ring", ...slotProps }))));
+    if (!asCard)
+        return grid;
+    return (h(Card, { padding: "p-4", className: "flex flex-col items-center", style: { background: 'linear-gradient(135deg, #141414, #0f0f0f)' } }, grid));
+}
+
 // ── screens/HomeScreen.js ──
 
 
@@ -43442,6 +43501,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
 
 
 
+
 const COMBAT_CATEGORIES = [
     {
         key: 'training',
@@ -44846,8 +44906,46 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                         slayerTask.monstersRemaining,
                         " / ",
                         slayerTask.totalCount,
-                        " remaining")))),
+                        " remaining"))),
+                h("div", { class: "hidden md:block mt-2" },
+                    h("div", { class: "text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1" }, "Gear"),
+                    h(EquipmentPaperdoll, { equipment: equipment, itemsData: itemsData, onSelect: () => setShowEquipmentModal(true), size: "sm" }))),
             h("div", { class: "flex flex-col md:col-start-3 md:row-start-1 md:overflow-y-auto md:min-h-0" },
+                h("div", { class: "hidden md:block mb-2" },
+                    h("div", { class: "text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1" }, "Prayers"),
+                    (() => {
+                        const prayerLevel = getLevelFromXP(stats.prayer?.xp || 0);
+                        const protectionPrayers = Object.values(prayersData).filter(p => p.bonusType === 'protection');
+                        const combatPrayers = Object.values(prayersData)
+                            .filter(p => p.bonusType !== 'protection')
+                            .sort((a, b) => b.level - a.level);
+                        return (h(Fragment, null,
+                            h("div", { class: "grid grid-cols-3 gap-1 mb-1.5" }, protectionPrayers.map(prayer => {
+                                const canUse = prayerLevel >= prayer.level;
+                                const isActive = combat?.activeProtectionPrayer === prayer.id;
+                                const protectType = prayer.style === 'magic' ? 'Mage' : prayer.style === 'ranged' ? 'Range' : 'Melee';
+                                return (h("button", { key: prayer.id, onClick: () => canUse && handlePrayer(prayer.id), disabled: !canUse, title: `${prayer.name} · Lv ${prayer.level}`, class: `px-1 py-1.5 rounded-md border text-center transition-colors ${isActive
+                                        ? 'bg-[#2a4a2a] border-[var(--color-gold)]'
+                                        : canUse
+                                            ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
+                                            : 'bg-[#111] border-[#1a1a1a] opacity-30 cursor-default'}` },
+                                    h("div", { class: "text-[12px] leading-none" }, prayer.icon),
+                                    h("div", { class: "text-[8px] text-[var(--color-parchment)] opacity-70 mt-0.5" }, protectType)));
+                            })),
+                            h("div", { class: "grid grid-cols-3 gap-1 max-h-[260px] overflow-y-auto pr-0.5" }, combatPrayers.map(prayer => {
+                                const canUse = prayerLevel >= prayer.level;
+                                const isActive = combat?.activeCombatPrayer === prayer.id;
+                                return (h("button", { key: prayer.id, onClick: () => canUse && handlePrayer(prayer.id), disabled: !canUse, title: `${prayer.name} · Lv ${prayer.level}\n${prayer.description}`, class: `px-1 py-1 rounded-md border text-center transition-colors ${isActive
+                                        ? 'bg-[#2a3a1a] border-[var(--color-gold)]'
+                                        : canUse
+                                            ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
+                                            : 'bg-[#111] border-[#1a1a1a] opacity-30 cursor-default'}` },
+                                    h("div", { class: "text-[12px] leading-none" }, prayer.icon),
+                                    h("div", { class: "text-[8px] text-[var(--color-gold-dim)] opacity-70 mt-0.5" },
+                                        "Lv ",
+                                        prayer.level)));
+                            }))));
+                    })()),
                 h("div", { class: "mb-2 bg-[#111] rounded-lg px-3 py-1.5" },
                     h("div", { class: "flex items-center justify-between mb-1" },
                         h("span", { class: "text-[10px] text-[var(--color-parchment)] opacity-50" }, "\uD83C\uDF92 Inventory"),
@@ -44918,30 +45016,37 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                     h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, killCount > 0 && (Date.now() - fightStartedAt) > 5000
                         ? Math.round(killCount / ((Date.now() - fightStartedAt) / 3600000)).toLocaleString()
                         : '—'))),
-                h("div", { class: "flex-shrink-0 flex flex-col gap-2" }, combat.active && !isAutoRestarting && (h(Fragment, null,
-                    h("div", { class: "grid grid-cols-3 gap-2" },
-                        h("button", { onClick: handleEat, class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\uD83C\uDF56 Eat"),
-                        h("button", { onClick: () => setShowPotionModal(true), class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\uD83E\uDDEA Potion"),
-                        h("button", { onClick: () => setShowEquipmentModal(true), class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#2a2a3a,#3a3a5a);border:1px solid rgba(150,150,200,0.35);color:#a8a8d8" }, "\u2699\uFE0F Gear")),
-                    h("div", { class: "grid grid-cols-3 gap-2" },
-                        (() => {
-                            const weaponEntry = equipment?.weapon;
-                            const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null;
-                            const hasSpec = weapon?.specialAttack;
-                            const energy = combat.specialAttackEnergy || 0;
-                            const canSpec = hasSpec && energy >= weapon.specialAttack.energyCost;
-                            return (h("button", { onClick: canSpec ? handleSpecialAttack : undefined, disabled: !canSpec, class: `py-2.5 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`, style: canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888' },
-                                "\u26A1 ",
-                                hasSpec ? `Spec` : 'No Spec'));
-                        })(),
-                        (() => {
-                            const weaponEntry = equipment?.weapon;
-                            const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null;
-                            const isMagic = weapon?.attackStyle === 'magic';
-                            const magicLevel = getLevelFromXP(stats.magic?.xp || 0);
-                            return (h("button", { onClick: () => isMagic && setShowSpellModal(true), disabled: !isMagic, class: `py-2.5 rounded-lg font-semibold text-sm transition-opacity ${isMagic ? 'active:opacity-80' : 'opacity-40 cursor-default'}`, style: isMagic ? 'background:linear-gradient(135deg,#1a2a3a,#2a3a5a);border:1px solid rgba(100,150,200,0.35);color:#a8d8ff' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888' }, "\uD83D\uDD2E Cast"));
-                        })(),
-                        h("button", { onClick: () => setShowPrayerModal(true), class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\uD83D\uDE4F Prayer"))))))),
+                h("div", { class: "flex-shrink-0 flex flex-col gap-2" }, combat.active && !isAutoRestarting && (() => {
+                    const weaponEntry = equipment?.weapon;
+                    const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null;
+                    const hasSpec = weapon?.specialAttack;
+                    const energy = combat.specialAttackEnergy || 0;
+                    const canSpec = hasSpec && energy >= weapon.specialAttack.energyCost;
+                    const isMagic = weapon?.attackStyle === 'magic';
+                    const eatBtn = (h("button", { onClick: handleEat, class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\uD83C\uDF56 Eat"));
+                    const potionBtn = (h("button", { onClick: () => setShowPotionModal(true), class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\uD83E\uDDEA Potion"));
+                    const gearBtn = (h("button", { onClick: () => setShowEquipmentModal(true), class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#2a2a3a,#3a3a5a);border:1px solid rgba(150,150,200,0.35);color:#a8a8d8" }, "\u2699\uFE0F Gear"));
+                    const specBtn = (h("button", { onClick: canSpec ? handleSpecialAttack : undefined, disabled: !canSpec, class: `py-2.5 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`, style: canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888' },
+                        "\u26A1 ",
+                        hasSpec ? `Spec` : 'No Spec'));
+                    const castBtn = (h("button", { onClick: () => isMagic && setShowSpellModal(true), disabled: !isMagic, class: `py-2.5 rounded-lg font-semibold text-sm transition-opacity ${isMagic ? 'active:opacity-80' : 'opacity-40 cursor-default'}`, style: isMagic ? 'background:linear-gradient(135deg,#1a2a3a,#2a3a5a);border:1px solid rgba(100,150,200,0.35);color:#a8d8ff' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888' }, "\uD83D\uDD2E Cast"));
+                    const prayerBtn = (h("button", { onClick: () => setShowPrayerModal(true), class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\uD83D\uDE4F Prayer"));
+                    return (h(Fragment, null,
+                        h("div", { class: "md:hidden flex flex-col gap-2" },
+                            h("div", { class: "grid grid-cols-3 gap-2" },
+                                eatBtn,
+                                potionBtn,
+                                gearBtn),
+                            h("div", { class: "grid grid-cols-3 gap-2" },
+                                specBtn,
+                                castBtn,
+                                prayerBtn)),
+                        h("div", { class: "hidden md:grid md:grid-cols-4 gap-2" },
+                            eatBtn,
+                            potionBtn,
+                            specBtn,
+                            castBtn)));
+                })()))),
         showPrayerModal && (h(Modal, { onClose: () => setShowPrayerModal(false) },
             h("div", { class: "flex items-center justify-between mb-3" },
                 h("h3", { class: "font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]" }, "Choose Prayer"),
@@ -48249,33 +48354,8 @@ function GeneralStoreScreen({ onBuyCredits }) {
 
 
 
+
 const DEFAULT_CHARGE_ITEM_ID = 'zulrah_scales';
-const EQ_SLOT_LABELS = {
-    head: '🪖', cape: '🧣', neck: '📿', ammo: '🏹',
-    weapon: '🗡️', body: '👕', shield: '🛡️',
-    legs: '👖', gloves: '🧤', boots: '👢', ring: '💍'
-};
-const EQ_SLOT_NAMES = {
-    head: 'Head', cape: 'Cape', neck: 'Neck', ammo: 'Ammo',
-    weapon: 'Weapon', body: 'Body', shield: 'Shield',
-    legs: 'Legs', gloves: 'Gloves', boots: 'Boots', ring: 'Ring'
-};
-/**
- * Renders a single equipment slot in the paperdoll grid.
- */
-function EquipSlot({ slotName, equipment, itemsData, onSelect }) {
-    const entry = equipment[slotName];
-    const item = entry ? itemsData[entry.itemId] : null;
-    const isEmpty = !item;
-    const charges = entry?.charges || 0;
-    const bgClass = isEmpty ? 'bg-[#111] border-[#222] opacity-40' : 'bg-[var(--color-void-light)] border-[#444]';
-    const cursorClass = item ? 'cursor-pointer' : 'cursor-default';
-    return (h("button", { onClick: () => { if (item)
-            onSelect(slotName, item); }, class: `w-14 h-14 rounded-[10px] border flex flex-col items-center justify-center relative ${bgClass} ${cursorClass}` },
-        h("span", { style: { fontSize: item ? '18px' : '14px' } }, item ? (item.icon || '📦') : EQ_SLOT_LABELS[slotName]),
-        charges > 0 && (h("span", { class: "absolute bottom-[2px] right-[2px] text-[8px] text-[#4ade80] font-bold" }, "\u26A1")),
-        h("span", { class: `text-[7px] text-center mt-[2px] max-w-[52px] overflow-hidden text-ellipsis whitespace-nowrap ${item ? 'text-[var(--color-parchment)] font-semibold' : 'text-[#555]'}` }, item ? item.name : EQ_SLOT_NAMES[slotName])));
-}
 function EquipmentScreen() {
     const { equipment, inventory, bank, updateEquipment, updateInventory, updateBank, addToast, itemsData } = useGame();
     const [selected, setSelected] = useState(null); // { slot, item }
@@ -48426,33 +48506,11 @@ function EquipmentScreen() {
         addToast(`Uncharged ${item.name}, recovered ${totalCharges} ${chargeItemName}`, 'info');
     };
     const bonuses = getEquipmentBonuses(equipment, itemsData);
-    // Paperdoll grid layout:
-    //   Row 0:  [head]
-    //   Row 1:  [cape] [neck] [ammo]
-    //   Row 2:  [weapon] [body] [shield]
-    //   Row 3:  [legs]
-    //   Row 4:  [gloves] [boots] [ring]
-    const slotProps = { equipment, itemsData, onSelect: handleSelect };
     return (h("div", { class: "h-full overflow-y-auto p-4" },
         h(SectionHeader, { className: "mb-3" }, "Equipment"),
         h("div", { class: "md:grid md:grid-cols-2 md:gap-4 md:items-start" },
-            h(Card, { padding: "p-4", className: "mb-4 md:mb-0 flex flex-col items-center gap-[6px]", style: { background: 'linear-gradient(135deg, #141414, #0f0f0f)' } },
-                h("div", { class: "flex justify-center" },
-                    h(EquipSlot, { slotName: "head", ...slotProps })),
-                h("div", { class: "flex gap-[6px] justify-center" },
-                    h(EquipSlot, { slotName: "cape", ...slotProps }),
-                    h(EquipSlot, { slotName: "neck", ...slotProps }),
-                    h(EquipSlot, { slotName: "ammo", ...slotProps })),
-                h("div", { class: "flex gap-[6px] justify-center" },
-                    h(EquipSlot, { slotName: "weapon", ...slotProps }),
-                    h(EquipSlot, { slotName: "body", ...slotProps }),
-                    h(EquipSlot, { slotName: "shield", ...slotProps })),
-                h("div", { class: "flex justify-center" },
-                    h(EquipSlot, { slotName: "legs", ...slotProps })),
-                h("div", { class: "flex gap-[6px] justify-center" },
-                    h(EquipSlot, { slotName: "gloves", ...slotProps }),
-                    h(EquipSlot, { slotName: "boots", ...slotProps }),
-                    h(EquipSlot, { slotName: "ring", ...slotProps }))),
+            h("div", { class: "mb-4 md:mb-0" },
+                h(EquipmentPaperdoll, { equipment: equipment, itemsData: itemsData, onSelect: handleSelect, size: "md" })),
             h(Card, null,
                 h(SectionHeader, { size: "sm", className: "mb-2 opacity-50" }, "Bonuses"),
                 h("div", { class: "grid grid-cols-2 gap-2 text-[11px]" },

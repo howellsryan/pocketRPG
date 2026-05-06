@@ -7,6 +7,7 @@ import PvpCombatScreen from './PvpCombatScreen.jsx'
 import Modal from '../components/Modal.jsx'
 import HPBar from '../components/HPBar.jsx'
 import IdleCombatSetupModal from '../components/IdleCombatSetupModal.jsx'
+import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applySpecialAttack } from '../engine/combat.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
@@ -1693,10 +1694,91 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </div>
       )}
 
+      {/* Inline gear paperdoll — desktop only. Click any equipped slot to
+          open the existing Swap Gear modal. Mobile keeps the ⚙️ Gear button. */}
+      <div class="hidden md:block mt-2">
+        <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1">Gear</div>
+        <EquipmentPaperdoll
+          equipment={equipment}
+          itemsData={itemsData}
+          onSelect={() => setShowEquipmentModal(true)}
+          size="sm"
+        />
+      </div>
+
       </div>{/* /LEFT pane */}
 
-      {/* RIGHT pane (DOM 2nd, visually 3rd at md+): inventory + active potions */}
+      {/* RIGHT pane (DOM 2nd, visually 3rd at md+): prayers + inventory + active potions */}
       <div class="flex flex-col md:col-start-3 md:row-start-1 md:overflow-y-auto md:min-h-0">
+
+      {/* Inline prayer toggles — desktop only. Mirrors the prayer modal's
+          activeProtectionPrayer / activeCombatPrayer toggles, but inline so
+          mobile keeps the 🙏 Prayer button + modal flow. */}
+      <div class="hidden md:block mb-2">
+        <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1">Prayers</div>
+        {(() => {
+          const prayerLevel = getLevelFromXP(stats.prayer?.xp || 0)
+          const protectionPrayers = Object.values(prayersData).filter(p => p.bonusType === 'protection')
+          const combatPrayers = Object.values(prayersData)
+            .filter(p => p.bonusType !== 'protection')
+            .sort((a, b) => b.level - a.level)
+          return (
+            <>
+              {/* Protection: melee / ranged / magic */}
+              <div class="grid grid-cols-3 gap-1 mb-1.5">
+                {protectionPrayers.map(prayer => {
+                  const canUse = prayerLevel >= prayer.level
+                  const isActive = combat?.activeProtectionPrayer === prayer.id
+                  const protectType = prayer.style === 'magic' ? 'Mage' : prayer.style === 'ranged' ? 'Range' : 'Melee'
+                  return (
+                    <button
+                      key={prayer.id}
+                      onClick={() => canUse && handlePrayer(prayer.id)}
+                      disabled={!canUse}
+                      title={`${prayer.name} · Lv ${prayer.level}`}
+                      class={`px-1 py-1.5 rounded-md border text-center transition-colors ${
+                        isActive
+                          ? 'bg-[#2a4a2a] border-[var(--color-gold)]'
+                          : canUse
+                            ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
+                            : 'bg-[#111] border-[#1a1a1a] opacity-30 cursor-default'
+                      }`}
+                    >
+                      <div class="text-[12px] leading-none">{prayer.icon}</div>
+                      <div class="text-[8px] text-[var(--color-parchment)] opacity-70 mt-0.5">{protectType}</div>
+                    </button>
+                  )
+                })}
+              </div>
+              {/* Combat-boost prayers, dense icon grid */}
+              <div class="grid grid-cols-3 gap-1 max-h-[260px] overflow-y-auto pr-0.5">
+                {combatPrayers.map(prayer => {
+                  const canUse = prayerLevel >= prayer.level
+                  const isActive = combat?.activeCombatPrayer === prayer.id
+                  return (
+                    <button
+                      key={prayer.id}
+                      onClick={() => canUse && handlePrayer(prayer.id)}
+                      disabled={!canUse}
+                      title={`${prayer.name} · Lv ${prayer.level}\n${prayer.description}`}
+                      class={`px-1 py-1 rounded-md border text-center transition-colors ${
+                        isActive
+                          ? 'bg-[#2a3a1a] border-[var(--color-gold)]'
+                          : canUse
+                            ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
+                            : 'bg-[#111] border-[#1a1a1a] opacity-30 cursor-default'
+                      }`}
+                    >
+                      <div class="text-[12px] leading-none">{prayer.icon}</div>
+                      <div class="text-[8px] text-[var(--color-gold-dim)] opacity-70 mt-0.5">Lv {prayer.level}</div>
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          )
+        })()}
+      </div>
 
       {/* Inventory slots indicator with active potion boosts */}
       <div class="mb-2 bg-[#111] rounded-lg px-3 py-1.5">
@@ -1794,71 +1876,88 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </div>
       )}
 
-      {/* Action buttons */}
+      {/* Action buttons.
+          Mobile keeps the 6-button two-row layout (Eat/Potion/Gear,
+          Spec/Cast/Prayer) since Gear + Prayer don't have inline panels there.
+          Desktop collapses to a single 4-button row (Eat/Potion/Spec/Cast)
+          because Gear lives in the LEFT pane paperdoll and Prayer lives in
+          the RIGHT pane prayer panel. */}
       <div class="flex-shrink-0 flex flex-col gap-2">
-        {combat.active && !isAutoRestarting && (
-          <>
-            {/* Primary combat actions */}
-            <div class="grid grid-cols-3 gap-2">
-              <button onClick={handleEat}
-                class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
-                style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
-                🍖 Eat
-              </button>
-              <button onClick={() => setShowPotionModal(true)}
-                class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
-                style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
-                🧪 Potion
-              </button>
-              <button onClick={() => setShowEquipmentModal(true)}
-                class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
-                style="background:linear-gradient(135deg,#2a2a3a,#3a3a5a);border:1px solid rgba(150,150,200,0.35);color:#a8a8d8">
-                ⚙️ Gear
-              </button>
-            </div>
-            {/* Special attack, Cast, and Prayer buttons */}
-            <div class="grid grid-cols-3 gap-2">
-              {(() => {
-                const weaponEntry = equipment?.weapon
-                const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
-                const hasSpec = weapon?.specialAttack
-                const energy = combat.specialAttackEnergy || 0
-                const canSpec = hasSpec && energy >= weapon.specialAttack.energyCost
-                return (
-                  <button
-                    onClick={canSpec ? handleSpecialAttack : undefined}
-                    disabled={!canSpec}
-                    class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
-                    style={canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
-                  >
-                    ⚡ {hasSpec ? `Spec` : 'No Spec'}
-                  </button>
-                )
-              })()}
-              {(() => {
-                const weaponEntry = equipment?.weapon
-                const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
-                const isMagic = weapon?.attackStyle === 'magic'
-                const magicLevel = getLevelFromXP(stats.magic?.xp || 0)
-                return (
-                  <button
-                    onClick={() => isMagic && setShowSpellModal(true)}
-                    disabled={!isMagic}
-                    class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${isMagic ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
-                    style={isMagic ? 'background:linear-gradient(135deg,#1a2a3a,#2a3a5a);border:1px solid rgba(100,150,200,0.35);color:#a8d8ff' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
-                  >
-                    🔮 Cast
-                  </button>
-                )
-              })()}
-              <button onClick={() => setShowPrayerModal(true)}
-                class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
-                style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
-                🙏 Prayer
-              </button>
-            </div>
-          </>
-        )}
+        {combat.active && !isAutoRestarting && (() => {
+          const weaponEntry = equipment?.weapon
+          const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
+          const hasSpec = weapon?.specialAttack
+          const energy = combat.specialAttackEnergy || 0
+          const canSpec = hasSpec && energy >= weapon.specialAttack.energyCost
+          const isMagic = weapon?.attackStyle === 'magic'
+
+          const eatBtn = (
+            <button onClick={handleEat}
+              class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
+              style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
+              🍖 Eat
+            </button>
+          )
+          const potionBtn = (
+            <button onClick={() => setShowPotionModal(true)}
+              class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
+              style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
+              🧪 Potion
+            </button>
+          )
+          const gearBtn = (
+            <button onClick={() => setShowEquipmentModal(true)}
+              class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
+              style="background:linear-gradient(135deg,#2a2a3a,#3a3a5a);border:1px solid rgba(150,150,200,0.35);color:#a8a8d8">
+              ⚙️ Gear
+            </button>
+          )
+          const specBtn = (
+            <button
+              onClick={canSpec ? handleSpecialAttack : undefined}
+              disabled={!canSpec}
+              class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
+              style={canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
+            >
+              ⚡ {hasSpec ? `Spec` : 'No Spec'}
+            </button>
+          )
+          const castBtn = (
+            <button
+              onClick={() => isMagic && setShowSpellModal(true)}
+              disabled={!isMagic}
+              class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${isMagic ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
+              style={isMagic ? 'background:linear-gradient(135deg,#1a2a3a,#2a3a5a);border:1px solid rgba(100,150,200,0.35);color:#a8d8ff' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
+            >
+              🔮 Cast
+            </button>
+          )
+          const prayerBtn = (
+            <button onClick={() => setShowPrayerModal(true)}
+              class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
+              style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0">
+              🙏 Prayer
+            </button>
+          )
+
+          return (
+            <>
+              {/* Mobile: two rows of 3 */}
+              <div class="md:hidden flex flex-col gap-2">
+                <div class="grid grid-cols-3 gap-2">
+                  {eatBtn}{potionBtn}{gearBtn}
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                  {specBtn}{castBtn}{prayerBtn}
+                </div>
+              </div>
+              {/* Desktop: single row of 4 (Gear + Prayer moved to side panes) */}
+              <div class="hidden md:grid md:grid-cols-4 gap-2">
+                {eatBtn}{potionBtn}{specBtn}{castBtn}
+              </div>
+            </>
+          )
+        })()}
       </div>
 
       </div>{/* /CENTRE pane */}
