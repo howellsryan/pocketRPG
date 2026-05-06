@@ -1207,6 +1207,15 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     }
   }
 
+  // Post-loop top-up: a real player would eat back to full before stepping
+  // away. Mirror that here so a skip never hands the player back near death
+  // while food remains. Counted into foodConsumed/itemsConsumed automatically.
+  while (hp < maxHP && foodQueue.length > 0) {
+    const heal = consumeFood()
+    if (heal == null) break
+    hp = Math.min(maxHP, hp + heal)
+  }
+
   // Deduct runes for magic combat: consume from inventory first, track bank overflow
   const runesConsumed = {}
   if (combatType === 'magic' && task.spell?.runeReq && hitsNeeded < Infinity && monstersKilled > 0) {

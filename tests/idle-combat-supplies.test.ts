@@ -198,6 +198,51 @@ describe('simulateIdleCombat — idle eat caps survivability', () => {
     expect(2 - remainingSharks).toBe(sim!.foodConsumed.shark || 0)
   })
 
+  it('tops player back up to full HP after the session if food remains', () => {
+    // Weak goblin can't really hurt a level-99 player, so HP wouldn't normally
+    // dip below 1. Start the player below max so the post-loop top-up has work
+    // to do, and confirm the player ends at full HP with food consumed.
+    const task: any = { stance: 'accurate', monster: WEAK_GOBLIN }
+    const inv = Array(28).fill(null)
+    inv[0] = { itemId: 'shark', quantity: 28 }
+    const sim = simulateIdleCombat(task, 60 * 60_000, ATT_99_STATS, {}, inv, ITEMS_FIXTURE, null, {}, {
+      currentHP: 50, // 49 HP missing => 3 sharks (heal 20 each) tops to 99
+      idleFood: [{ itemId: 'shark', quantity: 28 }],
+    })
+    expect(sim).toBeTruthy()
+    expect(sim!.finalHP).toBe(99)
+    expect(sim!.foodConsumed.shark).toBe(3)
+    const sharkSlot = sim!.finalInventory.find((s: any) => s && s.itemId === 'shark')
+    expect((sharkSlot?.quantity ?? 0)).toBe(28 - 3)
+  })
+
+  it('top-up does not run when player is already at full HP', () => {
+    const task: any = { stance: 'accurate', monster: WEAK_GOBLIN }
+    const inv = Array(28).fill(null)
+    inv[0] = { itemId: 'shark', quantity: 28 }
+    const sim = simulateIdleCombat(task, 60 * 60_000, ATT_99_STATS, {}, inv, ITEMS_FIXTURE, null, {}, {
+      currentHP: 99,
+      idleFood: [{ itemId: 'shark', quantity: 28 }],
+    })
+    expect(sim).toBeTruthy()
+    expect(sim!.finalHP).toBe(99)
+    expect(sim!.foodConsumed.shark || 0).toBe(0)
+  })
+
+  it('top-up consumes only what is available; if food runs out, leaves player below max', () => {
+    const task: any = { stance: 'accurate', monster: WEAK_GOBLIN }
+    const inv = Array(28).fill(null)
+    inv[0] = { itemId: 'shark', quantity: 1 }
+    const sim = simulateIdleCombat(task, 60 * 60_000, ATT_99_STATS, {}, inv, ITEMS_FIXTURE, null, {}, {
+      currentHP: 50,
+      idleFood: [{ itemId: 'shark', quantity: 1 }],
+    })
+    expect(sim).toBeTruthy()
+    // One shark heals 20: 50 + 20 = 70, below max 99, food queue exhausted.
+    expect(sim!.finalHP).toBe(70)
+    expect(sim!.foodConsumed.shark).toBe(1)
+  })
+
   it('no idle prayer => no prayer drain, no restore consumption', () => {
     const task: any = { stance: 'accurate', monster: WEAK_GOBLIN }
     const inv = Array(28).fill(null)
