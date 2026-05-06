@@ -87,7 +87,7 @@ export default function Modal({
       />
 
       <div
-        class={`relative z-[1] flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[#333] bg-[var(--color-void-light)] ${className}`}
+        class={`relative z-[1] flex w-full max-w-lg md:max-w-2xl flex-col overflow-hidden rounded-2xl border border-[#333] bg-[var(--color-void-light)] ${className}`}
         style={dialogSizeStyle}
         onClick={(e) => e.stopPropagation()}
       >

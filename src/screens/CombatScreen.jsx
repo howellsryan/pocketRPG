@@ -1301,7 +1301,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   )}
                 </button>
                 {!isCollapsed && (
-                  <div class="space-y-2">
+                  <div class="space-y-2 md:space-y-0 md:grid md:grid-cols-2 md:gap-2 lg:grid-cols-3 xl:grid-cols-4">
                   {monsters.map(monster => {
                     const slayLvl = getSlayerLevel()
                     const slayReq = monster.slayerRequirement
@@ -1617,12 +1617,21 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   // Combat view
   return (
-    <div class="h-full flex flex-col p-4">
+    <div class="h-full flex flex-col p-4 md:overflow-hidden">
       {/* Back button */}
       <button onClick={stopAndBack}
         class="text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1">
         ← Back
       </button>
+
+      {/* Pane container — single flex column on mobile, 3-pane grid on desktop.
+          DOM order is [left, right (inventory), centre] so mobile flow stays
+          [stats, inventory, log+actions]. At md+, explicit grid placement
+          puts inventory in column 3 and centre content in column 2. */}
+      <div class="flex-1 min-h-0 flex flex-col md:grid md:grid-cols-[minmax(220px,1fr)_minmax(0,1.6fr)_minmax(220px,1fr)] md:grid-rows-1 md:gap-4 md:overflow-hidden">
+
+      {/* LEFT pane: enemy + player stats */}
+      <div class="flex flex-col md:col-start-1 md:row-start-1 md:overflow-y-auto md:min-h-0 md:pr-1">
 
       {/* Monster HP */}
       <div class="mb-3">
@@ -1684,6 +1693,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </div>
       )}
 
+      </div>{/* /LEFT pane */}
+
+      {/* RIGHT pane (DOM 2nd, visually 3rd at md+): inventory + active potions */}
+      <div class="flex flex-col md:col-start-3 md:row-start-1 md:overflow-y-auto md:min-h-0">
+
       {/* Inventory slots indicator with active potion boosts */}
       <div class="mb-2 bg-[#111] rounded-lg px-3 py-1.5">
         <div class="flex items-center justify-between mb-1">
@@ -1716,6 +1730,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         )}
       </div>
 
+      </div>{/* /RIGHT pane */}
+
+      {/* CENTRE pane (DOM 3rd, visually 2nd at md+): special bar, log, kill stats, action buttons */}
+      <div class="flex-1 min-h-0 flex flex-col md:col-start-2 md:row-start-1 md:overflow-hidden">
 
       {/* Special attack bar — only shown when equipped weapon has a spec */}
       {(() => {
@@ -1843,6 +1861,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         )}
       </div>
 
+      </div>{/* /CENTRE pane */}
+      </div>{/* /pane container */}
+
       {/* Prayer modal */}
       {showPrayerModal && (
         <Modal onClose={() => setShowPrayerModal(false)}>
@@ -1860,7 +1881,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           <div class="space-y-4 max-h-96 overflow-y-auto">
             {/* Protection Prayers */}
             <div>
-              <div class="grid grid-cols-3 gap-2">
+              <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
                 {Object.values(prayersData)
                   .filter(p => p.bonusType === 'protection')
                   .map(prayer => {
@@ -1898,7 +1919,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             {/* Combat Enhancement Prayers */}
             <div>
               <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Combat</h4>
-              <div class="grid grid-cols-2 gap-2">
+              <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                 {Object.values(prayersData)
                   .filter(p => p.bonusType !== 'protection')
                   .sort((a, b) => b.level - a.level)
@@ -2092,7 +2113,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               })
 
               return (
-                <div class="grid grid-cols-4 gap-1.5">
+                <div class="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1.5">
                   {sortedItems.map(slot => {
                     const item = itemsData[slot.itemId]
                     const equipped = equipmentRef.current[item.slot]?.itemId === item.id

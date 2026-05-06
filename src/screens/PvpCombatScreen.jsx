@@ -665,7 +665,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
   return (
     <div
-      class="h-full min-h-0 overflow-y-auto overscroll-contain p-3 space-y-3 pb-24"
+      class="h-full min-h-0 overflow-y-auto overscroll-contain p-3 space-y-3 pb-24 md:max-w-5xl md:mx-auto md:px-6"
       style={{ maxHeight: 'calc(100vh - 72px)' }}
     >
       {loading && (
@@ -736,7 +736,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
       <Card>
         <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Combat actions</div>
-        <div class="grid grid-cols-2 gap-2">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
           <Button
             variant={specialVisuallyQueued ? 'primary' : 'secondary'}
             size="md"
@@ -787,7 +787,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
             {availablePrayers.length === 0 ? (
               <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No PvP-usable prayers unlocked.</div>
             ) : (
-              <div class="grid grid-cols-2 gap-2">
+              <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                 {availablePrayers.map((prayer) => {
                   const active = visuallyActivePrayerId === prayer.id
                   return (
@@ -817,7 +817,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
             {potionSlots.length === 0 ? (
               <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No PvP potions in inventory.</div>
             ) : (
-              <div class="grid grid-cols-2 gap-2">
+              <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                 {potionSlots.map(({ slot, idx, item }) => (
                   <Button
                     key={`${slot.itemId}-${idx}`}
@@ -865,7 +865,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
                   No equippable items in inventory.
                 </div>
               ) : (
-                <div class="grid grid-cols-1 gap-2">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                   {equippableSlots.map(({ slot, idx, item }) => (
                     <button
                       key={`inventory-gear-${idx}-${slot.itemId}`}
@@ -901,7 +901,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
       <Panel>
         <div class="text-xs font-semibold text-[var(--color-gold)] mb-1">Recent actions</div>
-        <div class="space-y-1 max-h-24 overflow-y-auto">
+        <div class="space-y-1 max-h-24 md:max-h-48 overflow-y-auto">
           {recentLines.length === 0 && <div class="text-[11px] text-[var(--color-parchment)] opacity-60">Waiting for first swing…</div>}
           {recentLines.map((line, i) => (
             <div key={i} class="text-[11px] text-[var(--color-parchment)] opacity-80">• {line}</div>

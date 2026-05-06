@@ -40219,7 +40219,7 @@ function Modal({ title, onClose, children, fullHeight = false, className = '', c
             paddingLeft: 'max(8px, env(safe-area-inset-left))',
         } },
         h("div", { class: "absolute inset-0 bg-black/80", "aria-hidden": "true", onClick: () => onClose?.() }),
-        h("div", { class: `relative z-[1] flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[#333] bg-[var(--color-void-light)] ${className}`, style: dialogSizeStyle, onClick: (e) => e.stopPropagation() },
+        h("div", { class: `relative z-[1] flex w-full max-w-lg md:max-w-2xl flex-col overflow-hidden rounded-2xl border border-[#333] bg-[var(--color-void-light)] ${className}`, style: dialogSizeStyle, onClick: (e) => e.stopPropagation() },
             title && (h("div", { class: "flex flex-shrink-0 items-center justify-between border-b border-[#333] px-4 py-3" },
                 h("h2", { class: "font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]" }, title),
                 onClose && (h("button", { onClick: onClose, class: "flex h-8 w-8 items-center justify-center rounded-full bg-[#222] text-[var(--color-parchment)] opacity-60 hover:opacity-100 active:bg-[#333]", "aria-label": "Close modal" }, "\u2715")))),
@@ -43197,7 +43197,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
         setEndModal(null);
         await onExit?.();
     };
-    return (h("div", { class: "h-full min-h-0 overflow-y-auto overscroll-contain p-3 space-y-3 pb-24", style: { maxHeight: 'calc(100vh - 72px)' } },
+    return (h("div", { class: "h-full min-h-0 overflow-y-auto overscroll-contain p-3 space-y-3 pb-24 md:max-w-5xl md:mx-auto md:px-6", style: { maxHeight: 'calc(100vh - 72px)' } },
         loading && (h(Card, { className: "border-[var(--color-gold-dim)] bg-[var(--color-void-light)]" },
             h("div", { class: "text-[11px] text-[var(--color-gold)]" }, "Connecting to PvP match\u2026"))),
         bootstrapError && (h(Card, { className: "border-[var(--color-blood)] bg-[#2a1010]" },
@@ -43244,7 +43244,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
                     h(ItemSlot, { slot: slot, size: "small" })))))),
         h(Card, null,
             h("div", { class: "text-xs font-semibold text-[var(--color-gold)] mb-2" }, "Combat actions"),
-            h("div", { class: "grid grid-cols-2 gap-2" },
+            h("div", { class: "grid grid-cols-2 md:grid-cols-4 gap-2" },
                 h(Button, { variant: specialVisuallyQueued ? 'primary' : 'secondary', size: "md", className: `w-full ${specialVisuallyQueued ? '!bg-[var(--color-gold)] !text-[var(--color-void-dark)] !border-[var(--color-gold)]' : ''}`, disabled: busy || (!specialVisuallyQueued && !specialReady), "aria-pressed": specialVisuallyQueued, title: equippedSpecial ? (specialVisuallyQueued ? 'Special attack queued. Tap again to cancel.' : `Special attack energy: ${specialEnergy}/${specialCost}`) : 'No special attack available', onClick: toggleSpecialAttack },
                     h("span", { class: specialVisuallyQueued ? 'mr-1' : 'text-[var(--color-gold)] mr-1' }, "\u26A1"),
                     "Spec",
@@ -43254,7 +43254,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
                         : ''}`, "aria-pressed": !!visuallyActivePrayerId, onClick: () => toggleActionPanel('prayer') }, "\uD83D\uDE4F Prayer"),
                 h(Button, { variant: actionPanel === 'potion' ? 'primary' : 'secondary', size: "md", className: "w-full", disabled: busy || potionSlots.length === 0, onClick: () => toggleActionPanel('potion') }, "\uD83E\uDDEA Potion"),
                 h(Button, { variant: actionPanel === 'gear' ? 'primary' : 'secondary', size: "md", className: "w-full", disabled: busy || !hasGearActions, onClick: () => toggleActionPanel('gear') }, "\u2699\uFE0F Gear")),
-            actionPanel === 'prayer' && (h("div", { class: "mt-3" }, availablePrayers.length === 0 ? (h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60" }, "No PvP-usable prayers unlocked.")) : (h("div", { class: "grid grid-cols-2 gap-2" }, availablePrayers.map((prayer) => {
+            actionPanel === 'prayer' && (h("div", { class: "mt-3" }, availablePrayers.length === 0 ? (h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60" }, "No PvP-usable prayers unlocked.")) : (h("div", { class: "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2" }, availablePrayers.map((prayer) => {
                 const active = visuallyActivePrayerId === prayer.id;
                 return (h(Button, { key: prayer.id, variant: active ? 'primary' : 'secondary', size: "md", className: `min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight transition-none ${active
                         ? '!border-[var(--color-gold)] !bg-[var(--color-gold)] !text-[var(--color-void-dark)]'
@@ -43264,7 +43264,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
                         " ",
                         prayer.name)));
             }))))),
-            actionPanel === 'potion' && (h("div", { class: "mt-3" }, potionSlots.length === 0 ? (h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60" }, "No PvP potions in inventory.")) : (h("div", { class: "grid grid-cols-2 gap-2" }, potionSlots.map(({ slot, idx, item }) => (h(Button, { key: `${slot.itemId}-${idx}`, variant: "secondary", size: "md", className: "min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight", onClick: () => queueAction({ type: 'drink', inventorySlot: idx }, { showBusy: false }) },
+            actionPanel === 'potion' && (h("div", { class: "mt-3" }, potionSlots.length === 0 ? (h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60" }, "No PvP potions in inventory.")) : (h("div", { class: "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2" }, potionSlots.map(({ slot, idx, item }) => (h(Button, { key: `${slot.itemId}-${idx}`, variant: "secondary", size: "md", className: "min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight", onClick: () => queueAction({ type: 'drink', inventorySlot: idx }, { showBusy: false }) },
                 h("span", { class: "block truncate" },
                     item?.icon || '🧪',
                     " ",
@@ -43277,7 +43277,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
             h("div", { class: "space-y-4 max-h-[70vh] overflow-y-auto pr-1" },
                 h("div", null,
                     h("div", { class: "text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-2" }, "Inventory gear"),
-                    equippableSlots.length === 0 ? (h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-50" }, "No equippable items in inventory.")) : (h("div", { class: "grid grid-cols-1 gap-2" }, equippableSlots.map(({ slot, idx, item }) => (h("button", { key: `inventory-gear-${idx}-${slot.itemId}`, onClick: () => queueGearEquip(idx), class: "w-full p-3 rounded-lg border bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222] transition-colors text-left" },
+                    equippableSlots.length === 0 ? (h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-50" }, "No equippable items in inventory.")) : (h("div", { class: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2" }, equippableSlots.map(({ slot, idx, item }) => (h("button", { key: `inventory-gear-${idx}-${slot.itemId}`, onClick: () => queueGearEquip(idx), class: "w-full p-3 rounded-lg border bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222] transition-colors text-left" },
                         h("div", { class: "flex items-center justify-between gap-3" },
                             h("div", { class: "flex items-center gap-2 min-w-0" },
                                 h(ItemSlot, { slot: slot, size: "small" }),
@@ -43289,7 +43289,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
                             h("span", { class: "text-[10px] text-[var(--color-gold)] shrink-0" }, "Equip"))))))))))),
         h(Panel, null,
             h("div", { class: "text-xs font-semibold text-[var(--color-gold)] mb-1" }, "Recent actions"),
-            h("div", { class: "space-y-1 max-h-24 overflow-y-auto" },
+            h("div", { class: "space-y-1 max-h-24 md:max-h-48 overflow-y-auto" },
                 recentLines.length === 0 && h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60" }, "Waiting for first swing\u2026"),
                 recentLines.map((line, i) => (h("div", { key: i, class: "text-[11px] text-[var(--color-parchment)] opacity-80" },
                     "\u2022 ",
@@ -44517,7 +44517,7 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                             h("span", { class: "text-xs font-semibold text-[var(--color-parchment)] uppercase tracking-wider opacity-60" }, category.label),
                             h("span", { class: "ml-auto text-[10px] text-[var(--color-parchment)] opacity-60" }, isCollapsed ? '▶' : '▼'),
                             monsters.length === 0 && (h("span", { class: "text-[10px] text-[var(--color-parchment)] opacity-30 italic" }, "\u2014 coming soon"))),
-                        !isCollapsed && (h("div", { class: "space-y-2" }, monsters.map(monster => {
+                        !isCollapsed && (h("div", { class: "space-y-2 md:space-y-0 md:grid md:grid-cols-2 md:gap-2 lg:grid-cols-3 xl:grid-cols-4" }, monsters.map(monster => {
                             const slayLvl = getSlayerLevel();
                             const slayReq = monster.slayerRequirement;
                             const slayLocked = slayReq && slayLvl < slayReq;
@@ -44708,148 +44708,152 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                                 }))))))))))));
     }
     // Combat view
-    return (h("div", { class: "h-full flex flex-col p-4" },
+    return (h("div", { class: "h-full flex flex-col p-4 md:overflow-hidden" },
         h("button", { onClick: stopAndBack, class: "text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1" }, "\u2190 Back"),
-        h("div", { class: "mb-3" },
-            h("div", { class: "flex items-center justify-between mb-1" },
-                h("span", { class: "text-sm font-semibold text-[var(--color-parchment)]" },
-                    combat.monster.name,
-                    combat.monster.multiForm && combat.monster.currentForm && combat.monster.forms?.[combat.monster.currentForm] && (() => {
-                        const form = combat.monster.forms[combat.monster.currentForm];
-                        return (h("span", { class: "ml-2 text-[10px] font-[var(--font-mono)] text-purple-300" },
-                            form.icon,
+        h("div", { class: "flex-1 min-h-0 flex flex-col md:grid md:grid-cols-[minmax(220px,1fr)_minmax(0,1.6fr)_minmax(220px,1fr)] md:grid-rows-1 md:gap-4 md:overflow-hidden" },
+            h("div", { class: "flex flex-col md:col-start-1 md:row-start-1 md:overflow-y-auto md:min-h-0 md:pr-1" },
+                h("div", { class: "mb-3" },
+                    h("div", { class: "flex items-center justify-between mb-1" },
+                        h("span", { class: "text-sm font-semibold text-[var(--color-parchment)]" },
+                            combat.monster.name,
+                            combat.monster.multiForm && combat.monster.currentForm && combat.monster.forms?.[combat.monster.currentForm] && (() => {
+                                const form = combat.monster.forms[combat.monster.currentForm];
+                                return (h("span", { class: "ml-2 text-[10px] font-[var(--font-mono)] text-purple-300" },
+                                    form.icon,
+                                    " ",
+                                    form.displayName,
+                                    form.immunity ? ` · 🛡️ immune to ${form.immunity}` : ''));
+                            })()),
+                        h("span", { class: "text-[10px] font-[var(--font-mono)] text-[var(--color-blood-light)]" },
+                            "CB ",
+                            combat.monster.combatLevel)),
+                    h(HPBar, { current: Math.max(0, combat.monster.currentHP), max: combat.monster.hitpoints, size: "large" })),
+                combat.raid && (h("div", { class: "mb-2 bg-[#111] border border-[#2a2a2a] rounded-lg px-3 py-2" },
+                    h("div", { class: "flex items-center justify-between mb-1.5" },
+                        h("span", { class: "text-[10px] font-semibold text-[var(--color-gold)]" },
+                            raidsData[combat.raid.raidId]?.icon,
                             " ",
-                            form.displayName,
-                            form.immunity ? ` · 🛡️ immune to ${form.immunity}` : ''));
-                    })()),
-                h("span", { class: "text-[10px] font-[var(--font-mono)] text-[var(--color-blood-light)]" },
-                    "CB ",
-                    combat.monster.combatLevel)),
-            h(HPBar, { current: Math.max(0, combat.monster.currentHP), max: combat.monster.hitpoints, size: "large" })),
-        combat.raid && (h("div", { class: "mb-2 bg-[#111] border border-[#2a2a2a] rounded-lg px-3 py-2" },
-            h("div", { class: "flex items-center justify-between mb-1.5" },
-                h("span", { class: "text-[10px] font-semibold text-[var(--color-gold)]" },
-                    raidsData[combat.raid.raidId]?.icon,
-                    " ",
-                    raidsData[combat.raid.raidId]?.name || 'Raid'),
-                h("span", { class: "text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-60" },
-                    "Boss ",
-                    combat.raid.currentBossIndex + 1,
-                    "/",
-                    combat.raid.bosses.length)),
-            h("div", { class: "flex gap-1" }, combat.raid.bosses.map((bossId, i) => (h("div", { key: bossId, class: `flex-1 h-1.5 rounded-full ${i < combat.raid.currentBossIndex ? 'bg-[var(--color-hp-green)]' :
-                    i === combat.raid.currentBossIndex ? 'bg-[var(--color-gold)]' :
-                        'bg-[#333]'}`, title: monstersData[bossId]?.name || bossId })))))),
-        h("div", { class: "mb-2" },
-            h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-50 mb-0.5" }, "Your HP"),
-            h(HPBar, { current: currentHP, max: getMaxHP(), size: "large" })),
-        slayerTask?.monsterId === combat.monster.id && (h("div", { class: "mb-2 bg-[#1a1a08] border border-[#3a3a10] rounded-lg px-3 py-1.5 flex items-center justify-between" },
-            h("span", { class: "text-[10px] text-yellow-400 font-semibold" }, "\uD83D\uDC80 Slayer Task"),
-            h("span", { class: "text-[10px] font-[var(--font-mono)] text-yellow-400" },
-                slayerTask.monstersRemaining,
-                " / ",
-                slayerTask.totalCount,
-                " remaining"))),
-        h("div", { class: "mb-2 bg-[#111] rounded-lg px-3 py-1.5" },
-            h("div", { class: "flex items-center justify-between mb-1" },
-                h("span", { class: "text-[10px] text-[var(--color-parchment)] opacity-50" }, "\uD83C\uDF92 Inventory"),
-                h("span", { class: "text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40" },
-                    freeSlots(inventory),
-                    "/28 free")),
-            Object.keys(combat?.activePotions || {}).length > 0 && (h("div", { class: "text-[8px] text-[var(--color-gold)] opacity-75" }, Object.keys(combat.activePotions).map(potionId => {
-                const potion = itemsData[potionId];
-                if (!potion)
-                    return null;
-                const boosts = [];
-                if (potion.effect === 'attack')
-                    boosts.push(`+${potion.boost} Atk`);
-                if (potion.effect === 'strength')
-                    boosts.push(`+${potion.boost} Str`);
-                if (potion.effect === 'defence')
-                    boosts.push(`+${potion.boost} Def`);
-                if (potion.effect === 'ranged')
-                    boosts.push(`+${potion.boost} Rng`);
-                if (potion.effect === 'magic')
-                    boosts.push(`+${potion.boost} Mag`);
-                if (potion.effect === 'combat')
-                    boosts.push(`+${potion.boost} All`);
-                const remainingTicks = combat.activePotions[potionId] || 0;
-                const remainingSeconds = Math.ceil(remainingTicks * 0.6);
-                return (h("div", { key: potionId, class: "opacity-75" },
-                    potion.icon,
-                    " ",
-                    boosts.join(', '),
-                    " \u00B7 ",
-                    remainingSeconds,
-                    "s"));
-            })))),
-        (() => {
-            const weaponEntry = equipment?.weapon;
-            const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null;
-            if (!weapon?.specialAttack)
-                return null;
-            const energy = combat.specialAttackEnergy || 0;
-            const canSpec = energy >= weapon.specialAttack.energyCost;
-            return (h("div", { class: "mb-2 bg-[#111] rounded-lg px-3 py-2" },
-                h("div", { class: "flex items-center justify-between mb-1" },
-                    h("span", { class: "text-[10px] text-yellow-400 font-semibold" }, "\u26A1 Special Attack"),
+                            raidsData[combat.raid.raidId]?.name || 'Raid'),
+                        h("span", { class: "text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-60" },
+                            "Boss ",
+                            combat.raid.currentBossIndex + 1,
+                            "/",
+                            combat.raid.bosses.length)),
+                    h("div", { class: "flex gap-1" }, combat.raid.bosses.map((bossId, i) => (h("div", { key: bossId, class: `flex-1 h-1.5 rounded-full ${i < combat.raid.currentBossIndex ? 'bg-[var(--color-hp-green)]' :
+                            i === combat.raid.currentBossIndex ? 'bg-[var(--color-gold)]' :
+                                'bg-[#333]'}`, title: monstersData[bossId]?.name || bossId })))))),
+                h("div", { class: "mb-2" },
+                    h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-50 mb-0.5" }, "Your HP"),
+                    h(HPBar, { current: currentHP, max: getMaxHP(), size: "large" })),
+                slayerTask?.monsterId === combat.monster.id && (h("div", { class: "mb-2 bg-[#1a1a08] border border-[#3a3a10] rounded-lg px-3 py-1.5 flex items-center justify-between" },
+                    h("span", { class: "text-[10px] text-yellow-400 font-semibold" }, "\uD83D\uDC80 Slayer Task"),
                     h("span", { class: "text-[10px] font-[var(--font-mono)] text-yellow-400" },
-                        energy,
-                        "%")),
-                h("div", { class: "h-2 rounded-full bg-[#222] overflow-hidden" },
-                    h("div", { class: "h-full rounded-full transition-all duration-300", style: { width: `${energy}%`, background: canSpec ? '#eab308' : '#78530a' } })),
-                h("div", { class: "text-[9px] text-[var(--color-parchment)] opacity-40 mt-0.5" },
-                    weapon.specialAttack.energyCost,
-                    "% cost \u00B7 refills on kill")));
-        })(),
-        h("div", { ref: logRef, class: "flex-1 bg-[#111] rounded-lg border border-[#222] p-2 overflow-y-auto mb-2 min-h-[100px]" }, log.map((entry, i) => (h("div", { key: i, class: `text-[11px] font-[var(--font-mono)] py-0.5
-            ${entry.type === 'hit' ? 'text-[var(--color-emerald-light)]' :
-                entry.type === 'miss' ? 'text-[var(--color-parchment)] opacity-30' :
-                    entry.type === 'enemy' ? 'text-[var(--color-blood-light)]' :
-                        entry.type === 'heal' ? 'text-[var(--color-hp-green)]' :
-                            entry.type === 'dragonfire' ? 'text-orange-400' :
-                                entry.type === 'special' ? 'text-yellow-300' :
-                                    entry.type === 'formChange' ? 'text-purple-300' :
-                                        entry.type === 'victory' ? 'text-[var(--color-gold)]' :
-                                            'text-[var(--color-parchment)] opacity-50'}` }, entry.text)))),
-        fightStartedAt && (h("div", { class: "flex-shrink-0 flex justify-between bg-[#111] rounded-lg px-3 py-2 mb-2 text-[11px]" },
-            h("span", { class: "text-[var(--color-parchment)] opacity-50" }, "Kills"),
-            h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, killCount),
-            h("span", { class: "text-[var(--color-parchment)] opacity-50" }, "Kills/hr"),
-            h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, killCount > 0 && (Date.now() - fightStartedAt) > 5000
-                ? Math.round(killCount / ((Date.now() - fightStartedAt) / 3600000)).toLocaleString()
-                : '—'))),
-        h("div", { class: "flex-shrink-0 flex flex-col gap-2" }, combat.active && !isAutoRestarting && (h(Fragment, null,
-            h("div", { class: "grid grid-cols-3 gap-2" },
-                h("button", { onClick: handleEat, class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\uD83C\uDF56 Eat"),
-                h("button", { onClick: () => setShowPotionModal(true), class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\uD83E\uDDEA Potion"),
-                h("button", { onClick: () => setShowEquipmentModal(true), class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#2a2a3a,#3a3a5a);border:1px solid rgba(150,150,200,0.35);color:#a8a8d8" }, "\u2699\uFE0F Gear")),
-            h("div", { class: "grid grid-cols-3 gap-2" },
+                        slayerTask.monstersRemaining,
+                        " / ",
+                        slayerTask.totalCount,
+                        " remaining")))),
+            h("div", { class: "flex flex-col md:col-start-3 md:row-start-1 md:overflow-y-auto md:min-h-0" },
+                h("div", { class: "mb-2 bg-[#111] rounded-lg px-3 py-1.5" },
+                    h("div", { class: "flex items-center justify-between mb-1" },
+                        h("span", { class: "text-[10px] text-[var(--color-parchment)] opacity-50" }, "\uD83C\uDF92 Inventory"),
+                        h("span", { class: "text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40" },
+                            freeSlots(inventory),
+                            "/28 free")),
+                    Object.keys(combat?.activePotions || {}).length > 0 && (h("div", { class: "text-[8px] text-[var(--color-gold)] opacity-75" }, Object.keys(combat.activePotions).map(potionId => {
+                        const potion = itemsData[potionId];
+                        if (!potion)
+                            return null;
+                        const boosts = [];
+                        if (potion.effect === 'attack')
+                            boosts.push(`+${potion.boost} Atk`);
+                        if (potion.effect === 'strength')
+                            boosts.push(`+${potion.boost} Str`);
+                        if (potion.effect === 'defence')
+                            boosts.push(`+${potion.boost} Def`);
+                        if (potion.effect === 'ranged')
+                            boosts.push(`+${potion.boost} Rng`);
+                        if (potion.effect === 'magic')
+                            boosts.push(`+${potion.boost} Mag`);
+                        if (potion.effect === 'combat')
+                            boosts.push(`+${potion.boost} All`);
+                        const remainingTicks = combat.activePotions[potionId] || 0;
+                        const remainingSeconds = Math.ceil(remainingTicks * 0.6);
+                        return (h("div", { key: potionId, class: "opacity-75" },
+                            potion.icon,
+                            " ",
+                            boosts.join(', '),
+                            " \u00B7 ",
+                            remainingSeconds,
+                            "s"));
+                    }))))),
+            h("div", { class: "flex-1 min-h-0 flex flex-col md:col-start-2 md:row-start-1 md:overflow-hidden" },
                 (() => {
                     const weaponEntry = equipment?.weapon;
                     const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null;
-                    const hasSpec = weapon?.specialAttack;
+                    if (!weapon?.specialAttack)
+                        return null;
                     const energy = combat.specialAttackEnergy || 0;
-                    const canSpec = hasSpec && energy >= weapon.specialAttack.energyCost;
-                    return (h("button", { onClick: canSpec ? handleSpecialAttack : undefined, disabled: !canSpec, class: `py-2.5 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`, style: canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888' },
-                        "\u26A1 ",
-                        hasSpec ? `Spec` : 'No Spec'));
+                    const canSpec = energy >= weapon.specialAttack.energyCost;
+                    return (h("div", { class: "mb-2 bg-[#111] rounded-lg px-3 py-2" },
+                        h("div", { class: "flex items-center justify-between mb-1" },
+                            h("span", { class: "text-[10px] text-yellow-400 font-semibold" }, "\u26A1 Special Attack"),
+                            h("span", { class: "text-[10px] font-[var(--font-mono)] text-yellow-400" },
+                                energy,
+                                "%")),
+                        h("div", { class: "h-2 rounded-full bg-[#222] overflow-hidden" },
+                            h("div", { class: "h-full rounded-full transition-all duration-300", style: { width: `${energy}%`, background: canSpec ? '#eab308' : '#78530a' } })),
+                        h("div", { class: "text-[9px] text-[var(--color-parchment)] opacity-40 mt-0.5" },
+                            weapon.specialAttack.energyCost,
+                            "% cost \u00B7 refills on kill")));
                 })(),
-                (() => {
-                    const weaponEntry = equipment?.weapon;
-                    const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null;
-                    const isMagic = weapon?.attackStyle === 'magic';
-                    const magicLevel = getLevelFromXP(stats.magic?.xp || 0);
-                    return (h("button", { onClick: () => isMagic && setShowSpellModal(true), disabled: !isMagic, class: `py-2.5 rounded-lg font-semibold text-sm transition-opacity ${isMagic ? 'active:opacity-80' : 'opacity-40 cursor-default'}`, style: isMagic ? 'background:linear-gradient(135deg,#1a2a3a,#2a3a5a);border:1px solid rgba(100,150,200,0.35);color:#a8d8ff' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888' }, "\uD83D\uDD2E Cast"));
-                })(),
-                h("button", { onClick: () => setShowPrayerModal(true), class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\uD83D\uDE4F Prayer"))))),
+                h("div", { ref: logRef, class: "flex-1 bg-[#111] rounded-lg border border-[#222] p-2 overflow-y-auto mb-2 min-h-[100px]" }, log.map((entry, i) => (h("div", { key: i, class: `text-[11px] font-[var(--font-mono)] py-0.5
+            ${entry.type === 'hit' ? 'text-[var(--color-emerald-light)]' :
+                        entry.type === 'miss' ? 'text-[var(--color-parchment)] opacity-30' :
+                            entry.type === 'enemy' ? 'text-[var(--color-blood-light)]' :
+                                entry.type === 'heal' ? 'text-[var(--color-hp-green)]' :
+                                    entry.type === 'dragonfire' ? 'text-orange-400' :
+                                        entry.type === 'special' ? 'text-yellow-300' :
+                                            entry.type === 'formChange' ? 'text-purple-300' :
+                                                entry.type === 'victory' ? 'text-[var(--color-gold)]' :
+                                                    'text-[var(--color-parchment)] opacity-50'}` }, entry.text)))),
+                fightStartedAt && (h("div", { class: "flex-shrink-0 flex justify-between bg-[#111] rounded-lg px-3 py-2 mb-2 text-[11px]" },
+                    h("span", { class: "text-[var(--color-parchment)] opacity-50" }, "Kills"),
+                    h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, killCount),
+                    h("span", { class: "text-[var(--color-parchment)] opacity-50" }, "Kills/hr"),
+                    h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, killCount > 0 && (Date.now() - fightStartedAt) > 5000
+                        ? Math.round(killCount / ((Date.now() - fightStartedAt) / 3600000)).toLocaleString()
+                        : '—'))),
+                h("div", { class: "flex-shrink-0 flex flex-col gap-2" }, combat.active && !isAutoRestarting && (h(Fragment, null,
+                    h("div", { class: "grid grid-cols-3 gap-2" },
+                        h("button", { onClick: handleEat, class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\uD83C\uDF56 Eat"),
+                        h("button", { onClick: () => setShowPotionModal(true), class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\uD83E\uDDEA Potion"),
+                        h("button", { onClick: () => setShowEquipmentModal(true), class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#2a2a3a,#3a3a5a);border:1px solid rgba(150,150,200,0.35);color:#a8a8d8" }, "\u2699\uFE0F Gear")),
+                    h("div", { class: "grid grid-cols-3 gap-2" },
+                        (() => {
+                            const weaponEntry = equipment?.weapon;
+                            const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null;
+                            const hasSpec = weapon?.specialAttack;
+                            const energy = combat.specialAttackEnergy || 0;
+                            const canSpec = hasSpec && energy >= weapon.specialAttack.energyCost;
+                            return (h("button", { onClick: canSpec ? handleSpecialAttack : undefined, disabled: !canSpec, class: `py-2.5 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`, style: canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888' },
+                                "\u26A1 ",
+                                hasSpec ? `Spec` : 'No Spec'));
+                        })(),
+                        (() => {
+                            const weaponEntry = equipment?.weapon;
+                            const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null;
+                            const isMagic = weapon?.attackStyle === 'magic';
+                            const magicLevel = getLevelFromXP(stats.magic?.xp || 0);
+                            return (h("button", { onClick: () => isMagic && setShowSpellModal(true), disabled: !isMagic, class: `py-2.5 rounded-lg font-semibold text-sm transition-opacity ${isMagic ? 'active:opacity-80' : 'opacity-40 cursor-default'}`, style: isMagic ? 'background:linear-gradient(135deg,#1a2a3a,#2a3a5a);border:1px solid rgba(100,150,200,0.35);color:#a8d8ff' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888' }, "\uD83D\uDD2E Cast"));
+                        })(),
+                        h("button", { onClick: () => setShowPrayerModal(true), class: "py-2.5 rounded-lg font-semibold text-sm active:opacity-80", style: "background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0" }, "\uD83D\uDE4F Prayer"))))))),
         showPrayerModal && (h(Modal, { onClose: () => setShowPrayerModal(false) },
             h("div", { class: "flex items-center justify-between mb-3" },
                 h("h3", { class: "font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]" }, "Choose Prayer"),
                 h("button", { onClick: () => setShowPrayerModal(false), class: "w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors", title: "Close" }, "\u2715")),
             h("div", { class: "space-y-4 max-h-96 overflow-y-auto" },
                 h("div", null,
-                    h("div", { class: "grid grid-cols-3 gap-2" }, Object.values(prayersData)
+                    h("div", { class: "grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2" }, Object.values(prayersData)
                         .filter(p => p.bonusType === 'protection')
                         .map(prayer => {
                         const prayerLevel = getLevelFromXP(stats.prayer?.xp || 0);
@@ -44873,7 +44877,7 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                     }))),
                 h("div", null,
                     h("h4", { class: "text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70" }, "Combat"),
-                    h("div", { class: "grid grid-cols-2 gap-2" }, Object.values(prayersData)
+                    h("div", { class: "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2" }, Object.values(prayersData)
                         .filter(p => p.bonusType !== 'protection')
                         .sort((a, b) => b.level - a.level)
                         .map(prayer => {
@@ -44988,7 +44992,7 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                     const sb = slotRank[itemsData[b.itemId].slot] ?? 99;
                     return sa - sb;
                 });
-                return (h("div", { class: "grid grid-cols-4 gap-1.5" }, sortedItems.map(slot => {
+                return (h("div", { class: "grid grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1.5" }, sortedItems.map(slot => {
                     const item = itemsData[slot.itemId];
                     const equipped = equipmentRef.current[item.slot]?.itemId === item.id;
                     return (h("button", { key: `${slot.itemId}-${inventoryRef.current.indexOf(slot)}`, onClick: () => handleEquipItem(slot.itemId), class: `p-1.5 rounded-lg border transition-colors flex flex-col items-center ${equipped
