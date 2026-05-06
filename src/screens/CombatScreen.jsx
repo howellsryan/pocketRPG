@@ -8,6 +8,7 @@ import Modal from '../components/Modal.jsx'
 import HPBar from '../components/HPBar.jsx'
 import IdleCombatSetupModal from '../components/IdleCombatSetupModal.jsx'
 import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
+import ItemSlot from '../components/ItemSlot.jsx'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applySpecialAttack } from '../engine/combat.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
@@ -1626,9 +1627,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       </button>
 
       {/* Pane container — single flex column on mobile, 3-pane grid on desktop.
-          DOM order is [left, right (inventory), centre] so mobile flow stays
-          [stats, inventory, log+actions]. At md+, explicit grid placement
-          puts inventory in column 3 and centre content in column 2. */}
+          DOM order is [stats, inventory, console] so mobile flow stays
+          [stats, console] (the inventory pane is desktop-only). At md+,
+          explicit grid placement puts:
+            col 1 = stats + paperdoll + prayers
+            col 2 = inventory grid (click equippables to equip)
+            col 3 = special bar + combat log + kills + action buttons */}
       <div class="flex-1 min-h-0 flex flex-col md:grid md:grid-cols-[minmax(220px,1fr)_minmax(0,1.6fr)_minmax(220px,1fr)] md:grid-rows-1 md:gap-4 md:overflow-hidden">
 
       {/* LEFT pane: enemy + player stats */}
@@ -1702,19 +1706,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           equipment={equipment}
           itemsData={itemsData}
           onSelect={() => setShowEquipmentModal(true)}
-          size="sm"
+          size="md"
         />
       </div>
-
-      </div>{/* /LEFT pane */}
-
-      {/* RIGHT pane (DOM 2nd, visually 3rd at md+): prayers + inventory + active potions */}
-      <div class="flex flex-col md:col-start-3 md:row-start-1 md:overflow-y-auto md:min-h-0">
 
       {/* Inline prayer toggles — desktop only. Mirrors the prayer modal's
           activeProtectionPrayer / activeCombatPrayer toggles, but inline so
           mobile keeps the 🙏 Prayer button + modal flow. */}
-      <div class="hidden md:block mb-2">
+      <div class="hidden md:block mt-3">
         <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1">Prayers</div>
         {(() => {
           const prayerLevel = getLevelFromXP(stats.prayer?.xp || 0)
@@ -1724,7 +1723,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             .sort((a, b) => b.level - a.level)
           return (
             <>
-              {/* Protection: melee / ranged / magic */}
               <div class="grid grid-cols-3 gap-1 mb-1.5">
                 {protectionPrayers.map(prayer => {
                   const canUse = prayerLevel >= prayer.level
@@ -1750,7 +1748,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   )
                 })}
               </div>
-              {/* Combat-boost prayers, dense icon grid */}
               <div class="grid grid-cols-3 gap-1 max-h-[260px] overflow-y-auto pr-0.5">
                 {combatPrayers.map(prayer => {
                   const canUse = prayerLevel >= prayer.level
@@ -1780,42 +1777,64 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         })()}
       </div>
 
-      {/* Inventory slots indicator with active potion boosts */}
-      <div class="mb-2 bg-[#111] rounded-lg px-3 py-1.5">
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-[10px] text-[var(--color-parchment)] opacity-50">🎒 Inventory</span>
-          <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40">
-            {freeSlots(inventory)}/28 free
-          </span>
-        </div>
-        {Object.keys(combat?.activePotions || {}).length > 0 && (
-          <div class="text-[8px] text-[var(--color-gold)] opacity-75">
-            {Object.keys(combat.activePotions).map(potionId => {
-              const potion = itemsData[potionId]
-              if (!potion) return null
-              const boosts = []
-              if (potion.effect === 'attack') boosts.push(`+${potion.boost} Atk`)
-              if (potion.effect === 'strength') boosts.push(`+${potion.boost} Str`)
-              if (potion.effect === 'defence') boosts.push(`+${potion.boost} Def`)
-              if (potion.effect === 'ranged') boosts.push(`+${potion.boost} Rng`)
-              if (potion.effect === 'magic') boosts.push(`+${potion.boost} Mag`)
-              if (potion.effect === 'combat') boosts.push(`+${potion.boost} All`)
-              const remainingTicks = combat.activePotions[potionId] || 0
-              const remainingSeconds = Math.ceil(remainingTicks * 0.6)
-              return (
-                <div key={potionId} class="opacity-75">
-                  {potion.icon} {boosts.join(', ')} · {remainingSeconds}s
-                </div>
-              )
-            })}
-          </div>
-        )}
+      </div>{/* /LEFT pane */}
+
+      {/* INVENTORY pane (DOM 2nd, visually MIDDLE at md+): full inventory grid.
+          Click an equippable item to equip it instantly (no confirm). Clicks on
+          non-equippable items are ignored to keep mid-fight UX safe. Hidden on
+          mobile so the existing modal-driven flow is preserved there. */}
+      <div class="hidden md:flex md:flex-col md:col-start-2 md:row-start-1 md:overflow-y-auto md:min-h-0">
+
+      <div class="flex items-center justify-between mb-2 px-1">
+        <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60">Inventory</div>
+        <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40">
+          {freeSlots(inventory)}/28 free
+        </span>
       </div>
 
-      </div>{/* /RIGHT pane */}
+      {/* Active potion boosts strip */}
+      {Object.keys(combat?.activePotions || {}).length > 0 && (
+        <div class="mb-2 bg-[#111] rounded-lg px-2 py-1.5 text-[9px] text-[var(--color-gold)]">
+          {Object.keys(combat.activePotions).map(potionId => {
+            const potion = itemsData[potionId]
+            if (!potion) return null
+            const boosts = []
+            if (potion.effect === 'attack') boosts.push(`+${potion.boost} Atk`)
+            if (potion.effect === 'strength') boosts.push(`+${potion.boost} Str`)
+            if (potion.effect === 'defence') boosts.push(`+${potion.boost} Def`)
+            if (potion.effect === 'ranged') boosts.push(`+${potion.boost} Rng`)
+            if (potion.effect === 'magic') boosts.push(`+${potion.boost} Mag`)
+            if (potion.effect === 'combat') boosts.push(`+${potion.boost} All`)
+            const remainingTicks = combat.activePotions[potionId] || 0
+            const remainingSeconds = Math.ceil(remainingTicks * 0.6)
+            return (
+              <div key={potionId} class="opacity-80">
+                {potion.icon} {boosts.join(', ')} · {remainingSeconds}s
+              </div>
+            )
+          })}
+        </div>
+      )}
 
-      {/* CENTRE pane (DOM 3rd, visually 2nd at md+): special bar, log, kill stats, action buttons */}
-      <div class="flex-1 min-h-0 flex flex-col md:col-start-2 md:row-start-1 md:overflow-hidden">
+      <div class="grid grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 justify-items-center">
+        {inventory.map((slot, i) => {
+          const item = slot ? itemsData[slot.itemId] : null
+          const isEquippable = !!(item && item.slot && !slot.noted)
+          return (
+            <ItemSlot
+              key={i}
+              slot={slot}
+              onClick={isEquippable ? (() => handleEquipItem(slot.itemId)) : undefined}
+              showName
+            />
+          )
+        })}
+      </div>
+
+      </div>{/* /INVENTORY pane */}
+
+      {/* CONSOLE pane (DOM 3rd, visually RIGHT at md+): special bar, log, kill stats, action buttons */}
+      <div class="flex-1 min-h-0 flex flex-col md:col-start-3 md:row-start-1 md:overflow-hidden">
 
       {/* Special attack bar — only shown when equipped weapon has a spec */}
       {(() => {
@@ -1951,8 +1970,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   {specBtn}{castBtn}{prayerBtn}
                 </div>
               </div>
-              {/* Desktop: single row of 4 (Gear + Prayer moved to side panes) */}
-              <div class="hidden md:grid md:grid-cols-4 gap-2">
+              {/* Desktop: 2x2 grid (Gear + Prayer moved to side panes) */}
+              <div class="hidden md:grid md:grid-cols-2 gap-2">
                 {eatBtn}{potionBtn}{specBtn}{castBtn}
               </div>
             </>

@@ -43502,6 +43502,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
 
 
 
+
 const COMBAT_CATEGORIES = [
     {
         key: 'training',
@@ -44909,9 +44910,8 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                         " remaining"))),
                 h("div", { class: "hidden md:block mt-2" },
                     h("div", { class: "text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1" }, "Gear"),
-                    h(EquipmentPaperdoll, { equipment: equipment, itemsData: itemsData, onSelect: () => setShowEquipmentModal(true), size: "sm" }))),
-            h("div", { class: "flex flex-col md:col-start-3 md:row-start-1 md:overflow-y-auto md:min-h-0" },
-                h("div", { class: "hidden md:block mb-2" },
+                    h(EquipmentPaperdoll, { equipment: equipment, itemsData: itemsData, onSelect: () => setShowEquipmentModal(true), size: "md" })),
+                h("div", { class: "hidden md:block mt-3" },
                     h("div", { class: "text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1" }, "Prayers"),
                     (() => {
                         const prayerLevel = getLevelFromXP(stats.prayer?.xp || 0);
@@ -44945,41 +44945,46 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                                         "Lv ",
                                         prayer.level)));
                             }))));
-                    })()),
-                h("div", { class: "mb-2 bg-[#111] rounded-lg px-3 py-1.5" },
-                    h("div", { class: "flex items-center justify-between mb-1" },
-                        h("span", { class: "text-[10px] text-[var(--color-parchment)] opacity-50" }, "\uD83C\uDF92 Inventory"),
-                        h("span", { class: "text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40" },
-                            freeSlots(inventory),
-                            "/28 free")),
-                    Object.keys(combat?.activePotions || {}).length > 0 && (h("div", { class: "text-[8px] text-[var(--color-gold)] opacity-75" }, Object.keys(combat.activePotions).map(potionId => {
-                        const potion = itemsData[potionId];
-                        if (!potion)
-                            return null;
-                        const boosts = [];
-                        if (potion.effect === 'attack')
-                            boosts.push(`+${potion.boost} Atk`);
-                        if (potion.effect === 'strength')
-                            boosts.push(`+${potion.boost} Str`);
-                        if (potion.effect === 'defence')
-                            boosts.push(`+${potion.boost} Def`);
-                        if (potion.effect === 'ranged')
-                            boosts.push(`+${potion.boost} Rng`);
-                        if (potion.effect === 'magic')
-                            boosts.push(`+${potion.boost} Mag`);
-                        if (potion.effect === 'combat')
-                            boosts.push(`+${potion.boost} All`);
-                        const remainingTicks = combat.activePotions[potionId] || 0;
-                        const remainingSeconds = Math.ceil(remainingTicks * 0.6);
-                        return (h("div", { key: potionId, class: "opacity-75" },
-                            potion.icon,
-                            " ",
-                            boosts.join(', '),
-                            " \u00B7 ",
-                            remainingSeconds,
-                            "s"));
-                    }))))),
-            h("div", { class: "flex-1 min-h-0 flex flex-col md:col-start-2 md:row-start-1 md:overflow-hidden" },
+                    })())),
+            h("div", { class: "hidden md:flex md:flex-col md:col-start-2 md:row-start-1 md:overflow-y-auto md:min-h-0" },
+                h("div", { class: "flex items-center justify-between mb-2 px-1" },
+                    h("div", { class: "text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60" }, "Inventory"),
+                    h("span", { class: "text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40" },
+                        freeSlots(inventory),
+                        "/28 free")),
+                Object.keys(combat?.activePotions || {}).length > 0 && (h("div", { class: "mb-2 bg-[#111] rounded-lg px-2 py-1.5 text-[9px] text-[var(--color-gold)]" }, Object.keys(combat.activePotions).map(potionId => {
+                    const potion = itemsData[potionId];
+                    if (!potion)
+                        return null;
+                    const boosts = [];
+                    if (potion.effect === 'attack')
+                        boosts.push(`+${potion.boost} Atk`);
+                    if (potion.effect === 'strength')
+                        boosts.push(`+${potion.boost} Str`);
+                    if (potion.effect === 'defence')
+                        boosts.push(`+${potion.boost} Def`);
+                    if (potion.effect === 'ranged')
+                        boosts.push(`+${potion.boost} Rng`);
+                    if (potion.effect === 'magic')
+                        boosts.push(`+${potion.boost} Mag`);
+                    if (potion.effect === 'combat')
+                        boosts.push(`+${potion.boost} All`);
+                    const remainingTicks = combat.activePotions[potionId] || 0;
+                    const remainingSeconds = Math.ceil(remainingTicks * 0.6);
+                    return (h("div", { key: potionId, class: "opacity-80" },
+                        potion.icon,
+                        " ",
+                        boosts.join(', '),
+                        " \u00B7 ",
+                        remainingSeconds,
+                        "s"));
+                }))),
+                h("div", { class: "grid grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 justify-items-center" }, inventory.map((slot, i) => {
+                    const item = slot ? itemsData[slot.itemId] : null;
+                    const isEquippable = !!(item && item.slot && !slot.noted);
+                    return (h(ItemSlot, { key: i, slot: slot, onClick: isEquippable ? (() => handleEquipItem(slot.itemId)) : undefined, showName: true }));
+                }))),
+            h("div", { class: "flex-1 min-h-0 flex flex-col md:col-start-3 md:row-start-1 md:overflow-hidden" },
                 (() => {
                     const weaponEntry = equipment?.weapon;
                     const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null;
@@ -45041,7 +45046,7 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                                 specBtn,
                                 castBtn,
                                 prayerBtn)),
-                        h("div", { class: "hidden md:grid md:grid-cols-4 gap-2" },
+                        h("div", { class: "hidden md:grid md:grid-cols-2 gap-2" },
                             eatBtn,
                             potionBtn,
                             specBtn,
