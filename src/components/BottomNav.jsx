@@ -1,26 +1,13 @@
-import { SCREENS } from '../utils/constants.js'
-
-const tabs = [
-  { id: SCREENS.HOME,        label: 'Home',    icon: '🏠' },
-  { id: SCREENS.INVENTORY,   label: 'Items',   icon: '🎒' },
-  { id: SCREENS.EQUIPMENT,   label: 'Equip',   icon: '🛡️' },
-  { id: SCREENS.BANK,        label: 'Bank',    icon: '🏦' },
-  { id: SCREENS.STORE,       label: 'Store',   icon: '🪙' },
-  { id: SCREENS.GATHER,      label: 'Gather',  icon: '🌿' },
-  { id: SCREENS.COMBAT,      label: 'Combat',  icon: '⚔️' },
-  { id: SCREENS.SKILLS,      label: 'Skills',  icon: '🔨' },
-  { id: SCREENS.QUESTS,      label: 'Quests',  icon: '📜' },
-  { id: SCREENS.LEADERBOARD, label: 'Settings', icon: '⚙️' },
-]
+import { NAV_TABS } from './navTabs.js'
 
 export default function BottomNav({ active, onNavigate, isInCombat, onDisabledClick }) {
   return (
     <nav
-      class="flex-shrink-0 bg-[#111] border-t border-[var(--color-void-border)]"
+      class="md:hidden flex-shrink-0 bg-[#111] border-t border-[var(--color-void-border)]"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div class="flex items-center h-[52px]">
-        {tabs.map(tab => {
+        {NAV_TABS.map(tab => {
           const isActive = active === tab.id
           const opacity = isInCombat ? 'opacity-20' : isActive ? 'opacity-100' : 'opacity-45'
           const color = isActive ? 'text-[var(--color-gold)]' : 'text-[var(--color-parchment)]'

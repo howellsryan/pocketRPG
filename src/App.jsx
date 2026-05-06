@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'preact/hooks'
 import { GameProvider, useGame } from './state/gameState.jsx'
 import { PvpProvider, usePvp } from './state/pvpState.jsx'
 import BottomNav from './components/BottomNav.jsx'
+import SideNav from './components/SideNav.jsx'
 import Header from './components/Header.jsx'
 import ToastContainer from './components/Toast.jsx'
 import BuyCreditsModal from './components/BuyCreditsModal.jsx'
@@ -1424,18 +1425,26 @@ function GameApp() {
   const isCloudAccount = !!getToken() && !!getCharacterId()
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} />
-      <ToastContainer />
-      <main style={{ flex: 1, overflow: 'hidden' }}>
-        {renderScreen()}
-      </main>
-      <BottomNav
+    <div class="h-full flex flex-col md:flex-row">
+      <SideNav
         active={screen}
         onNavigate={(s) => navigate(s)}
         isInCombat={isInCombat}
         onDisabledClick={() => addToast('⚔️ Cannot navigate during combat!', 'warning')}
       />
+      <div class="flex-1 flex flex-col min-w-0 min-h-0">
+        <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} />
+        <ToastContainer />
+        <main class="flex-1 overflow-hidden">
+          {renderScreen()}
+        </main>
+        <BottomNav
+          active={screen}
+          onNavigate={(s) => navigate(s)}
+          isInCombat={isInCombat}
+          onDisabledClick={() => addToast('⚔️ Cannot navigate during combat!', 'warning')}
+        />
+      </div>
 
       {/* Idle Result Modal */}
       {idleResult && pvp.phase !== 'in_match' && Date.now() >= suppressIdleModalUntil && (
