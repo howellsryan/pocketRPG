@@ -44970,7 +44970,7 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                                     h("div", { class: "text-[12px] leading-none" }, prayer.icon),
                                     h("div", { class: "text-[8px] text-[var(--color-parchment)] opacity-70 mt-0.5" }, protectType)));
                             })),
-                            h("div", { class: "grid grid-cols-6 lg:grid-cols-7 xl:grid-cols-9 gap-1" }, combatPrayers.map(prayer => {
+                            h("div", { class: "grid grid-cols-6 gap-1" }, combatPrayers.map(prayer => {
                                 const canUse = prayerLevel >= prayer.level;
                                 const isActive = combat?.activeCombatPrayer === prayer.id;
                                 return (h("button", { key: prayer.id, onClick: () => canUse && handlePrayer(prayer.id), disabled: !canUse, title: `${prayer.name} · Lv ${prayer.level}\n${prayer.description}`, class: `px-1 py-1 rounded-md border text-center transition-colors ${isActive

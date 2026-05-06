@@ -1802,7 +1802,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   )
                 })}
               </div>
-              <div class="grid grid-cols-6 lg:grid-cols-7 xl:grid-cols-9 gap-1">
+              <div class="grid grid-cols-6 gap-1">
                 {combatPrayers.map(prayer => {
                   const canUse = prayerLevel >= prayer.level
                   const isActive = combat?.activeCombatPrayer === prayer.id
