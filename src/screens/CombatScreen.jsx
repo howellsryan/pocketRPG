@@ -873,14 +873,31 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     const newInv = [...inventoryRef.current]
     const foodIdx = newInv.findIndex(s => s && itemsData[s.itemId]?.type === 'food')
     if (foodIdx === -1) { addToast('No food!', 'error'); return }
+    consumeFoodAt(foodIdx, newInv)
+  }
 
+  const handleEatItem = (itemId) => {
+    const food = itemsData[itemId]
+    if (!food || food.type !== 'food') return
+    const newInv = [...inventoryRef.current]
+    const foodIdx = newInv.findIndex(s => s && s.itemId === itemId)
+    if (foodIdx === -1) return
+    consumeFoodAt(foodIdx, newInv)
+  }
+
+  // Shared eat path used by both the Eat button and direct inventory clicks.
+  // Mirrors the original handleEat: decrement inventory, heal up to max,
+  // applyEat() to bind the post-eat tick delay, and append the heal log line.
+  const consumeFoodAt = (foodIdx, newInv) => {
     const food = itemsData[newInv[foodIdx].itemId]
+    if (!food) return
     if (newInv[foodIdx].quantity > 1) {
       newInv[foodIdx] = { ...newInv[foodIdx], quantity: newInv[foodIdx].quantity - 1 }
     } else {
       newInv[foodIdx] = null
     }
     updateInventory(newInv)
+    inventoryRef.current = newInv
     const maxHP = getMaxHP()
     const newHP = Math.min(hpRef.current + food.heals, maxHP)
     updateHP(newHP)
@@ -1053,6 +1070,32 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     equipmentRef.current = newEq
 
     addToast(`Equipped ${itemData.name}`, 'info')
+  }
+
+  const handleUnequipSlot = (slotName) => {
+    const entry = equipmentRef.current?.[slotName]
+    if (!entry) return
+
+    const newInv = [...inventoryRef.current]
+    const emptyIdx = newInv.indexOf(null)
+    if (emptyIdx === -1) {
+      addToast('Inventory full', 'error')
+      return
+    }
+
+    const invEntry = { itemId: entry.itemId, quantity: entry.quantity || 1 }
+    if (entry.charges && entry.charges > 0) invEntry.charges = entry.charges
+    newInv[emptyIdx] = invEntry
+
+    const newEq = { ...equipmentRef.current, [slotName]: null }
+
+    updateInventory(newInv)
+    inventoryRef.current = newInv
+    updateEquipment(newEq)
+    equipmentRef.current = newEq
+
+    const itemName = itemsData[entry.itemId]?.name || entry.itemId
+    addToast(`Unequipped ${itemName}`, 'info')
   }
 
   const handlePrayer = (prayerId) => {
@@ -1698,14 +1741,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </div>
       )}
 
-      {/* Inline gear paperdoll — desktop only. Click any equipped slot to
-          open the existing Swap Gear modal. Mobile keeps the ⚙️ Gear button. */}
+      {/* Inline gear paperdoll — desktop only. Click an equipped slot to
+          unequip directly into inventory (only works if there's space).
+          Mobile keeps the ⚙️ Gear button + modal flow. */}
       <div class="hidden md:block mt-2">
         <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1">Gear</div>
         <EquipmentPaperdoll
           equipment={equipment}
           itemsData={itemsData}
-          onSelect={() => setShowEquipmentModal(true)}
+          onSelect={(slotName) => handleUnequipSlot(slotName)}
           size="md"
         />
       </div>
@@ -1752,12 +1796,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       <div class="grid grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 justify-items-center">
         {inventory.map((slot, i) => {
           const item = slot ? itemsData[slot.itemId] : null
-          const isEquippable = !!(item && item.slot && !slot.noted)
+          // Notes can't be equipped/eaten/drunk, so they fall through to no-op.
+          let onClick = undefined
+          if (item && !slot.noted) {
+            if (item.slot) onClick = () => handleEquipItem(slot.itemId)
+            else if (item.type === 'food') onClick = () => handleEatItem(slot.itemId)
+            else if (item.type === 'potion') onClick = () => handlePotion(slot.itemId)
+          }
           return (
             <ItemSlot
               key={i}
               slot={slot}
-              onClick={isEquippable ? (() => handleEquipItem(slot.itemId)) : undefined}
+              onClick={onClick}
               showName
             />
           )
@@ -1806,6 +1856,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 {combatPrayers.map(prayer => {
                   const canUse = prayerLevel >= prayer.level
                   const isActive = combat?.activeCombatPrayer === prayer.id
+                  // For low-level stat prayers, swap the prayer-specific emoji
+                  // for a "+X% <combat-style icon>" so the boost magnitude is
+                  // legible at a glance. High-level multi-stat prayers (Piety,
+                  // Chivalry, Rigour, Augury, …) keep their bespoke icon.
+                  const showBoostFmt = prayer.level < 45 && prayer.bonusType === 'stat'
+                  let styleIcon = prayer.icon
+                  if (showBoostFmt) {
+                    if (prayer.stat === 'attack' || prayer.stat === 'strength') styleIcon = '⚔️'
+                    else if (prayer.stat === 'ranged') styleIcon = '🏹'
+                    else if (prayer.stat === 'magic') styleIcon = '🔮'
+                    else if (prayer.stat === 'defence') styleIcon = '🛡️'
+                  }
                   return (
                     <button
                       key={prayer.id}
@@ -1820,7 +1882,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                             : 'bg-[#111] border-[#1a1a1a] opacity-30 cursor-default'
                       }`}
                     >
-                      <div class="text-[12px] leading-none">{prayer.icon}</div>
+                      {showBoostFmt ? (
+                        <div class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] leading-none whitespace-nowrap">
+                          +{prayer.boostPercent}% {styleIcon}
+                        </div>
+                      ) : (
+                        <div class="text-[12px] leading-none">{prayer.icon}</div>
+                      )}
                       <div class="text-[8px] text-[var(--color-gold-dim)] opacity-70 mt-0.5">Lv {prayer.level}</div>
                     </button>
                   )

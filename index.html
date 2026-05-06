@@ -44339,7 +44339,25 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
             addToast('No food!', 'error');
             return;
         }
+        consumeFoodAt(foodIdx, newInv);
+    };
+    const handleEatItem = (itemId) => {
+        const food = itemsData[itemId];
+        if (!food || food.type !== 'food')
+            return;
+        const newInv = [...inventoryRef.current];
+        const foodIdx = newInv.findIndex(s => s && s.itemId === itemId);
+        if (foodIdx === -1)
+            return;
+        consumeFoodAt(foodIdx, newInv);
+    };
+    // Shared eat path used by both the Eat button and direct inventory clicks.
+    // Mirrors the original handleEat: decrement inventory, heal up to max,
+    // applyEat() to bind the post-eat tick delay, and append the heal log line.
+    const consumeFoodAt = (foodIdx, newInv) => {
         const food = itemsData[newInv[foodIdx].itemId];
+        if (!food)
+            return;
         if (newInv[foodIdx].quantity > 1) {
             newInv[foodIdx] = { ...newInv[foodIdx], quantity: newInv[foodIdx].quantity - 1 };
         }
@@ -44347,6 +44365,7 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
             newInv[foodIdx] = null;
         }
         updateInventory(newInv);
+        inventoryRef.current = newInv;
         const maxHP = getMaxHP();
         const newHP = Math.min(hpRef.current + food.heals, maxHP);
         updateHP(newHP);
@@ -44508,6 +44527,28 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
         updateEquipment(newEq);
         equipmentRef.current = newEq;
         addToast(`Equipped ${itemData.name}`, 'info');
+    };
+    const handleUnequipSlot = (slotName) => {
+        const entry = equipmentRef.current?.[slotName];
+        if (!entry)
+            return;
+        const newInv = [...inventoryRef.current];
+        const emptyIdx = newInv.indexOf(null);
+        if (emptyIdx === -1) {
+            addToast('Inventory full', 'error');
+            return;
+        }
+        const invEntry = { itemId: entry.itemId, quantity: entry.quantity || 1 };
+        if (entry.charges && entry.charges > 0)
+            invEntry.charges = entry.charges;
+        newInv[emptyIdx] = invEntry;
+        const newEq = { ...equipmentRef.current, [slotName]: null };
+        updateInventory(newInv);
+        inventoryRef.current = newInv;
+        updateEquipment(newEq);
+        equipmentRef.current = newEq;
+        const itemName = itemsData[entry.itemId]?.name || entry.itemId;
+        addToast(`Unequipped ${itemName}`, 'info');
     };
     const handlePrayer = (prayerId) => {
         if (!combatRef.current)
@@ -44910,7 +44951,7 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                         " remaining"))),
                 h("div", { class: "hidden md:block mt-2" },
                     h("div", { class: "text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1" }, "Gear"),
-                    h(EquipmentPaperdoll, { equipment: equipment, itemsData: itemsData, onSelect: () => setShowEquipmentModal(true), size: "md" }))),
+                    h(EquipmentPaperdoll, { equipment: equipment, itemsData: itemsData, onSelect: (slotName) => handleUnequipSlot(slotName), size: "md" }))),
             h("div", { class: "hidden md:flex md:flex-col md:col-start-2 md:row-start-1 md:overflow-y-auto md:min-h-0" },
                 h("div", { class: "flex items-center justify-between mb-2 px-1" },
                     h("div", { class: "text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60" }, "Inventory"),
@@ -44946,8 +44987,17 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                 }))),
                 h("div", { class: "grid grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 justify-items-center" }, inventory.map((slot, i) => {
                     const item = slot ? itemsData[slot.itemId] : null;
-                    const isEquippable = !!(item && item.slot && !slot.noted);
-                    return (h(ItemSlot, { key: i, slot: slot, onClick: isEquippable ? (() => handleEquipItem(slot.itemId)) : undefined, showName: true }));
+                    // Notes can't be equipped/eaten/drunk, so they fall through to no-op.
+                    let onClick = undefined;
+                    if (item && !slot.noted) {
+                        if (item.slot)
+                            onClick = () => handleEquipItem(slot.itemId);
+                        else if (item.type === 'food')
+                            onClick = () => handleEatItem(slot.itemId);
+                        else if (item.type === 'potion')
+                            onClick = () => handlePotion(slot.itemId);
+                    }
+                    return (h(ItemSlot, { key: i, slot: slot, onClick: onClick, showName: true }));
                 })),
                 h("div", { class: "mt-4" },
                     h("div", { class: "text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1" }, "Prayers"),
@@ -44973,12 +45023,32 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                             h("div", { class: "grid grid-cols-6 gap-1" }, combatPrayers.map(prayer => {
                                 const canUse = prayerLevel >= prayer.level;
                                 const isActive = combat?.activeCombatPrayer === prayer.id;
+                                // For low-level stat prayers, swap the prayer-specific emoji
+                                // for a "+X% <combat-style icon>" so the boost magnitude is
+                                // legible at a glance. High-level multi-stat prayers (Piety,
+                                // Chivalry, Rigour, Augury, …) keep their bespoke icon.
+                                const showBoostFmt = prayer.level < 45 && prayer.bonusType === 'stat';
+                                let styleIcon = prayer.icon;
+                                if (showBoostFmt) {
+                                    if (prayer.stat === 'attack' || prayer.stat === 'strength')
+                                        styleIcon = '⚔️';
+                                    else if (prayer.stat === 'ranged')
+                                        styleIcon = '🏹';
+                                    else if (prayer.stat === 'magic')
+                                        styleIcon = '🔮';
+                                    else if (prayer.stat === 'defence')
+                                        styleIcon = '🛡️';
+                                }
                                 return (h("button", { key: prayer.id, onClick: () => canUse && handlePrayer(prayer.id), disabled: !canUse, title: `${prayer.name} · Lv ${prayer.level}\n${prayer.description}`, class: `px-1 py-1 rounded-md border text-center transition-colors ${isActive
                                         ? 'bg-[#2a3a1a] border-[var(--color-gold)]'
                                         : canUse
                                             ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
                                             : 'bg-[#111] border-[#1a1a1a] opacity-30 cursor-default'}` },
-                                    h("div", { class: "text-[12px] leading-none" }, prayer.icon),
+                                    showBoostFmt ? (h("div", { class: "text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] leading-none whitespace-nowrap" },
+                                        "+",
+                                        prayer.boostPercent,
+                                        "% ",
+                                        styleIcon)) : (h("div", { class: "text-[12px] leading-none" }, prayer.icon)),
                                     h("div", { class: "text-[8px] text-[var(--color-gold-dim)] opacity-70 mt-0.5" },
                                         "Lv ",
                                         prayer.level)));
