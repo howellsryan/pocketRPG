@@ -1,5 +1,6 @@
 import { createPortal } from 'preact/compat'
 import { useEffect, useState } from 'preact/hooks'
+import { useEscapeKey } from '../hooks/useEscapeKey.js'
 
 function getVisualViewportHeight() {
   if (typeof window === 'undefined') return null
@@ -58,6 +59,8 @@ export default function Modal({
       document.body.style.overflow = previousOverflow
     }
   }, [])
+
+  useEscapeKey(() => onClose?.(), !!onClose)
 
   const viewportHeightValue = viewportHeight ? `${viewportHeight}px` : '100svh'
   const dialogMaxHeight = `calc(${viewportHeightValue} - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px)`

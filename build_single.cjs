@@ -17,6 +17,7 @@ const sourceFiles = [
   'utils/idleElapsed.js',
   'hooks/useActionTick.js',
   'hooks/useIsDesktop.js',
+  'hooks/useEscapeKey.js',
   'engine/experience.js',
   'engine/formulas.js',
   'engine/equipment.js',
@@ -168,6 +169,13 @@ const html = `<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Nunito:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"><\/script>
+<script>
+  // Gate hover utilities behind @media (hover: hover) so tap-induced
+  // hover states do not stick on touch devices.
+  if (typeof tailwind !== 'undefined') {
+    tailwind.config = { future: { hoverOnlyWhenSupported: true } }
+  }
+<\/script>
 <style>
 ${css}
 </style>

@@ -9,6 +9,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Nunito:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
+<script>
+  // Gate hover utilities behind @media (hover: hover) so tap-induced
+  // hover states do not stick on touch devices.
+  if (typeof tailwind !== 'undefined') {
+    tailwind.config = { future: { hoverOnlyWhenSupported: true } }
+  }
+</script>
 <style>
 :root {
   --color-parchment: #f5e6c8;
@@ -31707,6 +31714,35 @@ function useIsDesktop() {
     return isDesktop;
 }
 
+// ── hooks/useEscapeKey.js ──
+
+/**
+ * Calls `handler` whenever the user presses Escape while `enabled` is true.
+ * Listener is registered on `keydown` capture-phase so the topmost mounted
+ * modal handles it first (most-recently-mounted handler runs last in capture
+ * but first in bubble — we use bubble for last-wins behaviour).
+ *
+ * Pass enabled=false to no-op (e.g. for modals that must not be dismissable).
+ */
+function useEscapeKey(handler, enabled = true) {
+    useEffect(() => {
+        if (!enabled || typeof window === 'undefined')
+            return undefined;
+        const onKeyDown = (e) => {
+            if (e.key !== 'Escape' && e.key !== 'Esc')
+                return;
+            // Don't dismiss while typing in an input.
+            const target = e.target;
+            const tag = target?.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || target?.isContentEditable)
+                return;
+            handler(e);
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [handler, enabled]);
+}
+
 // ── engine/experience.js ──
 
 // Pre-compute XP table using exact level formula
@@ -40193,6 +40229,7 @@ function usePvp() {
 // ── components/Modal.js ──
 
 
+
 function getVisualViewportHeight() {
     if (typeof window === 'undefined')
         return null;
@@ -40234,6 +40271,7 @@ function Modal({ title, onClose, children, fullHeight = false, className = '', c
             document.body.style.overflow = previousOverflow;
         };
     }, []);
+    useEscapeKey(() => onClose?.(), !!onClose);
     const viewportHeightValue = viewportHeight ? `${viewportHeight}px` : '100svh';
     const dialogMaxHeight = `calc(${viewportHeightValue} - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px)`;
     const dialogSizeStyle = fullHeight
@@ -40555,8 +40593,10 @@ const BUTTON_SIZES = {
 function Button({ variant = 'secondary', size = 'md', disabled = false, className = '', children, ...props }) {
     const variantClass = BUTTON_VARIANTS[variant] || BUTTON_VARIANTS.secondary;
     const sizeClass = BUTTON_SIZES[size] || BUTTON_SIZES.md;
-    const disabledClass = disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer';
-    return (h("button", { disabled: disabled, class: `rounded-lg font-semibold transition-colors ${variantClass} ${sizeClass} ${disabledClass} ${className}`, ...props }, children));
+    const disabledClass = disabled
+        ? 'opacity-40 cursor-not-allowed'
+        : 'cursor-pointer active:scale-[0.98]';
+    return (h("button", { disabled: disabled, class: `rounded-lg font-semibold transition-colors transition-transform ${variantClass} ${sizeClass} ${disabledClass} ${className}`, ...props }, children));
 }
 
 // ── components/SectionHeader.js ──
