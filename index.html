@@ -40979,7 +40979,7 @@ function HomeScreen({ onNavigate, onLogout, isCloudAccount, removeAds, identityI
     function SkillGroup({ title, skills }) {
         return (h("div", { class: "mb-4" },
             h("h3", { class: "text-[10px] font-bold text-[var(--color-parchment)] opacity-40 uppercase tracking-widest mb-1.5" }, title),
-            h("div", { class: "grid grid-cols-2 gap-1.5" }, skills.map(skill => {
+            h("div", { class: "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1.5" }, skills.map(skill => {
                 const data = stats[skill] || { xp: 0, level: 1 };
                 return (h(SkillBadge, { key: skill, skill: skill, xp: data.xp, level: data.level || getLevelFromXP(data.xp), onClick: handleSkillSelect }));
             }))));
@@ -41521,7 +41521,7 @@ function InventoryScreen() {
                 h("span", { class: "text-xs font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40" },
                     free,
                     " free"))),
-        h("div", { class: "grid grid-cols-4 gap-2 justify-items-center" }, inventory.map((slot, i) => (h(ItemSlot, { key: i, slot: slot, onClick: (s, item) => handleSlotClick(s, item, i), showName: true })))),
+        h("div", { class: "grid grid-cols-4 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-8 xl:grid-cols-10 gap-2 justify-items-center" }, inventory.map((slot, i) => (h(ItemSlot, { key: i, slot: slot, onClick: (s, item) => handleSlotClick(s, item, i), showName: true })))),
         selected && (h(SharedItemModal, { item: selected.item, quantity: selected.slot.quantity, noted: selected.slot.noted, onClose: () => setSelected(null) },
             h("div", { class: "space-y-2" },
                 selected.slot.noted && (h("p", { style: { color: '#d4a017', fontWeight: '600', marginBottom: '4px' } }, "\uD83D\uDCDC Noted \u2014 cannot be used")),
@@ -42063,7 +42063,7 @@ function BankScreen() {
                 tabs.length < MAX_TABS && (h("button", { onClick: addTab, class: "flex-shrink-0 px-2.5 py-1.5 rounded-md bg-[#222] text-[var(--color-parchment)] opacity-30 text-sm font-bold active:opacity-60" }, "+")))),
         h("div", { class: "flex-1 overflow-y-auto px-4 pb-4" }, displayItems.length === 0 ? (h("div", { class: "text-center py-12 text-[var(--color-parchment)] opacity-30 text-sm" }, activeTab === 0
             ? (bankItems.length > 0 ? 'All items are in tabs' : 'Your bank is empty')
-            : 'No items — tap an item and use "Move to Tab"')) : (h("div", { class: "grid grid-cols-4 gap-2" }, displayItems.map(entry => {
+            : 'No items — tap an item and use "Move to Tab"')) : (h("div", { class: "grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2" }, displayItems.map(entry => {
             const item = itemsData[entry.itemId];
             if (!item)
                 return null;
@@ -48327,50 +48327,51 @@ function EquipmentScreen() {
     const slotProps = { equipment, itemsData, onSelect: handleSelect };
     return (h("div", { class: "h-full overflow-y-auto p-4" },
         h(SectionHeader, { className: "mb-3" }, "Equipment"),
-        h(Card, { padding: "p-4", className: "mb-4 flex flex-col items-center gap-[6px]", style: { background: 'linear-gradient(135deg, #141414, #0f0f0f)' } },
-            h("div", { class: "flex justify-center" },
-                h(EquipSlot, { slotName: "head", ...slotProps })),
-            h("div", { class: "flex gap-[6px] justify-center" },
-                h(EquipSlot, { slotName: "cape", ...slotProps }),
-                h(EquipSlot, { slotName: "neck", ...slotProps }),
-                h(EquipSlot, { slotName: "ammo", ...slotProps })),
-            h("div", { class: "flex gap-[6px] justify-center" },
-                h(EquipSlot, { slotName: "weapon", ...slotProps }),
-                h(EquipSlot, { slotName: "body", ...slotProps }),
-                h(EquipSlot, { slotName: "shield", ...slotProps })),
-            h("div", { class: "flex justify-center" },
-                h(EquipSlot, { slotName: "legs", ...slotProps })),
-            h("div", { class: "flex gap-[6px] justify-center" },
-                h(EquipSlot, { slotName: "gloves", ...slotProps }),
-                h(EquipSlot, { slotName: "boots", ...slotProps }),
-                h(EquipSlot, { slotName: "ring", ...slotProps }))),
-        h(Card, null,
-            h(SectionHeader, { size: "sm", className: "mb-2 opacity-50" }, "Bonuses"),
-            h("div", { class: "grid grid-cols-2 gap-2 text-[11px]" },
-                h("div", null,
-                    h(SectionHeader, { size: "sm", className: "mb-1 opacity-40" }, "Attack"),
-                    Object.entries(bonuses.attackBonus).map(([k, v]) => (h("div", { key: k, class: "flex justify-between text-[var(--color-parchment)] opacity-70 py-[1px]" },
-                        h("span", { class: "capitalize" }, k),
-                        h("span", { class: "font-[var(--font-mono)]", style: { color: v > 0 ? '#27ae60' : v < 0 ? '#c0392b' : '#555' } },
-                            v > 0 ? '+' : '',
-                            v))))),
-                h("div", null,
-                    h(SectionHeader, { size: "sm", className: "mb-1 opacity-40" }, "Defence"),
-                    Object.entries(bonuses.defenceBonus).map(([k, v]) => (h("div", { key: k, class: "flex justify-between text-[var(--color-parchment)] opacity-70 py-[1px]" },
-                        h("span", { class: "capitalize" }, k),
-                        h("span", { class: "font-[var(--font-mono)]", style: { color: v > 0 ? '#27ae60' : v < 0 ? '#c0392b' : '#555' } },
-                            v > 0 ? '+' : '',
-                            v)))))),
-            h("div", { class: "border-t border-[#222] mt-2 pt-2" },
-                h(SectionHeader, { size: "sm", className: "mb-1 opacity-40" }, "Other"),
-                h("div", { class: "grid grid-cols-3 gap-1 text-[11px]" }, Object.entries(bonuses.otherBonus).map(([k, v]) => {
-                    const label = k === 'meleeStrength' ? 'Str' : k === 'rangedStrength' ? 'Rng Str' : 'Mag %';
-                    return (h("div", { key: k, class: "flex justify-between text-[var(--color-parchment)] opacity-70" },
-                        h("span", null, label),
-                        h("span", { class: "font-[var(--font-mono)]", style: { color: v > 0 ? '#27ae60' : '#555' } },
-                            v > 0 ? '+' : '',
-                            v)));
-                })))),
+        h("div", { class: "md:grid md:grid-cols-2 md:gap-4 md:items-start" },
+            h(Card, { padding: "p-4", className: "mb-4 md:mb-0 flex flex-col items-center gap-[6px]", style: { background: 'linear-gradient(135deg, #141414, #0f0f0f)' } },
+                h("div", { class: "flex justify-center" },
+                    h(EquipSlot, { slotName: "head", ...slotProps })),
+                h("div", { class: "flex gap-[6px] justify-center" },
+                    h(EquipSlot, { slotName: "cape", ...slotProps }),
+                    h(EquipSlot, { slotName: "neck", ...slotProps }),
+                    h(EquipSlot, { slotName: "ammo", ...slotProps })),
+                h("div", { class: "flex gap-[6px] justify-center" },
+                    h(EquipSlot, { slotName: "weapon", ...slotProps }),
+                    h(EquipSlot, { slotName: "body", ...slotProps }),
+                    h(EquipSlot, { slotName: "shield", ...slotProps })),
+                h("div", { class: "flex justify-center" },
+                    h(EquipSlot, { slotName: "legs", ...slotProps })),
+                h("div", { class: "flex gap-[6px] justify-center" },
+                    h(EquipSlot, { slotName: "gloves", ...slotProps }),
+                    h(EquipSlot, { slotName: "boots", ...slotProps }),
+                    h(EquipSlot, { slotName: "ring", ...slotProps }))),
+            h(Card, null,
+                h(SectionHeader, { size: "sm", className: "mb-2 opacity-50" }, "Bonuses"),
+                h("div", { class: "grid grid-cols-2 gap-2 text-[11px]" },
+                    h("div", null,
+                        h(SectionHeader, { size: "sm", className: "mb-1 opacity-40" }, "Attack"),
+                        Object.entries(bonuses.attackBonus).map(([k, v]) => (h("div", { key: k, class: "flex justify-between text-[var(--color-parchment)] opacity-70 py-[1px]" },
+                            h("span", { class: "capitalize" }, k),
+                            h("span", { class: "font-[var(--font-mono)]", style: { color: v > 0 ? '#27ae60' : v < 0 ? '#c0392b' : '#555' } },
+                                v > 0 ? '+' : '',
+                                v))))),
+                    h("div", null,
+                        h(SectionHeader, { size: "sm", className: "mb-1 opacity-40" }, "Defence"),
+                        Object.entries(bonuses.defenceBonus).map(([k, v]) => (h("div", { key: k, class: "flex justify-between text-[var(--color-parchment)] opacity-70 py-[1px]" },
+                            h("span", { class: "capitalize" }, k),
+                            h("span", { class: "font-[var(--font-mono)]", style: { color: v > 0 ? '#27ae60' : v < 0 ? '#c0392b' : '#555' } },
+                                v > 0 ? '+' : '',
+                                v)))))),
+                h("div", { class: "border-t border-[#222] mt-2 pt-2" },
+                    h(SectionHeader, { size: "sm", className: "mb-1 opacity-40" }, "Other"),
+                    h("div", { class: "grid grid-cols-3 gap-1 text-[11px]" }, Object.entries(bonuses.otherBonus).map(([k, v]) => {
+                        const label = k === 'meleeStrength' ? 'Str' : k === 'rangedStrength' ? 'Rng Str' : 'Mag %';
+                        return (h("div", { key: k, class: "flex justify-between text-[var(--color-parchment)] opacity-70" },
+                            h("span", null, label),
+                            h("span", { class: "font-[var(--font-mono)]", style: { color: v > 0 ? '#27ae60' : '#555' } },
+                                v > 0 ? '+' : '',
+                                v)));
+                    }))))),
         selected && (h(SharedItemModal, { item: selected.item, onClose: () => setSelected(null), extraInfo: h("p", null,
                 "Slot: ",
                 EQ_SLOT_NAMES[selected.slot]) },

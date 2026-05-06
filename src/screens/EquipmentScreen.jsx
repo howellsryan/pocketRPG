@@ -229,10 +229,12 @@ export default function EquipmentScreen() {
     <div class="h-full overflow-y-auto p-4">
       <SectionHeader className="mb-3">Equipment</SectionHeader>
 
+      <div class="md:grid md:grid-cols-2 md:gap-4 md:items-start">
+
       {/* Paperdoll */}
       <Card
         padding="p-4"
-        className="mb-4 flex flex-col items-center gap-[6px]"
+        className="mb-4 md:mb-0 flex flex-col items-center gap-[6px]"
         style={{ background: 'linear-gradient(135deg, #141414, #0f0f0f)' }}
       >
         <div class="flex justify-center">
@@ -308,6 +310,8 @@ export default function EquipmentScreen() {
           </div>
         </div>
       </Card>
+
+      </div>
 
       {/* Unequip modal */}
       {selected && (
