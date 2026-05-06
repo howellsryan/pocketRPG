@@ -38,10 +38,11 @@ const PRAYER_BONUS_ICONS = {
   magic: '🔮'
 }
 
-function renderPrayerBonusIcons(description = '') {
+function getPrayerPrimaryIcon(description = '') {
   const lower = description.toLowerCase()
-  const order = ['attack', 'strength', 'defence', 'ranged', 'magic']
-  return order.filter(stat => lower.includes(stat)).map(stat => PRAYER_BONUS_ICONS[stat]).join(' ')
+  const order = ['ranged', 'magic', 'strength', 'attack', 'defence']
+  const primaryStat = order.find(stat => lower.includes(stat))
+  return primaryStat ? PRAYER_BONUS_ICONS[primaryStat] : '🙏'
 }
 
 const COMBAT_CATEGORIES = [
@@ -1956,11 +1957,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       >
                         <div class="flex flex-col items-start justify-between h-full">
                           <div class="text-left flex-1">
-                            <div class="text-sm font-semibold text-[var(--color-parchment)]">{prayer.icon} {prayer.name}</div>
-                            <div class="text-xs text-[var(--color-parchment)] opacity-75 mt-0.5 md:hidden">
-                              {renderPrayerBonusIcons(prayer.description)}
+                            <div class="text-sm font-semibold text-[var(--color-parchment)] md:hidden">{getPrayerPrimaryIcon(prayer.description)} {prayer.name}</div>
+                            <div class="text-sm font-semibold text-[var(--color-parchment)] hidden md:block">{prayer.icon} {prayer.name}</div>
+                            <div class="text-[9px] text-[var(--color-parchment)] opacity-60 line-clamp-2 mt-0.5">
+                              {prayer.description}
                             </div>
-                            <div class="text-[9px] text-[var(--color-parchment)] opacity-60 line-clamp-2">{prayer.description}</div>
                             <div class="text-[8px] text-[var(--color-gold-dim)] mt-0.5">Lv {prayer.level}</div>
                           </div>
                           {isActive && (
