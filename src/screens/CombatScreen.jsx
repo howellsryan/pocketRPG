@@ -1630,8 +1630,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           DOM order is [stats, inventory, console] so mobile flow stays
           [stats, console] (the inventory pane is desktop-only). At md+,
           explicit grid placement puts:
-            col 1 = stats + paperdoll + prayers
-            col 2 = inventory grid (click equippables to equip)
+            col 1 = stats + paperdoll
+            col 2 = inventory grid (click equippables to equip) + prayers
             col 3 = special bar + combat log + kills + action buttons */}
       <div class="flex-1 min-h-0 flex flex-col md:grid md:grid-cols-[minmax(220px,1fr)_minmax(0,1.6fr)_minmax(220px,1fr)] md:grid-rows-1 md:gap-4 md:overflow-hidden">
 
@@ -1710,73 +1710,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         />
       </div>
 
-      {/* Inline prayer toggles — desktop only. Mirrors the prayer modal's
-          activeProtectionPrayer / activeCombatPrayer toggles, but inline so
-          mobile keeps the 🙏 Prayer button + modal flow. */}
-      <div class="hidden md:block mt-3">
-        <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1">Prayers</div>
-        {(() => {
-          const prayerLevel = getLevelFromXP(stats.prayer?.xp || 0)
-          const protectionPrayers = Object.values(prayersData).filter(p => p.bonusType === 'protection')
-          const combatPrayers = Object.values(prayersData)
-            .filter(p => p.bonusType !== 'protection')
-            .sort((a, b) => b.level - a.level)
-          return (
-            <>
-              <div class="grid grid-cols-3 gap-1 mb-1.5">
-                {protectionPrayers.map(prayer => {
-                  const canUse = prayerLevel >= prayer.level
-                  const isActive = combat?.activeProtectionPrayer === prayer.id
-                  const protectType = prayer.style === 'magic' ? 'Mage' : prayer.style === 'ranged' ? 'Range' : 'Melee'
-                  return (
-                    <button
-                      key={prayer.id}
-                      onClick={() => canUse && handlePrayer(prayer.id)}
-                      disabled={!canUse}
-                      title={`${prayer.name} · Lv ${prayer.level}`}
-                      class={`px-1 py-1.5 rounded-md border text-center transition-colors ${
-                        isActive
-                          ? 'bg-[#2a4a2a] border-[var(--color-gold)]'
-                          : canUse
-                            ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
-                            : 'bg-[#111] border-[#1a1a1a] opacity-30 cursor-default'
-                      }`}
-                    >
-                      <div class="text-[12px] leading-none">{prayer.icon}</div>
-                      <div class="text-[8px] text-[var(--color-parchment)] opacity-70 mt-0.5">{protectType}</div>
-                    </button>
-                  )
-                })}
-              </div>
-              <div class="grid grid-cols-3 gap-1 max-h-[260px] overflow-y-auto pr-0.5">
-                {combatPrayers.map(prayer => {
-                  const canUse = prayerLevel >= prayer.level
-                  const isActive = combat?.activeCombatPrayer === prayer.id
-                  return (
-                    <button
-                      key={prayer.id}
-                      onClick={() => canUse && handlePrayer(prayer.id)}
-                      disabled={!canUse}
-                      title={`${prayer.name} · Lv ${prayer.level}\n${prayer.description}`}
-                      class={`px-1 py-1 rounded-md border text-center transition-colors ${
-                        isActive
-                          ? 'bg-[#2a3a1a] border-[var(--color-gold)]'
-                          : canUse
-                            ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
-                            : 'bg-[#111] border-[#1a1a1a] opacity-30 cursor-default'
-                      }`}
-                    >
-                      <div class="text-[12px] leading-none">{prayer.icon}</div>
-                      <div class="text-[8px] text-[var(--color-gold-dim)] opacity-70 mt-0.5">Lv {prayer.level}</div>
-                    </button>
-                  )
-                })}
-              </div>
-            </>
-          )
-        })()}
-      </div>
-
       </div>{/* /LEFT pane */}
 
       {/* INVENTORY pane (DOM 2nd, visually MIDDLE at md+): full inventory grid.
@@ -1829,6 +1762,73 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             />
           )
         })}
+      </div>
+
+      {/* Inline prayer toggles — desktop only. Mirrors the prayer modal's
+          activeProtectionPrayer / activeCombatPrayer toggles, but inline so
+          mobile keeps the 🙏 Prayer button + modal flow. */}
+      <div class="mt-4">
+        <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1">Prayers</div>
+        {(() => {
+          const prayerLevel = getLevelFromXP(stats.prayer?.xp || 0)
+          const protectionPrayers = Object.values(prayersData).filter(p => p.bonusType === 'protection')
+          const combatPrayers = Object.values(prayersData)
+            .filter(p => p.bonusType !== 'protection')
+            .sort((a, b) => b.level - a.level)
+          return (
+            <>
+              <div class="grid grid-cols-3 gap-1 mb-1.5">
+                {protectionPrayers.map(prayer => {
+                  const canUse = prayerLevel >= prayer.level
+                  const isActive = combat?.activeProtectionPrayer === prayer.id
+                  const protectType = prayer.style === 'magic' ? 'Mage' : prayer.style === 'ranged' ? 'Range' : 'Melee'
+                  return (
+                    <button
+                      key={prayer.id}
+                      onClick={() => canUse && handlePrayer(prayer.id)}
+                      disabled={!canUse}
+                      title={`${prayer.name} · Lv ${prayer.level}`}
+                      class={`px-1 py-1.5 rounded-md border text-center transition-colors ${
+                        isActive
+                          ? 'bg-[#2a4a2a] border-[var(--color-gold)]'
+                          : canUse
+                            ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
+                            : 'bg-[#111] border-[#1a1a1a] opacity-30 cursor-default'
+                      }`}
+                    >
+                      <div class="text-[12px] leading-none">{prayer.icon}</div>
+                      <div class="text-[8px] text-[var(--color-parchment)] opacity-70 mt-0.5">{protectType}</div>
+                    </button>
+                  )
+                })}
+              </div>
+              <div class="grid grid-cols-6 lg:grid-cols-7 xl:grid-cols-9 gap-1">
+                {combatPrayers.map(prayer => {
+                  const canUse = prayerLevel >= prayer.level
+                  const isActive = combat?.activeCombatPrayer === prayer.id
+                  return (
+                    <button
+                      key={prayer.id}
+                      onClick={() => canUse && handlePrayer(prayer.id)}
+                      disabled={!canUse}
+                      title={`${prayer.name} · Lv ${prayer.level}\n${prayer.description}`}
+                      class={`px-1 py-1 rounded-md border text-center transition-colors ${
+                        isActive
+                          ? 'bg-[#2a3a1a] border-[var(--color-gold)]'
+                          : canUse
+                            ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
+                            : 'bg-[#111] border-[#1a1a1a] opacity-30 cursor-default'
+                      }`}
+                    >
+                      <div class="text-[12px] leading-none">{prayer.icon}</div>
+                      <div class="text-[8px] text-[var(--color-gold-dim)] opacity-70 mt-0.5">Lv {prayer.level}</div>
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          )
+        })()}
       </div>
 
       </div>{/* /INVENTORY pane */}

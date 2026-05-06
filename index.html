@@ -44910,42 +44910,7 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                         " remaining"))),
                 h("div", { class: "hidden md:block mt-2" },
                     h("div", { class: "text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1" }, "Gear"),
-                    h(EquipmentPaperdoll, { equipment: equipment, itemsData: itemsData, onSelect: () => setShowEquipmentModal(true), size: "md" })),
-                h("div", { class: "hidden md:block mt-3" },
-                    h("div", { class: "text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1" }, "Prayers"),
-                    (() => {
-                        const prayerLevel = getLevelFromXP(stats.prayer?.xp || 0);
-                        const protectionPrayers = Object.values(prayersData).filter(p => p.bonusType === 'protection');
-                        const combatPrayers = Object.values(prayersData)
-                            .filter(p => p.bonusType !== 'protection')
-                            .sort((a, b) => b.level - a.level);
-                        return (h(Fragment, null,
-                            h("div", { class: "grid grid-cols-3 gap-1 mb-1.5" }, protectionPrayers.map(prayer => {
-                                const canUse = prayerLevel >= prayer.level;
-                                const isActive = combat?.activeProtectionPrayer === prayer.id;
-                                const protectType = prayer.style === 'magic' ? 'Mage' : prayer.style === 'ranged' ? 'Range' : 'Melee';
-                                return (h("button", { key: prayer.id, onClick: () => canUse && handlePrayer(prayer.id), disabled: !canUse, title: `${prayer.name} · Lv ${prayer.level}`, class: `px-1 py-1.5 rounded-md border text-center transition-colors ${isActive
-                                        ? 'bg-[#2a4a2a] border-[var(--color-gold)]'
-                                        : canUse
-                                            ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
-                                            : 'bg-[#111] border-[#1a1a1a] opacity-30 cursor-default'}` },
-                                    h("div", { class: "text-[12px] leading-none" }, prayer.icon),
-                                    h("div", { class: "text-[8px] text-[var(--color-parchment)] opacity-70 mt-0.5" }, protectType)));
-                            })),
-                            h("div", { class: "grid grid-cols-3 gap-1 max-h-[260px] overflow-y-auto pr-0.5" }, combatPrayers.map(prayer => {
-                                const canUse = prayerLevel >= prayer.level;
-                                const isActive = combat?.activeCombatPrayer === prayer.id;
-                                return (h("button", { key: prayer.id, onClick: () => canUse && handlePrayer(prayer.id), disabled: !canUse, title: `${prayer.name} · Lv ${prayer.level}\n${prayer.description}`, class: `px-1 py-1 rounded-md border text-center transition-colors ${isActive
-                                        ? 'bg-[#2a3a1a] border-[var(--color-gold)]'
-                                        : canUse
-                                            ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
-                                            : 'bg-[#111] border-[#1a1a1a] opacity-30 cursor-default'}` },
-                                    h("div", { class: "text-[12px] leading-none" }, prayer.icon),
-                                    h("div", { class: "text-[8px] text-[var(--color-gold-dim)] opacity-70 mt-0.5" },
-                                        "Lv ",
-                                        prayer.level)));
-                            }))));
-                    })())),
+                    h(EquipmentPaperdoll, { equipment: equipment, itemsData: itemsData, onSelect: () => setShowEquipmentModal(true), size: "md" }))),
             h("div", { class: "hidden md:flex md:flex-col md:col-start-2 md:row-start-1 md:overflow-y-auto md:min-h-0" },
                 h("div", { class: "flex items-center justify-between mb-2 px-1" },
                     h("div", { class: "text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60" }, "Inventory"),
@@ -44983,7 +44948,42 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                     const item = slot ? itemsData[slot.itemId] : null;
                     const isEquippable = !!(item && item.slot && !slot.noted);
                     return (h(ItemSlot, { key: i, slot: slot, onClick: isEquippable ? (() => handleEquipItem(slot.itemId)) : undefined, showName: true }));
-                }))),
+                })),
+                h("div", { class: "mt-4" },
+                    h("div", { class: "text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1" }, "Prayers"),
+                    (() => {
+                        const prayerLevel = getLevelFromXP(stats.prayer?.xp || 0);
+                        const protectionPrayers = Object.values(prayersData).filter(p => p.bonusType === 'protection');
+                        const combatPrayers = Object.values(prayersData)
+                            .filter(p => p.bonusType !== 'protection')
+                            .sort((a, b) => b.level - a.level);
+                        return (h(Fragment, null,
+                            h("div", { class: "grid grid-cols-3 gap-1 mb-1.5" }, protectionPrayers.map(prayer => {
+                                const canUse = prayerLevel >= prayer.level;
+                                const isActive = combat?.activeProtectionPrayer === prayer.id;
+                                const protectType = prayer.style === 'magic' ? 'Mage' : prayer.style === 'ranged' ? 'Range' : 'Melee';
+                                return (h("button", { key: prayer.id, onClick: () => canUse && handlePrayer(prayer.id), disabled: !canUse, title: `${prayer.name} · Lv ${prayer.level}`, class: `px-1 py-1.5 rounded-md border text-center transition-colors ${isActive
+                                        ? 'bg-[#2a4a2a] border-[var(--color-gold)]'
+                                        : canUse
+                                            ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
+                                            : 'bg-[#111] border-[#1a1a1a] opacity-30 cursor-default'}` },
+                                    h("div", { class: "text-[12px] leading-none" }, prayer.icon),
+                                    h("div", { class: "text-[8px] text-[var(--color-parchment)] opacity-70 mt-0.5" }, protectType)));
+                            })),
+                            h("div", { class: "grid grid-cols-6 lg:grid-cols-7 xl:grid-cols-9 gap-1" }, combatPrayers.map(prayer => {
+                                const canUse = prayerLevel >= prayer.level;
+                                const isActive = combat?.activeCombatPrayer === prayer.id;
+                                return (h("button", { key: prayer.id, onClick: () => canUse && handlePrayer(prayer.id), disabled: !canUse, title: `${prayer.name} · Lv ${prayer.level}\n${prayer.description}`, class: `px-1 py-1 rounded-md border text-center transition-colors ${isActive
+                                        ? 'bg-[#2a3a1a] border-[var(--color-gold)]'
+                                        : canUse
+                                            ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
+                                            : 'bg-[#111] border-[#1a1a1a] opacity-30 cursor-default'}` },
+                                    h("div", { class: "text-[12px] leading-none" }, prayer.icon),
+                                    h("div", { class: "text-[8px] text-[var(--color-gold-dim)] opacity-70 mt-0.5" },
+                                        "Lv ",
+                                        prayer.level)));
+                            }))));
+                    })())),
             h("div", { class: "flex-1 min-h-0 flex flex-col md:col-start-3 md:row-start-1 md:overflow-hidden" },
                 (() => {
                     const weaponEntry = equipment?.weapon;
