@@ -5,22 +5,23 @@ import { PRODUCTION_SKILLS, STUB_SKILLS } from '../src/utils/constants.js'
 import { canPerformAction, createSkillingState, processSkillingTick } from '../src/engine/skilling.js'
 import { simulateIdleSkilling } from '../src/engine/idleEngine.js'
 
+// Runecrafting grants 2× XP per action across the board.
 const RUNES = [
-  ['craft_air_rune', 1, 5.0, 'air_rune'],
-  ['craft_mind_rune', 2, 5.5, 'mind_rune'],
-  ['craft_water_rune', 5, 6.0, 'water_rune'],
-  ['craft_earth_rune', 9, 6.5, 'earth_rune'],
-  ['craft_fire_rune', 14, 7.0, 'fire_rune'],
-  ['craft_body_rune', 20, 7.5, 'body_rune'],
-  ['craft_cosmic_rune', 27, 8.0, 'cosmic_rune'],
-  ['craft_chaos_rune', 35, 8.5, 'chaos_rune'],
-  ['craft_astral_rune', 40, 8.7, 'astral_rune'],
-  ['craft_nature_rune', 44, 9.0, 'nature_rune'],
-  ['craft_law_rune', 54, 9.5, 'law_rune'],
-  ['craft_death_rune', 65, 10.0, 'death_rune'],
-  ['craft_blood_rune', 77, 10.5, 'blood_rune'],
-  ['craft_soul_rune', 90, 11.3, 'soul_rune'],
-  ['craft_wrath_rune', 95, 8.0, 'wrath_rune'],
+  ['craft_air_rune', 1, 10.0, 'air_rune'],
+  ['craft_mind_rune', 2, 11.0, 'mind_rune'],
+  ['craft_water_rune', 5, 12.0, 'water_rune'],
+  ['craft_earth_rune', 9, 13.0, 'earth_rune'],
+  ['craft_fire_rune', 14, 14.0, 'fire_rune'],
+  ['craft_body_rune', 20, 15.0, 'body_rune'],
+  ['craft_cosmic_rune', 27, 16.0, 'cosmic_rune'],
+  ['craft_chaos_rune', 35, 17.0, 'chaos_rune'],
+  ['craft_astral_rune', 40, 17.4, 'astral_rune'],
+  ['craft_nature_rune', 44, 18.0, 'nature_rune'],
+  ['craft_law_rune', 54, 19.0, 'law_rune'],
+  ['craft_death_rune', 65, 20.0, 'death_rune'],
+  ['craft_blood_rune', 77, 21.0, 'blood_rune'],
+  ['craft_soul_rune', 90, 22.6, 'soul_rune'],
+  ['craft_wrath_rune', 95, 16.0, 'wrath_rune'],
 ] as const
 
 describe('runecrafting enablement and data', () => {
@@ -89,7 +90,7 @@ describe('runecrafting idle simulation', () => {
     const action = (skills as any).runecraft.actions.find((a: any) => a.id === 'craft_air_rune')
     const sim = simulateIdleSkilling({ skill: 'runecraft', action } as any, 60_000, {}, {}, {}, items as any, [{ itemId: 'rune_essence', quantity: 10 }, ...Array(27).fill(null)] as any)
     expect(sim?.actions).toBe(10)
-    expect(sim?.xpGained.runecraft).toBe(50)
+    expect(sim?.xpGained.runecraft).toBe(100)
     const gained = (sim?.itemsGained.air_rune || 0) + (sim?.itemsBanked.air_rune || 0)
     expect(gained).toBe(10)
     expect(sim?.finalInventory.find((s: any) => s?.itemId === 'rune_essence')).toBeFalsy()
@@ -105,7 +106,7 @@ describe('runecrafting idle simulation', () => {
     const action = (skills as any).runecraft.actions.find((a: any) => a.id === 'craft_air_rune')
     const sim = simulateIdleSkilling({ skill: 'runecraft', action } as any, 60_000, {}, {}, {}, items as any, [{ itemId: 'rune_essence', quantity: 3 }, ...Array(27).fill(null)] as any)
     expect(sim?.actions).toBe(3)
-    expect(sim?.xpGained.runecraft).toBe(15)
+    expect(sim?.xpGained.runecraft).toBe(30)
   })
 
   it('runecraft action ids are unique and no duplicate item ids exist', () => {

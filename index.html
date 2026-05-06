@@ -25857,7 +25857,7 @@ const skillsData = {
         "name": "Craft air rune",
         "level": 1,
         "ticks": 2,
-        "xp": 5,
+        "xp": 10,
         "product": "air_rune",
         "productQty": 1,
         "materials": {
@@ -25869,7 +25869,7 @@ const skillsData = {
         "name": "Craft mind rune",
         "level": 2,
         "ticks": 2,
-        "xp": 5.5,
+        "xp": 11,
         "product": "mind_rune",
         "productQty": 1,
         "materials": {
@@ -25881,7 +25881,7 @@ const skillsData = {
         "name": "Craft water rune",
         "level": 5,
         "ticks": 2,
-        "xp": 6,
+        "xp": 12,
         "product": "water_rune",
         "productQty": 1,
         "materials": {
@@ -25893,7 +25893,7 @@ const skillsData = {
         "name": "Craft earth rune",
         "level": 9,
         "ticks": 2,
-        "xp": 6.5,
+        "xp": 13,
         "product": "earth_rune",
         "productQty": 1,
         "materials": {
@@ -25905,7 +25905,7 @@ const skillsData = {
         "name": "Craft fire rune",
         "level": 14,
         "ticks": 2,
-        "xp": 7,
+        "xp": 14,
         "product": "fire_rune",
         "productQty": 1,
         "materials": {
@@ -25917,7 +25917,7 @@ const skillsData = {
         "name": "Craft body rune",
         "level": 20,
         "ticks": 2,
-        "xp": 7.5,
+        "xp": 15,
         "product": "body_rune",
         "productQty": 1,
         "materials": {
@@ -25929,7 +25929,7 @@ const skillsData = {
         "name": "Craft cosmic rune",
         "level": 27,
         "ticks": 2,
-        "xp": 8,
+        "xp": 16,
         "product": "cosmic_rune",
         "productQty": 1,
         "materials": {
@@ -25941,7 +25941,7 @@ const skillsData = {
         "name": "Craft chaos rune",
         "level": 35,
         "ticks": 2,
-        "xp": 8.5,
+        "xp": 17,
         "product": "chaos_rune",
         "productQty": 1,
         "materials": {
@@ -25953,7 +25953,7 @@ const skillsData = {
         "name": "Craft astral rune",
         "level": 40,
         "ticks": 2,
-        "xp": 8.7,
+        "xp": 17.4,
         "product": "astral_rune",
         "productQty": 1,
         "materials": {
@@ -25965,7 +25965,7 @@ const skillsData = {
         "name": "Craft nature rune",
         "level": 44,
         "ticks": 2,
-        "xp": 9,
+        "xp": 18,
         "product": "nature_rune",
         "productQty": 1,
         "materials": {
@@ -25977,7 +25977,7 @@ const skillsData = {
         "name": "Craft law rune",
         "level": 54,
         "ticks": 2,
-        "xp": 9.5,
+        "xp": 19,
         "product": "law_rune",
         "productQty": 1,
         "materials": {
@@ -25989,7 +25989,7 @@ const skillsData = {
         "name": "Craft death rune",
         "level": 65,
         "ticks": 2,
-        "xp": 10,
+        "xp": 20,
         "product": "death_rune",
         "productQty": 1,
         "materials": {
@@ -26001,7 +26001,7 @@ const skillsData = {
         "name": "Craft blood rune",
         "level": 77,
         "ticks": 2,
-        "xp": 10.5,
+        "xp": 21,
         "product": "blood_rune",
         "productQty": 1,
         "materials": {
@@ -26013,7 +26013,7 @@ const skillsData = {
         "name": "Craft soul rune",
         "level": 90,
         "ticks": 2,
-        "xp": 11.3,
+        "xp": 22.6,
         "product": "soul_rune",
         "productQty": 1,
         "materials": {
@@ -26025,7 +26025,7 @@ const skillsData = {
         "name": "Craft wrath rune",
         "level": 95,
         "ticks": 2,
-        "xp": 8,
+        "xp": 16,
         "product": "wrath_rune",
         "productQty": 1,
         "materials": {
@@ -31594,6 +31594,71 @@ function isHighValueDrop(itemId, quantity, itemsData) {
         return false;
     const qty = Math.max(0, Number(quantity) || 0);
     return (unitValue * qty) > 1000000;
+}
+
+// ── utils/idleElapsed.js ──
+/**
+ * Compute the elapsed-idle window when the page returns from a hidden state.
+ *
+ * Picks the most authoritative reading available:
+ *   1. Cloud server-stamped (serverNow - lastActiveAt) — immune to local
+ *      clock manipulation AND cannot be paused by mobile tab suspension.
+ *   2. Cloud client wall-clock (Date.now() - lastActiveAt) when the server
+ *      didn't echo serverNow back — paired with the rollback-watermark guard.
+ *   3. Same-session: the larger of the perf-clock diff and the wall-clock
+ *      diff. Mobile browsers (notably iOS Safari) pause performance.now()
+ *      when the JS runtime is suspended, so a short perf-clock reading
+ *      doesn't actually mean little time passed. The wall-clock fallback is
+ *      clamped by the rollback watermark to defend against clock-set-back
+ *      attacks.
+ *   4. Pure local wall-clock as the last resort.
+ *
+ * The result is capped at MAX_OFFLINE_MS (24 h) to limit cross-session clock
+ * manipulation.
+ *
+ * @param {object} input
+ * @param {number} input.now                — Date.now() at return
+ * @param {number} input.perfNow            — performance.now() at return
+ * @param {number|null} input.hiddenAt      — Date.now() captured on hide
+ * @param {number|null} input.hiddenAtPerf  — performance.now() captured on hide
+ * @param {number|null} input.cloudServerNow      — server-stamped now
+ * @param {number|null} input.cloudLastActiveAt   — server-stamped last active
+ * @param {number} input.clockWatermark     — highest Date.now() ever observed
+ * @param {number} [input.maxOfflineMs]     — cap (default 24 h)
+ */
+function computeIdleElapsedMs({ now, perfNow, hiddenAt, hiddenAtPerf, cloudServerNow = null, cloudLastActiveAt = null, clockWatermark = 0, maxOfflineMs = 24 * 60 * 60 * 1000, }) {
+    const clampWatermark = (ms) => {
+        if (ms <= 0)
+            return 0;
+        if (clockWatermark > 0 && now < clockWatermark)
+            return 0;
+        return ms;
+    };
+    let elapsed = 0;
+    if (Number.isFinite(cloudServerNow) && Number.isFinite(cloudLastActiveAt) && cloudServerNow && cloudLastActiveAt) {
+        elapsed = Math.max(0, cloudServerNow - cloudLastActiveAt);
+    }
+    else if (Number.isFinite(cloudLastActiveAt) && cloudLastActiveAt) {
+        elapsed = clampWatermark(Math.max(0, now - cloudLastActiveAt));
+    }
+    else {
+        const wallDiff = Number.isFinite(hiddenAt) && hiddenAt
+            ? Math.max(0, now - hiddenAt)
+            : 0;
+        const perfDiff = Number.isFinite(hiddenAtPerf) && hiddenAtPerf !== null && Number.isFinite(perfNow) && perfNow >= hiddenAtPerf
+            ? Math.floor(perfNow - hiddenAtPerf)
+            : 0;
+        if (hiddenAtPerf !== null && Number.isFinite(hiddenAtPerf)) {
+            // Same session: if perf.now() paused (mobile suspend), wall-clock is
+            // higher and reflects the real elapsed window. Trust the larger reading
+            // but keep the watermark guard against clock-set-back.
+            elapsed = Math.max(perfDiff, clampWatermark(wallDiff));
+        }
+        else {
+            elapsed = clampWatermark(wallDiff);
+        }
+    }
+    return Math.min(Math.max(0, Math.floor(elapsed)), maxOfflineMs);
 }
 
 // ── hooks/useActionTick.js ──
@@ -44389,19 +44454,13 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                 h("div", { class: "flex gap-1.5 mb-2" },
                     h("button", { onClick: () => setIdleSetupMode('food'), class: "flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a]", title: "Configure food the simulator can use during idle/skip combat" },
                         "\uD83C\uDF56 Idle Eat",
-                        idleCombatSetup?.food?.length > 0 && (h("span", { class: "ml-1 text-[var(--color-gold)]" },
-                            "(",
-                            idleCombatSetup.food.reduce((n, e) => n + (e.quantity || 0), 0),
-                            ")"))),
+                        idleCombatSetup?.food?.length > 0 && (h("span", { class: "ml-1 text-[var(--color-gold)]" }, "\u2713"))),
                     h("button", { onClick: () => setIdleSetupMode('prayer'), class: "flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a]", title: "Configure prayers the simulator should use during idle/skip combat" },
                         "\uD83D\uDE4F Idle Pray",
                         (idleCombatSetup?.prayers?.protectionPrayerId || idleCombatSetup?.prayers?.combatPrayerId) && (h("span", { class: "ml-1 text-[var(--color-gold)]" }, "\u2713"))),
                     h("button", { onClick: () => setIdleSetupMode('potion'), class: "flex-1 py-1.5 rounded-lg text-[10px] font-semibold bg-[#1a1a1a] text-[var(--color-parchment)] active:bg-[#2a2a2a]", title: "Configure potions the simulator can drink during idle/skip combat" },
                         "\uD83E\uDDEA Idle Potion",
-                        idleCombatSetup?.potions?.length > 0 && (h("span", { class: "ml-1 text-[var(--color-gold)]" },
-                            "(",
-                            idleCombatSetup.potions.reduce((n, e) => n + (e.quantity || 0), 0),
-                            ")")))),
+                        idleCombatSetup?.potions?.length > 0 && (h("span", { class: "ml-1 text-[var(--color-gold)]" }, "\u2713")))),
                 h("div", { class: "flex gap-1.5 mb-3" }, ['accurate', 'aggressive', 'defensive'].map(s => (h("button", { key: s, onClick: () => updateCombatStance(s), class: `flex-1 py-1.5 rounded-lg text-[10px] font-semibold capitalize transition-colors
                 ${combatStance === s ? 'bg-[var(--color-gold-dim)] text-white' : 'bg-[#1a1a1a] text-[var(--color-parchment)] opacity-50'}` }, s)))),
                 h("div", { class: "space-y-4" }, COMBAT_CATEGORIES.map(category => {
@@ -48916,6 +48975,7 @@ const errorText = { color: '#ff6b6b', fontSize: '12px', marginTop: '12px', textA
 
 
 
+
 // ── Clock-rollback watermark ────────────────────────────────────────────────
 // We persist the highest Date.now() we've ever observed. If the device clock
 // later reports a value below the watermark, the user rolled it backwards —
@@ -49323,31 +49383,15 @@ function GameApp() {
                         }
                     }
                     catch (e) { /* fall back to local */ }
-                    let elapsedMs;
-                    if (hiddenAtPerfRef.current !== null && perfNow >= hiddenAtPerfRef.current) {
-                        // Same session: use monotonic clock — immune to system time changes
-                        elapsedMs = Math.floor(perfNow - hiddenAtPerfRef.current);
-                    }
-                    else if (cloudServerNow && cloudLastActiveAt) {
-                        // New session + cloud: both endpoints are server-stamped so this
-                        // elapsed is immune to the user changing their device clock.
-                        elapsedMs = Math.min(Math.max(0, cloudServerNow - cloudLastActiveAt), 24 * 60 * 60 * 1000);
-                    }
-                    else if (cloudLastActiveAt) {
-                        // Cloud knows lastActiveAt but didn't return serverNow (older
-                        // deployment). We still prefer the server-stamped anchor, but the
-                        // endpoint (Date.now()) is client-controlled — cross-check against
-                        // the clock-rollback watermark before trusting it.
-                        elapsedMs = Math.min(Math.max(0, Date.now() - cloudLastActiveAt), 24 * 60 * 60 * 1000);
-                        elapsedMs = clampByClockWatermark(elapsedMs);
-                    }
-                    else {
-                        // No cloud state — wall-clock only. Clamp against our max-observed
-                        // watermark so a player who rolls the device clock backwards can't
-                        // resurrect old progress, then cap at 24h.
-                        elapsedMs = Math.min(Math.max(0, Date.now() - hiddenAt), 24 * 60 * 60 * 1000);
-                        elapsedMs = clampByClockWatermark(elapsedMs);
-                    }
+                    const elapsedMs = computeIdleElapsedMs({
+                        now: Date.now(),
+                        perfNow,
+                        hiddenAt,
+                        hiddenAtPerf: hiddenAtPerfRef.current,
+                        cloudServerNow,
+                        cloudLastActiveAt,
+                        clockWatermark: readMaxObservedAt(),
+                    });
                     hiddenAtPerfRef.current = null;
                     if (elapsedMs < 2000)
                         return;
