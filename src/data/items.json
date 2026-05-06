@@ -1,4 +1,3 @@
-
 {
   "coins": {
     "id": "coins",
@@ -15,7 +14,7 @@
     "name": "Bones",
     "type": "resource",
     "stackable": false,
-    "shopValue": 29,
+    "shopValue": 31,
     "icon": "🦴",
     "isGeneralStore": false
   },
@@ -33,7 +32,7 @@
     "name": "Cowhide",
     "type": "resource",
     "stackable": false,
-    "shopValue": 110,
+    "shopValue": 114,
     "icon": "🐄",
     "isGeneralStore": false
   },
@@ -68,7 +67,7 @@
     "requirements": {
       "attack": 1
     },
-    "shopValue": 41,
+    "shopValue": 39,
     "icon": "🗡️",
     "isGeneralStore": true
   },
@@ -173,7 +172,7 @@
     "requirements": {
       "attack": 5
     },
-    "shopValue": 33,
+    "shopValue": 80,
     "icon": "⚔️",
     "isGeneralStore": true
   },
@@ -208,7 +207,7 @@
     "requirements": {
       "attack": 20
     },
-    "shopValue": 365,
+    "shopValue": 465,
     "icon": "⚔️",
     "isGeneralStore": true
   },
@@ -243,7 +242,7 @@
     "requirements": {
       "attack": 30
     },
-    "shopValue": 1420,
+    "shopValue": 1440,
     "icon": "⚔️",
     "isGeneralStore": true
   },
@@ -278,7 +277,7 @@
     "requirements": {
       "attack": 40
     },
-    "shopValue": 14915,
+    "shopValue": 14906,
     "icon": "⚔️",
     "isGeneralStore": false
   },
@@ -313,7 +312,7 @@
     "requirements": {
       "attack": 1
     },
-    "shopValue": 684,
+    "shopValue": 435,
     "icon": "🔱",
     "isGeneralStore": false
   },
@@ -365,7 +364,7 @@
       "rangedStrength": 7,
       "magicDamage": 0
     },
-    "shopValue": 5,
+    "shopValue": 4,
     "icon": "🏹",
     "isGeneralStore": true
   },
@@ -414,7 +413,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 157,
+    "shopValue": 153,
     "icon": "🪄",
     "isGeneralStore": false
   },
@@ -446,7 +445,7 @@
     "requirements": {
       "defence": 1
     },
-    "shopValue": 72,
+    "shopValue": 84,
     "icon": "⛑️",
     "isGeneralStore": true
   },
@@ -510,7 +509,7 @@
     "requirements": {
       "defence": 1
     },
-    "shopValue": 279,
+    "shopValue": 377,
     "icon": "👖",
     "isGeneralStore": true
   },
@@ -542,7 +541,7 @@
     "requirements": {
       "defence": 1
     },
-    "shopValue": 152,
+    "shopValue": 158,
     "icon": "🛡️",
     "isGeneralStore": true
   },
@@ -574,7 +573,7 @@
     "requirements": {
       "defence": 1
     },
-    "shopValue": 70,
+    "shopValue": 58,
     "icon": "⛑️",
     "isGeneralStore": true
   },
@@ -606,7 +605,7 @@
     "requirements": {
       "defence": 1
     },
-    "shopValue": 131,
+    "shopValue": 123,
     "icon": "🧥",
     "isGeneralStore": true
   },
@@ -638,7 +637,7 @@
     "requirements": {
       "defence": 40
     },
-    "shopValue": 11079,
+    "shopValue": 11087,
     "icon": "⛑️",
     "isGeneralStore": false
   },
@@ -670,7 +669,7 @@
     "requirements": {
       "ranged": 1
     },
-    "shopValue": 11,
+    "shopValue": 17,
     "icon": "🧥",
     "isGeneralStore": false
   },
@@ -702,7 +701,7 @@
     "requirements": {
       "ranged": 1
     },
-    "shopValue": 3,
+    "shopValue": 4,
     "icon": "👖",
     "isGeneralStore": false
   },
@@ -732,7 +731,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 182,
+    "shopValue": 109,
     "icon": "🧙",
     "isGeneralStore": false
   },
@@ -852,7 +851,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 2188,
+    "shopValue": 2482,
     "icon": "📿",
     "isGeneralStore": false
   },
@@ -876,7 +875,7 @@
     "stackable": false,
     "heals": 3,
     "eatTicks": 3,
-    "shopValue": 21,
+    "shopValue": 23,
     "icon": "🦐",
     "isGeneralStore": false
   },
@@ -889,7 +888,7 @@
     "cookLevel": 15,
     "cookXP": 70,
     "burnStopLevel": 50,
-    "shopValue": 40,
+    "shopValue": 41,
     "icon": "🐟",
     "isGeneralStore": false
   },
@@ -900,7 +899,7 @@
     "stackable": false,
     "heals": 7,
     "eatTicks": 3,
-    "shopValue": 30,
+    "shopValue": 31,
     "icon": "🐟",
     "isGeneralStore": false
   },
@@ -913,7 +912,7 @@
     "cookLevel": 40,
     "cookXP": 120,
     "burnStopLevel": 74,
-    "shopValue": 151,
+    "shopValue": 149,
     "icon": "🦞",
     "isGeneralStore": false
   },
@@ -937,7 +936,7 @@
     "cookLevel": 45,
     "cookXP": 140,
     "burnStopLevel": 86,
-    "shopValue": 220,
+    "shopValue": 219,
     "icon": "🐟",
     "isGeneralStore": false
   },
@@ -948,7 +947,7 @@
     "stackable": false,
     "heals": 14,
     "eatTicks": 3,
-    "shopValue": 203,
+    "shopValue": 196,
     "icon": "🐟",
     "isGeneralStore": false
   },
@@ -961,7 +960,7 @@
     "cookLevel": 80,
     "cookXP": 210,
     "burnStopLevel": 99,
-    "shopValue": 618,
+    "shopValue": 622,
     "icon": "🦈",
     "isGeneralStore": false
   },
@@ -972,7 +971,7 @@
     "stackable": false,
     "heals": 20,
     "eatTicks": 3,
-    "shopValue": 794,
+    "shopValue": 803,
     "icon": "🦈",
     "isGeneralStore": false
   },
@@ -996,7 +995,7 @@
     "stackable": false,
     "heals": 3,
     "eatTicks": 3,
-    "shopValue": 60,
+    "shopValue": 83,
     "icon": "🍗",
     "isGeneralStore": false
   },
@@ -1020,7 +1019,7 @@
     "stackable": false,
     "heals": 3,
     "eatTicks": 3,
-    "shopValue": 57,
+    "shopValue": 55,
     "icon": "🥩",
     "isGeneralStore": false
   },
@@ -1048,7 +1047,7 @@
     "name": "Copper Ore",
     "type": "resource",
     "stackable": false,
-    "shopValue": 12,
+    "shopValue": 14,
     "icon": "🪨",
     "isGeneralStore": false
   },
@@ -1057,7 +1056,7 @@
     "name": "Iron Ore",
     "type": "resource",
     "stackable": false,
-    "shopValue": 84,
+    "shopValue": 80,
     "icon": "🪨",
     "isGeneralStore": false
   },
@@ -1075,7 +1074,7 @@
     "name": "Mithril Ore",
     "type": "resource",
     "stackable": false,
-    "shopValue": 139,
+    "shopValue": 143,
     "icon": "🪨",
     "isGeneralStore": false
   },
@@ -1084,7 +1083,7 @@
     "name": "Adamantite Ore",
     "type": "resource",
     "stackable": false,
-    "shopValue": 646,
+    "shopValue": 648,
     "icon": "🪨",
     "isGeneralStore": false
   },
@@ -1093,7 +1092,7 @@
     "name": "Runite Ore",
     "type": "resource",
     "stackable": false,
-    "shopValue": 10498,
+    "shopValue": 10547,
     "icon": "🪨",
     "isGeneralStore": false
   },
@@ -1102,7 +1101,7 @@
     "name": "Bronze Bar",
     "type": "resource",
     "stackable": false,
-    "shopValue": 56,
+    "shopValue": 60,
     "icon": "🔶",
     "isGeneralStore": false
   },
@@ -1111,7 +1110,7 @@
     "name": "Iron Bar",
     "type": "resource",
     "stackable": false,
-    "shopValue": 146,
+    "shopValue": 143,
     "icon": "🔷",
     "isGeneralStore": false
   },
@@ -1120,7 +1119,7 @@
     "name": "Steel Bar",
     "type": "resource",
     "stackable": false,
-    "shopValue": 571,
+    "shopValue": 573,
     "icon": "🔷",
     "isGeneralStore": false
   },
@@ -1129,7 +1128,7 @@
     "name": "Mithril Bar",
     "type": "resource",
     "stackable": false,
-    "shopValue": 976,
+    "shopValue": 973,
     "icon": "🔷",
     "isGeneralStore": false
   },
@@ -1156,7 +1155,7 @@
     "name": "Logs",
     "type": "resource",
     "stackable": false,
-    "shopValue": 26,
+    "shopValue": 25,
     "icon": "🪵",
     "isGeneralStore": false
   },
@@ -1165,7 +1164,7 @@
     "name": "Oak Logs",
     "type": "resource",
     "stackable": false,
-    "shopValue": 36,
+    "shopValue": 33,
     "icon": "🪵",
     "isGeneralStore": false
   },
@@ -1192,7 +1191,7 @@
     "name": "Yew Logs",
     "type": "resource",
     "stackable": false,
-    "shopValue": 122,
+    "shopValue": 123,
     "icon": "🪵",
     "isGeneralStore": false
   },
@@ -1201,7 +1200,7 @@
     "name": "Magic Logs",
     "type": "resource",
     "stackable": false,
-    "shopValue": 914,
+    "shopValue": 907,
     "icon": "🪵",
     "isGeneralStore": false
   },
@@ -1210,7 +1209,7 @@
     "name": "Redwood Logs",
     "type": "resource",
     "stackable": false,
-    "shopValue": 769,
+    "shopValue": 772,
     "icon": "🪵",
     "isGeneralStore": false
   },
@@ -1219,7 +1218,7 @@
     "name": "Teak Logs",
     "type": "resource",
     "stackable": false,
-    "shopValue": 124,
+    "shopValue": 121,
     "icon": "🪵",
     "isGeneralStore": false
   },
@@ -1228,7 +1227,7 @@
     "name": "Mahogany Logs",
     "type": "resource",
     "stackable": false,
-    "shopValue": 287,
+    "shopValue": 282,
     "icon": "🪵",
     "isGeneralStore": false
   },
@@ -1237,7 +1236,7 @@
     "name": "Bucket of Sand",
     "type": "resource",
     "stackable": false,
-    "shopValue": 10,
+    "shopValue": 9,
     "icon": "🏖️",
     "isGeneralStore": true
   },
@@ -1246,7 +1245,7 @@
     "name": "Soda Ash",
     "type": "resource",
     "stackable": false,
-    "shopValue": 6,
+    "shopValue": 22,
     "icon": "⬜",
     "isGeneralStore": true
   },
@@ -1255,7 +1254,7 @@
     "name": "Molten Glass",
     "type": "resource",
     "stackable": false,
-    "shopValue": 96,
+    "shopValue": 92,
     "icon": "🫧",
     "isGeneralStore": false
   },
@@ -1264,7 +1263,7 @@
     "name": "Seaweed",
     "type": "resource",
     "stackable": false,
-    "shopValue": 8,
+    "shopValue": 7,
     "icon": "🌊",
     "isGeneralStore": false
   },
@@ -1273,7 +1272,7 @@
     "name": "Soft Clay",
     "type": "resource",
     "stackable": false,
-    "shopValue": 109,
+    "shopValue": 108,
     "icon": "🟫",
     "isGeneralStore": true
   },
@@ -1282,7 +1281,7 @@
     "name": "Clay",
     "type": "resource",
     "stackable": false,
-    "shopValue": 75,
+    "shopValue": 74,
     "icon": "🟫",
     "isGeneralStore": false
   },
@@ -1291,7 +1290,7 @@
     "name": "Pot of Flour",
     "type": "resource",
     "stackable": false,
-    "shopValue": 65,
+    "shopValue": 70,
     "icon": "🫙",
     "isGeneralStore": true
   },
@@ -1318,7 +1317,7 @@
     "name": "Bird Snare",
     "type": "resource",
     "stackable": false,
-    "shopValue": 20,
+    "shopValue": 22,
     "icon": "🪤",
     "isGeneralStore": true
   },
@@ -1327,7 +1326,7 @@
     "name": "Hard Leather",
     "type": "resource",
     "stackable": false,
-    "shopValue": 169,
+    "shopValue": 158,
     "icon": "🟤",
     "isGeneralStore": false
   },
@@ -1336,7 +1335,7 @@
     "name": "Green Dragon Leather",
     "type": "resource",
     "stackable": false,
-    "shopValue": 1930,
+    "shopValue": 2027,
     "icon": "📦",
     "isGeneralStore": false
   },
@@ -1345,7 +1344,7 @@
     "name": "Blue Dragon Leather",
     "type": "resource",
     "stackable": false,
-    "shopValue": 2155,
+    "shopValue": 2165,
     "icon": "📦",
     "isGeneralStore": false
   },
@@ -1354,7 +1353,7 @@
     "name": "Red Dragon Leather",
     "type": "resource",
     "stackable": false,
-    "shopValue": 2917,
+    "shopValue": 3106,
     "icon": "📦",
     "isGeneralStore": false
   },
@@ -1387,7 +1386,7 @@
       "ranged": 60,
       "defence": 1
     },
-    "shopValue": 5900,
+    "shopValue": 6019,
     "icon": "🧥",
     "isGeneralStore": false
   },
@@ -1396,7 +1395,7 @@
     "name": "Black Dragon Leather",
     "type": "resource",
     "stackable": false,
-    "shopValue": 4257,
+    "shopValue": 4243,
     "icon": "🟤",
     "isGeneralStore": false
   },
@@ -1458,7 +1457,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 32,
+    "shopValue": 67,
     "icon": "👢",
     "isGeneralStore": false
   },
@@ -1490,7 +1489,7 @@
     "requirements": {
       "ranged": 1
     },
-    "shopValue": 12,
+    "shopValue": 13,
     "icon": "⛑️",
     "isGeneralStore": false
   },
@@ -1555,7 +1554,7 @@
       "ranged": 40,
       "defence": 1
     },
-    "shopValue": 4427,
+    "shopValue": 4404,
     "icon": "🧥",
     "isGeneralStore": false
   },
@@ -1587,7 +1586,7 @@
     "requirements": {
       "ranged": 40
     },
-    "shopValue": 2130,
+    "shopValue": 2303,
     "icon": "👖",
     "isGeneralStore": false
   },
@@ -1596,7 +1595,7 @@
     "name": "Uncut Sapphire",
     "type": "resource",
     "stackable": false,
-    "shopValue": 319,
+    "shopValue": 340,
     "icon": "💎",
     "isGeneralStore": false
   },
@@ -1605,7 +1604,7 @@
     "name": "Uncut Emerald",
     "type": "resource",
     "stackable": false,
-    "shopValue": 614,
+    "shopValue": 620,
     "icon": "💎",
     "isGeneralStore": false
   },
@@ -1614,7 +1613,7 @@
     "name": "Uncut Ruby",
     "type": "resource",
     "stackable": false,
-    "shopValue": 1351,
+    "shopValue": 1358,
     "icon": "💎",
     "isGeneralStore": false
   },
@@ -1623,7 +1622,7 @@
     "name": "Uncut Diamond",
     "type": "resource",
     "stackable": false,
-    "shopValue": 2905,
+    "shopValue": 2961,
     "icon": "💎",
     "isGeneralStore": false
   },
@@ -1632,7 +1631,7 @@
     "name": "Uncut Dragonstone",
     "type": "resource",
     "stackable": false,
-    "shopValue": 16219,
+    "shopValue": 16345,
     "icon": "💎",
     "isGeneralStore": false
   },
@@ -1641,7 +1640,7 @@
     "name": "Uncut Onyx",
     "type": "resource",
     "stackable": false,
-    "shopValue": 2518111,
+    "shopValue": 2548500,
     "icon": "💎",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -1651,7 +1650,7 @@
     "name": "Sapphire",
     "type": "resource",
     "stackable": false,
-    "shopValue": 334,
+    "shopValue": 329,
     "icon": "💎",
     "isGeneralStore": false
   },
@@ -1660,7 +1659,7 @@
     "name": "Emerald",
     "type": "resource",
     "stackable": false,
-    "shopValue": 560,
+    "shopValue": 539,
     "icon": "💎",
     "isGeneralStore": false
   },
@@ -1669,7 +1668,7 @@
     "name": "Ruby",
     "type": "resource",
     "stackable": false,
-    "shopValue": 1172,
+    "shopValue": 983,
     "icon": "💎",
     "isGeneralStore": false
   },
@@ -1678,7 +1677,7 @@
     "name": "Diamond",
     "type": "resource",
     "stackable": false,
-    "shopValue": 1865,
+    "shopValue": 1840,
     "icon": "💎",
     "isGeneralStore": false
   },
@@ -1687,7 +1686,7 @@
     "name": "Dragonstone",
     "type": "resource",
     "stackable": false,
-    "shopValue": 11370,
+    "shopValue": 11248,
     "icon": "💎",
     "isGeneralStore": false
   },
@@ -1696,7 +1695,7 @@
     "name": "Onyx",
     "type": "resource",
     "stackable": false,
-    "shopValue": 2504632,
+    "shopValue": 2515257,
     "icon": "💎",
     "isGeneralStore": false
   },
@@ -1705,7 +1704,7 @@
     "name": "Uncut Zenyte",
     "type": "resource",
     "stackable": false,
-    "shopValue": 19463608,
+    "shopValue": 19502441,
     "icon": "💎",
     "isGeneralStore": false,
     "isBossUnique": true,
@@ -1719,7 +1718,7 @@
     "name": "Zenyte",
     "type": "resource",
     "stackable": false,
-    "shopValue": 19702779,
+    "shopValue": 19900000,
     "icon": "💎",
     "isGeneralStore": false,
     "isBossUnique": true,
@@ -1733,7 +1732,7 @@
     "name": "Gold Bar",
     "type": "resource",
     "stackable": false,
-    "shopValue": 115,
+    "shopValue": 118,
     "icon": "🟡",
     "isGeneralStore": false
   },
@@ -1763,7 +1762,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 430,
+    "shopValue": 404,
     "icon": "📿",
     "isGeneralStore": false
   },
@@ -1793,7 +1792,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 706,
+    "shopValue": 735,
     "icon": "📿",
     "isGeneralStore": false
   },
@@ -1823,7 +1822,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 1182,
+    "shopValue": 1171,
     "icon": "📿",
     "isGeneralStore": false
   },
@@ -1853,7 +1852,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 2094,
+    "shopValue": 2387,
     "icon": "📿",
     "isGeneralStore": false
   },
@@ -1883,7 +1882,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 11122,
+    "shopValue": 10875,
     "icon": "📿",
     "isGeneralStore": false
   },
@@ -1943,7 +1942,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 433,
+    "shopValue": 650,
     "icon": "📿",
     "isGeneralStore": false
   },
@@ -1973,7 +1972,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 11544,
+    "shopValue": 11471,
     "icon": "📿",
     "isGeneralStore": false
   },
@@ -2003,7 +2002,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 2564831,
+    "shopValue": 2565673,
     "icon": "📿",
     "isGeneralStore": false
   },
@@ -2012,7 +2011,7 @@
     "name": "Gold Amulet (U)",
     "type": "resource",
     "stackable": false,
-    "shopValue": 163,
+    "shopValue": 176,
     "icon": "📿",
     "isGeneralStore": false
   },
@@ -2021,7 +2020,7 @@
     "name": "Unpowered Orb",
     "type": "resource",
     "stackable": false,
-    "shopValue": 62,
+    "shopValue": 65,
     "icon": "🔮",
     "isGeneralStore": false
   },
@@ -2030,7 +2029,7 @@
     "name": "Vial",
     "type": "resource",
     "stackable": false,
-    "shopValue": 2,
+    "shopValue": 3,
     "icon": "🧪",
     "isGeneralStore": false
   },
@@ -2039,7 +2038,7 @@
     "name": "Arrow Shaft",
     "type": "resource",
     "stackable": true,
-    "shopValue": 1,
+    "shopValue": 2,
     "icon": "🪵",
     "isGeneralStore": false
   },
@@ -2057,7 +2056,7 @@
     "name": "Iron Arrowtips",
     "type": "resource",
     "stackable": true,
-    "shopValue": 4,
+    "shopValue": 3,
     "icon": "🔩",
     "isGeneralStore": false
   },
@@ -2066,7 +2065,7 @@
     "name": "Steel Arrowtips",
     "type": "resource",
     "stackable": true,
-    "shopValue": 16,
+    "shopValue": 13,
     "icon": "🔩",
     "isGeneralStore": false
   },
@@ -2075,7 +2074,7 @@
     "name": "Mithril Arrowtips",
     "type": "resource",
     "stackable": true,
-    "shopValue": 45,
+    "shopValue": 48,
     "icon": "🔩",
     "isGeneralStore": false
   },
@@ -2084,7 +2083,7 @@
     "name": "Adamant Arrowtips",
     "type": "resource",
     "stackable": true,
-    "shopValue": 122,
+    "shopValue": 116,
     "icon": "🔩",
     "isGeneralStore": false
   },
@@ -2093,7 +2092,7 @@
     "name": "Rune Arrowtips",
     "type": "resource",
     "stackable": true,
-    "shopValue": 235,
+    "shopValue": 233,
     "icon": "🔩",
     "isGeneralStore": false
   },
@@ -2109,7 +2108,7 @@
       "rangedStrength": 16,
       "magicDamage": 0
     },
-    "shopValue": 11,
+    "shopValue": 10,
     "icon": "🏹",
     "isGeneralStore": true
   },
@@ -2141,7 +2140,7 @@
       "rangedStrength": 31,
       "magicDamage": 0
     },
-    "shopValue": 44,
+    "shopValue": 42,
     "icon": "🏹",
     "isGeneralStore": true
   },
@@ -2176,7 +2175,7 @@
       "rangedStrength": 60,
       "magicDamage": 0
     },
-    "shopValue": 2920,
+    "shopValue": 2914,
     "icon": "🏹",
     "isGeneralStore": false
   },
@@ -2185,7 +2184,7 @@
     "name": "Shortbow (U)",
     "type": "resource",
     "stackable": false,
-    "shopValue": 17,
+    "shopValue": 20,
     "icon": "🏹",
     "isGeneralStore": false
   },
@@ -2194,7 +2193,7 @@
     "name": "Oak Shortbow (U)",
     "type": "resource",
     "stackable": false,
-    "shopValue": 8,
+    "shopValue": 20,
     "icon": "🏹",
     "isGeneralStore": false
   },
@@ -2203,7 +2202,7 @@
     "name": "Willow Shortbow (U)",
     "type": "resource",
     "stackable": false,
-    "shopValue": 31,
+    "shopValue": 35,
     "icon": "🏹",
     "isGeneralStore": false
   },
@@ -2212,7 +2211,7 @@
     "name": "Maple Shortbow (U)",
     "type": "resource",
     "stackable": false,
-    "shopValue": 97,
+    "shopValue": 86,
     "icon": "🏹",
     "isGeneralStore": false
   },
@@ -2221,7 +2220,7 @@
     "name": "Yew Shortbow (U)",
     "type": "resource",
     "stackable": false,
-    "shopValue": 167,
+    "shopValue": 176,
     "icon": "🏹",
     "isGeneralStore": false
   },
@@ -2230,7 +2229,7 @@
     "name": "Magic Shortbow (U)",
     "type": "resource",
     "stackable": false,
-    "shopValue": 671,
+    "shopValue": 679,
     "icon": "🏹",
     "isGeneralStore": false
   },
@@ -2266,7 +2265,7 @@
     "requirements": {
       "ranged": 5
     },
-    "shopValue": 55,
+    "shopValue": 49,
     "icon": "🏹",
     "isGeneralStore": true
   },
@@ -2302,7 +2301,7 @@
     "requirements": {
       "ranged": 20
     },
-    "shopValue": 109,
+    "shopValue": 98,
     "icon": "🏹",
     "isGeneralStore": true
   },
@@ -2338,7 +2337,7 @@
     "requirements": {
       "ranged": 30
     },
-    "shopValue": 200,
+    "shopValue": 190,
     "icon": "🏹",
     "isGeneralStore": true
   },
@@ -2374,7 +2373,7 @@
     "requirements": {
       "ranged": 40
     },
-    "shopValue": 416,
+    "shopValue": 414,
     "icon": "🏹",
     "isGeneralStore": true
   },
@@ -2415,7 +2414,7 @@
       "energyCost": 55,
       "description": "Snapshot: Fires two arrows in rapid succession, each dealing up to 75% of your normal max hit."
     },
-    "shopValue": 785,
+    "shopValue": 845,
     "icon": "🏹",
     "isGeneralStore": true
   },
@@ -2424,7 +2423,7 @@
     "name": "Needle",
     "type": "tool",
     "stackable": false,
-    "shopValue": 45,
+    "shopValue": 47,
     "icon": "🧵",
     "isGeneralStore": true
   },
@@ -2442,7 +2441,7 @@
     "name": "Gold Ore",
     "type": "resource",
     "stackable": false,
-    "shopValue": 144,
+    "shopValue": 145,
     "icon": "🟡",
     "isGeneralStore": false
   },
@@ -2479,7 +2478,7 @@
     "requirements": {
       "woodcutting": 1
     },
-    "shopValue": 79,
+    "shopValue": 83,
     "icon": "🪓",
     "isGeneralStore": true
   },
@@ -2553,7 +2552,7 @@
     "requirements": {
       "woodcutting": 5
     },
-    "shopValue": 130,
+    "shopValue": 209,
     "icon": "🪓",
     "isGeneralStore": true
   },
@@ -2590,7 +2589,7 @@
     "requirements": {
       "woodcutting": 20
     },
-    "shopValue": 209,
+    "shopValue": 224,
     "icon": "🪓",
     "isGeneralStore": true
   },
@@ -2627,7 +2626,7 @@
     "requirements": {
       "woodcutting": 30
     },
-    "shopValue": 568,
+    "shopValue": 588,
     "icon": "🪓",
     "isGeneralStore": true
   },
@@ -2664,7 +2663,7 @@
     "requirements": {
       "woodcutting": 40
     },
-    "shopValue": 7201,
+    "shopValue": 7231,
     "icon": "🪓",
     "isGeneralStore": true
   },
@@ -2701,7 +2700,7 @@
     "requirements": {
       "mining": 1
     },
-    "shopValue": 65,
+    "shopValue": 24,
     "icon": "⛏️",
     "isGeneralStore": true
   },
@@ -2738,7 +2737,7 @@
     "requirements": {
       "mining": 1
     },
-    "shopValue": 306,
+    "shopValue": 541,
     "icon": "⛏️",
     "isGeneralStore": false
   },
@@ -2775,7 +2774,7 @@
     "requirements": {
       "mining": 5
     },
-    "shopValue": 1833,
+    "shopValue": 745,
     "icon": "⛏️",
     "isGeneralStore": true
   },
@@ -2812,7 +2811,7 @@
     "requirements": {
       "mining": 20
     },
-    "shopValue": 397,
+    "shopValue": 446,
     "icon": "⛏️",
     "isGeneralStore": true
   },
@@ -2849,7 +2848,7 @@
     "requirements": {
       "mining": 30
     },
-    "shopValue": 1831,
+    "shopValue": 1649,
     "icon": "⛏️",
     "isGeneralStore": true
   },
@@ -2886,7 +2885,7 @@
     "requirements": {
       "mining": 40
     },
-    "shopValue": 18735,
+    "shopValue": 19524,
     "icon": "⛏️",
     "isGeneralStore": true
   },
@@ -2896,7 +2895,7 @@
     "type": "tool",
     "slot": null,
     "stackable": false,
-    "shopValue": 85,
+    "shopValue": 97,
     "icon": "🔥",
     "requirements": {},
     "isGeneralStore": true
@@ -2918,7 +2917,7 @@
     "type": "tool",
     "slot": null,
     "stackable": false,
-    "shopValue": 93,
+    "shopValue": 120,
     "icon": "🔨",
     "requirements": {},
     "isGeneralStore": true
@@ -2989,7 +2988,7 @@
     "requirements": {
       "attack": 5
     },
-    "shopValue": 16,
+    "shopValue": 40,
     "icon": "🗡️",
     "isGeneralStore": true
   },
@@ -3024,7 +3023,7 @@
     "requirements": {
       "attack": 20
     },
-    "shopValue": 99,
+    "shopValue": 123,
     "icon": "🗡️",
     "isGeneralStore": true
   },
@@ -3059,7 +3058,7 @@
     "requirements": {
       "attack": 30
     },
-    "shopValue": 296,
+    "shopValue": 294,
     "icon": "🗡️",
     "isGeneralStore": true
   },
@@ -3094,7 +3093,7 @@
     "requirements": {
       "attack": 1
     },
-    "shopValue": 55,
+    "shopValue": 85,
     "icon": "⚔️",
     "isGeneralStore": true
   },
@@ -3129,7 +3128,7 @@
     "requirements": {
       "attack": 1
     },
-    "shopValue": 36,
+    "shopValue": 37,
     "icon": "⚔️",
     "isGeneralStore": true
   },
@@ -3164,7 +3163,7 @@
     "requirements": {
       "attack": 5
     },
-    "shopValue": 55,
+    "shopValue": 67,
     "icon": "⚔️",
     "isGeneralStore": true
   },
@@ -3199,7 +3198,7 @@
     "requirements": {
       "attack": 20
     },
-    "shopValue": 343,
+    "shopValue": 361,
     "icon": "⚔️",
     "isGeneralStore": true
   },
@@ -3234,7 +3233,7 @@
     "requirements": {
       "attack": 30
     },
-    "shopValue": 987,
+    "shopValue": 822,
     "icon": "⚔️",
     "isGeneralStore": true
   },
@@ -3269,7 +3268,7 @@
     "requirements": {
       "attack": 1
     },
-    "shopValue": 34,
+    "shopValue": 29,
     "icon": "⚔️",
     "isGeneralStore": true
   },
@@ -3304,7 +3303,7 @@
     "requirements": {
       "attack": 1
     },
-    "shopValue": 50,
+    "shopValue": 32,
     "icon": "⚔️",
     "isGeneralStore": true
   },
@@ -3339,7 +3338,7 @@
     "requirements": {
       "attack": 5
     },
-    "shopValue": 93,
+    "shopValue": 177,
     "icon": "⚔️",
     "isGeneralStore": true
   },
@@ -3374,7 +3373,7 @@
     "requirements": {
       "attack": 20
     },
-    "shopValue": 648,
+    "shopValue": 539,
     "icon": "⚔️",
     "isGeneralStore": true
   },
@@ -3409,7 +3408,7 @@
     "requirements": {
       "attack": 30
     },
-    "shopValue": 1594,
+    "shopValue": 1548,
     "icon": "⚔️",
     "isGeneralStore": true
   },
@@ -3444,7 +3443,7 @@
     "requirements": {
       "attack": 1
     },
-    "shopValue": 41,
+    "shopValue": 43,
     "icon": "🪃",
     "isGeneralStore": true
   },
@@ -3479,7 +3478,7 @@
     "requirements": {
       "attack": 1
     },
-    "shopValue": 12,
+    "shopValue": 5,
     "icon": "🪃",
     "isGeneralStore": true
   },
@@ -3514,7 +3513,7 @@
     "requirements": {
       "attack": 5
     },
-    "shopValue": 37,
+    "shopValue": 22,
     "icon": "🪃",
     "isGeneralStore": true
   },
@@ -3549,7 +3548,7 @@
     "requirements": {
       "attack": 20
     },
-    "shopValue": 114,
+    "shopValue": 109,
     "icon": "🪃",
     "isGeneralStore": true
   },
@@ -3584,7 +3583,7 @@
     "requirements": {
       "attack": 30
     },
-    "shopValue": 673,
+    "shopValue": 678,
     "icon": "🪃",
     "isGeneralStore": true
   },
@@ -3616,7 +3615,7 @@
     "requirements": {
       "defence": 1
     },
-    "shopValue": 77,
+    "shopValue": 81,
     "icon": "🦵",
     "isGeneralStore": true
   },
@@ -3648,7 +3647,7 @@
     "requirements": {
       "defence": 1
     },
-    "shopValue": 75,
+    "shopValue": 134,
     "icon": "🛡️",
     "isGeneralStore": true
   },
@@ -3680,7 +3679,7 @@
     "requirements": {
       "defence": 5
     },
-    "shopValue": 104,
+    "shopValue": 131,
     "icon": "⛑️",
     "isGeneralStore": true
   },
@@ -3712,7 +3711,7 @@
     "requirements": {
       "defence": 5
     },
-    "shopValue": 984,
+    "shopValue": 1021,
     "icon": "🧥",
     "isGeneralStore": true
   },
@@ -3744,7 +3743,7 @@
     "requirements": {
       "defence": 5
     },
-    "shopValue": 419,
+    "shopValue": 417,
     "icon": "🦵",
     "isGeneralStore": true
   },
@@ -3776,7 +3775,7 @@
     "requirements": {
       "defence": 5
     },
-    "shopValue": 231,
+    "shopValue": 339,
     "icon": "🛡️",
     "isGeneralStore": true
   },
@@ -3808,7 +3807,7 @@
     "requirements": {
       "defence": 20
     },
-    "shopValue": 740,
+    "shopValue": 774,
     "icon": "⛑️",
     "isGeneralStore": true
   },
@@ -3840,7 +3839,7 @@
     "requirements": {
       "defence": 20
     },
-    "shopValue": 2826,
+    "shopValue": 2813,
     "icon": "🧥",
     "isGeneralStore": true
   },
@@ -3872,7 +3871,7 @@
     "requirements": {
       "defence": 20
     },
-    "shopValue": 1286,
+    "shopValue": 1279,
     "icon": "🦵",
     "isGeneralStore": true
   },
@@ -3904,7 +3903,7 @@
     "requirements": {
       "defence": 20
     },
-    "shopValue": 1034,
+    "shopValue": 1220,
     "icon": "🛡️",
     "isGeneralStore": true
   },
@@ -3936,7 +3935,7 @@
     "requirements": {
       "defence": 30
     },
-    "shopValue": 1924,
+    "shopValue": 1889,
     "icon": "⛑️",
     "isGeneralStore": true
   },
@@ -3968,7 +3967,7 @@
     "requirements": {
       "defence": 30
     },
-    "shopValue": 9561,
+    "shopValue": 9581,
     "icon": "🧥",
     "isGeneralStore": true
   },
@@ -4000,7 +3999,7 @@
     "requirements": {
       "defence": 30
     },
-    "shopValue": 3574,
+    "shopValue": 3555,
     "icon": "🦵",
     "isGeneralStore": true
   },
@@ -4032,7 +4031,7 @@
     "requirements": {
       "defence": 30
     },
-    "shopValue": 3051,
+    "shopValue": 3056,
     "icon": "🛡️",
     "isGeneralStore": true
   },
@@ -4064,7 +4063,7 @@
     "requirements": {
       "defence": 20
     },
-    "shopValue": 388,
+    "shopValue": 386,
     "icon": "🧥",
     "isGeneralStore": true
   },
@@ -4131,7 +4130,7 @@
     "requirements": {
       "ranged": 1
     },
-    "shopValue": 20,
+    "shopValue": 22,
     "icon": "🏹",
     "isGeneralStore": true
   },
@@ -4166,7 +4165,7 @@
     "requirements": {
       "ranged": 5
     },
-    "shopValue": 42,
+    "shopValue": 44,
     "icon": "🏹",
     "isGeneralStore": true
   },
@@ -4201,7 +4200,7 @@
     "requirements": {
       "ranged": 20
     },
-    "shopValue": 151,
+    "shopValue": 147,
     "icon": "🏹",
     "isGeneralStore": true
   },
@@ -4236,7 +4235,7 @@
     "requirements": {
       "ranged": 30
     },
-    "shopValue": 319,
+    "shopValue": 312,
     "icon": "🏹",
     "isGeneralStore": true
   },
@@ -4272,7 +4271,7 @@
     "requirements": {
       "ranged": 1
     },
-    "shopValue": 83,
+    "shopValue": 70,
     "icon": "🏹",
     "isGeneralStore": true
   },
@@ -4308,7 +4307,7 @@
     "requirements": {
       "ranged": 1
     },
-    "shopValue": 340,
+    "shopValue": 719,
     "icon": "🏹",
     "isGeneralStore": true
   },
@@ -4344,7 +4343,7 @@
     "requirements": {
       "ranged": 20
     },
-    "shopValue": 26,
+    "shopValue": 42,
     "icon": "🏹",
     "isGeneralStore": true
   },
@@ -4380,7 +4379,7 @@
     "requirements": {
       "ranged": 30
     },
-    "shopValue": 290,
+    "shopValue": 415,
     "icon": "🏹",
     "isGeneralStore": true
   },
@@ -4416,7 +4415,7 @@
     "requirements": {
       "ranged": 40
     },
-    "shopValue": 969,
+    "shopValue": 822,
     "icon": "🏹",
     "isGeneralStore": false
   },
@@ -4561,7 +4560,7 @@
     "name": "Diamond Bolt Tips",
     "type": "resource",
     "stackable": true,
-    "shopValue": 190,
+    "shopValue": 165,
     "icon": "💎",
     "isGeneralStore": false
   },
@@ -4570,7 +4569,7 @@
     "name": "Dragonstone Bolt Tips",
     "type": "resource",
     "stackable": true,
-    "shopValue": 582,
+    "shopValue": 544,
     "icon": "💎",
     "isGeneralStore": false
   },
@@ -4579,7 +4578,7 @@
     "name": "Onyx Bolt Tips",
     "type": "resource",
     "stackable": true,
-    "shopValue": 8262,
+    "shopValue": 8295,
     "icon": "💎",
     "isGeneralStore": false
   },
@@ -5021,7 +5020,7 @@
     "requirements": {
       "magic": 1
     },
-    "shopValue": 311,
+    "shopValue": 652,
     "icon": "🪄",
     "isGeneralStore": false
   },
@@ -5057,7 +5056,7 @@
     "requirements": {
       "magic": 1
     },
-    "shopValue": 1675,
+    "shopValue": 1800,
     "icon": "🌬️",
     "isGeneralStore": false
   },
@@ -5093,7 +5092,7 @@
     "requirements": {
       "magic": 1
     },
-    "shopValue": 1519,
+    "shopValue": 1647,
     "icon": "💧",
     "isGeneralStore": false
   },
@@ -5129,7 +5128,7 @@
     "requirements": {
       "magic": 1
     },
-    "shopValue": 1267,
+    "shopValue": 1206,
     "icon": "🔥",
     "isGeneralStore": false
   },
@@ -5165,7 +5164,7 @@
     "requirements": {
       "magic": 1
     },
-    "shopValue": 720,
+    "shopValue": 775,
     "icon": "🌍",
     "isGeneralStore": false
   },
@@ -5201,7 +5200,7 @@
     "name": "Fire Rune",
     "type": "rune",
     "stackable": true,
-    "shopValue": 5,
+    "shopValue": 4,
     "icon": "🔥",
     "isGeneralStore": true
   },
@@ -5228,7 +5227,7 @@
     "name": "Chaos Rune",
     "type": "rune",
     "stackable": true,
-    "shopValue": 109,
+    "shopValue": 106,
     "icon": "💜",
     "isGeneralStore": true
   },
@@ -5255,7 +5254,7 @@
     "name": "Law Rune",
     "type": "rune",
     "stackable": true,
-    "shopValue": 121,
+    "shopValue": 122,
     "icon": "⚖️",
     "isGeneralStore": true
   },
@@ -5264,7 +5263,7 @@
     "name": "Cosmic Rune",
     "type": "rune",
     "stackable": true,
-    "shopValue": 98,
+    "shopValue": 99,
     "icon": "⭐",
     "isGeneralStore": true
   },
@@ -5296,7 +5295,7 @@
     "requirements": {
       "defence": 1
     },
-    "shopValue": 22,
+    "shopValue": 21,
     "icon": "🔗",
     "isGeneralStore": true
   },
@@ -5328,7 +5327,7 @@
     "requirements": {
       "defence": 1
     },
-    "shopValue": 62,
+    "shopValue": 3274,
     "icon": "🔗",
     "isGeneralStore": true
   },
@@ -5360,7 +5359,7 @@
     "requirements": {
       "defence": 5
     },
-    "shopValue": 132,
+    "shopValue": 229,
     "icon": "🔗",
     "isGeneralStore": true
   },
@@ -5392,7 +5391,7 @@
     "requirements": {
       "defence": 20
     },
-    "shopValue": 789,
+    "shopValue": 1011,
     "icon": "🔗",
     "isGeneralStore": true
   },
@@ -5424,7 +5423,7 @@
     "requirements": {
       "defence": 40
     },
-    "shopValue": 20659,
+    "shopValue": 20660,
     "icon": "⛑️",
     "isGeneralStore": false
   },
@@ -5456,7 +5455,7 @@
     "requirements": {
       "defence": 40
     },
-    "shopValue": 38723,
+    "shopValue": 38561,
     "icon": "🛡️",
     "isGeneralStore": true
   },
@@ -5488,7 +5487,7 @@
     "requirements": {
       "defence": 40
     },
-    "shopValue": 37867,
+    "shopValue": 37956,
     "icon": "🦵",
     "isGeneralStore": true
   },
@@ -5520,7 +5519,7 @@
     "requirements": {
       "defence": 40
     },
-    "shopValue": 32077,
+    "shopValue": 32151,
     "icon": "🛡️",
     "isGeneralStore": true
   },
@@ -5552,7 +5551,7 @@
     "requirements": {
       "defence": 40
     },
-    "shopValue": 29534,
+    "shopValue": 29563,
     "icon": "🔗",
     "isGeneralStore": false
   },
@@ -5570,7 +5569,7 @@
     "name": "Dragon Bones",
     "type": "resource",
     "stackable": false,
-    "shopValue": 2739,
+    "shopValue": 2757,
     "icon": "🦴",
     "isGeneralStore": false
   },
@@ -5579,7 +5578,7 @@
     "name": "Green Dragonhide",
     "type": "resource",
     "stackable": false,
-    "shopValue": 1738,
+    "shopValue": 1743,
     "icon": "🐉",
     "isGeneralStore": false
   },
@@ -5588,7 +5587,7 @@
     "name": "Blood Rune",
     "type": "rune",
     "stackable": true,
-    "shopValue": 288,
+    "shopValue": 286,
     "icon": "🔴",
     "isGeneralStore": true
   },
@@ -5597,7 +5596,7 @@
     "name": "Soul Rune",
     "type": "rune",
     "stackable": true,
-    "shopValue": 351,
+    "shopValue": 343,
     "icon": "🔵",
     "isGeneralStore": true
   },
@@ -5606,7 +5605,7 @@
     "name": "Limpwurt Root",
     "type": "resource",
     "stackable": true,
-    "shopValue": 338,
+    "shopValue": 337,
     "icon": "🌿",
     "isGeneralStore": false
   },
@@ -5640,7 +5639,7 @@
       "defence": 1
     },
     "questUnlock": "dragon_slayer_i",
-    "shopValue": 101,
+    "shopValue": 99,
     "icon": "🛡️",
     "isGeneralStore": false
   },
@@ -5680,7 +5679,7 @@
       "energyCost": 50,
       "description": "Energy Drain: Lashes at the target — if it connects, the creature is stunned for one attack cycle, skipping its next hit."
     },
-    "shopValue": 1208593,
+    "shopValue": 1217710,
     "icon": "🪱",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -5782,7 +5781,7 @@
       "description": "Puncture: Strikes twice in rapid succession, each hit capable of dealing up to 115% of your normal max hit."
     },
     "questUnlock": "lost_city",
-    "shopValue": 17253,
+    "shopValue": 17364,
     "icon": "🗡️",
     "isGeneralStore": true
   },
@@ -5823,7 +5822,7 @@
       "description": "Sever: A precise strike that completely bypasses the target's defences, rolling against zero defence."
     },
     "questUnlock": "monkey_madness_i",
-    "shopValue": 60452,
+    "shopValue": 59741,
     "icon": "⚔️",
     "isGeneralStore": true
   },
@@ -5859,7 +5858,7 @@
       "attack": 60
     },
     "questUnlock": "lost_city",
-    "shopValue": 59195,
+    "shopValue": 59279,
     "icon": "⚔️",
     "isGeneralStore": false
   },
@@ -5891,7 +5890,7 @@
     "requirements": {
       "defence": 60
     },
-    "shopValue": 59109214,
+    "shopValue": 57698717,
     "icon": "⛑️",
     "isGeneralStore": false
   },
@@ -5924,7 +5923,7 @@
       "defence": 60
     },
     "questUnlock": "dragon_slayer_i",
-    "shopValue": 265604,
+    "shopValue": 268752,
     "icon": "🔗",
     "isGeneralStore": false
   },
@@ -5957,7 +5956,7 @@
       "defence": 60
     },
     "questUnlock": "dragon_slayer_i",
-    "shopValue": 161003,
+    "shopValue": 160994,
     "icon": "🦵",
     "isGeneralStore": false
   },
@@ -5990,7 +5989,7 @@
       "defence": 60
     },
     "questUnlock": "dragon_slayer_i",
-    "shopValue": 161177,
+    "shopValue": 161248,
     "icon": "🦵",
     "isGeneralStore": false
   },
@@ -6023,7 +6022,7 @@
       "defence": 60
     },
     "questUnlock": "dragon_slayer_i",
-    "shopValue": 78475206,
+    "shopValue": 78356004,
     "icon": "🛡️",
     "isGeneralStore": false
   },
@@ -6056,7 +6055,7 @@
       "defence": 45,
       "strength": 45
     },
-    "shopValue": 39129,
+    "shopValue": 39049,
     "icon": "⛑️",
     "isGeneralStore": false
   },
@@ -6652,7 +6651,7 @@
     "requirements": {
       "attack": 40
     },
-    "shopValue": 12000,
+    "shopValue": 12079,
     "icon": "⚔️",
     "isGeneralStore": false
   },
@@ -6687,7 +6686,7 @@
     "requirements": {
       "attack": 40
     },
-    "shopValue": 37952,
+    "shopValue": 37983,
     "icon": "🗡️",
     "isGeneralStore": false
   },
@@ -6719,7 +6718,7 @@
     "requirements": {
       "defence": 40
     },
-    "shopValue": 37998,
+    "shopValue": 37970,
     "icon": "🦵",
     "isGeneralStore": true
   },
@@ -6755,7 +6754,7 @@
     "requirements": {
       "ranged": 61
     },
-    "shopValue": 9219,
+    "shopValue": 9358,
     "icon": "🏹",
     "isGeneralStore": true
   },
@@ -6774,7 +6773,7 @@
     "name": "Godsword Blade",
     "type": "resource",
     "stackable": false,
-    "shopValue": 551443,
+    "shopValue": 550477,
     "icon": "🗡️",
     "isGeneralStore": false
   },
@@ -6814,7 +6813,7 @@
       "energyCost": 50,
       "description": "Warstrike: A crushing blow that deals damage and permanently weakens the target's defences for the rest of the fight by the amount of damage dealt."
     },
-    "shopValue": 18826703,
+    "shopValue": 18983495,
     "icon": "⚔️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -6855,7 +6854,7 @@
       "energyCost": 50,
       "description": "The Judgement: A devastating strike rolled at 125% accuracy and capable of hitting up to 125% of your normal max damage."
     },
-    "shopValue": 8017928,
+    "shopValue": 7917385,
     "icon": "⚔️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -6897,7 +6896,7 @@
       "minHeal": 10,
       "description": "Healing Blade: Strikes with divine power, restoring your HP by half the damage dealt (minimum 10 HP healed)."
     },
-    "shopValue": 29664120,
+    "shopValue": 29411312,
     "icon": "⚔️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -6939,7 +6938,7 @@
       "stunTicks": 33,
       "description": "Ice Cleave: Strikes with chaotic energy, dealing damage and freezing the target for ~20 seconds (33 ticks), preventing it from attacking."
     },
-    "shopValue": 19711605,
+    "shopValue": 19750000,
     "icon": "⚔️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -6972,7 +6971,7 @@
     "requirements": {
       "defence": 65
     },
-    "shopValue": 24418706,
+    "shopValue": 24684517,
     "icon": "🛡️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -7005,7 +7004,7 @@
     "requirements": {
       "defence": 65
     },
-    "shopValue": 16287430,
+    "shopValue": 16368144,
     "icon": "🦵",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -7038,7 +7037,7 @@
     "requirements": {
       "defence": 65
     },
-    "shopValue": 589836,
+    "shopValue": 607049,
     "icon": "👢",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -7048,7 +7047,7 @@
     "name": "Bandos Hilt",
     "type": "resource",
     "stackable": false,
-    "shopValue": 18316559,
+    "shopValue": 18080000,
     "icon": "⚔️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -7082,7 +7081,7 @@
       "ranged": 70,
       "defence": 70
     },
-    "shopValue": 9348438,
+    "shopValue": 9326235,
     "icon": "⛑️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -7116,7 +7115,7 @@
       "ranged": 70,
       "defence": 70
     },
-    "shopValue": 38296250,
+    "shopValue": 37119929,
     "icon": "🛡️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -7150,7 +7149,7 @@
       "ranged": 70,
       "defence": 70
     },
-    "shopValue": 28088003,
+    "shopValue": 28038798,
     "icon": "🦵",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -7160,7 +7159,7 @@
     "name": "Armadyl Hilt",
     "type": "resource",
     "stackable": false,
-    "shopValue": 7800000,
+    "shopValue": 7225000,
     "icon": "⚔️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -7202,7 +7201,7 @@
       "lightningMax": 16,
       "description": "Saradomin's Lightning: A two-hit attack — a melee strike followed by a divine lightning bolt dealing 1–16 magic damage (always hits)."
     },
-    "shopValue": 163403,
+    "shopValue": 171948,
     "icon": "⚔️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -7212,7 +7211,7 @@
     "name": "Saradomin Hilt",
     "type": "resource",
     "stackable": false,
-    "shopValue": 27606000,
+    "shopValue": 27888500,
     "icon": "⚔️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -7254,7 +7253,7 @@
       "energyCost": 40,
       "description": "Pebble Shot: Fires a bolt that never misses, dealing up to 125% of your normal ranged max hit."
     },
-    "shopValue": 32277500,
+    "shopValue": 32692770,
     "icon": "🏹",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -7332,7 +7331,7 @@
       "attack": 75,
       "magic": 75
     },
-    "shopValue": 5544798,
+    "shopValue": 5570000,
     "icon": "🪄",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -7342,7 +7341,7 @@
     "name": "Zamorak Hilt",
     "type": "resource",
     "stackable": false,
-    "shopValue": 18518465,
+    "shopValue": 18521798,
     "icon": "⚔️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -7352,7 +7351,7 @@
     "name": "Dagannoth Bones",
     "type": "resource",
     "stackable": false,
-    "shopValue": 14835,
+    "shopValue": 15102,
     "icon": "🦴",
     "isGeneralStore": false
   },
@@ -7382,7 +7381,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 3242187,
+    "shopValue": 3320783,
     "icon": "💍",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -7413,7 +7412,7 @@
       "magicDamage": 12
     },
     "requirements": {},
-    "shopValue": 771115,
+    "shopValue": 775855,
     "icon": "💍",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -7444,7 +7443,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 2786964,
+    "shopValue": 2717036,
     "icon": "💍",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -7513,7 +7512,7 @@
       "woodcutting": 60
     },
     "toolFor": "woodcutting",
-    "shopValue": 88518,
+    "shopValue": 87729,
     "icon": "⚔️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -7557,7 +7556,7 @@
     "name": "Guam Leaf",
     "type": "resource",
     "stackable": true,
-    "shopValue": 281,
+    "shopValue": 280,
     "icon": "🌿",
     "isGeneralStore": false
   },
@@ -7566,7 +7565,7 @@
     "name": "Tarromin",
     "type": "resource",
     "stackable": true,
-    "shopValue": 253,
+    "shopValue": 229,
     "icon": "🌿",
     "isGeneralStore": false
   },
@@ -7575,7 +7574,7 @@
     "name": "Ranarr Weed",
     "type": "resource",
     "stackable": true,
-    "shopValue": 5487,
+    "shopValue": 5516,
     "icon": "🌿",
     "isGeneralStore": false
   },
@@ -7584,7 +7583,7 @@
     "name": "Harralander",
     "type": "resource",
     "stackable": true,
-    "shopValue": 442,
+    "shopValue": 444,
     "icon": "🌿",
     "isGeneralStore": false
   },
@@ -7593,7 +7592,7 @@
     "name": "Irit Leaf",
     "type": "resource",
     "stackable": true,
-    "shopValue": 1812,
+    "shopValue": 1793,
     "icon": "🌿",
     "isGeneralStore": false
   },
@@ -7602,7 +7601,7 @@
     "name": "Kwuarm",
     "type": "resource",
     "stackable": true,
-    "shopValue": 2573,
+    "shopValue": 2606,
     "icon": "🌿",
     "isGeneralStore": false
   },
@@ -7620,7 +7619,7 @@
     "name": "Cadantine",
     "type": "resource",
     "stackable": true,
-    "shopValue": 2859,
+    "shopValue": 2900,
     "icon": "🌿",
     "isGeneralStore": false
   },
@@ -7629,7 +7628,7 @@
     "name": "Dwarf Weed",
     "type": "resource",
     "stackable": true,
-    "shopValue": 1769,
+    "shopValue": 1796,
     "icon": "🌿",
     "isGeneralStore": false
   },
@@ -7638,7 +7637,7 @@
     "name": "Lantadyme",
     "type": "resource",
     "stackable": true,
-    "shopValue": 1679,
+    "shopValue": 1741,
     "icon": "🌿",
     "isGeneralStore": false
   },
@@ -7647,7 +7646,7 @@
     "name": "Toadflax",
     "type": "resource",
     "stackable": true,
-    "shopValue": 2536,
+    "shopValue": 2502,
     "icon": "🌿",
     "isGeneralStore": false
   },
@@ -7656,7 +7655,7 @@
     "name": "Torstol",
     "type": "resource",
     "stackable": true,
-    "shopValue": 3655,
+    "shopValue": 3557,
     "icon": "🌿",
     "isGeneralStore": false
   },
@@ -7674,7 +7673,7 @@
     "name": "White Berries",
     "type": "resource",
     "stackable": true,
-    "shopValue": 457,
+    "shopValue": 455,
     "icon": "🫐",
     "isGeneralStore": false
   },
@@ -7683,7 +7682,7 @@
     "name": "Goat Horn Dust",
     "type": "resource",
     "stackable": true,
-    "shopValue": 147,
+    "shopValue": 141,
     "icon": "💥",
     "isGeneralStore": false
   },
@@ -7692,7 +7691,7 @@
     "name": "Snape Grass",
     "type": "resource",
     "stackable": true,
-    "shopValue": 585,
+    "shopValue": 578,
     "icon": "🌾",
     "isGeneralStore": false
   },
@@ -7701,7 +7700,7 @@
     "name": "Wine of Zamorak",
     "type": "resource",
     "stackable": true,
-    "shopValue": 1324,
+    "shopValue": 1296,
     "icon": "🍷",
     "isGeneralStore": false
   },
@@ -7719,7 +7718,7 @@
     "name": "Red Spiders' Eggs",
     "type": "resource",
     "stackable": true,
-    "shopValue": 183,
+    "shopValue": 181,
     "icon": "🥚",
     "isGeneralStore": false
   },
@@ -7932,7 +7931,7 @@
       "attack": 60,
       "mining": 60
     },
-    "shopValue": 516547,
+    "shopValue": 506800,
     "icon": "⛏️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -7942,7 +7941,7 @@
     "name": "Draconic Visage",
     "type": "resource",
     "stackable": false,
-    "shopValue": 3528300,
+    "shopValue": 3637203,
     "icon": "🐉",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -7976,7 +7975,7 @@
     "requirements": {
       "defence": 75
     },
-    "shopValue": 3638937,
+    "shopValue": 3630433,
     "icon": "🛡️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -8051,7 +8050,7 @@
     "requirements": {
       "fishing": 20
     },
-    "shopValue": 133,
+    "shopValue": 113,
     "icon": "🎣",
     "isGeneralStore": true
   },
@@ -8125,7 +8124,7 @@
     "requirements": {
       "fishing": 50
     },
-    "shopValue": 81,
+    "shopValue": 109,
     "icon": "🔱",
     "isGeneralStore": true
   },
@@ -8134,7 +8133,7 @@
     "name": "Astral Rune",
     "type": "rune",
     "stackable": true,
-    "shopValue": 92,
+    "shopValue": 91,
     "icon": "✨",
     "isGeneralStore": true
   },
@@ -8143,7 +8142,7 @@
     "name": "Leather",
     "type": "resource",
     "stackable": true,
-    "shopValue": 141,
+    "shopValue": 144,
     "icon": "🧥",
     "isGeneralStore": false
   },
@@ -8170,7 +8169,7 @@
     "name": "Plank",
     "type": "resource",
     "stackable": true,
-    "shopValue": 152,
+    "shopValue": 149,
     "icon": "🪵",
     "isGeneralStore": false
   },
@@ -8179,7 +8178,7 @@
     "name": "Zulrah'S Scales",
     "type": "resource",
     "stackable": true,
-    "shopValue": 185,
+    "shopValue": 186,
     "icon": "🐍",
     "isGeneralStore": false
   },
@@ -8643,7 +8642,7 @@
       "ranged": 75,
       "defence": 75
     },
-    "shopValue": 13900590,
+    "shopValue": 13851941,
     "icon": "🛡️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -8681,7 +8680,7 @@
     "requirements": {
       "ranged": 70
     },
-    "shopValue": 41383581,
+    "shopValue": 40845860,
     "icon": "🏹",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -8722,7 +8721,7 @@
       "energyCost": 50,
       "description": "The Block: Slam your bulwark with unstoppable force — guaranteed 40–64 damage. No accuracy roll. Cannot be blocked."
     },
-    "shopValue": 12664111,
+    "shopValue": 12711338,
     "icon": "🔰",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -8756,7 +8755,7 @@
       "magic": 75,
       "defence": 65
     },
-    "shopValue": 54484388,
+    "shopValue": 53969500,
     "icon": "👑",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -8790,7 +8789,7 @@
       "magic": 75,
       "defence": 65
     },
-    "shopValue": 131643245,
+    "shopValue": 131333348,
     "icon": "👘",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -8824,7 +8823,7 @@
       "magic": 75,
       "defence": 65
     },
-    "shopValue": 93458648,
+    "shopValue": 91575900,
     "icon": "👖",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -8865,7 +8864,7 @@
       "energyCost": 50,
       "description": "Slice and Dice: Four rapid slashes — each hit is half the previous. Exceptional burst damage."
     },
-    "shopValue": 43026711,
+    "shopValue": 42538047,
     "icon": "🦀",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -8902,7 +8901,7 @@
       "attack": 75,
       "strength": 75
     },
-    "shopValue": 97728776,
+    "shopValue": 97659670,
     "icon": "🔨",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -8939,7 +8938,7 @@
     "requirements": {
       "magic": 75
     },
-    "shopValue": 75486854,
+    "shopValue": 76073044,
     "icon": "🪄",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -8977,7 +8976,7 @@
     "requirements": {
       "ranged": 75
     },
-    "shopValue": 1589500000,
+    "shopValue": 1591302448,
     "icon": "🏹",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -9078,7 +9077,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 20502195,
+    "shopValue": 20250000,
     "icon": "📿",
     "isGeneralStore": false,
     "isBossUnique": true,
@@ -9148,7 +9147,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 20045243,
+    "shopValue": 20154378,
     "icon": "📿",
     "isGeneralStore": false,
     "isBossUnique": true,
@@ -9183,7 +9182,7 @@
       "magicDamage": 25
     },
     "requirements": {},
-    "shopValue": 19819540,
+    "shopValue": 20369931,
     "icon": "📿",
     "isGeneralStore": false,
     "isBossUnique": true,
@@ -9218,7 +9217,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 20115265,
+    "shopValue": 19917891,
     "icon": "📿",
     "isGeneralStore": false,
     "isBossUnique": true,
@@ -9253,7 +9252,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 19661864,
+    "shopValue": 20036971,
     "icon": "💍",
     "isGeneralStore": false,
     "isBossUnique": true,
@@ -9267,7 +9266,7 @@
     "name": "Zenyte Shard",
     "type": "resource",
     "stackable": false,
-    "shopValue": 17110015,
+    "shopValue": 17574156,
     "icon": "🔮",
     "isGeneralStore": false,
     "isBossUnique": true,
@@ -9308,7 +9307,7 @@
     "requirements": {
       "ranged": 75
     },
-    "shopValue": 1035834,
+    "shopValue": 1003401,
     "icon": "🏹",
     "isGeneralStore": false,
     "requiredAmmoId": "dragon_javelin",
@@ -9329,7 +9328,7 @@
     "name": "Dragon Javelin",
     "type": "ammo",
     "stackable": true,
-    "shopValue": 765,
+    "shopValue": 769,
     "rangedStrength": 150,
     "icon": "🏹",
     "isGeneralStore": false,
@@ -9371,7 +9370,7 @@
       "ranged": 80,
       "defence": 45
     },
-    "shopValue": 79183779,
+    "shopValue": 78134710,
     "icon": "🧤",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -9407,7 +9406,7 @@
     "requirements": {
       "attack": 80
     },
-    "shopValue": 25246697,
+    "shopValue": 25690946,
     "icon": "🗡️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -9555,7 +9554,7 @@
     "requirements": {
       "defence": 75
     },
-    "shopValue": 10788312,
+    "shopValue": 10417098,
     "icon": "⛑️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -9589,7 +9588,7 @@
     "requirements": {
       "defence": 75
     },
-    "shopValue": 10895405,
+    "shopValue": 10699802,
     "icon": "🦺",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -9623,7 +9622,7 @@
     "requirements": {
       "defence": 75
     },
-    "shopValue": 8788105,
+    "shopValue": 8846061,
     "icon": "🩲",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -9819,7 +9818,7 @@
     "name": "Guam Seed",
     "type": "seed",
     "stackable": true,
-    "shopValue": 3,
+    "shopValue": 6,
     "icon": "🌱",
     "isGeneralStore": false
   },
@@ -9828,7 +9827,7 @@
     "name": "Marrentill Seed",
     "type": "seed",
     "stackable": true,
-    "shopValue": 12,
+    "shopValue": 11,
     "icon": "🌱",
     "isGeneralStore": false
   },
@@ -9837,7 +9836,7 @@
     "name": "Tarromin Seed",
     "type": "seed",
     "stackable": true,
-    "shopValue": 8,
+    "shopValue": 26,
     "icon": "🌱",
     "isGeneralStore": false
   },
@@ -9873,7 +9872,7 @@
     "name": "Ranarr Seed",
     "type": "seed",
     "stackable": true,
-    "shopValue": 26609,
+    "shopValue": 27028,
     "icon": "🌱",
     "isGeneralStore": false
   },
@@ -9882,7 +9881,7 @@
     "name": "Oak Sapling",
     "type": "seed",
     "stackable": true,
-    "shopValue": 163,
+    "shopValue": 192,
     "icon": "🌱",
     "isGeneralStore": false
   },
@@ -9891,7 +9890,7 @@
     "name": "Willow Sapling",
     "type": "seed",
     "stackable": true,
-    "shopValue": 382,
+    "shopValue": 427,
     "icon": "🌱",
     "isGeneralStore": false
   },
@@ -9900,7 +9899,7 @@
     "name": "Maple Sapling",
     "type": "seed",
     "stackable": true,
-    "shopValue": 5033,
+    "shopValue": 4975,
     "icon": "🌱",
     "isGeneralStore": false
   },
@@ -9909,7 +9908,7 @@
     "name": "Yew Sapling",
     "type": "seed",
     "stackable": true,
-    "shopValue": 30199,
+    "shopValue": 30804,
     "icon": "🌱",
     "isGeneralStore": false
   },
@@ -9918,7 +9917,7 @@
     "name": "Magic Sapling",
     "type": "seed",
     "stackable": true,
-    "shopValue": 98056,
+    "shopValue": 98611,
     "icon": "🌱",
     "isGeneralStore": false
   },
@@ -9927,7 +9926,7 @@
     "name": "Apple Sapling",
     "type": "seed",
     "stackable": true,
-    "shopValue": 22,
+    "shopValue": 56,
     "icon": "🌱",
     "isGeneralStore": false
   },
@@ -9936,7 +9935,7 @@
     "name": "Banana Sapling",
     "type": "seed",
     "stackable": true,
-    "shopValue": 153,
+    "shopValue": 157,
     "icon": "🌱",
     "isGeneralStore": false
   },
@@ -9954,7 +9953,7 @@
     "name": "Curry Sapling",
     "type": "seed",
     "stackable": true,
-    "shopValue": 500,
+    "shopValue": 1005,
     "icon": "🌱",
     "isGeneralStore": false
   },
@@ -9963,7 +9962,7 @@
     "name": "Papaya Sapling",
     "type": "seed",
     "stackable": true,
-    "shopValue": 2601,
+    "shopValue": 2479,
     "icon": "🌱",
     "isGeneralStore": false
   },
@@ -9972,7 +9971,7 @@
     "name": "Palm Sapling",
     "type": "seed",
     "stackable": true,
-    "shopValue": 24432,
+    "shopValue": 25548,
     "icon": "🌱",
     "isGeneralStore": false
   },
@@ -9981,7 +9980,7 @@
     "name": "Marrentill",
     "type": "resource",
     "stackable": true,
-    "shopValue": 227,
+    "shopValue": 187,
     "icon": "🌿",
     "isGeneralStore": false
   },
@@ -10008,7 +10007,7 @@
     "name": "Gout Tuber",
     "type": "resource",
     "stackable": true,
-    "shopValue": 390000,
+    "shopValue": 599999,
     "icon": "🥔",
     "isGeneralStore": false
   },
@@ -10035,7 +10034,7 @@
     "name": "Orange",
     "type": "resource",
     "stackable": true,
-    "shopValue": 152,
+    "shopValue": 131,
     "icon": "🍊",
     "isGeneralStore": false
   },
@@ -10044,7 +10043,7 @@
     "name": "Curry Leaf",
     "type": "resource",
     "stackable": true,
-    "shopValue": 55,
+    "shopValue": 54,
     "icon": "🌿",
     "isGeneralStore": false
   },
@@ -10053,7 +10052,7 @@
     "name": "Papaya Fruit",
     "type": "resource",
     "stackable": true,
-    "shopValue": 1886,
+    "shopValue": 1927,
     "icon": "🧡",
     "isGeneralStore": false
   },
@@ -10071,7 +10070,7 @@
     "name": "Oak Plank",
     "type": "resource",
     "stackable": true,
-    "shopValue": 532,
+    "shopValue": 536,
     "icon": "🪵",
     "isGeneralStore": false
   },
@@ -10080,7 +10079,7 @@
     "name": "Teak Plank",
     "type": "resource",
     "stackable": true,
-    "shopValue": 885,
+    "shopValue": 919,
     "icon": "🪵",
     "isGeneralStore": false
   },
@@ -10089,7 +10088,7 @@
     "name": "Mahogany Plank",
     "type": "resource",
     "stackable": true,
-    "shopValue": 2034,
+    "shopValue": 2052,
     "icon": "🪵",
     "isGeneralStore": false
   },
@@ -10359,7 +10358,7 @@
     "requirements": {
       "magic": 70
     },
-    "shopValue": 446196,
+    "shopValue": 393521,
     "icon": "👑",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -10392,7 +10391,7 @@
     "requirements": {
       "magic": 70
     },
-    "shopValue": 2020365,
+    "shopValue": 2053874,
     "icon": "🥼",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -10425,7 +10424,7 @@
     "requirements": {
       "magic": 70
     },
-    "shopValue": 1817972,
+    "shopValue": 1865500,
     "icon": "👖",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -10461,7 +10460,7 @@
     "requirements": {
       "magic": 70
     },
-    "shopValue": 174721,
+    "shopValue": 165183,
     "icon": "🧙",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -10494,7 +10493,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 348061,
+    "shopValue": 332623,
     "icon": "👑",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -10527,7 +10526,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 809882,
+    "shopValue": 832758,
     "icon": "🥼",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -10560,7 +10559,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 800319,
+    "shopValue": 820542,
     "icon": "👖",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -10597,7 +10596,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 2005166,
+    "shopValue": 2009322,
     "icon": "🪓",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -10630,7 +10629,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 160999,
+    "shopValue": 153905,
     "icon": "👑",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -10663,7 +10662,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 247073,
+    "shopValue": 220879,
     "icon": "🥼",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -10696,7 +10695,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 198446,
+    "shopValue": 188998,
     "icon": "👖",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -10733,7 +10732,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 84132,
+    "shopValue": 82262,
     "icon": "⛏️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -10766,7 +10765,7 @@
     "requirements": {
       "ranged": 70
     },
-    "shopValue": 60474,
+    "shopValue": 65098,
     "icon": "👒",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -10799,7 +10798,7 @@
     "requirements": {
       "ranged": 70
     },
-    "shopValue": 1106952,
+    "shopValue": 1062826,
     "icon": "🥼",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -10832,7 +10831,7 @@
     "requirements": {
       "ranged": 70
     },
-    "shopValue": 433741,
+    "shopValue": 446292,
     "icon": "👖",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -10868,7 +10867,7 @@
     "requirements": {
       "ranged": 70
     },
-    "shopValue": 96292,
+    "shopValue": 101903,
     "icon": "🏹",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -10901,7 +10900,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 166370,
+    "shopValue": 163514,
     "icon": "👑",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -10934,7 +10933,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 366879,
+    "shopValue": 360394,
     "icon": "🥼",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -10967,7 +10966,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 283345,
+    "shopValue": 280202,
     "icon": "👖",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -11003,7 +11002,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 97199,
+    "shopValue": 97099,
     "icon": "🔨",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -11036,7 +11035,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 153342,
+    "shopValue": 164788,
     "icon": "👑",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -11069,7 +11068,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 174013,
+    "shopValue": 172038,
     "icon": "🥼",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -11102,7 +11101,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 302227,
+    "shopValue": 300234,
     "icon": "👖",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -11138,7 +11137,7 @@
     "requirements": {
       "attack": 70
     },
-    "shopValue": 99190,
+    "shopValue": 102164,
     "icon": "⚒️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -11322,7 +11321,7 @@
     "name": "Mithril Plateskirt",
     "type": "resource",
     "stackable": true,
-    "shopValue": 1358,
+    "shopValue": 1330,
     "icon": "📦",
     "isGeneralStore": false,
     "defenceBonus": {
@@ -11350,7 +11349,7 @@
     "name": "Adamant Plateskirt",
     "type": "resource",
     "stackable": true,
-    "shopValue": 3746,
+    "shopValue": 3323,
     "icon": "📦",
     "isGeneralStore": false
   },
@@ -11359,7 +11358,7 @@
     "name": "Purple Sweets",
     "type": "resource",
     "stackable": true,
-    "shopValue": 5878,
+    "shopValue": 5592,
     "icon": "🍬",
     "isGeneralStore": false
   },
@@ -11368,7 +11367,7 @@
     "name": "Dragon Mace",
     "type": "resource",
     "stackable": true,
-    "shopValue": 42305,
+    "shopValue": 29476,
     "icon": "🔨",
     "isGeneralStore": false
   },
@@ -11377,7 +11376,7 @@
     "name": "Battlestaff",
     "type": "resource",
     "stackable": true,
-    "shopValue": 7408,
+    "shopValue": 7447,
     "icon": "🪄",
     "isGeneralStore": false
   },
@@ -11386,7 +11385,7 @@
     "name": "Manta Ray",
     "type": "resource",
     "stackable": true,
-    "shopValue": 1521,
+    "shopValue": 1515,
     "icon": "🐟",
     "isGeneralStore": false
   },
@@ -11395,7 +11394,7 @@
     "name": "Dragon Battleaxe",
     "type": "resource",
     "stackable": true,
-    "shopValue": 119528,
+    "shopValue": 119398,
     "icon": "📦",
     "isGeneralStore": false
   },
@@ -11404,7 +11403,7 @@
     "name": "Anglerfish",
     "type": "resource",
     "stackable": true,
-    "shopValue": 2119,
+    "shopValue": 2168,
     "icon": "🐟",
     "isGeneralStore": false
   },
@@ -11413,7 +11412,7 @@
     "name": "Ranger Boots",
     "type": "armour",
     "stackable": false,
-    "shopValue": 28972436,
+    "shopValue": 29411334,
     "icon": "👢",
     "isGeneralStore": false,
     "slot": "boots",
@@ -11447,7 +11446,7 @@
     "name": "Wizard Boots",
     "type": "armour",
     "stackable": false,
-    "shopValue": 118423,
+    "shopValue": 116382,
     "icon": "👢",
     "isGeneralStore": false,
     "slot": "boots",
@@ -11481,7 +11480,7 @@
     "name": "Holy Sandals",
     "type": "armour",
     "stackable": false,
-    "shopValue": 762692,
+    "shopValue": 780028,
     "icon": "👢",
     "isGeneralStore": false,
     "slot": "boots",
@@ -11513,7 +11512,7 @@
     "name": "Spiked Manacles",
     "type": "armour",
     "stackable": false,
-    "shopValue": 459097,
+    "shopValue": 448177,
     "icon": "👢",
     "isGeneralStore": false,
     "slot": "boots",
@@ -11542,7 +11541,7 @@
     "name": "Climbing Boots (G)",
     "type": "armour",
     "stackable": false,
-    "shopValue": 45968,
+    "shopValue": 45936,
     "icon": "👢",
     "isGeneralStore": false,
     "slot": "boots",
@@ -11574,7 +11573,7 @@
     "name": "Saradomin D'Hide Body",
     "type": "armour",
     "stackable": false,
-    "shopValue": 102535,
+    "shopValue": 113556,
     "icon": "👔",
     "isGeneralStore": false,
     "slot": "body",
@@ -11645,7 +11644,7 @@
     "name": "Saradomin D'Hide Boots",
     "type": "armour",
     "stackable": false,
-    "shopValue": 195534,
+    "shopValue": 193224,
     "icon": "👢",
     "isGeneralStore": false,
     "slot": "boots",
@@ -11717,7 +11716,7 @@
     "name": "Saradomin Coif",
     "type": "armour",
     "stackable": false,
-    "shopValue": 63926,
+    "shopValue": 63719,
     "icon": "🪖",
     "isGeneralStore": false,
     "slot": "head",
@@ -11750,7 +11749,7 @@
     "name": "Saradomin Stole",
     "type": "armour",
     "stackable": false,
-    "shopValue": 3330,
+    "shopValue": 26695,
     "icon": "📿",
     "isGeneralStore": false,
     "slot": "neck",
@@ -11782,7 +11781,7 @@
     "name": "Guthix D'Hide Body",
     "type": "armour",
     "stackable": false,
-    "shopValue": 109128,
+    "shopValue": 105562,
     "icon": "👔",
     "isGeneralStore": false,
     "slot": "body",
@@ -11853,7 +11852,7 @@
     "name": "Guthix D'Hide Boots",
     "type": "armour",
     "stackable": false,
-    "shopValue": 179278,
+    "shopValue": 188953,
     "icon": "👢",
     "isGeneralStore": false,
     "slot": "boots",
@@ -11925,7 +11924,7 @@
     "name": "Guthix Coif",
     "type": "armour",
     "stackable": false,
-    "shopValue": 54839,
+    "shopValue": 54325,
     "icon": "🪖",
     "isGeneralStore": false,
     "slot": "head",
@@ -11958,7 +11957,7 @@
     "name": "Guthix Stole",
     "type": "armour",
     "stackable": false,
-    "shopValue": 3895,
+    "shopValue": 3616,
     "icon": "📿",
     "isGeneralStore": false,
     "slot": "neck",
@@ -11990,7 +11989,7 @@
     "name": "Zamorak D'Hide Body",
     "type": "armour",
     "stackable": false,
-    "shopValue": 120006,
+    "shopValue": 117045,
     "icon": "👔",
     "isGeneralStore": false,
     "slot": "body",
@@ -12061,7 +12060,7 @@
     "name": "Zamorak D'Hide Boots",
     "type": "armour",
     "stackable": false,
-    "shopValue": 263630,
+    "shopValue": 268495,
     "icon": "👢",
     "isGeneralStore": false,
     "slot": "boots",
@@ -12133,7 +12132,7 @@
     "name": "Zamorak Coif",
     "type": "armour",
     "stackable": false,
-    "shopValue": 49913,
+    "shopValue": 47105,
     "icon": "🪖",
     "isGeneralStore": false,
     "slot": "head",
@@ -12166,7 +12165,7 @@
     "name": "Zamorak Stole",
     "type": "armour",
     "stackable": false,
-    "shopValue": 1450,
+    "shopValue": 5388,
     "icon": "📿",
     "isGeneralStore": false,
     "slot": "neck",
@@ -12198,7 +12197,7 @@
     "name": "Ancient D'Hide Body",
     "type": "armour",
     "stackable": false,
-    "shopValue": 116231,
+    "shopValue": 112025,
     "icon": "👔",
     "isGeneralStore": false,
     "slot": "body",
@@ -12269,7 +12268,7 @@
     "name": "Ancient D'Hide Boots",
     "type": "armour",
     "stackable": false,
-    "shopValue": 319714,
+    "shopValue": 318469,
     "icon": "👢",
     "isGeneralStore": false,
     "slot": "boots",
@@ -12341,7 +12340,7 @@
     "name": "Ancient Coif",
     "type": "armour",
     "stackable": false,
-    "shopValue": 87476,
+    "shopValue": 69573,
     "icon": "🪖",
     "isGeneralStore": false,
     "slot": "head",
@@ -12374,7 +12373,7 @@
     "name": "Ancient Stole",
     "type": "armour",
     "stackable": false,
-    "shopValue": 3092,
+    "shopValue": 1060,
     "icon": "📿",
     "isGeneralStore": false,
     "slot": "neck",
@@ -12406,7 +12405,7 @@
     "name": "Armadyl D'Hide Body",
     "type": "armour",
     "stackable": false,
-    "shopValue": 100760,
+    "shopValue": 109306,
     "icon": "👔",
     "isGeneralStore": false,
     "slot": "body",
@@ -12477,7 +12476,7 @@
     "name": "Armadyl D'Hide Boots",
     "type": "armour",
     "stackable": false,
-    "shopValue": 448271,
+    "shopValue": 436985,
     "icon": "👢",
     "isGeneralStore": false,
     "slot": "boots",
@@ -12549,7 +12548,7 @@
     "name": "Armadyl Coif",
     "type": "armour",
     "stackable": false,
-    "shopValue": 50605,
+    "shopValue": 52723,
     "icon": "🪖",
     "isGeneralStore": false,
     "slot": "head",
@@ -12582,7 +12581,7 @@
     "name": "Armadyl Stole",
     "type": "armour",
     "stackable": false,
-    "shopValue": 2891,
+    "shopValue": 2682,
     "icon": "📿",
     "isGeneralStore": false,
     "slot": "neck",
@@ -12614,7 +12613,7 @@
     "name": "Bandos D'Hide Body",
     "type": "armour",
     "stackable": false,
-    "shopValue": 88286,
+    "shopValue": 98196,
     "icon": "👔",
     "isGeneralStore": false,
     "slot": "body",
@@ -12685,7 +12684,7 @@
     "name": "Bandos D'Hide Boots",
     "type": "armour",
     "stackable": false,
-    "shopValue": 185985,
+    "shopValue": 192614,
     "icon": "👢",
     "isGeneralStore": false,
     "slot": "boots",
@@ -12757,7 +12756,7 @@
     "name": "Bandos Coif",
     "type": "armour",
     "stackable": false,
-    "shopValue": 44494,
+    "shopValue": 30763,
     "icon": "🪖",
     "isGeneralStore": false,
     "slot": "head",
@@ -12790,7 +12789,7 @@
     "name": "Bandos Stole",
     "type": "armour",
     "stackable": false,
-    "shopValue": 5760,
+    "shopValue": 4058,
     "icon": "📿",
     "isGeneralStore": false,
     "slot": "neck",
@@ -12822,7 +12821,7 @@
     "name": "Black D'Hide Body",
     "type": "armour",
     "stackable": false,
-    "shopValue": 7350,
+    "shopValue": 7367,
     "icon": "👔",
     "isGeneralStore": false,
     "slot": "body",
@@ -12855,7 +12854,7 @@
     "name": "Black D'Hide Chaps",
     "type": "armour",
     "stackable": false,
-    "shopValue": 3547,
+    "shopValue": 3037,
     "icon": "🩳",
     "isGeneralStore": false,
     "slot": "legs",
@@ -12887,7 +12886,7 @@
     "name": "Robin Hood Hat",
     "type": "armour",
     "stackable": false,
-    "shopValue": 974262,
+    "shopValue": 974001,
     "icon": "🪖",
     "isGeneralStore": false,
     "slot": "head",
@@ -12921,7 +12920,7 @@
     "name": "Amulet of Glory (T)",
     "type": "armour",
     "stackable": false,
-    "shopValue": 47221,
+    "shopValue": 58387,
     "icon": "📿",
     "isGeneralStore": false,
     "slot": "neck",
@@ -12985,7 +12984,7 @@
     "name": "3rd Age Platebody",
     "type": "armour",
     "stackable": false,
-    "shopValue": 185793500,
+    "shopValue": 184729160,
     "icon": "👔",
     "isGeneralStore": false,
     "slot": "body",
@@ -13019,7 +13018,7 @@
     "name": "3rd Age Platelegs",
     "type": "armour",
     "stackable": false,
-    "shopValue": 122000000,
+    "shopValue": 125475403,
     "icon": "🩳",
     "isGeneralStore": false,
     "slot": "legs",
@@ -13053,7 +13052,7 @@
     "name": "3rd Age Plateskirt",
     "type": "armour",
     "stackable": false,
-    "shopValue": 37044444,
+    "shopValue": 36556603,
     "icon": "🩳",
     "isGeneralStore": false,
     "slot": "legs",
@@ -13087,7 +13086,7 @@
     "name": "3rd Age Kiteshield",
     "type": "armour",
     "stackable": false,
-    "shopValue": 85600000,
+    "shopValue": 87669431,
     "icon": "🛡️",
     "isGeneralStore": false,
     "slot": "shield",
@@ -13156,7 +13155,7 @@
     "name": "3rd Age Range Top",
     "type": "armour",
     "stackable": false,
-    "shopValue": 35661610,
+    "shopValue": 35525999,
     "icon": "👔",
     "isGeneralStore": false,
     "slot": "body",
@@ -13226,7 +13225,7 @@
     "name": "3rd Age Vambraces",
     "type": "armour",
     "stackable": false,
-    "shopValue": 16164499,
+    "shopValue": 16158327,
     "icon": "🤲",
     "isGeneralStore": false,
     "slot": "gloves",
@@ -13261,7 +13260,7 @@
     "name": "3rd Age Mage Hat",
     "type": "armour",
     "stackable": false,
-    "shopValue": 17463059,
+    "shopValue": 17364437,
     "icon": "🪖",
     "isGeneralStore": false,
     "slot": "head",
@@ -13296,7 +13295,7 @@
     "name": "3rd Age Robe Top",
     "type": "armour",
     "stackable": false,
-    "shopValue": 168337959,
+    "shopValue": 166769952,
     "icon": "👔",
     "isGeneralStore": false,
     "slot": "body",
@@ -13366,7 +13365,7 @@
     "name": "3rd Age Amulet",
     "type": "armour",
     "stackable": false,
-    "shopValue": 52000000,
+    "shopValue": 52177779,
     "icon": "📿",
     "isGeneralStore": false,
     "slot": "neck",
@@ -13401,7 +13400,7 @@
     "name": "3rd Age Longsword",
     "type": "armour",
     "stackable": false,
-    "shopValue": 1475445001,
+    "shopValue": 1485500000,
     "icon": "⚔️",
     "isGeneralStore": false,
     "slot": "weapon",
@@ -13433,7 +13432,7 @@
     "name": "3rd Age Bow",
     "type": "armour",
     "stackable": false,
-    "shopValue": 1437834710,
+    "shopValue": 1433499999,
     "icon": "⚔️",
     "isGeneralStore": false,
     "slot": "weapon",
@@ -13465,7 +13464,7 @@
     "name": "3rd Age Wand",
     "type": "armour",
     "stackable": false,
-    "shopValue": 412851460,
+    "shopValue": 409743002,
     "icon": "⚔️",
     "isGeneralStore": false,
     "slot": "weapon",
@@ -13499,7 +13498,7 @@
     "name": "3rd Age Cloak",
     "type": "armour",
     "stackable": false,
-    "shopValue": 378439661,
+    "shopValue": 378439662,
     "icon": "🧥",
     "isGeneralStore": false,
     "slot": "cape",
@@ -13531,7 +13530,7 @@
     "name": "Saradomin D'Hide Shield",
     "type": "armour",
     "stackable": false,
-    "shopValue": 234200,
+    "shopValue": 324927,
     "icon": "🛡️",
     "isGeneralStore": false,
     "slot": "shield",
@@ -13567,7 +13566,7 @@
     "name": "Guthix D'Hide Shield",
     "type": "armour",
     "stackable": false,
-    "shopValue": 240459,
+    "shopValue": 258975,
     "icon": "🛡️",
     "isGeneralStore": false,
     "slot": "shield",
@@ -13603,7 +13602,7 @@
     "name": "Zamorak D'Hide Shield",
     "type": "armour",
     "stackable": false,
-    "shopValue": 391959,
+    "shopValue": 406609,
     "icon": "🛡️",
     "isGeneralStore": false,
     "slot": "shield",
@@ -13639,7 +13638,7 @@
     "name": "Ancient D'Hide Shield",
     "type": "armour",
     "stackable": false,
-    "shopValue": 309296,
+    "shopValue": 315254,
     "icon": "🛡️",
     "isGeneralStore": false,
     "slot": "shield",
@@ -13675,7 +13674,7 @@
     "name": "Armadyl D'Hide Shield",
     "type": "armour",
     "stackable": false,
-    "shopValue": 439842,
+    "shopValue": 339999,
     "icon": "🛡️",
     "isGeneralStore": false,
     "slot": "shield",
@@ -13711,7 +13710,7 @@
     "name": "Bandos D'Hide Shield",
     "type": "armour",
     "stackable": false,
-    "shopValue": 239085,
+    "shopValue": 263422,
     "icon": "🛡️",
     "isGeneralStore": false,
     "slot": "shield",
@@ -13747,7 +13746,7 @@
     "name": "Holy Blessing",
     "type": "armour",
     "stackable": false,
-    "shopValue": 16185,
+    "shopValue": 13134,
     "icon": "🏹",
     "isGeneralStore": false,
     "slot": "ammo",
@@ -13807,7 +13806,7 @@
     "name": "Unholy Blessing",
     "type": "armour",
     "stackable": false,
-    "shopValue": 14740,
+    "shopValue": 11793,
     "icon": "🏹",
     "isGeneralStore": false,
     "slot": "ammo",
@@ -13867,7 +13866,7 @@
     "name": "War Blessing",
     "type": "armour",
     "stackable": false,
-    "shopValue": 8340,
+    "shopValue": 8210,
     "icon": "🏹",
     "isGeneralStore": false,
     "slot": "ammo",
@@ -13897,7 +13896,7 @@
     "name": "Ancient Blessing",
     "type": "armour",
     "stackable": false,
-    "shopValue": 4583,
+    "shopValue": 11055,
     "icon": "🏹",
     "isGeneralStore": false,
     "slot": "ammo",
@@ -13927,7 +13926,7 @@
     "name": "Rangers' Tunic",
     "type": "armour",
     "stackable": false,
-    "shopValue": 2715870,
+    "shopValue": 2650393,
     "icon": "👔",
     "isGeneralStore": false,
     "slot": "body",
@@ -13961,7 +13960,7 @@
     "name": "Holy Wraps",
     "type": "armour",
     "stackable": false,
-    "shopValue": 427716,
+    "shopValue": 382430,
     "icon": "🤲",
     "isGeneralStore": false,
     "slot": "gloves",
@@ -14090,7 +14089,7 @@
     "name": "3rd Age Druidic Cloak",
     "type": "armour",
     "stackable": false,
-    "shopValue": 1122499998,
+    "shopValue": 1156184420,
     "icon": "🧥",
     "isGeneralStore": false,
     "slot": "cape",
@@ -14122,7 +14121,7 @@
     "name": "3rd Age Druidic Staff",
     "type": "armour",
     "stackable": false,
-    "shopValue": 583611106,
+    "shopValue": 585478187,
     "icon": "⚔️",
     "isGeneralStore": false,
     "slot": "weapon",
@@ -14223,7 +14222,7 @@
     "name": "Gilded Pickaxe",
     "type": "armour",
     "stackable": false,
-    "shopValue": 4111740,
+    "shopValue": 4134793,
     "icon": "⚔️",
     "isGeneralStore": false,
     "slot": "weapon",
@@ -14256,7 +14255,7 @@
     "name": "Gilded Axe",
     "type": "armour",
     "stackable": false,
-    "shopValue": 5067894,
+    "shopValue": 5016228,
     "icon": "⚔️",
     "isGeneralStore": false,
     "slot": "weapon",
@@ -14289,7 +14288,7 @@
     "name": "Gilded Spade",
     "type": "armour",
     "stackable": false,
-    "shopValue": 3026299,
+    "shopValue": 2933351,
     "icon": "⚔️",
     "isGeneralStore": false,
     "slot": "weapon",
@@ -14320,7 +14319,7 @@
     "name": "Fancy Tiara",
     "type": "armour",
     "stackable": false,
-    "shopValue": 7342,
+    "shopValue": 10209,
     "icon": "🪖",
     "isGeneralStore": false,
     "slot": "head",
@@ -14349,7 +14348,7 @@
     "name": "Saradomin Mitre",
     "type": "armour",
     "stackable": false,
-    "shopValue": 12200,
+    "shopValue": 12254,
     "icon": "🪖",
     "isGeneralStore": false,
     "slot": "head",
@@ -14382,7 +14381,7 @@
     "name": "Guthix Mitre",
     "type": "armour",
     "stackable": false,
-    "shopValue": 14736,
+    "shopValue": 19687,
     "icon": "🪖",
     "isGeneralStore": false,
     "slot": "head",
@@ -14415,7 +14414,7 @@
     "name": "Zamorak Mitre",
     "type": "armour",
     "stackable": false,
-    "shopValue": 22580,
+    "shopValue": 11797,
     "icon": "🪖",
     "isGeneralStore": false,
     "slot": "head",
@@ -14448,7 +14447,7 @@
     "name": "Ancient Mitre",
     "type": "armour",
     "stackable": false,
-    "shopValue": 10213,
+    "shopValue": 9701,
     "icon": "🪖",
     "isGeneralStore": false,
     "slot": "head",
@@ -14481,7 +14480,7 @@
     "name": "Armadyl Mitre",
     "type": "armour",
     "stackable": false,
-    "shopValue": 17357,
+    "shopValue": 11041,
     "icon": "🪖",
     "isGeneralStore": false,
     "slot": "head",
@@ -14514,7 +14513,7 @@
     "name": "Bandos Mitre",
     "type": "armour",
     "stackable": false,
-    "shopValue": 8711,
+    "shopValue": 8901,
     "icon": "🪖",
     "isGeneralStore": false,
     "slot": "head",
@@ -14622,7 +14621,7 @@
     "name": "Wrath Rune",
     "type": "resource",
     "stackable": true,
-    "shopValue": 303,
+    "shopValue": 299,
     "icon": "📦",
     "isGeneralStore": false
   },
@@ -14631,7 +14630,7 @@
     "name": "Kraken Tentacle",
     "type": "resource",
     "stackable": false,
-    "shopValue": 256182,
+    "shopValue": 251965,
     "icon": "🦑",
     "isGeneralStore": false,
     "combineWith": "abyssal_whip",
@@ -14706,7 +14705,7 @@
       "magicDamage": 10
     },
     "requirements": {},
-    "shopValue": 424574,
+    "shopValue": 421322,
     "icon": "📿",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -15035,7 +15034,7 @@
     "requirements": {
       "attack": 60
     },
-    "shopValue": 15744708,
+    "shopValue": 15701239,
     "icon": "🔨",
     "isGeneralStore": false,
     "isBossUnique": true,
@@ -15057,7 +15056,7 @@
     "name": "Rune Essence",
     "type": "resource",
     "stackable": true,
-    "shopValue": 11,
+    "shopValue": 12,
     "icon": "🪨",
     "isGeneralStore": true
   },
@@ -15089,7 +15088,7 @@
     "requirements": {
       "defence": 60
     },
-    "shopValue": 248818,
+    "shopValue": 248567,
     "icon": "👢",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -15123,7 +15122,7 @@
       "magic": 40,
       "defence": 20
     },
-    "shopValue": 9558,
+    "shopValue": 10438,
     "icon": "🎩",
     "isGeneralStore": false
   },
@@ -15156,7 +15155,7 @@
       "magic": 40,
       "defence": 20
     },
-    "shopValue": 71423,
+    "shopValue": 72364,
     "icon": "🥷",
     "isGeneralStore": false
   },
@@ -15189,7 +15188,7 @@
       "magic": 40,
       "defence": 20
     },
-    "shopValue": 47544,
+    "shopValue": 49582,
     "icon": "👖",
     "isGeneralStore": false
   },
@@ -15222,7 +15221,7 @@
       "magic": 40,
       "defence": 20
     },
-    "shopValue": 5806,
+    "shopValue": 5416,
     "icon": "🧤",
     "isGeneralStore": false
   },
@@ -15255,7 +15254,7 @@
       "magic": 40,
       "defence": 20
     },
-    "shopValue": 5728,
+    "shopValue": 5516,
     "icon": "👢",
     "isGeneralStore": false
   },
@@ -15296,7 +15295,7 @@
       "energyCost": 100,
       "description": "Quake: Smashes the target three times in a single attack, each strike rolling its own damage."
     },
-    "shopValue": 186983,
+    "shopValue": 184096,
     "icon": "🔨",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -15346,7 +15345,7 @@
       "energyCost": 100,
       "description": "Descent of Darkness: Fires two arrows simultaneously, each hitting up to 150% of your normal max hit."
     },
-    "shopValue": 872591,
+    "shopValue": 902307,
     "icon": "🏹",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -15356,7 +15355,7 @@
     "name": "Primordial Crystal",
     "type": "resource",
     "stackable": false,
-    "shopValue": 21101401,
+    "shopValue": 21210500,
     "icon": "💎",
     "isGeneralStore": false,
     "isBossUnique": true,
@@ -15369,7 +15368,7 @@
     "name": "Pegasian Crystal",
     "type": "resource",
     "stackable": false,
-    "shopValue": 111229,
+    "shopValue": 100930,
     "icon": "💎",
     "isGeneralStore": false,
     "isBossUnique": true,
@@ -15382,7 +15381,7 @@
     "name": "Eternal Crystal",
     "type": "resource",
     "stackable": false,
-    "shopValue": 4118606,
+    "shopValue": 4119094,
     "icon": "💎",
     "isGeneralStore": false,
     "isBossUnique": true,
@@ -15419,7 +15418,7 @@
       "defence": 75,
       "strength": 75
     },
-    "shopValue": 21937783,
+    "shopValue": 21605120,
     "icon": "👢",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -15453,7 +15452,7 @@
       "defence": 75,
       "ranged": 75
     },
-    "shopValue": 29747792,
+    "shopValue": 29101037,
     "icon": "👢",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -15487,7 +15486,7 @@
       "defence": 75,
       "magic": 75
     },
-    "shopValue": 4852740,
+    "shopValue": 4853112,
     "icon": "👢",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -15497,7 +15496,7 @@
     "name": "Hydra Leather",
     "type": "resource",
     "stackable": false,
-    "shopValue": 13469036,
+    "shopValue": 13343175,
     "icon": "🐉",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -15547,7 +15546,7 @@
     "requirements": {
       "attack": 78
     },
-    "shopValue": 63300047,
+    "shopValue": 63525273,
     "icon": "🗡️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -15557,7 +15556,7 @@
     "name": "Hydra Bones",
     "type": "resource",
     "stackable": false,
-    "shopValue": 7569,
+    "shopValue": 7672,
     "icon": "🦴",
     "isGeneralStore": false
   },
