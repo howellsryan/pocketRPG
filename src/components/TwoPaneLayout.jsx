@@ -8,15 +8,17 @@
  *           message when nothing is selected so the pane isn't blank.
  *   detailWidthClass: optional override for the detail pane width.
  */
-export default function TwoPaneLayout({ list, detail, detailWidthClass = 'md:w-[360px] lg:w-[420px]' }) {
+export default function TwoPaneLayout({ list, detail, detailWidthClass = 'md:w-[360px] lg:w-[420px]', showDetailPane = true }) {
   return (
     <div class="flex-1 min-h-0 md:flex md:gap-4 md:overflow-hidden">
       <div class="h-full md:flex-1 md:min-w-0 md:overflow-hidden md:flex md:flex-col">
         {list}
       </div>
-      <aside class={`hidden md:flex md:flex-col ${detailWidthClass} md:flex-shrink-0 md:overflow-y-auto md:border-l md:border-[var(--color-void-border)] md:pl-4`}>
-        {detail}
-      </aside>
+      {showDetailPane && (
+        <aside class={`hidden md:flex md:flex-col ${detailWidthClass} md:flex-shrink-0 md:overflow-y-auto md:border-l md:border-[var(--color-void-border)] md:pl-4`}>
+          {detail}
+        </aside>
+      )}
     </div>
   )
 }
