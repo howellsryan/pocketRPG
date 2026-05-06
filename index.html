@@ -43442,6 +43442,19 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
 
 
 
+const PRAYER_BONUS_ICONS = {
+    attack: '⚔️',
+    strength: '💪',
+    defence: '🛡️',
+    ranged: '🏹',
+    magic: '🔮'
+};
+function getPrayerPrimaryIcon(description = '') {
+    const lower = description.toLowerCase();
+    const order = ['ranged', 'magic', 'strength', 'attack', 'defence'];
+    const primaryStat = order.find(stat => lower.includes(stat));
+    return primaryStat ? PRAYER_BONUS_ICONS[primaryStat] : '🙏';
+}
 const COMBAT_CATEGORIES = [
     {
         key: 'training',
@@ -44986,11 +44999,15 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                                     : 'bg-[#111] border-[#1a1a1a] opacity-40'}` },
                             h("div", { class: "flex flex-col items-start justify-between h-full" },
                                 h("div", { class: "text-left flex-1" },
-                                    h("div", { class: "text-sm font-semibold text-[var(--color-parchment)]" },
+                                    h("div", { class: "text-sm font-semibold text-[var(--color-parchment)] md:hidden" },
+                                        getPrayerPrimaryIcon(prayer.description),
+                                        " ",
+                                        prayer.name),
+                                    h("div", { class: "text-sm font-semibold text-[var(--color-parchment)] hidden md:block" },
                                         prayer.icon,
                                         " ",
                                         prayer.name),
-                                    h("div", { class: "text-[9px] text-[var(--color-parchment)] opacity-60 line-clamp-2" }, prayer.description),
+                                    h("div", { class: "text-[9px] text-[var(--color-parchment)] opacity-60 line-clamp-2 mt-0.5" }, prayer.description),
                                     h("div", { class: "text-[8px] text-[var(--color-gold-dim)] mt-0.5" },
                                         "Lv ",
                                         prayer.level)),
