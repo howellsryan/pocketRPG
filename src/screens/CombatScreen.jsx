@@ -1754,24 +1754,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         />
       </div>
 
-      </div>{/* /LEFT pane */}
-
-      {/* INVENTORY pane (DOM 2nd, visually MIDDLE at md+): full inventory grid.
-          Click an equippable item to equip it instantly (no confirm). Clicks on
-          non-equippable items are ignored to keep mid-fight UX safe. Hidden on
-          mobile so the existing modal-driven flow is preserved there. */}
-      <div class="hidden md:flex md:flex-col md:col-start-2 md:row-start-1 md:overflow-y-auto md:min-h-0">
-
-      <div class="flex items-center justify-between mb-2 px-1">
-        <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60">Inventory</div>
-        <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40">
-          {freeSlots(inventory)}/28 free
-        </span>
-      </div>
-
-      {/* Active potion boosts strip */}
+      {/* Active potion boosts — desktop only, shown under the paperdoll so
+          a player can see active boosts at a glance without leaving the
+          gear column. */}
       {Object.keys(combat?.activePotions || {}).length > 0 && (
-        <div class="mb-2 bg-[#111] rounded-lg px-2 py-1.5 text-[9px] text-[var(--color-gold)]">
+        <div class="hidden md:block mt-2 bg-[#111] rounded-lg px-2 py-1.5 text-[9px] text-[var(--color-gold)]">
           {Object.keys(combat.activePotions).map(potionId => {
             const potion = itemsData[potionId]
             if (!potion) return null
@@ -1792,6 +1779,21 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           })}
         </div>
       )}
+
+      </div>{/* /LEFT pane */}
+
+      {/* INVENTORY pane (DOM 2nd, visually MIDDLE at md+): full inventory grid.
+          Click an equippable item to equip it instantly (no confirm). Clicks on
+          non-equippable items are ignored to keep mid-fight UX safe. Hidden on
+          mobile so the existing modal-driven flow is preserved there. */}
+      <div class="hidden md:flex md:flex-col md:col-start-2 md:row-start-1 md:overflow-y-auto md:min-h-0">
+
+      <div class="flex items-center justify-between mb-2 px-1">
+        <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60">Inventory</div>
+        <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40">
+          {freeSlots(inventory)}/28 free
+        </span>
+      </div>
 
       <div class="grid grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 justify-items-center">
         {inventory.map((slot, i) => {
@@ -1856,17 +1858,33 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 {combatPrayers.map(prayer => {
                   const canUse = prayerLevel >= prayer.level
                   const isActive = combat?.activeCombatPrayer === prayer.id
-                  // For low-level stat prayers, swap the prayer-specific emoji
-                  // for a "+X% <combat-style icon>" so the boost magnitude is
-                  // legible at a glance. High-level multi-stat prayers (Piety,
-                  // Chivalry, Rigour, Augury, …) keep their bespoke icon.
-                  const showBoostFmt = prayer.level < 45 && prayer.bonusType === 'stat'
+                  // Reformat single-stat low-level prayers and the two
+                  // pure-style high-level prayers (Rigour ranged, Augury
+                  // magic) as "+X% <style icon>" so the magnitude is
+                  // legible at a glance. Melee multi-stat prayers
+                  // (Chivalry, Piety) keep their bespoke icon since they
+                  // boost both attack and strength.
+                  let showBoostFmt = false
+                  let boostPct = null
                   let styleIcon = prayer.icon
-                  if (showBoostFmt) {
-                    if (prayer.stat === 'attack' || prayer.stat === 'strength') styleIcon = '⚔️'
+                  if (prayer.bonusType === 'stat' && prayer.level < 45) {
+                    showBoostFmt = true
+                    boostPct = prayer.boostPercent
+                    if (prayer.stat === 'attack') styleIcon = '⚔️'
+                    else if (prayer.stat === 'strength') styleIcon = '💪'
                     else if (prayer.stat === 'ranged') styleIcon = '🏹'
                     else if (prayer.stat === 'magic') styleIcon = '🔮'
                     else if (prayer.stat === 'defence') styleIcon = '🛡️'
+                  } else if (prayer.bonusType === 'multi_stat' && prayer.stats) {
+                    if (prayer.stats.magic != null) {
+                      showBoostFmt = true
+                      boostPct = prayer.stats.magic
+                      styleIcon = '🔮'
+                    } else if (prayer.stats.ranged != null || prayer.stats.ranged_strength != null) {
+                      showBoostFmt = true
+                      boostPct = Math.max(prayer.stats.ranged ?? 0, prayer.stats.ranged_strength ?? 0)
+                      styleIcon = '🏹'
+                    }
                   }
                   return (
                     <button
@@ -1884,7 +1902,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     >
                       {showBoostFmt ? (
                         <div class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] leading-none whitespace-nowrap">
-                          +{prayer.boostPercent}% {styleIcon}
+                          +{boostPct}% {styleIcon}
                         </div>
                       ) : (
                         <div class="text-[12px] leading-none">{prayer.icon}</div>
@@ -2038,9 +2056,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   {specBtn}{castBtn}{prayerBtn}
                 </div>
               </div>
-              {/* Desktop: 2x2 grid (Gear + Prayer moved to side panes) */}
+              {/* Desktop: only Spec + Cast remain (Gear/Prayer moved to side
+                  panes; Eat/Potion are now click-an-inventory-item flows). */}
               <div class="hidden md:grid md:grid-cols-2 gap-2">
-                {eatBtn}{potionBtn}{specBtn}{castBtn}
+                {specBtn}{castBtn}
               </div>
             </>
           )
