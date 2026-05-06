@@ -9,6 +9,7 @@ import HPBar from '../components/HPBar.jsx'
 import IdleCombatSetupModal from '../components/IdleCombatSetupModal.jsx'
 import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
 import ItemSlot from '../components/ItemSlot.jsx'
+import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applySpecialAttack } from '../engine/combat.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
@@ -1741,20 +1742,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </div>
       )}
 
-      {/* Inline gear paperdoll — desktop only. Click an equipped slot to
-          unequip directly into inventory (only works if there's space).
-          Mobile keeps the ⚙️ Gear button + modal flow. */}
-      <div class="hidden md:block mt-2">
-        <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1">Gear</div>
-        <EquipmentPaperdoll
-          equipment={equipment}
-          itemsData={itemsData}
-          onSelect={(slotName) => handleUnequipSlot(slotName)}
-          size="md"
-        />
-      </div>
-
-      {/* Active potion boosts — desktop only, shown under the paperdoll so
+      {/* Active potion boosts — desktop only, shown above the paperdoll so
           a player can see active boosts at a glance without leaving the
           gear column. */}
       {Object.keys(combat?.activePotions || {}).length > 0 && (
@@ -1779,6 +1767,19 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           })}
         </div>
       )}
+
+      {/* Inline gear paperdoll — desktop only. Click an equipped slot to
+          unequip directly into inventory (only works if there's space).
+          Mobile keeps the ⚙️ Gear button + modal flow. */}
+      <div class="hidden md:block mt-2">
+        <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1">Gear</div>
+        <EquipmentPaperdoll
+          equipment={equipment}
+          itemsData={itemsData}
+          onSelect={(slotName) => handleUnequipSlot(slotName)}
+          size="md"
+        />
+      </div>
 
       </div>{/* /LEFT pane */}
 
@@ -1858,34 +1859,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 {combatPrayers.map(prayer => {
                   const canUse = prayerLevel >= prayer.level
                   const isActive = combat?.activeCombatPrayer === prayer.id
-                  // Reformat single-stat low-level prayers and the two
-                  // pure-style high-level prayers (Rigour ranged, Augury
-                  // magic) as "+X% <style icon>" so the magnitude is
-                  // legible at a glance. Melee multi-stat prayers
-                  // (Chivalry, Piety) keep their bespoke icon since they
-                  // boost both attack and strength.
-                  let showBoostFmt = false
-                  let boostPct = null
-                  let styleIcon = prayer.icon
-                  if (prayer.bonusType === 'stat' && prayer.level < 45) {
-                    showBoostFmt = true
-                    boostPct = prayer.boostPercent
-                    if (prayer.stat === 'attack') styleIcon = '⚔️'
-                    else if (prayer.stat === 'strength') styleIcon = '💪'
-                    else if (prayer.stat === 'ranged') styleIcon = '🏹'
-                    else if (prayer.stat === 'magic') styleIcon = '🔮'
-                    else if (prayer.stat === 'defence') styleIcon = '🛡️'
-                  } else if (prayer.bonusType === 'multi_stat' && prayer.stats) {
-                    if (prayer.stats.magic != null) {
-                      showBoostFmt = true
-                      boostPct = prayer.stats.magic
-                      styleIcon = '🔮'
-                    } else if (prayer.stats.ranged != null || prayer.stats.ranged_strength != null) {
-                      showBoostFmt = true
-                      boostPct = Math.max(prayer.stats.ranged ?? 0, prayer.stats.ranged_strength ?? 0)
-                      styleIcon = '🏹'
-                    }
-                  }
+                  const styled = getPrayerStyleIcon(prayer)
                   return (
                     <button
                       key={prayer.id}
@@ -1900,9 +1874,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                             : 'bg-[#111] border-[#1a1a1a] opacity-30 cursor-default'
                       }`}
                     >
-                      {showBoostFmt ? (
+                      {styled ? (
                         <div class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] leading-none whitespace-nowrap">
-                          +{boostPct}% {styleIcon}
+                          +{styled.boostPercent}% {styled.icon}
                         </div>
                       ) : (
                         <div class="text-[12px] leading-none">{prayer.icon}</div>

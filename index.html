@@ -31668,6 +31668,61 @@ function computeIdleElapsedMs({ now, perfNow, hiddenAt, hiddenAtPerf, cloudServe
     return Math.min(Math.max(0, Math.floor(elapsed)), maxOfflineMs);
 }
 
+// ── utils/prayerIcons.js ──
+/**
+ * Combat-style icon + boost amount for a prayer.
+ *
+ * Used by the combat screen's prayer panel and the idle combat setup
+ * modal so both surfaces share one icon vocabulary:
+ *   attack   → ⚔️
+ *   strength → 💪
+ *   defence  → 🛡️
+ *   ranged   → 🏹
+ *   magic    → 🔮
+ *
+ * Returns `{ icon, boostPercent }` when the prayer can be reformatted as
+ * "+X% <icon>", or `null` to fall back to the prayer's bespoke emoji.
+ *
+ * Single-stat (`bonusType: 'stat'`) prayers below level 45 always
+ * reformat. Multi-stat prayers reformat when they have a clear primary
+ * style:
+ *   - magic key            → magic
+ *   - ranged or ranged_strength → ranged (max of the two values)
+ *   - strength             → strength (the headline melee-damage stat)
+ */
+function getPrayerStyleIcon(prayer) {
+    if (!prayer)
+        return null;
+    const STYLE_ICON = {
+        attack: '⚔️', // ⚔️
+        strength: '💪', // 💪
+        defence: '🛡️', // 🛡️
+        ranged: '🏹', // 🏹
+        magic: '🔮' // 🔮
+    };
+    if (prayer.bonusType === 'stat' && prayer.level < 45) {
+        const icon = STYLE_ICON[prayer.stat];
+        if (!icon)
+            return null;
+        return { icon, boostPercent: prayer.boostPercent };
+    }
+    if (prayer.bonusType === 'multi_stat' && prayer.stats) {
+        if (prayer.stats.magic != null) {
+            return { icon: STYLE_ICON.magic, boostPercent: prayer.stats.magic };
+        }
+        if (prayer.stats.ranged != null || prayer.stats.ranged_strength != null) {
+            return {
+                icon: STYLE_ICON.ranged,
+                boostPercent: Math.max(prayer.stats.ranged ?? 0, prayer.stats.ranged_strength ?? 0)
+            };
+        }
+        if (prayer.stats.strength != null) {
+            return { icon: STYLE_ICON.strength, boostPercent: prayer.stats.strength };
+        }
+    }
+    return null;
+}
+
 // ── hooks/useActionTick.js ──
 /**
  * Calculate progress for any action-based activity (0-1)
@@ -40814,6 +40869,7 @@ function BuyCreditsModal({ onClose, identityId, characterId, stripeLinks }) {
 
 
 
+
 const TAB_LABEL = {
     food: 'Idle Eat',
     potion: 'Idle Potion',
@@ -41015,11 +41071,16 @@ function PrayerSection({ prayersData, prayerLevel, draft, onSelect }) {
             h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60 mb-1" }, "Combat Prayer"),
             h("div", { class: "grid grid-cols-2 gap-2" }, combats.map((prayer) => {
                 const isActive = cmbId === prayer.id;
+                // Match the combat-screen icon vocabulary: attack ⚔️, strength
+                // 💪, defence 🛡️, ranged 🏹, magic 🔮. Falls back to the
+                // prayer's bespoke emoji when the helper has no opinion.
+                const styled = getPrayerStyleIcon(prayer);
+                const icon = styled ? styled.icon : prayer.icon;
                 return (h("button", { key: prayer.id, onClick: () => onSelect(prayer.id, 'combat'), class: `p-2 rounded-lg border text-left ${isActive
                         ? 'bg-[#2a3a1a] border-[#4a8a2a]'
                         : 'bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[#2a3a2a]'}` },
                     h("div", { class: "text-sm text-[var(--color-parchment)]" },
-                        prayer.icon,
+                        icon,
                         " ",
                         prayer.name),
                     h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60 line-clamp-2" }, prayer.description),
@@ -43503,6 +43564,7 @@ function PvpCombatScreen({ matchId, onExit, addToast }) {
 
 
 
+
 const COMBAT_CATEGORIES = [
     {
         key: 'training',
@@ -44949,9 +45011,6 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                         " / ",
                         slayerTask.totalCount,
                         " remaining"))),
-                h("div", { class: "hidden md:block mt-2" },
-                    h("div", { class: "text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1" }, "Gear"),
-                    h(EquipmentPaperdoll, { equipment: equipment, itemsData: itemsData, onSelect: (slotName) => handleUnequipSlot(slotName), size: "md" })),
                 Object.keys(combat?.activePotions || {}).length > 0 && (h("div", { class: "hidden md:block mt-2 bg-[#111] rounded-lg px-2 py-1.5 text-[9px] text-[var(--color-gold)]" }, Object.keys(combat.activePotions).map(potionId => {
                     const potion = itemsData[potionId];
                     if (!potion)
@@ -44978,7 +45037,10 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                         " \u00B7 ",
                         remainingSeconds,
                         "s"));
-                })))),
+                }))),
+                h("div", { class: "hidden md:block mt-2" },
+                    h("div", { class: "text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1" }, "Gear"),
+                    h(EquipmentPaperdoll, { equipment: equipment, itemsData: itemsData, onSelect: (slotName) => handleUnequipSlot(slotName), size: "md" }))),
             h("div", { class: "hidden md:flex md:flex-col md:col-start-2 md:row-start-1 md:overflow-y-auto md:min-h-0" },
                 h("div", { class: "flex items-center justify-between mb-2 px-1" },
                     h("div", { class: "text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60" }, "Inventory"),
@@ -45023,51 +45085,17 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                             h("div", { class: "grid grid-cols-6 gap-1" }, combatPrayers.map(prayer => {
                                 const canUse = prayerLevel >= prayer.level;
                                 const isActive = combat?.activeCombatPrayer === prayer.id;
-                                // Reformat single-stat low-level prayers and the two
-                                // pure-style high-level prayers (Rigour ranged, Augury
-                                // magic) as "+X% <style icon>" so the magnitude is
-                                // legible at a glance. Melee multi-stat prayers
-                                // (Chivalry, Piety) keep their bespoke icon since they
-                                // boost both attack and strength.
-                                let showBoostFmt = false;
-                                let boostPct = null;
-                                let styleIcon = prayer.icon;
-                                if (prayer.bonusType === 'stat' && prayer.level < 45) {
-                                    showBoostFmt = true;
-                                    boostPct = prayer.boostPercent;
-                                    if (prayer.stat === 'attack')
-                                        styleIcon = '⚔️';
-                                    else if (prayer.stat === 'strength')
-                                        styleIcon = '💪';
-                                    else if (prayer.stat === 'ranged')
-                                        styleIcon = '🏹';
-                                    else if (prayer.stat === 'magic')
-                                        styleIcon = '🔮';
-                                    else if (prayer.stat === 'defence')
-                                        styleIcon = '🛡️';
-                                }
-                                else if (prayer.bonusType === 'multi_stat' && prayer.stats) {
-                                    if (prayer.stats.magic != null) {
-                                        showBoostFmt = true;
-                                        boostPct = prayer.stats.magic;
-                                        styleIcon = '🔮';
-                                    }
-                                    else if (prayer.stats.ranged != null || prayer.stats.ranged_strength != null) {
-                                        showBoostFmt = true;
-                                        boostPct = Math.max(prayer.stats.ranged ?? 0, prayer.stats.ranged_strength ?? 0);
-                                        styleIcon = '🏹';
-                                    }
-                                }
+                                const styled = getPrayerStyleIcon(prayer);
                                 return (h("button", { key: prayer.id, onClick: () => canUse && handlePrayer(prayer.id), disabled: !canUse, title: `${prayer.name} · Lv ${prayer.level}\n${prayer.description}`, class: `px-1 py-1 rounded-md border text-center transition-colors ${isActive
                                         ? 'bg-[#2a3a1a] border-[var(--color-gold)]'
                                         : canUse
                                             ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
                                             : 'bg-[#111] border-[#1a1a1a] opacity-30 cursor-default'}` },
-                                    showBoostFmt ? (h("div", { class: "text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] leading-none whitespace-nowrap" },
+                                    styled ? (h("div", { class: "text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] leading-none whitespace-nowrap" },
                                         "+",
-                                        boostPct,
+                                        styled.boostPercent,
                                         "% ",
-                                        styleIcon)) : (h("div", { class: "text-[12px] leading-none" }, prayer.icon)),
+                                        styled.icon)) : (h("div", { class: "text-[12px] leading-none" }, prayer.icon)),
                                     h("div", { class: "text-[8px] text-[var(--color-gold-dim)] opacity-70 mt-0.5" },
                                         "Lv ",
                                         prayer.level)));
