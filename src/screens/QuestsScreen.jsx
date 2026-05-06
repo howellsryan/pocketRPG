@@ -5,6 +5,8 @@ import Button from '../components/Button.jsx'
 import Modal from '../components/Modal.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
+import TwoPaneLayout from '../components/TwoPaneLayout.jsx'
+import { useIsDesktop } from '../hooks/useIsDesktop.js'
 import {
   createQuestState, checkQuestEligibility,
   getQuestPointsEarned, formatQuestDuration,
@@ -38,6 +40,7 @@ export default function QuestsScreen() {
   const [showQueue, setShowQueue] = useState(false)
   const [section, setSection] = useState('quests')
   const hasAutoStarted = useRef(false)
+  const isDesktop = useIsDesktop()
 
   const startQuest = (quest) => {
     const state = createQuestState(quest)
@@ -321,7 +324,9 @@ export default function QuestsScreen() {
         )}
       </div>
 
-      <div class="flex-1 overflow-y-auto px-4 pb-4">
+      <TwoPaneLayout
+        list={
+      <div class="h-full overflow-y-auto px-4 pb-4">
         {section === 'quests' && (
           <div class="flex flex-col gap-2">
             {showQueue && questQueue.length > 0 && (
@@ -450,9 +455,32 @@ export default function QuestsScreen() {
           </div>
         )}
       </div>
+        }
+        detail={
+          selectedQuest ? (
+            <div class="p-4">
+              <QuestDetailsBody
+                quest={selectedQuest}
+                stats={stats}
+                completedQuests={completedQuests}
+                itemsData={itemsData}
+                onClose={() => setSelectedQuest(null)}
+                onStart={startQuest}
+                onAddToQueue={addToQueue}
+                isInQueue={questQueue.some(q => q.id === selectedQuest.id)}
+                queueFull={questQueue.length >= QUEST_QUEUE_MAX}
+              />
+            </div>
+          ) : (
+            <div class="p-6 text-center text-[12px] text-[var(--color-parchment)] opacity-50">
+              Select a quest to see details and start it.
+            </div>
+          )
+        }
+      />
 
-      {/* ── Quest details modal ── */}
-      {selectedQuest && (
+      {/* ── Quest details modal — mobile only ── */}
+      {!isDesktop && selectedQuest && (
         <QuestDetailsModal
           quest={selectedQuest}
           stats={stats}
@@ -472,6 +500,25 @@ export default function QuestsScreen() {
 // ──────────────────────────────────────────────────────────────────────────────
 
 function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, onStart, onAddToQueue, isInQueue, queueFull }) {
+  return (
+    <Modal title={quest.name} onClose={onClose}>
+      <QuestDetailsBody
+        quest={quest}
+        stats={stats}
+        completedQuests={completedQuests}
+        itemsData={itemsData}
+        onClose={onClose}
+        onStart={onStart}
+        onAddToQueue={onAddToQueue}
+        isInQueue={isInQueue}
+        queueFull={queueFull}
+        showCloseButton
+      />
+    </Modal>
+  )
+}
+
+function QuestDetailsBody({ quest, stats, completedQuests, itemsData, onClose, onStart, onAddToQueue, isInQueue, queueFull, showCloseButton = false }) {
   const completed = completedQuests.has(quest.id)
   const elig = checkQuestEligibility(quest, stats, completedQuests, questsData)
   const skillEntries = Object.entries(quest.skillRequirements || {})
@@ -480,7 +527,6 @@ function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, 
     .map(id => itemsData[id]?.name || id)
 
   return (
-    <Modal title={quest.name} onClose={onClose}>
       <div class="flex flex-col gap-3">
         <Panel className="flex items-center gap-3">
           <span class="text-[28px]">{completed ? '✅' : '📜'}</span>
@@ -555,9 +601,11 @@ function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, 
 
         <div class="flex flex-col gap-2">
           <div class="flex gap-2">
-            <Button variant="secondary" size="lg" onClick={onClose} className="flex-1">
-              Close
-            </Button>
+            {showCloseButton && (
+              <Button variant="secondary" size="lg" onClick={onClose} className="flex-1">
+                Close
+              </Button>
+            )}
             {!completed && (
               <Button
                 variant="primary"
@@ -583,7 +631,6 @@ function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, 
           )}
         </div>
       </div>
-    </Modal>
   )
 }
 

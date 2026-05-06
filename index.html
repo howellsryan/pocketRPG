@@ -31677,6 +31677,36 @@ function getActionProgress(active, ticksRemaining, totalTicks) {
     return Math.min(1, Math.max(0, (totalTicks - ticksRemaining) / totalTicks));
 }
 
+// ── hooks/useIsDesktop.js ──
+
+const QUERY = '(min-width: 768px)';
+function readMatch() {
+    if (typeof window === 'undefined' || !window.matchMedia)
+        return false;
+    return window.matchMedia(QUERY).matches;
+}
+function useIsDesktop() {
+    const [isDesktop, setIsDesktop] = useState(readMatch);
+    useEffect(() => {
+        if (typeof window === 'undefined' || !window.matchMedia)
+            return undefined;
+        const mql = window.matchMedia(QUERY);
+        const handler = (e) => setIsDesktop(e.matches);
+        setIsDesktop(mql.matches);
+        if (mql.addEventListener)
+            mql.addEventListener('change', handler);
+        else if (mql.addListener)
+            mql.addListener(handler);
+        return () => {
+            if (mql.removeEventListener)
+                mql.removeEventListener('change', handler);
+            else if (mql.removeListener)
+                mql.removeListener(handler);
+        };
+    }, []);
+    return isDesktop;
+}
+
 // ── engine/experience.js ──
 
 // Pre-compute XP table using exact level formula
@@ -40587,55 +40617,80 @@ function BonusDisplay({ item }) {
                     v))) : null)))));
 }
 
-// ── components/SharedItemModal.js ──
+// ── components/ItemDetailPanel.js ──
 
 
-
-function SharedItemModal({ item, title, onClose, children, quantity, noted, extraInfo }) {
+function ItemDetailPanel({ item, children, quantity, noted, extraInfo }) {
     if (!item)
         return null;
     const hasAttackBonus = item.attackBonus && Object.values(item.attackBonus).some(v => v !== 0);
     const hasDefenceBonus = item.defenceBonus && Object.values(item.defenceBonus).some(v => v !== 0);
     const hasOtherBonus = item.otherBonus && Object.values(item.otherBonus).some(v => v !== 0);
     const hasBonuses = hasAttackBonus || hasDefenceBonus || hasOtherBonus;
+    return (h("div", { class: "space-y-3" },
+        h(Panel, { className: "flex items-center gap-3 min-w-0" },
+            h("span", { class: "text-[30px] shrink-0" }, item.icon || '📦'),
+            h("div", { class: "min-w-0" },
+                h("div", { class: "text-[13px] font-semibold text-[var(--color-parchment)] break-words" }, item.name),
+                h("div", { class: "text-[11px] text-[#888] mt-[2px] break-words" }, item.type))),
+        h(Panel, { className: "text-[12px] text-[var(--color-parchment)] opacity-80 space-y-2" },
+            noted && h("p", { class: "text-[var(--color-gold)] font-semibold" }, "\uD83D\uDCDC Noted \u2014 cannot be used"),
+            item.slot && h("p", null,
+                "Slot: ",
+                item.slot),
+            item.attackSpeed && h("p", null,
+                "Attack speed: ",
+                item.attackSpeed,
+                " ticks"),
+            item.attackStyle && h("p", null,
+                "Style: ",
+                item.attackStyle),
+            item.type === 'food' && h("p", null,
+                "Heals ",
+                item.heals,
+                " HP"),
+            item.requirements && Object.entries(item.requirements).length > 0 && (h("p", null,
+                "Requires: ",
+                Object.entries(item.requirements).map(([s, l]) => `${s} ${l}`).join(', '))),
+            quantity > 1 && h("p", null,
+                "Quantity: ",
+                quantity),
+            item.shopValue > 0 && h("p", null,
+                "Value: ",
+                h("span", { class: "text-[var(--color-gold)]" },
+                    item.shopValue.toLocaleString(),
+                    " gp")),
+            extraInfo,
+            hasBonuses && (h("div", { class: "pt-2 border-t border-[var(--color-void-border)]" },
+                h(BonusDisplay, { item: item })))),
+        children));
+}
+
+// ── components/TwoPaneLayout.js ──
+/**
+ * Master-detail layout. Below md, only the list pane shows (mobile uses a
+ * modal for selection details). At md+, list and detail render side-by-side.
+ *
+ * Props:
+ *   list:   JSX rendered in the left pane (always visible)
+ *   detail: JSX rendered in the right pane (md+ only). Pass an empty-state
+ *           message when nothing is selected so the pane isn't blank.
+ *   detailWidthClass: optional override for the detail pane width.
+ */
+function TwoPaneLayout({ list, detail, detailWidthClass = 'md:w-[360px] lg:w-[420px]' }) {
+    return (h("div", { class: "flex-1 min-h-0 md:flex md:gap-4 md:overflow-hidden" },
+        h("div", { class: "h-full md:flex-1 md:min-w-0 md:overflow-hidden md:flex md:flex-col" }, list),
+        h("aside", { class: `hidden md:flex md:flex-col ${detailWidthClass} md:flex-shrink-0 md:overflow-y-auto md:border-l md:border-[var(--color-void-border)] md:pl-4` }, detail)));
+}
+
+// ── components/SharedItemModal.js ──
+
+
+function SharedItemModal({ item, title, onClose, children, quantity, noted, extraInfo }) {
+    if (!item)
+        return null;
     return (h(Modal, { title: title || item.name, onClose: onClose },
-        h("div", { class: "space-y-3" },
-            h(Panel, { className: "flex items-center gap-3 min-w-0" },
-                h("span", { class: "text-[30px] shrink-0" }, item.icon || '📦'),
-                h("div", { class: "min-w-0" },
-                    h("div", { class: "text-[13px] font-semibold text-[var(--color-parchment)] break-words" }, item.name),
-                    h("div", { class: "text-[11px] text-[#888] mt-[2px] break-words" }, item.type))),
-            h(Panel, { className: "text-[12px] text-[var(--color-parchment)] opacity-80 space-y-2" },
-                noted && h("p", { class: "text-[var(--color-gold)] font-semibold" }, "\uD83D\uDCDC Noted \u2014 cannot be used"),
-                item.slot && h("p", null,
-                    "Slot: ",
-                    item.slot),
-                item.attackSpeed && h("p", null,
-                    "Attack speed: ",
-                    item.attackSpeed,
-                    " ticks"),
-                item.attackStyle && h("p", null,
-                    "Style: ",
-                    item.attackStyle),
-                item.type === 'food' && h("p", null,
-                    "Heals ",
-                    item.heals,
-                    " HP"),
-                item.requirements && Object.entries(item.requirements).length > 0 && (h("p", null,
-                    "Requires: ",
-                    Object.entries(item.requirements).map(([s, l]) => `${s} ${l}`).join(', '))),
-                quantity > 1 && h("p", null,
-                    "Quantity: ",
-                    quantity),
-                item.shopValue > 0 && h("p", null,
-                    "Value: ",
-                    h("span", { class: "text-[var(--color-gold)]" },
-                        item.shopValue.toLocaleString(),
-                        " gp")),
-                extraInfo,
-                hasBonuses && (h("div", { class: "pt-2 border-t border-[var(--color-void-border)]" },
-                    h(BonusDisplay, { item: item })))),
-            children)));
+        h(ItemDetailPanel, { item: item, quantity: quantity, noted: noted, extraInfo: extraInfo }, children)));
 }
 
 // ── components/QuestXpChoiceModal.js ──
@@ -47855,6 +47910,9 @@ function formatRemaining(totalSeconds) {
 
 
 
+
+
+
 // ── COMPONENT ───────────────────────────────────────────────────────────────
 function GeneralStoreScreen({ onBuyCredits }) {
     const { inventory, bank, updateInventory, updateBankDirect, addToast, itemsData, unlockedFeatures, completedQuests, unlockedMinigameItems, isIronman, getSnapshot } = useGame();
@@ -47862,6 +47920,7 @@ function GeneralStoreScreen({ onBuyCredits }) {
     const [selectedItem, setSelectedItem] = useState(null); // item being purchased
     const [buyQty, setBuyQty] = useState(1);
     const [activeTab, setActiveTab] = useState('all'); // 'all' | 'quest_items' | 'minigame_unlocks' | type-based filters
+    const isDesktop = useIsDesktop();
     const hasMoneyPurse = unlockedFeatures.has('money_purse');
     const coinsInInv = countItem(inventory, 'coins');
     const coinsInBank = bank['coins']?.quantity || 0;
@@ -48045,6 +48104,42 @@ function GeneralStoreScreen({ onBuyCredits }) {
     const totalCost = selectedItem ? getItemPrice(selectedItem) * buyQty : 0;
     const canAffordSelected = selectedItem ? coins >= totalCost : false;
     const isSelectedPurchaseRestricted = Boolean(selectedRestriction && !selectedRestriction.allowed);
+    // Purchase controls reused by both the mobile modal and the desktop detail pane.
+    const purchaseControls = selectedItem ? (h("div", { class: "flex flex-col gap-4" },
+        selectedItem.questUnlock && (h(Panel, { className: `text-[12px] ${selectedItem.isUnlocked ? 'border-l-4 border-[var(--color-gold)]' : 'border-l-4 border-[#666]'}` },
+            h("div", { class: "text-[11px] font-semibold mb-1 text-[#aaa]" }, "Required Quest:"),
+            h("div", { class: `text-[13px] font-semibold ${selectedItem.isUnlocked ? 'text-[var(--color-gold)]' : 'text-[#888]'}` }, questMap[selectedItem.questUnlock]),
+            h("div", { class: `text-[10px] mt-2 ${selectedItem.isUnlocked ? 'text-[#7a7]' : 'text-[#a77]'}` }, selectedItem.isUnlocked ? '✓ Quest Complete' : '✗ Not Yet Completed'))),
+        selectedObtainMessage && (h(Panel, { className: "text-[11px] text-[#aaa] border-l-4 border-[#666]" }, selectedObtainMessage)),
+        (!selectedItem.questUnlock && !selectedItem.isMinigameItem) || selectedItem.isUnlocked ? (h(Panel, null,
+            h("div", { class: "flex justify-between mb-[6px] text-[12px]" },
+                h("span", { class: "text-[#888]" }, "Price per item:"),
+                h("span", { class: "text-[var(--color-gold)] font-[var(--font-mono)] font-bold" },
+                    getItemPrice(selectedItem).toLocaleString(),
+                    " gp")),
+            h("div", { class: "flex justify-between text-[12px]" },
+                h("span", { class: "text-[#888]" }, "Total:"),
+                h("span", { class: "text-[var(--color-gold)] font-[var(--font-mono)] font-bold" },
+                    totalCost.toLocaleString(),
+                    " gp")))) : null,
+        (!selectedItem.questUnlock && !selectedItem.isMinigameItem) || selectedItem.isUnlocked ? (h("div", { class: "flex flex-col gap-2" },
+            h("div", { class: "text-[12px] text-[#888]" }, "Quantity"),
+            h("div", { class: "flex gap-[6px] items-center" },
+                h(Button, { variant: "secondary", size: "md", onClick: () => setBuyQty(Math.max(1, buyQty - 1)), className: "w-8 h-8 p-0 flex items-center justify-center text-base" }, "\u2212"),
+                h("input", { type: "number", min: "1", max: Number.MAX_SAFE_INTEGER, value: buyQty, onInput: (e) => {
+                        const parsed = parseInt(e.target.value);
+                        if (!isNaN(parsed)) {
+                            setBuyQty(Math.max(1, Math.min(Number.MAX_SAFE_INTEGER, parsed)));
+                        }
+                    }, class: "flex-1 h-8 rounded-md bg-[#111] border border-[var(--color-void-border)] text-[var(--color-parchment)] text-[13px] font-[var(--font-mono)] text-center outline-none" }),
+                h(Button, { variant: "secondary", size: "md", onClick: () => setBuyQty(Math.min(Number.MAX_SAFE_INTEGER, buyQty + 1)), className: "w-8 h-8 p-0 flex items-center justify-center text-base" }, "+")),
+            buyQty > 1 && !selectedItem.stackable && (h("div", { class: "text-[10px] text-[#888] mt-1" },
+                "\uD83D\uDCA1 Buying ",
+                buyQty,
+                " items will be delivered as noted (stackable)")))) : null,
+        h("div", { class: "flex gap-2 mt-2" },
+            h(Button, { variant: "secondary", size: "lg", onClick: () => { setSelectedItem(null); setBuyQty(1); }, className: "flex-1" }, isDesktop ? 'Clear' : 'Cancel'),
+            (selectedItem.questUnlock || selectedItem.isMinigameItem) && !selectedItem.isUnlocked ? (h(Button, { variant: "secondary", size: "lg", disabled: true, className: "flex-1 opacity-50" }, "Locked")) : (h(Button, { variant: "primary", size: "lg", onClick: handleBuy, disabled: !canAffordSelected || isSelectedPurchaseRestricted, className: "flex-1" }, "Buy"))))) : null;
     return (h("div", { class: "h-full flex flex-col overflow-hidden" },
         h("div", { class: "px-4 pt-3 pb-3 flex-shrink-0" },
             h("div", { class: "flex justify-between items-baseline mb-3" },
@@ -48071,68 +48166,37 @@ function GeneralStoreScreen({ onBuyCredits }) {
                         ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
                         : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'}` }, type)))),
             h("input", { type: "text", placeholder: "Search items...", value: searchTerm, onInput: (e) => setSearchTerm(e.target.value), class: "w-full px-3 py-2 rounded-lg border border-[#2a2a2a] bg-[#111] text-[var(--color-parchment)] text-[13px] outline-none" })),
-        h("div", { class: "flex-1 overflow-y-auto px-4 pb-20" }, searchResults.length === 0 ? (h("div", { class: "py-10 px-4 text-center text-[#888] text-[12px]" }, searchTerm
-            ? 'No items found.'
-            : activeTab === 'quest_items'
-                ? 'Complete quests to unlock items here.'
-                : activeTab === 'all'
-                    ? 'No items to buy.'
-                    : 'No items in this category.')) : (h("div", { class: "flex flex-col gap-2 pt-3" }, searchResults.map(item => {
-            const isQuestItem = item.questUnlock !== undefined;
-            const isMinigameItem = item.isMinigameItem === true;
-            const isUnlocked = isQuestItem || isMinigameItem ? item.isUnlocked : true;
-            const price = isQuestItem && !isUnlocked ? 0 : getItemPrice(item);
-            const canAfford = coins >= price;
-            const restriction = getPurchaseRestriction(item, { isIronman });
-            const isBossUnique = restriction.code === 'BOSS_UNIQUE_RESTRICTED';
-            const isClueReward = restriction.code === 'CLUE_REWARD_RESTRICTED';
-            return (h("button", { key: item.id, onClick: () => { setSelectedItem(item); setBuyQty(1); }, disabled: ((isQuestItem || isMinigameItem) && !isUnlocked), class: `p-3 rounded-lg border text-left flex items-center gap-3 transition-colors ${isQuestItem && !isUnlocked
-                    ? 'bg-[#1a1a1a] border-[#1a1a1a] cursor-not-allowed opacity-50'
-                    : 'bg-[var(--color-void-light)] border-[#2a2a2a] cursor-pointer hover:bg-[#222] hover:border-[#333]'}` },
-                h("span", { class: "text-2xl leading-none flex-shrink-0" }, item.icon || '📦'),
-                h("div", { class: "flex-1 min-w-0" },
-                    h("div", { class: "text-[13px] font-semibold text-[var(--color-parchment)]" }, item.name),
-                    (isQuestItem || isMinigameItem) && !isUnlocked && (h("div", { class: "text-[10px] text-[#888] mt-1" },
-                        "\uD83D\uDD12 ",
-                        isQuestItem ? questMap[item.unlockedBy] : 'Complete this minigame reward once to unlock purchasing.'))),
-                h("div", { class: `text-right flex-shrink-0 text-[12px] font-[var(--font-mono)] font-bold ${isQuestItem && !isUnlocked ? 'text-[#666]' : (canAfford ? 'text-[var(--color-gold)]' : 'text-[#888]')}` }, isQuestItem && !isUnlocked ? '—' : (isBossUnique ? 'Boss unique' : (isClueReward ? 'Clue reward' : `${price.toLocaleString()} gp`)))));
-        })))),
-        selectedItem && (h(SharedItemModal, { item: selectedItem, title: `${(selectedItem.questUnlock || selectedItem.isMinigameItem) && !selectedItem.isUnlocked ? 'Locked: ' : ''}${selectedItem.name}`, onClose: () => { setSelectedItem(null); setBuyQty(1); } },
-            h("div", { class: "flex flex-col gap-4" },
-                selectedItem.questUnlock && (h(Panel, { className: `text-[12px] ${selectedItem.isUnlocked ? 'border-l-4 border-[var(--color-gold)]' : 'border-l-4 border-[#666]'}` },
-                    h("div", { class: "text-[11px] font-semibold mb-1 text-[#aaa]" }, "Required Quest:"),
-                    h("div", { class: `text-[13px] font-semibold ${selectedItem.isUnlocked ? 'text-[var(--color-gold)]' : 'text-[#888]'}` }, questMap[selectedItem.questUnlock]),
-                    h("div", { class: `text-[10px] mt-2 ${selectedItem.isUnlocked ? 'text-[#7a7]' : 'text-[#a77]'}` }, selectedItem.isUnlocked ? '✓ Quest Complete' : '✗ Not Yet Completed'))),
-                selectedObtainMessage && (h(Panel, { className: "text-[11px] text-[#aaa] border-l-4 border-[#666]" }, selectedObtainMessage)),
-                (!selectedItem.questUnlock && !selectedItem.isMinigameItem) || selectedItem.isUnlocked ? (h(Panel, null,
-                    h("div", { class: "flex justify-between mb-[6px] text-[12px]" },
-                        h("span", { class: "text-[#888]" }, "Price per item:"),
-                        h("span", { class: "text-[var(--color-gold)] font-[var(--font-mono)] font-bold" },
-                            getItemPrice(selectedItem).toLocaleString(),
-                            " gp")),
-                    h("div", { class: "flex justify-between text-[12px]" },
-                        h("span", { class: "text-[#888]" }, "Total:"),
-                        h("span", { class: "text-[var(--color-gold)] font-[var(--font-mono)] font-bold" },
-                            totalCost.toLocaleString(),
-                            " gp")))) : null,
-                (!selectedItem.questUnlock && !selectedItem.isMinigameItem) || selectedItem.isUnlocked ? (h("div", { class: "flex flex-col gap-2" },
-                    h("div", { class: "text-[12px] text-[#888]" }, "Quantity"),
-                    h("div", { class: "flex gap-[6px] items-center" },
-                        h(Button, { variant: "secondary", size: "md", onClick: () => setBuyQty(Math.max(1, buyQty - 1)), className: "w-8 h-8 p-0 flex items-center justify-center text-base" }, "\u2212"),
-                        h("input", { type: "number", min: "1", max: Number.MAX_SAFE_INTEGER, value: buyQty, onInput: (e) => {
-                                const parsed = parseInt(e.target.value);
-                                if (!isNaN(parsed)) {
-                                    setBuyQty(Math.max(1, Math.min(Number.MAX_SAFE_INTEGER, parsed)));
-                                }
-                            }, class: "flex-1 h-8 rounded-md bg-[#111] border border-[var(--color-void-border)] text-[var(--color-parchment)] text-[13px] font-[var(--font-mono)] text-center outline-none" }),
-                        h(Button, { variant: "secondary", size: "md", onClick: () => setBuyQty(Math.min(Number.MAX_SAFE_INTEGER, buyQty + 1)), className: "w-8 h-8 p-0 flex items-center justify-center text-base" }, "+")),
-                    buyQty > 1 && !selectedItem.stackable && (h("div", { class: "text-[10px] text-[#888] mt-1" },
-                        "\uD83D\uDCA1 Buying ",
-                        buyQty,
-                        " items will be delivered as noted (stackable)")))) : null,
-                h("div", { class: "flex gap-2 mt-2" },
-                    h(Button, { variant: "secondary", size: "lg", onClick: () => { setSelectedItem(null); setBuyQty(1); }, className: "flex-1" }, "Cancel"),
-                    (selectedItem.questUnlock || selectedItem.isMinigameItem) && !selectedItem.isUnlocked ? (h(Button, { variant: "secondary", size: "lg", disabled: true, className: "flex-1 opacity-50" }, "Locked")) : (h(Button, { variant: "primary", size: "lg", onClick: handleBuy, disabled: !canAffordSelected || isSelectedPurchaseRestricted, className: "flex-1" }, "Buy"))))))));
+        h(TwoPaneLayout, { list: h("div", { class: "h-full overflow-y-auto px-4 pb-20 md:pb-4" }, searchResults.length === 0 ? (h("div", { class: "py-10 px-4 text-center text-[#888] text-[12px]" }, searchTerm
+                ? 'No items found.'
+                : activeTab === 'quest_items'
+                    ? 'Complete quests to unlock items here.'
+                    : activeTab === 'all'
+                        ? 'No items to buy.'
+                        : 'No items in this category.')) : (h("div", { class: "flex flex-col gap-2 pt-3" }, searchResults.map(item => {
+                const isQuestItem = item.questUnlock !== undefined;
+                const isMinigameItem = item.isMinigameItem === true;
+                const isUnlocked = isQuestItem || isMinigameItem ? item.isUnlocked : true;
+                const price = isQuestItem && !isUnlocked ? 0 : getItemPrice(item);
+                const canAfford = coins >= price;
+                const restriction = getPurchaseRestriction(item, { isIronman });
+                const isBossUnique = restriction.code === 'BOSS_UNIQUE_RESTRICTED';
+                const isClueReward = restriction.code === 'CLUE_REWARD_RESTRICTED';
+                const isSelected = selectedItem?.id === item.id;
+                return (h("button", { key: item.id, onClick: () => { setSelectedItem(item); setBuyQty(1); }, disabled: ((isQuestItem || isMinigameItem) && !isUnlocked), class: `p-3 rounded-lg border text-left flex items-center gap-3 transition-colors ${isQuestItem && !isUnlocked
+                        ? 'bg-[#1a1a1a] border-[#1a1a1a] cursor-not-allowed opacity-50'
+                        : isSelected
+                            ? 'bg-[var(--color-void-light)] border-[var(--color-gold)] cursor-pointer'
+                            : 'bg-[var(--color-void-light)] border-[#2a2a2a] cursor-pointer hover:bg-[#222] hover:border-[#333]'}` },
+                    h("span", { class: "text-2xl leading-none flex-shrink-0" }, item.icon || '📦'),
+                    h("div", { class: "flex-1 min-w-0" },
+                        h("div", { class: "text-[13px] font-semibold text-[var(--color-parchment)]" }, item.name),
+                        (isQuestItem || isMinigameItem) && !isUnlocked && (h("div", { class: "text-[10px] text-[#888] mt-1" },
+                            "\uD83D\uDD12 ",
+                            isQuestItem ? questMap[item.unlockedBy] : 'Complete this minigame reward once to unlock purchasing.'))),
+                    h("div", { class: `text-right flex-shrink-0 text-[12px] font-[var(--font-mono)] font-bold ${isQuestItem && !isUnlocked ? 'text-[#666]' : (canAfford ? 'text-[var(--color-gold)]' : 'text-[#888]')}` }, isQuestItem && !isUnlocked ? '—' : (isBossUnique ? 'Boss unique' : (isClueReward ? 'Clue reward' : `${price.toLocaleString()} gp`)))));
+            })))), detail: selectedItem ? (h("div", { class: "p-4" },
+                h(ItemDetailPanel, { item: selectedItem, extraInfo: null }, purchaseControls))) : (h("div", { class: "p-6 text-center text-[12px] text-[var(--color-parchment)] opacity-50" }, "Select an item to see details and purchase options.")) }),
+        !isDesktop && selectedItem && (h(SharedItemModal, { item: selectedItem, title: `${(selectedItem.questUnlock || selectedItem.isMinigameItem) && !selectedItem.isUnlocked ? 'Locked: ' : ''}${selectedItem.name}`, onClose: () => { setSelectedItem(null); setBuyQty(1); } }, purchaseControls))));
 }
 
 // ── screens/EquipmentScreen.js ──
@@ -48442,6 +48506,8 @@ function EquipmentScreen() {
 
 
 
+
+
 const COMPLEXITY_COLORS = {
     Novice: '#7fbf7f',
     Intermediate: '#7bb3f0',
@@ -48460,6 +48526,7 @@ function QuestsScreen() {
     const [showQueue, setShowQueue] = useState(false);
     const [section, setSection] = useState('quests');
     const hasAutoStarted = useRef(false);
+    const isDesktop = useIsDesktop();
     const startQuest = (quest) => {
         const state = createQuestState(quest);
         setActiveTask({
@@ -48645,126 +48712,130 @@ function QuestsScreen() {
                         questQueue.length,
                         ")"))),
                 questQueue.length > 0 && (h(Button, { variant: "success", size: "sm", onClick: startQueue }, "\u25B6\uFE0F Begin Queue"))))),
-        h("div", { class: "flex-1 overflow-y-auto px-4 pb-4" },
-            section === 'quests' && (h("div", { class: "flex flex-col gap-2" },
-                showQueue && questQueue.length > 0 && (h("div", { class: "flex flex-col gap-2 pt-2 mb-4" },
-                    h(SectionHeader, { size: "sm" }, "\uD83D\uDCCB Quest Queue"),
-                    questQueue.map((quest, idx) => (h("div", { key: quest.id, class: "p-3 rounded-xl bg-[var(--color-void-light)] border border-[#2a2a2a] flex items-center justify-between gap-2" },
-                        h("div", { class: "flex-1 min-w-0" },
-                            h("div", { class: "text-[13px] font-semibold text-[var(--color-parchment)]" },
-                                idx + 1,
-                                ". ",
-                                quest.name),
-                            h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60" }, formatQuestDuration(quest.durationSeconds))),
-                        h("button", { onClick: () => removeQuestFromQueue(quest.id), class: "text-[12px] text-[#e57373] bg-transparent border-0 cursor-pointer flex-shrink-0" }, "\u2715")))))),
-                visibleQuests.map(quest => {
-                    const completed = completedQuests.has(quest.id);
-                    const elig = checkQuestEligibility(quest, stats, completedQuests, questsData);
-                    const complexityColor = COMPLEXITY_COLORS[quest.complexity] || '#888';
-                    return (h("button", { key: quest.id, onClick: () => setSelectedQuest(quest), class: `p-3 rounded-xl border text-left flex items-center gap-3 ${completed
-                            ? 'bg-[rgba(74,222,128,0.06)] border-[rgba(74,222,128,0.2)]'
-                            : elig.eligible
-                                ? 'bg-[var(--color-void-light)] border-[#2a2a2a]'
-                                : 'bg-[#111] border-[#1a1a1a] opacity-70'}` },
-                        h("span", { class: "text-[24px] flex-shrink-0" }, completed ? '✅' : '📜'),
-                        h("div", { class: "flex-1 min-w-0" },
-                            h("div", { class: `text-[13px] font-semibold ${completed ? 'text-[#4ade80]' : 'text-[var(--color-parchment)]'}` }, quest.name),
-                            h("div", { class: "text-[10px] flex items-center gap-2 mt-[2px]" },
-                                h("span", { style: { color: complexityColor } }, quest.complexity),
-                                h("span", { class: "text-[var(--color-parchment)] opacity-50" }, "\u00B7"),
-                                h("span", { class: "text-[var(--color-parchment)] opacity-60" }, formatQuestDuration(quest.durationSeconds)))),
-                        h("div", { class: "flex-shrink-0 text-[18px] text-[var(--color-parchment)] opacity-40" }, "\u2192")));
-                }),
-                visibleQuests.length === 0 && (h("div", { class: "py-10 text-center text-[#888] text-[12px]" }, "No quests to show.")))),
-            section === 'minigames' && (h("div", { class: "flex flex-col gap-4" }, minigamesData.minigames.map(mg => {
-                const tasks = minigamesData.tasks.filter(t => t.minigame === mg.id);
-                if (tasks.length === 0)
-                    return null;
-                return (h("div", { key: mg.id, class: "flex flex-col gap-2" },
-                    h(SectionHeader, { size: "sm" },
-                        mg.icon,
-                        " ",
-                        mg.label),
-                    tasks.map(task => {
-                        const missingReq = task.requiresItem && !hasItemAnywhere(task.requiresItem);
-                        const alreadyUnlocked = unlockedMinigameItems.has(task.product);
-                        const enabled = !missingReq && !alreadyUnlocked;
-                        const rowClass = enabled
-                            ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
-                            : 'bg-[#111] border-[#1a1a1a] opacity-45';
-                        return (h("button", { key: task.id, onClick: () => enabled && startMinigame(task), disabled: !enabled, class: `p-3 rounded-xl border text-left flex items-center gap-3 ${rowClass}` },
-                            h("span", { class: "text-[28px] flex-shrink-0" }, task.icon),
+        h(TwoPaneLayout, { list: h("div", { class: "h-full overflow-y-auto px-4 pb-4" },
+                section === 'quests' && (h("div", { class: "flex flex-col gap-2" },
+                    showQueue && questQueue.length > 0 && (h("div", { class: "flex flex-col gap-2 pt-2 mb-4" },
+                        h(SectionHeader, { size: "sm" }, "\uD83D\uDCCB Quest Queue"),
+                        questQueue.map((quest, idx) => (h("div", { key: quest.id, class: "p-3 rounded-xl bg-[var(--color-void-light)] border border-[#2a2a2a] flex items-center justify-between gap-2" },
                             h("div", { class: "flex-1 min-w-0" },
-                                h("div", { class: "text-[13px] font-semibold text-[var(--color-parchment)] mb-1" }, task.name),
-                                h("div", { class: "text-[10px] text-[#c8a96e] opacity-80" },
-                                    alreadyUnlocked && h("span", { class: "text-[#7a7]" }, "\u2713 Unlocked in store"),
-                                    alreadyUnlocked && task.requiresItem && ' · ',
-                                    "\u23F1 ",
-                                    formatHours(task.hours),
-                                    " total",
-                                    task.requiresItem && (h("span", { class: `${missingReq ? 'text-[#e57373]' : 'text-[var(--color-parchment)] opacity-50'}` },
-                                        ' · ',
-                                        "Needs: ",
-                                        minigamesData.itemNames[task.requiresItem] || task.requiresItem)))),
-                            h("div", { class: "flex-shrink-0 text-right" },
-                                h("div", { class: "text-[18px]" }, alreadyUnlocked ? '✓' : '→'),
-                                h("div", { class: "text-[9px] text-[#c8a96e] opacity-70" }, minigamesData.itemNames[task.product] || task.product))));
-                    })));
-            })))),
-        selectedQuest && (h(QuestDetailsModal, { quest: selectedQuest, stats: stats, completedQuests: completedQuests, itemsData: itemsData, onClose: () => setSelectedQuest(null), onStart: startQuest, onAddToQueue: addToQueue, isInQueue: questQueue.some(q => q.id === selectedQuest.id), queueFull: questQueue.length >= QUEST_QUEUE_MAX }))));
+                                h("div", { class: "text-[13px] font-semibold text-[var(--color-parchment)]" },
+                                    idx + 1,
+                                    ". ",
+                                    quest.name),
+                                h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60" }, formatQuestDuration(quest.durationSeconds))),
+                            h("button", { onClick: () => removeQuestFromQueue(quest.id), class: "text-[12px] text-[#e57373] bg-transparent border-0 cursor-pointer flex-shrink-0" }, "\u2715")))))),
+                    visibleQuests.map(quest => {
+                        const completed = completedQuests.has(quest.id);
+                        const elig = checkQuestEligibility(quest, stats, completedQuests, questsData);
+                        const complexityColor = COMPLEXITY_COLORS[quest.complexity] || '#888';
+                        return (h("button", { key: quest.id, onClick: () => setSelectedQuest(quest), class: `p-3 rounded-xl border text-left flex items-center gap-3 ${completed
+                                ? 'bg-[rgba(74,222,128,0.06)] border-[rgba(74,222,128,0.2)]'
+                                : elig.eligible
+                                    ? 'bg-[var(--color-void-light)] border-[#2a2a2a]'
+                                    : 'bg-[#111] border-[#1a1a1a] opacity-70'}` },
+                            h("span", { class: "text-[24px] flex-shrink-0" }, completed ? '✅' : '📜'),
+                            h("div", { class: "flex-1 min-w-0" },
+                                h("div", { class: `text-[13px] font-semibold ${completed ? 'text-[#4ade80]' : 'text-[var(--color-parchment)]'}` }, quest.name),
+                                h("div", { class: "text-[10px] flex items-center gap-2 mt-[2px]" },
+                                    h("span", { style: { color: complexityColor } }, quest.complexity),
+                                    h("span", { class: "text-[var(--color-parchment)] opacity-50" }, "\u00B7"),
+                                    h("span", { class: "text-[var(--color-parchment)] opacity-60" }, formatQuestDuration(quest.durationSeconds)))),
+                            h("div", { class: "flex-shrink-0 text-[18px] text-[var(--color-parchment)] opacity-40" }, "\u2192")));
+                    }),
+                    visibleQuests.length === 0 && (h("div", { class: "py-10 text-center text-[#888] text-[12px]" }, "No quests to show.")))),
+                section === 'minigames' && (h("div", { class: "flex flex-col gap-4" }, minigamesData.minigames.map(mg => {
+                    const tasks = minigamesData.tasks.filter(t => t.minigame === mg.id);
+                    if (tasks.length === 0)
+                        return null;
+                    return (h("div", { key: mg.id, class: "flex flex-col gap-2" },
+                        h(SectionHeader, { size: "sm" },
+                            mg.icon,
+                            " ",
+                            mg.label),
+                        tasks.map(task => {
+                            const missingReq = task.requiresItem && !hasItemAnywhere(task.requiresItem);
+                            const alreadyUnlocked = unlockedMinigameItems.has(task.product);
+                            const enabled = !missingReq && !alreadyUnlocked;
+                            const rowClass = enabled
+                                ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
+                                : 'bg-[#111] border-[#1a1a1a] opacity-45';
+                            return (h("button", { key: task.id, onClick: () => enabled && startMinigame(task), disabled: !enabled, class: `p-3 rounded-xl border text-left flex items-center gap-3 ${rowClass}` },
+                                h("span", { class: "text-[28px] flex-shrink-0" }, task.icon),
+                                h("div", { class: "flex-1 min-w-0" },
+                                    h("div", { class: "text-[13px] font-semibold text-[var(--color-parchment)] mb-1" }, task.name),
+                                    h("div", { class: "text-[10px] text-[#c8a96e] opacity-80" },
+                                        alreadyUnlocked && h("span", { class: "text-[#7a7]" }, "\u2713 Unlocked in store"),
+                                        alreadyUnlocked && task.requiresItem && ' · ',
+                                        "\u23F1 ",
+                                        formatHours(task.hours),
+                                        " total",
+                                        task.requiresItem && (h("span", { class: `${missingReq ? 'text-[#e57373]' : 'text-[var(--color-parchment)] opacity-50'}` },
+                                            ' · ',
+                                            "Needs: ",
+                                            minigamesData.itemNames[task.requiresItem] || task.requiresItem)))),
+                                h("div", { class: "flex-shrink-0 text-right" },
+                                    h("div", { class: "text-[18px]" }, alreadyUnlocked ? '✓' : '→'),
+                                    h("div", { class: "text-[9px] text-[#c8a96e] opacity-70" }, minigamesData.itemNames[task.product] || task.product))));
+                        })));
+                })))), detail: selectedQuest ? (h("div", { class: "p-4" },
+                h(QuestDetailsBody, { quest: selectedQuest, stats: stats, completedQuests: completedQuests, itemsData: itemsData, onClose: () => setSelectedQuest(null), onStart: startQuest, onAddToQueue: addToQueue, isInQueue: questQueue.some(q => q.id === selectedQuest.id), queueFull: questQueue.length >= QUEST_QUEUE_MAX }))) : (h("div", { class: "p-6 text-center text-[12px] text-[var(--color-parchment)] opacity-50" }, "Select a quest to see details and start it.")) }),
+        !isDesktop && selectedQuest && (h(QuestDetailsModal, { quest: selectedQuest, stats: stats, completedQuests: completedQuests, itemsData: itemsData, onClose: () => setSelectedQuest(null), onStart: startQuest, onAddToQueue: addToQueue, isInQueue: questQueue.some(q => q.id === selectedQuest.id), queueFull: questQueue.length >= QUEST_QUEUE_MAX }))));
 }
 // ──────────────────────────────────────────────────────────────────────────────
 function QuestDetailsModal({ quest, stats, completedQuests, itemsData, onClose, onStart, onAddToQueue, isInQueue, queueFull }) {
+    return (h(Modal, { title: quest.name, onClose: onClose },
+        h(QuestDetailsBody, { quest: quest, stats: stats, completedQuests: completedQuests, itemsData: itemsData, onClose: onClose, onStart: onStart, onAddToQueue: onAddToQueue, isInQueue: isInQueue, queueFull: queueFull, showCloseButton: true })));
+}
+function QuestDetailsBody({ quest, stats, completedQuests, itemsData, onClose, onStart, onAddToQueue, isInQueue, queueFull, showCloseButton = false }) {
     const completed = completedQuests.has(quest.id);
     const elig = checkQuestEligibility(quest, stats, completedQuests, questsData);
     const skillEntries = Object.entries(quest.skillRequirements || {});
     const questPrereqs = quest.questRequirements || [];
     const itemUnlockNames = (quest.itemUnlocks || [])
         .map(id => itemsData[id]?.name || id);
-    return (h(Modal, { title: quest.name, onClose: onClose },
-        h("div", { class: "flex flex-col gap-3" },
-            h(Panel, { className: "flex items-center gap-3" },
-                h("span", { class: "text-[28px]" }, completed ? '✅' : '📜'),
-                h("div", { class: "flex-1" },
-                    h("div", { class: "text-[13px] font-semibold text-[var(--color-parchment)]" },
-                        quest.complexity,
-                        " \u00B7 ",
-                        quest.length),
-                    h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60" },
-                        "Duration: ",
-                        formatQuestDuration(quest.durationSeconds)))),
-            h(Panel, null,
-                h(SectionHeader, { size: "sm", className: "mb-2" }, "Rewards"),
-                h("div", { class: "text-[12px] text-[var(--color-parchment)] flex flex-col gap-1" },
-                    h("div", null,
-                        "\uD83E\uDE99 ",
-                        h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, quest.coinReward.toLocaleString()),
-                        " coins"),
-                    Object.entries(quest.xpReward || {}).map(([skill, xp]) => (h("div", { key: skill },
-                        "\u2B50 ",
-                        h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, xp.toLocaleString()),
-                        " ",
-                        skill,
-                        " XP"))),
-                    itemUnlockNames.length > 0 && (h("div", null,
-                        "\uD83C\uDF81 Unlocks: ",
-                        h("span", { class: "text-[var(--color-gold)]" }, itemUnlockNames.join(', ')))))),
-            (skillEntries.length > 0 || questPrereqs.length > 0 || quest.questPointRequirement > 0 || quest.combatLevelRequirement > 0) && (h(Panel, null,
-                h(SectionHeader, { size: "sm", className: "mb-2" }, "Requirements"),
-                h("div", { class: "text-[12px] flex flex-col gap-1" },
-                    quest.questPointRequirement > 0 && (h(RequirementRow, { label: `${quest.questPointRequirement} Quest points`, ok: !elig.reasons.some(r => r.includes('Quest points')) })),
-                    quest.combatLevelRequirement > 0 && (h(RequirementRow, { label: `Combat level ${quest.combatLevelRequirement}`, ok: !elig.reasons.some(r => r.startsWith('Combat level')) })),
-                    skillEntries.map(([skill, lvl]) => (h(RequirementRow, { key: skill, label: `${skill.charAt(0).toUpperCase() + skill.slice(1)} ${lvl}`, ok: !elig.reasons.some(r => r.toLowerCase().startsWith(skill.toLowerCase())) }))),
-                    questPrereqs.map(pid => {
-                        const prereq = questsData.find(q => q.id === pid);
-                        const ok = completedQuests.has(pid);
-                        return (h(RequirementRow, { key: pid, label: `Quest: ${prereq ? prereq.name : pid}`, ok: ok }));
-                    })))),
-            h("div", { class: "flex flex-col gap-2" },
-                h("div", { class: "flex gap-2" },
-                    h(Button, { variant: "secondary", size: "lg", onClick: onClose, className: "flex-1" }, "Close"),
-                    !completed && (h(Button, { variant: "primary", size: "lg", disabled: !elig.eligible, onClick: () => onStart(quest), className: "flex-1" }, elig.eligible ? 'Begin Quest' : 'Locked'))),
-                !completed && (h(Button, { variant: isInQueue ? 'secondary' : 'success', size: "lg", disabled: !elig.eligible || isInQueue || (queueFull && !isInQueue), onClick: () => onAddToQueue(quest), className: "w-full" }, isInQueue ? '✓ In Queue' : queueFull ? `Queue Full (${QUEST_QUEUE_MAX}/${QUEST_QUEUE_MAX})` : '🔗 Add to Queue'))))));
+    return (h("div", { class: "flex flex-col gap-3" },
+        h(Panel, { className: "flex items-center gap-3" },
+            h("span", { class: "text-[28px]" }, completed ? '✅' : '📜'),
+            h("div", { class: "flex-1" },
+                h("div", { class: "text-[13px] font-semibold text-[var(--color-parchment)]" },
+                    quest.complexity,
+                    " \u00B7 ",
+                    quest.length),
+                h("div", { class: "text-[11px] text-[var(--color-parchment)] opacity-60" },
+                    "Duration: ",
+                    formatQuestDuration(quest.durationSeconds)))),
+        h(Panel, null,
+            h(SectionHeader, { size: "sm", className: "mb-2" }, "Rewards"),
+            h("div", { class: "text-[12px] text-[var(--color-parchment)] flex flex-col gap-1" },
+                h("div", null,
+                    "\uD83E\uDE99 ",
+                    h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, quest.coinReward.toLocaleString()),
+                    " coins"),
+                Object.entries(quest.xpReward || {}).map(([skill, xp]) => (h("div", { key: skill },
+                    "\u2B50 ",
+                    h("span", { class: "font-[var(--font-mono)] text-[var(--color-gold)]" }, xp.toLocaleString()),
+                    " ",
+                    skill,
+                    " XP"))),
+                itemUnlockNames.length > 0 && (h("div", null,
+                    "\uD83C\uDF81 Unlocks: ",
+                    h("span", { class: "text-[var(--color-gold)]" }, itemUnlockNames.join(', ')))))),
+        (skillEntries.length > 0 || questPrereqs.length > 0 || quest.questPointRequirement > 0 || quest.combatLevelRequirement > 0) && (h(Panel, null,
+            h(SectionHeader, { size: "sm", className: "mb-2" }, "Requirements"),
+            h("div", { class: "text-[12px] flex flex-col gap-1" },
+                quest.questPointRequirement > 0 && (h(RequirementRow, { label: `${quest.questPointRequirement} Quest points`, ok: !elig.reasons.some(r => r.includes('Quest points')) })),
+                quest.combatLevelRequirement > 0 && (h(RequirementRow, { label: `Combat level ${quest.combatLevelRequirement}`, ok: !elig.reasons.some(r => r.startsWith('Combat level')) })),
+                skillEntries.map(([skill, lvl]) => (h(RequirementRow, { key: skill, label: `${skill.charAt(0).toUpperCase() + skill.slice(1)} ${lvl}`, ok: !elig.reasons.some(r => r.toLowerCase().startsWith(skill.toLowerCase())) }))),
+                questPrereqs.map(pid => {
+                    const prereq = questsData.find(q => q.id === pid);
+                    const ok = completedQuests.has(pid);
+                    return (h(RequirementRow, { key: pid, label: `Quest: ${prereq ? prereq.name : pid}`, ok: ok }));
+                })))),
+        h("div", { class: "flex flex-col gap-2" },
+            h("div", { class: "flex gap-2" },
+                showCloseButton && (h(Button, { variant: "secondary", size: "lg", onClick: onClose, className: "flex-1" }, "Close")),
+                !completed && (h(Button, { variant: "primary", size: "lg", disabled: !elig.eligible, onClick: () => onStart(quest), className: "flex-1" }, elig.eligible ? 'Begin Quest' : 'Locked'))),
+            !completed && (h(Button, { variant: isInQueue ? 'secondary' : 'success', size: "lg", disabled: !elig.eligible || isInQueue || (queueFull && !isInQueue), onClick: () => onAddToQueue(quest), className: "w-full" }, isInQueue ? '✓ In Queue' : queueFull ? `Queue Full (${QUEST_QUEUE_MAX}/${QUEST_QUEUE_MAX})` : '🔗 Add to Queue')))));
 }
 function RequirementRow({ label, ok }) {
     return (h("div", { class: `flex items-center gap-2 ${ok ? 'text-[#4ade80]' : 'text-[#e57373]'}` },
