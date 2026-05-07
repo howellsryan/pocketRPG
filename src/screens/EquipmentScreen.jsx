@@ -8,6 +8,7 @@ import Panel from '../components/Panel.jsx'
 import Button from '../components/Button.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
 import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
+import { OTHER_BONUS_LABELS, OTHER_BONUS_PERCENT_KEYS } from '../utils/bonusLabels.js'
 
 const DEFAULT_CHARGE_ITEM_ID = 'zulrah_scales'
 
@@ -226,12 +227,12 @@ export default function EquipmentScreen() {
           <SectionHeader size="sm" className="mb-1 opacity-40">Other</SectionHeader>
           <div class="grid grid-cols-3 gap-1 text-[11px]">
             {Object.entries(bonuses.otherBonus).map(([k, v]) => {
-              const label = k === 'meleeStrength' ? 'Str' : k === 'rangedStrength' ? 'Rng Str' : 'Mag %'
+              const label = OTHER_BONUS_LABELS[k] || k
               return (
                 <div key={k} class="flex justify-between text-[var(--color-parchment)] opacity-70">
                   <span>{label}</span>
                   <span class="font-[var(--font-mono)]" style={{ color: v > 0 ? '#27ae60' : '#555' }}>
-                    {v > 0 ? '+' : ''}{v}
+                    {typeof v === 'boolean' ? (v ? 'Yes' : 'No') : `${v > 0 ? '+' : ''}${v}${OTHER_BONUS_PERCENT_KEYS.has(k) ? '%' : ''}`}
                   </span>
                 </div>
               )
