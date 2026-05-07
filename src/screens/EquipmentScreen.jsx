@@ -7,52 +7,9 @@ import Card from '../components/Card.jsx'
 import Panel from '../components/Panel.jsx'
 import Button from '../components/Button.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
+import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
 
 const DEFAULT_CHARGE_ITEM_ID = 'zulrah_scales'
-
-const EQ_SLOT_LABELS = {
-  head: '🪖', cape: '🧣', neck: '📿', ammo: '🏹',
-  weapon: '🗡️', body: '👕', shield: '🛡️',
-  legs: '👖', gloves: '🧤', boots: '👢', ring: '💍'
-}
-
-const EQ_SLOT_NAMES = {
-  head: 'Head', cape: 'Cape', neck: 'Neck', ammo: 'Ammo',
-  weapon: 'Weapon', body: 'Body', shield: 'Shield',
-  legs: 'Legs', gloves: 'Gloves', boots: 'Boots', ring: 'Ring'
-}
-
-/**
- * Renders a single equipment slot in the paperdoll grid.
- */
-function EquipSlot({ slotName, equipment, itemsData, onSelect }) {
-  const entry = equipment[slotName]
-  const item = entry ? itemsData[entry.itemId] : null
-  const isEmpty = !item
-  const charges = entry?.charges || 0
-
-  const bgClass = isEmpty ? 'bg-[#111] border-[#222] opacity-40' : 'bg-[var(--color-void-light)] border-[#444]'
-  const cursorClass = item ? 'cursor-pointer' : 'cursor-default'
-
-  return (
-    <button
-      onClick={() => { if (item) onSelect(slotName, item) }}
-      class={`w-14 h-14 rounded-[10px] border flex flex-col items-center justify-center relative ${bgClass} ${cursorClass}`}
-    >
-      <span style={{ fontSize: item ? '18px' : '14px' }}>
-        {item ? (item.icon || '📦') : EQ_SLOT_LABELS[slotName]}
-      </span>
-      {charges > 0 && (
-        <span class="absolute bottom-[2px] right-[2px] text-[8px] text-[#4ade80] font-bold">⚡</span>
-      )}
-      <span
-        class={`text-[7px] text-center mt-[2px] max-w-[52px] overflow-hidden text-ellipsis whitespace-nowrap ${item ? 'text-[var(--color-parchment)] font-semibold' : 'text-[#555]'}`}
-      >
-        {item ? item.name : EQ_SLOT_NAMES[slotName]}
-      </span>
-    </button>
-  )
-}
 
 export default function EquipmentScreen() {
   const { equipment, inventory, bank, updateEquipment, updateInventory, updateBank, addToast, itemsData } = useGame()
@@ -217,48 +174,20 @@ export default function EquipmentScreen() {
 
   const bonuses = getEquipmentBonuses(equipment, itemsData)
 
-  // Paperdoll grid layout:
-  //   Row 0:  [head]
-  //   Row 1:  [cape] [neck] [ammo]
-  //   Row 2:  [weapon] [body] [shield]
-  //   Row 3:  [legs]
-  //   Row 4:  [gloves] [boots] [ring]
-  const slotProps = { equipment, itemsData, onSelect: handleSelect }
-
   return (
     <div class="h-full overflow-y-auto p-4">
       <SectionHeader className="mb-3">Equipment</SectionHeader>
 
       <div class="md:grid md:grid-cols-2 md:gap-4 md:items-start">
 
-      {/* Paperdoll */}
-      <Card
-        padding="p-4"
-        className="mb-4 md:mb-0 flex flex-col items-center gap-[6px]"
-        style={{ background: 'linear-gradient(135deg, #141414, #0f0f0f)' }}
-      >
-        <div class="flex justify-center">
-          <EquipSlot slotName="head" {...slotProps} />
-        </div>
-        <div class="flex gap-[6px] justify-center">
-          <EquipSlot slotName="cape" {...slotProps} />
-          <EquipSlot slotName="neck" {...slotProps} />
-          <EquipSlot slotName="ammo" {...slotProps} />
-        </div>
-        <div class="flex gap-[6px] justify-center">
-          <EquipSlot slotName="weapon" {...slotProps} />
-          <EquipSlot slotName="body" {...slotProps} />
-          <EquipSlot slotName="shield" {...slotProps} />
-        </div>
-        <div class="flex justify-center">
-          <EquipSlot slotName="legs" {...slotProps} />
-        </div>
-        <div class="flex gap-[6px] justify-center">
-          <EquipSlot slotName="gloves" {...slotProps} />
-          <EquipSlot slotName="boots" {...slotProps} />
-          <EquipSlot slotName="ring" {...slotProps} />
-        </div>
-      </Card>
+      <div class="mb-4 md:mb-0">
+        <EquipmentPaperdoll
+          equipment={equipment}
+          itemsData={itemsData}
+          onSelect={handleSelect}
+          size="md"
+        />
+      </div>
 
       {/* Bonuses summary */}
       <Card>
