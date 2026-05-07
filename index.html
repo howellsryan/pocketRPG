@@ -33768,6 +33768,25 @@ function formatObtainSourceMessage(itemId, data) {
     return `Obtain from ${sources.slice(0, -1).join(', ')}, or ${sources[sources.length - 1]}`;
 }
 
+// ── engine/combatSetBonuses.js ──
+const VOID_SET_ITEM_IDS = ['void_knight_top', 'void_knight_robe', 'void_knight_helm', 'void_knight_gloves'];
+function equippedItemId(equipment, slot) {
+    const entry = equipment?.[slot];
+    return entry?.itemId || null;
+}
+function hasFullVoidKnightSet(equipment) {
+    return equippedItemId(equipment, 'body') === 'void_knight_top'
+        && equippedItemId(equipment, 'legs') === 'void_knight_robe'
+        && equippedItemId(equipment, 'head') === 'void_knight_helm'
+        && equippedItemId(equipment, 'hands') === 'void_knight_gloves';
+}
+function getVoidKnightCombatMultipliers(equipment) {
+    if (!hasFullVoidKnightSet(equipment)) {
+        return { meleeAccuracy: 1, meleeDamage: 1, rangedAccuracy: 1, rangedDamage: 1, magicAccuracy: 1, magicDamage: 1 };
+    }
+    return { meleeAccuracy: 1.125, meleeDamage: 1.125, rangedAccuracy: 1.125, rangedDamage: 1.125, magicAccuracy: 1.45, magicDamage: 1.05 };
+}
+
 // ── engine/combat.js ──
 
 
