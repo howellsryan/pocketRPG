@@ -13,6 +13,10 @@ describe('new minigame tasks', () => {
     expect(byName.get('Obtain Imbued God Cape')?.hours).toBe(2)
     expect(byName.get('Grind full void')?.hours).toBe(10)
     expect(byName.get('Grind full void')?.products).toEqual({ void_hat: 1, void_body: 1, void_bottoms: 1, void_gloves: 1 })
+    expect(byName.get('Obtain decorative armour')?.minigame).toBe('castle_wars')
+    expect(byName.get('Grind Angler Net')?.minigame).toBe('fishing_trawler')
+    expect(byName.get('Obtain Imbued God Cape')?.minigame).toBe('mage_arena')
+    expect(byName.get('Grind full void')?.minigame).toBe('pest_control')
   })
 })
 
