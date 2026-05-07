@@ -283,9 +283,9 @@ export default function EquipmentScreen() {
         </div>
 
         {/* Inventory display */}
-        <div class="border-t border-[#222] mt-4 pt-4">
-          <SectionHeader size="sm" className="mb-3 opacity-50">Inventory</SectionHeader>
-          <div class="grid grid-cols-4 gap-2">
+        <div class="border-t border-[#222] mt-3 pt-3">
+          <SectionHeader size="sm" className="mb-2 opacity-50">Inventory</SectionHeader>
+          <div class="grid grid-cols-7 gap-1">
             {inventory.map((slot, i) => (
               <ItemSlot
                 key={i}
