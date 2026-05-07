@@ -5430,7 +5430,7 @@
   },
   "arim_the_blighted": {
     "id": "arim_the_blighted",
-    "name": "Arim the Blighted",
+    "name": "Ahrim the Blighted",
     "boss": true,
     "combatLevel": 115,
     "hitpoints": 100,

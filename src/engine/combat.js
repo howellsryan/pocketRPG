@@ -10,6 +10,7 @@ import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE, EAT_TICK_COST } from '../utils/constants.js'
 import { randInt } from '../utils/helpers.js'
 import { getSlayerTaskEquipmentBonuses } from './slayerCombatBonuses.js'
+import { getVoidKnightCombatMultipliers } from './combatSetBonuses.js'
 
 /**
  * Create a new combat state
@@ -404,6 +405,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     }
 
     const slayerEquipmentBonus = getSlayerTaskEquipmentBonuses({ equipment, itemsData, slayerTask, monsterId: monster.id })
+    const voidMult = getVoidKnightCombatMultipliers(equipment)
     let damage = 0
     let xpSkills = {}
 
@@ -420,10 +422,10 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
 
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(boostedPlayerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-      let maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
+      let maxHit = Math.floor(meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength) * voidMult.meleeDamage)
       maxHit = Math.floor(maxHit + slayerEquipmentBonus.damageFlat)
       const effAtk = effectiveAttack(boostedPlayerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-      const atkRoll = maxAttackRoll(effAtk, (bonuses.attackBonus[weaponStyle] || 0) + slayerEquipmentBonus.accuracyFlat)
+      const atkRoll = Math.floor(maxAttackRoll(effAtk, (bonuses.attackBonus[weaponStyle] || 0) + slayerEquipmentBonus.accuracyFlat) * voidMult.meleeAccuracy)
       const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
       const acc = hitChance(atkRoll, defRoll)
       damage = rollDamage(acc, maxHit)
@@ -477,8 +479,8 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
 
       const styleBonus = getRangedStyleBonus(state.stance)
       const effRng = effectiveRanged(boostedPlayerStats.ranged, 0, 1.0, styleBonus)
-      let maxHit = rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength)
-      let atkRoll = maxAttackRoll(effRng, (bonuses.attackBonus.ranged || 0) + slayerEquipmentBonus.accuracyFlat)
+      let maxHit = Math.floor(rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength) * voidMult.rangedDamage)
+      let atkRoll = Math.floor(maxAttackRoll(effRng, (bonuses.attackBonus.ranged || 0) + slayerEquipmentBonus.accuracyFlat) * voidMult.rangedAccuracy)
 
       // Dragon Hunter Crossbow: +30% accuracy and damage vs dragon-type monsters
       if (equippedWeapon?.dragonHunter && monster.isDragon) {
@@ -594,14 +596,14 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       }
 
       const effMag = effectiveMagic(boostedPlayerStats.magic)
-      const atkRoll = maxAttackRoll(effMag, (bonuses.attackBonus.magic || 0) + slayerEquipmentBonus.accuracyFlat)
+      const atkRoll = Math.floor(maxAttackRoll(effMag, (bonuses.attackBonus.magic || 0) + slayerEquipmentBonus.accuracyFlat) * voidMult.magicAccuracy)
       const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0)
       const acc = hitChance(atkRoll, defRoll)
       // Max hit scales with magic level: base at level 75, +1 per 3 levels above.
       // At 75 = 24, at 99 = 32, at 123 = 39 (matches OSRS trident formulas approx).
       const magicLevel = boostedPlayerStats.magic || 1
       const baseDamage = Math.max(1, Math.floor(magicLevel / 3) + 9)
-      const maxHit = Math.floor(magicMaxHit(baseDamage, bonuses.otherBonus.magicDamage) + slayerEquipmentBonus.damageFlat)
+      const maxHit = Math.floor(magicMaxHit(baseDamage, bonuses.otherBonus.magicDamage + (voidMult.magicDamage > 1 ? 5 : 0)) + slayerEquipmentBonus.damageFlat)
       damage = rollDamage(acc, maxHit)
 
       if (weaponIsScaleCharged) {
@@ -625,10 +627,10 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       // Only cast if runes are available
       if (hasRunes) {
         const effMag = effectiveMagic(boostedPlayerStats.magic)
-        const atkRoll = maxAttackRoll(effMag, (bonuses.attackBonus.magic || 0) + slayerEquipmentBonus.accuracyFlat)
+        const atkRoll = Math.floor(maxAttackRoll(effMag, (bonuses.attackBonus.magic || 0) + slayerEquipmentBonus.accuracyFlat) * voidMult.magicAccuracy)
         const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0)
         const acc = hitChance(atkRoll, defRoll)
-        const maxHit = Math.floor(magicMaxHit(state.spell.baseDamage, bonuses.otherBonus.magicDamage) + slayerEquipmentBonus.damageFlat)
+        const maxHit = Math.floor(magicMaxHit(state.spell.baseDamage, bonuses.otherBonus.magicDamage + (voidMult.magicDamage > 1 ? 5 : 0)) + slayerEquipmentBonus.damageFlat)
         damage = rollDamage(acc, maxHit)
 
         // Track which runes to consume (excluding those provided by staff)

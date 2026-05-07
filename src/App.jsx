@@ -76,6 +76,27 @@ function clampByClockWatermark(elapsedMs) {
 // Records a oneShot minigame product drop against the minigame's collection
 // log section. No-op if the (product, minigame) pair isn't in the log
 // (e.g. data drift), so callers can fire safely.
+
+function getMinigameRewardEntries(task) {
+  if (!task) return []
+  const qty = task.qty || 1
+  if (Array.isArray(task.rewardItems) && task.rewardItems.length > 0) {
+    return task.rewardItems.map((itemId) => ({ itemId, qty }))
+  }
+  return task.product ? [{ itemId: task.product, qty }] : []
+}
+
+function grantMinigameTaskRewards(task, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame }) {
+  const rewards = getMinigameRewardEntries(task)
+  if (rewards.length === 0) return
+  const bankUpdates = {}
+  for (const reward of rewards) {
+    bankUpdates[reward.itemId] = (bankUpdates[reward.itemId] || 0) + reward.qty
+    unlockMinigameItem(reward.itemId)
+    recordCollectionLogDropForMinigame({ ...task, product: reward.itemId })
+  }
+  updateBankDirect(bankUpdates)
+}
 function recordCollectionLogDropForMinigame(task) {
   const itemId = task?.product
   const sourceId = task?.minigame
@@ -525,9 +546,7 @@ function GameApp() {
             const prevRemaining = savedTask.ticksRemaining ?? totalTicks
             const newRemaining = Math.max(0, prevRemaining - elapsedTicks)
             if (newRemaining <= 0) {
-              updateBankDirect({ [savedTask.gatherTask.product]: savedTask.gatherTask.qty || 1 })
-              unlockMinigameItem(savedTask.gatherTask.product)
-              recordCollectionLogDropForMinigame(savedTask.gatherTask)
+              grantMinigameTaskRewards(savedTask.gatherTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
               setActiveTask(null)
               sim = { minigameCompleted: true }
             } else {
@@ -540,9 +559,7 @@ function GameApp() {
             const prevRemaining = savedTask.ticksRemaining ?? totalTicks
             const newRemaining = Math.max(0, prevRemaining - elapsedTicks)
             if (newRemaining <= 0) {
-              updateBankDirect({ [savedTask.minigameTask.product]: savedTask.minigameTask.qty || 1 })
-              unlockMinigameItem(savedTask.minigameTask.product)
-              recordCollectionLogDropForMinigame(savedTask.minigameTask)
+              grantMinigameTaskRewards(savedTask.minigameTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
               setActiveTask(null)
               sim = { minigameCompleted: true }
             } else {
@@ -824,11 +841,7 @@ function GameApp() {
         const total = task.totalTicks ?? task.gatherTask.ticks
         const remaining = (task.ticksRemaining ?? total) - 1
         if (remaining <= 0) {
-          const product = task.gatherTask.product
-          const qty = task.gatherTask.qty || 1
-          updateBankDirect({ [product]: qty })
-          unlockMinigameItem(product)
-          recordCollectionLogDropForMinigame(task.gatherTask)
+          grantMinigameTaskRewards(task.gatherTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
           addToast(`${task.gatherTask.icon || '🎮'} ${task.gatherTask.name} complete!`, 'levelup', '🏆')
           setActiveTask(null)
         } else {
@@ -842,9 +855,7 @@ function GameApp() {
         const remaining = (task.ticksRemaining ?? total) - 1
         if (remaining <= 0) {
           const mgTask = task.minigameTask
-          updateBankDirect({ [mgTask.product]: mgTask.qty || 1 })
-          unlockMinigameItem(mgTask.product)
-          recordCollectionLogDropForMinigame(mgTask)
+          grantMinigameTaskRewards(mgTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
           addToast(`${mgTask.icon || '🎮'} ${mgTask.name} complete!`, 'levelup', '🏆')
           setActiveTask(null)
         } else {
