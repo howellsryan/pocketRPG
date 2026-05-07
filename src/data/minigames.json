@@ -62,13 +62,49 @@
       "oneShot": true
     },
     {
+      "id": "cw_decorative_top",
+      "name": "Obtain decorative armour",
+      "icon": "🛡️",
+      "description": "Play Castle Wars until you can purchase a Decorative Top.",
+      "hours": 2,
+      "ticks": 12000,
+      "product": "decorative_top",
+      "qty": 1,
+      "minigame": "castle_wars",
+      "oneShot": true
+    },
+    {
+      "id": "ft_angler_net",
+      "name": "Grind Angler Net",
+      "icon": "🎣",
+      "description": "Play Castle Wars until you can purchase an Angler Net.",
+      "hours": 5,
+      "ticks": 30000,
+      "product": "angler_net",
+      "qty": 1,
+      "minigame": "fishing_trawler",
+      "oneShot": true
+    },
+    {
+      "id": "ma_imbued_god_cape",
+      "name": "Obtain Imbued God Cape",
+      "icon": "🧙",
+      "description": "Play Castle Wars until you can purchase an Imbued God Cape.",
+      "hours": 2,
+      "ticks": 12000,
+      "product": "imbued_god_cape",
+      "qty": 1,
+      "minigame": "mage_arena",
+      "oneShot": true
+    },
+    {
       "id": "pc_void_set",
       "name": "Grind for Void Knight Set",
       "icon": "\ud83d\udee1\ufe0f",
       "description": "Play Pest Control until you earn the full Void Knight set.",
       "hours": 6,
       "ticks": 36000,
-      "product": "void_knight_top",
+      "product": "void_knight_set",
       "rewardItems": [
         "void_knight_helm",
         "void_knight_top",
@@ -81,26 +117,12 @@
     }
   ],
   "minigames": [
-    {
-      "id": "barbarian_assault",
-      "label": "Barbarian Assault",
-      "icon": "\u2694\ufe0f"
-    },
-    {
-      "id": "warriors_guild",
-      "label": "Warriors' Guild",
-      "icon": "\ud83c\udfdb\ufe0f"
-    },
-    {
-      "id": "castle_wars",
-      "label": "Castle Wars",
-      "icon": "\ud83c\udff0"
-    },
-    {
-      "id": "pest_control",
-      "label": "Pest Control",
-      "icon": "\ud83d\udee1\ufe0f"
-    }
+    { "id": "barbarian_assault", "label": "Barbarian Assault", "icon": "⚔️" },
+    { "id": "warriors_guild", "label": "Warriors' Guild", "icon": "🏛️" },
+    { "id": "castle_wars", "label": "Castle Wars", "icon": "🏰" },
+    { "id": "fishing_trawler", "label": "Fishing Trawler", "icon": "🛶" },
+    { "id": "mage_arena", "label": "Mage Arena", "icon": "🪄" },
+    { "id": "pest_control", "label": "Pest Control", "icon": "🛡️" }
   ],
   "itemNames": {
     "fighter_torso": "Fighter torso",
@@ -108,6 +130,9 @@
     "rune_defender": "Rune defender",
     "dragon_defender": "Dragon defender",
     "halo": "Halo",
+    "decorative_top": "Decorative Top",
+    "angler_net": "Angler Net",
+    "imbued_god_cape": "Imbued God Cape",
     "void_knight_set": "Void Knight Set",
     "void_knight_helm": "Void Knight Helm",
     "void_knight_top": "Void Knight Top",

@@ -464,56 +464,8 @@ export default function InventoryScreen() {
       {selected && (
         <SharedItemModal item={selected.item} quantity={selected.slot.quantity} noted={selected.slot.noted} onClose={() => setSelected(null)}>
           <div class="space-y-2">
-              {selected.slot.noted && (
-                <p style={{ color: '#d4a017', fontWeight: '600', marginBottom: '4px' }}>📜 Noted — cannot be used</p>
-              )}
-              {selected.item.type === 'food' && <p>Heals {selected.item.heals} HP</p>}
-              {selected.item.type === 'weapon' && (
-                <div class="space-y-1">
-                  <p>Attack speed: {selected.item.attackSpeed} ticks</p>
-                  <p>Style: {selected.item.attackStyle}</p>
-                  {selected.item.otherBonus?.meleeStrength > 0 && <p>Strength bonus: +{selected.item.otherBonus.meleeStrength}</p>}
-                  {selected.item.scaleCharged && (
-                    <p class="mt-1">⚡ Charges: <span class="text-[var(--color-emerald)] font-bold">{selected.slot.charges || 0}</span></p>
-                  )}
-                </div>
-              )}
-              {selected.item.type === 'armour' && (
-                <div class="space-y-1">
-                  {(selected.item.attackBonus?.stab > 0 || selected.item.attackBonus?.slash > 0 || selected.item.attackBonus?.crush > 0) && (
-                    <>
-                      <p>Attack bonuses:</p>
-                      {selected.item.attackBonus.stab > 0 && <p class="ml-2">Stab: +{selected.item.attackBonus.stab}</p>}
-                      {selected.item.attackBonus.slash > 0 && <p class="ml-2">Slash: +{selected.item.attackBonus.slash}</p>}
-                      {selected.item.attackBonus.crush > 0 && <p class="ml-2">Crush: +{selected.item.attackBonus.crush}</p>}
-                    </>
-                  )}
-                  {(selected.item.attackBonus?.ranged > 0 || selected.item.attackBonus?.magic > 0) && (
-                    <>
-                      {selected.item.attackBonus.ranged > 0 && <p>Ranged: +{selected.item.attackBonus.ranged}</p>}
-                      {selected.item.attackBonus.magic > 0 && <p>Magic: +{selected.item.attackBonus.magic}</p>}
-                    </>
-                  )}
-                  {(selected.item.defenceBonus?.stab > 0 || selected.item.defenceBonus?.slash > 0 || selected.item.defenceBonus?.crush > 0 || selected.item.defenceBonus?.ranged > 0 || selected.item.defenceBonus?.magic > 0) && (
-                    <>
-                      <p>Defence bonuses:</p>
-                      {selected.item.defenceBonus.stab > 0 && <p class="ml-2">Stab: +{selected.item.defenceBonus.stab}</p>}
-                      {selected.item.defenceBonus.slash > 0 && <p class="ml-2">Slash: +{selected.item.defenceBonus.slash}</p>}
-                      {selected.item.defenceBonus.crush > 0 && <p class="ml-2">Crush: +{selected.item.defenceBonus.crush}</p>}
-                      {selected.item.defenceBonus.ranged > 0 && <p class="ml-2">Ranged: +{selected.item.defenceBonus.ranged}</p>}
-                      {selected.item.defenceBonus.magic > 0 && <p class="ml-2">Magic: +{selected.item.defenceBonus.magic}</p>}
-                    </>
-                  )}
-                  {selected.item.otherBonus?.meleeStrength > 0 && <p>Strength: +{selected.item.otherBonus.meleeStrength}</p>}
-                  {selected.item.otherBonus?.prayer > 0 && <p>Prayer: +{selected.item.otherBonus.prayer}</p>}
-                </div>
-              )}
-              {selected.item.requirements && Object.entries(selected.item.requirements).length > 0 && (
-                <p class="mt-1">Requires: {Object.entries(selected.item.requirements).map(([s, l]) => `${s} ${l}`).join(', ')}</p>
-              )}
-              {selected.slot.quantity > 1 && <p>Quantity: {selected.slot.quantity}</p>}
-              {selected.item.shopValue > 0 && (
-                <p class="mt-1">Value: <span class="text-[var(--color-gold)]">{selected.item.shopValue} gp</span></p>
+              {selected.item.scaleCharged && (
+                <p class="mt-1">⚡ Charges: <span class="text-[var(--color-emerald)] font-bold">{selected.slot.charges || 0}</span></p>
               )}
             {/* Special attack info — shown for weapons with a spec */}
             {selected.item.specialAttack && (
