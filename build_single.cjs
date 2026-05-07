@@ -54,6 +54,7 @@ const sourceFiles = [
   'engine/quests.js',
   'engine/questIdleCascade.js',
   'engine/clueScrolls.js',
+  'engine/collectionLog.js',
   'engine/skipPreflight.js',
   'db/database.js',
   'db/stores.js',
@@ -63,6 +64,7 @@ const sourceFiles = [
   'cloud/criticalSavePolicy.js',
   'cloud/sync.js',
   'cloud/pvp.js',
+  'cloud/collectionLog.js',
   'state/gameState.js',
   'state/pvpState.js',
   'components/Modal.js',
@@ -87,6 +89,7 @@ const sourceFiles = [
   'components/BuyCreditsModal.js',
   'components/IdleCombatSetupModal.js',
   'components/EquipmentPaperdoll.js',
+  'components/CollectionLogPanel.js',
   'screens/HomeScreen.js',
   'screens/StatsScreen.js',
   'screens/InventoryScreen.js',
@@ -145,6 +148,7 @@ const farmingJSON = readSrc('data/farming.json');
 const questsJSON = readSrc('data/quests.json');
 const minigamesJSON = readSrc('data/minigames.json');
 const cluesJSON = readSrc('data/clues.json');
+const collectionLogJSON = readSrc('data/collectionLog.json');
 
 // Concatenate all JS
 let allJS = '';
@@ -201,6 +205,7 @@ const farmingData = ${farmingJSON};
 const questsData = ${questsJSON};
 const minigamesData = ${minigamesJSON};
 const cluesData = ${cluesJSON};
+const collectionLogData = ${collectionLogJSON};
 
 ${allJS}
 
