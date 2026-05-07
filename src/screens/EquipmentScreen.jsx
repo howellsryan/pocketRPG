@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
-import { unequipSlot, getEquipmentBonuses } from '../engine/equipment.js'
+import { unequipSlot, getEquipmentBonuses, checkEquipRequirements, equipItem } from '../engine/equipment.js'
 import { EQUIPMENT_SLOTS } from '../utils/constants.js'
 import SharedItemModal from '../components/SharedItemModal.jsx'
 import Card from '../components/Card.jsx'
@@ -8,20 +8,63 @@ import Panel from '../components/Panel.jsx'
 import Button from '../components/Button.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
 import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
+import ItemSlot from '../components/ItemSlot.jsx'
 import { OTHER_BONUS_LABELS, OTHER_BONUS_PERCENT_KEYS } from '../utils/bonusLabels.js'
 
 const DEFAULT_CHARGE_ITEM_ID = 'zulrah_scales'
 
 export default function EquipmentScreen() {
-  const { equipment, inventory, bank, updateEquipment, updateInventory, updateBank, addToast, itemsData } = useGame()
+  const { equipment, inventory, bank, stats, updateEquipment, updateInventory, updateBank, addToast, itemsData, completedQuests } = useGame()
   const [selected, setSelected] = useState(null) // { slot, item }
   const [showSpecInfo, setShowSpecInfo] = useState(false)
   const [chargeInput, setChargeInput] = useState('')
+  const [invSelected, setInvSelected] = useState(null) // { slotIndex, slot, item }
 
   const handleSelect = (slotName, item) => {
     setSelected({ slot: slotName, item })
     setShowSpecInfo(false)
     setChargeInput('')
+  }
+
+  const handleInvSlotClick = (slot, item, index) => {
+    setInvSelected({ slotIndex: index, slot, item })
+  }
+
+  const handleEquipFromInv = () => {
+    if (!invSelected) return
+    const { slotIndex, item } = invSelected
+
+    const reqError = checkEquipRequirements(item, stats, completedQuests)
+    if (reqError) {
+      if (reqError.reason === 'quest') {
+        addToast(`Complete quest to equip: ${reqError.questUnlock.replace(/_/g, ' ')}`, 'error')
+      } else {
+        addToast(`Need ${reqError.skill} level ${reqError.required} to equip`, 'error')
+      }
+      setInvSelected(null)
+      return
+    }
+
+    const newEquip = { ...equipment }
+    const newInv = [...inventory]
+    const sourceSlot = newInv[slotIndex]
+    newInv[slotIndex] = null
+
+    const result = equipItem(newEquip, item, itemsData, sourceSlot)
+    if (result.equipped) {
+      for (const unequipped of result.unequipped) {
+        const empty = newInv.indexOf(null)
+        if (empty !== -1 && unequipped) {
+          const invEntry = { itemId: unequipped.itemId, quantity: unequipped.quantity || 1 }
+          if (unequipped.charges && unequipped.charges > 0) invEntry.charges = unequipped.charges
+          newInv[empty] = invEntry
+        }
+      }
+      updateEquipment(newEquip)
+      updateInventory(newInv)
+      addToast(`Equipped ${item.name}`, 'info')
+    }
+    setInvSelected(null)
   }
 
   const handleUnequip = () => {
@@ -179,22 +222,22 @@ export default function EquipmentScreen() {
     <div class="h-full overflow-y-auto p-4">
       <SectionHeader className="mb-3">Equipment</SectionHeader>
 
-      <div class="md:grid md:grid-cols-2 md:gap-4 md:items-start">
-
-      <div class="mb-4 md:mb-0">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+      <div class="w-full">
         <EquipmentPaperdoll
           equipment={equipment}
           itemsData={itemsData}
           onSelect={handleSelect}
           size="md"
+          className="w-full"
         />
       </div>
 
       {/* Bonuses summary */}
-      <Card>
+      <Card className="w-full h-full">
         <SectionHeader size="sm" className="mb-2 opacity-50">Bonuses</SectionHeader>
 
-        <div class="grid grid-cols-2 gap-2 text-[11px]">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4 text-[11px] md:text-[13px]">
           {/* Attack bonuses */}
           <div>
             <SectionHeader size="sm" className="mb-1 opacity-40">Attack</SectionHeader>
@@ -223,9 +266,9 @@ export default function EquipmentScreen() {
         </div>
 
         {/* Other bonuses */}
-        <div class="border-t border-[#222] mt-2 pt-2">
+        <div class="border-t border-[#222] mt-3 pt-3">
           <SectionHeader size="sm" className="mb-1 opacity-40">Other</SectionHeader>
-          <div class="grid grid-cols-3 gap-1 text-[11px]">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 md:gap-3 text-[11px] md:text-[13px]">
             {Object.entries(bonuses.otherBonus).map(([k, v]) => {
               const label = OTHER_BONUS_LABELS[k] || k
               return (
@@ -239,9 +282,41 @@ export default function EquipmentScreen() {
             })}
           </div>
         </div>
+
+        {/* Inventory display — desktop only */}
+        <div class="hidden lg:block border-t border-[#222] mt-3 pt-3">
+          <SectionHeader size="sm" className="mb-2 opacity-50">Inventory</SectionHeader>
+          <div class="grid grid-cols-7 gap-1">
+            {inventory.map((slot, i) => (
+              <ItemSlot
+                key={i}
+                slot={slot}
+                onClick={(s, item) => handleInvSlotClick(s, item, i)}
+                size="small"
+              />
+            ))}
+          </div>
+        </div>
       </Card>
 
       </div>
+
+      {/* Inventory item modal */}
+      {invSelected && (
+        <SharedItemModal item={invSelected.item} quantity={invSelected.slot.quantity} noted={invSelected.slot.noted} onClose={() => setInvSelected(null)}>
+          <div class="flex flex-col gap-2">
+            {invSelected.item.type === 'armour' || invSelected.item.type === 'weapon' ? (
+              <Button variant="primary" size="lg" onClick={handleEquipFromInv} className="w-full">
+                Equip
+              </Button>
+            ) : (
+              <p class="text-[11px] text-[var(--color-parchment)] opacity-60">
+                This item cannot be equipped
+              </p>
+            )}
+          </div>
+        </SharedItemModal>
+      )}
 
       {/* Unequip modal */}
       {selected && (

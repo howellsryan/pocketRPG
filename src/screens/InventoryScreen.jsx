@@ -448,12 +448,13 @@ export default function InventoryScreen() {
         </div>
       </div>
 
-      <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-8 xl:grid-cols-10 gap-2 justify-items-center">
+      <div class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-7 gap-2 md:gap-3 justify-items-center">
         {inventory.map((slot, i) => (
           <ItemSlot
             key={i}
             slot={slot}
             onClick={(s, item) => handleSlotClick(s, item, i)}
+            size="inventory"
             showName
           />
         ))}
