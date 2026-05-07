@@ -7524,7 +7524,7 @@
     "slot": "head",
     "stackable": false,
     "icon": "\ud83d\udc80",
-    "shopValue": 0,
+    "shopValue": 1000000,
     "attackBonus": {
       "stab": 10,
       "slash": 10,
@@ -8137,14 +8137,31 @@
     "stackable": false,
     "attackSpeed": 4,
     "attackStyle": "stab",
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0, "fishingXpPercent": 10 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "fishingXpPercent": 10
+    },
     "toolFor": "fishing",
     "speedMultiplier": 0.7,
     "requirements": {},
     "shopValue": 1000000,
-    "icon": "🪢",
+    "icon": "\ud83e\udea2",
     "isGeneralStore": false,
     "isUntradeable": true
   },
@@ -10357,12 +10374,28 @@
     "slot": "body",
     "stackable": false,
     "isUntradeable": true,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 20, "slash": 20, "crush": 20, "magic": 20, "ranged": 20 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 20,
+      "slash": 20,
+      "crush": 20,
+      "magic": 20,
+      "ranged": 20
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
     "requirements": {},
     "shopValue": 1000000,
-    "icon": "🎽",
+    "icon": "\ud83c\udfbd",
     "isGeneralStore": false
   },
   "imbued_god_cape": {
@@ -10372,12 +10405,30 @@
     "slot": "cape",
     "stackable": false,
     "isUntradeable": true,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 15, "ranged": 0 },
-    "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 15, "ranged": 0 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 3 },
-    "requirements": { "magic": 50 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 15,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 15,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 3
+    },
+    "requirements": {
+      "magic": 50
+    },
     "shopValue": 1000000,
-    "icon": "🧣",
+    "icon": "\ud83e\udde3",
     "isGeneralStore": false
   },
   "void_hat": {
@@ -10387,12 +10438,35 @@
     "slot": "head",
     "stackable": false,
     "isUntradeable": true,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "defence": 42, "attack": 42, "strength": 42, "ranged": 42, "hitpoints": 42, "magic": 42 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 42,
+      "attack": 42,
+      "strength": 42,
+      "ranged": 42,
+      "hitpoints": 42,
+      "magic": 42
+    },
     "shopValue": 1000000,
-    "icon": "🪖",
+    "icon": "\ud83e\ude96",
     "isGeneralStore": false
   },
   "void_body": {
@@ -10402,12 +10476,36 @@
     "slot": "body",
     "stackable": false,
     "isUntradeable": true,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 45, "slash": 45, "crush": 45, "magic": 45, "ranged": 45 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0, "prayer": 3 },
-    "requirements": { "defence": 42, "attack": 42, "strength": 42, "ranged": 42, "hitpoints": 42, "magic": 42 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 45,
+      "slash": 45,
+      "crush": 45,
+      "magic": 45,
+      "ranged": 45
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "prayer": 3
+    },
+    "requirements": {
+      "defence": 42,
+      "attack": 42,
+      "strength": 42,
+      "ranged": 42,
+      "hitpoints": 42,
+      "magic": 42
+    },
     "shopValue": 1000000,
-    "icon": "🥋",
+    "icon": "\ud83e\udd4b",
     "isGeneralStore": false
   },
   "void_bottoms": {
@@ -10417,12 +10515,36 @@
     "slot": "legs",
     "stackable": false,
     "isUntradeable": true,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 30, "slash": 30, "crush": 30, "magic": 30, "ranged": 30 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0, "prayer": 3 },
-    "requirements": { "defence": 42, "attack": 42, "strength": 42, "ranged": 42, "hitpoints": 42, "magic": 42 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 30,
+      "slash": 30,
+      "crush": 30,
+      "magic": 30,
+      "ranged": 30
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "prayer": 3
+    },
+    "requirements": {
+      "defence": 42,
+      "attack": 42,
+      "strength": 42,
+      "ranged": 42,
+      "hitpoints": 42,
+      "magic": 42
+    },
     "shopValue": 1000000,
-    "icon": "👖",
+    "icon": "\ud83d\udc56",
     "isGeneralStore": false
   },
   "void_gloves": {
@@ -10432,12 +10554,35 @@
     "slot": "gloves",
     "stackable": false,
     "isUntradeable": true,
-    "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "defenceBonus": { "stab": 6, "slash": 6, "crush": 6, "magic": 6, "ranged": 6 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
-    "requirements": { "defence": 42, "attack": 42, "strength": 42, "ranged": 42, "hitpoints": 42, "magic": 42 },
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 6,
+      "slash": 6,
+      "crush": 6,
+      "magic": 6,
+      "ranged": 6
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "defence": 42,
+      "attack": 42,
+      "strength": 42,
+      "ranged": 42,
+      "hitpoints": 42,
+      "magic": 42
+    },
     "shopValue": 1000000,
-    "icon": "🧤",
+    "icon": "\ud83e\udde4",
     "isGeneralStore": false
   },
   "ahrims_hood": {
@@ -14656,7 +14801,7 @@
     "name": "Gloves of Slaughter",
     "type": "armour",
     "stackable": false,
-    "shopValue": 65000000,
+    "shopValue": 5000000,
     "icon": "\ud83e\udd4a",
     "isGeneralStore": false,
     "slot": "gloves",
@@ -14694,7 +14839,7 @@
     "name": "Slayer Defender",
     "type": "armour",
     "stackable": false,
-    "shopValue": 35000000,
+    "shopValue": 5000000,
     "icon": "\ud83d\udee1\ufe0f",
     "isGeneralStore": false,
     "slot": "shield",

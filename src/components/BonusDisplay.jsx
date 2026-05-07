@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks'
 import SectionHeader from './SectionHeader.jsx'
+import { OTHER_BONUS_LABELS, OTHER_BONUS_PERCENT_KEYS } from '../utils/bonusLabels.js'
 
 /**
  * Displays all bonuses from an item (attack, defence, other).
@@ -18,13 +19,6 @@ export default function BonusDisplay({ item }) {
     return null
   }
 
-  const otherBonusLabels = {
-    meleeStrength: 'Str',
-    rangedStrength: 'Rng Str',
-    magicDamage: 'Mag %',
-    fishingXpPercent: 'Fishing XP'
-  }
-  const percentBonusKeys = new Set(['fishingXpPercent'])
 
   return (
     <div class="text-[12px]">
@@ -77,9 +71,9 @@ export default function BonusDisplay({ item }) {
               {Object.entries(item.otherBonus).map(([k, v]) =>
                 v !== 0 ? (
                   <div key={k} class="flex justify-between text-[var(--color-parchment)] opacity-70 py-[2px]">
-                    <span>{otherBonusLabels[k] || k}</span>
+                    <span>{OTHER_BONUS_LABELS[k] || k}</span>
                     <span class="font-[var(--font-mono)]" style={{ color: v > 0 ? '#27ae60' : '#c0392b' }}>
-                      {v > 0 ? '+' : ''}{v}{percentBonusKeys.has(k) ? '%' : ''}
+                      {typeof v === 'boolean' ? (v ? 'Yes' : 'No') : `${v > 0 ? '+' : ''}${v}${OTHER_BONUS_PERCENT_KEYS.has(k) ? '%' : ''}`}
                     </span>
                   </div>
                 ) : null
