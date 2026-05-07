@@ -104,7 +104,7 @@
       "description": "Play Pest Control until you earn the full Void Knight set.",
       "hours": 6,
       "ticks": 36000,
-      "product": "void_knight_top",
+      "product": "void_knight_set",
       "rewardItems": [
         "void_knight_helm",
         "void_knight_top",
