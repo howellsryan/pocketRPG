@@ -16,9 +16,10 @@ const raids = require(path.join(root, 'src/data/raids.json'))
 const minigames = require(path.join(root, 'src/data/minigames.json'))
 const clues = require(path.join(root, 'src/data/clues.json'))
 
-function buildMonsters() {
+function buildMonsters(raidBossIds) {
   const sections = []
   for (const [id, m] of Object.entries(monsters)) {
+    if (raidBossIds.has(id)) continue // covered by the raid sub-section
     const uniques = (m.drops || [])
       .filter(d => items[d.itemId]?.isBossUnique)
       .map(d => d.itemId)
@@ -96,15 +97,41 @@ function buildClues() {
   return sections
 }
 
+// Monsters that are part of a raid don't get their own monster sub-section;
+// the raid covers them.
+const raidBossIds = new Set()
+for (const r of Object.values(raids)) {
+  for (const b of (r.bosses || [])) raidBossIds.add(b)
+}
+
+const categories = [
+  { id: 'monsters',  label: 'Monsters',     icon: '⚔️', sections: buildMonsters(raidBossIds) },
+  { id: 'raids',     label: 'Raids',        icon: '🏛️', sections: buildRaids()     },
+  { id: 'minigames', label: 'Minigames',    icon: '🎮', sections: buildMinigames() },
+  { id: 'clues',     label: 'Clue Scrolls', icon: '📜', sections: buildClues()     },
+]
+
+// "Shared" uniques are items that appear in 2+ collection log slots — e.g.
+// dragon axe drops from all three dagannoth kings. The UI marks every slot
+// for a shared item green as soon as the player gets it from any source.
+const sourceCount = new Map()
+for (const cat of categories) {
+  for (const sec of cat.sections) {
+    for (const itemId of sec.items) {
+      sourceCount.set(itemId, (sourceCount.get(itemId) || 0) + 1)
+    }
+  }
+}
+const sharedItems = [...sourceCount.entries()]
+  .filter(([_id, n]) => n >= 2)
+  .map(([id]) => id)
+  .sort()
+
 const output = {
   // Bumped whenever the hand-tuned schema changes; useful for migrations later.
-  version: 1,
-  categories: [
-    { id: 'monsters',  label: 'Monsters',     icon: '⚔️', sections: buildMonsters()  },
-    { id: 'raids',     label: 'Raids',        icon: '🏛️', sections: buildRaids()     },
-    { id: 'minigames', label: 'Minigames',    icon: '🎮', sections: buildMinigames() },
-    { id: 'clues',     label: 'Clue Scrolls', icon: '📜', sections: buildClues()     },
-  ],
+  version: 2,
+  sharedItems,
+  categories,
 }
 
 const total = output.categories.reduce(

@@ -31382,7 +31382,13 @@ const cluesData = {
 }
 ;
 const collectionLogData = {
-  "version": 1,
+  "version": 2,
+  "sharedItems": [
+    "draconic_visage",
+    "dragon_axe",
+    "dragon_boots",
+    "uncut_onyx"
+  ],
   "categories": [
     {
       "id": "monsters",
@@ -31404,17 +31410,6 @@ const collectionLogData = {
           "items": [
             "uncut_onyx",
             "draconic_visage"
-          ]
-        },
-        {
-          "id": "arim_the_blighted",
-          "label": "Arim the Blighted",
-          "icon": "👑",
-          "items": [
-            "ahrims_hood",
-            "ahrims_robetop",
-            "ahrims_robeskirt",
-            "ahrims_staff"
           ]
         },
         {
@@ -31506,17 +31501,6 @@ const collectionLogData = {
           ]
         },
         {
-          "id": "dharok_the_wretched",
-          "label": "Dharok the Wretched",
-          "icon": "👑",
-          "items": [
-            "dharoks_helm",
-            "dharoks_platebody",
-            "dharoks_platelegs",
-            "dharoks_greataxe"
-          ]
-        },
-        {
           "id": "gargoyle",
           "label": "Gargoyle",
           "icon": "⚔️",
@@ -31533,17 +31517,6 @@ const collectionLogData = {
             "bandos_tassets",
             "bandos_boots",
             "bandos_hilt"
-          ]
-        },
-        {
-          "id": "guthan_the_infested",
-          "label": "Guthan the Infested",
-          "icon": "👑",
-          "items": [
-            "guthans_helm",
-            "guthans_platebody",
-            "guthans_chainskirt",
-            "guthans_warspear"
           ]
         },
         {
@@ -31564,17 +31537,6 @@ const collectionLogData = {
             "zamorak_spear",
             "staff_of_the_dead",
             "zamorak_hilt"
-          ]
-        },
-        {
-          "id": "karil_the_tainted",
-          "label": "Karil the Tainted",
-          "icon": "👑",
-          "items": [
-            "karils_coif",
-            "karils_leathertop",
-            "karils_leatherskirt",
-            "karils_crossbow"
           ]
         },
         {
@@ -31652,28 +31614,6 @@ const collectionLogData = {
           "icon": "⚔️",
           "items": [
             "dragon_boots"
-          ]
-        },
-        {
-          "id": "torag_the_corrupted",
-          "label": "Torag the Corrupted",
-          "icon": "👑",
-          "items": [
-            "torags_helm",
-            "torags_platebody",
-            "torags_platelegs",
-            "torags_hammers"
-          ]
-        },
-        {
-          "id": "verac_the_defiled",
-          "label": "Verac the Defiled",
-          "icon": "👑",
-          "items": [
-            "veracs_helm",
-            "veracs_brassard",
-            "veracs_plateskirt",
-            "veracs_flail"
           ]
         },
         {
@@ -38685,33 +38625,41 @@ const TOTAL = (() => {
     }
     return n;
 })();
+// Items that appear in two or more collection-log slots. Once obtained from
+// any source, every slot for that item is considered collected (e.g. dragon
+// axe drops from all three dagannoth kings — getting it from one credits all
+// three slots). Sourced from collectionLog.json.sharedItems.
+const SHARED_ITEMS = new Set(collectionLogData.sharedItems || []);
 function getCollectionLogData() {
     return collectionLogData;
 }
 function getCollectionLogTotal() {
     return TOTAL;
 }
-// Map each itemId to the set of (categoryId, sectionId) pairs it appears in.
-// Used by drop hooks: after a kill we know `itemId` and the source identity
-// (e.g. monster id), so we ask "is this item in the collection log under
-// {category, section}?" before queuing the record.
-const ITEM_INDEX = (() => {
-    const map = new Map(); // itemId -> Array<{categoryId, sectionId}>
-    for (const cat of (collectionLogData.categories || [])) {
-        for (const sec of (cat.sections || [])) {
-            for (const itemId of (sec.items || [])) {
-                const arr = map.get(itemId) || [];
-                arr.push({ categoryId: cat.id, sectionId: sec.id });
-                map.set(itemId, arr);
-            }
-        }
-    }
-    return map;
-})();
+function isSharedCollectionLogItem(itemId) {
+    return SHARED_ITEMS.has(itemId);
+}
 function isLoggedDrop(itemId, categoryId, sectionId) {
     if (!itemId || !categoryId || !sectionId)
         return false;
     return VALID_KEYS.has(`${categoryId}:${sectionId}:${itemId}`);
+}
+// True when a given (category, section, item) slot should render as obtained
+// for the user. Direct match always counts; shared items count when ANY entry
+// for that itemId exists across the user's log.
+function isSlotObtained(entriesSet, categoryId, sectionId, itemId) {
+    if (!entriesSet || typeof entriesSet.has !== 'function')
+        return false;
+    if (entriesSet.has(`${categoryId}:${sectionId}:${itemId}`))
+        return true;
+    if (!SHARED_ITEMS.has(itemId))
+        return false;
+    // Shared item: scan the user's entries for any source with this itemId.
+    for (const key of entriesSet) {
+        if (typeof key === 'string' && key.endsWith(`:${itemId}`))
+            return true;
+    }
+    return false;
 }
 // Filter an array of {itemId, ...} drops down to those that belong in the
 // collection log under (categoryId, sectionId). Returns just the itemIds.
@@ -38732,7 +38680,8 @@ function filterLoggedDrops(drops, categoryId, sectionId) {
     return out;
 }
 // Given an entries Set keyed by `${sourceType}:${sourceId}:${itemId}`, return
-// the obtained-vs-total summary used for the top-level header.
+// the obtained-vs-total summary used for the top-level header. Shared items
+// inflate every matching slot once any one of them is collected.
 function summarizeProgress(entriesSet) {
     if (!entriesSet || typeof entriesSet.has !== 'function') {
         return { obtained: 0, total: TOTAL };
@@ -38741,7 +38690,7 @@ function summarizeProgress(entriesSet) {
     for (const cat of (collectionLogData.categories || [])) {
         for (const sec of (cat.sections || [])) {
             for (const itemId of (sec.items || [])) {
-                if (entriesSet.has(`${cat.id}:${sec.id}:${itemId}`))
+                if (isSlotObtained(entriesSet, cat.id, sec.id, itemId))
                     obtained++;
             }
         }
@@ -38756,12 +38705,12 @@ function summarizeSection(entriesSet, categoryId, sectionId, items) {
     }
     let obtained = 0;
     for (const itemId of items) {
-        if (entriesSet.has(`${categoryId}:${sectionId}:${itemId}`))
+        if (isSlotObtained(entriesSet, categoryId, sectionId, itemId))
             obtained++;
     }
     return { obtained, total: items.length };
 }
-const __testing = { ITEM_INDEX, VALID_KEYS, TOTAL };
+const __testing = { VALID_KEYS, TOTAL, SHARED_ITEMS };
 
 // ── engine/skipPreflight.js ──
 
@@ -41941,9 +41890,6 @@ function EquipmentPaperdoll({ equipment, itemsData, onSelect, size = 'md', class
 function itemLabel(itemId) {
     return itemsData[itemId]?.name || itemId;
 }
-function collectionLogEntryKey(categoryId, sectionId, itemId) {
-    return `${categoryId}:${sectionId}:${itemId}`;
-}
 function CollectionSection({ category, section, entries }) {
     const [open, setOpen] = useState(false);
     const summary = summarizeSection(entries, category.id, section.id, section.items);
@@ -41963,7 +41909,7 @@ function CollectionSection({ category, section, entries }) {
                     summary.total),
                 h("span", { class: "text-[var(--color-gold)] text-xs" }, open ? '▾' : '▸'))),
         open && (h("div", { class: "px-3 pb-3 pt-1 grid grid-cols-1 sm:grid-cols-2 gap-1" }, section.items.map(itemId => {
-            const has = entries?.has?.(collectionLogEntryKey(category.id, section.id, itemId)) || false;
+            const has = isSlotObtained(entries, category.id, section.id, itemId);
             return (h("div", { key: itemId, class: `flex items-center gap-2 px-2 py-1 rounded text-[11px] border ${has
                     ? 'border-[var(--color-hp-green)] bg-[var(--color-hp-green)] bg-opacity-10 text-[var(--color-hp-green)]'
                     : 'border-[var(--color-void-border)] text-[var(--color-parchment)] opacity-60'}`, style: has ? { backgroundColor: 'rgba(39, 174, 96, 0.12)' } : null },

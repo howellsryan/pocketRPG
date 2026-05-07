@@ -26,6 +26,12 @@ const TOTAL = (() => {
   return n
 })()
 
+// Items that appear in two or more collection-log slots. Once obtained from
+// any source, every slot for that item is considered collected (e.g. dragon
+// axe drops from all three dagannoth kings — getting it from one credits all
+// three slots). Sourced from collectionLog.json.sharedItems.
+const SHARED_ITEMS = new Set(collectionLogData.sharedItems || [])
+
 export function getCollectionLogData() {
   return collectionLogData
 }
@@ -34,27 +40,27 @@ export function getCollectionLogTotal() {
   return TOTAL
 }
 
-// Map each itemId to the set of (categoryId, sectionId) pairs it appears in.
-// Used by drop hooks: after a kill we know `itemId` and the source identity
-// (e.g. monster id), so we ask "is this item in the collection log under
-// {category, section}?" before queuing the record.
-const ITEM_INDEX = (() => {
-  const map = new Map() // itemId -> Array<{categoryId, sectionId}>
-  for (const cat of (collectionLogData.categories || [])) {
-    for (const sec of (cat.sections || [])) {
-      for (const itemId of (sec.items || [])) {
-        const arr = map.get(itemId) || []
-        arr.push({ categoryId: cat.id, sectionId: sec.id })
-        map.set(itemId, arr)
-      }
-    }
-  }
-  return map
-})()
+export function isSharedCollectionLogItem(itemId) {
+  return SHARED_ITEMS.has(itemId)
+}
 
 export function isLoggedDrop(itemId, categoryId, sectionId) {
   if (!itemId || !categoryId || !sectionId) return false
   return VALID_KEYS.has(`${categoryId}:${sectionId}:${itemId}`)
+}
+
+// True when a given (category, section, item) slot should render as obtained
+// for the user. Direct match always counts; shared items count when ANY entry
+// for that itemId exists across the user's log.
+export function isSlotObtained(entriesSet, categoryId, sectionId, itemId) {
+  if (!entriesSet || typeof entriesSet.has !== 'function') return false
+  if (entriesSet.has(`${categoryId}:${sectionId}:${itemId}`)) return true
+  if (!SHARED_ITEMS.has(itemId)) return false
+  // Shared item: scan the user's entries for any source with this itemId.
+  for (const key of entriesSet) {
+    if (typeof key === 'string' && key.endsWith(`:${itemId}`)) return true
+  }
+  return false
 }
 
 // Filter an array of {itemId, ...} drops down to those that belong in the
@@ -75,7 +81,8 @@ export function filterLoggedDrops(drops, categoryId, sectionId) {
 }
 
 // Given an entries Set keyed by `${sourceType}:${sourceId}:${itemId}`, return
-// the obtained-vs-total summary used for the top-level header.
+// the obtained-vs-total summary used for the top-level header. Shared items
+// inflate every matching slot once any one of them is collected.
 export function summarizeProgress(entriesSet) {
   if (!entriesSet || typeof entriesSet.has !== 'function') {
     return { obtained: 0, total: TOTAL }
@@ -84,7 +91,7 @@ export function summarizeProgress(entriesSet) {
   for (const cat of (collectionLogData.categories || [])) {
     for (const sec of (cat.sections || [])) {
       for (const itemId of (sec.items || [])) {
-        if (entriesSet.has(`${cat.id}:${sec.id}:${itemId}`)) obtained++
+        if (isSlotObtained(entriesSet, cat.id, sec.id, itemId)) obtained++
       }
     }
   }
@@ -99,9 +106,9 @@ export function summarizeSection(entriesSet, categoryId, sectionId, items) {
   }
   let obtained = 0
   for (const itemId of items) {
-    if (entriesSet.has(`${categoryId}:${sectionId}:${itemId}`)) obtained++
+    if (isSlotObtained(entriesSet, categoryId, sectionId, itemId)) obtained++
   }
   return { obtained, total: items.length }
 }
 
-export const __testing = { ITEM_INDEX, VALID_KEYS, TOTAL }
+export const __testing = { VALID_KEYS, TOTAL, SHARED_ITEMS }

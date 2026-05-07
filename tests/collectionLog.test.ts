@@ -6,7 +6,10 @@ import {
   filterLoggedDrops,
   summarizeProgress,
   summarizeSection,
+  isSlotObtained,
+  isSharedCollectionLogItem,
 } from '../src/engine/collectionLog.js'
+import raids from '../src/data/raids.json' assert { type: 'json' }
 
 describe('collection log data', () => {
   const data = getCollectionLogData()
@@ -122,5 +125,77 @@ describe('collection log seeded contents', () => {
     const clues = findCategory('clues')
     expect(clues?.sections.length).toBeGreaterThan(0)
     expect(clues?.sections[0].items.length).toBeGreaterThan(0)
+  })
+
+  it('does not duplicate raid bosses as standalone monster sections', () => {
+    const raidBossIds = new Set<string>()
+    for (const r of Object.values(raids as Record<string, any>)) {
+      for (const b of (r.bosses || [])) raidBossIds.add(b)
+    }
+    const monsters = findCategory('monsters')
+    for (const sec of monsters!.sections) {
+      expect(raidBossIds.has(sec.id), `Monster section ${sec.id} duplicates a raid boss`).toBe(false)
+    }
+  })
+
+  it('declares the expected shared uniques', () => {
+    expect(data.sharedItems).toEqual(expect.arrayContaining(['uncut_onyx', 'dragon_axe', 'draconic_visage']))
+    for (const id of data.sharedItems) expect(isSharedCollectionLogItem(id)).toBe(true)
+  })
+})
+
+describe('shared item collection credit', () => {
+  const data = getCollectionLogData()
+
+  it('isSlotObtained credits every section a shared item appears in once it is recorded anywhere', () => {
+    const shared = (data.sharedItems || []).find((id: string) => id === 'dragon_axe') || data.sharedItems?.[0]
+    expect(shared).toBeTruthy()
+
+    // Find every (cat, sec) pair that lists this shared item.
+    const slots: { cat: string; sec: string }[] = []
+    for (const cat of data.categories) {
+      for (const sec of cat.sections) {
+        if (sec.items.includes(shared)) slots.push({ cat: cat.id, sec: sec.id })
+      }
+    }
+    expect(slots.length).toBeGreaterThanOrEqual(2)
+
+    const owned = new Set<string>([`${slots[0].cat}:${slots[0].sec}:${shared}`])
+    for (const { cat, sec } of slots) {
+      expect(isSlotObtained(owned, cat, sec, shared)).toBe(true)
+    }
+  })
+
+  it('isSlotObtained does not credit non-shared items across other sections', () => {
+    // Find a non-shared item from any section.
+    let nonShared: { cat: string; sec: string; id: string } | null = null
+    for (const cat of data.categories) {
+      for (const sec of cat.sections) {
+        for (const id of sec.items) {
+          if (!data.sharedItems?.includes(id)) { nonShared = { cat: cat.id, sec: sec.id, id }; break }
+        }
+        if (nonShared) break
+      }
+      if (nonShared) break
+    }
+    expect(nonShared).toBeTruthy()
+    const owned = new Set<string>([`${nonShared!.cat}:${nonShared!.sec}:${nonShared!.id}`])
+    expect(isSlotObtained(owned, nonShared!.cat, nonShared!.sec, nonShared!.id)).toBe(true)
+    expect(isSlotObtained(owned, 'monsters', 'no_such_section', nonShared!.id)).toBe(false)
+  })
+
+  it('summary credits all shared-item slots after a single record', () => {
+    const shared = data.sharedItems?.[0]
+    if (!shared) return
+    const slots: { cat: string; sec: string }[] = []
+    for (const cat of data.categories) {
+      for (const sec of cat.sections) {
+        if (sec.items.includes(shared)) slots.push({ cat: cat.id, sec: sec.id })
+      }
+    }
+    const owned = new Set<string>([`${slots[0].cat}:${slots[0].sec}:${shared}`])
+    const summary = summarizeProgress(owned)
+    // One server entry credits every slot the shared item lives in.
+    expect(summary.obtained).toBe(slots.length)
   })
 })

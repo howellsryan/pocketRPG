@@ -1,5 +1,11 @@
 {
-  "version": 1,
+  "version": 2,
+  "sharedItems": [
+    "draconic_visage",
+    "dragon_axe",
+    "dragon_boots",
+    "uncut_onyx"
+  ],
   "categories": [
     {
       "id": "monsters",
@@ -21,17 +27,6 @@
           "items": [
             "uncut_onyx",
             "draconic_visage"
-          ]
-        },
-        {
-          "id": "arim_the_blighted",
-          "label": "Arim the Blighted",
-          "icon": "👑",
-          "items": [
-            "ahrims_hood",
-            "ahrims_robetop",
-            "ahrims_robeskirt",
-            "ahrims_staff"
           ]
         },
         {
@@ -123,17 +118,6 @@
           ]
         },
         {
-          "id": "dharok_the_wretched",
-          "label": "Dharok the Wretched",
-          "icon": "👑",
-          "items": [
-            "dharoks_helm",
-            "dharoks_platebody",
-            "dharoks_platelegs",
-            "dharoks_greataxe"
-          ]
-        },
-        {
           "id": "gargoyle",
           "label": "Gargoyle",
           "icon": "⚔️",
@@ -150,17 +134,6 @@
             "bandos_tassets",
             "bandos_boots",
             "bandos_hilt"
-          ]
-        },
-        {
-          "id": "guthan_the_infested",
-          "label": "Guthan the Infested",
-          "icon": "👑",
-          "items": [
-            "guthans_helm",
-            "guthans_platebody",
-            "guthans_chainskirt",
-            "guthans_warspear"
           ]
         },
         {
@@ -181,17 +154,6 @@
             "zamorak_spear",
             "staff_of_the_dead",
             "zamorak_hilt"
-          ]
-        },
-        {
-          "id": "karil_the_tainted",
-          "label": "Karil the Tainted",
-          "icon": "👑",
-          "items": [
-            "karils_coif",
-            "karils_leathertop",
-            "karils_leatherskirt",
-            "karils_crossbow"
           ]
         },
         {
@@ -269,28 +231,6 @@
           "icon": "⚔️",
           "items": [
             "dragon_boots"
-          ]
-        },
-        {
-          "id": "torag_the_corrupted",
-          "label": "Torag the Corrupted",
-          "icon": "👑",
-          "items": [
-            "torags_helm",
-            "torags_platebody",
-            "torags_platelegs",
-            "torags_hammers"
-          ]
-        },
-        {
-          "id": "verac_the_defiled",
-          "label": "Verac the Defiled",
-          "icon": "👑",
-          "items": [
-            "veracs_helm",
-            "veracs_brassard",
-            "veracs_plateskirt",
-            "veracs_flail"
           ]
         },
         {

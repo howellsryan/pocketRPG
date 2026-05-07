@@ -8,6 +8,7 @@ import {
   getCollectionLogTotal,
   summarizeProgress,
   summarizeSection,
+  isSlotObtained,
 } from '../engine/collectionLog.js'
 import {
   fetchCollectionLog,
@@ -20,9 +21,6 @@ function itemLabel(itemId) {
   return itemsData[itemId]?.name || itemId
 }
 
-function collectionLogEntryKey(categoryId, sectionId, itemId) {
-  return `${categoryId}:${sectionId}:${itemId}`
-}
 
 function CollectionSection({ category, section, entries }) {
   const [open, setOpen] = useState(false)
@@ -51,7 +49,7 @@ function CollectionSection({ category, section, entries }) {
       {open && (
         <div class="px-3 pb-3 pt-1 grid grid-cols-1 sm:grid-cols-2 gap-1">
           {section.items.map(itemId => {
-            const has = entries?.has?.(collectionLogEntryKey(category.id, section.id, itemId)) || false
+            const has = isSlotObtained(entries, category.id, section.id, itemId)
             return (
               <div
                 key={itemId}
