@@ -7651,7 +7651,8 @@ const itemsData = {
       "meleeStrength": 3,
       "rangedStrength": 0,
       "magicDamage": 0,
-      "slayerHelmet": true
+      "slayerTaskAccuracyFlat": 15,
+      "slayerTaskDamageFlat": 15
     },
     "requirements": {
       "slayer": 20
@@ -16091,8 +16092,7 @@ const itemsData = {
     "isUntradeable": true,
     "isGeneralStore": false
   }
-}
-;
+};
 const monstersData = {
   "chicken": {
     "id": "chicken",
@@ -32655,6 +32655,23 @@ function getPrayerStyleIcon(prayer) {
     return null;
 }
 
+// ── utils/bonusLabels.js ──
+const OTHER_BONUS_LABELS = {
+    meleeStrength: 'Melee Strength',
+    rangedStrength: 'Ranged Strength',
+    magicDamage: 'Magic Damage %',
+    fishingXpPercent: 'Fishing XP Boost %',
+    prayer: 'Prayer Bonus',
+    miningLevel: 'Mining Level',
+    woodcuttingLevel: 'Woodcutting Level',
+    antiDragon: 'Anti-Dragonfire',
+    barrowsDharokBonus: "Dharok's Set Effect",
+    barrowsGuthanBonus: "Guthan's Set Effect",
+    slayerTaskAccuracyFlat: 'Slayer Task Accuracy',
+    slayerTaskDamageFlat: 'Slayer Task Damage'
+};
+const OTHER_BONUS_PERCENT_KEYS = new Set(['magicDamage', 'fishingXpPercent']);
+
 // ── hooks/useActionTick.js ──
 /**
  * Calculate progress for any action-based activity (0-1)
@@ -45205,13 +45222,6 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                 magic: getLevelFromXP(statsRef.current.magic?.xp || 0),
                 currentHP: hpRef.current
             };
-            // Apply slayer helmet +15% melee accuracy & strength bonus when on task
-            const headEquip = equipmentRef.current?.head;
-            const headItemData = headEquip ? itemsData[headEquip.itemId] : null;
-            if (headItemData?.otherBonus?.slayerHelmet && slayerTaskRef.current?.monsterId === state.monster.id) {
-                playerStats.attack = Math.floor(playerStats.attack * 1.15);
-                playerStats.strength = Math.floor(playerStats.strength * 1.15);
-            }
             const { combatState, events } = processCombatTick(state, playerStats, equipmentRef.current, itemsData, prayersData, inventoryRef.current, slayerTaskRef.current);
             // Master Rejuvenation: auto-refill spec bar when it hits 0 mid-fight
             if (combatState.active && combatState.specialAttackEnergy === 0 && unlockedFeaturesRef.current.has('master_rejuvenation')) {
@@ -49863,6 +49873,7 @@ function GeneralStoreScreen({ onBuyCredits }) {
 }
 
 // ── screens/EquipmentScreen.js ──
+
 
 
 
