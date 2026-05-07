@@ -42,7 +42,7 @@ import { isHighValueDrop } from './utils/itemValue.js'
 import { computeIdleElapsedMs } from './utils/idleElapsed.js'
 import { advanceFarmingState } from './engine/farming.ts'
 import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, onCollectionLogSlotComplete } from './cloud/collectionLog.js'
-import { isLoggedDrop } from './engine/collectionLog.js'
+import { isLoggedDrop, collectIdleCombatLoggedDrops } from './engine/collectionLog.js'
 
 // ── Clock-rollback watermark ────────────────────────────────────────────────
 // We persist the highest Date.now() we've ever observed. If the device clock
@@ -87,17 +87,8 @@ function recordCollectionLogDropForMinigame(task) {
 // Idle combat sim returns drops keyed by itemId across lootGained/lootBanked.
 // Fire one record per matching unique against the monster source.
 function recordCollectionLogDropsForIdleCombat(monsterId, sim) {
-  if (!monsterId || !sim) return
-  const seen = new Set()
-  for (const bucket of [sim.lootGained, sim.lootBanked, sim.itemsGained, sim.itemsBanked]) {
-    if (!bucket) continue
-    for (const itemId of Object.keys(bucket)) {
-      if (seen.has(itemId)) continue
-      seen.add(itemId)
-      if (isLoggedDrop(itemId, 'monsters', monsterId)) {
-        recordCollectionLogDrop({ itemId, sourceType: 'monsters', sourceId: monsterId })
-      }
-    }
+  for (const itemId of collectIdleCombatLoggedDrops(monsterId, sim)) {
+    recordCollectionLogDrop({ itemId, sourceType: 'monsters', sourceId: monsterId })
   }
 }
 
@@ -668,8 +659,8 @@ function GameApp() {
           } else if (sim.itemsGained) {
             updateBankDirect(sim.itemsGained)
           }
-          if (savedTask.type === 'combat' && savedTask.monsterId) {
-            recordCollectionLogDropsForIdleCombat(savedTask.monsterId, sim)
+          if (savedTask.type === 'combat' && savedTask.monster?.id) {
+            recordCollectionLogDropsForIdleCombat(savedTask.monster.id, sim)
           }
           // Apply agility coin reward directly to bank
           if (savedTask.type === 'agility' && sim.coinsGained > 0) {
@@ -1251,8 +1242,8 @@ function GameApp() {
           } else if (sim.itemsGained) {
             updateBankDirect(sim.itemsGained)
           }
-          if (savedTask.type === 'combat' && savedTask.monsterId) {
-            recordCollectionLogDropsForIdleCombat(savedTask.monsterId, sim)
+          if (savedTask.type === 'combat' && savedTask.monster?.id) {
+            recordCollectionLogDropsForIdleCombat(savedTask.monster.id, sim)
           }
           // Apply agility coin reward directly to bank
           if (savedTask.type === 'agility' && sim.coinsGained > 0) {

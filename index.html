@@ -38679,6 +38679,30 @@ function filterLoggedDrops(drops, categoryId, sectionId) {
     }
     return out;
 }
+// Idle combat sims return drops keyed by itemId across multiple buckets
+// (lootGained/lootBanked from combat, itemsGained/itemsBanked from skill/
+// gather paths). Walk every bucket and return the unique set of itemIds
+// that map to a collection log slot for the given monster.
+const IDLE_LOOT_BUCKETS = ['lootGained', 'lootBanked', 'itemsGained', 'itemsBanked'];
+function collectIdleCombatLoggedDrops(monsterId, sim) {
+    if (!monsterId || !sim)
+        return [];
+    const out = [];
+    const seen = new Set();
+    for (const name of IDLE_LOOT_BUCKETS) {
+        const bucket = sim[name];
+        if (!bucket || typeof bucket !== 'object')
+            continue;
+        for (const itemId of Object.keys(bucket)) {
+            if (seen.has(itemId))
+                continue;
+            seen.add(itemId);
+            if (isLoggedDrop(itemId, 'monsters', monsterId))
+                out.push(itemId);
+        }
+    }
+    return out;
+}
 // Given an entries Set keyed by `${sourceType}:${sourceId}:${itemId}`, return
 // the obtained-vs-total summary used for the top-level header. Shared items
 // inflate every matching slot once any one of them is collected.
@@ -50264,20 +50288,8 @@ function recordCollectionLogDropForMinigame(task) {
 // Idle combat sim returns drops keyed by itemId across lootGained/lootBanked.
 // Fire one record per matching unique against the monster source.
 function recordCollectionLogDropsForIdleCombat(monsterId, sim) {
-    if (!monsterId || !sim)
-        return;
-    const seen = new Set();
-    for (const bucket of [sim.lootGained, sim.lootBanked, sim.itemsGained, sim.itemsBanked]) {
-        if (!bucket)
-            continue;
-        for (const itemId of Object.keys(bucket)) {
-            if (seen.has(itemId))
-                continue;
-            seen.add(itemId);
-            if (isLoggedDrop(itemId, 'monsters', monsterId)) {
-                recordCollectionLogDrop({ itemId, sourceType: 'monsters', sourceId: monsterId });
-            }
-        }
+    for (const itemId of collectIdleCombatLoggedDrops(monsterId, sim)) {
+        recordCollectionLogDrop({ itemId, sourceType: 'monsters', sourceId: monsterId });
     }
 }
 function IdleResultProgressCard({ type, idleResult, taskName }) {
@@ -50858,8 +50870,8 @@ function GameApp() {
                     else if (sim.itemsGained) {
                         updateBankDirect(sim.itemsGained);
                     }
-                    if (savedTask.type === 'combat' && savedTask.monsterId) {
-                        recordCollectionLogDropsForIdleCombat(savedTask.monsterId, sim);
+                    if (savedTask.type === 'combat' && savedTask.monster?.id) {
+                        recordCollectionLogDropsForIdleCombat(savedTask.monster.id, sim);
                     }
                     // Apply agility coin reward directly to bank
                     if (savedTask.type === 'agility' && sim.coinsGained > 0) {
@@ -51457,8 +51469,8 @@ function GameApp() {
                     else if (sim.itemsGained) {
                         updateBankDirect(sim.itemsGained);
                     }
-                    if (savedTask.type === 'combat' && savedTask.monsterId) {
-                        recordCollectionLogDropsForIdleCombat(savedTask.monsterId, sim);
+                    if (savedTask.type === 'combat' && savedTask.monster?.id) {
+                        recordCollectionLogDropsForIdleCombat(savedTask.monster.id, sim);
                     }
                     // Apply agility coin reward directly to bank
                     if (savedTask.type === 'agility' && sim.coinsGained > 0) {

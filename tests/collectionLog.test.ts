@@ -8,6 +8,7 @@ import {
   summarizeSection,
   isSlotObtained,
   isSharedCollectionLogItem,
+  collectIdleCombatLoggedDrops,
 } from '../src/engine/collectionLog.js'
 import raids from '../src/data/raids.json' assert { type: 'json' }
 
@@ -182,6 +183,41 @@ describe('shared item collection credit', () => {
     const owned = new Set<string>([`${nonShared!.cat}:${nonShared!.sec}:${nonShared!.id}`])
     expect(isSlotObtained(owned, nonShared!.cat, nonShared!.sec, nonShared!.id)).toBe(true)
     expect(isSlotObtained(owned, 'monsters', 'no_such_section', nonShared!.id)).toBe(false)
+  })
+
+  it('collectIdleCombatLoggedDrops finds uniques in lootBanked (skip-hour shape)', () => {
+    // This is the exact regression: skip-hour returns rare drops as keyed
+    // entries in sim.lootBanked. The helper must surface them for the
+    // monster source, since live monsterDeath events don't fire offline.
+    const sim = {
+      lootBanked: { dragon_boots: 1, coins: 12345 },
+      lootGained: {},
+    }
+    const found = collectIdleCombatLoggedDrops('spiritual_ranger', sim)
+    expect(found).toContain('dragon_boots')
+  })
+
+  it('collectIdleCombatLoggedDrops also reads lootGained when banking is off', () => {
+    const sim = { lootGained: { granite_maul: 1 }, lootBanked: {} }
+    const found = collectIdleCombatLoggedDrops('gargoyle', sim)
+    expect(found).toContain('granite_maul')
+  })
+
+  it('collectIdleCombatLoggedDrops dedupes itemIds across buckets', () => {
+    const sim = { lootGained: { granite_maul: 1 }, lootBanked: { granite_maul: 1 } }
+    const found = collectIdleCombatLoggedDrops('gargoyle', sim)
+    expect(found.filter(id => id === 'granite_maul')).toHaveLength(1)
+  })
+
+  it('collectIdleCombatLoggedDrops ignores unrelated items', () => {
+    const sim = { lootBanked: { coins: 10000, bones: 50, dragon_boots: 1 } }
+    const found = collectIdleCombatLoggedDrops('spiritual_ranger', sim)
+    expect(found).toEqual(['dragon_boots'])
+  })
+
+  it('collectIdleCombatLoggedDrops returns [] for missing monsterId or sim', () => {
+    expect(collectIdleCombatLoggedDrops('', { lootBanked: { dragon_boots: 1 } })).toEqual([])
+    expect(collectIdleCombatLoggedDrops('spiritual_ranger', null as any)).toEqual([])
   })
 
   it('summary credits all shared-item slots after a single record', () => {

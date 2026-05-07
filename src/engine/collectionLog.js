@@ -80,6 +80,27 @@ export function filterLoggedDrops(drops, categoryId, sectionId) {
   return out
 }
 
+// Idle combat sims return drops keyed by itemId across multiple buckets
+// (lootGained/lootBanked from combat, itemsGained/itemsBanked from skill/
+// gather paths). Walk every bucket and return the unique set of itemIds
+// that map to a collection log slot for the given monster.
+const IDLE_LOOT_BUCKETS = ['lootGained', 'lootBanked', 'itemsGained', 'itemsBanked']
+export function collectIdleCombatLoggedDrops(monsterId, sim) {
+  if (!monsterId || !sim) return []
+  const out = []
+  const seen = new Set()
+  for (const name of IDLE_LOOT_BUCKETS) {
+    const bucket = sim[name]
+    if (!bucket || typeof bucket !== 'object') continue
+    for (const itemId of Object.keys(bucket)) {
+      if (seen.has(itemId)) continue
+      seen.add(itemId)
+      if (isLoggedDrop(itemId, 'monsters', monsterId)) out.push(itemId)
+    }
+  }
+  return out
+}
+
 // Given an entries Set keyed by `${sourceType}:${sourceId}:${itemId}`, return
 // the obtained-vs-total summary used for the top-level header. Shared items
 // inflate every matching slot once any one of them is collected.
