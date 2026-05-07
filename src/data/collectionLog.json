@@ -335,7 +335,8 @@
           "label": "Castle Wars",
           "icon": "🏰",
           "items": [
-            "halo"
+            "halo",
+            "decorative_top"
           ]
         },
         {
@@ -345,6 +346,33 @@
           "items": [
             "rune_defender",
             "dragon_defender"
+          ]
+        },
+        {
+          "id": "fishing_trawler",
+          "label": "Fishing Trawler",
+          "icon": "🛶",
+          "items": [
+            "angler_net"
+          ]
+        },
+        {
+          "id": "mage_arena",
+          "label": "Mage Arena",
+          "icon": "🪄",
+          "items": [
+            "imbued_god_cape"
+          ]
+        },
+        {
+          "id": "pest_control",
+          "label": "Pest Control",
+          "icon": "🛡️",
+          "items": [
+            "void_knight_helm",
+            "void_knight_top",
+            "void_knight_robe",
+            "void_knight_gloves"
           ]
         }
       ]

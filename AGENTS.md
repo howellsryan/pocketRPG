@@ -81,6 +81,7 @@ Schema:
 - **Item Naming**: All item `name` fields must use **Title Case** (each word capitalized), e.g., "Bronze Dagger", "Oak Logs", "Iron Ore".
 - Stackables (coins/runes/arrows): quantity as `[min, max]`.
 - Non-stackable equipment: `quantity: 1`.
+- Collection log upkeep: whenever adding a new boss unique, raid unique, minigame reward item, or clue reward item, add the matching slot to `src/data/collectionLog.json` in the same change and include/update a regression test.
 
 ## 9) UI/Styling Rules
 - Minimum tap target: 44×44px.
