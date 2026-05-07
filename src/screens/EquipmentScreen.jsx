@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
-import { unequipSlot, getEquipmentBonuses } from '../engine/equipment.js'
+import { unequipSlot, getEquipmentBonuses, checkEquipRequirements, equipItem } from '../engine/equipment.js'
 import { EQUIPMENT_SLOTS } from '../utils/constants.js'
 import SharedItemModal from '../components/SharedItemModal.jsx'
 import Card from '../components/Card.jsx'
@@ -8,19 +8,62 @@ import Panel from '../components/Panel.jsx'
 import Button from '../components/Button.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
 import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
+import ItemSlot from '../components/ItemSlot.jsx'
 
 const DEFAULT_CHARGE_ITEM_ID = 'zulrah_scales'
 
 export default function EquipmentScreen() {
-  const { equipment, inventory, bank, updateEquipment, updateInventory, updateBank, addToast, itemsData } = useGame()
+  const { equipment, inventory, bank, stats, updateEquipment, updateInventory, updateBank, addToast, itemsData, completedQuests } = useGame()
   const [selected, setSelected] = useState(null) // { slot, item }
   const [showSpecInfo, setShowSpecInfo] = useState(false)
   const [chargeInput, setChargeInput] = useState('')
+  const [invSelected, setInvSelected] = useState(null) // { slotIndex, slot, item }
 
   const handleSelect = (slotName, item) => {
     setSelected({ slot: slotName, item })
     setShowSpecInfo(false)
     setChargeInput('')
+  }
+
+  const handleInvSlotClick = (slot, item, index) => {
+    setInvSelected({ slotIndex: index, slot, item })
+  }
+
+  const handleEquipFromInv = () => {
+    if (!invSelected) return
+    const { slotIndex, item } = invSelected
+
+    const reqError = checkEquipRequirements(item, stats, completedQuests)
+    if (reqError) {
+      if (reqError.reason === 'quest') {
+        addToast(`Complete quest to equip: ${reqError.questUnlock.replace(/_/g, ' ')}`, 'error')
+      } else {
+        addToast(`Need ${reqError.skill} level ${reqError.required} to equip`, 'error')
+      }
+      setInvSelected(null)
+      return
+    }
+
+    const newEquip = { ...equipment }
+    const newInv = [...inventory]
+    const sourceSlot = newInv[slotIndex]
+    newInv[slotIndex] = null
+
+    const result = equipItem(newEquip, item, itemsData, sourceSlot)
+    if (result.equipped) {
+      for (const unequipped of result.unequipped) {
+        const empty = newInv.indexOf(null)
+        if (empty !== -1 && unequipped) {
+          const invEntry = { itemId: unequipped.itemId, quantity: unequipped.quantity || 1 }
+          if (unequipped.charges && unequipped.charges > 0) invEntry.charges = unequipped.charges
+          newInv[empty] = invEntry
+        }
+      }
+      updateEquipment(newEquip)
+      updateInventory(newInv)
+      addToast(`Equipped ${item.name}`, 'info')
+    }
+    setInvSelected(null)
   }
 
   const handleUnequip = () => {
@@ -238,9 +281,41 @@ export default function EquipmentScreen() {
             })}
           </div>
         </div>
+
+        {/* Inventory display — desktop only */}
+        <div class="hidden lg:block border-t border-[#222] mt-3 pt-3">
+          <SectionHeader size="sm" className="mb-2 opacity-50">Inventory</SectionHeader>
+          <div class="grid grid-cols-7 gap-1">
+            {inventory.map((slot, i) => (
+              <ItemSlot
+                key={i}
+                slot={slot}
+                onClick={(s, item) => handleInvSlotClick(s, item, i)}
+                size="small"
+              />
+            ))}
+          </div>
+        </div>
       </Card>
 
       </div>
+
+      {/* Inventory item modal */}
+      {invSelected && (
+        <SharedItemModal item={invSelected.item} quantity={invSelected.slot.quantity} noted={invSelected.slot.noted} onClose={() => setInvSelected(null)}>
+          <div class="flex flex-col gap-2">
+            {invSelected.item.type === 'armour' || invSelected.item.type === 'weapon' ? (
+              <Button variant="primary" size="lg" onClick={handleEquipFromInv} className="w-full">
+                Equip
+              </Button>
+            ) : (
+              <p class="text-[11px] text-[var(--color-parchment)] opacity-60">
+                This item cannot be equipped
+              </p>
+            )}
+          </div>
+        </SharedItemModal>
+      )}
 
       {/* Unequip modal */}
       {selected && (

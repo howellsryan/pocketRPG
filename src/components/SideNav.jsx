@@ -22,6 +22,7 @@ export default function SideNav({ active, onNavigate, isInCombat, onDisabledClic
         const activeBorder = isActive
           ? 'border-l-2 border-[var(--color-gold)]'
           : 'border-l-2 border-transparent'
+        const label = tab.id === 'inventory' ? 'Inventory' : tab.label
         return (
           <button
             key={tab.id}
@@ -31,7 +32,7 @@ export default function SideNav({ active, onNavigate, isInCombat, onDisabledClic
             class={`flex items-center gap-3 w-full px-4 py-2 mx-0 border-0 text-left transition-colors ${activeBg} ${activeBorder} ${baseColor} ${opacity} ${cursor} ${hover}`}
           >
             <span class="text-xl leading-none">{tab.icon}</span>
-            <span class="text-sm font-semibold font-[var(--font-body)]">{tab.label}</span>
+            <span class="text-sm font-semibold font-[var(--font-body)]">{label}</span>
           </button>
         )
       })}
