@@ -8,6 +8,7 @@ import {
   getValidIdlePrayerSelection,
   getFoodHealAmount,
 } from '../engine/idleSupplies.js'
+import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
 
 const TAB_LABEL = {
   food: 'Idle Eat',
@@ -265,6 +266,11 @@ function PrayerSection({ prayersData, prayerLevel, draft, onSelect }) {
         <div class="grid grid-cols-2 gap-2">
           {combats.map((prayer) => {
             const isActive = cmbId === prayer.id
+            // Match the combat-screen icon vocabulary: attack ⚔️, strength
+            // 💪, defence 🛡️, ranged 🏹, magic 🔮. Falls back to the
+            // prayer's bespoke emoji when the helper has no opinion.
+            const styled = getPrayerStyleIcon(prayer)
+            const icon = styled ? styled.icon : prayer.icon
             return (
               <button
                 key={prayer.id}
@@ -275,7 +281,7 @@ function PrayerSection({ prayersData, prayerLevel, draft, onSelect }) {
                     : 'bg-[var(--color-void-light)] border-[var(--color-void-border)] active:bg-[#2a3a2a]'
                 }`}
               >
-                <div class="text-sm text-[var(--color-parchment)]">{prayer.icon} {prayer.name}</div>
+                <div class="text-sm text-[var(--color-parchment)]">{icon} {prayer.name}</div>
                 <div class="text-[10px] text-[var(--color-parchment)] opacity-60 line-clamp-2">{prayer.description}</div>
                 <div class="text-[9px] text-[var(--color-gold-dim)]">Lv {prayer.level}</div>
               </button>

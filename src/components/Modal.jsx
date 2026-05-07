@@ -1,5 +1,6 @@
 import { createPortal } from 'preact/compat'
 import { useEffect, useState } from 'preact/hooks'
+import { useEscapeKey } from '../hooks/useEscapeKey.js'
 
 function getVisualViewportHeight() {
   if (typeof window === 'undefined') return null
@@ -59,6 +60,8 @@ export default function Modal({
     }
   }, [])
 
+  useEscapeKey(() => onClose?.(), !!onClose)
+
   const viewportHeightValue = viewportHeight ? `${viewportHeight}px` : '100svh'
   const dialogMaxHeight = `calc(${viewportHeightValue} - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px)`
   const dialogSizeStyle = fullHeight
@@ -87,7 +90,7 @@ export default function Modal({
       />
 
       <div
-        class={`relative z-[1] flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[#333] bg-[var(--color-void-light)] ${className}`}
+        class={`relative z-[1] flex w-full max-w-lg md:max-w-2xl flex-col overflow-hidden rounded-2xl border border-[#333] bg-[var(--color-void-light)] ${className}`}
         style={dialogSizeStyle}
         onClick={(e) => e.stopPropagation()}
       >

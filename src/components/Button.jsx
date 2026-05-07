@@ -29,11 +29,13 @@ export default function Button({
 }) {
   const variantClass = BUTTON_VARIANTS[variant] || BUTTON_VARIANTS.secondary
   const sizeClass = BUTTON_SIZES[size] || BUTTON_SIZES.md
-  const disabledClass = disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+  const disabledClass = disabled
+    ? 'opacity-40 cursor-not-allowed'
+    : 'cursor-pointer active:scale-[0.98]'
   return (
     <button
       disabled={disabled}
-      class={`rounded-lg font-semibold transition-colors ${variantClass} ${sizeClass} ${disabledClass} ${className}`}
+      class={`rounded-lg font-semibold transition-colors transition-transform ${variantClass} ${sizeClass} ${disabledClass} ${className}`}
       {...props}
     >
       {children}

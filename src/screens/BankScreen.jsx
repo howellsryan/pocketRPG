@@ -400,7 +400,7 @@ export default function BankScreen() {
               : 'No items — tap an item and use "Move to Tab"'}
           </div>
         ) : (
-          <div class="grid grid-cols-4 gap-2">
+          <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2">
             {displayItems.map(entry => {
               const item = itemsData[entry.itemId]
               if (!item) return null

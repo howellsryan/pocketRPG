@@ -5,7 +5,10 @@ import { api, getToken, getCharacterId } from '../cloud/api.js'
 import { getStoreItemTypes, isStoreVisibleItem, getPurchaseRestriction } from '../engine/storeRules.js'
 import Panel from '../components/Panel.jsx'
 import SharedItemModal from '../components/SharedItemModal.jsx'
+import ItemDetailPanel from '../components/ItemDetailPanel.jsx'
+import TwoPaneLayout from '../components/TwoPaneLayout.jsx'
 import Button from '../components/Button.jsx'
+import { useIsDesktop } from '../hooks/useIsDesktop.js'
 import questsData from '../data/quests.json'
 import minigamesData from '../data/minigames.json'
 import monstersData from '../data/monsters.json'
@@ -21,6 +24,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
   const [selectedItem, setSelectedItem] = useState(null) // item being purchased
   const [buyQty, setBuyQty] = useState(1)
   const [activeTab, setActiveTab] = useState('all') // 'all' | 'quest_items' | 'minigame_unlocks' | type-based filters
+  const isDesktop = useIsDesktop()
 
   const hasMoneyPurse = unlockedFeatures.has('money_purse')
   const coinsInInv = countItem(inventory, 'coins')
@@ -208,6 +212,100 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
   const canAffordSelected = selectedItem ? coins >= totalCost : false
   const isSelectedPurchaseRestricted = Boolean(selectedRestriction && !selectedRestriction.allowed)
 
+  // Purchase controls reused by both the mobile modal and the desktop detail pane.
+  const purchaseControls = selectedItem ? (
+    <div class="flex flex-col gap-4">
+
+      {/* Quest unlock info */}
+      {selectedItem.questUnlock && (
+        <Panel className={`text-[12px] ${selectedItem.isUnlocked ? 'border-l-4 border-[var(--color-gold)]' : 'border-l-4 border-[#666]'}`}>
+          <div class="text-[11px] font-semibold mb-1 text-[#aaa]">Required Quest:</div>
+          <div class={`text-[13px] font-semibold ${selectedItem.isUnlocked ? 'text-[var(--color-gold)]' : 'text-[#888]'}`}>
+            {questMap[selectedItem.questUnlock]}
+          </div>
+          <div class={`text-[10px] mt-2 ${selectedItem.isUnlocked ? 'text-[#7a7]' : 'text-[#a77]'}`}>
+            {selectedItem.isUnlocked ? '✓ Quest Complete' : '✗ Not Yet Completed'}
+          </div>
+        </Panel>
+      )}
+
+      {selectedObtainMessage && (
+        <Panel className="text-[11px] text-[#aaa] border-l-4 border-[#666]">
+          {selectedObtainMessage}
+        </Panel>
+      )}
+
+      {/* Price info - only show if unlocked */}
+      {(!selectedItem.questUnlock && !selectedItem.isMinigameItem) || selectedItem.isUnlocked ? (
+        <Panel>
+          <div class="flex justify-between mb-[6px] text-[12px]">
+            <span class="text-[#888]">Price per item:</span>
+            <span class="text-[var(--color-gold)] font-[var(--font-mono)] font-bold">
+              {getItemPrice(selectedItem).toLocaleString()} gp
+            </span>
+          </div>
+          <div class="flex justify-between text-[12px]">
+            <span class="text-[#888]">Total:</span>
+            <span class="text-[var(--color-gold)] font-[var(--font-mono)] font-bold">
+              {totalCost.toLocaleString()} gp
+            </span>
+          </div>
+        </Panel>
+      ) : null}
+
+      {/* Quantity selector - only show if not locked */}
+      {(!selectedItem.questUnlock && !selectedItem.isMinigameItem) || selectedItem.isUnlocked ? (
+        <div class="flex flex-col gap-2">
+          <div class="text-[12px] text-[#888]">Quantity</div>
+          <div class="flex gap-[6px] items-center">
+            <Button variant="secondary" size="md" onClick={() => setBuyQty(Math.max(1, buyQty - 1))} className="w-8 h-8 p-0 flex items-center justify-center text-base">−</Button>
+            <input
+              type="number"
+              min="1"
+              max={Number.MAX_SAFE_INTEGER}
+              value={buyQty}
+              onInput={(e) => {
+                const parsed = parseInt(e.target.value)
+                if (!isNaN(parsed)) {
+                  setBuyQty(Math.max(1, Math.min(Number.MAX_SAFE_INTEGER, parsed)))
+                }
+              }}
+              class="flex-1 h-8 rounded-md bg-[#111] border border-[var(--color-void-border)] text-[var(--color-parchment)] text-[13px] font-[var(--font-mono)] text-center outline-none"
+            />
+            <Button variant="secondary" size="md" onClick={() => setBuyQty(Math.min(Number.MAX_SAFE_INTEGER, buyQty + 1))} className="w-8 h-8 p-0 flex items-center justify-center text-base">+</Button>
+          </div>
+          {buyQty > 1 && !selectedItem.stackable && (
+            <div class="text-[10px] text-[#888] mt-1">
+              💡 Buying {buyQty} items will be delivered as noted (stackable)
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {/* Buttons */}
+      <div class="flex gap-2 mt-2">
+        <Button variant="secondary" size="lg" onClick={() => { setSelectedItem(null); setBuyQty(1) }} className="flex-1">
+          {isDesktop ? 'Clear' : 'Cancel'}
+        </Button>
+        {(selectedItem.questUnlock || selectedItem.isMinigameItem) && !selectedItem.isUnlocked ? (
+          <Button variant="secondary" size="lg" disabled className="flex-1 opacity-50">
+            Locked
+          </Button>
+        ) : (
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={handleBuy}
+            disabled={!canAffordSelected || isSelectedPurchaseRestricted}
+            className="flex-1"
+          >
+            Buy
+          </Button>
+        )}
+      </div>
+    </div>
+  ) : null
+
   return (
     <div class="h-full flex flex-col overflow-hidden">
       {/* ── HEADER ── */}
@@ -289,156 +387,86 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
         />
       </div>
 
-      {/* ── SEARCH RESULTS ── */}
-      <div class="flex-1 overflow-y-auto px-4 pb-20">
-        {searchResults.length === 0 ? (
-          <div class="py-10 px-4 text-center text-[#888] text-[12px]">
-            {searchTerm
-              ? 'No items found.'
-              : activeTab === 'quest_items'
-                ? 'Complete quests to unlock items here.'
-                : activeTab === 'all'
-                  ? 'No items to buy.'
-                  : 'No items in this category.'}
+      <TwoPaneLayout
+        list={
+          <div class="h-full overflow-y-auto px-4 pb-20 md:pb-4">
+            {searchResults.length === 0 ? (
+              <div class="py-10 px-4 text-center text-[#888] text-[12px]">
+                {searchTerm
+                  ? 'No items found.'
+                  : activeTab === 'quest_items'
+                    ? 'Complete quests to unlock items here.'
+                    : activeTab === 'all'
+                      ? 'No items to buy.'
+                      : 'No items in this category.'}
+              </div>
+            ) : (
+              <div class="flex flex-col gap-2 pt-3">
+                {searchResults.map(item => {
+                  const isQuestItem = item.questUnlock !== undefined
+                  const isMinigameItem = item.isMinigameItem === true
+                  const isUnlocked = isQuestItem || isMinigameItem ? item.isUnlocked : true
+                  const price = isQuestItem && !isUnlocked ? 0 : getItemPrice(item)
+                  const canAfford = coins >= price
+                  const restriction = getPurchaseRestriction(item, { isIronman })
+                  const isBossUnique = restriction.code === 'BOSS_UNIQUE_RESTRICTED'
+                  const isClueReward = restriction.code === 'CLUE_REWARD_RESTRICTED'
+                  const isSelected = selectedItem?.id === item.id
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => { setSelectedItem(item); setBuyQty(1) }}
+                      disabled={((isQuestItem || isMinigameItem) && !isUnlocked)}
+                      class={`p-3 rounded-lg border text-left flex items-center gap-3 transition-colors ${
+                        isQuestItem && !isUnlocked
+                          ? 'bg-[#1a1a1a] border-[#1a1a1a] cursor-not-allowed opacity-50'
+                          : isSelected
+                            ? 'bg-[var(--color-void-light)] border-[var(--color-gold)] cursor-pointer'
+                            : 'bg-[var(--color-void-light)] border-[#2a2a2a] cursor-pointer hover:bg-[#222] hover:border-[#333]'
+                      }`}
+                    >
+                      <span class="text-2xl leading-none flex-shrink-0">{item.icon || '📦'}</span>
+                      <div class="flex-1 min-w-0">
+                        <div class="text-[13px] font-semibold text-[var(--color-parchment)]">{item.name}</div>
+                        {(isQuestItem || isMinigameItem) && !isUnlocked && (
+                          <div class="text-[10px] text-[#888] mt-1">🔒 {isQuestItem ? questMap[item.unlockedBy] : 'Complete this minigame reward once to unlock purchasing.'}</div>
+                        )}
+                      </div>
+                      <div class={`text-right flex-shrink-0 text-[12px] font-[var(--font-mono)] font-bold ${
+                        isQuestItem && !isUnlocked ? 'text-[#666]' : (canAfford ? 'text-[var(--color-gold)]' : 'text-[#888]')
+                      }`}>
+                        {isQuestItem && !isUnlocked ? '—' : (isBossUnique ? 'Boss unique' : (isClueReward ? 'Clue reward' : `${price.toLocaleString()} gp`))}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
-        ) : (
-          <div class="flex flex-col gap-2 pt-3">
-            {searchResults.map(item => {
-              const isQuestItem = item.questUnlock !== undefined
-              const isMinigameItem = item.isMinigameItem === true
-              const isUnlocked = isQuestItem || isMinigameItem ? item.isUnlocked : true
-              const price = isQuestItem && !isUnlocked ? 0 : getItemPrice(item)
-              const canAfford = coins >= price
-              const restriction = getPurchaseRestriction(item, { isIronman })
-              const isBossUnique = restriction.code === 'BOSS_UNIQUE_RESTRICTED'
-              const isClueReward = restriction.code === 'CLUE_REWARD_RESTRICTED'
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => { setSelectedItem(item); setBuyQty(1) }}
-                  disabled={((isQuestItem || isMinigameItem) && !isUnlocked)}
-                  class={`p-3 rounded-lg border text-left flex items-center gap-3 transition-colors ${
-                    isQuestItem && !isUnlocked
-                      ? 'bg-[#1a1a1a] border-[#1a1a1a] cursor-not-allowed opacity-50'
-                      : 'bg-[var(--color-void-light)] border-[#2a2a2a] cursor-pointer hover:bg-[#222] hover:border-[#333]'
-                  }`}
-                >
-                  <span class="text-2xl leading-none flex-shrink-0">{item.icon || '📦'}</span>
-                  <div class="flex-1 min-w-0">
-                    <div class="text-[13px] font-semibold text-[var(--color-parchment)]">{item.name}</div>
-                    {(isQuestItem || isMinigameItem) && !isUnlocked && (
-                      <div class="text-[10px] text-[#888] mt-1">🔒 {isQuestItem ? questMap[item.unlockedBy] : 'Complete this minigame reward once to unlock purchasing.'}</div>
-                    )}
-                  </div>
-                  <div class={`text-right flex-shrink-0 text-[12px] font-[var(--font-mono)] font-bold ${
-                    isQuestItem && !isUnlocked ? 'text-[#666]' : (canAfford ? 'text-[var(--color-gold)]' : 'text-[#888]')
-                  }`}>
-                    {isQuestItem && !isUnlocked ? '—' : (isBossUnique ? 'Boss unique' : (isClueReward ? 'Clue reward' : `${price.toLocaleString()} gp`))}
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        )}
-      </div>
+        }
+        detail={
+          selectedItem ? (
+            <div class="p-4">
+              <ItemDetailPanel item={selectedItem} extraInfo={null}>
+                {purchaseControls}
+              </ItemDetailPanel>
+            </div>
+          ) : (
+            <div class="p-6 text-center text-[12px] text-[var(--color-parchment)] opacity-50">
+              Select an item to see details and purchase options.
+            </div>
+          )
+        }
+      />
 
-      {/* ── PURCHASE MODAL ── */}
-      {selectedItem && (
+      {/* ── PURCHASE MODAL — mobile only ── */}
+      {!isDesktop && selectedItem && (
         <SharedItemModal
           item={selectedItem}
           title={`${(selectedItem.questUnlock || selectedItem.isMinigameItem) && !selectedItem.isUnlocked ? 'Locked: ' : ''}${selectedItem.name}`}
           onClose={() => { setSelectedItem(null); setBuyQty(1) }}
         >
-          <div class="flex flex-col gap-4">
-
-            {/* Quest unlock info */}
-            {selectedItem.questUnlock && (
-              <Panel className={`text-[12px] ${selectedItem.isUnlocked ? 'border-l-4 border-[var(--color-gold)]' : 'border-l-4 border-[#666]'}`}>
-                <div class="text-[11px] font-semibold mb-1 text-[#aaa]">Required Quest:</div>
-                <div class={`text-[13px] font-semibold ${selectedItem.isUnlocked ? 'text-[var(--color-gold)]' : 'text-[#888]'}`}>
-                  {questMap[selectedItem.questUnlock]}
-                </div>
-                <div class={`text-[10px] mt-2 ${selectedItem.isUnlocked ? 'text-[#7a7]' : 'text-[#a77]'}`}>
-                  {selectedItem.isUnlocked ? '✓ Quest Complete' : '✗ Not Yet Completed'}
-                </div>
-              </Panel>
-            )}
-
-
-            {selectedObtainMessage && (
-              <Panel className="text-[11px] text-[#aaa] border-l-4 border-[#666]">
-                {selectedObtainMessage}
-              </Panel>
-            )}
-            {/* Price info - only show if unlocked */}
-            {(!selectedItem.questUnlock && !selectedItem.isMinigameItem) || selectedItem.isUnlocked ? (
-              <Panel>
-                <div class="flex justify-between mb-[6px] text-[12px]">
-                  <span class="text-[#888]">Price per item:</span>
-                  <span class="text-[var(--color-gold)] font-[var(--font-mono)] font-bold">
-                    {getItemPrice(selectedItem).toLocaleString()} gp
-                  </span>
-                </div>
-                <div class="flex justify-between text-[12px]">
-                  <span class="text-[#888]">Total:</span>
-                  <span class="text-[var(--color-gold)] font-[var(--font-mono)] font-bold">
-                    {totalCost.toLocaleString()} gp
-                  </span>
-                </div>
-              </Panel>
-            ) : null}
-
-            {/* Quantity selector - only show if not locked */}
-            {(!selectedItem.questUnlock && !selectedItem.isMinigameItem) || selectedItem.isUnlocked ? (
-              <div class="flex flex-col gap-2">
-                <div class="text-[12px] text-[#888]">Quantity</div>
-                <div class="flex gap-[6px] items-center">
-                  <Button variant="secondary" size="md" onClick={() => setBuyQty(Math.max(1, buyQty - 1))} className="w-8 h-8 p-0 flex items-center justify-center text-base">−</Button>
-                  <input
-                    type="number"
-                    min="1"
-                    max={Number.MAX_SAFE_INTEGER}
-                    value={buyQty}
-                    onInput={(e) => {
-                      const parsed = parseInt(e.target.value)
-                      if (!isNaN(parsed)) {
-                        setBuyQty(Math.max(1, Math.min(Number.MAX_SAFE_INTEGER, parsed)))
-                      }
-                    }}
-                    class="flex-1 h-8 rounded-md bg-[#111] border border-[var(--color-void-border)] text-[var(--color-parchment)] text-[13px] font-[var(--font-mono)] text-center outline-none"
-                  />
-                  <Button variant="secondary" size="md" onClick={() => setBuyQty(Math.min(Number.MAX_SAFE_INTEGER, buyQty + 1))} className="w-8 h-8 p-0 flex items-center justify-center text-base">+</Button>
-                </div>
-                {buyQty > 1 && !selectedItem.stackable && (
-                  <div class="text-[10px] text-[#888] mt-1">
-                    💡 Buying {buyQty} items will be delivered as noted (stackable)
-                  </div>
-                )}
-              </div>
-            ) : null}
-
-            {/* Buttons */}
-            <div class="flex gap-2 mt-2">
-              <Button variant="secondary" size="lg" onClick={() => { setSelectedItem(null); setBuyQty(1) }} className="flex-1">
-                Cancel
-              </Button>
-              {(selectedItem.questUnlock || selectedItem.isMinigameItem) && !selectedItem.isUnlocked ? (
-                <Button variant="secondary" size="lg" disabled className="flex-1 opacity-50">
-                  Locked
-                </Button>
-              ) : (
-                <Button
-                  variant="primary"
-                  size="lg"
-                  onClick={handleBuy}
-                  disabled={!canAffordSelected || isSelectedPurchaseRestricted}
-                  className="flex-1"
-                >
-                  Buy
-                </Button>
-              )}
-            </div>
-          </div>
+          {purchaseControls}
         </SharedItemModal>
       )}
     </div>

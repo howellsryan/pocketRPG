@@ -46,7 +46,7 @@ export default function HomeScreen({ onNavigate, onLogout, isCloudAccount, remov
         <h3 class="text-[10px] font-bold text-[var(--color-parchment)] opacity-40 uppercase tracking-widest mb-1.5">
           {title}
         </h3>
-        <div class="grid grid-cols-2 gap-1.5">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1.5">
           {skills.map(skill => {
             const data = stats[skill] || { xp: 0, level: 1 }
             return (
