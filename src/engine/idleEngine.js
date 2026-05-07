@@ -11,7 +11,7 @@ import {
   effectiveMagic, monsterMagicDefenceRoll, magicMaxHit
 } from './formulas.js'
 import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getCombatType, getRangedAmmoRequirementFailure } from './equipment.js'
-import { getEffectiveToolActionTicks } from './skilling.js'
+import { getEffectiveToolActionTicks, getEquippedSkillXpMultiplier } from './skilling.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE } from '../utils/constants.js'
 import { getAgilityBankDelayFromStats, simulateIdleAgility } from './agility.js'
@@ -109,11 +109,18 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
     const newRemaining = prevRemaining - consumed
     const completed = newRemaining <= 0
     const product = task.action.product
+    const rewardItems = task.action.rewardItems || []
+    const completedItems = completed
+      ? Object.fromEntries([
+          ...(product ? [[product, 1]] : []),
+          ...rewardItems.map(id => [id, 1])
+        ])
+      : {}
 
     return {
       xpGained: {},
-      itemsGained: completed && product ? { [product]: 1 } : {},
-      itemsBanked: completed && product ? { [product]: 1 } : {},
+      itemsGained: completedItems,
+      itemsBanked: completedItems,
       itemsConsumed: {},
       itemsDropped: {},
       actions: completed ? 1 : 0,
@@ -201,7 +208,8 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
   const itemsDropped = {}
   const newInv = [...inventory]
 
-  const xpPer = task.action.xp || 0
+  const xpMultiplier = getEquippedSkillXpMultiplier(task.skill, equipment, itemsData)
+  const xpPer = Math.floor((task.action.xp || 0) * xpMultiplier)
   if (xpPer > 0 && task.skill) {
     xpGained[task.skill] = xpPer * actions
   }
@@ -531,6 +539,24 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
   const actionTicks = task.gatherTask.ticks
   let actions = Math.floor(totalTicks / actionTicks)
   if (actions <= 0) return null
+
+  // OneShot minigame tasks (e.g. void set) complete once and bank all reward
+  // items directly, matching the active-path behaviour in GatherScreen.
+  if (task.gatherTask.oneShot) {
+    const allRewards = task.gatherTask.rewardItems?.length > 0
+      ? task.gatherTask.rewardItems
+      : (task.gatherTask.product ? [task.gatherTask.product] : [])
+    const itemsBanked = Object.fromEntries(allRewards.map(id => [id, 1]))
+    return {
+      itemsGained: { ...itemsBanked },
+      itemsBanked,
+      itemsDropped: {},
+      itemsConsumed: {},
+      actions: 1,
+      actionName: task.gatherTask.name,
+      finalInventory: inventory,
+    }
+  }
 
   // Clue scroll tasks roll a reward table per completion and consume one
   // scroll from the bank. Rewards go directly to the bank; inventory is

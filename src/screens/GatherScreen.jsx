@@ -314,7 +314,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
   // on any screen. Resource gathers stay local.
   useEffect(() => {
     if (!activeTask) return
-    if (activeTask.task?.oneShot) return
+    if (activeTask.gatherTask?.oneShot) return
     taskRef.current = activeTask
 
     const unsub = onTick(() => {
@@ -449,6 +449,8 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
           }
           const rewardNames = rewards.map(r => `${ITEM_NAMES[r.itemId] || r.itemId} ×${r.quantity}`).join(', ')
           addToast(`${task.icon} Rewards: ${rewardNames}`, 'success')
+        } else if (task.rewardItems && task.rewardItems.length > 0) {
+          // OneShot tasks with multiple reward items — award all at once (handled below)
         } else {
           // Add product to bank directly
           updateBankDirect({ [task.product]: task.qty || 1 })
@@ -456,7 +458,13 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
 
         if (task.oneShot) {
           // Minigame grind — award once then stop.
-          addToast(`${task.icon} ${ITEM_NAMES[task.product] || task.product} banked!`, 'success')
+          if (task.rewardItems && task.rewardItems.length > 0) {
+            updateBankDirect(Object.fromEntries(task.rewardItems.map(id => [id, 1])))
+            const rewardNames = task.rewardItems.map(id => ITEM_NAMES[id] || id).join(', ')
+            addToast(`${task.icon} Received: ${rewardNames}!`, 'success')
+          } else {
+            addToast(`${task.icon} ${ITEM_NAMES[task.product] || task.product} banked!`, 'success')
+          }
           taskRef.current = { ...next, stopped: true }
           setLocalTask(null)
           setActiveTask(null)

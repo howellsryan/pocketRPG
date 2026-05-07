@@ -1155,10 +1155,8 @@ function GameApp() {
           const ticksRemaining = Math.max(0, prevRemaining - ticksInOneHour)
 
           if (ticksRemaining <= 0) {
-            // Minigame completed — award item and clear task
-            updateBankDirect({ [savedTask.gatherTask.product]: savedTask.gatherTask.qty || 1 })
-            unlockMinigameItem(savedTask.gatherTask.product)
-            recordCollectionLogDropForMinigame(savedTask.gatherTask)
+            // Minigame completed — award all reward items and clear task
+            grantMinigameTaskRewards(savedTask.gatherTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
             setActiveTask(null)
             idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true }
             sim = {}
@@ -1180,9 +1178,7 @@ function GameApp() {
           const prevRemaining = savedTask.ticksRemaining ?? totalTicks
           const ticksRemaining = Math.max(0, prevRemaining - TICKS_PER_HOUR)
           if (ticksRemaining <= 0) {
-            updateBankDirect({ [savedTask.minigameTask.product]: savedTask.minigameTask.qty || 1 })
-            unlockMinigameItem(savedTask.minigameTask.product)
-            recordCollectionLogDropForMinigame(savedTask.minigameTask)
+            grantMinigameTaskRewards(savedTask.minigameTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
             setActiveTask(null)
             idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true }
             sim = {}

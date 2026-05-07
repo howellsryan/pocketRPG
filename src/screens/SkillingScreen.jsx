@@ -5,7 +5,7 @@ import ProgressBar from '../components/ProgressBar.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { SKILL_ICONS, STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS, formatDropChance } from '../utils/constants.js'
 import { getLevelFromXP } from '../engine/experience.js'
-import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getEffectiveToolActionTicks, hasToolForSkill } from '../engine/skilling.js'
+import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getEffectiveToolActionTicks, hasToolForSkill, getEquippedSkillXpMultiplier } from '../engine/skilling.js'
 import { addItem, removeItem, countItem } from '../engine/inventory.js'
 import { hasRequiredRunes, getRunesToConsume } from '../engine/runes.js'
 import { onTick } from '../engine/tick.js'
@@ -290,7 +290,13 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
           if (action.materials) updateInventory(newInv)
 
           // Grant XP
-          grantXP(state.skill, ev.xp)
+          const xpMultiplier = getEquippedSkillXpMultiplier(state.skill, equipment, itemsData)
+          const multipliedXP = Math.floor(ev.xp * xpMultiplier)
+          grantXP(state.skill, multipliedXP)
+          // Keep totalXP display in sync — processSkillingTick added base ev.xp; correct to multiplied value
+          if (xpMultiplier !== 1) {
+            skillingRef.current = { ...skillingRef.current, totalXP: skillingRef.current.totalXP - ev.xp + multipliedXP }
+          }
           if (state.skill === 'dungeoneering' && action.category !== 'reward') {
             const tokenReward = calculateDungeoneeringTokensForAction(action)
             if (tokenReward > 0) {
@@ -544,6 +550,8 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
               stats,
               inventory,
             )
+            const xpMultiplier = getEquippedSkillXpMultiplier(selectedSkill, equipment, itemsData)
+            const displayXP = xpMultiplier !== 1 ? Math.floor(action.xp * xpMultiplier) : action.xp
             return (
               <button
                 key={action.id}
@@ -559,7 +567,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                   <div class="text-[10px] text-[var(--color-parchment)] opacity-40">
                     {isDungeoneeringReward
                       ? `Lv ${action.level} · Cost: ${formatNumber(rewardCost)} tokens`
-                      : <>Lv {action.level} · {action.xp} XP · {effectiveTicks !== action.ticks
+                      : <>Lv {action.level} · {displayXP} XP{xpMultiplier !== 1 && <span class="text-[var(--color-gold)] opacity-100"> (+{Math.round((xpMultiplier - 1) * 100)}%)</span>} · {effectiveTicks !== action.ticks
                       ? <><span class="line-through">{formatActionDuration(action.ticks)}</span> <span class="text-[var(--color-gold)] opacity-100">{formatActionDuration(effectiveTicks)}</span></>
                       : formatActionDuration(action.ticks)}</>}
                     {isDungeoneeringReward && rowEnabled === false && (
