@@ -5,7 +5,7 @@ import ProgressBar from '../components/ProgressBar.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { SKILL_ICONS, STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS, formatDropChance } from '../utils/constants.js'
 import { getLevelFromXP } from '../engine/experience.js'
-import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getEffectiveToolActionTicks, hasToolForSkill } from '../engine/skilling.js'
+import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getEffectiveToolActionTicks, hasToolForSkill, getEquippedSkillXpMultiplier } from '../engine/skilling.js'
 import { addItem, removeItem, countItem } from '../engine/inventory.js'
 import { hasRequiredRunes, getRunesToConsume } from '../engine/runes.js'
 import { onTick } from '../engine/tick.js'
@@ -290,7 +290,8 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
           if (action.materials) updateInventory(newInv)
 
           // Grant XP
-          grantXP(state.skill, ev.xp)
+          const xpMultiplier = getEquippedSkillXpMultiplier(state.skill, equipment, itemsData)
+          grantXP(state.skill, Math.floor(ev.xp * xpMultiplier))
           if (state.skill === 'dungeoneering' && action.category !== 'reward') {
             const tokenReward = calculateDungeoneeringTokensForAction(action)
             if (tokenReward > 0) {
