@@ -178,7 +178,7 @@ export default function EquipmentScreen() {
     <div class="h-full overflow-y-auto p-4">
       <SectionHeader className="mb-3">Equipment</SectionHeader>
 
-      <div class="space-y-4">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
       <div class="w-full">
         <EquipmentPaperdoll
           equipment={equipment}
@@ -190,7 +190,7 @@ export default function EquipmentScreen() {
       </div>
 
       {/* Bonuses summary */}
-      <Card className="w-full">
+      <Card className="w-full h-full">
         <SectionHeader size="sm" className="mb-2 opacity-50">Bonuses</SectionHeader>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4 text-[11px] md:text-[13px]">
