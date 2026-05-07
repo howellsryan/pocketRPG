@@ -16,6 +16,7 @@ const sourceFiles = [
   'utils/itemValue.js',
   'utils/idleElapsed.js',
   'utils/prayerIcons.js',
+  'utils/bonusLabels.js',
   'hooks/useActionTick.js',
   'hooks/useIsDesktop.js',
   'hooks/useEscapeKey.js',
