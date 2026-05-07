@@ -10,7 +10,7 @@ import skillsData from '../data/skills.json'
 
 const thievingData = skillsData.thieving
 
-export default function ThievingScreen({ initialNpcId, onBack }) {
+export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
   const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask } = useGame()
 
   const thievingLevel = getLevelFromXP(stats.thieving?.xp || 0)
@@ -32,6 +32,31 @@ export default function ThievingScreen({ initialNpcId, onBack }) {
       if (npc && thievingLevel >= npc.level) startThieving(npc)
     }
   }, [initialNpcId])
+
+  // When a skip completes while actively thieving, add the skipped XP and
+  // coins to the running session totals.
+  useEffect(() => {
+    if (!thieving?.active) return
+    if (!idleResult) return
+    if (idleResult.task?.type !== 'thieving') return
+    const xpGained = idleResult.xpGained?.thieving || 0
+    const coinsGained = idleResult.coinsGained || 0
+    const actions = idleResult.actions || 0
+    const elapsedMs = idleResult.elapsedMs || 0
+    if (xpGained === 0 && coinsGained === 0) return
+    setThieving((prev) => {
+      if (!prev?.active) return prev
+      const next = {
+        ...prev,
+        totalPickpockets: (prev.totalPickpockets || 0) + actions,
+        totalXP: (prev.totalXP || 0) + xpGained,
+        totalCoins: (prev.totalCoins || 0) + coinsGained,
+        startedAt: (prev.startedAt || Date.now()) - elapsedMs,
+      }
+      thievingRef.current = next
+      return next
+    })
+  }, [idleResult])
 
   // Tick listener
   useEffect(() => {

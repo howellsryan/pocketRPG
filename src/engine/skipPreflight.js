@@ -116,6 +116,7 @@ export function isChargeableSkipOutcome(activeTask, outcome) {
   if (activeTask.type === 'skill' && activeTask.skill === 'dungeoneering' && activeTask.action?.category === 'reward') return false
   if (activeTask.type === 'skill' && activeTask.action?.category === 'reward') return !!outcome.rewardCompleted || !!outcome.rewardTimeReduced
   if (Number(outcome.actions || 0) > 0) return true
+  if (Number(outcome.laps || 0) > 0) return true
   if (Number(outcome.monstersKilled || 0) > 0) return true
   if (activeTask.type === 'combat' && Number(outcome.hpRestored || 0) > 0) return true
   return false

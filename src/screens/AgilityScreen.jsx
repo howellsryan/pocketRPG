@@ -9,7 +9,7 @@ import skillsData from '../data/skills.json'
 
 const agilityData = skillsData.agility
 
-export default function AgilityScreen({ initialActionId, onBack }) {
+export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
   const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask } = useGame()
 
   const agilityLevel = getLevelFromXP(stats.agility?.xp || 0)
@@ -31,6 +31,31 @@ export default function AgilityScreen({ initialActionId, onBack }) {
       if (action && agilityLevel >= action.level) startCourse(action)
     }
   }, [initialActionId])
+
+  // When a skip completes while actively running agility, add the skipped laps,
+  // XP, and coins to the running session totals.
+  useEffect(() => {
+    if (!agility?.active) return
+    if (!idleResult) return
+    if (idleResult.task?.type !== 'agility') return
+    const laps = idleResult.laps || 0
+    const xpGained = idleResult.xpGained?.agility || 0
+    const coinsGained = idleResult.coinsGained || 0
+    const elapsedMs = idleResult.elapsedMs || 0
+    if (laps === 0 && xpGained === 0) return
+    setAgility((prev) => {
+      if (!prev?.active) return prev
+      const next = {
+        ...prev,
+        totalLaps: (prev.totalLaps || 0) + laps,
+        totalXP: (prev.totalXP || 0) + xpGained,
+        totalCoins: (prev.totalCoins || 0) + coinsGained,
+        startedAt: (prev.startedAt || Date.now()) - elapsedMs,
+      }
+      agilityRef.current = next
+      return next
+    })
+  }, [idleResult])
 
   // Tick listener
   useEffect(() => {

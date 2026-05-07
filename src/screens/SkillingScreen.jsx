@@ -73,6 +73,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     return (
       <AgilityScreen
         initialActionId={initialActionId}
+        idleResult={idleResult}
         onBack={() => setSelectedSkill(null)}
       />
     )
@@ -92,6 +93,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     return (
       <ThievingScreen
         initialNpcId={initialActionId}
+        idleResult={idleResult}
         onBack={() => setSelectedSkill(null)}
       />
     )
@@ -102,6 +104,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     return (
       <HunterScreen
         initialActionId={initialActionId}
+        idleResult={idleResult}
         onBack={() => setSelectedSkill(null)}
       />
     )
@@ -391,6 +394,33 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     setActiveTask({ type: 'skill', skill: selectedSkill, action: selectedAction, bankingEnabled: true, selectedAlchemyItem: item })
   }
 
+
+  // When a skip completes while actively skilling, add the skipped XP and
+  // actions to the running session totals so the progress display stays accurate.
+  useEffect(() => {
+    if (!skilling?.active) return
+    if (!idleResult) return
+    if (idleResult.task?.type !== 'skill') return
+    if (idleResult.task?.skill !== selectedSkill) return
+    if (idleResult.rewardCompleted) return
+    const xpGained = idleResult.xpGained?.[selectedSkill] || 0
+    const actionsGained = idleResult.actions || 0
+    const tokensGained = idleResult.dungeoneeringTokensGained || 0
+    const elapsedMs = idleResult.elapsedMs || 0
+    if (xpGained === 0 && actionsGained === 0 && tokensGained === 0) return
+    setSkilling((prev) => {
+      if (!prev?.active) return prev
+      const next = {
+        ...prev,
+        totalXP: (prev.totalXP || 0) + xpGained,
+        totalActions: (prev.totalActions || 0) + actionsGained,
+        totalDungeoneeringTokens: (prev.totalDungeoneeringTokens || 0) + tokensGained,
+        startedAt: (prev.startedAt || Date.now()) - elapsedMs,
+      }
+      skillingRef.current = next
+      return next
+    })
+  }, [idleResult, selectedSkill])
 
   // If an idle/skip simulation completed a long-form unlock while this screen
   // was open, close the active skilling modal so the player returns to the

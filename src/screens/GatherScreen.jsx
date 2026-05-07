@@ -543,6 +543,33 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
     }
   }, [initialTaskId])
 
+  // When a skip completes while actively gathering, add the skipped actions and
+  // items to the running session totals so the progress display stays accurate.
+  useEffect(() => {
+    if (!idleResult) return
+    if (idleResult.task?.type !== 'gather') return
+    const current = taskRef.current
+    if (!current?.task || current.stopped) return
+    if (idleResult.task?.gatherTask?.id !== current.task.id) return
+    const actionsGained = idleResult.actions || 0
+    const itemsGained = idleResult.itemsGained
+      ? Object.values(idleResult.itemsGained).reduce((s, v) => s + v, 0)
+      : 0
+    const elapsedMs = idleResult.elapsedMs || 0
+    if (actionsGained === 0 && itemsGained === 0) return
+    setLocalTask((prev) => {
+      if (!prev?.task || prev.stopped) return prev
+      const next = {
+        ...prev,
+        totalDone: (prev.totalDone || 0) + actionsGained,
+        totalItems: (prev.totalItems || 0) + itemsGained,
+        startedAt: (prev.startedAt || Date.now()) - elapsedMs,
+      }
+      taskRef.current = next
+      return next
+    })
+  }, [idleResult])
+
   // If the app-level task is cleared (for example by skip preflight exhaustion),
   // force-close any local gather action view so the user returns to the picker.
   useEffect(() => {

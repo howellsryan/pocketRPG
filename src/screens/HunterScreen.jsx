@@ -12,7 +12,7 @@ import itemsData from '../data/items.json'
 
 const hunterData = skillsData.hunter
 
-export default function HunterScreen({ initialActionId, onBack }) {
+export default function HunterScreen({ initialActionId, idleResult, onBack }) {
   const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask } = useGame()
 
   const hunterLevel = getLevelFromXP(stats.hunter?.xp || 0)
@@ -33,6 +33,29 @@ export default function HunterScreen({ initialActionId, onBack }) {
       if (action && hunterLevel >= action.level) startHunting(action)
     }
   }, [initialActionId])
+
+  // When a skip completes while actively hunting, add the skipped actions and
+  // XP to the running session totals.
+  useEffect(() => {
+    if (!hunter?.active) return
+    if (!idleResult) return
+    if (idleResult.task?.type !== 'hunter') return
+    const actions = idleResult.actions || 0
+    const xpGained = idleResult.xpGained?.hunter || 0
+    const elapsedMs = idleResult.elapsedMs || 0
+    if (actions === 0 && xpGained === 0) return
+    setHunter((prev) => {
+      if (!prev?.active) return prev
+      const next = {
+        ...prev,
+        totalActions: (prev.totalActions || 0) + actions,
+        totalXP: (prev.totalXP || 0) + xpGained,
+        startedAt: (prev.startedAt || Date.now()) - elapsedMs,
+      }
+      hunterRef.current = next
+      return next
+    })
+  }, [idleResult])
 
   useEffect(() => {
     if (!hunter || !hunter.active) return

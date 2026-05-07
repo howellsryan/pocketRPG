@@ -1457,7 +1457,7 @@ function GameApp() {
       case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onCombatStatusChange={setIsInCombat} />
       case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} idleResult={idleResult} />
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} />
-      case SCREENS.AGILITY:     return <AgilityScreen initialActionId={actionData?.actionId} />
+      case SCREENS.AGILITY:     return <AgilityScreen initialActionId={actionData?.actionId} idleResult={idleResult} />
       case SCREENS.STORE:       return <GeneralStoreScreen />
       case SCREENS.QUESTS:      return <QuestsScreen />
       case SCREENS.LEADERBOARD: return <LeaderboardScreen />
