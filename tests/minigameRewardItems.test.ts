@@ -4,6 +4,7 @@ import items from '../src/data/items.json'
 import { getEquippedSkillXpMultiplier, hasToolForSkill } from '../src/engine/skilling.js'
 import { getXPForLevel } from '../src/engine/experience.js'
 import { checkEquipRequirements } from '../src/engine/equipment.js'
+import { simulateIdleGather } from '../src/engine/idleEngine.js'
 
 describe('new minigame tasks', () => {
   it('includes expected tasks and durations', () => {
@@ -45,7 +46,7 @@ describe('angler net fishing integration', () => {
     expect(items.angler_net.toolFor).toBe('fishing')
     expect(items.angler_net.speedMultiplier).toBe(items.harpoon.speedMultiplier)
     const multiplier = getEquippedSkillXpMultiplier('fishing', { weapon: { itemId: 'angler_net' } }, items as any)
-    expect(multiplier).toBe(1.05)
+    expect(multiplier).toBe(1.1)
     expect(getEquippedSkillXpMultiplier('fishing', {}, items as any)).toBe(1)
   })
 
@@ -53,6 +54,21 @@ describe('angler net fishing integration', () => {
     const stats = { fishing: { xp: getXPForLevel(99) } } as any
     expect(hasToolForSkill('fishing', { weapon: { itemId: 'angler_net' } } as any, [], items as any, stats)).toBe(true)
     expect(hasToolForSkill('fishing', {} as any, [{ itemId: 'angler_net', quantity: 1 }] as any, items as any, stats)).toBe(true)
+  })
+})
+
+describe('void set idle reward', () => {
+  it('grants all 4 void knight pieces when the idle grind completes', () => {
+    const task = minigames.tasks.find(t => t.id === 'pc_void_set')!
+    const idleTask = { type: 'gather', gatherTask: task, bankingEnabled: true }
+    // Simulate 6+ hours elapsed (task.ticks * 0.6s = 36000 * 600ms = 6h)
+    const sixHoursMs = 6 * 60 * 60 * 1000 + 1000
+    const result = simulateIdleGather(idleTask as any, sixHoursMs, [], {}, items as any, {})
+    expect(result).not.toBeNull()
+    expect(result!.itemsGained).toHaveProperty('void_knight_helm', 1)
+    expect(result!.itemsGained).toHaveProperty('void_knight_top', 1)
+    expect(result!.itemsGained).toHaveProperty('void_knight_robe', 1)
+    expect(result!.itemsGained).toHaveProperty('void_knight_gloves', 1)
   })
 })
 

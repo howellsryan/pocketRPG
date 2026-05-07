@@ -21,8 +21,10 @@ export default function BonusDisplay({ item }) {
   const otherBonusLabels = {
     meleeStrength: 'Str',
     rangedStrength: 'Rng Str',
-    magicDamage: 'Mag %'
+    magicDamage: 'Mag %',
+    fishingXpPercent: 'Fishing XP'
   }
+  const percentBonusKeys = new Set(['fishingXpPercent'])
 
   return (
     <div class="text-[12px]">
@@ -77,7 +79,7 @@ export default function BonusDisplay({ item }) {
                   <div key={k} class="flex justify-between text-[var(--color-parchment)] opacity-70 py-[2px]">
                     <span>{otherBonusLabels[k] || k}</span>
                     <span class="font-[var(--font-mono)]" style={{ color: v > 0 ? '#27ae60' : '#c0392b' }}>
-                      {v > 0 ? '+' : ''}{v}
+                      {v > 0 ? '+' : ''}{v}{percentBonusKeys.has(k) ? '%' : ''}
                     </span>
                   </div>
                 ) : null

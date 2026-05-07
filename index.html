@@ -8247,7 +8247,7 @@ const itemsData = {
     "attackStyle": "stab",
     "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
     "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0, "fishingXpPercent": 5 },
+    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0, "fishingXpPercent": 10 },
     "toolFor": "fishing",
     "speedMultiplier": 0.7,
     "requirements": {},
@@ -37197,10 +37197,17 @@ function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, stats = {
         const newRemaining = prevRemaining - consumed;
         const completed = newRemaining <= 0;
         const product = task.action.product;
+        const rewardItems = task.action.rewardItems || [];
+        const completedItems = completed
+            ? Object.fromEntries([
+                ...(product ? [[product, 1]] : []),
+                ...rewardItems.map(id => [id, 1])
+            ])
+            : {};
         return {
             xpGained: {},
-            itemsGained: completed && product ? { [product]: 1 } : {},
-            itemsBanked: completed && product ? { [product]: 1 } : {},
+            itemsGained: completedItems,
+            itemsBanked: completedItems,
             itemsConsumed: {},
             itemsDropped: {},
             actions: completed ? 1 : 0,
@@ -37611,6 +37618,23 @@ function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, itemsDa
     let actions = Math.floor(totalTicks / actionTicks);
     if (actions <= 0)
         return null;
+    // OneShot minigame tasks (e.g. void set) complete once and bank all reward
+    // items directly, matching the active-path behaviour in GatherScreen.
+    if (task.gatherTask.oneShot) {
+        const allRewards = task.gatherTask.rewardItems?.length > 0
+            ? task.gatherTask.rewardItems
+            : (task.gatherTask.product ? [task.gatherTask.product] : []);
+        const itemsBanked = Object.fromEntries(allRewards.map(id => [id, 1]));
+        return {
+            itemsGained: { ...itemsBanked },
+            itemsBanked,
+            itemsDropped: {},
+            itemsConsumed: {},
+            actions: 1,
+            actionName: task.gatherTask.name,
+            finalInventory: inventory,
+        };
+    }
     // Clue scroll tasks roll a reward table per completion and consume one
     // scroll from the bank. Rewards go directly to the bank; inventory is
     // untouched (matches the live tick handler in GatherScreen).
@@ -41811,8 +41835,10 @@ function BonusDisplay({ item }) {
     const otherBonusLabels = {
         meleeStrength: 'Str',
         rangedStrength: 'Rng Str',
-        magicDamage: 'Mag %'
+        magicDamage: 'Mag %',
+        fishingXpPercent: 'Fishing XP'
     };
+    const percentBonusKeys = new Set(['fishingXpPercent']);
     return (h("div", { class: "text-[12px]" },
         h("button", { type: "button", onClick: () => setExpanded(e => !e), "aria-expanded": expanded, class: "w-full flex items-center gap-2 py-1 text-left rounded-lg active:bg-[#1a1a1a]" },
             h(SectionHeader, { size: "sm", className: "opacity-60" }, "Bonuses"),
@@ -41838,7 +41864,8 @@ function BonusDisplay({ item }) {
                     h("span", null, otherBonusLabels[k] || k),
                     h("span", { class: "font-[var(--font-mono)]", style: { color: v > 0 ? '#27ae60' : '#c0392b' } },
                         v > 0 ? '+' : '',
-                        v))) : null)))))));
+                        v,
+                        percentBonusKeys.has(k) ? '%' : ''))) : null)))))));
 }
 
 // ── components/ItemDetailPanel.js ──
@@ -47768,7 +47795,12 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
                         updateInventory(newInv);
                     // Grant XP
                     const xpMultiplier = getEquippedSkillXpMultiplier(state.skill, equipment, itemsData);
-                    grantXP(state.skill, Math.floor(ev.xp * xpMultiplier));
+                    const multipliedXP = Math.floor(ev.xp * xpMultiplier);
+                    grantXP(state.skill, multipliedXP);
+                    // Keep totalXP display in sync — processSkillingTick added base ev.xp; correct to multiplied value
+                    if (xpMultiplier !== 1) {
+                        skillingRef.current = { ...skillingRef.current, totalXP: skillingRef.current.totalXP - ev.xp + multipliedXP };
+                    }
                     if (state.skill === 'dungeoneering' && action.category !== 'reward') {
                         const tokenReward = calculateDungeoneeringTokensForAction(action);
                         if (tokenReward > 0) {
@@ -47987,6 +48019,8 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
                         ? canAffordDungeoneeringReward(action, dungeoneeringTokens, skillLevel) && !!itemsData[action.product]
                         : canStart;
                     const effectiveTicks = getEffectiveToolActionTicks(selectedSkill, action.ticks, equipment, itemsData, stats, inventory);
+                    const xpMultiplier = getEquippedSkillXpMultiplier(selectedSkill, equipment, itemsData);
+                    const displayXP = xpMultiplier !== 1 ? Math.floor(action.xp * xpMultiplier) : action.xp;
                     return (h("button", { key: action.id, onClick: () => rowEnabled && startSkilling(action), disabled: !rowEnabled, class: `w-full flex items-center justify-between p-3 rounded-xl border transition-colors
                   ${rowEnabled
                             ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
@@ -48000,8 +48034,13 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
                                         "Lv ",
                                         action.level,
                                         " \u00B7 ",
-                                        action.xp,
-                                        " XP \u00B7 ",
+                                        displayXP,
+                                        " XP",
+                                        xpMultiplier !== 1 && h("span", { class: "text-[var(--color-gold)] opacity-100" },
+                                            " (+",
+                                            Math.round((xpMultiplier - 1) * 100),
+                                            "%)"),
+                                        " \u00B7 ",
                                         effectiveTicks !== action.ticks
                                             ? h(Fragment, null,
                                                 h("span", { class: "line-through" }, formatActionDuration(action.ticks)),
@@ -49082,13 +49121,23 @@ function GatherScreen({ initialTaskId, idleResult }) {
                     const rewardNames = rewards.map(r => `${ITEM_NAMES[r.itemId] || r.itemId} ×${r.quantity}`).join(', ');
                     addToast(`${task.icon} Rewards: ${rewardNames}`, 'success');
                 }
+                else if (task.rewardItems && task.rewardItems.length > 0) {
+                    // OneShot tasks with multiple reward items — award all at once (handled below)
+                }
                 else {
                     // Add product to bank directly
                     updateBankDirect({ [task.product]: task.qty || 1 });
                 }
                 if (task.oneShot) {
                     // Minigame grind — award once then stop.
-                    addToast(`${task.icon} ${ITEM_NAMES[task.product] || task.product} banked!`, 'success');
+                    if (task.rewardItems && task.rewardItems.length > 0) {
+                        updateBankDirect(Object.fromEntries(task.rewardItems.map(id => [id, 1])));
+                        const rewardNames = task.rewardItems.map(id => ITEM_NAMES[id] || id).join(', ');
+                        addToast(`${task.icon} Received: ${rewardNames}!`, 'success');
+                    }
+                    else {
+                        addToast(`${task.icon} ${ITEM_NAMES[task.product] || task.product} banked!`, 'success');
+                    }
                     taskRef.current = { ...next, stopped: true };
                     setLocalTask(null);
                     setActiveTask(null);

@@ -8139,7 +8139,7 @@
     "attackStyle": "stab",
     "attackBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
     "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
-    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0, "fishingXpPercent": 5 },
+    "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0, "fishingXpPercent": 10 },
     "toolFor": "fishing",
     "speedMultiplier": 0.7,
     "requirements": {},
