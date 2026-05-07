@@ -41,7 +41,7 @@ import { getSlayerTaskReward } from './engine/slayerRewards.js'
 import { isHighValueDrop } from './utils/itemValue.js'
 import { computeIdleElapsedMs } from './utils/idleElapsed.js'
 import { advanceFarmingState } from './engine/farming.ts'
-import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache } from './cloud/collectionLog.js'
+import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, onCollectionLogSlotComplete } from './cloud/collectionLog.js'
 import { isLoggedDrop } from './engine/collectionLog.js'
 
 // ── Clock-rollback watermark ────────────────────────────────────────────────
@@ -392,6 +392,13 @@ function GameApp() {
     const t2 = setTimeout(refreshMe, 8000)
     return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [gameReady])
+
+  useEffect(() => {
+    return onCollectionLogSlotComplete(({ itemId }) => {
+      const name = itemsDataRef.current?.[itemId]?.name || itemId
+      addToast(`📖 Collection Log: ${name}`, 'levelup', '📖')
+    })
+  }, [addToast])
 
   useEffect(() => {
     if (gameReady) {

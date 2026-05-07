@@ -6,6 +6,7 @@
 // silently rejected because no PvE source maps to them.
 
 import { api, getToken, getCharacterId } from './api.js'
+import { isSlotObtained } from '../engine/collectionLog.js'
 
 const FLUSH_DELAY_MS = 500
 const MAX_BUFFER = 64
@@ -13,6 +14,7 @@ const MAX_BUFFER = 64
 let buffer = []
 let timer = null
 let collectionLogListeners = new Set()
+let collectionLogSlotListeners = new Set()
 let cachedEntries = null    // Set<string> "type:source:item"
 let cachedTotal = null
 let isFetching = false
@@ -34,9 +36,22 @@ export function subscribe(fn) {
   return () => collectionLogListeners.delete(fn)
 }
 
+// Fires once per fresh slot completion (i.e. transitions from "unobtained" to
+// "obtained" in the user's view). Used by the UI to surface a toast.
+export function onCollectionLogSlotComplete(fn) {
+  collectionLogSlotListeners.add(fn)
+  return () => collectionLogSlotListeners.delete(fn)
+}
+
 function notify() {
   for (const fn of collectionLogListeners) {
     try { fn({ entries: cachedEntries, total: cachedTotal }) } catch (err) { console.warn('[collectionLog] listener error', err) }
+  }
+}
+
+function notifySlotComplete(entry) {
+  for (const fn of collectionLogSlotListeners) {
+    try { fn(entry) } catch (err) { console.warn('[collectionLog] slot listener error', err) }
   }
 }
 
@@ -100,13 +115,21 @@ function scheduleFlush() {
 
 // Record a candidate drop. Server is source of truth; we still optimistically
 // dedupe against the local cache so we don't spam the buffer with already-
-// owned entries.
+// owned entries. Skips records whose slot is already visually obtained
+// (covers the shared-item case where one source credits multiple slots).
 export function recordCollectionLogDrop({ itemId, sourceType, sourceId }) {
   if (!itemId || !sourceType || !sourceId) return
   const key = `${sourceType}:${sourceId}:${itemId}`
-  if (cachedEntries && cachedEntries.has(key)) return
+  if (cachedEntries) {
+    if (cachedEntries.has(key)) return
+    if (isSlotObtained(cachedEntries, sourceType, sourceId, itemId)) return
+  }
   // Avoid duplicate buffered entries within the same flush window.
   if (buffer.some(e => entryKey(e) === key)) return
   buffer.push({ itemId, sourceType, sourceId })
+  // Fire the toast hook eagerly — server validation may still reject, but the
+  // common case is a successful insert and waiting for the round-trip would
+  // make the toast feel laggy after a kill.
+  notifySlotComplete({ itemId, sourceType, sourceId })
   scheduleFlush()
 }
