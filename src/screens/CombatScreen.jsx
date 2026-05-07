@@ -321,14 +321,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         currentHP: hpRef.current
       }
 
-      // Apply slayer helmet +15% melee accuracy & strength bonus when on task
-      const headEquip = equipmentRef.current?.head
-      const headItemData = headEquip ? itemsData[headEquip.itemId] : null
-      if (headItemData?.otherBonus?.slayerHelmet && slayerTaskRef.current?.monsterId === state.monster.id) {
-        playerStats.attack = Math.floor(playerStats.attack * 1.15)
-        playerStats.strength = Math.floor(playerStats.strength * 1.15)
-      }
-
       const { combatState, events } = processCombatTick(state, playerStats, equipmentRef.current, itemsData, prayersData, inventoryRef.current, slayerTaskRef.current)
 
       // Master Rejuvenation: auto-refill spec bar when it hits 0 mid-fight

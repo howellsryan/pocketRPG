@@ -7543,7 +7543,8 @@
       "meleeStrength": 3,
       "rangedStrength": 0,
       "magicDamage": 0,
-      "slayerHelmet": true
+      "slayerTaskAccuracyFlat": 15,
+      "slayerTaskDamageFlat": 15
     },
     "requirements": {
       "slayer": 20
