@@ -1978,6 +1978,19 @@
     "name": "Magic",
     "actions": [
       {
+        "id": "curse",
+        "name": "Curse",
+        "level": 19,
+        "ticks": 5,
+        "xp": 29,
+        "type": "utility_spell",
+        "runeReq": {
+          "body_rune": 1,
+          "water_rune": 2,
+          "earth_rune": 3
+        }
+      },
+      {
         "id": "high_alch",
         "name": "High Alchemy",
         "level": 55,
@@ -2068,6 +2081,19 @@
         },
         "materials": {
           "dragonstone_amulet": 1
+        }
+      },
+      {
+        "id": "stun",
+        "name": "Stun",
+        "level": 80,
+        "ticks": 5,
+        "xp": 90,
+        "type": "utility_spell",
+        "runeReq": {
+          "soul_rune": 1,
+          "water_rune": 12,
+          "earth_rune": 12
         }
       },
       {
