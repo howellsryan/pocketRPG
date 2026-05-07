@@ -41,6 +41,7 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
     const laps = idleResult.laps || 0
     const xpGained = idleResult.xpGained?.agility || 0
     const coinsGained = idleResult.coinsGained || 0
+    const elapsedMs = idleResult.elapsedMs || 0
     if (laps === 0 && xpGained === 0) return
     setAgility((prev) => {
       if (!prev?.active) return prev
@@ -49,6 +50,7 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
         totalLaps: (prev.totalLaps || 0) + laps,
         totalXP: (prev.totalXP || 0) + xpGained,
         totalCoins: (prev.totalCoins || 0) + coinsGained,
+        startedAt: (prev.startedAt || Date.now()) - elapsedMs,
       }
       agilityRef.current = next
       return next

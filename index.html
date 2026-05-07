@@ -46913,6 +46913,7 @@ function AgilityScreen({ initialActionId, idleResult, onBack }) {
         const laps = idleResult.laps || 0;
         const xpGained = idleResult.xpGained?.agility || 0;
         const coinsGained = idleResult.coinsGained || 0;
+        const elapsedMs = idleResult.elapsedMs || 0;
         if (laps === 0 && xpGained === 0)
             return;
         setAgility((prev) => {
@@ -46923,6 +46924,7 @@ function AgilityScreen({ initialActionId, idleResult, onBack }) {
                 totalLaps: (prev.totalLaps || 0) + laps,
                 totalXP: (prev.totalXP || 0) + xpGained,
                 totalCoins: (prev.totalCoins || 0) + coinsGained,
+                startedAt: (prev.startedAt || Date.now()) - elapsedMs,
             };
             agilityRef.current = next;
             return next;
@@ -47356,6 +47358,7 @@ function ThievingScreen({ initialNpcId, idleResult, onBack }) {
         const xpGained = idleResult.xpGained?.thieving || 0;
         const coinsGained = idleResult.coinsGained || 0;
         const actions = idleResult.actions || 0;
+        const elapsedMs = idleResult.elapsedMs || 0;
         if (xpGained === 0 && coinsGained === 0)
             return;
         setThieving((prev) => {
@@ -47366,6 +47369,7 @@ function ThievingScreen({ initialNpcId, idleResult, onBack }) {
                 totalPickpockets: (prev.totalPickpockets || 0) + actions,
                 totalXP: (prev.totalXP || 0) + xpGained,
                 totalCoins: (prev.totalCoins || 0) + coinsGained,
+                startedAt: (prev.startedAt || Date.now()) - elapsedMs,
             };
             thievingRef.current = next;
             return next;
@@ -47556,6 +47560,7 @@ function HunterScreen({ initialActionId, idleResult, onBack }) {
             return;
         const actions = idleResult.actions || 0;
         const xpGained = idleResult.xpGained?.hunter || 0;
+        const elapsedMs = idleResult.elapsedMs || 0;
         if (actions === 0 && xpGained === 0)
             return;
         setHunter((prev) => {
@@ -47565,6 +47570,7 @@ function HunterScreen({ initialActionId, idleResult, onBack }) {
                 ...prev,
                 totalActions: (prev.totalActions || 0) + actions,
                 totalXP: (prev.totalXP || 0) + xpGained,
+                startedAt: (prev.startedAt || Date.now()) - elapsedMs,
             };
             hunterRef.current = next;
             return next;
@@ -48208,6 +48214,7 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
         const xpGained = idleResult.xpGained?.[selectedSkill] || 0;
         const actionsGained = idleResult.actions || 0;
         const tokensGained = idleResult.dungeoneeringTokensGained || 0;
+        const elapsedMs = idleResult.elapsedMs || 0;
         if (xpGained === 0 && actionsGained === 0 && tokensGained === 0)
             return;
         setSkilling((prev) => {
@@ -48218,6 +48225,7 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
                 totalXP: (prev.totalXP || 0) + xpGained,
                 totalActions: (prev.totalActions || 0) + actionsGained,
                 totalDungeoneeringTokens: (prev.totalDungeoneeringTokens || 0) + tokensGained,
+                startedAt: (prev.startedAt || Date.now()) - elapsedMs,
             };
             skillingRef.current = next;
             return next;
@@ -49556,6 +49564,7 @@ function GatherScreen({ initialTaskId, idleResult }) {
         const itemsGained = idleResult.itemsGained
             ? Object.values(idleResult.itemsGained).reduce((s, v) => s + v, 0)
             : 0;
+        const elapsedMs = idleResult.elapsedMs || 0;
         if (actionsGained === 0 && itemsGained === 0)
             return;
         setLocalTask((prev) => {
@@ -49565,6 +49574,7 @@ function GatherScreen({ initialTaskId, idleResult }) {
                 ...prev,
                 totalDone: (prev.totalDone || 0) + actionsGained,
                 totalItems: (prev.totalItems || 0) + itemsGained,
+                startedAt: (prev.startedAt || Date.now()) - elapsedMs,
             };
             taskRef.current = next;
             return next;

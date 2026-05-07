@@ -42,6 +42,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
     const xpGained = idleResult.xpGained?.thieving || 0
     const coinsGained = idleResult.coinsGained || 0
     const actions = idleResult.actions || 0
+    const elapsedMs = idleResult.elapsedMs || 0
     if (xpGained === 0 && coinsGained === 0) return
     setThieving((prev) => {
       if (!prev?.active) return prev
@@ -50,6 +51,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
         totalPickpockets: (prev.totalPickpockets || 0) + actions,
         totalXP: (prev.totalXP || 0) + xpGained,
         totalCoins: (prev.totalCoins || 0) + coinsGained,
+        startedAt: (prev.startedAt || Date.now()) - elapsedMs,
       }
       thievingRef.current = next
       return next

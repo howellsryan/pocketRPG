@@ -406,6 +406,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     const xpGained = idleResult.xpGained?.[selectedSkill] || 0
     const actionsGained = idleResult.actions || 0
     const tokensGained = idleResult.dungeoneeringTokensGained || 0
+    const elapsedMs = idleResult.elapsedMs || 0
     if (xpGained === 0 && actionsGained === 0 && tokensGained === 0) return
     setSkilling((prev) => {
       if (!prev?.active) return prev
@@ -414,6 +415,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
         totalXP: (prev.totalXP || 0) + xpGained,
         totalActions: (prev.totalActions || 0) + actionsGained,
         totalDungeoneeringTokens: (prev.totalDungeoneeringTokens || 0) + tokensGained,
+        startedAt: (prev.startedAt || Date.now()) - elapsedMs,
       }
       skillingRef.current = next
       return next

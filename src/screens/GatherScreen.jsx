@@ -555,6 +555,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
     const itemsGained = idleResult.itemsGained
       ? Object.values(idleResult.itemsGained).reduce((s, v) => s + v, 0)
       : 0
+    const elapsedMs = idleResult.elapsedMs || 0
     if (actionsGained === 0 && itemsGained === 0) return
     setLocalTask((prev) => {
       if (!prev?.task || prev.stopped) return prev
@@ -562,6 +563,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
         ...prev,
         totalDone: (prev.totalDone || 0) + actionsGained,
         totalItems: (prev.totalItems || 0) + itemsGained,
+        startedAt: (prev.startedAt || Date.now()) - elapsedMs,
       }
       taskRef.current = next
       return next

@@ -42,6 +42,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
     if (idleResult.task?.type !== 'hunter') return
     const actions = idleResult.actions || 0
     const xpGained = idleResult.xpGained?.hunter || 0
+    const elapsedMs = idleResult.elapsedMs || 0
     if (actions === 0 && xpGained === 0) return
     setHunter((prev) => {
       if (!prev?.active) return prev
@@ -49,6 +50,7 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
         ...prev,
         totalActions: (prev.totalActions || 0) + actions,
         totalXP: (prev.totalXP || 0) + xpGained,
+        startedAt: (prev.startedAt || Date.now()) - elapsedMs,
       }
       hunterRef.current = next
       return next
