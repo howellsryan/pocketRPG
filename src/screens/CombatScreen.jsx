@@ -32,6 +32,8 @@ import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slay
 import { resolveSlayerTaskKill } from '../engine/slayerTasks.js'
 import { getSlayerTaskReward } from '../engine/slayerRewards.js'
 import { CRITICAL_SAVE_REASONS, hasCriticalDrop } from '../cloud/criticalSavePolicy.js'
+import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
+import { filterLoggedDrops } from '../engine/collectionLog.js'
 
 const COMBAT_CATEGORIES = [
   {
@@ -575,6 +577,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             raidKillCountsRef.current = updatedCounts
             updateRaidKillCounts(updatedCounts)
           }
+          if (ev.raidId && Array.isArray(ev.loot)) {
+            for (const itemId of filterLoggedDrops(ev.loot, 'raids', ev.raidId)) {
+              recordCollectionLogDrop({ itemId, sourceType: 'raids', sourceId: ev.raidId })
+            }
+          }
         }
         if (ev.type === 'scythePassive') {
           setLog(prev => [...prev.slice(-20), {
@@ -738,6 +745,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
           if (hasCriticalDrop(killLoot, defeatedMonsterData, itemsData)) {
             requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.RARE_DROP)
+          }
+          if (defeatedMonsterId && killLoot.length > 0) {
+            for (const itemId of filterLoggedDrops(killLoot, 'monsters', defeatedMonsterId)) {
+              recordCollectionLogDrop({ itemId, sourceType: 'monsters', sourceId: defeatedMonsterId })
+            }
           }
           setLog(prev => [...prev.slice(-20), {
             text: `${defeatedMonsterName} defeated!`,

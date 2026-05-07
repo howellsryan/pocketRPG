@@ -41,6 +41,8 @@ import { getSlayerTaskReward } from './engine/slayerRewards.js'
 import { isHighValueDrop } from './utils/itemValue.js'
 import { computeIdleElapsedMs } from './utils/idleElapsed.js'
 import { advanceFarmingState } from './engine/farming.ts'
+import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, onCollectionLogSlotComplete } from './cloud/collectionLog.js'
+import { isLoggedDrop, collectIdleCombatLoggedDrops } from './engine/collectionLog.js'
 
 // ── Clock-rollback watermark ────────────────────────────────────────────────
 // We persist the highest Date.now() we've ever observed. If the device clock
@@ -69,6 +71,46 @@ function clampByClockWatermark(elapsedMs) {
   const watermark = readMaxObservedAt()
   if (watermark > 0 && Date.now() < watermark) return 0
   return elapsedMs
+}
+
+// Records a oneShot minigame product drop against the minigame's collection
+// log section. No-op if the (product, minigame) pair isn't in the log
+// (e.g. data drift), so callers can fire safely.
+
+function getMinigameRewardEntries(task) {
+  if (!task) return []
+  const qty = task.qty || 1
+  if (Array.isArray(task.rewardItems) && task.rewardItems.length > 0) {
+    return task.rewardItems.map((itemId) => ({ itemId, qty }))
+  }
+  return task.product ? [{ itemId: task.product, qty }] : []
+}
+
+function grantMinigameTaskRewards(task, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame }) {
+  const rewards = getMinigameRewardEntries(task)
+  if (rewards.length === 0) return
+  const bankUpdates = {}
+  for (const reward of rewards) {
+    bankUpdates[reward.itemId] = (bankUpdates[reward.itemId] || 0) + reward.qty
+    unlockMinigameItem(reward.itemId)
+    recordCollectionLogDropForMinigame({ ...task, product: reward.itemId })
+  }
+  updateBankDirect(bankUpdates)
+}
+function recordCollectionLogDropForMinigame(task) {
+  const itemId = task?.product
+  const sourceId = task?.minigame
+  if (!itemId || !sourceId) return
+  if (!isLoggedDrop(itemId, 'minigames', sourceId)) return
+  recordCollectionLogDrop({ itemId, sourceType: 'minigames', sourceId })
+}
+
+// Idle combat sim returns drops keyed by itemId across lootGained/lootBanked.
+// Fire one record per matching unique against the monster source.
+function recordCollectionLogDropsForIdleCombat(monsterId, sim) {
+  for (const itemId of collectIdleCombatLoggedDrops(monsterId, sim)) {
+    recordCollectionLogDrop({ itemId, sourceType: 'monsters', sourceId: monsterId })
+  }
 }
 
 function IdleResultProgressCard({ type, idleResult, taskName }) {
@@ -364,6 +406,13 @@ function GameApp() {
   }, [gameReady])
 
   useEffect(() => {
+    return onCollectionLogSlotComplete(({ itemId }) => {
+      const name = itemsDataRef.current?.[itemId]?.name || itemId
+      addToast(`📖 Collection Log: ${name}`, 'levelup', '📖')
+    })
+  }, [addToast])
+
+  useEffect(() => {
     if (gameReady) {
       // Immediately stamp lastTick so idle engine has a baseline if user closes tab
       const bootNow = Date.now()
@@ -497,8 +546,7 @@ function GameApp() {
             const prevRemaining = savedTask.ticksRemaining ?? totalTicks
             const newRemaining = Math.max(0, prevRemaining - elapsedTicks)
             if (newRemaining <= 0) {
-              updateBankDirect({ [savedTask.gatherTask.product]: savedTask.gatherTask.qty || 1 })
-              unlockMinigameItem(savedTask.gatherTask.product)
+              grantMinigameTaskRewards(savedTask.gatherTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
               setActiveTask(null)
               sim = { minigameCompleted: true }
             } else {
@@ -511,8 +559,7 @@ function GameApp() {
             const prevRemaining = savedTask.ticksRemaining ?? totalTicks
             const newRemaining = Math.max(0, prevRemaining - elapsedTicks)
             if (newRemaining <= 0) {
-              updateBankDirect({ [savedTask.minigameTask.product]: savedTask.minigameTask.qty || 1 })
-              unlockMinigameItem(savedTask.minigameTask.product)
+              grantMinigameTaskRewards(savedTask.minigameTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
               setActiveTask(null)
               sim = { minigameCompleted: true }
             } else {
@@ -628,6 +675,9 @@ function GameApp() {
             }
           } else if (sim.itemsGained) {
             updateBankDirect(sim.itemsGained)
+          }
+          if (savedTask.type === 'combat' && savedTask.monster?.id) {
+            recordCollectionLogDropsForIdleCombat(savedTask.monster.id, sim)
           }
           // Apply agility coin reward directly to bank
           if (savedTask.type === 'agility' && sim.coinsGained > 0) {
@@ -791,10 +841,7 @@ function GameApp() {
         const total = task.totalTicks ?? task.gatherTask.ticks
         const remaining = (task.ticksRemaining ?? total) - 1
         if (remaining <= 0) {
-          const product = task.gatherTask.product
-          const qty = task.gatherTask.qty || 1
-          updateBankDirect({ [product]: qty })
-          unlockMinigameItem(product)
+          grantMinigameTaskRewards(task.gatherTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
           addToast(`${task.gatherTask.icon || '🎮'} ${task.gatherTask.name} complete!`, 'levelup', '🏆')
           setActiveTask(null)
         } else {
@@ -808,8 +855,7 @@ function GameApp() {
         const remaining = (task.ticksRemaining ?? total) - 1
         if (remaining <= 0) {
           const mgTask = task.minigameTask
-          updateBankDirect({ [mgTask.product]: mgTask.qty || 1 })
-          unlockMinigameItem(mgTask.product)
+          grantMinigameTaskRewards(mgTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
           addToast(`${mgTask.icon || '🎮'} ${mgTask.name} complete!`, 'levelup', '🏆')
           setActiveTask(null)
         } else {
@@ -875,6 +921,9 @@ function GameApp() {
 
       setCloudPhase('ready')
       await checkSave()
+      // Pull collection log alongside the save. Fire-and-forget — UI shows a
+      // loading state until cache populates.
+      fetchCollectionLog({ force: true }).catch(() => {})
     } catch (err) {
       console.warn('[PocketRPG] Cloud init failed:', err)
       setCloudLoadError(err?.message || 'Failed to load cloud save')
@@ -973,6 +1022,7 @@ function GameApp() {
     setCharacter(null)
     resetSyncState()
     resetIdleStateSync()
+    clearCollectionLogCache()
     setGameReady(false)
     setCloudPhase('auth')
   }
@@ -1108,6 +1158,7 @@ function GameApp() {
             // Minigame completed — award item and clear task
             updateBankDirect({ [savedTask.gatherTask.product]: savedTask.gatherTask.qty || 1 })
             unlockMinigameItem(savedTask.gatherTask.product)
+            recordCollectionLogDropForMinigame(savedTask.gatherTask)
             setActiveTask(null)
             idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true }
             sim = {}
@@ -1131,6 +1182,7 @@ function GameApp() {
           if (ticksRemaining <= 0) {
             updateBankDirect({ [savedTask.minigameTask.product]: savedTask.minigameTask.qty || 1 })
             unlockMinigameItem(savedTask.minigameTask.product)
+            recordCollectionLogDropForMinigame(savedTask.minigameTask)
             setActiveTask(null)
             idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true }
             sim = {}
@@ -1200,6 +1252,9 @@ function GameApp() {
             }
           } else if (sim.itemsGained) {
             updateBankDirect(sim.itemsGained)
+          }
+          if (savedTask.type === 'combat' && savedTask.monster?.id) {
+            recordCollectionLogDropsForIdleCombat(savedTask.monster.id, sim)
           }
           // Apply agility coin reward directly to bank
           if (savedTask.type === 'agility' && sim.coinsGained > 0) {
@@ -1360,7 +1415,7 @@ function GameApp() {
             <h2 className="font-[var(--font-display)] text-[var(--color-gold)] mb-2">Cloud save unavailable</h2>
             <p className="text-sm mb-4">{cloudLoadError}</p>
             <button onClick={() => { setCloudPhase('pending'); setCloudLoadError(null); initCloudAndSave() }} className="w-full mb-2 rounded-lg px-3 py-2 bg-[var(--color-gold)] text-black font-semibold">Retry</button>
-            <button onClick={() => { clearAuth(); setCloudLoadError(null); setCloudPhase('auth') }} className="w-full rounded-lg px-3 py-2 border border-[var(--color-void-border)]">Log out</button>
+            <button onClick={() => { clearAuth(); clearCollectionLogCache(); setCloudLoadError(null); setCloudPhase('auth') }} className="w-full rounded-lg px-3 py-2 border border-[var(--color-void-border)]">Log out</button>
           </div>
         </div>
       )

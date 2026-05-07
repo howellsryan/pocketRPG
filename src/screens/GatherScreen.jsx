@@ -13,6 +13,8 @@ import { SCREENS } from '../utils/constants.js'
 import minigamesData from '../data/minigames.json'
 import cluesData from '../data/clues.json'
 import { rollClueRewards } from '../engine/clueScrolls.js'
+import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
+import { isLoggedDrop } from '../engine/collectionLog.js'
 
 /**
  * Gathering tasks — no skill level required, just time-based resource collection.
@@ -438,6 +440,13 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
           }
           bankUpdates[task.requiresItem] = -1
           updateBankDirect(bankUpdates)
+          if (task.clueLevel) {
+            for (const reward of rewards) {
+              if (isLoggedDrop(reward.itemId, 'clues', task.clueLevel)) {
+                recordCollectionLogDrop({ itemId: reward.itemId, sourceType: 'clues', sourceId: task.clueLevel })
+              }
+            }
+          }
           const rewardNames = rewards.map(r => `${ITEM_NAMES[r.itemId] || r.itemId} ×${r.quantity}`).join(', ')
           addToast(`${task.icon} Rewards: ${rewardNames}`, 'success')
         } else {

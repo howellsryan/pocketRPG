@@ -19,6 +19,7 @@ import { rollClueRewards } from './clueScrolls.js'
 import { resolveSlayerTaskKill } from './slayerTasks.js'
 import { calculateDungeoneeringTokensForAction } from './dungeoneeringTokens.js'
 import { getSlayerTaskEquipmentBonuses } from './slayerCombatBonuses.js'
+import { getVoidKnightCombatMultipliers } from './combatSetBonuses.js'
 import {
   isFoodItem, getFoodHealAmount, isBoostPotion, isPrayerRestorePotion,
   getPrayerRestoreAmount, getBoostPotionDurationTicks,
@@ -720,6 +721,7 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
   const bonuses = getEquipmentBonuses(equipment, itemsData)
   const slayerEquipmentBonus = getSlayerTaskEquipmentBonuses({ equipment, itemsData, slayerTask, monsterId: monster.id })
   const weaponSpeed = getAttackSpeed(equipment, itemsData)
+  const voidMult = getVoidKnightCombatMultipliers(equipment)
   const combatType = getCombatType(equipment, itemsData)
 
   let maxHit, atkRoll, defRoll, acc
@@ -727,8 +729,8 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
   if (combatType === 'ranged') {
     const styleBonus = getRangedStyleBonus(stance)
     const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
-    maxHit = rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength)
-    atkRoll = maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0)
+    maxHit = Math.floor(rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength) * voidMult.rangedDamage)
+    atkRoll = Math.floor(maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0) * voidMult.rangedAccuracy)
     defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus?.ranged || 0)
   } else if (combatType === 'magic') {
     const weaponEntry = equipment?.weapon
@@ -738,17 +740,17 @@ function avgHitStats(playerStats, equipment, monster, stance, itemsData, spell =
     const effMag = effectiveMagic(playerStats.magic || 1)
     // Powered staffs (Sanguinesti, Trident) scale max hit with magic level: floor(magic/3)+9.
     const baseDamage = spell ? spell.baseDamage : Math.max(1, Math.floor((playerStats.magic || 1) / 3) + 9)
-    maxHit = magicMaxHit(baseDamage, bonuses.otherBonus.magicDamage || 0)
-    atkRoll = maxAttackRoll(effMag, bonuses.attackBonus.magic || 0)
+    maxHit = magicMaxHit(baseDamage, (bonuses.otherBonus.magicDamage || 0) + (voidMult.magicDamage > 1 ? 5 : 0))
+    atkRoll = Math.floor(maxAttackRoll(effMag, bonuses.attackBonus.magic || 0) * voidMult.magicAccuracy)
     defRoll = monsterMagicDefenceRoll(monster.stats.magic || 1, monster.stats.defence, monster.defenceBonus?.magic || 0)
   } else {
     // Melee (default)
     const weaponStyle = getAttackStyle(equipment, itemsData)
     const styleBonuses = getMeleeStyleBonuses(stance)
     const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
-    maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
+    maxHit = Math.floor(meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength) * voidMult.meleeDamage)
     const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
-    atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+    atkRoll = Math.floor(maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0) * voidMult.meleeAccuracy)
     defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus?.[weaponStyle] || 0)
   }
 

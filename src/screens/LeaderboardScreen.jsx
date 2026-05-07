@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'preact/hooks'
 import Card from '../components/Card.jsx'
+import CollectionLogPanel from '../components/CollectionLogPanel.jsx'
 import { formatNumber } from '../utils/helpers.js'
 
-export default function LeaderboardScreen() {
+function LeaderboardList() {
   const [characters, setCharacters] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -27,59 +28,78 @@ export default function LeaderboardScreen() {
     fetchLeaderboard()
   }, [])
 
+  if (loading) return <div class="text-center py-4 text-[var(--color-parchment)] opacity-60 text-sm">Loading leaderboard...</div>
+  if (error) return <div class="text-center py-4 text-[#e57373] text-sm">Error: {error}</div>
+  if (characters.length === 0) return <div class="text-center py-4 text-[var(--color-parchment)] opacity-60 text-sm">No characters found</div>
+
+  return (
+    <div class="space-y-2">
+      {characters.map((char, idx) => (
+        <Card key={idx} className="p-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3 flex-1">
+              <div class="text-lg font-semibold text-[var(--color-gold)] min-w-[2rem]">
+                #{idx + 1}
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-semibold text-[var(--color-parchment)] truncate">
+                  {char.username}
+                </div>
+              </div>
+            </div>
+            <div class="text-right flex-shrink-0 ml-2">
+              <div class="text-sm font-semibold text-[var(--color-gold)]">
+                {formatNumber(char.totalLevel)}
+              </div>
+              <div class="text-[10px] text-[var(--color-parchment)] opacity-60">
+                Total Level
+              </div>
+            </div>
+          </div>
+        </Card>
+      ))}
+    </div>
+  )
+}
+
+function CollapsibleSection({ icon, title, children, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <Card className="p-0 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        class="w-full flex items-center justify-between gap-2 px-4 py-3 bg-transparent border-0 text-left cursor-pointer"
+      >
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="text-xl flex-shrink-0">{icon}</span>
+          <span class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">{title}</span>
+        </div>
+        <span class="text-[var(--color-gold)] text-sm">{open ? '▾' : '▸'}</span>
+      </button>
+      {open && (
+        <div class="px-4 pb-4 pt-1">
+          {children}
+        </div>
+      )}
+    </Card>
+  )
+}
+
+export default function LeaderboardScreen() {
   return (
     <div class="h-full flex flex-col">
       <div class="flex-shrink-0 bg-[#111] border-b border-[var(--color-void-border)] px-4 py-3">
-        <h1 class="font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)]">Leaderboards</h1>
+        <h1 class="font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)]">Settings</h1>
       </div>
 
-      <div class="flex-1 overflow-y-auto px-4 py-4">
-        {loading && (
-          <div class="text-center py-8">
-            <div class="text-[var(--color-parchment)] opacity-60">Loading leaderboard...</div>
-          </div>
-        )}
-
-        {error && (
-          <div class="text-center py-8">
-            <div class="text-[#e57373]">Error: {error}</div>
-          </div>
-        )}
-
-        {!loading && !error && characters.length === 0 && (
-          <div class="text-center py-8">
-            <div class="text-[var(--color-parchment)] opacity-60">No characters found</div>
-          </div>
-        )}
-
-        {!loading && characters.length > 0 && (
-          <div class="space-y-2">
-            {characters.map((char, idx) => (
-              <Card key={idx} className="p-3">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-3 flex-1">
-                    <div class="text-lg font-semibold text-[var(--color-gold)] min-w-[2rem]">
-                      #{idx + 1}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                      <div class="text-sm font-semibold text-[var(--color-parchment)] truncate">
-                        {char.username}
-                      </div>
-                    </div>
-                  </div>
-                  <div class="text-right flex-shrink-0 ml-2">
-                    <div class="text-sm font-semibold text-[var(--color-gold)]">
-                      {formatNumber(char.totalLevel)}
-                    </div>
-                    <div class="text-[10px] text-[var(--color-parchment)] opacity-60">
-                      Total Level
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
+      <div class="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+        <CollapsibleSection icon="🏆" title="Leaderboards">
+          <LeaderboardList />
+        </CollapsibleSection>
+        <CollapsibleSection icon="📖" title="Collection Log">
+          <CollectionLogPanel />
+        </CollapsibleSection>
       </div>
     </div>
   )

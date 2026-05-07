@@ -51,7 +51,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
         })
     }
     if (activeTab === 'minigame_unlocks') {
-      const minigameProducts = new Set((minigamesData.tasks || []).map(t => t.product).filter(Boolean))
+      const minigameProducts = new Set((minigamesData.tasks || []).flatMap((t) => (Array.isArray(t.rewardItems) && t.rewardItems.length > 0 ? t.rewardItems : [t.product])).filter(Boolean))
       return Object.entries(itemsData)
         .filter(([id]) => minigameProducts.has(id))
         .map(([id, item]) => ({ ...item, id, isMinigameItem: true, isUnlocked: unlockedMinigameItems.has(id) }))

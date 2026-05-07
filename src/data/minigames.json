@@ -3,7 +3,7 @@
     {
       "id": "ba_fighter_torso",
       "name": "Grind for Fighter Torso",
-      "icon": "👕",
+      "icon": "\ud83d\udc55",
       "description": "Run Barbarian Assault until you earn a Fighter Torso.",
       "hours": 5,
       "ticks": 30000,
@@ -15,7 +15,7 @@
     {
       "id": "ba_fighter_hat",
       "name": "Grind for Fighter Hat",
-      "icon": "🪖",
+      "icon": "\ud83e\ude96",
       "description": "Run Barbarian Assault until you earn a Fighter Hat.",
       "hours": 2,
       "ticks": 12000,
@@ -27,7 +27,7 @@
     {
       "id": "wg_rune_defender",
       "name": "Grind for Rune Defender",
-      "icon": "🛡️",
+      "icon": "\ud83d\udee1\ufe0f",
       "description": "Slay Cyclopes in the Warriors' Guild basement until one drops a Rune Defender.",
       "hours": 3,
       "ticks": 18000,
@@ -39,7 +39,7 @@
     {
       "id": "wg_dragon_defender",
       "name": "Grind for Dragon Defender",
-      "icon": "🛡️",
+      "icon": "\ud83d\udee1\ufe0f",
       "description": "Slay Cyclopes wielding your Rune Defender until one drops a Dragon Defender.",
       "hours": 2,
       "ticks": 12000,
@@ -52,7 +52,7 @@
     {
       "id": "cw_halo",
       "name": "Grind for Halo",
-      "icon": "😇",
+      "icon": "\ud83d\ude07",
       "description": "Play Castle Wars matches until you can purchase a Halo.",
       "hours": 3,
       "ticks": 18000,
@@ -98,18 +98,20 @@
       "oneShot": true
     },
     {
-      "id": "pc_full_void",
-      "name": "Grind full void",
-      "icon": "🥋",
-      "description": "Play Castle Wars until you can purchase a full Void set.",
-      "hours": 10,
-      "ticks": 60000,
-      "products": {
-        "void_hat": 1,
-        "void_body": 1,
-        "void_bottoms": 1,
-        "void_gloves": 1
-      },
+      "id": "pc_void_set",
+      "name": "Grind for Void Knight Set",
+      "icon": "\ud83d\udee1\ufe0f",
+      "description": "Play Pest Control until you earn the full Void Knight set.",
+      "hours": 6,
+      "ticks": 36000,
+      "product": "void_knight_top",
+      "rewardItems": [
+        "void_knight_helm",
+        "void_knight_top",
+        "void_knight_robe",
+        "void_knight_gloves"
+      ],
+      "qty": 1,
       "minigame": "pest_control",
       "oneShot": true
     }
@@ -131,9 +133,10 @@
     "decorative_top": "Decorative Top",
     "angler_net": "Angler Net",
     "imbued_god_cape": "Imbued God Cape",
-    "void_hat": "Void Hat",
-    "void_body": "Void Body",
-    "void_bottoms": "Void Bottoms",
-    "void_gloves": "Void Gloves"
+    "void_knight_set": "Void Knight Set",
+    "void_knight_helm": "Void Knight Helm",
+    "void_knight_top": "Void Knight Top",
+    "void_knight_robe": "Void Knight Robe",
+    "void_knight_gloves": "Void Knight Gloves"
   }
 }

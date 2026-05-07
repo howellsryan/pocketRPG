@@ -30,6 +30,7 @@ import {
   effectiveDefence, playerDefenceRoll,
 } from './formulas.js'
 import { getEquipmentBonuses, getAttackStyle } from './equipment.js'
+import { getVoidKnightCombatMultipliers } from './combatSetBonuses.js'
 import { getPvpCombatModifiers } from './pvpCombatModifiers.js'
 
 // ── Helpers ─────────────────────────────────────────────────────────────
@@ -70,6 +71,7 @@ export function rollMeleeAttack(attacker, defender, itemsData) {
   const atkStance = getMeleeStyleBonuses(attacker.stance)
   const defStance = getMeleeStyleBonuses(defender.stance)
   const atkMods = getPvpCombatModifiers(attacker)
+  const voidMult = getVoidKnightCombatMultipliers(attacker.equipment)
   const defMods = getPvpCombatModifiers(defender)
 
   const effStr = effectiveStrength(
@@ -78,7 +80,7 @@ export function rollMeleeAttack(attacker, defender, itemsData) {
     atkMods.prayer.strength,
     atkStance.strengthStyleBonus,
   )
-  const maxHit = meleeMaxHit(effStr, atkBonuses.otherBonus.meleeStrength)
+  const maxHit = Math.floor(meleeMaxHit(effStr, atkBonuses.otherBonus.meleeStrength) * voidMult.meleeDamage)
 
   const effAtk = effectiveAttack(
     attacker.stats.attack,
@@ -86,7 +88,7 @@ export function rollMeleeAttack(attacker, defender, itemsData) {
     atkMods.prayer.attack,
     atkStance.attackStyleBonus,
   )
-  const atkRoll = maxAttackRoll(effAtk, atkBonuses.attackBonus[style] || 0)
+  const atkRoll = Math.floor(maxAttackRoll(effAtk, atkBonuses.attackBonus[style] || 0) * voidMult.meleeAccuracy)
 
   const effDef = effectiveDefence(
     defender.stats.defence,
@@ -116,13 +118,14 @@ export function rollRangedAttack(attacker, defender, itemsData) {
   const defStance = getMeleeStyleBonuses(defender.stance)
   const styleBonus = getRangedStyleBonus(attacker.stance)
   const atkMods = getPvpCombatModifiers(attacker)
+  const voidMult = getVoidKnightCombatMultipliers(attacker.equipment)
   const defMods = getPvpCombatModifiers(defender)
 
   const effRngAttack = effectiveRanged(attacker.stats.ranged, atkMods.potions.ranged, atkMods.prayer.ranged, styleBonus)
   const effRngStrength = effectiveRanged(attacker.stats.ranged, atkMods.potions.ranged, atkMods.prayer.rangedStrength, styleBonus)
-  const maxHit = rangedMaxHit(effRngStrength, atkBonuses.otherBonus.rangedStrength)
+  const maxHit = Math.floor(rangedMaxHit(effRngStrength, atkBonuses.otherBonus.rangedStrength) * voidMult.rangedDamage)
 
-  const atkRoll = maxAttackRoll(effRngAttack, atkBonuses.attackBonus.ranged || 0)
+  const atkRoll = Math.floor(maxAttackRoll(effRngAttack, atkBonuses.attackBonus.ranged || 0) * voidMult.rangedAccuracy)
 
   const effDef = effectiveDefence(
     defender.stats.defence,
@@ -163,10 +166,11 @@ export function rollMagicAttack(attacker, defender, itemsData, opts = {}) {
   const atkBonuses = getEquipmentBonuses(attacker.equipment, itemsData)
   const defBonuses = getEquipmentBonuses(defender.equipment, itemsData)
   const atkMods = getPvpCombatModifiers(attacker)
+  const voidMult = getVoidKnightCombatMultipliers(attacker.equipment)
   const defMods = getPvpCombatModifiers(defender)
 
   const effMag = effectiveMagic(attacker.stats.magic, atkMods.potions.magic, atkMods.prayer.magic)
-  const atkRoll = maxAttackRoll(effMag, atkBonuses.attackBonus.magic || 0)
+  const atkRoll = Math.floor(maxAttackRoll(effMag, atkBonuses.attackBonus.magic || 0) * voidMult.magicAccuracy)
 
   // Player magic defence: effective magic level + magic defence equipment.
   // We use effectiveDefence(magicLevel) — for player vs player, magic
@@ -180,9 +184,9 @@ export function rollMagicAttack(attacker, defender, itemsData, opts = {}) {
 
   let maxHit
   if (typeof maxHitOverride === 'number') {
-    maxHit = magicMaxHit(maxHitOverride, atkBonuses.otherBonus.magicDamage)
+    maxHit = magicMaxHit(maxHitOverride, atkBonuses.otherBonus.magicDamage + (voidMult.magicDamage > 1 ? 5 : 0))
   } else if (spell) {
-    maxHit = magicMaxHit(spell.baseDamage, atkBonuses.otherBonus.magicDamage)
+    maxHit = magicMaxHit(spell.baseDamage, atkBonuses.otherBonus.magicDamage + (voidMult.magicDamage > 1 ? 5 : 0))
   } else {
     // No spell, no override — caller is misusing the API. Bail with 0.
     return { hit: false, damage: 0, accuracy: 0, maxHit: 0, attackRoll: atkRoll, defenceRoll: defRoll, style: 'magic' }
