@@ -49812,7 +49812,7 @@ function EquipmentScreen() {
                                 v > 0 ? '+' : '',
                                 v)));
                     }))),
-                h("div", { class: "border-t border-[#222] mt-3 pt-3" },
+                h("div", { class: "hidden lg:block border-t border-[#222] mt-3 pt-3" },
                     h(SectionHeader, { size: "sm", className: "mb-2 opacity-50" }, "Inventory"),
                     h("div", { class: "grid grid-cols-7 gap-1" }, inventory.map((slot, i) => (h(ItemSlot, { key: i, slot: slot, onClick: (s, item) => handleInvSlotClick(s, item, i), size: "small" }))))))),
         invSelected && (h(SharedItemModal, { item: invSelected.item, quantity: invSelected.slot.quantity, noted: invSelected.slot.noted, onClose: () => setInvSelected(null) },

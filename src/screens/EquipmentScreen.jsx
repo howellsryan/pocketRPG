@@ -282,8 +282,8 @@ export default function EquipmentScreen() {
           </div>
         </div>
 
-        {/* Inventory display */}
-        <div class="border-t border-[#222] mt-3 pt-3">
+        {/* Inventory display — desktop only */}
+        <div class="hidden lg:block border-t border-[#222] mt-3 pt-3">
           <SectionHeader size="sm" className="mb-2 opacity-50">Inventory</SectionHeader>
           <div class="grid grid-cols-7 gap-1">
             {inventory.map((slot, i) => (
