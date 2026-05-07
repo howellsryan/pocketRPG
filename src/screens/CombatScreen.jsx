@@ -2121,8 +2121,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       >
                         <div class="flex flex-col items-start justify-between h-full">
                           <div class="text-left flex-1">
-                            <div class="text-sm font-semibold text-[var(--color-parchment)]">{prayer.icon} {prayer.name}</div>
-                            <div class="text-[9px] text-[var(--color-parchment)] opacity-60 line-clamp-2">{prayer.description}</div>
+                            <div class="text-sm font-semibold text-[var(--color-parchment)]">{(getPrayerStyleIcon(prayer)?.icon) || prayer.icon} {prayer.name}</div>
+                            <div class="text-[9px] text-[var(--color-parchment)] opacity-60 line-clamp-2 mt-0.5">
+                              {prayer.description}
+                            </div>
                             <div class="text-[8px] text-[var(--color-gold-dim)] mt-0.5">Lv {prayer.level}</div>
                           </div>
                           {isActive && (
