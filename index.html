@@ -41540,12 +41540,13 @@ function BottomNav({ active, onNavigate, isInCombat, onDisabledClick }) {
             const opacity = isInCombat ? 'opacity-20' : isActive ? 'opacity-100' : 'opacity-45';
             const color = isActive ? 'text-[var(--color-gold)]' : 'text-[var(--color-parchment)]';
             const cursor = isInCombat ? 'cursor-not-allowed' : 'cursor-pointer';
+            const label = tab.id === 'inventory' ? 'Invent' : tab.label;
             return (h("button", { key: tab.id, onClick: () => { if (isInCombat)
                     onDisabledClick?.();
                 else
                     onNavigate(tab.id); }, disabled: isInCombat, class: `flex flex-col items-center justify-center flex-1 h-full bg-transparent border-0 p-0 transition-opacity ${color} ${opacity} ${cursor}` },
                 h("span", { class: "text-[16px] leading-none" }, tab.icon),
-                h("span", { class: "text-[9px] font-semibold mt-[2px] font-[var(--font-body)]" }, tab.label)));
+                h("span", { class: "text-[9px] font-semibold mt-[2px] font-[var(--font-body)]" }, label)));
         }))));
 }
 
@@ -41565,12 +41566,13 @@ function SideNav({ active, onNavigate, isInCombat, onDisabledClick }) {
             const activeBorder = isActive
                 ? 'border-l-2 border-[var(--color-gold)]'
                 : 'border-l-2 border-transparent';
+            const label = tab.id === 'inventory' ? 'Inventory' : tab.label;
             return (h("button", { key: tab.id, onClick: () => { if (isInCombat)
                     onDisabledClick?.();
                 else
                     onNavigate(tab.id); }, disabled: isInCombat, "aria-current": isActive ? 'page' : undefined, class: `flex items-center gap-3 w-full px-4 py-2 mx-0 border-0 text-left transition-colors ${activeBg} ${activeBorder} ${baseColor} ${opacity} ${cursor} ${hover}` },
                 h("span", { class: "text-xl leading-none" }, tab.icon),
-                h("span", { class: "text-sm font-semibold font-[var(--font-body)]" }, tab.label)));
+                h("span", { class: "text-sm font-semibold font-[var(--font-body)]" }, label)));
         })));
 }
 
@@ -49586,16 +49588,57 @@ function GeneralStoreScreen({ onBuyCredits }) {
 
 
 
+
 const DEFAULT_CHARGE_ITEM_ID = 'zulrah_scales';
 function EquipmentScreen() {
-    const { equipment, inventory, bank, updateEquipment, updateInventory, updateBank, addToast, itemsData } = useGame();
+    const { equipment, inventory, bank, stats, updateEquipment, updateInventory, updateBank, addToast, itemsData, completedQuests } = useGame();
     const [selected, setSelected] = useState(null); // { slot, item }
     const [showSpecInfo, setShowSpecInfo] = useState(false);
     const [chargeInput, setChargeInput] = useState('');
+    const [invSelected, setInvSelected] = useState(null); // { slotIndex, slot, item }
     const handleSelect = (slotName, item) => {
         setSelected({ slot: slotName, item });
         setShowSpecInfo(false);
         setChargeInput('');
+    };
+    const handleInvSlotClick = (slot, item, index) => {
+        setInvSelected({ slotIndex: index, slot, item });
+    };
+    const handleEquipFromInv = () => {
+        if (!invSelected)
+            return;
+        const { slotIndex, item } = invSelected;
+        const reqError = checkEquipRequirements(item, stats, completedQuests);
+        if (reqError) {
+            if (reqError.reason === 'quest') {
+                addToast(`Complete quest to equip: ${reqError.questUnlock.replace(/_/g, ' ')}`, 'error');
+            }
+            else {
+                addToast(`Need ${reqError.skill} level ${reqError.required} to equip`, 'error');
+            }
+            setInvSelected(null);
+            return;
+        }
+        const newEquip = { ...equipment };
+        const newInv = [...inventory];
+        const sourceSlot = newInv[slotIndex];
+        newInv[slotIndex] = null;
+        const result = equipItem(newEquip, item, itemsData, sourceSlot);
+        if (result.equipped) {
+            for (const unequipped of result.unequipped) {
+                const empty = newInv.indexOf(null);
+                if (empty !== -1 && unequipped) {
+                    const invEntry = { itemId: unequipped.itemId, quantity: unequipped.quantity || 1 };
+                    if (unequipped.charges && unequipped.charges > 0)
+                        invEntry.charges = unequipped.charges;
+                    newInv[empty] = invEntry;
+                }
+            }
+            updateEquipment(newEquip);
+            updateInventory(newInv);
+            addToast(`Equipped ${item.name}`, 'info');
+        }
+        setInvSelected(null);
     };
     const handleUnequip = () => {
         if (!selected)
@@ -49768,7 +49811,12 @@ function EquipmentScreen() {
                             h("span", { class: "font-[var(--font-mono)]", style: { color: v > 0 ? '#27ae60' : '#555' } },
                                 v > 0 ? '+' : '',
                                 v)));
-                    }))))),
+                    }))),
+                h("div", { class: "border-t border-[#222] mt-4 pt-4" },
+                    h(SectionHeader, { size: "sm", className: "mb-3 opacity-50" }, "Inventory"),
+                    h("div", { class: "grid grid-cols-4 gap-2" }, inventory.map((slot, i) => (h(ItemSlot, { key: i, slot: slot, onClick: (s, item) => handleInvSlotClick(s, item, i), size: "small" }))))))),
+        invSelected && (h(SharedItemModal, { item: invSelected.item, quantity: invSelected.slot.quantity, noted: invSelected.slot.noted, onClose: () => setInvSelected(null) },
+            h("div", { class: "flex flex-col gap-2" }, invSelected.item.type === 'armour' || invSelected.item.type === 'weapon' ? (h(Button, { variant: "primary", size: "lg", onClick: handleEquipFromInv, className: "w-full" }, "Equip")) : (h("p", { class: "text-[11px] text-[var(--color-parchment)] opacity-60" }, "This item cannot be equipped"))))),
         selected && (h(SharedItemModal, { item: selected.item, onClose: () => setSelected(null), extraInfo: h("p", null,
                 "Slot: ",
                 EQ_SLOT_NAMES[selected.slot]) },
