@@ -1,8 +1,8 @@
 export const OTHER_BONUS_LABELS = {
-  meleeStrength: 'Str',
-  rangedStrength: 'Rng Str',
-  magicDamage: 'Mag %',
-  fishingXpPercent: 'Fishing XP %',
+  meleeStrength: 'Melee Strength',
+  rangedStrength: 'Ranged Strength',
+  magicDamage: 'Magic Damage %',
+  fishingXpPercent: 'Fishing XP Boost %',
   prayer: 'Prayer Bonus',
   miningLevel: 'Mining Level',
   woodcuttingLevel: 'Woodcutting Level',
