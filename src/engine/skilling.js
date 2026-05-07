@@ -291,3 +291,14 @@ export function findBestToolForSkill(skill, equipment, inventory, itemsData, sta
 export function hasToolForSkill(skill, equipment, inventory, itemsData, stats = {}) {
   return findBestToolForSkill(skill, equipment, inventory, itemsData, stats) !== null
 }
+
+export function getEquippedSkillXpMultiplier(skill, equipment, itemsData) {
+  if (!equipment?.weapon) return 1
+  const weapon = itemsData?.[equipment.weapon.itemId]
+  if (!weapon) return 1
+  if (skill === 'fishing') {
+    const pct = Number(weapon.otherBonus?.fishingXpPercent || 0)
+    if (pct > 0) return 1 + (pct / 100)
+  }
+  return 1
+}

@@ -11,7 +11,7 @@ import {
   effectiveMagic, monsterMagicDefenceRoll, magicMaxHit
 } from './formulas.js'
 import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getCombatType, getRangedAmmoRequirementFailure } from './equipment.js'
-import { getEffectiveToolActionTicks } from './skilling.js'
+import { getEffectiveToolActionTicks, getEquippedSkillXpMultiplier } from './skilling.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE } from '../utils/constants.js'
 import { getAgilityBankDelayFromStats, simulateIdleAgility } from './agility.js'
@@ -200,7 +200,8 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
   const itemsDropped = {}
   const newInv = [...inventory]
 
-  const xpPer = task.action.xp || 0
+  const xpMultiplier = getEquippedSkillXpMultiplier(task.skill, equipment, itemsData)
+  const xpPer = Math.floor((task.action.xp || 0) * xpMultiplier)
   if (xpPer > 0 && task.skill) {
     xpGained[task.skill] = xpPer * actions
   }

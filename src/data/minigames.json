@@ -60,6 +60,58 @@
       "qty": 1,
       "minigame": "castle_wars",
       "oneShot": true
+    },
+    {
+      "id": "cw_decorative_top",
+      "name": "Obtain decorative armour",
+      "icon": "🛡️",
+      "description": "Play Castle Wars until you can purchase a Decorative Top.",
+      "hours": 2,
+      "ticks": 12000,
+      "product": "decorative_top",
+      "qty": 1,
+      "minigame": "castle_wars",
+      "oneShot": true
+    },
+    {
+      "id": "cw_angler_net",
+      "name": "Grind Angler Net",
+      "icon": "🎣",
+      "description": "Play Castle Wars until you can purchase an Angler Net.",
+      "hours": 5,
+      "ticks": 30000,
+      "product": "angler_net",
+      "qty": 1,
+      "minigame": "castle_wars",
+      "oneShot": true
+    },
+    {
+      "id": "cw_imbued_god_cape",
+      "name": "Obtain Imbued God Cape",
+      "icon": "🧙",
+      "description": "Play Castle Wars until you can purchase an Imbued God Cape.",
+      "hours": 2,
+      "ticks": 12000,
+      "product": "imbued_god_cape",
+      "qty": 1,
+      "minigame": "castle_wars",
+      "oneShot": true
+    },
+    {
+      "id": "cw_full_void",
+      "name": "Grind full void",
+      "icon": "🥋",
+      "description": "Play Castle Wars until you can purchase a full Void set.",
+      "hours": 10,
+      "ticks": 60000,
+      "products": {
+        "void_hat": 1,
+        "void_body": 1,
+        "void_bottoms": 1,
+        "void_gloves": 1
+      },
+      "minigame": "castle_wars",
+      "oneShot": true
     }
   ],
   "minigames": [
@@ -72,6 +124,13 @@
     "fighter_hat": "Fighter hat",
     "rune_defender": "Rune defender",
     "dragon_defender": "Dragon defender",
-    "halo": "Halo"
+    "halo": "Halo",
+    "decorative_top": "Decorative Top",
+    "angler_net": "Angler Net",
+    "imbued_god_cape": "Imbued God Cape",
+    "void_hat": "Void Hat",
+    "void_body": "Void Body",
+    "void_bottoms": "Void Bottoms",
+    "void_gloves": "Void Gloves"
   }
 }
