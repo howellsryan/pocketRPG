@@ -25204,6 +25204,19 @@ const skillsData = {
     "name": "Magic",
     "actions": [
       {
+        "id": "curse",
+        "name": "Curse",
+        "level": 19,
+        "ticks": 5,
+        "xp": 29,
+        "type": "utility_spell",
+        "runeReq": {
+          "body_rune": 1,
+          "water_rune": 2,
+          "earth_rune": 3
+        }
+      },
+      {
         "id": "high_alch",
         "name": "High Alchemy",
         "level": 55,
@@ -25294,6 +25307,19 @@ const skillsData = {
         },
         "materials": {
           "dragonstone_amulet": 1
+        }
+      },
+      {
+        "id": "stun",
+        "name": "Stun",
+        "level": 80,
+        "ticks": 5,
+        "xp": 90,
+        "type": "utility_spell",
+        "runeReq": {
+          "soul_rune": 1,
+          "water_rune": 12,
+          "earth_rune": 12
         }
       },
       {
@@ -26428,7 +26454,8 @@ const skillsData = {
       }
     ]
   }
-};
+}
+;
 const spellsData = {
   "wind_strike": { "id": "wind_strike", "name": "Wind Strike", "baseDamage": 2, "levelReq": 1, "baseXP": 5, "tier": "strike", "runeReq": { "air_rune": 1 } },
   "water_strike": { "id": "water_strike", "name": "Water Strike", "baseDamage": 4, "levelReq": 5, "baseXP": 7, "tier": "strike", "runeReq": { "water_rune": 1, "air_rune": 1 } },
@@ -46855,7 +46882,7 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
 
 
 const agilityData = skillsData.agility;
-function AgilityScreen({ initialActionId, onBack }) {
+function AgilityScreen({ initialActionId, idleResult, onBack }) {
     const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask } = useGame();
     const agilityLevel = getLevelFromXP(stats.agility?.xp || 0);
     const agilityXP = stats.agility?.xp || 0;
@@ -46874,6 +46901,33 @@ function AgilityScreen({ initialActionId, onBack }) {
                 startCourse(action);
         }
     }, [initialActionId]);
+    // When a skip completes while actively running agility, add the skipped laps,
+    // XP, and coins to the running session totals.
+    useEffect(() => {
+        if (!agility?.active)
+            return;
+        if (!idleResult)
+            return;
+        if (idleResult.task?.type !== 'agility')
+            return;
+        const laps = idleResult.laps || 0;
+        const xpGained = idleResult.xpGained?.agility || 0;
+        const coinsGained = idleResult.coinsGained || 0;
+        if (laps === 0 && xpGained === 0)
+            return;
+        setAgility((prev) => {
+            if (!prev?.active)
+                return prev;
+            const next = {
+                ...prev,
+                totalLaps: (prev.totalLaps || 0) + laps,
+                totalXP: (prev.totalXP || 0) + xpGained,
+                totalCoins: (prev.totalCoins || 0) + coinsGained,
+            };
+            agilityRef.current = next;
+            return next;
+        });
+    }, [idleResult]);
     // Tick listener
     useEffect(() => {
         if (!agility || !agility.active)
@@ -47271,7 +47325,7 @@ function PatchDetails({ patch, onHarvest }) {
 
 
 const thievingData = skillsData.thieving;
-function ThievingScreen({ initialNpcId, onBack }) {
+function ThievingScreen({ initialNpcId, idleResult, onBack }) {
     const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask } = useGame();
     const thievingLevel = getLevelFromXP(stats.thieving?.xp || 0);
     const thievingXP = stats.thieving?.xp || 0;
@@ -47290,6 +47344,33 @@ function ThievingScreen({ initialNpcId, onBack }) {
                 startThieving(npc);
         }
     }, [initialNpcId]);
+    // When a skip completes while actively thieving, add the skipped XP and
+    // coins to the running session totals.
+    useEffect(() => {
+        if (!thieving?.active)
+            return;
+        if (!idleResult)
+            return;
+        if (idleResult.task?.type !== 'thieving')
+            return;
+        const xpGained = idleResult.xpGained?.thieving || 0;
+        const coinsGained = idleResult.coinsGained || 0;
+        const actions = idleResult.actions || 0;
+        if (xpGained === 0 && coinsGained === 0)
+            return;
+        setThieving((prev) => {
+            if (!prev?.active)
+                return prev;
+            const next = {
+                ...prev,
+                totalPickpockets: (prev.totalPickpockets || 0) + actions,
+                totalXP: (prev.totalXP || 0) + xpGained,
+                totalCoins: (prev.totalCoins || 0) + coinsGained,
+            };
+            thievingRef.current = next;
+            return next;
+        });
+    }, [idleResult]);
     // Tick listener
     useEffect(() => {
         if (!thieving || !thieving.active)
@@ -47446,7 +47527,7 @@ function ThievingScreen({ initialNpcId, onBack }) {
 
 
 const hunterData = skillsData.hunter;
-function HunterScreen({ initialActionId, onBack }) {
+function HunterScreen({ initialActionId, idleResult, onBack }) {
     const { stats, inventory, updateInventory, bank, updateBankDirect, grantXP, addToast, setActiveTask } = useGame();
     const hunterLevel = getLevelFromXP(stats.hunter?.xp || 0);
     const hunterXP = stats.hunter?.xp || 0;
@@ -47464,6 +47545,31 @@ function HunterScreen({ initialActionId, onBack }) {
                 startHunting(action);
         }
     }, [initialActionId]);
+    // When a skip completes while actively hunting, add the skipped actions and
+    // XP to the running session totals.
+    useEffect(() => {
+        if (!hunter?.active)
+            return;
+        if (!idleResult)
+            return;
+        if (idleResult.task?.type !== 'hunter')
+            return;
+        const actions = idleResult.actions || 0;
+        const xpGained = idleResult.xpGained?.hunter || 0;
+        if (actions === 0 && xpGained === 0)
+            return;
+        setHunter((prev) => {
+            if (!prev?.active)
+                return prev;
+            const next = {
+                ...prev,
+                totalActions: (prev.totalActions || 0) + actions,
+                totalXP: (prev.totalXP || 0) + xpGained,
+            };
+            hunterRef.current = next;
+            return next;
+        });
+    }, [idleResult]);
     useEffect(() => {
         if (!hunter || !hunter.active)
             return;
@@ -47795,7 +47901,7 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
     useEffect(() => { bankRef.current = bank; }, [bank]);
     // If agility is selected, delegate to AgilityScreen (special screen for agility only)
     if (selectedSkill === 'agility') {
-        return (h(AgilityScreen, { initialActionId: initialActionId, onBack: () => setSelectedSkill(null) }));
+        return (h(AgilityScreen, { initialActionId: initialActionId, idleResult: idleResult, onBack: () => setSelectedSkill(null) }));
     }
     // If slayer is selected, delegate to SlayerScreen
     if (selectedSkill === 'slayer') {
@@ -47803,11 +47909,11 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
     }
     // If thieving is selected, delegate to ThievingScreen
     if (selectedSkill === 'thieving') {
-        return (h(ThievingScreen, { initialNpcId: initialActionId, onBack: () => setSelectedSkill(null) }));
+        return (h(ThievingScreen, { initialNpcId: initialActionId, idleResult: idleResult, onBack: () => setSelectedSkill(null) }));
     }
     // If hunter is selected, delegate to HunterScreen
     if (selectedSkill === 'hunter') {
-        return (h(HunterScreen, { initialActionId: initialActionId, onBack: () => setSelectedSkill(null) }));
+        return (h(HunterScreen, { initialActionId: initialActionId, idleResult: idleResult, onBack: () => setSelectedSkill(null) }));
     }
     // If farming is selected, delegate to FarmingScreen
     if (selectedSkill === 'farming') {
@@ -48086,6 +48192,37 @@ function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
         // Store original action in task — idle engine will apply tool multiplier separately
         setActiveTask({ type: 'skill', skill: selectedSkill, action: selectedAction, bankingEnabled: true, selectedAlchemyItem: item });
     };
+    // When a skip completes while actively skilling, add the skipped XP and
+    // actions to the running session totals so the progress display stays accurate.
+    useEffect(() => {
+        if (!skilling?.active)
+            return;
+        if (!idleResult)
+            return;
+        if (idleResult.task?.type !== 'skill')
+            return;
+        if (idleResult.task?.skill !== selectedSkill)
+            return;
+        if (idleResult.rewardCompleted)
+            return;
+        const xpGained = idleResult.xpGained?.[selectedSkill] || 0;
+        const actionsGained = idleResult.actions || 0;
+        const tokensGained = idleResult.dungeoneeringTokensGained || 0;
+        if (xpGained === 0 && actionsGained === 0 && tokensGained === 0)
+            return;
+        setSkilling((prev) => {
+            if (!prev?.active)
+                return prev;
+            const next = {
+                ...prev,
+                totalXP: (prev.totalXP || 0) + xpGained,
+                totalActions: (prev.totalActions || 0) + actionsGained,
+                totalDungeoneeringTokens: (prev.totalDungeoneeringTokens || 0) + tokensGained,
+            };
+            skillingRef.current = next;
+            return next;
+        });
+    }, [idleResult, selectedSkill]);
     // If an idle/skip simulation completed a long-form unlock while this screen
     // was open, close the active skilling modal so the player returns to the
     // dungeoneering action list instead of staying on a stale ~90% bar.
@@ -49403,6 +49540,36 @@ function GatherScreen({ initialTaskId, idleResult }) {
                 startTask(task, true);
         }
     }, [initialTaskId]);
+    // When a skip completes while actively gathering, add the skipped actions and
+    // items to the running session totals so the progress display stays accurate.
+    useEffect(() => {
+        if (!idleResult)
+            return;
+        if (idleResult.task?.type !== 'gather')
+            return;
+        const current = taskRef.current;
+        if (!current?.task || current.stopped)
+            return;
+        if (idleResult.task?.gatherTask?.id !== current.task.id)
+            return;
+        const actionsGained = idleResult.actions || 0;
+        const itemsGained = idleResult.itemsGained
+            ? Object.values(idleResult.itemsGained).reduce((s, v) => s + v, 0)
+            : 0;
+        if (actionsGained === 0 && itemsGained === 0)
+            return;
+        setLocalTask((prev) => {
+            if (!prev?.task || prev.stopped)
+                return prev;
+            const next = {
+                ...prev,
+                totalDone: (prev.totalDone || 0) + actionsGained,
+                totalItems: (prev.totalItems || 0) + itemsGained,
+            };
+            taskRef.current = next;
+            return next;
+        });
+    }, [idleResult]);
     // If the app-level task is cleared (for example by skip preflight exhaustion),
     // force-close any local gather action view so the user returns to the picker.
     useEffect(() => {
@@ -52224,7 +52391,7 @@ function GameApp() {
             case SCREENS.COMBAT: return h(CombatScreen, { onNavigate: navigate, initialMonsterId: actionData?.monsterId, initialRaidId: actionData?.raidId, onCombatStatusChange: setIsInCombat });
             case SCREENS.SKILLS: return h(SkillingScreen, { initialSkillId: actionData?.skillId, initialActionId: actionData?.actionId, idleResult: idleResult });
             case SCREENS.GATHER: return h(GatherScreen, { initialTaskId: actionData?.gatherTaskId, idleResult: idleResult });
-            case SCREENS.AGILITY: return h(AgilityScreen, { initialActionId: actionData?.actionId });
+            case SCREENS.AGILITY: return h(AgilityScreen, { initialActionId: actionData?.actionId, idleResult: idleResult });
             case SCREENS.STORE: return h(GeneralStoreScreen, null);
             case SCREENS.QUESTS: return h(QuestsScreen, null);
             case SCREENS.LEADERBOARD: return h(LeaderboardScreen, null);
