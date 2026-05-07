@@ -178,22 +178,22 @@ export default function EquipmentScreen() {
     <div class="h-full overflow-y-auto p-4">
       <SectionHeader className="mb-3">Equipment</SectionHeader>
 
-      <div class="md:grid md:grid-cols-2 md:gap-4 md:items-start">
-
-      <div class="mb-4 md:mb-0">
+      <div class="space-y-4">
+      <div class="w-full">
         <EquipmentPaperdoll
           equipment={equipment}
           itemsData={itemsData}
           onSelect={handleSelect}
           size="md"
+          className="w-full"
         />
       </div>
 
       {/* Bonuses summary */}
-      <Card>
+      <Card className="w-full">
         <SectionHeader size="sm" className="mb-2 opacity-50">Bonuses</SectionHeader>
 
-        <div class="grid grid-cols-2 gap-2 text-[11px]">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4 text-[11px] md:text-[13px]">
           {/* Attack bonuses */}
           <div>
             <SectionHeader size="sm" className="mb-1 opacity-40">Attack</SectionHeader>
@@ -222,9 +222,9 @@ export default function EquipmentScreen() {
         </div>
 
         {/* Other bonuses */}
-        <div class="border-t border-[#222] mt-2 pt-2">
+        <div class="border-t border-[#222] mt-3 pt-3">
           <SectionHeader size="sm" className="mb-1 opacity-40">Other</SectionHeader>
-          <div class="grid grid-cols-3 gap-1 text-[11px]">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 md:gap-3 text-[11px] md:text-[13px]">
             {Object.entries(bonuses.otherBonus).map(([k, v]) => {
               const label = k === 'meleeStrength' ? 'Str' : k === 'rangedStrength' ? 'Rng Str' : 'Mag %'
               return (

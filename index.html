@@ -49739,12 +49739,12 @@ function EquipmentScreen() {
     const bonuses = getEquipmentBonuses(equipment, itemsData);
     return (h("div", { class: "h-full overflow-y-auto p-4" },
         h(SectionHeader, { className: "mb-3" }, "Equipment"),
-        h("div", { class: "md:grid md:grid-cols-2 md:gap-4 md:items-start" },
-            h("div", { class: "mb-4 md:mb-0" },
-                h(EquipmentPaperdoll, { equipment: equipment, itemsData: itemsData, onSelect: handleSelect, size: "md" })),
-            h(Card, null,
+        h("div", { class: "space-y-4" },
+            h("div", { class: "w-full" },
+                h(EquipmentPaperdoll, { equipment: equipment, itemsData: itemsData, onSelect: handleSelect, size: "md", className: "w-full" })),
+            h(Card, { className: "w-full" },
                 h(SectionHeader, { size: "sm", className: "mb-2 opacity-50" }, "Bonuses"),
-                h("div", { class: "grid grid-cols-2 gap-2 text-[11px]" },
+                h("div", { class: "grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4 text-[11px] md:text-[13px]" },
                     h("div", null,
                         h(SectionHeader, { size: "sm", className: "mb-1 opacity-40" }, "Attack"),
                         Object.entries(bonuses.attackBonus).map(([k, v]) => (h("div", { key: k, class: "flex justify-between text-[var(--color-parchment)] opacity-70 py-[1px]" },
@@ -49759,9 +49759,9 @@ function EquipmentScreen() {
                             h("span", { class: "font-[var(--font-mono)]", style: { color: v > 0 ? '#27ae60' : v < 0 ? '#c0392b' : '#555' } },
                                 v > 0 ? '+' : '',
                                 v)))))),
-                h("div", { class: "border-t border-[#222] mt-2 pt-2" },
+                h("div", { class: "border-t border-[#222] mt-3 pt-3" },
                     h(SectionHeader, { size: "sm", className: "mb-1 opacity-40" }, "Other"),
-                    h("div", { class: "grid grid-cols-3 gap-1 text-[11px]" }, Object.entries(bonuses.otherBonus).map(([k, v]) => {
+                    h("div", { class: "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 md:gap-3 text-[11px] md:text-[13px]" }, Object.entries(bonuses.otherBonus).map(([k, v]) => {
                         const label = k === 'meleeStrength' ? 'Str' : k === 'rangedStrength' ? 'Rng Str' : 'Mag %';
                         return (h("div", { key: k, class: "flex justify-between text-[var(--color-parchment)] opacity-70" },
                             h("span", null, label),
