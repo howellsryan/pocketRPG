@@ -140,6 +140,11 @@ export const api = {
       credits_used_increment: options?.creditsUsedIncrement === 1 ? 1 : 0,
     }),
   }),
+  getCollectionLog: () => request('/api/collection-log'),
+  postCollectionLog: (entries) => request('/api/collection-log', {
+    method: 'POST',
+    body: JSON.stringify({ entries }),
+  }),
   getIdle: () => request('/api/idle'),
   putIdle: (activeTask) => request('/api/idle', {
     method: 'PUT',

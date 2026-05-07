@@ -1,0 +1,479 @@
+{
+  "version": 2,
+  "sharedItems": [
+    "draconic_visage",
+    "dragon_axe",
+    "dragon_boots",
+    "uncut_onyx"
+  ],
+  "categories": [
+    {
+      "id": "monsters",
+      "label": "Monsters",
+      "icon": "⚔️",
+      "sections": [
+        {
+          "id": "abyssal_demon",
+          "label": "Abyssal Demon",
+          "icon": "⚔️",
+          "items": [
+            "abyssal_whip"
+          ]
+        },
+        {
+          "id": "adamant_dragon",
+          "label": "Adamant Dragon",
+          "icon": "⚔️",
+          "items": [
+            "uncut_onyx",
+            "draconic_visage"
+          ]
+        },
+        {
+          "id": "brutal_black_dragon",
+          "label": "Brutal Black Dragon",
+          "icon": "⚔️",
+          "items": [
+            "draconic_visage"
+          ]
+        },
+        {
+          "id": "cerberus",
+          "label": "Cerberus",
+          "icon": "👑",
+          "items": [
+            "primordial_crystal",
+            "pegasian_crystal",
+            "eternal_crystal"
+          ]
+        },
+        {
+          "id": "commander_zilyana",
+          "label": "Commander Zilyana",
+          "icon": "👑",
+          "items": [
+            "saradomin_sword",
+            "armadyl_crossbow",
+            "saradomin_hilt"
+          ]
+        },
+        {
+          "id": "corrupted_gauntlet",
+          "label": "Corrupted Gauntlet",
+          "icon": "👑",
+          "items": [
+            "uncut_onyx",
+            "crystal_pickaxe",
+            "crystal_axe",
+            "crystal_helmet",
+            "crystal_plate_body",
+            "crystal_platelegs",
+            "bow_of_faerdhinen",
+            "blade_of_saeldor"
+          ]
+        },
+        {
+          "id": "dagganoth_prime",
+          "label": "Dagannoth Prime",
+          "icon": "👑",
+          "items": [
+            "dragon_axe",
+            "seers_ring"
+          ]
+        },
+        {
+          "id": "dagganoth_rex",
+          "label": "Dagannoth Rex",
+          "icon": "👑",
+          "items": [
+            "dragon_axe",
+            "berserker_ring",
+            "warriors_ring"
+          ]
+        },
+        {
+          "id": "dagganoth_supreme",
+          "label": "Dagannoth Supreme",
+          "icon": "👑",
+          "items": [
+            "dragon_axe",
+            "archers_ring"
+          ]
+        },
+        {
+          "id": "dark_beast",
+          "label": "Dark Beast",
+          "icon": "⚔️",
+          "items": [
+            "dark_bow"
+          ]
+        },
+        {
+          "id": "demonic_gorilla",
+          "label": "Demonic Gorilla",
+          "icon": "👑",
+          "items": [
+            "uncut_zenyte",
+            "heavy_ballista"
+          ]
+        },
+        {
+          "id": "gargoyle",
+          "label": "Gargoyle",
+          "icon": "⚔️",
+          "items": [
+            "granite_maul"
+          ]
+        },
+        {
+          "id": "general_graardor",
+          "label": "General Graardor",
+          "icon": "👑",
+          "items": [
+            "bandos_chestplate",
+            "bandos_tassets",
+            "bandos_boots",
+            "bandos_hilt"
+          ]
+        },
+        {
+          "id": "hydra",
+          "label": "Hydra",
+          "icon": "👑",
+          "items": [
+            "hydra_leather",
+            "hydra_claw",
+            "ferocious_gloves"
+          ]
+        },
+        {
+          "id": "kril_tsutsaroth",
+          "label": "K'ril Tsutsaroth",
+          "icon": "👑",
+          "items": [
+            "zamorak_spear",
+            "staff_of_the_dead",
+            "zamorak_hilt"
+          ]
+        },
+        {
+          "id": "king_black_dragon",
+          "label": "King Black Dragon",
+          "icon": "👑",
+          "items": [
+            "dragon_pickaxe",
+            "draconic_visage"
+          ]
+        },
+        {
+          "id": "kraken",
+          "label": "Kraken",
+          "icon": "👑",
+          "items": [
+            "kraken_tentacle"
+          ]
+        },
+        {
+          "id": "kreearra",
+          "label": "Kree'arra",
+          "icon": "👑",
+          "items": [
+            "armadyl_helmet",
+            "armadyl_chestplate",
+            "armadyl_chainskirt",
+            "armadyl_hilt"
+          ]
+        },
+        {
+          "id": "lizardman_shaman",
+          "label": "Lizardman Shaman",
+          "icon": "⚔️",
+          "items": [
+            "dragon_warhammer"
+          ]
+        },
+        {
+          "id": "rune_dragon",
+          "label": "Rune Dragon",
+          "icon": "⚔️",
+          "items": [
+            "uncut_onyx",
+            "draconic_visage"
+          ]
+        },
+        {
+          "id": "smoke_devil",
+          "label": "Smoke Devil",
+          "icon": "⚔️",
+          "items": [
+            "occult_necklace"
+          ]
+        },
+        {
+          "id": "spiritual_mage",
+          "label": "Spiritual Mage",
+          "icon": "⚔️",
+          "items": [
+            "dragon_boots"
+          ]
+        },
+        {
+          "id": "spiritual_ranger",
+          "label": "Spiritual Ranger",
+          "icon": "⚔️",
+          "items": [
+            "dragon_boots"
+          ]
+        },
+        {
+          "id": "spiritual_warrior",
+          "label": "Spiritual Warrior",
+          "icon": "⚔️",
+          "items": [
+            "dragon_boots"
+          ]
+        },
+        {
+          "id": "zulrah",
+          "label": "Zulrah",
+          "icon": "👑",
+          "items": [
+            "toxic_blowpipe",
+            "trident_of_the_swamp",
+            "serpentine_helm",
+            "uncut_onyx"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "raids",
+      "label": "Raids",
+      "icon": "🏛️",
+      "sections": [
+        {
+          "id": "barrows_brothers",
+          "label": "Barrows Brothers",
+          "icon": "⚰️",
+          "items": [
+            "ahrims_hood",
+            "ahrims_robetop",
+            "ahrims_robeskirt",
+            "ahrims_staff",
+            "dharoks_helm",
+            "dharoks_platebody",
+            "dharoks_platelegs",
+            "dharoks_greataxe",
+            "guthans_helm",
+            "guthans_platebody",
+            "guthans_chainskirt",
+            "guthans_warspear",
+            "karils_coif",
+            "karils_leathertop",
+            "karils_leatherskirt",
+            "karils_crossbow",
+            "torags_helm",
+            "torags_platebody",
+            "torags_platelegs",
+            "torags_hammers",
+            "veracs_helm",
+            "veracs_brassard",
+            "veracs_plateskirt",
+            "veracs_flail"
+          ]
+        },
+        {
+          "id": "chambers_of_xeric",
+          "label": "Chambers of Xeric",
+          "icon": "🏛️",
+          "items": [
+            "twisted_buckler",
+            "dragon_hunter_crossbow",
+            "dinhs_bulwark",
+            "ancestral_hat",
+            "ancestral_robe_top",
+            "ancestral_robe_bottom",
+            "dragon_claws",
+            "elder_maul",
+            "zaryte_vambraces",
+            "kodai_wand",
+            "twisted_bow"
+          ]
+        },
+        {
+          "id": "theatre_of_blood",
+          "label": "Theatre of Blood",
+          "icon": "🩸",
+          "items": [
+            "avernic_defender",
+            "ghrazi_rapier",
+            "sanguinesti_staff",
+            "justiciar_faceguard",
+            "justiciar_chestguard",
+            "justiciar_legguards",
+            "scythe_of_vitur"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "minigames",
+      "label": "Minigames",
+      "icon": "🎮",
+      "sections": [
+        {
+          "id": "barbarian_assault",
+          "label": "Barbarian Assault",
+          "icon": "⚔️",
+          "items": [
+            "fighter_torso",
+            "fighter_hat"
+          ]
+        },
+        {
+          "id": "castle_wars",
+          "label": "Castle Wars",
+          "icon": "🏰",
+          "items": [
+            "halo"
+          ]
+        },
+        {
+          "id": "warriors_guild",
+          "label": "Warriors' Guild",
+          "icon": "🏛️",
+          "items": [
+            "rune_defender",
+            "dragon_defender"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "clues",
+      "label": "Clue Scrolls",
+      "icon": "📜",
+      "sections": [
+        {
+          "id": "medium",
+          "label": "Medium Clue",
+          "icon": "📜",
+          "items": [
+            "ranger_boots",
+            "wizard_boots",
+            "holy_sandals",
+            "spiked_manacles",
+            "climbing_boots_g",
+            "saradomin_mitre",
+            "guthix_mitre",
+            "zamorak_mitre",
+            "ancient_mitre",
+            "armadyl_mitre",
+            "bandos_mitre",
+            "holy_blessing",
+            "peace_blessing",
+            "unholy_blessing",
+            "honorable_blessing",
+            "war_blessing",
+            "ancient_blessing",
+            "saradomin_stole",
+            "guthix_stole",
+            "zamorak_stole",
+            "ancient_stole",
+            "armadyl_stole",
+            "bandos_stole",
+            "robin_hood_hat"
+          ]
+        },
+        {
+          "id": "hard",
+          "label": "Hard Clue",
+          "icon": "📜",
+          "items": [
+            "saradomin_dhide_body",
+            "saradomin_dhide_chaps",
+            "saradomin_dhide_boots",
+            "saradomin_dhide_bracers",
+            "saradomin_coif",
+            "guthix_dhide_body",
+            "guthix_dhide_chaps",
+            "guthix_dhide_boots",
+            "guthix_dhide_bracers",
+            "guthix_coif",
+            "zamorak_dhide_body",
+            "zamorak_dhide_chaps",
+            "zamorak_dhide_boots",
+            "zamorak_dhide_bracers",
+            "zamorak_coif",
+            "ancient_dhide_body",
+            "ancient_dhide_chaps",
+            "ancient_dhide_boots",
+            "ancient_dhide_bracers",
+            "ancient_coif",
+            "armadyl_dhide_body",
+            "armadyl_dhide_chaps",
+            "armadyl_dhide_boots",
+            "armadyl_dhide_bracers",
+            "armadyl_coif",
+            "bandos_dhide_body",
+            "bandos_dhide_chaps",
+            "bandos_dhide_boots",
+            "bandos_dhide_bracers",
+            "bandos_coif",
+            "amulet_of_glory_t",
+            "3rd_age_full_helm",
+            "3rd_age_platebody",
+            "3rd_age_platelegs",
+            "3rd_age_plateskirt",
+            "3rd_age_kiteshield",
+            "3rd_age_range_coif",
+            "3rd_age_range_top",
+            "3rd_age_range_legs",
+            "3rd_age_vambraces",
+            "3rd_age_mage_hat",
+            "3rd_age_robe_top",
+            "3rd_age_robe_legs",
+            "3rd_age_amulet",
+            "saradomin_dhide_shield",
+            "guthix_dhide_shield",
+            "zamorak_dhide_shield",
+            "ancient_dhide_shield",
+            "armadyl_dhide_shield",
+            "bandos_dhide_shield"
+          ]
+        },
+        {
+          "id": "elite",
+          "label": "Elite Clue",
+          "icon": "📜",
+          "items": [
+            "rangers_tunic",
+            "holy_wraps",
+            "freminnik_kilt",
+            "3rd_age_longsword",
+            "3rd_age_bow",
+            "3rd_age_wand",
+            "3rd_age_cloak"
+          ]
+        },
+        {
+          "id": "master",
+          "label": "Master Clue",
+          "icon": "📜",
+          "items": [
+            "3rd_age_druidic_robe_top",
+            "3rd_age_druidic_robe_bottoms",
+            "3rd_age_druidic_cloak",
+            "3rd_age_druidic_staff",
+            "3rd_age_pickaxe",
+            "3rd_age_axe",
+            "gilded_pickaxe",
+            "gilded_axe",
+            "gilded_spade",
+            "fancy_tiara"
+          ]
+        }
+      ]
+    }
+  ]
+}
