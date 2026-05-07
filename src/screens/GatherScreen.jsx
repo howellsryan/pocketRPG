@@ -314,7 +314,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
   // on any screen. Resource gathers stay local.
   useEffect(() => {
     if (!activeTask) return
-    if (activeTask.task?.oneShot) return
+    if (activeTask.gatherTask?.oneShot) return
     taskRef.current = activeTask
 
     const unsub = onTick(() => {

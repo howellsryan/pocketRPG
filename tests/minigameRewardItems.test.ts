@@ -61,7 +61,6 @@ describe('void set idle reward', () => {
   it('grants all 4 void knight pieces when the idle grind completes', () => {
     const task = minigames.tasks.find(t => t.id === 'pc_void_set')!
     const idleTask = { type: 'gather', gatherTask: task, bankingEnabled: true }
-    // Simulate 6+ hours elapsed (task.ticks * 0.6s = 36000 * 600ms = 6h)
     const sixHoursMs = 6 * 60 * 60 * 1000 + 1000
     const result = simulateIdleGather(idleTask as any, sixHoursMs, [], {}, items as any, {})
     expect(result).not.toBeNull()
@@ -69,6 +68,36 @@ describe('void set idle reward', () => {
     expect(result!.itemsGained).toHaveProperty('void_knight_top', 1)
     expect(result!.itemsGained).toHaveProperty('void_knight_robe', 1)
     expect(result!.itemsGained).toHaveProperty('void_knight_gloves', 1)
+    // Must not award only the product key
+    expect(Object.keys(result!.itemsGained)).toHaveLength(4)
+  })
+
+  it('returns null when not enough time has elapsed', () => {
+    const task = minigames.tasks.find(t => t.id === 'pc_void_set')!
+    const idleTask = { type: 'gather', gatherTask: task, bankingEnabled: true }
+    const oneHourMs = 1 * 60 * 60 * 1000
+    const result = simulateIdleGather(idleTask as any, oneHourMs, [], {}, items as any, {})
+    expect(result).toBeNull()
+  })
+
+  it('rewardItems derivation: tasks with rewardItems yield all entries; tasks without yield product', () => {
+    // Mirror the getMinigameRewardEntries logic used by grantMinigameTaskRewards
+    function deriveRewards(task: any) {
+      const qty = task.qty || 1
+      if (Array.isArray(task.rewardItems) && task.rewardItems.length > 0) {
+        return task.rewardItems.map((itemId: string) => ({ itemId, qty }))
+      }
+      return task.product ? [{ itemId: task.product, qty }] : []
+    }
+    const voidTask = minigames.tasks.find(t => t.id === 'pc_void_set')!
+    const voidRewards = deriveRewards(voidTask)
+    expect(voidRewards.map((r: any) => r.itemId)).toEqual([
+      'void_knight_helm', 'void_knight_top', 'void_knight_robe', 'void_knight_gloves'
+    ])
+
+    const haloTask = minigames.tasks.find(t => t.id === 'cw_halo')!
+    const haloRewards = deriveRewards(haloTask)
+    expect(haloRewards).toEqual([{ itemId: 'halo', qty: 1 }])
   })
 })
 
