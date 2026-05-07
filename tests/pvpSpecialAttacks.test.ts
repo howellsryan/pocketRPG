@@ -84,4 +84,19 @@ describe('pvpSpecialAttacks helpers', () => {
       outcome: 'hit',
     })
   })
+
+  it('prefers explicit weapon metadata over attacker fallback', () => {
+    const meta = buildPvpSpecialAttackMeta({
+      attacker: { equipment: { weapon: { itemId: 'fallback_weapon' } } },
+      weapon: { id: 'actual_weapon', name: 'Actual Weapon' },
+      spec: { type: 'triple_hit', energyCost: 30 },
+      energyBefore: 30,
+      energyAfter: 0,
+      hits: [1, 2, 3],
+      totalDamage: 6,
+    } as any)
+
+    expect(meta.weaponId).toBe('actual_weapon')
+    expect(meta.weaponName).toBe('Actual Weapon')
+  })
 })

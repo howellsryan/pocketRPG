@@ -3,6 +3,7 @@ import { createHunterState, processHunterTick, simulateIdleHunting } from '../sr
 
 afterEach(() => {
   vi.restoreAllMocks()
+
 })
 
 const action = {
@@ -96,5 +97,16 @@ describe('hunter engine', () => {
       { itemId: 'feather', quantity: 1 },
       { itemId: 'bone', quantity: 2 },
     ])
+  })
+
+  it('aggregates duplicate reward item ids across idle actions', () => {
+    vi.spyOn(Math, 'random')
+      .mockReturnValueOnce(0.2)
+      .mockReturnValueOnce(0.9)
+      .mockReturnValueOnce(0.1)
+      .mockReturnValueOnce(0.9)
+
+    const sim = simulateIdleHunting({ action } as any, 3600)
+    expect(sim?.rewards).toEqual([{ itemId: 'feather', quantity: 2 }])
   })
 })

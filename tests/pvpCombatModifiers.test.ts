@@ -57,10 +57,12 @@ describe('pvp combat modifiers', () => {
     const unknown = getPvpCombatModifiers({ activePotions: { unknown_potion: 10 }, stats: base } as any).potions
     expect(unknown).toEqual({ attack: 0, strength: 0, defence: 0, ranged: 0, magic: 0 })
 
+    const superAttackOnly = getPvpCombatModifiers({ activePotions: { super_attack: 5 }, stats: base } as any).potions
     const stacked = getPvpCombatModifiers({
       activePotions: { attack_potion: 5, super_attack: 5, super_combat_potion: 5 },
       stats: base,
     } as any).potions
-    expect(stacked.attack).toBeGreaterThanOrEqual(active.attack)
+    expect(stacked.attack).toBeGreaterThanOrEqual(superAttackOnly.attack)
+    expect(stacked.attack).toBe(active.attack)
   })
 })

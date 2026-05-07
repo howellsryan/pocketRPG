@@ -84,4 +84,19 @@ describe('pvpRanks', () => {
       pvpRank: null,
     })
   })
+
+  it('preserves explicit rank info when present', () => {
+    const out = applyPvpRankToCombatant(
+      { id: 2, name: 'Veteran' } as any,
+      { totalPvpKills: 19, lastUpdatedTotalPvpKills: 1710000000, rank: 3 } as any,
+    )
+
+    expect(out).toMatchObject({
+      id: 2,
+      name: 'Veteran',
+      totalPvpKills: 19,
+      lastUpdatedTotalPvpKills: 1710000000,
+      pvpRank: 3,
+    })
+  })
 })
