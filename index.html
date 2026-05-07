@@ -41372,8 +41372,21 @@ const TYPE_COLORS = {
     default: 'border-[#333]'
 };
 function ItemSlot({ slot, onClick, size = 'normal', showName = false, highlight = false }) {
+    const sizeClass = size === 'small'
+        ? 'w-10 h-10'
+        : size === 'inventory'
+            ? 'w-14 h-14 md:w-20 md:h-20 lg:w-24 lg:h-24'
+            : 'w-14 h-14';
+    const iconSizeClass = size === 'small'
+        ? 'text-sm'
+        : size === 'inventory'
+            ? 'text-lg md:text-2xl lg:text-[30px]'
+            : 'text-lg';
+    const nameSizeClass = size === 'inventory'
+        ? 'text-[7px] md:text-[10px]'
+        : 'text-[7px]';
     if (!slot) {
-        return (h("div", { class: `${size === 'small' ? 'w-10 h-10' : 'w-14 h-14'} rounded-lg bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center` },
+        return (h("div", { class: `${sizeClass} rounded-lg bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center` },
             h("span", { class: "text-[#2a2a2a] text-xs" }, "\u2014")));
     }
     const item = itemsData[slot.itemId];
@@ -41381,18 +41394,18 @@ function ItemSlot({ slot, onClick, size = 'normal', showName = false, highlight 
         return null;
     const borderClass = TYPE_COLORS[item.type] || TYPE_COLORS.default;
     const emoji = item.icon || '📦';
-    return (h("button", { onClick: () => onClick?.(slot, item), class: `${size === 'small' ? 'w-10 h-10' : 'w-14 h-14'} rounded-lg bg-[#1a1a1a] border ${borderClass}
+    return (h("button", { onClick: () => onClick?.(slot, item), class: `${sizeClass} rounded-lg bg-[#1a1a1a] border ${borderClass}
         flex flex-col items-center justify-center relative
         active:bg-[#252525] transition-colors
         ${highlight ? 'ring-1 ring-[var(--color-gold)]' : ''}` },
-        h("span", { class: size === 'small' ? 'text-sm' : 'text-lg' }, emoji),
+        h("span", { class: iconSizeClass }, emoji),
         slot.noted && (h("span", { class: "absolute top-0 left-0.5 text-[8px]" }, "\uD83D\uDCDC")),
         slot.charges && slot.charges > 0 && (h("span", { class: "absolute bottom-0 left-0.5 text-[7px] font-bold text-[var(--color-emerald)]" }, "\u26A1")),
         slot.quantity > 1 && (() => {
             const { text, isM } = formatQuantity(slot.quantity);
             return (h("span", { class: `absolute top-0 right-0.5 text-[8px] font-[var(--font-mono)] font-bold ${isM ? 'text-[var(--color-emerald)]' : 'text-[var(--color-gold)]'}` }, text));
         })(),
-        showName && (h("span", { class: "text-[7px] text-[var(--color-parchment)] opacity-60 truncate w-full text-center mt-0.5 px-0.5" }, item.name))));
+        showName && (h("span", { class: `${nameSizeClass} text-[var(--color-parchment)] opacity-60 truncate w-full text-center mt-0.5 px-0.5` }, item.name))));
 }
 
 // ── components/Toast.js ──
@@ -42813,7 +42826,7 @@ function InventoryScreen() {
                 h("span", { class: "text-xs font-[var(--font-mono)] text-[var(--color-parchment)] opacity-40" },
                     free,
                     " free"))),
-        h("div", { class: "grid grid-cols-4 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-8 xl:grid-cols-10 gap-2 justify-items-center" }, inventory.map((slot, i) => (h(ItemSlot, { key: i, slot: slot, onClick: (s, item) => handleSlotClick(s, item, i), showName: true })))),
+        h("div", { class: "grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-7 gap-2 md:gap-3 justify-items-center" }, inventory.map((slot, i) => (h(ItemSlot, { key: i, slot: slot, onClick: (s, item) => handleSlotClick(s, item, i), size: "inventory", showName: true })))),
         selected && (h(SharedItemModal, { item: selected.item, quantity: selected.slot.quantity, noted: selected.slot.noted, onClose: () => setSelected(null) },
             h("div", { class: "space-y-2" },
                 selected.slot.noted && (h("p", { style: { color: '#d4a017', fontWeight: '600', marginBottom: '4px' } }, "\uD83D\uDCDC Noted \u2014 cannot be used")),
