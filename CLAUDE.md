@@ -1,155 +1,136 @@
-# PocketRPG — Project Reference
-## 1. CORE CONCEPT
-Menu-driven idle/simulation fantasy RPG. 0.6s tick-based engine with a text, icon, and progress-bar UI. Mobile-first and offline-first.
-## 2. TECH STACK & RULES
- * **Stack**: Preact (UI), Tailwind v4 via CDN (Style), and IndexedDB/idb/localStorage for persistence.
- * **Architecture**:
-   * engine/: Pure logic with zero UI imports.
-   * screens/: Top-level UI components.
-   * state/: Preact context and hooks.
-   * db/: Persistence layer.
- * **Flow**: Static JSON is immutable; state flows down, events flow up.
- * **Persistence**: Debounced auto-save at 300ms.
+# AGENTS.md — PocketRPG Contributor Guide
 
-## 3. XP & LEVELING
- * **Progression**: 1–99.
- * **XP Formula**: totalXP(L) = floor(sum(x=1 to L-1) of floor(x + 300 * 2^(x/7)) / 4).
- * **Caps**: 200M XP limit.
- * **Start**: Level 10 HP start (1,154 XP).
- * **Gains**:
-   * **Combat**: 4 XP/dmg to primary skill, 1.33 XP/dmg to HP.
-   * **Magic**: Base spell XP + 2 XP/dmg.
-## 4. COMBAT ENGINE (Per Tick)
- * **Tick**: 600ms engine cycle. Actions like attacking or eating consume ticks.
- * **Melee Max Hit**: base = floor(0.5 + effectiveStr * (bonus + 64) / 640).
- * **Accuracy Logic**:
-   * maxRoll = effectiveLevel * (bonus + 64).
-   * If attackRoll > defRoll: acc = 1 - (defRoll + 2) / (2 * (attackRoll + 1)).
-   * Else: acc = attackRoll / (2 * (defRoll + 1)).
- * **Styles**: Accurate (Attack), Aggressive (Str), and Defensive (Def) give +3 to the relevant effective level; Controlled gives +1 to all.
- * **Auto-fight**: Combat restarts after 1.2s delay following a kill.
- * **Dragonfire**: 33% proc chance with 50 max damage. Fully blocked by items with otherBonus.antiDragon: true.
-## 5. SKILLING & RESOURCES
- * **Gathering**: No level requirement for basic tasks.
- * **Skilling**: Requires specific levels; uses a Picker → Action → Modal flow with a progress bar.
-## 6. IDLE MECHANICS
- * **Regen**: +1 HP every 60s.
- * **Auto-Bank**: Triggered on full inventory. Delay scales linearly from 5 minutes at Level 1 Agility down to 10 seconds at Level 99.
-## 7. INVENTORY & BANKING
- * **Inventory Cap**: Hard limit of 28 slots.
- * **Withdraw as Note**: Sets noted: true. Noted items stack but cannot be equipped or eaten.
-## 8. DATA SCHEMAS (example below, ensure this is followed)
- * **Items**: Located in src/data/items.json.
-   * **Naming Convention**: All item `name` fields must use **Title Case** (each word capitalized), e.g. "Bronze Dagger", "Iron Ore", "Oak Logs". This applies to all new items added.
- * **Monsters**: Located in src/data/monsters.json.
-## 9. KEY INVARIANTS
- * **Rounding**: Always use Math.floor().
- * **UI**: 44×44px minimum tap targets. Fixed Header/Footer with a scrollable body.
- * **Styles**: Tailwind CDN is used; do not use /N opacity modifiers. Use solid CSS variables.
- * **Styling Rule**: Prefer Tailwind utility classes + CSS variables over inline `style={{}}`. See §15 for the shared component library and the inline-vs-utility decision rule.
-## 10. LOGIC REGRESSION TEST SUITE
- * **Scope**: Unit tests cover pure game logic only. Avoid UI, DOM, browser, screenshot, and component snapshot testing unless the user explicitly asks.
- * **Location**: Tests live under `tests/**/*.test.ts`. Shared test builders/helpers may live under `tests/helpers/`.
- * **Commands**:
-   * `npm test` — one-shot Vitest regression run.
-   * `npm run test:watch` — local watch mode while developing.
-   * `npm run build` — runs the logic regression pack first via `prebuild`, then Vite build.
-   * `npm run rebuild` — TypeScript transpile + `build_single.cjs` single-file output.
-   * `npm run check:single` — syntax-checks the generated single-file module for duplicate identifiers.
-   * `npm run ci` — full required validation before a push.
- * **Requirement**: Before every commit and before every push, run `npm test`, `npm run build`, `npm run rebuild`, and `npm run check:single` or simply run `npm run ci` when it covers those commands. Do not commit or push with failing tests/build checks.
- * **Quality bar**: New gameplay logic requires matching logic tests. Regression tests must be deterministic and must not import UI modules.
+> **Purpose**: Fast, reliable instructions for AI/human contributors. Keep this file aligned with the live codebase and scripts.
 
+## 1) Project Snapshot
+- **Game**: Menu-driven idle/simulation fantasy RPG.
+- **Engine tick**: 600ms.
+- **Experience goals**: Mobile-first UI, offline-first gameplay, deterministic core logic.
 
----
+## 2) Tech Stack (Current)
+- **UI**: Preact.
+- **Styling**: Tailwind via CDN in `index.html` (single-file build also injects CDN).
+- **Persistence**: IndexedDB + `idb` + localStorage.
+- **Build tooling**: Vite + TypeScript transpile for single-file bundle.
 
-## 11. MONSTER DROP TABLE 
+## 3) Repository Layout Rules
+- `src/engine/`: Pure game logic. **No UI imports**.
+- `src/screens/`: Top-level UI screens.
+- `src/state/`: Preact context/hooks and app state wiring.
+- `src/db/`: Persistence/data access.
+- `src/data/`: Static JSON definitions (treat as immutable content data).
+- `tests/**/*.test.ts`: Logic regression tests.
 
-### Drop Table Notes
-When checking OSRS Wiki drop tables for future monsters:
-- Always check for "always" drops (chance: 1.0), "common" (0.3-0.5), "uncommon" (0.1-0.2), "rare" (0.01-0.05), "very rare" (<0.01).
-- Add any missing items to `items.json` before adding them to the monster drop table.
-- Stackable drops (runes, coins, arrows) use `[min, max]` array for quantity.
-- Non-stackable equipment drops use single `quantity: 1`.
+## 4) Core Gameplay Invariants
+- Always use `Math.floor()` for gameplay rounding.
+- Inventory capacity is a hard 28-slot limit.
+- HP regeneration: +1 HP per 60s.
+- Auto-bank trigger: full inventory; delay scales from 5m (Agility 1) to 10s (Agility 99).
+- Combat style bonuses:
+  - Accurate/Aggressive/Defensive: +3 relevant effective level.
+  - Controlled: +1 to attack/strength/defence effective levels.
+- Dragonfire: 33% proc, max 50 hit, fully blocked by `otherBonus.antiDragon: true`.
 
----
+## 5) XP & Leveling
+- Level range: 1–99.
+- XP cap: 200,000,000.
+- XP formula:
+  - `totalXP(L) = floor(sum(x=1..L-1, floor(x + 300 * 2^(x/7)) / 4))`
+- Starting HP level baseline: level 10 (1,154 XP).
+- XP gains:
+  - Combat: 4 XP per damage to primary skill, 1.33 XP per damage to HP.
+  - Magic: base spell XP + 2 XP per damage.
 
-## 12. SPECIAL ATTACKS
+## 6) Combat Tick Model
+- Global tick: 600ms.
+- Melee max hit:
+  - `floor(0.5 + effectiveStr * (bonus + 64) / 640)`
+- Accuracy:
+  - `maxRoll = effectiveLevel * (bonus + 64)`
+  - if `attackRoll > defRoll`: `1 - (defRoll + 2) / (2 * (attackRoll + 1))`
+  - else: `attackRoll / (2 * (defRoll + 1))`
+- Auto-fight restart delay after kill: 1.2s.
 
-### Mechanic
-- The special attack bar is a **0–100% energy bar** stored in `combatState.specialAttackEnergy`.
-- Bar starts at **0** on the first fight; **regenerates to 100% on every monster kill**.
-- The player manually fires the special by pressing the **⚡ Special Attack** button in the combat screen.
-- Each use drains the weapon's defined `energyCost`. Multiple uses are possible if enough energy remains (e.g. Dragon Dagger at 25% cost = 4 uses per kill).
-- Specs do **not** fire during idle/offline simulation — manual only.
+## 7) Special Attacks
+- PvE special energy (`combatState.specialAttackEnergy`) is 0–100.
+- PvE behavior: starts each fight at 100, drains on use, refills on kill.
+- Manual trigger only via combat UI (`⚡ Special Attack`).
+- No automatic/offline special attack firing.
 
-### Weapon Special Attacks Example
-| Weapon              | Type           | Cost | Effect |
-|---------------------|----------------|------|--------|
-| Dragon Dagger       | `double_hit`   | 25%  | Two hits, each up to 115% max hit |
+### Adding a weapon with a special attack
+1. Check OSRS Wiki for spec existence.
+2. Confirm adaptation design with the user for PocketRPG-specific behavior.
+3. Add `specialAttack` object to item in `src/data/items.json`.
+4. Implement behavior in `applySpecialAttack()` in `src/engine/combat.js`.
+5. Add label entry in `specLabels` in combat screen handling.
 
-### Adding New Weapons
-When adding a new weapon from OSRS, **always check if it has a special attack on the OSRS Wiki**. If it does:
-1. Ask the user how they want to adapt the special for PocketRPG (since some OSRS specs are PvP-only or require mechanics we don't have).
-2. Reference the table above for how existing specs are structured.
-3. Add a `"specialAttack"` object to the weapon in `items.json`:
-   ```json
-   "specialAttack": {
-     "type": "your_type",
-     "energyCost": 50,
-     "description": "Short flavour description shown in item modal."
-   }
-   ```
-4. Add a `case 'your_type':` block in `applySpecialAttack()` in `src/engine/combat.js`.
-5. Add a label entry in the `specLabels` map in `CombatScreen.jsx → handleSpecialAttack`.
-
-### Data Schema
+Schema:
 ```json
 "specialAttack": {
-  "type": "string (matches case in applySpecialAttack)",
+  "type": "string",
   "energyCost": 25,
-  "description": "Player-facing description shown in item modal ⚡ panel.",
-  // optional extras used by the engine:
-  "stunTicks": 33,    // for freeze/stun types
-  "minHeal": 10,      // for healing_blade
-  "lightningMax": 16  // for lightning
+  "description": "Player-facing description",
+  "stunTicks": 33,
+  "minHeal": 10,
+  "lightningMax": 16
 }
 ```
 
----
+## 8) Drops & Data Authoring
+- Before adding a monster drop, ensure every referenced item exists in `src/data/items.json`.
+- **Item Naming**: All item `name` fields must use **Title Case** (each word capitalized), e.g., "Bronze Dagger", "Oak Logs", "Iron Ore".
+- Stackables (coins/runes/arrows): quantity as `[min, max]`.
+- Non-stackable equipment: `quantity: 1`.
+- Collection log upkeep: whenever adding a new boss unique, raid unique, minigame reward item, or clue reward item, add the matching slot to `src/data/collectionLog.json` in the same change and include/update a regression test.
 
-## 13. STYLING & SHARED COMPONENTS
+## 9) UI/Styling Rules
+- Minimum tap target: 44×44px.
+- Prefer Tailwind utility classes + CSS variables from `index.html`.
+- Avoid inline `style={{}}` unless value is truly dynamic per render (e.g., computed widths/colors).
+- Do not use Tailwind `/N` opacity modifiers; use solid CSS variable colors.
+- Reuse shared components in `src/components/` before inventing new wrappers.
+- If introducing a new shared component, register it in `build_single.cjs` `sourceFiles` with existing component ordering conventions.
 
-### Design Decision: Utility Classes > Inline `style={{}}`
+## 10) PvP Rules (Current Lockdown)
+- Server-authoritative under `/api/pvp/*`.
+- Matchmaking constraints:
+  - combat level ±10,
+  - Ironman and One-Life blocked.
+- Save/idle/purchase/skip-hour writes locked while `characters.active_match_id` is active.
+- Tick cadence: 600ms; deterministic ordering by tick + character ids.
+- PvP special energy:
+  - starts at 100,
+  - regenerates +10 every 30s,
+  - capped at 100.
+- Equipment swap anti-abuse: `attackTimer = max(currentTimer, newWeaponSpeed)`.
+- Simultaneous deaths tie-breaker: lower `characterId`.
+- Protection prayers disabled in PvP v1.
+- Forfeit treated as death for loot transfer.
 
-All reusable components **must** be built on Tailwind utility classes and the CSS variables defined in `index.html` (`--color-parchment`, `--color-gold`, `--color-void-light`, `--font-display`, etc.). Raw hex like `#111` or `#e8d5b0` should live in CSS variables, not component code.
+## 11) Build/Test Commands (Authoritative)
+Use these npm scripts as the source of truth:
+- `npm test` → full Vitest run.
+- `npm run build` → runs `prebuild` (`test:logic`) then Vite build.
+- `npm run rebuild` → transpile + single-file concat via `build_single.cjs`.
+- `npm run check:single` → duplicate identifier/syntax safety for single-file output.
+- `npm run ci` → required validation bundle (`build` + `rebuild` + `check:single`).
 
-#### When to use inline `style={{}}`
-Only for values that are genuinely **dynamic per render**:
-  - Animated or computed widths/heights (`width: ${pct}%`)
-  - Colors interpolated from state (e.g. HP bar colour based on `hpPct`)
-  - One-off gradient backgrounds that don't justify a CSS variable
-  - Animation delays / durations tied to data
+### Commit gate (required)
+Before commit/push, run either:
+- `npm test && npm run build && npm run rebuild && npm run check:single`, **or**
+- `npm run ci` **and** `npm test`.
 
-#### When to use Tailwind classes
-Everything else — all static colours, borders, radii, padding, typography, flex/grid layout. If you catch yourself repeating the same `style={{}}` object in more than one screen, extract it to a shared component or a CSS variable.
+Do not commit with failing checks.
 
-### Shared Component Library (`src/components/`)
+## 12) Single-file Build Safety
+- `index.html` is generated by concatenating transpiled modules.
+- Top-level declarations must be globally unique.
+- Treat duplicate identifier syntax errors as release-blocking.
+- Prefer shared helpers from `src/utils/helpers.js` over redefining common top-level names.
 
-| Component | When to use |
-|-----------|-------------|
-| `Card`     | Outer surface panel (paperdoll, bonus summary, task rows). Dark background, rounded-xl, border. |
-| `Panel`    | Inner surface inside a card or modal (item preview, price info, stat rows). Darker than Card. |
-| `Button`   | Any clickable button. Variants: `primary` (gold), `secondary` (neutral), `danger` (red), `success` (green), `ghost`. Sizes: `sm`, `md`, `lg`. |
-| `SectionHeader` | Small uppercase Cinzel label for section titles ("Bonuses", "Equipment", "Gather Resources"). Sizes: `sm`, `md`, `lg`. |
-| `Modal`    | Full-screen modal with backdrop + header + scrollable body. |
-| `ProgressBar` | Animated progress bar — `value`, `max`, `color`, optional `label`/`showText`. |
-| `ItemSlot` | Inventory/bank slot with type-coloured border and quantity badge. |
-| `HPBar`, `SkillBadge`, `Header`, `BottomNav`, `Toast` | Screen-specific fixtures. |
-
-### Rules when adding new screens
-1. **Reach for `Card` / `Panel` / `Button` / `SectionHeader` first.** Don't reinvent a dark-background-with-border container inline.
-2. **Colours come from CSS variables.** Use `bg-[var(--color-void-light)]`, `text-[var(--color-gold)]`, `border-[var(--color-void-border)]` etc.
-3. **If a pattern appears 3+ times, extract it.** Either a new shared component or a new CSS variable in `index.html`.
-4. **New shared components must be registered in `build_single.cjs`** under `sourceFiles`, between the existing `components/*.js` entries and the screens.
-5. **Button styling is never bespoke.** If you need a new variant (e.g. warning orange), add it to `Button.jsx`'s `VARIANTS` map rather than styling a raw `<button>`.
+## 13) Contribution Best Practices for Agents
+- Keep changes minimal and scoped; avoid unrelated refactors.
+- Update tests with new gameplay logic (deterministic, logic-only).
+- Prefer source-of-truth edits in `src/**`; generated output should follow from build scripts.
+- If instructions in this file conflict with direct user/developer/system instructions, higher-priority instructions win.
+- When this guide becomes stale, update it in the same PR as the behavior/script changes.

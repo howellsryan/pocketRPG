@@ -11,6 +11,7 @@ import {
   collectIdleCombatLoggedDrops,
 } from '../src/engine/collectionLog.js'
 import raids from '../src/data/raids.json' assert { type: 'json' }
+import minigames from '../src/data/minigames.json' assert { type: 'json' }
 
 describe('collection log data', () => {
   const data = getCollectionLogData()
@@ -233,5 +234,55 @@ describe('shared item collection credit', () => {
     const summary = summarizeProgress(owned)
     // One server entry credits every slot the shared item lives in.
     expect(summary.obtained).toBe(slots.length)
+  })
+})
+
+
+describe('minigame collection log coverage', () => {
+  const data = getCollectionLogData()
+  const minigamesCategory = data.categories.find((c: any) => c.id === 'minigames')
+  const getSection = (id: string) => minigamesCategory?.sections.find((s: any) => s.id === id)
+
+  it('contains expected minigame sections for new rewards', () => {
+    expect(minigamesCategory).toBeTruthy()
+    expect(minigamesCategory?.sections.map((s: any) => s.id)).toEqual(expect.arrayContaining([
+      'castle_wars',
+      'fishing_trawler',
+      'mage_arena',
+      'pest_control',
+    ]))
+  })
+
+  it('maps new one-off rewards to collection slots and isLoggedDrop entries', () => {
+    const expected = [
+      { sectionId: 'castle_wars', itemIds: ['halo', 'decorative_top'] },
+      { sectionId: 'fishing_trawler', itemIds: ['angler_net'] },
+      { sectionId: 'mage_arena', itemIds: ['imbued_god_cape'] },
+    ]
+
+    for (const { sectionId, itemIds } of expected) {
+      const section = getSection(sectionId)
+      expect(section).toBeTruthy()
+      for (const itemId of itemIds) {
+        expect(section.items).toContain(itemId)
+        expect(isLoggedDrop(itemId, 'minigames', sectionId)).toBe(true)
+      }
+    }
+  })
+
+  it('maps every Pest Control void rewardItem to a collection slot', () => {
+    const section = getSection('pest_control')
+    expect(section).toBeTruthy()
+
+    const voidTask = minigames.tasks.find((t: any) => t.id === 'pc_void_set')
+    expect(voidTask).toBeTruthy()
+    expect(Array.isArray(voidTask?.rewardItems)).toBe(true)
+
+    const rewardItems = voidTask.rewardItems as string[]
+    expect(rewardItems.length).toBeGreaterThan(0)
+    for (const itemId of rewardItems) {
+      expect(section.items).toContain(itemId)
+      expect(isLoggedDrop(itemId, 'minigames', 'pest_control')).toBe(true)
+    }
   })
 })
