@@ -39466,6 +39466,8 @@ function isChargeableSkipOutcome(activeTask, outcome) {
         return !!outcome.rewardCompleted || !!outcome.rewardTimeReduced;
     if (Number(outcome.actions || 0) > 0)
         return true;
+    if (Number(outcome.laps || 0) > 0)
+        return true;
     if (Number(outcome.monstersKilled || 0) > 0)
         return true;
     if (activeTask.type === 'combat' && Number(outcome.hpRestored || 0) > 0)
