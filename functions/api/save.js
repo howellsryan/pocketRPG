@@ -1,5 +1,6 @@
 import { requireAuth, json } from '../_lib/auth.js'
 import { assertNotInActiveMatch, sweepStaleRows } from '../_lib/pvp.js'
+import { computeSaveSummaryFromJson } from '../_lib/saveSummary.js'
 
 const MAX_SAVE_BYTES = 256 * 1024 // 256 KB ceiling — current saves are well under this
 
@@ -61,6 +62,10 @@ export async function onRequestPut({ request, env }) {
   }
 
   const now = Date.now()
+  // Recompute denormalized summary so the leaderboard / PvP CB lookups can
+  // run as cheap indexed SELECTs against `characters` instead of LEFT
+  // JOINing `saves` and JSON.parsing the full blob in a Worker.
+  const { totalLevel, combatLevel } = computeSaveSummaryFromJson(save_data)
   await env.DB.batch([
     env.DB.prepare(
       `INSERT INTO saves (character_id, save_data, updated_at)
@@ -71,9 +76,11 @@ export async function onRequestPut({ request, env }) {
     ).bind(ch.id, save_data, now),
     env.DB.prepare(
       `UPDATE characters
-          SET credits_used = credits_used + ?
+          SET credits_used = credits_used + ?,
+              total_level = ?,
+              combat_level = ?
         WHERE id = ? AND owner_id = ? AND deleted_at IS NULL`
-    ).bind(credits_used_increment, ch.id, auth.identity.id),
+    ).bind(credits_used_increment, totalLevel, combatLevel, ch.id, auth.identity.id),
   ])
 
   return json({ ok: true, updatedAt: now })

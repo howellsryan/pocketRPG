@@ -29,15 +29,15 @@ export function getCombatLevelFromSave(save) {
   return Math.max(3, Math.floor(base + Math.max(melee, range, mage)))
 }
 
-// Read save row → parse → compute CB. Returns 3 (lowest) if no save exists.
+// Read the denormalized CB column off `characters`. Populated on every save
+// PUT (see functions/api/save.js + migration 0012) so PvP hot paths no
+// longer parse a full save blob just to read combat level. Returns 3
+// (lowest) if the character is missing/deleted or hasn't been backfilled.
 export async function readCombatLevel(env, characterId) {
   const row = await env.DB.prepare(
-    'SELECT save_data FROM saves WHERE character_id = ?'
+    'SELECT combat_level FROM characters WHERE id = ? AND deleted_at IS NULL'
   ).bind(characterId).first()
-  if (!row?.save_data) return 3
-  try {
-    return getCombatLevelFromSave(JSON.parse(row.save_data))
-  } catch {
-    return 3
-  }
+  const cb = Number(row?.combat_level)
+  if (!Number.isFinite(cb) || cb < 3) return 3
+  return Math.floor(cb)
 }
