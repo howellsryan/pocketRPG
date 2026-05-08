@@ -1,6 +1,7 @@
 import itemsData from '../../src/data/items.json' assert { type: 'json' }
 import { buildPlayerCombatant } from '../../src/engine/combatant.js'
 import { getLevelFromXP } from '../../src/engine/experience.js'
+import { decodeSaveRow } from './saveCodec.js'
 
 
 const VALID_PVP_STANCES = new Set([
@@ -16,11 +17,12 @@ export function normalizePvpCombatStance(value) {
   return VALID_PVP_STANCES.has(value) ? value : 'accurate'
 }
 
-function parseSaveRow(row) {
-  if (!row?.save_data || typeof row.save_data !== 'string') return null
+async function parseSaveRow(row) {
+  const decoded = await decodeSaveRow(row)
+  if (!decoded?.save_data) return null
   try {
-    const payload = JSON.parse(row.save_data)
-    return { payload, updatedAt: row.updated_at }
+    const payload = JSON.parse(decoded.save_data)
+    return { payload, updatedAt: decoded.updatedAt }
   } catch {
     return null
   }
@@ -80,9 +82,9 @@ export async function readOwnedActiveMatch(env, matchId, characterId) {
 
 export async function readCharacterSave(env, characterId) {
   const row = await env.DB.prepare(
-    'SELECT save_data, updated_at FROM saves WHERE character_id = ?'
+    'SELECT save_data, save_blob, updated_at FROM saves WHERE character_id = ?'
   ).bind(characterId).first()
-  const parsed = parseSaveRow(row)
+  const parsed = await parseSaveRow(row)
   if (!parsed) return null
   return parsed
 }

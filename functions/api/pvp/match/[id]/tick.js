@@ -4,6 +4,7 @@ import { readOwnedActiveMatch, itemsData, readCharacterSave, applyCombatantToSav
 import { processPvpTick } from '../../../../../src/engine/pvpEngine.js'
 import { applyLootTransfer } from '../../../../../src/engine/lootTransfer.js'
 import { appendPvpEndSummaryToState, createPvpEndSummary } from '../../../../../src/engine/pvpEndSummary.js'
+import { gzipJsonString } from '../../../../_lib/saveCodec.js'
 
 const PVP_TICK_MS = 600
 const PVP_TICK_GRACE_MS = 75
@@ -72,15 +73,17 @@ async function finalizeTerminalMatch(env, match, stateNext, terminal, appliedInt
 
     const winnerJson = JSON.stringify(winnerSnapshot)
     const loserJson = JSON.stringify(loserSnapshot)
+    const winnerBlob = await gzipJsonString(winnerJson)
+    const loserBlob = await gzipJsonString(loserJson)
     const finalStateJson = JSON.stringify(finalState)
 
     const writes = [
       env.DB.prepare(
-        'UPDATE saves SET save_data = ?, updated_at = ? WHERE character_id = ? AND updated_at = ?'
-      ).bind(winnerJson, now, winnerId, winnerSave.updatedAt),
+        'UPDATE saves SET save_data = ?, save_blob = ?, updated_at = ? WHERE character_id = ? AND updated_at = ?'
+      ).bind(winnerJson, winnerBlob, now, winnerId, winnerSave.updatedAt),
       env.DB.prepare(
-        'UPDATE saves SET save_data = ?, updated_at = ? WHERE character_id = ? AND updated_at = ?'
-      ).bind(loserJson, now, loserId, loserSave.updatedAt),
+        'UPDATE saves SET save_data = ?, save_blob = ?, updated_at = ? WHERE character_id = ? AND updated_at = ?'
+      ).bind(loserJson, loserBlob, now, loserId, loserSave.updatedAt),
       env.DB.prepare(
         `UPDATE pvp_matches
             SET status = 'completed', ended_at = ?, winner_character_id = ?,
