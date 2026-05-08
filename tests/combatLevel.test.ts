@@ -3,8 +3,8 @@
 // Mirrors src/engine/quests.js getCombatLevel — these tests pin the
 // formula so a future quest-engine refactor can't silently drift.
 
-import { describe, it, expect } from 'vitest'
-import { getCombatLevelFromSave } from '../functions/_lib/combatLevel.js'
+import { describe, it, expect, vi } from 'vitest'
+import { getCombatLevelFromSave, readCombatLevel } from '../functions/_lib/combatLevel.js'
 import { getXPForLevel } from '../src/engine/experience.js'
 
 function statsAtLevels(levels: Record<string, number>) {
@@ -78,5 +78,39 @@ describe('getCombatLevelFromSave (PvP server-side CB)', () => {
     const cbB = getCombatLevelFromSave(b)
     expect(Math.abs(cbA - cbB)).toBe(Math.abs(cbB - cbA))
     expect(Math.abs(cbA - cbB)).toBeLessThanOrEqual(10)
+  })
+})
+
+describe('readCombatLevel (denormalized column path)', () => {
+  function mockDb(row: any) {
+    const first = vi.fn().mockResolvedValue(row)
+    const bind = vi.fn(() => ({ first }))
+    const prepare = vi.fn(() => ({ bind }))
+    return { env: { DB: { prepare } } as any, prepare, bind }
+  }
+
+  it('reads combat_level off `characters` (no JOIN to `saves`)', async () => {
+    const { env, prepare, bind } = mockDb({ combat_level: 87 })
+    await expect(readCombatLevel(env, 42)).resolves.toBe(87)
+
+    const sql = prepare.mock.calls[0][0] as string
+    expect(sql).toContain('FROM characters')
+    expect(sql).not.toMatch(/FROM\s+saves/i)
+    expect(sql).not.toContain('save_data')
+    expect(sql).toContain('deleted_at IS NULL')
+    expect(bind).toHaveBeenCalledWith(42)
+  })
+
+  it('floors the column value', async () => {
+    const { env } = mockDb({ combat_level: 50.9 })
+    await expect(readCombatLevel(env, 1)).resolves.toBe(50)
+  })
+
+  it('returns 3 for missing rows or sub-3 values', async () => {
+    const cases = [null, undefined, { combat_level: null }, { combat_level: 'oops' }, { combat_level: 0 }]
+    for (const row of cases) {
+      const { env } = mockDb(row)
+      await expect(readCombatLevel(env, 1)).resolves.toBe(3)
+    }
   })
 })

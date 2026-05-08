@@ -1,5 +1,6 @@
 import { requireAuth, json } from '../_lib/auth.js'
 import { assertNotInActiveMatch } from '../_lib/pvp.js'
+import { decodeSaveRow } from '../_lib/saveCodec.js'
 import itemsData from '../../src/data/items.json' assert { type: 'json' }
 import { getPurchaseRestriction } from '../../src/engine/storeRules.js'
 
@@ -35,7 +36,7 @@ export async function onRequestPost({ request, env }) {
   try {
     // Verify character exists and belongs to authenticated user
     const character = await env.DB.prepare(
-      'SELECT c.id, c.username, c.is_ironman, s.save_data FROM characters c LEFT JOIN saves s ON s.character_id = c.id WHERE c.id = ? AND c.owner_id = ? AND c.deleted_at IS NULL'
+      'SELECT c.id, c.username, c.is_ironman, s.save_data, s.save_blob, s.updated_at FROM characters c LEFT JOIN saves s ON s.character_id = c.id WHERE c.id = ? AND c.owner_id = ? AND c.deleted_at IS NULL'
     ).bind(characterId, auth.identity.id).first()
 
     if (!character) {
@@ -52,9 +53,10 @@ export async function onRequestPost({ request, env }) {
       return json({ error: 'Item not found', code: 'ITEM_NOT_FOUND' }, 404)
     }
 
+    const decodedSave = await decodeSaveRow(character)
     const restriction = getPurchaseRestriction(item, {
       isIronman: Boolean(character.is_ironman),
-      allowMinigameUnlockPurchase: hasUnlockedMinigameItem(character.save_data, item_id, unlocked_minigame_items),
+      allowMinigameUnlockPurchase: hasUnlockedMinigameItem(decodedSave?.save_data, item_id, unlocked_minigame_items),
     })
     if (!restriction.allowed) {
       const status = restriction.code === 'ITEM_NOT_FOUND' ? 404 : 403
