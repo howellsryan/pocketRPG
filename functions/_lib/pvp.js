@@ -22,10 +22,14 @@ export async function assertNotInActiveMatch(env, characterId) {
     'SELECT active_match_id FROM characters WHERE id = ?'
   ).bind(characterId).first()
   if (row?.active_match_id) {
-    return json(
-      { error: 'character_in_active_match', match_id: row.active_match_id },
-      409,
-    )
+    const activeMatch = await env.DB.prepare("SELECT id FROM pvp_matches WHERE id = ? AND status = 'active'").bind(row.active_match_id).first()
+    if (activeMatch?.id) {
+      return json(
+        { error: 'character_in_active_match', match_id: row.active_match_id },
+        409,
+      )
+    }
+    await env.DB.prepare('UPDATE characters SET active_match_id = NULL WHERE id = ? AND active_match_id = ?').bind(characterId, row.active_match_id).run()
   }
 
   // Defence in depth for any stale/null active_match_id rows:

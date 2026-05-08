@@ -1,6 +1,7 @@
 import { requireAuth, json } from '../_lib/auth.js'
 import { assertNotInActiveMatch, sweepStaleRows } from '../_lib/pvp.js'
 import { computeSaveSummaryFromJson } from '../_lib/saveSummary.js'
+import { decodeSaveRow, gzipJsonString } from '../_lib/saveCodec.js'
 
 const MAX_SAVE_BYTES = 256 * 1024 // 256 KB ceiling — current saves are well under this
 
@@ -41,11 +42,13 @@ export async function onRequestGet({ request, env }) {
   if (ch.error) return json({ error: ch.error }, ch.status)
 
   const row = await env.DB.prepare(
-    'SELECT save_data, updated_at FROM saves WHERE character_id = ?'
+    'SELECT save_data, save_blob, updated_at FROM saves WHERE character_id = ?'
   ).bind(ch.id).first()
   if (!row) return json({ save: null })
 
-  return json({ save: { save_data: row.save_data, updatedAt: row.updated_at } })
+  const decoded = await decodeSaveRow(row)
+  if (!decoded) return json({ save: null })
+  return json({ save: { save_data: decoded.save_data, updatedAt: decoded.updatedAt } })
 }
 
 export async function onRequestPut({ request, env }) {
@@ -81,14 +84,16 @@ export async function onRequestPut({ request, env }) {
   // run as cheap indexed SELECTs against `characters` instead of LEFT
   // JOINing `saves` and JSON.parsing the full blob in a Worker.
   const { totalLevel, combatLevel } = computeSaveSummaryFromJson(save_data)
+  const save_blob = save_data ? await gzipJsonString(save_data) : null
   await env.DB.batch([
     env.DB.prepare(
-      `INSERT INTO saves (character_id, save_data, updated_at)
-       VALUES (?, ?, ?)
+      `INSERT INTO saves (character_id, save_data, save_blob, updated_at)
+       VALUES (?, ?, ?, ?)
        ON CONFLICT(character_id) DO UPDATE SET
          save_data = excluded.save_data,
+         save_blob = excluded.save_blob,
          updated_at = excluded.updated_at`
-    ).bind(ch.id, save_data, now),
+    ).bind(ch.id, save_data, save_blob, now),
     env.DB.prepare(
       `UPDATE characters
           SET credits_used = credits_used + ?,
