@@ -1138,6 +1138,9 @@ function GameApp() {
         return
       }
 
+      const result = await api.skipHour()
+      setCredits(result?.credits_remaining ?? credits)
+
       const elapsedMs = SKIP_HOUR_MS
       let idleResultData = { elapsedMs, task: activeTaskRef.current }
 
@@ -1354,8 +1357,6 @@ function GameApp() {
         return
       }
 
-      const result = await api.skipHour()
-      setCredits(result?.credits_remaining ?? credits)
       updateFarming(advanceFarmingState(farming, SKIP_HOUR_MS))
 
       // Show idle result modal with skip summary

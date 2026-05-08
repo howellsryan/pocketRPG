@@ -50774,7 +50774,7 @@ function LeaderboardList() {
                 h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60" }, "Total Level"),
                 h("div", { class: "text-[10px] font-[var(--font-mono)] text-[var(--color-blood-light)] mt-1" },
                     "Combat ",
-                    formatNumber(char.combatLevel ?? 0)))))))));
+                    formatNumber(char.combatLevel ?? 3)))))))));
 }
 function CollapsibleSection({ icon, title, children, defaultOpen = false }) {
     const [open, setOpen] = useState(defaultOpen);
@@ -52102,6 +52102,8 @@ function GameApp() {
                 addToast('⏭️ Skipped 1 hour', 'info');
                 return;
             }
+            const result = await api.skipHour();
+            setCredits(result?.credits_remaining ?? credits);
             const elapsedMs = SKIP_HOUR_MS;
             let idleResultData = { elapsedMs, task: activeTaskRef.current };
             // If there's an active task, simulate it for 1 hour
@@ -52326,8 +52328,6 @@ function GameApp() {
                 clearExhaustedActiveTask(preflight?.reason || 'No remaining actions available for this activity.');
                 return;
             }
-            const result = await api.skipHour();
-            setCredits(result?.credits_remaining ?? credits);
             updateFarming(advanceFarmingState(farming, SKIP_HOUR_MS));
             // Show idle result modal with skip summary
             if (idleResultData)
