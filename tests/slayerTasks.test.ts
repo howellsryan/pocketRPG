@@ -80,6 +80,14 @@ describe('doesSlayerTaskMatchMonster', () => {
     expect(doesSlayerTaskMatchMonster('dagganoth_prime', 'dagganoth_supreme')).toBe(true)
   })
 
+
+
+  it('matches dagannoth kings task id to any king', () => {
+    expect(doesSlayerTaskMatchMonster('dagganoth_kings', 'dagganoth_rex')).toBe(true)
+    expect(doesSlayerTaskMatchMonster('dagganoth_kings', 'dagganoth_prime')).toBe(true)
+    expect(doesSlayerTaskMatchMonster('dagganoth_kings', 'dagganoth_supreme')).toBe(true)
+  })
+
   it('does not treat unrelated monsters as equivalent', () => {
     expect(doesSlayerTaskMatchMonster('dagganoth_rex', 'kraken')).toBe(false)
   })

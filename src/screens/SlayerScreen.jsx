@@ -4,6 +4,7 @@ import monstersData from '../data/monsters.json'
 import itemsData from '../data/items.json'
 import { SLAYER_UNLOCKS, getSlayerUnlockPurchaseState } from '../engine/slayerUnlocks.js'
 import { requestCriticalPushSave } from '../cloud/sync.js'
+import { DAGANNOTH_KINGS_TASK_ID } from '../engine/slayerTasks.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 
 // OSRS slayer masters — requirements and monster pools from OSRS Wiki
@@ -80,9 +81,7 @@ const SLAYER_MASTERS = [
     bossTaskRange: [5, 25],
     monsterPool: [
       'abyssal_demon',
-      { id: 'dagganoth_rex', boss: true },
-      { id: 'dagganoth_prime', boss: true },
-      { id: 'dagganoth_supreme', boss: true },
+      { id: DAGANNOTH_KINGS_TASK_ID, boss: true },
       'red_dragon',
       'blood_veld', 'nechryael', 'skeletal_wyvern', 'smoke_devil',
       'spiritual_mage', 'gargoyle', 'brutal_black_dragon', 'dark_beast',
@@ -103,9 +102,7 @@ const SLAYER_MASTERS = [
     bossTaskRange: [20, 50],
     monsterPool: [
       'abyssal_demon',
-      { id: 'dagganoth_rex', boss: true },
-      { id: 'dagganoth_prime', boss: true },
-      { id: 'dagganoth_supreme', boss: true },
+      { id: DAGANNOTH_KINGS_TASK_ID, boss: true },
       { id: 'general_graardor', boss: true },
       { id: 'commander_zilyana', boss: true },
       { id: 'kril_tsutsaroth', boss: true },
@@ -146,7 +143,7 @@ const SLAYER_MONSTER_ICONS = {
   sand_crab: '🦀', dark_wizard: '🧙‍♂️', giant_spider: '🕷️', hill_giant: '👊',
   moss_giant: '🌿', green_dragon: '🐉', lesser_demon: '👿', abyssal_demon: '😈',
   general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
-  dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹', jad: '🔥',
+  dagganoth_kings: '👑', dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹', jad: '🔥',
   blood_veld: '🩸', nechryael: '👻', skeletal_wyvern: '🐲', smoke_devil: '💨', kraken: '🦑',
   banshee: '👻', aberrant_spectre: '👁️', wyrm: '🐍', spiritual_warrior: '⚔️',
   spiritual_ranger: '🏹', spiritual_mage: '🔮', gargoyle: '🗿',
@@ -158,6 +155,12 @@ export default function SlayerScreen({ onBack }) {
 
   const combatLevel = getPlayerCombatLevel(stats)
   const slayerLevel = getLevelFromXP(stats.slayer?.xp || 0)
+
+
+  const resolveTaskMonsterIds = (monsterId) => {
+    if (monsterId === DAGANNOTH_KINGS_TASK_ID) return ['dagganoth_rex', 'dagganoth_prime', 'dagganoth_supreme']
+    return [monsterId]
+  }
 
   const handleGetTask = (master) => {
     if (slayerTask) {
@@ -180,16 +183,22 @@ export default function SlayerScreen({ onBack }) {
     const monsterId = typeof pick === 'object' ? pick.id : pick
 
     // Check slayer requirement on the monster itself
-    const monsterData = monstersData[monsterId]
-    if (monsterData?.slayerRequirement && slayerLevel < monsterData.slayerRequirement) {
+    const candidateIds = resolveTaskMonsterIds(monsterId)
+    const unmetRequirement = candidateIds
+      .map(id => monstersData[id]?.slayerRequirement || 0)
+      .find(req => req > slayerLevel)
+    if (unmetRequirement) {
       // Re-roll once to avoid blocking the player
       const fallback = pool.find(p => {
         const id = typeof p === 'object' ? p.id : p
-        const m = monstersData[id]
-        return !m?.slayerRequirement || slayerLevel >= m.slayerRequirement
+        const fallbackIds = resolveTaskMonsterIds(id)
+        return fallbackIds.every(monsterKey => {
+          const m = monstersData[monsterKey]
+          return !m?.slayerRequirement || slayerLevel >= m.slayerRequirement
+        })
       })
       if (!fallback) {
-        addToast(`Need slayer level ${monsterData.slayerRequirement} for this task`, 'error')
+        addToast(`Need slayer level ${unmetRequirement} for this task`, 'error')
         return
       }
       const fbId = typeof fallback === 'object' ? fallback.id : fallback
@@ -203,7 +212,7 @@ export default function SlayerScreen({ onBack }) {
 
   const assignTask = (master, monsterId, isBoss) => {
     const monsterData = monstersData[monsterId]
-    const monsterName = monsterData?.name || monsterId.replace(/_/g, ' ')
+    const monsterName = monsterId === DAGANNOTH_KINGS_TASK_ID ? 'Dagannoth Kings' : (monsterData?.name || monsterId.replace(/_/g, ' '))
 
     // Jad always has a single-kill task
     let totalCount
