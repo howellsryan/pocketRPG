@@ -1,5 +1,16 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { onRequestGet } from '../functions/api/leaderboard.js'
+
+function stubCache() {
+  const match = vi.fn()
+  const put = vi.fn().mockResolvedValue(undefined)
+  vi.stubGlobal('caches', { default: { match, put } })
+  return { match, put }
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 function mockDb(rows: any[]) {
   const all = vi.fn().mockResolvedValue({ results: rows })
@@ -75,5 +86,77 @@ describe('GET /api/leaderboard (denormalized + paginated)', () => {
     expect(res.status).toBe(500)
     const body = await res.json() as any
     expect(body.characters).toEqual([])
+  })
+})
+
+describe('GET /api/leaderboard (edge cache)', () => {
+  it('cache miss → queries D1, sets Cache-Control, stores response', async () => {
+    const { match, put } = stubCache()
+    match.mockResolvedValue(undefined) // miss
+    const { env, prepare } = mockDb([
+      { id: 1, username: 'alice', total_level: 1500, combat_level: 110 },
+    ])
+    const waitUntil = vi.fn()
+
+    const res = await onRequestGet({ request: reqWith(), env, waitUntil } as any)
+
+    expect(prepare).toHaveBeenCalledTimes(1)
+    expect(res.headers.get('Cache-Control')).toMatch(/s-maxage=60/)
+    expect(put).toHaveBeenCalledTimes(1)
+    expect(waitUntil).toHaveBeenCalledTimes(1)
+
+    const cachedKey = put.mock.calls[0][0] as Request
+    expect(new URL(cachedKey.url).searchParams.get('limit')).toBe('100')
+    expect(new URL(cachedKey.url).searchParams.get('offset')).toBe('0')
+  })
+
+  it('cache hit → returns cached response without touching D1', async () => {
+    const { match, put } = stubCache()
+    const cached = new Response('{"cached":true}', { status: 200 })
+    match.mockResolvedValue(cached)
+    const { env, prepare } = mockDb([])
+
+    const res = await onRequestGet({ request: reqWith(), env } as any)
+
+    expect(res).toBe(cached)
+    expect(prepare).not.toHaveBeenCalled()
+    expect(put).not.toHaveBeenCalled()
+  })
+
+  it('different (limit, offset) pages get different cache keys', async () => {
+    const { match, put } = stubCache()
+    match.mockResolvedValue(undefined)
+    const { env } = mockDb([])
+
+    await onRequestGet({ request: reqWith('?limit=50&offset=0'), env } as any)
+    await onRequestGet({ request: reqWith('?limit=50&offset=50'), env } as any)
+
+    const k1 = put.mock.calls[0][0] as Request
+    const k2 = put.mock.calls[1][0] as Request
+    expect(k1.url).not.toBe(k2.url)
+    expect(new URL(k1.url).searchParams.get('offset')).toBe('0')
+    expect(new URL(k2.url).searchParams.get('offset')).toBe('50')
+  })
+
+  it('strips arbitrary query params from the cache key', async () => {
+    const { match, put } = stubCache()
+    match.mockResolvedValue(undefined)
+    const { env } = mockDb([])
+
+    await onRequestGet({ request: reqWith('?limit=100&offset=0&cb=12345'), env } as any)
+    await onRequestGet({ request: reqWith('?limit=100&offset=0&cb=99999'), env } as any)
+
+    const k1 = put.mock.calls[0][0] as Request
+    const k2 = put.mock.calls[1][0] as Request
+    expect(k1.url).toBe(k2.url) // same canonical key
+    expect(k1.url).not.toContain('cb=')
+  })
+
+  it('falls through to D1 if globalThis.caches is unavailable', async () => {
+    // No stub — globalThis.caches is undefined in vitest's node env.
+    const { env, prepare } = mockDb([])
+    const res = await onRequestGet({ request: reqWith(), env } as any)
+    expect(res.status).toBe(200)
+    expect(prepare).toHaveBeenCalledTimes(1)
   })
 })

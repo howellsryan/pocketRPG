@@ -4,6 +4,18 @@ import { computeSaveSummaryFromJson } from '../_lib/saveSummary.js'
 
 const MAX_SAVE_BYTES = 256 * 1024 // 256 KB ceiling — current saves are well under this
 
+// Probabilistic gate for the PvP-state sweep on the save-PUT path. Saves
+// happen on a tight client-side cadence; running the full sweep on every
+// one was burning a chunk of the daily D1 write budget on cleanup work
+// the PvP endpoints (which sweep on every action) already do. 5% keeps
+// global state tidy in any reasonable traffic without piling sweep load
+// on a non-PvP player's routine save loop.
+const SAVE_SWEEP_PROBABILITY = 0.05
+
+export function shouldSweepOnSave(rng = Math.random) {
+  return rng() < SAVE_SWEEP_PROBABILITY
+}
+
 async function getCharacterId(request, env, identityId) {
   const url = new URL(request.url)
   const headerId = request.headers.get('X-Character-Id')
@@ -44,11 +56,14 @@ export async function onRequestPut({ request, env }) {
   if (ch.error) return json({ error: ch.error }, ch.status)
 
   // PvP inventory lock: refuse local-client saves while a match is active.
-  // Also sweep stale rows here — high-traffic endpoint, cheap indexed deletes.
   const lock = await assertNotInActiveMatch(env, ch.id)
   if (lock) return lock
-  // Fire-and-forget sweep; failures are logged inside sweepStaleRows.
-  sweepStaleRows(env).catch(() => {})
+  // Probabilistic sweep — see SAVE_SWEEP_PROBABILITY above. PvP endpoints
+  // already sweep on every action, so the global state stays fresh during
+  // active PvP without forcing every routine save to do cleanup work.
+  if (shouldSweepOnSave()) {
+    sweepStaleRows(env).catch(() => {})
+  }
 
   let body
   try { body = await request.json() } catch { return json({ error: 'Invalid JSON' }, 400) }
