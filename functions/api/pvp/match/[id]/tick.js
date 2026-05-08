@@ -79,11 +79,11 @@ async function finalizeTerminalMatch(env, match, stateNext, terminal, appliedInt
 
     const writes = [
       env.DB.prepare(
-        'UPDATE saves SET save_data = ?, save_blob = ?, updated_at = ? WHERE character_id = ? AND updated_at = ?'
-      ).bind(winnerJson, winnerBlob, now, winnerId, winnerSave.updatedAt),
+        'UPDATE saves SET save_blob = ?, updated_at = ? WHERE character_id = ? AND updated_at = ?'
+      ).bind(winnerBlob, now, winnerId, winnerSave.updatedAt),
       env.DB.prepare(
-        'UPDATE saves SET save_data = ?, save_blob = ?, updated_at = ? WHERE character_id = ? AND updated_at = ?'
-      ).bind(loserJson, loserBlob, now, loserId, loserSave.updatedAt),
+        'UPDATE saves SET save_blob = ?, updated_at = ? WHERE character_id = ? AND updated_at = ?'
+      ).bind(loserBlob, now, loserId, loserSave.updatedAt),
       env.DB.prepare(
         `UPDATE pvp_matches
             SET status = 'completed', ended_at = ?, winner_character_id = ?,

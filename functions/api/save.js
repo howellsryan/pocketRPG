@@ -87,13 +87,12 @@ export async function onRequestPut({ request, env }) {
   const save_blob = save_data ? await gzipJsonString(save_data) : null
   await env.DB.batch([
     env.DB.prepare(
-      `INSERT INTO saves (character_id, save_data, save_blob, updated_at)
-       VALUES (?, ?, ?, ?)
+      `INSERT INTO saves (character_id, save_blob, updated_at)
+       VALUES (?, ?, ?)
        ON CONFLICT(character_id) DO UPDATE SET
-         save_data = excluded.save_data,
          save_blob = excluded.save_blob,
          updated_at = excluded.updated_at`
-    ).bind(ch.id, save_data, save_blob, now),
+    ).bind(ch.id, save_blob, now),
     env.DB.prepare(
       `UPDATE characters
           SET credits_used = credits_used + ?,
