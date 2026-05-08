@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { resolveSlayerTaskKill } from '../src/engine/slayerTasks.js'
+import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster } from '../src/engine/slayerTasks.js'
 
 describe('resolveSlayerTaskKill', () => {
   it('does nothing when the killed monster is not on task', () => {
@@ -70,4 +70,17 @@ describe('resolveSlayerTaskKill', () => {
     expect(rerun.pointsAwarded).toBe(0)
   })
 
+})
+
+
+describe('doesSlayerTaskMatchMonster', () => {
+  it('treats Dagannoth kings as equivalent for slayer task matching', () => {
+    expect(doesSlayerTaskMatchMonster('dagganoth_rex', 'dagganoth_prime')).toBe(true)
+    expect(doesSlayerTaskMatchMonster('dagganoth_rex', 'dagganoth_supreme')).toBe(true)
+    expect(doesSlayerTaskMatchMonster('dagganoth_prime', 'dagganoth_supreme')).toBe(true)
+  })
+
+  it('does not treat unrelated monsters as equivalent', () => {
+    expect(doesSlayerTaskMatchMonster('dagganoth_rex', 'kraken')).toBe(false)
+  })
 })
