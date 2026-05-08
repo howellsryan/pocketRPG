@@ -54,6 +54,9 @@ function LeaderboardList() {
               <div class="text-[10px] text-[var(--color-parchment)] opacity-60">
                 Total Level
               </div>
+              <div class="text-[10px] font-[var(--font-mono)] text-[var(--color-blood-light)] mt-1">
+                Combat {formatNumber(char.combatLevel ?? 3)}
+              </div>
             </div>
           </div>
         </Card>

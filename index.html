@@ -50771,7 +50771,10 @@ function LeaderboardList() {
                     h("div", { class: "text-sm font-semibold text-[var(--color-parchment)] truncate" }, char.username))),
             h("div", { class: "text-right flex-shrink-0 ml-2" },
                 h("div", { class: "text-sm font-semibold text-[var(--color-gold)]" }, formatNumber(char.totalLevel)),
-                h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60" }, "Total Level"))))))));
+                h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-60" }, "Total Level"),
+                h("div", { class: "text-[10px] font-[var(--font-mono)] text-[var(--color-blood-light)] mt-1" },
+                    "Combat ",
+                    formatNumber(char.combatLevel ?? 0)))))))));
 }
 function CollapsibleSection({ icon, title, children, defaultOpen = false }) {
     const [open, setOpen] = useState(defaultOpen);
