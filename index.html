@@ -33818,8 +33818,16 @@ function getSlayerTaskReward(basePoints, completedTasksBeforeCompletion = 0) {
 }
 
 // ── engine/slayerTasks.js ──
+const DAGANNOTH_KINGS = new Set(['dagganoth_rex', 'dagganoth_prime', 'dagganoth_supreme']);
+function doesSlayerTaskMatchMonster(taskMonsterId, monsterId) {
+    if (!taskMonsterId || !monsterId)
+        return false;
+    if (taskMonsterId === monsterId)
+        return true;
+    return DAGANNOTH_KINGS.has(taskMonsterId) && DAGANNOTH_KINGS.has(monsterId);
+}
 function resolveSlayerTaskKill(task, monsterId, killCount = 1) {
-    if (!task || !monsterId || task.monsterId !== monsterId) {
+    if (!task || !doesSlayerTaskMatchMonster(task.monsterId, monsterId)) {
         return {
             onTask: false,
             completed: false,
@@ -33898,8 +33906,9 @@ function getSlayerUnlockPurchaseState({ unlock, item, slayerPoints, bank, invent
 }
 
 // ── engine/slayerCombatBonuses.js ──
+
 function isOnSlayerTask(slayerTask, monsterId) {
-    return Boolean(slayerTask && monsterId && slayerTask.monsterId === monsterId && Number(slayerTask.monstersRemaining ?? 0) > 0);
+    return Boolean(slayerTask && monsterId && doesSlayerTaskMatchMonster(slayerTask.monsterId, monsterId) && Number(slayerTask.monstersRemaining ?? 0) > 0);
 }
 function getSlayerTaskEquipmentBonuses({ equipment = {}, itemsData = {}, slayerTask = null, monsterId = null }) {
     if (!isOnSlayerTask(slayerTask, monsterId))
@@ -38450,7 +38459,7 @@ function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory, itemsD
         remainingTicks -= killTicks;
         monstersKilled++;
         // Check if this kill counts toward slayer task — cap at total task count
-        if (slayerTask && slayerTask.monsterId === monster.id && monstersKilledOnTask < slayerTask.monstersRemaining) {
+        if (slayerTask && doesSlayerTaskMatchMonster(slayerTask.monsterId, monster.id) && monstersKilledOnTask < slayerTask.monstersRemaining) {
             monstersKilledOnTask++;
         }
         // XP for this kill
@@ -45642,7 +45651,7 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                     }
                     // Slayer task tracking
                     const task = slayerTaskRef.current;
-                    if (task && defeatedMonsterId && task.monsterId === defeatedMonsterId) {
+                    if (task && defeatedMonsterId && doesSlayerTaskMatchMonster(task.monsterId, defeatedMonsterId)) {
                         // Active combat does not flow through the idle-engine slayer XP handler.
                         // Grant XP on the live kill event so active and idle kills stay consistent.
                         const xpForKill = getSlayerTaskXpForKill(defeatedMonster, state.monster, monstersData);
@@ -46216,7 +46225,7 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                             const slayLocked = slayReq && slayLvl < slayReq;
                             const bossReq = checkBossRequirements(monster);
                             const isLocked = slayLocked || bossReq.locked;
-                            const isOnTask = slayerTask?.monsterId === monster.id;
+                            const isOnTask = doesSlayerTaskMatchMonster(slayerTask?.monsterId, monster.id);
                             return (h("div", { key: monster.id, class: "flex gap-2 items-center", title: isLocked ? (bossReq.locked ? bossReq.reason : '') : '' },
                                 h("button", { onClick: () => !isLocked && startFight(monster), disabled: isLocked, title: isLocked && bossReq.locked ? bossReq.reason : '', class: `flex-1 flex items-center justify-between p-3 rounded-xl border transition-colors
                           ${isOnTask ? 'bg-[#1a1a08] border-[#3a3a10]' :
@@ -46438,7 +46447,7 @@ function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatSta
                 h("div", { class: "mb-2" },
                     h("div", { class: "text-[10px] text-[var(--color-parchment)] opacity-50 mb-0.5" }, "Your HP"),
                     h(HPBar, { current: currentHP, max: getMaxHP(), size: "large" })),
-                slayerTask?.monsterId === combat.monster.id && (h("div", { class: "mb-2 bg-[#1a1a08] border border-[#3a3a10] rounded-lg px-3 py-1.5 flex items-center justify-between" },
+                doesSlayerTaskMatchMonster(slayerTask?.monsterId, combat.monster.id) && (h("div", { class: "mb-2 bg-[#1a1a08] border border-[#3a3a10] rounded-lg px-3 py-1.5 flex items-center justify-between" },
                     h("span", { class: "text-[10px] text-yellow-400 font-semibold" }, "\uD83D\uDC80 Slayer Task"),
                     h("span", { class: "text-[10px] font-[var(--font-mono)] text-yellow-400" },
                         slayerTask.monstersRemaining,

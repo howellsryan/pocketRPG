@@ -1,5 +1,6 @@
+import { doesSlayerTaskMatchMonster } from './slayerTasks.js'
 export function isOnSlayerTask(slayerTask, monsterId) {
-  return Boolean(slayerTask && monsterId && slayerTask.monsterId === monsterId && Number(slayerTask.monstersRemaining ?? 0) > 0)
+  return Boolean(slayerTask && monsterId && doesSlayerTaskMatchMonster(slayerTask.monsterId, monsterId) && Number(slayerTask.monstersRemaining ?? 0) > 0)
 }
 
 export function getSlayerTaskEquipmentBonuses({ equipment = {}, itemsData = {}, slayerTask = null, monsterId = null }) {

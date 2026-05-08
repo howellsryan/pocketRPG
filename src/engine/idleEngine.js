@@ -16,7 +16,7 @@ import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE } from '../utils/constants.js'
 import { getAgilityBankDelayFromStats, simulateIdleAgility } from './agility.js'
 import { rollClueRewards } from './clueScrolls.js'
-import { resolveSlayerTaskKill } from './slayerTasks.js'
+import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster } from './slayerTasks.js'
 import { calculateDungeoneeringTokensForAction } from './dungeoneeringTokens.js'
 import { getSlayerTaskEquipmentBonuses } from './slayerCombatBonuses.js'
 import { getVoidKnightCombatMultipliers } from './combatSetBonuses.js'
@@ -1175,7 +1175,7 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     monstersKilled++
 
     // Check if this kill counts toward slayer task — cap at total task count
-    if (slayerTask && slayerTask.monsterId === monster.id && monstersKilledOnTask < slayerTask.monstersRemaining) {
+    if (slayerTask && doesSlayerTaskMatchMonster(slayerTask.monsterId, monster.id) && monstersKilledOnTask < slayerTask.monstersRemaining) {
       monstersKilledOnTask++
     }
 

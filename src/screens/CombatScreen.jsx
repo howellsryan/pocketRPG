@@ -29,7 +29,7 @@ import raidsData from '../data/raids.json'
 import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { isHighValueDrop } from '../utils/itemValue.js'
 import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slayerRewards.js'
-import { resolveSlayerTaskKill } from '../engine/slayerTasks.js'
+import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster } from '../engine/slayerTasks.js'
 import { getSlayerTaskReward } from '../engine/slayerRewards.js'
 import { CRITICAL_SAVE_REASONS, hasCriticalDrop } from '../cloud/criticalSavePolicy.js'
 import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
@@ -682,7 +682,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
           // Slayer task tracking
           const task = slayerTaskRef.current
-          if (task && defeatedMonsterId && task.monsterId === defeatedMonsterId) {
+          if (task && defeatedMonsterId && doesSlayerTaskMatchMonster(task.monsterId, defeatedMonsterId)) {
             // Active combat does not flow through the idle-engine slayer XP handler.
             // Grant XP on the live kill event so active and idle kills stay consistent.
             const xpForKill = getSlayerTaskXpForKill(defeatedMonster, state.monster, monstersData)
@@ -1358,7 +1358,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                     const slayLocked = slayReq && slayLvl < slayReq
                     const bossReq = checkBossRequirements(monster)
                     const isLocked = slayLocked || bossReq.locked
-                    const isOnTask = slayerTask?.monsterId === monster.id
+                    const isOnTask = doesSlayerTaskMatchMonster(slayerTask?.monsterId, monster.id)
                     return (
                     <div key={monster.id} class="flex gap-2 items-center" title={isLocked ? (bossReq.locked ? bossReq.reason : '') : ''}>
                       <button
@@ -1737,7 +1737,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       </div>
 
       {/* Slayer task indicator */}
-      {slayerTask?.monsterId === combat.monster.id && (
+      {doesSlayerTaskMatchMonster(slayerTask?.monsterId, combat.monster.id) && (
         <div class="mb-2 bg-[#1a1a08] border border-[#3a3a10] rounded-lg px-3 py-1.5 flex items-center justify-between">
           <span class="text-[10px] text-yellow-400 font-semibold">💀 Slayer Task</span>
           <span class="text-[10px] font-[var(--font-mono)] text-yellow-400">
