@@ -40,7 +40,7 @@ function EquipSlot({ slotName, equipment, itemsData, onSelect, size = 'md' }) {
         <span class="absolute bottom-[2px] right-[2px] text-[8px] text-[#4ade80] font-bold">⚡</span>
       )}
       <span
-        class={`${preset.label} text-center mt-[2px] overflow-hidden text-ellipsis whitespace-nowrap ${item ? 'text-[var(--color-parchment)] font-semibold' : 'text-[#555]'}`}
+        class={`${preset.label} text-center mt-[2px] ${item ? 'text-[var(--color-parchment)] font-semibold' : 'text-[#555]'}`}
       >
         {item ? item.name : EQ_SLOT_NAMES[slotName]}
       </span>
