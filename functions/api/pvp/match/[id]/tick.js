@@ -167,10 +167,6 @@ export async function onRequestPost(context) {
   const now = Date.now()
   const pacing = shouldAdvancePvpTick(now, match.last_tick_at)
   if (!pacing.advance) {
-    if (terminalWrite.ok) {
-      await writeAuditEventSafe(context, { eventType: 'pvp_match_completed', severity: 'info', requestId, matchId: match.id, characterId: out.terminal.winner, relatedCharacterId: out.terminal.loser, status: 'completed', metadata: { tick: terminalWrite.state?.tick || out.stateNext?.tick || 0, lootItemCount: terminalWrite.loot?.summary?.items?.length || 0, terminalReason: out.terminal?.reason || null, winnerId: out.terminal.winner, loserId: out.terminal.loser } })
-    }
-
     return json({
       ok: true,
       advanced: false,
@@ -216,6 +212,9 @@ export async function onRequestPost(context) {
     if (!terminalWrite.ok) {
       context.data?.logger?.error({ event: 'pvp_terminal_writeback_failed', matchId: match.id, status: 'failed', errorCode: terminalWrite.reason, winnerId: out.terminal.winner, loserId: out.terminal.loser })
       await writeAuditEventSafe(context, { eventType: 'pvp_terminal_writeback_failed', severity: 'error', requestId, matchId: match.id, characterId: out.terminal.winner, relatedCharacterId: out.terminal.loser, status: 'failed', errorCode: terminalWrite.reason, metadata: { tick: out.stateNext?.tick || 0, winnerId: out.terminal.winner, loserId: out.terminal.loser, reason: terminalWrite.reason, aborted: terminalWrite.reason === 'save_conflict' } })
+    } else {
+      context.data?.logger?.info({ event: 'pvp_match_completed', matchId: match.id, status: 'completed', winnerId: out.terminal.winner, loserId: out.terminal.loser })
+      await writeAuditEventSafe(context, { eventType: 'pvp_match_completed', severity: 'info', requestId, matchId: match.id, characterId: out.terminal.winner, relatedCharacterId: out.terminal.loser, status: 'completed', metadata: { tick: terminalWrite.state?.tick || out.stateNext?.tick || 0, lootItemCount: Array.isArray(terminalWrite.loot?.summary?.items) ? terminalWrite.loot.summary.items.length : 0, winnerId: out.terminal.winner, loserId: out.terminal.loser, terminalReason: out.terminal?.reason || null } })
     }
 
     return json({
