@@ -192,6 +192,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     ...Object.fromEntries(COMBAT_CATEGORIES.map(category => [category.key, true])),
   }))
   const [lootModal, setLootModal] = useState(null)
+  const [isDesktopCombatLayout, setIsDesktopCombatLayout] = useState(false)
 
   const combatRef = useRef(null)
   const hpRef = useRef(currentHP)
@@ -252,6 +253,22 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   useEffect(() => { bossKillCountsRef.current = bossKillCounts }, [bossKillCounts])
   useEffect(() => { raidKillCountsRef.current = raidKillCounts }, [raidKillCounts])
   useEffect(() => { unlockedFeaturesRef.current = unlockedFeatures }, [unlockedFeatures])
+
+  useEffect(() => {
+    const updateDesktopLayout = () => {
+      const width = Number(window.innerWidth) || 0
+      const height = Number(window.innerHeight) || 0
+      setIsDesktopCombatLayout(width >= 1250 && height >= 600)
+    }
+
+    updateDesktopLayout()
+    window.addEventListener('resize', updateDesktopLayout)
+    window.addEventListener('orientationchange', updateDesktopLayout)
+    return () => {
+      window.removeEventListener('resize', updateDesktopLayout)
+      window.removeEventListener('orientationchange', updateDesktopLayout)
+    }
+  }, [])
 
   // Auto-scroll log to bottom on new messages
   useEffect(() => {
@@ -1667,7 +1684,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
   // Combat view
   return (
-    <div class="h-full flex flex-col p-4 md:overflow-hidden">
+    <div class={`h-full flex flex-col p-4 ${isDesktopCombatLayout ? 'overflow-hidden' : ''}`}>
       {/* Back button */}
       <button onClick={stopAndBack}
         class="text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1">
@@ -1681,10 +1698,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             col 1 = stats + paperdoll
             col 2 = inventory grid (click equippables to equip) + prayers
             col 3 = special bar + combat log + kills + action buttons */}
-      <div class="flex-1 min-h-0 flex flex-col md:grid md:grid-cols-[minmax(220px,1fr)_minmax(0,1.6fr)_minmax(220px,1fr)] md:grid-rows-1 md:gap-4 md:overflow-hidden">
+      <div class={`flex-1 min-h-0 flex flex-col ${isDesktopCombatLayout ? 'grid grid-cols-[minmax(220px,1fr)_minmax(0,1.6fr)_minmax(220px,1fr)] grid-rows-1 gap-4 overflow-hidden' : ''}`}>
 
       {/* LEFT pane: enemy + player stats */}
-      <div class="flex flex-col md:col-start-1 md:row-start-1 md:overflow-y-auto md:min-h-0 md:pr-1">
+      <div class={`flex flex-col ${isDesktopCombatLayout ? 'col-start-1 row-start-1 overflow-y-auto min-h-0 pr-1' : ''}`}>
 
       {/* Monster HP */}
       <div class="mb-3">
@@ -1750,7 +1767,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           a player can see active boosts at a glance without leaving the
           gear column. */}
       {Object.keys(combat?.activePotions || {}).length > 0 && (
-        <div class="hidden md:block mt-2 bg-[#111] rounded-lg px-2 py-1.5 text-[9px] text-[var(--color-gold)]">
+        <div class={`${isDesktopCombatLayout ? 'block' : 'hidden'} mt-2 bg-[#111] rounded-lg px-2 py-1.5 text-[9px] text-[var(--color-gold)]`}>
           {Object.keys(combat.activePotions).map(potionId => {
             const potion = itemsData[potionId]
             if (!potion) return null
@@ -1775,7 +1792,37 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {/* Inline gear paperdoll — desktop only. Click an equipped slot to
           unequip directly into inventory (only works if there's space).
           Mobile keeps the ⚙️ Gear button + modal flow. */}
-      <div class="hidden md:block mt-2">
+      <div class={`${isDesktopCombatLayout ? 'block' : 'hidden'} mt-2`}>
+        <div class="grid grid-cols-2 gap-2 mb-2">
+          {(() => {
+            const weaponEntry = equipment?.weapon
+            const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
+            const hasSpec = weapon?.specialAttack
+            const energy = combat.specialAttackEnergy || 0
+            const canSpec = hasSpec && energy >= weapon.specialAttack.energyCost
+            const isMagic = weapon?.attackStyle === 'magic'
+            return (
+              <>
+                <button
+                  onClick={canSpec ? handleSpecialAttack : undefined}
+                  disabled={!canSpec}
+                  class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${canSpec ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
+                  style={canSpec ? 'background:linear-gradient(135deg,#3a2a00,#6a4a00);border:1px solid rgba(234,179,8,0.5);color:#fde047' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
+                >
+                  ⚡ {hasSpec ? 'Spec' : 'No Spec'}
+                </button>
+                <button
+                  onClick={() => isMagic && setShowSpellModal(true)}
+                  disabled={!isMagic}
+                  class={`py-2.5 rounded-lg font-semibold text-sm transition-opacity ${isMagic ? 'active:opacity-80' : 'opacity-40 cursor-default'}`}
+                  style={isMagic ? 'background:linear-gradient(135deg,#1a2a3a,#2a3a5a);border:1px solid rgba(100,150,200,0.35);color:#a8d8ff' : 'background:#1a1a1a;border:1px solid #2a2a2a;color:#888'}
+                >
+                  🔮 Cast
+                </button>
+              </>
+            )
+          })()}
+        </div>
         <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1">Gear</div>
         <EquipmentPaperdoll
           equipment={equipment}
@@ -1791,7 +1838,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           Click an equippable item to equip it instantly (no confirm). Clicks on
           non-equippable items are ignored to keep mid-fight UX safe. Hidden on
           mobile so the existing modal-driven flow is preserved there. */}
-      <div class="hidden md:flex md:flex-col md:col-start-2 md:row-start-1 md:overflow-y-auto md:min-h-0">
+      <div class={`${isDesktopCombatLayout ? 'flex' : 'hidden'} flex-col ${isDesktopCombatLayout ? 'col-start-2 row-start-1 overflow-y-auto min-h-0' : ''}`}>
 
       <div class="flex items-center justify-between mb-2 px-1">
         <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60">Inventory</div>
@@ -1898,7 +1945,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       </div>{/* /INVENTORY pane */}
 
       {/* CONSOLE pane (DOM 3rd, visually RIGHT at md+): special bar, log, kill stats, action buttons */}
-      <div class="flex-1 min-h-0 flex flex-col md:col-start-3 md:row-start-1 md:overflow-hidden">
+      <div class={`flex-1 min-h-0 flex flex-col ${isDesktopCombatLayout ? 'col-start-3 row-start-1 overflow-hidden' : ''}`}>
 
       {/* Special attack bar — only shown when equipped weapon has a spec */}
       {(() => {
@@ -2026,7 +2073,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           return (
             <>
               {/* Mobile: two rows of 3 */}
-              <div class="md:hidden flex flex-col gap-2">
+              <div class={`${isDesktopCombatLayout ? 'hidden' : 'flex'} flex-col gap-2`}>
                 <div class="grid grid-cols-3 gap-2">
                   {eatBtn}{potionBtn}{gearBtn}
                 </div>
@@ -2036,9 +2083,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               </div>
               {/* Desktop: only Spec + Cast remain (Gear/Prayer moved to side
                   panes; Eat/Potion are now click-an-inventory-item flows). */}
-              <div class="hidden md:grid md:grid-cols-2 gap-2">
-                {specBtn}{castBtn}
-              </div>
+              <div class="hidden" />
             </>
           )
         })()}
