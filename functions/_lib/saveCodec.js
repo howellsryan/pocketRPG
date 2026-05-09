@@ -8,6 +8,10 @@ function toUint8Array(bufferLike) {
   if (ArrayBuffer.isView(bufferLike)) {
     return new Uint8Array(bufferLike.buffer, bufferLike.byteOffset, bufferLike.byteLength)
   }
+  if (Array.isArray(bufferLike)) return Uint8Array.from(bufferLike)
+  if (bufferLike && typeof bufferLike === 'object') {
+    if (Array.isArray(bufferLike.data)) return Uint8Array.from(bufferLike.data)
+  }
   return null
 }
 
@@ -37,14 +41,20 @@ export async function gunzipToJsonString(blob) {
 
 export async function decodeSaveRow(row) {
   if (!row) return null
-  if (row.save_blob && isGzipBuffer(row.save_blob)) {
+  if (row.save_blob) {
+    if (!isGzipBuffer(row.save_blob)) {
+      throw new Error('save_blob_unexpected_format')
+    }
     try {
       const decoded = await gunzipToJsonString(row.save_blob)
       if (decoded) return { save_data: decoded, updatedAt: row.updated_at }
-    } catch {}
-  }
-  if (typeof row.save_data === 'string') {
-    return { save_data: row.save_data, updatedAt: row.updated_at }
+      throw new Error('save_blob_empty_after_decode')
+    } catch (err) {
+      const decodeError = new Error('save_blob_decode_failed')
+      decodeError.cause = err
+      throw decodeError
+    }
   }
   return null
 }
+
