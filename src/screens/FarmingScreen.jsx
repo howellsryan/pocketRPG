@@ -5,7 +5,8 @@ import Modal from '../components/Modal.jsx'
 import FarmLocationPicker from '../screens/FarmLocationPicker.jsx'
 import FarmPatchView from '../screens/FarmPatchView.jsx'
 import farmingData from '../data/farming.json'
-import { applyPlantAll, getCropDef, getPatchesForLocation, getPlantableCropOptions, harvestCrop, plantCrop, getEffectiveStage } from '../engine/farming.ts'
+import { getCropDef, getPatchesForLocation, getPlantableCropOptions, harvestCrop, plantCrop, getEffectiveStage } from '../engine/farming.ts'
+import { applyPlantAll } from '../engine/farmingPlantAll.ts'
 
 export default function FarmingScreen({ onBack }) {
   const { stats, farming, inventory, bank, updateFarming, grantXP, addToBank, updateBankDirect, removeFromInventory, addToast, itemsData } = useGame()

@@ -10,8 +10,8 @@ import {
   advanceFarmingState,
   getPlantableCropOptions,
   getReadyPatchSummaryForLocation,
-  applyPlantAll,
 } from '../src/engine/farming.ts'
+import { applyPlantAll } from '../src/engine/farmingPlantAll.ts'
 import { GATHERING_SKILLS, STUB_SKILLS } from '../src/utils/constants.js'
 
 describe('farming engine', () => {

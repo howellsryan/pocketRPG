@@ -53,6 +53,7 @@ const sourceFiles = [
   'engine/idleEngine.js',
   'engine/tick.js',
   'engine/farming.js',
+  'engine/farmingPlantAll.js',
   'engine/quests.js',
   'engine/questIdleCascade.js',
   'engine/clueScrolls.js',
