@@ -11,6 +11,21 @@ describe('decodeSaveRow', () => {
   })
 
 
+
+  it('decodes array-like blobs returned by some runtimes', async () => {
+    const payload = JSON.stringify({ stats: { strength: 55 } })
+    const saveBlobBytes = await gzipJsonString(payload)
+    const arrayLikeBlob = Array.from(saveBlobBytes)
+
+    const decoded = await decodeSaveRow({ save_blob: arrayLikeBlob, save_data: null, updated_at: 321 })
+
+    expect(decoded).toEqual({ save_data: payload, updatedAt: 321 })
+  })
+
+  it('throws when save_blob exists but is not gzip format', async () => {
+    await expect(decodeSaveRow({ save_blob: new Uint8Array([0x00, 0x01, 0x02]), save_data: null, updated_at: 654 })).rejects.toThrow('save_blob_unexpected_format')
+  })
+
   it('throws when save_blob has gzip header but cannot be decompressed', async () => {
     const brokenBlob = new Uint8Array([0x1f, 0x8b, 0x00])
 
