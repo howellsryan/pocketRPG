@@ -23,6 +23,7 @@ function EquipSlot({ slotName, equipment, itemsData, onSelect, size = 'md' }) {
   const item = entry ? itemsData[entry.itemId] : null
   const isEmpty = !item
   const charges = entry?.charges || 0
+  const ammoQuantity = slotName === 'ammo' ? Number(entry?.quantity || 1) : 1
   const preset = SIZE_PRESETS[size] || SIZE_PRESETS.md
 
   const bgClass = isEmpty ? 'bg-[#111] border-[#222] opacity-40' : 'bg-[var(--color-void-light)] border-[#444]'
@@ -38,6 +39,9 @@ function EquipSlot({ slotName, equipment, itemsData, onSelect, size = 'md' }) {
       </span>
       {charges > 0 && (
         <span class="absolute bottom-[2px] right-[2px] text-[8px] text-[#4ade80] font-bold">⚡</span>
+      )}
+      {ammoQuantity > 1 && (
+        <span class="absolute top-[2px] right-[2px] text-[8px] text-[var(--color-gold)] font-bold">{ammoQuantity}</span>
       )}
       <span
         class={`${preset.label} text-center mt-[2px] ${item ? 'text-[var(--color-parchment)] font-semibold' : 'text-[#555]'}`}
