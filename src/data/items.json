@@ -7552,6 +7552,26 @@
     "isUntradeable": true,
     "isGeneralStore": false
   },
+  "money_purse": {
+    "id": "money_purse",
+    "name": "Money Purse",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "👛",
+    "isUntradeable": true,
+    "isGeneralStore": false
+  },
+  "master_rejuvenation": {
+    "id": "master_rejuvenation",
+    "name": "Master Rejuvenation",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 0,
+    "icon": "⚡",
+    "isUntradeable": true,
+    "isGeneralStore": false
+  },
   "guam_leaf": {
     "id": "guam_leaf",
     "name": "Guam Leaf",
