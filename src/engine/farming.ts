@@ -98,7 +98,8 @@ export function plantCrop(
 
 export function harvestCrop(
   state: FarmingState,
-  patchId: string
+  patchId: string,
+  farmingLevel: number = 1
 ): { state: FarmingState; harvestXp: number; cropId: string; quantity: number } | null {
   const patch = state.patchesById[patchId]
   if (!patch || !patch.cropId) return null
@@ -110,11 +111,15 @@ export function harvestCrop(
   const newState = { ...state, patchesById: { ...state.patchesById } }
   delete newState.patchesById[patchId]
 
+  const safeLevel = Math.max(1, Math.min(99, Math.floor(farmingLevel || 1)))
+  const maxHerbYield = 5 + Math.floor(((safeLevel - 1) * 10) / 98)
+  const herbYield = 5 + Math.floor(Math.random() * (Math.max(5, maxHerbYield) - 5 + 1))
+
   return {
     state: newState,
     harvestXp: crop.harvestXp,
     cropId: crop.cropId,
-    quantity: 1
+    quantity: getCropType(patch.cropId) === 'herb' ? herbYield : 1
   }
 }
 

@@ -68,7 +68,7 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
   }
 
   const handleHarvest = () => {
-    const result = harvestCrop(farming, selectedPatch.patchId)
+    const result = harvestCrop(farming, selectedPatch.patchId, farmingLevel)
     if (!result) {
       addToast('Not ready to harvest', 'error')
       return

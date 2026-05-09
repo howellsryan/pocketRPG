@@ -8,7 +8,7 @@ import farmingData from '../data/farming.json'
 import { getCropDef, getPatchesForLocation, getPlantableCropOptions, harvestCrop, plantCrop, getEffectiveStage } from '../engine/farming.ts'
 
 export default function FarmingScreen({ onBack }) {
-  const { stats, farming, inventory, bank, updateFarming, grantXP, addToBank, updateBankDirect, removeFromInventory, addToast } = useGame()
+  const { stats, farming, inventory, bank, updateFarming, grantXP, addToBank, updateBankDirect, removeFromInventory, addToast, itemsData } = useGame()
   const farmingLevel = getLevelFromXP(stats.farming?.xp || 0)
 
   const [selectedLocation, setSelectedLocation] = useState(null)
@@ -25,7 +25,7 @@ export default function FarmingScreen({ onBack }) {
     let harvestedCount = 0
     for (const patchData of allPatches) {
       if (!patchData.patch?.cropId || getEffectiveStage(patchData.patch) < 4) continue
-      const result = harvestCrop(nextState, patchData.patchId)
+      const result = harvestCrop(nextState, patchData.patchId, farmingLevel)
       if (!result) continue
       nextState = result.state
       totalXp += result.harvestXp
@@ -170,7 +170,7 @@ export default function FarmingScreen({ onBack }) {
           <div class="text-xs text-[var(--color-parchment)] space-y-2">
             <div>Farming XP gained: <span class="text-[var(--color-gold)] font-semibold">{Math.floor(resultModal.xp)}</span></div>
             {Object.entries(resultModal.items).map(([itemId, qty]) => {
-              const item = getCropDef(itemId)
+              const item = itemsData[itemId] || getCropDef(itemId)
               return <div key={itemId}>{resultModal.action} {item?.icon || ''} {item?.name || itemId} ×{qty}</div>
             })}
           </div>
