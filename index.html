@@ -50748,7 +50748,7 @@ function RequirementRow({ label, ok }) {
         h("span", null, label)));
 }
 
-// ── screens/LeaderboardScreen.js ──
+// ── screens/SettingsScreen.js ──
 
 
 
@@ -50894,7 +50894,7 @@ function HelpGuidesDirectory() {
     return (h("div", { class: "space-y-2" }, HELP_GUIDES.map((guide) => (h(CollapsibleSection, { key: guide.title, icon: guide.icon, title: guide.title },
         h("ul", { class: "list-disc pl-4 space-y-1" }, guide.points.map((point) => (h("li", { key: point, class: "text-sm text-[var(--color-parchment)] opacity-90 leading-relaxed" }, point)))))))));
 }
-function LeaderboardScreen() {
+function SettingsScreen() {
     return (h("div", { class: "h-full flex flex-col" },
         h("div", { class: "flex-shrink-0 bg-[#111] border-b border-[var(--color-void-border)] px-4 py-3" },
             h("h1", { class: "font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)]" }, "Settings")),
@@ -51033,7 +51033,7 @@ function AuthScreen({ onCloudReady }) {
                 h("label", { style: { display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '11px', color: '#ffd4d4' } },
                     h("input", { type: "checkbox", checked: oneLifeAck, onChange: (e) => setOneLifeAck(e.target.checked), style: { marginTop: '1px', width: '14px', height: '14px', cursor: 'pointer' } }),
                     "I understand this character is permanently deleted on death."))),
-            (!characters || characters.length === 0) && (h("details", { style: { marginBottom: '14px', padding: '12px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333' }, open: true },
+            showCreate && (h("details", { style: { marginBottom: '14px', padding: '12px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333' }, open: true },
                 h("summary", { style: { cursor: 'pointer', fontSize: '13px', color: '#d4af37', fontWeight: 'bold' } }, "\uD83E\uDDED New to PocketRPG?"),
                 h("div", { style: { marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '10px' } },
                     h("div", null,
@@ -51054,7 +51054,11 @@ function AuthScreen({ onCloudReady }) {
                             h("li", null, "Create your character and equip your bronze gear from Items."),
                             h("li", null, "Open Combat and train on early monsters."),
                             h("li", null, "Eat shrimp when low HP, then bank or sell loot."),
-                            h("li", null, "Upgrade gear, then try skilling and quests.")))))),
+                            h("li", null, "Upgrade gear, then try skilling and quests."))),
+                    h("div", null,
+                        h("div", { style: { fontSize: '11px', color: '#d4af37', fontWeight: 'bold', marginBottom: '4px' } }, "Need more help?"),
+                        h("ul", { style: { margin: 0, paddingLeft: '16px', fontSize: '10px', color: '#e8d5b0', opacity: 0.9, lineHeight: 1.45 } },
+                            h("li", null, "Please read the help and guides section for more information in the Settings screen once you have started your adventure.")))))),
             h("button", { type: "submit", disabled: busy || newName.trim().length < 3 || (isOneLife && !oneLifeAck), style: primaryBtn }, busy ? 'Creating…' : 'Create Character'),
             characters && characters.length > 0 && (h("button", { type: "button", onClick: () => setMode('characters'), style: ghostBtn }, "Back")))),
         error && h("p", { style: errorText }, error)));
@@ -52554,8 +52558,8 @@ function GameApp() {
             case SCREENS.AGILITY: return h(AgilityScreen, { initialActionId: actionData?.actionId, idleResult: idleResult });
             case SCREENS.STORE: return h(GeneralStoreScreen, null);
             case SCREENS.QUESTS: return h(QuestsScreen, null);
-            case SCREENS.SETTINGS: return h(LeaderboardScreen, null);
-            case SCREENS.LEADERBOARD: return h(LeaderboardScreen, null);
+            case SCREENS.SETTINGS: return h(SettingsScreen, null);
+            case SCREENS.LEADERBOARD: return h(SettingsScreen, null);
             default: return h(HomeScreen, { onNavigate: navigate, onLogout: handleLogoutToCharacterSelect, isCloudAccount: !!getToken() && !!getCharacterId() });
         }
     };
