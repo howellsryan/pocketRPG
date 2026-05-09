@@ -71,7 +71,7 @@ export default function FarmingScreen({ onBack }) {
       return
     }
 
-    updateFarming({ ...safeFarming, ...nextState, plantAllSelections })
+    updateFarming({ ...safeFarming, ...nextState, plantAllSelections: plantSelections })
     const inventorySlots = Array.isArray(inventory) ? inventory : []
     for (const [seedId, qty] of Object.entries(inventoryUsage)) {
       let remaining = qty
