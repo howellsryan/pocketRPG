@@ -66,32 +66,39 @@ export default function FarmingScreen({ onBack }) {
     const inventoryPool = {}
     const bankPool = {}
 
-    for (const slot of inventory) {
+    for (const slot of inventory || []) {
       if (!slot?.itemId) continue
       inventoryPool[slot.itemId] = (inventoryPool[slot.itemId] || 0) + (slot.quantity || 0)
     }
     for (const [itemId, entry] of Object.entries(bank || {})) {
       bankPool[itemId] = Math.max(0, entry?.quantity || 0)
     }
-    for (const patchData of allPatches) {
-      if (patchData.patch?.cropId) continue
-      const seedId = plantSelections[patchData.type]
-      if (!seedId) continue
-      const availableInv = inventoryPool[seedId] || 0
-      const availableBank = bankPool[seedId] || 0
-      if ((availableInv + availableBank) <= 0) continue
-      const result = plantCrop(nextState, patchData.patchId, seedId, patchData.type)
-      if (!result) continue
-      nextState = result.state
-      totalXp += result.plantXp
-      planted[seedId] = (planted[seedId] || 0) + 1
-      consumed[seedId] = (consumed[seedId] || 0) + 1
-      if (availableInv > 0) {
-        inventoryUsage[seedId] = (inventoryUsage[seedId] || 0) + 1
-        inventoryPool[seedId] = availableInv - 1
-      } else {
-        bankUsage[seedId] = (bankUsage[seedId] || 0) + 1
-        bankPool[seedId] = availableBank - 1
+
+    for (const location of farmingData.locations) {
+      for (const patchData of getPatchesForLocation(nextState, location.id)) {
+        if (patchData.patch?.cropId) continue
+        const seedId = plantSelections[patchData.type]
+        if (!seedId) continue
+
+        const availableInv = inventoryPool[seedId] || 0
+        const availableBank = bankPool[seedId] || 0
+        if ((availableInv + availableBank) <= 0) continue
+
+        const result = plantCrop(nextState, patchData.patchId, seedId, patchData.type)
+        if (!result) continue
+
+        nextState = result.state
+        totalXp += result.plantXp
+        planted[seedId] = (planted[seedId] || 0) + 1
+        consumed[seedId] = (consumed[seedId] || 0) + 1
+
+        if (availableInv > 0) {
+          inventoryUsage[seedId] = (inventoryUsage[seedId] || 0) + 1
+          inventoryPool[seedId] = availableInv - 1
+        } else {
+          bankUsage[seedId] = (bankUsage[seedId] || 0) + 1
+          bankPool[seedId] = availableBank - 1
+        }
       }
     }
 
