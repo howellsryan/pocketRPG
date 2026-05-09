@@ -63,12 +63,22 @@ export default function FarmingScreen({ onBack }) {
     const consumed = {}
     const inventoryUsage = {}
     const bankUsage = {}
+    const inventoryPool = {}
+    const bankPool = {}
+
+    for (const slot of inventory) {
+      if (!slot?.itemId) continue
+      inventoryPool[slot.itemId] = (inventoryPool[slot.itemId] || 0) + (slot.quantity || 0)
+    }
+    for (const [itemId, entry] of Object.entries(bank || {})) {
+      bankPool[itemId] = Math.max(0, entry?.quantity || 0)
+    }
     for (const patchData of allPatches) {
       if (patchData.patch?.cropId) continue
       const seedId = plantSelections[patchData.type]
       if (!seedId) continue
-      const availableInv = (inventory.find(s => s && s.itemId === seedId)?.quantity || 0) - (inventoryUsage[seedId] || 0)
-      const availableBank = (bank?.[seedId]?.quantity || 0) - (bankUsage[seedId] || 0)
+      const availableInv = inventoryPool[seedId] || 0
+      const availableBank = bankPool[seedId] || 0
       if ((availableInv + availableBank) <= 0) continue
       const result = plantCrop(nextState, patchData.patchId, seedId, patchData.type)
       if (!result) continue
@@ -76,8 +86,13 @@ export default function FarmingScreen({ onBack }) {
       totalXp += result.plantXp
       planted[seedId] = (planted[seedId] || 0) + 1
       consumed[seedId] = (consumed[seedId] || 0) + 1
-      if (availableInv > 0) inventoryUsage[seedId] = (inventoryUsage[seedId] || 0) + 1
-      else bankUsage[seedId] = (bankUsage[seedId] || 0) + 1
+      if (availableInv > 0) {
+        inventoryUsage[seedId] = (inventoryUsage[seedId] || 0) + 1
+        inventoryPool[seedId] = availableInv - 1
+      } else {
+        bankUsage[seedId] = (bankUsage[seedId] || 0) + 1
+        bankPool[seedId] = availableBank - 1
+      }
     }
 
     if (Object.keys(planted).length === 0) {
