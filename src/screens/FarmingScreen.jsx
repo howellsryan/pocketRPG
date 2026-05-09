@@ -5,7 +5,7 @@ import Modal from '../components/Modal.jsx'
 import FarmLocationPicker from '../screens/FarmLocationPicker.jsx'
 import FarmPatchView from '../screens/FarmPatchView.jsx'
 import farmingData from '../data/farming.json'
-import { getCropDef, getPatchesForLocation, getPlantableCropOptions, harvestCrop, plantCrop, getEffectiveStage } from '../engine/farming.ts'
+import { applyPlantAll, getCropDef, getPatchesForLocation, getPlantableCropOptions, harvestCrop, getEffectiveStage, initFarmingState } from '../engine/farming.ts'
 
 export default function FarmingScreen({ onBack }) {
   const { stats, farming, inventory, bank, updateFarming, grantXP, addToBank, updateBankDirect, removeFromInventory, addToast, itemsData } = useGame()
@@ -16,10 +16,11 @@ export default function FarmingScreen({ onBack }) {
   const [plantAllOpen, setPlantAllOpen] = useState(false)
   const [plantSelections, setPlantSelections] = useState(() => farming?.plantAllSelections || {})
 
-  const allPatches = farmingData.locations.flatMap(location => getPatchesForLocation(farming, location.id))
+  const safeFarming = farming?.patchesById ? farming : initFarmingState()
+  const allPatches = farmingData.locations.flatMap(location => getPatchesForLocation(safeFarming, location.id))
 
   const handleHarvestAll = () => {
-    let nextState = farming
+    let nextState = safeFarming
     let totalXp = 0
     const items = {}
     let harvestedCount = 0
@@ -57,52 +58,25 @@ export default function FarmingScreen({ onBack }) {
     const selectedTypes = Object.entries(plantSelections).filter(([, v]) => !!v).map(([k]) => k)
     if (selectedTypes.length === 0) return
 
-    let nextState = farming
-    let totalXp = 0
-    const planted = {}
-    const consumed = {}
-    const inventoryUsage = {}
-    const bankUsage = {}
-    const inventoryPool = {}
-    const bankPool = {}
-
-    for (const slot of inventory) {
-      if (!slot?.itemId) continue
-      inventoryPool[slot.itemId] = (inventoryPool[slot.itemId] || 0) + (slot.quantity || 0)
-    }
-    for (const [itemId, entry] of Object.entries(bank || {})) {
-      bankPool[itemId] = Math.max(0, entry?.quantity || 0)
-    }
-    for (const patchData of allPatches) {
-      if (patchData.patch?.cropId) continue
-      const seedId = plantSelections[patchData.type]
-      if (!seedId) continue
-      const availableInv = inventoryPool[seedId] || 0
-      const availableBank = bankPool[seedId] || 0
-      if ((availableInv + availableBank) <= 0) continue
-      const result = plantCrop(nextState, patchData.patchId, seedId, patchData.type)
-      if (!result) continue
-      nextState = result.state
-      totalXp += result.plantXp
-      planted[seedId] = (planted[seedId] || 0) + 1
-      consumed[seedId] = (consumed[seedId] || 0) + 1
-      if (availableInv > 0) {
-        inventoryUsage[seedId] = (inventoryUsage[seedId] || 0) + 1
-        inventoryPool[seedId] = availableInv - 1
-      } else {
-        bankUsage[seedId] = (bankUsage[seedId] || 0) + 1
-        bankPool[seedId] = availableBank - 1
-      }
-    }
+    const { state: nextState, totalXp, planted, consumed, inventoryUsage, bankUsage } = applyPlantAll(
+      safeFarming,
+      farmingData.locations.flatMap(location => getPatchesForLocation(safeFarming, location.id)),
+      plantSelections,
+      inventory,
+      bank,
+    )
 
     if (Object.keys(planted).length === 0) {
       addToast('No empty patches or not enough selected seeds', 'error')
       return
     }
+
+    updateFarming({ ...safeFarming, ...nextState, plantAllSelections: plantSelections })
+    const inventorySlots = Array.isArray(inventory) ? inventory : []
     for (const [seedId, qty] of Object.entries(inventoryUsage)) {
       let remaining = qty
-      for (let i = 0; i < inventory.length && remaining > 0; i++) {
-        const slot = inventory[i]
+      for (let i = 0; i < inventorySlots.length && remaining > 0; i++) {
+        const slot = inventorySlots[i]
         if (!slot || slot.itemId !== seedId) continue
         const removeQty = Math.min(slot.quantity || 0, remaining)
         if (removeQty > 0) {
@@ -112,7 +86,6 @@ export default function FarmingScreen({ onBack }) {
       }
     }
     for (const [seedId, qty] of Object.entries(bankUsage)) updateBankDirect({ [seedId]: -qty })
-    updateFarming({ ...nextState, plantAllSelections })
     if (totalXp > 0) grantXP('farming', totalXp)
     setPlantAllOpen(false)
     addToast('Planted all selected crops', 'success')
