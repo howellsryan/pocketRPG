@@ -10,12 +10,12 @@
     {
       "id": "monsters",
       "label": "Monsters",
-      "icon": "⚔️",
+      "icon": "\u2694\ufe0f",
       "sections": [
         {
           "id": "abyssal_demon",
           "label": "Abyssal Demon",
-          "icon": "⚔️",
+          "icon": "\u2694\ufe0f",
           "items": [
             "abyssal_whip"
           ]
@@ -23,7 +23,7 @@
         {
           "id": "adamant_dragon",
           "label": "Adamant Dragon",
-          "icon": "⚔️",
+          "icon": "\u2694\ufe0f",
           "items": [
             "uncut_onyx",
             "draconic_visage"
@@ -32,7 +32,7 @@
         {
           "id": "brutal_black_dragon",
           "label": "Brutal Black Dragon",
-          "icon": "⚔️",
+          "icon": "\u2694\ufe0f",
           "items": [
             "draconic_visage"
           ]
@@ -40,7 +40,7 @@
         {
           "id": "cerberus",
           "label": "Cerberus",
-          "icon": "👑",
+          "icon": "\ud83d\udc51",
           "items": [
             "primordial_crystal",
             "pegasian_crystal",
@@ -50,7 +50,7 @@
         {
           "id": "commander_zilyana",
           "label": "Commander Zilyana",
-          "icon": "👑",
+          "icon": "\ud83d\udc51",
           "items": [
             "saradomin_sword",
             "armadyl_crossbow",
@@ -60,7 +60,7 @@
         {
           "id": "corrupted_gauntlet",
           "label": "Corrupted Gauntlet",
-          "icon": "👑",
+          "icon": "\ud83d\udc51",
           "items": [
             "uncut_onyx",
             "crystal_pickaxe",
@@ -75,7 +75,7 @@
         {
           "id": "dagganoth_prime",
           "label": "Dagannoth Prime",
-          "icon": "👑",
+          "icon": "\ud83d\udc51",
           "items": [
             "dragon_axe",
             "seers_ring"
@@ -84,7 +84,7 @@
         {
           "id": "dagganoth_rex",
           "label": "Dagannoth Rex",
-          "icon": "👑",
+          "icon": "\ud83d\udc51",
           "items": [
             "dragon_axe",
             "berserker_ring",
@@ -94,7 +94,7 @@
         {
           "id": "dagganoth_supreme",
           "label": "Dagannoth Supreme",
-          "icon": "👑",
+          "icon": "\ud83d\udc51",
           "items": [
             "dragon_axe",
             "archers_ring"
@@ -103,7 +103,7 @@
         {
           "id": "dark_beast",
           "label": "Dark Beast",
-          "icon": "⚔️",
+          "icon": "\u2694\ufe0f",
           "items": [
             "dark_bow"
           ]
@@ -111,7 +111,7 @@
         {
           "id": "demonic_gorilla",
           "label": "Demonic Gorilla",
-          "icon": "👑",
+          "icon": "\ud83d\udc51",
           "items": [
             "uncut_zenyte",
             "heavy_ballista"
@@ -120,7 +120,7 @@
         {
           "id": "gargoyle",
           "label": "Gargoyle",
-          "icon": "⚔️",
+          "icon": "\u2694\ufe0f",
           "items": [
             "granite_maul"
           ]
@@ -128,7 +128,7 @@
         {
           "id": "general_graardor",
           "label": "General Graardor",
-          "icon": "👑",
+          "icon": "\ud83d\udc51",
           "items": [
             "bandos_chestplate",
             "bandos_tassets",
@@ -139,7 +139,7 @@
         {
           "id": "hydra",
           "label": "Hydra",
-          "icon": "👑",
+          "icon": "\ud83d\udc51",
           "items": [
             "hydra_leather",
             "hydra_claw",
@@ -149,7 +149,7 @@
         {
           "id": "kril_tsutsaroth",
           "label": "K'ril Tsutsaroth",
-          "icon": "👑",
+          "icon": "\ud83d\udc51",
           "items": [
             "zamorak_spear",
             "staff_of_the_dead",
@@ -159,7 +159,7 @@
         {
           "id": "king_black_dragon",
           "label": "King Black Dragon",
-          "icon": "👑",
+          "icon": "\ud83d\udc51",
           "items": [
             "dragon_pickaxe",
             "draconic_visage"
@@ -168,7 +168,7 @@
         {
           "id": "kraken",
           "label": "Kraken",
-          "icon": "👑",
+          "icon": "\ud83d\udc51",
           "items": [
             "kraken_tentacle"
           ]
@@ -176,7 +176,7 @@
         {
           "id": "kreearra",
           "label": "Kree'arra",
-          "icon": "👑",
+          "icon": "\ud83d\udc51",
           "items": [
             "armadyl_helmet",
             "armadyl_chestplate",
@@ -187,7 +187,7 @@
         {
           "id": "lizardman_shaman",
           "label": "Lizardman Shaman",
-          "icon": "⚔️",
+          "icon": "\u2694\ufe0f",
           "items": [
             "dragon_warhammer"
           ]
@@ -195,7 +195,7 @@
         {
           "id": "rune_dragon",
           "label": "Rune Dragon",
-          "icon": "⚔️",
+          "icon": "\u2694\ufe0f",
           "items": [
             "uncut_onyx",
             "draconic_visage"
@@ -204,7 +204,7 @@
         {
           "id": "smoke_devil",
           "label": "Smoke Devil",
-          "icon": "⚔️",
+          "icon": "\u2694\ufe0f",
           "items": [
             "occult_necklace"
           ]
@@ -212,7 +212,7 @@
         {
           "id": "spiritual_mage",
           "label": "Spiritual Mage",
-          "icon": "⚔️",
+          "icon": "\u2694\ufe0f",
           "items": [
             "dragon_boots"
           ]
@@ -220,7 +220,7 @@
         {
           "id": "spiritual_ranger",
           "label": "Spiritual Ranger",
-          "icon": "⚔️",
+          "icon": "\u2694\ufe0f",
           "items": [
             "dragon_boots"
           ]
@@ -228,7 +228,7 @@
         {
           "id": "spiritual_warrior",
           "label": "Spiritual Warrior",
-          "icon": "⚔️",
+          "icon": "\u2694\ufe0f",
           "items": [
             "dragon_boots"
           ]
@@ -236,7 +236,7 @@
         {
           "id": "zulrah",
           "label": "Zulrah",
-          "icon": "👑",
+          "icon": "\ud83d\udc51",
           "items": [
             "toxic_blowpipe",
             "trident_of_the_swamp",
@@ -249,12 +249,12 @@
     {
       "id": "raids",
       "label": "Raids",
-      "icon": "🏛️",
+      "icon": "\ud83c\udfdb\ufe0f",
       "sections": [
         {
           "id": "barrows_brothers",
           "label": "Barrows Brothers",
-          "icon": "⚰️",
+          "icon": "\u26b0\ufe0f",
           "items": [
             "ahrims_hood",
             "ahrims_robetop",
@@ -285,7 +285,7 @@
         {
           "id": "chambers_of_xeric",
           "label": "Chambers of Xeric",
-          "icon": "🏛️",
+          "icon": "\ud83c\udfdb\ufe0f",
           "items": [
             "twisted_buckler",
             "dragon_hunter_crossbow",
@@ -303,7 +303,7 @@
         {
           "id": "theatre_of_blood",
           "label": "Theatre of Blood",
-          "icon": "🩸",
+          "icon": "\ud83e\ude78",
           "items": [
             "avernic_defender",
             "ghrazi_rapier",
@@ -319,12 +319,12 @@
     {
       "id": "minigames",
       "label": "Minigames",
-      "icon": "🎮",
+      "icon": "\ud83c\udfae",
       "sections": [
         {
           "id": "barbarian_assault",
           "label": "Barbarian Assault",
-          "icon": "⚔️",
+          "icon": "\u2694\ufe0f",
           "items": [
             "fighter_torso",
             "fighter_hat"
@@ -333,7 +333,7 @@
         {
           "id": "castle_wars",
           "label": "Castle Wars",
-          "icon": "🏰",
+          "icon": "\ud83c\udff0",
           "items": [
             "halo",
             "decorative_top"
@@ -342,7 +342,7 @@
         {
           "id": "warriors_guild",
           "label": "Warriors' Guild",
-          "icon": "🏛️",
+          "icon": "\ud83c\udfdb\ufe0f",
           "items": [
             "rune_defender",
             "dragon_defender"
@@ -351,7 +351,7 @@
         {
           "id": "fishing_trawler",
           "label": "Fishing Trawler",
-          "icon": "🛶",
+          "icon": "\ud83d\udef6",
           "items": [
             "angler_net"
           ]
@@ -359,7 +359,7 @@
         {
           "id": "mage_arena",
           "label": "Mage Arena",
-          "icon": "🪄",
+          "icon": "\ud83e\ude84",
           "items": [
             "imbued_god_cape"
           ]
@@ -367,7 +367,7 @@
         {
           "id": "pest_control",
           "label": "Pest Control",
-          "icon": "🛡️",
+          "icon": "\ud83d\udee1\ufe0f",
           "items": [
             "void_knight_helm",
             "void_knight_top",
@@ -380,12 +380,12 @@
     {
       "id": "clues",
       "label": "Clue Scrolls",
-      "icon": "📜",
+      "icon": "\ud83d\udcdc",
       "sections": [
         {
           "id": "medium",
           "label": "Medium Clue",
-          "icon": "📜",
+          "icon": "\ud83d\udcdc",
           "items": [
             "ranger_boots",
             "wizard_boots",
@@ -416,7 +416,7 @@
         {
           "id": "hard",
           "label": "Hard Clue",
-          "icon": "📜",
+          "icon": "\ud83d\udcdc",
           "items": [
             "saradomin_dhide_body",
             "saradomin_dhide_chaps",
@@ -473,7 +473,7 @@
         {
           "id": "elite",
           "label": "Elite Clue",
-          "icon": "📜",
+          "icon": "\ud83d\udcdc",
           "items": [
             "rangers_tunic",
             "holy_wraps",
@@ -487,7 +487,7 @@
         {
           "id": "master",
           "label": "Master Clue",
-          "icon": "📜",
+          "icon": "\ud83d\udcdc",
           "items": [
             "3rd_age_druidic_robe_top",
             "3rd_age_druidic_robe_bottoms",
@@ -499,6 +499,47 @@
             "gilded_axe",
             "gilded_spade",
             "fancy_tiara"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "skilling",
+      "label": "Skilling",
+      "icon": "\ud83d\udee0\ufe0f",
+      "sections": [
+        {
+          "id": "construction",
+          "label": "Construction Unlocks",
+          "icon": "\ud83c\udfe0",
+          "items": [
+            "money_purse",
+            "master_rejuvenation"
+          ]
+        },
+        {
+          "id": "dungeoneering",
+          "label": "Dungeoneering Rewards",
+          "icon": "\ud83c\udff0",
+          "items": [
+            "arcane_necklace",
+            "chaotic_rapier",
+            "chaotic_longsword",
+            "chaotic_maul",
+            "chaotic_crossbow",
+            "chaotic_staff",
+            "eagle_eyed_kiteshield",
+            "arcane_kiteshield"
+          ]
+        },
+        {
+          "id": "slayer",
+          "label": "Slayer Unlocks",
+          "icon": "\ud83d\udc80",
+          "items": [
+            "slayer_helmet",
+            "slayer_defender",
+            "gloves_of_slaughter"
           ]
         }
       ]
