@@ -7,6 +7,7 @@ import { countItem, removeItem } from '../engine/inventory.js'
 import { onTick } from '../engine/tick.js'
 import { formatNumber } from '../utils/helpers.js'
 import itemsData from '../data/items.json'
+import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
 
 const BUILDING_ACTIONS = [
   { id: 'build_plank', name: 'Build with Plank', level: 1, ticks: 2, xp: 29, materials: { planks: 1 } },
@@ -118,6 +119,7 @@ export default function ConstructionScreen({ onBack }) {
 
   const handleUnlock = (unlockable) => {
     unlockFeature(unlockable.id)
+    recordCollectionLogDrop({ itemId: unlockable.id, sourceType: 'skilling', sourceId: 'construction' })
     addToast(`${unlockable.icon} ${unlockable.name} complete!`, 'success')
   }
 

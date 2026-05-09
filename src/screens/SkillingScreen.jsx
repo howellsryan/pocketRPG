@@ -19,6 +19,7 @@ import ThievingScreen from './ThievingScreen.jsx'
 import HunterScreen from './HunterScreen.jsx'
 import FarmingScreen from './FarmingScreen.jsx'
 import ConstructionScreen from './ConstructionScreen.jsx'
+import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
 
 // Farming, Agility, Prayer, Thieving, Hunter, Slayer, Construction, and Dungeoneering are special
 // skills shown here in the Skills tab.
@@ -346,6 +347,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
       if (!productItem) return addToast('This reward item is unavailable.', 'error')
       if (!trySpendDungeoneeringTokens(cost)) return addToast(`Need ${formatNumber(cost)} Dungeoneering tokens.`, 'error')
       updateBankDirect({ [action.product]: action.productQty || 1 })
+      recordCollectionLogDrop({ itemId: action.product, sourceType: 'skilling', sourceId: 'dungeoneering' })
       addToast(`Purchased ${productItem.name} for ${formatNumber(cost)} tokens.`, 'success')
       return
     }

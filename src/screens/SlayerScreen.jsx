@@ -6,6 +6,7 @@ import { SLAYER_UNLOCKS, getSlayerUnlockPurchaseState } from '../engine/slayerUn
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { DAGANNOTH_KINGS_TASK_ID } from '../engine/slayerTasks.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
+import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
 
 // OSRS slayer masters — requirements and monster pools from OSRS Wiki
 const SLAYER_MASTERS = [
@@ -259,6 +260,7 @@ export default function SlayerScreen({ onBack }) {
     }
     updateSlayerPoints(slayerPoints - unlock.cost)
     addToBank(unlock.itemId, 1)
+    recordCollectionLogDrop({ itemId: unlock.itemId, sourceType: 'skilling', sourceId: 'slayer' })
     requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.PURCHASE)
     addToast(`🎉 Purchased ${item.name} — sent to bank`, 'info')
   }

@@ -81,6 +81,19 @@ describe('collection log slot completion notifications', () => {
     expect(count).toBe(0)
   })
 
+
+  it('fires slot-complete for skilling unlock source entries', async () => {
+    const mod: any = await freshClient()
+    getCollectionLogMock.mockResolvedValueOnce({ entries: [], total: 100 })
+    await mod.fetchCollectionLog({ force: true })
+
+    const seen: Array<{ itemId: string; sourceType: string; sourceId: string }> = []
+    mod.onCollectionLogSlotComplete((e: any) => seen.push(e))
+
+    mod.recordCollectionLogDrop({ itemId: 'master_rejuvenation', sourceType: 'skilling', sourceId: 'construction' })
+    expect(seen).toEqual([{ itemId: 'master_rejuvenation', sourceType: 'skilling', sourceId: 'construction' }])
+  })
+
   it('clearCollectionLogCache resets state without firing toasts', async () => {
     const mod: any = await freshClient()
     getCollectionLogMock.mockResolvedValueOnce({ entries: [], total: 100 })
