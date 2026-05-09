@@ -71,10 +71,11 @@ export default function FarmingScreen({ onBack }) {
     }
 
     updateFarming({ ...nextState, plantAllSelections })
+    const inventorySlots = Array.isArray(inventory) ? inventory : []
     for (const [seedId, qty] of Object.entries(inventoryUsage)) {
       let remaining = qty
-      for (let i = 0; i < inventory.length && remaining > 0; i++) {
-        const slot = inventory[i]
+      for (let i = 0; i < inventorySlots.length && remaining > 0; i++) {
+        const slot = inventorySlots[i]
         if (!slot || slot.itemId !== seedId) continue
         const removeQty = Math.min(slot.quantity || 0, remaining)
         if (removeQty > 0) {
