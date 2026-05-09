@@ -32443,6 +32443,7 @@ const SCREENS = {
     AGILITY: 'agility',
     STORE: 'store',
     QUESTS: 'quests',
+    SETTINGS: 'settings',
     LEADERBOARD: 'leaderboard'
 };
 
@@ -33818,11 +33819,16 @@ function getSlayerTaskReward(basePoints, completedTasksBeforeCompletion = 0) {
 }
 
 // ── engine/slayerTasks.js ──
+const DAGANNOTH_KINGS_TASK_ID = 'dagganoth_kings';
 const DAGANNOTH_KINGS = new Set(['dagganoth_rex', 'dagganoth_prime', 'dagganoth_supreme']);
 function doesSlayerTaskMatchMonster(taskMonsterId, monsterId) {
     if (!taskMonsterId || !monsterId)
         return false;
     if (taskMonsterId === monsterId)
+        return true;
+    if (taskMonsterId === DAGANNOTH_KINGS_TASK_ID && DAGANNOTH_KINGS.has(monsterId))
+        return true;
+    if (monsterId === DAGANNOTH_KINGS_TASK_ID && DAGANNOTH_KINGS.has(taskMonsterId))
         return true;
     return DAGANNOTH_KINGS.has(taskMonsterId) && DAGANNOTH_KINGS.has(monsterId);
 }
@@ -41949,7 +41955,7 @@ const NAV_TABS = [
     { id: SCREENS.COMBAT, label: 'Combat', icon: '⚔️' },
     { id: SCREENS.SKILLS, label: 'Skills', icon: '🔨' },
     { id: SCREENS.QUESTS, label: 'Quests', icon: '📜' },
-    { id: SCREENS.LEADERBOARD, label: 'Settings', icon: '⚙️' },
+    { id: SCREENS.SETTINGS, label: 'Settings', icon: '⚙️' },
 ];
 
 // ── components/BottomNav.js ──
@@ -48694,6 +48700,7 @@ function ConstructionScreen({ onBack }) {
 
 
 
+
 // OSRS slayer masters — requirements and monster pools from OSRS Wiki
 const SLAYER_MASTERS = [
     {
@@ -48768,9 +48775,7 @@ const SLAYER_MASTERS = [
         bossTaskRange: [5, 25],
         monsterPool: [
             'abyssal_demon',
-            { id: 'dagganoth_rex', boss: true },
-            { id: 'dagganoth_prime', boss: true },
-            { id: 'dagganoth_supreme', boss: true },
+            { id: DAGANNOTH_KINGS_TASK_ID, boss: true },
             'red_dragon',
             'blood_veld', 'nechryael', 'skeletal_wyvern', 'smoke_devil',
             'spiritual_mage', 'gargoyle', 'brutal_black_dragon', 'dark_beast',
@@ -48791,9 +48796,7 @@ const SLAYER_MASTERS = [
         bossTaskRange: [20, 50],
         monsterPool: [
             'abyssal_demon',
-            { id: 'dagganoth_rex', boss: true },
-            { id: 'dagganoth_prime', boss: true },
-            { id: 'dagganoth_supreme', boss: true },
+            { id: DAGANNOTH_KINGS_TASK_ID, boss: true },
             { id: 'general_graardor', boss: true },
             { id: 'commander_zilyana', boss: true },
             { id: 'kril_tsutsaroth', boss: true },
@@ -48830,7 +48833,7 @@ const SLAYER_MONSTER_ICONS = {
     sand_crab: '🦀', dark_wizard: '🧙‍♂️', giant_spider: '🕷️', hill_giant: '👊',
     moss_giant: '🌿', green_dragon: '🐉', lesser_demon: '👿', abyssal_demon: '😈',
     general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
-    dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹', jad: '🔥',
+    dagganoth_kings: '👑', dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹', jad: '🔥',
     blood_veld: '🩸', nechryael: '👻', skeletal_wyvern: '🐲', smoke_devil: '💨', kraken: '🦑',
     banshee: '👻', aberrant_spectre: '👁️', wyrm: '🐍', spiritual_warrior: '⚔️',
     spiritual_ranger: '🏹', spiritual_mage: '🔮', gargoyle: '🗿',
@@ -48840,6 +48843,11 @@ function SlayerScreen({ onBack }) {
     const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, bank, inventory, addToBank, getSnapshot, slayerTasksCompleted } = useGame();
     const combatLevel = getPlayerCombatLevel(stats);
     const slayerLevel = getLevelFromXP(stats.slayer?.xp || 0);
+    const resolveTaskMonsterIds = (monsterId) => {
+        if (monsterId === DAGANNOTH_KINGS_TASK_ID)
+            return ['dagganoth_rex', 'dagganoth_prime', 'dagganoth_supreme'];
+        return [monsterId];
+    };
     const handleGetTask = (master) => {
         if (slayerTask) {
             addToast('Complete your current task first!', 'error');
@@ -48859,16 +48867,22 @@ function SlayerScreen({ onBack }) {
         const isBoss = typeof pick === 'object' && pick.boss;
         const monsterId = typeof pick === 'object' ? pick.id : pick;
         // Check slayer requirement on the monster itself
-        const monsterData = monstersData[monsterId];
-        if (monsterData?.slayerRequirement && slayerLevel < monsterData.slayerRequirement) {
+        const candidateIds = resolveTaskMonsterIds(monsterId);
+        const unmetRequirement = candidateIds
+            .map(id => monstersData[id]?.slayerRequirement || 0)
+            .find(req => req > slayerLevel);
+        if (unmetRequirement) {
             // Re-roll once to avoid blocking the player
             const fallback = pool.find(p => {
                 const id = typeof p === 'object' ? p.id : p;
-                const m = monstersData[id];
-                return !m?.slayerRequirement || slayerLevel >= m.slayerRequirement;
+                const fallbackIds = resolveTaskMonsterIds(id);
+                return fallbackIds.every(monsterKey => {
+                    const m = monstersData[monsterKey];
+                    return !m?.slayerRequirement || slayerLevel >= m.slayerRequirement;
+                });
             });
             if (!fallback) {
-                addToast(`Need slayer level ${monsterData.slayerRequirement} for this task`, 'error');
+                addToast(`Need slayer level ${unmetRequirement} for this task`, 'error');
                 return;
             }
             const fbId = typeof fallback === 'object' ? fallback.id : fallback;
@@ -48880,7 +48894,7 @@ function SlayerScreen({ onBack }) {
     };
     const assignTask = (master, monsterId, isBoss) => {
         const monsterData = monstersData[monsterId];
-        const monsterName = monsterData?.name || monsterId.replace(/_/g, ' ');
+        const monsterName = monsterId === DAGANNOTH_KINGS_TASK_ID ? 'Dagannoth Kings' : (monsterData?.name || monsterId.replace(/_/g, ' '));
         // Jad always has a single-kill task
         let totalCount;
         if (monsterId === 'jad') {
@@ -50795,15 +50809,99 @@ function CollapsibleSection({ icon, title, children, defaultOpen = false }) {
             h("span", { class: "text-[var(--color-gold)] text-sm" }, open ? '▾' : '▸')),
         open && (h("div", { class: "px-4 pb-4 pt-1" }, children))));
 }
+const HELP_GUIDES = [
+    {
+        title: 'Getting Started',
+        icon: '🌟',
+        points: [
+            'In your first 10 minutes, equip your starter bronze gear from Items.',
+            'Train on safer early monsters like chickens, cows, goblins, or crabs.',
+            'Eat food when HP gets low, then bank or sell loot and upgrade gear.',
+            'Try easy skills like Mining, Woodcutting, and Fishing before branching out.',
+            'Once comfortable, start quests for guided progression and rewards.'
+        ]
+    },
+    {
+        title: 'Account & Character Modes',
+        icon: '👤',
+        points: [
+            'GitHub and Google logins use separate character rosters.',
+            'Character names are permanent, so pick a name you want to keep.',
+            'Normal mode is best for first-time players.',
+            'Ironman limits shop access and is a challenge mode.',
+            'One Life deletes the character on death, with or without Ironman.',
+            'Ironman + One Life is the hardest challenge combination.'
+        ]
+    },
+    {
+        title: 'Combat Basics',
+        icon: '⚔️',
+        points: [
+            'Bring food and watch HP carefully. Dying can be costly in risky content.',
+            'Equip gear that matches your level and combat style.',
+            'Use attack styles, food, potions, prayers, and specials where supported.',
+            'Magic needs the correct spell, runes, and weapon setup. Ranged needs ammo.',
+            'Bosses and raids are much more dangerous than standard training monsters.'
+        ]
+    },
+    {
+        title: 'Idle Combat Supplies',
+        icon: '🧰',
+        points: [
+            'Idle Eat, Idle Potion, and Idle Pray are for away combat and Skip 1h progress.',
+            'Idle Eat lets you pre-select food consumed automatically based on expected damage.',
+            'Idle Potion lets you pre-select potions that are used when relevant.',
+            'Idle Pray lets you pre-select prayers applied during idle combat when resources exist.',
+            'Food, potions, and prayer supplies are consumed during idle/skip progress and can run out.',
+            'If supplies run out, progress may slow, stop, or become more dangerous depending on the fight.',
+            'Match your food, prayer, and potion setup to the monster and your combat style.'
+        ]
+    },
+    {
+        title: 'Idle Progress & Skip 1h',
+        icon: '💤',
+        points: [
+            'Active tasks can continue while you are away.',
+            'Idle progress can apply to combat, gathering, skills, agility, thieving, hunter, and quests where supported.',
+            'Some idle tasks consume supplies like runes, ammo, food, potions, or materials.',
+            'Skip 1h manually advances eligible active tasks.',
+            'If required supplies are missing, progress or rewards may be limited.',
+            'High-risk boss and raid content may have additional restrictions.'
+        ]
+    },
+    {
+        title: 'Inventory, Bank & Equipment',
+        icon: '🎒',
+        points: [
+            'Inventory space is limited, so bank often when grinding.',
+            'Some items stack and some are noted to save space.',
+            'Equip gear into the correct slot to gain stats and bonuses.',
+            'Check item stats, weapon charge behavior, and ammo/rune needs when relevant.'
+        ]
+    },
+    { title: 'Store & Economy', icon: '🪙', points: ['Use coins to buy items and sell extra loot for upgrades.', 'Some items are visible but not buyable until requirements are met.', 'Quest items may need quest completion first.', 'Boss uniques and clue rewards must be earned from their activities.', 'Ironman has stricter shop access, and some minigame rewards unlock differently.'] },
+    { title: 'Skills Overview', icon: '🔨', points: ['Combat skills improve your fighting power.', 'Gathering skills collect raw resources.', 'Production skills turn resources into gear and supplies.', 'Utility skills support account progression and unlocks.', 'Some skills use standard action lists, while others have dedicated screens.'] },
+    { title: 'Slayer', icon: '💀', points: ['Take Slayer tasks to fight assigned monsters.', 'Complete tasks for Slayer XP and Slayer points.', 'Spend points on unlocks that expand Slayer progression.', 'Some Slayer gear and unlocks improve efficiency on relevant targets.'] },
+    { title: 'Quests & Minigames', icon: '📜', points: ['Quests can have requirements and reward useful progression unlocks.', 'Quest progress can run in the background where supported.', 'Minigames can unlock unique rewards and progression options.', 'Some minigame rewards may later become purchasable or re-obtainable, depending on the activity.'] },
+    { title: 'Collection Log & Leaderboards', icon: '📖', points: ['Collection Log tracks important drops and reward milestones.', 'Boss, raid, clue, and minigame rewards may appear there.', 'Leaderboards show account progression and ranking snapshots.'] },
+    { title: 'PvP Basics', icon: '🛡️', points: ['PvP is higher risk than normal PvE.', 'Learn invitations, matchmaking flow, and risk before entering.', 'Deaths in PvP can cause item or coin loss depending on current rules.', 'Bring proper food, prayer, potions, gear, and special attack setup before fighting players.'] },
+    { title: 'Cloud Saves & Troubleshooting', icon: '☁️', points: ['Cloud saves sync progress for the selected account and character.', 'GitHub and Google sign-ins do not share character rosters.', 'If progress looks wrong, verify both provider and selected character first.', 'Try to avoid refreshing during critical combat or PvP moments.'] }
+];
+function HelpGuidesDirectory() {
+    return (h("div", { class: "space-y-2" }, HELP_GUIDES.map((guide) => (h(CollapsibleSection, { key: guide.title, icon: guide.icon, title: guide.title },
+        h("ul", { class: "list-disc pl-4 space-y-1" }, guide.points.map((point) => (h("li", { key: point, class: "text-sm text-[var(--color-parchment)] opacity-90 leading-relaxed" }, point)))))))));
+}
 function LeaderboardScreen() {
     return (h("div", { class: "h-full flex flex-col" },
         h("div", { class: "flex-shrink-0 bg-[#111] border-b border-[var(--color-void-border)] px-4 py-3" },
             h("h1", { class: "font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)]" }, "Settings")),
         h("div", { class: "flex-1 overflow-y-auto px-4 py-4 space-y-3" },
-            h(CollapsibleSection, { icon: "\uD83C\uDFC6", title: "Leaderboards" },
+            h(CollapsibleSection, { icon: "\uD83C\uDFC6", title: "Leaderboards", defaultOpen: true },
                 h(LeaderboardList, null)),
             h(CollapsibleSection, { icon: "\uD83D\uDCD6", title: "Collection Log" },
-                h(CollectionLogPanel, null)))));
+                h(CollectionLogPanel, null)),
+            h(CollapsibleSection, { icon: "\uD83E\uDDED", title: "Help & Guides" },
+                h(HelpGuidesDirectory, null)))));
 }
 
 // ── screens/AuthScreen.js ──
@@ -50823,6 +50921,7 @@ function AuthScreen({ onCloudReady }) {
     const [newName, setNewName] = useState('');
     const [isIronman, setIsIronman] = useState(false);
     const [isOneLife, setIsOneLife] = useState(false);
+    const [oneLifeAck, setOneLifeAck] = useState(false);
     useEffect(() => {
         if (mode === 'characters')
             refreshCharacters();
@@ -50916,11 +51015,44 @@ function AuthScreen({ onCloudReady }) {
                         h("div", { style: { fontSize: '10px', color: '#e8d5b0', opacity: 0.6, marginTop: '2px' } }, "Limited shop access. Can only buy general and quest items.")))),
             h("div", { style: { marginBottom: '14px', padding: '12px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333' } },
                 h("label", { style: { display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', margin: 0 } },
-                    h("input", { type: "checkbox", checked: isOneLife, onChange: (e) => setIsOneLife(e.target.checked), style: { width: '18px', height: '18px', cursor: 'pointer' } }),
+                    h("input", { type: "checkbox", checked: isOneLife, onChange: (e) => {
+                            const checked = e.target.checked;
+                            setIsOneLife(checked);
+                            if (!checked)
+                                setOneLifeAck(false);
+                        }, style: { width: '18px', height: '18px', cursor: 'pointer' } }),
                     h("div", null,
                         h("div", { style: { fontSize: '13px', color: '#d4af37', fontWeight: 'bold' } }, "\u2620\uFE0F One Life Mode"),
                         h("div", { style: { fontSize: '10px', color: '#e8d5b0', opacity: 0.6, marginTop: '2px' } }, "Die once and your account is permanently deleted. Works with or without Ironman.")))),
-            h("button", { type: "submit", disabled: busy || newName.trim().length < 3, style: primaryBtn }, busy ? 'Creating…' : 'Create Character'),
+            isOneLife && (h("div", { style: { marginBottom: '14px', padding: '12px', borderRadius: '12px', background: '#2a1616', border: '1px solid #7a2d2d' } },
+                h("div", { style: { fontSize: '12px', color: '#ff9b9b', fontWeight: 'bold', marginBottom: '6px' } }, "\u26A0\uFE0F One Life Warning"),
+                h("div", { style: { fontSize: '11px', color: '#ffd4d4', lineHeight: 1.45, marginBottom: '8px' } }, "Death permanently deletes this character. Not recommended for first-time players. Works with or without Ironman."),
+                h("label", { style: { display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '11px', color: '#ffd4d4' } },
+                    h("input", { type: "checkbox", checked: oneLifeAck, onChange: (e) => setOneLifeAck(e.target.checked), style: { marginTop: '1px', width: '14px', height: '14px', cursor: 'pointer' } }),
+                    "I understand this character is permanently deleted on death."))),
+            (!characters || characters.length === 0) && (h("details", { style: { marginBottom: '14px', padding: '12px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333' }, open: true },
+                h("summary", { style: { cursor: 'pointer', fontSize: '13px', color: '#d4af37', fontWeight: 'bold' } }, "\uD83E\uDDED New to PocketRPG?"),
+                h("div", { style: { marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '10px' } },
+                    h("div", null,
+                        h("div", { style: { fontSize: '11px', color: '#d4af37', fontWeight: 'bold', marginBottom: '4px' } }, "Recommended first character"),
+                        h("ul", { style: { margin: 0, paddingLeft: '16px', fontSize: '10px', color: '#e8d5b0', opacity: 0.9, lineHeight: 1.45 } },
+                            h("li", null, "Normal mode is recommended for your first character."),
+                            h("li", null, "Ironman is a challenge mode with limited shop access."),
+                            h("li", null, "One Life is extreme: death permanently deletes that character."),
+                            h("li", null, "Ironman + One Life is best for experienced challenge runs."))),
+                    h("div", null,
+                        h("div", { style: { fontSize: '11px', color: '#d4af37', fontWeight: 'bold', marginBottom: '4px' } }, "Starter kit"),
+                        h("ul", { style: { margin: 0, paddingLeft: '16px', fontSize: '10px', color: '#e8d5b0', opacity: 0.9, lineHeight: 1.45 } },
+                            h("li", null, "Bronze dagger, bronze scimitar, and full bronze armor + kiteshield."),
+                            h("li", null, "Shrimp for healing and a small amount of starting coins."))),
+                    h("div", null,
+                        h("div", { style: { fontSize: '11px', color: '#d4af37', fontWeight: 'bold', marginBottom: '4px' } }, "First steps"),
+                        h("ul", { style: { margin: 0, paddingLeft: '16px', fontSize: '10px', color: '#e8d5b0', opacity: 0.9, lineHeight: 1.45 } },
+                            h("li", null, "Create your character and equip your bronze gear from Items."),
+                            h("li", null, "Open Combat and train on early monsters."),
+                            h("li", null, "Eat shrimp when low HP, then bank or sell loot."),
+                            h("li", null, "Upgrade gear, then try skilling and quests.")))))),
+            h("button", { type: "submit", disabled: busy || newName.trim().length < 3 || (isOneLife && !oneLifeAck), style: primaryBtn }, busy ? 'Creating…' : 'Create Character'),
             characters && characters.length > 0 && (h("button", { type: "button", onClick: () => setMode('characters'), style: ghostBtn }, "Back")))),
         error && h("p", { style: errorText }, error)));
 }
@@ -52419,6 +52551,7 @@ function GameApp() {
             case SCREENS.AGILITY: return h(AgilityScreen, { initialActionId: actionData?.actionId, idleResult: idleResult });
             case SCREENS.STORE: return h(GeneralStoreScreen, null);
             case SCREENS.QUESTS: return h(QuestsScreen, null);
+            case SCREENS.SETTINGS: return h(LeaderboardScreen, null);
             case SCREENS.LEADERBOARD: return h(LeaderboardScreen, null);
             default: return h(HomeScreen, { onNavigate: navigate, onLogout: handleLogoutToCharacterSelect, isCloudAccount: !!getToken() && !!getCharacterId() });
         }
