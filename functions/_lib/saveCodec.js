@@ -43,8 +43,6 @@ export async function decodeSaveRow(row) {
       if (decoded) return { save_data: decoded, updatedAt: row.updated_at }
     } catch {}
   }
-  if (typeof row.save_data === 'string') {
-    return { save_data: row.save_data, updatedAt: row.updated_at }
-  }
   return null
 }
+
