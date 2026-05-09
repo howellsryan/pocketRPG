@@ -10,6 +10,7 @@ import {
   advanceFarmingState,
   getPlantableCropOptions,
   getReadyPatchSummaryForLocation,
+  applyPlantAll,
 } from '../src/engine/farming.ts'
 import { GATHERING_SKILLS, STUB_SKILLS } from '../src/utils/constants.js'
 
@@ -211,5 +212,41 @@ describe('farming ui helper data', () => {
     const catherbyReady = getReadyPatchSummaryForLocation(state, 'catherby')
     expect(catherbyReady).toEqual([{ type: 'fruitTree', count: 1 }])
     expect(state).toEqual(snapshot)
+  })
+})
+
+
+describe('farming plant-all behavior', () => {
+  it('plants only selected guam herb patches and uses inventory then bank seeds', () => {
+    const state = initFarmingState()
+    const allPatches = [
+      { patchId: 'falador_herb_0', patch: null, type: 'herb' },
+      { patchId: 'falador_herb_1', patch: null, type: 'herb' },
+      { patchId: 'falador_tree_0', patch: null, type: 'tree' },
+    ]
+    const inventory = [{ itemId: 'guam_seed', quantity: 1 }]
+    const bank = { guam_seed: { quantity: 1 } }
+
+    const result = applyPlantAll(state, allPatches as any, { herb: 'guam_seed' }, inventory as any, bank as any)
+
+    expect(Object.keys(result.state.patchesById).sort()).toEqual(['falador_herb_0', 'falador_herb_1'])
+    expect(result.state.patchesById.falador_herb_0.cropId).toBe('guam_seed')
+    expect(result.state.patchesById.falador_herb_1.cropId).toBe('guam_seed')
+    expect(result.state.patchesById.falador_tree_0).toBeUndefined()
+    expect(result.planted).toEqual({ guam_seed: 2 })
+    expect(result.inventoryUsage).toEqual({ guam_seed: 1 })
+    expect(result.bankUsage).toEqual({ guam_seed: 1 })
+  })
+
+  it('returns no plantings when selected seed does not match patch type', () => {
+    const state = initFarmingState()
+    const allPatches = [{ patchId: 'falador_herb_0', patch: null, type: 'herb' }]
+    const inventory = [{ itemId: 'oak_sapling', quantity: 1 }]
+
+    const result = applyPlantAll(state, allPatches as any, { herb: 'oak_sapling' }, inventory as any, {})
+
+    expect(result.planted).toEqual({})
+    expect(result.state).toEqual(state)
+    expect(result.totalXp).toBe(0)
   })
 })

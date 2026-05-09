@@ -5,7 +5,7 @@ import Modal from '../components/Modal.jsx'
 import FarmLocationPicker from '../screens/FarmLocationPicker.jsx'
 import FarmPatchView from '../screens/FarmPatchView.jsx'
 import farmingData from '../data/farming.json'
-import { getCropDef, getPatchesForLocation, getPlantableCropOptions, harvestCrop, plantCrop, getEffectiveStage } from '../engine/farming.ts'
+import { applyPlantAll, getCropDef, getPatchesForLocation, getPlantableCropOptions, harvestCrop, plantCrop, getEffectiveStage } from '../engine/farming.ts'
 
 export default function FarmingScreen({ onBack }) {
   const { stats, farming, inventory, bank, updateFarming, grantXP, addToBank, updateBankDirect, removeFromInventory, addToast, itemsData } = useGame()
@@ -57,43 +57,13 @@ export default function FarmingScreen({ onBack }) {
     const selectedTypes = Object.entries(plantSelections).filter(([, v]) => !!v).map(([k]) => k)
     if (selectedTypes.length === 0) return
 
-    let nextState = farming
-    let totalXp = 0
-    const planted = {}
-    const consumed = {}
-    const inventoryUsage = {}
-    const bankUsage = {}
-    const inventoryPool = {}
-    const bankPool = {}
-
-    for (const slot of inventory) {
-      if (!slot?.itemId) continue
-      inventoryPool[slot.itemId] = (inventoryPool[slot.itemId] || 0) + (slot.quantity || 0)
-    }
-    for (const [itemId, entry] of Object.entries(bank || {})) {
-      bankPool[itemId] = Math.max(0, entry?.quantity || 0)
-    }
-    for (const patchData of allPatches) {
-      if (patchData.patch?.cropId) continue
-      const seedId = plantSelections[patchData.type]
-      if (!seedId) continue
-      const availableInv = inventoryPool[seedId] || 0
-      const availableBank = bankPool[seedId] || 0
-      if ((availableInv + availableBank) <= 0) continue
-      const result = plantCrop(nextState, patchData.patchId, seedId, patchData.type)
-      if (!result) continue
-      nextState = result.state
-      totalXp += result.plantXp
-      planted[seedId] = (planted[seedId] || 0) + 1
-      consumed[seedId] = (consumed[seedId] || 0) + 1
-      if (availableInv > 0) {
-        inventoryUsage[seedId] = (inventoryUsage[seedId] || 0) + 1
-        inventoryPool[seedId] = availableInv - 1
-      } else {
-        bankUsage[seedId] = (bankUsage[seedId] || 0) + 1
-        bankPool[seedId] = availableBank - 1
-      }
-    }
+    const { state: nextState, totalXp, planted, consumed, inventoryUsage, bankUsage } = applyPlantAll(
+      farming,
+      allPatches,
+      plantSelections,
+      inventory,
+      bank,
+    )
 
     if (Object.keys(planted).length === 0) {
       addToast('No empty patches or not enough selected seeds', 'error')
