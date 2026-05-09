@@ -1,3 +1,4 @@
+
 {
   "coins": {
     "id": "coins",
@@ -9339,7 +9340,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 165,
+      "rangedStrength": 25,
       "magicDamage": 0
     },
     "requirements": {
@@ -15165,7 +15166,7 @@
       "stab": 0,
       "slash": 0,
       "crush": 0,
-      "magic": 40,
+      "magic": 8,
       "ranged": 0
     },
     "defenceBonus": {
@@ -15178,7 +15179,7 @@
     "otherBonus": {
       "meleeStrength": 0,
       "rangedStrength": 0,
-      "magicDamage": 15
+      "magicDamage": 5
     },
     "requirements": {
       "magic": 90,
