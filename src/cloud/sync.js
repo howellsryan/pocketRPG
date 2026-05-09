@@ -165,8 +165,8 @@ export async function pullSave() {
   if (!canSync()) return { applied: false }
   const res = await withTimeout(api.getSave(), CLOUD_READ_TIMEOUT_MS, null)
   if (!res || !res.save) return { applied: false }
-  const { save_data, updatedAt } = res.save
-  return { applied: false, payload: JSON.parse(save_data), updatedAt }
+  const { save_blob, updatedAt } = res.save
+  return { applied: false, payload: JSON.parse(save_blob), updatedAt }
 }
 
 // Public: check if the cloud copy is meaningfully newer than the last save we
@@ -179,9 +179,9 @@ export async function checkCloudNewer() {
   if (!canSync()) return null
   const res = await withTimeout(api.getSave(), CLOUD_READ_TIMEOUT_MS, null)
   if (!res || !res.save) return null
-  const { save_data, updatedAt } = res.save
+  const { save_blob, updatedAt } = res.save
   if (updatedAt <= lastPushedAt + FRESHNESS_GRACE_MS) return null
-  return { payload: JSON.parse(save_data), updatedAt }
+  return { payload: JSON.parse(save_blob), updatedAt }
 }
 
 // Public: apply a previously-pulled cloud save to IDB. Caller decides whether

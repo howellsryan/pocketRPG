@@ -40,11 +40,11 @@ export async function decodeSaveRow(row) {
   if (row.save_blob && isGzipBuffer(row.save_blob)) {
     try {
       const decoded = await gunzipToJsonString(row.save_blob)
-      if (decoded) return { save_data: decoded, updatedAt: row.updated_at }
+      if (decoded) return { save_blob: decoded, updatedAt: row.updated_at }
     } catch {}
   }
-  if (typeof row.save_data === 'string') {
-    return { save_data: row.save_data, updatedAt: row.updated_at }
+  if (typeof row.save_blob === 'string') {
+    return { save_blob: row.save_blob, updatedAt: row.updated_at }
   }
   return null
 }

@@ -103,7 +103,7 @@ export async function onRequestPost({ request, env, params }) {
   const fromSave = await readCharacterSave(env, invite.from_character)
   const toSave = await readCharacterSave(env, invite.to_character)
   if (!fromSave || !toSave) {
-    return json({ error: 'missing_save_data' }, 409)
+    return json({ error: 'missing_save_blob' }, 409)
   }
 
   const now = Date.now()

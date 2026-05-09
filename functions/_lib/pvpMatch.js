@@ -19,9 +19,9 @@ export function normalizePvpCombatStance(value) {
 
 async function parseSaveRow(row) {
   const decoded = await decodeSaveRow(row)
-  if (!decoded?.save_data) return null
+  if (!decoded?.save_blob) return null
   try {
-    const payload = JSON.parse(decoded.save_data)
+    const payload = JSON.parse(decoded.save_blob)
     return { payload, updatedAt: decoded.updatedAt }
   } catch {
     return null
@@ -82,7 +82,7 @@ export async function readOwnedActiveMatch(env, matchId, characterId) {
 
 export async function readCharacterSave(env, characterId) {
   const row = await env.DB.prepare(
-    'SELECT save_data, save_blob, updated_at FROM saves WHERE character_id = ?'
+    'SELECT save_blob, updated_at FROM saves WHERE character_id = ?'
   ).bind(characterId).first()
   const parsed = await parseSaveRow(row)
   if (!parsed) return null

@@ -233,7 +233,7 @@ export function fillBank(initialBank, sortedLoot, itemsData, bankSize = BANK_SIZ
 /**
  * Convenience wrapper: split + sort + fill in one call. Returns the full
  * picture the engine needs to emit a 'matchEnd' event and persist back
- * to saves.save_data for both characters.
+ * to saves.save_blob for both characters.
  */
 export function applyLootTransfer({
   loserInventory, loserEquipment,

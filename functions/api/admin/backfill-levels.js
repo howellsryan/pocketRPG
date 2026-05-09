@@ -1,4 +1,5 @@
 import { json } from '../../_lib/auth.js'
+import { decodeSaveRow } from '../../_lib/saveCodec.js'
 import { computeSaveSummaryFromJson } from '../../_lib/saveSummary.js'
 
 const DEFAULT_BATCH_SIZE = 250
@@ -18,7 +19,7 @@ export async function onRequestPost({ request, env }) {
   const limit = Math.max(1, Math.min(MAX_BATCH_SIZE, parseInt(url.searchParams.get('limit') || `${DEFAULT_BATCH_SIZE}`, 10) || DEFAULT_BATCH_SIZE))
 
   const rows = await env.DB.prepare(
-    `SELECT c.id AS character_id, s.save_data
+    `SELECT c.id AS character_id, s.save_blob, s.updated_at
        FROM characters c
        JOIN saves s ON s.character_id = c.id
       WHERE c.deleted_at IS NULL
@@ -28,7 +29,9 @@ export async function onRequestPost({ request, env }) {
 
   const updates = []
   for (const row of rows.results || []) {
-    const summary = computeSaveSummaryFromJson(row.save_data)
+    const decoded = await decodeSaveRow(row)
+    if (!decoded?.save_blob) continue
+    const summary = computeSaveSummaryFromJson(decoded.save_blob)
     if (summary.totalLevel > 0 || summary.combatLevel > 3) {
       updates.push(
         env.DB.prepare('UPDATE characters SET total_level = ?, combat_level = ? WHERE id = ?').bind(

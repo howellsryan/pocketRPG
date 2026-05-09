@@ -133,10 +133,10 @@ export const api = {
     body: JSON.stringify({}),
   }),
   getSave: () => request('/api/save'),
-  putSave: (save_data, options = {}) => request('/api/save', {
+  putSave: (save_blob, options = {}) => request('/api/save', {
     method: 'PUT',
     body: JSON.stringify({
-      save_data,
+      save_blob,
       credits_used_increment: options?.creditsUsedIncrement === 1 ? 1 : 0,
     }),
   }),

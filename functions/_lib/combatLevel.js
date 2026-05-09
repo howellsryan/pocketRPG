@@ -1,6 +1,6 @@
 // Server-side combat level computation. Mirrors src/engine/quests.js's
 // getCombatLevel but lives here so Pages Functions don't pull JSX/Preact
-// transitively. Reads stats from a parsed save_data JSON blob.
+// transitively. Reads stats from a parsed save_blob JSON blob.
 //
 // We intentionally re-derive CB from the save rather than trusting the
 // client to send it — the waiting-room CB column is a server-authoritative

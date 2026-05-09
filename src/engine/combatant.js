@@ -95,7 +95,7 @@ export function combatTypeFromEquipment(equipment, itemsData) {
  * Build a Combatant from a player's persisted state. Pure: takes already-
  * loaded stats / equipment / inventory and returns a fresh snapshot.
  *
- * The server constructs both combatants from each character's `saves.save_data`
+ * The server constructs both combatants from each character's `saves.save_blob`
  * at match start (Phase 3). The client constructs its own combatant locally
  * for optimistic UI, but the server's snapshot is authoritative.
  */

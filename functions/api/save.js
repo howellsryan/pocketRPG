@@ -42,13 +42,13 @@ export async function onRequestGet({ request, env }) {
   if (ch.error) return json({ error: ch.error }, ch.status)
 
   const row = await env.DB.prepare(
-    'SELECT save_data, save_blob, updated_at FROM saves WHERE character_id = ?'
+    'SELECT save_blob, updated_at FROM saves WHERE character_id = ?'
   ).bind(ch.id).first()
   if (!row) return json({ save: null })
 
   const decoded = await decodeSaveRow(row)
   if (!decoded) return json({ save: null })
-  return json({ save: { save_data: decoded.save_data, updatedAt: decoded.updatedAt } })
+  return json({ save: { save_blob: decoded.save_blob, updatedAt: decoded.updatedAt } })
 }
 
 export async function onRequestPut({ request, env }) {
@@ -70,12 +70,12 @@ export async function onRequestPut({ request, env }) {
 
   let body
   try { body = await request.json() } catch { return json({ error: 'Invalid JSON' }, 400) }
-  const save_data = body.save_data
+  const saveJson = body.save_blob
   const credits_used_increment = body.credits_used_increment === 1 ? 1 : 0
-  if (save_data !== null && typeof save_data !== 'string') {
-    return json({ error: 'Missing save_data' }, 400)
+  if (saveJson !== null && typeof saveJson !== 'string') {
+    return json({ error: 'Missing save_blob' }, 400)
   }
-  if (save_data && save_data.length > MAX_SAVE_BYTES) {
+  if (saveJson && saveJson.length > MAX_SAVE_BYTES) {
     return json({ error: 'Save too large' }, 413)
   }
 
@@ -83,8 +83,8 @@ export async function onRequestPut({ request, env }) {
   // Recompute denormalized summary so the leaderboard / PvP CB lookups can
   // run as cheap indexed SELECTs against `characters` instead of LEFT
   // JOINing `saves` and JSON.parsing the full blob in a Worker.
-  const { totalLevel, combatLevel } = computeSaveSummaryFromJson(save_data)
-  const save_blob = save_data ? await gzipJsonString(save_data) : null
+  const { totalLevel, combatLevel } = computeSaveSummaryFromJson(saveJson)
+  const saveBlob = saveJson ? await gzipJsonString(saveJson) : null
   await env.DB.batch([
     env.DB.prepare(
       `INSERT INTO saves (character_id, save_blob, updated_at)
@@ -92,7 +92,7 @@ export async function onRequestPut({ request, env }) {
        ON CONFLICT(character_id) DO UPDATE SET
          save_blob = excluded.save_blob,
          updated_at = excluded.updated_at`
-    ).bind(ch.id, save_blob, now),
+    ).bind(ch.id, saveBlob, now),
     env.DB.prepare(
       `UPDATE characters
           SET credits_used = credits_used + ?,
