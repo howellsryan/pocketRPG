@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
+import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
 import Card from '../components/Card.jsx'
 import Panel from '../components/Panel.jsx'
 import Button from '../components/Button.jsx'
@@ -60,54 +61,6 @@ function CompactHpBadge({ label, combatant, align = 'left' }) {
     </div>
   )
 }
-
-function EquipmentMiniPanel({ title, combatant, align = 'left', onUnequipSlot = null }) {
-  const equipment = combatant?.equipment || {}
-  const equipped = EQUIPMENT_DISPLAY_SLOTS
-    .map((slot) => ({ slot, entry: equipment?.[slot], item: equipment?.[slot] ? itemsData[equipment[slot].itemId] : null }))
-    .filter(({ entry }) => !!entry)
-  const weapon = equipment?.weapon ? itemsData[equipment.weapon.itemId] : null
-
-  return (
-    <Card className="p-2">
-      <div class={`text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-1 ${align === 'right' ? 'text-right' : ''}`}>
-        {title}
-      </div>
-      <div class={`text-[11px] text-[var(--color-parchment)] opacity-80 mb-2 truncate ${align === 'right' ? 'text-right' : ''}`}>
-        Weapon: {weapon?.name || 'None'}
-      </div>
-      <div class={`flex gap-1 flex-wrap ${align === 'right' ? 'justify-end' : 'justify-start'}`}>
-        {equipped.length === 0 && (
-          <span class="text-[10px] text-[var(--color-parchment)] opacity-50">No gear equipped</span>
-        )}
-        {equipped.slice(0, 8).map(({ slot, entry, item }) => (
-          <span
-            key={`${slot}-${entry.itemId}`}
-            title={`${slot}: ${item?.name || entry.itemId}`}
-            class="inline-flex max-w-full items-center rounded border border-[var(--color-gold-dim)] bg-[var(--color-void-light)] px-1.5 py-0.5 text-[10px] text-[var(--color-parchment)] gap-1"
-          >
-            <span class="inline-flex max-w-full items-center gap-1 align-middle">
-              <span class="shrink-0">{item?.icon || '▫️'}</span>
-              <span class="truncate">{item?.name || entry.itemId}</span>
-            </span>
-            {onUnequipSlot && (
-              <button
-                type="button"
-                onClick={() => onUnequipSlot(slot)}
-                class="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-[9px] leading-none text-[var(--color-parchment)] opacity-70 hover:opacity-100 active:opacity-100"
-                title={`Unequip ${item?.name || entry.itemId}`}
-                aria-label={`Unequip ${item?.name || entry.itemId}`}
-              >
-                ✕
-              </button>
-            )}
-          </span>
-        ))}
-      </div>
-    </Card>
-  )
-}
-
 
 function getLootQuantity(entry) {
   const qty = Number(entry?.quantity)
@@ -209,6 +162,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const [hiddenMode, setHiddenMode] = useState(() => (
     typeof document !== 'undefined' ? document.hidden : false
   ))
+  const [isDesktopLayout, setIsDesktopLayout] = useState(false)
   const [staleWarning, setStaleWarning] = useState(false)
   const [specialQueuedOverride, setSpecialQueuedOverride] = useState(null)
   const [prayerQueuedOverride, setPrayerQueuedOverride] = useState(undefined)
@@ -295,6 +249,18 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     return () => {
       document.removeEventListener('visibilitychange', onVisibility)
     }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+    const checkDesktop = () => {
+      const width = window.innerWidth || 0
+      const height = window.innerHeight || 0
+      setIsDesktopLayout(width >= 1250 && height >= 600)
+    }
+    checkDesktop()
+    window.addEventListener('resize', checkDesktop)
+    return () => window.removeEventListener('resize', checkDesktop)
   }, [])
 
   const notifyFatalOnce = (message, err = null) => {
@@ -665,7 +631,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
   return (
     <div
-      class="h-full min-h-0 overflow-y-auto overscroll-contain p-3 space-y-3 pb-24 md:max-w-5xl md:mx-auto md:px-6"
+      class="h-full min-h-0 overflow-y-auto overscroll-contain p-3 space-y-3 pb-24 md:max-w-6xl md:mx-auto md:px-6"
       style={{ maxHeight: 'calc(100vh - 72px)' }}
     >
       {loading && (
@@ -707,19 +673,51 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
         </Card>
       )}
 
-      <Card className="bg-[var(--color-void-dark)]">
-        <div class="grid grid-cols-2 gap-3 items-start">
-          <CompactHpBadge label="Opponent" combatant={pair.opp} align="left" />
-          <CompactHpBadge label="You" combatant={pair.self} align="right" />
+      <div class={`${isDesktopLayout ? 'grid grid-cols-[minmax(220px,1fr)_minmax(0,1.4fr)_minmax(220px,1fr)] gap-4 items-start' : 'space-y-3'}`}>
+        <div class="space-y-2">
+          <Card className="bg-[var(--color-void-dark)]">
+            <CompactHpBadge label="You" combatant={pair.self} align="left" />
+            <div class="mt-2 text-[10px] font-[var(--font-mono)] text-[var(--color-gold)]">Tick {state?.tick ?? matchMeta?.current_tick ?? 0}</div>
+          </Card>
+          <Card>
+            <div class="text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-2">Your gear</div>
+            <EquipmentPaperdoll equipment={pair.self?.equipment || {}} itemsData={itemsData} onSelect={(slotName) => queueGearUnequip(slotName)} size="mdFixed" asCard={false} />
+          </Card>
         </div>
-        <div class="mt-2 text-center text-[10px] font-[var(--font-mono)] text-[var(--color-gold)]">
-          Tick {state?.tick ?? matchMeta?.current_tick ?? 0}
-        </div>
-      </Card>
 
-      <div class="grid grid-cols-2 gap-2">
-        <EquipmentMiniPanel title="Opponent gear" combatant={pair.opp} align="left" />
-        <EquipmentMiniPanel title="Your gear" combatant={pair.self} align="right" onUnequipSlot={queueGearUnequip} />
+        <div class={`${isDesktopLayout ? 'space-y-3' : 'hidden'}`}>
+          <Card>
+            <div class="flex items-center justify-between mb-2 px-1">
+              <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60">Inventory</div>
+            </div>
+            <div class="grid grid-cols-4 gap-2 justify-items-center">
+              {toArray(pair.self?.inventory).map((slot, idx) => (
+                <div key={`inv-${idx}`} onClick={() => slot && queueAction({ type: 'eat', inventorySlot: idx }, { showBusy: false })}>
+                  <ItemSlot slot={slot} size="small" />
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+
+        <div class="space-y-2">
+          <Card className="bg-[var(--color-void-dark)]">
+            <CompactHpBadge label="Opponent" combatant={pair.opp} align="right" />
+          </Card>
+          <Card>
+            <div class="text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-2 text-right">Opponent gear</div>
+            <EquipmentPaperdoll equipment={pair.opp?.equipment || {}} itemsData={itemsData} size="mdFixed" asCard={false} />
+          </Card>
+          <Panel>
+            <div class="text-xs font-semibold text-[var(--color-gold)] mb-1">Recent actions</div>
+            <div class="space-y-1 max-h-40 overflow-y-auto">
+              {recentLines.length === 0 && <div class="text-[11px] text-[var(--color-parchment)] opacity-60">Waiting for first swing…</div>}
+              {recentLines.map((line, i) => (
+                <div key={i} class="text-[11px] text-[var(--color-parchment)] opacity-80">• {line}</div>
+              ))}
+            </div>
+          </Panel>
+        </div>
       </div>
 
       <Card>
@@ -898,16 +896,17 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
         </Modal>
       )}
 
-
-      <Panel>
-        <div class="text-xs font-semibold text-[var(--color-gold)] mb-1">Recent actions</div>
-        <div class="space-y-1 max-h-24 md:max-h-48 overflow-y-auto">
-          {recentLines.length === 0 && <div class="text-[11px] text-[var(--color-parchment)] opacity-60">Waiting for first swing…</div>}
-          {recentLines.map((line, i) => (
-            <div key={i} class="text-[11px] text-[var(--color-parchment)] opacity-80">• {line}</div>
-          ))}
-        </div>
-      </Panel>
+      {!isDesktopLayout && (
+        <Panel>
+          <div class="text-xs font-semibold text-[var(--color-gold)] mb-1">Recent actions</div>
+          <div class="space-y-1 max-h-24 overflow-y-auto">
+            {recentLines.length === 0 && <div class="text-[11px] text-[var(--color-parchment)] opacity-60">Waiting for first swing…</div>}
+            {recentLines.map((line, i) => (
+              <div key={i} class="text-[11px] text-[var(--color-parchment)] opacity-80">• {line}</div>
+            ))}
+          </div>
+        </Panel>
+      )}
 
       {endModal && (
         <Modal
