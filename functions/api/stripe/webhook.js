@@ -67,7 +67,7 @@ export async function onRequestPost(context) {
         'UPDATE characters SET credits = credits + ? WHERE id = ?',
       ).bind(amount, refId).run()
       if (update.meta?.changes === 1) {
-        await writeAuditEventSafe(context, { eventType: 'stripe_credit_purchase_applied', severity: 'info', requestId, characterId: Number(refId), stripeEventId: event.id || null, status: 'applied', metadata: { amount, checkoutSessionId: session?.id || null, paymentStatus: session?.payment_status || null, livemode: event?.livemode === true, type: 'credits' } })
+        await writeAuditEventSafe(context, { eventType: 'stripe_credit_purchase_applied', severity: 'info', requestId: requestId || 'unknown', characterId: Number(refId), status: 'applied', errorCode: 'none', message: `Credits applied: ${amount}` })
       }
     }
   }

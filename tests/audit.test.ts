@@ -4,10 +4,10 @@ import { writeAuditEvent, writeAuditEventSafe } from '../functions/_lib/audit.js
 describe('audit helper', () => {
   it('does not throw on insert failure', async () => {
     const env = { DB: { prepare: () => ({ bind: () => ({ run: async () => { throw new Error('nope') } }) }) } }
-    await expect(writeAuditEventSafe(env, { eventType: 'save_error', severity: 'warn' })).resolves.toBeUndefined()
+    await expect(writeAuditEventSafe(env, { eventType: 'save_error', severity: 'warn', requestId: 'r', characterId: 1, status: 'failed', errorCode: 'x', message: 'm' })).resolves.toBeUndefined()
   })
 
-  it('only includes populated columns and sanitizes metadata', async () => {
+  it('writes compact mandatory schema columns', async () => {
     let capturedSql = ''
     let capturedBindings: unknown[] = []
     const env = {
@@ -27,15 +27,15 @@ describe('audit helper', () => {
     await writeAuditEvent(env as never, {
       eventType: 'auth_failure',
       severity: 'warn',
+      requestId: 'req-1',
       characterId: 42,
-      metadata: { token: 'abc', reason: 'invalid_token' },
+      status: 'failed',
+      errorCode: 'missing_bearer_token',
+      message: 'Missing bearer token',
       createdAt: 123,
     })
 
-    expect(capturedSql).toContain('character_id')
-    expect(capturedSql).not.toContain('related_character_id')
-    expect(capturedBindings).toContain(42)
-    expect(JSON.stringify(capturedBindings)).not.toContain('abc')
-    expect(JSON.stringify(capturedBindings)).toContain('[redacted]')
+    expect(capturedSql).toContain('event_type, severity, request_id, character_id, status, error_code, message, created_at')
+    expect(capturedBindings).toEqual(['auth_failure', 'warn', 'req-1', 42, 'failed', 'missing_bearer_token', 'Missing bearer token', 123])
   })
 })

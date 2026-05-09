@@ -54,10 +54,10 @@ export async function onRequestGet(context) {
     decoded = await decodeSaveRow(row)
   } catch (err) {
     const code = err?.message || 'save_blob_decode_failed'
-    await writeAuditEventSafe(context, { eventType: 'save_error', severity: 'warn', requestId, characterId: ch.id, status: 'failed', errorCode: code, metadata: { method: 'GET' } })
+    await writeAuditEventSafe(context, { eventType: 'save_error', severity: 'warn', requestId: requestId || 'unknown', characterId: ch.id, status: 'failed', errorCode: code, message: `Save GET decode failure: ${code}` })
     return json({ error: code }, 400, {}, requestId)
   }
-  if (!decoded) { await writeAuditEventSafe(context, { eventType: 'save_error', severity: 'warn', requestId, characterId: ch.id, status: 'failed', errorCode: 'save_blob_missing', metadata: { method: 'GET' } }); return json({ error: 'save_blob_missing' }, 400, {}, requestId) }
+  if (!decoded) { await writeAuditEventSafe(context, { eventType: 'save_error', severity: 'warn', requestId: requestId || 'unknown', characterId: ch.id, status: 'failed', errorCode: 'save_blob_missing', message: 'Save blob missing on GET' }); return json({ error: 'save_blob_missing' }, 400, {}, requestId) }
   return json({ save: { save_data: decoded.save_data, updatedAt: decoded.updatedAt } }, 200, {}, requestId)
 }
 
@@ -72,7 +72,7 @@ export async function onRequestPut(context) {
 
   // PvP inventory lock: refuse local-client saves while a match is active.
   const lock = await assertNotInActiveMatch(env, ch.id)
-  if (lock) { await writeAuditEventSafe(context, { eventType: 'save_error', severity: 'warn', requestId, characterId: ch.id, status: 'rejected', errorCode: 'active_match_lock', metadata: { method: 'PUT' } }); return lock }
+  if (lock) { await writeAuditEventSafe(context, { eventType: 'save_error', severity: 'warn', requestId: requestId || 'unknown', characterId: ch.id, status: 'rejected', errorCode: 'active_match_lock', message: 'Save PUT rejected while in active PvP match' }); return lock }
   // Probabilistic sweep — see SAVE_SWEEP_PROBABILITY above. PvP endpoints
   // already sweep on every action, so the global state stays fresh during
   // active PvP without forcing every routine save to do cleanup work.
@@ -81,14 +81,14 @@ export async function onRequestPut(context) {
   }
 
   let body
-  try { body = await request.json() } catch { await writeAuditEventSafe(context, { eventType: 'save_error', severity: 'warn', requestId, characterId: ch.id, status: 'rejected', errorCode: 'invalid_json', metadata: { method: 'PUT' } }); return json({ error: 'Invalid JSON' }, 400, {}, requestId) }
+  try { body = await request.json() } catch { await writeAuditEventSafe(context, { eventType: 'save_error', severity: 'warn', requestId: requestId || 'unknown', characterId: ch.id, status: 'rejected', errorCode: 'invalid_json', message: 'Invalid JSON in save PUT body' }); return json({ error: 'Invalid JSON' }, 400, {}, requestId) }
   const save_data = body.save_data
   const credits_used_increment = body.credits_used_increment === 1 ? 1 : 0
   if (save_data !== null && typeof save_data !== 'string') {
-    await writeAuditEventSafe(context, { eventType: 'save_error', severity: 'warn', requestId, characterId: ch.id, status: 'rejected', errorCode: 'missing_save_data', metadata: { method: 'PUT' } }); return json({ error: 'Missing save_data' }, 400, {}, requestId)
+    await writeAuditEventSafe(context, { eventType: 'save_error', severity: 'warn', requestId: requestId || 'unknown', characterId: ch.id, status: 'rejected', errorCode: 'missing_save_data', message: 'Missing or invalid save_data in PUT body' }); return json({ error: 'Missing save_data' }, 400, {}, requestId)
   }
   if (save_data && save_data.length > MAX_SAVE_BYTES) {
-    await writeAuditEventSafe(context, { eventType: 'save_error', severity: 'warn', requestId, characterId: ch.id, status: 'rejected', errorCode: 'save_too_large', metadata: { method: 'PUT', saveLength: save_data.length, maxAllowedBytes: MAX_SAVE_BYTES } }); return json({ error: 'Save too large' }, 413, {}, requestId)
+    await writeAuditEventSafe(context, { eventType: 'save_error', severity: 'warn', requestId: requestId || 'unknown', characterId: ch.id, status: 'rejected', errorCode: 'save_too_large', message: `Save size ${save_data.length} exceeded max ${MAX_SAVE_BYTES}` }); return json({ error: 'Save too large' }, 413, {}, requestId)
   }
 
   const now = Date.now()

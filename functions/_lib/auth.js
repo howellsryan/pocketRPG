@@ -6,14 +6,14 @@ export async function requireAuth(request, env, context = null) {
   const match = header.match(/^Bearer\s+(.+)$/i)
   if (!match) {
     await writeAuditEventSafe(context || env, {
-      eventType: 'auth_failure', severity: 'warn', requestId: context?.data?.requestId, status: 'failed', errorCode: 'missing_bearer_token', metadata: { route: new URL(request.url).pathname, hasAuthorizationHeader: Boolean(header) }
+      eventType: 'auth_failure', severity: 'warn', requestId: context?.data?.requestId || 'unknown', characterId: 0, status: 'failed', errorCode: 'missing_bearer_token', message: 'Missing bearer token'
     })
     return { error: 'Missing bearer token', status: 401 }
   }
   const payload = await verifyJWT(match[1], env.JWT_SECRET)
   if (!payload || !payload.sub) {
     await writeAuditEventSafe(context || env, {
-      eventType: 'auth_failure', severity: 'warn', requestId: context?.data?.requestId, status: 'failed', errorCode: 'invalid_or_expired_token', metadata: { route: new URL(request.url).pathname, hasAuthorizationHeader: true }
+      eventType: 'auth_failure', severity: 'warn', requestId: context?.data?.requestId || 'unknown', characterId: 0, status: 'failed', errorCode: 'invalid_or_expired_token', message: 'Invalid or expired token'
     })
     return { error: 'Invalid or expired token', status: 401 }
   }
