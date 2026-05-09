@@ -38865,7 +38865,7 @@ function plantCrop(state, patchId, seedId, patchType) {
         cropName: crop.name
     };
 }
-function harvestCrop(state, patchId) {
+function harvestCrop(state, patchId, farmingLevel = 1) {
     const patch = state.patchesById[patchId];
     if (!patch || !patch.cropId)
         return null;
@@ -38876,11 +38876,14 @@ function harvestCrop(state, patchId) {
         return null;
     const newState = { ...state, patchesById: { ...state.patchesById } };
     delete newState.patchesById[patchId];
+    const safeLevel = Math.max(1, Math.min(99, Math.floor(farmingLevel || 1)));
+    const maxHerbYield = 5 + Math.floor(((safeLevel - 1) * 10) / 98);
+    const herbYield = 5 + Math.floor(Math.random() * (Math.max(5, maxHerbYield) - 5 + 1));
     return {
         state: newState,
         harvestXp: crop.harvestXp,
         cropId: crop.cropId,
-        quantity: 1
+        quantity: getCropType(patch.cropId) === 'herb' ? herbYield : 1
     };
 }
 function processFarmingTick(state) {
@@ -38934,6 +38937,52 @@ function getPatchesForLocation(state, locationId) {
 function getAvailableCrops(type, currentLevel) {
     const cropList = type === 'herb' ? farmingData.herbs : type === 'tree' ? farmingData.trees : farmingData.fruitTrees;
     return cropList.filter(c => currentLevel >= c.level);
+}
+function applyPlantAll(state, allPatches, plantSelections, inventory, bank) {
+    let nextState = state;
+    let totalXp = 0;
+    const planted = {};
+    const consumed = {};
+    const inventoryUsage = {};
+    const bankUsage = {};
+    const inventoryPool = {};
+    const bankPool = {};
+    for (const slot of inventory || []) {
+        if (!slot?.itemId)
+            continue;
+        inventoryPool[slot.itemId] = (inventoryPool[slot.itemId] || 0) + (slot.quantity || 0);
+    }
+    for (const [itemId, entry] of Object.entries(bank || {})) {
+        bankPool[itemId] = Math.max(0, entry?.quantity || 0);
+    }
+    for (const patchData of allPatches) {
+        if (patchData.patch?.cropId)
+            continue;
+        const patchType = patchData.type;
+        const seedId = plantSelections[patchType];
+        if (!seedId)
+            continue;
+        const availableInv = inventoryPool[seedId] || 0;
+        const availableBank = bankPool[seedId] || 0;
+        if ((availableInv + availableBank) <= 0)
+            continue;
+        const result = plantCrop(nextState, patchData.patchId, seedId, patchType);
+        if (!result)
+            continue;
+        nextState = result.state;
+        totalXp += result.plantXp;
+        planted[seedId] = (planted[seedId] || 0) + 1;
+        consumed[seedId] = (consumed[seedId] || 0) + 1;
+        if (availableInv > 0) {
+            inventoryUsage[seedId] = (inventoryUsage[seedId] || 0) + 1;
+            inventoryPool[seedId] = availableInv - 1;
+        }
+        else {
+            bankUsage[seedId] = (bankUsage[seedId] || 0) + 1;
+            bankPool[seedId] = availableBank - 1;
+        }
+    }
+    return { state: nextState, planted, consumed, inventoryUsage, bankUsage, totalXp };
 }
 function getPlantableCropOptions(type, currentLevel, inventory, bank = {}) {
     const safeInventory = Array.isArray(inventory) ? inventory : [];
@@ -47212,7 +47261,7 @@ function AgilityScreen({ initialActionId, idleResult, onBack }) {
 
 
 function FarmingScreen({ onBack }) {
-    const { stats, farming, inventory, bank, updateFarming, grantXP, addToBank, updateBankDirect, removeFromInventory, addToast } = useGame();
+    const { stats, farming, inventory, bank, updateFarming, grantXP, addToBank, updateBankDirect, removeFromInventory, addToast, itemsData } = useGame();
     const farmingLevel = getLevelFromXP(stats.farming?.xp || 0);
     const [selectedLocation, setSelectedLocation] = useState(null);
     const [resultModal, setResultModal] = useState(null);
@@ -47227,7 +47276,7 @@ function FarmingScreen({ onBack }) {
         for (const patchData of allPatches) {
             if (!patchData.patch?.cropId || getEffectiveStage(patchData.patch) < 4)
                 continue;
-            const result = harvestCrop(nextState, patchData.patchId);
+            const result = harvestCrop(nextState, patchData.patchId, farmingLevel);
             if (!result)
                 continue;
             nextState = result.state;
@@ -47251,6 +47300,10 @@ function FarmingScreen({ onBack }) {
         tree: getPlantableCropOptions('tree', farmingLevel, inventory, bank),
         fruitTree: getPlantableCropOptions('fruitTree', farmingLevel, inventory, bank),
     };
+    const openPlantAllModal = () => {
+        setPlantSelections(farming?.plantAllSelections || {});
+        setPlantAllOpen(true);
+    };
     const confirmPlantAll = () => {
         const selectedTypes = Object.entries(plantSelections).filter(([, v]) => !!v).map(([k]) => k);
         if (selectedTypes.length === 0)
@@ -47261,27 +47314,43 @@ function FarmingScreen({ onBack }) {
         const consumed = {};
         const inventoryUsage = {};
         const bankUsage = {};
-        for (const patchData of allPatches) {
-            if (patchData.patch?.cropId)
+        const inventoryPool = {};
+        const bankPool = {};
+        for (const slot of inventory || []) {
+            if (!slot?.itemId)
                 continue;
-            const seedId = plantSelections[patchData.type];
-            if (!seedId)
-                continue;
-            const availableInv = (inventory.find(s => s && s.itemId === seedId)?.quantity || 0) - (inventoryUsage[seedId] || 0);
-            const availableBank = (bank?.[seedId]?.quantity || 0) - (bankUsage[seedId] || 0);
-            if ((availableInv + availableBank) <= 0)
-                continue;
-            const result = plantCrop(nextState, patchData.patchId, seedId, patchData.type);
-            if (!result)
-                continue;
-            nextState = result.state;
-            totalXp += result.plantXp;
-            planted[seedId] = (planted[seedId] || 0) + 1;
-            consumed[seedId] = (consumed[seedId] || 0) + 1;
-            if (availableInv > 0)
-                inventoryUsage[seedId] = (inventoryUsage[seedId] || 0) + 1;
-            else
-                bankUsage[seedId] = (bankUsage[seedId] || 0) + 1;
+            inventoryPool[slot.itemId] = (inventoryPool[slot.itemId] || 0) + (slot.quantity || 0);
+        }
+        for (const [itemId, entry] of Object.entries(bank || {})) {
+            bankPool[itemId] = Math.max(0, entry?.quantity || 0);
+        }
+        for (const location of farmingData.locations) {
+            for (const patchData of getPatchesForLocation(nextState, location.id)) {
+                if (patchData.patch?.cropId)
+                    continue;
+                const seedId = plantSelections[patchData.type];
+                if (!seedId)
+                    continue;
+                const availableInv = inventoryPool[seedId] || 0;
+                const availableBank = bankPool[seedId] || 0;
+                if ((availableInv + availableBank) <= 0)
+                    continue;
+                const result = plantCrop(nextState, patchData.patchId, seedId, patchData.type);
+                if (!result)
+                    continue;
+                nextState = result.state;
+                totalXp += result.plantXp;
+                planted[seedId] = (planted[seedId] || 0) + 1;
+                consumed[seedId] = (consumed[seedId] || 0) + 1;
+                if (availableInv > 0) {
+                    inventoryUsage[seedId] = (inventoryUsage[seedId] || 0) + 1;
+                    inventoryPool[seedId] = availableInv - 1;
+                }
+                else {
+                    bankUsage[seedId] = (bankUsage[seedId] || 0) + 1;
+                    bankPool[seedId] = availableBank - 1;
+                }
+            }
         }
         if (Object.keys(planted).length === 0) {
             addToast('No empty patches or not enough selected seeds', 'error');
@@ -47289,12 +47358,15 @@ function FarmingScreen({ onBack }) {
         }
         for (const [seedId, qty] of Object.entries(inventoryUsage)) {
             let remaining = qty;
-            while (remaining > 0) {
-                const slot = inventory.findIndex(s => s && s.itemId === seedId);
-                if (slot < 0)
-                    break;
-                removeFromInventory(slot, 1);
-                remaining--;
+            for (let i = 0; i < inventory.length && remaining > 0; i++) {
+                const slot = inventory[i];
+                if (!slot || slot.itemId !== seedId)
+                    continue;
+                const removeQty = Math.min(slot.quantity || 0, remaining);
+                if (removeQty > 0) {
+                    removeFromInventory(i, removeQty);
+                    remaining -= removeQty;
+                }
             }
         }
         for (const [seedId, qty] of Object.entries(bankUsage))
@@ -47303,13 +47375,14 @@ function FarmingScreen({ onBack }) {
         if (totalXp > 0)
             grantXP('farming', totalXp);
         setPlantAllOpen(false);
+        addToast('Planted all selected crops', 'success');
         setResultModal({ title: 'Plant All Complete', xp: totalXp, items: consumed, action: 'Planted' });
     };
     if (selectedLocation) {
         return (h(FarmPatchView, { locationId: selectedLocation, farmingLevel: farmingLevel, onBack: () => setSelectedLocation(null) }));
     }
     return (h(Fragment, null,
-        h(FarmLocationPicker, { farmingLevel: farmingLevel, farming: farming, onSelectLocation: setSelectedLocation, onBack: onBack, onHarvestAll: handleHarvestAll, onPlantAll: () => setPlantAllOpen(true) }),
+        h(FarmLocationPicker, { farmingLevel: farmingLevel, farming: farming, onSelectLocation: setSelectedLocation, onBack: onBack, onHarvestAll: handleHarvestAll, onPlantAll: openPlantAllModal }),
         plantAllOpen && (h(Modal, { title: "Plant All", onClose: () => setPlantAllOpen(false) },
             h("div", { class: "space-y-3" },
                 ['herb', 'tree', 'fruitTree'].map(type => (h("div", { class: "bg-[#111] rounded-lg p-2", key: type },
@@ -47325,14 +47398,14 @@ function FarmingScreen({ onBack }) {
                     }))))),
                 h("div", { class: "flex gap-2" },
                     h("button", { onClick: () => setPlantAllOpen(false), class: "flex-1 py-2 rounded-lg bg-[#2a2a2a] text-[var(--color-parchment)] text-sm" }, "Cancel"),
-                    h("button", { disabled: !Object.values(plantSelections).some(Boolean), onClick: confirmPlantAll, class: "flex-1 py-2 rounded-lg bg-[var(--color-gold)] text-[#111] text-sm font-semibold disabled:opacity-50" }, "Confirm"))))),
+                    h("button", { disabled: !Object.values(plantSelections).some(Boolean), onClick: confirmPlantAll, class: "flex-1 py-2 rounded-lg bg-[var(--color-gold)] text-[#111] text-sm font-semibold disabled:opacity-50" }, "Plant"))))),
         resultModal && (h(Modal, { title: resultModal.title, onClose: () => setResultModal(null) },
             h("div", { class: "text-xs text-[var(--color-parchment)] space-y-2" },
                 h("div", null,
                     "Farming XP gained: ",
                     h("span", { class: "text-[var(--color-gold)] font-semibold" }, Math.floor(resultModal.xp))),
                 Object.entries(resultModal.items).map(([itemId, qty]) => {
-                    const item = getCropDef(itemId);
+                    const item = itemsData[itemId] || getCropDef(itemId);
                     return h("div", { key: itemId },
                         resultModal.action,
                         " ",
@@ -47360,14 +47433,15 @@ const readyTypeLabels = {
 function FarmLocationPicker({ farmingLevel, farming, onSelectLocation, onBack, onHarvestAll, onPlantAll }) {
     return (h("div", { class: "h-full overflow-y-auto p-4" },
         onBack && (h("button", { onClick: onBack, class: "text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1" }, "\u2190 Skills")),
-        h("div", { class: "flex items-start justify-between mb-1" },
+        h("div", { class: "flex items-start justify-between mb-1 gap-3" },
             h("h2", { class: "font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider" }, "Farming Locations"),
-            h("div", { class: "flex flex-col items-end gap-1" },
-                h("span", { class: "text-xs font-[var(--font-mono)] text-[var(--color-gold)]" },
+            h("div", { class: "flex w-[220px] shrink-0 flex-col items-stretch gap-1" },
+                h("span", { class: "text-right text-xs font-[var(--font-mono)] text-[var(--color-gold)]" },
                     "Lv ",
                     farmingLevel),
-                h("button", { onClick: onHarvestAll, class: "min-h-[44px] px-3 rounded-lg border border-[var(--color-gold)] bg-[#201a08] text-xs font-semibold text-[var(--color-gold)]" }, "Harvest All"),
-                h("button", { onClick: onPlantAll, class: "min-h-[44px] px-3 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-xs font-semibold text-[var(--color-parchment)]" }, "Plant All"))),
+                h("div", { class: "flex gap-2" },
+                    h("button", { onClick: onHarvestAll, class: "min-h-[44px] flex-1 px-3 rounded-lg border border-[var(--color-gold)] bg-[#201a08] text-xs font-semibold text-[var(--color-gold)]" }, "Harvest All"),
+                    h("button", { onClick: onPlantAll, class: "min-h-[44px] flex-1 px-3 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-xs font-semibold text-[var(--color-parchment)]" }, "Plant All")))),
         h("div", { class: "mb-3 bg-[#111] rounded-lg px-3 py-2 text-[11px] text-[var(--color-parchment)] opacity-60 flex items-center gap-2" },
             h("span", null, "\uD83C\uDF3E"),
             h("span", null, "Plant seeds at farms and harvest crops over time")),
@@ -47446,7 +47520,7 @@ function FarmPatchView({ locationId, farmingLevel, onBack }) {
         setSelectedPatch(null);
     };
     const handleHarvest = () => {
-        const result = harvestCrop(farming, selectedPatch.patchId);
+        const result = harvestCrop(farming, selectedPatch.patchId, farmingLevel);
         if (!result) {
             addToast('Not ready to harvest', 'error');
             return;
