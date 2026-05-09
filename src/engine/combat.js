@@ -12,6 +12,14 @@ import { randInt } from '../utils/helpers.js'
 import { getSlayerTaskEquipmentBonuses } from './slayerCombatBonuses.js'
 import { getVoidKnightCombatMultipliers } from './combatSetBonuses.js'
 
+
+function getAvasAmmoSaveChance(equipment) {
+  const capeId = equipment?.cape?.itemId
+  if (capeId === 'avas_assembler') return 0.75
+  if (capeId === 'avas_accumulator') return 0.5
+  return 0
+}
+
 /**
  * Create a new combat state
  */
@@ -565,8 +573,9 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
         // Consume one scale charge per shot
         events.push({ type: 'consumeCharge', qty: 1 })
       } else if (canConsumeEquippedAmmo) {
-        // Consume one bolt/arrow per shot
-        events.push({ type: 'consumeAmmo', itemId: equippedAmmoEntry.itemId, qty: 1 })
+        const saveChance = getAvasAmmoSaveChance(equipment)
+        // Consume one bolt/arrow per shot unless Ava's effect preserves it.
+        if (Math.random() >= saveChance) events.push({ type: 'consumeAmmo', itemId: equippedAmmoEntry.itemId, qty: 1 })
       }
 
       if (boltProcEvent) {
