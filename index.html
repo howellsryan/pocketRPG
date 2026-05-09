@@ -47267,9 +47267,10 @@ function FarmingScreen({ onBack }) {
     const [resultModal, setResultModal] = useState(null);
     const [plantAllOpen, setPlantAllOpen] = useState(false);
     const [plantSelections, setPlantSelections] = useState(() => farming?.plantAllSelections || {});
-    const allPatches = farmingData.locations.flatMap(location => getPatchesForLocation(farming, location.id));
+    const safeFarming = farming?.patchesById ? farming : initFarmingState();
+    const allPatches = farmingData.locations.flatMap(location => getPatchesForLocation(safeFarming, location.id));
     const handleHarvestAll = () => {
-        let nextState = farming;
+        let nextState = safeFarming;
         let totalXp = 0;
         const items = {};
         let harvestedCount = 0;
@@ -47308,12 +47309,12 @@ function FarmingScreen({ onBack }) {
         const selectedTypes = Object.entries(plantSelections).filter(([, v]) => !!v).map(([k]) => k);
         if (selectedTypes.length === 0)
             return;
-        const { state: nextState, totalXp, planted, consumed, inventoryUsage, bankUsage } = applyPlantAll(farming, farmingData.locations.flatMap(location => getPatchesForLocation(farming, location.id)), plantSelections, inventory, bank);
+        const { state: nextState, totalXp, planted, consumed, inventoryUsage, bankUsage } = applyPlantAll(safeFarming, farmingData.locations.flatMap(location => getPatchesForLocation(safeFarming, location.id)), plantSelections, inventory, bank);
         if (Object.keys(planted).length === 0) {
             addToast('No empty patches or not enough selected seeds', 'error');
             return;
         }
-        updateFarming({ ...nextState, plantAllSelections });
+        updateFarming({ ...safeFarming, ...nextState, plantAllSelections });
         const inventorySlots = Array.isArray(inventory) ? inventory : [];
         for (const [seedId, qty] of Object.entries(inventoryUsage)) {
             let remaining = qty;

@@ -5,7 +5,7 @@ import Modal from '../components/Modal.jsx'
 import FarmLocationPicker from '../screens/FarmLocationPicker.jsx'
 import FarmPatchView from '../screens/FarmPatchView.jsx'
 import farmingData from '../data/farming.json'
-import { applyPlantAll, getCropDef, getPatchesForLocation, getPlantableCropOptions, harvestCrop, getEffectiveStage } from '../engine/farming.ts'
+import { applyPlantAll, getCropDef, getPatchesForLocation, getPlantableCropOptions, harvestCrop, getEffectiveStage, initFarmingState } from '../engine/farming.ts'
 
 export default function FarmingScreen({ onBack }) {
   const { stats, farming, inventory, bank, updateFarming, grantXP, addToBank, updateBankDirect, removeFromInventory, addToast, itemsData } = useGame()
@@ -16,10 +16,11 @@ export default function FarmingScreen({ onBack }) {
   const [plantAllOpen, setPlantAllOpen] = useState(false)
   const [plantSelections, setPlantSelections] = useState(() => farming?.plantAllSelections || {})
 
-  const allPatches = farmingData.locations.flatMap(location => getPatchesForLocation(farming, location.id))
+  const safeFarming = farming?.patchesById ? farming : initFarmingState()
+  const allPatches = farmingData.locations.flatMap(location => getPatchesForLocation(safeFarming, location.id))
 
   const handleHarvestAll = () => {
-    let nextState = farming
+    let nextState = safeFarming
     let totalXp = 0
     const items = {}
     let harvestedCount = 0
@@ -58,8 +59,8 @@ export default function FarmingScreen({ onBack }) {
     if (selectedTypes.length === 0) return
 
     const { state: nextState, totalXp, planted, consumed, inventoryUsage, bankUsage } = applyPlantAll(
-      farming,
-      farmingData.locations.flatMap(location => getPatchesForLocation(farming, location.id)),
+      safeFarming,
+      farmingData.locations.flatMap(location => getPatchesForLocation(safeFarming, location.id)),
       plantSelections,
       inventory,
       bank,
@@ -70,7 +71,7 @@ export default function FarmingScreen({ onBack }) {
       return
     }
 
-    updateFarming({ ...nextState, plantAllSelections })
+    updateFarming({ ...safeFarming, ...nextState, plantAllSelections })
     const inventorySlots = Array.isArray(inventory) ? inventory : []
     for (const [seedId, qty] of Object.entries(inventoryUsage)) {
       let remaining = qty
