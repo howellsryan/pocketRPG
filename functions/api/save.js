@@ -2,6 +2,7 @@ import { requireAuth, json } from '../_lib/auth.js'
 import { assertNotInActiveMatch, sweepStaleRows } from '../_lib/pvp.js'
 import { computeSaveSummaryFromJson } from '../_lib/saveSummary.js'
 import { decodeSaveRow, gzipJsonString } from '../_lib/saveCodec.js'
+import { writeAuditEventSafe } from '../_lib/audit.js'
 
 const MAX_SAVE_BYTES = 256 * 1024 // 256 KB ceiling — current saves are well under this
 
@@ -34,12 +35,14 @@ async function getCharacterId(request, env, identityId) {
   return { id }
 }
 
-export async function onRequestGet({ request, env }) {
-  const auth = await requireAuth(request, env)
-  if (auth.error) return json({ error: auth.error }, auth.status)
+export async function onRequestGet(context) {
+  const { request, env } = context
+  const requestId = context.data?.requestId
+  const auth = await requireAuth(request, env, context)
+  if (auth.error) return json({ error: auth.error }, auth.status, {}, requestId)
 
   const ch = await getCharacterId(request, env, auth.identity.id)
-  if (ch.error) return json({ error: ch.error }, ch.status)
+  if (ch.error) return json({ error: ch.error }, ch.status, {}, requestId)
 
   const row = await env.DB.prepare(
     'SELECT save_data, save_blob, updated_at FROM saves WHERE character_id = ?'
@@ -51,22 +54,25 @@ export async function onRequestGet({ request, env }) {
     decoded = await decodeSaveRow(row)
   } catch (err) {
     const code = err?.message || 'save_blob_decode_failed'
-    return json({ error: code }, 400)
+    await writeAuditEventSafe(context, { eventType: 'save_error', severity: 'warn', requestId, characterId: ch.id, status: 'failed', errorCode: code, metadata: { method: 'GET' } })
+    return json({ error: code }, 400, {}, requestId)
   }
-  if (!decoded) return json({ error: 'save_blob_missing' }, 400)
-  return json({ save: { save_data: decoded.save_data, updatedAt: decoded.updatedAt } })
+  if (!decoded) { await writeAuditEventSafe(context, { eventType: 'save_error', severity: 'warn', requestId, characterId: ch.id, status: 'failed', errorCode: 'save_blob_missing', metadata: { method: 'GET' } }); return json({ error: 'save_blob_missing' }, 400, {}, requestId) }
+  return json({ save: { save_data: decoded.save_data, updatedAt: decoded.updatedAt } }, 200, {}, requestId)
 }
 
-export async function onRequestPut({ request, env }) {
-  const auth = await requireAuth(request, env)
-  if (auth.error) return json({ error: auth.error }, auth.status)
+export async function onRequestPut(context) {
+  const { request, env } = context
+  const requestId = context.data?.requestId
+  const auth = await requireAuth(request, env, context)
+  if (auth.error) return json({ error: auth.error }, auth.status, {}, requestId)
 
   const ch = await getCharacterId(request, env, auth.identity.id)
-  if (ch.error) return json({ error: ch.error }, ch.status)
+  if (ch.error) return json({ error: ch.error }, ch.status, {}, requestId)
 
   // PvP inventory lock: refuse local-client saves while a match is active.
   const lock = await assertNotInActiveMatch(env, ch.id)
-  if (lock) return lock
+  if (lock) { await writeAuditEventSafe(context, { eventType: 'save_error', severity: 'warn', requestId, characterId: ch.id, status: 'rejected', errorCode: 'active_match_lock', metadata: { method: 'PUT' } }); return lock }
   // Probabilistic sweep — see SAVE_SWEEP_PROBABILITY above. PvP endpoints
   // already sweep on every action, so the global state stays fresh during
   // active PvP without forcing every routine save to do cleanup work.
@@ -75,14 +81,14 @@ export async function onRequestPut({ request, env }) {
   }
 
   let body
-  try { body = await request.json() } catch { return json({ error: 'Invalid JSON' }, 400) }
+  try { body = await request.json() } catch { await writeAuditEventSafe(context, { eventType: 'save_error', severity: 'warn', requestId, characterId: ch.id, status: 'rejected', errorCode: 'invalid_json', metadata: { method: 'PUT' } }); return json({ error: 'Invalid JSON' }, 400, {}, requestId) }
   const save_data = body.save_data
   const credits_used_increment = body.credits_used_increment === 1 ? 1 : 0
   if (save_data !== null && typeof save_data !== 'string') {
-    return json({ error: 'Missing save_data' }, 400)
+    await writeAuditEventSafe(context, { eventType: 'save_error', severity: 'warn', requestId, characterId: ch.id, status: 'rejected', errorCode: 'missing_save_data', metadata: { method: 'PUT' } }); return json({ error: 'Missing save_data' }, 400, {}, requestId)
   }
   if (save_data && save_data.length > MAX_SAVE_BYTES) {
-    return json({ error: 'Save too large' }, 413)
+    await writeAuditEventSafe(context, { eventType: 'save_error', severity: 'warn', requestId, characterId: ch.id, status: 'rejected', errorCode: 'save_too_large', metadata: { method: 'PUT', saveLength: save_data.length, maxAllowedBytes: MAX_SAVE_BYTES } }); return json({ error: 'Save too large' }, 413, {}, requestId)
   }
 
   const now = Date.now()
@@ -108,18 +114,20 @@ export async function onRequestPut({ request, env }) {
     ).bind(credits_used_increment, totalLevel, combatLevel, ch.id, auth.identity.id),
   ])
 
-  return json({ ok: true, updatedAt: now })
+  return json({ ok: true, updatedAt: now }, 200, {}, requestId)
 }
 
 // Hard-delete the saves row for this character. Used on One-Life death so
 // nothing remains for the client to pull back on next login.
-export async function onRequestDelete({ request, env }) {
-  const auth = await requireAuth(request, env)
-  if (auth.error) return json({ error: auth.error }, auth.status)
+export async function onRequestDelete(context) {
+  const { request, env } = context
+  const requestId = context.data?.requestId
+  const auth = await requireAuth(request, env, context)
+  if (auth.error) return json({ error: auth.error }, auth.status, {}, requestId)
 
   const ch = await getCharacterId(request, env, auth.identity.id)
-  if (ch.error) return json({ error: ch.error }, ch.status)
+  if (ch.error) return json({ error: ch.error }, ch.status, {}, requestId)
 
   await env.DB.prepare('DELETE FROM saves WHERE character_id = ?').bind(ch.id).run()
-  return json({ ok: true })
+  return json({ ok: true }, 200, {}, requestId)
 }

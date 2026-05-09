@@ -1,4 +1,5 @@
 import { json } from '../../_lib/auth.js'
+import { writeAuditEventSafe } from '../../_lib/audit.js'
 
 // Verify Stripe webhook signature using Web Crypto (no Stripe SDK needed).
 // Stripe signs with HMAC-SHA256: signed_payload = "{timestamp}.{rawBody}"
@@ -30,7 +31,9 @@ async function verifyStripeSignature(rawBody, sigHeader, secret) {
   return signatures.some(sig => sig === computed)
 }
 
-export async function onRequestPost({ request, env }) {
+export async function onRequestPost(context) {
+  const { request, env } = context
+  const requestId = context.data?.requestId
   const sigHeader = request.headers.get('stripe-signature')
   if (!sigHeader) return json({ error: 'Missing Stripe-Signature header' }, 400)
 
@@ -60,9 +63,12 @@ export async function onRequestPost({ request, env }) {
       ).bind(refId).run()
     } else if (type === 'credits' && amount > 0) {
       // refId is a characters.id — credits are per-character
-      await env.DB.prepare(
+      const update = await env.DB.prepare(
         'UPDATE characters SET credits = credits + ? WHERE id = ?',
       ).bind(amount, refId).run()
+      if (update.meta?.changes === 1) {
+        await writeAuditEventSafe(context, { eventType: 'stripe_credit_purchase_applied', severity: 'info', requestId, characterId: Number(refId), stripeEventId: event.id || null, status: 'applied', metadata: { amount, checkoutSessionId: session?.id || null, paymentStatus: session?.payment_status || null, livemode: event?.livemode === true, type: 'credits' } })
+      }
     }
   }
 

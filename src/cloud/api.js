@@ -10,6 +10,11 @@ const CHARACTER_NAME_KEY = 'pocketrpg_cloud_character_name'
 const LOCAL_CHARACTER_KEY = 'pocketrpg_local_character_id'
 const ACTIVE_MATCH_EVENT = 'pocketrpg:pvp-active-match'
 
+function createRequestId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID()
+  return `req_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`
+}
+
 function emitActiveMatchConflict(matchId = null) {
   if (typeof window === 'undefined') return
   const parsed = Number(matchId)
@@ -96,11 +101,14 @@ async function request(path, options = {}) {
     headers.set('X-Character-Id', String(characterId))
   }
 
+  const requestId = createRequestId()
+  headers.set('X-Request-Id', requestId)
   const res = await fetch(path, { ...options, headers })
   if (res.status === 401) {
     clearAuth()
     const err = new Error('Not authenticated')
     err.status = 401
+    err.requestId = res.headers.get('X-Request-Id') || requestId
     throw err
   }
   let body = null
@@ -112,6 +120,7 @@ async function request(path, options = {}) {
     const err = new Error(body?.error || `Request failed (${res.status})`)
     err.status = res.status
     err.body = body
+    err.requestId = res.headers.get('X-Request-Id') || requestId
     throw err
   }
   return body
