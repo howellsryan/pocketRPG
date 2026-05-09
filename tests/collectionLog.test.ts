@@ -16,10 +16,10 @@ import minigames from '../src/data/minigames.json' assert { type: 'json' }
 describe('collection log data', () => {
   const data = getCollectionLogData()
 
-  it('exposes a versioned schema with the four expected categories', () => {
+  it('exposes a versioned schema with the expected categories', () => {
     expect(data.version).toBeTypeOf('number')
     const categoryIds = data.categories.map((c: any) => c.id)
-    expect(categoryIds).toEqual(expect.arrayContaining(['monsters', 'raids', 'minigames', 'clues']))
+    expect(categoryIds).toEqual(expect.arrayContaining(['monsters', 'raids', 'minigames', 'clues', 'skilling']))
   })
 
   it('every section declares at least one item, no duplicates within a section', () => {
@@ -127,6 +127,16 @@ describe('collection log seeded contents', () => {
     const clues = findCategory('clues')
     expect(clues?.sections.length).toBeGreaterThan(0)
     expect(clues?.sections[0].items.length).toBeGreaterThan(0)
+  })
+
+  it('has a skilling category with construction, dungeoneering, and slayer reward sections', () => {
+    const skilling = findCategory('skilling')
+    expect(skilling).toBeTruthy()
+    expect(skilling?.sections.map((s: any) => s.id)).toEqual(expect.arrayContaining([
+      'construction',
+      'dungeoneering',
+      'slayer',
+    ]))
   })
 
   it('does not duplicate raid bosses as standalone monster sections', () => {
