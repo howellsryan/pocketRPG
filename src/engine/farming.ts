@@ -187,11 +187,13 @@ export interface PlantableCropOption {
 export function getPlantableCropOptions(
   type: FarmingPatchType,
   currentLevel: number,
-  inventory: Array<{ itemId: string; quantity: number } | null> | null | undefined
+  inventory: Array<{ itemId: string; quantity: number } | null> | null | undefined,
+  bank: Record<string, { quantity?: number }> | null | undefined = {}
 ): PlantableCropOption[] {
   const safeInventory = Array.isArray(inventory) ? inventory : []
+  const safeBank = bank || {}
   return getAvailableCrops(type, currentLevel).map(crop => {
-    const ownedQuantity = countItem(safeInventory, crop.id)
+    const ownedQuantity = countItem(safeInventory, crop.id) + (safeBank[crop.id]?.quantity || 0)
     return {
       crop,
       ownedQuantity,

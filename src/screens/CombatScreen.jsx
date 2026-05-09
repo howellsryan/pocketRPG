@@ -1781,7 +1781,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           equipment={equipment}
           itemsData={itemsData}
           onSelect={(slotName) => handleUnequipSlot(slotName)}
-          size="md"
+          size="mdFixed"
         />
       </div>
 

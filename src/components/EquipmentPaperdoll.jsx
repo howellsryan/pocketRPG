@@ -14,7 +14,8 @@ const EQ_SLOT_NAMES = {
 
 const SIZE_PRESETS = {
   sm: { box: 'w-11 h-11', icon: '14px', label: 'text-[6px] max-w-[40px]', emptyIcon: '12px', gap: 'gap-[4px]' },
-  md: { box: 'w-14 h-14 lg:w-20 lg:h-20', icon: '18px', label: 'text-[7px] lg:text-[10px] max-w-[52px] lg:max-w-[72px]', emptyIcon: '14px', gap: 'gap-[6px] lg:gap-3' }
+  md: { box: 'w-14 h-14 lg:w-20 lg:h-20', icon: '18px', label: 'text-[7px] lg:text-[10px] max-w-[52px] lg:max-w-[72px]', emptyIcon: '14px', gap: 'gap-[6px] lg:gap-3' },
+  mdFixed: { box: 'w-14 h-14', icon: '18px', label: 'text-[7px] max-w-[52px]', emptyIcon: '14px', gap: 'gap-[6px]' }
 }
 
 function EquipSlot({ slotName, equipment, itemsData, onSelect, size = 'md' }) {
