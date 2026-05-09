@@ -113,6 +113,16 @@ function recordCollectionLogDropsForIdleCombat(monsterId, sim) {
   }
 }
 
+
+function recordCollectionLogDropsForIdleClues(savedTask, sim) {
+  const clueLevel = savedTask?.gatherTask?.clueLevel
+  if (!clueLevel || !sim?.itemsBanked) return
+  for (const itemId of Object.keys(sim.itemsBanked)) {
+    if (!isLoggedDrop(itemId, 'clues', clueLevel)) continue
+    recordCollectionLogDrop({ itemId, sourceType: 'clues', sourceId: clueLevel })
+  }
+}
+
 function IdleResultProgressCard({ type, idleResult, taskName }) {
   const configs = {
     minigame_progress: {
@@ -678,6 +688,9 @@ function GameApp() {
           }
           if (savedTask.type === 'combat' && savedTask.monster?.id) {
             recordCollectionLogDropsForIdleCombat(savedTask.monster.id, sim)
+          }
+          if (savedTask.type === 'gather' && savedTask.gatherTask?.isClue) {
+            recordCollectionLogDropsForIdleClues(savedTask, sim)
           }
           // Apply agility coin reward directly to bank
           if (savedTask.type === 'agility' && sim.coinsGained > 0) {
@@ -1254,6 +1267,9 @@ function GameApp() {
           }
           if (savedTask.type === 'combat' && savedTask.monster?.id) {
             recordCollectionLogDropsForIdleCombat(savedTask.monster.id, sim)
+          }
+          if (savedTask.type === 'gather' && savedTask.gatherTask?.isClue) {
+            recordCollectionLogDropsForIdleClues(savedTask, sim)
           }
           // Apply agility coin reward directly to bank
           if (savedTask.type === 'agility' && sim.coinsGained > 0) {
