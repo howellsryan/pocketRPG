@@ -115,11 +115,15 @@ export function harvestCrop(
   const maxHerbYield = 5 + Math.floor(((safeLevel - 1) * 10) / 98)
   const herbYield = 5 + Math.floor(Math.random() * (Math.max(5, maxHerbYield) - 5 + 1))
 
+  const isHerb = getCropType(patch.cropId) === 'herb'
+  const quantity = isHerb ? herbYield : 1
+  const harvestXp = isHerb ? Math.floor(crop.harvestXp * quantity) : Math.floor(crop.harvestXp)
+
   return {
     state: newState,
-    harvestXp: crop.harvestXp,
+    harvestXp,
     cropId: crop.cropId,
-    quantity: getCropType(patch.cropId) === 'herb' ? herbYield : 1
+    quantity
   }
 }
 

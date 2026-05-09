@@ -91,6 +91,18 @@ describe('farming engine', () => {
     expect(harvested!.state.patchesById.falador_herb_0).toBeUndefined()
   })
 
+
+  it('harvestCrop multiplies herb xp by harvested quantity', () => {
+    const planted = plantCrop(initFarmingState(), 'falador_herb_0', 'guam_seed', 'herb')!
+    vi.advanceTimersByTime(getCropDef('guam_seed')!.growthTimeMs + 1)
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const harvested = harvestCrop(planted.state, 'falador_herb_0', 1)
+    expect(harvested).toBeTruthy()
+    const baseXp = getCropDef('guam_seed')!.harvestXp
+    expect(harvested!.harvestXp).toBe(Math.floor(baseXp * harvested!.quantity))
+    vi.restoreAllMocks()
+  })
+
   it('advanceFarmingState advances planted patches by elapsed ms', () => {
     const planted = plantCrop(initFarmingState(), 'falador_tree_0', 'oak_sapling', 'tree')!
     const patchBefore = planted.state.patchesById.falador_tree_0
