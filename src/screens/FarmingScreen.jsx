@@ -48,6 +48,11 @@ export default function FarmingScreen({ onBack }) {
     fruitTree: getPlantableCropOptions('fruitTree', farmingLevel, inventory, bank),
   }
 
+  const openPlantAllModal = () => {
+    setPlantSelections(farming?.plantAllSelections || {})
+    setPlantAllOpen(true)
+  }
+
   const confirmPlantAll = () => {
     const selectedTypes = Object.entries(plantSelections).filter(([, v]) => !!v).map(([k]) => k)
     if (selectedTypes.length === 0) return
@@ -81,17 +86,21 @@ export default function FarmingScreen({ onBack }) {
     }
     for (const [seedId, qty] of Object.entries(inventoryUsage)) {
       let remaining = qty
-      while (remaining > 0) {
-        const slot = inventory.findIndex(s => s && s.itemId === seedId)
-        if (slot < 0) break
-        removeFromInventory(slot, 1)
-        remaining--
+      for (let i = 0; i < inventory.length && remaining > 0; i++) {
+        const slot = inventory[i]
+        if (!slot || slot.itemId !== seedId) continue
+        const removeQty = Math.min(slot.quantity || 0, remaining)
+        if (removeQty > 0) {
+          removeFromInventory(i, removeQty)
+          remaining -= removeQty
+        }
       }
     }
     for (const [seedId, qty] of Object.entries(bankUsage)) updateBankDirect({ [seedId]: -qty })
     updateFarming({ ...nextState, plantAllSelections })
     if (totalXp > 0) grantXP('farming', totalXp)
     setPlantAllOpen(false)
+    addToast('Planted all selected crops', 'success')
     setResultModal({ title: 'Plant All Complete', xp: totalXp, items: consumed, action: 'Planted' })
   }
 
@@ -113,7 +122,7 @@ export default function FarmingScreen({ onBack }) {
         onSelectLocation={setSelectedLocation}
         onBack={onBack}
         onHarvestAll={handleHarvestAll}
-        onPlantAll={() => setPlantAllOpen(true)}
+        onPlantAll={openPlantAllModal}
       />
       {plantAllOpen && (
       <Modal title="Plant All" onClose={() => setPlantAllOpen(false)}>
@@ -136,7 +145,7 @@ export default function FarmingScreen({ onBack }) {
           ))}
           <div class="flex gap-2">
             <button onClick={() => setPlantAllOpen(false)} class="flex-1 py-2 rounded-lg bg-[#2a2a2a] text-[var(--color-parchment)] text-sm">Cancel</button>
-            <button disabled={!Object.values(plantSelections).some(Boolean)} onClick={confirmPlantAll} class="flex-1 py-2 rounded-lg bg-[var(--color-gold)] text-[#111] text-sm font-semibold disabled:opacity-50">Confirm</button>
+            <button disabled={!Object.values(plantSelections).some(Boolean)} onClick={confirmPlantAll} class="flex-1 py-2 rounded-lg bg-[var(--color-gold)] text-[#111] text-sm font-semibold disabled:opacity-50">Plant</button>
           </div>
         </div>
       </Modal>
