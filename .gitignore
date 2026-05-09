@@ -3,3 +3,4 @@ dist/
 dist_tmp/
 .wrangler/
 .dev.vars
+index.html

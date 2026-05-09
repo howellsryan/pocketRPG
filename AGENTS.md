@@ -132,5 +132,6 @@ Do not commit with failing checks.
 - Keep changes minimal and scoped; avoid unrelated refactors.
 - Update tests with new gameplay logic (deterministic, logic-only).
 - Prefer source-of-truth edits in `src/**`; generated output should follow from build scripts.
+- Generated root `index.html` is a build artifact from `npm run rebuild`; do not commit `index.html` changes in normal PRs.
 - If instructions in this file conflict with direct user/developer/system instructions, higher-priority instructions win.
 - When this guide becomes stale, update it in the same PR as the behavior/script changes.
