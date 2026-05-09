@@ -229,6 +229,7 @@ export default function AuthScreen({ onCloudReady }) {
                     <li>Open Combat and train on early monsters.</li>
                     <li>Eat shrimp when low HP, then bank or sell loot.</li>
                     <li>Upgrade gear, then try skilling and quests.</li>
+                    <li>Please read the help and guides section for more information in the Settings screen once you have started your adventure.</li>
                   </ul>
                 </div>
               </div>
