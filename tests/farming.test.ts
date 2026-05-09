@@ -160,6 +160,15 @@ describe('farming ui helper data', () => {
     expect(treeOptions.find(option => option.crop.id === 'oak_sapling')?.ownedQuantity).toBe(3)
   })
 
+
+  it('getPlantableCropOptions counts seeds in bank and inventory', () => {
+    const inventory = [{ itemId: 'guam_seed', quantity: 1 }]
+    const bank = { guam_seed: { quantity: 4 } }
+    const options = getPlantableCropOptions('herb', 1, inventory as any, bank as any)
+    expect(options.find(option => option.crop.id === 'guam_seed')?.ownedQuantity).toBe(5)
+    expect(options.find(option => option.crop.id === 'guam_seed')?.canPlant).toBe(true)
+  })
+
   it('getPlantableCropOptions works for fruit tree saplings', () => {
     const inventory = [{ itemId: 'apple_sapling', quantity: 1 }]
     const options = getPlantableCropOptions('fruitTree', 27, inventory as any)

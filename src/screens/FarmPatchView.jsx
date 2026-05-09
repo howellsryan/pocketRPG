@@ -13,7 +13,7 @@ const patchViewTypeLabels = {
 }
 
 export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
-  const { inventory, farming, updateFarming, grantXP, removeFromInventory, addToBank, addToast } = useGame()
+  const { inventory, bank, farming, updateFarming, grantXP, removeFromInventory, updateBankDirect, addToBank, addToast } = useGame()
 
   const location = farmingData.locations.find(l => l.id === locationId)
   const [patchStates, setPatchStates] = useState([])
@@ -48,7 +48,8 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
     }
 
     const seedSlot = inventory.findIndex(s => s && s.itemId === seedId)
-    if (seedSlot < 0) {
+    const bankQuantity = bank?.[seedId]?.quantity || 0
+    if (seedSlot < 0 && bankQuantity <= 0) {
       addToast(`Need ${crop.name} seed`, 'error')
       return
     }
@@ -60,7 +61,8 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
     }
 
     updateFarming(result.state)
-    removeFromInventory(seedSlot, 1)
+    if (seedSlot >= 0) removeFromInventory(seedSlot, 1)
+    else updateBankDirect({ [seedId]: -1 })
     grantXP('farming', result.plantXp)
     setSelectedPatch(null)
   }
@@ -79,7 +81,7 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
   }
 
   const isEmpty = selectedPatch && !selectedPatch.patch?.cropId
-  const plantableOptions = isEmpty ? getPlantableCropOptions(selectedPatch.type, farmingLevel, inventory) : []
+  const plantableOptions = isEmpty ? getPlantableCropOptions(selectedPatch.type, farmingLevel, inventory, bank) : []
 
   return (
     <div class="h-full overflow-y-auto p-4">
