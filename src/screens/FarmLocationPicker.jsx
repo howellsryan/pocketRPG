@@ -25,10 +25,12 @@ export default function FarmLocationPicker({ farmingLevel, farming, onSelectLoca
         <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider">
           Farming Locations
         </h2>
-        <div class="flex w-[132px] shrink-0 flex-col items-stretch gap-1">
+        <div class="flex w-[220px] shrink-0 flex-col items-stretch gap-1">
           <span class="text-right text-xs font-[var(--font-mono)] text-[var(--color-gold)]">Lv {farmingLevel}</span>
-          <button onClick={onHarvestAll} class="min-h-[44px] w-full px-3 rounded-lg border border-[var(--color-gold)] bg-[#201a08] text-xs font-semibold text-[var(--color-gold)]">Harvest All</button>
-          <button onClick={onPlantAll} class="min-h-[44px] w-full px-3 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-xs font-semibold text-[var(--color-parchment)]">Plant All</button>
+          <div class="flex gap-2">
+            <button onClick={onHarvestAll} class="min-h-[44px] flex-1 px-3 rounded-lg border border-[var(--color-gold)] bg-[#201a08] text-xs font-semibold text-[var(--color-gold)]">Harvest All</button>
+            <button onClick={onPlantAll} class="min-h-[44px] flex-1 px-3 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-xs font-semibold text-[var(--color-parchment)]">Plant All</button>
+          </div>
         </div>
       </div>
 
