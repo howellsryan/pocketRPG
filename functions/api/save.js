@@ -46,8 +46,14 @@ export async function onRequestGet({ request, env }) {
   ).bind(ch.id).first()
   if (!row) return json({ save: null })
 
-  const decoded = await decodeSaveRow(row)
-  if (!decoded) return json({ save: null })
+  let decoded = null
+  try {
+    decoded = await decodeSaveRow(row)
+  } catch (err) {
+    const code = err?.message || 'save_blob_decode_failed'
+    return json({ error: code }, 400)
+  }
+  if (!decoded) return json({ error: 'save_blob_missing' }, 400)
   return json({ save: { save_data: decoded.save_data, updatedAt: decoded.updatedAt } })
 }
 
