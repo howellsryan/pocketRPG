@@ -170,6 +170,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             if (Object.keys(bankUpdates).length > 0) updateBankDirect(bankUpdates)
           }
 
+          let stopAfterCompletion = false
           if (action.materials) {
             let hasMats = true
             for (const [matId, qty] of Object.entries(action.materials)) {
@@ -212,15 +213,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                 break
               }
             }
-            if (!canContinue) {
-              skillingRef.current = { ...skillingState, active: false, stopped: true }
-              setSkilling(null)
-              setSelectedAction(null)
-              setSelectedAlchemyItem(null)
-              setActiveTask(null)
-              addToast('Out of materials!', 'error')
-              return
-            }
+            if (!canContinue) stopAfterCompletion = true
           }
 
           // Handle cooking burn
@@ -306,6 +299,16 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
               awardDungeoneeringTokens(tokenReward)
               skillingState.totalDungeoneeringTokens = (skillingState.totalDungeoneeringTokens || 0) + tokenReward
             }
+          }
+
+          if (stopAfterCompletion) {
+            skillingRef.current = { ...skillingRef.current, active: false, stopped: true }
+            setSkilling(null)
+            setSelectedAction(null)
+            setSelectedAlchemyItem(null)
+            setActiveTask(null)
+            addToast('Out of materials!', 'error')
+            return
           }
         }
       }
