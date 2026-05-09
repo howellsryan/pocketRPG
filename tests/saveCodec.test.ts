@@ -10,6 +10,13 @@ describe('decodeSaveRow', () => {
     expect(decoded).toEqual({ save_data: payload, updatedAt: 123 })
   })
 
+
+  it('throws when save_blob has gzip header but cannot be decompressed', async () => {
+    const brokenBlob = new Uint8Array([0x1f, 0x8b, 0x00])
+
+    await expect(decodeSaveRow({ save_blob: brokenBlob, save_data: null, updated_at: 789 })).rejects.toThrow('save_blob_decode_failed')
+  })
+
   it('does not fall back to legacy save_data when save_blob is absent', async () => {
     const decoded = await decodeSaveRow({ save_blob: null, save_data: '{"stale":true}', updated_at: 456 })
 

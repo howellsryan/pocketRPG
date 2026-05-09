@@ -41,7 +41,11 @@ export async function decodeSaveRow(row) {
     try {
       const decoded = await gunzipToJsonString(row.save_blob)
       if (decoded) return { save_data: decoded, updatedAt: row.updated_at }
-    } catch {}
+    } catch (err) {
+      const decodeError = new Error('save_blob_decode_failed')
+      decodeError.cause = err
+      throw decodeError
+    }
   }
   return null
 }
