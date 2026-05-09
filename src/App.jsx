@@ -17,7 +17,7 @@ import AgilityScreen from './screens/AgilityScreen.jsx'
 import GeneralStoreScreen from './screens/GeneralStoreScreen.jsx'
 import EquipmentScreen from './screens/EquipmentScreen.jsx'
 import QuestsScreen from './screens/QuestsScreen.jsx'
-import LeaderboardScreen from './screens/LeaderboardScreen.jsx'
+import SettingsScreen from './screens/SettingsScreen.jsx'
 import AuthScreen from './screens/AuthScreen.jsx'
 import { SCREENS } from './utils/constants.js'
 import { hasSave, closeDB } from './db/database.js'
@@ -1461,7 +1461,8 @@ function GameApp() {
       case SCREENS.AGILITY:     return <AgilityScreen initialActionId={actionData?.actionId} idleResult={idleResult} />
       case SCREENS.STORE:       return <GeneralStoreScreen />
       case SCREENS.QUESTS:      return <QuestsScreen />
-      case SCREENS.LEADERBOARD: return <LeaderboardScreen />
+      case SCREENS.SETTINGS: return <SettingsScreen />
+      case SCREENS.LEADERBOARD: return <SettingsScreen />
       default:                  return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} isCloudAccount={!!getToken() && !!getCharacterId()} />
     }
   }

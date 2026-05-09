@@ -15,6 +15,7 @@ export default function AuthScreen({ onCloudReady }) {
   const [newName, setNewName] = useState('')
   const [isIronman, setIsIronman] = useState(false)
   const [isOneLife, setIsOneLife] = useState(false)
+  const [oneLifeAck, setOneLifeAck] = useState(false)
 
   useEffect(() => {
     if (mode === 'characters') refreshCharacters()
@@ -166,7 +167,11 @@ export default function AuthScreen({ onCloudReady }) {
               <input
                 type="checkbox"
                 checked={isOneLife}
-                onChange={(e) => setIsOneLife(e.target.checked)}
+                onChange={(e) => {
+                  const checked = e.target.checked
+                  setIsOneLife(checked)
+                  if (!checked) setOneLifeAck(false)
+                }}
                 style={{ width: '18px', height: '18px', cursor: 'pointer' }}
               />
               <div>
@@ -177,8 +182,60 @@ export default function AuthScreen({ onCloudReady }) {
               </div>
             </label>
           </div>
+          {isOneLife && (
+            <div style={{ marginBottom: '14px', padding: '12px', borderRadius: '12px', background: '#2a1616', border: '1px solid #7a2d2d' }}>
+              <div style={{ fontSize: '12px', color: '#ff9b9b', fontWeight: 'bold', marginBottom: '6px' }}>
+                ⚠️ One Life Warning
+              </div>
+              <div style={{ fontSize: '11px', color: '#ffd4d4', lineHeight: 1.45, marginBottom: '8px' }}>
+                Death permanently deletes this character. Not recommended for first-time players. Works with or without Ironman.
+              </div>
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '11px', color: '#ffd4d4' }}>
+                <input
+                  type="checkbox"
+                  checked={oneLifeAck}
+                  onChange={(e) => setOneLifeAck(e.target.checked)}
+                  style={{ marginTop: '1px', width: '14px', height: '14px', cursor: 'pointer' }}
+                />
+                I understand this character is permanently deleted on death.
+              </label>
+            </div>
+          )}
 
-          <button type="submit" disabled={busy || newName.trim().length < 3} style={primaryBtn}>
+          {showCreate && (
+            <details style={{ marginBottom: '14px', padding: '12px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333' }} open>
+              <summary style={{ cursor: 'pointer', fontSize: '13px', color: '#d4af37', fontWeight: 'bold' }}>🧭 New to PocketRPG?</summary>
+              <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div>
+                  <div style={{ fontSize: '11px', color: '#d4af37', fontWeight: 'bold', marginBottom: '4px' }}>Recommended first character</div>
+                  <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '10px', color: '#e8d5b0', opacity: 0.9, lineHeight: 1.45 }}>
+                    <li>Normal mode is recommended for your first character.</li>
+                    <li>Ironman is a challenge mode with limited shop access.</li>
+                    <li>One Life is extreme: death permanently deletes that character.</li>
+                    <li>Ironman + One Life is best for experienced challenge runs.</li>
+                  </ul>
+                </div>
+                <div>
+                  <div style={{ fontSize: '11px', color: '#d4af37', fontWeight: 'bold', marginBottom: '4px' }}>Starter kit</div>
+                  <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '10px', color: '#e8d5b0', opacity: 0.9, lineHeight: 1.45 }}>
+                    <li>Bronze dagger, bronze scimitar, and full bronze armor + kiteshield.</li>
+                    <li>Shrimp for healing and a small amount of starting coins.</li>
+                  </ul>
+                </div>
+                <div>
+                  <div style={{ fontSize: '11px', color: '#d4af37', fontWeight: 'bold', marginBottom: '4px' }}>First steps</div>
+                  <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '10px', color: '#e8d5b0', opacity: 0.9, lineHeight: 1.45 }}>
+                    <li>Create your character and equip your bronze gear from Items.</li>
+                    <li>Open Combat and train on early monsters.</li>
+                    <li>Eat shrimp when low HP, then bank or sell loot.</li>
+                    <li>Upgrade gear, then try skilling and quests.</li>
+                  </ul>
+                </div>
+              </div>
+            </details>
+          )}
+
+          <button type="submit" disabled={busy || newName.trim().length < 3 || (isOneLife && !oneLifeAck)} style={primaryBtn}>
             {busy ? 'Creating…' : 'Create Character'}
           </button>
           {characters && characters.length > 0 && (

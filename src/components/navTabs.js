@@ -10,5 +10,5 @@ export const NAV_TABS = [
   { id: SCREENS.COMBAT,      label: 'Combat',   icon: '⚔️' },
   { id: SCREENS.SKILLS,      label: 'Skills',   icon: '🔨' },
   { id: SCREENS.QUESTS,      label: 'Quests',   icon: '📜' },
-  { id: SCREENS.LEADERBOARD, label: 'Settings', icon: '⚙️' },
+  { id: SCREENS.SETTINGS, label: 'Settings', icon: '⚙️' },
 ]
