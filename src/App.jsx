@@ -1462,7 +1462,6 @@ function GameApp() {
       case SCREENS.STORE:       return <GeneralStoreScreen />
       case SCREENS.QUESTS:      return <QuestsScreen />
       case SCREENS.SETTINGS: return <SettingsScreen />
-      case SCREENS.LEADERBOARD: return <SettingsScreen />
       default:                  return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} isCloudAccount={!!getToken() && !!getCharacterId()} />
     }
   }
