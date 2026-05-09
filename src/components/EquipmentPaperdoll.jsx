@@ -14,7 +14,8 @@ const EQ_SLOT_NAMES = {
 
 const SIZE_PRESETS = {
   sm: { box: 'w-11 h-11', icon: '14px', label: 'text-[6px] max-w-[40px]', emptyIcon: '12px', gap: 'gap-[4px]' },
-  md: { box: 'w-14 h-14 lg:w-20 lg:h-20', icon: '18px', label: 'text-[7px] lg:text-[10px] max-w-[52px] lg:max-w-[72px]', emptyIcon: '14px', gap: 'gap-[6px] lg:gap-3' }
+  md: { box: 'w-14 h-14 lg:w-20 lg:h-20', icon: '18px', label: 'text-[7px] lg:text-[10px] max-w-[52px] lg:max-w-[72px]', emptyIcon: '14px', gap: 'gap-[6px] lg:gap-3' },
+  mdFixed: { box: 'w-16 h-16', icon: '18px', label: 'text-[7px] max-w-[52px]', emptyIcon: '14px', gap: 'gap-[6px]' }
 }
 
 function EquipSlot({ slotName, equipment, itemsData, onSelect, size = 'md' }) {
@@ -22,6 +23,7 @@ function EquipSlot({ slotName, equipment, itemsData, onSelect, size = 'md' }) {
   const item = entry ? itemsData[entry.itemId] : null
   const isEmpty = !item
   const charges = entry?.charges || 0
+  const ammoQuantity = slotName === 'ammo' ? Number(entry?.quantity || 1) : 1
   const preset = SIZE_PRESETS[size] || SIZE_PRESETS.md
 
   const bgClass = isEmpty ? 'bg-[#111] border-[#222] opacity-40' : 'bg-[var(--color-void-light)] border-[#444]'
@@ -38,8 +40,11 @@ function EquipSlot({ slotName, equipment, itemsData, onSelect, size = 'md' }) {
       {charges > 0 && (
         <span class="absolute bottom-[2px] right-[2px] text-[8px] text-[#4ade80] font-bold">⚡</span>
       )}
+      {ammoQuantity > 1 && (
+        <span class="absolute top-[2px] right-[2px] text-[8px] text-[var(--color-gold)] font-bold">{ammoQuantity}</span>
+      )}
       <span
-        class={`${preset.label} text-center mt-[2px] overflow-hidden text-ellipsis whitespace-nowrap ${item ? 'text-[var(--color-parchment)] font-semibold' : 'text-[#555]'}`}
+        class={`${preset.label} text-center mt-[2px] ${item ? 'text-[var(--color-parchment)] font-semibold' : 'text-[#555]'}`}
       >
         {item ? item.name : EQ_SLOT_NAMES[slotName]}
       </span>

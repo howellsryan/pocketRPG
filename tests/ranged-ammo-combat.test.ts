@@ -52,4 +52,26 @@ describe('ranged ammo gating pve', () => {
     expect(out.events.some((e:any)=>e.type==='consumeAmmo')).toBe(false)
     expect(out.events.some((e:any)=>e.type==='boltProc')).toBe(false)
   })
+
+  it("Ava's accumulator preserves ammo 50% of the time", () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.2)
+    const state = createCombatState(monster, 'ranged', 'accurate')
+    const out = processCombatTick(state, player, {
+      weapon: { itemId: 'rune_crossbow' },
+      ammo: { itemId: 'onyx_bolts_e', quantity: 100 },
+      cape: { itemId: 'avas_accumulator' }
+    }, itemsData)
+    expect(out.events.some((e:any)=>e.type==='consumeAmmo')).toBe(false)
+  })
+
+  it("Ava's assembler preserves ammo 75% of the time", () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.7)
+    const state = createCombatState(monster, 'ranged', 'accurate')
+    const out = processCombatTick(state, player, {
+      weapon: { itemId: 'rune_crossbow' },
+      ammo: { itemId: 'onyx_bolts_e', quantity: 100 },
+      cape: { itemId: 'avas_assembler' }
+    }, itemsData)
+    expect(out.events.some((e:any)=>e.type==='consumeAmmo')).toBe(false)
+  })
 })
