@@ -106,6 +106,7 @@ export default function FarmingScreen({ onBack }) {
       addToast('No empty patches or not enough selected seeds', 'error')
       return
     }
+    updateFarming({ ...nextState, plantAllSelections })
     for (const [seedId, qty] of Object.entries(inventoryUsage)) {
       let remaining = qty
       for (let i = 0; i < inventory.length && remaining > 0; i++) {
@@ -119,7 +120,6 @@ export default function FarmingScreen({ onBack }) {
       }
     }
     for (const [seedId, qty] of Object.entries(bankUsage)) updateBankDirect({ [seedId]: -qty })
-    updateFarming({ ...nextState, plantAllSelections })
     if (totalXp > 0) grantXP('farming', totalXp)
     setPlantAllOpen(false)
     addToast('Planted all selected crops', 'success')
