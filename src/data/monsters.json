@@ -3771,7 +3771,7 @@
       {
         "itemId": "dragon_full_helm",
         "quantity": 1,
-        "chance": 0.02
+        "chance": "1/1000"
       },
       {
         "itemId": "dragon_chainbody",
@@ -3791,7 +3791,7 @@
       {
         "itemId": "dragon_kiteshield",
         "quantity": 1,
-        "chance": 0.015
+        "chance": "1/1000"
       },
       {
         "itemId": "dragon_longsword",
@@ -3920,7 +3920,7 @@
       {
         "itemId": "dragon_full_helm",
         "quantity": 1,
-        "chance": 0.025
+        "chance": "1/500"
       },
       {
         "itemId": "dragon_chainbody",
@@ -3940,7 +3940,7 @@
       {
         "itemId": "dragon_kiteshield",
         "quantity": 1,
-        "chance": 0.02
+        "chance": "1/500"
       },
       {
         "itemId": "dragon_longsword",

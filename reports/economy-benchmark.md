@@ -1,6 +1,6 @@
 # PocketRPG Economy Benchmark
 
-Generated: 2026-05-10T16:08:37.819Z
+Generated: 2026-05-10T16:20:22.269Z
 
 ## Assumptions
 
@@ -16,28 +16,28 @@ Generated: 2026-05-10T16:08:37.819Z
 
 | Category | Name | Level | Ticks | Actions/hr | EV/action | EV/kill | EV/completion | Gross coins/hr | Net coins/hr | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Smithing | Attach Saradomin hilt | 80 | 2 | 3,000 | 28,950,625 |  |  | 86,851,875,000 | 2,514,507,000 | Product: Saradomin Godsword x1 \| Materials: Godsword Blade x1, Saradomin Hilt x1 |
-| Smithing | Attach Zamorak hilt | 80 | 2 | 3,000 | 19,571,258 |  |  | 58,713,774,000 | 1,856,856,000 | Product: Zamorak Godsword x1 \| Materials: Godsword Blade x1, Zamorak Hilt x1 |
-| Smithing | Attach Bandos hilt | 80 | 2 | 3,000 | 19,029,248 |  |  | 57,087,744,000 | 1,191,324,000 | Product: Bandos Godsword x1 \| Materials: Godsword Blade x1, Bandos Hilt x1 |
-| Smithing | Attach Armadyl hilt | 80 | 2 | 3,000 | 8,108,827 |  |  | 24,326,481,000 | 935,058,000 | Product: Armadyl Godsword x1 \| Materials: Godsword Blade x1, Armadyl Hilt x1 |
+| Combat 380 | Rune Dragon | 380 |  | 100 |  | 136,087,930 |  | 13,608,793,048 | 13,608,793,048 | Assumes 100 kills/hr. EV: Dragon Kiteshield: 77,250,000; Dragon Full Helm: 58,753,000; Onyx Bolt Tips: 16,600; Coins: 15,000; Rune Bar: 12,500; Runite Ore: 9,417; Dragon Chainbody: 5,473; Dragon Platelegs: 4,029; +12 more |
+| Combat 338 | Adamant Dragon | 338 |  | 100 |  | 136,072,986 |  | 13,607,298,580 | 13,607,298,580 | Assumes 100 kills/hr. EV: Dragon Kiteshield: 77,250,000; Dragon Full Helm: 58,753,000; Onyx Bolt Tips: 16,600; Rune Bar: 12,500; Coins: 10,000; Runite Ore: 4,708; Dragon Chainbody: 4,105; Draconic Visage: 3,679; +11 more |
 | Crafting | String zenyte amulet | 98 | 4 | 1,500 | 20,570,000 |  |  | 30,855,000,000 | 667,314,000 | Product: Zenyte Amulet x1 \| Materials: Zenyte x1, Gold Bar x1 |
 | Crafting | Craft zenyte bracelet | 98 | 4 | 1,500 | 20,512,727 |  |  | 30,769,090,500 | 581,404,500 | Product: Zenyte Bracelet x1 \| Materials: Zenyte x1, Gold Bar x1 |
 | Magic | Enchant Onyx | 87 | 3 | 2,000 | 2,609,432 |  |  | 5,218,864,000 | 369,838,000 | Product: Amulet of Fury x1 \| Materials: Onyx Amulet x1 |
 | Magic | Enchant Zenyte Necklace | 93 | 3 | 2,000 | 20,287,526 |  |  | 40,575,052,000 | 325,046,000 | Product: Necklace of Anguish x1 \| Materials: Zenyte Necklace x1 |
-| Combat 380 | Rune Dragon | 380 |  | 100 |  | 3,098,755 |  | 309,875,548 | 309,875,548 | Assumes 100 kills/hr. EV: Dragon Kiteshield: 1,545,000; Dragon Full Helm: 1,468,825; Onyx Bolt Tips: 16,600; Coins: 15,000; Rune Bar: 12,500; Runite Ore: 9,417; Dragon Chainbody: 5,473; Dragon Platelegs: 4,029; +12 more |
-| Combat 338 | Adamant Dragon | 338 |  | 100 |  | 2,403,796 |  | 240,379,580 | 240,379,580 | Assumes 100 kills/hr. EV: Dragon Full Helm: 1,175,060; Dragon Kiteshield: 1,158,750; Onyx Bolt Tips: 16,600; Rune Bar: 12,500; Coins: 10,000; Runite Ore: 4,708; Dragon Chainbody: 4,105; Draconic Visage: 3,679; +11 more |
 | Smithing | Forge godsword blade | 80 | 10 | 600 | 539,640 |  |  | 323,784,000 | 206,784,000 | Product: Godsword Blade x1 \| Materials: Godsword Shard x3 |
 | Crafting | Cut onyx | 72 | 3 | 2,000 | 2,641,365 |  |  | 5,282,730,000 | 145,986,000 | Product: Onyx x1 \| Materials: Uncut Onyx x1 |
 | Magic | Enchant Zenyte Ring | 93 | 3 | 2,000 | 20,255,567 |  |  | 40,511,134,000 | 128,134,000 | Product: Ring of Suffering x1 \| Materials: Zenyte Ring x1 |
 | Combat 894 | Corrupted Gauntlet | 894 |  | 100 |  | 1,263,543 |  | 126,354,287 | 126,354,287 | Assumes 100 kills/hr. EV: Bow of Faerdhinen: 400,000; Blade of Saeldor: 400,000; Crystal Pickaxe: 75,000; Crystal Axe: 75,000; Coins: 36,750; Dragon Bones: 35,188; Crystal Helmet: 30,000; Crystal Plate Body: 30,000; +26 more |
 | Crafting | Craft zenyte ring | 98 | 4 | 1,500 | 20,191,500 |  |  | 30,287,250,000 | 99,564,000 | Product: Zenyte Ring x1 \| Materials: Zenyte x1, Gold Bar x1 |
 | Magic | Enchant Onyx Dragon Bolts (10) | 87 | 3 | 2,000 | 115,000 |  |  | 230,000,000 | 54,000,000 | Product: Onyx Dragon Bolt (E) x10 \| Materials: Onyx Dragon Bolt x10 |
+| Smithing | Attach Saradomin hilt | 80 | 100 | 60 | 28,950,625 |  |  | 1,737,037,500 | 50,290,140 | Product: Saradomin Godsword x1 \| Materials: Godsword Blade x1, Saradomin Hilt x1 |
 | Magic | Enchant Onyx Bolts (10) | 87 | 3 | 2,000 | 95,000 |  |  | 190,000,000 | 40,000,000 | Product: Onyx Bolt (E) x10 \| Materials: Onyx Bolt x10 |
 | Combat 725 | Zulrah | 725 |  | 100 |  | 387,806 |  | 38,780,626 | 38,780,626 | Assumes 100 kills/hr. EV: Toxic Blowpipe: 100,000; Trident of the Swamp: 100,000; Serpentine Helm: 100,000; Zulrah's Scales: 60,450; Uncut Onyx: 10,273; Coins: 7,200; Ranarr Weed: 2,886; Blood Rune: 2,009; +5 more |
+| Smithing | Attach Zamorak hilt | 80 | 100 | 60 | 19,571,258 |  |  | 1,174,275,480 | 37,137,120 | Product: Zamorak Godsword x1 \| Materials: Godsword Blade x1, Zamorak Hilt x1 |
 | Fletching | Tip dragonstone dragon bolts (10) | 84 | 3 | 2,000 | 36,000 |  |  | 72,000,000 | 35,900,000 | Product: Dragonstone Dragon Bolt x10 \| Materials: Dragon Bolt x10, Dragonstone Bolt Tips x10 |
 | Fletching | Tip dragonstone bolts (10) | 71 | 3 | 2,000 | 19,000 |  |  | 38,000,000 | 25,060,000 | Product: Dragonstone Bolt x10 \| Materials: Runite Bolt x10, Dragonstone Bolt Tips x10 |
 | Magic | Enchant Dragonstone Dragon Bolts (10) | 68 | 3 | 2,000 | 48,000 |  |  | 96,000,000 | 24,000,000 | Product: Dragonstone Dragon Bolt (E) x10 \| Materials: Dragonstone Dragon Bolt x10 |
+| Smithing | Attach Bandos hilt | 80 | 100 | 60 | 19,029,248 |  |  | 1,141,754,880 | 23,826,480 | Product: Bandos Godsword x1 \| Materials: Godsword Blade x1, Bandos Hilt x1 |
 | Combat 580 | Kree'arra | 580 |  | 100 |  | 235,925 |  | 23,592,543 | 23,592,543 | Assumes 100 kills/hr. EV: Armadyl Chestplate: 98,878; Armadyl Chainskirt: 73,025; Armadyl Helmet: 24,438; Coins: 20,000; Armadyl Hilt: 14,297; Death Rune: 1,063; Ranarr Weed: 990; Blood Rune: 574; +16 more |
+| Smithing | Attach Armadyl hilt | 80 | 100 | 60 | 8,108,827 |  |  | 486,529,620 | 18,701,160 | Product: Armadyl Godsword x1 \| Materials: Godsword Blade x1, Armadyl Hilt x1 |
 | Magic | Enchant Diamond Dragon Bolts (10) | 57 | 3 | 2,000 | 24,000 |  |  | 48,000,000 | 18,000,000 | Product: Diamond Dragon Bolt (E) x10 \| Materials: Diamond Dragon Bolt x10 |
 | Combat 624 | General Graardor | 624 |  | 100 |  | 170,818 |  | 17,081,823 | 17,081,823 | Assumes 100 kills/hr. EV: Bandos Chestplate: 64,311; Bandos Tassets: 43,132; Bandos Hilt: 35,642; Coins: 20,000; Bandos Boots: 1,771; Death Rune: 1,063; Ranarr Weed: 990; Blood Rune: 574; +18 more |
 | Chambers of Xeric | Chambers of Xeric |  |  | 1 |  |  | 16,784,851 | 16,784,851 | 16,784,851 | Assumes 1 completions/hr \| Common EV: 198,708 \| Unique EV: 16,586,144 \| Unique table: Twisted Bow 0.500% EV 7,909,400; Ancestral Robe Top 1.500% EV 1,948,984; Ancestral Robe Bottom 1.500% EV 1,363,348; Elder Maul 1.000% EV 1,020,095; Dragon Hunter Crossbow 2.000% EV 811,943; Ancestral Hat 1.500% EV 808,709; Kodai Wand 1.000% EV 787,437; Zaryte Vambraces 1.000% EV 784,272; +3 more |
@@ -126,8 +126,8 @@ Generated: 2026-05-10T16:08:37.819Z
 
 | Category | Name | Level | Ticks | Actions/hr | EV/action | EV/kill | EV/completion | Gross coins/hr | Net coins/hr | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Combat 380 | Rune Dragon | 380 |  | 100 |  | 3,098,755 |  | 309,875,548 | 309,875,548 | Assumes 100 kills/hr. EV: Dragon Kiteshield: 1,545,000; Dragon Full Helm: 1,468,825; Onyx Bolt Tips: 16,600; Coins: 15,000; Rune Bar: 12,500; Runite Ore: 9,417; Dragon Chainbody: 5,473; Dragon Platelegs: 4,029; +12 more |
-| Combat 338 | Adamant Dragon | 338 |  | 100 |  | 2,403,796 |  | 240,379,580 | 240,379,580 | Assumes 100 kills/hr. EV: Dragon Full Helm: 1,175,060; Dragon Kiteshield: 1,158,750; Onyx Bolt Tips: 16,600; Rune Bar: 12,500; Coins: 10,000; Runite Ore: 4,708; Dragon Chainbody: 4,105; Draconic Visage: 3,679; +11 more |
+| Combat 380 | Rune Dragon | 380 |  | 100 |  | 136,087,930 |  | 13,608,793,048 | 13,608,793,048 | Assumes 100 kills/hr. EV: Dragon Kiteshield: 77,250,000; Dragon Full Helm: 58,753,000; Onyx Bolt Tips: 16,600; Coins: 15,000; Rune Bar: 12,500; Runite Ore: 9,417; Dragon Chainbody: 5,473; Dragon Platelegs: 4,029; +12 more |
+| Combat 338 | Adamant Dragon | 338 |  | 100 |  | 136,072,986 |  | 13,607,298,580 | 13,607,298,580 | Assumes 100 kills/hr. EV: Dragon Kiteshield: 77,250,000; Dragon Full Helm: 58,753,000; Onyx Bolt Tips: 16,600; Rune Bar: 12,500; Coins: 10,000; Runite Ore: 4,708; Dragon Chainbody: 4,105; Draconic Visage: 3,679; +11 more |
 | Combat 894 | Corrupted Gauntlet | 894 |  | 100 |  | 1,263,543 |  | 126,354,287 | 126,354,287 | Assumes 100 kills/hr. EV: Bow of Faerdhinen: 400,000; Blade of Saeldor: 400,000; Crystal Pickaxe: 75,000; Crystal Axe: 75,000; Coins: 36,750; Dragon Bones: 35,188; Crystal Helmet: 30,000; Crystal Plate Body: 30,000; +26 more |
 | Combat 725 | Zulrah | 725 |  | 100 |  | 387,806 |  | 38,780,626 | 38,780,626 | Assumes 100 kills/hr. EV: Toxic Blowpipe: 100,000; Trident of the Swamp: 100,000; Serpentine Helm: 100,000; Zulrah's Scales: 60,450; Uncut Onyx: 10,273; Coins: 7,200; Ranarr Weed: 2,886; Blood Rune: 2,009; +5 more |
 | Combat 580 | Kree'arra | 580 |  | 100 |  | 235,925 |  | 23,592,543 | 23,592,543 | Assumes 100 kills/hr. EV: Armadyl Chestplate: 98,878; Armadyl Chainskirt: 73,025; Armadyl Helmet: 24,438; Coins: 20,000; Armadyl Hilt: 14,297; Death Rune: 1,063; Ranarr Weed: 990; Blood Rune: 574; +16 more |
@@ -186,10 +186,6 @@ Generated: 2026-05-10T16:08:37.819Z
 
 | Category | Name | Level | Ticks | Actions/hr | EV/action | EV/kill | EV/completion | Gross coins/hr | Net coins/hr | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Smithing | Attach Saradomin hilt | 80 | 2 | 3,000 | 28,950,625 |  |  | 86,851,875,000 | 2,514,507,000 | Product: Saradomin Godsword x1 \| Materials: Godsword Blade x1, Saradomin Hilt x1 |
-| Smithing | Attach Zamorak hilt | 80 | 2 | 3,000 | 19,571,258 |  |  | 58,713,774,000 | 1,856,856,000 | Product: Zamorak Godsword x1 \| Materials: Godsword Blade x1, Zamorak Hilt x1 |
-| Smithing | Attach Bandos hilt | 80 | 2 | 3,000 | 19,029,248 |  |  | 57,087,744,000 | 1,191,324,000 | Product: Bandos Godsword x1 \| Materials: Godsword Blade x1, Bandos Hilt x1 |
-| Smithing | Attach Armadyl hilt | 80 | 2 | 3,000 | 8,108,827 |  |  | 24,326,481,000 | 935,058,000 | Product: Armadyl Godsword x1 \| Materials: Godsword Blade x1, Armadyl Hilt x1 |
 | Crafting | String zenyte amulet | 98 | 4 | 1,500 | 20,570,000 |  |  | 30,855,000,000 | 667,314,000 | Product: Zenyte Amulet x1 \| Materials: Zenyte x1, Gold Bar x1 |
 | Crafting | Craft zenyte bracelet | 98 | 4 | 1,500 | 20,512,727 |  |  | 30,769,090,500 | 581,404,500 | Product: Zenyte Bracelet x1 \| Materials: Zenyte x1, Gold Bar x1 |
 | Magic | Enchant Onyx | 87 | 3 | 2,000 | 2,609,432 |  |  | 5,218,864,000 | 369,838,000 | Product: Amulet of Fury x1 \| Materials: Onyx Amulet x1 |
@@ -199,10 +195,14 @@ Generated: 2026-05-10T16:08:37.819Z
 | Magic | Enchant Zenyte Ring | 93 | 3 | 2,000 | 20,255,567 |  |  | 40,511,134,000 | 128,134,000 | Product: Ring of Suffering x1 \| Materials: Zenyte Ring x1 |
 | Crafting | Craft zenyte ring | 98 | 4 | 1,500 | 20,191,500 |  |  | 30,287,250,000 | 99,564,000 | Product: Zenyte Ring x1 \| Materials: Zenyte x1, Gold Bar x1 |
 | Magic | Enchant Onyx Dragon Bolts (10) | 87 | 3 | 2,000 | 115,000 |  |  | 230,000,000 | 54,000,000 | Product: Onyx Dragon Bolt (E) x10 \| Materials: Onyx Dragon Bolt x10 |
+| Smithing | Attach Saradomin hilt | 80 | 100 | 60 | 28,950,625 |  |  | 1,737,037,500 | 50,290,140 | Product: Saradomin Godsword x1 \| Materials: Godsword Blade x1, Saradomin Hilt x1 |
 | Magic | Enchant Onyx Bolts (10) | 87 | 3 | 2,000 | 95,000 |  |  | 190,000,000 | 40,000,000 | Product: Onyx Bolt (E) x10 \| Materials: Onyx Bolt x10 |
+| Smithing | Attach Zamorak hilt | 80 | 100 | 60 | 19,571,258 |  |  | 1,174,275,480 | 37,137,120 | Product: Zamorak Godsword x1 \| Materials: Godsword Blade x1, Zamorak Hilt x1 |
 | Fletching | Tip dragonstone dragon bolts (10) | 84 | 3 | 2,000 | 36,000 |  |  | 72,000,000 | 35,900,000 | Product: Dragonstone Dragon Bolt x10 \| Materials: Dragon Bolt x10, Dragonstone Bolt Tips x10 |
 | Fletching | Tip dragonstone bolts (10) | 71 | 3 | 2,000 | 19,000 |  |  | 38,000,000 | 25,060,000 | Product: Dragonstone Bolt x10 \| Materials: Runite Bolt x10, Dragonstone Bolt Tips x10 |
 | Magic | Enchant Dragonstone Dragon Bolts (10) | 68 | 3 | 2,000 | 48,000 |  |  | 96,000,000 | 24,000,000 | Product: Dragonstone Dragon Bolt (E) x10 \| Materials: Dragonstone Dragon Bolt x10 |
+| Smithing | Attach Bandos hilt | 80 | 100 | 60 | 19,029,248 |  |  | 1,141,754,880 | 23,826,480 | Product: Bandos Godsword x1 \| Materials: Godsword Blade x1, Bandos Hilt x1 |
+| Smithing | Attach Armadyl hilt | 80 | 100 | 60 | 8,108,827 |  |  | 486,529,620 | 18,701,160 | Product: Armadyl Godsword x1 \| Materials: Godsword Blade x1, Armadyl Hilt x1 |
 | Magic | Enchant Diamond Dragon Bolts (10) | 57 | 3 | 2,000 | 24,000 |  |  | 48,000,000 | 18,000,000 | Product: Diamond Dragon Bolt (E) x10 \| Materials: Diamond Dragon Bolt x10 |
 | Magic | Enchant Ruby Dragon Bolts (10) | 49 | 3 | 2,000 | 22,000 |  |  | 44,000,000 | 16,000,000 | Product: Ruby Dragon Bolt (E) x10 \| Materials: Ruby Dragon Bolt x10 |
 | Fletching | Make dragon bolts (10) | 84 | 3 | 2,000 | 12,000 |  |  | 24,000,000 | 15,960,000 | Product: Dragon Bolt x10 \| Materials: Feather x10, Dragon Bolt (Unf) x10 |
