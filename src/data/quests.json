@@ -29,7 +29,7 @@
   },
   {
     "id": "a_night_at_the_theatre",
-    "name": "A Dusk at the Theater",
+    "name": "A Dusk At the Theater",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -61,7 +61,7 @@
   },
   {
     "id": "a_souls_bane",
-    "name": "A Soul's Bane",
+    "name": "A Spirit's Bane",
     "complexity": "Novice",
     "length": "Medium",
     "durationSeconds": 900,
@@ -78,7 +78,7 @@
   },
   {
     "id": "a_tail_of_two_cats",
-    "name": "Two Tails of the Cats",
+    "name": "A Trail of Two Cats",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -97,7 +97,7 @@
   },
   {
     "id": "a_taste_of_hope",
-    "name": "A Taste of Dawn",
+    "name": "A Savor of Hope",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -151,7 +151,7 @@
   },
   {
     "id": "another_slice_of_h_a_m",
-    "name": "Another Chapter of H A M",
+    "name": "Another Shard of H.A.M.",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -175,7 +175,7 @@
   },
   {
     "id": "at_first_light",
-    "name": "At First Light",
+    "name": "At First Light Legacy",
     "complexity": "Experienced",
     "length": "Short",
     "durationSeconds": 600,
@@ -198,7 +198,7 @@
   },
   {
     "id": "below_ice_mountain",
-    "name": "Below Ice Highland",
+    "name": "Beneath Ice Peak",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -242,7 +242,7 @@
   },
   {
     "id": "between_a_rock",
-    "name": "Between A Stone",
+    "name": "Between A Rock Legacy",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -289,7 +289,7 @@
   },
   {
     "id": "biohazard",
-    "name": "Biohazard",
+    "name": "Biohazard Legacy",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -307,7 +307,7 @@
   },
   {
     "id": "black_knights_fortress",
-    "name": "Obsidian Knights' Fortress",
+    "name": "Obsidian Sentinels' Fortress",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -344,7 +344,7 @@
   },
   {
     "id": "bone_voyage",
-    "name": "Bone Voyage",
+    "name": "Bone Voyage Legacy",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -363,7 +363,7 @@
   },
   {
     "id": "cabin_fever",
-    "name": "Cabin Fever",
+    "name": "Cabin Fever Legacy",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -446,7 +446,7 @@
   },
   {
     "id": "contact",
-    "name": "Contact",
+    "name": "Contact Legacy",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -466,7 +466,7 @@
   },
   {
     "id": "cooks_assistant",
-    "name": "Cook's Assistant",
+    "name": "Chef's Assistant",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -482,7 +482,7 @@
   },
   {
     "id": "creature_of_fenkenstrain",
-    "name": "Creature of Fenkenstrain",
+    "name": "Creature of Fenkenstrain Legacy",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -504,7 +504,7 @@
   },
   {
     "id": "current_affairs",
-    "name": "Current Affairs",
+    "name": "Current Affairs Legacy",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -586,7 +586,7 @@
   },
   {
     "id": "defender_of_varrock",
-    "name": "Defender of Varrock",
+    "name": "Defender of Varrock Legacy",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -685,7 +685,7 @@
   },
   {
     "id": "devious_minds",
-    "name": "Devious Minds",
+    "name": "Devious Minds Legacy",
     "complexity": "Experienced",
     "length": "Short",
     "durationSeconds": 600,
@@ -711,7 +711,7 @@
   },
   {
     "id": "dorics_quest",
-    "name": "Doric's Quest",
+    "name": "Doric's Quest Legacy",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -837,7 +837,7 @@
   },
   {
     "id": "eadgars_ruse",
-    "name": "Eadgar's Ruse",
+    "name": "Eadgar's Ruse Legacy",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -857,7 +857,7 @@
   },
   {
     "id": "eagles_peak",
-    "name": "Eagles Peak",
+    "name": "Skyhawks Peak",
     "complexity": "Novice",
     "length": "Medium",
     "durationSeconds": 900,
@@ -918,7 +918,7 @@
   },
   {
     "id": "enakhras_lament",
-    "name": "Enakhras Lament",
+    "name": "Enakhras Lament Legacy",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -942,7 +942,7 @@
   },
   {
     "id": "enlightened_journey",
-    "name": "Enlightened Journey",
+    "name": "Enlightened Journey Legacy",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -965,7 +965,7 @@
   },
   {
     "id": "ernest_the_chicken",
-    "name": "Ernest the Chicken",
+    "name": "Ernest the Chicken Legacy",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -981,7 +981,7 @@
   },
   {
     "id": "ethos_of_arceuus",
-    "name": "Ethos of Arceuus",
+    "name": "Ethos of Arceuus Legacy",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1099,7 +1099,7 @@
   },
   {
     "id": "forgettable_tale",
-    "name": "A Tale Forgotten",
+    "name": "Forgettable Tale Legacy",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1142,7 +1142,7 @@
   },
   {
     "id": "gertrudes_cat",
-    "name": "Gertrude's Cat",
+    "name": "Gertrude's Cat Legacy",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1158,7 +1158,7 @@
   },
   {
     "id": "getting_ahead",
-    "name": "Getting Ahead",
+    "name": "Getting Ahead Legacy",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1178,7 +1178,7 @@
   },
   {
     "id": "ghosts_ahoy",
-    "name": "Ghosts Ahoy",
+    "name": "Essences Ahoy",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1215,7 +1215,7 @@
   },
   {
     "id": "goodbye_grubby",
-    "name": "Goodbye Grubby",
+    "name": "Goodbye Grubby Legacy",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1280,7 +1280,7 @@
   },
   {
     "id": "hazeel_cult",
-    "name": "Hazeel Cult",
+    "name": "Hazeel Cult Legacy",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1296,7 +1296,7 @@
   },
   {
     "id": "heroes_quest",
-    "name": "Heroes Quest",
+    "name": "Champions Quest",
     "complexity": "Experienced",
     "length": "Long",
     "durationSeconds": 3600,
@@ -1373,7 +1373,7 @@
   },
   {
     "id": "icthlarins_little_helper",
-    "name": "Icthlarins Little Helper",
+    "name": "Icthlarins Little Helper Legacy",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1409,7 +1409,7 @@
   },
   {
     "id": "in_aid_of_the_myreque",
-    "name": "In Aid of the Myreque",
+    "name": "In Aid of the Myreque Legacy",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1435,7 +1435,7 @@
   },
   {
     "id": "in_search_of_the_myreque",
-    "name": "In Search of the Myreque",
+    "name": "In Search of the Myreque Legacy",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -1479,7 +1479,7 @@
   },
   {
     "id": "kings_ransom",
-    "name": "Kings Ransom",
+    "name": "Kings Ransom Legacy",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -1504,7 +1504,7 @@
   },
   {
     "id": "lair_of_tarn_razorlor",
-    "name": "Lair of Tarn Razorlor",
+    "name": "Lair of Tarn Razorlor Legacy",
     "complexity": "Experienced",
     "length": "Short",
     "durationSeconds": 600,
@@ -1550,7 +1550,7 @@
   },
   {
     "id": "legends_quest",
-    "name": "Legends' Quest",
+    "name": "Legacies Quest",
     "complexity": "Master",
     "length": "Very Long",
     "durationSeconds": 18000,
@@ -1679,7 +1679,7 @@
   },
   {
     "id": "merlins_crystal",
-    "name": "Merlins Crystal",
+    "name": "Merlins Crystal Legacy",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1695,7 +1695,7 @@
   },
   {
     "id": "misthalin_mystery",
-    "name": "Misthalin Mystery",
+    "name": "Misthalin Mystery Legacy",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1711,7 +1711,7 @@
   },
   {
     "id": "monks_friend",
-    "name": "Monk's Friend",
+    "name": "Monk's Friend Legacy",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1781,7 +1781,7 @@
   },
   {
     "id": "mountain_daughter",
-    "name": "Highland Daughter",
+    "name": "Peak Daughter",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1800,7 +1800,7 @@
   },
   {
     "id": "mournings_end_part_i",
-    "name": "Mourning's End Part I",
+    "name": "Mourning's End Part I Legacy",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -1823,7 +1823,7 @@
   },
   {
     "id": "mournings_end_part_ii",
-    "name": "Mourning's End Part II",
+    "name": "Mourning's End Part II Legacy",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -1857,7 +1857,7 @@
   },
   {
     "id": "my_arms_big_adventure",
-    "name": "My Arm's Big Adventure",
+    "name": "My Arm's Big Adventure Legacy",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1880,7 +1880,7 @@
   },
   {
     "id": "nature_spirit",
-    "name": "Wild Essence",
+    "name": "Wild Spirit",
     "complexity": "Novice",
     "length": "Medium",
     "durationSeconds": 900,
@@ -1918,7 +1918,7 @@
   },
   {
     "id": "olafs_quest",
-    "name": "Olaf's Quest",
+    "name": "Olaf's Quest Legacy",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -1937,7 +1937,7 @@
   },
   {
     "id": "one_small_favour",
-    "name": "One Small Favour",
+    "name": "One Small Favour Legacy",
     "complexity": "Experienced",
     "length": "Very Long",
     "durationSeconds": 7200,
@@ -1961,7 +1961,7 @@
   },
   {
     "id": "path_of_glouphrie",
-    "name": "Path of Glouphrie",
+    "name": "Path of Glouphrie Legacy",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -1989,7 +1989,7 @@
   },
   {
     "id": "perilous_moons",
-    "name": "Perilous Moons",
+    "name": "Perilous Moons Legacy",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -2014,7 +2014,7 @@
   },
   {
     "id": "pirates_treasure",
-    "name": "Pirates Treasure",
+    "name": "Pirates Treasure Legacy",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2078,7 +2078,7 @@
   },
   {
     "id": "rag_and_bone_man_i",
-    "name": "Rag And Bone Man I",
+    "name": "Rag And Bone Man I Legacy",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2095,7 +2095,7 @@
   },
   {
     "id": "rag_and_bone_man_ii",
-    "name": "Rag And Bone Man II",
+    "name": "Rag And Bone Man II Legacy",
     "complexity": "Intermediate",
     "length": "Long",
     "durationSeconds": 2700,
@@ -2117,7 +2117,7 @@
   },
   {
     "id": "ratcatchers",
-    "name": "Ratcatchers",
+    "name": "Ratcatchers Legacy",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2195,7 +2195,7 @@
   },
   {
     "id": "regicide",
-    "name": "Regicide",
+    "name": "Regicide Legacy",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -2216,7 +2216,7 @@
   },
   {
     "id": "romeo_juliet",
-    "name": "Romeo Juliet",
+    "name": "Romeo Juliet Legacy",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2232,7 +2232,7 @@
   },
   {
     "id": "roving_elves",
-    "name": "Roving Elves",
+    "name": "Roving Elves Legacy",
     "complexity": "Experienced",
     "length": "Short",
     "durationSeconds": 600,
@@ -2251,7 +2251,7 @@
   },
   {
     "id": "royal_trouble",
-    "name": "Royal Trouble",
+    "name": "Royal Trouble Legacy",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -2273,7 +2273,7 @@
   },
   {
     "id": "rum_deal",
-    "name": "Rum Deal",
+    "name": "Rum Deal Legacy",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -2350,7 +2350,7 @@
   },
   {
     "id": "secrets_of_the_north",
-    "name": "Secrets of the North",
+    "name": "Mysteries of the North",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -2375,7 +2375,7 @@
   },
   {
     "id": "shades_of_mortton",
-    "name": "Shades of Mortton",
+    "name": "Wraiths of Mortton",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -2466,7 +2466,7 @@
   },
   {
     "id": "shilo_village",
-    "name": "Shilo Village",
+    "name": "Shroud Village",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -2487,7 +2487,7 @@
   },
   {
     "id": "sins_of_the_father",
-    "name": "Sins of the Father",
+    "name": "Vices of the Father",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -2514,7 +2514,7 @@
   },
   {
     "id": "skipping_stones",
-    "name": "Skipping Stones",
+    "name": "Skipping Stones Legacy",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2531,7 +2531,7 @@
   },
   {
     "id": "sleeping_giants",
-    "name": "Sleeping Giants",
+    "name": "Sleeping Giants Legacy",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -2586,7 +2586,7 @@
   },
   {
     "id": "spirits_of_the_elid",
-    "name": "Spirits of the Elid",
+    "name": "Essences of the Elid",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2637,7 +2637,7 @@
   },
   {
     "id": "tai_bwo_wannai_trio",
-    "name": "Tai Bwo Wannai Trio",
+    "name": "Tai Bwo Wannai Trio Legacy",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2660,7 +2660,7 @@
   },
   {
     "id": "tale_of_the_righteous",
-    "name": "Tale of the Just",
+    "name": "Tale of the Righteous Legacy",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2766,7 +2766,7 @@
   },
   {
     "id": "the_dig_site",
-    "name": "The Dig Site",
+    "name": "The Dig Site Legacy",
     "complexity": "Intermediate",
     "length": "Long",
     "durationSeconds": 2700,
@@ -2787,7 +2787,7 @@
   },
   {
     "id": "the_eyes_of_glouphrie",
-    "name": "The Eyes of Glouphrie",
+    "name": "The Eyes of Glouphrie Legacy",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -2811,7 +2811,7 @@
   },
   {
     "id": "the_feud",
-    "name": "The Feud",
+    "name": "The Feud Legacy",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2846,7 +2846,7 @@
   },
   {
     "id": "the_fremennik_exiles",
-    "name": "The Fremennik Exiles",
+    "name": "The Fremennik Exiles Legacy",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -2875,7 +2875,7 @@
   },
   {
     "id": "the_fremennik_isles",
-    "name": "The Fremennik Isles",
+    "name": "The Fremennik Isles Legacy",
     "complexity": "Experienced",
     "length": "Long",
     "durationSeconds": 3600,
@@ -2899,7 +2899,7 @@
   },
   {
     "id": "the_fremennik_trials",
-    "name": "The Fremennik Trials",
+    "name": "The Fremennik Trials Legacy",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2973,7 +2973,7 @@
   },
   {
     "id": "the_golem",
-    "name": "The Golem",
+    "name": "The Golem Legacy",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3013,7 +3013,7 @@
   },
   {
     "id": "the_hand_in_the_sand",
-    "name": "The Hand In the Sand",
+    "name": "The Hand In the Sand Legacy",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3058,7 +3058,7 @@
   },
   {
     "id": "the_knights_sword",
-    "name": "The Knights' Sword",
+    "name": "The Sentinels' Sword",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3098,7 +3098,7 @@
   },
   {
     "id": "the_queen_of_thieves",
-    "name": "The Queen of Thieves",
+    "name": "The Queen of Thieves Legacy",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -3116,7 +3116,7 @@
   },
   {
     "id": "the_restless_ghost",
-    "name": "The Restless Spirit",
+    "name": "The Restless Ghost Legacy",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3132,7 +3132,7 @@
   },
   {
     "id": "the_ribbiting_tale_of_a_lily_pad_laborer",
-    "name": "The Ribbiting Tale of a Lily-Pad Worker",
+    "name": "The Ribbiting Tale of A Lily Pad Laborer Legacy",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3168,7 +3168,7 @@
   },
   {
     "id": "throne_of_miscellania",
-    "name": "Throne of Miscellania",
+    "name": "Throne of Miscellania Legacy",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3280,7 +3280,7 @@
   },
   {
     "id": "twilights_promise",
-    "name": "Twilights Promise",
+    "name": "Twilights Promise Legacy",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3335,7 +3335,7 @@
   },
   {
     "id": "walking_the_dog",
-    "name": "Tracking the Dog",
+    "name": "Walking the Dog Legacy",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3351,7 +3351,7 @@
   },
   {
     "id": "wanted",
-    "name": "Wanted",
+    "name": "Hunted",
     "complexity": "Intermediate",
     "length": "Long",
     "durationSeconds": 2700,
@@ -3410,7 +3410,7 @@
   },
   {
     "id": "what_lies_below",
-    "name": "What Lies Below",
+    "name": "Which Lies Beneath",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3463,7 +3463,7 @@
   },
   {
     "id": "witchs_house",
-    "name": "Witch's House",
+    "name": "Hex's House",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3479,7 +3479,7 @@
   },
   {
     "id": "witchs_potion",
-    "name": "Witch's Potion",
+    "name": "Hex's Potion",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3495,7 +3495,7 @@
   },
   {
     "id": "x_marks_the_spot",
-    "name": "X Marks the Spot",
+    "name": "Cross Marks the Spot",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
