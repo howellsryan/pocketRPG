@@ -1,6 +1,6 @@
 # PocketRPG Economy Benchmark
 
-Generated: 2026-05-10T18:07:05.439Z
+Generated: 2026-05-10T18:30:11.322Z
 
 ## Assumptions
 
@@ -16,7 +16,7 @@ Generated: 2026-05-10T18:07:05.439Z
 
 | Category | Name | Level | Ticks | Actions/hr | EV/action | EV/kill | EV/completion | Gross coins/hr | Net coins/hr | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Chambers of Xeric | Chambers of Xeric |  |  | 10 |  |  | 8,491,779 | 84,917,794 | 84,917,794 | Assumes 10 completions/hr \| Common EV: 198,708 \| Unique EV: 8,293,072 \| Unique table: Twisted Bow 0.250% EV 3,954,700; Ancestral Robe Top 0.750% EV 974,492; Ancestral Robe Bottom 0.750% EV 681,674; Elder Maul 0.500% EV 510,048; Dragon Hunter Crossbow 1.000% EV 405,972; Ancestral Hat 0.750% EV 404,355; Kodai Wand 0.500% EV 393,718; Zaryte Vambraces 0.500% EV 392,136; +3 more |
+| Chambers of Xeric | Chambers of Xeric |  |  | 10 |  |  | 16,784,851 | 167,848,512 | 167,848,512 | Assumes 10 completions/hr \| Common EV: 198,708 \| Unique EV: 16,586,144 \| Unique table: Twisted Bow 0.500% EV 7,909,400; Ancestral Robe Top 1.500% EV 1,948,984; Ancestral Robe Bottom 1.500% EV 1,363,348; Elder Maul 1.000% EV 1,020,095; Dragon Hunter Crossbow 2.000% EV 811,943; Ancestral Hat 1.500% EV 808,709; Kodai Wand 1.000% EV 787,437; Zaryte Vambraces 1.000% EV 784,272; +3 more |
 | Combat 894 | Corrupted Gauntlet | 894 |  | 60 |  | 1,263,543 |  | 75,812,572 | 75,812,572 | Assumes 60 kills/hr. EV: Bow of Faerdhinen: 400,000; Blade of Saeldor: 400,000; Crystal Pickaxe: 75,000; Crystal Axe: 75,000; Coins: 36,750; Dragon Bones: 35,188; Crystal Helmet: 30,000; Crystal Plate Body: 30,000; +26 more |
 | Theatre of Blood | Theatre of Blood |  |  | 5 |  |  | 8,975,226 | 44,876,131 | 44,876,131 | Assumes 5 completions/hr \| Common EV: 389,718 \| Unique EV: 8,585,509 \| Unique table: Avernic Defender 5.053% EV 4,042,105; Sanguinesti Staff 1.263% EV 1,894,737; Scythe of Vitur 0.632% EV 1,894,737; Ghrazi Rapier 1.263% EV 336,133; Justiciar Faceguard 1.263% EV 150,125; Justiciar Chestguard 1.263% EV 143,141; Justiciar Legguards 1.263% EV 124,531 |
 | Combat 725 | Zulrah | 725 |  | 100 |  | 387,806 |  | 38,780,626 | 38,780,626 | Assumes 100 kills/hr. EV: Toxic Blowpipe: 100,000; Trident of the Swamp: 100,000; Serpentine Helm: 100,000; Zulrah's Scales: 60,450; Uncut Onyx: 10,273; Coins: 7,200; Ranarr Weed: 2,886; Blood Rune: 2,009; +5 more |
@@ -178,7 +178,7 @@ Generated: 2026-05-10T18:07:05.439Z
 
 | Category | Name | Level | Ticks | Actions/hr | EV/action | EV/kill | EV/completion | Gross coins/hr | Net coins/hr | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Chambers of Xeric | Chambers of Xeric |  |  | 10 |  |  | 8,491,779 | 84,917,794 | 84,917,794 | Assumes 10 completions/hr \| Common EV: 198,708 \| Unique EV: 8,293,072 \| Unique table: Twisted Bow 0.250% EV 3,954,700; Ancestral Robe Top 0.750% EV 974,492; Ancestral Robe Bottom 0.750% EV 681,674; Elder Maul 0.500% EV 510,048; Dragon Hunter Crossbow 1.000% EV 405,972; Ancestral Hat 0.750% EV 404,355; Kodai Wand 0.500% EV 393,718; Zaryte Vambraces 0.500% EV 392,136; +3 more |
+| Chambers of Xeric | Chambers of Xeric |  |  | 10 |  |  | 16,784,851 | 167,848,512 | 167,848,512 | Assumes 10 completions/hr \| Common EV: 198,708 \| Unique EV: 16,586,144 \| Unique table: Twisted Bow 0.500% EV 7,909,400; Ancestral Robe Top 1.500% EV 1,948,984; Ancestral Robe Bottom 1.500% EV 1,363,348; Elder Maul 1.000% EV 1,020,095; Dragon Hunter Crossbow 2.000% EV 811,943; Ancestral Hat 1.500% EV 808,709; Kodai Wand 1.000% EV 787,437; Zaryte Vambraces 1.000% EV 784,272; +3 more |
 | Theatre of Blood | Theatre of Blood |  |  | 5 |  |  | 8,975,226 | 44,876,131 | 44,876,131 | Assumes 5 completions/hr \| Common EV: 389,718 \| Unique EV: 8,585,509 \| Unique table: Avernic Defender 5.053% EV 4,042,105; Sanguinesti Staff 1.263% EV 1,894,737; Scythe of Vitur 0.632% EV 1,894,737; Ghrazi Rapier 1.263% EV 336,133; Justiciar Faceguard 1.263% EV 150,125; Justiciar Chestguard 1.263% EV 143,141; Justiciar Legguards 1.263% EV 124,531 |
 | Barrows Brothers | Barrows Brothers |  |  | 40 |  |  | 280,008 | 11,200,318 | 11,200,318 | Assumes 40 completions/hr \| Common EV: 150,828 \| Unique EV: 129,180 \| Unique table: Ahrim's Robeskirt 1.042% EV 20,754; Dharok's Greataxe 1.042% EV 20,083; Ahrim's Robetop 1.042% EV 20,031; Karil's Leathertop 1.042% EV 11,229; Dharok's Platebody 1.042% EV 8,606; Dharok's Platelegs 1.042% EV 8,568; Karil's Leatherskirt 1.042% EV 4,839; Torag's Platebody 1.042% EV 3,912; +16 more |
 

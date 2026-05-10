@@ -62,7 +62,7 @@
         }
       ],
       "unique": {
-        "chance": 0.075,
+        "chance": 0.15,
         "items": [
           {
             "itemId": "twisted_buckler",
