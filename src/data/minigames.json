@@ -2,9 +2,9 @@
   "tasks": [
     {
       "id": "ba_fighter_torso",
-      "name": "Grind for Fighter Torso",
+      "name": "Grind for Fighter Body",
       "icon": "👕",
-      "description": "Run Barbarian Assault until you earn a Fighter Torso.",
+      "description": "Run Viking Assault until you earn a Fighter Body.",
       "hours": 5,
       "ticks": 30000,
       "product": "fighter_torso",
@@ -14,9 +14,9 @@
     },
     {
       "id": "ba_fighter_hat",
-      "name": "Grind for Fighter Hat",
+      "name": "Grind for Fighter Helm",
       "icon": "🪖",
-      "description": "Run Barbarian Assault until you earn a Fighter Hat.",
+      "description": "Run Viking Assault until you earn a Fighter Helm.",
       "hours": 2,
       "ticks": 12000,
       "product": "fighter_hat",
@@ -99,9 +99,9 @@
     },
     {
       "id": "pc_void_set",
-      "name": "Grind for Void Knight Set",
+      "name": "Grind for Void King Set",
       "icon": "🛡️",
-      "description": "Play Void Breach until you earn the full Void Knight set.",
+      "description": "Play Void Breach until you earn the full Void King set.",
       "hours": 6,
       "ticks": 36000,
       "product": "void_knight_set",
@@ -119,7 +119,7 @@
   "minigames": [
     {
       "id": "barbarian_assault",
-      "label": "Barbarian Assault",
+      "label": "Viking Assault",
       "icon": "⚔️"
     },
     {
@@ -157,10 +157,10 @@
     "decorative_top": "Decorative Top",
     "angler_net": "Angler Net",
     "imbued_god_cape": "Imbued God Cape",
-    "void_knight_set": "Void Knight Set",
-    "void_knight_helm": "Void Knight Helm",
-    "void_knight_top": "Void Knight Top",
-    "void_knight_robe": "Void Knight Robe",
-    "void_knight_gloves": "Void Knight Gloves"
+    "void_knight_set": "Void King Set",
+    "void_knight_helm": "Void King Helm",
+    "void_knight_top": "Void King Top",
+    "void_knight_robe": "Void King Robe",
+    "void_knight_gloves": "Void King Gloves"
   }
 }

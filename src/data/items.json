@@ -11410,7 +11410,7 @@
   },
   "fighter_torso": {
     "id": "fighter_torso",
-    "name": "Fighter Torso",
+    "name": "Fighter Body",
     "type": "armour",
     "slot": "body",
     "stackable": false,
@@ -11511,7 +11511,7 @@
   },
   "fighter_hat": {
     "id": "fighter_hat",
-    "name": "Fighter Hat",
+    "name": "Fighter Helm",
     "type": "armour",
     "slot": "head",
     "stackable": false,
@@ -15864,7 +15864,7 @@
   },
   "void_knight_helm": {
     "id": "void_knight_helm",
-    "name": "Void Knight Helm",
+    "name": "Void King Helm",
     "type": "armour",
     "slot": "head",
     "stackable": false,
@@ -15897,7 +15897,7 @@
   },
   "void_knight_top": {
     "id": "void_knight_top",
-    "name": "Void Knight Top",
+    "name": "Void King Top",
     "type": "armour",
     "slot": "body",
     "stackable": false,
@@ -15930,7 +15930,7 @@
   },
   "void_knight_robe": {
     "id": "void_knight_robe",
-    "name": "Void Knight Robe",
+    "name": "Void King Robe",
     "type": "armour",
     "slot": "legs",
     "stackable": false,
@@ -15963,7 +15963,7 @@
   },
   "void_knight_gloves": {
     "id": "void_knight_gloves",
-    "name": "Void Knight Gloves",
+    "name": "Void King Gloves",
     "type": "armour",
     "slot": "hands",
     "stackable": false,
