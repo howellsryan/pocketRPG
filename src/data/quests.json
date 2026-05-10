@@ -1,7 +1,7 @@
 [
   {
     "id": "a_kingdom_divided",
-    "name": "A Kingdom Divided",
+    "name": "A Realm Divided",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -29,7 +29,7 @@
   },
   {
     "id": "a_night_at_the_theatre",
-    "name": "A Night at the Theatre",
+    "name": "A Dusk at the Theater",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -1296,7 +1296,7 @@
   },
   {
     "id": "heroes_quest",
-    "name": "Heroes' Quest",
+    "name": "Champions' Quest",
     "complexity": "Experienced",
     "length": "Long",
     "durationSeconds": 3600,
@@ -1550,7 +1550,7 @@
   },
   {
     "id": "legends_quest",
-    "name": "Legends' Quest",
+    "name": "Legacies' Quest",
     "complexity": "Master",
     "length": "Very Long",
     "durationSeconds": 18000,
@@ -2014,7 +2014,7 @@
   },
   {
     "id": "pirates_treasure",
-    "name": "Pirate's Treasure",
+    "name": "Corsair's Treasure",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2300,7 +2300,7 @@
   },
   {
     "id": "rune_mysteries",
-    "name": "Rune Mysteries",
+    "name": "Sigil Secrets",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2680,7 +2680,7 @@
   },
   {
     "id": "tears_of_guthix",
-    "name": "Tears Of Guthix",
+    "name": "Echoes Of Guthix",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3058,7 +3058,7 @@
   },
   {
     "id": "the_knights_sword",
-    "name": "The Knight's Sword",
+    "name": "The Sentinel's Sword",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3463,7 +3463,7 @@
   },
   {
     "id": "witchs_house",
-    "name": "Witch's House",
+    "name": "Hex's House",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3479,7 +3479,7 @@
   },
   {
     "id": "witchs_potion",
-    "name": "Witch's Potion",
+    "name": "Hex's Potion",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
