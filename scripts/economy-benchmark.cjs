@@ -53,7 +53,7 @@ const zeroValueItemIds = new Set()
 
 const rows = [
   ...buildSkillRows(skills),
-  ...buildMonsterRows(monsters),
+  ...buildMonsterRows(monsters, raids),
   ...buildRaidRows(raids),
   ...buildMinigameRows(minigames),
   ...buildFarmingRows(farming),
@@ -65,7 +65,7 @@ const filteredRows = rows
   .sort((a, b) => {
     const categoryCompare = String(a.category).localeCompare(String(b.category))
     if (categoryCompare !== 0) return categoryCompare
-    return Number(b.grossCoinsPerHour || 0) - Number(a.grossCoinsPerHour || 0)
+    return Number(b.netCoinsPerHour || 0) - Number(a.netCoinsPerHour || 0)
   })
 
 writeReport(filteredRows)
@@ -317,10 +317,12 @@ function buildActionNotes(action) {
   return notes.join(' | ')
 }
 
-function buildMonsterRows(monstersData) {
+function buildMonsterRows(monstersData, raidsData) {
+  const raidBossIds = collectRaidBossIds(raidsData)
   const result = []
 
   for (const [monsterId, monster] of Object.entries(monstersData || {})) {
+    if (raidBossIds.has(monsterId)) continue
     const drops = Array.isArray(monster.drops) ? monster.drops : []
     const evPerKill = expectedDropTableValue(drops)
     const killsPerHour = getMonsterKillsPerHour(monsterId)
@@ -347,6 +349,18 @@ function buildMonsterRows(monstersData) {
   return result
 }
 
+
+function collectRaidBossIds(raidsData) {
+  const ids = new Set()
+
+  for (const raid of Object.values(raidsData || {})) {
+    for (const bossId of (raid?.bosses || [])) {
+      ids.add(bossId)
+    }
+  }
+
+  return ids
+}
 function getMonsterKillsPerHour(monsterId) {
   const rawOverrides = String(args['monster-kills-per-hour'] ?? args['monster-kph'] ?? '').trim()
 
@@ -646,8 +660,8 @@ function writeReport(reportRows) {
 
   const byCategory = groupBy(reportRows, row => row.category)
   const topRows = [...reportRows]
-    .filter(row => Number(row.grossCoinsPerHour) > 0)
-    .sort((a, b) => Number(b.grossCoinsPerHour) - Number(a.grossCoinsPerHour))
+    .filter(row => Number(row.netCoinsPerHour) > 0)
+    .sort((a, b) => Number(b.netCoinsPerHour) - Number(a.netCoinsPerHour))
     .slice(0, 50)
 
   const lines = []
@@ -666,7 +680,7 @@ function writeReport(reportRows) {
   lines.push(`- Raid coins/hour assumes ${formatNumber(DEFAULT_RAID_COMPLETIONS_PER_HOUR)} completions/hour.`)
   lines.push(`- Farming herb/tree yields default to ${FARMING_HERB_YIELD}/${FARMING_TREE_YIELD}; fruit trees use fruitLimit where present, otherwise ${FARMING_FRUIT_YIELD}.`)
   lines.push('')
-  lines.push('## Top activities by gross coins/hour')
+  lines.push('## Top activities by net coins/hour')
   lines.push('')
   lines.push(markdownTable(topRows))
   lines.push('')
