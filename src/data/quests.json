@@ -61,7 +61,7 @@
   },
   {
     "id": "a_souls_bane",
-    "name": "Tale of A Soul's Bane",
+    "name": "A Soul's Bane",
     "complexity": "Novice",
     "length": "Medium",
     "durationSeconds": 900,
@@ -78,7 +78,7 @@
   },
   {
     "id": "a_tail_of_two_cats",
-    "name": "A Tale of Two Cats",
+    "name": "A Tail of Two Cats",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -175,7 +175,7 @@
   },
   {
     "id": "at_first_light",
-    "name": "Tale of At First Light",
+    "name": "At First Light",
     "complexity": "Experienced",
     "length": "Short",
     "durationSeconds": 600,
@@ -289,7 +289,7 @@
   },
   {
     "id": "biohazard",
-    "name": "Tale of Biohazard",
+    "name": "Biohazard",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -344,7 +344,7 @@
   },
   {
     "id": "bone_voyage",
-    "name": "Tale of Bone Voyage",
+    "name": "Bone Voyage",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -363,7 +363,7 @@
   },
   {
     "id": "cabin_fever",
-    "name": "Tale of Cabin Fever",
+    "name": "Cabin Fever",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -446,7 +446,7 @@
   },
   {
     "id": "contact",
-    "name": "Tale of Contact",
+    "name": "Contact",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -466,7 +466,7 @@
   },
   {
     "id": "cooks_assistant",
-    "name": "Tale of Cook's Assistant",
+    "name": "Cook's Assistant",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -482,7 +482,7 @@
   },
   {
     "id": "creature_of_fenkenstrain",
-    "name": "Tale of Creature of Fenkenstrain",
+    "name": "Creature of Fenkenstrain",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -504,7 +504,7 @@
   },
   {
     "id": "current_affairs",
-    "name": "Tale of Current Affairs",
+    "name": "Current Affairs",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -586,7 +586,7 @@
   },
   {
     "id": "defender_of_varrock",
-    "name": "Tale of Defender of Varrock",
+    "name": "Defender of Varrock",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -685,7 +685,7 @@
   },
   {
     "id": "devious_minds",
-    "name": "Tale of Devious Minds",
+    "name": "Devious Minds",
     "complexity": "Experienced",
     "length": "Short",
     "durationSeconds": 600,
@@ -711,7 +711,7 @@
   },
   {
     "id": "dorics_quest",
-    "name": "Tale of Doric's Quest",
+    "name": "Doric's Quest",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -837,7 +837,7 @@
   },
   {
     "id": "eadgars_ruse",
-    "name": "Tale of Eadgar's Ruse",
+    "name": "Eadgar's Ruse",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -857,7 +857,7 @@
   },
   {
     "id": "eagles_peak",
-    "name": "Tale of Eagles Peak",
+    "name": "Eagles Peak",
     "complexity": "Novice",
     "length": "Medium",
     "durationSeconds": 900,
@@ -918,7 +918,7 @@
   },
   {
     "id": "enakhras_lament",
-    "name": "Tale of Enakhras Lament",
+    "name": "Enakhras Lament",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -942,7 +942,7 @@
   },
   {
     "id": "enlightened_journey",
-    "name": "Tale of Enlightened Journey",
+    "name": "Enlightened Journey",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -965,7 +965,7 @@
   },
   {
     "id": "ernest_the_chicken",
-    "name": "Tale of Ernest the Chicken",
+    "name": "Ernest the Chicken",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -981,7 +981,7 @@
   },
   {
     "id": "ethos_of_arceuus",
-    "name": "Tale of Ethos of Arceuus",
+    "name": "Ethos of Arceuus",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1099,7 +1099,7 @@
   },
   {
     "id": "forgettable_tale",
-    "name": "Tale of Forgettable Tale",
+    "name": "Forgettable Tale",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1142,7 +1142,7 @@
   },
   {
     "id": "gertrudes_cat",
-    "name": "Tale of Gertrude's Cat",
+    "name": "Gertrude's Cat",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1158,7 +1158,7 @@
   },
   {
     "id": "getting_ahead",
-    "name": "Tale of Getting Ahead",
+    "name": "Getting Ahead",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1178,7 +1178,7 @@
   },
   {
     "id": "ghosts_ahoy",
-    "name": "Tale of Ghosts Ahoy",
+    "name": "Ghosts Ahoy",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1215,7 +1215,7 @@
   },
   {
     "id": "goodbye_grubby",
-    "name": "Tale of Goodbye Grubby",
+    "name": "Goodbye Grubby",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1280,7 +1280,7 @@
   },
   {
     "id": "hazeel_cult",
-    "name": "Tale of Hazeel Cult",
+    "name": "Hazeel Cult",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1296,7 +1296,7 @@
   },
   {
     "id": "heroes_quest",
-    "name": "Tale of Heroes Quest",
+    "name": "Heroes Quest",
     "complexity": "Experienced",
     "length": "Long",
     "durationSeconds": 3600,
@@ -1373,7 +1373,7 @@
   },
   {
     "id": "icthlarins_little_helper",
-    "name": "Tale of Icthlarins Little Helper",
+    "name": "Icthlarins Little Helper",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1409,7 +1409,7 @@
   },
   {
     "id": "in_aid_of_the_myreque",
-    "name": "Tale of In Aid of the Myreque",
+    "name": "In Aid of the Myreque",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1435,7 +1435,7 @@
   },
   {
     "id": "in_search_of_the_myreque",
-    "name": "Tale of In Search of the Myreque",
+    "name": "In Search of the Myreque",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -1479,7 +1479,7 @@
   },
   {
     "id": "kings_ransom",
-    "name": "Tale of Kings Ransom",
+    "name": "Kings Ransom",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -1504,7 +1504,7 @@
   },
   {
     "id": "lair_of_tarn_razorlor",
-    "name": "Tale of Lair of Tarn Razorlor",
+    "name": "Lair of Tarn Razorlor",
     "complexity": "Experienced",
     "length": "Short",
     "durationSeconds": 600,
@@ -1550,7 +1550,7 @@
   },
   {
     "id": "legends_quest",
-    "name": "Tale of Legends' Quest",
+    "name": "Legends' Quest",
     "complexity": "Master",
     "length": "Very Long",
     "durationSeconds": 18000,
@@ -1679,7 +1679,7 @@
   },
   {
     "id": "merlins_crystal",
-    "name": "Tale of Merlins Crystal",
+    "name": "Merlins Crystal",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1695,7 +1695,7 @@
   },
   {
     "id": "misthalin_mystery",
-    "name": "Tale of Misthalin Mystery",
+    "name": "Misthalin Mystery",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1711,7 +1711,7 @@
   },
   {
     "id": "monks_friend",
-    "name": "Tale of Monk's Friend",
+    "name": "Monk's Friend",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1800,7 +1800,7 @@
   },
   {
     "id": "mournings_end_part_i",
-    "name": "Tale of Mourning's End Part I",
+    "name": "Mourning's End Part I",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -1823,7 +1823,7 @@
   },
   {
     "id": "mournings_end_part_ii",
-    "name": "Tale of Mourning's End Part II",
+    "name": "Mourning's End Part II",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -1857,7 +1857,7 @@
   },
   {
     "id": "my_arms_big_adventure",
-    "name": "Tale of My Arm's Big Adventure",
+    "name": "My Arm's Big Adventure",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1918,7 +1918,7 @@
   },
   {
     "id": "olafs_quest",
-    "name": "Tale of Olaf's Quest",
+    "name": "Olaf's Quest",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -1937,7 +1937,7 @@
   },
   {
     "id": "one_small_favour",
-    "name": "Tale of One Small Favour",
+    "name": "One Small Favour",
     "complexity": "Experienced",
     "length": "Very Long",
     "durationSeconds": 7200,
@@ -1961,7 +1961,7 @@
   },
   {
     "id": "path_of_glouphrie",
-    "name": "Tale of Path of Glouphrie",
+    "name": "Path of Glouphrie",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -1989,7 +1989,7 @@
   },
   {
     "id": "perilous_moons",
-    "name": "Tale of Perilous Moons",
+    "name": "Perilous Moons",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -2014,7 +2014,7 @@
   },
   {
     "id": "pirates_treasure",
-    "name": "Tale of Pirates Treasure",
+    "name": "Pirates Treasure",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2078,7 +2078,7 @@
   },
   {
     "id": "rag_and_bone_man_i",
-    "name": "Tale of Rag And Bone Man I",
+    "name": "Rag And Bone Man I",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2095,7 +2095,7 @@
   },
   {
     "id": "rag_and_bone_man_ii",
-    "name": "Tale of Rag And Bone Man II",
+    "name": "Rag And Bone Man II",
     "complexity": "Intermediate",
     "length": "Long",
     "durationSeconds": 2700,
@@ -2117,7 +2117,7 @@
   },
   {
     "id": "ratcatchers",
-    "name": "Tale of Ratcatchers",
+    "name": "Ratcatchers",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2195,7 +2195,7 @@
   },
   {
     "id": "regicide",
-    "name": "Tale of Regicide",
+    "name": "Regicide",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -2216,7 +2216,7 @@
   },
   {
     "id": "romeo_juliet",
-    "name": "Tale of Romeo Juliet",
+    "name": "Romeo Juliet",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2232,7 +2232,7 @@
   },
   {
     "id": "roving_elves",
-    "name": "Tale of Roving Elves",
+    "name": "Roving Elves",
     "complexity": "Experienced",
     "length": "Short",
     "durationSeconds": 600,
@@ -2251,7 +2251,7 @@
   },
   {
     "id": "royal_trouble",
-    "name": "Tale of Royal Trouble",
+    "name": "Royal Trouble",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -2273,7 +2273,7 @@
   },
   {
     "id": "rum_deal",
-    "name": "Tale of Rum Deal",
+    "name": "Rum Deal",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -2350,7 +2350,7 @@
   },
   {
     "id": "secrets_of_the_north",
-    "name": "Tale of Secrets of the North",
+    "name": "Secrets of the North",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -2375,7 +2375,7 @@
   },
   {
     "id": "shades_of_mortton",
-    "name": "Tale of Shades of Mortton",
+    "name": "Shades of Mortton",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -2466,7 +2466,7 @@
   },
   {
     "id": "shilo_village",
-    "name": "Tale of Shilo Village",
+    "name": "Shilo Village",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -2487,7 +2487,7 @@
   },
   {
     "id": "sins_of_the_father",
-    "name": "Tale of Sins of the Father",
+    "name": "Sins of the Father",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -2514,7 +2514,7 @@
   },
   {
     "id": "skipping_stones",
-    "name": "Tale of Skipping Stones",
+    "name": "Skipping Stones",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2531,7 +2531,7 @@
   },
   {
     "id": "sleeping_giants",
-    "name": "Tale of Sleeping Giants",
+    "name": "Sleeping Giants",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -2586,7 +2586,7 @@
   },
   {
     "id": "spirits_of_the_elid",
-    "name": "Tale of Spirits of the Elid",
+    "name": "Spirits of the Elid",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2637,7 +2637,7 @@
   },
   {
     "id": "tai_bwo_wannai_trio",
-    "name": "Tale of Tai Bwo Wannai Trio",
+    "name": "Tai Bwo Wannai Trio",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2660,7 +2660,7 @@
   },
   {
     "id": "tale_of_the_righteous",
-    "name": "Tale of Tale of the Righteous",
+    "name": "Tale of the Righteous",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2766,7 +2766,7 @@
   },
   {
     "id": "the_dig_site",
-    "name": "Tale of The Dig Site",
+    "name": "The Dig Site",
     "complexity": "Intermediate",
     "length": "Long",
     "durationSeconds": 2700,
@@ -2787,7 +2787,7 @@
   },
   {
     "id": "the_eyes_of_glouphrie",
-    "name": "Tale of The Eyes of Glouphrie",
+    "name": "The Eyes of Glouphrie",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -2811,7 +2811,7 @@
   },
   {
     "id": "the_feud",
-    "name": "Tale of The Feud",
+    "name": "The Feud",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2846,7 +2846,7 @@
   },
   {
     "id": "the_fremennik_exiles",
-    "name": "Tale of The Fremennik Exiles",
+    "name": "The Fremennik Exiles",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -2875,7 +2875,7 @@
   },
   {
     "id": "the_fremennik_isles",
-    "name": "Tale of The Fremennik Isles",
+    "name": "The Fremennik Isles",
     "complexity": "Experienced",
     "length": "Long",
     "durationSeconds": 3600,
@@ -2899,7 +2899,7 @@
   },
   {
     "id": "the_fremennik_trials",
-    "name": "Tale of The Fremennik Trials",
+    "name": "The Fremennik Trials",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2973,7 +2973,7 @@
   },
   {
     "id": "the_golem",
-    "name": "Tale of The Golem",
+    "name": "The Golem",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3013,7 +3013,7 @@
   },
   {
     "id": "the_hand_in_the_sand",
-    "name": "Tale of The Hand In the Sand",
+    "name": "The Hand In the Sand",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3058,7 +3058,7 @@
   },
   {
     "id": "the_knights_sword",
-    "name": "Tale of The Knights' Sword",
+    "name": "The Knights' Sword",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3098,7 +3098,7 @@
   },
   {
     "id": "the_queen_of_thieves",
-    "name": "Tale of The Queen of Thieves",
+    "name": "The Queen of Thieves",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -3132,7 +3132,7 @@
   },
   {
     "id": "the_ribbiting_tale_of_a_lily_pad_laborer",
-    "name": "Tale of The Ribbiting Tale of A Lily Pad Laborer",
+    "name": "The Ribbiting Tale of A Lily Pad Laborer",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3168,7 +3168,7 @@
   },
   {
     "id": "throne_of_miscellania",
-    "name": "Tale of Throne of Miscellania",
+    "name": "Throne of Miscellania",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3280,7 +3280,7 @@
   },
   {
     "id": "twilights_promise",
-    "name": "Tale of Twilights Promise",
+    "name": "Twilights Promise",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3351,7 +3351,7 @@
   },
   {
     "id": "wanted",
-    "name": "Tale of Wanted",
+    "name": "Wanted",
     "complexity": "Intermediate",
     "length": "Long",
     "durationSeconds": 2700,
@@ -3410,7 +3410,7 @@
   },
   {
     "id": "what_lies_below",
-    "name": "Tale of What Lies Below",
+    "name": "What Lies Below",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3463,7 +3463,7 @@
   },
   {
     "id": "witchs_house",
-    "name": "Tale of Witch's House",
+    "name": "Witch's House",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3479,7 +3479,7 @@
   },
   {
     "id": "witchs_potion",
-    "name": "Tale of Witch's Potion",
+    "name": "Witch's Potion",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3495,7 +3495,7 @@
   },
   {
     "id": "x_marks_the_spot",
-    "name": "Tale of X Marks the Spot",
+    "name": "X Marks the Spot",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
