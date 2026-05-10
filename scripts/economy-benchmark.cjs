@@ -35,6 +35,11 @@ const args = parseArgs(process.argv.slice(2))
 
 const DEFAULT_KILLS_PER_HOUR = Number(args['kills-per-hour'] ?? 100)
 const DEFAULT_RAID_COMPLETIONS_PER_HOUR = Number(args['raid-completions-per-hour'] ?? 1)
+const RAID_COMPLETIONS_PER_HOUR_OVERRIDES = {
+  chambers_of_xeric: 10,
+  theatre_of_blood: 5,
+  barrows_brothers: 40,
+}
 const FARMING_HERB_YIELD = Number(args['farming-herb-yield'] ?? 1)
 const FARMING_TREE_YIELD = Number(args['farming-tree-yield'] ?? 1)
 const FARMING_FRUIT_YIELD = Number(args['farming-fruit-yield'] ?? 6)
@@ -449,6 +454,8 @@ function buildRaidRows(raidsData) {
     const uniqueEv = expectedWeightedUniqueValue(raid.rewards?.unique)
     const evPerCompletion = alwaysEv + uniqueEv
 
+    const completionsPerHour = getRaidCompletionsPerHour(raidId)
+
     result.push({
       category: 'Raids',
       subcategory: raid.name || raidId,
@@ -456,16 +463,16 @@ function buildRaidRows(raidsData) {
       name: raid.name || raidId,
       level: '',
       ticks: '',
-      actionsPerHour: DEFAULT_RAID_COMPLETIONS_PER_HOUR,
+      actionsPerHour: completionsPerHour,
       expectedValuePerAction: '',
       expectedValuePerKill: '',
       expectedValuePerCompletion: evPerCompletion,
       materialCostPerAction: '',
       netValuePerAction: '',
-      grossCoinsPerHour: evPerCompletion * DEFAULT_RAID_COMPLETIONS_PER_HOUR,
-      netCoinsPerHour: evPerCompletion * DEFAULT_RAID_COMPLETIONS_PER_HOUR,
+      grossCoinsPerHour: evPerCompletion * completionsPerHour,
+      netCoinsPerHour: evPerCompletion * completionsPerHour,
       notes: [
-        `Assumes ${formatNumber(DEFAULT_RAID_COMPLETIONS_PER_HOUR)} completions/hr`,
+        `Assumes ${formatNumber(completionsPerHour)} completions/hr`,
         `Common EV: ${formatNumber(alwaysEv)}`,
         `Unique EV: ${formatNumber(uniqueEv)}`,
         formatUniqueBreakdown(raid.rewards?.unique),
@@ -474,6 +481,12 @@ function buildRaidRows(raidsData) {
   }
 
   return result
+}
+
+function getRaidCompletionsPerHour(raidId) {
+  const override = RAID_COMPLETIONS_PER_HOUR_OVERRIDES[raidId]
+  if (Number.isFinite(override) && override >= 0) return override
+  return DEFAULT_RAID_COMPLETIONS_PER_HOUR
 }
 
 function expectedWeightedUniqueValue(uniqueTable) {
