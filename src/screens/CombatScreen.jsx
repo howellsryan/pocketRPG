@@ -618,7 +618,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           updateHP(newHP)
           hpRef.current = newHP
           setLog(prev => [...prev.slice(-20), {
-            text: `💚 Guthan's Blessing heals ${ev.healAmount} HP`,
+            text: `💚 Gorath's Blessing heals ${ev.healAmount} HP`,
             type: 'heal',
             time: Date.now()
           }])

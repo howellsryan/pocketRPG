@@ -5420,7 +5420,7 @@
   },
   "arim_the_blighted": {
     "id": "arim_the_blighted",
-    "name": "Ahrim the Blighted",
+    "name": "Morvyn the Blighted",
     "boss": true,
     "combatLevel": 115,
     "hitpoints": 100,
@@ -5480,7 +5480,7 @@
   },
   "dharok_the_wretched": {
     "id": "dharok_the_wretched",
-    "name": "Dharok the Wretched",
+    "name": "Dravok the Wretched",
     "boss": true,
     "combatLevel": 115,
     "hitpoints": 100,
@@ -5540,7 +5540,7 @@
   },
   "guthan_the_infested": {
     "id": "guthan_the_infested",
-    "name": "Guthan the Infested",
+    "name": "Gorath the Infested",
     "boss": true,
     "combatLevel": 115,
     "hitpoints": 100,
@@ -5600,7 +5600,7 @@
   },
   "karil_the_tainted": {
     "id": "karil_the_tainted",
-    "name": "Karil the Tainted",
+    "name": "Kaelor the Tainted",
     "boss": true,
     "combatLevel": 115,
     "hitpoints": 100,
@@ -5660,7 +5660,7 @@
   },
   "torag_the_corrupted": {
     "id": "torag_the_corrupted",
-    "name": "Torag the Corrupted",
+    "name": "Torvek the Corrupted",
     "boss": true,
     "combatLevel": 115,
     "hitpoints": 100,
@@ -5720,7 +5720,7 @@
   },
   "verac_the_defiled": {
     "id": "verac_the_defiled",
-    "name": "Verac the Defiled",
+    "name": "Verin the Defiled",
     "boss": true,
     "combatLevel": 115,
     "hitpoints": 100,

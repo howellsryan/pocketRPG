@@ -6778,7 +6778,7 @@
   },
   "bandos_godsword": {
     "id": "bandos_godsword",
-    "name": "Bandos Godsword",
+    "name": "Grondar Godsword",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": true,
@@ -6819,7 +6819,7 @@
   },
   "armadyl_godsword": {
     "id": "armadyl_godsword",
-    "name": "Armadyl Godsword",
+    "name": "Zephyra Godsword",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": true,
@@ -6860,7 +6860,7 @@
   },
   "saradomin_godsword": {
     "id": "saradomin_godsword",
-    "name": "Saradomin Godsword",
+    "name": "Lumira Godsword",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": true,
@@ -6902,7 +6902,7 @@
   },
   "zamorak_godsword": {
     "id": "zamorak_godsword",
-    "name": "Zamorak Godsword",
+    "name": "Krylth Godsword",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": true,
@@ -6944,7 +6944,7 @@
   },
   "bandos_chestplate": {
     "id": "bandos_chestplate",
-    "name": "Bandos Chestplate",
+    "name": "Grondar Chestplate",
     "type": "armour",
     "slot": "body",
     "stackable": false,
@@ -6977,7 +6977,7 @@
   },
   "bandos_tassets": {
     "id": "bandos_tassets",
-    "name": "Bandos Tassets",
+    "name": "Grondar Tassets",
     "type": "armour",
     "slot": "legs",
     "stackable": false,
@@ -7010,7 +7010,7 @@
   },
   "bandos_boots": {
     "id": "bandos_boots",
-    "name": "Bandos Boots",
+    "name": "Grondar Boots",
     "type": "armour",
     "slot": "boots",
     "stackable": false,
@@ -7043,7 +7043,7 @@
   },
   "bandos_hilt": {
     "id": "bandos_hilt",
-    "name": "Bandos Hilt",
+    "name": "Grondar Hilt",
     "type": "resource",
     "stackable": false,
     "shopValue": 18092500,
@@ -7053,7 +7053,7 @@
   },
   "armadyl_helmet": {
     "id": "armadyl_helmet",
-    "name": "Armadyl Helmet",
+    "name": "Zephyra Helmet",
     "type": "armour",
     "slot": "head",
     "stackable": false,
@@ -7087,7 +7087,7 @@
   },
   "armadyl_chestplate": {
     "id": "armadyl_chestplate",
-    "name": "Armadyl Chestplate",
+    "name": "Zephyra Chestplate",
     "type": "armour",
     "slot": "body",
     "stackable": false,
@@ -7121,7 +7121,7 @@
   },
   "armadyl_chainskirt": {
     "id": "armadyl_chainskirt",
-    "name": "Armadyl Chainskirt",
+    "name": "Zephyra Chainskirt",
     "type": "armour",
     "slot": "legs",
     "stackable": false,
@@ -7155,7 +7155,7 @@
   },
   "armadyl_hilt": {
     "id": "armadyl_hilt",
-    "name": "Armadyl Hilt",
+    "name": "Zephyra Hilt",
     "type": "resource",
     "stackable": false,
     "shopValue": 7257501,
@@ -7165,7 +7165,7 @@
   },
   "saradomin_sword": {
     "id": "saradomin_sword",
-    "name": "Saradomin Sword",
+    "name": "Lumira Sword",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": false,
@@ -7198,7 +7198,7 @@
       "type": "lightning",
       "energyCost": 100,
       "lightningMax": 16,
-      "description": "Saradomin's Lightning: A two-hit attack — a melee strike followed by a divine lightning bolt dealing 1–16 magic damage (always hits)."
+      "description": "Lumira's Lightning: A two-hit attack — a melee strike followed by a divine lightning bolt dealing 1–16 magic damage (always hits)."
     },
     "shopValue": 169802,
     "icon": "⚔️",
@@ -7207,7 +7207,7 @@
   },
   "saradomin_hilt": {
     "id": "saradomin_hilt",
-    "name": "Saradomin Hilt",
+    "name": "Lumira Hilt",
     "type": "resource",
     "stackable": false,
     "shopValue": 27572816,
@@ -7217,7 +7217,7 @@
   },
   "armadyl_crossbow": {
     "id": "armadyl_crossbow",
-    "name": "Armadyl Crossbow",
+    "name": "Zephyra Crossbow",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": false,
@@ -7259,7 +7259,7 @@
   },
   "zamorak_spear": {
     "id": "zamorak_spear",
-    "name": "Zamorak Spear",
+    "name": "Krylth Spear",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": true,
@@ -7337,7 +7337,7 @@
   },
   "zamorak_hilt": {
     "id": "zamorak_hilt",
-    "name": "Zamorak Hilt",
+    "name": "Krylth Hilt",
     "type": "resource",
     "stackable": false,
     "shopValue": 18412666,
@@ -8241,7 +8241,7 @@
   },
   "toxic_blowpipe": {
     "id": "toxic_blowpipe",
-    "name": "Toxic Blowpipe",
+    "name": "Venom Blowpipe",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": true,
@@ -8283,7 +8283,7 @@
   },
   "trident_of_the_swamp": {
     "id": "trident_of_the_swamp",
-    "name": "Trident of the Swamp",
+    "name": "Trident of Venom",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": false,
@@ -10151,7 +10151,7 @@
   },
   "barrows_gloves": {
     "id": "barrows_gloves",
-    "name": "Barrows Gloves",
+    "name": "Cryptbound Gloves",
     "type": "armour",
     "slot": "gloves",
     "stackable": false,
@@ -10607,7 +10607,7 @@
   },
   "ahrims_hood": {
     "id": "ahrims_hood",
-    "name": "Ahrim's Hood",
+    "name": "Morvyn's Hood",
     "type": "armour",
     "slot": "head",
     "stackable": false,
@@ -10640,7 +10640,7 @@
   },
   "ahrims_robetop": {
     "id": "ahrims_robetop",
-    "name": "Ahrim's Robetop",
+    "name": "Morvyn's Robetop",
     "type": "armour",
     "slot": "body",
     "stackable": false,
@@ -10673,7 +10673,7 @@
   },
   "ahrims_robeskirt": {
     "id": "ahrims_robeskirt",
-    "name": "Ahrim's Robeskirt",
+    "name": "Morvyn's Robeskirt",
     "type": "armour",
     "slot": "legs",
     "stackable": false,
@@ -10706,7 +10706,7 @@
   },
   "ahrims_staff": {
     "id": "ahrims_staff",
-    "name": "Ahrim's Staff",
+    "name": "Morvyn's Staff",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": true,
@@ -10742,7 +10742,7 @@
   },
   "dharoks_helm": {
     "id": "dharoks_helm",
-    "name": "Dharok's Helm",
+    "name": "Dravok's Helm",
     "type": "armour",
     "slot": "head",
     "stackable": false,
@@ -10775,7 +10775,7 @@
   },
   "dharoks_platebody": {
     "id": "dharoks_platebody",
-    "name": "Dharok's Platebody",
+    "name": "Dravok's Platebody",
     "type": "armour",
     "slot": "body",
     "stackable": false,
@@ -10808,7 +10808,7 @@
   },
   "dharoks_platelegs": {
     "id": "dharoks_platelegs",
-    "name": "Dharok's Platelegs",
+    "name": "Dravok's Platelegs",
     "type": "armour",
     "slot": "legs",
     "stackable": false,
@@ -10841,7 +10841,7 @@
   },
   "dharoks_greataxe": {
     "id": "dharoks_greataxe",
-    "name": "Dharok's Greataxe",
+    "name": "Dravok's Greataxe",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": true,
@@ -10878,7 +10878,7 @@
   },
   "guthans_helm": {
     "id": "guthans_helm",
-    "name": "Guthan's Helm",
+    "name": "Gorath's Helm",
     "type": "armour",
     "slot": "head",
     "stackable": false,
@@ -10911,7 +10911,7 @@
   },
   "guthans_platebody": {
     "id": "guthans_platebody",
-    "name": "Guthan's Platebody",
+    "name": "Gorath's Platebody",
     "type": "armour",
     "slot": "body",
     "stackable": false,
@@ -10944,7 +10944,7 @@
   },
   "guthans_chainskirt": {
     "id": "guthans_chainskirt",
-    "name": "Guthan's Chainskirt",
+    "name": "Gorath's Chainskirt",
     "type": "armour",
     "slot": "legs",
     "stackable": false,
@@ -10977,7 +10977,7 @@
   },
   "guthans_warspear": {
     "id": "guthans_warspear",
-    "name": "Guthan's Warspear",
+    "name": "Gorath's Warspear",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": true,
@@ -11014,7 +11014,7 @@
   },
   "karils_coif": {
     "id": "karils_coif",
-    "name": "Karil's Coif",
+    "name": "Kaelor's Coif",
     "type": "armour",
     "slot": "head",
     "stackable": false,
@@ -11047,7 +11047,7 @@
   },
   "karils_leathertop": {
     "id": "karils_leathertop",
-    "name": "Karil's Leathertop",
+    "name": "Kaelor's Leathertop",
     "type": "armour",
     "slot": "body",
     "stackable": false,
@@ -11080,7 +11080,7 @@
   },
   "karils_leatherskirt": {
     "id": "karils_leatherskirt",
-    "name": "Karil's Leatherskirt",
+    "name": "Kaelor's Leatherskirt",
     "type": "armour",
     "slot": "legs",
     "stackable": false,
@@ -11113,7 +11113,7 @@
   },
   "karils_crossbow": {
     "id": "karils_crossbow",
-    "name": "Karil's Crossbow",
+    "name": "Kaelor's Crossbow",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": false,
@@ -11149,7 +11149,7 @@
   },
   "torags_helm": {
     "id": "torags_helm",
-    "name": "Torag's Helm",
+    "name": "Torvek's Helm",
     "type": "armour",
     "slot": "head",
     "stackable": false,
@@ -11182,7 +11182,7 @@
   },
   "torags_platebody": {
     "id": "torags_platebody",
-    "name": "Torag's Platebody",
+    "name": "Torvek's Platebody",
     "type": "armour",
     "slot": "body",
     "stackable": false,
@@ -11215,7 +11215,7 @@
   },
   "torags_platelegs": {
     "id": "torags_platelegs",
-    "name": "Torag's Platelegs",
+    "name": "Torvek's Platelegs",
     "type": "armour",
     "slot": "legs",
     "stackable": false,
@@ -11248,7 +11248,7 @@
   },
   "torags_hammers": {
     "id": "torags_hammers",
-    "name": "Torag's Hammers",
+    "name": "Torvek's Hammers",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": false,
@@ -11284,7 +11284,7 @@
   },
   "veracs_helm": {
     "id": "veracs_helm",
-    "name": "Verac's Helm",
+    "name": "Verin's Helm",
     "type": "armour",
     "slot": "head",
     "stackable": false,
@@ -11317,7 +11317,7 @@
   },
   "veracs_brassard": {
     "id": "veracs_brassard",
-    "name": "Verac's Brassard",
+    "name": "Verin's Brassard",
     "type": "armour",
     "slot": "body",
     "stackable": false,
@@ -11350,7 +11350,7 @@
   },
   "veracs_plateskirt": {
     "id": "veracs_plateskirt",
-    "name": "Verac's Plateskirt",
+    "name": "Verin's Plateskirt",
     "type": "armour",
     "slot": "legs",
     "stackable": false,
@@ -11383,7 +11383,7 @@
   },
   "veracs_flail": {
     "id": "veracs_flail",
-    "name": "Verac's Flail",
+    "name": "Verin's Flail",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": false,
@@ -15787,7 +15787,7 @@
     "isBossUnique": true,
     "combineWith": "zamorak_spear",
     "combineResult": "dragon_hunter_lance",
-    "combineDescription": "Combine with a Zamorak spear to forge a Dragon hunter lance."
+    "combineDescription": "Combine with a Krylth spear to forge a Dragon hunter lance."
   },
   "dragon_hunter_lance": {
     "id": "dragon_hunter_lance",

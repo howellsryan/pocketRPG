@@ -1095,7 +1095,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
     }
 
     case 'judgement': {
-      // Armadyl Godsword — 125% accuracy + 125% max hit
+      // Zephyra Godsword — 125% accuracy + 125% max hit
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
       const maxHit = Math.floor(meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength) * 1.25)
@@ -1114,7 +1114,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
     }
 
     case 'healing_blade': {
-      // Saradomin Godsword — hit + heal 50% of damage (min 10 HP)
+      // Lumira Godsword — hit + heal 50% of damage (min 10 HP)
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
       const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
@@ -1135,7 +1135,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
     }
 
     case 'freeze': {
-      // Zamorak Godsword — hit + freeze monster for stunTicks ticks
+      // Krylth Godsword — hit + freeze monster for stunTicks ticks
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
       const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
@@ -1155,7 +1155,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
     }
 
     case 'warstrike': {
-      // Bandos Godsword — hit + reduce monster defenceBonus by damage dealt
+      // Grondar Godsword — hit + reduce monster defenceBonus by damage dealt
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
       const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
@@ -1204,7 +1204,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
     }
 
     case 'lightning': {
-      // Saradomin Sword — normal melee hit + guaranteed magic lightning hit
+      // Lumira Sword — normal melee hit + guaranteed magic lightning hit
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
       const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
@@ -1247,7 +1247,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
     }
 
     case 'pebble_shot': {
-      // Armadyl Crossbow — guaranteed hit at 125% max hit
+      // Zephyra Crossbow — guaranteed hit at 125% max hit
       const styleBonus = getRangedStyleBonus(state.stance)
       const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
       const maxHit = Math.floor(rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength) * 1.25)
@@ -1262,7 +1262,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
     }
 
     case 'toxic_siphon': {
-      // Toxic Blowpipe — guaranteed 150% max hit ranged attack, heals for half damage dealt.
+      // Venom Blowpipe — guaranteed 150% max hit ranged attack, heals for half damage dealt.
       // Also consumes one scale charge (like a normal blowpipe shot).
       const styleBonus = getRangedStyleBonus(state.stance)
       const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
@@ -1281,7 +1281,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
     }
 
     case 'shove': {
-      // Zamorak Spear — 175% accuracy + stun 2 monster attacks
+      // Krylth Spear — 175% accuracy + stun 2 monster attacks
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
       const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
