@@ -47,12 +47,13 @@ const raids = readJsonOptional('raids.json', {})
 const minigames = readJsonOptional('minigames.json', {})
 const farming = readJsonOptional('farming.json', {})
 const clues = readJsonOptional('clues.json', {})
+const collectionLog = readJsonOptional('collectionLog.json', {})
 
 const missingItemIds = new Set()
 const zeroValueItemIds = new Set()
 
 const rows = [
-  ...buildSkillRows(skills),
+  ...buildSkillRows(skills, collectionLog, raids),
   ...buildMonsterRows(monsters, raids),
   ...buildRaidRows(raids),
   ...buildMinigameRows(minigames),
@@ -254,13 +255,18 @@ function actionsPerHourFromTicks(ticks) {
   return ACTIONS_PER_HOUR_PER_TICK / parsedTicks
 }
 
-function buildSkillRows(skillsData) {
+function buildSkillRows(skillsData, collectionLogData, raidsData) {
   const result = []
+  const blockedMaterials = collectBlockedMaterialIds(collectionLogData, raidsData, skillsData)
 
   for (const [skillId, skill] of Object.entries(skillsData || {})) {
     const actions = Array.isArray(skill.actions) ? skill.actions : []
 
     for (const action of actions) {
+      if (actionUsesBlockedMaterial(action, blockedMaterials)) {
+        continue
+      }
+
       const actionsPerHour = actionsPerHourFromTicks(action.ticks)
       const grossPerAction = actionProductValue(action)
       const materialCostPerAction = actionMaterialCost(action)
@@ -287,6 +293,56 @@ function buildSkillRows(skillsData) {
   }
 
   return result
+}
+
+function actionUsesBlockedMaterial(action, blockedMaterials) {
+  if (!action?.materials || !blockedMaterials || blockedMaterials.size === 0) {
+    return false
+  }
+
+  return Object.keys(action.materials).some(itemId => blockedMaterials.has(itemId))
+}
+
+function collectBlockedMaterialIds(collectionLogData, raidsData, skillsData) {
+  const ids = new Set()
+
+  for (const raid of Object.values(raidsData || {})) {
+    for (const item of (raid?.rewards?.unique?.items || [])) {
+      if (item?.itemId) ids.add(item.itemId)
+    }
+  }
+
+  for (const category of (collectionLogData?.categories || [])) {
+    for (const section of (category?.sections || [])) {
+      for (const itemId of (section?.items || [])) ids.add(itemId)
+    }
+  }
+
+  for (const itemId of (collectionLogData?.sharedItems || [])) {
+    ids.add(itemId)
+  }
+
+  // Explicit non-repeatable resources currently treated as blocked inputs.
+  ids.add('godsword_shard')
+
+  // Propagate blocked status through skilling dependency chains:
+  // if an action consumes blocked input, its produced item is also blocked.
+  let changed = true
+  while (changed) {
+    changed = false
+    for (const skill of Object.values(skillsData || {})) {
+      for (const action of (skill?.actions || [])) {
+        if (!action?.product || !action?.materials) continue
+        const usesBlocked = Object.keys(action.materials).some(itemId => ids.has(itemId))
+        if (usesBlocked && !ids.has(action.product)) {
+          ids.add(action.product)
+          changed = true
+        }
+      }
+    }
+  }
+
+  return ids
 }
 
 function buildActionNotes(action) {
