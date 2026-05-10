@@ -1,7 +1,7 @@
 [
   {
     "id": "a_kingdom_divided",
-    "name": "A Realm Divided Reborn",
+    "name": "A Realm Divided",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -29,7 +29,7 @@
   },
   {
     "id": "a_night_at_the_theatre",
-    "name": "A Dusk at the Theater Reborn",
+    "name": "A Dusk at the Theater",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -45,7 +45,7 @@
   },
   {
     "id": "a_porcine_of_interest",
-    "name": "A Porcine of Interest Reborn",
+    "name": "A Boarborn of Interest",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -61,7 +61,7 @@
   },
   {
     "id": "a_souls_bane",
-    "name": "A Soul's Bane Reborn",
+    "name": "Tale of A Soul's Bane",
     "complexity": "Novice",
     "length": "Medium",
     "durationSeconds": 900,
@@ -78,7 +78,7 @@
   },
   {
     "id": "a_tail_of_two_cats",
-    "name": "A Tail Of Two Cats Reborn",
+    "name": "A Tale of Two Cats",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -97,7 +97,7 @@
   },
   {
     "id": "a_taste_of_hope",
-    "name": "A Taste Of Hope Reborn",
+    "name": "A Taste of Dawn",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -121,7 +121,7 @@
   },
   {
     "id": "animal_magnetism",
-    "name": "Animal Magnetism Reborn",
+    "name": "Beast Magnetism",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -151,7 +151,7 @@
   },
   {
     "id": "another_slice_of_h_a_m",
-    "name": "Another Slice of H.A.M. Reborn",
+    "name": "Another Chapter of H A M",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -175,7 +175,7 @@
   },
   {
     "id": "at_first_light",
-    "name": "At First Light Reborn",
+    "name": "Tale of At First Light",
     "complexity": "Experienced",
     "length": "Short",
     "durationSeconds": 600,
@@ -198,7 +198,7 @@
   },
   {
     "id": "below_ice_mountain",
-    "name": "Below Ice Mountain Reborn",
+    "name": "Below Ice Highland",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -218,7 +218,7 @@
   },
   {
     "id": "beneath_cursed_sands",
-    "name": "Beneath Cursed Sands Reborn",
+    "name": "Beneath Blighted Sands",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -242,7 +242,7 @@
   },
   {
     "id": "between_a_rock",
-    "name": "Between a Rock... Reborn",
+    "name": "Between A Stone",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -267,7 +267,7 @@
   },
   {
     "id": "big_chompy_bird_hunting",
-    "name": "Big Chompy Bird Hunting Reborn",
+    "name": "Big Chompy Wing Hunting",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -289,7 +289,7 @@
   },
   {
     "id": "biohazard",
-    "name": "Biohazard Reborn",
+    "name": "Tale of Biohazard",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -307,7 +307,7 @@
   },
   {
     "id": "black_knights_fortress",
-    "name": "Black Knights' Fortress Reborn",
+    "name": "Obsidian Knights' Fortress",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -323,7 +323,7 @@
   },
   {
     "id": "blood_runs_deep",
-    "name": "Blood Runs Deep Reborn",
+    "name": "Crimson Runs Deep",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -344,7 +344,7 @@
   },
   {
     "id": "bone_voyage",
-    "name": "Bone Voyage Reborn",
+    "name": "Tale of Bone Voyage",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -363,7 +363,7 @@
   },
   {
     "id": "cabin_fever",
-    "name": "Cabin Fever Reborn",
+    "name": "Tale of Cabin Fever",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -388,7 +388,7 @@
   },
   {
     "id": "children_of_the_sun",
-    "name": "Children Of The Sun Reborn",
+    "name": "Heirs of the Sun",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -404,7 +404,7 @@
   },
   {
     "id": "clock_tower",
-    "name": "Clock Tower Reborn",
+    "name": "Clock Spire",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -420,7 +420,7 @@
   },
   {
     "id": "cold_war",
-    "name": "Cold War Reborn",
+    "name": "Frost War",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -446,7 +446,7 @@
   },
   {
     "id": "contact",
-    "name": "Contact! Reborn",
+    "name": "Tale of Contact",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -466,7 +466,7 @@
   },
   {
     "id": "cooks_assistant",
-    "name": "Cook's Assistant Reborn",
+    "name": "Tale of Cook's Assistant",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -482,7 +482,7 @@
   },
   {
     "id": "creature_of_fenkenstrain",
-    "name": "Creature of Fenkenstrain Reborn",
+    "name": "Tale of Creature of Fenkenstrain",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -504,7 +504,7 @@
   },
   {
     "id": "current_affairs",
-    "name": "Current Affairs Reborn",
+    "name": "Tale of Current Affairs",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -520,7 +520,7 @@
   },
   {
     "id": "darkness_of_hallowvale",
-    "name": "Darkness Of Hallowvale Reborn",
+    "name": "Shadows of Hallowvale",
     "complexity": "Intermediate",
     "length": "Long",
     "durationSeconds": 2700,
@@ -548,7 +548,7 @@
   },
   {
     "id": "death_plateau",
-    "name": "Death Plateau Reborn",
+    "name": "Doom Plateau",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -564,7 +564,7 @@
   },
   {
     "id": "death_to_the_dorgeshuun",
-    "name": "Death To The Dorgeshuun Reborn",
+    "name": "Doom To the Dorgeshuun",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -586,7 +586,7 @@
   },
   {
     "id": "defender_of_varrock",
-    "name": "Defender Of Varrock Reborn",
+    "name": "Tale of Defender of Varrock",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -613,7 +613,7 @@
   },
   {
     "id": "demon_slayer",
-    "name": "Fiend Slayer Reborn",
+    "name": "Fiend Slayer",
     "complexity": "Novice",
     "length": "Medium",
     "durationSeconds": 900,
@@ -629,7 +629,7 @@
   },
   {
     "id": "desert_treasure_i",
-    "name": "Sunscar Treasure I Reborn",
+    "name": "Sunscar Treasure I",
     "complexity": "Master",
     "length": "Very Long",
     "durationSeconds": 18000,
@@ -655,7 +655,7 @@
   },
   {
     "id": "desert_treasure_ii_the_fallen_empire",
-    "name": "Sunscar Treasure II The Fallen Empire Reborn",
+    "name": "Sunscar Treasure II the Fallen Empire",
     "complexity": "Grandmaster",
     "length": "Very Long",
     "durationSeconds": 36000,
@@ -685,7 +685,7 @@
   },
   {
     "id": "devious_minds",
-    "name": "Devious Minds Reborn",
+    "name": "Tale of Devious Minds",
     "complexity": "Experienced",
     "length": "Short",
     "durationSeconds": 600,
@@ -711,7 +711,7 @@
   },
   {
     "id": "dorics_quest",
-    "name": "Doric's Quest Reborn",
+    "name": "Tale of Doric's Quest",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -729,7 +729,7 @@
   },
   {
     "id": "dragon_slayer_i",
-    "name": "Wyrm Slayer I Reborn",
+    "name": "Drake Slayer I",
     "complexity": "Experienced",
     "length": "Long",
     "durationSeconds": 3600,
@@ -748,7 +748,7 @@
   },
   {
     "id": "dragon_slayer_ii",
-    "name": "Wyrm Slayer II Reborn",
+    "name": "Drake Slayer II",
     "complexity": "Grandmaster",
     "length": "Very Long",
     "durationSeconds": 36000,
@@ -785,7 +785,7 @@
   },
   {
     "id": "dream_mentor",
-    "name": "Dream Mentor Reborn",
+    "name": "Vision Mentor",
     "complexity": "Master",
     "length": "Short",
     "durationSeconds": 1500,
@@ -805,7 +805,7 @@
   },
   {
     "id": "druidic_ritual",
-    "name": "Druidic Ritual Reborn",
+    "name": "Verdant Ritual",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -821,7 +821,7 @@
   },
   {
     "id": "dwarf_cannon",
-    "name": "Stonekin Cannon Reborn",
+    "name": "Stonekin Cannon",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -837,7 +837,7 @@
   },
   {
     "id": "eadgars_ruse",
-    "name": "Eadgar's Ruse Reborn",
+    "name": "Tale of Eadgar's Ruse",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -857,7 +857,7 @@
   },
   {
     "id": "eagles_peak",
-    "name": "Eagles' Peak Reborn",
+    "name": "Tale of Eagles Peak",
     "complexity": "Novice",
     "length": "Medium",
     "durationSeconds": 900,
@@ -875,7 +875,7 @@
   },
   {
     "id": "elemental_workshop_i",
-    "name": "Elemental Workshop I Reborn",
+    "name": "Arcane Workshop I",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -896,7 +896,7 @@
   },
   {
     "id": "elemental_workshop_ii",
-    "name": "Elemental Workshop II Reborn",
+    "name": "Arcane Workshop II",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -918,7 +918,7 @@
   },
   {
     "id": "enakhras_lament",
-    "name": "Enakhras Lament Reborn",
+    "name": "Tale of Enakhras Lament",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -942,7 +942,7 @@
   },
   {
     "id": "enlightened_journey",
-    "name": "Enlightened Journey Reborn",
+    "name": "Tale of Enlightened Journey",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -965,7 +965,7 @@
   },
   {
     "id": "ernest_the_chicken",
-    "name": "Ernest The Chicken Reborn",
+    "name": "Tale of Ernest the Chicken",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -981,7 +981,7 @@
   },
   {
     "id": "ethos_of_arceuus",
-    "name": "Ethos Of Arceuus Reborn",
+    "name": "Tale of Ethos of Arceuus",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -998,7 +998,7 @@
   },
   {
     "id": "fairytale_i_growing_pains",
-    "name": "Feytale I Growing Pains Reborn",
+    "name": "Feytale I Growing Pains",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -1019,7 +1019,7 @@
   },
   {
     "id": "fairytale_ii_cure_a_queen",
-    "name": "Feytale II Cure A Queen Reborn",
+    "name": "Feytale II Cure A Queen",
     "complexity": "Experienced",
     "length": "Short",
     "durationSeconds": 600,
@@ -1040,7 +1040,7 @@
   },
   {
     "id": "family_crest",
-    "name": "Family Crest Reborn",
+    "name": "Kin Crest",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -1064,7 +1064,7 @@
   },
   {
     "id": "fight_arena",
-    "name": "Fight Arena Reborn",
+    "name": "Duel Arena",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1081,7 +1081,7 @@
   },
   {
     "id": "fishing_contest",
-    "name": "Fishing Contest Reborn",
+    "name": "Angler Contest",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1099,7 +1099,7 @@
   },
   {
     "id": "forgettable_tale",
-    "name": "Forgettable Tale Reborn",
+    "name": "Tale of Forgettable Tale",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1122,7 +1122,7 @@
   },
   {
     "id": "garden_of_tranquillity",
-    "name": "Garden Of Tranquillity Reborn",
+    "name": "Grove of Tranquillity",
     "complexity": "Intermediate",
     "length": "Long",
     "durationSeconds": 2700,
@@ -1142,7 +1142,7 @@
   },
   {
     "id": "gertrudes_cat",
-    "name": "Gertrude's Cat Reborn",
+    "name": "Tale of Gertrude's Cat",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1158,7 +1158,7 @@
   },
   {
     "id": "getting_ahead",
-    "name": "Getting Ahead Reborn",
+    "name": "Tale of Getting Ahead",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1178,7 +1178,7 @@
   },
   {
     "id": "ghosts_ahoy",
-    "name": "Ghosts Ahoy Reborn",
+    "name": "Tale of Ghosts Ahoy",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1199,7 +1199,7 @@
   },
   {
     "id": "goblin_diplomacy",
-    "name": "Gloomkin Diplomacy Reborn",
+    "name": "Gloomkin Diplomacy",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1215,7 +1215,7 @@
   },
   {
     "id": "goodbye_grubby",
-    "name": "Goodbye Grubby Reborn",
+    "name": "Tale of Goodbye Grubby",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1231,7 +1231,7 @@
   },
   {
     "id": "grim_tales",
-    "name": "Grim Tales Reborn",
+    "name": "Gloam Tales",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -1259,7 +1259,7 @@
   },
   {
     "id": "haunted_mine",
-    "name": "Haunted Mine Reborn",
+    "name": "Cursed Mine",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -1280,7 +1280,7 @@
   },
   {
     "id": "hazeel_cult",
-    "name": "Hazeel Cult Reborn",
+    "name": "Tale of Hazeel Cult",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1296,7 +1296,7 @@
   },
   {
     "id": "heroes_quest",
-    "name": "Champions' Quest Reborn",
+    "name": "Tale of Heroes Quest",
     "complexity": "Experienced",
     "length": "Long",
     "durationSeconds": 3600,
@@ -1332,7 +1332,7 @@
   },
   {
     "id": "holy_grail",
-    "name": "Holy Grail Reborn",
+    "name": "Sacred Grail",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1353,7 +1353,7 @@
   },
   {
     "id": "horror_from_the_deep",
-    "name": "Horror From The Deep Reborn",
+    "name": "Terror From the Deep",
     "complexity": "Experienced",
     "length": "Short",
     "durationSeconds": 600,
@@ -1373,7 +1373,7 @@
   },
   {
     "id": "icthlarins_little_helper",
-    "name": "Icthlarin's Little Helper Reborn",
+    "name": "Tale of Icthlarins Little Helper",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1393,7 +1393,7 @@
   },
   {
     "id": "imp_catcher",
-    "name": "Imp Catcher Reborn",
+    "name": "Sprite Catcher",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1409,7 +1409,7 @@
   },
   {
     "id": "in_aid_of_the_myreque",
-    "name": "In Aid Of The Myreque Reborn",
+    "name": "Tale of In Aid of the Myreque",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1435,7 +1435,7 @@
   },
   {
     "id": "in_search_of_the_myreque",
-    "name": "In Search Of The Myreque Reborn",
+    "name": "Tale of In Search of the Myreque",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -1459,7 +1459,7 @@
   },
   {
     "id": "jungle_potion",
-    "name": "Jungle Potion Reborn",
+    "name": "Wildwood Potion",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1479,7 +1479,7 @@
   },
   {
     "id": "kings_ransom",
-    "name": "King's Ransom Reborn",
+    "name": "Tale of Kings Ransom",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -1504,7 +1504,7 @@
   },
   {
     "id": "lair_of_tarn_razorlor",
-    "name": "Lair Of Tarn Razorlor Reborn",
+    "name": "Tale of Lair of Tarn Razorlor",
     "complexity": "Experienced",
     "length": "Short",
     "durationSeconds": 600,
@@ -1524,7 +1524,7 @@
   },
   {
     "id": "land_of_the_goblins",
-    "name": "Land Of The Goblins Reborn",
+    "name": "Realm of the Goblins",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -1550,7 +1550,7 @@
   },
   {
     "id": "legends_quest",
-    "name": "Legacies' Quest Reborn",
+    "name": "Tale of Legends' Quest",
     "complexity": "Master",
     "length": "Very Long",
     "durationSeconds": 18000,
@@ -1582,7 +1582,7 @@
   },
   {
     "id": "lost_city",
-    "name": "Lost City Reborn",
+    "name": "Forsaken City",
     "complexity": "Experienced",
     "length": "Short",
     "durationSeconds": 600,
@@ -1604,7 +1604,7 @@
   },
   {
     "id": "lunar_diplomacy",
-    "name": "Lunar Diplomacy Reborn",
+    "name": "Moon Diplomacy",
     "complexity": "Experienced",
     "length": "Long",
     "durationSeconds": 3600,
@@ -1632,7 +1632,7 @@
   },
   {
     "id": "making_friends_with_my_arm",
-    "name": "Making Friends With My Arm Reborn",
+    "name": "Forging Friends With My Arm",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -1660,7 +1660,7 @@
   },
   {
     "id": "making_history",
-    "name": "Making History Reborn",
+    "name": "Forging History",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1679,7 +1679,7 @@
   },
   {
     "id": "merlins_crystal",
-    "name": "Merlins Crystal Reborn",
+    "name": "Tale of Merlins Crystal",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1695,7 +1695,7 @@
   },
   {
     "id": "misthalin_mystery",
-    "name": "Misthalin Mystery Reborn",
+    "name": "Tale of Misthalin Mystery",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1711,7 +1711,7 @@
   },
   {
     "id": "monks_friend",
-    "name": "Monk's Friend Reborn",
+    "name": "Tale of Monk's Friend",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1727,7 +1727,7 @@
   },
   {
     "id": "monkey_madness_i",
-    "name": "Moonfang Madness I Reborn",
+    "name": "Moonfang Madness I",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -1748,7 +1748,7 @@
   },
   {
     "id": "monkey_madness_ii",
-    "name": "Moonfang Madness II Reborn",
+    "name": "Moonfang Madness II",
     "complexity": "Grandmaster",
     "length": "Very Long",
     "durationSeconds": 36000,
@@ -1781,7 +1781,7 @@
   },
   {
     "id": "mountain_daughter",
-    "name": "Mountain Daughter Reborn",
+    "name": "Highland Daughter",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1800,7 +1800,7 @@
   },
   {
     "id": "mournings_end_part_i",
-    "name": "Mourning's End Part I Reborn",
+    "name": "Tale of Mourning's End Part I",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -1823,7 +1823,7 @@
   },
   {
     "id": "mournings_end_part_ii",
-    "name": "Mourning's End Part II Reborn",
+    "name": "Tale of Mourning's End Part II",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -1841,7 +1841,7 @@
   },
   {
     "id": "murder_mystery",
-    "name": "Murder Mystery Reborn",
+    "name": "Bloodline Mystery",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1857,7 +1857,7 @@
   },
   {
     "id": "my_arms_big_adventure",
-    "name": "My Arm's Big Adventure Reborn",
+    "name": "Tale of My Arm's Big Adventure",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1880,7 +1880,7 @@
   },
   {
     "id": "nature_spirit",
-    "name": "Nature Spirit Reborn",
+    "name": "Wild Essence",
     "complexity": "Novice",
     "length": "Medium",
     "durationSeconds": 900,
@@ -1900,7 +1900,7 @@
   },
   {
     "id": "observatory_quest",
-    "name": "Observatory Quest Reborn",
+    "name": "Starwatch Quest",
     "complexity": "Novice",
     "length": "Medium",
     "durationSeconds": 900,
@@ -1918,7 +1918,7 @@
   },
   {
     "id": "olafs_quest",
-    "name": "Olaf's Quest Reborn",
+    "name": "Tale of Olaf's Quest",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -1937,7 +1937,7 @@
   },
   {
     "id": "one_small_favour",
-    "name": "One Small Favour Reborn",
+    "name": "Tale of One Small Favour",
     "complexity": "Experienced",
     "length": "Very Long",
     "durationSeconds": 7200,
@@ -1961,7 +1961,7 @@
   },
   {
     "id": "path_of_glouphrie",
-    "name": "Path Of Glouphrie Reborn",
+    "name": "Tale of Path of Glouphrie",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -1989,7 +1989,7 @@
   },
   {
     "id": "perilous_moons",
-    "name": "Perilous Moons Reborn",
+    "name": "Tale of Perilous Moons",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -2014,7 +2014,7 @@
   },
   {
     "id": "pirates_treasure",
-    "name": "Corsair's Treasure Reborn",
+    "name": "Tale of Pirates Treasure",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2030,7 +2030,7 @@
   },
   {
     "id": "plague_city",
-    "name": "Plague City Reborn",
+    "name": "Blight City",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2046,7 +2046,7 @@
   },
   {
     "id": "priest_in_peril",
-    "name": "Priest In Peril Reborn",
+    "name": "Warden In Peril",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2062,7 +2062,7 @@
   },
   {
     "id": "prince_ali_rescue",
-    "name": "Prince Ali Rescue Reborn",
+    "name": "Heir Ali Rescue",
     "complexity": "Novice",
     "length": "Medium",
     "durationSeconds": 900,
@@ -2078,7 +2078,7 @@
   },
   {
     "id": "rag_and_bone_man_i",
-    "name": "Rag And Bone Man I Reborn",
+    "name": "Tale of Rag And Bone Man I",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2095,7 +2095,7 @@
   },
   {
     "id": "rag_and_bone_man_ii",
-    "name": "Rag And Bone Man II Reborn",
+    "name": "Tale of Rag And Bone Man II",
     "complexity": "Intermediate",
     "length": "Long",
     "durationSeconds": 2700,
@@ -2117,7 +2117,7 @@
   },
   {
     "id": "ratcatchers",
-    "name": "Ratcatchers Reborn",
+    "name": "Tale of Ratcatchers",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2136,7 +2136,7 @@
   },
   {
     "id": "recipe_for_disaster",
-    "name": "Recipe For Disaster Reborn",
+    "name": "Banquet For Disaster",
     "complexity": "Special",
     "length": "Very Long",
     "durationSeconds": 36000,
@@ -2174,7 +2174,7 @@
   },
   {
     "id": "recruitment_drive",
-    "name": "Recruitment Drive Reborn",
+    "name": "Mustering Drive",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2195,7 +2195,7 @@
   },
   {
     "id": "regicide",
-    "name": "Regicide Reborn",
+    "name": "Tale of Regicide",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -2216,7 +2216,7 @@
   },
   {
     "id": "romeo_juliet",
-    "name": "Romeo Juliet Reborn",
+    "name": "Tale of Romeo Juliet",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2232,7 +2232,7 @@
   },
   {
     "id": "roving_elves",
-    "name": "Roving Sylvans Reborn",
+    "name": "Tale of Roving Elves",
     "complexity": "Experienced",
     "length": "Short",
     "durationSeconds": 600,
@@ -2251,7 +2251,7 @@
   },
   {
     "id": "royal_trouble",
-    "name": "Royal Trouble Reborn",
+    "name": "Tale of Royal Trouble",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -2273,7 +2273,7 @@
   },
   {
     "id": "rum_deal",
-    "name": "Rum Deal Reborn",
+    "name": "Tale of Rum Deal",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -2300,7 +2300,7 @@
   },
   {
     "id": "rune_mysteries",
-    "name": "Sigil Secrets Reborn",
+    "name": "Sigil Mysteries",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2316,7 +2316,7 @@
   },
   {
     "id": "scorpion_catcher",
-    "name": "Scorpion Catcher Reborn",
+    "name": "Sting Catcher",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -2332,7 +2332,7 @@
   },
   {
     "id": "sea_slug",
-    "name": "Sea Slug Reborn",
+    "name": "Tide Slug",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2350,7 +2350,7 @@
   },
   {
     "id": "secrets_of_the_north",
-    "name": "Secrets Of The North Reborn",
+    "name": "Tale of Secrets of the North",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -2375,7 +2375,7 @@
   },
   {
     "id": "shades_of_mortton",
-    "name": "Shades Of Mortton Reborn",
+    "name": "Tale of Shades of Mortton",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -2397,7 +2397,7 @@
   },
   {
     "id": "shadow_of_the_storm",
-    "name": "Shadow Of The Storm Reborn",
+    "name": "Umbral of the Storm",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2418,7 +2418,7 @@
   },
   {
     "id": "sheep_herder",
-    "name": "Sheep Herder Reborn",
+    "name": "Wool Herder",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2434,7 +2434,7 @@
   },
   {
     "id": "sheep_shearer",
-    "name": "Sheep Shearer Reborn",
+    "name": "Wool Shearer",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2450,7 +2450,7 @@
   },
   {
     "id": "shield_of_arrav",
-    "name": "Shield Of Arrav Reborn",
+    "name": "Aegis of Arrav",
     "complexity": "Novice",
     "length": "Medium",
     "durationSeconds": 900,
@@ -2466,7 +2466,7 @@
   },
   {
     "id": "shilo_village",
-    "name": "Shilo Village Reborn",
+    "name": "Tale of Shilo Village",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -2487,7 +2487,7 @@
   },
   {
     "id": "sins_of_the_father",
-    "name": "Sins Of The Father Reborn",
+    "name": "Tale of Sins of the Father",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -2514,7 +2514,7 @@
   },
   {
     "id": "skipping_stones",
-    "name": "Skipping Stones Reborn",
+    "name": "Tale of Skipping Stones",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2531,7 +2531,7 @@
   },
   {
     "id": "sleeping_giants",
-    "name": "Sleeping Giants Reborn",
+    "name": "Tale of Sleeping Giants",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -2549,7 +2549,7 @@
   },
   {
     "id": "song_of_the_elves",
-    "name": "Song Of The Sylvans Reborn",
+    "name": "Hymn of the Elves",
     "complexity": "Grandmaster",
     "length": "Very Long",
     "durationSeconds": 36000,
@@ -2586,7 +2586,7 @@
   },
   {
     "id": "spirits_of_the_elid",
-    "name": "Spirits Of The Elid Reborn",
+    "name": "Tale of Spirits of the Elid",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2609,7 +2609,7 @@
   },
   {
     "id": "swan_song",
-    "name": "Swan Song Reborn",
+    "name": "Silverwing Hymn",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -2637,7 +2637,7 @@
   },
   {
     "id": "tai_bwo_wannai_trio",
-    "name": "Tai Bwo Wannai Trio Reborn",
+    "name": "Tale of Tai Bwo Wannai Trio",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2660,7 +2660,7 @@
   },
   {
     "id": "tale_of_the_righteous",
-    "name": "Tale Of The Righteous Reborn",
+    "name": "Tale of Tale of the Righteous",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2680,7 +2680,7 @@
   },
   {
     "id": "tears_of_guthix",
-    "name": "Echoes Of Guthix Reborn",
+    "name": "Echoes of Guthix",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2702,7 +2702,7 @@
   },
   {
     "id": "temple_of_ikov",
-    "name": "Temple Of Ikov Reborn",
+    "name": "Sanctum of Ikov",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -2722,7 +2722,7 @@
   },
   {
     "id": "temple_of_the_eye",
-    "name": "Temple Of The Eye Reborn",
+    "name": "Sanctum of the Eye",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2740,7 +2740,7 @@
   },
   {
     "id": "the_curse_of_arrav",
-    "name": "The Curse Of Arrav Reborn",
+    "name": "The Hex of Arrav",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -2766,7 +2766,7 @@
   },
   {
     "id": "the_dig_site",
-    "name": "The Dig Site Reborn",
+    "name": "Tale of The Dig Site",
     "complexity": "Intermediate",
     "length": "Long",
     "durationSeconds": 2700,
@@ -2787,7 +2787,7 @@
   },
   {
     "id": "the_eyes_of_glouphrie",
-    "name": "The Eyes Of Glouphrie Reborn",
+    "name": "Tale of The Eyes of Glouphrie",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -2811,7 +2811,7 @@
   },
   {
     "id": "the_feud",
-    "name": "The Feud Reborn",
+    "name": "Tale of The Feud",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2829,7 +2829,7 @@
   },
   {
     "id": "the_forsaken_tower",
-    "name": "The Forsaken Tower Reborn",
+    "name": "The Forsaken Spire",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2846,7 +2846,7 @@
   },
   {
     "id": "the_fremennik_exiles",
-    "name": "The Fremennik Exiles Reborn",
+    "name": "Tale of The Fremennik Exiles",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -2875,7 +2875,7 @@
   },
   {
     "id": "the_fremennik_isles",
-    "name": "The Fremennik Isles Reborn",
+    "name": "Tale of The Fremennik Isles",
     "complexity": "Experienced",
     "length": "Long",
     "durationSeconds": 3600,
@@ -2899,7 +2899,7 @@
   },
   {
     "id": "the_fremennik_trials",
-    "name": "The Fremennik Trials Reborn",
+    "name": "Tale of The Fremennik Trials",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2929,7 +2929,7 @@
   },
   {
     "id": "the_garden_of_death",
-    "name": "The Garden Of Death Reborn",
+    "name": "The Grove of Doom",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -2947,7 +2947,7 @@
   },
   {
     "id": "the_giant_dwarf",
-    "name": "The Giant Stonekin Reborn",
+    "name": "The Giant Stonekin",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2973,7 +2973,7 @@
   },
   {
     "id": "the_golem",
-    "name": "The Golem Reborn",
+    "name": "Tale of The Golem",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2993,7 +2993,7 @@
   },
   {
     "id": "the_grand_tree",
-    "name": "The Grand Tree Reborn",
+    "name": "The Grand Grove",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3013,7 +3013,7 @@
   },
   {
     "id": "the_hand_in_the_sand",
-    "name": "The Hand In The Sand Reborn",
+    "name": "Tale of The Hand In the Sand",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3033,7 +3033,7 @@
   },
   {
     "id": "the_heart_of_darkness",
-    "name": "The Heart Of Darkness Reborn",
+    "name": "The Heart of Shadows",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -3058,7 +3058,7 @@
   },
   {
     "id": "the_knights_sword",
-    "name": "The Sentinel's Sword Reborn",
+    "name": "Tale of The Knights' Sword",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3076,7 +3076,7 @@
   },
   {
     "id": "the_lost_tribe",
-    "name": "The Lost Tribe Reborn",
+    "name": "The Forsaken Tribe",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3098,7 +3098,7 @@
   },
   {
     "id": "the_queen_of_thieves",
-    "name": "The Queen Of Thieves Reborn",
+    "name": "Tale of The Queen of Thieves",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -3116,7 +3116,7 @@
   },
   {
     "id": "the_restless_ghost",
-    "name": "The Restless Wraith Reborn",
+    "name": "The Restless Spirit",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3132,7 +3132,7 @@
   },
   {
     "id": "the_ribbiting_tale_of_a_lily_pad_laborer",
-    "name": "The Ribbiting Tale Of A Lily Pad Laborer Reborn",
+    "name": "Tale of The Ribbiting Tale of A Lily Pad Laborer",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3149,7 +3149,7 @@
   },
   {
     "id": "the_tourist_trap",
-    "name": "The Tourist Trap Reborn",
+    "name": "The Traveler Trap",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3168,7 +3168,7 @@
   },
   {
     "id": "throne_of_miscellania",
-    "name": "Throne Of Miscellania Reborn",
+    "name": "Tale of Throne of Miscellania",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3187,7 +3187,7 @@
   },
   {
     "id": "tower_of_life",
-    "name": "Tower Of Life Reborn",
+    "name": "Spire of Life",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3205,7 +3205,7 @@
   },
   {
     "id": "tree_gnome_village",
-    "name": "Tree Gnome Village Reborn",
+    "name": "Grove Gnome Village",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3221,7 +3221,7 @@
   },
   {
     "id": "tribal_totem",
-    "name": "Tribal Totem Reborn",
+    "name": "Clan Totem",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -3239,7 +3239,7 @@
   },
   {
     "id": "troll_romance",
-    "name": "Troll Romance Reborn",
+    "name": "Brute Romance",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -3260,7 +3260,7 @@
   },
   {
     "id": "troll_stronghold",
-    "name": "Troll Stronghold Reborn",
+    "name": "Brute Stronghold",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -3280,7 +3280,7 @@
   },
   {
     "id": "twilights_promise",
-    "name": "Twilights Promise Reborn",
+    "name": "Tale of Twilights Promise",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3298,7 +3298,7 @@
   },
   {
     "id": "underground_pass",
-    "name": "Underground Pass Reborn",
+    "name": "Underpath Pass",
     "complexity": "Experienced",
     "length": "Very Long",
     "durationSeconds": 7200,
@@ -3319,7 +3319,7 @@
   },
   {
     "id": "vampyre_slayer",
-    "name": "Nightborn Slayer Reborn",
+    "name": "Nightborn Slayer",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3335,7 +3335,7 @@
   },
   {
     "id": "walking_the_dog",
-    "name": "Walking The Dog Reborn",
+    "name": "Tracking the Dog",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3351,7 +3351,7 @@
   },
   {
     "id": "wanted",
-    "name": "Wanted Reborn",
+    "name": "Tale of Wanted",
     "complexity": "Intermediate",
     "length": "Long",
     "durationSeconds": 2700,
@@ -3371,7 +3371,7 @@
   },
   {
     "id": "watchtower",
-    "name": "Watchtower Reborn",
+    "name": "Wardspire",
     "complexity": "Intermediate",
     "length": "Long",
     "durationSeconds": 2700,
@@ -3393,7 +3393,7 @@
   },
   {
     "id": "waterfall_quest",
-    "name": "Waterfall Quest Reborn",
+    "name": "Cascade Quest",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3410,7 +3410,7 @@
   },
   {
     "id": "what_lies_below",
-    "name": "What Lies Below Reborn",
+    "name": "Tale of What Lies Below",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3430,7 +3430,7 @@
   },
   {
     "id": "while_guthix_sleeps",
-    "name": "While Guthix Sleeps Reborn",
+    "name": "When Guthix Sleeps",
     "complexity": "Grandmaster",
     "length": "Very Long",
     "durationSeconds": 36000,
@@ -3463,7 +3463,7 @@
   },
   {
     "id": "witchs_house",
-    "name": "Hex's House Reborn",
+    "name": "Tale of Witch's House",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3479,7 +3479,7 @@
   },
   {
     "id": "witchs_potion",
-    "name": "Hex's Potion Reborn",
+    "name": "Tale of Witch's Potion",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3495,7 +3495,7 @@
   },
   {
     "id": "x_marks_the_spot",
-    "name": "X Marks the Spot Reborn",
+    "name": "Tale of X Marks the Spot",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3511,7 +3511,7 @@
   },
   {
     "id": "zogre_flesh_eaters",
-    "name": "Zogre Flesh Eaters Reborn",
+    "name": "Bogre Flesh Eaters",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
