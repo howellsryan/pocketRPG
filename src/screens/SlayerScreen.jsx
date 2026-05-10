@@ -213,7 +213,7 @@ export default function SlayerScreen({ onBack }) {
 
   const assignTask = (master, monsterId, isBoss) => {
     const monsterData = monstersData[monsterId]
-    const monsterName = monsterId === DAGANNOTH_KINGS_TASK_ID ? 'Deepking Kings' : (monsterData?.name || monsterId.replace(/_/g, ' '))
+    const monsterName = monsterId === DAGANNOTH_KINGS_TASK_ID ? 'Nagadoth Kings' : (monsterData?.name || monsterId.replace(/_/g, ' '))
 
     // Jad always has a single-kill task
     let totalCount

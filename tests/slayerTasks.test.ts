@@ -74,7 +74,7 @@ describe('resolveSlayerTaskKill', () => {
 
 
 describe('doesSlayerTaskMatchMonster', () => {
-  it('treats Deepking kings as equivalent for slayer task matching', () => {
+  it('treats Nagadoth kings as equivalent for slayer task matching', () => {
     expect(doesSlayerTaskMatchMonster('dagganoth_rex', 'dagganoth_prime')).toBe(true)
     expect(doesSlayerTaskMatchMonster('dagganoth_rex', 'dagganoth_supreme')).toBe(true)
     expect(doesSlayerTaskMatchMonster('dagganoth_prime', 'dagganoth_supreme')).toBe(true)
@@ -82,7 +82,7 @@ describe('doesSlayerTaskMatchMonster', () => {
 
 
 
-  it('matches dagannoth kings task id to any king', () => {
+  it('matches nagadoth kings task id to any king', () => {
     expect(doesSlayerTaskMatchMonster('dagganoth_kings', 'dagganoth_rex')).toBe(true)
     expect(doesSlayerTaskMatchMonster('dagganoth_kings', 'dagganoth_prime')).toBe(true)
     expect(doesSlayerTaskMatchMonster('dagganoth_kings', 'dagganoth_supreme')).toBe(true)

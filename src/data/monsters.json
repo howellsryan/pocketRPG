@@ -3070,7 +3070,7 @@
   },
   "dagganoth_rex": {
     "id": "dagganoth_rex",
-    "name": "Deepking Rex",
+    "name": "Nagadoth Rex",
     "boss": true,
     "combatLevel": 303,
     "hitpoints": 150,
@@ -3213,7 +3213,7 @@
   },
   "dagganoth_prime": {
     "id": "dagganoth_prime",
-    "name": "Deepking Prime",
+    "name": "Nagadoth Prime",
     "boss": true,
     "combatLevel": 303,
     "hitpoints": 150,
@@ -3351,7 +3351,7 @@
   },
   "dagganoth_supreme": {
     "id": "dagganoth_supreme",
-    "name": "Deepking Supreme",
+    "name": "Nagadoth Supreme",
     "boss": true,
     "combatLevel": 303,
     "hitpoints": 150,

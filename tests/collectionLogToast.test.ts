@@ -66,7 +66,7 @@ describe('collection log slot completion notifications', () => {
 
   it('does not re-fire for shared items already obtained from another source', async () => {
     const mod: any = await freshClient()
-    // dragon_axe is shared across all three dagannoth kings — having it from
+    // dragon_axe is shared across all three nagadoth kings — having it from
     // Rex should suppress the toast when Prime later "drops" it.
     getCollectionLogMock.mockResolvedValueOnce({
       entries: [{ itemId: 'dragon_axe', sourceType: 'monsters', sourceId: 'dagganoth_rex', obtainedAt: 1 }],
