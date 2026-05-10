@@ -80,7 +80,7 @@
         "name": "Mine runite ore",
         "level": 85,
         "ticks": 30,
-        "xp": 416.667,
+        "xp": 420,
         "product": "runite_ore"
       },
       {

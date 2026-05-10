@@ -1,6 +1,6 @@
 # PocketRPG Economy Benchmark
 
-Generated: 2026-05-10T17:35:26.676Z
+Generated: 2026-05-10T17:47:42.203Z
 
 ## Assumptions
 
