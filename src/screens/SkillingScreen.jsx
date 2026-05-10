@@ -248,10 +248,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                 return
               }
 
-              // Calculate coins based on shop value: <100k = 1.5x, >=100k = 1.1x
-              const alchValue = alchItem.shopValue >= 100000
-                ? Math.floor(alchItem.shopValue * 1.1)
-                : Math.floor(alchItem.shopValue * 1.5)
+              const alchValue = Math.floor(alchItem.shopValue * 1.1)
 
               // Remove the alchemized item from inventory
               if (newInv[alchemyItemIdx].quantity > 1) {
@@ -702,7 +699,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             </div>
 
             <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mb-3">
-              Shop value &lt; 100k: ×1.5 | Shop value ≥ 100k: ×1.1
+Shop value: ×1.1
             </div>
 
             <div class="space-y-2 max-h-96 overflow-y-auto">
@@ -713,9 +710,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                   // Skip if not stackable but quantity > 1 (only show first instance)
                   return null
                 }
-                const alchValue = item.shopValue >= 100000
-                  ? Math.floor(item.shopValue * 1.1)
-                  : Math.floor(item.shopValue * 1.5)
+                const alchValue = Math.floor(item.shopValue * 1.1)
                 return (
                   <button
                     key={`${idx}-${slot.itemId}`}

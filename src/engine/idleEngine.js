@@ -255,9 +255,7 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
   if (task.action.type === 'alchemy' && task.selectedAlchemyItem) {
     const alchItem = itemsData[task.selectedAlchemyItem.itemId]
     if (alchItem && typeof alchItem.shopValue === 'number') {
-      const coinsPerAction = alchItem.shopValue >= 100000
-        ? Math.floor(alchItem.shopValue * 1.1)
-        : Math.floor(alchItem.shopValue * 1.5)
+      const coinsPerAction = Math.floor(alchItem.shopValue * 1.1)
       coinsGained = coinsPerAction * actions
 
       // Consume the alchemized items from inventory
