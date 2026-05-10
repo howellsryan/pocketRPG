@@ -215,7 +215,7 @@ export default function SlayerScreen({ onBack }) {
     const monsterData = monstersData[monsterId]
     const monsterName = monsterId === DAGANNOTH_KINGS_TASK_ID ? 'Nagadoth Kings' : (monsterData?.name || monsterId.replace(/_/g, ' '))
 
-    // Jad always has a single-kill task
+    // Ember Tyrant always has a single-kill task
     let totalCount
     if (monsterId === 'jad') {
       totalCount = 1

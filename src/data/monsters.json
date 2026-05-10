@@ -4139,7 +4139,7 @@
   },
   "jad": {
     "id": "jad",
-    "name": "TzKal-Zuk (Jad)",
+    "name": "Ember Tyrant",
     "boss": true,
     "combatLevel": 702,
     "hitpoints": 250,
@@ -4229,7 +4229,7 @@
   },
   "inferno": {
     "id": "inferno",
-    "name": "The Inferno (TzKal-Zuk)",
+    "name": "Ashen Crucible",
     "boss": true,
     "combatLevel": 1400,
     "hitpoints": 600,
@@ -4319,7 +4319,7 @@
   },
   "corrupted_gauntlet": {
     "id": "corrupted_gauntlet",
-    "name": "Corrupted Gauntlet",
+    "name": "Blighted Gauntlet",
     "boss": true,
     "combatLevel": 894,
     "hitpoints": 1000,
