@@ -2736,7 +2736,7 @@
   },
   "green_dragon": {
     "id": "green_dragon",
-    "name": "Verdant Drake",
+    "name": "Green Dragon",
     "isDragon": true,
     "combatLevel": 79,
     "hitpoints": 75,
@@ -2905,7 +2905,7 @@
   },
   "red_dragon": {
     "id": "red_dragon",
-    "name": "Crimson Drake",
+    "name": "Red Dragon",
     "combatLevel": 152,
     "hitpoints": 140,
     "stats": {
@@ -6638,7 +6638,7 @@
   },
   "brutal_black_dragon": {
     "id": "brutal_black_dragon",
-    "name": "Dread Black Drake",
+    "name": "Brutal Black Dragon",
     "isDragon": true,
     "combatLevel": 318,
     "hitpoints": 315,
