@@ -1,7 +1,7 @@
 [
   {
     "id": "a_kingdom_divided",
-    "name": "Chronicle: A Kingdom Divided",
+    "name": "Echoes of A Crownlands Divided",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -29,7 +29,7 @@
   },
   {
     "id": "a_night_at_the_theatre",
-    "name": "Chronicle: A Night At The Theatre",
+    "name": "The A Night At The Stage Accord",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -45,7 +45,7 @@
   },
   {
     "id": "a_porcine_of_interest",
-    "name": "Chronicle: A Porcine Of Interest",
+    "name": "Shadows over A Porcine Of Interest",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -61,7 +61,7 @@
   },
   {
     "id": "a_souls_bane",
-    "name": "Chronicle: A Souls Bane",
+    "name": "Legacy of A Souls Bane",
     "complexity": "Novice",
     "length": "Medium",
     "durationSeconds": 900,
@@ -78,7 +78,7 @@
   },
   {
     "id": "a_tail_of_two_cats",
-    "name": "Chronicle: A Tail Of Two Cats",
+    "name": "The A Tail Of Two Cats Reckoning",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -97,7 +97,7 @@
   },
   {
     "id": "a_taste_of_hope",
-    "name": "Chronicle: A Taste Of Hope",
+    "name": "Echoes of A Taste Of Hope",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -121,7 +121,7 @@
   },
   {
     "id": "animal_magnetism",
-    "name": "Chronicle: Animal Magnetism",
+    "name": "The Animal Magnetism Accord",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -151,7 +151,7 @@
   },
   {
     "id": "another_slice_of_h_a_m",
-    "name": "Chronicle: Another Slice Of H A M",
+    "name": "Shadows over Another Slice Of H A M",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -175,7 +175,7 @@
   },
   {
     "id": "at_first_light",
-    "name": "Chronicle: At First Light",
+    "name": "Legacy of At First Light",
     "complexity": "Experienced",
     "length": "Short",
     "durationSeconds": 600,
@@ -198,7 +198,7 @@
   },
   {
     "id": "below_ice_mountain",
-    "name": "Chronicle: Below Ice Mountain",
+    "name": "The Below Ice Mountain Reckoning",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -218,7 +218,7 @@
   },
   {
     "id": "beneath_cursed_sands",
-    "name": "Chronicle: Beneath Cursed Sands",
+    "name": "Echoes of Beneath Cursed Sands",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -242,7 +242,7 @@
   },
   {
     "id": "between_a_rock",
-    "name": "Chronicle: Between A Rock",
+    "name": "The Between A Rock Accord",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -267,7 +267,7 @@
   },
   {
     "id": "big_chompy_bird_hunting",
-    "name": "Chronicle: Big Chompy Bird Hunting",
+    "name": "Shadows over Big Chompy Bird Hunting",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -289,7 +289,7 @@
   },
   {
     "id": "biohazard",
-    "name": "Chronicle: Biohazard",
+    "name": "Legacy of Biohazard",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -307,7 +307,7 @@
   },
   {
     "id": "black_knights_fortress",
-    "name": "Chronicle: Black Knights Fortress",
+    "name": "The Black Knights Fortress Reckoning",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -323,7 +323,7 @@
   },
   {
     "id": "blood_runs_deep",
-    "name": "Chronicle: Blood Runs Deep",
+    "name": "Echoes of Blood Runs Deep",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -344,7 +344,7 @@
   },
   {
     "id": "bone_voyage",
-    "name": "Chronicle: Bone Voyage",
+    "name": "The Bone Voyage Accord",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -363,7 +363,7 @@
   },
   {
     "id": "cabin_fever",
-    "name": "Chronicle: Cabin Fever",
+    "name": "Shadows over Cabin Fever",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -388,7 +388,7 @@
   },
   {
     "id": "children_of_the_sun",
-    "name": "Chronicle: Children Of The Sun",
+    "name": "Legacy of Children Of The Sun",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -404,7 +404,7 @@
   },
   {
     "id": "clock_tower",
-    "name": "Chronicle: Clock Tower",
+    "name": "The Clock Tower Reckoning",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -420,7 +420,7 @@
   },
   {
     "id": "cold_war",
-    "name": "Chronicle: Cold War",
+    "name": "Echoes of Cold War",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -446,7 +446,7 @@
   },
   {
     "id": "contact",
-    "name": "Chronicle: Contact",
+    "name": "The Contact Accord",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -466,7 +466,7 @@
   },
   {
     "id": "cooks_assistant",
-    "name": "Chronicle: Cooks Assistant",
+    "name": "Shadows over Cooks Assistant",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -482,7 +482,7 @@
   },
   {
     "id": "creature_of_fenkenstrain",
-    "name": "Chronicle: Creature Of Fenkenstrain",
+    "name": "Legacy of Creature Of Fenkenstrain",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -504,7 +504,7 @@
   },
   {
     "id": "current_affairs",
-    "name": "Chronicle: Current Affairs",
+    "name": "The Current Affairs Reckoning",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -520,7 +520,7 @@
   },
   {
     "id": "darkness_of_hallowvale",
-    "name": "Chronicle: Darkness Of Hallowvale",
+    "name": "Echoes of Darkness Of Hallowvale",
     "complexity": "Intermediate",
     "length": "Long",
     "durationSeconds": 2700,
@@ -548,7 +548,7 @@
   },
   {
     "id": "death_plateau",
-    "name": "Chronicle: Death Plateau",
+    "name": "The Death Plateau Accord",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -564,7 +564,7 @@
   },
   {
     "id": "death_to_the_dorgeshuun",
-    "name": "Chronicle: Death To The Dorgeshuun",
+    "name": "Shadows over Death To The Dorgeshuun",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -586,7 +586,7 @@
   },
   {
     "id": "defender_of_varrock",
-    "name": "Chronicle: Defender Of Varrock",
+    "name": "Legacy of Defender Of Varrock",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -613,7 +613,7 @@
   },
   {
     "id": "demon_slayer",
-    "name": "Chronicle: Demon Slayer",
+    "name": "The Fiend Slayer Reckoning",
     "complexity": "Novice",
     "length": "Medium",
     "durationSeconds": 900,
@@ -629,7 +629,7 @@
   },
   {
     "id": "desert_treasure_i",
-    "name": "Chronicle: Desert Treasure I",
+    "name": "Echoes of Sunscar Treasure I",
     "complexity": "Master",
     "length": "Very Long",
     "durationSeconds": 18000,
@@ -655,7 +655,7 @@
   },
   {
     "id": "desert_treasure_ii_the_fallen_empire",
-    "name": "Chronicle: Desert Treasure II The Fallen Empire",
+    "name": "The Sunscar Treasure II The Fallen Empire Accord",
     "complexity": "Grandmaster",
     "length": "Very Long",
     "durationSeconds": 36000,
@@ -685,7 +685,7 @@
   },
   {
     "id": "devious_minds",
-    "name": "Chronicle: Devious Minds",
+    "name": "Shadows over Devious Minds",
     "complexity": "Experienced",
     "length": "Short",
     "durationSeconds": 600,
@@ -711,7 +711,7 @@
   },
   {
     "id": "dorics_quest",
-    "name": "Chronicle: Dorics Quest",
+    "name": "Legacy of Dorics Quest",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -729,7 +729,7 @@
   },
   {
     "id": "dragon_slayer_i",
-    "name": "Chronicle: Dragon Slayer I",
+    "name": "The Wyrm Slayer I Reckoning",
     "complexity": "Experienced",
     "length": "Long",
     "durationSeconds": 3600,
@@ -748,7 +748,7 @@
   },
   {
     "id": "dragon_slayer_ii",
-    "name": "Chronicle: Dragon Slayer II",
+    "name": "Echoes of Wyrm Slayer II",
     "complexity": "Grandmaster",
     "length": "Very Long",
     "durationSeconds": 36000,
@@ -785,7 +785,7 @@
   },
   {
     "id": "dream_mentor",
-    "name": "Chronicle: Dream Mentor",
+    "name": "The Dream Mentor Accord",
     "complexity": "Master",
     "length": "Short",
     "durationSeconds": 1500,
@@ -805,7 +805,7 @@
   },
   {
     "id": "druidic_ritual",
-    "name": "Chronicle: Druidic Ritual",
+    "name": "Shadows over Druidic Ritual",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -821,7 +821,7 @@
   },
   {
     "id": "dwarf_cannon",
-    "name": "Chronicle: Dwarf Cannon",
+    "name": "Legacy of Stonekin Cannon",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -837,7 +837,7 @@
   },
   {
     "id": "eadgars_ruse",
-    "name": "Chronicle: Eadgars Ruse",
+    "name": "The Eadgars Ruse Reckoning",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -857,7 +857,7 @@
   },
   {
     "id": "eagles_peak",
-    "name": "Chronicle: Eagles Peak",
+    "name": "Echoes of Eagles Peak",
     "complexity": "Novice",
     "length": "Medium",
     "durationSeconds": 900,
@@ -875,7 +875,7 @@
   },
   {
     "id": "elemental_workshop_i",
-    "name": "Chronicle: Elemental Workshop I",
+    "name": "The Elemental Workshop I Accord",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -896,7 +896,7 @@
   },
   {
     "id": "elemental_workshop_ii",
-    "name": "Chronicle: Elemental Workshop II",
+    "name": "Shadows over Elemental Workshop II",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -918,7 +918,7 @@
   },
   {
     "id": "enakhras_lament",
-    "name": "Chronicle: Enakhras Lament",
+    "name": "Legacy of Enakhras Lament",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -942,7 +942,7 @@
   },
   {
     "id": "enlightened_journey",
-    "name": "Chronicle: Enlightened Journey",
+    "name": "The Enlightened Journey Reckoning",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -965,7 +965,7 @@
   },
   {
     "id": "ernest_the_chicken",
-    "name": "Chronicle: Ernest The Chicken",
+    "name": "Echoes of Ernest The Chicken",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -981,7 +981,7 @@
   },
   {
     "id": "ethos_of_arceuus",
-    "name": "Chronicle: Ethos Of Arceuus",
+    "name": "The Ethos Of Arceuus Accord",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -998,7 +998,7 @@
   },
   {
     "id": "fairytale_i_growing_pains",
-    "name": "Chronicle: Fairytale I Growing Pains",
+    "name": "Shadows over Feytale I Growing Pains",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -1019,7 +1019,7 @@
   },
   {
     "id": "fairytale_ii_cure_a_queen",
-    "name": "Chronicle: Fairytale II Cure A Queen",
+    "name": "Legacy of Feytale II Cure A Queen",
     "complexity": "Experienced",
     "length": "Short",
     "durationSeconds": 600,
@@ -1040,7 +1040,7 @@
   },
   {
     "id": "family_crest",
-    "name": "Chronicle: Family Crest",
+    "name": "The Family Crest Reckoning",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -1064,7 +1064,7 @@
   },
   {
     "id": "fight_arena",
-    "name": "Chronicle: Fight Arena",
+    "name": "Echoes of Fight Arena",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1081,7 +1081,7 @@
   },
   {
     "id": "fishing_contest",
-    "name": "Chronicle: Fishing Contest",
+    "name": "The Fishing Contest Accord",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1099,7 +1099,7 @@
   },
   {
     "id": "forgettable_tale",
-    "name": "Chronicle: Forgettable Tale",
+    "name": "Shadows over Forgettable Tale",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1122,7 +1122,7 @@
   },
   {
     "id": "garden_of_tranquillity",
-    "name": "Chronicle: Garden Of Tranquillity",
+    "name": "Legacy of Garden Of Tranquillity",
     "complexity": "Intermediate",
     "length": "Long",
     "durationSeconds": 2700,
@@ -1142,7 +1142,7 @@
   },
   {
     "id": "gertrudes_cat",
-    "name": "Chronicle: Gertrudes Cat",
+    "name": "The Gertrudes Cat Reckoning",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1158,7 +1158,7 @@
   },
   {
     "id": "getting_ahead",
-    "name": "Chronicle: Getting Ahead",
+    "name": "Echoes of Getting Ahead",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1178,7 +1178,7 @@
   },
   {
     "id": "ghosts_ahoy",
-    "name": "Chronicle: Ghosts Ahoy",
+    "name": "The Ghosts Ahoy Accord",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1199,7 +1199,7 @@
   },
   {
     "id": "goblin_diplomacy",
-    "name": "Chronicle: Goblin Diplomacy",
+    "name": "Shadows over Gloomkin Diplomacy",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1215,7 +1215,7 @@
   },
   {
     "id": "goodbye_grubby",
-    "name": "Chronicle: Goodbye Grubby",
+    "name": "Legacy of Goodbye Grubby",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1231,7 +1231,7 @@
   },
   {
     "id": "grim_tales",
-    "name": "Chronicle: Grim Tales",
+    "name": "The Grim Tales Reckoning",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -1259,7 +1259,7 @@
   },
   {
     "id": "haunted_mine",
-    "name": "Chronicle: Haunted Mine",
+    "name": "Echoes of Haunted Mine",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -1280,7 +1280,7 @@
   },
   {
     "id": "hazeel_cult",
-    "name": "Chronicle: Hazeel Cult",
+    "name": "The Hazeel Cult Accord",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1296,7 +1296,7 @@
   },
   {
     "id": "heroes_quest",
-    "name": "Chronicle: Heroes Quest",
+    "name": "Shadows over Heroes Quest",
     "complexity": "Experienced",
     "length": "Long",
     "durationSeconds": 3600,
@@ -1332,7 +1332,7 @@
   },
   {
     "id": "holy_grail",
-    "name": "Chronicle: Holy Grail",
+    "name": "Legacy of Holy Grail",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1353,7 +1353,7 @@
   },
   {
     "id": "horror_from_the_deep",
-    "name": "Chronicle: Horror From The Deep",
+    "name": "The Horror From The Deep Reckoning",
     "complexity": "Experienced",
     "length": "Short",
     "durationSeconds": 600,
@@ -1373,7 +1373,7 @@
   },
   {
     "id": "icthlarins_little_helper",
-    "name": "Chronicle: Icthlarins Little Helper",
+    "name": "Echoes of Icthlarins Little Helper",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1393,7 +1393,7 @@
   },
   {
     "id": "imp_catcher",
-    "name": "Chronicle: Imp Catcher",
+    "name": "The Imp Catcher Accord",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1409,7 +1409,7 @@
   },
   {
     "id": "in_aid_of_the_myreque",
-    "name": "Chronicle: In Aid Of The Myreque",
+    "name": "Shadows over In Aid Of The Myreque",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1435,7 +1435,7 @@
   },
   {
     "id": "in_search_of_the_myreque",
-    "name": "Chronicle: In Search Of The Myreque",
+    "name": "Legacy of In Search Of The Myreque",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -1459,7 +1459,7 @@
   },
   {
     "id": "jungle_potion",
-    "name": "Chronicle: Jungle Potion",
+    "name": "The Jungle Potion Reckoning",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1479,7 +1479,7 @@
   },
   {
     "id": "kings_ransom",
-    "name": "Chronicle: Kings Ransom",
+    "name": "Echoes of Kings Ransom",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -1504,7 +1504,7 @@
   },
   {
     "id": "lair_of_tarn_razorlor",
-    "name": "Chronicle: Lair Of Tarn Razorlor",
+    "name": "The Lair Of Tarn Razorlor Accord",
     "complexity": "Experienced",
     "length": "Short",
     "durationSeconds": 600,
@@ -1524,7 +1524,7 @@
   },
   {
     "id": "land_of_the_goblins",
-    "name": "Chronicle: Land Of The Goblins",
+    "name": "Shadows over Land Of The Goblins",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -1550,7 +1550,7 @@
   },
   {
     "id": "legends_quest",
-    "name": "Chronicle: Legends Quest",
+    "name": "Legacy of Legends Quest",
     "complexity": "Master",
     "length": "Very Long",
     "durationSeconds": 18000,
@@ -1582,7 +1582,7 @@
   },
   {
     "id": "lost_city",
-    "name": "Chronicle: Lost City",
+    "name": "The Lost City Reckoning",
     "complexity": "Experienced",
     "length": "Short",
     "durationSeconds": 600,
@@ -1604,7 +1604,7 @@
   },
   {
     "id": "lunar_diplomacy",
-    "name": "Chronicle: Lunar Diplomacy",
+    "name": "Echoes of Lunar Diplomacy",
     "complexity": "Experienced",
     "length": "Long",
     "durationSeconds": 3600,
@@ -1632,7 +1632,7 @@
   },
   {
     "id": "making_friends_with_my_arm",
-    "name": "Chronicle: Making Friends With My Arm",
+    "name": "The Making Friends With My Arm Accord",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -1660,7 +1660,7 @@
   },
   {
     "id": "making_history",
-    "name": "Chronicle: Making History",
+    "name": "Shadows over Making History",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1679,7 +1679,7 @@
   },
   {
     "id": "merlins_crystal",
-    "name": "Chronicle: Merlins Crystal",
+    "name": "Legacy of Merlins Crystal",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1695,7 +1695,7 @@
   },
   {
     "id": "misthalin_mystery",
-    "name": "Chronicle: Misthalin Mystery",
+    "name": "The Misthalin Mystery Reckoning",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1711,7 +1711,7 @@
   },
   {
     "id": "monks_friend",
-    "name": "Chronicle: Monks Friend",
+    "name": "Echoes of Monks Friend",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1727,7 +1727,7 @@
   },
   {
     "id": "monkey_madness_i",
-    "name": "Chronicle: Monkey Madness I",
+    "name": "The Moonfang Madness I Accord",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -1748,7 +1748,7 @@
   },
   {
     "id": "monkey_madness_ii",
-    "name": "Chronicle: Monkey Madness II",
+    "name": "Shadows over Moonfang Madness II",
     "complexity": "Grandmaster",
     "length": "Very Long",
     "durationSeconds": 36000,
@@ -1781,7 +1781,7 @@
   },
   {
     "id": "mountain_daughter",
-    "name": "Chronicle: Mountain Daughter",
+    "name": "Legacy of Mountain Daughter",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1800,7 +1800,7 @@
   },
   {
     "id": "mournings_end_part_i",
-    "name": "Chronicle: Mournings End Part I",
+    "name": "The Mournings End Part I Reckoning",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -1823,7 +1823,7 @@
   },
   {
     "id": "mournings_end_part_ii",
-    "name": "Chronicle: Mournings End Part II",
+    "name": "Echoes of Mournings End Part II",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -1841,7 +1841,7 @@
   },
   {
     "id": "murder_mystery",
-    "name": "Chronicle: Murder Mystery",
+    "name": "The Murder Mystery Accord",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -1857,7 +1857,7 @@
   },
   {
     "id": "my_arms_big_adventure",
-    "name": "Chronicle: My Arms Big Adventure",
+    "name": "Shadows over My Arms Big Adventure",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1880,7 +1880,7 @@
   },
   {
     "id": "nature_spirit",
-    "name": "Chronicle: Nature Spirit",
+    "name": "Legacy of Nature Spirit",
     "complexity": "Novice",
     "length": "Medium",
     "durationSeconds": 900,
@@ -1900,7 +1900,7 @@
   },
   {
     "id": "observatory_quest",
-    "name": "Chronicle: Observatory Quest",
+    "name": "The Observatory Quest Reckoning",
     "complexity": "Novice",
     "length": "Medium",
     "durationSeconds": 900,
@@ -1918,7 +1918,7 @@
   },
   {
     "id": "olafs_quest",
-    "name": "Chronicle: Olafs Quest",
+    "name": "Echoes of Olafs Quest",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -1937,7 +1937,7 @@
   },
   {
     "id": "one_small_favour",
-    "name": "Chronicle: One Small Favour",
+    "name": "The One Small Favour Accord",
     "complexity": "Experienced",
     "length": "Very Long",
     "durationSeconds": 7200,
@@ -1961,7 +1961,7 @@
   },
   {
     "id": "path_of_glouphrie",
-    "name": "Chronicle: Path Of Glouphrie",
+    "name": "Shadows over Path Of Glouphrie",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -1989,7 +1989,7 @@
   },
   {
     "id": "perilous_moons",
-    "name": "Chronicle: Perilous Moons",
+    "name": "Legacy of Perilous Moons",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -2014,7 +2014,7 @@
   },
   {
     "id": "pirates_treasure",
-    "name": "Chronicle: Pirates Treasure",
+    "name": "The Pirates Treasure Reckoning",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2030,7 +2030,7 @@
   },
   {
     "id": "plague_city",
-    "name": "Chronicle: Plague City",
+    "name": "Echoes of Plague City",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2046,7 +2046,7 @@
   },
   {
     "id": "priest_in_peril",
-    "name": "Chronicle: Priest In Peril",
+    "name": "The Priest In Peril Accord",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2062,7 +2062,7 @@
   },
   {
     "id": "prince_ali_rescue",
-    "name": "Chronicle: Prince Ali Rescue",
+    "name": "Shadows over Prince Ali Rescue",
     "complexity": "Novice",
     "length": "Medium",
     "durationSeconds": 900,
@@ -2078,7 +2078,7 @@
   },
   {
     "id": "rag_and_bone_man_i",
-    "name": "Chronicle: Rag And Bone Man I",
+    "name": "Legacy of Rag And Bone Man I",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2095,7 +2095,7 @@
   },
   {
     "id": "rag_and_bone_man_ii",
-    "name": "Chronicle: Rag And Bone Man II",
+    "name": "The Rag And Bone Man II Reckoning",
     "complexity": "Intermediate",
     "length": "Long",
     "durationSeconds": 2700,
@@ -2117,7 +2117,7 @@
   },
   {
     "id": "ratcatchers",
-    "name": "Chronicle: Ratcatchers",
+    "name": "Echoes of Ratcatchers",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2136,7 +2136,7 @@
   },
   {
     "id": "recipe_for_disaster",
-    "name": "Chronicle: Recipe For Disaster",
+    "name": "The Recipe For Disaster Accord",
     "complexity": "Special",
     "length": "Very Long",
     "durationSeconds": 36000,
@@ -2174,7 +2174,7 @@
   },
   {
     "id": "recruitment_drive",
-    "name": "Chronicle: Recruitment Drive",
+    "name": "Shadows over Recruitment Drive",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2195,7 +2195,7 @@
   },
   {
     "id": "regicide",
-    "name": "Chronicle: Regicide",
+    "name": "Legacy of Regicide",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -2216,7 +2216,7 @@
   },
   {
     "id": "romeo_juliet",
-    "name": "Chronicle: Romeo Juliet",
+    "name": "The Romeo Juliet Reckoning",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2232,7 +2232,7 @@
   },
   {
     "id": "roving_elves",
-    "name": "Chronicle: Roving Elves",
+    "name": "Echoes of Roving Elves",
     "complexity": "Experienced",
     "length": "Short",
     "durationSeconds": 600,
@@ -2251,7 +2251,7 @@
   },
   {
     "id": "royal_trouble",
-    "name": "Chronicle: Royal Trouble",
+    "name": "The Royal Trouble Accord",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -2273,7 +2273,7 @@
   },
   {
     "id": "rum_deal",
-    "name": "Chronicle: Rum Deal",
+    "name": "Shadows over Rum Deal",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -2300,7 +2300,7 @@
   },
   {
     "id": "rune_mysteries",
-    "name": "Chronicle: Rune Mysteries",
+    "name": "Legacy of Rune Mysteries",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2316,7 +2316,7 @@
   },
   {
     "id": "scorpion_catcher",
-    "name": "Chronicle: Scorpion Catcher",
+    "name": "The Scorpion Catcher Reckoning",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -2332,7 +2332,7 @@
   },
   {
     "id": "sea_slug",
-    "name": "Chronicle: Sea Slug",
+    "name": "Echoes of Sea Slug",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2350,7 +2350,7 @@
   },
   {
     "id": "secrets_of_the_north",
-    "name": "Chronicle: Secrets Of The North",
+    "name": "The Secrets Of The North Accord",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -2375,7 +2375,7 @@
   },
   {
     "id": "shades_of_mortton",
-    "name": "Chronicle: Shades Of Mortton",
+    "name": "Shadows over Shades Of Mortton",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -2397,7 +2397,7 @@
   },
   {
     "id": "shadow_of_the_storm",
-    "name": "Chronicle: Shadow Of The Storm",
+    "name": "Legacy of Shadow Of The Storm",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2418,7 +2418,7 @@
   },
   {
     "id": "sheep_herder",
-    "name": "Chronicle: Sheep Herder",
+    "name": "The Sheep Herder Reckoning",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2434,7 +2434,7 @@
   },
   {
     "id": "sheep_shearer",
-    "name": "Chronicle: Sheep Shearer",
+    "name": "Echoes of Sheep Shearer",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2450,7 +2450,7 @@
   },
   {
     "id": "shield_of_arrav",
-    "name": "Chronicle: Shield Of Arrav",
+    "name": "The Shield Of Arrav Accord",
     "complexity": "Novice",
     "length": "Medium",
     "durationSeconds": 900,
@@ -2466,7 +2466,7 @@
   },
   {
     "id": "shilo_village",
-    "name": "Chronicle: Shilo Village",
+    "name": "Shadows over Shilo Village",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -2487,7 +2487,7 @@
   },
   {
     "id": "sins_of_the_father",
-    "name": "Chronicle: Sins Of The Father",
+    "name": "Legacy of Sins Of The Father",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -2514,7 +2514,7 @@
   },
   {
     "id": "skipping_stones",
-    "name": "Chronicle: Skipping Stones",
+    "name": "The Skipping Stones Reckoning",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2531,7 +2531,7 @@
   },
   {
     "id": "sleeping_giants",
-    "name": "Chronicle: Sleeping Giants",
+    "name": "Echoes of Sleeping Giants",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -2549,7 +2549,7 @@
   },
   {
     "id": "song_of_the_elves",
-    "name": "Chronicle: Song Of The Elves",
+    "name": "The Song Of The Elves Accord",
     "complexity": "Grandmaster",
     "length": "Very Long",
     "durationSeconds": 36000,
@@ -2586,7 +2586,7 @@
   },
   {
     "id": "spirits_of_the_elid",
-    "name": "Chronicle: Spirits Of The Elid",
+    "name": "Shadows over Spirits Of The Elid",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2609,7 +2609,7 @@
   },
   {
     "id": "swan_song",
-    "name": "Chronicle: Swan Song",
+    "name": "Legacy of Swan Song",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -2637,7 +2637,7 @@
   },
   {
     "id": "tai_bwo_wannai_trio",
-    "name": "Chronicle: Tai Bwo Wannai Trio",
+    "name": "The Tai Bwo Wannai Trio Reckoning",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2660,7 +2660,7 @@
   },
   {
     "id": "tale_of_the_righteous",
-    "name": "Chronicle: Tale Of The Righteous",
+    "name": "Echoes of Tale Of The Righteous",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2680,7 +2680,7 @@
   },
   {
     "id": "tears_of_guthix",
-    "name": "Chronicle: Tears Of Guthix",
+    "name": "The Tears Of Guthix Accord",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2702,7 +2702,7 @@
   },
   {
     "id": "temple_of_ikov",
-    "name": "Chronicle: Temple Of Ikov",
+    "name": "Shadows over Temple Of Ikov",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -2722,7 +2722,7 @@
   },
   {
     "id": "temple_of_the_eye",
-    "name": "Chronicle: Temple Of The Eye",
+    "name": "Legacy of Temple Of The Eye",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2740,7 +2740,7 @@
   },
   {
     "id": "the_curse_of_arrav",
-    "name": "Chronicle: The Curse Of Arrav",
+    "name": "The The Curse Of Arrav Reckoning",
     "complexity": "Master",
     "length": "Medium",
     "durationSeconds": 4500,
@@ -2766,7 +2766,7 @@
   },
   {
     "id": "the_dig_site",
-    "name": "Chronicle: The Dig Site",
+    "name": "Echoes of The Dig Site",
     "complexity": "Intermediate",
     "length": "Long",
     "durationSeconds": 2700,
@@ -2787,7 +2787,7 @@
   },
   {
     "id": "the_eyes_of_glouphrie",
-    "name": "Chronicle: The Eyes Of Glouphrie",
+    "name": "The The Eyes Of Glouphrie Accord",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -2811,7 +2811,7 @@
   },
   {
     "id": "the_feud",
-    "name": "Chronicle: The Feud",
+    "name": "Shadows over The Feud",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2829,7 +2829,7 @@
   },
   {
     "id": "the_forsaken_tower",
-    "name": "Chronicle: The Forsaken Tower",
+    "name": "Legacy of The Forsaken Tower",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -2846,7 +2846,7 @@
   },
   {
     "id": "the_fremennik_exiles",
-    "name": "Chronicle: The Fremennik Exiles",
+    "name": "The The Fremennik Exiles Reckoning",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -2875,7 +2875,7 @@
   },
   {
     "id": "the_fremennik_isles",
-    "name": "Chronicle: The Fremennik Isles",
+    "name": "Echoes of The Fremennik Isles",
     "complexity": "Experienced",
     "length": "Long",
     "durationSeconds": 3600,
@@ -2899,7 +2899,7 @@
   },
   {
     "id": "the_fremennik_trials",
-    "name": "Chronicle: The Fremennik Trials",
+    "name": "The The Fremennik Trials Accord",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2929,7 +2929,7 @@
   },
   {
     "id": "the_garden_of_death",
-    "name": "Chronicle: The Garden Of Death",
+    "name": "Shadows over The Garden Of Death",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -2947,7 +2947,7 @@
   },
   {
     "id": "the_giant_dwarf",
-    "name": "Chronicle: The Giant Dwarf",
+    "name": "Legacy of The Giant Stonekin",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2973,7 +2973,7 @@
   },
   {
     "id": "the_golem",
-    "name": "Chronicle: The Golem",
+    "name": "The The Golem Reckoning",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2993,7 +2993,7 @@
   },
   {
     "id": "the_grand_tree",
-    "name": "Chronicle: The Grand Tree",
+    "name": "Echoes of The Grand Tree",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3013,7 +3013,7 @@
   },
   {
     "id": "the_hand_in_the_sand",
-    "name": "Chronicle: The Hand In The Sand",
+    "name": "The The Hand In The Sand Accord",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3033,7 +3033,7 @@
   },
   {
     "id": "the_heart_of_darkness",
-    "name": "Chronicle: The Heart Of Darkness",
+    "name": "Shadows over The Heart Of Darkness",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -3058,7 +3058,7 @@
   },
   {
     "id": "the_knights_sword",
-    "name": "Chronicle: The Knights Sword",
+    "name": "Legacy of The Knights Sword",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3076,7 +3076,7 @@
   },
   {
     "id": "the_lost_tribe",
-    "name": "Chronicle: The Lost Tribe",
+    "name": "The The Lost Tribe Reckoning",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3098,7 +3098,7 @@
   },
   {
     "id": "the_queen_of_thieves",
-    "name": "Chronicle: The Queen Of Thieves",
+    "name": "Echoes of The Queen Of Thieves",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -3116,7 +3116,7 @@
   },
   {
     "id": "the_restless_ghost",
-    "name": "Chronicle: The Restless Ghost",
+    "name": "The The Restless Wraith Accord",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3132,7 +3132,7 @@
   },
   {
     "id": "the_ribbiting_tale_of_a_lily_pad_laborer",
-    "name": "Chronicle: The Ribbiting Tale Of A Lily Pad Laborer",
+    "name": "Shadows over The Ribbiting Tale Of A Lily Pad Laborer",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3149,7 +3149,7 @@
   },
   {
     "id": "the_tourist_trap",
-    "name": "Chronicle: The Tourist Trap",
+    "name": "Legacy of The Tourist Trap",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3168,7 +3168,7 @@
   },
   {
     "id": "throne_of_miscellania",
-    "name": "Chronicle: Throne Of Miscellania",
+    "name": "The Throne Of Miscellania Reckoning",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3187,7 +3187,7 @@
   },
   {
     "id": "tower_of_life",
-    "name": "Chronicle: Tower Of Life",
+    "name": "Echoes of Tower Of Life",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3205,7 +3205,7 @@
   },
   {
     "id": "tree_gnome_village",
-    "name": "Chronicle: Tree Gnome Village",
+    "name": "The Tree Gnome Village Accord",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3221,7 +3221,7 @@
   },
   {
     "id": "tribal_totem",
-    "name": "Chronicle: Tribal Totem",
+    "name": "Shadows over Tribal Totem",
     "complexity": "Intermediate",
     "length": "Short",
     "durationSeconds": 450,
@@ -3239,7 +3239,7 @@
   },
   {
     "id": "troll_romance",
-    "name": "Chronicle: Troll Romance",
+    "name": "Legacy of Troll Romance",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -3260,7 +3260,7 @@
   },
   {
     "id": "troll_stronghold",
-    "name": "Chronicle: Troll Stronghold",
+    "name": "The Troll Stronghold Reckoning",
     "complexity": "Experienced",
     "length": "Medium",
     "durationSeconds": 1800,
@@ -3280,7 +3280,7 @@
   },
   {
     "id": "twilights_promise",
-    "name": "Chronicle: Twilights Promise",
+    "name": "Echoes of Twilights Promise",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3298,7 +3298,7 @@
   },
   {
     "id": "underground_pass",
-    "name": "Chronicle: Underground Pass",
+    "name": "The Underground Pass Accord",
     "complexity": "Experienced",
     "length": "Very Long",
     "durationSeconds": 7200,
@@ -3319,7 +3319,7 @@
   },
   {
     "id": "vampyre_slayer",
-    "name": "Chronicle: Vampyre Slayer",
+    "name": "Shadows over Nightborn Slayer",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3335,7 +3335,7 @@
   },
   {
     "id": "walking_the_dog",
-    "name": "Chronicle: Walking The Dog",
+    "name": "Legacy of Walking The Dog",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3351,7 +3351,7 @@
   },
   {
     "id": "wanted",
-    "name": "Chronicle: Wanted",
+    "name": "The Wanted Reckoning",
     "complexity": "Intermediate",
     "length": "Long",
     "durationSeconds": 2700,
@@ -3371,7 +3371,7 @@
   },
   {
     "id": "watchtower",
-    "name": "Chronicle: Watchtower",
+    "name": "Echoes of Watchtower",
     "complexity": "Intermediate",
     "length": "Long",
     "durationSeconds": 2700,
@@ -3393,7 +3393,7 @@
   },
   {
     "id": "waterfall_quest",
-    "name": "Chronicle: Waterfall Quest",
+    "name": "The Waterfall Quest Accord",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3410,7 +3410,7 @@
   },
   {
     "id": "what_lies_below",
-    "name": "Chronicle: What Lies Below",
+    "name": "Shadows over What Lies Below",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -3430,7 +3430,7 @@
   },
   {
     "id": "while_guthix_sleeps",
-    "name": "Chronicle: While Guthix Sleeps",
+    "name": "Legacy of While Guthix Sleeps",
     "complexity": "Grandmaster",
     "length": "Very Long",
     "durationSeconds": 36000,
@@ -3463,7 +3463,7 @@
   },
   {
     "id": "witchs_house",
-    "name": "Chronicle: Witchs House",
+    "name": "The Witchs House Reckoning",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3479,7 +3479,7 @@
   },
   {
     "id": "witchs_potion",
-    "name": "Chronicle: Witchs Potion",
+    "name": "Echoes of Witchs Potion",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3495,7 +3495,7 @@
   },
   {
     "id": "x_marks_the_spot",
-    "name": "Chronicle: X Marks The Spot",
+    "name": "The X Marks The Spot Accord",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3511,7 +3511,7 @@
   },
   {
     "id": "zogre_flesh_eaters",
-    "name": "Chronicle: Zogre Flesh Eaters",
+    "name": "Shadows over Zogre Flesh Eaters",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
