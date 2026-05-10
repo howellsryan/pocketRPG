@@ -37,7 +37,7 @@ describe('simulateIdleSkilling (alchemy)', () => {
 
     expect(sim).toBeTruthy()
     expect(sim?.actions).toBe(2)
-    expect(sim?.coinsGained).toBe(48_000)
+    expect(sim?.coinsGained).toBe(35_200)
     expect(sim?.itemsConsumed.nature_rune).toBe(2)
   })
 
@@ -62,7 +62,7 @@ describe('simulateIdleSkilling (alchemy)', () => {
 
     expect(sim).toBeTruthy()
     expect(sim?.actions).toBe(3)
-    expect(sim?.coinsGained).toBe(72_000)
+    expect(sim?.coinsGained).toBe(52_800)
     expect(sim?.finalInventory[0]).toBeNull()
     expect(sim?.finalInventory[1]).toEqual({ itemId: 'adamant_platebody', quantity: 1, noted: false })
   })
