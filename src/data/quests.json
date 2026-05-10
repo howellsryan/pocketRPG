@@ -78,7 +78,7 @@
   },
   {
     "id": "a_tail_of_two_cats",
-    "name": "A Tail of Two Cats",
+    "name": "Two Tails of the Cats",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -1099,7 +1099,7 @@
   },
   {
     "id": "forgettable_tale",
-    "name": "Forgettable Tale",
+    "name": "A Tale Forgotten",
     "complexity": "Intermediate",
     "length": "Medium",
     "durationSeconds": 1350,
@@ -2660,7 +2660,7 @@
   },
   {
     "id": "tale_of_the_righteous",
-    "name": "Tale of the Righteous",
+    "name": "Tale of the Just",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
@@ -3132,7 +3132,7 @@
   },
   {
     "id": "the_ribbiting_tale_of_a_lily_pad_laborer",
-    "name": "The Ribbiting Tale of A Lily Pad Laborer",
+    "name": "The Ribbiting Tale of a Lily-Pad Worker",
     "complexity": "Novice",
     "length": "Short",
     "durationSeconds": 300,
