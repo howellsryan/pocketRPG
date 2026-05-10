@@ -56,7 +56,7 @@ const COMBAT_CATEGORIES = [
   },
   {
     key: 'dagganoth_kings',
-    label: 'Dagannoth Kings',
+    label: 'Deepking Kings',
     icon: '👹',
     ids: ['dagganoth_rex', 'dagganoth_prime', 'dagganoth_supreme'],
   },
@@ -74,7 +74,7 @@ const COMBAT_CATEGORIES = [
   },
   {
     key: 'zulrah',
-    label: 'Zulrah',
+    label: 'Venomcoil Matriarch',
     icon: '🐍',
     ids: ['zulrah'],
   },
@@ -802,14 +802,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       return { locked: true, reason: 'Complete Dragon Slayer II to fight Metal Dragons' }
     }
     if (monster.id === 'demonic_gorilla' && !completedQuests.has('monkey_madness_ii')) {
-      return { locked: true, reason: 'Complete Monkey Madness II to fight Demonic Gorilla' }
+      return { locked: true, reason: 'Complete Monkey Madness II to fight Hellbound Gorilla' }
     }
     return { locked: false }
   }
 
   const checkRaidRequirements = (raid) => {
     if (raid.id === 'theatre_of_blood' && !completedQuests.has('a_night_at_the_theatre')) {
-      return { locked: true, reason: 'Complete A Night at the Theatre to access Theatre of Blood' }
+      return { locked: true, reason: 'Complete A Night at the Theatre to access Crimson Night Theatre' }
     }
     return { locked: false }
   }

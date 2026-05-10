@@ -22,7 +22,7 @@ describe('getCombatLevelFromSave (PvP server-side CB)', () => {
     expect(getCombatLevelFromSave({ stats: {} } as any)).toBe(3)
   })
 
-  it('matches the OSRS formula for an all-99 melee character (CB 126)', () => {
+  it('matches the PocketRPG formula for an all-99 melee character (CB 126)', () => {
     const save = statsAtLevels({
       attack: 99, strength: 99, defence: 99, hitpoints: 99,
       ranged: 99, magic: 99, prayer: 99,

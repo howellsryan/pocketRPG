@@ -24,7 +24,7 @@ const monstersData = {
   },
   kraken: {
     id: 'kraken',
-    name: 'Kraken',
+    name: 'Deepmaw Kraken',
     hitpoints: 255,
     slayerXP: 255,
     boss: true,
@@ -57,7 +57,7 @@ describe('slayerRewards module surface', () => {
 
 describe('resolveMonsterRewardData', () => {
   it('returns the full monster record from monstersData when only id/name/boss are passed', () => {
-    expect(resolveMonsterRewardData({ id: 'kraken', name: 'Kraken', boss: true }, null, monstersData))
+    expect(resolveMonsterRewardData({ id: 'kraken', name: 'Deepmaw Kraken', boss: true }, null, monstersData))
       .toBe(monstersData.kraken)
   })
 
@@ -95,7 +95,7 @@ describe('getBaseSlayerXp', () => {
 
 describe('isBossMonster', () => {
   it('detects bosses via the resolved monstersData record', () => {
-    expect(isBossMonster({ id: 'kraken', name: 'Kraken', boss: true }, null, monstersData)).toBe(true)
+    expect(isBossMonster({ id: 'kraken', name: 'Deepmaw Kraken', boss: true }, null, monstersData)).toBe(true)
   })
 
   it('returns false for non-boss monsters', () => {
@@ -110,7 +110,7 @@ describe('getSlayerTaskXpForKill', () => {
   })
 
   it('awards 10x base Slayer XP for boss task kills', () => {
-    expect(getSlayerTaskXpForKill({ id: 'kraken', name: 'Kraken', boss: true }, null, monstersData))
+    expect(getSlayerTaskXpForKill({ id: 'kraken', name: 'Deepmaw Kraken', boss: true }, null, monstersData))
       .toBe(255 * BOSS_SLAYER_TASK_XP_MULTIPLIER)
   })
 

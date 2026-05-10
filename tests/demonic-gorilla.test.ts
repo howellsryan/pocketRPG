@@ -15,7 +15,7 @@ const emptyEquipment = {
   neck: null, ring: null, ammo: null
 }
 
-describe('Demonic Gorilla', () => {
+describe('Hellbound Gorilla', () => {
   describe('Stats', () => {
     it('should exist in monsters data', () => {
       expect(gorilla).toBeDefined()

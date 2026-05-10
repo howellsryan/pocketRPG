@@ -7347,7 +7347,7 @@
   },
   "dagganoth_bones": {
     "id": "dagganoth_bones",
-    "name": "Dagannoth Bones",
+    "name": "Deepking Bones",
     "type": "resource",
     "stackable": false,
     "shopValue": 14448,
@@ -8232,7 +8232,7 @@
   },
   "zulrah_scales": {
     "id": "zulrah_scales",
-    "name": "Zulrah's Scales",
+    "name": "Venomcoil Scales",
     "type": "resource",
     "stackable": true,
     "shopValue": 186,
@@ -13222,7 +13222,7 @@
   },
   "3rd_age_full_helm": {
     "id": "3rd_age_full_helm",
-    "name": "3rd Age Full Helm",
+    "name": "2nd Age Full Helm",
     "type": "armour",
     "stackable": false,
     "shopValue": 2500000,
@@ -13256,7 +13256,7 @@
   },
   "3rd_age_platebody": {
     "id": "3rd_age_platebody",
-    "name": "3rd Age Platebody",
+    "name": "2nd Age Platebody",
     "type": "armour",
     "stackable": false,
     "shopValue": 186888502,
@@ -13290,7 +13290,7 @@
   },
   "3rd_age_platelegs": {
     "id": "3rd_age_platelegs",
-    "name": "3rd Age Platelegs",
+    "name": "2nd Age Platelegs",
     "type": "armour",
     "stackable": false,
     "shopValue": 126165027,
@@ -13324,7 +13324,7 @@
   },
   "3rd_age_plateskirt": {
     "id": "3rd_age_plateskirt",
-    "name": "3rd Age Plateskirt",
+    "name": "2nd Age Plateskirt",
     "type": "armour",
     "stackable": false,
     "shopValue": 40728054,
@@ -13358,7 +13358,7 @@
   },
   "3rd_age_kiteshield": {
     "id": "3rd_age_kiteshield",
-    "name": "3rd Age Kiteshield",
+    "name": "2nd Age Kiteshield",
     "type": "armour",
     "stackable": false,
     "shopValue": 85861682,
@@ -13392,7 +13392,7 @@
   },
   "3rd_age_range_coif": {
     "id": "3rd_age_range_coif",
-    "name": "3rd Age Range Coif",
+    "name": "2nd Age Range Coif",
     "type": "armour",
     "stackable": false,
     "shopValue": 22605480,
@@ -13427,7 +13427,7 @@
   },
   "3rd_age_range_top": {
     "id": "3rd_age_range_top",
-    "name": "3rd Age Range Top",
+    "name": "2nd Age Range Top",
     "type": "armour",
     "stackable": false,
     "shopValue": 36063781,
@@ -13462,7 +13462,7 @@
   },
   "3rd_age_range_legs": {
     "id": "3rd_age_range_legs",
-    "name": "3rd Age Range Legs",
+    "name": "2nd Age Range Legs",
     "type": "armour",
     "stackable": false,
     "shopValue": 17143324,
@@ -13497,7 +13497,7 @@
   },
   "3rd_age_vambraces": {
     "id": "3rd_age_vambraces",
-    "name": "3rd Age Vambraces",
+    "name": "2nd Age Vambraces",
     "type": "armour",
     "stackable": false,
     "shopValue": 16917650,
@@ -13532,7 +13532,7 @@
   },
   "3rd_age_mage_hat": {
     "id": "3rd_age_mage_hat",
-    "name": "3rd Age Mage Hat",
+    "name": "2nd Age Mage Hat",
     "type": "armour",
     "stackable": false,
     "shopValue": 18941223,
@@ -13567,7 +13567,7 @@
   },
   "3rd_age_robe_top": {
     "id": "3rd_age_robe_top",
-    "name": "3rd Age Robe Top",
+    "name": "2nd Age Robe Top",
     "type": "armour",
     "stackable": false,
     "shopValue": 166601004,
@@ -13602,7 +13602,7 @@
   },
   "3rd_age_robe_legs": {
     "id": "3rd_age_robe_legs",
-    "name": "3rd Age Robe Legs",
+    "name": "2nd Age Robe Legs",
     "type": "armour",
     "stackable": false,
     "shopValue": 2200000,
@@ -13637,7 +13637,7 @@
   },
   "3rd_age_amulet": {
     "id": "3rd_age_amulet",
-    "name": "3rd Age Amulet",
+    "name": "2nd Age Amulet",
     "type": "armour",
     "stackable": false,
     "shopValue": 51352500,
@@ -13672,7 +13672,7 @@
   },
   "3rd_age_longsword": {
     "id": "3rd_age_longsword",
-    "name": "3rd Age Longsword",
+    "name": "2nd Age Longsword",
     "type": "armour",
     "stackable": false,
     "shopValue": 1474173904,
@@ -13704,7 +13704,7 @@
   },
   "3rd_age_bow": {
     "id": "3rd_age_bow",
-    "name": "3rd Age Bow",
+    "name": "2nd Age Bow",
     "type": "armour",
     "stackable": false,
     "shopValue": 1419450502,
@@ -13736,7 +13736,7 @@
   },
   "3rd_age_wand": {
     "id": "3rd_age_wand",
-    "name": "3rd Age Wand",
+    "name": "2nd Age Wand",
     "type": "armour",
     "stackable": false,
     "shopValue": 402450000,
@@ -13770,7 +13770,7 @@
   },
   "3rd_age_cloak": {
     "id": "3rd_age_cloak",
-    "name": "3rd Age Cloak",
+    "name": "2nd Age Cloak",
     "type": "armour",
     "stackable": false,
     "shopValue": 375060000,
@@ -14295,7 +14295,7 @@
   },
   "3rd_age_druidic_robe_top": {
     "id": "3rd_age_druidic_robe_top",
-    "name": "3rd Age Druidic Robe Top",
+    "name": "2nd Age Druidic Robe Top",
     "type": "armour",
     "stackable": false,
     "shopValue": 2147483647,
@@ -14328,7 +14328,7 @@
   },
   "3rd_age_druidic_robe_bottoms": {
     "id": "3rd_age_druidic_robe_bottoms",
-    "name": "3rd Age Druidic Robe Bottoms",
+    "name": "2nd Age Druidic Robe Bottoms",
     "type": "armour",
     "stackable": false,
     "shopValue": 2147483647,
@@ -14361,7 +14361,7 @@
   },
   "3rd_age_druidic_cloak": {
     "id": "3rd_age_druidic_cloak",
-    "name": "3rd Age Druidic Cloak",
+    "name": "2nd Age Druidic Cloak",
     "type": "armour",
     "stackable": false,
     "shopValue": 1255173674,
@@ -14393,7 +14393,7 @@
   },
   "3rd_age_druidic_staff": {
     "id": "3rd_age_druidic_staff",
-    "name": "3rd Age Druidic Staff",
+    "name": "2nd Age Druidic Staff",
     "type": "armour",
     "stackable": false,
     "shopValue": 593600497,
@@ -14426,7 +14426,7 @@
   },
   "3rd_age_pickaxe": {
     "id": "3rd_age_pickaxe",
-    "name": "3rd Age Pickaxe",
+    "name": "2nd Age Pickaxe",
     "type": "armour",
     "stackable": false,
     "shopValue": 2147483647,
@@ -14460,7 +14460,7 @@
   },
   "3rd_age_axe": {
     "id": "3rd_age_axe",
-    "name": "3rd Age Axe",
+    "name": "2nd Age Axe",
     "type": "armour",
     "stackable": false,
     "shopValue": 2147483647,
@@ -14902,7 +14902,7 @@
   },
   "kraken_tentacle": {
     "id": "kraken_tentacle",
-    "name": "Kraken Tentacle",
+    "name": "Deepmaw Kraken Tentacle",
     "type": "resource",
     "stackable": false,
     "shopValue": 266500,
@@ -15768,7 +15768,7 @@
   },
   "hydra_leather": {
     "id": "hydra_leather",
-    "name": "Hydra Leather",
+    "name": "Ashen Hydra Leather",
     "type": "resource",
     "stackable": false,
     "shopValue": 13864589,
@@ -15778,7 +15778,7 @@
   },
   "hydra_claw": {
     "id": "hydra_claw",
-    "name": "Hydra Claw",
+    "name": "Ashen Hydra Claw",
     "type": "resource",
     "stackable": false,
     "shopValue": 4500000,
@@ -15828,7 +15828,7 @@
   },
   "hydra_bones": {
     "id": "hydra_bones",
-    "name": "Hydra Bones",
+    "name": "Ashen Hydra Bones",
     "type": "resource",
     "stackable": false,
     "shopValue": 7633,

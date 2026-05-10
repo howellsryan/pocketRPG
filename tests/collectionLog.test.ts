@@ -109,7 +109,7 @@ describe('collection log seeded contents', () => {
     expect(gargoyle.items).toContain('granite_maul')
   })
 
-  it('Chambers of Xeric lists the Twisted Bow as a unique', () => {
+  it('Vaults of Xyren lists the Twisted Bow as a unique', () => {
     const raids = findCategory('raids')
     const cox = raids?.sections.find((s: any) => s.id === 'chambers_of_xeric')
     expect(cox).toBeTruthy()
@@ -280,7 +280,7 @@ describe('minigame collection log coverage', () => {
     }
   })
 
-  it('maps every Pest Control void rewardItem to a collection slot', () => {
+  it('maps every Void Breach void rewardItem to a collection slot', () => {
     const section = getSection('pest_control')
     expect(section).toBeTruthy()
 

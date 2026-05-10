@@ -21,7 +21,7 @@ import { isLoggedDrop } from '../engine/collectionLog.js'
  * Inspired by activities like picking flax, collecting sand, etc.
  *
  * Also hosts long-running Minigame grinds (Barbarian Assault, Warriors Guild,
- * Castle Wars) which award a single untradeable reward after hours of idling.
+ * Fortress Clash) which award a single untradeable reward after hours of idling.
  */
 
 const GATHER_TASKS = [

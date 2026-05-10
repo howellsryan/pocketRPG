@@ -1333,7 +1333,7 @@
   },
   "abyssal_demon": {
     "id": "abyssal_demon",
-    "name": "Abyssal Demon",
+    "name": "Netherfiend Demon",
     "combatLevel": 124,
     "hitpoints": 150,
     "slayerRequirement": 85,
@@ -1927,7 +1927,7 @@
   },
   "kraken": {
     "id": "kraken",
-    "name": "Kraken",
+    "name": "Deepmaw Kraken",
     "boss": true,
     "combatLevel": 291,
     "hitpoints": 255,
@@ -2023,7 +2023,7 @@
   },
   "general_graardor": {
     "id": "general_graardor",
-    "name": "General Graardor",
+    "name": "Warlord Grondar",
     "boss": true,
     "combatLevel": 624,
     "hitpoints": 255,
@@ -2210,7 +2210,7 @@
   },
   "commander_zilyana": {
     "id": "commander_zilyana",
-    "name": "Commander Zilyana",
+    "name": "Commander Zephyra",
     "boss": true,
     "combatLevel": 596,
     "hitpoints": 255,
@@ -2382,7 +2382,7 @@
   },
   "kril_tsutsaroth": {
     "id": "kril_tsutsaroth",
-    "name": "K'ril Tsutsaroth",
+    "name": "Krylth the Defiler",
     "boss": true,
     "combatLevel": 650,
     "hitpoints": 255,
@@ -2559,7 +2559,7 @@
   },
   "kreearra": {
     "id": "kreearra",
-    "name": "Kree'arra",
+    "name": "Skyrender Kharra",
     "boss": true,
     "combatLevel": 580,
     "hitpoints": 255,
@@ -3070,7 +3070,7 @@
   },
   "dagganoth_rex": {
     "id": "dagganoth_rex",
-    "name": "Dagannoth Rex",
+    "name": "Deepking Rex",
     "boss": true,
     "combatLevel": 303,
     "hitpoints": 150,
@@ -3213,7 +3213,7 @@
   },
   "dagganoth_prime": {
     "id": "dagganoth_prime",
-    "name": "Dagannoth Prime",
+    "name": "Deepking Prime",
     "boss": true,
     "combatLevel": 303,
     "hitpoints": 150,
@@ -3351,7 +3351,7 @@
   },
   "dagganoth_supreme": {
     "id": "dagganoth_supreme",
-    "name": "Dagannoth Supreme",
+    "name": "Deepking Supreme",
     "boss": true,
     "combatLevel": 303,
     "hitpoints": 150,
@@ -3969,7 +3969,7 @@
   },
   "zulrah": {
     "id": "zulrah",
-    "name": "Zulrah",
+    "name": "Venomcoil Matriarch",
     "boss": true,
     "combatLevel": 725,
     "hitpoints": 500,
@@ -4720,7 +4720,7 @@
   },
   "demonic_gorilla": {
     "id": "demonic_gorilla",
-    "name": "Demonic Gorilla",
+    "name": "Hellbound Gorilla",
     "boss": true,
     "combatLevel": 275,
     "hitpoints": 205,
@@ -5780,7 +5780,7 @@
   },
   "lizardman_shaman": {
     "id": "lizardman_shaman",
-    "name": "Lizardman Shaman",
+    "name": "Marshscale Shaman",
     "combatLevel": 150,
     "hitpoints": 150,
     "stats": {
@@ -6997,7 +6997,7 @@
   },
   "hydra": {
     "id": "hydra",
-    "name": "Hydra",
+    "name": "Ashen Hydra",
     "boss": true,
     "combatLevel": 194,
     "hitpoints": 320,

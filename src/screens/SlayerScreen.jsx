@@ -8,7 +8,7 @@ import { DAGANNOTH_KINGS_TASK_ID } from '../engine/slayerTasks.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
 
-// OSRS slayer masters — requirements and monster pools from OSRS Wiki
+// PocketRPG slayer masters — requirements and monster pools from PocketRPG design references
 const SLAYER_MASTERS = [
   {
     id: 'turael',
@@ -61,7 +61,7 @@ const SLAYER_MASTERS = [
     combatReq: 70,
     slayerReq: 0,
     pointsPerTask: 10,
-    description: 'High-level tasks including Abyssal Demons. Requires combat 70.',
+    description: 'High-level tasks including Netherfiend Demons. Requires combat 70.',
     taskRange: [80, 300],
     monsterPool: [
       'green_dragon', 'lesser_demon', 'abyssal_demon', 'red_dragon',
@@ -118,7 +118,7 @@ const SLAYER_MASTERS = [
   },
 ]
 
-// OSRS combat level formula
+// PocketRPG combat level formula
 function getPlayerCombatLevel(stats) {
   const atk = getLevelFromXP(stats.attack?.xp || 0)
   const str = getLevelFromXP(stats.strength?.xp || 0)
@@ -213,7 +213,7 @@ export default function SlayerScreen({ onBack }) {
 
   const assignTask = (master, monsterId, isBoss) => {
     const monsterData = monstersData[monsterId]
-    const monsterName = monsterId === DAGANNOTH_KINGS_TASK_ID ? 'Dagannoth Kings' : (monsterData?.name || monsterId.replace(/_/g, ' '))
+    const monsterName = monsterId === DAGANNOTH_KINGS_TASK_ID ? 'Deepking Kings' : (monsterData?.name || monsterId.replace(/_/g, ' '))
 
     // Jad always has a single-kill task
     let totalCount
