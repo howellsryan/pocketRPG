@@ -1,6 +1,6 @@
 # PocketRPG Economy Benchmark
 
-Generated: 2026-05-10T16:39:20.221Z
+Generated: 2026-05-10T16:44:00.806Z
 
 ## Assumptions
 
@@ -21,7 +21,6 @@ Generated: 2026-05-10T16:39:20.221Z
 | Combat 580 | Kree'arra | 580 |  | 100 |  | 235,925 |  | 23,592,543 | 23,592,543 | Assumes 100 kills/hr. EV: Armadyl Chestplate: 98,878; Armadyl Chainskirt: 73,025; Armadyl Helmet: 24,438; Coins: 20,000; Armadyl Hilt: 14,297; Death Rune: 1,063; Ranarr Weed: 990; Blood Rune: 574; +16 more |
 | Combat 624 | General Graardor | 624 |  | 100 |  | 170,818 |  | 17,081,823 | 17,081,823 | Assumes 100 kills/hr. EV: Bandos Chestplate: 64,311; Bandos Tassets: 43,132; Bandos Hilt: 35,642; Coins: 20,000; Bandos Boots: 1,771; Death Rune: 1,063; Ranarr Weed: 990; Blood Rune: 574; +18 more |
 | Chambers of Xeric | Chambers of Xeric |  |  | 1 |  |  | 16,784,851 | 16,784,851 | 16,784,851 | Assumes 1 completions/hr \| Common EV: 198,708 \| Unique EV: 16,586,144 \| Unique table: Twisted Bow 0.500% EV 7,909,400; Ancestral Robe Top 1.500% EV 1,948,984; Ancestral Robe Bottom 1.500% EV 1,363,348; Elder Maul 1.000% EV 1,020,095; Dragon Hunter Crossbow 2.000% EV 811,943; Ancestral Hat 1.500% EV 808,709; Kodai Wand 1.000% EV 787,437; Zaryte Vambraces 1.000% EV 784,272; +3 more |
-| Fletching | Make dragon bolts (10) | 84 | 3 | 2,000 | 12,000 |  |  | 24,000,000 | 15,960,000 | Product: Dragon Bolt x10 \| Materials: Feather x10, Dragon Bolt (Unf) x10 |
 | Combat 596 | Commander Zilyana | 596 |  | 100 |  | 147,479 |  | 14,747,925 | 14,747,925 | Assumes 100 kills/hr. EV: Armadyl Crossbow: 66,307; Saradomin Hilt: 54,318; Coins: 20,000; Saradomin Sword: 1,341; Death Rune: 1,063; Ranarr Weed: 990; Blood Rune: 574; Soul Rune: 504; +15 more |
 | Combat 650 | K'ril Tsutsaroth | 650 |  | 100 |  | 132,486 |  | 13,248,649 | 13,248,649 | Assumes 100 kills/hr. EV: Zamorak Spear: 59,250; Zamorak Hilt: 36,273; Coins: 20,000; Staff of the Dead: 11,149; Death Rune: 1,063; Ranarr Weed: 990; Blood Rune: 574; Soul Rune: 504; +16 more |
 | Combat 194 | Hydra | 194 |  | 100 |  | 108,684 |  | 10,868,439 | 10,868,439 | Assumes 100 kills/hr. EV: Hydra Leather: 69,323; Ferocious Gloves: 10,200; Hydra Claw: 9,000; Hydra Bones: 7,633; Coins: 3,500; Runite Ore: 2,093; Death Rune: 1,985; Blood Rune: 1,679; +6 more |
@@ -37,7 +36,7 @@ Generated: 2026-05-10T16:39:20.221Z
 | Combat 303 | Dagannoth Supreme | 303 |  | 100 |  | 51,834 |  | 5,183,371 | 5,183,371 | Assumes 100 kills/hr. EV: Archers Ring: 20,704; Dagannoth Bones: 14,448; Coins: 6,500; Dragon Axe: 4,096; Rune Platebody: 1,924; Rune Platelegs: 1,896; Ranarr Weed: 990; Snapdragon: 427; +10 more |
 | Combat 303 | Dagannoth Prime | 303 |  | 100 |  | 37,468 |  | 3,746,817 | 3,746,817 | Assumes 100 kills/hr. EV: Dagannoth Bones: 14,448; Coins: 6,500; Seers Ring: 6,339; Dragon Axe: 4,096; Rune Platebody: 1,924; Rune Platelegs: 1,896; Ranarr Weed: 990; Snapdragon: 427; +10 more |
 | Fletching | Tip dragonstone dragon bolts (10) | 84 | 30 | 200 | 36,000 |  |  | 7,200,000 | 3,590,000 | Product: Dragonstone Dragon Bolt x10 \| Materials: Dragon Bolt x10, Dragonstone Bolt Tips x10 |
-| Fletching | Make adamant bolts (10) | 61 | 3 | 2,000 | 1,590 |  |  | 3,180,000 | 2,940,000 | Product: Adamant Bolt x10 \| Materials: Feather x10, Adamant Bolt (Unf) x10 |
+| Fletching | Make dragon bolts (10) | 84 | 15 | 400 | 12,000 |  |  | 4,800,000 | 3,192,000 | Product: Dragon Bolt x10 \| Materials: Feather x10, Dragon Bolt (Unf) x10 |
 | Combat 276 | King Black Dragon | 276 |  | 100 |  | 28,701 |  | 2,870,111 | 2,870,111 | Assumes 100 kills/hr. EV: Coins: 12,500; Runite Ore: 7,324; Dragon Bones: 2,815; Draconic Visage: 1,840; Dragon Pickaxe: 1,429; Blood Rune: 1,076; Death Rune: 907; Soul Rune: 810; +1 more |
 | Combat 318 | Brutal Black Dragon | 318 |  | 100 |  | 26,098 |  | 2,609,761 | 2,609,761 | Assumes 100 kills/hr. EV: Coins: 6,000; Black Dragon Leather: 4,182; Draconic Visage: 3,679; Runite Ore: 3,139; Dragon Bones: 2,815; Dragon Arrow: 1,447; Death Rune: 1,040; Blood Rune: 904; +6 more |
 | Fletching | Tip dragonstone bolts (10) | 71 | 30 | 200 | 19,000 |  |  | 3,800,000 | 2,506,000 | Product: Dragonstone Bolt x10 \| Materials: Runite Bolt x10, Dragonstone Bolt Tips x10 |
@@ -51,10 +50,8 @@ Generated: 2026-05-10T16:39:20.221Z
 | Combat 291 | Kraken | 291 |  | 100 |  | 12,816 |  | 1,281,582 | 1,281,582 | Assumes 100 kills/hr. EV: Death Rune: 3,544; Blood Rune: 2,440; Coins: 2,000; Chaos Rune: 1,545; Ranarr Weed: 1,320; Kraken Tentacle: 879; Snapdragon: 769; Big Bones: 250; +2 more |
 | Fletching | Cut ruby bolt tips (12) | 63 | 2 | 3,000 | 1,356 |  |  | 4,068,000 | 1,194,000 | Product: Ruby Bolt Tips x12 \| Materials: Ruby x1 |
 | Mining | Mine gems | 75 | 20 | 300 | 3,856 |  |  | 1,156,870 | 1,156,870 | Drop EV: Uncut Onyx: 2,568; Uncut Diamond: 610; Uncut Ruby: 370; Uncut Dragonstone: 180; Uncut Sapphire: 127 |
-| Fletching | Make iron bolts (10) | 39 | 3 | 2,000 | 570 |  |  | 1,140,000 | 1,060,000 | Product: Iron Bolt x10 \| Materials: Feather x10, Iron Bolt (Unf) x10 |
 | Runecrafting | Craft soul rune | 90 | 2 | 3,000 | 360 |  |  | 1,080,000 | 1,047,000 | Product: Soul Rune x1 \| Materials: Rune Essence x1 |
 | Combat 152 | Red Dragon | 152 |  | 100 |  | 10,276 |  | 1,027,557 | 1,027,557 | Assumes 100 kills/hr. EV: Red Dragon Leather: 2,896; Dragon Bones: 2,815; Ranarr Weed: 990; Rune Platelegs: 758; Snapdragon: 427; Rune Full Helm: 414; Chaos Rune: 303; Nature Rune: 288; +14 more |
-| Fletching | Make steel bolts (10) | 46 | 3 | 2,000 | 540 |  |  | 1,080,000 | 960,000 | Product: Steel Bolt x10 \| Materials: Feather x10, Steel Bolt (Unf) x10 |
 | Fletching | Cut diamond bolt tips (12) | 65 | 2 | 3,000 | 2,136 |  |  | 6,408,000 | 948,000 | Product: Diamond Bolt Tips x12 \| Materials: Diamond x1 |
 | Smithing | Smelt rune bar | 85 | 4 | 1,500 | 12,500 |  |  | 18,750,000 | 943,500 | Product: Rune Bar x1 \| Materials: Runite Ore x1, Coal x8 |
 | Runecrafting | Craft wrath rune | 95 | 2 | 3,000 | 303 |  |  | 909,000 | 876,000 | Product: Wrath Rune x1 \| Materials: Rune Essence x1 |
@@ -66,6 +63,9 @@ Generated: 2026-05-10T16:39:20.221Z
 | pest_control | Grind for Void Knight Set |  | 36000 | 0.1667 | 4,000,000 |  | 4,000,000 | 666,667 | 666,667 | One-shot reward \| Product: void_knight_set x1 \| Rewards: Void Knight Helm, Void Knight Top, Void Knight Robe, Void Knight Gloves \| Duration: 6 hours |
 | Combat 140 | Skeletal Wyvern | 140 |  | 100 |  | 6,438 |  | 643,806 | 643,806 | Assumes 100 kills/hr. EV: Dragon Bones: 2,815; Ranarr Weed: 660; Rune Platelegs: 569; Chaos Rune: 455; Snapdragon: 427; Blood Rune: 366; Death Rune: 340; Rune Chainbody: 296; +5 more |
 | Magic | Enchant Diamond Bolts (10) | 57 | 30 | 200 | 7,000 |  |  | 1,400,000 | 640,000 | Product: Diamond Bolt (E) x10 \| Materials: Diamond Bolt x10 |
+| Woodcutting | Chop magic | 75 | 9 | 667 | 909 |  |  | 606,000 | 606,000 | Product: Magic Logs x1 |
+| Fletching | Make adamant bolts (10) | 61 | 15 | 400 | 1,590 |  |  | 636,000 | 588,000 | Product: Adamant Bolt x10 \| Materials: Feather x10, Adamant Bolt (Unf) x10 |
+| Crafting | Tan green dragon hide | 55 | 3 | 2,000 | 1,960 |  |  | 3,920,000 | 548,000 | Product: Green Dragon Leather x1 \| Materials: Green Dragonhide x1 |
 
 ## Farming
 
@@ -186,12 +186,11 @@ Generated: 2026-05-10T16:39:20.221Z
 
 | Category | Name | Level | Ticks | Actions/hr | EV/action | EV/kill | EV/completion | Gross coins/hr | Net coins/hr | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Fletching | Make dragon bolts (10) | 84 | 3 | 2,000 | 12,000 |  |  | 24,000,000 | 15,960,000 | Product: Dragon Bolt x10 \| Materials: Feather x10, Dragon Bolt (Unf) x10 |
 | Smithing | Smith rune pickaxe | 86 | 5 | 1,200 | 18,685 |  |  | 22,422,000 | 7,422,000 | Product: Rune Pickaxe x1 \| Materials: Rune Bar x1 |
 | Mining | Mine runite ore | 85 | 9 | 667 | 10,463 |  |  | 6,975,333 | 6,975,333 | Product: Runite Ore x1 |
 | Herblore | Make combat potion | 36 | 3 | 2,000 | 4,000 |  |  | 8,000,000 | 6,724,000 | Product: Combat Potion x1 \| Materials: Harralander x1, Goat Horn Dust x1 |
 | Fletching | Tip dragonstone dragon bolts (10) | 84 | 30 | 200 | 36,000 |  |  | 7,200,000 | 3,590,000 | Product: Dragonstone Dragon Bolt x10 \| Materials: Dragon Bolt x10, Dragonstone Bolt Tips x10 |
-| Fletching | Make adamant bolts (10) | 61 | 3 | 2,000 | 1,590 |  |  | 3,180,000 | 2,940,000 | Product: Adamant Bolt x10 \| Materials: Feather x10, Adamant Bolt (Unf) x10 |
+| Fletching | Make dragon bolts (10) | 84 | 15 | 400 | 12,000 |  |  | 4,800,000 | 3,192,000 | Product: Dragon Bolt x10 \| Materials: Feather x10, Dragon Bolt (Unf) x10 |
 | Fletching | Tip dragonstone bolts (10) | 71 | 30 | 200 | 19,000 |  |  | 3,800,000 | 2,506,000 | Product: Dragonstone Bolt x10 \| Materials: Runite Bolt x10, Dragonstone Bolt Tips x10 |
 | Magic | Enchant Dragonstone Dragon Bolts (10) | 68 | 30 | 200 | 48,000 |  |  | 9,600,000 | 2,400,000 | Product: Dragonstone Dragon Bolt (E) x10 \| Materials: Dragonstone Dragon Bolt x10 |
 | Herblore | Make strength potion | 12 | 3 | 2,000 | 1,500 |  |  | 3,000,000 | 1,950,000 | Product: Strength Potion x1 \| Materials: Tarromin x1, Limpwurt Root x1 |
@@ -200,15 +199,14 @@ Generated: 2026-05-10T16:39:20.221Z
 | Magic | Enchant Dragonstone Bolts (10) | 68 | 30 | 200 | 26,000 |  |  | 5,200,000 | 1,400,000 | Product: Dragonstone Bolt (E) x10 \| Materials: Dragonstone Bolt x10 |
 | Fletching | Cut ruby bolt tips (12) | 63 | 2 | 3,000 | 1,356 |  |  | 4,068,000 | 1,194,000 | Product: Ruby Bolt Tips x12 \| Materials: Ruby x1 |
 | Mining | Mine gems | 75 | 20 | 300 | 3,856 |  |  | 1,156,870 | 1,156,870 | Drop EV: Uncut Onyx: 2,568; Uncut Diamond: 610; Uncut Ruby: 370; Uncut Dragonstone: 180; Uncut Sapphire: 127 |
-| Fletching | Make iron bolts (10) | 39 | 3 | 2,000 | 570 |  |  | 1,140,000 | 1,060,000 | Product: Iron Bolt x10 \| Materials: Feather x10, Iron Bolt (Unf) x10 |
 | Runecrafting | Craft soul rune | 90 | 2 | 3,000 | 360 |  |  | 1,080,000 | 1,047,000 | Product: Soul Rune x1 \| Materials: Rune Essence x1 |
-| Fletching | Make steel bolts (10) | 46 | 3 | 2,000 | 540 |  |  | 1,080,000 | 960,000 | Product: Steel Bolt x10 \| Materials: Feather x10, Steel Bolt (Unf) x10 |
 | Fletching | Cut diamond bolt tips (12) | 65 | 2 | 3,000 | 2,136 |  |  | 6,408,000 | 948,000 | Product: Diamond Bolt Tips x12 \| Materials: Diamond x1 |
 | Smithing | Smelt rune bar | 85 | 4 | 1,500 | 12,500 |  |  | 18,750,000 | 943,500 | Product: Rune Bar x1 \| Materials: Runite Ore x1, Coal x8 |
 | Runecrafting | Craft wrath rune | 95 | 2 | 3,000 | 303 |  |  | 909,000 | 876,000 | Product: Wrath Rune x1 \| Materials: Rune Essence x1 |
 | Runecrafting | Craft blood rune | 77 | 2 | 3,000 | 287 |  |  | 861,000 | 828,000 | Product: Blood Rune x1 \| Materials: Rune Essence x1 |
 | Magic | Enchant Diamond Bolts (10) | 57 | 30 | 200 | 7,000 |  |  | 1,400,000 | 640,000 | Product: Diamond Bolt (E) x10 \| Materials: Diamond Bolt x10 |
 | Woodcutting | Chop magic | 75 | 9 | 667 | 909 |  |  | 606,000 | 606,000 | Product: Magic Logs x1 |
+| Fletching | Make adamant bolts (10) | 61 | 15 | 400 | 1,590 |  |  | 636,000 | 588,000 | Product: Adamant Bolt x10 \| Materials: Feather x10, Adamant Bolt (Unf) x10 |
 | Crafting | Tan green dragon hide | 55 | 3 | 2,000 | 1,960 |  |  | 3,920,000 | 548,000 | Product: Green Dragon Leather x1 \| Materials: Green Dragonhide x1 |
 | Smithing | Smith iron pickaxe | 16 | 5 | 1,200 | 593 |  |  | 711,600 | 538,800 | Product: Iron Pickaxe x1 \| Materials: Iron Bar x1 |
 | Runecrafting | Craft death rune | 65 | 2 | 3,000 | 189 |  |  | 567,000 | 534,000 | Product: Death Rune x1 \| Materials: Rune Essence x1 |
@@ -217,7 +215,6 @@ Generated: 2026-05-10T16:39:20.221Z
 | Mining | Mine adamantite ore | 70 | 8 | 750 | 644 |  |  | 483,000 | 483,000 | Product: Adamantite Ore x1 |
 | Herblore | Make super attack | 45 | 3 | 2,000 | 2,000 |  |  | 4,000,000 | 464,000 | Product: Super Attack x1 \| Materials: Irit Leaf x1, Eye of Newt x1 |
 | Fishing | Fish shark | 76 | 8 | 750 | 599 |  |  | 449,250 | 449,250 | Product: Raw Shark x1 |
-| Fletching | Make mithril bolts (10) | 54 | 3 | 2,000 | 310 |  |  | 620,000 | 440,000 | Product: Mithril Bolt x10 \| Materials: Feather x10, Mithril Bolt (Unf) x10 |
 | Magic | Enchant Ruby Bolts (10) | 49 | 30 | 200 | 5,000 |  |  | 1,000,000 | 440,000 | Product: Ruby Bolt (E) x10 \| Materials: Ruby Bolt x10 |
 | Crafting | String diamond amulet | 70 | 4 | 1,500 | 2,236 |  |  | 3,354,000 | 438,000 | Product: Diamond Amulet x1 \| Materials: Diamond x1, Gold Bar x1 |
 | Runecrafting | Craft law rune | 54 | 2 | 3,000 | 123 |  |  | 369,000 | 336,000 | Product: Law Rune x1 \| Materials: Rune Essence x1 |
@@ -230,8 +227,10 @@ Generated: 2026-05-10T16:39:20.221Z
 | Fletching | Tip diamond dragon bolts (10) | 84 | 30 | 200 | 15,000 |  |  | 3,000,000 | 244,000 | Product: Diamond Dragon Bolt x10 \| Materials: Dragon Bolt x10, Diamond Bolt Tips x10 |
 | Smithing | Smelt steel bar | 30 | 4 | 1,500 | 595 |  |  | 892,500 | 243,000 | Product: Steel Bar x1 \| Materials: Iron Ore x1, Coal x2 |
 | Fletching | Cut wooden stocks (10) | 9 | 2 | 3,000 | 100 |  |  | 300,000 | 219,000 | Product: Wooden Stock x10 \| Materials: Logs x1 |
+| Fletching | Make iron bolts (10) | 39 | 15 | 400 | 570 |  |  | 228,000 | 212,000 | Product: Iron Bolt x10 \| Materials: Feather x10, Iron Bolt (Unf) x10 |
 | Smithing | Smelt mithril bar | 50 | 4 | 1,500 | 994 |  |  | 1,491,000 | 211,500 | Product: Mithril Bar x1 \| Materials: Mithril Ore x1, Coal x4 |
 | Crafting | Spin bowstring | 10 | 3 | 2,000 | 100 |  |  | 200,000 | 198,000 | Product: Bowstring x1 \| Materials: Flax x1 |
+| Fletching | Make steel bolts (10) | 46 | 15 | 400 | 540 |  |  | 216,000 | 192,000 | Product: Steel Bolt x10 \| Materials: Feather x10, Steel Bolt (Unf) x10 |
 | Woodcutting | Chop mahogany | 50 | 8 | 750 | 249 |  |  | 186,750 | 186,750 | Product: Mahogany Logs x1 |
 | Fishing | Fish swordfish | 50 | 7 | 857 | 212 |  |  | 181,714 | 181,714 | Product: Raw Swordfish x1 |
 | Mining | Mine coal | 30 | 6 | 1,000 | 176 |  |  | 176,000 | 176,000 | Product: Coal x1 |
@@ -250,11 +249,11 @@ Generated: 2026-05-10T16:39:20.221Z
 | Fletching | Cut maple shortbow (u) | 50 | 4 | 1,500 | 91 |  |  | 136,500 | 114,000 | Product: Maple Shortbow (U) x1 \| Materials: Maple Logs x1 |
 | Mining | Mine clay | 1 | 4 | 1,500 | 72 |  |  | 108,000 | 108,000 | Product: Clay x1 |
 | Woodcutting | Chop teak | 35 | 7 | 857 | 121 |  |  | 103,714 | 103,714 | Product: Teak Logs x1 |
-| Fletching | Make runite bolts (10) | 69 | 3 | 2,000 | 420 |  |  | 840,000 | 100,000 | Product: Runite Bolt x10 \| Materials: Feather x10, Runite Bolt (Unf) x10 |
 | Mining | Mine iron ore | 15 | 5 | 1,200 | 81 |  |  | 97,200 | 97,200 | Product: Iron Ore x1 |
 | Woodcutting | Chop yew | 60 | 8 | 750 | 127 |  |  | 95,250 | 95,250 | Product: Yew Logs x1 |
 | Smithing | Smelt iron bar | 15 | 4 | 1,500 | 144 |  |  | 216,000 | 94,500 | Product: Iron Bar x1 \| Materials: Iron Ore x1 |
 | Agility | Pollnivneach Rooftop | 70 | 23 | 261 | 350 |  |  | 91,304 | 91,304 |  |
+| Fletching | Make mithril bolts (10) | 54 | 15 | 400 | 310 |  |  | 124,000 | 88,000 | Product: Mithril Bolt x10 \| Materials: Feather x10, Mithril Bolt (Unf) x10 |
 | Fletching | Tip diamond bolts (10) | 65 | 30 | 200 | 3,800 |  |  | 760,000 | 86,000 | Product: Diamond Bolt x10 \| Materials: Adamant Bolt x10, Diamond Bolt Tips x10 |
 | Cooking | Cook meat | 1 | 4 | 1,500 | 85 |  |  | 127,500 | 82,500 | Product: Cooked Meat x1 \| Materials: Raw Beef x1 |
 | Fletching | Cut yew shortbow (u) | 65 | 5 | 1,200 | 195 |  |  | 234,000 | 81,600 | Product: Yew Shortbow (U) x1 \| Materials: Yew Logs x1 |
@@ -278,6 +277,7 @@ Generated: 2026-05-10T16:39:20.221Z
 | Smithing | Smith bronze pickaxe | 4 | 5 | 1,200 | 82 |  |  | 98,400 | 26,400 | Product: Bronze Pickaxe x1 \| Materials: Bronze Bar x1 |
 | Mining | Mine copper ore | 1 | 4 | 1,500 | 14 |  |  | 21,000 | 21,000 | Product: Copper Ore x1 |
 | Woodcutting | Chop willow | 30 | 6 | 1,000 | 21 |  |  | 21,000 | 21,000 | Product: Willow Logs x1 |
+| Fletching | Make runite bolts (10) | 69 | 15 | 400 | 420 |  |  | 168,000 | 20,000 | Product: Runite Bolt x10 \| Materials: Feather x10, Runite Bolt (Unf) x10 |
 | Mining | Mine tin ore | 1 | 4 | 1,500 | 13 |  |  | 19,500 | 19,500 | Product: Tin Ore x1 |
 | Mining | Mine rune essence | 1 | 4 | 1,500 | 11 |  |  | 16,500 | 16,500 | Product: Rune Essence x1 |
 | Agility | Varrock Rooftop | 30 | 33 | 182 | 90 |  |  | 16,364 | 16,364 |  |
@@ -288,7 +288,7 @@ Generated: 2026-05-10T16:39:20.221Z
 | Agility | Draynor Village Rooftop | 10 | 38 | 158 | 25 |  |  | 3,947 | 3,947 |  |
 | Fletching | String maple shortbow | 50 | 4 | 1,500 | 192 |  |  | 288,000 | 1,500 | Product: Maple Shortbow x1 \| Materials: Maple Shortbow (U) x1, Bowstring x1 |
 | Agility | Gnome Stronghold Course | 1 | 40 | 150 | 10 |  |  | 1,500 | 1,500 |  |
-| Fletching | Make bronze bolts (10) | 9 | 3 | 2,000 | 30 |  |  | 60,000 | 0 | Product: Bronze Bolt x10 \| Materials: Feather x10, Bronze Bolt (Unf) x10 |
+| Fletching | Make bronze bolts (10) | 9 | 15 | 400 | 30 |  |  | 12,000 | 0 | Product: Bronze Bolt x10 \| Materials: Feather x10, Bronze Bolt (Unf) x10 |
 | Magic | Curse | 19 | 5 | 1,200 | 0 |  |  | 0 | 0 |  |
 | Magic | High Alchemy | 55 | 5 | 1,200 | 0 |  |  | 0 | 0 |  |
 | Magic | Stun | 80 | 5 | 1,200 | 0 |  |  | 0 | 0 |  |
