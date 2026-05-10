@@ -1350,17 +1350,6 @@
         }
       },
       {
-        "id": "spin_bowstring",
-        "name": "Spin bowstring",
-        "level": 10,
-        "ticks": 3,
-        "xp": 15,
-        "product": "bowstring",
-        "materials": {
-          "flax": 1
-        }
-      },
-      {
         "id": "leather_body",
         "name": "Craft leather body",
         "level": 14,
@@ -2322,23 +2311,6 @@
           "cosmic_rune": 1,
           "death_rune": 1,
           "fire_rune": 20
-        }
-      },
-      {
-        "id": "spin_flax",
-        "name": "Spin Flax",
-        "level": 76,
-        "ticks": 5,
-        "xp": 75,
-        "type": "spin_flax",
-        "product": "bowstring",
-        "materials": {
-          "flax": 1
-        },
-        "runeReq": {
-          "nature_rune": 1,
-          "astral_rune": 2,
-          "air_rune": 5
         }
       },
       {
