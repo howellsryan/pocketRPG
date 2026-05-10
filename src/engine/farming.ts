@@ -119,7 +119,7 @@ export function harvestCrop(
 
   const cropType = getCropType(patch.cropId)
   const quantity = cropType === 'herb' ? herbYield : (cropType === 'tree' || cropType === 'fruitTree' ? treeYield : 1)
-  const harvestXp = Math.floor(crop.harvestXp * quantity)
+  const harvestXp = cropType === 'herb' ? Math.floor(crop.harvestXp * quantity) : Math.floor(crop.harvestXp)
 
   return {
     state: newState,
