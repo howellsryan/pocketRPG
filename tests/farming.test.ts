@@ -103,6 +103,37 @@ describe('farming engine', () => {
     vi.restoreAllMocks()
   })
 
+
+  it('harvestCrop scales tree yield from 5 at level 1 to 25 at level 99', () => {
+    const planted = plantCrop(initFarmingState(), 'falador_tree_0', 'oak_sapling', 'tree')!
+    vi.advanceTimersByTime(getCropDef('oak_sapling')!.growthTimeMs + 1)
+
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const levelOne = harvestCrop(planted.state, 'falador_tree_0', 1)
+    expect(levelOne?.quantity).toBe(5)
+
+    const replanted = plantCrop(levelOne!.state, 'falador_tree_0', 'oak_sapling', 'tree')!
+    vi.advanceTimersByTime(getCropDef('oak_sapling')!.growthTimeMs + 1)
+    vi.spyOn(Math, 'random').mockReturnValue(0.999999)
+    const levelNinetyNine = harvestCrop(replanted.state, 'falador_tree_0', 99)
+    expect(levelNinetyNine?.quantity).toBe(25)
+    vi.restoreAllMocks()
+  })
+
+  it('harvestCrop applies farming-level-scaled quantity to fruit trees', () => {
+    const planted = plantCrop(initFarmingState(), 'catherby_fruitTree_0', 'apple_sapling', 'fruitTree')!
+    vi.advanceTimersByTime(getCropDef('apple_sapling')!.growthTimeMs + 1)
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const low = harvestCrop(planted.state, 'catherby_fruitTree_0', 1)
+    expect(low?.quantity).toBe(5)
+
+    const replanted = plantCrop(low!.state, 'catherby_fruitTree_0', 'apple_sapling', 'fruitTree')!
+    vi.advanceTimersByTime(getCropDef('apple_sapling')!.growthTimeMs + 1)
+    vi.spyOn(Math, 'random').mockReturnValue(0.999999)
+    const high = harvestCrop(replanted.state, 'catherby_fruitTree_0', 99)
+    expect(high?.quantity).toBe(25)
+    vi.restoreAllMocks()
+  })
   it('advanceFarmingState advances planted patches by elapsed ms', () => {
     const planted = plantCrop(initFarmingState(), 'falador_tree_0', 'oak_sapling', 'tree')!
     const patchBefore = planted.state.patchesById.falador_tree_0
