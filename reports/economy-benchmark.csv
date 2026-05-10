@@ -94,13 +94,13 @@ Monsters,Combat 1400,inferno,The Inferno (TzKal-Zuk),1400,,100,,0.02,,,,2,2,Assu
 Raids,Chambers of Xeric,chambers_of_xeric,Chambers of Xeric,,,1,,,16784851.21,,,16784851.21,16784851.21,"Assumes 1 completions/hr | Common EV: 198,708 | Unique EV: 16,586,144 | Unique table: Twisted Bow 0.500% EV 7,909,400; Ancestral Robe Top 1.500% EV 1,948,984; Ancestral Robe Bottom 1.500% EV 1,363,348; Elder Maul 1.000% EV 1,020,095; Dragon Hunter Crossbow 2.000% EV 811,943; Ancestral Hat 1.500% EV 808,709; Kodai Wand 1.000% EV 787,437; Zaryte Vambraces 1.000% EV 784,272; +3 more"
 Raids,Theatre of Blood,theatre_of_blood,Theatre of Blood,,,1,,,8252612.511557895,,,8252612.511557895,8252612.511557895,"Assumes 1 completions/hr | Common EV: 389,718 | Unique EV: 7,862,895 | Unique table: Avernic Defender 4.627% EV 3,701,895; Sanguinesti Staff 1.157% EV 1,735,263; Scythe of Vitur 0.578% EV 1,735,263; Ghrazi Rapier 1.157% EV 307,842; Justiciar Faceguard 1.157% EV 137,490; Justiciar Chestguard 1.157% EV 131,093; Justiciar Legguards 1.157% EV 114,049"
 Raids,Barrows Brothers,barrows_brothers,Barrows Brothers,,,1,,,280007.9375,,,280007.9375,280007.9375,"Assumes 1 completions/hr | Common EV: 150,828 | Unique EV: 129,180 | Unique table: Ahrim's Robeskirt 1.042% EV 20,754; Dharok's Greataxe 1.042% EV 20,083; Ahrim's Robetop 1.042% EV 20,031; Karil's Leathertop 1.042% EV 11,229; Dharok's Platebody 1.042% EV 8,606; Dharok's Platelegs 1.042% EV 8,568; Karil's Leatherskirt 1.042% EV 4,839; Torag's Platebody 1.042% EV 3,912; +16 more"
-Skilling,Smithing,smithing:smith_rune_pickaxe,Smith rune pickaxe,86,5,1200,18685,,,12500,6185,22422000,7422000,Product: Rune Pickaxe x1 | Materials: Rune Bar x1
-Skilling,Mining,mining:runite,Mine runite ore,85,9,666.6666666666666,10463,,,0,10463,6975333.333333333,6975333.333333333,Product: Runite Ore x1
 Skilling,Herblore,herblore:combat_potion,Make combat potion,36,3,2000,4000,,,638,3362,8000000,6724000,"Product: Combat Potion x1 | Materials: Harralander x1, Goat Horn Dust x1"
+Skilling,Smithing,smithing:smith_rune_pickaxe,Smith rune pickaxe,86,10,600,18685,,,12500,6185,11211000,3711000,Product: Rune Pickaxe x1 | Materials: Rune Bar x1
 Skilling,Fletching,fletching:tip_dragonstone_dragon_bolts,Tip dragonstone dragon bolts (10),84,30,200,36000,,,18050,17950,7200000,3590000,"Product: Dragonstone Dragon Bolt x10 | Materials: Dragon Bolt x10, Dragonstone Bolt Tips x10"
 Skilling,Fletching,fletching:make_dragon_bolts,Make dragon bolts (10),84,15,400,12000,,,4020,7980,4800000,3192000,"Product: Dragon Bolt x10 | Materials: Feather x10, Dragon Bolt (Unf) x10"
 Skilling,Fletching,fletching:tip_dragonstone_bolts,Tip dragonstone bolts (10),71,30,200,19000,,,6470,12530,3800000,2506000,"Product: Dragonstone Bolt x10 | Materials: Runite Bolt x10, Dragonstone Bolt Tips x10"
 Skilling,Magic,magic:enchant_dragonstone_dragon_bolts,Enchant Dragonstone Dragon Bolts (10),68,30,200,48000,,,36000,12000,9600000,2400000,Product: Dragonstone Dragon Bolt (E) x10 | Materials: Dragonstone Dragon Bolt x10
+Skilling,Mining,mining:runite,Mine runite ore,85,30,200,10463,,,0,10463,2092600,2092600,Product: Runite Ore x1
 Skilling,Herblore,herblore:strength_potion,Make strength potion,12,3,2000,1500,,,525,975,3000000,1950000,"Product: Strength Potion x1 | Materials: Tarromin x1, Limpwurt Root x1"
 Skilling,Magic,magic:enchant_diamond_dragon_bolts,Enchant Diamond Dragon Bolts (10),57,30,200,24000,,,15000,9000,4800000,1800000,Product: Diamond Dragon Bolt (E) x10 | Materials: Diamond Dragon Bolt x10
 Skilling,Magic,magic:enchant_ruby_dragon_bolts,Enchant Ruby Dragon Bolts (10),49,30,200,22000,,,14000,8000,4400000,1600000,Product: Ruby Dragon Bolt (E) x10 | Materials: Ruby Dragon Bolt x10
@@ -294,20 +294,20 @@ Skilling,Crafting,crafting:cut_diamond,Cut diamond,43,3,2000,1820,,,3052,-1232,3
 Skilling,Firemaking,firemaking:magic_logs,Burn magic logs,75,2,3000,0,,,909,-909,0,-2727000,Materials: Magic Logs x1
 Skilling,Herblore,herblore:magic_potion,Make magic potion,76,3,2000,350,,,1810,-1460,700000,-2920000,"Product: Magic Potion x1 | Materials: Lantadyme x1, Potato Cactus x1"
 Skilling,Smithing,smithing:smith_adamant_bolts_unf,Smith adamant bolts (unf) (10),73,4,1500,100,,,2048,-1948,150000,-2922000,Product: Adamant Bolt (Unf) x10 | Materials: Adamant Bar x1
+Skilling,Smithing,smithing:smith_rune_axe,Smith rune axe,86,10,600,7401,,,12500,-5099,4440600,-3059400,Product: Rune Axe x1 | Materials: Rune Bar x1
 Skilling,Smithing,smithing:smith_adamant_scimitar,Smith adamant scimitar,74,5,1200,1479,,,4096,-2617,1774800,-3140400,Product: Adamant Scimitar x1 | Materials: Adamant Bar x2
 Skilling,Herblore,herblore:saradomin_brew,Make saradomin brew,81,3,2000,600,,,2527,-1927,1200000,-3854000,"Product: Saradomin Brew x1 | Materials: Toadflax x1, Crushed Bird's Nest x1"
+Skilling,Herblore,herblore:super_combat_potion,Make super combat potion,90,6,1000,7500,,,11387,-3887,7500000,-3887000,"Product: Super Combat x1 | Materials: Torstol x1, Super Attack x1, Super Strength x1, Super Defence x1, Ranging Potion x1, Magic Potion x1"
 Skilling,Fletching,fletching:rune_arrows,Make rune arrows (15),75,3,2000,1170,,,3525,-2355,2340000,-4710000,"Product: Rune Arrow x15 | Materials: Headless Arrow x15, Rune Arrowtips x15"
 Skilling,Herblore,herblore:prayer_potion,Make prayer potion,38,3,2000,3500,,,6073,-2573,7000000,-5146000,"Product: Prayer Potion x1 | Materials: Ranarr Weed x1, Snape Grass x1"
 Skilling,Crafting,crafting:red_dhide_body,Craft red d'hide body,75,6,1000,5954,,,11584,-5630,5954000,-5630000,Product: Red D'Hide Body x1 | Materials: Red Dragon Leather x4
 Skilling,Prayer,prayer:bury_dragon_bones,Bury dragon bones,35,3,2000,0,,,2815,-2815,0,-5630000,Materials: Dragon Bones x1
 Skilling,Prayer,prayer:altar_dragon_bones,Use gilded altar (dragon bones),35,3,2000,0,,,2815,-2815,0,-5630000,Materials: Dragon Bones x1
-Skilling,Smithing,smithing:smith_rune_axe,Smith rune axe,86,5,1200,7401,,,12500,-5099,8881200,-6118800,Product: Rune Axe x1 | Materials: Rune Bar x1
+Skilling,Smithing,smithing:smith_rune_scimitar,Smith rune scimitar,89,10,600,14925,,,25000,-10075,8955000,-6045000,Product: Rune Scimitar x1 | Materials: Rune Bar x2
 Skilling,Herblore,herblore:super_defence,Make super defence,66,3,2000,400,,,3516,-3116,800000,-6232000,"Product: Super Defence x1 | Materials: Cadantine x1, White Berries x1"
 Skilling,Herblore,herblore:super_restore,Make super restore,63,3,2000,5000,,,8733,-3733,10000000,-7466000,"Product: Super Restore x1 | Materials: Snapdragon x1, Red Spiders' Eggs x1"
-Skilling,Herblore,herblore:super_combat_potion,Make super combat potion,90,3,2000,7500,,,11387,-3887,15000000,-7774000,"Product: Super Combat x1 | Materials: Torstol x1, Super Attack x1, Super Strength x1, Super Defence x1, Ranging Potion x1, Magic Potion x1"
 Skilling,Herblore,herblore:defence_potion,Make defence potion,30,3,2000,150,,,5945,-5795,300000,-11590000,"Product: Defence Potion x1 | Materials: Ranarr Weed x1, White Berries x1"
 Skilling,Fletching,fletching:cut_dragonstone_bolt_tips,Cut dragonstone bolt tips (12),71,2,3000,7260,,,11199,-3939,21780000,-11817000,Product: Dragonstone Bolt Tips x12 | Materials: Dragonstone x1
-Skilling,Smithing,smithing:smith_rune_scimitar,Smith rune scimitar,89,5,1200,14925,,,25000,-10075,17910000,-12090000,Product: Rune Scimitar x1 | Materials: Rune Bar x2
 Skilling,Crafting,crafting:cut_dragonstone,Cut dragonstone,55,3,2000,11199,,,17990,-6791,22398000,-13582000,Product: Dragonstone x1 | Materials: Uncut Dragonstone x1
 Skilling,Smithing,smithing:smith_runite_bolts_unf,Smith runite bolts (unf) (10),88,4,1500,350,,,12500,-12150,525000,-18225000,Product: Runite Bolt (Unf) x10 | Materials: Rune Bar x1
 Skilling,Prayer,prayer:bury_dagganoth_bones,Bury dagganoth bones,40,3,2000,0,,,14448,-14448,0,-28896000,Materials: Dagannoth Bones x1

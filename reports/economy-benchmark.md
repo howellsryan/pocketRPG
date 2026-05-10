@@ -1,6 +1,6 @@
 # PocketRPG Economy Benchmark
 
-Generated: 2026-05-10T16:44:00.806Z
+Generated: 2026-05-10T16:48:52.857Z
 
 ## Assumptions
 
@@ -27,14 +27,13 @@ Generated: 2026-05-10T16:44:00.806Z
 | Combat 380 | Rune Dragon | 380 |  | 100 |  | 93,431 |  | 9,343,067 | 9,343,067 | Assumes 100 kills/hr. EV: Onyx Bolt Tips: 16,600; Coins: 15,000; Rune Bar: 12,500; Runite Ore: 9,417; Dragon Chainbody: 5,473; Dragon Kiteshield: 4,828; Dragon Platelegs: 4,029; Dragon Plateskirt: 4,027; +12 more |
 | Combat 275 | Demonic Gorilla | 275 |  | 100 |  | 86,302 |  | 8,630,207 | 8,630,207 | Assumes 100 kills/hr. EV: Uncut Zenyte: 67,442; Heavy Ballista: 5,250; Ranarr Weed: 4,398; Coins: 3,000; Dragon Bones: 2,815; Snapdragon: 1,282; Death Rune: 992; Blood Rune: 718; +2 more |
 | Theatre of Blood | Theatre of Blood |  |  | 1 |  |  | 8,252,613 | 8,252,613 | 8,252,613 | Assumes 1 completions/hr \| Common EV: 389,718 \| Unique EV: 7,862,895 \| Unique table: Avernic Defender 4.627% EV 3,701,895; Sanguinesti Staff 1.157% EV 1,735,263; Scythe of Vitur 0.578% EV 1,735,263; Ghrazi Rapier 1.157% EV 307,842; Justiciar Faceguard 1.157% EV 137,490; Justiciar Chestguard 1.157% EV 131,093; Justiciar Legguards 1.157% EV 114,049 |
-| Smithing | Smith rune pickaxe | 86 | 5 | 1,200 | 18,685 |  |  | 22,422,000 | 7,422,000 | Product: Rune Pickaxe x1 \| Materials: Rune Bar x1 |
 | Combat 338 | Adamant Dragon | 338 |  | 100 |  | 69,986 |  | 6,998,580 | 6,998,580 | Assumes 100 kills/hr. EV: Onyx Bolt Tips: 16,600; Rune Bar: 12,500; Coins: 10,000; Runite Ore: 4,708; Dragon Chainbody: 4,105; Draconic Visage: 3,679; Dragon Platelegs: 3,223; Dragon Plateskirt: 3,222; +9 more |
-| Mining | Mine runite ore | 85 | 9 | 667 | 10,463 |  |  | 6,975,333 | 6,975,333 | Product: Runite Ore x1 |
 | Herblore | Make combat potion | 36 | 3 | 2,000 | 4,000 |  |  | 8,000,000 | 6,724,000 | Product: Combat Potion x1 \| Materials: Harralander x1, Goat Horn Dust x1 |
 | Combat 318 | Cerberus | 318 |  | 100 |  | 65,926 |  | 6,592,554 | 6,592,554 | Assumes 100 kills/hr. EV: Primordial Crystal: 32,624; Coins: 11,250; Eternal Crystal: 6,375; Death Rune: 3,780; Blood Rune: 3,014; Dragon Bones: 2,815; Ranarr Weed: 1,924; Soul Rune: 1,404; +6 more |
 | Combat 303 | Dagannoth Rex | 303 |  | 100 |  | 57,323 |  | 5,732,314 | 5,732,314 | Assumes 100 kills/hr. EV: Berserker Ring: 25,412; Dagannoth Bones: 14,448; Coins: 6,500; Dragon Axe: 4,096; Rune Platebody: 1,924; Rune Platelegs: 1,896; Ranarr Weed: 990; Warriors Ring: 781; +11 more |
 | Combat 303 | Dagannoth Supreme | 303 |  | 100 |  | 51,834 |  | 5,183,371 | 5,183,371 | Assumes 100 kills/hr. EV: Archers Ring: 20,704; Dagannoth Bones: 14,448; Coins: 6,500; Dragon Axe: 4,096; Rune Platebody: 1,924; Rune Platelegs: 1,896; Ranarr Weed: 990; Snapdragon: 427; +10 more |
 | Combat 303 | Dagannoth Prime | 303 |  | 100 |  | 37,468 |  | 3,746,817 | 3,746,817 | Assumes 100 kills/hr. EV: Dagannoth Bones: 14,448; Coins: 6,500; Seers Ring: 6,339; Dragon Axe: 4,096; Rune Platebody: 1,924; Rune Platelegs: 1,896; Ranarr Weed: 990; Snapdragon: 427; +10 more |
+| Smithing | Smith rune pickaxe | 86 | 10 | 600 | 18,685 |  |  | 11,211,000 | 3,711,000 | Product: Rune Pickaxe x1 \| Materials: Rune Bar x1 |
 | Fletching | Tip dragonstone dragon bolts (10) | 84 | 30 | 200 | 36,000 |  |  | 7,200,000 | 3,590,000 | Product: Dragonstone Dragon Bolt x10 \| Materials: Dragon Bolt x10, Dragonstone Bolt Tips x10 |
 | Fletching | Make dragon bolts (10) | 84 | 15 | 400 | 12,000 |  |  | 4,800,000 | 3,192,000 | Product: Dragon Bolt x10 \| Materials: Feather x10, Dragon Bolt (Unf) x10 |
 | Combat 276 | King Black Dragon | 276 |  | 100 |  | 28,701 |  | 2,870,111 | 2,870,111 | Assumes 100 kills/hr. EV: Coins: 12,500; Runite Ore: 7,324; Dragon Bones: 2,815; Draconic Visage: 1,840; Dragon Pickaxe: 1,429; Blood Rune: 1,076; Death Rune: 907; Soul Rune: 810; +1 more |
@@ -42,6 +41,7 @@ Generated: 2026-05-10T16:44:00.806Z
 | Fletching | Tip dragonstone bolts (10) | 71 | 30 | 200 | 19,000 |  |  | 3,800,000 | 2,506,000 | Product: Dragonstone Bolt x10 \| Materials: Runite Bolt x10, Dragonstone Bolt Tips x10 |
 | Magic | Enchant Dragonstone Dragon Bolts (10) | 68 | 30 | 200 | 48,000 |  |  | 9,600,000 | 2,400,000 | Product: Dragonstone Dragon Bolt (E) x10 \| Materials: Dragonstone Dragon Bolt x10 |
 | Combat 150 | Lizardman Shaman | 150 |  | 100 |  | 21,142 |  | 2,114,161 | 2,114,161 | Assumes 100 kills/hr. EV: Dragon Warhammer: 5,358; Snapdragon: 4,272; Ranarr Weed: 2,749; Blood Rune: 2,153; Rune Chainbody: 1,482; Death Rune: 1,418; Kwuarm: 1,272; Coins: 875; +3 more |
+| Mining | Mine runite ore | 85 | 30 | 200 | 10,463 |  |  | 2,092,600 | 2,092,600 | Product: Runite Ore x1 |
 | Herblore | Make strength potion | 12 | 3 | 2,000 | 1,500 |  |  | 3,000,000 | 1,950,000 | Product: Strength Potion x1 \| Materials: Tarromin x1, Limpwurt Root x1 |
 | Magic | Enchant Diamond Dragon Bolts (10) | 57 | 30 | 200 | 24,000 |  |  | 4,800,000 | 1,800,000 | Product: Diamond Dragon Bolt (E) x10 \| Materials: Diamond Dragon Bolt x10 |
 | Herb | Gout tuber (Herb, all 5 patches) | 36 |  | 3.75 | 2,323,530 |  | 2,323,530 | 1,742,648 | 1,742,423 | All available herb patches from farming.json. Crop: Gout Tuber x1. Growth: 1.33 hours. |
@@ -186,13 +186,13 @@ Generated: 2026-05-10T16:44:00.806Z
 
 | Category | Name | Level | Ticks | Actions/hr | EV/action | EV/kill | EV/completion | Gross coins/hr | Net coins/hr | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Smithing | Smith rune pickaxe | 86 | 5 | 1,200 | 18,685 |  |  | 22,422,000 | 7,422,000 | Product: Rune Pickaxe x1 \| Materials: Rune Bar x1 |
-| Mining | Mine runite ore | 85 | 9 | 667 | 10,463 |  |  | 6,975,333 | 6,975,333 | Product: Runite Ore x1 |
 | Herblore | Make combat potion | 36 | 3 | 2,000 | 4,000 |  |  | 8,000,000 | 6,724,000 | Product: Combat Potion x1 \| Materials: Harralander x1, Goat Horn Dust x1 |
+| Smithing | Smith rune pickaxe | 86 | 10 | 600 | 18,685 |  |  | 11,211,000 | 3,711,000 | Product: Rune Pickaxe x1 \| Materials: Rune Bar x1 |
 | Fletching | Tip dragonstone dragon bolts (10) | 84 | 30 | 200 | 36,000 |  |  | 7,200,000 | 3,590,000 | Product: Dragonstone Dragon Bolt x10 \| Materials: Dragon Bolt x10, Dragonstone Bolt Tips x10 |
 | Fletching | Make dragon bolts (10) | 84 | 15 | 400 | 12,000 |  |  | 4,800,000 | 3,192,000 | Product: Dragon Bolt x10 \| Materials: Feather x10, Dragon Bolt (Unf) x10 |
 | Fletching | Tip dragonstone bolts (10) | 71 | 30 | 200 | 19,000 |  |  | 3,800,000 | 2,506,000 | Product: Dragonstone Bolt x10 \| Materials: Runite Bolt x10, Dragonstone Bolt Tips x10 |
 | Magic | Enchant Dragonstone Dragon Bolts (10) | 68 | 30 | 200 | 48,000 |  |  | 9,600,000 | 2,400,000 | Product: Dragonstone Dragon Bolt (E) x10 \| Materials: Dragonstone Dragon Bolt x10 |
+| Mining | Mine runite ore | 85 | 30 | 200 | 10,463 |  |  | 2,092,600 | 2,092,600 | Product: Runite Ore x1 |
 | Herblore | Make strength potion | 12 | 3 | 2,000 | 1,500 |  |  | 3,000,000 | 1,950,000 | Product: Strength Potion x1 \| Materials: Tarromin x1, Limpwurt Root x1 |
 | Magic | Enchant Diamond Dragon Bolts (10) | 57 | 30 | 200 | 24,000 |  |  | 4,800,000 | 1,800,000 | Product: Diamond Dragon Bolt (E) x10 \| Materials: Diamond Dragon Bolt x10 |
 | Magic | Enchant Ruby Dragon Bolts (10) | 49 | 30 | 200 | 22,000 |  |  | 4,400,000 | 1,600,000 | Product: Ruby Dragon Bolt (E) x10 \| Materials: Ruby Dragon Bolt x10 |
@@ -386,20 +386,20 @@ Generated: 2026-05-10T16:44:00.806Z
 | Firemaking | Burn magic logs | 75 | 2 | 3,000 | 0 |  |  | 0 | -2,727,000 | Materials: Magic Logs x1 |
 | Herblore | Make magic potion | 76 | 3 | 2,000 | 350 |  |  | 700,000 | -2,920,000 | Product: Magic Potion x1 \| Materials: Lantadyme x1, Potato Cactus x1 |
 | Smithing | Smith adamant bolts (unf) (10) | 73 | 4 | 1,500 | 100 |  |  | 150,000 | -2,922,000 | Product: Adamant Bolt (Unf) x10 \| Materials: Adamant Bar x1 |
+| Smithing | Smith rune axe | 86 | 10 | 600 | 7,401 |  |  | 4,440,600 | -3,059,400 | Product: Rune Axe x1 \| Materials: Rune Bar x1 |
 | Smithing | Smith adamant scimitar | 74 | 5 | 1,200 | 1,479 |  |  | 1,774,800 | -3,140,400 | Product: Adamant Scimitar x1 \| Materials: Adamant Bar x2 |
 | Herblore | Make saradomin brew | 81 | 3 | 2,000 | 600 |  |  | 1,200,000 | -3,854,000 | Product: Saradomin Brew x1 \| Materials: Toadflax x1, Crushed Bird's Nest x1 |
+| Herblore | Make super combat potion | 90 | 6 | 1,000 | 7,500 |  |  | 7,500,000 | -3,887,000 | Product: Super Combat x1 \| Materials: Torstol x1, Super Attack x1, Super Strength x1, Super Defence x1, Ranging Potion x1, Magic Potion x1 |
 | Fletching | Make rune arrows (15) | 75 | 3 | 2,000 | 1,170 |  |  | 2,340,000 | -4,710,000 | Product: Rune Arrow x15 \| Materials: Headless Arrow x15, Rune Arrowtips x15 |
 | Herblore | Make prayer potion | 38 | 3 | 2,000 | 3,500 |  |  | 7,000,000 | -5,146,000 | Product: Prayer Potion x1 \| Materials: Ranarr Weed x1, Snape Grass x1 |
 | Crafting | Craft red d'hide body | 75 | 6 | 1,000 | 5,954 |  |  | 5,954,000 | -5,630,000 | Product: Red D'Hide Body x1 \| Materials: Red Dragon Leather x4 |
 | Prayer | Bury dragon bones | 35 | 3 | 2,000 | 0 |  |  | 0 | -5,630,000 | Materials: Dragon Bones x1 |
 | Prayer | Use gilded altar (dragon bones) | 35 | 3 | 2,000 | 0 |  |  | 0 | -5,630,000 | Materials: Dragon Bones x1 |
-| Smithing | Smith rune axe | 86 | 5 | 1,200 | 7,401 |  |  | 8,881,200 | -6,118,800 | Product: Rune Axe x1 \| Materials: Rune Bar x1 |
+| Smithing | Smith rune scimitar | 89 | 10 | 600 | 14,925 |  |  | 8,955,000 | -6,045,000 | Product: Rune Scimitar x1 \| Materials: Rune Bar x2 |
 | Herblore | Make super defence | 66 | 3 | 2,000 | 400 |  |  | 800,000 | -6,232,000 | Product: Super Defence x1 \| Materials: Cadantine x1, White Berries x1 |
 | Herblore | Make super restore | 63 | 3 | 2,000 | 5,000 |  |  | 10,000,000 | -7,466,000 | Product: Super Restore x1 \| Materials: Snapdragon x1, Red Spiders' Eggs x1 |
-| Herblore | Make super combat potion | 90 | 3 | 2,000 | 7,500 |  |  | 15,000,000 | -7,774,000 | Product: Super Combat x1 \| Materials: Torstol x1, Super Attack x1, Super Strength x1, Super Defence x1, Ranging Potion x1, Magic Potion x1 |
 | Herblore | Make defence potion | 30 | 3 | 2,000 | 150 |  |  | 300,000 | -11,590,000 | Product: Defence Potion x1 \| Materials: Ranarr Weed x1, White Berries x1 |
 | Fletching | Cut dragonstone bolt tips (12) | 71 | 2 | 3,000 | 7,260 |  |  | 21,780,000 | -11,817,000 | Product: Dragonstone Bolt Tips x12 \| Materials: Dragonstone x1 |
-| Smithing | Smith rune scimitar | 89 | 5 | 1,200 | 14,925 |  |  | 17,910,000 | -12,090,000 | Product: Rune Scimitar x1 \| Materials: Rune Bar x2 |
 | Crafting | Cut dragonstone | 55 | 3 | 2,000 | 11,199 |  |  | 22,398,000 | -13,582,000 | Product: Dragonstone x1 \| Materials: Uncut Dragonstone x1 |
 | Smithing | Smith runite bolts (unf) (10) | 88 | 4 | 1,500 | 350 |  |  | 525,000 | -18,225,000 | Product: Runite Bolt (Unf) x10 \| Materials: Rune Bar x1 |
 | Prayer | Bury dagganoth bones | 40 | 3 | 2,000 | 0 |  |  | 0 | -28,896,000 | Materials: Dagannoth Bones x1 |

@@ -79,7 +79,7 @@
         "id": "runite",
         "name": "Mine runite ore",
         "level": 85,
-        "ticks": 9,
+        "ticks": 30,
         "xp": 125,
         "product": "runite_ore"
       },
@@ -501,7 +501,7 @@
         "id": "smith_rune_axe",
         "name": "Smith rune axe",
         "level": 86,
-        "ticks": 5,
+        "ticks": 10,
         "xp": 200,
         "product": "rune_axe",
         "materials": {
@@ -512,7 +512,7 @@
         "id": "smith_rune_pickaxe",
         "name": "Smith rune pickaxe",
         "level": 86,
-        "ticks": 5,
+        "ticks": 10,
         "xp": 200,
         "product": "rune_pickaxe",
         "materials": {
@@ -523,7 +523,7 @@
         "id": "smith_rune_scimitar",
         "name": "Smith rune scimitar",
         "level": 89,
-        "ticks": 5,
+        "ticks": 10,
         "xp": 150,
         "product": "rune_scimitar",
         "materials": {
@@ -1777,7 +1777,7 @@
         "id": "super_combat_potion",
         "name": "Make super combat potion",
         "level": 90,
-        "ticks": 3,
+        "ticks": 6,
         "xp": 250,
         "product": "super_combat_potion",
         "materials": {
