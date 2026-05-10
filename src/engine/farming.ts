@@ -98,7 +98,8 @@ export function plantCrop(
 
 export function harvestCrop(
   state: FarmingState,
-  patchId: string
+  patchId: string,
+  farmingLevel: number = 1
 ): { state: FarmingState; harvestXp: number; cropId: string; quantity: number } | null {
   const patch = state.patchesById[patchId]
   if (!patch || !patch.cropId) return null
@@ -110,11 +111,19 @@ export function harvestCrop(
   const newState = { ...state, patchesById: { ...state.patchesById } }
   delete newState.patchesById[patchId]
 
+  const safeLevel = Math.max(1, Math.min(99, Math.floor(farmingLevel || 1)))
+  const maxHerbYield = 5 + Math.floor(((safeLevel - 1) * 10) / 98)
+  const herbYield = 5 + Math.floor(Math.random() * (Math.max(5, maxHerbYield) - 5 + 1))
+
+  const isHerb = getCropType(patch.cropId) === 'herb'
+  const quantity = isHerb ? herbYield : 1
+  const harvestXp = isHerb ? Math.floor(crop.harvestXp * quantity) : Math.floor(crop.harvestXp)
+
   return {
     state: newState,
-    harvestXp: crop.harvestXp,
+    harvestXp,
     cropId: crop.cropId,
-    quantity: 1
+    quantity
   }
 }
 
@@ -182,6 +191,66 @@ export interface PlantableCropOption {
   crop: CropDef
   ownedQuantity: number
   canPlant: boolean
+}
+
+export interface PlantAllOutcome {
+  state: FarmingState
+  planted: Record<string, number>
+  consumed: Record<string, number>
+  inventoryUsage: Record<string, number>
+  bankUsage: Record<string, number>
+  totalXp: number
+}
+
+export function applyPlantAll(
+  state: FarmingState,
+  allPatches: Array<{ patchId: string; patch: FarmingPatch | null; type: string }>,
+  plantSelections: Partial<Record<FarmingPatchType, string | null | undefined>>,
+  inventory: Array<{ itemId: string; quantity: number } | null> | null | undefined,
+  bank: Record<string, { quantity?: number }> | null | undefined,
+): PlantAllOutcome {
+  let nextState = state
+  let totalXp = 0
+  const planted: Record<string, number> = {}
+  const consumed: Record<string, number> = {}
+  const inventoryUsage: Record<string, number> = {}
+  const bankUsage: Record<string, number> = {}
+  const inventoryPool: Record<string, number> = {}
+  const bankPool: Record<string, number> = {}
+
+  for (const slot of inventory || []) {
+    if (!slot?.itemId) continue
+    inventoryPool[slot.itemId] = (inventoryPool[slot.itemId] || 0) + (slot.quantity || 0)
+  }
+  for (const [itemId, entry] of Object.entries(bank || {})) {
+    bankPool[itemId] = Math.max(0, entry?.quantity || 0)
+  }
+
+  for (const patchData of allPatches) {
+    if (patchData.patch?.cropId) continue
+    const patchType = patchData.type as FarmingPatchType
+    const seedId = plantSelections[patchType]
+    if (!seedId) continue
+    const availableInv = inventoryPool[seedId] || 0
+    const availableBank = bankPool[seedId] || 0
+    if ((availableInv + availableBank) <= 0) continue
+    const result = plantCrop(nextState, patchData.patchId, seedId, patchType)
+    if (!result) continue
+    nextState = result.state
+    totalXp += result.plantXp
+    planted[seedId] = (planted[seedId] || 0) + 1
+    consumed[seedId] = (consumed[seedId] || 0) + 1
+
+    if (availableInv > 0) {
+      inventoryUsage[seedId] = (inventoryUsage[seedId] || 0) + 1
+      inventoryPool[seedId] = availableInv - 1
+    } else {
+      bankUsage[seedId] = (bankUsage[seedId] || 0) + 1
+      bankPool[seedId] = availableBank - 1
+    }
+  }
+
+  return { state: nextState, planted, consumed, inventoryUsage, bankUsage, totalXp }
 }
 
 export function getPlantableCropOptions(

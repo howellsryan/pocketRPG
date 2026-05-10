@@ -38865,7 +38865,7 @@ function plantCrop(state, patchId, seedId, patchType) {
         cropName: crop.name
     };
 }
-function harvestCrop(state, patchId) {
+function harvestCrop(state, patchId, farmingLevel = 1) {
     const patch = state.patchesById[patchId];
     if (!patch || !patch.cropId)
         return null;
@@ -38876,11 +38876,17 @@ function harvestCrop(state, patchId) {
         return null;
     const newState = { ...state, patchesById: { ...state.patchesById } };
     delete newState.patchesById[patchId];
+    const safeLevel = Math.max(1, Math.min(99, Math.floor(farmingLevel || 1)));
+    const maxHerbYield = 5 + Math.floor(((safeLevel - 1) * 10) / 98);
+    const herbYield = 5 + Math.floor(Math.random() * (Math.max(5, maxHerbYield) - 5 + 1));
+    const isHerb = getCropType(patch.cropId) === 'herb';
+    const quantity = isHerb ? herbYield : 1;
+    const harvestXp = isHerb ? Math.floor(crop.harvestXp * quantity) : Math.floor(crop.harvestXp);
     return {
         state: newState,
-        harvestXp: crop.harvestXp,
+        harvestXp,
         cropId: crop.cropId,
-        quantity: 1
+        quantity
     };
 }
 function processFarmingTick(state) {
@@ -47208,14 +47214,123 @@ function AgilityScreen({ initialActionId, idleResult, onBack }) {
 
 
 
+
+
+
 function FarmingScreen({ onBack }) {
-    const { stats, farming } = useGame();
+    const { stats, farming, inventory, bank, updateFarming, grantXP, addToBank, updateBankDirect, removeFromInventory, addToast, itemsData } = useGame();
     const farmingLevel = getLevelFromXP(stats.farming?.xp || 0);
     const [selectedLocation, setSelectedLocation] = useState(null);
+    const [resultModal, setResultModal] = useState(null);
+    const [plantAllOpen, setPlantAllOpen] = useState(false);
+    const [plantSelections, setPlantSelections] = useState(() => farming?.plantAllSelections || {});
+    const safeFarming = farming?.patchesById ? farming : initFarmingState();
+    const allPatches = farmingData.locations.flatMap(location => getPatchesForLocation(safeFarming, location.id));
+    const handleHarvestAll = () => {
+        let nextState = safeFarming;
+        let totalXp = 0;
+        const items = {};
+        let harvestedCount = 0;
+        for (const patchData of allPatches) {
+            if (!patchData.patch?.cropId || getEffectiveStage(patchData.patch) < 4)
+                continue;
+            const result = harvestCrop(nextState, patchData.patchId, farmingLevel);
+            if (!result)
+                continue;
+            nextState = result.state;
+            totalXp += result.harvestXp;
+            items[result.cropId] = (items[result.cropId] || 0) + result.quantity;
+            harvestedCount++;
+        }
+        if (harvestedCount <= 0) {
+            addToast('No crops ready to harvest', 'error');
+            return;
+        }
+        updateFarming(nextState);
+        if (totalXp > 0)
+            grantXP('farming', totalXp);
+        for (const [itemId, qty] of Object.entries(items))
+            addToBank(itemId, qty);
+        setResultModal({ title: 'Harvest All Complete', xp: totalXp, items, action: 'Harvested' });
+    };
+    const cropGroups = {
+        herb: getPlantableCropOptions('herb', farmingLevel, inventory, bank),
+        tree: getPlantableCropOptions('tree', farmingLevel, inventory, bank),
+        fruitTree: getPlantableCropOptions('fruitTree', farmingLevel, inventory, bank),
+    };
+    const openPlantAllModal = () => {
+        setPlantSelections(farming?.plantAllSelections || {});
+        setPlantAllOpen(true);
+    };
+    const confirmPlantAll = () => {
+        const selectedTypes = Object.entries(plantSelections).filter(([, v]) => !!v).map(([k]) => k);
+        if (selectedTypes.length === 0)
+            return;
+        const { state: nextState, totalXp, planted, consumed, inventoryUsage, bankUsage } = applyPlantAll(safeFarming, farmingData.locations.flatMap(location => getPatchesForLocation(safeFarming, location.id)), plantSelections, inventory, bank);
+        if (Object.keys(planted).length === 0) {
+            addToast('No empty patches or not enough selected seeds', 'error');
+            return;
+        }
+        updateFarming({ ...safeFarming, ...nextState, plantAllSelections: plantSelections });
+        const inventorySlots = Array.isArray(inventory) ? inventory : [];
+        for (const [seedId, qty] of Object.entries(inventoryUsage)) {
+            let remaining = qty;
+            for (let i = 0; i < inventorySlots.length && remaining > 0; i++) {
+                const slot = inventorySlots[i];
+                if (!slot || slot.itemId !== seedId)
+                    continue;
+                const removeQty = Math.min(slot.quantity || 0, remaining);
+                if (removeQty > 0) {
+                    removeFromInventory(i, removeQty);
+                    remaining -= removeQty;
+                }
+            }
+        }
+        for (const [seedId, qty] of Object.entries(bankUsage))
+            updateBankDirect({ [seedId]: -qty });
+        if (totalXp > 0)
+            grantXP('farming', totalXp);
+        setPlantAllOpen(false);
+        addToast('Planted all selected crops', 'success');
+        setResultModal({ title: 'Plant All Complete', xp: totalXp, items: consumed, action: 'Planted' });
+    };
     if (selectedLocation) {
         return (h(FarmPatchView, { locationId: selectedLocation, farmingLevel: farmingLevel, onBack: () => setSelectedLocation(null) }));
     }
-    return (h(FarmLocationPicker, { farmingLevel: farmingLevel, farming: farming, onSelectLocation: setSelectedLocation, onBack: onBack }));
+    return (h(Fragment, null,
+        h(FarmLocationPicker, { farmingLevel: farmingLevel, farming: farming, onSelectLocation: setSelectedLocation, onBack: onBack, onHarvestAll: handleHarvestAll, onPlantAll: openPlantAllModal }),
+        plantAllOpen && (h(Modal, { title: "Plant All", onClose: () => setPlantAllOpen(false) },
+            h("div", { class: "space-y-3" },
+                ['herb', 'tree', 'fruitTree'].map(type => (h("div", { class: "bg-[#111] rounded-lg p-2", key: type },
+                    h("div", { class: "text-xs font-semibold text-[var(--color-gold)] capitalize mb-2" }, type === 'fruitTree' ? 'Fruit Trees' : `${type}s`),
+                    h("div", { class: "space-y-1" }, cropGroups[type].filter(x => x.ownedQuantity > 0).map(({ crop }) => {
+                        const selected = plantSelections[type] === crop.id;
+                        return (h("button", { key: crop.id, onClick: () => setPlantSelections(prev => ({ ...prev, [type]: selected ? null : crop.id })), class: `w-full p-2 rounded border text-left flex items-center justify-between ${selected ? 'border-[var(--color-gold)] bg-[#201a08]' : 'border-[#2a2a2a] bg-[#1a1a1a]'}` },
+                            h("span", { class: "text-xs text-[var(--color-parchment)]" },
+                                crop.icon,
+                                " ",
+                                crop.name),
+                            h("span", { class: `text-sm ${selected ? 'text-[var(--color-gold)]' : 'text-[var(--color-parchment)] opacity-30'}` }, selected ? '✓' : '○')));
+                    }))))),
+                h("div", { class: "flex gap-2" },
+                    h("button", { onClick: () => setPlantAllOpen(false), class: "flex-1 py-2 rounded-lg bg-[#2a2a2a] text-[var(--color-parchment)] text-sm" }, "Cancel"),
+                    h("button", { disabled: !Object.values(plantSelections).some(Boolean), onClick: confirmPlantAll, class: "flex-1 py-2 rounded-lg bg-[var(--color-gold)] text-[#111] text-sm font-semibold disabled:opacity-50" }, "Plant"))))),
+        resultModal && (h(Modal, { title: resultModal.title, onClose: () => setResultModal(null) },
+            h("div", { class: "text-xs text-[var(--color-parchment)] space-y-2" },
+                h("div", null,
+                    "Farming XP gained: ",
+                    h("span", { class: "text-[var(--color-gold)] font-semibold" }, Math.floor(resultModal.xp))),
+                Object.entries(resultModal.items).map(([itemId, qty]) => {
+                    const item = itemsData[itemId] || getCropDef(itemId);
+                    return h("div", { key: itemId },
+                        resultModal.action,
+                        " ",
+                        item?.icon || '',
+                        " ",
+                        item?.name || itemId,
+                        " \u00D7",
+                        qty);
+                }))))));
 }
 
 // ── screens/FarmLocationPicker.js ──
@@ -47231,14 +47346,18 @@ const readyTypeLabels = {
     tree: 'Tree',
     fruitTree: 'Fruit tree'
 };
-function FarmLocationPicker({ farmingLevel, farming, onSelectLocation, onBack }) {
+function FarmLocationPicker({ farmingLevel, farming, onSelectLocation, onBack, onHarvestAll, onPlantAll }) {
     return (h("div", { class: "h-full overflow-y-auto p-4" },
         onBack && (h("button", { onClick: onBack, class: "text-xs text-[var(--color-gold-dim)] mb-3 flex items-center gap-1" }, "\u2190 Skills")),
-        h("div", { class: "flex items-center justify-between mb-1" },
+        h("div", { class: "flex items-start justify-between mb-1 gap-3" },
             h("h2", { class: "font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider" }, "Farming Locations"),
-            h("span", { class: "text-xs font-[var(--font-mono)] text-[var(--color-gold)]" },
-                "Lv ",
-                farmingLevel)),
+            h("div", { class: "flex w-[220px] shrink-0 flex-col items-stretch gap-1" },
+                h("span", { class: "text-right text-xs font-[var(--font-mono)] text-[var(--color-gold)]" },
+                    "Lv ",
+                    farmingLevel),
+                h("div", { class: "flex gap-2" },
+                    h("button", { onClick: onHarvestAll, class: "min-h-[44px] flex-1 px-3 rounded-lg border border-[var(--color-gold)] bg-[#201a08] text-xs font-semibold text-[var(--color-gold)]" }, "Harvest All"),
+                    h("button", { onClick: onPlantAll, class: "min-h-[44px] flex-1 px-3 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-xs font-semibold text-[var(--color-parchment)]" }, "Plant All")))),
         h("div", { class: "mb-3 bg-[#111] rounded-lg px-3 py-2 text-[11px] text-[var(--color-parchment)] opacity-60 flex items-center gap-2" },
             h("span", null, "\uD83C\uDF3E"),
             h("span", null, "Plant seeds at farms and harvest crops over time")),
@@ -47317,7 +47436,7 @@ function FarmPatchView({ locationId, farmingLevel, onBack }) {
         setSelectedPatch(null);
     };
     const handleHarvest = () => {
-        const result = harvestCrop(farming, selectedPatch.patchId);
+        const result = harvestCrop(farming, selectedPatch.patchId, farmingLevel);
         if (!result) {
             addToast('Not ready to harvest', 'error');
             return;

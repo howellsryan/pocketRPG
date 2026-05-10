@@ -10,8 +10,11 @@ import {
   advanceFarmingState,
   getPlantableCropOptions,
   getReadyPatchSummaryForLocation,
+  applyPlantAll,
+  getPatchesForLocation,
 } from '../src/engine/farming.ts'
 import { GATHERING_SKILLS, STUB_SKILLS } from '../src/utils/constants.js'
+import farmingData from '../src/data/farming.json'
 
 describe('farming engine', () => {
   beforeEach(() => {
@@ -86,6 +89,18 @@ describe('farming engine', () => {
     expect(harvested).toBeTruthy()
     expect(harvested!.cropId).toBe('guam_leaf')
     expect(harvested!.state.patchesById.falador_herb_0).toBeUndefined()
+  })
+
+
+  it('harvestCrop multiplies herb xp by harvested quantity', () => {
+    const planted = plantCrop(initFarmingState(), 'falador_herb_0', 'guam_seed', 'herb')!
+    vi.advanceTimersByTime(getCropDef('guam_seed')!.growthTimeMs + 1)
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const harvested = harvestCrop(planted.state, 'falador_herb_0', 1)
+    expect(harvested).toBeTruthy()
+    const baseXp = getCropDef('guam_seed')!.harvestXp
+    expect(harvested!.harvestXp).toBe(Math.floor(baseXp * harvested!.quantity))
+    vi.restoreAllMocks()
   })
 
   it('advanceFarmingState advances planted patches by elapsed ms', () => {
@@ -211,5 +226,34 @@ describe('farming ui helper data', () => {
     const catherbyReady = getReadyPatchSummaryForLocation(state, 'catherby')
     expect(catherbyReady).toEqual([{ type: 'fruitTree', count: 1 }])
     expect(state).toEqual(snapshot)
+  })
+})
+
+
+describe('farming plant-all behavior', () => {
+  it('plants guam herb seeds across herb patches in all farming locations', () => {
+    const state = initFarmingState()
+    const allPatches = farmingData.locations.flatMap(location => getPatchesForLocation(state, location.id))
+    const herbPatchCount = allPatches.filter(p => p.type === 'herb').length
+    const inventory = [{ itemId: 'guam_seed', quantity: Math.max(1, herbPatchCount - 1) }]
+    const bank = { guam_seed: { quantity: 1 } }
+
+    const result = applyPlantAll(state, allPatches as any, { herb: 'guam_seed' }, inventory as any, bank as any)
+
+    expect(result.planted).toEqual({ guam_seed: herbPatchCount })
+    expect(Object.values(result.state.patchesById).every(p => p.type === 'herb')).toBe(true)
+    expect(result.inventoryUsage.guam_seed + result.bankUsage.guam_seed).toBe(herbPatchCount)
+  })
+
+  it('returns no plantings when selected seed does not match patch type', () => {
+    const state = initFarmingState()
+    const allPatches = [{ patchId: 'falador_herb_0', patch: null, type: 'herb' }]
+    const inventory = [{ itemId: 'oak_sapling', quantity: 1 }]
+
+    const result = applyPlantAll(state, allPatches as any, { herb: 'oak_sapling' }, inventory as any, {})
+
+    expect(result.planted).toEqual({})
+    expect(result.state).toEqual(state)
+    expect(result.totalXp).toBe(0)
   })
 })

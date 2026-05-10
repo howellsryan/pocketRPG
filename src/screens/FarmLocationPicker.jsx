@@ -13,7 +13,7 @@ const readyTypeLabels = {
   fruitTree: 'Fruit tree'
 }
 
-export default function FarmLocationPicker({ farmingLevel, farming, onSelectLocation, onBack }) {
+export default function FarmLocationPicker({ farmingLevel, farming, onSelectLocation, onBack, onHarvestAll, onPlantAll }) {
   return (
     <div class="h-full overflow-y-auto p-4">
       {onBack && (
@@ -21,11 +21,17 @@ export default function FarmLocationPicker({ farmingLevel, farming, onSelectLoca
           ← Skills
         </button>
       )}
-      <div class="flex items-center justify-between mb-1">
+      <div class="flex items-start justify-between mb-1 gap-3">
         <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider">
           Farming Locations
         </h2>
-        <span class="text-xs font-[var(--font-mono)] text-[var(--color-gold)]">Lv {farmingLevel}</span>
+        <div class="flex w-[220px] shrink-0 flex-col items-stretch gap-1">
+          <span class="text-right text-xs font-[var(--font-mono)] text-[var(--color-gold)]">Lv {farmingLevel}</span>
+          <div class="flex gap-2">
+            <button onClick={onHarvestAll} class="min-h-[44px] flex-1 px-3 rounded-lg border border-[var(--color-gold)] bg-[#201a08] text-xs font-semibold text-[var(--color-gold)]">Harvest All</button>
+            <button onClick={onPlantAll} class="min-h-[44px] flex-1 px-3 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-xs font-semibold text-[var(--color-parchment)]">Plant All</button>
+          </div>
+        </div>
       </div>
 
       <div class="mb-3 bg-[#111] rounded-lg px-3 py-2 text-[11px] text-[var(--color-parchment)] opacity-60 flex items-center gap-2">
