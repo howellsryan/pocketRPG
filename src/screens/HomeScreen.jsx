@@ -7,14 +7,21 @@ import { SCREENS, COMBAT_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SK
 import Modal from '../components/Modal.jsx'
 import SkillBadge from '../components/SkillBadge.jsx'
 
-export default function HomeScreen({ onNavigate, onLogout, isCloudAccount, removeAds, identityId, characterId, stripeLinks }) {
+export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloudAccount, removeAds, identityId, characterId, stripeLinks }) {
   const { player, stats, setActiveTask, equipment, inventory, itemsData } = useGame()
   const [loggingOut, setLoggingOut] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [selectedSkillDetail, setSelectedSkillDetail] = useState(null)
 
   async function handleLogout() {
     setLoggingOut(true)
     try { await onLogout() } finally { setLoggingOut(false) }
+  }
+
+  async function handleManualSave() {
+    if (!onManualSave || saving || loggingOut) return
+    setSaving(true)
+    try { await onManualSave() } finally { setSaving(false) }
   }
 
   if (!player) return null
@@ -78,13 +85,26 @@ export default function HomeScreen({ onNavigate, onLogout, isCloudAccount, remov
               <span>📊 Total {totalLevel}</span>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            disabled={loggingOut}
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #333', borderRadius: '8px', padding: '6px 10px', fontSize: '11px', color: '#e8d5b0', opacity: loggingOut ? 0.4 : 0.7, cursor: loggingOut ? 'default' : 'pointer' }}
-          >
-            {isCloudAccount && loggingOut ? '☁️ Saving...' : '🚪 Logout'}
-          </button>
+          <div class="flex items-center gap-2">
+            <button
+              onClick={handleManualSave}
+              disabled={saving || loggingOut || !onManualSave}
+              aria-label="Save game"
+              title={saving ? 'Saving...' : 'Save game'}
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #333', borderRadius: '8px', width: '44px', height: '44px', fontSize: '18px', color: '#e8d5b0', opacity: (saving || loggingOut || !onManualSave) ? 0.4 : 0.7, cursor: (saving || loggingOut || !onManualSave) ? 'default' : 'pointer' }}
+            >
+              {saving ? '☁️' : '💾'}
+            </button>
+            <button
+              onClick={handleLogout}
+              disabled={loggingOut || saving}
+              aria-label="Log out"
+              title={isCloudAccount && loggingOut ? 'Saving...' : 'Log out'}
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #333', borderRadius: '8px', width: '44px', height: '44px', fontSize: '18px', color: '#e8d5b0', opacity: (loggingOut || saving) ? 0.4 : 0.7, cursor: (loggingOut || saving) ? 'default' : 'pointer' }}
+            >
+              🚪
+            </button>
+          </div>
         </div>
       </div>
 
