@@ -1763,32 +1763,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </div>
       )}
 
-      {/* Active potion boosts — desktop only, shown above the paperdoll so
-          a player can see active boosts at a glance without leaving the
-          gear column. */}
-      {Object.keys(combat?.activePotions || {}).length > 0 && (
-        <div class={`${isDesktopCombatLayout ? 'block' : 'hidden'} mt-2 bg-[#111] rounded-lg px-2 py-1.5 text-[9px] text-[var(--color-gold)]`}>
-          {Object.keys(combat.activePotions).map(potionId => {
-            const potion = itemsData[potionId]
-            if (!potion) return null
-            const boosts = []
-            if (potion.effect === 'attack') boosts.push(`+${potion.boost} Atk`)
-            if (potion.effect === 'strength') boosts.push(`+${potion.boost} Str`)
-            if (potion.effect === 'defence') boosts.push(`+${potion.boost} Def`)
-            if (potion.effect === 'ranged') boosts.push(`+${potion.boost} Rng`)
-            if (potion.effect === 'magic') boosts.push(`+${potion.boost} Mag`)
-            if (potion.effect === 'combat') boosts.push(`+${potion.boost} All`)
-            const remainingTicks = combat.activePotions[potionId] || 0
-            const remainingSeconds = Math.ceil(remainingTicks * 0.6)
-            return (
-              <div key={potionId} class="opacity-80">
-                {potion.icon} {boosts.join(', ')} · {remainingSeconds}s
-              </div>
-            )
-          })}
-        </div>
-      )}
-
       {/* Inline gear paperdoll — desktop only. Click an equipped slot to
           unequip directly into inventory (only works if there's space).
           Mobile keeps the ⚙️ Gear button + modal flow. */}
@@ -1872,7 +1846,31 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           activeProtectionPrayer / activeCombatPrayer toggles, but inline so
           mobile keeps the 🙏 Prayer button + modal flow. */}
       <div class="mt-4">
-        <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1">Prayers</div>
+        <div class="flex items-start justify-between gap-2 mb-1.5 px-1">
+          <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60">Prayers</div>
+          {Object.keys(combat?.activePotions || {}).length > 0 && (
+            <div class="text-right text-[9px] text-[var(--color-gold)] leading-tight">
+              {Object.keys(combat.activePotions).map(potionId => {
+                const potion = itemsData[potionId]
+                if (!potion) return null
+                const boosts = []
+                if (potion.effect === 'attack') boosts.push(`+${potion.boost} Atk`)
+                if (potion.effect === 'strength') boosts.push(`+${potion.boost} Str`)
+                if (potion.effect === 'defence') boosts.push(`+${potion.boost} Def`)
+                if (potion.effect === 'ranged') boosts.push(`+${potion.boost} Rng`)
+                if (potion.effect === 'magic') boosts.push(`+${potion.boost} Mag`)
+                if (potion.effect === 'combat') boosts.push(`+${potion.boost} All`)
+                const remainingTicks = combat.activePotions[potionId] || 0
+                const remainingSeconds = Math.ceil(remainingTicks * 0.6)
+                return (
+                  <div key={potionId} class="opacity-80">
+                    {potion.icon} {boosts.join(', ')} · {remainingSeconds}s
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
         {(() => {
           const prayerLevel = getLevelFromXP(stats.prayer?.xp || 0)
           const protectionPrayers = Object.values(prayersData).filter(p => p.bonusType === 'protection')

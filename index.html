@@ -38941,52 +38941,6 @@ function getAvailableCrops(type, currentLevel) {
     const cropList = type === 'herb' ? farmingData.herbs : type === 'tree' ? farmingData.trees : farmingData.fruitTrees;
     return cropList.filter(c => currentLevel >= c.level);
 }
-function applyPlantAll(state, allPatches, plantSelections, inventory, bank) {
-    let nextState = state;
-    let totalXp = 0;
-    const planted = {};
-    const consumed = {};
-    const inventoryUsage = {};
-    const bankUsage = {};
-    const inventoryPool = {};
-    const bankPool = {};
-    for (const slot of inventory || []) {
-        if (!slot?.itemId)
-            continue;
-        inventoryPool[slot.itemId] = (inventoryPool[slot.itemId] || 0) + (slot.quantity || 0);
-    }
-    for (const [itemId, entry] of Object.entries(bank || {})) {
-        bankPool[itemId] = Math.max(0, entry?.quantity || 0);
-    }
-    for (const patchData of allPatches) {
-        if (patchData.patch?.cropId)
-            continue;
-        const patchType = patchData.type;
-        const seedId = plantSelections[patchType];
-        if (!seedId)
-            continue;
-        const availableInv = inventoryPool[seedId] || 0;
-        const availableBank = bankPool[seedId] || 0;
-        if ((availableInv + availableBank) <= 0)
-            continue;
-        const result = plantCrop(nextState, patchData.patchId, seedId, patchType);
-        if (!result)
-            continue;
-        nextState = result.state;
-        totalXp += result.plantXp;
-        planted[seedId] = (planted[seedId] || 0) + 1;
-        consumed[seedId] = (consumed[seedId] || 0) + 1;
-        if (availableInv > 0) {
-            inventoryUsage[seedId] = (inventoryUsage[seedId] || 0) + 1;
-            inventoryPool[seedId] = availableInv - 1;
-        }
-        else {
-            bankUsage[seedId] = (bankUsage[seedId] || 0) + 1;
-            bankPool[seedId] = availableBank - 1;
-        }
-    }
-    return { state: nextState, planted, consumed, inventoryUsage, bankUsage, totalXp };
-}
 function getPlantableCropOptions(type, currentLevel, inventory, bank = {}) {
     const safeInventory = Array.isArray(inventory) ? inventory : [];
     const safeBank = bank || {};
@@ -51482,6 +51436,16 @@ function recordCollectionLogDropsForIdleCombat(monsterId, sim) {
         recordCollectionLogDrop({ itemId, sourceType: 'monsters', sourceId: monsterId });
     }
 }
+function recordCollectionLogDropsForIdleClues(savedTask, sim) {
+    const clueLevel = savedTask?.gatherTask?.clueLevel;
+    if (!clueLevel || !sim?.itemsBanked)
+        return;
+    for (const itemId of Object.keys(sim.itemsBanked)) {
+        if (!isLoggedDrop(itemId, 'clues', clueLevel))
+            continue;
+        recordCollectionLogDrop({ itemId, sourceType: 'clues', sourceId: clueLevel });
+    }
+}
 function IdleResultProgressCard({ type, idleResult, taskName }) {
     const configs = {
         minigame_progress: {
@@ -52058,6 +52022,9 @@ function GameApp() {
                     }
                     if (savedTask.type === 'combat' && savedTask.monster?.id) {
                         recordCollectionLogDropsForIdleCombat(savedTask.monster.id, sim);
+                    }
+                    if (savedTask.type === 'gather' && savedTask.gatherTask?.isClue) {
+                        recordCollectionLogDropsForIdleClues(savedTask, sim);
                     }
                     // Apply agility coin reward directly to bank
                     if (savedTask.type === 'agility' && sim.coinsGained > 0) {
@@ -52649,6 +52616,9 @@ function GameApp() {
                     }
                     if (savedTask.type === 'combat' && savedTask.monster?.id) {
                         recordCollectionLogDropsForIdleCombat(savedTask.monster.id, sim);
+                    }
+                    if (savedTask.type === 'gather' && savedTask.gatherTask?.isClue) {
+                        recordCollectionLogDropsForIdleClues(savedTask, sim);
                     }
                     // Apply agility coin reward directly to bank
                     if (savedTask.type === 'agility' && sim.coinsGained > 0) {
