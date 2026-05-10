@@ -35,6 +35,9 @@ const args = parseArgs(process.argv.slice(2))
 
 const DEFAULT_KILLS_PER_HOUR = Number(args['kills-per-hour'] ?? 100)
 const DEFAULT_RAID_COMPLETIONS_PER_HOUR = Number(args['raid-completions-per-hour'] ?? 1)
+const MONSTER_KILLS_PER_HOUR_OVERRIDES = {
+  corrupted_gauntlet: 60,
+}
 const RAID_COMPLETIONS_PER_HOUR_OVERRIDES = {
   chambers_of_xeric: 10,
   theatre_of_blood: 5,
@@ -423,6 +426,9 @@ function collectRaidBossIds(raidsData) {
   return ids
 }
 function getMonsterKillsPerHour(monsterId) {
+  const override = MONSTER_KILLS_PER_HOUR_OVERRIDES[monsterId]
+  if (Number.isFinite(override) && override >= 0) return override
+
   const rawOverrides = String(args['monster-kills-per-hour'] ?? args['monster-kph'] ?? '').trim()
 
   if (!rawOverrides) {

@@ -2,7 +2,7 @@
   "chambers_of_xeric": {
     "id": "chambers_of_xeric",
     "name": "Chambers of Xeric",
-    "icon": "\ud83c\udfdb\ufe0f",
+    "icon": "🏛️",
     "description": "Delve into Xeric's mountain stronghold. Defeat Tekton, Vespula, the Muttadile and Great Olm to claim your reward.",
     "bosses": [
       "tekton",
@@ -18,7 +18,7 @@
             50000,
             150000
           ],
-          "chance": 1.0
+          "chance": 1
         },
         {
           "itemId": "dragon_bones",
@@ -62,7 +62,7 @@
         }
       ],
       "unique": {
-        "chance": 0.15,
+        "chance": 0.075,
         "items": [
           {
             "itemId": "twisted_buckler",
@@ -115,7 +115,7 @@
   "theatre_of_blood": {
     "id": "theatre_of_blood",
     "name": "Theatre of Blood",
-    "icon": "\ud83e\ude78",
+    "icon": "🩸",
     "description": "Fight through six deadly bosses in Verzik's theatre. Defeat them all to claim your reward.",
     "bosses": [
       "maiden_of_sugadinti",
@@ -133,7 +133,7 @@
             100000,
             300000
           ],
-          "chance": 1.0
+          "chance": 1
         },
         {
           "itemId": "blood_rune",
@@ -141,7 +141,7 @@
             150,
             300
           ],
-          "chance": 1.0
+          "chance": 1
         },
         {
           "itemId": "death_rune",
@@ -177,7 +177,7 @@
         }
       ],
       "unique": {
-        "chance": 0.1099,
+        "chance": 0.12,
         "items": [
           {
             "itemId": "avernic_defender",
@@ -214,7 +214,7 @@
   "barrows_brothers": {
     "id": "barrows_brothers",
     "name": "Barrows Brothers",
-    "icon": "\u26b0\ufe0f",
+    "icon": "⚰️",
     "description": "Descend into the Barrows crypt and defeat all six brothers to claim their treasures.",
     "bosses": [
       "arim_the_blighted",
@@ -232,7 +232,7 @@
             10000,
             50000
           ],
-          "chance": 1.0
+          "chance": 1
         },
         {
           "itemId": "death_rune",
