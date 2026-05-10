@@ -1040,6 +1040,17 @@ function GameApp() {
     setCloudPhase('auth')
   }
 
+
+
+  async function handleManualSave() {
+    if (isInPvpMatch) return
+    try {
+      await pushNow(getSnapshot())
+      addToast('Game saved.', 'success')
+    } catch {
+      addToast('Save failed. Try again.', 'error')
+    }
+  }
   // Navigate with optional action data
   const navigate = (scr, data) => {
     // Navigating away stops any active screen-bound task (skilling, gathering,
@@ -1466,7 +1477,7 @@ function GameApp() {
   // Main game
   const renderScreen = () => {
     switch (screen) {
-      case SCREENS.HOME:      return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} isCloudAccount={!!getToken() && !!getCharacterId()} removeAds={removeAds} identityId={identityId} characterId={getCharacterId()} stripeLinks={stripeLinks} />
+      case SCREENS.HOME:      return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} removeAds={removeAds} identityId={identityId} characterId={getCharacterId()} stripeLinks={stripeLinks} />
       case SCREENS.STATS:     return <StatsScreen />
       case SCREENS.INVENTORY: return <InventoryScreen />
       case SCREENS.EQUIPMENT: return <EquipmentScreen />
@@ -1479,7 +1490,7 @@ function GameApp() {
       case SCREENS.QUESTS:      return <QuestsScreen />
       case SCREENS.SETTINGS: return <SettingsScreen />
       case SCREENS.LEADERBOARD: return <SettingsScreen />
-      default:                  return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} isCloudAccount={!!getToken() && !!getCharacterId()} />
+      default:                  return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} />
     }
   }
 
