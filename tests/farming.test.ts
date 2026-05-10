@@ -120,6 +120,31 @@ describe('farming engine', () => {
     vi.restoreAllMocks()
   })
 
+  it('harvestCrop keeps tree harvest xp at base value while scaling quantity', () => {
+    const planted = plantCrop(initFarmingState(), 'falador_tree_0', 'oak_sapling', 'tree')!
+    vi.advanceTimersByTime(getCropDef('oak_sapling')!.growthTimeMs + 1)
+    vi.spyOn(Math, 'random').mockReturnValue(0.999999)
+    const harvested = harvestCrop(planted.state, 'falador_tree_0', 99)
+    expect(harvested).toBeTruthy()
+    const baseXp = getCropDef('oak_sapling')!.harvestXp
+    expect(harvested!.quantity).toBeGreaterThan(1)
+    expect(harvested!.harvestXp).toBe(Math.floor(baseXp))
+    vi.restoreAllMocks()
+  })
+
+  it('harvestCrop keeps fruit tree harvest xp at base value while scaling quantity', () => {
+    const planted = plantCrop(initFarmingState(), 'catherby_fruitTree_0', 'apple_sapling', 'fruitTree')!
+    vi.advanceTimersByTime(getCropDef('apple_sapling')!.growthTimeMs + 1)
+    vi.spyOn(Math, 'random').mockReturnValue(0.999999)
+    const harvested = harvestCrop(planted.state, 'catherby_fruitTree_0', 99)
+    expect(harvested).toBeTruthy()
+    const baseXp = getCropDef('apple_sapling')!.harvestXp
+    expect(harvested!.quantity).toBeGreaterThan(1)
+    expect(harvested!.harvestXp).toBe(Math.floor(baseXp))
+    vi.restoreAllMocks()
+  })
+
+
   it('harvestCrop applies farming-level-scaled quantity to fruit trees', () => {
     const planted = plantCrop(initFarmingState(), 'catherby_fruitTree_0', 'apple_sapling', 'fruitTree')!
     vi.advanceTimersByTime(getCropDef('apple_sapling')!.growthTimeMs + 1)
