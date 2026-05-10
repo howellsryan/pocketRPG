@@ -12,12 +12,12 @@ describe('new minigame tasks', () => {
     expect(byName.get('Obtain decorative armour')?.hours).toBe(2)
     expect(byName.get('Grind Angler Net')?.hours).toBe(5)
     expect(byName.get('Obtain Imbued God Cape')?.hours).toBe(2)
-    expect(byName.get('Grind for Void Knight Set')?.hours).toBe(6)
-    expect(byName.get('Grind for Void Knight Set')?.rewardItems).toEqual(['void_knight_helm', 'void_knight_top', 'void_knight_robe', 'void_knight_gloves'])
+    expect(byName.get('Grind for Void King Set')?.hours).toBe(6)
+    expect(byName.get('Grind for Void King Set')?.rewardItems).toEqual(['void_knight_helm', 'void_knight_top', 'void_knight_robe', 'void_knight_gloves'])
     expect(byName.get('Obtain decorative armour')?.minigame).toBe('castle_wars')
     expect(byName.get('Grind Angler Net')?.minigame).toBe('fishing_trawler')
     expect(byName.get('Obtain Imbued God Cape')?.minigame).toBe('mage_arena')
-    expect(byName.get('Grind for Void Knight Set')?.minigame).toBe('pest_control')
+    expect(byName.get('Grind for Void King Set')?.minigame).toBe('pest_control')
   })
 })
 
@@ -58,7 +58,7 @@ describe('angler net fishing integration', () => {
 })
 
 describe('void set idle reward', () => {
-  it('grants all 4 void knight pieces when the idle grind completes', () => {
+  it('grants all 4 void king pieces when the idle grind completes', () => {
     const task = minigames.tasks.find(t => t.id === 'pc_void_set')!
     const idleTask = { type: 'gather', gatherTask: task, bankingEnabled: true }
     const sixHoursMs = 6 * 60 * 60 * 1000 + 1000
