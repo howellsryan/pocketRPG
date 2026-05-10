@@ -6021,7 +6021,6 @@
     "requirements": {
       "defence": 60
     },
-    "questUnlock": "dragon_slayer_i",
     "shopValue": 77250000,
     "icon": "🛡️",
     "isGeneralStore": false

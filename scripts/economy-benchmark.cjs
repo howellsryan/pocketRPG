@@ -35,6 +35,14 @@ const args = parseArgs(process.argv.slice(2))
 
 const DEFAULT_KILLS_PER_HOUR = Number(args['kills-per-hour'] ?? 100)
 const DEFAULT_RAID_COMPLETIONS_PER_HOUR = Number(args['raid-completions-per-hour'] ?? 1)
+const MONSTER_KILLS_PER_HOUR_OVERRIDES = {
+  corrupted_gauntlet: 60,
+}
+const RAID_COMPLETIONS_PER_HOUR_OVERRIDES = {
+  chambers_of_xeric: 10,
+  theatre_of_blood: 5,
+  barrows_brothers: 40,
+}
 const FARMING_HERB_YIELD = Number(args['farming-herb-yield'] ?? 1)
 const FARMING_TREE_YIELD = Number(args['farming-tree-yield'] ?? 1)
 const FARMING_FRUIT_YIELD = Number(args['farming-fruit-yield'] ?? 6)
@@ -47,13 +55,14 @@ const raids = readJsonOptional('raids.json', {})
 const minigames = readJsonOptional('minigames.json', {})
 const farming = readJsonOptional('farming.json', {})
 const clues = readJsonOptional('clues.json', {})
+const collectionLog = readJsonOptional('collectionLog.json', {})
 
 const missingItemIds = new Set()
 const zeroValueItemIds = new Set()
 
 const rows = [
-  ...buildSkillRows(skills),
-  ...buildMonsterRows(monsters),
+  ...buildSkillRows(skills, collectionLog, raids),
+  ...buildMonsterRows(monsters, raids),
   ...buildRaidRows(raids),
   ...buildMinigameRows(minigames),
   ...buildFarmingRows(farming),
@@ -65,7 +74,7 @@ const filteredRows = rows
   .sort((a, b) => {
     const categoryCompare = String(a.category).localeCompare(String(b.category))
     if (categoryCompare !== 0) return categoryCompare
-    return Number(b.grossCoinsPerHour || 0) - Number(a.grossCoinsPerHour || 0)
+    return Number(b.netCoinsPerHour || 0) - Number(a.netCoinsPerHour || 0)
   })
 
 writeReport(filteredRows)
@@ -254,13 +263,18 @@ function actionsPerHourFromTicks(ticks) {
   return ACTIONS_PER_HOUR_PER_TICK / parsedTicks
 }
 
-function buildSkillRows(skillsData) {
+function buildSkillRows(skillsData, collectionLogData, raidsData) {
   const result = []
+  const blockedMaterials = collectBlockedMaterialIds(collectionLogData, raidsData, skillsData)
 
   for (const [skillId, skill] of Object.entries(skillsData || {})) {
     const actions = Array.isArray(skill.actions) ? skill.actions : []
 
     for (const action of actions) {
+      if (actionUsesBlockedMaterial(action, blockedMaterials)) {
+        continue
+      }
+
       const actionsPerHour = actionsPerHourFromTicks(action.ticks)
       const grossPerAction = actionProductValue(action)
       const materialCostPerAction = actionMaterialCost(action)
@@ -287,6 +301,56 @@ function buildSkillRows(skillsData) {
   }
 
   return result
+}
+
+function actionUsesBlockedMaterial(action, blockedMaterials) {
+  if (!action?.materials || !blockedMaterials || blockedMaterials.size === 0) {
+    return false
+  }
+
+  return Object.keys(action.materials).some(itemId => blockedMaterials.has(itemId))
+}
+
+function collectBlockedMaterialIds(collectionLogData, raidsData, skillsData) {
+  const ids = new Set()
+
+  for (const raid of Object.values(raidsData || {})) {
+    for (const item of (raid?.rewards?.unique?.items || [])) {
+      if (item?.itemId) ids.add(item.itemId)
+    }
+  }
+
+  for (const category of (collectionLogData?.categories || [])) {
+    for (const section of (category?.sections || [])) {
+      for (const itemId of (section?.items || [])) ids.add(itemId)
+    }
+  }
+
+  for (const itemId of (collectionLogData?.sharedItems || [])) {
+    ids.add(itemId)
+  }
+
+  // Explicit non-repeatable resources currently treated as blocked inputs.
+  ids.add('godsword_shard')
+
+  // Propagate blocked status through skilling dependency chains:
+  // if an action consumes blocked input, its produced item is also blocked.
+  let changed = true
+  while (changed) {
+    changed = false
+    for (const skill of Object.values(skillsData || {})) {
+      for (const action of (skill?.actions || [])) {
+        if (!action?.product || !action?.materials) continue
+        const usesBlocked = Object.keys(action.materials).some(itemId => ids.has(itemId))
+        if (usesBlocked && !ids.has(action.product)) {
+          ids.add(action.product)
+          changed = true
+        }
+      }
+    }
+  }
+
+  return ids
 }
 
 function buildActionNotes(action) {
@@ -317,10 +381,12 @@ function buildActionNotes(action) {
   return notes.join(' | ')
 }
 
-function buildMonsterRows(monstersData) {
+function buildMonsterRows(monstersData, raidsData) {
+  const raidBossIds = collectRaidBossIds(raidsData)
   const result = []
 
   for (const [monsterId, monster] of Object.entries(monstersData || {})) {
+    if (raidBossIds.has(monsterId)) continue
     const drops = Array.isArray(monster.drops) ? monster.drops : []
     const evPerKill = expectedDropTableValue(drops)
     const killsPerHour = getMonsterKillsPerHour(monsterId)
@@ -347,7 +413,22 @@ function buildMonsterRows(monstersData) {
   return result
 }
 
+
+function collectRaidBossIds(raidsData) {
+  const ids = new Set()
+
+  for (const raid of Object.values(raidsData || {})) {
+    for (const bossId of (raid?.bosses || [])) {
+      ids.add(bossId)
+    }
+  }
+
+  return ids
+}
 function getMonsterKillsPerHour(monsterId) {
+  const override = MONSTER_KILLS_PER_HOUR_OVERRIDES[monsterId]
+  if (Number.isFinite(override) && override >= 0) return override
+
   const rawOverrides = String(args['monster-kills-per-hour'] ?? args['monster-kph'] ?? '').trim()
 
   if (!rawOverrides) {
@@ -379,6 +460,8 @@ function buildRaidRows(raidsData) {
     const uniqueEv = expectedWeightedUniqueValue(raid.rewards?.unique)
     const evPerCompletion = alwaysEv + uniqueEv
 
+    const completionsPerHour = getRaidCompletionsPerHour(raidId)
+
     result.push({
       category: 'Raids',
       subcategory: raid.name || raidId,
@@ -386,16 +469,16 @@ function buildRaidRows(raidsData) {
       name: raid.name || raidId,
       level: '',
       ticks: '',
-      actionsPerHour: DEFAULT_RAID_COMPLETIONS_PER_HOUR,
+      actionsPerHour: completionsPerHour,
       expectedValuePerAction: '',
       expectedValuePerKill: '',
       expectedValuePerCompletion: evPerCompletion,
       materialCostPerAction: '',
       netValuePerAction: '',
-      grossCoinsPerHour: evPerCompletion * DEFAULT_RAID_COMPLETIONS_PER_HOUR,
-      netCoinsPerHour: evPerCompletion * DEFAULT_RAID_COMPLETIONS_PER_HOUR,
+      grossCoinsPerHour: evPerCompletion * completionsPerHour,
+      netCoinsPerHour: evPerCompletion * completionsPerHour,
       notes: [
-        `Assumes ${formatNumber(DEFAULT_RAID_COMPLETIONS_PER_HOUR)} completions/hr`,
+        `Assumes ${formatNumber(completionsPerHour)} completions/hr`,
         `Common EV: ${formatNumber(alwaysEv)}`,
         `Unique EV: ${formatNumber(uniqueEv)}`,
         formatUniqueBreakdown(raid.rewards?.unique),
@@ -404,6 +487,12 @@ function buildRaidRows(raidsData) {
   }
 
   return result
+}
+
+function getRaidCompletionsPerHour(raidId) {
+  const override = RAID_COMPLETIONS_PER_HOUR_OVERRIDES[raidId]
+  if (Number.isFinite(override) && override >= 0) return override
+  return DEFAULT_RAID_COMPLETIONS_PER_HOUR
 }
 
 function expectedWeightedUniqueValue(uniqueTable) {
@@ -646,8 +735,8 @@ function writeReport(reportRows) {
 
   const byCategory = groupBy(reportRows, row => row.category)
   const topRows = [...reportRows]
-    .filter(row => Number(row.grossCoinsPerHour) > 0)
-    .sort((a, b) => Number(b.grossCoinsPerHour) - Number(a.grossCoinsPerHour))
+    .filter(row => Number(row.netCoinsPerHour) > 0)
+    .sort((a, b) => Number(b.netCoinsPerHour) - Number(a.netCoinsPerHour))
     .slice(0, 50)
 
   const lines = []
@@ -666,7 +755,7 @@ function writeReport(reportRows) {
   lines.push(`- Raid coins/hour assumes ${formatNumber(DEFAULT_RAID_COMPLETIONS_PER_HOUR)} completions/hour.`)
   lines.push(`- Farming herb/tree yields default to ${FARMING_HERB_YIELD}/${FARMING_TREE_YIELD}; fruit trees use fruitLimit where present, otherwise ${FARMING_FRUIT_YIELD}.`)
   lines.push('')
-  lines.push('## Top activities by gross coins/hour')
+  lines.push('## Top activities by net coins/hour')
   lines.push('')
   lines.push(markdownTable(topRows))
   lines.push('')
