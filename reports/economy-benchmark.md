@@ -1,6 +1,6 @@
 # PocketRPG Economy Benchmark
 
-Generated: 2026-05-10T16:20:22.269Z
+Generated: 2026-05-10T16:24:34.302Z
 
 ## Assumptions
 
@@ -20,32 +20,26 @@ Generated: 2026-05-10T16:20:22.269Z
 | Combat 338 | Adamant Dragon | 338 |  | 100 |  | 136,072,986 |  | 13,607,298,580 | 13,607,298,580 | Assumes 100 kills/hr. EV: Dragon Kiteshield: 77,250,000; Dragon Full Helm: 58,753,000; Onyx Bolt Tips: 16,600; Rune Bar: 12,500; Coins: 10,000; Runite Ore: 4,708; Dragon Chainbody: 4,105; Draconic Visage: 3,679; +11 more |
 | Crafting | String zenyte amulet | 98 | 4 | 1,500 | 20,570,000 |  |  | 30,855,000,000 | 667,314,000 | Product: Zenyte Amulet x1 \| Materials: Zenyte x1, Gold Bar x1 |
 | Crafting | Craft zenyte bracelet | 98 | 4 | 1,500 | 20,512,727 |  |  | 30,769,090,500 | 581,404,500 | Product: Zenyte Bracelet x1 \| Materials: Zenyte x1, Gold Bar x1 |
-| Magic | Enchant Onyx | 87 | 3 | 2,000 | 2,609,432 |  |  | 5,218,864,000 | 369,838,000 | Product: Amulet of Fury x1 \| Materials: Onyx Amulet x1 |
-| Magic | Enchant Zenyte Necklace | 93 | 3 | 2,000 | 20,287,526 |  |  | 40,575,052,000 | 325,046,000 | Product: Necklace of Anguish x1 \| Materials: Zenyte Necklace x1 |
 | Smithing | Forge godsword blade | 80 | 10 | 600 | 539,640 |  |  | 323,784,000 | 206,784,000 | Product: Godsword Blade x1 \| Materials: Godsword Shard x3 |
 | Crafting | Cut onyx | 72 | 3 | 2,000 | 2,641,365 |  |  | 5,282,730,000 | 145,986,000 | Product: Onyx x1 \| Materials: Uncut Onyx x1 |
-| Magic | Enchant Zenyte Ring | 93 | 3 | 2,000 | 20,255,567 |  |  | 40,511,134,000 | 128,134,000 | Product: Ring of Suffering x1 \| Materials: Zenyte Ring x1 |
 | Combat 894 | Corrupted Gauntlet | 894 |  | 100 |  | 1,263,543 |  | 126,354,287 | 126,354,287 | Assumes 100 kills/hr. EV: Bow of Faerdhinen: 400,000; Blade of Saeldor: 400,000; Crystal Pickaxe: 75,000; Crystal Axe: 75,000; Coins: 36,750; Dragon Bones: 35,188; Crystal Helmet: 30,000; Crystal Plate Body: 30,000; +26 more |
 | Crafting | Craft zenyte ring | 98 | 4 | 1,500 | 20,191,500 |  |  | 30,287,250,000 | 99,564,000 | Product: Zenyte Ring x1 \| Materials: Zenyte x1, Gold Bar x1 |
-| Magic | Enchant Onyx Dragon Bolts (10) | 87 | 3 | 2,000 | 115,000 |  |  | 230,000,000 | 54,000,000 | Product: Onyx Dragon Bolt (E) x10 \| Materials: Onyx Dragon Bolt x10 |
 | Smithing | Attach Saradomin hilt | 80 | 100 | 60 | 28,950,625 |  |  | 1,737,037,500 | 50,290,140 | Product: Saradomin Godsword x1 \| Materials: Godsword Blade x1, Saradomin Hilt x1 |
-| Magic | Enchant Onyx Bolts (10) | 87 | 3 | 2,000 | 95,000 |  |  | 190,000,000 | 40,000,000 | Product: Onyx Bolt (E) x10 \| Materials: Onyx Bolt x10 |
 | Combat 725 | Zulrah | 725 |  | 100 |  | 387,806 |  | 38,780,626 | 38,780,626 | Assumes 100 kills/hr. EV: Toxic Blowpipe: 100,000; Trident of the Swamp: 100,000; Serpentine Helm: 100,000; Zulrah's Scales: 60,450; Uncut Onyx: 10,273; Coins: 7,200; Ranarr Weed: 2,886; Blood Rune: 2,009; +5 more |
 | Smithing | Attach Zamorak hilt | 80 | 100 | 60 | 19,571,258 |  |  | 1,174,275,480 | 37,137,120 | Product: Zamorak Godsword x1 \| Materials: Godsword Blade x1, Zamorak Hilt x1 |
+| Magic | Enchant Onyx | 87 | 30 | 200 | 2,609,432 |  |  | 521,886,400 | 36,983,800 | Product: Amulet of Fury x1 \| Materials: Onyx Amulet x1 |
 | Fletching | Tip dragonstone dragon bolts (10) | 84 | 3 | 2,000 | 36,000 |  |  | 72,000,000 | 35,900,000 | Product: Dragonstone Dragon Bolt x10 \| Materials: Dragon Bolt x10, Dragonstone Bolt Tips x10 |
+| Magic | Enchant Zenyte Necklace | 93 | 30 | 200 | 20,287,526 |  |  | 4,057,505,200 | 32,504,600 | Product: Necklace of Anguish x1 \| Materials: Zenyte Necklace x1 |
 | Fletching | Tip dragonstone bolts (10) | 71 | 3 | 2,000 | 19,000 |  |  | 38,000,000 | 25,060,000 | Product: Dragonstone Bolt x10 \| Materials: Runite Bolt x10, Dragonstone Bolt Tips x10 |
-| Magic | Enchant Dragonstone Dragon Bolts (10) | 68 | 3 | 2,000 | 48,000 |  |  | 96,000,000 | 24,000,000 | Product: Dragonstone Dragon Bolt (E) x10 \| Materials: Dragonstone Dragon Bolt x10 |
 | Smithing | Attach Bandos hilt | 80 | 100 | 60 | 19,029,248 |  |  | 1,141,754,880 | 23,826,480 | Product: Bandos Godsword x1 \| Materials: Godsword Blade x1, Bandos Hilt x1 |
 | Combat 580 | Kree'arra | 580 |  | 100 |  | 235,925 |  | 23,592,543 | 23,592,543 | Assumes 100 kills/hr. EV: Armadyl Chestplate: 98,878; Armadyl Chainskirt: 73,025; Armadyl Helmet: 24,438; Coins: 20,000; Armadyl Hilt: 14,297; Death Rune: 1,063; Ranarr Weed: 990; Blood Rune: 574; +16 more |
 | Smithing | Attach Armadyl hilt | 80 | 100 | 60 | 8,108,827 |  |  | 486,529,620 | 18,701,160 | Product: Armadyl Godsword x1 \| Materials: Godsword Blade x1, Armadyl Hilt x1 |
-| Magic | Enchant Diamond Dragon Bolts (10) | 57 | 3 | 2,000 | 24,000 |  |  | 48,000,000 | 18,000,000 | Product: Diamond Dragon Bolt (E) x10 \| Materials: Diamond Dragon Bolt x10 |
 | Combat 624 | General Graardor | 624 |  | 100 |  | 170,818 |  | 17,081,823 | 17,081,823 | Assumes 100 kills/hr. EV: Bandos Chestplate: 64,311; Bandos Tassets: 43,132; Bandos Hilt: 35,642; Coins: 20,000; Bandos Boots: 1,771; Death Rune: 1,063; Ranarr Weed: 990; Blood Rune: 574; +18 more |
 | Chambers of Xeric | Chambers of Xeric |  |  | 1 |  |  | 16,784,851 | 16,784,851 | 16,784,851 | Assumes 1 completions/hr \| Common EV: 198,708 \| Unique EV: 16,586,144 \| Unique table: Twisted Bow 0.500% EV 7,909,400; Ancestral Robe Top 1.500% EV 1,948,984; Ancestral Robe Bottom 1.500% EV 1,363,348; Elder Maul 1.000% EV 1,020,095; Dragon Hunter Crossbow 2.000% EV 811,943; Ancestral Hat 1.500% EV 808,709; Kodai Wand 1.000% EV 787,437; Zaryte Vambraces 1.000% EV 784,272; +3 more |
-| Magic | Enchant Ruby Dragon Bolts (10) | 49 | 3 | 2,000 | 22,000 |  |  | 44,000,000 | 16,000,000 | Product: Ruby Dragon Bolt (E) x10 \| Materials: Ruby Dragon Bolt x10 |
 | Fletching | Make dragon bolts (10) | 84 | 3 | 2,000 | 12,000 |  |  | 24,000,000 | 15,960,000 | Product: Dragon Bolt x10 \| Materials: Feather x10, Dragon Bolt (Unf) x10 |
 | Combat 596 | Commander Zilyana | 596 |  | 100 |  | 147,479 |  | 14,747,925 | 14,747,925 | Assumes 100 kills/hr. EV: Armadyl Crossbow: 66,307; Saradomin Hilt: 54,318; Coins: 20,000; Saradomin Sword: 1,341; Death Rune: 1,063; Ranarr Weed: 990; Blood Rune: 574; Soul Rune: 504; +15 more |
-| Magic | Enchant Dragonstone Bolts (10) | 68 | 3 | 2,000 | 26,000 |  |  | 52,000,000 | 14,000,000 | Product: Dragonstone Bolt (E) x10 \| Materials: Dragonstone Bolt x10 |
 | Combat 650 | K'ril Tsutsaroth | 650 |  | 100 |  | 132,486 |  | 13,248,649 | 13,248,649 | Assumes 100 kills/hr. EV: Zamorak Spear: 59,250; Zamorak Hilt: 36,273; Coins: 20,000; Staff of the Dead: 11,149; Death Rune: 1,063; Ranarr Weed: 990; Blood Rune: 574; Soul Rune: 504; +16 more |
+| Magic | Enchant Zenyte Ring | 93 | 30 | 200 | 20,255,567 |  |  | 4,051,113,400 | 12,813,400 | Product: Ring of Suffering x1 \| Materials: Zenyte Ring x1 |
 | Smithing | Attach draconic visage | 90 | 10 | 600 | 3,700,524 |  |  | 2,220,314,400 | 12,624,000 | Product: Dragonfire Shield x1 \| Materials: Anti-Dragon Shield x1, Draconic Visage x1 |
 | Combat 194 | Hydra | 194 |  | 100 |  | 108,684 |  | 10,868,439 | 10,868,439 | Assumes 100 kills/hr. EV: Hydra Leather: 69,323; Ferocious Gloves: 10,200; Hydra Claw: 9,000; Hydra Bones: 7,633; Coins: 3,500; Runite Ore: 2,093; Death Rune: 1,985; Blood Rune: 1,679; +6 more |
 | Combat 275 | Demonic Gorilla | 275 |  | 100 |  | 86,302 |  | 8,630,207 | 8,630,207 | Assumes 100 kills/hr. EV: Uncut Zenyte: 67,442; Heavy Ballista: 5,250; Ranarr Weed: 4,398; Coins: 3,000; Dragon Bones: 2,815; Snapdragon: 1,282; Death Rune: 992; Blood Rune: 718; +2 more |
@@ -54,18 +48,24 @@ Generated: 2026-05-10T16:20:22.269Z
 | Mining | Mine runite ore | 85 | 9 | 667 | 10,463 |  |  | 6,975,333 | 6,975,333 | Product: Runite Ore x1 |
 | Herblore | Make combat potion | 36 | 3 | 2,000 | 4,000 |  |  | 8,000,000 | 6,724,000 | Product: Combat Potion x1 \| Materials: Harralander x1, Goat Horn Dust x1 |
 | Combat 318 | Cerberus | 318 |  | 100 |  | 65,926 |  | 6,592,554 | 6,592,554 | Assumes 100 kills/hr. EV: Primordial Crystal: 32,624; Coins: 11,250; Eternal Crystal: 6,375; Death Rune: 3,780; Blood Rune: 3,014; Dragon Bones: 2,815; Ranarr Weed: 1,924; Soul Rune: 1,404; +6 more |
-| Magic | Enchant Diamond Bolts (10) | 57 | 3 | 2,000 | 7,000 |  |  | 14,000,000 | 6,400,000 | Product: Diamond Bolt (E) x10 \| Materials: Diamond Bolt x10 |
 | Combat 303 | Dagannoth Rex | 303 |  | 100 |  | 57,323 |  | 5,732,314 | 5,732,314 | Assumes 100 kills/hr. EV: Berserker Ring: 25,412; Dagannoth Bones: 14,448; Coins: 6,500; Dragon Axe: 4,096; Rune Platebody: 1,924; Rune Platelegs: 1,896; Ranarr Weed: 990; Warriors Ring: 781; +11 more |
+| Magic | Enchant Onyx Dragon Bolts (10) | 87 | 30 | 200 | 115,000 |  |  | 23,000,000 | 5,400,000 | Product: Onyx Dragon Bolt (E) x10 \| Materials: Onyx Dragon Bolt x10 |
 | Combat 303 | Dagannoth Supreme | 303 |  | 100 |  | 51,834 |  | 5,183,371 | 5,183,371 | Assumes 100 kills/hr. EV: Archers Ring: 20,704; Dagannoth Bones: 14,448; Coins: 6,500; Dragon Axe: 4,096; Rune Platebody: 1,924; Rune Platelegs: 1,896; Ranarr Weed: 990; Snapdragon: 427; +10 more |
-| Magic | Enchant Ruby Bolts (10) | 49 | 3 | 2,000 | 5,000 |  |  | 10,000,000 | 4,400,000 | Product: Ruby Bolt (E) x10 \| Materials: Ruby Bolt x10 |
+| Magic | Enchant Onyx Bolts (10) | 87 | 30 | 200 | 95,000 |  |  | 19,000,000 | 4,000,000 | Product: Onyx Bolt (E) x10 \| Materials: Onyx Bolt x10 |
 | Combat 303 | Dagannoth Prime | 303 |  | 100 |  | 37,468 |  | 3,746,817 | 3,746,817 | Assumes 100 kills/hr. EV: Dagannoth Bones: 14,448; Coins: 6,500; Seers Ring: 6,339; Dragon Axe: 4,096; Rune Platebody: 1,924; Rune Platelegs: 1,896; Ranarr Weed: 990; Snapdragon: 427; +10 more |
 | Fletching | Make adamant bolts (10) | 61 | 3 | 2,000 | 1,590 |  |  | 3,180,000 | 2,940,000 | Product: Adamant Bolt x10 \| Materials: Feather x10, Adamant Bolt (Unf) x10 |
 | Combat 276 | King Black Dragon | 276 |  | 100 |  | 28,701 |  | 2,870,111 | 2,870,111 | Assumes 100 kills/hr. EV: Coins: 12,500; Runite Ore: 7,324; Dragon Bones: 2,815; Draconic Visage: 1,840; Dragon Pickaxe: 1,429; Blood Rune: 1,076; Death Rune: 907; Soul Rune: 810; +1 more |
 | Combat 318 | Brutal Black Dragon | 318 |  | 100 |  | 26,098 |  | 2,609,761 | 2,609,761 | Assumes 100 kills/hr. EV: Coins: 6,000; Black Dragon Leather: 4,182; Draconic Visage: 3,679; Runite Ore: 3,139; Dragon Bones: 2,815; Dragon Arrow: 1,447; Death Rune: 1,040; Blood Rune: 904; +6 more |
 | Fletching | Tip diamond dragon bolts (10) | 84 | 3 | 2,000 | 15,000 |  |  | 30,000,000 | 2,440,000 | Product: Diamond Dragon Bolt x10 \| Materials: Dragon Bolt x10, Diamond Bolt Tips x10 |
+| Magic | Enchant Dragonstone Dragon Bolts (10) | 68 | 30 | 200 | 48,000 |  |  | 9,600,000 | 2,400,000 | Product: Dragonstone Dragon Bolt (E) x10 \| Materials: Dragonstone Dragon Bolt x10 |
 | Combat 150 | Lizardman Shaman | 150 |  | 100 |  | 21,142 |  | 2,114,161 | 2,114,161 | Assumes 100 kills/hr. EV: Dragon Warhammer: 5,358; Snapdragon: 4,272; Ranarr Weed: 2,749; Blood Rune: 2,153; Rune Chainbody: 1,482; Death Rune: 1,418; Kwuarm: 1,272; Coins: 875; +3 more |
 | Herblore | Make strength potion | 12 | 3 | 2,000 | 1,500 |  |  | 3,000,000 | 1,950,000 | Product: Strength Potion x1 \| Materials: Tarromin x1, Limpwurt Root x1 |
+| Magic | Enchant Diamond Dragon Bolts (10) | 57 | 30 | 200 | 24,000 |  |  | 4,800,000 | 1,800,000 | Product: Diamond Dragon Bolt (E) x10 \| Materials: Diamond Dragon Bolt x10 |
 | Herb | Gout tuber (Herb, all 5 patches) | 36 |  | 3.75 | 2,323,530 |  | 2,323,530 | 1,742,648 | 1,742,423 | All available herb patches from farming.json. Crop: Gout Tuber x1. Growth: 1.33 hours. |
+| Fletching | Tip ruby dragon bolts (10) | 84 | 3 | 2,000 | 14,000 |  |  | 28,000,000 | 1,740,000 | Product: Ruby Dragon Bolt x10 \| Materials: Dragon Bolt x10, Ruby Bolt Tips x10 |
+| Magic | Enchant Ruby Dragon Bolts (10) | 49 | 30 | 200 | 22,000 |  |  | 4,400,000 | 1,600,000 | Product: Ruby Dragon Bolt (E) x10 \| Materials: Ruby Dragon Bolt x10 |
+| Magic | Enchant Dragonstone Bolts (10) | 68 | 30 | 200 | 26,000 |  |  | 5,200,000 | 1,400,000 | Product: Dragonstone Bolt (E) x10 \| Materials: Dragonstone Bolt x10 |
+| Combat 291 | Kraken | 291 |  | 100 |  | 12,816 |  | 1,281,582 | 1,281,582 | Assumes 100 kills/hr. EV: Death Rune: 3,544; Blood Rune: 2,440; Coins: 2,000; Chaos Rune: 1,545; Ranarr Weed: 1,320; Kraken Tentacle: 879; Snapdragon: 769; Big Bones: 250; +2 more |
 
 ## Farming
 
@@ -188,36 +188,33 @@ Generated: 2026-05-10T16:20:22.269Z
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Crafting | String zenyte amulet | 98 | 4 | 1,500 | 20,570,000 |  |  | 30,855,000,000 | 667,314,000 | Product: Zenyte Amulet x1 \| Materials: Zenyte x1, Gold Bar x1 |
 | Crafting | Craft zenyte bracelet | 98 | 4 | 1,500 | 20,512,727 |  |  | 30,769,090,500 | 581,404,500 | Product: Zenyte Bracelet x1 \| Materials: Zenyte x1, Gold Bar x1 |
-| Magic | Enchant Onyx | 87 | 3 | 2,000 | 2,609,432 |  |  | 5,218,864,000 | 369,838,000 | Product: Amulet of Fury x1 \| Materials: Onyx Amulet x1 |
-| Magic | Enchant Zenyte Necklace | 93 | 3 | 2,000 | 20,287,526 |  |  | 40,575,052,000 | 325,046,000 | Product: Necklace of Anguish x1 \| Materials: Zenyte Necklace x1 |
 | Smithing | Forge godsword blade | 80 | 10 | 600 | 539,640 |  |  | 323,784,000 | 206,784,000 | Product: Godsword Blade x1 \| Materials: Godsword Shard x3 |
 | Crafting | Cut onyx | 72 | 3 | 2,000 | 2,641,365 |  |  | 5,282,730,000 | 145,986,000 | Product: Onyx x1 \| Materials: Uncut Onyx x1 |
-| Magic | Enchant Zenyte Ring | 93 | 3 | 2,000 | 20,255,567 |  |  | 40,511,134,000 | 128,134,000 | Product: Ring of Suffering x1 \| Materials: Zenyte Ring x1 |
 | Crafting | Craft zenyte ring | 98 | 4 | 1,500 | 20,191,500 |  |  | 30,287,250,000 | 99,564,000 | Product: Zenyte Ring x1 \| Materials: Zenyte x1, Gold Bar x1 |
-| Magic | Enchant Onyx Dragon Bolts (10) | 87 | 3 | 2,000 | 115,000 |  |  | 230,000,000 | 54,000,000 | Product: Onyx Dragon Bolt (E) x10 \| Materials: Onyx Dragon Bolt x10 |
 | Smithing | Attach Saradomin hilt | 80 | 100 | 60 | 28,950,625 |  |  | 1,737,037,500 | 50,290,140 | Product: Saradomin Godsword x1 \| Materials: Godsword Blade x1, Saradomin Hilt x1 |
-| Magic | Enchant Onyx Bolts (10) | 87 | 3 | 2,000 | 95,000 |  |  | 190,000,000 | 40,000,000 | Product: Onyx Bolt (E) x10 \| Materials: Onyx Bolt x10 |
 | Smithing | Attach Zamorak hilt | 80 | 100 | 60 | 19,571,258 |  |  | 1,174,275,480 | 37,137,120 | Product: Zamorak Godsword x1 \| Materials: Godsword Blade x1, Zamorak Hilt x1 |
+| Magic | Enchant Onyx | 87 | 30 | 200 | 2,609,432 |  |  | 521,886,400 | 36,983,800 | Product: Amulet of Fury x1 \| Materials: Onyx Amulet x1 |
 | Fletching | Tip dragonstone dragon bolts (10) | 84 | 3 | 2,000 | 36,000 |  |  | 72,000,000 | 35,900,000 | Product: Dragonstone Dragon Bolt x10 \| Materials: Dragon Bolt x10, Dragonstone Bolt Tips x10 |
+| Magic | Enchant Zenyte Necklace | 93 | 30 | 200 | 20,287,526 |  |  | 4,057,505,200 | 32,504,600 | Product: Necklace of Anguish x1 \| Materials: Zenyte Necklace x1 |
 | Fletching | Tip dragonstone bolts (10) | 71 | 3 | 2,000 | 19,000 |  |  | 38,000,000 | 25,060,000 | Product: Dragonstone Bolt x10 \| Materials: Runite Bolt x10, Dragonstone Bolt Tips x10 |
-| Magic | Enchant Dragonstone Dragon Bolts (10) | 68 | 3 | 2,000 | 48,000 |  |  | 96,000,000 | 24,000,000 | Product: Dragonstone Dragon Bolt (E) x10 \| Materials: Dragonstone Dragon Bolt x10 |
 | Smithing | Attach Bandos hilt | 80 | 100 | 60 | 19,029,248 |  |  | 1,141,754,880 | 23,826,480 | Product: Bandos Godsword x1 \| Materials: Godsword Blade x1, Bandos Hilt x1 |
 | Smithing | Attach Armadyl hilt | 80 | 100 | 60 | 8,108,827 |  |  | 486,529,620 | 18,701,160 | Product: Armadyl Godsword x1 \| Materials: Godsword Blade x1, Armadyl Hilt x1 |
-| Magic | Enchant Diamond Dragon Bolts (10) | 57 | 3 | 2,000 | 24,000 |  |  | 48,000,000 | 18,000,000 | Product: Diamond Dragon Bolt (E) x10 \| Materials: Diamond Dragon Bolt x10 |
-| Magic | Enchant Ruby Dragon Bolts (10) | 49 | 3 | 2,000 | 22,000 |  |  | 44,000,000 | 16,000,000 | Product: Ruby Dragon Bolt (E) x10 \| Materials: Ruby Dragon Bolt x10 |
 | Fletching | Make dragon bolts (10) | 84 | 3 | 2,000 | 12,000 |  |  | 24,000,000 | 15,960,000 | Product: Dragon Bolt x10 \| Materials: Feather x10, Dragon Bolt (Unf) x10 |
-| Magic | Enchant Dragonstone Bolts (10) | 68 | 3 | 2,000 | 26,000 |  |  | 52,000,000 | 14,000,000 | Product: Dragonstone Bolt (E) x10 \| Materials: Dragonstone Bolt x10 |
+| Magic | Enchant Zenyte Ring | 93 | 30 | 200 | 20,255,567 |  |  | 4,051,113,400 | 12,813,400 | Product: Ring of Suffering x1 \| Materials: Zenyte Ring x1 |
 | Smithing | Attach draconic visage | 90 | 10 | 600 | 3,700,524 |  |  | 2,220,314,400 | 12,624,000 | Product: Dragonfire Shield x1 \| Materials: Anti-Dragon Shield x1, Draconic Visage x1 |
 | Smithing | Smith rune pickaxe | 86 | 5 | 1,200 | 18,685 |  |  | 22,422,000 | 7,422,000 | Product: Rune Pickaxe x1 \| Materials: Rune Bar x1 |
 | Mining | Mine runite ore | 85 | 9 | 667 | 10,463 |  |  | 6,975,333 | 6,975,333 | Product: Runite Ore x1 |
 | Herblore | Make combat potion | 36 | 3 | 2,000 | 4,000 |  |  | 8,000,000 | 6,724,000 | Product: Combat Potion x1 \| Materials: Harralander x1, Goat Horn Dust x1 |
-| Magic | Enchant Diamond Bolts (10) | 57 | 3 | 2,000 | 7,000 |  |  | 14,000,000 | 6,400,000 | Product: Diamond Bolt (E) x10 \| Materials: Diamond Bolt x10 |
-| Magic | Enchant Ruby Bolts (10) | 49 | 3 | 2,000 | 5,000 |  |  | 10,000,000 | 4,400,000 | Product: Ruby Bolt (E) x10 \| Materials: Ruby Bolt x10 |
+| Magic | Enchant Onyx Dragon Bolts (10) | 87 | 30 | 200 | 115,000 |  |  | 23,000,000 | 5,400,000 | Product: Onyx Dragon Bolt (E) x10 \| Materials: Onyx Dragon Bolt x10 |
+| Magic | Enchant Onyx Bolts (10) | 87 | 30 | 200 | 95,000 |  |  | 19,000,000 | 4,000,000 | Product: Onyx Bolt (E) x10 \| Materials: Onyx Bolt x10 |
 | Fletching | Make adamant bolts (10) | 61 | 3 | 2,000 | 1,590 |  |  | 3,180,000 | 2,940,000 | Product: Adamant Bolt x10 \| Materials: Feather x10, Adamant Bolt (Unf) x10 |
 | Fletching | Tip diamond dragon bolts (10) | 84 | 3 | 2,000 | 15,000 |  |  | 30,000,000 | 2,440,000 | Product: Diamond Dragon Bolt x10 \| Materials: Dragon Bolt x10, Diamond Bolt Tips x10 |
+| Magic | Enchant Dragonstone Dragon Bolts (10) | 68 | 30 | 200 | 48,000 |  |  | 9,600,000 | 2,400,000 | Product: Dragonstone Dragon Bolt (E) x10 \| Materials: Dragonstone Dragon Bolt x10 |
 | Herblore | Make strength potion | 12 | 3 | 2,000 | 1,500 |  |  | 3,000,000 | 1,950,000 | Product: Strength Potion x1 \| Materials: Tarromin x1, Limpwurt Root x1 |
+| Magic | Enchant Diamond Dragon Bolts (10) | 57 | 30 | 200 | 24,000 |  |  | 4,800,000 | 1,800,000 | Product: Diamond Dragon Bolt (E) x10 \| Materials: Diamond Dragon Bolt x10 |
 | Fletching | Tip ruby dragon bolts (10) | 84 | 3 | 2,000 | 14,000 |  |  | 28,000,000 | 1,740,000 | Product: Ruby Dragon Bolt x10 \| Materials: Dragon Bolt x10, Ruby Bolt Tips x10 |
-| Magic | Enchant Ruby | 49 | 3 | 2,000 | 1,897 |  |  | 3,794,000 | 1,418,000 | Product: Amulet of Strength x1 \| Materials: Ruby Amulet x1 |
+| Magic | Enchant Ruby Dragon Bolts (10) | 49 | 30 | 200 | 22,000 |  |  | 4,400,000 | 1,600,000 | Product: Ruby Dragon Bolt (E) x10 \| Materials: Ruby Dragon Bolt x10 |
+| Magic | Enchant Dragonstone Bolts (10) | 68 | 30 | 200 | 26,000 |  |  | 5,200,000 | 1,400,000 | Product: Dragonstone Bolt (E) x10 \| Materials: Dragonstone Bolt x10 |
 | Fletching | Cut ruby bolt tips (12) | 63 | 2 | 3,000 | 1,356 |  |  | 4,068,000 | 1,194,000 | Product: Ruby Bolt Tips x12 \| Materials: Ruby x1 |
 | Mining | Mine gems | 75 | 20 | 300 | 3,856 |  |  | 1,156,870 | 1,156,870 | Drop EV: Uncut Onyx: 2,568; Uncut Diamond: 610; Uncut Ruby: 370; Uncut Dragonstone: 180; Uncut Sapphire: 127 |
 | Fletching | Make iron bolts (10) | 39 | 3 | 2,000 | 570 |  |  | 1,140,000 | 1,060,000 | Product: Iron Bolt x10 \| Materials: Feather x10, Iron Bolt (Unf) x10 |
@@ -228,7 +225,7 @@ Generated: 2026-05-10T16:20:22.269Z
 | Runecrafting | Craft wrath rune | 95 | 2 | 3,000 | 303 |  |  | 909,000 | 876,000 | Product: Wrath Rune x1 \| Materials: Rune Essence x1 |
 | Fletching | Tip diamond bolts (10) | 65 | 3 | 2,000 | 3,800 |  |  | 7,600,000 | 860,000 | Product: Diamond Bolt x10 \| Materials: Adamant Bolt x10, Diamond Bolt Tips x10 |
 | Runecrafting | Craft blood rune | 77 | 2 | 3,000 | 287 |  |  | 861,000 | 828,000 | Product: Blood Rune x1 \| Materials: Rune Essence x1 |
-| Magic | Enchant Dragonstone | 68 | 3 | 2,000 | 11,259 |  |  | 22,518,000 | 762,000 | Product: Amulet of Glory x1 \| Materials: Dragonstone Amulet x1 |
+| Magic | Enchant Diamond Bolts (10) | 57 | 30 | 200 | 7,000 |  |  | 1,400,000 | 640,000 | Product: Diamond Bolt (E) x10 \| Materials: Diamond Bolt x10 |
 | Woodcutting | Chop magic | 75 | 9 | 667 | 909 |  |  | 606,000 | 606,000 | Product: Magic Logs x1 |
 | Crafting | Tan green dragon hide | 55 | 3 | 2,000 | 1,960 |  |  | 3,920,000 | 548,000 | Product: Green Dragon Leather x1 \| Materials: Green Dragonhide x1 |
 | Smithing | Smith iron pickaxe | 16 | 5 | 1,200 | 593 |  |  | 711,600 | 538,800 | Product: Iron Pickaxe x1 \| Materials: Iron Bar x1 |
@@ -239,13 +236,12 @@ Generated: 2026-05-10T16:20:22.269Z
 | Herblore | Make super attack | 45 | 3 | 2,000 | 2,000 |  |  | 4,000,000 | 464,000 | Product: Super Attack x1 \| Materials: Irit Leaf x1, Eye of Newt x1 |
 | Fishing | Fish shark | 76 | 8 | 750 | 599 |  |  | 449,250 | 449,250 | Product: Raw Shark x1 |
 | Fletching | Make mithril bolts (10) | 54 | 3 | 2,000 | 310 |  |  | 620,000 | 440,000 | Product: Mithril Bolt x10 \| Materials: Feather x10, Mithril Bolt (Unf) x10 |
+| Magic | Enchant Ruby Bolts (10) | 49 | 30 | 200 | 5,000 |  |  | 1,000,000 | 440,000 | Product: Ruby Bolt (E) x10 \| Materials: Ruby Bolt x10 |
 | Crafting | String diamond amulet | 70 | 4 | 1,500 | 2,236 |  |  | 3,354,000 | 438,000 | Product: Diamond Amulet x1 \| Materials: Diamond x1, Gold Bar x1 |
-| Magic | Enchant Sapphire | 7 | 3 | 2,000 | 594 |  |  | 1,188,000 | 386,000 | Product: Amulet of Magic x1 \| Materials: Sapphire Amulet x1 |
 | Runecrafting | Craft law rune | 54 | 2 | 3,000 | 123 |  |  | 369,000 | 336,000 | Product: Law Rune x1 \| Materials: Rune Essence x1 |
 | Runecrafting | Craft nature rune | 44 | 2 | 3,000 | 120 |  |  | 360,000 | 327,000 | Product: Nature Rune x1 \| Materials: Rune Essence x1 |
 | Cooking | Cook shark | 80 | 4 | 1,500 | 791 |  |  | 1,186,500 | 288,000 | Product: Shark x1 \| Materials: Raw Shark x1 |
 | Runecrafting | Craft chaos rune | 35 | 2 | 3,000 | 101 |  |  | 303,000 | 270,000 | Product: Chaos Rune x1 \| Materials: Rune Essence x1 |
-| Magic | Enchant Diamond | 57 | 3 | 2,000 | 2,370 |  |  | 4,740,000 | 268,000 | Product: Amulet of Power x1 \| Materials: Diamond Amulet x1 |
 | Magic | Plank Make | 86 | 3 | 2,000 | 156 |  |  | 312,000 | 258,000 | Product: Plank x1 \| Materials: Logs x1 |
 | Runecrafting | Craft cosmic rune | 27 | 2 | 3,000 | 97 |  |  | 291,000 | 258,000 | Product: Cosmic Rune x1 \| Materials: Rune Essence x1 |
 | Runecrafting | Craft astral rune | 40 | 2 | 3,000 | 95 |  |  | 285,000 | 252,000 | Product: Astral Rune x1 \| Materials: Rune Essence x1 |
@@ -263,6 +259,7 @@ Generated: 2026-05-10T16:20:22.269Z
 | Fletching | String yew shortbow | 65 | 5 | 1,200 | 416 |  |  | 499,200 | 145,200 | Product: Yew Shortbow x1 \| Materials: Yew Shortbow (U) x1, Bowstring x1 |
 | Fishing | Fish lobster | 40 | 6 | 1,000 | 145 |  |  | 145,000 | 145,000 | Product: Raw Lobster x1 |
 | Mining | Mine gold ore | 40 | 6 | 1,000 | 144 |  |  | 144,000 | 144,000 | Product: Gold Ore x1 |
+| Magic | Enchant Ruby | 49 | 30 | 200 | 1,897 |  |  | 379,400 | 141,800 | Product: Amulet of Strength x1 \| Materials: Ruby Amulet x1 |
 | Mining | Mine mithril ore | 55 | 7 | 857 | 149 |  |  | 127,714 | 127,714 | Product: Mithril Ore x1 |
 | Agility | Rellekka Rooftop | 80 | 20 | 300 | 400 |  |  | 120,000 | 120,000 |  |
 | Magic | Spin Flax | 76 | 5 | 1,200 | 100 |  |  | 120,000 | 118,800 | Product: Bowstring x1 \| Materials: Flax x1 |
@@ -278,6 +275,7 @@ Generated: 2026-05-10T16:20:22.269Z
 | Cooking | Cook meat | 1 | 4 | 1,500 | 85 |  |  | 127,500 | 82,500 | Product: Cooked Meat x1 \| Materials: Raw Beef x1 |
 | Fletching | Cut yew shortbow (u) | 65 | 5 | 1,200 | 195 |  |  | 234,000 | 81,600 | Product: Yew Shortbow (U) x1 \| Materials: Yew Logs x1 |
 | Crafting | String emerald amulet | 31 | 4 | 1,500 | 698 |  |  | 1,047,000 | 81,000 | Product: Emerald Amulet x1 \| Materials: Emerald x1, Gold Bar x1 |
+| Magic | Enchant Dragonstone | 68 | 30 | 200 | 11,259 |  |  | 2,251,800 | 76,200 | Product: Amulet of Glory x1 \| Materials: Dragonstone Amulet x1 |
 | Agility | Seers' Village Rooftop | 60 | 25 | 240 | 300 |  |  | 72,000 | 72,000 |  |
 | Cooking | Cook chicken | 1 | 4 | 1,500 | 66 |  |  | 99,000 | 69,000 | Product: Cooked Chicken x1 \| Materials: Raw Chicken x1 |
 | Crafting | Make molten glass | 1 | 4 | 1,500 | 89 |  |  | 133,500 | 61,500 | Product: Molten Glass x1 \| Materials: Soda Ash x1, Bucket of Sand x1 |
@@ -288,9 +286,11 @@ Generated: 2026-05-10T16:20:22.269Z
 | Agility | Falador Rooftop | 50 | 28 | 214 | 200 |  |  | 42,857 | 42,857 |  |
 | Woodcutting | Chop oak | 15 | 5 | 1,200 | 34 |  |  | 40,800 | 40,800 | Product: Oak Logs x1 |
 | Woodcutting | Chop tree | 1 | 4 | 1,500 | 27 |  |  | 40,500 | 40,500 | Product: Logs x1 |
+| Magic | Enchant Sapphire | 7 | 30 | 200 | 594 |  |  | 118,800 | 38,600 | Product: Amulet of Magic x1 \| Materials: Sapphire Amulet x1 |
 | Smithing | Smith bronze axe | 4 | 5 | 1,200 | 86 |  |  | 103,200 | 31,200 | Product: Bronze Axe x1 \| Materials: Bronze Bar x1 |
 | Agility | Canifis Rooftop | 40 | 30 | 200 | 140 |  |  | 28,000 | 28,000 |  |
 | Smithing | Smith bronze dagger | 1 | 5 | 1,200 | 83 |  |  | 99,600 | 27,600 | Product: Bronze Dagger x1 \| Materials: Bronze Bar x1 |
+| Magic | Enchant Diamond | 57 | 30 | 200 | 2,370 |  |  | 474,000 | 26,800 | Product: Amulet of Power x1 \| Materials: Diamond Amulet x1 |
 | Smithing | Smith bronze pickaxe | 4 | 5 | 1,200 | 82 |  |  | 98,400 | 26,400 | Product: Bronze Pickaxe x1 \| Materials: Bronze Bar x1 |
 | Mining | Mine copper ore | 1 | 4 | 1,500 | 14 |  |  | 21,000 | 21,000 | Product: Copper Ore x1 |
 | Woodcutting | Chop willow | 30 | 6 | 1,000 | 21 |  |  | 21,000 | 21,000 | Product: Willow Logs x1 |
@@ -410,6 +410,7 @@ Generated: 2026-05-10T16:20:22.269Z
 | Prayer | Bury dragon bones | 35 | 3 | 2,000 | 0 |  |  | 0 | -5,630,000 | Materials: Dragon Bones x1 |
 | Prayer | Use gilded altar (dragon bones) | 35 | 3 | 2,000 | 0 |  |  | 0 | -5,630,000 | Materials: Dragon Bones x1 |
 | Smithing | Smith rune axe | 86 | 5 | 1,200 | 7,401 |  |  | 8,881,200 | -6,118,800 | Product: Rune Axe x1 \| Materials: Rune Bar x1 |
+| Magic | Enchant Zenyte Amulet | 93 | 30 | 200 | 20,539,001 |  |  | 4,107,800,200 | -6,199,800 | Product: Amulet of Torture x1 \| Materials: Zenyte Amulet x1 |
 | Herblore | Make super defence | 66 | 3 | 2,000 | 400 |  |  | 800,000 | -6,232,000 | Product: Super Defence x1 \| Materials: Cadantine x1, White Berries x1 |
 | Herblore | Make super restore | 63 | 3 | 2,000 | 5,000 |  |  | 10,000,000 | -7,466,000 | Product: Super Restore x1 \| Materials: Snapdragon x1, Red Spiders' Eggs x1 |
 | Herblore | Make super combat potion | 90 | 3 | 2,000 | 7,500 |  |  | 15,000,000 | -7,774,000 | Product: Super Combat x1 \| Materials: Torstol x1, Super Attack x1, Super Strength x1, Super Defence x1, Ranging Potion x1, Magic Potion x1 |
@@ -420,11 +421,10 @@ Generated: 2026-05-10T16:20:22.269Z
 | Fletching | Tip onyx dragon bolts (10) | 84 | 3 | 2,000 | 88,000 |  |  | 176,000,000 | -14,000,000 | Product: Onyx Dragon Bolt x10 \| Materials: Dragon Bolt x10, Onyx Bolt Tips x10 |
 | Fletching | Tip onyx bolts (10) | 73 | 3 | 2,000 | 75,000 |  |  | 150,000,000 | -16,840,000 | Product: Onyx Bolt x10 \| Materials: Runite Bolt x10, Onyx Bolt Tips x10 |
 | Smithing | Smith runite bolts (unf) (10) | 88 | 4 | 1,500 | 350 |  |  | 525,000 | -18,225,000 | Product: Runite Bolt (Unf) x10 \| Materials: Rune Bar x1 |
+| Magic | Enchant Zenyte Bracelet | 93 | 30 | 200 | 20,377,850 |  |  | 4,075,570,000 | -26,975,400 | Product: Tormented Bracelet x1 \| Materials: Zenyte Bracelet x1 |
 | Prayer | Bury dagganoth bones | 40 | 3 | 2,000 | 0 |  |  | 0 | -28,896,000 | Materials: Dagannoth Bones x1 |
 | Prayer | Use gilded altar (dagganoth bones) | 40 | 3 | 2,000 | 0 |  |  | 0 | -28,896,000 | Materials: Dagannoth Bones x1 |
-| Magic | Enchant Zenyte Amulet | 93 | 3 | 2,000 | 20,539,001 |  |  | 41,078,002,000 | -61,998,000 | Product: Amulet of Torture x1 \| Materials: Zenyte Amulet x1 |
 | Crafting | Cut zenyte | 89 | 3 | 2,000 | 20,125,000 |  |  | 40,250,000,000 | -255,886,000 | Product: Zenyte x1 \| Materials: Uncut Zenyte x1 |
-| Magic | Enchant Zenyte Bracelet | 93 | 3 | 2,000 | 20,377,850 |  |  | 40,755,700,000 | -269,754,000 | Product: Tormented Bracelet x1 \| Materials: Zenyte Bracelet x1 |
 | Crafting | String onyx amulet | 90 | 4 | 1,500 | 2,424,513 |  |  | 3,636,769,500 | -325,464,000 | Product: Onyx Amulet x1 \| Materials: Onyx x1, Gold Bar x1 |
 | Fletching | Cut onyx bolt tips (12) | 73 | 2 | 3,000 | 99,600 |  |  | 298,800,000 | -7,625,295,000 | Product: Onyx Bolt Tips x12 \| Materials: Onyx x1 |
 

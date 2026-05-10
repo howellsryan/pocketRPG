@@ -96,36 +96,33 @@ Raids,Theatre of Blood,theatre_of_blood,Theatre of Blood,,,1,,,8252612.511557895
 Raids,Barrows Brothers,barrows_brothers,Barrows Brothers,,,1,,,280007.9375,,,280007.9375,280007.9375,"Assumes 1 completions/hr | Common EV: 150,828 | Unique EV: 129,180 | Unique table: Ahrim's Robeskirt 1.042% EV 20,754; Dharok's Greataxe 1.042% EV 20,083; Ahrim's Robetop 1.042% EV 20,031; Karil's Leathertop 1.042% EV 11,229; Dharok's Platebody 1.042% EV 8,606; Dharok's Platelegs 1.042% EV 8,568; Karil's Leatherskirt 1.042% EV 4,839; Torag's Platebody 1.042% EV 3,912; +16 more"
 Skilling,Crafting,crafting:zenyte_amulet,String zenyte amulet,98,4,1500,20570000,,,20125124,444876,30855000000,667314000,"Product: Zenyte Amulet x1 | Materials: Zenyte x1, Gold Bar x1"
 Skilling,Crafting,crafting:zenyte_bracelet,Craft zenyte bracelet,98,4,1500,20512727,,,20125124,387603,30769090500,581404500,"Product: Zenyte Bracelet x1 | Materials: Zenyte x1, Gold Bar x1"
-Skilling,Magic,magic:enchant_onyx,Enchant Onyx,87,3,2000,2609432,,,2424513,184919,5218864000,369838000,Product: Amulet of Fury x1 | Materials: Onyx Amulet x1
-Skilling,Magic,magic:enchant_zenyte_necklace,Enchant Zenyte Necklace,93,3,2000,20287526,,,20125003,162523,40575052000,325046000,Product: Necklace of Anguish x1 | Materials: Zenyte Necklace x1
 Skilling,Smithing,smithing:forge_godsword_blade,Forge godsword blade,80,10,600,539640,,,195000,344640,323784000,206784000,Product: Godsword Blade x1 | Materials: Godsword Shard x3
 Skilling,Crafting,crafting:cut_onyx,Cut onyx,72,3,2000,2641365,,,2568372,72993,5282730000,145986000,Product: Onyx x1 | Materials: Uncut Onyx x1
-Skilling,Magic,magic:enchant_zenyte_ring,Enchant Zenyte Ring,93,3,2000,20255567,,,20191500,64067,40511134000,128134000,Product: Ring of Suffering x1 | Materials: Zenyte Ring x1
 Skilling,Crafting,crafting:zenyte_ring,Craft zenyte ring,98,4,1500,20191500,,,20125124,66376,30287250000,99564000,"Product: Zenyte Ring x1 | Materials: Zenyte x1, Gold Bar x1"
-Skilling,Magic,magic:enchant_onyx_dragon_bolts,Enchant Onyx Dragon Bolts (10),87,3,2000,115000,,,88000,27000,230000000,54000000,Product: Onyx Dragon Bolt (E) x10 | Materials: Onyx Dragon Bolt x10
 Skilling,Smithing,smithing:make_saradomin_godsword,Attach Saradomin hilt,80,100,60,28950625,,,28112456,838169,1737037500,50290140,"Product: Saradomin Godsword x1 | Materials: Godsword Blade x1, Saradomin Hilt x1"
-Skilling,Magic,magic:enchant_onyx_bolts,Enchant Onyx Bolts (10),87,3,2000,95000,,,75000,20000,190000000,40000000,Product: Onyx Bolt (E) x10 | Materials: Onyx Bolt x10
 Skilling,Smithing,smithing:make_zamorak_godsword,Attach Zamorak hilt,80,100,60,19571258,,,18952306,618952,1174275480,37137120,"Product: Zamorak Godsword x1 | Materials: Godsword Blade x1, Zamorak Hilt x1"
+Skilling,Magic,magic:enchant_onyx,Enchant Onyx,87,30,200,2609432,,,2424513,184919,521886400,36983800,Product: Amulet of Fury x1 | Materials: Onyx Amulet x1
 Skilling,Fletching,fletching:tip_dragonstone_dragon_bolts,Tip dragonstone dragon bolts (10),84,3,2000,36000,,,18050,17950,72000000,35900000,"Product: Dragonstone Dragon Bolt x10 | Materials: Dragon Bolt x10, Dragonstone Bolt Tips x10"
+Skilling,Magic,magic:enchant_zenyte_necklace,Enchant Zenyte Necklace,93,30,200,20287526,,,20125003,162523,4057505200,32504600,Product: Necklace of Anguish x1 | Materials: Zenyte Necklace x1
 Skilling,Fletching,fletching:tip_dragonstone_bolts,Tip dragonstone bolts (10),71,3,2000,19000,,,6470,12530,38000000,25060000,"Product: Dragonstone Bolt x10 | Materials: Runite Bolt x10, Dragonstone Bolt Tips x10"
-Skilling,Magic,magic:enchant_dragonstone_dragon_bolts,Enchant Dragonstone Dragon Bolts (10),68,3,2000,48000,,,36000,12000,96000000,24000000,Product: Dragonstone Dragon Bolt (E) x10 | Materials: Dragonstone Dragon Bolt x10
 Skilling,Smithing,smithing:make_bandos_godsword,Attach Bandos hilt,80,100,60,19029248,,,18632140,397108,1141754880,23826480,"Product: Bandos Godsword x1 | Materials: Godsword Blade x1, Bandos Hilt x1"
 Skilling,Smithing,smithing:make_armadyl_godsword,Attach Armadyl hilt,80,100,60,8108827,,,7797141,311686,486529620,18701160,"Product: Armadyl Godsword x1 | Materials: Godsword Blade x1, Armadyl Hilt x1"
-Skilling,Magic,magic:enchant_diamond_dragon_bolts,Enchant Diamond Dragon Bolts (10),57,3,2000,24000,,,15000,9000,48000000,18000000,Product: Diamond Dragon Bolt (E) x10 | Materials: Diamond Dragon Bolt x10
-Skilling,Magic,magic:enchant_ruby_dragon_bolts,Enchant Ruby Dragon Bolts (10),49,3,2000,22000,,,14000,8000,44000000,16000000,Product: Ruby Dragon Bolt (E) x10 | Materials: Ruby Dragon Bolt x10
 Skilling,Fletching,fletching:make_dragon_bolts,Make dragon bolts (10),84,3,2000,12000,,,4020,7980,24000000,15960000,"Product: Dragon Bolt x10 | Materials: Feather x10, Dragon Bolt (Unf) x10"
-Skilling,Magic,magic:enchant_dragonstone_bolts,Enchant Dragonstone Bolts (10),68,3,2000,26000,,,19000,7000,52000000,14000000,Product: Dragonstone Bolt (E) x10 | Materials: Dragonstone Bolt x10
+Skilling,Magic,magic:enchant_zenyte_ring,Enchant Zenyte Ring,93,30,200,20255567,,,20191500,64067,4051113400,12813400,Product: Ring of Suffering x1 | Materials: Zenyte Ring x1
 Skilling,Smithing,smithing:make_dragonfire_shield,Attach draconic visage,90,10,600,3700524,,,3679484,21040,2220314400,12624000,"Product: Dragonfire Shield x1 | Materials: Anti-Dragon Shield x1, Draconic Visage x1"
 Skilling,Smithing,smithing:smith_rune_pickaxe,Smith rune pickaxe,86,5,1200,18685,,,12500,6185,22422000,7422000,Product: Rune Pickaxe x1 | Materials: Rune Bar x1
 Skilling,Mining,mining:runite,Mine runite ore,85,9,666.6666666666666,10463,,,0,10463,6975333.333333333,6975333.333333333,Product: Runite Ore x1
 Skilling,Herblore,herblore:combat_potion,Make combat potion,36,3,2000,4000,,,638,3362,8000000,6724000,"Product: Combat Potion x1 | Materials: Harralander x1, Goat Horn Dust x1"
-Skilling,Magic,magic:enchant_diamond_bolts,Enchant Diamond Bolts (10),57,3,2000,7000,,,3800,3200,14000000,6400000,Product: Diamond Bolt (E) x10 | Materials: Diamond Bolt x10
-Skilling,Magic,magic:enchant_ruby_bolts,Enchant Ruby Bolts (10),49,3,2000,5000,,,2800,2200,10000000,4400000,Product: Ruby Bolt (E) x10 | Materials: Ruby Bolt x10
+Skilling,Magic,magic:enchant_onyx_dragon_bolts,Enchant Onyx Dragon Bolts (10),87,30,200,115000,,,88000,27000,23000000,5400000,Product: Onyx Dragon Bolt (E) x10 | Materials: Onyx Dragon Bolt x10
+Skilling,Magic,magic:enchant_onyx_bolts,Enchant Onyx Bolts (10),87,30,200,95000,,,75000,20000,19000000,4000000,Product: Onyx Bolt (E) x10 | Materials: Onyx Bolt x10
 Skilling,Fletching,fletching:make_adamant_bolts,Make adamant bolts (10),61,3,2000,1590,,,120,1470,3180000,2940000,"Product: Adamant Bolt x10 | Materials: Feather x10, Adamant Bolt (Unf) x10"
 Skilling,Fletching,fletching:tip_diamond_dragon_bolts,Tip diamond dragon bolts (10),84,3,2000,15000,,,13780,1220,30000000,2440000,"Product: Diamond Dragon Bolt x10 | Materials: Dragon Bolt x10, Diamond Bolt Tips x10"
+Skilling,Magic,magic:enchant_dragonstone_dragon_bolts,Enchant Dragonstone Dragon Bolts (10),68,30,200,48000,,,36000,12000,9600000,2400000,Product: Dragonstone Dragon Bolt (E) x10 | Materials: Dragonstone Dragon Bolt x10
 Skilling,Herblore,herblore:strength_potion,Make strength potion,12,3,2000,1500,,,525,975,3000000,1950000,"Product: Strength Potion x1 | Materials: Tarromin x1, Limpwurt Root x1"
+Skilling,Magic,magic:enchant_diamond_dragon_bolts,Enchant Diamond Dragon Bolts (10),57,30,200,24000,,,15000,9000,4800000,1800000,Product: Diamond Dragon Bolt (E) x10 | Materials: Diamond Dragon Bolt x10
 Skilling,Fletching,fletching:tip_ruby_dragon_bolts,Tip ruby dragon bolts (10),84,3,2000,14000,,,13130,870,28000000,1740000,"Product: Ruby Dragon Bolt x10 | Materials: Dragon Bolt x10, Ruby Bolt Tips x10"
-Skilling,Magic,magic:enchant_ruby,Enchant Ruby,49,3,2000,1897,,,1188,709,3794000,1418000,Product: Amulet of Strength x1 | Materials: Ruby Amulet x1
+Skilling,Magic,magic:enchant_ruby_dragon_bolts,Enchant Ruby Dragon Bolts (10),49,30,200,22000,,,14000,8000,4400000,1600000,Product: Ruby Dragon Bolt (E) x10 | Materials: Ruby Dragon Bolt x10
+Skilling,Magic,magic:enchant_dragonstone_bolts,Enchant Dragonstone Bolts (10),68,30,200,26000,,,19000,7000,5200000,1400000,Product: Dragonstone Bolt (E) x10 | Materials: Dragonstone Bolt x10
 Skilling,Fletching,fletching:cut_ruby_bolt_tips,Cut ruby bolt tips (12),63,2,3000,1356,,,958,398,4068000,1194000,Product: Ruby Bolt Tips x12 | Materials: Ruby x1
 Skilling,Mining,mining:gem_mining,Mine gems,75,20,300,3856.232,,,0,3856.232,1156869.6,1156869.6,"Drop EV: Uncut Onyx: 2,568; Uncut Diamond: 610; Uncut Ruby: 370; Uncut Dragonstone: 180; Uncut Sapphire: 127"
 Skilling,Fletching,fletching:make_iron_bolts,Make iron bolts (10),39,3,2000,570,,,40,530,1140000,1060000,"Product: Iron Bolt x10 | Materials: Feather x10, Iron Bolt (Unf) x10"
@@ -136,7 +133,7 @@ Skilling,Smithing,smithing:smelt_rune,Smelt rune bar,85,4,1500,12500,,,11871,629
 Skilling,Runecrafting,runecraft:craft_wrath_rune,Craft wrath rune,95,2,3000,303,,,11,292,909000,876000,Product: Wrath Rune x1 | Materials: Rune Essence x1
 Skilling,Fletching,fletching:tip_diamond_bolts,Tip diamond bolts (10),65,3,2000,3800,,,3370,430,7600000,860000,"Product: Diamond Bolt x10 | Materials: Adamant Bolt x10, Diamond Bolt Tips x10"
 Skilling,Runecrafting,runecraft:craft_blood_rune,Craft blood rune,77,2,3000,287,,,11,276,861000,828000,Product: Blood Rune x1 | Materials: Rune Essence x1
-Skilling,Magic,magic:enchant_dragonstone,Enchant Dragonstone,68,3,2000,11259,,,10878,381,22518000,762000,Product: Amulet of Glory x1 | Materials: Dragonstone Amulet x1
+Skilling,Magic,magic:enchant_diamond_bolts,Enchant Diamond Bolts (10),57,30,200,7000,,,3800,3200,1400000,640000,Product: Diamond Bolt (E) x10 | Materials: Diamond Bolt x10
 Skilling,Woodcutting,woodcutting:magic,Chop magic,75,9,666.6666666666666,909,,,0,909,606000,606000,Product: Magic Logs x1
 Skilling,Crafting,crafting:tan_green_dhide,Tan green dragon hide,55,3,2000,1960,,,1686,274,3920000,548000,Product: Green Dragon Leather x1 | Materials: Green Dragonhide x1
 Skilling,Smithing,smithing:smith_iron_pickaxe,Smith iron pickaxe,16,5,1200,593,,,144,449,711600,538800,Product: Iron Pickaxe x1 | Materials: Iron Bar x1
@@ -147,13 +144,12 @@ Skilling,Mining,mining:adamantite,Mine adamantite ore,70,8,750,644,,,0,644,48300
 Skilling,Herblore,herblore:super_attack,Make super attack,45,3,2000,2000,,,1768,232,4000000,464000,"Product: Super Attack x1 | Materials: Irit Leaf x1, Eye of Newt x1"
 Skilling,Fishing,fishing:shark,Fish shark,76,8,750,599,,,0,599,449250,449250,Product: Raw Shark x1
 Skilling,Fletching,fletching:make_mithril_bolts,Make mithril bolts (10),54,3,2000,310,,,90,220,620000,440000,"Product: Mithril Bolt x10 | Materials: Feather x10, Mithril Bolt (Unf) x10"
+Skilling,Magic,magic:enchant_ruby_bolts,Enchant Ruby Bolts (10),49,30,200,5000,,,2800,2200,1000000,440000,Product: Ruby Bolt (E) x10 | Materials: Ruby Bolt x10
 Skilling,Crafting,crafting:diamond_amulet,String diamond amulet,70,4,1500,2236,,,1944,292,3354000,438000,"Product: Diamond Amulet x1 | Materials: Diamond x1, Gold Bar x1"
-Skilling,Magic,magic:enchant_sapphire,Enchant Sapphire,7,3,2000,594,,,401,193,1188000,386000,Product: Amulet of Magic x1 | Materials: Sapphire Amulet x1
 Skilling,Runecrafting,runecraft:craft_law_rune,Craft law rune,54,2,3000,123,,,11,112,369000,336000,Product: Law Rune x1 | Materials: Rune Essence x1
 Skilling,Runecrafting,runecraft:craft_nature_rune,Craft nature rune,44,2,3000,120,,,11,109,360000,327000,Product: Nature Rune x1 | Materials: Rune Essence x1
 Skilling,Cooking,cooking:cook_shark,Cook shark,80,4,1500,791,,,599,192,1186500,288000,Product: Shark x1 | Materials: Raw Shark x1
 Skilling,Runecrafting,runecraft:craft_chaos_rune,Craft chaos rune,35,2,3000,101,,,11,90,303000,270000,Product: Chaos Rune x1 | Materials: Rune Essence x1
-Skilling,Magic,magic:enchant_diamond,Enchant Diamond,57,3,2000,2370,,,2236,134,4740000,268000,Product: Amulet of Power x1 | Materials: Diamond Amulet x1
 Skilling,Magic,magic:plank_make,Plank Make,86,3,2000,156,,,27,129,312000,258000,Product: Plank x1 | Materials: Logs x1
 Skilling,Runecrafting,runecraft:craft_cosmic_rune,Craft cosmic rune,27,2,3000,97,,,11,86,291000,258000,Product: Cosmic Rune x1 | Materials: Rune Essence x1
 Skilling,Runecrafting,runecraft:craft_astral_rune,Craft astral rune,40,2,3000,95,,,11,84,285000,252000,Product: Astral Rune x1 | Materials: Rune Essence x1
@@ -171,6 +167,7 @@ Skilling,Crafting,crafting:tan_cowhide_hard,Tan cowhide (hard),1,2,3000,161,,,10
 Skilling,Fletching,fletching:yew_shortbow_string,String yew shortbow,65,5,1200,416,,,295,121,499200,145200,"Product: Yew Shortbow x1 | Materials: Yew Shortbow (U) x1, Bowstring x1"
 Skilling,Fishing,fishing:lobster,Fish lobster,40,6,1000,145,,,0,145,145000,145000,Product: Raw Lobster x1
 Skilling,Mining,mining:gold,Mine gold ore,40,6,1000,144,,,0,144,144000,144000,Product: Gold Ore x1
+Skilling,Magic,magic:enchant_ruby,Enchant Ruby,49,30,200,1897,,,1188,709,379400,141800,Product: Amulet of Strength x1 | Materials: Ruby Amulet x1
 Skilling,Mining,mining:mithril,Mine mithril ore,55,7,857.1428571428571,149,,,0,149,127714.28571428571,127714.28571428571,Product: Mithril Ore x1
 Skilling,Agility,agility:rellekka,Rellekka Rooftop,80,20,300,400,,,0,400,120000,120000,
 Skilling,Magic,magic:spin_flax,Spin Flax,76,5,1200,100,,,1,99,120000,118800,Product: Bowstring x1 | Materials: Flax x1
@@ -186,6 +183,7 @@ Skilling,Agility,agility:pollnivneach,Pollnivneach Rooftop,70,23,260.86956521739
 Skilling,Cooking,cooking:cook_meat,Cook meat,1,4,1500,85,,,30,55,127500,82500,Product: Cooked Meat x1 | Materials: Raw Beef x1
 Skilling,Fletching,fletching:yew_shortbow_u_cut,Cut yew shortbow (u),65,5,1200,195,,,127,68,234000,81600,Product: Yew Shortbow (U) x1 | Materials: Yew Logs x1
 Skilling,Crafting,crafting:emerald_amulet,String emerald amulet,31,4,1500,698,,,644,54,1047000,81000,"Product: Emerald Amulet x1 | Materials: Emerald x1, Gold Bar x1"
+Skilling,Magic,magic:enchant_dragonstone,Enchant Dragonstone,68,30,200,11259,,,10878,381,2251800,76200,Product: Amulet of Glory x1 | Materials: Dragonstone Amulet x1
 Skilling,Agility,agility:seers_village,Seers' Village Rooftop,60,25,240,300,,,0,300,72000,72000,
 Skilling,Cooking,cooking:cook_chicken,Cook chicken,1,4,1500,66,,,20,46,99000,69000,Product: Cooked Chicken x1 | Materials: Raw Chicken x1
 Skilling,Crafting,crafting:molten_glass,Make molten glass,1,4,1500,89,,,48,41,133500,61500,"Product: Molten Glass x1 | Materials: Soda Ash x1, Bucket of Sand x1"
@@ -196,9 +194,11 @@ Skilling,Magic,magic:tan_leather,Tan Leather,78,5,1200,148,,,109,39,177600,46800
 Skilling,Agility,agility:falador,Falador Rooftop,50,28,214.28571428571428,200,,,0,200,42857.142857142855,42857.142857142855,
 Skilling,Woodcutting,woodcutting:oak,Chop oak,15,5,1200,34,,,0,34,40800,40800,Product: Oak Logs x1
 Skilling,Woodcutting,woodcutting:normal,Chop tree,1,4,1500,27,,,0,27,40500,40500,Product: Logs x1
+Skilling,Magic,magic:enchant_sapphire,Enchant Sapphire,7,30,200,594,,,401,193,118800,38600,Product: Amulet of Magic x1 | Materials: Sapphire Amulet x1
 Skilling,Smithing,smithing:smith_bronze_axe,Smith bronze axe,4,5,1200,86,,,60,26,103200,31200,Product: Bronze Axe x1 | Materials: Bronze Bar x1
 Skilling,Agility,agility:canifis,Canifis Rooftop,40,30,200,140,,,0,140,28000,28000,
 Skilling,Smithing,smithing:smith_bronze_dagger,Smith bronze dagger,1,5,1200,83,,,60,23,99600,27600,Product: Bronze Dagger x1 | Materials: Bronze Bar x1
+Skilling,Magic,magic:enchant_diamond,Enchant Diamond,57,30,200,2370,,,2236,134,474000,26800,Product: Amulet of Power x1 | Materials: Diamond Amulet x1
 Skilling,Smithing,smithing:smith_bronze_pickaxe,Smith bronze pickaxe,4,5,1200,82,,,60,22,98400,26400,Product: Bronze Pickaxe x1 | Materials: Bronze Bar x1
 Skilling,Mining,mining:copper,Mine copper ore,1,4,1500,14,,,0,14,21000,21000,Product: Copper Ore x1
 Skilling,Woodcutting,woodcutting:willow,Chop willow,30,6,1000,21,,,0,21,21000,21000,Product: Willow Logs x1
@@ -318,6 +318,7 @@ Skilling,Crafting,crafting:red_dhide_body,Craft red d'hide body,75,6,1000,5954,,
 Skilling,Prayer,prayer:bury_dragon_bones,Bury dragon bones,35,3,2000,0,,,2815,-2815,0,-5630000,Materials: Dragon Bones x1
 Skilling,Prayer,prayer:altar_dragon_bones,Use gilded altar (dragon bones),35,3,2000,0,,,2815,-2815,0,-5630000,Materials: Dragon Bones x1
 Skilling,Smithing,smithing:smith_rune_axe,Smith rune axe,86,5,1200,7401,,,12500,-5099,8881200,-6118800,Product: Rune Axe x1 | Materials: Rune Bar x1
+Skilling,Magic,magic:enchant_zenyte_amulet,Enchant Zenyte Amulet,93,30,200,20539001,,,20570000,-30999,4107800200,-6199800,Product: Amulet of Torture x1 | Materials: Zenyte Amulet x1
 Skilling,Herblore,herblore:super_defence,Make super defence,66,3,2000,400,,,3516,-3116,800000,-6232000,"Product: Super Defence x1 | Materials: Cadantine x1, White Berries x1"
 Skilling,Herblore,herblore:super_restore,Make super restore,63,3,2000,5000,,,8733,-3733,10000000,-7466000,"Product: Super Restore x1 | Materials: Snapdragon x1, Red Spiders' Eggs x1"
 Skilling,Herblore,herblore:super_combat_potion,Make super combat potion,90,3,2000,7500,,,11387,-3887,15000000,-7774000,"Product: Super Combat x1 | Materials: Torstol x1, Super Attack x1, Super Strength x1, Super Defence x1, Ranging Potion x1, Magic Potion x1"
@@ -328,10 +329,9 @@ Skilling,Crafting,crafting:cut_dragonstone,Cut dragonstone,55,3,2000,11199,,,179
 Skilling,Fletching,fletching:tip_onyx_dragon_bolts,Tip onyx dragon bolts (10),84,3,2000,88000,,,95000,-7000,176000000,-14000000,"Product: Onyx Dragon Bolt x10 | Materials: Dragon Bolt x10, Onyx Bolt Tips x10"
 Skilling,Fletching,fletching:tip_onyx_bolts,Tip onyx bolts (10),73,3,2000,75000,,,83420,-8420,150000000,-16840000,"Product: Onyx Bolt x10 | Materials: Runite Bolt x10, Onyx Bolt Tips x10"
 Skilling,Smithing,smithing:smith_runite_bolts_unf,Smith runite bolts (unf) (10),88,4,1500,350,,,12500,-12150,525000,-18225000,Product: Runite Bolt (Unf) x10 | Materials: Rune Bar x1
+Skilling,Magic,magic:enchant_zenyte_bracelet,Enchant Zenyte Bracelet,93,30,200,20377850,,,20512727,-134877,4075570000,-26975400,Product: Tormented Bracelet x1 | Materials: Zenyte Bracelet x1
 Skilling,Prayer,prayer:bury_dagganoth_bones,Bury dagganoth bones,40,3,2000,0,,,14448,-14448,0,-28896000,Materials: Dagannoth Bones x1
 Skilling,Prayer,prayer:altar_dagganoth_bones,Use gilded altar (dagganoth bones),40,3,2000,0,,,14448,-14448,0,-28896000,Materials: Dagannoth Bones x1
-Skilling,Magic,magic:enchant_zenyte_amulet,Enchant Zenyte Amulet,93,3,2000,20539001,,,20570000,-30999,41078002000,-61998000,Product: Amulet of Torture x1 | Materials: Zenyte Amulet x1
 Skilling,Crafting,crafting:cut_zenyte,Cut zenyte,89,3,2000,20125000,,,20252943,-127943,40250000000,-255886000,Product: Zenyte x1 | Materials: Uncut Zenyte x1
-Skilling,Magic,magic:enchant_zenyte_bracelet,Enchant Zenyte Bracelet,93,3,2000,20377850,,,20512727,-134877,40755700000,-269754000,Product: Tormented Bracelet x1 | Materials: Zenyte Bracelet x1
 Skilling,Crafting,crafting:onyx_amulet,String onyx amulet,90,4,1500,2424513,,,2641489,-216976,3636769500,-325464000,"Product: Onyx Amulet x1 | Materials: Onyx x1, Gold Bar x1"
 Skilling,Fletching,fletching:cut_onyx_bolt_tips,Cut onyx bolt tips (12),73,2,3000,99600,,,2641365,-2541765,298800000,-7625295000,Product: Onyx Bolt Tips x12 | Materials: Onyx x1
