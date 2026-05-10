@@ -34,7 +34,8 @@ const ACTIONS_PER_HOUR_PER_TICK = 3_600_000 / TICK_MS
 const args = parseArgs(process.argv.slice(2))
 
 const DEFAULT_KILLS_PER_HOUR = Number(args['kills-per-hour'] ?? 100)
-const DEFAULT_RAID_COMPLETIONS_PER_HOUR = Number(args['raid-completions-per-hour'] ?? 1)
+const DEFAULT_RAID_COMPLETIONS_PER_HOUR = Number(args['raid-completions-per-hour'] ?? 60)
+const DEFAULT_GAUNTLET_KILLS_PER_HOUR = Number(args['gauntlet-kills-per-hour'] ?? 60)
 const FARMING_HERB_YIELD = Number(args['farming-herb-yield'] ?? 1)
 const FARMING_TREE_YIELD = Number(args['farming-tree-yield'] ?? 1)
 const FARMING_FRUIT_YIELD = Number(args['farming-fruit-yield'] ?? 6)
@@ -63,9 +64,7 @@ const rows = [
 const filteredRows = rows
   .filter(row => Number.isFinite(row.grossCoinsPerHour))
   .sort((a, b) => {
-    const categoryCompare = String(a.category).localeCompare(String(b.category))
-    if (categoryCompare !== 0) return categoryCompare
-    return Number(b.grossCoinsPerHour || 0) - Number(a.grossCoinsPerHour || 0)
+    return Number(b.netCoinsPerHour || 0) - Number(a.netCoinsPerHour || 0)
   })
 
 writeReport(filteredRows)
@@ -367,6 +366,10 @@ function getMonsterKillsPerHour(monsterId) {
     }
   }
 
+  if (monsterId === 'corrupted_gauntlet') {
+    return DEFAULT_GAUNTLET_KILLS_PER_HOUR
+  }
+
   return DEFAULT_KILLS_PER_HOUR
 }
 
@@ -646,8 +649,8 @@ function writeReport(reportRows) {
 
   const byCategory = groupBy(reportRows, row => row.category)
   const topRows = [...reportRows]
-    .filter(row => Number(row.grossCoinsPerHour) > 0)
-    .sort((a, b) => Number(b.grossCoinsPerHour) - Number(a.grossCoinsPerHour))
+    .filter(row => Number(row.netCoinsPerHour) > 0)
+    .sort((a, b) => Number(b.netCoinsPerHour) - Number(a.netCoinsPerHour))
     .slice(0, 50)
 
   const lines = []
@@ -663,10 +666,11 @@ function writeReport(reportRows) {
   lines.push('- All item rewards are valued using `item.shopValue`.')
   lines.push('- Production net value subtracts material opportunity cost.')
   lines.push(`- Monster coins/hour assumes ${formatNumber(DEFAULT_KILLS_PER_HOUR)} kills/hour unless overridden.`)
+  lines.push(`- Corrupted Gauntlet assumes ${formatNumber(DEFAULT_GAUNTLET_KILLS_PER_HOUR)} runs/hour unless overridden.`)
   lines.push(`- Raid coins/hour assumes ${formatNumber(DEFAULT_RAID_COMPLETIONS_PER_HOUR)} completions/hour.`)
   lines.push(`- Farming herb/tree yields default to ${FARMING_HERB_YIELD}/${FARMING_TREE_YIELD}; fruit trees use fruitLimit where present, otherwise ${FARMING_FRUIT_YIELD}.`)
   lines.push('')
-  lines.push('## Top activities by gross coins/hour')
+  lines.push('## Top activities by net coins/hour')
   lines.push('')
   lines.push(markdownTable(topRows))
   lines.push('')

@@ -1,100 +1,195 @@
 category,subcategory,id,name,level,ticks,actionsPerHour,expectedValuePerAction,expectedValuePerKill,expectedValuePerCompletion,materialCostPerAction,netValuePerAction,grossCoinsPerHour,netCoinsPerHour,notes
-Farming,Herb,gout_tuber_seed:all-patches,"Gout tuber (Herb, all 5 patches)",36,,3.75,2323530,,2323530,300,2323230,1742647.5,1742422.5,All available herb patches from farming.json. Crop: Gout Tuber x1. Growth: 1.33 hours.
-Farming,Herb,gout_tuber_seed,"Gout tuber (Herb, per patch)",36,,0.75,464706,,464706,60,464646,348529.5,348484.5,Per patch. Crop: Gout Tuber x1. Growth: 1.33 hours.
-Farming,Fruit tree,papaya_sapling:all-patches,"Papaya (Fruit tree, all 7 patches)",57,,3.3157894736842106,80388,,80388,17080,63308,38078.526315789466,29988,All available fruit tree patches from farming.json. Crop: Papaya Fruit x6. Growth: 2.11 hours.
-Farming,Herb,ranarr_seed:all-patches,"Ranarr (Herb, all 5 patches)",52,,3.75,27490,,27490,123115,-95625,20617.5,-71718.75,All available herb patches from farming.json. Crop: Ranarr Weed x1. Growth: 1.33 hours.
-Farming,Fruit tree,papaya_sapling,"Papaya (Fruit tree, per patch)",57,,0.47368421052631576,11484,,11484,2440,9044,5439.78947368421,4284,Per patch. Crop: Papaya Fruit x6. Growth: 2.11 hours.
-Farming,Herb,ranarr_seed,"Ranarr (Herb, per patch)",52,,0.75,5498,,5498,24623,-19125,4123.5,-14343.75,Per patch. Crop: Ranarr Weed x1. Growth: 1.33 hours.
-Farming,Tree,magic_sapling:all-patches,"Magic (Tree, all 10 patches)",75,,4.090909090909091,9090,,9090,976910,-967820,3718.636363636363,-395926.3636363636,All available tree patches from farming.json. Crop: Magic Logs x1. Growth: 2.44 hours.
-Farming,Fruit tree,orange_sapling:all-patches,"Orange (Fruit tree, all 7 patches)",39,,3.3157894736842106,5838,,5838,889,4949,2765.368421052631,2344.2631578947367,All available fruit tree patches from farming.json. Crop: Orange x6. Growth: 2.11 hours.
-Farming,Fruit tree,curry_sapling:all-patches,"Curry (Fruit tree, all 7 patches)",42,,3.3157894736842106,2562,,2562,4564,-2002,1213.5789473684208,-948.3157894736842,All available fruit tree patches from farming.json. Crop: Curry Leaf x6. Growth: 2.11 hours.
-Farming,Herb,guam_seed:all-patches,"Guam (Herb, all 5 patches)",1,,3.75,1405,,1405,25,1380,1053.75,1035,All available herb patches from farming.json. Crop: Guam Leaf x1. Growth: 1.33 hours.
-Farming,Fruit tree,palm_sapling:all-patches,"Palm (Fruit tree, all 7 patches)",68,,3.3157894736842106,2100,,2100,170450,-168350,994.7368421052631,-79744.73684210527,All available fruit tree patches from farming.json. Crop: Palm Fruit x6. Growth: 2.11 hours.
-Farming,Herb,tarromin_seed:all-patches,"Tarromin (Herb, all 5 patches)",19,,3.75,1120,,1120,40,1080,840,810,All available herb patches from farming.json. Crop: Tarromin x1. Growth: 1.33 hours.
-Farming,Herb,marrentill_seed:all-patches,"Marrentill (Herb, all 5 patches)",14,,3.75,970,,970,90,880,727.5,660,All available herb patches from farming.json. Crop: Marrentill x1. Growth: 1.33 hours.
-Farming,Fruit tree,banana_sapling:all-patches,"Banana (Fruit tree, all 7 patches)",33,,3.3157894736842106,1176,,1176,1141,35,557.0526315789474,16.57894736842105,All available fruit tree patches from farming.json. Crop: Banana x6. Growth: 2.11 hours.
-Farming,Tree,yew_sapling:all-patches,"Yew (Tree, all 10 patches)",60,,4.090909090909091,1270,,1270,300750,-299480,519.5454545454545,-122514.54545454544,All available tree patches from farming.json. Crop: Yew Logs x1. Growth: 2.44 hours.
-Farming,Fruit tree,orange_sapling,"Orange (Fruit tree, per patch)",39,,0.47368421052631576,834,,834,127,707,395.05263157894734,334.89473684210526,Per patch. Crop: Orange x6. Growth: 2.11 hours.
-Farming,Tree,magic_sapling,"Magic (Tree, per patch)",75,,0.40909090909090906,909,,909,97691,-96782,371.8636363636363,-39592.63636363636,Per patch. Crop: Magic Logs x1. Growth: 2.44 hours.
-Farming,Herb,guam_seed,"Guam (Herb, per patch)",1,,0.75,281,,281,5,276,210.75,207,Per patch. Crop: Guam Leaf x1. Growth: 1.33 hours.
-Farming,Herb,sagewort_seed:all-patches,"Sagewort (Herb, all 5 patches)",32,,3.75,250,,250,250,0,187.5,0,All available herb patches from farming.json. Crop: Sagewort x1. Growth: 1.33 hours.
-Farming,Fruit tree,curry_sapling,"Curry (Fruit tree, per patch)",42,,0.47368421052631576,366,,366,652,-286,173.36842105263156,-135.4736842105263,Per patch. Crop: Curry Leaf x6. Growth: 2.11 hours.
-Farming,Herb,tarromin_seed,"Tarromin (Herb, per patch)",19,,0.75,224,,224,8,216,168,162,Per patch. Crop: Tarromin x1. Growth: 1.33 hours.
-Farming,Herb,marrentill_seed,"Marrentill (Herb, per patch)",14,,0.75,194,,194,18,176,145.5,132,Per patch. Crop: Marrentill x1. Growth: 1.33 hours.
-Farming,Fruit tree,palm_sapling,"Palm (Fruit tree, per patch)",68,,0.47368421052631576,300,,300,24350,-24050,142.10526315789474,-11392.105263157895,Per patch. Crop: Palm Fruit x6. Growth: 2.11 hours.
-Farming,Tree,oak_sapling:all-patches,"Oak (Tree, all 10 patches)",15,,4.090909090909091,340,,340,2460,-2120,139.0909090909091,-867.2727272727273,All available tree patches from farming.json. Crop: Oak Logs x1. Growth: 2.44 hours.
-Farming,Herb,basil_seed:all-patches,"Basil (Herb, all 5 patches)",25,,3.75,150,,150,200,-50,112.5,-37.5,All available herb patches from farming.json. Crop: Basil x1. Growth: 1.33 hours.
-Farming,Tree,willow_sapling:all-patches,"Willow (Tree, all 10 patches)",30,,4.090909090909091,210,,210,3610,-3400,85.9090909090909,-1390.9090909090908,All available tree patches from farming.json. Crop: Willow Logs x1. Growth: 2.44 hours.
-Farming,Fruit tree,banana_sapling,"Banana (Fruit tree, per patch)",33,,0.47368421052631576,168,,168,163,5,79.57894736842105,2.3684210526315788,Per patch. Crop: Banana x6. Growth: 2.11 hours.
-Farming,Tree,maple_sapling:all-patches,"Maple (Tree, all 10 patches)",45,,4.090909090909091,150,,150,49650,-49500,61.36363636363636,-20250,All available tree patches from farming.json. Crop: Maple Logs x1. Growth: 2.44 hours.
-Farming,Tree,yew_sapling,"Yew (Tree, per patch)",60,,0.40909090909090906,127,,127,30075,-29948,51.95454545454545,-12251.454545454544,Per patch. Crop: Yew Logs x1. Growth: 2.44 hours.
-Farming,Herb,sagewort_seed,"Sagewort (Herb, per patch)",32,,0.75,50,,50,50,0,37.5,0,Per patch. Crop: Sagewort x1. Growth: 1.33 hours.
-Farming,Herb,basil_seed,"Basil (Herb, per patch)",25,,0.75,30,,30,40,-10,22.5,-7.5,Per patch. Crop: Basil x1. Growth: 1.33 hours.
-Farming,Fruit tree,apple_sapling:all-patches,"Apple (Fruit tree, all 7 patches)",27,,0.4375,336,,336,1722,-1386,21,-86.625,All available fruit tree patches from farming.json. Crop: Apple x6. Growth: 16 hours.
-Farming,Tree,oak_sapling,"Oak (Tree, per patch)",15,,0.40909090909090906,34,,34,246,-212,13.909090909090908,-86.72727272727272,Per patch. Crop: Oak Logs x1. Growth: 2.44 hours.
-Farming,Tree,willow_sapling,"Willow (Tree, per patch)",30,,0.40909090909090906,21,,21,361,-340,8.59090909090909,-139.0909090909091,Per patch. Crop: Willow Logs x1. Growth: 2.44 hours.
-Farming,Tree,maple_sapling,"Maple (Tree, per patch)",45,,0.40909090909090906,15,,15,4965,-4950,6.136363636363636,-2024.9999999999998,Per patch. Crop: Maple Logs x1. Growth: 2.44 hours.
-Farming,Fruit tree,apple_sapling,"Apple (Fruit tree, per patch)",27,,0.0625,48,,48,246,-198,3,-12.375,Per patch. Crop: Apple x6. Growth: 16 hours.
-Minigames,castle_wars,cw_halo,Grind for Halo,,18000,0.3333333333333333,2000000,,2000000,,2000000,666666.6666666666,666666.6666666666,One-shot reward | Product: Halo x1 | Duration: 3 hours
-Minigames,pest_control,pc_void_set,Grind for Void Knight Set,,36000,0.16666666666666666,4000000,,4000000,,4000000,666666.6666666666,666666.6666666666,"One-shot reward | Product: void_knight_set x1 | Rewards: Void Knight Helm, Void Knight Top, Void Knight Robe, Void Knight Gloves | Duration: 6 hours"
-Minigames,castle_wars,cw_decorative_top,Obtain decorative armour,,12000,0.5,1000000,,1000000,,1000000,500000,500000,One-shot reward | Product: Decorative Top x1 | Duration: 2 hours
-Minigames,mage_arena,ma_imbued_god_cape,Obtain Imbued God Cape,,12000,0.5,1000000,,1000000,,1000000,500000,500000,One-shot reward | Product: Imbued God Cape x1 | Duration: 2 hours
-Minigames,fishing_trawler,ft_angler_net,Grind Angler Net,,30000,0.2,1000000,,1000000,,1000000,200000,200000,One-shot reward | Product: Angler Net x1 | Duration: 5 hours
-Minigames,warriors_guild,wg_dragon_defender,Grind for Dragon Defender,,12000,0.5,35000,,35000,,35000,17500,17500,One-shot reward | Product: Dragon Defender x1 | Duration: 2 hours
-Minigames,barbarian_assault,ba_fighter_torso,Grind for Fighter Torso,,30000,0.2,0,,0,,0,0,0,One-shot reward | Product: Fighter Torso x1 | Duration: 5 hours
-Minigames,barbarian_assault,ba_fighter_hat,Grind for Fighter Hat,,12000,0.5,0,,0,,0,0,0,One-shot reward | Product: Fighter Hat x1 | Duration: 2 hours
-Minigames,warriors_guild,wg_rune_defender,Grind for Rune Defender,,18000,0.3333333333333333,0,,0,,0,0,0,One-shot reward | Product: Rune Defender x1 | Duration: 3 hours
+Skilling,Smithing,smithing:make_saradomin_godsword,Attach Saradomin hilt,80,2,3000,28950625,,,28112456,838169,86851875000,2514507000,"Product: Saradomin Godsword x1 | Materials: Godsword Blade x1, Saradomin Hilt x1"
+Skilling,Smithing,smithing:make_zamorak_godsword,Attach Zamorak hilt,80,2,3000,19571258,,,18952306,618952,58713774000,1856856000,"Product: Zamorak Godsword x1 | Materials: Godsword Blade x1, Zamorak Hilt x1"
+Skilling,Smithing,smithing:make_bandos_godsword,Attach Bandos hilt,80,2,3000,19029248,,,18632140,397108,57087744000,1191324000,"Product: Bandos Godsword x1 | Materials: Godsword Blade x1, Bandos Hilt x1"
+Raids,Chambers of Xeric,chambers_of_xeric,Chambers of Xeric,,,60,,,16784851.21,,,1007091072.6,1007091072.6,"Assumes 60 completions/hr | Common EV: 198,708 | Unique EV: 16,586,144 | Unique table: Twisted Bow 0.500% EV 7,909,400; Ancestral Robe Top 1.500% EV 1,948,984; Ancestral Robe Bottom 1.500% EV 1,363,348; Elder Maul 1.000% EV 1,020,095; Dragon Hunter Crossbow 2.000% EV 811,943; Ancestral Hat 1.500% EV 808,709; Kodai Wand 1.000% EV 787,437; Zaryte Vambraces 1.000% EV 784,272; +3 more"
+Skilling,Smithing,smithing:make_armadyl_godsword,Attach Armadyl hilt,80,2,3000,8108827,,,7797141,311686,24326481000,935058000,"Product: Armadyl Godsword x1 | Materials: Godsword Blade x1, Armadyl Hilt x1"
+Skilling,Crafting,crafting:zenyte_amulet,String zenyte amulet,98,4,1500,20570000,,,20125124,444876,30855000000,667314000,"Product: Zenyte Amulet x1 | Materials: Zenyte x1, Gold Bar x1"
+Skilling,Crafting,crafting:zenyte_bracelet,Craft zenyte bracelet,98,4,1500,20512727,,,20125124,387603,30769090500,581404500,"Product: Zenyte Bracelet x1 | Materials: Zenyte x1, Gold Bar x1"
+Raids,Theatre of Blood,theatre_of_blood,Theatre of Blood,,,60,,,8252612.511557895,,,495156750.6934737,495156750.6934737,"Assumes 60 completions/hr | Common EV: 389,718 | Unique EV: 7,862,895 | Unique table: Avernic Defender 4.627% EV 3,701,895; Sanguinesti Staff 1.157% EV 1,735,263; Scythe of Vitur 0.578% EV 1,735,263; Ghrazi Rapier 1.157% EV 307,842; Justiciar Faceguard 1.157% EV 137,490; Justiciar Chestguard 1.157% EV 131,093; Justiciar Legguards 1.157% EV 114,049"
+Skilling,Magic,magic:enchant_onyx,Enchant Onyx,87,3,2000,2609432,,,2424513,184919,5218864000,369838000,Product: Amulet of Fury x1 | Materials: Onyx Amulet x1
+Skilling,Magic,magic:enchant_zenyte_necklace,Enchant Zenyte Necklace,93,3,2000,20287526,,,20125003,162523,40575052000,325046000,Product: Necklace of Anguish x1 | Materials: Zenyte Necklace x1
 Monsters,Combat 380,rune_dragon,Rune Dragon,380,,100,,3098755.4820000003,,,,309875548.20000005,309875548.20000005,"Assumes 100 kills/hr. EV: Dragon Kiteshield: 1,545,000; Dragon Full Helm: 1,468,825; Onyx Bolt Tips: 16,600; Coins: 15,000; Rune Bar: 12,500; Runite Ore: 9,417; Dragon Chainbody: 5,473; Dragon Platelegs: 4,029; +12 more"
 Monsters,Combat 338,adamant_dragon,Adamant Dragon,338,,100,,2403795.802,,,,240379580.20000002,240379580.20000002,"Assumes 100 kills/hr. EV: Dragon Full Helm: 1,175,060; Dragon Kiteshield: 1,158,750; Onyx Bolt Tips: 16,600; Rune Bar: 12,500; Coins: 10,000; Runite Ore: 4,708; Dragon Chainbody: 4,105; Draconic Visage: 3,679; +11 more"
+Skilling,Smithing,smithing:forge_godsword_blade,Forge godsword blade,80,10,600,539640,,,195000,344640,323784000,206784000,Product: Godsword Blade x1 | Materials: Godsword Shard x3
+Skilling,Crafting,crafting:cut_onyx,Cut onyx,72,3,2000,2641365,,,2568372,72993,5282730000,145986000,Product: Onyx x1 | Materials: Uncut Onyx x1
+Skilling,Magic,magic:enchant_zenyte_ring,Enchant Zenyte Ring,93,3,2000,20255567,,,20191500,64067,40511134000,128134000,Product: Ring of Suffering x1 | Materials: Zenyte Ring x1
 Monsters,Combat 894,corrupted_gauntlet,Corrupted Gauntlet,894,,100,,1263542.8699999999,,,,126354286.99999999,126354286.99999999,"Assumes 100 kills/hr. EV: Bow of Faerdhinen: 400,000; Blade of Saeldor: 400,000; Crystal Pickaxe: 75,000; Crystal Axe: 75,000; Coins: 36,750; Dragon Bones: 35,188; Crystal Helmet: 30,000; Crystal Plate Body: 30,000; +26 more"
+Skilling,Crafting,crafting:zenyte_ring,Craft zenyte ring,98,4,1500,20191500,,,20125124,66376,30287250000,99564000,"Product: Zenyte Ring x1 | Materials: Zenyte x1, Gold Bar x1"
 Monsters,Combat 115,arim_the_blighted,Ahrim the Blighted,115,,100,,988341.787,,,,98834178.7,98834178.7,"Assumes 100 kills/hr. EV: Ahrim's Robeskirt: 444,312; Ahrim's Robetop: 428,829; Ahrim's Hood: 75,338; Ahrim's Staff: 39,663; Coins: 200; Clue Scroll (Master): 0.0200"
 Monsters,Combat 115,dharok_the_wretched,Dharok the Wretched,115,,100,,867238.5150000001,,,,86723851.50000001,86723851.50000001,"Assumes 100 kills/hr. EV: Dharok's Greataxe: 429,927; Dharok's Platebody: 184,245; Dharok's Platelegs: 183,432; Dharok's Helm: 69,434; Coins: 200; Clue Scroll (Master): 0.0200"
+Skilling,Magic,magic:enchant_onyx_dragon_bolts,Enchant Onyx Dragon Bolts (10),87,3,2000,115000,,,88000,27000,230000000,54000000,Product: Onyx Dragon Bolt (E) x10 | Materials: Onyx Dragon Bolt x10
+Skilling,Magic,magic:enchant_onyx_bolts,Enchant Onyx Bolts (10),87,3,2000,95000,,,75000,20000,190000000,40000000,Product: Onyx Bolt (E) x10 | Materials: Onyx Bolt x10
 Monsters,Combat 725,zulrah,Zulrah,725,,100,,387806.25800000003,,,,38780625.800000004,38780625.800000004,"Assumes 100 kills/hr. EV: Toxic Blowpipe: 100,000; Trident of the Swamp: 100,000; Serpentine Helm: 100,000; Zulrah's Scales: 60,450; Uncut Onyx: 10,273; Coins: 7,200; Ranarr Weed: 2,886; Blood Rune: 2,009; +5 more"
 Monsters,Combat 115,karil_the_tainted,Karil the Tainted,115,,100,,381651.555,,,,38165155.5,38165155.5,"Assumes 100 kills/hr. EV: Karil's Leathertop: 240,381; Karil's Leatherskirt: 103,599; Karil's Crossbow: 21,807; Karil's Coif: 15,666; Coins: 200; Clue Scroll (Master): 0.0200"
+Skilling,Fletching,fletching:tip_dragonstone_dragon_bolts,Tip dragonstone dragon bolts (10),84,3,2000,36000,,,18050,17950,72000000,35900000,"Product: Dragonstone Dragon Bolt x10 | Materials: Dragon Bolt x10, Dragonstone Bolt Tips x10"
+Skilling,Fletching,fletching:tip_dragonstone_bolts,Tip dragonstone bolts (10),71,3,2000,19000,,,6470,12530,38000000,25060000,"Product: Dragonstone Bolt x10 | Materials: Runite Bolt x10, Dragonstone Bolt Tips x10"
+Skilling,Magic,magic:enchant_dragonstone_dragon_bolts,Enchant Dragonstone Dragon Bolts (10),68,3,2000,48000,,,36000,12000,96000000,24000000,Product: Dragonstone Dragon Bolt (E) x10 | Materials: Dragonstone Dragon Bolt x10
 Monsters,Combat 580,kreearra,Kree'arra,580,,100,,235925.42989000003,,,,23592542.989000004,23592542.989000004,"Assumes 100 kills/hr. EV: Armadyl Chestplate: 98,878; Armadyl Chainskirt: 73,025; Armadyl Helmet: 24,438; Coins: 20,000; Armadyl Hilt: 14,297; Death Rune: 1,063; Ranarr Weed: 990; Blood Rune: 574; +16 more"
 Monsters,Combat 115,torag_the_corrupted,Torag the Corrupted,115,,100,,215393.682,,,,21539368.2,21539368.2,"Assumes 100 kills/hr. EV: Torag's Platebody: 83,739; Torag's Platelegs: 70,398; Torag's Helm: 39,590; Torag's Hammers: 21,467; Coins: 200; Clue Scroll (Master): 0.0200"
+Skilling,Magic,magic:enchant_diamond_dragon_bolts,Enchant Diamond Dragon Bolts (10),57,3,2000,24000,,,15000,9000,48000000,18000000,Product: Diamond Dragon Bolt (E) x10 | Materials: Diamond Dragon Bolt x10
 Monsters,Combat 624,general_graardor,General Graardor,624,,100,,170818.23161999998,,,,17081823.161999997,17081823.161999997,"Assumes 100 kills/hr. EV: Bandos Chestplate: 64,311; Bandos Tassets: 43,132; Bandos Hilt: 35,642; Coins: 20,000; Bandos Boots: 1,771; Death Rune: 1,063; Ranarr Weed: 990; Blood Rune: 574; +18 more"
+Raids,Barrows Brothers,barrows_brothers,Barrows Brothers,,,60,,,280007.9375,,,16800476.25,16800476.25,"Assumes 60 completions/hr | Common EV: 150,828 | Unique EV: 129,180 | Unique table: Ahrim's Robeskirt 1.042% EV 20,754; Dharok's Greataxe 1.042% EV 20,083; Ahrim's Robetop 1.042% EV 20,031; Karil's Leathertop 1.042% EV 11,229; Dharok's Platebody 1.042% EV 8,606; Dharok's Platelegs 1.042% EV 8,568; Karil's Leatherskirt 1.042% EV 4,839; Torag's Platebody 1.042% EV 3,912; +16 more"
 Monsters,Combat 115,verac_the_defiled,Verac the Defiled,115,,100,,164273.83099999998,,,,16427383.099999998,16427383.099999998,"Assumes 100 kills/hr. EV: Verac's Plateskirt: 63,879; Verac's Brassard: 39,839; Verac's Helm: 38,881; Verac's Flail: 21,475; Coins: 200; Clue Scroll (Master): 0.0200"
+Skilling,Magic,magic:enchant_ruby_dragon_bolts,Enchant Ruby Dragon Bolts (10),49,3,2000,22000,,,14000,8000,44000000,16000000,Product: Ruby Dragon Bolt (E) x10 | Materials: Ruby Dragon Bolt x10
+Skilling,Fletching,fletching:make_dragon_bolts,Make dragon bolts (10),84,3,2000,12000,,,4020,7980,24000000,15960000,"Product: Dragon Bolt x10 | Materials: Feather x10, Dragon Bolt (Unf) x10"
 Monsters,Combat 115,guthan_the_infested,Guthan the Infested,115,,100,,149795.55599999998,,,,14979555.599999998,14979555.599999998,"Assumes 100 kills/hr. EV: Guthan's Platebody: 51,625; Guthan's Chainskirt: 42,183; Guthan's Helm: 31,053; Guthan's Warspear: 24,735; Coins: 200; Clue Scroll (Master): 0.0200"
 Monsters,Combat 596,commander_zilyana,Commander Zilyana,596,,100,,147479.24761999998,,,,14747924.761999998,14747924.761999998,"Assumes 100 kills/hr. EV: Armadyl Crossbow: 66,307; Saradomin Hilt: 54,318; Coins: 20,000; Saradomin Sword: 1,341; Death Rune: 1,063; Ranarr Weed: 990; Blood Rune: 574; Soul Rune: 504; +15 more"
+Skilling,Magic,magic:enchant_dragonstone_bolts,Enchant Dragonstone Bolts (10),68,3,2000,26000,,,19000,7000,52000000,14000000,Product: Dragonstone Bolt (E) x10 | Materials: Dragonstone Bolt x10
 Monsters,Combat 650,kril_tsutsaroth,K'ril Tsutsaroth,650,,100,,132486.4887,,,,13248648.87,13248648.87,"Assumes 100 kills/hr. EV: Zamorak Spear: 59,250; Zamorak Hilt: 36,273; Coins: 20,000; Staff of the Dead: 11,149; Death Rune: 1,063; Ranarr Weed: 990; Blood Rune: 574; Soul Rune: 504; +16 more"
+Skilling,Smithing,smithing:make_dragonfire_shield,Attach draconic visage,90,10,600,3700524,,,3679484,21040,2220314400,12624000,"Product: Dragonfire Shield x1 | Materials: Anti-Dragon Shield x1, Draconic Visage x1"
 Monsters,Combat 194,hydra,Hydra,194,,100,,108684.38500000001,,,,10868438.5,10868438.5,"Assumes 100 kills/hr. EV: Hydra Leather: 69,323; Ferocious Gloves: 10,200; Hydra Claw: 9,000; Hydra Bones: 7,633; Coins: 3,500; Runite Ore: 2,093; Death Rune: 1,985; Blood Rune: 1,679; +6 more"
 Monsters,Combat 275,demonic_gorilla,Demonic Gorilla,275,,100,,86302.07019,,,,8630207.019,8630207.019,"Assumes 100 kills/hr. EV: Uncut Zenyte: 67,442; Heavy Ballista: 5,250; Ranarr Weed: 4,398; Coins: 3,000; Dragon Bones: 2,815; Snapdragon: 1,282; Death Rune: 992; Blood Rune: 718; +2 more"
+Skilling,Smithing,smithing:smith_rune_pickaxe,Smith rune pickaxe,86,5,1200,18685,,,12500,6185,22422000,7422000,Product: Rune Pickaxe x1 | Materials: Rune Bar x1
+Skilling,Mining,mining:runite,Mine runite ore,85,9,666.6666666666666,10463,,,0,10463,6975333.333333333,6975333.333333333,Product: Runite Ore x1
+Skilling,Herblore,herblore:combat_potion,Make combat potion,36,3,2000,4000,,,638,3362,8000000,6724000,"Product: Combat Potion x1 | Materials: Harralander x1, Goat Horn Dust x1"
 Monsters,Combat 318,cerberus,Cerberus,318,,100,,65925.53898799999,,,,6592553.898799999,6592553.898799999,"Assumes 100 kills/hr. EV: Primordial Crystal: 32,624; Coins: 11,250; Eternal Crystal: 6,375; Death Rune: 3,780; Blood Rune: 3,014; Dragon Bones: 2,815; Ranarr Weed: 1,924; Soul Rune: 1,404; +6 more"
+Skilling,Magic,magic:enchant_diamond_bolts,Enchant Diamond Bolts (10),57,3,2000,7000,,,3800,3200,14000000,6400000,Product: Diamond Bolt (E) x10 | Materials: Diamond Bolt x10
 Monsters,Combat 303,dagganoth_rex,Dagannoth Rex,303,,100,,57323.1415625,,,,5732314.15625,5732314.15625,"Assumes 100 kills/hr. EV: Berserker Ring: 25,412; Dagannoth Bones: 14,448; Coins: 6,500; Dragon Axe: 4,096; Rune Platebody: 1,924; Rune Platelegs: 1,896; Ranarr Weed: 990; Warriors Ring: 781; +11 more"
 Monsters,Combat 303,dagganoth_supreme,Dagannoth Supreme,303,,100,,51833.711875,,,,5183371.1875,5183371.1875,"Assumes 100 kills/hr. EV: Archers Ring: 20,704; Dagannoth Bones: 14,448; Coins: 6,500; Dragon Axe: 4,096; Rune Platebody: 1,924; Rune Platelegs: 1,896; Ranarr Weed: 990; Snapdragon: 427; +10 more"
+Skilling,Magic,magic:enchant_ruby_bolts,Enchant Ruby Bolts (10),49,3,2000,5000,,,2800,2200,10000000,4400000,Product: Ruby Bolt (E) x10 | Materials: Ruby Bolt x10
 Monsters,Combat 303,dagganoth_prime,Dagannoth Prime,303,,100,,37468.1728125,,,,3746817.28125,3746817.28125,"Assumes 100 kills/hr. EV: Dagannoth Bones: 14,448; Coins: 6,500; Seers Ring: 6,339; Dragon Axe: 4,096; Rune Platebody: 1,924; Rune Platelegs: 1,896; Ranarr Weed: 990; Snapdragon: 427; +10 more"
+Skilling,Fletching,fletching:make_adamant_bolts,Make adamant bolts (10),61,3,2000,1590,,,120,1470,3180000,2940000,"Product: Adamant Bolt x10 | Materials: Feather x10, Adamant Bolt (Unf) x10"
 Monsters,Combat 276,king_black_dragon,King Black Dragon,276,,100,,28701.107500000002,,,,2870110.75,2870110.75,"Assumes 100 kills/hr. EV: Coins: 12,500; Runite Ore: 7,324; Dragon Bones: 2,815; Draconic Visage: 1,840; Dragon Pickaxe: 1,429; Blood Rune: 1,076; Death Rune: 907; Soul Rune: 810; +1 more"
 Monsters,Combat 318,brutal_black_dragon,Brutal Black Dragon,318,,100,,26097.613,,,,2609761.3000000003,2609761.3000000003,"Assumes 100 kills/hr. EV: Coins: 6,000; Black Dragon Leather: 4,182; Draconic Visage: 3,679; Runite Ore: 3,139; Dragon Bones: 2,815; Dragon Arrow: 1,447; Death Rune: 1,040; Blood Rune: 904; +6 more"
+Skilling,Fletching,fletching:tip_diamond_dragon_bolts,Tip diamond dragon bolts (10),84,3,2000,15000,,,13780,1220,30000000,2440000,"Product: Diamond Dragon Bolt x10 | Materials: Dragon Bolt x10, Diamond Bolt Tips x10"
 Monsters,Combat 150,lizardman_shaman,Lizardman Shaman,150,,100,,21141.611,,,,2114161.1,2114161.1,"Assumes 100 kills/hr. EV: Dragon Warhammer: 5,358; Snapdragon: 4,272; Ranarr Weed: 2,749; Blood Rune: 2,153; Rune Chainbody: 1,482; Death Rune: 1,418; Kwuarm: 1,272; Coins: 875; +3 more"
+Skilling,Herblore,herblore:strength_potion,Make strength potion,12,3,2000,1500,,,525,975,3000000,1950000,"Product: Strength Potion x1 | Materials: Tarromin x1, Limpwurt Root x1"
+Farming,Herb,gout_tuber_seed:all-patches,"Gout tuber (Herb, all 5 patches)",36,,3.75,2323530,,2323530,300,2323230,1742647.5,1742422.5,All available herb patches from farming.json. Crop: Gout Tuber x1. Growth: 1.33 hours.
+Skilling,Fletching,fletching:tip_ruby_dragon_bolts,Tip ruby dragon bolts (10),84,3,2000,14000,,,13130,870,28000000,1740000,"Product: Ruby Dragon Bolt x10 | Materials: Dragon Bolt x10, Ruby Bolt Tips x10"
+Skilling,Magic,magic:enchant_ruby,Enchant Ruby,49,3,2000,1897,,,1188,709,3794000,1418000,Product: Amulet of Strength x1 | Materials: Ruby Amulet x1
 Monsters,Combat 291,kraken,Kraken,291,,100,,12815.82,,,,1281582,1281582,"Assumes 100 kills/hr. EV: Death Rune: 3,544; Blood Rune: 2,440; Coins: 2,000; Chaos Rune: 1,545; Ranarr Weed: 1,320; Kraken Tentacle: 879; Snapdragon: 769; Big Bones: 250; +2 more"
+Skilling,Fletching,fletching:cut_ruby_bolt_tips,Cut ruby bolt tips (12),63,2,3000,1356,,,958,398,4068000,1194000,Product: Ruby Bolt Tips x12 | Materials: Ruby x1
+Skilling,Mining,mining:gem_mining,Mine gems,75,20,300,3856.232,,,0,3856.232,1156869.6,1156869.6,"Drop EV: Uncut Onyx: 2,568; Uncut Diamond: 610; Uncut Ruby: 370; Uncut Dragonstone: 180; Uncut Sapphire: 127"
+Skilling,Fletching,fletching:make_iron_bolts,Make iron bolts (10),39,3,2000,570,,,40,530,1140000,1060000,"Product: Iron Bolt x10 | Materials: Feather x10, Iron Bolt (Unf) x10"
+Skilling,Runecrafting,runecraft:craft_soul_rune,Craft soul rune,90,2,3000,360,,,11,349,1080000,1047000,Product: Soul Rune x1 | Materials: Rune Essence x1
 Monsters,Combat 152,red_dragon,Red Dragon,152,,100,,10275.574999999999,,,,1027557.4999999999,1027557.4999999999,"Assumes 100 kills/hr. EV: Red Dragon Leather: 2,896; Dragon Bones: 2,815; Ranarr Weed: 990; Rune Platelegs: 758; Snapdragon: 427; Rune Full Helm: 414; Chaos Rune: 303; Nature Rune: 288; +14 more"
+Skilling,Fletching,fletching:make_steel_bolts,Make steel bolts (10),46,3,2000,540,,,60,480,1080000,960000,"Product: Steel Bolt x10 | Materials: Feather x10, Steel Bolt (Unf) x10"
+Skilling,Fletching,fletching:cut_diamond_bolt_tips,Cut diamond bolt tips (12),65,2,3000,2136,,,1820,316,6408000,948000,Product: Diamond Bolt Tips x12 | Materials: Diamond x1
+Skilling,Smithing,smithing:smelt_rune,Smelt rune bar,85,4,1500,12500,,,11871,629,18750000,943500,"Product: Rune Bar x1 | Materials: Runite Ore x1, Coal x8"
+Skilling,Runecrafting,runecraft:craft_wrath_rune,Craft wrath rune,95,2,3000,303,,,11,292,909000,876000,Product: Wrath Rune x1 | Materials: Rune Essence x1
+Skilling,Fletching,fletching:tip_diamond_bolts,Tip diamond bolts (10),65,3,2000,3800,,,3370,430,7600000,860000,"Product: Diamond Bolt x10 | Materials: Adamant Bolt x10, Diamond Bolt Tips x10"
 Monsters,Combat 124,abyssal_demon,Abyssal Demon,124,,100,,8586.475,,,,858647.5,858647.5,"Assumes 100 kills/hr. EV: Abyssal Whip: 2,429; Rune Chainbody: 1,482; Ranarr Weed: 990; Rune Med Helm: 556; Death Rune: 473; Snapdragon: 427; Chaos Rune: 404; Rune Platelegs: 379; +14 more"
+Skilling,Runecrafting,runecraft:craft_blood_rune,Craft blood rune,77,2,3000,287,,,11,276,861000,828000,Product: Blood Rune x1 | Materials: Rune Essence x1
+Skilling,Magic,magic:enchant_dragonstone,Enchant Dragonstone,68,3,2000,11259,,,10878,381,22518000,762000,Product: Amulet of Glory x1 | Materials: Dragonstone Amulet x1
 Monsters,Combat 182,dark_beast,Dark Beast,182,,100,,7555.736,,,,755573.6,755573.6,"Assumes 100 kills/hr. EV: Runite Ore: 1,883; Coins: 1,063; Dark Bow: 734; Rune Arrow: 702; Death Rune: 662; Ranarr Weed: 660; Snapdragon: 513; Blood Rune: 431; +5 more"
 Monsters,Combat 79,green_dragon,Green Dragon,79,,100,,7524.655000000002,,,,752465.5000000001,752465.5000000001,"Assumes 100 kills/hr. EV: Dragon Bones: 2,815; Green Dragonhide: 1,686; Ranarr Weed: 990; Snapdragon: 427; Kwuarm: 229; Irit Leaf: 212; Rune Full Helm: 207; Chaos Rune: 182; +14 more"
+Minigames,castle_wars,cw_halo,Grind for Halo,,18000,0.3333333333333333,2000000,,2000000,,2000000,666666.6666666666,666666.6666666666,One-shot reward | Product: Halo x1 | Duration: 3 hours
+Minigames,pest_control,pc_void_set,Grind for Void Knight Set,,36000,0.16666666666666666,4000000,,4000000,,4000000,666666.6666666666,666666.6666666666,"One-shot reward | Product: void_knight_set x1 | Rewards: Void Knight Helm, Void Knight Top, Void Knight Robe, Void Knight Gloves | Duration: 6 hours"
 Monsters,Combat 140,skeletal_wyvern,Skeletal Wyvern,140,,100,,6438.058,,,,643805.8,643805.8,"Assumes 100 kills/hr. EV: Dragon Bones: 2,815; Ranarr Weed: 660; Rune Platelegs: 569; Chaos Rune: 455; Snapdragon: 427; Blood Rune: 366; Death Rune: 340; Rune Chainbody: 296; +5 more"
+Skilling,Woodcutting,woodcutting:magic,Chop magic,75,9,666.6666666666666,909,,,0,909,606000,606000,Product: Magic Logs x1
+Skilling,Crafting,crafting:tan_green_dhide,Tan green dragon hide,55,3,2000,1960,,,1686,274,3920000,548000,Product: Green Dragon Leather x1 | Materials: Green Dragonhide x1
+Skilling,Smithing,smithing:smith_iron_pickaxe,Smith iron pickaxe,16,5,1200,593,,,144,449,711600,538800,Product: Iron Pickaxe x1 | Materials: Iron Bar x1
+Skilling,Runecrafting,runecraft:craft_death_rune,Craft death rune,65,2,3000,189,,,11,178,567000,534000,Product: Death Rune x1 | Materials: Rune Essence x1
+Skilling,Smithing,smithing:smelt_adamant,Smelt adamant bar,70,4,1500,2048,,,1700,348,3072000,522000,"Product: Adamant Bar x1 | Materials: Adamantite Ore x1, Coal x6"
+Minigames,castle_wars,cw_decorative_top,Obtain decorative armour,,12000,0.5,1000000,,1000000,,1000000,500000,500000,One-shot reward | Product: Decorative Top x1 | Duration: 2 hours
+Minigames,mage_arena,ma_imbued_god_cape,Obtain Imbued God Cape,,12000,0.5,1000000,,1000000,,1000000,500000,500000,One-shot reward | Product: Imbued God Cape x1 | Duration: 2 hours
+Skilling,Fletching,fletching:headless_arrows,Attach feathers (15),1,2,3000,210,,,45,165,630000,495000,"Product: Headless Arrow x15 | Materials: Arrow Shaft x15, Feather x15"
+Skilling,Mining,mining:adamantite,Mine adamantite ore,70,8,750,644,,,0,644,483000,483000,Product: Adamantite Ore x1
+Skilling,Herblore,herblore:super_attack,Make super attack,45,3,2000,2000,,,1768,232,4000000,464000,"Product: Super Attack x1 | Materials: Irit Leaf x1, Eye of Newt x1"
+Skilling,Fishing,fishing:shark,Fish shark,76,8,750,599,,,0,599,449250,449250,Product: Raw Shark x1
+Skilling,Fletching,fletching:make_mithril_bolts,Make mithril bolts (10),54,3,2000,310,,,90,220,620000,440000,"Product: Mithril Bolt x10 | Materials: Feather x10, Mithril Bolt (Unf) x10"
+Skilling,Crafting,crafting:diamond_amulet,String diamond amulet,70,4,1500,2236,,,1944,292,3354000,438000,"Product: Diamond Amulet x1 | Materials: Diamond x1, Gold Bar x1"
 Monsters,Combat 120,spiritual_mage,Spiritual Mage,120,,100,,4129.633000000001,,,,412963.30000000005,412963.30000000005,"Assumes 100 kills/hr. EV: Dragon Boots: 1,020; Blood Rune: 517; Chaos Rune: 500; Ranarr Weed: 495; Death Rune: 473; Coins: 468; Snapdragon: 342; Mystic Robe Top: 108; +5 more"
 Monsters,Combat 134,spiritual_warrior,Spiritual Warrior,134,,100,,4054.3630000000003,,,,405436.30000000005,405436.30000000005,"Assumes 100 kills/hr. EV: Dragon Boots: 1,020; Ranarr Weed: 577; Snapdragon: 427; Coins: 400; Rune Chainbody: 356; Death Rune: 340; Rune Platelegs: 303; Blood Rune: 237; +4 more"
 Monsters,Combat 160,smoke_devil,Smoke Devil,160,,100,,4043.8210000000004,,,,404382.10000000003,404382.10000000003,Assumes 100 kills/hr. EV: Ranarr Weed: 660; Occult Necklace: 623; Chaos Rune: 556; Coins: 510; Blood Rune: 431; Death Rune: 378; Rune Chainbody: 356; Snapdragon: 342; +4 more
+Skilling,Magic,magic:enchant_sapphire,Enchant Sapphire,7,3,2000,594,,,401,193,1188000,386000,Product: Amulet of Magic x1 | Materials: Sapphire Amulet x1
 Monsters,Combat 113,spiritual_ranger,Spiritual Ranger,113,,100,,3597.53,,,,359753,359753,"Assumes 100 kills/hr. EV: Dragon Boots: 1,020; Ranarr Weed: 495; Snapdragon: 342; Coins: 340; Rune Arrow: 322; Green Dragon Leather: 294; Chaos Rune: 265; Blood Rune: 189; +4 more"
 Monsters,Combat 96,aberrant_spectre,Aberrant Spectre,96,,100,,3512.263,,,,351226.3,351226.3,Assumes 100 kills/hr. EV: Ranarr Seed: 985; Ranarr Weed: 660; Snapdragon: 427; Death Rune: 221; Chaos Rune: 182; Coins: 168; Mystic Robe Top: 144; Mystic Robe Bottom: 142; +10 more
+Farming,Herb,gout_tuber_seed,"Gout tuber (Herb, per patch)",36,,0.75,464706,,464706,60,464646,348529.5,348484.5,Per patch. Crop: Gout Tuber x1. Growth: 1.33 hours.
+Skilling,Runecrafting,runecraft:craft_law_rune,Craft law rune,54,2,3000,123,,,11,112,369000,336000,Product: Law Rune x1 | Materials: Rune Essence x1
+Skilling,Runecrafting,runecraft:craft_nature_rune,Craft nature rune,44,2,3000,120,,,11,109,360000,327000,Product: Nature Rune x1 | Materials: Rune Essence x1
+Skilling,Cooking,cooking:cook_shark,Cook shark,80,4,1500,791,,,599,192,1186500,288000,Product: Shark x1 | Materials: Raw Shark x1
 Monsters,Combat 111,gargoyle,Gargoyle,111,,100,,2780.69925,,,,278069.925,278069.925,Assumes 100 kills/hr. EV: Ranarr Weed: 577; Coins: 404; Rune Chainbody: 356; Snapdragon: 342; Chaos Rune: 265; Blood Rune: 189; Death Rune: 184; Rune Full Helm: 165; +4 more
 Monsters,Combat 115,nechryael,Nechryael,115,,100,,2731.0110000000004,,,,273101.10000000003,273101.10000000003,Assumes 100 kills/hr. EV: Ranarr Weed: 660; Rune Chainbody: 356; Snapdragon: 342; Death Rune: 340; Chaos Rune: 265; Coins: 244; Blood Rune: 189; Kwuarm: 127; +4 more
+Skilling,Runecrafting,runecraft:craft_chaos_rune,Craft chaos rune,35,2,3000,101,,,11,90,303000,270000,Product: Chaos Rune x1 | Materials: Rune Essence x1
+Skilling,Magic,magic:enchant_diamond,Enchant Diamond,57,3,2000,2370,,,2236,134,4740000,268000,Product: Amulet of Power x1 | Materials: Diamond Amulet x1
+Skilling,Magic,magic:plank_make,Plank Make,86,3,2000,156,,,27,129,312000,258000,Product: Plank x1 | Materials: Logs x1
+Skilling,Runecrafting,runecraft:craft_cosmic_rune,Craft cosmic rune,27,2,3000,97,,,11,86,291000,258000,Product: Cosmic Rune x1 | Materials: Rune Essence x1
+Skilling,Runecrafting,runecraft:craft_astral_rune,Craft astral rune,40,2,3000,95,,,11,84,285000,252000,Product: Astral Rune x1 | Materials: Rune Essence x1
 Monsters,Combat 99,wyrm,Wyrm,99,,100,,2488.3489999999997,,,,248834.89999999997,248834.89999999997,Assumes 100 kills/hr. EV: Granite Dust: 750; Ranarr Weed: 495; Snapdragon: 342; Chaos Rune: 265; Coins: 210; Death Rune: 147; Mystic Robe Top: 108; Earth Rune: 54; +4 more
+Skilling,Smithing,smithing:smelt_steel,Smelt steel bar,30,4,1500,595,,,433,162,892500,243000,"Product: Steel Bar x1 | Materials: Iron Ore x1, Coal x2"
+Skilling,Fletching,fletching:cut_wooden_stocks,Cut wooden stocks (10),9,2,3000,100,,,27,73,300000,219000,Product: Wooden Stock x10 | Materials: Logs x1
+Skilling,Smithing,smithing:smelt_mithril,Smelt mithril bar,50,4,1500,994,,,853,141,1491000,211500,"Product: Mithril Bar x1 | Materials: Mithril Ore x1, Coal x4"
+Minigames,fishing_trawler,ft_angler_net,Grind Angler Net,,30000,0.2,1000000,,1000000,,1000000,200000,200000,One-shot reward | Product: Angler Net x1 | Duration: 5 hours
+Skilling,Crafting,crafting:spin_bowstring,Spin bowstring,10,3,2000,100,,,1,99,200000,198000,Product: Bowstring x1 | Materials: Flax x1
 Monsters,Combat 204,crazy_archaeologist,Crazy Archaeologist,204,,100,,1947.4725,,,,194747.25,194747.25,Assumes 100 kills/hr. EV: Ranarr Weed: 990; Rune Crossbow: 378; Red D'Hide Body: 186; Amulet of Power: 119; Guam Leaf: 84.3; Harralander: 66.5; Tarromin: 50.4; White Berries: 44.7; +2 more
+Skilling,Woodcutting,woodcutting:mahogany,Chop mahogany,50,8,750,249,,,0,249,186750,186750,Product: Mahogany Logs x1
+Skilling,Fishing,fishing:swordfish,Fish swordfish,50,7,857.1428571428571,212,,,0,212,181714.2857142857,181714.2857142857,Product: Raw Swordfish x1
+Skilling,Mining,mining:coal,Mine coal,30,6,1000,176,,,0,176,176000,176000,Product: Coal x1
+Skilling,Agility,agility:ardougne,Ardougne Rooftop,90,18,333.3333333333333,500,,,0,500,166666.66666666666,166666.66666666666,
+Skilling,Fletching,fletching:tip_ruby_bolts,Tip ruby bolts (10),63,3,2000,2800,,,2720,80,5600000,160000,"Product: Ruby Bolt x10 | Materials: Adamant Bolt x10, Ruby Bolt Tips x10"
+Skilling,Crafting,crafting:ruby_amulet,String ruby amulet,50,4,1500,1188,,,1082,106,1782000,159000,"Product: Ruby Amulet x1 | Materials: Ruby x1, Gold Bar x1"
+Skilling,Crafting,crafting:tan_cowhide_hard,Tan cowhide (hard),1,2,3000,161,,,109,52,483000,156000,Product: Hard Leather x1 | Materials: Cowhide x1
+Skilling,Fletching,fletching:yew_shortbow_string,String yew shortbow,65,5,1200,416,,,295,121,499200,145200,"Product: Yew Shortbow x1 | Materials: Yew Shortbow (U) x1, Bowstring x1"
+Skilling,Fishing,fishing:lobster,Fish lobster,40,6,1000,145,,,0,145,145000,145000,Product: Raw Lobster x1
+Skilling,Mining,mining:gold,Mine gold ore,40,6,1000,144,,,0,144,144000,144000,Product: Gold Ore x1
+Skilling,Mining,mining:mithril,Mine mithril ore,55,7,857.1428571428571,149,,,0,149,127714.28571428571,127714.28571428571,Product: Mithril Ore x1
+Skilling,Agility,agility:rellekka,Rellekka Rooftop,80,20,300,400,,,0,400,120000,120000,
+Skilling,Magic,magic:spin_flax,Spin Flax,76,5,1200,100,,,1,99,120000,118800,Product: Bowstring x1 | Materials: Flax x1
+Skilling,Crafting,crafting:tan_cowhide,Tan cowhide,1,2,3000,148,,,109,39,444000,117000,Product: Leather x1 | Materials: Cowhide x1
+Skilling,Fletching,fletching:maple_shortbow_u_cut,Cut maple shortbow (u),50,4,1500,91,,,15,76,136500,114000,Product: Maple Shortbow (U) x1 | Materials: Maple Logs x1
+Skilling,Mining,mining:clay,Mine clay,1,4,1500,72,,,0,72,108000,108000,Product: Clay x1
+Skilling,Woodcutting,woodcutting:teak,Chop teak,35,7,857.1428571428571,121,,,0,121,103714.28571428571,103714.28571428571,Product: Teak Logs x1
+Skilling,Fletching,fletching:make_runite_bolts,Make runite bolts (10),69,3,2000,420,,,370,50,840000,100000,"Product: Runite Bolt x10 | Materials: Feather x10, Runite Bolt (Unf) x10"
 Monsters,Combat 76,blood_veld,Blood Veld,76,,100,,978.246,,,,97824.59999999999,97824.59999999999,Assumes 100 kills/hr. EV: Ranarr Weed: 275; Chaos Rune: 155; Death Rune: 90.7; Rune Med Helm: 89; Coins: 87.5; Blood Rune: 80.4; Irit Leaf: 70.6; Guam Leaf: 42.2; +5 more
+Skilling,Mining,mining:iron,Mine iron ore,15,5,1200,81,,,0,81,97200,97200,Product: Iron Ore x1
+Skilling,Woodcutting,woodcutting:yew,Chop yew,60,8,750,127,,,0,127,95250,95250,Product: Yew Logs x1
+Skilling,Smithing,smithing:smelt_iron,Smelt iron bar,15,4,1500,144,,,81,63,216000,94500,Product: Iron Bar x1 | Materials: Iron Ore x1
+Skilling,Agility,agility:pollnivneach,Pollnivneach Rooftop,70,23,260.8695652173913,350,,,0,350,91304.34782608696,91304.34782608696,
 Monsters,Combat 20,dark_wizard,Dark Wizard,20,,100,,877.56,,,,87756,87756,Assumes 100 kills/hr. EV: Staff of Air: 149; Staff of Water: 108; Chaos Rune: 101; Nature Rune: 84; Staff of Fire: 79.9; Staff of Earth: 47.6; Earth Rune: 37.8; Cosmic Rune: 34.9; +12 more
+Skilling,Cooking,cooking:cook_meat,Cook meat,1,4,1500,85,,,30,55,127500,82500,Product: Cooked Meat x1 | Materials: Raw Beef x1
+Skilling,Fletching,fletching:yew_shortbow_u_cut,Cut yew shortbow (u),65,5,1200,195,,,127,68,234000,81600,Product: Yew Shortbow (U) x1 | Materials: Yew Logs x1
+Skilling,Crafting,crafting:emerald_amulet,String emerald amulet,31,4,1500,698,,,644,54,1047000,81000,"Product: Emerald Amulet x1 | Materials: Emerald x1, Gold Bar x1"
 Monsters,Combat 82,lesser_demon,Lesser Demon,82,,100,,781.339,,,,78133.90000000001,78133.90000000001,Assumes 100 kills/hr. EV: Rune Med Helm: 223; Ranarr Weed: 198; Snapdragon: 85.4; Coins: 76.5; Kwuarm: 45.8; Irit Leaf: 42.4; Bones: 29; Cadantine: 24.6; +7 more
+Skilling,Agility,agility:seers_village,Seers' Village Rooftop,60,25,240,300,,,0,300,72000,72000,
 Monsters,Combat 42,moss_giant,Moss Giant,42,,100,,692.5994999999998,,,,69259.94999999998,69259.94999999998,Assumes 100 kills/hr. EV: Big Bones: 250; Ranarr Weed: 99; Nature Rune: 64.8; Snapdragon: 42.7; Chaos Rune: 35.4; Limpwurt Root: 30.1; Coins: 24.8; Kwuarm: 22.9; +15 more
+Skilling,Cooking,cooking:cook_chicken,Cook chicken,1,4,1500,66,,,20,46,99000,69000,Product: Cooked Chicken x1 | Materials: Raw Chicken x1
 Monsters,Combat 28,hill_giant,Hill Giant,28,,100,,647.5494999999999,,,,64754.94999999998,64754.94999999998,Assumes 100 kills/hr. EV: Big Bones: 250; Ranarr Weed: 99; Nature Rune: 72; Snapdragon: 42.7; Limpwurt Root: 30.1; Kwuarm: 22.9; Irit Leaf: 21.2; Death Rune: 15.1; +15 more
+Skilling,Crafting,crafting:molten_glass,Make molten glass,1,4,1500,89,,,48,41,133500,61500,"Product: Molten Glass x1 | Materials: Soda Ash x1, Bucket of Sand x1"
+Skilling,Fishing,fishing:shrimp,Fish shrimps,1,4,1500,38,,,0,38,57000,57000,Product: Raw Shrimps x1
+Skilling,Fishing,fishing:trout,Fish trout,20,5,1200,42,,,0,42,50400,50400,Product: Raw Trout x1
+Skilling,Smithing,smithing:smelt_bronze,Smelt bronze bar,1,4,1500,60,,,27,33,90000,49500,"Product: Bronze Bar x1 | Materials: Tin Ore x1, Copper Ore x1"
+Skilling,Magic,magic:tan_leather,Tan Leather,78,5,1200,148,,,109,39,177600,46800,Product: Leather x1 | Materials: Cowhide x1
+Skilling,Agility,agility:falador,Falador Rooftop,50,28,214.28571428571428,200,,,0,200,42857.142857142855,42857.142857142855,
+Skilling,Woodcutting,woodcutting:oak,Chop oak,15,5,1200,34,,,0,34,40800,40800,Product: Oak Logs x1
+Skilling,Woodcutting,woodcutting:normal,Chop tree,1,4,1500,27,,,0,27,40500,40500,Product: Logs x1
 Monsters,Combat 23,banshee,Banshee,23,,100,,334.125,,,,33412.5,33412.5,Assumes 100 kills/hr. EV: Ranarr Weed: 165; Irit Leaf: 35.3; Bones: 29; Chaos Rune: 20.2; Harralander: 17.7; Guam Leaf: 16.9; Coins: 16.5; Tarromin: 11.2; +5 more
 Monsters,Combat 15,sand_crab,Sand Crab,15,,100,,327.2395000000001,,,,32723.950000000008,32723.950000000008,Assumes 100 kills/hr. EV: Ranarr Weed: 99; Nature Rune: 48; Snapdragon: 42.7; Bones: 29; Kwuarm: 22.9; Irit Leaf: 21.2; Cadantine: 12.3; Coins: 10.5; +9 more
 Monsters,Combat 13,rock_crab,Rock Crab,13,,100,,314.2195000000001,,,,31421.950000000008,31421.950000000008,Assumes 100 kills/hr. EV: Ranarr Weed: 99; Snapdragon: 42.7; Nature Rune: 38.4; Bones: 29; Kwuarm: 22.9; Irit Leaf: 21.2; Cadantine: 12.3; Coins: 8.70; +9 more
+Skilling,Smithing,smithing:smith_bronze_axe,Smith bronze axe,4,5,1200,86,,,60,26,103200,31200,Product: Bronze Axe x1 | Materials: Bronze Bar x1
+Farming,Fruit tree,papaya_sapling:all-patches,"Papaya (Fruit tree, all 7 patches)",57,,3.3157894736842106,80388,,80388,17080,63308,38078.526315789466,29988,All available fruit tree patches from farming.json. Crop: Papaya Fruit x6. Growth: 2.11 hours.
+Skilling,Agility,agility:canifis,Canifis Rooftop,40,30,200,140,,,0,140,28000,28000,
+Skilling,Smithing,smithing:smith_bronze_dagger,Smith bronze dagger,1,5,1200,83,,,60,23,99600,27600,Product: Bronze Dagger x1 | Materials: Bronze Bar x1
 Monsters,Combat 5,goblin,Goblin,5,,100,,272.1595000000001,,,,27215.950000000008,27215.950000000008,Assumes 100 kills/hr. EV: Ranarr Weed: 99; Snapdragon: 42.7; Bones: 29; Kwuarm: 22.9; Irit Leaf: 21.2; Bronze Spear: 14.3; Cadantine: 12.3; Guam Leaf: 8.43; +7 more
+Skilling,Smithing,smithing:smith_bronze_pickaxe,Smith bronze pickaxe,4,5,1200,82,,,60,22,98400,26400,Product: Bronze Pickaxe x1 | Materials: Bronze Bar x1
 Monsters,Combat 27,giant_spider,Giant Spider,27,,100,,259.6595000000001,,,,25965.950000000008,25965.950000000008,Assumes 100 kills/hr. EV: Ranarr Weed: 99; Snapdragon: 42.7; Bones: 29; Kwuarm: 22.9; Irit Leaf: 21.2; Cadantine: 12.3; Guam Leaf: 8.43; Harralander: 6.64; +6 more
+Skilling,Mining,mining:copper,Mine copper ore,1,4,1500,14,,,0,14,21000,21000,Product: Copper Ore x1
+Skilling,Woodcutting,woodcutting:willow,Chop willow,30,6,1000,21,,,0,21,21000,21000,Product: Willow Logs x1
+Skilling,Mining,mining:tin,Mine tin ore,1,4,1500,13,,,0,13,19500,19500,Product: Tin Ore x1
 Monsters,Combat 9,wizard,Wizard,9,,100,,181.32,,,,18132,18132,Assumes 100 kills/hr. EV: Chaos Rune: 30.3; Bones: 29; Nature Rune: 28.8; Earth Rune: 15.8; Air Rune: 13.6; Wizard Hat: 12.6; Staff: 11.6; Water Rune: 10.5; +6 more
+Minigames,warriors_guild,wg_dragon_defender,Grind for Dragon Defender,,12000,0.5,35000,,35000,,35000,17500,17500,One-shot reward | Product: Dragon Defender x1 | Duration: 2 hours
 Monsters,Combat 8,cow,Cow,8,,100,,168.02,,,,16802,16802,Assumes 100 kills/hr. EV: Cowhide: 109; Raw Beef: 30; Bones: 29; Clue Scroll (Medium): 0.0200
+Skilling,Mining,mining:rune_essence,Mine rune essence,1,4,1500,11,,,0,11,16500,16500,Product: Rune Essence x1
+Skilling,Agility,agility:varrock,Varrock Rooftop,30,33,181.8181818181818,90,,,0,90,16363.636363636364,16363.636363636364,
+Skilling,Fletching,fletching:willow_shortbow_u_cut,Cut willow shortbow (u),35,4,1500,30,,,21,9,45000,13500,Product: Willow Shortbow (U) x1 | Materials: Willow Logs x1
+Skilling,Woodcutting,woodcutting:maple,Chop maple,45,7,857.1428571428571,15,,,0,15,12857.142857142857,12857.142857142857,Product: Maple Logs x1
+Skilling,Agility,agility:al_kharid,Al Kharid Rooftop,20,35,171.42857142857142,50,,,0,50,8571.42857142857,8571.42857142857,
 Monsters,Combat 1,chicken,Chicken,1,,100,,69.02,,,,6902,6902,Assumes 100 kills/hr. EV: Bones: 29; Raw Chicken: 20; Feather: 20; Clue Scroll (Medium): 0.0200
+Farming,Fruit tree,papaya_sapling,"Papaya (Fruit tree, per patch)",57,,0.47368421052631576,11484,,11484,2440,9044,5439.78947368421,4284,Per patch. Crop: Papaya Fruit x6. Growth: 2.11 hours.
+Skilling,Agility,agility:draynor_village,Draynor Village Rooftop,10,38,157.89473684210526,25,,,0,25,3947.3684210526317,3947.3684210526317,
+Farming,Fruit tree,orange_sapling:all-patches,"Orange (Fruit tree, all 7 patches)",39,,3.3157894736842106,5838,,5838,889,4949,2765.368421052631,2344.2631578947367,All available fruit tree patches from farming.json. Crop: Orange x6. Growth: 2.11 hours.
+Skilling,Fletching,fletching:maple_shortbow_string,String maple shortbow,50,4,1500,192,,,191,1,288000,1500,"Product: Maple Shortbow x1 | Materials: Maple Shortbow (U) x1, Bowstring x1"
+Skilling,Agility,agility:gnome_stronghold,Gnome Stronghold Course,1,40,150,10,,,0,10,1500,1500,
+Farming,Herb,guam_seed:all-patches,"Guam (Herb, all 5 patches)",1,,3.75,1405,,1405,25,1380,1053.75,1035,All available herb patches from farming.json. Crop: Guam Leaf x1. Growth: 1.33 hours.
+Farming,Herb,tarromin_seed:all-patches,"Tarromin (Herb, all 5 patches)",19,,3.75,1120,,1120,40,1080,840,810,All available herb patches from farming.json. Crop: Tarromin x1. Growth: 1.33 hours.
+Farming,Herb,marrentill_seed:all-patches,"Marrentill (Herb, all 5 patches)",14,,3.75,970,,970,90,880,727.5,660,All available herb patches from farming.json. Crop: Marrentill x1. Growth: 1.33 hours.
+Farming,Fruit tree,orange_sapling,"Orange (Fruit tree, per patch)",39,,0.47368421052631576,834,,834,127,707,395.05263157894734,334.89473684210526,Per patch. Crop: Orange x6. Growth: 2.11 hours.
+Farming,Herb,guam_seed,"Guam (Herb, per patch)",1,,0.75,281,,281,5,276,210.75,207,Per patch. Crop: Guam Leaf x1. Growth: 1.33 hours.
+Farming,Herb,tarromin_seed,"Tarromin (Herb, per patch)",19,,0.75,224,,224,8,216,168,162,Per patch. Crop: Tarromin x1. Growth: 1.33 hours.
+Farming,Herb,marrentill_seed,"Marrentill (Herb, per patch)",14,,0.75,194,,194,18,176,145.5,132,Per patch. Crop: Marrentill x1. Growth: 1.33 hours.
+Farming,Fruit tree,banana_sapling:all-patches,"Banana (Fruit tree, all 7 patches)",33,,3.3157894736842106,1176,,1176,1141,35,557.0526315789474,16.57894736842105,All available fruit tree patches from farming.json. Crop: Banana x6. Growth: 2.11 hours.
+Farming,Fruit tree,banana_sapling,"Banana (Fruit tree, per patch)",33,,0.47368421052631576,168,,168,163,5,79.57894736842105,2.3684210526315788,Per patch. Crop: Banana x6. Growth: 2.11 hours.
 Monsters,Combat 702,jad,TzKal-Zuk (Jad),702,,100,,0.02,,,,2,2,Assumes 100 kills/hr. EV: Clue Scroll (Master): 0.0200; Fire Cape: 0
 Monsters,Combat 1400,inferno,The Inferno (TzKal-Zuk),1400,,100,,0.02,,,,2,2,Assumes 100 kills/hr. EV: Clue Scroll (Master): 0.0200; Infernal Cape: 0
 Monsters,Combat 1000,olm,The Great Olm,1000,,100,,0.02,,,,2,2,Assumes 100 kills/hr. EV: Clue Scroll (Master): 0.0200
@@ -107,226 +202,10 @@ Monsters,Combat 1040,verzik_vitur,Verzik Vitur,1040,,100,,0.02,,,,2,2,Assumes 10
 Monsters,Combat 149,tekton,Tekton,149,,100,,0.02,,,,2,2,Assumes 100 kills/hr. EV: Clue Scroll (Master): 0.0200
 Monsters,Combat 202,vespula,Vespula,202,,100,,0.02,,,,2,2,Assumes 100 kills/hr. EV: Clue Scroll (Master): 0.0200
 Monsters,Combat 170,muttadile,Muttadile,170,,100,,0.02,,,,2,2,Assumes 100 kills/hr. EV: Clue Scroll (Master): 0.0200
-Raids,Chambers of Xeric,chambers_of_xeric,Chambers of Xeric,,,1,,,16784851.21,,,16784851.21,16784851.21,"Assumes 1 completions/hr | Common EV: 198,708 | Unique EV: 16,586,144 | Unique table: Twisted Bow 0.500% EV 7,909,400; Ancestral Robe Top 1.500% EV 1,948,984; Ancestral Robe Bottom 1.500% EV 1,363,348; Elder Maul 1.000% EV 1,020,095; Dragon Hunter Crossbow 2.000% EV 811,943; Ancestral Hat 1.500% EV 808,709; Kodai Wand 1.000% EV 787,437; Zaryte Vambraces 1.000% EV 784,272; +3 more"
-Raids,Theatre of Blood,theatre_of_blood,Theatre of Blood,,,1,,,8252612.511557895,,,8252612.511557895,8252612.511557895,"Assumes 1 completions/hr | Common EV: 389,718 | Unique EV: 7,862,895 | Unique table: Avernic Defender 4.627% EV 3,701,895; Sanguinesti Staff 1.157% EV 1,735,263; Scythe of Vitur 0.578% EV 1,735,263; Ghrazi Rapier 1.157% EV 307,842; Justiciar Faceguard 1.157% EV 137,490; Justiciar Chestguard 1.157% EV 131,093; Justiciar Legguards 1.157% EV 114,049"
-Raids,Barrows Brothers,barrows_brothers,Barrows Brothers,,,1,,,280007.9375,,,280007.9375,280007.9375,"Assumes 1 completions/hr | Common EV: 150,828 | Unique EV: 129,180 | Unique table: Ahrim's Robeskirt 1.042% EV 20,754; Dharok's Greataxe 1.042% EV 20,083; Ahrim's Robetop 1.042% EV 20,031; Karil's Leathertop 1.042% EV 11,229; Dharok's Platebody 1.042% EV 8,606; Dharok's Platelegs 1.042% EV 8,568; Karil's Leatherskirt 1.042% EV 4,839; Torag's Platebody 1.042% EV 3,912; +16 more"
-Skilling,Smithing,smithing:make_saradomin_godsword,Attach Saradomin hilt,80,2,3000,28950625,,,28112456,838169,86851875000,2514507000,"Product: Saradomin Godsword x1 | Materials: Godsword Blade x1, Saradomin Hilt x1"
-Skilling,Smithing,smithing:make_zamorak_godsword,Attach Zamorak hilt,80,2,3000,19571258,,,18952306,618952,58713774000,1856856000,"Product: Zamorak Godsword x1 | Materials: Godsword Blade x1, Zamorak Hilt x1"
-Skilling,Smithing,smithing:make_bandos_godsword,Attach Bandos hilt,80,2,3000,19029248,,,18632140,397108,57087744000,1191324000,"Product: Bandos Godsword x1 | Materials: Godsword Blade x1, Bandos Hilt x1"
-Skilling,Magic,magic:enchant_zenyte_amulet,Enchant Zenyte Amulet,93,3,2000,20539001,,,20570000,-30999,41078002000,-61998000,Product: Amulet of Torture x1 | Materials: Zenyte Amulet x1
-Skilling,Magic,magic:enchant_zenyte_bracelet,Enchant Zenyte Bracelet,93,3,2000,20377850,,,20512727,-134877,40755700000,-269754000,Product: Tormented Bracelet x1 | Materials: Zenyte Bracelet x1
-Skilling,Magic,magic:enchant_zenyte_necklace,Enchant Zenyte Necklace,93,3,2000,20287526,,,20125003,162523,40575052000,325046000,Product: Necklace of Anguish x1 | Materials: Zenyte Necklace x1
-Skilling,Magic,magic:enchant_zenyte_ring,Enchant Zenyte Ring,93,3,2000,20255567,,,20191500,64067,40511134000,128134000,Product: Ring of Suffering x1 | Materials: Zenyte Ring x1
-Skilling,Crafting,crafting:cut_zenyte,Cut zenyte,89,3,2000,20125000,,,20252943,-127943,40250000000,-255886000,Product: Zenyte x1 | Materials: Uncut Zenyte x1
-Skilling,Crafting,crafting:zenyte_amulet,String zenyte amulet,98,4,1500,20570000,,,20125124,444876,30855000000,667314000,"Product: Zenyte Amulet x1 | Materials: Zenyte x1, Gold Bar x1"
-Skilling,Crafting,crafting:zenyte_bracelet,Craft zenyte bracelet,98,4,1500,20512727,,,20125124,387603,30769090500,581404500,"Product: Zenyte Bracelet x1 | Materials: Zenyte x1, Gold Bar x1"
-Skilling,Crafting,crafting:zenyte_ring,Craft zenyte ring,98,4,1500,20191500,,,20125124,66376,30287250000,99564000,"Product: Zenyte Ring x1 | Materials: Zenyte x1, Gold Bar x1"
-Skilling,Crafting,crafting:zenyte_necklace,String zenyte necklace,98,4,1500,20125003,,,20125124,-121,30187504500,-181500,"Product: Zenyte Necklace x1 | Materials: Zenyte x1, Gold Bar x1"
-Skilling,Smithing,smithing:make_armadyl_godsword,Attach Armadyl hilt,80,2,3000,8108827,,,7797141,311686,24326481000,935058000,"Product: Armadyl Godsword x1 | Materials: Godsword Blade x1, Armadyl Hilt x1"
-Skilling,Crafting,crafting:cut_onyx,Cut onyx,72,3,2000,2641365,,,2568372,72993,5282730000,145986000,Product: Onyx x1 | Materials: Uncut Onyx x1
-Skilling,Magic,magic:enchant_onyx,Enchant Onyx,87,3,2000,2609432,,,2424513,184919,5218864000,369838000,Product: Amulet of Fury x1 | Materials: Onyx Amulet x1
-Skilling,Crafting,crafting:onyx_amulet,String onyx amulet,90,4,1500,2424513,,,2641489,-216976,3636769500,-325464000,"Product: Onyx Amulet x1 | Materials: Onyx x1, Gold Bar x1"
-Skilling,Smithing,smithing:make_dragonfire_shield,Attach draconic visage,90,10,600,3700524,,,3679484,21040,2220314400,12624000,"Product: Dragonfire Shield x1 | Materials: Anti-Dragon Shield x1, Draconic Visage x1"
-Skilling,Smithing,smithing:forge_godsword_blade,Forge godsword blade,80,10,600,539640,,,195000,344640,323784000,206784000,Product: Godsword Blade x1 | Materials: Godsword Shard x3
-Skilling,Fletching,fletching:cut_onyx_bolt_tips,Cut onyx bolt tips (12),73,2,3000,99600,,,2641365,-2541765,298800000,-7625295000,Product: Onyx Bolt Tips x12 | Materials: Onyx x1
-Skilling,Magic,magic:enchant_onyx_dragon_bolts,Enchant Onyx Dragon Bolts (10),87,3,2000,115000,,,88000,27000,230000000,54000000,Product: Onyx Dragon Bolt (E) x10 | Materials: Onyx Dragon Bolt x10
-Skilling,Magic,magic:enchant_onyx_bolts,Enchant Onyx Bolts (10),87,3,2000,95000,,,75000,20000,190000000,40000000,Product: Onyx Bolt (E) x10 | Materials: Onyx Bolt x10
-Skilling,Fletching,fletching:tip_onyx_dragon_bolts,Tip onyx dragon bolts (10),84,3,2000,88000,,,95000,-7000,176000000,-14000000,"Product: Onyx Dragon Bolt x10 | Materials: Dragon Bolt x10, Onyx Bolt Tips x10"
-Skilling,Fletching,fletching:tip_onyx_bolts,Tip onyx bolts (10),73,3,2000,75000,,,83420,-8420,150000000,-16840000,"Product: Onyx Bolt x10 | Materials: Runite Bolt x10, Onyx Bolt Tips x10"
-Skilling,Magic,magic:enchant_dragonstone_dragon_bolts,Enchant Dragonstone Dragon Bolts (10),68,3,2000,48000,,,36000,12000,96000000,24000000,Product: Dragonstone Dragon Bolt (E) x10 | Materials: Dragonstone Dragon Bolt x10
-Skilling,Fletching,fletching:tip_dragonstone_dragon_bolts,Tip dragonstone dragon bolts (10),84,3,2000,36000,,,18050,17950,72000000,35900000,"Product: Dragonstone Dragon Bolt x10 | Materials: Dragon Bolt x10, Dragonstone Bolt Tips x10"
-Skilling,Magic,magic:enchant_dragonstone_bolts,Enchant Dragonstone Bolts (10),68,3,2000,26000,,,19000,7000,52000000,14000000,Product: Dragonstone Bolt (E) x10 | Materials: Dragonstone Bolt x10
-Skilling,Magic,magic:enchant_diamond_dragon_bolts,Enchant Diamond Dragon Bolts (10),57,3,2000,24000,,,15000,9000,48000000,18000000,Product: Diamond Dragon Bolt (E) x10 | Materials: Diamond Dragon Bolt x10
-Skilling,Magic,magic:enchant_ruby_dragon_bolts,Enchant Ruby Dragon Bolts (10),49,3,2000,22000,,,14000,8000,44000000,16000000,Product: Ruby Dragon Bolt (E) x10 | Materials: Ruby Dragon Bolt x10
-Skilling,Fletching,fletching:tip_dragonstone_bolts,Tip dragonstone bolts (10),71,3,2000,19000,,,6470,12530,38000000,25060000,"Product: Dragonstone Bolt x10 | Materials: Runite Bolt x10, Dragonstone Bolt Tips x10"
-Skilling,Fletching,fletching:tip_diamond_dragon_bolts,Tip diamond dragon bolts (10),84,3,2000,15000,,,13780,1220,30000000,2440000,"Product: Diamond Dragon Bolt x10 | Materials: Dragon Bolt x10, Diamond Bolt Tips x10"
-Skilling,Fletching,fletching:tip_ruby_dragon_bolts,Tip ruby dragon bolts (10),84,3,2000,14000,,,13130,870,28000000,1740000,"Product: Ruby Dragon Bolt x10 | Materials: Dragon Bolt x10, Ruby Bolt Tips x10"
-Skilling,Fletching,fletching:make_dragon_bolts,Make dragon bolts (10),84,3,2000,12000,,,4020,7980,24000000,15960000,"Product: Dragon Bolt x10 | Materials: Feather x10, Dragon Bolt (Unf) x10"
-Skilling,Magic,magic:enchant_dragonstone,Enchant Dragonstone,68,3,2000,11259,,,10878,381,22518000,762000,Product: Amulet of Glory x1 | Materials: Dragonstone Amulet x1
-Skilling,Smithing,smithing:smith_rune_pickaxe,Smith rune pickaxe,86,5,1200,18685,,,12500,6185,22422000,7422000,Product: Rune Pickaxe x1 | Materials: Rune Bar x1
-Skilling,Crafting,crafting:cut_dragonstone,Cut dragonstone,55,3,2000,11199,,,17990,-6791,22398000,-13582000,Product: Dragonstone x1 | Materials: Uncut Dragonstone x1
-Skilling,Fletching,fletching:cut_dragonstone_bolt_tips,Cut dragonstone bolt tips (12),71,2,3000,7260,,,11199,-3939,21780000,-11817000,Product: Dragonstone Bolt Tips x12 | Materials: Dragonstone x1
-Skilling,Smithing,smithing:smelt_rune,Smelt rune bar,85,4,1500,12500,,,11871,629,18750000,943500,"Product: Rune Bar x1 | Materials: Runite Ore x1, Coal x8"
-Skilling,Smithing,smithing:smith_rune_scimitar,Smith rune scimitar,89,5,1200,14925,,,25000,-10075,17910000,-12090000,Product: Rune Scimitar x1 | Materials: Rune Bar x2
-Skilling,Crafting,crafting:dragonstone_amulet,String dragonstone amulet,80,4,1500,10878,,,11323,-445,16317000,-667500,"Product: Dragonstone Amulet x1 | Materials: Dragonstone x1, Gold Bar x1"
-Skilling,Herblore,herblore:super_combat_potion,Make super combat potion,90,3,2000,7500,,,11387,-3887,15000000,-7774000,"Product: Super Combat x1 | Materials: Torstol x1, Super Attack x1, Super Strength x1, Super Defence x1, Ranging Potion x1, Magic Potion x1"
-Skilling,Magic,magic:enchant_diamond_bolts,Enchant Diamond Bolts (10),57,3,2000,7000,,,3800,3200,14000000,6400000,Product: Diamond Bolt (E) x10 | Materials: Diamond Bolt x10
-Skilling,Herblore,herblore:super_restore,Make super restore,63,3,2000,5000,,,8733,-3733,10000000,-7466000,"Product: Super Restore x1 | Materials: Snapdragon x1, Red Spiders' Eggs x1"
-Skilling,Magic,magic:enchant_ruby_bolts,Enchant Ruby Bolts (10),49,3,2000,5000,,,2800,2200,10000000,4400000,Product: Ruby Bolt (E) x10 | Materials: Ruby Bolt x10
-Skilling,Smithing,smithing:smith_rune_axe,Smith rune axe,86,5,1200,7401,,,12500,-5099,8881200,-6118800,Product: Rune Axe x1 | Materials: Rune Bar x1
-Skilling,Herblore,herblore:combat_potion,Make combat potion,36,3,2000,4000,,,638,3362,8000000,6724000,"Product: Combat Potion x1 | Materials: Harralander x1, Goat Horn Dust x1"
-Skilling,Fletching,fletching:tip_diamond_bolts,Tip diamond bolts (10),65,3,2000,3800,,,3370,430,7600000,860000,"Product: Diamond Bolt x10 | Materials: Adamant Bolt x10, Diamond Bolt Tips x10"
-Skilling,Herblore,herblore:prayer_potion,Make prayer potion,38,3,2000,3500,,,6073,-2573,7000000,-5146000,"Product: Prayer Potion x1 | Materials: Ranarr Weed x1, Snape Grass x1"
-Skilling,Mining,mining:runite,Mine runite ore,85,9,666.6666666666666,10463,,,0,10463,6975333.333333333,6975333.333333333,Product: Runite Ore x1
-Skilling,Fletching,fletching:cut_diamond_bolt_tips,Cut diamond bolt tips (12),65,2,3000,2136,,,1820,316,6408000,948000,Product: Diamond Bolt Tips x12 | Materials: Diamond x1
-Skilling,Herblore,herblore:ranging_potion,Make ranging potion,72,3,2000,3000,,,3153,-153,6000000,-306000,"Product: Ranging Potion x1 | Materials: Dwarf Weed x1, Wine of Zamorak x1"
-Skilling,Crafting,crafting:red_dhide_body,Craft red d'hide body,75,6,1000,5954,,,11584,-5630,5954000,-5630000,Product: Red D'Hide Body x1 | Materials: Red Dragon Leather x4
-Skilling,Fletching,fletching:tip_ruby_bolts,Tip ruby bolts (10),63,3,2000,2800,,,2720,80,5600000,160000,"Product: Ruby Bolt x10 | Materials: Adamant Bolt x10, Ruby Bolt Tips x10"
-Skilling,Crafting,crafting:green_dhide_body,Craft green d'hide body,63,5,1200,4405,,,5880,-1475,5286000,-1770000,Product: Green D'Hide Body x1 | Materials: Green Dragon Leather x3
-Skilling,Magic,magic:enchant_diamond,Enchant Diamond,57,3,2000,2370,,,2236,134,4740000,268000,Product: Amulet of Power x1 | Materials: Diamond Amulet x1
-Skilling,Fletching,fletching:cut_ruby_bolt_tips,Cut ruby bolt tips (12),63,2,3000,1356,,,958,398,4068000,1194000,Product: Ruby Bolt Tips x12 | Materials: Ruby x1
-Skilling,Herblore,herblore:super_attack,Make super attack,45,3,2000,2000,,,1768,232,4000000,464000,"Product: Super Attack x1 | Materials: Irit Leaf x1, Eye of Newt x1"
-Skilling,Herblore,herblore:super_strength,Make super strength,55,3,2000,2000,,,2845,-845,4000000,-1690000,"Product: Super Strength x1 | Materials: Kwuarm x1, Limpwurt Root x1"
-Skilling,Crafting,crafting:tan_green_dhide,Tan green dragon hide,55,3,2000,1960,,,1686,274,3920000,548000,Product: Green Dragon Leather x1 | Materials: Green Dragonhide x1
-Skilling,Magic,magic:enchant_ruby,Enchant Ruby,49,3,2000,1897,,,1188,709,3794000,1418000,Product: Amulet of Strength x1 | Materials: Ruby Amulet x1
-Skilling,Crafting,crafting:cut_diamond,Cut diamond,43,3,2000,1820,,,3052,-1232,3640000,-2464000,Product: Diamond x1 | Materials: Uncut Diamond x1
-Skilling,Crafting,crafting:diamond_amulet,String diamond amulet,70,4,1500,2236,,,1944,292,3354000,438000,"Product: Diamond Amulet x1 | Materials: Diamond x1, Gold Bar x1"
-Skilling,Fletching,fletching:make_adamant_bolts,Make adamant bolts (10),61,3,2000,1590,,,120,1470,3180000,2940000,"Product: Adamant Bolt x10 | Materials: Feather x10, Adamant Bolt (Unf) x10"
-Skilling,Smithing,smithing:smelt_adamant,Smelt adamant bar,70,4,1500,2048,,,1700,348,3072000,522000,"Product: Adamant Bar x1 | Materials: Adamantite Ore x1, Coal x6"
-Skilling,Herblore,herblore:strength_potion,Make strength potion,12,3,2000,1500,,,525,975,3000000,1950000,"Product: Strength Potion x1 | Materials: Tarromin x1, Limpwurt Root x1"
-Skilling,Crafting,crafting:green_dhide_chaps,Craft green d'hide chaps,57,5,1200,2239,,,3920,-1681,2686800,-2017200,Product: Green D'Hide Chaps x1 | Materials: Green Dragon Leather x2
-Skilling,Fletching,fletching:rune_arrows,Make rune arrows (15),75,3,2000,1170,,,3525,-2355,2340000,-4710000,"Product: Rune Arrow x15 | Materials: Headless Arrow x15, Rune Arrowtips x15"
-Skilling,Smithing,smithing:smith_adamant_pickaxe,Smith adamant pickaxe,71,5,1200,1750,,,2048,-298,2100000,-357600,Product: Adamant Pickaxe x1 | Materials: Adamant Bar x1
-Skilling,Crafting,crafting:cut_ruby,Cut ruby,34,3,2000,958,,,1322,-364,1916000,-728000,Product: Ruby x1 | Materials: Uncut Ruby x1
-Skilling,Crafting,crafting:ruby_amulet,String ruby amulet,50,4,1500,1188,,,1082,106,1782000,159000,"Product: Ruby Amulet x1 | Materials: Ruby x1, Gold Bar x1"
-Skilling,Smithing,smithing:smith_adamant_scimitar,Smith adamant scimitar,74,5,1200,1479,,,4096,-2617,1774800,-3140400,Product: Adamant Scimitar x1 | Materials: Adamant Bar x2
-Skilling,Smithing,smithing:smelt_mithril,Smelt mithril bar,50,4,1500,994,,,853,141,1491000,211500,"Product: Mithril Bar x1 | Materials: Mithril Ore x1, Coal x4"
-Skilling,Fletching,fletching:adamant_arrows,Make adamant arrows (15),60,3,2000,630,,,1740,-1110,1260000,-2220000,"Product: Adamant Arrow x15 | Materials: Headless Arrow x15, Adamant Arrowtips x15"
-Skilling,Herblore,herblore:saradomin_brew,Make saradomin brew,81,3,2000,600,,,2527,-1927,1200000,-3854000,"Product: Saradomin Brew x1 | Materials: Toadflax x1, Crushed Bird's Nest x1"
-Skilling,Magic,magic:enchant_sapphire,Enchant Sapphire,7,3,2000,594,,,401,193,1188000,386000,Product: Amulet of Magic x1 | Materials: Sapphire Amulet x1
-Skilling,Cooking,cooking:cook_shark,Cook shark,80,4,1500,791,,,599,192,1186500,288000,Product: Shark x1 | Materials: Raw Shark x1
-Skilling,Mining,mining:gem_mining,Mine gems,75,20,300,3856.232,,,0,3856.232,1156869.6,1156869.6,"Drop EV: Uncut Onyx: 2,568; Uncut Diamond: 610; Uncut Ruby: 370; Uncut Dragonstone: 180; Uncut Sapphire: 127"
-Skilling,Fletching,fletching:make_iron_bolts,Make iron bolts (10),39,3,2000,570,,,40,530,1140000,1060000,"Product: Iron Bolt x10 | Materials: Feather x10, Iron Bolt (Unf) x10"
-Skilling,Fletching,fletching:make_steel_bolts,Make steel bolts (10),46,3,2000,540,,,60,480,1080000,960000,"Product: Steel Bolt x10 | Materials: Feather x10, Steel Bolt (Unf) x10"
-Skilling,Runecrafting,runecraft:craft_soul_rune,Craft soul rune,90,2,3000,360,,,11,349,1080000,1047000,Product: Soul Rune x1 | Materials: Rune Essence x1
-Skilling,Crafting,crafting:emerald_amulet,String emerald amulet,31,4,1500,698,,,644,54,1047000,81000,"Product: Emerald Amulet x1 | Materials: Emerald x1, Gold Bar x1"
-Skilling,Crafting,crafting:cut_emerald,Cut emerald,27,3,2000,520,,,643,-123,1040000,-246000,Product: Emerald x1 | Materials: Uncut Emerald x1
-Skilling,Runecrafting,runecraft:craft_wrath_rune,Craft wrath rune,95,2,3000,303,,,11,292,909000,876000,Product: Wrath Rune x1 | Materials: Rune Essence x1
-Skilling,Smithing,smithing:smelt_steel,Smelt steel bar,30,4,1500,595,,,433,162,892500,243000,"Product: Steel Bar x1 | Materials: Iron Ore x1, Coal x2"
-Skilling,Runecrafting,runecraft:craft_blood_rune,Craft blood rune,77,2,3000,287,,,11,276,861000,828000,Product: Blood Rune x1 | Materials: Rune Essence x1
-Skilling,Fletching,fletching:make_runite_bolts,Make runite bolts (10),69,3,2000,420,,,370,50,840000,100000,"Product: Runite Bolt x10 | Materials: Feather x10, Runite Bolt (Unf) x10"
-Skilling,Fletching,fletching:magic_shortbow_string,String magic shortbow,80,6,1000,814,,,893,-79,814000,-79000,"Product: Magic Shortbow x1 | Materials: Magic Shortbow (U) x1, Bowstring x1"
-Skilling,Herblore,herblore:super_defence,Make super defence,66,3,2000,400,,,3516,-3116,800000,-6232000,"Product: Super Defence x1 | Materials: Cadantine x1, White Berries x1"
-Skilling,Fletching,fletching:magic_shortbow_u_cut,Cut magic shortbow (u),80,6,1000,793,,,909,-116,793000,-116000,Product: Magic Shortbow (U) x1 | Materials: Magic Logs x1
-Skilling,Smithing,smithing:smith_iron_pickaxe,Smith iron pickaxe,16,5,1200,593,,,144,449,711600,538800,Product: Iron Pickaxe x1 | Materials: Iron Bar x1
-Skilling,Herblore,herblore:magic_potion,Make magic potion,76,3,2000,350,,,1810,-1460,700000,-2920000,"Product: Magic Potion x1 | Materials: Lantadyme x1, Potato Cactus x1"
-Skilling,Smithing,smithing:smith_adamant_axe,Smith adamant axe,71,5,1200,570,,,2048,-1478,684000,-1773600,Product: Adamant Axe x1 | Materials: Adamant Bar x1
-Skilling,Fletching,fletching:headless_arrows,Attach feathers (15),1,2,3000,210,,,45,165,630000,495000,"Product: Headless Arrow x15 | Materials: Arrow Shaft x15, Feather x15"
-Skilling,Fletching,fletching:make_mithril_bolts,Make mithril bolts (10),54,3,2000,310,,,90,220,620000,440000,"Product: Mithril Bolt x10 | Materials: Feather x10, Mithril Bolt (Unf) x10"
-Skilling,Crafting,crafting:cut_sapphire,Cut sapphire,20,3,2000,308,,,364,-56,616000,-112000,Product: Sapphire x1 | Materials: Uncut Sapphire x1
-Skilling,Woodcutting,woodcutting:magic,Chop magic,75,9,666.6666666666666,909,,,0,909,606000,606000,Product: Magic Logs x1
-Skilling,Crafting,crafting:sapphire_amulet,String sapphire amulet,24,4,1500,401,,,432,-31,601500,-46500,"Product: Sapphire Amulet x1 | Materials: Sapphire x1, Gold Bar x1"
-Skilling,Runecrafting,runecraft:craft_death_rune,Craft death rune,65,2,3000,189,,,11,178,567000,534000,Product: Death Rune x1 | Materials: Rune Essence x1
-Skilling,Smithing,smithing:smith_steel_pickaxe,Smith steel pickaxe,31,5,1200,470,,,595,-125,564000,-150000,Product: Steel Pickaxe x1 | Materials: Steel Bar x1
-Skilling,Smithing,smithing:smith_mithril_pickaxe,Smith mithril pickaxe,51,5,1200,469,,,994,-525,562800,-630000,Product: Mithril Pickaxe x1 | Materials: Mithril Bar x1
-Skilling,Smithing,smithing:smith_mithril_scimitar,Smith mithril scimitar,54,5,1200,452,,,1988,-1536,542400,-1843200,Product: Mithril Scimitar x1 | Materials: Mithril Bar x2
-Skilling,Smithing,smithing:smith_runite_bolts_unf,Smith runite bolts (unf) (10),88,4,1500,350,,,12500,-12150,525000,-18225000,Product: Runite Bolt (Unf) x10 | Materials: Rune Bar x1
-Skilling,Fletching,fletching:yew_shortbow_string,String yew shortbow,65,5,1200,416,,,295,121,499200,145200,"Product: Yew Shortbow x1 | Materials: Yew Shortbow (U) x1, Bowstring x1"
-Skilling,Mining,mining:adamantite,Mine adamantite ore,70,8,750,644,,,0,644,483000,483000,Product: Adamantite Ore x1
-Skilling,Crafting,crafting:tan_cowhide_hard,Tan cowhide (hard),1,2,3000,161,,,109,52,483000,156000,Product: Hard Leather x1 | Materials: Cowhide x1
-Skilling,Fishing,fishing:shark,Fish shark,76,8,750,599,,,0,599,449250,449250,Product: Raw Shark x1
-Skilling,Crafting,crafting:tan_cowhide,Tan cowhide,1,2,3000,148,,,109,39,444000,117000,Product: Leather x1 | Materials: Cowhide x1
-Skilling,Runecrafting,runecraft:craft_law_rune,Craft law rune,54,2,3000,123,,,11,112,369000,336000,Product: Law Rune x1 | Materials: Rune Essence x1
-Skilling,Runecrafting,runecraft:craft_nature_rune,Craft nature rune,44,2,3000,120,,,11,109,360000,327000,Product: Nature Rune x1 | Materials: Rune Essence x1
-Skilling,Fletching,fletching:steel_arrows,Make steel arrows (15),30,3,2000,165,,,405,-240,330000,-480000,"Product: Steel Arrow x15 | Materials: Headless Arrow x15, Steel Arrowtips x15"
-Skilling,Magic,magic:plank_make,Plank Make,86,3,2000,156,,,27,129,312000,258000,Product: Plank x1 | Materials: Logs x1
-Skilling,Runecrafting,runecraft:craft_chaos_rune,Craft chaos rune,35,2,3000,101,,,11,90,303000,270000,Product: Chaos Rune x1 | Materials: Rune Essence x1
-Skilling,Fletching,fletching:cut_wooden_stocks,Cut wooden stocks (10),9,2,3000,100,,,27,73,300000,219000,Product: Wooden Stock x10 | Materials: Logs x1
-Skilling,Herblore,herblore:attack_potion,Make attack potion,1,3,2000,150,,,284,-134,300000,-268000,"Product: Attack Potion x1 | Materials: Guam Leaf x1, Eye of Newt x1"
-Skilling,Herblore,herblore:defence_potion,Make defence potion,30,3,2000,150,,,5945,-5795,300000,-11590000,"Product: Defence Potion x1 | Materials: Ranarr Weed x1, White Berries x1"
-Skilling,Cooking,cooking:cook_swordfish,Cook swordfish,45,4,1500,196,,,212,-16,294000,-24000,Product: Swordfish x1 | Materials: Raw Swordfish x1
-Skilling,Runecrafting,runecraft:craft_cosmic_rune,Craft cosmic rune,27,2,3000,97,,,11,86,291000,258000,Product: Cosmic Rune x1 | Materials: Rune Essence x1
-Skilling,Fletching,fletching:maple_shortbow_string,String maple shortbow,50,4,1500,192,,,191,1,288000,1500,"Product: Maple Shortbow x1 | Materials: Maple Shortbow (U) x1, Bowstring x1"
-Skilling,Runecrafting,runecraft:craft_astral_rune,Craft astral rune,40,2,3000,95,,,11,84,285000,252000,Product: Astral Rune x1 | Materials: Rune Essence x1
-Skilling,Fletching,fletching:mithril_arrows,Make mithril arrows (15),45,3,2000,135,,,765,-630,270000,-1260000,"Product: Mithril Arrow x15 | Materials: Headless Arrow x15, Mithril Arrowtips x15"
-Skilling,Smithing,smithing:smith_mithril_axe,Smith mithril axe,51,5,1200,201,,,994,-793,241200,-951600,Product: Mithril Axe x1 | Materials: Mithril Bar x1
-Skilling,Fletching,fletching:yew_shortbow_u_cut,Cut yew shortbow (u),65,5,1200,195,,,127,68,234000,81600,Product: Yew Shortbow (U) x1 | Materials: Yew Logs x1
-Skilling,Smithing,smithing:smelt_iron,Smelt iron bar,15,4,1500,144,,,81,63,216000,94500,Product: Iron Bar x1 | Materials: Iron Ore x1
-Skilling,Fletching,fletching:iron_arrows,Make iron arrows (15),15,3,2000,105,,,285,-180,210000,-360000,"Product: Iron Arrow x15 | Materials: Headless Arrow x15, Iron Arrowtips x15"
-Skilling,Cooking,cooking:cook_lobster,Cook lobster,40,4,1500,134,,,145,-11,201000,-16500,Product: Lobster x1 | Materials: Raw Lobster x1
-Skilling,Crafting,crafting:spin_bowstring,Spin bowstring,10,3,2000,100,,,1,99,200000,198000,Product: Bowstring x1 | Materials: Flax x1
-Skilling,Woodcutting,woodcutting:mahogany,Chop mahogany,50,8,750,249,,,0,249,186750,186750,Product: Mahogany Logs x1
-Skilling,Smithing,smithing:smith_steel_axe,Smith steel axe,31,5,1200,155,,,595,-440,186000,-528000,Product: Steel Axe x1 | Materials: Steel Bar x1
-Skilling,Smithing,smithing:smelt_gold,Smelt gold bar,40,4,1500,124,,,144,-20,186000,-30000,Product: Gold Bar x1 | Materials: Gold Ore x1
-Skilling,Fishing,fishing:swordfish,Fish swordfish,50,7,857.1428571428571,212,,,0,212,181714.2857142857,181714.2857142857,Product: Raw Swordfish x1
-Skilling,Magic,magic:tan_leather,Tan Leather,78,5,1200,148,,,109,39,177600,46800,Product: Leather x1 | Materials: Cowhide x1
-Skilling,Mining,mining:coal,Mine coal,30,6,1000,176,,,0,176,176000,176000,Product: Coal x1
-Skilling,Magic,magic:superheat,Superheat Item (iron ore),43,5,1200,144,,,257,-113,172800,-135600,"Product: Iron Bar x1 | Materials: Iron Ore x1, Coal x1"
-Skilling,Agility,agility:ardougne,Ardougne Rooftop,90,18,333.3333333333333,500,,,0,500,166666.66666666666,166666.66666666666,
-Skilling,Crafting,crafting:hard_leather_body,Craft hard leather body,28,5,1200,132,,,161,-29,158400,-34800,Product: Hard Leather Body x1 | Materials: Hard Leather x1
-Skilling,Smithing,smithing:smith_adamant_bolts_unf,Smith adamant bolts (unf) (10),73,4,1500,100,,,2048,-1948,150000,-2922000,Product: Adamant Bolt (Unf) x10 | Materials: Adamant Bar x1
-Skilling,Fishing,fishing:lobster,Fish lobster,40,6,1000,145,,,0,145,145000,145000,Product: Raw Lobster x1
-Skilling,Mining,mining:gold,Mine gold ore,40,6,1000,144,,,0,144,144000,144000,Product: Gold Ore x1
-Skilling,Fletching,fletching:willow_shortbow_string,String willow shortbow,35,4,1500,92,,,130,-38,138000,-57000,"Product: Willow Shortbow x1 | Materials: Willow Shortbow (U) x1, Bowstring x1"
-Skilling,Fletching,fletching:maple_shortbow_u_cut,Cut maple shortbow (u),50,4,1500,91,,,15,76,136500,114000,Product: Maple Shortbow (U) x1 | Materials: Maple Logs x1
-Skilling,Crafting,crafting:molten_glass,Make molten glass,1,4,1500,89,,,48,41,133500,61500,"Product: Molten Glass x1 | Materials: Soda Ash x1, Bucket of Sand x1"
-Skilling,Mining,mining:mithril,Mine mithril ore,55,7,857.1428571428571,149,,,0,149,127714.28571428571,127714.28571428571,Product: Mithril Ore x1
-Skilling,Cooking,cooking:cook_meat,Cook meat,1,4,1500,85,,,30,55,127500,82500,Product: Cooked Meat x1 | Materials: Raw Beef x1
-Skilling,Fletching,fletching:bronze_arrows,Make bronze arrows (15),1,3,2000,60,,,210,-150,120000,-300000,Product: Bronze Arrow x15 | Materials: Headless Arrow x15
-Skilling,Agility,agility:rellekka,Rellekka Rooftop,80,20,300,400,,,0,400,120000,120000,
-Skilling,Magic,magic:spin_flax,Spin Flax,76,5,1200,100,,,1,99,120000,118800,Product: Bowstring x1 | Materials: Flax x1
-Skilling,Smithing,smithing:smith_iron_axe,Smith iron axe,16,5,1200,95,,,144,-49,114000,-58800,Product: Iron Axe x1 | Materials: Iron Bar x1
-Skilling,Mining,mining:clay,Mine clay,1,4,1500,72,,,0,72,108000,108000,Product: Clay x1
-Skilling,Smithing,smithing:smith_mithril_bolts_unf,Smith mithril bolts (unf) (10),53,4,1500,70,,,994,-924,105000,-1386000,Product: Mithril Bolt (Unf) x10 | Materials: Mithril Bar x1
-Skilling,Woodcutting,woodcutting:teak,Chop teak,35,7,857.1428571428571,121,,,0,121,103714.28571428571,103714.28571428571,Product: Teak Logs x1
-Skilling,Smithing,smithing:smith_bronze_axe,Smith bronze axe,4,5,1200,86,,,60,26,103200,31200,Product: Bronze Axe x1 | Materials: Bronze Bar x1
-Skilling,Smithing,smithing:smith_steel_scimitar,Smith steel scimitar,34,5,1200,85,,,1190,-1105,102000,-1326000,Product: Steel Scimitar x1 | Materials: Steel Bar x2
-Skilling,Fletching,fletching:shortbow_string,String shortbow,5,3,2000,50,,,116,-66,100000,-132000,"Product: Shortbow x1 | Materials: Shortbow (U) x1, Bowstring x1"
-Skilling,Smithing,smithing:smith_bronze_dagger,Smith bronze dagger,1,5,1200,83,,,60,23,99600,27600,Product: Bronze Dagger x1 | Materials: Bronze Bar x1
-Skilling,Cooking,cooking:cook_chicken,Cook chicken,1,4,1500,66,,,20,46,99000,69000,Product: Cooked Chicken x1 | Materials: Raw Chicken x1
-Skilling,Smithing,smithing:smith_bronze_pickaxe,Smith bronze pickaxe,4,5,1200,82,,,60,22,98400,26400,Product: Bronze Pickaxe x1 | Materials: Bronze Bar x1
-Skilling,Mining,mining:iron,Mine iron ore,15,5,1200,81,,,0,81,97200,97200,Product: Iron Ore x1
-Skilling,Woodcutting,woodcutting:yew,Chop yew,60,8,750,127,,,0,127,95250,95250,Product: Yew Logs x1
-Skilling,Agility,agility:pollnivneach,Pollnivneach Rooftop,70,23,260.8695652173913,350,,,0,350,91304.34782608696,91304.34782608696,
-Skilling,Smithing,smithing:smelt_bronze,Smelt bronze bar,1,4,1500,60,,,27,33,90000,49500,"Product: Bronze Bar x1 | Materials: Tin Ore x1, Copper Ore x1"
-Skilling,Smithing,smithing:smith_iron_scimitar,Smith iron scimitar,19,5,1200,74,,,288,-214,88800,-256800,Product: Iron Scimitar x1 | Materials: Iron Bar x2
-Skilling,Smithing,smithing:smith_bronze_scimitar,Smith bronze scimitar,4,5,1200,71,,,120,-49,85200,-58800,Product: Bronze Scimitar x1 | Materials: Bronze Bar x2
-Skilling,Crafting,crafting:leather_boots,Craft leather boots,7,3,2000,40,,,148,-108,80000,-216000,Product: Leather Boots x1 | Materials: Leather x1
-Skilling,Agility,agility:seers_village,Seers' Village Rooftop,60,25,240,300,,,0,300,72000,72000,
-Skilling,Fletching,fletching:oak_shortbow_string,String oak shortbow,20,3,2000,31,,,107,-76,62000,-152000,"Product: Oak Shortbow x1 | Materials: Oak Shortbow (U) x1, Bowstring x1"
-Skilling,Smithing,smithing:smith_steel_bolts_unf,Smith steel bolts (unf) (10),33,4,1500,40,,,595,-555,60000,-832500,Product: Steel Bolt (Unf) x10 | Materials: Steel Bar x1
 Skilling,Fletching,fletching:make_bronze_bolts,Make bronze bolts (10),9,3,2000,30,,,30,0,60000,0,"Product: Bronze Bolt x10 | Materials: Feather x10, Bronze Bolt (Unf) x10"
-Skilling,Fishing,fishing:shrimp,Fish shrimps,1,4,1500,38,,,0,38,57000,57000,Product: Raw Shrimps x1
-Skilling,Cooking,cooking:cook_trout,Cook trout,15,4,1500,34,,,42,-8,51000,-12000,Product: Trout x1 | Materials: Raw Trout x1
-Skilling,Fishing,fishing:trout,Fish trout,20,5,1200,42,,,0,42,50400,50400,Product: Raw Trout x1
-Skilling,Fletching,fletching:arrow_shafts,Cut arrow shafts (15),1,2,3000,15,,,27,-12,45000,-36000,Product: Arrow Shaft x15 | Materials: Logs x1
-Skilling,Fletching,fletching:willow_shortbow_u_cut,Cut willow shortbow (u),35,4,1500,30,,,21,9,45000,13500,Product: Willow Shortbow (U) x1 | Materials: Willow Logs x1
-Skilling,Agility,agility:falador,Falador Rooftop,50,28,214.28571428571428,200,,,0,200,42857.142857142855,42857.142857142855,
-Skilling,Woodcutting,woodcutting:oak,Chop oak,15,5,1200,34,,,0,34,40800,40800,Product: Oak Logs x1
-Skilling,Woodcutting,woodcutting:normal,Chop tree,1,4,1500,27,,,0,27,40500,40500,Product: Logs x1
-Skilling,Fletching,fletching:shortbow_u_cut,Cut shortbow (u),5,3,2000,16,,,27,-11,32000,-22000,Product: Shortbow (U) x1 | Materials: Logs x1
-Skilling,Smithing,smithing:smith_iron_bolts_unf,Smith iron bolts (unf) (10),18,4,1500,20,,,144,-124,30000,-186000,Product: Iron Bolt (Unf) x10 | Materials: Iron Bar x1
-Skilling,Cooking,cooking:cook_shrimp,Cook shrimps,1,4,1500,20,,,38,-18,30000,-27000,Product: Shrimps x1 | Materials: Raw Shrimps x1
-Skilling,Agility,agility:canifis,Canifis Rooftop,40,30,200,140,,,0,140,28000,28000,
-Skilling,Mining,mining:copper,Mine copper ore,1,4,1500,14,,,0,14,21000,21000,Product: Copper Ore x1
-Skilling,Woodcutting,woodcutting:willow,Chop willow,30,6,1000,21,,,0,21,21000,21000,Product: Willow Logs x1
-Skilling,Crafting,crafting:leather_chaps,Craft leather chaps,18,5,1200,17,,,148,-131,20400,-157200,Product: Leather Chaps x1 | Materials: Leather x1
-Skilling,Mining,mining:tin,Mine tin ore,1,4,1500,13,,,0,13,19500,19500,Product: Tin Ore x1
-Skilling,Runecrafting,runecraft:craft_earth_rune,Craft earth rune,9,2,3000,6,,,11,-5,18000,-15000,Product: Earth Rune x1 | Materials: Rune Essence x1
-Skilling,Mining,mining:rune_essence,Mine rune essence,1,4,1500,11,,,0,11,16500,16500,Product: Rune Essence x1
-Skilling,Crafting,crafting:leather_coif,Craft leather cowl,9,4,1500,11,,,148,-137,16500,-205500,Product: Leather Cowl x1 | Materials: Leather x1
-Skilling,Agility,agility:varrock,Varrock Rooftop,30,33,181.8181818181818,90,,,0,90,16363.636363636364,16363.636363636364,
-Skilling,Crafting,crafting:leather_body,Craft leather body,14,5,1200,13,,,148,-135,15600,-162000,Product: Leather Body x1 | Materials: Leather x1
-Skilling,Smithing,smithing:smith_bronze_bolts_unf,Smith bronze bolts (unf) (10),9,4,1500,10,,,60,-50,15000,-75000,Product: Bronze Bolt (Unf) x10 | Materials: Bronze Bar x1
-Skilling,Fletching,fletching:oak_shortbow_u_cut,Cut oak shortbow (u),20,3,2000,7,,,34,-27,14000,-54000,Product: Oak Shortbow (U) x1 | Materials: Oak Logs x1
-Skilling,Woodcutting,woodcutting:maple,Chop maple,45,7,857.1428571428571,15,,,0,15,12857.142857142857,12857.142857142857,Product: Maple Logs x1
-Skilling,Runecrafting,runecraft:craft_air_rune,Craft air rune,1,2,3000,4,,,11,-7,12000,-21000,Product: Air Rune x1 | Materials: Rune Essence x1
-Skilling,Runecrafting,runecraft:craft_water_rune,Craft water rune,5,2,3000,4,,,11,-7,12000,-21000,Product: Water Rune x1 | Materials: Rune Essence x1
-Skilling,Runecrafting,runecraft:craft_fire_rune,Craft fire rune,14,2,3000,4,,,11,-7,12000,-21000,Product: Fire Rune x1 | Materials: Rune Essence x1
-Skilling,Runecrafting,runecraft:craft_body_rune,Craft body rune,20,2,3000,4,,,11,-7,12000,-21000,Product: Body Rune x1 | Materials: Rune Essence x1
-Skilling,Runecrafting,runecraft:craft_mind_rune,Craft mind rune,2,2,3000,3,,,11,-8,9000,-24000,Product: Mind Rune x1 | Materials: Rune Essence x1
-Skilling,Agility,agility:al_kharid,Al Kharid Rooftop,20,35,171.42857142857142,50,,,0,50,8571.42857142857,8571.42857142857,
-Skilling,Crafting,crafting:leather_gloves,Craft leather gloves,1,3,2000,2,,,148,-146,4000,-292000,Product: Leather Gloves x1 | Materials: Leather x1
-Skilling,Agility,agility:draynor_village,Draynor Village Rooftop,10,38,157.89473684210526,25,,,0,25,3947.3684210526317,3947.3684210526317,
-Skilling,Agility,agility:gnome_stronghold,Gnome Stronghold Course,1,40,150,10,,,0,10,1500,1500,
-Skilling,Prayer,prayer:bury_bones,Bury bones,1,3,2000,0,,,29,-29,0,-58000,Materials: Bones x1
-Skilling,Prayer,prayer:bury_big_bones,Bury big bones,5,3,2000,0,,,250,-250,0,-500000,Materials: Big Bones x1
-Skilling,Prayer,prayer:bury_dragon_bones,Bury dragon bones,35,3,2000,0,,,2815,-2815,0,-5630000,Materials: Dragon Bones x1
-Skilling,Prayer,prayer:altar_bones,Use gilded altar (bones),1,3,2000,0,,,29,-29,0,-58000,Materials: Bones x1
-Skilling,Prayer,prayer:altar_big_bones,Use gilded altar (big bones),5,3,2000,0,,,250,-250,0,-500000,Materials: Big Bones x1
-Skilling,Prayer,prayer:altar_dragon_bones,Use gilded altar (dragon bones),35,3,2000,0,,,2815,-2815,0,-5630000,Materials: Dragon Bones x1
-Skilling,Prayer,prayer:bury_dagganoth_bones,Bury dagganoth bones,40,3,2000,0,,,14448,-14448,0,-28896000,Materials: Dagannoth Bones x1
-Skilling,Prayer,prayer:altar_dagganoth_bones,Use gilded altar (dagganoth bones),40,3,2000,0,,,14448,-14448,0,-28896000,Materials: Dagannoth Bones x1
 Skilling,Magic,magic:curse,Curse,19,5,1200,0,,,0,0,0,0,
 Skilling,Magic,magic:high_alch,High Alchemy,55,5,1200,0,,,0,0,0,0,
 Skilling,Magic,magic:stun,Stun,80,5,1200,0,,,0,0,0,0,
-Skilling,Firemaking,firemaking:normal_logs,Burn logs,1,2,3000,0,,,27,-27,0,-81000,Materials: Logs x1
-Skilling,Firemaking,firemaking:oak_logs,Burn oak logs,15,2,3000,0,,,34,-34,0,-102000,Materials: Oak Logs x1
-Skilling,Firemaking,firemaking:willow_logs,Burn willow logs,30,2,3000,0,,,21,-21,0,-63000,Materials: Willow Logs x1
-Skilling,Firemaking,firemaking:maple_logs,Burn maple logs,45,2,3000,0,,,15,-15,0,-45000,Materials: Maple Logs x1
-Skilling,Firemaking,firemaking:yew_logs,Burn yew logs,60,2,3000,0,,,127,-127,0,-381000,Materials: Yew Logs x1
-Skilling,Firemaking,firemaking:magic_logs,Burn magic logs,75,2,3000,0,,,909,-909,0,-2727000,Materials: Magic Logs x1
-Skilling,Firemaking,firemaking:redwood_logs,Burn redwood logs,90,2,3000,0,,,819,-819,0,-2457000,Materials: Redwood Logs x1
 Skilling,Hunter,hunter:hunt_cow,Hunt Cow,1,20,300,0,,,0,0,0,0,
 Skilling,Hunter,hunter:hunt_wizard,Hunt Wizard,15,20,300,0,,,0,0,0,0,
 Skilling,Hunter,hunter:hunt_jeweller,Hunt Jeweller,35,20,300,0,,,0,0,0,0,
@@ -351,3 +230,124 @@ Skilling,Dungeoneering,dungeoneering:unlock_chaotic_crossbow,Claim chaotic cross
 Skilling,Dungeoneering,dungeoneering:unlock_chaotic_staff,Claim chaotic staff,80,0,0,200000,,,0,200000,0,0,Product: Chaotic Staff x1
 Skilling,Dungeoneering,dungeoneering:unlock_eagle_eyed_kiteshield,Claim eagle eyed kiteshield,80,0,0,200000,,,0,200000,0,0,Product: Eagle Eyed Kiteshield x1
 Skilling,Dungeoneering,dungeoneering:unlock_arcane_kiteshield,Claim arcane kiteshield,80,0,0,200000,,,0,200000,0,0,Product: Arcane Kiteshield x1
+Minigames,barbarian_assault,ba_fighter_torso,Grind for Fighter Torso,,30000,0.2,0,,0,,0,0,0,One-shot reward | Product: Fighter Torso x1 | Duration: 5 hours
+Minigames,barbarian_assault,ba_fighter_hat,Grind for Fighter Hat,,12000,0.5,0,,0,,0,0,0,One-shot reward | Product: Fighter Hat x1 | Duration: 2 hours
+Minigames,warriors_guild,wg_rune_defender,Grind for Rune Defender,,18000,0.3333333333333333,0,,0,,0,0,0,One-shot reward | Product: Rune Defender x1 | Duration: 3 hours
+Farming,Herb,sagewort_seed,"Sagewort (Herb, per patch)",32,,0.75,50,,50,50,0,37.5,0,Per patch. Crop: Sagewort x1. Growth: 1.33 hours.
+Farming,Herb,sagewort_seed:all-patches,"Sagewort (Herb, all 5 patches)",32,,3.75,250,,250,250,0,187.5,0,All available herb patches from farming.json. Crop: Sagewort x1. Growth: 1.33 hours.
+Farming,Herb,basil_seed,"Basil (Herb, per patch)",25,,0.75,30,,30,40,-10,22.5,-7.5,Per patch. Crop: Basil x1. Growth: 1.33 hours.
+Farming,Fruit tree,apple_sapling,"Apple (Fruit tree, per patch)",27,,0.0625,48,,48,246,-198,3,-12.375,Per patch. Crop: Apple x6. Growth: 16 hours.
+Farming,Herb,basil_seed:all-patches,"Basil (Herb, all 5 patches)",25,,3.75,150,,150,200,-50,112.5,-37.5,All available herb patches from farming.json. Crop: Basil x1. Growth: 1.33 hours.
+Farming,Fruit tree,apple_sapling:all-patches,"Apple (Fruit tree, all 7 patches)",27,,0.4375,336,,336,1722,-1386,21,-86.625,All available fruit tree patches from farming.json. Crop: Apple x6. Growth: 16 hours.
+Farming,Tree,oak_sapling,"Oak (Tree, per patch)",15,,0.40909090909090906,34,,34,246,-212,13.909090909090908,-86.72727272727272,Per patch. Crop: Oak Logs x1. Growth: 2.44 hours.
+Farming,Fruit tree,curry_sapling,"Curry (Fruit tree, per patch)",42,,0.47368421052631576,366,,366,652,-286,173.36842105263156,-135.4736842105263,Per patch. Crop: Curry Leaf x6. Growth: 2.11 hours.
+Farming,Tree,willow_sapling,"Willow (Tree, per patch)",30,,0.40909090909090906,21,,21,361,-340,8.59090909090909,-139.0909090909091,Per patch. Crop: Willow Logs x1. Growth: 2.44 hours.
+Farming,Tree,oak_sapling:all-patches,"Oak (Tree, all 10 patches)",15,,4.090909090909091,340,,340,2460,-2120,139.0909090909091,-867.2727272727273,All available tree patches from farming.json. Crop: Oak Logs x1. Growth: 2.44 hours.
+Farming,Fruit tree,curry_sapling:all-patches,"Curry (Fruit tree, all 7 patches)",42,,3.3157894736842106,2562,,2562,4564,-2002,1213.5789473684208,-948.3157894736842,All available fruit tree patches from farming.json. Crop: Curry Leaf x6. Growth: 2.11 hours.
+Farming,Tree,willow_sapling:all-patches,"Willow (Tree, all 10 patches)",30,,4.090909090909091,210,,210,3610,-3400,85.9090909090909,-1390.9090909090908,All available tree patches from farming.json. Crop: Willow Logs x1. Growth: 2.44 hours.
+Farming,Tree,maple_sapling,"Maple (Tree, per patch)",45,,0.40909090909090906,15,,15,4965,-4950,6.136363636363636,-2024.9999999999998,Per patch. Crop: Maple Logs x1. Growth: 2.44 hours.
+Farming,Fruit tree,palm_sapling,"Palm (Fruit tree, per patch)",68,,0.47368421052631576,300,,300,24350,-24050,142.10526315789474,-11392.105263157895,Per patch. Crop: Palm Fruit x6. Growth: 2.11 hours.
+Skilling,Cooking,cooking:cook_trout,Cook trout,15,4,1500,34,,,42,-8,51000,-12000,Product: Trout x1 | Materials: Raw Trout x1
+Farming,Tree,yew_sapling,"Yew (Tree, per patch)",60,,0.40909090909090906,127,,127,30075,-29948,51.95454545454545,-12251.454545454544,Per patch. Crop: Yew Logs x1. Growth: 2.44 hours.
+Farming,Herb,ranarr_seed,"Ranarr (Herb, per patch)",52,,0.75,5498,,5498,24623,-19125,4123.5,-14343.75,Per patch. Crop: Ranarr Weed x1. Growth: 1.33 hours.
+Skilling,Runecrafting,runecraft:craft_earth_rune,Craft earth rune,9,2,3000,6,,,11,-5,18000,-15000,Product: Earth Rune x1 | Materials: Rune Essence x1
+Skilling,Cooking,cooking:cook_lobster,Cook lobster,40,4,1500,134,,,145,-11,201000,-16500,Product: Lobster x1 | Materials: Raw Lobster x1
+Farming,Tree,maple_sapling:all-patches,"Maple (Tree, all 10 patches)",45,,4.090909090909091,150,,150,49650,-49500,61.36363636363636,-20250,All available tree patches from farming.json. Crop: Maple Logs x1. Growth: 2.44 hours.
+Skilling,Runecrafting,runecraft:craft_air_rune,Craft air rune,1,2,3000,4,,,11,-7,12000,-21000,Product: Air Rune x1 | Materials: Rune Essence x1
+Skilling,Runecrafting,runecraft:craft_water_rune,Craft water rune,5,2,3000,4,,,11,-7,12000,-21000,Product: Water Rune x1 | Materials: Rune Essence x1
+Skilling,Runecrafting,runecraft:craft_fire_rune,Craft fire rune,14,2,3000,4,,,11,-7,12000,-21000,Product: Fire Rune x1 | Materials: Rune Essence x1
+Skilling,Runecrafting,runecraft:craft_body_rune,Craft body rune,20,2,3000,4,,,11,-7,12000,-21000,Product: Body Rune x1 | Materials: Rune Essence x1
+Skilling,Fletching,fletching:shortbow_u_cut,Cut shortbow (u),5,3,2000,16,,,27,-11,32000,-22000,Product: Shortbow (U) x1 | Materials: Logs x1
+Skilling,Cooking,cooking:cook_swordfish,Cook swordfish,45,4,1500,196,,,212,-16,294000,-24000,Product: Swordfish x1 | Materials: Raw Swordfish x1
+Skilling,Runecrafting,runecraft:craft_mind_rune,Craft mind rune,2,2,3000,3,,,11,-8,9000,-24000,Product: Mind Rune x1 | Materials: Rune Essence x1
+Skilling,Cooking,cooking:cook_shrimp,Cook shrimps,1,4,1500,20,,,38,-18,30000,-27000,Product: Shrimps x1 | Materials: Raw Shrimps x1
+Skilling,Smithing,smithing:smelt_gold,Smelt gold bar,40,4,1500,124,,,144,-20,186000,-30000,Product: Gold Bar x1 | Materials: Gold Ore x1
+Skilling,Crafting,crafting:hard_leather_body,Craft hard leather body,28,5,1200,132,,,161,-29,158400,-34800,Product: Hard Leather Body x1 | Materials: Hard Leather x1
+Skilling,Fletching,fletching:arrow_shafts,Cut arrow shafts (15),1,2,3000,15,,,27,-12,45000,-36000,Product: Arrow Shaft x15 | Materials: Logs x1
+Farming,Tree,magic_sapling,"Magic (Tree, per patch)",75,,0.40909090909090906,909,,909,97691,-96782,371.8636363636363,-39592.63636363636,Per patch. Crop: Magic Logs x1. Growth: 2.44 hours.
+Skilling,Firemaking,firemaking:maple_logs,Burn maple logs,45,2,3000,0,,,15,-15,0,-45000,Materials: Maple Logs x1
+Skilling,Crafting,crafting:sapphire_amulet,String sapphire amulet,24,4,1500,401,,,432,-31,601500,-46500,"Product: Sapphire Amulet x1 | Materials: Sapphire x1, Gold Bar x1"
+Skilling,Fletching,fletching:oak_shortbow_u_cut,Cut oak shortbow (u),20,3,2000,7,,,34,-27,14000,-54000,Product: Oak Shortbow (U) x1 | Materials: Oak Logs x1
+Skilling,Fletching,fletching:willow_shortbow_string,String willow shortbow,35,4,1500,92,,,130,-38,138000,-57000,"Product: Willow Shortbow x1 | Materials: Willow Shortbow (U) x1, Bowstring x1"
+Skilling,Prayer,prayer:bury_bones,Bury bones,1,3,2000,0,,,29,-29,0,-58000,Materials: Bones x1
+Skilling,Prayer,prayer:altar_bones,Use gilded altar (bones),1,3,2000,0,,,29,-29,0,-58000,Materials: Bones x1
+Skilling,Smithing,smithing:smith_bronze_scimitar,Smith bronze scimitar,4,5,1200,71,,,120,-49,85200,-58800,Product: Bronze Scimitar x1 | Materials: Bronze Bar x2
+Skilling,Smithing,smithing:smith_iron_axe,Smith iron axe,16,5,1200,95,,,144,-49,114000,-58800,Product: Iron Axe x1 | Materials: Iron Bar x1
+Skilling,Firemaking,firemaking:willow_logs,Burn willow logs,30,2,3000,0,,,21,-21,0,-63000,Materials: Willow Logs x1
+Farming,Herb,ranarr_seed:all-patches,"Ranarr (Herb, all 5 patches)",52,,3.75,27490,,27490,123115,-95625,20617.5,-71718.75,All available herb patches from farming.json. Crop: Ranarr Weed x1. Growth: 1.33 hours.
+Skilling,Smithing,smithing:smith_bronze_bolts_unf,Smith bronze bolts (unf) (10),9,4,1500,10,,,60,-50,15000,-75000,Product: Bronze Bolt (Unf) x10 | Materials: Bronze Bar x1
+Skilling,Fletching,fletching:magic_shortbow_string,String magic shortbow,80,6,1000,814,,,893,-79,814000,-79000,"Product: Magic Shortbow x1 | Materials: Magic Shortbow (U) x1, Bowstring x1"
+Farming,Fruit tree,palm_sapling:all-patches,"Palm (Fruit tree, all 7 patches)",68,,3.3157894736842106,2100,,2100,170450,-168350,994.7368421052631,-79744.73684210527,All available fruit tree patches from farming.json. Crop: Palm Fruit x6. Growth: 2.11 hours.
+Skilling,Firemaking,firemaking:normal_logs,Burn logs,1,2,3000,0,,,27,-27,0,-81000,Materials: Logs x1
+Skilling,Firemaking,firemaking:oak_logs,Burn oak logs,15,2,3000,0,,,34,-34,0,-102000,Materials: Oak Logs x1
+Skilling,Crafting,crafting:cut_sapphire,Cut sapphire,20,3,2000,308,,,364,-56,616000,-112000,Product: Sapphire x1 | Materials: Uncut Sapphire x1
+Skilling,Fletching,fletching:magic_shortbow_u_cut,Cut magic shortbow (u),80,6,1000,793,,,909,-116,793000,-116000,Product: Magic Shortbow (U) x1 | Materials: Magic Logs x1
+Farming,Tree,yew_sapling:all-patches,"Yew (Tree, all 10 patches)",60,,4.090909090909091,1270,,1270,300750,-299480,519.5454545454545,-122514.54545454544,All available tree patches from farming.json. Crop: Yew Logs x1. Growth: 2.44 hours.
+Skilling,Fletching,fletching:shortbow_string,String shortbow,5,3,2000,50,,,116,-66,100000,-132000,"Product: Shortbow x1 | Materials: Shortbow (U) x1, Bowstring x1"
+Skilling,Magic,magic:superheat,Superheat Item (iron ore),43,5,1200,144,,,257,-113,172800,-135600,"Product: Iron Bar x1 | Materials: Iron Ore x1, Coal x1"
+Skilling,Smithing,smithing:smith_steel_pickaxe,Smith steel pickaxe,31,5,1200,470,,,595,-125,564000,-150000,Product: Steel Pickaxe x1 | Materials: Steel Bar x1
+Skilling,Fletching,fletching:oak_shortbow_string,String oak shortbow,20,3,2000,31,,,107,-76,62000,-152000,"Product: Oak Shortbow x1 | Materials: Oak Shortbow (U) x1, Bowstring x1"
+Skilling,Crafting,crafting:leather_chaps,Craft leather chaps,18,5,1200,17,,,148,-131,20400,-157200,Product: Leather Chaps x1 | Materials: Leather x1
+Skilling,Crafting,crafting:leather_body,Craft leather body,14,5,1200,13,,,148,-135,15600,-162000,Product: Leather Body x1 | Materials: Leather x1
+Skilling,Crafting,crafting:zenyte_necklace,String zenyte necklace,98,4,1500,20125003,,,20125124,-121,30187504500,-181500,"Product: Zenyte Necklace x1 | Materials: Zenyte x1, Gold Bar x1"
+Skilling,Smithing,smithing:smith_iron_bolts_unf,Smith iron bolts (unf) (10),18,4,1500,20,,,144,-124,30000,-186000,Product: Iron Bolt (Unf) x10 | Materials: Iron Bar x1
+Skilling,Crafting,crafting:leather_coif,Craft leather cowl,9,4,1500,11,,,148,-137,16500,-205500,Product: Leather Cowl x1 | Materials: Leather x1
+Skilling,Crafting,crafting:leather_boots,Craft leather boots,7,3,2000,40,,,148,-108,80000,-216000,Product: Leather Boots x1 | Materials: Leather x1
+Skilling,Crafting,crafting:cut_emerald,Cut emerald,27,3,2000,520,,,643,-123,1040000,-246000,Product: Emerald x1 | Materials: Uncut Emerald x1
+Skilling,Smithing,smithing:smith_iron_scimitar,Smith iron scimitar,19,5,1200,74,,,288,-214,88800,-256800,Product: Iron Scimitar x1 | Materials: Iron Bar x2
+Skilling,Herblore,herblore:attack_potion,Make attack potion,1,3,2000,150,,,284,-134,300000,-268000,"Product: Attack Potion x1 | Materials: Guam Leaf x1, Eye of Newt x1"
+Skilling,Crafting,crafting:leather_gloves,Craft leather gloves,1,3,2000,2,,,148,-146,4000,-292000,Product: Leather Gloves x1 | Materials: Leather x1
+Skilling,Fletching,fletching:bronze_arrows,Make bronze arrows (15),1,3,2000,60,,,210,-150,120000,-300000,Product: Bronze Arrow x15 | Materials: Headless Arrow x15
+Skilling,Herblore,herblore:ranging_potion,Make ranging potion,72,3,2000,3000,,,3153,-153,6000000,-306000,"Product: Ranging Potion x1 | Materials: Dwarf Weed x1, Wine of Zamorak x1"
+Skilling,Smithing,smithing:smith_adamant_pickaxe,Smith adamant pickaxe,71,5,1200,1750,,,2048,-298,2100000,-357600,Product: Adamant Pickaxe x1 | Materials: Adamant Bar x1
+Skilling,Fletching,fletching:iron_arrows,Make iron arrows (15),15,3,2000,105,,,285,-180,210000,-360000,"Product: Iron Arrow x15 | Materials: Headless Arrow x15, Iron Arrowtips x15"
+Skilling,Firemaking,firemaking:yew_logs,Burn yew logs,60,2,3000,0,,,127,-127,0,-381000,Materials: Yew Logs x1
+Farming,Tree,magic_sapling:all-patches,"Magic (Tree, all 10 patches)",75,,4.090909090909091,9090,,9090,976910,-967820,3718.636363636363,-395926.3636363636,All available tree patches from farming.json. Crop: Magic Logs x1. Growth: 2.44 hours.
+Skilling,Fletching,fletching:steel_arrows,Make steel arrows (15),30,3,2000,165,,,405,-240,330000,-480000,"Product: Steel Arrow x15 | Materials: Headless Arrow x15, Steel Arrowtips x15"
+Skilling,Prayer,prayer:bury_big_bones,Bury big bones,5,3,2000,0,,,250,-250,0,-500000,Materials: Big Bones x1
+Skilling,Prayer,prayer:altar_big_bones,Use gilded altar (big bones),5,3,2000,0,,,250,-250,0,-500000,Materials: Big Bones x1
+Skilling,Smithing,smithing:smith_steel_axe,Smith steel axe,31,5,1200,155,,,595,-440,186000,-528000,Product: Steel Axe x1 | Materials: Steel Bar x1
+Skilling,Smithing,smithing:smith_mithril_pickaxe,Smith mithril pickaxe,51,5,1200,469,,,994,-525,562800,-630000,Product: Mithril Pickaxe x1 | Materials: Mithril Bar x1
+Skilling,Crafting,crafting:dragonstone_amulet,String dragonstone amulet,80,4,1500,10878,,,11323,-445,16317000,-667500,"Product: Dragonstone Amulet x1 | Materials: Dragonstone x1, Gold Bar x1"
+Skilling,Crafting,crafting:cut_ruby,Cut ruby,34,3,2000,958,,,1322,-364,1916000,-728000,Product: Ruby x1 | Materials: Uncut Ruby x1
+Skilling,Smithing,smithing:smith_steel_bolts_unf,Smith steel bolts (unf) (10),33,4,1500,40,,,595,-555,60000,-832500,Product: Steel Bolt (Unf) x10 | Materials: Steel Bar x1
+Skilling,Smithing,smithing:smith_mithril_axe,Smith mithril axe,51,5,1200,201,,,994,-793,241200,-951600,Product: Mithril Axe x1 | Materials: Mithril Bar x1
+Skilling,Fletching,fletching:mithril_arrows,Make mithril arrows (15),45,3,2000,135,,,765,-630,270000,-1260000,"Product: Mithril Arrow x15 | Materials: Headless Arrow x15, Mithril Arrowtips x15"
+Skilling,Smithing,smithing:smith_steel_scimitar,Smith steel scimitar,34,5,1200,85,,,1190,-1105,102000,-1326000,Product: Steel Scimitar x1 | Materials: Steel Bar x2
+Skilling,Smithing,smithing:smith_mithril_bolts_unf,Smith mithril bolts (unf) (10),53,4,1500,70,,,994,-924,105000,-1386000,Product: Mithril Bolt (Unf) x10 | Materials: Mithril Bar x1
+Skilling,Herblore,herblore:super_strength,Make super strength,55,3,2000,2000,,,2845,-845,4000000,-1690000,"Product: Super Strength x1 | Materials: Kwuarm x1, Limpwurt Root x1"
+Skilling,Crafting,crafting:green_dhide_body,Craft green d'hide body,63,5,1200,4405,,,5880,-1475,5286000,-1770000,Product: Green D'Hide Body x1 | Materials: Green Dragon Leather x3
+Skilling,Smithing,smithing:smith_adamant_axe,Smith adamant axe,71,5,1200,570,,,2048,-1478,684000,-1773600,Product: Adamant Axe x1 | Materials: Adamant Bar x1
+Skilling,Smithing,smithing:smith_mithril_scimitar,Smith mithril scimitar,54,5,1200,452,,,1988,-1536,542400,-1843200,Product: Mithril Scimitar x1 | Materials: Mithril Bar x2
+Skilling,Crafting,crafting:green_dhide_chaps,Craft green d'hide chaps,57,5,1200,2239,,,3920,-1681,2686800,-2017200,Product: Green D'Hide Chaps x1 | Materials: Green Dragon Leather x2
+Skilling,Fletching,fletching:adamant_arrows,Make adamant arrows (15),60,3,2000,630,,,1740,-1110,1260000,-2220000,"Product: Adamant Arrow x15 | Materials: Headless Arrow x15, Adamant Arrowtips x15"
+Skilling,Firemaking,firemaking:redwood_logs,Burn redwood logs,90,2,3000,0,,,819,-819,0,-2457000,Materials: Redwood Logs x1
+Skilling,Crafting,crafting:cut_diamond,Cut diamond,43,3,2000,1820,,,3052,-1232,3640000,-2464000,Product: Diamond x1 | Materials: Uncut Diamond x1
+Skilling,Firemaking,firemaking:magic_logs,Burn magic logs,75,2,3000,0,,,909,-909,0,-2727000,Materials: Magic Logs x1
+Skilling,Herblore,herblore:magic_potion,Make magic potion,76,3,2000,350,,,1810,-1460,700000,-2920000,"Product: Magic Potion x1 | Materials: Lantadyme x1, Potato Cactus x1"
+Skilling,Smithing,smithing:smith_adamant_bolts_unf,Smith adamant bolts (unf) (10),73,4,1500,100,,,2048,-1948,150000,-2922000,Product: Adamant Bolt (Unf) x10 | Materials: Adamant Bar x1
+Skilling,Smithing,smithing:smith_adamant_scimitar,Smith adamant scimitar,74,5,1200,1479,,,4096,-2617,1774800,-3140400,Product: Adamant Scimitar x1 | Materials: Adamant Bar x2
+Skilling,Herblore,herblore:saradomin_brew,Make saradomin brew,81,3,2000,600,,,2527,-1927,1200000,-3854000,"Product: Saradomin Brew x1 | Materials: Toadflax x1, Crushed Bird's Nest x1"
+Skilling,Fletching,fletching:rune_arrows,Make rune arrows (15),75,3,2000,1170,,,3525,-2355,2340000,-4710000,"Product: Rune Arrow x15 | Materials: Headless Arrow x15, Rune Arrowtips x15"
+Skilling,Herblore,herblore:prayer_potion,Make prayer potion,38,3,2000,3500,,,6073,-2573,7000000,-5146000,"Product: Prayer Potion x1 | Materials: Ranarr Weed x1, Snape Grass x1"
+Skilling,Crafting,crafting:red_dhide_body,Craft red d'hide body,75,6,1000,5954,,,11584,-5630,5954000,-5630000,Product: Red D'Hide Body x1 | Materials: Red Dragon Leather x4
+Skilling,Prayer,prayer:bury_dragon_bones,Bury dragon bones,35,3,2000,0,,,2815,-2815,0,-5630000,Materials: Dragon Bones x1
+Skilling,Prayer,prayer:altar_dragon_bones,Use gilded altar (dragon bones),35,3,2000,0,,,2815,-2815,0,-5630000,Materials: Dragon Bones x1
+Skilling,Smithing,smithing:smith_rune_axe,Smith rune axe,86,5,1200,7401,,,12500,-5099,8881200,-6118800,Product: Rune Axe x1 | Materials: Rune Bar x1
+Skilling,Herblore,herblore:super_defence,Make super defence,66,3,2000,400,,,3516,-3116,800000,-6232000,"Product: Super Defence x1 | Materials: Cadantine x1, White Berries x1"
+Skilling,Herblore,herblore:super_restore,Make super restore,63,3,2000,5000,,,8733,-3733,10000000,-7466000,"Product: Super Restore x1 | Materials: Snapdragon x1, Red Spiders' Eggs x1"
+Skilling,Herblore,herblore:super_combat_potion,Make super combat potion,90,3,2000,7500,,,11387,-3887,15000000,-7774000,"Product: Super Combat x1 | Materials: Torstol x1, Super Attack x1, Super Strength x1, Super Defence x1, Ranging Potion x1, Magic Potion x1"
+Skilling,Herblore,herblore:defence_potion,Make defence potion,30,3,2000,150,,,5945,-5795,300000,-11590000,"Product: Defence Potion x1 | Materials: Ranarr Weed x1, White Berries x1"
+Skilling,Fletching,fletching:cut_dragonstone_bolt_tips,Cut dragonstone bolt tips (12),71,2,3000,7260,,,11199,-3939,21780000,-11817000,Product: Dragonstone Bolt Tips x12 | Materials: Dragonstone x1
+Skilling,Smithing,smithing:smith_rune_scimitar,Smith rune scimitar,89,5,1200,14925,,,25000,-10075,17910000,-12090000,Product: Rune Scimitar x1 | Materials: Rune Bar x2
+Skilling,Crafting,crafting:cut_dragonstone,Cut dragonstone,55,3,2000,11199,,,17990,-6791,22398000,-13582000,Product: Dragonstone x1 | Materials: Uncut Dragonstone x1
+Skilling,Fletching,fletching:tip_onyx_dragon_bolts,Tip onyx dragon bolts (10),84,3,2000,88000,,,95000,-7000,176000000,-14000000,"Product: Onyx Dragon Bolt x10 | Materials: Dragon Bolt x10, Onyx Bolt Tips x10"
+Skilling,Fletching,fletching:tip_onyx_bolts,Tip onyx bolts (10),73,3,2000,75000,,,83420,-8420,150000000,-16840000,"Product: Onyx Bolt x10 | Materials: Runite Bolt x10, Onyx Bolt Tips x10"
+Skilling,Smithing,smithing:smith_runite_bolts_unf,Smith runite bolts (unf) (10),88,4,1500,350,,,12500,-12150,525000,-18225000,Product: Runite Bolt (Unf) x10 | Materials: Rune Bar x1
+Skilling,Prayer,prayer:bury_dagganoth_bones,Bury dagganoth bones,40,3,2000,0,,,14448,-14448,0,-28896000,Materials: Dagannoth Bones x1
+Skilling,Prayer,prayer:altar_dagganoth_bones,Use gilded altar (dagganoth bones),40,3,2000,0,,,14448,-14448,0,-28896000,Materials: Dagannoth Bones x1
+Skilling,Magic,magic:enchant_zenyte_amulet,Enchant Zenyte Amulet,93,3,2000,20539001,,,20570000,-30999,41078002000,-61998000,Product: Amulet of Torture x1 | Materials: Zenyte Amulet x1
+Skilling,Crafting,crafting:cut_zenyte,Cut zenyte,89,3,2000,20125000,,,20252943,-127943,40250000000,-255886000,Product: Zenyte x1 | Materials: Uncut Zenyte x1
+Skilling,Magic,magic:enchant_zenyte_bracelet,Enchant Zenyte Bracelet,93,3,2000,20377850,,,20512727,-134877,40755700000,-269754000,Product: Tormented Bracelet x1 | Materials: Zenyte Bracelet x1
+Skilling,Crafting,crafting:onyx_amulet,String onyx amulet,90,4,1500,2424513,,,2641489,-216976,3636769500,-325464000,"Product: Onyx Amulet x1 | Materials: Onyx x1, Gold Bar x1"
+Skilling,Fletching,fletching:cut_onyx_bolt_tips,Cut onyx bolt tips (12),73,2,3000,99600,,,2641365,-2541765,298800000,-7625295000,Product: Onyx Bolt Tips x12 | Materials: Onyx x1
