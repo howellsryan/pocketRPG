@@ -1,7 +1,7 @@
 {
   "chicken": {
     "id": "chicken",
-    "name": "Chicken",
+    "name": "Field Chicken",
     "combatLevel": 1,
     "hitpoints": 3,
     "stats": {
@@ -50,7 +50,7 @@
   },
   "goblin": {
     "id": "goblin",
-    "name": "Goblin",
+    "name": "Cave Goblin",
     "combatLevel": 5,
     "hitpoints": 5,
     "stats": {
@@ -172,7 +172,7 @@
   },
   "cow": {
     "id": "cow",
-    "name": "Cow",
+    "name": "Pasture Bull",
     "combatLevel": 8,
     "hitpoints": 8,
     "stats": {
@@ -218,7 +218,7 @@
   },
   "giant_spider": {
     "id": "giant_spider",
-    "name": "Giant Spider",
+    "name": "Broodfang Spider",
     "combatLevel": 27,
     "hitpoints": 26,
     "stats": {
@@ -335,7 +335,7 @@
   },
   "lesser_demon": {
     "id": "lesser_demon",
-    "name": "Lesser Demon",
+    "name": "Lesser Fiend",
     "combatLevel": 82,
     "hitpoints": 79,
     "stats": {
@@ -457,7 +457,7 @@
   },
   "rock_crab": {
     "id": "rock_crab",
-    "name": "Rock Crab",
+    "name": "Stoneback Crab",
     "combatLevel": 13,
     "hitpoints": 50,
     "stats": {
@@ -589,7 +589,7 @@
   },
   "sand_crab": {
     "id": "sand_crab",
-    "name": "Sand Crab",
+    "name": "Duneback Crab",
     "combatLevel": 15,
     "hitpoints": 60,
     "stats": {
@@ -721,7 +721,7 @@
   },
   "hill_giant": {
     "id": "hill_giant",
-    "name": "Hill Giant",
+    "name": "Highland Giant",
     "combatLevel": 28,
     "hitpoints": 35,
     "stats": {
@@ -883,7 +883,7 @@
   },
   "moss_giant": {
     "id": "moss_giant",
-    "name": "Moss Giant",
+    "name": "Briar Giant",
     "combatLevel": 42,
     "hitpoints": 60,
     "stats": {
@@ -1054,7 +1054,7 @@
   },
   "wizard": {
     "id": "wizard",
-    "name": "Wizard",
+    "name": "Arcane Adept",
     "combatLevel": 9,
     "hitpoints": 17,
     "stats": {
@@ -1177,7 +1177,7 @@
   },
   "dark_wizard": {
     "id": "dark_wizard",
-    "name": "Dark Wizard",
+    "name": "Umbral Adept",
     "combatLevel": 20,
     "hitpoints": 24,
     "stats": {
@@ -1500,7 +1500,7 @@
   },
   "blood_veld": {
     "id": "blood_veld",
-    "name": "Blood Veld",
+    "name": "Sanguine Veld",
     "combatLevel": 76,
     "hitpoints": 75,
     "slayerRequirement": 50,
@@ -1613,7 +1613,7 @@
   },
   "nechryael": {
     "id": "nechryael",
-    "name": "Nechryael",
+    "name": "Nether Wraith",
     "combatLevel": 115,
     "hitpoints": 105,
     "slayerRequirement": 80,
@@ -1715,7 +1715,7 @@
   },
   "skeletal_wyvern": {
     "id": "skeletal_wyvern",
-    "name": "Skeletal Wyvern",
+    "name": "Bone Wyvern",
     "combatLevel": 140,
     "hitpoints": 130,
     "slayerRequirement": 72,
@@ -1822,7 +1822,7 @@
   },
   "smoke_devil": {
     "id": "smoke_devil",
-    "name": "Smoke Devil",
+    "name": "Cinder Devil",
     "combatLevel": 160,
     "hitpoints": 95,
     "slayerRequirement": 85,
@@ -2736,7 +2736,7 @@
   },
   "green_dragon": {
     "id": "green_dragon",
-    "name": "Green Dragon",
+    "name": "Verdant Drake",
     "isDragon": true,
     "combatLevel": 79,
     "hitpoints": 75,
@@ -2905,7 +2905,7 @@
   },
   "red_dragon": {
     "id": "red_dragon",
-    "name": "Red Dragon",
+    "name": "Crimson Drake",
     "combatLevel": 152,
     "hitpoints": 140,
     "stats": {
@@ -5878,7 +5878,7 @@
   },
   "banshee": {
     "id": "banshee",
-    "name": "Banshee",
+    "name": "Wailing Banshee",
     "combatLevel": 23,
     "hitpoints": 22,
     "slayerRequirement": 15,
@@ -5979,7 +5979,7 @@
   },
   "aberrant_spectre": {
     "id": "aberrant_spectre",
-    "name": "Aberrant Spectre",
+    "name": "Warped Spectre",
     "combatLevel": 96,
     "hitpoints": 90,
     "slayerRequirement": 60,
@@ -6111,7 +6111,7 @@
   },
   "wyrm": {
     "id": "wyrm",
-    "name": "Wyrm",
+    "name": "Ash Wyrm",
     "combatLevel": 99,
     "hitpoints": 130,
     "slayerRequirement": 62,
@@ -6219,7 +6219,7 @@
   },
   "spiritual_warrior": {
     "id": "spiritual_warrior",
-    "name": "Spiritual Warrior",
+    "name": "Astral Warrior",
     "combatLevel": 134,
     "hitpoints": 145,
     "slayerRequirement": 68,
@@ -6321,7 +6321,7 @@
   },
   "spiritual_mage": {
     "id": "spiritual_mage",
-    "name": "Spiritual Mage",
+    "name": "Astral Mage",
     "combatLevel": 120,
     "hitpoints": 115,
     "slayerRequirement": 83,
@@ -6428,7 +6428,7 @@
   },
   "spiritual_ranger": {
     "id": "spiritual_ranger",
-    "name": "Spiritual Ranger",
+    "name": "Astral Ranger",
     "combatLevel": 113,
     "hitpoints": 105,
     "slayerRequirement": 63,
@@ -6536,7 +6536,7 @@
   },
   "gargoyle": {
     "id": "gargoyle",
-    "name": "Gargoyle",
+    "name": "Runestone Gargoyle",
     "combatLevel": 111,
     "hitpoints": 105,
     "slayerRequirement": 75,
@@ -6638,7 +6638,7 @@
   },
   "brutal_black_dragon": {
     "id": "brutal_black_dragon",
-    "name": "Brutal Black Dragon",
+    "name": "Dread Black Drake",
     "isDragon": true,
     "combatLevel": 318,
     "hitpoints": 315,
@@ -6765,7 +6765,7 @@
   },
   "dark_beast": {
     "id": "dark_beast",
-    "name": "Dark Beast",
+    "name": "Nightfang Beast",
     "combatLevel": 182,
     "hitpoints": 220,
     "slayerRequirement": 90,
@@ -6878,7 +6878,7 @@
   },
   "cerberus": {
     "id": "cerberus",
-    "name": "Cerberus",
+    "name": "Threefang Cerberus",
     "boss": true,
     "combatLevel": 318,
     "hitpoints": 600,
