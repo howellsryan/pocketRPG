@@ -729,7 +729,7 @@
   },
   {
     "id": "dragon_slayer_i",
-    "name": "Drake Slayer I",
+    "name": "Dragon Slayer I",
     "complexity": "Experienced",
     "length": "Long",
     "durationSeconds": 3600,
@@ -748,7 +748,7 @@
   },
   {
     "id": "dragon_slayer_ii",
-    "name": "Drake Slayer II",
+    "name": "Dragon Slayer II",
     "complexity": "Grandmaster",
     "length": "Very Long",
     "durationSeconds": 36000,
@@ -1727,7 +1727,7 @@
   },
   {
     "id": "monkey_madness_i",
-    "name": "Moonfang Madness I",
+    "name": "Gorilla Slayer I",
     "complexity": "Master",
     "length": "Long",
     "durationSeconds": 9000,
@@ -1748,7 +1748,7 @@
   },
   {
     "id": "monkey_madness_ii",
-    "name": "Moonfang Madness II",
+    "name": "Gorilla Slayer II",
     "complexity": "Grandmaster",
     "length": "Very Long",
     "durationSeconds": 36000,
