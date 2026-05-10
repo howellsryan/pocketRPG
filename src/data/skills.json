@@ -80,7 +80,7 @@
         "name": "Mine runite ore",
         "level": 85,
         "ticks": 30,
-        "xp": 125,
+        "xp": 416.667,
         "product": "runite_ore"
       },
       {
@@ -502,7 +502,7 @@
         "name": "Smith rune axe",
         "level": 86,
         "ticks": 10,
-        "xp": 200,
+        "xp": 400,
         "product": "rune_axe",
         "materials": {
           "rune_bar": 1
@@ -513,7 +513,7 @@
         "name": "Smith rune pickaxe",
         "level": 86,
         "ticks": 10,
-        "xp": 200,
+        "xp": 400,
         "product": "rune_pickaxe",
         "materials": {
           "rune_bar": 1
@@ -524,7 +524,7 @@
         "name": "Smith rune scimitar",
         "level": 89,
         "ticks": 10,
-        "xp": 150,
+        "xp": 300,
         "product": "rune_scimitar",
         "materials": {
           "rune_bar": 2
@@ -1027,7 +1027,7 @@
         "name": "Make bronze bolts (10)",
         "level": 9,
         "ticks": 15,
-        "xp": 5,
+        "xp": 25,
         "product": "bronze_bolts",
         "productQty": 10,
         "materials": {
@@ -1040,7 +1040,7 @@
         "name": "Make iron bolts (10)",
         "level": 39,
         "ticks": 15,
-        "xp": 10,
+        "xp": 50,
         "product": "iron_bolts",
         "productQty": 10,
         "materials": {
@@ -1053,7 +1053,7 @@
         "name": "Make steel bolts (10)",
         "level": 46,
         "ticks": 15,
-        "xp": 35,
+        "xp": 175,
         "product": "steel_bolts",
         "productQty": 10,
         "materials": {
@@ -1066,7 +1066,7 @@
         "name": "Make mithril bolts (10)",
         "level": 54,
         "ticks": 15,
-        "xp": 50,
+        "xp": 250,
         "product": "mithril_bolts",
         "productQty": 10,
         "materials": {
@@ -1079,7 +1079,7 @@
         "name": "Make adamant bolts (10)",
         "level": 61,
         "ticks": 15,
-        "xp": 70,
+        "xp": 350,
         "product": "adamant_bolts",
         "productQty": 10,
         "materials": {
@@ -1092,7 +1092,7 @@
         "name": "Make runite bolts (10)",
         "level": 69,
         "ticks": 15,
-        "xp": 100,
+        "xp": 500,
         "product": "runite_bolts",
         "productQty": 10,
         "materials": {
@@ -1105,7 +1105,7 @@
         "name": "Make dragon bolts (10)",
         "level": 84,
         "ticks": 15,
-        "xp": 120,
+        "xp": 600,
         "product": "dragon_bolts",
         "productQty": 10,
         "materials": {
@@ -1166,7 +1166,7 @@
         "name": "Tip ruby bolts (10)",
         "level": 63,
         "ticks": 30,
-        "xp": 63,
+        "xp": 630,
         "product": "ruby_bolts",
         "productQty": 10,
         "materials": {
@@ -1179,7 +1179,7 @@
         "name": "Tip diamond bolts (10)",
         "level": 65,
         "ticks": 30,
-        "xp": 70,
+        "xp": 700,
         "product": "diamond_bolts",
         "productQty": 10,
         "materials": {
@@ -1192,7 +1192,7 @@
         "name": "Tip dragonstone bolts (10)",
         "level": 71,
         "ticks": 30,
-        "xp": 82,
+        "xp": 820,
         "product": "dragonstone_bolts",
         "productQty": 10,
         "materials": {
@@ -1205,7 +1205,7 @@
         "name": "Tip onyx bolts (10)",
         "level": 73,
         "ticks": 30,
-        "xp": 94,
+        "xp": 940,
         "product": "onyx_bolts",
         "productQty": 10,
         "materials": {
@@ -1218,7 +1218,7 @@
         "name": "Tip ruby dragon bolts (10)",
         "level": 84,
         "ticks": 30,
-        "xp": 70,
+        "xp": 700,
         "product": "ruby_dragon_bolts",
         "productQty": 10,
         "materials": {
@@ -1231,7 +1231,7 @@
         "name": "Tip diamond dragon bolts (10)",
         "level": 84,
         "ticks": 30,
-        "xp": 75,
+        "xp": 750,
         "product": "diamond_dragon_bolts",
         "productQty": 10,
         "materials": {
@@ -1244,7 +1244,7 @@
         "name": "Tip dragonstone dragon bolts (10)",
         "level": 84,
         "ticks": 30,
-        "xp": 90,
+        "xp": 900,
         "product": "dragonstone_dragon_bolts",
         "productQty": 10,
         "materials": {
@@ -1257,7 +1257,7 @@
         "name": "Tip onyx dragon bolts (10)",
         "level": 84,
         "ticks": 30,
-        "xp": 100,
+        "xp": 1000,
         "product": "onyx_dragon_bolts",
         "productQty": 10,
         "materials": {
@@ -1778,7 +1778,7 @@
         "name": "Make super combat potion",
         "level": 90,
         "ticks": 6,
-        "xp": 250,
+        "xp": 500,
         "product": "super_combat_potion",
         "materials": {
           "torstol": 1,
@@ -2024,7 +2024,7 @@
         "name": "Enchant Sapphire",
         "level": 7,
         "ticks": 30,
-        "xp": 17,
+        "xp": 170,
         "type": "enchant_jewel",
         "product": "amulet_of_magic",
         "runeReq": {
@@ -2040,7 +2040,7 @@
         "name": "Enchant Ruby",
         "level": 49,
         "ticks": 30,
-        "xp": 59,
+        "xp": 590,
         "type": "enchant_jewel",
         "product": "amulet_of_strength",
         "runeReq": {
@@ -2056,7 +2056,7 @@
         "name": "Enchant Diamond",
         "level": 57,
         "ticks": 30,
-        "xp": 67,
+        "xp": 670,
         "type": "enchant_jewel",
         "product": "amulet_of_power",
         "runeReq": {
@@ -2072,7 +2072,7 @@
         "name": "Enchant Dragonstone",
         "level": 68,
         "ticks": 30,
-        "xp": 78,
+        "xp": 780,
         "type": "enchant_jewel",
         "product": "amulet_of_glory",
         "runeReq": {
@@ -2101,7 +2101,7 @@
         "name": "Enchant Onyx",
         "level": 87,
         "ticks": 30,
-        "xp": 97,
+        "xp": 970,
         "type": "enchant_jewel",
         "product": "amulet_of_fury",
         "runeReq": {
@@ -2117,7 +2117,7 @@
         "name": "Enchant Zenyte Amulet",
         "level": 93,
         "ticks": 30,
-        "xp": 110,
+        "xp": 1100,
         "type": "enchant_jewel",
         "product": "amulet_of_torture",
         "runeReq": {
@@ -2134,7 +2134,7 @@
         "name": "Enchant Zenyte Bracelet",
         "level": 93,
         "ticks": 30,
-        "xp": 110,
+        "xp": 1100,
         "type": "enchant_jewel",
         "product": "tormented_bracelet",
         "runeReq": {
@@ -2151,7 +2151,7 @@
         "name": "Enchant Zenyte Necklace",
         "level": 93,
         "ticks": 30,
-        "xp": 110,
+        "xp": 1100,
         "type": "enchant_jewel",
         "product": "necklace_of_anguish",
         "runeReq": {
@@ -2168,7 +2168,7 @@
         "name": "Enchant Zenyte Ring",
         "level": 93,
         "ticks": 30,
-        "xp": 110,
+        "xp": 1100,
         "type": "enchant_jewel",
         "product": "ring_of_suffering",
         "runeReq": {
@@ -2185,7 +2185,7 @@
         "name": "Enchant Ruby Bolts (10)",
         "level": 49,
         "ticks": 30,
-        "xp": 59,
+        "xp": 590,
         "type": "enchant_bolts",
         "product": "ruby_bolts_e",
         "productQty": 10,
@@ -2203,7 +2203,7 @@
         "name": "Enchant Ruby Dragon Bolts (10)",
         "level": 49,
         "ticks": 30,
-        "xp": 59,
+        "xp": 590,
         "type": "enchant_bolts",
         "product": "ruby_dragon_bolts_e",
         "productQty": 10,
@@ -2221,7 +2221,7 @@
         "name": "Enchant Diamond Bolts (10)",
         "level": 57,
         "ticks": 30,
-        "xp": 67,
+        "xp": 670,
         "type": "enchant_bolts",
         "product": "diamond_bolts_e",
         "productQty": 10,
@@ -2239,7 +2239,7 @@
         "name": "Enchant Diamond Dragon Bolts (10)",
         "level": 57,
         "ticks": 30,
-        "xp": 67,
+        "xp": 670,
         "type": "enchant_bolts",
         "product": "diamond_dragon_bolts_e",
         "productQty": 10,
@@ -2257,7 +2257,7 @@
         "name": "Enchant Dragonstone Bolts (10)",
         "level": 68,
         "ticks": 30,
-        "xp": 78,
+        "xp": 780,
         "type": "enchant_bolts",
         "product": "dragonstone_bolts_e",
         "productQty": 10,
@@ -2275,7 +2275,7 @@
         "name": "Enchant Dragonstone Dragon Bolts (10)",
         "level": 68,
         "ticks": 30,
-        "xp": 78,
+        "xp": 780,
         "type": "enchant_bolts",
         "product": "dragonstone_dragon_bolts_e",
         "productQty": 10,
@@ -2293,7 +2293,7 @@
         "name": "Enchant Onyx Bolts (10)",
         "level": 87,
         "ticks": 30,
-        "xp": 97,
+        "xp": 970,
         "type": "enchant_bolts",
         "product": "onyx_bolts_e",
         "productQty": 10,
@@ -2311,7 +2311,7 @@
         "name": "Enchant Onyx Dragon Bolts (10)",
         "level": 87,
         "ticks": 30,
-        "xp": 97,
+        "xp": 970,
         "type": "enchant_bolts",
         "product": "onyx_dragon_bolts_e",
         "productQty": 10,
