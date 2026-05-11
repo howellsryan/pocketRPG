@@ -39,7 +39,15 @@ export function applyRewardClaim(saveObject, claim) {
 
   const dungeoneeringTokens = Math.floor(Number(claim?.dungeoneeringTokens) || 0)
   if (dungeoneeringTokens > 0) {
-    saveObject.dungeoneeringTokens = (Number(saveObject.dungeoneeringTokens) || 0) + dungeoneeringTokens
+    const topLevel = Number(saveObject?.dungeoneeringTokens)
+    const settingsLevel = Number(saveObject?.settings?.dungeoneeringTokens)
+    const cur = Number.isFinite(topLevel)
+      ? Math.floor(topLevel)
+      : (Number.isFinite(settingsLevel) ? Math.floor(settingsLevel) : 0)
+    const next = cur + dungeoneeringTokens
+    saveObject.dungeoneeringTokens = next
+    if (!saveObject.settings || typeof saveObject.settings !== 'object') saveObject.settings = {}
+    saveObject.settings.dungeoneeringTokens = next
   }
 
   return { granted, slayerPoints, dungeoneeringTokens }

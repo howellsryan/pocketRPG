@@ -26,6 +26,21 @@ function assertNonce(saveObject, nonce) {
   saveObject._serverActionNonces[nonce] = Date.now()
 }
 
+function getDungeoneeringTokenBalance(saveObject) {
+  const topLevel = Number(saveObject?.dungeoneeringTokens)
+  if (Number.isFinite(topLevel)) return Math.floor(topLevel)
+  const settingsLevel = Number(saveObject?.settings?.dungeoneeringTokens)
+  if (Number.isFinite(settingsLevel)) return Math.floor(settingsLevel)
+  return 0
+}
+
+function setDungeoneeringTokenBalance(saveObject, nextValue) {
+  const normalized = Math.max(0, Math.floor(Number(nextValue) || 0))
+  saveObject.dungeoneeringTokens = normalized
+  if (!saveObject.settings || typeof saveObject.settings !== 'object') saveObject.settings = {}
+  saveObject.settings.dungeoneeringTokens = normalized
+}
+
 export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce, rewards = [], consumptions = [], slayerPoints = 0, dungeoneeringTokens = 0 }) {
   assertNonce(saveObject, nonce)
 
@@ -55,9 +70,9 @@ export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce
 
   const dTokens = Math.floor(Number(dungeoneeringTokens) || 0)
   if (dTokens !== 0) {
-    const cur = Number(saveObject.dungeoneeringTokens) || 0
+    const cur = getDungeoneeringTokenBalance(saveObject)
     if (cur + dTokens < 0) throw new GameApiError('INSUFFICIENT_SUPPLIES', 'Insufficient supplies', 400)
-    saveObject.dungeoneeringTokens = cur + dTokens
+    setDungeoneeringTokenBalance(saveObject, cur + dTokens)
   }
 
   return { granted, slayerPoints: sPoints, dungeoneeringTokens: dTokens }

@@ -53,7 +53,7 @@ describe('action completion endpoint tamper guards', () => {
     const handler = makeCompletionHandler('dungeoneering', {
       requireAuth: async () => ({ identity: { id: 1 } }),
       assertNotInActiveMatch: async () => null,
-      loadCharacterWithSave: async () => ({ saveObject: { inventory: [], dungeoneeringTokens: 100000 }, saveRevision: 0 }),
+      loadCharacterWithSave: async () => ({ saveObject: { inventory: [], settings: { dungeoneeringTokens: 100000 } }, saveRevision: 0 }),
       writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
     })
     const req = new Request('https://example.com/api/actions/dungeoneering/complete', {
