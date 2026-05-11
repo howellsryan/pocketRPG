@@ -248,7 +248,7 @@
   },
   "rune_scimitar": {
     "id": "rune_scimitar",
-    "name": "Rune Scimitar",
+    "name": "Runeforged Scimitar",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": false,
@@ -611,7 +611,7 @@
   },
   "rune_med_helm": {
     "id": "rune_med_helm",
-    "name": "Rune Med Helm",
+    "name": "Runeforged Med Helm",
     "type": "armour",
     "slot": "head",
     "stackable": false,
@@ -2632,7 +2632,7 @@
   },
   "rune_axe": {
     "id": "rune_axe",
-    "name": "Rune Axe",
+    "name": "Runeforged Axe",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": false,
@@ -2854,7 +2854,7 @@
   },
   "rune_pickaxe": {
     "id": "rune_pickaxe",
-    "name": "Rune Pickaxe",
+    "name": "Runeforged Pickaxe",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": false,
@@ -5397,7 +5397,7 @@
   },
   "rune_full_helm": {
     "id": "rune_full_helm",
-    "name": "Rune Full Helm",
+    "name": "Runeforged Full Helm",
     "type": "armour",
     "slot": "head",
     "stackable": false,
@@ -5429,7 +5429,7 @@
   },
   "rune_platebody": {
     "id": "rune_platebody",
-    "name": "Rune Platebody",
+    "name": "Runeforged Platebody",
     "type": "armour",
     "slot": "body",
     "stackable": false,
@@ -5461,7 +5461,7 @@
   },
   "rune_platelegs": {
     "id": "rune_platelegs",
-    "name": "Rune Platelegs",
+    "name": "Runeforged Platelegs",
     "type": "armour",
     "slot": "legs",
     "stackable": false,
@@ -5493,7 +5493,7 @@
   },
   "rune_kiteshield": {
     "id": "rune_kiteshield",
-    "name": "Rune Kiteshield",
+    "name": "Runeforged Kiteshield",
     "type": "armour",
     "slot": "shield",
     "stackable": false,
@@ -5525,7 +5525,7 @@
   },
   "rune_chainbody": {
     "id": "rune_chainbody",
-    "name": "Rune Chainbody",
+    "name": "Runeforged Chainbody",
     "type": "armour",
     "slot": "body",
     "stackable": false,
@@ -6621,7 +6621,7 @@
   },
   "rune_sword": {
     "id": "rune_sword",
-    "name": "Rune Sword",
+    "name": "Runeforged Sword",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": false,
@@ -6656,7 +6656,7 @@
   },
   "rune_2h_sword": {
     "id": "rune_2h_sword",
-    "name": "Rune 2h Sword",
+    "name": "Runeforged 2h Sword",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": true,
@@ -6691,7 +6691,7 @@
   },
   "rune_plateskirt": {
     "id": "rune_plateskirt",
-    "name": "Rune Plateskirt",
+    "name": "Runeforged Plateskirt",
     "type": "armour",
     "slot": "legs",
     "stackable": false,
@@ -6723,7 +6723,7 @@
   },
   "rune_crossbow": {
     "id": "rune_crossbow",
-    "name": "Rune Crossbow",
+    "name": "Runeforged Crossbow",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": true,
@@ -11443,7 +11443,7 @@
   },
   "rune_defender": {
     "id": "rune_defender",
-    "name": "Rune Defender",
+    "name": "Runeforged Defender",
     "type": "armour",
     "slot": "shield",
     "stackable": false,
