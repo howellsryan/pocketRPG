@@ -1474,7 +1474,7 @@
       },
       {
         "id": "cut_zenyte",
-        "name": "Cut zenyte",
+        "name": "Cut zyrite",
         "level": 89,
         "ticks": 3,
         "xp": 200,
@@ -1566,7 +1566,7 @@
       },
       {
         "id": "zenyte_amulet",
-        "name": "String zenyte amulet",
+        "name": "String zyrite amulet",
         "level": 98,
         "ticks": 4,
         "xp": 200,
@@ -1578,7 +1578,7 @@
       },
       {
         "id": "zenyte_bracelet",
-        "name": "Craft zenyte bracelet",
+        "name": "Craft zyrite bracelet",
         "level": 98,
         "ticks": 4,
         "xp": 200,
@@ -1590,7 +1590,7 @@
       },
       {
         "id": "zenyte_necklace",
-        "name": "String zenyte necklace",
+        "name": "String zyrite necklace",
         "level": 98,
         "ticks": 4,
         "xp": 200,
@@ -1602,7 +1602,7 @@
       },
       {
         "id": "zenyte_ring",
-        "name": "Craft zenyte ring",
+        "name": "Craft zyrite ring",
         "level": 98,
         "ticks": 4,
         "xp": 200,
@@ -2103,7 +2103,7 @@
       },
       {
         "id": "enchant_zenyte_amulet",
-        "name": "Enchant Zenyte Amulet",
+        "name": "Enchant Zyrite Amulet",
         "level": 93,
         "ticks": 30,
         "xp": 1100,
@@ -2120,7 +2120,7 @@
       },
       {
         "id": "enchant_zenyte_bracelet",
-        "name": "Enchant Zenyte Bracelet",
+        "name": "Enchant Zyrite Bracelet",
         "level": 93,
         "ticks": 30,
         "xp": 1100,
@@ -2137,7 +2137,7 @@
       },
       {
         "id": "enchant_zenyte_necklace",
-        "name": "Enchant Zenyte Necklace",
+        "name": "Enchant Zyrite Necklace",
         "level": 93,
         "ticks": 30,
         "xp": 1100,
@@ -2154,7 +2154,7 @@
       },
       {
         "id": "enchant_zenyte_ring",
-        "name": "Enchant Zenyte Ring",
+        "name": "Enchant Zyrite Ring",
         "level": 93,
         "ticks": 30,
         "xp": 1100,
