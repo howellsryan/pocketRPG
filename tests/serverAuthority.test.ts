@@ -20,4 +20,10 @@ describe('server authority helpers', () => {
     const save: any = { inventory: Array.from({ length: 28 }, (_, i) => ({ id: `i${i}`, quantity: 1 })) }
     expect(() => addItemToInventory(save, 'new_item', 1)).toThrow(/Inventory is full/)
   })
+
+  it('ignores empty/null fixed slots when enforcing inventory cap', () => {
+    const save: any = { inventory: Array.from({ length: 28 }, () => null) }
+    expect(() => addItemToInventory(save, 'new_item', 1)).not.toThrow()
+    expect(save.inventory).toEqual([{ id: 'new_item', quantity: 1 }])
+  })
 })

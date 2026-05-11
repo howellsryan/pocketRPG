@@ -1,7 +1,18 @@
 import { GameApiError } from './errors.js'
 
 export function getInventory(save) {
-  if (!Array.isArray(save.inventory)) save.inventory = []
+  if (!Array.isArray(save.inventory)) {
+    save.inventory = []
+    return save.inventory
+  }
+  // Some historical/client payloads may store inventory as a fixed 28-slot
+  // array with null/empty entries. Normalize to occupied slots so slot-cap
+  // checks reflect actual item usage.
+  save.inventory = save.inventory.filter((slot) => {
+    if (!slot || typeof slot !== 'object') return false
+    if (typeof slot.id !== 'string' || !slot.id) return false
+    return (Number(slot.quantity) || 0) > 0
+  })
   return save.inventory
 }
 
