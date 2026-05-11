@@ -1942,7 +1942,7 @@
       },
       {
         "id": "bury_dagganoth_bones",
-        "name": "Bury dagganoth bones",
+        "name": "Bury nagadoth bones",
         "level": 40,
         "ticks": 3,
         "xp": 125,
@@ -1952,7 +1952,7 @@
       },
       {
         "id": "altar_dagganoth_bones",
-        "name": "Use gilded altar (dagganoth bones)",
+        "name": "Use gilded altar (nagadoth bones)",
         "level": 40,
         "ticks": 3,
         "xp": 437,
