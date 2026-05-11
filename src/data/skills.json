@@ -615,7 +615,7 @@
       },
       {
         "id": "make_bandos_godsword",
-        "name": "Attach Warlord hilt",
+        "name": "Attach Grondar hilt",
         "level": 80,
         "ticks": 100,
         "xp": 0,
@@ -627,7 +627,7 @@
       },
       {
         "id": "make_armadyl_godsword",
-        "name": "Attach Skyguard hilt",
+        "name": "Attach Zephyra hilt",
         "level": 80,
         "ticks": 100,
         "xp": 0,
@@ -639,7 +639,7 @@
       },
       {
         "id": "make_saradomin_godsword",
-        "name": "Attach Dawnbringer hilt",
+        "name": "Attach Lumira hilt",
         "level": 80,
         "ticks": 100,
         "xp": 0,
@@ -651,7 +651,7 @@
       },
       {
         "id": "make_zamorak_godsword",
-        "name": "Attach Dreadlord hilt",
+        "name": "Attach Krylth hilt",
         "level": 80,
         "ticks": 100,
         "xp": 0,
