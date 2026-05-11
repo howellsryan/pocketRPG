@@ -8931,6 +8931,7 @@
       "rangedStrength": 0,
       "magicDamage": 0
     },
+    "toolFor": "mining",
     "requirements": {
       "mining": 70
     },
@@ -8966,6 +8967,7 @@
       "rangedStrength": 0,
       "magicDamage": 0
     },
+    "toolFor": "woodcutting",
     "requirements": {
       "woodcutting": 70
     },
@@ -15062,6 +15064,7 @@
       "meleeStrength": 42,
       "woodcuttingLevel": 61
     },
+    "toolFor": "woodcutting",
     "defenceBonus": {
       "stab": 0,
       "slash": 0,

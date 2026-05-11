@@ -1089,7 +1089,7 @@
       },
       {
         "id": "make_runite_bolts",
-        "name": "Make runite bolts (10)",
+        "name": "Make runeforged bolts (10)",
         "level": 69,
         "ticks": 15,
         "xp": 500,
