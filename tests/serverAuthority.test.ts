@@ -16,6 +16,13 @@ describe('server authority helpers', () => {
     expect(() => subtractCoins(save, 100)).toThrow(/Insufficient/)
   })
 
+  it('allows purchases when coins are split between inventory and bank', () => {
+    const save: any = { coins: 50, bank: { coins: { quantity: 100 } } }
+    expect(() => subtractCoins(save, 125)).not.toThrow()
+    expect(save.coins).toBe(0)
+    expect(save.bank.coins.quantity).toBe(25)
+  })
+
   it('enforces inventory slot cap at 28', () => {
     const save: any = { inventory: Array.from({ length: 28 }, (_, i) => ({ itemId: `i${i}`, quantity: 1 })) }
     expect(() => addItemToInventory(save, 'new_item', 1)).toThrow(/Inventory is full/)
