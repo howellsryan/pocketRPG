@@ -1,6 +1,7 @@
 {
   "coins": {
     "id": "coins",
+    "legacy_item_id": "coins",
     "name": "Coins",
     "type": "currency",
     "stackable": true,
@@ -11,6 +12,7 @@
   },
   "bones": {
     "id": "bones",
+    "legacy_item_id": "bones",
     "name": "Bones",
     "type": "resource",
     "stackable": false,
@@ -20,6 +22,7 @@
   },
   "feathers": {
     "id": "feathers",
+    "legacy_item_id": "feathers",
     "name": "Feather",
     "type": "resource",
     "stackable": true,
@@ -29,6 +32,7 @@
   },
   "cowhide": {
     "id": "cowhide",
+    "legacy_item_id": "cowhide",
     "name": "Cowhide",
     "type": "resource",
     "stackable": false,
@@ -38,6 +42,7 @@
   },
   "bronze_dagger": {
     "id": "bronze_dagger",
+    "legacy_item_id": "bronze_dagger",
     "name": "Bronze Dagger",
     "type": "weapon",
     "slot": "weapon",
@@ -73,6 +78,7 @@
   },
   "bronze_scimitar": {
     "id": "bronze_scimitar",
+    "legacy_item_id": "bronze_scimitar",
     "name": "Bronze Scimitar",
     "type": "weapon",
     "slot": "weapon",
@@ -108,6 +114,7 @@
   },
   "iron_scimitar": {
     "id": "iron_scimitar",
+    "legacy_item_id": "iron_scimitar",
     "name": "Iron Scimitar",
     "type": "weapon",
     "slot": "weapon",
@@ -143,6 +150,7 @@
   },
   "steel_scimitar": {
     "id": "steel_scimitar",
+    "legacy_item_id": "steel_scimitar",
     "name": "Steel Scimitar",
     "type": "weapon",
     "slot": "weapon",
@@ -178,6 +186,7 @@
   },
   "mithril_scimitar": {
     "id": "mithril_scimitar",
+    "legacy_item_id": "mithril_scimitar",
     "name": "Mithril Scimitar",
     "type": "weapon",
     "slot": "weapon",
@@ -213,6 +222,7 @@
   },
   "adamant_scimitar": {
     "id": "adamant_scimitar",
+    "legacy_item_id": "adamant_scimitar",
     "name": "Adamant Scimitar",
     "type": "weapon",
     "slot": "weapon",
@@ -248,6 +258,7 @@
   },
   "rune_scimitar": {
     "id": "rune_scimitar",
+    "legacy_item_id": "rune_scimitar",
     "name": "Runeforged Scimitar",
     "type": "weapon",
     "slot": "weapon",
@@ -283,6 +294,7 @@
   },
   "bronze_spear": {
     "id": "bronze_spear",
+    "legacy_item_id": "bronze_spear",
     "name": "Bronze Spear",
     "type": "weapon",
     "slot": "weapon",
@@ -318,6 +330,7 @@
   },
   "shortbow": {
     "id": "shortbow",
+    "legacy_item_id": "shortbow",
     "name": "Shortbow",
     "type": "weapon",
     "slot": "weapon",
@@ -354,6 +367,7 @@
   },
   "bronze_arrow": {
     "id": "bronze_arrow",
+    "legacy_item_id": "bronze_arrow",
     "name": "Bronze Arrow",
     "type": "ammo",
     "slot": "ammo",
@@ -370,6 +384,7 @@
   },
   "iron_arrow": {
     "id": "iron_arrow",
+    "legacy_item_id": "iron_arrow",
     "name": "Iron Arrow",
     "type": "ammo",
     "slot": "ammo",
@@ -386,6 +401,7 @@
   },
   "staff": {
     "id": "staff",
+    "legacy_item_id": "staff",
     "name": "Staff",
     "type": "weapon",
     "slot": "weapon",
@@ -419,6 +435,7 @@
   },
   "bronze_full_helm": {
     "id": "bronze_full_helm",
+    "legacy_item_id": "bronze_full_helm",
     "name": "Bronze Full Helm",
     "type": "armour",
     "slot": "head",
@@ -451,6 +468,7 @@
   },
   "bronze_platebody": {
     "id": "bronze_platebody",
+    "legacy_item_id": "bronze_platebody",
     "name": "Bronze Platebody",
     "type": "armour",
     "slot": "body",
@@ -483,6 +501,7 @@
   },
   "bronze_platelegs": {
     "id": "bronze_platelegs",
+    "legacy_item_id": "bronze_platelegs",
     "name": "Bronze Platelegs",
     "type": "armour",
     "slot": "legs",
@@ -515,6 +534,7 @@
   },
   "bronze_kiteshield": {
     "id": "bronze_kiteshield",
+    "legacy_item_id": "bronze_kiteshield",
     "name": "Bronze Kiteshield",
     "type": "armour",
     "slot": "shield",
@@ -547,6 +567,7 @@
   },
   "iron_full_helm": {
     "id": "iron_full_helm",
+    "legacy_item_id": "iron_full_helm",
     "name": "Iron Full Helm",
     "type": "armour",
     "slot": "head",
@@ -579,6 +600,7 @@
   },
   "iron_platebody": {
     "id": "iron_platebody",
+    "legacy_item_id": "iron_platebody",
     "name": "Iron Platebody",
     "type": "armour",
     "slot": "body",
@@ -611,6 +633,7 @@
   },
   "rune_med_helm": {
     "id": "rune_med_helm",
+    "legacy_item_id": "rune_med_helm",
     "name": "Runeforged Med Helm",
     "type": "armour",
     "slot": "head",
@@ -643,6 +666,7 @@
   },
   "leather_body": {
     "id": "leather_body",
+    "legacy_item_id": "leather_body",
     "name": "Leather Body",
     "type": "armour",
     "slot": "body",
@@ -675,6 +699,7 @@
   },
   "leather_chaps": {
     "id": "leather_chaps",
+    "legacy_item_id": "leather_chaps",
     "name": "Leather Chaps",
     "type": "armour",
     "slot": "legs",
@@ -707,6 +732,7 @@
   },
   "wizard_hat": {
     "id": "wizard_hat",
+    "legacy_item_id": "wizard_hat",
     "name": "Wizard Hat",
     "type": "armour",
     "slot": "head",
@@ -737,6 +763,7 @@
   },
   "wizard_robe_top": {
     "id": "wizard_robe_top",
+    "legacy_item_id": "wizard_robe_top",
     "name": "Wizard Robe Top",
     "type": "armour",
     "slot": "body",
@@ -767,6 +794,7 @@
   },
   "wizard_robe_skirt": {
     "id": "wizard_robe_skirt",
+    "legacy_item_id": "wizard_robe_skirt",
     "name": "Wizard Robe Skirt",
     "type": "armour",
     "slot": "legs",
@@ -797,6 +825,7 @@
   },
   "amulet_of_strength": {
     "id": "amulet_of_strength",
+    "legacy_item_id": "amulet_of_strength",
     "name": "Amulet of Strength",
     "type": "armour",
     "slot": "neck",
@@ -827,6 +856,7 @@
   },
   "amulet_of_power": {
     "id": "amulet_of_power",
+    "legacy_item_id": "amulet_of_power",
     "name": "Amulet of Power",
     "type": "armour",
     "slot": "neck",
@@ -857,6 +887,7 @@
   },
   "raw_shrimp": {
     "id": "raw_shrimp",
+    "legacy_item_id": "raw_shrimp",
     "name": "Raw Shrimps",
     "type": "resource",
     "stackable": false,
@@ -870,6 +901,7 @@
   },
   "shrimp": {
     "id": "shrimp",
+    "legacy_item_id": "shrimp",
     "name": "Shrimps",
     "type": "food",
     "stackable": false,
@@ -881,6 +913,7 @@
   },
   "raw_trout": {
     "id": "raw_trout",
+    "legacy_item_id": "raw_trout",
     "name": "Raw Trout",
     "type": "resource",
     "stackable": false,
@@ -894,6 +927,7 @@
   },
   "trout": {
     "id": "trout",
+    "legacy_item_id": "trout",
     "name": "Trout",
     "type": "food",
     "stackable": false,
@@ -905,6 +939,7 @@
   },
   "raw_lobster": {
     "id": "raw_lobster",
+    "legacy_item_id": "raw_lobster",
     "name": "Raw Lobster",
     "type": "resource",
     "stackable": false,
@@ -918,6 +953,7 @@
   },
   "lobster": {
     "id": "lobster",
+    "legacy_item_id": "lobster",
     "name": "Lobster",
     "type": "food",
     "stackable": false,
@@ -929,6 +965,7 @@
   },
   "raw_swordfish": {
     "id": "raw_swordfish",
+    "legacy_item_id": "raw_swordfish",
     "name": "Raw Swordfish",
     "type": "resource",
     "stackable": false,
@@ -942,6 +979,7 @@
   },
   "swordfish": {
     "id": "swordfish",
+    "legacy_item_id": "swordfish",
     "name": "Swordfish",
     "type": "food",
     "stackable": false,
@@ -953,6 +991,7 @@
   },
   "raw_shark": {
     "id": "raw_shark",
+    "legacy_item_id": "raw_shark",
     "name": "Raw Shark",
     "type": "resource",
     "stackable": false,
@@ -966,6 +1005,7 @@
   },
   "shark": {
     "id": "shark",
+    "legacy_item_id": "shark",
     "name": "Shark",
     "type": "food",
     "stackable": false,
@@ -977,6 +1017,7 @@
   },
   "raw_chicken": {
     "id": "raw_chicken",
+    "legacy_item_id": "raw_chicken",
     "name": "Raw Chicken",
     "type": "resource",
     "stackable": false,
@@ -990,6 +1031,7 @@
   },
   "cooked_chicken": {
     "id": "cooked_chicken",
+    "legacy_item_id": "cooked_chicken",
     "name": "Cooked Chicken",
     "type": "food",
     "stackable": false,
@@ -1001,6 +1043,7 @@
   },
   "raw_beef": {
     "id": "raw_beef",
+    "legacy_item_id": "raw_beef",
     "name": "Raw Beef",
     "type": "resource",
     "stackable": false,
@@ -1014,6 +1057,7 @@
   },
   "cooked_meat": {
     "id": "cooked_meat",
+    "legacy_item_id": "cooked_meat",
     "name": "Cooked Meat",
     "type": "food",
     "stackable": false,
@@ -1025,6 +1069,7 @@
   },
   "burnt_food": {
     "id": "burnt_food",
+    "legacy_item_id": "burnt_food",
     "name": "Burnt Food",
     "type": "junk",
     "stackable": false,
@@ -1035,6 +1080,7 @@
   },
   "tin_ore": {
     "id": "tin_ore",
+    "legacy_item_id": "tin_ore",
     "name": "Tin Ore",
     "type": "resource",
     "stackable": false,
@@ -1044,6 +1090,7 @@
   },
   "copper_ore": {
     "id": "copper_ore",
+    "legacy_item_id": "copper_ore",
     "name": "Copper Ore",
     "type": "resource",
     "stackable": false,
@@ -1053,6 +1100,7 @@
   },
   "iron_ore": {
     "id": "iron_ore",
+    "legacy_item_id": "iron_ore",
     "name": "Iron Ore",
     "type": "resource",
     "stackable": false,
@@ -1062,6 +1110,7 @@
   },
   "coal": {
     "id": "coal",
+    "legacy_item_id": "coal",
     "name": "Coal",
     "type": "resource",
     "stackable": false,
@@ -1071,6 +1120,7 @@
   },
   "mithril_ore": {
     "id": "mithril_ore",
+    "legacy_item_id": "mithril_ore",
     "name": "Mithril Ore",
     "type": "resource",
     "stackable": false,
@@ -1080,6 +1130,7 @@
   },
   "adamantite_ore": {
     "id": "adamantite_ore",
+    "legacy_item_id": "adamantite_ore",
     "name": "Adamantite Ore",
     "type": "resource",
     "stackable": false,
@@ -1089,6 +1140,7 @@
   },
   "runite_ore": {
     "id": "runite_ore",
+    "legacy_item_id": "runite_ore",
     "name": "Runite Ore",
     "type": "resource",
     "stackable": false,
@@ -1098,6 +1150,7 @@
   },
   "bronze_bar": {
     "id": "bronze_bar",
+    "legacy_item_id": "bronze_bar",
     "name": "Bronze Bar",
     "type": "resource",
     "stackable": false,
@@ -1107,6 +1160,7 @@
   },
   "iron_bar": {
     "id": "iron_bar",
+    "legacy_item_id": "iron_bar",
     "name": "Iron Bar",
     "type": "resource",
     "stackable": false,
@@ -1116,6 +1170,7 @@
   },
   "steel_bar": {
     "id": "steel_bar",
+    "legacy_item_id": "steel_bar",
     "name": "Steel Bar",
     "type": "resource",
     "stackable": false,
@@ -1125,6 +1180,7 @@
   },
   "mithril_bar": {
     "id": "mithril_bar",
+    "legacy_item_id": "mithril_bar",
     "name": "Mithril Bar",
     "type": "resource",
     "stackable": false,
@@ -1134,6 +1190,7 @@
   },
   "adamant_bar": {
     "id": "adamant_bar",
+    "legacy_item_id": "adamant_bar",
     "name": "Adamant Bar",
     "type": "resource",
     "stackable": false,
@@ -1143,6 +1200,7 @@
   },
   "rune_bar": {
     "id": "rune_bar",
+    "legacy_item_id": "rune_bar",
     "name": "Runeforged Bar",
     "type": "resource",
     "stackable": false,
@@ -1152,6 +1210,7 @@
   },
   "logs": {
     "id": "logs",
+    "legacy_item_id": "logs",
     "name": "Logs",
     "type": "resource",
     "stackable": false,
@@ -1161,6 +1220,7 @@
   },
   "oak_logs": {
     "id": "oak_logs",
+    "legacy_item_id": "oak_logs",
     "name": "Oak Logs",
     "type": "resource",
     "stackable": false,
@@ -1170,6 +1230,7 @@
   },
   "willow_logs": {
     "id": "willow_logs",
+    "legacy_item_id": "willow_logs",
     "name": "Willow Logs",
     "type": "resource",
     "stackable": false,
@@ -1179,6 +1240,7 @@
   },
   "maple_logs": {
     "id": "maple_logs",
+    "legacy_item_id": "maple_logs",
     "name": "Maple Logs",
     "type": "resource",
     "stackable": false,
@@ -1188,6 +1250,7 @@
   },
   "yew_logs": {
     "id": "yew_logs",
+    "legacy_item_id": "yew_logs",
     "name": "Yew Logs",
     "type": "resource",
     "stackable": false,
@@ -1197,6 +1260,7 @@
   },
   "magic_logs": {
     "id": "magic_logs",
+    "legacy_item_id": "magic_logs",
     "name": "Magic Logs",
     "type": "resource",
     "stackable": false,
@@ -1206,6 +1270,7 @@
   },
   "redwood_logs": {
     "id": "redwood_logs",
+    "legacy_item_id": "redwood_logs",
     "name": "Redwood Logs",
     "type": "resource",
     "stackable": false,
@@ -1215,6 +1280,7 @@
   },
   "teak_logs": {
     "id": "teak_logs",
+    "legacy_item_id": "teak_logs",
     "name": "Teak Logs",
     "type": "resource",
     "stackable": false,
@@ -1224,6 +1290,7 @@
   },
   "mahogany_logs": {
     "id": "mahogany_logs",
+    "legacy_item_id": "mahogany_logs",
     "name": "Mahogany Logs",
     "type": "resource",
     "stackable": false,
@@ -1233,6 +1300,7 @@
   },
   "bucket_of_sand": {
     "id": "bucket_of_sand",
+    "legacy_item_id": "bucket_of_sand",
     "name": "Bucket of Sand",
     "type": "resource",
     "stackable": false,
@@ -1242,6 +1310,7 @@
   },
   "soda_ash": {
     "id": "soda_ash",
+    "legacy_item_id": "soda_ash",
     "name": "Soda Ash",
     "type": "resource",
     "stackable": false,
@@ -1251,6 +1320,7 @@
   },
   "molten_glass": {
     "id": "molten_glass",
+    "legacy_item_id": "molten_glass",
     "name": "Molten Glass",
     "type": "resource",
     "stackable": false,
@@ -1260,6 +1330,7 @@
   },
   "giant_seaweed": {
     "id": "giant_seaweed",
+    "legacy_item_id": "giant_seaweed",
     "name": "Seaweed",
     "type": "resource",
     "stackable": false,
@@ -1269,6 +1340,7 @@
   },
   "soft_clay": {
     "id": "soft_clay",
+    "legacy_item_id": "soft_clay",
     "name": "Soft Clay",
     "type": "resource",
     "stackable": false,
@@ -1278,6 +1350,7 @@
   },
   "clay": {
     "id": "clay",
+    "legacy_item_id": "clay",
     "name": "Clay",
     "type": "resource",
     "stackable": false,
@@ -1287,6 +1360,7 @@
   },
   "pot_of_flour": {
     "id": "pot_of_flour",
+    "legacy_item_id": "pot_of_flour",
     "name": "Pot of Flour",
     "type": "resource",
     "stackable": false,
@@ -1296,6 +1370,7 @@
   },
   "wheat": {
     "id": "wheat",
+    "legacy_item_id": "wheat",
     "name": "Wheat",
     "type": "resource",
     "stackable": false,
@@ -1305,6 +1380,7 @@
   },
   "nettles": {
     "id": "nettles",
+    "legacy_item_id": "nettles",
     "name": "Nettle",
     "type": "resource",
     "stackable": false,
@@ -1314,6 +1390,7 @@
   },
   "bird_snare": {
     "id": "bird_snare",
+    "legacy_item_id": "bird_snare",
     "name": "Bird Snare",
     "type": "resource",
     "stackable": false,
@@ -1323,6 +1400,7 @@
   },
   "hard_leather": {
     "id": "hard_leather",
+    "legacy_item_id": "hard_leather",
     "name": "Hard Leather",
     "type": "resource",
     "stackable": false,
@@ -1332,6 +1410,7 @@
   },
   "green_dhide": {
     "id": "green_dhide",
+    "legacy_item_id": "green_dhide",
     "name": "Green Dragon Leather",
     "type": "resource",
     "stackable": false,
@@ -1341,6 +1420,7 @@
   },
   "blue_dhide": {
     "id": "blue_dhide",
+    "legacy_item_id": "blue_dhide",
     "name": "Blue Dragon Leather",
     "type": "resource",
     "stackable": false,
@@ -1350,6 +1430,7 @@
   },
   "red_dhide": {
     "id": "red_dhide",
+    "legacy_item_id": "red_dhide",
     "name": "Red Dragon Leather",
     "type": "resource",
     "stackable": false,
@@ -1359,6 +1440,7 @@
   },
   "red_dhide_body": {
     "id": "red_dhide_body",
+    "legacy_item_id": "red_dhide_body",
     "name": "Red D'Hide Body",
     "type": "armour",
     "slot": "body",
@@ -1392,6 +1474,7 @@
   },
   "black_dhide": {
     "id": "black_dhide",
+    "legacy_item_id": "black_dhide",
     "name": "Black Dragon Leather",
     "type": "resource",
     "stackable": false,
@@ -1401,6 +1484,7 @@
   },
   "leather_gloves": {
     "id": "leather_gloves",
+    "legacy_item_id": "leather_gloves",
     "name": "Leather Gloves",
     "type": "armour",
     "slot": "gloves",
@@ -1433,6 +1517,7 @@
   },
   "leather_boots": {
     "id": "leather_boots",
+    "legacy_item_id": "leather_boots",
     "name": "Leather Boots",
     "type": "armour",
     "slot": "boots",
@@ -1463,6 +1548,7 @@
   },
   "leather_coif": {
     "id": "leather_coif",
+    "legacy_item_id": "leather_coif",
     "name": "Leather Cowl",
     "type": "armour",
     "slot": "head",
@@ -1495,6 +1581,7 @@
   },
   "hard_leather_body": {
     "id": "hard_leather_body",
+    "legacy_item_id": "hard_leather_body",
     "name": "Hard Leather Body",
     "type": "armour",
     "slot": "body",
@@ -1527,6 +1614,7 @@
   },
   "green_dhide_body": {
     "id": "green_dhide_body",
+    "legacy_item_id": "green_dhide_body",
     "name": "Green D'Hide Body",
     "type": "armour",
     "slot": "body",
@@ -1560,6 +1648,7 @@
   },
   "green_dhide_chaps": {
     "id": "green_dhide_chaps",
+    "legacy_item_id": "green_dhide_chaps",
     "name": "Green D'Hide Chaps",
     "type": "armour",
     "slot": "legs",
@@ -1592,6 +1681,7 @@
   },
   "uncut_sapphire": {
     "id": "uncut_sapphire",
+    "legacy_item_id": "uncut_sapphire",
     "name": "Uncut Sapphire",
     "type": "resource",
     "stackable": false,
@@ -1601,6 +1691,7 @@
   },
   "uncut_emerald": {
     "id": "uncut_emerald",
+    "legacy_item_id": "uncut_emerald",
     "name": "Uncut Emerald",
     "type": "resource",
     "stackable": false,
@@ -1610,6 +1701,7 @@
   },
   "uncut_ruby": {
     "id": "uncut_ruby",
+    "legacy_item_id": "uncut_ruby",
     "name": "Uncut Ruby",
     "type": "resource",
     "stackable": false,
@@ -1619,6 +1711,7 @@
   },
   "uncut_diamond": {
     "id": "uncut_diamond",
+    "legacy_item_id": "uncut_diamond",
     "name": "Uncut Diamond",
     "type": "resource",
     "stackable": false,
@@ -1628,6 +1721,7 @@
   },
   "uncut_dragonstone": {
     "id": "uncut_dragonstone",
+    "legacy_item_id": "uncut_dragonstone",
     "name": "Uncut Dragonstone",
     "type": "resource",
     "stackable": false,
@@ -1637,6 +1731,7 @@
   },
   "uncut_onyx": {
     "id": "uncut_onyx",
+    "legacy_item_id": "uncut_onyx",
     "name": "Uncut Onyx",
     "type": "resource",
     "stackable": false,
@@ -1647,6 +1742,7 @@
   },
   "sapphire": {
     "id": "sapphire",
+    "legacy_item_id": "sapphire",
     "name": "Sapphire",
     "type": "resource",
     "stackable": false,
@@ -1656,6 +1752,7 @@
   },
   "emerald": {
     "id": "emerald",
+    "legacy_item_id": "emerald",
     "name": "Emerald",
     "type": "resource",
     "stackable": false,
@@ -1665,6 +1762,7 @@
   },
   "ruby": {
     "id": "ruby",
+    "legacy_item_id": "ruby",
     "name": "Ruby",
     "type": "resource",
     "stackable": false,
@@ -1674,6 +1772,7 @@
   },
   "diamond": {
     "id": "diamond",
+    "legacy_item_id": "diamond",
     "name": "Diamond",
     "type": "resource",
     "stackable": false,
@@ -1683,6 +1782,7 @@
   },
   "dragonstone": {
     "id": "dragonstone",
+    "legacy_item_id": "dragonstone",
     "name": "Dragonstone",
     "type": "resource",
     "stackable": false,
@@ -1692,6 +1792,7 @@
   },
   "onyx": {
     "id": "onyx",
+    "legacy_item_id": "onyx",
     "name": "Onyx",
     "type": "resource",
     "stackable": false,
@@ -1701,6 +1802,7 @@
   },
   "uncut_zenyte": {
     "id": "uncut_zenyte",
+    "legacy_item_id": "uncut_zenyte",
     "name": "Uncut Zyrite",
     "type": "resource",
     "stackable": false,
@@ -1715,6 +1817,7 @@
   },
   "zenyte": {
     "id": "zenyte",
+    "legacy_item_id": "zenyte",
     "name": "Zyrite",
     "type": "resource",
     "stackable": false,
@@ -1729,6 +1832,7 @@
   },
   "gold_bar": {
     "id": "gold_bar",
+    "legacy_item_id": "gold_bar",
     "name": "Gold Bar",
     "type": "resource",
     "stackable": false,
@@ -1738,6 +1842,7 @@
   },
   "sapphire_amulet": {
     "id": "sapphire_amulet",
+    "legacy_item_id": "sapphire_amulet",
     "name": "Sapphire Amulet",
     "type": "armour",
     "slot": "neck",
@@ -1768,6 +1873,7 @@
   },
   "emerald_amulet": {
     "id": "emerald_amulet",
+    "legacy_item_id": "emerald_amulet",
     "name": "Emerald Amulet",
     "type": "armour",
     "slot": "neck",
@@ -1798,6 +1904,7 @@
   },
   "ruby_amulet": {
     "id": "ruby_amulet",
+    "legacy_item_id": "ruby_amulet",
     "name": "Ruby Amulet",
     "type": "armour",
     "slot": "neck",
@@ -1828,6 +1935,7 @@
   },
   "diamond_amulet": {
     "id": "diamond_amulet",
+    "legacy_item_id": "diamond_amulet",
     "name": "Diamond Amulet",
     "type": "armour",
     "slot": "neck",
@@ -1858,6 +1966,7 @@
   },
   "dragonstone_amulet": {
     "id": "dragonstone_amulet",
+    "legacy_item_id": "dragonstone_amulet",
     "name": "Dragonstone Amulet",
     "type": "armour",
     "slot": "neck",
@@ -1888,6 +1997,7 @@
   },
   "onyx_amulet": {
     "id": "onyx_amulet",
+    "legacy_item_id": "onyx_amulet",
     "name": "Onyx Amulet",
     "type": "armour",
     "slot": "neck",
@@ -1918,6 +2028,7 @@
   },
   "amulet_of_magic": {
     "id": "amulet_of_magic",
+    "legacy_item_id": "amulet_of_magic",
     "name": "Amulet of Magic",
     "type": "armour",
     "slot": "neck",
@@ -1948,6 +2059,7 @@
   },
   "amulet_of_glory": {
     "id": "amulet_of_glory",
+    "legacy_item_id": "amulet_of_glory",
     "name": "Amulet of Glory",
     "type": "armour",
     "slot": "neck",
@@ -1978,6 +2090,7 @@
   },
   "amulet_of_fury": {
     "id": "amulet_of_fury",
+    "legacy_item_id": "amulet_of_fury",
     "name": "Amulet of Fury",
     "type": "armour",
     "slot": "neck",
@@ -2008,6 +2121,7 @@
   },
   "gold_amulet": {
     "id": "gold_amulet",
+    "legacy_item_id": "gold_amulet",
     "name": "Gold Amulet (U)",
     "type": "resource",
     "stackable": false,
@@ -2017,6 +2131,7 @@
   },
   "glass_orb": {
     "id": "glass_orb",
+    "legacy_item_id": "glass_orb",
     "name": "Unpowered Orb",
     "type": "resource",
     "stackable": false,
@@ -2026,6 +2141,7 @@
   },
   "glass_vial": {
     "id": "glass_vial",
+    "legacy_item_id": "glass_vial",
     "name": "Vial",
     "type": "resource",
     "stackable": false,
@@ -2035,6 +2151,7 @@
   },
   "arrow_shaft": {
     "id": "arrow_shaft",
+    "legacy_item_id": "arrow_shaft",
     "name": "Arrow Shaft",
     "type": "resource",
     "stackable": true,
@@ -2044,6 +2161,7 @@
   },
   "headless_arrow": {
     "id": "headless_arrow",
+    "legacy_item_id": "headless_arrow",
     "name": "Headless Arrow",
     "type": "resource",
     "stackable": true,
@@ -2053,6 +2171,7 @@
   },
   "iron_arrow_heads": {
     "id": "iron_arrow_heads",
+    "legacy_item_id": "iron_arrow_heads",
     "name": "Iron Arrowtips",
     "type": "resource",
     "stackable": true,
@@ -2062,6 +2181,7 @@
   },
   "steel_arrow_heads": {
     "id": "steel_arrow_heads",
+    "legacy_item_id": "steel_arrow_heads",
     "name": "Steel Arrowtips",
     "type": "resource",
     "stackable": true,
@@ -2071,6 +2191,7 @@
   },
   "mithril_arrow_heads": {
     "id": "mithril_arrow_heads",
+    "legacy_item_id": "mithril_arrow_heads",
     "name": "Mithril Arrowtips",
     "type": "resource",
     "stackable": true,
@@ -2080,6 +2201,7 @@
   },
   "adamant_arrow_heads": {
     "id": "adamant_arrow_heads",
+    "legacy_item_id": "adamant_arrow_heads",
     "name": "Adamant Arrowtips",
     "type": "resource",
     "stackable": true,
@@ -2089,6 +2211,7 @@
   },
   "rune_arrow_heads": {
     "id": "rune_arrow_heads",
+    "legacy_item_id": "rune_arrow_heads",
     "name": "Runeforged Arrowtips",
     "type": "resource",
     "stackable": true,
@@ -2098,6 +2221,7 @@
   },
   "steel_arrow": {
     "id": "steel_arrow",
+    "legacy_item_id": "steel_arrow",
     "name": "Steel Arrow",
     "type": "ammo",
     "slot": "ammo",
@@ -2114,6 +2238,7 @@
   },
   "mithril_arrow": {
     "id": "mithril_arrow",
+    "legacy_item_id": "mithril_arrow",
     "name": "Mithril Arrow",
     "type": "ammo",
     "slot": "ammo",
@@ -2130,6 +2255,7 @@
   },
   "adamant_arrow": {
     "id": "adamant_arrow",
+    "legacy_item_id": "adamant_arrow",
     "name": "Adamant Arrow",
     "type": "ammo",
     "slot": "ammo",
@@ -2146,6 +2272,7 @@
   },
   "rune_arrow": {
     "id": "rune_arrow",
+    "legacy_item_id": "rune_arrow",
     "name": "Runeforged Arrow",
     "type": "ammo",
     "slot": "ammo",
@@ -2162,6 +2289,7 @@
   },
   "dragon_arrow": {
     "id": "dragon_arrow",
+    "legacy_item_id": "dragon_arrow",
     "name": "Dragon Arrow",
     "type": "ammo",
     "slot": "ammo",
@@ -2181,6 +2309,7 @@
   },
   "shortbow_u": {
     "id": "shortbow_u",
+    "legacy_item_id": "shortbow_u",
     "name": "Shortbow (U)",
     "type": "resource",
     "stackable": false,
@@ -2190,6 +2319,7 @@
   },
   "oak_shortbow_u": {
     "id": "oak_shortbow_u",
+    "legacy_item_id": "oak_shortbow_u",
     "name": "Oak Shortbow (U)",
     "type": "resource",
     "stackable": false,
@@ -2199,6 +2329,7 @@
   },
   "willow_shortbow_u": {
     "id": "willow_shortbow_u",
+    "legacy_item_id": "willow_shortbow_u",
     "name": "Willow Shortbow (U)",
     "type": "resource",
     "stackable": false,
@@ -2208,6 +2339,7 @@
   },
   "maple_shortbow_u": {
     "id": "maple_shortbow_u",
+    "legacy_item_id": "maple_shortbow_u",
     "name": "Maple Shortbow (U)",
     "type": "resource",
     "stackable": false,
@@ -2217,6 +2349,7 @@
   },
   "yew_shortbow_u": {
     "id": "yew_shortbow_u",
+    "legacy_item_id": "yew_shortbow_u",
     "name": "Yew Shortbow (U)",
     "type": "resource",
     "stackable": false,
@@ -2226,6 +2359,7 @@
   },
   "magic_shortbow_u": {
     "id": "magic_shortbow_u",
+    "legacy_item_id": "magic_shortbow_u",
     "name": "Magic Shortbow (U)",
     "type": "resource",
     "stackable": false,
@@ -2235,6 +2369,7 @@
   },
   "oak_shortbow": {
     "id": "oak_shortbow",
+    "legacy_item_id": "oak_shortbow",
     "name": "Oak Shortbow",
     "type": "weapon",
     "slot": "weapon",
@@ -2271,6 +2406,7 @@
   },
   "willow_shortbow": {
     "id": "willow_shortbow",
+    "legacy_item_id": "willow_shortbow",
     "name": "Willow Shortbow",
     "type": "weapon",
     "slot": "weapon",
@@ -2307,6 +2443,7 @@
   },
   "maple_shortbow": {
     "id": "maple_shortbow",
+    "legacy_item_id": "maple_shortbow",
     "name": "Maple Shortbow",
     "type": "weapon",
     "slot": "weapon",
@@ -2343,6 +2480,7 @@
   },
   "yew_shortbow": {
     "id": "yew_shortbow",
+    "legacy_item_id": "yew_shortbow",
     "name": "Yew Shortbow",
     "type": "weapon",
     "slot": "weapon",
@@ -2379,6 +2517,7 @@
   },
   "magic_shortbow": {
     "id": "magic_shortbow",
+    "legacy_item_id": "magic_shortbow",
     "name": "Magic Shortbow",
     "type": "weapon",
     "slot": "weapon",
@@ -2420,6 +2559,7 @@
   },
   "needle": {
     "id": "needle",
+    "legacy_item_id": "needle",
     "name": "Needle",
     "type": "tool",
     "stackable": false,
@@ -2429,6 +2569,7 @@
   },
   "thread": {
     "id": "thread",
+    "legacy_item_id": "thread",
     "name": "Thread",
     "type": "resource",
     "stackable": true,
@@ -2438,6 +2579,7 @@
   },
   "gold_ore": {
     "id": "gold_ore",
+    "legacy_item_id": "gold_ore",
     "name": "Gold Ore",
     "type": "resource",
     "stackable": false,
@@ -2447,6 +2589,7 @@
   },
   "bronze_axe": {
     "id": "bronze_axe",
+    "legacy_item_id": "bronze_axe",
     "name": "Bronze Axe",
     "type": "weapon",
     "slot": "weapon",
@@ -2484,6 +2627,7 @@
   },
   "iron_axe": {
     "id": "iron_axe",
+    "legacy_item_id": "iron_axe",
     "name": "Iron Axe",
     "type": "weapon",
     "slot": "weapon",
@@ -2521,6 +2665,7 @@
   },
   "steel_axe": {
     "id": "steel_axe",
+    "legacy_item_id": "steel_axe",
     "name": "Steel Axe",
     "type": "weapon",
     "slot": "weapon",
@@ -2558,6 +2703,7 @@
   },
   "mithril_axe": {
     "id": "mithril_axe",
+    "legacy_item_id": "mithril_axe",
     "name": "Mithril Axe",
     "type": "weapon",
     "slot": "weapon",
@@ -2595,6 +2741,7 @@
   },
   "adamant_axe": {
     "id": "adamant_axe",
+    "legacy_item_id": "adamant_axe",
     "name": "Adamant Axe",
     "type": "weapon",
     "slot": "weapon",
@@ -2632,6 +2779,7 @@
   },
   "rune_axe": {
     "id": "rune_axe",
+    "legacy_item_id": "rune_axe",
     "name": "Runeforged Axe",
     "type": "weapon",
     "slot": "weapon",
@@ -2669,6 +2817,7 @@
   },
   "bronze_pickaxe": {
     "id": "bronze_pickaxe",
+    "legacy_item_id": "bronze_pickaxe",
     "name": "Bronze Pickaxe",
     "type": "weapon",
     "slot": "weapon",
@@ -2706,6 +2855,7 @@
   },
   "iron_pickaxe": {
     "id": "iron_pickaxe",
+    "legacy_item_id": "iron_pickaxe",
     "name": "Iron Pickaxe",
     "type": "weapon",
     "slot": "weapon",
@@ -2743,6 +2893,7 @@
   },
   "steel_pickaxe": {
     "id": "steel_pickaxe",
+    "legacy_item_id": "steel_pickaxe",
     "name": "Steel Pickaxe",
     "type": "weapon",
     "slot": "weapon",
@@ -2780,6 +2931,7 @@
   },
   "mithril_pickaxe": {
     "id": "mithril_pickaxe",
+    "legacy_item_id": "mithril_pickaxe",
     "name": "Mithril Pickaxe",
     "type": "weapon",
     "slot": "weapon",
@@ -2817,6 +2969,7 @@
   },
   "adamant_pickaxe": {
     "id": "adamant_pickaxe",
+    "legacy_item_id": "adamant_pickaxe",
     "name": "Adamant Pickaxe",
     "type": "weapon",
     "slot": "weapon",
@@ -2854,6 +3007,7 @@
   },
   "rune_pickaxe": {
     "id": "rune_pickaxe",
+    "legacy_item_id": "rune_pickaxe",
     "name": "Runeforged Pickaxe",
     "type": "weapon",
     "slot": "weapon",
@@ -2891,6 +3045,7 @@
   },
   "tinderbox": {
     "id": "tinderbox",
+    "legacy_item_id": "tinderbox",
     "name": "Tinderbox",
     "type": "tool",
     "slot": null,
@@ -2902,6 +3057,7 @@
   },
   "chisel": {
     "id": "chisel",
+    "legacy_item_id": "chisel",
     "name": "Chisel",
     "type": "tool",
     "slot": null,
@@ -2913,6 +3069,7 @@
   },
   "hammer": {
     "id": "hammer",
+    "legacy_item_id": "hammer",
     "name": "Hammer",
     "type": "tool",
     "slot": null,
@@ -2924,6 +3081,7 @@
   },
   "iron_dagger": {
     "id": "iron_dagger",
+    "legacy_item_id": "iron_dagger",
     "name": "Iron Dagger",
     "type": "weapon",
     "slot": "weapon",
@@ -2959,6 +3117,7 @@
   },
   "steel_dagger": {
     "id": "steel_dagger",
+    "legacy_item_id": "steel_dagger",
     "name": "Steel Dagger",
     "type": "weapon",
     "slot": "weapon",
@@ -2994,6 +3153,7 @@
   },
   "mithril_dagger": {
     "id": "mithril_dagger",
+    "legacy_item_id": "mithril_dagger",
     "name": "Mithril Dagger",
     "type": "weapon",
     "slot": "weapon",
@@ -3029,6 +3189,7 @@
   },
   "adamant_dagger": {
     "id": "adamant_dagger",
+    "legacy_item_id": "adamant_dagger",
     "name": "Adamant Dagger",
     "type": "weapon",
     "slot": "weapon",
@@ -3064,6 +3225,7 @@
   },
   "bronze_sword": {
     "id": "bronze_sword",
+    "legacy_item_id": "bronze_sword",
     "name": "Bronze Sword",
     "type": "weapon",
     "slot": "weapon",
@@ -3099,6 +3261,7 @@
   },
   "iron_sword": {
     "id": "iron_sword",
+    "legacy_item_id": "iron_sword",
     "name": "Iron Sword",
     "type": "weapon",
     "slot": "weapon",
@@ -3134,6 +3297,7 @@
   },
   "steel_sword": {
     "id": "steel_sword",
+    "legacy_item_id": "steel_sword",
     "name": "Steel Sword",
     "type": "weapon",
     "slot": "weapon",
@@ -3169,6 +3333,7 @@
   },
   "mithril_sword": {
     "id": "mithril_sword",
+    "legacy_item_id": "mithril_sword",
     "name": "Mithril Sword",
     "type": "weapon",
     "slot": "weapon",
@@ -3204,6 +3369,7 @@
   },
   "adamant_sword": {
     "id": "adamant_sword",
+    "legacy_item_id": "adamant_sword",
     "name": "Adamant Sword",
     "type": "weapon",
     "slot": "weapon",
@@ -3239,6 +3405,7 @@
   },
   "bronze_longsword": {
     "id": "bronze_longsword",
+    "legacy_item_id": "bronze_longsword",
     "name": "Bronze Longsword",
     "type": "weapon",
     "slot": "weapon",
@@ -3274,6 +3441,7 @@
   },
   "iron_longsword": {
     "id": "iron_longsword",
+    "legacy_item_id": "iron_longsword",
     "name": "Iron Longsword",
     "type": "weapon",
     "slot": "weapon",
@@ -3309,6 +3477,7 @@
   },
   "steel_longsword": {
     "id": "steel_longsword",
+    "legacy_item_id": "steel_longsword",
     "name": "Steel Longsword",
     "type": "weapon",
     "slot": "weapon",
@@ -3344,6 +3513,7 @@
   },
   "mithril_longsword": {
     "id": "mithril_longsword",
+    "legacy_item_id": "mithril_longsword",
     "name": "Mithril Longsword",
     "type": "weapon",
     "slot": "weapon",
@@ -3379,6 +3549,7 @@
   },
   "adamant_longsword": {
     "id": "adamant_longsword",
+    "legacy_item_id": "adamant_longsword",
     "name": "Adamant Longsword",
     "type": "weapon",
     "slot": "weapon",
@@ -3414,6 +3585,7 @@
   },
   "bronze_mace": {
     "id": "bronze_mace",
+    "legacy_item_id": "bronze_mace",
     "name": "Bronze Mace",
     "type": "weapon",
     "slot": "weapon",
@@ -3449,6 +3621,7 @@
   },
   "iron_mace": {
     "id": "iron_mace",
+    "legacy_item_id": "iron_mace",
     "name": "Iron Mace",
     "type": "weapon",
     "slot": "weapon",
@@ -3484,6 +3657,7 @@
   },
   "steel_mace": {
     "id": "steel_mace",
+    "legacy_item_id": "steel_mace",
     "name": "Steel Mace",
     "type": "weapon",
     "slot": "weapon",
@@ -3519,6 +3693,7 @@
   },
   "mithril_mace": {
     "id": "mithril_mace",
+    "legacy_item_id": "mithril_mace",
     "name": "Mithril Mace",
     "type": "weapon",
     "slot": "weapon",
@@ -3554,6 +3729,7 @@
   },
   "adamant_mace": {
     "id": "adamant_mace",
+    "legacy_item_id": "adamant_mace",
     "name": "Adamant Mace",
     "type": "weapon",
     "slot": "weapon",
@@ -3589,6 +3765,7 @@
   },
   "iron_platelegs": {
     "id": "iron_platelegs",
+    "legacy_item_id": "iron_platelegs",
     "name": "Iron Platelegs",
     "type": "armour",
     "slot": "legs",
@@ -3621,6 +3798,7 @@
   },
   "iron_kiteshield": {
     "id": "iron_kiteshield",
+    "legacy_item_id": "iron_kiteshield",
     "name": "Iron Kiteshield",
     "type": "armour",
     "slot": "shield",
@@ -3653,6 +3831,7 @@
   },
   "steel_full_helm": {
     "id": "steel_full_helm",
+    "legacy_item_id": "steel_full_helm",
     "name": "Steel Full Helm",
     "type": "armour",
     "slot": "head",
@@ -3685,6 +3864,7 @@
   },
   "steel_platebody": {
     "id": "steel_platebody",
+    "legacy_item_id": "steel_platebody",
     "name": "Steel Platebody",
     "type": "armour",
     "slot": "body",
@@ -3717,6 +3897,7 @@
   },
   "steel_platelegs": {
     "id": "steel_platelegs",
+    "legacy_item_id": "steel_platelegs",
     "name": "Steel Platelegs",
     "type": "armour",
     "slot": "legs",
@@ -3749,6 +3930,7 @@
   },
   "steel_kiteshield": {
     "id": "steel_kiteshield",
+    "legacy_item_id": "steel_kiteshield",
     "name": "Steel Kiteshield",
     "type": "armour",
     "slot": "shield",
@@ -3781,6 +3963,7 @@
   },
   "mithril_full_helm": {
     "id": "mithril_full_helm",
+    "legacy_item_id": "mithril_full_helm",
     "name": "Mithril Full Helm",
     "type": "armour",
     "slot": "head",
@@ -3813,6 +3996,7 @@
   },
   "mithril_platebody": {
     "id": "mithril_platebody",
+    "legacy_item_id": "mithril_platebody",
     "name": "Mithril Platebody",
     "type": "armour",
     "slot": "body",
@@ -3845,6 +4029,7 @@
   },
   "mithril_platelegs": {
     "id": "mithril_platelegs",
+    "legacy_item_id": "mithril_platelegs",
     "name": "Mithril Platelegs",
     "type": "armour",
     "slot": "legs",
@@ -3877,6 +4062,7 @@
   },
   "mithril_kiteshield": {
     "id": "mithril_kiteshield",
+    "legacy_item_id": "mithril_kiteshield",
     "name": "Mithril Kiteshield",
     "type": "armour",
     "slot": "shield",
@@ -3909,6 +4095,7 @@
   },
   "adamant_full_helm": {
     "id": "adamant_full_helm",
+    "legacy_item_id": "adamant_full_helm",
     "name": "Adamant Full Helm",
     "type": "armour",
     "slot": "head",
@@ -3941,6 +4128,7 @@
   },
   "adamant_platebody": {
     "id": "adamant_platebody",
+    "legacy_item_id": "adamant_platebody",
     "name": "Adamant Platebody",
     "type": "armour",
     "slot": "body",
@@ -3973,6 +4161,7 @@
   },
   "adamant_platelegs": {
     "id": "adamant_platelegs",
+    "legacy_item_id": "adamant_platelegs",
     "name": "Adamant Platelegs",
     "type": "armour",
     "slot": "legs",
@@ -4005,6 +4194,7 @@
   },
   "adamant_kiteshield": {
     "id": "adamant_kiteshield",
+    "legacy_item_id": "adamant_kiteshield",
     "name": "Adamant Kiteshield",
     "type": "armour",
     "slot": "shield",
@@ -4037,6 +4227,7 @@
   },
   "studded_body": {
     "id": "studded_body",
+    "legacy_item_id": "studded_body",
     "name": "Studded Body",
     "type": "armour",
     "slot": "body",
@@ -4069,6 +4260,7 @@
   },
   "studded_chaps": {
     "id": "studded_chaps",
+    "legacy_item_id": "studded_chaps",
     "name": "Studded Chaps",
     "type": "armour",
     "slot": "legs",
@@ -4101,6 +4293,7 @@
   },
   "longbow": {
     "id": "longbow",
+    "legacy_item_id": "longbow",
     "name": "Longbow",
     "type": "weapon",
     "slot": "weapon",
@@ -4136,6 +4329,7 @@
   },
   "oak_longbow": {
     "id": "oak_longbow",
+    "legacy_item_id": "oak_longbow",
     "name": "Oak Longbow",
     "type": "weapon",
     "slot": "weapon",
@@ -4171,6 +4365,7 @@
   },
   "willow_longbow": {
     "id": "willow_longbow",
+    "legacy_item_id": "willow_longbow",
     "name": "Willow Longbow",
     "type": "weapon",
     "slot": "weapon",
@@ -4206,6 +4401,7 @@
   },
   "maple_longbow": {
     "id": "maple_longbow",
+    "legacy_item_id": "maple_longbow",
     "name": "Maple Longbow",
     "type": "weapon",
     "slot": "weapon",
@@ -4241,6 +4437,7 @@
   },
   "crossbow": {
     "id": "crossbow",
+    "legacy_item_id": "crossbow",
     "name": "Crossbow",
     "type": "weapon",
     "slot": "weapon",
@@ -4277,6 +4474,7 @@
   },
   "iron_crossbow": {
     "id": "iron_crossbow",
+    "legacy_item_id": "iron_crossbow",
     "name": "Iron Crossbow",
     "type": "weapon",
     "slot": "weapon",
@@ -4313,6 +4511,7 @@
   },
   "steel_crossbow": {
     "id": "steel_crossbow",
+    "legacy_item_id": "steel_crossbow",
     "name": "Steel Crossbow",
     "type": "weapon",
     "slot": "weapon",
@@ -4349,6 +4548,7 @@
   },
   "mithril_crossbow": {
     "id": "mithril_crossbow",
+    "legacy_item_id": "mithril_crossbow",
     "name": "Mithril Crossbow",
     "type": "weapon",
     "slot": "weapon",
@@ -4385,6 +4585,7 @@
   },
   "adamant_crossbow": {
     "id": "adamant_crossbow",
+    "legacy_item_id": "adamant_crossbow",
     "name": "Adamant Crossbow",
     "type": "weapon",
     "slot": "weapon",
@@ -4421,6 +4622,7 @@
   },
   "bronze_bolts": {
     "id": "bronze_bolts",
+    "legacy_item_id": "bronze_bolts",
     "name": "Bronze Bolt",
     "type": "ammo",
     "slot": "ammo",
@@ -4437,6 +4639,7 @@
   },
   "iron_bolts": {
     "id": "iron_bolts",
+    "legacy_item_id": "iron_bolts",
     "name": "Iron Bolt",
     "type": "ammo",
     "slot": "ammo",
@@ -4453,6 +4656,7 @@
   },
   "steel_bolts": {
     "id": "steel_bolts",
+    "legacy_item_id": "steel_bolts",
     "name": "Steel Bolt",
     "type": "ammo",
     "slot": "ammo",
@@ -4469,6 +4673,7 @@
   },
   "mithril_bolts": {
     "id": "mithril_bolts",
+    "legacy_item_id": "mithril_bolts",
     "name": "Mithril Bolt",
     "type": "ammo",
     "slot": "ammo",
@@ -4485,6 +4690,7 @@
   },
   "adamant_bolts": {
     "id": "adamant_bolts",
+    "legacy_item_id": "adamant_bolts",
     "name": "Adamant Bolt",
     "type": "ammo",
     "slot": "ammo",
@@ -4501,6 +4707,7 @@
   },
   "runite_bolts": {
     "id": "runite_bolts",
+    "legacy_item_id": "runite_bolts",
     "name": "Runite Bolt",
     "type": "ammo",
     "slot": "ammo",
@@ -4520,6 +4727,7 @@
   },
   "dragon_bolts_unf": {
     "id": "dragon_bolts_unf",
+    "legacy_item_id": "dragon_bolts_unf",
     "name": "Dragon Bolt (Unf)",
     "type": "resource",
     "stackable": true,
@@ -4529,6 +4737,7 @@
   },
   "dragon_bolts": {
     "id": "dragon_bolts",
+    "legacy_item_id": "dragon_bolts",
     "name": "Dragon Bolt",
     "type": "ammo",
     "slot": "ammo",
@@ -4548,6 +4757,7 @@
   },
   "ruby_bolt_tips": {
     "id": "ruby_bolt_tips",
+    "legacy_item_id": "ruby_bolt_tips",
     "name": "Ruby Bolt Tips",
     "type": "resource",
     "stackable": true,
@@ -4557,6 +4767,7 @@
   },
   "diamond_bolt_tips": {
     "id": "diamond_bolt_tips",
+    "legacy_item_id": "diamond_bolt_tips",
     "name": "Diamond Bolt Tips",
     "type": "resource",
     "stackable": true,
@@ -4566,6 +4777,7 @@
   },
   "dragonstone_bolt_tips": {
     "id": "dragonstone_bolt_tips",
+    "legacy_item_id": "dragonstone_bolt_tips",
     "name": "Dragonstone Bolt Tips",
     "type": "resource",
     "stackable": true,
@@ -4575,6 +4787,7 @@
   },
   "onyx_bolt_tips": {
     "id": "onyx_bolt_tips",
+    "legacy_item_id": "onyx_bolt_tips",
     "name": "Onyx Bolt Tips",
     "type": "resource",
     "stackable": true,
@@ -4584,6 +4797,7 @@
   },
   "ruby_bolts": {
     "id": "ruby_bolts",
+    "legacy_item_id": "ruby_bolts",
     "name": "Ruby Bolt",
     "type": "ammo",
     "slot": "ammo",
@@ -4603,6 +4817,7 @@
   },
   "ruby_bolts_e": {
     "id": "ruby_bolts_e",
+    "legacy_item_id": "ruby_bolts_e",
     "name": "Ruby Bolt (E)",
     "type": "ammo",
     "slot": "ammo",
@@ -4627,6 +4842,7 @@
   },
   "diamond_bolts": {
     "id": "diamond_bolts",
+    "legacy_item_id": "diamond_bolts",
     "name": "Diamond Bolt",
     "type": "ammo",
     "slot": "ammo",
@@ -4646,6 +4862,7 @@
   },
   "diamond_bolts_e": {
     "id": "diamond_bolts_e",
+    "legacy_item_id": "diamond_bolts_e",
     "name": "Diamond Bolt (E)",
     "type": "ammo",
     "slot": "ammo",
@@ -4670,6 +4887,7 @@
   },
   "dragonstone_bolts": {
     "id": "dragonstone_bolts",
+    "legacy_item_id": "dragonstone_bolts",
     "name": "Dragonstone Bolt",
     "type": "ammo",
     "slot": "ammo",
@@ -4689,6 +4907,7 @@
   },
   "dragonstone_bolts_e": {
     "id": "dragonstone_bolts_e",
+    "legacy_item_id": "dragonstone_bolts_e",
     "name": "Dragonstone Bolt (E)",
     "type": "ammo",
     "slot": "ammo",
@@ -4713,6 +4932,7 @@
   },
   "onyx_bolts": {
     "id": "onyx_bolts",
+    "legacy_item_id": "onyx_bolts",
     "name": "Onyx Bolt",
     "type": "ammo",
     "slot": "ammo",
@@ -4732,6 +4952,7 @@
   },
   "onyx_bolts_e": {
     "id": "onyx_bolts_e",
+    "legacy_item_id": "onyx_bolts_e",
     "name": "Onyx Bolt (E)",
     "type": "ammo",
     "slot": "ammo",
@@ -4756,6 +4977,7 @@
   },
   "ruby_dragon_bolts": {
     "id": "ruby_dragon_bolts",
+    "legacy_item_id": "ruby_dragon_bolts",
     "name": "Ruby Dragon Bolt",
     "type": "ammo",
     "slot": "ammo",
@@ -4775,6 +4997,7 @@
   },
   "ruby_dragon_bolts_e": {
     "id": "ruby_dragon_bolts_e",
+    "legacy_item_id": "ruby_dragon_bolts_e",
     "name": "Ruby Dragon Bolt (E)",
     "type": "ammo",
     "slot": "ammo",
@@ -4799,6 +5022,7 @@
   },
   "diamond_dragon_bolts": {
     "id": "diamond_dragon_bolts",
+    "legacy_item_id": "diamond_dragon_bolts",
     "name": "Diamond Dragon Bolt",
     "type": "ammo",
     "slot": "ammo",
@@ -4818,6 +5042,7 @@
   },
   "diamond_dragon_bolts_e": {
     "id": "diamond_dragon_bolts_e",
+    "legacy_item_id": "diamond_dragon_bolts_e",
     "name": "Diamond Dragon Bolt (E)",
     "type": "ammo",
     "slot": "ammo",
@@ -4842,6 +5067,7 @@
   },
   "dragonstone_dragon_bolts": {
     "id": "dragonstone_dragon_bolts",
+    "legacy_item_id": "dragonstone_dragon_bolts",
     "name": "Dragonstone Dragon Bolt",
     "type": "ammo",
     "slot": "ammo",
@@ -4861,6 +5087,7 @@
   },
   "dragonstone_dragon_bolts_e": {
     "id": "dragonstone_dragon_bolts_e",
+    "legacy_item_id": "dragonstone_dragon_bolts_e",
     "name": "Dragonstone Dragon Bolt (E)",
     "type": "ammo",
     "slot": "ammo",
@@ -4885,6 +5112,7 @@
   },
   "onyx_dragon_bolts": {
     "id": "onyx_dragon_bolts",
+    "legacy_item_id": "onyx_dragon_bolts",
     "name": "Onyx Dragon Bolt",
     "type": "ammo",
     "slot": "ammo",
@@ -4904,6 +5132,7 @@
   },
   "onyx_dragon_bolts_e": {
     "id": "onyx_dragon_bolts_e",
+    "legacy_item_id": "onyx_dragon_bolts_e",
     "name": "Onyx Dragon Bolt (E)",
     "type": "ammo",
     "slot": "ammo",
@@ -4928,6 +5157,7 @@
   },
   "bronze_bolts_unf": {
     "id": "bronze_bolts_unf",
+    "legacy_item_id": "bronze_bolts_unf",
     "name": "Bronze Bolt (Unf)",
     "type": "resource",
     "stackable": true,
@@ -4937,6 +5167,7 @@
   },
   "iron_bolts_unf": {
     "id": "iron_bolts_unf",
+    "legacy_item_id": "iron_bolts_unf",
     "name": "Iron Bolt (Unf)",
     "type": "resource",
     "stackable": true,
@@ -4946,6 +5177,7 @@
   },
   "steel_bolts_unf": {
     "id": "steel_bolts_unf",
+    "legacy_item_id": "steel_bolts_unf",
     "name": "Steel Bolt (Unf)",
     "type": "resource",
     "stackable": true,
@@ -4955,6 +5187,7 @@
   },
   "mithril_bolts_unf": {
     "id": "mithril_bolts_unf",
+    "legacy_item_id": "mithril_bolts_unf",
     "name": "Mithril Bolt (Unf)",
     "type": "resource",
     "stackable": true,
@@ -4964,6 +5197,7 @@
   },
   "adamant_bolts_unf": {
     "id": "adamant_bolts_unf",
+    "legacy_item_id": "adamant_bolts_unf",
     "name": "Adamant Bolt (Unf)",
     "type": "resource",
     "stackable": true,
@@ -4973,6 +5207,7 @@
   },
   "runite_bolts_unf": {
     "id": "runite_bolts_unf",
+    "legacy_item_id": "runite_bolts_unf",
     "name": "Runite Bolt (Unf)",
     "type": "resource",
     "stackable": true,
@@ -4982,6 +5217,7 @@
   },
   "wooden_stock": {
     "id": "wooden_stock",
+    "legacy_item_id": "wooden_stock",
     "name": "Wooden Stock",
     "type": "resource",
     "stackable": true,
@@ -4991,6 +5227,7 @@
   },
   "magic_staff": {
     "id": "magic_staff",
+    "legacy_item_id": "magic_staff",
     "name": "Magic Staff",
     "type": "weapon",
     "slot": "weapon",
@@ -5026,6 +5263,7 @@
   },
   "staff_of_air": {
     "id": "staff_of_air",
+    "legacy_item_id": "staff_of_air",
     "name": "Staff of Air",
     "type": "weapon",
     "slot": "weapon",
@@ -5062,6 +5300,7 @@
   },
   "staff_of_water": {
     "id": "staff_of_water",
+    "legacy_item_id": "staff_of_water",
     "name": "Staff of Water",
     "type": "weapon",
     "slot": "weapon",
@@ -5098,6 +5337,7 @@
   },
   "staff_of_fire": {
     "id": "staff_of_fire",
+    "legacy_item_id": "staff_of_fire",
     "name": "Staff of Fire",
     "type": "weapon",
     "slot": "weapon",
@@ -5134,6 +5374,7 @@
   },
   "staff_of_earth": {
     "id": "staff_of_earth",
+    "legacy_item_id": "staff_of_earth",
     "name": "Staff of Earth",
     "type": "weapon",
     "slot": "weapon",
@@ -5170,6 +5411,7 @@
   },
   "air_rune": {
     "id": "air_rune",
+    "legacy_item_id": "air_rune",
     "name": "Air Rune",
     "type": "rune",
     "stackable": true,
@@ -5179,6 +5421,7 @@
   },
   "water_rune": {
     "id": "water_rune",
+    "legacy_item_id": "water_rune",
     "name": "Water Rune",
     "type": "rune",
     "stackable": true,
@@ -5188,6 +5431,7 @@
   },
   "earth_rune": {
     "id": "earth_rune",
+    "legacy_item_id": "earth_rune",
     "name": "Earth Rune",
     "type": "rune",
     "stackable": true,
@@ -5197,6 +5441,7 @@
   },
   "fire_rune": {
     "id": "fire_rune",
+    "legacy_item_id": "fire_rune",
     "name": "Fire Rune",
     "type": "rune",
     "stackable": true,
@@ -5206,6 +5451,7 @@
   },
   "mind_rune": {
     "id": "mind_rune",
+    "legacy_item_id": "mind_rune",
     "name": "Mind Rune",
     "type": "resource",
     "stackable": true,
@@ -5215,6 +5461,7 @@
   },
   "body_rune": {
     "id": "body_rune",
+    "legacy_item_id": "body_rune",
     "name": "Body Rune",
     "type": "resource",
     "stackable": true,
@@ -5224,6 +5471,7 @@
   },
   "chaos_rune": {
     "id": "chaos_rune",
+    "legacy_item_id": "chaos_rune",
     "name": "Chaos Rune",
     "type": "rune",
     "stackable": true,
@@ -5233,6 +5481,7 @@
   },
   "death_rune": {
     "id": "death_rune",
+    "legacy_item_id": "death_rune",
     "name": "Death Rune",
     "type": "rune",
     "stackable": true,
@@ -5242,6 +5491,7 @@
   },
   "nature_rune": {
     "id": "nature_rune",
+    "legacy_item_id": "nature_rune",
     "name": "Nature Rune",
     "type": "rune",
     "stackable": true,
@@ -5251,6 +5501,7 @@
   },
   "law_rune": {
     "id": "law_rune",
+    "legacy_item_id": "law_rune",
     "name": "Law Rune",
     "type": "rune",
     "stackable": true,
@@ -5260,6 +5511,7 @@
   },
   "cosmic_rune": {
     "id": "cosmic_rune",
+    "legacy_item_id": "cosmic_rune",
     "name": "Cosmic Rune",
     "type": "rune",
     "stackable": true,
@@ -5269,6 +5521,7 @@
   },
   "bronze_chainbody": {
     "id": "bronze_chainbody",
+    "legacy_item_id": "bronze_chainbody",
     "name": "Bronze Chainbody",
     "type": "armour",
     "slot": "body",
@@ -5301,6 +5554,7 @@
   },
   "iron_chainbody": {
     "id": "iron_chainbody",
+    "legacy_item_id": "iron_chainbody",
     "name": "Iron Chainbody",
     "type": "armour",
     "slot": "body",
@@ -5333,6 +5587,7 @@
   },
   "steel_chainbody": {
     "id": "steel_chainbody",
+    "legacy_item_id": "steel_chainbody",
     "name": "Steel Chainbody",
     "type": "armour",
     "slot": "body",
@@ -5365,6 +5620,7 @@
   },
   "mithril_chainbody": {
     "id": "mithril_chainbody",
+    "legacy_item_id": "mithril_chainbody",
     "name": "Mithril Chainbody",
     "type": "armour",
     "slot": "body",
@@ -5397,6 +5653,7 @@
   },
   "rune_full_helm": {
     "id": "rune_full_helm",
+    "legacy_item_id": "rune_full_helm",
     "name": "Runeforged Full Helm",
     "type": "armour",
     "slot": "head",
@@ -5429,6 +5686,7 @@
   },
   "rune_platebody": {
     "id": "rune_platebody",
+    "legacy_item_id": "rune_platebody",
     "name": "Runeforged Platebody",
     "type": "armour",
     "slot": "body",
@@ -5461,6 +5719,7 @@
   },
   "rune_platelegs": {
     "id": "rune_platelegs",
+    "legacy_item_id": "rune_platelegs",
     "name": "Runeforged Platelegs",
     "type": "armour",
     "slot": "legs",
@@ -5493,6 +5752,7 @@
   },
   "rune_kiteshield": {
     "id": "rune_kiteshield",
+    "legacy_item_id": "rune_kiteshield",
     "name": "Runeforged Kiteshield",
     "type": "armour",
     "slot": "shield",
@@ -5525,6 +5785,7 @@
   },
   "rune_chainbody": {
     "id": "rune_chainbody",
+    "legacy_item_id": "rune_chainbody",
     "name": "Runeforged Chainbody",
     "type": "armour",
     "slot": "body",
@@ -5557,6 +5818,7 @@
   },
   "big_bones": {
     "id": "big_bones",
+    "legacy_item_id": "big_bones",
     "name": "Big Bones",
     "type": "resource",
     "stackable": false,
@@ -5566,6 +5828,7 @@
   },
   "dragon_bones": {
     "id": "dragon_bones",
+    "legacy_item_id": "dragon_bones",
     "name": "Dragon Bones",
     "type": "resource",
     "stackable": false,
@@ -5575,6 +5838,7 @@
   },
   "green_dragonhide": {
     "id": "green_dragonhide",
+    "legacy_item_id": "green_dragonhide",
     "name": "Green Dragonhide",
     "type": "resource",
     "stackable": false,
@@ -5584,6 +5848,7 @@
   },
   "blood_rune": {
     "id": "blood_rune",
+    "legacy_item_id": "blood_rune",
     "name": "Blood Rune",
     "type": "rune",
     "stackable": true,
@@ -5593,6 +5858,7 @@
   },
   "soul_rune": {
     "id": "soul_rune",
+    "legacy_item_id": "soul_rune",
     "name": "Soul Rune",
     "type": "rune",
     "stackable": true,
@@ -5602,6 +5868,7 @@
   },
   "limpwurt_root": {
     "id": "limpwurt_root",
+    "legacy_item_id": "limpwurt_root",
     "name": "Limpwurt Root",
     "type": "resource",
     "stackable": true,
@@ -5611,6 +5878,7 @@
   },
   "anti_dragon_shield": {
     "id": "anti_dragon_shield",
+    "legacy_item_id": "anti_dragon_shield",
     "name": "Anti-Dragon Shield",
     "type": "armour",
     "slot": "shield",
@@ -5645,6 +5913,7 @@
   },
   "abyssal_whip": {
     "id": "abyssal_whip",
+    "legacy_item_id": "abyssal_whip",
     "name": "Abyssal Whip",
     "type": "weapon",
     "slot": "weapon",
@@ -5686,6 +5955,7 @@
   },
   "black_wizard_hat": {
     "id": "black_wizard_hat",
+    "legacy_item_id": "black_wizard_hat",
     "name": "Black Wizard Hat",
     "type": "armour",
     "slot": "head",
@@ -5716,6 +5986,7 @@
   },
   "black_wizard_robe": {
     "id": "black_wizard_robe",
+    "legacy_item_id": "black_wizard_robe",
     "name": "Black Wizard Robe",
     "type": "armour",
     "slot": "body",
@@ -5746,6 +6017,7 @@
   },
   "dragon_dagger": {
     "id": "dragon_dagger",
+    "legacy_item_id": "dragon_dagger",
     "name": "Dragon Dagger",
     "type": "weapon",
     "slot": "weapon",
@@ -5787,6 +6059,7 @@
   },
   "dragon_scimitar": {
     "id": "dragon_scimitar",
+    "legacy_item_id": "dragon_scimitar",
     "name": "Dragon Scimitar",
     "type": "weapon",
     "slot": "weapon",
@@ -5828,6 +6101,7 @@
   },
   "dragon_longsword": {
     "id": "dragon_longsword",
+    "legacy_item_id": "dragon_longsword",
     "name": "Dragon Longsword",
     "type": "weapon",
     "slot": "weapon",
@@ -5864,6 +6138,7 @@
   },
   "dragon_full_helm": {
     "id": "dragon_full_helm",
+    "legacy_item_id": "dragon_full_helm",
     "name": "Dragon Full Helm",
     "type": "armour",
     "slot": "head",
@@ -5896,6 +6171,7 @@
   },
   "dragon_chainbody": {
     "id": "dragon_chainbody",
+    "legacy_item_id": "dragon_chainbody",
     "name": "Dragon Chainbody",
     "type": "armour",
     "slot": "body",
@@ -5929,6 +6205,7 @@
   },
   "dragon_platelegs": {
     "id": "dragon_platelegs",
+    "legacy_item_id": "dragon_platelegs",
     "name": "Dragon Platelegs",
     "type": "armour",
     "slot": "legs",
@@ -5962,6 +6239,7 @@
   },
   "dragon_plateskirt": {
     "id": "dragon_plateskirt",
+    "legacy_item_id": "dragon_plateskirt",
     "name": "Dragon Plateskirt",
     "type": "armour",
     "slot": "legs",
@@ -5995,6 +6273,7 @@
   },
   "dragon_kiteshield": {
     "id": "dragon_kiteshield",
+    "legacy_item_id": "dragon_kiteshield",
     "name": "Dragon Kiteshield",
     "type": "armour",
     "slot": "shield",
@@ -6027,6 +6306,7 @@
   },
   "berserker_helm": {
     "id": "berserker_helm",
+    "legacy_item_id": "berserker_helm",
     "name": "Berserker Helm",
     "type": "armour",
     "slot": "head",
@@ -6060,6 +6340,7 @@
   },
   "attack_cape": {
     "id": "attack_cape",
+    "legacy_item_id": "attack_cape",
     "name": "Attack Cape",
     "type": "armour",
     "slot": "cape",
@@ -6093,6 +6374,7 @@
   },
   "strength_cape": {
     "id": "strength_cape",
+    "legacy_item_id": "strength_cape",
     "name": "Strength Cape",
     "type": "armour",
     "slot": "cape",
@@ -6126,6 +6408,7 @@
   },
   "defence_cape": {
     "id": "defence_cape",
+    "legacy_item_id": "defence_cape",
     "name": "Defence Cape",
     "type": "armour",
     "slot": "cape",
@@ -6159,6 +6442,7 @@
   },
   "hitpoints_cape": {
     "id": "hitpoints_cape",
+    "legacy_item_id": "hitpoints_cape",
     "name": "Hitpoints Cape",
     "type": "armour",
     "slot": "cape",
@@ -6192,6 +6476,7 @@
   },
   "ranged_cape": {
     "id": "ranged_cape",
+    "legacy_item_id": "ranged_cape",
     "name": "Ranged Cape",
     "type": "armour",
     "slot": "cape",
@@ -6225,6 +6510,7 @@
   },
   "magic_cape": {
     "id": "magic_cape",
+    "legacy_item_id": "magic_cape",
     "name": "Magic Cape",
     "type": "armour",
     "slot": "cape",
@@ -6258,6 +6544,7 @@
   },
   "prayer_cape": {
     "id": "prayer_cape",
+    "legacy_item_id": "prayer_cape",
     "name": "Prayer Cape",
     "type": "armour",
     "slot": "cape",
@@ -6291,6 +6578,7 @@
   },
   "mining_cape": {
     "id": "mining_cape",
+    "legacy_item_id": "mining_cape",
     "name": "Mining Cape",
     "type": "armour",
     "slot": "cape",
@@ -6324,6 +6612,7 @@
   },
   "woodcutting_cape": {
     "id": "woodcutting_cape",
+    "legacy_item_id": "woodcutting_cape",
     "name": "Woodcutting Cape",
     "type": "armour",
     "slot": "cape",
@@ -6357,6 +6646,7 @@
   },
   "fishing_cape": {
     "id": "fishing_cape",
+    "legacy_item_id": "fishing_cape",
     "name": "Fishing Cape",
     "type": "armour",
     "slot": "cape",
@@ -6390,6 +6680,7 @@
   },
   "smithing_cape": {
     "id": "smithing_cape",
+    "legacy_item_id": "smithing_cape",
     "name": "Smithing Cape",
     "type": "armour",
     "slot": "cape",
@@ -6423,6 +6714,7 @@
   },
   "cooking_cape": {
     "id": "cooking_cape",
+    "legacy_item_id": "cooking_cape",
     "name": "Cooking Cape",
     "type": "armour",
     "slot": "cape",
@@ -6456,6 +6748,7 @@
   },
   "fletching_cape": {
     "id": "fletching_cape",
+    "legacy_item_id": "fletching_cape",
     "name": "Fletching Cape",
     "type": "armour",
     "slot": "cape",
@@ -6489,6 +6782,7 @@
   },
   "crafting_cape": {
     "id": "crafting_cape",
+    "legacy_item_id": "crafting_cape",
     "name": "Crafting Cape",
     "type": "armour",
     "slot": "cape",
@@ -6522,6 +6816,7 @@
   },
   "herblore_cape": {
     "id": "herblore_cape",
+    "legacy_item_id": "herblore_cape",
     "name": "Herblore Cape",
     "type": "armour",
     "slot": "cape",
@@ -6555,6 +6850,7 @@
   },
   "agility_cape": {
     "id": "agility_cape",
+    "legacy_item_id": "agility_cape",
     "name": "Agility Cape",
     "type": "armour",
     "slot": "cape",
@@ -6588,6 +6884,7 @@
   },
   "thieving_cape": {
     "id": "thieving_cape",
+    "legacy_item_id": "thieving_cape",
     "name": "Thieving Cape",
     "type": "armour",
     "slot": "cape",
@@ -6621,6 +6918,7 @@
   },
   "rune_sword": {
     "id": "rune_sword",
+    "legacy_item_id": "rune_sword",
     "name": "Runeforged Sword",
     "type": "weapon",
     "slot": "weapon",
@@ -6656,6 +6954,7 @@
   },
   "rune_2h_sword": {
     "id": "rune_2h_sword",
+    "legacy_item_id": "rune_2h_sword",
     "name": "Runeforged 2h Sword",
     "type": "weapon",
     "slot": "weapon",
@@ -6691,6 +6990,7 @@
   },
   "rune_plateskirt": {
     "id": "rune_plateskirt",
+    "legacy_item_id": "rune_plateskirt",
     "name": "Runeforged Plateskirt",
     "type": "armour",
     "slot": "legs",
@@ -6723,6 +7023,7 @@
   },
   "rune_crossbow": {
     "id": "rune_crossbow",
+    "legacy_item_id": "rune_crossbow",
     "name": "Runeforged Crossbow",
     "type": "weapon",
     "slot": "weapon",
@@ -6759,6 +7060,7 @@
   },
   "godsword_shard": {
     "id": "godsword_shard",
+    "legacy_item_id": "godsword_shard",
     "name": "Godsword Shard",
     "type": "resource",
     "stackable": false,
@@ -6769,6 +7071,7 @@
   },
   "godsword_blade": {
     "id": "godsword_blade",
+    "legacy_item_id": "godsword_blade",
     "name": "Godsword Blade",
     "type": "resource",
     "stackable": false,
@@ -6778,6 +7081,7 @@
   },
   "bandos_godsword": {
     "id": "bandos_godsword",
+    "legacy_item_id": "bandos_godsword",
     "name": "Grondar Godsword",
     "type": "weapon",
     "slot": "weapon",
@@ -6819,6 +7123,7 @@
   },
   "armadyl_godsword": {
     "id": "armadyl_godsword",
+    "legacy_item_id": "armadyl_godsword",
     "name": "Zephyra Godsword",
     "type": "weapon",
     "slot": "weapon",
@@ -6860,6 +7165,7 @@
   },
   "saradomin_godsword": {
     "id": "saradomin_godsword",
+    "legacy_item_id": "saradomin_godsword",
     "name": "Lumira Godsword",
     "type": "weapon",
     "slot": "weapon",
@@ -6902,6 +7208,7 @@
   },
   "zamorak_godsword": {
     "id": "zamorak_godsword",
+    "legacy_item_id": "zamorak_godsword",
     "name": "Krylth Godsword",
     "type": "weapon",
     "slot": "weapon",
@@ -6944,6 +7251,7 @@
   },
   "bandos_chestplate": {
     "id": "bandos_chestplate",
+    "legacy_item_id": "bandos_chestplate",
     "name": "Grondar Chestplate",
     "type": "armour",
     "slot": "body",
@@ -6977,6 +7285,7 @@
   },
   "bandos_tassets": {
     "id": "bandos_tassets",
+    "legacy_item_id": "bandos_tassets",
     "name": "Grondar Tassets",
     "type": "armour",
     "slot": "legs",
@@ -7010,6 +7319,7 @@
   },
   "bandos_boots": {
     "id": "bandos_boots",
+    "legacy_item_id": "bandos_boots",
     "name": "Grondar Boots",
     "type": "armour",
     "slot": "boots",
@@ -7043,6 +7353,7 @@
   },
   "bandos_hilt": {
     "id": "bandos_hilt",
+    "legacy_item_id": "bandos_hilt",
     "name": "Grondar Hilt",
     "type": "resource",
     "stackable": false,
@@ -7053,6 +7364,7 @@
   },
   "armadyl_helmet": {
     "id": "armadyl_helmet",
+    "legacy_item_id": "armadyl_helmet",
     "name": "Zephyra Helmet",
     "type": "armour",
     "slot": "head",
@@ -7087,6 +7399,7 @@
   },
   "armadyl_chestplate": {
     "id": "armadyl_chestplate",
+    "legacy_item_id": "armadyl_chestplate",
     "name": "Zephyra Chestplate",
     "type": "armour",
     "slot": "body",
@@ -7121,6 +7434,7 @@
   },
   "armadyl_chainskirt": {
     "id": "armadyl_chainskirt",
+    "legacy_item_id": "armadyl_chainskirt",
     "name": "Zephyra Chainskirt",
     "type": "armour",
     "slot": "legs",
@@ -7155,6 +7469,7 @@
   },
   "armadyl_hilt": {
     "id": "armadyl_hilt",
+    "legacy_item_id": "armadyl_hilt",
     "name": "Zephyra Hilt",
     "type": "resource",
     "stackable": false,
@@ -7165,6 +7480,7 @@
   },
   "saradomin_sword": {
     "id": "saradomin_sword",
+    "legacy_item_id": "saradomin_sword",
     "name": "Lumira Sword",
     "type": "weapon",
     "slot": "weapon",
@@ -7207,6 +7523,7 @@
   },
   "saradomin_hilt": {
     "id": "saradomin_hilt",
+    "legacy_item_id": "saradomin_hilt",
     "name": "Lumira Hilt",
     "type": "resource",
     "stackable": false,
@@ -7217,6 +7534,7 @@
   },
   "armadyl_crossbow": {
     "id": "armadyl_crossbow",
+    "legacy_item_id": "armadyl_crossbow",
     "name": "Zephyra Crossbow",
     "type": "weapon",
     "slot": "weapon",
@@ -7259,6 +7577,7 @@
   },
   "zamorak_spear": {
     "id": "zamorak_spear",
+    "legacy_item_id": "zamorak_spear",
     "name": "Krylth Spear",
     "type": "weapon",
     "slot": "weapon",
@@ -7300,6 +7619,7 @@
   },
   "staff_of_the_dead": {
     "id": "staff_of_the_dead",
+    "legacy_item_id": "staff_of_the_dead",
     "name": "Staff of the Dead",
     "type": "weapon",
     "slot": "weapon",
@@ -7337,6 +7657,7 @@
   },
   "zamorak_hilt": {
     "id": "zamorak_hilt",
+    "legacy_item_id": "zamorak_hilt",
     "name": "Krylth Hilt",
     "type": "resource",
     "stackable": false,
@@ -7347,6 +7668,7 @@
   },
   "dagganoth_bones": {
     "id": "dagganoth_bones",
+    "legacy_item_id": "dagganoth_bones",
     "name": "Nagadoth Bones",
     "type": "resource",
     "stackable": false,
@@ -7356,6 +7678,7 @@
   },
   "berserker_ring": {
     "id": "berserker_ring",
+    "legacy_item_id": "berserker_ring",
     "name": "Berserker Ring",
     "type": "armour",
     "slot": "ring",
@@ -7387,6 +7710,7 @@
   },
   "seers_ring": {
     "id": "seers_ring",
+    "legacy_item_id": "seers_ring",
     "name": "Seers Ring",
     "type": "armour",
     "slot": "ring",
@@ -7418,6 +7742,7 @@
   },
   "archers_ring": {
     "id": "archers_ring",
+    "legacy_item_id": "archers_ring",
     "name": "Archers Ring",
     "type": "armour",
     "slot": "ring",
@@ -7449,6 +7774,7 @@
   },
   "warriors_ring": {
     "id": "warriors_ring",
+    "legacy_item_id": "warriors_ring",
     "name": "Warriors Ring",
     "type": "armour",
     "slot": "ring",
@@ -7480,6 +7806,7 @@
   },
   "dragon_axe": {
     "id": "dragon_axe",
+    "legacy_item_id": "dragon_axe",
     "name": "Dragon Axe",
     "type": "weapon",
     "slot": "weapon",
@@ -7518,6 +7845,7 @@
   },
   "slayer_helmet": {
     "id": "slayer_helmet",
+    "legacy_item_id": "slayer_helmet",
     "name": "Slayer Helmet",
     "type": "armor",
     "slot": "head",
@@ -7553,6 +7881,7 @@
   },
   "money_purse": {
     "id": "money_purse",
+    "legacy_item_id": "money_purse",
     "name": "Money Purse",
     "type": "resource",
     "stackable": false,
@@ -7563,6 +7892,7 @@
   },
   "master_rejuvenation": {
     "id": "master_rejuvenation",
+    "legacy_item_id": "master_rejuvenation",
     "name": "Master Rejuvenation",
     "type": "resource",
     "stackable": false,
@@ -7573,6 +7903,7 @@
   },
   "guam_leaf": {
     "id": "guam_leaf",
+    "legacy_item_id": "guam_leaf",
     "name": "Guam Leaf",
     "type": "resource",
     "stackable": true,
@@ -7582,6 +7913,7 @@
   },
   "tarromin": {
     "id": "tarromin",
+    "legacy_item_id": "tarromin",
     "name": "Tarromin",
     "type": "resource",
     "stackable": true,
@@ -7591,6 +7923,7 @@
   },
   "ranarr_weed": {
     "id": "ranarr_weed",
+    "legacy_item_id": "ranarr_weed",
     "name": "Ranarr Weed",
     "type": "resource",
     "stackable": true,
@@ -7600,6 +7933,7 @@
   },
   "harralander": {
     "id": "harralander",
+    "legacy_item_id": "harralander",
     "name": "Harralander",
     "type": "resource",
     "stackable": true,
@@ -7609,6 +7943,7 @@
   },
   "irit_leaf": {
     "id": "irit_leaf",
+    "legacy_item_id": "irit_leaf",
     "name": "Irit Leaf",
     "type": "resource",
     "stackable": true,
@@ -7618,6 +7953,7 @@
   },
   "kwuarm": {
     "id": "kwuarm",
+    "legacy_item_id": "kwuarm",
     "name": "Kwuarm",
     "type": "resource",
     "stackable": true,
@@ -7627,6 +7963,7 @@
   },
   "snapdragon": {
     "id": "snapdragon",
+    "legacy_item_id": "snapdragon",
     "name": "Snapdragon",
     "type": "resource",
     "stackable": true,
@@ -7636,6 +7973,7 @@
   },
   "cadantine": {
     "id": "cadantine",
+    "legacy_item_id": "cadantine",
     "name": "Cadantine",
     "type": "resource",
     "stackable": true,
@@ -7645,6 +7983,7 @@
   },
   "dwarf_weed": {
     "id": "dwarf_weed",
+    "legacy_item_id": "dwarf_weed",
     "name": "Dwarf Weed",
     "type": "resource",
     "stackable": true,
@@ -7654,6 +7993,7 @@
   },
   "lantadyme": {
     "id": "lantadyme",
+    "legacy_item_id": "lantadyme",
     "name": "Lantadyme",
     "type": "resource",
     "stackable": true,
@@ -7663,6 +8003,7 @@
   },
   "toadflax": {
     "id": "toadflax",
+    "legacy_item_id": "toadflax",
     "name": "Toadflax",
     "type": "resource",
     "stackable": true,
@@ -7672,6 +8013,7 @@
   },
   "torstol": {
     "id": "torstol",
+    "legacy_item_id": "torstol",
     "name": "Torstol",
     "type": "resource",
     "stackable": true,
@@ -7681,6 +8023,7 @@
   },
   "eye_of_newt": {
     "id": "eye_of_newt",
+    "legacy_item_id": "eye_of_newt",
     "name": "Eye of Newt",
     "type": "resource",
     "stackable": true,
@@ -7690,6 +8033,7 @@
   },
   "white_berries": {
     "id": "white_berries",
+    "legacy_item_id": "white_berries",
     "name": "White Berries",
     "type": "resource",
     "stackable": true,
@@ -7699,6 +8043,7 @@
   },
   "goat_horn_dust": {
     "id": "goat_horn_dust",
+    "legacy_item_id": "goat_horn_dust",
     "name": "Goat Horn Dust",
     "type": "resource",
     "stackable": true,
@@ -7708,6 +8053,7 @@
   },
   "snape_grass": {
     "id": "snape_grass",
+    "legacy_item_id": "snape_grass",
     "name": "Snape Grass",
     "type": "resource",
     "stackable": true,
@@ -7717,6 +8063,7 @@
   },
   "wine_of_zamorak": {
     "id": "wine_of_zamorak",
+    "legacy_item_id": "wine_of_zamorak",
     "name": "Wine of Zamorak",
     "type": "resource",
     "stackable": true,
@@ -7726,6 +8073,7 @@
   },
   "potato_cactus": {
     "id": "potato_cactus",
+    "legacy_item_id": "potato_cactus",
     "name": "Potato Cactus",
     "type": "resource",
     "stackable": true,
@@ -7735,6 +8083,7 @@
   },
   "red_spiders_eggs": {
     "id": "red_spiders_eggs",
+    "legacy_item_id": "red_spiders_eggs",
     "name": "Red Spiders' Eggs",
     "type": "resource",
     "stackable": true,
@@ -7744,6 +8093,7 @@
   },
   "crushed_birds_nest": {
     "id": "crushed_birds_nest",
+    "legacy_item_id": "crushed_birds_nest",
     "name": "Crushed Bird's Nest",
     "type": "resource",
     "stackable": true,
@@ -7753,6 +8103,7 @@
   },
   "empty_birds_nest": {
     "id": "empty_birds_nest",
+    "legacy_item_id": "empty_birds_nest",
     "name": "Empty Bird's Nest",
     "type": "resource",
     "stackable": true,
@@ -7762,6 +8113,7 @@
   },
   "attack_potion": {
     "id": "attack_potion",
+    "legacy_item_id": "attack_potion",
     "name": "Attack Potion",
     "type": "potion",
     "stackable": true,
@@ -7774,6 +8126,7 @@
   },
   "strength_potion": {
     "id": "strength_potion",
+    "legacy_item_id": "strength_potion",
     "name": "Strength Potion",
     "type": "potion",
     "stackable": true,
@@ -7786,6 +8139,7 @@
   },
   "defence_potion": {
     "id": "defence_potion",
+    "legacy_item_id": "defence_potion",
     "name": "Defence Potion",
     "type": "potion",
     "stackable": true,
@@ -7798,6 +8152,7 @@
   },
   "combat_potion": {
     "id": "combat_potion",
+    "legacy_item_id": "combat_potion",
     "name": "Combat Potion",
     "type": "potion",
     "stackable": true,
@@ -7810,6 +8165,7 @@
   },
   "prayer_potion": {
     "id": "prayer_potion",
+    "legacy_item_id": "prayer_potion",
     "name": "Prayer Potion",
     "type": "potion",
     "stackable": true,
@@ -7823,6 +8179,7 @@
   },
   "super_attack": {
     "id": "super_attack",
+    "legacy_item_id": "super_attack",
     "name": "Super Attack",
     "type": "potion",
     "stackable": true,
@@ -7835,6 +8192,7 @@
   },
   "super_strength": {
     "id": "super_strength",
+    "legacy_item_id": "super_strength",
     "name": "Super Strength",
     "type": "potion",
     "stackable": true,
@@ -7847,6 +8205,7 @@
   },
   "super_restore": {
     "id": "super_restore",
+    "legacy_item_id": "super_restore",
     "name": "Super Restore",
     "type": "potion",
     "stackable": true,
@@ -7859,6 +8218,7 @@
   },
   "super_defence": {
     "id": "super_defence",
+    "legacy_item_id": "super_defence",
     "name": "Super Defence",
     "type": "potion",
     "stackable": true,
@@ -7871,6 +8231,7 @@
   },
   "ranging_potion": {
     "id": "ranging_potion",
+    "legacy_item_id": "ranging_potion",
     "name": "Ranging Potion",
     "type": "potion",
     "stackable": true,
@@ -7883,6 +8244,7 @@
   },
   "magic_potion": {
     "id": "magic_potion",
+    "legacy_item_id": "magic_potion",
     "name": "Magic Potion",
     "type": "potion",
     "stackable": true,
@@ -7895,6 +8257,7 @@
   },
   "saradomin_brew": {
     "id": "saradomin_brew",
+    "legacy_item_id": "saradomin_brew",
     "name": "Saradomin Brew",
     "type": "potion",
     "stackable": true,
@@ -7907,6 +8270,7 @@
   },
   "super_combat_potion": {
     "id": "super_combat_potion",
+    "legacy_item_id": "super_combat_potion",
     "name": "Super Combat",
     "type": "potion",
     "stackable": true,
@@ -7919,6 +8283,7 @@
   },
   "dragon_pickaxe": {
     "id": "dragon_pickaxe",
+    "legacy_item_id": "dragon_pickaxe",
     "name": "Dragon Pickaxe",
     "type": "weapon",
     "slot": "weapon",
@@ -7958,6 +8323,7 @@
   },
   "draconic_visage": {
     "id": "draconic_visage",
+    "legacy_item_id": "draconic_visage",
     "name": "Draconic Visage",
     "type": "resource",
     "stackable": false,
@@ -7968,6 +8334,7 @@
   },
   "dragonfire_shield": {
     "id": "dragonfire_shield",
+    "legacy_item_id": "dragonfire_shield",
     "name": "Dragonfire Shield",
     "type": "armour",
     "slot": "shield",
@@ -8002,6 +8369,7 @@
   },
   "fishing_net": {
     "id": "fishing_net",
+    "legacy_item_id": "fishing_net",
     "name": "Fishing Net",
     "type": "weapon",
     "slot": "weapon",
@@ -8039,6 +8407,7 @@
   },
   "fishing_rod": {
     "id": "fishing_rod",
+    "legacy_item_id": "fishing_rod",
     "name": "Fishing Rod",
     "type": "weapon",
     "slot": "weapon",
@@ -8076,6 +8445,7 @@
   },
   "lobster_cage": {
     "id": "lobster_cage",
+    "legacy_item_id": "lobster_cage",
     "name": "Lobster Cage",
     "type": "weapon",
     "slot": "weapon",
@@ -8113,6 +8483,7 @@
   },
   "harpoon": {
     "id": "harpoon",
+    "legacy_item_id": "harpoon",
     "name": "Harpoon",
     "type": "weapon",
     "slot": "weapon",
@@ -8150,6 +8521,7 @@
   },
   "angler_net": {
     "id": "angler_net",
+    "legacy_item_id": "angler_net",
     "name": "Angler Net",
     "type": "weapon",
     "slot": "weapon",
@@ -8187,6 +8559,7 @@
   },
   "astral_rune": {
     "id": "astral_rune",
+    "legacy_item_id": "astral_rune",
     "name": "Astral Rune",
     "type": "rune",
     "stackable": true,
@@ -8196,6 +8569,7 @@
   },
   "leather": {
     "id": "leather",
+    "legacy_item_id": "leather",
     "name": "Leather",
     "type": "resource",
     "stackable": true,
@@ -8205,6 +8579,7 @@
   },
   "bowstring": {
     "id": "bowstring",
+    "legacy_item_id": "bowstring",
     "name": "Bowstring",
     "type": "resource",
     "stackable": true,
@@ -8214,6 +8589,7 @@
   },
   "planks": {
     "id": "planks",
+    "legacy_item_id": "planks",
     "name": "Plank",
     "type": "resource",
     "stackable": true,
@@ -8223,6 +8599,7 @@
   },
   "zulrah_scales": {
     "id": "zulrah_scales",
+    "legacy_item_id": "zulrah_scales",
     "name": "Venomcoil Scales",
     "type": "resource",
     "stackable": true,
@@ -8232,6 +8609,7 @@
   },
   "toxic_blowpipe": {
     "id": "toxic_blowpipe",
+    "legacy_item_id": "toxic_blowpipe",
     "name": "Venom Blowpipe",
     "type": "weapon",
     "slot": "weapon",
@@ -8274,6 +8652,7 @@
   },
   "trident_of_the_swamp": {
     "id": "trident_of_the_swamp",
+    "legacy_item_id": "trident_of_the_swamp",
     "name": "Trident of Venom",
     "type": "weapon",
     "slot": "weapon",
@@ -8313,6 +8692,7 @@
   },
   "serpentine_helm": {
     "id": "serpentine_helm",
+    "legacy_item_id": "serpentine_helm",
     "name": "Serpentine Helm",
     "type": "armour",
     "slot": "head",
@@ -8346,6 +8726,7 @@
   },
   "fire_cape": {
     "id": "fire_cape",
+    "legacy_item_id": "fire_cape",
     "name": "Fire Cape",
     "type": "armour",
     "slot": "cape",
@@ -8377,6 +8758,7 @@
   },
   "infernal_cape": {
     "id": "infernal_cape",
+    "legacy_item_id": "infernal_cape",
     "name": "Infernal Cape",
     "type": "armour",
     "slot": "cape",
@@ -8408,6 +8790,7 @@
   },
   "crystal_shards": {
     "id": "crystal_shards",
+    "legacy_item_id": "crystal_shards",
     "name": "Shardglass Shards",
     "type": "resource",
     "stackable": true,
@@ -8418,6 +8801,7 @@
   },
   "crystal_helmet": {
     "id": "crystal_helmet",
+    "legacy_item_id": "crystal_helmet",
     "name": "Shardglass Helmet",
     "type": "armour",
     "slot": "head",
@@ -8452,6 +8836,7 @@
   },
   "crystal_plate_body": {
     "id": "crystal_plate_body",
+    "legacy_item_id": "crystal_plate_body",
     "name": "Shardglass Plate Body",
     "type": "armour",
     "slot": "body",
@@ -8486,6 +8871,7 @@
   },
   "crystal_platelegs": {
     "id": "crystal_platelegs",
+    "legacy_item_id": "crystal_platelegs",
     "name": "Shardglass Platelegs",
     "type": "armour",
     "slot": "legs",
@@ -8520,6 +8906,7 @@
   },
   "crystal_pickaxe": {
     "id": "crystal_pickaxe",
+    "legacy_item_id": "crystal_pickaxe",
     "name": "Shardglass Pickaxe",
     "type": "tool",
     "slot": "weapon",
@@ -8554,6 +8941,7 @@
   },
   "crystal_axe": {
     "id": "crystal_axe",
+    "legacy_item_id": "crystal_axe",
     "name": "Shardglass Axe",
     "type": "tool",
     "slot": "weapon",
@@ -8588,6 +8976,7 @@
   },
   "bow_of_faerdhinen": {
     "id": "bow_of_faerdhinen",
+    "legacy_item_id": "bow_of_faerdhinen",
     "name": "Bow of Faerdhinen",
     "type": "weapon",
     "slot": "weapon",
@@ -8625,6 +9014,7 @@
   },
   "blade_of_saeldor": {
     "id": "blade_of_saeldor",
+    "legacy_item_id": "blade_of_saeldor",
     "name": "Blade of Saeldor",
     "type": "weapon",
     "slot": "weapon",
@@ -8663,6 +9053,7 @@
   },
   "twisted_buckler": {
     "id": "twisted_buckler",
+    "legacy_item_id": "twisted_buckler",
     "name": "Twisted Buckler",
     "type": "armour",
     "slot": "shield",
@@ -8697,6 +9088,7 @@
   },
   "dragon_hunter_crossbow": {
     "id": "dragon_hunter_crossbow",
+    "legacy_item_id": "dragon_hunter_crossbow",
     "name": "Dragon Hunter Crossbow",
     "type": "weapon",
     "slot": "weapon",
@@ -8735,6 +9127,7 @@
   },
   "dinhs_bulwark": {
     "id": "dinhs_bulwark",
+    "legacy_item_id": "dinhs_bulwark",
     "name": "Dinh's Bulwark",
     "type": "weapon",
     "slot": "weapon",
@@ -8776,6 +9169,7 @@
   },
   "ancestral_hat": {
     "id": "ancestral_hat",
+    "legacy_item_id": "ancestral_hat",
     "name": "Ancestral Hat",
     "type": "armour",
     "slot": "head",
@@ -8810,6 +9204,7 @@
   },
   "ancestral_robe_top": {
     "id": "ancestral_robe_top",
+    "legacy_item_id": "ancestral_robe_top",
     "name": "Ancestral Robe Top",
     "type": "armour",
     "slot": "body",
@@ -8844,6 +9239,7 @@
   },
   "ancestral_robe_bottom": {
     "id": "ancestral_robe_bottom",
+    "legacy_item_id": "ancestral_robe_bottom",
     "name": "Ancestral Robe Bottom",
     "type": "armour",
     "slot": "legs",
@@ -8878,6 +9274,7 @@
   },
   "dragon_claws": {
     "id": "dragon_claws",
+    "legacy_item_id": "dragon_claws",
     "name": "Dragon Claws",
     "type": "weapon",
     "slot": "weapon",
@@ -8919,6 +9316,7 @@
   },
   "elder_maul": {
     "id": "elder_maul",
+    "legacy_item_id": "elder_maul",
     "name": "Elder Maul",
     "type": "weapon",
     "slot": "weapon",
@@ -8956,6 +9354,7 @@
   },
   "kodai_wand": {
     "id": "kodai_wand",
+    "legacy_item_id": "kodai_wand",
     "name": "Kodai Wand",
     "type": "weapon",
     "slot": "weapon",
@@ -8993,6 +9392,7 @@
   },
   "twisted_bow": {
     "id": "twisted_bow",
+    "legacy_item_id": "twisted_bow",
     "name": "Twisted Bow",
     "type": "weapon",
     "slot": "weapon",
@@ -9031,6 +9431,7 @@
   },
   "zenyte_amulet": {
     "id": "zenyte_amulet",
+    "legacy_item_id": "zenyte_amulet",
     "name": "Zyrite Amulet",
     "type": "armour",
     "slot": "neck",
@@ -9066,6 +9467,7 @@
   },
   "zenyte_bracelet": {
     "id": "zenyte_bracelet",
+    "legacy_item_id": "zenyte_bracelet",
     "name": "Zyrite Bracelet",
     "type": "armour",
     "slot": "gloves",
@@ -9101,6 +9503,7 @@
   },
   "zenyte_necklace": {
     "id": "zenyte_necklace",
+    "legacy_item_id": "zenyte_necklace",
     "name": "Zyrite Necklace",
     "type": "armour",
     "slot": "neck",
@@ -9136,6 +9539,7 @@
   },
   "zenyte_ring": {
     "id": "zenyte_ring",
+    "legacy_item_id": "zenyte_ring",
     "name": "Zyrite Ring",
     "type": "armour",
     "slot": "ring",
@@ -9171,6 +9575,7 @@
   },
   "amulet_of_torture": {
     "id": "amulet_of_torture",
+    "legacy_item_id": "amulet_of_torture",
     "name": "Amulet of Torment",
     "type": "armour",
     "slot": "neck",
@@ -9206,6 +9611,7 @@
   },
   "tormented_bracelet": {
     "id": "tormented_bracelet",
+    "legacy_item_id": "tormented_bracelet",
     "name": "Afflicted Bracelet",
     "type": "armour",
     "slot": "gloves",
@@ -9241,6 +9647,7 @@
   },
   "necklace_of_anguish": {
     "id": "necklace_of_anguish",
+    "legacy_item_id": "necklace_of_anguish",
     "name": "Necklace of Agony",
     "type": "armour",
     "slot": "neck",
@@ -9276,6 +9683,7 @@
   },
   "ring_of_suffering": {
     "id": "ring_of_suffering",
+    "legacy_item_id": "ring_of_suffering",
     "name": "Ring of Affliction",
     "type": "armour",
     "slot": "ring",
@@ -9311,6 +9719,7 @@
   },
   "zenyte_shard": {
     "id": "zenyte_shard",
+    "legacy_item_id": "zenyte_shard",
     "name": "Zyrite Shard",
     "type": "resource",
     "stackable": false,
@@ -9325,6 +9734,7 @@
   },
   "heavy_ballista": {
     "id": "heavy_ballista",
+    "legacy_item_id": "heavy_ballista",
     "name": "Heavy Ballista",
     "type": "weapon",
     "slot": "weapon",
@@ -9363,6 +9773,7 @@
   },
   "javelin": {
     "id": "javelin",
+    "legacy_item_id": "javelin",
     "name": "Javelin",
     "type": "ammo",
     "stackable": true,
@@ -9373,6 +9784,7 @@
   },
   "dragon_javelin": {
     "id": "dragon_javelin",
+    "legacy_item_id": "dragon_javelin",
     "name": "Dragon Javelin",
     "type": "ammo",
     "stackable": true,
@@ -9391,6 +9803,7 @@
   },
   "zaryte_vambraces": {
     "id": "zaryte_vambraces",
+    "legacy_item_id": "zaryte_vambraces",
     "name": "Zaryte Vambraces",
     "type": "armour",
     "slot": "gloves",
@@ -9425,6 +9838,7 @@
   },
   "ghrazi_rapier": {
     "id": "ghrazi_rapier",
+    "legacy_item_id": "ghrazi_rapier",
     "name": "Ghrazi Rapier",
     "type": "weapon",
     "slot": "weapon",
@@ -9461,6 +9875,7 @@
   },
   "scythe_of_vitur": {
     "id": "scythe_of_vitur",
+    "legacy_item_id": "scythe_of_vitur",
     "name": "Scythe of Vitur",
     "type": "weapon",
     "slot": "weapon",
@@ -9501,6 +9916,7 @@
   },
   "sanguinesti_staff": {
     "id": "sanguinesti_staff",
+    "legacy_item_id": "sanguinesti_staff",
     "name": "Sanguinesti Staff",
     "type": "weapon",
     "slot": "weapon",
@@ -9541,6 +9957,7 @@
   },
   "avernic_defender": {
     "id": "avernic_defender",
+    "legacy_item_id": "avernic_defender",
     "name": "Avernic Defender",
     "type": "armour",
     "slot": "shield",
@@ -9575,6 +9992,7 @@
   },
   "justiciar_faceguard": {
     "id": "justiciar_faceguard",
+    "legacy_item_id": "justiciar_faceguard",
     "name": "Justiciar Faceguard",
     "type": "armour",
     "slot": "head",
@@ -9609,6 +10027,7 @@
   },
   "justiciar_chestguard": {
     "id": "justiciar_chestguard",
+    "legacy_item_id": "justiciar_chestguard",
     "name": "Justiciar Chestguard",
     "type": "armour",
     "slot": "body",
@@ -9643,6 +10062,7 @@
   },
   "justiciar_legguards": {
     "id": "justiciar_legguards",
+    "legacy_item_id": "justiciar_legguards",
     "name": "Justiciar Legguards",
     "type": "armour",
     "slot": "legs",
@@ -9677,6 +10097,7 @@
   },
   "red_partyhat": {
     "id": "red_partyhat",
+    "legacy_item_id": "red_partyhat",
     "name": "Red Partyhat",
     "type": "armour",
     "slot": "head",
@@ -9708,6 +10129,7 @@
   },
   "blue_partyhat": {
     "id": "blue_partyhat",
+    "legacy_item_id": "blue_partyhat",
     "name": "Blue Partyhat",
     "type": "armour",
     "slot": "head",
@@ -9739,6 +10161,7 @@
   },
   "green_partyhat": {
     "id": "green_partyhat",
+    "legacy_item_id": "green_partyhat",
     "name": "Green Partyhat",
     "type": "armour",
     "slot": "head",
@@ -9770,6 +10193,7 @@
   },
   "yellow_partyhat": {
     "id": "yellow_partyhat",
+    "legacy_item_id": "yellow_partyhat",
     "name": "Yellow Partyhat",
     "type": "armour",
     "slot": "head",
@@ -9801,6 +10225,7 @@
   },
   "white_partyhat": {
     "id": "white_partyhat",
+    "legacy_item_id": "white_partyhat",
     "name": "White Partyhat",
     "type": "armour",
     "slot": "head",
@@ -9832,6 +10257,7 @@
   },
   "purple_partyhat": {
     "id": "purple_partyhat",
+    "legacy_item_id": "purple_partyhat",
     "name": "Purple Partyhat",
     "type": "armour",
     "slot": "head",
@@ -9863,6 +10289,7 @@
   },
   "guam_seed": {
     "id": "guam_seed",
+    "legacy_item_id": "guam_seed",
     "name": "Guam Seed",
     "type": "seed",
     "stackable": true,
@@ -9872,6 +10299,7 @@
   },
   "marrentill_seed": {
     "id": "marrentill_seed",
+    "legacy_item_id": "marrentill_seed",
     "name": "Marrentill Seed",
     "type": "seed",
     "stackable": true,
@@ -9881,6 +10309,7 @@
   },
   "tarromin_seed": {
     "id": "tarromin_seed",
+    "legacy_item_id": "tarromin_seed",
     "name": "Tarromin Seed",
     "type": "seed",
     "stackable": true,
@@ -9890,6 +10319,7 @@
   },
   "basil_seed": {
     "id": "basil_seed",
+    "legacy_item_id": "basil_seed",
     "name": "Basil Seed",
     "type": "seed",
     "stackable": true,
@@ -9899,6 +10329,7 @@
   },
   "sagewort_seed": {
     "id": "sagewort_seed",
+    "legacy_item_id": "sagewort_seed",
     "name": "Sagewort Seed",
     "type": "seed",
     "stackable": true,
@@ -9908,6 +10339,7 @@
   },
   "gout_tuber_seed": {
     "id": "gout_tuber_seed",
+    "legacy_item_id": "gout_tuber_seed",
     "name": "Gout Tuber Seed",
     "type": "seed",
     "stackable": true,
@@ -9917,6 +10349,7 @@
   },
   "ranarr_seed": {
     "id": "ranarr_seed",
+    "legacy_item_id": "ranarr_seed",
     "name": "Ranarr Seed",
     "type": "seed",
     "stackable": true,
@@ -9926,6 +10359,7 @@
   },
   "oak_sapling": {
     "id": "oak_sapling",
+    "legacy_item_id": "oak_sapling",
     "name": "Oak Sapling",
     "type": "seed",
     "stackable": true,
@@ -9935,6 +10369,7 @@
   },
   "willow_sapling": {
     "id": "willow_sapling",
+    "legacy_item_id": "willow_sapling",
     "name": "Willow Sapling",
     "type": "seed",
     "stackable": true,
@@ -9944,6 +10379,7 @@
   },
   "maple_sapling": {
     "id": "maple_sapling",
+    "legacy_item_id": "maple_sapling",
     "name": "Maple Sapling",
     "type": "seed",
     "stackable": true,
@@ -9953,6 +10389,7 @@
   },
   "yew_sapling": {
     "id": "yew_sapling",
+    "legacy_item_id": "yew_sapling",
     "name": "Yew Sapling",
     "type": "seed",
     "stackable": true,
@@ -9962,6 +10399,7 @@
   },
   "magic_sapling": {
     "id": "magic_sapling",
+    "legacy_item_id": "magic_sapling",
     "name": "Magic Sapling",
     "type": "seed",
     "stackable": true,
@@ -9971,6 +10409,7 @@
   },
   "apple_sapling": {
     "id": "apple_sapling",
+    "legacy_item_id": "apple_sapling",
     "name": "Apple Sapling",
     "type": "seed",
     "stackable": true,
@@ -9980,6 +10419,7 @@
   },
   "banana_sapling": {
     "id": "banana_sapling",
+    "legacy_item_id": "banana_sapling",
     "name": "Banana Sapling",
     "type": "seed",
     "stackable": true,
@@ -9989,6 +10429,7 @@
   },
   "orange_sapling": {
     "id": "orange_sapling",
+    "legacy_item_id": "orange_sapling",
     "name": "Orange Sapling",
     "type": "seed",
     "stackable": true,
@@ -9998,6 +10439,7 @@
   },
   "curry_sapling": {
     "id": "curry_sapling",
+    "legacy_item_id": "curry_sapling",
     "name": "Curry Sapling",
     "type": "seed",
     "stackable": true,
@@ -10007,6 +10449,7 @@
   },
   "papaya_sapling": {
     "id": "papaya_sapling",
+    "legacy_item_id": "papaya_sapling",
     "name": "Papaya Sapling",
     "type": "seed",
     "stackable": true,
@@ -10016,6 +10459,7 @@
   },
   "palm_sapling": {
     "id": "palm_sapling",
+    "legacy_item_id": "palm_sapling",
     "name": "Palm Sapling",
     "type": "seed",
     "stackable": true,
@@ -10025,6 +10469,7 @@
   },
   "marrentill": {
     "id": "marrentill",
+    "legacy_item_id": "marrentill",
     "name": "Marrentill",
     "type": "resource",
     "stackable": true,
@@ -10034,6 +10479,7 @@
   },
   "basil": {
     "id": "basil",
+    "legacy_item_id": "basil",
     "name": "Basil",
     "type": "resource",
     "stackable": true,
@@ -10043,6 +10489,7 @@
   },
   "sagewort": {
     "id": "sagewort",
+    "legacy_item_id": "sagewort",
     "name": "Sagewort",
     "type": "resource",
     "stackable": true,
@@ -10052,6 +10499,7 @@
   },
   "gout_tuber": {
     "id": "gout_tuber",
+    "legacy_item_id": "gout_tuber",
     "name": "Gout Tuber",
     "type": "resource",
     "stackable": true,
@@ -10061,6 +10509,7 @@
   },
   "apple": {
     "id": "apple",
+    "legacy_item_id": "apple",
     "name": "Apple",
     "type": "resource",
     "stackable": true,
@@ -10070,6 +10519,7 @@
   },
   "banana": {
     "id": "banana",
+    "legacy_item_id": "banana",
     "name": "Banana",
     "type": "resource",
     "stackable": true,
@@ -10079,6 +10529,7 @@
   },
   "orange": {
     "id": "orange",
+    "legacy_item_id": "orange",
     "name": "Orange",
     "type": "resource",
     "stackable": true,
@@ -10088,6 +10539,7 @@
   },
   "curry_leaf": {
     "id": "curry_leaf",
+    "legacy_item_id": "curry_leaf",
     "name": "Curry Leaf",
     "type": "resource",
     "stackable": true,
@@ -10097,6 +10549,7 @@
   },
   "papaya_fruit": {
     "id": "papaya_fruit",
+    "legacy_item_id": "papaya_fruit",
     "name": "Papaya Fruit",
     "type": "resource",
     "stackable": true,
@@ -10106,6 +10559,7 @@
   },
   "palm_fruit": {
     "id": "palm_fruit",
+    "legacy_item_id": "palm_fruit",
     "name": "Palm Fruit",
     "type": "resource",
     "stackable": true,
@@ -10115,6 +10569,7 @@
   },
   "oak_plank": {
     "id": "oak_plank",
+    "legacy_item_id": "oak_plank",
     "name": "Oak Plank",
     "type": "resource",
     "stackable": true,
@@ -10124,6 +10579,7 @@
   },
   "teak_plank": {
     "id": "teak_plank",
+    "legacy_item_id": "teak_plank",
     "name": "Teak Plank",
     "type": "resource",
     "stackable": true,
@@ -10133,6 +10589,7 @@
   },
   "mahogany_plank": {
     "id": "mahogany_plank",
+    "legacy_item_id": "mahogany_plank",
     "name": "Mahogany Plank",
     "type": "resource",
     "stackable": true,
@@ -10142,6 +10599,7 @@
   },
   "barrows_gloves": {
     "id": "barrows_gloves",
+    "legacy_item_id": "barrows_gloves",
     "name": "Cryptbound Gloves",
     "type": "armour",
     "slot": "gloves",
@@ -10174,6 +10632,7 @@
   },
   "avas_assembler": {
     "id": "avas_assembler",
+    "legacy_item_id": "avas_assembler",
     "name": "Ava's Assembler",
     "type": "armour",
     "slot": "cape",
@@ -10208,6 +10667,7 @@
   },
   "avas_accumulator": {
     "id": "avas_accumulator",
+    "legacy_item_id": "avas_accumulator",
     "name": "Ava's Accumulator",
     "type": "armour",
     "slot": "cape",
@@ -10242,6 +10702,7 @@
   },
   "climbing_boots": {
     "id": "climbing_boots",
+    "legacy_item_id": "climbing_boots",
     "name": "Climbing Boots",
     "type": "armour",
     "slot": "boots",
@@ -10274,6 +10735,7 @@
   },
   "crystal_bow": {
     "id": "crystal_bow",
+    "legacy_item_id": "crystal_bow",
     "name": "Shardglass Bow",
     "type": "weapon",
     "slot": "weapon",
@@ -10312,6 +10774,7 @@
   },
   "crystal_shield": {
     "id": "crystal_shield",
+    "legacy_item_id": "crystal_shield",
     "name": "Shardglass Shield",
     "type": "armour",
     "slot": "shield",
@@ -10348,6 +10811,7 @@
   },
   "halo": {
     "id": "halo",
+    "legacy_item_id": "halo",
     "name": "Halo",
     "type": "armour",
     "slot": "head",
@@ -10380,6 +10844,7 @@
   },
   "decorative_top": {
     "id": "decorative_top",
+    "legacy_item_id": "decorative_top",
     "name": "Decorative Top",
     "type": "armour",
     "slot": "body",
@@ -10411,6 +10876,7 @@
   },
   "imbued_god_cape": {
     "id": "imbued_god_cape",
+    "legacy_item_id": "imbued_god_cape",
     "name": "Imbued God Cape",
     "type": "armour",
     "slot": "cape",
@@ -10444,6 +10910,7 @@
   },
   "void_hat": {
     "id": "void_hat",
+    "legacy_item_id": "void_hat",
     "name": "Void Hat",
     "type": "armour",
     "slot": "head",
@@ -10482,6 +10949,7 @@
   },
   "void_body": {
     "id": "void_body",
+    "legacy_item_id": "void_body",
     "name": "Void Body",
     "type": "armour",
     "slot": "body",
@@ -10521,6 +10989,7 @@
   },
   "void_bottoms": {
     "id": "void_bottoms",
+    "legacy_item_id": "void_bottoms",
     "name": "Void Bottoms",
     "type": "armour",
     "slot": "legs",
@@ -10560,6 +11029,7 @@
   },
   "void_gloves": {
     "id": "void_gloves",
+    "legacy_item_id": "void_gloves",
     "name": "Void Gloves",
     "type": "armour",
     "slot": "gloves",
@@ -10598,6 +11068,7 @@
   },
   "ahrims_hood": {
     "id": "ahrims_hood",
+    "legacy_item_id": "ahrims_hood",
     "name": "Morvyn's Hood",
     "type": "armour",
     "slot": "head",
@@ -10631,6 +11102,7 @@
   },
   "ahrims_robetop": {
     "id": "ahrims_robetop",
+    "legacy_item_id": "ahrims_robetop",
     "name": "Morvyn's Robetop",
     "type": "armour",
     "slot": "body",
@@ -10664,6 +11136,7 @@
   },
   "ahrims_robeskirt": {
     "id": "ahrims_robeskirt",
+    "legacy_item_id": "ahrims_robeskirt",
     "name": "Morvyn's Robeskirt",
     "type": "armour",
     "slot": "legs",
@@ -10697,6 +11170,7 @@
   },
   "ahrims_staff": {
     "id": "ahrims_staff",
+    "legacy_item_id": "ahrims_staff",
     "name": "Morvyn's Staff",
     "type": "weapon",
     "slot": "weapon",
@@ -10733,6 +11207,7 @@
   },
   "dharoks_helm": {
     "id": "dharoks_helm",
+    "legacy_item_id": "dharoks_helm",
     "name": "Dravok's Helm",
     "type": "armour",
     "slot": "head",
@@ -10766,6 +11241,7 @@
   },
   "dharoks_platebody": {
     "id": "dharoks_platebody",
+    "legacy_item_id": "dharoks_platebody",
     "name": "Dravok's Platebody",
     "type": "armour",
     "slot": "body",
@@ -10799,6 +11275,7 @@
   },
   "dharoks_platelegs": {
     "id": "dharoks_platelegs",
+    "legacy_item_id": "dharoks_platelegs",
     "name": "Dravok's Platelegs",
     "type": "armour",
     "slot": "legs",
@@ -10832,6 +11309,7 @@
   },
   "dharoks_greataxe": {
     "id": "dharoks_greataxe",
+    "legacy_item_id": "dharoks_greataxe",
     "name": "Dravok's Greataxe",
     "type": "weapon",
     "slot": "weapon",
@@ -10869,6 +11347,7 @@
   },
   "guthans_helm": {
     "id": "guthans_helm",
+    "legacy_item_id": "guthans_helm",
     "name": "Gorath's Helm",
     "type": "armour",
     "slot": "head",
@@ -10902,6 +11381,7 @@
   },
   "guthans_platebody": {
     "id": "guthans_platebody",
+    "legacy_item_id": "guthans_platebody",
     "name": "Gorath's Platebody",
     "type": "armour",
     "slot": "body",
@@ -10935,6 +11415,7 @@
   },
   "guthans_chainskirt": {
     "id": "guthans_chainskirt",
+    "legacy_item_id": "guthans_chainskirt",
     "name": "Gorath's Chainskirt",
     "type": "armour",
     "slot": "legs",
@@ -10968,6 +11449,7 @@
   },
   "guthans_warspear": {
     "id": "guthans_warspear",
+    "legacy_item_id": "guthans_warspear",
     "name": "Gorath's Warspear",
     "type": "weapon",
     "slot": "weapon",
@@ -11005,6 +11487,7 @@
   },
   "karils_coif": {
     "id": "karils_coif",
+    "legacy_item_id": "karils_coif",
     "name": "Kaelor's Coif",
     "type": "armour",
     "slot": "head",
@@ -11038,6 +11521,7 @@
   },
   "karils_leathertop": {
     "id": "karils_leathertop",
+    "legacy_item_id": "karils_leathertop",
     "name": "Kaelor's Leathertop",
     "type": "armour",
     "slot": "body",
@@ -11071,6 +11555,7 @@
   },
   "karils_leatherskirt": {
     "id": "karils_leatherskirt",
+    "legacy_item_id": "karils_leatherskirt",
     "name": "Kaelor's Leatherskirt",
     "type": "armour",
     "slot": "legs",
@@ -11104,6 +11589,7 @@
   },
   "karils_crossbow": {
     "id": "karils_crossbow",
+    "legacy_item_id": "karils_crossbow",
     "name": "Kaelor's Crossbow",
     "type": "weapon",
     "slot": "weapon",
@@ -11140,6 +11626,7 @@
   },
   "torags_helm": {
     "id": "torags_helm",
+    "legacy_item_id": "torags_helm",
     "name": "Torvek's Helm",
     "type": "armour",
     "slot": "head",
@@ -11173,6 +11660,7 @@
   },
   "torags_platebody": {
     "id": "torags_platebody",
+    "legacy_item_id": "torags_platebody",
     "name": "Torvek's Platebody",
     "type": "armour",
     "slot": "body",
@@ -11206,6 +11694,7 @@
   },
   "torags_platelegs": {
     "id": "torags_platelegs",
+    "legacy_item_id": "torags_platelegs",
     "name": "Torvek's Platelegs",
     "type": "armour",
     "slot": "legs",
@@ -11239,6 +11728,7 @@
   },
   "torags_hammers": {
     "id": "torags_hammers",
+    "legacy_item_id": "torags_hammers",
     "name": "Torvek's Hammers",
     "type": "weapon",
     "slot": "weapon",
@@ -11275,6 +11765,7 @@
   },
   "veracs_helm": {
     "id": "veracs_helm",
+    "legacy_item_id": "veracs_helm",
     "name": "Verin's Helm",
     "type": "armour",
     "slot": "head",
@@ -11308,6 +11799,7 @@
   },
   "veracs_brassard": {
     "id": "veracs_brassard",
+    "legacy_item_id": "veracs_brassard",
     "name": "Verin's Brassard",
     "type": "armour",
     "slot": "body",
@@ -11341,6 +11833,7 @@
   },
   "veracs_plateskirt": {
     "id": "veracs_plateskirt",
+    "legacy_item_id": "veracs_plateskirt",
     "name": "Verin's Plateskirt",
     "type": "armour",
     "slot": "legs",
@@ -11374,6 +11867,7 @@
   },
   "veracs_flail": {
     "id": "veracs_flail",
+    "legacy_item_id": "veracs_flail",
     "name": "Verin's Flail",
     "type": "weapon",
     "slot": "weapon",
@@ -11410,6 +11904,7 @@
   },
   "fighter_torso": {
     "id": "fighter_torso",
+    "legacy_item_id": "fighter_torso",
     "name": "Fighter Body",
     "type": "armour",
     "slot": "body",
@@ -11443,6 +11938,7 @@
   },
   "rune_defender": {
     "id": "rune_defender",
+    "legacy_item_id": "rune_defender",
     "name": "Runeforged Defender",
     "type": "armour",
     "slot": "shield",
@@ -11477,6 +11973,7 @@
   },
   "dragon_defender": {
     "id": "dragon_defender",
+    "legacy_item_id": "dragon_defender",
     "name": "Dragon Defender",
     "type": "armour",
     "slot": "shield",
@@ -11511,6 +12008,7 @@
   },
   "fighter_hat": {
     "id": "fighter_hat",
+    "legacy_item_id": "fighter_hat",
     "name": "Fighter Helm",
     "type": "armour",
     "slot": "head",
@@ -11544,6 +12042,7 @@
   },
   "clue_scroll_medium": {
     "id": "clue_scroll_medium",
+    "legacy_item_id": "clue_scroll_medium",
     "name": "Clue Scroll (Medium)",
     "type": "quest",
     "stackable": true,
@@ -11554,6 +12053,7 @@
   },
   "clue_scroll_hard": {
     "id": "clue_scroll_hard",
+    "legacy_item_id": "clue_scroll_hard",
     "name": "Clue Scroll (Hard)",
     "type": "quest",
     "stackable": true,
@@ -11564,6 +12064,7 @@
   },
   "clue_scroll_elite": {
     "id": "clue_scroll_elite",
+    "legacy_item_id": "clue_scroll_elite",
     "name": "Clue Scroll (Elite)",
     "type": "quest",
     "stackable": true,
@@ -11574,6 +12075,7 @@
   },
   "clue_scroll_master": {
     "id": "clue_scroll_master",
+    "legacy_item_id": "clue_scroll_master",
     "name": "Clue Scroll (Master)",
     "type": "quest",
     "stackable": true,
@@ -11584,6 +12086,7 @@
   },
   "mithril_plateskirt": {
     "id": "mithril_plateskirt",
+    "legacy_item_id": "mithril_plateskirt",
     "name": "Mithril Plateskirt",
     "type": "resource",
     "stackable": true,
@@ -11612,6 +12115,7 @@
   },
   "adamant_plateskirt": {
     "id": "adamant_plateskirt",
+    "legacy_item_id": "adamant_plateskirt",
     "name": "Adamant Plateskirt",
     "type": "resource",
     "stackable": true,
@@ -11621,6 +12125,7 @@
   },
   "purple_sweets": {
     "id": "purple_sweets",
+    "legacy_item_id": "purple_sweets",
     "name": "Purple Sweets",
     "type": "resource",
     "stackable": true,
@@ -11630,6 +12135,7 @@
   },
   "dragon_mace": {
     "id": "dragon_mace",
+    "legacy_item_id": "dragon_mace",
     "name": "Dragon Mace",
     "type": "resource",
     "stackable": true,
@@ -11639,6 +12145,7 @@
   },
   "battlestaff": {
     "id": "battlestaff",
+    "legacy_item_id": "battlestaff",
     "name": "Battlestaff",
     "type": "resource",
     "stackable": true,
@@ -11648,6 +12155,7 @@
   },
   "manta_ray": {
     "id": "manta_ray",
+    "legacy_item_id": "manta_ray",
     "name": "Manta Ray",
     "type": "resource",
     "stackable": true,
@@ -11657,6 +12165,7 @@
   },
   "dragon_battleaxe": {
     "id": "dragon_battleaxe",
+    "legacy_item_id": "dragon_battleaxe",
     "name": "Dragon Battleaxe",
     "type": "resource",
     "stackable": true,
@@ -11666,6 +12175,7 @@
   },
   "anglerfish": {
     "id": "anglerfish",
+    "legacy_item_id": "anglerfish",
     "name": "Anglerfish",
     "type": "resource",
     "stackable": true,
@@ -11675,6 +12185,7 @@
   },
   "ranger_boots": {
     "id": "ranger_boots",
+    "legacy_item_id": "ranger_boots",
     "name": "Ranger Boots",
     "type": "armour",
     "stackable": false,
@@ -11709,6 +12220,7 @@
   },
   "wizard_boots": {
     "id": "wizard_boots",
+    "legacy_item_id": "wizard_boots",
     "name": "Wizard Boots",
     "type": "armour",
     "stackable": false,
@@ -11743,6 +12255,7 @@
   },
   "holy_sandals": {
     "id": "holy_sandals",
+    "legacy_item_id": "holy_sandals",
     "name": "Holy Sandals",
     "type": "armour",
     "stackable": false,
@@ -11775,6 +12288,7 @@
   },
   "spiked_manacles": {
     "id": "spiked_manacles",
+    "legacy_item_id": "spiked_manacles",
     "name": "Spiked Manacles",
     "type": "armour",
     "stackable": false,
@@ -11804,6 +12318,7 @@
   },
   "climbing_boots_g": {
     "id": "climbing_boots_g",
+    "legacy_item_id": "climbing_boots_g",
     "name": "Climbing Boots (G)",
     "type": "armour",
     "stackable": false,
@@ -11836,6 +12351,7 @@
   },
   "saradomin_dhide_body": {
     "id": "saradomin_dhide_body",
+    "legacy_item_id": "saradomin_dhide_body",
     "name": "Saradomin D'Hide Body",
     "type": "armour",
     "stackable": false,
@@ -11872,6 +12388,7 @@
   },
   "saradomin_dhide_chaps": {
     "id": "saradomin_dhide_chaps",
+    "legacy_item_id": "saradomin_dhide_chaps",
     "name": "Saradomin D'Hide Chaps",
     "type": "armour",
     "stackable": false,
@@ -11907,6 +12424,7 @@
   },
   "saradomin_dhide_boots": {
     "id": "saradomin_dhide_boots",
+    "legacy_item_id": "saradomin_dhide_boots",
     "name": "Saradomin D'Hide Boots",
     "type": "armour",
     "stackable": false,
@@ -11943,6 +12461,7 @@
   },
   "saradomin_dhide_bracers": {
     "id": "saradomin_dhide_bracers",
+    "legacy_item_id": "saradomin_dhide_bracers",
     "name": "Saradomin D'Hide Bracers",
     "type": "armour",
     "stackable": false,
@@ -11979,6 +12498,7 @@
   },
   "saradomin_coif": {
     "id": "saradomin_coif",
+    "legacy_item_id": "saradomin_coif",
     "name": "Saradomin Coif",
     "type": "armour",
     "stackable": false,
@@ -12012,6 +12532,7 @@
   },
   "saradomin_stole": {
     "id": "saradomin_stole",
+    "legacy_item_id": "saradomin_stole",
     "name": "Saradomin Stole",
     "type": "armour",
     "stackable": false,
@@ -12044,6 +12565,7 @@
   },
   "guthix_dhide_body": {
     "id": "guthix_dhide_body",
+    "legacy_item_id": "guthix_dhide_body",
     "name": "Guthix D'Hide Body",
     "type": "armour",
     "stackable": false,
@@ -12080,6 +12602,7 @@
   },
   "guthix_dhide_chaps": {
     "id": "guthix_dhide_chaps",
+    "legacy_item_id": "guthix_dhide_chaps",
     "name": "Guthix D'Hide Chaps",
     "type": "armour",
     "stackable": false,
@@ -12115,6 +12638,7 @@
   },
   "guthix_dhide_boots": {
     "id": "guthix_dhide_boots",
+    "legacy_item_id": "guthix_dhide_boots",
     "name": "Guthix D'Hide Boots",
     "type": "armour",
     "stackable": false,
@@ -12151,6 +12675,7 @@
   },
   "guthix_dhide_bracers": {
     "id": "guthix_dhide_bracers",
+    "legacy_item_id": "guthix_dhide_bracers",
     "name": "Guthix D'Hide Bracers",
     "type": "armour",
     "stackable": false,
@@ -12187,6 +12712,7 @@
   },
   "guthix_coif": {
     "id": "guthix_coif",
+    "legacy_item_id": "guthix_coif",
     "name": "Guthix Coif",
     "type": "armour",
     "stackable": false,
@@ -12220,6 +12746,7 @@
   },
   "guthix_stole": {
     "id": "guthix_stole",
+    "legacy_item_id": "guthix_stole",
     "name": "Guthix Stole",
     "type": "armour",
     "stackable": false,
@@ -12252,6 +12779,7 @@
   },
   "zamorak_dhide_body": {
     "id": "zamorak_dhide_body",
+    "legacy_item_id": "zamorak_dhide_body",
     "name": "Zamorak D'Hide Body",
     "type": "armour",
     "stackable": false,
@@ -12288,6 +12816,7 @@
   },
   "zamorak_dhide_chaps": {
     "id": "zamorak_dhide_chaps",
+    "legacy_item_id": "zamorak_dhide_chaps",
     "name": "Zamorak D'Hide Chaps",
     "type": "armour",
     "stackable": false,
@@ -12323,6 +12852,7 @@
   },
   "zamorak_dhide_boots": {
     "id": "zamorak_dhide_boots",
+    "legacy_item_id": "zamorak_dhide_boots",
     "name": "Zamorak D'Hide Boots",
     "type": "armour",
     "stackable": false,
@@ -12359,6 +12889,7 @@
   },
   "zamorak_dhide_bracers": {
     "id": "zamorak_dhide_bracers",
+    "legacy_item_id": "zamorak_dhide_bracers",
     "name": "Zamorak D'Hide Bracers",
     "type": "armour",
     "stackable": false,
@@ -12395,6 +12926,7 @@
   },
   "zamorak_coif": {
     "id": "zamorak_coif",
+    "legacy_item_id": "zamorak_coif",
     "name": "Zamorak Coif",
     "type": "armour",
     "stackable": false,
@@ -12428,6 +12960,7 @@
   },
   "zamorak_stole": {
     "id": "zamorak_stole",
+    "legacy_item_id": "zamorak_stole",
     "name": "Zamorak Stole",
     "type": "armour",
     "stackable": false,
@@ -12460,6 +12993,7 @@
   },
   "ancient_dhide_body": {
     "id": "ancient_dhide_body",
+    "legacy_item_id": "ancient_dhide_body",
     "name": "Ancient D'Hide Body",
     "type": "armour",
     "stackable": false,
@@ -12496,6 +13030,7 @@
   },
   "ancient_dhide_chaps": {
     "id": "ancient_dhide_chaps",
+    "legacy_item_id": "ancient_dhide_chaps",
     "name": "Ancient D'Hide Chaps",
     "type": "armour",
     "stackable": false,
@@ -12531,6 +13066,7 @@
   },
   "ancient_dhide_boots": {
     "id": "ancient_dhide_boots",
+    "legacy_item_id": "ancient_dhide_boots",
     "name": "Ancient D'Hide Boots",
     "type": "armour",
     "stackable": false,
@@ -12567,6 +13103,7 @@
   },
   "ancient_dhide_bracers": {
     "id": "ancient_dhide_bracers",
+    "legacy_item_id": "ancient_dhide_bracers",
     "name": "Ancient D'Hide Bracers",
     "type": "armour",
     "stackable": false,
@@ -12603,6 +13140,7 @@
   },
   "ancient_coif": {
     "id": "ancient_coif",
+    "legacy_item_id": "ancient_coif",
     "name": "Ancient Coif",
     "type": "armour",
     "stackable": false,
@@ -12636,6 +13174,7 @@
   },
   "ancient_stole": {
     "id": "ancient_stole",
+    "legacy_item_id": "ancient_stole",
     "name": "Ancient Stole",
     "type": "armour",
     "stackable": false,
@@ -12668,6 +13207,7 @@
   },
   "armadyl_dhide_body": {
     "id": "armadyl_dhide_body",
+    "legacy_item_id": "armadyl_dhide_body",
     "name": "Armadyl D'Hide Body",
     "type": "armour",
     "stackable": false,
@@ -12704,6 +13244,7 @@
   },
   "armadyl_dhide_chaps": {
     "id": "armadyl_dhide_chaps",
+    "legacy_item_id": "armadyl_dhide_chaps",
     "name": "Armadyl D'Hide Chaps",
     "type": "armour",
     "stackable": false,
@@ -12739,6 +13280,7 @@
   },
   "armadyl_dhide_boots": {
     "id": "armadyl_dhide_boots",
+    "legacy_item_id": "armadyl_dhide_boots",
     "name": "Armadyl D'Hide Boots",
     "type": "armour",
     "stackable": false,
@@ -12775,6 +13317,7 @@
   },
   "armadyl_dhide_bracers": {
     "id": "armadyl_dhide_bracers",
+    "legacy_item_id": "armadyl_dhide_bracers",
     "name": "Armadyl D'Hide Bracers",
     "type": "armour",
     "stackable": false,
@@ -12811,6 +13354,7 @@
   },
   "armadyl_coif": {
     "id": "armadyl_coif",
+    "legacy_item_id": "armadyl_coif",
     "name": "Armadyl Coif",
     "type": "armour",
     "stackable": false,
@@ -12844,6 +13388,7 @@
   },
   "armadyl_stole": {
     "id": "armadyl_stole",
+    "legacy_item_id": "armadyl_stole",
     "name": "Armadyl Stole",
     "type": "armour",
     "stackable": false,
@@ -12876,6 +13421,7 @@
   },
   "bandos_dhide_body": {
     "id": "bandos_dhide_body",
+    "legacy_item_id": "bandos_dhide_body",
     "name": "Bandos D'Hide Body",
     "type": "armour",
     "stackable": false,
@@ -12912,6 +13458,7 @@
   },
   "bandos_dhide_chaps": {
     "id": "bandos_dhide_chaps",
+    "legacy_item_id": "bandos_dhide_chaps",
     "name": "Bandos D'Hide Chaps",
     "type": "armour",
     "stackable": false,
@@ -12947,6 +13494,7 @@
   },
   "bandos_dhide_boots": {
     "id": "bandos_dhide_boots",
+    "legacy_item_id": "bandos_dhide_boots",
     "name": "Bandos D'Hide Boots",
     "type": "armour",
     "stackable": false,
@@ -12983,6 +13531,7 @@
   },
   "bandos_dhide_bracers": {
     "id": "bandos_dhide_bracers",
+    "legacy_item_id": "bandos_dhide_bracers",
     "name": "Bandos D'Hide Bracers",
     "type": "armour",
     "stackable": false,
@@ -13019,6 +13568,7 @@
   },
   "bandos_coif": {
     "id": "bandos_coif",
+    "legacy_item_id": "bandos_coif",
     "name": "Bandos Coif",
     "type": "armour",
     "stackable": false,
@@ -13052,6 +13602,7 @@
   },
   "bandos_stole": {
     "id": "bandos_stole",
+    "legacy_item_id": "bandos_stole",
     "name": "Bandos Stole",
     "type": "armour",
     "stackable": false,
@@ -13084,6 +13635,7 @@
   },
   "black_dhide_body": {
     "id": "black_dhide_body",
+    "legacy_item_id": "black_dhide_body",
     "name": "Black D'Hide Body",
     "type": "armour",
     "stackable": false,
@@ -13117,6 +13669,7 @@
   },
   "black_dhide_chaps": {
     "id": "black_dhide_chaps",
+    "legacy_item_id": "black_dhide_chaps",
     "name": "Black D'Hide Chaps",
     "type": "armour",
     "stackable": false,
@@ -13149,6 +13702,7 @@
   },
   "robin_hood_hat": {
     "id": "robin_hood_hat",
+    "legacy_item_id": "robin_hood_hat",
     "name": "Robin Hood Hat",
     "type": "armour",
     "stackable": false,
@@ -13183,6 +13737,7 @@
   },
   "amulet_of_glory_t": {
     "id": "amulet_of_glory_t",
+    "legacy_item_id": "amulet_of_glory_t",
     "name": "Amulet of Glory (T)",
     "type": "armour",
     "stackable": false,
@@ -13213,6 +13768,7 @@
   },
   "3rd_age_full_helm": {
     "id": "3rd_age_full_helm",
+    "legacy_item_id": "3rd_age_full_helm",
     "name": "2nd Age Full Helm",
     "type": "armour",
     "stackable": false,
@@ -13247,6 +13803,7 @@
   },
   "3rd_age_platebody": {
     "id": "3rd_age_platebody",
+    "legacy_item_id": "3rd_age_platebody",
     "name": "2nd Age Platebody",
     "type": "armour",
     "stackable": false,
@@ -13281,6 +13838,7 @@
   },
   "3rd_age_platelegs": {
     "id": "3rd_age_platelegs",
+    "legacy_item_id": "3rd_age_platelegs",
     "name": "2nd Age Platelegs",
     "type": "armour",
     "stackable": false,
@@ -13315,6 +13873,7 @@
   },
   "3rd_age_plateskirt": {
     "id": "3rd_age_plateskirt",
+    "legacy_item_id": "3rd_age_plateskirt",
     "name": "2nd Age Plateskirt",
     "type": "armour",
     "stackable": false,
@@ -13349,6 +13908,7 @@
   },
   "3rd_age_kiteshield": {
     "id": "3rd_age_kiteshield",
+    "legacy_item_id": "3rd_age_kiteshield",
     "name": "2nd Age Kiteshield",
     "type": "armour",
     "stackable": false,
@@ -13383,6 +13943,7 @@
   },
   "3rd_age_range_coif": {
     "id": "3rd_age_range_coif",
+    "legacy_item_id": "3rd_age_range_coif",
     "name": "2nd Age Range Coif",
     "type": "armour",
     "stackable": false,
@@ -13418,6 +13979,7 @@
   },
   "3rd_age_range_top": {
     "id": "3rd_age_range_top",
+    "legacy_item_id": "3rd_age_range_top",
     "name": "2nd Age Range Top",
     "type": "armour",
     "stackable": false,
@@ -13453,6 +14015,7 @@
   },
   "3rd_age_range_legs": {
     "id": "3rd_age_range_legs",
+    "legacy_item_id": "3rd_age_range_legs",
     "name": "2nd Age Range Legs",
     "type": "armour",
     "stackable": false,
@@ -13488,6 +14051,7 @@
   },
   "3rd_age_vambraces": {
     "id": "3rd_age_vambraces",
+    "legacy_item_id": "3rd_age_vambraces",
     "name": "2nd Age Vambraces",
     "type": "armour",
     "stackable": false,
@@ -13523,6 +14087,7 @@
   },
   "3rd_age_mage_hat": {
     "id": "3rd_age_mage_hat",
+    "legacy_item_id": "3rd_age_mage_hat",
     "name": "2nd Age Mage Hat",
     "type": "armour",
     "stackable": false,
@@ -13558,6 +14123,7 @@
   },
   "3rd_age_robe_top": {
     "id": "3rd_age_robe_top",
+    "legacy_item_id": "3rd_age_robe_top",
     "name": "2nd Age Robe Top",
     "type": "armour",
     "stackable": false,
@@ -13593,6 +14159,7 @@
   },
   "3rd_age_robe_legs": {
     "id": "3rd_age_robe_legs",
+    "legacy_item_id": "3rd_age_robe_legs",
     "name": "2nd Age Robe Legs",
     "type": "armour",
     "stackable": false,
@@ -13628,6 +14195,7 @@
   },
   "3rd_age_amulet": {
     "id": "3rd_age_amulet",
+    "legacy_item_id": "3rd_age_amulet",
     "name": "2nd Age Amulet",
     "type": "armour",
     "stackable": false,
@@ -13663,6 +14231,7 @@
   },
   "3rd_age_longsword": {
     "id": "3rd_age_longsword",
+    "legacy_item_id": "3rd_age_longsword",
     "name": "2nd Age Longsword",
     "type": "armour",
     "stackable": false,
@@ -13695,6 +14264,7 @@
   },
   "3rd_age_bow": {
     "id": "3rd_age_bow",
+    "legacy_item_id": "3rd_age_bow",
     "name": "2nd Age Bow",
     "type": "armour",
     "stackable": false,
@@ -13727,6 +14297,7 @@
   },
   "3rd_age_wand": {
     "id": "3rd_age_wand",
+    "legacy_item_id": "3rd_age_wand",
     "name": "2nd Age Wand",
     "type": "armour",
     "stackable": false,
@@ -13761,6 +14332,7 @@
   },
   "3rd_age_cloak": {
     "id": "3rd_age_cloak",
+    "legacy_item_id": "3rd_age_cloak",
     "name": "2nd Age Cloak",
     "type": "armour",
     "stackable": false,
@@ -13793,6 +14365,7 @@
   },
   "saradomin_dhide_shield": {
     "id": "saradomin_dhide_shield",
+    "legacy_item_id": "saradomin_dhide_shield",
     "name": "Saradomin D'Hide Shield",
     "type": "armour",
     "stackable": false,
@@ -13829,6 +14402,7 @@
   },
   "guthix_dhide_shield": {
     "id": "guthix_dhide_shield",
+    "legacy_item_id": "guthix_dhide_shield",
     "name": "Guthix D'Hide Shield",
     "type": "armour",
     "stackable": false,
@@ -13865,6 +14439,7 @@
   },
   "zamorak_dhide_shield": {
     "id": "zamorak_dhide_shield",
+    "legacy_item_id": "zamorak_dhide_shield",
     "name": "Zamorak D'Hide Shield",
     "type": "armour",
     "stackable": false,
@@ -13901,6 +14476,7 @@
   },
   "ancient_dhide_shield": {
     "id": "ancient_dhide_shield",
+    "legacy_item_id": "ancient_dhide_shield",
     "name": "Ancient D'Hide Shield",
     "type": "armour",
     "stackable": false,
@@ -13937,6 +14513,7 @@
   },
   "armadyl_dhide_shield": {
     "id": "armadyl_dhide_shield",
+    "legacy_item_id": "armadyl_dhide_shield",
     "name": "Armadyl D'Hide Shield",
     "type": "armour",
     "stackable": false,
@@ -13973,6 +14550,7 @@
   },
   "bandos_dhide_shield": {
     "id": "bandos_dhide_shield",
+    "legacy_item_id": "bandos_dhide_shield",
     "name": "Bandos D'Hide Shield",
     "type": "armour",
     "stackable": false,
@@ -14009,6 +14587,7 @@
   },
   "holy_blessing": {
     "id": "holy_blessing",
+    "legacy_item_id": "holy_blessing",
     "name": "Holy Blessing",
     "type": "armour",
     "stackable": false,
@@ -14039,6 +14618,7 @@
   },
   "peace_blessing": {
     "id": "peace_blessing",
+    "legacy_item_id": "peace_blessing",
     "name": "Peace Blessing",
     "type": "armour",
     "stackable": false,
@@ -14069,6 +14649,7 @@
   },
   "unholy_blessing": {
     "id": "unholy_blessing",
+    "legacy_item_id": "unholy_blessing",
     "name": "Unholy Blessing",
     "type": "armour",
     "stackable": false,
@@ -14099,6 +14680,7 @@
   },
   "honorable_blessing": {
     "id": "honorable_blessing",
+    "legacy_item_id": "honorable_blessing",
     "name": "Honorable Blessing",
     "type": "armour",
     "stackable": false,
@@ -14129,6 +14711,7 @@
   },
   "war_blessing": {
     "id": "war_blessing",
+    "legacy_item_id": "war_blessing",
     "name": "War Blessing",
     "type": "armour",
     "stackable": false,
@@ -14159,6 +14742,7 @@
   },
   "ancient_blessing": {
     "id": "ancient_blessing",
+    "legacy_item_id": "ancient_blessing",
     "name": "Ancient Blessing",
     "type": "armour",
     "stackable": false,
@@ -14189,6 +14773,7 @@
   },
   "rangers_tunic": {
     "id": "rangers_tunic",
+    "legacy_item_id": "rangers_tunic",
     "name": "Rangers' Tunic",
     "type": "armour",
     "stackable": false,
@@ -14223,6 +14808,7 @@
   },
   "holy_wraps": {
     "id": "holy_wraps",
+    "legacy_item_id": "holy_wraps",
     "name": "Holy Wraps",
     "type": "armour",
     "stackable": false,
@@ -14255,6 +14841,7 @@
   },
   "freminnik_kilt": {
     "id": "freminnik_kilt",
+    "legacy_item_id": "freminnik_kilt",
     "name": "Freminnik Kilt",
     "type": "armour",
     "stackable": false,
@@ -14286,6 +14873,7 @@
   },
   "3rd_age_druidic_robe_top": {
     "id": "3rd_age_druidic_robe_top",
+    "legacy_item_id": "3rd_age_druidic_robe_top",
     "name": "2nd Age Druidic Robe Top",
     "type": "armour",
     "stackable": false,
@@ -14319,6 +14907,7 @@
   },
   "3rd_age_druidic_robe_bottoms": {
     "id": "3rd_age_druidic_robe_bottoms",
+    "legacy_item_id": "3rd_age_druidic_robe_bottoms",
     "name": "2nd Age Druidic Robe Bottoms",
     "type": "armour",
     "stackable": false,
@@ -14352,6 +14941,7 @@
   },
   "3rd_age_druidic_cloak": {
     "id": "3rd_age_druidic_cloak",
+    "legacy_item_id": "3rd_age_druidic_cloak",
     "name": "2nd Age Druidic Cloak",
     "type": "armour",
     "stackable": false,
@@ -14384,6 +14974,7 @@
   },
   "3rd_age_druidic_staff": {
     "id": "3rd_age_druidic_staff",
+    "legacy_item_id": "3rd_age_druidic_staff",
     "name": "2nd Age Druidic Staff",
     "type": "armour",
     "stackable": false,
@@ -14417,6 +15008,7 @@
   },
   "3rd_age_pickaxe": {
     "id": "3rd_age_pickaxe",
+    "legacy_item_id": "3rd_age_pickaxe",
     "name": "2nd Age Pickaxe",
     "type": "armour",
     "stackable": false,
@@ -14451,6 +15043,7 @@
   },
   "3rd_age_axe": {
     "id": "3rd_age_axe",
+    "legacy_item_id": "3rd_age_axe",
     "name": "2nd Age Axe",
     "type": "armour",
     "stackable": false,
@@ -14485,6 +15078,7 @@
   },
   "gilded_pickaxe": {
     "id": "gilded_pickaxe",
+    "legacy_item_id": "gilded_pickaxe",
     "name": "Gilded Pickaxe",
     "type": "armour",
     "stackable": false,
@@ -14518,6 +15112,7 @@
   },
   "gilded_axe": {
     "id": "gilded_axe",
+    "legacy_item_id": "gilded_axe",
     "name": "Gilded Axe",
     "type": "armour",
     "stackable": false,
@@ -14551,6 +15146,7 @@
   },
   "gilded_spade": {
     "id": "gilded_spade",
+    "legacy_item_id": "gilded_spade",
     "name": "Gilded Spade",
     "type": "armour",
     "stackable": false,
@@ -14582,6 +15178,7 @@
   },
   "fancy_tiara": {
     "id": "fancy_tiara",
+    "legacy_item_id": "fancy_tiara",
     "name": "Fancy Tiara",
     "type": "armour",
     "stackable": false,
@@ -14611,6 +15208,7 @@
   },
   "saradomin_mitre": {
     "id": "saradomin_mitre",
+    "legacy_item_id": "saradomin_mitre",
     "name": "Saradomin Mitre",
     "type": "armour",
     "stackable": false,
@@ -14644,6 +15242,7 @@
   },
   "guthix_mitre": {
     "id": "guthix_mitre",
+    "legacy_item_id": "guthix_mitre",
     "name": "Guthix Mitre",
     "type": "armour",
     "stackable": false,
@@ -14677,6 +15276,7 @@
   },
   "zamorak_mitre": {
     "id": "zamorak_mitre",
+    "legacy_item_id": "zamorak_mitre",
     "name": "Zamorak Mitre",
     "type": "armour",
     "stackable": false,
@@ -14710,6 +15310,7 @@
   },
   "ancient_mitre": {
     "id": "ancient_mitre",
+    "legacy_item_id": "ancient_mitre",
     "name": "Ancient Mitre",
     "type": "armour",
     "stackable": false,
@@ -14743,6 +15344,7 @@
   },
   "armadyl_mitre": {
     "id": "armadyl_mitre",
+    "legacy_item_id": "armadyl_mitre",
     "name": "Armadyl Mitre",
     "type": "armour",
     "stackable": false,
@@ -14776,6 +15378,7 @@
   },
   "bandos_mitre": {
     "id": "bandos_mitre",
+    "legacy_item_id": "bandos_mitre",
     "name": "Bandos Mitre",
     "type": "armour",
     "stackable": false,
@@ -14809,6 +15412,7 @@
   },
   "gloves_of_slaughter": {
     "id": "gloves_of_slaughter",
+    "legacy_item_id": "gloves_of_slaughter",
     "name": "Gloves of Slaughter",
     "type": "armour",
     "stackable": false,
@@ -14847,6 +15451,7 @@
   },
   "slayer_defender": {
     "id": "slayer_defender",
+    "legacy_item_id": "slayer_defender",
     "name": "Slayer Defender",
     "type": "armour",
     "stackable": false,
@@ -14884,6 +15489,7 @@
   },
   "wrath_rune": {
     "id": "wrath_rune",
+    "legacy_item_id": "wrath_rune",
     "name": "Wrath Rune",
     "type": "resource",
     "stackable": true,
@@ -14893,6 +15499,7 @@
   },
   "kraken_tentacle": {
     "id": "kraken_tentacle",
+    "legacy_item_id": "kraken_tentacle",
     "name": "Deepmaw Kraken Tentacle",
     "type": "resource",
     "stackable": false,
@@ -14906,6 +15513,7 @@
   },
   "abyssal_tentacle": {
     "id": "abyssal_tentacle",
+    "legacy_item_id": "abyssal_tentacle",
     "name": "Abyssal Tentacle",
     "type": "weapon",
     "slot": "weapon",
@@ -14947,6 +15555,7 @@
   },
   "occult_necklace": {
     "id": "occult_necklace",
+    "legacy_item_id": "occult_necklace",
     "name": "Occult Necklace",
     "type": "armour",
     "slot": "neck",
@@ -14978,6 +15587,7 @@
   },
   "chaotic_rapier": {
     "id": "chaotic_rapier",
+    "legacy_item_id": "chaotic_rapier",
     "name": "Chaotic Rapier",
     "type": "weapon",
     "slot": "weapon",
@@ -15016,6 +15626,7 @@
   },
   "chaotic_longsword": {
     "id": "chaotic_longsword",
+    "legacy_item_id": "chaotic_longsword",
     "name": "Chaotic Longsword",
     "type": "weapon",
     "slot": "weapon",
@@ -15054,6 +15665,7 @@
   },
   "chaotic_maul": {
     "id": "chaotic_maul",
+    "legacy_item_id": "chaotic_maul",
     "name": "Chaotic Maul",
     "type": "weapon",
     "slot": "weapon",
@@ -15092,6 +15704,7 @@
   },
   "chaotic_crossbow": {
     "id": "chaotic_crossbow",
+    "legacy_item_id": "chaotic_crossbow",
     "name": "Chaotic Crossbow",
     "type": "weapon",
     "slot": "weapon",
@@ -15130,6 +15743,7 @@
   },
   "chaotic_staff": {
     "id": "chaotic_staff",
+    "legacy_item_id": "chaotic_staff",
     "name": "Chaotic Staff",
     "type": "weapon",
     "slot": "weapon",
@@ -15167,6 +15781,7 @@
   },
   "arcane_necklace": {
     "id": "arcane_necklace",
+    "legacy_item_id": "arcane_necklace",
     "name": "Arcane Necklace",
     "type": "armour",
     "slot": "neck",
@@ -15201,6 +15816,7 @@
   },
   "eagle_eyed_kiteshield": {
     "id": "eagle_eyed_kiteshield",
+    "legacy_item_id": "eagle_eyed_kiteshield",
     "name": "Eagle Eyed Kiteshield",
     "type": "armour",
     "slot": "shield",
@@ -15236,6 +15852,7 @@
   },
   "arcane_kiteshield": {
     "id": "arcane_kiteshield",
+    "legacy_item_id": "arcane_kiteshield",
     "name": "Arcane Kiteshield",
     "type": "armour",
     "slot": "shield",
@@ -15271,6 +15888,7 @@
   },
   "dragon_warhammer": {
     "id": "dragon_warhammer",
+    "legacy_item_id": "dragon_warhammer",
     "name": "Dragon Warhammer",
     "type": "weapon",
     "slot": "weapon",
@@ -15319,6 +15937,7 @@
   },
   "rune_essence": {
     "id": "rune_essence",
+    "legacy_item_id": "rune_essence",
     "name": "Rune Essence",
     "type": "resource",
     "stackable": true,
@@ -15328,6 +15947,7 @@
   },
   "dragon_boots": {
     "id": "dragon_boots",
+    "legacy_item_id": "dragon_boots",
     "name": "Dragon Boots",
     "type": "armour",
     "slot": "boots",
@@ -15361,6 +15981,7 @@
   },
   "mystic_hat": {
     "id": "mystic_hat",
+    "legacy_item_id": "mystic_hat",
     "name": "Mystic Hat",
     "type": "armour",
     "slot": "head",
@@ -15394,6 +16015,7 @@
   },
   "mystic_robe_top": {
     "id": "mystic_robe_top",
+    "legacy_item_id": "mystic_robe_top",
     "name": "Mystic Robe Top",
     "type": "armour",
     "slot": "body",
@@ -15427,6 +16049,7 @@
   },
   "mystic_robe_bottom": {
     "id": "mystic_robe_bottom",
+    "legacy_item_id": "mystic_robe_bottom",
     "name": "Mystic Robe Bottom",
     "type": "armour",
     "slot": "legs",
@@ -15460,6 +16083,7 @@
   },
   "mystic_gloves": {
     "id": "mystic_gloves",
+    "legacy_item_id": "mystic_gloves",
     "name": "Mystic Gloves",
     "type": "armour",
     "slot": "gloves",
@@ -15493,6 +16117,7 @@
   },
   "mystic_boots": {
     "id": "mystic_boots",
+    "legacy_item_id": "mystic_boots",
     "name": "Mystic Boots",
     "type": "armour",
     "slot": "boots",
@@ -15526,6 +16151,7 @@
   },
   "granite_maul": {
     "id": "granite_maul",
+    "legacy_item_id": "granite_maul",
     "name": "Granite Maul",
     "type": "weapon",
     "slot": "weapon",
@@ -15568,6 +16194,7 @@
   },
   "granite_dust": {
     "id": "granite_dust",
+    "legacy_item_id": "granite_dust",
     "name": "Granite Dust",
     "type": "resource",
     "stackable": true,
@@ -15577,6 +16204,7 @@
   },
   "dark_bow": {
     "id": "dark_bow",
+    "legacy_item_id": "dark_bow",
     "name": "Nightfang Bow",
     "type": "weapon",
     "slot": "weapon",
@@ -15618,6 +16246,7 @@
   },
   "primordial_crystal": {
     "id": "primordial_crystal",
+    "legacy_item_id": "primordial_crystal",
     "name": "Primeval Crystal",
     "type": "resource",
     "stackable": false,
@@ -15631,6 +16260,7 @@
   },
   "pegasian_crystal": {
     "id": "pegasian_crystal",
+    "legacy_item_id": "pegasian_crystal",
     "name": "Skyfury Crystal",
     "type": "resource",
     "stackable": false,
@@ -15644,6 +16274,7 @@
   },
   "eternal_crystal": {
     "id": "eternal_crystal",
+    "legacy_item_id": "eternal_crystal",
     "name": "Evermore Crystal",
     "type": "resource",
     "stackable": false,
@@ -15657,6 +16288,7 @@
   },
   "primordial_boots": {
     "id": "primordial_boots",
+    "legacy_item_id": "primordial_boots",
     "name": "Primeval Boots",
     "type": "armour",
     "slot": "boots",
@@ -15691,6 +16323,7 @@
   },
   "pegasian_boots": {
     "id": "pegasian_boots",
+    "legacy_item_id": "pegasian_boots",
     "name": "Skyfury Boots",
     "type": "armour",
     "slot": "boots",
@@ -15725,6 +16358,7 @@
   },
   "eternal_boots": {
     "id": "eternal_boots",
+    "legacy_item_id": "eternal_boots",
     "name": "Evermore Boots",
     "type": "armour",
     "slot": "boots",
@@ -15759,6 +16393,7 @@
   },
   "hydra_leather": {
     "id": "hydra_leather",
+    "legacy_item_id": "hydra_leather",
     "name": "Ashen Hydra Leather",
     "type": "resource",
     "stackable": false,
@@ -15769,6 +16404,7 @@
   },
   "hydra_claw": {
     "id": "hydra_claw",
+    "legacy_item_id": "hydra_claw",
     "name": "Ashen Hydra Claw",
     "type": "resource",
     "stackable": false,
@@ -15782,6 +16418,7 @@
   },
   "dragon_hunter_lance": {
     "id": "dragon_hunter_lance",
+    "legacy_item_id": "dragon_hunter_lance",
     "name": "Dragon Hunter Lance",
     "type": "weapon",
     "slot": "weapon",
@@ -15819,6 +16456,7 @@
   },
   "hydra_bones": {
     "id": "hydra_bones",
+    "legacy_item_id": "hydra_bones",
     "name": "Ashen Hydra Bones",
     "type": "resource",
     "stackable": false,
@@ -15828,6 +16466,7 @@
   },
   "ferocious_gloves": {
     "id": "ferocious_gloves",
+    "legacy_item_id": "ferocious_gloves",
     "name": "Ferocious Gloves",
     "type": "armour",
     "slot": "gloves",
@@ -15864,6 +16503,7 @@
   },
   "void_knight_helm": {
     "id": "void_knight_helm",
+    "legacy_item_id": "void_knight_helm",
     "name": "Void King Helm",
     "type": "armour",
     "slot": "head",
@@ -15897,6 +16537,7 @@
   },
   "void_knight_top": {
     "id": "void_knight_top",
+    "legacy_item_id": "void_knight_top",
     "name": "Void King Top",
     "type": "armour",
     "slot": "body",
@@ -15930,6 +16571,7 @@
   },
   "void_knight_robe": {
     "id": "void_knight_robe",
+    "legacy_item_id": "void_knight_robe",
     "name": "Void King Robe",
     "type": "armour",
     "slot": "legs",
@@ -15963,6 +16605,7 @@
   },
   "void_knight_gloves": {
     "id": "void_knight_gloves",
+    "legacy_item_id": "void_knight_gloves",
     "name": "Void King Gloves",
     "type": "armour",
     "slot": "hands",
