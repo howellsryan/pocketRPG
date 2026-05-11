@@ -39,10 +39,10 @@ export function processThievingTick(thievingState) {
 
   if (state.ticksRemaining <= 0) {
     // Calculate success based on level vs requirement
-    // OSRS has a success rate formula, but for simplicity:
+    // PocketRPG has a success rate formula, but for simplicity:
     // success_rate = 1 - (npc_level - player_thieving_level) / 100 (capped at 0-100%)
     // For now, we'll just make it always succeed for player level >= npc level
-    // TODO: Implement proper OSRS success rates in future
+    // TODO: Implement proper PocketRPG success rates in future
 
     events.push({
       type: 'pickpocketSuccess',

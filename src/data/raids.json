@@ -1,7 +1,7 @@
 {
   "chambers_of_xeric": {
     "id": "chambers_of_xeric",
-    "name": "Chambers of Xeric",
+    "name": "Vaults of Xyren",
     "icon": "🏛️",
     "description": "Delve into Xeric's mountain stronghold. Defeat Tekton, Vespula, the Muttadile and Great Olm to claim your reward.",
     "bosses": [
@@ -114,7 +114,7 @@
   },
   "theatre_of_blood": {
     "id": "theatre_of_blood",
-    "name": "Theatre of Blood",
+    "name": "Crimson Night Theatre",
     "icon": "🩸",
     "description": "Fight through six deadly bosses in Verzik's theatre. Defeat them all to claim your reward.",
     "bosses": [
@@ -213,9 +213,9 @@
   },
   "barrows_brothers": {
     "id": "barrows_brothers",
-    "name": "Barrows Brothers",
+    "name": "Cryptbound Champions",
     "icon": "⚰️",
-    "description": "Descend into the Barrows crypt and defeat all six brothers to claim their treasures.",
+    "description": "Descend into the ancient crypt and defeat all six champions to claim their treasures.",
     "bosses": [
       "arim_the_blighted",
       "dharok_the_wretched",

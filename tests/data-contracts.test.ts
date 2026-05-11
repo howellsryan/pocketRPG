@@ -193,6 +193,48 @@ describe('data contracts', () => {
     }
   })
 
+
+
+  it('quest graph references valid ids and names are unique/non-empty', () => {
+    const questList = quests as any[]
+    const questMap = Object.fromEntries(questList.map((q) => [q.id, q]))
+    const ids = questList.map((q) => q.id)
+    const names = new Set<string>()
+    expect(new Set(ids).size).toBe(ids.length)
+    for (const quest of questList) {
+      const questId = quest.id
+      expect(typeof quest.name).toBe('string')
+      expect(quest.name.trim().length, `${questId} must have a non-empty name`).toBeGreaterThan(0)
+      expect(names.has(quest.name), `${questId} has duplicate name ${quest.name}`).toBe(false)
+      names.add(quest.name)
+      for (const req of quest.questRequirements || []) {
+        expect(questMap[req], `${questId} has unknown quest requirement ${req}`).toBeDefined()
+      }
+    }
+  })
+
+  it('player-facing data excludes blocked legacy names', () => {
+    const blocked = [
+      'Chambers of Xeric',
+      'Theatre of Blood',
+      'Pest Control',
+      'Castle Wars',
+      'Mage Arena',
+      'Fishing Trawler',
+      '3rd Age',
+      '3rd age',
+      'Old School RuneScape',
+      'RuneScape',
+      'Jagex',
+    ]
+    const blobs = [JSON.stringify(items), JSON.stringify(monsters), JSON.stringify(raids), JSON.stringify(quests)]
+    for (const term of blocked) {
+      for (const blob of blobs) {
+        expect(blob.includes(term), `Found blocked name: ${term}`).toBe(false)
+      }
+    }
+  })
+
   it('boss unique and clue reward items have finite positive shopValue for PvP coin conversion', () => {
     for (const [itemId, item] of Object.entries(items as Record<string, any>)) {
       if (!item.isBossUnique && !item.isClueReward) continue

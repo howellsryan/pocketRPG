@@ -12,7 +12,6 @@
     "test:logic": "vitest run --config vitest.config.ts",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "fetch-prices": "node scripts/fetch-prices.cjs",
     "rebuild": "tsc --project tsconfig.build.json && node build_single.cjs",
     "check:single": "node scripts/check-single-file-build.cjs",
     "ci": "npm run build && npm run rebuild && npm run check:single",

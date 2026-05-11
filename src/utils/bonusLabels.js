@@ -7,8 +7,8 @@ export const OTHER_BONUS_LABELS = {
   miningLevel: 'Mining Level',
   woodcuttingLevel: 'Woodcutting Level',
   antiDragon: 'Anti-Dragonfire',
-  barrowsDharokBonus: "Dharok's Set Effect",
-  barrowsGuthanBonus: "Guthan's Set Effect",
+  barrowsDharokBonus: "Dravok's Set Effect",
+  barrowsGuthanBonus: "Gorath's Set Effect",
   slayerTaskAccuracyFlat: 'Slayer Task Accuracy',
   slayerTaskDamageFlat: 'Slayer Task Damage'
 }

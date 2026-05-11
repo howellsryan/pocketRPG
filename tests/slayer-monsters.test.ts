@@ -6,7 +6,7 @@ const shaman: any = (monstersData as any).lizardman_shaman
 describe('Slayer monster requirements', () => {
   it('lizardman shaman exists with expected core config', () => {
     expect(shaman).toBeDefined()
-    expect(shaman.name).toBe('Lizardman Shaman')
+    expect(shaman.name).toBe('Marshscale Shaman')
     expect(shaman.boss).not.toBe(true)
     expect(shaman.slayerRequirement).toBe(80)
     expect(shaman.skippable).toBe(true)

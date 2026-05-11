@@ -56,7 +56,7 @@ const COMBAT_CATEGORIES = [
   },
   {
     key: 'dagganoth_kings',
-    label: 'Dagannoth Kings',
+    label: 'Nagadoth Kings',
     icon: '👹',
     ids: ['dagganoth_rex', 'dagganoth_prime', 'dagganoth_supreme'],
   },
@@ -74,19 +74,19 @@ const COMBAT_CATEGORIES = [
   },
   {
     key: 'zulrah',
-    label: 'Zulrah',
+    label: 'Venomcoil Matriarch',
     icon: '🐍',
     ids: ['zulrah'],
   },
   {
     key: 'fight_caves',
-    label: 'Fight Caves',
+    label: 'Ember Pits',
     icon: '🔥',
     ids: ['jad', 'inferno'],
   },
   {
     key: 'corrupted_gauntlet',
-    label: 'Corrupted Gauntlet',
+    label: 'Blighted Gauntlet',
     icon: '⚡',
     ids: ['corrupted_gauntlet'],
   },
@@ -618,7 +618,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           updateHP(newHP)
           hpRef.current = newHP
           setLog(prev => [...prev.slice(-20), {
-            text: `💚 Guthan's Blessing heals ${ev.healAmount} HP`,
+            text: `💚 Gorath's Blessing heals ${ev.healAmount} HP`,
             type: 'heal',
             time: Date.now()
           }])
@@ -793,23 +793,23 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       return { locked: true, reason: `Need Slayer level ${monster.slayerRequirement} to fight ${monster.name}` }
     }
     if (monster.id === 'corrupted_gauntlet' && !completedQuests.has('song_of_the_elves')) {
-      return { locked: true, reason: 'Complete Song of the Elves to fight Corrupted Gauntlet' }
+      return { locked: true, reason: 'Complete Song of the Elves to fight Blighted Gauntlet' }
     }
     if (monster.id === 'inferno' && (!bossKillCounts['jad'] || bossKillCounts['jad'] < 1)) {
-      return { locked: true, reason: 'Defeat TzTok-Jad first to unlock The Inferno' }
+      return { locked: true, reason: 'Defeat Ember Tyrant first to unlock Ashen Crucible' }
     }
     if ((monster.id === 'adamant_dragon' || monster.id === 'rune_dragon') && !completedQuests.has('dragon_slayer_ii')) {
       return { locked: true, reason: 'Complete Dragon Slayer II to fight Metal Dragons' }
     }
     if (monster.id === 'demonic_gorilla' && !completedQuests.has('monkey_madness_ii')) {
-      return { locked: true, reason: 'Complete Monkey Madness II to fight Demonic Gorilla' }
+      return { locked: true, reason: 'Complete Monkey Madness II to fight Hellbound Gorilla' }
     }
     return { locked: false }
   }
 
   const checkRaidRequirements = (raid) => {
     if (raid.id === 'theatre_of_blood' && !completedQuests.has('a_night_at_the_theatre')) {
-      return { locked: true, reason: 'Complete A Night at the Theatre to access Theatre of Blood' }
+      return { locked: true, reason: 'Complete A Night at the Theatre to access Crimson Night Theatre' }
     }
     return { locked: false }
   }
@@ -1405,7 +1405,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                             {bossReq.locked && !slayLocked && (
                               <div class="text-[9px] font-semibold text-[var(--color-blood-light)]">
                                 🔒 {monster.id === 'corrupted_gauntlet' ? 'Song of the Elves' :
-                                     monster.id === 'inferno' ? 'Defeat TzTok-Jad' :
+                                     monster.id === 'inferno' ? 'Defeat Ember Tyrant' :
                                      (monster.id === 'adamant_dragon' || monster.id === 'rune_dragon') ? 'Dragon Slayer II' :
                                      monster.id === 'demonic_gorilla' ? 'Monkey Madness II' : 'Locked'}
                               </div>

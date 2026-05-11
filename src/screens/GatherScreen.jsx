@@ -18,20 +18,20 @@ import { isLoggedDrop } from '../engine/collectionLog.js'
 
 /**
  * Gathering tasks — no skill level required, just time-based resource collection.
- * Inspired by activities like picking flax, collecting sand, etc.
+ * Inspired by activities like collecting bowstrings, gathering sand, etc.
  *
  * Also hosts long-running Minigame grinds (Barbarian Assault, Warriors Guild,
- * Castle Wars) which award a single untradeable reward after hours of idling.
+ * Fortress Clash) which award a single untradeable reward after hours of idling.
  */
 
 const GATHER_TASKS = [
   {
-    id: 'pick_flax',
-    name: 'Pick Flax',
+    id: 'gather_bowstring',
+    name: 'Gather Bowstring',
     icon: '🌿',
-    description: 'Pick flax from the fields. Used in Crafting to spin bowstrings.',
-    ticks: 3,
-    product: 'flax',
+    description: 'Gather loose bowstrings from fieldwork caches. Directly used for fletching bows.',
+    ticks: 6,
+    product: 'bowstring',
     qty: 1,
     stackable: false,
     category: 'fields',
@@ -267,7 +267,7 @@ const TICKS_PER_HOUR = 6000 // 3600s / 0.6s per tick
 const MINIGAME_TASKS = minigamesData.tasks
 const MINIGAMES = minigamesData.minigames
 const ITEM_NAMES = {
-  flax: 'Flax', bucket_of_sand: 'Bucket of sand', giant_seaweed: 'Seaweed',
+  bowstring: 'Bowstring', bucket_of_sand: 'Bucket of sand', giant_seaweed: 'Seaweed',
   clay: 'Clay', soft_clay: 'Soft clay', wheat: 'Wheat', pot_of_flour: 'Pot of flour',
   leather: 'Leather', hard_leather: 'Hard leather', molten_glass: 'Molten glass',
   soda_ash: 'Soda ash', cowhide: 'Cowhide', bucket: 'Bucket',

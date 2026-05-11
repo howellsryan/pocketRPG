@@ -7,8 +7,8 @@ import { formatObtainSourceMessage } from '../src/engine/itemSources.js'
 describe('item source messaging', () => {
   const data = { itemsData: itemsData as any, monstersData: monstersData as any, raidsData: raidsData as any }
   it('resolves raid and monster sources', () => {
-    expect(formatObtainSourceMessage('twisted_bow', data)).toContain('Chambers of Xeric')
-    expect(formatObtainSourceMessage('zaryte_vambraces', data)).toContain('Chambers of Xeric')
-    expect(formatObtainSourceMessage('armadyl_helmet', data)).toContain("Kree'arra")
+    expect(formatObtainSourceMessage('twisted_bow', data)).toContain('Vaults of Xyren')
+    expect(formatObtainSourceMessage('zaryte_vambraces', data)).toContain('Vaults of Xyren')
+    expect(formatObtainSourceMessage('armadyl_helmet', data)).toContain("Skyrender Kharra")
   })
 })

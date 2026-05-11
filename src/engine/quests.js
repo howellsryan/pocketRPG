@@ -8,7 +8,7 @@ import { TICK_DURATION } from '../utils/constants.js'
 
 /**
  * Compute the total quest points a player has from a Set-like of completed quest IDs.
- * Quest points are awarded by complexity tier (OSRS-flavoured approximation).
+ * Quest points are awarded by complexity tier (PocketRPG-flavoured approximation).
  */
 const QUEST_POINTS_BY_COMPLEXITY = {
   Novice: 1,
@@ -31,7 +31,7 @@ export function getQuestPointsEarned(completedQuestIds, questsData) {
 
 /**
  * Convert the effective player combat level from the stats object.
- * Mirrors the OSRS combat level formula.
+ * Mirrors the PocketRPG combat level formula.
  */
 export function getCombatLevel(stats) {
   const lvl = (skill) => {

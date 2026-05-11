@@ -14,7 +14,7 @@
       "sections": [
         {
           "id": "abyssal_demon",
-          "label": "Abyssal Demon",
+          "label": "Netherfiend Demon",
           "icon": "\u2694\ufe0f",
           "items": [
             "abyssal_whip"
@@ -49,7 +49,7 @@
         },
         {
           "id": "commander_zilyana",
-          "label": "Commander Zilyana",
+          "label": "Commander Zephyra",
           "icon": "\ud83d\udc51",
           "items": [
             "saradomin_sword",
@@ -59,7 +59,7 @@
         },
         {
           "id": "corrupted_gauntlet",
-          "label": "Corrupted Gauntlet",
+          "label": "Blighted Gauntlet",
           "icon": "\ud83d\udc51",
           "items": [
             "uncut_onyx",
@@ -74,7 +74,7 @@
         },
         {
           "id": "dagganoth_prime",
-          "label": "Dagannoth Prime",
+          "label": "Nagadoth Prime",
           "icon": "\ud83d\udc51",
           "items": [
             "dragon_axe",
@@ -83,7 +83,7 @@
         },
         {
           "id": "dagganoth_rex",
-          "label": "Dagannoth Rex",
+          "label": "Nagadoth Rex",
           "icon": "\ud83d\udc51",
           "items": [
             "dragon_axe",
@@ -93,7 +93,7 @@
         },
         {
           "id": "dagganoth_supreme",
-          "label": "Dagannoth Supreme",
+          "label": "Nagadoth Supreme",
           "icon": "\ud83d\udc51",
           "items": [
             "dragon_axe",
@@ -110,7 +110,7 @@
         },
         {
           "id": "demonic_gorilla",
-          "label": "Demonic Gorilla",
+          "label": "Hellbound Gorilla",
           "icon": "\ud83d\udc51",
           "items": [
             "uncut_zenyte",
@@ -127,7 +127,7 @@
         },
         {
           "id": "general_graardor",
-          "label": "General Graardor",
+          "label": "Warlord Grondar",
           "icon": "\ud83d\udc51",
           "items": [
             "bandos_chestplate",
@@ -138,7 +138,7 @@
         },
         {
           "id": "hydra",
-          "label": "Hydra",
+          "label": "Ashen Hydra",
           "icon": "\ud83d\udc51",
           "items": [
             "hydra_leather",
@@ -148,7 +148,7 @@
         },
         {
           "id": "kril_tsutsaroth",
-          "label": "K'ril Tsutsaroth",
+          "label": "Krylth the Defiler",
           "icon": "\ud83d\udc51",
           "items": [
             "zamorak_spear",
@@ -167,7 +167,7 @@
         },
         {
           "id": "kraken",
-          "label": "Kraken",
+          "label": "Deepmaw Kraken",
           "icon": "\ud83d\udc51",
           "items": [
             "kraken_tentacle"
@@ -175,7 +175,7 @@
         },
         {
           "id": "kreearra",
-          "label": "Kree'arra",
+          "label": "Skyrender Kharra",
           "icon": "\ud83d\udc51",
           "items": [
             "armadyl_helmet",
@@ -186,7 +186,7 @@
         },
         {
           "id": "lizardman_shaman",
-          "label": "Lizardman Shaman",
+          "label": "Marshscale Shaman",
           "icon": "\u2694\ufe0f",
           "items": [
             "dragon_warhammer"
@@ -235,7 +235,7 @@
         },
         {
           "id": "zulrah",
-          "label": "Zulrah",
+          "label": "Venomcoil Matriarch",
           "icon": "\ud83d\udc51",
           "items": [
             "toxic_blowpipe",
@@ -253,7 +253,7 @@
       "sections": [
         {
           "id": "barrows_brothers",
-          "label": "Barrows Brothers",
+          "label": "Cryptbound Champions",
           "icon": "\u26b0\ufe0f",
           "items": [
             "ahrims_hood",
@@ -284,7 +284,7 @@
         },
         {
           "id": "chambers_of_xeric",
-          "label": "Chambers of Xeric",
+          "label": "Vaults of Xyren",
           "icon": "\ud83c\udfdb\ufe0f",
           "items": [
             "twisted_buckler",
@@ -302,7 +302,7 @@
         },
         {
           "id": "theatre_of_blood",
-          "label": "Theatre of Blood",
+          "label": "Crimson Night Theatre",
           "icon": "\ud83e\ude78",
           "items": [
             "avernic_defender",
@@ -323,7 +323,7 @@
       "sections": [
         {
           "id": "barbarian_assault",
-          "label": "Barbarian Assault",
+          "label": "Viking Assault",
           "icon": "\u2694\ufe0f",
           "items": [
             "fighter_torso",
@@ -332,7 +332,7 @@
         },
         {
           "id": "castle_wars",
-          "label": "Castle Wars",
+          "label": "Fortress Clash",
           "icon": "\ud83c\udff0",
           "items": [
             "halo",
@@ -341,7 +341,7 @@
         },
         {
           "id": "warriors_guild",
-          "label": "Warriors' Guild",
+          "label": "Champion's Hall",
           "icon": "\ud83c\udfdb\ufe0f",
           "items": [
             "rune_defender",
@@ -350,7 +350,7 @@
         },
         {
           "id": "fishing_trawler",
-          "label": "Fishing Trawler",
+          "label": "Deepsea Haul",
           "icon": "\ud83d\udef6",
           "items": [
             "angler_net"
@@ -358,7 +358,7 @@
         },
         {
           "id": "mage_arena",
-          "label": "Mage Arena",
+          "label": "Arcane Crucible",
           "icon": "\ud83e\ude84",
           "items": [
             "imbued_god_cape"
@@ -366,7 +366,7 @@
         },
         {
           "id": "pest_control",
-          "label": "Pest Control",
+          "label": "Void Breach",
           "icon": "\ud83d\udee1\ufe0f",
           "items": [
             "void_knight_helm",

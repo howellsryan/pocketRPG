@@ -58,7 +58,7 @@
 - No automatic/offline special attack firing.
 
 ### Adding a weapon with a special attack
-1. Check OSRS Wiki for spec existence.
+1. Confirm the weapon has an existing PocketRPG design and maintain PocketRPG-owned fantasy naming.
 2. Confirm adaptation design with the user for PocketRPG-specific behavior.
 3. Add `specialAttack` object to item in `src/data/items.json`.
 4. Implement behavior in `applySpecialAttack()` in `src/engine/combat.js`.

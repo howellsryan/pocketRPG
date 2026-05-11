@@ -5,7 +5,7 @@ import monstersData from '../src/data/monsters.json'
 
 const corruptedGauntlet = monstersData['corrupted_gauntlet']
 
-describe('Corrupted Gauntlet Boss', () => {
+describe('Blighted Gauntlet Boss', () => {
   describe('Boss Stats and Initialization', () => {
     it('should have correct combat level and hitpoints', () => {
       expect(corruptedGauntlet.combatLevel).toBe(894)

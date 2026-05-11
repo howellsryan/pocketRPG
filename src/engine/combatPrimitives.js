@@ -151,8 +151,8 @@ export function rollRangedAttack(attacker, defender, itemsData) {
 // ── Magic ───────────────────────────────────────────────────────────────
 
 /**
- * Magic attack roll. Defender's magic defence is the OSRS-style mix of
- * 70% magic level + 30% defence level for monsters; for players, OSRS
+ * Magic attack roll. Defender's magic defence is the PocketRPG-style mix of
+ * 70% magic level + 30% defence level for monsters; for players, PocketRPG
  * uses 100% magic level. We use the player formula here since both sides
  * are players.
  *
@@ -175,7 +175,7 @@ export function rollMagicAttack(attacker, defender, itemsData, opts = {}) {
   // Player magic defence: effective magic level + magic defence equipment.
   // We use effectiveDefence(magicLevel) — for player vs player, magic
   // defence is dominated by the magic level itself, not the defence stat.
-  // (OSRS PvP: magic def = 70% magic + 30% defence. We follow that here
+  // (PocketRPG PvP: magic def = 70% magic + 30% defence. We follow that here
   // because it's the well-tested formula and it preserves the feel.)
   const effectiveDefenceLevel = Math.floor((defender.stats.defence + defMods.potions.defence) * defMods.prayer.defence)
   const playerMagicDefLevel = Math.floor(defender.stats.magic * 0.7) + Math.floor(effectiveDefenceLevel * 0.3)

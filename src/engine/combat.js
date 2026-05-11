@@ -24,7 +24,7 @@ function getAvasAmmoSaveChance(equipment) {
  * Create a new combat state
  */
 export function createCombatState(monster, combatType = 'melee', stance = 'accurate', spell = null) {
-  // Apply initial form for multi-form bosses (e.g. Zulrah)
+  // Apply initial form for multi-form bosses (e.g. Venomcoil Matriarch)
   let preparedMonster = prepareMonster(monster)
   return {
     active: true,
@@ -122,7 +122,7 @@ function pickNextForm(monster) {
 
 /**
  * Returns the immunity type ('melee', 'ranged', 'magic') of the monster's current form,
- * or null if the current form has no immunity. Used for phase-based bosses like Demonic Gorilla.
+ * or null if the current form has no immunity. Used for phase-based bosses like Hellbound Gorilla.
  */
 function getFormImmunity(monster) {
   if (!monster.multiForm || !monster.currentForm || !monster.forms) return null
@@ -374,7 +374,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
           if (currentEnergy >= weapon.specialAttack.energyCost) {
             // Drain energy when special attack actually fires
             state.specialAttackEnergy = Math.max(0, currentEnergy - weapon.specialAttack.energyCost)
-            // Check form immunity before firing (e.g. Demonic Gorilla)
+            // Check form immunity before firing (e.g. Hellbound Gorilla)
             const specImmunity = getFormImmunity(monster)
             if (specImmunity && specImmunity === state.combatType) {
               // Energy drained but attack is fully blocked — consistent with normal spec early-return
@@ -496,7 +496,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
         maxHit = Math.floor(maxHit * 1.3)
       }
 
-      // Twisted Bow: scales accuracy and damage with target's magic level (OSRS formula, capped at M=250)
+      // Twisted Bow: scales accuracy and damage with target's magic level (PocketRPG formula, capped at M=250)
       if (equippedWeapon?.scalesWithMagic) {
         const M = Math.min(250, Math.max(1, monster.stats?.magic || 1))
         const accInner = Math.floor(3 * M / 10) - 100
@@ -609,7 +609,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0)
       const acc = hitChance(atkRoll, defRoll)
       // Max hit scales with magic level: base at level 75, +1 per 3 levels above.
-      // At 75 = 24, at 99 = 32, at 123 = 39 (matches OSRS trident formulas approx).
+      // At 75 = 24, at 99 = 32, at 123 = 39 (matches PocketRPG trident formulas approx).
       const magicLevel = boostedPlayerStats.magic || 1
       const baseDamage = Math.max(1, Math.floor(magicLevel / 3) + 9)
       const maxHit = Math.floor(magicMaxHit(baseDamage, bonuses.otherBonus.magicDamage + (voidMult.magicDamage > 1 ? 5 : 0)) + slayerEquipmentBonus.damageFlat)
@@ -660,7 +660,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       }
     }
 
-    // ── Form Immunity Check (e.g. Demonic Gorilla) ──
+    // ── Form Immunity Check (e.g. Hellbound Gorilla) ──
     const formImmunity = getFormImmunity(monster)
     const isImmune = !!formImmunity && formImmunity === state.combatType
     if (isImmune) {
@@ -811,7 +811,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
 
     state.monsterAttackTimer = monster.attackSpeed || 4
 
-    // ── Multi-form switch check (e.g. Zulrah) ──
+    // ── Multi-form switch check (e.g. Venomcoil Matriarch) ──
     if (monster.multiForm && monster.forms) {
       monster.formAttackCount = (monster.formAttackCount || 0) + 1
       if (monster.formAttackCount >= (monster.formSwitchThreshold || 3)) {
@@ -1095,7 +1095,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
     }
 
     case 'judgement': {
-      // Armadyl Godsword — 125% accuracy + 125% max hit
+      // Zephyra Godsword — 125% accuracy + 125% max hit
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
       const maxHit = Math.floor(meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength) * 1.25)
@@ -1114,7 +1114,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
     }
 
     case 'healing_blade': {
-      // Saradomin Godsword — hit + heal 50% of damage (min 10 HP)
+      // Lumira Godsword — hit + heal 50% of damage (min 10 HP)
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
       const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
@@ -1135,7 +1135,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
     }
 
     case 'freeze': {
-      // Zamorak Godsword — hit + freeze monster for stunTicks ticks
+      // Krylth Godsword — hit + freeze monster for stunTicks ticks
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
       const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
@@ -1155,7 +1155,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
     }
 
     case 'warstrike': {
-      // Bandos Godsword — hit + reduce monster defenceBonus by damage dealt
+      // Grondar Godsword — hit + reduce monster defenceBonus by damage dealt
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
       const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
@@ -1204,7 +1204,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
     }
 
     case 'lightning': {
-      // Saradomin Sword — normal melee hit + guaranteed magic lightning hit
+      // Lumira Sword — normal melee hit + guaranteed magic lightning hit
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
       const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
@@ -1247,7 +1247,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
     }
 
     case 'pebble_shot': {
-      // Armadyl Crossbow — guaranteed hit at 125% max hit
+      // Zephyra Crossbow — guaranteed hit at 125% max hit
       const styleBonus = getRangedStyleBonus(state.stance)
       const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
       const maxHit = Math.floor(rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength) * 1.25)
@@ -1262,7 +1262,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
     }
 
     case 'toxic_siphon': {
-      // Toxic Blowpipe — guaranteed 150% max hit ranged attack, heals for half damage dealt.
+      // Venom Blowpipe — guaranteed 150% max hit ranged attack, heals for half damage dealt.
       // Also consumes one scale charge (like a normal blowpipe shot).
       const styleBonus = getRangedStyleBonus(state.stance)
       const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
@@ -1281,7 +1281,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
     }
 
     case 'shove': {
-      // Zamorak Spear — 175% accuracy + stun 2 monster attacks
+      // Krylth Spear — 175% accuracy + stun 2 monster attacks
       const styleBonuses = getMeleeStyleBonuses(state.stance)
       const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
       const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
@@ -1357,7 +1357,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
     }
 
     case 'descent_of_darkness': {
-      // Dark Bow — fires two arrows at 150% max hit each
+      // Nightfang Bow — fires two arrows at 150% max hit each
       const styleBonus = getRangedStyleBonus(state.stance)
       const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
       const maxHit = Math.floor(rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength) * 1.5)
