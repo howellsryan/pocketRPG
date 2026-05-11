@@ -15577,7 +15577,7 @@
   },
   "dark_bow": {
     "id": "dark_bow",
-    "name": "Dark Bow",
+    "name": "Nightfang Bow",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": true,
@@ -15618,7 +15618,7 @@
   },
   "primordial_crystal": {
     "id": "primordial_crystal",
-    "name": "Primordial Crystal",
+    "name": "Primeval Crystal",
     "type": "resource",
     "stackable": false,
     "shopValue": 21212249,
@@ -15627,11 +15627,11 @@
     "isBossUnique": true,
     "combineWith": "dragon_boots",
     "combineResult": "primordial_boots",
-    "combineDescription": "Combine with Dragon boots to forge Primordial boots."
+    "combineDescription": "Combine with Dragon boots to forge Primeval boots."
   },
   "pegasian_crystal": {
     "id": "pegasian_crystal",
-    "name": "Pegasian Crystal",
+    "name": "Skyfury Crystal",
     "type": "resource",
     "stackable": false,
     "shopValue": 116512,
@@ -15640,11 +15640,11 @@
     "isBossUnique": true,
     "combineWith": "ranger_boots",
     "combineResult": "pegasian_boots",
-    "combineDescription": "Combine with Ranger boots to forge Pegasian boots."
+    "combineDescription": "Combine with Ranger boots to forge Skyfury boots."
   },
   "eternal_crystal": {
     "id": "eternal_crystal",
-    "name": "Eternal Crystal",
+    "name": "Evermore Crystal",
     "type": "resource",
     "stackable": false,
     "shopValue": 4144765,
@@ -15653,11 +15653,11 @@
     "isBossUnique": true,
     "combineWith": "wizard_boots",
     "combineResult": "eternal_boots",
-    "combineDescription": "Combine with Wizard boots to forge Eternal boots."
+    "combineDescription": "Combine with Wizard boots to forge Evermore boots."
   },
   "primordial_boots": {
     "id": "primordial_boots",
-    "name": "Primordial Boots",
+    "name": "Primeval Boots",
     "type": "armour",
     "slot": "boots",
     "stackable": false,
@@ -15691,7 +15691,7 @@
   },
   "pegasian_boots": {
     "id": "pegasian_boots",
-    "name": "Pegasian Boots",
+    "name": "Skyfury Boots",
     "type": "armour",
     "slot": "boots",
     "stackable": false,
@@ -15725,7 +15725,7 @@
   },
   "eternal_boots": {
     "id": "eternal_boots",
-    "name": "Eternal Boots",
+    "name": "Evermore Boots",
     "type": "armour",
     "slot": "boots",
     "stackable": false,
