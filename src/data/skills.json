@@ -77,7 +77,7 @@
       },
       {
         "id": "runite",
-        "name": "Mine runite ore",
+        "name": "Mine runeforged ore",
         "level": 85,
         "ticks": 30,
         "xp": 420,
@@ -487,7 +487,7 @@
       },
       {
         "id": "smelt_rune",
-        "name": "Smelt rune bar",
+        "name": "Smelt runeforged bar",
         "level": 85,
         "ticks": 4,
         "xp": 50,
@@ -499,7 +499,7 @@
       },
       {
         "id": "smith_rune_axe",
-        "name": "Smith rune axe",
+        "name": "Smith runeforged axe",
         "level": 86,
         "ticks": 10,
         "xp": 400,
@@ -510,7 +510,7 @@
       },
       {
         "id": "smith_rune_pickaxe",
-        "name": "Smith rune pickaxe",
+        "name": "Smith runeforged pickaxe",
         "level": 86,
         "ticks": 10,
         "xp": 400,
@@ -521,7 +521,7 @@
       },
       {
         "id": "smith_rune_scimitar",
-        "name": "Smith rune scimitar",
+        "name": "Smith runeforged scimitar",
         "level": 89,
         "ticks": 10,
         "xp": 300,
@@ -592,7 +592,7 @@
       },
       {
         "id": "smith_runite_bolts_unf",
-        "name": "Smith runite bolts (unf) (10)",
+        "name": "Smith runeforged bolts (unf) (10)",
         "level": 88,
         "ticks": 4,
         "xp": 75,
@@ -615,7 +615,7 @@
       },
       {
         "id": "make_bandos_godsword",
-        "name": "Attach Bandos hilt",
+        "name": "Attach Grondar hilt",
         "level": 80,
         "ticks": 100,
         "xp": 0,
@@ -627,7 +627,7 @@
       },
       {
         "id": "make_armadyl_godsword",
-        "name": "Attach Armadyl hilt",
+        "name": "Attach Zephyra hilt",
         "level": 80,
         "ticks": 100,
         "xp": 0,
@@ -639,7 +639,7 @@
       },
       {
         "id": "make_saradomin_godsword",
-        "name": "Attach Saradomin hilt",
+        "name": "Attach Lumira hilt",
         "level": 80,
         "ticks": 100,
         "xp": 0,
@@ -651,7 +651,7 @@
       },
       {
         "id": "make_zamorak_godsword",
-        "name": "Attach Zamorak hilt",
+        "name": "Attach Krylth hilt",
         "level": 80,
         "ticks": 100,
         "xp": 0,
@@ -976,7 +976,7 @@
       },
       {
         "id": "rune_arrows",
-        "name": "Make rune arrows (15)",
+        "name": "Make runeforged arrows (15)",
         "level": 75,
         "ticks": 3,
         "xp": 150,
@@ -1089,7 +1089,7 @@
       },
       {
         "id": "make_runite_bolts",
-        "name": "Make runite bolts (10)",
+        "name": "Make runeforged bolts (10)",
         "level": 69,
         "ticks": 15,
         "xp": 500,
@@ -1474,7 +1474,7 @@
       },
       {
         "id": "cut_zenyte",
-        "name": "Cut zenyte",
+        "name": "Cut zyrite",
         "level": 89,
         "ticks": 3,
         "xp": 200,
@@ -1566,7 +1566,7 @@
       },
       {
         "id": "zenyte_amulet",
-        "name": "String zenyte amulet",
+        "name": "String zyrite amulet",
         "level": 98,
         "ticks": 4,
         "xp": 200,
@@ -1578,7 +1578,7 @@
       },
       {
         "id": "zenyte_bracelet",
-        "name": "Craft zenyte bracelet",
+        "name": "Craft zyrite bracelet",
         "level": 98,
         "ticks": 4,
         "xp": 200,
@@ -1590,7 +1590,7 @@
       },
       {
         "id": "zenyte_necklace",
-        "name": "String zenyte necklace",
+        "name": "String zyrite necklace",
         "level": 98,
         "ticks": 4,
         "xp": 200,
@@ -1602,7 +1602,7 @@
       },
       {
         "id": "zenyte_ring",
-        "name": "Craft zenyte ring",
+        "name": "Craft zyrite ring",
         "level": 98,
         "ticks": 4,
         "xp": 200,
@@ -1786,93 +1786,93 @@
     "actions": [
       {
         "id": "gnome_stronghold",
-        "name": "Gnome Stronghold Course",
+        "name": "Spryroot Grounds",
         "level": 1,
         "ticks": 40,
         "xp": 86,
         "coinReward": 10,
-        "description": "Beginner course in the Gnome Stronghold"
+        "description": "Beginner agility route through the Spryroot training grounds"
       },
       {
         "id": "draynor_village",
-        "name": "Draynor Village Rooftop",
+        "name": "Brambleford Rooftop",
         "level": 10,
         "ticks": 38,
         "xp": 120,
         "coinReward": 25,
-        "description": "Rooftop course through Draynor Village"
+        "description": "Rooftop agility route across Brambleford"
       },
       {
         "id": "al_kharid",
-        "name": "Al Kharid Rooftop",
+        "name": "Sunspire Rooftop",
         "level": 20,
         "ticks": 35,
         "xp": 175,
         "coinReward": 50,
-        "description": "Desert rooftop course in Al Kharid"
+        "description": "Desert rooftop agility route in Sunspire"
       },
       {
         "id": "varrock",
-        "name": "Varrock Rooftop",
+        "name": "Stonewatch Rooftop",
         "level": 30,
         "ticks": 33,
         "xp": 190,
         "coinReward": 90,
-        "description": "Rooftop agility course through Varrock"
+        "description": "Urban rooftop agility route through Stonewatch"
       },
       {
         "id": "canifis",
-        "name": "Canifis Rooftop",
+        "name": "Duskmire Rooftop",
         "level": 40,
         "ticks": 30,
         "xp": 240,
         "coinReward": 140,
-        "description": "Rooftop course through the spooky village of Canifis"
+        "description": "Rooftop agility route through the eerie village of Duskmire"
       },
       {
         "id": "falador",
-        "name": "Falador Rooftop",
+        "name": "Ironhold Rooftop",
         "level": 50,
         "ticks": 28,
         "xp": 440,
         "coinReward": 200,
-        "description": "High-speed rooftop course over Falador"
+        "description": "High-speed rooftop agility route above Ironhold"
       },
       {
         "id": "seers_village",
-        "name": "Seers' Village Rooftop",
+        "name": "Starweaver Hamlet Rooftop",
         "level": 60,
         "ticks": 25,
         "xp": 500,
         "coinReward": 300,
-        "description": "Agility course over the rooftops of Seers' Village"
+        "description": "Agility route above the rooftops of Starweaver Hamlet"
       },
       {
         "id": "pollnivneach",
-        "name": "Pollnivneach Rooftop",
+        "name": "Dunescale Rooftop",
         "level": 70,
         "ticks": 23,
         "xp": 550,
         "coinReward": 350,
-        "description": "Challenging desert rooftop course in Pollnivneach"
+        "description": "Challenging desert rooftop agility route in Dunescale"
       },
       {
         "id": "rellekka",
-        "name": "Rellekka Rooftop",
+        "name": "Frostharbor Rooftop",
         "level": 80,
         "ticks": 20,
         "xp": 600,
         "coinReward": 400,
-        "description": "Rugged northern rooftop course in Rellekka"
+        "description": "Rugged northern rooftop agility route in Frostharbor"
       },
       {
         "id": "ardougne",
-        "name": "Ardougne Rooftop",
+        "name": "Silverkeep Rooftop",
         "level": 90,
         "ticks": 18,
         "xp": 700,
         "coinReward": 500,
-        "description": "Elite rooftop course in the grand city of Ardougne"
+        "description": "Elite rooftop agility route in the grand city of Silverkeep"
       }
     ]
   },
@@ -1942,7 +1942,7 @@
       },
       {
         "id": "bury_dagganoth_bones",
-        "name": "Bury dagganoth bones",
+        "name": "Bury nagadoth bones",
         "level": 40,
         "ticks": 3,
         "xp": 125,
@@ -1952,7 +1952,7 @@
       },
       {
         "id": "altar_dagganoth_bones",
-        "name": "Use gilded altar (dagganoth bones)",
+        "name": "Use gilded altar (nagadoth bones)",
         "level": 40,
         "ticks": 3,
         "xp": 437,
@@ -2103,7 +2103,7 @@
       },
       {
         "id": "enchant_zenyte_amulet",
-        "name": "Enchant Zenyte Amulet",
+        "name": "Enchant Zyrite Amulet",
         "level": 93,
         "ticks": 30,
         "xp": 1100,
@@ -2120,7 +2120,7 @@
       },
       {
         "id": "enchant_zenyte_bracelet",
-        "name": "Enchant Zenyte Bracelet",
+        "name": "Enchant Zyrite Bracelet",
         "level": 93,
         "ticks": 30,
         "xp": 1100,
@@ -2137,7 +2137,7 @@
       },
       {
         "id": "enchant_zenyte_necklace",
-        "name": "Enchant Zenyte Necklace",
+        "name": "Enchant Zyrite Necklace",
         "level": 93,
         "ticks": 30,
         "xp": 1100,
@@ -2154,7 +2154,7 @@
       },
       {
         "id": "enchant_zenyte_ring",
-        "name": "Enchant Zenyte Ring",
+        "name": "Enchant Zyrite Ring",
         "level": 93,
         "ticks": 30,
         "xp": 1100,
@@ -2419,7 +2419,7 @@
       },
       {
         "id": "ardougne_knight",
-        "name": "Pickpocket Ardougne Knight",
+        "name": "Pickpocket Silverkeep Knight",
         "level": 65,
         "xp": 100,
         "coins": 75,
