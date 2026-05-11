@@ -347,7 +347,35 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
       if (getToken() && getCharacterId()) {
         try {
           const res = await api.completeDungeoneering('dungeoneering', { actionNonce: `dng:${action.id}:${Date.now()}`, rewards: [{ itemId: action.product, quantity: action.productQty || 1 }], dungeoneeringTokens: -cost })
-          if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
+          if (res?.save?.save_data) {
+            const cloudSave = JSON.parse(res.save.save_data)
+            await applyCloudSave(cloudSave, res.save.updatedAt)
+
+            // Keep token display in sync immediately after purchase.
+            const serverTokens = Number(cloudSave?.settings?.dungeoneeringTokens ?? cloudSave?.dungeoneeringTokens)
+            if (Number.isFinite(serverTokens)) {
+              const delta = Math.floor(serverTokens) - (Number(dungeoneeringTokens) || 0)
+              if (delta > 0) awardDungeoneeringTokens(delta)
+              else if (delta < 0) trySpendDungeoneeringTokens(Math.abs(delta))
+            }
+
+            // Keep inventory UI in sync immediately after server grant.
+            if (Array.isArray(cloudSave?.inventory)) {
+              const compact = cloudSave.inventory
+                .map((slot) => {
+                  if (!slot || typeof slot !== 'object') return null
+                  const itemId = slot.itemId || slot.id
+                  const quantity = Math.floor(Number(slot.quantity) || 0)
+                  if (!itemId || quantity < 1) return null
+                  return { ...slot, itemId, quantity }
+                })
+                .filter(Boolean)
+              const nextInv = Array(28).fill(null)
+              for (let i = 0; i < compact.length && i < 28; i++) nextInv[i] = compact[i]
+              updateInventory(nextInv)
+            }
+          }
+          recordCollectionLogDrop({ itemId: action.product, sourceType: 'skilling', sourceId: 'dungeoneering' })
           addToast(`Purchased ${productItem.name} for ${formatNumber(cost)} tokens.`, 'success')
           return
         } catch (e) {
