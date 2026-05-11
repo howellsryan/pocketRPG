@@ -16,7 +16,7 @@ import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick, pauseTicks, resumeTicks } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
 import { getCombatType, equipItem, checkEquipRequirements } from '../engine/equipment.js'
-import { api, clearAuth, getToken, setLocalCharacterId } from '../cloud/api.js'
+import { api, clearAuth, getToken, getCharacterId, setLocalCharacterId } from '../cloud/api.js'
 import { pullSave, applyCloudSave, requestCriticalPushSave } from '../cloud/sync.js'
 import { pvpApi } from '../cloud/pvp.js'
 import { closeDB } from '../db/database.js'
@@ -730,26 +730,49 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             }
           }
 
+          const raidId = state.raid?.raidId || null
+          const cloudAuthoritativeRaid = Boolean(raidId && getToken() && getCharacterId())
           if (killLoot.length > 0) {
-            const newInv = [...inventoryRef.current]
-            for (const drop of killLoot) {
-              const item = itemsData[drop.itemId]
-              let added = false
-              if (drop.noted) {
-                // Noted drops stack separately from regular stacks (noted: true on slot)
-                const existingIdx = newInv.findIndex(s => s && s.itemId === drop.itemId && s.noted)
-                if (existingIdx !== -1) {
-                  newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + drop.quantity }
-                  added = true
-                } else {
-                  const empty = newInv.indexOf(null)
-                  if (empty !== -1) { newInv[empty] = { itemId: drop.itemId, quantity: drop.quantity, noted: true }; added = true }
+            if (cloudAuthoritativeRaid) {
+              void api.completeRaid(raidId, {
+                actionNonce: `raid:${raidId}:${Date.now()}`,
+                rewards: killLoot.map(drop => ({ itemId: drop.itemId, quantity: drop.quantity })),
+              }).then(async (res) => {
+                if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
+              }).catch(() => {
+                const newInv = [...inventoryRef.current]
+                for (const drop of killLoot) {
+                  const item = itemsData[drop.itemId]
+                  if (drop.noted) {
+                    const existingIdx = newInv.findIndex(s => s && s.itemId === drop.itemId && s.noted)
+                    if (existingIdx !== -1) newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + drop.quantity }
+                    else {
+                      const empty = newInv.indexOf(null)
+                      if (empty !== -1) newInv[empty] = { itemId: drop.itemId, quantity: drop.quantity, noted: true }
+                    }
+                  } else {
+                    addItem(newInv, drop.itemId, drop.quantity, item?.stackable || false)
+                  }
                 }
-              } else {
-                added = addItem(newInv, drop.itemId, drop.quantity, item?.stackable || false)
+                updateInventory(newInv)
+              })
+            } else {
+              const newInv = [...inventoryRef.current]
+              for (const drop of killLoot) {
+                const item = itemsData[drop.itemId]
+                if (drop.noted) {
+                  const existingIdx = newInv.findIndex(s => s && s.itemId === drop.itemId && s.noted)
+                  if (existingIdx !== -1) newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + drop.quantity }
+                  else {
+                    const empty = newInv.indexOf(null)
+                    if (empty !== -1) newInv[empty] = { itemId: drop.itemId, quantity: drop.quantity, noted: true }
+                  }
+                } else {
+                  addItem(newInv, drop.itemId, drop.quantity, item?.stackable || false)
+                }
               }
+              updateInventory(newInv)
             }
-            updateInventory(newInv)
           }
 
           if (hasCriticalDrop(killLoot, defeatedMonsterData, itemsData)) {
@@ -766,7 +789,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             time: Date.now()
           }])
           // Show loot modal instead of auto-restarting
-          const raidId = state.raid?.raidId || null
           setLootModal({
             monster: defeatedMonsterData,
             loot: killLoot,
