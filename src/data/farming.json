@@ -200,7 +200,7 @@
   "locations": [
     {
       "id": "falador",
-      "name": "Falador Farm",
+      "name": "Ironhold Farm",
       "patches": [
         { "type": "herb", "count": 1 },
         { "type": "tree", "count": 2 }
@@ -208,7 +208,7 @@
     },
     {
       "id": "taverley",
-      "name": "Taverley Farm",
+      "name": "Mossmere Farm",
       "patches": [
         { "type": "herb", "count": 1 },
         { "type": "tree", "count": 2 }
@@ -216,7 +216,7 @@
     },
     {
       "id": "ardougne",
-      "name": "Ardougne Farm",
+      "name": "Silverkeep Farm",
       "patches": [
         { "type": "herb", "count": 1 },
         { "type": "tree", "count": 2 }
@@ -224,7 +224,7 @@
     },
     {
       "id": "catherby",
-      "name": "Catherby Farm",
+      "name": "Seabloom Farm",
       "patches": [
         { "type": "herb", "count": 1 },
         { "type": "tree", "count": 2 },
@@ -233,7 +233,7 @@
     },
     {
       "id": "hosidius",
-      "name": "Hosidius Farm",
+      "name": "Sunmeadow Farm",
       "patches": [
         { "type": "herb", "count": 1, "minLevel": 65 },
         { "type": "tree", "count": 2 },
@@ -242,14 +242,14 @@
     },
     {
       "id": "gnome",
-      "name": "Tree Gnome Stronghold",
+      "name": "Spryroot Grove",
       "patches": [
         { "type": "fruitTree", "count": 2 }
       ]
     },
     {
       "id": "brimhaven",
-      "name": "Brimhaven Farm",
+      "name": "Emberbay Farm",
       "patches": [
         { "type": "fruitTree", "count": 2 }
       ]
