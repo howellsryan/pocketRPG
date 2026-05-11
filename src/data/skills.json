@@ -615,7 +615,7 @@
       },
       {
         "id": "make_bandos_godsword",
-        "name": "Attach Bandos hilt",
+        "name": "Attach Warlord hilt",
         "level": 80,
         "ticks": 100,
         "xp": 0,
@@ -627,7 +627,7 @@
       },
       {
         "id": "make_armadyl_godsword",
-        "name": "Attach Armadyl hilt",
+        "name": "Attach Skyguard hilt",
         "level": 80,
         "ticks": 100,
         "xp": 0,
@@ -639,7 +639,7 @@
       },
       {
         "id": "make_saradomin_godsword",
-        "name": "Attach Saradomin hilt",
+        "name": "Attach Dawnbringer hilt",
         "level": 80,
         "ticks": 100,
         "xp": 0,
@@ -651,7 +651,7 @@
       },
       {
         "id": "make_zamorak_godsword",
-        "name": "Attach Zamorak hilt",
+        "name": "Attach Dreadlord hilt",
         "level": 80,
         "ticks": 100,
         "xp": 0,
