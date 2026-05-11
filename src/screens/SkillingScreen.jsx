@@ -350,7 +350,10 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
           if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
           addToast(`Purchased ${productItem.name} for ${formatNumber(cost)} tokens.`, 'success')
           return
-        } catch (e) {}
+        } catch (e) {
+          addToast(`Reward claim failed: ${e?.message || 'server_error'}`, 'error')
+          return
+        }
       }
       if (!trySpendDungeoneeringTokens(cost)) return addToast(`Need ${formatNumber(cost)} Dungeoneering tokens.`, 'error')
       updateBankDirect({ [action.product]: action.productQty || 1 })

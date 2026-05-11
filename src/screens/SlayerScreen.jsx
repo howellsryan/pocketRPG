@@ -266,7 +266,10 @@ export default function SlayerScreen({ onBack }) {
         if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
         addToast(`🎉 Purchased ${item.name} — sent to bank`, 'info')
         return
-      } catch (e) {}
+      } catch (e) {
+        addToast(`Unlock claim failed: ${e?.message || 'server_error'}`, 'error')
+        return
+      }
     }
     updateSlayerPoints(slayerPoints - unlock.cost)
     addToBank(unlock.itemId, 1)

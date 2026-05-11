@@ -443,7 +443,11 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
               consumptions: [{ itemId: task.requiresItem, quantity: 1 }],
             }).then(async (res) => {
               if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
-            }).catch(() => {})
+              const rewardNames = rewards.map(r => `${ITEM_NAMES[r.itemId] || r.itemId} ×${r.quantity}`).join(', ')
+              addToast(`${task.icon} Rewards: ${rewardNames}`, 'success')
+            }).catch((err) => {
+              addToast(`Clue claim failed: ${err?.message || 'server_error'}`, 'error')
+            })
           } else {
             const bankUpdates = {}
             for (const reward of rewards) bankUpdates[reward.itemId] = reward.quantity
@@ -455,8 +459,10 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
               }
             }
           }
-          const rewardNames = rewards.map(r => `${ITEM_NAMES[r.itemId] || r.itemId} ×${r.quantity}`).join(', ')
-          addToast(`${task.icon} Rewards: ${rewardNames}`, 'success')
+          if (!(getToken() && getCharacterId())) {
+            const rewardNames = rewards.map(r => `${ITEM_NAMES[r.itemId] || r.itemId} ×${r.quantity}`).join(', ')
+            addToast(`${task.icon} Rewards: ${rewardNames}`, 'success')
+          }
         } else if (task.rewardItems && task.rewardItems.length > 0) {
           // OneShot tasks with multiple reward items — award all at once (handled below)
         } else {
@@ -473,14 +479,16 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
                 rewards: task.rewardItems.map(id => ({ itemId: id, quantity: 1 })),
               }).then(async (res) => {
                 if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
-              }).catch(() => {
-                updateBankDirect(Object.fromEntries(task.rewardItems.map(id => [id, 1])))
+                const rewardNames = task.rewardItems.map(id => ITEM_NAMES[id] || id).join(', ')
+                addToast(`${task.icon} Received: ${rewardNames}!`, 'success')
+              }).catch((err) => {
+                addToast(`Minigame claim failed: ${err?.message || 'server_error'}`, 'error')
               })
             } else {
               updateBankDirect(Object.fromEntries(task.rewardItems.map(id => [id, 1])))
+              const rewardNames = task.rewardItems.map(id => ITEM_NAMES[id] || id).join(', ')
+              addToast(`${task.icon} Received: ${rewardNames}!`, 'success')
             }
-            const rewardNames = task.rewardItems.map(id => ITEM_NAMES[id] || id).join(', ')
-            addToast(`${task.icon} Received: ${rewardNames}!`, 'success')
           } else {
             addToast(`${task.icon} ${ITEM_NAMES[task.product] || task.product} banked!`, 'success')
           }
