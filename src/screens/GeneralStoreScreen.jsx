@@ -127,7 +127,8 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
         const cloud = await pullSave()
         if (cloud?.payload) await applyCloudSave(cloud.payload, cloud.updatedAt)
         addToast(`${selectedItem.icon || '📦'} ${selectedItem.name} ${buyQty > 1 ? `×${buyQty}` : ''} purchased!`, 'success')
-        requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.PURCHASE)
+        // Purchase already mutated server-authoritative state; avoid pushing a
+        // potentially stale local snapshot back over the freshly updated save.
         setSelectedItem(null)
         setBuyQty(1)
         return
