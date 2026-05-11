@@ -8064,7 +8064,7 @@
   "wine_of_zamorak": {
     "id": "wine_of_zamorak",
     "legacy_item_id": "wine_of_zamorak",
-    "name": "Wine of Zamorak",
+    "name": "Wine of Krylth",
     "type": "resource",
     "stackable": true,
     "shopValue": 1304,
@@ -8258,7 +8258,7 @@
   "saradomin_brew": {
     "id": "saradomin_brew",
     "legacy_item_id": "saradomin_brew",
-    "name": "Saradomin Brew",
+    "name": "Lumira Brew",
     "type": "potion",
     "stackable": true,
     "shopValue": 600,
@@ -9737,7 +9737,7 @@
   "heavy_ballista": {
     "id": "heavy_ballista",
     "legacy_item_id": "heavy_ballista",
-    "name": "Heavy Ballista",
+    "name": "Colossal Ballista",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": true,
@@ -12354,7 +12354,7 @@
   "saradomin_dhide_body": {
     "id": "saradomin_dhide_body",
     "legacy_item_id": "saradomin_dhide_body",
-    "name": "Saradomin D'Hide Body",
+    "name": "Lumira D'Hide Body",
     "type": "armour",
     "stackable": false,
     "shopValue": 92013,
@@ -12391,7 +12391,7 @@
   "saradomin_dhide_chaps": {
     "id": "saradomin_dhide_chaps",
     "legacy_item_id": "saradomin_dhide_chaps",
-    "name": "Saradomin D'Hide Chaps",
+    "name": "Lumira D'Hide Chaps",
     "type": "armour",
     "stackable": false,
     "shopValue": 120000,
@@ -12427,7 +12427,7 @@
   "saradomin_dhide_boots": {
     "id": "saradomin_dhide_boots",
     "legacy_item_id": "saradomin_dhide_boots",
-    "name": "Saradomin D'Hide Boots",
+    "name": "Lumira D'Hide Boots",
     "type": "armour",
     "stackable": false,
     "shopValue": 210446,
@@ -12464,7 +12464,7 @@
   "saradomin_dhide_bracers": {
     "id": "saradomin_dhide_bracers",
     "legacy_item_id": "saradomin_dhide_bracers",
-    "name": "Saradomin D'Hide Bracers",
+    "name": "Lumira D'Hide Bracers",
     "type": "armour",
     "stackable": false,
     "shopValue": 90000,
@@ -12501,7 +12501,7 @@
   "saradomin_coif": {
     "id": "saradomin_coif",
     "legacy_item_id": "saradomin_coif",
-    "name": "Saradomin Coif",
+    "name": "Lumira Coif",
     "type": "armour",
     "stackable": false,
     "shopValue": 64887,
@@ -12535,7 +12535,7 @@
   "saradomin_stole": {
     "id": "saradomin_stole",
     "legacy_item_id": "saradomin_stole",
-    "name": "Saradomin Stole",
+    "name": "Lumira Stole",
     "type": "armour",
     "stackable": false,
     "shopValue": 1749,
@@ -12782,7 +12782,7 @@
   "zamorak_dhide_body": {
     "id": "zamorak_dhide_body",
     "legacy_item_id": "zamorak_dhide_body",
-    "name": "Zamorak D'Hide Body",
+    "name": "Krylth D'Hide Body",
     "type": "armour",
     "stackable": false,
     "shopValue": 115466,
@@ -12819,7 +12819,7 @@
   "zamorak_dhide_chaps": {
     "id": "zamorak_dhide_chaps",
     "legacy_item_id": "zamorak_dhide_chaps",
-    "name": "Zamorak D'Hide Chaps",
+    "name": "Krylth D'Hide Chaps",
     "type": "armour",
     "stackable": false,
     "shopValue": 120000,
@@ -12855,7 +12855,7 @@
   "zamorak_dhide_boots": {
     "id": "zamorak_dhide_boots",
     "legacy_item_id": "zamorak_dhide_boots",
-    "name": "Zamorak D'Hide Boots",
+    "name": "Krylth D'Hide Boots",
     "type": "armour",
     "stackable": false,
     "shopValue": 259914,
@@ -12892,7 +12892,7 @@
   "zamorak_dhide_bracers": {
     "id": "zamorak_dhide_bracers",
     "legacy_item_id": "zamorak_dhide_bracers",
-    "name": "Zamorak D'Hide Bracers",
+    "name": "Krylth D'Hide Bracers",
     "type": "armour",
     "stackable": false,
     "shopValue": 90000,
@@ -12929,7 +12929,7 @@
   "zamorak_coif": {
     "id": "zamorak_coif",
     "legacy_item_id": "zamorak_coif",
-    "name": "Zamorak Coif",
+    "name": "Krylth Coif",
     "type": "armour",
     "stackable": false,
     "shopValue": 46600,
@@ -12963,7 +12963,7 @@
   "zamorak_stole": {
     "id": "zamorak_stole",
     "legacy_item_id": "zamorak_stole",
-    "name": "Zamorak Stole",
+    "name": "Krylth Stole",
     "type": "armour",
     "stackable": false,
     "shopValue": 2406,
@@ -13210,7 +13210,7 @@
   "armadyl_dhide_body": {
     "id": "armadyl_dhide_body",
     "legacy_item_id": "armadyl_dhide_body",
-    "name": "Armadyl D'Hide Body",
+    "name": "Zephyra D'Hide Body",
     "type": "armour",
     "stackable": false,
     "shopValue": 103033,
@@ -13247,7 +13247,7 @@
   "armadyl_dhide_chaps": {
     "id": "armadyl_dhide_chaps",
     "legacy_item_id": "armadyl_dhide_chaps",
-    "name": "Armadyl D'Hide Chaps",
+    "name": "Zephyra D'Hide Chaps",
     "type": "armour",
     "stackable": false,
     "shopValue": 130000,
@@ -13283,7 +13283,7 @@
   "armadyl_dhide_boots": {
     "id": "armadyl_dhide_boots",
     "legacy_item_id": "armadyl_dhide_boots",
-    "name": "Armadyl D'Hide Boots",
+    "name": "Zephyra D'Hide Boots",
     "type": "armour",
     "stackable": false,
     "shopValue": 387420,
@@ -13320,7 +13320,7 @@
   "armadyl_dhide_bracers": {
     "id": "armadyl_dhide_bracers",
     "legacy_item_id": "armadyl_dhide_bracers",
-    "name": "Armadyl D'Hide Bracers",
+    "name": "Zephyra D'Hide Bracers",
     "type": "armour",
     "stackable": false,
     "shopValue": 100000,
@@ -13357,7 +13357,7 @@
   "armadyl_coif": {
     "id": "armadyl_coif",
     "legacy_item_id": "armadyl_coif",
-    "name": "Armadyl Coif",
+    "name": "Zephyra Coif",
     "type": "armour",
     "stackable": false,
     "shopValue": 48309,
@@ -13391,7 +13391,7 @@
   "armadyl_stole": {
     "id": "armadyl_stole",
     "legacy_item_id": "armadyl_stole",
-    "name": "Armadyl Stole",
+    "name": "Zephyra Stole",
     "type": "armour",
     "stackable": false,
     "shopValue": 2835,
@@ -13424,7 +13424,7 @@
   "bandos_dhide_body": {
     "id": "bandos_dhide_body",
     "legacy_item_id": "bandos_dhide_body",
-    "name": "Bandos D'Hide Body",
+    "name": "Grondar D'Hide Body",
     "type": "armour",
     "stackable": false,
     "shopValue": 94484,
@@ -13461,7 +13461,7 @@
   "bandos_dhide_chaps": {
     "id": "bandos_dhide_chaps",
     "legacy_item_id": "bandos_dhide_chaps",
-    "name": "Bandos D'Hide Chaps",
+    "name": "Grondar D'Hide Chaps",
     "type": "armour",
     "stackable": false,
     "shopValue": 130000,
@@ -13497,7 +13497,7 @@
   "bandos_dhide_boots": {
     "id": "bandos_dhide_boots",
     "legacy_item_id": "bandos_dhide_boots",
-    "name": "Bandos D'Hide Boots",
+    "name": "Grondar D'Hide Boots",
     "type": "armour",
     "stackable": false,
     "shopValue": 226534,
@@ -13534,7 +13534,7 @@
   "bandos_dhide_bracers": {
     "id": "bandos_dhide_bracers",
     "legacy_item_id": "bandos_dhide_bracers",
-    "name": "Bandos D'Hide Bracers",
+    "name": "Grondar D'Hide Bracers",
     "type": "armour",
     "stackable": false,
     "shopValue": 100000,
@@ -13571,7 +13571,7 @@
   "bandos_coif": {
     "id": "bandos_coif",
     "legacy_item_id": "bandos_coif",
-    "name": "Bandos Coif",
+    "name": "Grondar Coif",
     "type": "armour",
     "stackable": false,
     "shopValue": 42868,
@@ -13605,7 +13605,7 @@
   "bandos_stole": {
     "id": "bandos_stole",
     "legacy_item_id": "bandos_stole",
-    "name": "Bandos Stole",
+    "name": "Grondar Stole",
     "type": "armour",
     "stackable": false,
     "shopValue": 5842,
@@ -14368,7 +14368,7 @@
   "saradomin_dhide_shield": {
     "id": "saradomin_dhide_shield",
     "legacy_item_id": "saradomin_dhide_shield",
-    "name": "Saradomin D'Hide Shield",
+    "name": "Lumira D'Hide Shield",
     "type": "armour",
     "stackable": false,
     "shopValue": 310941,
@@ -14442,7 +14442,7 @@
   "zamorak_dhide_shield": {
     "id": "zamorak_dhide_shield",
     "legacy_item_id": "zamorak_dhide_shield",
-    "name": "Zamorak D'Hide Shield",
+    "name": "Krylth D'Hide Shield",
     "type": "armour",
     "stackable": false,
     "shopValue": 414130,
@@ -14516,7 +14516,7 @@
   "armadyl_dhide_shield": {
     "id": "armadyl_dhide_shield",
     "legacy_item_id": "armadyl_dhide_shield",
-    "name": "Armadyl D'Hide Shield",
+    "name": "Zephyra D'Hide Shield",
     "type": "armour",
     "stackable": false,
     "shopValue": 380922,
@@ -14553,7 +14553,7 @@
   "bandos_dhide_shield": {
     "id": "bandos_dhide_shield",
     "legacy_item_id": "bandos_dhide_shield",
-    "name": "Bandos D'Hide Shield",
+    "name": "Grondar D'Hide Shield",
     "type": "armour",
     "stackable": false,
     "shopValue": 283655,
@@ -15212,7 +15212,7 @@
   "saradomin_mitre": {
     "id": "saradomin_mitre",
     "legacy_item_id": "saradomin_mitre",
-    "name": "Saradomin Mitre",
+    "name": "Lumira Mitre",
     "type": "armour",
     "stackable": false,
     "shopValue": 10461,
@@ -15280,7 +15280,7 @@
   "zamorak_mitre": {
     "id": "zamorak_mitre",
     "legacy_item_id": "zamorak_mitre",
-    "name": "Zamorak Mitre",
+    "name": "Krylth Mitre",
     "type": "armour",
     "stackable": false,
     "shopValue": 16298,
@@ -15348,7 +15348,7 @@
   "armadyl_mitre": {
     "id": "armadyl_mitre",
     "legacy_item_id": "armadyl_mitre",
-    "name": "Armadyl Mitre",
+    "name": "Zephyra Mitre",
     "type": "armour",
     "stackable": false,
     "shopValue": 16925,
@@ -15382,7 +15382,7 @@
   "bandos_mitre": {
     "id": "bandos_mitre",
     "legacy_item_id": "bandos_mitre",
-    "name": "Bandos Mitre",
+    "name": "Grondar Mitre",
     "type": "armour",
     "stackable": false,
     "shopValue": 10151,

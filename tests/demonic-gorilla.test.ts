@@ -247,7 +247,7 @@ describe('Hellbound Gorilla', () => {
 
     it('heavy_ballista should exist in items data', () => {
       expect((itemsData as any)['heavy_ballista']).toBeDefined()
-      expect((itemsData as any)['heavy_ballista'].name).toBe('Heavy Ballista')
+      expect((itemsData as any)['heavy_ballista'].name).toBe('Colossal Ballista')
     })
 
     it('heavy_ballista should require level 75 ranged', () => {
