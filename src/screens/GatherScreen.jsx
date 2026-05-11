@@ -467,7 +467,18 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
         if (task.oneShot) {
           // Minigame grind — award once then stop.
           if (task.rewardItems && task.rewardItems.length > 0) {
-            updateBankDirect(Object.fromEntries(task.rewardItems.map(id => [id, 1])))
+            if (getToken() && getCharacterId()) {
+              void api.completeMinigame(task.id, {
+                actionNonce: `minigame:${task.id}:${Date.now()}`,
+                rewards: task.rewardItems.map(id => ({ itemId: id, quantity: 1 })),
+              }).then(async (res) => {
+                if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
+              }).catch(() => {
+                updateBankDirect(Object.fromEntries(task.rewardItems.map(id => [id, 1])))
+              })
+            } else {
+              updateBankDirect(Object.fromEntries(task.rewardItems.map(id => [id, 1])))
+            }
             const rewardNames = task.rewardItems.map(id => ITEM_NAMES[id] || id).join(', ')
             addToast(`${task.icon} Received: ${rewardNames}!`, 'success')
           } else {

@@ -4,6 +4,17 @@ import { loadCharacterWithSave, writeSave } from '../../_lib/game/save.js'
 import { settleActionCompletion } from '../../_lib/game/actionCompletion.js'
 import { toErrorResponse } from '../../_lib/game/errors.js'
 import { auditLog } from '../../_lib/game/audit.js'
+import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
+import cluesData from '../../../src/data/clues.json' assert { type: 'json' }
+import minigamesData from '../../../src/data/minigames.json' assert { type: 'json' }
+
+const VALID_SOURCE_IDS = {
+  raids: new Set(Object.keys(raidsData || {})),
+  clues: new Set(Object.keys(cluesData || {})),
+  minigames: new Set((minigamesData?.tasks || []).map(t => t?.id).filter(Boolean)),
+  slayer: new Set(['slayer']),
+  dungeoneering: new Set(['dungeoneering']),
+}
 
 export function makeCompletionHandler(sourceType, deps = {}) {
   return async function onRequestPost({ request, env }) {
@@ -20,6 +31,8 @@ export function makeCompletionHandler(sourceType, deps = {}) {
       const body = await request.json()
       const sourceId = typeof body?.sourceId === 'string' ? body.sourceId : null
       if (!sourceId) return json({ error: 'Missing sourceId', code: 'INVALID_SOURCE_ID' }, 400)
+      const validIds = VALID_SOURCE_IDS[sourceType]
+      if (validIds && !validIds.has(sourceId)) return json({ error: 'Invalid sourceId', code: 'INVALID_SOURCE_ID' }, 403)
 
       const { saveObject, saveRevision } = await (deps.loadCharacterWithSave || loadCharacterWithSave)(env, characterId, auth.identity.id)
       const settled = settleActionCompletion(saveObject, {
