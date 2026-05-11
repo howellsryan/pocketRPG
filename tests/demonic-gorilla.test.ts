@@ -242,7 +242,7 @@ describe('Hellbound Gorilla', () => {
   describe('New Items', () => {
     it('uncut_zenyte should exist in items data', () => {
       expect((itemsData as any)['uncut_zenyte']).toBeDefined()
-      expect((itemsData as any)['uncut_zenyte'].name).toBe('Uncut Zenyte')
+      expect((itemsData as any)['uncut_zenyte'].name).toBe('Uncut Zyrite')
     })
 
     it('heavy_ballista should exist in items data', () => {

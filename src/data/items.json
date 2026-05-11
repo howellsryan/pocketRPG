@@ -1701,7 +1701,7 @@
   },
   "uncut_zenyte": {
     "id": "uncut_zenyte",
-    "name": "Uncut Zenyte",
+    "name": "Uncut Zyrite",
     "type": "resource",
     "stackable": false,
     "shopValue": 20252943,
@@ -1715,7 +1715,7 @@
   },
   "zenyte": {
     "id": "zenyte",
-    "name": "Zenyte",
+    "name": "Zyrite",
     "type": "resource",
     "stackable": false,
     "shopValue": 20125000,
@@ -9031,7 +9031,7 @@
   },
   "zenyte_amulet": {
     "id": "zenyte_amulet",
-    "name": "Zenyte Amulet",
+    "name": "Zyrite Amulet",
     "type": "armour",
     "slot": "neck",
     "stackable": false,
@@ -9066,7 +9066,7 @@
   },
   "zenyte_bracelet": {
     "id": "zenyte_bracelet",
-    "name": "Zenyte Bracelet",
+    "name": "Zyrite Bracelet",
     "type": "armour",
     "slot": "gloves",
     "stackable": false,
@@ -9101,7 +9101,7 @@
   },
   "zenyte_necklace": {
     "id": "zenyte_necklace",
-    "name": "Zenyte Necklace",
+    "name": "Zyrite Necklace",
     "type": "armour",
     "slot": "neck",
     "stackable": false,
@@ -9136,7 +9136,7 @@
   },
   "zenyte_ring": {
     "id": "zenyte_ring",
-    "name": "Zenyte Ring",
+    "name": "Zyrite Ring",
     "type": "armour",
     "slot": "ring",
     "stackable": false,
@@ -9171,7 +9171,7 @@
   },
   "amulet_of_torture": {
     "id": "amulet_of_torture",
-    "name": "Amulet of Torture",
+    "name": "Amulet of Torment",
     "type": "armour",
     "slot": "neck",
     "stackable": false,
@@ -9206,7 +9206,7 @@
   },
   "tormented_bracelet": {
     "id": "tormented_bracelet",
-    "name": "Tormented Bracelet",
+    "name": "Afflicted Bracelet",
     "type": "armour",
     "slot": "gloves",
     "stackable": false,
@@ -9241,7 +9241,7 @@
   },
   "necklace_of_anguish": {
     "id": "necklace_of_anguish",
-    "name": "Necklace of Anguish",
+    "name": "Necklace of Agony",
     "type": "armour",
     "slot": "neck",
     "stackable": false,
@@ -9276,7 +9276,7 @@
   },
   "ring_of_suffering": {
     "id": "ring_of_suffering",
-    "name": "Ring of Suffering",
+    "name": "Ring of Affliction",
     "type": "armour",
     "slot": "ring",
     "stackable": false,
@@ -9311,7 +9311,7 @@
   },
   "zenyte_shard": {
     "id": "zenyte_shard",
-    "name": "Zenyte Shard",
+    "name": "Zyrite Shard",
     "type": "resource",
     "stackable": false,
     "shopValue": 17301567,
