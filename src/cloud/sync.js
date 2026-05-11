@@ -17,6 +17,7 @@ const ACTIVE_MATCH_RETRY_MS = 5_000
 export const CLOUD_SAVE_STATUS_EVENT = 'pocketrpg:cloud-save-status'
 
 let lastPushedAt = 0
+let lastSaveRevision = 0
 let pendingTimer = null
 let pendingSnapshot = null
 let pendingSaveOptions = {}
@@ -68,9 +69,10 @@ async function flushNow() {
   try {
     const data = buildSavePayloadFromSnapshot(snap)
     const json = JSON.stringify(data)
-    const res = await api.putSave(json, pendingSaveOptions)
+    const res = await api.putSave(json, { ...pendingSaveOptions, saveRevision: lastSaveRevision })
     pendingSaveOptions = {}
     if (res?.updatedAt) lastPushedAt = res.updatedAt
+    if (Number.isFinite(res?.save_revision)) lastSaveRevision = res.save_revision
     emitCloudSaveStatus('saved', { updatedAt: res?.updatedAt || null })
     console.log('[PocketRPG] Cloud save pushed, size:', json.length)
   } catch (err) {
@@ -165,7 +167,8 @@ export async function pullSave() {
   if (!canSync()) return { applied: false }
   const res = await withTimeout(api.getSave(), CLOUD_READ_TIMEOUT_MS, null)
   if (!res || !res.save) return { applied: false }
-  const { save_data, updatedAt } = res.save
+  const { save_data, updatedAt, save_revision } = res.save
+  if (Number.isFinite(save_revision)) lastSaveRevision = save_revision
   return { applied: false, payload: JSON.parse(save_data), updatedAt }
 }
 
@@ -179,7 +182,8 @@ export async function checkCloudNewer() {
   if (!canSync()) return null
   const res = await withTimeout(api.getSave(), CLOUD_READ_TIMEOUT_MS, null)
   if (!res || !res.save) return null
-  const { save_data, updatedAt } = res.save
+  const { save_data, updatedAt, save_revision } = res.save
+  if (Number.isFinite(save_revision)) lastSaveRevision = save_revision
   if (updatedAt <= lastPushedAt + FRESHNESS_GRACE_MS) return null
   return { payload: JSON.parse(save_data), updatedAt }
 }
@@ -189,6 +193,7 @@ export async function checkCloudNewer() {
 export async function applyCloudSave(payload, updatedAt) {
   await applySavePayload(payload, { restoreLocalIdleMirrors: false })
   if (updatedAt) lastPushedAt = updatedAt
+  if (Number.isFinite(updatedAt) && Number.isFinite(lastSaveRevision) === false) lastSaveRevision = 0
   // IDB now holds this character's data — stamp ownership so the next boot
   // knows which character these rows belong to.
   const charId = getCharacterId()
@@ -198,6 +203,7 @@ export async function applyCloudSave(payload, updatedAt) {
 // Reset cached state — call on logout / character switch.
 export function resetSyncState() {
   lastPushedAt = 0
+  lastSaveRevision = 0
   pendingSnapshot = null
   pendingSaveOptions = {}
   pendingCriticalSnapshotSource = null

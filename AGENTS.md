@@ -135,3 +135,10 @@ Do not commit with failing checks.
 - Generated root `index.html` is a build artifact from `npm run rebuild`; do not commit `index.html` changes in normal PRs.
 - If instructions in this file conflict with direct user/developer/system instructions, higher-priority instructions win.
 - When this guide becomes stale, update it in the same PR as the behavior/script changes.
+
+## 14) Production Security Model (Server Authority)
+- Treat browser/client state as untrusted for progression/economy outcomes.
+- API/server must authoritatively validate and mutate important outcomes (items, coins, XP, points, unlocks, collection log, PvP settlement, credits usage).
+- `/api/save` must reject stale writes (`save_revision`) and reject unauthorized protected reward/economy deltas.
+- High-value/protected rewards (boss/raid/clue/minigame/dungeoneering and restricted items) require server-authoritative mutation paths with regression tests.
+- New API mutations that can materially change economy/progression must emit audit events.
