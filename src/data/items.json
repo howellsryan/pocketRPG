@@ -1143,7 +1143,7 @@
   },
   "rune_bar": {
     "id": "rune_bar",
-    "name": "Rune Bar",
+    "name": "Runeforged Bar",
     "type": "resource",
     "stackable": false,
     "shopValue": 12500,
@@ -2089,7 +2089,7 @@
   },
   "rune_arrow_heads": {
     "id": "rune_arrow_heads",
-    "name": "Rune Arrowtips",
+    "name": "Runeforged Arrowtips",
     "type": "resource",
     "stackable": true,
     "shopValue": 221,
@@ -2146,7 +2146,7 @@
   },
   "rune_arrow": {
     "id": "rune_arrow",
-    "name": "Rune Arrow",
+    "name": "Runeforged Arrow",
     "type": "ammo",
     "slot": "ammo",
     "stackable": true,
