@@ -14,7 +14,7 @@ import minigamesData from '../data/minigames.json'
 import monstersData from '../data/monsters.json'
 import raidsData from '../data/raids.json'
 import { formatObtainSourceMessage } from '../engine/itemSources.js'
-import { requestCriticalPushSave } from '../cloud/sync.js'
+import { requestCriticalPushSave, pullSave, applyCloudSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 
 // ── COMPONENT ───────────────────────────────────────────────────────────────
@@ -123,7 +123,14 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
     // Validate purchase with backend (required for cloud accounts)
     if (getToken() && getCharacterId()) {
       try {
-        await api.validatePurchase(selectedItem.id, buyQty, [...unlockedMinigameItems])
+        await api.purchaseItem(selectedItem.id, buyQty, [...unlockedMinigameItems])
+        const cloud = await pullSave()
+        if (cloud?.payload) await applyCloudSave(cloud.payload, cloud.updatedAt)
+        addToast(`${selectedItem.icon || '📦'} ${selectedItem.name} ${buyQty > 1 ? `×${buyQty}` : ''} purchased!`, 'success')
+        requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.PURCHASE)
+        setSelectedItem(null)
+        setBuyQty(1)
+        return
       } catch (err) {
         if (err.body?.code === 'BOSS_UNIQUE_RESTRICTED') {
           addToast('Boss unique drops can only be obtained from bosses and raids.', 'error')

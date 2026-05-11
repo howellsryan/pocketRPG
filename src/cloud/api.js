@@ -124,7 +124,7 @@ export const api = {
     method: 'POST',
     body: JSON.stringify({ username, is_ironman: isIronman, is_one_life: isOneLife }),
   }),
-  validatePurchase: (itemId, quantity = 1, unlockedMinigameItems = []) => request('/api/purchase', {
+  purchaseItem: (itemId, quantity = 1, unlockedMinigameItems = []) => request('/api/purchase', {
     method: 'POST',
     body: JSON.stringify({ item_id: itemId, quantity, unlocked_minigame_items: unlockedMinigameItems }),
   }),
