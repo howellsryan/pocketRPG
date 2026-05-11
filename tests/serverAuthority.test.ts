@@ -17,13 +17,20 @@ describe('server authority helpers', () => {
   })
 
   it('enforces inventory slot cap at 28', () => {
-    const save: any = { inventory: Array.from({ length: 28 }, (_, i) => ({ id: `i${i}`, quantity: 1 })) }
+    const save: any = { inventory: Array.from({ length: 28 }, (_, i) => ({ itemId: `i${i}`, quantity: 1 })) }
     expect(() => addItemToInventory(save, 'new_item', 1)).toThrow(/Inventory is full/)
   })
 
   it('ignores empty/null fixed slots when enforcing inventory cap', () => {
     const save: any = { inventory: Array.from({ length: 28 }, () => null) }
     expect(() => addItemToInventory(save, 'new_item', 1)).not.toThrow()
-    expect(save.inventory).toEqual([{ id: 'new_item', quantity: 1 }])
+    expect(save.inventory).toEqual([{ itemId: 'new_item', quantity: 1 }])
+  })
+
+  it('normalizes legacy id-shaped inventory entries to itemId', () => {
+    const save: any = { inventory: [{ id: 'legacy_item', quantity: 1 }] }
+    addItemToInventory(save, 'new_item', 1)
+    expect(save.inventory[0]).toEqual({ id: 'legacy_item', itemId: 'legacy_item', quantity: 1 })
+    expect(save.inventory[1]).toEqual({ itemId: 'new_item', quantity: 1 })
   })
 })
