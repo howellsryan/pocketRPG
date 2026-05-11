@@ -8408,7 +8408,7 @@
   },
   "crystal_shards": {
     "id": "crystal_shards",
-    "name": "Crystal Shards",
+    "name": "Shardglass Shards",
     "type": "resource",
     "stackable": true,
     "shopValue": 0,
@@ -8418,7 +8418,7 @@
   },
   "crystal_helmet": {
     "id": "crystal_helmet",
-    "name": "Crystal Helmet",
+    "name": "Shardglass Helmet",
     "type": "armour",
     "slot": "head",
     "stackable": false,
@@ -8452,7 +8452,7 @@
   },
   "crystal_plate_body": {
     "id": "crystal_plate_body",
-    "name": "Crystal Plate Body",
+    "name": "Shardglass Plate Body",
     "type": "armour",
     "slot": "body",
     "stackable": false,
@@ -8486,7 +8486,7 @@
   },
   "crystal_platelegs": {
     "id": "crystal_platelegs",
-    "name": "Crystal Platelegs",
+    "name": "Shardglass Platelegs",
     "type": "armour",
     "slot": "legs",
     "stackable": false,
@@ -8520,7 +8520,7 @@
   },
   "crystal_pickaxe": {
     "id": "crystal_pickaxe",
-    "name": "Crystal Pickaxe",
+    "name": "Shardglass Pickaxe",
     "type": "tool",
     "slot": "weapon",
     "stackable": false,
@@ -8554,7 +8554,7 @@
   },
   "crystal_axe": {
     "id": "crystal_axe",
-    "name": "Crystal Axe",
+    "name": "Shardglass Axe",
     "type": "tool",
     "slot": "weapon",
     "stackable": false,
@@ -10274,7 +10274,7 @@
   },
   "crystal_bow": {
     "id": "crystal_bow",
-    "name": "Crystal Bow",
+    "name": "Shardglass Bow",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": true,
@@ -10312,7 +10312,7 @@
   },
   "crystal_shield": {
     "id": "crystal_shield",
-    "name": "Crystal Shield",
+    "name": "Shardglass Shield",
     "type": "armour",
     "slot": "shield",
     "stackable": false,
