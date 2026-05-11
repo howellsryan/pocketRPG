@@ -5914,7 +5914,7 @@
   "abyssal_whip": {
     "id": "abyssal_whip",
     "legacy_item_id": "abyssal_whip",
-    "name": "Abyssal Whip",
+    "name": "Nether Demon Whip",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": false,
@@ -7904,7 +7904,7 @@
   "guam_leaf": {
     "id": "guam_leaf",
     "legacy_item_id": "guam_leaf",
-    "name": "Guam Leaf",
+    "name": "Greenthorn Leaf",
     "type": "resource",
     "stackable": true,
     "shopValue": 281,
@@ -7914,7 +7914,7 @@
   "tarromin": {
     "id": "tarromin",
     "legacy_item_id": "tarromin",
-    "name": "Tarromin",
+    "name": "Duskroot",
     "type": "resource",
     "stackable": true,
     "shopValue": 224,
@@ -7924,7 +7924,7 @@
   "ranarr_weed": {
     "id": "ranarr_weed",
     "legacy_item_id": "ranarr_weed",
-    "name": "Ranarr Weed",
+    "name": "Rynarr Weed",
     "type": "resource",
     "stackable": true,
     "shopValue": 5498,
@@ -8324,7 +8324,7 @@
   "draconic_visage": {
     "id": "draconic_visage",
     "legacy_item_id": "draconic_visage",
-    "name": "Draconic Visage",
+    "name": "Dragon Visage",
     "type": "resource",
     "stackable": false,
     "shopValue": 3679395,
@@ -8335,7 +8335,7 @@
   "dragonfire_shield": {
     "id": "dragonfire_shield",
     "legacy_item_id": "dragonfire_shield",
-    "name": "Dragonfire Shield",
+    "name": "Visage Shield",
     "type": "armour",
     "slot": "shield",
     "stackable": false,
@@ -10292,7 +10292,7 @@
   "guam_seed": {
     "id": "guam_seed",
     "legacy_item_id": "guam_seed",
-    "name": "Guam Seed",
+    "name": "Greenthorn Seed",
     "type": "seed",
     "stackable": true,
     "shopValue": 5,
@@ -10302,7 +10302,7 @@
   "marrentill_seed": {
     "id": "marrentill_seed",
     "legacy_item_id": "marrentill_seed",
-    "name": "Marrentill Seed",
+    "name": "Miremint Seed",
     "type": "seed",
     "stackable": true,
     "shopValue": 18,
@@ -10312,7 +10312,7 @@
   "tarromin_seed": {
     "id": "tarromin_seed",
     "legacy_item_id": "tarromin_seed",
-    "name": "Tarromin Seed",
+    "name": "Duskroot Seed",
     "type": "seed",
     "stackable": true,
     "shopValue": 8,
@@ -10322,7 +10322,7 @@
   "basil_seed": {
     "id": "basil_seed",
     "legacy_item_id": "basil_seed",
-    "name": "Basil Seed",
+    "name": "Kingsherb Seed",
     "type": "seed",
     "stackable": true,
     "shopValue": 40,
@@ -10332,7 +10332,7 @@
   "sagewort_seed": {
     "id": "sagewort_seed",
     "legacy_item_id": "sagewort_seed",
-    "name": "Sagewort Seed",
+    "name": "Graysage Seed",
     "type": "seed",
     "stackable": true,
     "shopValue": 50,
@@ -10342,7 +10342,7 @@
   "gout_tuber_seed": {
     "id": "gout_tuber_seed",
     "legacy_item_id": "gout_tuber_seed",
-    "name": "Gout Tuber Seed",
+    "name": "Bogtuber Seed",
     "type": "seed",
     "stackable": true,
     "shopValue": 60,
@@ -10352,7 +10352,7 @@
   "ranarr_seed": {
     "id": "ranarr_seed",
     "legacy_item_id": "ranarr_seed",
-    "name": "Ranarr Seed",
+    "name": "Rynarr Seed",
     "type": "seed",
     "stackable": true,
     "shopValue": 24623,
@@ -10472,7 +10472,7 @@
   "marrentill": {
     "id": "marrentill",
     "legacy_item_id": "marrentill",
-    "name": "Marrentill",
+    "name": "Miremint",
     "type": "resource",
     "stackable": true,
     "shopValue": 194,
@@ -10482,7 +10482,7 @@
   "basil": {
     "id": "basil",
     "legacy_item_id": "basil",
-    "name": "Basil",
+    "name": "Kingsherb",
     "type": "resource",
     "stackable": true,
     "shopValue": 30,
@@ -10492,7 +10492,7 @@
   "sagewort": {
     "id": "sagewort",
     "legacy_item_id": "sagewort",
-    "name": "Sagewort",
+    "name": "Graysage",
     "type": "resource",
     "stackable": true,
     "shopValue": 50,
@@ -10502,7 +10502,7 @@
   "gout_tuber": {
     "id": "gout_tuber",
     "legacy_item_id": "gout_tuber",
-    "name": "Gout Tuber",
+    "name": "Bogtuber",
     "type": "resource",
     "stackable": true,
     "shopValue": 464706,
@@ -12188,7 +12188,7 @@
   "ranger_boots": {
     "id": "ranger_boots",
     "legacy_item_id": "ranger_boots",
-    "name": "Ranger Boots",
+    "name": "Pathfinder Boots",
     "type": "armour",
     "stackable": false,
     "shopValue": 29247485,
@@ -12223,7 +12223,7 @@
   "wizard_boots": {
     "id": "wizard_boots",
     "legacy_item_id": "wizard_boots",
-    "name": "Wizard Boots",
+    "name": "Spellweaver Boots",
     "type": "armour",
     "stackable": false,
     "shopValue": 119551,
@@ -14590,7 +14590,7 @@
   "holy_blessing": {
     "id": "holy_blessing",
     "legacy_item_id": "holy_blessing",
-    "name": "Holy Blessing",
+    "name": "Sacred Charm",
     "type": "armour",
     "stackable": false,
     "shopValue": 14167,
@@ -14652,7 +14652,7 @@
   "unholy_blessing": {
     "id": "unholy_blessing",
     "legacy_item_id": "unholy_blessing",
-    "name": "Unholy Blessing",
+    "name": "Profane Charm",
     "type": "armour",
     "stackable": false,
     "shopValue": 14030,
@@ -14714,7 +14714,7 @@
   "war_blessing": {
     "id": "war_blessing",
     "legacy_item_id": "war_blessing",
-    "name": "War Blessing",
+    "name": "Battle Charm",
     "type": "armour",
     "stackable": false,
     "shopValue": 7927,
@@ -14745,7 +14745,7 @@
   "ancient_blessing": {
     "id": "ancient_blessing",
     "legacy_item_id": "ancient_blessing",
-    "name": "Ancient Blessing",
+    "name": "Elder Charm",
     "type": "armour",
     "stackable": false,
     "shopValue": 5427,
@@ -15082,7 +15082,7 @@
   "gilded_pickaxe": {
     "id": "gilded_pickaxe",
     "legacy_item_id": "gilded_pickaxe",
-    "name": "Gilded Pickaxe",
+    "name": "Gold Pickaxe",
     "type": "armour",
     "stackable": false,
     "shopValue": 4185000,
@@ -15116,7 +15116,7 @@
   "gilded_axe": {
     "id": "gilded_axe",
     "legacy_item_id": "gilded_axe",
-    "name": "Gilded Axe",
+    "name": "Gold Axe",
     "type": "armour",
     "stackable": false,
     "shopValue": 5322155,
@@ -15150,7 +15150,7 @@
   "gilded_spade": {
     "id": "gilded_spade",
     "legacy_item_id": "gilded_spade",
-    "name": "Gilded Spade",
+    "name": "Gold Spade",
     "type": "armour",
     "stackable": false,
     "shopValue": 2978995,
@@ -15985,7 +15985,7 @@
   "mystic_hat": {
     "id": "mystic_hat",
     "legacy_item_id": "mystic_hat",
-    "name": "Mystic Hat",
+    "name": "Arcanist Hat",
     "type": "armour",
     "slot": "head",
     "stackable": false,
@@ -16019,7 +16019,7 @@
   "mystic_robe_top": {
     "id": "mystic_robe_top",
     "legacy_item_id": "mystic_robe_top",
-    "name": "Mystic Robe Top",
+    "name": "Arcanist Robe Top",
     "type": "armour",
     "slot": "body",
     "stackable": false,
@@ -16053,7 +16053,7 @@
   "mystic_robe_bottom": {
     "id": "mystic_robe_bottom",
     "legacy_item_id": "mystic_robe_bottom",
-    "name": "Mystic Robe Bottom",
+    "name": "Arcanist Robe Bottom",
     "type": "armour",
     "slot": "legs",
     "stackable": false,
@@ -16087,7 +16087,7 @@
   "mystic_gloves": {
     "id": "mystic_gloves",
     "legacy_item_id": "mystic_gloves",
-    "name": "Mystic Gloves",
+    "name": "Arcanist Gloves",
     "type": "armour",
     "slot": "gloves",
     "stackable": false,
@@ -16121,7 +16121,7 @@
   "mystic_boots": {
     "id": "mystic_boots",
     "legacy_item_id": "mystic_boots",
-    "name": "Mystic Boots",
+    "name": "Arcanist Boots",
     "type": "armour",
     "slot": "boots",
     "stackable": false,
@@ -16155,7 +16155,7 @@
   "granite_maul": {
     "id": "granite_maul",
     "legacy_item_id": "granite_maul",
-    "name": "Granite Maul",
+    "name": "Gargoyle Maul",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": true,
@@ -16198,7 +16198,7 @@
   "granite_dust": {
     "id": "granite_dust",
     "legacy_item_id": "granite_dust",
-    "name": "Granite Dust",
+    "name": "Gargoyle Dust",
     "type": "resource",
     "stackable": true,
     "shopValue": 50,

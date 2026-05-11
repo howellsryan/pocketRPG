@@ -1333,7 +1333,7 @@
   },
   "abyssal_demon": {
     "id": "abyssal_demon",
-    "name": "Netherfiend Demon",
+    "name": "Nether Demon",
     "combatLevel": 124,
     "hitpoints": 150,
     "slayerRequirement": 85,
@@ -6638,7 +6638,7 @@
   },
   "brutal_black_dragon": {
     "id": "brutal_black_dragon",
-    "name": "Brutal Black Dragon",
+    "name": "Vicious Black Dragon",
     "isDragon": true,
     "combatLevel": 318,
     "hitpoints": 315,
