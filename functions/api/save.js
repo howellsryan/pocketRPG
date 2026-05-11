@@ -2,6 +2,8 @@ import { requireAuth, json } from '../_lib/auth.js'
 import { assertNotInActiveMatch, sweepStaleRows } from '../_lib/pvp.js'
 import { computeSaveSummaryFromJson } from '../_lib/saveSummary.js'
 import { decodeSaveRow, gzipJsonString } from '../_lib/saveCodec.js'
+import { detectProtectedDelta } from '../_lib/game/saveValidation.js'
+import itemsData from '../../src/data/items.json' assert { type: 'json' }
 
 const MAX_SAVE_BYTES = 256 * 1024 // 256 KB ceiling — current saves are well under this
 
@@ -42,7 +44,7 @@ export async function onRequestGet({ request, env }) {
   if (ch.error) return json({ error: ch.error }, ch.status)
 
   const row = await env.DB.prepare(
-    'SELECT save_data, save_blob, updated_at FROM saves WHERE character_id = ?'
+    'SELECT save_data, save_blob, updated_at, save_revision FROM saves WHERE character_id = ?'
   ).bind(ch.id).first()
   if (!row) return json({ save: null })
 
@@ -54,7 +56,7 @@ export async function onRequestGet({ request, env }) {
     return json({ error: code }, 400)
   }
   if (!decoded) return json({ error: 'save_blob_missing' }, 400)
-  return json({ save: { save_data: decoded.save_data, updatedAt: decoded.updatedAt } })
+  return json({ save: { save_data: decoded.save_data, updatedAt: decoded.updatedAt, save_revision: Number(row.save_revision) || 0 } })
 }
 
 export async function onRequestPut({ request, env }) {
@@ -77,6 +79,7 @@ export async function onRequestPut({ request, env }) {
   let body
   try { body = await request.json() } catch { return json({ error: 'Invalid JSON' }, 400) }
   const save_data = body.save_data
+  const expectedSaveRevision = Number.isFinite(body?.save_revision) ? body.save_revision : parseInt(body?.save_revision, 10)
   const credits_used_increment = body.credits_used_increment === 1 ? 1 : 0
   if (save_data !== null && typeof save_data !== 'string') {
     return json({ error: 'Missing save_data' }, 400)
@@ -85,20 +88,36 @@ export async function onRequestPut({ request, env }) {
     return json({ error: 'Save too large' }, 413)
   }
 
+  
+  const existing = await env.DB.prepare('SELECT save_data, save_blob, save_revision FROM saves WHERE character_id = ?').bind(ch.id).first()
+  const currentRevision = Number(existing?.save_revision) || 0
+  if (Number.isFinite(expectedSaveRevision) && expectedSaveRevision !== currentRevision) {
+    return json({ error: 'save_revision_conflict', code: 'SAVE_REVISION_CONFLICT', current_revision: currentRevision }, 409)
+  }
+
   const now = Date.now()
   // Recompute denormalized summary so the leaderboard / PvP CB lookups can
   // run as cheap indexed SELECTs against `characters` instead of LEFT
   // JOINing `saves` and JSON.parsing the full blob in a Worker.
   const { totalLevel, combatLevel } = computeSaveSummaryFromJson(save_data)
   const save_blob = save_data ? await gzipJsonString(save_data) : null
+
+  if (existing?.save_data && save_data) {
+    try {
+      const violations = detectProtectedDelta(JSON.parse((await decodeSaveRow(existing))?.save_data || '{}'), JSON.parse(save_data), itemsData)
+      if (violations.length) return json({ error: 'protected_state_delta_rejected', code: 'PROTECTED_STATE_DELTA', items: violations }, 403)
+    } catch {}
+  }
   await env.DB.batch([
     env.DB.prepare(
-      `INSERT INTO saves (character_id, save_blob, updated_at)
-       VALUES (?, ?, ?)
+      `INSERT INTO saves (character_id, save_blob, save_data, updated_at, save_revision)
+       VALUES (?, ?, ?, ?, 1)
        ON CONFLICT(character_id) DO UPDATE SET
          save_blob = excluded.save_blob,
-         updated_at = excluded.updated_at`
-    ).bind(ch.id, save_blob, now),
+         save_data = excluded.save_data,
+         updated_at = excluded.updated_at,
+         save_revision = COALESCE(saves.save_revision, 0) + 1`
+    ).bind(ch.id, save_blob, save_data, now),
     env.DB.prepare(
       `UPDATE characters
           SET credits_used = credits_used + ?,
@@ -108,7 +127,8 @@ export async function onRequestPut({ request, env }) {
     ).bind(credits_used_increment, totalLevel, combatLevel, ch.id, auth.identity.id),
   ])
 
-  return json({ ok: true, updatedAt: now })
+  const revisionRow = await env.DB.prepare('SELECT save_revision FROM saves WHERE character_id = ?').bind(ch.id).first()
+  return json({ ok: true, updatedAt: now, save_revision: Number(revisionRow?.save_revision) || 0 })
 }
 
 // Hard-delete the saves row for this character. Used on One-Life death so
