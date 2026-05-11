@@ -1357,7 +1357,7 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
     }
 
     case 'descent_of_darkness': {
-      // Dark Bow — fires two arrows at 150% max hit each
+      // Nightfang Bow — fires two arrows at 150% max hit each
       const styleBonus = getRangedStyleBonus(state.stance)
       const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
       const maxHit = Math.floor(rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength) * 1.5)
