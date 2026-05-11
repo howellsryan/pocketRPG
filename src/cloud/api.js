@@ -153,6 +153,13 @@ export const api = {
   }),
   deleteSave: () => request('/api/save', { method: 'DELETE' }),
   deleteIdle: () => request('/api/idle', { method: 'DELETE' }),
+
+  completeRaid: (sourceId, payload = {}) => request('/api/actions/raid/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
+  completeClue: (sourceId, payload = {}) => request('/api/actions/clue/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
+  completeMinigame: (sourceId, payload = {}) => request('/api/actions/minigame/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
+  completeSlayer: (sourceId, payload = {}) => request('/api/actions/slayer/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
+  completeDungeoneering: (sourceId, payload = {}) => request('/api/actions/dungeoneering/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
+
 }
 
 // Fire-and-forget idle state write via navigator.sendBeacon. Survives tab
