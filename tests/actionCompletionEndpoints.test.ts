@@ -71,4 +71,24 @@ describe('action completion endpoint tamper guards', () => {
     expect(res.status).toBe(200)
     expect(body.ok).toBe(true)
   })
+
+  it('rejects non-dungeoneering items on dungeoneering completion endpoint', async () => {
+    const handler = makeCompletionHandler('dungeoneering', {
+      requireAuth: async () => ({ identity: { id: 1 } }),
+      assertNotInActiveMatch: async () => null,
+      loadCharacterWithSave: async () => ({ saveObject: { inventory: [], dungeoneeringTokens: 100000 }, saveRevision: 0 }),
+      writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
+    })
+    const req = new Request('https://example.com/api/actions/dungeoneering/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' },
+      body: JSON.stringify({
+        sourceId: 'dungeoneering',
+        actionNonce: 'n5',
+        rewards: [{ itemId: 'twisted_bow', quantity: 1 }],
+      }),
+    })
+    const res = await handler({ request: req, env: {} as any })
+    expect(res.status).toBe(403)
+  })
 })

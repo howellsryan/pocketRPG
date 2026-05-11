@@ -1,6 +1,23 @@
 import { isValidEntry } from '../collectionLog.js'
 import { GameApiError } from './errors.js'
 import { addItemToInventory, removeItemFromInventory } from './inventory.js'
+import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
+
+const VALID_DUNGEONEERING_REWARD_ITEMS = new Set(
+  ((skillsData?.dungeoneering?.actions) || [])
+    .filter(action => action?.category === 'reward' && typeof action?.product === 'string')
+    .map(action => action.product)
+)
+
+function isValidRewardSourceItem(sourceType, sourceId, itemId) {
+  if (isValidEntry(sourceType, sourceId, itemId)) return true
+  // Keep dungeoneering claim validation authoritative even if collection-log
+  // source naming drifts between branches/deploys.
+  if (sourceType === 'dungeoneering' && sourceId === 'dungeoneering') {
+    return VALID_DUNGEONEERING_REWARD_ITEMS.has(itemId)
+  }
+  return false
+}
 
 function assertNonce(saveObject, nonce) {
   if (!nonce || typeof nonce !== 'string') throw new GameApiError('INVALID_NONCE', 'Invalid action nonce', 400)
@@ -21,7 +38,7 @@ export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce
     const itemId = typeof reward?.itemId === 'string' ? reward.itemId : null
     const qty = Math.floor(Number(reward?.quantity) || 0)
     if (!itemId || qty < 1) throw new GameApiError('INVALID_REWARD_ITEM', 'Invalid reward item', 400)
-    if (!isValidEntry(sourceType, sourceId, itemId)) {
+    if (!isValidRewardSourceItem(sourceType, sourceId, itemId)) {
       throw new GameApiError('INVALID_REWARD_SOURCE', 'Reward item not valid for source', 403)
     }
     addItemToInventory(saveObject, itemId, qty)
