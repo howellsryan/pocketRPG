@@ -5,6 +5,8 @@ import itemsData from '../data/items.json'
 import { SLAYER_UNLOCKS, getSlayerUnlockPurchaseState } from '../engine/slayerUnlocks.js'
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { DAGANNOTH_KINGS_TASK_ID } from '../engine/slayerTasks.js'
+import { api, getToken, getCharacterId } from '../cloud/api.js'
+import { applyCloudSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
 
@@ -251,12 +253,20 @@ export default function SlayerScreen({ onBack }) {
     addToast(`Task skipped for ${skipCost} slayer points.`, 'info')
   }
 
-  const handleUnlock = (unlock) => {
+  const handleUnlock = async (unlock) => {
     const item = itemsData[unlock.itemId]
     const purchaseState = getSlayerUnlockPurchaseState({ unlock, item, slayerPoints, bank, inventory })
     if (!purchaseState.allowed) {
       addToast(purchaseState.message || 'Unable to purchase unlock', 'error')
       return
+    }
+    if (getToken() && getCharacterId()) {
+      try {
+        const res = await api.completeSlayer('slayer', { actionNonce: `slayer:${unlock.itemId}:${Date.now()}`, rewards: [{ itemId: unlock.itemId, quantity: 1 }], slayerPoints: -unlock.cost })
+        if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
+        addToast(`🎉 Purchased ${item.name} — sent to bank`, 'info')
+        return
+      } catch (e) {}
     }
     updateSlayerPoints(slayerPoints - unlock.cost)
     addToBank(unlock.itemId, 1)

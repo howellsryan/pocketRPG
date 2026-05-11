@@ -13,6 +13,8 @@ import { SCREENS } from '../utils/constants.js'
 import minigamesData from '../data/minigames.json'
 import cluesData from '../data/clues.json'
 import { rollClueRewards } from '../engine/clueScrolls.js'
+import { api, getToken, getCharacterId } from '../cloud/api.js'
+import { pullSave, applyCloudSave } from '../cloud/sync.js'
 import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
 import { isLoggedDrop } from '../engine/collectionLog.js'
 
@@ -434,16 +436,22 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
         // Handle clue scrolls (roll rewards and consume scroll)
         if (task.isClue) {
           const rewards = rollClueRewards(task.clueLevel)
-          const bankUpdates = {}
-          for (const reward of rewards) {
-            bankUpdates[reward.itemId] = reward.quantity
-          }
-          bankUpdates[task.requiresItem] = -1
-          updateBankDirect(bankUpdates)
-          if (task.clueLevel) {
-            for (const reward of rewards) {
-              if (isLoggedDrop(reward.itemId, 'clues', task.clueLevel)) {
-                recordCollectionLogDrop({ itemId: reward.itemId, sourceType: 'clues', sourceId: task.clueLevel })
+          if (getToken() && getCharacterId()) {
+            void api.completeClue(task.clueLevel, {
+              actionNonce: `clue:${task.clueLevel}:${Date.now()}`,
+              rewards,
+              consumptions: [{ itemId: task.requiresItem, quantity: 1 }],
+            }).then(async (res) => {
+              if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
+            }).catch(() => {})
+          } else {
+            const bankUpdates = {}
+            for (const reward of rewards) bankUpdates[reward.itemId] = reward.quantity
+            bankUpdates[task.requiresItem] = -1
+            updateBankDirect(bankUpdates)
+            if (task.clueLevel) {
+              for (const reward of rewards) {
+                if (isLoggedDrop(reward.itemId, 'clues', task.clueLevel)) recordCollectionLogDrop({ itemId: reward.itemId, sourceType: 'clues', sourceId: task.clueLevel })
               }
             }
           }

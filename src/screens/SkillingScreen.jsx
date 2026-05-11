@@ -11,6 +11,8 @@ import { hasRequiredRunes, getRunesToConsume } from '../engine/runes.js'
 import { onTick } from '../engine/tick.js'
 import { formatNumber } from '../utils/helpers.js'
 import { calculateDungeoneeringTokensForAction, getDungeoneeringRewardCost, canAffordDungeoneeringReward } from '../engine/dungeoneeringTokens.js'
+import { api, getToken, getCharacterId } from '../cloud/api.js'
+import { applyCloudSave } from '../cloud/sync.js'
 import skillsData from '../data/skills.json'
 import itemsData from '../data/items.json'
 import AgilityScreen from './AgilityScreen.jsx'
@@ -334,7 +336,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     })
   }, [activeTask, selectedSkill, skilling])
 
-  const startSkilling = (action) => {
+  const startSkilling = async (action) => {
     if (selectedSkill === 'dungeoneering' && action.category === 'reward') {
       const currentLevel = getLevelFromXP(stats.dungeoneering?.xp || 0)
       if (currentLevel < (action.level || 1)) return addToast(`Requires Dungeoneering level ${action.level}.`, 'error')
@@ -342,6 +344,14 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
       if (cost <= 0) return addToast('Invalid token cost for this reward.', 'error')
       const productItem = itemsData[action.product]
       if (!productItem) return addToast('This reward item is unavailable.', 'error')
+      if (getToken() && getCharacterId()) {
+        try {
+          const res = await api.completeDungeoneering('dungeoneering', { actionNonce: `dng:${action.id}:${Date.now()}`, rewards: [{ itemId: action.product, quantity: action.productQty || 1 }], dungeoneeringTokens: -cost })
+          if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
+          addToast(`Purchased ${productItem.name} for ${formatNumber(cost)} tokens.`, 'success')
+          return
+        } catch (e) {}
+      }
       if (!trySpendDungeoneeringTokens(cost)) return addToast(`Need ${formatNumber(cost)} Dungeoneering tokens.`, 'error')
       updateBankDirect({ [action.product]: action.productQty || 1 })
       recordCollectionLogDrop({ itemId: action.product, sourceType: 'skilling', sourceId: 'dungeoneering' })

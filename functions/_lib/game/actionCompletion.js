@@ -29,13 +29,19 @@ export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce
   }
 
   const sPoints = Math.floor(Number(slayerPoints) || 0)
-  if (sPoints > 0) {
+  if (sPoints !== 0) {
     if (!saveObject.slayer) saveObject.slayer = {}
-    saveObject.slayer.points = (Number(saveObject.slayer.points) || 0) + sPoints
+    const cur = Number(saveObject.slayer.points) || 0
+    if (cur + sPoints < 0) throw new GameApiError('INSUFFICIENT_SUPPLIES', 'Insufficient supplies', 400)
+    saveObject.slayer.points = cur + sPoints
   }
 
   const dTokens = Math.floor(Number(dungeoneeringTokens) || 0)
-  if (dTokens > 0) saveObject.dungeoneeringTokens = (Number(saveObject.dungeoneeringTokens) || 0) + dTokens
+  if (dTokens !== 0) {
+    const cur = Number(saveObject.dungeoneeringTokens) || 0
+    if (cur + dTokens < 0) throw new GameApiError('INSUFFICIENT_SUPPLIES', 'Insufficient supplies', 400)
+    saveObject.dungeoneeringTokens = cur + dTokens
+  }
 
   return { granted, slayerPoints: sPoints, dungeoneeringTokens: dTokens }
 }
