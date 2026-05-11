@@ -23,6 +23,13 @@ describe('server authority helpers', () => {
     expect(save.bank.coins.quantity).toBe(25)
   })
 
+  it('supports legacy numeric bank coin storage', () => {
+    const save: any = { coins: 10, bank: { coins: 90 } }
+    expect(() => subtractCoins(save, 60)).not.toThrow()
+    expect(save.coins).toBe(0)
+    expect(save.bank.coins).toEqual({ itemId: 'coins', quantity: 40 })
+  })
+
   it('enforces inventory slot cap at 28', () => {
     const save: any = { inventory: Array.from({ length: 28 }, (_, i) => ({ itemId: `i${i}`, quantity: 1 })) }
     expect(() => addItemToInventory(save, 'new_item', 1)).toThrow(/Inventory is full/)
