@@ -19,7 +19,7 @@ import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 
 // ── COMPONENT ───────────────────────────────────────────────────────────────
 export default function GeneralStoreScreen({ onBuyCredits }) {
-  const { inventory, bank, updateInventory, updateBankDirect, addToast, itemsData, unlockedFeatures, completedQuests, unlockedMinigameItems, isIronman, getSnapshot } = useGame()
+  const { inventory, bank, updateInventory, updateBankDirect, addToast, itemsData, unlockedFeatures, completedQuests, unlockedMinigameItems, isIronman, getSnapshot, loadGame } = useGame()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedItem, setSelectedItem] = useState(null) // item being purchased
   const [buyQty, setBuyQty] = useState(1)
@@ -126,6 +126,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
         await api.purchaseItem(selectedItem.id, buyQty, [...unlockedMinigameItems])
         const cloud = await pullSave()
         if (cloud?.payload) await applyCloudSave(cloud.payload, cloud.updatedAt)
+        await loadGame()
         addToast(`${selectedItem.icon || '📦'} ${selectedItem.name} ${buyQty > 1 ? `×${buyQty}` : ''} purchased!`, 'success')
         // Purchase already mutated server-authoritative state; avoid pushing a
         // potentially stale local snapshot back over the freshly updated save.
