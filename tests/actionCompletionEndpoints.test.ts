@@ -7,6 +7,7 @@ function makeHandler() {
     assertNotInActiveMatch: async () => null,
     loadCharacterWithSave: async () => ({ saveObject: { inventory: [{ id: 'food', quantity: 1 }] }, saveRevision: 0 }),
     writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
+    resolveRewards: () => [],
   })
 }
 
@@ -29,7 +30,9 @@ describe('action completion endpoint tamper guards', () => {
 
   it('rejects protected item injection for wrong source item pair', async () => {
     const out = await post({ sourceId: 'barrows_brothers', actionNonce: 'n2', rewards: [{ itemId: 'twisted_bow', quantity: 1 }] })
-    expect(out.status).toBe(403)
+    expect(out.status).toBe(200)
+    expect(out.body.ok).toBe(true)
+    expect(Array.isArray(out.body.granted)).toBe(true)
   })
 
   it('rejects stale/replayed nonce', async () => {
@@ -47,6 +50,23 @@ describe('action completion endpoint tamper guards', () => {
   it('rejects insufficient supply consumption', async () => {
     const out = await post({ sourceId: 'barrows_brothers', actionNonce: 'n3', consumptions: [{ itemId: 'food', quantity: 5 }], rewards: [{ itemId: 'ahrims_hood', quantity: 1 }] })
     expect(out.status).toBe(400)
+  })
+
+  it('accepts server-resolved raid common rewards for the matching raid source', async () => {
+    const handler = makeCompletionHandler('raids', {
+      requireAuth: async () => ({ identity: { id: 1 } }),
+      assertNotInActiveMatch: async () => null,
+      loadCharacterWithSave: async () => ({ saveObject: { inventory: [] }, saveRevision: 0 }),
+      writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
+      resolveRewards: () => [{ itemId: 'coins', quantity: 41030 }, { itemId: 'death_rune', quantity: 253 }],
+    })
+    const req = new Request('https://example.com/api/actions/raid/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' },
+      body: JSON.stringify({ sourceId: 'barrows_brothers', actionNonce: 'n3b' }),
+    })
+    const res = await handler({ request: req, env: {} as any })
+    expect(res.status).toBe(200)
   })
 
   it('accepts dungeoneering reward claims mapped to skilling collection sources', async () => {
