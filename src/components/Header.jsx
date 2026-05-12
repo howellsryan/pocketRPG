@@ -31,7 +31,7 @@ export default function Header({ activity, credits = 0, isCloudAccount = false, 
         }, 3000)
         return
       }
-      if (status === 'pending' || status === 'saving') {
+      if (status === 'pending' || status === 'saving' || status === 'out_of_sync') {
         if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current)
         setShowSavedToCloud(false)
       }
@@ -55,6 +55,12 @@ export default function Header({ activity, credits = 0, isCloudAccount = false, 
     <header class="relative flex-shrink-0 bg-[#111] border-b border-[#333] px-3 py-2 md:px-6 md:py-3">
       <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
         {(cloudStatus === 'pending' || cloudStatus === 'saving') && <div class="h-3.5 w-3.5 rounded-full border-2 border-[#555] border-t-[var(--color-gold)] animate-spin" aria-label="Saving to Cloud" />}
+        {cloudStatus === 'out_of_sync' && (
+          <div class="flex items-center gap-1 text-[10px] font-semibold text-[var(--color-warning)]" aria-label="Cloud Save Out of Sync">
+            <span>☁️</span>
+            <span>Out of Sync</span>
+          </div>
+        )}
         {cloudStatus === 'saved' && showSavedToCloud && (
           <div class="flex items-center gap-1 text-[10px] font-semibold text-[var(--color-success)]" aria-label="Saved to Cloud">
             <span>✓</span>

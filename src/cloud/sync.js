@@ -25,6 +25,7 @@ let inFlight = false
 let criticalTimer = null
 let pendingCriticalSnapshotSource = null
 let pendingCriticalReasons = new Set()
+let hasUnsyncedChanges = false
 
 function emitCloudSaveStatus(status, detail = {}) {
   if (typeof window === 'undefined') return
@@ -34,6 +35,12 @@ function emitCloudSaveStatus(status, detail = {}) {
       ...detail,
     },
   }))
+}
+
+function markUnsynced() {
+  hasUnsyncedChanges = true
+  emitCloudSaveStatus('pending')
+  emitCloudSaveStatus('out_of_sync')
 }
 
 function emitSaveSyncActiveMatchConflict(matchId) {
@@ -73,6 +80,7 @@ async function flushNow() {
     pendingSaveOptions = {}
     if (res?.updatedAt) lastPushedAt = res.updatedAt
     if (Number.isFinite(res?.save_revision)) lastSaveRevision = res.save_revision
+    hasUnsyncedChanges = false
     emitCloudSaveStatus('saved', { updatedAt: res?.updatedAt || null })
     console.log('[PocketRPG] Cloud save pushed, size:', json.length)
   } catch (err) {
@@ -83,7 +91,7 @@ async function flushNow() {
     if (err?.status === 409 && (err?.body?.error === 'character_in_active_match' || err?.message === 'character_in_active_match')) {
       emitSaveSyncActiveMatchConflict(err?.body?.match_id)
       pendingSnapshot = snap
-      emitCloudSaveStatus('pending')
+      markUnsynced()
       schedulePush(snap, ACTIVE_MATCH_RETRY_MS)
       return
     }
@@ -96,7 +104,7 @@ async function flushNow() {
 
 function schedulePush(snapshot, delay = PUSH_DEBOUNCE_MS) {
   pendingSnapshot = snapshot
-  emitCloudSaveStatus('pending')
+  markUnsynced()
   if (pendingTimer) return
   pendingTimer = setTimeout(flushNow, delay)
 }
@@ -131,7 +139,7 @@ export function requestCriticalPushSave(snapshotOrFactory, reason = 'critical') 
   if (reason === CRITICAL_SAVE_REASONS.SKIP_HOUR) {
     pendingSaveOptions.creditsUsedIncrement = 1
   }
-  emitCloudSaveStatus('pending')
+  markUnsynced()
 
   // Critical milestones should not wait behind the normal 60s autosave timer.
   if (pendingTimer) {
@@ -205,6 +213,7 @@ export function resetSyncState() {
   lastPushedAt = 0
   lastSaveRevision = 0
   pendingSnapshot = null
+  hasUnsyncedChanges = false
   pendingSaveOptions = {}
   pendingCriticalSnapshotSource = null
   pendingCriticalReasons.clear()
