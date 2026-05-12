@@ -154,7 +154,7 @@ const SLAYER_MONSTER_ICONS = {
 }
 
 export default function SlayerScreen({ onBack }) {
-  const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, bank, inventory, addToBank, getSnapshot, slayerTasksCompleted } = useGame()
+  const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, bank, inventory, addToBank, getSnapshot, slayerTasksCompleted, loadGame } = useGame()
 
   const combatLevel = getPlayerCombatLevel(stats)
   const slayerLevel = getLevelFromXP(stats.slayer?.xp || 0)
@@ -264,6 +264,7 @@ export default function SlayerScreen({ onBack }) {
       try {
         const res = await api.completeSlayer('slayer', { actionNonce: `slayer:${unlock.itemId}:${Date.now()}`, rewards: [{ itemId: unlock.itemId, quantity: 1 }], slayerPoints: -unlock.cost })
         if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
+        await loadGame()
         addToast(`🎉 Purchased ${item.name} — sent to bank`, 'info')
         return
       } catch (e) {

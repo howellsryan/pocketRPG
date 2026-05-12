@@ -56,7 +56,7 @@ function calculateRemainingActions(action, inventory, bank) {
 }
 
 export default function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
-  const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens } = useGame()
+  const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, loadGame } = useGame()
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
   const [selectedAction, setSelectedAction] = useState(null)
   const [skilling, setSkilling] = useState(null)
@@ -350,6 +350,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
           if (res?.save?.save_data) {
             const cloudSave = JSON.parse(res.save.save_data)
             await applyCloudSave(cloudSave, res.save.updatedAt)
+            await loadGame()
 
             // Keep token display in sync immediately after purchase.
             const serverTokens = Number(cloudSave?.settings?.dungeoneeringTokens ?? cloudSave?.dungeoneeringTokens)
