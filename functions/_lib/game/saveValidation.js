@@ -18,6 +18,13 @@ function getOwnedTotals(save = {}) {
     const qty = typeof entry === 'number' ? entry : entry?.quantity
     addQuantity(totals, itemId, qty)
   }
+  const equipment = save.equipment && typeof save.equipment === 'object' ? save.equipment : {}
+  for (const equipped of Object.values(equipment)) {
+    const itemId = equipped?.id ?? equipped?.itemId ?? null
+    if (!itemId) continue
+    const qty = Number(equipped?.quantity)
+    addQuantity(totals, itemId, Number.isFinite(qty) && qty > 0 ? qty : 1)
+  }
   return totals
 }
 

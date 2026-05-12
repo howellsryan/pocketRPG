@@ -33,4 +33,12 @@ describe('detectProtectedDelta', () => {
 
     expect(detectProtectedDelta(previousSave, nextSave, itemsData)).toEqual([])
   })
+
+  it('does not flag protected deltas when equipping from inventory', () => {
+    const previousSave = { inventory: [{ itemId: 'archers_ring', quantity: 1 }], equipment: {} }
+    const nextSave = { inventory: [], equipment: { ring: { itemId: 'archers_ring' } } }
+    const itemsData = { archers_ring: { id: 'archers_ring', isBossUnique: true } }
+
+    expect(detectProtectedDelta(previousSave, nextSave, itemsData)).toEqual([])
+  })
 })
