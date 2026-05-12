@@ -9,12 +9,20 @@ const CHARACTER_NAME_KEY = 'pocketrpg_cloud_character_name'
 // wipe before loading, so characters never bleed into each other.
 const LOCAL_CHARACTER_KEY = 'pocketrpg_local_character_id'
 const ACTIVE_MATCH_EVENT = 'pocketrpg:pvp-active-match'
+export const SAVE_REVISION_EVENT = 'pocketrpg:cloud-save-revision'
 
 function emitActiveMatchConflict(matchId = null) {
   if (typeof window === 'undefined') return
   const parsed = Number(matchId)
   const safeMatchId = Number.isFinite(parsed) && parsed > 0 ? parsed : null
   window.dispatchEvent(new CustomEvent(ACTIVE_MATCH_EVENT, { detail: { matchId: safeMatchId } }))
+}
+
+function emitSaveRevision(revision) {
+  if (typeof window === 'undefined') return
+  const parsed = Number(revision)
+  if (!Number.isFinite(parsed) || parsed < 0) return
+  window.dispatchEvent(new CustomEvent(SAVE_REVISION_EVENT, { detail: { saveRevision: parsed } }))
 }
 
 export function getToken() {
@@ -114,6 +122,10 @@ async function request(path, options = {}) {
     err.body = body
     throw err
   }
+  const responseSaveRevision = Number.isFinite(body?.save_revision)
+    ? body.save_revision
+    : (Number.isFinite(body?.save?.save_revision) ? body.save.save_revision : null)
+  if (responseSaveRevision != null) emitSaveRevision(responseSaveRevision)
   return body
 }
 

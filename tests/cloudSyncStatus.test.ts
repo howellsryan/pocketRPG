@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 const putSaveMock = vi.fn()
 
 vi.mock('../src/cloud/api.js', () => ({
+  SAVE_REVISION_EVENT: 'pocketrpg:cloud-save-revision',
   api: { putSave: (...args: unknown[]) => putSaveMock(...args), getSave: vi.fn() },
   getToken: () => 'token',
   getCharacterId: () => 123,

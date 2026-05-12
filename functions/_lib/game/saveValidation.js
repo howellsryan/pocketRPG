@@ -1,15 +1,31 @@
 import { isProtectedItem } from './rewards.js'
 
+function addQuantity(map, itemId, quantity) {
+  if (!itemId) return
+  const qty = Number(quantity) || 0
+  if (qty <= 0) return
+  map.set(itemId, (map.get(itemId) || 0) + qty)
+}
+
+function getOwnedTotals(save = {}) {
+  const totals = new Map()
+  for (const slot of (save.inventory || [])) {
+    const itemId = slot?.id ?? slot?.itemId ?? null
+    addQuantity(totals, itemId, slot?.quantity)
+  }
+  const bank = save.bank && typeof save.bank === 'object' ? save.bank : {}
+  for (const [itemId, entry] of Object.entries(bank)) {
+    const qty = typeof entry === 'number' ? entry : entry?.quantity
+    addQuantity(totals, itemId, qty)
+  }
+  return totals
+}
+
 export function detectProtectedDelta(previousSave = {}, nextSave = {}, itemsData = {}) {
-  const prev = new Map((previousSave.inventory || []).map((slot) => {
-    const itemId = slot?.id ?? slot?.itemId ?? null
-    return [itemId, Number(slot?.quantity) || 0]
-  }))
+  const prev = getOwnedTotals(previousSave)
+  const next = getOwnedTotals(nextSave)
   const violations = []
-  for (const slot of (nextSave.inventory || [])) {
-    const itemId = slot?.id ?? slot?.itemId ?? null
-    if (!itemId) continue
-    const nextQty = Number(slot?.quantity) || 0
+  for (const [itemId, nextQty] of next.entries()) {
     const prevQty = prev.get(itemId) || 0
     if (nextQty > prevQty && isProtectedItem(itemsData[itemId])) violations.push(itemId)
   }

@@ -737,7 +737,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             if (cloudAuthoritativeRaid) {
               void api.completeRaid(raidId, {
                 actionNonce: `raid:${raidId}:${Date.now()}`,
-                rewards: killLoot.map(drop => ({ itemId: drop.itemId, quantity: drop.quantity })),
               }).then(async (res) => {
                 if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
               }).catch((err) => {
