@@ -1,6 +1,6 @@
 // Cloud-save push/pull. Pushes are debounced to once per 60s per character.
 
-import { api, getToken, getCharacterId, setLocalCharacterId } from './api.js'
+import { api, getToken, getCharacterId, setLocalCharacterId, SAVE_REVISION_EVENT } from './api.js'
 import { buildSavePayloadFromSnapshot, applySavePayload } from '../db/saveload.js'
 import { withTimeout } from '../utils/helpers.js'
 import { CRITICAL_SAVE_COALESCE_MS, CRITICAL_SAVE_REASONS, normaliseCriticalSaveReason } from './criticalSavePolicy.js'
@@ -26,6 +26,15 @@ let criticalTimer = null
 let pendingCriticalSnapshotSource = null
 let pendingCriticalReasons = new Set()
 let hasUnsyncedChanges = false
+
+if (typeof window !== 'undefined') {
+  window.addEventListener(SAVE_REVISION_EVENT, (event) => {
+    const revision = Number(event?.detail?.saveRevision)
+    if (Number.isFinite(revision) && revision >= 0) {
+      lastSaveRevision = revision
+    }
+  })
+}
 
 function emitCloudSaveStatus(status, detail = {}) {
   if (typeof window === 'undefined') return
