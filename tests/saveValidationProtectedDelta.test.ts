@@ -17,4 +17,12 @@ describe('detectProtectedDelta', () => {
 
     expect(detectProtectedDelta(previousSave, nextSave, itemsData)).toEqual(['dragon_claw'])
   })
+
+  it('does not flag protected deltas when stack totals are unchanged across slot rearranges', () => {
+    const previousSave = { inventory: [{ itemId: 'archers_ring', quantity: 1 }, { itemId: 'archers_ring', quantity: 1 }] }
+    const nextSave = { inventory: [{ itemId: 'archers_ring', quantity: 2 }] }
+    const itemsData = { archers_ring: { id: 'archers_ring', isBossUnique: true } }
+
+    expect(detectProtectedDelta(previousSave, nextSave, itemsData)).toEqual([])
+  })
 })

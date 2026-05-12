@@ -1,15 +1,22 @@
 import { isProtectedItem } from './rewards.js'
 
 export function detectProtectedDelta(previousSave = {}, nextSave = {}, itemsData = {}) {
-  const prev = new Map((previousSave.inventory || []).map((slot) => {
+  const prev = new Map()
+  for (const slot of (previousSave.inventory || [])) {
     const itemId = slot?.id ?? slot?.itemId ?? null
-    return [itemId, Number(slot?.quantity) || 0]
-  }))
-  const violations = []
+    if (!itemId) continue
+    const qty = Number(slot?.quantity) || 0
+    prev.set(itemId, (prev.get(itemId) || 0) + qty)
+  }
+  const next = new Map()
   for (const slot of (nextSave.inventory || [])) {
     const itemId = slot?.id ?? slot?.itemId ?? null
     if (!itemId) continue
-    const nextQty = Number(slot?.quantity) || 0
+    const qty = Number(slot?.quantity) || 0
+    next.set(itemId, (next.get(itemId) || 0) + qty)
+  }
+  const violations = []
+  for (const [itemId, nextQty] of next.entries()) {
     const prevQty = prev.get(itemId) || 0
     if (nextQty > prevQty && isProtectedItem(itemsData[itemId])) violations.push(itemId)
   }

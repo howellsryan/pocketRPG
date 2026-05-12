@@ -52,6 +52,23 @@ describe('action completion endpoint tamper guards', () => {
     expect(out.status).toBe(400)
   })
 
+  it('accepts server-resolved raid common rewards for the matching raid source', async () => {
+    const handler = makeCompletionHandler('raids', {
+      requireAuth: async () => ({ identity: { id: 1 } }),
+      assertNotInActiveMatch: async () => null,
+      loadCharacterWithSave: async () => ({ saveObject: { inventory: [] }, saveRevision: 0 }),
+      writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
+      resolveRewards: () => [{ itemId: 'coins', quantity: 41030 }, { itemId: 'death_rune', quantity: 253 }],
+    })
+    const req = new Request('https://example.com/api/actions/raid/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' },
+      body: JSON.stringify({ sourceId: 'barrows_brothers', actionNonce: 'n3b' }),
+    })
+    const res = await handler({ request: req, env: {} as any })
+    expect(res.status).toBe(200)
+  })
+
   it('accepts dungeoneering reward claims mapped to skilling collection sources', async () => {
     const handler = makeCompletionHandler('dungeoneering', {
       requireAuth: async () => ({ identity: { id: 1 } }),
