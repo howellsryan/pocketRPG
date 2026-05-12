@@ -760,6 +760,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 bankRef.current = newBank
               }
               if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
+              setLootModal({
+                monster: defeatedMonsterData,
+                loot: granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity })),
+                slayerXpGained,
+                isBossKill: isDefeatedBoss,
+                raidId
+              })
             }).catch((err) => {
               addToast(`Raid claim failed: ${err?.message || 'server_error'}`, 'error')
             })
@@ -795,13 +802,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             time: Date.now()
           }])
           // Show loot modal instead of auto-restarting
-          setLootModal({
-            monster: defeatedMonsterData,
-            loot: killLoot,
-            slayerXpGained,
-            isBossKill: isDefeatedBoss,
-            raidId
-          })
+          if (!cloudAuthoritativeRaid) {
+            setLootModal({
+              monster: defeatedMonsterData,
+              loot: killLoot,
+              slayerXpGained,
+              isBossKill: isDefeatedBoss,
+              raidId
+            })
+          }
         }
       }
 
