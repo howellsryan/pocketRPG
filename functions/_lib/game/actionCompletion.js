@@ -51,6 +51,15 @@ function getDungeoneeringTokenBalance(saveObject) {
   return 0
 }
 
+
+function incrementSettingCounterMap(saveObject, key, sourceId) {
+  if (!sourceId || typeof sourceId !== 'string') return
+  if (!saveObject.settings || typeof saveObject.settings !== 'object') saveObject.settings = {}
+  const counts = (saveObject.settings[key] && typeof saveObject.settings[key] === 'object') ? saveObject.settings[key] : {}
+  const current = Math.max(0, Math.floor(Number(counts[sourceId]) || 0))
+  saveObject.settings[key] = { ...counts, [sourceId]: current + 1 }
+}
+
 function setDungeoneeringTokenBalance(saveObject, nextValue) {
   const normalized = Math.max(0, Math.floor(Number(nextValue) || 0))
   saveObject.dungeoneeringTokens = normalized
@@ -94,6 +103,9 @@ export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce
     if (cur + sPoints < 0) throw new GameApiError('INSUFFICIENT_SUPPLIES', 'Insufficient supplies', 400)
     saveObject.slayer.points = cur + sPoints
   }
+
+  if (sourceType === 'raids') incrementSettingCounterMap(saveObject, 'raidKillCounts', sourceId)
+  if (sourceType === 'monsters') incrementSettingCounterMap(saveObject, 'bossKillCounts', sourceId)
 
   const dTokens = Math.floor(Number(dungeoneeringTokens) || 0)
   if (dTokens !== 0) {

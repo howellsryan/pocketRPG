@@ -165,4 +165,24 @@ describe('action completion endpoint tamper guards', () => {
     expect(saved.bank.death_rune.quantity).toBe(253)
   })
 
+  it('persists raid KC into save settings for cloud-authoritative completions', async () => {
+    const handler = makeCompletionHandler('raids', {
+      requireAuth: async () => ({ identity: { id: 1 } }),
+      assertNotInActiveMatch: async () => null,
+      loadCharacterWithSave: async () => ({ saveObject: { inventory: [], settings: { raidKillCounts: { barrows_brothers: 4 } } }, saveRevision: 0 }),
+      writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
+      resolveRewards: () => [],
+    })
+    const req = new Request('https://example.com/api/actions/raid/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' },
+      body: JSON.stringify({ sourceId: 'barrows_brothers', actionNonce: 'n8' }),
+    })
+    const res = await handler({ request: req, env: {} as any })
+    const body = await res.json()
+    expect(res.status).toBe(200)
+    const saved = JSON.parse(body.save.save_data)
+    expect(saved.settings.raidKillCounts.barrows_brothers).toBe(5)
+  })
+
 })
