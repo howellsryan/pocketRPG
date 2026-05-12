@@ -92,4 +92,42 @@ describe('cloud sync save status events', () => {
     expect(calls).toContain('saving')
     expect(calls).toContain('saved')
   })
+
+  it('can emit a new pending state immediately after saved for follow-up saves', async () => {
+    putSaveMock.mockResolvedValue({ updatedAt: 100 })
+    const sync = await import('../src/cloud/sync.js')
+
+    sync.schedulePushSave({ player: { name: 'Hero' }, rev: 1 })
+    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.runAllTicks()
+
+    sync.schedulePushSave({ player: { name: 'Hero' }, rev: 2 })
+
+    const calls = (window.dispatchEvent as any).mock.calls.map((c: any[]) => c[0].detail.status)
+    const firstSavedIndex = calls.indexOf('saved')
+    const pendingAfterSavedIndex = calls.findIndex((status: string, idx: number) => status === 'pending' && idx > firstSavedIndex)
+
+    expect(firstSavedIndex).toBeGreaterThanOrEqual(0)
+    expect(pendingAfterSavedIndex).toBeGreaterThan(firstSavedIndex)
+  })
+
+  it('clears skip-hour save options after failed push so later saves are not rejected', async () => {
+    putSaveMock
+      .mockRejectedValueOnce({ status: 403, message: 'protected_state_delta_rejected' })
+      .mockResolvedValueOnce({ updatedAt: 250 })
+    const sync = await import('../src/cloud/sync.js')
+    const { CRITICAL_SAVE_REASONS } = await import('../src/cloud/criticalSavePolicy.js')
+
+    sync.requestCriticalPushSave(() => ({ player: { name: 'Hero' }, rev: 1 }), CRITICAL_SAVE_REASONS.SKIP_HOUR)
+    await vi.runOnlyPendingTimersAsync()
+    await vi.runAllTicks()
+
+    sync.schedulePushSave({ player: { name: 'Hero' }, rev: 2 })
+    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.runAllTicks()
+
+    expect(putSaveMock).toHaveBeenCalledTimes(2)
+    expect(putSaveMock.mock.calls[0][1]).toMatchObject({ creditsUsedIncrement: 1 })
+    expect(putSaveMock.mock.calls[1][1]).not.toHaveProperty('creditsUsedIncrement')
+  })
 })
