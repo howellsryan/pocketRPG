@@ -45,3 +45,15 @@ export function removeItemFromInventory(save, itemId, quantity) {
   if (next <= 0) inv.splice(idx, 1)
   else inv[idx].quantity = next
 }
+
+
+export function addItemToBank(save, itemId, quantity) {
+  const qty = Math.floor(Number(quantity) || 0)
+  if (qty < 1) throw new GameApiError('INVALID_QUANTITY', 'Invalid quantity', 400)
+  if (!save.bank || typeof save.bank !== 'object') save.bank = {}
+  const existing = save.bank[itemId]
+  const curQty = typeof existing === 'number'
+    ? Math.floor(existing)
+    : Math.floor(Number(existing?.quantity) || 0)
+  save.bank[itemId] = { itemId, quantity: curQty + qty }
+}
