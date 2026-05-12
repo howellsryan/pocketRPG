@@ -111,4 +111,58 @@ describe('action completion endpoint tamper guards', () => {
     const res = await handler({ request: req, env: {} as any })
     expect(res.status).toBe(403)
   })
+
+  it('accepts raid completion when inventory has free slots in sparse 28-slot payloads', async () => {
+    const sparseInventory = Array.from({ length: 28 }, (_, i) => (i < 19 ? { itemId: `occupied_${i}`, quantity: 1 } : null))
+    const handler = makeCompletionHandler('raids', {
+      requireAuth: async () => ({ identity: { id: 1 } }),
+      assertNotInActiveMatch: async () => null,
+      loadCharacterWithSave: async () => ({ saveObject: { inventory: sparseInventory }, saveRevision: 0 }),
+      writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
+      resolveRewards: () => [
+        { itemId: 'coins', quantity: 41030 },
+        { itemId: 'death_rune', quantity: 253 },
+        { itemId: 'blood_rune', quantity: 57 },
+        { itemId: 'soul_rune', quantity: 47 },
+        { itemId: 'ahrims_hood', quantity: 1 },
+        { itemId: 'dharoks_helm', quantity: 1 },
+        { itemId: 'guthans_helm', quantity: 1 },
+      ],
+    })
+    const req = new Request('https://example.com/api/actions/raid/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' },
+      body: JSON.stringify({ sourceId: 'barrows_brothers', actionNonce: 'n6' }),
+    })
+    const res = await handler({ request: req, env: {} as any })
+    expect(res.status).toBe(200)
+  })
+
+
+  it('banks overflow raid rewards instead of failing when inventory is full', async () => {
+    const fullInventory = Array.from({ length: 28 }, (_, i) => ({ itemId: `occupied_${i}`, quantity: 1 }))
+    const handler = makeCompletionHandler('raids', {
+      requireAuth: async () => ({ identity: { id: 1 } }),
+      assertNotInActiveMatch: async () => null,
+      loadCharacterWithSave: async () => ({ saveObject: { inventory: fullInventory, bank: {} }, saveRevision: 0 }),
+      writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
+      resolveRewards: () => [{ itemId: 'coins', quantity: 41030 }, { itemId: 'death_rune', quantity: 253 }],
+    })
+    const req = new Request('https://example.com/api/actions/raid/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' },
+      body: JSON.stringify({ sourceId: 'barrows_brothers', actionNonce: 'n7' }),
+    })
+    const res = await handler({ request: req, env: {} as any })
+    const body = await res.json()
+    expect(res.status).toBe(200)
+    expect(body.granted).toEqual([
+      { itemId: 'coins', quantity: 41030, destination: 'bank' },
+      { itemId: 'death_rune', quantity: 253, destination: 'bank' },
+    ])
+    const saved = JSON.parse(body.save.save_data)
+    expect(saved.bank.coins.quantity).toBe(41030)
+    expect(saved.bank.death_rune.quantity).toBe(253)
+  })
+
 })

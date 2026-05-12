@@ -1,6 +1,6 @@
 import { isValidEntry } from '../collectionLog.js'
 import { GameApiError } from './errors.js'
-import { addItemToInventory, removeItemFromInventory } from './inventory.js'
+import { addItemToInventory, addItemToBank, removeItemFromInventory } from './inventory.js'
 import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
 import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
 
@@ -35,6 +35,7 @@ function isValidRewardSourceItem(sourceType, sourceId, itemId) {
   return false
 }
 
+
 function assertNonce(saveObject, nonce) {
   if (!nonce || typeof nonce !== 'string') throw new GameApiError('INVALID_NONCE', 'Invalid action nonce', 400)
   if (!saveObject._serverActionNonces) saveObject._serverActionNonces = {}
@@ -64,6 +65,7 @@ export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce
     removeItemFromInventory(saveObject, c.itemId, c.quantity)
   }
 
+
   const granted = []
   for (const reward of rewards) {
     const itemId = typeof reward?.itemId === 'string' ? reward.itemId : null
@@ -72,8 +74,17 @@ export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce
     if (!isValidRewardSourceItem(sourceType, sourceId, itemId)) {
       throw new GameApiError('INVALID_REWARD_SOURCE', 'Reward item not valid for source', 403)
     }
-    addItemToInventory(saveObject, itemId, qty)
-    granted.push({ itemId, quantity: qty })
+    try {
+      addItemToInventory(saveObject, itemId, qty)
+      granted.push({ itemId, quantity: qty, destination: 'inventory' })
+    } catch (err) {
+      if (err?.code === 'INVENTORY_FULL') {
+        addItemToBank(saveObject, itemId, qty)
+        granted.push({ itemId, quantity: qty, destination: 'bank' })
+      } else {
+        throw err
+      }
+    }
   }
 
   const sPoints = Math.floor(Number(slayerPoints) || 0)

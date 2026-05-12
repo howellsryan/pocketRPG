@@ -733,18 +733,17 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
           const raidId = state.raid?.raidId || null
           const cloudAuthoritativeRaid = Boolean(raidId && getToken() && getCharacterId())
-          if (killLoot.length > 0) {
-            if (cloudAuthoritativeRaid) {
-              void api.completeRaid(raidId, {
-                actionNonce: `raid:${raidId}:${Date.now()}`,
-              }).then(async (res) => {
-                if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
-              }).catch((err) => {
-                addToast(`Raid claim failed: ${err?.message || 'server_error'}`, 'error')
-              })
-            } else {
-              const newInv = [...inventoryRef.current]
-              for (const drop of killLoot) {
+          if (cloudAuthoritativeRaid) {
+            void api.completeRaid(raidId, {
+              actionNonce: `raid:${raidId}:${Date.now()}`,
+            }).then(async (res) => {
+              if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
+            }).catch((err) => {
+              addToast(`Raid claim failed: ${err?.message || 'server_error'}`, 'error')
+            })
+          } else if (killLoot.length > 0) {
+            const newInv = [...inventoryRef.current]
+            for (const drop of killLoot) {
                 const item = itemsData[drop.itemId]
                 if (drop.noted) {
                   const existingIdx = newInv.findIndex(s => s && s.itemId === drop.itemId && s.noted)
@@ -759,7 +758,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               }
               updateInventory(newInv)
             }
-          }
 
           if (hasCriticalDrop(killLoot, defeatedMonsterData, itemsData)) {
             requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.RARE_DROP)
