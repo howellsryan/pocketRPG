@@ -34,12 +34,15 @@ export function makeCompletionHandler(sourceType, deps = {}) {
       const validIds = VALID_SOURCE_IDS[sourceType]
       if (validIds && !validIds.has(sourceId)) return json({ error: 'Invalid sourceId', code: 'INVALID_SOURCE_ID' }, 403)
 
+      const resolvedRewards = typeof deps.resolveRewards === 'function'
+        ? deps.resolveRewards({ sourceType, sourceId, body })
+        : (Array.isArray(body?.rewards) ? body.rewards : [])
       const { saveObject, saveRevision } = await (deps.loadCharacterWithSave || loadCharacterWithSave)(env, characterId, auth.identity.id)
       const settled = settleActionCompletion(saveObject, {
         sourceType,
         sourceId,
         nonce: body?.actionNonce,
-        rewards: Array.isArray(body?.rewards) ? body.rewards : [],
+        rewards: resolvedRewards,
         consumptions: Array.isArray(body?.consumptions) ? body.consumptions : [],
         slayerPoints: body?.slayerPoints,
         dungeoneeringTokens: body?.dungeoneeringTokens,

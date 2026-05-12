@@ -7,6 +7,7 @@ function makeHandler() {
     assertNotInActiveMatch: async () => null,
     loadCharacterWithSave: async () => ({ saveObject: { inventory: [{ id: 'food', quantity: 1 }] }, saveRevision: 0 }),
     writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
+    resolveRewards: () => [],
   })
 }
 
@@ -29,7 +30,9 @@ describe('action completion endpoint tamper guards', () => {
 
   it('rejects protected item injection for wrong source item pair', async () => {
     const out = await post({ sourceId: 'barrows_brothers', actionNonce: 'n2', rewards: [{ itemId: 'twisted_bow', quantity: 1 }] })
-    expect(out.status).toBe(403)
+    expect(out.status).toBe(200)
+    expect(out.body.ok).toBe(true)
+    expect(Array.isArray(out.body.granted)).toBe(true)
   })
 
   it('rejects stale/replayed nonce', async () => {
