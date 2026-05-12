@@ -446,7 +446,6 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
               if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
               const rewardNames = rewards.map(r => `${ITEM_NAMES[r.itemId] || r.itemId} ×${r.quantity}`).join(', ')
               addToast(`${task.icon} Rewards: ${rewardNames}`, 'success')
-              requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.CLUE_REWARD)
             }).catch((err) => {
               addToast(`Clue claim failed: ${err?.message || 'server_error'}`, 'error')
             })
@@ -484,7 +483,6 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
                 if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
                 const rewardNames = task.rewardItems.map(id => ITEM_NAMES[id] || id).join(', ')
                 addToast(`${task.icon} Received: ${rewardNames}!`, 'success')
-                requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.MINIGAME_COMPLETE)
               }).catch((err) => {
                 addToast(`Minigame claim failed: ${err?.message || 'server_error'}`, 'error')
               })
