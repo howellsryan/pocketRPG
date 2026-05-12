@@ -1,4 +1,8 @@
 export const CRITICAL_SAVE_REASONS = Object.freeze({
+  MONSTER_KILL: 'monster_kill',
+  CLUE_REWARD: 'clue_reward',
+  MINIGAME_COMPLETE: 'minigame_complete',
+  ACTIVITY_HEARTBEAT: 'activity_heartbeat',
   LEVEL_UP: 'level_up',
   BOSS_KILL: 'boss_kill',
   RAID_COMPLETE: 'raid_complete',

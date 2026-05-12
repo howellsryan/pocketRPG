@@ -683,6 +683,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           const killLoot = Array.isArray(ev.loot) ? ev.loot : []
           let slayerXpGained = 0
           setKillCount(k => k + 1)
+          requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.MONSTER_KILL)
 
           // Boss kill count tracking
           if (isDefeatedBoss && defeatedMonsterId) {

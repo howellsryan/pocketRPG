@@ -22,6 +22,8 @@ const normalisePointCurrency = (value) => {
   const n = Math.floor(Number(value) || 0)
   return n > 0 ? n : 0
 }
+const CLOUD_ACTIVITY_HEARTBEAT_MS = 30_000
+const HEARTBEAT_ACTIVE_TASK_TYPES = new Set(['skill', 'gather', 'agility', 'thieving', 'hunter', 'minigame'])
 
 const GameContext = createContext(null)
 
@@ -822,6 +824,14 @@ export function GameProvider({ children }) {
       requestCriticalPushSave(() => getSnapshot(), reason)
     }
   }, [loaded, stats, bossKillCounts, raidKillCounts, completedQuests, unlockedFeatures, slayerPoints, getSnapshot])
+
+  useEffect(() => {
+    if (!loaded || !activeTask || !HEARTBEAT_ACTIVE_TASK_TYPES.has(activeTask.type)) return
+    const timer = setInterval(() => {
+      requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.ACTIVITY_HEARTBEAT)
+    }, CLOUD_ACTIVITY_HEARTBEAT_MS)
+    return () => clearInterval(timer)
+  }, [loaded, activeTask, getSnapshot])
 
   const value = {
     loaded, player, stats, inventory, equipment, bank, currentHP, toasts, isSaving,
