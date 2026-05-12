@@ -95,6 +95,7 @@ async function flushNow() {
       schedulePush(snap, ACTIVE_MATCH_RETRY_MS)
       return
     }
+    pendingSaveOptions = {}
     emitCloudSaveStatus('failed', { error: err?.message || 'cloud_save_failed' })
     console.warn('[PocketRPG] Cloud push failed:', err.message)
   } finally {
