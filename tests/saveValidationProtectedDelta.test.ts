@@ -25,4 +25,20 @@ describe('detectProtectedDelta', () => {
 
     expect(detectProtectedDelta(previousSave, nextSave, itemsData)).toEqual([])
   })
+
+  it('does not flag protected deltas when moving protected items from bank to inventory', () => {
+    const previousSave = { inventory: [], bank: { archers_ring: { quantity: 1 } } }
+    const nextSave = { inventory: [{ itemId: 'archers_ring', quantity: 1 }], bank: { archers_ring: { quantity: 0 } } }
+    const itemsData = { archers_ring: { id: 'archers_ring', isBossUnique: true } }
+
+    expect(detectProtectedDelta(previousSave, nextSave, itemsData)).toEqual([])
+  })
+
+  it('flags net protected increases across inventory+bank totals', () => {
+    const previousSave = { inventory: [], bank: { archers_ring: { quantity: 1 } } }
+    const nextSave = { inventory: [{ itemId: 'archers_ring', quantity: 2 }], bank: { archers_ring: { quantity: 0 } } }
+    const itemsData = { archers_ring: { id: 'archers_ring', isBossUnique: true } }
+
+    expect(detectProtectedDelta(previousSave, nextSave, itemsData)).toEqual(['archers_ring'])
+  })
 })
