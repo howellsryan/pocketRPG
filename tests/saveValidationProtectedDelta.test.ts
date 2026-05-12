@@ -41,4 +41,15 @@ describe('detectProtectedDelta', () => {
 
     expect(detectProtectedDelta(previousSave, nextSave, itemsData)).toEqual([])
   })
+
+  it('does not flag protected monster-drop items like clue scrolls and coins', () => {
+    const previousSave = { inventory: [] }
+    const nextSave = { inventory: [{ itemId: 'coins', quantity: 1000 }, { itemId: 'clue_scroll_master', quantity: 1 }] }
+    const itemsData = {
+      coins: { id: 'coins', shopValue: 1_000_000_000 },
+      clue_scroll_master: { id: 'clue_scroll_master', isClueReward: true },
+    }
+
+    expect(detectProtectedDelta(previousSave, nextSave, itemsData)).toEqual([])
+  })
 })

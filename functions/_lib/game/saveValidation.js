@@ -1,4 +1,14 @@
 import { isProtectedItem } from './rewards.js'
+import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
+
+const MONSTER_DROP_ITEMS = new Set(
+  Object.values(monstersData || {}).flatMap(monster => (monster?.drops || []).map(drop => drop?.itemId)).filter(Boolean)
+)
+
+function isProtectedDeltaExempt(itemId) {
+  if (!itemId) return true
+  return MONSTER_DROP_ITEMS.has(itemId)
+}
 
 function addQuantity(map, itemId, quantity) {
   if (!itemId) return
@@ -34,7 +44,7 @@ export function detectProtectedDelta(previousSave = {}, nextSave = {}, itemsData
   const violations = []
   for (const [itemId, nextQty] of next.entries()) {
     const prevQty = prev.get(itemId) || 0
-    if (nextQty > prevQty && isProtectedItem(itemsData[itemId])) violations.push(itemId)
+    if (nextQty > prevQty && isProtectedItem(itemsData[itemId]) && !isProtectedDeltaExempt(itemId)) violations.push(itemId)
   }
   return violations
 }
