@@ -737,6 +737,28 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             void api.completeRaid(raidId, {
               actionNonce: `raid:${raidId}:${Date.now()}`,
             }).then(async (res) => {
+              const granted = Array.isArray(res?.granted) ? res.granted : []
+              if (granted.length > 0) {
+                const newInv = [...inventoryRef.current]
+                const newBank = { ...(bankRef.current || {}) }
+                for (const reward of granted) {
+                  const itemId = reward?.itemId
+                  const quantity = Math.floor(Number(reward?.quantity) || 0)
+                  if (!itemId || quantity < 1) continue
+                  const item = itemsData[itemId]
+                  if (reward?.destination === 'bank') {
+                    const existing = newBank[itemId]
+                    const existingQty = Math.floor(Number(existing?.quantity ?? existing) || 0)
+                    newBank[itemId] = { itemId, quantity: existingQty + quantity }
+                  } else {
+                    addItem(newInv, itemId, quantity, item?.stackable || false)
+                  }
+                }
+                updateInventory(newInv)
+                inventoryRef.current = newInv
+                updateBank(newBank)
+                bankRef.current = newBank
+              }
               if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
             }).catch((err) => {
               addToast(`Raid claim failed: ${err?.message || 'server_error'}`, 'error')
