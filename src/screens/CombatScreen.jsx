@@ -745,6 +745,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           const cloudAuthoritativeRaid = Boolean(raidId && getToken() && getCharacterId())
           const cloudAuthoritativeMonster = Boolean(!raidId && defeatedMonsterId && getToken() && getCharacterId())
           if (cloudAuthoritativeRaid) {
+            setLootModal({
+              monster: defeatedMonsterData,
+              loot: [],
+              slayerXpGained,
+              isBossKill: isDefeatedBoss,
+              raidId,
+              loading: true
+            })
             void api.completeRaid(raidId, {
               actionNonce: `raid:${raidId}:${Date.now()}`,
             }).then(async (res) => {
@@ -781,12 +789,22 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 loot: granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity })),
                 slayerXpGained,
                 isBossKill: isDefeatedBoss,
-                raidId
+                raidId,
+                loading: false
               })
             }).catch((err) => {
+              setLootModal(null)
               addToast(`Raid claim failed: ${err?.message || 'server_error'}`, 'error')
             })
           } else if (cloudAuthoritativeMonster) {
+            setLootModal({
+              monster: defeatedMonsterData,
+              loot: [],
+              slayerXpGained,
+              isBossKill: isDefeatedBoss,
+              raidId,
+              loading: true
+            })
             void api.completeMonster(defeatedMonsterId, {
               actionNonce: `monster:${defeatedMonsterId}:${Date.now()}`,
             }).then(async (res) => {
@@ -823,9 +841,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 loot: granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity })),
                 slayerXpGained,
                 isBossKill: isDefeatedBoss,
-                raidId
+                raidId,
+                loading: false
               })
             }).catch((err) => {
+              setLootModal(null)
               addToast(`Monster claim failed: ${err?.message || 'server_error'}`, 'error')
             })
           } else if (killLoot.length > 0) {
@@ -868,7 +888,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               loot: killLoot,
               slayerXpGained,
               isBossKill: isDefeatedBoss,
-              raidId
+              raidId,
+              loading: false
             })
           }
         }
@@ -2489,7 +2510,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             </div>
 
             {/* Loot items */}
-            {lootModal.loot && lootModal.loot.length > 0 ? (
+            {lootModal.loading ? (
+              <div class="text-center py-6">
+                <div class="w-8 h-8 mx-auto border-2 border-[var(--color-gold)] border-t-transparent rounded-full animate-spin" />
+                <div class="mt-3 text-sm text-[var(--color-parchment)] opacity-70">Waiting for server loot…</div>
+              </div>
+            ) : lootModal.loot && lootModal.loot.length > 0 ? (
               <div class="space-y-2 max-h-48 overflow-y-auto">
                 {lootModal.loot.map((drop, idx) => {
                   const item = itemsData[drop.itemId]
@@ -2518,6 +2544,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             )}
 
             {/* Action buttons */}
+            {!lootModal.loading && (
             <div class="grid grid-cols-2 gap-3 pt-2">
               <button
                 onClick={() => {
@@ -2546,6 +2573,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 {lootModal.raidId ? 'Raid Again' : 'Fight Again'}
               </button>
             </div>
+            )}
           </div>
         </Modal>
       )}
