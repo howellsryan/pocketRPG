@@ -89,8 +89,9 @@ function getMinigameRewardEntries(task) {
 }
 const VALID_SERVER_MINIGAME_IDS = new Set((minigamesData?.tasks || []).map((task) => task?.id).filter(Boolean))
 
-function grantMinigameTaskRewards(task, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame }) {
+function grantMinigameTaskRewards(task, { updateBankDirect, unlockMinigameItem, completeMinigameTask, recordCollectionLogDropForMinigame }) {
   const rewards = getMinigameRewardEntries(task)
+  completeMinigameTask(task?.id)
   if (rewards.length === 0) return
   const bankUpdates = {}
   for (const reward of rewards) {
@@ -179,7 +180,7 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
 
 function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
-    unlockMinigameItem, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup } = useGame()
+    unlockMinigameItem, completeMinigameTask: markMinigameTaskCompleted, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [gameReady, setGameReady] = useState(false)
@@ -212,6 +213,11 @@ function GameApp() {
   const snapshotCounter = useRef(99) // Start at 99 so first snapshot fires after 1 tick
   const idleHeartbeatCounter = useRef(49) // 50 ticks = ~30s — first heartbeat ~600ms after load
   const hiddenAtPerfRef = useRef(null) // performance.now() at hide — monotonic, immune to clock changes
+  const getSnapshotRef = useRef(() => getSnapshot())
+
+  useEffect(() => {
+    getSnapshotRef.current = () => getSnapshot()
+  }, [getSnapshot])
 
   const minigameCompletingRef = useRef(new Set())
 
@@ -229,9 +235,9 @@ function GameApp() {
         setActiveTask,
         activeTaskRef,
         removeLocalActiveTask: () => { try { localStorage.removeItem('pocketrpg_activeTask') } catch {} },
-        grantMinigameTaskRewards: (t) => grantMinigameTaskRewards(t, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame }),
+        grantMinigameTaskRewards: (t) => grantMinigameTaskRewards(t, { updateBankDirect, unlockMinigameItem, completeMinigameTask: markMinigameTaskCompleted, recordCollectionLogDropForMinigame }),
         requestCriticalPushSave,
-        getSnapshot,
+        getSnapshot: () => getSnapshotRef.current(),
         addToast,
         isInPvpMatch,
         inFlightSet: minigameCompletingRef.current,

@@ -31,7 +31,7 @@ const COMPLEXITY_ORDER = {
 
 export default function QuestsScreen() {
   const {
-    stats, completedQuests, activeTask, setActiveTask, inventory, bank, equipment, unlockedMinigameItems,
+    stats, completedQuests, activeTask, setActiveTask, inventory, bank, equipment, unlockedMinigameItems, completedMinigameTasks,
     addToast, itemsData, questQueue, addQuestToQueue, removeFromQuestQueue, updateQuestQueue,
   } = useGame()
 
@@ -415,7 +415,7 @@ export default function QuestsScreen() {
                   <SectionHeader size="sm">{mg.icon} {mg.label}</SectionHeader>
                   {tasks.map(task => {
                     const missingReq = task.requiresItem && !hasItemAnywhere(task.requiresItem)
-                    const alreadyUnlocked = unlockedMinigameItems.has(task.product)
+                    const alreadyUnlocked = completedMinigameTasks.has(task.id) || unlockedMinigameItems.has(task.product)
                     const enabled = !missingReq && !alreadyUnlocked
                     const rowClass = enabled
                       ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
