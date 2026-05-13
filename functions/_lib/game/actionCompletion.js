@@ -1,9 +1,10 @@
 import { isValidEntry } from '../collectionLog.js'
 import { GameApiError } from './errors.js'
-import { addItemToInventory, addItemToBank, removeItemFromInventory } from './inventory.js'
+import { addItemToInventory, addItemToBank, removeItemFromInventory, getInventory } from './inventory.js'
 import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
 import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
 import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
+import itemsData from '../../../src/data/items.json' assert { type: 'json' }
 
 const VALID_DUNGEONEERING_REWARD_ITEMS = new Set(
   ((skillsData?.dungeoneering?.actions) || [])
@@ -80,6 +81,10 @@ function setDungeoneeringTokenBalance(saveObject, nextValue) {
   saveObject.settings.dungeoneeringTokens = normalized
 }
 
+function isStackableItem(itemId) {
+  return itemsData?.[itemId]?.stackable === true
+}
+
 export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce, rewards = [], consumptions = [], slayerPoints = 0, dungeoneeringTokens = 0 }) {
   assertNonce(saveObject, nonce)
 
@@ -89,6 +94,7 @@ export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce
 
 
   const granted = []
+  const inv = getInventory(saveObject)
   for (const reward of rewards) {
     const itemId = typeof reward?.itemId === 'string' ? reward.itemId : null
     const qty = Math.floor(Number(reward?.quantity) || 0)
@@ -96,16 +102,29 @@ export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce
     if (!isValidRewardSourceItem(sourceType, sourceId, itemId)) {
       throw new GameApiError('INVALID_REWARD_SOURCE', 'Reward item not valid for source', 403)
     }
-    try {
-      addItemToInventory(saveObject, itemId, qty)
-      granted.push({ itemId, quantity: qty, destination: 'inventory' })
-    } catch (err) {
-      if (err?.code === 'INVENTORY_FULL') {
+    const stackable = isStackableItem(itemId)
+    if (stackable) {
+      const hasExistingStack = inv.some(s => s?.itemId === itemId)
+      if (hasExistingStack || inv.length < 28) {
+        addItemToInventory(saveObject, itemId, qty)
+        granted.push({ itemId, quantity: qty, destination: 'inventory' })
+      } else {
         addItemToBank(saveObject, itemId, qty)
         granted.push({ itemId, quantity: qty, destination: 'bank' })
-      } else {
-        throw err
       }
+      continue
+    }
+
+    const slotsLeft = Math.max(0, 28 - inv.length)
+    const toInventory = Math.min(qty, slotsLeft)
+    const toBank = qty - toInventory
+    for (let i = 0; i < toInventory; i++) {
+      inv.push({ itemId, quantity: 1 })
+    }
+    if (toInventory > 0) granted.push({ itemId, quantity: toInventory, destination: 'inventory' })
+    if (toBank > 0) {
+      addItemToBank(saveObject, itemId, toBank)
+      granted.push({ itemId, quantity: toBank, destination: 'bank' })
     }
   }
 
