@@ -11,6 +11,8 @@ import { hasRequiredRunes, getRunesToConsume } from '../engine/runes.js'
 import { onTick } from '../engine/tick.js'
 import { formatNumber } from '../utils/helpers.js'
 import { calculateDungeoneeringTokensForAction, getDungeoneeringRewardCost, canAffordDungeoneeringReward } from '../engine/dungeoneeringTokens.js'
+import { api, getToken, getCharacterId } from '../cloud/api.js'
+import { applyCloudSave } from '../cloud/sync.js'
 import skillsData from '../data/skills.json'
 import itemsData from '../data/items.json'
 import AgilityScreen from './AgilityScreen.jsx'
@@ -54,7 +56,7 @@ function calculateRemainingActions(action, inventory, bank) {
 }
 
 export default function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
-  const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens } = useGame()
+  const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, loadGame } = useGame()
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
   const [selectedAction, setSelectedAction] = useState(null)
   const [skilling, setSkilling] = useState(null)
@@ -334,7 +336,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     })
   }, [activeTask, selectedSkill, skilling])
 
-  const startSkilling = (action) => {
+  const startSkilling = async (action) => {
     if (selectedSkill === 'dungeoneering' && action.category === 'reward') {
       const currentLevel = getLevelFromXP(stats.dungeoneering?.xp || 0)
       if (currentLevel < (action.level || 1)) return addToast(`Requires Dungeoneering level ${action.level}.`, 'error')
@@ -342,6 +344,46 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
       if (cost <= 0) return addToast('Invalid token cost for this reward.', 'error')
       const productItem = itemsData[action.product]
       if (!productItem) return addToast('This reward item is unavailable.', 'error')
+      if (getToken() && getCharacterId()) {
+        try {
+          const res = await api.completeDungeoneering('dungeoneering', { actionNonce: `dng:${action.id}:${Date.now()}`, rewards: [{ itemId: action.product, quantity: action.productQty || 1 }], dungeoneeringTokens: -cost })
+          if (res?.save?.save_data) {
+            const cloudSave = JSON.parse(res.save.save_data)
+            await applyCloudSave(cloudSave, res.save.updatedAt)
+            await loadGame()
+
+            // Keep token display in sync immediately after purchase.
+            const serverTokens = Number(cloudSave?.settings?.dungeoneeringTokens ?? cloudSave?.dungeoneeringTokens)
+            if (Number.isFinite(serverTokens)) {
+              const delta = Math.floor(serverTokens) - (Number(dungeoneeringTokens) || 0)
+              if (delta > 0) awardDungeoneeringTokens(delta)
+              else if (delta < 0) trySpendDungeoneeringTokens(Math.abs(delta))
+            }
+
+            // Keep inventory UI in sync immediately after server grant.
+            if (Array.isArray(cloudSave?.inventory)) {
+              const compact = cloudSave.inventory
+                .map((slot) => {
+                  if (!slot || typeof slot !== 'object') return null
+                  const itemId = slot.itemId || slot.id
+                  const quantity = Math.floor(Number(slot.quantity) || 0)
+                  if (!itemId || quantity < 1) return null
+                  return { ...slot, itemId, quantity }
+                })
+                .filter(Boolean)
+              const nextInv = Array(28).fill(null)
+              for (let i = 0; i < compact.length && i < 28; i++) nextInv[i] = compact[i]
+              updateInventory(nextInv)
+            }
+          }
+          recordCollectionLogDrop({ itemId: action.product, sourceType: 'skilling', sourceId: 'dungeoneering' })
+          addToast(`Purchased ${productItem.name} for ${formatNumber(cost)} tokens.`, 'success')
+          return
+        } catch (e) {
+          addToast(`Reward claim failed: ${e?.message || 'server_error'}`, 'error')
+          return
+        }
+      }
       if (!trySpendDungeoneeringTokens(cost)) return addToast(`Need ${formatNumber(cost)} Dungeoneering tokens.`, 'error')
       updateBankDirect({ [action.product]: action.productQty || 1 })
       recordCollectionLogDrop({ itemId: action.product, sourceType: 'skilling', sourceId: 'dungeoneering' })

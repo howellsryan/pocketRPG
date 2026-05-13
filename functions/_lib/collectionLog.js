@@ -14,6 +14,11 @@ const VALID = (() => {
   return set
 })()
 
+const SOURCE_TYPE_ALIASES = {
+  dungeoneering: 'skilling',
+  slayer: 'skilling',
+}
+
 // Top-level total — used by the client to render the "0/N collected" header
 // when the client-side bundle disagrees with the server (rare, but possible
 // if a deploy is mid-flight).
@@ -31,5 +36,6 @@ export const TOTAL_ENTRIES = (() => {
 export function isValidEntry(sourceType, sourceId, itemId) {
   if (typeof sourceType !== 'string' || typeof sourceId !== 'string' || typeof itemId !== 'string') return false
   if (!sourceType || !sourceId || !itemId) return false
-  return VALID.has(`${sourceType}:${sourceId}:${itemId}`)
+  const normalizedSourceType = SOURCE_TYPE_ALIASES[sourceType] || sourceType
+  return VALID.has(`${normalizedSourceType}:${sourceId}:${itemId}`)
 }

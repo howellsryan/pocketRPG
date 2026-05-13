@@ -9,12 +9,20 @@ const CHARACTER_NAME_KEY = 'pocketrpg_cloud_character_name'
 // wipe before loading, so characters never bleed into each other.
 const LOCAL_CHARACTER_KEY = 'pocketrpg_local_character_id'
 const ACTIVE_MATCH_EVENT = 'pocketrpg:pvp-active-match'
+export const SAVE_REVISION_EVENT = 'pocketrpg:cloud-save-revision'
 
 function emitActiveMatchConflict(matchId = null) {
   if (typeof window === 'undefined') return
   const parsed = Number(matchId)
   const safeMatchId = Number.isFinite(parsed) && parsed > 0 ? parsed : null
   window.dispatchEvent(new CustomEvent(ACTIVE_MATCH_EVENT, { detail: { matchId: safeMatchId } }))
+}
+
+function emitSaveRevision(revision) {
+  if (typeof window === 'undefined') return
+  const parsed = Number(revision)
+  if (!Number.isFinite(parsed) || parsed < 0) return
+  window.dispatchEvent(new CustomEvent(SAVE_REVISION_EVENT, { detail: { saveRevision: parsed } }))
 }
 
 export function getToken() {
@@ -114,6 +122,10 @@ async function request(path, options = {}) {
     err.body = body
     throw err
   }
+  const responseSaveRevision = Number.isFinite(body?.save_revision)
+    ? body.save_revision
+    : (Number.isFinite(body?.save?.save_revision) ? body.save.save_revision : null)
+  if (responseSaveRevision != null) emitSaveRevision(responseSaveRevision)
   return body
 }
 
@@ -124,7 +136,7 @@ export const api = {
     method: 'POST',
     body: JSON.stringify({ username, is_ironman: isIronman, is_one_life: isOneLife }),
   }),
-  validatePurchase: (itemId, quantity = 1, unlockedMinigameItems = []) => request('/api/purchase', {
+  purchaseItem: (itemId, quantity = 1, unlockedMinigameItems = []) => request('/api/purchase', {
     method: 'POST',
     body: JSON.stringify({ item_id: itemId, quantity, unlocked_minigame_items: unlockedMinigameItems }),
   }),
@@ -138,6 +150,7 @@ export const api = {
     body: JSON.stringify({
       save_data,
       credits_used_increment: options?.creditsUsedIncrement === 1 ? 1 : 0,
+      save_revision: Number.isFinite(options?.saveRevision) ? options.saveRevision : undefined,
     }),
   }),
   getCollectionLog: () => request('/api/collection-log'),
@@ -152,6 +165,14 @@ export const api = {
   }),
   deleteSave: () => request('/api/save', { method: 'DELETE' }),
   deleteIdle: () => request('/api/idle', { method: 'DELETE' }),
+
+  completeRaid: (sourceId, payload = {}) => request('/api/actions/raid/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
+  completeClue: (sourceId, payload = {}) => request('/api/actions/clue/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
+  completeMinigame: (sourceId, payload = {}) => request('/api/actions/minigame/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
+  completeSlayer: (sourceId, payload = {}) => request('/api/actions/slayer/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
+  completeDungeoneering: (sourceId, payload = {}) => request('/api/actions/dungeoneering/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
+  completeMonster: (sourceId, payload = {}) => request('/api/actions/monster/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
+
 }
 
 // Fire-and-forget idle state write via navigator.sendBeacon. Survives tab

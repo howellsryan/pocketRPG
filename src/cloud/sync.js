@@ -1,6 +1,6 @@
 // Cloud-save push/pull. Pushes are debounced to once per 60s per character.
 
-import { api, getToken, getCharacterId, setLocalCharacterId } from './api.js'
+import { api, getToken, getCharacterId, setLocalCharacterId, SAVE_REVISION_EVENT } from './api.js'
 import { buildSavePayloadFromSnapshot, applySavePayload } from '../db/saveload.js'
 import { withTimeout } from '../utils/helpers.js'
 import { CRITICAL_SAVE_COALESCE_MS, CRITICAL_SAVE_REASONS, normaliseCriticalSaveReason } from './criticalSavePolicy.js'
@@ -17,6 +17,7 @@ const ACTIVE_MATCH_RETRY_MS = 5_000
 export const CLOUD_SAVE_STATUS_EVENT = 'pocketrpg:cloud-save-status'
 
 let lastPushedAt = 0
+let lastSaveRevision = 0
 let pendingTimer = null
 let pendingSnapshot = null
 let pendingSaveOptions = {}
@@ -24,6 +25,16 @@ let inFlight = false
 let criticalTimer = null
 let pendingCriticalSnapshotSource = null
 let pendingCriticalReasons = new Set()
+let hasUnsyncedChanges = false
+
+if (typeof window !== 'undefined') {
+  window.addEventListener(SAVE_REVISION_EVENT, (event) => {
+    const revision = Number(event?.detail?.saveRevision)
+    if (Number.isFinite(revision) && revision >= 0) {
+      lastSaveRevision = revision
+    }
+  })
+}
 
 function emitCloudSaveStatus(status, detail = {}) {
   if (typeof window === 'undefined') return
@@ -33,6 +44,12 @@ function emitCloudSaveStatus(status, detail = {}) {
       ...detail,
     },
   }))
+}
+
+function markUnsynced() {
+  hasUnsyncedChanges = true
+  emitCloudSaveStatus('pending')
+  emitCloudSaveStatus('out_of_sync')
 }
 
 function emitSaveSyncActiveMatchConflict(matchId) {
@@ -68,9 +85,11 @@ async function flushNow() {
   try {
     const data = buildSavePayloadFromSnapshot(snap)
     const json = JSON.stringify(data)
-    const res = await api.putSave(json, pendingSaveOptions)
+    const res = await api.putSave(json, { ...pendingSaveOptions, saveRevision: lastSaveRevision })
     pendingSaveOptions = {}
     if (res?.updatedAt) lastPushedAt = res.updatedAt
+    if (Number.isFinite(res?.save_revision)) lastSaveRevision = res.save_revision
+    hasUnsyncedChanges = false
     emitCloudSaveStatus('saved', { updatedAt: res?.updatedAt || null })
     console.log('[PocketRPG] Cloud save pushed, size:', json.length)
   } catch (err) {
@@ -81,10 +100,11 @@ async function flushNow() {
     if (err?.status === 409 && (err?.body?.error === 'character_in_active_match' || err?.message === 'character_in_active_match')) {
       emitSaveSyncActiveMatchConflict(err?.body?.match_id)
       pendingSnapshot = snap
-      emitCloudSaveStatus('pending')
+      markUnsynced()
       schedulePush(snap, ACTIVE_MATCH_RETRY_MS)
       return
     }
+    pendingSaveOptions = {}
     emitCloudSaveStatus('failed', { error: err?.message || 'cloud_save_failed' })
     console.warn('[PocketRPG] Cloud push failed:', err.message)
   } finally {
@@ -94,7 +114,7 @@ async function flushNow() {
 
 function schedulePush(snapshot, delay = PUSH_DEBOUNCE_MS) {
   pendingSnapshot = snapshot
-  emitCloudSaveStatus('pending')
+  markUnsynced()
   if (pendingTimer) return
   pendingTimer = setTimeout(flushNow, delay)
 }
@@ -129,7 +149,7 @@ export function requestCriticalPushSave(snapshotOrFactory, reason = 'critical') 
   if (reason === CRITICAL_SAVE_REASONS.SKIP_HOUR) {
     pendingSaveOptions.creditsUsedIncrement = 1
   }
-  emitCloudSaveStatus('pending')
+  markUnsynced()
 
   // Critical milestones should not wait behind the normal 60s autosave timer.
   if (pendingTimer) {
@@ -165,7 +185,8 @@ export async function pullSave() {
   if (!canSync()) return { applied: false }
   const res = await withTimeout(api.getSave(), CLOUD_READ_TIMEOUT_MS, null)
   if (!res || !res.save) return { applied: false }
-  const { save_data, updatedAt } = res.save
+  const { save_data, updatedAt, save_revision } = res.save
+  if (Number.isFinite(save_revision)) lastSaveRevision = save_revision
   return { applied: false, payload: JSON.parse(save_data), updatedAt }
 }
 
@@ -179,7 +200,8 @@ export async function checkCloudNewer() {
   if (!canSync()) return null
   const res = await withTimeout(api.getSave(), CLOUD_READ_TIMEOUT_MS, null)
   if (!res || !res.save) return null
-  const { save_data, updatedAt } = res.save
+  const { save_data, updatedAt, save_revision } = res.save
+  if (Number.isFinite(save_revision)) lastSaveRevision = save_revision
   if (updatedAt <= lastPushedAt + FRESHNESS_GRACE_MS) return null
   return { payload: JSON.parse(save_data), updatedAt }
 }
@@ -189,6 +211,7 @@ export async function checkCloudNewer() {
 export async function applyCloudSave(payload, updatedAt) {
   await applySavePayload(payload, { restoreLocalIdleMirrors: false })
   if (updatedAt) lastPushedAt = updatedAt
+  if (Number.isFinite(updatedAt) && Number.isFinite(lastSaveRevision) === false) lastSaveRevision = 0
   // IDB now holds this character's data — stamp ownership so the next boot
   // knows which character these rows belong to.
   const charId = getCharacterId()
@@ -198,7 +221,9 @@ export async function applyCloudSave(payload, updatedAt) {
 // Reset cached state — call on logout / character switch.
 export function resetSyncState() {
   lastPushedAt = 0
+  lastSaveRevision = 0
   pendingSnapshot = null
+  hasUnsyncedChanges = false
   pendingSaveOptions = {}
   pendingCriticalSnapshotSource = null
   pendingCriticalReasons.clear()

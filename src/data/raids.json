@@ -2,7 +2,7 @@
   "chambers_of_xeric": {
     "id": "chambers_of_xeric",
     "name": "Vaults of Xyren",
-    "icon": "🏛️",
+    "icon": "\ud83c\udfdb\ufe0f",
     "description": "Delve into Xeric's mountain stronghold. Defeat Tekton, Vespula, the Muttadile and Great Olm to claim your reward.",
     "bosses": [
       "tekton",
@@ -62,7 +62,7 @@
         }
       ],
       "unique": {
-        "chance": 0.075,
+        "chance": 0.1,
         "items": [
           {
             "itemId": "twisted_buckler",
@@ -115,7 +115,7 @@
   "theatre_of_blood": {
     "id": "theatre_of_blood",
     "name": "Crimson Night Theatre",
-    "icon": "🩸",
+    "icon": "\ud83e\ude78",
     "description": "Fight through six deadly bosses in Verzik's theatre. Defeat them all to claim your reward.",
     "bosses": [
       "maiden_of_sugadinti",
@@ -177,11 +177,11 @@
         }
       ],
       "unique": {
-        "chance": 0.12,
+        "chance": 0.15,
         "items": [
           {
             "itemId": "avernic_defender",
-            "weight": 8
+            "weight": 5
           },
           {
             "itemId": "ghrazi_rapier",
@@ -193,15 +193,15 @@
           },
           {
             "itemId": "justiciar_faceguard",
-            "weight": 2
+            "weight": 3
           },
           {
             "itemId": "justiciar_chestguard",
-            "weight": 2
+            "weight": 3
           },
           {
             "itemId": "justiciar_legguards",
-            "weight": 2
+            "weight": 3
           },
           {
             "itemId": "scythe_of_vitur",
@@ -214,7 +214,7 @@
   "barrows_brothers": {
     "id": "barrows_brothers",
     "name": "Cryptbound Champions",
-    "icon": "⚰️",
+    "icon": "\u26b0\ufe0f",
     "description": "Descend into the ancient crypt and defeat all six champions to claim their treasures.",
     "bosses": [
       "arim_the_blighted",

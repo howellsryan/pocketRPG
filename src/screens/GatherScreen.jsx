@@ -13,6 +13,9 @@ import { SCREENS } from '../utils/constants.js'
 import minigamesData from '../data/minigames.json'
 import cluesData from '../data/clues.json'
 import { rollClueRewards } from '../engine/clueScrolls.js'
+import { api, getToken, getCharacterId } from '../cloud/api.js'
+import { pullSave, applyCloudSave, requestCriticalPushSave } from '../cloud/sync.js'
+import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
 import { isLoggedDrop } from '../engine/collectionLog.js'
 
@@ -434,21 +437,34 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
         // Handle clue scrolls (roll rewards and consume scroll)
         if (task.isClue) {
           const rewards = rollClueRewards(task.clueLevel)
-          const bankUpdates = {}
-          for (const reward of rewards) {
-            bankUpdates[reward.itemId] = reward.quantity
-          }
-          bankUpdates[task.requiresItem] = -1
-          updateBankDirect(bankUpdates)
-          if (task.clueLevel) {
-            for (const reward of rewards) {
-              if (isLoggedDrop(reward.itemId, 'clues', task.clueLevel)) {
-                recordCollectionLogDrop({ itemId: reward.itemId, sourceType: 'clues', sourceId: task.clueLevel })
+          if (getToken() && getCharacterId()) {
+            void api.completeClue(task.clueLevel, {
+              actionNonce: `clue:${task.clueLevel}:${Date.now()}`,
+              rewards,
+              consumptions: [{ itemId: task.requiresItem, quantity: 1 }],
+            }).then(async (res) => {
+              if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
+              const rewardNames = rewards.map(r => `${ITEM_NAMES[r.itemId] || r.itemId} ×${r.quantity}`).join(', ')
+              addToast(`${task.icon} Rewards: ${rewardNames}`, 'success')
+            }).catch((err) => {
+              addToast(`Clue claim failed: ${err?.message || 'server_error'}`, 'error')
+            })
+          } else {
+            const bankUpdates = {}
+            for (const reward of rewards) bankUpdates[reward.itemId] = reward.quantity
+            bankUpdates[task.requiresItem] = -1
+            updateBankDirect(bankUpdates)
+            if (task.clueLevel) {
+              for (const reward of rewards) {
+                if (isLoggedDrop(reward.itemId, 'clues', task.clueLevel)) recordCollectionLogDrop({ itemId: reward.itemId, sourceType: 'clues', sourceId: task.clueLevel })
               }
             }
+            requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.CLUE_REWARD)
           }
-          const rewardNames = rewards.map(r => `${ITEM_NAMES[r.itemId] || r.itemId} ×${r.quantity}`).join(', ')
-          addToast(`${task.icon} Rewards: ${rewardNames}`, 'success')
+          if (!(getToken() && getCharacterId())) {
+            const rewardNames = rewards.map(r => `${ITEM_NAMES[r.itemId] || r.itemId} ×${r.quantity}`).join(', ')
+            addToast(`${task.icon} Rewards: ${rewardNames}`, 'success')
+          }
         } else if (task.rewardItems && task.rewardItems.length > 0) {
           // OneShot tasks with multiple reward items — award all at once (handled below)
         } else {
@@ -459,9 +475,23 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
         if (task.oneShot) {
           // Minigame grind — award once then stop.
           if (task.rewardItems && task.rewardItems.length > 0) {
-            updateBankDirect(Object.fromEntries(task.rewardItems.map(id => [id, 1])))
-            const rewardNames = task.rewardItems.map(id => ITEM_NAMES[id] || id).join(', ')
-            addToast(`${task.icon} Received: ${rewardNames}!`, 'success')
+            if (getToken() && getCharacterId()) {
+              void api.completeMinigame(task.id, {
+                actionNonce: `minigame:${task.id}:${Date.now()}`,
+                rewards: task.rewardItems.map(id => ({ itemId: id, quantity: 1 })),
+              }).then(async (res) => {
+                if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
+                const rewardNames = task.rewardItems.map(id => ITEM_NAMES[id] || id).join(', ')
+                addToast(`${task.icon} Received: ${rewardNames}!`, 'success')
+              }).catch((err) => {
+                addToast(`Minigame claim failed: ${err?.message || 'server_error'}`, 'error')
+              })
+            } else {
+              updateBankDirect(Object.fromEntries(task.rewardItems.map(id => [id, 1])))
+              const rewardNames = task.rewardItems.map(id => ITEM_NAMES[id] || id).join(', ')
+              addToast(`${task.icon} Received: ${rewardNames}!`, 'success')
+              requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.MINIGAME_COMPLETE)
+            }
           } else {
             addToast(`${task.icon} ${ITEM_NAMES[task.product] || task.product} banked!`, 'success')
           }
