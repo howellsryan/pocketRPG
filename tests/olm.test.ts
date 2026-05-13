@@ -247,8 +247,8 @@ describe('The Great Olm Boss', () => {
       expect(buckler.weight).toBeGreaterThan(tbow.weight)
     })
 
-    it('CoX unique chance should be 100% for temporary testing', () => {
-      expect(cox.rewards.unique.chance).toBe(1)
+    it('CoX unique chance should be 10%', () => {
+      expect(cox.rewards.unique.chance).toBe(0.1)
     })
   })
 })
