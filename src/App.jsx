@@ -558,6 +558,7 @@ function GameApp() {
             if (newRemaining <= 0) {
               grantMinigameTaskRewards(savedTask.gatherTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
               setActiveTask(null)
+              if (!isInPvpMatch) requestCriticalPushSave(() => getSnapshot(), 'minigame_complete')
               sim = { minigameCompleted: true }
             } else {
               setActiveTask({ ...savedTask, totalTicks, ticksRemaining: newRemaining })
@@ -571,6 +572,7 @@ function GameApp() {
             if (newRemaining <= 0) {
               grantMinigameTaskRewards(savedTask.minigameTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
               setActiveTask(null)
+              if (!isInPvpMatch) requestCriticalPushSave(() => getSnapshot(), 'minigame_complete')
               sim = { minigameCompleted: true }
             } else {
               setActiveTask({ ...savedTask, totalTicks, ticksRemaining: newRemaining })
@@ -819,7 +821,7 @@ function GameApp() {
       if (snapshotCounter.current >= 100) {
         snapshotCounter.current = 0
         // Cloud sync piggy-backs on the local snapshot cadence (debounced, hash-skipped).
-        if (!isInPvpMatch) schedulePushSave(snap)
+        if (!isInPvpMatch) schedulePushSave(getSnapshot())
       }
       // Idle heartbeat: ~30s cadence. Server stamps last_active_at on write,
       // so this keeps the "last seen" timestamp fresh even if the tab dies
@@ -857,6 +859,7 @@ function GameApp() {
           grantMinigameTaskRewards(task.gatherTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
           addToast(`${task.gatherTask.icon || '🎮'} ${task.gatherTask.name} complete!`, 'levelup', '🏆')
           setActiveTask(null)
+          if (!isInPvpMatch) requestCriticalPushSave(() => getSnapshot(), 'minigame_complete')
         } else {
           setActiveTask({ ...task, ticksRemaining: remaining, totalTicks: total })
         }
@@ -871,6 +874,7 @@ function GameApp() {
           grantMinigameTaskRewards(mgTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
           addToast(`${mgTask.icon || '🎮'} ${mgTask.name} complete!`, 'levelup', '🏆')
           setActiveTask(null)
+          if (!isInPvpMatch) requestCriticalPushSave(() => getSnapshot(), 'minigame_complete')
         } else {
           setActiveTask({ ...task, ticksRemaining: remaining, totalTicks: total })
         }
@@ -1185,6 +1189,7 @@ function GameApp() {
             // Minigame completed — award all reward items and clear task
             grantMinigameTaskRewards(savedTask.gatherTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
             setActiveTask(null)
+            if (!isInPvpMatch) requestCriticalPushSave(() => getSnapshot(), 'minigame_complete')
             idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true }
             sim = {}
           } else {
@@ -1207,6 +1212,7 @@ function GameApp() {
           if (ticksRemaining <= 0) {
             grantMinigameTaskRewards(savedTask.minigameTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
             setActiveTask(null)
+            if (!isInPvpMatch) requestCriticalPushSave(() => getSnapshot(), 'minigame_complete')
             idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true }
             sim = {}
           } else {
