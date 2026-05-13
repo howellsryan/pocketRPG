@@ -192,7 +192,7 @@ export default function SettingsScreen() {
       </div>
 
       <div class="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-        <CollapsibleSection icon="🏆" title="Leaderboards" defaultOpen>
+        <CollapsibleSection icon="🏆" title="Leaderboards">
           <LeaderboardList />
         </CollapsibleSection>
         <CollapsibleSection icon="📖" title="Collection Log">

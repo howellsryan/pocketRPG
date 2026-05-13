@@ -32,7 +32,7 @@ import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slay
 import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster } from '../engine/slayerTasks.js'
 import { getSlayerTaskReward } from '../engine/slayerRewards.js'
 import { CRITICAL_SAVE_REASONS, hasCriticalDrop } from '../cloud/criticalSavePolicy.js'
-import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
+import { recordCollectionLogDrop, applyServerCollectionLogEntries } from '../cloud/collectionLog.js'
 import { filterLoggedDrops } from '../engine/collectionLog.js'
 
 const COMBAT_CATEGORIES = [
@@ -781,6 +781,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 updateBank(newBank)
                 bankRef.current = newBank
               }
+              applyServerCollectionLogEntries(res?.collectionLogEntries || [])
               if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
               setLootModal({
                 monster: defeatedMonsterData,
@@ -828,6 +829,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 updateBank(newBank)
                 bankRef.current = newBank
               }
+              applyServerCollectionLogEntries(res?.collectionLogEntries || [])
               if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
               setLootModal({
                 monster: defeatedMonsterData,

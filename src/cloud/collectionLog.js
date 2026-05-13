@@ -78,6 +78,25 @@ export async function fetchCollectionLog({ force = false } = {}) {
   }
 }
 
+
+export function applyServerCollectionLogEntries(entries = []) {
+  if (!Array.isArray(entries) || entries.length === 0) return
+  if (!cachedEntries) cachedEntries = new Set()
+  let changed = false
+  for (const e of entries) {
+    const itemId = typeof e?.itemId === 'string' ? e.itemId : null
+    const sourceType = typeof e?.sourceType === 'string' ? e.sourceType : null
+    const sourceId = typeof e?.sourceId === 'string' ? e.sourceId : null
+    if (!itemId || !sourceType || !sourceId) continue
+    const key = `${sourceType}:${sourceId}:${itemId}`
+    if (cachedEntries.has(key)) continue
+    cachedEntries.add(key)
+    changed = true
+    notifySlotComplete({ itemId, sourceType, sourceId })
+  }
+  if (changed) notify()
+}
+
 export function clearCollectionLogCache() {
   cachedEntries = null
   cachedTotal = null
