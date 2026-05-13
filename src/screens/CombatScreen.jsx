@@ -782,7 +782,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 bankRef.current = newBank
               }
               applyServerCollectionLogEntries(res?.collectionLogEntries || [])
-              if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
+              if (res?.save?.save_data) {
+                const parsedSave = JSON.parse(res.save.save_data)
+                const serverRaidCounts = parsedSave?.settings?.raidKillCounts
+                if (serverRaidCounts && typeof serverRaidCounts === 'object') {
+                  raidKillCountsRef.current = serverRaidCounts
+                  updateRaidKillCounts(serverRaidCounts)
+                }
+                await applyCloudSave(parsedSave, res.save.updatedAt)
+              }
               setLootModal({
                 monster: defeatedMonsterData,
                 loot: granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity })),
@@ -830,7 +838,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 bankRef.current = newBank
               }
               applyServerCollectionLogEntries(res?.collectionLogEntries || [])
-              if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
+              if (res?.save?.save_data) {
+                const parsedSave = JSON.parse(res.save.save_data)
+                const serverBossCounts = parsedSave?.settings?.bossKillCounts
+                if (serverBossCounts && typeof serverBossCounts === 'object') {
+                  bossKillCountsRef.current = serverBossCounts
+                  updateBossKillCounts(serverBossCounts)
+                }
+                await applyCloudSave(parsedSave, res.save.updatedAt)
+              }
               setLootModal({
                 monster: defeatedMonsterData,
                 loot: granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity })),
