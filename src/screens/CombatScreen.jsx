@@ -743,6 +743,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
           const raidId = state.raid?.raidId || null
           const cloudAuthoritativeRaid = Boolean(raidId && getToken() && getCharacterId())
+          const cloudAuthoritativeMonster = Boolean(!raidId && defeatedMonsterId && getToken() && getCharacterId())
           if (cloudAuthoritativeRaid) {
             void api.completeRaid(raidId, {
               actionNonce: `raid:${raidId}:${Date.now()}`,
@@ -784,6 +785,48 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               })
             }).catch((err) => {
               addToast(`Raid claim failed: ${err?.message || 'server_error'}`, 'error')
+            })
+          } else if (cloudAuthoritativeMonster) {
+            void api.completeMonster(defeatedMonsterId, {
+              actionNonce: `monster:${defeatedMonsterId}:${Date.now()}`,
+            }).then(async (res) => {
+              const granted = Array.isArray(res?.granted) ? res.granted : []
+              if (granted.length > 0) {
+                const newInv = [...inventoryRef.current]
+                const newBank = { ...(bankRef.current || {}) }
+                for (const reward of granted) {
+                  const itemId = reward?.itemId
+                  const quantity = Math.floor(Number(reward?.quantity) || 0)
+                  if (!itemId || quantity < 1) continue
+                  const item = itemsData[itemId]
+                  if (reward?.destination === 'bank') {
+                    const existing = newBank[itemId]
+                    const existingQty = Math.floor(Number(existing?.quantity ?? existing) || 0)
+                    newBank[itemId] = { itemId, quantity: existingQty + quantity }
+                  } else {
+                    addItem(newInv, itemId, quantity, item?.stackable || false)
+                  }
+                }
+                updateInventory(newInv)
+                inventoryRef.current = newInv
+                updateBank(newBank)
+                bankRef.current = newBank
+              }
+              if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
+              if (defeatedMonsterId && granted.length > 0) {
+                for (const itemId of filterLoggedDrops(granted, 'monsters', defeatedMonsterId)) {
+                  recordCollectionLogDrop({ itemId, sourceType: 'monsters', sourceId: defeatedMonsterId })
+                }
+              }
+              setLootModal({
+                monster: defeatedMonsterData,
+                loot: granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity })),
+                slayerXpGained,
+                isBossKill: isDefeatedBoss,
+                raidId
+              })
+            }).catch((err) => {
+              addToast(`Monster claim failed: ${err?.message || 'server_error'}`, 'error')
             })
           } else if (killLoot.length > 0) {
             const newInv = [...inventoryRef.current]

@@ -171,6 +171,7 @@ export const api = {
   completeMinigame: (sourceId, payload = {}) => request('/api/actions/minigame/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
   completeSlayer: (sourceId, payload = {}) => request('/api/actions/slayer/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
   completeDungeoneering: (sourceId, payload = {}) => request('/api/actions/dungeoneering/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
+  completeMonster: (sourceId, payload = {}) => request('/api/actions/monster/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
 
 }
 
