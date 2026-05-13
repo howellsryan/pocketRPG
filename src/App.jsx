@@ -212,6 +212,11 @@ function GameApp() {
   const snapshotCounter = useRef(99) // Start at 99 so first snapshot fires after 1 tick
   const idleHeartbeatCounter = useRef(49) // 50 ticks = ~30s — first heartbeat ~600ms after load
   const hiddenAtPerfRef = useRef(null) // performance.now() at hide — monotonic, immune to clock changes
+  const getSnapshotRef = useRef(() => getSnapshot())
+
+  useEffect(() => {
+    getSnapshotRef.current = () => getSnapshot()
+  }, [getSnapshot])
 
   const minigameCompletingRef = useRef(new Set())
 
@@ -231,7 +236,7 @@ function GameApp() {
         removeLocalActiveTask: () => { try { localStorage.removeItem('pocketrpg_activeTask') } catch {} },
         grantMinigameTaskRewards: (t) => grantMinigameTaskRewards(t, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame }),
         requestCriticalPushSave,
-        getSnapshot,
+        getSnapshot: () => getSnapshotRef.current(),
         addToast,
         isInPvpMatch,
         inFlightSet: minigameCompletingRef.current,
