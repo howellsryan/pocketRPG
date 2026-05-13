@@ -3,6 +3,7 @@ import { GameApiError } from './errors.js'
 import { addItemToInventory, addItemToBank, removeItemFromInventory } from './inventory.js'
 import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
 import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
+import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
 
 const VALID_DUNGEONEERING_REWARD_ITEMS = new Set(
   ((skillsData?.dungeoneering?.actions) || [])
@@ -21,6 +22,15 @@ const VALID_RAID_REWARD_ITEMS = new Map(
     return [raidId, valid]
   })
 )
+const VALID_MONSTER_REWARD_ITEMS = new Map(
+  Object.entries(monstersData || {}).map(([monsterId, monster]) => {
+    const valid = new Set()
+    for (const drop of monster?.drops || []) {
+      if (typeof drop?.itemId === 'string') valid.add(drop.itemId)
+    }
+    return [monsterId, valid]
+  })
+)
 
 function isValidRewardSourceItem(sourceType, sourceId, itemId) {
   if (isValidEntry(sourceType, sourceId, itemId)) return true
@@ -31,6 +41,9 @@ function isValidRewardSourceItem(sourceType, sourceId, itemId) {
   }
   if (sourceType === 'raids') {
     return VALID_RAID_REWARD_ITEMS.get(sourceId)?.has(itemId) || false
+  }
+  if (sourceType === 'monsters' || sourceType === 'boss') {
+    return VALID_MONSTER_REWARD_ITEMS.get(sourceId)?.has(itemId) || false
   }
   return false
 }
