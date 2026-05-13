@@ -53,6 +53,7 @@ export function GameProvider({ children }) {
   const [farming, setFarmingState] = useState({ patchesById: {} })
   const [completedQuests, setCompletedQuestsState] = useState(new Set())
   const [unlockedMinigameItems, setUnlockedMinigameItemsState] = useState(new Set())
+  const [completedMinigameTasks, setCompletedMinigameTasksState] = useState(new Set())
   const [questQueue, setQuestQueueState] = useState([])
   const [isSaving, setIsSaving] = useState(false)
   const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false })
@@ -78,12 +79,12 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedCompletedMinigameTasks, savedIdleCombatSetup] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
       getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('slayerTasksCompleted'), getSetting('dungeoneeringTokens'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
-      getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems'),
+      getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems'), getSetting('completedMinigameTasks'),
       getSetting('idleCombatSetup')
     ])
     const normalisedIdleCombatSetup = normaliseIdleCombatSetup(savedIdleCombatSetup)
@@ -437,6 +438,7 @@ export function GameProvider({ children }) {
     setFarmingState(savedFarming ?? { patchesById: {} })
     setCompletedQuestsState(new Set(savedCompletedQuests || []))
     setUnlockedMinigameItemsState(new Set(savedUnlockedMinigameItems || []))
+    setCompletedMinigameTasksState(new Set(savedCompletedMinigameTasks || []))
     setQuestQueueState(savedQuestQueue ?? [])
     const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
     setCurrentHP(savedHP != null ? Math.min(savedHP, hpLevel) : hpLevel)
@@ -690,6 +692,17 @@ export function GameProvider({ children }) {
     })
   }, [])
 
+  const completeMinigameTask = useCallback((taskId) => {
+    if (!taskId) return
+    setCompletedMinigameTasksState(prev => {
+      if (prev.has(taskId)) return prev
+      const next = new Set(prev)
+      next.add(taskId)
+      saveSetting('completedMinigameTasks', [...next])
+      return next
+    })
+  }, [])
+
   const completeQuest = useCallback((questId) => {
     setCompletedQuestsState(prev => {
       if (prev.has(questId)) return prev
@@ -787,9 +800,10 @@ export function GameProvider({ children }) {
       farming,
       completedQuests: [...completedQuests],
       unlockedMinigameItems: [...unlockedMinigameItems],
+      completedMinigameTasks: [...completedMinigameTasks],
       questQueue,
     },
-  }), [currentHP, autoBankLoot, bankConfig, homeShortcuts, combatStance, idleCombatSetup, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, slayerTasksCompleted, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, questQueue])
+  }), [currentHP, autoBankLoot, bankConfig, homeShortcuts, combatStance, idleCombatSetup, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, slayerTasksCompleted, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, completedMinigameTasks, questQueue])
 
 
   useEffect(() => {
@@ -853,6 +867,7 @@ export function GameProvider({ children }) {
     farming, updateFarming,
     completedQuests, completeQuest,
     unlockedMinigameItems, unlockMinigameItem,
+    completedMinigameTasks, completeMinigameTask,
     questQueue, addQuestToQueue, removeFromQuestQueue, clearQuestQueue, updateQuestQueue,
     loadGame, grantXP, updateInventory, updateEquipment, updateBank,
     removeFromInventory, addToBank,

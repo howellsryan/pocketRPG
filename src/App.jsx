@@ -89,8 +89,9 @@ function getMinigameRewardEntries(task) {
 }
 const VALID_SERVER_MINIGAME_IDS = new Set((minigamesData?.tasks || []).map((task) => task?.id).filter(Boolean))
 
-function grantMinigameTaskRewards(task, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame }) {
+function grantMinigameTaskRewards(task, { updateBankDirect, unlockMinigameItem, completeMinigameTask, recordCollectionLogDropForMinigame }) {
   const rewards = getMinigameRewardEntries(task)
+  completeMinigameTask(task?.id)
   if (rewards.length === 0) return
   const bankUpdates = {}
   for (const reward of rewards) {
@@ -179,7 +180,7 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
 
 function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
-    unlockMinigameItem, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup } = useGame()
+    unlockMinigameItem, completeMinigameTask, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [gameReady, setGameReady] = useState(false)
@@ -234,7 +235,7 @@ function GameApp() {
         setActiveTask,
         activeTaskRef,
         removeLocalActiveTask: () => { try { localStorage.removeItem('pocketrpg_activeTask') } catch {} },
-        grantMinigameTaskRewards: (t) => grantMinigameTaskRewards(t, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame }),
+        grantMinigameTaskRewards: (t) => grantMinigameTaskRewards(t, { updateBankDirect, unlockMinigameItem, completeMinigameTask, recordCollectionLogDropForMinigame }),
         requestCriticalPushSave,
         getSnapshot: () => getSnapshotRef.current(),
         addToast,
