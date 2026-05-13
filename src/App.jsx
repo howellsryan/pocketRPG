@@ -30,6 +30,7 @@ import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
 import { defaultIdleCombatSetup } from './engine/idleSupplies.js'
 import prayersData from './data/prayers.json'
+import minigamesData from './data/minigames.json'
 import { simulateIdleThieving } from './engine/thieving.js'
 import { simulateIdleHunting } from './engine/hunter.js'
 import { createQuestState } from './engine/quests.js'
@@ -85,6 +86,7 @@ function getMinigameRewardEntries(task) {
   }
   return task.product ? [{ itemId: task.product, qty }] : []
 }
+const VALID_SERVER_MINIGAME_IDS = new Set((minigamesData?.tasks || []).map((task) => task?.id).filter(Boolean))
 
 function grantMinigameTaskRewards(task, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame }) {
   const rewards = getMinigameRewardEntries(task)
@@ -210,7 +212,7 @@ function GameApp() {
   const hiddenAtPerfRef = useRef(null) // performance.now() at hide — monotonic, immune to clock changes
 
   async function syncCompletedMinigameToServer(task) {
-    if (!task?.id || !(getToken() && getCharacterId())) return
+    if (!task?.id || !VALID_SERVER_MINIGAME_IDS.has(task.id) || !(getToken() && getCharacterId())) return
     const rewards = getMinigameRewardEntries(task).map((r) => ({ itemId: r.itemId, quantity: r.qty }))
     const res = await api.completeMinigame(task.id, {
       actionNonce: `minigame:${task.id}:${Date.now()}`,
