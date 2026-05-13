@@ -5,6 +5,7 @@ import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
 import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
 import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
 import itemsData from '../../../src/data/items.json' assert { type: 'json' }
+import minigamesData from '../../../src/data/minigames.json' assert { type: 'json' }
 
 const VALID_DUNGEONEERING_REWARD_ITEMS = new Set(
   ((skillsData?.dungeoneering?.actions) || [])
@@ -32,6 +33,16 @@ const VALID_MONSTER_REWARD_ITEMS = new Map(
     return [monsterId, valid]
   })
 )
+const VALID_MINIGAME_REWARD_ITEMS = new Map(
+  (minigamesData?.tasks || []).map((task) => {
+    const valid = new Set()
+    if (typeof task?.product === 'string') valid.add(task.product)
+    for (const itemId of (Array.isArray(task?.rewardItems) ? task.rewardItems : [])) {
+      if (typeof itemId === 'string') valid.add(itemId)
+    }
+    return [task?.id, valid]
+  }).filter(([id]) => typeof id === 'string' && id.length > 0)
+)
 
 function isValidRewardSourceItem(sourceType, sourceId, itemId) {
   if (isValidEntry(sourceType, sourceId, itemId)) return true
@@ -45,6 +56,9 @@ function isValidRewardSourceItem(sourceType, sourceId, itemId) {
   }
   if (sourceType === 'monsters' || sourceType === 'boss') {
     return VALID_MONSTER_REWARD_ITEMS.get(sourceId)?.has(itemId) || false
+  }
+  if (sourceType === 'minigames' || sourceType === 'minigame') {
+    return VALID_MINIGAME_REWARD_ITEMS.get(sourceId)?.has(itemId) || false
   }
   return false
 }
