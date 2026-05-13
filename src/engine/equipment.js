@@ -194,6 +194,11 @@ export function getEquipmentBonuses(equipment, itemsData) {
     }
     if (item.otherBonus) {
       for (const [k, v] of Object.entries(item.otherBonus)) {
+        // Ammo rangedStrength only applies when the equipped weapon uses that ammo type
+        if (slot === 'ammo' && k === 'rangedStrength') {
+          const weapon = equipment.weapon ? itemsData[equipment.weapon.itemId] : null
+          if (!weapon?.ammoType || weapon.ammoType !== item.ammoKind) continue
+        }
         bonuses.otherBonus[k] = (bonuses.otherBonus[k] || 0) + v
       }
     }

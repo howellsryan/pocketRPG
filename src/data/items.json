@@ -15600,8 +15600,8 @@
     "attackSpeed": 4,
     "attackStyle": "stab",
     "attackBonus": {
-      "stab": 120,
-      "slash": 60,
+      "stab": 89,
+      "slash": 52,
       "crush": 0,
       "magic": 0,
       "ranged": 0
@@ -15614,7 +15614,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 110,
+      "meleeStrength": 84,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -15680,7 +15680,7 @@
     "attackBonus": {
       "stab": 0,
       "slash": 0,
-      "crush": 170,
+      "crush": 128,
       "magic": 0,
       "ranged": 0
     },
@@ -15692,7 +15692,7 @@
       "ranged": 0
     },
     "otherBonus": {
-      "meleeStrength": 180,
+      "meleeStrength": 139,
       "rangedStrength": 0,
       "magicDamage": 0
     },
@@ -15722,7 +15722,7 @@
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 150
+      "ranged": 95
     },
     "defenceBonus": {
       "stab": 0,
@@ -15733,7 +15733,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 90,
+      "rangedStrength": 85,
       "magicDamage": 0
     },
     "requirements": {

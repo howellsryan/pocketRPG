@@ -1182,6 +1182,18 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
       xpGained[skill] = (xpGained[skill] || 0) + xp
     }
 
+    // If inventory is already full before drops, bank first so drop items can
+    // land in inventory rather than overflowing directly to bank/lost.
+    if (bankingEnabled && newInv.indexOf(null) === -1) {
+      if (remainingTicks < bankDelayTicks) break
+      remainingTicks -= bankDelayTicks
+      for (let i = 0; i < newInv.length; i++) {
+        if (!newInv[i]) continue
+        lootBanked[newInv[i].itemId] = (lootBanked[newInv[i].itemId] || 0) + newInv[i].quantity
+        newInv[i] = null
+      }
+    }
+
     // Loot for this kill — place items into inventory, overflow to lost/banked
     for (const drop of idleRollDrops(monster)) {
       const item = itemsData[drop.itemId]
