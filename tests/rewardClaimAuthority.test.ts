@@ -24,4 +24,24 @@ describe('reward claim authority helpers', () => {
     expect(save.slayer.points).toBe(15)
     expect(save.dungeoneeringTokens).toBe(25)
   })
+
+  it('accepts regular monster drop rewards not present in collection log', () => {
+    const save: any = { inventory: [] }
+    const out = applyRewardClaim(save, {
+      sourceType: 'monsters',
+      sourceId: 'chicken',
+      rewards: [{ itemId: 'raw_chicken', quantity: 1 }],
+    })
+    expect(out.granted).toEqual([{ itemId: 'raw_chicken', quantity: 1 }])
+  })
+
+  it('accepts boss-tagged source type using monster drop table validation', () => {
+    const save: any = { inventory: [] }
+    const out = applyRewardClaim(save, {
+      sourceType: 'boss',
+      sourceId: 'king_black_dragon',
+      rewards: [{ itemId: 'dragon_bones', quantity: 1 }],
+    })
+    expect(out.granted).toEqual([{ itemId: 'dragon_bones', quantity: 1 }])
+  })
 })

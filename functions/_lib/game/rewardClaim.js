@@ -1,9 +1,19 @@
 import itemsData from '../../../src/data/items.json' assert { type: 'json' }
+import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
 import { isValidEntry } from '../collectionLog.js'
 import { GameApiError } from './errors.js'
 import { addItemToInventory } from './inventory.js'
 
 export const PROTECTED_SOURCE_TYPES = new Set(['boss', 'raid', 'clue', 'minigame', 'monsters', 'raids', 'clues', 'minigames', 'dungeoneering', 'slayer'])
+const VALID_MONSTER_REWARD_ITEMS = new Map(
+  Object.entries(monstersData || {}).map(([monsterId, monster]) => {
+    const valid = new Set()
+    for (const drop of monster?.drops || []) {
+      if (typeof drop?.itemId === 'string') valid.add(drop.itemId)
+    }
+    return [monsterId, valid]
+  })
+)
 
 export function validateRewardClaimPayload(body) {
   const sourceType = typeof body?.sourceType === 'string' ? body.sourceType : ''
@@ -24,7 +34,11 @@ export function applyRewardClaim(saveObject, claim) {
     const item = itemsData[itemId]
     if (!item) throw new GameApiError('ITEM_NOT_FOUND', `Unknown item: ${itemId}`, 404)
     // High-value grant protection: endpoint only accepts protected source items.
-    if (!isValidEntry(claim.sourceType, claim.sourceId, itemId)) {
+    const fromCollectionLog = isValidEntry(claim.sourceType, claim.sourceId, itemId)
+    const fromMonsterDropTable = (claim.sourceType === 'monsters' || claim.sourceType === 'boss')
+      ? (VALID_MONSTER_REWARD_ITEMS.get(claim.sourceId)?.has(itemId) || false)
+      : false
+    if (!fromCollectionLog && !fromMonsterDropTable) {
       throw new GameApiError('INVALID_REWARD_SOURCE', 'Reward item not valid for source', 403)
     }
     addItemToInventory(saveObject, itemId, quantity)
