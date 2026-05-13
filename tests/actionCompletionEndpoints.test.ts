@@ -185,6 +185,26 @@ describe('action completion endpoint tamper guards', () => {
     expect(saved.settings.raidKillCounts.barrows_brothers).toBe(5)
   })
 
+  it('accepts minigame rewards validated by minigame task id', async () => {
+    const handler = makeCompletionHandler('minigames', {
+      requireAuth: async () => ({ identity: { id: 1 } }),
+      assertNotInActiveMatch: async () => null,
+      loadCharacterWithSave: async () => ({ saveObject: { inventory: [] }, saveRevision: 0 }),
+      writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
+      resolveRewards: () => [{ itemId: 'fighter_hat', quantity: 1 }],
+    })
+    const req = new Request('https://example.com/api/actions/minigame/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' },
+      body: JSON.stringify({ sourceId: 'ba_fighter_hat', actionNonce: 'n9' }),
+    })
+    const res = await handler({ request: req, env: {} as any })
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    const saved = JSON.parse(body.save.save_data)
+    expect(saved.settings.unlockedMinigameItems).toContain('fighter_hat')
+  })
+
 
 
 })
