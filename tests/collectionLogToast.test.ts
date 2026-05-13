@@ -24,7 +24,7 @@ describe('collection log slot completion notifications', () => {
     getCollectionLogMock.mockClear()
   })
 
-  it('fires the slot-complete listener exactly once for a fresh drop', async () => {
+  it('does not fire slot-complete for monster drops (server-authoritative via /complete)', async () => {
     const mod: any = await freshClient()
     getCollectionLogMock.mockResolvedValueOnce({ entries: [], total: 100 })
     await mod.fetchCollectionLog({ force: true })
@@ -33,21 +33,17 @@ describe('collection log slot completion notifications', () => {
     mod.onCollectionLogSlotComplete((e: any) => seen.push(e))
 
     mod.recordCollectionLogDrop({ itemId: 'granite_maul', sourceType: 'monsters', sourceId: 'gargoyle' })
-    expect(seen).toHaveLength(1)
-    expect(seen[0]).toEqual({ itemId: 'granite_maul', sourceType: 'monsters', sourceId: 'gargoyle' })
+    expect(seen).toHaveLength(0)
   })
 
-  it('does not re-fire when the same (source,item) is recorded again', async () => {
+  it('does not enqueue monster drops for /collection-log posting', async () => {
     const mod: any = await freshClient()
     getCollectionLogMock.mockResolvedValueOnce({ entries: [], total: 100 })
     await mod.fetchCollectionLog({ force: true })
 
-    let count = 0
-    mod.onCollectionLogSlotComplete(() => count++)
-
     mod.recordCollectionLogDrop({ itemId: 'granite_maul', sourceType: 'monsters', sourceId: 'gargoyle' })
-    mod.recordCollectionLogDrop({ itemId: 'granite_maul', sourceType: 'monsters', sourceId: 'gargoyle' })
-    expect(count).toBe(1)
+    vi.advanceTimersByTime(1000)
+    expect(postCollectionLogMock).not.toHaveBeenCalled()
   })
 
   it('does not re-fire when the entry already exists in the cached server state', async () => {

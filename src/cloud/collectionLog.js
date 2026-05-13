@@ -10,6 +10,7 @@ import { isSlotObtained } from '../engine/collectionLog.js'
 
 const FLUSH_DELAY_MS = 500
 const MAX_BUFFER = 64
+const SERVER_AUTHORITATIVE_SOURCES = new Set(['monsters', 'raids'])
 
 let buffer = []
 let timer = null
@@ -138,6 +139,7 @@ function scheduleFlush() {
 // (covers the shared-item case where one source credits multiple slots).
 export function recordCollectionLogDrop({ itemId, sourceType, sourceId }) {
   if (!itemId || !sourceType || !sourceId) return
+  if (SERVER_AUTHORITATIVE_SOURCES.has(sourceType)) return
   const key = `${sourceType}:${sourceId}:${itemId}`
   if (cachedEntries) {
     if (cachedEntries.has(key)) return
