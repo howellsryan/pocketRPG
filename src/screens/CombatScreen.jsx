@@ -572,6 +572,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           }])
         }
         if (ev.type === 'raidComplete') {
+          const cloudAuthoritativeRaid = Boolean(ev.raidId && getToken() && getCharacterId())
           setLog(prev => [...prev.slice(-20), {
             text: `🏆 Raid complete!`,
             type: 'raid',
@@ -592,7 +593,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               time: Date.now()
             }])
           }
-          if (ev.raidId && Array.isArray(ev.loot)) {
+          if (!cloudAuthoritativeRaid && ev.raidId && Array.isArray(ev.loot)) {
             for (const itemId of filterLoggedDrops(ev.loot, 'raids', ev.raidId)) {
               recordCollectionLogDrop({ itemId, sourceType: 'raids', sourceId: ev.raidId })
             }
