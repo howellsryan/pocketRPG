@@ -42,7 +42,8 @@ import { getSlayerTaskReward } from './engine/slayerRewards.js'
 import { isHighValueDrop } from './utils/itemValue.js'
 import { computeIdleElapsedMs } from './utils/idleElapsed.js'
 import { advanceFarmingState } from './engine/farming.ts'
-import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, onCollectionLogSlotComplete } from './cloud/collectionLog.js'
+import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, onCollectionLogSlotComplete, applyServerCollectionLogEntries } from './cloud/collectionLog.js'
+import { completeMinigameTask } from './cloud/minigameCompletion.js'
 import { isLoggedDrop, collectIdleCombatLoggedDrops } from './engine/collectionLog.js'
 
 // ── Clock-rollback watermark ────────────────────────────────────────────────
@@ -100,10 +101,6 @@ function grantMinigameTaskRewards(task, { updateBankDirect, unlockMinigameItem, 
   updateBankDirect(bankUpdates)
 }
 
-function markMinigameRewardsUnlocked(task, { unlockMinigameItem }) {
-  const rewards = getMinigameRewardEntries(task)
-  for (const reward of rewards) unlockMinigameItem(reward.itemId)
-}
 function recordCollectionLogDropForMinigame(task) {
   const itemId = task?.product
   const sourceId = task?.minigame
@@ -216,32 +213,31 @@ function GameApp() {
   const idleHeartbeatCounter = useRef(49) // 50 ticks = ~30s — first heartbeat ~600ms after load
   const hiddenAtPerfRef = useRef(null) // performance.now() at hide — monotonic, immune to clock changes
 
-  async function syncCompletedMinigameToServer(task) {
-    if (!task?.id || !VALID_SERVER_MINIGAME_IDS.has(task.id) || !(getToken() && getCharacterId())) return
-    const res = await api.completeMinigame(task.id, {
-      actionNonce: `minigame:${task.id}:${Date.now()}`,
-    })
-    if (res?.save?.save_data) {
-      await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
-      await loadGame()
-    }
-  }
-  function isCloudAuthoritativeMinigame(task) {
-    return !!(task?.id && VALID_SERVER_MINIGAME_IDS.has(task.id) && getToken() && getCharacterId())
-  }
+  const minigameCompletingRef = useRef(new Set())
 
-  function buildMinigameCompletionSnapshot(task) {
-    const snap = getSnapshot()
-    const rewardIds = getMinigameRewardEntries(task).map(reward => reward.itemId).filter(Boolean)
-    const unlocked = new Set([...(snap?.settings?.unlockedMinigameItems || []), ...unlockedMinigameItems, ...rewardIds])
-    return {
-      ...snap,
-      activeTask: null,
-      settings: {
-        ...(snap?.settings || {}),
-        unlockedMinigameItems: [...unlocked],
+  function runMinigameCompletion(task, taskWrapper) {
+    return completeMinigameTask({
+      task,
+      taskWrapper,
+      deps: {
+        isCloudAuthoritative: (t) => !!(t?.id && VALID_SERVER_MINIGAME_IDS.has(t.id) && getToken() && getCharacterId()),
+        api,
+        applyCloudSave,
+        loadGame,
+        pullSave,
+        applyServerCollectionLogEntries,
+        setActiveTask,
+        activeTaskRef,
+        removeLocalActiveTask: () => { try { localStorage.removeItem('pocketrpg_activeTask') } catch {} },
+        grantMinigameTaskRewards: (t) => grantMinigameTaskRewards(t, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame }),
+        requestCriticalPushSave,
+        getSnapshot,
+        addToast,
+        isInPvpMatch,
+        inFlightSet: minigameCompletingRef.current,
+        onWarn: (msg) => console.warn(msg),
       },
-    }
+    })
   }
 
   // Global PvP route/overlay guard:
@@ -591,19 +587,7 @@ function GameApp() {
             const prevRemaining = savedTask.ticksRemaining ?? totalTicks
             const newRemaining = Math.max(0, prevRemaining - elapsedTicks)
             if (newRemaining <= 0) {
-              setActiveTask(null)
-              activeTaskRef.current = null
-              try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
-              if (isCloudAuthoritativeMinigame(savedTask.gatherTask)) {
-                markMinigameRewardsUnlocked(savedTask.gatherTask, { unlockMinigameItem })
-                if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.gatherTask), 'minigame_complete')
-                void syncCompletedMinigameToServer(savedTask.gatherTask).catch((err) => {
-                  console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
-                })
-              } else {
-                grantMinigameTaskRewards(savedTask.gatherTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
-                if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.gatherTask), 'minigame_complete')
-              }
+              void runMinigameCompletion(savedTask.gatherTask, savedTask)
               sim = { minigameCompleted: true }
             } else {
               setActiveTask({ ...savedTask, totalTicks, ticksRemaining: newRemaining })
@@ -615,19 +599,7 @@ function GameApp() {
             const prevRemaining = savedTask.ticksRemaining ?? totalTicks
             const newRemaining = Math.max(0, prevRemaining - elapsedTicks)
             if (newRemaining <= 0) {
-              setActiveTask(null)
-              activeTaskRef.current = null
-              try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
-              if (isCloudAuthoritativeMinigame(savedTask.minigameTask)) {
-                markMinigameRewardsUnlocked(savedTask.minigameTask, { unlockMinigameItem })
-                if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.minigameTask), 'minigame_complete')
-                void syncCompletedMinigameToServer(savedTask.minigameTask).catch((err) => {
-                  console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
-                })
-              } else {
-                grantMinigameTaskRewards(savedTask.minigameTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
-                if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.minigameTask), 'minigame_complete')
-              }
+              void runMinigameCompletion(savedTask.minigameTask, savedTask)
               sim = { minigameCompleted: true }
             } else {
               setActiveTask({ ...savedTask, totalTicks, ticksRemaining: newRemaining })
@@ -912,19 +884,7 @@ function GameApp() {
         const remaining = (task.ticksRemaining ?? total) - 1
         if (remaining <= 0) {
           addToast(`${task.gatherTask.icon || '🎮'} ${task.gatherTask.name} complete!`, 'levelup', '🏆')
-          setActiveTask(null)
-          activeTaskRef.current = null
-          try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
-          if (isCloudAuthoritativeMinigame(task.gatherTask)) {
-            markMinigameRewardsUnlocked(task.gatherTask, { unlockMinigameItem })
-            if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(task.gatherTask), 'minigame_complete')
-            void syncCompletedMinigameToServer(task.gatherTask).catch((err) => {
-              console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
-            })
-          } else {
-            grantMinigameTaskRewards(task.gatherTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
-            if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(task.gatherTask), 'minigame_complete')
-          }
+          void runMinigameCompletion(task.gatherTask, task)
         } else {
           setActiveTask({ ...task, ticksRemaining: remaining, totalTicks: total })
         }
@@ -937,19 +897,7 @@ function GameApp() {
         if (remaining <= 0) {
           const mgTask = task.minigameTask
           addToast(`${mgTask.icon || '🎮'} ${mgTask.name} complete!`, 'levelup', '🏆')
-          setActiveTask(null)
-          activeTaskRef.current = null
-          try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
-          if (isCloudAuthoritativeMinigame(mgTask)) {
-            markMinigameRewardsUnlocked(mgTask, { unlockMinigameItem })
-            if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(mgTask), 'minigame_complete')
-            void syncCompletedMinigameToServer(mgTask).catch((err) => {
-              console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
-            })
-          } else {
-            grantMinigameTaskRewards(mgTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
-            if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(mgTask), 'minigame_complete')
-          }
+          void runMinigameCompletion(mgTask, task)
         } else {
           setActiveTask({ ...task, ticksRemaining: remaining, totalTicks: total })
         }
@@ -1261,20 +1209,7 @@ function GameApp() {
           const ticksRemaining = Math.max(0, prevRemaining - ticksInOneHour)
 
           if (ticksRemaining <= 0) {
-            // Minigame completed — award all reward items and clear task
-            setActiveTask(null)
-            activeTaskRef.current = null
-            try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
-            if (isCloudAuthoritativeMinigame(savedTask.gatherTask)) {
-              markMinigameRewardsUnlocked(savedTask.gatherTask, { unlockMinigameItem })
-              if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.gatherTask), 'minigame_complete')
-              await syncCompletedMinigameToServer(savedTask.gatherTask).catch((err) => {
-                console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
-              })
-            } else {
-              grantMinigameTaskRewards(savedTask.gatherTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
-              if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.gatherTask), 'minigame_complete')
-            }
+            await runMinigameCompletion(savedTask.gatherTask, savedTask)
             idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true }
             sim = {}
           } else {
@@ -1295,19 +1230,7 @@ function GameApp() {
           const prevRemaining = savedTask.ticksRemaining ?? totalTicks
           const ticksRemaining = Math.max(0, prevRemaining - TICKS_PER_HOUR)
           if (ticksRemaining <= 0) {
-            setActiveTask(null)
-            activeTaskRef.current = null
-            try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
-            if (isCloudAuthoritativeMinigame(savedTask.minigameTask)) {
-              markMinigameRewardsUnlocked(savedTask.minigameTask, { unlockMinigameItem })
-              if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.minigameTask), 'minigame_complete')
-              await syncCompletedMinigameToServer(savedTask.minigameTask).catch((err) => {
-                console.warn('[PocketRPG] minigame sync failed:', err?.message || err)
-              })
-            } else {
-              grantMinigameTaskRewards(savedTask.minigameTask, { updateBankDirect, unlockMinigameItem, recordCollectionLogDropForMinigame })
-              if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(savedTask.minigameTask), 'minigame_complete')
-            }
+            await runMinigameCompletion(savedTask.minigameTask, savedTask)
             idleResultData = { elapsedMs, task: savedTask, minigameCompleted: true }
             sim = {}
           } else {

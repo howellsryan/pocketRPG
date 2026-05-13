@@ -67,6 +67,7 @@ const sourceFiles = [
   'cloud/sync.js',
   'cloud/pvp.js',
   'cloud/collectionLog.js',
+  'cloud/minigameCompletion.js',
   'state/gameState.js',
   'state/pvpState.js',
   'components/Modal.js',
