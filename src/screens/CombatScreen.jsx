@@ -688,12 +688,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           const defeatedMonsterName = defeatedMonsterData?.name || defeatedMonster?.name || state.monster?.name || 'Monster'
           const isDefeatedBoss = defeatedMonsterData?.boss === true || defeatedMonster?.boss === true
           const killLoot = Array.isArray(ev.loot) ? ev.loot : []
+          const raidId = state.raid?.raidId || null
+          const cloudAuthoritativeRaid = Boolean(raidId && getToken() && getCharacterId())
+          const cloudAuthoritativeMonster = Boolean(!raidId && defeatedMonsterId && getToken() && getCharacterId())
+          const cloudAuthoritativeCompletion = cloudAuthoritativeRaid || cloudAuthoritativeMonster
           let slayerXpGained = 0
           setKillCount(k => k + 1)
-          requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.MONSTER_KILL)
+          if (!cloudAuthoritativeCompletion) {
+            requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.MONSTER_KILL)
+          }
 
           // Boss kill count tracking
-          if (isDefeatedBoss && defeatedMonsterId) {
+          if (!cloudAuthoritativeCompletion && isDefeatedBoss && defeatedMonsterId) {
             const skipBossKcLog = ev.fromRaidCompletion === true
             const newKC = (bossKillCountsRef.current[defeatedMonsterId] || 0) + 1
             const updatedCounts = { ...bossKillCountsRef.current, [defeatedMonsterId]: newKC }
@@ -741,9 +747,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             }
           }
 
-          const raidId = state.raid?.raidId || null
-          const cloudAuthoritativeRaid = Boolean(raidId && getToken() && getCharacterId())
-          const cloudAuthoritativeMonster = Boolean(!raidId && defeatedMonsterId && getToken() && getCharacterId())
           if (cloudAuthoritativeRaid) {
             setLootModal({
               monster: defeatedMonsterData,
@@ -872,7 +875,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             }])
           }
           // Show loot modal instead of auto-restarting
-          if (!cloudAuthoritativeRaid) {
+          if (!cloudAuthoritativeRaid && !cloudAuthoritativeMonster) {
             setLootModal({
               monster: defeatedMonsterData,
               loot: killLoot,
