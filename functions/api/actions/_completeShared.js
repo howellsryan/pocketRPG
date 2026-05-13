@@ -7,6 +7,7 @@ import { auditLog } from '../../_lib/game/audit.js'
 import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
 import cluesData from '../../../src/data/clues.json' assert { type: 'json' }
 import minigamesData from '../../../src/data/minigames.json' assert { type: 'json' }
+import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
 
 const VALID_SOURCE_IDS = {
   raids: new Set(Object.keys(raidsData || {})),
@@ -14,6 +15,7 @@ const VALID_SOURCE_IDS = {
   minigames: new Set((minigamesData?.tasks || []).map(t => t?.id).filter(Boolean)),
   slayer: new Set(['slayer']),
   dungeoneering: new Set(['dungeoneering']),
+  monsters: new Set(Object.keys(monstersData || {})),
 }
 
 export function makeCompletionHandler(sourceType, deps = {}) {
