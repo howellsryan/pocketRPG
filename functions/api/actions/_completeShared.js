@@ -8,6 +8,26 @@ import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
 import cluesData from '../../../src/data/clues.json' assert { type: 'json' }
 import minigamesData from '../../../src/data/minigames.json' assert { type: 'json' }
 import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
+import { isValidEntry } from '../../_lib/collectionLog.js'
+
+
+
+async function persistCollectionLogFromGranted(env, characterId, sourceType, sourceId, granted) {
+  if (!env?.DB || !characterId || !sourceType || !sourceId) return
+  if (!Array.isArray(granted) || granted.length === 0) return
+  const uniqueItemIds = [...new Set(granted.map(g => g?.itemId).filter(Boolean))]
+  const entries = uniqueItemIds
+    .filter(itemId => isValidEntry(sourceType, sourceId, itemId))
+    .map(itemId => ({ itemId, sourceType, sourceId }))
+  if (entries.length === 0) return
+  const now = Date.now()
+  const stmts = entries.map(e => env.DB.prepare(
+    `INSERT INTO collection_log (character_id, item_id, source_type, source_id, obtained_at)
+     VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT(character_id, item_id, source_type, source_id) DO NOTHING`
+  ).bind(characterId, e.itemId, e.sourceType, e.sourceId, now))
+  await env.DB.batch(stmts)
+}
 
 const VALID_SOURCE_IDS = {
   raids: new Set(Object.keys(raidsData || {})),
@@ -49,6 +69,7 @@ export function makeCompletionHandler(sourceType, deps = {}) {
         slayerPoints: body?.slayerPoints,
         dungeoneeringTokens: body?.dungeoneeringTokens,
       })
+      await persistCollectionLogFromGranted(env, characterId, sourceType, sourceId, settled.granted)
       const write = await (deps.writeSave || writeSave)(env, characterId, saveObject, saveRevision)
 
       auditLog('action_complete', { sourceType, sourceId, characterId, granted: settled.granted.length })

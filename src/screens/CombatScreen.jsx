@@ -779,11 +779,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 bankRef.current = newBank
               }
               if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
-              if (raidId && granted.length > 0) {
-                for (const itemId of filterLoggedDrops(granted, 'raids', raidId)) {
-                  recordCollectionLogDrop({ itemId, sourceType: 'raids', sourceId: raidId })
-                }
-              }
               setLootModal({
                 monster: defeatedMonsterData,
                 loot: granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity })),
@@ -831,11 +826,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 bankRef.current = newBank
               }
               if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
-              if (defeatedMonsterId && granted.length > 0) {
-                for (const itemId of filterLoggedDrops(granted, 'monsters', defeatedMonsterId)) {
-                  recordCollectionLogDrop({ itemId, sourceType: 'monsters', sourceId: defeatedMonsterId })
-                }
-              }
               setLootModal({
                 monster: defeatedMonsterData,
                 loot: granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity })),
