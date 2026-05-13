@@ -238,7 +238,13 @@ function checkMonsterDeath(state, monster, events) {
     state.active = false
     state.specialAttackEnergy = 100
     state.loot = rollRaidRewards(raid.rewards)
-    events.push({ type: 'raidComplete', raidId: raid.raidId, loot: state.loot, xpGained: { ...state.xpGained } })
+    events.push({
+      type: 'raidComplete',
+      raidId: raid.raidId,
+      raidName: raid.name,
+      loot: state.loot,
+      xpGained: { ...state.xpGained }
+    })
     events.push({
       type: 'monsterDeath',
       monster: { id: monster.id, name: monster.name, boss: monster.boss === true },

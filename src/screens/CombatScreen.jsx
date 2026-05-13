@@ -572,7 +572,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           }])
         }
         if (ev.type === 'raidComplete') {
-          let newKC = null
           setLog(prev => [...prev.slice(-20), {
             text: `🏆 Raid complete!`,
             type: 'raid',
@@ -582,12 +581,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           // Track raid KC
           if (ev.raidId && state.raid) {
             const raidId = ev.raidId
-            newKC = (raidKillCountsRef.current[raidId] || 0) + 1
+            const newKC = (raidKillCountsRef.current[raidId] || 0) + 1
             const updatedCounts = { ...raidKillCountsRef.current, [raidId]: newKC }
             raidKillCountsRef.current = updatedCounts
             updateRaidKillCounts(updatedCounts)
+            const raidName = ev.raidName || state.raid?.name || raidId
             setLog(prev => [...prev.slice(-20), {
-              text: `👑 ${state.raid.name} KC: ${newKC.toLocaleString()}`,
+              text: `👑 ${raidName} KC: ${newKC.toLocaleString()}`,
               type: 'victory',
               time: Date.now()
             }])
@@ -805,11 +805,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               recordCollectionLogDrop({ itemId, sourceType: 'monsters', sourceId: defeatedMonsterId })
             }
           }
-          setLog(prev => [...prev.slice(-20), {
-            text: `${defeatedMonsterName} defeated!`,
-            type: 'victory',
-            time: Date.now()
-          }])
+          if (ev.fromRaidCompletion !== true) {
+            setLog(prev => [...prev.slice(-20), {
+              text: `${defeatedMonsterName} defeated!`,
+              type: 'victory',
+              time: Date.now()
+            }])
+          }
           // Show loot modal instead of auto-restarting
           if (!cloudAuthoritativeRaid) {
             setLootModal({
