@@ -31,6 +31,7 @@ export async function completeMinigameTask({ task, taskWrapper, deps }) {
     grantMinigameTaskRewards,
     requestCriticalPushSave,
     getSnapshot,
+    forceFinalSave,
     addToast,
     isInPvpMatch,
     inFlightSet,
@@ -60,6 +61,7 @@ export async function completeMinigameTask({ task, taskWrapper, deps }) {
         removeLocalActiveTask,
         requestCriticalPushSave,
         getSnapshot,
+        forceFinalSave,
         isInPvpMatch,
         addToast,
         onWarn,
@@ -88,6 +90,7 @@ async function runCloudCompletion({
   removeLocalActiveTask,
   requestCriticalPushSave,
   getSnapshot,
+  forceFinalSave,
   isInPvpMatch,
   addToast,
   onWarn,
@@ -111,6 +114,9 @@ async function runCloudCompletion({
     // push that would have overwritten the server's authoritative save.
     if (!isInPvpMatch && requestCriticalPushSave && getSnapshot) {
       requestCriticalPushSave(getSnapshot, 'minigame_complete')
+      // Belt-and-suspenders durability: perform one immediate final save after
+      // completion + state apply to minimise any window before debounce flush.
+      if (forceFinalSave) await forceFinalSave()
     }
     return { status: 'success', granted: res?.granted || [] }
   } catch (err) {

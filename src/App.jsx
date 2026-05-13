@@ -238,6 +238,10 @@ function GameApp() {
         grantMinigameTaskRewards: (t) => grantMinigameTaskRewards(t, { updateBankDirect, unlockMinigameItem, completeMinigameTask: markMinigameTaskCompleted, recordCollectionLogDropForMinigame }),
         requestCriticalPushSave,
         getSnapshot: () => getSnapshotRef.current(),
+        forceFinalSave: async () => {
+          await Promise.resolve()
+          await pushNow(getSnapshotRef.current())
+        },
         addToast,
         isInPvpMatch,
         inFlightSet: minigameCompletingRef.current,
