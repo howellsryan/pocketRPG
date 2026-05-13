@@ -58,6 +58,9 @@ export async function completeMinigameTask({ task, taskWrapper, deps }) {
         pullSave,
         applyServerCollectionLogEntries,
         removeLocalActiveTask,
+        requestCriticalPushSave,
+        getSnapshot,
+        isInPvpMatch,
         addToast,
         onWarn,
       })
@@ -83,6 +86,9 @@ async function runCloudCompletion({
   pullSave,
   applyServerCollectionLogEntries,
   removeLocalActiveTask,
+  requestCriticalPushSave,
+  getSnapshot,
+  isInPvpMatch,
   addToast,
   onWarn,
 }) {
@@ -97,6 +103,15 @@ async function runCloudCompletion({
       applyServerCollectionLogEntries(res.collectionLogEntries)
     }
     removeLocalActiveTask()
+    // Schedule a fresh save AFTER /complete + applyCloudSave + loadGame have
+    // landed unlockedMinigameItems into React state. The snapshot factory is
+    // evaluated at flush time (post-render), so any subsequent push
+    // necessarily includes the unlock. This is also the only push we issue in
+    // the cloud branch — applyCloudSave invalidated any pre-complete pending
+    // push that would have overwritten the server's authoritative save.
+    if (!isInPvpMatch && requestCriticalPushSave && getSnapshot) {
+      requestCriticalPushSave(getSnapshot, 'minigame_complete')
+    }
     return { status: 'success', granted: res?.granted || [] }
   } catch (err) {
     if (err?.status === 409 && err?.body?.code === 'STALE_REPLAYED_ACTION') {
@@ -111,6 +126,9 @@ async function runCloudCompletion({
         onWarn?.(`[PocketRPG] post-dedupe pull failed: ${e?.message || e}`)
       }
       removeLocalActiveTask()
+      if (!isInPvpMatch && requestCriticalPushSave && getSnapshot) {
+        requestCriticalPushSave(getSnapshot, 'minigame_complete')
+      }
       return { status: 'success-deduped' }
     }
     onWarn?.(`[PocketRPG] minigame sync failed: ${err?.message || err}`)

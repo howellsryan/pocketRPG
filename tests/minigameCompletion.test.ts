@@ -54,7 +54,7 @@ function buildDeps(log: CallLog, opts: BuildDepsOptions = {}) {
 }
 
 describe('completeMinigameTask — cloud-authoritative ordering', () => {
-  it('calls /complete BEFORE any save push (no pre-complete /api/save)', async () => {
+  it('runs /complete -> applyCloudSave -> loadGame -> removeLocalActiveTask -> requestCriticalPushSave, in that order', async () => {
     const log: CallLog = []
     const deps = buildDeps(log)
     const task = { id: 'ba_fighter_hat', name: 'Fighter Hat' }
@@ -63,17 +63,34 @@ describe('completeMinigameTask — cloud-authoritative ordering', () => {
     const res = await completeMinigameTask({ task, taskWrapper: wrapper, deps })
 
     expect(res.status).toBe('success')
-    expect(deps.requestCriticalPushSave).not.toHaveBeenCalled()
     expect(deps.api.completeMinigame).toHaveBeenCalledTimes(1)
+    expect(deps.requestCriticalPushSave).toHaveBeenCalledTimes(1)
 
     const completeIdx = log.findIndex(e => e.startsWith('api.completeMinigame:'))
     const applyIdx = log.indexOf('applyCloudSave')
     const loadIdx = log.indexOf('loadGame')
     const removeIdx = log.indexOf('removeLocalActiveTask')
+    const pushIdx = log.findIndex(e => e.startsWith('requestCriticalPushSave:'))
     expect(completeIdx).toBeGreaterThan(-1)
     expect(applyIdx).toBeGreaterThan(completeIdx)
     expect(loadIdx).toBeGreaterThan(applyIdx)
     expect(removeIdx).toBeGreaterThan(loadIdx)
+    // The post-complete save must happen strictly AFTER applyCloudSave so the
+    // snapshot factory has unlockedMinigameItems in React state.
+    expect(pushIdx).toBeGreaterThan(applyIdx)
+  })
+
+  it('passes the getSnapshot thunk (not a captured value) to requestCriticalPushSave so the snapshot reads post-render state', async () => {
+    const log: CallLog = []
+    const deps = buildDeps(log)
+    await completeMinigameTask({
+      task: { id: 'ba_fighter_hat' },
+      taskWrapper: { startedAt: 1 },
+      deps,
+    })
+    const [factory, reason] = (deps.requestCriticalPushSave as any).mock.calls[0]
+    expect(factory).toBe(deps.getSnapshot)
+    expect(reason).toBe('minigame_complete')
   })
 
   it('clears React state synchronously to stop tick re-fire, before awaiting /complete', async () => {
@@ -148,6 +165,7 @@ describe('completeMinigameTask — cloud-authoritative ordering', () => {
     expect(deps.loadGame).toHaveBeenCalled()
     expect(deps.removeLocalActiveTask).toHaveBeenCalled()
     expect(deps.addToast).not.toHaveBeenCalled()
+    expect(deps.requestCriticalPushSave).toHaveBeenCalledWith(deps.getSnapshot, 'minigame_complete')
   })
 
   it('on genuine /complete failure surfaces a toast and leaves localStorage activeTask in place', async () => {
@@ -165,6 +183,20 @@ describe('completeMinigameTask — cloud-authoritative ordering', () => {
     expect(res.status).toBe('failed')
     expect(deps.addToast).toHaveBeenCalledTimes(1)
     expect(deps.removeLocalActiveTask).not.toHaveBeenCalled()
+    expect(deps.requestCriticalPushSave).not.toHaveBeenCalled()
+  })
+
+  it('skips the post-complete critical save while in a PvP match', async () => {
+    const log: CallLog = []
+    const deps = buildDeps(log)
+    deps.isInPvpMatch = true
+    await completeMinigameTask({
+      task: { id: 'ba_fighter_hat' },
+      taskWrapper: { startedAt: 1 },
+      deps,
+    })
+    expect(deps.api.completeMinigame).toHaveBeenCalled()
+    expect(deps.requestCriticalPushSave).not.toHaveBeenCalled()
   })
 
   it('dedupes concurrent completions for the same task instance', async () => {

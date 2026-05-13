@@ -131,4 +131,37 @@ describe('cloud sync save status events', () => {
     expect(putSaveMock.mock.calls[0][1]).toMatchObject({ creditsUsedIncrement: 1 })
     expect(putSaveMock.mock.calls[1][1]).not.toHaveProperty('creditsUsedIncrement')
   })
+
+  it('applyCloudSave cancels a pending debounced push so a stale snapshot cannot overwrite the cloud copy', async () => {
+    putSaveMock.mockResolvedValue({ updatedAt: 1 })
+    const sync = await import('../src/cloud/sync.js')
+
+    // Simulate a debounced push queued BEFORE a /complete (snapshot lacks the
+    // server-granted unlock).
+    sync.schedulePushSave({ player: { name: 'Hero' }, settings: { unlockedMinigameItems: [] } })
+
+    // /complete returns; client applies the authoritative cloud save.
+    await sync.applyCloudSave({ player: { name: 'Hero' }, settings: { unlockedMinigameItems: ['fighter_hat'] } }, 999)
+
+    // The pending debounce timer should have been cleared — advancing past the
+    // 60s window must NOT fire the stale putSave.
+    await vi.advanceTimersByTimeAsync(120_000)
+    await vi.runAllTicks()
+
+    expect(putSaveMock).not.toHaveBeenCalled()
+  })
+
+  it('applyCloudSave cancels a pending critical push that was scheduled before /complete returned', async () => {
+    putSaveMock.mockResolvedValue({ updatedAt: 2 })
+    const sync = await import('../src/cloud/sync.js')
+
+    sync.requestCriticalPushSave(() => ({ player: { name: 'Hero' }, settings: { unlockedMinigameItems: [] } }), 'level_up')
+
+    await sync.applyCloudSave({ player: { name: 'Hero' }, settings: { unlockedMinigameItems: ['fighter_hat'] } }, 1000)
+
+    await vi.advanceTimersByTimeAsync(30_000)
+    await vi.runAllTicks()
+
+    expect(putSaveMock).not.toHaveBeenCalled()
+  })
 })

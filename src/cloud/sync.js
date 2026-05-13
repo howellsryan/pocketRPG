@@ -206,12 +206,31 @@ export async function checkCloudNewer() {
   return { payload: JSON.parse(save_data), updatedAt }
 }
 
+// Public: drop any queued push (debounced or critical). The captured
+// pendingSnapshot is from BEFORE the cloud save we just applied, so flushing
+// it would overwrite authoritative server state (e.g. minigame
+// `settings.unlockedMinigameItems` written by /api/actions/minigame/complete).
+// lastSaveRevision is preserved — it was just emitted by the response that
+// triggered the apply.
+export function invalidatePendingPush() {
+  pendingSnapshot = null
+  pendingSaveOptions = {}
+  if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }
+  pendingCriticalSnapshotSource = null
+  pendingCriticalReasons.clear()
+  if (criticalTimer) { clearTimeout(criticalTimer); criticalTimer = null }
+  hasUnsyncedChanges = false
+}
+
 // Public: apply a previously-pulled cloud save to IDB. Caller decides whether
 // to do this based on conflict-resolution UX.
 export async function applyCloudSave(payload, updatedAt) {
   await applySavePayload(payload, { restoreLocalIdleMirrors: false })
   if (updatedAt) lastPushedAt = updatedAt
   if (Number.isFinite(updatedAt) && Number.isFinite(lastSaveRevision) === false) lastSaveRevision = 0
+  // Any stale-snapshot pushes queued before this apply would clobber the cloud
+  // copy we just took as authoritative.
+  invalidatePendingPush()
   // IDB now holds this character's data — stamp ownership so the next boot
   // knows which character these rows belong to.
   const charId = getCharacterId()
