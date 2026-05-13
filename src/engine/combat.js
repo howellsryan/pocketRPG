@@ -898,8 +898,7 @@ function rollRaidRewards(rewards) {
     }
   }
   // Roll for a unique item
-  // TEMP (testing aid): always grant one unique if the raid has a unique table.
-  if (rewards.unique) {
+  if (rewards.unique && Math.random() < rewards.unique.chance) {
     const items = rewards.unique.items
     const totalWeight = items.reduce((sum, i) => sum + i.weight, 0)
     let roll = Math.random() * totalWeight

@@ -35,10 +35,6 @@ import { CRITICAL_SAVE_REASONS, hasCriticalDrop } from '../cloud/criticalSavePol
 import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
 import { filterLoggedDrops } from '../engine/collectionLog.js'
 
-// TEMP (testing aid): force raids to use client-side reward rolls (which are
-// currently configured to always include a unique) instead of server grants.
-const FORCE_LOCAL_RAID_REWARDS_FOR_TESTING = true
-
 const COMBAT_CATEGORIES = [
   {
     key: 'training',
@@ -576,7 +572,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           }])
         }
         if (ev.type === 'raidComplete') {
-          const cloudAuthoritativeRaid = !FORCE_LOCAL_RAID_REWARDS_FOR_TESTING && Boolean(ev.raidId && getToken() && getCharacterId())
+          const cloudAuthoritativeRaid = Boolean(ev.raidId && getToken() && getCharacterId())
           setLog(prev => [...prev.slice(-20), {
             text: `🏆 Raid complete!`,
             type: 'raid',
@@ -746,7 +742,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           }
 
           const raidId = state.raid?.raidId || null
-          const cloudAuthoritativeRaid = !FORCE_LOCAL_RAID_REWARDS_FOR_TESTING && Boolean(raidId && getToken() && getCharacterId())
+          const cloudAuthoritativeRaid = Boolean(raidId && getToken() && getCharacterId())
           if (cloudAuthoritativeRaid) {
             void api.completeRaid(raidId, {
               actionNonce: `raid:${raidId}:${Date.now()}`,
