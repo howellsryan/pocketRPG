@@ -87,6 +87,7 @@ export function createRaidCombatState(raidData, monstersData, combatType = 'mele
   const state = createCombatState(firstBoss, combatType, stance, spell)
   state.raid = {
     raidId: raidData.id,
+    name: raidData.name,
     bosses: raidData.bosses,
     currentBossIndex: 0,
     monstersData,
@@ -241,7 +242,7 @@ function checkMonsterDeath(state, monster, events) {
     events.push({
       type: 'raidComplete',
       raidId: raid.raidId,
-      raidName: raid.name,
+      raidName: raid.name || raid.raidId,
       loot: state.loot,
       xpGained: { ...state.xpGained }
     })
