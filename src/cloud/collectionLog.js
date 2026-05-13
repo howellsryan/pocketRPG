@@ -10,6 +10,7 @@ import { isSlotObtained } from '../engine/collectionLog.js'
 
 const FLUSH_DELAY_MS = 500
 const MAX_BUFFER = 64
+const SERVER_AUTHORITATIVE_SOURCES = new Set(['monsters', 'raids'])
 
 let buffer = []
 let timer = null
@@ -78,6 +79,25 @@ export async function fetchCollectionLog({ force = false } = {}) {
   }
 }
 
+
+export function applyServerCollectionLogEntries(entries = []) {
+  if (!Array.isArray(entries) || entries.length === 0) return
+  if (!cachedEntries) cachedEntries = new Set()
+  let changed = false
+  for (const e of entries) {
+    const itemId = typeof e?.itemId === 'string' ? e.itemId : null
+    const sourceType = typeof e?.sourceType === 'string' ? e.sourceType : null
+    const sourceId = typeof e?.sourceId === 'string' ? e.sourceId : null
+    if (!itemId || !sourceType || !sourceId) continue
+    const key = `${sourceType}:${sourceId}:${itemId}`
+    if (cachedEntries.has(key)) continue
+    cachedEntries.add(key)
+    changed = true
+    notifySlotComplete({ itemId, sourceType, sourceId })
+  }
+  if (changed) notify()
+}
+
 export function clearCollectionLogCache() {
   cachedEntries = null
   cachedTotal = null
@@ -119,6 +139,7 @@ function scheduleFlush() {
 // (covers the shared-item case where one source credits multiple slots).
 export function recordCollectionLogDrop({ itemId, sourceType, sourceId }) {
   if (!itemId || !sourceType || !sourceId) return
+  if (SERVER_AUTHORITATIVE_SOURCES.has(sourceType)) return
   const key = `${sourceType}:${sourceId}:${itemId}`
   if (cachedEntries) {
     if (cachedEntries.has(key)) return

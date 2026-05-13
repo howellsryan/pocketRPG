@@ -32,7 +32,7 @@ import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slay
 import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster } from '../engine/slayerTasks.js'
 import { getSlayerTaskReward } from '../engine/slayerRewards.js'
 import { CRITICAL_SAVE_REASONS, hasCriticalDrop } from '../cloud/criticalSavePolicy.js'
-import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
+import { recordCollectionLogDrop, applyServerCollectionLogEntries } from '../cloud/collectionLog.js'
 import { filterLoggedDrops } from '../engine/collectionLog.js'
 
 const COMBAT_CATEGORIES = [
@@ -688,12 +688,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           const defeatedMonsterName = defeatedMonsterData?.name || defeatedMonster?.name || state.monster?.name || 'Monster'
           const isDefeatedBoss = defeatedMonsterData?.boss === true || defeatedMonster?.boss === true
           const killLoot = Array.isArray(ev.loot) ? ev.loot : []
+          const raidId = state.raid?.raidId || null
+          const cloudAuthoritativeRaid = Boolean(raidId && getToken() && getCharacterId())
+          const cloudAuthoritativeMonster = Boolean(!raidId && defeatedMonsterId && getToken() && getCharacterId())
+          const cloudAuthoritativeCompletion = cloudAuthoritativeRaid || cloudAuthoritativeMonster
           let slayerXpGained = 0
           setKillCount(k => k + 1)
-          requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.MONSTER_KILL)
+          if (!cloudAuthoritativeCompletion) {
+            requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.MONSTER_KILL)
+          }
 
           // Boss kill count tracking
-          if (isDefeatedBoss && defeatedMonsterId) {
+          if (!cloudAuthoritativeCompletion && isDefeatedBoss && defeatedMonsterId) {
             const skipBossKcLog = ev.fromRaidCompletion === true
             const newKC = (bossKillCountsRef.current[defeatedMonsterId] || 0) + 1
             const updatedCounts = { ...bossKillCountsRef.current, [defeatedMonsterId]: newKC }
@@ -741,10 +747,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             }
           }
 
-          const raidId = state.raid?.raidId || null
-          const cloudAuthoritativeRaid = Boolean(raidId && getToken() && getCharacterId())
-          const cloudAuthoritativeMonster = Boolean(!raidId && defeatedMonsterId && getToken() && getCharacterId())
           if (cloudAuthoritativeRaid) {
+            setLootModal({
+              monster: defeatedMonsterData,
+              loot: [],
+              slayerXpGained,
+              isBossKill: isDefeatedBoss,
+              raidId,
+              loading: true
+            })
             void api.completeRaid(raidId, {
               actionNonce: `raid:${raidId}:${Date.now()}`,
             }).then(async (res) => {
@@ -770,23 +781,37 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 updateBank(newBank)
                 bankRef.current = newBank
               }
-              if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
-              if (raidId && granted.length > 0) {
-                for (const itemId of filterLoggedDrops(granted, 'raids', raidId)) {
-                  recordCollectionLogDrop({ itemId, sourceType: 'raids', sourceId: raidId })
+              applyServerCollectionLogEntries(res?.collectionLogEntries || [])
+              if (res?.save?.save_data) {
+                const parsedSave = JSON.parse(res.save.save_data)
+                const serverRaidCounts = parsedSave?.settings?.raidKillCounts
+                if (serverRaidCounts && typeof serverRaidCounts === 'object') {
+                  raidKillCountsRef.current = serverRaidCounts
+                  updateRaidKillCounts(serverRaidCounts)
                 }
+                await applyCloudSave(parsedSave, res.save.updatedAt)
               }
               setLootModal({
                 monster: defeatedMonsterData,
                 loot: granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity })),
                 slayerXpGained,
                 isBossKill: isDefeatedBoss,
-                raidId
+                raidId,
+                loading: false
               })
             }).catch((err) => {
+              setLootModal(null)
               addToast(`Raid claim failed: ${err?.message || 'server_error'}`, 'error')
             })
           } else if (cloudAuthoritativeMonster) {
+            setLootModal({
+              monster: defeatedMonsterData,
+              loot: [],
+              slayerXpGained,
+              isBossKill: isDefeatedBoss,
+              raidId,
+              loading: true
+            })
             void api.completeMonster(defeatedMonsterId, {
               actionNonce: `monster:${defeatedMonsterId}:${Date.now()}`,
             }).then(async (res) => {
@@ -812,20 +837,26 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 updateBank(newBank)
                 bankRef.current = newBank
               }
-              if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
-              if (defeatedMonsterId && granted.length > 0) {
-                for (const itemId of filterLoggedDrops(granted, 'monsters', defeatedMonsterId)) {
-                  recordCollectionLogDrop({ itemId, sourceType: 'monsters', sourceId: defeatedMonsterId })
+              applyServerCollectionLogEntries(res?.collectionLogEntries || [])
+              if (res?.save?.save_data) {
+                const parsedSave = JSON.parse(res.save.save_data)
+                const serverBossCounts = parsedSave?.settings?.bossKillCounts
+                if (serverBossCounts && typeof serverBossCounts === 'object') {
+                  bossKillCountsRef.current = serverBossCounts
+                  updateBossKillCounts(serverBossCounts)
                 }
+                await applyCloudSave(parsedSave, res.save.updatedAt)
               }
               setLootModal({
                 monster: defeatedMonsterData,
                 loot: granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity })),
                 slayerXpGained,
                 isBossKill: isDefeatedBoss,
-                raidId
+                raidId,
+                loading: false
               })
             }).catch((err) => {
+              setLootModal(null)
               addToast(`Monster claim failed: ${err?.message || 'server_error'}`, 'error')
             })
           } else if (killLoot.length > 0) {
@@ -862,13 +893,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             }])
           }
           // Show loot modal instead of auto-restarting
-          if (!cloudAuthoritativeRaid) {
+          if (!cloudAuthoritativeRaid && !cloudAuthoritativeMonster) {
             setLootModal({
               monster: defeatedMonsterData,
               loot: killLoot,
               slayerXpGained,
               isBossKill: isDefeatedBoss,
-              raidId
+              raidId,
+              loading: false
             })
           }
         }
@@ -2489,7 +2521,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             </div>
 
             {/* Loot items */}
-            {lootModal.loot && lootModal.loot.length > 0 ? (
+            {lootModal.loading ? (
+              <div class="text-center py-6">
+                <div class="w-8 h-8 mx-auto border-2 border-[var(--color-gold)] border-t-transparent rounded-full animate-spin" />
+                <div class="mt-3 text-sm text-[var(--color-parchment)] opacity-70">Waiting for server loot…</div>
+              </div>
+            ) : lootModal.loot && lootModal.loot.length > 0 ? (
               <div class="space-y-2 max-h-48 overflow-y-auto">
                 {lootModal.loot.map((drop, idx) => {
                   const item = itemsData[drop.itemId]
@@ -2518,6 +2555,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             )}
 
             {/* Action buttons */}
+            {!lootModal.loading && (
             <div class="grid grid-cols-2 gap-3 pt-2">
               <button
                 onClick={() => {
@@ -2546,6 +2584,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 {lootModal.raidId ? 'Raid Again' : 'Fight Again'}
               </button>
             </div>
+            )}
           </div>
         </Modal>
       )}
