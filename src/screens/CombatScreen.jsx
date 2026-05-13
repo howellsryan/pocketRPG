@@ -14,7 +14,7 @@ import { createCombatState, createRaidCombatState, processCombatTick, applyEat, 
 import { getLevelFromXP } from '../engine/experience.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick, pauseTicks, resumeTicks } from '../engine/tick.js'
-import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
+import { addItem, removeItem, freeSlots, deliverDropWithBankOverflow } from '../engine/inventory.js'
 import { getCombatType, equipItem, checkEquipRequirements } from '../engine/equipment.js'
 import { api, clearAuth, getToken, setLocalCharacterId } from '../cloud/api.js'
 import { pullSave, applyCloudSave, requestCriticalPushSave } from '../cloud/sync.js'
@@ -730,26 +730,25 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             }
           }
 
+          let overflowedDrops = []
           if (killLoot.length > 0) {
             const newInv = [...inventoryRef.current]
+            const newBank = { ...bankRef.current }
+            let anyOverflow = false
             for (const drop of killLoot) {
               const item = itemsData[drop.itemId]
-              let added = false
-              if (drop.noted) {
-                // Noted drops stack separately from regular stacks (noted: true on slot)
-                const existingIdx = newInv.findIndex(s => s && s.itemId === drop.itemId && s.noted)
-                if (existingIdx !== -1) {
-                  newInv[existingIdx] = { ...newInv[existingIdx], quantity: newInv[existingIdx].quantity + drop.quantity }
-                  added = true
-                } else {
-                  const empty = newInv.indexOf(null)
-                  if (empty !== -1) { newInv[empty] = { itemId: drop.itemId, quantity: drop.quantity, noted: true }; added = true }
-                }
-              } else {
-                added = addItem(newInv, drop.itemId, drop.quantity, item?.stackable || false)
+              const { overflowedToBank } = deliverDropWithBankOverflow(newInv, newBank, drop, !!item?.stackable)
+              if (overflowedToBank > 0) {
+                anyOverflow = true
+                overflowedDrops.push({ itemId: drop.itemId, quantity: overflowedToBank })
               }
             }
             updateInventory(newInv)
+            if (anyOverflow) {
+              updateBank(newBank)
+              bankRef.current = newBank
+              addToast('🏦 Inventory full — extra loot sent to bank.', 'info')
+            }
           }
 
           if (hasCriticalDrop(killLoot, defeatedMonsterData, itemsData)) {
@@ -772,7 +771,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             loot: killLoot,
             slayerXpGained,
             isBossKill: isDefeatedBoss,
-            raidId
+            raidId,
+            overflowedToBank: overflowedDrops
           })
         }
       }
@@ -2390,6 +2390,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 </>
               )}
             </div>
+
+            {/* Bank overflow notice */}
+            {Array.isArray(lootModal.overflowedToBank) && lootModal.overflowedToBank.length > 0 && (
+              <div class="rounded-lg p-2 text-xs text-center bg-[#2a2410] border border-[#5a4a1a] text-[var(--color-gold)]">
+                🏦 Inventory full — {lootModal.overflowedToBank.length} drop{lootModal.overflowedToBank.length === 1 ? '' : 's'} sent to bank.
+              </div>
+            )}
 
             {/* Loot items */}
             {lootModal.loot && lootModal.loot.length > 0 ? (

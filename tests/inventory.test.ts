@@ -7,7 +7,8 @@ import {
   countItem,
   addItem,
   removeItem,
-  swapSlots
+  swapSlots,
+  deliverDropWithBankOverflow
 } from '../src/engine/inventory.js'
 
 const INVENTORY_SIZE = 28
@@ -316,6 +317,103 @@ describe('Inventory System', () => {
 
       expect(inventory[0].itemId).toBe('last')
       expect(inventory[27].itemId).toBe('first')
+    })
+  })
+
+  describe('deliverDropWithBankOverflow', () => {
+    it('places a stackable drop into inventory when space is available', () => {
+      const bank: any = {}
+      const result = deliverDropWithBankOverflow(inventory, bank, { itemId: 'coins', quantity: 50000 }, true)
+      expect(result).toEqual({ addedToInventory: 50000, overflowedToBank: 0 })
+      expect(findItem(inventory, 'coins')).toBe(0)
+      expect(inventory[0].quantity).toBe(50000)
+      expect(bank.coins).toBeUndefined()
+    })
+
+    it('overflows stackable drop to bank when inventory is full', () => {
+      for (let i = 0; i < 28; i++) inventory[i] = { itemId: 'filler_' + i, quantity: 1 }
+      const bank: any = {}
+      const result = deliverDropWithBankOverflow(inventory, bank, { itemId: 'death_rune', quantity: 200 }, true)
+      expect(result).toEqual({ addedToInventory: 0, overflowedToBank: 200 })
+      expect(bank.death_rune).toEqual({ itemId: 'death_rune', quantity: 200 })
+    })
+
+    it('places non-stackable units one-per-slot and overflows the remainder to bank', () => {
+      for (let i = 0; i < 26; i++) inventory[i] = { itemId: 'filler_' + i, quantity: 1 }
+      const bank: any = {}
+      const result = deliverDropWithBankOverflow(inventory, bank, { itemId: 'dragon_bones', quantity: 10 }, false)
+      expect(result).toEqual({ addedToInventory: 2, overflowedToBank: 8 })
+      expect(countItem(inventory, 'dragon_bones')).toBe(2)
+      expect(bank.dragon_bones).toEqual({ itemId: 'dragon_bones', quantity: 8 })
+    })
+
+    it('places a non-stackable unique reward into the bank when inventory is full', () => {
+      for (let i = 0; i < 28; i++) inventory[i] = { itemId: 'filler_' + i, quantity: 1 }
+      const bank: any = {}
+      const result = deliverDropWithBankOverflow(inventory, bank, { itemId: 'twisted_bow', quantity: 1 }, false)
+      expect(result).toEqual({ addedToInventory: 0, overflowedToBank: 1 })
+      expect(bank.twisted_bow).toEqual({ itemId: 'twisted_bow', quantity: 1 })
+    })
+
+    it('merges overflow into existing bank entries', () => {
+      for (let i = 0; i < 28; i++) inventory[i] = { itemId: 'filler_' + i, quantity: 1 }
+      const bank: any = { coins: { itemId: 'coins', quantity: 1000 } }
+      deliverDropWithBankOverflow(inventory, bank, { itemId: 'coins', quantity: 75000 }, true)
+      expect(bank.coins.quantity).toBe(76000)
+    })
+
+    it('delivers a full Chambers of Xeric reward set without losing any items', () => {
+      // Pre-fill 15 slots so a CoX-sized payload must overflow
+      for (let i = 0; i < 15; i++) inventory[i] = { itemId: 'pre_' + i, quantity: 1 }
+      const bank: any = {}
+      const drops = [
+        { itemId: 'coins', quantity: 100000, stackable: true },
+        { itemId: 'dragon_bones', quantity: 15, stackable: false },
+        { itemId: 'death_rune', quantity: 200, stackable: true },
+        { itemId: 'blood_rune', quantity: 150, stackable: true },
+        { itemId: 'soul_rune', quantity: 100, stackable: true },
+        { itemId: 'snapdragon', quantity: 20, stackable: true },
+        { itemId: 'twisted_bow', quantity: 1, stackable: false }
+      ]
+      let totalDelivered = 0
+      for (const d of drops) {
+        const { addedToInventory, overflowedToBank } = deliverDropWithBankOverflow(
+          inventory, bank, { itemId: d.itemId, quantity: d.quantity }, d.stackable
+        )
+        totalDelivered += addedToInventory + overflowedToBank
+      }
+      const totalExpected = drops.reduce((s, d) => s + d.quantity, 0)
+      expect(totalDelivered).toBe(totalExpected)
+      // Every drop must end up somewhere — either inventory or bank
+      for (const d of drops) {
+        const inInv = countItem(inventory, d.itemId)
+        const inBank = bank[d.itemId]?.quantity || 0
+        expect(inInv + inBank).toBe(d.quantity)
+      }
+    })
+
+    it('handles noted drops by stacking with existing noted entries', () => {
+      inventory[0] = { itemId: 'dragon_bones', quantity: 5, noted: true }
+      const bank: any = {}
+      const result = deliverDropWithBankOverflow(inventory, bank, { itemId: 'dragon_bones', quantity: 10, noted: true }, false)
+      expect(result).toEqual({ addedToInventory: 10, overflowedToBank: 0 })
+      expect(inventory[0]).toEqual({ itemId: 'dragon_bones', quantity: 15, noted: true })
+    })
+
+    it('overflows noted drops to bank when no slot is available', () => {
+      for (let i = 0; i < 28; i++) inventory[i] = { itemId: 'filler_' + i, quantity: 1 }
+      const bank: any = {}
+      const result = deliverDropWithBankOverflow(inventory, bank, { itemId: 'shark', quantity: 50, noted: true }, false)
+      expect(result).toEqual({ addedToInventory: 0, overflowedToBank: 50 })
+      expect(bank.shark).toEqual({ itemId: 'shark', quantity: 50 })
+    })
+
+    it('ignores empty drops gracefully', () => {
+      const bank: any = {}
+      expect(deliverDropWithBankOverflow(inventory, bank, { itemId: 'coins', quantity: 0 }, true))
+        .toEqual({ addedToInventory: 0, overflowedToBank: 0 })
+      expect(deliverDropWithBankOverflow(inventory, bank, { itemId: '', quantity: 5 }, true))
+        .toEqual({ addedToInventory: 0, overflowedToBank: 0 })
     })
   })
 
