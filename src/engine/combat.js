@@ -242,6 +242,7 @@ function checkMonsterDeath(state, monster, events) {
     events.push({
       type: 'monsterDeath',
       monster: { id: monster.id, name: monster.name, boss: monster.boss === true },
+      fromRaidCompletion: true,
       loot: state.loot,
       xpGained: { ...state.xpGained }
     })

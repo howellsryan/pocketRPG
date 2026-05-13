@@ -572,6 +572,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           }])
         }
         if (ev.type === 'raidComplete') {
+          let newKC = null
           setLog(prev => [...prev.slice(-20), {
             text: `🏆 Raid complete!`,
             type: 'raid',
@@ -581,10 +582,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           // Track raid KC
           if (ev.raidId && state.raid) {
             const raidId = ev.raidId
-            const newKC = (raidKillCountsRef.current[raidId] || 0) + 1
+            newKC = (raidKillCountsRef.current[raidId] || 0) + 1
             const updatedCounts = { ...raidKillCountsRef.current, [raidId]: newKC }
             raidKillCountsRef.current = updatedCounts
             updateRaidKillCounts(updatedCounts)
+            setLog(prev => [...prev.slice(-20), {
+              text: `👑 ${state.raid.name} KC: ${newKC.toLocaleString()}`,
+              type: 'victory',
+              time: Date.now()
+            }])
           }
           if (ev.raidId && Array.isArray(ev.loot)) {
             for (const itemId of filterLoggedDrops(ev.loot, 'raids', ev.raidId)) {
@@ -687,15 +693,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
           // Boss kill count tracking
           if (isDefeatedBoss && defeatedMonsterId) {
+            const skipBossKcLog = ev.fromRaidCompletion === true
             const newKC = (bossKillCountsRef.current[defeatedMonsterId] || 0) + 1
             const updatedCounts = { ...bossKillCountsRef.current, [defeatedMonsterId]: newKC }
             bossKillCountsRef.current = updatedCounts
             updateBossKillCounts(updatedCounts)
-            setLog(prev => [...prev.slice(-20), {
-              text: `👑 ${defeatedMonsterName} KC: ${newKC.toLocaleString()}`,
-              type: 'victory',
-              time: Date.now()
-            }])
+            if (!skipBossKcLog) {
+              setLog(prev => [...prev.slice(-20), {
+                text: `👑 ${defeatedMonsterName} KC: ${newKC.toLocaleString()}`,
+                type: 'victory',
+                time: Date.now()
+              }])
+            }
           }
 
           // Slayer task tracking
