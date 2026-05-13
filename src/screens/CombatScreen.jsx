@@ -572,6 +572,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           }])
         }
         if (ev.type === 'raidComplete') {
+          const cloudAuthoritativeRaid = Boolean(ev.raidId && getToken() && getCharacterId())
           setLog(prev => [...prev.slice(-20), {
             text: `🏆 Raid complete!`,
             type: 'raid',
@@ -585,8 +586,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             const updatedCounts = { ...raidKillCountsRef.current, [raidId]: newKC }
             raidKillCountsRef.current = updatedCounts
             updateRaidKillCounts(updatedCounts)
+            const raidName = ev.raidName || state.raid?.name || raidId
+            setLog(prev => [...prev.slice(-20), {
+              text: `👑 ${raidName} KC: ${newKC.toLocaleString()}`,
+              type: 'victory',
+              time: Date.now()
+            }])
           }
-          if (ev.raidId && Array.isArray(ev.loot)) {
+          if (!cloudAuthoritativeRaid && ev.raidId && Array.isArray(ev.loot)) {
             for (const itemId of filterLoggedDrops(ev.loot, 'raids', ev.raidId)) {
               recordCollectionLogDrop({ itemId, sourceType: 'raids', sourceId: ev.raidId })
             }
@@ -687,15 +694,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
           // Boss kill count tracking
           if (isDefeatedBoss && defeatedMonsterId) {
+            const skipBossKcLog = ev.fromRaidCompletion === true
             const newKC = (bossKillCountsRef.current[defeatedMonsterId] || 0) + 1
             const updatedCounts = { ...bossKillCountsRef.current, [defeatedMonsterId]: newKC }
             bossKillCountsRef.current = updatedCounts
             updateBossKillCounts(updatedCounts)
-            setLog(prev => [...prev.slice(-20), {
-              text: `👑 ${defeatedMonsterName} KC: ${newKC.toLocaleString()}`,
-              type: 'victory',
-              time: Date.now()
-            }])
+            if (!skipBossKcLog) {
+              setLog(prev => [...prev.slice(-20), {
+                text: `👑 ${defeatedMonsterName} KC: ${newKC.toLocaleString()}`,
+                type: 'victory',
+                time: Date.now()
+              }])
+            }
           }
 
           // Slayer task tracking
@@ -760,6 +770,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 bankRef.current = newBank
               }
               if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
+              if (raidId && granted.length > 0) {
+                for (const itemId of filterLoggedDrops(granted, 'raids', raidId)) {
+                  recordCollectionLogDrop({ itemId, sourceType: 'raids', sourceId: raidId })
+                }
+              }
               setLootModal({
                 monster: defeatedMonsterData,
                 loot: granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity })),
@@ -796,11 +811,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               recordCollectionLogDrop({ itemId, sourceType: 'monsters', sourceId: defeatedMonsterId })
             }
           }
-          setLog(prev => [...prev.slice(-20), {
-            text: `${defeatedMonsterName} defeated!`,
-            type: 'victory',
-            time: Date.now()
-          }])
+          if (ev.fromRaidCompletion !== true) {
+            setLog(prev => [...prev.slice(-20), {
+              text: `${defeatedMonsterName} defeated!`,
+              type: 'victory',
+              time: Date.now()
+            }])
+          }
           // Show loot modal instead of auto-restarting
           if (!cloudAuthoritativeRaid) {
             setLootModal({

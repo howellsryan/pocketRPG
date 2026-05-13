@@ -8623,7 +8623,7 @@
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 60
+      "ranged": 10000
     },
     "defenceBonus": {
       "stab": 0,
@@ -8634,7 +8634,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 40,
+      "rangedStrength": 10000,
       "magicDamage": 0
     },
     "requirements": {
