@@ -200,6 +200,9 @@ describe('action completion endpoint tamper guards', () => {
     })
     const res = await handler({ request: req, env: {} as any })
     expect(res.status).toBe(200)
+    const body = await res.json()
+    const saved = JSON.parse(body.save.save_data)
+    expect(saved.settings.unlockedMinigameItems).toContain('fighter_hat')
   })
 
 

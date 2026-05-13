@@ -88,6 +88,14 @@ function incrementSettingCounterMap(saveObject, key, sourceId) {
   saveObject.settings[key] = { ...counts, [sourceId]: current + 1 }
 }
 
+function addUnlockedMinigameItems(saveObject, itemIds = []) {
+  const filtered = itemIds.filter(id => typeof id === 'string' && id.length > 0)
+  if (filtered.length === 0) return
+  if (!saveObject.settings || typeof saveObject.settings !== 'object') saveObject.settings = {}
+  const current = Array.isArray(saveObject.settings.unlockedMinigameItems) ? saveObject.settings.unlockedMinigameItems : []
+  saveObject.settings.unlockedMinigameItems = [...new Set([...current, ...filtered])]
+}
+
 function setDungeoneeringTokenBalance(saveObject, nextValue) {
   const normalized = Math.max(0, Math.floor(Number(nextValue) || 0))
   saveObject.dungeoneeringTokens = normalized
@@ -152,6 +160,9 @@ export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce
 
   if (sourceType === 'raids') incrementSettingCounterMap(saveObject, 'raidKillCounts', sourceId)
   if (sourceType === 'monsters') incrementSettingCounterMap(saveObject, 'bossKillCounts', sourceId)
+  if (sourceType === 'minigames' || sourceType === 'minigame') {
+    addUnlockedMinigameItems(saveObject, granted.map(g => g.itemId))
+  }
 
   const dTokens = Math.floor(Number(dungeoneeringTokens) || 0)
   if (dTokens !== 0) {
