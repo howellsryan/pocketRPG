@@ -62,7 +62,7 @@
         }
       ],
       "unique": {
-        "chance": 1,
+        "chance": 0.1,
         "items": [
           {
             "itemId": "twisted_buckler",
@@ -177,11 +177,11 @@
         }
       ],
       "unique": {
-        "chance": 1,
+        "chance": 0.15,
         "items": [
           {
             "itemId": "avernic_defender",
-            "weight": 8
+            "weight": 5
           },
           {
             "itemId": "ghrazi_rapier",
@@ -193,15 +193,15 @@
           },
           {
             "itemId": "justiciar_faceguard",
-            "weight": 2
+            "weight": 3
           },
           {
             "itemId": "justiciar_chestguard",
-            "weight": 2
+            "weight": 3
           },
           {
             "itemId": "justiciar_legguards",
-            "weight": 2
+            "weight": 3
           },
           {
             "itemId": "scythe_of_vitur",
@@ -260,7 +260,7 @@
         }
       ],
       "unique": {
-        "chance": 1,
+        "chance": 0.25,
         "items": [
           {
             "itemId": "ahrims_hood",
