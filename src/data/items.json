@@ -7931,30 +7931,30 @@
     "icon": "🌿",
     "isGeneralStore": false
   },
-  "harralander": {
-    "id": "harralander",
+  "sunblossom": {
+    "id": "sunblossom",
     "legacy_item_id": "harralander",
-    "name": "Harralander",
+    "name": "Sunblossom",
     "type": "resource",
     "stackable": true,
     "shopValue": 443,
     "icon": "🌿",
     "isGeneralStore": false
   },
-  "irit_leaf": {
-    "id": "irit_leaf",
+  "emberleaf": {
+    "id": "emberleaf",
     "legacy_item_id": "irit_leaf",
-    "name": "Irit Leaf",
+    "name": "Emberleaf",
     "type": "resource",
     "stackable": true,
     "shopValue": 1765,
     "icon": "🌿",
     "isGeneralStore": false
   },
-  "kwuarm": {
-    "id": "kwuarm",
+  "wyrmspice": {
+    "id": "wyrmspice",
     "legacy_item_id": "kwuarm",
-    "name": "Kwuarm",
+    "name": "Wyrmspice",
     "type": "resource",
     "stackable": true,
     "shopValue": 2544,
@@ -7971,30 +7971,30 @@
     "icon": "🌿",
     "isGeneralStore": false
   },
-  "cadantine": {
-    "id": "cadantine",
+  "cinderbloom": {
+    "id": "cinderbloom",
     "legacy_item_id": "cadantine",
-    "name": "Cadantine",
+    "name": "Cinderbloom",
     "type": "resource",
     "stackable": true,
     "shopValue": 3069,
     "icon": "🌿",
     "isGeneralStore": false
   },
-  "dwarf_weed": {
-    "id": "dwarf_weed",
+  "stonefern": {
+    "id": "stonefern",
     "legacy_item_id": "dwarf_weed",
-    "name": "Dwarf Weed",
+    "name": "Stonefern",
     "type": "resource",
     "stackable": true,
     "shopValue": 1849,
     "icon": "🌿",
     "isGeneralStore": false
   },
-  "lantadyme": {
-    "id": "lantadyme",
+  "mistvine": {
+    "id": "mistvine",
     "legacy_item_id": "lantadyme",
-    "name": "Lantadyme",
+    "name": "Mistvine",
     "type": "resource",
     "stackable": true,
     "shopValue": 1733,
@@ -8011,10 +8011,10 @@
     "icon": "🌿",
     "isGeneralStore": false
   },
-  "torstol": {
-    "id": "torstol",
+  "thornspire": {
+    "id": "thornspire",
     "legacy_item_id": "torstol",
-    "name": "Torstol",
+    "name": "Thornspire",
     "type": "resource",
     "stackable": true,
     "shopValue": 3637,
