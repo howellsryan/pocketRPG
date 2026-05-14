@@ -137,7 +137,7 @@
         "quantity": 1
       },
       {
-        "itemId": "guthix_mitre",
+        "itemId": "guthar_mitre",
         "weight": 0.01,
         "quantity": 1
       },
@@ -197,7 +197,7 @@
         "quantity": 1
       },
       {
-        "itemId": "guthix_stole",
+        "itemId": "guthar_stole",
         "weight": 0.005,
         "quantity": 1
       },
@@ -356,27 +356,27 @@
         "quantity": 1
       },
       {
-        "itemId": "guthix_d_hide_body",
+        "itemId": "guthar_d_hide_body",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "guthix_d_hide_chaps",
+        "itemId": "guthar_d_hide_chaps",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "guthix_d_hide_boots",
+        "itemId": "guthar_d_hide_boots",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "guthix_d_hide_bracers",
+        "itemId": "guthar_d_hide_bracers",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "guthix_coif",
+        "itemId": "guthar_coif",
         "weight": 0.005,
         "quantity": 1
       },
@@ -556,7 +556,7 @@
         "quantity": 1
       },
       {
-        "itemId": "guthix_d_hide_shield",
+        "itemId": "guthar_d_hide_shield",
         "weight": 0.005,
         "quantity": 1
       },

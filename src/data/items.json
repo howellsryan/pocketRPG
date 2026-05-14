@@ -12565,10 +12565,10 @@
     },
     "isClueReward": true
   },
-  "guthix_d_hide_body": {
-    "id": "guthix_d_hide_body",
+  "guthar_d_hide_body": {
+    "id": "guthar_d_hide_body",
     "legacy_item_id": "guthix_dhide_body",
-    "name": "Guthix D'Hide Body",
+    "name": "Guthar D'Hide Body",
     "type": "armour",
     "stackable": false,
     "shopValue": 97706,
@@ -12602,10 +12602,10 @@
     },
     "isClueReward": true
   },
-  "guthix_d_hide_chaps": {
-    "id": "guthix_d_hide_chaps",
+  "guthar_d_hide_chaps": {
+    "id": "guthar_d_hide_chaps",
     "legacy_item_id": "guthix_dhide_chaps",
-    "name": "Guthix D'Hide Chaps",
+    "name": "Guthar D'Hide Chaps",
     "type": "armour",
     "stackable": false,
     "shopValue": 120000,
@@ -12638,10 +12638,10 @@
     },
     "isClueReward": true
   },
-  "guthix_d_hide_boots": {
-    "id": "guthix_d_hide_boots",
+  "guthar_d_hide_boots": {
+    "id": "guthar_d_hide_boots",
     "legacy_item_id": "guthix_dhide_boots",
-    "name": "Guthix D'Hide Boots",
+    "name": "Guthar D'Hide Boots",
     "type": "armour",
     "stackable": false,
     "shopValue": 219370,
@@ -12675,10 +12675,10 @@
     },
     "isClueReward": true
   },
-  "guthix_d_hide_bracers": {
-    "id": "guthix_d_hide_bracers",
+  "guthar_d_hide_bracers": {
+    "id": "guthar_d_hide_bracers",
     "legacy_item_id": "guthix_dhide_bracers",
-    "name": "Guthix D'Hide Bracers",
+    "name": "Guthar D'Hide Bracers",
     "type": "armour",
     "stackable": false,
     "shopValue": 90000,
@@ -12712,10 +12712,10 @@
     },
     "isClueReward": true
   },
-  "guthix_coif": {
-    "id": "guthix_coif",
+  "guthar_coif": {
+    "id": "guthar_coif",
     "legacy_item_id": "guthix_coif",
-    "name": "Guthix Coif",
+    "name": "Guthar Coif",
     "type": "armour",
     "stackable": false,
     "shopValue": 65111,
@@ -12746,10 +12746,10 @@
     },
     "isClueReward": true
   },
-  "guthix_stole": {
-    "id": "guthix_stole",
+  "guthar_stole": {
+    "id": "guthar_stole",
     "legacy_item_id": "guthix_stole",
-    "name": "Guthix Stole",
+    "name": "Guthar Stole",
     "type": "armour",
     "stackable": false,
     "shopValue": 2764,
@@ -14402,10 +14402,10 @@
     },
     "isClueReward": true
   },
-  "guthix_d_hide_shield": {
-    "id": "guthix_d_hide_shield",
+  "guthar_d_hide_shield": {
+    "id": "guthar_d_hide_shield",
     "legacy_item_id": "guthix_dhide_shield",
-    "name": "Guthix D'Hide Shield",
+    "name": "Guthar D'Hide Shield",
     "type": "armour",
     "stackable": false,
     "shopValue": 291503,
@@ -15243,10 +15243,10 @@
     },
     "isClueReward": true
   },
-  "guthix_mitre": {
-    "id": "guthix_mitre",
+  "guthar_mitre": {
+    "id": "guthar_mitre",
     "legacy_item_id": "guthix_mitre",
-    "name": "Guthix Mitre",
+    "name": "Guthar Mitre",
     "type": "armour",
     "stackable": false,
     "shopValue": 8847,
@@ -21522,10 +21522,10 @@
     },
     "isClueReward": true
   },
-  "guthix_dhide_body": {
-    "id": "guthix_d_hide_body",
+  "guthar_dhide_body": {
+    "id": "guthar_d_hide_body",
     "legacy_item_id": "guthix_dhide_body",
-    "name": "Guthix D'Hide Body",
+    "name": "Guthar D'Hide Body",
     "type": "armour",
     "stackable": false,
     "shopValue": 97706,
@@ -21559,10 +21559,10 @@
     },
     "isClueReward": true
   },
-  "guthix_dhide_chaps": {
-    "id": "guthix_d_hide_chaps",
+  "guthar_dhide_chaps": {
+    "id": "guthar_d_hide_chaps",
     "legacy_item_id": "guthix_dhide_chaps",
-    "name": "Guthix D'Hide Chaps",
+    "name": "Guthar D'Hide Chaps",
     "type": "armour",
     "stackable": false,
     "shopValue": 120000,
@@ -21595,10 +21595,10 @@
     },
     "isClueReward": true
   },
-  "guthix_dhide_boots": {
-    "id": "guthix_d_hide_boots",
+  "guthar_dhide_boots": {
+    "id": "guthar_d_hide_boots",
     "legacy_item_id": "guthix_dhide_boots",
-    "name": "Guthix D'Hide Boots",
+    "name": "Guthar D'Hide Boots",
     "type": "armour",
     "stackable": false,
     "shopValue": 219370,
@@ -21632,10 +21632,10 @@
     },
     "isClueReward": true
   },
-  "guthix_dhide_bracers": {
-    "id": "guthix_d_hide_bracers",
+  "guthar_dhide_bracers": {
+    "id": "guthar_d_hide_bracers",
     "legacy_item_id": "guthix_dhide_bracers",
-    "name": "Guthix D'Hide Bracers",
+    "name": "Guthar D'Hide Bracers",
     "type": "armour",
     "stackable": false,
     "shopValue": 90000,
@@ -23159,10 +23159,10 @@
     },
     "isClueReward": true
   },
-  "guthix_dhide_shield": {
-    "id": "guthix_d_hide_shield",
+  "guthar_dhide_shield": {
+    "id": "guthar_d_hide_shield",
     "legacy_item_id": "guthix_dhide_shield",
-    "name": "Guthix D'Hide Shield",
+    "name": "Guthar D'Hide Shield",
     "type": "armour",
     "stackable": false,
     "shopValue": 291503,
