@@ -252,7 +252,7 @@
       "icon": "🏛️",
       "sections": [
         {
-          "id": "barrows_brothers",
+          "id": "cryptbound_champions",
           "label": "Cryptbound Champions",
           "icon": "⚰️",
           "items": [
@@ -283,7 +283,7 @@
           ]
         },
         {
-          "id": "chambers_of_xeric",
+          "id": "vaults_of_xyren",
           "label": "Vaults of Xyren",
           "icon": "🏛️",
           "items": [
@@ -301,7 +301,7 @@
           ]
         },
         {
-          "id": "theatre_of_blood",
+          "id": "crimson_night_theatre",
           "label": "Crimson Night Theatre",
           "icon": "🩸",
           "items": [

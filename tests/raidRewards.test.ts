@@ -4,7 +4,7 @@ import itemsData from '../src/data/items.json'
 
 describe('raid rewards', () => {
   it('includes zaryte vambraces at elder maul weight', () => {
-    const cox = (raidsData as any).chambers_of_xeric
+    const cox = (raidsData as any).vaults_of_xyren
     const elder = cox.rewards.unique.items.find((i: any) => i.itemId === 'ancient_maul')
     const zaryte = cox.rewards.unique.items.find((i: any) => i.itemId === 'zaryth_vambraces')
     expect(zaryte.weight).toBe(elder.weight)

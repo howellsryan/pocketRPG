@@ -1,6 +1,372 @@
 {
+  "vaults_of_xyren": {
+    "id": "vaults_of_xyren",
+    "name": "Vaults of Xyren",
+    "icon": "🏛️",
+    "description": "Delve into Xeric's mountain stronghold. Defeat Tekton, Vespula, the Muttadile and Great Olm to claim your reward.",
+    "bosses": [
+      "tekton",
+      "vespula",
+      "muttadile",
+      "olm"
+    ],
+    "rewards": {
+      "always": [
+        {
+          "itemId": "coins",
+          "quantity": [
+            50000,
+            150000
+          ],
+          "chance": 1
+        },
+        {
+          "itemId": "dragon_bones",
+          "quantity": [
+            5,
+            15
+          ],
+          "chance": 0.6
+        },
+        {
+          "itemId": "death_rune",
+          "quantity": [
+            100,
+            250
+          ],
+          "chance": 0.4
+        },
+        {
+          "itemId": "blood_rune",
+          "quantity": [
+            100,
+            200
+          ],
+          "chance": 0.35
+        },
+        {
+          "itemId": "soul_rune",
+          "quantity": [
+            50,
+            150
+          ],
+          "chance": 0.3
+        },
+        {
+          "itemId": "snapdragon",
+          "quantity": [
+            10,
+            30
+          ],
+          "chance": 0.25
+        }
+      ],
+      "unique": {
+        "chance": 0.1,
+        "items": [
+          {
+            "itemId": "warped_buckler",
+            "weight": 8
+          },
+          {
+            "itemId": "dragon_slayer_crossbow",
+            "weight": 8
+          },
+          {
+            "itemId": "durn_s_bulwark",
+            "weight": 6
+          },
+          {
+            "itemId": "kodai_hat",
+            "weight": 6
+          },
+          {
+            "itemId": "kodai_robe_top",
+            "weight": 6
+          },
+          {
+            "itemId": "kodai_robe_bottom",
+            "weight": 6
+          },
+          {
+            "itemId": "dragon_claws",
+            "weight": 6
+          },
+          {
+            "itemId": "ancient_maul",
+            "weight": 4
+          },
+          {
+            "itemId": "zaryth_vambraces",
+            "weight": 4
+          },
+          {
+            "itemId": "ancestral_wand",
+            "weight": 4
+          },
+          {
+            "itemId": "warped_bow",
+            "weight": 2
+          }
+        ]
+      }
+    },
+    "legacy_id": "chambers_of_xeric"
+  },
+  "crimson_night_theatre": {
+    "id": "crimson_night_theatre",
+    "name": "Crimson Night Theatre",
+    "icon": "🩸",
+    "description": "Fight through six deadly bosses in Verzik's theatre. Defeat them all to claim your reward.",
+    "bosses": [
+      "maiden_of_sugadinti",
+      "pestilent_bloat",
+      "nylocas_vasilias",
+      "sotetseg",
+      "xarpus",
+      "verzik_vitur"
+    ],
+    "rewards": {
+      "always": [
+        {
+          "itemId": "coins",
+          "quantity": [
+            100000,
+            300000
+          ],
+          "chance": 1
+        },
+        {
+          "itemId": "blood_rune",
+          "quantity": [
+            150,
+            300
+          ],
+          "chance": 1
+        },
+        {
+          "itemId": "death_rune",
+          "quantity": [
+            100,
+            250
+          ],
+          "chance": 0.8
+        },
+        {
+          "itemId": "soul_rune",
+          "quantity": [
+            50,
+            150
+          ],
+          "chance": 0.6
+        },
+        {
+          "itemId": "snapdragon",
+          "quantity": [
+            5,
+            15
+          ],
+          "chance": 0.5
+        },
+        {
+          "itemId": "rynarr_weed",
+          "quantity": [
+            5,
+            20
+          ],
+          "chance": 0.5
+        }
+      ],
+      "unique": {
+        "chance": 0.15,
+        "items": [
+          {
+            "itemId": "avernal_defender",
+            "weight": 5
+          },
+          {
+            "itemId": "ghraxis_rapier",
+            "weight": 2
+          },
+          {
+            "itemId": "sanguine_staff",
+            "weight": 2
+          },
+          {
+            "itemId": "justicar_faceguard",
+            "weight": 3
+          },
+          {
+            "itemId": "justicar_chestguard",
+            "weight": 3
+          },
+          {
+            "itemId": "justicar_legguards",
+            "weight": 3
+          },
+          {
+            "itemId": "scythe_of_vythar",
+            "weight": 1
+          }
+        ]
+      }
+    },
+    "legacy_id": "theatre_of_blood"
+  },
+  "cryptbound_champions": {
+    "id": "cryptbound_champions",
+    "name": "Cryptbound Champions",
+    "icon": "⚰️",
+    "description": "Descend into the ancient crypt and defeat all six champions to claim their treasures.",
+    "bosses": [
+      "arim_the_blighted",
+      "dharok_the_wretched",
+      "guthan_the_infested",
+      "karil_the_tainted",
+      "torag_the_corrupted",
+      "verac_the_defiled"
+    ],
+    "rewards": {
+      "always": [
+        {
+          "itemId": "coins",
+          "quantity": [
+            10000,
+            50000
+          ],
+          "chance": 1
+        },
+        {
+          "itemId": "death_rune",
+          "quantity": [
+            50,
+            750
+          ],
+          "chance": 0.6
+        },
+        {
+          "itemId": "blood_rune",
+          "quantity": [
+            30,
+            500
+          ],
+          "chance": 0.5
+        },
+        {
+          "itemId": "soul_rune",
+          "quantity": [
+            20,
+            500
+          ],
+          "chance": 0.4
+        }
+      ],
+      "unique": {
+        "chance": 0.25,
+        "items": [
+          {
+            "itemId": "morvyn_s_hood",
+            "weight": 1
+          },
+          {
+            "itemId": "morvyn_s_robetop",
+            "weight": 1
+          },
+          {
+            "itemId": "morvyn_s_robeskirt",
+            "weight": 1
+          },
+          {
+            "itemId": "morvyn_s_staff",
+            "weight": 1
+          },
+          {
+            "itemId": "dravok_s_helm",
+            "weight": 1
+          },
+          {
+            "itemId": "dravok_s_platebody",
+            "weight": 1
+          },
+          {
+            "itemId": "dravok_s_platelegs",
+            "weight": 1
+          },
+          {
+            "itemId": "dravok_s_greataxe",
+            "weight": 1
+          },
+          {
+            "itemId": "gorath_s_helm",
+            "weight": 1
+          },
+          {
+            "itemId": "gorath_s_platebody",
+            "weight": 1
+          },
+          {
+            "itemId": "gorath_s_chainskirt",
+            "weight": 1
+          },
+          {
+            "itemId": "gorath_s_warspear",
+            "weight": 1
+          },
+          {
+            "itemId": "kaelor_s_coif",
+            "weight": 1
+          },
+          {
+            "itemId": "kaelor_s_leathertop",
+            "weight": 1
+          },
+          {
+            "itemId": "kaelor_s_leatherskirt",
+            "weight": 1
+          },
+          {
+            "itemId": "kaelor_s_crossbow",
+            "weight": 1
+          },
+          {
+            "itemId": "torvek_s_helm",
+            "weight": 1
+          },
+          {
+            "itemId": "torvek_s_platebody",
+            "weight": 1
+          },
+          {
+            "itemId": "torvek_s_platelegs",
+            "weight": 1
+          },
+          {
+            "itemId": "torvek_s_hammers",
+            "weight": 1
+          },
+          {
+            "itemId": "verin_s_helm",
+            "weight": 1
+          },
+          {
+            "itemId": "verin_s_brassard",
+            "weight": 1
+          },
+          {
+            "itemId": "verin_s_plateskirt",
+            "weight": 1
+          },
+          {
+            "itemId": "verin_s_flail",
+            "weight": 1
+          }
+        ]
+      }
+    },
+    "legacy_id": "barrows_brothers"
+  },
   "chambers_of_xeric": {
-    "id": "chambers_of_xeric",
+    "id": "vaults_of_xyren",
     "name": "Vaults of Xyren",
     "icon": "🏛️",
     "description": "Delve into Xeric's mountain stronghold. Defeat Tekton, Vespula, the Muttadile and Great Olm to claim your reward.",
@@ -114,7 +480,7 @@
     "legacy_id": "chambers_of_xeric"
   },
   "theatre_of_blood": {
-    "id": "theatre_of_blood",
+    "id": "crimson_night_theatre",
     "name": "Crimson Night Theatre",
     "icon": "🩸",
     "description": "Fight through six deadly bosses in Verzik's theatre. Defeat them all to claim your reward.",
@@ -214,7 +580,7 @@
     "legacy_id": "theatre_of_blood"
   },
   "barrows_brothers": {
-    "id": "barrows_brothers",
+    "id": "cryptbound_champions",
     "name": "Cryptbound Champions",
     "icon": "⚰️",
     "description": "Descend into the ancient crypt and defeat all six champions to claim their treasures.",

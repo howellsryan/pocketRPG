@@ -6052,7 +6052,7 @@
       "energyCost": 25,
       "description": "Puncture: Strikes twice in rapid succession, each hit capable of dealing up to 115% of your normal max hit."
     },
-    "questUnlock": "lost_city",
+    "questUnlock": "forsaken_city",
     "shopValue": 17298,
     "icon": "🗡️",
     "isGeneralStore": true
@@ -6094,7 +6094,7 @@
       "energyCost": 55,
       "description": "Sever: A precise strike that completely bypasses the target's defences, rolling against zero defence."
     },
-    "questUnlock": "monkey_madness_i",
+    "questUnlock": "gorilla_slayer_i",
     "shopValue": 59656,
     "icon": "⚔️",
     "isGeneralStore": true
@@ -6131,7 +6131,7 @@
     "requirements": {
       "attack": 60
     },
-    "questUnlock": "lost_city",
+    "questUnlock": "forsaken_city",
     "shopValue": 59258,
     "icon": "⚔️",
     "isGeneralStore": false
@@ -10607,7 +10607,7 @@
     "slot": "gloves",
     "stackable": false,
     "isUntradeable": true,
-    "questUnlock": "recipe_for_disaster",
+    "questUnlock": "banquet_for_disaster",
     "attackBonus": {
       "stab": 12,
       "slash": 12,
@@ -10675,7 +10675,7 @@
     "slot": "cape",
     "stackable": false,
     "isUntradeable": true,
-    "questUnlock": "animal_magnetism",
+    "questUnlock": "beast_magnetism",
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -10710,7 +10710,7 @@
     "slot": "boots",
     "stackable": false,
     "isUntradeable": true,
-    "questUnlock": "death_plateau",
+    "questUnlock": "doom_plateau",
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -10768,7 +10768,7 @@
       "agility": 50,
       "ranged": 70
     },
-    "questUnlock": "roving_elves",
+    "questUnlock": "wandering_elves",
     "isUntradeable": true,
     "shopValue": 300000,
     "icon": "🏹",
@@ -10782,7 +10782,7 @@
     "slot": "shield",
     "stackable": false,
     "isUntradeable": true,
-    "questUnlock": "roving_elves",
+    "questUnlock": "wandering_elves",
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -20128,7 +20128,7 @@
     "slot": "gloves",
     "stackable": false,
     "isUntradeable": true,
-    "questUnlock": "recipe_for_disaster",
+    "questUnlock": "banquet_for_disaster",
     "attackBonus": {
       "stab": 12,
       "slash": 12,
@@ -20196,7 +20196,7 @@
     "slot": "cape",
     "stackable": false,
     "isUntradeable": true,
-    "questUnlock": "animal_magnetism",
+    "questUnlock": "beast_magnetism",
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -20256,7 +20256,7 @@
       "agility": 50,
       "ranged": 70
     },
-    "questUnlock": "roving_elves",
+    "questUnlock": "wandering_elves",
     "isUntradeable": true,
     "shopValue": 300000,
     "icon": "🏹",
@@ -20270,7 +20270,7 @@
     "slot": "shield",
     "stackable": false,
     "isUntradeable": true,
-    "questUnlock": "roving_elves",
+    "questUnlock": "wandering_elves",
     "attackBonus": {
       "stab": 0,
       "slash": 0,

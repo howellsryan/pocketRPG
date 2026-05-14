@@ -1,6 +1,6 @@
 [
   {
-    "id": "a_kingdom_divided",
+    "id": "a_realm_divided",
     "name": "A Realm Divided",
     "complexity": "Master",
     "length": "Long",
@@ -23,13 +23,13 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "tale_of_the_righteous",
-      "the_forsaken_tower"
+      "story_of_the_righteous",
+      "the_forsaken_spire"
     ],
     "legacy_id": "a_kingdom_divided"
   },
   {
-    "id": "a_night_at_the_theatre",
+    "id": "a_dusk_at_the_theater",
     "name": "A Dusk At the Theater",
     "complexity": "Master",
     "length": "Medium",
@@ -46,7 +46,7 @@
     "legacy_id": "a_night_at_the_theatre"
   },
   {
-    "id": "a_porcine_of_interest",
+    "id": "a_boarborn_of_interest",
     "name": "A Boarborn of Interest",
     "complexity": "Novice",
     "length": "Short",
@@ -63,7 +63,7 @@
     "legacy_id": "a_porcine_of_interest"
   },
   {
-    "id": "a_souls_bane",
+    "id": "a_spirit_s_bane",
     "name": "A Spirit's Bane",
     "complexity": "Novice",
     "length": "Medium",
@@ -81,7 +81,7 @@
     "legacy_id": "a_souls_bane"
   },
   {
-    "id": "a_tail_of_two_cats",
+    "id": "a_trail_of_two_cats",
     "name": "A Trail of Two Cats",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -96,12 +96,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "icthlarins_little_helper"
+      "icthlarin_s_young_aide"
     ],
     "legacy_id": "a_tail_of_two_cats"
   },
   {
-    "id": "a_taste_of_hope",
+    "id": "a_savor_of_hope",
     "name": "A Savor of Hope",
     "complexity": "Experienced",
     "length": "Medium",
@@ -121,12 +121,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "darkness_of_hallowvale"
+      "shadows_of_hallowvale"
     ],
     "legacy_id": "a_taste_of_hope"
   },
   {
-    "id": "animal_magnetism",
+    "id": "beast_magnetism",
     "name": "Beast Magnetism",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -150,14 +150,14 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "ernest_the_chicken",
-      "the_restless_ghost",
-      "priest_in_peril"
+      "ernest_and_the_fowl_curse",
+      "the_wandering_spirit",
+      "warden_in_peril"
     ],
     "legacy_id": "animal_magnetism"
   },
   {
-    "id": "another_slice_of_h_a_m",
+    "id": "another_shard_of_h_a_m",
     "name": "Another Shard of H.A.M.",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -175,14 +175,14 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "death_to_the_dorgeshuun",
-      "the_giant_dwarf",
-      "the_dig_site"
+      "doom_to_the_dorgeshuun",
+      "the_giant_stonekin",
+      "the_excavation_grounds"
     ],
     "legacy_id": "another_slice_of_h_a_m"
   },
   {
-    "id": "at_first_light",
+    "id": "dawn_s_first_oath",
     "name": "Dawn's First Oath",
     "complexity": "Experienced",
     "length": "Short",
@@ -200,13 +200,13 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "children_of_the_sun",
-      "eagles_peak"
+      "heirs_of_the_sun",
+      "skyhawks_peak"
     ],
     "legacy_id": "at_first_light"
   },
   {
-    "id": "below_ice_mountain",
+    "id": "beneath_ice_peak",
     "name": "Beneath Ice Peak",
     "complexity": "Novice",
     "length": "Short",
@@ -227,7 +227,7 @@
     "legacy_id": "below_ice_mountain"
   },
   {
-    "id": "beneath_cursed_sands",
+    "id": "beneath_blighted_sands",
     "name": "Beneath Blighted Sands",
     "complexity": "Master",
     "length": "Long",
@@ -247,12 +247,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "contact"
+      "desert_correspondence"
     ],
     "legacy_id": "beneath_cursed_sands"
   },
   {
-    "id": "between_a_rock",
+    "id": "between_stone_and_steel",
     "name": "Between Stone And Steel",
     "complexity": "Experienced",
     "length": "Medium",
@@ -272,13 +272,13 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "fishing_contest",
-      "dwarf_cannon"
+      "angler_contest",
+      "stonekin_cannon"
     ],
     "legacy_id": "between_a_rock"
   },
   {
-    "id": "big_chompy_bird_hunting",
+    "id": "big_chompy_wing_hunting",
     "name": "Big Chompy Wing Hunting",
     "complexity": "Intermediate",
     "length": "Short",
@@ -301,7 +301,7 @@
     "legacy_id": "big_chompy_bird_hunting"
   },
   {
-    "id": "biohazard",
+    "id": "chemical_danger",
     "name": "Chemical Danger",
     "complexity": "Novice",
     "length": "Short",
@@ -315,12 +315,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "plague_city"
+      "blight_city"
     ],
     "legacy_id": "biohazard"
   },
   {
-    "id": "black_knights_fortress",
+    "id": "obsidian_sentinels_fortress",
     "name": "Obsidian Sentinels' Fortress",
     "complexity": "Novice",
     "length": "Short",
@@ -337,7 +337,7 @@
     "legacy_id": "black_knights_fortress"
   },
   {
-    "id": "blood_runs_deep",
+    "id": "crimson_runs_deep",
     "name": "Crimson Runs Deep",
     "complexity": "Master",
     "length": "Medium",
@@ -354,12 +354,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "dream_mentor"
+      "vision_mentor"
     ],
     "legacy_id": "blood_runs_deep"
   },
   {
-    "id": "bone_voyage",
+    "id": "skeletal_passage",
     "name": "Skeletal Passage",
     "complexity": "Novice",
     "length": "Short",
@@ -374,12 +374,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "the_dig_site"
+      "the_excavation_grounds"
     ],
     "legacy_id": "bone_voyage"
   },
   {
-    "id": "cabin_fever",
+    "id": "harbor_fever",
     "name": "Harbor Fever",
     "complexity": "Experienced",
     "length": "Medium",
@@ -399,13 +399,13 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "pirates_treasure",
-      "rum_deal"
+      "pirate_s_hoard",
+      "spirits_bargain"
     ],
     "legacy_id": "cabin_fever"
   },
   {
-    "id": "children_of_the_sun",
+    "id": "heirs_of_the_sun",
     "name": "Heirs of the Sun",
     "complexity": "Novice",
     "length": "Short",
@@ -422,7 +422,7 @@
     "legacy_id": "children_of_the_sun"
   },
   {
-    "id": "clock_tower",
+    "id": "clock_spire",
     "name": "Clock Spire",
     "complexity": "Novice",
     "length": "Short",
@@ -439,7 +439,7 @@
     "legacy_id": "clock_tower"
   },
   {
-    "id": "cold_war",
+    "id": "frost_war",
     "name": "Frost War",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -466,7 +466,7 @@
     "legacy_id": "cold_war"
   },
   {
-    "id": "contact",
+    "id": "desert_correspondence",
     "name": "Desert Correspondence",
     "complexity": "Master",
     "length": "Medium",
@@ -481,13 +481,13 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "icthlarins_little_helper",
-      "prince_ali_rescue"
+      "icthlarin_s_young_aide",
+      "heir_ali_rescue"
     ],
     "legacy_id": "contact"
   },
   {
-    "id": "cooks_assistant",
+    "id": "chef_s_assistant",
     "name": "Chef's Assistant",
     "complexity": "Novice",
     "length": "Short",
@@ -504,7 +504,7 @@
     "legacy_id": "cooks_assistant"
   },
   {
-    "id": "creature_of_fenkenstrain",
+    "id": "fenkenstrain_s_creation",
     "name": "Fenkenstrain's Creation",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -521,13 +521,13 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "the_restless_ghost",
-      "priest_in_peril"
+      "the_wandering_spirit",
+      "warden_in_peril"
     ],
     "legacy_id": "creature_of_fenkenstrain"
   },
   {
-    "id": "current_affairs",
+    "id": "present_concerns",
     "name": "Present Concerns",
     "complexity": "Novice",
     "length": "Short",
@@ -544,7 +544,7 @@
     "legacy_id": "current_affairs"
   },
   {
-    "id": "darkness_of_hallowvale",
+    "id": "shadows_of_hallowvale",
     "name": "Shadows of Hallowvale",
     "complexity": "Intermediate",
     "length": "Long",
@@ -568,12 +568,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "in_aid_of_the_myreque"
+      "helping_the_myreque"
     ],
     "legacy_id": "darkness_of_hallowvale"
   },
   {
-    "id": "death_plateau",
+    "id": "doom_plateau",
     "name": "Doom Plateau",
     "complexity": "Novice",
     "length": "Short",
@@ -590,7 +590,7 @@
     "legacy_id": "death_plateau"
   },
   {
-    "id": "death_to_the_dorgeshuun",
+    "id": "doom_to_the_dorgeshuun",
     "name": "Doom To the Dorgeshuun",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -608,12 +608,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "the_lost_tribe"
+      "the_forsaken_tribe"
     ],
     "legacy_id": "death_to_the_dorgeshuun"
   },
   {
-    "id": "defender_of_varrock",
+    "id": "guardian_of_varrock",
     "name": "Guardian of Varrock",
     "complexity": "Experienced",
     "length": "Medium",
@@ -634,14 +634,14 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "the_garden_of_death",
-      "shield_of_arrav",
-      "family_crest"
+      "the_grove_of_doom",
+      "aegis_of_arrav",
+      "kin_crest"
     ],
     "legacy_id": "defender_of_varrock"
   },
   {
-    "id": "demon_slayer",
+    "id": "fiend_slayer",
     "name": "Fiend Slayer",
     "complexity": "Novice",
     "length": "Medium",
@@ -658,7 +658,7 @@
     "legacy_id": "demon_slayer"
   },
   {
-    "id": "desert_treasure_i",
+    "id": "sunscar_treasure_i",
     "name": "Sunscar Treasure I",
     "complexity": "Master",
     "length": "Very Long",
@@ -677,15 +677,15 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "the_tourist_trap",
-      "priest_in_peril",
-      "temple_of_ikov",
-      "the_dig_site"
+      "the_traveler_trap",
+      "warden_in_peril",
+      "sanctum_of_ikov",
+      "the_excavation_grounds"
     ],
     "legacy_id": "desert_treasure_i"
   },
   {
-    "id": "desert_treasure_ii_the_fallen_empire",
+    "id": "sunscar_treasure_ii_the_fallen_empire",
     "name": "Sunscar Treasure II the Fallen Empire",
     "complexity": "Grandmaster",
     "length": "Very Long",
@@ -706,17 +706,17 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "secrets_of_the_north",
-      "the_garden_of_death",
-      "below_ice_mountain",
-      "desert_treasure_i",
-      "temple_of_the_eye",
-      "enakhras_lament"
+      "mysteries_of_the_north",
+      "the_grove_of_doom",
+      "beneath_ice_peak",
+      "sunscar_treasure_i",
+      "sanctum_of_the_eye",
+      "enakhra_s_sorrow"
     ],
     "legacy_id": "desert_treasure_ii_the_fallen_empire"
   },
   {
-    "id": "devious_minds",
+    "id": "cunning_intellects",
     "name": "Cunning Intellects",
     "complexity": "Experienced",
     "length": "Short",
@@ -736,14 +736,14 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "troll_stronghold",
-      "dorics_quest",
-      "wanted"
+      "brute_stronghold",
+      "doric_s_duty",
+      "hunted"
     ],
     "legacy_id": "devious_minds"
   },
   {
-    "id": "dorics_quest",
+    "id": "doric_s_duty",
     "name": "Doric's Duty",
     "complexity": "Novice",
     "length": "Short",
@@ -810,17 +810,17 @@
     "questPointRequirement": 200,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "a_tail_of_two_cats",
-      "animal_magnetism",
-      "legends_quest",
-      "dream_mentor",
-      "bone_voyage",
-      "ghosts_ahoy"
+      "a_trail_of_two_cats",
+      "beast_magnetism",
+      "legacies_quest",
+      "vision_mentor",
+      "skeletal_passage",
+      "essences_ahoy"
     ],
     "legacy_id": "dragon_slayer_ii"
   },
   {
-    "id": "dream_mentor",
+    "id": "vision_mentor",
     "name": "Vision Mentor",
     "complexity": "Master",
     "length": "Short",
@@ -835,13 +835,13 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 85,
     "questRequirements": [
-      "lunar_diplomacy",
-      "eadgars_ruse"
+      "moon_diplomacy",
+      "eadgar_s_gambit"
     ],
     "legacy_id": "dream_mentor"
   },
   {
-    "id": "druidic_ritual",
+    "id": "verdant_ritual",
     "name": "Verdant Ritual",
     "complexity": "Novice",
     "length": "Short",
@@ -858,7 +858,7 @@
     "legacy_id": "druidic_ritual"
   },
   {
-    "id": "dwarf_cannon",
+    "id": "stonekin_cannon",
     "name": "Stonekin Cannon",
     "complexity": "Novice",
     "length": "Short",
@@ -875,7 +875,7 @@
     "legacy_id": "dwarf_cannon"
   },
   {
-    "id": "eadgars_ruse",
+    "id": "eadgar_s_gambit",
     "name": "Eadgar's Gambit",
     "complexity": "Experienced",
     "length": "Medium",
@@ -891,12 +891,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "troll_stronghold"
+      "brute_stronghold"
     ],
     "legacy_id": "eadgars_ruse"
   },
   {
-    "id": "eagles_peak",
+    "id": "skyhawks_peak",
     "name": "Skyhawks Peak",
     "complexity": "Novice",
     "length": "Medium",
@@ -915,7 +915,7 @@
     "legacy_id": "eagles_peak"
   },
   {
-    "id": "elemental_workshop_i",
+    "id": "arcane_workshop_i",
     "name": "Arcane Workshop I",
     "complexity": "Novice",
     "length": "Short",
@@ -937,7 +937,7 @@
     "legacy_id": "elemental_workshop_i"
   },
   {
-    "id": "elemental_workshop_ii",
+    "id": "arcane_workshop_ii",
     "name": "Arcane Workshop II",
     "complexity": "Intermediate",
     "length": "Short",
@@ -955,12 +955,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "elemental_workshop_i"
+      "arcane_workshop_i"
     ],
     "legacy_id": "elemental_workshop_ii"
   },
   {
-    "id": "enakhras_lament",
+    "id": "enakhra_s_sorrow",
     "name": "Enakhra's Sorrow",
     "complexity": "Experienced",
     "length": "Medium",
@@ -985,7 +985,7 @@
     "legacy_id": "enakhras_lament"
   },
   {
-    "id": "enlightened_journey",
+    "id": "illuminated_expedition",
     "name": "Illuminated Expedition",
     "complexity": "Intermediate",
     "length": "Short",
@@ -1009,7 +1009,7 @@
     "legacy_id": "enlightened_journey"
   },
   {
-    "id": "ernest_the_chicken",
+    "id": "ernest_and_the_fowl_curse",
     "name": "Ernest and the Fowl Curse",
     "complexity": "Novice",
     "length": "Short",
@@ -1026,7 +1026,7 @@
     "legacy_id": "ernest_the_chicken"
   },
   {
-    "id": "ethos_of_arceuus",
+    "id": "creed_of_arceuus",
     "name": "Creed of Arceuus",
     "complexity": "Novice",
     "length": "Short",
@@ -1044,7 +1044,7 @@
     "legacy_id": "ethos_of_arceuus"
   },
   {
-    "id": "fairytale_i_growing_pains",
+    "id": "feytale_i_growing_pains",
     "name": "Feytale I Growing Pains",
     "complexity": "Experienced",
     "length": "Medium",
@@ -1060,13 +1060,13 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "nature_spirit",
-      "lost_city"
+      "wild_spirit",
+      "forsaken_city"
     ],
     "legacy_id": "fairytale_i_growing_pains"
   },
   {
-    "id": "fairytale_ii_cure_a_queen",
+    "id": "feytale_ii_cure_a_queen",
     "name": "Feytale II Cure A Queen",
     "complexity": "Experienced",
     "length": "Short",
@@ -1088,7 +1088,7 @@
     "legacy_id": "fairytale_ii_cure_a_queen"
   },
   {
-    "id": "family_crest",
+    "id": "kin_crest",
     "name": "Kin Crest",
     "complexity": "Experienced",
     "length": "Medium",
@@ -1113,7 +1113,7 @@
     "legacy_id": "family_crest"
   },
   {
-    "id": "fight_arena",
+    "id": "duel_arena",
     "name": "Duel Arena",
     "complexity": "Novice",
     "length": "Short",
@@ -1131,7 +1131,7 @@
     "legacy_id": "fight_arena"
   },
   {
-    "id": "fishing_contest",
+    "id": "angler_contest",
     "name": "Angler Contest",
     "complexity": "Novice",
     "length": "Short",
@@ -1150,7 +1150,7 @@
     "legacy_id": "fishing_contest"
   },
   {
-    "id": "forgettable_tale",
+    "id": "unforgotten_story",
     "name": "Unforgotten Story",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -1168,13 +1168,13 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "fishing_contest",
-      "the_giant_dwarf"
+      "angler_contest",
+      "the_giant_stonekin"
     ],
     "legacy_id": "forgettable_tale"
   },
   {
-    "id": "garden_of_tranquillity",
+    "id": "grove_of_tranquillity",
     "name": "Grove of Tranquillity",
     "complexity": "Intermediate",
     "length": "Long",
@@ -1190,12 +1190,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "creature_of_fenkenstrain"
+      "fenkenstrain_s_creation"
     ],
     "legacy_id": "garden_of_tranquillity"
   },
   {
-    "id": "gertrudes_cat",
+    "id": "gertrude_s_lost_cat",
     "name": "Gertrude's Lost Cat",
     "complexity": "Novice",
     "length": "Short",
@@ -1212,7 +1212,7 @@
     "legacy_id": "gertrudes_cat"
   },
   {
-    "id": "getting_ahead",
+    "id": "staying_ahead",
     "name": "Staying Ahead",
     "complexity": "Novice",
     "length": "Short",
@@ -1233,7 +1233,7 @@
     "legacy_id": "getting_ahead"
   },
   {
-    "id": "ghosts_ahoy",
+    "id": "essences_ahoy",
     "name": "Essences Ahoy",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -1250,12 +1250,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "priest_in_peril"
+      "warden_in_peril"
     ],
     "legacy_id": "ghosts_ahoy"
   },
   {
-    "id": "goblin_diplomacy",
+    "id": "gloomkin_diplomacy",
     "name": "Gloomkin Diplomacy",
     "complexity": "Novice",
     "length": "Short",
@@ -1272,7 +1272,7 @@
     "legacy_id": "goblin_diplomacy"
   },
   {
-    "id": "goodbye_grubby",
+    "id": "farewell_grubby",
     "name": "Farewell, Grubby",
     "complexity": "Novice",
     "length": "Short",
@@ -1289,7 +1289,7 @@
     "legacy_id": "goodbye_grubby"
   },
   {
-    "id": "grim_tales",
+    "id": "gloam_tales",
     "name": "Gloam Tales",
     "complexity": "Master",
     "length": "Medium",
@@ -1313,12 +1313,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "witchs_house"
+      "hex_s_house"
     ],
     "legacy_id": "grim_tales"
   },
   {
-    "id": "haunted_mine",
+    "id": "cursed_mine",
     "name": "Cursed Mine",
     "complexity": "Experienced",
     "length": "Medium",
@@ -1335,12 +1335,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "priest_in_peril"
+      "warden_in_peril"
     ],
     "legacy_id": "haunted_mine"
   },
   {
-    "id": "hazeel_cult",
+    "id": "hazeel_conspiracy",
     "name": "Hazeel Conspiracy",
     "complexity": "Novice",
     "length": "Short",
@@ -1357,7 +1357,7 @@
     "legacy_id": "hazeel_cult"
   },
   {
-    "id": "heroes_quest",
+    "id": "champions_quest",
     "name": "Champions Quest",
     "complexity": "Experienced",
     "length": "Long",
@@ -1386,15 +1386,15 @@
     "questPointRequirement": 55,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "merlins_crystal",
+      "merlin_s_shard",
       "dragon_slayer_i",
-      "shield_of_arrav",
-      "lost_city"
+      "aegis_of_arrav",
+      "forsaken_city"
     ],
     "legacy_id": "heroes_quest"
   },
   {
-    "id": "holy_grail",
+    "id": "sacred_grail",
     "name": "Sacred Grail",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -1411,12 +1411,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "merlins_crystal"
+      "merlin_s_shard"
     ],
     "legacy_id": "holy_grail"
   },
   {
-    "id": "horror_from_the_deep",
+    "id": "terror_from_the_deep",
     "name": "Terror From the Deep",
     "complexity": "Experienced",
     "length": "Short",
@@ -1437,7 +1437,7 @@
     "legacy_id": "horror_from_the_deep"
   },
   {
-    "id": "icthlarins_little_helper",
+    "id": "icthlarin_s_young_aide",
     "name": "Icthlarin's Young Aide",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -1453,12 +1453,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "gertrudes_cat"
+      "gertrude_s_lost_cat"
     ],
     "legacy_id": "icthlarins_little_helper"
   },
   {
-    "id": "imp_catcher",
+    "id": "sprite_catcher",
     "name": "Sprite Catcher",
     "complexity": "Novice",
     "length": "Short",
@@ -1475,7 +1475,7 @@
     "legacy_id": "imp_catcher"
   },
   {
-    "id": "in_aid_of_the_myreque",
+    "id": "helping_the_myreque",
     "name": "Helping the Myreque",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -1497,12 +1497,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "in_search_of_the_myreque"
+      "hunt_for_the_myreque"
     ],
     "legacy_id": "in_aid_of_the_myreque"
   },
   {
-    "id": "in_search_of_the_myreque",
+    "id": "hunt_for_the_myreque",
     "name": "Hunt for the Myreque",
     "complexity": "Intermediate",
     "length": "Short",
@@ -1522,12 +1522,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "nature_spirit"
+      "wild_spirit"
     ],
     "legacy_id": "in_search_of_the_myreque"
   },
   {
-    "id": "jungle_potion",
+    "id": "wildwood_potion",
     "name": "Wildwood Potion",
     "complexity": "Novice",
     "length": "Short",
@@ -1543,12 +1543,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "druidic_ritual"
+      "verdant_ritual"
     ],
     "legacy_id": "jungle_potion"
   },
   {
-    "id": "kings_ransom",
+    "id": "crown_s_ransom",
     "name": "Crown's Ransom",
     "complexity": "Experienced",
     "length": "Medium",
@@ -1566,15 +1566,15 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "black_knights_fortress",
-      "one_small_favour",
-      "murder_mystery",
-      "holy_grail"
+      "obsidian_sentinels_fortress",
+      "one_modest_favor",
+      "bloodline_mystery",
+      "sacred_grail"
     ],
     "legacy_id": "kings_ransom"
   },
   {
-    "id": "lair_of_tarn_razorlor",
+    "id": "sanctum_of_tarn_razorlor",
     "name": "Sanctum of Tarn Razorlor",
     "complexity": "Experienced",
     "length": "Short",
@@ -1590,12 +1590,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "haunted_mine"
+      "cursed_mine"
     ],
     "legacy_id": "lair_of_tarn_razorlor"
   },
   {
-    "id": "land_of_the_goblins",
+    "id": "realm_of_the_goblins",
     "name": "Realm of the Goblins",
     "complexity": "Experienced",
     "length": "Medium",
@@ -1617,12 +1617,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "another_slice_of_h_a_m"
+      "another_shard_of_h_a_m"
     ],
     "legacy_id": "land_of_the_goblins"
   },
   {
-    "id": "legends_quest",
+    "id": "legacies_quest",
     "name": "Legacies Quest",
     "complexity": "Master",
     "length": "Very Long",
@@ -1646,16 +1646,16 @@
     "questPointRequirement": 107,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "underground_pass",
-      "waterfall_quest",
-      "heroes_quest",
-      "shilo_village",
-      "family_crest"
+      "underpath_pass",
+      "cascade_quest",
+      "champions_quest",
+      "shroud_village",
+      "kin_crest"
     ],
     "legacy_id": "legends_quest"
   },
   {
-    "id": "lost_city",
+    "id": "forsaken_city",
     "name": "Forsaken City",
     "complexity": "Experienced",
     "length": "Short",
@@ -1678,7 +1678,7 @@
     "legacy_id": "lost_city"
   },
   {
-    "id": "lunar_diplomacy",
+    "id": "moon_diplomacy",
     "name": "Moon Diplomacy",
     "complexity": "Experienced",
     "length": "Long",
@@ -1700,14 +1700,14 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "the_fremennik_trials",
-      "shilo_village",
-      "lost_city"
+      "the_fremennik_challenges",
+      "shroud_village",
+      "forsaken_city"
     ],
     "legacy_id": "lunar_diplomacy"
   },
   {
-    "id": "making_friends_with_my_arm",
+    "id": "forging_friends_with_my_arm",
     "name": "Forging Friends With My Arm",
     "complexity": "Master",
     "length": "Medium",
@@ -1729,14 +1729,14 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "my_arms_big_adventure",
-      "romeo_juliet",
-      "cold_war"
+      "my_arm_s_grand_expedition",
+      "romeo_and_juliet",
+      "frost_war"
     ],
     "legacy_id": "making_friends_with_my_arm"
   },
   {
-    "id": "making_history",
+    "id": "forging_history",
     "name": "Forging History",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -1751,12 +1751,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "priest_in_peril"
+      "warden_in_peril"
     ],
     "legacy_id": "making_history"
   },
   {
-    "id": "merlins_crystal",
+    "id": "merlin_s_shard",
     "name": "Merlin's Shard",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -1773,7 +1773,7 @@
     "legacy_id": "merlins_crystal"
   },
   {
-    "id": "misthalin_mystery",
+    "id": "misthalin_enigma",
     "name": "Misthalin Enigma",
     "complexity": "Novice",
     "length": "Short",
@@ -1790,7 +1790,7 @@
     "legacy_id": "misthalin_mystery"
   },
   {
-    "id": "monks_friend",
+    "id": "a_monk_s_ally",
     "name": "A Monk's Ally",
     "complexity": "Novice",
     "length": "Short",
@@ -1807,7 +1807,7 @@
     "legacy_id": "monks_friend"
   },
   {
-    "id": "monkey_madness_i",
+    "id": "gorilla_slayer_i",
     "name": "Gorilla Slayer I",
     "complexity": "Master",
     "length": "Long",
@@ -1823,13 +1823,13 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "tree_gnome_village",
-      "the_grand_tree"
+      "grove_gnome_village",
+      "the_grand_grove"
     ],
     "legacy_id": "monkey_madness_i"
   },
   {
-    "id": "monkey_madness_ii",
+    "id": "gorilla_slayer_ii",
     "name": "Gorilla Slayer II",
     "complexity": "Grandmaster",
     "length": "Very Long",
@@ -1853,17 +1853,17 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "the_eyes_of_glouphrie",
-      "enlightened_journey",
-      "recipe_for_disaster",
-      "monkey_madness_i",
-      "troll_stronghold",
-      "watchtower"
+      "glouphrie_s_gaze",
+      "illuminated_expedition",
+      "banquet_for_disaster",
+      "gorilla_slayer_i",
+      "brute_stronghold",
+      "wardspire"
     ],
     "legacy_id": "monkey_madness_ii"
   },
   {
-    "id": "mountain_daughter",
+    "id": "peak_daughter",
     "name": "Peak Daughter",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -1883,7 +1883,7 @@
     "legacy_id": "mountain_daughter"
   },
   {
-    "id": "mournings_end_part_i",
+    "id": "mourning_s_finale_part_i",
     "name": "Mourning's Finale Part I",
     "complexity": "Master",
     "length": "Long",
@@ -1901,13 +1901,13 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "big_chompy_bird_hunting",
-      "roving_elves"
+      "big_chompy_wing_hunting",
+      "wandering_elves"
     ],
     "legacy_id": "mournings_end_part_i"
   },
   {
-    "id": "mournings_end_part_ii",
+    "id": "mourning_s_finale_part_ii",
     "name": "Mourning's Finale Part II",
     "complexity": "Master",
     "length": "Long",
@@ -1921,12 +1921,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "mournings_end_part_i"
+      "mourning_s_finale_part_i"
     ],
     "legacy_id": "mournings_end_part_ii"
   },
   {
-    "id": "murder_mystery",
+    "id": "bloodline_mystery",
     "name": "Bloodline Mystery",
     "complexity": "Novice",
     "length": "Short",
@@ -1943,7 +1943,7 @@
     "legacy_id": "murder_mystery"
   },
   {
-    "id": "my_arms_big_adventure",
+    "id": "my_arm_s_grand_expedition",
     "name": "My Arm's Grand Expedition",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -1961,13 +1961,13 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "eadgars_ruse",
-      "the_feud"
+      "eadgar_s_gambit",
+      "the_rivalry"
     ],
     "legacy_id": "my_arms_big_adventure"
   },
   {
-    "id": "nature_spirit",
+    "id": "wild_spirit",
     "name": "Wild Spirit",
     "complexity": "Novice",
     "length": "Medium",
@@ -1983,12 +1983,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "priest_in_peril"
+      "warden_in_peril"
     ],
     "legacy_id": "nature_spirit"
   },
   {
-    "id": "observatory_quest",
+    "id": "starwatch_quest",
     "name": "Starwatch Quest",
     "complexity": "Novice",
     "length": "Medium",
@@ -2007,7 +2007,7 @@
     "legacy_id": "observatory_quest"
   },
   {
-    "id": "olafs_quest",
+    "id": "olaf_s_journey",
     "name": "Olaf's Journey",
     "complexity": "Intermediate",
     "length": "Short",
@@ -2027,7 +2027,7 @@
     "legacy_id": "olafs_quest"
   },
   {
-    "id": "one_small_favour",
+    "id": "one_modest_favor",
     "name": "One Modest Favor",
     "complexity": "Experienced",
     "length": "Very Long",
@@ -2046,13 +2046,13 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "rune_mysteries",
-      "shilo_village"
+      "sigil_mysteries",
+      "shroud_village"
     ],
     "legacy_id": "one_small_favour"
   },
   {
-    "id": "path_of_glouphrie",
+    "id": "road_of_glouphrie",
     "name": "Road of Glouphrie",
     "complexity": "Experienced",
     "length": "Medium",
@@ -2076,12 +2076,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "the_eyes_of_glouphrie"
+      "glouphrie_s_gaze"
     ],
     "legacy_id": "path_of_glouphrie"
   },
   {
-    "id": "perilous_moons",
+    "id": "hazardous_moons",
     "name": "Hazardous Moons",
     "complexity": "Master",
     "length": "Medium",
@@ -2102,12 +2102,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 75,
     "questRequirements": [
-      "twilights_promise"
+      "twilight_s_vow"
     ],
     "legacy_id": "perilous_moons"
   },
   {
-    "id": "pirates_treasure",
+    "id": "pirate_s_hoard",
     "name": "Pirate's Hoard",
     "complexity": "Novice",
     "length": "Short",
@@ -2124,7 +2124,7 @@
     "legacy_id": "pirates_treasure"
   },
   {
-    "id": "plague_city",
+    "id": "blight_city",
     "name": "Blight City",
     "complexity": "Novice",
     "length": "Short",
@@ -2141,7 +2141,7 @@
     "legacy_id": "plague_city"
   },
   {
-    "id": "priest_in_peril",
+    "id": "warden_in_peril",
     "name": "Warden In Peril",
     "complexity": "Novice",
     "length": "Short",
@@ -2158,7 +2158,7 @@
     "legacy_id": "priest_in_peril"
   },
   {
-    "id": "prince_ali_rescue",
+    "id": "heir_ali_rescue",
     "name": "Heir Ali Rescue",
     "complexity": "Novice",
     "length": "Medium",
@@ -2175,7 +2175,7 @@
     "legacy_id": "prince_ali_rescue"
   },
   {
-    "id": "rag_and_bone_man_i",
+    "id": "rag_and_bone_collector_i",
     "name": "Rag and Bone Collector I",
     "complexity": "Novice",
     "length": "Short",
@@ -2193,7 +2193,7 @@
     "legacy_id": "rag_and_bone_man_i"
   },
   {
-    "id": "rag_and_bone_man_ii",
+    "id": "rag_and_bone_collector_ii",
     "name": "Rag and Bone Collector II",
     "complexity": "Intermediate",
     "length": "Long",
@@ -2209,14 +2209,14 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "creature_of_fenkenstrain",
-      "rag_and_bone_man_i",
-      "zogre_flesh_eaters"
+      "fenkenstrain_s_creation",
+      "rag_and_bone_collector_i",
+      "bogre_flesh_eaters"
     ],
     "legacy_id": "rag_and_bone_man_ii"
   },
   {
-    "id": "ratcatchers",
+    "id": "vermin_hunters",
     "name": "Vermin Hunters",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -2230,13 +2230,13 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "icthlarins_little_helper",
-      "gertrudes_cat"
+      "icthlarin_s_young_aide",
+      "gertrude_s_lost_cat"
     ],
     "legacy_id": "ratcatchers"
   },
   {
-    "id": "recipe_for_disaster",
+    "id": "banquet_for_disaster",
     "name": "Banquet For Disaster",
     "complexity": "Special",
     "length": "Very Long",
@@ -2264,18 +2264,18 @@
     "questPointRequirement": 175,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "horror_from_the_deep",
-      "shadow_of_the_storm",
-      "desert_treasure_i",
-      "cooks_assistant",
-      "goblin_diplomacy",
-      "fishing_contest",
-      "gertrudes_cat"
+      "terror_from_the_deep",
+      "umbral_of_the_storm",
+      "sunscar_treasure_i",
+      "chef_s_assistant",
+      "gloomkin_diplomacy",
+      "angler_contest",
+      "gertrude_s_lost_cat"
     ],
     "legacy_id": "recipe_for_disaster"
   },
   {
-    "id": "recruitment_drive",
+    "id": "mustering_drive",
     "name": "Mustering Drive",
     "complexity": "Novice",
     "length": "Short",
@@ -2291,13 +2291,13 @@
     "questPointRequirement": 12,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "black_knights_fortress",
-      "druidic_ritual"
+      "obsidian_sentinels_fortress",
+      "verdant_ritual"
     ],
     "legacy_id": "recruitment_drive"
   },
   {
-    "id": "regicide",
+    "id": "royal_assassination",
     "name": "Royal Assassination",
     "complexity": "Master",
     "length": "Long",
@@ -2314,12 +2314,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "underground_pass"
+      "underpath_pass"
     ],
     "legacy_id": "regicide"
   },
   {
-    "id": "romeo_juliet",
+    "id": "romeo_and_juliet",
     "name": "Romeo and Juliet",
     "complexity": "Novice",
     "length": "Short",
@@ -2336,7 +2336,7 @@
     "legacy_id": "romeo_juliet"
   },
   {
-    "id": "roving_elves",
+    "id": "wandering_elves",
     "name": "Wandering Elves",
     "complexity": "Experienced",
     "length": "Short",
@@ -2350,13 +2350,13 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "waterfall_quest",
-      "regicide"
+      "cascade_quest",
+      "royal_assassination"
     ],
     "legacy_id": "roving_elves"
   },
   {
-    "id": "royal_trouble",
+    "id": "crown_complications",
     "name": "Crown Complications",
     "complexity": "Experienced",
     "length": "Medium",
@@ -2374,12 +2374,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "throne_of_miscellania"
+      "crown_of_miscellania"
     ],
     "legacy_id": "royal_trouble"
   },
   {
-    "id": "rum_deal",
+    "id": "spirits_bargain",
     "name": "Spirits Bargain",
     "complexity": "Experienced",
     "length": "Medium",
@@ -2401,13 +2401,13 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "zogre_flesh_eaters",
-      "priest_in_peril"
+      "bogre_flesh_eaters",
+      "warden_in_peril"
     ],
     "legacy_id": "rum_deal"
   },
   {
-    "id": "rune_mysteries",
+    "id": "sigil_mysteries",
     "name": "Sigil Mysteries",
     "complexity": "Novice",
     "length": "Short",
@@ -2424,7 +2424,7 @@
     "legacy_id": "rune_mysteries"
   },
   {
-    "id": "scorpion_catcher",
+    "id": "sting_catcher",
     "name": "Sting Catcher",
     "complexity": "Intermediate",
     "length": "Short",
@@ -2441,7 +2441,7 @@
     "legacy_id": "scorpion_catcher"
   },
   {
-    "id": "sea_slug",
+    "id": "tide_slug",
     "name": "Tide Slug",
     "complexity": "Novice",
     "length": "Short",
@@ -2460,7 +2460,7 @@
     "legacy_id": "sea_slug"
   },
   {
-    "id": "secrets_of_the_north",
+    "id": "mysteries_of_the_north",
     "name": "Mysteries of the North",
     "complexity": "Master",
     "length": "Medium",
@@ -2480,13 +2480,13 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "making_history",
-      "hazeel_cult"
+      "forging_history",
+      "hazeel_conspiracy"
     ],
     "legacy_id": "secrets_of_the_north"
   },
   {
-    "id": "shades_of_mortton",
+    "id": "wraiths_of_mortton",
     "name": "Wraiths of Mortton",
     "complexity": "Intermediate",
     "length": "Short",
@@ -2509,7 +2509,7 @@
     "legacy_id": "shades_of_mortton"
   },
   {
-    "id": "shadow_of_the_storm",
+    "id": "umbral_of_the_storm",
     "name": "Umbral of the Storm",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -2525,13 +2525,13 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "demon_slayer",
-      "the_golem"
+      "fiend_slayer",
+      "the_stone_guardian"
     ],
     "legacy_id": "shadow_of_the_storm"
   },
   {
-    "id": "sheep_herder",
+    "id": "wool_herder",
     "name": "Wool Herder",
     "complexity": "Novice",
     "length": "Short",
@@ -2548,7 +2548,7 @@
     "legacy_id": "sheep_herder"
   },
   {
-    "id": "sheep_shearer",
+    "id": "wool_shearer",
     "name": "Wool Shearer",
     "complexity": "Novice",
     "length": "Short",
@@ -2565,7 +2565,7 @@
     "legacy_id": "sheep_shearer"
   },
   {
-    "id": "shield_of_arrav",
+    "id": "aegis_of_arrav",
     "name": "Aegis of Arrav",
     "complexity": "Novice",
     "length": "Medium",
@@ -2582,7 +2582,7 @@
     "legacy_id": "shield_of_arrav"
   },
   {
-    "id": "shilo_village",
+    "id": "shroud_village",
     "name": "Shroud Village",
     "complexity": "Experienced",
     "length": "Medium",
@@ -2599,12 +2599,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "jungle_potion"
+      "wildwood_potion"
     ],
     "legacy_id": "shilo_village"
   },
   {
-    "id": "sins_of_the_father",
+    "id": "vices_of_the_father",
     "name": "Vices of the Father",
     "complexity": "Master",
     "length": "Long",
@@ -2626,13 +2626,13 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "a_taste_of_hope",
-      "vampyre_slayer"
+      "a_savor_of_hope",
+      "nightborn_slayer"
     ],
     "legacy_id": "sins_of_the_father"
   },
   {
-    "id": "skipping_stones",
+    "id": "stone_skippers",
     "name": "Stone Skippers",
     "complexity": "Novice",
     "length": "Short",
@@ -2650,7 +2650,7 @@
     "legacy_id": "skipping_stones"
   },
   {
-    "id": "sleeping_giants",
+    "id": "slumbering_giants",
     "name": "Slumbering Giants",
     "complexity": "Intermediate",
     "length": "Short",
@@ -2669,7 +2669,7 @@
     "legacy_id": "sleeping_giants"
   },
   {
-    "id": "song_of_the_elves",
+    "id": "hymn_of_the_elves",
     "name": "Hymn of the Elves",
     "complexity": "Grandmaster",
     "length": "Very Long",
@@ -2699,15 +2699,15 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "mournings_end_part_ii",
-      "the_eyes_of_glouphrie",
-      "enakhras_lament",
-      "making_history"
+      "mourning_s_finale_part_ii",
+      "glouphrie_s_gaze",
+      "enakhra_s_sorrow",
+      "forging_history"
     ],
     "legacy_id": "song_of_the_elves"
   },
   {
-    "id": "spirits_of_the_elid",
+    "id": "essences_of_the_elid",
     "name": "Essences of the Elid",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -2731,7 +2731,7 @@
     "legacy_id": "spirits_of_the_elid"
   },
   {
-    "id": "swan_song",
+    "id": "silverwing_hymn",
     "name": "Silverwing Hymn",
     "complexity": "Master",
     "length": "Medium",
@@ -2754,13 +2754,13 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "garden_of_tranquillity",
-      "one_small_favour"
+      "grove_of_tranquillity",
+      "one_modest_favor"
     ],
     "legacy_id": "swan_song"
   },
   {
-    "id": "tai_bwo_wannai_trio",
+    "id": "tai_bwo_wannai_three",
     "name": "Tai Bwo Wannai Three",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -2779,12 +2779,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "jungle_potion"
+      "wildwood_potion"
     ],
     "legacy_id": "tai_bwo_wannai_trio"
   },
   {
-    "id": "tale_of_the_righteous",
+    "id": "story_of_the_righteous",
     "name": "Story of the Righteous",
     "complexity": "Novice",
     "length": "Short",
@@ -2805,7 +2805,7 @@
     "legacy_id": "tale_of_the_righteous"
   },
   {
-    "id": "tears_of_guthix",
+    "id": "echoes_of_guthix",
     "name": "Echoes of Guthix",
     "complexity": "Novice",
     "length": "Short",
@@ -2828,7 +2828,7 @@
     "legacy_id": "tears_of_guthix"
   },
   {
-    "id": "temple_of_ikov",
+    "id": "sanctum_of_ikov",
     "name": "Sanctum of Ikov",
     "complexity": "Experienced",
     "length": "Medium",
@@ -2849,7 +2849,7 @@
     "legacy_id": "temple_of_ikov"
   },
   {
-    "id": "temple_of_the_eye",
+    "id": "sanctum_of_the_eye",
     "name": "Sanctum of the Eye",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -2868,7 +2868,7 @@
     "legacy_id": "temple_of_the_eye"
   },
   {
-    "id": "the_curse_of_arrav",
+    "id": "the_hex_of_arrav",
     "name": "The Hex of Arrav",
     "complexity": "Master",
     "length": "Medium",
@@ -2889,13 +2889,13 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "defender_of_varrock",
-      "troll_romance"
+      "guardian_of_varrock",
+      "brute_romance"
     ],
     "legacy_id": "the_curse_of_arrav"
   },
   {
-    "id": "the_dig_site",
+    "id": "the_excavation_grounds",
     "name": "The Excavation Grounds",
     "complexity": "Intermediate",
     "length": "Long",
@@ -2917,7 +2917,7 @@
     "legacy_id": "the_dig_site"
   },
   {
-    "id": "the_eyes_of_glouphrie",
+    "id": "glouphrie_s_gaze",
     "name": "Glouphrie's Gaze",
     "complexity": "Intermediate",
     "length": "Short",
@@ -2937,12 +2937,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "the_grand_tree"
+      "the_grand_grove"
     ],
     "legacy_id": "the_eyes_of_glouphrie"
   },
   {
-    "id": "the_feud",
+    "id": "the_rivalry",
     "name": "The Rivalry",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -2961,7 +2961,7 @@
     "legacy_id": "the_feud"
   },
   {
-    "id": "the_forsaken_tower",
+    "id": "the_forsaken_spire",
     "name": "The Forsaken Spire",
     "complexity": "Novice",
     "length": "Short",
@@ -2979,7 +2979,7 @@
     "legacy_id": "the_forsaken_tower"
   },
   {
-    "id": "the_fremennik_exiles",
+    "id": "the_fremennik_outcasts",
     "name": "The Fremennik Outcasts",
     "complexity": "Master",
     "length": "Long",
@@ -3001,15 +3001,15 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "the_fremennik_isles",
-      "mountain_daughter",
-      "lunar_diplomacy",
-      "heroes_quest"
+      "the_fremennik_archipelago",
+      "peak_daughter",
+      "moon_diplomacy",
+      "champions_quest"
     ],
     "legacy_id": "the_fremennik_exiles"
   },
   {
-    "id": "the_fremennik_isles",
+    "id": "the_fremennik_archipelago",
     "name": "The Fremennik Archipelago",
     "complexity": "Experienced",
     "length": "Long",
@@ -3029,12 +3029,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "the_fremennik_trials"
+      "the_fremennik_challenges"
     ],
     "legacy_id": "the_fremennik_isles"
   },
   {
-    "id": "the_fremennik_trials",
+    "id": "the_fremennik_challenges",
     "name": "The Fremennik Challenges",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -3065,7 +3065,7 @@
     "legacy_id": "the_fremennik_trials"
   },
   {
-    "id": "the_garden_of_death",
+    "id": "the_grove_of_doom",
     "name": "The Grove of Doom",
     "complexity": "Intermediate",
     "length": "Short",
@@ -3084,7 +3084,7 @@
     "legacy_id": "the_garden_of_death"
   },
   {
-    "id": "the_giant_dwarf",
+    "id": "the_giant_stonekin",
     "name": "The Giant Stonekin",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -3111,7 +3111,7 @@
     "legacy_id": "the_giant_dwarf"
   },
   {
-    "id": "the_golem",
+    "id": "the_stone_guardian",
     "name": "The Stone Guardian",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -3132,7 +3132,7 @@
     "legacy_id": "the_golem"
   },
   {
-    "id": "the_grand_tree",
+    "id": "the_grand_grove",
     "name": "The Grand Grove",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -3153,7 +3153,7 @@
     "legacy_id": "the_grand_tree"
   },
   {
-    "id": "the_hand_in_the_sand",
+    "id": "the_palm_in_the_dunes",
     "name": "The Palm in the Dunes",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -3174,7 +3174,7 @@
     "legacy_id": "the_hand_in_the_sand"
   },
   {
-    "id": "the_heart_of_darkness",
+    "id": "the_heart_of_shadows",
     "name": "The Heart of Shadows",
     "complexity": "Master",
     "length": "Long",
@@ -3194,13 +3194,13 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "children_of_the_sun",
-      "twilights_promise"
+      "heirs_of_the_sun",
+      "twilight_s_vow"
     ],
     "legacy_id": "the_heart_of_darkness"
   },
   {
-    "id": "the_knights_sword",
+    "id": "the_sentinels_sword",
     "name": "The Sentinels' Sword",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -3219,7 +3219,7 @@
     "legacy_id": "the_knights_sword"
   },
   {
-    "id": "the_lost_tribe",
+    "id": "the_forsaken_tribe",
     "name": "The Forsaken Tribe",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -3237,12 +3237,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "goblin_diplomacy"
+      "gloomkin_diplomacy"
     ],
     "legacy_id": "the_lost_tribe"
   },
   {
-    "id": "the_queen_of_thieves",
+    "id": "the_thieves_queen",
     "name": "The Thieves' Queen",
     "complexity": "Intermediate",
     "length": "Short",
@@ -3261,7 +3261,7 @@
     "legacy_id": "the_queen_of_thieves"
   },
   {
-    "id": "the_restless_ghost",
+    "id": "the_wandering_spirit",
     "name": "The Wandering Spirit",
     "complexity": "Novice",
     "length": "Short",
@@ -3278,7 +3278,7 @@
     "legacy_id": "the_restless_ghost"
   },
   {
-    "id": "the_ribbiting_tale_of_a_lily_pad_laborer",
+    "id": "the_croaking_tale_of_a_lily_pad_worker",
     "name": "The Croaking Tale of a Lily Pad Worker",
     "complexity": "Novice",
     "length": "Short",
@@ -3296,7 +3296,7 @@
     "legacy_id": "the_ribbiting_tale_of_a_lily_pad_laborer"
   },
   {
-    "id": "the_tourist_trap",
+    "id": "the_traveler_trap",
     "name": "The Traveler Trap",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -3316,7 +3316,7 @@
     "legacy_id": "the_tourist_trap"
   },
   {
-    "id": "throne_of_miscellania",
+    "id": "crown_of_miscellania",
     "name": "Crown of Miscellania",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -3330,13 +3330,13 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "the_giant_dwarf",
-      "heroes_quest"
+      "the_giant_stonekin",
+      "champions_quest"
     ],
     "legacy_id": "throne_of_miscellania"
   },
   {
-    "id": "tower_of_life",
+    "id": "spire_of_life",
     "name": "Spire of Life",
     "complexity": "Novice",
     "length": "Short",
@@ -3355,7 +3355,7 @@
     "legacy_id": "tower_of_life"
   },
   {
-    "id": "tree_gnome_village",
+    "id": "grove_gnome_village",
     "name": "Grove Gnome Village",
     "complexity": "Novice",
     "length": "Short",
@@ -3372,7 +3372,7 @@
     "legacy_id": "tree_gnome_village"
   },
   {
-    "id": "tribal_totem",
+    "id": "clan_totem",
     "name": "Clan Totem",
     "complexity": "Intermediate",
     "length": "Short",
@@ -3391,7 +3391,7 @@
     "legacy_id": "tribal_totem"
   },
   {
-    "id": "troll_romance",
+    "id": "brute_romance",
     "name": "Brute Romance",
     "complexity": "Experienced",
     "length": "Medium",
@@ -3408,12 +3408,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "troll_stronghold"
+      "brute_stronghold"
     ],
     "legacy_id": "troll_romance"
   },
   {
-    "id": "troll_stronghold",
+    "id": "brute_stronghold",
     "name": "Brute Stronghold",
     "complexity": "Experienced",
     "length": "Medium",
@@ -3429,12 +3429,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "death_plateau"
+      "doom_plateau"
     ],
     "legacy_id": "troll_stronghold"
   },
   {
-    "id": "twilights_promise",
+    "id": "twilight_s_vow",
     "name": "Twilight's Vow",
     "complexity": "Novice",
     "length": "Short",
@@ -3448,12 +3448,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "children_of_the_sun"
+      "heirs_of_the_sun"
     ],
     "legacy_id": "twilights_promise"
   },
   {
-    "id": "underground_pass",
+    "id": "underpath_pass",
     "name": "Underpath Pass",
     "complexity": "Experienced",
     "length": "Very Long",
@@ -3470,12 +3470,12 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "biohazard"
+      "chemical_danger"
     ],
     "legacy_id": "underground_pass"
   },
   {
-    "id": "vampyre_slayer",
+    "id": "nightborn_slayer",
     "name": "Nightborn Slayer",
     "complexity": "Novice",
     "length": "Short",
@@ -3492,7 +3492,7 @@
     "legacy_id": "vampyre_slayer"
   },
   {
-    "id": "walking_the_dog",
+    "id": "taking_the_hound_for_a_walk",
     "name": "Taking the Hound for a Walk",
     "complexity": "Novice",
     "length": "Short",
@@ -3509,7 +3509,7 @@
     "legacy_id": "walking_the_dog"
   },
   {
-    "id": "wanted",
+    "id": "hunted",
     "name": "Hunted",
     "complexity": "Intermediate",
     "length": "Long",
@@ -3523,14 +3523,14 @@
     "questPointRequirement": 33,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "recruitment_drive",
-      "priest_in_peril",
-      "the_lost_tribe"
+      "mustering_drive",
+      "warden_in_peril",
+      "the_forsaken_tribe"
     ],
     "legacy_id": "wanted"
   },
   {
-    "id": "watchtower",
+    "id": "wardspire",
     "name": "Wardspire",
     "complexity": "Intermediate",
     "length": "Long",
@@ -3553,7 +3553,7 @@
     "legacy_id": "watchtower"
   },
   {
-    "id": "waterfall_quest",
+    "id": "cascade_quest",
     "name": "Cascade Quest",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -3571,7 +3571,7 @@
     "legacy_id": "waterfall_quest"
   },
   {
-    "id": "what_lies_below",
+    "id": "which_lies_beneath",
     "name": "Which Lies Beneath",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -3592,7 +3592,7 @@
     "legacy_id": "what_lies_below"
   },
   {
-    "id": "while_guthix_sleeps",
+    "id": "when_guthix_sleeps",
     "name": "When Guthix Sleeps",
     "complexity": "Grandmaster",
     "length": "Very Long",
@@ -3614,19 +3614,19 @@
     "questPointRequirement": 270,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "mournings_end_part_ii",
-      "defender_of_varrock",
-      "recipe_for_disaster",
-      "path_of_glouphrie",
-      "legends_quest",
-      "kings_ransom",
-      "dream_mentor",
-      "swan_song"
+      "mourning_s_finale_part_ii",
+      "guardian_of_varrock",
+      "banquet_for_disaster",
+      "road_of_glouphrie",
+      "legacies_quest",
+      "crown_s_ransom",
+      "vision_mentor",
+      "silverwing_hymn"
     ],
     "legacy_id": "while_guthix_sleeps"
   },
   {
-    "id": "witchs_house",
+    "id": "hex_s_house",
     "name": "Hex's House",
     "complexity": "Novice",
     "length": "Short",
@@ -3643,7 +3643,7 @@
     "legacy_id": "witchs_house"
   },
   {
-    "id": "witchs_potion",
+    "id": "hex_s_potion",
     "name": "Hex's Potion",
     "complexity": "Novice",
     "length": "Short",
@@ -3660,7 +3660,7 @@
     "legacy_id": "witchs_potion"
   },
   {
-    "id": "x_marks_the_spot",
+    "id": "cross_marks_the_spot",
     "name": "Cross Marks the Spot",
     "complexity": "Novice",
     "length": "Short",
@@ -3677,7 +3677,7 @@
     "legacy_id": "x_marks_the_spot"
   },
   {
-    "id": "zogre_flesh_eaters",
+    "id": "bogre_flesh_eaters",
     "name": "Bogre Flesh Eaters",
     "complexity": "Intermediate",
     "length": "Medium",
@@ -3699,7 +3699,7 @@
     "questPointRequirement": 0,
     "combatLevelRequirement": 0,
     "questRequirements": [
-      "jungle_potion"
+      "wildwood_potion"
     ],
     "legacy_id": "zogre_flesh_eaters"
   }

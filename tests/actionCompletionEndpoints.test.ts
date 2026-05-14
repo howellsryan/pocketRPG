@@ -29,7 +29,7 @@ describe('action completion endpoint tamper guards', () => {
   })
 
   it('rejects protected item injection for wrong source item pair', async () => {
-    const out = await post({ sourceId: 'barrows_brothers', actionNonce: 'n2', rewards: [{ itemId: 'warped_bow', quantity: 1 }] })
+    const out = await post({ sourceId: 'cryptbound_champions', actionNonce: 'n2', rewards: [{ itemId: 'warped_bow', quantity: 1 }] })
     expect(out.status).toBe(200)
     expect(out.body.ok).toBe(true)
     expect(Array.isArray(out.body.granted)).toBe(true)
@@ -42,13 +42,13 @@ describe('action completion endpoint tamper guards', () => {
       loadCharacterWithSave: async () => ({ saveObject: { _serverActionNonces: { replay: 1 }, inventory: [] }, saveRevision: 0 }),
       writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
     })
-    const req = new Request('https://example.com', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' }, body: JSON.stringify({ sourceId: 'barrows_brothers', actionNonce: 'replay', rewards: [] }) })
+    const req = new Request('https://example.com', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' }, body: JSON.stringify({ sourceId: 'cryptbound_champions', actionNonce: 'replay', rewards: [] }) })
     const res = await handler({ request: req, env: {} as any })
     expect(res.status).toBe(409)
   })
 
   it('rejects insufficient supply consumption', async () => {
-    const out = await post({ sourceId: 'barrows_brothers', actionNonce: 'n3', consumptions: [{ itemId: 'food', quantity: 5 }], rewards: [{ itemId: 'morvyn_s_hood', quantity: 1 }] })
+    const out = await post({ sourceId: 'cryptbound_champions', actionNonce: 'n3', consumptions: [{ itemId: 'food', quantity: 5 }], rewards: [{ itemId: 'morvyn_s_hood', quantity: 1 }] })
     expect(out.status).toBe(400)
   })
 
@@ -63,7 +63,7 @@ describe('action completion endpoint tamper guards', () => {
     const req = new Request('https://example.com/api/actions/raid/complete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' },
-      body: JSON.stringify({ sourceId: 'barrows_brothers', actionNonce: 'n3b' }),
+      body: JSON.stringify({ sourceId: 'cryptbound_champions', actionNonce: 'n3b' }),
     })
     const res = await handler({ request: req, env: {} as any })
     expect(res.status).toBe(200)
@@ -132,7 +132,7 @@ describe('action completion endpoint tamper guards', () => {
     const req = new Request('https://example.com/api/actions/raid/complete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' },
-      body: JSON.stringify({ sourceId: 'barrows_brothers', actionNonce: 'n6' }),
+      body: JSON.stringify({ sourceId: 'cryptbound_champions', actionNonce: 'n6' }),
     })
     const res = await handler({ request: req, env: {} as any })
     expect(res.status).toBe(200)
@@ -151,7 +151,7 @@ describe('action completion endpoint tamper guards', () => {
     const req = new Request('https://example.com/api/actions/raid/complete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' },
-      body: JSON.stringify({ sourceId: 'barrows_brothers', actionNonce: 'n7' }),
+      body: JSON.stringify({ sourceId: 'cryptbound_champions', actionNonce: 'n7' }),
     })
     const res = await handler({ request: req, env: {} as any })
     const body = await res.json()
@@ -169,20 +169,20 @@ describe('action completion endpoint tamper guards', () => {
     const handler = makeCompletionHandler('raids', {
       requireAuth: async () => ({ identity: { id: 1 } }),
       assertNotInActiveMatch: async () => null,
-      loadCharacterWithSave: async () => ({ saveObject: { inventory: [], settings: { raidKillCounts: { barrows_brothers: 4 } } }, saveRevision: 0 }),
+      loadCharacterWithSave: async () => ({ saveObject: { inventory: [], settings: { raidKillCounts: { cryptbound_champions: 4 } } }, saveRevision: 0 }),
       writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
       resolveRewards: () => [],
     })
     const req = new Request('https://example.com/api/actions/raid/complete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' },
-      body: JSON.stringify({ sourceId: 'barrows_brothers', actionNonce: 'n8' }),
+      body: JSON.stringify({ sourceId: 'cryptbound_champions', actionNonce: 'n8' }),
     })
     const res = await handler({ request: req, env: {} as any })
     const body = await res.json()
     expect(res.status).toBe(200)
     const saved = JSON.parse(body.save.save_data)
-    expect(saved.settings.raidKillCounts.barrows_brothers).toBe(5)
+    expect(saved.settings.raidKillCounts.cryptbound_champions).toBe(5)
   })
 
   it('accepts minigame rewards validated by minigame task id', async () => {

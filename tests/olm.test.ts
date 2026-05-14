@@ -214,7 +214,7 @@ describe('The Great Olm Boss', () => {
   })
 
   describe('Drop Table', () => {
-    const cox = (raidsData as any)['chambers_of_xeric']
+    const cox = (raidsData as any)['vaults_of_xyren']
 
     it('olm standalone drops should only include the master clue drop', () => {
       expect(olm.drops).toHaveLength(1)

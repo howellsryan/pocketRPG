@@ -111,7 +111,7 @@ describe('collection log seeded contents', () => {
 
   it('Vaults of Xyren lists the Twisted Bow as a unique', () => {
     const raids = findCategory('raids')
-    const cox = raids?.sections.find((s: any) => s.id === 'chambers_of_xeric')
+    const cox = raids?.sections.find((s: any) => s.id === 'vaults_of_xyren')
     expect(cox).toBeTruthy()
     expect(cox.items).toContain('warped_bow')
   })
