@@ -33,16 +33,8 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
 
   const getItemTypes = () => getStoreItemTypes(itemsData, { isIronman })
 
+  const getCanonicalStoreEntries = () => Object.entries(itemsData).filter(([entryId, item]) => !item?.id || entryId === item.id)
 
-  const dedupeStoreItems = (items) => {
-    const seen = new Set()
-    return items.filter((item) => {
-      const key = `${item.name.toLowerCase()}::${item.shopValue || 0}::${item.questUnlock || ''}::${item.type || ''}`
-      if (seen.has(key)) return false
-      seen.add(key)
-      return true
-    })
-  }
 
   const itemTypes = getItemTypes()
 
@@ -54,7 +46,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
 
   const getAvailableItems = () => {
     if (activeTab === 'quest_items') {
-      return Object.entries(itemsData)
+      return getCanonicalStoreEntries()
         .filter(([_, item]) => item.questUnlock && isStoreVisibleItem(item, { isIronman, includeQuestItems: true }))
         .map(([id, item]) => {
           const isUnlocked = completedQuests.has(item.questUnlock)
@@ -63,12 +55,12 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
     }
     if (activeTab === 'minigame_unlocks') {
       const minigameProducts = new Set((minigamesData.tasks || []).flatMap((t) => (Array.isArray(t.rewardItems) && t.rewardItems.length > 0 ? t.rewardItems : [t.product])).filter(Boolean))
-      return Object.entries(itemsData)
+      return getCanonicalStoreEntries()
         .filter(([id]) => minigameProducts.has(id))
         .map(([id, item]) => ({ ...item, id, isMinigameItem: true, isUnlocked: unlockedMinigameItems.has(id) }))
     }
     if (activeTab === 'all') {
-      return Object.entries(itemsData)
+      return getCanonicalStoreEntries()
         .filter(([_, item]) => {
           // Ironman: only show general store items
           if (isIronman) {
@@ -81,7 +73,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
     }
     // For type-based tabs, show only items of that type that aren't quest items or untradeable
     // For ironman, additionally filter to only isGeneralStore items
-    return Object.entries(itemsData)
+    return getCanonicalStoreEntries()
       .filter(([_, item]) => {
         if (item.type !== activeTab) return false
         return !item.questUnlock && isStoreVisibleItem(item, { isIronman, includeQuestItems: false })
@@ -91,10 +83,9 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
 
   const getSearchResults = () => {
     const available = getAvailableItems()
-    if (!searchTerm.trim()) return dedupeStoreItems(available)
+    if (!searchTerm.trim()) return available
     const lower = searchTerm.toLowerCase()
-    const filtered = available.filter(item => item.name.toLowerCase().includes(lower))
-    return dedupeStoreItems(filtered)
+    return available.filter(item => item.name.toLowerCase().includes(lower))
   }
 
   const MINIGAME_UNLOCK_STORE_PRICE = 4_500_000
