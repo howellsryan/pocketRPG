@@ -1812,7 +1812,7 @@
     "isBossUnique": true,
     "obtainSource": {
       "type": "monster_drop",
-      "sourceId": "demonic_gorilla"
+      "sourceId": "hellbound_gorilla"
     }
   },
   "zyrite": {
@@ -1827,7 +1827,7 @@
     "isBossUnique": true,
     "obtainSource": {
       "type": "monster_drop",
-      "sourceId": "demonic_gorilla"
+      "sourceId": "hellbound_gorilla"
     }
   },
   "gold_bar": {
@@ -9731,7 +9731,7 @@
     "isBossUnique": true,
     "obtainSource": {
       "type": "monster_drop",
-      "sourceId": "demonic_gorilla"
+      "sourceId": "hellbound_gorilla"
     }
   },
   "colossal_ballista": {
@@ -15934,7 +15934,7 @@
       {
         "type": "drop",
         "sourceType": "monster",
-        "sourceId": "lizardman_shaman"
+        "sourceId": "marshscale_shaman"
       }
     ]
   },
@@ -16961,7 +16961,7 @@
     "isBossUnique": true,
     "obtainSource": {
       "type": "monster_drop",
-      "sourceId": "demonic_gorilla"
+      "sourceId": "hellbound_gorilla"
     }
   },
   "zenyte": {
@@ -16976,7 +16976,7 @@
     "isBossUnique": true,
     "obtainSource": {
       "type": "monster_drop",
-      "sourceId": "demonic_gorilla"
+      "sourceId": "hellbound_gorilla"
     }
   },
   "gold_amulet": {
@@ -19674,7 +19674,7 @@
     "isBossUnique": true,
     "obtainSource": {
       "type": "monster_drop",
-      "sourceId": "demonic_gorilla"
+      "sourceId": "hellbound_gorilla"
     }
   },
   "heavy_ballista": {

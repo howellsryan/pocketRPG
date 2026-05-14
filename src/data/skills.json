@@ -693,7 +693,7 @@
       },
       {
         "id": "cook_chicken",
-        "name": "Cook chicken",
+        "name": "Cook field_chicken",
         "level": 1,
         "ticks": 4,
         "xp": 30,

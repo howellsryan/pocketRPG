@@ -36,7 +36,7 @@ const args = parseArgs(process.argv.slice(2))
 const DEFAULT_KILLS_PER_HOUR = Number(args['kills-per-hour'] ?? 100)
 const DEFAULT_RAID_COMPLETIONS_PER_HOUR = Number(args['raid-completions-per-hour'] ?? 1)
 const MONSTER_KILLS_PER_HOUR_OVERRIDES = {
-  corrupted_gauntlet: 60,
+  blighted_gauntlet: 60,
 }
 const RAID_COMPLETIONS_PER_HOUR_OVERRIDES = {
   vaults_of_xyren: 10,

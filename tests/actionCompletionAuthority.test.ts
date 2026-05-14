@@ -15,8 +15,8 @@ describe('action completion authority helpers', () => {
     const save = makeSave()
     const out = settleActionCompletion(save, {
       sourceType: 'monsters',
-      sourceId: 'chicken',
-      nonce: 'monster:chicken:1',
+      sourceId: 'field_chicken',
+      nonce: 'monster:field_chicken:1',
       rewards: [{ itemId: 'raw_chicken', quantity: 1 }],
     })
 
@@ -39,8 +39,8 @@ describe('action completion authority helpers', () => {
     const save = makeSave()
     expect(() => settleActionCompletion(save, {
       sourceType: 'monsters',
-      sourceId: 'chicken',
-      nonce: 'monster:chicken:2',
+      sourceId: 'field_chicken',
+      nonce: 'monster:field_chicken:2',
       rewards: [{ itemId: 'nether_demon_whip', quantity: 1 }],
     })).toThrow(/Reward item not valid for source/)
   })
@@ -50,8 +50,8 @@ describe('action completion authority helpers', () => {
     save.inventory = Array.from({ length: 27 }, (_, i) => ({ itemId: `filler_${i}`, quantity: 1 }))
     const out = settleActionCompletion(save, {
       sourceType: 'monsters',
-      sourceId: 'chicken',
-      nonce: 'monster:chicken:3',
+      sourceId: 'field_chicken',
+      nonce: 'monster:field_chicken:3',
       rewards: [{ itemId: 'raw_chicken', quantity: 2 }],
     })
 
@@ -69,8 +69,8 @@ describe('action completion authority helpers', () => {
     ]
     const out = settleActionCompletion(save, {
       sourceType: 'monsters',
-      sourceId: 'chicken',
-      nonce: 'monster:chicken:4',
+      sourceId: 'field_chicken',
+      nonce: 'monster:field_chicken:4',
       rewards: [{ itemId: 'feather', quantity: 50 }],
     })
 

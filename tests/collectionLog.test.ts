@@ -104,9 +104,9 @@ describe('collection log seeded contents', () => {
 
   it('Gargoyle is one of the monster sources for Granite Maul', () => {
     const monsters = findCategory('monsters')
-    const gargoyle = monsters?.sections.find((s: any) => s.id === 'gargoyle')
-    expect(gargoyle).toBeTruthy()
-    expect(gargoyle.items).toContain('gargoyle_maul')
+    const runestone_gargoyle = monsters?.sections.find((s: any) => s.id === 'runestone_gargoyle')
+    expect(runestone_gargoyle).toBeTruthy()
+    expect(runestone_gargoyle.items).toContain('gargoyle_maul')
   })
 
   it('Vaults of Xyren lists the Twisted Bow as a unique', () => {
@@ -204,31 +204,31 @@ describe('shared item collection credit', () => {
       lootBanked: { dragon_boots: 1, coins: 12345 },
       lootGained: {},
     }
-    const found = collectIdleCombatLoggedDrops('spiritual_ranger', sim)
+    const found = collectIdleCombatLoggedDrops('astral_ranger', sim)
     expect(found).toContain('dragon_boots')
   })
 
   it('collectIdleCombatLoggedDrops also reads lootGained when banking is off', () => {
     const sim = { lootGained: { gargoyle_maul: 1 }, lootBanked: {} }
-    const found = collectIdleCombatLoggedDrops('gargoyle', sim)
+    const found = collectIdleCombatLoggedDrops('runestone_gargoyle', sim)
     expect(found).toContain('gargoyle_maul')
   })
 
   it('collectIdleCombatLoggedDrops dedupes itemIds across buckets', () => {
     const sim = { lootGained: { gargoyle_maul: 1 }, lootBanked: { gargoyle_maul: 1 } }
-    const found = collectIdleCombatLoggedDrops('gargoyle', sim)
+    const found = collectIdleCombatLoggedDrops('runestone_gargoyle', sim)
     expect(found.filter(id => id === 'gargoyle_maul')).toHaveLength(1)
   })
 
   it('collectIdleCombatLoggedDrops ignores unrelated items', () => {
     const sim = { lootBanked: { coins: 10000, bones: 50, dragon_boots: 1 } }
-    const found = collectIdleCombatLoggedDrops('spiritual_ranger', sim)
+    const found = collectIdleCombatLoggedDrops('astral_ranger', sim)
     expect(found).toEqual(['dragon_boots'])
   })
 
   it('collectIdleCombatLoggedDrops returns [] for missing monsterId or sim', () => {
     expect(collectIdleCombatLoggedDrops('', { lootBanked: { dragon_boots: 1 } })).toEqual([])
-    expect(collectIdleCombatLoggedDrops('spiritual_ranger', null as any)).toEqual([])
+    expect(collectIdleCombatLoggedDrops('astral_ranger', null as any)).toEqual([])
   })
 
   it('summary credits all shared-item slots after a single record', () => {

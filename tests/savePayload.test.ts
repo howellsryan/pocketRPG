@@ -18,7 +18,7 @@ describe('save payload snapshot', () => {
         combatStance: 'defensive',
         unlockedFeatures: new Set(['slayer']),
         activeCombatSpell: { id: 'wind_strike' },
-        slayerTask: { monsterId: 'goblin' },
+        slayerTask: { monsterId: 'cave_goblin' },
         slayerPoints: 5,
         dungeoneeringTokens: 12345,
         bossKillCounts: { dragon: 2 },
@@ -53,7 +53,7 @@ describe('save payload snapshot', () => {
   })
 
   it('models immediate post-completion snapshot durability', () => {
-    let slayerTaskRef = { monsterId: 'goblin', monstersRemaining: 1, pointsOnComplete: 4 }
+    let slayerTaskRef = { monsterId: 'cave_goblin', monstersRemaining: 1, pointsOnComplete: 4 }
     let slayerPointsRef = 10
 
     slayerTaskRef = null

@@ -8,7 +8,7 @@
       "tekton",
       "vespula",
       "muttadile",
-      "olm"
+      "the_great_olm"
     ],
     "rewards": {
       "always": [
@@ -119,7 +119,7 @@
     "icon": "🩸",
     "description": "Fight through six deadly bosses in Verzik's theatre. Defeat them all to claim your reward.",
     "bosses": [
-      "maiden_of_sugadinti",
+      "the_maiden_of_sugadinti",
       "pestilent_bloat",
       "nylocas_vasilias",
       "sotetseg",
@@ -219,12 +219,12 @@
     "icon": "⚰️",
     "description": "Descend into the ancient crypt and defeat all six champions to claim their treasures.",
     "bosses": [
-      "arim_the_blighted",
-      "dharok_the_wretched",
-      "guthan_the_infested",
-      "karil_the_tainted",
-      "torag_the_corrupted",
-      "verac_the_defiled"
+      "morvyn_the_blighted",
+      "dravok_the_wretched",
+      "gorath_the_infested",
+      "kaelor_the_tainted",
+      "torvek_the_corrupted",
+      "verin_the_defiled"
     ],
     "rewards": {
       "always": [
@@ -374,7 +374,7 @@
       "tekton",
       "vespula",
       "muttadile",
-      "olm"
+      "the_great_olm"
     ],
     "rewards": {
       "always": [
@@ -485,7 +485,7 @@
     "icon": "🩸",
     "description": "Fight through six deadly bosses in Verzik's theatre. Defeat them all to claim your reward.",
     "bosses": [
-      "maiden_of_sugadinti",
+      "the_maiden_of_sugadinti",
       "pestilent_bloat",
       "nylocas_vasilias",
       "sotetseg",
@@ -585,12 +585,12 @@
     "icon": "⚰️",
     "description": "Descend into the ancient crypt and defeat all six champions to claim their treasures.",
     "bosses": [
-      "arim_the_blighted",
-      "dharok_the_wretched",
-      "guthan_the_infested",
-      "karil_the_tainted",
-      "torag_the_corrupted",
-      "verac_the_defiled"
+      "morvyn_the_blighted",
+      "dravok_the_wretched",
+      "gorath_the_infested",
+      "kaelor_the_tainted",
+      "torvek_the_corrupted",
+      "verin_the_defiled"
     ],
     "rewards": {
       "always": [

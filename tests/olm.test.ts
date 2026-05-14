@@ -4,47 +4,47 @@ import itemsData from '../src/data/items.json'
 import monstersData from '../src/data/monsters.json'
 import raidsData from '../src/data/raids.json'
 
-const olm = monstersData['olm']
+const the_great_olm = monstersData['the_great_olm']
 
 describe('The Great Olm Boss', () => {
   describe('Boss Stats', () => {
     it('should have correct combat level and hitpoints', () => {
-      expect(olm.combatLevel).toBe(1000)
-      expect(olm.hitpoints).toBe(800)
+      expect(the_great_olm.combatLevel).toBe(1000)
+      expect(the_great_olm.hitpoints).toBe(800)
     })
 
     it('should have all combat stats at 250 and defence 150', () => {
-      expect(olm.stats.attack).toBe(250)
-      expect(olm.stats.strength).toBe(250)
-      expect(olm.stats.defence).toBe(150)
-      expect(olm.stats.magic).toBe(250)
-      expect(olm.stats.ranged).toBe(250)
+      expect(the_great_olm.stats.attack).toBe(250)
+      expect(the_great_olm.stats.strength).toBe(250)
+      expect(the_great_olm.stats.defence).toBe(150)
+      expect(the_great_olm.stats.magic).toBe(250)
+      expect(the_great_olm.stats.ranged).toBe(250)
     })
 
     it('should have attack speed of 4 ticks', () => {
-      expect(olm.attackSpeed).toBe(4)
+      expect(the_great_olm.attackSpeed).toBe(4)
     })
 
     it('should require a double kill', () => {
-      expect(olm.requiresDoubleKill).toBe(true)
+      expect(the_great_olm.requiresDoubleKill).toBe(true)
     })
 
     it('should be flagged as a boss', () => {
-      expect(olm.boss).toBe(true)
+      expect(the_great_olm.boss).toBe(true)
     })
   })
 
   describe('Defence Bonuses', () => {
     it('should have melee and magic defence of +200 and zero ranged defence', () => {
-      expect(olm.defenceBonus.stab).toBe(200)
-      expect(olm.defenceBonus.slash).toBe(200)
-      expect(olm.defenceBonus.crush).toBe(200)
-      expect(olm.defenceBonus.magic).toBe(200)
-      expect(olm.defenceBonus.ranged).toBe(0)
+      expect(the_great_olm.defenceBonus.stab).toBe(200)
+      expect(the_great_olm.defenceBonus.slash).toBe(200)
+      expect(the_great_olm.defenceBonus.crush).toBe(200)
+      expect(the_great_olm.defenceBonus.magic).toBe(200)
+      expect(the_great_olm.defenceBonus.ranged).toBe(0)
     })
 
     it('each form should maintain the same defence bonuses (always weak to ranged)', () => {
-      for (const form of Object.values(olm.forms)) {
+      for (const form of Object.values(the_great_olm.forms)) {
         expect((form as any).defenceBonus.ranged).toBe(0)
         expect((form as any).defenceBonus.stab).toBe(200)
         expect((form as any).defenceBonus.magic).toBe(200)
@@ -54,34 +54,34 @@ describe('The Great Olm Boss', () => {
 
   describe('Phase Mechanics', () => {
     it('should have three forms: magic, melee, ranged', () => {
-      expect(olm.forms).toBeDefined()
-      expect(olm.forms.magic).toBeDefined()
-      expect(olm.forms.melee).toBeDefined()
-      expect(olm.forms.ranged).toBeDefined()
+      expect(the_great_olm.forms).toBeDefined()
+      expect(the_great_olm.forms.magic).toBeDefined()
+      expect(the_great_olm.forms.melee).toBeDefined()
+      expect(the_great_olm.forms.ranged).toBeDefined()
     })
 
     it('should start in magic phase', () => {
-      expect(olm.initialForm).toBe('magic')
+      expect(the_great_olm.initialForm).toBe('magic')
     })
 
     it('should change form every attack (randomFormEveryAttack)', () => {
-      expect(olm.randomFormEveryAttack).toBe(true)
+      expect(the_great_olm.randomFormEveryAttack).toBe(true)
     })
 
     it('should not have a fixed cycle order (random phases)', () => {
-      expect(olm.formCycleOrder).toBeUndefined()
+      expect(the_great_olm.formCycleOrder).toBeUndefined()
     })
 
     it('each phase should have max hit of 30', () => {
-      expect(olm.forms.magic.maxHit).toBe(30)
-      expect(olm.forms.melee.maxHit).toBe(30)
-      expect(olm.forms.ranged.maxHit).toBe(30)
+      expect(the_great_olm.forms.magic.maxHit).toBe(30)
+      expect(the_great_olm.forms.melee.maxHit).toBe(30)
+      expect(the_great_olm.forms.ranged.maxHit).toBe(30)
     })
 
     it('each phase should have its correct attack style', () => {
-      expect(olm.forms.magic.attackStyle).toBe('magic')
-      expect(olm.forms.melee.attackStyle).toBe('crush')
-      expect(olm.forms.ranged.attackStyle).toBe('ranged')
+      expect(the_great_olm.forms.magic.attackStyle).toBe('magic')
+      expect(the_great_olm.forms.melee.attackStyle).toBe('crush')
+      expect(the_great_olm.forms.ranged.attackStyle).toBe('ranged')
     })
   })
 
@@ -89,7 +89,7 @@ describe('The Great Olm Boss', () => {
     let combatState: ReturnType<typeof createCombatState>
 
     beforeEach(() => {
-      combatState = createCombatState(olm, 'ranged', 'accurate')
+      combatState = createCombatState(the_great_olm, 'ranged', 'accurate')
     })
 
     it('should initialize in magic phase', () => {
@@ -111,7 +111,7 @@ describe('The Great Olm Boss', () => {
 
   describe('Random Phase Switching', () => {
     it('should switch to a random phase on each monster attack', () => {
-      const state = createCombatState(olm, 'ranged', 'accurate')
+      const state = createCombatState(the_great_olm, 'ranged', 'accurate')
       expect(state.monster.currentForm).toBe('magic')
 
       // Simulate monster attacks to trigger phase switches
@@ -150,7 +150,7 @@ describe('The Great Olm Boss', () => {
     })
 
     it('should regenerate on first kill and continue combat', () => {
-      const state = createCombatState(olm, 'ranged', 'accurate')
+      const state = createCombatState(the_great_olm, 'ranged', 'accurate')
       state.monster.currentHP = 1
 
       const playerStats = { attack: 99, strength: 99, defence: 99, ranged: 99, magic: 99, hitpoints: 99, currentHP: 99 }
@@ -174,7 +174,7 @@ describe('The Great Olm Boss', () => {
     })
 
     it('should grant loot on second kill', () => {
-      const state = createCombatState(olm, 'ranged', 'accurate')
+      const state = createCombatState(the_great_olm, 'ranged', 'accurate')
       state.monster.currentHP = 1
       state.doubleKillCount = 1
 
@@ -197,7 +197,7 @@ describe('The Great Olm Boss', () => {
     })
 
     it('should reset spec energy on phase reset', () => {
-      const state = createCombatState(olm, 'ranged', 'accurate')
+      const state = createCombatState(the_great_olm, 'ranged', 'accurate')
       state.monster.currentHP = 1
       state.specialAttackEnergy = 25
 
@@ -216,10 +216,10 @@ describe('The Great Olm Boss', () => {
   describe('Drop Table', () => {
     const cox = (raidsData as any)['vaults_of_xyren']
 
-    it('olm standalone drops should only include the master clue drop', () => {
-      expect(olm.drops).toHaveLength(1)
-      expect(olm.drops[0].itemId).toBe('clue_scroll_master')
-      expect(olm.drops[0].chance).toBe(0.02)
+    it('the_great_olm standalone drops should only include the master clue drop', () => {
+      expect(the_great_olm.drops).toHaveLength(1)
+      expect(the_great_olm.drops[0].itemId).toBe('clue_scroll_master')
+      expect(the_great_olm.drops[0].chance).toBe(0.02)
     })
 
     it('CoX raid should always drop coins', () => {
@@ -302,8 +302,8 @@ describe('Dragon Hunter passive on dragon monsters', () => {
     expect((monstersData['king_black_dragon'] as any).isDragon).toBe(true)
   })
 
-  it('olm should NOT be flagged as a dragon', () => {
-    expect((monstersData['olm'] as any).isDragon).toBeUndefined()
+  it('the_great_olm should NOT be flagged as a dragon', () => {
+    expect((monstersData['the_great_olm'] as any).isDragon).toBeUndefined()
   })
 })
 

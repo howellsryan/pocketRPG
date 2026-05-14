@@ -53,11 +53,11 @@ describe('simulateIdleCombat', () => {
   it('returns completed slayerTaskUpdate with capped task kills and points on idle overkill', () => {
     const task: any = {
       stance: 'accurate',
-      monster: { id: 'goblin', name: 'Goblin', hitpoints: 1, stats: { defence: 1 }, defenceBonus: {}, drops: [] }
+      monster: { id: 'cave_goblin', name: 'Goblin', hitpoints: 1, stats: { defence: 1 }, defenceBonus: {}, drops: [] }
     }
     const stats: any = { attack: { xp: 13_034_431 }, strength: { xp: 13_034_431 }, defence: { xp: 0 } }
     const sim = simulateIdleCombat(task, 60_000, stats, {}, Array(28).fill(null), {}, {
-      monsterId: 'goblin',
+      monsterId: 'cave_goblin',
       monstersRemaining: 2,
       pointsOnComplete: 4
     })
@@ -72,7 +72,7 @@ describe('simulateIdleCombat', () => {
   it('does not idle kill with ranged weapons that require ammo when ammo is missing', () => {
     const task: any = {
       stance: 'accurate',
-      monster: { id: 'goblin', name: 'Goblin', hitpoints: 5, stats: { defence: 1, magic: 1 }, defenceBonus: { ranged: 0 }, drops: [] }
+      monster: { id: 'cave_goblin', name: 'Goblin', hitpoints: 5, stats: { defence: 1, magic: 1 }, defenceBonus: { ranged: 0 }, drops: [] }
     }
     const stats: any = { ranged: { xp: 13_034_431 }, hitpoints: { xp: 13_034_431 } }
     const equipment: any = { weapon: { itemId: 'runeforged_crossbow' } }
@@ -88,7 +88,7 @@ describe('simulateIdleCombat', () => {
   it('does not idle consume/proc bolts for non-bolt ranged weapons with bolts equipped', () => {
     const task: any = {
       stance: 'accurate',
-      monster: { id: 'goblin', name: 'Goblin', hitpoints: 1, stats: { defence: 1, magic: 1 }, defenceBonus: { ranged: 0 }, drops: [] }
+      monster: { id: 'cave_goblin', name: 'Goblin', hitpoints: 1, stats: { defence: 1, magic: 1 }, defenceBonus: { ranged: 0 }, drops: [] }
     }
     const stats: any = { ranged: { xp: 13_034_431 }, hitpoints: { xp: 13_034_431 } }
     const equipment: any = { weapon: { itemId: 'magic_shortbow' }, ammo: { itemId: 'onyx_bolt_e', quantity: 100 } }
@@ -107,7 +107,7 @@ describe('simulateIdleCombat', () => {
   it('caps ranged idle kills by equipped ammo and reports ammo consumption', () => {
     const task: any = {
       stance: 'accurate',
-      monster: { id: 'goblin', name: 'Goblin', hitpoints: 5, stats: { defence: 1, magic: 1 }, defenceBonus: { ranged: 0 }, drops: [] }
+      monster: { id: 'cave_goblin', name: 'Goblin', hitpoints: 5, stats: { defence: 1, magic: 1 }, defenceBonus: { ranged: 0 }, drops: [] }
     }
     const stats: any = { ranged: { xp: 13_034_431 }, hitpoints: { xp: 13_034_431 } }
     const equipment: any = { weapon: { itemId: 'runeforged_crossbow' }, ammo: { itemId: 'bronze_bolt', quantity: 3 } }
@@ -126,7 +126,7 @@ describe('simulateIdleCombat', () => {
   it('caps powered staff idle kills by weapon charges', () => {
     const task: any = {
       stance: 'accurate',
-      monster: { id: 'goblin', name: 'Goblin', hitpoints: 5, stats: { defence: 1, magic: 1 }, defenceBonus: { magic: 0 }, drops: [] }
+      monster: { id: 'cave_goblin', name: 'Goblin', hitpoints: 5, stats: { defence: 1, magic: 1 }, defenceBonus: { magic: 0 }, drops: [] }
     }
     const stats: any = { magic: { xp: 13_034_431 }, hitpoints: { xp: 13_034_431 } }
     const equipment: any = { weapon: { itemId: 'trident', charges: 2 } }

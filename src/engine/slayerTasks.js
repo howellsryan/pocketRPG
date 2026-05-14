@@ -1,5 +1,5 @@
 export const DAGANNOTH_KINGS_TASK_ID = 'dagganoth_kings'
-const DAGANNOTH_KINGS = new Set(['dagganoth_rex', 'dagganoth_prime', 'dagganoth_supreme'])
+const DAGANNOTH_KINGS = new Set(['nagadoth_rex', 'nagadoth_prime', 'nagadoth_supreme'])
 
 export function doesSlayerTaskMatchMonster(taskMonsterId, monsterId) {
   if (!taskMonsterId || !monsterId) return false

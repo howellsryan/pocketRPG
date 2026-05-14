@@ -3,7 +3,7 @@ import { createCombatState, processCombatTick } from '../src/engine/combat.js'
 import itemsData from '../src/data/items.json'
 import monstersData from '../src/data/monsters.json'
 
-const corruptedGauntlet = monstersData['corrupted_gauntlet']
+const corruptedGauntlet = monstersData['blighted_gauntlet']
 
 describe('Blighted Gauntlet Boss', () => {
   describe('Boss Stats and Initialization', () => {

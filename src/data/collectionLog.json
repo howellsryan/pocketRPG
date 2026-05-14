@@ -13,7 +13,7 @@
       "icon": "⚔️",
       "sections": [
         {
-          "id": "abyssal_demon",
+          "id": "nether_demon",
           "label": "Nether Demon",
           "icon": "⚔️",
           "items": [
@@ -30,7 +30,7 @@
           ]
         },
         {
-          "id": "brutal_black_dragon",
+          "id": "vicious_black_dragon",
           "label": "Vicious Black Dragon",
           "icon": "⚔️",
           "items": [
@@ -38,7 +38,7 @@
           ]
         },
         {
-          "id": "cerberus",
+          "id": "threefang_cerberus",
           "label": "Threefang Cerberus",
           "icon": "👑",
           "items": [
@@ -48,7 +48,7 @@
           ]
         },
         {
-          "id": "commander_zilyana",
+          "id": "commander_zephyra",
           "label": "Commander Zephyra",
           "icon": "👑",
           "items": [
@@ -58,7 +58,7 @@
           ]
         },
         {
-          "id": "corrupted_gauntlet",
+          "id": "blighted_gauntlet",
           "label": "Blighted Gauntlet",
           "icon": "👑",
           "items": [
@@ -73,7 +73,7 @@
           ]
         },
         {
-          "id": "dagganoth_prime",
+          "id": "nagadoth_prime",
           "label": "Nagadoth Prime",
           "icon": "👑",
           "items": [
@@ -82,7 +82,7 @@
           ]
         },
         {
-          "id": "dagganoth_rex",
+          "id": "nagadoth_rex",
           "label": "Nagadoth Rex",
           "icon": "👑",
           "items": [
@@ -92,7 +92,7 @@
           ]
         },
         {
-          "id": "dagganoth_supreme",
+          "id": "nagadoth_supreme",
           "label": "Nagadoth Supreme",
           "icon": "👑",
           "items": [
@@ -101,7 +101,7 @@
           ]
         },
         {
-          "id": "dark_beast",
+          "id": "nightfang_beast",
           "label": "Nightfang Beast",
           "icon": "⚔️",
           "items": [
@@ -109,7 +109,7 @@
           ]
         },
         {
-          "id": "demonic_gorilla",
+          "id": "hellbound_gorilla",
           "label": "Hellbound Gorilla",
           "icon": "👑",
           "items": [
@@ -118,7 +118,7 @@
           ]
         },
         {
-          "id": "gargoyle",
+          "id": "runestone_gargoyle",
           "label": "Runestone Gargoyle",
           "icon": "⚔️",
           "items": [
@@ -126,7 +126,7 @@
           ]
         },
         {
-          "id": "general_graardor",
+          "id": "warlord_grondar",
           "label": "Warlord Grondar",
           "icon": "👑",
           "items": [
@@ -137,7 +137,7 @@
           ]
         },
         {
-          "id": "hydra",
+          "id": "ashen_hydra",
           "label": "Ashen Hydra",
           "icon": "👑",
           "items": [
@@ -147,7 +147,7 @@
           ]
         },
         {
-          "id": "kril_tsutsaroth",
+          "id": "krylth_the_defiler",
           "label": "Krylth the Defiler",
           "icon": "👑",
           "items": [
@@ -166,7 +166,7 @@
           ]
         },
         {
-          "id": "kraken",
+          "id": "deepmaw_kraken",
           "label": "Deepmaw Kraken",
           "icon": "👑",
           "items": [
@@ -174,7 +174,7 @@
           ]
         },
         {
-          "id": "kreearra",
+          "id": "skyrender_kharra",
           "label": "Skyrender Kharra",
           "icon": "👑",
           "items": [
@@ -185,7 +185,7 @@
           ]
         },
         {
-          "id": "lizardman_shaman",
+          "id": "marshscale_shaman",
           "label": "Marshscale Shaman",
           "icon": "⚔️",
           "items": [
@@ -202,7 +202,7 @@
           ]
         },
         {
-          "id": "smoke_devil",
+          "id": "cinder_devil",
           "label": "Cinder Devil",
           "icon": "⚔️",
           "items": [
@@ -210,7 +210,7 @@
           ]
         },
         {
-          "id": "spiritual_mage",
+          "id": "astral_mage",
           "label": "Astral Mage",
           "icon": "⚔️",
           "items": [
@@ -218,7 +218,7 @@
           ]
         },
         {
-          "id": "spiritual_ranger",
+          "id": "astral_ranger",
           "label": "Astral Ranger",
           "icon": "⚔️",
           "items": [
@@ -226,7 +226,7 @@
           ]
         },
         {
-          "id": "spiritual_warrior",
+          "id": "astral_warrior",
           "label": "Astral Warrior",
           "icon": "⚔️",
           "items": [
@@ -234,7 +234,7 @@
           ]
         },
         {
-          "id": "zulrah",
+          "id": "venomcoil_matriarch",
           "label": "Venomcoil Matriarch",
           "icon": "👑",
           "items": [

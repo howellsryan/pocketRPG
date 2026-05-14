@@ -3,7 +3,7 @@ import { createCombatState, processCombatTick } from '../src/engine/combat.js'
 import itemsData from '../src/data/items.json'
 import monstersData from '../src/data/monsters.json'
 
-const gorilla = monstersData['demonic_gorilla']
+const gorilla = monstersData['hellbound_gorilla']
 
 const basePlayerStats = {
   attack: 99, strength: 99, defence: 99,

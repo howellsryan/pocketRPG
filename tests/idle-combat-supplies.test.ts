@@ -93,7 +93,7 @@ const HARD_HITTER = {
 }
 
 const WEAK_GOBLIN = {
-  id: 'goblin',
+  id: 'cave_goblin',
   name: 'Goblin',
   hitpoints: 1,
   stats: { attack: 1, strength: 1, defence: 1, magic: 1, ranged: 1 },
@@ -199,7 +199,7 @@ describe('simulateIdleCombat — idle eat caps survivability', () => {
   })
 
   it('tops player back up to full HP after the session if food remains', () => {
-    // Weak goblin can't really hurt a level-99 player, so HP wouldn't normally
+    // Weak cave_goblin can't really hurt a level-99 player, so HP wouldn't normally
     // dip below 1. Start the player below max so the post-loop top-up has work
     // to do, and confirm the player ends at full HP with food consumed.
     const task: any = { stance: 'accurate', monster: WEAK_GOBLIN }
