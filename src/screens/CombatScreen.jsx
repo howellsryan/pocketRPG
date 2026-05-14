@@ -17,7 +17,7 @@ import { onTick, pauseTicks, resumeTicks } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
 import { getCombatType, equipItem, checkEquipRequirements } from '../engine/equipment.js'
 import { api, clearAuth, getToken, getCharacterId, setLocalCharacterId } from '../cloud/api.js'
-import { pullSave, applyCloudSave, requestCriticalPushSave } from '../cloud/sync.js'
+import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow } from '../cloud/sync.js'
 import { pvpApi } from '../cloud/pvp.js'
 import { closeDB } from '../db/database.js'
 import { wipeLocalSave } from '../db/saveload.js'
@@ -812,9 +812,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               raidId,
               loading: true
             })
-            void api.completeMonster(defeatedMonsterId, {
-              actionNonce: `monster:${defeatedMonsterId}:${Date.now()}`,
-            }).then(async (res) => {
+            void (async () => {
+              // Flush current inventory to server before completing the monster so
+              // the server sees consumed food/potions and can correctly route drops
+              // to inventory (not bank) when space is available.
+              try { await pushNow(getSnapshot()) } catch { /* non-fatal; server falls back to last saved state */ }
+              return api.completeMonster(defeatedMonsterId, {
+                actionNonce: `monster:${defeatedMonsterId}:${Date.now()}`,
+              })
+            })().then(async (res) => {
               const granted = Array.isArray(res?.granted) ? res.granted : []
               if (granted.length > 0) {
                 const newInv = [...inventoryRef.current]

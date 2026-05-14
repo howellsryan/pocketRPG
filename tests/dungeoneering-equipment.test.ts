@@ -205,16 +205,12 @@ describe('dungeoneering: best-in-slot guarantees', () => {
     return allItems.filter((it) => filter(it) && !exclude.has(it.id))
   }
 
-  it('chaotic_rapier is strictly best one-handed stab weapon', () => {
+  it('chaotic_rapier is ~5% below ghrazi_rapier stats', () => {
     const item = itemsData.chaotic_rapier
-    const stab = item.attackBonus.stab
-    const str = item.otherBonus.meleeStrength
-    for (const other of competitors((it) => isWeapon(it) && oneHanded(it) && styleIs(it, 'stab'))) {
-      const oStab = other.attackBonus?.stab ?? 0
-      const oStr = other.otherBonus?.meleeStrength ?? 0
-      expect(stab, `chaotic_rapier stab vs ${other.id}`).toBeGreaterThan(oStab)
-      expect(str, `chaotic_rapier melee str vs ${other.id}`).toBeGreaterThanOrEqual(oStr)
-    }
+    const ref = itemsData.ghrazi_rapier
+    expect(item.attackBonus.stab).toBe(Math.floor(ref.attackBonus.stab * 0.95))
+    expect(item.attackBonus.slash).toBe(Math.floor(ref.attackBonus.slash * 0.95))
+    expect(item.otherBonus.meleeStrength).toBe(Math.floor(ref.otherBonus.meleeStrength * 0.95))
   })
 
   it('chaotic_longsword is strictly best one-handed slash weapon', () => {
@@ -229,28 +225,18 @@ describe('dungeoneering: best-in-slot guarantees', () => {
     }
   })
 
-  it('chaotic_maul is strictly best two-handed crush weapon', () => {
+  it('chaotic_maul is ~5% below elder_maul stats', () => {
     const item = itemsData.chaotic_maul
-    const crush = item.attackBonus.crush
-    const str = item.otherBonus.meleeStrength
-    for (const other of competitors((it) => isWeapon(it) && twoHanded(it) && styleIs(it, 'crush'))) {
-      const oCrush = other.attackBonus?.crush ?? 0
-      const oStr = other.otherBonus?.meleeStrength ?? 0
-      expect(crush, `chaotic_maul crush vs ${other.id}`).toBeGreaterThan(oCrush)
-      expect(str, `chaotic_maul melee str vs ${other.id}`).toBeGreaterThanOrEqual(oStr)
-    }
+    const ref = itemsData.elder_maul
+    expect(item.attackBonus.crush).toBe(Math.floor(ref.attackBonus.crush * 0.95))
+    expect(item.otherBonus.meleeStrength).toBe(Math.floor(ref.otherBonus.meleeStrength * 0.95))
   })
 
-  it('chaotic_crossbow is strictly best one-handed ranged weapon', () => {
+  it('chaotic_crossbow is ~5% below armadyl_crossbow stats', () => {
     const item = itemsData.chaotic_crossbow
-    const ranged = item.attackBonus.ranged
-    const rstr = item.otherBonus.rangedStrength
-    for (const other of competitors((it) => isWeapon(it) && oneHanded(it) && styleIs(it, 'ranged'))) {
-      const oRng = other.attackBonus?.ranged ?? 0
-      const oStr = other.otherBonus?.rangedStrength ?? 0
-      expect(ranged, `chaotic_crossbow ranged vs ${other.id}`).toBeGreaterThan(oRng)
-      expect(rstr, `chaotic_crossbow ranged str vs ${other.id}`).toBeGreaterThanOrEqual(oStr)
-    }
+    const ref = itemsData.armadyl_crossbow
+    expect(item.attackBonus.ranged).toBe(Math.floor(ref.attackBonus.ranged * 0.95))
+    expect(item.otherBonus.rangedStrength).toBe(Math.floor(ref.otherBonus.rangedStrength * 0.95))
   })
 
   it('chaotic_staff is strictly best one-handed magic weapon', () => {
