@@ -2,7 +2,7 @@ import { useGame } from '../state/gameState.jsx'
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { CLOUD_SAVE_STATUS_EVENT } from '../cloud/sync.js'
 
-export default function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null, onBuyCredits = null }) {
+export default function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null, onBuyCredits = null, onMenuClick = null }) {
   const { player, currentHP, getMaxHP } = useGame()
   const [cloudStatus, setCloudStatus] = useState('idle')
   const [showSavedToCloud, setShowSavedToCloud] = useState(false)
@@ -61,13 +61,26 @@ export default function Header({ activity, credits = 0, isCloudAccount = false, 
         {showSavedToCloud && (
           <div class="flex items-center gap-1 text-[10px] font-semibold text-[var(--color-success)]" aria-label="Saved to Cloud">
             <span>✓</span>
-            <span>Saved to Cloud</span>
+            <span>Saved</span>
           </div>
         )}
       </div>
 
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-1">
+          {onMenuClick && (
+            <button
+              onClick={onMenuClick}
+              aria-label="Open navigation menu"
+              class="md:hidden w-9 h-9 -ml-1 mr-0.5 flex items-center justify-center bg-transparent border-0 text-[var(--color-parchment)] hover:text-[var(--color-gold)] cursor-pointer p-0"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="4" y1="7" x2="20" y2="7" />
+                <line x1="4" y1="12" x2="20" y2="12" />
+                <line x1="4" y1="17" x2="20" y2="17" />
+              </svg>
+            </button>
+          )}
           <button
             onClick={handleSkip}
             class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1a2a1a] border border-[#3a5a3a] hover:border-[#5a8a5a] transition-colors text-[10px] font-semibold text-[var(--color-parchment)] whitespace-nowrap"

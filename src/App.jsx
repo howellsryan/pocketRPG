@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { GameProvider, useGame } from './state/gameState.jsx'
 import { PvpProvider, usePvp } from './state/pvpState.jsx'
-import BottomNav from './components/BottomNav.jsx'
+import BurgerMenu from './components/BurgerMenu.jsx'
 import SideNav from './components/SideNav.jsx'
 import Header from './components/Header.jsx'
 import ToastContainer from './components/Toast.jsx'
@@ -185,6 +185,7 @@ function GameApp() {
     unlockMinigameItem, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [gameReady, setGameReady] = useState(false)
   const [activity, setActivity] = useState(null)
   const [idleResult, setIdleResult] = useState(null) // { elapsedMs, task, xpGained, itemsGained, lootLost, monstersKilled }
@@ -1614,18 +1615,20 @@ function GameApp() {
         onDisabledClick={() => addToast('⚔️ Cannot navigate during combat!', 'warning')}
       />
       <div class="flex-1 flex flex-col min-w-0 min-h-0">
-        <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} />
+        <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onMenuClick={() => setMenuOpen(true)} />
         <ToastContainer />
         <main class="flex-1 overflow-hidden">
           {renderScreen()}
         </main>
-        <BottomNav
-          active={screen}
-          onNavigate={(s) => navigate(s)}
-          isInCombat={isInCombat}
-          onDisabledClick={() => addToast('⚔️ Cannot navigate during combat!', 'warning')}
-        />
       </div>
+      <BurgerMenu
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        active={screen}
+        onNavigate={(s) => navigate(s)}
+        isInCombat={isInCombat}
+        onDisabledClick={() => addToast('⚔️ Cannot navigate during combat!', 'warning')}
+      />
 
       {/* Idle Result Modal */}
       {idleResult && pvp.phase !== 'in_match' && Date.now() >= suppressIdleModalUntil && (

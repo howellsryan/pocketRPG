@@ -77,7 +77,7 @@ const sourceFiles = [
   'components/Toast.js',
   'components/Header.js',
   'components/navTabs.js',
-  'components/BottomNav.js',
+  'components/BurgerMenu.js',
   'components/SideNav.js',
   'components/Card.js',
   'components/Panel.js',
