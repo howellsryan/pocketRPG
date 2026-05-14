@@ -40,7 +40,7 @@ const COMBAT_CATEGORIES = [
     key: 'training',
     label: 'Training',
     icon: '⚔️',
-    ids: ['chicken', 'goblin', 'cow', 'rock_crab', 'sand_crab', 'wizard', 'dark_wizard', 'giant_spider', 'hill_giant', 'moss_giant', 'lesser_demon'],
+    ids: ['field_chicken', 'cave_goblin', 'pasture_bull', 'stoneback_crab', 'duneback_crab', 'arcane_adept', 'umbral_adept', 'broodfang_spider', 'highland_giant', 'briar_giant', 'lesser_fiend'],
   },
   {
     key: 'slayer',
@@ -93,14 +93,14 @@ const COMBAT_CATEGORIES = [
 ]
 
 const MONSTER_ICONS = {
-  chicken: '🐔', goblin: '👺', cow: '🐄', giant_spider: '🕷️',
-  rock_crab: '🦀', sand_crab: '🦀', hill_giant: '👊', moss_giant: '🌿',
-  wizard: '🧙', dark_wizard: '🧙‍♂️', abyssal_demon: '😈', hellbound_gorilla: '🦍', lizardman_shaman: '🦎',
+  field_chicken: '🐔', cave_goblin: '👺', pasture_bull: '🐄', broodfang_spider: '🕷️',
+  stoneback_crab: '🦀', duneback_crab: '🦀', highland_giant: '👊', briar_giant: '🌿',
+  arcane_adept: '🧙', umbral_adept: '🧙‍♂️', abyssal_demon: '😈', hellbound_gorilla: '🦍', lizardman_shaman: '🦎',
   blood_veld: '🩸', nechryael: '👻', skeletal_wyvern: '🐲', smoke_devil: '💨', deepmaw_kraken: '🦑',
   banshee: '👻', aberrant_spectre: '👁️', wyrm: '🐍', spiritual_warrior: '⚔️',
   spiritual_ranger: '🏹', spiritual_mage: '🔮', gargoyle: '🗿',
   brutal_black_dragon: '🐉', dark_beast: '🦇', threefang_cerberus: '🐺', ashen_hydra: '🐲',
-  green_dragon: '🐉', red_dragon: '🔴', adamant_dragon: '⚔️', rune_dragon: '🛡️', lesser_demon: '👿',
+  green_dragon: '🐉', red_dragon: '🔴', adamant_dragon: '⚔️', rune_dragon: '🛡️', lesser_fiend: '👿',
   warlord_grondar: '👹', commander_zephyra: '🌟', krylth_the_defiler: '🔥', skyrender_kharra: '🦅',
   nagadoth_rex: '🦖', nagadoth_prime: '👹', nagadoth_supreme: '🏹',
   crazy_archaeologist: '📜', king_black_dragon: '👑', venomcoil_matriarch: '🐍', ember_tyrant: '🌋', ashen_crucible: '🌋', blighted_gauntlet: '⚡',
