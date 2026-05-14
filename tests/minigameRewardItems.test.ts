@@ -13,7 +13,7 @@ describe('new minigame tasks', () => {
     expect(byName.get('Grind Angler Net')?.hours).toBe(5)
     expect(byName.get('Obtain Imbued God Cape')?.hours).toBe(2)
     expect(byName.get('Grind for Void King Set')?.hours).toBe(6)
-    expect(byName.get('Grind for Void King Set')?.rewardItems).toEqual(['void_knight_helm', 'void_knight_top', 'void_knight_robe', 'void_knight_gloves'])
+    expect(byName.get('Grind for Void King Set')?.rewardItems).toEqual(['void_king_helm', 'void_king_top', 'void_king_robe', 'void_king_gloves'])
     expect(byName.get('Obtain decorative armour')?.minigame).toBe('castle_wars')
     expect(byName.get('Grind Angler Net')?.minigame).toBe('fishing_trawler')
     expect(byName.get('Obtain Imbued God Cape')?.minigame).toBe('mage_arena')
@@ -64,10 +64,10 @@ describe('void set idle reward', () => {
     const sixHoursMs = 6 * 60 * 60 * 1000 + 1000
     const result = simulateIdleGather(idleTask as any, sixHoursMs, [], {}, items as any, {})
     expect(result).not.toBeNull()
-    expect(result!.itemsGained).toHaveProperty('void_knight_helm', 1)
-    expect(result!.itemsGained).toHaveProperty('void_knight_top', 1)
-    expect(result!.itemsGained).toHaveProperty('void_knight_robe', 1)
-    expect(result!.itemsGained).toHaveProperty('void_knight_gloves', 1)
+    expect(result!.itemsGained).toHaveProperty('void_king_helm', 1)
+    expect(result!.itemsGained).toHaveProperty('void_king_top', 1)
+    expect(result!.itemsGained).toHaveProperty('void_king_robe', 1)
+    expect(result!.itemsGained).toHaveProperty('void_king_gloves', 1)
     // Must not award only the product key
     expect(Object.keys(result!.itemsGained)).toHaveLength(4)
   })
@@ -92,7 +92,7 @@ describe('void set idle reward', () => {
     const voidTask = minigames.tasks.find(t => t.id === 'pc_void_set')!
     const voidRewards = deriveRewards(voidTask)
     expect(voidRewards.map((r: any) => r.itemId)).toEqual([
-      'void_knight_helm', 'void_knight_top', 'void_knight_robe', 'void_knight_gloves'
+      'void_king_helm', 'void_king_top', 'void_king_robe', 'void_king_gloves'
     ])
 
     const haloTask = minigames.tasks.find(t => t.id === 'cw_halo')!

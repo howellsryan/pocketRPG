@@ -10,7 +10,7 @@ const monster: any = { id: 'm', name: 'Dummy', stats: { defence: 1, magic: 1 }, 
 describe('ranged ammo gating pve', () => {
   it('blocks heavy ballista without ammo', () => {
     const state = createCombatState(monster, 'ranged', 'accurate')
-    const out = processCombatTick(state, player, { weapon: { itemId: 'heavy_ballista' } }, itemsData)
+    const out = processCombatTick(state, player, { weapon: { itemId: 'colossal_ballista' } }, itemsData)
     expect(out.events.some((e:any)=>e.type==='noAmmo')).toBe(true)
     expect(out.events.some((e:any)=>e.type==='playerHit')).toBe(false)
   })
@@ -22,17 +22,17 @@ describe('ranged ammo gating pve', () => {
   it('consumes ammo when valid', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0)
     const state = createCombatState(monster, 'ranged', 'accurate')
-    const out = processCombatTick(state, player, { weapon: { itemId: 'heavy_ballista' }, ammo: { itemId: 'dragon_javelin', quantity: 3 } }, itemsData)
+    const out = processCombatTick(state, player, { weapon: { itemId: 'colossal_ballista' }, ammo: { itemId: 'dragon_javelin', quantity: 3 } }, itemsData)
     expect(out.events.some((e:any)=>e.type==='consumeAmmo')).toBe(true)
-    const withAmmo = getEquipmentBonuses({ weapon: { itemId: 'heavy_ballista' }, ammo: { itemId: 'dragon_javelin' } }, itemsData)
-    const withoutAmmo = getEquipmentBonuses({ weapon: { itemId: 'heavy_ballista' } }, itemsData)
+    const withAmmo = getEquipmentBonuses({ weapon: { itemId: 'colossal_ballista' }, ammo: { itemId: 'dragon_javelin' } }, itemsData)
+    const withoutAmmo = getEquipmentBonuses({ weapon: { itemId: 'colossal_ballista' } }, itemsData)
     expect(withAmmo.otherBonus.rangedStrength).toBeGreaterThan(withoutAmmo.otherBonus.rangedStrength)
   })
 
   it('does not consume or proc enchanted bolts with crystal bow', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0)
     const state = createCombatState(monster, 'ranged', 'accurate')
-    const out = processCombatTick(state, player, { weapon: { itemId: 'crystal_bow' }, ammo: { itemId: 'onyx_bolts_e', quantity: 100 } }, itemsData)
+    const out = processCombatTick(state, player, { weapon: { itemId: 'shardglass_bow' }, ammo: { itemId: 'onyx_bolt_e', quantity: 100 } }, itemsData)
     expect(out.events.some((e:any)=>e.type==='consumeAmmo')).toBe(false)
     expect(out.events.some((e:any)=>e.type==='boltProc')).toBe(false)
   })
@@ -40,7 +40,7 @@ describe('ranged ammo gating pve', () => {
   it('allows enchanted bolt proc + ammo consumption with crossbow', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0)
     const state = createCombatState(monster, 'ranged', 'accurate')
-    const out = processCombatTick(state, player, { weapon: { itemId: 'rune_crossbow' }, ammo: { itemId: 'onyx_bolts_e', quantity: 100 } }, itemsData)
+    const out = processCombatTick(state, player, { weapon: { itemId: 'runeforged_crossbow' }, ammo: { itemId: 'onyx_bolt_e', quantity: 100 } }, itemsData)
     expect(out.events.some((e:any)=>e.type==='consumeAmmo')).toBe(true)
     expect(out.events.some((e:any)=>e.type==='boltProc')).toBe(true)
   })
@@ -48,7 +48,7 @@ describe('ranged ammo gating pve', () => {
   it('does not consume or proc enchanted bolts with magic shortbow', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0)
     const state = createCombatState(monster, 'ranged', 'accurate')
-    const out = processCombatTick(state, player, { weapon: { itemId: 'magic_shortbow' }, ammo: { itemId: 'onyx_bolts_e', quantity: 100 } }, itemsData)
+    const out = processCombatTick(state, player, { weapon: { itemId: 'magic_shortbow' }, ammo: { itemId: 'onyx_bolt_e', quantity: 100 } }, itemsData)
     expect(out.events.some((e:any)=>e.type==='consumeAmmo')).toBe(false)
     expect(out.events.some((e:any)=>e.type==='boltProc')).toBe(false)
   })
@@ -57,9 +57,9 @@ describe('ranged ammo gating pve', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.2)
     const state = createCombatState(monster, 'ranged', 'accurate')
     const out = processCombatTick(state, player, {
-      weapon: { itemId: 'rune_crossbow' },
-      ammo: { itemId: 'onyx_bolts_e', quantity: 100 },
-      cape: { itemId: 'avas_accumulator' }
+      weapon: { itemId: 'runeforged_crossbow' },
+      ammo: { itemId: 'onyx_bolt_e', quantity: 100 },
+      cape: { itemId: 'ava_s_accumulator' }
     }, itemsData)
     expect(out.events.some((e:any)=>e.type==='consumeAmmo')).toBe(false)
   })
@@ -68,9 +68,9 @@ describe('ranged ammo gating pve', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.7)
     const state = createCombatState(monster, 'ranged', 'accurate')
     const out = processCombatTick(state, player, {
-      weapon: { itemId: 'rune_crossbow' },
-      ammo: { itemId: 'onyx_bolts_e', quantity: 100 },
-      cape: { itemId: 'avas_assembler' }
+      weapon: { itemId: 'runeforged_crossbow' },
+      ammo: { itemId: 'onyx_bolt_e', quantity: 100 },
+      cape: { itemId: 'ava_s_assembler' }
     }, itemsData)
     expect(out.events.some((e:any)=>e.type==='consumeAmmo')).toBe(false)
   })

@@ -1,7 +1,7 @@
 {
   "version": 2,
   "sharedItems": [
-    "draconic_visage",
+    "dragon_visage",
     "dragon_axe",
     "dragon_boots",
     "uncut_onyx"
@@ -10,81 +10,81 @@
     {
       "id": "monsters",
       "label": "Monsters",
-      "icon": "\u2694\ufe0f",
+      "icon": "⚔️",
       "sections": [
         {
-          "id": "abyssal_demon",
-          "label": "Netherfiend Demon",
-          "icon": "\u2694\ufe0f",
+          "id": "nether_demon",
+          "label": "Nether Demon",
+          "icon": "⚔️",
           "items": [
-            "abyssal_whip"
+            "nether_demon_whip"
           ]
         },
         {
           "id": "adamant_dragon",
           "label": "Adamant Dragon",
-          "icon": "\u2694\ufe0f",
+          "icon": "⚔️",
           "items": [
             "uncut_onyx",
-            "draconic_visage"
+            "dragon_visage"
           ]
         },
         {
-          "id": "brutal_black_dragon",
-          "label": "Brutal Black Dragon",
-          "icon": "\u2694\ufe0f",
+          "id": "vicious_black_dragon",
+          "label": "Vicious Black Dragon",
+          "icon": "⚔️",
           "items": [
-            "draconic_visage"
+            "dragon_visage"
           ]
         },
         {
-          "id": "cerberus",
-          "label": "Cerberus",
-          "icon": "\ud83d\udc51",
+          "id": "threefang_cerberus",
+          "label": "Threefang Cerberus",
+          "icon": "👑",
           "items": [
-            "primordial_crystal",
-            "pegasian_crystal",
-            "eternal_crystal"
+            "primeval_crystal",
+            "skyfury_crystal",
+            "evermore_crystal"
           ]
         },
         {
-          "id": "commander_zilyana",
+          "id": "commander_zephyra",
           "label": "Commander Zephyra",
-          "icon": "\ud83d\udc51",
+          "icon": "👑",
           "items": [
-            "saradomin_sword",
-            "armadyl_crossbow",
-            "saradomin_hilt"
+            "lumira_sword",
+            "zephyra_crossbow",
+            "lumira_hilt"
           ]
         },
         {
-          "id": "corrupted_gauntlet",
+          "id": "blighted_gauntlet",
           "label": "Blighted Gauntlet",
-          "icon": "\ud83d\udc51",
+          "icon": "👑",
           "items": [
             "uncut_onyx",
-            "crystal_pickaxe",
-            "crystal_axe",
-            "crystal_helmet",
-            "crystal_plate_body",
-            "crystal_platelegs",
+            "shardglass_pickaxe",
+            "shardglass_axe",
+            "shardglass_helmet",
+            "shardglass_plate_body",
+            "shardglass_platelegs",
             "bow_of_faerdhinen",
             "blade_of_saeldor"
           ]
         },
         {
-          "id": "dagganoth_prime",
+          "id": "nagadoth_prime",
           "label": "Nagadoth Prime",
-          "icon": "\ud83d\udc51",
+          "icon": "👑",
           "items": [
             "dragon_axe",
             "seers_ring"
           ]
         },
         {
-          "id": "dagganoth_rex",
+          "id": "nagadoth_rex",
           "label": "Nagadoth Rex",
-          "icon": "\ud83d\udc51",
+          "icon": "👑",
           "items": [
             "dragon_axe",
             "berserker_ring",
@@ -92,154 +92,154 @@
           ]
         },
         {
-          "id": "dagganoth_supreme",
+          "id": "nagadoth_supreme",
           "label": "Nagadoth Supreme",
-          "icon": "\ud83d\udc51",
+          "icon": "👑",
           "items": [
             "dragon_axe",
             "archers_ring"
           ]
         },
         {
-          "id": "dark_beast",
-          "label": "Dark Beast",
-          "icon": "\u2694\ufe0f",
+          "id": "nightfang_beast",
+          "label": "Nightfang Beast",
+          "icon": "⚔️",
           "items": [
-            "dark_bow"
+            "nightfang_bow"
           ]
         },
         {
-          "id": "demonic_gorilla",
+          "id": "hellbound_gorilla",
           "label": "Hellbound Gorilla",
-          "icon": "\ud83d\udc51",
+          "icon": "👑",
           "items": [
-            "uncut_zenyte",
-            "heavy_ballista"
+            "uncut_zyrite",
+            "colossal_ballista"
           ]
         },
         {
-          "id": "gargoyle",
-          "label": "Gargoyle",
-          "icon": "\u2694\ufe0f",
+          "id": "runestone_gargoyle",
+          "label": "Runestone Gargoyle",
+          "icon": "⚔️",
           "items": [
-            "granite_maul"
+            "gargoyle_maul"
           ]
         },
         {
-          "id": "general_graardor",
+          "id": "warlord_grondar",
           "label": "Warlord Grondar",
-          "icon": "\ud83d\udc51",
+          "icon": "👑",
           "items": [
-            "bandos_chestplate",
-            "bandos_tassets",
-            "bandos_boots",
-            "bandos_hilt"
+            "grondar_chestplate",
+            "grondar_tassets",
+            "grondar_boots",
+            "grondar_hilt"
           ]
         },
         {
-          "id": "hydra",
+          "id": "ashen_hydra",
           "label": "Ashen Hydra",
-          "icon": "\ud83d\udc51",
+          "icon": "👑",
           "items": [
-            "hydra_leather",
-            "hydra_claw",
+            "ashen_hydra_leather",
+            "ashen_hydra_claw",
             "ferocious_gloves"
           ]
         },
         {
-          "id": "kril_tsutsaroth",
+          "id": "krylth_the_defiler",
           "label": "Krylth the Defiler",
-          "icon": "\ud83d\udc51",
+          "icon": "👑",
           "items": [
-            "zamorak_spear",
+            "krylth_spear",
             "staff_of_the_dead",
-            "zamorak_hilt"
+            "krylth_hilt"
           ]
         },
         {
           "id": "king_black_dragon",
           "label": "King Black Dragon",
-          "icon": "\ud83d\udc51",
+          "icon": "👑",
           "items": [
             "dragon_pickaxe",
-            "draconic_visage"
+            "dragon_visage"
           ]
         },
         {
-          "id": "kraken",
+          "id": "deepmaw_kraken",
           "label": "Deepmaw Kraken",
-          "icon": "\ud83d\udc51",
+          "icon": "👑",
           "items": [
-            "kraken_tentacle"
+            "deepmaw_kraken_tentacle"
           ]
         },
         {
-          "id": "kreearra",
+          "id": "skyrender_kharra",
           "label": "Skyrender Kharra",
-          "icon": "\ud83d\udc51",
+          "icon": "👑",
           "items": [
-            "armadyl_helmet",
-            "armadyl_chestplate",
-            "armadyl_chainskirt",
-            "armadyl_hilt"
+            "zephyra_helmet",
+            "zephyra_chestplate",
+            "zephyra_chainskirt",
+            "zephyra_hilt"
           ]
         },
         {
-          "id": "lizardman_shaman",
+          "id": "marshscale_shaman",
           "label": "Marshscale Shaman",
-          "icon": "\u2694\ufe0f",
+          "icon": "⚔️",
           "items": [
             "dragon_warhammer"
           ]
         },
         {
           "id": "rune_dragon",
-          "label": "Rune Dragon",
-          "icon": "\u2694\ufe0f",
+          "label": "Runeforged Dragon",
+          "icon": "⚔️",
           "items": [
             "uncut_onyx",
-            "draconic_visage"
+            "dragon_visage"
           ]
         },
         {
-          "id": "smoke_devil",
-          "label": "Smoke Devil",
-          "icon": "\u2694\ufe0f",
+          "id": "cinder_devil",
+          "label": "Cinder Devil",
+          "icon": "⚔️",
           "items": [
             "occult_necklace"
           ]
         },
         {
-          "id": "spiritual_mage",
-          "label": "Spiritual Mage",
-          "icon": "\u2694\ufe0f",
+          "id": "astral_mage",
+          "label": "Astral Mage",
+          "icon": "⚔️",
           "items": [
             "dragon_boots"
           ]
         },
         {
-          "id": "spiritual_ranger",
-          "label": "Spiritual Ranger",
-          "icon": "\u2694\ufe0f",
+          "id": "astral_ranger",
+          "label": "Astral Ranger",
+          "icon": "⚔️",
           "items": [
             "dragon_boots"
           ]
         },
         {
-          "id": "spiritual_warrior",
-          "label": "Spiritual Warrior",
-          "icon": "\u2694\ufe0f",
+          "id": "astral_warrior",
+          "label": "Astral Warrior",
+          "icon": "⚔️",
           "items": [
             "dragon_boots"
           ]
         },
         {
-          "id": "zulrah",
+          "id": "venomcoil_matriarch",
           "label": "Venomcoil Matriarch",
-          "icon": "\ud83d\udc51",
+          "icon": "👑",
           "items": [
-            "toxic_blowpipe",
-            "trident_of_the_swamp",
+            "venom_blowpipe",
+            "trident_of_venom",
             "serpentine_helm",
             "uncut_onyx"
           ]
@@ -249,69 +249,69 @@
     {
       "id": "raids",
       "label": "Raids",
-      "icon": "\ud83c\udfdb\ufe0f",
+      "icon": "🏛️",
       "sections": [
         {
-          "id": "barrows_brothers",
+          "id": "cryptbound_champions",
           "label": "Cryptbound Champions",
-          "icon": "\u26b0\ufe0f",
+          "icon": "⚰️",
           "items": [
-            "ahrims_hood",
-            "ahrims_robetop",
-            "ahrims_robeskirt",
-            "ahrims_staff",
-            "dharoks_helm",
-            "dharoks_platebody",
-            "dharoks_platelegs",
-            "dharoks_greataxe",
-            "guthans_helm",
-            "guthans_platebody",
-            "guthans_chainskirt",
-            "guthans_warspear",
-            "karils_coif",
-            "karils_leathertop",
-            "karils_leatherskirt",
-            "karils_crossbow",
-            "torags_helm",
-            "torags_platebody",
-            "torags_platelegs",
-            "torags_hammers",
-            "veracs_helm",
-            "veracs_brassard",
-            "veracs_plateskirt",
-            "veracs_flail"
+            "morvyn_s_hood",
+            "morvyn_s_robetop",
+            "morvyn_s_robeskirt",
+            "morvyn_s_staff",
+            "dravok_s_helm",
+            "dravok_s_platebody",
+            "dravok_s_platelegs",
+            "dravok_s_greataxe",
+            "gorath_s_helm",
+            "gorath_s_platebody",
+            "gorath_s_chainskirt",
+            "gorath_s_warspear",
+            "kaelor_s_coif",
+            "kaelor_s_leathertop",
+            "kaelor_s_leatherskirt",
+            "kaelor_s_crossbow",
+            "torvek_s_helm",
+            "torvek_s_platebody",
+            "torvek_s_platelegs",
+            "torvek_s_hammers",
+            "verin_s_helm",
+            "verin_s_brassard",
+            "verin_s_plateskirt",
+            "verin_s_flail"
           ]
         },
         {
-          "id": "chambers_of_xeric",
+          "id": "vaults_of_xyren",
           "label": "Vaults of Xyren",
-          "icon": "\ud83c\udfdb\ufe0f",
+          "icon": "🏛️",
           "items": [
-            "twisted_buckler",
-            "dragon_hunter_crossbow",
-            "dinhs_bulwark",
-            "ancestral_hat",
-            "ancestral_robe_top",
-            "ancestral_robe_bottom",
+            "warped_buckler",
+            "dragon_slayer_crossbow",
+            "durn_s_bulwark",
+            "kodai_hat",
+            "kodai_robe_top",
+            "kodai_robe_bottom",
             "dragon_claws",
-            "elder_maul",
-            "zaryte_vambraces",
-            "kodai_wand",
-            "twisted_bow"
+            "ancient_maul",
+            "zaryth_vambraces",
+            "ancestral_wand",
+            "warped_bow"
           ]
         },
         {
-          "id": "theatre_of_blood",
+          "id": "crimson_night_theatre",
           "label": "Crimson Night Theatre",
-          "icon": "\ud83e\ude78",
+          "icon": "🩸",
           "items": [
-            "avernic_defender",
-            "ghrazi_rapier",
-            "sanguinesti_staff",
-            "justiciar_faceguard",
-            "justiciar_chestguard",
-            "justiciar_legguards",
-            "scythe_of_vitur"
+            "avernal_defender",
+            "ghraxis_rapier",
+            "sanguine_staff",
+            "justicar_faceguard",
+            "justicar_chestguard",
+            "justicar_legguards",
+            "scythe_of_vythar"
           ]
         }
       ]
@@ -319,21 +319,21 @@
     {
       "id": "minigames",
       "label": "Minigames",
-      "icon": "\ud83c\udfae",
+      "icon": "🎮",
       "sections": [
         {
           "id": "barbarian_assault",
           "label": "Viking Assault",
-          "icon": "\u2694\ufe0f",
+          "icon": "⚔️",
           "items": [
-            "fighter_torso",
-            "fighter_hat"
+            "fighter_body",
+            "fighter_helm"
           ]
         },
         {
           "id": "castle_wars",
           "label": "Fortress Clash",
-          "icon": "\ud83c\udff0",
+          "icon": "🏰",
           "items": [
             "halo",
             "decorative_top"
@@ -342,16 +342,16 @@
         {
           "id": "warriors_guild",
           "label": "Champion's Hall",
-          "icon": "\ud83c\udfdb\ufe0f",
+          "icon": "🏛️",
           "items": [
-            "rune_defender",
+            "runeforged_defender",
             "dragon_defender"
           ]
         },
         {
           "id": "fishing_trawler",
           "label": "Deepsea Haul",
-          "icon": "\ud83d\udef6",
+          "icon": "🛶",
           "items": [
             "angler_net"
           ]
@@ -359,7 +359,7 @@
         {
           "id": "mage_arena",
           "label": "Arcane Crucible",
-          "icon": "\ud83e\ude84",
+          "icon": "🪄",
           "items": [
             "imbued_god_cape"
           ]
@@ -367,12 +367,12 @@
         {
           "id": "pest_control",
           "label": "Void Breach",
-          "icon": "\ud83d\udee1\ufe0f",
+          "icon": "🛡️",
           "items": [
-            "void_knight_helm",
-            "void_knight_top",
-            "void_knight_robe",
-            "void_knight_gloves"
+            "void_king_helm",
+            "void_king_top",
+            "void_king_robe",
+            "void_king_gloves"
           ]
         }
       ]
@@ -380,124 +380,124 @@
     {
       "id": "clues",
       "label": "Clue Scrolls",
-      "icon": "\ud83d\udcdc",
+      "icon": "📜",
       "sections": [
         {
           "id": "medium",
           "label": "Medium Clue",
-          "icon": "\ud83d\udcdc",
+          "icon": "📜",
           "items": [
-            "ranger_boots",
-            "wizard_boots",
+            "pathfinder_boots",
+            "spellweaver_boots",
             "holy_sandals",
             "spiked_manacles",
             "climbing_boots_g",
-            "saradomin_mitre",
+            "lumira_mitre",
             "guthix_mitre",
-            "zamorak_mitre",
+            "krylth_mitre",
             "ancient_mitre",
-            "armadyl_mitre",
-            "bandos_mitre",
-            "holy_blessing",
+            "zephyra_mitre",
+            "grondar_mitre",
+            "sacred_charm",
             "peace_blessing",
-            "unholy_blessing",
+            "profane_charm",
             "honorable_blessing",
-            "war_blessing",
-            "ancient_blessing",
-            "saradomin_stole",
+            "battle_charm",
+            "elder_charm",
+            "lumira_stole",
             "guthix_stole",
-            "zamorak_stole",
+            "krylth_stole",
             "ancient_stole",
-            "armadyl_stole",
-            "bandos_stole",
+            "zephyra_stole",
+            "grondar_stole",
             "robin_hood_hat"
           ]
         },
         {
           "id": "hard",
           "label": "Hard Clue",
-          "icon": "\ud83d\udcdc",
+          "icon": "📜",
           "items": [
-            "saradomin_dhide_body",
-            "saradomin_dhide_chaps",
-            "saradomin_dhide_boots",
-            "saradomin_dhide_bracers",
-            "saradomin_coif",
-            "guthix_dhide_body",
-            "guthix_dhide_chaps",
-            "guthix_dhide_boots",
-            "guthix_dhide_bracers",
+            "lumira_d_hide_body",
+            "lumira_d_hide_chaps",
+            "lumira_d_hide_boots",
+            "lumira_d_hide_bracers",
+            "lumira_coif",
+            "guthix_d_hide_body",
+            "guthix_d_hide_chaps",
+            "guthix_d_hide_boots",
+            "guthix_d_hide_bracers",
             "guthix_coif",
-            "zamorak_dhide_body",
-            "zamorak_dhide_chaps",
-            "zamorak_dhide_boots",
-            "zamorak_dhide_bracers",
-            "zamorak_coif",
-            "ancient_dhide_body",
-            "ancient_dhide_chaps",
-            "ancient_dhide_boots",
-            "ancient_dhide_bracers",
+            "krylth_d_hide_body",
+            "krylth_d_hide_chaps",
+            "krylth_d_hide_boots",
+            "krylth_d_hide_bracers",
+            "krylth_coif",
+            "ancient_d_hide_body",
+            "ancient_d_hide_chaps",
+            "ancient_d_hide_boots",
+            "ancient_d_hide_bracers",
             "ancient_coif",
-            "armadyl_dhide_body",
-            "armadyl_dhide_chaps",
-            "armadyl_dhide_boots",
-            "armadyl_dhide_bracers",
-            "armadyl_coif",
-            "bandos_dhide_body",
-            "bandos_dhide_chaps",
-            "bandos_dhide_boots",
-            "bandos_dhide_bracers",
-            "bandos_coif",
+            "zephyra_d_hide_body",
+            "zephyra_d_hide_chaps",
+            "zephyra_d_hide_boots",
+            "zephyra_d_hide_bracers",
+            "zephyra_coif",
+            "grondar_d_hide_body",
+            "grondar_d_hide_chaps",
+            "grondar_d_hide_boots",
+            "grondar_d_hide_bracers",
+            "grondar_coif",
             "amulet_of_glory_t",
-            "3rd_age_full_helm",
-            "3rd_age_platebody",
-            "3rd_age_platelegs",
-            "3rd_age_plateskirt",
-            "3rd_age_kiteshield",
-            "3rd_age_range_coif",
-            "3rd_age_range_top",
-            "3rd_age_range_legs",
-            "3rd_age_vambraces",
-            "3rd_age_mage_hat",
-            "3rd_age_robe_top",
-            "3rd_age_robe_legs",
-            "3rd_age_amulet",
-            "saradomin_dhide_shield",
-            "guthix_dhide_shield",
-            "zamorak_dhide_shield",
-            "ancient_dhide_shield",
-            "armadyl_dhide_shield",
-            "bandos_dhide_shield"
+            "2nd_age_full_helm",
+            "2nd_age_platebody",
+            "2nd_age_platelegs",
+            "2nd_age_plateskirt",
+            "2nd_age_kiteshield",
+            "2nd_age_range_coif",
+            "2nd_age_range_top",
+            "2nd_age_range_legs",
+            "2nd_age_vambraces",
+            "2nd_age_mage_hat",
+            "2nd_age_robe_top",
+            "2nd_age_robe_legs",
+            "2nd_age_amulet",
+            "lumira_d_hide_shield",
+            "guthix_d_hide_shield",
+            "krylth_d_hide_shield",
+            "ancient_d_hide_shield",
+            "zephyra_d_hide_shield",
+            "grondar_d_hide_shield"
           ]
         },
         {
           "id": "elite",
           "label": "Elite Clue",
-          "icon": "\ud83d\udcdc",
+          "icon": "📜",
           "items": [
             "rangers_tunic",
             "holy_wraps",
             "freminnik_kilt",
-            "3rd_age_longsword",
-            "3rd_age_bow",
-            "3rd_age_wand",
-            "3rd_age_cloak"
+            "2nd_age_longsword",
+            "2nd_age_bow",
+            "2nd_age_wand",
+            "2nd_age_cloak"
           ]
         },
         {
           "id": "master",
           "label": "Master Clue",
-          "icon": "\ud83d\udcdc",
+          "icon": "📜",
           "items": [
-            "3rd_age_druidic_robe_top",
-            "3rd_age_druidic_robe_bottoms",
-            "3rd_age_druidic_cloak",
-            "3rd_age_druidic_staff",
-            "3rd_age_pickaxe",
-            "3rd_age_axe",
-            "gilded_pickaxe",
-            "gilded_axe",
-            "gilded_spade",
+            "2nd_age_druidic_robe_top",
+            "2nd_age_druidic_robe_bottoms",
+            "2nd_age_druidic_cloak",
+            "2nd_age_druidic_staff",
+            "2nd_age_pickaxe",
+            "2nd_age_axe",
+            "gold_pickaxe",
+            "gold_axe",
+            "gold_spade",
             "fancy_tiara"
           ]
         }
@@ -506,12 +506,12 @@
     {
       "id": "skilling",
       "label": "Skilling",
-      "icon": "\ud83d\udee0\ufe0f",
+      "icon": "🛠️",
       "sections": [
         {
           "id": "construction",
           "label": "Construction Unlocks",
-          "icon": "\ud83c\udfe0",
+          "icon": "🏠",
           "items": [
             "money_purse",
             "master_rejuvenation"
@@ -520,7 +520,7 @@
         {
           "id": "dungeoneering",
           "label": "Dungeoneering Rewards",
-          "icon": "\ud83c\udff0",
+          "icon": "🏰",
           "items": [
             "arcane_necklace",
             "chaotic_rapier",
@@ -535,7 +535,7 @@
         {
           "id": "slayer",
           "label": "Slayer Unlocks",
-          "icon": "\ud83d\udc80",
+          "icon": "💀",
           "items": [
             "slayer_helmet",
             "slayer_defender",

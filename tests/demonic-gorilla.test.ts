@@ -3,7 +3,7 @@ import { createCombatState, processCombatTick } from '../src/engine/combat.js'
 import itemsData from '../src/data/items.json'
 import monstersData from '../src/data/monsters.json'
 
-const gorilla = monstersData['demonic_gorilla']
+const gorilla = monstersData['hellbound_gorilla']
 
 const basePlayerStats = {
   attack: 99, strength: 99, defence: 99,
@@ -130,8 +130,8 @@ describe('Hellbound Gorilla', () => {
       // Equip a ranged weapon so ranged attack can fire
       const equipment = {
         ...emptyEquipment,
-        weapon: { itemId: 'armadyl_crossbow' },
-        ammo: { itemId: 'runite_bolts', quantity: 100 }
+        weapon: { itemId: 'zephyra_crossbow' },
+        ammo: { itemId: 'runite_bolt', quantity: 100 }
       }
       const result = processCombatTick(state, basePlayerStats, equipment, itemsData)
       const playerHit = result.events.find(e => e.type === 'playerHit')
@@ -222,14 +222,14 @@ describe('Hellbound Gorilla', () => {
       expect(bonesDrop.noted).toBe(true)
     })
 
-    it('should have uncut_zenyte as a rare drop (~1/300 per roll)', () => {
-      const zenyteDrop = gorilla.drops.find((d: any) => d.itemId === 'uncut_zenyte')
+    it('should have uncut_zyrite as a rare drop (~1/300 per roll)', () => {
+      const zenyteDrop = gorilla.drops.find((d: any) => d.itemId === 'uncut_zyrite')
       expect(zenyteDrop).toBeDefined()
       expect(zenyteDrop.chance).toBeLessThan(0.01)
     })
 
-    it('should have heavy_ballista as a rare drop', () => {
-      const ballistaDrop = gorilla.drops.find((d: any) => d.itemId === 'heavy_ballista')
+    it('should have colossal_ballista as a rare drop', () => {
+      const ballistaDrop = gorilla.drops.find((d: any) => d.itemId === 'colossal_ballista')
       expect(ballistaDrop).toBeDefined()
       expect(ballistaDrop.chance).toBeLessThan(0.01)
     })
@@ -240,22 +240,22 @@ describe('Hellbound Gorilla', () => {
   })
 
   describe('New Items', () => {
-    it('uncut_zenyte should exist in items data', () => {
-      expect((itemsData as any)['uncut_zenyte']).toBeDefined()
-      expect((itemsData as any)['uncut_zenyte'].name).toBe('Uncut Zyrite')
+    it('uncut_zyrite should exist in items data', () => {
+      expect((itemsData as any)['uncut_zyrite']).toBeDefined()
+      expect((itemsData as any)['uncut_zyrite'].name).toBe('Uncut Zyrite')
     })
 
-    it('heavy_ballista should exist in items data', () => {
-      expect((itemsData as any)['heavy_ballista']).toBeDefined()
-      expect((itemsData as any)['heavy_ballista'].name).toBe('Colossal Ballista')
+    it('colossal_ballista should exist in items data', () => {
+      expect((itemsData as any)['colossal_ballista']).toBeDefined()
+      expect((itemsData as any)['colossal_ballista'].name).toBe('Colossal Ballista')
     })
 
-    it('heavy_ballista should require level 75 ranged', () => {
-      expect((itemsData as any)['heavy_ballista'].requirements?.ranged).toBe(75)
+    it('colossal_ballista should require level 75 ranged', () => {
+      expect((itemsData as any)['colossal_ballista'].requirements?.ranged).toBe(75)
     })
 
-    it('heavy_ballista should have updated ranged attack and ranged strength bonuses', () => {
-      const ballista = (itemsData as any)['heavy_ballista']
+    it('colossal_ballista should have updated ranged attack and ranged strength bonuses', () => {
+      const ballista = (itemsData as any)['colossal_ballista']
       expect(ballista.attackBonus.ranged).toBe(185)
       expect(ballista.otherBonus.rangedStrength).toBe(165)
     })

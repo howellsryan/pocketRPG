@@ -4,47 +4,47 @@ import itemsData from '../src/data/items.json'
 import monstersData from '../src/data/monsters.json'
 import raidsData from '../src/data/raids.json'
 
-const olm = monstersData['olm']
+const the_great_olm = monstersData['the_great_olm']
 
 describe('The Great Olm Boss', () => {
   describe('Boss Stats', () => {
     it('should have correct combat level and hitpoints', () => {
-      expect(olm.combatLevel).toBe(1000)
-      expect(olm.hitpoints).toBe(800)
+      expect(the_great_olm.combatLevel).toBe(1000)
+      expect(the_great_olm.hitpoints).toBe(800)
     })
 
     it('should have all combat stats at 250 and defence 150', () => {
-      expect(olm.stats.attack).toBe(250)
-      expect(olm.stats.strength).toBe(250)
-      expect(olm.stats.defence).toBe(150)
-      expect(olm.stats.magic).toBe(250)
-      expect(olm.stats.ranged).toBe(250)
+      expect(the_great_olm.stats.attack).toBe(250)
+      expect(the_great_olm.stats.strength).toBe(250)
+      expect(the_great_olm.stats.defence).toBe(150)
+      expect(the_great_olm.stats.magic).toBe(250)
+      expect(the_great_olm.stats.ranged).toBe(250)
     })
 
     it('should have attack speed of 4 ticks', () => {
-      expect(olm.attackSpeed).toBe(4)
+      expect(the_great_olm.attackSpeed).toBe(4)
     })
 
     it('should require a double kill', () => {
-      expect(olm.requiresDoubleKill).toBe(true)
+      expect(the_great_olm.requiresDoubleKill).toBe(true)
     })
 
     it('should be flagged as a boss', () => {
-      expect(olm.boss).toBe(true)
+      expect(the_great_olm.boss).toBe(true)
     })
   })
 
   describe('Defence Bonuses', () => {
     it('should have melee and magic defence of +200 and zero ranged defence', () => {
-      expect(olm.defenceBonus.stab).toBe(200)
-      expect(olm.defenceBonus.slash).toBe(200)
-      expect(olm.defenceBonus.crush).toBe(200)
-      expect(olm.defenceBonus.magic).toBe(200)
-      expect(olm.defenceBonus.ranged).toBe(0)
+      expect(the_great_olm.defenceBonus.stab).toBe(200)
+      expect(the_great_olm.defenceBonus.slash).toBe(200)
+      expect(the_great_olm.defenceBonus.crush).toBe(200)
+      expect(the_great_olm.defenceBonus.magic).toBe(200)
+      expect(the_great_olm.defenceBonus.ranged).toBe(0)
     })
 
     it('each form should maintain the same defence bonuses (always weak to ranged)', () => {
-      for (const form of Object.values(olm.forms)) {
+      for (const form of Object.values(the_great_olm.forms)) {
         expect((form as any).defenceBonus.ranged).toBe(0)
         expect((form as any).defenceBonus.stab).toBe(200)
         expect((form as any).defenceBonus.magic).toBe(200)
@@ -54,34 +54,34 @@ describe('The Great Olm Boss', () => {
 
   describe('Phase Mechanics', () => {
     it('should have three forms: magic, melee, ranged', () => {
-      expect(olm.forms).toBeDefined()
-      expect(olm.forms.magic).toBeDefined()
-      expect(olm.forms.melee).toBeDefined()
-      expect(olm.forms.ranged).toBeDefined()
+      expect(the_great_olm.forms).toBeDefined()
+      expect(the_great_olm.forms.magic).toBeDefined()
+      expect(the_great_olm.forms.melee).toBeDefined()
+      expect(the_great_olm.forms.ranged).toBeDefined()
     })
 
     it('should start in magic phase', () => {
-      expect(olm.initialForm).toBe('magic')
+      expect(the_great_olm.initialForm).toBe('magic')
     })
 
     it('should change form every attack (randomFormEveryAttack)', () => {
-      expect(olm.randomFormEveryAttack).toBe(true)
+      expect(the_great_olm.randomFormEveryAttack).toBe(true)
     })
 
     it('should not have a fixed cycle order (random phases)', () => {
-      expect(olm.formCycleOrder).toBeUndefined()
+      expect(the_great_olm.formCycleOrder).toBeUndefined()
     })
 
     it('each phase should have max hit of 30', () => {
-      expect(olm.forms.magic.maxHit).toBe(30)
-      expect(olm.forms.melee.maxHit).toBe(30)
-      expect(olm.forms.ranged.maxHit).toBe(30)
+      expect(the_great_olm.forms.magic.maxHit).toBe(30)
+      expect(the_great_olm.forms.melee.maxHit).toBe(30)
+      expect(the_great_olm.forms.ranged.maxHit).toBe(30)
     })
 
     it('each phase should have its correct attack style', () => {
-      expect(olm.forms.magic.attackStyle).toBe('magic')
-      expect(olm.forms.melee.attackStyle).toBe('crush')
-      expect(olm.forms.ranged.attackStyle).toBe('ranged')
+      expect(the_great_olm.forms.magic.attackStyle).toBe('magic')
+      expect(the_great_olm.forms.melee.attackStyle).toBe('crush')
+      expect(the_great_olm.forms.ranged.attackStyle).toBe('ranged')
     })
   })
 
@@ -89,7 +89,7 @@ describe('The Great Olm Boss', () => {
     let combatState: ReturnType<typeof createCombatState>
 
     beforeEach(() => {
-      combatState = createCombatState(olm, 'ranged', 'accurate')
+      combatState = createCombatState(the_great_olm, 'ranged', 'accurate')
     })
 
     it('should initialize in magic phase', () => {
@@ -111,7 +111,7 @@ describe('The Great Olm Boss', () => {
 
   describe('Random Phase Switching', () => {
     it('should switch to a random phase on each monster attack', () => {
-      const state = createCombatState(olm, 'ranged', 'accurate')
+      const state = createCombatState(the_great_olm, 'ranged', 'accurate')
       expect(state.monster.currentForm).toBe('magic')
 
       // Simulate monster attacks to trigger phase switches
@@ -150,7 +150,7 @@ describe('The Great Olm Boss', () => {
     })
 
     it('should regenerate on first kill and continue combat', () => {
-      const state = createCombatState(olm, 'ranged', 'accurate')
+      const state = createCombatState(the_great_olm, 'ranged', 'accurate')
       state.monster.currentHP = 1
 
       const playerStats = { attack: 99, strength: 99, defence: 99, ranged: 99, magic: 99, hitpoints: 99, currentHP: 99 }
@@ -174,7 +174,7 @@ describe('The Great Olm Boss', () => {
     })
 
     it('should grant loot on second kill', () => {
-      const state = createCombatState(olm, 'ranged', 'accurate')
+      const state = createCombatState(the_great_olm, 'ranged', 'accurate')
       state.monster.currentHP = 1
       state.doubleKillCount = 1
 
@@ -197,7 +197,7 @@ describe('The Great Olm Boss', () => {
     })
 
     it('should reset spec energy on phase reset', () => {
-      const state = createCombatState(olm, 'ranged', 'accurate')
+      const state = createCombatState(the_great_olm, 'ranged', 'accurate')
       state.monster.currentHP = 1
       state.specialAttackEnergy = 25
 
@@ -214,12 +214,12 @@ describe('The Great Olm Boss', () => {
   })
 
   describe('Drop Table', () => {
-    const cox = (raidsData as any)['chambers_of_xeric']
+    const cox = (raidsData as any)['vaults_of_xyren']
 
-    it('olm standalone drops should only include the master clue drop', () => {
-      expect(olm.drops).toHaveLength(1)
-      expect(olm.drops[0].itemId).toBe('clue_scroll_master')
-      expect(olm.drops[0].chance).toBe(0.02)
+    it('the_great_olm standalone drops should only include the master clue drop', () => {
+      expect(the_great_olm.drops).toHaveLength(1)
+      expect(the_great_olm.drops[0].itemId).toBe('clue_scroll_master')
+      expect(the_great_olm.drops[0].chance).toBe(0.02)
     })
 
     it('CoX raid should always drop coins', () => {
@@ -230,9 +230,9 @@ describe('The Great Olm Boss', () => {
 
     it('CoX raid should have all 10 unique drops', () => {
       const uniques = [
-        'twisted_buckler', 'dragon_hunter_crossbow',
-        'dinhs_bulwark', 'ancestral_hat', 'ancestral_robe_top', 'ancestral_robe_bottom', 'dragon_claws',
-        'elder_maul', 'kodai_wand', 'twisted_bow'
+        'warped_buckler', 'dragon_slayer_crossbow',
+        'durn_s_bulwark', 'kodai_hat', 'kodai_robe_top', 'kodai_robe_bottom', 'dragon_claws',
+        'ancient_maul', 'ancestral_wand', 'warped_bow'
       ]
       for (const itemId of uniques) {
         const entry = cox.rewards.unique.items.find((d: any) => d.itemId === itemId)
@@ -242,8 +242,8 @@ describe('The Great Olm Boss', () => {
     })
 
     it('twisted buckler and dragon hunter crossbow should have higher weight than twisted bow', () => {
-      const buckler = cox.rewards.unique.items.find((d: any) => d.itemId === 'twisted_buckler')
-      const tbow = cox.rewards.unique.items.find((d: any) => d.itemId === 'twisted_bow')
+      const buckler = cox.rewards.unique.items.find((d: any) => d.itemId === 'warped_buckler')
+      const tbow = cox.rewards.unique.items.find((d: any) => d.itemId === 'warped_bow')
       expect(buckler.weight).toBeGreaterThan(tbow.weight)
     })
 
@@ -254,7 +254,7 @@ describe('The Great Olm Boss', () => {
 })
 
 describe('Dragon Hunter Crossbow', () => {
-  const dhcb = itemsData['dragon_hunter_crossbow' as keyof typeof itemsData]
+  const dhcb = itemsData['dragon_slayer_crossbow' as keyof typeof itemsData]
 
   it('should exist in items data', () => {
     expect(dhcb).toBeDefined()
@@ -274,7 +274,7 @@ describe('Dragon Hunter Crossbow', () => {
 })
 
 describe('Twisted Bow', () => {
-  const tbow = itemsData['twisted_bow' as keyof typeof itemsData]
+  const tbow = itemsData['warped_bow' as keyof typeof itemsData]
 
   it('should exist in items data', () => {
     expect(tbow).toBeDefined()
@@ -302,35 +302,35 @@ describe('Dragon Hunter passive on dragon monsters', () => {
     expect((monstersData['king_black_dragon'] as any).isDragon).toBe(true)
   })
 
-  it('olm should NOT be flagged as a dragon', () => {
-    expect((monstersData['olm'] as any).isDragon).toBeUndefined()
+  it('the_great_olm should NOT be flagged as a dragon', () => {
+    expect((monstersData['the_great_olm'] as any).isDragon).toBeUndefined()
   })
 })
 
 describe('New Items', () => {
   it('ancestral hat should give +2% magic damage bonus', () => {
-    const hat = itemsData['ancestral_hat' as keyof typeof itemsData]
+    const hat = itemsData['kodai_hat' as keyof typeof itemsData]
     expect((hat as any).otherBonus.magicDamage).toBe(2)
   })
 
   it('ancestral robe top should give +2% magic damage bonus', () => {
-    const top = itemsData['ancestral_robe_top' as keyof typeof itemsData]
+    const top = itemsData['kodai_robe_top' as keyof typeof itemsData]
     expect((top as any).otherBonus.magicDamage).toBe(2)
   })
 
   it('ancestral robe bottom should give +2% magic damage bonus', () => {
-    const bot = itemsData['ancestral_robe_bottom' as keyof typeof itemsData]
+    const bot = itemsData['kodai_robe_bottom' as keyof typeof itemsData]
     expect((bot as any).otherBonus.magicDamage).toBe(2)
   })
 
   it('kodai wand should give +15% magic damage bonus and provide water runes', () => {
-    const wand = itemsData['kodai_wand' as keyof typeof itemsData]
+    const wand = itemsData['ancestral_wand' as keyof typeof itemsData]
     expect((wand as any).otherBonus.magicDamage).toBe(15)
     expect((wand as any).elemental).toBe('water_rune')
   })
 
   it('elder maul should have crush +135 and strength +147', () => {
-    const maul = itemsData['elder_maul' as keyof typeof itemsData]
+    const maul = itemsData['ancient_maul' as keyof typeof itemsData]
     expect((maul as any).attackBonus.crush).toBe(135)
     expect((maul as any).otherBonus.meleeStrength).toBe(147)
   })
@@ -342,13 +342,13 @@ describe('New Items', () => {
   })
 
   it("dinh's bulwark should have lunge special attack at 50% cost", () => {
-    const bulwark = itemsData['dinhs_bulwark' as keyof typeof itemsData]
+    const bulwark = itemsData['durn_s_bulwark' as keyof typeof itemsData]
     expect((bulwark as any).specialAttack.type).toBe('lunge')
     expect((bulwark as any).specialAttack.energyCost).toBe(50)
   })
 
   it("dinh's bulwark should have very high defence bonuses", () => {
-    const bulwark = itemsData['dinhs_bulwark' as keyof typeof itemsData]
+    const bulwark = itemsData['durn_s_bulwark' as keyof typeof itemsData]
     expect((bulwark as any).defenceBonus.stab).toBe(153)
     expect((bulwark as any).defenceBonus.slash).toBe(153)
     expect((bulwark as any).defenceBonus.crush).toBe(143)
@@ -356,7 +356,7 @@ describe('New Items', () => {
   })
 
   it('twisted buckler should occupy the shield slot', () => {
-    const buckler = itemsData['twisted_buckler' as keyof typeof itemsData]
+    const buckler = itemsData['warped_buckler' as keyof typeof itemsData]
     expect((buckler as any).slot).toBe('shield')
     expect((buckler as any).attackBonus.ranged).toBe(18)
   })

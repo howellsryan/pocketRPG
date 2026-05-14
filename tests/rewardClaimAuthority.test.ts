@@ -3,7 +3,7 @@ import { applyRewardClaim, validateRewardClaimPayload } from '../functions/_lib/
 
 describe('reward claim authority helpers', () => {
   it('accepts protected source payload shape', () => {
-    const parsed = validateRewardClaimPayload({ sourceType: 'monsters', sourceId: 'abyssal_demon', rewards: [{ itemId: 'abyssal_whip', quantity: 1 }] })
+    const parsed = validateRewardClaimPayload({ sourceType: 'monsters', sourceId: 'nether_demon', rewards: [{ itemId: 'nether_demon_whip', quantity: 1 }] })
     expect(parsed.sourceType).toBe('monsters')
   })
 
@@ -15,8 +15,8 @@ describe('reward claim authority helpers', () => {
     const save: any = { inventory: [] }
     const out = applyRewardClaim(save, {
       sourceType: 'monsters',
-      sourceId: 'abyssal_demon',
-      rewards: [{ itemId: 'abyssal_whip', quantity: 1 }],
+      sourceId: 'nether_demon',
+      rewards: [{ itemId: 'nether_demon_whip', quantity: 1 }],
       slayerPoints: 15,
       dungeoneeringTokens: 25,
     })
@@ -29,7 +29,7 @@ describe('reward claim authority helpers', () => {
     const save: any = { inventory: [] }
     const out = applyRewardClaim(save, {
       sourceType: 'monsters',
-      sourceId: 'chicken',
+      sourceId: 'field_chicken',
       rewards: [{ itemId: 'raw_chicken', quantity: 1 }],
     })
     expect(out.granted).toEqual([{ itemId: 'raw_chicken', quantity: 1 }])

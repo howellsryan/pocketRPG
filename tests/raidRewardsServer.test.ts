@@ -17,7 +17,7 @@ describe('rollRaidRewardsById', () => {
 
   it('rolls deterministic always drops with quantity ranges', () => {
     const rewards = rollRaidRewardsById(
-      'barrows_brothers',
+      'cryptbound_champions',
       // always[0] chance pass, qty pick low edge, later drops fail
       seqRandom([0, 0, 0.999, 0.999, 0.999, 0.999, 0.999, 0.999])
     )
@@ -28,10 +28,10 @@ describe('rollRaidRewardsById', () => {
 
   it('rolls a unique reward when unique chance passes', () => {
     const rewards = rollRaidRewardsById(
-      'chambers_of_xeric',
+      'vaults_of_xyren',
       // fail non-coin always drops, pass unique chance, pick first weighted unique
       seqRandom([0, 0.99, 0.99, 0.99, 0.99, 0.99, 0, 0])
     )
-    expect(rewards.some(r => r.itemId === 'twisted_buckler')).toBe(true)
+    expect(rewards.some(r => r.itemId === 'warped_buckler')).toBe(true)
   })
 })

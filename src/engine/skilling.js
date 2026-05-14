@@ -16,12 +16,12 @@ export const WOODCUTTING_AXE_REDUCTION_TIERS = {
   black_axe: 0.30,
   mithril_axe: 0.45,
   adamant_axe: 0.60,
-  rune_axe: 0.75,
+  runeforged_axe: 0.75,
   dragon_axe: 0.88,
   infernal_axe: 0.94,
-  crystal_axe: 1.00,
+  shardglass_axe: 1.00,
   third_age_axe: 1.00,
-  '3rd_age_axe': 1.00,
+  '2nd_age_axe': 1.00,
 }
 
 /**
@@ -35,12 +35,12 @@ export const WOODCUTTING_AXE_SPEED_MULTIPLIERS = {
   black_axe: 0.80,
   mithril_axe: 0.75,
   adamant_axe: 0.70,
-  rune_axe: 0.62,
+  runeforged_axe: 0.62,
   dragon_axe: 0.56,
   infernal_axe: 0.53,
-  crystal_axe: 0.50,
+  shardglass_axe: 0.50,
   third_age_axe: 0.50,
-  '3rd_age_axe': 0.50,
+  '2nd_age_axe': 0.50,
 }
 
 export function getConfiguredToolSpeedMultiplier(skill, item) {

@@ -1,6 +1,6 @@
 {
-  "chicken": {
-    "id": "chicken",
+  "field_chicken": {
+    "id": "field_chicken",
     "name": "Field Chicken",
     "combatLevel": 1,
     "hitpoints": 3,
@@ -34,7 +34,7 @@
         "chance": 1
       },
       {
-        "itemId": "feathers",
+        "itemId": "feather",
         "quantity": [
           5,
           15
@@ -46,10 +46,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "chicken"
   },
-  "goblin": {
-    "id": "goblin",
+  "cave_goblin": {
+    "id": "cave_goblin",
     "name": "Cave Goblin",
     "combatLevel": 5,
     "hitpoints": 5,
@@ -91,7 +92,7 @@
         "chance": 0.05
       },
       {
-        "itemId": "guam_leaf",
+        "itemId": "greenthorn_leaf",
         "quantity": [
           1,
           2
@@ -99,7 +100,7 @@
         "chance": 0.02
       },
       {
-        "itemId": "tarromin",
+        "itemId": "duskroot",
         "quantity": [
           1,
           2
@@ -107,7 +108,7 @@
         "chance": 0.015
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -168,10 +169,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "goblin"
   },
-  "cow": {
-    "id": "cow",
+  "pasture_bull": {
+    "id": "pasture_bull",
     "name": "Pasture Bull",
     "combatLevel": 8,
     "hitpoints": 8,
@@ -214,10 +216,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "cow"
   },
-  "giant_spider": {
-    "id": "giant_spider",
+  "broodfang_spider": {
+    "id": "broodfang_spider",
     "name": "Broodfang Spider",
     "combatLevel": 27,
     "hitpoints": 26,
@@ -254,7 +257,7 @@
         "chance": 0.5
       },
       {
-        "itemId": "guam_leaf",
+        "itemId": "greenthorn_leaf",
         "quantity": [
           1,
           2
@@ -262,7 +265,7 @@
         "chance": 0.02
       },
       {
-        "itemId": "tarromin",
+        "itemId": "duskroot",
         "quantity": [
           1,
           2
@@ -270,7 +273,7 @@
         "chance": 0.015
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -331,10 +334,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "giant_spider"
   },
-  "lesser_demon": {
-    "id": "lesser_demon",
+  "lesser_fiend": {
+    "id": "lesser_fiend",
     "name": "Lesser Fiend",
     "combatLevel": 82,
     "hitpoints": 79,
@@ -371,12 +375,12 @@
         "chance": 0.85
       },
       {
-        "itemId": "rune_med_helm",
+        "itemId": "runeforged_med_helm",
         "quantity": 1,
         "chance": 0.02
       },
       {
-        "itemId": "guam_leaf",
+        "itemId": "greenthorn_leaf",
         "quantity": [
           1,
           2
@@ -384,7 +388,7 @@
         "chance": 0.04
       },
       {
-        "itemId": "tarromin",
+        "itemId": "duskroot",
         "quantity": [
           1,
           2
@@ -392,7 +396,7 @@
         "chance": 0.03
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -453,10 +457,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "lesser_demon"
   },
-  "rock_crab": {
-    "id": "rock_crab",
+  "stoneback_crab": {
+    "id": "stoneback_crab",
     "name": "Stoneback Crab",
     "combatLevel": 13,
     "hitpoints": 50,
@@ -508,7 +513,7 @@
         "chance": 0.08
       },
       {
-        "itemId": "guam_leaf",
+        "itemId": "greenthorn_leaf",
         "quantity": [
           1,
           2
@@ -516,7 +521,7 @@
         "chance": 0.02
       },
       {
-        "itemId": "tarromin",
+        "itemId": "duskroot",
         "quantity": [
           1,
           2
@@ -524,7 +529,7 @@
         "chance": 0.015
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -585,10 +590,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "rock_crab"
   },
-  "sand_crab": {
-    "id": "sand_crab",
+  "duneback_crab": {
+    "id": "duneback_crab",
     "name": "Duneback Crab",
     "combatLevel": 15,
     "hitpoints": 60,
@@ -640,7 +646,7 @@
         "chance": 0.1
       },
       {
-        "itemId": "guam_leaf",
+        "itemId": "greenthorn_leaf",
         "quantity": [
           1,
           2
@@ -648,7 +654,7 @@
         "chance": 0.02
       },
       {
-        "itemId": "tarromin",
+        "itemId": "duskroot",
         "quantity": [
           1,
           2
@@ -656,7 +662,7 @@
         "chance": 0.015
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -717,10 +723,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "sand_crab"
   },
-  "hill_giant": {
-    "id": "hill_giant",
+  "highland_giant": {
+    "id": "highland_giant",
     "name": "Highland Giant",
     "combatLevel": 28,
     "hitpoints": 35,
@@ -802,7 +809,7 @@
         "chance": 0.04
       },
       {
-        "itemId": "guam_leaf",
+        "itemId": "greenthorn_leaf",
         "quantity": [
           1,
           2
@@ -810,7 +817,7 @@
         "chance": 0.02
       },
       {
-        "itemId": "tarromin",
+        "itemId": "duskroot",
         "quantity": [
           1,
           2
@@ -818,7 +825,7 @@
         "chance": 0.015
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -879,10 +886,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "hill_giant"
   },
-  "moss_giant": {
-    "id": "moss_giant",
+  "briar_giant": {
+    "id": "briar_giant",
     "name": "Briar Giant",
     "combatLevel": 42,
     "hitpoints": 60,
@@ -973,7 +981,7 @@
         "chance": 0.02
       },
       {
-        "itemId": "guam_leaf",
+        "itemId": "greenthorn_leaf",
         "quantity": [
           1,
           2
@@ -981,7 +989,7 @@
         "chance": 0.02
       },
       {
-        "itemId": "tarromin",
+        "itemId": "duskroot",
         "quantity": [
           1,
           2
@@ -989,7 +997,7 @@
         "chance": 0.015
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -1050,10 +1058,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "moss_giant"
   },
-  "wizard": {
-    "id": "wizard",
+  "arcane_adept": {
+    "id": "arcane_adept",
     "name": "Arcane Adept",
     "combatLevel": 9,
     "hitpoints": 17,
@@ -1173,10 +1182,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "wizard"
   },
-  "dark_wizard": {
-    "id": "dark_wizard",
+  "umbral_adept": {
+    "id": "umbral_adept",
     "name": "Umbral Adept",
     "combatLevel": 20,
     "hitpoints": 24,
@@ -1329,10 +1339,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "dark_wizard"
   },
-  "abyssal_demon": {
-    "id": "abyssal_demon",
+  "nether_demon": {
+    "id": "nether_demon",
     "name": "Nether Demon",
     "combatLevel": 124,
     "hitpoints": 150,
@@ -1370,12 +1381,12 @@
         "chance": 0.8
       },
       {
-        "itemId": "rune_chainbody",
+        "itemId": "runeforged_chainbody",
         "quantity": 1,
         "chance": 0.05
       },
       {
-        "itemId": "rune_med_helm",
+        "itemId": "runeforged_med_helm",
         "quantity": 1,
         "chance": 0.05
       },
@@ -1409,17 +1420,17 @@
         "chance": 0.03
       },
       {
-        "itemId": "rune_platelegs",
+        "itemId": "runeforged_platelegs",
         "quantity": 1,
         "chance": 0.01
       },
       {
-        "itemId": "abyssal_whip",
+        "itemId": "nether_demon_whip",
         "quantity": 1,
         "chance": 0.002
       },
       {
-        "itemId": "guam_leaf",
+        "itemId": "greenthorn_leaf",
         "quantity": [
           1,
           2
@@ -1427,7 +1438,7 @@
         "chance": 0.2
       },
       {
-        "itemId": "tarromin",
+        "itemId": "duskroot",
         "quantity": [
           1,
           2
@@ -1435,7 +1446,7 @@
         "chance": 0.15
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -1496,10 +1507,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "abyssal_demon"
   },
-  "blood_veld": {
-    "id": "blood_veld",
+  "sanguine_veld": {
+    "id": "sanguine_veld",
     "name": "Sanguine Veld",
     "combatLevel": 76,
     "hitpoints": 75,
@@ -1569,7 +1581,7 @@
         "chance": 0.15
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": 1,
         "chance": 0.05
       },
@@ -1584,7 +1596,7 @@
         "chance": 0.04
       },
       {
-        "itemId": "guam_leaf",
+        "itemId": "greenthorn_leaf",
         "quantity": [
           1,
           2
@@ -1592,7 +1604,7 @@
         "chance": 0.1
       },
       {
-        "itemId": "tarromin",
+        "itemId": "duskroot",
         "quantity": [
           1,
           2
@@ -1600,7 +1612,7 @@
         "chance": 0.08
       },
       {
-        "itemId": "rune_med_helm",
+        "itemId": "runeforged_med_helm",
         "quantity": 1,
         "chance": 0.008
       },
@@ -1609,10 +1621,11 @@
         "quantity": 1,
         "chance": 0.01
       }
-    ]
+    ],
+    "legacy_id": "blood_veld"
   },
-  "nechryael": {
-    "id": "nechryael",
+  "nether_wraith": {
+    "id": "nether_wraith",
     "name": "Nether Wraith",
     "combatLevel": 115,
     "hitpoints": 105,
@@ -1674,7 +1687,7 @@
         "chance": 0.15
       },
       {
-        "itemId": "rune_chainbody",
+        "itemId": "runeforged_chainbody",
         "quantity": 1,
         "chance": 0.012
       },
@@ -1684,7 +1697,7 @@
         "chance": 0.025
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -1711,10 +1724,11 @@
         "quantity": 1,
         "chance": 0.012
       }
-    ]
+    ],
+    "legacy_id": "nechryael"
   },
-  "skeletal_wyvern": {
-    "id": "skeletal_wyvern",
+  "bone_wyvern": {
+    "id": "bone_wyvern",
     "name": "Bone Wyvern",
     "combatLevel": 140,
     "hitpoints": 130,
@@ -1752,12 +1766,12 @@
         "chance": 0.7
       },
       {
-        "itemId": "rune_platelegs",
+        "itemId": "runeforged_platelegs",
         "quantity": 1,
         "chance": 0.015
       },
       {
-        "itemId": "rune_chainbody",
+        "itemId": "runeforged_chainbody",
         "quantity": 1,
         "chance": 0.01
       },
@@ -1791,7 +1805,7 @@
         "chance": 0.18
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -1818,10 +1832,11 @@
         "quantity": 1,
         "chance": 0.018
       }
-    ]
+    ],
+    "legacy_id": "skeletal_wyvern"
   },
-  "smoke_devil": {
-    "id": "smoke_devil",
+  "cinder_devil": {
+    "id": "cinder_devil",
     "name": "Cinder Devil",
     "combatLevel": 160,
     "hitpoints": 95,
@@ -1891,7 +1906,7 @@
         "chance": 0.15
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -1909,7 +1924,7 @@
         "chance": 0.05
       },
       {
-        "itemId": "rune_chainbody",
+        "itemId": "runeforged_chainbody",
         "quantity": 1,
         "chance": 0.012
       },
@@ -1923,10 +1938,11 @@
         "quantity": 1,
         "chance": 0.015
       }
-    ]
+    ],
+    "legacy_id": "smoke_devil"
   },
-  "kraken": {
-    "id": "kraken",
+  "deepmaw_kraken": {
+    "id": "deepmaw_kraken",
     "name": "Deepmaw Kraken",
     "boss": true,
     "combatLevel": 291,
@@ -1989,7 +2005,7 @@
         "chance": 0.18
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           2,
           4
@@ -2010,7 +2026,7 @@
         "chance": 0.04
       },
       {
-        "itemId": "kraken_tentacle",
+        "itemId": "deepmaw_kraken_tentacle",
         "quantity": 1,
         "chance": 0.0033
       },
@@ -2019,10 +2035,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "kraken"
   },
-  "general_graardor": {
-    "id": "general_graardor",
+  "warlord_grondar": {
+    "id": "warlord_grondar",
     "name": "Warlord Grondar",
     "boss": true,
     "combatLevel": 624,
@@ -2084,42 +2101,42 @@
         "chance": 0.08
       },
       {
-        "itemId": "rune_platelegs",
+        "itemId": "runeforged_platelegs",
         "quantity": 1,
         "chance": 0.0079
       },
       {
-        "itemId": "rune_plateskirt",
+        "itemId": "runeforged_plateskirt",
         "quantity": 1,
         "chance": 0.0079
       },
       {
-        "itemId": "rune_2h_sword",
+        "itemId": "runeforged_2h_sword",
         "quantity": 1,
         "chance": 0.0079
       },
       {
-        "itemId": "rune_pickaxe",
+        "itemId": "runeforged_pickaxe",
         "quantity": 1,
         "chance": 0.0079
       },
       {
-        "itemId": "bandos_chestplate",
+        "itemId": "grondar_chestplate",
         "quantity": 1,
         "chance": 0.00262
       },
       {
-        "itemId": "bandos_tassets",
+        "itemId": "grondar_tassets",
         "quantity": 1,
         "chance": 0.00262
       },
       {
-        "itemId": "bandos_boots",
+        "itemId": "grondar_boots",
         "quantity": 1,
         "chance": 0.00262
       },
       {
-        "itemId": "bandos_hilt",
+        "itemId": "grondar_hilt",
         "quantity": 1,
         "chance": 0.00197
       },
@@ -2129,7 +2146,7 @@
         "chance": 0.00393
       },
       {
-        "itemId": "guam_leaf",
+        "itemId": "greenthorn_leaf",
         "quantity": [
           1,
           2
@@ -2137,7 +2154,7 @@
         "chance": 0.2
       },
       {
-        "itemId": "tarromin",
+        "itemId": "duskroot",
         "quantity": [
           1,
           2
@@ -2145,7 +2162,7 @@
         "chance": 0.15
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -2206,10 +2223,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "general_graardor"
   },
-  "commander_zilyana": {
-    "id": "commander_zilyana",
+  "commander_zephyra": {
+    "id": "commander_zephyra",
     "name": "Commander Zephyra",
     "boss": true,
     "combatLevel": 596,
@@ -2271,27 +2289,27 @@
         "chance": 0.08
       },
       {
-        "itemId": "rune_platelegs",
+        "itemId": "runeforged_platelegs",
         "quantity": 1,
         "chance": 0.0079
       },
       {
-        "itemId": "rune_plateskirt",
+        "itemId": "runeforged_plateskirt",
         "quantity": 1,
         "chance": 0.0079
       },
       {
-        "itemId": "saradomin_sword",
+        "itemId": "lumira_sword",
         "quantity": 1,
         "chance": 0.0079
       },
       {
-        "itemId": "armadyl_crossbow",
+        "itemId": "zephyra_crossbow",
         "quantity": 1,
         "chance": 0.00197
       },
       {
-        "itemId": "saradomin_hilt",
+        "itemId": "lumira_hilt",
         "quantity": 1,
         "chance": 0.00197
       },
@@ -2301,7 +2319,7 @@
         "chance": 0.00393
       },
       {
-        "itemId": "guam_leaf",
+        "itemId": "greenthorn_leaf",
         "quantity": [
           1,
           2
@@ -2309,7 +2327,7 @@
         "chance": 0.2
       },
       {
-        "itemId": "tarromin",
+        "itemId": "duskroot",
         "quantity": [
           1,
           2
@@ -2317,7 +2335,7 @@
         "chance": 0.15
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -2378,10 +2396,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "commander_zilyana"
   },
-  "kril_tsutsaroth": {
-    "id": "kril_tsutsaroth",
+  "krylth_the_defiler": {
+    "id": "krylth_the_defiler",
     "name": "Krylth the Defiler",
     "boss": true,
     "combatLevel": 650,
@@ -2443,22 +2462,22 @@
         "chance": 0.08
       },
       {
-        "itemId": "rune_platelegs",
+        "itemId": "runeforged_platelegs",
         "quantity": 1,
         "chance": 0.0079
       },
       {
-        "itemId": "rune_plateskirt",
+        "itemId": "runeforged_plateskirt",
         "quantity": 1,
         "chance": 0.0079
       },
       {
-        "itemId": "rune_2h_sword",
+        "itemId": "runeforged_2h_sword",
         "quantity": 1,
         "chance": 0.0079
       },
       {
-        "itemId": "zamorak_spear",
+        "itemId": "krylth_spear",
         "quantity": 1,
         "chance": 0.0079
       },
@@ -2468,7 +2487,7 @@
         "chance": 0.00197
       },
       {
-        "itemId": "zamorak_hilt",
+        "itemId": "krylth_hilt",
         "quantity": 1,
         "chance": 0.00197
       },
@@ -2478,7 +2497,7 @@
         "chance": 0.00393
       },
       {
-        "itemId": "guam_leaf",
+        "itemId": "greenthorn_leaf",
         "quantity": [
           1,
           2
@@ -2486,7 +2505,7 @@
         "chance": 0.2
       },
       {
-        "itemId": "tarromin",
+        "itemId": "duskroot",
         "quantity": [
           1,
           2
@@ -2494,7 +2513,7 @@
         "chance": 0.15
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -2555,10 +2574,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "kril_tsutsaroth"
   },
-  "kreearra": {
-    "id": "kreearra",
+  "skyrender_kharra": {
+    "id": "skyrender_kharra",
     "name": "Skyrender Kharra",
     "boss": true,
     "combatLevel": 580,
@@ -2620,32 +2640,32 @@
         "chance": 0.08
       },
       {
-        "itemId": "rune_platelegs",
+        "itemId": "runeforged_platelegs",
         "quantity": 1,
         "chance": 0.0079
       },
       {
-        "itemId": "rune_crossbow",
+        "itemId": "runeforged_crossbow",
         "quantity": 1,
         "chance": 0.0079
       },
       {
-        "itemId": "armadyl_helmet",
+        "itemId": "zephyra_helmet",
         "quantity": 1,
         "chance": 0.00262
       },
       {
-        "itemId": "armadyl_chestplate",
+        "itemId": "zephyra_chestplate",
         "quantity": 1,
         "chance": 0.00262
       },
       {
-        "itemId": "armadyl_chainskirt",
+        "itemId": "zephyra_chainskirt",
         "quantity": 1,
         "chance": 0.00262
       },
       {
-        "itemId": "armadyl_hilt",
+        "itemId": "zephyra_hilt",
         "quantity": 1,
         "chance": 0.00197
       },
@@ -2655,7 +2675,7 @@
         "chance": 0.00393
       },
       {
-        "itemId": "guam_leaf",
+        "itemId": "greenthorn_leaf",
         "quantity": [
           1,
           2
@@ -2663,7 +2683,7 @@
         "chance": 0.2
       },
       {
-        "itemId": "tarromin",
+        "itemId": "duskroot",
         "quantity": [
           1,
           2
@@ -2671,7 +2691,7 @@
         "chance": 0.15
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -2732,7 +2752,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "kreearra"
   },
   "green_dragon": {
     "id": "green_dragon",
@@ -2819,12 +2840,12 @@
         "chance": 0.04
       },
       {
-        "itemId": "rune_full_helm",
+        "itemId": "runeforged_full_helm",
         "quantity": 1,
         "chance": 0.01
       },
       {
-        "itemId": "guam_leaf",
+        "itemId": "greenthorn_leaf",
         "quantity": [
           1,
           2
@@ -2832,7 +2853,7 @@
         "chance": 0.2
       },
       {
-        "itemId": "tarromin",
+        "itemId": "duskroot",
         "quantity": [
           1,
           2
@@ -2840,7 +2861,7 @@
         "chance": 0.15
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -2901,7 +2922,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "green_dragon"
   },
   "red_dragon": {
     "id": "red_dragon",
@@ -2935,7 +2957,7 @@
         "chance": 1
       },
       {
-        "itemId": "red_dhide",
+        "itemId": "red_dragon_leather",
         "quantity": 1,
         "chance": 1
       },
@@ -2979,17 +3001,17 @@
         "chance": 0.05
       },
       {
-        "itemId": "rune_full_helm",
+        "itemId": "runeforged_full_helm",
         "quantity": 1,
         "chance": 0.02
       },
       {
-        "itemId": "rune_platelegs",
+        "itemId": "runeforged_platelegs",
         "quantity": 1,
         "chance": 0.02
       },
       {
-        "itemId": "guam_leaf",
+        "itemId": "greenthorn_leaf",
         "quantity": [
           1,
           2
@@ -2997,7 +3019,7 @@
         "chance": 0.2
       },
       {
-        "itemId": "tarromin",
+        "itemId": "duskroot",
         "quantity": [
           1,
           2
@@ -3005,7 +3027,7 @@
         "chance": 0.15
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -3066,10 +3088,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "red_dragon"
   },
-  "dagganoth_rex": {
-    "id": "dagganoth_rex",
+  "nagadoth_rex": {
+    "id": "nagadoth_rex",
     "name": "Nagadoth Rex",
     "boss": true,
     "combatLevel": 303,
@@ -3094,7 +3117,7 @@
     },
     "drops": [
       {
-        "itemId": "dagganoth_bones",
+        "itemId": "nagadoth_bones",
         "quantity": 1,
         "chance": 1
       },
@@ -3107,12 +3130,12 @@
         "chance": 1
       },
       {
-        "itemId": "rune_platelegs",
+        "itemId": "runeforged_platelegs",
         "quantity": 1,
         "chance": 0.05
       },
       {
-        "itemId": "rune_platebody",
+        "itemId": "runeforged_platebody",
         "quantity": 1,
         "chance": 0.05
       },
@@ -3132,7 +3155,7 @@
         "chance": 0.0078125
       },
       {
-        "itemId": "guam_leaf",
+        "itemId": "greenthorn_leaf",
         "quantity": [
           1,
           2
@@ -3140,7 +3163,7 @@
         "chance": 0.2
       },
       {
-        "itemId": "tarromin",
+        "itemId": "duskroot",
         "quantity": [
           1,
           2
@@ -3148,7 +3171,7 @@
         "chance": 0.15
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -3209,10 +3232,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "dagganoth_rex"
   },
-  "dagganoth_prime": {
-    "id": "dagganoth_prime",
+  "nagadoth_prime": {
+    "id": "nagadoth_prime",
     "name": "Nagadoth Prime",
     "boss": true,
     "combatLevel": 303,
@@ -3237,7 +3261,7 @@
     },
     "drops": [
       {
-        "itemId": "dagganoth_bones",
+        "itemId": "nagadoth_bones",
         "quantity": 1,
         "chance": 1
       },
@@ -3250,12 +3274,12 @@
         "chance": 1
       },
       {
-        "itemId": "rune_platelegs",
+        "itemId": "runeforged_platelegs",
         "quantity": 1,
         "chance": 0.05
       },
       {
-        "itemId": "rune_platebody",
+        "itemId": "runeforged_platebody",
         "quantity": 1,
         "chance": 0.05
       },
@@ -3270,7 +3294,7 @@
         "chance": 0.0078125
       },
       {
-        "itemId": "guam_leaf",
+        "itemId": "greenthorn_leaf",
         "quantity": [
           1,
           2
@@ -3278,7 +3302,7 @@
         "chance": 0.2
       },
       {
-        "itemId": "tarromin",
+        "itemId": "duskroot",
         "quantity": [
           1,
           2
@@ -3286,7 +3310,7 @@
         "chance": 0.15
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -3347,10 +3371,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "dagganoth_prime"
   },
-  "dagganoth_supreme": {
-    "id": "dagganoth_supreme",
+  "nagadoth_supreme": {
+    "id": "nagadoth_supreme",
     "name": "Nagadoth Supreme",
     "boss": true,
     "combatLevel": 303,
@@ -3375,7 +3400,7 @@
     },
     "drops": [
       {
-        "itemId": "dagganoth_bones",
+        "itemId": "nagadoth_bones",
         "quantity": 1,
         "chance": 1
       },
@@ -3388,12 +3413,12 @@
         "chance": 1
       },
       {
-        "itemId": "rune_platelegs",
+        "itemId": "runeforged_platelegs",
         "quantity": 1,
         "chance": 0.05
       },
       {
-        "itemId": "rune_platebody",
+        "itemId": "runeforged_platebody",
         "quantity": 1,
         "chance": 0.05
       },
@@ -3408,7 +3433,7 @@
         "chance": 0.0078125
       },
       {
-        "itemId": "guam_leaf",
+        "itemId": "greenthorn_leaf",
         "quantity": [
           1,
           2
@@ -3416,7 +3441,7 @@
         "chance": 0.2
       },
       {
-        "itemId": "tarromin",
+        "itemId": "duskroot",
         "quantity": [
           1,
           2
@@ -3424,7 +3449,7 @@
         "chance": 0.15
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -3485,7 +3510,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "dagganoth_supreme"
   },
   "crazy_archaeologist": {
     "id": "crazy_archaeologist",
@@ -3525,12 +3551,12 @@
         "chance": 0.05
       },
       {
-        "itemId": "rune_crossbow",
+        "itemId": "runeforged_crossbow",
         "quantity": 1,
         "chance": 0.04
       },
       {
-        "itemId": "red_dhide_body",
+        "itemId": "red_d_hide_body",
         "quantity": 1,
         "chance": 0.03125
       },
@@ -3543,7 +3569,7 @@
         "chance": 0.05
       },
       {
-        "itemId": "guam_leaf",
+        "itemId": "greenthorn_leaf",
         "quantity": [
           1,
           2
@@ -3551,7 +3577,7 @@
         "chance": 0.2
       },
       {
-        "itemId": "tarromin",
+        "itemId": "duskroot",
         "quantity": [
           1,
           2
@@ -3559,7 +3585,7 @@
         "chance": 0.15
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -3579,7 +3605,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "crazy_archaeologist"
   },
   "king_black_dragon": {
     "id": "king_black_dragon",
@@ -3620,7 +3647,7 @@
         "chance": 0.0025
       },
       {
-        "itemId": "draconic_visage",
+        "itemId": "dragon_visage",
         "quantity": 1,
         "chance": 0.0005
       },
@@ -3657,7 +3684,7 @@
         "chance": 0.12
       },
       {
-        "itemId": "runite_ore",
+        "itemId": "runeforged_ore",
         "quantity": [
           2,
           5
@@ -3669,7 +3696,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "king_black_dragon"
   },
   "adamant_dragon": {
     "id": "adamant_dragon",
@@ -3708,7 +3736,7 @@
         "chance": 1
       },
       {
-        "itemId": "rune_bar",
+        "itemId": "runeforged_bar",
         "quantity": 1,
         "chance": 1
       },
@@ -3761,7 +3789,7 @@
         "chance": 0.1
       },
       {
-        "itemId": "runite_ore",
+        "itemId": "runeforged_ore",
         "quantity": [
           2,
           4
@@ -3799,7 +3827,7 @@
         "chance": 0.001
       },
       {
-        "itemId": "draconic_visage",
+        "itemId": "dragon_visage",
         "quantity": 1,
         "chance": 0.001
       },
@@ -3808,7 +3836,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "adamant_dragon"
   },
   "rune_dragon": {
     "id": "rune_dragon",
@@ -3847,7 +3876,7 @@
         "chance": 1
       },
       {
-        "itemId": "rune_bar",
+        "itemId": "runeforged_bar",
         "quantity": 1,
         "chance": 1
       },
@@ -3900,7 +3929,7 @@
         "chance": 0.1
       },
       {
-        "itemId": "runite_ore",
+        "itemId": "runeforged_ore",
         "quantity": [
           3,
           6
@@ -3956,7 +3985,7 @@
         "chance": 0.001
       },
       {
-        "itemId": "draconic_visage",
+        "itemId": "dragon_visage",
         "quantity": 1,
         "chance": 0.001
       },
@@ -3965,10 +3994,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "rune_dragon"
   },
-  "zulrah": {
-    "id": "zulrah",
+  "venomcoil_matriarch": {
+    "id": "venomcoil_matriarch",
     "name": "Venomcoil Matriarch",
     "boss": true,
     "combatLevel": 725,
@@ -4047,7 +4077,7 @@
     },
     "drops": [
       {
-        "itemId": "zulrah_scales",
+        "itemId": "venomcoil_scales",
         "quantity": [
           150,
           500
@@ -4087,7 +4117,7 @@
         "chance": 0.2
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           2,
           5
@@ -4111,12 +4141,12 @@
         "chance": 0.15
       },
       {
-        "itemId": "toxic_blowpipe",
+        "itemId": "venom_blowpipe",
         "quantity": 1,
         "chance": 0.004
       },
       {
-        "itemId": "trident_of_the_swamp",
+        "itemId": "trident_of_venom",
         "quantity": 1,
         "chance": 0.004
       },
@@ -4135,10 +4165,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "zulrah"
   },
-  "jad": {
-    "id": "jad",
+  "ember_tyrant": {
+    "id": "ember_tyrant",
     "name": "Ember Tyrant",
     "boss": true,
     "combatLevel": 702,
@@ -4225,10 +4256,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "jad"
   },
-  "inferno": {
-    "id": "inferno",
+  "ashen_crucible": {
+    "id": "ashen_crucible",
     "name": "Ashen Crucible",
     "boss": true,
     "combatLevel": 1400,
@@ -4315,10 +4347,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "inferno"
   },
-  "corrupted_gauntlet": {
-    "id": "corrupted_gauntlet",
+  "blighted_gauntlet": {
+    "id": "blighted_gauntlet",
     "name": "Blighted Gauntlet",
     "boss": true,
     "combatLevel": 894,
@@ -4397,7 +4430,7 @@
     },
     "drops": [
       {
-        "itemId": "crystal_shards",
+        "itemId": "shardglass_shards",
         "quantity": [
           100,
           500
@@ -4410,27 +4443,27 @@
         "chance": 0.01
       },
       {
-        "itemId": "crystal_pickaxe",
+        "itemId": "shardglass_pickaxe",
         "quantity": 1,
         "chance": 0.01
       },
       {
-        "itemId": "crystal_axe",
+        "itemId": "shardglass_axe",
         "quantity": 1,
         "chance": 0.01
       },
       {
-        "itemId": "crystal_helmet",
+        "itemId": "shardglass_helmet",
         "quantity": 1,
         "chance": 0.004
       },
       {
-        "itemId": "crystal_plate_body",
+        "itemId": "shardglass_plate_body",
         "quantity": 1,
         "chance": 0.004
       },
       {
-        "itemId": "crystal_platelegs",
+        "itemId": "shardglass_platelegs",
         "quantity": 1,
         "chance": 0.004
       },
@@ -4485,7 +4518,7 @@
         "chance": 0.08
       },
       {
-        "itemId": "guam_leaf",
+        "itemId": "greenthorn_leaf",
         "quantity": [
           5,
           25
@@ -4493,7 +4526,7 @@
         "chance": 0.25
       },
       {
-        "itemId": "tarromin",
+        "itemId": "duskroot",
         "quantity": [
           5,
           25
@@ -4533,7 +4566,7 @@
         "chance": 0.16
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           3,
           15
@@ -4577,7 +4610,7 @@
         "chance": 0.12
       },
       {
-        "itemId": "rune_full_helm",
+        "itemId": "runeforged_full_helm",
         "quantity": [
           1,
           3
@@ -4585,7 +4618,7 @@
         "chance": 0.18
       },
       {
-        "itemId": "rune_platebody",
+        "itemId": "runeforged_platebody",
         "quantity": [
           1,
           3
@@ -4593,7 +4626,7 @@
         "chance": 0.16
       },
       {
-        "itemId": "rune_platelegs",
+        "itemId": "runeforged_platelegs",
         "quantity": [
           1,
           3
@@ -4601,7 +4634,7 @@
         "chance": 0.14
       },
       {
-        "itemId": "rune_med_helm",
+        "itemId": "runeforged_med_helm",
         "quantity": [
           1,
           3
@@ -4629,11 +4662,12 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "corrupted_gauntlet"
   },
-  "olm": {
-    "id": "olm",
-    "name": "The Great Olm",
+  "the_great_olm": {
+    "id": "the_great_olm",
+    "name": "The Grand Olm",
     "boss": true,
     "raidBoss": true,
     "requiresDoubleKill": true,
@@ -4716,10 +4750,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "olm"
   },
-  "demonic_gorilla": {
-    "id": "demonic_gorilla",
+  "hellbound_gorilla": {
+    "id": "hellbound_gorilla",
     "name": "Hellbound Gorilla",
     "boss": true,
     "combatLevel": 275,
@@ -4818,7 +4853,7 @@
         "noted": true
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           3
@@ -4855,12 +4890,12 @@
         "chance": 0.15
       },
       {
-        "itemId": "uncut_zenyte",
+        "itemId": "uncut_zyrite",
         "quantity": 1,
         "chance": 0.00333
       },
       {
-        "itemId": "heavy_ballista",
+        "itemId": "colossal_ballista",
         "quantity": 1,
         "chance": 0.005
       },
@@ -4870,11 +4905,12 @@
         "chance": 0.02
       }
     ],
-    "slayerRequirement": 70
+    "slayerRequirement": 70,
+    "legacy_id": "demonic_gorilla"
   },
-  "maiden_of_sugadinti": {
-    "id": "maiden_of_sugadinti",
-    "name": "The Maiden of Sugadinti",
+  "the_maiden_of_sugadinti": {
+    "id": "the_maiden_of_sugadinti",
+    "name": "The Matron of Sugadinti",
     "boss": true,
     "raidBoss": true,
     "combatLevel": 940,
@@ -4904,11 +4940,12 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "maiden_of_sugadinti"
   },
   "pestilent_bloat": {
     "id": "pestilent_bloat",
-    "name": "Pestilent Bloat",
+    "name": "Pestilent Blight",
     "boss": true,
     "raidBoss": true,
     "combatLevel": 870,
@@ -4938,11 +4975,12 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "pestilent_bloat"
   },
   "nylocas_vasilias": {
     "id": "nylocas_vasilias",
-    "name": "Nylocas Vasilias",
+    "name": "Nylocas Vashilias",
     "boss": true,
     "raidBoss": true,
     "combatLevel": 800,
@@ -5030,11 +5068,12 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "nylocas_vasilias"
   },
   "sotetseg": {
     "id": "sotetseg",
-    "name": "Sotetseg",
+    "name": "Sotethseg",
     "boss": true,
     "raidBoss": true,
     "combatLevel": 995,
@@ -5116,11 +5155,12 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "sotetseg"
   },
   "xarpus": {
     "id": "xarpus",
-    "name": "Xarpus",
+    "name": "Xarphus",
     "boss": true,
     "raidBoss": true,
     "combatLevel": 960,
@@ -5150,11 +5190,12 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "xarpus"
   },
   "verzik_vitur": {
     "id": "verzik_vitur",
-    "name": "Verzik Vitur",
+    "name": "Verzik Vitura",
     "boss": true,
     "raidBoss": true,
     "combatLevel": 1040,
@@ -5246,11 +5287,12 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "verzik_vitur"
   },
   "tekton": {
     "id": "tekton",
-    "name": "Tekton",
+    "name": "Tecton",
     "boss": true,
     "raidBoss": true,
     "combatLevel": 149,
@@ -5280,11 +5322,12 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "tekton"
   },
   "vespula": {
     "id": "vespula",
-    "name": "Vespula",
+    "name": "Vespara",
     "boss": true,
     "raidBoss": true,
     "combatLevel": 202,
@@ -5348,11 +5391,12 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "vespula"
   },
   "muttadile": {
     "id": "muttadile",
-    "name": "Muttadile",
+    "name": "Mudtadile",
     "boss": true,
     "raidBoss": true,
     "combatLevel": 170,
@@ -5416,10 +5460,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "muttadile"
   },
-  "arim_the_blighted": {
-    "id": "arim_the_blighted",
+  "morvyn_the_blighted": {
+    "id": "morvyn_the_blighted",
     "name": "Morvyn the Blighted",
     "boss": true,
     "combatLevel": 115,
@@ -5444,22 +5489,22 @@
     },
     "drops": [
       {
-        "itemId": "ahrims_hood",
+        "itemId": "morvyn_s_hood",
         "quantity": 1,
         "chance": 0.223
       },
       {
-        "itemId": "ahrims_robetop",
+        "itemId": "morvyn_s_robetop",
         "quantity": 1,
         "chance": 0.223
       },
       {
-        "itemId": "ahrims_robeskirt",
+        "itemId": "morvyn_s_robeskirt",
         "quantity": 1,
         "chance": 0.223
       },
       {
-        "itemId": "ahrims_staff",
+        "itemId": "morvyn_s_staff",
         "quantity": 1,
         "chance": 0.223
       },
@@ -5476,10 +5521,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "arim_the_blighted"
   },
-  "dharok_the_wretched": {
-    "id": "dharok_the_wretched",
+  "dravok_the_wretched": {
+    "id": "dravok_the_wretched",
     "name": "Dravok the Wretched",
     "boss": true,
     "combatLevel": 115,
@@ -5504,22 +5550,22 @@
     },
     "drops": [
       {
-        "itemId": "dharoks_helm",
+        "itemId": "dravok_s_helm",
         "quantity": 1,
         "chance": 0.223
       },
       {
-        "itemId": "dharoks_platebody",
+        "itemId": "dravok_s_platebody",
         "quantity": 1,
         "chance": 0.223
       },
       {
-        "itemId": "dharoks_platelegs",
+        "itemId": "dravok_s_platelegs",
         "quantity": 1,
         "chance": 0.223
       },
       {
-        "itemId": "dharoks_greataxe",
+        "itemId": "dravok_s_greataxe",
         "quantity": 1,
         "chance": 0.223
       },
@@ -5536,10 +5582,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "dharok_the_wretched"
   },
-  "guthan_the_infested": {
-    "id": "guthan_the_infested",
+  "gorath_the_infested": {
+    "id": "gorath_the_infested",
     "name": "Gorath the Infested",
     "boss": true,
     "combatLevel": 115,
@@ -5564,22 +5611,22 @@
     },
     "drops": [
       {
-        "itemId": "guthans_helm",
+        "itemId": "gorath_s_helm",
         "quantity": 1,
         "chance": 0.223
       },
       {
-        "itemId": "guthans_platebody",
+        "itemId": "gorath_s_platebody",
         "quantity": 1,
         "chance": 0.223
       },
       {
-        "itemId": "guthans_chainskirt",
+        "itemId": "gorath_s_chainskirt",
         "quantity": 1,
         "chance": 0.223
       },
       {
-        "itemId": "guthans_warspear",
+        "itemId": "gorath_s_warspear",
         "quantity": 1,
         "chance": 0.223
       },
@@ -5596,10 +5643,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "guthan_the_infested"
   },
-  "karil_the_tainted": {
-    "id": "karil_the_tainted",
+  "kaelor_the_tainted": {
+    "id": "kaelor_the_tainted",
     "name": "Kaelor the Tainted",
     "boss": true,
     "combatLevel": 115,
@@ -5624,22 +5672,22 @@
     },
     "drops": [
       {
-        "itemId": "karils_coif",
+        "itemId": "kaelor_s_coif",
         "quantity": 1,
         "chance": 0.223
       },
       {
-        "itemId": "karils_leathertop",
+        "itemId": "kaelor_s_leathertop",
         "quantity": 1,
         "chance": 0.223
       },
       {
-        "itemId": "karils_leatherskirt",
+        "itemId": "kaelor_s_leatherskirt",
         "quantity": 1,
         "chance": 0.223
       },
       {
-        "itemId": "karils_crossbow",
+        "itemId": "kaelor_s_crossbow",
         "quantity": 1,
         "chance": 0.223
       },
@@ -5656,10 +5704,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "karil_the_tainted"
   },
-  "torag_the_corrupted": {
-    "id": "torag_the_corrupted",
+  "torvek_the_corrupted": {
+    "id": "torvek_the_corrupted",
     "name": "Torvek the Corrupted",
     "boss": true,
     "combatLevel": 115,
@@ -5684,22 +5733,22 @@
     },
     "drops": [
       {
-        "itemId": "torags_helm",
+        "itemId": "torvek_s_helm",
         "quantity": 1,
         "chance": 0.223
       },
       {
-        "itemId": "torags_platebody",
+        "itemId": "torvek_s_platebody",
         "quantity": 1,
         "chance": 0.223
       },
       {
-        "itemId": "torags_platelegs",
+        "itemId": "torvek_s_platelegs",
         "quantity": 1,
         "chance": 0.223
       },
       {
-        "itemId": "torags_hammers",
+        "itemId": "torvek_s_hammers",
         "quantity": 1,
         "chance": 0.223
       },
@@ -5716,10 +5765,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "torag_the_corrupted"
   },
-  "verac_the_defiled": {
-    "id": "verac_the_defiled",
+  "verin_the_defiled": {
+    "id": "verin_the_defiled",
     "name": "Verin the Defiled",
     "boss": true,
     "combatLevel": 115,
@@ -5744,22 +5794,22 @@
     },
     "drops": [
       {
-        "itemId": "veracs_helm",
+        "itemId": "verin_s_helm",
         "quantity": 1,
         "chance": 0.223
       },
       {
-        "itemId": "veracs_brassard",
+        "itemId": "verin_s_brassard",
         "quantity": 1,
         "chance": 0.223
       },
       {
-        "itemId": "veracs_plateskirt",
+        "itemId": "verin_s_plateskirt",
         "quantity": 1,
         "chance": 0.223
       },
       {
-        "itemId": "veracs_flail",
+        "itemId": "verin_s_flail",
         "quantity": 1,
         "chance": 0.223
       },
@@ -5776,10 +5826,11 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "verac_the_defiled"
   },
-  "lizardman_shaman": {
-    "id": "lizardman_shaman",
+  "marshscale_shaman": {
+    "id": "marshscale_shaman",
     "name": "Marshscale Shaman",
     "combatLevel": 150,
     "hitpoints": 150,
@@ -5818,7 +5869,7 @@
         "chance": 1
       },
       {
-        "itemId": "rune_arrow",
+        "itemId": "runeforged_arrow",
         "quantity": [
           15,
           80
@@ -5850,7 +5901,7 @@
         "chance": 0.15
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": 5,
         "chance": 0.1
       },
@@ -5865,7 +5916,7 @@
         "chance": 0.1
       },
       {
-        "itemId": "rune_chainbody",
+        "itemId": "runeforged_chainbody",
         "quantity": 1,
         "chance": 0.05
       },
@@ -5874,10 +5925,11 @@
         "quantity": 1,
         "chance": 0.0003333333333333333
       }
-    ]
+    ],
+    "legacy_id": "lizardman_shaman"
   },
-  "banshee": {
-    "id": "banshee",
+  "wailing_banshee": {
+    "id": "wailing_banshee",
     "name": "Wailing Banshee",
     "combatLevel": 23,
     "hitpoints": 22,
@@ -5936,12 +5988,12 @@
         "chance": 0.05
       },
       {
-        "itemId": "guam_leaf",
+        "itemId": "greenthorn_leaf",
         "quantity": 1,
         "chance": 0.06
       },
       {
-        "itemId": "tarromin",
+        "itemId": "duskroot",
         "quantity": 1,
         "chance": 0.05
       },
@@ -5951,7 +6003,7 @@
         "chance": 0.04
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": 1,
         "chance": 0.03
       },
@@ -5975,10 +6027,11 @@
         "quantity": 1,
         "chance": 0.015
       }
-    ]
+    ],
+    "legacy_id": "banshee"
   },
-  "aberrant_spectre": {
-    "id": "aberrant_spectre",
+  "warped_spectre": {
+    "id": "warped_spectre",
     "name": "Warped Spectre",
     "combatLevel": 96,
     "hitpoints": 90,
@@ -6016,37 +6069,37 @@
         "chance": 0.7
       },
       {
-        "itemId": "mystic_hat",
+        "itemId": "arcanist_hat",
         "quantity": 1,
         "chance": 0.005
       },
       {
-        "itemId": "mystic_robe_top",
+        "itemId": "arcanist_robe_top",
         "quantity": 1,
         "chance": 0.002
       },
       {
-        "itemId": "mystic_robe_bottom",
+        "itemId": "arcanist_robe_bottom",
         "quantity": 1,
         "chance": 0.003
       },
       {
-        "itemId": "mystic_gloves",
+        "itemId": "arcanist_gloves",
         "quantity": 1,
         "chance": 0.005
       },
       {
-        "itemId": "mystic_boots",
+        "itemId": "arcanist_boots",
         "quantity": 1,
         "chance": 0.005
       },
       {
-        "itemId": "ranarr_seed",
+        "itemId": "rynarr_seed",
         "quantity": 1,
         "chance": 0.04
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -6107,10 +6160,11 @@
         "quantity": 1,
         "chance": 0.015
       }
-    ]
+    ],
+    "legacy_id": "aberrant_spectre"
   },
-  "wyrm": {
-    "id": "wyrm",
+  "ash_wyrm": {
+    "id": "ash_wyrm",
     "name": "Ash Wyrm",
     "combatLevel": 99,
     "hitpoints": 130,
@@ -6148,7 +6202,7 @@
         "chance": 0.7
       },
       {
-        "itemId": "granite_dust",
+        "itemId": "gargoyle_dust",
         "quantity": [
           5,
           25
@@ -6156,7 +6210,7 @@
         "chance": 1
       },
       {
-        "itemId": "mystic_robe_top",
+        "itemId": "arcanist_robe_top",
         "quantity": 1,
         "chance": 0.0015
       },
@@ -6198,7 +6252,7 @@
         "chance": 0.04
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -6215,10 +6269,11 @@
         "quantity": 1,
         "chance": 0.015
       }
-    ]
+    ],
+    "legacy_id": "wyrm"
   },
-  "spiritual_warrior": {
-    "id": "spiritual_warrior",
+  "astral_warrior": {
+    "id": "astral_warrior",
     "name": "Astral Warrior",
     "combatLevel": 134,
     "hitpoints": 145,
@@ -6261,17 +6316,17 @@
         "chance": 0.004
       },
       {
-        "itemId": "rune_full_helm",
+        "itemId": "runeforged_full_helm",
         "quantity": 1,
         "chance": 0.01
       },
       {
-        "itemId": "rune_chainbody",
+        "itemId": "runeforged_chainbody",
         "quantity": 1,
         "chance": 0.012
       },
       {
-        "itemId": "rune_platelegs",
+        "itemId": "runeforged_platelegs",
         "quantity": 1,
         "chance": 0.008
       },
@@ -6284,7 +6339,7 @@
         "chance": 0.1
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -6317,10 +6372,11 @@
         "quantity": 1,
         "chance": 0.012
       }
-    ]
+    ],
+    "legacy_id": "spiritual_warrior"
   },
-  "spiritual_mage": {
-    "id": "spiritual_mage",
+  "astral_mage": {
+    "id": "astral_mage",
     "name": "Astral Mage",
     "combatLevel": 120,
     "hitpoints": 115,
@@ -6363,17 +6419,17 @@
         "chance": 0.004
       },
       {
-        "itemId": "mystic_hat",
+        "itemId": "arcanist_hat",
         "quantity": 1,
         "chance": 0.003
       },
       {
-        "itemId": "mystic_robe_top",
+        "itemId": "arcanist_robe_top",
         "quantity": 1,
         "chance": 0.0015
       },
       {
-        "itemId": "mystic_robe_bottom",
+        "itemId": "arcanist_robe_bottom",
         "quantity": 1,
         "chance": 0.002
       },
@@ -6407,7 +6463,7 @@
         "chance": 0.04
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -6424,10 +6480,11 @@
         "quantity": 1,
         "chance": 0.012
       }
-    ]
+    ],
+    "legacy_id": "spiritual_mage"
   },
-  "spiritual_ranger": {
-    "id": "spiritual_ranger",
+  "astral_ranger": {
+    "id": "astral_ranger",
     "name": "Astral Ranger",
     "combatLevel": 113,
     "hitpoints": 105,
@@ -6470,7 +6527,7 @@
         "chance": 0.004
       },
       {
-        "itemId": "green_dhide",
+        "itemId": "green_dragon_leather",
         "quantity": [
           1,
           2
@@ -6478,12 +6535,12 @@
         "chance": 0.1
       },
       {
-        "itemId": "blue_dhide",
+        "itemId": "blue_dragon_leather",
         "quantity": 1,
         "chance": 0.05
       },
       {
-        "itemId": "rune_arrow",
+        "itemId": "runeforged_arrow",
         "quantity": [
           15,
           40
@@ -6515,7 +6572,7 @@
         "chance": 0.15
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -6532,10 +6589,11 @@
         "quantity": 1,
         "chance": 0.012
       }
-    ]
+    ],
+    "legacy_id": "spiritual_ranger"
   },
-  "gargoyle": {
-    "id": "gargoyle",
+  "runestone_gargoyle": {
+    "id": "runestone_gargoyle",
     "name": "Runestone Gargoyle",
     "combatLevel": 111,
     "hitpoints": 105,
@@ -6573,17 +6631,17 @@
         "chance": 0.85
       },
       {
-        "itemId": "granite_maul",
+        "itemId": "gargoyle_maul",
         "quantity": 1,
         "chance": 0.00075
       },
       {
-        "itemId": "rune_full_helm",
+        "itemId": "runeforged_full_helm",
         "quantity": 1,
         "chance": 0.008
       },
       {
-        "itemId": "rune_chainbody",
+        "itemId": "runeforged_chainbody",
         "quantity": 1,
         "chance": 0.012
       },
@@ -6612,7 +6670,7 @@
         "chance": 0.15
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -6634,10 +6692,11 @@
         "quantity": 1,
         "chance": 0.015
       }
-    ]
+    ],
+    "legacy_id": "gargoyle"
   },
-  "brutal_black_dragon": {
-    "id": "brutal_black_dragon",
+  "vicious_black_dragon": {
+    "id": "vicious_black_dragon",
     "name": "Vicious Black Dragon",
     "isDragon": true,
     "combatLevel": 318,
@@ -6670,7 +6729,7 @@
         "chance": 1
       },
       {
-        "itemId": "black_dhide",
+        "itemId": "black_dragon_leather",
         "quantity": 1,
         "chance": 1
       },
@@ -6683,12 +6742,12 @@
         "chance": 0.6
       },
       {
-        "itemId": "draconic_visage",
+        "itemId": "dragon_visage",
         "quantity": 1,
         "chance": 0.001
       },
       {
-        "itemId": "runite_ore",
+        "itemId": "runeforged_ore",
         "quantity": [
           1,
           3
@@ -6696,7 +6755,7 @@
         "chance": 0.15
       },
       {
-        "itemId": "rune_arrow",
+        "itemId": "runeforged_arrow",
         "quantity": [
           25,
           75
@@ -6736,7 +6795,7 @@
         "chance": 0.12
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           3
@@ -6761,10 +6820,11 @@
         "quantity": 1,
         "chance": 0.018
       }
-    ]
+    ],
+    "legacy_id": "brutal_black_dragon"
   },
-  "dark_beast": {
-    "id": "dark_beast",
+  "nightfang_beast": {
+    "id": "nightfang_beast",
     "name": "Nightfang Beast",
     "combatLevel": 182,
     "hitpoints": 220,
@@ -6802,12 +6862,12 @@
         "chance": 0.85
       },
       {
-        "itemId": "dark_bow",
+        "itemId": "nightfang_bow",
         "quantity": 1,
         "chance": 0.0008
       },
       {
-        "itemId": "runite_ore",
+        "itemId": "runeforged_ore",
         "quantity": [
           1,
           2
@@ -6815,12 +6875,12 @@
         "chance": 0.12
       },
       {
-        "itemId": "rune_chainbody",
+        "itemId": "runeforged_chainbody",
         "quantity": 1,
         "chance": 0.012
       },
       {
-        "itemId": "rune_arrow",
+        "itemId": "runeforged_arrow",
         "quantity": [
           25,
           75
@@ -6852,7 +6912,7 @@
         "chance": 0.15
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           2
@@ -6874,10 +6934,11 @@
         "quantity": 1,
         "chance": 0.018
       }
-    ]
+    ],
+    "legacy_id": "dark_beast"
   },
-  "cerberus": {
-    "id": "cerberus",
+  "threefang_cerberus": {
+    "id": "threefang_cerberus",
     "name": "Threefang Cerberus",
     "boss": true,
     "combatLevel": 318,
@@ -6916,27 +6977,27 @@
         "chance": 0.5
       },
       {
-        "itemId": "primordial_crystal",
+        "itemId": "primeval_crystal",
         "quantity": 1,
         "chance": 0.001538
       },
       {
-        "itemId": "pegasian_crystal",
+        "itemId": "skyfury_crystal",
         "quantity": 1,
         "chance": 0.001538
       },
       {
-        "itemId": "eternal_crystal",
+        "itemId": "evermore_crystal",
         "quantity": 1,
         "chance": 0.001538
       },
       {
-        "itemId": "rune_platebody",
+        "itemId": "runeforged_platebody",
         "quantity": 1,
         "chance": 0.012
       },
       {
-        "itemId": "rune_2h_sword",
+        "itemId": "runeforged_2h_sword",
         "quantity": 1,
         "chance": 0.012
       },
@@ -6965,7 +7026,7 @@
         "chance": 0.12
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           2,
           5
@@ -6993,10 +7054,11 @@
         "quantity": 1,
         "chance": 0.025
       }
-    ]
+    ],
+    "legacy_id": "cerberus"
   },
-  "hydra": {
-    "id": "hydra",
+  "ashen_hydra": {
+    "id": "ashen_hydra",
     "name": "Ashen Hydra",
     "boss": true,
     "combatLevel": 194,
@@ -7022,7 +7084,7 @@
     },
     "drops": [
       {
-        "itemId": "hydra_bones",
+        "itemId": "ashen_hydra_bones",
         "quantity": 1,
         "chance": 1
       },
@@ -7035,12 +7097,12 @@
         "chance": 0.7
       },
       {
-        "itemId": "hydra_leather",
+        "itemId": "ashen_hydra_leather",
         "quantity": 1,
         "chance": 0.005
       },
       {
-        "itemId": "hydra_claw",
+        "itemId": "ashen_hydra_claw",
         "quantity": 1,
         "chance": 0.002
       },
@@ -7074,7 +7136,7 @@
         "chance": 0.12
       },
       {
-        "itemId": "rune_arrow",
+        "itemId": "runeforged_arrow",
         "quantity": [
           25,
           80
@@ -7082,7 +7144,7 @@
         "chance": 0.15
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "quantity": [
           1,
           3
@@ -7103,7 +7165,7 @@
         "chance": 0.04
       },
       {
-        "itemId": "runite_ore",
+        "itemId": "runeforged_ore",
         "quantity": [
           1,
           3
@@ -7115,6 +7177,7 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "hydra"
   }
 }

@@ -1,74 +1,74 @@
 {
   "herbs": [
     {
-      "id": "guam_seed",
-      "cropId": "guam_leaf",
-      "name": "Guam",
+      "id": "greenthorn_seed",
+      "cropId": "greenthorn_leaf",
+      "name": "Greenthorn",
       "level": 1,
       "plantXp": 11,
       "harvestXp": 12.5,
       "growthTimeMs": 4800000,
-      "icon": "🌱"
+      "icon": "\ud83c\udf31"
     },
     {
-      "id": "marrentill_seed",
-      "cropId": "marrentill",
-      "name": "Marrentill",
+      "id": "miremint_seed",
+      "cropId": "miremint",
+      "name": "Miremint",
       "level": 14,
       "plantXp": 14,
       "harvestXp": 16,
       "growthTimeMs": 4800000,
-      "icon": "🌿"
+      "icon": "\ud83c\udf3f"
     },
     {
-      "id": "tarromin_seed",
-      "cropId": "tarromin",
-      "name": "Tarromin",
+      "id": "duskroot_seed",
+      "cropId": "duskroot",
+      "name": "Duskroot",
       "level": 19,
       "plantXp": 17,
       "harvestXp": 19.5,
       "growthTimeMs": 4800000,
-      "icon": "🌿"
+      "icon": "\ud83c\udf3f"
     },
     {
-      "id": "basil_seed",
-      "cropId": "basil",
-      "name": "Basil",
+      "id": "kingsherb_seed",
+      "cropId": "kingsherb",
+      "name": "Kingsherb",
       "level": 25,
       "plantXp": 23,
       "harvestXp": 26,
       "growthTimeMs": 4800000,
-      "icon": "🌱"
+      "icon": "\ud83c\udf31"
     },
     {
-      "id": "sagewort_seed",
-      "cropId": "sagewort",
-      "name": "Sagewort",
+      "id": "graysage_seed",
+      "cropId": "graysage",
+      "name": "Graysage",
       "level": 32,
       "plantXp": 30,
       "harvestXp": 34.5,
       "growthTimeMs": 4800000,
-      "icon": "🌿"
+      "icon": "\ud83c\udf3f"
     },
     {
-      "id": "gout_tuber_seed",
-      "cropId": "gout_tuber",
-      "name": "Gout tuber",
+      "id": "bogtuber_seed",
+      "cropId": "bogtuber",
+      "name": "Bogtuber",
       "level": 36,
       "plantXp": 35,
       "harvestXp": 40,
       "growthTimeMs": 4800000,
-      "icon": "🥔"
+      "icon": "\ud83e\udd54"
     },
     {
-      "id": "ranarr_seed",
-      "cropId": "ranarr_weed",
-      "name": "Ranarr",
+      "id": "rynarr_seed",
+      "cropId": "rynarr_weed",
+      "name": "Rynarr",
       "level": 52,
       "plantXp": 64,
       "harvestXp": 73.5,
       "growthTimeMs": 4800000,
-      "icon": "🌿"
+      "icon": "\ud83c\udf3f"
     }
   ],
   "trees": [
@@ -80,7 +80,7 @@
       "plantXp": 14,
       "harvestXp": 4500,
       "growthTimeMs": 8800000,
-      "icon": "🌲"
+      "icon": "\ud83c\udf32"
     },
     {
       "id": "willow_sapling",
@@ -90,7 +90,7 @@
       "plantXp": 27,
       "harvestXp": 8150,
       "growthTimeMs": 8800000,
-      "icon": "🌳"
+      "icon": "\ud83c\udf33"
     },
     {
       "id": "maple_sapling",
@@ -100,7 +100,7 @@
       "plantXp": 45,
       "harvestXp": 13500,
       "growthTimeMs": 8800000,
-      "icon": "🌳"
+      "icon": "\ud83c\udf33"
     },
     {
       "id": "yew_sapling",
@@ -110,7 +110,7 @@
       "plantXp": 81,
       "harvestXp": 24000,
       "growthTimeMs": 8800000,
-      "icon": "🌳"
+      "icon": "\ud83c\udf33"
     },
     {
       "id": "magic_sapling",
@@ -120,7 +120,7 @@
       "plantXp": 145,
       "harvestXp": 43700,
       "growthTimeMs": 8800000,
-      "icon": "🌳"
+      "icon": "\ud83c\udf33"
     }
   ],
   "fruitTrees": [
@@ -134,7 +134,7 @@
       "growthTimeMs": 57600000,
       "fruitRegrowMs": 2400000,
       "fruitLimit": 6,
-      "icon": "🍎"
+      "icon": "\ud83c\udf4e"
     },
     {
       "id": "banana_sapling",
@@ -146,7 +146,7 @@
       "growthTimeMs": 7600000,
       "fruitRegrowMs": 2400000,
       "fruitLimit": 6,
-      "icon": "🍌"
+      "icon": "\ud83c\udf4c"
     },
     {
       "id": "orange_sapling",
@@ -158,7 +158,7 @@
       "growthTimeMs": 7600000,
       "fruitRegrowMs": 2400000,
       "fruitLimit": 6,
-      "icon": "🍊"
+      "icon": "\ud83c\udf4a"
     },
     {
       "id": "curry_sapling",
@@ -170,7 +170,7 @@
       "growthTimeMs": 7600000,
       "fruitRegrowMs": 2400000,
       "fruitLimit": 6,
-      "icon": "🌿"
+      "icon": "\ud83c\udf3f"
     },
     {
       "id": "papaya_sapling",
@@ -182,7 +182,7 @@
       "growthTimeMs": 7600000,
       "fruitRegrowMs": 2400000,
       "fruitLimit": 6,
-      "icon": "🧡"
+      "icon": "\ud83e\udde1"
     },
     {
       "id": "palm_sapling",
@@ -194,7 +194,7 @@
       "growthTimeMs": 7600000,
       "fruitRegrowMs": 2400000,
       "fruitLimit": 6,
-      "icon": "🌴"
+      "icon": "\ud83c\udf34"
     }
   ],
   "locations": [
@@ -202,56 +202,99 @@
       "id": "falador",
       "name": "Ironhold Farm",
       "patches": [
-        { "type": "herb", "count": 1 },
-        { "type": "tree", "count": 2 }
+        {
+          "type": "herb",
+          "count": 1
+        },
+        {
+          "type": "tree",
+          "count": 2
+        }
       ]
     },
     {
       "id": "taverley",
       "name": "Mossmere Farm",
       "patches": [
-        { "type": "herb", "count": 1 },
-        { "type": "tree", "count": 2 }
+        {
+          "type": "herb",
+          "count": 1
+        },
+        {
+          "type": "tree",
+          "count": 2
+        }
       ]
     },
     {
       "id": "ardougne",
       "name": "Silverkeep Farm",
       "patches": [
-        { "type": "herb", "count": 1 },
-        { "type": "tree", "count": 2 }
+        {
+          "type": "herb",
+          "count": 1
+        },
+        {
+          "type": "tree",
+          "count": 2
+        }
       ]
     },
     {
       "id": "catherby",
       "name": "Seabloom Farm",
       "patches": [
-        { "type": "herb", "count": 1 },
-        { "type": "tree", "count": 2 },
-        { "type": "fruitTree", "count": 2 }
+        {
+          "type": "herb",
+          "count": 1
+        },
+        {
+          "type": "tree",
+          "count": 2
+        },
+        {
+          "type": "fruitTree",
+          "count": 2
+        }
       ]
     },
     {
       "id": "hosidius",
       "name": "Sunmeadow Farm",
       "patches": [
-        { "type": "herb", "count": 1, "minLevel": 65 },
-        { "type": "tree", "count": 2 },
-        { "type": "fruitTree", "count": 1 }
+        {
+          "type": "herb",
+          "count": 1,
+          "minLevel": 65
+        },
+        {
+          "type": "tree",
+          "count": 2
+        },
+        {
+          "type": "fruitTree",
+          "count": 1
+        }
       ]
     },
     {
       "id": "gnome",
       "name": "Spryroot Grove",
       "patches": [
-        { "type": "fruitTree", "count": 2 }
+        {
+          "type": "fruitTree",
+          "count": 2
+        }
       ]
     },
     {
       "id": "brimhaven",
       "name": "Emberbay Farm",
       "patches": [
-        { "type": "fruitTree", "count": 2 }
+        {
+          "type": "fruitTree",
+          "count": 2
+        }
       ]
     }
   ]

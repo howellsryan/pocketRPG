@@ -16,7 +16,7 @@ describe('pvp potion helpers', () => {
 
   it('computes max active boosts per stat', () => {
     const boosts = getPvpPotionBoosts(
-      { attack_potion: 10, super_attack: 5, super_combat_potion: 12 },
+      { attack_potion: 10, super_attack: 5, super_combat: 12 },
       { attack: 99, strength: 99, defence: 99, ranged: 99, magic: 99 },
     )
     expect(boosts.attack).toBeGreaterThan(0)

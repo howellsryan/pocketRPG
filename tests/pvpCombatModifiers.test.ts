@@ -44,14 +44,14 @@ describe('pvp combat modifiers', () => {
     const base = { attack: 99, strength: 99, defence: 99, ranged: 99, magic: 99 }
 
     const active = getPvpCombatModifiers({
-      activePotions: { super_combat_potion: 10 },
+      activePotions: { super_combat: 10 },
       stats: base,
     } as any).potions
     expect(active.attack).toBeGreaterThan(0)
     expect(active.strength).toBeGreaterThan(0)
     expect(active.defence).toBeGreaterThan(0)
 
-    const expired = getPvpCombatModifiers({ activePotions: { super_combat_potion: 0 }, stats: base } as any).potions
+    const expired = getPvpCombatModifiers({ activePotions: { super_combat: 0 }, stats: base } as any).potions
     expect(expired).toEqual({ attack: 0, strength: 0, defence: 0, ranged: 0, magic: 0 })
 
     const unknown = getPvpCombatModifiers({ activePotions: { unknown_potion: 10 }, stats: base } as any).potions
@@ -59,7 +59,7 @@ describe('pvp combat modifiers', () => {
 
     const superAttackOnly = getPvpCombatModifiers({ activePotions: { super_attack: 5 }, stats: base } as any).potions
     const stacked = getPvpCombatModifiers({
-      activePotions: { attack_potion: 5, super_attack: 5, super_combat_potion: 5 },
+      activePotions: { attack_potion: 5, super_attack: 5, super_combat: 5 },
       stats: base,
     } as any).potions
     expect(stacked.attack).toBeGreaterThanOrEqual(superAttackOnly.attack)

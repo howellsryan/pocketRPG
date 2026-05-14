@@ -7,7 +7,7 @@ export const PVP_SPECIAL_ATTACK_LABELS = {
   freeze: '❄️ Ice Cleave',
   warstrike: '💥 Warstrike',
   smash: '🔨 Smash',
-  lightning: "⚡ Lumira's Lightning",
+  lightning: "⚡ Lumina Lightning",
   snapshot: '🏹🏹 Snapshot',
   pebble_shot: '🎯 Pebble Shot',
   shove: '🗡️ Shove',

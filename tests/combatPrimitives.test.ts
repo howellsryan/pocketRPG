@@ -13,14 +13,14 @@ import { rollMeleeAttack, rollRangedAttack, rollMagicAttack } from '../src/engin
 import { buildPlayerCombatant } from '../src/engine/combatant.js'
 
 const items = {
-  abyssal_whip: {
-    id: 'abyssal_whip', slot: 'weapon', attackStyle: 'slash', attackSpeed: 4,
+  nether_demon_whip: {
+    id: 'nether_demon_whip', slot: 'weapon', attackStyle: 'slash', attackSpeed: 4,
     attackBonus: { stab: 0, slash: 82, crush: 0, magic: 0, ranged: 0 },
     defenceBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
     otherBonus: { meleeStrength: 82, rangedStrength: 0, magicDamage: 0 },
   },
-  rune_platebody: {
-    id: 'rune_platebody', slot: 'body',
+  runeforged_platebody: {
+    id: 'runeforged_platebody', slot: 'body',
     attackBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
     defenceBonus: { stab: 82, slash: 80, crush: 72, magic: -6, ranged: 80 },
     otherBonus: {},
@@ -56,8 +56,8 @@ function buildPlayer(overrides: any = {}) {
 
 describe('rollMeleeAttack', () => {
   it('two identical attackers produce identical max hits and rolls (symmetric)', () => {
-    const a = buildPlayer({ characterId: 1, equipment: { weapon: { itemId: 'abyssal_whip' } } })
-    const b = buildPlayer({ characterId: 2, equipment: { weapon: { itemId: 'abyssal_whip' } } })
+    const a = buildPlayer({ characterId: 1, equipment: { weapon: { itemId: 'nether_demon_whip' } } })
+    const b = buildPlayer({ characterId: 2, equipment: { weapon: { itemId: 'nether_demon_whip' } } })
 
     // We can't pin the damage roll (Math.random) but the maxHit + roll
     // calculations should be deterministic and equal in both directions.
@@ -70,8 +70,8 @@ describe('rollMeleeAttack', () => {
   })
 
   it('aggressive stance gives a higher max hit than defensive', () => {
-    const aggressive = buildPlayer({ stance: 'aggressive', equipment: { weapon: { itemId: 'abyssal_whip' } } })
-    const defensive  = buildPlayer({ stance: 'defensive',  equipment: { weapon: { itemId: 'abyssal_whip' } } })
+    const aggressive = buildPlayer({ stance: 'aggressive', equipment: { weapon: { itemId: 'nether_demon_whip' } } })
+    const defensive  = buildPlayer({ stance: 'defensive',  equipment: { weapon: { itemId: 'nether_demon_whip' } } })
     const target     = buildPlayer({ characterId: 99 })
     const swingAg = rollMeleeAttack(aggressive, target, items)
     const swingDe = rollMeleeAttack(defensive,  target, items)
@@ -79,9 +79,9 @@ describe('rollMeleeAttack', () => {
   })
 
   it('better defender equipment lowers attacker accuracy', () => {
-    const attacker = buildPlayer({ equipment: { weapon: { itemId: 'abyssal_whip' } } })
+    const attacker = buildPlayer({ equipment: { weapon: { itemId: 'nether_demon_whip' } } })
     const naked    = buildPlayer({ characterId: 2 })
-    const armoured = buildPlayer({ characterId: 3, equipment: { body: { itemId: 'rune_platebody' } } })
+    const armoured = buildPlayer({ characterId: 3, equipment: { body: { itemId: 'runeforged_platebody' } } })
     const swingNaked    = rollMeleeAttack(attacker, naked, items)
     const swingArmoured = rollMeleeAttack(attacker, armoured, items)
     expect(swingArmoured.accuracy).toBeLessThan(swingNaked.accuracy)
@@ -144,9 +144,9 @@ describe('buildPlayerCombatant', () => {
   })
 
   it('does not mutate the caller-supplied equipment object', () => {
-    const eq = { weapon: { itemId: 'abyssal_whip' } }
+    const eq = { weapon: { itemId: 'nether_demon_whip' } }
     const c = buildPlayer({ equipment: eq })
     c.equipment.weapon!.itemId = 'mutated' as any
-    expect(eq.weapon.itemId).toBe('abyssal_whip')   // original untouched
+    expect(eq.weapon.itemId).toBe('nether_demon_whip')   // original untouched
   })
 })

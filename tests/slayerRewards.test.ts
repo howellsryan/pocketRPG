@@ -16,14 +16,14 @@ import {
 } from '../src/engine/slayerRewards.js'
 
 const monstersData = {
-  blood_veld: {
-    id: 'blood_veld',
+  sanguine_veld: {
+    id: 'sanguine_veld',
     name: 'Bloodveld',
     hitpoints: 120,
     slayerXP: 120,
   },
-  kraken: {
-    id: 'kraken',
+  deepmaw_kraken: {
+    id: 'deepmaw_kraken',
     name: 'Deepmaw Kraken',
     hitpoints: 255,
     slayerXP: 255,
@@ -57,8 +57,8 @@ describe('slayerRewards module surface', () => {
 
 describe('resolveMonsterRewardData', () => {
   it('returns the full monster record from monstersData when only id/name/boss are passed', () => {
-    expect(resolveMonsterRewardData({ id: 'kraken', name: 'Deepmaw Kraken', boss: true }, null, monstersData))
-      .toBe(monstersData.kraken)
+    expect(resolveMonsterRewardData({ id: 'deepmaw_kraken', name: 'Deepmaw Kraken', boss: true }, null, monstersData))
+      .toBe(monstersData.deepmaw_kraken)
   })
 
   it('falls back to the live state.monster when defeatedMonster is null', () => {
@@ -68,9 +68,9 @@ describe('resolveMonsterRewardData', () => {
   })
 
   it('prefers the live state.monster from monstersData when defeatedMonster.id is unknown', () => {
-    const liveMonster = { id: 'kraken' }
+    const liveMonster = { id: 'deepmaw_kraken' }
     expect(resolveMonsterRewardData({ id: 'unknown_id' }, liveMonster, monstersData))
-      .toBe(monstersData.kraken)
+      .toBe(monstersData.deepmaw_kraken)
   })
 
   it('returns the defeated monster object as a last resort', () => {
@@ -81,7 +81,7 @@ describe('resolveMonsterRewardData', () => {
 
 describe('getBaseSlayerXp', () => {
   it('uses explicit slayerXP before hitpoints', () => {
-    expect(getBaseSlayerXp({ id: 'blood_veld' }, null, monstersData)).toBe(120)
+    expect(getBaseSlayerXp({ id: 'sanguine_veld' }, null, monstersData)).toBe(120)
   })
 
   it('falls back to hitpoints when slayerXP is absent', () => {
@@ -95,22 +95,22 @@ describe('getBaseSlayerXp', () => {
 
 describe('isBossMonster', () => {
   it('detects bosses via the resolved monstersData record', () => {
-    expect(isBossMonster({ id: 'kraken', name: 'Deepmaw Kraken', boss: true }, null, monstersData)).toBe(true)
+    expect(isBossMonster({ id: 'deepmaw_kraken', name: 'Deepmaw Kraken', boss: true }, null, monstersData)).toBe(true)
   })
 
   it('returns false for non-boss monsters', () => {
-    expect(isBossMonster({ id: 'blood_veld' }, null, monstersData)).toBe(false)
+    expect(isBossMonster({ id: 'sanguine_veld' }, null, monstersData)).toBe(false)
   })
 })
 
 describe('getSlayerTaskXpForKill', () => {
   it('awards 2x base Slayer XP for non-boss task kills', () => {
-    expect(getSlayerTaskXpForKill({ id: 'blood_veld' }, null, monstersData))
+    expect(getSlayerTaskXpForKill({ id: 'sanguine_veld' }, null, monstersData))
       .toBe(120 * DEFAULT_SLAYER_TASK_XP_MULTIPLIER)
   })
 
   it('awards 10x base Slayer XP for boss task kills', () => {
-    expect(getSlayerTaskXpForKill({ id: 'kraken', name: 'Deepmaw Kraken', boss: true }, null, monstersData))
+    expect(getSlayerTaskXpForKill({ id: 'deepmaw_kraken', name: 'Deepmaw Kraken', boss: true }, null, monstersData))
       .toBe(255 * BOSS_SLAYER_TASK_XP_MULTIPLIER)
   })
 

@@ -1,4 +1,4 @@
-const VOID_SET_ITEM_IDS = ['void_knight_top', 'void_knight_robe', 'void_knight_helm', 'void_knight_gloves']
+const VOID_SET_ITEM_IDS = ['void_king_top', 'void_king_robe', 'void_king_helm', 'void_king_gloves']
 
 function equippedItemId(equipment, slot) {
   const entry = equipment?.[slot]
@@ -6,10 +6,10 @@ function equippedItemId(equipment, slot) {
 }
 
 export function hasFullVoidKnightSet(equipment) {
-  return equippedItemId(equipment, 'body') === 'void_knight_top'
-    && equippedItemId(equipment, 'legs') === 'void_knight_robe'
-    && equippedItemId(equipment, 'head') === 'void_knight_helm'
-    && equippedItemId(equipment, 'hands') === 'void_knight_gloves'
+  return equippedItemId(equipment, 'body') === 'void_king_top'
+    && equippedItemId(equipment, 'legs') === 'void_king_robe'
+    && equippedItemId(equipment, 'head') === 'void_king_helm'
+    && equippedItemId(equipment, 'hands') === 'void_king_gloves'
 }
 
 export function getVoidKnightCombatMultipliers(equipment) {

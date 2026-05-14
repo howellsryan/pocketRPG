@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import monstersData from '../src/data/monsters.json'
 
-const shaman: any = (monstersData as any).lizardman_shaman
+const shaman: any = (monstersData as any).marshscale_shaman
 
 describe('Slayer monster requirements', () => {
   it('lizardman shaman exists with expected core config', () => {
@@ -24,7 +24,7 @@ describe('Slayer monster requirements', () => {
     const canFight = (slayerLevel: number, required: number) => slayerLevel >= required
     expect(canFight(79, shaman.slayerRequirement)).toBe(false)
     expect(canFight(80, shaman.slayerRequirement)).toBe(true)
-    const gorilla: any = (monstersData as any).demonic_gorilla
+    const gorilla: any = (monstersData as any).hellbound_gorilla
     expect(canFight(69, gorilla.slayerRequirement)).toBe(false)
     expect(canFight(70, gorilla.slayerRequirement)).toBe(true)
   })

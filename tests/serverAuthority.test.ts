@@ -47,4 +47,19 @@ describe('server authority helpers', () => {
     expect(save.inventory[0]).toEqual({ id: 'legacy_item', itemId: 'legacy_item', quantity: 1 })
     expect(save.inventory[1]).toEqual({ itemId: 'new_item', quantity: 1 })
   })
+
+  it('adds non-stackable purchases as separate slots', () => {
+    const save: any = { inventory: [{ itemId: 'fighter_helm', quantity: 1 }] }
+    addItemToInventory(save, 'fighter_helm', 1, { stackable: false, noted: false })
+    expect(save.inventory).toEqual([
+      { itemId: 'fighter_helm', quantity: 1 },
+      { itemId: 'fighter_helm', quantity: 1 },
+    ])
+  })
+
+  it('stacks noted non-stackable bulk purchases', () => {
+    const save: any = { inventory: [{ itemId: 'fighter_helm', quantity: 2, noted: true }] }
+    addItemToInventory(save, 'fighter_helm', 3, { stackable: true, noted: true })
+    expect(save.inventory).toEqual([{ itemId: 'fighter_helm', quantity: 5, noted: true }])
+  })
 })

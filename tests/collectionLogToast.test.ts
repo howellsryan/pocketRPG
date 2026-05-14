@@ -32,7 +32,7 @@ describe('collection log slot completion notifications', () => {
     const seen: Array<{ itemId: string; sourceType: string; sourceId: string }> = []
     mod.onCollectionLogSlotComplete((e: any) => seen.push(e))
 
-    mod.recordCollectionLogDrop({ itemId: 'granite_maul', sourceType: 'monsters', sourceId: 'gargoyle' })
+    mod.recordCollectionLogDrop({ itemId: 'gargoyle_maul', sourceType: 'monsters', sourceId: 'runestone_gargoyle' })
     expect(seen).toHaveLength(0)
   })
 
@@ -41,7 +41,7 @@ describe('collection log slot completion notifications', () => {
     getCollectionLogMock.mockResolvedValueOnce({ entries: [], total: 100 })
     await mod.fetchCollectionLog({ force: true })
 
-    mod.recordCollectionLogDrop({ itemId: 'granite_maul', sourceType: 'monsters', sourceId: 'gargoyle' })
+    mod.recordCollectionLogDrop({ itemId: 'gargoyle_maul', sourceType: 'monsters', sourceId: 'runestone_gargoyle' })
     vi.advanceTimersByTime(1000)
     expect(postCollectionLogMock).not.toHaveBeenCalled()
   })
@@ -49,14 +49,14 @@ describe('collection log slot completion notifications', () => {
   it('does not re-fire when the entry already exists in the cached server state', async () => {
     const mod: any = await freshClient()
     getCollectionLogMock.mockResolvedValueOnce({
-      entries: [{ itemId: 'granite_maul', sourceType: 'monsters', sourceId: 'gargoyle', obtainedAt: 1 }],
+      entries: [{ itemId: 'gargoyle_maul', sourceType: 'monsters', sourceId: 'runestone_gargoyle', obtainedAt: 1 }],
       total: 100,
     })
     await mod.fetchCollectionLog({ force: true })
 
     let count = 0
     mod.onCollectionLogSlotComplete(() => count++)
-    mod.recordCollectionLogDrop({ itemId: 'granite_maul', sourceType: 'monsters', sourceId: 'gargoyle' })
+    mod.recordCollectionLogDrop({ itemId: 'gargoyle_maul', sourceType: 'monsters', sourceId: 'runestone_gargoyle' })
     expect(count).toBe(0)
   })
 
@@ -65,15 +65,15 @@ describe('collection log slot completion notifications', () => {
     // dragon_axe is shared across all three nagadoth kings — having it from
     // Rex should suppress the toast when Prime later "drops" it.
     getCollectionLogMock.mockResolvedValueOnce({
-      entries: [{ itemId: 'dragon_axe', sourceType: 'monsters', sourceId: 'dagganoth_rex', obtainedAt: 1 }],
+      entries: [{ itemId: 'dragon_axe', sourceType: 'monsters', sourceId: 'nagadoth_rex', obtainedAt: 1 }],
       total: 100,
     })
     await mod.fetchCollectionLog({ force: true })
 
     let count = 0
     mod.onCollectionLogSlotComplete(() => count++)
-    mod.recordCollectionLogDrop({ itemId: 'dragon_axe', sourceType: 'monsters', sourceId: 'dagganoth_prime' })
-    mod.recordCollectionLogDrop({ itemId: 'dragon_axe', sourceType: 'monsters', sourceId: 'dagganoth_supreme' })
+    mod.recordCollectionLogDrop({ itemId: 'dragon_axe', sourceType: 'monsters', sourceId: 'nagadoth_prime' })
+    mod.recordCollectionLogDrop({ itemId: 'dragon_axe', sourceType: 'monsters', sourceId: 'nagadoth_supreme' })
     expect(count).toBe(0)
   })
 
