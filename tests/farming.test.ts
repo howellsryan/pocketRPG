@@ -31,37 +31,37 @@ describe('farming engine', () => {
   })
 
   it('getCropDef finds herb/tree/fruit tree definitions', () => {
-    expect(getCropDef('guam_seed')?.name).toBe('Guam')
+    expect(getCropDef('greenthorn_seed')?.name).toBe('Guam')
     expect(getCropDef('oak_sapling')?.name).toBe('Oak')
     expect(getCropDef('apple_sapling')?.name).toBe('Apple')
   })
 
   it('getAvailableCrops respects farming level', () => {
-    expect(getAvailableCrops('herb', 1).some(c => c.id === 'guam_seed')).toBe(true)
+    expect(getAvailableCrops('herb', 1).some(c => c.id === 'greenthorn_seed')).toBe(true)
     expect(getAvailableCrops('tree', 1).some(c => c.id === 'oak_sapling')).toBe(false)
     expect(getAvailableCrops('fruitTree', 30).some(c => c.id === 'banana_sapling')).toBe(false)
     expect(getAvailableCrops('fruitTree', 33).some(c => c.id === 'banana_sapling')).toBe(true)
   })
 
   it('plantCrop plants valid crop with expected fields', () => {
-    const result = plantCrop(initFarmingState(), 'falador_herb_0', 'guam_seed', 'herb')
+    const result = plantCrop(initFarmingState(), 'falador_herb_0', 'greenthorn_seed', 'herb')
     expect(result).toBeTruthy()
     const patch = result!.state.patchesById.falador_herb_0
     expect(patch.patchId).toBe('falador_herb_0')
-    expect(patch.cropId).toBe('guam_seed')
+    expect(patch.cropId).toBe('greenthorn_seed')
     expect(patch.type).toBe('herb')
     expect(patch.plantedAt).toBe(Date.now())
     expect(patch.readyAt).toBeGreaterThan(patch.plantedAt)
   })
 
   it('plantCrop rejects invalid crop/patch type combinations', () => {
-    expect(plantCrop(initFarmingState(), 'falador_tree_0', 'guam_seed', 'tree')).toBeNull()
+    expect(plantCrop(initFarmingState(), 'falador_tree_0', 'greenthorn_seed', 'tree')).toBeNull()
     expect(plantCrop(initFarmingState(), 'falador_herb_0', 'oak_sapling', 'herb')).toBeNull()
     expect(plantCrop(initFarmingState(), 'catherby_fruitTree_0', 'apple_sapling', 'tree')).toBeNull()
   })
 
   it('getEffectiveStage returns stage 1 immediately after planting', () => {
-    const planted = plantCrop(initFarmingState(), 'falador_herb_0', 'guam_seed', 'herb')!
+    const planted = plantCrop(initFarmingState(), 'falador_herb_0', 'greenthorn_seed', 'herb')!
     expect(getEffectiveStage(planted.state.patchesById.falador_herb_0)).toBe(1)
   })
 
@@ -72,33 +72,33 @@ describe('farming engine', () => {
   })
 
   it('getGrowthProgress reaches 100 once enough time has passed', () => {
-    const planted = plantCrop(initFarmingState(), 'falador_herb_0', 'guam_seed', 'herb')!
-    vi.advanceTimersByTime(getCropDef('guam_seed')!.growthTimeMs + 1)
+    const planted = plantCrop(initFarmingState(), 'falador_herb_0', 'greenthorn_seed', 'herb')!
+    vi.advanceTimersByTime(getCropDef('greenthorn_seed')!.growthTimeMs + 1)
     expect(getGrowthProgress(planted.state.patchesById.falador_herb_0)).toBe(100)
   })
 
   it('harvestCrop rejects harvesting before ready', () => {
-    const planted = plantCrop(initFarmingState(), 'falador_herb_0', 'guam_seed', 'herb')!
+    const planted = plantCrop(initFarmingState(), 'falador_herb_0', 'greenthorn_seed', 'herb')!
     expect(harvestCrop(planted.state, 'falador_herb_0')).toBeNull()
   })
 
   it('harvestCrop succeeds when ready and clears patch', () => {
-    const planted = plantCrop(initFarmingState(), 'falador_herb_0', 'guam_seed', 'herb')!
-    vi.advanceTimersByTime(getCropDef('guam_seed')!.growthTimeMs + 1)
+    const planted = plantCrop(initFarmingState(), 'falador_herb_0', 'greenthorn_seed', 'herb')!
+    vi.advanceTimersByTime(getCropDef('greenthorn_seed')!.growthTimeMs + 1)
     const harvested = harvestCrop(planted.state, 'falador_herb_0')
     expect(harvested).toBeTruthy()
-    expect(harvested!.cropId).toBe('guam_leaf')
+    expect(harvested!.cropId).toBe('greenthorn_leaf')
     expect(harvested!.state.patchesById.falador_herb_0).toBeUndefined()
   })
 
 
   it('harvestCrop multiplies herb xp by harvested quantity', () => {
-    const planted = plantCrop(initFarmingState(), 'falador_herb_0', 'guam_seed', 'herb')!
-    vi.advanceTimersByTime(getCropDef('guam_seed')!.growthTimeMs + 1)
+    const planted = plantCrop(initFarmingState(), 'falador_herb_0', 'greenthorn_seed', 'herb')!
+    vi.advanceTimersByTime(getCropDef('greenthorn_seed')!.growthTimeMs + 1)
     vi.spyOn(Math, 'random').mockReturnValue(0)
     const harvested = harvestCrop(planted.state, 'falador_herb_0', 1)
     expect(harvested).toBeTruthy()
-    const baseXp = getCropDef('guam_seed')!.harvestXp
+    const baseXp = getCropDef('greenthorn_seed')!.harvestXp
     expect(harvested!.harvestXp).toBe(Math.floor(baseXp * harvested!.quantity))
     vi.restoreAllMocks()
   })
@@ -209,16 +209,16 @@ describe('farming ui helper data', () => {
   })
 
   it('getPlantableCropOptions marks owned unlocked herb as plantable', () => {
-    const inventory = [{ itemId: 'guam_seed', quantity: 3 }]
+    const inventory = [{ itemId: 'greenthorn_seed', quantity: 3 }]
     const options = getPlantableCropOptions('herb', 1, inventory as any)
-    const guam = options.find(option => option.crop.id === 'guam_seed')
+    const guam = options.find(option => option.crop.id === 'greenthorn_seed')
     expect(guam?.canPlant).toBe(true)
     expect(guam?.ownedQuantity).toBe(3)
   })
 
   it('getPlantableCropOptions returns 0 owned when missing', () => {
     const options = getPlantableCropOptions('herb', 1, [])
-    const guam = options.find(option => option.crop.id === 'guam_seed')
+    const guam = options.find(option => option.crop.id === 'greenthorn_seed')
     expect(guam?.canPlant).toBe(false)
     expect(guam?.ownedQuantity).toBe(0)
   })
@@ -233,11 +233,11 @@ describe('farming ui helper data', () => {
 
 
   it('getPlantableCropOptions counts seeds in bank and inventory', () => {
-    const inventory = [{ itemId: 'guam_seed', quantity: 1 }]
-    const bank = { guam_seed: { quantity: 4 } }
+    const inventory = [{ itemId: 'greenthorn_seed', quantity: 1 }]
+    const bank = { greenthorn_seed: { quantity: 4 } }
     const options = getPlantableCropOptions('herb', 1, inventory as any, bank as any)
-    expect(options.find(option => option.crop.id === 'guam_seed')?.ownedQuantity).toBe(5)
-    expect(options.find(option => option.crop.id === 'guam_seed')?.canPlant).toBe(true)
+    expect(options.find(option => option.crop.id === 'greenthorn_seed')?.ownedQuantity).toBe(5)
+    expect(options.find(option => option.crop.id === 'greenthorn_seed')?.canPlant).toBe(true)
   })
 
   it('getPlantableCropOptions works for fruit tree saplings', () => {
@@ -254,25 +254,25 @@ describe('farming ui helper data', () => {
   })
 
   it('getReadyPatchSummaryForLocation ignores non-ready and empty patches', () => {
-    const planted = plantCrop(initFarmingState(), 'falador_herb_0', 'guam_seed', 'herb')!
+    const planted = plantCrop(initFarmingState(), 'falador_herb_0', 'greenthorn_seed', 'herb')!
     const withEmpty = { ...planted.state, patchesById: { ...planted.state.patchesById, falador_herb_1: null as any } }
     expect(getReadyPatchSummaryForLocation(withEmpty, 'falador')).toEqual([])
   })
 
   it('getReadyPatchSummaryForLocation reports a type when only one of multiple same-type patches is ready', () => {
     let state = initFarmingState()
-    state = plantCrop(state, 'falador_herb_0', 'guam_seed', 'herb')!.state
-    vi.advanceTimersByTime(getCropDef('guam_seed')!.growthTimeMs + 1)
+    state = plantCrop(state, 'falador_herb_0', 'greenthorn_seed', 'herb')!.state
+    vi.advanceTimersByTime(getCropDef('greenthorn_seed')!.growthTimeMs + 1)
     // Plant a second herb at the same farm AFTER time advance so it isn't ready.
-    state = plantCrop(state, 'falador_herb_1', 'guam_seed', 'herb')!.state
+    state = plantCrop(state, 'falador_herb_1', 'greenthorn_seed', 'herb')!.state
     const ready = getReadyPatchSummaryForLocation(state, 'falador')
     expect(ready).toEqual([{ type: 'herb', count: 1 }])
   })
 
   it('getReadyPatchSummaryForLocation groups ready patches by type and does not mutate', () => {
     let state = initFarmingState()
-    state = plantCrop(state, 'falador_herb_0', 'guam_seed', 'herb')!.state
-    state = plantCrop(state, 'falador_herb_1', 'guam_seed', 'herb')!.state
+    state = plantCrop(state, 'falador_herb_0', 'greenthorn_seed', 'herb')!.state
+    state = plantCrop(state, 'falador_herb_1', 'greenthorn_seed', 'herb')!.state
     state = plantCrop(state, 'falador_tree_0', 'oak_sapling', 'tree')!.state
     state = plantCrop(state, 'catherby_fruitTree_0', 'apple_sapling', 'fruitTree')!.state
     const snapshot = JSON.parse(JSON.stringify(state))
@@ -291,14 +291,14 @@ describe('farming plant-all behavior', () => {
     const state = initFarmingState()
     const allPatches = farmingData.locations.flatMap(location => getPatchesForLocation(state, location.id))
     const herbPatchCount = allPatches.filter(p => p.type === 'herb').length
-    const inventory = [{ itemId: 'guam_seed', quantity: Math.max(1, herbPatchCount - 1) }]
-    const bank = { guam_seed: { quantity: 1 } }
+    const inventory = [{ itemId: 'greenthorn_seed', quantity: Math.max(1, herbPatchCount - 1) }]
+    const bank = { greenthorn_seed: { quantity: 1 } }
 
-    const result = applyPlantAll(state, allPatches as any, { herb: 'guam_seed' }, inventory as any, bank as any)
+    const result = applyPlantAll(state, allPatches as any, { herb: 'greenthorn_seed' }, inventory as any, bank as any)
 
-    expect(result.planted).toEqual({ guam_seed: herbPatchCount })
+    expect(result.planted).toEqual({ greenthorn_seed: herbPatchCount })
     expect(Object.values(result.state.patchesById).every(p => p.type === 'herb')).toBe(true)
-    expect(result.inventoryUsage.guam_seed + result.bankUsage.guam_seed).toBe(herbPatchCount)
+    expect(result.inventoryUsage.greenthorn_seed + result.bankUsage.greenthorn_seed).toBe(herbPatchCount)
   })
 
   it('returns no plantings when selected seed does not match patch type', () => {

@@ -167,11 +167,11 @@ export async function initNewGame(playerName, isIronman = false, isOneLife = fal
   starterInv[3] = { itemId: 'bronze_platebody', quantity: 1 }
   starterInv[4] = { itemId: 'bronze_platelegs', quantity: 1 }
   starterInv[5] = { itemId: 'bronze_kiteshield', quantity: 1 }
-  starterInv[6] = { itemId: 'shrimp', quantity: 1 }
-  starterInv[7] = { itemId: 'shrimp', quantity: 1 }
-  starterInv[8] = { itemId: 'shrimp', quantity: 1 }
-  starterInv[9] = { itemId: 'shrimp', quantity: 1 }
-  starterInv[10] = { itemId: 'shrimp', quantity: 1 }
+  starterInv[6] = { itemId: 'shrimps', quantity: 1 }
+  starterInv[7] = { itemId: 'shrimps', quantity: 1 }
+  starterInv[8] = { itemId: 'shrimps', quantity: 1 }
+  starterInv[9] = { itemId: 'shrimps', quantity: 1 }
+  starterInv[10] = { itemId: 'shrimps', quantity: 1 }
   starterInv[11] = { itemId: 'coins', quantity: 25 }
   await saveInventory(starterInv)
 }

@@ -180,7 +180,7 @@ describe('Blighted Gauntlet Boss', () => {
 
   describe('Drop Table', () => {
     it('should always drop crystal shards between 100-500', () => {
-      const shardDrop = corruptedGauntlet.drops.find((d: any) => d.itemId === 'crystal_shards')
+      const shardDrop = corruptedGauntlet.drops.find((d: any) => d.itemId === 'shardglass_shards')
       expect(shardDrop).toBeDefined()
       expect(shardDrop.chance).toBe(1)
       expect(shardDrop.quantity).toEqual([100, 500])
@@ -189,11 +189,11 @@ describe('Blighted Gauntlet Boss', () => {
     it('should have rare unique items with 1/100 or 1/250 chance', () => {
       const uniques = [
         { itemId: 'uncut_onyx', expectedChance: 0.01 },
-        { itemId: 'crystal_pickaxe', expectedChance: 0.01 },
-        { itemId: 'crystal_axe', expectedChance: 0.01 },
-        { itemId: 'crystal_helmet', expectedChance: 0.004 },
-        { itemId: 'crystal_plate_body', expectedChance: 0.004 },
-        { itemId: 'crystal_platelegs', expectedChance: 0.004 },
+        { itemId: 'shardglass_pickaxe', expectedChance: 0.01 },
+        { itemId: 'shardglass_axe', expectedChance: 0.01 },
+        { itemId: 'shardglass_helmet', expectedChance: 0.004 },
+        { itemId: 'shardglass_plate_body', expectedChance: 0.004 },
+        { itemId: 'shardglass_platelegs', expectedChance: 0.004 },
         { itemId: 'bow_of_faerdhinen', expectedChance: 0.004 },
         { itemId: 'blade_of_saeldor', expectedChance: 0.004 }
       ]
@@ -206,7 +206,7 @@ describe('Blighted Gauntlet Boss', () => {
     })
 
     it('should include common resources like herbs, gems, and coins', () => {
-      const commonItems = ['guam_leaf', 'tarromin', 'coins', 'death_rune', 'blood_rune']
+      const commonItems = ['greenthorn_leaf', 'duskroot', 'coins', 'death_rune', 'blood_rune']
 
       for (const itemId of commonItems) {
         const drop = corruptedGauntlet.drops.find((d: any) => d.itemId === itemId)
@@ -225,7 +225,7 @@ describe('Blighted Gauntlet Boss', () => {
     })
 
     it('should include rune armour items', () => {
-      const runeArmour = ['rune_full_helm', 'rune_platebody', 'rune_platelegs', 'rune_med_helm']
+      const runeArmour = ['runeforged_full_helm', 'runeforged_platebody', 'runeforged_platelegs', 'runeforged_med_helm']
 
       for (const itemId of runeArmour) {
         const drop = corruptedGauntlet.drops.find((d: any) => d.itemId === itemId)
@@ -247,12 +247,12 @@ describe('Blighted Gauntlet Boss', () => {
   describe('Crystal Items', () => {
     it('should have all crystal items in items data', () => {
       const crystalItems = [
-        'crystal_shards',
-        'crystal_helmet',
-        'crystal_plate_body',
-        'crystal_platelegs',
-        'crystal_pickaxe',
-        'crystal_axe',
+        'shardglass_shards',
+        'shardglass_helmet',
+        'shardglass_plate_body',
+        'shardglass_platelegs',
+        'shardglass_pickaxe',
+        'shardglass_axe',
         'bow_of_faerdhinen',
         'blade_of_saeldor'
       ]
@@ -264,11 +264,11 @@ describe('Blighted Gauntlet Boss', () => {
 
     it('crystal armour and weapons should be scale-charged', () => {
       const chargedItems = [
-        'crystal_helmet',
-        'crystal_plate_body',
-        'crystal_platelegs',
-        'crystal_pickaxe',
-        'crystal_axe',
+        'shardglass_helmet',
+        'shardglass_plate_body',
+        'shardglass_platelegs',
+        'shardglass_pickaxe',
+        'shardglass_axe',
         'bow_of_faerdhinen',
         'blade_of_saeldor'
       ]
@@ -288,9 +288,9 @@ describe('Blighted Gauntlet Boss', () => {
     })
 
     it('crystal armour should have high defence bonuses', () => {
-      const helmet = itemsData['crystal_helmet' as keyof typeof itemsData]
-      const body = itemsData['crystal_plate_body' as keyof typeof itemsData]
-      const legs = itemsData['crystal_platelegs' as keyof typeof itemsData]
+      const helmet = itemsData['shardglass_helmet' as keyof typeof itemsData]
+      const body = itemsData['shardglass_plate_body' as keyof typeof itemsData]
+      const legs = itemsData['shardglass_platelegs' as keyof typeof itemsData]
 
       // Each should have substantial defence across all styles
       expect(helmet.defenceBonus.stab).toBeGreaterThan(70)

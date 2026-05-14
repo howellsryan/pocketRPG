@@ -32,6 +32,6 @@ describe('rollRaidRewardsById', () => {
       // fail non-coin always drops, pass unique chance, pick first weighted unique
       seqRandom([0, 0.99, 0.99, 0.99, 0.99, 0.99, 0, 0])
     )
-    expect(rewards.some(r => r.itemId === 'twisted_buckler')).toBe(true)
+    expect(rewards.some(r => r.itemId === 'warped_buckler')).toBe(true)
   })
 })

@@ -10,16 +10,16 @@ const clueRewardUniques = clueRewardIds.filter(itemId => itemsData[itemId]?.isCl
 
 describe('store rules', () => {
   it('shows boss uniques for discovery', () => {
-    expect(isStoreVisibleItem(itemsData.twisted_bow, { isIronman: false })).toBe(true)
-    expect(isStoreVisibleItem(itemsData.twisted_bow, { isIronman: true })).toBe(true)
+    expect(isStoreVisibleItem(itemsData.warped_bow, { isIronman: false })).toBe(true)
+    expect(isStoreVisibleItem(itemsData.warped_bow, { isIronman: true })).toBe(true)
   })
   it('blocks boss unique purchases', () => {
-    const r = getPurchaseRestriction(itemsData.twisted_bow, { isIronman: false })
+    const r = getPurchaseRestriction(itemsData.warped_bow, { isIronman: false })
     expect(r.allowed).toBe(false)
     expect(r.code).toBe('BOSS_UNIQUE_RESTRICTED')
   })
   it('shows clue rewards for discovery and blocks purchases', () => {
-    const rangerBoots = itemsData.ranger_boots
+    const rangerBoots = itemsData.pathfinder_boots
     expect(isStoreVisibleItem(rangerBoots, { isIronman: false })).toBe(true)
     expect(isStoreVisibleItem(rangerBoots, { isIronman: true })).toBe(true)
     expect(getPurchaseRestriction(rangerBoots, { isIronman: false })).toMatchObject({
@@ -33,9 +33,9 @@ describe('store rules', () => {
   })
   it('preserves normal and ironman restrictions', () => {
     expect(getPurchaseRestriction(itemsData.bronze_scimitar, { isIronman: false }).allowed).toBe(true)
-    expect(getPurchaseRestriction(itemsData.rune_scimitar, { isIronman: true }).code).toBe('IRONMAN_RESTRICTED')
-    expect(getPurchaseRestriction(itemsData.rune_crossbow, { isIronman: true }).allowed).toBe(true)
-    expect(isStoreVisibleItem(itemsData.rune_crossbow, { isIronman: true })).toBe(true)
+    expect(getPurchaseRestriction(itemsData.runeforged_scimitar, { isIronman: true }).code).toBe('IRONMAN_RESTRICTED')
+    expect(getPurchaseRestriction(itemsData.runeforged_crossbow, { isIronman: true }).allowed).toBe(true)
+    expect(isStoreVisibleItem(itemsData.runeforged_crossbow, { isIronman: true })).toBe(true)
   })
   it('type tabs can include restricted-only types', () => {
     const fake = {
@@ -48,8 +48,8 @@ describe('store rules', () => {
     expect(types).toContain('clue-only-type')
   })
   it('allows clue-reward items to remain sellable via isUntradeable false', () => {
-    expect(itemsData.ranger_boots.isClueReward).toBe(true)
-    expect(itemsData.ranger_boots.isUntradeable).toBe(false)
+    expect(itemsData.pathfinder_boots.isClueReward).toBe(true)
+    expect(itemsData.pathfinder_boots.isUntradeable).toBe(false)
   })
   it('marks only clue-specific rewards with isClueReward', () => {
     expect(clueRewardUniques.length).toBeGreaterThan(0)

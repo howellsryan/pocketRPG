@@ -106,21 +106,21 @@ describe('collection log seeded contents', () => {
     const monsters = findCategory('monsters')
     const gargoyle = monsters?.sections.find((s: any) => s.id === 'gargoyle')
     expect(gargoyle).toBeTruthy()
-    expect(gargoyle.items).toContain('granite_maul')
+    expect(gargoyle.items).toContain('gargoyle_maul')
   })
 
   it('Vaults of Xyren lists the Twisted Bow as a unique', () => {
     const raids = findCategory('raids')
     const cox = raids?.sections.find((s: any) => s.id === 'chambers_of_xeric')
     expect(cox).toBeTruthy()
-    expect(cox.items).toContain('twisted_bow')
+    expect(cox.items).toContain('warped_bow')
   })
 
   it('Barbarian Assault lists the Fighter Hat as a minigame unique', () => {
     const minigames = findCategory('minigames')
     const ba = minigames?.sections.find((s: any) => s.id === 'barbarian_assault')
     expect(ba).toBeTruthy()
-    expect(ba.items).toContain('fighter_hat')
+    expect(ba.items).toContain('fighter_helm')
   })
 
   it('Has a clue tier with at least one entry', () => {
@@ -151,7 +151,7 @@ describe('collection log seeded contents', () => {
   })
 
   it('declares the expected shared uniques', () => {
-    expect(data.sharedItems).toEqual(expect.arrayContaining(['uncut_onyx', 'dragon_axe', 'draconic_visage']))
+    expect(data.sharedItems).toEqual(expect.arrayContaining(['uncut_onyx', 'dragon_axe', 'dragon_visage']))
     for (const id of data.sharedItems) expect(isSharedCollectionLogItem(id)).toBe(true)
   })
 })
@@ -209,15 +209,15 @@ describe('shared item collection credit', () => {
   })
 
   it('collectIdleCombatLoggedDrops also reads lootGained when banking is off', () => {
-    const sim = { lootGained: { granite_maul: 1 }, lootBanked: {} }
+    const sim = { lootGained: { gargoyle_maul: 1 }, lootBanked: {} }
     const found = collectIdleCombatLoggedDrops('gargoyle', sim)
-    expect(found).toContain('granite_maul')
+    expect(found).toContain('gargoyle_maul')
   })
 
   it('collectIdleCombatLoggedDrops dedupes itemIds across buckets', () => {
-    const sim = { lootGained: { granite_maul: 1 }, lootBanked: { granite_maul: 1 } }
+    const sim = { lootGained: { gargoyle_maul: 1 }, lootBanked: { gargoyle_maul: 1 } }
     const found = collectIdleCombatLoggedDrops('gargoyle', sim)
-    expect(found.filter(id => id === 'granite_maul')).toHaveLength(1)
+    expect(found.filter(id => id === 'gargoyle_maul')).toHaveLength(1)
   })
 
   it('collectIdleCombatLoggedDrops ignores unrelated items', () => {

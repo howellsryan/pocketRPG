@@ -107,12 +107,12 @@
         "quantity": 10
       },
       {
-        "itemId": "ranger_boots",
+        "itemId": "pathfinder_boots",
         "weight": 0.01,
         "quantity": 1
       },
       {
-        "itemId": "wizard_boots",
+        "itemId": "spellweaver_boots",
         "weight": 0.01,
         "quantity": 1
       },
@@ -132,7 +132,7 @@
         "quantity": 1
       },
       {
-        "itemId": "saradomin_mitre",
+        "itemId": "lumira_mitre",
         "weight": 0.01,
         "quantity": 1
       },
@@ -142,7 +142,7 @@
         "quantity": 1
       },
       {
-        "itemId": "zamorak_mitre",
+        "itemId": "krylth_mitre",
         "weight": 0.01,
         "quantity": 1
       },
@@ -152,17 +152,17 @@
         "quantity": 1
       },
       {
-        "itemId": "armadyl_mitre",
+        "itemId": "zephyra_mitre",
         "weight": 0.01,
         "quantity": 1
       },
       {
-        "itemId": "bandos_mitre",
+        "itemId": "grondar_mitre",
         "weight": 0.01,
         "quantity": 1
       },
       {
-        "itemId": "holy_blessing",
+        "itemId": "sacred_charm",
         "weight": 0.005,
         "quantity": 1
       },
@@ -172,7 +172,7 @@
         "quantity": 1
       },
       {
-        "itemId": "unholy_blessing",
+        "itemId": "profane_charm",
         "weight": 0.005,
         "quantity": 1
       },
@@ -182,17 +182,17 @@
         "quantity": 1
       },
       {
-        "itemId": "war_blessing",
+        "itemId": "battle_charm",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "ancient_blessing",
+        "itemId": "elder_charm",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "saradomin_stole",
+        "itemId": "lumira_stole",
         "weight": 0.005,
         "quantity": 1
       },
@@ -202,7 +202,7 @@
         "quantity": 1
       },
       {
-        "itemId": "zamorak_stole",
+        "itemId": "krylth_stole",
         "weight": 0.005,
         "quantity": 1
       },
@@ -212,12 +212,12 @@
         "quantity": 1
       },
       {
-        "itemId": "armadyl_stole",
+        "itemId": "zephyra_stole",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "bandos_stole",
+        "itemId": "grondar_stole",
         "weight": 0.005,
         "quantity": 1
       },
@@ -291,37 +291,37 @@
         "quantity": 100
       },
       {
-        "itemId": "rune_platebody",
+        "itemId": "runeforged_platebody",
         "weight": 0.25,
         "quantity": 1
       },
       {
-        "itemId": "rune_platelegs",
+        "itemId": "runeforged_platelegs",
         "weight": 0.25,
         "quantity": 1
       },
       {
-        "itemId": "rune_plateskirt",
+        "itemId": "runeforged_plateskirt",
         "weight": 0.25,
         "quantity": 1
       },
       {
-        "itemId": "rune_full_helm",
+        "itemId": "runeforged_full_helm",
         "weight": 0.25,
         "quantity": 1
       },
       {
-        "itemId": "rune_kiteshield",
+        "itemId": "runeforged_kiteshield",
         "weight": 0.25,
         "quantity": 1
       },
       {
-        "itemId": "black_dhide_body",
+        "itemId": "black_d_hide_body",
         "weight": 0.25,
         "quantity": 1
       },
       {
-        "itemId": "black_dhide_chaps",
+        "itemId": "black_d_hide_chaps",
         "weight": 0.25,
         "quantity": 1
       },
@@ -331,47 +331,47 @@
         "quantity": 1
       },
       {
-        "itemId": "saradomin_dhide_body",
+        "itemId": "lumira_d_hide_body",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "saradomin_dhide_chaps",
+        "itemId": "lumira_d_hide_chaps",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "saradomin_dhide_boots",
+        "itemId": "lumira_d_hide_boots",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "saradomin_dhide_bracers",
+        "itemId": "lumira_d_hide_bracers",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "saradomin_coif",
+        "itemId": "lumira_coif",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "guthix_dhide_body",
+        "itemId": "guthix_d_hide_body",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "guthix_dhide_chaps",
+        "itemId": "guthix_d_hide_chaps",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "guthix_dhide_boots",
+        "itemId": "guthix_d_hide_boots",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "guthix_dhide_bracers",
+        "itemId": "guthix_d_hide_bracers",
         "weight": 0.005,
         "quantity": 1
       },
@@ -381,47 +381,47 @@
         "quantity": 1
       },
       {
-        "itemId": "zamorak_dhide_body",
+        "itemId": "krylth_d_hide_body",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "zamorak_dhide_chaps",
+        "itemId": "krylth_d_hide_chaps",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "zamorak_dhide_boots",
+        "itemId": "krylth_d_hide_boots",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "zamorak_dhide_bracers",
+        "itemId": "krylth_d_hide_bracers",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "zamorak_coif",
+        "itemId": "krylth_coif",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "ancient_dhide_body",
+        "itemId": "ancient_d_hide_body",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "ancient_dhide_chaps",
+        "itemId": "ancient_d_hide_chaps",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "ancient_dhide_boots",
+        "itemId": "ancient_d_hide_boots",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "ancient_dhide_bracers",
+        "itemId": "ancient_d_hide_bracers",
         "weight": 0.005,
         "quantity": 1
       },
@@ -431,52 +431,52 @@
         "quantity": 1
       },
       {
-        "itemId": "armadyl_dhide_body",
+        "itemId": "zephyra_d_hide_body",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "armadyl_dhide_chaps",
+        "itemId": "zephyra_d_hide_chaps",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "armadyl_dhide_boots",
+        "itemId": "zephyra_d_hide_boots",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "armadyl_dhide_bracers",
+        "itemId": "zephyra_d_hide_bracers",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "armadyl_coif",
+        "itemId": "zephyra_coif",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "bandos_dhide_body",
+        "itemId": "grondar_d_hide_body",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "bandos_dhide_chaps",
+        "itemId": "grondar_d_hide_chaps",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "bandos_dhide_boots",
+        "itemId": "grondar_d_hide_boots",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "bandos_dhide_bracers",
+        "itemId": "grondar_d_hide_bracers",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "bandos_coif",
+        "itemId": "grondar_coif",
         "weight": 0.005,
         "quantity": 1
       },
@@ -486,97 +486,97 @@
         "quantity": 1
       },
       {
-        "itemId": "3rd_age_full_helm",
+        "itemId": "2nd_age_full_helm",
         "weight": 0.00287447,
         "quantity": 1
       },
       {
-        "itemId": "3rd_age_platebody",
+        "itemId": "2nd_age_platebody",
         "weight": 0.00287447,
         "quantity": 1
       },
       {
-        "itemId": "3rd_age_platelegs",
+        "itemId": "2nd_age_platelegs",
         "weight": 0.00287447,
         "quantity": 1
       },
       {
-        "itemId": "3rd_age_plateskirt",
+        "itemId": "2nd_age_plateskirt",
         "weight": 0.00287447,
         "quantity": 1
       },
       {
-        "itemId": "3rd_age_kiteshield",
+        "itemId": "2nd_age_kiteshield",
         "weight": 0.00287447,
         "quantity": 1
       },
       {
-        "itemId": "3rd_age_range_coif",
+        "itemId": "2nd_age_range_coif",
         "weight": 0.00287447,
         "quantity": 1
       },
       {
-        "itemId": "3rd_age_range_top",
+        "itemId": "2nd_age_range_top",
         "weight": 0.00287447,
         "quantity": 1
       },
       {
-        "itemId": "3rd_age_range_legs",
+        "itemId": "2nd_age_range_legs",
         "weight": 0.00287447,
         "quantity": 1
       },
       {
-        "itemId": "3rd_age_vambraces",
+        "itemId": "2nd_age_vambraces",
         "weight": 0.00287447,
         "quantity": 1
       },
       {
-        "itemId": "3rd_age_mage_hat",
+        "itemId": "2nd_age_mage_hat",
         "weight": 0.00287447,
         "quantity": 1
       },
       {
-        "itemId": "3rd_age_robe_top",
+        "itemId": "2nd_age_robe_top",
         "weight": 0.00287447,
         "quantity": 1
       },
       {
-        "itemId": "3rd_age_robe_legs",
+        "itemId": "2nd_age_robe_legs",
         "weight": 0.00287447,
         "quantity": 1
       },
       {
-        "itemId": "3rd_age_amulet",
+        "itemId": "2nd_age_amulet",
         "weight": 0.00287447,
         "quantity": 1
       },
       {
-        "itemId": "saradomin_dhide_shield",
+        "itemId": "lumira_d_hide_shield",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "guthix_dhide_shield",
+        "itemId": "guthix_d_hide_shield",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "zamorak_dhide_shield",
+        "itemId": "krylth_d_hide_shield",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "ancient_dhide_shield",
+        "itemId": "ancient_d_hide_shield",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "armadyl_dhide_shield",
+        "itemId": "zephyra_d_hide_shield",
         "weight": 0.005,
         "quantity": 1
       },
       {
-        "itemId": "bandos_dhide_shield",
+        "itemId": "grondar_d_hide_shield",
         "weight": 0.005,
         "quantity": 1
       }
@@ -690,7 +690,7 @@
         "quantity": 100
       },
       {
-        "itemId": "wine_of_zamorak",
+        "itemId": "wine_of_krylth",
         "weight": 0.3,
         "quantity": 100
       },
@@ -715,22 +715,22 @@
         "quantity": 1
       },
       {
-        "itemId": "3rd_age_longsword",
+        "itemId": "2nd_age_longsword",
         "weight": 0.00323979,
         "quantity": 1
       },
       {
-        "itemId": "3rd_age_bow",
+        "itemId": "2nd_age_bow",
         "weight": 0.00323979,
         "quantity": 1
       },
       {
-        "itemId": "3rd_age_wand",
+        "itemId": "2nd_age_wand",
         "weight": 0.00323979,
         "quantity": 1
       },
       {
-        "itemId": "3rd_age_cloak",
+        "itemId": "2nd_age_cloak",
         "weight": 0.00323979,
         "quantity": 1
       }
@@ -754,7 +754,7 @@
         "quantity": 1
       },
       {
-        "itemId": "onyx_bolts_e",
+        "itemId": "onyx_bolt_e",
         "weight": 0.3,
         "quantity": 50
       },
@@ -789,7 +789,7 @@
         "quantity": 50
       },
       {
-        "itemId": "ranarr_weed",
+        "itemId": "rynarr_weed",
         "weight": 0.4,
         "quantity": 50
       },
@@ -799,47 +799,47 @@
         "quantity": 50
       },
       {
-        "itemId": "3rd_age_druidic_robe_top",
+        "itemId": "2nd_age_druidic_robe_top",
         "weight": 0.00087185,
         "quantity": 1
       },
       {
-        "itemId": "3rd_age_druidic_robe_bottoms",
+        "itemId": "2nd_age_druidic_robe_bottoms",
         "weight": 0.00087185,
         "quantity": 1
       },
       {
-        "itemId": "3rd_age_druidic_cloak",
+        "itemId": "2nd_age_druidic_cloak",
         "weight": 0.00087185,
         "quantity": 1
       },
       {
-        "itemId": "3rd_age_druidic_staff",
+        "itemId": "2nd_age_druidic_staff",
         "weight": 0.00087185,
         "quantity": 1
       },
       {
-        "itemId": "3rd_age_pickaxe",
+        "itemId": "2nd_age_pickaxe",
         "weight": 0.00087185,
         "quantity": 1
       },
       {
-        "itemId": "3rd_age_axe",
+        "itemId": "2nd_age_axe",
         "weight": 0.00087185,
         "quantity": 1
       },
       {
-        "itemId": "gilded_pickaxe",
+        "itemId": "gold_pickaxe",
         "weight": 0.001,
         "quantity": 1
       },
       {
-        "itemId": "gilded_axe",
+        "itemId": "gold_axe",
         "weight": 0.001,
         "quantity": 1
       },
       {
-        "itemId": "gilded_spade",
+        "itemId": "gold_spade",
         "weight": 0.001,
         "quantity": 1
       },

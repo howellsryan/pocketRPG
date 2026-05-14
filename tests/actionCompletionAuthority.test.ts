@@ -41,7 +41,7 @@ describe('action completion authority helpers', () => {
       sourceType: 'monsters',
       sourceId: 'chicken',
       nonce: 'monster:chicken:2',
-      rewards: [{ itemId: 'abyssal_whip', quantity: 1 }],
+      rewards: [{ itemId: 'nether_demon_whip', quantity: 1 }],
     })).toThrow(/Reward item not valid for source/)
   })
 
@@ -64,16 +64,16 @@ describe('action completion authority helpers', () => {
   it('keeps stackable rewards in inventory when stack already exists even if full', () => {
     const save = makeSave()
     save.inventory = [
-      { itemId: 'feathers', quantity: 10 },
+      { itemId: 'feather', quantity: 10 },
       ...Array.from({ length: 27 }, (_, i) => ({ itemId: `filler_${i}`, quantity: 1 })),
     ]
     const out = settleActionCompletion(save, {
       sourceType: 'monsters',
       sourceId: 'chicken',
       nonce: 'monster:chicken:4',
-      rewards: [{ itemId: 'feathers', quantity: 50 }],
+      rewards: [{ itemId: 'feather', quantity: 50 }],
     })
 
-    expect(out.granted).toEqual([{ itemId: 'feathers', quantity: 50, destination: 'inventory' }])
+    expect(out.granted).toEqual([{ itemId: 'feather', quantity: 50, destination: 'inventory' }])
   })
 })

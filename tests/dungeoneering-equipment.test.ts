@@ -205,9 +205,9 @@ describe('dungeoneering: best-in-slot guarantees', () => {
     return allItems.filter((it) => filter(it) && !exclude.has(it.id))
   }
 
-  it('chaotic_rapier is ~5% below ghrazi_rapier stats', () => {
+  it('chaotic_rapier is ~5% below ghraxis_rapier stats', () => {
     const item = itemsData.chaotic_rapier
-    const ref = itemsData.ghrazi_rapier
+    const ref = itemsData.ghraxis_rapier
     expect(item.attackBonus.stab).toBe(Math.floor(ref.attackBonus.stab * 0.95))
     expect(item.attackBonus.slash).toBe(Math.floor(ref.attackBonus.slash * 0.95))
     expect(item.otherBonus.meleeStrength).toBe(Math.floor(ref.otherBonus.meleeStrength * 0.95))
@@ -225,16 +225,16 @@ describe('dungeoneering: best-in-slot guarantees', () => {
     }
   })
 
-  it('chaotic_maul is ~5% below elder_maul stats', () => {
+  it('chaotic_maul is ~5% below ancient_maul stats', () => {
     const item = itemsData.chaotic_maul
-    const ref = itemsData.elder_maul
+    const ref = itemsData.ancient_maul
     expect(item.attackBonus.crush).toBe(Math.floor(ref.attackBonus.crush * 0.95))
     expect(item.otherBonus.meleeStrength).toBe(Math.floor(ref.otherBonus.meleeStrength * 0.95))
   })
 
-  it('chaotic_crossbow is ~5% below armadyl_crossbow stats', () => {
+  it('chaotic_crossbow is ~5% below zephyra_crossbow stats', () => {
     const item = itemsData.chaotic_crossbow
-    const ref = itemsData.armadyl_crossbow
+    const ref = itemsData.zephyra_crossbow
     expect(item.attackBonus.ranged).toBe(Math.floor(ref.attackBonus.ranged * 0.95))
     expect(item.otherBonus.rangedStrength).toBe(Math.floor(ref.otherBonus.rangedStrength * 0.95))
   })

@@ -15,8 +15,8 @@ import { getVoidKnightCombatMultipliers } from './combatSetBonuses.js'
 
 function getAvasAmmoSaveChance(equipment) {
   const capeId = equipment?.cape?.itemId
-  if (capeId === 'avas_assembler') return 0.75
-  if (capeId === 'avas_accumulator') return 0.5
+  if (capeId === 'ava_s_assembler') return 0.75
+  if (capeId === 'ava_s_accumulator') return 0.5
   return 0
 }
 
@@ -274,7 +274,7 @@ function checkMonsterDeath(state, monster, events) {
  */
 function hasFullDharokSet(equipment, itemsData) {
   if (!equipment || !itemsData) return false
-  const dharokItems = ['dharoks_helm', 'dharoks_platebody', 'dharoks_platelegs', 'dharoks_greataxe']
+  const dharokItems = ['dravok_s_helm', 'dravok_s_platebody', 'dravok_s_platelegs', 'dravok_s_greataxe']
   return dharokItems.every(itemId => {
     for (const [, slot] of Object.entries(equipment)) {
       if (slot && slot.itemId === itemId) return true
@@ -288,7 +288,7 @@ function hasFullDharokSet(equipment, itemsData) {
  */
 function hasFullGuthanSet(equipment, itemsData) {
   if (!equipment || !itemsData) return false
-  const guthanItems = ['guthans_helm', 'guthans_platebody', 'guthans_chainskirt', 'guthans_warspear']
+  const guthanItems = ['gorath_s_helm', 'gorath_s_platebody', 'gorath_s_chainskirt', 'gorath_s_warspear']
   return guthanItems.every(itemId => {
     for (const [, slot] of Object.entries(equipment)) {
       if (slot && slot.itemId === itemId) return true

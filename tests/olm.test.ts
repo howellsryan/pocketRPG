@@ -230,9 +230,9 @@ describe('The Great Olm Boss', () => {
 
     it('CoX raid should have all 10 unique drops', () => {
       const uniques = [
-        'twisted_buckler', 'dragon_hunter_crossbow',
-        'dinhs_bulwark', 'ancestral_hat', 'ancestral_robe_top', 'ancestral_robe_bottom', 'dragon_claws',
-        'elder_maul', 'kodai_wand', 'twisted_bow'
+        'warped_buckler', 'dragon_slayer_crossbow',
+        'durn_s_bulwark', 'kodai_hat', 'kodai_robe_top', 'kodai_robe_bottom', 'dragon_claws',
+        'ancient_maul', 'ancestral_wand', 'warped_bow'
       ]
       for (const itemId of uniques) {
         const entry = cox.rewards.unique.items.find((d: any) => d.itemId === itemId)
@@ -242,8 +242,8 @@ describe('The Great Olm Boss', () => {
     })
 
     it('twisted buckler and dragon hunter crossbow should have higher weight than twisted bow', () => {
-      const buckler = cox.rewards.unique.items.find((d: any) => d.itemId === 'twisted_buckler')
-      const tbow = cox.rewards.unique.items.find((d: any) => d.itemId === 'twisted_bow')
+      const buckler = cox.rewards.unique.items.find((d: any) => d.itemId === 'warped_buckler')
+      const tbow = cox.rewards.unique.items.find((d: any) => d.itemId === 'warped_bow')
       expect(buckler.weight).toBeGreaterThan(tbow.weight)
     })
 
@@ -254,7 +254,7 @@ describe('The Great Olm Boss', () => {
 })
 
 describe('Dragon Hunter Crossbow', () => {
-  const dhcb = itemsData['dragon_hunter_crossbow' as keyof typeof itemsData]
+  const dhcb = itemsData['dragon_slayer_crossbow' as keyof typeof itemsData]
 
   it('should exist in items data', () => {
     expect(dhcb).toBeDefined()
@@ -274,7 +274,7 @@ describe('Dragon Hunter Crossbow', () => {
 })
 
 describe('Twisted Bow', () => {
-  const tbow = itemsData['twisted_bow' as keyof typeof itemsData]
+  const tbow = itemsData['warped_bow' as keyof typeof itemsData]
 
   it('should exist in items data', () => {
     expect(tbow).toBeDefined()
@@ -309,28 +309,28 @@ describe('Dragon Hunter passive on dragon monsters', () => {
 
 describe('New Items', () => {
   it('ancestral hat should give +2% magic damage bonus', () => {
-    const hat = itemsData['ancestral_hat' as keyof typeof itemsData]
+    const hat = itemsData['kodai_hat' as keyof typeof itemsData]
     expect((hat as any).otherBonus.magicDamage).toBe(2)
   })
 
   it('ancestral robe top should give +2% magic damage bonus', () => {
-    const top = itemsData['ancestral_robe_top' as keyof typeof itemsData]
+    const top = itemsData['kodai_robe_top' as keyof typeof itemsData]
     expect((top as any).otherBonus.magicDamage).toBe(2)
   })
 
   it('ancestral robe bottom should give +2% magic damage bonus', () => {
-    const bot = itemsData['ancestral_robe_bottom' as keyof typeof itemsData]
+    const bot = itemsData['kodai_robe_bottom' as keyof typeof itemsData]
     expect((bot as any).otherBonus.magicDamage).toBe(2)
   })
 
   it('kodai wand should give +15% magic damage bonus and provide water runes', () => {
-    const wand = itemsData['kodai_wand' as keyof typeof itemsData]
+    const wand = itemsData['ancestral_wand' as keyof typeof itemsData]
     expect((wand as any).otherBonus.magicDamage).toBe(15)
     expect((wand as any).elemental).toBe('water_rune')
   })
 
   it('elder maul should have crush +135 and strength +147', () => {
-    const maul = itemsData['elder_maul' as keyof typeof itemsData]
+    const maul = itemsData['ancient_maul' as keyof typeof itemsData]
     expect((maul as any).attackBonus.crush).toBe(135)
     expect((maul as any).otherBonus.meleeStrength).toBe(147)
   })
@@ -342,13 +342,13 @@ describe('New Items', () => {
   })
 
   it("dinh's bulwark should have lunge special attack at 50% cost", () => {
-    const bulwark = itemsData['dinhs_bulwark' as keyof typeof itemsData]
+    const bulwark = itemsData['durn_s_bulwark' as keyof typeof itemsData]
     expect((bulwark as any).specialAttack.type).toBe('lunge')
     expect((bulwark as any).specialAttack.energyCost).toBe(50)
   })
 
   it("dinh's bulwark should have very high defence bonuses", () => {
-    const bulwark = itemsData['dinhs_bulwark' as keyof typeof itemsData]
+    const bulwark = itemsData['durn_s_bulwark' as keyof typeof itemsData]
     expect((bulwark as any).defenceBonus.stab).toBe(153)
     expect((bulwark as any).defenceBonus.slash).toBe(153)
     expect((bulwark as any).defenceBonus.crush).toBe(143)
@@ -356,7 +356,7 @@ describe('New Items', () => {
   })
 
   it('twisted buckler should occupy the shield slot', () => {
-    const buckler = itemsData['twisted_buckler' as keyof typeof itemsData]
+    const buckler = itemsData['warped_buckler' as keyof typeof itemsData]
     expect((buckler as any).slot).toBe('shield')
     expect((buckler as any).attackBonus.ranged).toBe(18)
   })

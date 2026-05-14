@@ -5,8 +5,8 @@ import realItemsData from '../src/data/items.json'
 import { SUPPORTED_PVP_SPECIAL_ATTACK_TYPES } from '../src/engine/pvpSpecialAttacks.js'
 
 const items = {
-  abyssal_whip: {
-    id: 'abyssal_whip', slot: 'weapon', attackStyle: 'slash', attackSpeed: 4,
+  nether_demon_whip: {
+    id: 'nether_demon_whip', slot: 'weapon', attackStyle: 'slash', attackSpeed: 4,
     attackBonus: { stab: 0, slash: 82, crush: 0, magic: 0, ranged: 0 },
     defenceBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
     otherBonus: { meleeStrength: 82, rangedStrength: 0, magicDamage: 0 },
@@ -32,7 +32,7 @@ function buildPlayer(overrides: any = {}) {
       prayer:    { xp: 13_034_431, level: 99 },
       ...overrides.stats,
     },
-    equipment: overrides.equipment ?? { weapon: { itemId: 'abyssal_whip' } },
+    equipment: overrides.equipment ?? { weapon: { itemId: 'nether_demon_whip' } },
     inventory: overrides.inventory ?? [],
     stance: overrides.stance ?? 'aggressive',
     currentHP: overrides.currentHP,

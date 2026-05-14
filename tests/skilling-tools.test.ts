@@ -23,14 +23,14 @@ const axeItems = {
     toolFor: 'woodcutting',
     requirements: { woodcutting: 1 },
   },
-  rune_axe: {
-    id: 'rune_axe',
+  runeforged_axe: {
+    id: 'runeforged_axe',
     name: 'Rune axe',
     toolFor: 'woodcutting',
     requirements: { woodcutting: 41 },
   },
-  crystal_axe: {
-    id: 'crystal_axe',
+  shardglass_axe: {
+    id: 'shardglass_axe',
     name: 'Crystal axe',
     toolFor: 'woodcutting',
     requirements: { woodcutting: 71 },
@@ -80,7 +80,7 @@ describe('woodcutting axe effective action ticks', () => {
       {},
       axeItems,
       maxedWoodcuttingStats,
-      makeInventory('rune_axe'),
+      makeInventory('runeforged_axe'),
     )
 
     expect(ironTicks).toBeLessThan(bronzeTicks)
@@ -94,7 +94,7 @@ describe('woodcutting axe effective action ticks', () => {
       {},
       axeItems,
       maxedWoodcuttingStats,
-      makeInventory('crystal_axe'),
+      makeInventory('shardglass_axe'),
     )).toBe(2)
 
     expect(getEffectiveToolActionTicks(
@@ -114,7 +114,7 @@ describe('woodcutting axe effective action ticks', () => {
       {},
       axeItems,
       maxedWoodcuttingStats,
-      makeInventory('rune_axe'),
+      makeInventory('runeforged_axe'),
     )
 
     const crystalTicks = getEffectiveToolActionTicks(
@@ -123,7 +123,7 @@ describe('woodcutting axe effective action ticks', () => {
       {},
       axeItems,
       maxedWoodcuttingStats,
-      makeInventory('crystal_axe'),
+      makeInventory('shardglass_axe'),
     )
 
     const thirdAgeTicks = getEffectiveToolActionTicks(

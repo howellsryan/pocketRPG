@@ -194,12 +194,12 @@
     "name": "Fishing",
     "actions": [
       {
-        "id": "shrimp",
+        "id": "shrimps",
         "name": "Fish shrimps",
         "level": 1,
         "ticks": 4,
         "xp": 10,
-        "product": "raw_shrimp"
+        "product": "raw_shrimps"
       },
       {
         "id": "trout",
@@ -491,7 +491,7 @@
         "level": 85,
         "ticks": 4,
         "xp": 50,
-        "product": "rune_bar",
+        "product": "runeforged_bar",
         "materials": {
           "runite_ore": 1,
           "coal": 8
@@ -503,9 +503,9 @@
         "level": 86,
         "ticks": 10,
         "xp": 400,
-        "product": "rune_axe",
+        "product": "runeforged_axe",
         "materials": {
-          "rune_bar": 1
+          "runeforged_bar": 1
         }
       },
       {
@@ -514,9 +514,9 @@
         "level": 86,
         "ticks": 10,
         "xp": 400,
-        "product": "rune_pickaxe",
+        "product": "runeforged_pickaxe",
         "materials": {
-          "rune_bar": 1
+          "runeforged_bar": 1
         }
       },
       {
@@ -525,9 +525,9 @@
         "level": 89,
         "ticks": 10,
         "xp": 300,
-        "product": "rune_scimitar",
+        "product": "runeforged_scimitar",
         "materials": {
-          "rune_bar": 2
+          "runeforged_bar": 2
         }
       },
       {
@@ -536,7 +536,7 @@
         "level": 9,
         "ticks": 4,
         "xp": 13,
-        "product": "bronze_bolts_unf",
+        "product": "bronze_bolt_unf",
         "productQty": 10,
         "materials": {
           "bronze_bar": 1
@@ -548,7 +548,7 @@
         "level": 18,
         "ticks": 4,
         "xp": 25,
-        "product": "iron_bolts_unf",
+        "product": "iron_bolt_unf",
         "productQty": 10,
         "materials": {
           "iron_bar": 1
@@ -560,7 +560,7 @@
         "level": 33,
         "ticks": 4,
         "xp": 38,
-        "product": "steel_bolts_unf",
+        "product": "steel_bolt_unf",
         "productQty": 10,
         "materials": {
           "steel_bar": 1
@@ -572,7 +572,7 @@
         "level": 53,
         "ticks": 4,
         "xp": 50,
-        "product": "mithril_bolts_unf",
+        "product": "mithril_bolt_unf",
         "productQty": 10,
         "materials": {
           "mithril_bar": 1
@@ -584,7 +584,7 @@
         "level": 73,
         "ticks": 4,
         "xp": 63,
-        "product": "adamant_bolts_unf",
+        "product": "adamant_bolt_unf",
         "productQty": 10,
         "materials": {
           "adamant_bar": 1
@@ -596,10 +596,10 @@
         "level": 88,
         "ticks": 4,
         "xp": 75,
-        "product": "runite_bolts_unf",
+        "product": "runite_bolt_unf",
         "productQty": 10,
         "materials": {
-          "rune_bar": 1
+          "runeforged_bar": 1
         }
       },
       {
@@ -619,10 +619,10 @@
         "level": 80,
         "ticks": 100,
         "xp": 0,
-        "product": "bandos_godsword",
+        "product": "grondar_godsword",
         "materials": {
           "godsword_blade": 1,
-          "bandos_hilt": 1
+          "grondar_hilt": 1
         }
       },
       {
@@ -631,10 +631,10 @@
         "level": 80,
         "ticks": 100,
         "xp": 0,
-        "product": "armadyl_godsword",
+        "product": "zephyra_godsword",
         "materials": {
           "godsword_blade": 1,
-          "armadyl_hilt": 1
+          "zephyra_hilt": 1
         }
       },
       {
@@ -643,10 +643,10 @@
         "level": 80,
         "ticks": 100,
         "xp": 0,
-        "product": "saradomin_godsword",
+        "product": "lumira_godsword",
         "materials": {
           "godsword_blade": 1,
-          "saradomin_hilt": 1
+          "lumira_hilt": 1
         }
       },
       {
@@ -655,10 +655,10 @@
         "level": 80,
         "ticks": 100,
         "xp": 0,
-        "product": "zamorak_godsword",
+        "product": "krylth_godsword",
         "materials": {
           "godsword_blade": 1,
-          "zamorak_hilt": 1
+          "krylth_hilt": 1
         }
       },
       {
@@ -667,10 +667,10 @@
         "level": 90,
         "ticks": 10,
         "xp": 2000,
-        "product": "dragonfire_shield",
+        "product": "visage_shield",
         "materials": {
           "anti_dragon_shield": 1,
-          "draconic_visage": 1
+          "dragon_visage": 1
         }
       }
     ]
@@ -685,9 +685,9 @@
         "level": 1,
         "ticks": 4,
         "xp": 30,
-        "product": "shrimp",
+        "product": "shrimps",
         "materials": {
-          "raw_shrimp": 1
+          "raw_shrimps": 1
         },
         "burnStopLevel": 34
       },
@@ -783,7 +783,7 @@
       },
       {
         "id": "headless_arrows",
-        "name": "Attach feathers (15)",
+        "name": "Attach feather (15)",
         "level": 1,
         "ticks": 2,
         "xp": 15,
@@ -791,7 +791,7 @@
         "productQty": 15,
         "materials": {
           "arrow_shaft": 15,
-          "feathers": 15
+          "feather": 15
         }
       },
       {
@@ -804,7 +804,7 @@
         "productQty": 15,
         "materials": {
           "headless_arrow": 15,
-          "feathers": 0
+          "feather": 0
         }
       },
       {
@@ -840,7 +840,7 @@
         "productQty": 15,
         "materials": {
           "headless_arrow": 15,
-          "iron_arrow_heads": 15
+          "iron_arrowtips": 15
         }
       },
       {
@@ -876,7 +876,7 @@
         "productQty": 15,
         "materials": {
           "headless_arrow": 15,
-          "steel_arrow_heads": 15
+          "steel_arrowtips": 15
         }
       },
       {
@@ -912,7 +912,7 @@
         "productQty": 15,
         "materials": {
           "headless_arrow": 15,
-          "mithril_arrow_heads": 15
+          "mithril_arrowtips": 15
         }
       },
       {
@@ -948,7 +948,7 @@
         "productQty": 15,
         "materials": {
           "headless_arrow": 15,
-          "adamant_arrow_heads": 15
+          "adamant_arrowtips": 15
         }
       },
       {
@@ -980,11 +980,11 @@
         "level": 75,
         "ticks": 3,
         "xp": 150,
-        "product": "rune_arrow",
+        "product": "runeforged_arrow",
         "productQty": 15,
         "materials": {
           "headless_arrow": 15,
-          "rune_arrow_heads": 15
+          "runeforged_arrowtips": 15
         }
       },
       {
@@ -1028,11 +1028,11 @@
         "level": 9,
         "ticks": 15,
         "xp": 25,
-        "product": "bronze_bolts",
+        "product": "bronze_bolt",
         "productQty": 10,
         "materials": {
-          "feathers": 10,
-          "bronze_bolts_unf": 10
+          "feather": 10,
+          "bronze_bolt_unf": 10
         }
       },
       {
@@ -1041,11 +1041,11 @@
         "level": 39,
         "ticks": 15,
         "xp": 50,
-        "product": "iron_bolts",
+        "product": "iron_bolt",
         "productQty": 10,
         "materials": {
-          "feathers": 10,
-          "iron_bolts_unf": 10
+          "feather": 10,
+          "iron_bolt_unf": 10
         }
       },
       {
@@ -1054,11 +1054,11 @@
         "level": 46,
         "ticks": 15,
         "xp": 175,
-        "product": "steel_bolts",
+        "product": "steel_bolt",
         "productQty": 10,
         "materials": {
-          "feathers": 10,
-          "steel_bolts_unf": 10
+          "feather": 10,
+          "steel_bolt_unf": 10
         }
       },
       {
@@ -1067,11 +1067,11 @@
         "level": 54,
         "ticks": 15,
         "xp": 250,
-        "product": "mithril_bolts",
+        "product": "mithril_bolt",
         "productQty": 10,
         "materials": {
-          "feathers": 10,
-          "mithril_bolts_unf": 10
+          "feather": 10,
+          "mithril_bolt_unf": 10
         }
       },
       {
@@ -1080,11 +1080,11 @@
         "level": 61,
         "ticks": 15,
         "xp": 350,
-        "product": "adamant_bolts",
+        "product": "adamant_bolt",
         "productQty": 10,
         "materials": {
-          "feathers": 10,
-          "adamant_bolts_unf": 10
+          "feather": 10,
+          "adamant_bolt_unf": 10
         }
       },
       {
@@ -1093,11 +1093,11 @@
         "level": 69,
         "ticks": 15,
         "xp": 500,
-        "product": "runite_bolts",
+        "product": "runite_bolt",
         "productQty": 10,
         "materials": {
-          "feathers": 10,
-          "runite_bolts_unf": 10
+          "feather": 10,
+          "runite_bolt_unf": 10
         }
       },
       {
@@ -1106,11 +1106,11 @@
         "level": 84,
         "ticks": 15,
         "xp": 600,
-        "product": "dragon_bolts",
+        "product": "dragon_bolt",
         "productQty": 10,
         "materials": {
-          "feathers": 10,
-          "dragon_bolts_unf": 10
+          "feather": 10,
+          "dragon_bolt_unf": 10
         }
       },
       {
@@ -1167,10 +1167,10 @@
         "level": 63,
         "ticks": 30,
         "xp": 630,
-        "product": "ruby_bolts",
+        "product": "ruby_bolt",
         "productQty": 10,
         "materials": {
-          "adamant_bolts": 10,
+          "adamant_bolt": 10,
           "ruby_bolt_tips": 10
         }
       },
@@ -1180,10 +1180,10 @@
         "level": 65,
         "ticks": 30,
         "xp": 700,
-        "product": "diamond_bolts",
+        "product": "diamond_bolt",
         "productQty": 10,
         "materials": {
-          "adamant_bolts": 10,
+          "adamant_bolt": 10,
           "diamond_bolt_tips": 10
         }
       },
@@ -1193,10 +1193,10 @@
         "level": 71,
         "ticks": 30,
         "xp": 820,
-        "product": "dragonstone_bolts",
+        "product": "dragonstone_bolt",
         "productQty": 10,
         "materials": {
-          "runite_bolts": 10,
+          "runite_bolt": 10,
           "dragonstone_bolt_tips": 10
         }
       },
@@ -1206,10 +1206,10 @@
         "level": 73,
         "ticks": 30,
         "xp": 940,
-        "product": "onyx_bolts",
+        "product": "onyx_bolt",
         "productQty": 10,
         "materials": {
-          "runite_bolts": 10,
+          "runite_bolt": 10,
           "onyx_bolt_tips": 10
         }
       },
@@ -1219,10 +1219,10 @@
         "level": 84,
         "ticks": 30,
         "xp": 700,
-        "product": "ruby_dragon_bolts",
+        "product": "ruby_dragon_bolt",
         "productQty": 10,
         "materials": {
-          "dragon_bolts": 10,
+          "dragon_bolt": 10,
           "ruby_bolt_tips": 10
         }
       },
@@ -1232,10 +1232,10 @@
         "level": 84,
         "ticks": 30,
         "xp": 750,
-        "product": "diamond_dragon_bolts",
+        "product": "diamond_dragon_bolt",
         "productQty": 10,
         "materials": {
-          "dragon_bolts": 10,
+          "dragon_bolt": 10,
           "diamond_bolt_tips": 10
         }
       },
@@ -1245,10 +1245,10 @@
         "level": 84,
         "ticks": 30,
         "xp": 900,
-        "product": "dragonstone_dragon_bolts",
+        "product": "dragonstone_dragon_bolt",
         "productQty": 10,
         "materials": {
-          "dragon_bolts": 10,
+          "dragon_bolt": 10,
           "dragonstone_bolt_tips": 10
         }
       },
@@ -1258,10 +1258,10 @@
         "level": 84,
         "ticks": 30,
         "xp": 1000,
-        "product": "onyx_dragon_bolts",
+        "product": "onyx_dragon_bolt",
         "productQty": 10,
         "materials": {
-          "dragon_bolts": 10,
+          "dragon_bolt": 10,
           "onyx_bolt_tips": 10
         }
       }
@@ -1299,7 +1299,7 @@
         "level": 55,
         "ticks": 3,
         "xp": 25,
-        "product": "green_dhide",
+        "product": "green_dragon_leather",
         "materials": {
           "green_dragonhide": 1
         }
@@ -1339,12 +1339,12 @@
         }
       },
       {
-        "id": "leather_coif",
+        "id": "leather_cowl",
         "name": "Craft leather cowl",
         "level": 9,
         "ticks": 4,
         "xp": 18,
-        "product": "leather_coif",
+        "product": "leather_cowl",
         "materials": {
           "leather": 1
         }
@@ -1478,9 +1478,9 @@
         "level": 89,
         "ticks": 3,
         "xp": 200,
-        "product": "zenyte",
+        "product": "zyrite",
         "materials": {
-          "uncut_zenyte": 1
+          "uncut_zyrite": 1
         }
       },
       {
@@ -1496,36 +1496,36 @@
         }
       },
       {
-        "id": "green_dhide_chaps",
+        "id": "green_d_hide_chaps",
         "name": "Craft green d'hide chaps",
         "level": 57,
         "ticks": 5,
         "xp": 62,
-        "product": "green_dhide_chaps",
+        "product": "green_d_hide_chaps",
         "materials": {
-          "green_dhide": 2
+          "green_dragon_leather": 2
         }
       },
       {
-        "id": "green_dhide_body",
+        "id": "green_d_hide_body",
         "name": "Craft green d'hide body",
         "level": 63,
         "ticks": 5,
         "xp": 186,
-        "product": "green_dhide_body",
+        "product": "green_d_hide_body",
         "materials": {
-          "green_dhide": 3
+          "green_dragon_leather": 3
         }
       },
       {
-        "id": "red_dhide_body",
+        "id": "red_d_hide_body",
         "name": "Craft red d'hide body",
         "level": 75,
         "ticks": 6,
         "xp": 225,
-        "product": "red_dhide_body",
+        "product": "red_d_hide_body",
         "materials": {
-          "red_dhide": 4
+          "red_dragon_leather": 4
         }
       },
       {
@@ -1565,50 +1565,50 @@
         }
       },
       {
-        "id": "zenyte_amulet",
+        "id": "zyrite_amulet",
         "name": "String zyrite amulet",
         "level": 98,
         "ticks": 4,
         "xp": 200,
-        "product": "zenyte_amulet",
+        "product": "zyrite_amulet",
         "materials": {
-          "zenyte": 1,
+          "zyrite": 1,
           "gold_bar": 1
         }
       },
       {
-        "id": "zenyte_bracelet",
+        "id": "zyrite_bracelet",
         "name": "Craft zyrite bracelet",
         "level": 98,
         "ticks": 4,
         "xp": 200,
-        "product": "zenyte_bracelet",
+        "product": "zyrite_bracelet",
         "materials": {
-          "zenyte": 1,
+          "zyrite": 1,
           "gold_bar": 1
         }
       },
       {
-        "id": "zenyte_necklace",
+        "id": "zyrite_necklace",
         "name": "String zyrite necklace",
         "level": 98,
         "ticks": 4,
         "xp": 200,
-        "product": "zenyte_necklace",
+        "product": "zyrite_necklace",
         "materials": {
-          "zenyte": 1,
+          "zyrite": 1,
           "gold_bar": 1
         }
       },
       {
-        "id": "zenyte_ring",
+        "id": "zyrite_ring",
         "name": "Craft zyrite ring",
         "level": 98,
         "ticks": 4,
         "xp": 200,
-        "product": "zenyte_ring",
+        "product": "zyrite_ring",
         "materials": {
-          "zenyte": 1,
+          "zyrite": 1,
           "gold_bar": 1
         }
       }
@@ -1626,7 +1626,7 @@
         "xp": 25,
         "product": "attack_potion",
         "materials": {
-          "guam_leaf": 1,
+          "greenthorn_leaf": 1,
           "eye_of_newt": 1
         }
       },
@@ -1638,7 +1638,7 @@
         "xp": 40,
         "product": "strength_potion",
         "materials": {
-          "tarromin": 1,
+          "duskroot": 1,
           "limpwurt_root": 1
         }
       },
@@ -1650,7 +1650,7 @@
         "xp": 55,
         "product": "defence_potion",
         "materials": {
-          "ranarr_weed": 1,
+          "rynarr_weed": 1,
           "white_berries": 1
         }
       },
@@ -1674,7 +1674,7 @@
         "xp": 75,
         "product": "prayer_potion",
         "materials": {
-          "ranarr_weed": 1,
+          "rynarr_weed": 1,
           "snape_grass": 1
         }
       },
@@ -1735,7 +1735,7 @@
         "product": "ranging_potion",
         "materials": {
           "dwarf_weed": 1,
-          "wine_of_zamorak": 1
+          "wine_of_krylth": 1
         }
       },
       {
@@ -1751,24 +1751,24 @@
         }
       },
       {
-        "id": "saradomin_brew",
+        "id": "lumira_brew",
         "name": "Make saradomin brew",
         "level": 81,
         "ticks": 3,
         "xp": 200,
-        "product": "saradomin_brew",
+        "product": "lumira_brew",
         "materials": {
           "toadflax": 1,
-          "crushed_birds_nest": 1
+          "crushed_bird_s_nest": 1
         }
       },
       {
-        "id": "super_combat_potion",
+        "id": "super_combat",
         "name": "Make super combat potion",
         "level": 90,
         "ticks": 6,
         "xp": 500,
-        "product": "super_combat_potion",
+        "product": "super_combat",
         "materials": {
           "torstol": 1,
           "super_attack": 1,
@@ -1947,7 +1947,7 @@
         "ticks": 3,
         "xp": 125,
         "materials": {
-          "dagganoth_bones": 1
+          "nagadoth_bones": 1
         }
       },
       {
@@ -1957,7 +1957,7 @@
         "ticks": 3,
         "xp": 437,
         "materials": {
-          "dagganoth_bones": 1
+          "nagadoth_bones": 1
         }
       }
     ]
@@ -2108,14 +2108,14 @@
         "ticks": 30,
         "xp": 1100,
         "type": "enchant_jewel",
-        "product": "amulet_of_torture",
+        "product": "amulet_of_torment",
         "runeReq": {
           "cosmic_rune": 1,
           "soul_rune": 20,
           "blood_rune": 20
         },
         "materials": {
-          "zenyte_amulet": 1
+          "zyrite_amulet": 1
         }
       },
       {
@@ -2125,14 +2125,14 @@
         "ticks": 30,
         "xp": 1100,
         "type": "enchant_jewel",
-        "product": "tormented_bracelet",
+        "product": "afflicted_bracelet",
         "runeReq": {
           "cosmic_rune": 1,
           "soul_rune": 20,
           "blood_rune": 20
         },
         "materials": {
-          "zenyte_bracelet": 1
+          "zyrite_bracelet": 1
         }
       },
       {
@@ -2142,14 +2142,14 @@
         "ticks": 30,
         "xp": 1100,
         "type": "enchant_jewel",
-        "product": "necklace_of_anguish",
+        "product": "necklace_of_agony",
         "runeReq": {
           "cosmic_rune": 1,
           "soul_rune": 20,
           "blood_rune": 20
         },
         "materials": {
-          "zenyte_necklace": 1
+          "zyrite_necklace": 1
         }
       },
       {
@@ -2159,14 +2159,14 @@
         "ticks": 30,
         "xp": 1100,
         "type": "enchant_jewel",
-        "product": "ring_of_suffering",
+        "product": "ring_of_affliction",
         "runeReq": {
           "cosmic_rune": 1,
           "soul_rune": 20,
           "blood_rune": 20
         },
         "materials": {
-          "zenyte_ring": 1
+          "zyrite_ring": 1
         }
       },
       {
@@ -2176,10 +2176,10 @@
         "ticks": 30,
         "xp": 590,
         "type": "enchant_bolts",
-        "product": "ruby_bolts_e",
+        "product": "ruby_bolt_e",
         "productQty": 10,
         "materials": {
-          "ruby_bolts": 10
+          "ruby_bolt": 10
         },
         "runeReq": {
           "cosmic_rune": 1,
@@ -2194,10 +2194,10 @@
         "ticks": 30,
         "xp": 590,
         "type": "enchant_bolts",
-        "product": "ruby_dragon_bolts_e",
+        "product": "ruby_dragon_bolt_e",
         "productQty": 10,
         "materials": {
-          "ruby_dragon_bolts": 10
+          "ruby_dragon_bolt": 10
         },
         "runeReq": {
           "cosmic_rune": 1,
@@ -2212,10 +2212,10 @@
         "ticks": 30,
         "xp": 670,
         "type": "enchant_bolts",
-        "product": "diamond_bolts_e",
+        "product": "diamond_bolt_e",
         "productQty": 10,
         "materials": {
-          "diamond_bolts": 10
+          "diamond_bolt": 10
         },
         "runeReq": {
           "cosmic_rune": 1,
@@ -2230,10 +2230,10 @@
         "ticks": 30,
         "xp": 670,
         "type": "enchant_bolts",
-        "product": "diamond_dragon_bolts_e",
+        "product": "diamond_dragon_bolt_e",
         "productQty": 10,
         "materials": {
-          "diamond_dragon_bolts": 10
+          "diamond_dragon_bolt": 10
         },
         "runeReq": {
           "cosmic_rune": 1,
@@ -2248,10 +2248,10 @@
         "ticks": 30,
         "xp": 780,
         "type": "enchant_bolts",
-        "product": "dragonstone_bolts_e",
+        "product": "dragonstone_bolt_e",
         "productQty": 10,
         "materials": {
-          "dragonstone_bolts": 10
+          "dragonstone_bolt": 10
         },
         "runeReq": {
           "cosmic_rune": 1,
@@ -2266,10 +2266,10 @@
         "ticks": 30,
         "xp": 780,
         "type": "enchant_bolts",
-        "product": "dragonstone_dragon_bolts_e",
+        "product": "dragonstone_dragon_bolt_e",
         "productQty": 10,
         "materials": {
-          "dragonstone_dragon_bolts": 10
+          "dragonstone_dragon_bolt": 10
         },
         "runeReq": {
           "cosmic_rune": 1,
@@ -2284,10 +2284,10 @@
         "ticks": 30,
         "xp": 970,
         "type": "enchant_bolts",
-        "product": "onyx_bolts_e",
+        "product": "onyx_bolt_e",
         "productQty": 10,
         "materials": {
-          "onyx_bolts": 10
+          "onyx_bolt": 10
         },
         "runeReq": {
           "cosmic_rune": 1,
@@ -2302,10 +2302,10 @@
         "ticks": 30,
         "xp": 970,
         "type": "enchant_bolts",
-        "product": "onyx_dragon_bolts_e",
+        "product": "onyx_dragon_bolt_e",
         "productQty": 10,
         "materials": {
-          "onyx_dragon_bolts": 10
+          "onyx_dragon_bolt": 10
         },
         "runeReq": {
           "cosmic_rune": 1,
@@ -2337,7 +2337,7 @@
         "ticks": 3,
         "xp": 90,
         "type": "plank_make",
-        "product": "planks",
+        "product": "plank",
         "materials": {
           "logs": 1
         },
@@ -2736,7 +2736,7 @@
                 "chance": 0.2
               },
               {
-                "itemId": "dagganoth_bones",
+                "itemId": "nagadoth_bones",
                 "quantity": 1,
                 "chance": 0.1
               }
@@ -2787,17 +2787,17 @@
                 "chance": 0.090909
               },
               {
-                "itemId": "dagganoth_bones",
+                "itemId": "nagadoth_bones",
                 "quantity": 60,
                 "chance": 0.090909
               },
               {
-                "itemId": "onyx_bolts",
+                "itemId": "onyx_bolt",
                 "quantity": 250,
                 "chance": 0.090909
               },
               {
-                "itemId": "dragon_bolts",
+                "itemId": "dragon_bolt",
                 "quantity": 250,
                 "chance": 0.090909
               },
@@ -2807,7 +2807,7 @@
                 "chance": 0.090909
               },
               {
-                "itemId": "zulrah_scales",
+                "itemId": "venomcoil_scales",
                 "quantity": 2500,
                 "chance": 0.090909
               },
@@ -2837,7 +2837,7 @@
                 "chance": 0.1
               },
               {
-                "itemId": "uncut_zenyte",
+                "itemId": "uncut_zyrite",
                 "quantity": 1,
                 "chance": 0.05
               }

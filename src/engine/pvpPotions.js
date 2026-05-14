@@ -9,7 +9,7 @@ const BASE_PVP_COMBAT_POTIONS = {
   super_strength: { strength: 'super_strength' },
   super_defence: { defence: 'super_defence' },
   combat_potion: { attack: 'attack_potion', strength: 'strength_potion' },
-  super_combat_potion: { attack: 'super_attack', strength: 'super_strength', defence: 'super_defence' },
+  super_combat: { attack: 'super_attack', strength: 'super_strength', defence: 'super_defence' },
 }
 
 function normalizePotionId(itemOrId) {

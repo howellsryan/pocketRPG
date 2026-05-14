@@ -39,8 +39,8 @@ const PRAYERS_FIXTURE: any = {
 
 const ITEMS_FIXTURE: any = {
   shark: { id: 'shark', name: 'Shark', type: 'food', heals: 20, eatTicks: 3 },
-  super_combat_potion: {
-    id: 'super_combat_potion',
+  super_combat: {
+    id: 'super_combat',
     name: 'Super Combat',
     type: 'potion',
     effect: 'combat',
@@ -115,7 +115,7 @@ describe('idleSupplies helpers', () => {
   })
 
   it('classifies boost vs prayer-restore potions', () => {
-    expect(isBoostPotion(ITEMS_FIXTURE.super_combat_potion)).toBe(true)
+    expect(isBoostPotion(ITEMS_FIXTURE.super_combat)).toBe(true)
     expect(isBoostPotion(ITEMS_FIXTURE.prayer_potion)).toBe(false)
     expect(isPrayerRestorePotion(ITEMS_FIXTURE.prayer_potion)).toBe(true)
     expect(isPrayerRestorePotion(ITEMS_FIXTURE.super_restore)).toBe(true)
@@ -124,13 +124,13 @@ describe('idleSupplies helpers', () => {
   })
 
   it('caps configured supplies against actual inventory + bank availability', () => {
-    const supplyList = [{ itemId: 'shark', quantity: 100 }, { itemId: 'super_combat_potion', quantity: 50 }]
+    const supplyList = [{ itemId: 'shark', quantity: 100 }, { itemId: 'super_combat', quantity: 50 }]
     const inventory = [{ itemId: 'shark', quantity: 2 }]
-    const bank = { super_combat_potion: { itemId: 'super_combat_potion', quantity: 3 } }
+    const bank = { super_combat: { itemId: 'super_combat', quantity: 3 } }
     const out = buildAvailableSupplyMap(supplyList, inventory, bank)
     expect(out.shark.configured).toBe(100)
     expect(out.shark.available).toBe(2)
-    expect(out.super_combat_potion.available).toBe(3)
+    expect(out.super_combat.available).toBe(3)
   })
 
   it('drops invalid prayer choices when level is too low', () => {
@@ -146,11 +146,11 @@ describe('idleSupplies helpers', () => {
     expect(normaliseIdleCombatSetup(undefined)).toEqual(defaultIdleCombatSetup())
     const out = normaliseIdleCombatSetup({
       food: [{ itemId: 'shark', quantity: 5 }, { itemId: 'shark', quantity: 7 }, { itemId: '', quantity: 1 }],
-      potions: [{ itemId: 'super_combat_potion', quantity: 'NaN' }, { itemId: 'super_combat_potion', quantity: 3 }],
+      potions: [{ itemId: 'super_combat', quantity: 'NaN' }, { itemId: 'super_combat', quantity: 3 }],
       prayers: { protectionPrayerId: 42, combatPrayerId: 'eagle_eye' },
     } as any)
     expect(out.food).toEqual([{ itemId: 'shark', quantity: 5 }])
-    expect(out.potions).toEqual([{ itemId: 'super_combat_potion', quantity: 3 }])
+    expect(out.potions).toEqual([{ itemId: 'super_combat', quantity: 3 }])
     expect(out.prayers).toEqual({ protectionPrayerId: null, combatPrayerId: 'eagle_eye' })
   })
 })
@@ -265,14 +265,14 @@ describe('simulateIdleCombat — super combat boost duration', () => {
   it('1h skip with 100 super combat potions consumes about 12 doses', () => {
     const task: any = { stance: 'accurate', monster: WEAK_GOBLIN }
     const inv = Array(28).fill(null)
-    inv[0] = { itemId: 'super_combat_potion', quantity: 100 }
+    inv[0] = { itemId: 'super_combat', quantity: 100 }
     const sim = simulateIdleCombat(task, 60 * 60_000, ATT_99_STATS, {}, inv, ITEMS_FIXTURE, null, {}, {
       currentHP: 99,
-      idlePotions: [{ itemId: 'super_combat_potion', quantity: 100 }],
+      idlePotions: [{ itemId: 'super_combat', quantity: 100 }],
       prayersData: PRAYERS_FIXTURE,
     })
     expect(sim).toBeTruthy()
-    expect(sim!.potionsConsumed.super_combat_potion).toBe(12)
+    expect(sim!.potionsConsumed.super_combat).toBe(12)
   })
 
   it('only enough boost for 1/5 of session covers ~1/5 of kills with the boost active', () => {
@@ -280,29 +280,29 @@ describe('simulateIdleCombat — super combat boost duration', () => {
     // We just assert that consumption is capped at configured availability.
     const task: any = { stance: 'accurate', monster: WEAK_GOBLIN }
     const inv = Array(28).fill(null)
-    inv[0] = { itemId: 'super_combat_potion', quantity: 3 }
+    inv[0] = { itemId: 'super_combat', quantity: 3 }
     const sim = simulateIdleCombat(task, 60 * 60_000, ATT_99_STATS, {}, inv, ITEMS_FIXTURE, null, {}, {
       currentHP: 99,
-      idlePotions: [{ itemId: 'super_combat_potion', quantity: 3 }],
+      idlePotions: [{ itemId: 'super_combat', quantity: 3 }],
       prayersData: PRAYERS_FIXTURE,
     })
     expect(sim).toBeTruthy()
-    expect(sim!.potionsConsumed.super_combat_potion).toBe(3)
+    expect(sim!.potionsConsumed.super_combat).toBe(3)
   })
 
   it('configuring potions you do not own provides no benefit', () => {
     const task: any = { stance: 'accurate', monster: WEAK_GOBLIN }
     const inv = Array(28).fill(null)
-    inv[0] = { itemId: 'super_combat_potion', quantity: 3 }
+    inv[0] = { itemId: 'super_combat', quantity: 3 }
     const sim = simulateIdleCombat(task, 60 * 60_000, ATT_99_STATS, {}, inv, ITEMS_FIXTURE, null, {}, {
       currentHP: 99,
-      idlePotions: [{ itemId: 'super_combat_potion', quantity: 100 }],
+      idlePotions: [{ itemId: 'super_combat', quantity: 100 }],
       prayersData: PRAYERS_FIXTURE,
     })
     expect(sim).toBeTruthy()
-    expect(sim!.potionsConsumed.super_combat_potion).toBeLessThanOrEqual(3)
-    expect(sim!.idleSupplies?.potionsAvailable.super_combat_potion).toBe(3)
-    expect(sim!.idleSupplies?.potionsConfigured.super_combat_potion).toBe(100)
+    expect(sim!.potionsConsumed.super_combat).toBeLessThanOrEqual(3)
+    expect(sim!.idleSupplies?.potionsAvailable.super_combat).toBe(3)
+    expect(sim!.idleSupplies?.potionsConfigured.super_combat).toBe(100)
   })
 })
 
@@ -348,21 +348,21 @@ describe('simulateIdleCombat — prayer drain', () => {
   it('combo of super combat + super restore is allowed and tracked separately', () => {
     const task: any = { stance: 'accurate', monster: HARD_HITTER, bankingEnabled: true }
     const inv = Array(28).fill(null)
-    inv[0] = { itemId: 'super_combat_potion', quantity: 12 }
+    inv[0] = { itemId: 'super_combat', quantity: 12 }
     inv[1] = { itemId: 'super_restore', quantity: 4 }
     inv[2] = { itemId: 'shark', quantity: 28 }
     const sim = simulateIdleCombat(task, 60 * 60_000, ATT_99_STATS, {}, inv, ITEMS_FIXTURE, null, {}, {
       currentHP: 99,
       idleFood: [{ itemId: 'shark', quantity: 28 }],
       idlePotions: [
-        { itemId: 'super_combat_potion', quantity: 12 },
+        { itemId: 'super_combat', quantity: 12 },
         { itemId: 'super_restore', quantity: 4 },
       ],
       idlePrayers: { protectionPrayerId: 'protection_from_melee', combatPrayerId: null },
       prayersData: PRAYERS_FIXTURE,
     })
     expect(sim).toBeTruthy()
-    expect(sim!.idleSupplies?.potionsConfigured.super_combat_potion).toBe(12)
+    expect(sim!.idleSupplies?.potionsConfigured.super_combat).toBe(12)
     expect(sim!.idleSupplies?.potionsConfigured.super_restore).toBe(4)
   })
 })
@@ -374,19 +374,19 @@ describe('simulateIdleCombat — modal metadata', () => {
     const task: any = { stance: 'accurate', monster: WEAK_GOBLIN }
     const inv = Array(28).fill(null)
     inv[0] = { itemId: 'shark', quantity: 2 }
-    inv[1] = { itemId: 'super_combat_potion', quantity: 1 }
+    inv[1] = { itemId: 'super_combat', quantity: 1 }
     const sim = simulateIdleCombat(task, 60_000, ATT_99_STATS, {}, inv, ITEMS_FIXTURE, null, {}, {
       currentHP: 99,
       idleFood: [{ itemId: 'shark', quantity: 2 }],
-      idlePotions: [{ itemId: 'super_combat_potion', quantity: 1 }],
+      idlePotions: [{ itemId: 'super_combat', quantity: 1 }],
       prayersData: PRAYERS_FIXTURE,
     })
     expect(sim).toBeTruthy()
     expect(sim!.idleSupplies).toBeTruthy()
     expect(sim!.idleSupplies!.foodConfigured.shark).toBe(2)
     expect(sim!.idleSupplies!.foodAvailable.shark).toBe(2)
-    expect(sim!.idleSupplies!.potionsConfigured.super_combat_potion).toBe(1)
-    expect(sim!.idleSupplies!.potionsAvailable.super_combat_potion).toBe(1)
+    expect(sim!.idleSupplies!.potionsConfigured.super_combat).toBe(1)
+    expect(sim!.idleSupplies!.potionsAvailable.super_combat).toBe(1)
     expect(typeof sim!.stoppedReason).toBe('string')
     expect(typeof sim!.effectiveElapsedMs).toBe('number')
   })
