@@ -663,7 +663,7 @@
       },
       {
         "id": "make_dragonfire_shield",
-        "name": "Attach draconic visage",
+        "name": "Attach dragon visage",
         "level": 90,
         "ticks": 10,
         "xp": 2000,
@@ -693,7 +693,7 @@
       },
       {
         "id": "cook_chicken",
-        "name": "Cook field_chicken",
+        "name": "Cook chicken",
         "level": 1,
         "ticks": 4,
         "xp": 30,
