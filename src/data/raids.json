@@ -3,7 +3,7 @@
     "id": "vaults_of_xyren",
     "name": "Vaults of Xyren",
     "icon": "🏛️",
-    "description": "Delve into Xeric's mountain stronghold. Defeat Tekton, Vespula, the Muttadile and Great Olm to claim your reward.",
+    "description": "Delve into Xeric's mountain stronghold. Defeat Tecton, Vespara, the Mudtadile and the Grand Olm to claim your reward.",
     "bosses": [
       "tekton",
       "vespula",
@@ -117,7 +117,7 @@
     "id": "crimson_night_theatre",
     "name": "Crimson Night Theatre",
     "icon": "🩸",
-    "description": "Fight through six deadly bosses in Verzik's theatre. Defeat them all to claim your reward.",
+    "description": "Fight through six deadly bosses in Verzik Vitura's theatre. Defeat them all to claim your reward.",
     "bosses": [
       "the_maiden_of_sugadinti",
       "pestilent_bloat",
@@ -369,7 +369,7 @@
     "id": "vaults_of_xyren",
     "name": "Vaults of Xyren",
     "icon": "🏛️",
-    "description": "Delve into Xeric's mountain stronghold. Defeat Tekton, Vespula, the Muttadile and Great Olm to claim your reward.",
+    "description": "Delve into Xeric's mountain stronghold. Defeat Tecton, Vespara, the Mudtadile and the Grand Olm to claim your reward.",
     "bosses": [
       "tekton",
       "vespula",
@@ -483,7 +483,7 @@
     "id": "crimson_night_theatre",
     "name": "Crimson Night Theatre",
     "icon": "🩸",
-    "description": "Fight through six deadly bosses in Verzik's theatre. Defeat them all to claim your reward.",
+    "description": "Fight through six deadly bosses in Verzik Vitura's theatre. Defeat them all to claim your reward.",
     "bosses": [
       "the_maiden_of_sugadinti",
       "pestilent_bloat",

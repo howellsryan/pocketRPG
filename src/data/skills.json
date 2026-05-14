@@ -81,7 +81,7 @@
         "level": 85,
         "ticks": 30,
         "xp": 420,
-        "product": "runite_ore"
+        "product": "runeforged_ore"
       },
       {
         "id": "gem_mining",
@@ -493,7 +493,7 @@
         "xp": 50,
         "product": "runeforged_bar",
         "materials": {
-          "runite_ore": 1,
+          "runeforged_ore": 1,
           "coal": 8
         }
       },

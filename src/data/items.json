@@ -1138,10 +1138,10 @@
     "icon": "🪨",
     "isGeneralStore": false
   },
-  "runite_ore": {
-    "id": "runite_ore",
-    "legacy_item_id": "runite_ore",
-    "name": "Runite Ore",
+  "runeforged_ore": {
+    "id": "runeforged_ore",
+    "legacy_item_id": "runeforged_ore",
+    "name": "Runeforged Ore",
     "type": "resource",
     "stackable": false,
     "shopValue": 10463,
