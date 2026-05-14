@@ -33,6 +33,9 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
 
   const getItemTypes = () => getStoreItemTypes(itemsData, { isIronman })
 
+  const getCanonicalStoreEntries = () => Object.entries(itemsData).filter(([entryId, item]) => !item?.id || entryId === item.id)
+
+
   const itemTypes = getItemTypes()
 
   // Quest ID to quest name mapping
@@ -43,7 +46,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
 
   const getAvailableItems = () => {
     if (activeTab === 'quest_items') {
-      return Object.entries(itemsData)
+      return getCanonicalStoreEntries()
         .filter(([_, item]) => item.questUnlock && isStoreVisibleItem(item, { isIronman, includeQuestItems: true }))
         .map(([id, item]) => {
           const isUnlocked = completedQuests.has(item.questUnlock)
@@ -52,12 +55,12 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
     }
     if (activeTab === 'minigame_unlocks') {
       const minigameProducts = new Set((minigamesData.tasks || []).flatMap((t) => (Array.isArray(t.rewardItems) && t.rewardItems.length > 0 ? t.rewardItems : [t.product])).filter(Boolean))
-      return Object.entries(itemsData)
+      return getCanonicalStoreEntries()
         .filter(([id]) => minigameProducts.has(id))
         .map(([id, item]) => ({ ...item, id, isMinigameItem: true, isUnlocked: unlockedMinigameItems.has(id) }))
     }
     if (activeTab === 'all') {
-      return Object.entries(itemsData)
+      return getCanonicalStoreEntries()
         .filter(([_, item]) => {
           // Ironman: only show general store items
           if (isIronman) {
@@ -70,7 +73,7 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
     }
     // For type-based tabs, show only items of that type that aren't quest items or untradeable
     // For ironman, additionally filter to only isGeneralStore items
-    return Object.entries(itemsData)
+    return getCanonicalStoreEntries()
       .filter(([_, item]) => {
         if (item.type !== activeTab) return false
         return !item.questUnlock && isStoreVisibleItem(item, { isIronman, includeQuestItems: false })

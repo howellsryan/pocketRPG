@@ -22,14 +22,24 @@ export function getInventory(save) {
   return save.inventory
 }
 
-export function addItemToInventory(save, itemId, quantity) {
+export function addItemToInventory(save, itemId, quantity, { stackable = true, noted = false } = {}) {
   const inv = getInventory(save)
   const qty = Math.floor(Number(quantity) || 0)
   if (qty < 1) throw new GameApiError('INVALID_QUANTITY', 'Invalid quantity', 400)
-  const existing = inv.find(s => s?.itemId === itemId)
-  if (existing) { existing.quantity = (Number(existing.quantity) || 0) + qty; return }
+
+  if (!stackable && !noted) {
+    if (inv.length + qty > 28) throw new GameApiError('INVENTORY_FULL', 'Inventory is full', 409)
+    for (let i = 0; i < qty; i += 1) inv.push({ itemId, quantity: 1 })
+    return
+  }
+
+  const existing = inv.find(s => s?.itemId === itemId && Boolean(s?.noted) === Boolean(noted))
+  if (existing) {
+    existing.quantity = (Number(existing.quantity) || 0) + qty
+    return
+  }
   if (inv.length >= 28) throw new GameApiError('INVENTORY_FULL', 'Inventory is full', 409)
-  inv.push({ itemId, quantity: qty })
+  inv.push(noted ? { itemId, quantity: qty, noted: true } : { itemId, quantity: qty })
 }
 
 
