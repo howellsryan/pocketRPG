@@ -31,7 +31,7 @@ describe('farming engine', () => {
   })
 
   it('getCropDef finds herb/tree/fruit tree definitions', () => {
-    expect(getCropDef('greenthorn_seed')?.name).toBe('Guam')
+    expect(getCropDef('greenthorn_seed')?.name).toBe('Greenthorn')
     expect(getCropDef('oak_sapling')?.name).toBe('Oak')
     expect(getCropDef('apple_sapling')?.name).toBe('Apple')
   })
