@@ -68,11 +68,11 @@ const mockItemsData = {
     attackBonus: { ranged: 2 },
     otherBonus: { rangedStrength: 2 }
   },
-  heavy_ballista: { id: 'heavy_ballista', name: 'Heavy ballista', slot: 'weapon', attackStyle: 'ranged', ammoType: 'javelin', requiredAmmoId: 'dragon_javelin', attackBonus: { ranged: 125 }, defenceBonus: {}, otherBonus: { rangedStrength: 15 } },
+  colossal_ballista: { id: 'colossal_ballista', name: 'Heavy ballista', slot: 'weapon', attackStyle: 'ranged', ammoType: 'javelin', requiredAmmoId: 'dragon_javelin', attackBonus: { ranged: 125 }, defenceBonus: {}, otherBonus: { rangedStrength: 15 } },
   dragon_javelin: { id: 'dragon_javelin', name: 'Dragon javelin', slot: 'ammo', ammoKind: 'javelin', otherBonus: { rangedStrength: 150 } },
   rune_javelin: { id: 'rune_javelin', name: 'Rune javelin', slot: 'ammo', ammoKind: 'javelin', otherBonus: { rangedStrength: 124 } },
   chaotic_crossbow: { id: 'chaotic_crossbow', name: 'Chaotic crossbow', slot: 'weapon', attackStyle: 'ranged', ammoType: 'bolt', attackBonus: { ranged: 150 }, defenceBonus: {}, otherBonus: { rangedStrength: 90 } },
-  dragon_bolts: { id: 'dragon_bolts', name: 'Dragon bolts', slot: 'ammo', ammoKind: 'bolt', otherBonus: { rangedStrength: 122 } },
+  dragon_bolt: { id: 'dragon_bolt', name: 'Dragon bolts', slot: 'ammo', ammoKind: 'bolt', otherBonus: { rangedStrength: 122 } },
   'staff': {
     id: 'staff',
     name: 'Staff',
@@ -148,7 +148,7 @@ describe('Equipment System', () => {
       expect(result).toBe(false)
     })
     it('enforces exact ammo id requirements for heavy ballista', () => {
-      equipment.weapon = { itemId: 'heavy_ballista' }
+      equipment.weapon = { itemId: 'colossal_ballista' }
       expect(isAmmoCompatible(equipment, mockItemsData.dragon_javelin, mockItemsData)).toBe(true)
       expect(isAmmoCompatible(equipment, mockItemsData.rune_javelin, mockItemsData)).toBe(false)
       expect(isAmmoCompatible(equipment, mockItemsData.bolt, mockItemsData)).toBe(false)
@@ -156,21 +156,21 @@ describe('Equipment System', () => {
     })
     it('chaotic crossbow accepts bolts only', () => {
       equipment.weapon = { itemId: 'chaotic_crossbow' }
-      expect(isAmmoCompatible(equipment, mockItemsData.dragon_bolts, mockItemsData)).toBe(true)
+      expect(isAmmoCompatible(equipment, mockItemsData.dragon_bolt, mockItemsData)).toBe(true)
       expect(isAmmoCompatible(equipment, mockItemsData.arrow, mockItemsData)).toBe(false)
       expect(isAmmoCompatible(equipment, mockItemsData.dragon_javelin, mockItemsData)).toBe(false)
     })
   })
   describe('getRangedAmmoRequirementFailure', () => {
     it('reports missing/wrong ammo and success', () => {
-      equipment.weapon = { itemId: 'heavy_ballista' }
+      equipment.weapon = { itemId: 'colossal_ballista' }
       expect(getRangedAmmoRequirementFailure(equipment, mockItemsData)?.reason).toBe('missing_ammo')
       equipment.ammo = { itemId: 'rune_javelin', quantity: 10 }
       expect(getRangedAmmoRequirementFailure(equipment, mockItemsData)?.reason).toBe('wrong_ammo_item')
       equipment.ammo = { itemId: 'dragon_javelin', quantity: 10 }
       expect(getRangedAmmoRequirementFailure(equipment, mockItemsData)).toBeNull()
       equipment.weapon = { itemId: 'chaotic_crossbow' }
-      equipment.ammo = { itemId: 'dragon_bolts', quantity: 10 }
+      equipment.ammo = { itemId: 'dragon_bolt', quantity: 10 }
       expect(getRangedAmmoRequirementFailure(equipment, mockItemsData)).toBeNull()
     })
   })

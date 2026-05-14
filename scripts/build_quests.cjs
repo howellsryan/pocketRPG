@@ -37,9 +37,9 @@ const CANONICAL_SKILLS = [
 const SKILL_ALIASES = { runecrafting: 'runecraft' }
 
 const ITEM_UNLOCK_PATTERNS = [
-  { rx: /barrows gloves/i, id: 'barrows_gloves' },
-  { rx: /ava'?s assembler/i, id: 'avas_assembler' },
-  { rx: /ava'?s (attractor|accumulator)/i, id: 'avas_accumulator' },
+  { rx: /barrows gloves/i, id: 'cryptbound_gloves' },
+  { rx: /ava'?s assembler/i, id: 'ava_s_assembler' },
+  { rx: /ava'?s (attractor|accumulator)/i, id: 'ava_s_accumulator' },
   { rx: /dragon scimitar/i, id: 'dragon_scimitar' },
   { rx: /dragon dagger/i, id: 'dragon_dagger' },
   { rx: /anti-?dragon shield/i, id: 'anti_dragon_shield' },

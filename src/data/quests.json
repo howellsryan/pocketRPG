@@ -133,7 +133,7 @@
       "woodcutting": 2500
     },
     "itemUnlocks": [
-      "avas_accumulator"
+      "ava_s_accumulator"
     ],
     "skillRequirements": {
       "slayer": 18,
@@ -760,7 +760,7 @@
       "thieving": 15000
     },
     "itemUnlocks": [
-      "avas_assembler"
+      "ava_s_assembler"
     ],
     "skillRequirements": {
       "magic": 75,
@@ -2150,7 +2150,7 @@
       "smithing": 12500
     },
     "itemUnlocks": [
-      "barrows_gloves"
+      "cryptbound_gloves"
     ],
     "skillRequirements": {
       "cooking": 70,

@@ -7,7 +7,7 @@
       "description": "Run Viking Assault until you earn a Fighter Body.",
       "hours": 5,
       "ticks": 30000,
-      "product": "fighter_torso",
+      "product": "fighter_body",
       "qty": 1,
       "minigame": "barbarian_assault",
       "oneShot": true
@@ -19,7 +19,7 @@
       "description": "Run Viking Assault until you earn a Fighter Helm.",
       "hours": 2,
       "ticks": 12000,
-      "product": "fighter_hat",
+      "product": "fighter_helm",
       "qty": 1,
       "minigame": "barbarian_assault",
       "oneShot": true
@@ -31,7 +31,7 @@
       "description": "Slay Cyclopes in the Champion's Hall basement until one drops a Rune Defender.",
       "hours": 3,
       "ticks": 18000,
-      "product": "rune_defender",
+      "product": "runeforged_defender",
       "qty": 1,
       "minigame": "warriors_guild",
       "oneShot": true
@@ -46,7 +46,7 @@
       "product": "dragon_defender",
       "qty": 1,
       "minigame": "warriors_guild",
-      "requiresItem": "rune_defender",
+      "requiresItem": "runeforged_defender",
       "oneShot": true
     },
     {
@@ -106,10 +106,10 @@
       "ticks": 36000,
       "product": "void_knight_set",
       "rewardItems": [
-        "void_knight_helm",
-        "void_knight_top",
-        "void_knight_robe",
-        "void_knight_gloves"
+        "void_king_helm",
+        "void_king_top",
+        "void_king_robe",
+        "void_king_gloves"
       ],
       "qty": 1,
       "minigame": "pest_control",
@@ -149,18 +149,18 @@
     }
   ],
   "itemNames": {
-    "fighter_torso": "Fighter torso",
-    "fighter_hat": "Fighter hat",
-    "rune_defender": "Rune defender",
+    "fighter_body": "Fighter torso",
+    "fighter_helm": "Fighter hat",
+    "runeforged_defender": "Rune defender",
     "dragon_defender": "Dragon defender",
     "halo": "Halo",
     "decorative_top": "Decorative Top",
     "angler_net": "Angler Net",
     "imbued_god_cape": "Imbued God Cape",
     "void_knight_set": "Void King Set",
-    "void_knight_helm": "Void King Helm",
-    "void_knight_top": "Void King Top",
-    "void_knight_robe": "Void King Robe",
-    "void_knight_gloves": "Void King Gloves"
+    "void_king_helm": "Void King Helm",
+    "void_king_top": "Void King Top",
+    "void_king_robe": "Void King Robe",
+    "void_king_gloves": "Void King Gloves"
   }
 }

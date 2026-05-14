@@ -105,25 +105,25 @@ describe('simulateIdleSkilling (enchant bolts)', () => {
           type: 'enchant_bolts',
           ticks: 3,
           xp: 59,
-          product: 'ruby_bolts_e',
+          product: 'ruby_bolt_e',
           productQty: 10,
-          materials: { ruby_bolts: 10 },
+          materials: { ruby_bolt: 10 },
           runeReq: { cosmic_rune: 1, blood_rune: 1, fire_rune: 5 },
         },
       } as any,
       3_600_000,
-      { ruby_bolts: { quantity: 20 }, cosmic_rune: { quantity: 200 }, blood_rune: { quantity: 200 }, fire_rune: { quantity: 1000 } } as any,
+      { ruby_bolt: { quantity: 20 }, cosmic_rune: { quantity: 200 }, blood_rune: { quantity: 200 }, fire_rune: { quantity: 1000 } } as any,
       {} as any,
       {} as any,
-      { ruby_bolts_e: { stackable: true } } as any,
-      [{ itemId: 'ruby_bolts', quantity: 30 }, ...Array(27).fill(null)] as any
+      { ruby_bolt_e: { stackable: true } } as any,
+      [{ itemId: 'ruby_bolt', quantity: 30 }, ...Array(27).fill(null)] as any
     )
 
     expect(sim).toBeTruthy()
     expect(sim?.actions).toBe(5)
-    expect(sim?.itemsConsumed.ruby_bolts).toBe(20)
-    expect(sim?.finalInventory[0]).toEqual({ itemId: 'ruby_bolts_e', quantity: 50 })
-    const totalProduced = (sim?.itemsGained.ruby_bolts_e || 0) + (sim?.itemsBanked.ruby_bolts_e || 0)
+    expect(sim?.itemsConsumed.ruby_bolt).toBe(20)
+    expect(sim?.finalInventory[0]).toEqual({ itemId: 'ruby_bolt_e', quantity: 50 })
+    const totalProduced = (sim?.itemsGained.ruby_bolt_e || 0) + (sim?.itemsBanked.ruby_bolt_e || 0)
     expect(totalProduced).toBe(50)
   })
 })

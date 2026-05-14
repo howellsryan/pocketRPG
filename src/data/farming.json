@@ -1,8 +1,8 @@
 {
   "herbs": [
     {
-      "id": "guam_seed",
-      "cropId": "guam_leaf",
+      "id": "greenthorn_seed",
+      "cropId": "greenthorn_leaf",
       "name": "Guam",
       "level": 1,
       "plantXp": 11,
@@ -11,8 +11,8 @@
       "icon": "🌱"
     },
     {
-      "id": "marrentill_seed",
-      "cropId": "marrentill",
+      "id": "miremint_seed",
+      "cropId": "miremint",
       "name": "Marrentill",
       "level": 14,
       "plantXp": 14,
@@ -21,8 +21,8 @@
       "icon": "🌿"
     },
     {
-      "id": "tarromin_seed",
-      "cropId": "tarromin",
+      "id": "duskroot_seed",
+      "cropId": "duskroot",
       "name": "Tarromin",
       "level": 19,
       "plantXp": 17,
@@ -31,8 +31,8 @@
       "icon": "🌿"
     },
     {
-      "id": "basil_seed",
-      "cropId": "basil",
+      "id": "kingsherb_seed",
+      "cropId": "kingsherb",
       "name": "Basil",
       "level": 25,
       "plantXp": 23,
@@ -41,8 +41,8 @@
       "icon": "🌱"
     },
     {
-      "id": "sagewort_seed",
-      "cropId": "sagewort",
+      "id": "graysage_seed",
+      "cropId": "graysage",
       "name": "Sagewort",
       "level": 32,
       "plantXp": 30,
@@ -51,8 +51,8 @@
       "icon": "🌿"
     },
     {
-      "id": "gout_tuber_seed",
-      "cropId": "gout_tuber",
+      "id": "bogtuber_seed",
+      "cropId": "bogtuber",
       "name": "Gout tuber",
       "level": 36,
       "plantXp": 35,
@@ -61,8 +61,8 @@
       "icon": "🥔"
     },
     {
-      "id": "ranarr_seed",
-      "cropId": "ranarr_weed",
+      "id": "rynarr_seed",
+      "cropId": "rynarr_weed",
       "name": "Ranarr",
       "level": 52,
       "plantXp": 64,

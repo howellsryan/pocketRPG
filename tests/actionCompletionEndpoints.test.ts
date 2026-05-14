@@ -24,12 +24,12 @@ async function post(body: any) {
 
 describe('action completion endpoint tamper guards', () => {
   it('rejects source spoofing', async () => {
-    const out = await post({ sourceId: 'fake_raid', actionNonce: 'n1', rewards: [{ itemId: 'ahrims_hood', quantity: 1 }] })
+    const out = await post({ sourceId: 'fake_raid', actionNonce: 'n1', rewards: [{ itemId: 'morvyn_s_hood', quantity: 1 }] })
     expect(out.status).toBe(403)
   })
 
   it('rejects protected item injection for wrong source item pair', async () => {
-    const out = await post({ sourceId: 'barrows_brothers', actionNonce: 'n2', rewards: [{ itemId: 'twisted_bow', quantity: 1 }] })
+    const out = await post({ sourceId: 'barrows_brothers', actionNonce: 'n2', rewards: [{ itemId: 'warped_bow', quantity: 1 }] })
     expect(out.status).toBe(200)
     expect(out.body.ok).toBe(true)
     expect(Array.isArray(out.body.granted)).toBe(true)
@@ -48,7 +48,7 @@ describe('action completion endpoint tamper guards', () => {
   })
 
   it('rejects insufficient supply consumption', async () => {
-    const out = await post({ sourceId: 'barrows_brothers', actionNonce: 'n3', consumptions: [{ itemId: 'food', quantity: 5 }], rewards: [{ itemId: 'ahrims_hood', quantity: 1 }] })
+    const out = await post({ sourceId: 'barrows_brothers', actionNonce: 'n3', consumptions: [{ itemId: 'food', quantity: 5 }], rewards: [{ itemId: 'morvyn_s_hood', quantity: 1 }] })
     expect(out.status).toBe(400)
   })
 
@@ -105,7 +105,7 @@ describe('action completion endpoint tamper guards', () => {
       body: JSON.stringify({
         sourceId: 'dungeoneering',
         actionNonce: 'n5',
-        rewards: [{ itemId: 'twisted_bow', quantity: 1 }],
+        rewards: [{ itemId: 'warped_bow', quantity: 1 }],
       }),
     })
     const res = await handler({ request: req, env: {} as any })
@@ -124,9 +124,9 @@ describe('action completion endpoint tamper guards', () => {
         { itemId: 'death_rune', quantity: 253 },
         { itemId: 'blood_rune', quantity: 57 },
         { itemId: 'soul_rune', quantity: 47 },
-        { itemId: 'ahrims_hood', quantity: 1 },
-        { itemId: 'dharoks_helm', quantity: 1 },
-        { itemId: 'guthans_helm', quantity: 1 },
+        { itemId: 'morvyn_s_hood', quantity: 1 },
+        { itemId: 'dravok_s_helm', quantity: 1 },
+        { itemId: 'gorath_s_helm', quantity: 1 },
       ],
     })
     const req = new Request('https://example.com/api/actions/raid/complete', {
@@ -191,7 +191,7 @@ describe('action completion endpoint tamper guards', () => {
       assertNotInActiveMatch: async () => null,
       loadCharacterWithSave: async () => ({ saveObject: { inventory: [] }, saveRevision: 0 }),
       writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
-      resolveRewards: () => [{ itemId: 'fighter_hat', quantity: 1 }],
+      resolveRewards: () => [{ itemId: 'fighter_helm', quantity: 1 }],
     })
     const req = new Request('https://example.com/api/actions/minigame/complete', {
       method: 'POST',
@@ -202,7 +202,7 @@ describe('action completion endpoint tamper guards', () => {
     expect(res.status).toBe(200)
     const body = await res.json()
     const saved = JSON.parse(body.save.save_data)
-    expect(saved.settings.unlockedMinigameItems).toContain('fighter_hat')
+    expect(saved.settings.unlockedMinigameItems).toContain('fighter_helm')
   })
 
 
