@@ -116,7 +116,7 @@
         "chance": 0.012
       },
       {
-        "itemId": "harralander",
+        "itemId": "sunblossom",
         "quantity": [
           1,
           2
@@ -124,7 +124,7 @@
         "chance": 0.01
       },
       {
-        "itemId": "irit_leaf",
+        "itemId": "emberleaf",
         "quantity": [
           1,
           2
@@ -132,7 +132,7 @@
         "chance": 0.008
       },
       {
-        "itemId": "kwuarm",
+        "itemId": "wyrmspice",
         "quantity": [
           1,
           2
@@ -145,22 +145,22 @@
         "chance": 0.005
       },
       {
-        "itemId": "cadantine",
+        "itemId": "cinderbloom",
         "quantity": 1,
         "chance": 0.004
       },
       {
-        "itemId": "dwarf_weed",
+        "itemId": "stonefern",
         "quantity": 1,
         "chance": 0.003
       },
       {
-        "itemId": "lantadyme",
+        "itemId": "mistvine",
         "quantity": 1,
         "chance": 0.001
       },
       {
-        "itemId": "toadflax",
+        "itemId": "marshflax",
         "quantity": 1,
         "chance": 0.0005
       },
@@ -281,7 +281,7 @@
         "chance": 0.012
       },
       {
-        "itemId": "harralander",
+        "itemId": "sunblossom",
         "quantity": [
           1,
           2
@@ -289,7 +289,7 @@
         "chance": 0.01
       },
       {
-        "itemId": "irit_leaf",
+        "itemId": "emberleaf",
         "quantity": [
           1,
           2
@@ -297,7 +297,7 @@
         "chance": 0.008
       },
       {
-        "itemId": "kwuarm",
+        "itemId": "wyrmspice",
         "quantity": [
           1,
           2
@@ -310,22 +310,22 @@
         "chance": 0.005
       },
       {
-        "itemId": "cadantine",
+        "itemId": "cinderbloom",
         "quantity": 1,
         "chance": 0.004
       },
       {
-        "itemId": "dwarf_weed",
+        "itemId": "stonefern",
         "quantity": 1,
         "chance": 0.003
       },
       {
-        "itemId": "lantadyme",
+        "itemId": "mistvine",
         "quantity": 1,
         "chance": 0.001
       },
       {
-        "itemId": "toadflax",
+        "itemId": "marshflax",
         "quantity": 1,
         "chance": 0.0005
       },
@@ -404,7 +404,7 @@
         "chance": 0.024
       },
       {
-        "itemId": "harralander",
+        "itemId": "sunblossom",
         "quantity": [
           1,
           2
@@ -412,7 +412,7 @@
         "chance": 0.02
       },
       {
-        "itemId": "irit_leaf",
+        "itemId": "emberleaf",
         "quantity": [
           1,
           2
@@ -420,7 +420,7 @@
         "chance": 0.016
       },
       {
-        "itemId": "kwuarm",
+        "itemId": "wyrmspice",
         "quantity": [
           1,
           2
@@ -433,22 +433,22 @@
         "chance": 0.01
       },
       {
-        "itemId": "cadantine",
+        "itemId": "cinderbloom",
         "quantity": 1,
         "chance": 0.008
       },
       {
-        "itemId": "dwarf_weed",
+        "itemId": "stonefern",
         "quantity": 1,
         "chance": 0.006
       },
       {
-        "itemId": "lantadyme",
+        "itemId": "mistvine",
         "quantity": 1,
         "chance": 0.002
       },
       {
-        "itemId": "toadflax",
+        "itemId": "marshflax",
         "quantity": 1,
         "chance": 0.001
       },
@@ -537,7 +537,7 @@
         "chance": 0.012
       },
       {
-        "itemId": "harralander",
+        "itemId": "sunblossom",
         "quantity": [
           1,
           2
@@ -545,7 +545,7 @@
         "chance": 0.01
       },
       {
-        "itemId": "irit_leaf",
+        "itemId": "emberleaf",
         "quantity": [
           1,
           2
@@ -553,7 +553,7 @@
         "chance": 0.008
       },
       {
-        "itemId": "kwuarm",
+        "itemId": "wyrmspice",
         "quantity": [
           1,
           2
@@ -566,22 +566,22 @@
         "chance": 0.005
       },
       {
-        "itemId": "cadantine",
+        "itemId": "cinderbloom",
         "quantity": 1,
         "chance": 0.004
       },
       {
-        "itemId": "dwarf_weed",
+        "itemId": "stonefern",
         "quantity": 1,
         "chance": 0.003
       },
       {
-        "itemId": "lantadyme",
+        "itemId": "mistvine",
         "quantity": 1,
         "chance": 0.001
       },
       {
-        "itemId": "toadflax",
+        "itemId": "marshflax",
         "quantity": 1,
         "chance": 0.0005
       },
@@ -670,7 +670,7 @@
         "chance": 0.012
       },
       {
-        "itemId": "harralander",
+        "itemId": "sunblossom",
         "quantity": [
           1,
           2
@@ -678,7 +678,7 @@
         "chance": 0.01
       },
       {
-        "itemId": "irit_leaf",
+        "itemId": "emberleaf",
         "quantity": [
           1,
           2
@@ -686,7 +686,7 @@
         "chance": 0.008
       },
       {
-        "itemId": "kwuarm",
+        "itemId": "wyrmspice",
         "quantity": [
           1,
           2
@@ -699,22 +699,22 @@
         "chance": 0.005
       },
       {
-        "itemId": "cadantine",
+        "itemId": "cinderbloom",
         "quantity": 1,
         "chance": 0.004
       },
       {
-        "itemId": "dwarf_weed",
+        "itemId": "stonefern",
         "quantity": 1,
         "chance": 0.003
       },
       {
-        "itemId": "lantadyme",
+        "itemId": "mistvine",
         "quantity": 1,
         "chance": 0.001
       },
       {
-        "itemId": "toadflax",
+        "itemId": "marshflax",
         "quantity": 1,
         "chance": 0.0005
       },
@@ -833,7 +833,7 @@
         "chance": 0.012
       },
       {
-        "itemId": "harralander",
+        "itemId": "sunblossom",
         "quantity": [
           1,
           2
@@ -841,7 +841,7 @@
         "chance": 0.01
       },
       {
-        "itemId": "irit_leaf",
+        "itemId": "emberleaf",
         "quantity": [
           1,
           2
@@ -849,7 +849,7 @@
         "chance": 0.008
       },
       {
-        "itemId": "kwuarm",
+        "itemId": "wyrmspice",
         "quantity": [
           1,
           2
@@ -862,22 +862,22 @@
         "chance": 0.005
       },
       {
-        "itemId": "cadantine",
+        "itemId": "cinderbloom",
         "quantity": 1,
         "chance": 0.004
       },
       {
-        "itemId": "dwarf_weed",
+        "itemId": "stonefern",
         "quantity": 1,
         "chance": 0.003
       },
       {
-        "itemId": "lantadyme",
+        "itemId": "mistvine",
         "quantity": 1,
         "chance": 0.001
       },
       {
-        "itemId": "toadflax",
+        "itemId": "marshflax",
         "quantity": 1,
         "chance": 0.0005
       },
@@ -1005,7 +1005,7 @@
         "chance": 0.012
       },
       {
-        "itemId": "harralander",
+        "itemId": "sunblossom",
         "quantity": [
           1,
           2
@@ -1013,7 +1013,7 @@
         "chance": 0.01
       },
       {
-        "itemId": "irit_leaf",
+        "itemId": "emberleaf",
         "quantity": [
           1,
           2
@@ -1021,7 +1021,7 @@
         "chance": 0.008
       },
       {
-        "itemId": "kwuarm",
+        "itemId": "wyrmspice",
         "quantity": [
           1,
           2
@@ -1034,22 +1034,22 @@
         "chance": 0.005
       },
       {
-        "itemId": "cadantine",
+        "itemId": "cinderbloom",
         "quantity": 1,
         "chance": 0.004
       },
       {
-        "itemId": "dwarf_weed",
+        "itemId": "stonefern",
         "quantity": 1,
         "chance": 0.003
       },
       {
-        "itemId": "lantadyme",
+        "itemId": "mistvine",
         "quantity": 1,
         "chance": 0.001
       },
       {
-        "itemId": "toadflax",
+        "itemId": "marshflax",
         "quantity": 1,
         "chance": 0.0005
       },
@@ -1454,7 +1454,7 @@
         "chance": 0.12
       },
       {
-        "itemId": "harralander",
+        "itemId": "sunblossom",
         "quantity": [
           1,
           2
@@ -1462,7 +1462,7 @@
         "chance": 0.1
       },
       {
-        "itemId": "irit_leaf",
+        "itemId": "emberleaf",
         "quantity": [
           1,
           2
@@ -1470,7 +1470,7 @@
         "chance": 0.08
       },
       {
-        "itemId": "kwuarm",
+        "itemId": "wyrmspice",
         "quantity": [
           1,
           2
@@ -1483,22 +1483,22 @@
         "chance": 0.05
       },
       {
-        "itemId": "cadantine",
+        "itemId": "cinderbloom",
         "quantity": 1,
         "chance": 0.04
       },
       {
-        "itemId": "dwarf_weed",
+        "itemId": "stonefern",
         "quantity": 1,
         "chance": 0.03
       },
       {
-        "itemId": "lantadyme",
+        "itemId": "mistvine",
         "quantity": 1,
         "chance": 0.01
       },
       {
-        "itemId": "toadflax",
+        "itemId": "marshflax",
         "quantity": 1,
         "chance": 0.005
       },
@@ -1586,12 +1586,12 @@
         "chance": 0.05
       },
       {
-        "itemId": "harralander",
+        "itemId": "sunblossom",
         "quantity": 1,
         "chance": 0.06
       },
       {
-        "itemId": "irit_leaf",
+        "itemId": "emberleaf",
         "quantity": 1,
         "chance": 0.04
       },
@@ -1710,12 +1710,12 @@
         "chance": 0.04
       },
       {
-        "itemId": "kwuarm",
+        "itemId": "wyrmspice",
         "quantity": 1,
         "chance": 0.05
       },
       {
-        "itemId": "cadantine",
+        "itemId": "cinderbloom",
         "quantity": 1,
         "chance": 0.03
       },
@@ -1818,12 +1818,12 @@
         "chance": 0.05
       },
       {
-        "itemId": "lantadyme",
+        "itemId": "mistvine",
         "quantity": 1,
         "chance": 0.03
       },
       {
-        "itemId": "dwarf_weed",
+        "itemId": "stonefern",
         "quantity": 1,
         "chance": 0.04
       },
@@ -1919,7 +1919,7 @@
         "chance": 0.04
       },
       {
-        "itemId": "kwuarm",
+        "itemId": "wyrmspice",
         "quantity": 1,
         "chance": 0.05
       },
@@ -2021,7 +2021,7 @@
         "chance": 0.06
       },
       {
-        "itemId": "lantadyme",
+        "itemId": "mistvine",
         "quantity": 1,
         "chance": 0.04
       },
@@ -2170,7 +2170,7 @@
         "chance": 0.12
       },
       {
-        "itemId": "harralander",
+        "itemId": "sunblossom",
         "quantity": [
           1,
           2
@@ -2178,7 +2178,7 @@
         "chance": 0.1
       },
       {
-        "itemId": "irit_leaf",
+        "itemId": "emberleaf",
         "quantity": [
           1,
           2
@@ -2186,7 +2186,7 @@
         "chance": 0.08
       },
       {
-        "itemId": "kwuarm",
+        "itemId": "wyrmspice",
         "quantity": [
           1,
           2
@@ -2199,22 +2199,22 @@
         "chance": 0.05
       },
       {
-        "itemId": "cadantine",
+        "itemId": "cinderbloom",
         "quantity": 1,
         "chance": 0.04
       },
       {
-        "itemId": "dwarf_weed",
+        "itemId": "stonefern",
         "quantity": 1,
         "chance": 0.03
       },
       {
-        "itemId": "lantadyme",
+        "itemId": "mistvine",
         "quantity": 1,
         "chance": 0.01
       },
       {
-        "itemId": "toadflax",
+        "itemId": "marshflax",
         "quantity": 1,
         "chance": 0.005
       },
@@ -2343,7 +2343,7 @@
         "chance": 0.12
       },
       {
-        "itemId": "harralander",
+        "itemId": "sunblossom",
         "quantity": [
           1,
           2
@@ -2351,7 +2351,7 @@
         "chance": 0.1
       },
       {
-        "itemId": "irit_leaf",
+        "itemId": "emberleaf",
         "quantity": [
           1,
           2
@@ -2359,7 +2359,7 @@
         "chance": 0.08
       },
       {
-        "itemId": "kwuarm",
+        "itemId": "wyrmspice",
         "quantity": [
           1,
           2
@@ -2372,22 +2372,22 @@
         "chance": 0.05
       },
       {
-        "itemId": "cadantine",
+        "itemId": "cinderbloom",
         "quantity": 1,
         "chance": 0.04
       },
       {
-        "itemId": "dwarf_weed",
+        "itemId": "stonefern",
         "quantity": 1,
         "chance": 0.03
       },
       {
-        "itemId": "lantadyme",
+        "itemId": "mistvine",
         "quantity": 1,
         "chance": 0.01
       },
       {
-        "itemId": "toadflax",
+        "itemId": "marshflax",
         "quantity": 1,
         "chance": 0.005
       },
@@ -2521,7 +2521,7 @@
         "chance": 0.12
       },
       {
-        "itemId": "harralander",
+        "itemId": "sunblossom",
         "quantity": [
           1,
           2
@@ -2529,7 +2529,7 @@
         "chance": 0.1
       },
       {
-        "itemId": "irit_leaf",
+        "itemId": "emberleaf",
         "quantity": [
           1,
           2
@@ -2537,7 +2537,7 @@
         "chance": 0.08
       },
       {
-        "itemId": "kwuarm",
+        "itemId": "wyrmspice",
         "quantity": [
           1,
           2
@@ -2550,22 +2550,22 @@
         "chance": 0.05
       },
       {
-        "itemId": "cadantine",
+        "itemId": "cinderbloom",
         "quantity": 1,
         "chance": 0.04
       },
       {
-        "itemId": "dwarf_weed",
+        "itemId": "stonefern",
         "quantity": 1,
         "chance": 0.03
       },
       {
-        "itemId": "lantadyme",
+        "itemId": "mistvine",
         "quantity": 1,
         "chance": 0.01
       },
       {
-        "itemId": "toadflax",
+        "itemId": "marshflax",
         "quantity": 1,
         "chance": 0.005
       },
@@ -2699,7 +2699,7 @@
         "chance": 0.12
       },
       {
-        "itemId": "harralander",
+        "itemId": "sunblossom",
         "quantity": [
           1,
           2
@@ -2707,7 +2707,7 @@
         "chance": 0.1
       },
       {
-        "itemId": "irit_leaf",
+        "itemId": "emberleaf",
         "quantity": [
           1,
           2
@@ -2715,7 +2715,7 @@
         "chance": 0.08
       },
       {
-        "itemId": "kwuarm",
+        "itemId": "wyrmspice",
         "quantity": [
           1,
           2
@@ -2728,22 +2728,22 @@
         "chance": 0.05
       },
       {
-        "itemId": "cadantine",
+        "itemId": "cinderbloom",
         "quantity": 1,
         "chance": 0.04
       },
       {
-        "itemId": "dwarf_weed",
+        "itemId": "stonefern",
         "quantity": 1,
         "chance": 0.03
       },
       {
-        "itemId": "lantadyme",
+        "itemId": "mistvine",
         "quantity": 1,
         "chance": 0.01
       },
       {
-        "itemId": "toadflax",
+        "itemId": "marshflax",
         "quantity": 1,
         "chance": 0.005
       },
@@ -2869,7 +2869,7 @@
         "chance": 0.12
       },
       {
-        "itemId": "harralander",
+        "itemId": "sunblossom",
         "quantity": [
           1,
           2
@@ -2877,7 +2877,7 @@
         "chance": 0.1
       },
       {
-        "itemId": "irit_leaf",
+        "itemId": "emberleaf",
         "quantity": [
           1,
           2
@@ -2885,7 +2885,7 @@
         "chance": 0.08
       },
       {
-        "itemId": "kwuarm",
+        "itemId": "wyrmspice",
         "quantity": [
           1,
           2
@@ -2898,22 +2898,22 @@
         "chance": 0.05
       },
       {
-        "itemId": "cadantine",
+        "itemId": "cinderbloom",
         "quantity": 1,
         "chance": 0.04
       },
       {
-        "itemId": "dwarf_weed",
+        "itemId": "stonefern",
         "quantity": 1,
         "chance": 0.03
       },
       {
-        "itemId": "lantadyme",
+        "itemId": "mistvine",
         "quantity": 1,
         "chance": 0.01
       },
       {
-        "itemId": "toadflax",
+        "itemId": "marshflax",
         "quantity": 1,
         "chance": 0.005
       },
@@ -3035,7 +3035,7 @@
         "chance": 0.12
       },
       {
-        "itemId": "harralander",
+        "itemId": "sunblossom",
         "quantity": [
           1,
           2
@@ -3043,7 +3043,7 @@
         "chance": 0.1
       },
       {
-        "itemId": "irit_leaf",
+        "itemId": "emberleaf",
         "quantity": [
           1,
           2
@@ -3051,7 +3051,7 @@
         "chance": 0.08
       },
       {
-        "itemId": "kwuarm",
+        "itemId": "wyrmspice",
         "quantity": [
           1,
           2
@@ -3064,22 +3064,22 @@
         "chance": 0.05
       },
       {
-        "itemId": "cadantine",
+        "itemId": "cinderbloom",
         "quantity": 1,
         "chance": 0.04
       },
       {
-        "itemId": "dwarf_weed",
+        "itemId": "stonefern",
         "quantity": 1,
         "chance": 0.03
       },
       {
-        "itemId": "lantadyme",
+        "itemId": "mistvine",
         "quantity": 1,
         "chance": 0.01
       },
       {
-        "itemId": "toadflax",
+        "itemId": "marshflax",
         "quantity": 1,
         "chance": 0.005
       },
@@ -3179,7 +3179,7 @@
         "chance": 0.12
       },
       {
-        "itemId": "harralander",
+        "itemId": "sunblossom",
         "quantity": [
           1,
           2
@@ -3187,7 +3187,7 @@
         "chance": 0.1
       },
       {
-        "itemId": "irit_leaf",
+        "itemId": "emberleaf",
         "quantity": [
           1,
           2
@@ -3195,7 +3195,7 @@
         "chance": 0.08
       },
       {
-        "itemId": "kwuarm",
+        "itemId": "wyrmspice",
         "quantity": [
           1,
           2
@@ -3208,22 +3208,22 @@
         "chance": 0.05
       },
       {
-        "itemId": "cadantine",
+        "itemId": "cinderbloom",
         "quantity": 1,
         "chance": 0.04
       },
       {
-        "itemId": "dwarf_weed",
+        "itemId": "stonefern",
         "quantity": 1,
         "chance": 0.03
       },
       {
-        "itemId": "lantadyme",
+        "itemId": "mistvine",
         "quantity": 1,
         "chance": 0.01
       },
       {
-        "itemId": "toadflax",
+        "itemId": "marshflax",
         "quantity": 1,
         "chance": 0.005
       },
@@ -3318,7 +3318,7 @@
         "chance": 0.12
       },
       {
-        "itemId": "harralander",
+        "itemId": "sunblossom",
         "quantity": [
           1,
           2
@@ -3326,7 +3326,7 @@
         "chance": 0.1
       },
       {
-        "itemId": "irit_leaf",
+        "itemId": "emberleaf",
         "quantity": [
           1,
           2
@@ -3334,7 +3334,7 @@
         "chance": 0.08
       },
       {
-        "itemId": "kwuarm",
+        "itemId": "wyrmspice",
         "quantity": [
           1,
           2
@@ -3347,22 +3347,22 @@
         "chance": 0.05
       },
       {
-        "itemId": "cadantine",
+        "itemId": "cinderbloom",
         "quantity": 1,
         "chance": 0.04
       },
       {
-        "itemId": "dwarf_weed",
+        "itemId": "stonefern",
         "quantity": 1,
         "chance": 0.03
       },
       {
-        "itemId": "lantadyme",
+        "itemId": "mistvine",
         "quantity": 1,
         "chance": 0.01
       },
       {
-        "itemId": "toadflax",
+        "itemId": "marshflax",
         "quantity": 1,
         "chance": 0.005
       },
@@ -3457,7 +3457,7 @@
         "chance": 0.12
       },
       {
-        "itemId": "harralander",
+        "itemId": "sunblossom",
         "quantity": [
           1,
           2
@@ -3465,7 +3465,7 @@
         "chance": 0.1
       },
       {
-        "itemId": "irit_leaf",
+        "itemId": "emberleaf",
         "quantity": [
           1,
           2
@@ -3473,7 +3473,7 @@
         "chance": 0.08
       },
       {
-        "itemId": "kwuarm",
+        "itemId": "wyrmspice",
         "quantity": [
           1,
           2
@@ -3486,22 +3486,22 @@
         "chance": 0.05
       },
       {
-        "itemId": "cadantine",
+        "itemId": "cinderbloom",
         "quantity": 1,
         "chance": 0.04
       },
       {
-        "itemId": "dwarf_weed",
+        "itemId": "stonefern",
         "quantity": 1,
         "chance": 0.03
       },
       {
-        "itemId": "lantadyme",
+        "itemId": "mistvine",
         "quantity": 1,
         "chance": 0.01
       },
       {
-        "itemId": "toadflax",
+        "itemId": "marshflax",
         "quantity": 1,
         "chance": 0.005
       },
@@ -3593,7 +3593,7 @@
         "chance": 0.12
       },
       {
-        "itemId": "harralander",
+        "itemId": "sunblossom",
         "quantity": [
           1,
           2
@@ -4534,7 +4534,7 @@
         "chance": 0.24
       },
       {
-        "itemId": "irit_leaf",
+        "itemId": "emberleaf",
         "quantity": [
           5,
           25
@@ -4542,7 +4542,7 @@
         "chance": 0.22
       },
       {
-        "itemId": "kwuarm",
+        "itemId": "wyrmspice",
         "quantity": [
           5,
           25
@@ -4550,7 +4550,7 @@
         "chance": 0.2
       },
       {
-        "itemId": "cadantine",
+        "itemId": "cinderbloom",
         "quantity": [
           5,
           25
@@ -4558,7 +4558,7 @@
         "chance": 0.18
       },
       {
-        "itemId": "dwarf_weed",
+        "itemId": "stonefern",
         "quantity": [
           5,
           25
@@ -5911,7 +5911,7 @@
         "chance": 0.1
       },
       {
-        "itemId": "kwuarm",
+        "itemId": "wyrmspice",
         "quantity": 5,
         "chance": 0.1
       },
@@ -5998,7 +5998,7 @@
         "chance": 0.05
       },
       {
-        "itemId": "harralander",
+        "itemId": "sunblossom",
         "quantity": 1,
         "chance": 0.04
       },
@@ -6008,7 +6008,7 @@
         "chance": 0.03
       },
       {
-        "itemId": "irit_leaf",
+        "itemId": "emberleaf",
         "quantity": 1,
         "chance": 0.02
       },
@@ -6112,22 +6112,22 @@
         "chance": 0.05
       },
       {
-        "itemId": "kwuarm",
+        "itemId": "wyrmspice",
         "quantity": 1,
         "chance": 0.05
       },
       {
-        "itemId": "cadantine",
+        "itemId": "cinderbloom",
         "quantity": 1,
         "chance": 0.04
       },
       {
-        "itemId": "lantadyme",
+        "itemId": "mistvine",
         "quantity": 1,
         "chance": 0.02
       },
       {
-        "itemId": "dwarf_weed",
+        "itemId": "stonefern",
         "quantity": 1,
         "chance": 0.02
       },
@@ -6260,7 +6260,7 @@
         "chance": 0.06
       },
       {
-        "itemId": "lantadyme",
+        "itemId": "mistvine",
         "quantity": 1,
         "chance": 0.03
       },
@@ -6471,7 +6471,7 @@
         "chance": 0.06
       },
       {
-        "itemId": "lantadyme",
+        "itemId": "mistvine",
         "quantity": 1,
         "chance": 0.03
       },
@@ -6683,7 +6683,7 @@
         "chance": 0.04
       },
       {
-        "itemId": "kwuarm",
+        "itemId": "wyrmspice",
         "quantity": 1,
         "chance": 0.05
       },
@@ -6811,7 +6811,7 @@
         "chance": 0.06
       },
       {
-        "itemId": "torstol",
+        "itemId": "thornspire",
         "quantity": 1,
         "chance": 0.03
       },
@@ -6925,7 +6925,7 @@
         "chance": 0.06
       },
       {
-        "itemId": "torstol",
+        "itemId": "thornspire",
         "quantity": 1,
         "chance": 0.04
       },
@@ -7042,7 +7042,7 @@
         "chance": 0.08
       },
       {
-        "itemId": "torstol",
+        "itemId": "thornspire",
         "quantity": [
           1,
           2
@@ -7160,7 +7160,7 @@
         "chance": 0.06
       },
       {
-        "itemId": "torstol",
+        "itemId": "thornspire",
         "quantity": 1,
         "chance": 0.04
       },

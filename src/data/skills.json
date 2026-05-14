@@ -1662,7 +1662,7 @@
         "xp": 70,
         "product": "combat_potion",
         "materials": {
-          "harralander": 1,
+          "sunblossom": 1,
           "goat_horn_dust": 1
         }
       },
@@ -1686,7 +1686,7 @@
         "xp": 90,
         "product": "super_attack",
         "materials": {
-          "irit_leaf": 1,
+          "emberleaf": 1,
           "eye_of_newt": 1
         }
       },
@@ -1698,7 +1698,7 @@
         "xp": 110,
         "product": "super_strength",
         "materials": {
-          "kwuarm": 1,
+          "wyrmspice": 1,
           "limpwurt_root": 1
         }
       },
@@ -1722,7 +1722,7 @@
         "xp": 140,
         "product": "super_defence",
         "materials": {
-          "cadantine": 1,
+          "cinderbloom": 1,
           "white_berries": 1
         }
       },
@@ -1734,7 +1734,7 @@
         "xp": 160,
         "product": "ranging_potion",
         "materials": {
-          "dwarf_weed": 1,
+          "stonefern": 1,
           "wine_of_krylth": 1
         }
       },
@@ -1746,7 +1746,7 @@
         "xp": 180,
         "product": "magic_potion",
         "materials": {
-          "lantadyme": 1,
+          "mistvine": 1,
           "potato_cactus": 1
         }
       },
@@ -1758,7 +1758,7 @@
         "xp": 200,
         "product": "lumira_brew",
         "materials": {
-          "toadflax": 1,
+          "marshflax": 1,
           "crushed_bird_s_nest": 1
         }
       },
@@ -1770,7 +1770,7 @@
         "xp": 500,
         "product": "super_combat",
         "materials": {
-          "torstol": 1,
+          "thornspire": 1,
           "super_attack": 1,
           "super_strength": 1,
           "super_defence": 1,
