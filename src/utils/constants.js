@@ -83,6 +83,9 @@ export const SCREENS = {
   AGILITY: 'agility',
   STORE: 'store',
   QUESTS: 'quests',
-  SETTINGS: 'settings',
-  LEADERBOARD: 'leaderboard'
+  CLUES: 'clues',
+  MINIGAMES: 'minigames',
+  COLLECTION_LOG: 'collection_log',
+  LEADERBOARD: 'leaderboard',
+  HELP: 'help'
 }

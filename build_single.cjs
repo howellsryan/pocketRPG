@@ -112,7 +112,11 @@ const sourceFiles = [
   'screens/GeneralStoreScreen.js',
   'screens/EquipmentScreen.js',
   'screens/QuestsScreen.js',
-  'screens/SettingsScreen.js',
+  'screens/CluesScreen.js',
+  'screens/MinigamesScreen.js',
+  'screens/CollectionLogScreen.js',
+  'screens/LeaderboardScreen.js',
+  'screens/HelpScreen.js',
   'screens/AuthScreen.js',
   'App.js',
 ];

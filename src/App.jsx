@@ -17,7 +17,11 @@ import AgilityScreen from './screens/AgilityScreen.jsx'
 import GeneralStoreScreen from './screens/GeneralStoreScreen.jsx'
 import EquipmentScreen from './screens/EquipmentScreen.jsx'
 import QuestsScreen from './screens/QuestsScreen.jsx'
-import SettingsScreen from './screens/SettingsScreen.jsx'
+import CluesScreen from './screens/CluesScreen.jsx'
+import MinigamesScreen from './screens/MinigamesScreen.jsx'
+import CollectionLogScreen from './screens/CollectionLogScreen.jsx'
+import LeaderboardScreen from './screens/LeaderboardScreen.jsx'
+import HelpScreen from './screens/HelpScreen.jsx'
 import AuthScreen from './screens/AuthScreen.jsx'
 import { SCREENS } from './utils/constants.js'
 import { hasSave, closeDB } from './db/database.js'
@@ -1589,9 +1593,12 @@ function GameApp() {
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} />
       case SCREENS.AGILITY:     return <AgilityScreen initialActionId={actionData?.actionId} idleResult={idleResult} />
       case SCREENS.STORE:       return <GeneralStoreScreen />
-      case SCREENS.QUESTS:      return <QuestsScreen />
-      case SCREENS.SETTINGS: return <SettingsScreen />
-      case SCREENS.LEADERBOARD: return <SettingsScreen />
+      case SCREENS.QUESTS:         return <QuestsScreen />
+      case SCREENS.CLUES:          return <CluesScreen />
+      case SCREENS.MINIGAMES:      return <MinigamesScreen />
+      case SCREENS.COLLECTION_LOG: return <CollectionLogScreen />
+      case SCREENS.LEADERBOARD:    return <LeaderboardScreen />
+      case SCREENS.HELP:           return <HelpScreen />
       default:                  return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} />
     }
   }
