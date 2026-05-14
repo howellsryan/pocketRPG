@@ -46,7 +46,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "chicken"
   },
   "goblin": {
     "id": "goblin",
@@ -168,7 +169,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "goblin"
   },
   "cow": {
     "id": "cow",
@@ -214,7 +216,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "cow"
   },
   "giant_spider": {
     "id": "giant_spider",
@@ -331,7 +334,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "giant_spider"
   },
   "lesser_demon": {
     "id": "lesser_demon",
@@ -453,7 +457,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "lesser_demon"
   },
   "rock_crab": {
     "id": "rock_crab",
@@ -585,7 +590,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "rock_crab"
   },
   "sand_crab": {
     "id": "sand_crab",
@@ -717,7 +723,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "sand_crab"
   },
   "hill_giant": {
     "id": "hill_giant",
@@ -879,7 +886,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "hill_giant"
   },
   "moss_giant": {
     "id": "moss_giant",
@@ -1050,7 +1058,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "moss_giant"
   },
   "wizard": {
     "id": "wizard",
@@ -1173,7 +1182,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "wizard"
   },
   "dark_wizard": {
     "id": "dark_wizard",
@@ -1329,7 +1339,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "dark_wizard"
   },
   "abyssal_demon": {
     "id": "abyssal_demon",
@@ -1496,7 +1507,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "abyssal_demon"
   },
   "blood_veld": {
     "id": "blood_veld",
@@ -1609,7 +1621,8 @@
         "quantity": 1,
         "chance": 0.01
       }
-    ]
+    ],
+    "legacy_id": "blood_veld"
   },
   "nechryael": {
     "id": "nechryael",
@@ -1711,7 +1724,8 @@
         "quantity": 1,
         "chance": 0.012
       }
-    ]
+    ],
+    "legacy_id": "nechryael"
   },
   "skeletal_wyvern": {
     "id": "skeletal_wyvern",
@@ -1818,7 +1832,8 @@
         "quantity": 1,
         "chance": 0.018
       }
-    ]
+    ],
+    "legacy_id": "skeletal_wyvern"
   },
   "smoke_devil": {
     "id": "smoke_devil",
@@ -1923,7 +1938,8 @@
         "quantity": 1,
         "chance": 0.015
       }
-    ]
+    ],
+    "legacy_id": "smoke_devil"
   },
   "kraken": {
     "id": "kraken",
@@ -2019,7 +2035,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "kraken"
   },
   "general_graardor": {
     "id": "general_graardor",
@@ -2206,7 +2223,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "general_graardor"
   },
   "commander_zilyana": {
     "id": "commander_zilyana",
@@ -2378,7 +2396,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "commander_zilyana"
   },
   "kril_tsutsaroth": {
     "id": "kril_tsutsaroth",
@@ -2555,7 +2574,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "kril_tsutsaroth"
   },
   "kreearra": {
     "id": "kreearra",
@@ -2732,7 +2752,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "kreearra"
   },
   "green_dragon": {
     "id": "green_dragon",
@@ -2901,7 +2922,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "green_dragon"
   },
   "red_dragon": {
     "id": "red_dragon",
@@ -3066,7 +3088,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "red_dragon"
   },
   "dagganoth_rex": {
     "id": "dagganoth_rex",
@@ -3209,7 +3232,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "dagganoth_rex"
   },
   "dagganoth_prime": {
     "id": "dagganoth_prime",
@@ -3347,7 +3371,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "dagganoth_prime"
   },
   "dagganoth_supreme": {
     "id": "dagganoth_supreme",
@@ -3485,7 +3510,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "dagganoth_supreme"
   },
   "crazy_archaeologist": {
     "id": "crazy_archaeologist",
@@ -3579,7 +3605,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "crazy_archaeologist"
   },
   "king_black_dragon": {
     "id": "king_black_dragon",
@@ -3669,7 +3696,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "king_black_dragon"
   },
   "adamant_dragon": {
     "id": "adamant_dragon",
@@ -3808,7 +3836,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "adamant_dragon"
   },
   "rune_dragon": {
     "id": "rune_dragon",
@@ -3965,7 +3994,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "rune_dragon"
   },
   "zulrah": {
     "id": "zulrah",
@@ -4135,7 +4165,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "zulrah"
   },
   "jad": {
     "id": "jad",
@@ -4225,7 +4256,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "jad"
   },
   "inferno": {
     "id": "inferno",
@@ -4315,7 +4347,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "inferno"
   },
   "corrupted_gauntlet": {
     "id": "corrupted_gauntlet",
@@ -4629,7 +4662,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "corrupted_gauntlet"
   },
   "olm": {
     "id": "olm",
@@ -4716,7 +4750,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "olm"
   },
   "demonic_gorilla": {
     "id": "demonic_gorilla",
@@ -4870,7 +4905,8 @@
         "chance": 0.02
       }
     ],
-    "slayerRequirement": 70
+    "slayerRequirement": 70,
+    "legacy_id": "demonic_gorilla"
   },
   "maiden_of_sugadinti": {
     "id": "maiden_of_sugadinti",
@@ -4904,7 +4940,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "maiden_of_sugadinti"
   },
   "pestilent_bloat": {
     "id": "pestilent_bloat",
@@ -4938,7 +4975,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "pestilent_bloat"
   },
   "nylocas_vasilias": {
     "id": "nylocas_vasilias",
@@ -5030,7 +5068,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "nylocas_vasilias"
   },
   "sotetseg": {
     "id": "sotetseg",
@@ -5116,7 +5155,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "sotetseg"
   },
   "xarpus": {
     "id": "xarpus",
@@ -5150,7 +5190,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "xarpus"
   },
   "verzik_vitur": {
     "id": "verzik_vitur",
@@ -5246,7 +5287,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "verzik_vitur"
   },
   "tekton": {
     "id": "tekton",
@@ -5280,7 +5322,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "tekton"
   },
   "vespula": {
     "id": "vespula",
@@ -5348,7 +5391,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "vespula"
   },
   "muttadile": {
     "id": "muttadile",
@@ -5416,7 +5460,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "muttadile"
   },
   "arim_the_blighted": {
     "id": "arim_the_blighted",
@@ -5476,7 +5521,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "arim_the_blighted"
   },
   "dharok_the_wretched": {
     "id": "dharok_the_wretched",
@@ -5536,7 +5582,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "dharok_the_wretched"
   },
   "guthan_the_infested": {
     "id": "guthan_the_infested",
@@ -5596,7 +5643,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "guthan_the_infested"
   },
   "karil_the_tainted": {
     "id": "karil_the_tainted",
@@ -5656,7 +5704,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "karil_the_tainted"
   },
   "torag_the_corrupted": {
     "id": "torag_the_corrupted",
@@ -5716,7 +5765,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "torag_the_corrupted"
   },
   "verac_the_defiled": {
     "id": "verac_the_defiled",
@@ -5776,7 +5826,8 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "verac_the_defiled"
   },
   "lizardman_shaman": {
     "id": "lizardman_shaman",
@@ -5874,7 +5925,8 @@
         "quantity": 1,
         "chance": 0.0003333333333333333
       }
-    ]
+    ],
+    "legacy_id": "lizardman_shaman"
   },
   "banshee": {
     "id": "banshee",
@@ -5975,7 +6027,8 @@
         "quantity": 1,
         "chance": 0.015
       }
-    ]
+    ],
+    "legacy_id": "banshee"
   },
   "aberrant_spectre": {
     "id": "aberrant_spectre",
@@ -6107,7 +6160,8 @@
         "quantity": 1,
         "chance": 0.015
       }
-    ]
+    ],
+    "legacy_id": "aberrant_spectre"
   },
   "wyrm": {
     "id": "wyrm",
@@ -6215,7 +6269,8 @@
         "quantity": 1,
         "chance": 0.015
       }
-    ]
+    ],
+    "legacy_id": "wyrm"
   },
   "spiritual_warrior": {
     "id": "spiritual_warrior",
@@ -6317,7 +6372,8 @@
         "quantity": 1,
         "chance": 0.012
       }
-    ]
+    ],
+    "legacy_id": "spiritual_warrior"
   },
   "spiritual_mage": {
     "id": "spiritual_mage",
@@ -6424,7 +6480,8 @@
         "quantity": 1,
         "chance": 0.012
       }
-    ]
+    ],
+    "legacy_id": "spiritual_mage"
   },
   "spiritual_ranger": {
     "id": "spiritual_ranger",
@@ -6532,7 +6589,8 @@
         "quantity": 1,
         "chance": 0.012
       }
-    ]
+    ],
+    "legacy_id": "spiritual_ranger"
   },
   "gargoyle": {
     "id": "gargoyle",
@@ -6634,7 +6692,8 @@
         "quantity": 1,
         "chance": 0.015
       }
-    ]
+    ],
+    "legacy_id": "gargoyle"
   },
   "brutal_black_dragon": {
     "id": "brutal_black_dragon",
@@ -6761,7 +6820,8 @@
         "quantity": 1,
         "chance": 0.018
       }
-    ]
+    ],
+    "legacy_id": "brutal_black_dragon"
   },
   "dark_beast": {
     "id": "dark_beast",
@@ -6874,7 +6934,8 @@
         "quantity": 1,
         "chance": 0.018
       }
-    ]
+    ],
+    "legacy_id": "dark_beast"
   },
   "cerberus": {
     "id": "cerberus",
@@ -6993,7 +7054,8 @@
         "quantity": 1,
         "chance": 0.025
       }
-    ]
+    ],
+    "legacy_id": "cerberus"
   },
   "hydra": {
     "id": "hydra",
@@ -7115,6 +7177,7 @@
         "quantity": 1,
         "chance": 0.02
       }
-    ]
+    ],
+    "legacy_id": "hydra"
   }
 }
