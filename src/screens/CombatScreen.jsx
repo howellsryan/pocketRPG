@@ -46,7 +46,7 @@ const COMBAT_CATEGORIES = [
     key: 'slayer',
     label: 'Slayer',
     icon: '💀',
-    ids: ['banshee', 'aberrant_spectre', 'wyrm', 'spiritual_warrior', 'spiritual_ranger', 'spiritual_mage', 'gargoyle', 'blood_veld', 'skeletal_wyvern', 'nechryael', 'smoke_devil', 'brutal_black_dragon', 'abyssal_demon', 'dark_beast', 'deepmaw_kraken', 'hellbound_gorilla', 'lizardman_shaman', 'threefang_cerberus', 'ashen_hydra'],
+    ids: ['wailing_banshee', 'sanguine_veld', 'warped_spectre', 'ash_wyrm', 'astral_ranger', 'astral_warrior', 'hellbound_gorilla', 'bone_wyvern', 'runestone_gargoyle', 'vicious_black_dragon', 'nether_wraith', 'marshscale_shaman', 'astral_mage', 'nether_demon', 'cinder_devil', 'deepmaw_kraken', 'nightfang_beast', 'threefang_cerberus', 'ashen_hydra'],
   },
   {
     key: 'bossing',
@@ -95,11 +95,12 @@ const COMBAT_CATEGORIES = [
 const MONSTER_ICONS = {
   field_chicken: '🐔', cave_goblin: '👺', pasture_bull: '🐄', broodfang_spider: '🕷️',
   stoneback_crab: '🦀', duneback_crab: '🦀', highland_giant: '👊', briar_giant: '🌿',
-  arcane_adept: '🧙', umbral_adept: '🧙‍♂️', abyssal_demon: '😈', hellbound_gorilla: '🦍', lizardman_shaman: '🦎',
-  blood_veld: '🩸', nechryael: '👻', skeletal_wyvern: '🐲', smoke_devil: '💨', deepmaw_kraken: '🦑',
-  banshee: '👻', aberrant_spectre: '👁️', wyrm: '🐍', spiritual_warrior: '⚔️',
-  spiritual_ranger: '🏹', spiritual_mage: '🔮', gargoyle: '🗿',
-  brutal_black_dragon: '🐉', dark_beast: '🦇', threefang_cerberus: '🐺', ashen_hydra: '🐲',
+  arcane_adept: '🧙', umbral_adept: '🧙‍♂️', hellbound_gorilla: '🦍',
+  wailing_banshee: '👻', sanguine_veld: '🩸', warped_spectre: '👁️', ash_wyrm: '🐍',
+  astral_warrior: '⚔️', astral_ranger: '🏹', astral_mage: '🔮', runestone_gargoyle: '🗿',
+  bone_wyvern: '🐲', cinder_devil: '💨', deepmaw_kraken: '🦑', nightfang_beast: '🦇',
+  marshscale_shaman: '🦎', nether_wraith: '👻', nether_demon: '😈', vicious_black_dragon: '🐉',
+  threefang_cerberus: '🐺', ashen_hydra: '🐲',
   green_dragon: '🐉', red_dragon: '🔴', adamant_dragon: '⚔️', rune_dragon: '🛡️', lesser_fiend: '👿',
   warlord_grondar: '👹', commander_zephyra: '🌟', krylth_the_defiler: '🔥', skyrender_kharra: '🦅',
   nagadoth_rex: '🦖', nagadoth_prime: '👹', nagadoth_supreme: '🏹',
@@ -1588,7 +1589,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           </button>
           {!(collapsedSections.raids ?? true) && (
             <div class="space-y-2">
-            {Object.values(raidsData).map(raid => {
+            {Object.values(raidsData).filter((raid, index, allRaids) =>
+              allRaids.findIndex(candidate => candidate.id === raid.id) === index
+            ).map(raid => {
               const raidReq = checkRaidRequirements(raid)
               const isRaidLocked = raidReq.locked
               return (
