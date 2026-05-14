@@ -33,6 +33,17 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
 
   const getItemTypes = () => getStoreItemTypes(itemsData, { isIronman })
 
+
+  const dedupeStoreItems = (items) => {
+    const seen = new Set()
+    return items.filter((item) => {
+      const key = `${item.name.toLowerCase()}::${item.shopValue || 0}::${item.questUnlock || ''}::${item.type || ''}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }
+
   const itemTypes = getItemTypes()
 
   // Quest ID to quest name mapping
@@ -80,9 +91,10 @@ export default function GeneralStoreScreen({ onBuyCredits }) {
 
   const getSearchResults = () => {
     const available = getAvailableItems()
-    if (!searchTerm.trim()) return available
+    if (!searchTerm.trim()) return dedupeStoreItems(available)
     const lower = searchTerm.toLowerCase()
-    return available.filter(item => item.name.toLowerCase().includes(lower))
+    const filtered = available.filter(item => item.name.toLowerCase().includes(lower))
+    return dedupeStoreItems(filtered)
   }
 
   const MINIGAME_UNLOCK_STORE_PRICE = 4_500_000
