@@ -7961,10 +7961,10 @@
     "icon": "🌿",
     "isGeneralStore": false
   },
-  "snapdragon": {
-    "id": "snapdragon",
+  "snapdrake": {
+    "id": "snapdrake",
     "legacy_item_id": "snapdragon",
-    "name": "Snapdragon",
+    "name": "Snapdrake",
     "type": "resource",
     "stackable": true,
     "shopValue": 8544,

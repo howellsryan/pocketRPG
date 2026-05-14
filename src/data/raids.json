@@ -53,7 +53,7 @@
           "chance": 0.3
         },
         {
-          "itemId": "snapdragon",
+          "itemId": "snapdrake",
           "quantity": [
             10,
             30
@@ -161,7 +161,7 @@
           "chance": 0.6
         },
         {
-          "itemId": "snapdragon",
+          "itemId": "snapdrake",
           "quantity": [
             5,
             15
@@ -419,7 +419,7 @@
           "chance": 0.3
         },
         {
-          "itemId": "snapdragon",
+          "itemId": "snapdrake",
           "quantity": [
             10,
             30
@@ -527,7 +527,7 @@
           "chance": 0.6
         },
         {
-          "itemId": "snapdragon",
+          "itemId": "snapdrake",
           "quantity": [
             5,
             15

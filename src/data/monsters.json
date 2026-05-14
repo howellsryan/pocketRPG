@@ -140,7 +140,7 @@
         "chance": 0.006
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.005
       },
@@ -305,7 +305,7 @@
         "chance": 0.006
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.005
       },
@@ -428,7 +428,7 @@
         "chance": 0.012
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.01
       },
@@ -561,7 +561,7 @@
         "chance": 0.006
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.005
       },
@@ -694,7 +694,7 @@
         "chance": 0.006
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.005
       },
@@ -857,7 +857,7 @@
         "chance": 0.006
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.005
       },
@@ -1029,7 +1029,7 @@
         "chance": 0.006
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.005
       },
@@ -1478,7 +1478,7 @@
         "chance": 0.06
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.05
       },
@@ -1705,7 +1705,7 @@
         "chance": 0.08
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.04
       },
@@ -1813,7 +1813,7 @@
         "chance": 0.08
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.05
       },
@@ -1914,7 +1914,7 @@
         "chance": 0.08
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.04
       },
@@ -2013,7 +2013,7 @@
         "chance": 0.08
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": [
           1,
           2
@@ -2194,7 +2194,7 @@
         "chance": 0.06
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.05
       },
@@ -2367,7 +2367,7 @@
         "chance": 0.06
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.05
       },
@@ -2545,7 +2545,7 @@
         "chance": 0.06
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.05
       },
@@ -2723,7 +2723,7 @@
         "chance": 0.06
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.05
       },
@@ -2893,7 +2893,7 @@
         "chance": 0.06
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.05
       },
@@ -3059,7 +3059,7 @@
         "chance": 0.06
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.05
       },
@@ -3203,7 +3203,7 @@
         "chance": 0.06
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.05
       },
@@ -3342,7 +3342,7 @@
         "chance": 0.06
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.05
       },
@@ -3481,7 +3481,7 @@
         "chance": 0.06
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.05
       },
@@ -4125,7 +4125,7 @@
         "chance": 0.15
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": [
           1,
           3
@@ -4574,7 +4574,7 @@
         "chance": 0.15
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": [
           3,
           12
@@ -4861,7 +4861,7 @@
         "chance": 0.4
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.15
       },
@@ -5906,7 +5906,7 @@
         "chance": 0.1
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 5,
         "chance": 0.1
       },
@@ -6107,7 +6107,7 @@
         "chance": 0.08
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.05
       },
@@ -6247,7 +6247,7 @@
         "chance": 0.12
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.04
       },
@@ -6347,7 +6347,7 @@
         "chance": 0.07
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.05
       },
@@ -6458,7 +6458,7 @@
         "chance": 0.18
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.04
       },
@@ -6580,7 +6580,7 @@
         "chance": 0.06
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.04
       },
@@ -6678,7 +6678,7 @@
         "chance": 0.07
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.04
       },
@@ -6803,7 +6803,7 @@
         "chance": 0.08
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": [
           1,
           2
@@ -6920,7 +6920,7 @@
         "chance": 0.08
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": 1,
         "chance": 0.06
       },
@@ -7034,7 +7034,7 @@
         "chance": 0.1
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": [
           1,
           3
@@ -7152,7 +7152,7 @@
         "chance": 0.08
       },
       {
-        "itemId": "snapdragon",
+        "itemId": "snapdrake",
         "quantity": [
           1,
           2
