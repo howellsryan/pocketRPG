@@ -81,7 +81,7 @@
         "level": 85,
         "ticks": 30,
         "xp": 420,
-        "product": "runite_ore"
+        "product": "runeforged_ore"
       },
       {
         "id": "gem_mining",
@@ -493,7 +493,7 @@
         "xp": 50,
         "product": "runeforged_bar",
         "materials": {
-          "runite_ore": 1,
+          "runeforged_ore": 1,
           "coal": 8
         }
       },
@@ -663,7 +663,7 @@
       },
       {
         "id": "make_dragonfire_shield",
-        "name": "Attach draconic visage",
+        "name": "Attach dragon visage",
         "level": 90,
         "ticks": 10,
         "xp": 2000,
@@ -693,7 +693,7 @@
       },
       {
         "id": "cook_chicken",
-        "name": "Cook field_chicken",
+        "name": "Cook chicken",
         "level": 1,
         "ticks": 4,
         "xp": 30,

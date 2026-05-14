@@ -40,25 +40,25 @@ const COMBAT_CATEGORIES = [
     key: 'training',
     label: 'Training',
     icon: '⚔️',
-    ids: ['chicken', 'goblin', 'cow', 'rock_crab', 'sand_crab', 'wizard', 'dark_wizard', 'giant_spider', 'hill_giant', 'moss_giant', 'lesser_demon'],
+    ids: ['field_chicken', 'cave_goblin', 'pasture_bull', 'stoneback_crab', 'duneback_crab', 'arcane_adept', 'umbral_adept', 'broodfang_spider', 'highland_giant', 'briar_giant', 'lesser_fiend'],
   },
   {
     key: 'slayer',
     label: 'Slayer',
     icon: '💀',
-    ids: ['banshee', 'aberrant_spectre', 'wyrm', 'spiritual_warrior', 'spiritual_ranger', 'spiritual_mage', 'gargoyle', 'blood_veld', 'skeletal_wyvern', 'nechryael', 'smoke_devil', 'brutal_black_dragon', 'abyssal_demon', 'dark_beast', 'kraken', 'demonic_gorilla', 'lizardman_shaman', 'cerberus', 'hydra'],
+    ids: ['wailing_banshee', 'sanguine_veld', 'warped_spectre', 'ash_wyrm', 'astral_ranger', 'astral_warrior', 'hellbound_gorilla', 'bone_wyvern', 'runestone_gargoyle', 'vicious_black_dragon', 'nether_wraith', 'marshscale_shaman', 'astral_mage', 'nether_demon', 'cinder_devil', 'deepmaw_kraken', 'nightfang_beast', 'threefang_cerberus', 'ashen_hydra'],
   },
   {
     key: 'bossing',
     label: 'God Wars Dungeon',
     icon: '👑',
-    ids: ['general_graardor', 'commander_zilyana', 'kril_tsutsaroth', 'kreearra'],
+    ids: ['warlord_grondar', 'commander_zephyra', 'krylth_the_defiler', 'skyrender_kharra'],
   },
   {
     key: 'dagganoth_kings',
     label: 'Nagadoth Kings',
     icon: '👹',
-    ids: ['dagganoth_rex', 'dagganoth_prime', 'dagganoth_supreme'],
+    ids: ['nagadoth_rex', 'nagadoth_prime', 'nagadoth_supreme'],
   },
   {
     key: 'wilderness',
@@ -73,39 +73,40 @@ const COMBAT_CATEGORIES = [
     ids: ['green_dragon', 'red_dragon', 'king_black_dragon', 'adamant_dragon', 'rune_dragon'],
   },
   {
-    key: 'zulrah',
+    key: 'venomcoil_matriarch',
     label: 'Venomcoil Matriarch',
     icon: '🐍',
-    ids: ['zulrah'],
+    ids: ['venomcoil_matriarch'],
   },
   {
     key: 'fight_caves',
     label: 'Ember Pits',
     icon: '🔥',
-    ids: ['jad', 'inferno'],
+    ids: ['ember_tyrant', 'ashen_crucible'],
   },
   {
-    key: 'corrupted_gauntlet',
+    key: 'blighted_gauntlet',
     label: 'Blighted Gauntlet',
     icon: '⚡',
-    ids: ['corrupted_gauntlet'],
+    ids: ['blighted_gauntlet'],
   },
 ]
 
 const MONSTER_ICONS = {
-  chicken: '🐔', goblin: '👺', cow: '🐄', giant_spider: '🕷️',
-  rock_crab: '🦀', sand_crab: '🦀', hill_giant: '👊', moss_giant: '🌿',
-  wizard: '🧙', dark_wizard: '🧙‍♂️', abyssal_demon: '😈', demonic_gorilla: '🦍', lizardman_shaman: '🦎',
-  blood_veld: '🩸', nechryael: '👻', skeletal_wyvern: '🐲', smoke_devil: '💨', kraken: '🦑',
-  banshee: '👻', aberrant_spectre: '👁️', wyrm: '🐍', spiritual_warrior: '⚔️',
-  spiritual_ranger: '🏹', spiritual_mage: '🔮', gargoyle: '🗿',
-  brutal_black_dragon: '🐉', dark_beast: '🦇', cerberus: '🐺', hydra: '🐲',
-  green_dragon: '🐉', red_dragon: '🔴', adamant_dragon: '⚔️', rune_dragon: '🛡️', lesser_demon: '👿',
-  general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
-  dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹',
-  crazy_archaeologist: '📜', king_black_dragon: '👑', zulrah: '🐍', jad: '🌋', inferno: '🌋', corrupted_gauntlet: '⚡',
-  tekton: '🔨', vespula: '🦟', muttadile: '🦷', olm: '🏛️',
-  maiden_of_sugadinti: '🩸', pestilent_bloat: '🤢', nylocas_vasilias: '🕷️',
+  field_chicken: '🐔', cave_goblin: '👺', pasture_bull: '🐄', broodfang_spider: '🕷️',
+  stoneback_crab: '🦀', duneback_crab: '🦀', highland_giant: '👊', briar_giant: '🌿',
+  arcane_adept: '🧙', umbral_adept: '🧙‍♂️', hellbound_gorilla: '🦍',
+  wailing_banshee: '👻', sanguine_veld: '🩸', warped_spectre: '👁️', ash_wyrm: '🐍',
+  astral_warrior: '⚔️', astral_ranger: '🏹', astral_mage: '🔮', runestone_gargoyle: '🗿',
+  bone_wyvern: '🐲', cinder_devil: '💨', deepmaw_kraken: '🦑', nightfang_beast: '🦇',
+  marshscale_shaman: '🦎', nether_wraith: '👻', nether_demon: '😈', vicious_black_dragon: '🐉',
+  threefang_cerberus: '🐺', ashen_hydra: '🐲',
+  green_dragon: '🐉', red_dragon: '🔴', adamant_dragon: '⚔️', rune_dragon: '🛡️', lesser_fiend: '👿',
+  warlord_grondar: '👹', commander_zephyra: '🌟', krylth_the_defiler: '🔥', skyrender_kharra: '🦅',
+  nagadoth_rex: '🦖', nagadoth_prime: '👹', nagadoth_supreme: '🏹',
+  crazy_archaeologist: '📜', king_black_dragon: '👑', venomcoil_matriarch: '🐍', ember_tyrant: '🌋', ashen_crucible: '🌋', blighted_gauntlet: '⚡',
+  tekton: '🔨', vespula: '🦟', muttadile: '🦷', the_great_olm: '🏛️',
+  the_maiden_of_sugadinti: '🩸', pestilent_bloat: '🤢', nylocas_vasilias: '🕷️',
   sotetseg: '🔮', xarpus: '☠️', verzik_vitur: '👑'
 }
 
@@ -537,7 +538,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             type: 'formChange',
             time: Date.now()
           }])
-          const phaseChangeMonsters = ['olm', 'zulrah', 'jad', 'inferno', 'demonic_gorilla', 'maiden_of_sugadinti', 'pestilent_bloat', 'nylocas_vasilias', 'sotetseg', 'xarpus', 'verzik_vitur', 'vespula', 'muttadile']
+          const phaseChangeMonsters = ['the_great_olm', 'venomcoil_matriarch', 'ember_tyrant', 'ashen_crucible', 'hellbound_gorilla', 'the_maiden_of_sugadinti', 'pestilent_bloat', 'nylocas_vasilias', 'sotetseg', 'xarpus', 'verzik_vitur', 'vespula', 'muttadile']
           if (!phaseChangeMonsters.includes(state.monster.id)) {
             addToast(`${ev.icon || '🐍'} ${monsterName}: ${ev.displayName} form${immunityNote}`, 'info')
           }
@@ -927,16 +928,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     if (monster.slayerRequirement && slayLvl < monster.slayerRequirement) {
       return { locked: true, reason: `Need Slayer level ${monster.slayerRequirement} to fight ${monster.name}` }
     }
-    if (monster.id === 'corrupted_gauntlet' && !completedQuests.has('song_of_the_elves')) {
+    if (monster.id === 'blighted_gauntlet' && !completedQuests.has('song_of_the_elves')) {
       return { locked: true, reason: 'Complete Song of the Elves to fight Blighted Gauntlet' }
     }
-    if (monster.id === 'inferno' && (!bossKillCounts['jad'] || bossKillCounts['jad'] < 1)) {
+    if (monster.id === 'ashen_crucible' && (!bossKillCounts['ember_tyrant'] || bossKillCounts['ember_tyrant'] < 1)) {
       return { locked: true, reason: 'Defeat Ember Tyrant first to unlock Ashen Crucible' }
     }
     if ((monster.id === 'adamant_dragon' || monster.id === 'rune_dragon') && !completedQuests.has('dragon_slayer_ii')) {
       return { locked: true, reason: 'Complete Dragon Slayer II to fight Metal Dragons' }
     }
-    if (monster.id === 'demonic_gorilla' && !completedQuests.has('monkey_madness_ii')) {
+    if (monster.id === 'hellbound_gorilla' && !completedQuests.has('monkey_madness_ii')) {
       return { locked: true, reason: 'Complete Monkey Madness II to fight Hellbound Gorilla' }
     }
     return { locked: false }
@@ -1539,10 +1540,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                             )}
                             {bossReq.locked && !slayLocked && (
                               <div class="text-[9px] font-semibold text-[var(--color-blood-light)]">
-                                🔒 {monster.id === 'corrupted_gauntlet' ? 'Song of the Elves' :
-                                     monster.id === 'inferno' ? 'Defeat Ember Tyrant' :
+                                🔒 {monster.id === 'blighted_gauntlet' ? 'Song of the Elves' :
+                                     monster.id === 'ashen_crucible' ? 'Defeat Ember Tyrant' :
                                      (monster.id === 'adamant_dragon' || monster.id === 'rune_dragon') ? 'Dragon Slayer II' :
-                                     monster.id === 'demonic_gorilla' ? 'Monkey Madness II' : 'Locked'}
+                                     monster.id === 'hellbound_gorilla' ? 'Monkey Madness II' : 'Locked'}
                               </div>
                             )}
                           </div>
@@ -1588,7 +1589,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           </button>
           {!(collapsedSections.raids ?? true) && (
             <div class="space-y-2">
-            {Object.values(raidsData).map(raid => {
+            {Object.values(raidsData).filter((raid, index, allRaids) =>
+              allRaids.findIndex(candidate => candidate.id === raid.id) === index
+            ).map(raid => {
               const raidReq = checkRaidRequirements(raid)
               const isRaidLocked = raidReq.locked
               return (

@@ -3684,7 +3684,7 @@
         "chance": 0.12
       },
       {
-        "itemId": "runite_ore",
+        "itemId": "runeforged_ore",
         "quantity": [
           2,
           5
@@ -3789,7 +3789,7 @@
         "chance": 0.1
       },
       {
-        "itemId": "runite_ore",
+        "itemId": "runeforged_ore",
         "quantity": [
           2,
           4
@@ -3929,7 +3929,7 @@
         "chance": 0.1
       },
       {
-        "itemId": "runite_ore",
+        "itemId": "runeforged_ore",
         "quantity": [
           3,
           6
@@ -4667,7 +4667,7 @@
   },
   "the_great_olm": {
     "id": "the_great_olm",
-    "name": "The Great Olm",
+    "name": "The Grand Olm",
     "boss": true,
     "raidBoss": true,
     "requiresDoubleKill": true,
@@ -4910,7 +4910,7 @@
   },
   "the_maiden_of_sugadinti": {
     "id": "the_maiden_of_sugadinti",
-    "name": "The Maiden of Sugadinti",
+    "name": "The Matron of Sugadinti",
     "boss": true,
     "raidBoss": true,
     "combatLevel": 940,
@@ -4945,7 +4945,7 @@
   },
   "pestilent_bloat": {
     "id": "pestilent_bloat",
-    "name": "Pestilent Bloat",
+    "name": "Pestilent Blight",
     "boss": true,
     "raidBoss": true,
     "combatLevel": 870,
@@ -4980,7 +4980,7 @@
   },
   "nylocas_vasilias": {
     "id": "nylocas_vasilias",
-    "name": "Nylocas Vasilias",
+    "name": "Nylocas Vashilias",
     "boss": true,
     "raidBoss": true,
     "combatLevel": 800,
@@ -5073,7 +5073,7 @@
   },
   "sotetseg": {
     "id": "sotetseg",
-    "name": "Sotetseg",
+    "name": "Sotethseg",
     "boss": true,
     "raidBoss": true,
     "combatLevel": 995,
@@ -5160,7 +5160,7 @@
   },
   "xarpus": {
     "id": "xarpus",
-    "name": "Xarpus",
+    "name": "Xarphus",
     "boss": true,
     "raidBoss": true,
     "combatLevel": 960,
@@ -5195,7 +5195,7 @@
   },
   "verzik_vitur": {
     "id": "verzik_vitur",
-    "name": "Verzik Vitur",
+    "name": "Verzik Vitura",
     "boss": true,
     "raidBoss": true,
     "combatLevel": 1040,
@@ -5292,7 +5292,7 @@
   },
   "tekton": {
     "id": "tekton",
-    "name": "Tekton",
+    "name": "Tecton",
     "boss": true,
     "raidBoss": true,
     "combatLevel": 149,
@@ -5327,7 +5327,7 @@
   },
   "vespula": {
     "id": "vespula",
-    "name": "Vespula",
+    "name": "Vespara",
     "boss": true,
     "raidBoss": true,
     "combatLevel": 202,
@@ -5396,7 +5396,7 @@
   },
   "muttadile": {
     "id": "muttadile",
-    "name": "Muttadile",
+    "name": "Mudtadile",
     "boss": true,
     "raidBoss": true,
     "combatLevel": 170,
@@ -6747,7 +6747,7 @@
         "chance": 0.001
       },
       {
-        "itemId": "runite_ore",
+        "itemId": "runeforged_ore",
         "quantity": [
           1,
           3
@@ -6867,7 +6867,7 @@
         "chance": 0.0008
       },
       {
-        "itemId": "runite_ore",
+        "itemId": "runeforged_ore",
         "quantity": [
           1,
           2
@@ -7165,7 +7165,7 @@
         "chance": 0.04
       },
       {
-        "itemId": "runite_ore",
+        "itemId": "runeforged_ore",
         "quantity": [
           1,
           3
