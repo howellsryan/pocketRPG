@@ -16,6 +16,7 @@
 //   authoritative save and treat as success.
 
 const PRE_COMPLETE_SAVE_BANNED = true // documents intent; not used at runtime
+const FINAL_SAVE_DELAY_MS = 2000
 
 export async function completeMinigameTask({ task, taskWrapper, deps }) {
   const {
@@ -116,7 +117,10 @@ async function runCloudCompletion({
       requestCriticalPushSave(getSnapshot, 'minigame_complete')
       // Belt-and-suspenders durability: perform one immediate final save after
       // completion + state apply to minimise any window before debounce flush.
-      if (forceFinalSave) await forceFinalSave()
+      if (forceFinalSave) {
+        await new Promise(resolve => setTimeout(resolve, FINAL_SAVE_DELAY_MS))
+        await forceFinalSave()
+      }
     }
     return { status: 'success', granted: res?.granted || [] }
   } catch (err) {
