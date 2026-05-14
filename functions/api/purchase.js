@@ -1,12 +1,20 @@
 import { requireAuth, json } from '../_lib/auth.js'
 import { assertNotInActiveMatch } from '../_lib/pvp.js'
 import itemsData from '../../src/data/items.json' assert { type: 'json' }
+import minigamesData from '../../src/data/minigames.json' assert { type: 'json' }
 import { assertPurchasable } from '../_lib/game/rewards.js'
 import { loadCharacterWithSave, writeSave } from '../_lib/game/save.js'
 import { subtractCoins } from '../_lib/game/economy.js'
 import { addItemToInventory } from '../_lib/game/inventory.js'
 import { auditLog } from '../_lib/game/audit.js'
 import { toErrorResponse } from '../_lib/game/errors.js'
+
+const MINIGAME_UNLOCK_STORE_PRICE = 4_500_000
+const MINIGAME_STORE_PRODUCTS = new Set(
+  (minigamesData?.tasks || [])
+    .flatMap((task) => (Array.isArray(task?.rewardItems) && task.rewardItems.length > 0 ? task.rewardItems : [task?.product]))
+    .filter(Boolean),
+)
 
 export async function onRequestPost({ request, env }) {
   const auth = await requireAuth(request, env)
@@ -17,6 +25,7 @@ export async function onRequestPost({ request, env }) {
     const characterId = parseInt(request.headers.get('X-Character-Id') || '0', 10)
     const itemId = body?.item_id
     const quantity = Math.floor(Number(body?.quantity) || 0)
+    const unlockedMinigameItems = new Set(Array.isArray(body?.unlocked_minigame_items) ? body.unlocked_minigame_items : [])
     if (!characterId || !itemId || quantity < 1) return json({ error: 'Invalid request parameters' }, 400)
 
     const lock = await assertNotInActiveMatch(env, characterId)
@@ -26,10 +35,12 @@ export async function onRequestPost({ request, env }) {
     if (!item) return json({ error: 'Item not found', code: 'ITEM_NOT_FOUND' }, 404)
 
     const { row, saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, auth.identity.id)
-    const restriction = assertPurchasable(item, { isIronman: Boolean(row.is_ironman), allowMinigameUnlockPurchase: false })
+    const allowMinigameUnlockPurchase = MINIGAME_STORE_PRODUCTS.has(itemId) && unlockedMinigameItems.has(itemId)
+    const restriction = assertPurchasable(item, { isIronman: Boolean(row.is_ironman), allowMinigameUnlockPurchase })
     if (!restriction.allowed) return json({ error: restriction.message, code: restriction.code }, 403)
 
-    const totalCost = (Number(item.shopValue) || 0) * quantity
+    const unitCost = allowMinigameUnlockPurchase ? MINIGAME_UNLOCK_STORE_PRICE : (Number(item.shopValue) || 0)
+    const totalCost = unitCost * quantity
     subtractCoins(saveObject, totalCost)
     addItemToInventory(saveObject, itemId, quantity)
     const write = await writeSave(env, characterId, saveObject, saveRevision)
