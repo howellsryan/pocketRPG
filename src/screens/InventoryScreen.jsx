@@ -7,10 +7,10 @@ import { freeSlots, countItem } from '../engine/inventory.js'
 import { equipItem, checkEquipRequirements } from '../engine/equipment.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
-import { pullSave, applyCloudSave } from '../cloud/sync.js'
+import { pullSave, applyCloudSave, pushNow } from '../cloud/sync.js'
 
 export default function InventoryScreen() {
-  const { inventory, equipment, stats, bank, updateInventory, updateEquipment, updateBank, updateHP, currentHP, getMaxHP, addToast, itemsData, completedQuests, isIronman, loadGame } = useGame()
+  const { inventory, equipment, stats, bank, updateInventory, updateEquipment, updateBank, updateHP, currentHP, getMaxHP, addToast, itemsData, completedQuests, isIronman, loadGame, getSnapshot } = useGame()
   const [selected, setSelected] = useState(null) // { slotIndex, slot, item }
   const [showSpecInfo, setShowSpecInfo] = useState(false)
   const [bankQuantityMode, setBankQuantityMode] = useState(null) // 'stackable' | 'nonStackable' | null
@@ -334,6 +334,13 @@ export default function InventoryScreen() {
 
     setSellBusy(true)
     try {
+      // Flush local inventory/bank/coins state to the server before mutating
+      // through the API. Otherwise the 60s autosave debounce can leave the
+      // server-side save out of date (e.g. items just banked locally), and
+      // the trading post sees an inventory without the item the player just
+      // tapped.
+      try { await pushNow(getSnapshot()) } catch (_) { /* ignore push failure */ }
+
       if (isIronman) {
         // Ironman accounts can't use the trading post; keep the NPC-instant-sell path.
         await api.tradingPostSellImmediate(slot.itemId, sellQty)
