@@ -630,7 +630,7 @@ export default function InventoryScreen() {
                       class="py-2 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80">
                       Bank 1
                     </button>
-                    {sameItemCount >= 5 && (
+                    {sameItemCount >= 3 && (
                       <button onClick={() => handleDeposit(5)}
                         class="py-2 rounded-lg bg-[var(--color-emerald-mid)] text-white font-semibold text-sm active:opacity-80">
                         Bank 5
@@ -695,7 +695,7 @@ export default function InventoryScreen() {
                       class={`py-2 rounded-lg text-white font-semibold text-sm ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
                       {isIronman ? 'Sell 1' : 'List 1'} ({selected.item.shopValue}gp)
                     </button>
-                    {sameItemCount >= 5 && (
+                    {sameItemCount >= 3 && (
                       <button onClick={() => (isIronman ? handleSell(5) : openCustomListModal())}
                         disabled={sellBusy}
                         class={`py-2 rounded-lg text-white font-semibold text-sm ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
@@ -712,7 +712,7 @@ export default function InventoryScreen() {
                     {sameItemCount > 1 && (
                       <button onClick={() => handleSell(sameItemCount)}
                         disabled={sellBusy}
-                        class={`py-2 rounded-lg text-white font-semibold text-sm ${sameItemCount >= 10 ? 'col-span-3' : sameItemCount >= 5 ? 'col-span-1' : 'col-span-2'} ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
+                        class={`py-2 rounded-lg text-white font-semibold text-sm ${sameItemCount >= 10 ? 'col-span-3' : sameItemCount >= 3 ? 'col-span-1' : 'col-span-2'} ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
                         {isIronman ? 'Sell All' : 'List All'} ({sameItemCount * selected.item.shopValue}gp)
                       </button>
                     )}
