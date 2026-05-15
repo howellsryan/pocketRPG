@@ -106,6 +106,18 @@ export default function TradingPostScreen({ onBuyCredits }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+
+  const refreshMarketDataForItems = async (itemIds) => {
+    const ids = [...new Set((itemIds || []).filter((id) => typeof id === 'string' && id.length > 0))]
+    if (ids.length === 0) return
+    try {
+      const res = await api.tradingPostSearch(ids)
+      setMarketData((prev) => ({ ...prev, ...(res?.market || {}) }))
+    } catch (_) {
+      // non-fatal
+    }
+  }
+
   const searchResults = useMemo(() => {
     const term = searchTerm.trim().toLowerCase()
     if (!term) return []
@@ -119,6 +131,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
   useEffect(() => {
     if (isIronman) return
     if (!getToken() || !getCharacterId()) return
+    if (mode !== 'market') return
     const orderBookIds = searchResults.filter((r) => isOrderBookItem(r)).map((r) => r.id)
     if (orderBookIds.length === 0) return
     const token = ++searchAbortRef.current
@@ -126,13 +139,14 @@ export default function TradingPostScreen({ onBuyCredits }) {
       if (token !== searchAbortRef.current) return
       setMarketData((prev) => ({ ...prev, ...(res?.market || {}) }))
     }).catch(() => { /* non-fatal */ })
-  }, [searchResults, isIronman])
+  }, [searchResults, isIronman, mode])
 
   const openItem = (item, action) => {
     setSelected(item)
     setPendingAction(action)
     setQty(1)
     const orderBook = isOrderBookItem(item)
+    if (orderBook) refreshMarketDataForItems([item.id])
     if (orderBook) {
       // Seed with a sensible default: best opposing price if available, else
       // the static shopValue. Player can edit.
@@ -203,6 +217,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
           addToast(`Buy offer listed for ${qty} × ${selected.name}.`, 'info')
         }
         await refreshMyOffers()
+        await refreshMarketDataForItems([selected.id])
         closeModal()
       } else {
         // General-store path -- legacy /api/purchase endpoint.
@@ -259,6 +274,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
           addToast(`Sell offer listed for ${qty} × ${selected.name}.`, 'info')
         }
         await refreshMyOffers()
+        await refreshMarketDataForItems([selected.id])
         closeModal()
       } else {
         if (!selected.shopValue || selected.shopValue <= 0) {
