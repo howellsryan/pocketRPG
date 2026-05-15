@@ -1,6 +1,7 @@
 import { isValidEntry } from '../collectionLog.js'
 import { GameApiError } from './errors.js'
 import { addItemToInventory, addItemToBank, removeItemFromInventory, getInventory } from './inventory.js'
+import { VALID_CLUE_REWARD_ITEMS } from './clueRewards.js'
 import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
 import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
 import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
@@ -59,6 +60,9 @@ function isValidRewardSourceItem(sourceType, sourceId, itemId) {
   }
   if (sourceType === 'minigames' || sourceType === 'minigame') {
     return VALID_MINIGAME_REWARD_ITEMS.get(sourceId)?.has(itemId) || false
+  }
+  if (sourceType === 'clues' || sourceType === 'clue') {
+    return VALID_CLUE_REWARD_ITEMS.get(sourceId)?.has(itemId) || false
   }
   return false
 }
