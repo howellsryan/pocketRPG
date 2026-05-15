@@ -18,6 +18,9 @@ export default function InventoryScreen() {
   const [chargeInput, setChargeInput] = useState('')
   const [showChargeModal, setShowChargeModal] = useState(false)
   const [sellBusy, setSellBusy] = useState(false)
+  const [showListModal, setShowListModal] = useState(false)
+  const [listQtyInput, setListQtyInput] = useState('')
+  const [listPriceInput, setListPriceInput] = useState('')
   const hasCloudAccount = Boolean(getToken() && getCharacterId())
 
   const handleSlotClick = (slot, item, index) => {
@@ -306,10 +309,11 @@ export default function InventoryScreen() {
     }
   }
 
-  const handleSell = async (qty) => {
+  const handleSell = async (qty, overridePrice = null) => {
     if (!selected || sellBusy) return
     const { slot, item } = selected
-    const price = Math.floor(Number(item.shopValue) || 0)
+    const defaultPrice = Math.floor(Number(item.shopValue) || 0)
+    const price = Math.floor(Number(overridePrice ?? defaultPrice) || 0)
     if (price <= 0) {
       addToast('This item has no value', 'error')
       setSelected(null)
@@ -376,6 +380,40 @@ export default function InventoryScreen() {
       setSellBusy(false)
       setSelected(null)
     }
+  }
+
+
+  const openCustomListModal = () => {
+    if (!selected || isIronman) return
+    const { slot, item } = selected
+    const isNoted = !!slot.noted
+    const maxQty = (item.stackable || isNoted)
+      ? slot.quantity
+      : inventory.reduce((n, s) => n + ((s && s.itemId === slot.itemId && !!s.noted === isNoted) ? 1 : 0), 0)
+    setListQtyInput(String(Math.max(1, Math.min(1, maxQty))))
+    setListPriceInput(String(Math.max(1, Math.floor(Number(item.shopValue) || 1))))
+    setShowListModal(true)
+  }
+
+  const handleCustomListSubmit = async () => {
+    if (!selected) return
+    const qty = Math.floor(Number(listQtyInput) || 0)
+    const price = Math.floor(Number(listPriceInput) || 0)
+    const { slot, item } = selected
+    const isNoted = !!slot.noted
+    const maxQty = (item.stackable || isNoted)
+      ? slot.quantity
+      : inventory.reduce((n, s) => n + ((s && s.itemId === slot.itemId && !!s.noted === isNoted) ? 1 : 0), 0)
+    if (qty < 1 || qty > maxQty) {
+      addToast(`Quantity must be 1-${maxQty}`, 'error')
+      return
+    }
+    if (price < 1) {
+      addToast('Price must be at least 1 gp', 'error')
+      return
+    }
+    setShowListModal(false)
+    await handleSell(qty, price)
   }
 
   const handleBankQuantitySubmit = () => {
@@ -658,10 +696,10 @@ export default function InventoryScreen() {
                       {isIronman ? 'Sell 1' : 'List 1'} ({selected.item.shopValue}gp)
                     </button>
                     {sameItemCount >= 5 && (
-                      <button onClick={() => handleSell(5)}
+                      <button onClick={() => (isIronman ? handleSell(5) : openCustomListModal())}
                         disabled={sellBusy}
                         class={`py-2 rounded-lg text-white font-semibold text-sm ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
-                        {isIronman ? 'Sell 5' : 'List 5'}
+                        {isIronman ? 'Sell 5' : 'List X'}
                       </button>
                     )}
                     {sameItemCount >= 10 && (
@@ -714,6 +752,26 @@ export default function InventoryScreen() {
               >
                 Bank {bankQuantityInput || '0'}
               </button>
+            </div>
+          </Modal>
+        )
+      })()}
+
+
+      {showListModal && selected && !isIronman && (() => {
+        const slot = selected.slot
+        const item = selected.item
+        const isNoted = !!slot.noted
+        const maxQty = (item.stackable || isNoted)
+          ? slot.quantity
+          : inventory.reduce((n, s) => n + ((s && s.itemId === slot.itemId && !!s.noted === isNoted) ? 1 : 0), 0)
+        return (
+          <Modal title={`List ${item.name}`} onClose={() => setShowListModal(false)}>
+            <div class="space-y-3">
+              <p class="text-[10px] text-[var(--color-parchment)] opacity-50">Choose quantity and price per item.</p>
+              <input type="number" min="1" max={maxQty} value={listQtyInput} onInput={(e) => setListQtyInput(e.target.value)} class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)]" placeholder={`Quantity (max ${maxQty})`} />
+              <input type="number" min="1" value={listPriceInput} onInput={(e) => setListPriceInput(e.target.value)} class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)]" placeholder="Price per item (gp)" />
+              <button onClick={handleCustomListSubmit} disabled={sellBusy} class="w-full py-2.5 rounded-lg bg-[var(--color-gold-dim)] text-white font-semibold text-sm active:opacity-80">List</button>
             </div>
           </Modal>
         )
