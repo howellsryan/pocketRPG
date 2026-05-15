@@ -109,7 +109,7 @@ const sourceFiles = [
   'screens/ConstructionScreen.js',
   'screens/SlayerScreen.js',
   'screens/GatherScreen.js',
-  'screens/GeneralStoreScreen.js',
+  'screens/TradingPostScreen.js',
   'screens/EquipmentScreen.js',
   'screens/QuestsScreen.js',
   'screens/CluesScreen.js',

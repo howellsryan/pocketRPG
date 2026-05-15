@@ -5,7 +5,7 @@ export const NAV_TABS = [
   { id: SCREENS.BANK,           label: 'Bank',           icon: '🏦' },
   { id: SCREENS.INVENTORY,      label: 'Items',          icon: '🎒' },
   { id: SCREENS.EQUIPMENT,      label: 'Equip',          icon: '🛡️' },
-  { id: SCREENS.STORE,          label: 'Store',          icon: '🪙' },
+  { id: SCREENS.STORE,          label: 'Trading Post',   icon: '🪙' },
   { id: SCREENS.SKILLS,         label: 'Skills',         icon: '🔨' },
   { id: SCREENS.COMBAT,         label: 'Combat',         icon: '⚔️' },
   { id: SCREENS.QUESTS,         label: 'Quests',         icon: '📜' },
