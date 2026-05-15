@@ -1,13 +1,17 @@
 import { isProtectedItem } from './rewards.js'
 import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
+import cluesData from '../../../src/data/clues.json' assert { type: 'json' }
 
 const MONSTER_DROP_ITEMS = new Set(
   Object.values(monstersData || {}).flatMap(monster => (monster?.drops || []).map(drop => drop?.itemId)).filter(Boolean)
 )
+const CLUE_REWARD_ITEMS = new Set(
+  Object.values(cluesData || {}).flatMap(clue => (clue?.rewards || []).map(reward => reward?.itemId)).filter(Boolean)
+)
 
 function isProtectedDeltaExempt(itemId) {
   if (!itemId) return true
-  return MONSTER_DROP_ITEMS.has(itemId)
+  return MONSTER_DROP_ITEMS.has(itemId) || CLUE_REWARD_ITEMS.has(itemId)
 }
 
 function addQuantity(map, itemId, quantity) {

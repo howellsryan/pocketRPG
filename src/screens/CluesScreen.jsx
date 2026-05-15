@@ -12,7 +12,7 @@ import { rollClueRewards } from '../engine/clueScrolls.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
 import { applyCloudSave, requestCriticalPushSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
-import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
+import { recordCollectionLogDrop, applyServerCollectionLogEntries } from '../cloud/collectionLog.js'
 import { isLoggedDrop } from '../engine/collectionLog.js'
 
 const CLUE_TASKS = [
@@ -122,20 +122,21 @@ export default function CluesScreen() {
 
       if (next.ticksRemaining <= 0) {
         const task = next.task
-        const rewards = rollClueRewards(task.clueLevel)
         if (getToken() && getCharacterId()) {
           void api.completeClue(task.clueLevel, {
             actionNonce: `clue:${task.clueLevel}:${Date.now()}`,
-            rewards,
             consumptions: [{ itemId: task.requiresItem, quantity: 1 }],
           }).then(async (res) => {
             if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
-            const rewardNames = rewards.map(r => `${itemsData?.[r.itemId]?.name || CLUE_ITEM_NAMES[r.itemId] || r.itemId} ×${r.quantity}`).join(', ')
-            addToast(`${task.icon} Rewards: ${rewardNames}`, 'success')
+            applyServerCollectionLogEntries(res?.collectionLogEntries || [])
+            const granted = Array.isArray(res?.granted) ? res.granted : []
+            const rewardNames = granted.map(r => `${itemsData?.[r.itemId]?.name || CLUE_ITEM_NAMES[r.itemId] || r.itemId} ×${r.quantity}`).join(', ')
+            addToast(`${task.icon} Rewards: ${rewardNames || 'none'}`, 'success')
           }).catch((err) => {
             addToast(`Clue claim failed: ${err?.message || 'server_error'}`, 'error')
           })
         } else {
+          const rewards = rollClueRewards(task.clueLevel)
           const bankUpdates = {}
           for (const reward of rewards) bankUpdates[reward.itemId] = reward.quantity
           bankUpdates[task.requiresItem] = -1

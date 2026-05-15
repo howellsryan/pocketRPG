@@ -52,4 +52,24 @@ describe('detectProtectedDelta', () => {
 
     expect(detectProtectedDelta(previousSave, nextSave, itemsData)).toEqual([])
   })
+
+  it('does not flag clue reward uniques that appear in the canonical clue tables', () => {
+    const previousSave = { inventory: [], bank: {} }
+    const nextSave = { inventory: [], bank: { pathfinder_boots: { quantity: 1 } } }
+    const itemsData = {
+      pathfinder_boots: { id: 'pathfinder_boots', isClueReward: true, shopValue: 1_700_000 },
+    }
+
+    expect(detectProtectedDelta(previousSave, nextSave, itemsData)).toEqual([])
+  })
+
+  it('does not flag master-tier 2nd age clue uniques granted to the bank', () => {
+    const previousSave = { inventory: [], bank: {} }
+    const nextSave = { inventory: [], bank: { '2nd_age_druidic_staff': { quantity: 1 } } }
+    const itemsData = {
+      '2nd_age_druidic_staff': { id: '2nd_age_druidic_staff', isClueReward: true, shopValue: 50_000_000 },
+    }
+
+    expect(detectProtectedDelta(previousSave, nextSave, itemsData)).toEqual([])
+  })
 })
