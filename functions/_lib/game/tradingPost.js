@@ -29,7 +29,6 @@ export const INSTANT_SELL_PAYOUT_FRACTION = 0.8
 
 export const OFFER_STATUS = {
   ACTIVE: 'active',
-  READY_TO_COLLECT: 'ready_to_collect',
 }
 
 export function isOrderBookItem(item) {
@@ -87,7 +86,9 @@ function nowMs() {
 
 async function countActiveOffers(env, characterId) {
   const row = await env.DB.prepare(
-    `SELECT COUNT(*) AS n FROM trading_post_offers WHERE character_id = ? AND status = 'active'`,
+    `SELECT COUNT(*) AS n FROM trading_post_offers
+     WHERE character_id = ? AND status = 'active'
+       AND NOT (quantity_remaining = 0 AND (coins_pending > 0 OR items_pending > 0))`,
   ).bind(characterId).first()
   return Number(row?.n) || 0
 }
@@ -143,11 +144,12 @@ async function recordFill(env, { buyerOfferId, sellerOfferId, tradeQty, tradePri
   ).bind(tradeQty, buyerOfferRemaining, now, buyerOfferId).run()
 }
 
-// Re-read an offer and pick its final status after a batch of fills.
+// Re-read an offer after fills.
 //   * remaining > 0 -> stays 'active'.
 //   * remaining = 0, no pending -> row is removed entirely (nothing to do
 //     with it; happens only on self-trades).
-//   * remaining = 0, pending exists -> 'ready_to_collect'.
+//   * remaining = 0, pending exists -> keep status='active' and rely on
+//     (remaining=0,pending>0) as the ready-to-collect signal.
 async function finalizeOfferStatus(env, offerId) {
   const row = await env.DB.prepare(
     `SELECT quantity_remaining, coins_pending, items_pending FROM trading_post_offers WHERE id = ?`,
@@ -160,9 +162,6 @@ async function finalizeOfferStatus(env, offerId) {
     await env.DB.prepare(`DELETE FROM trading_post_offers WHERE id = ?`).bind(offerId).run()
     return
   }
-  await env.DB.prepare(
-    `UPDATE trading_post_offers SET status = ?, updated_at = ? WHERE id = ?`,
-  ).bind(OFFER_STATUS.READY_TO_COLLECT, nowMs(), offerId).run()
 }
 
 // Run matching for a brand-new offer (already inserted with row id

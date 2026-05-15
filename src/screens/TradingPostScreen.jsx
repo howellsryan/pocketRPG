@@ -18,6 +18,13 @@ const GENERAL_BUY_MULTIPLIER = 1.1
 const MINIGAME_UNLOCK_STORE_PRICE = 4_500_000
 const INSTANT_SELL_FRACTION = 0.8
 
+function isReadyToCollectOffer(offer) {
+  const coinsPending = Number(offer?.coins_pending) || 0
+  const itemsPending = Number(offer?.items_pending) || 0
+  const remaining = Number(offer?.quantity_remaining) || 0
+  return offer?.status === 'ready_to_collect' || (remaining <= 0 && (coinsPending > 0 || itemsPending > 0))
+}
+
 function generalStoreBuyPrice(item) {
   if (!item) return 0
   return Math.floor((Number(item.shopValue) || 0) * GENERAL_BUY_MULTIPLIER)
@@ -378,14 +385,14 @@ export default function TradingPostScreen({ onBuyCredits }) {
   const renderMyOffersList = () => {
     // Active offers (still on the book) hold a slot; ready-to-collect rows
     // float above the slot grid so the player can see what's waiting on them.
-    const activeOffers = myOffers.filter((o) => o.status === 'active')
-    const readyOffers = myOffers.filter((o) => o.status === 'ready_to_collect')
+    const readyOffers = myOffers.filter((o) => isReadyToCollectOffer(o))
+    const activeOffers = myOffers.filter((o) => !isReadyToCollectOffer(o))
     const slotsUsed = activeOffers.length
 
     const renderOffer = (offer, key) => {
       const item = itemsData[offer.item_id]
       const filled = offer.quantity_total - offer.quantity_remaining
-      const isReady = offer.status === 'ready_to_collect'
+      const isReady = isReadyToCollectOffer(offer)
       const coinsPending = Number(offer.coins_pending) || 0
       const itemsPending = Number(offer.items_pending) || 0
       const hasPending = coinsPending > 0 || itemsPending > 0
@@ -572,10 +579,10 @@ export default function TradingPostScreen({ onBuyCredits }) {
                 ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
                 : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
             }`}
-          >📦 My Offers {offersLoaded ? `(${myOffers.filter((o) => o.status === 'active').length}/${MAX_SLOTS})` : ''}
-            {offersLoaded && myOffers.some((o) => o.status === 'ready_to_collect') && (
+          >📦 My Offers {offersLoaded ? `(${myOffers.filter((o) => !isReadyToCollectOffer(o)).length}/${MAX_SLOTS})` : ''}
+            {offersLoaded && myOffers.some((o) => isReadyToCollectOffer(o)) && (
               <span class="ml-1 inline-block min-w-[16px] h-[16px] leading-[16px] px-1 rounded-full text-[10px] font-bold bg-[var(--color-gold)] text-[var(--color-void)] align-middle">
-                {myOffers.filter((o) => o.status === 'ready_to_collect').length}
+                {myOffers.filter((o) => isReadyToCollectOffer(o)).length}
               </span>
             )}
           </button>
