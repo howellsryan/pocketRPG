@@ -13,7 +13,7 @@ import { pullSave, applyCloudSave } from '../cloud/sync.js'
 import questsData from '../data/quests.json'
 import minigamesData from '../data/minigames.json'
 
-const MAX_SLOTS = 3
+const MAX_SLOTS = 8
 const GENERAL_BUY_MULTIPLIER = 1.1
 const MINIGAME_UNLOCK_STORE_PRICE = 4_500_000
 const INSTANT_SELL_FRACTION = 0.8

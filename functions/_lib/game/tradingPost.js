@@ -2,7 +2,7 @@ import { GameApiError } from './errors.js'
 import { getInventory, addItemToInventory, addItemToBank, removeItemFromInventory } from './inventory.js'
 import { subtractCoins } from './economy.js'
 
-export const MAX_ACTIVE_OFFERS_PER_CHARACTER = 3
+export const MAX_ACTIVE_OFFERS_PER_CHARACTER = 8
 export const INSTANT_SELL_PAYOUT_FRACTION = 0.8
 
 // Items eligible for the player-to-player order book. Everything else uses
