@@ -308,6 +308,35 @@ export default function TradingPostScreen({ onBuyCredits }) {
     }
   }
 
+  const handleCollect = async (offer) => {
+    if (busy) return
+    setBusy(true)
+    try {
+      const res = await api.tradingPostCollect(offer.id)
+      const cloud = await pullSave()
+      if (cloud?.payload) await applyCloudSave(cloud.payload, cloud.updatedAt)
+      await loadGame()
+      await refreshMyOffers()
+      const coins = Number(res?.coins_collected) || 0
+      const items = Number(res?.items_collected) || 0
+      const item = itemsData[offer.item_id]
+      const name = item?.name || offer.item_id
+      if (coins > 0 && items > 0) {
+        addToast(`Collected ${coins.toLocaleString()} gp + ${items} × ${name}.`, 'success')
+      } else if (coins > 0) {
+        addToast(`Collected ${coins.toLocaleString()} gp.`, 'success')
+      } else if (items > 0) {
+        addToast(`Collected ${items} × ${name}.`, 'success')
+      } else {
+        addToast('Nothing to collect.', 'info')
+      }
+    } catch (err) {
+      addToast(`Collect failed: ${err.message}`, 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   // ── RENDERING ────────────────────────────────────────────────────────────
   const renderListRow = (item) => {
     const orderBook = isOrderBookItem(item)
@@ -346,10 +375,80 @@ export default function TradingPostScreen({ onBuyCredits }) {
   }
 
   const renderMyOffersList = () => {
+    // Active offers (still on the book) hold a slot; ready-to-collect rows
+    // float above the slot grid so the player can see what's waiting on them.
     const activeOffers = myOffers.filter((o) => o.status === 'active')
+    const readyOffers = myOffers.filter((o) => o.status === 'ready_to_collect')
     const slotsUsed = activeOffers.length
+
+    const renderOffer = (offer, key) => {
+      const item = itemsData[offer.item_id]
+      const filled = offer.quantity_total - offer.quantity_remaining
+      const isReady = offer.status === 'ready_to_collect'
+      const coinsPending = Number(offer.coins_pending) || 0
+      const itemsPending = Number(offer.items_pending) || 0
+      const hasPending = coinsPending > 0 || itemsPending > 0
+      const pendingLabel = (() => {
+        if (!hasPending) return null
+        if (offer.offer_type === 'buy') {
+          return itemsPending > 0
+            ? `${itemsPending} × ${item?.name || offer.item_id} ready`
+            : null
+        }
+        return coinsPending > 0
+          ? `${coinsPending.toLocaleString()} gp ready`
+          : null
+      })()
+      const accentBorder = isReady ? 'border-[var(--color-gold)]' : 'border-[#2a2a2a]'
+      return (
+        <Panel key={key} className={`text-[12px] border ${accentBorder}`}>
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">{item?.icon || '📦'}</span>
+            <div class="flex-1 min-w-0">
+              <div class="text-[13px] font-semibold text-[var(--color-parchment)]">
+                {offer.offer_type === 'buy' ? 'Buy' : 'Sell'} {item?.name || offer.item_id}
+              </div>
+              <div class="text-[10px] text-[#888]">
+                {offer.price.toLocaleString()} gp · {filled}/{offer.quantity_total} filled
+              </div>
+              {isReady && (
+                <div class="text-[10px] text-[var(--color-gold)] font-semibold mt-0.5">
+                  ✓ Ready to collect{pendingLabel ? ` — ${pendingLabel}` : ''}
+                </div>
+              )}
+              {!isReady && pendingLabel && (
+                <div class="text-[10px] text-[var(--color-gold)] mt-0.5">{pendingLabel}</div>
+              )}
+            </div>
+          </div>
+          <div class="flex gap-2 mt-3">
+            {hasPending && (
+              <Button variant="primary" size="sm" onClick={() => handleCollect(offer)} disabled={busy}>
+                Collect
+              </Button>
+            )}
+            {!isReady && (
+              <Button variant="secondary" size="sm" onClick={() => handleCancel(offer.id)} disabled={busy}>Cancel</Button>
+            )}
+            {!isReady && offer.offer_type === 'sell' && offer.quantity_remaining > 0 && (
+              <Button variant="secondary" size="sm" onClick={() => handleInstantSell(offer.id)} disabled={busy}>
+                Instant Sell (−20%)
+              </Button>
+            )}
+          </div>
+        </Panel>
+      )
+    }
+
     return (
       <div class="flex flex-col gap-2 px-4 pt-3 pb-20 md:pb-4">
+        {readyOffers.length > 0 && (
+          <>
+            <div class="text-[11px] text-[var(--color-gold)] font-semibold mb-1">Ready to collect</div>
+            {readyOffers.map((o) => renderOffer(o, `ready-${o.id}`))}
+            <div class="h-2" />
+          </>
+        )}
         <div class="text-[11px] text-[#888] mb-1">Slots: {slotsUsed}/{MAX_SLOTS} active</div>
         {Array.from({ length: MAX_SLOTS }).map((_, idx) => {
           const offer = activeOffers[idx]
@@ -360,31 +459,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
               </Panel>
             )
           }
-          const item = itemsData[offer.item_id]
-          const filled = offer.quantity_total - offer.quantity_remaining
-          return (
-            <Panel key={offer.id} className="text-[12px]">
-              <div class="flex items-center gap-3">
-                <span class="text-2xl">{item?.icon || '📦'}</span>
-                <div class="flex-1 min-w-0">
-                  <div class="text-[13px] font-semibold text-[var(--color-parchment)]">
-                    {offer.offer_type === 'buy' ? 'Buy' : 'Sell'} {item?.name || offer.item_id}
-                  </div>
-                  <div class="text-[10px] text-[#888]">
-                    {offer.price.toLocaleString()} gp · {filled}/{offer.quantity_total} filled
-                  </div>
-                </div>
-              </div>
-              <div class="flex gap-2 mt-3">
-                <Button variant="secondary" size="sm" onClick={() => handleCancel(offer.id)} disabled={busy}>Cancel</Button>
-                {offer.offer_type === 'sell' && offer.quantity_remaining > 0 && (
-                  <Button variant="primary" size="sm" onClick={() => handleInstantSell(offer.id)} disabled={busy}>
-                    Instant Sell (−20%)
-                  </Button>
-                )}
-              </div>
-            </Panel>
-          )
+          return renderOffer(offer, `active-${offer.id}`)
         })}
       </div>
     )
@@ -496,7 +571,13 @@ export default function TradingPostScreen({ onBuyCredits }) {
                 ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
                 : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
             }`}
-          >📦 My Offers {offersLoaded ? `(${myOffers.filter((o) => o.status === 'active').length}/${MAX_SLOTS})` : ''}</button>
+          >📦 My Offers {offersLoaded ? `(${myOffers.filter((o) => o.status === 'active').length}/${MAX_SLOTS})` : ''}
+            {offersLoaded && myOffers.some((o) => o.status === 'ready_to_collect') && (
+              <span class="ml-1 inline-block min-w-[16px] h-[16px] leading-[16px] px-1 rounded-full text-[10px] font-bold bg-[var(--color-gold)] text-[var(--color-void)] align-middle">
+                {myOffers.filter((o) => o.status === 'ready_to_collect').length}
+              </span>
+            )}
+          </button>
         </div>
         {mode === 'market' && (
           <input

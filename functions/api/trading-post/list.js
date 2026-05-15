@@ -14,7 +14,6 @@ import {
   executeBuyMatching,
   executeSellMatching,
   insertOffer,
-  sweepPendingDeliveries,
   MAX_ACTIVE_OFFERS_PER_CHARACTER,
 } from '../../_lib/game/tradingPost.js'
 
@@ -67,9 +66,6 @@ export async function onRequestPost({ request, env }) {
     // and so the persisted save phases out the legacy keys on next write.
     normalizeSaveItemIds(saveObject, itemsData)
 
-    // Pull any prior pending fills into the save before mutating it for this
-    // listing -- avoids losing them if a writeSave revision conflict races.
-    await sweepPendingDeliveries(env, characterId, saveObject, itemsData)
     await assertSlotAvailable(env, characterId)
 
     const stackable = Boolean(item.stackable)

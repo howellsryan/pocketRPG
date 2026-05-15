@@ -185,6 +185,10 @@ export const api = {
     method: 'POST',
     body: JSON.stringify({ offer_id: offerId }),
   }),
+  tradingPostCollect: (offerId) => request('/api/trading-post/collect', {
+    method: 'POST',
+    body: JSON.stringify({ offer_id: offerId }),
+  }),
   tradingPostMyOffers: () => request('/api/trading-post/my-offers'),
   tradingPostSearch: (itemIds) => request('/api/trading-post/search', {
     method: 'POST',

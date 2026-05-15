@@ -29,6 +29,12 @@ function itemIdMatchSet(itemId) {
 export const MAX_ACTIVE_OFFERS_PER_CHARACTER = 8
 export const INSTANT_SELL_PAYOUT_FRACTION = 0.8
 
+export const OFFER_STATUS = {
+  ACTIVE: 'active',
+  READY_TO_COLLECT: 'ready_to_collect',
+  COMPLETED: 'completed',
+}
+
 // Items eligible for the player-to-player order book. Everything else uses
 // the legacy /api/purchase auto-execute path against the static shop.
 export function isOrderBookItem(item) {
@@ -115,14 +121,32 @@ async function fetchMatchableOffers(env, { itemId, side, limitPrice }) {
   return results || []
 }
 
-async function updateOpposingOffer(env, offerId, { newRemaining, completed }) {
+// Pick the status to apply to an offer after a fill updates its remaining
+// quantity. Fully filled offers go to 'ready_to_collect' so the owner can
+// pick up coins/items via /api/trading-post/collect; the slot frees up
+// immediately. If, for some reason, an offer reaches remaining=0 with no
+// pending payouts (e.g. a self-trade where everything was delivered
+// inline), skip the collect step and mark it directly 'completed'.
+async function applyOpposingOfferFill(env, offerId, newRemaining) {
   const now = nowMs()
-  const status = completed ? 'completed' : 'active'
+  if (newRemaining > 0) {
+    await env.DB.prepare(
+      `UPDATE trading_post_offers
+       SET quantity_remaining = ?, updated_at = ?
+       WHERE id = ?`,
+    ).bind(newRemaining, now, offerId).run()
+    return
+  }
+  const row = await env.DB.prepare(
+    `SELECT coins_pending, items_pending FROM trading_post_offers WHERE id = ?`,
+  ).bind(offerId).first()
+  const hasPending = Number(row?.coins_pending) > 0 || Number(row?.items_pending) > 0
+  const nextStatus = hasPending ? OFFER_STATUS.READY_TO_COLLECT : OFFER_STATUS.COMPLETED
   await env.DB.prepare(
     `UPDATE trading_post_offers
-     SET quantity_remaining = ?, status = ?, updated_at = ?
+     SET quantity_remaining = 0, status = ?, updated_at = ?
      WHERE id = ?`,
-  ).bind(newRemaining, status, now, offerId).run()
+  ).bind(nextStatus, now, offerId).run()
 }
 
 // Settle the buyer side of a match. Items are delivered to the buyer's save
@@ -197,10 +221,7 @@ export async function executeBuyMatching(env, { buyerCharacterId, buyerSave, ite
       gold: tradeGold,
     })
     const newRemaining = (Number(sell.quantity_remaining) || 0) - tradeQty
-    await updateOpposingOffer(env, sell.id, {
-      newRemaining,
-      completed: newRemaining <= 0,
-    })
+    await applyOpposingOfferFill(env, sell.id, newRemaining)
     remaining -= tradeQty
     totalSpent += tradeGold
     totalReceived += tradeQty
@@ -236,10 +257,7 @@ export async function executeSellMatching(env, { sellerCharacterId, sellerSave, 
       stackable,
     })
     const newRemaining = (Number(buy.quantity_remaining) || 0) - tradeQty
-    await updateOpposingOffer(env, buy.id, {
-      newRemaining,
-      completed: newRemaining <= 0,
-    })
+    await applyOpposingOfferFill(env, buy.id, newRemaining)
     remaining -= tradeQty
     totalEarned += tradeGold
     totalSold += tradeQty
@@ -250,6 +268,9 @@ export async function executeSellMatching(env, { sellerCharacterId, sellerSave, 
 
 export async function insertOffer(env, { characterId, offerType, itemId, price, quantityTotal, quantityRemaining }) {
   const now = nowMs()
+  // Only call this when there is leftover quantity to park on the book.
+  // Fully-filled offers never get an inserted row; their payouts are settled
+  // inline on the matching path.
   const result = await env.DB.prepare(
     `INSERT INTO trading_post_offers
        (character_id, offer_type, item_id, price, quantity_total, quantity_remaining,
@@ -262,7 +283,7 @@ export async function insertOffer(env, { characterId, offerType, itemId, price, 
     price,
     quantityTotal,
     quantityRemaining,
-    quantityRemaining > 0 ? 'active' : 'completed',
+    OFFER_STATUS.ACTIVE,
     now,
     now,
   ).run()
@@ -277,49 +298,59 @@ export async function getOwnedOffer(env, offerId, characterId) {
 }
 
 export async function listOffersForCharacter(env, characterId) {
+  // Hide collected ('completed') and cancelled-and-deleted rows from "my
+  // offers" -- the only states the player still needs to see are open
+  // listings and fills awaiting collection.
   const { results } = await env.DB.prepare(
     `SELECT * FROM trading_post_offers
-     WHERE character_id = ? AND status IN ('active', 'completed')
+     WHERE character_id = ? AND status IN ('active', 'ready_to_collect')
      ORDER BY created_at DESC`,
   ).bind(characterId).all()
   return results || []
 }
 
-// Sweep any pending coins/items on a character's offers into their save. Used
-// by /my-offers GET and by cancellations so offline matches eventually land
-// in the right place. Mutates saveObject; caller must writeSave.
-export async function sweepPendingDeliveries(env, characterId, saveObject, itemsLookup) {
-  const offers = await listOffersForCharacter(env, characterId)
-  let delivered = false
-  for (const offer of offers) {
-    const coinsPending = Number(offer.coins_pending) || 0
-    const itemsPending = Number(offer.items_pending) || 0
-    if (coinsPending <= 0 && itemsPending <= 0) continue
-    if (coinsPending > 0) {
-      deliverCoins(saveObject, coinsPending)
-      delivered = true
-    }
-    if (itemsPending > 0) {
-      const canonId = canonicalItemId(itemsLookup, offer.item_id)
-      const item = itemsLookup?.[canonId] || itemsLookup?.[offer.item_id]
-      const stackable = Boolean(item?.stackable)
-      deliverItems(saveObject, canonId, itemsPending, { stackable })
-      delivered = true
-    }
-    const now = nowMs()
+// Deliver any pending coins/items on a single offer into the save, then
+// settle the offer's status:
+//   * fully filled (remaining = 0) + payouts emptied -> 'completed' (hidden)
+//   * still on the book (remaining > 0) -> stays 'active', pending cleared.
+// Mutates saveObject; caller must writeSave.
+export async function collectOffer(env, { offer, saveObject, itemsLookup }) {
+  const coinsPending = Math.floor(Number(offer.coins_pending) || 0)
+  const itemsPending = Math.floor(Number(offer.items_pending) || 0)
+  if (coinsPending <= 0 && itemsPending <= 0
+      && offer.status !== OFFER_STATUS.READY_TO_COLLECT) {
+    throw new GameApiError('NOTHING_TO_COLLECT', 'No coins or items to collect on this offer.', 400)
+  }
+  if (coinsPending > 0) deliverCoins(saveObject, coinsPending)
+  if (itemsPending > 0) {
+    const canonId = canonicalItemId(itemsLookup, offer.item_id)
+    const item = itemsLookup?.[canonId] || itemsLookup?.[offer.item_id]
+    deliverItems(saveObject, canonId, itemsPending, { stackable: Boolean(item?.stackable) })
+  }
+  const remaining = Math.floor(Number(offer.quantity_remaining) || 0)
+  const now = nowMs()
+  if (remaining <= 0) {
+    await env.DB.prepare(
+      `UPDATE trading_post_offers
+       SET coins_pending = 0, items_pending = 0, status = ?, updated_at = ?
+       WHERE id = ?`,
+    ).bind(OFFER_STATUS.COMPLETED, now, offer.id).run()
+  } else {
     await env.DB.prepare(
       `UPDATE trading_post_offers
        SET coins_pending = 0, items_pending = 0, updated_at = ?
        WHERE id = ?`,
     ).bind(now, offer.id).run()
   }
-  return delivered
+  return { coinsCollected: coinsPending, itemsCollected: itemsPending }
 }
 
 // Returns the escrowed value the player should recover when cancelling.
 // For a buy offer that's only partially filled, the player gets the unspent
 // coins (quantity_remaining * price). For a sell offer they get the unsold
-// items back. Items_pending / coins_pending are also flushed in the same op.
+// items back. Items_pending / coins_pending from earlier partial fills are
+// flushed in the same op. The offer row is then deleted -- there's no value
+// in keeping cancelled history.
 export async function cancelOffer(env, { offer, saveObject, itemsLookup }) {
   const remaining = Number(offer.quantity_remaining) || 0
   const coinsPending = Number(offer.coins_pending) || 0
@@ -336,12 +367,9 @@ export async function cancelOffer(env, { offer, saveObject, itemsLookup }) {
     if (coinsPending > 0) deliverCoins(saveObject, coinsPending)
     if (itemsPending > 0) deliverItems(saveObject, canonId, itemsPending, { stackable })
   }
-  const now = nowMs()
   await env.DB.prepare(
-    `UPDATE trading_post_offers
-     SET status = 'cancelled', quantity_remaining = 0, coins_pending = 0, items_pending = 0, updated_at = ?
-     WHERE id = ?`,
-  ).bind(now, offer.id).run()
+    `DELETE FROM trading_post_offers WHERE id = ?`,
+  ).bind(offer.id).run()
 }
 
 // Convert a remaining sell offer into orphan house stock at 80% payout. The

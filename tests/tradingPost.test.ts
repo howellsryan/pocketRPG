@@ -4,9 +4,10 @@ import {
   executeSellMatching,
   insertOffer,
   cancelOffer,
+  collectOffer,
   instantSellOffer,
   getOwnedOffer,
-  sweepPendingDeliveries,
+  listOffersForCharacter,
   isOrderBookItem,
   isTradingPostListable,
   assertSlotAvailable,
@@ -14,6 +15,7 @@ import {
   escrowBuyCoins,
   MAX_ACTIVE_OFFERS_PER_CHARACTER,
   INSTANT_SELL_PAYOUT_FRACTION,
+  OFFER_STATUS,
 } from '../functions/_lib/game/tradingPost.js'
 import { getCoinTotal } from '../functions/_lib/game/economy.js'
 
@@ -69,10 +71,18 @@ class FakeDB {
       })
       return { meta: { last_row_id: id, changes: 1 } }
     }
-    if (sql.startsWith('UPDATE trading_post_offers SET quantity_remaining = ?, status = ?, updated_at = ? WHERE id = ?')) {
-      const [qRem, status, updatedAt, id] = params
+    if (sql.startsWith('UPDATE trading_post_offers SET quantity_remaining = ?, updated_at = ? WHERE id = ?')) {
+      // Partial-fill update -- status unchanged.
+      const [qRem, updatedAt, id] = params
       const row = this.rows.find((r) => r.id === id)
-      if (row) { row.quantity_remaining = qRem; row.status = status; row.updated_at = updatedAt }
+      if (row) { row.quantity_remaining = qRem; row.updated_at = updatedAt }
+      return { meta: { changes: row ? 1 : 0 } }
+    }
+    if (sql.startsWith('UPDATE trading_post_offers SET quantity_remaining = 0, status = ?, updated_at = ?')) {
+      // Full-fill update -- status flips to ready_to_collect or completed.
+      const [status, updatedAt, id] = params
+      const row = this.rows.find((r) => r.id === id)
+      if (row) { row.quantity_remaining = 0; row.status = status; row.updated_at = updatedAt }
       return { meta: { changes: row ? 1 : 0 } }
     }
     if (sql.startsWith('UPDATE trading_post_offers SET coins_pending = coins_pending + ?, updated_at = ?')) {
@@ -87,16 +97,18 @@ class FakeDB {
       if (row) { row.items_pending = (row.items_pending || 0) + delta; row.updated_at = updatedAt }
       return { meta: { changes: row ? 1 : 0 } }
     }
-    if (sql.startsWith('UPDATE trading_post_offers SET coins_pending = 0, items_pending = 0')) {
+    if (sql.startsWith('UPDATE trading_post_offers SET coins_pending = 0, items_pending = 0, status = ?')) {
+      // collect on a fully-filled offer -- flush pending + flip to completed.
+      const [status, updatedAt, id] = params
+      const row = this.rows.find((r) => r.id === id)
+      if (row) { row.coins_pending = 0; row.items_pending = 0; row.status = status; row.updated_at = updatedAt }
+      return { meta: { changes: row ? 1 : 0 } }
+    }
+    if (sql.startsWith('UPDATE trading_post_offers SET coins_pending = 0, items_pending = 0, updated_at = ?')) {
+      // collect on a still-active offer (partial), or instant-sell pre-detach.
       const [updatedAt, id] = params
       const row = this.rows.find((r) => r.id === id)
       if (row) { row.coins_pending = 0; row.items_pending = 0; row.updated_at = updatedAt }
-      return { meta: { changes: row ? 1 : 0 } }
-    }
-    if (sql.startsWith('UPDATE trading_post_offers SET status = \'cancelled\'')) {
-      const [updatedAt, id] = params
-      const row = this.rows.find((r) => r.id === id)
-      if (row) { row.status = 'cancelled'; row.quantity_remaining = 0; row.coins_pending = 0; row.items_pending = 0; row.updated_at = updatedAt }
       return { meta: { changes: row ? 1 : 0 } }
     }
     if (sql.startsWith('UPDATE trading_post_offers SET character_id = NULL')) {
@@ -104,6 +116,12 @@ class FakeDB {
       const row = this.rows.find((r) => r.id === id)
       if (row) { row.character_id = null; row.coins_pending = 0; row.items_pending = 0; row.updated_at = updatedAt }
       return { meta: { changes: row ? 1 : 0 } }
+    }
+    if (sql.startsWith('DELETE FROM trading_post_offers WHERE id = ?')) {
+      const [id] = params
+      const idx = this.rows.findIndex((r) => r.id === id)
+      if (idx >= 0) this.rows.splice(idx, 1)
+      return { meta: { changes: idx >= 0 ? 1 : 0 } }
     }
     throw new Error('Unhandled SQL (run): ' + sql)
   }
@@ -139,10 +157,15 @@ class FakeDB {
       const results = this.rows.filter((r) => r.id === id && r.character_id === characterId)
       return { results }
     }
+    if (sql.startsWith('SELECT coins_pending, items_pending FROM trading_post_offers WHERE id = ?')) {
+      const [id] = params
+      const row = this.rows.find((r) => r.id === id)
+      return { results: row ? [{ coins_pending: row.coins_pending, items_pending: row.items_pending }] : [] }
+    }
     if (sql.startsWith('SELECT * FROM trading_post_offers WHERE character_id = ? AND status IN')) {
       const [characterId] = params
       const results = this.rows
-        .filter((r) => r.character_id === characterId && (r.status === 'active' || r.status === 'completed'))
+        .filter((r) => r.character_id === characterId && (r.status === 'active' || r.status === 'ready_to_collect'))
         .sort((a, b) => b.created_at - a.created_at)
       return { results }
     }
@@ -220,9 +243,10 @@ describe('order matching — buy side', () => {
     expect(res.remaining).toBe(0)
     expect(res.totalReceived).toBe(1)
     expect(res.totalSpent).toBe(50)
-    // Seller B is offline -- coins go to their offer row as coins_pending.
+    // Seller B is offline -- coins go to their offer row as coins_pending,
+    // and the offer flips to 'ready_to_collect' so B sees a collect prompt.
     const sellerOffer = env.DB.rows[0]
-    expect(sellerOffer.status).toBe('completed')
+    expect(sellerOffer.status).toBe('ready_to_collect')
     expect(sellerOffer.coins_pending).toBe(50)
     // Buyer's inventory got the item.
     expect(buyerSave.inventory.find((s: any) => s.itemId === 'warped_bow')?.quantity).toBe(1)
@@ -281,7 +305,7 @@ describe('order matching — sell side', () => {
     expect(res.totalEarned).toBe(200)
     expect(getCoinTotal(sellerSave)).toBe(200)
     const buyerOffer = env.DB.rows[0]
-    expect(buyerOffer.status).toBe('completed')
+    expect(buyerOffer.status).toBe('ready_to_collect')
     expect(buyerOffer.items_pending).toBe(1)
   })
 
@@ -339,7 +363,8 @@ describe('orphan stock (instant sell)', () => {
     expect(res.totalReceived).toBe(2)
     expect(res.totalSpent).toBe(2000)
     // Coins go to void -- the orphan row had character_id null so no
-    // coins_pending should accumulate.
+    // coins_pending should accumulate, and with no pending payouts the
+    // row flips straight to 'completed' rather than awaiting collection.
     const orphan = env.DB.rows[0]
     expect(orphan.coins_pending).toBe(0)
     expect(orphan.status).toBe('completed')
@@ -350,28 +375,96 @@ describe('cancellation refunds escrow', () => {
   let env: any
   beforeEach(() => { env = fakeEnv() })
 
-  it('returns remaining items on sell cancel', async () => {
+  it('returns remaining items on sell cancel and deletes the row', async () => {
     const offerId = await insertOffer(env, { characterId: 1, offerType: 'sell', itemId: 'warped_bow', price: 1000, quantityTotal: 5, quantityRemaining: 3 })
     const offer = await getOwnedOffer(env, offerId!, 1)
     const save = makeSave(0)
     await cancelOffer(env, { offer, saveObject: save, itemsLookup: ITEM })
     // Non-stackable, qty 3 -> delivered as noted stack.
     expect(save.inventory.find((s: any) => s.itemId === 'warped_bow')?.quantity).toBe(3)
-    const row = env.DB.rows[0]
-    expect(row.status).toBe('cancelled')
+    // Cancelled offers are dropped entirely -- no value in keeping a tombstone.
+    expect(env.DB.rows).toHaveLength(0)
   })
 
-  it('refunds unspent coins on buy cancel', async () => {
+  it('refunds unspent coins on buy cancel and deletes the row', async () => {
     const offerId = await insertOffer(env, { characterId: 1, offerType: 'buy', itemId: 'warped_bow', price: 1000, quantityTotal: 5, quantityRemaining: 2 })
     const offer = await getOwnedOffer(env, offerId!, 1)
     const save = makeSave(0)
     await cancelOffer(env, { offer, saveObject: save, itemsLookup: ITEM })
     expect(getCoinTotal(save)).toBe(2 * 1000)
-    expect(env.DB.rows[0].status).toBe('cancelled')
+    expect(env.DB.rows).toHaveLength(0)
   })
 })
 
-describe('slot limits and sweeping', () => {
+describe('manual collect flow', () => {
+  let env: any
+  beforeEach(() => { env = fakeEnv() })
+
+  it('flips a fully-filled sell to ready_to_collect, then completed on collect', async () => {
+    // Seller B parks 1 warped_bow @50.
+    await insertOffer(env, { characterId: 2, offerType: 'sell', itemId: 'warped_bow', price: 50, quantityTotal: 1, quantityRemaining: 1 })
+    // Buyer A walks in and clears it.
+    const buyerSave = makeSave(0)
+    await executeBuyMatching(env, {
+      buyerCharacterId: 1, buyerSave, itemId: 'warped_bow', maxPrice: 100, quantity: 1, stackable: false,
+    })
+    const sellerOffer = env.DB.rows[0]
+    expect(sellerOffer.status).toBe('ready_to_collect')
+    expect(sellerOffer.coins_pending).toBe(50)
+
+    // Now seller B collects.
+    const offer = await getOwnedOffer(env, sellerOffer.id, 2)
+    const sellerSave = makeSave(0)
+    const result = await collectOffer(env, { offer, saveObject: sellerSave, itemsLookup: ITEM })
+    expect(result.coinsCollected).toBe(50)
+    expect(getCoinTotal(sellerSave)).toBe(50)
+    expect(env.DB.rows[0].status).toBe('completed')
+    expect(env.DB.rows[0].coins_pending).toBe(0)
+  })
+
+  it('hides completed (collected) offers from listOffersForCharacter', async () => {
+    await insertOffer(env, { characterId: 2, offerType: 'sell', itemId: 'warped_bow', price: 50, quantityTotal: 1, quantityRemaining: 1 })
+    const buyerSave = makeSave(0)
+    await executeBuyMatching(env, {
+      buyerCharacterId: 1, buyerSave, itemId: 'warped_bow', maxPrice: 100, quantity: 1, stackable: false,
+    })
+    const offer = await getOwnedOffer(env, env.DB.rows[0].id, 2)
+    await collectOffer(env, { offer, saveObject: makeSave(0), itemsLookup: ITEM })
+    const visible = await listOffersForCharacter(env, 2)
+    expect(visible).toHaveLength(0)
+  })
+
+  it('lets a partial collect leave the offer active with cleared pending', async () => {
+    // Seller B parks 5 warped_bow @50.
+    await insertOffer(env, { characterId: 2, offerType: 'sell', itemId: 'warped_bow', price: 50, quantityTotal: 5, quantityRemaining: 5 })
+    // Buyer A takes 2 -> seller's offer has remaining=3, coins_pending=100, status='active'.
+    const buyerSave = makeSave(0)
+    await executeBuyMatching(env, {
+      buyerCharacterId: 1, buyerSave, itemId: 'warped_bow', maxPrice: 100, quantity: 2, stackable: false,
+    })
+    const row = env.DB.rows[0]
+    expect(row.status).toBe('active')
+    expect(row.coins_pending).toBe(100)
+
+    // Seller collects the partial payout.
+    const offer = await getOwnedOffer(env, row.id, 2)
+    const sellerSave = makeSave(0)
+    await collectOffer(env, { offer, saveObject: sellerSave, itemsLookup: ITEM })
+    expect(getCoinTotal(sellerSave)).toBe(100)
+    expect(env.DB.rows[0].status).toBe('active')
+    expect(env.DB.rows[0].coins_pending).toBe(0)
+    expect(env.DB.rows[0].quantity_remaining).toBe(3)
+  })
+
+  it('rejects a collect when nothing is pending and the offer is still active', async () => {
+    const offerId = await insertOffer(env, { characterId: 1, offerType: 'sell', itemId: 'warped_bow', price: 50, quantityTotal: 5, quantityRemaining: 5 })
+    const offer = await getOwnedOffer(env, offerId!, 1)
+    await expect(collectOffer(env, { offer, saveObject: makeSave(0), itemsLookup: ITEM }))
+      .rejects.toThrow(/no coins or items to collect/i)
+  })
+})
+
+describe('slot limits', () => {
   let env: any
   beforeEach(() => { env = fakeEnv() })
 
@@ -382,15 +475,19 @@ describe('slot limits and sweeping', () => {
     await expect(assertSlotAvailable(env, 1)).rejects.toThrow(/active offers/i)
   })
 
-  it('sweepPendingDeliveries clears coins_pending and items_pending into save', async () => {
-    const id = await insertOffer(env, { characterId: 1, offerType: 'sell', itemId: 'warped_bow', price: 100, quantityTotal: 5, quantityRemaining: 3 })
-    // Simulate a counterparty match queued some pending coins.
-    env.DB.rows[0].coins_pending = 200
-    const save = makeSave(50)
-    const swept = await sweepPendingDeliveries(env, 1, save, ITEM)
-    expect(swept).toBe(true)
-    expect(getCoinTotal(save)).toBe(250)
-    expect(env.DB.rows[0].coins_pending).toBe(0)
+  it('does not count ready_to_collect offers against the active-slot cap', async () => {
+    // Fill MAX-1 active slots, then add one ready_to_collect row. Slot still
+    // available since the filled offer no longer holds the book.
+    for (let i = 0; i < MAX_ACTIVE_OFFERS_PER_CHARACTER - 1; i++) {
+      await insertOffer(env, { characterId: 1, offerType: 'sell', itemId: 'warped_bow', price: 10 + i, quantityTotal: 1, quantityRemaining: 1 })
+    }
+    // Inject a ready_to_collect row directly.
+    env.DB.rows.push({
+      id: 999, character_id: 1, offer_type: 'sell', item_id: 'warped_bow', price: 5,
+      quantity_total: 1, quantity_remaining: 0, coins_pending: 5, items_pending: 0,
+      status: 'ready_to_collect', created_at: 0, updated_at: 0,
+    })
+    await expect(assertSlotAvailable(env, 1)).resolves.toBeUndefined()
   })
 })
 
