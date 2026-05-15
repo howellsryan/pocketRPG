@@ -393,6 +393,13 @@ export default function TradingPostScreen({ onBuyCredits }) {
       const item = itemsData[offer.item_id]
       const filled = offer.quantity_total - offer.quantity_remaining
       const isReady = isReadyToCollectOffer(offer)
+      const buyPendingQty = Number(offer.items_pending) || 0
+      const sellPendingQty = Math.max(0, Math.min(filled, Math.floor((Number(offer.coins_pending) || 0) / Math.max(1, Number(offer.price) || 1))))
+      const executedUnitPrice = (() => {
+        if (offer.offer_type === 'buy' && buyPendingQty > 0) return Math.floor((Number(offer.coins_pending) || 0) / buyPendingQty)
+        if (offer.offer_type === 'sell' && sellPendingQty > 0) return Math.floor((Number(offer.coins_pending) || 0) / sellPendingQty)
+        return Number(offer.price) || 0
+      })()
       const coinsPending = Number(offer.coins_pending) || 0
       const itemsPending = Number(offer.items_pending) || 0
       const hasPending = coinsPending > 0 || itemsPending > 0
@@ -417,7 +424,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
                 {offer.offer_type === 'buy' ? 'Buy' : 'Sell'} {item?.name || offer.item_id}
               </div>
               <div class="text-[10px] text-[#888]">
-                {offer.price.toLocaleString()} gp · {filled}/{offer.quantity_total} filled
+                {executedUnitPrice.toLocaleString()} gp · {filled}/{offer.quantity_total} filled
               </div>
               {isReady && (
                 <div class="text-[10px] text-[var(--color-gold)] font-semibold mt-0.5">

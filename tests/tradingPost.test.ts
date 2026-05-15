@@ -75,11 +75,12 @@ class FakeDB {
       }
       return { meta: { changes: row ? 1 : 0 } }
     }
-    if (sql.startsWith('UPDATE trading_post_offers SET items_pending = items_pending + ?, quantity_remaining = ?, updated_at = ?')) {
-      const [delta, qRem, updatedAt, id] = params
+    if (sql.startsWith('UPDATE trading_post_offers SET items_pending = items_pending + ?, coins_pending = coins_pending + ?, quantity_remaining = ?, updated_at = ?')) {
+      const [deltaItems, deltaCoins, qRem, updatedAt, id] = params
       const row = this.rows.find((r) => r.id === id)
       if (row) {
-        row.items_pending = (row.items_pending || 0) + delta
+        row.items_pending = (row.items_pending || 0) + deltaItems
+        row.coins_pending = (row.coins_pending || 0) + deltaCoins
         row.quantity_remaining = qRem
         row.updated_at = updatedAt
       }
@@ -261,7 +262,7 @@ describe('matching engine — ready-to-collect inferred from pending+remaining',
     expect(sellerOffer.items_pending).toBe(0)
     expect(buyerOffer.status).toBe('active')
     expect(buyerOffer.items_pending).toBe(1)
-    expect(buyerOffer.coins_pending).toBe(0)
+    expect(buyerOffer.coins_pending).toBe(50)
   })
 
   it('walks the book cheapest-first across multiple sells', async () => {
@@ -452,6 +453,7 @@ describe('cancellation refunds and deletes', () => {
     })
     const buyerOffer = await getOwnedOffer(env, buyerOfferId, 1)
     expect(buyerOffer.items_pending).toBe(2)
+    expect(buyerOffer.coins_pending).toBe(100)
     expect(buyerOffer.quantity_remaining).toBe(3)
     expect(buyerOffer.status).toBe('active')
 

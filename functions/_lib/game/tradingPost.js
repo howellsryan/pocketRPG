@@ -139,9 +139,9 @@ async function recordFill(env, { buyerOfferId, sellerOfferId, tradeQty, tradePri
   }
   await env.DB.prepare(
     `UPDATE trading_post_offers
-     SET items_pending = items_pending + ?, quantity_remaining = ?, updated_at = ?
+     SET items_pending = items_pending + ?, coins_pending = coins_pending + ?, quantity_remaining = ?, updated_at = ?
      WHERE id = ?`,
-  ).bind(tradeQty, buyerOfferRemaining, now, buyerOfferId).run()
+  ).bind(tradeQty, tradeGold, buyerOfferRemaining, now, buyerOfferId).run()
 }
 
 // Re-read an offer after fills.
@@ -282,7 +282,7 @@ export async function collectOffer(env, { offer, saveObject, itemsLookup }) {
   if (coinsPending <= 0 && itemsPending <= 0) {
     throw new GameApiError('NOTHING_TO_COLLECT', 'No coins or items to collect on this offer.', 400)
   }
-  if (coinsPending > 0) deliverCoins(saveObject, coinsPending)
+  if (offer.offer_type === 'sell' && coinsPending > 0) deliverCoins(saveObject, coinsPending)
   if (itemsPending > 0) {
     const canonId = canonicalItemId(itemsLookup, offer.item_id)
     const item = itemsLookup?.[canonId] || itemsLookup?.[offer.item_id]
@@ -299,7 +299,7 @@ export async function collectOffer(env, { offer, saveObject, itemsLookup }) {
        WHERE id = ?`,
     ).bind(now, offer.id).run()
   }
-  return { coinsCollected: coinsPending, itemsCollected: itemsPending }
+  return { coinsCollected: offer.offer_type === 'sell' ? coinsPending : 0, itemsCollected: itemsPending }
 }
 
 // Cancel an offer: refund the unmatched escrow + any pending payouts to the
@@ -315,10 +315,10 @@ export async function cancelOffer(env, { offer, saveObject, itemsLookup }) {
   if (offer.offer_type === 'buy') {
     if (remaining > 0) deliverCoins(saveObject, remaining * Number(offer.price))
     if (itemsPending > 0) deliverItems(saveObject, canonId, itemsPending, { stackable })
-    if (coinsPending > 0) deliverCoins(saveObject, coinsPending)
+    if (offer.offer_type === 'sell' && coinsPending > 0) deliverCoins(saveObject, coinsPending)
   } else {
     if (remaining > 0) deliverItems(saveObject, canonId, remaining, { stackable })
-    if (coinsPending > 0) deliverCoins(saveObject, coinsPending)
+    if (offer.offer_type === 'sell' && coinsPending > 0) deliverCoins(saveObject, coinsPending)
     if (itemsPending > 0) deliverItems(saveObject, canonId, itemsPending, { stackable })
   }
   await env.DB.prepare(`DELETE FROM trading_post_offers WHERE id = ?`).bind(offer.id).run()
@@ -336,7 +336,7 @@ export async function instantSellOffer(env, { offer, saveObject, itemsLookup }) 
   const payout = Math.floor(remaining * Number(offer.price) * INSTANT_SELL_PAYOUT_FRACTION)
   deliverCoins(saveObject, payout)
   const coinsPending = Number(offer.coins_pending) || 0
-  if (coinsPending > 0) deliverCoins(saveObject, coinsPending)
+  if (offer.offer_type === 'sell' && coinsPending > 0) deliverCoins(saveObject, coinsPending)
   const itemsPending = Number(offer.items_pending) || 0
   const canonId = canonicalItemId(itemsLookup, offer.item_id)
   const item = itemsLookup?.[canonId] || itemsLookup?.[offer.item_id]
