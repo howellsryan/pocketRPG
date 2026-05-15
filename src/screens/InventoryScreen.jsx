@@ -6,15 +6,19 @@ import SharedItemModal from '../components/SharedItemModal.jsx'
 import { freeSlots, countItem } from '../engine/inventory.js'
 import { equipItem, checkEquipRequirements } from '../engine/equipment.js'
 import { getLevelFromXP } from '../engine/experience.js'
+import { api, getToken, getCharacterId } from '../cloud/api.js'
+import { pullSave, applyCloudSave } from '../cloud/sync.js'
 
 export default function InventoryScreen() {
-  const { inventory, equipment, stats, bank, updateInventory, updateEquipment, updateBank, updateHP, currentHP, getMaxHP, addToast, itemsData, completedQuests } = useGame()
+  const { inventory, equipment, stats, bank, updateInventory, updateEquipment, updateBank, updateHP, currentHP, getMaxHP, addToast, itemsData, completedQuests, isIronman, loadGame } = useGame()
   const [selected, setSelected] = useState(null) // { slotIndex, slot, item }
   const [showSpecInfo, setShowSpecInfo] = useState(false)
   const [bankQuantityMode, setBankQuantityMode] = useState(null) // 'stackable' | 'nonStackable' | null
   const [bankQuantityInput, setBankQuantityInput] = useState('')
   const [chargeInput, setChargeInput] = useState('')
   const [showChargeModal, setShowChargeModal] = useState(false)
+  const [sellBusy, setSellBusy] = useState(false)
+  const hasCloudAccount = Boolean(getToken() && getCharacterId())
 
   const handleSlotClick = (slot, item, index) => {
     const idx = inventory.indexOf(slot)
@@ -302,69 +306,69 @@ export default function InventoryScreen() {
     }
   }
 
-  const handleSell = (qty) => {
-    if (!selected) return
+  const handleSell = async (qty) => {
+    if (!selected || sellBusy) return
     const { slot, item } = selected
-    // Noted items can't be used but can still be sold at the underlying item's
-    // shop value. The price lookup is the same for both forms.
-    const price = item.shopValue || 0
+    const price = Math.floor(Number(item.shopValue) || 0)
     if (price <= 0) {
       addToast('This item has no value', 'error')
       setSelected(null)
       return
     }
-
-    const newInv = [...inventory]
-    // Match the exact form the user interacted with. Without this, selling a
-    // noted stack could drain the non-noted slot (or vice-versa), duplicating
-    // value because both forms share itemId but noted stacks hold many more
-    // units per slot than non-noted ones.
-    const isNoted = !!slot.noted
-
-    if (item.stackable || slot.noted) {
-      const actualQty = Math.min(qty, slot.quantity)
-      const idx = newInv.findIndex(s => s && s.itemId === slot.itemId && !!s.noted === isNoted)
-      if (idx === -1) return
-      if (newInv[idx].quantity <= actualQty) {
-        newInv[idx] = null
-      } else {
-        newInv[idx] = { ...newInv[idx], quantity: newInv[idx].quantity - actualQty }
-      }
-      // Add coins
-      const totalGold = price * actualQty
-      const coinIdx = newInv.findIndex(s => s && s.itemId === 'coins')
-      if (coinIdx !== -1) {
-        newInv[coinIdx] = { ...newInv[coinIdx], quantity: newInv[coinIdx].quantity + totalGold }
-      } else {
-        const empty = newInv.indexOf(null)
-        if (empty !== -1) newInv[empty] = { itemId: 'coins', quantity: totalGold }
-      }
-      updateInventory(newInv)
-      addToast(`Sold ${actualQty} × ${item.name} for ${totalGold} gp`, 'info')
-    } else {
-      // Non-stackable: sell qty across inventory (only from the same noted form)
-      const sellQty = qty || 1
-      let sold = 0
-      for (let i = 0; i < newInv.length && sold < sellQty; i++) {
-        if (newInv[i] && newInv[i].itemId === slot.itemId && !!newInv[i].noted === isNoted) {
-          newInv[i] = null
-          sold++
-        }
-      }
-      if (sold > 0) {
-        const totalGold = price * sold
-        const coinIdx = newInv.findIndex(s => s && s.itemId === 'coins')
-        if (coinIdx !== -1) {
-          newInv[coinIdx] = { ...newInv[coinIdx], quantity: newInv[coinIdx].quantity + totalGold }
-        } else {
-          const empty = newInv.indexOf(null)
-          if (empty !== -1) newInv[empty] = { itemId: 'coins', quantity: totalGold }
-        }
-        updateInventory(newInv)
-        addToast(`Sold ${sold} × ${item.name} for ${totalGold} gp`, 'info')
-      }
+    if (item.isUntradeable) {
+      addToast('This item cannot be sold', 'error')
+      setSelected(null)
+      return
     }
-    setSelected(null)
+    if (!hasCloudAccount) {
+      addToast('Selling requires a cloud-synced character', 'error')
+      setSelected(null)
+      return
+    }
+
+    const isNoted = !!slot.noted
+    const ownedQty = (item.stackable || isNoted)
+      ? slot.quantity
+      : inventory.reduce((n, s) => n + ((s && s.itemId === slot.itemId && !!s.noted === isNoted) ? 1 : 0), 0)
+    const sellQty = Math.max(1, Math.min(Number(qty) || 1, ownedQty))
+
+    setSellBusy(true)
+    try {
+      if (isIronman) {
+        // Ironman accounts can't use the trading post; keep the NPC-instant-sell path.
+        await api.tradingPostSellImmediate(slot.itemId, sellQty)
+        const cloud = await pullSave()
+        if (cloud?.payload) await applyCloudSave(cloud.payload, cloud.updatedAt)
+        await loadGame()
+        addToast(`Sold ${sellQty} × ${item.name} for ${(sellQty * price).toLocaleString()} gp`, 'info')
+      } else {
+        const res = await api.tradingPostList('sell', slot.itemId, price, sellQty)
+        const cloud = await pullSave()
+        if (cloud?.payload) await applyCloudSave(cloud.payload, cloud.updatedAt)
+        await loadGame()
+        const sold = Number(res?.matched_quantity) || 0
+        const remaining = Number(res?.remaining) || 0
+        const earned = Number(res?.total_earned) || 0
+        if (sold > 0 && remaining === 0) {
+          addToast(`Sold ${sold} × ${item.name} for ${earned.toLocaleString()} gp`, 'success')
+        } else if (sold > 0 && remaining > 0) {
+          addToast(`Sold ${sold} now; ${remaining} listed at ${price.toLocaleString()} gp on the trading post`, 'success')
+        } else {
+          addToast(`Listed ${sellQty} × ${item.name} at ${price.toLocaleString()} gp on the trading post`, 'info')
+        }
+      }
+    } catch (err) {
+      const code = err?.body?.code
+      if (code === 'TRADING_POST_SLOTS_FULL') addToast(err.body.error, 'error')
+      else if (code === 'IRONMAN_RESTRICTED') addToast(err.body.error, 'error')
+      else if (code === 'INSUFFICIENT_SUPPLIES') addToast("You don't have that many to sell.", 'error')
+      else if (code === 'NOT_LISTABLE') addToast('This item cannot be listed.', 'error')
+      else if (code === 'IN_ACTIVE_MATCH') addToast('Cannot sell during a PvP match.', 'error')
+      else addToast(`Sell failed: ${err?.message || 'unknown error'}`, 'error')
+    } finally {
+      setSellBusy(false)
+      setSelected(null)
+    }
   }
 
   const handleBankQuantitySubmit = () => {
@@ -614,45 +618,57 @@ export default function InventoryScreen() {
             </div>
 
             {/* Sell section */}
-            {selected.item.shopValue > 0 && selected.item.type !== 'currency' && (
+            {selected.item.shopValue > 0 && selected.item.type !== 'currency' && !selected.item.isUntradeable && (
               <div class="border-t border-[#333] pt-2 mt-1">
-                <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold">Sell</p>
+                <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold">
+                  {isIronman ? 'Sell' : 'Trading Post Listing'}
+                </p>
+                {!isIronman && (
+                  <p class="text-[10px] text-[var(--color-parchment)] opacity-50 mb-1.5">
+                    Listing at {selected.item.shopValue.toLocaleString()} gp · paid only when sold.
+                  </p>
+                )}
                 {(selected.item.stackable || selected.slot.noted) ? (
                   <div class="grid grid-cols-3 gap-2">
                     {[1, 5, 10].map(qty => (
                       <button key={qty} onClick={() => handleSell(qty)}
-                        disabled={selected.slot.quantity < qty}
-                        class={`py-2 rounded-lg text-white font-semibold text-sm ${selected.slot.quantity < qty ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
-                        Sell {qty} ({qty * selected.item.shopValue}gp)
+                        disabled={selected.slot.quantity < qty || sellBusy}
+                        class={`py-2 rounded-lg text-white font-semibold text-sm ${selected.slot.quantity < qty || sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
+                        {isIronman ? `Sell ${qty}` : `List ${qty}`} ({qty * selected.item.shopValue}gp)
                       </button>
                     ))}
                     <button onClick={() => handleSell(selected.slot.quantity)}
-                      class="py-2 rounded-lg bg-[var(--color-gold-dim)] text-white font-semibold text-sm active:opacity-80 col-span-3">
-                      Sell All ({selected.slot.quantity * selected.item.shopValue} gp)
+                      disabled={sellBusy}
+                      class={`py-2 rounded-lg text-white font-semibold text-sm col-span-3 ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
+                      {isIronman ? 'Sell All' : 'List All'} ({selected.slot.quantity * selected.item.shopValue} gp)
                     </button>
                   </div>
                 ) : (
                   <div class="grid grid-cols-3 gap-2">
                     <button onClick={() => handleSell(1)}
-                      class="py-2 rounded-lg bg-[var(--color-gold-dim)] text-white font-semibold text-sm active:opacity-80">
-                      Sell 1 ({selected.item.shopValue}gp)
+                      disabled={sellBusy}
+                      class={`py-2 rounded-lg text-white font-semibold text-sm ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
+                      {isIronman ? 'Sell 1' : 'List 1'} ({selected.item.shopValue}gp)
                     </button>
                     {sameItemCount >= 5 && (
                       <button onClick={() => handleSell(5)}
-                        class="py-2 rounded-lg bg-[var(--color-gold-dim)] text-white font-semibold text-sm active:opacity-80">
-                        Sell 5
+                        disabled={sellBusy}
+                        class={`py-2 rounded-lg text-white font-semibold text-sm ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
+                        {isIronman ? 'Sell 5' : 'List 5'}
                       </button>
                     )}
                     {sameItemCount >= 10 && (
                       <button onClick={() => handleSell(10)}
-                        class="py-2 rounded-lg bg-[var(--color-gold-dim)] text-white font-semibold text-sm active:opacity-80">
-                        Sell 10
+                        disabled={sellBusy}
+                        class={`py-2 rounded-lg text-white font-semibold text-sm ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
+                        {isIronman ? 'Sell 10' : 'List 10'}
                       </button>
                     )}
                     {sameItemCount > 1 && (
                       <button onClick={() => handleSell(sameItemCount)}
-                        class={`py-2 rounded-lg bg-[var(--color-gold-dim)] text-white font-semibold text-sm active:opacity-80 ${sameItemCount >= 10 ? 'col-span-3' : sameItemCount >= 5 ? 'col-span-1' : 'col-span-2'}`}>
-                        Sell All ({sameItemCount * selected.item.shopValue}gp)
+                        disabled={sellBusy}
+                        class={`py-2 rounded-lg text-white font-semibold text-sm ${sameItemCount >= 10 ? 'col-span-3' : sameItemCount >= 5 ? 'col-span-1' : 'col-span-2'} ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
+                        {isIronman ? 'Sell All' : 'List All'} ({sameItemCount * selected.item.shopValue}gp)
                       </button>
                     )}
                   </div>

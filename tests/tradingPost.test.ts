@@ -164,7 +164,10 @@ describe('trading post classification', () => {
   it('blocks untradeables from being listable', () => {
     expect(isTradingPostListable({ isBossUnique: true })).toBe(true)
     expect(isTradingPostListable({ isBossUnique: true, isUntradeable: true })).toBe(false)
-    expect(isTradingPostListable({ shopValue: 50 })).toBe(false)
+    expect(isTradingPostListable({ shopValue: 50 })).toBe(true)
+    expect(isTradingPostListable({ shopValue: 50, isUntradeable: true })).toBe(false)
+    expect(isTradingPostListable({ shopValue: 0 })).toBe(false)
+    expect(isTradingPostListable({})).toBe(false)
   })
 })
 

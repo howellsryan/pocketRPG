@@ -46,8 +46,8 @@ export async function onRequestPost({ request, env }) {
     if (!item) return json({ error: 'Item not found', code: 'ITEM_NOT_FOUND' }, 404)
     if (!isTradingPostListable(item)) {
       return json({
-        error: 'This item trades immediately through the general store, not the order book.',
-        code: 'NOT_ORDER_BOOK_ITEM',
+        error: 'This item cannot be listed on the trading post.',
+        code: 'NOT_LISTABLE',
       }, 400)
     }
 

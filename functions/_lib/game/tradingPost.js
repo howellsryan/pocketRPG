@@ -15,7 +15,9 @@ export function isOrderBookItem(item) {
 export function isTradingPostListable(item) {
   if (!item) return false
   if (item.isUntradeable) return false
-  return isOrderBookItem(item)
+  if (isOrderBookItem(item)) return true
+  const shopValue = Math.floor(Number(item?.shopValue) || 0)
+  return shopValue > 0
 }
 
 // Deliver `quantity` items to the character's inventory; spill to bank when

@@ -47,13 +47,25 @@ export function removeItemFromInventory(save, itemId, quantity) {
   const inv = getInventory(save)
   const qty = Math.floor(Number(quantity) || 0)
   if (qty < 1) throw new GameApiError('INVALID_QUANTITY', 'Invalid quantity', 400)
-  const idx = inv.findIndex(s => s?.itemId === itemId)
-  if (idx === -1) throw new GameApiError('INSUFFICIENT_SUPPLIES', 'Insufficient supplies', 400)
-  const cur = Number(inv[idx].quantity) || 0
-  if (cur < qty) throw new GameApiError('INSUFFICIENT_SUPPLIES', 'Insufficient supplies', 400)
-  const next = cur - qty
-  if (next <= 0) inv.splice(idx, 1)
-  else inv[idx].quantity = next
+  let available = 0
+  for (const s of inv) {
+    if (s?.itemId === itemId) available += Number(s.quantity) || 0
+  }
+  if (available < qty) throw new GameApiError('INSUFFICIENT_SUPPLIES', 'Insufficient supplies', 400)
+  // Walk slots back-to-front so spliced indices don't shift the iteration.
+  let remaining = qty
+  for (let i = inv.length - 1; i >= 0 && remaining > 0; i--) {
+    const s = inv[i]
+    if (!s || s.itemId !== itemId) continue
+    const cur = Number(s.quantity) || 0
+    if (cur <= remaining) {
+      remaining -= cur
+      inv.splice(i, 1)
+    } else {
+      s.quantity = cur - remaining
+      remaining = 0
+    }
+  }
 }
 
 
