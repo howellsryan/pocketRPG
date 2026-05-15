@@ -122,7 +122,7 @@ class FakeDB {
   private async _all(sql: string, params: any[]) {
     if (sql.startsWith("SELECT COUNT(*) AS n FROM trading_post_offers WHERE character_id = ? AND status = 'active'")) {
       const [characterId] = params
-      const n = this.rows.filter((r) => r.character_id === characterId && r.status === 'active').length
+      const n = this.rows.filter((r) => r.character_id === characterId && r.status === 'active' && !(Number(r.quantity_remaining) === 0 && ((Number(r.coins_pending) || 0) > 0 || (Number(r.items_pending) || 0) > 0))).length
       return { results: [{ n }] }
     }
     const sellMatch = sql.match(/^SELECT \* FROM trading_post_offers WHERE item_id IN \((\?(?:,\?)*)\) AND offer_type = 'sell' AND status = 'active' AND price <= \?/)
@@ -228,11 +228,11 @@ describe('trading post classification', () => {
   })
 })
 
-describe('matching engine — both sides go to ready_to_collect', () => {
+describe('matching engine — ready-to-collect inferred from pending+remaining', () => {
   let env: any
   beforeEach(() => { env = fakeEnv() })
 
-  it('user spec: seller lists, buyer buys -> both ready_to_collect, neither auto-delivered', async () => {
+  it('user spec: seller lists, buyer buys -> both become collectible, neither auto-delivered', async () => {
     // Seller B parks 1 warped_bow @50.
     const seller = makeSave(0, [{ itemId: 'warped_bow', quantity: 1 }])
     const { offerId: sellerOfferId } = await placeOffer(env, {
@@ -256,10 +256,10 @@ describe('matching engine — both sides go to ready_to_collect', () => {
 
     const sellerOffer = env.DB.rows.find((r: any) => r.id === sellerOfferId)
     const buyerOffer = env.DB.rows.find((r: any) => r.id === buyerOfferId)
-    expect(sellerOffer.status).toBe('ready_to_collect')
+    expect(sellerOffer.status).toBe('active')
     expect(sellerOffer.coins_pending).toBe(50)
     expect(sellerOffer.items_pending).toBe(0)
-    expect(buyerOffer.status).toBe('ready_to_collect')
+    expect(buyerOffer.status).toBe('active')
     expect(buyerOffer.items_pending).toBe(1)
     expect(buyerOffer.coins_pending).toBe(0)
   })
@@ -281,7 +281,7 @@ describe('matching engine — both sides go to ready_to_collect', () => {
     // Buyer's offer holds 5 items_pending until collect.
     const buyerOffer = env.DB.rows.find((r: any) => r.id === offerId)
     expect(buyerOffer.items_pending).toBe(5)
-    expect(buyerOffer.status).toBe('ready_to_collect')
+    expect(buyerOffer.status).toBe('active')
   })
 
   it('does not match a sell offer parked above the buyer price', async () => {
@@ -323,7 +323,7 @@ describe('matching engine — both sides go to ready_to_collect', () => {
     expect(res.remaining).toBe(5)
   })
 
-  it('a sell into a higher buy bid: seller takes the bid price as their earnings', async () => {
+  it('a sell into a higher buy bid: trade clears at seller ask price', async () => {
     // Buyer parks bid for 1 @ 200.
     await placeOffer(env, { characterId: 2, offerType: 'buy', itemId: 'warped_bow', price: 200, quantity: 1, saveObject: makeSave(200) })
     // Seller lists 1 @ 100 (floor).
@@ -331,13 +331,13 @@ describe('matching engine — both sides go to ready_to_collect', () => {
     const { offerId, res } = await placeOffer(env, {
       characterId: 1, offerType: 'sell', itemId: 'warped_bow', price: 100, quantity: 1, saveObject: seller,
     })
-    expect(res.totalEarned).toBe(200)
+    expect(res.totalEarned).toBe(100)
 
     const sellerOffer = env.DB.rows.find((r: any) => r.id === offerId)
     // Coins go to seller's offer row -- collect to claim.
     expect(getCoinTotal(seller)).toBe(0)
-    expect(sellerOffer.coins_pending).toBe(200)
-    expect(sellerOffer.status).toBe('ready_to_collect')
+    expect(sellerOffer.coins_pending).toBe(100)
+    expect(sellerOffer.status).toBe('active')
   })
 })
 
@@ -509,14 +509,14 @@ describe('slot limits', () => {
     await expect(assertSlotAvailable(env, 1)).rejects.toThrow(/active offers/i)
   })
 
-  it('does not count ready_to_collect offers against the active-slot cap', async () => {
+  it('does not count collectible offers against the active-slot cap', async () => {
     for (let i = 0; i < MAX_ACTIVE_OFFERS_PER_CHARACTER - 1; i++) {
       await insertOffer(env, { characterId: 1, offerType: 'sell', itemId: 'warped_bow', price: 10 + i, quantityTotal: 1, quantityRemaining: 1 })
     }
     env.DB.rows.push({
       id: 999, character_id: 1, offer_type: 'sell', item_id: 'warped_bow', price: 5,
       quantity_total: 1, quantity_remaining: 0, coins_pending: 5, items_pending: 0,
-      status: 'ready_to_collect', created_at: 0, updated_at: 0,
+      status: 'active', created_at: 0, updated_at: 0,
     })
     await expect(assertSlotAvailable(env, 1)).resolves.toBeUndefined()
   })
@@ -567,8 +567,7 @@ describe('legacy id aliasing on the matcher', () => {
 })
 
 describe('OFFER_STATUS constants', () => {
-  it('exports active and ready_to_collect (no completed/cancelled)', () => {
+  it('exports active status (no completed/cancelled)', () => {
     expect(OFFER_STATUS.ACTIVE).toBe('active')
-    expect(OFFER_STATUS.READY_TO_COLLECT).toBe('ready_to_collect')
   })
 })
