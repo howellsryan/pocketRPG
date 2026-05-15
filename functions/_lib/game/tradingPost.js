@@ -1,6 +1,6 @@
 import { GameApiError } from './errors.js'
 import { getInventory, addItemToInventory, addItemToBank, removeItemFromInventory } from './inventory.js'
-import { subtractCoins } from './economy.js'
+import { subtractCoins, addCoins } from './economy.js'
 
 export const MAX_ACTIVE_OFFERS_PER_CHARACTER = 8
 export const INSTANT_SELL_PAYOUT_FRACTION = 0.8
@@ -55,8 +55,7 @@ function deliverItems(saveObject, itemId, quantity, { stackable }) {
 
 function deliverCoins(saveObject, amount) {
   if (amount <= 0) return
-  const inventoryCoins = Number(saveObject?.coins) || 0
-  saveObject.coins = inventoryCoins + amount
+  addCoins(saveObject, amount)
 }
 
 function nowMs() {

@@ -4,6 +4,7 @@ import itemsData from '../../../src/data/items.json' assert { type: 'json' }
 import { loadCharacterWithSave, writeSave } from '../../_lib/game/save.js'
 import { toErrorResponse, GameApiError } from '../../_lib/game/errors.js'
 import { auditLog } from '../../_lib/game/audit.js'
+import { addCoins } from '../../_lib/game/economy.js'
 import {
   isTradingPostListable,
   assertSlotAvailable,
@@ -86,7 +87,7 @@ export async function onRequestPost({ request, env }) {
       totalReceived = res.totalReceived
       // Refund the price-improvement (cap*matched - actuallySpent).
       const refund = price * totalReceived - totalSpent
-      if (refund > 0) saveObject.coins = (Number(saveObject.coins) || 0) + refund
+      if (refund > 0) addCoins(saveObject, refund)
     } else {
       // Escrow items first; matching converts them to coins as fills happen.
       escrowSellItems(saveObject, itemId, quantity)

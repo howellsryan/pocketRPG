@@ -1,5 +1,6 @@
 import { GameApiError } from './errors.js'
 import { addItemToInventory } from './inventory.js'
+import { addCoins } from './economy.js'
 
 const MAX_IDLE_WINDOW_MS = 24 * 60 * 60 * 1000 + 5 * 60 * 1000
 const SKIP_HOUR_MS = 60 * 60 * 1000
@@ -23,7 +24,7 @@ export function applyIdleClaimRewards(saveObject, claimRewards = {}, elapsedMs) 
   const coinsPerHour = Math.max(0, Number(claimRewards?.coinsPerHour) || 0)
   const maxCoins = Math.max(0, Number(claimRewards?.maxCoins) || 0)
   const grantedCoins = Math.floor(Math.min(maxCoins, coinsPerHour * elapsedHours))
-  if (grantedCoins > 0) saveObject.coins = (Number(saveObject.coins) || 0) + grantedCoins
+  if (grantedCoins > 0) addCoins(saveObject, grantedCoins)
 
   const grantedItems = []
   for (const reward of (claimRewards?.items || [])) {

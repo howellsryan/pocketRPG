@@ -15,6 +15,7 @@ import {
   MAX_ACTIVE_OFFERS_PER_CHARACTER,
   INSTANT_SELL_PAYOUT_FRACTION,
 } from '../functions/_lib/game/tradingPost.js'
+import { getCoinTotal } from '../functions/_lib/game/economy.js'
 
 // Tiny in-memory shim of the subset of D1 that tradingPost.js actually uses.
 // Supports the exact SQL strings used by the engine via pattern matching.
@@ -245,7 +246,7 @@ describe('order matching — sell side', () => {
       sellerCharacterId: 1, sellerSave, itemId: 'warped_bow', minPrice: 100, quantity: 1, stackable: false,
     })
     expect(res.totalEarned).toBe(200)
-    expect(sellerSave.coins).toBe(200)
+    expect(getCoinTotal(sellerSave)).toBe(200)
     const buyerOffer = env.DB.rows[0]
     expect(buyerOffer.status).toBe('completed')
     expect(buyerOffer.items_pending).toBe(1)
@@ -284,7 +285,7 @@ describe('orphan stock (instant sell)', () => {
     const sellerSave = makeSave(0)
     const payout = await instantSellOffer(env, { offer, saveObject: sellerSave, itemsLookup: ITEM })
     expect(payout).toBe(Math.floor(5 * 1000 * INSTANT_SELL_PAYOUT_FRACTION))
-    expect(sellerSave.coins).toBe(payout)
+    expect(getCoinTotal(sellerSave)).toBe(payout)
     const row = env.DB.rows[0]
     expect(row.character_id).toBeNull()
     expect(row.price).toBe(1000) // listed price preserved
@@ -332,7 +333,7 @@ describe('cancellation refunds escrow', () => {
     const offer = await getOwnedOffer(env, offerId!, 1)
     const save = makeSave(0)
     await cancelOffer(env, { offer, saveObject: save, itemsLookup: ITEM })
-    expect(save.coins).toBe(2 * 1000)
+    expect(getCoinTotal(save)).toBe(2 * 1000)
     expect(env.DB.rows[0].status).toBe('cancelled')
   })
 })
@@ -355,7 +356,7 @@ describe('slot limits and sweeping', () => {
     const save = makeSave(50)
     const swept = await sweepPendingDeliveries(env, 1, save, ITEM)
     expect(swept).toBe(true)
-    expect(save.coins).toBe(250)
+    expect(getCoinTotal(save)).toBe(250)
     expect(env.DB.rows[0].coins_pending).toBe(0)
   })
 })
@@ -370,6 +371,6 @@ describe('escrow primitives', () => {
   it('escrowBuyCoins subtracts from coins (inventory + bank)', () => {
     const save = makeSave(1000)
     escrowBuyCoins(save, 800)
-    expect(save.coins).toBe(200)
+    expect(getCoinTotal(save)).toBe(200)
   })
 })

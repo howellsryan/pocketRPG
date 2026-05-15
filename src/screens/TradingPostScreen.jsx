@@ -9,7 +9,7 @@ import ItemDetailPanel from '../components/ItemDetailPanel.jsx'
 import TwoPaneLayout from '../components/TwoPaneLayout.jsx'
 import Button from '../components/Button.jsx'
 import { useIsDesktop } from '../hooks/useIsDesktop.js'
-import { pullSave, applyCloudSave } from '../cloud/sync.js'
+import { pullSave, applyCloudSave, pushNow } from '../cloud/sync.js'
 import questsData from '../data/quests.json'
 import minigamesData from '../data/minigames.json'
 
@@ -40,6 +40,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
     unlockedMinigameItems,
     completedQuests,
     loadGame,
+    getSnapshot,
   } = useGame()
   const isDesktop = useIsDesktop()
 
@@ -171,6 +172,9 @@ export default function TradingPostScreen({ onBuyCredits }) {
     if (!selected || busy) return
     setBusy(true)
     try {
+      // Flush local state (esp. coins) so the server-side escrow sees the
+      // player's true balance rather than a stale ≤60s-old snapshot.
+      try { await pushNow(getSnapshot()) } catch (_) { /* ignore push failure */ }
       if (isOrderBookItem(selected)) {
         const totalCoinsRequired = bidPrice * qty
         if (coins < totalCoinsRequired) {
@@ -229,6 +233,9 @@ export default function TradingPostScreen({ onBuyCredits }) {
         setBusy(false)
         return
       }
+      // Flush local inventory state so the server-side escrow sees the right
+      // slot contents (e.g. items moved out of bank recently).
+      try { await pushNow(getSnapshot()) } catch (_) { /* ignore push failure */ }
       if (isOrderBookItem(selected)) {
         const res = await api.tradingPostList('sell', selected.id, bidPrice, qty)
         const cloud = await pullSave()

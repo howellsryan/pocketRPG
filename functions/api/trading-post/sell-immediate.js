@@ -6,6 +6,7 @@ import { toErrorResponse } from '../../_lib/game/errors.js'
 import { auditLog } from '../../_lib/game/audit.js'
 import { isTradingPostListable } from '../../_lib/game/tradingPost.js'
 import { removeItemFromInventory } from '../../_lib/game/inventory.js'
+import { addCoins } from '../../_lib/game/economy.js'
 
 // POST /api/trading-post/sell-immediate  { item_id, quantity }
 //
@@ -50,7 +51,7 @@ export async function onRequestPost({ request, env }) {
 
     removeItemFromInventory(saveObject, itemId, quantity)
     const totalPayout = unit * quantity
-    saveObject.coins = (Number(saveObject.coins) || 0) + totalPayout
+    addCoins(saveObject, totalPayout)
 
     const write = await writeSave(env, characterId, saveObject, saveRevision)
 
