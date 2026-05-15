@@ -360,6 +360,9 @@ export default function TradingPostScreen({ onBuyCredits }) {
     const priceLabel = orderBook
       ? (m?.bestSell ? `From ${m.bestSell.price.toLocaleString()} gp` : 'No sellers')
       : `${generalStoreBuyPrice(item).toLocaleString()} gp`
+    const buyLabel = orderBook
+      ? (m?.bestBuy ? `Best buy ${m.bestBuy.price.toLocaleString()} gp` : 'No buyers')
+      : null
     return (
       <div key={item.id} class="p-3 rounded-lg bg-[var(--color-void-light)] border border-[#2a2a2a] flex items-center gap-3">
         <span class="text-2xl leading-none shrink-0">{item.icon || '📦'}</span>
@@ -373,6 +376,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
         </div>
         <div class="text-right shrink-0">
           <div class="text-[11px] font-[var(--font-mono)] text-[var(--color-gold)]">{priceLabel}</div>
+          {buyLabel && <div class="text-[10px] text-[#8fb0d1]">{buyLabel}</div>}
           <div class="flex gap-1 mt-1">
             <Button variant="primary" size="sm" onClick={() => openItem(item, 'buy')} disabled={!!buyDisabledReason}>Buy</Button>
             <Button variant="secondary" size="sm" onClick={() => openItem(item, 'sell')} disabled={owned <= 0}>Sell</Button>
