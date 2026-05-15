@@ -3,6 +3,7 @@ import { useGame } from '../state/gameState.jsx'
 import ItemSlot from '../components/ItemSlot.jsx'
 import Modal from '../components/Modal.jsx'
 import SharedItemModal from '../components/SharedItemModal.jsx'
+import TradingPostSellForm from '../components/TradingPostSellForm.jsx'
 import { freeSlots, countItem } from '../engine/inventory.js'
 import { equipItem, checkEquipRequirements } from '../engine/equipment.js'
 import { getLevelFromXP } from '../engine/experience.js'
@@ -19,8 +20,8 @@ export default function InventoryScreen() {
   const [showChargeModal, setShowChargeModal] = useState(false)
   const [sellBusy, setSellBusy] = useState(false)
   const [showListModal, setShowListModal] = useState(false)
-  const [listQtyInput, setListQtyInput] = useState('')
-  const [listPriceInput, setListPriceInput] = useState('')
+  const [listQtyInput, setListQtyInput] = useState(1)
+  const [listPriceInput, setListPriceInput] = useState(1)
   const hasCloudAccount = Boolean(getToken() && getCharacterId())
 
   const handleSlotClick = (slot, item, index) => {
@@ -390,8 +391,8 @@ export default function InventoryScreen() {
     const maxQty = (item.stackable || isNoted)
       ? slot.quantity
       : inventory.reduce((n, s) => n + ((s && s.itemId === slot.itemId && !!s.noted === isNoted) ? 1 : 0), 0)
-    setListQtyInput(String(Math.max(1, Math.min(1, maxQty))))
-    setListPriceInput(String(Math.max(1, Math.floor(Number(item.shopValue) || 1))))
+    setListQtyInput(Math.max(1, Math.min(1, maxQty)))
+    setListPriceInput(Math.max(1, Math.floor(Number(item.shopValue) || 1)))
     setShowListModal(true)
   }
 
@@ -769,9 +770,16 @@ export default function InventoryScreen() {
           <Modal title={`List ${item.name}`} onClose={() => setShowListModal(false)}>
             <div class="space-y-3">
               <p class="text-[10px] text-[var(--color-parchment)] opacity-50">Choose quantity and price per item.</p>
-              <input type="number" min="1" max={maxQty} value={listQtyInput} onInput={(e) => setListQtyInput(e.target.value)} class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)]" placeholder={`Quantity (max ${maxQty})`} />
-              <input type="number" min="1" value={listPriceInput} onInput={(e) => setListPriceInput(e.target.value)} class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[var(--color-parchment)]" placeholder="Price per item (gp)" />
-              <button onClick={handleCustomListSubmit} disabled={sellBusy} class="w-full py-2.5 rounded-lg bg-[var(--color-gold-dim)] text-white font-semibold text-sm active:opacity-80">List</button>
+              <TradingPostSellForm
+                qty={listQtyInput}
+                setQty={setListQtyInput}
+                price={listPriceInput}
+                setPrice={setListPriceInput}
+                maxQty={maxQty}
+                busy={sellBusy}
+                onCancel={() => setShowListModal(false)}
+                onSubmit={handleCustomListSubmit}
+              />
             </div>
           </Modal>
         )
