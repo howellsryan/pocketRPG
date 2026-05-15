@@ -1147,7 +1147,11 @@ function GameApp() {
     }
     setActionData(data || null)
     setScreen(scr)
+    if (gameReady && isCloudAccount && !isInPvpMatch && cloudPhase === 'ready') {
+      void pushNow(getSnapshot()).catch(() => {})
+    }
   }
+
 
   const isSkippingRef = useRef(false)
 

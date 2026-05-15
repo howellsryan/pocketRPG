@@ -18,6 +18,13 @@ const GENERAL_BUY_MULTIPLIER = 1.1
 const MINIGAME_UNLOCK_STORE_PRICE = 4_500_000
 const INSTANT_SELL_FRACTION = 0.8
 
+function isReadyToCollectOffer(offer) {
+  const coinsPending = Number(offer?.coins_pending) || 0
+  const itemsPending = Number(offer?.items_pending) || 0
+  const remaining = Number(offer?.quantity_remaining) || 0
+  return offer?.status === 'ready_to_collect' || (remaining <= 0 && (coinsPending > 0 || itemsPending > 0))
+}
+
 function generalStoreBuyPrice(item) {
   if (!item) return 0
   return Math.floor((Number(item.shopValue) || 0) * GENERAL_BUY_MULTIPLIER)
@@ -353,6 +360,9 @@ export default function TradingPostScreen({ onBuyCredits }) {
     const priceLabel = orderBook
       ? (m?.bestSell ? `From ${m.bestSell.price.toLocaleString()} gp` : 'No sellers')
       : `${generalStoreBuyPrice(item).toLocaleString()} gp`
+    const buyLabel = orderBook
+      ? (m?.bestBuy ? `Best buy ${m.bestBuy.price.toLocaleString()} gp` : 'No buyers')
+      : null
     return (
       <div key={item.id} class="p-3 rounded-lg bg-[var(--color-void-light)] border border-[#2a2a2a] flex items-center gap-3">
         <span class="text-2xl leading-none shrink-0">{item.icon || '📦'}</span>
@@ -366,6 +376,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
         </div>
         <div class="text-right shrink-0">
           <div class="text-[11px] font-[var(--font-mono)] text-[var(--color-gold)]">{priceLabel}</div>
+          {buyLabel && <div class="text-[10px] text-[#8fb0d1]">{buyLabel}</div>}
           <div class="flex gap-1 mt-1">
             <Button variant="primary" size="sm" onClick={() => openItem(item, 'buy')} disabled={!!buyDisabledReason}>Buy</Button>
             <Button variant="secondary" size="sm" onClick={() => openItem(item, 'sell')} disabled={owned <= 0}>Sell</Button>
@@ -378,14 +389,21 @@ export default function TradingPostScreen({ onBuyCredits }) {
   const renderMyOffersList = () => {
     // Active offers (still on the book) hold a slot; ready-to-collect rows
     // float above the slot grid so the player can see what's waiting on them.
-    const activeOffers = myOffers.filter((o) => o.status === 'active')
-    const readyOffers = myOffers.filter((o) => o.status === 'ready_to_collect')
+    const readyOffers = myOffers.filter((o) => isReadyToCollectOffer(o))
+    const activeOffers = myOffers.filter((o) => !isReadyToCollectOffer(o))
     const slotsUsed = activeOffers.length
 
     const renderOffer = (offer, key) => {
       const item = itemsData[offer.item_id]
       const filled = offer.quantity_total - offer.quantity_remaining
-      const isReady = offer.status === 'ready_to_collect'
+      const isReady = isReadyToCollectOffer(offer)
+      const buyPendingQty = Number(offer.items_pending) || 0
+      const sellPendingQty = Math.max(0, Math.min(filled, Math.floor((Number(offer.coins_pending) || 0) / Math.max(1, Number(offer.price) || 1))))
+      const executedUnitPrice = (() => {
+        if (offer.offer_type === 'buy' && buyPendingQty > 0) return Math.floor((Number(offer.coins_pending) || 0) / buyPendingQty)
+        if (offer.offer_type === 'sell' && sellPendingQty > 0) return Math.floor((Number(offer.coins_pending) || 0) / sellPendingQty)
+        return Number(offer.price) || 0
+      })()
       const coinsPending = Number(offer.coins_pending) || 0
       const itemsPending = Number(offer.items_pending) || 0
       const hasPending = coinsPending > 0 || itemsPending > 0
@@ -410,7 +428,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
                 {offer.offer_type === 'buy' ? 'Buy' : 'Sell'} {item?.name || offer.item_id}
               </div>
               <div class="text-[10px] text-[#888]">
-                {offer.price.toLocaleString()} gp · {filled}/{offer.quantity_total} filled
+                {executedUnitPrice.toLocaleString()} gp · {filled}/{offer.quantity_total} filled
               </div>
               {isReady && (
                 <div class="text-[10px] text-[var(--color-gold)] font-semibold mt-0.5">
@@ -572,10 +590,10 @@ export default function TradingPostScreen({ onBuyCredits }) {
                 ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
                 : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
             }`}
-          >📦 My Offers {offersLoaded ? `(${myOffers.filter((o) => o.status === 'active').length}/${MAX_SLOTS})` : ''}
-            {offersLoaded && myOffers.some((o) => o.status === 'ready_to_collect') && (
+          >📦 My Offers {offersLoaded ? `(${myOffers.filter((o) => !isReadyToCollectOffer(o)).length}/${MAX_SLOTS})` : ''}
+            {offersLoaded && myOffers.some((o) => isReadyToCollectOffer(o)) && (
               <span class="ml-1 inline-block min-w-[16px] h-[16px] leading-[16px] px-1 rounded-full text-[10px] font-bold bg-[var(--color-gold)] text-[var(--color-void)] align-middle">
-                {myOffers.filter((o) => o.status === 'ready_to_collect').length}
+                {myOffers.filter((o) => isReadyToCollectOffer(o)).length}
               </span>
             )}
           </button>

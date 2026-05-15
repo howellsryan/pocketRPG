@@ -29,7 +29,6 @@ export const INSTANT_SELL_PAYOUT_FRACTION = 0.8
 
 export const OFFER_STATUS = {
   ACTIVE: 'active',
-  READY_TO_COLLECT: 'ready_to_collect',
 }
 
 export function isOrderBookItem(item) {
@@ -87,7 +86,9 @@ function nowMs() {
 
 async function countActiveOffers(env, characterId) {
   const row = await env.DB.prepare(
-    `SELECT COUNT(*) AS n FROM trading_post_offers WHERE character_id = ? AND status = 'active'`,
+    `SELECT COUNT(*) AS n FROM trading_post_offers
+     WHERE character_id = ? AND status = 'active'
+       AND NOT (quantity_remaining = 0 AND (coins_pending > 0 OR items_pending > 0))`,
   ).bind(characterId).first()
   return Number(row?.n) || 0
 }
@@ -138,16 +139,17 @@ async function recordFill(env, { buyerOfferId, sellerOfferId, tradeQty, tradePri
   }
   await env.DB.prepare(
     `UPDATE trading_post_offers
-     SET items_pending = items_pending + ?, quantity_remaining = ?, updated_at = ?
+     SET items_pending = items_pending + ?, coins_pending = coins_pending + ?, quantity_remaining = ?, updated_at = ?
      WHERE id = ?`,
-  ).bind(tradeQty, buyerOfferRemaining, now, buyerOfferId).run()
+  ).bind(tradeQty, tradeGold, buyerOfferRemaining, now, buyerOfferId).run()
 }
 
-// Re-read an offer and pick its final status after a batch of fills.
+// Re-read an offer after fills.
 //   * remaining > 0 -> stays 'active'.
 //   * remaining = 0, no pending -> row is removed entirely (nothing to do
 //     with it; happens only on self-trades).
-//   * remaining = 0, pending exists -> 'ready_to_collect'.
+//   * remaining = 0, pending exists -> keep status='active' and rely on
+//     (remaining=0,pending>0) as the ready-to-collect signal.
 async function finalizeOfferStatus(env, offerId) {
   const row = await env.DB.prepare(
     `SELECT quantity_remaining, coins_pending, items_pending FROM trading_post_offers WHERE id = ?`,
@@ -160,9 +162,6 @@ async function finalizeOfferStatus(env, offerId) {
     await env.DB.prepare(`DELETE FROM trading_post_offers WHERE id = ?`).bind(offerId).run()
     return
   }
-  await env.DB.prepare(
-    `UPDATE trading_post_offers SET status = ?, updated_at = ? WHERE id = ?`,
-  ).bind(OFFER_STATUS.READY_TO_COLLECT, nowMs(), offerId).run()
 }
 
 // Run matching for a brand-new offer (already inserted with row id
@@ -187,7 +186,8 @@ export async function executeMatching(env, { newOfferId, newCharacterId, offerTy
     const oppRemaining = Number(opp.quantity_remaining) || 0
     if (oppRemaining <= 0) continue
     const tradeQty = Math.min(remaining, oppRemaining)
-    const tradePrice = Number(opp.price)
+    const oppPrice = Number(opp.price)
+    const tradePrice = oppPrice
     const newOfferRemaining = remaining - tradeQty
     const oppNewRemaining = oppRemaining - tradeQty
 
@@ -209,8 +209,8 @@ export async function executeMatching(env, { newOfferId, newCharacterId, offerTy
       }
       totalSpent += tradePrice * tradeQty
     } else {
-      // New offer is sell, opp is buy. Trade at opp's (higher) price -- the
-      // buyer pays the bid they posted; the seller gets the upgraded price.
+      // New offer is sell, opp is buy. Trade at the resting buy price.
+      // A seller accepts the best bid already on the book.
       // The seller side is always the caller here, never orphan.
       await recordFill(env, {
         buyerOfferId: opp.id,
@@ -281,7 +281,7 @@ export async function collectOffer(env, { offer, saveObject, itemsLookup }) {
   if (coinsPending <= 0 && itemsPending <= 0) {
     throw new GameApiError('NOTHING_TO_COLLECT', 'No coins or items to collect on this offer.', 400)
   }
-  if (coinsPending > 0) deliverCoins(saveObject, coinsPending)
+  if (offer.offer_type === 'sell' && coinsPending > 0) deliverCoins(saveObject, coinsPending)
   if (itemsPending > 0) {
     const canonId = canonicalItemId(itemsLookup, offer.item_id)
     const item = itemsLookup?.[canonId] || itemsLookup?.[offer.item_id]
@@ -298,7 +298,7 @@ export async function collectOffer(env, { offer, saveObject, itemsLookup }) {
        WHERE id = ?`,
     ).bind(now, offer.id).run()
   }
-  return { coinsCollected: coinsPending, itemsCollected: itemsPending }
+  return { coinsCollected: offer.offer_type === 'sell' ? coinsPending : 0, itemsCollected: itemsPending }
 }
 
 // Cancel an offer: refund the unmatched escrow + any pending payouts to the
@@ -314,10 +314,10 @@ export async function cancelOffer(env, { offer, saveObject, itemsLookup }) {
   if (offer.offer_type === 'buy') {
     if (remaining > 0) deliverCoins(saveObject, remaining * Number(offer.price))
     if (itemsPending > 0) deliverItems(saveObject, canonId, itemsPending, { stackable })
-    if (coinsPending > 0) deliverCoins(saveObject, coinsPending)
+    if (offer.offer_type === 'sell' && coinsPending > 0) deliverCoins(saveObject, coinsPending)
   } else {
     if (remaining > 0) deliverItems(saveObject, canonId, remaining, { stackable })
-    if (coinsPending > 0) deliverCoins(saveObject, coinsPending)
+    if (offer.offer_type === 'sell' && coinsPending > 0) deliverCoins(saveObject, coinsPending)
     if (itemsPending > 0) deliverItems(saveObject, canonId, itemsPending, { stackable })
   }
   await env.DB.prepare(`DELETE FROM trading_post_offers WHERE id = ?`).bind(offer.id).run()
@@ -335,7 +335,7 @@ export async function instantSellOffer(env, { offer, saveObject, itemsLookup }) 
   const payout = Math.floor(remaining * Number(offer.price) * INSTANT_SELL_PAYOUT_FRACTION)
   deliverCoins(saveObject, payout)
   const coinsPending = Number(offer.coins_pending) || 0
-  if (coinsPending > 0) deliverCoins(saveObject, coinsPending)
+  if (offer.offer_type === 'sell' && coinsPending > 0) deliverCoins(saveObject, coinsPending)
   const itemsPending = Number(offer.items_pending) || 0
   const canonId = canonicalItemId(itemsLookup, offer.item_id)
   const item = itemsLookup?.[canonId] || itemsLookup?.[offer.item_id]
