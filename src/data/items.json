@@ -21562,7 +21562,7 @@
   },
   "verdant_dhide_chaps": {
     "id": "verdant_d_hide_chaps",
-    "legacy_item_id": "verdant_dhide_chaps",
+    "legacy_item_id": "guthix_dhide_chaps",
     "name": "Verdant D'Hide Chaps",
     "type": "armour",
     "stackable": false,
@@ -21598,7 +21598,7 @@
   },
   "verdant_dhide_boots": {
     "id": "verdant_d_hide_boots",
-    "legacy_item_id": "verdant_dhide_boots",
+    "legacy_item_id": "guthix_dhide_boots",
     "name": "Verdant D'Hide Boots",
     "type": "armour",
     "stackable": false,
@@ -21635,7 +21635,7 @@
   },
   "verdant_dhide_bracers": {
     "id": "verdant_d_hide_bracers",
-    "legacy_item_id": "verdant_dhide_bracers",
+    "legacy_item_id": "guthix_dhide_bracers",
     "name": "Verdant D'Hide Bracers",
     "type": "armour",
     "stackable": false,
@@ -23162,7 +23162,7 @@
   },
   "verdant_dhide_shield": {
     "id": "verdant_d_hide_shield",
-    "legacy_item_id": "verdant_dhide_shield",
+    "legacy_item_id": "guthix_dhide_shield",
     "name": "Verdant D'Hide Shield",
     "type": "armour",
     "stackable": false,
