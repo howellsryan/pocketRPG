@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { GameProvider, useGame } from './state/gameState.jsx'
 import { PvpProvider, usePvp } from './state/pvpState.jsx'
-import BottomNav from './components/BottomNav.jsx'
+import BurgerMenu from './components/BurgerMenu.jsx'
 import SideNav from './components/SideNav.jsx'
 import Header from './components/Header.jsx'
 import ToastContainer from './components/Toast.jsx'
@@ -17,7 +17,11 @@ import AgilityScreen from './screens/AgilityScreen.jsx'
 import GeneralStoreScreen from './screens/GeneralStoreScreen.jsx'
 import EquipmentScreen from './screens/EquipmentScreen.jsx'
 import QuestsScreen from './screens/QuestsScreen.jsx'
-import SettingsScreen from './screens/SettingsScreen.jsx'
+import CluesScreen from './screens/CluesScreen.jsx'
+import MinigamesScreen from './screens/MinigamesScreen.jsx'
+import CollectionLogScreen from './screens/CollectionLogScreen.jsx'
+import LeaderboardScreen from './screens/LeaderboardScreen.jsx'
+import HelpScreen from './screens/HelpScreen.jsx'
 import AuthScreen from './screens/AuthScreen.jsx'
 import { SCREENS } from './utils/constants.js'
 import { hasSave, closeDB } from './db/database.js'
@@ -185,6 +189,7 @@ function GameApp() {
     unlockMinigameItem, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [gameReady, setGameReady] = useState(false)
   const [activity, setActivity] = useState(null)
   const [idleResult, setIdleResult] = useState(null) // { elapsedMs, task, xpGained, itemsGained, lootLost, monstersKilled }
@@ -1588,9 +1593,12 @@ function GameApp() {
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} />
       case SCREENS.AGILITY:     return <AgilityScreen initialActionId={actionData?.actionId} idleResult={idleResult} />
       case SCREENS.STORE:       return <GeneralStoreScreen />
-      case SCREENS.QUESTS:      return <QuestsScreen />
-      case SCREENS.SETTINGS: return <SettingsScreen />
-      case SCREENS.LEADERBOARD: return <SettingsScreen />
+      case SCREENS.QUESTS:         return <QuestsScreen />
+      case SCREENS.CLUES:          return <CluesScreen />
+      case SCREENS.MINIGAMES:      return <MinigamesScreen />
+      case SCREENS.COLLECTION_LOG: return <CollectionLogScreen />
+      case SCREENS.LEADERBOARD:    return <LeaderboardScreen />
+      case SCREENS.HELP:           return <HelpScreen />
       default:                  return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} />
     }
   }
@@ -1614,18 +1622,20 @@ function GameApp() {
         onDisabledClick={() => addToast('⚔️ Cannot navigate during combat!', 'warning')}
       />
       <div class="flex-1 flex flex-col min-w-0 min-h-0">
-        <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} />
+        <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onMenuClick={() => setMenuOpen(true)} />
         <ToastContainer />
         <main class="flex-1 overflow-hidden">
           {renderScreen()}
         </main>
-        <BottomNav
-          active={screen}
-          onNavigate={(s) => navigate(s)}
-          isInCombat={isInCombat}
-          onDisabledClick={() => addToast('⚔️ Cannot navigate during combat!', 'warning')}
-        />
       </div>
+      <BurgerMenu
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        active={screen}
+        onNavigate={(s) => navigate(s)}
+        isInCombat={isInCombat}
+        onDisabledClick={() => addToast('⚔️ Cannot navigate during combat!', 'warning')}
+      />
 
       {/* Idle Result Modal */}
       {idleResult && pvp.phase !== 'in_match' && Date.now() >= suppressIdleModalUntil && (

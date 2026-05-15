@@ -1,30 +1,16 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
-import Card from '../components/Card.jsx'
 import Panel from '../components/Panel.jsx'
-import Modal from '../components/Modal.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
-import { addItem, countItem, freeSlots } from '../engine/inventory.js'
+import { countItem } from '../engine/inventory.js'
 import { onTick } from '../engine/tick.js'
-import { formatNumber } from '../utils/helpers.js'
-import { SCREENS } from '../utils/constants.js'
 import minigamesData from '../data/minigames.json'
-import cluesData from '../data/clues.json'
-import { rollClueRewards } from '../engine/clueScrolls.js'
-import { api, getToken, getCharacterId } from '../cloud/api.js'
-import { pullSave, applyCloudSave, requestCriticalPushSave } from '../cloud/sync.js'
-import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
-import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
-import { isLoggedDrop } from '../engine/collectionLog.js'
 
 /**
  * Gathering tasks — no skill level required, just time-based resource collection.
  * Inspired by activities like collecting bowstrings, gathering sand, etc.
- *
- * Also hosts long-running Minigame grinds (Barbarian Assault, Warriors Guild,
- * Fortress Clash) which award a single untradeable reward after hours of idling.
  */
 
 const GATHER_TASKS = [
@@ -214,61 +200,12 @@ const GATHER_TASKS = [
     gpCost: 100,
     category: 'fields',
   },
-  {
-    id: 'complete_medium_clue',
-    name: 'Complete Medium Clue',
-    icon: '📜',
-    description: 'Solve a medium clue scroll for treasure rewards.',
-    ticks: 500,
-    requiresItem: 'clue_scroll_medium',
-    isClue: true,
-    clueLevel: 'medium',
-    category: 'clues',
-  },
-  {
-    id: 'complete_hard_clue',
-    name: 'Complete Hard Clue',
-    icon: '📜',
-    description: 'Solve a hard clue scroll for treasure rewards.',
-    ticks: 1500,
-    requiresItem: 'clue_scroll_hard',
-    isClue: true,
-    clueLevel: 'hard',
-    category: 'clues',
-  },
-  {
-    id: 'complete_elite_clue',
-    name: 'Complete Elite Clue',
-    icon: '📜',
-    description: 'Solve an elite clue scroll for treasure rewards.',
-    ticks: 3000,
-    requiresItem: 'clue_scroll_elite',
-    isClue: true,
-    clueLevel: 'elite',
-    category: 'clues',
-  },
-  {
-    id: 'complete_master_clue',
-    name: 'Complete Master Clue',
-    icon: '📜',
-    description: 'Solve a master clue scroll for treasure rewards.',
-    ticks: 6000,
-    requiresItem: 'clue_scroll_master',
-    isClue: true,
-    clueLevel: 'master',
-    category: 'clues',
-  },
 ]
 
 const CATEGORIES = [
   { id: 'all', label: 'All', icon: '📋' },
-  { id: 'clues', label: 'Clues', icon: '📜' },
 ]
 
-const TICKS_PER_HOUR = 6000 // 3600s / 0.6s per tick
-
-const MINIGAME_TASKS = minigamesData.tasks
-const MINIGAMES = minigamesData.minigames
 const ITEM_NAMES = {
   bowstring: 'Bowstring', bucket_of_sand: 'Bucket of sand', giant_seaweed: 'Seaweed',
   clay: 'Clay', soft_clay: 'Soft clay', wheat: 'Wheat', pot_of_flour: 'Pot of flour',
@@ -280,8 +217,6 @@ const ITEM_NAMES = {
   empty_birds_nest: 'Empty bird\'s nest', limpwurt_root: 'Limpwurt root',
   logs: 'Logs', oak_logs: 'Oak logs', teak_logs: 'Teak logs', mahogany_logs: 'Mahogany logs',
   planks: 'Plank', oak_plank: 'Oak plank', teak_plank: 'Teak plank', mahogany_plank: 'Mahogany plank',
-  clue_scroll_medium: 'Clue scroll (medium)', clue_scroll_hard: 'Clue scroll (hard)',
-  clue_scroll_elite: 'Clue scroll (elite)', clue_scroll_master: 'Clue scroll (master)',
   ...minigamesData.itemNames,
 }
 
@@ -296,16 +231,10 @@ function hasItemAnywhere(itemId, inventory, bank, equipment) {
   return false
 }
 
-function formatHours(hours) {
-  if (hours === Math.floor(hours)) return `${hours}h`
-  return `${hours.toFixed(1)}h`
-}
-
 export default function GatherScreen({ initialTaskId, idleResult }) {
   const { inventory, bank, equipment, updateInventory, updateBankDirect, addToast, setActiveTask, activeTask: globalActiveTask, itemsData } = useGame()
   const [category, setCategory] = useState('all')
   const [activeTask, setLocalTask] = useState(null)
-  const [infoTask, setInfoTask] = useState(null)
   const taskRef = useRef(null)
   const hasAutoStarted = useRef(false)
 
@@ -329,19 +258,6 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
       let justCompleted = state.justCompleted || false
 
       if (justCompleted) {
-        // For clue tasks, ensure another scroll is available before
-        // starting the next cycle — otherwise the player would idle
-        // through a full action only to finish empty-handed.
-        if (state.task.isClue) {
-          const scrollCount = bank?.[state.task.requiresItem]?.quantity || 0
-          if (scrollCount <= 0) {
-            taskRef.current = { ...state, stopped: true }
-            setLocalTask(null)
-            setActiveTask(null)
-            addToast(`No ${ITEM_NAMES[state.task.requiresItem] || state.task.requiresItem} left.`, 'info')
-            return
-          }
-        }
         ticksRemaining = state.task.ticks
         justCompleted = false
       } else {
@@ -369,7 +285,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
           }
         }
 
-        if (task.requiresItem && !task.isClue && !hasItemAnywhere(task.requiresItem, newInv, bank, equipment)) {
+        if (task.requiresItem && !hasItemAnywhere(task.requiresItem, newInv, bank, equipment)) {
           taskRef.current = { ...next, stopped: true }
           setLocalTask(null)
           addToast(`Need ${ITEM_NAMES[task.requiresItem] || task.requiresItem}.`, 'error')
@@ -434,72 +350,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
         if (Object.keys(bankUpdates).length > 0) updateBankDirect(bankUpdates)
         if (inventoryModified) updateInventory(newInv)
 
-        // Handle clue scrolls (roll rewards and consume scroll)
-        if (task.isClue) {
-          const rewards = rollClueRewards(task.clueLevel)
-          if (getToken() && getCharacterId()) {
-            void api.completeClue(task.clueLevel, {
-              actionNonce: `clue:${task.clueLevel}:${Date.now()}`,
-              rewards,
-              consumptions: [{ itemId: task.requiresItem, quantity: 1 }],
-            }).then(async (res) => {
-              if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
-              const rewardNames = rewards.map(r => `${ITEM_NAMES[r.itemId] || r.itemId} ×${r.quantity}`).join(', ')
-              addToast(`${task.icon} Rewards: ${rewardNames}`, 'success')
-            }).catch((err) => {
-              addToast(`Clue claim failed: ${err?.message || 'server_error'}`, 'error')
-            })
-          } else {
-            const bankUpdates = {}
-            for (const reward of rewards) bankUpdates[reward.itemId] = reward.quantity
-            bankUpdates[task.requiresItem] = -1
-            updateBankDirect(bankUpdates)
-            if (task.clueLevel) {
-              for (const reward of rewards) {
-                if (isLoggedDrop(reward.itemId, 'clues', task.clueLevel)) recordCollectionLogDrop({ itemId: reward.itemId, sourceType: 'clues', sourceId: task.clueLevel })
-              }
-            }
-            requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.CLUE_REWARD)
-          }
-          if (!(getToken() && getCharacterId())) {
-            const rewardNames = rewards.map(r => `${ITEM_NAMES[r.itemId] || r.itemId} ×${r.quantity}`).join(', ')
-            addToast(`${task.icon} Rewards: ${rewardNames}`, 'success')
-          }
-        } else if (task.rewardItems && task.rewardItems.length > 0) {
-          // OneShot tasks with multiple reward items — award all at once (handled below)
-        } else {
-          // Add product to bank directly
-          updateBankDirect({ [task.product]: task.qty || 1 })
-        }
-
-        if (task.oneShot) {
-          // Minigame grind — award once then stop.
-          if (task.rewardItems && task.rewardItems.length > 0) {
-            if (getToken() && getCharacterId()) {
-              void api.completeMinigame(task.id, {
-                actionNonce: `minigame:${task.id}:${Date.now()}`,
-                rewards: task.rewardItems.map(id => ({ itemId: id, quantity: 1 })),
-              }).then(async (res) => {
-                if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
-                const rewardNames = task.rewardItems.map(id => ITEM_NAMES[id] || id).join(', ')
-                addToast(`${task.icon} Received: ${rewardNames}!`, 'success')
-              }).catch((err) => {
-                addToast(`Minigame claim failed: ${err?.message || 'server_error'}`, 'error')
-              })
-            } else {
-              updateBankDirect(Object.fromEntries(task.rewardItems.map(id => [id, 1])))
-              const rewardNames = task.rewardItems.map(id => ITEM_NAMES[id] || id).join(', ')
-              addToast(`${task.icon} Received: ${rewardNames}!`, 'success')
-              requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.MINIGAME_COMPLETE)
-            }
-          } else {
-            addToast(`${task.icon} ${ITEM_NAMES[task.product] || task.product} banked!`, 'success')
-          }
-          taskRef.current = { ...next, stopped: true }
-          setLocalTask(null)
-          setActiveTask(null)
-          return
-        }
+        updateBankDirect({ [task.product]: task.qty || 1 })
 
         const updated = {
           ...next,
@@ -534,21 +385,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
     }
     taskRef.current = newState
     setLocalTask(newState)
-    // Gathering always has bankingEnabled = true (auto-bank enabled).
-    // OneShot minigames persist progress on the global activeTask so they
-    // continue ticking at the App level after the user leaves this screen.
-    if (task.oneShot) {
-      setActiveTask({
-        type: 'gather',
-        gatherTask: task,
-        bankingEnabled: true,
-        totalTicks: task.ticks,
-        ticksRemaining: task.ticks,
-        startedAt: Date.now(),
-      })
-    } else {
-      setActiveTask({ type: 'gather', gatherTask: task, bankingEnabled: true })
-    }
+    setActiveTask({ type: 'gather', gatherTask: task, bankingEnabled: true })
   }
 
   const stopTask = () => {
@@ -561,14 +398,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
   useEffect(() => {
     if (initialTaskId && !hasAutoStarted.current && !activeTask) {
       hasAutoStarted.current = true
-      // Don't restart a minigame that's already running in the background.
-      if (globalActiveTask?.type === 'gather'
-          && globalActiveTask?.gatherTask?.id === initialTaskId
-          && globalActiveTask?.gatherTask?.oneShot) {
-        return
-      }
       const task = GATHER_TASKS.find(t => t.id === initialTaskId)
-        || MINIGAME_TASKS.find(t => t.id === initialTaskId)
       if (task) startTask(task, true)
     }
   }, [initialTaskId])
@@ -618,34 +448,19 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
 
 
 
-  // Active gathering modal — show if we have a local task OR a global minigame
-  // that was started earlier (allows the user to leave and return to the screen
-  // without losing progress).
-  const isGlobalMinigame = globalActiveTask?.type === 'gather' && globalActiveTask?.gatherTask?.oneShot
-  if (activeTask || isGlobalMinigame) {
-    const task = activeTask?.task || globalActiveTask.gatherTask
-    const isOneShot = !!task.oneShot
-    const totalTicks = isOneShot
-      ? (globalActiveTask?.totalTicks ?? task.ticks)
-      : task.ticks
-    const ticksRemaining = isOneShot
-      ? (globalActiveTask?.ticksRemaining ?? totalTicks)
-      : activeTask.ticksRemaining
-    const progress = isOneShot
-      ? (totalTicks > 0 ? 1 - ticksRemaining / totalTicks : 0)
-      : getActionProgress(true, activeTask.ticksRemaining, task.ticks)
+  if (activeTask) {
+    const task = activeTask.task
+    const progress = getActionProgress(true, activeTask.ticksRemaining, task.ticks)
     const elapsedHrs = activeTask?.startedAt ? (Date.now() - activeTask.startedAt) / 3600000 : 0
     const perHour = elapsedHrs > 0 ? Math.round(activeTask.totalItems / elapsedHrs) : 0
-    const remainingSeconds = ticksRemaining * 0.6
 
     return (
       <div class="h-full flex flex-col p-4">
-        {/* Back button */}
         <button
           onClick={stopTask}
           class="text-[12px] text-[#c4af7a] mb-3 flex items-center gap-1 bg-transparent border-0 cursor-pointer"
         >
-          {isOneShot ? '← Abandon' : '← Back'}
+          ← Back
         </button>
 
         <div class="flex-1 flex flex-col items-center justify-center">
@@ -659,53 +474,21 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
             <ProgressBar value={progress} max={1} height="h-4" color="var(--color-gold)" showText />
           </div>
 
-          {task.isClue ? (
-            <Panel padding="p-3" className="w-full max-w-[280px] mb-3 rounded-xl">
-              <div class="flex justify-between mb-2">
-                <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Clue Required</span>
-                <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">{ITEM_NAMES[task.requiresItem] || task.requiresItem}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Time remaining</span>
-                <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">
-                  {formatRemaining(remainingSeconds)}
-                </span>
-              </div>
-            </Panel>
-          ) : task.oneShot ? (
-            <Panel padding="p-3" className="w-full max-w-[280px] mb-3 rounded-xl">
-              <div class="flex justify-between mb-2">
-                <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Reward</span>
-                <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">{ITEM_NAMES[task.product] || task.product}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Time remaining</span>
-                <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">
-                  {formatRemaining(remainingSeconds)}
-                </span>
-              </div>
-            </Panel>
-          ) : (
-            <Panel padding="p-3" className="w-full max-w-[280px] mb-3 rounded-xl">
-              <div class="flex justify-between mb-2">
-                <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Items banked</span>
-                <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">{activeTask.totalItems}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Items banked/hr</span>
-                <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">
-                  {elapsedHrs > 0 ? perHour.toLocaleString() : '—'}
-                </span>
-              </div>
-            </Panel>
-          )}
+          <Panel padding="p-3" className="w-full max-w-[280px] mb-3 rounded-xl">
+            <div class="flex justify-between mb-2">
+              <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Items banked</span>
+              <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">{activeTask.totalItems}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Items banked/hr</span>
+              <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">
+                {elapsedHrs > 0 ? perHour.toLocaleString() : '—'}
+              </span>
+            </div>
+          </Panel>
 
           <div class="text-[11px] text-[var(--color-parchment)] opacity-50 text-center max-w-[280px]">
-            {task.isClue
-              ? '⏳ Solving clue... 1–4 rewards will be banked on completion.'
-              : task.oneShot
-              ? '⏳ Minigame runs in the background — feel free to switch screens. Reward is banked on completion.'
-              : '⏳ Items go directly to your bank.'}
+            ⏳ Items go directly to your bank.
           </div>
         </div>
       </div>
@@ -782,7 +565,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
                   </div>
                   <div class="flex-shrink-0 text-right">
                     <div class="text-[18px]">→</div>
-                    <div class="text-[9px] text-[#c8a96e] opacity-70">{task.isClue ? 'Rewards' : ITEM_NAMES[task.product] || task.product}</div>
+                    <div class="text-[9px] text-[#c8a96e] opacity-70">{ITEM_NAMES[task.product] || task.product}</div>
                     {(task.materials || task.requiresItem) && (
                       <div class={`text-[9px] mt-[2px] ${enabled ? 'text-[#4caf50]' : 'text-[#e57373]'}`}>
                         {enabled ? '✓ ready' : '✗ need item'}
@@ -790,125 +573,12 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
                     )}
                   </div>
                 </button>
-                {task.isClue && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setInfoTask(task) }}
-                    aria-label="Drop rates"
-                    class="flex-shrink-0 w-9 h-9 rounded-full border border-[var(--color-void-border)] bg-[var(--color-void-light)] text-[var(--color-gold)] text-[14px] font-bold flex items-center justify-center active:opacity-70"
-                  >
-                    ⓘ
-                  </button>
-                )}
               </div>
             )
           })}
         </div>
       </div>
-
-      {infoTask && (
-        <ClueDropRatesModal
-          task={infoTask}
-          itemsData={itemsData}
-          onClose={() => setInfoTask(null)}
-        />
-      )}
     </div>
   )
 }
 
-function formatChance(pct) {
-  if (pct >= 1) return `${pct.toFixed(2)}%`
-  if (pct >= 0.05) return `${pct.toFixed(3)}%`
-  if (pct <= 0) return '—'
-  // Per-roll odds < 0.05% — display as "1 in N" for readability
-  const oneIn = Math.round(100 / pct)
-  return `1 in ${oneIn.toLocaleString()}`
-}
-
-function rarityBand(pct) {
-  if (pct >= 1) return 'common'
-  if (pct >= 0.05) return 'uncommon'
-  return 'rare'
-}
-
-function ClueDropRatesModal({ task, itemsData, onClose }) {
-  const data = cluesData[task.clueLevel]
-  if (!data) return null
-
-  const totalWeight = data.rewards.reduce((s, r) => s + r.weight, 0)
-  const groups = { common: [], uncommon: [], rare: [] }
-  for (const r of data.rewards) {
-    const pct = totalWeight > 0 ? (100 * r.weight) / totalWeight : 0
-    const item = itemsData?.[r.itemId]
-    const name = item?.name || ITEM_NAMES[r.itemId] || r.itemId
-    const icon = item?.icon || '•'
-    const reqs = item?.requirements
-    groups[rarityBand(pct)].push({ itemId: r.itemId, name, icon, pct, reqs })
-  }
-  for (const key of Object.keys(groups)) {
-    groups[key].sort((a, b) => b.pct - a.pct || a.name.localeCompare(b.name))
-  }
-
-  const tierLabel = task.clueLevel.charAt(0).toUpperCase() + task.clueLevel.slice(1)
-  const bandLabels = {
-    common: { label: 'Common', color: '#86efac' },
-    uncommon: { label: 'Uncommon', color: '#fcd34d' },
-    rare: { label: 'Rare', color: '#a78bfa' },
-  }
-
-  // Helper to format requirements
-  const formatReqs = (reqs) => {
-    if (!reqs) return null
-    return Object.entries(reqs)
-      .map(([skill, level]) => `${level} ${skill.charAt(0).toUpperCase() + skill.slice(1)}`)
-      .join(', ')
-  }
-
-  return (
-    <Modal title={`${task.icon} ${tierLabel} Clue — Drop Rates`} onClose={onClose}>
-      <p class="text-[11px] text-[var(--color-parchment)] opacity-60 mb-3">
-        Each completed clue rolls 1–4 reward slots. Percentages below are the chance per slot.
-      </p>
-      {Object.entries(groups).map(([band, rows]) => rows.length === 0 ? null : (
-        <div key={band} class="mb-4">
-          <div
-            class="text-[10px] font-bold uppercase tracking-wider mb-1"
-            style={{ color: bandLabels[band].color }}
-          >
-            {bandLabels[band].label} ({rows.length})
-          </div>
-          <Panel padding="p-2" className="rounded-lg">
-            {rows.map(r => (
-              <div key={r.itemId} class="flex items-center justify-between py-[3px] text-[12px]">
-                <div class="flex items-center gap-2 text-[var(--color-parchment)] truncate flex-1">
-                  <span class="text-[14px] flex-shrink-0">{r.icon}</span>
-                  <div class="truncate flex-1">
-                    <div class="truncate">{r.name}</div>
-                    {r.reqs && (
-                      <div class="text-[10px] opacity-60 truncate">
-                        {formatReqs(r.reqs)}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <span class="font-[var(--font-mono)] text-[var(--color-gold)] flex-shrink-0 ml-2">
-                  {formatChance(r.pct)}
-                </span>
-              </div>
-            ))}
-          </Panel>
-        </div>
-      ))}
-    </Modal>
-  )
-}
-
-function formatRemaining(totalSeconds) {
-  const s = Math.max(0, Math.floor(totalSeconds))
-  const hrs = Math.floor(s / 3600)
-  const mins = Math.floor((s % 3600) / 60)
-  const secs = s % 60
-  if (hrs > 0) return `${hrs}h ${mins}m`
-  if (mins > 0) return `${mins}m ${secs}s`
-  return `${secs}s`
-}
