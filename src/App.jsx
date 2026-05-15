@@ -1147,20 +1147,11 @@ function GameApp() {
     }
     setActionData(data || null)
     setScreen(scr)
+    if (gameReady && isCloudAccount && !isInPvpMatch && cloudPhase === 'ready') {
+      void pushNow(getSnapshot()).catch(() => {})
+    }
   }
 
-
-  const lastCloudSavedScreenRef = useRef(null)
-
-  useEffect(() => {
-    if (!gameReady) return
-    if (!isCloudAccount) return
-    if (isInPvpMatch) return
-    if (cloudPhase !== 'ready') return
-    if (lastCloudSavedScreenRef.current === screen) return
-    lastCloudSavedScreenRef.current = screen
-    void pushNow(getSnapshot()).catch(() => {})
-  }, [screen, gameReady, isCloudAccount, isInPvpMatch, cloudPhase, getSnapshot])
 
   const isSkippingRef = useRef(false)
 
