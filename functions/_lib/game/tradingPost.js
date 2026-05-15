@@ -187,7 +187,7 @@ export async function executeMatching(env, { newOfferId, newCharacterId, offerTy
     if (oppRemaining <= 0) continue
     const tradeQty = Math.min(remaining, oppRemaining)
     const oppPrice = Number(opp.price)
-    const tradePrice = offerType === 'buy' ? oppPrice : Number(price)
+    const tradePrice = oppPrice
     const newOfferRemaining = remaining - tradeQty
     const oppNewRemaining = oppRemaining - tradeQty
 
@@ -209,10 +209,9 @@ export async function executeMatching(env, { newOfferId, newCharacterId, offerTy
       }
       totalSpent += tradePrice * tradeQty
     } else {
-      // New offer is sell, opp is buy. Trade at the incoming sell price so
-      // buyers always pay the cheapest available sell and receive refunds
-      // against their bid cap when they overbid. The seller side is always
-      // the caller here, never orphan.
+      // New offer is sell, opp is buy. Trade at the resting buy price.
+      // A seller accepts the best bid already on the book.
+      // The seller side is always the caller here, never orphan.
       await recordFill(env, {
         buyerOfferId: opp.id,
         sellerOfferId: newOfferId,

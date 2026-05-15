@@ -324,7 +324,7 @@ describe('matching engine — ready-to-collect inferred from pending+remaining',
     expect(res.remaining).toBe(5)
   })
 
-  it('a sell into a higher buy bid: trade clears at seller ask price', async () => {
+  it('a sell into a higher buy bid: seller fills at resting bid price', async () => {
     // Buyer parks bid for 1 @ 200.
     await placeOffer(env, { characterId: 2, offerType: 'buy', itemId: 'warped_bow', price: 200, quantity: 1, saveObject: makeSave(200) })
     // Seller lists 1 @ 100 (floor).
@@ -332,12 +332,12 @@ describe('matching engine — ready-to-collect inferred from pending+remaining',
     const { offerId, res } = await placeOffer(env, {
       characterId: 1, offerType: 'sell', itemId: 'warped_bow', price: 100, quantity: 1, saveObject: seller,
     })
-    expect(res.totalEarned).toBe(100)
+    expect(res.totalEarned).toBe(200)
 
     const sellerOffer = env.DB.rows.find((r: any) => r.id === offerId)
     // Coins go to seller's offer row -- collect to claim.
     expect(getCoinTotal(seller)).toBe(0)
-    expect(sellerOffer.coins_pending).toBe(100)
+    expect(sellerOffer.coins_pending).toBe(200)
     expect(sellerOffer.status).toBe('active')
   })
 })
