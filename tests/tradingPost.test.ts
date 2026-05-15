@@ -114,17 +114,23 @@ class FakeDB {
       const n = this.rows.filter((r) => r.character_id === characterId && r.status === 'active').length
       return { results: [{ n }] }
     }
-    if (sql.startsWith('SELECT * FROM trading_post_offers WHERE item_id = ? AND offer_type = \'sell\' AND status = \'active\' AND price <= ?')) {
-      const [itemId, maxPrice] = params
+    const sellMatch = sql.match(/^SELECT \* FROM trading_post_offers WHERE item_id IN \((\?(?:,\?)*)\) AND offer_type = 'sell' AND status = 'active' AND price <= \?/)
+    if (sellMatch) {
+      const idCount = sellMatch[1].split(',').length
+      const itemIds = params.slice(0, idCount)
+      const maxPrice = params[idCount]
       const results = this.rows
-        .filter((r) => r.item_id === itemId && r.offer_type === 'sell' && r.status === 'active' && r.price <= maxPrice)
+        .filter((r) => itemIds.includes(r.item_id) && r.offer_type === 'sell' && r.status === 'active' && r.price <= maxPrice)
         .sort((a, b) => a.price - b.price || a.created_at - b.created_at)
       return { results }
     }
-    if (sql.startsWith('SELECT * FROM trading_post_offers WHERE item_id = ? AND offer_type = \'buy\' AND status = \'active\' AND price >= ?')) {
-      const [itemId, minPrice] = params
+    const buyMatch = sql.match(/^SELECT \* FROM trading_post_offers WHERE item_id IN \((\?(?:,\?)*)\) AND offer_type = 'buy' AND status = 'active' AND price >= \?/)
+    if (buyMatch) {
+      const idCount = buyMatch[1].split(',').length
+      const itemIds = params.slice(0, idCount)
+      const minPrice = params[idCount]
       const results = this.rows
-        .filter((r) => r.item_id === itemId && r.offer_type === 'buy' && r.status === 'active' && r.price >= minPrice)
+        .filter((r) => itemIds.includes(r.item_id) && r.offer_type === 'buy' && r.status === 'active' && r.price >= minPrice)
         .sort((a, b) => b.price - a.price || a.created_at - b.created_at)
       return { results }
     }
@@ -169,6 +175,33 @@ describe('trading post classification', () => {
     expect(isTradingPostListable({ shopValue: 50, isUntradeable: true })).toBe(false)
     expect(isTradingPostListable({ shopValue: 0 })).toBe(false)
     expect(isTradingPostListable({})).toBe(false)
+  })
+})
+
+describe('legacy id aliasing on the matcher', () => {
+  let env: any
+  beforeEach(() => { env = fakeEnv() })
+
+  it('matches a canonical-id buy against a legacy-id sell (items.json key !== item.id case)', async () => {
+    // 'twisted_bow' is a legacy items.json key whose canonical id is
+    // 'warped_bow'. A seller stored under the legacy key should still be
+    // discoverable by a canonical-id buyer.
+    await insertOffer(env, { characterId: 2, offerType: 'sell', itemId: 'twisted_bow', price: 100, quantityTotal: 1, quantityRemaining: 1 })
+    const buyerSave = makeSave(0)
+    const res = await executeBuyMatching(env, {
+      buyerCharacterId: 1, buyerSave, itemId: 'warped_bow', maxPrice: 100, quantity: 1, stackable: false,
+    })
+    expect(res.totalReceived).toBe(1)
+    expect(res.totalSpent).toBe(100)
+  })
+
+  it('matches a legacy-id buy against a canonical-id sell', async () => {
+    await insertOffer(env, { characterId: 2, offerType: 'sell', itemId: 'warped_bow', price: 50, quantityTotal: 1, quantityRemaining: 1 })
+    const buyerSave = makeSave(0)
+    const res = await executeBuyMatching(env, {
+      buyerCharacterId: 1, buyerSave, itemId: 'twisted_bow', maxPrice: 100, quantity: 1, stackable: false,
+    })
+    expect(res.totalReceived).toBe(1)
   })
 })
 

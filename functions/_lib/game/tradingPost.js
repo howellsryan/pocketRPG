@@ -1,6 +1,30 @@
+import itemsData from '../../../src/data/items.json' assert { type: 'json' }
 import { GameApiError } from './errors.js'
-import { getInventory, addItemToInventory, addItemToBank, removeItemFromInventory } from './inventory.js'
+import { getInventory, addItemToInventory, addItemToBank, removeItemFromInventory, canonicalItemId } from './inventory.js'
 import { subtractCoins, addCoins } from './economy.js'
+
+// Alias map keyed by every id form (canonical AND legacy) -> the full set
+// of synonymous ids. Used by the matcher so a buy can find sells stored
+// under any synonym, regardless of which form the buyer/seller picked.
+// This protects against older saves writing legacy keys while newer code
+// writes the canonical id.
+const ALIAS_GROUPS = (() => {
+  const groups = new Map()
+  for (const [key, item] of Object.entries(itemsData)) {
+    const canon = (item && typeof item.id === 'string' && item.id) ? item.id : key
+    if (canon === key) continue
+    const group = new Set([key, canon])
+    groups.set(key, group)
+    groups.set(canon, group)
+  }
+  return groups
+})()
+
+function itemIdMatchSet(itemId) {
+  const set = ALIAS_GROUPS.get(itemId)
+  if (set) return [...set]
+  return [itemId]
+}
 
 export const MAX_ACTIVE_OFFERS_PER_CHARACTER = 8
 export const INSTANT_SELL_PAYOUT_FRACTION = 0.8
@@ -73,19 +97,21 @@ async function countActiveOffers(env, characterId) {
 // For a buy, opposing sells with price <= maxPrice, ordered price ASC.
 // For a sell, opposing buys with price >= minPrice, ordered price DESC.
 async function fetchMatchableOffers(env, { itemId, side, limitPrice }) {
+  const ids = itemIdMatchSet(itemId)
+  const placeholders = ids.map(() => '?').join(',')
   if (side === 'buy') {
     const { results } = await env.DB.prepare(
       `SELECT * FROM trading_post_offers
-       WHERE item_id = ? AND offer_type = 'sell' AND status = 'active' AND price <= ?
+       WHERE item_id IN (${placeholders}) AND offer_type = 'sell' AND status = 'active' AND price <= ?
        ORDER BY price ASC, created_at ASC`,
-    ).bind(itemId, limitPrice).all()
+    ).bind(...ids, limitPrice).all()
     return results || []
   }
   const { results } = await env.DB.prepare(
     `SELECT * FROM trading_post_offers
-     WHERE item_id = ? AND offer_type = 'buy' AND status = 'active' AND price >= ?
+     WHERE item_id IN (${placeholders}) AND offer_type = 'buy' AND status = 'active' AND price >= ?
      ORDER BY price DESC, created_at ASC`,
-  ).bind(itemId, limitPrice).all()
+  ).bind(...ids, limitPrice).all()
   return results || []
 }
 
@@ -274,9 +300,10 @@ export async function sweepPendingDeliveries(env, characterId, saveObject, items
       delivered = true
     }
     if (itemsPending > 0) {
-      const item = itemsLookup?.[offer.item_id]
+      const canonId = canonicalItemId(itemsLookup, offer.item_id)
+      const item = itemsLookup?.[canonId] || itemsLookup?.[offer.item_id]
       const stackable = Boolean(item?.stackable)
-      deliverItems(saveObject, offer.item_id, itemsPending, { stackable })
+      deliverItems(saveObject, canonId, itemsPending, { stackable })
       delivered = true
     }
     const now = nowMs()
@@ -297,16 +324,17 @@ export async function cancelOffer(env, { offer, saveObject, itemsLookup }) {
   const remaining = Number(offer.quantity_remaining) || 0
   const coinsPending = Number(offer.coins_pending) || 0
   const itemsPending = Number(offer.items_pending) || 0
-  const item = itemsLookup?.[offer.item_id]
+  const canonId = canonicalItemId(itemsLookup, offer.item_id)
+  const item = itemsLookup?.[canonId] || itemsLookup?.[offer.item_id]
   const stackable = Boolean(item?.stackable)
   if (offer.offer_type === 'buy') {
     if (remaining > 0) deliverCoins(saveObject, remaining * Number(offer.price))
-    if (itemsPending > 0) deliverItems(saveObject, offer.item_id, itemsPending, { stackable })
+    if (itemsPending > 0) deliverItems(saveObject, canonId, itemsPending, { stackable })
     if (coinsPending > 0) deliverCoins(saveObject, coinsPending) // shouldn't happen for buys but safe
   } else {
-    if (remaining > 0) deliverItems(saveObject, offer.item_id, remaining, { stackable })
+    if (remaining > 0) deliverItems(saveObject, canonId, remaining, { stackable })
     if (coinsPending > 0) deliverCoins(saveObject, coinsPending)
-    if (itemsPending > 0) deliverItems(saveObject, offer.item_id, itemsPending, { stackable })
+    if (itemsPending > 0) deliverItems(saveObject, canonId, itemsPending, { stackable })
   }
   const now = nowMs()
   await env.DB.prepare(
@@ -329,8 +357,9 @@ export async function instantSellOffer(env, { offer, saveObject, itemsLookup }) 
   const coinsPending = Number(offer.coins_pending) || 0
   if (coinsPending > 0) deliverCoins(saveObject, coinsPending)
   const itemsPending = Number(offer.items_pending) || 0
-  const item = itemsLookup?.[offer.item_id]
-  if (itemsPending > 0) deliverItems(saveObject, offer.item_id, itemsPending, { stackable: Boolean(item?.stackable) })
+  const canonId = canonicalItemId(itemsLookup, offer.item_id)
+  const item = itemsLookup?.[canonId] || itemsLookup?.[offer.item_id]
+  if (itemsPending > 0) deliverItems(saveObject, canonId, itemsPending, { stackable: Boolean(item?.stackable) })
 
   const now = nowMs()
   await env.DB.prepare(
@@ -345,27 +374,29 @@ export async function instantSellOffer(env, { offer, saveObject, itemsLookup }) 
 // pane so players can see current market spread without exposing other
 // players' offer ids.
 export async function getMarketSummary(env, itemId) {
+  const ids = itemIdMatchSet(itemId)
+  const placeholders = ids.map(() => '?').join(',')
   const bestSell = await env.DB.prepare(
     `SELECT price, SUM(quantity_remaining) AS qty
      FROM trading_post_offers
-     WHERE item_id = ? AND offer_type = 'sell' AND status = 'active'
+     WHERE item_id IN (${placeholders}) AND offer_type = 'sell' AND status = 'active'
      GROUP BY price
      ORDER BY price ASC
      LIMIT 1`,
-  ).bind(itemId).first()
+  ).bind(...ids).first()
   const bestBuy = await env.DB.prepare(
     `SELECT price, SUM(quantity_remaining) AS qty
      FROM trading_post_offers
-     WHERE item_id = ? AND offer_type = 'buy' AND status = 'active'
+     WHERE item_id IN (${placeholders}) AND offer_type = 'buy' AND status = 'active'
      GROUP BY price
      ORDER BY price DESC
      LIMIT 1`,
-  ).bind(itemId).first()
+  ).bind(...ids).first()
   const totalStock = await env.DB.prepare(
     `SELECT COALESCE(SUM(quantity_remaining), 0) AS qty
      FROM trading_post_offers
-     WHERE item_id = ? AND offer_type = 'sell' AND status = 'active'`,
-  ).bind(itemId).first()
+     WHERE item_id IN (${placeholders}) AND offer_type = 'sell' AND status = 'active'`,
+  ).bind(...ids).first()
   return {
     bestSell: bestSell ? { price: Number(bestSell.price), quantity: Number(bestSell.qty) } : null,
     bestBuy: bestBuy ? { price: Number(bestBuy.price), quantity: Number(bestBuy.qty) } : null,

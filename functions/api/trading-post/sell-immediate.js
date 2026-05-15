@@ -5,7 +5,7 @@ import { loadCharacterWithSave, writeSave } from '../../_lib/game/save.js'
 import { toErrorResponse } from '../../_lib/game/errors.js'
 import { auditLog } from '../../_lib/game/audit.js'
 import { isTradingPostListable } from '../../_lib/game/tradingPost.js'
-import { removeItemFromInventory } from '../../_lib/game/inventory.js'
+import { removeItemFromInventory, canonicalItemId, normalizeSaveItemIds } from '../../_lib/game/inventory.js'
 import { addCoins } from '../../_lib/game/economy.js'
 
 // POST /api/trading-post/sell-immediate  { item_id, quantity }
@@ -21,16 +21,17 @@ export async function onRequestPost({ request, env }) {
   try {
     const body = await request.json()
     const characterId = parseInt(request.headers.get('X-Character-Id') || '0', 10)
-    const itemId = body?.item_id
+    const rawItemId = body?.item_id
     const quantity = Math.floor(Number(body?.quantity) || 0)
     if (!characterId) return json({ error: 'Missing X-Character-Id header' }, 400)
-    if (!itemId || typeof itemId !== 'string') return json({ error: 'Invalid item_id', code: 'INVALID_ITEM_ID' }, 400)
+    if (!rawItemId || typeof rawItemId !== 'string') return json({ error: 'Invalid item_id', code: 'INVALID_ITEM_ID' }, 400)
     if (quantity < 1) return json({ error: 'Quantity must be >= 1', code: 'INVALID_QUANTITY' }, 400)
 
     const lock = await assertNotInActiveMatch(env, characterId)
     if (lock) return lock
 
-    const item = itemsData[itemId]
+    const itemId = canonicalItemId(itemsData, rawItemId)
+    const item = itemsData[itemId] || itemsData[rawItemId]
     if (!item) return json({ error: 'Item not found', code: 'ITEM_NOT_FOUND' }, 404)
     if (isTradingPostListable(item)) {
       return json({
@@ -49,6 +50,7 @@ export async function onRequestPost({ request, env }) {
       return json({ error: 'Ironman characters cannot use the trading post.', code: 'IRONMAN_RESTRICTED' }, 403)
     }
 
+    normalizeSaveItemIds(saveObject, itemsData)
     removeItemFromInventory(saveObject, itemId, quantity)
     const totalPayout = unit * quantity
     addCoins(saveObject, totalPayout)

@@ -1,5 +1,50 @@
 import { GameApiError } from './errors.js'
 
+// Some items in items.json are keyed by a legacy id but expose a different
+// canonical id via the `id` field on the entry (e.g. key "rune_scimitar"
+// holds id "runeforged_scimitar"). Save data on old clients still carries
+// the legacy key. Resolve to the canonical id whenever we touch persistent
+// state so writes from inventory (sell) and shop search (buy) use the same
+// identifier on the trading post.
+export function canonicalItemId(itemsData, rawId) {
+  if (typeof rawId !== 'string' || !rawId) return rawId
+  const direct = itemsData?.[rawId]
+  if (direct && typeof direct.id === 'string' && direct.id) return direct.id
+  return rawId
+}
+
+// Walk the save's inventory + bank and rewrite any legacy keys to their
+// canonical id. Coalesces slots/entries that collapse onto the same id.
+export function normalizeSaveItemIds(save, itemsData) {
+  if (!save || !itemsData) return
+  if (Array.isArray(save.inventory)) {
+    for (const slot of save.inventory) {
+      if (!slot || typeof slot !== 'object') continue
+      const raw = typeof slot.itemId === 'string' && slot.itemId
+        ? slot.itemId
+        : (typeof slot.id === 'string' ? slot.id : null)
+      if (!raw) continue
+      const canon = canonicalItemId(itemsData, raw)
+      if (canon !== slot.itemId) slot.itemId = canon
+    }
+  }
+  if (save.bank && typeof save.bank === 'object') {
+    const merged = {}
+    for (const [key, val] of Object.entries(save.bank)) {
+      const rawId = (val && typeof val === 'object' && typeof val.itemId === 'string' && val.itemId) || key
+      const canon = canonicalItemId(itemsData, rawId)
+      const qty = typeof val === 'number'
+        ? Math.floor(val)
+        : Math.floor(Number(val?.quantity) || 0)
+      if (qty <= 0) continue
+      const existing = merged[canon]
+      const next = (existing?.quantity || 0) + qty
+      merged[canon] = { itemId: canon, quantity: next }
+    }
+    save.bank = merged
+  }
+}
+
 export function getInventory(save) {
   if (!Array.isArray(save.inventory)) {
     save.inventory = []
