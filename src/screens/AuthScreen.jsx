@@ -13,7 +13,6 @@ export default function AuthScreen({ onCloudReady }) {
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
   const [newName, setNewName] = useState('')
-  const [isIronman, setIsIronman] = useState(false)
   const [isOneLife, setIsOneLife] = useState(false)
   const [oneLifeAck, setOneLifeAck] = useState(false)
 
@@ -53,7 +52,7 @@ export default function AuthScreen({ onCloudReady }) {
     if (!name) return
     setBusy(true)
     try {
-      const res = await api.createCharacter(name, isIronman, isOneLife)
+      const res = await api.createCharacter(name, false, isOneLife)
       selectCharacter(res.character)
     } catch (err) {
       setError(err.message)
@@ -143,24 +142,6 @@ export default function AuthScreen({ onCloudReady }) {
             Letters, numbers, _ and - only. Names are unique forever and cannot be changed.
           </p>
 
-          {/* Ironman Mode Toggle */}
-          <div style={{ marginBottom: '14px', padding: '12px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', margin: 0 }}>
-              <input
-                type="checkbox"
-                checked={isIronman}
-                onChange={(e) => setIsIronman(e.target.checked)}
-                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-              />
-              <div>
-                <div style={{ fontSize: '13px', color: '#d4af37', fontWeight: 'bold' }}>⚔️ Ironman Mode</div>
-                <div style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.6, marginTop: '2px' }}>
-                  Limited shop access. Can only buy general and quest items.
-                </div>
-              </div>
-            </label>
-          </div>
-
           {/* One Life Mode Toggle */}
           <div style={{ marginBottom: '14px', padding: '12px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', margin: 0 }}>
@@ -177,7 +158,7 @@ export default function AuthScreen({ onCloudReady }) {
               <div>
                 <div style={{ fontSize: '13px', color: '#d4af37', fontWeight: 'bold' }}>☠️ One Life Mode</div>
                 <div style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.6, marginTop: '2px' }}>
-                  Die once and your account is permanently deleted. Works with or without Ironman.
+                  Die once and your account is permanently deleted.
                 </div>
               </div>
             </label>
@@ -188,7 +169,7 @@ export default function AuthScreen({ onCloudReady }) {
                 ⚠️ One Life Warning
               </div>
               <div style={{ fontSize: '11px', color: '#ffd4d4', lineHeight: 1.45, marginBottom: '8px' }}>
-                Death permanently deletes this character. Not recommended for first-time players. Works with or without Ironman.
+                Death permanently deletes this character. Not recommended for first-time players.
               </div>
               <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '11px', color: '#ffd4d4' }}>
                 <input
@@ -211,9 +192,7 @@ export default function AuthScreen({ onCloudReady }) {
                   <div style={{ fontSize: '11px', color: '#d4af37', fontWeight: 'bold', marginBottom: '4px' }}>Recommended first character</div>
                   <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '10px', color: '#e8d5b0', opacity: 0.9, lineHeight: 1.45 }}>
                     <li>Normal mode is recommended for your first character.</li>
-                    <li>Ironman is a challenge mode with limited shop access.</li>
                     <li>One Life is extreme: death permanently deletes that character.</li>
-                    <li>Ironman + One Life is best for experienced challenge runs.</li>
                   </ul>
                 </div>
 
