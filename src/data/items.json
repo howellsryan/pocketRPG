@@ -1,3 +1,4 @@
+
 {
   "coins": {
     "id": "coins",
@@ -12567,7 +12568,7 @@
   },
   "verdant_d_hide_body": {
     "id": "verdant_d_hide_body",
-    "legacy_item_id": "verdant_dhide_body",
+    "legacy_item_id": "guthix_dhide_body",
     "name": "Verdant D'Hide Body",
     "type": "armour",
     "stackable": false,
@@ -12604,7 +12605,7 @@
   },
   "verdant_d_hide_chaps": {
     "id": "verdant_d_hide_chaps",
-    "legacy_item_id": "verdant_dhide_chaps",
+    "legacy_item_id": "guthix_dhide_chaps",
     "name": "Verdant D'Hide Chaps",
     "type": "armour",
     "stackable": false,
@@ -12640,7 +12641,7 @@
   },
   "verdant_d_hide_boots": {
     "id": "verdant_d_hide_boots",
-    "legacy_item_id": "verdant_dhide_boots",
+    "legacy_item_id": "guthix_dhide_boots",
     "name": "Verdant D'Hide Boots",
     "type": "armour",
     "stackable": false,
@@ -12677,7 +12678,7 @@
   },
   "verdant_d_hide_bracers": {
     "id": "verdant_d_hide_bracers",
-    "legacy_item_id": "verdant_dhide_bracers",
+    "legacy_item_id": "guthix_dhide_bracers",
     "name": "Verdant D'Hide Bracers",
     "type": "armour",
     "stackable": false,
@@ -12714,7 +12715,7 @@
   },
   "verdant_coif": {
     "id": "verdant_coif",
-    "legacy_item_id": "verdant_coif",
+    "legacy_item_id": "guthix_coif",
     "name": "Verdant Coif",
     "type": "armour",
     "stackable": false,
@@ -12748,7 +12749,7 @@
   },
   "verdant_stole": {
     "id": "verdant_stole",
-    "legacy_item_id": "verdant_stole",
+    "legacy_item_id": "guthix_stole",
     "name": "Verdant Stole",
     "type": "armour",
     "stackable": false,
@@ -14404,7 +14405,7 @@
   },
   "verdant_d_hide_shield": {
     "id": "verdant_d_hide_shield",
-    "legacy_item_id": "verdant_dhide_shield",
+    "legacy_item_id": "guthix_dhide_shield",
     "name": "Verdant D'Hide Shield",
     "type": "armour",
     "stackable": false,
@@ -15245,7 +15246,7 @@
   },
   "verdant_mitre": {
     "id": "verdant_mitre",
-    "legacy_item_id": "verdant_mitre",
+    "legacy_item_id": "guthix_mitre",
     "name": "Verdant Mitre",
     "type": "armour",
     "stackable": false,
@@ -21524,7 +21525,7 @@
   },
   "verdant_dhide_body": {
     "id": "verdant_d_hide_body",
-    "legacy_item_id": "verdant_dhide_body",
+    "legacy_item_id": "guthix_dhide_body",
     "name": "Verdant D'Hide Body",
     "type": "armour",
     "stackable": false,
