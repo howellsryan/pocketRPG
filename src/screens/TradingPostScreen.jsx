@@ -189,9 +189,9 @@ export default function TradingPostScreen({ onBuyCredits }) {
         const filled = res?.matched_quantity || 0
         const remaining = res?.remaining ?? 0
         if (filled > 0 && remaining === 0) {
-          addToast(`Bought ${filled} × ${selected.name}.`, 'success')
+          addToast(`Matched ${filled} × ${selected.name} — collect them from "My Offers".`, 'success')
         } else if (filled > 0 && remaining > 0) {
-          addToast(`Filled ${filled} now; ${remaining} listed at ${bidPrice.toLocaleString()} gp.`, 'success')
+          addToast(`Matched ${filled} (ready to collect); ${remaining} still listed at ${bidPrice.toLocaleString()} gp.`, 'success')
         } else {
           addToast(`Buy offer listed for ${qty} × ${selected.name}.`, 'info')
         }
@@ -242,11 +242,12 @@ export default function TradingPostScreen({ onBuyCredits }) {
         if (cloud?.payload) await applyCloudSave(cloud.payload, cloud.updatedAt)
         await loadGame()
         const sold = res?.matched_quantity || 0
+        const earned = Number(res?.total_earned) || 0
         const remaining = res?.remaining ?? 0
         if (sold > 0 && remaining === 0) {
-          addToast(`Sold ${sold} × ${selected.name}.`, 'success')
+          addToast(`Matched ${sold} × ${selected.name} — collect ${earned.toLocaleString()} gp from "My Offers".`, 'success')
         } else if (sold > 0 && remaining > 0) {
-          addToast(`Sold ${sold} now; ${remaining} listed at ${bidPrice.toLocaleString()} gp.`, 'success')
+          addToast(`Matched ${sold} (collect ${earned.toLocaleString()} gp); ${remaining} still listed at ${bidPrice.toLocaleString()} gp.`, 'success')
         } else {
           addToast(`Sell offer listed for ${qty} × ${selected.name}.`, 'info')
         }

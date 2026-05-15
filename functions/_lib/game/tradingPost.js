@@ -6,8 +6,6 @@ import { subtractCoins, addCoins } from './economy.js'
 // Alias map keyed by every id form (canonical AND legacy) -> the full set
 // of synonymous ids. Used by the matcher so a buy can find sells stored
 // under any synonym, regardless of which form the buyer/seller picked.
-// This protects against older saves writing legacy keys while newer code
-// writes the canonical id.
 const ALIAS_GROUPS = (() => {
   const groups = new Map()
   for (const [key, item] of Object.entries(itemsData)) {
@@ -32,11 +30,8 @@ export const INSTANT_SELL_PAYOUT_FRACTION = 0.8
 export const OFFER_STATUS = {
   ACTIVE: 'active',
   READY_TO_COLLECT: 'ready_to_collect',
-  COMPLETED: 'completed',
 }
 
-// Items eligible for the player-to-player order book. Everything else uses
-// the legacy /api/purchase auto-execute path against the static shop.
 export function isOrderBookItem(item) {
   if (!item) return false
   return Boolean(item.isBossUnique || item.isClueReward || item.isRaidUnique)
@@ -50,9 +45,9 @@ export function isTradingPostListable(item) {
   return shopValue > 0
 }
 
-// Deliver `quantity` items to the character's inventory; spill to bank when
-// the inventory is full. Stackable items always coalesce; non-stackables
-// follow OSRS GE noted-delivery for multi-quantity fills.
+// Push delivered items into the save -- inventory first, bank fallback.
+// Stackable items always coalesce; multi-quantity non-stackables become a
+// noted stack to match the /api/purchase delivery shape.
 function deliverItems(saveObject, itemId, quantity, { stackable }) {
   if (quantity <= 0) return
   const inv = getInventory(saveObject)
@@ -65,7 +60,6 @@ function deliverItems(saveObject, itemId, quantity, { stackable }) {
     }
     return
   }
-  // Non-stackable: deliver as noted stack when qty > 1 (matches /api/purchase).
   if (quantity > 1) {
     const hasNoted = inv.some((s) => s?.itemId === itemId && s.noted)
     if (hasNoted || inv.length < 28) {
@@ -75,7 +69,6 @@ function deliverItems(saveObject, itemId, quantity, { stackable }) {
     }
     return
   }
-  // qty === 1 non-stackable
   if (inv.length < 28) {
     addItemToInventory(saveObject, itemId, 1, { stackable: false, noted: false })
   } else {
@@ -99,9 +92,9 @@ async function countActiveOffers(env, characterId) {
   return Number(row?.n) || 0
 }
 
-// Selects opposing offers ordered by best price first, then oldest first.
-// For a buy, opposing sells with price <= maxPrice, ordered price ASC.
-// For a sell, opposing buys with price >= minPrice, ordered price DESC.
+// Find every existing offer that the incoming offer could match against.
+// For an incoming buy: opposing sells with price <= maxPrice, cheapest first.
+// For an incoming sell: opposing buys with price >= minPrice, dearest first.
 async function fetchMatchableOffers(env, { itemId, side, limitPrice }) {
   const ids = itemIdMatchSet(itemId)
   const placeholders = ids.map(() => '?').join(',')
@@ -121,156 +114,128 @@ async function fetchMatchableOffers(env, { itemId, side, limitPrice }) {
   return results || []
 }
 
-// Pick the status to apply to an offer after a fill updates its remaining
-// quantity. Fully filled offers go to 'ready_to_collect' so the owner can
-// pick up coins/items via /api/trading-post/collect; the slot frees up
-// immediately. If, for some reason, an offer reaches remaining=0 with no
-// pending payouts (e.g. a self-trade where everything was delivered
-// inline), skip the collect step and mark it directly 'completed'.
-async function applyOpposingOfferFill(env, offerId, newRemaining) {
+// Record one match-unit on the two sides' offer rows. The buyer's offer
+// gets items credited to items_pending; the seller's offer gets coins
+// credited to coins_pending (unless it's orphan house stock with no
+// owner -- those coins are the gold sink). Both rows'
+// quantity_remaining gets decremented to its caller-computed value.
+async function recordFill(env, { buyerOfferId, sellerOfferId, tradeQty, tradePrice, buyerOfferRemaining, sellerOfferRemaining, sellerIsOrphan }) {
   const now = nowMs()
-  if (newRemaining > 0) {
+  const tradeGold = tradePrice * tradeQty
+  if (sellerIsOrphan) {
+    // No owner to pay -- skip the credit. Decrement quantity_remaining only.
     await env.DB.prepare(
       `UPDATE trading_post_offers
        SET quantity_remaining = ?, updated_at = ?
        WHERE id = ?`,
-    ).bind(newRemaining, now, offerId).run()
-    return
+    ).bind(sellerOfferRemaining, now, sellerOfferId).run()
+  } else {
+    await env.DB.prepare(
+      `UPDATE trading_post_offers
+       SET coins_pending = coins_pending + ?, quantity_remaining = ?, updated_at = ?
+       WHERE id = ?`,
+    ).bind(tradeGold, sellerOfferRemaining, now, sellerOfferId).run()
   }
+  await env.DB.prepare(
+    `UPDATE trading_post_offers
+     SET items_pending = items_pending + ?, quantity_remaining = ?, updated_at = ?
+     WHERE id = ?`,
+  ).bind(tradeQty, buyerOfferRemaining, now, buyerOfferId).run()
+}
+
+// Re-read an offer and pick its final status after a batch of fills.
+//   * remaining > 0 -> stays 'active'.
+//   * remaining = 0, no pending -> row is removed entirely (nothing to do
+//     with it; happens only on self-trades).
+//   * remaining = 0, pending exists -> 'ready_to_collect'.
+async function finalizeOfferStatus(env, offerId) {
   const row = await env.DB.prepare(
-    `SELECT coins_pending, items_pending FROM trading_post_offers WHERE id = ?`,
+    `SELECT quantity_remaining, coins_pending, items_pending FROM trading_post_offers WHERE id = ?`,
   ).bind(offerId).first()
-  const hasPending = Number(row?.coins_pending) > 0 || Number(row?.items_pending) > 0
-  const nextStatus = hasPending ? OFFER_STATUS.READY_TO_COLLECT : OFFER_STATUS.COMPLETED
-  await env.DB.prepare(
-    `UPDATE trading_post_offers
-     SET quantity_remaining = 0, status = ?, updated_at = ?
-     WHERE id = ?`,
-  ).bind(nextStatus, now, offerId).run()
-}
-
-// Settle the buyer side of a match. Items are delivered to the buyer's save
-// immediately. If the counterparty is offline (different character_id), their
-// coins are queued as coins_pending on their own offer for next-load delivery.
-async function settleBuyerSide(env, { buyerCharacterId, buyerSave, itemId, quantity, stackable }) {
-  deliverItems(buyerSave, itemId, quantity, { stackable })
-}
-
-// Add coins payable to the seller. Online-self path delivers to the active
-// save; otherwise stash on the seller's offer row for them to collect next
-// time they load /my-offers.
-async function settleSellerSide(env, { sellerOfferId, sellerCharacterId, buyerCharacterId, buyerSave, gold }) {
-  if (sellerCharacterId == null) {
-    // Orphan / house listing -- coins go to the void (20% sink baked in at
-    // instant-sell time; the buyer's 100% payment is the sink amount).
+  if (!row) return
+  const remaining = Number(row.quantity_remaining) || 0
+  if (remaining > 0) return
+  const hasPending = Number(row.coins_pending) > 0 || Number(row.items_pending) > 0
+  if (!hasPending) {
+    await env.DB.prepare(`DELETE FROM trading_post_offers WHERE id = ?`).bind(offerId).run()
     return
   }
-  if (sellerCharacterId === buyerCharacterId) {
-    // Self-trade -- return coins straight to the active save.
-    deliverCoins(buyerSave, gold)
-    return
-  }
-  const now = nowMs()
   await env.DB.prepare(
-    `UPDATE trading_post_offers
-     SET coins_pending = coins_pending + ?, updated_at = ?
-     WHERE id = ?`,
-  ).bind(gold, now, sellerOfferId).run()
+    `UPDATE trading_post_offers SET status = ?, updated_at = ? WHERE id = ?`,
+  ).bind(OFFER_STATUS.READY_TO_COLLECT, nowMs(), offerId).run()
 }
 
-// Same as settleSellerSide but for buyer-side counterparties (i.e. when this
-// character is the seller). The opposing buyer's items go into items_pending
-// on their offer.
-async function settleBuyerCounterparty(env, { buyerOfferId, buyerCharacterId, sellerCharacterId, sellerSave, quantity, itemId, stackable }) {
-  if (buyerCharacterId === sellerCharacterId) {
-    deliverItems(sellerSave, itemId, quantity, { stackable })
-    return
-  }
-  const now = nowMs()
-  await env.DB.prepare(
-    `UPDATE trading_post_offers
-     SET items_pending = items_pending + ?, updated_at = ?
-     WHERE id = ?`,
-  ).bind(quantity, now, buyerOfferId).run()
-}
+// Run matching for a brand-new offer (already inserted with row id
+// `newOfferId`). Walks the book and emits one recordFill per match. Trade
+// price is always the resting offer's price -- the new offer takes whatever
+// improvement the book gives, refunded to the caller's save inline when
+// they're the buyer. Returns aggregate stats so the API handler can answer
+// the request and emit audit events.
+export async function executeMatching(env, { newOfferId, newCharacterId, offerType, itemId, price, quantity, saveObject }) {
+  const side = offerType === 'buy' ? 'buy' : 'sell'
+  const opposing = await fetchMatchableOffers(env, { itemId, side, limitPrice: price })
 
-// Core matcher for an incoming BUY from `buyerCharacterId`. Walks opposing
-// sells from cheapest to most expensive, executing partial fills. Coins for
-// the trade are deducted from the buyer's save up to the actual matched
-// amount; the unmatched remainder is what gets put on the order book by the
-// caller, so the caller passes us an already-reserved budget.
-export async function executeBuyMatching(env, { buyerCharacterId, buyerSave, itemId, maxPrice, quantity, stackable }) {
   let remaining = quantity
+  let totalMatched = 0
   let totalSpent = 0
-  let totalReceived = 0
-  const matches = []
-  const opposing = await fetchMatchableOffers(env, { itemId, side: 'buy', limitPrice: maxPrice })
-  for (const sell of opposing) {
-    if (remaining <= 0) break
-    const tradeQty = Math.min(remaining, Number(sell.quantity_remaining) || 0)
-    if (tradeQty <= 0) continue
-    // Buyer pays the seller's listed price (better for buyer than their cap).
-    const tradePrice = Number(sell.price)
-    const tradeGold = tradePrice * tradeQty
-    await settleBuyerSide(env, { buyerCharacterId, buyerSave, itemId, quantity: tradeQty, stackable })
-    await settleSellerSide(env, {
-      sellerOfferId: sell.id,
-      sellerCharacterId: sell.character_id,
-      buyerCharacterId,
-      buyerSave,
-      gold: tradeGold,
-    })
-    const newRemaining = (Number(sell.quantity_remaining) || 0) - tradeQty
-    await applyOpposingOfferFill(env, sell.id, newRemaining)
-    remaining -= tradeQty
-    totalSpent += tradeGold
-    totalReceived += tradeQty
-    matches.push({ offerId: sell.id, price: tradePrice, quantity: tradeQty })
-  }
-  return { remaining, totalSpent, totalReceived, matches }
-}
-
-// Mirror of executeBuyMatching for an incoming SELL.
-export async function executeSellMatching(env, { sellerCharacterId, sellerSave, itemId, minPrice, quantity, stackable }) {
-  let remaining = quantity
   let totalEarned = 0
-  let totalSold = 0
+  let priceImprovementRefund = 0
   const matches = []
-  const opposing = await fetchMatchableOffers(env, { itemId, side: 'sell', limitPrice: minPrice })
-  for (const buy of opposing) {
+
+  for (const opp of opposing) {
     if (remaining <= 0) break
-    const tradeQty = Math.min(remaining, Number(buy.quantity_remaining) || 0)
-    if (tradeQty <= 0) continue
-    // Seller receives the buyer's listed price (better for seller).
-    const tradePrice = Number(buy.price)
-    const tradeGold = tradePrice * tradeQty
-    // Coins to the seller -- self path delivers to inv, offline path is
-    // unreachable since seller is the active save here.
-    deliverCoins(sellerSave, tradeGold)
-    await settleBuyerCounterparty(env, {
-      buyerOfferId: buy.id,
-      buyerCharacterId: buy.character_id,
-      sellerCharacterId,
-      sellerSave,
-      quantity: tradeQty,
-      itemId,
-      stackable,
-    })
-    const newRemaining = (Number(buy.quantity_remaining) || 0) - tradeQty
-    await applyOpposingOfferFill(env, buy.id, newRemaining)
+    const oppRemaining = Number(opp.quantity_remaining) || 0
+    if (oppRemaining <= 0) continue
+    const tradeQty = Math.min(remaining, oppRemaining)
+    const tradePrice = Number(opp.price)
+    const newOfferRemaining = remaining - tradeQty
+    const oppNewRemaining = oppRemaining - tradeQty
+
+    if (offerType === 'buy') {
+      // New offer is buy, opp is sell. Trade at opp's (cheaper) price.
+      await recordFill(env, {
+        buyerOfferId: newOfferId,
+        sellerOfferId: opp.id,
+        tradeQty,
+        tradePrice,
+        buyerOfferRemaining: newOfferRemaining,
+        sellerOfferRemaining: oppNewRemaining,
+        sellerIsOrphan: opp.character_id == null,
+      })
+      const improvement = (price - tradePrice) * tradeQty
+      if (improvement > 0) {
+        addCoins(saveObject, improvement)
+        priceImprovementRefund += improvement
+      }
+      totalSpent += tradePrice * tradeQty
+    } else {
+      // New offer is sell, opp is buy. Trade at opp's (higher) price -- the
+      // buyer pays the bid they posted; the seller gets the upgraded price.
+      // The seller side is always the caller here, never orphan.
+      await recordFill(env, {
+        buyerOfferId: opp.id,
+        sellerOfferId: newOfferId,
+        tradeQty,
+        tradePrice,
+        buyerOfferRemaining: oppNewRemaining,
+        sellerOfferRemaining: newOfferRemaining,
+        sellerIsOrphan: false,
+      })
+      totalEarned += tradePrice * tradeQty
+    }
+
+    await finalizeOfferStatus(env, opp.id)
     remaining -= tradeQty
-    totalEarned += tradeGold
-    totalSold += tradeQty
-    matches.push({ offerId: buy.id, price: tradePrice, quantity: tradeQty })
+    totalMatched += tradeQty
+    matches.push({ offerId: opp.id, price: tradePrice, quantity: tradeQty })
   }
-  return { remaining, totalEarned, totalSold, matches }
+
+  await finalizeOfferStatus(env, newOfferId)
+  return { remaining, totalMatched, totalSpent, totalEarned, priceImprovementRefund, matches }
 }
 
 export async function insertOffer(env, { characterId, offerType, itemId, price, quantityTotal, quantityRemaining }) {
   const now = nowMs()
-  // Only call this when there is leftover quantity to park on the book.
-  // Fully-filled offers never get an inserted row; their payouts are settled
-  // inline on the matching path.
   const result = await env.DB.prepare(
     `INSERT INTO trading_post_offers
        (character_id, offer_type, item_id, price, quantity_total, quantity_remaining,
@@ -298,9 +263,6 @@ export async function getOwnedOffer(env, offerId, characterId) {
 }
 
 export async function listOffersForCharacter(env, characterId) {
-  // Hide collected ('completed') and cancelled-and-deleted rows from "my
-  // offers" -- the only states the player still needs to see are open
-  // listings and fills awaiting collection.
   const { results } = await env.DB.prepare(
     `SELECT * FROM trading_post_offers
      WHERE character_id = ? AND status IN ('active', 'ready_to_collect')
@@ -309,16 +271,14 @@ export async function listOffersForCharacter(env, characterId) {
   return results || []
 }
 
-// Deliver any pending coins/items on a single offer into the save, then
-// settle the offer's status:
-//   * fully filled (remaining = 0) + payouts emptied -> 'completed' (hidden)
-//   * still on the book (remaining > 0) -> stays 'active', pending cleared.
-// Mutates saveObject; caller must writeSave.
+// Deliver pending coins/items into the save. If the offer was fully filled
+// (remaining = 0), the row is removed once everything's collected;
+// otherwise the row stays active with its pending fields zeroed so the
+// player can keep waiting on the remainder.
 export async function collectOffer(env, { offer, saveObject, itemsLookup }) {
   const coinsPending = Math.floor(Number(offer.coins_pending) || 0)
   const itemsPending = Math.floor(Number(offer.items_pending) || 0)
-  if (coinsPending <= 0 && itemsPending <= 0
-      && offer.status !== OFFER_STATUS.READY_TO_COLLECT) {
+  if (coinsPending <= 0 && itemsPending <= 0) {
     throw new GameApiError('NOTHING_TO_COLLECT', 'No coins or items to collect on this offer.', 400)
   }
   if (coinsPending > 0) deliverCoins(saveObject, coinsPending)
@@ -330,11 +290,7 @@ export async function collectOffer(env, { offer, saveObject, itemsLookup }) {
   const remaining = Math.floor(Number(offer.quantity_remaining) || 0)
   const now = nowMs()
   if (remaining <= 0) {
-    await env.DB.prepare(
-      `UPDATE trading_post_offers
-       SET coins_pending = 0, items_pending = 0, status = ?, updated_at = ?
-       WHERE id = ?`,
-    ).bind(OFFER_STATUS.COMPLETED, now, offer.id).run()
+    await env.DB.prepare(`DELETE FROM trading_post_offers WHERE id = ?`).bind(offer.id).run()
   } else {
     await env.DB.prepare(
       `UPDATE trading_post_offers
@@ -345,12 +301,9 @@ export async function collectOffer(env, { offer, saveObject, itemsLookup }) {
   return { coinsCollected: coinsPending, itemsCollected: itemsPending }
 }
 
-// Returns the escrowed value the player should recover when cancelling.
-// For a buy offer that's only partially filled, the player gets the unspent
-// coins (quantity_remaining * price). For a sell offer they get the unsold
-// items back. Items_pending / coins_pending from earlier partial fills are
-// flushed in the same op. The offer row is then deleted -- there's no value
-// in keeping cancelled history.
+// Cancel an offer: refund the unmatched escrow + any pending payouts to the
+// save, then delete the row entirely. The unmatched escrow is `remaining *
+// price` for buys (coins) and `remaining` items for sells.
 export async function cancelOffer(env, { offer, saveObject, itemsLookup }) {
   const remaining = Number(offer.quantity_remaining) || 0
   const coinsPending = Number(offer.coins_pending) || 0
@@ -361,27 +314,26 @@ export async function cancelOffer(env, { offer, saveObject, itemsLookup }) {
   if (offer.offer_type === 'buy') {
     if (remaining > 0) deliverCoins(saveObject, remaining * Number(offer.price))
     if (itemsPending > 0) deliverItems(saveObject, canonId, itemsPending, { stackable })
-    if (coinsPending > 0) deliverCoins(saveObject, coinsPending) // shouldn't happen for buys but safe
+    if (coinsPending > 0) deliverCoins(saveObject, coinsPending)
   } else {
     if (remaining > 0) deliverItems(saveObject, canonId, remaining, { stackable })
     if (coinsPending > 0) deliverCoins(saveObject, coinsPending)
     if (itemsPending > 0) deliverItems(saveObject, canonId, itemsPending, { stackable })
   }
-  await env.DB.prepare(
-    `DELETE FROM trading_post_offers WHERE id = ?`,
-  ).bind(offer.id).run()
+  await env.DB.prepare(`DELETE FROM trading_post_offers WHERE id = ?`).bind(offer.id).run()
 }
 
-// Convert a remaining sell offer into orphan house stock at 80% payout. The
-// row is detached from the character (character_id = NULL) and stays
-// purchasable at the original listed price; the spread is the gold sink.
+// Convert a still-active sell offer into orphan house stock at 80% payout.
+// The row is detached from the character (character_id = NULL) and stays
+// purchasable at the original listed price; the 20% spread is the gold
+// sink. Coins/items already pending from earlier partial fills go to the
+// seller in the same op.
 export async function instantSellOffer(env, { offer, saveObject, itemsLookup }) {
   const remaining = Number(offer.quantity_remaining) || 0
   if (remaining <= 0) throw new GameApiError('NO_REMAINING_QTY', 'Offer has no remaining quantity to instant-sell', 400)
   if (offer.offer_type !== 'sell') throw new GameApiError('NOT_SELL_OFFER', 'Only sell offers can be instant-sold', 400)
   const payout = Math.floor(remaining * Number(offer.price) * INSTANT_SELL_PAYOUT_FRACTION)
   deliverCoins(saveObject, payout)
-  // Also flush any already-pending coins from earlier fills.
   const coinsPending = Number(offer.coins_pending) || 0
   if (coinsPending > 0) deliverCoins(saveObject, coinsPending)
   const itemsPending = Number(offer.items_pending) || 0
@@ -398,9 +350,8 @@ export async function instantSellOffer(env, { offer, saveObject, itemsLookup }) 
   return payout
 }
 
-// Snapshot of best bid/ask for a single item -- used for the search detail
-// pane so players can see current market spread without exposing other
-// players' offer ids.
+// Snapshot of best bid/ask -- used by the search detail pane so players see
+// market spread without exposing other players' offer ids.
 export async function getMarketSummary(env, itemId) {
   const ids = itemIdMatchSet(itemId)
   const placeholders = ids.map(() => '?').join(',')

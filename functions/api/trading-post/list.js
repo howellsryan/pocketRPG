@@ -2,27 +2,26 @@ import { requireAuth, json } from '../../_lib/auth.js'
 import { assertNotInActiveMatch } from '../../_lib/pvp.js'
 import itemsData from '../../../src/data/items.json' assert { type: 'json' }
 import { loadCharacterWithSave, writeSave } from '../../_lib/game/save.js'
-import { toErrorResponse, GameApiError } from '../../_lib/game/errors.js'
+import { toErrorResponse } from '../../_lib/game/errors.js'
 import { auditLog } from '../../_lib/game/audit.js'
-import { addCoins } from '../../_lib/game/economy.js'
 import { canonicalItemId, normalizeSaveItemIds } from '../../_lib/game/inventory.js'
 import {
   isTradingPostListable,
   assertSlotAvailable,
   escrowSellItems,
   escrowBuyCoins,
-  executeBuyMatching,
-  executeSellMatching,
+  executeMatching,
   insertOffer,
   MAX_ACTIVE_OFFERS_PER_CHARACTER,
 } from '../../_lib/game/tradingPost.js'
 
 // POST /api/trading-post/list  { offer_type, item_id, price, quantity }
 //
-// Lists a buy or sell offer for an order-book-restricted item (boss/raid
-// unique or clue reward). Immediate-execute general store items still use
-// /api/purchase. Matching runs synchronously: matched portion settles, the
-// remainder is parked on the order book.
+// Reserves an offer slot, escrows the requisite items/coins from the
+// player's save, inserts the offer row, then runs matching against the
+// book. Filled portions appear on both sides as items_pending /
+// coins_pending awaiting manual /collect. Unfilled portions stay parked
+// as 'active'.
 export async function onRequestPost({ request, env }) {
   const auth = await requireAuth(request, env)
   if (auth.error) return json({ error: auth.error }, auth.status)
@@ -43,18 +42,11 @@ export async function onRequestPost({ request, env }) {
     const lock = await assertNotInActiveMatch(env, characterId)
     if (lock) return lock
 
-    // Items.json keys some entries by a legacy id but exposes a canonical id
-    // via `item.id`. Resolve here so the DB only ever sees one identifier
-    // per item -- otherwise sellers (slot.itemId) and buyers (search result
-    // id) write different rows and never match.
     const itemId = canonicalItemId(itemsData, rawItemId)
     const item = itemsData[itemId] || itemsData[rawItemId]
     if (!item) return json({ error: 'Item not found', code: 'ITEM_NOT_FOUND' }, 404)
     if (!isTradingPostListable(item)) {
-      return json({
-        error: 'This item cannot be listed on the trading post.',
-        code: 'NOT_LISTABLE',
-      }, 400)
+      return json({ error: 'This item cannot be listed on the trading post.', code: 'NOT_LISTABLE' }, 400)
     }
 
     const { row, saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, auth.identity.id)
@@ -62,65 +54,43 @@ export async function onRequestPost({ request, env }) {
       return json({ error: 'Ironman characters cannot use the trading post.', code: 'IRONMAN_RESTRICTED' }, 403)
     }
 
-    // Rewrite legacy ids in the save itself so escrow/match work uniformly,
-    // and so the persisted save phases out the legacy keys on next write.
     normalizeSaveItemIds(saveObject, itemsData)
-
     await assertSlotAvailable(env, characterId)
 
-    const stackable = Boolean(item.stackable)
-    let totalSpent = 0
-    let totalEarned = 0
-    let totalReceived = 0
-    let totalSold = 0
-    let remaining = quantity
-
+    // Escrow first (modifies saveObject in-memory only). If this throws, the
+    // listing has not yet touched the DB.
     if (offerType === 'buy') {
-      // Escrow up to maxPrice * quantity. Unused coins are refunded after
-      // matching completes, leaving exactly `remaining * price` reserved for
-      // the parked offer.
       escrowBuyCoins(saveObject, price * quantity)
-      const res = await executeBuyMatching(env, {
-        buyerCharacterId: characterId,
-        buyerSave: saveObject,
-        itemId,
-        maxPrice: price,
-        quantity,
-        stackable,
-      })
-      remaining = res.remaining
-      totalSpent = res.totalSpent
-      totalReceived = res.totalReceived
-      // Refund the price-improvement (cap*matched - actuallySpent).
-      const refund = price * totalReceived - totalSpent
-      if (refund > 0) addCoins(saveObject, refund)
     } else {
-      // Escrow items first; matching converts them to coins as fills happen.
       escrowSellItems(saveObject, itemId, quantity)
-      const res = await executeSellMatching(env, {
-        sellerCharacterId: characterId,
-        sellerSave: saveObject,
-        itemId,
-        minPrice: price,
-        quantity,
-        stackable,
-      })
-      remaining = res.remaining
-      totalEarned = res.totalEarned
-      totalSold = res.totalSold
     }
 
-    let offerId = null
-    if (remaining > 0) {
-      offerId = await insertOffer(env, {
-        characterId,
-        offerType,
-        itemId,
-        price,
-        quantityTotal: quantity,
-        quantityRemaining: remaining,
-      })
+    // Insert the new offer at full quantity. Matching mutates both sides'
+    // rows directly so the row needs to exist before we run it.
+    const offerId = await insertOffer(env, {
+      characterId,
+      offerType,
+      itemId,
+      price,
+      quantityTotal: quantity,
+      quantityRemaining: quantity,
+    })
+    if (!offerId) {
+      return json({ error: 'Failed to create offer', code: 'INSERT_FAILED' }, 500)
     }
+
+    // Run matching. recordFill credits items_pending to the buyer offer and
+    // coins_pending to the seller offer; price improvement (if any) is
+    // refunded inline to the saveObject.
+    const matchRes = await executeMatching(env, {
+      newOfferId: offerId,
+      newCharacterId: characterId,
+      offerType,
+      itemId,
+      price,
+      quantity,
+      saveObject,
+    })
 
     const write = await writeSave(env, characterId, saveObject, saveRevision)
 
@@ -130,21 +100,22 @@ export async function onRequestPost({ request, env }) {
       itemId,
       price,
       quantity,
-      remaining,
-      totalSpent,
-      totalEarned,
-      totalReceived,
-      totalSold,
       offerId,
+      matched: matchRes.totalMatched,
+      remaining: matchRes.remaining,
+      totalSpent: matchRes.totalSpent,
+      totalEarned: matchRes.totalEarned,
+      priceImprovementRefund: matchRes.priceImprovementRefund,
     })
 
     return json({
       ok: true,
       offer_id: offerId,
-      remaining,
-      matched_quantity: offerType === 'buy' ? totalReceived : totalSold,
-      total_spent: totalSpent,
-      total_earned: totalEarned,
+      remaining: matchRes.remaining,
+      matched_quantity: matchRes.totalMatched,
+      total_spent: matchRes.totalSpent,
+      total_earned: matchRes.totalEarned,
+      price_improvement_refund: matchRes.priceImprovementRefund,
       save_revision: write.saveRevision,
       updatedAt: write.updatedAt,
       max_slots: MAX_ACTIVE_OFFERS_PER_CHARACTER,

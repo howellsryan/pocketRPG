@@ -34,9 +34,6 @@ export async function onRequestPost({ request, env }) {
 
     const offer = await getOwnedOffer(env, offerId, characterId)
     if (!offer) return json({ error: 'Offer not found', code: 'OFFER_NOT_FOUND' }, 404)
-    if (offer.status === 'completed') {
-      return json({ error: 'Offer already collected.', code: 'ALREADY_COLLECTED' }, 400)
-    }
 
     normalizeSaveItemIds(saveObject, itemsData)
 

@@ -357,9 +357,9 @@ export default function InventoryScreen() {
         const remaining = Number(res?.remaining) || 0
         const earned = Number(res?.total_earned) || 0
         if (sold > 0 && remaining === 0) {
-          addToast(`Sold ${sold} × ${item.name} for ${earned.toLocaleString()} gp`, 'success')
+          addToast(`Matched ${sold} × ${item.name} — collect ${earned.toLocaleString()} gp from the trading post`, 'success')
         } else if (sold > 0 && remaining > 0) {
-          addToast(`Sold ${sold} now; ${remaining} listed at ${price.toLocaleString()} gp on the trading post`, 'success')
+          addToast(`Matched ${sold} (collect ${earned.toLocaleString()} gp); ${remaining} still listed`, 'success')
         } else {
           addToast(`Listed ${sellQty} × ${item.name} at ${price.toLocaleString()} gp on the trading post`, 'info')
         }
