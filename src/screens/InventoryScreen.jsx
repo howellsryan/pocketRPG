@@ -23,6 +23,16 @@ export default function InventoryScreen() {
   const [listPriceInput, setListPriceInput] = useState(1)
   const hasCloudAccount = Boolean(getToken() && getCharacterId())
 
+  const getListingMaxQty = (slot, item) => {
+    if (!slot || !item) return 1
+    const isNoted = !!slot.noted
+    if (item.stackable || isNoted) {
+      return Math.max(1, Math.floor(Number(slot.quantity) || 1))
+    }
+    const count = inventory.reduce((n, s) => n + ((s && s.itemId === slot.itemId && !!s.noted === isNoted) ? 1 : 0), 0)
+    return Math.max(1, count)
+  }
+
   const handleSlotClick = (slot, item, index) => {
     const idx = inventory.indexOf(slot)
     setSelected({ slotIndex: idx >= 0 ? idx : index, slot, item })
@@ -389,10 +399,7 @@ export default function InventoryScreen() {
     const qty = Math.floor(Number(listQtyInput) || 0)
     const price = Math.floor(Number(listPriceInput) || 0)
     const { slot, item } = selected
-    const isNoted = !!slot.noted
-    const maxQty = (item.stackable || isNoted)
-      ? slot.quantity
-      : inventory.reduce((n, s) => n + ((s && s.itemId === slot.itemId && !!s.noted === isNoted) ? 1 : 0), 0)
+    const maxQty = getListingMaxQty(slot, item)
     if (qty < 1 || qty > maxQty) {
       addToast(`Quantity must be 1-${maxQty}`, 'error')
       return
@@ -706,16 +713,21 @@ export default function InventoryScreen() {
                     )}
                   </div>
                 ) : (
+                  (() => {
+                    const maxQty = getListingMaxQty(selected.slot, selected.item)
+                    return (
                   <TradingPostSellForm
                     qty={listQtyInput}
                     setQty={setListQtyInput}
                     price={listPriceInput}
                     setPrice={setListPriceInput}
-                    maxQty={(selected.item.stackable || selected.slot.noted) ? selected.slot.quantity : sameItemCount}
+                    maxQty={maxQty}
                     busy={sellBusy}
                     onCancel={() => setSelected(null)}
                     onSubmit={handleCustomListSubmit}
                   />
+                    )
+                  })()
                 )}
               </div>
             )}
