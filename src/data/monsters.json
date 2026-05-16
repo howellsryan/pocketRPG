@@ -5933,7 +5933,7 @@
     "name": "Wailing Banshee",
     "combatLevel": 23,
     "hitpoints": 22,
-    "slayerRequirement": 0,
+    "slayerRequirement": 1,
     "stats": {
       "attack": 1,
       "strength": 1,

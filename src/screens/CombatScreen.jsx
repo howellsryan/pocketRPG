@@ -155,8 +155,13 @@ class PvpCombatErrorBoundary extends Component {
 // Best-effort on each step — we always fall through to clearAuth + reload.
 async function performOneLifeReset() {
   if (getToken()) {
-    try { await api.deleteSave() } catch (err) { console.error('Failed to delete cloud save:', err) }
-    try { await api.deleteIdle() } catch (err) { console.error('Failed to delete cloud idle state:', err) }
+    try {
+      await api.resetOneLife()
+    } catch (err) {
+      console.error('Failed one-life reset endpoint, falling back to legacy delete flow:', err)
+      try { await api.deleteSave() } catch (deleteErr) { console.error('Failed to delete cloud save:', deleteErr) }
+      try { await api.deleteIdle() } catch (deleteErr) { console.error('Failed to delete cloud idle state:', deleteErr) }
+    }
   }
   try {
     closeDB()
