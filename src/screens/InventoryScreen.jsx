@@ -43,8 +43,10 @@ export default function InventoryScreen() {
 
   const handleSlotClick = (slot, item, index) => {
     if (!slot || !item) return
-    const idx = inventory.indexOf(slot)
-    setSelected({ slotIndex: idx >= 0 ? idx : index, slot, item })
+    if (!Number.isInteger(index) || index < 0 || index >= inventory.length) return
+    const liveSlot = inventory[index]
+    if (!liveSlot || liveSlot.itemId !== slot.itemId) return
+    setSelected({ slotIndex: index, slot: liveSlot, item })
     setShowSpecInfo(false)
     setListQtyInput(1)
     setListPriceInput(Math.max(1, Math.floor(Number(item?.shopValue) || 1)))
