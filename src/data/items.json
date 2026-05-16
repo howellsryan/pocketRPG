@@ -8982,7 +8982,7 @@
   "bow_of_faerdhinen": {
     "id": "bow_of_faerdhinen",
     "legacy_item_id": "bow_of_faerdhinen",
-    "name": "Faerdhinen Bow",
+    "name": "Faerdhinen Warbow",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": true,
@@ -9021,7 +9021,7 @@
   "blade_of_saeldor": {
     "id": "blade_of_saeldor",
     "legacy_item_id": "blade_of_saeldor",
-    "name": "Saeldor Blade",
+    "name": "Saeldor Warblade",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": false,
