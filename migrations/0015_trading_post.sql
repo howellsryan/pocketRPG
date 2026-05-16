@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS trading_post_offers (
   coins_pending     INTEGER NOT NULL DEFAULT 0,
   items_pending     INTEGER NOT NULL DEFAULT 0,
   status            TEXT NOT NULL DEFAULT 'active'
-                    CHECK (status IN ('active', 'completed', 'cancelled')),
+                    CHECK (status IN ('active', 'ready_to_collect')),
   created_at        INTEGER NOT NULL,
   updated_at        INTEGER NOT NULL
 );
