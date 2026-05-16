@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks'
+import { useState, useEffect } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import ItemSlot from '../components/ItemSlot.jsx'
 import Modal from '../components/Modal.jsx'
@@ -22,6 +22,14 @@ export default function InventoryScreen() {
   const [listQtyInput, setListQtyInput] = useState(1)
   const [listPriceInput, setListPriceInput] = useState(1)
   const hasCloudAccount = Boolean(getToken() && getCharacterId())
+
+  useEffect(() => {
+    if (!selected) return
+    const liveSlot = inventory[selected.slotIndex]
+    if (!liveSlot || liveSlot.itemId !== selected.slot?.itemId) {
+      setSelected(null)
+    }
+  }, [inventory, selected])
 
   const getListingMaxQty = (slot, item) => {
     if (!slot || !item) return 1
