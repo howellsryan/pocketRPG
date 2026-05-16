@@ -25,28 +25,42 @@ export default function BankScreen() {
   const tabs = bankConfig?.tabs ?? []
   const itemTabMap = bankConfig?.itemTabMap ?? {}
   const allTabName = bankConfig?.allTabName ?? 'All'
+  const placeholders = bankConfig?.placeholders ?? {}
 
   // Derive selected entry fresh from bank state each render
   const selected = selectedId && bank[selectedId]?.quantity > 0 ? bank[selectedId] : null
   useEffect(() => { if (selectedId && !selected) setSelectedId(null) }, [selected, selectedId])
 
   const bankItems = Object.values(bank).filter(b => b && b.quantity > 0)
+  const placeholderIds = Object.keys(placeholders).filter(itemId => !bank[itemId] || bank[itemId].quantity <= 0)
 
   const getDisplayItems = () => {
     let items
     if (activeTab === 0) {
       // Show unassigned items + items explicitly ordered in All (tabIndex: 0)
-      items = bankItems
+      const byId = new Map()
+      bankItems
         .filter(e => !itemTabMap[e.itemId] || itemTabMap[e.itemId].tabIndex === 0)
-        .sort((a, b) => {
-          const pa = itemTabMap[a.itemId]?.tabIndex === 0 ? (itemTabMap[a.itemId].position ?? 9999) : 9999
-          const pb = itemTabMap[b.itemId]?.tabIndex === 0 ? (itemTabMap[b.itemId].position ?? 9999) : 9999
-          return pa - pb
-        })
+        .forEach(e => byId.set(e.itemId, e))
+      placeholderIds
+        .filter(itemId => !itemTabMap[itemId] || itemTabMap[itemId].tabIndex === 0)
+        .forEach(itemId => byId.set(itemId, { itemId, quantity: 0, inactivePlaceholder: true }))
+
+      items = Array.from(byId.values()).sort((a, b) => {
+        const pa = itemTabMap[a.itemId]?.tabIndex === 0 ? (itemTabMap[a.itemId].position ?? 9999) : 9999
+        const pb = itemTabMap[b.itemId]?.tabIndex === 0 ? (itemTabMap[b.itemId].position ?? 9999) : 9999
+        return pa - pb
+      })
     } else {
-      items = bankItems
+      const byId = new Map()
+      bankItems
         .filter(e => itemTabMap[e.itemId]?.tabIndex === activeTab)
-        .sort((a, b) => (itemTabMap[a.itemId]?.position ?? 9999) - (itemTabMap[b.itemId]?.position ?? 9999))
+        .forEach(e => byId.set(e.itemId, e))
+      placeholderIds
+        .filter(itemId => itemTabMap[itemId]?.tabIndex === activeTab)
+        .forEach(itemId => byId.set(itemId, { itemId, quantity: 0, inactivePlaceholder: true }))
+
+      items = Array.from(byId.values()).sort((a, b) => (itemTabMap[a.itemId]?.position ?? 9999) - (itemTabMap[b.itemId]?.position ?? 9999))
     }
 
     // Apply search filter
@@ -103,6 +117,12 @@ export default function BankScreen() {
     // For non-stackable items with charges, clear charges when quantity reaches 0
     if (updatedEntry.quantity <= 0) {
       delete newBank[itemId]
+      updateBankConfig({
+        tabs,
+        itemTabMap,
+        allTabName,
+        placeholders: { ...placeholders, [itemId]: true },
+      })
     } else {
       newBank[itemId] = updatedEntry
     }
@@ -133,7 +153,7 @@ export default function BankScreen() {
   const addTab = () => {
     if (tabs.length >= MAX_TABS) return
     const name = DEFAULT_NAMES[tabs.length] ?? `Tab ${tabs.length + 1}`
-    updateBankConfig({ tabs: [...tabs, name], itemTabMap, allTabName })
+    updateBankConfig({ tabs: [...tabs, name], itemTabMap, allTabName, placeholders })
     setActiveTab(tabs.length + 1)
   }
 
@@ -141,11 +161,11 @@ export default function BankScreen() {
     if (tabMenu === null) return
     const trimmed = renameValue.trim()
     if (tabMenu === 0) {
-      updateBankConfig({ tabs, itemTabMap, allTabName: trimmed || allTabName })
+      updateBankConfig({ tabs, itemTabMap, allTabName: trimmed || allTabName, placeholders })
     } else {
       const newTabs = [...tabs]
       newTabs[tabMenu - 1] = trimmed || tabs[tabMenu - 1]
-      updateBankConfig({ tabs: newTabs, itemTabMap, allTabName })
+      updateBankConfig({ tabs: newTabs, itemTabMap, allTabName, placeholders })
     }
     setTabMenu(null)
   }
@@ -157,7 +177,7 @@ export default function BankScreen() {
       if (info.tabIndex === tabIndex) continue
       newMap[id] = info.tabIndex > tabIndex ? { ...info, tabIndex: info.tabIndex - 1 } : info
     }
-    updateBankConfig({ tabs: newTabs, itemTabMap: newMap, allTabName })
+    updateBankConfig({ tabs: newTabs, itemTabMap: newMap, allTabName, placeholders })
     if (activeTab === tabIndex) setActiveTab(0)
     else if (activeTab > tabIndex) setActiveTab(activeTab - 1)
     setTabMenu(null)
@@ -172,8 +192,16 @@ export default function BankScreen() {
       const pos = Object.values(newMap).filter(v => v.tabIndex === tabIndex).length
       newMap[itemId] = { tabIndex, position: pos }
     }
-    updateBankConfig({ tabs, itemTabMap: newMap, allTabName })
+    updateBankConfig({ tabs, itemTabMap: newMap, allTabName, placeholders })
     setSelectedId(null)
+  }
+
+  const clearPlaceholder = (itemId) => {
+    const newMap = { ...itemTabMap }
+    const newPlaceholders = { ...placeholders }
+    delete newMap[itemId]
+    delete newPlaceholders[itemId]
+    updateBankConfig({ tabs, itemTabMap: newMap, allTabName, placeholders: newPlaceholders })
   }
 
   // ── Drag reorder ─────────────────────────────────────────────────────────────
@@ -209,7 +237,7 @@ export default function BankScreen() {
     ids.forEach((id, pos) => {
       newMap[id] = { tabIndex: activeTab, position: pos }
     })
-    updateBankConfig({ tabs, itemTabMap: newMap, allTabName })
+    updateBankConfig({ tabs, itemTabMap: newMap, allTabName, placeholders })
   }
 
   // Drag handle pointer events — pointer capture ensures move/up fire on the handle
@@ -407,6 +435,7 @@ export default function BankScreen() {
               const emoji = item.icon || '📦'
               const isDragging = draggingId === entry.itemId
               const isOver = overItemId === entry.itemId
+              const isInactivePlaceholder = !!entry.inactivePlaceholder
               const { text, isM } = formatQuantity(entry.quantity)
 
               return (
@@ -416,31 +445,43 @@ export default function BankScreen() {
                   class="relative"
                 >
                   <button
-                    onClick={() => setSelectedId(entry.itemId)}
+                    onClick={() => !isInactivePlaceholder && setSelectedId(entry.itemId)}
                     class={`w-full flex flex-col items-center p-2 rounded-lg border select-none ${
                       isDragging
                         ? 'opacity-30 border-[#444] bg-[#1a1a1a]'
                         : isOver
                           ? 'bg-[#252520] border-[var(--color-gold)]'
-                          : 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
+                          : isInactivePlaceholder
+                            ? 'bg-[#141414] border-[#2a2a2a] opacity-45'
+                            : 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
                     }`}
                   >
                     <span class="text-lg">{emoji}</span>
                     <span class="text-[8px] text-[var(--color-parchment)] opacity-60 truncate w-full text-center">{item.name}</span>
-                    <span class={`text-[9px] font-[var(--font-mono)] font-bold ${isM ? 'text-[var(--color-emerald)]' : 'text-[var(--color-gold)]'}`}>×{text}</span>
+                    <span class={`text-[9px] font-[var(--font-mono)] font-bold ${isInactivePlaceholder ? 'text-[#8a8a8a]' : (isM ? 'text-[var(--color-emerald)]' : 'text-[var(--color-gold)]')}`}>{isInactivePlaceholder ? 'Inactive' : `×${text}`}</span>
                   </button>
 
                   {/* Drag handle — shown in all tabs */}
-                  <span
-                    class="absolute top-0.5 right-0.5 text-[10px] text-[var(--color-parchment)] opacity-20 leading-none select-none z-10 px-0.5 py-0.5 cursor-grab"
-                    style={{ touchAction: 'none' }}
-                    onPointerDown={(e) => handleDragStart(e, entry.itemId)}
-                    onPointerMove={(e) => handleDragMove(e, entry.itemId)}
-                    onPointerUp={(e) => handleDragEnd(e, entry.itemId)}
-                    onPointerCancel={(e) => handleDragCancel(e, entry.itemId)}
-                  >
-                    ⠿
-                  </span>
+                  {isInactivePlaceholder ? (
+                    <button
+                      onClick={() => clearPlaceholder(entry.itemId)}
+                      class="absolute top-0.5 right-0.5 text-[11px] text-[#c8c8c8] opacity-80 leading-none select-none z-10 px-1 py-0.5 rounded bg-[#2a2a2a] hover:opacity-100 active:opacity-100"
+                      aria-label={`Clear placeholder for ${item.name}`}
+                    >
+                      ✕
+                    </button>
+                  ) : (
+                    <span
+                      class="absolute top-0.5 right-0.5 text-[10px] text-[var(--color-parchment)] opacity-20 leading-none select-none z-10 px-0.5 py-0.5 cursor-grab"
+                      style={{ touchAction: 'none' }}
+                      onPointerDown={(e) => handleDragStart(e, entry.itemId)}
+                      onPointerMove={(e) => handleDragMove(e, entry.itemId)}
+                      onPointerUp={(e) => handleDragEnd(e, entry.itemId)}
+                      onPointerCancel={(e) => handleDragCancel(e, entry.itemId)}
+                    >
+                      ⠿
+                    </span>
+                  )}
                 </div>
               )
             })}
