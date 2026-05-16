@@ -1304,9 +1304,7 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     ? Math.min(startingCharges, hitsNeeded * monstersKilled)
     : 0
 
-  const resourceLimited = monstersKilled < Math.floor(totalTicks / ticksPerCycle)
-    && (maxKillsFromResources !== Infinity)
-
+  const resourceLimited = (maxKillsFromResources !== Infinity) && (monstersKilled >= maxKillsFromResources) && (remainingTicks >= ticksPerCycle)
   if (resourceLimited && !stoppedReason) stoppedReason = 'resource_limited'
   if (!stoppedReason) stoppedReason = 'completed_elapsed'
 

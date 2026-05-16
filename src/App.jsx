@@ -1622,8 +1622,8 @@ function GameApp() {
       <SideNav
         active={screen}
         onNavigate={(s) => navigate(s)}
-        isInCombat={isInCombat}
-        onDisabledClick={() => addToast('⚔️ Cannot navigate during combat!', 'warning')}
+        isInCombat={isInPvpMatch}
+        onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')}
       />
       <div class="flex-1 flex flex-col min-w-0 min-h-0">
         <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onMenuClick={() => setMenuOpen(true)} />
@@ -1637,8 +1637,8 @@ function GameApp() {
         onClose={() => setMenuOpen(false)}
         active={screen}
         onNavigate={(s) => navigate(s)}
-        isInCombat={isInCombat}
-        onDisabledClick={() => addToast('⚔️ Cannot navigate during combat!', 'warning')}
+        isInCombat={isInPvpMatch}
+        onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')}
       />
 
       {/* Idle Result Modal */}
@@ -2013,7 +2013,7 @@ function GameApp() {
                         {entries.map(([itemId, qty]) => (
                           <div key={itemId} style={{ marginBottom: '4px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' }}>
-                              <span style={{ textTransform: 'capitalize', color: isHighValueDrop(itemId, qty, itemsData) ? '#c084fc' : '#e8d5b0', fontWeight: isHighValueDrop(itemId, qty, itemsData) ? '700' : '400' }}>{itemId.replace(/_/g, ' ')}</span>
+                              <span style={{ textTransform: 'capitalize', color: isHighValueDrop(itemId, qty, itemsData) ? '#c084fc' : '#e8d5b0', fontWeight: isHighValueDrop(itemId, qty, itemsData) ? '700' : '400' }}>{itemsData[itemId]?.name || itemId.replace(/_/g, ' ')}</span>
                               <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>×{qty.toLocaleString()}</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8d5b0', opacity: 0.45 }}>
