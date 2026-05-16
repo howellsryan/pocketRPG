@@ -4,7 +4,7 @@ import itemsData from '../../../src/data/items.json' assert { type: 'json' }
 import { loadCharacterWithSave, writeSave } from '../../_lib/game/save.js'
 import { toErrorResponse } from '../../_lib/game/errors.js'
 import { auditLog } from '../../_lib/game/audit.js'
-import { isTradingPostListable } from '../../_lib/game/tradingPost.js'
+import { isOrderBookItem } from '../../_lib/game/tradingPost.js'
 import { removeItemFromInventory, canonicalItemId, normalizeSaveItemIds } from '../../_lib/game/inventory.js'
 import { addCoins } from '../../_lib/game/economy.js'
 
@@ -33,7 +33,7 @@ export async function onRequestPost({ request, env }) {
     const itemId = canonicalItemId(itemsData, rawItemId)
     const item = itemsData[itemId] || itemsData[rawItemId]
     if (!item) return json({ error: 'Item not found', code: 'ITEM_NOT_FOUND' }, 404)
-    if (isTradingPostListable(item)) {
+    if (isOrderBookItem(item)) {
       return json({
         error: 'Restricted items must be listed on the order book via /api/trading-post/list.',
         code: 'ORDER_BOOK_REQUIRED',

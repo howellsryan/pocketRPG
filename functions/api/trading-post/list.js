@@ -7,6 +7,8 @@ import { auditLog } from '../../_lib/game/audit.js'
 import { canonicalItemId, normalizeSaveItemIds } from '../../_lib/game/inventory.js'
 import {
   isTradingPostListable,
+  isOrderBookItem,
+  autoFillSellAtShopValue,
   assertSlotAvailable,
   escrowSellItems,
   escrowBuyCoins,
@@ -55,6 +57,29 @@ export async function onRequestPost({ request, env }) {
     }
 
     normalizeSaveItemIds(saveObject, itemsData)
+
+    // Non-order-book sells auto-fill at the item's shopValue. The game is the
+    // buyer; the listing never touches the order book, so no slot is consumed
+    // and no DB row is inserted. The client-supplied price is intentionally
+    // ignored to prevent a "list at extreme price → game buys" gold dupe.
+    if (offerType === 'sell' && !isOrderBookItem(item)) {
+      const { unit, totalPayout } = autoFillSellAtShopValue(saveObject, item, itemId, quantity)
+      const write = await writeSave(env, characterId, saveObject, saveRevision)
+      auditLog('trading_post_list_autofill', { characterId, itemId, quantity, unit, totalPayout })
+      return json({
+        ok: true,
+        offer_id: null,
+        remaining: 0,
+        matched_quantity: quantity,
+        total_spent: 0,
+        total_earned: totalPayout,
+        price_improvement_refund: 0,
+        save_revision: write.saveRevision,
+        updatedAt: write.updatedAt,
+        max_slots: MAX_ACTIVE_OFFERS_PER_CHARACTER,
+      })
+    }
+
     await assertSlotAvailable(env, characterId)
 
     // Escrow first (modifies saveObject in-memory only). If this throws, the

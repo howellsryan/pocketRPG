@@ -401,3 +401,21 @@ export function escrowSellItems(saveObject, itemId, quantity) {
 export function escrowBuyCoins(saveObject, totalCoins) {
   subtractCoins(saveObject, totalCoins)
 }
+
+// Settle a non-order-book sell instantly at the item's shopValue. The game is
+// the buyer, so no DB row is created and no slot is consumed; items leave the
+// inventory and coins land in the save directly. Returns the unit price and
+// total payout so the caller can audit and respond.
+export function autoFillSellAtShopValue(saveObject, item, itemId, quantity) {
+  if (isOrderBookItem(item)) {
+    throw new GameApiError('ORDER_BOOK_ITEM', 'Order book items cannot auto-fill at shopValue.', 400)
+  }
+  const unit = Math.floor(Number(item?.shopValue) || 0)
+  if (unit <= 0) {
+    throw new GameApiError('NO_VALUE', 'This item has no shop value.', 400)
+  }
+  removeItemFromInventory(saveObject, itemId, quantity)
+  const totalPayout = unit * quantity
+  addCoins(saveObject, totalPayout)
+  return { unit, totalPayout }
+}

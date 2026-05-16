@@ -10,6 +10,7 @@ import {
   isOrderBookItem,
   isTradingPostListable,
   assertSlotAvailable,
+  autoFillSellAtShopValue,
   escrowSellItems,
   escrowBuyCoins,
   MAX_ACTIVE_OFFERS_PER_CHARACTER,
@@ -571,5 +572,38 @@ describe('legacy id aliasing on the matcher', () => {
 describe('OFFER_STATUS constants', () => {
   it('exports active status (no completed/cancelled)', () => {
     expect(OFFER_STATUS.ACTIVE).toBe('active')
+  })
+})
+
+describe('autoFillSellAtShopValue (non-order-book auto-sell)', () => {
+  it('removes items from inventory and credits coins at shopValue × quantity', () => {
+    const item = { shopValue: 50, stackable: false }
+    const save = makeSave(0, [{ itemId: 'bronze_dagger', quantity: 3 }])
+    const { unit, totalPayout } = autoFillSellAtShopValue(save, item, 'bronze_dagger', 3)
+    expect(unit).toBe(50)
+    expect(totalPayout).toBe(150)
+    expect(getCoinTotal(save)).toBe(150)
+    expect(save.inventory.find((s: any) => s?.itemId === 'bronze_dagger')).toBeUndefined()
+  })
+
+  it('ignores any caller-supplied price and always pays floor(shopValue)', () => {
+    const item = { shopValue: 12.9, stackable: true }
+    const save = makeSave(0, [{ itemId: 'iron_ore', quantity: 10 }])
+    const { unit, totalPayout } = autoFillSellAtShopValue(save, item, 'iron_ore', 10)
+    expect(unit).toBe(12)
+    expect(totalPayout).toBe(120)
+    expect(getCoinTotal(save)).toBe(120)
+  })
+
+  it('rejects order-book items (must go through the matching engine)', () => {
+    const item = { isBossUnique: true, shopValue: 100 }
+    const save = makeSave(0, [{ itemId: 'warped_bow', quantity: 1 }])
+    expect(() => autoFillSellAtShopValue(save, item, 'warped_bow', 1)).toThrow(/Order book/)
+  })
+
+  it('rejects items with no shopValue', () => {
+    const item = { shopValue: 0 }
+    const save = makeSave(0, [{ itemId: 'bones', quantity: 1 }])
+    expect(() => autoFillSellAtShopValue(save, item, 'bones', 1)).toThrow(/no shop value/)
   })
 })

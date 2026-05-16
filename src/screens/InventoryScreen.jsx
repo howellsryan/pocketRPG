@@ -5,6 +5,7 @@ import Modal from '../components/Modal.jsx'
 import SharedItemModal from '../components/SharedItemModal.jsx'
 import TradingPostSellForm from '../components/TradingPostSellForm.jsx'
 import { freeSlots, countItem } from '../engine/inventory.js'
+import { isOrderBookItem } from '../engine/storeRules.js'
 import { equipItem, checkEquipRequirements } from '../engine/equipment.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
@@ -383,7 +384,12 @@ export default function InventoryScreen() {
         const sold = Number(res?.matched_quantity) || 0
         const remaining = Number(res?.remaining) || 0
         const earned = Number(res?.total_earned) || 0
-        if (sold > 0 && remaining === 0) {
+        // Server returns offer_id = null when a non-order-book sell was
+        // auto-filled at shopValue (no listing was created).
+        const autoFilled = res?.offer_id == null
+        if (autoFilled) {
+          addToast(`Sold ${sold} × ${item.name} for ${earned.toLocaleString()} gp`, 'success')
+        } else if (sold > 0 && remaining === 0) {
           addToast(`Matched ${sold} × ${item.name} — collect ${earned.toLocaleString()} gp from the trading post`, 'success')
         } else if (sold > 0 && remaining > 0) {
           addToast(`Matched ${sold} (collect ${earned.toLocaleString()} gp); ${remaining} still listed`, 'success')
@@ -670,57 +676,62 @@ export default function InventoryScreen() {
             </div>
 
             {/* Sell section */}
-            {selected.item.shopValue > 0 && selected.item.type !== 'currency' && !selected.item.isUntradeable && (
+            {selected.item.shopValue > 0 && selected.item.type !== 'currency' && !selected.item.isUntradeable && (() => {
+              // Order-book items (boss/raid/clue uniques) go through the player-
+              // to-player listing form. Everything else auto-sells at shopValue,
+              // so we show the quick-sell buttons used by the legacy NPC path.
+              const useQuickSell = isIronman || !isOrderBookItem(selected.item)
+              return (
               <div class="border-t border-[#333] pt-2 mt-1">
                 <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold">
-                  {isIronman ? 'Sell' : 'Trading Post Listing'}
+                  {useQuickSell ? 'Sell' : 'Trading Post Listing'}
                 </p>
-                {!isIronman && (
+                {!useQuickSell && (
                   <p class="text-[10px] text-[var(--color-parchment)] opacity-50 mb-1.5">
                     Listing at {selected.item.shopValue.toLocaleString()} gp · paid only when sold.
                   </p>
                 )}
-                {isIronman && (selected.item.stackable || selected.slot.noted) ? (
+                {useQuickSell && (selected.item.stackable || selected.slot.noted) ? (
                   <div class="grid grid-cols-3 gap-2">
                     {[1, 5, 10].map(qty => (
                       <button key={qty} onClick={() => handleSell(qty)}
                         disabled={selected.slot.quantity < qty || sellBusy}
                         class={`py-2 rounded-lg text-white font-semibold text-sm ${selected.slot.quantity < qty || sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
-                        {isIronman ? `Sell ${qty}` : `List ${qty}`} ({qty * selected.item.shopValue}gp)
+                        Sell {qty} ({qty * selected.item.shopValue}gp)
                       </button>
                     ))}
                     <button onClick={() => handleSell(selected.slot.quantity)}
                       disabled={sellBusy}
                       class={`py-2 rounded-lg text-white font-semibold text-sm col-span-3 ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
-                      {isIronman ? 'Sell All' : 'List All'} ({selected.slot.quantity * selected.item.shopValue} gp)
+                      Sell All ({selected.slot.quantity * selected.item.shopValue} gp)
                     </button>
                   </div>
-                ) : isIronman ? (
+                ) : useQuickSell ? (
                   <div class="grid grid-cols-3 gap-2">
                     <button onClick={() => handleSell(1)}
                       disabled={sellBusy}
                       class={`py-2 rounded-lg text-white font-semibold text-sm ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
-                      {isIronman ? 'Sell 1' : 'List 1'} ({selected.item.shopValue}gp)
+                      Sell 1 ({selected.item.shopValue}gp)
                     </button>
                     {sameItemCount >= 3 && (
                       <button onClick={() => handleSell(5)}
                         disabled={sellBusy}
                         class={`py-2 rounded-lg text-white font-semibold text-sm ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
-                        {isIronman ? 'Sell 5' : 'List X'}
+                        Sell 5
                       </button>
                     )}
                     {sameItemCount >= 10 && (
                       <button onClick={() => handleSell(10)}
                         disabled={sellBusy}
                         class={`py-2 rounded-lg text-white font-semibold text-sm ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
-                        {isIronman ? 'Sell 10' : 'List 10'}
+                        Sell 10
                       </button>
                     )}
                     {sameItemCount > 1 && (
                       <button onClick={() => handleSell(sameItemCount)}
                         disabled={sellBusy}
                         class={`py-2 rounded-lg text-white font-semibold text-sm ${sameItemCount >= 10 ? 'col-span-3' : sameItemCount >= 3 ? 'col-span-1' : 'col-span-2'} ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
-                        {isIronman ? 'Sell All' : 'List All'} ({sameItemCount * selected.item.shopValue}gp)
+                        Sell All ({sameItemCount * selected.item.shopValue}gp)
                       </button>
                     )}
                   </div>
@@ -737,7 +748,8 @@ export default function InventoryScreen() {
                   />
                 )}
               </div>
-            )}
+              )
+            })()}
           </div>
         </SharedItemModal>
       )}
