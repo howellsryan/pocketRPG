@@ -3245,7 +3245,7 @@
       "attack": 1,
       "strength": 1,
       "defence": 100,
-      "magic": 90,
+      "magic": 200,
       "ranged": 1
     },
     "attackSpeed": 4,
@@ -4015,9 +4015,9 @@
     "attackBonus": 50,
     "strengthBonus": 50,
     "defenceBonus": {
-      "stab": -45,
-      "slash": -45,
-      "crush": -45,
+      "stab": 1000,
+      "slash": 1000,
+      "crush": 1000,
       "magic": 0,
       "ranged": 50
     },
@@ -4035,9 +4035,9 @@
         "attackBonus": 50,
         "strengthBonus": 50,
         "defenceBonus": {
-          "stab": -45,
-          "slash": -45,
-          "crush": -45,
+          "stab": 1000,
+          "slash": 1000,
+          "crush": 1000,
           "magic": 200,
           "ranged": 50
         }
@@ -4051,9 +4051,9 @@
         "attackBonus": 50,
         "strengthBonus": 50,
         "defenceBonus": {
-          "stab": 200,
-          "slash": 200,
-          "crush": 200,
+          "stab": 1000,
+          "slash": 1000,
+          "crush": 1000,
           "magic": 300,
           "ranged": -45
         }
@@ -4067,9 +4067,9 @@
         "attackBonus": 50,
         "strengthBonus": 50,
         "defenceBonus": {
-          "stab": 200,
-          "slash": 200,
-          "crush": 200,
+          "stab": 1000,
+          "slash": 1000,
+          "crush": 1000,
           "magic": -45,
           "ranged": 300
         }
@@ -7068,7 +7068,7 @@
       "attack": 130,
       "strength": 130,
       "defence": 200,
-      "magic": 130,
+      "magic": 200,
       "ranged": 130
     },
     "attackSpeed": 4,
