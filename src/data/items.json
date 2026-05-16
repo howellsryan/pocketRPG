@@ -9397,10 +9397,10 @@
     "isGeneralStore": false,
     "isBossUnique": true
   },
-  "warped_bow": {
-    "id": "warped_bow",
+  "twisted_longbow": {
+    "id": "twisted_longbow",
     "legacy_item_id": "twisted_bow",
-    "name": "Warped Bow",
+    "name": "Twisted Longbow",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": true,
@@ -19343,9 +19343,9 @@
     "isBossUnique": true
   },
   "twisted_bow": {
-    "id": "warped_bow",
+    "id": "twisted_longbow",
     "legacy_item_id": "twisted_bow",
-    "name": "Warped Bow",
+    "name": "Twisted Longbow",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": true,

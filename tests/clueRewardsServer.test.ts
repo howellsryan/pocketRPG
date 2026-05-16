@@ -73,7 +73,7 @@ describe('clue completion endpoint', () => {
   it('rejects items not in the clue reward table for the given level', async () => {
     const handler = makeCompletionHandler('clues', {
       ...makeBaseDeps(),
-      resolveRewards: () => [{ itemId: 'warped_bow', quantity: 1 }],
+      resolveRewards: () => [{ itemId: 'twisted_longbow', quantity: 1 }],
     })
     const req = new Request('https://example.com/api/actions/clue/complete', {
       method: 'POST',
