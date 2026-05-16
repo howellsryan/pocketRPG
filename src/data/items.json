@@ -8617,6 +8617,7 @@
     "twoHanded": true,
     "stackable": false,
     "scaleCharged": true,
+    "chargeItemId": "venomcoil_scales",
     "attackSpeed": 3,
     "attackStyle": "ranged",
     "attackBonus": {
@@ -8660,6 +8661,7 @@
     "twoHanded": false,
     "stackable": false,
     "scaleCharged": true,
+    "chargeItemId": "venomcoil_scales",
     "poweredStaff": true,
     "poweredStaffBaseDamage": 34,
     "attackSpeed": 3,
@@ -8980,12 +8982,13 @@
   "bow_of_faerdhinen": {
     "id": "bow_of_faerdhinen",
     "legacy_item_id": "bow_of_faerdhinen",
-    "name": "Bow of Faerdhinen",
+    "name": "Faerdhinen Bow",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": true,
     "stackable": false,
     "scaleCharged": true,
+    "chargeItemId": "shardglass_shards",
     "attackSpeed": 3,
     "attackStyle": "ranged",
     "attackBonus": {
@@ -9018,12 +9021,13 @@
   "blade_of_saeldor": {
     "id": "blade_of_saeldor",
     "legacy_item_id": "blade_of_saeldor",
-    "name": "Blade of Saeldor",
+    "name": "Saeldor Blade",
     "type": "weapon",
     "slot": "weapon",
     "twoHanded": false,
     "stackable": false,
     "scaleCharged": true,
+    "chargeItemId": "shardglass_shards",
     "attackSpeed": 3,
     "attackStyle": "slash",
     "attackBonus": {
@@ -18777,6 +18781,7 @@
     "twoHanded": true,
     "stackable": false,
     "scaleCharged": true,
+    "chargeItemId": "venomcoil_scales",
     "attackSpeed": 3,
     "attackStyle": "ranged",
     "attackBonus": {
@@ -18820,6 +18825,7 @@
     "twoHanded": false,
     "stackable": false,
     "scaleCharged": true,
+    "chargeItemId": "venomcoil_scales",
     "poweredStaff": true,
     "poweredStaffBaseDamage": 34,
     "attackSpeed": 3,
