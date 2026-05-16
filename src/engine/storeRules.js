@@ -6,6 +6,14 @@ export function isClueRewardItem(item) {
   return Boolean(item?.isClueReward)
 }
 
+// Items that transact through the player-to-player order book rather than the
+// immediate-execute general store path. Keep this aligned with the server-side
+// `isOrderBookItem` in functions/_lib/game/tradingPost.js.
+export function isOrderBookItem(item) {
+  if (!item) return false
+  return Boolean(item.isBossUnique || item.isClueReward || item.isRaidUnique)
+}
+
 export function getPurchaseRestriction(item, { isIronman = false, allowMinigameUnlockPurchase = false } = {}) {
   if (!item) {
     return { allowed: false, code: 'ITEM_NOT_FOUND', message: 'Item not found' }

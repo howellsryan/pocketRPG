@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { validateIdleClaimWindow, applyIdleClaimRewards } from '../functions/_lib/game/idleClaim.js'
+import { getCoinTotal } from '../functions/_lib/game/economy.js'
 
 describe('idle claim authority helpers', () => {
   it('accepts valid idle claim window', () => {
@@ -25,6 +26,6 @@ describe('idle claim authority helpers', () => {
 
     expect(out.grantedCoins).toBe(50)
     expect(out.grantedItems).toEqual([{ itemId: 'coins', quantity: 4 }])
-    expect(save.coins).toBe(50)
+    expect(getCoinTotal(save)).toBe(54)
   })
 })

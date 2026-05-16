@@ -173,6 +173,31 @@ export const api = {
   completeDungeoneering: (sourceId, payload = {}) => request('/api/actions/dungeoneering/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
   completeMonster: (sourceId, payload = {}) => request('/api/actions/monster/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
 
+  tradingPostList: (offerType, itemId, price, quantity) => request('/api/trading-post/list', {
+    method: 'POST',
+    body: JSON.stringify({ offer_type: offerType, item_id: itemId, price, quantity }),
+  }),
+  tradingPostCancel: (offerId) => request('/api/trading-post/cancel', {
+    method: 'POST',
+    body: JSON.stringify({ offer_id: offerId }),
+  }),
+  tradingPostInstantSell: (offerId) => request('/api/trading-post/instant-sell', {
+    method: 'POST',
+    body: JSON.stringify({ offer_id: offerId }),
+  }),
+  tradingPostCollect: (offerId) => request('/api/trading-post/collect', {
+    method: 'POST',
+    body: JSON.stringify({ offer_id: offerId }),
+  }),
+  tradingPostMyOffers: () => request('/api/trading-post/my-offers'),
+  tradingPostSearch: (itemIds) => request('/api/trading-post/search', {
+    method: 'POST',
+    body: JSON.stringify({ item_ids: itemIds }),
+  }),
+  tradingPostSellImmediate: (itemId, quantity) => request('/api/trading-post/sell-immediate', {
+    method: 'POST',
+    body: JSON.stringify({ item_id: itemId, quantity }),
+  }),
 }
 
 // Fire-and-forget idle state write via navigator.sendBeacon. Survives tab

@@ -14,7 +14,7 @@ import CombatScreen from './screens/CombatScreen.jsx'
 import SkillingScreen from './screens/SkillingScreen.jsx'
 import GatherScreen from './screens/GatherScreen.jsx'
 import AgilityScreen from './screens/AgilityScreen.jsx'
-import GeneralStoreScreen from './screens/GeneralStoreScreen.jsx'
+import TradingPostScreen from './screens/TradingPostScreen.jsx'
 import EquipmentScreen from './screens/EquipmentScreen.jsx'
 import QuestsScreen from './screens/QuestsScreen.jsx'
 import CluesScreen from './screens/CluesScreen.jsx'
@@ -1147,7 +1147,11 @@ function GameApp() {
     }
     setActionData(data || null)
     setScreen(scr)
+    if (gameReady && isCloudAccount && !isInPvpMatch && cloudPhase === 'ready') {
+      void pushNow(getSnapshot()).catch(() => {})
+    }
   }
+
 
   const isSkippingRef = useRef(false)
 
@@ -1592,7 +1596,7 @@ function GameApp() {
       case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} idleResult={idleResult} />
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} />
       case SCREENS.AGILITY:     return <AgilityScreen initialActionId={actionData?.actionId} idleResult={idleResult} />
-      case SCREENS.STORE:       return <GeneralStoreScreen />
+      case SCREENS.STORE:       return <TradingPostScreen />
       case SCREENS.QUESTS:         return <QuestsScreen />
       case SCREENS.CLUES:          return <CluesScreen />
       case SCREENS.MINIGAMES:      return <MinigamesScreen />

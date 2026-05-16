@@ -1,5 +1,50 @@
 import { GameApiError } from './errors.js'
 
+// Some items in items.json are keyed by a legacy id but expose a different
+// canonical id via the `id` field on the entry (e.g. key "rune_scimitar"
+// holds id "runeforged_scimitar"). Save data on old clients still carries
+// the legacy key. Resolve to the canonical id whenever we touch persistent
+// state so writes from inventory (sell) and shop search (buy) use the same
+// identifier on the trading post.
+export function canonicalItemId(itemsData, rawId) {
+  if (typeof rawId !== 'string' || !rawId) return rawId
+  const direct = itemsData?.[rawId]
+  if (direct && typeof direct.id === 'string' && direct.id) return direct.id
+  return rawId
+}
+
+// Walk the save's inventory + bank and rewrite any legacy keys to their
+// canonical id. Coalesces slots/entries that collapse onto the same id.
+export function normalizeSaveItemIds(save, itemsData) {
+  if (!save || !itemsData) return
+  if (Array.isArray(save.inventory)) {
+    for (const slot of save.inventory) {
+      if (!slot || typeof slot !== 'object') continue
+      const raw = typeof slot.itemId === 'string' && slot.itemId
+        ? slot.itemId
+        : (typeof slot.id === 'string' ? slot.id : null)
+      if (!raw) continue
+      const canon = canonicalItemId(itemsData, raw)
+      if (canon !== slot.itemId) slot.itemId = canon
+    }
+  }
+  if (save.bank && typeof save.bank === 'object') {
+    const merged = {}
+    for (const [key, val] of Object.entries(save.bank)) {
+      const rawId = (val && typeof val === 'object' && typeof val.itemId === 'string' && val.itemId) || key
+      const canon = canonicalItemId(itemsData, rawId)
+      const qty = typeof val === 'number'
+        ? Math.floor(val)
+        : Math.floor(Number(val?.quantity) || 0)
+      if (qty <= 0) continue
+      const existing = merged[canon]
+      const next = (existing?.quantity || 0) + qty
+      merged[canon] = { itemId: canon, quantity: next }
+    }
+    save.bank = merged
+  }
+}
+
 export function getInventory(save) {
   if (!Array.isArray(save.inventory)) {
     save.inventory = []
@@ -47,13 +92,25 @@ export function removeItemFromInventory(save, itemId, quantity) {
   const inv = getInventory(save)
   const qty = Math.floor(Number(quantity) || 0)
   if (qty < 1) throw new GameApiError('INVALID_QUANTITY', 'Invalid quantity', 400)
-  const idx = inv.findIndex(s => s?.itemId === itemId)
-  if (idx === -1) throw new GameApiError('INSUFFICIENT_SUPPLIES', 'Insufficient supplies', 400)
-  const cur = Number(inv[idx].quantity) || 0
-  if (cur < qty) throw new GameApiError('INSUFFICIENT_SUPPLIES', 'Insufficient supplies', 400)
-  const next = cur - qty
-  if (next <= 0) inv.splice(idx, 1)
-  else inv[idx].quantity = next
+  let available = 0
+  for (const s of inv) {
+    if (s?.itemId === itemId) available += Number(s.quantity) || 0
+  }
+  if (available < qty) throw new GameApiError('INSUFFICIENT_SUPPLIES', 'Insufficient supplies', 400)
+  // Walk slots back-to-front so spliced indices don't shift the iteration.
+  let remaining = qty
+  for (let i = inv.length - 1; i >= 0 && remaining > 0; i--) {
+    const s = inv[i]
+    if (!s || s.itemId !== itemId) continue
+    const cur = Number(s.quantity) || 0
+    if (cur <= remaining) {
+      remaining -= cur
+      inv.splice(i, 1)
+    } else {
+      s.quantity = cur - remaining
+      remaining = 0
+    }
+  }
 }
 
 
