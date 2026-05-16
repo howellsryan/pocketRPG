@@ -119,9 +119,22 @@ export default function BankScreen() {
     // For non-stackable items with charges, clear charges when quantity reaches 0
     if (updatedEntry.quantity <= 0) {
       delete newBank[itemId]
+      const currentDisplayIds = getDisplayItems().map(entry => entry.itemId)
+      const currentPosition = currentDisplayIds.indexOf(itemId)
+      const placeholderTabIndex = itemTabMap[itemId]?.tabIndex ?? activeTab
+      const placeholderPosition = currentPosition >= 0
+        ? currentPosition
+        : (itemTabMap[itemId]?.position ?? 9999)
+      const nextItemTabMap = {
+        ...itemTabMap,
+        [itemId]: {
+          tabIndex: placeholderTabIndex,
+          position: placeholderPosition,
+        },
+      }
       updateBankConfig({
         tabs,
-        itemTabMap,
+        itemTabMap: nextItemTabMap,
         allTabName,
         placeholders: { ...placeholders, [itemId]: true },
       })
