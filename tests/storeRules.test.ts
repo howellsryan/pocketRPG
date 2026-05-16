@@ -10,11 +10,11 @@ const clueRewardUniques = clueRewardIds.filter(itemId => itemsData[itemId]?.isCl
 
 describe('store rules', () => {
   it('shows boss uniques for discovery', () => {
-    expect(isStoreVisibleItem(itemsData.warped_bow, { isIronman: false })).toBe(true)
-    expect(isStoreVisibleItem(itemsData.warped_bow, { isIronman: true })).toBe(true)
+    expect(isStoreVisibleItem(itemsData.twisted_longbow, { isIronman: false })).toBe(true)
+    expect(isStoreVisibleItem(itemsData.twisted_longbow, { isIronman: true })).toBe(true)
   })
   it('blocks boss unique purchases', () => {
-    const r = getPurchaseRestriction(itemsData.warped_bow, { isIronman: false })
+    const r = getPurchaseRestriction(itemsData.twisted_longbow, { isIronman: false })
     expect(r.allowed).toBe(false)
     expect(r.code).toBe('BOSS_UNIQUE_RESTRICTED')
   })

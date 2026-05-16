@@ -916,14 +916,12 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     return head.restoreAmount
   }
 
-  function consumeBoostPotion() {
-    while (boostQueue.length > 0 && boostQueue[0].remaining <= 0) boostQueue.shift()
-    const head = boostQueue[0]
-    if (!head) return null
-    head.remaining--
-    potionsConsumed[head.itemId] = (potionsConsumed[head.itemId] || 0) + 1
-    if (head.remaining <= 0) boostQueue.shift()
-    return head
+  function consumeBoostPotionAtIndex(index) {
+    const entry = boostQueue[index]
+    if (!entry || entry.remaining <= 0) return null
+    entry.remaining--
+    potionsConsumed[entry.itemId] = (potionsConsumed[entry.itemId] || 0) + 1
+    return entry
   }
 
   // ── Per-state combat metrics ─────────────────────────────────────────────
@@ -1065,31 +1063,45 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   let damagePreventedByPrayer = 0
   let stoppedReason = null
 
-  // Active boost potion (one at a time per stack — we drink the next when the
-  // current expires).
-  let activeBoost = null
-  let boostTicksRemaining = 0
-  function ensureBoost() {
-    if (activeBoost && boostTicksRemaining > 0) return
-    const next = consumeBoostPotion()
-    if (next) {
-      activeBoost = next
-      boostTicksRemaining = next.durationTicks
-    } else {
-      activeBoost = null
-      boostTicksRemaining = 0
+  // Active boost potions (one tracked duration per configured boost potion).
+  // If multiple boost potions are selected, consume/apply all of them.
+  const activeBoostTicksByItemId = {}
+  function ensureBoosts() {
+    for (let i = 0; i < boostQueue.length; i++) {
+      const entry = boostQueue[i]
+      if (!entry || entry.remaining <= 0) continue
+      const currentTicks = activeBoostTicksByItemId[entry.itemId] || 0
+      if (currentTicks > 0) continue
+      const consumed = consumeBoostPotionAtIndex(i)
+      if (consumed) activeBoostTicksByItemId[entry.itemId] = consumed.durationTicks
     }
   }
-  ensureBoost()
+  ensureBoosts()
 
   while (remainingTicks > 0 && monstersKilled < maxKillsFromResources) {
-    if (boostTicksRemaining <= 0) {
-      activeBoost = null
-      ensureBoost()
-    }
+    ensureBoosts()
 
     const useCombatPrayer = !!idlePrayers.combatPrayerId && prayerPool > 0
-    const metrics = getKillMetricsFor(activeBoost?.item || null, useCombatPrayer)
+    const activeBoostItems = Object.keys(activeBoostTicksByItemId)
+      .map(itemId => itemsData?.[itemId])
+      .filter(Boolean)
+    const layeredBoostStats = activeBoostItems.reduce(
+      (acc, potionItem) => buildBoostedPlayerStats(acc, potionItem, null, null),
+      { ...playerStats },
+    )
+    const metrics = (() => {
+      const layeredWithPrayer = useCombatPrayer
+        ? buildBoostedPlayerStats(layeredBoostStats, null, idlePrayers.combatPrayerId, prayersData)
+        : layeredBoostStats
+      const hitStats = avgHitStats(layeredWithPrayer, equipment, monster, stance, itemsData, task.spell || null, slayerTask)
+      const incoming = estimateMonsterIncomingPerAttack(monster, equipment, itemsData, layeredWithPrayer, stance)
+      if (!Number.isFinite(hitStats.avgDmgPerHit) || hitStats.avgDmgPerHit <= 0) {
+        return { ...hitStats, hitsNeeded: Infinity, ticksPerKill: Infinity, ticksPerCycle: Infinity, incoming }
+      }
+      const hitsNeeded = Math.ceil(monster.hitpoints / hitStats.avgDmgPerHit)
+      const ticksPerKill = 1 + (hitsNeeded - 1) * hitStats.weaponSpeed
+      return { ...hitStats, hitsNeeded, ticksPerKill, ticksPerCycle: ticksPerKill + RESPAWN_TICKS, incoming }
+    })()
 
     if (!Number.isFinite(metrics.ticksPerCycle) || metrics.ticksPerCycle === Infinity) {
       stoppedReason = stoppedReason || 'resource_limited'
@@ -1160,13 +1172,11 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     }
     damageTaken += Math.max(0, dmgFromMonster)
 
-    // Advance time for the kill (player attacks + respawn) before applying
-    // boost duration — the boost was active for the length of the kill.
+    // Advance time for the kill (player attacks + respawn).
     const killTicks = metrics.ticksPerCycle
-    if (boostTicksRemaining > 0) {
-      const boostUsed = Math.min(boostTicksRemaining, killTicks)
-      boostTicksRemaining -= boostUsed
-      if (boostTicksRemaining <= 0) activeBoost = null
+    for (const itemId of Object.keys(activeBoostTicksByItemId)) {
+      activeBoostTicksByItemId[itemId] -= killTicks
+      if (activeBoostTicksByItemId[itemId] <= 0) delete activeBoostTicksByItemId[itemId]
     }
 
     remainingTicks -= killTicks
@@ -1294,9 +1304,7 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     ? Math.min(startingCharges, hitsNeeded * monstersKilled)
     : 0
 
-  const resourceLimited = monstersKilled < Math.floor(totalTicks / ticksPerCycle)
-    && (maxKillsFromResources !== Infinity)
-
+  const resourceLimited = (maxKillsFromResources !== Infinity) && (monstersKilled >= maxKillsFromResources) && (remainingTicks >= ticksPerCycle)
   if (resourceLimited && !stoppedReason) stoppedReason = 'resource_limited'
   if (!stoppedReason) stoppedReason = 'completed_elapsed'
 

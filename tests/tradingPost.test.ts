@@ -177,7 +177,7 @@ function makeSave(coins = 0, inventory: any[] = []) {
 }
 
 const ITEM = {
-  warped_bow: { isBossUnique: true, stackable: false },
+  twisted_longbow: { isBossUnique: true, stackable: false },
   ring_of_endless_riches: { isClueReward: true, stackable: false },
   coins: { stackable: true },
 }
@@ -235,17 +235,17 @@ describe('matching engine — ready-to-collect inferred from pending+remaining',
   beforeEach(() => { env = fakeEnv() })
 
   it('user spec: seller lists, buyer buys -> both become collectible, neither auto-delivered', async () => {
-    // Seller B parks 1 warped_bow @50.
-    const seller = makeSave(0, [{ itemId: 'warped_bow', quantity: 1 }])
+    // Seller B parks 1 twisted_longbow @50.
+    const seller = makeSave(0, [{ itemId: 'twisted_longbow', quantity: 1 }])
     const { offerId: sellerOfferId } = await placeOffer(env, {
-      characterId: 2, offerType: 'sell', itemId: 'warped_bow', price: 50, quantity: 1, saveObject: seller,
+      characterId: 2, offerType: 'sell', itemId: 'twisted_longbow', price: 50, quantity: 1, saveObject: seller,
     })
-    expect(seller.inventory.find((s: any) => s?.itemId === 'warped_bow')).toBeUndefined()
+    expect(seller.inventory.find((s: any) => s?.itemId === 'twisted_longbow')).toBeUndefined()
 
     // Buyer A walks in with cap 100 -- match at seller's 50.
     const buyer = makeSave(100)
     const { offerId: buyerOfferId, res } = await placeOffer(env, {
-      characterId: 1, offerType: 'buy', itemId: 'warped_bow', price: 100, quantity: 1, saveObject: buyer,
+      characterId: 1, offerType: 'buy', itemId: 'twisted_longbow', price: 100, quantity: 1, saveObject: buyer,
     })
     expect(res.totalMatched).toBe(1)
     expect(res.totalSpent).toBe(50)
@@ -254,7 +254,7 @@ describe('matching engine — ready-to-collect inferred from pending+remaining',
     // Buyer paid 100 (escrow), got 50 refund (price improvement). Net -50.
     // The matched item is NOT in their save yet -- it's on the offer row.
     expect(getCoinTotal(buyer)).toBe(50)
-    expect(buyer.inventory.find((s: any) => s?.itemId === 'warped_bow')).toBeUndefined()
+    expect(buyer.inventory.find((s: any) => s?.itemId === 'twisted_longbow')).toBeUndefined()
 
     const sellerOffer = env.DB.rows.find((r: any) => r.id === sellerOfferId)
     const buyerOffer = env.DB.rows.find((r: any) => r.id === buyerOfferId)
@@ -267,12 +267,12 @@ describe('matching engine — ready-to-collect inferred from pending+remaining',
   })
 
   it('walks the book cheapest-first across multiple sells', async () => {
-    await placeOffer(env, { characterId: 2, offerType: 'sell', itemId: 'warped_bow', price: 100, quantity: 5, saveObject: makeSave(0, [{ itemId: 'warped_bow', quantity: 5 }]) })
-    await placeOffer(env, { characterId: 3, offerType: 'sell', itemId: 'warped_bow', price: 50, quantity: 3, saveObject: makeSave(0, [{ itemId: 'warped_bow', quantity: 3 }]) })
+    await placeOffer(env, { characterId: 2, offerType: 'sell', itemId: 'twisted_longbow', price: 100, quantity: 5, saveObject: makeSave(0, [{ itemId: 'twisted_longbow', quantity: 5 }]) })
+    await placeOffer(env, { characterId: 3, offerType: 'sell', itemId: 'twisted_longbow', price: 50, quantity: 3, saveObject: makeSave(0, [{ itemId: 'twisted_longbow', quantity: 3 }]) })
 
     const buyer = makeSave(2000)
     const { offerId, res } = await placeOffer(env, {
-      characterId: 1, offerType: 'buy', itemId: 'warped_bow', price: 200, quantity: 5, saveObject: buyer,
+      characterId: 1, offerType: 'buy', itemId: 'twisted_longbow', price: 200, quantity: 5, saveObject: buyer,
     })
     expect(res.totalMatched).toBe(5)
     expect(res.totalSpent).toBe(3 * 50 + 2 * 100)
@@ -287,10 +287,10 @@ describe('matching engine — ready-to-collect inferred from pending+remaining',
   })
 
   it('does not match a sell offer parked above the buyer price', async () => {
-    await placeOffer(env, { characterId: 2, offerType: 'sell', itemId: 'warped_bow', price: 200, quantity: 5, saveObject: makeSave(0, [{ itemId: 'warped_bow', quantity: 5 }]) })
+    await placeOffer(env, { characterId: 2, offerType: 'sell', itemId: 'twisted_longbow', price: 200, quantity: 5, saveObject: makeSave(0, [{ itemId: 'twisted_longbow', quantity: 5 }]) })
     const buyer = makeSave(500)
     const { res } = await placeOffer(env, {
-      characterId: 1, offerType: 'buy', itemId: 'warped_bow', price: 100, quantity: 5, saveObject: buyer,
+      characterId: 1, offerType: 'buy', itemId: 'twisted_longbow', price: 100, quantity: 5, saveObject: buyer,
     })
     expect(res.totalMatched).toBe(0)
     expect(res.remaining).toBe(5)
@@ -298,11 +298,11 @@ describe('matching engine — ready-to-collect inferred from pending+remaining',
 
   it('partial fill: seller listing 100 against a 99-qty buy -> seller has 1 left', async () => {
     // Buyer parks bid for 99 @ 50.
-    await placeOffer(env, { characterId: 2, offerType: 'buy', itemId: 'warped_bow', price: 50, quantity: 99, saveObject: makeSave(99 * 50) })
+    await placeOffer(env, { characterId: 2, offerType: 'buy', itemId: 'twisted_longbow', price: 50, quantity: 99, saveObject: makeSave(99 * 50) })
     // Seller lists 100 @ 50.
-    const seller = makeSave(0, [{ itemId: 'warped_bow', quantity: 100 }])
+    const seller = makeSave(0, [{ itemId: 'twisted_longbow', quantity: 100 }])
     const { offerId, res } = await placeOffer(env, {
-      characterId: 1, offerType: 'sell', itemId: 'warped_bow', price: 50, quantity: 100, saveObject: seller,
+      characterId: 1, offerType: 'sell', itemId: 'twisted_longbow', price: 50, quantity: 100, saveObject: seller,
     })
     expect(res.totalMatched).toBe(99)
     expect(res.remaining).toBe(1)
@@ -315,11 +315,11 @@ describe('matching engine — ready-to-collect inferred from pending+remaining',
 
   it('refuses to fill a sell below the seller floor', async () => {
     // Buyer bids low.
-    await placeOffer(env, { characterId: 2, offerType: 'buy', itemId: 'warped_bow', price: 50, quantity: 5, saveObject: makeSave(250) })
+    await placeOffer(env, { characterId: 2, offerType: 'buy', itemId: 'twisted_longbow', price: 50, quantity: 5, saveObject: makeSave(250) })
     // Seller floor at 100 -- no match.
-    const seller = makeSave(0, [{ itemId: 'warped_bow', quantity: 5 }])
+    const seller = makeSave(0, [{ itemId: 'twisted_longbow', quantity: 5 }])
     const { res } = await placeOffer(env, {
-      characterId: 1, offerType: 'sell', itemId: 'warped_bow', price: 100, quantity: 5, saveObject: seller,
+      characterId: 1, offerType: 'sell', itemId: 'twisted_longbow', price: 100, quantity: 5, saveObject: seller,
     })
     expect(res.totalMatched).toBe(0)
     expect(res.remaining).toBe(5)
@@ -327,11 +327,11 @@ describe('matching engine — ready-to-collect inferred from pending+remaining',
 
   it('a sell into a higher buy bid: seller fills at resting bid price', async () => {
     // Buyer parks bid for 1 @ 200.
-    await placeOffer(env, { characterId: 2, offerType: 'buy', itemId: 'warped_bow', price: 200, quantity: 1, saveObject: makeSave(200) })
+    await placeOffer(env, { characterId: 2, offerType: 'buy', itemId: 'twisted_longbow', price: 200, quantity: 1, saveObject: makeSave(200) })
     // Seller lists 1 @ 100 (floor).
-    const seller = makeSave(0, [{ itemId: 'warped_bow', quantity: 1 }])
+    const seller = makeSave(0, [{ itemId: 'twisted_longbow', quantity: 1 }])
     const { offerId, res } = await placeOffer(env, {
-      characterId: 1, offerType: 'sell', itemId: 'warped_bow', price: 100, quantity: 1, saveObject: seller,
+      characterId: 1, offerType: 'sell', itemId: 'twisted_longbow', price: 100, quantity: 1, saveObject: seller,
     })
     expect(res.totalEarned).toBe(200)
 
@@ -348,26 +348,26 @@ describe('collect flow', () => {
   beforeEach(() => { env = fakeEnv() })
 
   it('buyer collects -> items delivered, row deleted, listing disappears', async () => {
-    await placeOffer(env, { characterId: 2, offerType: 'sell', itemId: 'warped_bow', price: 50, quantity: 1, saveObject: makeSave(0, [{ itemId: 'warped_bow', quantity: 1 }]) })
+    await placeOffer(env, { characterId: 2, offerType: 'sell', itemId: 'twisted_longbow', price: 50, quantity: 1, saveObject: makeSave(0, [{ itemId: 'twisted_longbow', quantity: 1 }]) })
     const buyer = makeSave(100)
     const { offerId: buyerOfferId } = await placeOffer(env, {
-      characterId: 1, offerType: 'buy', itemId: 'warped_bow', price: 100, quantity: 1, saveObject: buyer,
+      characterId: 1, offerType: 'buy', itemId: 'twisted_longbow', price: 100, quantity: 1, saveObject: buyer,
     })
     const buyerOffer = await getOwnedOffer(env, buyerOfferId, 1)
     const buyerCollectSave = makeSave(0)
     const collected = await collectOffer(env, { offer: buyerOffer, saveObject: buyerCollectSave, itemsLookup: ITEM })
     expect(collected.itemsCollected).toBe(1)
     expect(collected.coinsCollected).toBe(0)
-    expect(buyerCollectSave.inventory.find((s: any) => s?.itemId === 'warped_bow')?.quantity).toBe(1)
+    expect(buyerCollectSave.inventory.find((s: any) => s?.itemId === 'twisted_longbow')?.quantity).toBe(1)
     // Listing is gone.
     expect(env.DB.rows.find((r: any) => r.id === buyerOfferId)).toBeUndefined()
   })
 
   it('seller collects -> coins delivered, row deleted, listing disappears', async () => {
-    await placeOffer(env, { characterId: 2, offerType: 'sell', itemId: 'warped_bow', price: 50, quantity: 1, saveObject: makeSave(0, [{ itemId: 'warped_bow', quantity: 1 }]) })
+    await placeOffer(env, { characterId: 2, offerType: 'sell', itemId: 'twisted_longbow', price: 50, quantity: 1, saveObject: makeSave(0, [{ itemId: 'twisted_longbow', quantity: 1 }]) })
     const buyer = makeSave(100)
     await placeOffer(env, {
-      characterId: 1, offerType: 'buy', itemId: 'warped_bow', price: 100, quantity: 1, saveObject: buyer,
+      characterId: 1, offerType: 'buy', itemId: 'twisted_longbow', price: 100, quantity: 1, saveObject: buyer,
     })
     // Find seller's offer and collect.
     const sellerOffer = env.DB.rows.find((r: any) => r.character_id === 2)
@@ -381,12 +381,12 @@ describe('collect flow', () => {
   })
 
   it('partial collect: row stays active, pending cleared, escrow respected', async () => {
-    // Seller B parks 5 warped_bow @50.
-    await placeOffer(env, { characterId: 2, offerType: 'sell', itemId: 'warped_bow', price: 50, quantity: 5, saveObject: makeSave(0, [{ itemId: 'warped_bow', quantity: 5 }]) })
+    // Seller B parks 5 twisted_longbow @50.
+    await placeOffer(env, { characterId: 2, offerType: 'sell', itemId: 'twisted_longbow', price: 50, quantity: 5, saveObject: makeSave(0, [{ itemId: 'twisted_longbow', quantity: 5 }]) })
     // Buyer A takes 2.
     const buyer = makeSave(200)
     await placeOffer(env, {
-      characterId: 1, offerType: 'buy', itemId: 'warped_bow', price: 100, quantity: 2, saveObject: buyer,
+      characterId: 1, offerType: 'buy', itemId: 'twisted_longbow', price: 100, quantity: 2, saveObject: buyer,
     })
     // Seller's offer now has remaining=3, coins_pending=100, status='active'.
     const sellerOfferRow = env.DB.rows.find((r: any) => r.character_id === 2)
@@ -405,8 +405,8 @@ describe('collect flow', () => {
   })
 
   it('listOffersForCharacter only shows active rows (collected rows vanish)', async () => {
-    await placeOffer(env, { characterId: 2, offerType: 'sell', itemId: 'warped_bow', price: 50, quantity: 1, saveObject: makeSave(0, [{ itemId: 'warped_bow', quantity: 1 }]) })
-    await placeOffer(env, { characterId: 1, offerType: 'buy', itemId: 'warped_bow', price: 100, quantity: 1, saveObject: makeSave(100) })
+    await placeOffer(env, { characterId: 2, offerType: 'sell', itemId: 'twisted_longbow', price: 50, quantity: 1, saveObject: makeSave(0, [{ itemId: 'twisted_longbow', quantity: 1 }]) })
+    await placeOffer(env, { characterId: 1, offerType: 'buy', itemId: 'twisted_longbow', price: 100, quantity: 1, saveObject: makeSave(100) })
     // Seller collects, row deleted.
     const sellerOffer = env.DB.rows.find((r: any) => r.character_id === 2)
     await collectOffer(env, { offer: sellerOffer, saveObject: makeSave(0), itemsLookup: ITEM })
@@ -415,7 +415,7 @@ describe('collect flow', () => {
   })
 
   it('rejects collect when nothing pending and offer still active', async () => {
-    const offerId = await insertOffer(env, { characterId: 1, offerType: 'sell', itemId: 'warped_bow', price: 50, quantityTotal: 5, quantityRemaining: 5 })
+    const offerId = await insertOffer(env, { characterId: 1, offerType: 'sell', itemId: 'twisted_longbow', price: 50, quantityTotal: 5, quantityRemaining: 5 })
     const offer = await getOwnedOffer(env, offerId!, 1)
     await expect(collectOffer(env, { offer, saveObject: makeSave(0), itemsLookup: ITEM }))
       .rejects.toThrow(/no coins or items to collect/i)
@@ -427,16 +427,16 @@ describe('cancellation refunds and deletes', () => {
   beforeEach(() => { env = fakeEnv() })
 
   it('returns remaining items on sell cancel and deletes the row', async () => {
-    const offerId = await insertOffer(env, { characterId: 1, offerType: 'sell', itemId: 'warped_bow', price: 1000, quantityTotal: 5, quantityRemaining: 3 })
+    const offerId = await insertOffer(env, { characterId: 1, offerType: 'sell', itemId: 'twisted_longbow', price: 1000, quantityTotal: 5, quantityRemaining: 3 })
     const offer = await getOwnedOffer(env, offerId!, 1)
     const save = makeSave(0)
     await cancelOffer(env, { offer, saveObject: save, itemsLookup: ITEM })
-    expect(save.inventory.find((s: any) => s?.itemId === 'warped_bow')?.quantity).toBe(3)
+    expect(save.inventory.find((s: any) => s?.itemId === 'twisted_longbow')?.quantity).toBe(3)
     expect(env.DB.rows).toHaveLength(0)
   })
 
   it('refunds unspent coins on buy cancel and deletes the row', async () => {
-    const offerId = await insertOffer(env, { characterId: 1, offerType: 'buy', itemId: 'warped_bow', price: 1000, quantityTotal: 5, quantityRemaining: 2 })
+    const offerId = await insertOffer(env, { characterId: 1, offerType: 'buy', itemId: 'twisted_longbow', price: 1000, quantityTotal: 5, quantityRemaining: 2 })
     const offer = await getOwnedOffer(env, offerId!, 1)
     const save = makeSave(0)
     await cancelOffer(env, { offer, saveObject: save, itemsLookup: ITEM })
@@ -446,11 +446,11 @@ describe('cancellation refunds and deletes', () => {
 
   it('a partially filled buy: cancel returns escrow + pending items', async () => {
     // Seller parks 2 @ 50.
-    await placeOffer(env, { characterId: 2, offerType: 'sell', itemId: 'warped_bow', price: 50, quantity: 2, saveObject: makeSave(0, [{ itemId: 'warped_bow', quantity: 2 }]) })
+    await placeOffer(env, { characterId: 2, offerType: 'sell', itemId: 'twisted_longbow', price: 50, quantity: 2, saveObject: makeSave(0, [{ itemId: 'twisted_longbow', quantity: 2 }]) })
     // Buyer wants 5 @ 100. Matches 2, parks 3.
     const buyer = makeSave(500)
     const { offerId: buyerOfferId } = await placeOffer(env, {
-      characterId: 1, offerType: 'buy', itemId: 'warped_bow', price: 100, quantity: 5, saveObject: buyer,
+      characterId: 1, offerType: 'buy', itemId: 'twisted_longbow', price: 100, quantity: 5, saveObject: buyer,
     })
     const buyerOffer = await getOwnedOffer(env, buyerOfferId, 1)
     expect(buyerOffer.items_pending).toBe(2)
@@ -461,7 +461,7 @@ describe('cancellation refunds and deletes', () => {
     // Buyer cancels -- should get back the 2 pending items + 3*100 coins (unmatched escrow).
     const cancelSave = makeSave(0)
     await cancelOffer(env, { offer: buyerOffer, saveObject: cancelSave, itemsLookup: ITEM })
-    expect(cancelSave.inventory.find((s: any) => s?.itemId === 'warped_bow')?.quantity).toBe(2)
+    expect(cancelSave.inventory.find((s: any) => s?.itemId === 'twisted_longbow')?.quantity).toBe(2)
     expect(getCoinTotal(cancelSave)).toBe(3 * 100)
     expect(env.DB.rows.find((r: any) => r.id === buyerOfferId)).toBeUndefined()
   })
@@ -472,7 +472,7 @@ describe('orphan stock (instant sell)', () => {
   beforeEach(() => { env = fakeEnv() })
 
   it('pays seller 80% of remaining and detaches character_id', async () => {
-    const offerId = await insertOffer(env, { characterId: 1, offerType: 'sell', itemId: 'warped_bow', price: 1000, quantityTotal: 5, quantityRemaining: 5 })
+    const offerId = await insertOffer(env, { characterId: 1, offerType: 'sell', itemId: 'twisted_longbow', price: 1000, quantityTotal: 5, quantityRemaining: 5 })
     const offer = await getOwnedOffer(env, offerId!, 1)
     const sellerSave = makeSave(0)
     const payout = await instantSellOffer(env, { offer, saveObject: sellerSave, itemsLookup: ITEM })
@@ -485,13 +485,13 @@ describe('orphan stock (instant sell)', () => {
   })
 
   it('orphan stock is matched by future buyers at the original price (gold sink)', async () => {
-    const offerId = await insertOffer(env, { characterId: 1, offerType: 'sell', itemId: 'warped_bow', price: 1000, quantityTotal: 2, quantityRemaining: 2 })
+    const offerId = await insertOffer(env, { characterId: 1, offerType: 'sell', itemId: 'twisted_longbow', price: 1000, quantityTotal: 2, quantityRemaining: 2 })
     const offer = await getOwnedOffer(env, offerId!, 1)
     await instantSellOffer(env, { offer, saveObject: makeSave(0), itemsLookup: ITEM })
     // Buyer comes in.
     const buyer = makeSave(10000)
     const { offerId: buyerOfferId } = await placeOffer(env, {
-      characterId: 9, offerType: 'buy', itemId: 'warped_bow', price: 5000, quantity: 2, saveObject: buyer,
+      characterId: 9, offerType: 'buy', itemId: 'twisted_longbow', price: 5000, quantity: 2, saveObject: buyer,
     })
     const buyerOffer = env.DB.rows.find((r: any) => r.id === buyerOfferId)
     expect(buyerOffer.items_pending).toBe(2)
@@ -507,17 +507,17 @@ describe('slot limits', () => {
 
   it('blocks more than MAX active offers per character', async () => {
     for (let i = 0; i < MAX_ACTIVE_OFFERS_PER_CHARACTER; i++) {
-      await insertOffer(env, { characterId: 1, offerType: 'sell', itemId: 'warped_bow', price: 10 + i, quantityTotal: 1, quantityRemaining: 1 })
+      await insertOffer(env, { characterId: 1, offerType: 'sell', itemId: 'twisted_longbow', price: 10 + i, quantityTotal: 1, quantityRemaining: 1 })
     }
     await expect(assertSlotAvailable(env, 1)).rejects.toThrow(/active offers/i)
   })
 
   it('does not count collectible offers against the active-slot cap', async () => {
     for (let i = 0; i < MAX_ACTIVE_OFFERS_PER_CHARACTER - 1; i++) {
-      await insertOffer(env, { characterId: 1, offerType: 'sell', itemId: 'warped_bow', price: 10 + i, quantityTotal: 1, quantityRemaining: 1 })
+      await insertOffer(env, { characterId: 1, offerType: 'sell', itemId: 'twisted_longbow', price: 10 + i, quantityTotal: 1, quantityRemaining: 1 })
     }
     env.DB.rows.push({
-      id: 999, character_id: 1, offer_type: 'sell', item_id: 'warped_bow', price: 5,
+      id: 999, character_id: 1, offer_type: 'sell', item_id: 'twisted_longbow', price: 5,
       quantity_total: 1, quantity_remaining: 0, coins_pending: 5, items_pending: 0,
       status: 'active', created_at: 0, updated_at: 0,
     })
@@ -527,8 +527,8 @@ describe('slot limits', () => {
 
 describe('escrow primitives', () => {
   it('escrowSellItems removes from inventory', () => {
-    const save = makeSave(0, [{ itemId: 'warped_bow', quantity: 5 }])
-    escrowSellItems(save, 'warped_bow', 3)
+    const save = makeSave(0, [{ itemId: 'twisted_longbow', quantity: 5 }])
+    escrowSellItems(save, 'twisted_longbow', 3)
     expect(save.inventory[0].quantity).toBe(2)
   })
 
@@ -550,7 +550,7 @@ describe('legacy id aliasing on the matcher', () => {
     })
     const buyer = makeSave(100)
     const { res } = await placeOffer(env, {
-      characterId: 1, offerType: 'buy', itemId: 'warped_bow', price: 100, quantity: 1, saveObject: buyer,
+      characterId: 1, offerType: 'buy', itemId: 'twisted_longbow', price: 100, quantity: 1, saveObject: buyer,
     })
     expect(res.totalMatched).toBe(1)
     expect(res.totalSpent).toBe(100)
@@ -558,8 +558,8 @@ describe('legacy id aliasing on the matcher', () => {
 
   it('matches a legacy-id buy against a canonical-id sell', async () => {
     await placeOffer(env, {
-      characterId: 2, offerType: 'sell', itemId: 'warped_bow', price: 50, quantity: 1,
-      saveObject: makeSave(0, [{ itemId: 'warped_bow', quantity: 1 }]),
+      characterId: 2, offerType: 'sell', itemId: 'twisted_longbow', price: 50, quantity: 1,
+      saveObject: makeSave(0, [{ itemId: 'twisted_longbow', quantity: 1 }]),
     })
     const buyer = makeSave(100)
     const { res } = await placeOffer(env, {
@@ -597,8 +597,8 @@ describe('autoFillSellAtShopValue (non-order-book auto-sell)', () => {
 
   it('rejects order-book items (must go through the matching engine)', () => {
     const item = { isBossUnique: true, shopValue: 100 }
-    const save = makeSave(0, [{ itemId: 'warped_bow', quantity: 1 }])
-    expect(() => autoFillSellAtShopValue(save, item, 'warped_bow', 1)).toThrow(/Order book/)
+    const save = makeSave(0, [{ itemId: 'twisted_longbow', quantity: 1 }])
+    expect(() => autoFillSellAtShopValue(save, item, 'twisted_longbow', 1)).toThrow(/Order book/)
   })
 
   it('rejects items with no shopValue', () => {

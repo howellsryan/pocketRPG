@@ -29,7 +29,7 @@ describe('action completion endpoint tamper guards', () => {
   })
 
   it('rejects protected item injection for wrong source item pair', async () => {
-    const out = await post({ sourceId: 'cryptbound_champions', actionNonce: 'n2', rewards: [{ itemId: 'warped_bow', quantity: 1 }] })
+    const out = await post({ sourceId: 'cryptbound_champions', actionNonce: 'n2', rewards: [{ itemId: 'twisted_longbow', quantity: 1 }] })
     expect(out.status).toBe(200)
     expect(out.body.ok).toBe(true)
     expect(Array.isArray(out.body.granted)).toBe(true)
@@ -105,7 +105,7 @@ describe('action completion endpoint tamper guards', () => {
       body: JSON.stringify({
         sourceId: 'dungeoneering',
         actionNonce: 'n5',
-        rewards: [{ itemId: 'warped_bow', quantity: 1 }],
+        rewards: [{ itemId: 'twisted_longbow', quantity: 1 }],
       }),
     })
     const res = await handler({ request: req, env: {} as any })

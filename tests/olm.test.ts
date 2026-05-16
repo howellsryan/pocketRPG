@@ -232,7 +232,7 @@ describe('The Great Olm Boss', () => {
       const uniques = [
         'warped_buckler', 'dragon_slayer_crossbow',
         'durn_s_bulwark', 'kodai_hat', 'kodai_robe_top', 'kodai_robe_bottom', 'dragon_claws',
-        'ancient_maul', 'ancestral_wand', 'warped_bow'
+        'ancient_maul', 'ancestral_wand', 'twisted_longbow'
       ]
       for (const itemId of uniques) {
         const entry = cox.rewards.unique.items.find((d: any) => d.itemId === itemId)
@@ -243,7 +243,7 @@ describe('The Great Olm Boss', () => {
 
     it('twisted buckler and dragon hunter crossbow should have higher weight than twisted bow', () => {
       const buckler = cox.rewards.unique.items.find((d: any) => d.itemId === 'warped_buckler')
-      const tbow = cox.rewards.unique.items.find((d: any) => d.itemId === 'warped_bow')
+      const tbow = cox.rewards.unique.items.find((d: any) => d.itemId === 'twisted_longbow')
       expect(buckler.weight).toBeGreaterThan(tbow.weight)
     })
 
@@ -274,7 +274,7 @@ describe('Dragon Hunter Crossbow', () => {
 })
 
 describe('Twisted Bow', () => {
-  const tbow = itemsData['warped_bow' as keyof typeof itemsData]
+  const tbow = itemsData['twisted_longbow' as keyof typeof itemsData]
 
   it('should exist in items data', () => {
     expect(tbow).toBeDefined()

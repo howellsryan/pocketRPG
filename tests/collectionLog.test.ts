@@ -113,7 +113,7 @@ describe('collection log seeded contents', () => {
     const raids = findCategory('raids')
     const cox = raids?.sections.find((s: any) => s.id === 'vaults_of_xyren')
     expect(cox).toBeTruthy()
-    expect(cox.items).toContain('warped_bow')
+    expect(cox.items).toContain('twisted_longbow')
   })
 
   it('Barbarian Assault lists the Fighter Hat as a minigame unique', () => {
