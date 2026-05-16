@@ -63,18 +63,18 @@ describe('GET /api/leaderboard (denormalized + paginated)', () => {
     expect(bind).toHaveBeenLastCalledWith(100, 0)
   })
 
-  it('shapes rows into { username, totalLevel, combatLevel } and returns pagination meta', async () => {
+  it('shapes rows into { username, totalLevel, combatLevel, isOneLife } and returns pagination meta', async () => {
     const { env } = mockDb([
-      { id: 1, username: 'alice', total_level: 1500, combat_level: 110 },
-      { id: 2, username: 'bob', total_level: 900, combat_level: 70 },
+      { id: 1, username: 'alice', total_level: 1500, combat_level: 110, is_one_life: 0 },
+      { id: 2, username: 'bob', total_level: 900, combat_level: 70, is_one_life: 1 },
     ])
 
     const res = await onRequestGet({ request: reqWith('?limit=50&offset=10'), env } as any)
     const body = await res.json() as any
 
     expect(body.characters).toEqual([
-      { username: 'alice', totalLevel: 1500, combatLevel: 110 },
-      { username: 'bob', totalLevel: 900, combatLevel: 70 },
+      { username: 'alice', totalLevel: 1500, combatLevel: 110, isOneLife: false },
+      { username: 'bob', totalLevel: 900, combatLevel: 70, isOneLife: true },
     ])
     expect(body.pagination).toEqual({ limit: 50, offset: 10, count: 2 })
   })
