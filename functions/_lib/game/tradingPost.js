@@ -265,7 +265,7 @@ export async function getOwnedOffer(env, offerId, characterId) {
 export async function listOffersForCharacter(env, characterId) {
   const { results } = await env.DB.prepare(
     `SELECT * FROM trading_post_offers
-     WHERE character_id = ? AND status IN ('active', 'ready_to_collect')
+     WHERE character_id = ? AND status = 'active'
      ORDER BY created_at DESC`,
   ).bind(characterId).all()
   return results || []

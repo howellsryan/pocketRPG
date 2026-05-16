@@ -157,10 +157,10 @@ class FakeDB {
       const row = this.rows.find((r) => r.id === id)
       return { results: row ? [{ quantity_remaining: row.quantity_remaining, coins_pending: row.coins_pending, items_pending: row.items_pending }] : [] }
     }
-    if (sql.startsWith('SELECT * FROM trading_post_offers WHERE character_id = ? AND status IN')) {
+    if (sql.startsWith("SELECT * FROM trading_post_offers WHERE character_id = ? AND status = 'active'")) {
       const [characterId] = params
       const results = this.rows
-        .filter((r) => r.character_id === characterId && (r.status === 'active' || r.status === 'ready_to_collect'))
+        .filter((r) => r.character_id === characterId && r.status === 'active')
         .sort((a, b) => b.created_at - a.created_at)
       return { results }
     }
@@ -404,7 +404,7 @@ describe('collect flow', () => {
     expect(after.quantity_remaining).toBe(3)
   })
 
-  it('listOffersForCharacter only shows active + ready_to_collect (collected rows vanish)', async () => {
+  it('listOffersForCharacter only shows active rows (collected rows vanish)', async () => {
     await placeOffer(env, { characterId: 2, offerType: 'sell', itemId: 'warped_bow', price: 50, quantity: 1, saveObject: makeSave(0, [{ itemId: 'warped_bow', quantity: 1 }]) })
     await placeOffer(env, { characterId: 1, offerType: 'buy', itemId: 'warped_bow', price: 100, quantity: 1, saveObject: makeSave(100) })
     // Seller collects, row deleted.

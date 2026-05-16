@@ -22,7 +22,7 @@ function isReadyToCollectOffer(offer) {
   const coinsPending = Number(offer?.coins_pending) || 0
   const itemsPending = Number(offer?.items_pending) || 0
   const remaining = Number(offer?.quantity_remaining) || 0
-  return offer?.status === 'ready_to_collect' || (remaining <= 0 && (coinsPending > 0 || itemsPending > 0))
+  return remaining <= 0 && (coinsPending > 0 || itemsPending > 0)
 }
 
 function generalStoreBuyPrice(item) {
