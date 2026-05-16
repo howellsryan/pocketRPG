@@ -458,7 +458,7 @@ export default function BankScreen() {
                   >
                     <span class="text-lg">{emoji}</span>
                     <span class="text-[8px] text-[var(--color-parchment)] opacity-60 truncate w-full text-center">{item.name}</span>
-                    <span class={`text-[9px] font-[var(--font-mono)] font-bold ${isInactivePlaceholder ? 'text-[#8a8a8a]' : (isM ? 'text-[var(--color-emerald)]' : 'text-[var(--color-gold)]')}`}>{isInactivePlaceholder ? 'Inactive' : `×${text}`}</span>
+                    <span class={`text-[9px] font-[var(--font-mono)] font-bold ${isInactivePlaceholder ? 'text-[#8a8a8a]' : (isM ? 'text-[var(--color-emerald)]' : 'text-[var(--color-gold)]')}`}>{isInactivePlaceholder ? '\u00A0' : `×${text}`}</span>
                   </button>
 
                   {/* Drag handle — shown in all tabs */}
