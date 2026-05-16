@@ -34,6 +34,7 @@ export default function InventoryScreen() {
   }
 
   const handleSlotClick = (slot, item, index) => {
+    if (!slot || !item) return
     const idx = inventory.indexOf(slot)
     setSelected({ slotIndex: idx >= 0 ? idx : index, slot, item })
     setShowSpecInfo(false)
@@ -472,6 +473,7 @@ export default function InventoryScreen() {
   const sameItemCount = selected && !selected.item.stackable && !selected.slot.noted
     ? inventory.filter(s => s && s.itemId === selected.slot.itemId && !s.noted).length
     : 0
+  const selectedListingMaxQty = selected ? getListingMaxQty(selected.slot, selected.item) : 1
 
   return (
     <div class="h-full overflow-y-auto p-4">
@@ -713,21 +715,16 @@ export default function InventoryScreen() {
                     )}
                   </div>
                 ) : (
-                  (() => {
-                    const maxQty = getListingMaxQty(selected.slot, selected.item)
-                    return (
                   <TradingPostSellForm
                     qty={listQtyInput}
                     setQty={setListQtyInput}
                     price={listPriceInput}
                     setPrice={setListPriceInput}
-                    maxQty={maxQty}
+                    maxQty={selectedListingMaxQty}
                     busy={sellBusy}
                     onCancel={() => setSelected(null)}
                     onSubmit={handleCustomListSubmit}
                   />
-                    )
-                  })()
                 )}
               </div>
             )}
