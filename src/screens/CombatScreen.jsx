@@ -16,7 +16,7 @@ import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick, pauseTicks, resumeTicks } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
 import { getCombatType, equipItem, checkEquipRequirements } from '../engine/equipment.js'
-import { api, clearAuth, getToken, getCharacterId, setLocalCharacterId } from '../cloud/api.js'
+import { api, clearAuth, getToken, getCharacterId, setLocalCharacterId, getOneLifeMode } from '../cloud/api.js'
 import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow } from '../cloud/sync.js'
 import { pvpApi } from '../cloud/pvp.js'
 import { closeDB } from '../db/database.js'
@@ -209,6 +209,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const equipmentRef = useRef(equipment)
   const slayerTaskRef = useRef(slayerTask)
   const pvpCrashHandledRef = useRef(false)
+  const oneLifeModeRef = useRef(isOneLife || getOneLifeMode())
   const bossKillCountsRef = useRef(bossKillCounts)
   const raidKillCountsRef = useRef(raidKillCounts)
   const unlockedFeaturesRef = useRef(unlockedFeatures)
@@ -256,6 +257,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   useEffect(() => { statsRef.current = stats }, [stats])
   useEffect(() => { equipmentRef.current = equipment }, [equipment])
   useEffect(() => { slayerTaskRef.current = slayerTask }, [slayerTask])
+  useEffect(() => { oneLifeModeRef.current = isOneLife || getOneLifeMode() }, [isOneLife])
   useEffect(() => { bossKillCountsRef.current = bossKillCounts }, [bossKillCounts])
   useEffect(() => { raidKillCountsRef.current = raidKillCounts }, [raidKillCounts])
   useEffect(() => { unlockedFeaturesRef.current = unlockedFeatures }, [unlockedFeatures])
@@ -410,7 +412,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           if (newHP <= 0) {
             setCombat(prev => ({ ...prev, active: false }))
             setActiveTask(null)
-            if (isOneLife) {
+            if (oneLifeModeRef.current) {
               addToast('you died! Restarting your account…', 'error')
               setTimeout(async () => {
                 await performOneLifeReset()
@@ -442,7 +444,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           if (newHP <= 0) {
             setCombat(prev => ({ ...prev, active: false }))
             setActiveTask(null)
-            if (isOneLife) {
+            if (oneLifeModeRef.current) {
               addToast('you died! Restarting your account…', 'error')
               setTimeout(async () => {
                 await performOneLifeReset()
