@@ -17,6 +17,7 @@ const sourceFiles = [
   'utils/idleElapsed.js',
   'utils/prayerIcons.js',
   'utils/bonusLabels.js',
+  'utils/oneLifeDeath.js',
   'hooks/useActionTick.js',
   'hooks/useIsDesktop.js',
   'hooks/useEscapeKey.js',
