@@ -1157,7 +1157,10 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     // so the player gets credit even if combat aborts this kill from HP loss.
     damagePreventedByPrayer += dmgPrevented
 
-    // Eat reactively when HP would drop low; never below 1 (no skip death).
+    // Eat reactively when HP would drop low. Idle/skip is now high-risk:
+    // if the monster still kills the player after the food queue is
+    // exhausted, the simulation records a death and the caller decides
+    // whether that triggers a One-Life wipe or a normal respawn.
     hp -= dmgFromMonster
     while (hp <= 1 && foodQueue.length > 0) {
       const heal = consumeFood()
@@ -1165,9 +1168,10 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
       hp = Math.min(maxHP, hp + heal)
     }
     if (hp <= 0) {
-      // Survivability exhausted — stop early without rewarding this kill.
-      hp = 1
-      stoppedReason = foodQueue.length === 0 ? 'out_of_food' : 'out_of_hp'
+      // Survivability exhausted — character died mid-kill. The kill that
+      // would have completed is not rewarded.
+      hp = 0
+      stoppedReason = 'died'
       break
     }
     damageTaken += Math.max(0, dmgFromMonster)
@@ -1246,10 +1250,13 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
   // Post-loop top-up: a real player would eat back to full before stepping
   // away. Mirror that here so a skip never hands the player back near death
   // while food remains. Counted into foodConsumed/itemsConsumed automatically.
-  while (hp < maxHP && foodQueue.length > 0) {
-    const heal = consumeFood()
-    if (heal == null) break
-    hp = Math.min(maxHP, hp + heal)
+  // Skipped on death — a corpse doesn't eat.
+  if (stoppedReason !== 'died') {
+    while (hp < maxHP && foodQueue.length > 0) {
+      const heal = consumeFood()
+      if (heal == null) break
+      hp = Math.min(maxHP, hp + heal)
+    }
   }
 
   // Deduct runes for magic combat: consume from inventory first, track bank overflow
@@ -1356,7 +1363,8 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     if (remaining > 0) itemsConsumed[itemId] = remaining
   }
 
-  const finalHP = Math.max(1, Math.min(maxHP, Math.floor(hp)))
+  const died = stoppedReason === 'died'
+  const finalHP = died ? 0 : Math.max(1, Math.min(maxHP, Math.floor(hp)))
 
   return {
     xpGained, lootGained, lootLost, lootBanked, runesConsumed,
@@ -1366,6 +1374,7 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     // Idle-supply outputs:
     effectiveElapsedMs,
     stoppedReason,
+    died,
     finalHP,
     damageTaken: Math.max(0, Math.floor(damageTaken)),
     damagePreventedByPrayer: Math.max(0, Math.floor(damagePreventedByPrayer)),

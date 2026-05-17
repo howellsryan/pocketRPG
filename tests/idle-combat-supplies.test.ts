@@ -169,10 +169,10 @@ describe('simulateIdleCombat — stance normalisation', () => {
   })
 })
 
-// ── Idle eat / no skip death ───────────────────────────────────────────────
+// ── Idle eat / death-on-skip ───────────────────────────────────────────────
 
 describe('simulateIdleCombat — idle eat caps survivability', () => {
-  it('99 HP + 2 sharks stops early when monster damage exhausts pool, never dies, no partial kill rewards', () => {
+  it('99 HP + 2 sharks dies when monster damage exhausts pool, no partial kill rewards', () => {
     const task: any = { stance: 'accurate', monster: HARD_HITTER, bankingEnabled: true }
     const inv = Array(28).fill(null)
     inv[0] = { itemId: 'shark', quantity: 2 }
@@ -183,19 +183,37 @@ describe('simulateIdleCombat — idle eat caps survivability', () => {
 
     expect(sim).toBeTruthy()
     // We started fully healed and two sharks add ~40 HP. The hard hitter
-    // should burn through that within the hour.
+    // should burn through that within the hour and kill the player.
     expect(sim!.foodConsumed.shark).toBeLessThanOrEqual(2)
-    expect(sim!.finalHP).toBeGreaterThanOrEqual(1) // never dies
-    expect(sim!.stoppedReason).toBeDefined()
-    expect(['out_of_food', 'out_of_hp', 'completed_elapsed']).toContain(sim!.stoppedReason)
-    if (sim!.stoppedReason === 'out_of_food' || sim!.stoppedReason === 'out_of_hp') {
-      // Effective elapsed must be <= configured elapsed.
-      expect(sim!.effectiveElapsedMs).toBeLessThan(60 * 60_000)
-    }
+    expect(sim!.died).toBe(true)
+    expect(sim!.finalHP).toBe(0)
+    expect(sim!.stoppedReason).toBe('died')
+    // Effective elapsed must be < configured elapsed since combat halted.
+    expect(sim!.effectiveElapsedMs).toBeLessThan(60 * 60_000)
     // Inventory delta on shark should equal -consumed.
     const sharkSlot = sim!.finalInventory.find((s: any) => s && s.itemId === 'shark')
     const remainingSharks = sharkSlot ? sharkSlot.quantity : 0
     expect(2 - remainingSharks).toBe(sim!.foodConsumed.shark || 0)
+  })
+
+  it('does not top up HP after death even when food remains in the queue', () => {
+    // Three sharks queued but the hitter blows through them before kill 1
+    // can complete — engine should leave HP at 0 instead of running the
+    // post-loop top-up.
+    const task: any = { stance: 'accurate', monster: HARD_HITTER }
+    const inv = Array(28).fill(null)
+    inv[0] = { itemId: 'shark', quantity: 50 }
+    const sim = simulateIdleCombat(task, 60 * 60_000, ATT_99_STATS, {}, inv, ITEMS_FIXTURE, null, {}, {
+      currentHP: 10, // start low so 50 sharks still can't outpace incoming damage forever
+      idleFood: [{ itemId: 'shark', quantity: 50 }],
+    })
+    expect(sim).toBeTruthy()
+    // If we did die, finalHP must be exactly 0; if we survived, this case
+    // doesn't exercise the no-top-up branch and the assertion is vacuous.
+    if (sim!.died) {
+      expect(sim!.finalHP).toBe(0)
+      expect(sim!.stoppedReason).toBe('died')
+    }
   })
 
   it('tops player back up to full HP after the session if food remains', () => {

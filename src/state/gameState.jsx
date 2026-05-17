@@ -164,8 +164,22 @@ export function GameProvider({ children }) {
           // the simulator's finalHP is authoritative — combat may have stopped
           // partway through the elapsed window, so we don't want full-session
           // regen to mask early termination.
+          //
+          // If the offline simulation reports a death the player is treated
+          // as having died while we were away: rewards earned up to the
+          // killing blow are still kept (the engine already excluded the
+          // fatal kill), the active combat task is cleared, and HP resets
+          // to max. App.jsx inspects `idleResult.died` after load to decide
+          // whether to trigger a One-Life wipe or just a normal "you died"
+          // toast.
           const hpRegenSim = simulateIdleHPRegen(elapsedMs)
-          if (savedTask.type === 'combat' && Number.isFinite(Number(sim.finalHP))) {
+          if (savedTask.type === 'combat' && sim.died === true) {
+            const maxHP = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
+            savedHP = maxHP
+            sim.hpRestored = 0
+            savedTask = null
+            try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+          } else if (savedTask.type === 'combat' && Number.isFinite(Number(sim.finalHP))) {
             const maxHP = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
             savedHP = Math.max(1, Math.min(maxHP, Math.floor(Number(sim.finalHP))))
             sim.hpRestored = 0
