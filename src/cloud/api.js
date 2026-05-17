@@ -40,11 +40,12 @@ export function getCharacterId() {
 }
 
 export function setCharacter(id, username, isIronman = null, isOneLife = null) {
+  const asBool = (value) => value === true || value === 1 || value === '1' || value === 'true'
   if (id) {
     localStorage.setItem(CHARACTER_KEY, String(id))
     if (username) localStorage.setItem(CHARACTER_NAME_KEY, username)
-    if (isIronman != null) localStorage.setItem('pocketrpg_ironman_mode', String(isIronman))
-    if (isOneLife != null) localStorage.setItem('pocketrpg_one_life_mode', String(isOneLife))
+    if (isIronman != null) localStorage.setItem('pocketrpg_ironman_mode', String(asBool(isIronman)))
+    if (isOneLife != null) localStorage.setItem('pocketrpg_one_life_mode', String(asBool(isOneLife)))
   } else {
     localStorage.removeItem(CHARACTER_KEY)
     localStorage.removeItem(CHARACTER_NAME_KEY)
@@ -55,12 +56,12 @@ export function setCharacter(id, username, isIronman = null, isOneLife = null) {
 
 export function getIronmanMode() {
   const v = localStorage.getItem('pocketrpg_ironman_mode')
-  return v === 'true'
+  return v === 'true' || v === '1'
 }
 
 export function getOneLifeMode() {
   const v = localStorage.getItem('pocketrpg_one_life_mode')
-  return v === 'true'
+  return v === 'true' || v === '1'
 }
 
 export function getCharacterName() {
@@ -165,6 +166,7 @@ export const api = {
   }),
   deleteSave: () => request('/api/save', { method: 'DELETE' }),
   deleteIdle: () => request('/api/idle', { method: 'DELETE' }),
+  resetOneLife: () => request('/api/characters/reset-one-life', { method: 'POST', body: JSON.stringify({}) }),
 
   completeRaid: (sourceId, payload = {}) => request('/api/actions/raid/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
   completeClue: (sourceId, payload = {}) => request('/api/actions/clue/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
