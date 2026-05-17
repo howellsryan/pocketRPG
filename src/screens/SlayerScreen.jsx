@@ -37,7 +37,7 @@ const SLAYER_MASTERS = [
     description: 'Assigns medium-low level monsters. Requires combat 20.',
     taskRange: [60, 130],
     monsterPool: [
-      'dark_wizard', 'giant_spider', 'hill_giant', 'moss_giant', 'banshee',
+      'dark_wizard', 'giant_spider', 'hill_giant', 'moss_giant', 'wailing_banshee',
     ],
   },
   {
@@ -148,7 +148,7 @@ const SLAYER_MONSTER_ICONS = {
   general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
   dagganoth_kings: '👑', dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹', jad: '🔥',
   blood_veld: '🩸', nechryael: '👻', skeletal_wyvern: '🐲', smoke_devil: '💨', kraken: '🦑',
-  banshee: '👻', aberrant_spectre: '👁️', wyrm: '🐍', spiritual_warrior: '⚔️',
+  wailing_banshee: '👻', aberrant_spectre: '👁️', wyrm: '🐍', spiritual_warrior: '⚔️',
   spiritual_ranger: '🏹', spiritual_mage: '🔮', gargoyle: '🗿',
   brutal_black_dragon: '🐉', dark_beast: '🦇', cerberus: '🐺', hydra: '🐲',
 }

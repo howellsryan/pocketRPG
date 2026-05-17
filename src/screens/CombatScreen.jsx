@@ -16,7 +16,7 @@ import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick, pauseTicks, resumeTicks } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
 import { getCombatType, equipItem, checkEquipRequirements } from '../engine/equipment.js'
-import { api, clearAuth, getToken, getCharacterId, setLocalCharacterId } from '../cloud/api.js'
+import { api, clearAuth, getToken, getCharacterId, setLocalCharacterId, getOneLifeMode } from '../cloud/api.js'
 import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow } from '../cloud/sync.js'
 import { pvpApi } from '../cloud/pvp.js'
 import { closeDB } from '../db/database.js'
@@ -155,8 +155,13 @@ class PvpCombatErrorBoundary extends Component {
 // Best-effort on each step — we always fall through to clearAuth + reload.
 async function performOneLifeReset() {
   if (getToken()) {
-    try { await api.deleteSave() } catch (err) { console.error('Failed to delete cloud save:', err) }
-    try { await api.deleteIdle() } catch (err) { console.error('Failed to delete cloud idle state:', err) }
+    try {
+      await api.resetOneLife()
+    } catch (err) {
+      console.error('Failed one-life reset endpoint, falling back to legacy delete flow:', err)
+      try { await api.deleteSave() } catch (deleteErr) { console.error('Failed to delete cloud save:', deleteErr) }
+      try { await api.deleteIdle() } catch (deleteErr) { console.error('Failed to delete cloud idle state:', deleteErr) }
+    }
   }
   try {
     closeDB()
@@ -204,6 +209,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const equipmentRef = useRef(equipment)
   const slayerTaskRef = useRef(slayerTask)
   const pvpCrashHandledRef = useRef(false)
+  const oneLifeModeRef = useRef(isOneLife || getOneLifeMode())
   const bossKillCountsRef = useRef(bossKillCounts)
   const raidKillCountsRef = useRef(raidKillCounts)
   const unlockedFeaturesRef = useRef(unlockedFeatures)
@@ -251,6 +257,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   useEffect(() => { statsRef.current = stats }, [stats])
   useEffect(() => { equipmentRef.current = equipment }, [equipment])
   useEffect(() => { slayerTaskRef.current = slayerTask }, [slayerTask])
+  useEffect(() => { oneLifeModeRef.current = isOneLife || getOneLifeMode() }, [isOneLife])
   useEffect(() => { bossKillCountsRef.current = bossKillCounts }, [bossKillCounts])
   useEffect(() => { raidKillCountsRef.current = raidKillCounts }, [raidKillCounts])
   useEffect(() => { unlockedFeaturesRef.current = unlockedFeatures }, [unlockedFeatures])
@@ -405,7 +412,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           if (newHP <= 0) {
             setCombat(prev => ({ ...prev, active: false }))
             setActiveTask(null)
-            if (isOneLife) {
+            if (oneLifeModeRef.current) {
               addToast('you died! Restarting your account…', 'error')
               setTimeout(async () => {
                 await performOneLifeReset()
@@ -437,7 +444,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           if (newHP <= 0) {
             setCombat(prev => ({ ...prev, active: false }))
             setActiveTask(null)
-            if (isOneLife) {
+            if (oneLifeModeRef.current) {
               addToast('you died! Restarting your account…', 'error')
               setTimeout(async () => {
                 await performOneLifeReset()

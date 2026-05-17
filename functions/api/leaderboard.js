@@ -46,7 +46,7 @@ export async function onRequestGet(context) {
     // Pre-migration characters with no saves stay at total_level=0 and are
     // filtered out by the partial index idx_characters_total_level_rank.
     const rows = await env.DB.prepare(
-      `SELECT id, username, total_level, combat_level
+      `SELECT id, username, total_level, combat_level, is_one_life
          FROM characters
         WHERE deleted_at IS NULL AND total_level > 0
         ORDER BY total_level DESC, id ASC
@@ -57,6 +57,7 @@ export async function onRequestGet(context) {
       username: row.username,
       totalLevel: row.total_level,
       combatLevel: row.combat_level,
+      isOneLife: !!row.is_one_life,
     }))
 
     const response = json(

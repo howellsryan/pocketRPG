@@ -53,7 +53,7 @@ export default function LeaderboardScreen() {
                     </div>
                     <div class="flex-1 min-w-0">
                       <div class="text-sm font-semibold text-[var(--color-parchment)] truncate">
-                        {char.username}
+                        {char.isOneLife ? '☠️ ' : ''}{char.username}
                       </div>
                     </div>
                   </div>
