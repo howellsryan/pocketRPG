@@ -32,6 +32,7 @@ import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, 
 import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave } from './cloud/sync.js'
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
+import { triggerOneLifeDeath } from './utils/oneLifeDeath.js'
 import { defaultIdleCombatSetup } from './engine/idleSupplies.js'
 import prayersData from './data/prayers.json'
 import minigamesData from './data/minigames.json'
@@ -186,7 +187,7 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
 
 function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
-    unlockMinigameItem, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup } = useGame()
+    unlockMinigameItem, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -712,10 +713,27 @@ function GameApp() {
             return
           }
 
-          // Apply HP changes. For combat with active idle supplies the
-          // simulator's finalHP is authoritative — combat may have stopped
-          // partway, so we don't overlay full-session HP regen on top.
-          if (savedTask.type === 'combat' && Number.isFinite(Number(sim.finalHP))) {
+          // Idle/skip combat is high-risk: if supplies didn't keep the
+          // character alive, the engine reports `died`. For one-life
+          // accounts we trigger the wipe + redirect immediately; everyone
+          // else respawns at full HP with the active combat task cleared.
+          const idleDeath = savedTask.type === 'combat' && sim?.died === true
+          if (idleDeath) {
+            setActiveTask(null)
+            activeTaskRef.current = null
+            try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+            const oneLifeMode = isOneLife || getOneLifeMode()
+            if (oneLifeMode) {
+              void triggerOneLifeDeath(addToast)
+              return
+            }
+            addToast('You died during idle combat!', 'error')
+            sim.hpAfterRegen = getMaxHP()
+            sim.hpRestored = 0
+          } else if (savedTask.type === 'combat' && Number.isFinite(Number(sim.finalHP))) {
+            // Apply HP changes. For combat with active idle supplies the
+            // simulator's finalHP is authoritative — combat may have stopped
+            // partway, so we don't overlay full-session HP regen on top.
             sim.hpAfterRegen = Math.max(1, Math.min(getMaxHP(), Math.floor(Number(sim.finalHP))))
             sim.hpRestored = 0
           } else {
@@ -1038,6 +1056,20 @@ function GameApp() {
     await checkSave()
   }
 
+  // Offline catch-up reported a death during the time we were away.
+  // For One-Life accounts the account is wiped immediately; otherwise the
+  // player respawns (HP/task already reset by loadGame) and we show the
+  // idle-results modal flagged with the death so the cause is visible.
+  function handleOfflineIdleDeath(idleResult) {
+    const oneLifeMode = isOneLife || getOneLifeMode()
+    if (oneLifeMode) {
+      void triggerOneLifeDeath(addToast)
+      return
+    }
+    addToast('You died while you were away!', 'error')
+    setIdleResult(idleResult)
+  }
+
   async function checkSave() {
     const isCloudCharacter = !!getToken() && !!getCharacterId()
     try {
@@ -1046,7 +1078,11 @@ function GameApp() {
         const idleResult = await loadGame()
         setGameReady(true)
         if (idleResult) {
-          setIdleResult(idleResult)
+          if (idleResult.died === true) {
+            handleOfflineIdleDeath(idleResult)
+          } else {
+            setIdleResult(idleResult)
+          }
           if (idleResult.pendingChoices?.length > 0) {
             setPendingXpChoices(prev => [...prev, ...idleResult.pendingChoices])
           }
@@ -1070,7 +1106,11 @@ function GameApp() {
           const idleResult = await loadGame()
           setGameReady(true)
           if (idleResult) {
-            setIdleResult(idleResult)
+            if (idleResult.died === true) {
+              handleOfflineIdleDeath(idleResult)
+            } else {
+              setIdleResult(idleResult)
+            }
             if (idleResult.pendingChoices?.length > 0) {
               setPendingXpChoices(prev => [...prev, ...idleResult.pendingChoices])
             }
@@ -1350,10 +1390,26 @@ function GameApp() {
             setActiveTask(null)
           }
         } else {
-          // Apply HP changes. Idle combat with active supplies returns
-          // finalHP (clamped to ≥1, no skip death) — that wins over plain
-          // idle HP regen so a session that stopped early shows correctly.
-          if (savedTask.type === 'combat' && Number.isFinite(Number(sim.finalHP))) {
+          // Skipping is now high-risk: handle death-during-skip before
+          // applying anything else. One-life triggers the account wipe;
+          // everyone else respawns at full HP and the combat task clears.
+          const skipDeath = savedTask.type === 'combat' && sim?.died === true
+          if (skipDeath) {
+            setActiveTask(null)
+            activeTaskRef.current = null
+            try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+            const oneLifeMode = isOneLife || getOneLifeMode()
+            if (oneLifeMode) {
+              void triggerOneLifeDeath(addToast)
+              return
+            }
+            addToast('You died during the skipped hour!', 'error')
+            sim.hpAfterRegen = getMaxHP()
+            sim.hpRestored = 0
+          } else if (savedTask.type === 'combat' && Number.isFinite(Number(sim.finalHP))) {
+            // Apply HP changes. Idle combat with active supplies returns
+            // finalHP — that wins over plain idle HP regen so a session
+            // that stopped early shows correctly.
             sim.hpAfterRegen = Math.max(1, Math.min(getMaxHP(), Math.floor(Number(sim.finalHP))))
             sim.hpRestored = 0
           } else {
@@ -1857,13 +1913,21 @@ function GameApp() {
                       out_of_prayer: 'Ran out of prayer',
                       out_of_potion: 'Ran out of potions',
                       resource_limited: 'Out of ammo / runes / charges',
+                      died: 'You died',
                     }[stoppedReason] || null
-                    if (foodEntries.length === 0 && potionEntries.length === 0 && !idleResult.prayerPointsStarted && !showShortened) return null
+                    const died = idleResult.died === true
+                    if (foodEntries.length === 0 && potionEntries.length === 0 && !idleResult.prayerPointsStarted && !showShortened && !died) return null
                     return (
                       <div style={{ marginBottom: '12px', padding: '10px', background: '#111', borderRadius: '10px' }}>
                         <div style={{ fontSize: '11px', color: '#e8d5b0', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>🛡️ Idle Supplies</div>
 
-                        {showShortened && (
+                        {died && (
+                          <div style={{ marginBottom: '8px', padding: '8px', borderRadius: '8px', background: '#3a1212', border: '1px solid #ff8787', fontSize: '12px', color: '#ff8787', fontWeight: '700', textAlign: 'center' }}>
+                            ☠️ You died during idle combat! Combat halted after {formatIdleTime(effMs ?? 0)}.
+                          </div>
+                        )}
+
+                        {showShortened && !died && (
                           <div style={{ marginBottom: '6px', fontSize: '11px', color: '#ff8787' }}>
                             ⚠ Combat ran for {formatIdleTime(effMs)} of {formatIdleTime(idleResult.elapsedMs)}{reasonLabel ? ` — ${reasonLabel}` : ''}
                           </div>

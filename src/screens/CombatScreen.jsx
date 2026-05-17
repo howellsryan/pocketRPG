@@ -16,11 +16,10 @@ import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick, pauseTicks, resumeTicks } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
 import { getCombatType, equipItem, checkEquipRequirements } from '../engine/equipment.js'
-import { api, clearAuth, getToken, getCharacterId, setLocalCharacterId, getOneLifeMode } from '../cloud/api.js'
+import { api, getToken, getCharacterId, getOneLifeMode } from '../cloud/api.js'
 import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow } from '../cloud/sync.js'
 import { pvpApi } from '../cloud/pvp.js'
-import { closeDB } from '../db/database.js'
-import { wipeLocalSave } from '../db/saveload.js'
+import { triggerOneLifeDeath } from '../utils/oneLifeDeath.js'
 import monstersData from '../data/monsters.json'
 import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
@@ -147,33 +146,6 @@ class PvpCombatErrorBoundary extends Component {
     }
     return props.children
   }
-}
-
-// Nuke every trace of the current character so a One-Life death cannot be
-// revived by re-logging. Deletes the cloud saves row, the cloud idle-state
-// row, the local IndexedDB database, and every per-character localStorage key.
-// Best-effort on each step — we always fall through to clearAuth + reload.
-async function performOneLifeReset() {
-  if (getToken()) {
-    try {
-      await api.resetOneLife()
-    } catch (err) {
-      console.error('Failed one-life reset endpoint, falling back to legacy delete flow:', err)
-      try { await api.deleteSave() } catch (deleteErr) { console.error('Failed to delete cloud save:', deleteErr) }
-      try { await api.deleteIdle() } catch (deleteErr) { console.error('Failed to delete cloud idle state:', deleteErr) }
-    }
-  }
-  try {
-    closeDB()
-    await wipeLocalSave()
-  } catch (err) { console.error('Failed to wipe local save:', err) }
-  // wipeLocalSave() covers backup/lastTick/activeTask/hiddenAt. Mop up the rest.
-  try {
-    localStorage.removeItem('pocketrpg_activeCombatSpell')
-    localStorage.removeItem('pocketrpg_offline_mode')
-    setLocalCharacterId(null)
-  } catch { /* ignore */ }
-  clearAuth()
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange }) {
@@ -413,11 +385,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             setCombat(prev => ({ ...prev, active: false }))
             setActiveTask(null)
             if (oneLifeModeRef.current) {
-              addToast('you died! Restarting your account…', 'error')
-              setTimeout(async () => {
-                await performOneLifeReset()
-                window.location.href = '/'
-              }, 2000)
+              void triggerOneLifeDeath(addToast)
             } else {
               addToast('You died!', 'error')
               updateHP(getMaxHP())
@@ -445,11 +413,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             setCombat(prev => ({ ...prev, active: false }))
             setActiveTask(null)
             if (oneLifeModeRef.current) {
-              addToast('you died! Restarting your account…', 'error')
-              setTimeout(async () => {
-                await performOneLifeReset()
-                window.location.href = '/'
-              }, 2000)
+              void triggerOneLifeDeath(addToast)
             } else {
               addToast('Incinerated by dragonfire!', 'error')
               updateHP(getMaxHP())
