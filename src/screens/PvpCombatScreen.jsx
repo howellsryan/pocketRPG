@@ -706,6 +706,34 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
               })}
             </div>
           </Card>
+          <Card>
+            <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-2 px-1">Prayers</div>
+            {availablePrayers.length === 0 ? (
+              <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No PvP-usable prayers unlocked.</div>
+            ) : (
+              <div class="grid grid-cols-2 gap-2">
+                {availablePrayers.map((prayer) => {
+                  const active = visuallyActivePrayerId === prayer.id
+                  return (
+                    <Button
+                      key={prayer.id}
+                      variant={active ? 'primary' : 'secondary'}
+                      size="md"
+                      className={`min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight transition-none ${
+                        active
+                          ? '!border-[var(--color-gold)] !bg-[var(--color-gold)] !text-[var(--color-void-dark)]'
+                          : ''
+                      }`}
+                      aria-pressed={active}
+                      onClick={() => queuePrayerToggle(prayer.id)}
+                    >
+                      <span class="block truncate">{prayer.icon || '✨'} {prayer.name}</span>
+                    </Button>
+                  )
+                })}
+              </div>
+            )}
+          </Card>
         </div>
 
         <div class="space-y-2">
