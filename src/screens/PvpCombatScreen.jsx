@@ -22,7 +22,6 @@ const NO_POLL_WARNING_MS = 5000
 const MATCH_BOOT_GRACE_MS = 8000
 const MATCH_BOOT_RETRY_MS = 500
 const PVP_SCREEN_PROTECTION_PRAYER_IDS = new Set(['protection_from_magic', 'protection_from_missiles', 'protection_from_melee'])
-const EQUIPMENT_DISPLAY_SLOTS = ['weapon', 'shield', 'head', 'body', 'legs', 'gloves', 'boots', 'cape', 'neck', 'ring', 'ammo']
 
 function getCombatantTotalRisk(combatant) {
   const risk = calculatePvpRiskValues({
@@ -691,11 +690,20 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
               <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60">Inventory</div>
             </div>
             <div class="grid grid-cols-4 gap-2 justify-items-center">
-              {toArray(pair.self?.inventory).map((slot, idx) => (
-                <div key={`inv-${idx}`} onClick={() => slot && queueAction({ type: 'eat', inventorySlot: idx }, { showBusy: false })}>
-                  <ItemSlot slot={slot} size="small" />
-                </div>
-              ))}
+              {toArray(pair.self?.inventory).map((slot, idx) => {
+                const item = slot ? itemsData?.[slot.itemId] : null
+                let onClick
+                if (slot && item) {
+                  if (item.slot) onClick = () => queueGearEquip(idx)
+                  else if (isPvpFoodItem(item)) onClick = () => queueAction({ type: 'eat', inventorySlot: idx }, { showBusy: false })
+                  else if (isPvpCombatPotion(item)) onClick = () => queueAction({ type: 'drink', inventorySlot: idx }, { showBusy: false })
+                }
+                return (
+                  <div key={`inv-${idx}`} onClick={onClick}>
+                    <ItemSlot slot={slot} size="small" />
+                  </div>
+                )
+              })}
             </div>
           </Card>
         </div>
