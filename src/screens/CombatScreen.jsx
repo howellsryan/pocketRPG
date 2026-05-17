@@ -19,7 +19,7 @@ import { getCombatType, equipItem, checkEquipRequirements } from '../engine/equi
 import { api, getToken, getCharacterId, getOneLifeMode } from '../cloud/api.js'
 import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow } from '../cloud/sync.js'
 import { pvpApi } from '../cloud/pvp.js'
-import { performOneLifeReset } from '../utils/oneLifeDeath.js'
+import { triggerOneLifeDeath } from '../utils/oneLifeDeath.js'
 import monstersData from '../data/monsters.json'
 import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
@@ -385,11 +385,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             setCombat(prev => ({ ...prev, active: false }))
             setActiveTask(null)
             if (oneLifeModeRef.current) {
-              addToast('you died! Restarting your account…', 'error')
-              setTimeout(async () => {
-                await performOneLifeReset()
-                window.location.href = '/'
-              }, 2000)
+              void triggerOneLifeDeath(addToast)
             } else {
               addToast('You died!', 'error')
               updateHP(getMaxHP())
@@ -417,11 +413,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             setCombat(prev => ({ ...prev, active: false }))
             setActiveTask(null)
             if (oneLifeModeRef.current) {
-              addToast('you died! Restarting your account…', 'error')
-              setTimeout(async () => {
-                await performOneLifeReset()
-                window.location.href = '/'
-              }, 2000)
+              void triggerOneLifeDeath(addToast)
             } else {
               addToast('Incinerated by dragonfire!', 'error')
               updateHP(getMaxHP())

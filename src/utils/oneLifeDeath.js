@@ -27,11 +27,14 @@ export async function performOneLifeReset() {
   clearAuth()
 }
 
-// Trigger the visible One-Life death flow: brief toast, then wipe + redirect.
-export function triggerOneLifeDeath(addToast, delayMs = 2000) {
-  if (addToast) addToast('you died! Restarting your account…', 'error')
-  setTimeout(async () => {
-    await performOneLifeReset()
+// Trigger the visible One-Life death flow. The server-side wipe runs FIRST
+// — only after the cloud account is gone do we surface the toast and
+// redirect — so a browser refresh during the confirmation can't cancel the
+// death.
+export async function triggerOneLifeDeath(addToast) {
+  await performOneLifeReset()
+  if (addToast) addToast('You died — account wiped.', 'error')
+  setTimeout(() => {
     window.location.href = '/'
-  }, delayMs)
+  }, 1500)
 }

@@ -724,7 +724,7 @@ function GameApp() {
             try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
             const oneLifeMode = isOneLife || getOneLifeMode()
             if (oneLifeMode) {
-              triggerOneLifeDeath(addToast)
+              void triggerOneLifeDeath(addToast)
               return
             }
             addToast('You died during idle combat!', 'error')
@@ -1063,7 +1063,7 @@ function GameApp() {
   function handleOfflineIdleDeath(idleResult) {
     const oneLifeMode = isOneLife || getOneLifeMode()
     if (oneLifeMode) {
-      triggerOneLifeDeath(addToast)
+      void triggerOneLifeDeath(addToast)
       return
     }
     addToast('You died while you were away!', 'error')
@@ -1400,7 +1400,7 @@ function GameApp() {
             try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
             const oneLifeMode = isOneLife || getOneLifeMode()
             if (oneLifeMode) {
-              triggerOneLifeDeath(addToast)
+              void triggerOneLifeDeath(addToast)
               return
             }
             addToast('You died during the skipped hour!', 'error')
