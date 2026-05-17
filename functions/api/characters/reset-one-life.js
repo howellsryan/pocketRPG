@@ -43,7 +43,7 @@ export async function onRequestPost({ request, env }) {
       character.is_one_life ? 1 : 0,
       now,
       Number(character.credits) || 0,
-      Number(character.credits_used) || 0,
+      0,
     ),
   ])
 
