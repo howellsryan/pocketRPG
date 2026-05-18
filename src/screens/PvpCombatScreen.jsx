@@ -628,6 +628,111 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     await onExit?.()
   }
 
+  const renderCombatActionsCard = ({ compact }) => (
+    <Card>
+      <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Combat actions</div>
+      <div class={compact ? 'grid grid-cols-1 gap-2' : 'grid grid-cols-2 md:grid-cols-4 gap-2'}>
+        <Button
+          variant={specialVisuallyQueued ? 'primary' : 'secondary'}
+          size="md"
+          className={`w-full ${specialVisuallyQueued ? '!bg-[var(--color-gold)] !text-[var(--color-void-dark)] !border-[var(--color-gold)]' : ''}`}
+          disabled={busy || (!specialVisuallyQueued && !specialReady)}
+          aria-pressed={specialVisuallyQueued}
+          title={equippedSpecial ? (specialVisuallyQueued ? 'Special attack queued. Tap again to cancel.' : `Special attack energy: ${specialEnergy}/${specialCost}`) : 'No special attack available'}
+          onClick={toggleSpecialAttack}
+        >
+          <span class={specialVisuallyQueued ? 'mr-1' : 'text-[var(--color-gold)] mr-1'}>⚡</span>
+          Spec{specialCost != null ? ` ${specialEnergy}%` : ''}
+        </Button>
+        {!compact && (
+          <Button
+            variant={actionPanel === 'prayer' || visuallyActivePrayerId ? 'primary' : 'secondary'}
+            size="md"
+            className={`w-full transition-none ${
+              visuallyActivePrayerId
+                ? '!border-[var(--color-gold)] !bg-[var(--color-gold)] !text-[var(--color-void-dark)]'
+                : ''
+            }`}
+            aria-pressed={!!visuallyActivePrayerId}
+            onClick={() => toggleActionPanel('prayer')}
+          >
+            🙏 Prayer
+          </Button>
+        )}
+        <Button
+          variant={actionPanel === 'potion' ? 'primary' : 'secondary'}
+          size="md"
+          className="w-full"
+          disabled={busy || potionSlots.length === 0}
+          onClick={() => toggleActionPanel('potion')}
+        >
+          🧪 Potion
+        </Button>
+        <Button
+          variant={actionPanel === 'gear' ? 'primary' : 'secondary'}
+          size="md"
+          className="w-full"
+          disabled={busy || !hasGearActions}
+          onClick={() => toggleActionPanel('gear')}
+        >
+          ⚙️ Gear
+        </Button>
+      </div>
+
+      {actionPanel === 'prayer' && !compact && (
+        <div class="mt-3">
+          {availablePrayers.length === 0 ? (
+            <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No PvP-usable prayers unlocked.</div>
+          ) : (
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+              {availablePrayers.map((prayer) => {
+                const active = visuallyActivePrayerId === prayer.id
+                return (
+                  <Button
+                    key={prayer.id}
+                    variant={active ? 'primary' : 'secondary'}
+                    size="md"
+                    className={`min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight transition-none ${
+                      active
+                        ? '!border-[var(--color-gold)] !bg-[var(--color-gold)] !text-[var(--color-void-dark)]'
+                        : ''
+                    }`}
+                    aria-pressed={active}
+                    onClick={() => queuePrayerToggle(prayer.id)}
+                  >
+                    <span class="block truncate">{prayer.icon || '✨'} {prayer.name}</span>
+                  </Button>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {actionPanel === 'potion' && (
+        <div class="mt-3">
+          {potionSlots.length === 0 ? (
+            <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No PvP potions in inventory.</div>
+          ) : (
+            <div class={compact ? 'grid grid-cols-1 gap-2' : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2'}>
+              {potionSlots.map(({ slot, idx, item }) => (
+                <Button
+                  key={`${slot.itemId}-${idx}`}
+                  variant="secondary"
+                  size="md"
+                  className="min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight"
+                  onClick={() => queueAction({ type: 'drink', inventorySlot: idx }, { showBusy: false })}
+                >
+                  <span class="block truncate">{item?.icon || '🧪'} {item?.name || slot.itemId}</span>
+                </Button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
+  )
+
   return (
     <div
       class="h-full min-h-0 overflow-y-auto overscroll-contain p-3 space-y-3 pb-24 md:max-w-6xl md:mx-auto md:px-6"
@@ -682,6 +787,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
             <div class="text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-2">Your gear</div>
             <EquipmentPaperdoll equipment={pair.self?.equipment || {}} itemsData={itemsData} onSelect={(slotName) => queueGearUnequip(slotName)} size="mdFixed" asCard={false} />
           </Card>
+          {isDesktopLayout && renderCombatActionsCard({ compact: true })}
         </div>
 
         <div class={`${isDesktopLayout ? 'space-y-3' : 'hidden'}`}>
@@ -768,106 +874,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
         </div>
       </Card>
 
-      <Card>
-        <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Combat actions</div>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-          <Button
-            variant={specialVisuallyQueued ? 'primary' : 'secondary'}
-            size="md"
-            className={`w-full ${specialVisuallyQueued ? '!bg-[var(--color-gold)] !text-[var(--color-void-dark)] !border-[var(--color-gold)]' : ''}`}
-            disabled={busy || (!specialVisuallyQueued && !specialReady)}
-            aria-pressed={specialVisuallyQueued}
-            title={equippedSpecial ? (specialVisuallyQueued ? 'Special attack queued. Tap again to cancel.' : `Special attack energy: ${specialEnergy}/${specialCost}`) : 'No special attack available'}
-            onClick={toggleSpecialAttack}
-          >
-            <span class={specialVisuallyQueued ? 'mr-1' : 'text-[var(--color-gold)] mr-1'}>⚡</span>
-            Spec{specialCost != null ? ` ${specialEnergy}%` : ''}
-          </Button>
-          <Button
-            variant={actionPanel === 'prayer' || visuallyActivePrayerId ? 'primary' : 'secondary'}
-            size="md"
-            className={`w-full transition-none ${
-              visuallyActivePrayerId
-                ? '!border-[var(--color-gold)] !bg-[var(--color-gold)] !text-[var(--color-void-dark)]'
-                : ''
-            }`}
-            aria-pressed={!!visuallyActivePrayerId}
-            onClick={() => toggleActionPanel('prayer')}
-          >
-            🙏 Prayer
-          </Button>
-          <Button
-            variant={actionPanel === 'potion' ? 'primary' : 'secondary'}
-            size="md"
-            className="w-full"
-            disabled={busy || potionSlots.length === 0}
-            onClick={() => toggleActionPanel('potion')}
-          >
-            🧪 Potion
-          </Button>
-          <Button
-            variant={actionPanel === 'gear' ? 'primary' : 'secondary'}
-            size="md"
-            className="w-full"
-            disabled={busy || !hasGearActions}
-            onClick={() => toggleActionPanel('gear')}
-          >
-            ⚙️ Gear
-          </Button>
-        </div>
-
-        {actionPanel === 'prayer' && (
-          <div class="mt-3">
-            {availablePrayers.length === 0 ? (
-              <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No PvP-usable prayers unlocked.</div>
-            ) : (
-              <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                {availablePrayers.map((prayer) => {
-                  const active = visuallyActivePrayerId === prayer.id
-                  return (
-                    <Button
-                      key={prayer.id}
-                      variant={active ? 'primary' : 'secondary'}
-                      size="md"
-                      className={`min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight transition-none ${
-                        active
-                          ? '!border-[var(--color-gold)] !bg-[var(--color-gold)] !text-[var(--color-void-dark)]'
-                          : ''
-                      }`}
-                      aria-pressed={active}
-                      onClick={() => queuePrayerToggle(prayer.id)}
-                    >
-                      <span class="block truncate">{prayer.icon || '✨'} {prayer.name}</span>
-                    </Button>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {actionPanel === 'potion' && (
-          <div class="mt-3">
-            {potionSlots.length === 0 ? (
-              <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No PvP potions in inventory.</div>
-            ) : (
-              <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                {potionSlots.map(({ slot, idx, item }) => (
-                  <Button
-                    key={`${slot.itemId}-${idx}`}
-                    variant="secondary"
-                    size="md"
-                    className="min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight"
-                    onClick={() => queueAction({ type: 'drink', inventorySlot: idx }, { showBusy: false })}
-                  >
-                    <span class="block truncate">{item?.icon || '🧪'} {item?.name || slot.itemId}</span>
-                  </Button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </Card>
+      {!isDesktopLayout && renderCombatActionsCard({ compact: false })}
 
       {actionPanel === 'gear' && (
         <Modal onClose={() => setActionPanel(null)}>
