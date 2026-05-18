@@ -7587,7 +7587,7 @@
       { "itemId": "runeforged_arrow", "quantity": [15, 40], "chance": 0.25 },
       { "itemId": "runeforged_ore", "quantity": [1, 3], "chance": 0.15 },
       { "itemId": "uncut_dragonstone", "quantity": 1, "chance": 0.035 },
-      { "itemId": "dragon_visage", "quantity": 1, "chance": 0.0015 },
+      { "itemId": "dragon_visage", "quantity": 1, "chance": 0.0002 },
       { "itemId": "wyrmspice", "quantity": [1, 3], "chance": 0.15 },
       { "itemId": "thornspire", "quantity": [1, 2], "chance": 0.1 },
       { "itemId": "clue_scroll_elite", "quantity": 1, "chance": 0.018 }
@@ -7687,7 +7687,7 @@
       { "itemId": "coins", "quantity": [1200, 3000], "chance": 0.75 },
       { "itemId": "fire_rune", "quantity": [50, 150], "chance": 0.35 },
       { "itemId": "uncut_dragonstone", "quantity": 1, "chance": 0.04 },
-      { "itemId": "dragon_visage", "quantity": 1, "chance": 0.0015 },
+      { "itemId": "dragon_visage", "quantity": 1, "chance": 0.0002 },
       { "itemId": "runeforged_ore", "quantity": [2, 4], "chance": 0.15 },
       { "itemId": "wyrmspice", "quantity": [1, 3], "chance": 0.18 },
       { "itemId": "thornspire", "quantity": [1, 2], "chance": 0.12 },
