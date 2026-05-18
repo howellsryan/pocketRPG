@@ -359,7 +359,7 @@ export default function SlayerScreen({ onBack, onNavigate }) {
       {/* Current task banner */}
       {slayerTask ? (
         <div class="mb-4 bg-[#1a1a08] border border-[#3a3a10] rounded-xl p-3">
-          <div class="flex items-start justify-between mb-1">
+          <div class="flex items-center justify-between mb-2">
             <div class="text-[10px] text-yellow-400 uppercase font-bold tracking-wider">⚔️ Current Task</div>
             {onNavigate && (
               <button
