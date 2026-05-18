@@ -10,6 +10,7 @@ const CHARACTER_NAME_KEY = 'pocketrpg_cloud_character_name'
 const LOCAL_CHARACTER_KEY = 'pocketrpg_local_character_id'
 const ACTIVE_MATCH_EVENT = 'pocketrpg:pvp-active-match'
 export const SAVE_REVISION_EVENT = 'pocketrpg:cloud-save-revision'
+export const CREDITS_UPDATED_EVENT = 'pocketrpg:credits-updated'
 
 function emitActiveMatchConflict(matchId = null) {
   if (typeof window === 'undefined') return
@@ -142,6 +143,10 @@ export const api = {
     body: JSON.stringify({ item_id: itemId, quantity, unlocked_minigame_items: unlockedMinigameItems }),
   }),
   skipHour: () => request('/api/skip-hour', {
+    method: 'POST',
+    body: JSON.stringify({}),
+  }),
+  slayerSkip: () => request('/api/slayer/skip', {
     method: 'POST',
     body: JSON.stringify({}),
   }),

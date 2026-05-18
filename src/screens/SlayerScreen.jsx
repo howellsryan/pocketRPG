@@ -5,10 +5,11 @@ import itemsData from '../data/items.json'
 import { SLAYER_UNLOCKS, getSlayerUnlockPurchaseState } from '../engine/slayerUnlocks.js'
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { DAGANNOTH_KINGS_TASK_ID } from '../engine/slayerTasks.js'
-import { api, getToken, getCharacterId } from '../cloud/api.js'
+import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 import { applyCloudSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
+import { SCREENS } from '../utils/constants.js'
 
 // PocketRPG slayer masters — requirements and monster pools from PocketRPG design references
 const SLAYER_MASTERS = [
@@ -23,7 +24,9 @@ const SLAYER_MASTERS = [
     description: 'Assigns the easiest slayer tasks. No requirements.',
     taskRange: [50, 120],
     monsterPool: [
-      'chicken', 'goblin', 'cow', 'wizard', 'rock_crab', 'sand_crab', 'dark_wizard',
+      'field_chicken', 'cave_goblin', 'pasture_bull', 'arcane_adept',
+      'stoneback_crab', 'duneback_crab', 'umbral_adept',
+      'dustpaw_rat', 'bogling_sprite',
     ],
   },
   {
@@ -37,7 +40,8 @@ const SLAYER_MASTERS = [
     description: 'Assigns medium-low level monsters. Requires combat 20.',
     taskRange: [60, 130],
     monsterPool: [
-      'dark_wizard', 'giant_spider', 'hill_giant', 'moss_giant', 'wailing_banshee',
+      'umbral_adept', 'broodfang_spider', 'highland_giant', 'briar_giant', 'wailing_banshee',
+      'frostbite_imp', 'marshfen_toad', 'cinderpaw_cub',
     ],
   },
   {
@@ -51,8 +55,10 @@ const SLAYER_MASTERS = [
     description: 'Assigns mid-level combat tasks. Requires combat 40.',
     taskRange: [70, 160],
     monsterPool: [
-      'moss_giant', 'green_dragon', 'lesser_demon', 'blood_veld',
-      'aberrant_spectre', 'wyrm',
+      'briar_giant', 'green_dragon', 'lesser_fiend', 'sanguine_veld',
+      'warped_spectre', 'ash_wyrm',
+      'glaive_skeleton', 'mirebound_husk', 'verdant_stalker', 'stoneglare_basilisk',
+      'embertongue_lizard', 'hollow_reaver',
     ],
   },
   {
@@ -66,9 +72,12 @@ const SLAYER_MASTERS = [
     description: 'High-level tasks including Netherfiend Demons. Requires combat 70.',
     taskRange: [80, 300],
     monsterPool: [
-      'green_dragon', 'lesser_demon', 'abyssal_demon', 'red_dragon',
-      'blood_veld', 'nechryael', 'aberrant_spectre', 'spiritual_warrior',
-      'spiritual_ranger', 'gargoyle', 'wyrm',
+      'green_dragon', 'lesser_fiend', 'nether_demon', 'red_dragon',
+      'sanguine_veld', 'nether_wraith', 'warped_spectre', 'astral_warrior',
+      'astral_ranger', 'runestone_gargoyle', 'ash_wyrm',
+      'briarheart_treant', 'frostmaw_direwolf', 'pyreclaw_demon',
+      'wraithgale_specter', 'bloodmoon_stalker', 'ironfang_drake',
+      'shadeglass_golem', 'tidereaper_crab',
     ],
   },
   {
@@ -83,13 +92,16 @@ const SLAYER_MASTERS = [
     taskRange: [150, 400],
     bossTaskRange: [5, 25],
     monsterPool: [
-      'abyssal_demon',
+      'nether_demon',
       { id: DAGANNOTH_KINGS_TASK_ID, boss: true },
       'red_dragon',
-      'blood_veld', 'nechryael', 'skeletal_wyvern', 'smoke_devil',
-      'spiritual_mage', 'gargoyle', 'brutal_black_dragon', 'dark_beast',
-      { id: 'kraken', boss: true },
-      { id: 'jad', boss: true },
+      'sanguine_veld', 'nether_wraith', 'bone_wyvern', 'cinder_devil',
+      'astral_mage', 'runestone_gargoyle', 'vicious_black_dragon', 'nightfang_beast',
+      { id: 'deepmaw_kraken', boss: true },
+      { id: 'ember_tyrant', boss: true },
+      'voidweave_stalker', 'drakthul_wyrmling', 'bonelight_pyromancer',
+      'cinderfang_reaver', 'ashen_marauder',
+      { id: 'sovrathar_the_ashen_sovereign', boss: true },
     ],
   },
   {
@@ -104,18 +116,21 @@ const SLAYER_MASTERS = [
     taskRange: [100, 250],
     bossTaskRange: [20, 50],
     monsterPool: [
-      'abyssal_demon',
+      'nether_demon',
       { id: DAGANNOTH_KINGS_TASK_ID, boss: true },
-      { id: 'general_graardor', boss: true },
-      { id: 'commander_zilyana', boss: true },
-      { id: 'kril_tsutsaroth', boss: true },
-      { id: 'kreearra', boss: true },
-      'blood_veld', 'nechryael', 'skeletal_wyvern', 'smoke_devil',
-      'spiritual_mage', 'gargoyle', 'brutal_black_dragon', 'dark_beast',
-      { id: 'kraken', boss: true },
-      { id: 'jad', boss: true },
-      { id: 'cerberus', boss: true },
-      { id: 'hydra', boss: true },
+      { id: 'warlord_grondar', boss: true },
+      { id: 'commander_zephyra', boss: true },
+      { id: 'krylth_the_defiler', boss: true },
+      { id: 'skyrender_kharra', boss: true },
+      'sanguine_veld', 'nether_wraith', 'bone_wyvern', 'cinder_devil',
+      'astral_mage', 'runestone_gargoyle', 'vicious_black_dragon', 'nightfang_beast',
+      { id: 'deepmaw_kraken', boss: true },
+      { id: 'ember_tyrant', boss: true },
+      { id: 'threefang_cerberus', boss: true },
+      { id: 'ashen_hydra', boss: true },
+      'voidweave_stalker', 'drakthul_wyrmling', 'bonelight_pyromancer',
+      'cinderfang_reaver', 'ashen_marauder',
+      { id: 'sovrathar_the_ashen_sovereign', boss: true },
     ],
   },
 ]
@@ -142,18 +157,29 @@ function randRange(min, max) {
 }
 
 const SLAYER_MONSTER_ICONS = {
-  chicken: '🐔', goblin: '👺', cow: '🐄', wizard: '🧙', rock_crab: '🦀',
-  sand_crab: '🦀', dark_wizard: '🧙‍♂️', giant_spider: '🕷️', hill_giant: '👊',
-  moss_giant: '🌿', green_dragon: '🐉', lesser_demon: '👿', abyssal_demon: '😈',
-  general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
-  dagganoth_kings: '👑', dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹', jad: '🔥',
-  blood_veld: '🩸', nechryael: '👻', skeletal_wyvern: '🐲', smoke_devil: '💨', kraken: '🦑',
-  wailing_banshee: '👻', aberrant_spectre: '👁️', wyrm: '🐍', spiritual_warrior: '⚔️',
-  spiritual_ranger: '🏹', spiritual_mage: '🔮', gargoyle: '🗿',
-  brutal_black_dragon: '🐉', dark_beast: '🦇', cerberus: '🐺', hydra: '🐲',
+  field_chicken: '🐔', cave_goblin: '👺', pasture_bull: '🐄', arcane_adept: '🧙',
+  stoneback_crab: '🦀', duneback_crab: '🦀', umbral_adept: '🧙‍♂️',
+  broodfang_spider: '🕷️', highland_giant: '👊', briar_giant: '🌿',
+  green_dragon: '🐉', red_dragon: '🐉', lesser_fiend: '👿', nether_demon: '😈',
+  warlord_grondar: '👹', commander_zephyra: '🌟', krylth_the_defiler: '🔥', skyrender_kharra: '🦅',
+  [DAGANNOTH_KINGS_TASK_ID]: '👑',
+  nagadoth_rex: '🦖', nagadoth_prime: '👹', nagadoth_supreme: '🏹', ember_tyrant: '🔥',
+  sanguine_veld: '🩸', nether_wraith: '👻', bone_wyvern: '🐲', cinder_devil: '💨',
+  deepmaw_kraken: '🦑', wailing_banshee: '👻', warped_spectre: '👁️', ash_wyrm: '🐍',
+  astral_warrior: '⚔️', astral_ranger: '🏹', astral_mage: '🔮', runestone_gargoyle: '🗿',
+  vicious_black_dragon: '🐉', nightfang_beast: '🦇', threefang_cerberus: '🐺', ashen_hydra: '🐲',
+  dustpaw_rat: '🐀', bogling_sprite: '✨', frostbite_imp: '❄️', marshfen_toad: '🐸',
+  cinderpaw_cub: '🐅', glaive_skeleton: '💀', mirebound_husk: '🪦', verdant_stalker: '🏹',
+  stoneglare_basilisk: '🦎', embertongue_lizard: '🦎', hollow_reaver: '⚰️',
+  briarheart_treant: '🌳', frostmaw_direwolf: '🐺', pyreclaw_demon: '👹',
+  wraithgale_specter: '👻', bloodmoon_stalker: '🌙', ironfang_drake: '🐲',
+  shadeglass_golem: '🗿', tidereaper_crab: '🦀',
+  voidweave_stalker: '🕸️', drakthul_wyrmling: '🐉', bonelight_pyromancer: '🔥',
+  cinderfang_reaver: '🗡️', ashen_marauder: '⚒️',
+  sovrathar_the_ashen_sovereign: '👑',
 }
 
-export default function SlayerScreen({ onBack }) {
+export default function SlayerScreen({ onBack, onNavigate }) {
   const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, bank, inventory, addToBank, getSnapshot, slayerTasksCompleted, loadGame } = useGame()
 
   const combatLevel = getPlayerCombatLevel(stats)
@@ -161,7 +187,7 @@ export default function SlayerScreen({ onBack }) {
 
 
   const resolveTaskMonsterIds = (monsterId) => {
-    if (monsterId === DAGANNOTH_KINGS_TASK_ID) return ['dagganoth_rex', 'dagganoth_prime', 'dagganoth_supreme']
+    if (monsterId === DAGANNOTH_KINGS_TASK_ID) return ['nagadoth_rex', 'nagadoth_prime', 'nagadoth_supreme']
     return [monsterId]
   }
 
@@ -219,7 +245,7 @@ export default function SlayerScreen({ onBack }) {
 
     // Ember Tyrant always has a single-kill task
     let totalCount
-    if (monsterId === 'jad') {
+    if (monsterId === 'ember_tyrant') {
       totalCount = 1
     } else {
       const taskRange = isBoss ? (master.bossTaskRange || [20, 50]) : master.taskRange
@@ -253,6 +279,26 @@ export default function SlayerScreen({ onBack }) {
     addToast(`Task skipped for ${skipCost} slayer points.`, 'info')
   }
 
+  const handleSkipWithCredit = async () => {
+    if (!getToken() || !getCharacterId()) {
+      addToast('Credit skip requires a cloud account.', 'error')
+      return
+    }
+    try {
+      const res = await api.slayerSkip()
+      const remaining = Number(res?.credits_remaining)
+      if (Number.isFinite(remaining)) {
+        window.dispatchEvent(new CustomEvent(CREDITS_UPDATED_EVENT, { detail: { credits_remaining: remaining } }))
+      }
+      setSlayerTask(null)
+      requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SLAYER_TASK_CHANGE)
+      addToast('Task skipped for 1 credit.', 'info')
+    } catch (err) {
+      if (err?.status === 402) addToast('Not enough credits to skip.', 'error')
+      else addToast(err?.message || 'Failed to skip task.', 'error')
+    }
+  }
+
   const handleUnlock = async (unlock) => {
     const item = itemsData[unlock.itemId]
     const purchaseState = getSlayerUnlockPurchaseState({ unlock, item, slayerPoints, bank, inventory })
@@ -283,6 +329,17 @@ export default function SlayerScreen({ onBack }) {
     ? Math.round((1 - slayerTask.monstersRemaining / slayerTask.totalCount) * 100)
     : 0
 
+  const handleSlayTask = () => {
+    if (!slayerTask || !onNavigate) return
+    const candidateIds = resolveTaskMonsterIds(slayerTask.monsterId)
+    const targetId = candidateIds.find(id => monstersData[id]) || candidateIds[0]
+    if (!targetId || !monstersData[targetId]) {
+      addToast('Could not find target monster', 'error')
+      return
+    }
+    onNavigate(SCREENS.COMBAT, { monsterId: targetId })
+  }
+
   return (
     <div class="h-full overflow-y-auto p-4">
       {/* Back button */}
@@ -302,7 +359,17 @@ export default function SlayerScreen({ onBack }) {
       {/* Current task banner */}
       {slayerTask ? (
         <div class="mb-4 bg-[#1a1a08] border border-[#3a3a10] rounded-xl p-3">
-          <div class="text-[10px] text-yellow-400 uppercase font-bold tracking-wider mb-1">⚔️ Current Task</div>
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-[10px] text-yellow-400 uppercase font-bold tracking-wider">⚔️ Current Task</div>
+            {onNavigate && (
+              <button
+                onClick={handleSlayTask}
+                class="px-3 py-1.5 rounded-lg bg-yellow-600 text-black text-[11px] font-bold uppercase tracking-wider active:bg-yellow-700 min-h-[36px] min-w-[64px]"
+              >
+                ⚔️ Slay
+              </button>
+            )}
+          </div>
           <div class="flex items-center gap-2 mb-2">
             <span class="text-xl">{SLAYER_MONSTER_ICONS[slayerTask.monsterId] || '👹'}</span>
             <div>
@@ -322,12 +389,20 @@ export default function SlayerScreen({ onBack }) {
           </div>
           <div class="flex items-center justify-between">
             <span class="text-[10px] text-yellow-400">{progressPct}% complete</span>
-            <button
-              onClick={handleCancelTask}
-              class="text-[10px] text-[var(--color-parchment)] opacity-40 underline"
-            >
-              Skip (-30 points)
-            </button>
+            <div class="flex items-center gap-3">
+              <button
+                onClick={handleCancelTask}
+                class="text-[10px] text-[var(--color-parchment)] opacity-40 underline"
+              >
+                Skip (-30 points)
+              </button>
+              <button
+                onClick={handleSkipWithCredit}
+                class="text-[10px] text-[var(--color-parchment)] opacity-40 underline"
+              >
+                Skip (-1 credit)
+              </button>
+            </div>
           </div>
         </div>
       ) : (

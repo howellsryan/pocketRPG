@@ -28,7 +28,7 @@ import { hasSave, closeDB } from './db/database.js'
 import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
 import { startTicks, stopTicks, onTick, pauseTicks } from './engine/tick.js'
 import { wipeLocalSave } from './db/saveload.js'
-import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode } from './cloud/api.js'
+import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode, CREDITS_UPDATED_EVENT } from './cloud/api.js'
 import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave } from './cloud/sync.js'
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
@@ -462,6 +462,15 @@ function GameApp() {
       addToast(`📖 Collection Log: ${name}`, 'levelup', '📖')
     })
   }, [addToast])
+
+  useEffect(() => {
+    const handler = (event) => {
+      const remaining = Number(event?.detail?.credits_remaining)
+      if (Number.isFinite(remaining) && remaining >= 0) setCredits(remaining)
+    }
+    window.addEventListener(CREDITS_UPDATED_EVENT, handler)
+    return () => window.removeEventListener(CREDITS_UPDATED_EVENT, handler)
+  }, [])
 
   useEffect(() => {
     if (gameReady) {
@@ -1649,7 +1658,7 @@ function GameApp() {
       case SCREENS.EQUIPMENT: return <EquipmentScreen />
       case SCREENS.BANK:      return <BankScreen />
       case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onCombatStatusChange={setIsInCombat} />
-      case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} idleResult={idleResult} />
+      case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} idleResult={idleResult} onNavigate={navigate} />
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} />
       case SCREENS.AGILITY:     return <AgilityScreen initialActionId={actionData?.actionId} idleResult={idleResult} />
       case SCREENS.STORE:       return <TradingPostScreen />
