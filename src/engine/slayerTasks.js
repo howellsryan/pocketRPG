@@ -9,6 +9,11 @@ export function doesSlayerTaskMatchMonster(taskMonsterId, monsterId) {
   return DAGANNOTH_KINGS.has(taskMonsterId) && DAGANNOTH_KINGS.has(monsterId)
 }
 
+export function canFightSlayerMonster(monster, slayerTask) {
+  if (!monster?.slayerRequirement) return true
+  return doesSlayerTaskMatchMonster(slayerTask?.monsterId, monster?.id)
+}
+
 export function resolveSlayerTaskKill(task, monsterId, killCount = 1) {
   if (!task || !doesSlayerTaskMatchMonster(task.monsterId, monsterId)) {
     return {

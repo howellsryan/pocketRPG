@@ -28,7 +28,7 @@ import raidsData from '../data/raids.json'
 import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { isHighValueDrop } from '../utils/itemValue.js'
 import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slayerRewards.js'
-import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster } from '../engine/slayerTasks.js'
+import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster, canFightSlayerMonster } from '../engine/slayerTasks.js'
 import { getSlayerTaskReward } from '../engine/slayerRewards.js'
 import { CRITICAL_SAVE_REASONS, hasCriticalDrop } from '../cloud/criticalSavePolicy.js'
 import { recordCollectionLogDrop, applyServerCollectionLogEntries } from '../cloud/collectionLog.js'
@@ -899,6 +899,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     if (monster.slayerRequirement && slayLvl < monster.slayerRequirement) {
       return { locked: true, reason: `Need Slayer level ${monster.slayerRequirement} to fight ${monster.name}` }
     }
+    if (!canFightSlayerMonster(monster, slayerTask)) {
+      return { locked: true, reason: `${monster.name} can only be slain on an active Slayer task` }
+    }
     if (monster.id === 'blighted_gauntlet' && !completedQuests.has('song_of_the_elves')) {
       return { locked: true, reason: 'Complete Song of the Elves to fight Blighted Gauntlet' }
     }
@@ -1509,7 +1512,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                                 💀 Slayer {slayReq}{slayLocked ? ` (you: ${slayLvl})` : ' ✓'}
                               </div>
                             )}
-                            {bossReq.locked && !slayLocked && (
+                            {slayReq && !slayLocked && !isOnTask && (
+                              <div class="text-[9px] font-semibold text-[var(--color-blood-light)]">
+                                🔒 Slayer task required
+                              </div>
+                            )}
+                            {bossReq.locked && !slayLocked && !slayReq && (
                               <div class="text-[9px] font-semibold text-[var(--color-blood-light)]">
                                 🔒 {monster.id === 'blighted_gauntlet' ? 'Song of the Elves' :
                                      monster.id === 'ashen_crucible' ? 'Defeat Ember Tyrant' :
