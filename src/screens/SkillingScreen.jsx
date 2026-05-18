@@ -55,7 +55,7 @@ function calculateRemainingActions(action, inventory, bank) {
   return minAvailable === Infinity ? null : minAvailable
 }
 
-export default function SkillingScreen({ initialSkillId, initialActionId, idleResult }) {
+export default function SkillingScreen({ initialSkillId, initialActionId, idleResult, onNavigate }) {
   const { stats, inventory, bank, equipment, updateInventory, updateBankDirect, grantXP, addToast, setActiveTask, activeTask, dungeoneeringTokens, awardDungeoneeringTokens, trySpendDungeoneeringTokens, loadGame } = useGame()
   const [selectedSkill, setSelectedSkill] = useState(initialSkillId || null)
   const [selectedAction, setSelectedAction] = useState(null)
@@ -87,6 +87,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
     return (
       <SlayerScreen
         onBack={() => setSelectedSkill(null)}
+        onNavigate={onNavigate}
       />
     )
   }

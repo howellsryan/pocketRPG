@@ -122,6 +122,35 @@ function pickNextForm(monster) {
 }
 
 /**
+ * If a multi-form boss has an enrage threshold and its HP just dropped below it,
+ * switch to the enraged form once and emit a bossEnrage event. No-op otherwise.
+ */
+function triggerEnrageIfNeeded(state, monster, events) {
+  if (!monster || !monster.multiForm || !monster.forms || monster.enraged) return
+  const threshold = Number(monster.enrageHpPercent)
+  if (!Number.isFinite(threshold) || threshold <= 0 || threshold >= 100) return
+  const enragedKey = monster.enrageFormKey || 'enraged'
+  const enragedForm = monster.forms[enragedKey]
+  if (!enragedForm) return
+  const maxHP = monster.hitpoints || 1
+  if (monster.currentHP > Math.floor(maxHP * threshold / 100)) return
+  monster.enraged = true
+  monster.currentForm = enragedKey
+  monster.attackStyle = enragedForm.attackStyle ?? monster.attackStyle
+  monster.attackBonus = enragedForm.attackBonus ?? monster.attackBonus
+  monster.strengthBonus = enragedForm.strengthBonus ?? monster.strengthBonus
+  if (enragedForm.defenceBonus) monster.defenceBonus = { ...enragedForm.defenceBonus }
+  monster.formMaxHit = enragedForm.maxHit ?? monster.formMaxHit
+  if (enragedForm.attackSpeed) monster.attackSpeed = enragedForm.attackSpeed
+  events.push({
+    type: 'bossEnrage',
+    monsterName: monster.name,
+    formName: enragedForm.displayName || 'Enraged',
+    icon: enragedForm.icon || '🔥',
+  })
+}
+
+/**
  * Returns the immunity type ('melee', 'ranged', 'magic') of the monster's current form,
  * or null if the current form has no immunity. Used for phase-based bosses like Hellbound Gorilla.
  */
@@ -687,6 +716,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
 
     const actualDamage = Math.min(damage, Math.max(0, monster.currentHP))
     monster.currentHP -= actualDamage
+    triggerEnrageIfNeeded(state, monster, events)
 
     // ── Guthan Set Bonus: 25% chance to heal for 100% of damage dealt ──
     let guthanHealAmount = 0
@@ -1386,6 +1416,8 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
     default:
       return { combatState, events: [] }
   }
+
+  triggerEnrageIfNeeded(state, monster, events)
 
   // Check monster death from special attack (handles double-kill bosses like Olm)
   if (monster.currentHP <= 0) {

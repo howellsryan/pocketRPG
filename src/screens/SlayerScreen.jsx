@@ -9,6 +9,7 @@ import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/a
 import { applyCloudSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
+import { SCREENS } from '../utils/constants.js'
 
 // PocketRPG slayer masters — requirements and monster pools from PocketRPG design references
 const SLAYER_MASTERS = [
@@ -25,6 +26,7 @@ const SLAYER_MASTERS = [
     monsterPool: [
       'field_chicken', 'cave_goblin', 'pasture_bull', 'arcane_adept',
       'stoneback_crab', 'duneback_crab', 'umbral_adept',
+      'dustpaw_rat', 'bogling_sprite',
     ],
   },
   {
@@ -39,6 +41,7 @@ const SLAYER_MASTERS = [
     taskRange: [60, 130],
     monsterPool: [
       'umbral_adept', 'broodfang_spider', 'highland_giant', 'briar_giant', 'wailing_banshee',
+      'frostbite_imp', 'marshfen_toad', 'cinderpaw_cub',
     ],
   },
   {
@@ -54,6 +57,8 @@ const SLAYER_MASTERS = [
     monsterPool: [
       'briar_giant', 'green_dragon', 'lesser_fiend', 'sanguine_veld',
       'warped_spectre', 'ash_wyrm',
+      'glaive_skeleton', 'mirebound_husk', 'verdant_stalker', 'stoneglare_basilisk',
+      'embertongue_lizard', 'hollow_reaver',
     ],
   },
   {
@@ -70,6 +75,9 @@ const SLAYER_MASTERS = [
       'green_dragon', 'lesser_fiend', 'nether_demon', 'red_dragon',
       'sanguine_veld', 'nether_wraith', 'warped_spectre', 'astral_warrior',
       'astral_ranger', 'runestone_gargoyle', 'ash_wyrm',
+      'briarheart_treant', 'frostmaw_direwolf', 'pyreclaw_demon',
+      'wraithgale_specter', 'bloodmoon_stalker', 'ironfang_drake',
+      'shadeglass_golem', 'tidereaper_crab',
     ],
   },
   {
@@ -91,6 +99,9 @@ const SLAYER_MASTERS = [
       'astral_mage', 'runestone_gargoyle', 'vicious_black_dragon', 'nightfang_beast',
       { id: 'deepmaw_kraken', boss: true },
       { id: 'ember_tyrant', boss: true },
+      'voidweave_stalker', 'drakthul_wyrmling', 'bonelight_pyromancer',
+      'cinderfang_reaver', 'ashen_marauder',
+      { id: 'sovrathar_the_ashen_sovereign', boss: true },
     ],
   },
   {
@@ -117,6 +128,9 @@ const SLAYER_MASTERS = [
       { id: 'ember_tyrant', boss: true },
       { id: 'threefang_cerberus', boss: true },
       { id: 'ashen_hydra', boss: true },
+      'voidweave_stalker', 'drakthul_wyrmling', 'bonelight_pyromancer',
+      'cinderfang_reaver', 'ashen_marauder',
+      { id: 'sovrathar_the_ashen_sovereign', boss: true },
     ],
   },
 ]
@@ -154,9 +168,18 @@ const SLAYER_MONSTER_ICONS = {
   deepmaw_kraken: '🦑', wailing_banshee: '👻', warped_spectre: '👁️', ash_wyrm: '🐍',
   astral_warrior: '⚔️', astral_ranger: '🏹', astral_mage: '🔮', runestone_gargoyle: '🗿',
   vicious_black_dragon: '🐉', nightfang_beast: '🦇', threefang_cerberus: '🐺', ashen_hydra: '🐲',
+  dustpaw_rat: '🐀', bogling_sprite: '✨', frostbite_imp: '❄️', marshfen_toad: '🐸',
+  cinderpaw_cub: '🐅', glaive_skeleton: '💀', mirebound_husk: '🪦', verdant_stalker: '🏹',
+  stoneglare_basilisk: '🦎', embertongue_lizard: '🦎', hollow_reaver: '⚰️',
+  briarheart_treant: '🌳', frostmaw_direwolf: '🐺', pyreclaw_demon: '👹',
+  wraithgale_specter: '👻', bloodmoon_stalker: '🌙', ironfang_drake: '🐲',
+  shadeglass_golem: '🗿', tidereaper_crab: '🦀',
+  voidweave_stalker: '🕸️', drakthul_wyrmling: '🐉', bonelight_pyromancer: '🔥',
+  cinderfang_reaver: '🗡️', ashen_marauder: '⚒️',
+  sovrathar_the_ashen_sovereign: '👑',
 }
 
-export default function SlayerScreen({ onBack }) {
+export default function SlayerScreen({ onBack, onNavigate }) {
   const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, bank, inventory, addToBank, getSnapshot, slayerTasksCompleted, loadGame } = useGame()
 
   const combatLevel = getPlayerCombatLevel(stats)
@@ -306,6 +329,17 @@ export default function SlayerScreen({ onBack }) {
     ? Math.round((1 - slayerTask.monstersRemaining / slayerTask.totalCount) * 100)
     : 0
 
+  const handleSlayTask = () => {
+    if (!slayerTask || !onNavigate) return
+    const candidateIds = resolveTaskMonsterIds(slayerTask.monsterId)
+    const targetId = candidateIds.find(id => monstersData[id]) || candidateIds[0]
+    if (!targetId || !monstersData[targetId]) {
+      addToast('Could not find target monster', 'error')
+      return
+    }
+    onNavigate(SCREENS.COMBAT, { monsterId: targetId })
+  }
+
   return (
     <div class="h-full overflow-y-auto p-4">
       {/* Back button */}
@@ -325,7 +359,17 @@ export default function SlayerScreen({ onBack }) {
       {/* Current task banner */}
       {slayerTask ? (
         <div class="mb-4 bg-[#1a1a08] border border-[#3a3a10] rounded-xl p-3">
-          <div class="text-[10px] text-yellow-400 uppercase font-bold tracking-wider mb-1">⚔️ Current Task</div>
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-[10px] text-yellow-400 uppercase font-bold tracking-wider">⚔️ Current Task</div>
+            {onNavigate && (
+              <button
+                onClick={handleSlayTask}
+                class="px-3 py-1.5 rounded-lg bg-yellow-600 text-black text-[11px] font-bold uppercase tracking-wider active:bg-yellow-700 min-h-[36px] min-w-[64px]"
+              >
+                ⚔️ Slay
+              </button>
+            )}
+          </div>
           <div class="flex items-center gap-2 mb-2">
             <span class="text-xl">{SLAYER_MONSTER_ICONS[slayerTask.monsterId] || '👹'}</span>
             <div>

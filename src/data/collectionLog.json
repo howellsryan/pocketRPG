@@ -243,6 +243,19 @@
             "serpentine_helm",
             "uncut_onyx"
           ]
+        },
+        {
+          "id": "sovrathar_the_ashen_sovereign",
+          "label": "Sovrathar, the Ashen Sovereign",
+          "icon": "👑",
+          "items": [
+            "sovrathar_ashen_hilt",
+            "cinderforged_helm",
+            "sovereigns_cinderplate",
+            "sovereigns_cindergreaves",
+            "ashen_sovereigns_edge",
+            "ashen_slayer_helm"
+          ]
         }
       ]
     },

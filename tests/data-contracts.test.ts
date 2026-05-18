@@ -92,6 +92,12 @@ const EXPECTED_BOSS_UNIQUE_ITEM_IDS = new Set([
   'ashen_hydra_claw',
   'dragon_hunter_lance',
   'ferocious_gloves',
+
+  'sovrathar_ashen_hilt',
+  'ashen_sovereigns_edge',
+  'cinderforged_helm',
+  'sovereigns_cinderplate',
+  'sovereigns_cindergreaves',
 ])
 describe('data contracts', () => {
   it('item ids match keys and equipment slots are valid when present', () => {
