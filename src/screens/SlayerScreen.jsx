@@ -5,7 +5,7 @@ import itemsData from '../data/items.json'
 import { SLAYER_UNLOCKS, getSlayerUnlockPurchaseState } from '../engine/slayerUnlocks.js'
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { DAGANNOTH_KINGS_TASK_ID } from '../engine/slayerTasks.js'
-import { api, getToken, getCharacterId } from '../cloud/api.js'
+import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 import { applyCloudSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
@@ -253,6 +253,26 @@ export default function SlayerScreen({ onBack }) {
     addToast(`Task skipped for ${skipCost} slayer points.`, 'info')
   }
 
+  const handleSkipWithCredit = async () => {
+    if (!getToken() || !getCharacterId()) {
+      addToast('Credit skip requires a cloud account.', 'error')
+      return
+    }
+    try {
+      const res = await api.slayerSkip()
+      const remaining = Number(res?.credits_remaining)
+      if (Number.isFinite(remaining)) {
+        window.dispatchEvent(new CustomEvent(CREDITS_UPDATED_EVENT, { detail: { credits_remaining: remaining } }))
+      }
+      setSlayerTask(null)
+      requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SLAYER_TASK_CHANGE)
+      addToast('Task skipped for 1 credit.', 'info')
+    } catch (err) {
+      if (err?.status === 402) addToast('Not enough credits to skip.', 'error')
+      else addToast(err?.message || 'Failed to skip task.', 'error')
+    }
+  }
+
   const handleUnlock = async (unlock) => {
     const item = itemsData[unlock.itemId]
     const purchaseState = getSlayerUnlockPurchaseState({ unlock, item, slayerPoints, bank, inventory })
@@ -322,12 +342,20 @@ export default function SlayerScreen({ onBack }) {
           </div>
           <div class="flex items-center justify-between">
             <span class="text-[10px] text-yellow-400">{progressPct}% complete</span>
-            <button
-              onClick={handleCancelTask}
-              class="text-[10px] text-[var(--color-parchment)] opacity-40 underline"
-            >
-              Skip (-30 points)
-            </button>
+            <div class="flex items-center gap-3">
+              <button
+                onClick={handleCancelTask}
+                class="text-[10px] text-[var(--color-parchment)] opacity-40 underline"
+              >
+                Skip (-30 points)
+              </button>
+              <button
+                onClick={handleSkipWithCredit}
+                class="text-[10px] text-[var(--color-parchment)] opacity-40 underline"
+              >
+                Skip (-1 credit)
+              </button>
+            </div>
           </div>
         </div>
       ) : (
