@@ -23,7 +23,8 @@ const SLAYER_MASTERS = [
     description: 'Assigns the easiest slayer tasks. No requirements.',
     taskRange: [50, 120],
     monsterPool: [
-      'chicken', 'goblin', 'cow', 'wizard', 'rock_crab', 'sand_crab', 'dark_wizard',
+      'field_chicken', 'cave_goblin', 'pasture_bull', 'arcane_adept',
+      'stoneback_crab', 'duneback_crab', 'umbral_adept',
     ],
   },
   {
@@ -37,7 +38,7 @@ const SLAYER_MASTERS = [
     description: 'Assigns medium-low level monsters. Requires combat 20.',
     taskRange: [60, 130],
     monsterPool: [
-      'dark_wizard', 'giant_spider', 'hill_giant', 'moss_giant', 'wailing_banshee',
+      'umbral_adept', 'broodfang_spider', 'highland_giant', 'briar_giant', 'wailing_banshee',
     ],
   },
   {
@@ -51,8 +52,8 @@ const SLAYER_MASTERS = [
     description: 'Assigns mid-level combat tasks. Requires combat 40.',
     taskRange: [70, 160],
     monsterPool: [
-      'moss_giant', 'green_dragon', 'lesser_demon', 'blood_veld',
-      'aberrant_spectre', 'wyrm',
+      'briar_giant', 'green_dragon', 'lesser_fiend', 'sanguine_veld',
+      'warped_spectre', 'ash_wyrm',
     ],
   },
   {
@@ -66,9 +67,9 @@ const SLAYER_MASTERS = [
     description: 'High-level tasks including Netherfiend Demons. Requires combat 70.',
     taskRange: [80, 300],
     monsterPool: [
-      'green_dragon', 'lesser_demon', 'abyssal_demon', 'red_dragon',
-      'blood_veld', 'nechryael', 'aberrant_spectre', 'spiritual_warrior',
-      'spiritual_ranger', 'gargoyle', 'wyrm',
+      'green_dragon', 'lesser_fiend', 'nether_demon', 'red_dragon',
+      'sanguine_veld', 'nether_wraith', 'warped_spectre', 'astral_warrior',
+      'astral_ranger', 'runestone_gargoyle', 'ash_wyrm',
     ],
   },
   {
@@ -83,13 +84,13 @@ const SLAYER_MASTERS = [
     taskRange: [150, 400],
     bossTaskRange: [5, 25],
     monsterPool: [
-      'abyssal_demon',
+      'nether_demon',
       { id: DAGANNOTH_KINGS_TASK_ID, boss: true },
       'red_dragon',
-      'blood_veld', 'nechryael', 'skeletal_wyvern', 'smoke_devil',
-      'spiritual_mage', 'gargoyle', 'brutal_black_dragon', 'dark_beast',
-      { id: 'kraken', boss: true },
-      { id: 'jad', boss: true },
+      'sanguine_veld', 'nether_wraith', 'bone_wyvern', 'cinder_devil',
+      'astral_mage', 'runestone_gargoyle', 'vicious_black_dragon', 'nightfang_beast',
+      { id: 'deepmaw_kraken', boss: true },
+      { id: 'ember_tyrant', boss: true },
     ],
   },
   {
@@ -104,18 +105,18 @@ const SLAYER_MASTERS = [
     taskRange: [100, 250],
     bossTaskRange: [20, 50],
     monsterPool: [
-      'abyssal_demon',
+      'nether_demon',
       { id: DAGANNOTH_KINGS_TASK_ID, boss: true },
-      { id: 'general_graardor', boss: true },
-      { id: 'commander_zilyana', boss: true },
-      { id: 'kril_tsutsaroth', boss: true },
-      { id: 'kreearra', boss: true },
-      'blood_veld', 'nechryael', 'skeletal_wyvern', 'smoke_devil',
-      'spiritual_mage', 'gargoyle', 'brutal_black_dragon', 'dark_beast',
-      { id: 'kraken', boss: true },
-      { id: 'jad', boss: true },
-      { id: 'cerberus', boss: true },
-      { id: 'hydra', boss: true },
+      { id: 'warlord_grondar', boss: true },
+      { id: 'commander_zephyra', boss: true },
+      { id: 'krylth_the_defiler', boss: true },
+      { id: 'skyrender_kharra', boss: true },
+      'sanguine_veld', 'nether_wraith', 'bone_wyvern', 'cinder_devil',
+      'astral_mage', 'runestone_gargoyle', 'vicious_black_dragon', 'nightfang_beast',
+      { id: 'deepmaw_kraken', boss: true },
+      { id: 'ember_tyrant', boss: true },
+      { id: 'threefang_cerberus', boss: true },
+      { id: 'ashen_hydra', boss: true },
     ],
   },
 ]
@@ -142,15 +143,17 @@ function randRange(min, max) {
 }
 
 const SLAYER_MONSTER_ICONS = {
-  chicken: '🐔', goblin: '👺', cow: '🐄', wizard: '🧙', rock_crab: '🦀',
-  sand_crab: '🦀', dark_wizard: '🧙‍♂️', giant_spider: '🕷️', hill_giant: '👊',
-  moss_giant: '🌿', green_dragon: '🐉', lesser_demon: '👿', abyssal_demon: '😈',
-  general_graardor: '👹', commander_zilyana: '🌟', kril_tsutsaroth: '🔥', kreearra: '🦅',
-  dagganoth_kings: '👑', dagganoth_rex: '🦖', dagganoth_prime: '👹', dagganoth_supreme: '🏹', jad: '🔥',
-  blood_veld: '🩸', nechryael: '👻', skeletal_wyvern: '🐲', smoke_devil: '💨', kraken: '🦑',
-  wailing_banshee: '👻', aberrant_spectre: '👁️', wyrm: '🐍', spiritual_warrior: '⚔️',
-  spiritual_ranger: '🏹', spiritual_mage: '🔮', gargoyle: '🗿',
-  brutal_black_dragon: '🐉', dark_beast: '🦇', cerberus: '🐺', hydra: '🐲',
+  field_chicken: '🐔', cave_goblin: '👺', pasture_bull: '🐄', arcane_adept: '🧙',
+  stoneback_crab: '🦀', duneback_crab: '🦀', umbral_adept: '🧙‍♂️',
+  broodfang_spider: '🕷️', highland_giant: '👊', briar_giant: '🌿',
+  green_dragon: '🐉', red_dragon: '🐉', lesser_fiend: '👿', nether_demon: '😈',
+  warlord_grondar: '👹', commander_zephyra: '🌟', krylth_the_defiler: '🔥', skyrender_kharra: '🦅',
+  [DAGANNOTH_KINGS_TASK_ID]: '👑',
+  nagadoth_rex: '🦖', nagadoth_prime: '👹', nagadoth_supreme: '🏹', ember_tyrant: '🔥',
+  sanguine_veld: '🩸', nether_wraith: '👻', bone_wyvern: '🐲', cinder_devil: '💨',
+  deepmaw_kraken: '🦑', wailing_banshee: '👻', warped_spectre: '👁️', ash_wyrm: '🐍',
+  astral_warrior: '⚔️', astral_ranger: '🏹', astral_mage: '🔮', runestone_gargoyle: '🗿',
+  vicious_black_dragon: '🐉', nightfang_beast: '🦇', threefang_cerberus: '🐺', ashen_hydra: '🐲',
 }
 
 export default function SlayerScreen({ onBack }) {
@@ -161,7 +164,7 @@ export default function SlayerScreen({ onBack }) {
 
 
   const resolveTaskMonsterIds = (monsterId) => {
-    if (monsterId === DAGANNOTH_KINGS_TASK_ID) return ['dagganoth_rex', 'dagganoth_prime', 'dagganoth_supreme']
+    if (monsterId === DAGANNOTH_KINGS_TASK_ID) return ['nagadoth_rex', 'nagadoth_prime', 'nagadoth_supreme']
     return [monsterId]
   }
 
@@ -219,7 +222,7 @@ export default function SlayerScreen({ onBack }) {
 
     // Ember Tyrant always has a single-kill task
     let totalCount
-    if (monsterId === 'jad') {
+    if (monsterId === 'ember_tyrant') {
       totalCount = 1
     } else {
       const taskRange = isBoss ? (master.bossTaskRange || [20, 50]) : master.taskRange
