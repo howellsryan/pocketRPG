@@ -156,7 +156,6 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const [bootstrapError, setBootstrapError] = useState(null)
   const [busy, setBusy] = useState(false)
   const [pendingAction, setPendingAction] = useState(null)
-  const [actionPanel, setActionPanel] = useState(null)
   const [endModal, setEndModal] = useState(null)
   const [hiddenMode, setHiddenMode] = useState(() => (
     typeof document !== 'undefined' ? document.hidden : false
@@ -513,20 +512,6 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     .filter((prayer) => (pair.self?.stats?.prayer || 1) >= (prayer.level || 1))
     .sort((a, b) => (Number(b.level) || 0) - (Number(a.level) || 0))
 
-  const potionSlots = toArray(pair.self?.inventory)
-    .map((slot, idx) => ({ slot, idx, item: slot ? itemsData?.[slot.itemId] : null }))
-    .filter(({ slot, item }) => slot && item && isPvpCombatPotion(item))
-    .slice(0, 8)
-
-  const equippableSlots = toArray(pair.self?.inventory)
-    .map((slot, idx) => ({ slot, idx, item: slot ? itemsData?.[slot.itemId] : null }))
-    .filter(({ slot, item }) => slot && item?.slot)
-
-  const equippedSlots = Object.entries(pair.self?.equipment || {})
-    .filter(([, entry]) => !!entry)
-    .map(([slot, entry]) => ({ slot, entry, item: itemsData?.[entry.itemId] }))
-  const hasGearActions = equippableSlots.length > 0 || equippedSlots.length > 0
-
   const equippedSpecial = getEquippedPvpSpecialAttack(pair.self, itemsData)
   const specialReady = hasEnoughPvpSpecialEnergy(pair.self, itemsData)
   const specialEnergy = Math.max(0, Math.floor(Number(pair.self?.specialAttackEnergy ?? 0) || 0))
@@ -604,20 +589,14 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     queueAction({ type: 'queue_special' }, { showBusy: false })
   }
 
-  const toggleActionPanel = (panel) => {
-    setActionPanel((current) => (current === panel ? null : panel))
-  }
-
   const queueGearEquip = (inventorySlot) => {
     if (terminalHandledRef.current || endModalOpenRef.current) return
     queueAction({ type: 'equip', inventorySlot }, { showBusy: false })
-    setActionPanel(null)
   }
 
   const queueGearUnequip = (equipmentSlot) => {
     if (terminalHandledRef.current || endModalOpenRef.current) return
     queueAction({ type: 'unequip', equipmentSlot }, { showBusy: false })
-    setActionPanel(null)
   }
   const endTotalRiskValue = getEndLootTotal(endModal?.loot)
   const endTotalRiskLabel = `${formatCompactCoins(endTotalRiskValue)} gp`
@@ -627,111 +606,6 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     setEndModal(null)
     await onExit?.()
   }
-
-  const renderCombatActionsCard = ({ compact }) => (
-    <Card>
-      <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Combat actions</div>
-      <div class={compact ? 'grid grid-cols-1 gap-2' : 'grid grid-cols-2 md:grid-cols-4 gap-2'}>
-        <Button
-          variant={specialVisuallyQueued ? 'primary' : 'secondary'}
-          size="md"
-          className={`w-full ${specialVisuallyQueued ? '!bg-[var(--color-gold)] !text-[var(--color-void-dark)] !border-[var(--color-gold)]' : ''}`}
-          disabled={busy || (!specialVisuallyQueued && !specialReady)}
-          aria-pressed={specialVisuallyQueued}
-          title={equippedSpecial ? (specialVisuallyQueued ? 'Special attack queued. Tap again to cancel.' : `Special attack energy: ${specialEnergy}/${specialCost}`) : 'No special attack available'}
-          onClick={toggleSpecialAttack}
-        >
-          <span class={specialVisuallyQueued ? 'mr-1' : 'text-[var(--color-gold)] mr-1'}>⚡</span>
-          Spec{specialCost != null ? ` ${specialEnergy}%` : ''}
-        </Button>
-        {!compact && (
-          <Button
-            variant={actionPanel === 'prayer' || visuallyActivePrayerId ? 'primary' : 'secondary'}
-            size="md"
-            className={`w-full transition-none ${
-              visuallyActivePrayerId
-                ? '!border-[var(--color-gold)] !bg-[var(--color-gold)] !text-[var(--color-void-dark)]'
-                : ''
-            }`}
-            aria-pressed={!!visuallyActivePrayerId}
-            onClick={() => toggleActionPanel('prayer')}
-          >
-            🙏 Prayer
-          </Button>
-        )}
-        <Button
-          variant={actionPanel === 'potion' ? 'primary' : 'secondary'}
-          size="md"
-          className="w-full"
-          disabled={busy || potionSlots.length === 0}
-          onClick={() => toggleActionPanel('potion')}
-        >
-          🧪 Potion
-        </Button>
-        <Button
-          variant={actionPanel === 'gear' ? 'primary' : 'secondary'}
-          size="md"
-          className="w-full"
-          disabled={busy || !hasGearActions}
-          onClick={() => toggleActionPanel('gear')}
-        >
-          ⚙️ Gear
-        </Button>
-      </div>
-
-      {actionPanel === 'prayer' && !compact && (
-        <div class="mt-3">
-          {availablePrayers.length === 0 ? (
-            <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No PvP-usable prayers unlocked.</div>
-          ) : (
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-              {availablePrayers.map((prayer) => {
-                const active = visuallyActivePrayerId === prayer.id
-                return (
-                  <Button
-                    key={prayer.id}
-                    variant={active ? 'primary' : 'secondary'}
-                    size="md"
-                    className={`min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight transition-none ${
-                      active
-                        ? '!border-[var(--color-gold)] !bg-[var(--color-gold)] !text-[var(--color-void-dark)]'
-                        : ''
-                    }`}
-                    aria-pressed={active}
-                    onClick={() => queuePrayerToggle(prayer.id)}
-                  >
-                    <span class="block truncate">{prayer.icon || '✨'} {prayer.name}</span>
-                  </Button>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {actionPanel === 'potion' && (
-        <div class="mt-3">
-          {potionSlots.length === 0 ? (
-            <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No PvP potions in inventory.</div>
-          ) : (
-            <div class={compact ? 'grid grid-cols-1 gap-2' : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2'}>
-              {potionSlots.map(({ slot, idx, item }) => (
-                <Button
-                  key={`${slot.itemId}-${idx}`}
-                  variant="secondary"
-                  size="md"
-                  className="min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight"
-                  onClick={() => queueAction({ type: 'drink', inventorySlot: idx }, { showBusy: false })}
-                >
-                  <span class="block truncate">{item?.icon || '🧪'} {item?.name || slot.itemId}</span>
-                </Button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </Card>
-  )
 
   return (
     <div
@@ -781,13 +655,27 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
         <div class="space-y-2">
           <Card className="bg-[var(--color-void-dark)]">
             <CompactHpBadge label="You" combatant={pair.self} align="left" />
-            <div class="mt-2 text-[10px] font-[var(--font-mono)] text-[var(--color-gold)]">Tick {state?.tick ?? matchMeta?.current_tick ?? 0}</div>
           </Card>
           <Card>
-            <div class="text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-2">Your gear</div>
+            <div class="flex items-center justify-between mb-2">
+              <div class="text-[10px] uppercase tracking-wide text-[var(--color-gold)]">Your gear</div>
+              <button
+                type="button"
+                onClick={toggleSpecialAttack}
+                disabled={busy || (!specialVisuallyQueued && !specialReady)}
+                aria-pressed={specialVisuallyQueued}
+                title={equippedSpecial ? (specialVisuallyQueued ? `Special attack queued. Tap again to cancel. (${specialEnergy}%)` : `Special attack — energy: ${specialEnergy}/${specialCost}`) : 'No special attack available'}
+                class={`min-w-11 min-h-11 inline-flex items-center justify-center rounded text-base leading-none transition-colors disabled:opacity-40 ${
+                  specialVisuallyQueued
+                    ? '!bg-[var(--color-gold)] !text-[var(--color-void-dark)]'
+                    : 'text-[var(--color-gold)] hover:bg-[var(--color-void-light)]'
+                }`}
+              >
+                ⚡
+              </button>
+            </div>
             <EquipmentPaperdoll equipment={pair.self?.equipment || {}} itemsData={itemsData} onSelect={(slotName) => queueGearUnequip(slotName)} size="mdFixed" asCard={false} />
           </Card>
-          {isDesktopLayout && renderCombatActionsCard({ compact: true })}
         </div>
 
         <div class={`${isDesktopLayout ? 'space-y-3' : 'hidden'}`}>
@@ -850,15 +738,6 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
             <div class="text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-2 text-right">Opponent gear</div>
             <EquipmentPaperdoll equipment={pair.opp?.equipment || {}} itemsData={itemsData} size="mdFixed" asCard={false} />
           </Card>
-          <Panel>
-            <div class="text-xs font-semibold text-[var(--color-gold)] mb-1">Recent actions</div>
-            <div class="space-y-1 max-h-40 overflow-y-auto">
-              {recentLines.length === 0 && <div class="text-[11px] text-[var(--color-parchment)] opacity-60">Waiting for first swing…</div>}
-              {recentLines.map((line, i) => (
-                <div key={i} class="text-[11px] text-[var(--color-parchment)] opacity-80">• {line}</div>
-              ))}
-            </div>
-          </Panel>
         </div>
       </div>
 
@@ -873,71 +752,6 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
           ))}
         </div>
       </Card>
-
-      {!isDesktopLayout && renderCombatActionsCard({ compact: false })}
-
-      {actionPanel === 'gear' && (
-        <Modal onClose={() => setActionPanel(null)}>
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">
-              Gear
-            </h3>
-            <button
-              onClick={() => setActionPanel(null)}
-              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
-              title="Close"
-            >
-              ✕
-            </button>
-          </div>
-
-          <div class="text-[10px] text-[var(--color-parchment)] opacity-60 mb-3">
-            Equip an item from your inventory or unequip current gear. Gear changes are queued and apply on the next PvP tick.
-          </div>
-
-          <div class="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
-            <div>
-              <div class="text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-2">
-                Inventory gear
-              </div>
-
-              {equippableSlots.length === 0 ? (
-                <div class="text-[11px] text-[var(--color-parchment)] opacity-50">
-                  No equippable items in inventory.
-                </div>
-              ) : (
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {equippableSlots.map(({ slot, idx, item }) => (
-                    <button
-                      key={`inventory-gear-${idx}-${slot.itemId}`}
-                      onClick={() => queueGearEquip(idx)}
-                      class="w-full p-3 rounded-lg border bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222] transition-colors text-left"
-                    >
-                      <div class="flex items-center justify-between gap-3">
-                        <div class="flex items-center gap-2 min-w-0">
-                          <ItemSlot slot={slot} size="small" />
-                          <div class="min-w-0">
-                            <div class="text-sm font-semibold text-[var(--color-parchment)] truncate">
-                              {item?.name || slot.itemId}
-                            </div>
-                            <div class="text-[10px] text-[var(--color-parchment)] opacity-60 capitalize">
-                              {item?.slot || 'gear'}
-                              {(slot.quantity || 0) > 1 ? ` · x${slot.quantity}` : ''}
-                            </div>
-                          </div>
-                        </div>
-                        <span class="text-[10px] text-[var(--color-gold)] shrink-0">
-                          Equip
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </Modal>
-      )}
 
       {!isDesktopLayout && (
         <Panel>
