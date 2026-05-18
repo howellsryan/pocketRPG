@@ -24330,5 +24330,201 @@
     "icon": "🧤",
     "isUntradeable": true,
     "isGeneralStore": false
+  },
+  "sovrathar_ashen_hilt": {
+    "id": "sovrathar_ashen_hilt",
+    "name": "Sovrathar's Ashen Hilt",
+    "type": "resource",
+    "stackable": false,
+    "shopValue": 5000000,
+    "icon": "🔥",
+    "isGeneralStore": false,
+    "isBossUnique": true,
+    "combineWith": "slayer_helmet",
+    "combineResult": "ashen_slayer_helm",
+    "combineDescription": "Combine with a Slayer Helmet to forge the Ashen Slayer Helm."
+  },
+  "ashen_slayer_helm": {
+    "id": "ashen_slayer_helm",
+    "name": "Ashen Slayer Helm",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 15,
+      "slash": 15,
+      "crush": 15,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 25,
+      "slash": 28,
+      "crush": 25,
+      "magic": 8,
+      "ranged": 26
+    },
+    "otherBonus": {
+      "meleeStrength": 5,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "slayerTaskAccuracyFlat": 25,
+      "slayerTaskDamageFlat": 25
+    },
+    "requirements": {
+      "defence": 60,
+      "slayer": 80
+    },
+    "shopValue": 7500000,
+    "icon": "💀",
+    "isUntradeable": true,
+    "isGeneralStore": false
+  },
+  "ashen_sovereigns_edge": {
+    "id": "ashen_sovereigns_edge",
+    "name": "Ashen Sovereign's Edge",
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": {
+      "stab": 30,
+      "slash": 70,
+      "crush": -2,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 75,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "slayerTaskAccuracyFlat": 30,
+      "slayerTaskDamageFlat": 8
+    },
+    "requirements": {
+      "attack": 60,
+      "slayer": 80
+    },
+    "shopValue": 50000000,
+    "icon": "⚔️",
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "cinderforged_helm": {
+    "id": "cinderforged_helm",
+    "name": "Cinderforged Helm",
+    "type": "armour",
+    "slot": "head",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -2,
+      "ranged": -2
+    },
+    "defenceBonus": {
+      "stab": 50,
+      "slash": 50,
+      "crush": 50,
+      "magic": 30,
+      "ranged": 48
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "slayerTaskAccuracyFlat": 8,
+      "slayerTaskDamageFlat": 8
+    },
+    "requirements": {
+      "defence": 60,
+      "slayer": 80
+    },
+    "shopValue": 8000000,
+    "icon": "⛑️",
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "sovereigns_cinderplate": {
+    "id": "sovereigns_cinderplate",
+    "name": "Sovereign's Cinderplate",
+    "type": "armour",
+    "slot": "body",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -8,
+      "ranged": -5
+    },
+    "defenceBonus": {
+      "stab": 110,
+      "slash": 110,
+      "crush": 105,
+      "magic": 80,
+      "ranged": 115
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "slayerTaskAccuracyFlat": 10,
+      "slayerTaskDamageFlat": 10
+    },
+    "requirements": {
+      "defence": 60,
+      "slayer": 80
+    },
+    "shopValue": 18000000,
+    "icon": "🦺",
+    "isGeneralStore": false,
+    "isBossUnique": true
+  },
+  "sovereigns_cindergreaves": {
+    "id": "sovereigns_cindergreaves",
+    "name": "Sovereign's Cindergreaves",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -6,
+      "ranged": -3
+    },
+    "defenceBonus": {
+      "stab": 50,
+      "slash": 48,
+      "crush": 48,
+      "magic": 40,
+      "ranged": 52
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0,
+      "slayerTaskAccuracyFlat": 8,
+      "slayerTaskDamageFlat": 8
+    },
+    "requirements": {
+      "defence": 60,
+      "slayer": 80
+    },
+    "shopValue": 12000000,
+    "icon": "👖",
+    "isGeneralStore": false,
+    "isBossUnique": true
   }
 }
