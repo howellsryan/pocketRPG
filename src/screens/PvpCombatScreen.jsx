@@ -15,6 +15,7 @@ import { getEquippedPvpSpecialAttack, getPvpSpecialAttackLabel, hasEnoughPvpSpec
 import { isPvpCombatPotion } from '../engine/pvpPotions.js'
 import { calculatePvpRiskValues } from '../engine/pvpRisk.js'
 import { formatCompactCoins } from '../utils/formatters.js'
+import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
 
 const POLL_VISIBLE_MS = 600
 const POLL_HIDDEN_MS = 1500
@@ -639,12 +640,6 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
         </Card>
       )}
 
-      {hiddenMode && (
-        <Card className="border-[var(--color-gold-dim)] bg-[var(--color-void-light)]">
-          <div class="text-[11px] text-[var(--color-gold)]">⚠️ Keep this tab open for smooth PvP updates.</div>
-        </Card>
-      )}
-
       {staleWarning && (
         <Card className="border-[var(--color-blood)] bg-[#2a1010]">
           <div class="text-[11px] text-[var(--color-blood-light)]">No successful sync for 5s. You may desync — keep this tab open and reconnect if this persists.</div>
@@ -701,28 +696,36 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
             </div>
           </Card>
           <Card>
-            <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-2 px-1">Prayers</div>
+            <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1">Prayers</div>
             {availablePrayers.length === 0 ? (
               <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No PvP-usable prayers unlocked.</div>
             ) : (
-              <div class="grid grid-cols-2 gap-2">
+              <div class="grid grid-cols-4 gap-1">
                 {availablePrayers.map((prayer) => {
                   const active = visuallyActivePrayerId === prayer.id
+                  const styled = getPrayerStyleIcon(prayer)
                   return (
-                    <Button
+                    <button
                       key={prayer.id}
-                      variant={active ? 'primary' : 'secondary'}
-                      size="md"
-                      className={`min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight transition-none ${
-                        active
-                          ? '!border-[var(--color-gold)] !bg-[var(--color-gold)] !text-[var(--color-void-dark)]'
-                          : ''
-                      }`}
-                      aria-pressed={active}
+                      type="button"
                       onClick={() => queuePrayerToggle(prayer.id)}
+                      aria-pressed={active}
+                      title={`${prayer.name} · Lv ${prayer.level}${prayer.description ? `\n${prayer.description}` : ''}`}
+                      class={`px-1 py-1 rounded-md border text-center transition-colors ${
+                        active
+                          ? 'bg-[#2a3a1a] border-[var(--color-gold)]'
+                          : 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
+                      }`}
                     >
-                      <span class="block truncate">{prayer.icon || '✨'} {prayer.name}</span>
-                    </Button>
+                      {styled ? (
+                        <div class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] leading-none whitespace-nowrap">
+                          +{styled.boostPercent}% {styled.icon}
+                        </div>
+                      ) : (
+                        <div class="text-[12px] leading-none">{prayer.icon || '✨'}</div>
+                      )}
+                      <div class="text-[8px] text-[var(--color-gold-dim)] opacity-70 mt-0.5">Lv {prayer.level}</div>
+                    </button>
                   )
                 })}
               </div>
