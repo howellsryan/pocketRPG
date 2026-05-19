@@ -64,6 +64,8 @@ export function GameProvider({ children }) {
   const slayerPointsRef = useRef(0)
   const dungeoneeringTokensRef = useRef(0)
   const slayerTasksCompletedRef = useRef(0)
+  const completedQuestsRef = useRef(new Set())
+  const questQueueRef = useRef([])
 
   // Keep refs in sync with state
   useEffect(() => { stateRef.current.stats = stats }, [stats])
@@ -449,9 +451,13 @@ export function GameProvider({ children }) {
     setBossKillCountsState(savedBossKillCounts ?? {})
     setRaidKillCountsState(savedRaidKillCounts ?? {})
     setFarmingState(savedFarming ?? { patchesById: {} })
-    setCompletedQuestsState(new Set(savedCompletedQuests || []))
+    const initialCompletedQuests = new Set(savedCompletedQuests || [])
+    completedQuestsRef.current = initialCompletedQuests
+    setCompletedQuestsState(initialCompletedQuests)
     setUnlockedMinigameItemsState(new Set(savedUnlockedMinigameItems || []))
-    setQuestQueueState(savedQuestQueue ?? [])
+    const initialQuestQueue = savedQuestQueue ?? []
+    questQueueRef.current = initialQuestQueue
+    setQuestQueueState(initialQuestQueue)
     const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
     setCurrentHP(savedHP != null ? Math.min(savedHP, hpLevel) : hpLevel)
     setLoaded(true)
@@ -709,6 +715,7 @@ export function GameProvider({ children }) {
       if (prev.has(questId)) return prev
       const next = new Set(prev)
       next.add(questId)
+      completedQuestsRef.current = next
       saveSetting('completedQuests', [...next])
       return next
     })
@@ -720,6 +727,7 @@ export function GameProvider({ children }) {
       if (prev.length >= QUEST_QUEUE_MAX) return prev
       added = true
       const next = [...prev, quest]
+      questQueueRef.current = next
       saveSetting('questQueue', next)
       return next
     })
@@ -729,19 +737,23 @@ export function GameProvider({ children }) {
   const removeFromQuestQueue = useCallback((questId) => {
     setQuestQueueState(prev => {
       const next = prev.filter(q => q.id !== questId)
+      questQueueRef.current = next
       saveSetting('questQueue', next)
       return next
     })
   }, [])
 
   const clearQuestQueue = useCallback(() => {
+    questQueueRef.current = []
     setQuestQueueState([])
     saveSetting('questQueue', [])
   }, [])
 
   const updateQuestQueue = useCallback((newQueue) => {
-    setQuestQueueState(newQueue)
-    saveSetting('questQueue', newQueue)
+    const nextQueue = newQueue ?? []
+    questQueueRef.current = nextQueue
+    setQuestQueueState(nextQueue)
+    saveSetting('questQueue', nextQueue)
   }, [])
 
   // Direct bank update without inventory changes (for skill/gather item routing)
@@ -799,9 +811,9 @@ export function GameProvider({ children }) {
       bossKillCounts,
       raidKillCounts,
       farming,
-      completedQuests: [...completedQuests],
+      completedQuests: [...completedQuestsRef.current],
       unlockedMinigameItems: [...unlockedMinigameItems],
-      questQueue,
+      questQueue: questQueueRef.current,
     },
   }), [currentHP, autoBankLoot, bankConfig, homeShortcuts, combatStance, idleCombatSetup, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, slayerTasksCompleted, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, questQueue])
 

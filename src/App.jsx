@@ -30,6 +30,7 @@ import { startTicks, stopTicks, onTick, pauseTicks } from './engine/tick.js'
 import { wipeLocalSave } from './db/saveload.js'
 import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode, CREDITS_UPDATED_EVENT } from './cloud/api.js'
 import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave } from './cloud/sync.js'
+import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
 import { triggerOneLifeDeath } from './utils/oneLifeDeath.js'
@@ -1247,6 +1248,9 @@ function GameApp() {
         return
       }
       if (task?.type === 'quest') {
+        const skipResult = await api.skipHour()
+        setCredits(skipResult?.credits_remaining ?? credits)
+
         const cascade = simulateQuestIdleCascade({
           activeTask: task,
           questQueue: questQueueRef.current || [],
@@ -1294,7 +1298,10 @@ function GameApp() {
           elapsedMsUsed: cascade.elapsedMsUsed,
           elapsedMsRemaining: cascade.elapsedMsRemaining,
         })
-        schedulePushSave(getSnapshot())
+        if (!isInPvpMatch) {
+          schedulePushSave(getSnapshot())
+          requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SKIP_HOUR)
+        }
         addToast('⏭️ Skipped 1 hour', 'info')
         return
       }
