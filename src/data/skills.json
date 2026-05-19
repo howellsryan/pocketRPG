@@ -1959,6 +1959,16 @@
         "materials": {
           "nagadoth_bones": 1
         }
+      },
+      {
+        "id": "scatter_gargoyle_dust",
+        "name": "Scatter Gargoyle Dust",
+        "level": 20,
+        "ticks": 3,
+        "xp": 125,
+        "materials": {
+          "gargoyle_dust": 1
+        }
       }
     ]
   },
