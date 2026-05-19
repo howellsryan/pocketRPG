@@ -503,9 +503,9 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     }
   }
 
+  const playerPrayerLevel = Number(pair.self?.stats?.prayer || 1)
   const availablePrayers = Object.values(prayersData || {})
     .filter((prayer) => prayer && prayer.bonusType !== 'protection' && !PVP_SCREEN_PROTECTION_PRAYER_IDS.has(prayer.id))
-    .filter((prayer) => (pair.self?.stats?.prayer || 1) >= (prayer.level || 1))
     .sort((a, b) => (Number(b.level) || 0) - (Number(a.level) || 0))
 
   const equippedSpecial = getEquippedPvpSpecialAttack(pair.self, itemsData)
@@ -695,39 +695,39 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
           </Card>
           <Card>
             <div class="text-[10px] uppercase tracking-wider text-[var(--color-gold-dim)] opacity-60 mb-1.5 px-1">Prayers</div>
-            {availablePrayers.length === 0 ? (
-              <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No PvP-usable prayers unlocked.</div>
-            ) : (
-              <div class="grid grid-cols-4 gap-1">
-                {availablePrayers.map((prayer) => {
-                  const active = visuallyActivePrayerId === prayer.id
-                  const styled = getPrayerStyleIcon(prayer)
-                  return (
-                    <button
-                      key={prayer.id}
-                      type="button"
-                      onClick={() => queuePrayerToggle(prayer.id)}
-                      aria-pressed={active}
-                      title={`${prayer.name} · Lv ${prayer.level}${prayer.description ? `\n${prayer.description}` : ''}`}
-                      class={`px-1 py-1 rounded-md border text-center transition-colors ${
-                        active
-                          ? 'bg-[#2a3a1a] border-[var(--color-gold)]'
-                          : 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
-                      }`}
-                    >
-                      {styled ? (
-                        <div class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] leading-none whitespace-nowrap">
-                          +{styled.boostPercent}% {styled.icon}
-                        </div>
-                      ) : (
-                        <div class="text-[12px] leading-none">{prayer.icon || '✨'}</div>
-                      )}
-                      <div class="text-[8px] text-[var(--color-gold-dim)] opacity-70 mt-0.5">Lv {prayer.level}</div>
-                    </button>
-                  )
-                })}
-              </div>
-            )}
+            <div class="grid grid-cols-6 gap-1">
+              {availablePrayers.map((prayer) => {
+                const active = visuallyActivePrayerId === prayer.id
+                const canUse = playerPrayerLevel >= (prayer.level || 1)
+                const styled = getPrayerStyleIcon(prayer)
+                return (
+                  <button
+                    key={prayer.id}
+                    type="button"
+                    onClick={() => canUse && queuePrayerToggle(prayer.id)}
+                    disabled={!canUse}
+                    aria-pressed={active}
+                    title={`${prayer.name} · Lv ${prayer.level}${prayer.description ? `\n${prayer.description}` : ''}`}
+                    class={`px-1 py-1 rounded-md border text-center transition-colors ${
+                      active
+                        ? 'bg-[#2a3a1a] border-[var(--color-gold)]'
+                        : canUse
+                          ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
+                          : 'bg-[#111] border-[#1a1a1a] opacity-30 cursor-default'
+                    }`}
+                  >
+                    {styled ? (
+                      <div class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] leading-none whitespace-nowrap">
+                        +{styled.boostPercent}% {styled.icon}
+                      </div>
+                    ) : (
+                      <div class="text-[12px] leading-none">{prayer.icon || '✨'}</div>
+                    )}
+                    <div class="text-[8px] text-[var(--color-gold-dim)] opacity-70 mt-0.5">Lv {prayer.level}</div>
+                  </button>
+                )
+              })}
+            </div>
           </Card>
         </div>
 
