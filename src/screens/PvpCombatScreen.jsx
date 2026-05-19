@@ -503,11 +503,6 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     }
   }
 
-  const foodSlots = toArray(pair.self?.inventory)
-    .map((slot, idx) => ({ slot, idx, item: slot ? itemsData?.[slot.itemId] : null }))
-    .filter(({ slot, item }) => slot && item && isPvpFoodItem(item))
-    .slice(0, 8)
-
   const availablePrayers = Object.values(prayersData || {})
     .filter((prayer) => prayer && prayer.bonusType !== 'protection' && !PVP_SCREEN_PROTECTION_PRAYER_IDS.has(prayer.id))
     .filter((prayer) => (pair.self?.stats?.prayer || 1) >= (prayer.level || 1))
@@ -659,8 +654,11 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
                 onClick={toggleSpecialAttack}
                 disabled={busy || (!specialVisuallyQueued && !specialReady)}
                 aria-pressed={specialVisuallyQueued}
+                aria-label="Special attack"
                 title={equippedSpecial ? (specialVisuallyQueued ? `Special attack queued. Tap again to cancel. (${specialEnergy}%)` : `Special attack — energy: ${specialEnergy}/${specialCost}`) : 'No special attack available'}
-                class={`min-w-11 min-h-11 inline-flex items-center justify-center rounded text-base leading-none transition-colors disabled:opacity-40 ${
+                class={`inline-flex items-center justify-center rounded text-base leading-none transition-colors disabled:opacity-40 ${
+                  isDesktopLayout ? 'p-1' : 'min-w-11 min-h-11'
+                } ${
                   specialVisuallyQueued
                     ? '!bg-[var(--color-gold)] !text-[var(--color-void-dark)]'
                     : 'text-[var(--color-gold)] hover:bg-[var(--color-void-light)]'
@@ -743,18 +741,6 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
           </Card>
         </div>
       </div>
-
-      <Card>
-        <div class="text-xs font-semibold text-[var(--color-gold)] mb-2">Quick Actions</div>
-        <div class="flex gap-2 flex-wrap">
-          {foodSlots.length === 0 && <div class="text-[11px] text-[var(--color-parchment)] opacity-60">No food in inventory.</div>}
-          {foodSlots.map(({ slot, idx }) => (
-            <div key={`${slot.itemId}-${idx}`} onClick={() => queueAction({ type: 'eat', inventorySlot: idx })}>
-              <ItemSlot slot={slot} size="small" />
-            </div>
-          ))}
-        </div>
-      </Card>
 
       {!isDesktopLayout && (
         <Panel>
