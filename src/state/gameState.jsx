@@ -17,6 +17,7 @@ import prayersData from '../data/prayers.json'
 import { normaliseDungeoneeringTokens, isDungeoneeringRewardAction } from '../engine/dungeoneeringTokens.js'
 import { getSlayerTaskReward } from '../engine/slayerRewards.js'
 import { defaultIdleCombatSetup, normaliseIdleCombatSetup } from '../engine/idleSupplies.js'
+import { migrateLegacyItemIds } from '../engine/itemMigrations.js'
 
 const normalisePointCurrency = (value) => {
   const n = Math.floor(Number(value) || 0)
@@ -89,6 +90,15 @@ export function GameProvider({ children }) {
       getSetting('idleCombatSetup')
     ])
     const normalisedIdleCombatSetup = normaliseIdleCombatSetup(savedIdleCombatSetup)
+    // Rewrite legacy item ids (e.g. void_knight_* → void_king_*) before the
+    // idle simulator or set-bonus checks read the equipment/inventory/bank.
+    const migration = migrateLegacyItemIds({ equipment: eq, inventory: inv, bank: b })
+    eq = migration.equipment
+    inv = migration.inventory
+    b = migration.bank
+    if (migration.changed) {
+      await Promise.all([saveEquipment(eq), saveInventory(inv), saveBank(b)])
+    }
     savedDungeoneeringTokens = normaliseDungeoneeringTokens(savedDungeoneeringTokens)
     savedSlayerPoints = normalisePointCurrency(savedSlayerPoints)
     savedSlayerTasksCompleted = Math.max(0, Math.floor(Number(savedSlayerTasksCompleted) || 0))
