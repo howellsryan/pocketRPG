@@ -36,6 +36,7 @@ const sourceFiles = [
   'engine/slayerCombatBonuses.js',
   'engine/itemSources.js',
   'engine/combatSetBonuses.js',
+  'engine/itemMigrations.js',
   'engine/combat.js',
   'engine/combatant.js',
   'engine/combatPrimitives.js',
