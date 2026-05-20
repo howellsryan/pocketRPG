@@ -16616,7 +16616,7 @@
     "legacy_item_id": "void_knight_gloves",
     "name": "Void King Gloves",
     "type": "armour",
-    "slot": "hands",
+    "slot": "gloves",
     "stackable": false,
     "attackBonus": {
       "stab": 0,
@@ -24301,7 +24301,7 @@
     "legacy_item_id": "void_knight_gloves",
     "name": "Void King Gloves",
     "type": "armour",
-    "slot": "hands",
+    "slot": "gloves",
     "stackable": false,
     "attackBonus": {
       "stab": 0,
