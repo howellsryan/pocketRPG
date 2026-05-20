@@ -9,7 +9,7 @@ export function hasFullVoidKnightSet(equipment) {
   return equippedItemId(equipment, 'body') === 'void_king_top'
     && equippedItemId(equipment, 'legs') === 'void_king_robe'
     && equippedItemId(equipment, 'head') === 'void_king_helm'
-    && equippedItemId(equipment, 'hands') === 'void_king_gloves'
+    && equippedItemId(equipment, 'gloves') === 'void_king_gloves'
 }
 
 export function getVoidKnightCombatMultipliers(equipment) {
