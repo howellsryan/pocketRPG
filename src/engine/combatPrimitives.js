@@ -30,7 +30,7 @@ import {
   effectiveDefence, playerDefenceRoll,
 } from './formulas.js'
 import { getEquipmentBonuses, getAttackStyle } from './equipment.js'
-import { getVoidKnightCombatMultipliers } from './combatSetBonuses.js'
+import { getVoidKingCombatMultipliers } from './combatSetBonuses.js'
 import { getPvpCombatModifiers } from './pvpCombatModifiers.js'
 
 // ── Helpers ─────────────────────────────────────────────────────────────
@@ -71,7 +71,7 @@ export function rollMeleeAttack(attacker, defender, itemsData) {
   const atkStance = getMeleeStyleBonuses(attacker.stance)
   const defStance = getMeleeStyleBonuses(defender.stance)
   const atkMods = getPvpCombatModifiers(attacker)
-  const voidMult = getVoidKnightCombatMultipliers(attacker.equipment)
+  const voidMult = getVoidKingCombatMultipliers(attacker.equipment)
   const defMods = getPvpCombatModifiers(defender)
 
   const effStr = effectiveStrength(
@@ -118,7 +118,7 @@ export function rollRangedAttack(attacker, defender, itemsData) {
   const defStance = getMeleeStyleBonuses(defender.stance)
   const styleBonus = getRangedStyleBonus(attacker.stance)
   const atkMods = getPvpCombatModifiers(attacker)
-  const voidMult = getVoidKnightCombatMultipliers(attacker.equipment)
+  const voidMult = getVoidKingCombatMultipliers(attacker.equipment)
   const defMods = getPvpCombatModifiers(defender)
 
   const effRngAttack = effectiveRanged(attacker.stats.ranged, atkMods.potions.ranged, atkMods.prayer.ranged, styleBonus)
@@ -166,7 +166,7 @@ export function rollMagicAttack(attacker, defender, itemsData, opts = {}) {
   const atkBonuses = getEquipmentBonuses(attacker.equipment, itemsData)
   const defBonuses = getEquipmentBonuses(defender.equipment, itemsData)
   const atkMods = getPvpCombatModifiers(attacker)
-  const voidMult = getVoidKnightCombatMultipliers(attacker.equipment)
+  const voidMult = getVoidKingCombatMultipliers(attacker.equipment)
   const defMods = getPvpCombatModifiers(defender)
 
   const effMag = effectiveMagic(attacker.stats.magic, atkMods.potions.magic, atkMods.prayer.magic)
@@ -184,9 +184,9 @@ export function rollMagicAttack(attacker, defender, itemsData, opts = {}) {
 
   let maxHit
   if (typeof maxHitOverride === 'number') {
-    maxHit = magicMaxHit(maxHitOverride, atkBonuses.otherBonus.magicDamage + (voidMult.magicDamage > 1 ? 5 : 0))
+    maxHit = magicMaxHit(maxHitOverride, atkBonuses.otherBonus.magicDamage + voidMult.magicDamageBonusFlat)
   } else if (spell) {
-    maxHit = magicMaxHit(spell.baseDamage, atkBonuses.otherBonus.magicDamage + (voidMult.magicDamage > 1 ? 5 : 0))
+    maxHit = magicMaxHit(spell.baseDamage, atkBonuses.otherBonus.magicDamage + voidMult.magicDamageBonusFlat)
   } else {
     // No spell, no override — caller is misusing the API. Bail with 0.
     return { hit: false, damage: 0, accuracy: 0, maxHit: 0, attackRoll: atkRoll, defenceRoll: defRoll, style: 'magic' }

@@ -10,7 +10,7 @@ import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE, EAT_TICK_COST } from '../utils/constants.js'
 import { randInt } from '../utils/helpers.js'
 import { getSlayerTaskEquipmentBonuses } from './slayerCombatBonuses.js'
-import { getVoidKnightCombatMultipliers } from './combatSetBonuses.js'
+import { getVoidKingCombatMultipliers } from './combatSetBonuses.js'
 
 
 function getAvasAmmoSaveChance(equipment) {
@@ -450,7 +450,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
     }
 
     const slayerEquipmentBonus = getSlayerTaskEquipmentBonuses({ equipment, itemsData, slayerTask, monsterId: monster.id })
-    const voidMult = getVoidKnightCombatMultipliers(equipment)
+    const voidMult = getVoidKingCombatMultipliers(equipment)
     let damage = 0
     let xpSkills = {}
 
@@ -649,7 +649,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       // At 75 = 24, at 99 = 32, at 123 = 39 (matches PocketRPG trident formulas approx).
       const magicLevel = boostedPlayerStats.magic || 1
       const baseDamage = Math.max(1, Math.floor(magicLevel / 3) + 9)
-      const maxHit = Math.floor(magicMaxHit(baseDamage, bonuses.otherBonus.magicDamage + (voidMult.magicDamage > 1 ? 5 : 0)) + slayerEquipmentBonus.damageFlat)
+      const maxHit = Math.floor(magicMaxHit(baseDamage, bonuses.otherBonus.magicDamage + voidMult.magicDamageBonusFlat) + slayerEquipmentBonus.damageFlat)
       damage = rollDamage(acc, maxHit)
 
       if (weaponIsScaleCharged) {
@@ -676,7 +676,7 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
         const atkRoll = Math.floor(maxAttackRoll(effMag, (bonuses.attackBonus.magic || 0) + slayerEquipmentBonus.accuracyFlat) * voidMult.magicAccuracy)
         const defRoll = monsterMagicDefenceRoll(monster.stats.magic, monster.stats.defence, monster.defenceBonus.magic || 0)
         const acc = hitChance(atkRoll, defRoll)
-        const maxHit = Math.floor(magicMaxHit(state.spell.baseDamage, bonuses.otherBonus.magicDamage + (voidMult.magicDamage > 1 ? 5 : 0)) + slayerEquipmentBonus.damageFlat)
+        const maxHit = Math.floor(magicMaxHit(state.spell.baseDamage, bonuses.otherBonus.magicDamage + voidMult.magicDamageBonusFlat) + slayerEquipmentBonus.damageFlat)
         damage = rollDamage(acc, maxHit)
 
         // Track which runes to consume (excluding those provided by staff)
