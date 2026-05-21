@@ -2,6 +2,7 @@ import { requireAuth, json } from '../../_lib/auth.js'
 import { assertNotInActiveMatch } from '../../_lib/pvp.js'
 import { loadCharacterWithSave, writeSave } from '../../_lib/game/save.js'
 import { settleActionCompletion } from '../../_lib/game/actionCompletion.js'
+import { claimActionNonce } from '../../_lib/game/nonces.js'
 import { toErrorResponse } from '../../_lib/game/errors.js'
 import { auditLog } from '../../_lib/game/audit.js'
 import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
@@ -60,11 +61,15 @@ export function makeCompletionHandler(sourceType, deps = {}) {
       const resolvedRewards = typeof deps.resolveRewards === 'function'
         ? deps.resolveRewards({ sourceType, sourceId, body })
         : (Array.isArray(body?.rewards) ? body.rewards : [])
+      // Claim the nonce against the DB before doing anything else.
+      // A replay throws STALE_REPLAYED_ACTION which is mapped to 409.
+      // The DB-side claim is atomic and independent of save state, so a
+      // client that PUTs a stale save cannot resurrect a used nonce.
+      await (deps.claimActionNonce || claimActionNonce)(env, characterId, body?.actionNonce)
       const { saveObject, saveRevision } = await (deps.loadCharacterWithSave || loadCharacterWithSave)(env, characterId, auth.identity.id)
       const settled = settleActionCompletion(saveObject, {
         sourceType,
         sourceId,
-        nonce: body?.actionNonce,
         rewards: resolvedRewards,
         consumptions: Array.isArray(body?.consumptions) ? body.consumptions : [],
         slayerPoints: body?.slayerPoints,

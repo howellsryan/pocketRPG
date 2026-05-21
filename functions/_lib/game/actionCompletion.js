@@ -68,13 +68,6 @@ function isValidRewardSourceItem(sourceType, sourceId, itemId) {
 }
 
 
-function assertNonce(saveObject, nonce) {
-  if (!nonce || typeof nonce !== 'string') throw new GameApiError('INVALID_NONCE', 'Invalid action nonce', 400)
-  if (!saveObject._serverActionNonces) saveObject._serverActionNonces = {}
-  if (saveObject._serverActionNonces[nonce]) throw new GameApiError('STALE_REPLAYED_ACTION', 'stale_replayed_action', 409)
-  saveObject._serverActionNonces[nonce] = Date.now()
-}
-
 function getDungeoneeringTokenBalance(saveObject) {
   const topLevel = Number(saveObject?.dungeoneeringTokens)
   if (Number.isFinite(topLevel)) return Math.floor(topLevel)
@@ -111,9 +104,12 @@ function isStackableItem(itemId) {
   return itemsData?.[itemId]?.stackable === true
 }
 
-export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce, rewards = [], consumptions = [], slayerPoints = 0, dungeoneeringTokens = 0 }) {
-  assertNonce(saveObject, nonce)
-
+// Pre-step-6 callers passed `nonce` for in-blob replay defence. The new
+// flow claims the nonce via claimActionNonce(env, characterId, nonce)
+// BEFORE calling this — that path is atomic at the DB level. The `nonce`
+// arg is accepted and ignored here for backward compatibility with any
+// caller that hasn't migrated yet (tests can still pass it).
+export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce: _nonce, rewards = [], consumptions = [], slayerPoints = 0, dungeoneeringTokens = 0 }) {
   for (const c of consumptions) {
     removeItemFromInventory(saveObject, c.itemId, c.quantity)
   }

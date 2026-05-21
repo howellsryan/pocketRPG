@@ -1,12 +1,18 @@
 import { decodeSaveRow, gzipJsonString } from '../saveCodec.js'
 import { GameApiError } from './errors.js'
+import { migrateLegacyNonces } from './nonces.js'
 
 export async function loadCharacterWithSave(env, characterId, identityId) {
   const row = await env.DB.prepare(`SELECT c.id, c.owner_id, c.is_ironman, c.credits, s.save_data, s.save_blob, s.updated_at, s.save_revision FROM characters c LEFT JOIN saves s ON s.character_id = c.id WHERE c.id = ? AND c.owner_id = ? AND c.deleted_at IS NULL`).bind(characterId, identityId).first()
   if (!row) throw new GameApiError('CHARACTER_NOT_FOUND', 'Character not found', 404)
   const decoded = await decodeSaveRow(row)
   const save_data = decoded?.save_data || null
-  return { row, saveObject: save_data ? JSON.parse(save_data) : {}, saveRevision: Number(row?.save_revision) || 0 }
+  const saveObject = save_data ? JSON.parse(save_data) : {}
+  // One-shot lift of pre-step-6 in-blob nonces to the action_nonces
+  // table. INSERT-OR-IGNORE makes it idempotent and safe even if the
+  // same save is loaded by concurrent requests.
+  await migrateLegacyNonces(env, characterId, saveObject)
+  return { row, saveObject, saveRevision: Number(row?.save_revision) || 0 }
 }
 
 export async function writeSave(env, characterId, saveObject, expectedRevision) {
