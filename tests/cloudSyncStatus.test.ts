@@ -112,7 +112,13 @@ describe('cloud sync save status events', () => {
     expect(pendingAfterSavedIndex).toBeGreaterThan(firstSavedIndex)
   })
 
-  it('clears skip-hour save options after failed push so later saves are not rejected', async () => {
+  it('does not carry credits_used_increment on any save (server-debits via /api/skip-hour)', async () => {
+    // Pre-step-1, the client attached creditsUsedIncrement:1 to the next
+    // save after a skip-hour and the server bumped credits_used from
+    // /api/save. That path is gone: credits_used is now incremented by
+    // /api/skip-hour and /api/slayer/skip server-side, atomically, in
+    // the same UPDATE that debits credits. The client must not set the
+    // flag on any putSave call.
     putSaveMock
       .mockRejectedValueOnce({ status: 403, message: 'protected_state_delta_rejected' })
       .mockResolvedValueOnce({ updatedAt: 250 })
@@ -128,7 +134,7 @@ describe('cloud sync save status events', () => {
     await vi.runAllTicks()
 
     expect(putSaveMock).toHaveBeenCalledTimes(2)
-    expect(putSaveMock.mock.calls[0][1]).toMatchObject({ creditsUsedIncrement: 1 })
+    expect(putSaveMock.mock.calls[0][1]).not.toHaveProperty('creditsUsedIncrement')
     expect(putSaveMock.mock.calls[1][1]).not.toHaveProperty('creditsUsedIncrement')
   })
 })

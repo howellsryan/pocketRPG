@@ -146,9 +146,9 @@ export function requestCriticalPushSave(snapshotOrFactory, reason = 'critical') 
 
   pendingCriticalSnapshotSource = snapshotOrFactory
   pendingCriticalReasons.add(normaliseCriticalSaveReason(reason))
-  if (reason === CRITICAL_SAVE_REASONS.SKIP_HOUR) {
-    pendingSaveOptions.creditsUsedIncrement = 1
-  }
+  // Credit consumption is now debited server-side by /api/skip-hour and
+  // /api/slayer/skip — see Step 1 of the production-readiness rollout.
+  // The client no longer self-reports credits_used_increment.
   markUnsynced()
 
   // Critical milestones should not wait behind the normal 60s autosave timer.
