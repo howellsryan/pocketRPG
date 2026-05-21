@@ -87,11 +87,13 @@ export async function onRequestPut({ request, env }) {
   if (save_data && save_data.length > MAX_SAVE_BYTES) {
     return json({ error: 'Save too large' }, 413)
   }
+  if (!Number.isFinite(expectedSaveRevision) || expectedSaveRevision < 0) {
+    return json({ error: 'save_revision_required', code: 'SAVE_REVISION_REQUIRED' }, 400)
+  }
 
-  
   const existing = await env.DB.prepare('SELECT save_data, save_blob, save_revision FROM saves WHERE character_id = ?').bind(ch.id).first()
   const currentRevision = Number(existing?.save_revision) || 0
-  if (Number.isFinite(expectedSaveRevision) && expectedSaveRevision !== currentRevision) {
+  if (expectedSaveRevision !== currentRevision) {
     return json({ error: 'save_revision_conflict', code: 'SAVE_REVISION_CONFLICT', current_revision: currentRevision }, 409)
   }
 

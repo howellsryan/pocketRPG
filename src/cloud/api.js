@@ -156,7 +156,7 @@ export const api = {
     body: JSON.stringify({
       save_data,
       credits_used_increment: options?.creditsUsedIncrement === 1 ? 1 : 0,
-      save_revision: Number.isFinite(options?.saveRevision) ? options.saveRevision : undefined,
+      save_revision: Number.isFinite(options?.saveRevision) ? options.saveRevision : 0,
     }),
   }),
   getCollectionLog: () => request('/api/collection-log'),
