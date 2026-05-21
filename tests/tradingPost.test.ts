@@ -66,33 +66,43 @@ class FakeDB {
       })
       return { meta: { last_row_id: id, changes: 1 } }
     }
-    if (sql.startsWith('UPDATE trading_post_offers SET coins_pending = coins_pending + ?, quantity_remaining = ?, updated_at = ?')) {
-      const [delta, qRem, updatedAt, id] = params
+    if (sql.startsWith('UPDATE trading_post_offers SET coins_pending = coins_pending + ?, quantity_remaining = quantity_remaining - ?, updated_at = ? WHERE id = ? AND quantity_remaining >= ? AND status = \'active\' AND character_id IS NOT NULL')) {
+      // Seller-side decrement (non-orphan). Conditional on remaining >=
+      // tradeQty so concurrent fills can't both succeed against the
+      // same row.
+      const [delta, tradeQty, updatedAt, id, minRemaining] = params
       const row = this.rows.find((r) => r.id === id)
-      if (row) {
-        row.coins_pending = (row.coins_pending || 0) + delta
-        row.quantity_remaining = qRem
-        row.updated_at = updatedAt
+      if (!row || row.status !== 'active' || row.character_id == null || (Number(row.quantity_remaining) || 0) < minRemaining) {
+        return { meta: { changes: 0 } }
       }
-      return { meta: { changes: row ? 1 : 0 } }
+      row.coins_pending = (row.coins_pending || 0) + delta
+      row.quantity_remaining = (Number(row.quantity_remaining) || 0) - tradeQty
+      row.updated_at = updatedAt
+      return { meta: { changes: 1 } }
     }
-    if (sql.startsWith('UPDATE trading_post_offers SET items_pending = items_pending + ?, coins_pending = coins_pending + ?, quantity_remaining = ?, updated_at = ?')) {
-      const [deltaItems, deltaCoins, qRem, updatedAt, id] = params
+    if (sql.startsWith('UPDATE trading_post_offers SET items_pending = items_pending + ?, coins_pending = coins_pending + ?, quantity_remaining = quantity_remaining - ?, updated_at = ? WHERE id = ? AND quantity_remaining >= ? AND status = \'active\'')) {
+      // Buyer-side decrement.
+      const [deltaItems, deltaCoins, tradeQty, updatedAt, id, minRemaining] = params
       const row = this.rows.find((r) => r.id === id)
-      if (row) {
-        row.items_pending = (row.items_pending || 0) + deltaItems
-        row.coins_pending = (row.coins_pending || 0) + deltaCoins
-        row.quantity_remaining = qRem
-        row.updated_at = updatedAt
+      if (!row || row.status !== 'active' || (Number(row.quantity_remaining) || 0) < minRemaining) {
+        return { meta: { changes: 0 } }
       }
-      return { meta: { changes: row ? 1 : 0 } }
+      row.items_pending = (row.items_pending || 0) + deltaItems
+      row.coins_pending = (row.coins_pending || 0) + deltaCoins
+      row.quantity_remaining = (Number(row.quantity_remaining) || 0) - tradeQty
+      row.updated_at = updatedAt
+      return { meta: { changes: 1 } }
     }
-    if (sql.startsWith('UPDATE trading_post_offers SET quantity_remaining = ?, updated_at = ?')) {
+    if (sql.startsWith('UPDATE trading_post_offers SET quantity_remaining = quantity_remaining - ?, updated_at = ? WHERE id = ? AND quantity_remaining >= ? AND status = \'active\' AND character_id IS NULL')) {
       // Orphan-side decrement (no coins credited, no character to pay).
-      const [qRem, updatedAt, id] = params
+      const [tradeQty, updatedAt, id, minRemaining] = params
       const row = this.rows.find((r) => r.id === id)
-      if (row) { row.quantity_remaining = qRem; row.updated_at = updatedAt }
-      return { meta: { changes: row ? 1 : 0 } }
+      if (!row || row.status !== 'active' || row.character_id != null || (Number(row.quantity_remaining) || 0) < minRemaining) {
+        return { meta: { changes: 0 } }
+      }
+      row.quantity_remaining = (Number(row.quantity_remaining) || 0) - tradeQty
+      row.updated_at = updatedAt
+      return { meta: { changes: 1 } }
     }
     if (sql.startsWith('UPDATE trading_post_offers SET status = ?, updated_at = ?')) {
       const [status, updatedAt, id] = params
@@ -107,10 +117,19 @@ class FakeDB {
       return { meta: { changes: row ? 1 : 0 } }
     }
     if (sql.startsWith('UPDATE trading_post_offers SET character_id = NULL')) {
-      const [updatedAt, id] = params
+      // Instant-sell orphan: now conditional on still owning the row and
+      // remaining quantity matching, so a buyer mid-match can't get
+      // credited twice.
+      const [updatedAt, id, quantityRemaining] = params
       const row = this.rows.find((r) => r.id === id)
-      if (row) { row.character_id = null; row.coins_pending = 0; row.items_pending = 0; row.updated_at = updatedAt }
-      return { meta: { changes: row ? 1 : 0 } }
+      if (!row || row.character_id == null || row.status !== 'active' || row.quantity_remaining !== quantityRemaining) {
+        return { meta: { changes: 0 } }
+      }
+      row.character_id = null
+      row.coins_pending = 0
+      row.items_pending = 0
+      row.updated_at = updatedAt
+      return { meta: { changes: 1 } }
     }
     if (sql.startsWith('DELETE FROM trading_post_offers WHERE id = ?')) {
       const [id] = params
@@ -132,8 +151,10 @@ class FakeDB {
       const idCount = sellMatch[1].split(',').length
       const itemIds = params.slice(0, idCount)
       const maxPrice = params[idCount]
+      // Match new self-trade exclusion: last param is the excludeCharacterId.
+      const excludeChar = sql.includes('character_id IS NULL OR character_id != ?') ? params[idCount + 1] : null
       const results = this.rows
-        .filter((r) => itemIds.includes(r.item_id) && r.offer_type === 'sell' && r.status === 'active' && r.price <= maxPrice)
+        .filter((r) => itemIds.includes(r.item_id) && r.offer_type === 'sell' && r.status === 'active' && r.price <= maxPrice && (excludeChar == null || r.character_id == null || r.character_id !== excludeChar))
         .sort((a, b) => a.price - b.price || a.created_at - b.created_at)
       return { results }
     }
@@ -142,8 +163,9 @@ class FakeDB {
       const idCount = buyMatch[1].split(',').length
       const itemIds = params.slice(0, idCount)
       const minPrice = params[idCount]
+      const excludeChar = sql.includes('character_id != ?') ? params[idCount + 1] : null
       const results = this.rows
-        .filter((r) => itemIds.includes(r.item_id) && r.offer_type === 'buy' && r.status === 'active' && r.price >= minPrice)
+        .filter((r) => itemIds.includes(r.item_id) && r.offer_type === 'buy' && r.status === 'active' && r.price >= minPrice && (excludeChar == null || r.character_id !== excludeChar))
         .sort((a, b) => b.price - a.price || a.created_at - b.created_at)
       return { results }
     }
