@@ -57,7 +57,7 @@ export async function onRequestPost({ request, env }) {
 
     const write = await writeSave(env, characterId, saveObject, saveRevision)
 
-    auditLog('trading_post_sell_immediate', { characterId, itemId, quantity, unit, totalPayout })
+    await auditLog(env, 'trading_post_sell_immediate', { characterId, identityId: auth.identity.id, itemId, quantity, unit, totalPayout }, { swallow: true })
 
     return json({
       ok: true,

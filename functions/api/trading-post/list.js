@@ -65,7 +65,7 @@ export async function onRequestPost({ request, env }) {
     if (offerType === 'sell' && !isOrderBookItem(item)) {
       const { unit, totalPayout } = autoFillSellAtShopValue(saveObject, item, itemId, quantity)
       const write = await writeSave(env, characterId, saveObject, saveRevision)
-      auditLog('trading_post_list_autofill', { characterId, itemId, quantity, unit, totalPayout })
+      await auditLog(env, 'trading_post_list_autofill', { characterId, identityId: auth.identity.id, itemId, quantity, unit, totalPayout }, { swallow: true })
       return json({
         ok: true,
         offer_id: null,
@@ -119,8 +119,9 @@ export async function onRequestPost({ request, env }) {
 
     const write = await writeSave(env, characterId, saveObject, saveRevision)
 
-    auditLog('trading_post_list', {
+    await auditLog(env, 'trading_post_list', {
       characterId,
+      identityId: auth.identity.id,
       offerType,
       itemId,
       price,
@@ -131,7 +132,7 @@ export async function onRequestPost({ request, env }) {
       totalSpent: matchRes.totalSpent,
       totalEarned: matchRes.totalEarned,
       priceImprovementRefund: matchRes.priceImprovementRefund,
-    })
+    }, { swallow: true })
 
     return json({
       ok: true,

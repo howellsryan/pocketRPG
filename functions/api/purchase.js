@@ -51,7 +51,7 @@ export async function onRequestPost({ request, env }) {
     }
     const write = await writeSave(env, characterId, saveObject, saveRevision)
 
-    auditLog('shop_purchase', { characterId, itemId, quantity, totalCost })
+    await auditLog(env, 'shop_purchase', { characterId, identityId: auth.identity.id, itemId, quantity, totalCost }, { swallow: true })
     return json({ ok: true, item_id: itemId, quantity, totalCost, updatedAt: write.updatedAt, save_revision: write.saveRevision, coins: saveObject.coins })
   } catch (err) {
     const mapped = toErrorResponse(err)

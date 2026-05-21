@@ -37,7 +37,7 @@ export async function onRequestPost({ request, env }) {
     await cancelOffer(env, { offer, saveObject, itemsLookup: itemsData })
     const write = await writeSave(env, characterId, saveObject, saveRevision)
 
-    auditLog('trading_post_cancel', { characterId, offerId, itemId: offer.item_id, offerType: offer.offer_type })
+    await auditLog(env, 'trading_post_cancel', { characterId, identityId: auth.identity.id, offerId, itemId: offer.item_id, offerType: offer.offer_type }, { swallow: true })
 
     return json({
       ok: true,

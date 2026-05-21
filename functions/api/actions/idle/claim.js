@@ -49,7 +49,7 @@ export async function onRequestPost({ request, env }) {
     const now = Date.now()
     await env.DB.prepare('UPDATE character_idle_state SET last_active_at = ?, updated_at = ? WHERE character_id = ?').bind(now, now, characterId).run()
 
-    auditLog('idle_claim', { characterId, elapsedMs, isSkipHour, coins: granted.grantedCoins, itemCount: granted.grantedItems.length })
+    await auditLog(env, 'idle_claim', { characterId, identityId: auth.identity.id, elapsedMs, isSkipHour, coins: granted.grantedCoins, itemCount: granted.grantedItems.length }, { swallow: true })
     return json({ ok: true, elapsedMs, ...granted, updatedAt: write.updatedAt, save_revision: write.saveRevision })
   } catch (err) {
     const mapped = toErrorResponse(err)

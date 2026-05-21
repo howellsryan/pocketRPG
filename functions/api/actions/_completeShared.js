@@ -73,7 +73,7 @@ export function makeCompletionHandler(sourceType, deps = {}) {
       const collectionLogEntries = await persistCollectionLogFromGranted(env, characterId, sourceType, sourceId, settled.granted)
       const write = await (deps.writeSave || writeSave)(env, characterId, saveObject, saveRevision)
 
-      auditLog('action_complete', { sourceType, sourceId, characterId, granted: settled.granted.length })
+      await auditLog(env, 'action_complete', { sourceType, sourceId, characterId, identityId: auth.identity.id, granted: settled.granted.length }, { swallow: true })
       return json({ ok: true, sourceType, sourceId, ...settled, collectionLogEntries, save: { save_data: JSON.stringify(saveObject), updatedAt: write.updatedAt, save_revision: write.saveRevision } })
     } catch (err) {
       const mapped = toErrorResponse(err)
