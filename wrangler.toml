@@ -11,16 +11,23 @@ database_id = "439e810b-8dce-4697-94c2-a7392520ad8f"
 APP_BASE_URL = "https://pocketrpg.co.uk"
 
 # Secrets to set via dashboard or `wrangler pages secret put`:
-#   JWT_SECRET                      — random 32+ byte string used to sign session JWTs
-#   GITHUB_CLIENT_ID                — from GitHub OAuth App
-#   GITHUB_CLIENT_SECRET            — from GitHub OAuth App
-#   GOOGLE_CLIENT_ID                — from Google Cloud OAuth 2.0 Client
-#   GOOGLE_CLIENT_SECRET            — from Google Cloud OAuth 2.0 Client
-#   STRIPE_WEBHOOK_SECRET           — Stripe webhook signing secret (whsec_...), live environment
-#   STRIPE_PAYMENT_LINK_REMOVE_ADS  — Stripe payment link (metadata: { type: "remove_ads" })
-#   STRIPE_PAYMENT_LINK_CREDITS_10  — Stripe payment link (metadata: { type: "credits", amount: "10" })
-#   STRIPE_PAYMENT_LINK_CREDITS_100 — Stripe payment link (metadata: { type: "credits", amount: "100" })
-#   STRIPE_PAYMENT_LINK_CREDITS_1000— Stripe payment link (metadata: { type: "credits", amount: "1000" })
+#   JWT_SECRET                — random 32+ byte string used to sign session JWTs
+#   GITHUB_CLIENT_ID          — from GitHub OAuth App
+#   GITHUB_CLIENT_SECRET      — from GitHub OAuth App
+#   GOOGLE_CLIENT_ID          — from Google Cloud OAuth 2.0 Client
+#   GOOGLE_CLIENT_SECRET      — from Google Cloud OAuth 2.0 Client
+#   STRIPE_API_KEY            — Stripe secret key (sk_live_… in prod)
+#   STRIPE_WEBHOOK_SECRET     — Stripe webhook signing secret (whsec_…), live environment
+#   STRIPE_PRICE_REMOVE_ADS   — Stripe Price ID for the remove-ads product
+#   STRIPE_PRICE_CREDITS_10   — Stripe Price ID for 10 credits
+#   STRIPE_PRICE_CREDITS_100  — Stripe Price ID for 100 credits
+#   STRIPE_PRICE_CREDITS_1000 — Stripe Price ID for 1000 credits
+#
+# Pre-step-3 the four STRIPE_PAYMENT_LINK_* secrets pointed at public
+# Stripe Payment Links and clients passed ?client_reference_id=… on
+# them. That path was retired in favour of server-issued Checkout
+# Sessions; the old secrets can be deleted from the Pages dashboard
+# once a deploy with this code is live.
 
 [env.preview]
 d1_databases = [
@@ -28,8 +35,9 @@ d1_databases = [
 ]
 vars = { APP_BASE_URL = "https://preview.pocketrpg.pages.dev" }
 # Secrets for preview environment (set via `wrangler pages secret put --env preview`):
-#   STRIPE_WEBHOOK_SECRET   — Stripe webhook signing secret (whsec_...), test environment
-#   STRIPE_PAYMENT_LINK_REMOVE_ADS  — test Stripe payment link
-#   STRIPE_PAYMENT_LINK_CREDITS_10  — test Stripe payment link
-#   STRIPE_PAYMENT_LINK_CREDITS_100 — test Stripe payment link
-#   STRIPE_PAYMENT_LINK_CREDITS_1000— test Stripe payment link
+#   STRIPE_API_KEY            — Stripe secret key (sk_test_…)
+#   STRIPE_WEBHOOK_SECRET     — Stripe webhook signing secret (whsec_…), test environment
+#   STRIPE_PRICE_REMOVE_ADS   — test Stripe Price ID
+#   STRIPE_PRICE_CREDITS_10   — test Stripe Price ID
+#   STRIPE_PRICE_CREDITS_100  — test Stripe Price ID
+#   STRIPE_PRICE_CREDITS_1000 — test Stripe Price ID

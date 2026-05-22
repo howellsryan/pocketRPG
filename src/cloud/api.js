@@ -179,6 +179,11 @@ export const api = {
   completeDungeoneering: (sourceId, payload = {}) => request('/api/actions/dungeoneering/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
   completeMonster: (sourceId, payload = {}) => request('/api/actions/monster/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
 
+  createStripeSession: (sku, characterId) => request('/api/stripe/create-session', {
+    method: 'POST',
+    body: JSON.stringify({ sku, character_id: characterId || 0 }),
+  }),
+
   tradingPostList: (offerType, itemId, price, quantity) => request('/api/trading-post/list', {
     method: 'POST',
     body: JSON.stringify({ offer_type: offerType, item_id: itemId, price, quantity }),
