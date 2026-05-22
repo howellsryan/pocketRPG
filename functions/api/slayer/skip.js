@@ -20,7 +20,8 @@ export async function onRequestPost({ request, env }) {
 
     const debit = await env.DB.prepare(`
       UPDATE characters
-      SET credits = credits - 1
+      SET credits = credits - 1,
+          credits_used = credits_used + 1
       WHERE id = ?
         AND owner_id = ?
         AND deleted_at IS NULL

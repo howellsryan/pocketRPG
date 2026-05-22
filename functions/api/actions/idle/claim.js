@@ -6,7 +6,7 @@ import { toErrorResponse } from '../../../_lib/game/errors.js'
 import { auditLog } from '../../../_lib/game/audit.js'
 
 async function consumeSkipCredit(env, characterId, identityId) {
-  const row = await env.DB.prepare(`UPDATE characters SET credits = credits - 1 WHERE id = ? AND owner_id = ? AND deleted_at IS NULL AND credits >= 1 RETURNING credits`).bind(characterId, identityId).first()
+  const row = await env.DB.prepare(`UPDATE characters SET credits = credits - 1, credits_used = credits_used + 1 WHERE id = ? AND owner_id = ? AND deleted_at IS NULL AND credits >= 1 RETURNING credits`).bind(characterId, identityId).first()
   if (!row) throw new Error('INSUFFICIENT_CREDITS')
   return row.credits
 }
