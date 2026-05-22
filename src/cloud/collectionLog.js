@@ -6,6 +6,7 @@
 // silently rejected because no PvE source maps to them.
 
 import { api, getToken, getCharacterId } from './api.js'
+import { pushNow } from './sync.js'
 import { isSlotObtained } from '../engine/collectionLog.js'
 
 const FLUSH_DELAY_MS = 500
@@ -115,6 +116,14 @@ async function flush() {
     buffer = []
     return
   }
+  // Drain any pending save first. The server's collection-log handler
+  // requires the player to currently own the claimed item (server-side
+  // ownership check, see functions/api/collection-log.js), and a client-
+  // authoritative reward flow (e.g. minigame completion) may have only
+  // queued the save push 500ms ago. Without this drain the POST would
+  // race the save and the server's stored save would still lack the
+  // item.
+  try { await pushNow() } catch { /* best-effort — proceed regardless */ }
   const batch = buffer.splice(0, MAX_BUFFER)
   try {
     await api.postCollectionLog(batch)

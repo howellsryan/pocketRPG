@@ -126,11 +126,28 @@ export function schedulePushSave(snapshot) {
 }
 
 // Public: bypass the debounce — used on tab-hide / page-unload so we don't
-// lose a pending push.
+// lose a pending push. Also drains any pending critical save inline, so
+// callers that need "everything I've queued is on the server now" (e.g.
+// the collection-log POST, which is gated server-side on item ownership)
+// can await this and be confident the next request sees the new state.
 export async function pushNow(snapshot) {
   if (!canSync()) return
   if (snapshot) pendingSnapshot = snapshot
   if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }
+
+  // Resolve any pending critical-save snapshot synchronously and feed it
+  // through the normal flushNow path. Without this, a critical push
+  // queued moments before pushNow() would still be sitting on the
+  // criticalTimer when we return.
+  if (criticalTimer || pendingCriticalSnapshotSource) {
+    if (criticalTimer) { clearTimeout(criticalTimer); criticalTimer = null }
+    const source = pendingCriticalSnapshotSource
+    pendingCriticalSnapshotSource = null
+    pendingCriticalReasons.clear()
+    const criticalSnapshot = resolveSnapshotSource(source)
+    if (criticalSnapshot) pendingSnapshot = criticalSnapshot
+  }
+
   await flushNow()
 }
 
