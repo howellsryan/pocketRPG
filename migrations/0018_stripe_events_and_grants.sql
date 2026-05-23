@@ -17,9 +17,9 @@ CREATE TABLE IF NOT EXISTS purchase_grants (
   event_id                  TEXT PRIMARY KEY,
   identity_id               INTEGER NOT NULL,
   character_id              INTEGER,
-  type                      TEXT NOT NULL,            -- 'credits' | 'remove_ads'
-  amount                    INTEGER NOT NULL,         -- units granted
-  amount_total              INTEGER NOT NULL,         -- Stripe minor units paid
+  type                      TEXT NOT NULL,
+  amount                    INTEGER NOT NULL, 
+  amount_total              INTEGER NOT NULL,
   currency                  TEXT NOT NULL,
   stripe_session_id         TEXT NOT NULL,
   stripe_payment_intent_id  TEXT,
