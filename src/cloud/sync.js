@@ -72,11 +72,11 @@ function canSync() {
 
 async function flushNow() {
   pendingTimer = null
-  if (!canSync() || !pendingSnapshot) return
+  if (!canSync() || !pendingSnapshot) return false
   if (inFlight) {
     // Reschedule a single retry once the in-flight push settles.
     schedulePush(pendingSnapshot, 1000)
-    return
+    return false
   }
   const snap = pendingSnapshot
   pendingSnapshot = null
@@ -92,6 +92,7 @@ async function flushNow() {
     hasUnsyncedChanges = false
     emitCloudSaveStatus('saved', { updatedAt: res?.updatedAt || null })
     console.log('[PocketRPG] Cloud save pushed, size:', json.length)
+    return true
   } catch (err) {
     // While a PvP match is active, /api/save intentionally returns:
     //   409 { error: 'character_in_active_match' }
@@ -102,11 +103,12 @@ async function flushNow() {
       pendingSnapshot = snap
       markUnsynced()
       schedulePush(snap, ACTIVE_MATCH_RETRY_MS)
-      return
+      return false
     }
     pendingSaveOptions = {}
     emitCloudSaveStatus('failed', { error: err?.message || 'cloud_save_failed' })
     console.warn('[PocketRPG] Cloud push failed:', err.message)
+    return false
   } finally {
     inFlight = false
   }
@@ -130,8 +132,11 @@ export function schedulePushSave(snapshot) {
 // callers that need "everything I've queued is on the server now" (e.g.
 // the collection-log POST, which is gated server-side on item ownership)
 // can await this and be confident the next request sees the new state.
+// Returns true if the save landed on the server, false otherwise — callers
+// that gate UI on durable persistence (e.g. the paid skip-hour flow) use
+// this to decide whether to reveal rewards or keep retrying.
 export async function pushNow(snapshot) {
-  if (!canSync()) return
+  if (!canSync()) return false
   if (snapshot) pendingSnapshot = snapshot
   if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }
 
@@ -148,7 +153,7 @@ export async function pushNow(snapshot) {
     if (criticalSnapshot) pendingSnapshot = criticalSnapshot
   }
 
-  await flushNow()
+  return await flushNow()
 }
 
 

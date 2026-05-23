@@ -77,6 +77,20 @@ describe('cloud sync save status events', () => {
     expect(calls).not.toContain('saved')
   })
 
+  it('pushNow resolves true when the save lands (paid-skip durability gate)', async () => {
+    putSaveMock.mockResolvedValue({ updatedAt: 999, save_revision: 4 })
+    const sync = await import('../src/cloud/sync.js')
+    const ok = await sync.pushNow({ player: { name: 'Hero' } })
+    expect(ok).toBe(true)
+  })
+
+  it('pushNow resolves false when the save fails', async () => {
+    putSaveMock.mockRejectedValue(new Error('network down'))
+    const sync = await import('../src/cloud/sync.js')
+    const ok = await sync.pushNow({ player: { name: 'Hero' } })
+    expect(ok).toBe(false)
+  })
+
   it('critical saves still coalesce before a single push', async () => {
     putSaveMock.mockResolvedValue({ updatedAt: 77 })
     const sync = await import('../src/cloud/sync.js')
