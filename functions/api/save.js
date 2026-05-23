@@ -2,7 +2,7 @@ import { requireAuth, json } from '../_lib/auth.js'
 import { assertNotInActiveMatch, sweepStaleRows } from '../_lib/pvp.js'
 import { computeSaveSummaryFromJson } from '../_lib/saveSummary.js'
 import { decodeSaveRow, gzipJsonString } from '../_lib/saveCodec.js'
-import { detectProtectedDelta, detectEconomyInflation } from '../_lib/game/saveValidation.js'
+import { detectProtectedDelta } from '../_lib/game/saveValidation.js'
 import itemsData from '../../src/data/items.json' assert { type: 'json' }
 
 const MAX_SAVE_BYTES = 256 * 1024 // 256 KB ceiling — current saves are well under this
@@ -125,19 +125,19 @@ export async function onRequestPut({ request, env }) {
     try { parsedNext = JSON.parse(save_data) } catch {
       return json({ error: 'save_data_not_json', code: 'INVALID_SAVE_DATA' }, 400)
     }
-    // Step 1: economy fields are server-owned. Reject any client-initiated
-    // increase in XP, coins, slayer points, kill counts, etc. Legit gains
-    // arrive via the action-completion endpoints, which write the save
-    // server-side — the client's next PUT sees the new totals as already
-    // present and reports no inflation.
-    const econViolations = detectEconomyInflation(previousSave, parsedNext)
-    if (econViolations.length) {
-      return json({
-        error: 'protected_state_delta_rejected',
-        code: 'PROTECTED_STATE_DELTA',
-        violations: econViolations,
-      }, 403)
-    }
+    // PocketRPG is offline-first: live skilling, offline idle catch-up, and
+    // skip-hour all compute XP / coins / common drops on the CLIENT and
+    // persist them through this endpoint. There is no server-side game
+    // engine to recompute against, so a blanket "reject any economy
+    // increase" check would reject the core gameplay loop. We therefore
+    // only guard the high-value rewards that DO have server-authoritative
+    // grant paths: boss / raid / clue uniques (detectProtectedDelta, which
+    // already exempts anything present in a monster-drop or clue-reward
+    // table so normal drops pass). Paid credits are protected separately
+    // by the Stripe webhook + server-side debits; the trading post and PvP
+    // have their own server-authoritative paths. See the production-
+    // readiness notes: client-authoritative XP/coins is inherent to the
+    // idle-game design and the leaderboard is best-effort, not cheat-proof.
     const protectedViolations = detectProtectedDelta(previousSave, parsedNext, itemsData)
     if (protectedViolations.length) {
       return json({
