@@ -50,8 +50,13 @@ export async function onRequestPost({ request, env }) {
 
   const form = new URLSearchParams()
   form.append('mode', 'payment')
-  form.append('success_url', `${env.APP_BASE_URL}/?purchase=success`)
-  form.append('cancel_url',  `${env.APP_BASE_URL}/?purchase=cancel`)
+  // The client detects a successful return by the presence of a `payment`
+  // query param (App.jsx) — it then shows the thank-you toast and re-pulls
+  // credits to ride out webhook latency. Keep the success param named
+  // `payment` to match that handler. The cancel URL deliberately uses a
+  // different param so an abandoned checkout doesn't fire the toast.
+  form.append('success_url', `${env.APP_BASE_URL}/?payment=success`)
+  form.append('cancel_url',  `${env.APP_BASE_URL}/?checkout=cancel`)
   form.append('line_items[0][price]', price.priceId)
   form.append('line_items[0][quantity]', '1')
   form.append('client_reference_id', clientRef)
