@@ -80,19 +80,72 @@ export async function onRequestPut({ request, env }) {
   try { body = await request.json() } catch { return json({ error: 'Invalid JSON' }, 400) }
   const save_data = body.save_data
   const expectedSaveRevision = Number.isFinite(body?.save_revision) ? body.save_revision : parseInt(body?.save_revision, 10)
-  const credits_used_increment = body.credits_used_increment === 1 ? 1 : 0
+  // credits_used_increment is intentionally NOT read from the client.
+  // Credit consumption flows through /api/skip-hour and /api/slayer/skip,
+  // which atomically debit the column server-side. Letting the save endpoint
+  // also bump it lets a client either skip the increment (under-report) or
+  // double-bump it from a tab the user can't see.
   if (save_data !== null && typeof save_data !== 'string') {
     return json({ error: 'Missing save_data' }, 400)
   }
   if (save_data && save_data.length > MAX_SAVE_BYTES) {
     return json({ error: 'Save too large' }, 413)
   }
+  if (!Number.isFinite(expectedSaveRevision) || expectedSaveRevision < 0) {
+    return json({ error: 'save_revision_required', code: 'SAVE_REVISION_REQUIRED' }, 400)
+  }
 
-  
   const existing = await env.DB.prepare('SELECT save_data, save_blob, save_revision FROM saves WHERE character_id = ?').bind(ch.id).first()
   const currentRevision = Number(existing?.save_revision) || 0
-  if (Number.isFinite(expectedSaveRevision) && expectedSaveRevision !== currentRevision) {
+  if (expectedSaveRevision !== currentRevision) {
     return json({ error: 'save_revision_conflict', code: 'SAVE_REVISION_CONFLICT', current_revision: currentRevision }, 409)
+  }
+
+  // Decode the previous save once. The economy- and protected-delta checks
+  // both run against it; the catch-all that used to wrap the protected
+  // check (and swallow ALL errors silently) is gone — a decode failure on
+  // an existing row should return 500, not let the write through.
+  let previousSave = {}
+  if (existing?.save_data || existing?.save_blob) {
+    let previousJson = null
+    try {
+      const decoded = await decodeSaveRow(existing)
+      previousJson = decoded?.save_data || existing?.save_data || null
+    } catch (err) {
+      const code = err?.message || 'save_blob_decode_failed'
+      return json({ error: code }, 400)
+    }
+    if (previousJson) {
+      try { previousSave = JSON.parse(previousJson) } catch { previousSave = {} }
+    }
+  }
+
+  if (save_data) {
+    let parsedNext
+    try { parsedNext = JSON.parse(save_data) } catch {
+      return json({ error: 'save_data_not_json', code: 'INVALID_SAVE_DATA' }, 400)
+    }
+    // PocketRPG is offline-first: live skilling, offline idle catch-up, and
+    // skip-hour all compute XP / coins / common drops on the CLIENT and
+    // persist them through this endpoint. There is no server-side game
+    // engine to recompute against, so a blanket "reject any economy
+    // increase" check would reject the core gameplay loop. We therefore
+    // only guard the high-value rewards that DO have server-authoritative
+    // grant paths: boss / raid / clue uniques (detectProtectedDelta, which
+    // already exempts anything present in a monster-drop or clue-reward
+    // table so normal drops pass). Paid credits are protected separately
+    // by the Stripe webhook + server-side debits; the trading post and PvP
+    // have their own server-authoritative paths. See the production-
+    // readiness notes: client-authoritative XP/coins is inherent to the
+    // idle-game design and the leaderboard is best-effort, not cheat-proof.
+    const protectedViolations = detectProtectedDelta(previousSave, parsedNext, itemsData)
+    if (protectedViolations.length) {
+      return json({
+        error: 'protected_state_delta_rejected',
+        code: 'PROTECTED_STATE_DELTA',
+        items: protectedViolations,
+      }, 403)
+    }
   }
 
   const now = Date.now()
@@ -102,12 +155,6 @@ export async function onRequestPut({ request, env }) {
   const { totalLevel, combatLevel } = computeSaveSummaryFromJson(save_data)
   const save_blob = save_data ? await gzipJsonString(save_data) : null
 
-  if (existing?.save_data && save_data) {
-    try {
-      const violations = detectProtectedDelta(JSON.parse((await decodeSaveRow(existing))?.save_data || '{}'), JSON.parse(save_data), itemsData)
-      if (violations.length) return json({ error: 'protected_state_delta_rejected', code: 'PROTECTED_STATE_DELTA', items: violations }, 403)
-    } catch {}
-  }
   await env.DB.batch([
     env.DB.prepare(
       `INSERT INTO saves (character_id, save_blob, save_data, updated_at, save_revision)
@@ -120,11 +167,10 @@ export async function onRequestPut({ request, env }) {
     ).bind(ch.id, save_blob, save_data, now),
     env.DB.prepare(
       `UPDATE characters
-          SET credits_used = credits_used + ?,
-              total_level = ?,
+          SET total_level = ?,
               combat_level = ?
         WHERE id = ? AND owner_id = ? AND deleted_at IS NULL`
-    ).bind(credits_used_increment, totalLevel, combatLevel, ch.id, auth.identity.id),
+    ).bind(totalLevel, combatLevel, ch.id, auth.identity.id),
   ])
 
   const revisionRow = await env.DB.prepare('SELECT save_revision FROM saves WHERE character_id = ?').bind(ch.id).first()

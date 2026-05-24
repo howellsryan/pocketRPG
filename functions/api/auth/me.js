@@ -39,11 +39,17 @@ export async function onRequestGet({ request, env }) {
       remove_ads: row?.remove_ads === 1,
     },
     character,
-    stripe_links: {
-      remove_ads:   env.STRIPE_PAYMENT_LINK_REMOVE_ADS   || null,
-      credits_10:   env.STRIPE_PAYMENT_LINK_CREDITS_10   || null,
-      credits_100:  env.STRIPE_PAYMENT_LINK_CREDITS_100  || null,
-      credits_1000: env.STRIPE_PAYMENT_LINK_CREDITS_1000 || null,
+    // Credit / remove-ads purchases now go through POST /api/stripe/
+    // create-session, which authenticates the buyer and produces a
+    // server-issued Checkout Session URL. The four STRIPE_PAYMENT_LINK_*
+    // fields are no longer published; left as `null` so an older client
+    // that still reads them just falls through to the new flow.
+    stripe_links: { remove_ads: null, credits_10: null, credits_100: null, credits_1000: null },
+    stripe_skus: {
+      remove_ads:   'remove_ads',
+      credits_10:   'credits_10',
+      credits_100:  'credits_100',
+      credits_1000: 'credits_1000',
     },
   })
 }

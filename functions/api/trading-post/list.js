@@ -5,6 +5,8 @@ import { loadCharacterWithSave, writeSave } from '../../_lib/game/save.js'
 import { toErrorResponse } from '../../_lib/game/errors.js'
 import { auditLog } from '../../_lib/game/audit.js'
 import { canonicalItemId, normalizeSaveItemIds } from '../../_lib/game/inventory.js'
+import { addCoins } from '../../_lib/game/economy.js'
+import { addItemToBank } from '../../_lib/game/inventory.js'
 import {
   isTradingPostListable,
   isOrderBookItem,
@@ -65,7 +67,7 @@ export async function onRequestPost({ request, env }) {
     if (offerType === 'sell' && !isOrderBookItem(item)) {
       const { unit, totalPayout } = autoFillSellAtShopValue(saveObject, item, itemId, quantity)
       const write = await writeSave(env, characterId, saveObject, saveRevision)
-      auditLog('trading_post_list_autofill', { characterId, itemId, quantity, unit, totalPayout })
+      await auditLog(env, 'trading_post_list_autofill', { characterId, identityId: auth.identity.id, itemId, quantity, unit, totalPayout }, { swallow: true })
       return json({
         ok: true,
         offer_id: null,
@@ -82,45 +84,83 @@ export async function onRequestPost({ request, env }) {
 
     await assertSlotAvailable(env, characterId)
 
-    // Escrow first (modifies saveObject in-memory only). If this throws, the
-    // listing has not yet touched the DB.
+    // Escrow in memory. Then commit the escrow via writeSave BEFORE any
+    // DB-side mutation (offer insert + matching). Pre-step-2 the offer
+    // rows were written first and writeSave came last — if writeSave hit
+    // a save_revision conflict the offer existed but the player was
+    // never debited, so they could collect items_pending without paying.
     if (offerType === 'buy') {
       escrowBuyCoins(saveObject, price * quantity)
     } else {
       escrowSellItems(saveObject, itemId, quantity)
     }
+    const escrowWrite = await writeSave(env, characterId, saveObject, saveRevision)
+    const postEscrowRevision = escrowWrite.saveRevision
 
-    // Insert the new offer at full quantity. Matching mutates both sides'
-    // rows directly so the row needs to exist before we run it.
-    const offerId = await insertOffer(env, {
-      characterId,
-      offerType,
-      itemId,
-      price,
-      quantityTotal: quantity,
-      quantityRemaining: quantity,
-    })
-    if (!offerId) {
-      return json({ error: 'Failed to create offer', code: 'INSERT_FAILED' }, 500)
+    // Compensating refund: if anything after the escrow commit fails
+    // (offer insert, matching IO), undo the in-memory escrow and write
+    // again with the post-escrow revision. We can't roll back the DB
+    // revision bump but we can restore the player's coins/items so they
+    // are not silently debited.
+    async function refundEscrow(reason) {
+      try {
+        if (offerType === 'buy') {
+          addCoins(saveObject, price * quantity)
+        } else {
+          // Sell side: the item may be a non-stackable batch the inventory
+          // can't easily reabsorb mid-flow. Bank it so the refund is always
+          // representable, matching the bank-overflow convention elsewhere.
+          addItemToBank(saveObject, itemId, quantity)
+        }
+        await writeSave(env, characterId, saveObject, postEscrowRevision)
+        await auditLog(env, 'trading_post_list.compensating_refund', {
+          characterId, identityId: auth.identity.id, offerType, itemId, price, quantity, reason,
+        }, { swallow: true })
+      } catch (refundErr) {
+        // Best-effort. If the refund write also fails, log the situation
+        // for manual reconciliation — the audit row is the support trail.
+        await auditLog(env, 'trading_post_list.compensating_refund_failed', {
+          characterId, identityId: auth.identity.id, offerType, itemId, price, quantity, reason, refundError: refundErr?.message || String(refundErr),
+        }, { swallow: true })
+      }
     }
 
-    // Run matching. recordFill credits items_pending to the buyer offer and
-    // coins_pending to the seller offer; price improvement (if any) is
-    // refunded inline to the saveObject.
-    const matchRes = await executeMatching(env, {
-      newOfferId: offerId,
-      newCharacterId: characterId,
-      offerType,
-      itemId,
-      price,
-      quantity,
-      saveObject,
-    })
+    let offerId, matchRes
+    try {
+      offerId = await insertOffer(env, {
+        characterId,
+        offerType,
+        itemId,
+        price,
+        quantityTotal: quantity,
+        quantityRemaining: quantity,
+      })
+      if (!offerId) {
+        await refundEscrow('insert_failed')
+        return json({ error: 'Failed to create offer', code: 'INSERT_FAILED' }, 500)
+      }
+      matchRes = await executeMatching(env, {
+        newOfferId: offerId,
+        newCharacterId: characterId,
+        offerType,
+        itemId,
+        price,
+        quantity,
+        saveObject,
+      })
+    } catch (err) {
+      await refundEscrow(err?.code || err?.message || 'matching_failed')
+      throw err
+    }
 
-    const write = await writeSave(env, characterId, saveObject, saveRevision)
+    // Matching may have credited the buyer's price-improvement refund
+    // inline to saveObject. Persist that with a second writeSave using
+    // the revision bump from the escrow commit.
+    const write = await writeSave(env, characterId, saveObject, postEscrowRevision)
 
-    auditLog('trading_post_list', {
+    await auditLog(env, 'trading_post_list', {
       characterId,
+      identityId: auth.identity.id,
       offerType,
       itemId,
       price,
@@ -131,7 +171,7 @@ export async function onRequestPost({ request, env }) {
       totalSpent: matchRes.totalSpent,
       totalEarned: matchRes.totalEarned,
       priceImprovementRefund: matchRes.priceImprovementRefund,
-    })
+    }, { swallow: true })
 
     return json({
       ok: true,

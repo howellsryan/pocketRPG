@@ -155,8 +155,7 @@ export const api = {
     method: 'PUT',
     body: JSON.stringify({
       save_data,
-      credits_used_increment: options?.creditsUsedIncrement === 1 ? 1 : 0,
-      save_revision: Number.isFinite(options?.saveRevision) ? options.saveRevision : undefined,
+      save_revision: Number.isFinite(options?.saveRevision) ? options.saveRevision : 0,
     }),
   }),
   getCollectionLog: () => request('/api/collection-log'),
@@ -179,6 +178,11 @@ export const api = {
   completeSlayer: (sourceId, payload = {}) => request('/api/actions/slayer/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
   completeDungeoneering: (sourceId, payload = {}) => request('/api/actions/dungeoneering/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
   completeMonster: (sourceId, payload = {}) => request('/api/actions/monster/complete', { method: 'POST', body: JSON.stringify({ sourceId, ...payload }) }),
+
+  createStripeSession: (sku, characterId) => request('/api/stripe/create-session', {
+    method: 'POST',
+    body: JSON.stringify({ sku, character_id: characterId || 0 }),
+  }),
 
   tradingPostList: (offerType, itemId, price, quantity) => request('/api/trading-post/list', {
     method: 'POST',

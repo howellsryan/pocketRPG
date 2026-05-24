@@ -1,5 +1,6 @@
 import { requireAuth, json } from '../../_lib/auth.js'
 import { assertNotInActiveMatch } from '../../_lib/pvp.js'
+import { auditLog } from '../../_lib/game/audit.js'
 
 export async function onRequestPost({ request, env }) {
   const auth = await requireAuth(request, env)
@@ -19,7 +20,8 @@ export async function onRequestPost({ request, env }) {
 
     const debit = await env.DB.prepare(`
       UPDATE characters
-      SET credits = credits - 1
+      SET credits = credits - 1,
+          credits_used = credits_used + 1
       WHERE id = ?
         AND owner_id = ?
         AND deleted_at IS NULL
@@ -28,6 +30,13 @@ export async function onRequestPost({ request, env }) {
     `).bind(characterId, auth.identity.id).first()
 
     if (!debit) return json({ error: 'Insufficient credits' }, 402)
+
+    await auditLog(env, 'slayer.skip.spent', {
+      characterId,
+      identityId: auth.identity.id,
+      credits_remaining: debit.credits_remaining ?? 0,
+    }, { swallow: true })
+
     return json({ ok: true, credits_remaining: debit.credits_remaining ?? 0 })
   } catch (err) {
     console.error('[PocketRPG] Slayer skip error:', err)

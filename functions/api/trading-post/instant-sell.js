@@ -37,14 +37,15 @@ export async function onRequestPost({ request, env }) {
     const payout = await instantSellOffer(env, { offer, saveObject, itemsLookup: itemsData })
     const write = await writeSave(env, characterId, saveObject, saveRevision)
 
-    auditLog('trading_post_instant_sell', {
+    await auditLog(env, 'trading_post_instant_sell', {
       characterId,
+      identityId: auth.identity.id,
       offerId,
       itemId: offer.item_id,
       remaining: Number(offer.quantity_remaining) || 0,
       payout,
       payoutFraction: INSTANT_SELL_PAYOUT_FRACTION,
-    })
+    }, { swallow: true })
 
     return json({
       ok: true,

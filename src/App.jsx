@@ -195,6 +195,7 @@ function GameApp() {
   const [gameReady, setGameReady] = useState(false)
   const [activity, setActivity] = useState(null)
   const [idleResult, setIdleResult] = useState(null) // { elapsedMs, task, xpGained, itemsGained, lootLost, monstersKilled }
+  const [skipSaving, setSkipSaving] = useState(false) // true while a paid skip is being persisted before reveal
   const [actionData, setActionData] = useState(null) // { monsterId, gatherTaskId, skillId, actionId }
   const [isInCombat, setIsInCombat] = useState(false) // Track if currently in combat
   const [pendingXpChoices, setPendingXpChoices] = useState([]) // [{ rewards, questId, questName }, ...]
@@ -1205,6 +1206,54 @@ function GameApp() {
 
   const isSkippingRef = useRef(false)
 
+  // Wait for React to commit and run the stateRef-syncing effects in
+  // gameState before snapshotting. grantXP / updateBankDirect etc. are
+  // setState calls, and getSnapshot() reads stateRef.current, which is
+  // synced via useEffect — so a snapshot taken synchronously after the
+  // mutations would capture the PRE-skip state. Two animation frames
+  // guarantee a paint (and thus the passive effects) have run.
+  function waitForStateFlush() {
+    return new Promise((resolve) => {
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(() => requestAnimationFrame(resolve))
+      } else {
+        setTimeout(resolve, 32)
+      }
+    })
+  }
+
+  // Durably persist a paid skip before revealing its rewards. A skip
+  // debits a credit server-side up front, so if the client crashed/
+  // refreshed before the save landed the player would lose paid
+  // progress. We keep the loading overlay up, flush the post-skip state
+  // to the server (retrying transient failures), and only then show the
+  // idle-result modal. On a hard outage we still reveal the result but
+  // warn the player and leave the autosave retrying.
+  async function persistSkipThenReveal(idleResultData) {
+    if (isInPvpMatch) {
+      if (idleResultData) setIdleResult(idleResultData)
+      return
+    }
+    setSkipSaving(true)
+    try {
+      await waitForStateFlush()
+      let saved = false
+      for (let attempt = 0; attempt < 4 && !saved; attempt++) {
+        saved = await pushNow(getSnapshot())
+        if (!saved) await new Promise((r) => setTimeout(r, 400 * (attempt + 1)))
+      }
+      if (!saved) {
+        // Keep the unsynced flag (autosave keeps retrying) and warn the
+        // player rather than block forever on a dead connection.
+        schedulePushSave(getSnapshot())
+        addToast('Skip applied — still syncing to the cloud. Keep the app open.', 'error')
+      }
+    } finally {
+      setSkipSaving(false)
+      if (idleResultData) setIdleResult(idleResultData)
+    }
+  }
+
   function clearExhaustedActiveTask(reason) {
     setActiveTask(null)
     activeTaskRef.current = null
@@ -1288,7 +1337,8 @@ function GameApp() {
           setScreen(SCREENS.QUESTS)
         }
 
-        setIdleResult({
+        addToast('⏭️ Skipped 1 hour', 'info')
+        await persistSkipThenReveal({
           elapsedMs: SKIP_HOUR_MS,
           task: cascade.finalTask,
           questCascade: true,
@@ -1298,11 +1348,6 @@ function GameApp() {
           elapsedMsUsed: cascade.elapsedMsUsed,
           elapsedMsRemaining: cascade.elapsedMsRemaining,
         })
-        if (!isInPvpMatch) {
-          schedulePushSave(getSnapshot())
-          requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SKIP_HOUR)
-        }
-        addToast('⏭️ Skipped 1 hour', 'info')
         return
       }
 
@@ -1568,14 +1613,11 @@ function GameApp() {
 
       updateFarming(advanceFarmingState(farming, SKIP_HOUR_MS))
 
-      // Show idle result modal with skip summary
-      if (idleResultData) setIdleResult(idleResultData)
-
-      // Save the updated game state to cloud
-      if (!isInPvpMatch) {
-        schedulePushSave(getSnapshot())
-        requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SKIP_HOUR)
-      }
+      // Persist the paid skip to the cloud BEFORE revealing the reward.
+      // persistSkipThenReveal keeps the saving overlay up until the save
+      // lands, then shows the idle-result modal — so a refresh mid-save
+      // can't lose progress the player spent a credit on.
+      await persistSkipThenReveal(idleResultData)
     } catch (err) {
       console.error('[PocketRPG] Skip 1h error:', err)
       if (err?.status === 402) {
@@ -1713,8 +1755,21 @@ function GameApp() {
         onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')}
       />
 
+      {/* Skip-save overlay — shown while a paid skip is being persisted to
+          the cloud, before its rewards are revealed. Blocks interaction so
+          a refresh can't drop progress the player spent a credit on. */}
+      {skipSaving && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', zIndex: 250, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '30px', marginBottom: '10px' }}>⏭️</div>
+            <div style={{ fontFamily: 'Cinzel, serif', fontSize: '18px', color: '#d4af37', marginBottom: '6px' }}>Saving your progress…</div>
+            <div style={{ fontSize: '12px', color: '#c8a96e', opacity: 0.8 }}>Please don't close the app.</div>
+          </div>
+        </div>
+      )}
+
       {/* Idle Result Modal */}
-      {idleResult && pvp.phase !== 'in_match' && Date.now() >= suppressIdleModalUntil && (
+      {idleResult && !skipSaving && pvp.phase !== 'in_match' && Date.now() >= suppressIdleModalUntil && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <div style={{ width: '100%', maxWidth: '380px', background: '#1a1a1a', borderRadius: '20px', border: '1px solid #333', overflow: 'hidden' }}>
             {/* Header */}

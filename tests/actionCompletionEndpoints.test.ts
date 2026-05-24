@@ -5,6 +5,7 @@ function makeHandler() {
   return makeCompletionHandler('raids', {
     requireAuth: async () => ({ identity: { id: 1 } }),
     assertNotInActiveMatch: async () => null,
+    claimActionNonce: async () => {},
     loadCharacterWithSave: async () => ({ saveObject: { inventory: [{ id: 'food', quantity: 1 }] }, saveRevision: 0 }),
     writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
     resolveRewards: () => [],
@@ -35,11 +36,17 @@ describe('action completion endpoint tamper guards', () => {
     expect(Array.isArray(out.body.granted)).toBe(true)
   })
 
-  it('rejects stale/replayed nonce', async () => {
+  it('rejects stale/replayed nonce via DB-side claim', async () => {
     const handler = makeCompletionHandler('raids', {
       requireAuth: async () => ({ identity: { id: 1 } }),
       assertNotInActiveMatch: async () => null,
-      loadCharacterWithSave: async () => ({ saveObject: { _serverActionNonces: { replay: 1 }, inventory: [] }, saveRevision: 0 }),
+      claimActionNonce: async () => {
+        // Simulate the DB-side ON CONFLICT path firing — replay throws
+        // STALE_REPLAYED_ACTION.
+        const { GameApiError } = await import('../functions/_lib/game/errors.js')
+        throw new GameApiError('STALE_REPLAYED_ACTION', 'stale_replayed_action', 409)
+      },
+      loadCharacterWithSave: async () => ({ saveObject: { inventory: [] }, saveRevision: 0 }),
       writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
     })
     const req = new Request('https://example.com', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' }, body: JSON.stringify({ sourceId: 'cryptbound_champions', actionNonce: 'replay', rewards: [] }) })
@@ -56,6 +63,7 @@ describe('action completion endpoint tamper guards', () => {
     const handler = makeCompletionHandler('raids', {
       requireAuth: async () => ({ identity: { id: 1 } }),
       assertNotInActiveMatch: async () => null,
+      claimActionNonce: async () => {},
       loadCharacterWithSave: async () => ({ saveObject: { inventory: [] }, saveRevision: 0 }),
       writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
       resolveRewards: () => [{ itemId: 'coins', quantity: 41030 }, { itemId: 'death_rune', quantity: 253 }],
@@ -73,6 +81,7 @@ describe('action completion endpoint tamper guards', () => {
     const handler = makeCompletionHandler('dungeoneering', {
       requireAuth: async () => ({ identity: { id: 1 } }),
       assertNotInActiveMatch: async () => null,
+      claimActionNonce: async () => {},
       loadCharacterWithSave: async () => ({ saveObject: { inventory: [], settings: { dungeoneeringTokens: 100000 } }, saveRevision: 0 }),
       writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
     })
@@ -96,6 +105,7 @@ describe('action completion endpoint tamper guards', () => {
     const handler = makeCompletionHandler('dungeoneering', {
       requireAuth: async () => ({ identity: { id: 1 } }),
       assertNotInActiveMatch: async () => null,
+      claimActionNonce: async () => {},
       loadCharacterWithSave: async () => ({ saveObject: { inventory: [], dungeoneeringTokens: 100000 }, saveRevision: 0 }),
       writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
     })
@@ -117,6 +127,7 @@ describe('action completion endpoint tamper guards', () => {
     const handler = makeCompletionHandler('raids', {
       requireAuth: async () => ({ identity: { id: 1 } }),
       assertNotInActiveMatch: async () => null,
+      claimActionNonce: async () => {},
       loadCharacterWithSave: async () => ({ saveObject: { inventory: sparseInventory }, saveRevision: 0 }),
       writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
       resolveRewards: () => [
@@ -144,6 +155,7 @@ describe('action completion endpoint tamper guards', () => {
     const handler = makeCompletionHandler('raids', {
       requireAuth: async () => ({ identity: { id: 1 } }),
       assertNotInActiveMatch: async () => null,
+      claimActionNonce: async () => {},
       loadCharacterWithSave: async () => ({ saveObject: { inventory: fullInventory, bank: {} }, saveRevision: 0 }),
       writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
       resolveRewards: () => [{ itemId: 'coins', quantity: 41030 }, { itemId: 'death_rune', quantity: 253 }],
@@ -169,6 +181,7 @@ describe('action completion endpoint tamper guards', () => {
     const handler = makeCompletionHandler('raids', {
       requireAuth: async () => ({ identity: { id: 1 } }),
       assertNotInActiveMatch: async () => null,
+      claimActionNonce: async () => {},
       loadCharacterWithSave: async () => ({ saveObject: { inventory: [], settings: { raidKillCounts: { cryptbound_champions: 4 } } }, saveRevision: 0 }),
       writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
       resolveRewards: () => [],
@@ -189,6 +202,7 @@ describe('action completion endpoint tamper guards', () => {
     const handler = makeCompletionHandler('minigames', {
       requireAuth: async () => ({ identity: { id: 1 } }),
       assertNotInActiveMatch: async () => null,
+      claimActionNonce: async () => {},
       loadCharacterWithSave: async () => ({ saveObject: { inventory: [] }, saveRevision: 0 }),
       writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
       resolveRewards: () => [{ itemId: 'fighter_helm', quantity: 1 }],

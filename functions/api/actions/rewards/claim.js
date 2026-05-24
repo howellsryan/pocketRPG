@@ -22,7 +22,7 @@ export async function onRequestPost({ request, env }) {
     const applied = applyRewardClaim(saveObject, { ...claim, slayerPoints: body?.slayerPoints, dungeoneeringTokens: body?.dungeoneeringTokens })
     const write = await writeSave(env, characterId, saveObject, saveRevision)
 
-    auditLog('protected_reward_claim', { characterId, sourceType: claim.sourceType, sourceId: claim.sourceId, rewardCount: applied.granted.length })
+    await auditLog(env, 'protected_reward_claim', { characterId, identityId: auth.identity.id, sourceType: claim.sourceType, sourceId: claim.sourceId, rewardCount: applied.granted.length }, { swallow: true })
 
     return json({ ok: true, sourceType: claim.sourceType, sourceId: claim.sourceId, ...applied, updatedAt: write.updatedAt, save_revision: write.saveRevision })
   } catch (err) {

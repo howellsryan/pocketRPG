@@ -72,11 +72,11 @@ function canSync() {
 
 async function flushNow() {
   pendingTimer = null
-  if (!canSync() || !pendingSnapshot) return
+  if (!canSync() || !pendingSnapshot) return false
   if (inFlight) {
     // Reschedule a single retry once the in-flight push settles.
     schedulePush(pendingSnapshot, 1000)
-    return
+    return false
   }
   const snap = pendingSnapshot
   pendingSnapshot = null
@@ -92,6 +92,7 @@ async function flushNow() {
     hasUnsyncedChanges = false
     emitCloudSaveStatus('saved', { updatedAt: res?.updatedAt || null })
     console.log('[PocketRPG] Cloud save pushed, size:', json.length)
+    return true
   } catch (err) {
     // While a PvP match is active, /api/save intentionally returns:
     //   409 { error: 'character_in_active_match' }
@@ -102,11 +103,12 @@ async function flushNow() {
       pendingSnapshot = snap
       markUnsynced()
       schedulePush(snap, ACTIVE_MATCH_RETRY_MS)
-      return
+      return false
     }
     pendingSaveOptions = {}
     emitCloudSaveStatus('failed', { error: err?.message || 'cloud_save_failed' })
     console.warn('[PocketRPG] Cloud push failed:', err.message)
+    return false
   } finally {
     inFlight = false
   }
@@ -126,12 +128,32 @@ export function schedulePushSave(snapshot) {
 }
 
 // Public: bypass the debounce — used on tab-hide / page-unload so we don't
-// lose a pending push.
+// lose a pending push. Also drains any pending critical save inline, so
+// callers that need "everything I've queued is on the server now" (e.g.
+// the collection-log POST, which is gated server-side on item ownership)
+// can await this and be confident the next request sees the new state.
+// Returns true if the save landed on the server, false otherwise — callers
+// that gate UI on durable persistence (e.g. the paid skip-hour flow) use
+// this to decide whether to reveal rewards or keep retrying.
 export async function pushNow(snapshot) {
-  if (!canSync()) return
+  if (!canSync()) return false
   if (snapshot) pendingSnapshot = snapshot
   if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }
-  await flushNow()
+
+  // Resolve any pending critical-save snapshot synchronously and feed it
+  // through the normal flushNow path. Without this, a critical push
+  // queued moments before pushNow() would still be sitting on the
+  // criticalTimer when we return.
+  if (criticalTimer || pendingCriticalSnapshotSource) {
+    if (criticalTimer) { clearTimeout(criticalTimer); criticalTimer = null }
+    const source = pendingCriticalSnapshotSource
+    pendingCriticalSnapshotSource = null
+    pendingCriticalReasons.clear()
+    const criticalSnapshot = resolveSnapshotSource(source)
+    if (criticalSnapshot) pendingSnapshot = criticalSnapshot
+  }
+
+  return await flushNow()
 }
 
 
@@ -146,9 +168,9 @@ export function requestCriticalPushSave(snapshotOrFactory, reason = 'critical') 
 
   pendingCriticalSnapshotSource = snapshotOrFactory
   pendingCriticalReasons.add(normaliseCriticalSaveReason(reason))
-  if (reason === CRITICAL_SAVE_REASONS.SKIP_HOUR) {
-    pendingSaveOptions.creditsUsedIncrement = 1
-  }
+  // Credit consumption is now debited server-side by /api/skip-hour and
+  // /api/slayer/skip — see Step 1 of the production-readiness rollout.
+  // The client no longer self-reports credits_used_increment.
   markUnsynced()
 
   // Critical milestones should not wait behind the normal 60s autosave timer.

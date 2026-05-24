@@ -96,52 +96,91 @@ async function countActiveOffers(env, characterId) {
 // Find every existing offer that the incoming offer could match against.
 // For an incoming buy: opposing sells with price <= maxPrice, cheapest first.
 // For an incoming sell: opposing buys with price >= minPrice, dearest first.
-async function fetchMatchableOffers(env, { itemId, side, limitPrice }) {
+// Offers owned by the new offer's character are excluded — wash trading
+// (one player on both sides) would otherwise let a player synthesize
+// market depth and fire the price-improvement refund path.
+async function fetchMatchableOffers(env, { itemId, side, limitPrice, excludeCharacterId }) {
   const ids = itemIdMatchSet(itemId)
   const placeholders = ids.map(() => '?').join(',')
+  // Always exclude the new offer's character. If excludeCharacterId is
+  // null/undefined (shouldn't happen for legit calls) we still emit the
+  // clause with -1 to make the intent obvious in the query.
+  const ownerExclude = Number.isFinite(excludeCharacterId) ? excludeCharacterId : -1
   if (side === 'buy') {
     const { results } = await env.DB.prepare(
       `SELECT * FROM trading_post_offers
-       WHERE item_id IN (${placeholders}) AND offer_type = 'sell' AND status = 'active' AND price <= ?
+       WHERE item_id IN (${placeholders})
+         AND offer_type = 'sell' AND status = 'active' AND price <= ?
+         AND (character_id IS NULL OR character_id != ?)
        ORDER BY price ASC, created_at ASC`,
-    ).bind(...ids, limitPrice).all()
+    ).bind(...ids, limitPrice, ownerExclude).all()
     return results || []
   }
   const { results } = await env.DB.prepare(
     `SELECT * FROM trading_post_offers
-     WHERE item_id IN (${placeholders}) AND offer_type = 'buy' AND status = 'active' AND price >= ?
+     WHERE item_id IN (${placeholders})
+       AND offer_type = 'buy' AND status = 'active' AND price >= ?
+       AND character_id != ?
      ORDER BY price DESC, created_at ASC`,
-  ).bind(...ids, limitPrice).all()
+  ).bind(...ids, limitPrice, ownerExclude).all()
   return results || []
 }
 
-// Record one match-unit on the two sides' offer rows. The buyer's offer
-// gets items credited to items_pending; the seller's offer gets coins
-// credited to coins_pending (unless it's orphan house stock with no
-// owner -- those coins are the gold sink). Both rows'
-// quantity_remaining gets decremented to its caller-computed value.
-async function recordFill(env, { buyerOfferId, sellerOfferId, tradeQty, tradePrice, buyerOfferRemaining, sellerOfferRemaining, sellerIsOrphan }) {
+// Record one match-unit on the two sides' offer rows. Each UPDATE is
+// conditional and *relative* (qty_remaining = qty_remaining - ?), so two
+// concurrent fills against the same resting offer cannot both succeed:
+// the second one's WHERE clause fails because the first already
+// decremented the row below the required threshold. The caller catches
+// OFFER_RACE and moves on to the next opposing offer.
+async function recordFill(env, { buyerOfferId, sellerOfferId, tradeQty, tradePrice, sellerIsOrphan }) {
   const now = nowMs()
   const tradeGold = tradePrice * tradeQty
+
+  let sellerUpd
   if (sellerIsOrphan) {
-    // No owner to pay -- skip the credit. Decrement quantity_remaining only.
-    await env.DB.prepare(
+    // Orphan house stock: no owner, no coin credit. The character_id IS
+    // NULL guard prevents an instant-sell that orphans an offer mid-match
+    // from being credited to the original seller.
+    sellerUpd = await env.DB.prepare(
       `UPDATE trading_post_offers
-       SET quantity_remaining = ?, updated_at = ?
-       WHERE id = ?`,
-    ).bind(sellerOfferRemaining, now, sellerOfferId).run()
+         SET quantity_remaining = quantity_remaining - ?, updated_at = ?
+       WHERE id = ?
+         AND quantity_remaining >= ?
+         AND status = 'active'
+         AND character_id IS NULL`,
+    ).bind(tradeQty, now, sellerOfferId, tradeQty).run()
   } else {
-    await env.DB.prepare(
+    sellerUpd = await env.DB.prepare(
       `UPDATE trading_post_offers
-       SET coins_pending = coins_pending + ?, quantity_remaining = ?, updated_at = ?
-       WHERE id = ?`,
-    ).bind(tradeGold, sellerOfferRemaining, now, sellerOfferId).run()
+         SET coins_pending = coins_pending + ?,
+             quantity_remaining = quantity_remaining - ?,
+             updated_at = ?
+       WHERE id = ?
+         AND quantity_remaining >= ?
+         AND status = 'active'
+         AND character_id IS NOT NULL`,
+    ).bind(tradeGold, tradeQty, now, sellerOfferId, tradeQty).run()
   }
-  await env.DB.prepare(
+  if (!sellerUpd?.meta?.changes) {
+    throw new GameApiError('OFFER_RACE', 'offer changed concurrently', 409)
+  }
+
+  const buyerUpd = await env.DB.prepare(
     `UPDATE trading_post_offers
-     SET items_pending = items_pending + ?, coins_pending = coins_pending + ?, quantity_remaining = ?, updated_at = ?
-     WHERE id = ?`,
-  ).bind(tradeQty, tradeGold, buyerOfferRemaining, now, buyerOfferId).run()
+       SET items_pending = items_pending + ?,
+           coins_pending = coins_pending + ?,
+           quantity_remaining = quantity_remaining - ?,
+           updated_at = ?
+     WHERE id = ?
+       AND quantity_remaining >= ?
+       AND status = 'active'`,
+  ).bind(tradeQty, tradeGold, tradeQty, now, buyerOfferId, tradeQty).run()
+  if (!buyerUpd?.meta?.changes) {
+    // The buyer-side row is the new offer in the matching pass; it's only
+    // ever decremented by this one matcher, so a no-op here is a real
+    // consistency failure rather than a race.
+    throw new GameApiError('FILL_INTEGRITY', 'buyer-side decrement failed', 500)
+  }
 }
 
 // Re-read an offer after fills.
@@ -172,7 +211,12 @@ async function finalizeOfferStatus(env, offerId) {
 // the request and emit audit events.
 export async function executeMatching(env, { newOfferId, newCharacterId, offerType, itemId, price, quantity, saveObject }) {
   const side = offerType === 'buy' ? 'buy' : 'sell'
-  const opposing = await fetchMatchableOffers(env, { itemId, side, limitPrice: price })
+  const opposing = await fetchMatchableOffers(env, {
+    itemId,
+    side,
+    limitPrice: price,
+    excludeCharacterId: newCharacterId,
+  })
 
   let remaining = quantity
   let totalMatched = 0
@@ -188,40 +232,45 @@ export async function executeMatching(env, { newOfferId, newCharacterId, offerTy
     const tradeQty = Math.min(remaining, oppRemaining)
     const oppPrice = Number(opp.price)
     const tradePrice = oppPrice
-    const newOfferRemaining = remaining - tradeQty
-    const oppNewRemaining = oppRemaining - tradeQty
 
-    if (offerType === 'buy') {
-      // New offer is buy, opp is sell. Trade at opp's (cheaper) price.
-      await recordFill(env, {
-        buyerOfferId: newOfferId,
-        sellerOfferId: opp.id,
-        tradeQty,
-        tradePrice,
-        buyerOfferRemaining: newOfferRemaining,
-        sellerOfferRemaining: oppNewRemaining,
-        sellerIsOrphan: opp.character_id == null,
-      })
-      const improvement = (price - tradePrice) * tradeQty
-      if (improvement > 0) {
-        addCoins(saveObject, improvement)
-        priceImprovementRefund += improvement
+    try {
+      if (offerType === 'buy') {
+        // New offer is buy, opp is sell. Trade at opp's (cheaper) price.
+        await recordFill(env, {
+          buyerOfferId: newOfferId,
+          sellerOfferId: opp.id,
+          tradeQty,
+          tradePrice,
+          sellerIsOrphan: opp.character_id == null,
+        })
+        const improvement = (price - tradePrice) * tradeQty
+        if (improvement > 0) {
+          addCoins(saveObject, improvement)
+          priceImprovementRefund += improvement
+        }
+        totalSpent += tradePrice * tradeQty
+      } else {
+        // New offer is sell, opp is buy. Trade at the resting buy price.
+        // A seller accepts the best bid already on the book.
+        // The seller side is always the caller here, never orphan.
+        await recordFill(env, {
+          buyerOfferId: opp.id,
+          sellerOfferId: newOfferId,
+          tradeQty,
+          tradePrice,
+          sellerIsOrphan: false,
+        })
+        totalEarned += tradePrice * tradeQty
       }
-      totalSpent += tradePrice * tradeQty
-    } else {
-      // New offer is sell, opp is buy. Trade at the resting buy price.
-      // A seller accepts the best bid already on the book.
-      // The seller side is always the caller here, never orphan.
-      await recordFill(env, {
-        buyerOfferId: opp.id,
-        sellerOfferId: newOfferId,
-        tradeQty,
-        tradePrice,
-        buyerOfferRemaining: oppNewRemaining,
-        sellerOfferRemaining: newOfferRemaining,
-        sellerIsOrphan: false,
-      })
-      totalEarned += tradePrice * tradeQty
+    } catch (err) {
+      if (err?.code === 'OFFER_RACE') {
+        // Another concurrent fill consumed this offer's remaining stock,
+        // or it was orphaned / cancelled between fetch and update. Skip
+        // and try the next opposing offer. Cheaper / dearer offers
+        // already passed in the loop ordering, so we can't go back.
+        continue
+      }
+      throw err
     }
 
     await finalizeOfferStatus(env, opp.id)
@@ -342,11 +391,22 @@ export async function instantSellOffer(env, { offer, saveObject, itemsLookup }) 
   if (itemsPending > 0) deliverItems(saveObject, canonId, itemsPending, { stackable: Boolean(item?.stackable) })
 
   const now = nowMs()
-  await env.DB.prepare(
+  // Conditional orphan: only flip if the offer still belongs to this
+  // character AND its remaining quantity hasn't already been consumed by
+  // a concurrent buyer's fill. Without the WHERE guards a buyer matching
+  // mid-orphan can pay the original seller, and the seller still takes
+  // the 80% instant-sell payout — double pay.
+  const orphan = await env.DB.prepare(
     `UPDATE trading_post_offers
-     SET character_id = NULL, coins_pending = 0, items_pending = 0, updated_at = ?
-     WHERE id = ?`,
-  ).bind(now, offer.id).run()
+        SET character_id = NULL, coins_pending = 0, items_pending = 0, updated_at = ?
+      WHERE id = ?
+        AND character_id IS NOT NULL
+        AND status = 'active'
+        AND quantity_remaining = ?`,
+  ).bind(now, offer.id, remaining).run()
+  if (!orphan?.meta?.changes) {
+    throw new GameApiError('OFFER_RACE', 'offer changed concurrently', 409)
+  }
   return payout
 }
 

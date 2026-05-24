@@ -35,6 +35,7 @@ describe('clue completion endpoint', () => {
     return {
       requireAuth: async () => ({ identity: { id: 1 } }),
       assertNotInActiveMatch: async () => null,
+      claimActionNonce: async () => {},
       loadCharacterWithSave: async () => ({ saveObject: { inventory: [], bank: {} }, saveRevision: 0 }),
       writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
     }

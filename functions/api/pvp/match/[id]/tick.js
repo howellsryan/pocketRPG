@@ -5,6 +5,7 @@ import { processPvpTick } from '../../../../../src/engine/pvpEngine.js'
 import { applyLootTransfer } from '../../../../../src/engine/lootTransfer.js'
 import { appendPvpEndSummaryToState, createPvpEndSummary } from '../../../../../src/engine/pvpEndSummary.js'
 import { gzipJsonString } from '../../../../_lib/saveCodec.js'
+import { auditLog } from '../../../../_lib/game/audit.js'
 
 const PVP_TICK_MS = 600
 const PVP_TICK_GRACE_MS = 75
@@ -214,6 +215,14 @@ export async function onRequestPost({ request, env, params }) {
         reason: terminalWrite.reason,
       })
     }
+    await auditLog(env, 'pvp.match.settled', {
+      matchId: match.id,
+      winnerCharacterId: out.terminal.winner,
+      loserCharacterId: out.terminal.loser,
+      reason: out.terminal.reason || null,
+      writebackOk: terminalWrite.ok,
+      loot: terminalWrite.loot?.summary || null,
+    }, { swallow: true })
 
     return json({
       ok: true,
