@@ -30,6 +30,11 @@ function normaliseSaveSettings(settings = {}) {
   if (next.unlockedFeatures instanceof Set) next.unlockedFeatures = [...next.unlockedFeatures]
   if (next.completedQuests instanceof Set) next.completedQuests = [...next.completedQuests]
   if (next.unlockedMinigameItems instanceof Set) next.unlockedMinigameItems = [...next.unlockedMinigameItems]
+  // Boss/raid kill counts are server-authoritative in the kill_counts table
+  // (migration 0019). They must never ride the save blob — counters get
+  // clobbered by last-write-wins merges, which is what lost users their KC.
+  delete next.bossKillCounts
+  delete next.raidKillCounts
   return next
 }
 

@@ -773,14 +773,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 bankRef.current = newBank
               }
               applyServerCollectionLogEntries(res?.collectionLogEntries || [])
+              const serverRaidKc = res?.killCount
+              if (serverRaidKc?.sourceType === 'raids' && typeof serverRaidKc.killCount === 'number') {
+                const updated = { ...raidKillCountsRef.current, [serverRaidKc.sourceId]: serverRaidKc.killCount }
+                raidKillCountsRef.current = updated
+                updateRaidKillCounts(updated)
+              }
               if (res?.save?.save_data) {
-                const parsedSave = JSON.parse(res.save.save_data)
-                const serverRaidCounts = parsedSave?.settings?.raidKillCounts
-                if (serverRaidCounts && typeof serverRaidCounts === 'object') {
-                  raidKillCountsRef.current = serverRaidCounts
-                  updateRaidKillCounts(serverRaidCounts)
-                }
-                await applyCloudSave(parsedSave, res.save.updatedAt)
+                await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
               }
               setLootModal({
                 monster: defeatedMonsterData,
@@ -835,14 +835,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 bankRef.current = newBank
               }
               applyServerCollectionLogEntries(res?.collectionLogEntries || [])
+              const serverBossKc = res?.killCount
+              if (serverBossKc?.sourceType === 'monsters' && typeof serverBossKc.killCount === 'number') {
+                const updated = { ...bossKillCountsRef.current, [serverBossKc.sourceId]: serverBossKc.killCount }
+                bossKillCountsRef.current = updated
+                updateBossKillCounts(updated)
+              }
               if (res?.save?.save_data) {
-                const parsedSave = JSON.parse(res.save.save_data)
-                const serverBossCounts = parsedSave?.settings?.bossKillCounts
-                if (serverBossCounts && typeof serverBossCounts === 'object') {
-                  bossKillCountsRef.current = serverBossCounts
-                  updateBossKillCounts(serverBossCounts)
-                }
-                await applyCloudSave(parsedSave, res.save.updatedAt)
+                await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
               }
               setLootModal({
                 monster: defeatedMonsterData,

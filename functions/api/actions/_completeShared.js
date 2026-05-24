@@ -31,6 +31,26 @@ async function persistCollectionLogFromGranted(env, characterId, sourceType, sou
   return entries
 }
 
+// Server-authoritative boss/raid kill count. Runs only for monster/raid
+// completions, and only after the action nonce has been claimed — so a
+// replayed completion (same nonce) never reaches here and cannot
+// double-increment. Returns the new total for the client to display.
+async function persistKillCountFromAction(env, characterId, sourceType, sourceId) {
+  if (!env?.DB || !characterId) return null
+  if (sourceType !== 'monsters' && sourceType !== 'raids') return null
+  if (!sourceId || typeof sourceId !== 'string') return null
+  const now = Date.now()
+  const row = await env.DB.prepare(
+    `INSERT INTO kill_counts (character_id, source_type, source_id, kill_count, updated_at)
+     VALUES (?, ?, ?, 1, ?)
+     ON CONFLICT(character_id, source_type, source_id)
+     DO UPDATE SET kill_count = kill_count + 1, updated_at = excluded.updated_at
+     RETURNING kill_count`
+  ).bind(characterId, sourceType, sourceId, now).first()
+  const killCount = Math.max(0, Math.floor(Number(row?.kill_count) || 0))
+  return { sourceType, sourceId, killCount }
+}
+
 const VALID_SOURCE_IDS = {
   raids: new Set(Object.keys(raidsData || {})),
   clues: new Set(Object.keys(cluesData || {})),
@@ -76,10 +96,11 @@ export function makeCompletionHandler(sourceType, deps = {}) {
         dungeoneeringTokens: body?.dungeoneeringTokens,
       })
       const collectionLogEntries = await persistCollectionLogFromGranted(env, characterId, sourceType, sourceId, settled.granted)
+      const killCount = await persistKillCountFromAction(env, characterId, sourceType, sourceId)
       const write = await (deps.writeSave || writeSave)(env, characterId, saveObject, saveRevision)
 
       await auditLog(env, 'action_complete', { sourceType, sourceId, characterId, identityId: auth.identity.id, granted: settled.granted.length }, { swallow: true })
-      return json({ ok: true, sourceType, sourceId, ...settled, collectionLogEntries, save: { save_data: JSON.stringify(saveObject), updatedAt: write.updatedAt, save_revision: write.saveRevision } })
+      return json({ ok: true, sourceType, sourceId, ...settled, collectionLogEntries, killCount, save: { save_data: JSON.stringify(saveObject), updatedAt: write.updatedAt, save_revision: write.saveRevision } })
     } catch (err) {
       const mapped = toErrorResponse(err)
       return json(mapped.body, mapped.status)

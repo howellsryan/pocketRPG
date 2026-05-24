@@ -89,6 +89,60 @@ describe('GET /api/leaderboard (denormalized + paginated)', () => {
   })
 })
 
+describe('GET /api/leaderboard (kill-count filters)', () => {
+  it('queries kill_counts JOIN characters and shapes KC rows', async () => {
+    const { env, prepare, bind } = mockDb([
+      { username: 'alice', kill_count: 42, combat_level: 110, is_one_life: 0 },
+      { username: 'bob', kill_count: 17, combat_level: 90, is_one_life: 1 },
+    ])
+    const res = await onRequestGet({
+      request: reqWith('?metric=kc&source_type=raids&source_id=vaults_of_xyren'),
+      env,
+    } as any)
+    const body = await res.json() as any
+
+    const sql = prepare.mock.calls[0][0] as string
+    expect(sql).toContain('FROM kill_counts')
+    expect(sql).toMatch(/JOIN\s+characters/i)
+    expect(sql).toMatch(/ORDER BY\s+k\.kill_count\s+DESC/i)
+    expect(bind).toHaveBeenCalledWith('raids', 'vaults_of_xyren', 100, 0)
+    expect(body.metric).toBe('kc')
+    expect(body.characters).toEqual([
+      { username: 'alice', killCount: 42, combatLevel: 110, isOneLife: false },
+      { username: 'bob', killCount: 17, combatLevel: 90, isOneLife: true },
+    ])
+  })
+
+  it('accepts a valid boss source', async () => {
+    const { env, bind } = mockDb([])
+    await onRequestGet({
+      request: reqWith('?metric=kc&source_type=monsters&source_id=deepmaw_kraken'),
+      env,
+    } as any)
+    expect(bind).toHaveBeenCalledWith('monsters', 'deepmaw_kraken', 100, 0)
+  })
+
+  it('rejects an unknown KC source with 400 and never queries D1', async () => {
+    const { env, prepare } = mockDb([])
+    const res = await onRequestGet({
+      request: reqWith('?metric=kc&source_type=monsters&source_id=not_a_boss'),
+      env,
+    } as any)
+    expect(res.status).toBe(400)
+    expect(prepare).not.toHaveBeenCalled()
+  })
+
+  it('rejects a legacy raid alias (non-canonical key) with 400', async () => {
+    const { env, prepare } = mockDb([])
+    const res = await onRequestGet({
+      request: reqWith('?metric=kc&source_type=raids&source_id=chambers_of_xeric'),
+      env,
+    } as any)
+    expect(res.status).toBe(400)
+    expect(prepare).not.toHaveBeenCalled()
+  })
+})
+
 describe('GET /api/leaderboard (edge cache)', () => {
   it('cache miss → queries D1, sets Cache-Control, stores response', async () => {
     const { match, put } = stubCache()
@@ -150,6 +204,21 @@ describe('GET /api/leaderboard (edge cache)', () => {
     const k2 = put.mock.calls[1][0] as Request
     expect(k1.url).toBe(k2.url) // same canonical key
     expect(k1.url).not.toContain('cb=')
+  })
+
+  it('total and KC filters get different cache keys', async () => {
+    const { match, put } = stubCache()
+    match.mockResolvedValue(undefined)
+    const { env } = mockDb([])
+
+    await onRequestGet({ request: reqWith(), env } as any)
+    await onRequestGet({ request: reqWith('?metric=kc&source_type=raids&source_id=vaults_of_xyren'), env } as any)
+
+    const k1 = put.mock.calls[0][0] as Request
+    const k2 = put.mock.calls[1][0] as Request
+    expect(k1.url).not.toBe(k2.url)
+    expect(new URL(k1.url).searchParams.get('metric')).toBe('total')
+    expect(new URL(k2.url).searchParams.get('metric')).toBe('kc')
   })
 
   it('falls through to D1 if globalThis.caches is unavailable', async () => {
