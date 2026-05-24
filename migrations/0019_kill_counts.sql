@@ -12,3 +12,6 @@ CREATE TABLE IF NOT EXISTS kill_counts (
 );
 
 CREATE INDEX IF NOT EXISTS idx_kill_counts_character ON kill_counts(character_id);
+
+CREATE INDEX IF NOT EXISTS idx_kill_counts_leaderboard
+  ON kill_counts(source_type, source_id, kill_count DESC);
