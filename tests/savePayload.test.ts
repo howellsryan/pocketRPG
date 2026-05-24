@@ -32,6 +32,10 @@ describe('save payload snapshot', () => {
     expect(payload.settings.unlockedFeatures).toEqual(['slayer'])
     expect(payload.settings.completedQuests).toEqual(['quest_1'])
     expect(payload.settings.dungeoneeringTokens).toBe(12345)
+    // Kill counts are server-authoritative (kill_counts table) and must never
+    // ride the save blob — stripped even when present on the snapshot.
+    expect(payload.settings.bossKillCounts).toBeUndefined()
+    expect(payload.settings.raidKillCounts).toBeUndefined()
   })
 
 

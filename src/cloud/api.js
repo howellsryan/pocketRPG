@@ -163,6 +163,7 @@ export const api = {
     method: 'POST',
     body: JSON.stringify({ entries }),
   }),
+  getKillCounts: () => request('/api/kill-counts'),
   getIdle: () => request('/api/idle'),
   putIdle: (activeTask) => request('/api/idle', {
     method: 'PUT',

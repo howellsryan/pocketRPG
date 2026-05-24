@@ -77,14 +77,6 @@ function getDungeoneeringTokenBalance(saveObject) {
 }
 
 
-function incrementSettingCounterMap(saveObject, key, sourceId) {
-  if (!sourceId || typeof sourceId !== 'string') return
-  if (!saveObject.settings || typeof saveObject.settings !== 'object') saveObject.settings = {}
-  const counts = (saveObject.settings[key] && typeof saveObject.settings[key] === 'object') ? saveObject.settings[key] : {}
-  const current = Math.max(0, Math.floor(Number(counts[sourceId]) || 0))
-  saveObject.settings[key] = { ...counts, [sourceId]: current + 1 }
-}
-
 function addUnlockedMinigameItems(saveObject, itemIds = []) {
   const filtered = itemIds.filter(id => typeof id === 'string' && id.length > 0)
   if (filtered.length === 0) return
@@ -158,8 +150,8 @@ export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce
     saveObject.slayer.points = cur + sPoints
   }
 
-  if (sourceType === 'raids') incrementSettingCounterMap(saveObject, 'raidKillCounts', sourceId)
-  if (sourceType === 'monsters') incrementSettingCounterMap(saveObject, 'bossKillCounts', sourceId)
+  // Boss/raid kill counts are persisted server-authoritatively into the
+  // dedicated kill_counts table (see _completeShared.js), not the save blob.
   if (sourceType === 'minigames' || sourceType === 'minigame') {
     addUnlockedMinigameItems(saveObject, granted.map(g => g.itemId))
   }

@@ -49,6 +49,7 @@ import { isHighValueDrop } from './utils/itemValue.js'
 import { computeIdleElapsedMs } from './utils/idleElapsed.js'
 import { advanceFarmingState } from './engine/farming.ts'
 import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, onCollectionLogSlotComplete } from './cloud/collectionLog.js'
+import { fetchKillCounts } from './cloud/killCounts.js'
 import { isLoggedDrop, collectIdleCombatLoggedDrops } from './engine/collectionLog.js'
 
 // ── Clock-rollback watermark ────────────────────────────────────────────────
@@ -188,7 +189,7 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
 
 function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
-    unlockMinigameItem, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife } = useGame()
+    unlockMinigameItem, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -1050,6 +1051,13 @@ function GameApp() {
       // Pull collection log alongside the save. Fire-and-forget — UI shows a
       // loading state until cache populates.
       fetchCollectionLog({ force: true }).catch(() => {})
+      // Pull server-authoritative kill counts (kill_counts table) and let them
+      // replace the local cache — the server is the source of truth.
+      fetchKillCounts().then(server => {
+        if (!server) return
+        updateBossKillCounts(server.bossKillCounts)
+        updateRaidKillCounts(server.raidKillCounts)
+      }).catch(() => {})
     } catch (err) {
       console.warn('[PocketRPG] Cloud init failed:', err)
       setCloudLoadError(err?.message || 'Failed to load cloud save')

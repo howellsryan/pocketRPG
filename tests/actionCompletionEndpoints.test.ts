@@ -177,12 +177,28 @@ describe('action completion endpoint tamper guards', () => {
     expect(saved.bank.death_rune.quantity).toBe(253)
   })
 
-  it('persists raid KC into save settings for cloud-authoritative completions', async () => {
+  it('increments raid KC in the kill_counts table and returns it, not in the save blob', async () => {
+    const killCountWrites: any[] = []
+    const env = {
+      DB: {
+        prepare: (sql: string) => ({
+          bind: (...args: any[]) => ({
+            first: async () => {
+              if (/kill_counts/.test(sql)) {
+                killCountWrites.push({ sql, args })
+                return { kill_count: 5 }
+              }
+              return null
+            },
+          }),
+        }),
+      },
+    }
     const handler = makeCompletionHandler('raids', {
       requireAuth: async () => ({ identity: { id: 1 } }),
       assertNotInActiveMatch: async () => null,
       claimActionNonce: async () => {},
-      loadCharacterWithSave: async () => ({ saveObject: { inventory: [], settings: { raidKillCounts: { cryptbound_champions: 4 } } }, saveRevision: 0 }),
+      loadCharacterWithSave: async () => ({ saveObject: { inventory: [], settings: {} }, saveRevision: 0 }),
       writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
       resolveRewards: () => [],
     })
@@ -191,11 +207,16 @@ describe('action completion endpoint tamper guards', () => {
       headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' },
       body: JSON.stringify({ sourceId: 'cryptbound_champions', actionNonce: 'n8' }),
     })
-    const res = await handler({ request: req, env: {} as any })
+    const res = await handler({ request: req, env: env as any })
     const body = await res.json()
     expect(res.status).toBe(200)
+    // Server-authoritative increment hit the dedicated table.
+    expect(killCountWrites.length).toBe(1)
+    expect(body.killCount).toEqual({ sourceType: 'raids', sourceId: 'cryptbound_champions', killCount: 5 })
+    // KC must no longer be written into the save blob.
     const saved = JSON.parse(body.save.save_data)
-    expect(saved.settings.raidKillCounts.cryptbound_champions).toBe(5)
+    expect(saved.settings?.raidKillCounts).toBeUndefined()
+    expect(saved.settings?.bossKillCounts).toBeUndefined()
   })
 
   it('accepts minigame rewards validated by minigame task id', async () => {
