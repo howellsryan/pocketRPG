@@ -122,7 +122,7 @@ export default function MinigamesScreen() {
                       <div class="flex-1 min-w-0">
                         <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>
                         <div class="text-[10px] text-[#c8a96e] opacity-80">
-                          {alreadyUnlocked && <span class="text-[#7a7]">✓ Unlocked in store</span>}
+                          {alreadyUnlocked && <span class="text-[#7a7]">✓</span>}
                           {alreadyUnlocked && task.requiresItem && ' · '}
 
                           ⏱ {formatMinigameHours(task.hours)} total
