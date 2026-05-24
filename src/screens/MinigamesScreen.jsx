@@ -106,7 +106,7 @@ export default function MinigamesScreen() {
                 {tasks.map(task => {
                   const missingReq = task.requiresItem && !hasItemAnywhere(task.requiresItem)
                   const alreadyUnlocked = unlockedMinigameItems.has(task.product)
-                  const enabled = !missingReq && !alreadyUnlocked
+                  const enabled = !missingReq
                   const rowClass = enabled
                     ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
                     : 'bg-[#111] border-[#1a1a1a] opacity-45'
@@ -122,7 +122,7 @@ export default function MinigamesScreen() {
                       <div class="flex-1 min-w-0">
                         <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>
                         <div class="text-[10px] text-[#c8a96e] opacity-80">
-                          {alreadyUnlocked && <span class="text-[#7a7]">✓ Unlocked in store</span>}
+                          {alreadyUnlocked && <span class="text-[#7a7]">✓</span>}
                           {alreadyUnlocked && task.requiresItem && ' · '}
 
                           ⏱ {formatMinigameHours(task.hours)} total
@@ -134,7 +134,7 @@ export default function MinigamesScreen() {
                         </div>
                       </div>
                       <div class="flex-shrink-0 text-right">
-                        <div class="text-[18px]">{alreadyUnlocked ? '✓' : '→'}</div>
+                        <div class="text-[18px]">→</div>
                         <div class="text-[9px] text-[#c8a96e] opacity-70">{minigamesData.itemNames[task.product] || task.product}</div>
                       </div>
                     </button>
