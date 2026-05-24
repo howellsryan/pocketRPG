@@ -343,11 +343,6 @@ export default function InventoryScreen() {
       setSelected(null)
       return
     }
-    if (item.isUntradeable) {
-      addToast('This item cannot be sold', 'error')
-      setSelected(null)
-      return
-    }
     if (!hasCloudAccount) {
       addToast('Selling requires a cloud-synced character', 'error')
       setSelected(null)
@@ -369,8 +364,10 @@ export default function InventoryScreen() {
       // tapped.
       try { await pushNow(getSnapshot()) } catch (_) { /* ignore push failure */ }
 
-      if (isIronman) {
-        // Ironman accounts can't use the trading post; keep the NPC-instant-sell path.
+      if (isIronman || item.isUntradeable) {
+        // Ironman accounts can't use the trading post, and untradeable items
+        // never list there either; both take the NPC-instant-sell path that
+        // deletes the item and pays out its shopValue in coins.
         await api.tradingPostSellImmediate(slot.itemId, sellQty)
         const cloud = await pullSave()
         if (cloud?.payload) await applyCloudSave(cloud.payload, cloud.updatedAt)
@@ -676,11 +673,13 @@ export default function InventoryScreen() {
             </div>
 
             {/* Sell section */}
-            {selected.item.shopValue > 0 && selected.item.type !== 'currency' && !selected.item.isUntradeable && (() => {
+            {selected.item.shopValue > 0 && selected.item.type !== 'currency' && (() => {
               // Order-book items (boss/raid/clue uniques) go through the player-
               // to-player listing form. Everything else auto-sells at shopValue,
               // so we show the quick-sell buttons used by the legacy NPC path.
-              const useQuickSell = isIronman || !isOrderBookItem(selected.item)
+              // Untradeable items can't be listed at all, so they always sell
+              // instantly to the NPC.
+              const useQuickSell = isIronman || selected.item.isUntradeable || !isOrderBookItem(selected.item)
               return (
               <div class="border-t border-[#333] pt-2 mt-1">
                 <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold">

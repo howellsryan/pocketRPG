@@ -8796,7 +8796,7 @@
     "name": "Shardglass Shards",
     "type": "resource",
     "stackable": true,
-    "shopValue": 0,
+    "shopValue": 500,
     "icon": "💎",
     "isUntradeable": true,
     "isGeneralStore": false
@@ -11937,7 +11937,7 @@
     "requirements": {
       "defence": 40
     },
-    "shopValue": 0,
+    "shopValue": 40000,
     "icon": "👕",
     "isGeneralStore": false,
     "isUntradeable": true
@@ -11972,7 +11972,7 @@
       "attack": 40,
       "defence": 40
     },
-    "shopValue": 0,
+    "shopValue": 25000,
     "icon": "🛡️",
     "isGeneralStore": false,
     "isUntradeable": true
@@ -12041,7 +12041,7 @@
     "requirements": {
       "defence": 45
     },
-    "shopValue": 0,
+    "shopValue": 40000,
     "icon": "🪖",
     "isGeneralStore": false,
     "isUntradeable": true
@@ -18863,7 +18863,7 @@
     "name": "Shardglass Shards",
     "type": "resource",
     "stackable": true,
-    "shopValue": 0,
+    "shopValue": 500,
     "icon": "💎",
     "isUntradeable": true,
     "isGeneralStore": false
@@ -21171,7 +21171,7 @@
     "requirements": {
       "defence": 40
     },
-    "shopValue": 0,
+    "shopValue": 40000,
     "icon": "👕",
     "isGeneralStore": false,
     "isUntradeable": true
@@ -21206,7 +21206,7 @@
       "attack": 40,
       "defence": 40
     },
-    "shopValue": 0,
+    "shopValue": 25000,
     "icon": "🛡️",
     "isGeneralStore": false,
     "isUntradeable": true
@@ -21240,7 +21240,7 @@
     "requirements": {
       "defence": 45
     },
-    "shopValue": 0,
+    "shopValue": 40000,
     "icon": "🪖",
     "isGeneralStore": false,
     "isUntradeable": true

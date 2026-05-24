@@ -538,27 +538,16 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
           {allSkillsInTab.map(skill => {
             const data = stats[skill] || { xp: 0, level: 1 }
             const level = data.level || getLevelFromXP(data.xp)
-            const needsTool = ['mining', 'woodcutting', 'fishing'].includes(skill)
-            const hasTool = !needsTool || hasToolForSkill(skill, equipment, inventory, itemsData, stats)
-            const isClickable = hasTool
             return (
               <button
                 key={skill}
-                onClick={() => isClickable && setSelectedSkill(skill)}
-                disabled={!isClickable}
-                class={`flex items-center gap-2.5 p-3 rounded-xl border transition-colors ${
-                  isClickable
-                    ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
-                    : 'bg-[#111] border-[#1a1a1a] opacity-40'
-                }`}
+                onClick={() => setSelectedSkill(skill)}
+                class="flex items-center gap-2.5 p-3 rounded-xl border transition-colors bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]"
               >
                 <span class="text-xl">{SKILL_ICONS[skill]}</span>
                 <div class="text-left">
                   <div class="text-sm font-semibold text-[var(--color-parchment)] capitalize">{skill}</div>
                   <div class="text-[10px] font-[var(--font-mono)] text-[var(--color-gold)]">Lv {level}</div>
-                  {needsTool && !hasTool && (
-                    <div class="text-[9px] text-[#ff6b6b]">No tool available</div>
-                  )}
                 </div>
               </button>
             )
@@ -598,6 +587,23 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
 
         {/* Banking toggle for skilling */}
         {(() => {
+          const needsTool = ['mining', 'woodcutting', 'fishing'].includes(selectedSkill)
+          const hasTool = !needsTool || hasToolForSkill(selectedSkill, equipment, inventory, itemsData, stats)
+          if (needsTool && !hasTool) {
+            return (
+              <div class="mt-10 flex flex-col items-center justify-center gap-2 text-center">
+                <span class="text-4xl opacity-30">{selectedSkill === 'mining' ? '⚒️' : selectedSkill === 'woodcutting' ? '🪓' : '🎣'}</span>
+                <p class="text-sm font-semibold text-[#ff6b6b]">No tool available</p>
+                <p class="text-xs text-[var(--color-parchment)] opacity-50">
+                  {selectedSkill === 'mining'
+                    ? 'Equip or carry a pickaxe to mine.'
+                    : selectedSkill === 'woodcutting'
+                      ? 'Equip or carry an axe to chop trees.'
+                      : 'Equip or carry a fishing tool to fish.'}
+                </p>
+              </div>
+            )
+          }
           const renderActionRow = (action) => {
             const requiresGildedAltarConstruction = selectedSkill === 'prayer' && action.id?.startsWith('altar_')
             const meetsGildedAltarConstruction = !requiresGildedAltarConstruction || constructionLevel >= 75
@@ -606,12 +612,10 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
               ([id, qty]) => (countItem(inventory, id) + (bank[id]?.quantity || 0)) >= qty
             )
             const hasRunes = hasRequiredRunes(action.runeReq, inventory, bank, equipment, itemsData)
-            const needsTool = ['mining', 'woodcutting', 'fishing'].includes(selectedSkill)
-            const hasTool = !needsTool || hasToolForSkill(selectedSkill, equipment, inventory, itemsData, stats)
             const hasItems = !action.itemReq || action.itemReq.some(
               id => (countItem(inventory, id) + (bank[id]?.quantity || 0)) > 0
             )
-            const canStart = available && hasMats && hasRunes && hasTool && hasItems
+            const canStart = available && hasMats && hasRunes && hasItems
             const isDungeoneeringReward = selectedSkill === 'dungeoneering' && action.category === 'reward'
             const rewardCost = isDungeoneeringReward ? getDungeoneeringRewardCost(action) : 0
             const rowEnabled = isDungeoneeringReward
@@ -659,11 +663,6 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                     )}
                     {action.runeReq && (
                       <span> · Runes: {Object.entries(action.runeReq).map(([id, qty]) => `${itemsData[id]?.name || id} ×${qty}`).join(', ')}</span>
-                    )}
-                    {needsTool && !hasTool && (
-                      <span class="block text-[#ff6b6b] mt-1">
-                        {selectedSkill === 'mining' ? '⚒️ No pickaxe' : selectedSkill === 'woodcutting' ? '🪓 No axe' : '🎣 No rod'}
-                      </span>
                     )}
                     {action.itemReq && !hasItems && (
                       <span class="block text-[#ff6b6b] mt-1">

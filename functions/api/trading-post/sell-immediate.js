@@ -39,9 +39,6 @@ export async function onRequestPost({ request, env }) {
         code: 'ORDER_BOOK_REQUIRED',
       }, 400)
     }
-    if (item.isUntradeable) {
-      return json({ error: 'This item cannot be sold.', code: 'UNTRADEABLE' }, 400)
-    }
     const unit = Math.floor(Number(item.shopValue) || 0)
     if (unit <= 0) return json({ error: 'This item has no shop value.', code: 'NO_VALUE' }, 400)
 
