@@ -30,10 +30,26 @@ function buildRaidLeaderboardFilters() {
     }))
 }
 
-// Every boss, weakest to strongest by combat level (name as tiebreak).
+// Monster ids that belong to a raid encounter. These carry boss:true in
+// monsters.json but must not appear as standalone boss filters — only the
+// raid itself is leaderboard-ranked (raid KC is tracked per raid, not per
+// sub-boss).
+function getRaidBossIds() {
+  const ids = new Set()
+  for (const raid of Object.values(raidsData)) {
+    for (const bossId of (raid?.bosses || [])) {
+      if (typeof bossId === 'string' && bossId) ids.add(bossId)
+    }
+  }
+  return ids
+}
+
+// Every standalone boss, weakest to strongest by combat level (name as
+// tiebreak). Raid sub-bosses are excluded.
 function buildBossLeaderboardFilters() {
+  const raidBossIds = getRaidBossIds()
   return Object.entries(monstersData)
-    .filter(([, monster]) => monster && monster.boss === true)
+    .filter(([key, monster]) => monster && monster.boss === true && !raidBossIds.has(key))
     .map(([key, monster]) => ({
       id: `monsters:${key}`,
       type: 'kc',

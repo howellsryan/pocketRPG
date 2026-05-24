@@ -29,10 +29,19 @@ describe('leaderboard filters (shared client/server)', () => {
     expect(raidFilters.some(f => f.sourceId === 'vaults_of_xyren')).toBe(true)
   })
 
-  it('lists every boss ordered by combat level ascending', () => {
+  it('lists standalone bosses ordered by combat level ascending, excluding raid sub-bosses', () => {
     const bossFilters = getLeaderboardFilters().filter(f => f.sourceType === 'monsters')
-    const bossCount = Object.values(monstersData).filter((m: any) => m.boss === true).length
-    expect(bossFilters.length).toBe(bossCount)
+    const raidBossIds = new Set<string>()
+    for (const raid of Object.values(raidsData) as any[]) {
+      for (const bossId of (raid.bosses || [])) raidBossIds.add(bossId)
+    }
+    const standaloneCount = Object.entries(monstersData)
+      .filter(([key, m]: any) => m.boss === true && !raidBossIds.has(key)).length
+    expect(bossFilters.length).toBe(standaloneCount)
+    // kaelor_the_tainted is a Cryptbound Champions sub-boss — must not appear.
+    expect(bossFilters.some(f => f.sourceId === 'kaelor_the_tainted')).toBe(false)
+    // No boss filter may be a raid sub-boss.
+    expect(bossFilters.every(f => !raidBossIds.has(f.sourceId))).toBe(true)
     for (let i = 1; i < bossFilters.length; i++) {
       expect(bossFilters[i].combatLevel).toBeGreaterThanOrEqual(bossFilters[i - 1].combatLevel)
     }
