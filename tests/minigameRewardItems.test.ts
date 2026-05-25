@@ -24,20 +24,43 @@ describe('new minigame tasks', () => {
 describe('reward item definitions', () => {
   it('defines decorative top and imbued cape correctly', () => {
     expect(items.decorative_top.defenceBonus).toEqual({ stab: 20, slash: 20, crush: 20, magic: 20, ranged: 20 })
-    expect(items.decorative_top.shopValue).toBe(1_000_000)
+    expect(items.decorative_top.shopValue).toBe(500_000)
     expect(items.imbued_god_cape.requirements.magic).toBe(50)
     expect(items.imbued_god_cape.attackBonus.magic).toBe(15)
     expect(items.imbued_god_cape.defenceBonus.magic).toBe(15)
     expect(items.imbued_god_cape.otherBonus.magicDamage).toBe(3)
   })
 
-  it('defines void pieces with shared requirements', () => {
-    for (const id of ['void_hat','void_body','void_bottoms','void_gloves'] as const) {
-      expect(items[id].requirements).toEqual({ defence: 42, attack: 42, strength: 42, ranged: 42, hitpoints: 42, magic: 42 })
+  it('defines void king pieces as untradeable minigame rewards', () => {
+    for (const id of ['void_king_helm','void_king_top','void_king_robe','void_king_gloves'] as const) {
+      expect(items[id].requirements).toEqual({ defence: 42 })
       expect(items[id].attackBonus).toEqual({ stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 })
       expect(items[id].isUntradeable).toBe(true)
-      expect(items[id].shopValue).toBe(1_000_000)
+      expect(items[id].shopValue).toBe(375_000)
     }
+  })
+})
+
+describe('untradeable minigame item pricing (250k per hour of action)', () => {
+  const RATE = 250_000
+  const itemsData = items as Record<string, any>
+
+  it('prices single-reward untradeable minigame items at 250k x task hours', () => {
+    for (const task of minigames.tasks as any[]) {
+      if (Array.isArray(task.rewardItems)) continue // set rewards handled separately
+      const item = itemsData[task.product]
+      if (!item?.isUntradeable) continue // tradeable rewards (e.g. dragon defender) are priced elsewhere
+      expect(item.shopValue).toBe(RATE * task.hours)
+    }
+  })
+
+  it('splits a set reward total evenly across its pieces', () => {
+    const setTask = (minigames.tasks as any[]).find(t => Array.isArray(t.rewardItems))!
+    const pieces: string[] = setTask.rewardItems
+    const expectedTotal = RATE * setTask.hours
+    const total = pieces.reduce((sum, id) => sum + itemsData[id].shopValue, 0)
+    expect(total).toBe(expectedTotal)
+    for (const id of pieces) expect(itemsData[id].shopValue).toBe(expectedTotal / pieces.length)
   })
 })
 
@@ -107,7 +130,7 @@ describe('equip requirements', () => {
     const ok = { attack:{xp:getXPForLevel(42)},strength:{xp:getXPForLevel(42)},defence:{xp:getXPForLevel(42)},ranged:{xp:getXPForLevel(42)},hitpoints:{xp:getXPForLevel(42)},magic:{xp:getXPForLevel(50)} } as any
     expect(checkEquipRequirements(items.imbued_god_cape as any, low, new Set())).toBeTruthy()
     expect(checkEquipRequirements(items.imbued_god_cape as any, ok, new Set())).toBeNull()
-    expect(checkEquipRequirements(items.void_body as any, low, new Set())).toBeTruthy()
-    expect(checkEquipRequirements(items.void_body as any, ok, new Set())).toBeNull()
+    expect(checkEquipRequirements(items.void_king_top as any, low, new Set())).toBeTruthy()
+    expect(checkEquipRequirements(items.void_king_top as any, ok, new Set())).toBeNull()
   })
 })

@@ -8552,7 +8552,7 @@
     "toolFor": "fishing",
     "speedMultiplier": 0.7,
     "requirements": {},
-    "shopValue": 1000000,
+    "shopValue": 1250000,
     "icon": "🪢",
     "isGeneralStore": false,
     "isUntradeable": true
@@ -8796,7 +8796,7 @@
     "name": "Shardglass Shards",
     "type": "resource",
     "stackable": true,
-    "shopValue": 0,
+    "shopValue": 500,
     "icon": "💎",
     "isUntradeable": true,
     "isGeneralStore": false
@@ -10844,7 +10844,7 @@
       "prayer": 10
     },
     "requirements": {},
-    "shopValue": 2000000,
+    "shopValue": 750000,
     "icon": "😇",
     "isGeneralStore": false
   },
@@ -10876,7 +10876,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 1000000,
+    "shopValue": 500000,
     "icon": "🎽",
     "isGeneralStore": false
   },
@@ -10910,166 +10910,8 @@
     "requirements": {
       "magic": 50
     },
-    "shopValue": 1000000,
+    "shopValue": 500000,
     "icon": "🧣",
-    "isGeneralStore": false
-  },
-  "void_hat": {
-    "id": "void_hat",
-    "legacy_item_id": "void_hat",
-    "name": "Void Hat",
-    "type": "armour",
-    "slot": "head",
-    "stackable": false,
-    "isUntradeable": true,
-    "attackBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
-    },
-    "defenceBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
-    },
-    "otherBonus": {
-      "meleeStrength": 0,
-      "rangedStrength": 0,
-      "magicDamage": 0
-    },
-    "requirements": {
-      "defence": 42,
-      "attack": 42,
-      "strength": 42,
-      "ranged": 42,
-      "hitpoints": 42,
-      "magic": 42
-    },
-    "shopValue": 1000000,
-    "icon": "🪖",
-    "isGeneralStore": false
-  },
-  "void_body": {
-    "id": "void_body",
-    "legacy_item_id": "void_body",
-    "name": "Void Body",
-    "type": "armour",
-    "slot": "body",
-    "stackable": false,
-    "isUntradeable": true,
-    "attackBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
-    },
-    "defenceBonus": {
-      "stab": 45,
-      "slash": 45,
-      "crush": 45,
-      "magic": 45,
-      "ranged": 45
-    },
-    "otherBonus": {
-      "meleeStrength": 0,
-      "rangedStrength": 0,
-      "magicDamage": 0,
-      "prayer": 3
-    },
-    "requirements": {
-      "defence": 42,
-      "attack": 42,
-      "strength": 42,
-      "ranged": 42,
-      "hitpoints": 42,
-      "magic": 42
-    },
-    "shopValue": 1000000,
-    "icon": "🥋",
-    "isGeneralStore": false
-  },
-  "void_bottoms": {
-    "id": "void_bottoms",
-    "legacy_item_id": "void_bottoms",
-    "name": "Void Bottoms",
-    "type": "armour",
-    "slot": "legs",
-    "stackable": false,
-    "isUntradeable": true,
-    "attackBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
-    },
-    "defenceBonus": {
-      "stab": 30,
-      "slash": 30,
-      "crush": 30,
-      "magic": 30,
-      "ranged": 30
-    },
-    "otherBonus": {
-      "meleeStrength": 0,
-      "rangedStrength": 0,
-      "magicDamage": 0,
-      "prayer": 3
-    },
-    "requirements": {
-      "defence": 42,
-      "attack": 42,
-      "strength": 42,
-      "ranged": 42,
-      "hitpoints": 42,
-      "magic": 42
-    },
-    "shopValue": 1000000,
-    "icon": "👖",
-    "isGeneralStore": false
-  },
-  "void_gloves": {
-    "id": "void_gloves",
-    "legacy_item_id": "void_gloves",
-    "name": "Void Gloves",
-    "type": "armour",
-    "slot": "gloves",
-    "stackable": false,
-    "isUntradeable": true,
-    "attackBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
-    },
-    "defenceBonus": {
-      "stab": 6,
-      "slash": 6,
-      "crush": 6,
-      "magic": 6,
-      "ranged": 6
-    },
-    "otherBonus": {
-      "meleeStrength": 0,
-      "rangedStrength": 0,
-      "magicDamage": 0
-    },
-    "requirements": {
-      "defence": 42,
-      "attack": 42,
-      "strength": 42,
-      "ranged": 42,
-      "hitpoints": 42,
-      "magic": 42
-    },
-    "shopValue": 1000000,
-    "icon": "🧤",
     "isGeneralStore": false
   },
   "morvyn_s_hood": {
@@ -11937,7 +11779,7 @@
     "requirements": {
       "defence": 40
     },
-    "shopValue": 0,
+    "shopValue": 1250000,
     "icon": "👕",
     "isGeneralStore": false,
     "isUntradeable": true
@@ -11972,7 +11814,7 @@
       "attack": 40,
       "defence": 40
     },
-    "shopValue": 0,
+    "shopValue": 750000,
     "icon": "🛡️",
     "isGeneralStore": false,
     "isUntradeable": true
@@ -12007,10 +11849,10 @@
       "attack": 60,
       "defence": 60
     },
-    "shopValue": 35000,
+    "shopValue": 500000,
     "icon": "🛡️",
     "isGeneralStore": false,
-    "IsUntradeable": true
+    "isUntradeable": true
   },
   "fighter_helm": {
     "id": "fighter_helm",
@@ -12041,7 +11883,7 @@
     "requirements": {
       "defence": 45
     },
-    "shopValue": 0,
+    "shopValue": 500000,
     "icon": "🪖",
     "isGeneralStore": false,
     "isUntradeable": true
@@ -16538,7 +16380,7 @@
     "requirements": {
       "defence": 42
     },
-    "shopValue": 1000000,
+    "shopValue": 375000,
     "icon": "🪖",
     "isUntradeable": true,
     "isGeneralStore": false
@@ -16572,7 +16414,7 @@
     "requirements": {
       "defence": 42
     },
-    "shopValue": 1000000,
+    "shopValue": 375000,
     "icon": "🥋",
     "isUntradeable": true,
     "isGeneralStore": false
@@ -16606,7 +16448,7 @@
     "requirements": {
       "defence": 42
     },
-    "shopValue": 1000000,
+    "shopValue": 375000,
     "icon": "👖",
     "isUntradeable": true,
     "isGeneralStore": false
@@ -16640,7 +16482,7 @@
     "requirements": {
       "defence": 42
     },
-    "shopValue": 1000000,
+    "shopValue": 375000,
     "icon": "🧤",
     "isUntradeable": true,
     "isGeneralStore": false
@@ -18863,7 +18705,7 @@
     "name": "Shardglass Shards",
     "type": "resource",
     "stackable": true,
-    "shopValue": 0,
+    "shopValue": 500,
     "icon": "💎",
     "isUntradeable": true,
     "isGeneralStore": false
@@ -21171,7 +21013,7 @@
     "requirements": {
       "defence": 40
     },
-    "shopValue": 0,
+    "shopValue": 1250000,
     "icon": "👕",
     "isGeneralStore": false,
     "isUntradeable": true
@@ -21206,7 +21048,7 @@
       "attack": 40,
       "defence": 40
     },
-    "shopValue": 0,
+    "shopValue": 750000,
     "icon": "🛡️",
     "isGeneralStore": false,
     "isUntradeable": true
@@ -21240,7 +21082,7 @@
     "requirements": {
       "defence": 45
     },
-    "shopValue": 0,
+    "shopValue": 500000,
     "icon": "🪖",
     "isGeneralStore": false,
     "isUntradeable": true

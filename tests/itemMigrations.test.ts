@@ -76,6 +76,19 @@ describe('migrateLegacyItemIds', () => {
     expect(result.bank).toBe(bank)
   })
 
+  it('rewrites retired void_* gear to the current void_king_* set', () => {
+    const equipment = { head: { itemId: 'void_hat' } }
+    const inventory = [{ itemId: 'void_body', quantity: 1 }, { itemId: 'void_bottoms', quantity: 1 }]
+    const bank = { void_gloves: { itemId: 'void_gloves', quantity: 1 } }
+    const result = migrateLegacyItemIds({ equipment, inventory, bank })
+    expect(result.changed).toBe(true)
+    expect(result.equipment.head.itemId).toBe('void_king_helm')
+    expect(result.inventory[0]).toEqual({ itemId: 'void_king_top', quantity: 1 })
+    expect(result.inventory[1]).toEqual({ itemId: 'void_king_robe', quantity: 1 })
+    expect(result.bank.void_gloves).toBeUndefined()
+    expect(result.bank.void_king_gloves).toEqual({ itemId: 'void_king_gloves', quantity: 1 })
+  })
+
   it('handles missing containers safely', () => {
     const result = migrateLegacyItemIds({ equipment: null as any, inventory: null as any, bank: null as any })
     expect(result.changed).toBe(false)
