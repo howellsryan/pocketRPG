@@ -58,11 +58,11 @@ describe('POST /api/trading-post/sell-immediate — untradeable items', () => {
     const res = await onRequestPost({ request: await makeRequest({ item_id: 'fighter_helm', quantity: 1 }), env })
     expect(res.status).toBe(200)
     const body = await res.json() as any
-    expect(body.total_payout).toBe(40000)
+    expect(body.total_payout).toBe(500000)
 
     const written = JSON.parse(captured.saveData!)
     expect(written.inventory.find((s: any) => s.itemId === 'fighter_helm')).toBeUndefined()
-    expect(written.inventory.find((s: any) => s.itemId === 'coins')?.quantity).toBe(40000)
+    expect(written.inventory.find((s: any) => s.itemId === 'coins')?.quantity).toBe(500000)
   })
 
   it('does not pay out when the player does not own the item', async () => {

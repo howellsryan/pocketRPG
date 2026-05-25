@@ -8552,7 +8552,7 @@
     "toolFor": "fishing",
     "speedMultiplier": 0.7,
     "requirements": {},
-    "shopValue": 1000000,
+    "shopValue": 1250000,
     "icon": "🪢",
     "isGeneralStore": false,
     "isUntradeable": true
@@ -10844,7 +10844,7 @@
       "prayer": 10
     },
     "requirements": {},
-    "shopValue": 2000000,
+    "shopValue": 750000,
     "icon": "😇",
     "isGeneralStore": false
   },
@@ -10876,7 +10876,7 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 1000000,
+    "shopValue": 500000,
     "icon": "🎽",
     "isGeneralStore": false
   },
@@ -10910,7 +10910,7 @@
     "requirements": {
       "magic": 50
     },
-    "shopValue": 1000000,
+    "shopValue": 500000,
     "icon": "🧣",
     "isGeneralStore": false
   },
@@ -11937,7 +11937,7 @@
     "requirements": {
       "defence": 40
     },
-    "shopValue": 40000,
+    "shopValue": 1250000,
     "icon": "👕",
     "isGeneralStore": false,
     "isUntradeable": true
@@ -11972,7 +11972,7 @@
       "attack": 40,
       "defence": 40
     },
-    "shopValue": 25000,
+    "shopValue": 750000,
     "icon": "🛡️",
     "isGeneralStore": false,
     "isUntradeable": true
@@ -12041,7 +12041,7 @@
     "requirements": {
       "defence": 45
     },
-    "shopValue": 40000,
+    "shopValue": 500000,
     "icon": "🪖",
     "isGeneralStore": false,
     "isUntradeable": true
@@ -16538,7 +16538,7 @@
     "requirements": {
       "defence": 42
     },
-    "shopValue": 1000000,
+    "shopValue": 375000,
     "icon": "🪖",
     "isUntradeable": true,
     "isGeneralStore": false
@@ -16572,7 +16572,7 @@
     "requirements": {
       "defence": 42
     },
-    "shopValue": 1000000,
+    "shopValue": 375000,
     "icon": "🥋",
     "isUntradeable": true,
     "isGeneralStore": false
@@ -16606,7 +16606,7 @@
     "requirements": {
       "defence": 42
     },
-    "shopValue": 1000000,
+    "shopValue": 375000,
     "icon": "👖",
     "isUntradeable": true,
     "isGeneralStore": false
@@ -16640,7 +16640,7 @@
     "requirements": {
       "defence": 42
     },
-    "shopValue": 1000000,
+    "shopValue": 375000,
     "icon": "🧤",
     "isUntradeable": true,
     "isGeneralStore": false
@@ -21171,7 +21171,7 @@
     "requirements": {
       "defence": 40
     },
-    "shopValue": 40000,
+    "shopValue": 1250000,
     "icon": "👕",
     "isGeneralStore": false,
     "isUntradeable": true
@@ -21206,7 +21206,7 @@
       "attack": 40,
       "defence": 40
     },
-    "shopValue": 25000,
+    "shopValue": 750000,
     "icon": "🛡️",
     "isGeneralStore": false,
     "isUntradeable": true
@@ -21240,7 +21240,7 @@
     "requirements": {
       "defence": 45
     },
-    "shopValue": 40000,
+    "shopValue": 500000,
     "icon": "🪖",
     "isGeneralStore": false,
     "isUntradeable": true
