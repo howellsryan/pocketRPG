@@ -10914,164 +10914,6 @@
     "icon": "🧣",
     "isGeneralStore": false
   },
-  "void_hat": {
-    "id": "void_hat",
-    "legacy_item_id": "void_hat",
-    "name": "Void Hat",
-    "type": "armour",
-    "slot": "head",
-    "stackable": false,
-    "isUntradeable": true,
-    "attackBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
-    },
-    "defenceBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
-    },
-    "otherBonus": {
-      "meleeStrength": 0,
-      "rangedStrength": 0,
-      "magicDamage": 0
-    },
-    "requirements": {
-      "defence": 42,
-      "attack": 42,
-      "strength": 42,
-      "ranged": 42,
-      "hitpoints": 42,
-      "magic": 42
-    },
-    "shopValue": 1000000,
-    "icon": "🪖",
-    "isGeneralStore": false
-  },
-  "void_body": {
-    "id": "void_body",
-    "legacy_item_id": "void_body",
-    "name": "Void Body",
-    "type": "armour",
-    "slot": "body",
-    "stackable": false,
-    "isUntradeable": true,
-    "attackBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
-    },
-    "defenceBonus": {
-      "stab": 45,
-      "slash": 45,
-      "crush": 45,
-      "magic": 45,
-      "ranged": 45
-    },
-    "otherBonus": {
-      "meleeStrength": 0,
-      "rangedStrength": 0,
-      "magicDamage": 0,
-      "prayer": 3
-    },
-    "requirements": {
-      "defence": 42,
-      "attack": 42,
-      "strength": 42,
-      "ranged": 42,
-      "hitpoints": 42,
-      "magic": 42
-    },
-    "shopValue": 1000000,
-    "icon": "🥋",
-    "isGeneralStore": false
-  },
-  "void_bottoms": {
-    "id": "void_bottoms",
-    "legacy_item_id": "void_bottoms",
-    "name": "Void Bottoms",
-    "type": "armour",
-    "slot": "legs",
-    "stackable": false,
-    "isUntradeable": true,
-    "attackBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
-    },
-    "defenceBonus": {
-      "stab": 30,
-      "slash": 30,
-      "crush": 30,
-      "magic": 30,
-      "ranged": 30
-    },
-    "otherBonus": {
-      "meleeStrength": 0,
-      "rangedStrength": 0,
-      "magicDamage": 0,
-      "prayer": 3
-    },
-    "requirements": {
-      "defence": 42,
-      "attack": 42,
-      "strength": 42,
-      "ranged": 42,
-      "hitpoints": 42,
-      "magic": 42
-    },
-    "shopValue": 1000000,
-    "icon": "👖",
-    "isGeneralStore": false
-  },
-  "void_gloves": {
-    "id": "void_gloves",
-    "legacy_item_id": "void_gloves",
-    "name": "Void Gloves",
-    "type": "armour",
-    "slot": "gloves",
-    "stackable": false,
-    "isUntradeable": true,
-    "attackBonus": {
-      "stab": 0,
-      "slash": 0,
-      "crush": 0,
-      "magic": 0,
-      "ranged": 0
-    },
-    "defenceBonus": {
-      "stab": 6,
-      "slash": 6,
-      "crush": 6,
-      "magic": 6,
-      "ranged": 6
-    },
-    "otherBonus": {
-      "meleeStrength": 0,
-      "rangedStrength": 0,
-      "magicDamage": 0
-    },
-    "requirements": {
-      "defence": 42,
-      "attack": 42,
-      "strength": 42,
-      "ranged": 42,
-      "hitpoints": 42,
-      "magic": 42
-    },
-    "shopValue": 1000000,
-    "icon": "🧤",
-    "isGeneralStore": false
-  },
   "morvyn_s_hood": {
     "id": "morvyn_s_hood",
     "legacy_item_id": "ahrims_hood",
@@ -12007,10 +11849,10 @@
       "attack": 60,
       "defence": 60
     },
-    "shopValue": 35000,
+    "shopValue": 500000,
     "icon": "🛡️",
     "isGeneralStore": false,
-    "IsUntradeable": true
+    "isUntradeable": true
   },
   "fighter_helm": {
     "id": "fighter_helm",

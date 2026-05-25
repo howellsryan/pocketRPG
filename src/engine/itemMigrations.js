@@ -8,6 +8,10 @@ const LEGACY_ITEM_ID_MAP = {
   void_knight_top: 'void_king_top',
   void_knight_robe: 'void_king_robe',
   void_knight_gloves: 'void_king_gloves',
+  void_hat: 'void_king_helm',
+  void_body: 'void_king_top',
+  void_bottoms: 'void_king_robe',
+  void_gloves: 'void_king_gloves',
 }
 
 function rewriteEquipment(equipment) {

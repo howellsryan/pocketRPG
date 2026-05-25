@@ -31,12 +31,12 @@ describe('reward item definitions', () => {
     expect(items.imbued_god_cape.otherBonus.magicDamage).toBe(3)
   })
 
-  it('defines void pieces with shared requirements', () => {
-    for (const id of ['void_hat','void_body','void_bottoms','void_gloves'] as const) {
-      expect(items[id].requirements).toEqual({ defence: 42, attack: 42, strength: 42, ranged: 42, hitpoints: 42, magic: 42 })
+  it('defines void king pieces as untradeable minigame rewards', () => {
+    for (const id of ['void_king_helm','void_king_top','void_king_robe','void_king_gloves'] as const) {
+      expect(items[id].requirements).toEqual({ defence: 42 })
       expect(items[id].attackBonus).toEqual({ stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 })
       expect(items[id].isUntradeable).toBe(true)
-      expect(items[id].shopValue).toBe(1_000_000)
+      expect(items[id].shopValue).toBe(375_000)
     }
   })
 })
@@ -130,7 +130,7 @@ describe('equip requirements', () => {
     const ok = { attack:{xp:getXPForLevel(42)},strength:{xp:getXPForLevel(42)},defence:{xp:getXPForLevel(42)},ranged:{xp:getXPForLevel(42)},hitpoints:{xp:getXPForLevel(42)},magic:{xp:getXPForLevel(50)} } as any
     expect(checkEquipRequirements(items.imbued_god_cape as any, low, new Set())).toBeTruthy()
     expect(checkEquipRequirements(items.imbued_god_cape as any, ok, new Set())).toBeNull()
-    expect(checkEquipRequirements(items.void_body as any, low, new Set())).toBeTruthy()
-    expect(checkEquipRequirements(items.void_body as any, ok, new Set())).toBeNull()
+    expect(checkEquipRequirements(items.void_king_top as any, low, new Set())).toBeTruthy()
+    expect(checkEquipRequirements(items.void_king_top as any, ok, new Set())).toBeNull()
   })
 })
