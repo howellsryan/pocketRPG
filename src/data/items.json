@@ -16055,7 +16055,7 @@
     "name": "Gargoyle Dust",
     "type": "resource",
     "stackable": true,
-    "shopValue": 50,
+    "shopValue": 1500,
     "icon": "🪨",
     "isGeneralStore": false
   },
@@ -23821,7 +23821,7 @@
     "name": "Gargoyle Dust",
     "type": "resource",
     "stackable": true,
-    "shopValue": 50,
+    "shopValue": 1500,
     "icon": "🪨",
     "isGeneralStore": false
   },
