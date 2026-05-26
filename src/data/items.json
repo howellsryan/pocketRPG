@@ -1,3 +1,4 @@
+
 {
   "coins": {
     "id": "coins",
@@ -14130,7 +14131,7 @@
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 95
+      "ranged": 140
     },
     "defenceBonus": {
       "stab": 0,
@@ -14141,7 +14142,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 0,
+      "rangedStrength": 20,
       "magicDamage": 0
     },
     "isUntradeable": false,
@@ -22748,7 +22749,7 @@
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 95
+      "ranged": 140
     },
     "defenceBonus": {
       "stab": 0,
@@ -22759,7 +22760,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 0,
+      "rangedStrength": 20,
       "magicDamage": 0
     },
     "isUntradeable": false,
