@@ -14115,12 +14115,16 @@
     "id": "2nd_age_bow",
     "legacy_item_id": "3rd_age_bow",
     "name": "2nd Age Bow",
-    "type": "armour",
-    "stackable": false,
-    "shopValue": 1419450502,
-    "icon": "⚔️",
-    "isGeneralStore": false,
+    "type": "weapon",
     "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 3,
+    "attackStyle": "ranged",
+    "ammoType": "arrow",
+    "shopValue": 1419450502,
+    "icon": "🏹",
+    "isGeneralStore": false,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -14128,15 +14132,17 @@
       "magic": 0,
       "ranged": 95
     },
-    "otherBonus": {
-      "rangedStrength": 0
-    },
     "defenceBonus": {
       "stab": 0,
       "slash": 0,
       "crush": 0,
       "magic": 0,
       "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
     },
     "isUntradeable": false,
     "requirements": {
@@ -22727,12 +22733,16 @@
     "id": "2nd_age_bow",
     "legacy_item_id": "3rd_age_bow",
     "name": "2nd Age Bow",
-    "type": "armour",
-    "stackable": false,
-    "shopValue": 1419450502,
-    "icon": "⚔️",
-    "isGeneralStore": false,
+    "type": "weapon",
     "slot": "weapon",
+    "twoHanded": true,
+    "stackable": false,
+    "attackSpeed": 3,
+    "attackStyle": "ranged",
+    "ammoType": "arrow",
+    "shopValue": 1419450502,
+    "icon": "🏹",
+    "isGeneralStore": false,
     "attackBonus": {
       "stab": 0,
       "slash": 0,
@@ -22740,15 +22750,17 @@
       "magic": 0,
       "ranged": 95
     },
-    "otherBonus": {
-      "rangedStrength": 0
-    },
     "defenceBonus": {
       "stab": 0,
       "slash": 0,
       "crush": 0,
       "magic": 0,
       "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
     },
     "isUntradeable": false,
     "requirements": {

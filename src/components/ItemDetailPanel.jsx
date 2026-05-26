@@ -21,7 +21,7 @@ export default function ItemDetailPanel({ item, children, quantity, noted, extra
       <Panel className="text-[12px] text-[var(--color-parchment)] opacity-80 space-y-2">
         {noted && <p class="text-[var(--color-gold)] font-semibold">📜 Noted — cannot be used</p>}
         {item.slot && <p>Slot: {item.slot}</p>}
-        {item.attackSpeed && <p>Attack speed: {item.attackSpeed} ticks</p>}
+        {item.slot === 'weapon' && <p>Attack speed: {item.attackSpeed || 4} ticks</p>}
         {item.attackStyle && <p>Style: {item.attackStyle}</p>}
         {item.type === 'food' && <p>Heals {item.heals} HP</p>}
         {item.requirements && Object.entries(item.requirements).length > 0 && (
