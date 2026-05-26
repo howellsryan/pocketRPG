@@ -14131,7 +14131,7 @@
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 140
+      "ranged": 180
     },
     "defenceBonus": {
       "stab": 0,
@@ -14142,7 +14142,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 20,
+      "rangedStrength": 65,
       "magicDamage": 0
     },
     "isUntradeable": false,
@@ -22749,7 +22749,7 @@
       "slash": 0,
       "crush": 0,
       "magic": 0,
-      "ranged": 140
+      "ranged": 180
     },
     "defenceBonus": {
       "stab": 0,
@@ -22760,7 +22760,7 @@
     },
     "otherBonus": {
       "meleeStrength": 0,
-      "rangedStrength": 20,
+      "rangedStrength": 65,
       "magicDamage": 0
     },
     "isUntradeable": false,
