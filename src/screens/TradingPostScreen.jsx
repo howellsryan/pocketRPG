@@ -9,7 +9,7 @@ import ItemDetailPanel from '../components/ItemDetailPanel.jsx'
 import TwoPaneLayout from '../components/TwoPaneLayout.jsx'
 import Button from '../components/Button.jsx'
 import { useIsDesktop } from '../hooks/useIsDesktop.js'
-import { pullSave, applyCloudSave, pushNow } from '../cloud/sync.js'
+import { pullSave, applyCloudSave, pushNow, checkCloudNewer } from '../cloud/sync.js'
 import questsData from '../data/quests.json'
 import minigamesData from '../data/minigames.json'
 
@@ -90,10 +90,15 @@ export default function TradingPostScreen({ onBuyCredits }) {
       const res = await api.tradingPostMyOffers()
       setMyOffers(res?.offers || [])
       setOffersLoaded(true)
-      // Sweep may have delivered coins/items into the save -- pull authoritative state.
-      const cloud = await pullSave()
-      if (cloud?.payload) await applyCloudSave(cloud.payload, cloud.updatedAt)
-      await loadGame()
+      // Only adopt the cloud save when another session has actually advanced it.
+      // A blind pull here would overwrite local-only changes that haven't been
+      // pushed yet (e.g. coins just withdrawn from the bank), silently
+      // reverting them.
+      const cloudNewer = await checkCloudNewer()
+      if (cloudNewer?.payload) {
+        await applyCloudSave(cloudNewer.payload, cloudNewer.updatedAt)
+        await loadGame()
+      }
     } catch (err) {
       addToast(`Failed to load offers: ${err.message}`, 'error')
     }

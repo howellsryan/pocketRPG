@@ -559,6 +559,19 @@ describe('escrow primitives', () => {
     escrowBuyCoins(save, 800)
     expect(getCoinTotal(save)).toBe(200)
   })
+
+  it('escrowBuyCoins cannot spend bank coins without the money purse', () => {
+    const save = { coins: 0, inventory: [], bank: { coins: { quantity: 1000 } } } as any
+    expect(() => escrowBuyCoins(save, 800)).toThrow(/Insufficient/)
+    expect(save.bank.coins.quantity).toBe(1000)
+  })
+
+  it('escrowBuyCoins spends bank coins once the money purse is unlocked', () => {
+    const save = { coins: 0, inventory: [], bank: { coins: { quantity: 1000 } }, settings: { unlockedFeatures: ['money_purse'] } } as any
+    escrowBuyCoins(save, 800)
+    expect(getCoinTotal(save)).toBe(200)
+    expect(save.bank.coins.quantity).toBe(200)
+  })
 })
 
 describe('legacy id aliasing on the matcher', () => {
