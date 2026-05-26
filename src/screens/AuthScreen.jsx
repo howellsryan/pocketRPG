@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'preact/hooks'
-import { api, startGitHubLogin, startGoogleLogin, setCharacter, getToken, clearAuth } from '../cloud/api.js'
+import { api, startGitHubLogin, startGoogleLogin, isEmbeddedBrowser, setCharacter, getToken, clearAuth } from '../cloud/api.js'
 import { resetSyncState } from '../cloud/sync.js'
 
 // Three internal modes:
@@ -15,6 +15,9 @@ export default function AuthScreen({ onCloudReady }) {
   const [newName, setNewName] = useState('')
   const [isOneLife, setIsOneLife] = useState(false)
   const [oneLifeAck, setOneLifeAck] = useState(false)
+  const [embedded] = useState(() => isEmbeddedBrowser())
+  const [showBrowserHint, setShowBrowserHint] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     if (mode === 'characters') refreshCharacters()
@@ -60,6 +63,27 @@ export default function AuthScreen({ onCloudReady }) {
     }
   }
 
+  // Google blocks OAuth in embedded in-app browsers (Error 403:
+  // disallowed_useragent), so redirecting there would dead-end. Steer the user
+  // to a real browser instead.
+  function handleGoogleLogin() {
+    if (embedded) {
+      setShowBrowserHint(true)
+      return
+    }
+    startGoogleLogin()
+  }
+
+  async function copyAppLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.origin)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setCopied(false)
+    }
+  }
+
   function handleSignOut() {
     clearAuth()
     resetSyncState()
@@ -78,9 +102,29 @@ export default function AuthScreen({ onCloudReady }) {
         <button onClick={startGitHubLogin} style={primaryBtn}>
           🐙 Login with GitHub
         </button>
-        <button onClick={startGoogleLogin} style={googleBtn}>
+        <button onClick={handleGoogleLogin} style={googleBtn}>
           <span style={googleG}>G</span> Login with Google
         </button>
+        {embedded && (
+          <div style={browserHintBox}>
+            <div style={{ fontSize: '12px', color: '#d4af37', fontWeight: 'bold', marginBottom: '6px' }}>
+              ⚠️ Google sign-in needs your real browser
+            </div>
+            <div style={{ fontSize: '11px', color: '#e8d5b0', lineHeight: 1.45, marginBottom: showBrowserHint ? '10px' : 0 }}>
+              You're in an app's built-in browser, which Google blocks for sign-in. Tap the menu (••• or the Share icon) and choose <strong>Open in Safari</strong> / <strong>Open in Chrome</strong>, then use Google there. GitHub sign-in works here as-is.
+            </div>
+            {showBrowserHint && (
+              <>
+                <button type="button" onClick={copyAppLink} style={secondaryBtn}>
+                  {copied ? '✓ Link copied' : '🔗 Copy link to open in browser'}
+                </button>
+                <div style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.5, wordBreak: 'break-all', marginTop: '2px' }}>
+                  {window.location.origin}
+                </div>
+              </>
+            )}
+          </div>
+        )}
         <p style={{ ...subtitle, fontSize: '10px', marginTop: '20px', opacity: 0.4 }}>
           GitHub and Google accounts are kept separate — signing in with a different provider gives you a different character roster.
         </p>
@@ -278,3 +322,4 @@ const ghostBtn = { width: '100%', padding: '12px', borderRadius: '12px', backgro
 const charRowBtn = { width: '100%', padding: '12px 14px', borderRadius: '10px', background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#e8d5b0', textAlign: 'left', cursor: 'pointer' }
 const input = { width: '100%', padding: '12px 16px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333', color: '#e8d5b0', fontSize: '14px', fontFamily: 'Nunito, sans-serif', boxSizing: 'border-box', outline: 'none' }
 const errorText = { color: '#ff6b6b', fontSize: '12px', marginTop: '12px', textAlign: 'center' }
+const browserHintBox = { marginTop: '4px', marginBottom: '10px', padding: '12px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #3a3a3a' }

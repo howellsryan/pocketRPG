@@ -241,3 +241,19 @@ export function startGitHubLogin() {
 export function startGoogleLogin() {
   window.location.href = '/api/auth/google'
 }
+
+// Google rejects OAuth sign-in inside embedded/in-app browsers with
+// "Error 403: disallowed_useragent" ("Use secure browsers" policy). Detect the
+// common in-app webviews so the UI can steer users to a real browser, where
+// Google sign-in works. GitHub OAuth is unaffected and still works in webviews.
+export function isEmbeddedBrowser() {
+  if (typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent || ''
+  const inApp = /(FBAN|FBAV|FB_IAB|Instagram|Messenger|Line\/|Twitter|TikTok|musical_ly|BytedanceWebview|Snapchat|LinkedInApp|Pinterest|MicroMessenger|GSA|; wv\))/i
+  if (inApp.test(ua)) return true
+  // Generic iOS WKWebView: WebKit + Mobile but no Safari / dedicated-browser token.
+  if (/iPhone|iPad|iPod/i.test(ua) && !/Safari/i.test(ua) && !/(CriOS|FxiOS|EdgiOS|OPiOS)/i.test(ua)) {
+    return true
+  }
+  return false
+}
