@@ -2,9 +2,19 @@ import { GameApiError } from './errors.js'
 
 const COIN_ITEM_ID = 'coins'
 const INVENTORY_MAX_SLOTS = 28
+const MONEY_PURSE_FEATURE = 'money_purse'
 
 function getInventoryArray(save) {
   return Array.isArray(save?.inventory) ? save.inventory : null
+}
+
+// Bank coins are only spendable on purchases once the player has unlocked the
+// `money_purse` construction upgrade. Without it, only inventory coins count.
+function hasMoneyPurse(save) {
+  const features = save?.settings?.unlockedFeatures
+  if (Array.isArray(features)) return features.includes(MONEY_PURSE_FEATURE)
+  if (features instanceof Set) return features.has(MONEY_PURSE_FEATURE)
+  return false
 }
 
 function getBankCoinQty(save) {
@@ -68,8 +78,10 @@ export function addCoins(save, amount) {
 export function subtractCoins(save, amount) {
   const n = Math.floor(Number(amount) || 0)
   if (n <= 0) throw new GameApiError('INVALID_AMOUNT', 'Invalid amount', 400)
-  const total = getCoinTotal(save)
-  if (total < n) throw new GameApiError('INSUFFICIENT_COINS', 'Insufficient coins', 400)
+  const purseUnlocked = hasMoneyPurse(save)
+  // Without the money purse, bank coins are off-limits for spending.
+  const spendable = purseUnlocked ? getCoinTotal(save) : getCoinTotal(save) - getBankCoinQty(save)
+  if (spendable < n) throw new GameApiError('INSUFFICIENT_COINS', 'Insufficient coins', 400)
 
   let remaining = n
 
@@ -97,7 +109,7 @@ export function subtractCoins(save, amount) {
       remaining -= take
     }
   }
-  if (remaining <= 0) return
+  if (remaining <= 0 || !purseUnlocked) return
 
   const bankCoins = getBankCoinQty(save)
   if (bankCoins > 0) {

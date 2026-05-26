@@ -16,18 +16,37 @@ describe('server authority helpers', () => {
     expect(() => subtractCoins(save, 100)).toThrow(/Insufficient/)
   })
 
-  it('allows purchases when coins are split between inventory and bank', () => {
-    const save: any = { coins: 50, bank: { coins: { quantity: 100 } } }
+  it('allows purchases drawing on bank coins once money_purse is unlocked', () => {
+    const save: any = { coins: 50, bank: { coins: { quantity: 100 } }, settings: { unlockedFeatures: ['money_purse'] } }
     expect(() => subtractCoins(save, 125)).not.toThrow()
     expect(save.coins).toBe(0)
     expect(save.bank.coins.quantity).toBe(25)
   })
 
-  it('supports legacy numeric bank coin storage', () => {
-    const save: any = { coins: 10, bank: { coins: 90 } }
+  it('supports legacy numeric bank coin storage with money_purse unlocked', () => {
+    const save: any = { coins: 10, bank: { coins: 90 }, settings: { unlockedFeatures: ['money_purse'] } }
     expect(() => subtractCoins(save, 60)).not.toThrow()
     expect(save.coins).toBe(0)
     expect(save.bank.coins).toEqual({ itemId: 'coins', quantity: 40 })
+  })
+
+  it('refuses to spend bank coins without the money_purse unlock', () => {
+    const save: any = { coins: 50, bank: { coins: { quantity: 100 } } }
+    expect(() => subtractCoins(save, 125)).toThrow(/Insufficient/)
+    // Nothing should be debited from a failed purchase.
+    expect(save.coins).toBe(50)
+    expect(save.bank.coins.quantity).toBe(100)
+  })
+
+  it('spends only inventory coins (never bank) when money_purse is locked', () => {
+    const save: any = {
+      coins: 0,
+      inventory: [{ itemId: 'coins', quantity: 80 }],
+      bank: { coins: { quantity: 1000 } },
+    }
+    expect(() => subtractCoins(save, 80)).not.toThrow()
+    expect(save.inventory.find((s: any) => s?.itemId === 'coins')).toBeUndefined()
+    expect(save.bank.coins.quantity).toBe(1000)
   })
 
   it('enforces inventory slot cap at 28', () => {
