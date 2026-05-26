@@ -102,7 +102,14 @@ export default function TradingPostScreen({ onBuyCredits }) {
   useEffect(() => {
     if (isIronman) return
     if (!getToken() || !getCharacterId()) return
-    refreshMyOffers()
+    // Flush local-only changes (e.g. coins just withdrawn from the bank on the
+    // previous screen) to the cloud BEFORE refreshMyOffers() pulls the
+    // authoritative save. Otherwise the pull restores a ≤60s-old snapshot and
+    // silently reverts the withdrawal.
+    ;(async () => {
+      try { await pushNow(getSnapshot()) } catch (_) { /* ignore push failure */ }
+      await refreshMyOffers()
+    })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
