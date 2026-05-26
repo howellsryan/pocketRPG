@@ -12,9 +12,7 @@ function getInventoryArray(save) {
 // `money_purse` construction upgrade. Without it, only inventory coins count.
 function hasMoneyPurse(save) {
   const features = save?.settings?.unlockedFeatures
-  if (Array.isArray(features)) return features.includes(MONEY_PURSE_FEATURE)
-  if (features instanceof Set) return features.has(MONEY_PURSE_FEATURE)
-  return false
+  return Array.isArray(features) && features.includes(MONEY_PURSE_FEATURE)
 }
 
 function getBankCoinQty(save) {

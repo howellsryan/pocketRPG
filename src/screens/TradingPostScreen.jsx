@@ -217,11 +217,6 @@ export default function TradingPostScreen({ onBuyCredits }) {
           setBusy(false)
           return
         }
-        if (coins < bidPrice * qty) {
-          addToast('Insufficient coins for that purchase.', 'error')
-          setBusy(false)
-          return
-        }
         await api.purchaseItem(selected.id, qty, [...unlockedMinigameItems])
         const cloud = await pullSave()
         if (cloud?.payload) await applyCloudSave(cloud.payload, cloud.updatedAt)
