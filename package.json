@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:app": "vite build --config vite.config.app.js",
     "prebuild": "npm run test:logic",
     "preview": "vite preview",
     "test": "vitest run",
@@ -19,10 +20,21 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/browser": "^8.0.3",
+    "@capacitor/core": "^8.3.4",
+    "@capacitor/network": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2",
+    "@fontsource/cinzel": "^5.2.8",
+    "@fontsource/jetbrains-mono": "^5.2.8",
+    "@fontsource/nunito": "^5.2.7",
     "idb": "^8.0.2",
     "preact": "^10.25.4"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.3.4",
+    "@capacitor/ios": "^8.3.4",
     "@preact/preset-vite": "^2.9.4",
     "@tailwindcss/vite": "^4.1.3",
     "@types/node": "^25.6.0",

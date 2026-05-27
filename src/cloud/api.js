@@ -1,6 +1,8 @@
 // Thin fetch wrapper over the Cloudflare Pages Functions API.
 // Token + selected character ID live in localStorage so they survive reloads.
 
+import { apiUrl } from './apiBase.js'
+
 const TOKEN_KEY = 'pocketrpg_cloud_token'
 const CHARACTER_KEY = 'pocketrpg_cloud_character_id'
 const CHARACTER_NAME_KEY = 'pocketrpg_cloud_character_name'
@@ -106,7 +108,7 @@ async function request(path, options = {}) {
     headers.set('X-Character-Id', String(characterId))
   }
 
-  const res = await fetch(path, { ...options, headers })
+  const res = await fetch(apiUrl(path), { ...options, headers })
   if (res.status === 401) {
     clearAuth()
     const err = new Error('Not authenticated')
@@ -170,6 +172,7 @@ export const api = {
     body: JSON.stringify({ active_task: activeTask == null ? null : JSON.stringify(activeTask) }),
   }),
   deleteSave: () => request('/api/save', { method: 'DELETE' }),
+  deleteAccount: () => request('/api/auth/account', { method: 'DELETE' }),
   deleteIdle: () => request('/api/idle', { method: 'DELETE' }),
   resetOneLife: () => request('/api/characters/reset-one-life', { method: 'POST', body: JSON.stringify({}) }),
 
@@ -228,18 +231,28 @@ export function sendIdleBeacon(activeTask) {
       active_task: activeTask == null ? null : JSON.stringify(activeTask),
     })
     const blob = new Blob([body], { type: 'application/json' })
-    return navigator.sendBeacon('/api/idle', blob)
+    return navigator.sendBeacon(apiUrl('/api/idle'), blob)
   } catch {
     return false
   }
 }
 
+// In the native app, app/native.js installs __pocketrpgNativeLogin to drive the
+// system-browser + deep-link flow. On web the hook is absent and we redirect.
 export function startGitHubLogin() {
-  window.location.href = '/api/auth/github'
+  if (typeof window !== 'undefined' && window.__pocketrpgNativeLogin) {
+    window.__pocketrpgNativeLogin('github')
+    return
+  }
+  window.location.href = apiUrl('/api/auth/github')
 }
 
 export function startGoogleLogin() {
-  window.location.href = '/api/auth/google'
+  if (typeof window !== 'undefined' && window.__pocketrpgNativeLogin) {
+    window.__pocketrpgNativeLogin('google')
+    return
+  }
+  window.location.href = apiUrl('/api/auth/google')
 }
 
 // Google rejects OAuth sign-in inside embedded/in-app browsers with

@@ -16,6 +16,11 @@ import { hasRequiredRunes, getRunesToConsume } from './runes.js'
 import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE } from '../utils/constants.js'
 import { getAgilityBankDelayFromStats, simulateIdleAgility } from './agility.js'
 import { rollClueRewards } from './clueScrolls.js'
+
+// Re-exported so callers treat idleEngine as the single idle-sim facade
+// (App.jsx and gameState.jsx import simulateIdleAgility from here). The
+// single-file build concatenates scopes so this only matters to real bundlers.
+export { simulateIdleAgility }
 import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster } from './slayerTasks.js'
 import { calculateDungeoneeringTokensForAction } from './dungeoneeringTokens.js'
 import { getSlayerTaskEquipmentBonuses } from './slayerCombatBonuses.js'

@@ -1,0 +1,7 @@
+/* App build only. Vite's root is app/, so Tailwind v4's automatic source
+   detection would miss the shared src/ tree and emit no utility classes.
+   Register src/ explicitly so every class used across screens/components is
+   compiled into the offline bundle. (The web build compiles Tailwind from the
+   project root, so it needs none of this.) */
+@import "tailwindcss";
+@source "../src";

@@ -3,6 +3,7 @@
 // mints a session JWT, and redirects to / with #token=... in the URL fragment.
 
 import { signJWT } from '../../../_lib/jwt.js'
+import { stateIsNative, tokenRedirectLocation } from '../../../_lib/authRedirect.js'
 
 function parseCookies(header) {
   const out = {}
@@ -87,9 +88,10 @@ export async function onRequestGet({ request, env }) {
     60 * 60 * 24 * 30 // 30 days
   )
 
-  // Redirect back to app with token in fragment (never sent to server)
+  // Redirect back to app with token in fragment (never sent to server).
+  // Native logins return via the pocketrpg:// deep link instead of the web app.
   const redirectHeaders = new Headers({
-    Location: `/#token=${encodeURIComponent(token)}`,
+    Location: tokenRedirectLocation(token, stateIsNative(state)),
     'Set-Cookie': 'oauth_state=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax',
   })
   return new Response(null, { status: 302, headers: redirectHeaders })

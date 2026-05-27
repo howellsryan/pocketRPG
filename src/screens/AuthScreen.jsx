@@ -67,6 +67,12 @@ export default function AuthScreen({ onCloudReady }) {
   // disallowed_useragent), so redirecting there would dead-end. Steer the user
   // to a real browser instead.
   function handleGoogleLogin() {
+    // In the native app the login opens the system browser (where Google works),
+    // so skip the embedded-WebView hint even though the app shell reads as embedded.
+    if (typeof window !== 'undefined' && window.__pocketrpgNativeLogin) {
+      startGoogleLogin()
+      return
+    }
     if (embedded) {
       setShowBrowserHint(true)
       return
@@ -90,6 +96,20 @@ export default function AuthScreen({ onCloudReady }) {
     setMode('login')
     setCharacters(null)
     setIdentity(null)
+  }
+
+  async function handleDeleteAccount() {
+    if (!window.confirm('Permanently delete your account and ALL characters, saves and progress? This cannot be undone.')) return
+    setBusy(true)
+    setError(null)
+    try {
+      await api.deleteAccount()
+      handleSignOut()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy(false)
+    }
   }
 
   // ── Render ──
@@ -135,6 +155,22 @@ export default function AuthScreen({ onCloudReady }) {
   // mode === 'characters' or 'create'
   const showCreate = mode === 'create' || (characters && characters.length === 0)
 
+  // Account actions are shown in every signed-in view (character list AND the
+  // create form) so a logged-in user can always log out or delete — even a
+  // brand-new account with no characters, or one where /api/auth/me hasn't
+  // populated `identity` (logout only needs the token, not the profile).
+  // type="button" keeps them from submitting the create <form>.
+  const accountActions = (
+    <>
+      <button type="button" onClick={handleSignOut} style={ghostBtn}>
+        🚪 Log out{identity?.provider ? ` of ${providerLabel(identity.provider)}` : ''}
+      </button>
+      <button type="button" onClick={handleDeleteAccount} style={dangerBtn} disabled={busy}>
+        🗑️ Delete account
+      </button>
+    </>
+  )
+
   return (
     <Wrap>
       <Title />
@@ -162,15 +198,12 @@ export default function AuthScreen({ onCloudReady }) {
           <button onClick={() => { setMode('create'); setNewName('') }} style={secondaryBtn}>
             ➕ Create New Character
           </button>
-          {identity && (
-            <button onClick={handleSignOut} style={ghostBtn}>
-              🚪 Log out{identity.provider ? ` of ${providerLabel(identity.provider)}` : ''}
-            </button>
-          )}
+          {accountActions}
         </>
       )}
 
       {showCreate && (
+        <>
         <form onSubmit={handleCreate}>
           <SectionLabel>Create a character</SectionLabel>
           <input
@@ -277,6 +310,8 @@ export default function AuthScreen({ onCloudReady }) {
             </button>
           )}
         </form>
+        {accountActions}
+        </>
       )}
 
       {error && <p style={errorText}>{error}</p>}
@@ -287,9 +322,12 @@ export default function AuthScreen({ onCloudReady }) {
 // ── Styled helpers (kept inline to avoid coupling to component library during boot) ──
 
 function Wrap({ children }) {
+  // height:100% + overflowY:auto makes the panel a scroll container; margin:auto
+  // (instead of justify-content:center) vertically centers short content without
+  // clipping the top when the character list is taller than the viewport.
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', background: '#0f0f0f' }}>
-      <div style={{ width: '100%', maxWidth: '380px' }}>{children}</div>
+    <div style={{ height: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '24px', background: '#0f0f0f', boxSizing: 'border-box' }}>
+      <div style={{ width: '100%', maxWidth: '380px', margin: 'auto' }}>{children}</div>
     </div>
   )
 }
@@ -319,6 +357,7 @@ function providerLabel(provider) {
 }
 const secondaryBtn = { width: '100%', padding: '13px', borderRadius: '12px', background: '#2a2a2a', border: '1px solid #3a3a3a', color: '#e8d5b0', fontSize: '13px', fontWeight: '600', cursor: 'pointer', marginBottom: '10px' }
 const ghostBtn = { width: '100%', padding: '12px', borderRadius: '12px', background: 'transparent', border: '1px solid #2a2a2a', color: '#e8d5b0', opacity: 0.7, fontSize: '13px', cursor: 'pointer' }
+const dangerBtn = { width: '100%', padding: '12px', borderRadius: '12px', background: 'transparent', border: '1px solid var(--color-blood)', color: 'var(--color-blood-light)', fontSize: '13px', cursor: 'pointer', marginTop: '8px' }
 const charRowBtn = { width: '100%', padding: '12px 14px', borderRadius: '10px', background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#e8d5b0', textAlign: 'left', cursor: 'pointer' }
 const input = { width: '100%', padding: '12px 16px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333', color: '#e8d5b0', fontSize: '14px', fontFamily: 'Nunito, sans-serif', boxSizing: 'border-box', outline: 'none' }
 const errorText = { color: '#ff6b6b', fontSize: '12px', marginTop: '12px', textAlign: 'center' }

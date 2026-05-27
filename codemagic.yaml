@@ -1,0 +1,64 @@
+# Codemagic CI — builds the iOS app on cloud Macs and ships to TestFlight, so no
+# local Mac is required. Capacitor 8 uses Swift Package Manager (no CocoaPods),
+# so there is no `pod install` step.
+#
+# One-time setup before the first run (see docs/app-store-deployment-plan.md §5):
+#   1. Apple Developer Program membership active.
+#   2. App record created in App Store Connect with bundle id uk.co.pocketrpg.app.
+#   3. An App Store Connect API key added in the Codemagic UI under
+#      Teams → Integrations → App Store Connect, named to match
+#      `integrations.app_store_connect` below. This drives automatic code
+#      signing (Codemagic creates/fetches the distribution cert + profile).
+workflows:
+  ios-testflight:
+    name: PocketRPG iOS → TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    integrations:
+      app_store_connect: PocketRPG ASC Key
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: uk.co.pocketrpg.app
+      vars:
+        XCODE_PROJECT: "ios/App/App.xcodeproj"
+        XCODE_SCHEME: "App"
+      node: 20
+      xcode: latest
+    cache:
+      cache_paths:
+        - $HOME/.npm
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: claude/game-appstore-deployment-FDxHd
+          include: true
+    scripts:
+      - name: Install JS dependencies
+        script: npm ci
+      - name: Build self-contained web bundle (www/)
+        script: npm run build:app
+      - name: Sync Capacitor iOS project
+        script: npx cap sync ios
+      - name: Set build number
+        script: |
+          cd ios/App
+          agvtool new-version -all "$(($BUILD_NUMBER + 1))"
+      - name: Apply signing profiles
+        script: xcode-project use-profiles
+      - name: Build & sign IPA
+        script: |
+          xcode-project build-ipa \
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        # Flip to true (and add release notes / a review submission) when ready
+        # to push a build to production App Review:
+        # submit_to_app_store: false
