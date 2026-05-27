@@ -155,6 +155,21 @@ export default function AuthScreen({ onCloudReady }) {
   // mode === 'characters' or 'create'
   const showCreate = mode === 'create' || (characters && characters.length === 0)
 
+  // Account actions are shown in every signed-in view (character list AND the
+  // create form) so a logged-in user — including a brand-new account with no
+  // characters yet — can always log out or delete. type="button" keeps them
+  // from submitting the create <form>.
+  const accountActions = identity && (
+    <>
+      <button type="button" onClick={handleSignOut} style={ghostBtn}>
+        🚪 Log out{identity.provider ? ` of ${providerLabel(identity.provider)}` : ''}
+      </button>
+      <button type="button" onClick={handleDeleteAccount} style={dangerBtn} disabled={busy}>
+        🗑️ Delete account
+      </button>
+    </>
+  )
+
   return (
     <Wrap>
       <Title />
@@ -182,20 +197,12 @@ export default function AuthScreen({ onCloudReady }) {
           <button onClick={() => { setMode('create'); setNewName('') }} style={secondaryBtn}>
             ➕ Create New Character
           </button>
-          {identity && (
-            <button onClick={handleSignOut} style={ghostBtn}>
-              🚪 Log out{identity.provider ? ` of ${providerLabel(identity.provider)}` : ''}
-            </button>
-          )}
-          {identity && (
-            <button onClick={handleDeleteAccount} style={dangerBtn} disabled={busy}>
-              🗑️ Delete account
-            </button>
-          )}
+          {accountActions}
         </>
       )}
 
       {showCreate && (
+        <>
         <form onSubmit={handleCreate}>
           <SectionLabel>Create a character</SectionLabel>
           <input
@@ -302,6 +309,8 @@ export default function AuthScreen({ onCloudReady }) {
             </button>
           )}
         </form>
+        {accountActions}
+        </>
       )}
 
       {error && <p style={errorText}>{error}</p>}
