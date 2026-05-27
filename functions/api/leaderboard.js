@@ -75,7 +75,7 @@ export async function onRequestGet(context) {
       const rows = await env.DB.prepare(
         `SELECT id, username, total_level, combat_level, is_one_life
            FROM characters
-          WHERE deleted_at IS NULL AND total_level > 0
+          WHERE deleted_at IS NULL AND total_level > 33
           ORDER BY total_level DESC, id ASC
           LIMIT ? OFFSET ?`
       ).bind(limit, offset).all()
