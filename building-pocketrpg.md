@@ -2,7 +2,7 @@
 
 *27 May 2026*
 
-PocketRPG is an idle/simulation RPG I've been building. It's a menu-driven fantasy game in the same family as Old School RuneScape: combat, skilling, gathering, raids, clues and minigames, all advancing on a 600ms tick that keeps running while the tab is in the background. It runs in the browser, the layout works on both phones and desktops, and the production stack currently costs me nothing to run.
+PocketRPG is an idle/simulation RPG I've been building. It takes its cues from a fantasy RPG I played as a kid: combat, skilling, gathering, raids, clues and minigames, all advancing on a 600ms tick that keeps running while the tab is in the background. It runs in the browser, the layout works on both phones and desktops, and the production stack currently costs me nothing to run.
 
 This is a write-up of how it's built, for a technical reader. I'll cover the stack, the server-authority model, the way I've used Cloudflare's free tiers, the save system, PvP, the economy and the responsive UI. I've left out anything that's an actual secret or key; where a detail is sensitive I've described the mechanism instead.
 
@@ -81,7 +81,13 @@ The schema is spread across nineteen migrations but stays fairly small:
 - `trading_post_offers`: the whole player economy in one table.
 - `pvp_waiting_room`, `pvp_matches`, `pvp_invitations`, `pvp_intents`: PvP.
 
-Each table is indexed for the way it's actually queried. The partial indexes carry some weight: "one active match per character", for instance, is a `UNIQUE` index with `WHERE status = 'active'`, so a second active match for either side fails on the constraint instead of on application code I'd have to remember to write.
+Indexes get the most deliberate attention, because they aren't free. Every secondary index is more data the database has to write and keep in order on each insert and update, and on a platform that bills per row written, an over-indexed table quietly multiplies the cost of every save. So the default is no index, and each one has to justify itself against a query that actually runs and runs often.
+
+The indexes that exist map onto hot read paths. The leaderboard sorts by total level, so `characters` has a composite index on `(total_level DESC, id)`. The order book is searched by item and side at a given price, so `trading_post_offers` is indexed on `(item_id, offer_type, status, price, created_at)`, in that column order, because that's the order the query filters and then sorts in. The PvP match loop reads unapplied intents by match and tick on every poll, so `pvp_intents` has a composite index on `(match_id, tick_number, character_id, character_seq)`. Pending invitations get their own index because the lobby polls for them. Composite indexes are ordered to match how a query reads, not alphabetically or by gut feel, since a leading column the query doesn't filter on makes the index useless to it.
+
+Several of these are partial, with a `WHERE` clause that trims the index down to the rows that are ever queried. The leaderboard index only covers `WHERE deleted_at IS NULL AND total_level > 0`, so deleted and brand-new characters never take up space in it. The "one active match per character" constraint is a `UNIQUE` index with `WHERE status = 'active'`, which does two jobs at once: it enforces the rule (a second active match for either side fails on the constraint instead of on application code I'd have to remember to write) and it stays small, because completed and aborted matches drop straight out of it. A partial index is smaller, faster to scan and cheaper to maintain than a full one, so where a column has a clear "live" subset it's the natural choice.
+
+The other half of the decision is the tables left almost unindexed on purpose. `saves` is the hottest write path in the game, and it's read and written almost entirely by primary key (`character_id`), so it carries nothing beyond that key; a secondary index there would tax every save for a query that doesn't exist. Low-cardinality flags like the ironman boolean are the same story, since indexing a column with two possible values rarely helps the planner and still adds write cost. The line I hold is that an index is a standing tax on writes paid in exchange for one read being fast, so it's only worth adding when that read is both real and frequent.
 
 ## Authentication
 
