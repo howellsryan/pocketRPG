@@ -1,119 +1,105 @@
-# PocketRPG — App Store Deployment Plan (iOS + Android)
+# PocketRPG — iOS App Store Deployment Plan
 
-> **Goal**: Ship PocketRPG to the Apple App Store and Google Play **without forking the codebase**. One web build powers the browser, iOS, and Android. Native shells are thin wrappers.
+> **Goal**: Ship PocketRPG to the **Apple App Store** (iPhone) **without forking the codebase and without owning a Mac**. One web build powers the browser and iOS; the native shell is a thin wrapper.
 >
-> **Chosen approach**: **Capacitor** (by Ionic). It wraps the existing Vite/Preact build in a native WebView, exposes native APIs through plugins, and produces standard `.ipa`/`.aab` artifacts for the stores.
+> **Approach**: **Capacitor** (by Ionic) wraps the existing Vite/Preact build in a native WebView and produces a standard `.ipa`. **Codemagic** (cloud CI on Apple hardware) builds, signs, and publishes that `.ipa` to **TestFlight** and, eventually, the App Store — so no MacBook is required.
 >
-> **Monetisation decision (this plan)**: In-app purchases (credits, skip-hour, remove-ads) are **hidden inside the store apps**. Stripe stays web-only at `pocketrpg.co.uk`. This is the fastest path to store approval and avoids Apple/Google's mandatory native-IAP rules. (If you later want to sell inside the app, add StoreKit / Play Billing — see Appendix C.)
+> **Scope**: iOS only for now. Android is deferred; because the codebase stays single-source, Android can be added later with no rework (`npx cap add android` against the same `www/` build). Android-specific notes are out of scope here.
+>
+> **Monetisation**: In-app purchases (credits, skip-hour, remove-ads) are **hidden inside the app**. Stripe stays web-only at `pocketrpg.co.uk`. Fastest path to approval; avoids Apple's mandatory native-IAP rules. (To sell inside the app later, add StoreKit — see Appendix C.)
 
 ---
 
-## 1. Why Capacitor (vs the alternatives)
+## 1. The toolchain at a glance
 
-| Option | Single codebase? | iOS store | Android store | Effort | Verdict |
-|---|---|---|---|---|---|
-| **Capacitor** | ✅ reuses the web build verbatim | ✅ real `.ipa` | ✅ real `.aab` | Low–Med | **Chosen** |
-| PWA + TWA (Bubblewrap) | ✅ | ❌ iOS has no TWA | ✅ | Low | Android-only; fails the iOS requirement |
-| React Native / Flutter rewrite | ❌ rewrite the UI | ✅ | ✅ | Very high | Throws away the Preact app |
-| Cordova | ✅ | ✅ | ✅ | Med | Legacy; Capacitor is its modern successor |
+| Piece | Role | Cost |
+|---|---|---|
+| **Capacitor** | Wraps the web build in a native iOS shell; produces the Xcode project | **Free**, open source (MIT) |
+| **Codemagic** | Cloud Macs build + sign + upload to TestFlight/App Store | **Free tier** (~500 build-min/mo); paid above that |
+| **Apple Developer Program** | Required to use TestFlight and submit | **$99/yr (~£79)** — needed before any tester sees a build |
+| **Your iPhone** | Test device via TestFlight | Already own |
+| **Your dev machine** (Win/Linux/Mac) | All web dev + `npx cap sync` | Already own |
 
-Capacitor is the only option that satisfies "single place of deployment for the majority of code" **and** ships to both stores.
+**You never need to buy or rent a Mac.** Codemagic runs the macOS build for you. (A cloud Mac like MacinCloud is only a fallback if you ever need to debug signing interactively — see Appendix B.)
 
-### What stays shared vs platform-specific
+### What's shared vs iOS-specific
 
-~95% of the repo is shared, untouched, and runs identically everywhere:
+~95% of the repo is shared and runs identically in browser and app:
 
-| Shared (no change) | Platform-specific (thin shims) |
+| Shared (no change) | iOS-specific (thin shims / config) |
 |---|---|
 | `src/engine/**` (pure game logic) | API base URL resolver (`src/cloud/api.js`) |
-| `src/screens/**`, `src/components/**` | OAuth launch flow (system browser + deep link) |
-| `src/state/**`, `src/db/**` | Purchase UI gating (hide in native) |
-| `src/data/**` | `capacitor.config.ts`, `ios/`, `android/` projects |
-| Cloudflare Functions `functions/**` (the API server) | App icons / splash / store metadata |
+| `src/screens/**`, `src/components/**` | OAuth launch (system browser + deep link) |
+| `src/state/**`, `src/db/**`, `src/data/**` | Purchase UI gating (hide in native) |
+| Cloudflare Functions `functions/**` (the API) | `capacitor.config.ts`, generated `ios/` project, `codemagic.yaml`, icons/splash |
+
+The "app vs web" split is **runtime branches** (`if (Capacitor.isNativePlatform())`), not two codebases.
 
 ---
 
 ## 2. Prerequisites
 
 ### Accounts & money
-- **Apple Developer Program** — $99/year. Required to build, sign, and submit. (Enrolment can take 24–48h, sometimes longer for org accounts — start this early.)
-- **Google Play Developer** — $25 one-time.
-- A **privacy policy URL** (both stores require it). Host it on `pocketrpg.co.uk/privacy`.
-- A **support URL / contact email**.
+- **Apple Developer Program** — $99/yr (~£79). Enrolment can take 24–48h; **start this first**. Required for TestFlight *and* submission.
+- **Codemagic account** — free; sign up with the GitHub repo.
+- **App Store Connect API key** — created in App Store Connect (Users and Access → Integrations → App Store Connect API). You'll download a `.p8` key + note the Issuer ID and Key ID. Codemagic uses this for automatic signing and publishing.
+- **Privacy policy URL** (`pocketrpg.co.uk/privacy`) and a **support URL / contact email** — both required by Apple.
 
-### Tooling
-- **macOS + Xcode** (latest) — **mandatory** to build and submit the iOS app. There is no way around needing a Mac (or a Mac CI runner / cloud Mac such as Codemagic/MacStadium) for iOS.
-- **Android Studio** (latest) + JDK 17 + Android SDK — for Android.
-- **Node 20+** (already used by the project).
-- **CocoaPods** (`sudo gem install cocoapods`) for iOS native deps.
+### Tooling (on your own machine — any OS)
+- **Node 20+** (already used).
+- **Capacitor CLI** (added below).
+- You do **not** install Xcode locally. Codemagic provides it.
 
-### Hardware for testing
-- A physical iPhone and Android device are strongly recommended (timers, background behaviour, and the 600 ms tick behave differently on real hardware than simulators).
+> One caveat: without local Xcode you can't sideload/live-debug on a device. Your test loop is **push → Codemagic builds → TestFlight → install on iPhone**. The iOS Simulator (needs a Mac) is therefore skipped; rely on the browser for fast iteration and TestFlight for on-device checks.
 
 ---
 
 ## 3. Critical pre-work in the codebase (Phase 0)
 
-These are blockers that must be fixed **before** Capacitor will work. They stem from assumptions the current web build makes that are false inside a native shell.
+These are the blockers, and the bulk of the real effort. They're all testable in a normal browser before any iOS build exists.
 
 ### 3.1 Produce a self-contained, offline-capable web bundle ⚠️ **highest priority**
 
-The committed root `index.html` is the **CDN single-file build** (`build_single.cjs`): it imports Preact/idb from `esm.sh`, Tailwind from `cdn.tailwindcss.com`, and fonts from Google Fonts. **A packaged app must not depend on CDNs** — the game is offline-first, the App Store reviews offline, and remote-script execution can trigger Apple rejections.
+The committed root `index.html` is the **CDN single-file build** (`build_single.cjs`): it pulls Preact/idb from `esm.sh`, Tailwind from `cdn.tailwindcss.com`, and fonts from Google Fonts. **A packaged app must not depend on CDNs** — the game is offline-first, App Review tests offline, and remote-script execution invites rejection.
 
-**Action**: the app must ship the **bundled Vite build** (which already compiles Preact + Tailwind locally via `@preact/preset-vite` and `@tailwindcss/vite`), not the CDN single-file. Tasks:
+**Action**: ship the **bundled Vite build** (which already compiles Preact + Tailwind locally via `@preact/preset-vite` and `@tailwindcss/vite`), not the CDN single-file:
 
-1. Add a dedicated app entry HTML (e.g. `app/index.html`) that references `src/main.jsx` — do **not** reuse the generated CDN `index.html`.
-2. Self-host the three font families (`Cinzel`, `Nunito`, `JetBrains Mono`) — drop the `.woff2` files into the bundle and add `@font-face` rules to `src/index.css`. Remove the Google Fonts `<link>` for the app build.
-3. Add an app-specific Vite config with **`base: './'`** (the current `base: '/pocketrpg/'` in `vite.config.js` will break asset paths under `capacitor://`/`https://localhost`). A second config file (`vite.config.app.js`) keeps the web build untouched.
-4. Add an npm script, e.g.:
+1. Add a dedicated app entry HTML (e.g. `app/index.html`) referencing `src/main.jsx`. Do **not** reuse the generated CDN `index.html`.
+2. Self-host the three fonts (`Cinzel`, `Nunito`, `JetBrains Mono`) — add the `.woff2` files + `@font-face` to `src/index.css`; drop the Google Fonts `<link>` for the app build.
+3. Add `vite.config.app.js` with **`base: './'`** (the current `base: '/pocketrpg/'` breaks asset paths under `capacitor://`). Keeps the web build untouched.
+4. Add a script:
    ```jsonc
    "build:app": "vite build --config vite.config.app.js --outDir www"
    ```
    `www/` becomes Capacitor's `webDir`.
-5. Verify the output runs with **zero network requests** at startup (DevTools → Network, offline mode).
-
-> Net effect: the browser site keeps deploying exactly as today (Cloudflare Pages + CDN single-file). The app consumes a parallel, fully-bundled `www/` artifact from the same `src/`.
+5. Verify it boots with **zero network requests** (DevTools → offline).
 
 ### 3.2 Make API calls use an absolute base URL ⚠️ **blocker**
 
-`src/cloud/api.js` (`request()`, line ~109) and `src/cloud/pvp.js` (line ~20) call `fetch('/api/...')` with **relative** paths. In a native shell the app loads from `capacitor://localhost` (iOS) / `https://localhost` (Android), so `/api/...` resolves to the local bundle — **every API call 404s**.
-
-**Action**: introduce a single base-URL resolver and prefix all API/auth/beacon URLs with it.
+`src/cloud/api.js` (`request()`, ~line 109) and `src/cloud/pvp.js` (~line 20) call `fetch('/api/...')` with **relative** paths. In the app the shell loads from `capacitor://localhost`, so `/api/...` hits the local bundle and **every API call 404s**.
 
 ```js
 // src/cloud/apiBase.js
 import { Capacitor } from '@capacitor/core'
-
-// In the browser, relative paths hit the same origin (pocketrpg.co.uk).
-// In a native shell there is no server origin, so target prod explicitly.
-export const API_BASE = Capacitor.isNativePlatform()
-  ? 'https://pocketrpg.co.uk'
-  : ''
-
+export const API_BASE = Capacitor.isNativePlatform() ? 'https://pocketrpg.co.uk' : ''
 export const apiUrl = (path) => `${API_BASE}${path}`
 ```
 
-Then update:
-- `src/cloud/api.js` → `fetch(apiUrl(path), …)` and the `sendBeacon('/api/idle')` call.
-- `src/cloud/pvp.js` → same.
-- `startGitHubLogin` / `startGoogleLogin` (see 3.3).
+Update `api.js` (`fetch` + `sendBeacon('/api/idle')`), `pvp.js`, and the OAuth launchers to use `apiUrl(...)`.
 
-**Server CORS**: the Cloudflare Functions must allow the native origins. Add `capacitor://localhost`, `https://localhost`, and `http://localhost` to the CORS allowlist (`Access-Control-Allow-Origin` + credentials/headers `Authorization`, `X-Character-Id`, `Content-Type`) and handle `OPTIONS` preflight. Auth is Bearer-token in `localStorage`, not cookies, so SameSite cookie issues don't apply — but CORS still must be opened.
+**Server CORS**: the Cloudflare Functions must allow the native origin. Add `capacitor://localhost` (iOS) to the `Access-Control-Allow-Origin` allowlist, allow headers `Authorization`, `X-Character-Id`, `Content-Type`, and handle `OPTIONS` preflight. Auth is a Bearer token in `localStorage` (not cookies), so there are no SameSite issues — but CORS must still be opened.
 
 ### 3.3 Fix OAuth for native (system browser + deep link) ⚠️ **blocker**
 
-`AuthScreen.jsx` calls `startGitHubLogin/Google` which do `window.location.href = '/api/auth/github'` — a full-page redirect. Inside a WebView this is broken in two ways: (a) relative path (see 3.2), and (b) **Google rejects embedded WebViews** with `disallowed_useragent` (the code already detects this via `isEmbeddedBrowser`). GitHub also shouldn't keep the user trapped in the app WebView.
+`AuthScreen.jsx` → `startGitHubLogin/Google` do `window.location.href = '/api/auth/...'`. Broken in a WebView: relative path (3.2) **and** Google rejects embedded WebViews (`disallowed_useragent`; the app already detects this via `isEmbeddedBrowser`).
 
-**Native pattern**: open the OAuth URL in the **system browser** and return via a **deep link** (custom URL scheme):
-
-1. Add plugins `@capacitor/browser` and `@capacitor/app`.
-2. Pick a scheme, e.g. `pocketrpg://auth/callback`.
-3. On the server, the OAuth callback (`functions/api/auth/github.js`, `google.js`) currently redirects to the app with `#token=…`. Add a branch: if the request carries a `?platform=native` (or a stored state flag), redirect to `pocketrpg://auth/callback#token=…` instead of the web URL. **Register `pocketrpg://` as an allowed redirect** in the GitHub OAuth App and the Google Cloud OAuth client.
-4. Client:
+**Native pattern** — open OAuth in the **system browser**, return via a **deep link**:
+1. Add `@capacitor/browser` + `@capacitor/app`. Choose scheme `pocketrpg://auth/callback`.
+2. Server: in `functions/api/auth/github.js` & `google.js`, when the request is flagged native (`?platform=native`), redirect to `pocketrpg://auth/callback#token=…` instead of the web URL. Register `pocketrpg://` as an allowed redirect in the **GitHub OAuth App** and **Google Cloud OAuth client**.
+3. Client:
    ```js
    import { Browser } from '@capacitor/browser'
    import { App } from '@capacitor/app'
-
    export async function startGitHubLoginNative() {
      App.addListener('appUrlOpen', ({ url }) => {
        if (url.startsWith('pocketrpg://auth/callback')) {
@@ -125,206 +111,210 @@ Then update:
      await Browser.open({ url: apiUrl('/api/auth/github?platform=native') })
    }
    ```
-5. Branch in `AuthScreen.jsx`: use the native flow when `Capacitor.isNativePlatform()`, otherwise the existing redirect.
+4. Branch in `AuthScreen.jsx`: native flow when `isNativePlatform()`, else existing redirect.
 
-> Sign in with Apple: **not strictly required** under current Apple rules now that third-party-only login is permitted in many cases, **but** if you offer Google/GitHub social login Apple has historically required Apple as an option. Budget for adding "Sign in with Apple" to avoid a 4.8 rejection — confirm against the current App Review Guidelines at submission time. (New server endpoint + Apple key; can be a fast-follow if the reviewer flags it.)
+> **Sign in with Apple**: if you offer Google/GitHub social login, Apple has historically required Apple as an option (Guideline 4.8). Budget for adding it (new server endpoint + Apple key) — can be a fast-follow if a reviewer flags it. Confirm against the current guidelines at submission.
 
-### 3.4 Hide in-app purchases in native builds (per the chosen monetisation model)
+### 3.4 Hide in-app purchases in the native build
 
-Gate every purchase/credit-spend entry point behind a `!isNativePlatform()` check so the store apps show **no path to buy digital goods**. Apple 3.1.1 / 3.1.3 forbid selling or even *linking out* to buy digital content; the safe move is to hide it entirely (no "buy on web" button, no pricing).
+Gate every purchase / credit-spend entry behind `!isNativePlatform()` so the app shows **no path to buy digital goods** (Apple 3.1.1/3.1.3 forbid selling *or linking out* to buy digital content):
+- `src/App.jsx:1751` — pass `null` for `onBuyCredits`/`onSkip1h` to `<Header>` in native.
+- `src/App.jsx:2188` — never open `showBuyCreditsModal` in native.
+- `src/components/Header.jsx` — hide the buy affordance (showing credit *balance* is fine).
+- `src/components/BuyCreditsModal.jsx` — unreachable in native.
+- Skip-hour (`handleSkip1h` → `api.skipHour`) spends credits — hide its trigger natively too.
 
-Concrete touch points:
-- `src/App.jsx:1751` — `onBuyCredits` / `onSkip1h` props passed to `<Header>`. In native, pass `null` so the buttons don't render.
-- `src/App.jsx:2188` — `{showBuyCreditsModal && …}` modal; never opened in native.
-- `src/components/Header.jsx` — credits/buy UI; hide the buy affordance natively (showing the credit *balance* is fine; selling is not).
-- `src/components/BuyCreditsModal.jsx` — not reachable in native.
-- Skip-hour (`handleSkip1h`, `api.skipHour`) spends credits — hide the trigger natively too, since credits can't be purchased in-app.
+> No ad SDK exists in the client today, so "remove ads" only needs the purchase button hidden.
 
-> **No ad SDK exists in the client today** (no AdSense/AdMob found), so "remove ads" has nothing to gate on the client besides the purchase button — just hide the purchase. If ads are added later, only show them on web or implement AdMob natively.
+### 3.5 App icons, splash & manifest
 
-### 3.5 Add PWA/app assets
+None exist yet. Generate from one 1024×1024 source with **`@capacitor/assets`**. A `manifest.webmanifest` is optional (also makes the web build an installable PWA).
 
-None exist yet (no manifest, icons, or service worker). For Capacitor you don't need a service worker, but you do need:
-- App icons & splash screens — generate from one 1024×1024 source with **`@capacitor/assets`** (auto-produces all iOS/Android sizes).
-- A `manifest.webmanifest` (nice-to-have; lets the same build also be an installable PWA on the web).
+### 3.6 Account deletion ⚠️ **App Review blocker**
 
-### 3.6 Account deletion (store requirement) ⚠️ **compliance blocker for iOS**
+Apple **5.1.1(v)**: any app with account creation must allow **in-app account deletion**. PocketRPG has accounts (OAuth + characters) but only `deleteSave`/`resetOneLife` today — no full account delete.
 
-Apple Guideline **5.1.1(v)**: any app that supports **account creation** must also let users **delete their account from within the app**. PocketRPG has accounts (Google/GitHub OAuth + characters). Today only `deleteSave` and `resetOneLife` exist — there is **no full account-deletion endpoint**.
-
-**Action**: add a server endpoint (e.g. `DELETE /api/auth/account`) that purges the user row, characters, saves, trading-post offers, collection log, and PvP records, plus a "Delete account" button in the settings/auth UI. Required for iOS; Google also expects an account-deletion path (and a web deletion URL declared in the Play data-safety form).
+**Action**: add `DELETE /api/auth/account` (purge user, characters, saves, trading-post offers, collection log, PvP records) + a "Delete account" button in settings/auth UI. **Required before production review** (TestFlight tolerates its absence, but don't ship to review without it).
 
 ---
 
-## 4. Phase 1 — Add Capacitor
+## 4. Phase 1 — Add Capacitor (iOS)
 
-After Phase 0 is merged and the `www/` bundle builds clean:
+After Phase 0 is merged and `www/` builds clean:
 
 ```bash
 npm i -D @capacitor/cli
 npm i @capacitor/core @capacitor/app @capacitor/browser \
       @capacitor/network @capacitor/status-bar @capacitor/splash-screen
-
 npx cap init "PocketRPG" "uk.co.pocketrpg.app" --web-dir=www
+npm i @capacitor/ios
+npx cap add ios
 ```
 
 `capacitor.config.ts`:
-
 ```ts
 import type { CapacitorConfig } from '@capacitor/cli'
-
 const config: CapacitorConfig = {
-  appId: 'uk.co.pocketrpg.app',   // reverse-DNS; must match store bundle IDs
+  appId: 'uk.co.pocketrpg.app',   // reverse-DNS; must match the App Store bundle ID
   appName: 'PocketRPG',
   webDir: 'www',
   ios: { contentInset: 'always' },
-  plugins: {
-    SplashScreen: { launchShowDuration: 600, backgroundColor: '#0f0f0f' },
-  },
+  plugins: { SplashScreen: { launchShowDuration: 600, backgroundColor: '#0f0f0f' } },
 }
 export default config
 ```
 
-Add platforms:
+Commit the generated `ios/` folder (it's your native project). `.gitignore`: `www/`, `ios/App/Pods`, `ios/App/App/public`, `DerivedData`, etc.
 
+Local loop (no Mac needed — `cap sync` just copies files):
 ```bash
-npm i @capacitor/ios @capacitor/android
-npx cap add ios
-npx cap add android
+npm run build:app && npx cap sync ios
 ```
 
-The generated `ios/` and `android/` folders are **committed** to the repo (they're your native projects). Add build outputs (`www/`, `ios/App/Pods`, `android/.gradle`, etc.) to `.gitignore`.
+### iOS native config (set once, in the `ios/` project or `Info.plist`)
+- **Bundle identifier** = `uk.co.pocketrpg.app` (match `appId` and App Store Connect).
+- **URL scheme** `pocketrpg` under URL Types (OAuth deep link, 3.3).
+- **ATS**: all traffic is HTTPS — add no exceptions (no `NSAllowsArbitraryLoads`).
+- **Safe areas**: build already sets `viewport-fit=cover`; verify `env(safe-area-inset-*)` so the header clears the notch/Dynamic Island.
+- **Orientation**: lock to portrait (mobile-first UI).
+- **Privacy usage strings**: add only for capabilities used — likely **none**.
 
-Standard loop after any web change:
-```bash
-npm run build:app && npx cap sync      # copy www/ + native deps into the platforms
-npx cap open ios                       # → Xcode
-npx cap open android                   # → Android Studio
-```
+> You can edit `Info.plist` and these settings as plain files in the repo without Xcode; Codemagic compiles them.
 
 ---
 
-## 5. Phase 2 — Native configuration
+## 5. Phase 2 — Codemagic CI → TestFlight → Production
 
-### iOS (`ios/App`)
-- **Bundle identifier** = `uk.co.pocketrpg.app` (match `appId`).
-- **Signing**: select your Apple team; let Xcode manage provisioning to start.
-- **Deep link scheme**: add `pocketrpg` under URL Types in `Info.plist` (for OAuth callback, 3.3).
-- **App Transport Security**: all traffic is HTTPS to `pocketrpg.co.uk` — no ATS exceptions needed (don't add `NSAllowsArbitraryLoads`; it triggers extra review).
-- **Status bar / safe area**: the build already sets `viewport-fit=cover` and `apple-mobile-web-app-status-bar-style`. Verify notch/Dynamic-Island safe-area insets (`env(safe-area-inset-*)`) in CSS so the header isn't clipped.
-- **Orientation**: lock to portrait if the UI is portrait-only (it's mobile-first).
-- **Privacy strings**: only add `NS*UsageDescription` keys for capabilities you actually use. The app likely needs **none** (no camera/location/contacts). Fewer keys = smoother review.
+This replaces owning a Mac. Codemagic checks out the repo, runs the web + Capacitor build on a macOS VM, signs with your App Store Connect API key, and uploads to TestFlight.
 
-### Android (`android/app`)
-- **Application ID** = `uk.co.pocketrpg.app`.
-- **`minSdkVersion`**: Capacitor's default (currently 23) is fine.
-- **`targetSdkVersion`**: must meet Play's current requirement at submission (Play enforces "target the last-year-or-newer API level"). Bump as needed.
-- **Deep link intent filter**: add the `pocketrpg://auth/callback` scheme to `AndroidManifest.xml`.
-- **Cleartext**: keep cleartext traffic **disabled** (all HTTPS).
-- **Adaptive icons**: produced by `@capacitor/assets`.
+### One-time setup
+1. In **App Store Connect**: create the app record with bundle ID `uk.co.pocketrpg.app`; create an **App Store Connect API key** (`.p8`, Issuer ID, Key ID).
+2. In **Codemagic**: connect the GitHub repo; add the App Store Connect API key under **Teams → Integrations** (enables **automatic code signing** — Codemagic creates/fetches the distribution certificate and provisioning profile).
+3. Add `codemagic.yaml` to the repo root:
 
-### Icons & splash (both)
-```bash
-npm i -D @capacitor/assets
-# place a 1024x1024 icon at assets/icon.png and a splash at assets/splash.png
-npx capacitor-assets generate
+```yaml
+workflows:
+  ios-testflight:
+    name: PocketRPG iOS → TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    integrations:
+      app_store_connect: PocketRPG ASC Key   # the key you added in Codemagic
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: uk.co.pocketrpg.app
+      vars:
+        BUNDLE_ID: "uk.co.pocketrpg.app"
+      node: 20
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Install deps
+        script: npm ci
+      - name: Build web bundle
+        script: npm run build:app
+      - name: Capacitor sync iOS
+        script: npx cap sync ios
+      - name: Set build number
+        script: |
+          cd ios/App
+          agvtool new-version -all $(($BUILD_NUMBER + 1))
+      - name: Install pods
+        script: cd ios/App && pod install
+      - name: Build & sign IPA
+        script: |
+          xcode-project use-profiles
+          xcode-project build-ipa \
+            --workspace "ios/App/App.xcworkspace" \
+            --scheme "App"
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        # submit_to_app_store: false   # flip to true (with release notes) when ready for production
 ```
+
+### The loop
+- **Push to the branch** → Codemagic builds → `.ipa` lands in **TestFlight** automatically.
+- Add **yourself as an internal tester** in App Store Connect → install via the **TestFlight app** on your iPhone. Internal builds need **no review** and appear within minutes.
+- Iterate: web change → push → new TestFlight build → test on device.
+
+### Going to production
+When TestFlight looks good: complete the App Store listing (below), then either set `submit_to_app_store: true` in `codemagic.yaml` or click "Submit for Review" in App Store Connect. Production goes through **full App Review** (typically 24–48h).
 
 ---
 
-## 6. Phase 3 — Plugins & behaviour to validate
+## 6. Phase 3 — Behaviours to validate on device (via TestFlight)
 
 | Plugin | Why |
 |---|---|
-| `@capacitor/app` | Deep-link callback (OAuth), back-button, resume/pause events |
+| `@capacitor/app` | OAuth deep-link callback; resume/pause; (background events) |
 | `@capacitor/browser` | System-browser OAuth |
-| `@capacitor/network` | Detect offline → the game is offline-first; queue cloud sync until back online |
-| `@capacitor/status-bar` | Match the dark theme (`#0f0f0f`), avoid overlap |
-| `@capacitor/splash-screen` | Branded launch, hide once Preact mounts |
+| `@capacitor/network` | Offline detection → queue cloud sync until back online |
+| `@capacitor/status-bar` | Match dark theme `#0f0f0f` |
+| `@capacitor/splash-screen` | Branded launch; hide once Preact mounts |
 
-**App-specific behaviours to test hard:**
-- **600 ms engine tick & idle engine** when the app is backgrounded/locked. Mobile OSes throttle/suspend WebView timers. The cloud "idle catch-up" (`/api/idle`, `sendIdleBeacon`) is the right mechanism — confirm `sendBeacon` fires on `App` pause and that resume recomputes elapsed idle correctly.
-- **IndexedDB persistence** survives app restarts (it does in WKWebView/Android WebView, but verify; iOS can evict storage under pressure — the cloud save is the backstop).
-- **PvP** real-time match flow over the absolute API base.
-- **Android hardware back button** — wire `App.addListener('backButton', …)` so it closes modals/navigates instead of exiting the app.
-
----
-
-## 7. Phase 4 — Store submission
-
-### Apple App Store
-1. Create the app in **App Store Connect** with bundle ID `uk.co.pocketrpg.app`.
-2. **Archive** in Xcode → upload via **Organizer** (or `xcodebuild` / Fastlane in CI).
-3. Fill in:
-   - **App Privacy ("nutrition labels")**: declare email (from OAuth) + game/usage data, linked to identity. Provide the privacy-policy URL.
-   - **Account deletion**: confirm in-app deletion exists (3.6) — reviewers check this.
-   - **Sign in with Apple**: add if you keep social login (3.3).
-   - **Screenshots** for required device sizes (6.7" / 6.5" iPhone at minimum), keywords, description, support URL, age rating (likely 12+ for fantasy violence — answer the questionnaire honestly).
-   - **Review notes**: state clearly "No in-app purchases; account is optional; here is a demo login." Provide a test account.
-4. Submit for review (typically 24–48h).
-
-### Google Play
-1. Create the app in **Play Console**.
-2. **App signing**: enrol in **Play App Signing** (Google holds the signing key; you upload with an upload key).
-3. Build a signed **`.aab`**:
-   ```bash
-   cd android && ./gradlew bundleRelease
-   ```
-4. Complete the required forms:
-   - **Data safety** (mirror of the privacy labels; declare email + game data, and the account-deletion URL).
-   - **Content rating** (IARC questionnaire).
-   - Target audience, privacy policy URL, ads declaration (**No** — no ad SDK in the app build).
-5. Roll out to **Internal testing** first → Closed → Production. Internal testing reviews fast and is the right place to validate the signed build on real devices.
+App-specific things to test hard on a real iPhone:
+- **600 ms engine tick & idle engine** when backgrounded/locked — iOS throttles/suspends WebView timers. The cloud idle catch-up (`/api/idle`, `sendIdleBeacon`) is the safety net; confirm the beacon fires on pause and resume recomputes elapsed idle.
+- **IndexedDB** survives app restarts (iOS can evict storage under pressure — cloud save is the backstop).
+- **OAuth** round-trip through Safari and back via `pocketrpg://`.
+- **PvP** real-time flow over the absolute API base.
 
 ---
 
-## 8. Phase 5 — Updates strategy (keep web & app in lockstep)
+## 7. Phase 4 — App Store listing & review
 
-- **Web content changes** (game balance, screens, data) flow to the app simply by rebuilding `www/` and shipping a new binary. Because the app loads a **bundled** `www/`, a store update is needed for the user to get new web code.
-- **Optional OTA**: Capacitor supports **live updates** (Appflow, or self-hosted via `@capacitor/live-updates`) to push web-bundle changes without a store review. Useful for balance tweaks/bug fixes. **Caveat**: Apple permits JS/asset OTA updates *that don't change the app's purpose*, but you must not use it to add store-gated features (e.g. enabling purchases). Treat OTA as bugfix/content only.
-- **Server/API** (`functions/**`) deploys independently to Cloudflare — both web and app consume it. Maintain backward compatibility so older app binaries keep working (users update slowly). Version the API if you make breaking changes.
-- **Build matrix to maintain:**
-
-  | Target | Command | Output | Deploy |
-  |---|---|---|---|
-  | Browser | `npm run build` + `npm run rebuild` | CDN `index.html` | Cloudflare Pages |
-  | App (iOS/Android) | `npm run build:app` → `npx cap sync` | `www/` → `ios/`,`android/` | App Store / Play |
-  | API | (existing) | `functions/**` | Cloudflare |
+1. **App Privacy ("nutrition labels")**: declare email (from OAuth) + game/usage data linked to identity; provide privacy-policy URL.
+2. **Account deletion**: confirm in-app deletion (3.6) — reviewers check this.
+3. **Sign in with Apple**: add if you keep social login (3.3).
+4. **Screenshots** (6.7" / 6.5" iPhone minimum), description, keywords, support URL, **age rating** (likely 12+ for fantasy violence — answer honestly).
+5. **Review notes**: "No in-app purchases; account optional; demo login: …" Provide a test account.
+6. Submit (Codemagic `submit_to_app_store` or the ASC button).
 
 ---
 
-## 9. Phase 6 — CI/CD (optional, recommended once manual flow works)
+## 8. Keeping web & app in lockstep
 
-- **Fastlane** for both platforms (`gym`/`deliver` for iOS, `supply` for Android) — scriptable, store-credential-aware.
-- **GitHub Actions**: Android can build on Ubuntu runners; **iOS needs a macOS runner**. Store signing secrets (Apple API key, Android keystore) in encrypted CI secrets — never in the repo.
-- **Codemagic / EAS-style services**: turnkey if you don't want to manage Mac runners.
-- Gate releases on the existing commit gate: `npm test && npm run build && npm run rebuild && npm run check:single` (from `CLAUDE.md` §11) plus `npm run build:app`.
+| Target | Command | Output | Deploy |
+|---|---|---|---|
+| Browser | `npm run build` + `npm run rebuild` | CDN `index.html` | Cloudflare Pages |
+| iOS | `npm run build:app` → `npx cap sync ios` | `www/` → `ios/` → Codemagic | TestFlight / App Store |
+| API | (existing) | `functions/**` | Cloudflare |
+
+- Web code changes reach the app by rebuilding `www/` and shipping a new TestFlight/App Store build.
+- **Optional OTA** (later): Capacitor live updates (`@capacitor/live-updates` / Appflow) push web-bundle fixes without re-review — **bugfix/content only**, never to add store-gated features.
+- **API** (`functions/**`) deploys independently; keep it backward-compatible so older app binaries keep working.
+- Gate releases on the existing commit checks (`CLAUDE.md` §11) **plus** `npm run build:app`.
 
 ---
 
-## 10. Sequenced checklist
+## 9. Sequenced checklist
 
-**Phase 0 — code (do first, all in `src`/`functions`, fully testable on web):**
-- [ ] 3.1 Self-contained app bundle (`vite.config.app.js`, local fonts, `base:'./'`, `build:app` → `www/`, verify zero network at boot)
-- [ ] 3.2 `apiBase.js` + absolute URLs in `api.js`/`pvp.js`/beacon; server CORS for `capacitor://localhost` & `https://localhost`
-- [ ] 3.3 Native OAuth via system browser + `pocketrpg://` deep link; register redirect in GitHub & Google consoles
-- [ ] 3.4 Hide purchase/skip-hour UI when `Capacitor.isNativePlatform()`
-- [ ] 3.5 Generate icons/splash + manifest
-- [ ] 3.6 Account-deletion endpoint + UI (iOS-blocking)
+**Phase 0 — code (browser-testable, the real work):**
+- [ ] 3.1 Self-contained app bundle (`vite.config.app.js`, local fonts, `base:'./'`, `build:app` → `www/`, zero-network boot)
+- [ ] 3.2 `apiBase.js` + absolute URLs; server CORS for `capacitor://localhost`
+- [ ] 3.3 Native OAuth (system browser + `pocketrpg://`); register redirect in GitHub & Google
+- [ ] 3.4 Hide purchase/skip-hour UI in native
+- [ ] 3.5 Icons/splash + manifest
+- [ ] 3.6 Account-deletion endpoint + UI (production-blocking)
 
-**Phase 1–3 — native shells:**
-- [ ] Add Capacitor, init, `cap add ios/android`; commit `ios/`,`android/`
-- [ ] Configure bundle IDs, deep links, status bar, safe areas, orientation
-- [ ] Install/validate plugins; test tick/idle/IndexedDB/PvP/back-button on real devices
+**Phase 1 — Capacitor iOS:**
+- [ ] Add Capacitor, init, `cap add ios`; commit `ios/`
+- [ ] Bundle ID, URL scheme, safe areas, orientation, ATS
 
-**Phase 4–5 — stores:**
-- [ ] Apple Developer + Google Play enrolment (start early)
+**Phase 2 — Codemagic → TestFlight:**
+- [ ] Apple Developer enrolment (start early) + App Store Connect API key
+- [ ] Connect repo to Codemagic; add ASC key for automatic signing
+- [ ] `codemagic.yaml`; first green build → TestFlight; add self as internal tester; install on iPhone
+
+**Phase 3–4 — production:**
+- [ ] On-device validation (tick/idle/IndexedDB/OAuth/PvP)
 - [ ] Privacy policy + support URLs live
-- [ ] App Store Connect listing, privacy labels, screenshots, Sign in with Apple if needed → submit
-- [ ] Play Console listing, app signing, data-safety, content rating, signed `.aab` → internal testing → production
-
-**Phase 6 — after first manual release:**
-- [ ] CI/CD (Fastlane / Actions / Codemagic), optional OTA live-updates for content fixes
+- [ ] Listing, privacy labels, screenshots, Sign in with Apple if needed
+- [ ] Flip to `submit_to_app_store` → App Review → launch
 
 ---
 
@@ -332,21 +322,21 @@ npx capacitor-assets generate
 
 | Risk | Likelihood | Mitigation |
 |---|---|---|
-| Apple rejects for missing account deletion | High if skipped | Implement 3.6 before submission |
-| Apple flags missing "Sign in with Apple" | Medium | Add Apple login (3.3) or be ready to fast-follow |
-| CDN dependencies break offline review | High if not fixed | 3.1 — bundle everything locally |
+| First Codemagic build fails on signing | Medium | Use App Store Connect API key + automatic signing; check bundle ID matches everywhere |
+| CDN deps break offline review | High if not fixed | 3.1 — bundle everything locally |
 | API 404s in native (relative paths) | Certain if not fixed | 3.2 — absolute base URL + CORS |
-| Background timer throttling skews idle | Medium | Lean on server idle catch-up; test on device |
-| Play target-API-level rejection | Medium | Bump `targetSdkVersion` to current requirement |
+| Apple rejects: missing account deletion | High if skipped | 3.6 before production submit |
+| Apple flags missing "Sign in with Apple" | Medium | Add Apple login (3.3) or fast-follow |
+| Background timer throttling skews idle | Medium | Server idle catch-up; verify on device |
 
-## Appendix B — Cost summary
+## Appendix B — If you ever need hands-on Xcode
 
-- Apple Developer: **$99/yr** · Google Play: **$25 once** · (optional) Codemagic/cloud Mac, Appflow OTA: usage-based.
+Codemagic handles normal builds, but if you hit a signing/provisioning issue that needs interactive debugging, rent a cloud Mac (MacinCloud ~£20–30/mo or ~£1/hr; MacStadium; AWS EC2 Mac — pricier, 24h min) and remote in. A one-off **Mac mini (~£599)** is the cheapest owned hardware if this becomes routine. Neither is required for the standard flow.
 
-## Appendix C — If you later want in-app purchases
+## Appendix C — Adding in-app purchases later
 
-Add native IAP rather than Stripe-in-app:
-- Plugin: a maintained Capacitor purchases plugin (e.g. RevenueCat's `@revenuecat/purchases-capacitor`, or Cordova `cordova-plugin-purchase`).
-- Define products in **App Store Connect** and **Play Console** (consumables for credits, non-consumable for remove-ads).
-- **Server-side receipt validation** before granting entitlements — fits the existing server-authoritative model (`CLAUDE.md` §14). Mirror the Stripe grant logic in `functions/` keyed off validated Apple/Google receipts.
-- Keep Stripe for the web; the entitlement (credits/remove-ads) is account-level, so a purchase on any platform reflects everywhere via the cloud save.
+Use native IAP, not Stripe-in-app:
+- Plugin: `@revenuecat/purchases-capacitor` (or `cordova-plugin-purchase`).
+- Define products in App Store Connect (consumables for credits, non-consumable for remove-ads).
+- **Server-side receipt validation** before granting entitlements — fits the server-authoritative model (`CLAUDE.md` §14); mirror the Stripe grant logic keyed off validated Apple receipts.
+- Entitlements are account-level, so a purchase on any platform reflects everywhere via the cloud save.
