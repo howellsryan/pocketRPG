@@ -7,6 +7,8 @@
 > **Scope**: iOS only for now. Android is deferred; because the codebase stays single-source, Android can be added later with no rework (`npx cap add android` against the same `www/` build). Android-specific notes are out of scope here.
 >
 > **Monetisation**: In-app purchases (credits, skip-hour, remove-ads) are **hidden inside the app**. Stripe stays web-only at `pocketrpg.co.uk`. Fastest path to approval; avoids Apple's mandatory native-IAP rules. (To sell inside the app later, add StoreKit — see Appendix C.)
+>
+> **Cross-platform / client-agnostic**: web and app are the **same client over one server** — same login, shared progress, and shared PvP / trading / leaderboards across both. This is already how the backend is built; §10 explains the guarantees and the one risk to manage (save divergence).
 
 ---
 
@@ -312,9 +314,45 @@ App-specific things to test hard on a real iPhone:
 
 **Phase 3–4 — production:**
 - [ ] On-device validation (tick/idle/IndexedDB/OAuth/PvP)
+- [ ] Cross-platform acceptance tests (§10) — same account, two-way progress sync, cross-client PvP/trading
+- [ ] App pulls `getSave` on launch *and* resume; treats revision conflict as "server wins" (§10)
 - [ ] Privacy policy + support URLs live
 - [ ] Listing, privacy labels, screenshots, Sign in with Apple if needed
 - [ ] Flip to `submit_to_app_store` → App Review → launch
+
+---
+
+## 10. Cross-platform / client-agnostic guarantees
+
+The requirement — web users and app users share one account, progress carries across, and they PvP against each other — is **already satisfied by the architecture**, because every client is a thin frontend over one authoritative server (Cloudflare Functions + D1). There is **no client-type distinction anywhere in `functions/**`**. Verified against the code:
+
+| Concern | Why it already works | Evidence |
+|---|---|---|
+| **Same account on web & app** | Users are keyed by OAuth identity, not device. Logging in with the same Google/GitHub account resolves to the same user row from any client. | `migrations/0001_init.sql`: `UNIQUE (provider, provider_user_id)` |
+| **Independent login/logout per client** | Each client holds its own JWT (`sub` = user id). Logging out on web doesn't disturb the app, and vice versa — both still map to one account. | `functions/_lib/auth.js` (`requireAuth` → `payload.sub`) |
+| **Progress picks up across clients** | Saves live server-side; clients pull (`getSave`) and push (`putSave`) with a monotonic `save_revision`. The server is the single source of truth. | `src/cloud/sync.js`, `functions/api/save.js` |
+| **Cross-client PvP** | Matchmaking + simulation are server-authoritative (600 ms tick, deterministic ordering); the pool isn't segregated by client. A web player and an app player land in the same match. | `CLAUDE.md` §10; `functions/api/pvp/**` |
+| **Shared economy/social** | Trading post, leaderboards, collection log, kill counts are all server-side and account-scoped. | `functions/api/trading-post/**`, `leaderboard.js`, `collection-log.js` |
+| **Active-match safety across clients** | Save/idle/purchase writes are locked while a match is active; clients already handle the `409 character_in_active_match` signal. | `src/cloud/api.js` (`emitActiveMatchConflict`) |
+
+### What must hold true (and is in this plan)
+- **App targets the same origin** — the §3.2 absolute base URL (`https://pocketrpg.co.uk`) makes the app hit the *same* API and D1 as the website. Without it, the app would be a separate, broken island. This is the single linchpin of cross-platform parity.
+- **OAuth maps to the same user** — the §3.3 native flow uses the **same server handlers and the same OAuth provider apps**; identity is keyed on the provider's user id, so even a separately-registered native OAuth client still resolves to the same row. No special work needed beyond §3.3.
+
+### The one real risk: save divergence across devices
+Because progress is offline-first (IndexedDB) and the same character can be opened on two clients, two clients can advance independently and then both try to write. This is already guarded — `putSave` rejects stale writes by `save_revision`, and `sync.js` tracks `lastSaveRevision` and emits `SAVE_REVISION_EVENT` — so a stale client can't silently clobber newer progress. To make the UX clean on the app:
+- **Pull on foreground**: when the app launches *and* resumes from background, call `getSave` and reconcile to the server revision **before** resuming the local idle loop, so a session that advanced on web isn't overwritten.
+- **On conflict, server wins**: treat a `409`/revision mismatch as "reload from server", not "force my copy". (This matches the existing web behaviour; just ensure the app's resume path honours it.)
+- Lean on the existing **cloud idle catch-up** (`/api/idle`, `sendIdleBeacon`) so backgrounded app time is reconciled server-side rather than recomputed divergently on each client.
+
+### Cross-platform acceptance tests (run before production)
+- [ ] Log in with the **same Google account** on web and in the app → both show the same characters.
+- [ ] Earn XP / loot on **web**, then open the **app** → progress is present (and vice versa).
+- [ ] Log out on the app → web session unaffected; log back in → progress intact.
+- [ ] Queue PvP on the **app** and on **web** (two accounts) → they can be matched against each other; result settles identically on both.
+- [ ] List an item on the **web** trading post → it's visible/buyable from the **app**.
+- [ ] Leaderboard / collection log show identical state on both clients.
+- [ ] Advance the same character on two clients, then sync → no silent data loss (stale write rejected, newer state retained).
 
 ---
 
@@ -328,6 +366,8 @@ App-specific things to test hard on a real iPhone:
 | Apple rejects: missing account deletion | High if skipped | 3.6 before production submit |
 | Apple flags missing "Sign in with Apple" | Medium | Add Apple login (3.3) or fast-follow |
 | Background timer throttling skews idle | Medium | Server idle catch-up; verify on device |
+| Save divergence when same character played on web + app | Medium | `save_revision` stale-write guard; app pulls on foreground, server wins on conflict (§10) |
+| App points at wrong/separate origin → split accounts | Low (covered by 3.2) | Absolute base URL to `pocketrpg.co.uk`; same API/D1 as web |
 
 ## Appendix B — If you ever need hands-on Xcode
 
