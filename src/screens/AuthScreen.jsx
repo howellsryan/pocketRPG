@@ -156,13 +156,14 @@ export default function AuthScreen({ onCloudReady }) {
   const showCreate = mode === 'create' || (characters && characters.length === 0)
 
   // Account actions are shown in every signed-in view (character list AND the
-  // create form) so a logged-in user — including a brand-new account with no
-  // characters yet — can always log out or delete. type="button" keeps them
-  // from submitting the create <form>.
-  const accountActions = identity && (
+  // create form) so a logged-in user can always log out or delete — even a
+  // brand-new account with no characters, or one where /api/auth/me hasn't
+  // populated `identity` (logout only needs the token, not the profile).
+  // type="button" keeps them from submitting the create <form>.
+  const accountActions = (
     <>
       <button type="button" onClick={handleSignOut} style={ghostBtn}>
-        🚪 Log out{identity.provider ? ` of ${providerLabel(identity.provider)}` : ''}
+        🚪 Log out{identity?.provider ? ` of ${providerLabel(identity.provider)}` : ''}
       </button>
       <button type="button" onClick={handleDeleteAccount} style={dangerBtn} disabled={busy}>
         🗑️ Delete account
