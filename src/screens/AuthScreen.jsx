@@ -92,6 +92,20 @@ export default function AuthScreen({ onCloudReady }) {
     setIdentity(null)
   }
 
+  async function handleDeleteAccount() {
+    if (!window.confirm('Permanently delete your account and ALL characters, saves and progress? This cannot be undone.')) return
+    setBusy(true)
+    setError(null)
+    try {
+      await api.deleteAccount()
+      handleSignOut()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   // ── Render ──
 
   if (mode === 'login') {
@@ -165,6 +179,11 @@ export default function AuthScreen({ onCloudReady }) {
           {identity && (
             <button onClick={handleSignOut} style={ghostBtn}>
               🚪 Log out{identity.provider ? ` of ${providerLabel(identity.provider)}` : ''}
+            </button>
+          )}
+          {identity && (
+            <button onClick={handleDeleteAccount} style={dangerBtn} disabled={busy}>
+              🗑️ Delete account
             </button>
           )}
         </>
@@ -319,6 +338,7 @@ function providerLabel(provider) {
 }
 const secondaryBtn = { width: '100%', padding: '13px', borderRadius: '12px', background: '#2a2a2a', border: '1px solid #3a3a3a', color: '#e8d5b0', fontSize: '13px', fontWeight: '600', cursor: 'pointer', marginBottom: '10px' }
 const ghostBtn = { width: '100%', padding: '12px', borderRadius: '12px', background: 'transparent', border: '1px solid #2a2a2a', color: '#e8d5b0', opacity: 0.7, fontSize: '13px', cursor: 'pointer' }
+const dangerBtn = { width: '100%', padding: '12px', borderRadius: '12px', background: 'transparent', border: '1px solid var(--color-blood)', color: 'var(--color-blood-light)', fontSize: '13px', cursor: 'pointer', marginTop: '8px' }
 const charRowBtn = { width: '100%', padding: '12px 14px', borderRadius: '10px', background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#e8d5b0', textAlign: 'left', cursor: 'pointer' }
 const input = { width: '100%', padding: '12px 16px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333', color: '#e8d5b0', fontSize: '14px', fontFamily: 'Nunito, sans-serif', boxSizing: 'border-box', outline: 'none' }
 const errorText = { color: '#ff6b6b', fontSize: '12px', marginTop: '12px', textAlign: 'center' }

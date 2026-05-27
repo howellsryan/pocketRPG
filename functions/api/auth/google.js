@@ -1,6 +1,8 @@
 // GET /api/auth/google → 302 to Google OAuth
 // Sets a short-lived `oauth_state` cookie for CSRF defence.
 
+import { isNativeRequest, withNativeFlag } from '../../_lib/authRedirect.js'
+
 export async function onRequestGet({ request, env }) {
   if (!env.GOOGLE_CLIENT_ID) {
     return new Response('GOOGLE_CLIENT_ID not configured', { status: 500 })
@@ -12,7 +14,10 @@ export async function onRequestGet({ request, env }) {
 
   const stateBytes = new Uint8Array(16)
   crypto.getRandomValues(stateBytes)
-  const state = Array.from(stateBytes).map(b => b.toString(16).padStart(2, '0')).join('')
+  const state = withNativeFlag(
+    Array.from(stateBytes).map(b => b.toString(16).padStart(2, '0')).join(''),
+    isNativeRequest(url),
+  )
 
   const params = new URLSearchParams({
     client_id: env.GOOGLE_CLIENT_ID,

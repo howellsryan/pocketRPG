@@ -3,6 +3,7 @@
 // mints a session JWT, and redirects to / with #token=... in the URL fragment.
 
 import { signJWT } from '../../../_lib/jwt.js'
+import { stateIsNative, tokenRedirectLocation } from '../../../_lib/authRedirect.js'
 
 function parseCookies(header) {
   const out = {}
@@ -86,7 +87,7 @@ export async function onRequestGet({ request, env }) {
   )
 
   const redirectHeaders = new Headers({
-    Location: `/#token=${encodeURIComponent(token)}`,
+    Location: tokenRedirectLocation(token, stateIsNative(state)),
     'Set-Cookie': 'oauth_state=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax',
   })
   return new Response(null, { status: 302, headers: redirectHeaders })

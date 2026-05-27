@@ -172,6 +172,7 @@ export const api = {
     body: JSON.stringify({ active_task: activeTask == null ? null : JSON.stringify(activeTask) }),
   }),
   deleteSave: () => request('/api/save', { method: 'DELETE' }),
+  deleteAccount: () => request('/api/auth/account', { method: 'DELETE' }),
   deleteIdle: () => request('/api/idle', { method: 'DELETE' }),
   resetOneLife: () => request('/api/characters/reset-one-life', { method: 'POST', body: JSON.stringify({}) }),
 

@@ -89,7 +89,7 @@ export const apiUrl = (path) => `${API_BASE}${path}`
 
 Update `api.js` (`fetch` + `sendBeacon('/api/idle')`), `pvp.js`, and the OAuth launchers to use `apiUrl(...)`.
 
-**Server CORS**: the Cloudflare Functions must allow the native origin. Add `capacitor://localhost` (iOS) to the `Access-Control-Allow-Origin` allowlist, allow headers `Authorization`, `X-Character-Id`, `Content-Type`, and handle `OPTIONS` preflight. Auth is a Bearer token in `localStorage` (not cookies), so there are no SameSite issues — but CORS must still be opened.
+**Server CORS** *(implemented)*: `functions/api/_middleware.js` answers `OPTIONS` preflights and adds `Access-Control-*` headers for the allowlisted native origins (`capacitor://localhost`, `https://localhost`), allowing `Authorization`, `X-Character-Id`, `Content-Type`. Same-origin web requests are passed through untouched. Auth is a Bearer token (not cookies), so no credentialed-CORS/SameSite concerns.
 
 ### 3.3 Fix OAuth for native (system browser + deep link) ⚠️ **blocker**
 
@@ -97,7 +97,7 @@ Update `api.js` (`fetch` + `sendBeacon('/api/idle')`), `pvp.js`, and the OAuth l
 
 **Native pattern** — open OAuth in the **system browser**, return via a **deep link**:
 1. Add `@capacitor/browser` + `@capacitor/app`. Choose scheme `pocketrpg://auth/callback`.
-2. Server: in `functions/api/auth/github.js` & `google.js`, when the request is flagged native (`?platform=native`), redirect to `pocketrpg://auth/callback#token=…` instead of the web URL. Register `pocketrpg://` as an allowed redirect in the **GitHub OAuth App** and **Google Cloud OAuth client**.
+2. Server *(implemented)*: starting `/api/auth/{github,google}?platform=native` rides the intent through the CSRF `state` (suffix `.native`); the callbacks then redirect to `pocketrpg://auth/callback#token=…` instead of `/#token=…`. **No provider-side change is needed** — GitHub/Google still redirect to the existing server callback URL; only the server's *final* redirect target changes. (Helpers: `functions/_lib/authRedirect.js`.)
 3. Client:
    ```js
    import { Browser } from '@capacitor/browser'
