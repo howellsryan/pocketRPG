@@ -322,9 +322,12 @@ export default function AuthScreen({ onCloudReady }) {
 // ── Styled helpers (kept inline to avoid coupling to component library during boot) ──
 
 function Wrap({ children }) {
+  // height:100% + overflowY:auto makes the panel a scroll container; margin:auto
+  // (instead of justify-content:center) vertically centers short content without
+  // clipping the top when the character list is taller than the viewport.
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', background: '#0f0f0f' }}>
-      <div style={{ width: '100%', maxWidth: '380px' }}>{children}</div>
+    <div style={{ height: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '24px', background: '#0f0f0f', boxSizing: 'border-box' }}>
+      <div style={{ width: '100%', maxWidth: '380px', margin: 'auto' }}>{children}</div>
     </div>
   )
 }
