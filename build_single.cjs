@@ -64,6 +64,7 @@ const sourceFiles = [
   'db/database.js',
   'db/stores.js',
   'db/saveload.js',
+  'cloud/apiBase.js',
   'cloud/api.js',
   'cloud/idleState.js',
   'cloud/criticalSavePolicy.js',

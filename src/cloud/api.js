@@ -1,6 +1,8 @@
 // Thin fetch wrapper over the Cloudflare Pages Functions API.
 // Token + selected character ID live in localStorage so they survive reloads.
 
+import { apiUrl } from './apiBase.js'
+
 const TOKEN_KEY = 'pocketrpg_cloud_token'
 const CHARACTER_KEY = 'pocketrpg_cloud_character_id'
 const CHARACTER_NAME_KEY = 'pocketrpg_cloud_character_name'
@@ -106,7 +108,7 @@ async function request(path, options = {}) {
     headers.set('X-Character-Id', String(characterId))
   }
 
-  const res = await fetch(path, { ...options, headers })
+  const res = await fetch(apiUrl(path), { ...options, headers })
   if (res.status === 401) {
     clearAuth()
     const err = new Error('Not authenticated')
@@ -228,18 +230,18 @@ export function sendIdleBeacon(activeTask) {
       active_task: activeTask == null ? null : JSON.stringify(activeTask),
     })
     const blob = new Blob([body], { type: 'application/json' })
-    return navigator.sendBeacon('/api/idle', blob)
+    return navigator.sendBeacon(apiUrl('/api/idle'), blob)
   } catch {
     return false
   }
 }
 
 export function startGitHubLogin() {
-  window.location.href = '/api/auth/github'
+  window.location.href = apiUrl('/api/auth/github')
 }
 
 export function startGoogleLogin() {
-  window.location.href = '/api/auth/google'
+  window.location.href = apiUrl('/api/auth/google')
 }
 
 // Google rejects OAuth sign-in inside embedded/in-app browsers with

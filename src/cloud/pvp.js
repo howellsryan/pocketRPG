@@ -6,6 +6,7 @@
 // arrive in Phase 3 and will live in this same file.
 
 import { getToken, getCharacterId, clearAuth } from './api.js'
+import { apiUrl } from './apiBase.js'
 
 async function pvpRequest(path, options = {}) {
   const headers = new Headers(options.headers || {})
@@ -17,7 +18,7 @@ async function pvpRequest(path, options = {}) {
     headers.set('X-Character-Id', String(characterId))
   }
 
-  const res = await fetch(path, { ...options, headers })
+  const res = await fetch(apiUrl(path), { ...options, headers })
   if (res.status === 401) {
     clearAuth()
     const err = new Error('Not authenticated')
