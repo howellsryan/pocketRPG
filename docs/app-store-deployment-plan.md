@@ -60,7 +60,10 @@ The "app vs web" split is **runtime branches** (`if (Capacitor.isNativePlatform(
 
 These are the blockers, and the bulk of the real effort. They're all testable in a normal browser before any iOS build exists.
 
-### 3.1 Produce a self-contained, offline-capable web bundle ⚠️ **highest priority**
+### 3.1 Produce a self-contained, offline-capable web bundle ✅ **implemented**
+
+> **Status**: done. `npm run build:app` (config `vite.config.app.js`, entry `app/`) emits a fully self-contained `www/` — Tailwind compiled at build time, fonts self-hosted via `@fontsource`, base `./`, **zero CDN/network references**. Notes: Tailwind v4's auto source-detection keys off the Vite root (`app/`), so `app/app.css` registers `@source "../src"` to compile the classes used across `src/`. Building the real ESM graph (instead of the concatenated single-file) surfaced one latent bad import (`simulateIdleAgility`), now re-exported from `idleEngine.js`. Still requires **in-browser visual QA** before shipping. Original notes below.
+
 
 The committed root `index.html` is the **CDN single-file build** (`build_single.cjs`): it pulls Preact/idb from `esm.sh`, Tailwind from `cdn.tailwindcss.com`, and fonts from Google Fonts. **A packaged app must not depend on CDNs** — the game is offline-first, App Review tests offline, and remote-script execution invites rejection.
 

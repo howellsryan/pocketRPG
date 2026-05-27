@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:app": "vite build --config vite.config.app.js",
     "prebuild": "npm run test:logic",
     "preview": "vite preview",
     "test": "vitest run",
@@ -19,6 +20,9 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "@fontsource/cinzel": "^5.2.8",
+    "@fontsource/jetbrains-mono": "^5.2.8",
+    "@fontsource/nunito": "^5.2.7",
     "idb": "^8.0.2",
     "preact": "^10.25.4"
   },
