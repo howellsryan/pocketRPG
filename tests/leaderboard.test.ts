@@ -34,7 +34,7 @@ describe('GET /api/leaderboard (denormalized + paginated)', () => {
     expect(sql).not.toContain('save_data')
     expect(sql).toContain('total_level')
     expect(sql).toContain('LIMIT ? OFFSET ?')
-    expect(sql).toContain('total_level > 0')
+    expect(sql).toContain('total_level > 33')
     expect(sql).toContain('deleted_at IS NULL')
     expect(sql).toMatch(/ORDER BY\s+total_level\s+DESC/i)
   })
