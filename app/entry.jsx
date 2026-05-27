@@ -13,4 +13,7 @@ import '@fontsource/nunito/700.css'
 import '@fontsource/jetbrains-mono/400.css'
 import '@fontsource/jetbrains-mono/700.css'
 
+// Native Capacitor wiring (status bar, deep-link OAuth). No-ops on web.
+import './native.js'
+
 import '../src/main.jsx'

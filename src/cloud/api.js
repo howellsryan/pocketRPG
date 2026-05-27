@@ -237,11 +237,21 @@ export function sendIdleBeacon(activeTask) {
   }
 }
 
+// In the native app, app/native.js installs __pocketrpgNativeLogin to drive the
+// system-browser + deep-link flow. On web the hook is absent and we redirect.
 export function startGitHubLogin() {
+  if (typeof window !== 'undefined' && window.__pocketrpgNativeLogin) {
+    window.__pocketrpgNativeLogin('github')
+    return
+  }
   window.location.href = apiUrl('/api/auth/github')
 }
 
 export function startGoogleLogin() {
+  if (typeof window !== 'undefined' && window.__pocketrpgNativeLogin) {
+    window.__pocketrpgNativeLogin('google')
+    return
+  }
   window.location.href = apiUrl('/api/auth/google')
 }
 

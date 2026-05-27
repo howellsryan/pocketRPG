@@ -67,6 +67,12 @@ export default function AuthScreen({ onCloudReady }) {
   // disallowed_useragent), so redirecting there would dead-end. Steer the user
   // to a real browser instead.
   function handleGoogleLogin() {
+    // In the native app the login opens the system browser (where Google works),
+    // so skip the embedded-WebView hint even though the app shell reads as embedded.
+    if (typeof window !== 'undefined' && window.__pocketrpgNativeLogin) {
+      startGoogleLogin()
+      return
+    }
     if (embedded) {
       setShowBrowserHint(true)
       return

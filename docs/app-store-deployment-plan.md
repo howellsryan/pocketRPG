@@ -143,7 +143,9 @@ Apple **5.1.1(v)**: any app with account creation must allow **in-app account de
 
 ---
 
-## 4. Phase 1 — Add Capacitor (iOS)
+## 4. Phase 1 — Add Capacitor (iOS) ✅ **implemented**
+
+> **Status**: done. Capacitor 8 added (`capacitor.config.ts`, appId `uk.co.pocketrpg.app`, webDir `www`) with the `ios/` Xcode project committed. Capacitor 8 uses **Swift Package Manager, not CocoaPods**, so there is no `pod install` step (and `npx cap add ios` scaffolds fine off-Mac). Native wiring lives in `app/native.js` (app build only — the web single-file ships zero Capacitor code): dark status bar + the system-browser/deep-link OAuth flow, with `api.js` calling the `window.__pocketrpgNativeLogin` hook when present. `Info.plist` registers the `pocketrpg` URL scheme and locks iPhone to portrait. A **shared** `App.xcscheme` is committed so CI can build on a fresh checkout. Reference notes below.
 
 After Phase 0 is merged and `www/` builds clean:
 
@@ -191,6 +193,8 @@ npm run build:app && npx cap sync ios
 ## 5. Phase 2 — Codemagic CI → TestFlight → Production
 
 This replaces owning a Mac. Codemagic checks out the repo, runs the web + Capacitor build on a macOS VM, signs with your App Store Connect API key, and uploads to TestFlight.
+
+> **Status**: `codemagic.yaml` is committed at the repo root (source of truth — it builds the `.xcodeproj` with SPM, **no `pod install`**, unlike the illustrative sample below). It still needs the one-time UI/account setup: an App Store Connect API key added in Codemagic named `PocketRPG ASC Key`, and an app record in App Store Connect for bundle id `uk.co.pocketrpg.app`.
 
 ### One-time setup
 1. In **App Store Connect**: create the app record with bundle ID `uk.co.pocketrpg.app`; create an **App Store Connect API key** (`.p8`, Issuer ID, Key ID).
