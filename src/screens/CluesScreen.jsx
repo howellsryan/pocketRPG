@@ -176,7 +176,7 @@ export default function CluesScreen() {
     }
     taskRef.current = newState
     setLocalTask(newState)
-    setActiveTask({ type: 'gather', gatherTask: task, bankingEnabled: true })
+    setActiveTask({ type: 'clue', gatherTask: task, bankingEnabled: true })
   }
 
   const stopTask = () => {
@@ -187,7 +187,7 @@ export default function CluesScreen() {
 
   useEffect(() => {
     if (!activeTask) return
-    const globalGatherTask = globalActiveTask?.type === 'gather' ? globalActiveTask.gatherTask : null
+    const globalGatherTask = (globalActiveTask?.type === 'gather' || globalActiveTask?.type === 'clue') ? globalActiveTask.gatherTask : null
     if (!globalGatherTask || globalGatherTask.id !== activeTask.task?.id) {
       taskRef.current = null
       setLocalTask(null)

@@ -32,6 +32,8 @@ import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, 
 import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave } from './cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
+import { isBackground } from './engine/activityRegistry.js'
+import { resetActivityProgressSync } from './cloud/activityProgress.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
 import { triggerOneLifeDeath } from './utils/oneLifeDeath.js'
 import { defaultIdleCombatSetup } from './engine/idleSupplies.js'
@@ -652,7 +654,7 @@ function GameApp() {
               sim = { minigameTimeReduced: true, hoursRemaining: Math.ceil(newRemaining / 6000) }
             }
           } else if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
-          else if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
+          else if (savedTask.type === 'gather' || savedTask.type === 'clue')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
           else if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank, {
             currentHP: currentHPRef.current ?? getMaxHP(),
             idleFood: idleCombatSetupRef.current?.food || [],
@@ -769,7 +771,7 @@ function GameApp() {
             grantXP('slayer', sim.slayerXpGained)
           }
           // Apply items
-          if ((savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather') && sim.finalInventory) {
+          if ((savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather' || savedTask.type === 'clue') && sim.finalInventory) {
             updateInventory(sim.finalInventory)
             const bankedItems = sim.lootBanked || sim.itemsBanked || {}
             if (Object.keys(bankedItems).length > 0) {
@@ -781,7 +783,7 @@ function GameApp() {
           if (savedTask.type === 'combat' && savedTask.monster?.id) {
             recordCollectionLogDropsForIdleCombat(savedTask.monster.id, sim)
           }
-          if (savedTask.type === 'gather' && savedTask.gatherTask?.isClue) {
+          if ((savedTask.type === 'gather' || savedTask.type === 'clue') && savedTask.gatherTask?.isClue) {
             recordCollectionLogDropsForIdleClues(savedTask, sim)
           }
           // Apply agility coin reward directly to bank
@@ -1178,6 +1180,7 @@ function GameApp() {
     setCharacter(null)
     resetSyncState()
     resetIdleStateSync()
+    resetActivityProgressSync()
     clearCollectionLogCache()
     setGameReady(false)
     setCloudPhase('auth')
@@ -1196,12 +1199,14 @@ function GameApp() {
   }
   // Navigate with optional action data
   const navigate = (scr, data) => {
-    // Navigating away stops any active screen-bound task (skilling, gathering,
-    // combat, agility, thieving) and clears the idle-engine keys so it won't
-    // re-process a cancelled task. Quests and minigames run in the background — preserve them.
-    const isGatherMinigame = activeTask?.type === 'gather' && activeTask?.gatherTask?.oneShot
-    const shouldPreserve = activeTask?.type === 'quest' || activeTask?.type === 'minigame' || isGatherMinigame
-    if (!shouldPreserve) {
+    // Background activities (quests, minigames, clues, gathering, agility, thieving, hunter,
+    // dungeoneering) persist across screens — their progress is saved to the ledger.
+    // Foreground activities (combat, skilling) stop when the player navigates away.
+    if (!isBackground(activeTask)) {
+      if (activeTask) {
+        const stopMsg = activeTask.type === 'combat' ? 'You fled combat.' : 'Skilling stopped.'
+        addToast(stopMsg, 'info')
+      }
       setActiveTask(null)
     }
     setActionData(data || null)
@@ -1441,7 +1446,7 @@ function GameApp() {
           }
         } else {
           if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
-          if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
+          if (savedTask.type === 'gather' || savedTask.type === 'clue')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
           if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank, {
             currentHP: currentHPRef.current ?? getMaxHP(),
             idleFood: idleCombatSetupRef.current?.food || [],
@@ -1502,7 +1507,7 @@ function GameApp() {
             grantXP('slayer', sim.slayerXpGained)
           }
           // Apply items
-          if ((savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather') && sim.finalInventory) {
+          if ((savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather' || savedTask.type === 'clue') && sim.finalInventory) {
             updateInventory(sim.finalInventory)
             const bankedItems = sim.lootBanked || sim.itemsBanked || {}
             if (Object.keys(bankedItems).length > 0) {
@@ -1514,7 +1519,7 @@ function GameApp() {
           if (savedTask.type === 'combat' && savedTask.monster?.id) {
             recordCollectionLogDropsForIdleCombat(savedTask.monster.id, sim)
           }
-          if (savedTask.type === 'gather' && savedTask.gatherTask?.isClue) {
+          if ((savedTask.type === 'gather' || savedTask.type === 'clue') && savedTask.gatherTask?.isClue) {
             recordCollectionLogDropsForIdleClues(savedTask, sim)
           }
           // Apply agility coin reward directly to bank

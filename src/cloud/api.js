@@ -171,6 +171,11 @@ export const api = {
     method: 'PUT',
     body: JSON.stringify({ active_task: activeTask == null ? null : JSON.stringify(activeTask) }),
   }),
+  getActivityProgress: () => request('/api/activity-progress'),
+  putActivityProgress: (progress) => request('/api/activity-progress', {
+    method: 'PUT',
+    body: JSON.stringify({ progress }),
+  }),
   deleteSave: () => request('/api/save', { method: 'DELETE' }),
   deleteAccount: () => request('/api/auth/account', { method: 'DELETE' }),
   deleteIdle: () => request('/api/idle', { method: 'DELETE' }),

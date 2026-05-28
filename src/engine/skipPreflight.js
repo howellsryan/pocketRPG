@@ -100,7 +100,7 @@ function getSkillSkipPreflight(activeTask, context, elapsedMs) {
 
 export function getSkipPreflight(activeTask, context, elapsedMs = SKIP_HOUR_MS) {
   if (!activeTask?.type) return invalid('Start an action before using Skip 1h.', 'none', false)
-  if (activeTask.type === 'gather') return getGatherSkipPreflight(activeTask, context, elapsedMs)
+  if (activeTask.type === 'gather' || activeTask.type === 'clue') return getGatherSkipPreflight(activeTask, context, elapsedMs)
   if (activeTask.type === 'skill') return getSkillSkipPreflight(activeTask, context, elapsedMs)
   if (activeTask.type === 'quest') return (Number(activeTask.ticksRemaining || 0) > 0 || (context.questQueue || []).length > 0) ? valid(1, 'quest') : invalid('No quest time remains to skip.', 'quest', true)
   if (activeTask.type === 'combat' && (activeTask.monster?.boss || activeTask.raid)) return invalid('Cannot skip boss/raid combat.', 'combat', false)
@@ -111,7 +111,8 @@ export function getSkipPreflight(activeTask, context, elapsedMs = SKIP_HOUR_MS) 
 export function isChargeableSkipOutcome(activeTask, outcome) {
   if (!activeTask || !outcome) return false
   if (activeTask.type === 'quest') return !!outcome.questCascade && (((outcome.completedQuests || []).length > 0) || (outcome.elapsedMsUsed || 0) > 0 || !!outcome.finalTask || !!outcome.task)
-  if (activeTask.type === 'gather' && activeTask.gatherTask?.oneShot) return !!outcome.minigameCompleted || !!outcome.minigameTimeReduced
+  if ((activeTask.type === 'gather' || activeTask.type === 'clue') && activeTask.gatherTask?.oneShot) return !!outcome.minigameCompleted || !!outcome.minigameTimeReduced
+  if (activeTask.type === 'clue') return Number(outcome.actions || 0) > 0
   if (activeTask.type === 'minigame') return !!outcome.minigameCompleted || !!outcome.minigameTimeReduced
   if (activeTask.type === 'skill' && activeTask.skill === 'dungeoneering' && activeTask.action?.category === 'reward') return false
   if (activeTask.type === 'skill' && activeTask.action?.category === 'reward') return !!outcome.rewardCompleted || !!outcome.rewardTimeReduced
