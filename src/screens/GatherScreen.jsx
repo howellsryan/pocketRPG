@@ -3,6 +3,7 @@ import { useGame } from '../state/gameState.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import Panel from '../components/Panel.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
+import GameIcon from '../components/GameIcon.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { countItem, addItem } from '../engine/inventory.js'
 import { getLevelFromXP } from '../engine/experience.js'
@@ -21,6 +22,7 @@ const GATHER_TASKS = [
     id: 'gather_bowstring',
     name: 'Gather Bowstring',
     icon: '🌿',
+    iconKey: 'thread',
     description: 'Gather loose bowstrings from fieldwork caches. Directly used for fletching bows.',
     ticks: 6,
     product: 'bowstring',
@@ -32,6 +34,7 @@ const GATHER_TASKS = [
     id: 'collect_sand',
     name: 'Collect Bucket of Sand',
     icon: '🏖️',
+    iconKey: 'bucket',
     description: 'Collect sand from the beach. Used with seaweed to make glass.',
     ticks: 3,
     product: 'bucket_of_sand',
@@ -43,6 +46,7 @@ const GATHER_TASKS = [
     id: 'collect_seaweed',
     name: 'Collect Seaweed',
     icon: '🌊',
+    iconKey: 'seaweed',
     description: 'Gather seaweed from the shore. Burnt with a bucket of sand to make glass.',
     ticks: 4,
     product: 'giant_seaweed',
@@ -54,6 +58,7 @@ const GATHER_TASKS = [
     id: 'burn_seaweed',
     name: 'Burn Seaweed → Soda Ash',
     icon: '🔆',
+    iconKey: 'flame',
     description: 'Burn seaweed to produce soda ash. Used with bucket of sand to make glass.',
     ticks: 3,
     product: 'soda_ash',
@@ -66,6 +71,7 @@ const GATHER_TASKS = [
     id: 'catch_newts',
     name: 'Catch Eye of Newt',
     icon: '👁️',
+    iconKey: 'eye',
     description: 'Catch newts from the pond and harvest their eyes. Used in many potions.',
     ticks: 4,
     product: 'eye_of_newt',
@@ -77,6 +83,7 @@ const GATHER_TASKS = [
     id: 'pick_white_berries',
     name: 'Pick White Berries',
     icon: '🫐',
+    iconKey: 'berries',
     description: 'Pick white berries from the bushes. Used in defence and super restore potions.',
     ticks: 3,
     product: 'white_berries',
@@ -88,6 +95,7 @@ const GATHER_TASKS = [
     id: 'gather_snape_grass',
     name: 'Gather Snape Grass',
     icon: '🌾',
+    iconKey: 'grass',
     description: 'Cut snape grass from the swamp. Used in prayer potions.',
     ticks: 3,
     product: 'snape_grass',
@@ -99,6 +107,7 @@ const GATHER_TASKS = [
     id: 'collect_spiders_eggs',
     name: 'Collect Red Spiders\' Eggs',
     icon: '🥚',
+    iconKey: 'eggs',
     description: 'Collect eggs from red spiders. Used in super restore potions.',
     ticks: 4,
     product: 'red_spiders_eggs',
@@ -110,6 +119,7 @@ const GATHER_TASKS = [
     id: 'harvest_potato_cactus',
     name: 'Harvest Potato Cactus',
     icon: '🌵',
+    iconKey: 'cactus',
     description: 'Harvest potato cactus from the desert. Used in magic and potion combinations.',
     ticks: 4,
     product: 'potato_cactus',
@@ -121,6 +131,7 @@ const GATHER_TASKS = [
     id: 'crush_birds_nest',
     name: 'Crush Bird\'s Nest → Dust',
     icon: '🪹',
+    iconKey: 'nest',
     description: 'Crush an empty bird\'s nest into powder. Used in saradomin brew.',
     ticks: 5,
     product: 'crushed_birds_nest',
@@ -133,6 +144,7 @@ const GATHER_TASKS = [
     id: 'collect_wine_of_zamorak',
     name: 'Collect Wine of Zamorak',
     icon: '🍷',
+    iconKey: 'wine',
     description: 'Collect bottles of Wine of Zamorak. Used in herblore to make ranging potions.',
     ticks: 5,
     product: 'wine_of_zamorak',
@@ -144,6 +156,7 @@ const GATHER_TASKS = [
     id: 'pick_limpwurt_root',
     name: 'Pick Limpwurt Root',
     icon: '🌿',
+    iconKey: 'herb',
     description: 'Harvest limpwurt roots from the swamp. Used in herblore to make super strength potions.',
     ticks: 3,
     product: 'limpwurt_root',
@@ -155,6 +168,7 @@ const GATHER_TASKS = [
     id: 'convert_log_to_plank',
     name: 'Convert Logs → Planks',
     icon: '🪵',
+    iconKey: 'planks',
     description: 'Convert logs into planks at the sawmill. Costs 25gp per action.',
     ticks: 1,
     product: 'planks',
@@ -168,6 +182,7 @@ const GATHER_TASKS = [
     id: 'convert_oak_log_to_plank',
     name: 'Convert Oak Logs → Oak Planks',
     icon: '🪵',
+    iconKey: 'planks',
     description: 'Convert oak logs into oak planks at the sawmill. Costs 50gp per action.',
     ticks: 1,
     product: 'oak_plank',
@@ -181,6 +196,7 @@ const GATHER_TASKS = [
     id: 'convert_teak_log_to_plank',
     name: 'Convert Teak Logs → Teak Planks',
     icon: '🪵',
+    iconKey: 'planks',
     description: 'Convert teak logs into teak planks at the sawmill. Costs 75gp per action.',
     ticks: 1,
     product: 'teak_plank',
@@ -194,6 +210,7 @@ const GATHER_TASKS = [
     id: 'convert_mahogany_log_to_plank',
     name: 'Convert Mahogany Logs → Mahogany Planks',
     icon: '🪵',
+    iconKey: 'planks',
     description: 'Convert mahogany logs into mahogany planks at the sawmill. Costs 100gp per action.',
     ticks: 1,
     product: 'mahogany_plank',
@@ -206,7 +223,7 @@ const GATHER_TASKS = [
 ]
 
 const CATEGORIES = [
-  { id: 'all', label: 'All', icon: '📋' },
+  { id: 'all', label: 'All', icon: '📋', iconKey: 'list' },
 ]
 
 const ITEM_NAMES = {
@@ -497,7 +514,8 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
         </button>
 
         <div class="flex-1 flex flex-col items-center justify-center">
-          <span class="text-[48px] mb-2">{task.icon}</span>
+          <GameIcon iconKey={task.iconKey} item={{ icon: task.icon }} size={48} color="var(--color-gold)" class="mb-2" />
+
           <h2 class="font-[var(--font-display)] text-[18px] font-bold text-[var(--color-gold)] mb-1 text-center">
             {task.name}
           </h2>
@@ -549,9 +567,10 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
               <button
                 key={cat.id}
                 onClick={() => setCategory(cat.id)}
-                class={`flex-shrink-0 px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${pillClass}`}
+                class={`flex-shrink-0 inline-flex items-center gap-1 px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${pillClass}`}
               >
-                {cat.icon} {cat.label}
+                <GameIcon iconKey={cat.iconKey} item={{ icon: cat.icon }} size={13} color="currentColor" />
+                {cat.label}
               </button>
             )
           })}
@@ -581,7 +600,8 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
                   disabled={!enabled}
                   class="flex-1 min-w-0 flex items-center gap-3 text-left bg-transparent border-0 p-0 disabled:cursor-not-allowed"
                 >
-                  <span class="text-[28px] flex-shrink-0">{task.icon}</span>
+                  <GameIcon iconKey={task.iconKey} item={{ icon: task.icon }} size={28} color="var(--color-gold)" class="flex-shrink-0" />
+
                   <div class="flex-1 min-w-0">
                     <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>
                     <div class="text-[10px] text-[#c8a96e] opacity-80">

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import Modal from '../components/Modal.jsx'
+import GameIcon from '../components/GameIcon.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { SKILL_ICONS, STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS, formatDropChance, GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
@@ -811,7 +812,7 @@ Shop value: ×1.1
                   >
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-2 flex-1">
-                        <span class="text-lg">{item.icon}</span>
+                        <GameIcon item={item} size={20} />
                         <div>
                           <div class="text-sm font-semibold text-[var(--color-parchment)]">{item.name}</div>
                           <div class="text-[10px] text-[var(--color-parchment)] opacity-60">

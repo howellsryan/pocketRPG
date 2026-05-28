@@ -8,6 +8,7 @@ import { getActionProgress } from '../hooks/useActionTick.js'
 import { countItem } from '../engine/inventory.js'
 import { onTick } from '../engine/tick.js'
 import cluesData from '../data/clues.json'
+import GameIcon from '../components/GameIcon.jsx'
 import { rollClueRewards } from '../engine/clueScrolls.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
 import { applyCloudSave, requestCriticalPushSave } from '../cloud/sync.js'
@@ -329,9 +330,8 @@ function ClueDropRatesModal({ task, itemsData, onClose }) {
     const pct = totalWeight > 0 ? (100 * r.weight) / totalWeight : 0
     const item = itemsData?.[r.itemId]
     const name = item?.name || CLUE_ITEM_NAMES[r.itemId] || r.itemId
-    const icon = item?.icon || '•'
     const reqs = item?.requirements
-    groups[clueRarityBand(pct)].push({ itemId: r.itemId, name, icon, pct, reqs })
+    groups[clueRarityBand(pct)].push({ itemId: r.itemId, name, item, pct, reqs })
   }
   for (const key of Object.keys(groups)) {
     groups[key].sort((a, b) => b.pct - a.pct || a.name.localeCompare(b.name))
@@ -368,7 +368,7 @@ function ClueDropRatesModal({ task, itemsData, onClose }) {
             {rows.map(r => (
               <div key={r.itemId} class="flex items-center justify-between py-[3px] text-[12px]">
                 <div class="flex items-center gap-2 text-[var(--color-parchment)] truncate flex-1">
-                  <span class="text-[14px] flex-shrink-0">{r.icon}</span>
+                  {r.item ? <GameIcon item={r.item} size={14} /> : <span class="text-[14px] flex-shrink-0">•</span>}
                   <div class="truncate flex-1">
                     <div class="truncate">{r.name}</div>
                     {r.reqs && (
