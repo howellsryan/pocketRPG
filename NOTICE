@@ -57,7 +57,7 @@ Icons used (our key → game-icons name):
   spade                → spade
   helmet               → helmet
   body                 → breastplate
-  legs                 → leg-armor
+  legs                 → armored-pants
   boots                → boots
   gloves               → gloves
   cape                 → cape
@@ -66,5 +66,6 @@ Icons used (our key → game-icons name):
   shield               → shield
   dragon_shield        → dragon-shield
   arrow                → arrow-cluster
+  prayer               → prayer
 
 Generated: 2026-05-28

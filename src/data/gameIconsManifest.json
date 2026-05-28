@@ -45,7 +45,7 @@
 
   "helmet":      "helmet",
   "body":        "breastplate",
-  "legs":        "leg-armor",
+  "legs":        "armored-pants",
   "boots":       "boots",
   "gloves":      "gloves",
   "cape":        "cape",
@@ -53,5 +53,6 @@
   "ring":        "diamond-ring",
   "shield":      "shield",
   "dragon_shield":"dragon-shield",
-  "arrow":       "arrow-cluster"
+  "arrow":       "arrow-cluster",
+  "prayer":      "prayer"
 }

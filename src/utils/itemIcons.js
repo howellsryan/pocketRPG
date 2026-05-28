@@ -3,8 +3,8 @@ import gameIconsData from '../data/gameIcons.json'
 // ─── Fallback tables ──────────────────────────────────────────────────────────
 
 const SLOT_KEY = {
-  head: 'helmet', body: 'body', legs: 'legs', feet: 'boots',
-  hands: 'gloves', cape: 'cape', neck: 'amulet', ring: 'ring',
+  head: 'helmet', body: 'body', legs: 'legs', boots: 'boots',
+  gloves: 'gloves', cape: 'cape', neck: 'amulet', ring: 'ring',
   shield: 'shield', ammo: 'arrow', weapon: 'sword'
 }
 
@@ -39,12 +39,15 @@ function keyFromId(id) {
   if (id === 'scythe_of_vythar') return 'scythe'
   if (id === 'abyssal_tentacle' || id === 'nether_demon_whip') return 'whip'
   if (id === 'anti_dragon_shield' || id === 'dragon_kiteshield') return 'dragon_shield'
+  if (id.includes('charm') || id.includes('blessing')) return 'prayer'
+  if (id.includes('skirt')) return 'legs'
   if (id.includes('_ore') || id === 'ore') return 'ore'
   if (id.endsWith('_bar') || id === 'bar') return 'metal_bar'
   if (id.endsWith('_logs') || id === 'logs') return 'log'
   if (id.startsWith('raw_')) return 'raw_fish'
   if (id.startsWith('uncut_')) return 'gem'
-  if (id.includes('_hide') || id.includes('_leather') || id === 'cowhide') return 'animal_hide'
+  // Raw hide/leather materials only — *_d_hide_body/chaps/boots resolve by slot.
+  if (id.endsWith('hide') || id.endsWith('_leather') || id === 'cowhide') return 'animal_hide'
   if (id.endsWith('_seed') || id.endsWith('_sapling')) return 'seed'
   if (id.endsWith('_rune') || id === 'rune') return 'rune'
   if (id.endsWith('_potion') || id.endsWith('_brew') || id === 'prayer_potion' || id.endsWith('_restore') || id === 'super_combat') return 'potion'
@@ -65,7 +68,8 @@ function keyFromId(id) {
   if (id.includes('_mace')) return 'mace'
   if (id.includes('_bow')) return 'bow'
   if (id.includes('_gem') || id === 'dragonstone' || id === 'sapphire' || id === 'emerald' || id === 'ruby' || id === 'diamond' || id === 'onyx' || id === 'zyrite') return 'gem'
-  if (id.includes('greens') || id.includes('herb') || id.includes('grimy_') || id.includes('leaf') || id === 'nettle') return 'herb'
+  if (id.includes('greens') || id.includes('herb') || id.includes('grimy_') || id.includes('leaf') ||
+      id.includes('root') || id.includes('weed') || id === 'nettle' || id === 'eye_of_newt' || id === 'goat_horn_dust') return 'herb'
   if (id === 'vial' || id === 'unpowered_orb') return 'vial'
   if (id === 'shrimp' || id === 'shark' || id === 'lobster' || id === 'swordfish' || id === 'trout' || id === 'anglerfish' || id === 'cooked_chicken' || id === 'cooked_meat') return 'cooked_fish'
   return null
@@ -125,6 +129,8 @@ export function getItemIconTint(item) {
   if (!item) return 'var(--color-parchment)'
   // Special overrides
   if (item.type === 'currency') return 'var(--color-gold)'
+  if (item.id?.includes('charm') || item.id?.includes('blessing')) return 'var(--color-gold)'
+  if (item.id?.includes('leaf') || item.id?.includes('herb') || item.id?.includes('root') || item.id?.includes('weed')) return 'var(--color-emerald-light)'
   if (item.id === 'bones' || item.id?.endsWith('_bones')) return '#a0a0a0'
   if (item.type === 'rune' || item.id?.endsWith('_rune')) return 'var(--color-mana-light)'
   if (item.type === 'seed' || item.id?.endsWith('_seed') || item.id?.endsWith('_sapling')) return 'var(--color-emerald-light)'

@@ -110,4 +110,47 @@ describe('itemIcons', () => {
   it('fishing_rod resolves to fishing_pole glyph', () => {
     expect(getItemIconKey(itemsData.fishing_rod)).toBe('fishing_pole')
   })
+
+  it('charms and blessings resolve to the prayer glyph', () => {
+    expect(getItemIconKey(itemsData.sacred_charm)).toBe('prayer')
+    expect(getItemIconKey(itemsData.peace_blessing)).toBe('prayer')
+    expect(getItemIconKey(itemsData.elder_charm)).toBe('prayer')
+  })
+
+  it('real arrows still resolve to the arrow glyph', () => {
+    expect(getItemIconKey(itemsData.bronze_arrow)).toBe('arrow')
+  })
+
+  it('herblore resources (herbs, roots, weeds, secondaries) resolve to the herb glyph', () => {
+    expect(getItemIconKey(itemsData.greenthorn_leaf)).toBe('herb')
+    expect(getItemIconKey(itemsData.kingsherb)).toBe('herb')
+    expect(getItemIconKey(itemsData.limpwurt_root)).toBe('herb')
+    expect(getItemIconKey(itemsData.rynarr_weed)).toBe('herb')
+    expect(getItemIconKey(itemsData.eye_of_newt)).toBe('herb')
+  })
+
+  it('herb-seed still resolves to the seed glyph (not herb)', () => {
+    expect(getItemIconKey(itemsData.duskroot_seed)).toBe('seed')
+  })
+
+  it('skirts (chain/plate/robe/leather) resolve to the legs glyph', () => {
+    expect(getItemIconKey(itemsData.zephyra_chainskirt)).toBe('legs')
+    expect(getItemIconKey(itemsData.dragon_plateskirt)).toBe('legs')
+    expect(getItemIconKey(itemsData.kaelor_s_leatherskirt)).toBe('legs')
+    // Mislabelled as type:resource with no slot — still resolves via id pattern
+    expect(getItemIconKey(itemsData.mithril_plateskirt)).toBe('legs')
+  })
+
+  it('boots and gloves slots resolve to their own glyphs (not body)', () => {
+    expect(getItemIconKey(itemsData.leather_boots)).toBe('boots')
+    expect(getItemIconKey(itemsData.dragon_boots)).toBe('boots')
+    expect(getItemIconKey(itemsData.leather_gloves)).toBe('gloves')
+  })
+
+  it('dragonhide armour resolves by slot, raw hide by material', () => {
+    expect(getItemIconKey(itemsData.green_d_hide_chaps)).toBe('legs')
+    expect(getItemIconKey(itemsData.lumira_d_hide_boots)).toBe('boots')
+    expect(getItemIconKey(itemsData.cowhide)).toBe('animal_hide')
+    expect(getItemIconKey(itemsData.green_dragon_leather)).toBe('animal_hide')
+  })
 })
