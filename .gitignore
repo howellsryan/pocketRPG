@@ -4,4 +4,4 @@ dist_tmp/
 www/
 .wrangler/
 .dev.vars
-index.html
+/index.html
