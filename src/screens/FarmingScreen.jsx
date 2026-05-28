@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
 import Modal from '../components/Modal.jsx'
+import GameIcon from '../components/GameIcon.jsx'
 import FarmLocationPicker from '../screens/FarmLocationPicker.jsx'
 import FarmPatchView from '../screens/FarmPatchView.jsx'
 import farmingData from '../data/farming.json'
@@ -144,7 +145,7 @@ export default function FarmingScreen({ onBack }) {
             <div>Farming XP gained: <span class="text-[var(--color-gold)] font-semibold">{Math.floor(resultModal.xp)}</span></div>
             {Object.entries(resultModal.items).map(([itemId, qty]) => {
               const item = itemsData[itemId] || getCropDef(itemId)
-              return <div key={itemId}>{resultModal.action} {item?.icon || ''} {item?.name || itemId} ×{qty}</div>
+              return <div key={itemId} class="flex items-center gap-1">{resultModal.action} {item && <GameIcon item={item} size={14} />} {item?.name || itemId} ×{qty}</div>
             })}
           </div>
         </Modal>

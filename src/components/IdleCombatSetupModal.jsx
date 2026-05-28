@@ -1,6 +1,7 @@
 import { useMemo } from 'preact/hooks'
 import Modal from './Modal.jsx'
 import Button from './Button.jsx'
+import GameIcon from './GameIcon.jsx'
 import {
   isFoodItem,
   isBoostPotion,
@@ -178,7 +179,7 @@ function FoodSection({ candidates, draft, onToggle }) {
         const heal = getFoodHealAmount(item)
         return (
           <div key={itemId} class="flex items-center gap-2 p-2 rounded-lg bg-[var(--color-void-light)] border border-[var(--color-void-border)]">
-            <span class="text-xl">{item.icon || '🍖'}</span>
+            <GameIcon item={item} size={22} />
             <div class="flex-1 min-w-0">
               <div class="text-sm text-[var(--color-parchment)]">{item.name} · +{heal} HP</div>
               <div class="text-[10px] text-[var(--color-parchment)] opacity-60">Own {available}</div>
@@ -208,7 +209,7 @@ function PotionSection({ candidates, draft, onToggle }) {
         else if (item.effect === 'super_restore') blurb = `+${item.idlePrayerRestore || 20} prayer`
         return (
           <div key={itemId} class="flex items-center gap-2 p-2 rounded-lg bg-[var(--color-void-light)] border border-[var(--color-void-border)]">
-            <span class="text-xl">{item.icon || '🧪'}</span>
+            <GameIcon item={item} size={22} />
             <div class="flex-1 min-w-0">
               <div class="text-sm text-[var(--color-parchment)]">{item.name} · {blurb}</div>
               <div class="text-[10px] text-[var(--color-parchment)] opacity-60">Own {available}</div>

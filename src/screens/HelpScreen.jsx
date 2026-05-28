@@ -77,7 +77,8 @@ const HELP_GUIDES = [
   { title: 'Quests & Minigames', icon: '📜', points: ['Quests can have requirements and reward useful progression unlocks.', 'Quest progress can run in the background where supported.', 'Minigames can unlock unique rewards and progression options.', 'Some minigame rewards may later become purchasable or re-obtainable, depending on the activity.'] },
   { title: 'Collection Log & Leaderboards', icon: '📖', points: ['Collection Log tracks important drops and reward milestones.', 'Boss, raid, clue, and minigame rewards may appear there.', 'Leaderboards show account progression and ranking snapshots.'] },
   { title: 'PvP Basics', icon: '🛡️', points: ['PvP is higher risk than normal PvE.', 'Learn invitations, matchmaking flow, and risk before entering.', 'Deaths in PvP can cause item or coin loss depending on current rules.', 'Bring proper food, prayer, potions, gear, and special attack setup before fighting players.'] },
-  { title: 'Cloud Saves & Troubleshooting', icon: '☁️', points: ['Cloud saves sync progress for the selected account and character.', 'GitHub and Google sign-ins do not share character rosters.', 'If progress looks wrong, verify both provider and selected character first.', 'Try to avoid refreshing during critical combat or PvP moments.'] }
+  { title: 'Cloud Saves & Troubleshooting', icon: '☁️', points: ['Cloud saves sync progress for the selected account and character.', 'GitHub and Google sign-ins do not share character rosters.', 'If progress looks wrong, verify both provider and selected character first.', 'Try to avoid refreshing during critical combat or PvP moments.'] },
+  { title: 'Credits', icon: '🎨', points: ['Item icons by game-icons.net (CC BY 3.0). See the NOTICE file for full attribution.'] }
 ]
 
 function CollapsibleGuide({ icon, title, points }) {

@@ -1,5 +1,6 @@
 import itemsData from '../data/items.json'
 import { formatQuantity } from '../utils/helpers'
+import GameIcon from './GameIcon.jsx'
 
 const TYPE_COLORS = {
   weapon: 'border-[var(--color-blood)]/40',
@@ -18,11 +19,11 @@ export default function ItemSlot({ slot, onClick, size = 'normal', showName = fa
       ? 'w-14 h-14 md:w-20 md:h-20 lg:w-24 lg:h-24'
       : 'w-14 h-14'
 
-  const iconSizeClass = size === 'small'
-    ? 'text-sm'
+  const iconSize = size === 'small'
+    ? 16
     : size === 'inventory'
-      ? 'text-lg md:text-2xl lg:text-[30px]'
-      : 'text-lg'
+      ? 24
+      : 20
 
   const nameSizeClass = size === 'inventory'
     ? 'text-[7px] md:text-[10px]'
@@ -40,7 +41,6 @@ export default function ItemSlot({ slot, onClick, size = 'normal', showName = fa
   if (!item) return null
 
   const borderClass = TYPE_COLORS[item.type] || TYPE_COLORS.default
-  const emoji = item.icon || '📦'
 
   return (
     <button
@@ -50,7 +50,7 @@ export default function ItemSlot({ slot, onClick, size = 'normal', showName = fa
         active:bg-[#252525] transition-colors
         ${highlight ? 'ring-1 ring-[var(--color-gold)]' : ''}`}
     >
-      <span class={iconSizeClass}>{emoji}</span>
+      <GameIcon item={item} size={iconSize} />
       {slot.noted && (
         <span class="absolute top-0 left-0.5 text-[8px]">📜</span>
       )}
