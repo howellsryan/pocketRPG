@@ -17,22 +17,17 @@ export const ACTIVITY_POLICY = {
   agility:       { persistence: 'background' },
   thieving:      { persistence: 'background' },
   hunter:        { persistence: 'background' },
-  // dungeoneering reward actions use type:'skill' + skill:'dungeoneering'
-  // and are classified background by getActivityPolicy() below.
+  // All skills (gathering, production, dungeoneering, etc.) keep accruing in
+  // the background; only combat stops when the player leaves its screen.
+  skill:         { persistence: 'background' },
   combat:        { persistence: 'modal' },
-  skill:         { persistence: 'modal' },
 }
 
 /**
  * Returns the policy object for a task, or null if unknown.
- * Dungeoneering reward actions (type:'skill', skill:'dungeoneering') are
- * background because they represent long fixed-duration grinds.
  */
 export function getActivityPolicy(task) {
   if (!task?.type) return null
-  if (task.type === 'skill' && task.skill === 'dungeoneering') {
-    return { persistence: 'background' }
-  }
   return ACTIVITY_POLICY[task.type] ?? null
 }
 
@@ -66,7 +61,7 @@ export function getActivityKey(task) {
       if (task.skill === 'dungeoneering') {
         return `dungeoneering:${task.action?.id || ''}`
       }
-      return null
+      return `skill:${task.skill || ''}:${task.action?.id || ''}`
     default:
       return null
   }

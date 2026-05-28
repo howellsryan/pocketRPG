@@ -44,6 +44,30 @@ export function countItem(inventory, itemId) {
 }
 
 /**
+ * Returns true if every item in `items` ({ itemId: qty }) fits into the
+ * inventory without dropping anything. Stackables that already occupy a slot
+ * cost nothing; new stackables and non-stackables consume free slots.
+ */
+export function canFit(inventory, items, itemsData = {}) {
+  let free = freeSlots(inventory)
+  for (const [itemId, qty] of Object.entries(items)) {
+    if (qty <= 0) continue
+    const stackable = itemsData?.[itemId]?.stackable || false
+    if (stackable) {
+      const hasStack = inventory.some(s => s && s.itemId === itemId)
+      if (!hasStack) {
+        if (free <= 0) return false
+        free -= 1
+      }
+    } else {
+      if (free < qty) return false
+      free -= qty
+    }
+  }
+  return true
+}
+
+/**
  * Add item to inventory. Returns true if successful, false if full.
  * Stackable items go into existing stack or new slot.
  * Non-stackable items take one slot each.

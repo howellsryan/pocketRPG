@@ -857,6 +857,16 @@ function GameApp() {
             updateHP(sim.hpAfterRegen)
           }
 
+          // A background skill/gather that exhausted its materials or filled the
+          // inventory stops — clear the task and tell the player why.
+          if ((savedTask.type === 'skill' || savedTask.type === 'gather') &&
+              (sim.stoppedReason === 'inventory_full' || sim.stoppedReason === 'out_of_materials')) {
+            setActiveTask(null)
+            activeTaskRef.current = null
+            try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+            addToast(sim.stoppedReason === 'inventory_full' ? 'Inventory full — gathering stopped.' : 'Out of materials!', 'error')
+          }
+
           setIdleResult({ elapsedMs, task: savedTask, ...sim })
           // Push the post-idle state to the cloud (debounced + hash-skipped).
           if (!isInPvpMatch) schedulePushSave(getSnapshot())
@@ -1199,13 +1209,11 @@ function GameApp() {
   }
   // Navigate with optional action data
   const navigate = (scr, data) => {
-    // Background activities (quests, minigames, clues, gathering, agility, thieving, hunter,
-    // dungeoneering) persist across screens — their progress is saved to the ledger.
-    // Foreground activities (combat, skilling) stop when the player navigates away.
+    // Every activity except combat persists across screens — skills and gathering
+    // keep accruing in the background. Only combat stops when the player leaves.
     if (!isBackground(activeTask)) {
       if (activeTask) {
-        const stopMsg = activeTask.type === 'combat' ? 'You fled combat.' : 'Skilling stopped.'
-        addToast(stopMsg, 'info')
+        addToast('You fled combat.', 'info')
       }
       setActiveTask(null)
     }
@@ -1550,6 +1558,13 @@ function GameApp() {
             // Long-form skill reward (e.g. Dungeoneering equipment unlock)
             // finished — clear the task so the user can start a new action.
             setActiveTask(null)
+          } else if ((savedTask.type === 'skill' || savedTask.type === 'gather') &&
+              (sim.stoppedReason === 'inventory_full' || sim.stoppedReason === 'out_of_materials')) {
+            // Skill/gather that ran out of materials or filled the inventory stops.
+            setActiveTask(null)
+            activeTaskRef.current = null
+            try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+            addToast(sim.stoppedReason === 'inventory_full' ? 'Inventory full — gathering stopped.' : 'Out of materials!', 'error')
           } else if (sim.ticksRemaining !== undefined) {
             // Non-quest task — update progress if partial
             setActiveTask({

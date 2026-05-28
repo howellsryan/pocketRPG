@@ -6,7 +6,7 @@ describe('idle gather bucket requirement', () => {
     const result = simulateIdleGather(
       { type: 'gather', gatherTask: { id: 'collect_sand', ticks: 3, product: 'bucket_of_sand', qty: 1, requiresItem: 'bucket', reusableRequirement: true } },
       9_000,
-      [],
+      Array(28).fill(null),
       {},
       { bucket_of_sand: { id: 'bucket_of_sand', stackable: false } },
       { bucket: { itemId: 'bucket', quantity: 1 } },
@@ -19,7 +19,7 @@ describe('idle gather bucket requirement', () => {
     const result = simulateIdleGather(
       { type: 'gather', gatherTask: { id: 'collect_sand', ticks: 3, product: 'bucket_of_sand', qty: 1, requiresItem: 'bucket', reusableRequirement: true } },
       9_000,
-      [],
+      Array(28).fill(null),
       {},
       { bucket_of_sand: { id: 'bucket_of_sand', stackable: false } },
       {},

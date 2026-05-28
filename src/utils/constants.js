@@ -6,6 +6,11 @@ export const TICKS_PER_SECOND = 1000 / TICK_DURATION
 export const INVENTORY_SIZE = 28
 export const BANK_SIZE = 500
 
+// Construction level that unlocks auto-banking for gathered resources. Below
+// this, gathering fills the inventory and stops when full; at/above it, a full
+// inventory triggers an agility-scaled bank trip so gathering continues.
+export const GATHER_AUTOBANK_CONSTRUCTION_LEVEL = 80
+
 // Combat
 export const EAT_TICK_COST = 3
 export const POTION_TICK_COST = 3

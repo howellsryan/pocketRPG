@@ -4,8 +4,10 @@ import ProgressBar from '../components/ProgressBar.jsx'
 import Panel from '../components/Panel.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
-import { countItem } from '../engine/inventory.js'
+import { countItem, addItem } from '../engine/inventory.js'
+import { getLevelFromXP } from '../engine/experience.js'
 import { onTick } from '../engine/tick.js'
+import { GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
 import minigamesData from '../data/minigames.json'
 
 /**
@@ -232,7 +234,7 @@ function hasItemAnywhere(itemId, inventory, bank, equipment) {
 }
 
 export default function GatherScreen({ initialTaskId, idleResult }) {
-  const { inventory, bank, equipment, updateInventory, updateBankDirect, addToast, setActiveTask, activeTask: globalActiveTask, itemsData } = useGame()
+  const { inventory, bank, equipment, stats, updateInventory, updateBankDirect, addToast, setActiveTask, activeTask: globalActiveTask, itemsData } = useGame()
   const [category, setCategory] = useState('all')
   const [activeTask, setLocalTask] = useState(null)
   const taskRef = useRef(null)
@@ -346,16 +348,44 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
           if (fromBank > 0) bankUpdates.coins = (bankUpdates.coins || 0) - fromBank
         }
 
-        // Update bank and inventory
-        if (Object.keys(bankUpdates).length > 0) updateBankDirect(bankUpdates)
-        if (inventoryModified) updateInventory(newInv)
+        // Gathered items go to the inventory by default. When it fills, the
+        // Construction unlock turns a full inventory into a bank trip; without
+        // it, gathering stops so the player can manage their items.
+        const product = task.product
+        const qty = task.qty || 1
+        const stackable = itemsData[product]?.stackable || false
+        const constructionLevel = getLevelFromXP(stats.construction?.xp || 0)
+        const bankWhenFull = constructionLevel >= GATHER_AUTOBANK_CONSTRUCTION_LEVEL
 
-        updateBankDirect({ [task.product]: task.qty || 1 })
+        if (!addItem(newInv, product, qty, stackable)) {
+          if (bankWhenFull) {
+            // Bank trip: empty the inventory to the bank, then deposit.
+            for (let i = 0; i < newInv.length; i++) {
+              if (!newInv[i]) continue
+              bankUpdates[newInv[i].itemId] = (bankUpdates[newInv[i].itemId] || 0) + newInv[i].quantity
+              newInv[i] = null
+            }
+            addItem(newInv, product, qty, stackable)
+          } else {
+            // Inventory full — flush deductions, stop the action, and notify.
+            if (Object.keys(bankUpdates).length > 0) updateBankDirect(bankUpdates)
+            if (inventoryModified) updateInventory(newInv)
+            taskRef.current = { ...next, stopped: true }
+            setLocalTask(null)
+            setActiveTask(null)
+            addToast('Inventory full!', 'error')
+            return
+          }
+        }
+
+        // Update bank (material/gp deductions + any bank trip) and inventory.
+        if (Object.keys(bankUpdates).length > 0) updateBankDirect(bankUpdates)
+        updateInventory(newInv)
 
         const updated = {
           ...next,
           totalDone: next.totalDone + 1,
-          totalItems: next.totalItems + task.qty,
+          totalItems: next.totalItems + qty,
           justCompleted: true,
         }
         taskRef.current = updated
@@ -367,7 +397,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
     })
 
     return unsub
-  }, [activeTask?.task?.id, inventory, bank])
+  }, [activeTask?.task?.id, inventory, bank, stats])
 
   const startTask = (task, seedFromIdle = false) => {
     const idleActions = seedFromIdle && idleResult?.actions ? idleResult.actions : 0
@@ -385,7 +415,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
     }
     taskRef.current = newState
     setLocalTask(newState)
-    setActiveTask({ type: 'gather', gatherTask: task, bankingEnabled: true })
+    setActiveTask({ type: 'gather', gatherTask: task })
   }
 
   const stopTask = () => {
@@ -476,11 +506,11 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
 
           <Panel padding="p-3" className="w-full max-w-[280px] mb-3 rounded-xl">
             <div class="flex justify-between mb-2">
-              <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Items banked</span>
+              <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Items gathered</span>
               <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">{activeTask.totalItems}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Items banked/hr</span>
+              <span class="text-[13px] text-[var(--color-parchment)] opacity-60">Items/hr</span>
               <span class="font-[var(--font-mono)] text-[var(--color-gold)] font-bold">
                 {elapsedHrs > 0 ? perHour.toLocaleString() : '—'}
               </span>
@@ -488,7 +518,9 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
           </Panel>
 
           <div class="text-[11px] text-[var(--color-parchment)] opacity-50 text-center max-w-[280px]">
-            ⏳ Items go directly to your bank.
+            {getLevelFromXP(stats.construction?.xp || 0) >= GATHER_AUTOBANK_CONSTRUCTION_LEVEL
+              ? '🏦 Items fill your inventory, then auto-bank when full.'
+              : '🎒 Items go to your inventory. Gathering stops when it\'s full.'}
           </div>
         </div>
       </div>
