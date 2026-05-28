@@ -1,4 +1,5 @@
 import Card from './Card.jsx'
+import GameIcon from './GameIcon.jsx'
 
 const EQ_SLOT_LABELS = {
   head: '🪖', cape: '🧣', neck: '📿', ammo: '🏹',
@@ -34,9 +35,10 @@ function EquipSlot({ slotName, equipment, itemsData, onSelect, size = 'md' }) {
       onClick={() => { if (item && onSelect) onSelect(slotName, item) }}
       class={`${preset.box} rounded-[10px] border flex flex-col items-center justify-center relative ${bgClass} ${cursorClass}`}
     >
-      <span style={{ fontSize: item ? preset.icon : preset.emptyIcon }}>
-        {item ? (item.icon || '📦') : EQ_SLOT_LABELS[slotName]}
-      </span>
+      {item
+        ? <GameIcon item={item} size={parseInt(preset.icon, 10)} />
+        : <span style={{ fontSize: preset.emptyIcon }}>{EQ_SLOT_LABELS[slotName]}</span>
+      }
       {charges > 0 && (
         <span class="absolute bottom-[2px] right-[2px] text-[8px] text-[#4ade80] font-bold">⚡</span>
       )}

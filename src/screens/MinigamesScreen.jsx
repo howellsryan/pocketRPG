@@ -2,6 +2,7 @@ import { useGame } from '../state/gameState.jsx'
 import Panel from '../components/Panel.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
+import GameIcon from '../components/GameIcon.jsx'
 import { countItem } from '../engine/inventory.js'
 import minigamesData from '../data/minigames.json'
 
@@ -58,7 +59,8 @@ export default function MinigamesScreen() {
         </button>
 
         <div class="flex-1 flex flex-col items-center justify-center">
-          <span class="text-[48px] mb-2">{task.icon}</span>
+          <GameIcon iconKey={task.iconKey} item={{ icon: task.icon }} size={48} color="var(--color-gold)" class="mb-2" />
+
           <h2 class="font-[var(--font-display)] text-[18px] font-bold text-[var(--color-gold)] mb-1 text-center">
             {task.name}
           </h2>
@@ -102,7 +104,12 @@ export default function MinigamesScreen() {
             if (tasks.length === 0) return null
             return (
               <div key={mg.id} class="flex flex-col gap-2">
-                <SectionHeader size="sm">{mg.icon} {mg.label}</SectionHeader>
+                <SectionHeader size="sm">
+                  <span class="inline-flex items-center gap-2">
+                    <GameIcon iconKey={mg.iconKey} item={{ icon: mg.icon }} size={18} color="currentColor" />
+                    {mg.label}
+                  </span>
+                </SectionHeader>
                 {tasks.map(task => {
                   const missingReq = task.requiresItem && !hasItemAnywhere(task.requiresItem)
                   const alreadyUnlocked = unlockedMinigameItems.has(task.product)
@@ -118,7 +125,8 @@ export default function MinigamesScreen() {
                       disabled={!enabled}
                       class={`p-3 rounded-xl border text-left flex items-center gap-3 ${rowClass}`}
                     >
-                      <span class="text-[28px] flex-shrink-0">{task.icon}</span>
+                      <GameIcon iconKey={task.iconKey} item={{ icon: task.icon }} size={28} color="var(--color-gold)" class="flex-shrink-0" />
+
                       <div class="flex-1 min-w-0">
                         <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>
                         <div class="text-[10px] text-[#c8a96e] opacity-80">

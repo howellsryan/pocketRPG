@@ -4,6 +4,7 @@ import { countItem } from '../engine/inventory.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
 import { isOrderBookItem, getPurchaseRestriction, isStoreVisibleItem } from '../engine/storeRules.js'
 import Panel from '../components/Panel.jsx'
+import GameIcon from '../components/GameIcon.jsx'
 import SharedItemModal from '../components/SharedItemModal.jsx'
 import ItemDetailPanel from '../components/ItemDetailPanel.jsx'
 import TwoPaneLayout from '../components/TwoPaneLayout.jsx'
@@ -370,7 +371,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
       : null
     return (
       <div key={item.id} class="p-3 rounded-lg bg-[var(--color-void-light)] border border-[#2a2a2a] flex items-center gap-3">
-        <span class="text-2xl leading-none shrink-0">{item.icon || '📦'}</span>
+        <GameIcon item={item} size={24} class="shrink-0" />
         <div class="flex-1 min-w-0">
           <div class="text-[13px] font-semibold text-[var(--color-parchment)]">{item.name}</div>
           <div class="text-[10px] text-[#888] mt-1">
@@ -427,7 +428,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
       return (
         <Panel key={key} className={`text-[12px] border ${accentBorder}`}>
           <div class="flex items-center gap-3">
-            <span class="text-2xl">{item?.icon || '📦'}</span>
+            <GameIcon item={item} size={24} class="shrink-0" />
             <div class="flex-1 min-w-0">
               <div class="text-[13px] font-semibold text-[var(--color-parchment)]">
                 {offer.offer_type === 'buy' ? 'Buy' : 'Sell'} {item?.name || offer.item_id}
@@ -577,7 +578,9 @@ export default function TradingPostScreen({ onBuyCredits }) {
       <div class="px-4 pt-3 pb-3 flex-shrink-0">
         <div class="flex justify-between items-baseline mb-3">
           <h2 class="font-[var(--font-display)] text-[15px] font-bold text-[var(--color-gold)] m-0">Trading Post</h2>
-          <span class="text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]">🪙 {coins.toLocaleString()}</span>
+          <span class="inline-flex items-center gap-1 text-[11px] text-[var(--color-gold)] font-[var(--font-mono)]">
+            <GameIcon iconKey="coins" size={13} color="var(--color-gold)" /> {coins.toLocaleString()}
+          </span>
         </div>
         <div class="flex gap-2 mb-3">
           <button
@@ -586,16 +589,16 @@ export default function TradingPostScreen({ onBuyCredits }) {
               mode === 'market'
                 ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
                 : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
-            }`}
-          >🔍 Market</button>
+            } inline-flex items-center gap-1`}
+          ><GameIcon iconKey="search" size={13} color="currentColor" /> Market</button>
           <button
             onClick={() => { setMode('offers'); refreshMyOffers() }}
             class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
               mode === 'offers'
                 ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
                 : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
-            }`}
-          >📦 My Offers {offersLoaded ? `(${myOffers.filter((o) => !isReadyToCollectOffer(o)).length}/${MAX_SLOTS})` : ''}
+            } inline-flex items-center gap-1`}
+          ><GameIcon iconKey="offers" size={13} color="currentColor" /> My Offers {offersLoaded ? `(${myOffers.filter((o) => !isReadyToCollectOffer(o)).length}/${MAX_SLOTS})` : ''}
             {offersLoaded && myOffers.some((o) => isReadyToCollectOffer(o)) && (
               <span class="ml-1 inline-block min-w-[16px] h-[16px] leading-[16px] px-1 rounded-full text-[10px] font-bold bg-[var(--color-gold)] text-[var(--color-void)] align-middle">
                 {myOffers.filter((o) => isReadyToCollectOffer(o)).length}

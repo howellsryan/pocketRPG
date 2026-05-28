@@ -15,6 +15,7 @@ const sourceFiles = [
   'utils/formatters.js',
   'utils/itemValue.js',
   'utils/idleElapsed.js',
+  'utils/itemIcons.js',
   'utils/prayerIcons.js',
   'utils/bonusLabels.js',
   'utils/oneLifeDeath.js',
@@ -78,6 +79,7 @@ const sourceFiles = [
   'components/HPBar.js',
   'components/ProgressBar.js',
   'components/SkillBadge.js',
+  'components/GameIcon.js',
   'components/ItemSlot.js',
   'components/Toast.js',
   'components/Header.js',
@@ -151,6 +153,7 @@ function processFile(relPath) {
 }
 
 // Read JSON data
+const gameIconsJSON = readSrc('data/gameIcons.json');
 const itemsJSON = readSrc('data/items.json');
 const monstersJSON = readSrc('data/monsters.json');
 const skillsJSON = readSrc('data/skills.json');
@@ -208,6 +211,7 @@ import { useState, useEffect, useRef, useMemo, useCallback, useContext } from 'h
 import { openDB } from 'https://esm.sh/idb@8.0.2';
 
 // ── Inline JSON Data ──
+const gameIconsData = ${gameIconsJSON};
 const itemsData = ${itemsJSON};
 const monstersData = ${monstersJSON};
 const skillsData = ${skillsJSON};

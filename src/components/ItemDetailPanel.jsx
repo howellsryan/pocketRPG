@@ -1,5 +1,6 @@
 import Panel from './Panel.jsx'
 import BonusDisplay from './BonusDisplay.jsx'
+import GameIcon from './GameIcon.jsx'
 
 export default function ItemDetailPanel({ item, children, quantity, noted, extraInfo }) {
   if (!item) return null
@@ -11,7 +12,7 @@ export default function ItemDetailPanel({ item, children, quantity, noted, extra
   return (
     <div class="space-y-3">
       <Panel className="flex items-center gap-3 min-w-0">
-        <span class="text-[30px] shrink-0">{item.icon || '📦'}</span>
+        <GameIcon item={item} size={30} class="shrink-0" />
         <div class="min-w-0">
           <div class="text-[13px] font-semibold text-[var(--color-parchment)] break-words">{item.name}</div>
           <div class="text-[11px] text-[#888] mt-[2px] break-words">{item.type}</div>

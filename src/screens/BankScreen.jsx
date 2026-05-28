@@ -3,6 +3,7 @@ import { useGame } from '../state/gameState.jsx'
 import Modal from '../components/Modal.jsx'
 import SharedItemModal from '../components/SharedItemModal.jsx'
 import { formatQuantity } from '../utils/helpers'
+import GameIcon from '../components/GameIcon.jsx'
 
 const MAX_TABS = 8
 const DEFAULT_NAMES = ['Combat', 'Skilling', 'Resources', 'Food', 'Gems', 'Runes', 'Misc', 'Extra']
@@ -432,7 +433,6 @@ export default function BankScreen() {
             {displayItems.map(entry => {
               const item = itemsData[entry.itemId]
               if (!item) return null
-              const emoji = item.icon || '📦'
               const isDragging = draggingId === entry.itemId
               const isOver = overItemId === entry.itemId
               const isInactivePlaceholder = !!entry.inactivePlaceholder
@@ -456,7 +456,7 @@ export default function BankScreen() {
                             : 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
                     }`}
                   >
-                    <span class="text-lg">{emoji}</span>
+                    <GameIcon item={item} size={22} />
                     <span class="text-[8px] text-[var(--color-parchment)] opacity-60 truncate w-full text-center">{item.name}</span>
                     <span class={`text-[9px] font-[var(--font-mono)] font-bold ${isInactivePlaceholder ? 'text-[#8a8a8a]' : (isM ? 'text-[var(--color-emerald)]' : 'text-[var(--color-gold)]')}`}>{isInactivePlaceholder ? '\u00A0' : `×${text}`}</span>
                   </button>
