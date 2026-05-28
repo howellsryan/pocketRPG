@@ -109,7 +109,7 @@ export function getItemIconKey(item) {
         return 'magic_robe'
       }
       if ((ab.ranged || 0) > 0 && (ab.ranged || 0) > meleeBest) {
-        return 'ninja'
+        return item.slot === 'head' ? 'ninja' : 'ninja_body'
       }
     }
   }

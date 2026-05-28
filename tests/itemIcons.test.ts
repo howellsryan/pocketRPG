@@ -148,8 +148,8 @@ describe('itemIcons', () => {
   })
 
   it('dragonhide armour resolves by ranged bonus, raw hide by material', () => {
-    // d-hide chaps have ranged attackBonus → ninja icon
-    expect(getItemIconKey(itemsData.green_d_hide_chaps)).toBe('ninja')
+    // d-hide chaps are legs with ranged attackBonus → full ninja figure
+    expect(getItemIconKey(itemsData.green_d_hide_chaps)).toBe('ninja_body')
     // boots slot is not subject to magic/ranged override
     expect(getItemIconKey(itemsData.lumira_d_hide_boots)).toBe('boots')
     // raw materials use id pattern
@@ -171,10 +171,11 @@ describe('itemIcons', () => {
     expect(getItemIconKey(itemsData.kodai_robe_top)).toBe('magic_robe')
   })
 
-  it('ranged armour (positive ranged attackBonus > melee) resolves to ninja', () => {
+  it('ranged head armour resolves to ninja (mask), body/legs to ninja_body', () => {
     expect(getItemIconKey(itemsData.leather_cowl)).toBe('ninja')
-    expect(getItemIconKey(itemsData.leather_body)).toBe('ninja')
     expect(getItemIconKey(itemsData.zephyra_helmet)).toBe('ninja')
+    expect(getItemIconKey(itemsData.leather_body)).toBe('ninja_body')
+    expect(getItemIconKey(itemsData.leather_chaps)).toBe('ninja_body')
   })
 
   it('halo resolves to angel_outfit glyph', () => {
