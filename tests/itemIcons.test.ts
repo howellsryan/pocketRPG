@@ -69,9 +69,9 @@ describe('itemIcons', () => {
     expect(getItemIconKey(dagger)).toBe('dagger')
   })
 
-  it('slash weapons resolve to the sword glyph', () => {
+  it('slash weapons (scimitars) resolve to the sword_spin glyph', () => {
     const scimitar = itemsData.bronze_scimitar
-    expect(getItemIconKey(scimitar)).toBe('sword')
+    expect(getItemIconKey(scimitar)).toBe('sword_spin')
   })
 
   it('crush weapons resolve to the mace glyph', () => {
@@ -89,9 +89,9 @@ describe('itemIcons', () => {
     expect(getItemIconKey(staff)).toBe('staff')
   })
 
-  it('head slot armour resolves to helmet glyph', () => {
+  it('head slot armour resolves to crested_helmet glyph', () => {
     const helm = itemsData.bronze_full_helm
-    expect(getItemIconKey(helm)).toBe('helmet')
+    expect(getItemIconKey(helm)).toBe('crested_helmet')
   })
 
   it('body slot armour resolves to body glyph', () => {
@@ -147,10 +147,61 @@ describe('itemIcons', () => {
     expect(getItemIconKey(itemsData.leather_gloves)).toBe('gloves')
   })
 
-  it('dragonhide armour resolves by slot, raw hide by material', () => {
-    expect(getItemIconKey(itemsData.green_d_hide_chaps)).toBe('legs')
+  it('dragonhide armour resolves by ranged bonus, raw hide by material', () => {
+    // d-hide chaps have ranged attackBonus → ninja icon
+    expect(getItemIconKey(itemsData.green_d_hide_chaps)).toBe('ninja')
+    // boots slot is not subject to magic/ranged override
     expect(getItemIconKey(itemsData.lumira_d_hide_boots)).toBe('boots')
+    // raw materials use id pattern
     expect(getItemIconKey(itemsData.cowhide)).toBe('animal_hide')
     expect(getItemIconKey(itemsData.green_dragon_leather)).toBe('animal_hide')
+  })
+
+  it('sanguine_staff resolves to wand glyph', () => {
+    expect(getItemIconKey(itemsData.sanguine_staff)).toBe('wand')
+  })
+
+  it("durn_s_bulwark resolves to shield glyph despite crush attackStyle", () => {
+    expect(getItemIconKey(itemsData.durn_s_bulwark)).toBe('shield')
+  })
+
+  it('magic armour (positive magic attackBonus highest) resolves to magic_robe', () => {
+    expect(getItemIconKey(itemsData.wizard_hat)).toBe('magic_robe')
+    expect(getItemIconKey(itemsData.wizard_robe_top)).toBe('magic_robe')
+    expect(getItemIconKey(itemsData.kodai_robe_top)).toBe('magic_robe')
+  })
+
+  it('ranged armour (positive ranged attackBonus > melee) resolves to ninja', () => {
+    expect(getItemIconKey(itemsData.leather_cowl)).toBe('ninja')
+    expect(getItemIconKey(itemsData.leather_body)).toBe('ninja')
+    expect(getItemIconKey(itemsData.zephyra_helmet)).toBe('ninja')
+  })
+
+  it('halo resolves to angel_outfit glyph', () => {
+    expect(getItemIconKey(itemsData.halo)).toBe('angel_outfit')
+  })
+
+  it('Ava items resolve to quiver glyph', () => {
+    expect(getItemIconKey(itemsData.ava_s_accumulator)).toBe('quiver')
+    expect(getItemIconKey(itemsData.ava_s_assembler)).toBe('quiver')
+  })
+
+  it('party hats resolve to party_hat glyph', () => {
+    expect(getItemIconKey(itemsData.red_partyhat)).toBe('party_hat')
+    expect(getItemIconKey(itemsData.blue_partyhat)).toBe('party_hat')
+  })
+
+  it('mauls resolve to maul glyph (3d-hammer)', () => {
+    expect(getItemIconKey(itemsData.ancient_maul)).toBe('maul')
+    expect(getItemIconKey(itemsData.gargoyle_maul)).toBe('maul')
+  })
+
+  it('warhammers resolve to warhammer glyph', () => {
+    expect(getItemIconKey(itemsData.dragon_warhammer)).toBe('warhammer')
+  })
+
+  it('scimitars resolve to sword_spin glyph', () => {
+    expect(getItemIconKey(itemsData.dragon_scimitar)).toBe('sword_spin')
+    expect(getItemIconKey(itemsData.mithril_scimitar)).toBe('sword_spin')
   })
 })

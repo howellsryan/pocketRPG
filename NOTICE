@@ -37,11 +37,14 @@ Icons used (our key → game-icons name):
   thread               → sewing-string
   default              → wooden-crate
   sword                → ancient-sword
+  sword_spin           → sword-spin
   dagger               → plain-dagger
   axe                  → battle-axe
   hatchet              → hatchet
   pickaxe              → war-pick
   mace                 → flanged-mace
+  maul                 → 3d-hammer
+  warhammer            → warhammer
   spear                → spear-hook
   halberd              → halberd
   crossbow             → crossbow
@@ -55,7 +58,10 @@ Icons used (our key → game-icons name):
   fishing_pole         → fishing-pole
   fishing_net          → fishing-net
   spade                → spade
-  helmet               → helmet
+  quiver               → quiver
+  crested_helmet       → crested-helmet
+  magic_robe           → robe
+  ninja                → ninja-mask
   body                 → breastplate
   legs                 → armored-pants
   boots                → boots
@@ -67,5 +73,7 @@ Icons used (our key → game-icons name):
   dragon_shield        → dragon-shield
   arrow                → arrow-cluster
   prayer               → prayer
+  party_hat            → party-hat
+  angel_outfit         → angel-outfit
 
 Generated: 2026-05-28

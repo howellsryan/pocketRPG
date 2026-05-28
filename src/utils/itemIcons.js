@@ -3,7 +3,7 @@ import gameIconsData from '../data/gameIcons.json'
 // ─── Fallback tables ──────────────────────────────────────────────────────────
 
 const SLOT_KEY = {
-  head: 'helmet', body: 'body', legs: 'legs', boots: 'boots',
+  head: 'crested_helmet', body: 'body', legs: 'legs', boots: 'boots',
   gloves: 'gloves', cape: 'cape', neck: 'amulet', ring: 'ring',
   shield: 'shield', ammo: 'arrow', weapon: 'sword'
 }
@@ -39,6 +39,11 @@ function keyFromId(id) {
   if (id === 'scythe_of_vythar') return 'scythe'
   if (id === 'abyssal_tentacle' || id === 'nether_demon_whip') return 'whip'
   if (id === 'anti_dragon_shield' || id === 'dragon_kiteshield') return 'dragon_shield'
+  if (id === 'durn_s_bulwark') return 'shield'
+  if (id === 'sanguine_staff') return 'wand'
+  if (id === 'halo') return 'angel_outfit'
+  if (id === 'ava_s_accumulator' || id === 'ava_s_assembler') return 'quiver'
+  if (id.endsWith('_partyhat') || id === 'partyhat') return 'party_hat'
   if (id.includes('charm') || id.includes('blessing')) return 'prayer'
   if (id.includes('skirt')) return 'legs'
   if (id.includes('_ore') || id === 'ore') return 'ore'
@@ -61,9 +66,10 @@ function keyFromId(id) {
   if (id.includes('_spear') || id.includes('_lance')) return 'spear'
   if (id.includes('_halberd')) return 'halberd'
   if (id.includes('_rapier')) return 'rapier'
-  if (id.includes('_maul') || id.includes('_warhammer') || id.includes('_hammers') || id.includes('_flail')) return 'mace'
+  if (id.includes('_warhammer')) return 'warhammer'
+  if (id.includes('_maul') || id.includes('_hammers') || id.includes('_flail')) return 'maul'
   if (id.includes('_dagger')) return 'dagger'
-  if (id.includes('_scimitar')) return 'sword'
+  if (id.includes('_scimitar')) return 'sword_spin'
   if (id.includes('_sword') || id.includes('_longsword') || id.includes('_godsword')) return 'sword'
   if (id.includes('_mace')) return 'mace'
   if (id.includes('_bow')) return 'bow'
@@ -94,7 +100,19 @@ export function getItemIconKey(item) {
     return 'sword'
   }
 
-  // 4. Armour/equipment slot fallback
+  // 4. Armour/equipment slot fallback — magic/ranged overrides for head/body/legs
+  if (item.slot && (item.slot === 'head' || item.slot === 'body' || item.slot === 'legs')) {
+    const ab = item.attackBonus
+    if (ab) {
+      const meleeBest = Math.max(ab.stab || 0, ab.slash || 0, ab.crush || 0)
+      if ((ab.magic || 0) > 0 && (ab.magic || 0) > meleeBest && (ab.magic || 0) >= (ab.ranged || 0)) {
+        return 'magic_robe'
+      }
+      if ((ab.ranged || 0) > 0 && (ab.ranged || 0) > meleeBest) {
+        return 'ninja'
+      }
+    }
+  }
   if (item.slot) {
     const bySlot = SLOT_KEY[item.slot]
     if (bySlot && gameIconsData[bySlot]) return bySlot
