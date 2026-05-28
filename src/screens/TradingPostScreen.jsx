@@ -371,7 +371,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
       : null
     return (
       <div key={item.id} class="p-3 rounded-lg bg-[var(--color-void-light)] border border-[#2a2a2a] flex items-center gap-3">
-        <span class="text-2xl leading-none shrink-0">{item.icon || '📦'}</span>
+        <GameIcon item={item} size={24} class="shrink-0" />
         <div class="flex-1 min-w-0">
           <div class="text-[13px] font-semibold text-[var(--color-parchment)]">{item.name}</div>
           <div class="text-[10px] text-[#888] mt-1">
@@ -428,7 +428,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
       return (
         <Panel key={key} className={`text-[12px] border ${accentBorder}`}>
           <div class="flex items-center gap-3">
-            <span class="text-2xl">{item?.icon || '📦'}</span>
+            <GameIcon item={item} size={24} class="shrink-0" />
             <div class="flex-1 min-w-0">
               <div class="text-[13px] font-semibold text-[var(--color-parchment)]">
                 {offer.offer_type === 'buy' ? 'Buy' : 'Sell'} {item?.name || offer.item_id}
