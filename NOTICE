@@ -62,7 +62,7 @@ Icons used (our key → game-icons name):
   crested_helmet       → crested-helmet
   magic_robe           → robe
   ninja                → ninja-mask
-  ninja_body           → ninja-heroic-stance
+  ninja_body           → ninja-armor
   body                 → breastplate
   legs                 → armored-pants
   boots                → boots
@@ -76,5 +76,24 @@ Icons used (our key → game-icons name):
   prayer               → prayer
   party_hat            → party-hat
   angel_outfit         → angel-outfit
+  search               → magnifying-glass
+  offers               → swap-bag
+  crossed_swords       → crossed-swords
+  temple               → greek-temple
+  castle               → castle
+  boat                 → fishing-boat
+  magic_swirl          → magic-swirl
+  bucket               → full-wood-bucket
+  seaweed              → algae
+  flame                → flame
+  eye                  → eyeball
+  berries              → berry-bush
+  grass                → high-grass
+  eggs                 → egg-clutch
+  cactus               → cactus
+  nest                 → nest-birds
+  wine                 → wine-glass
+  planks               → planks
+  list                 → checklist
 
 Generated: 2026-05-28

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import items from '../src/data/items.json'
 import gameIcons from '../src/data/gameIcons.json'
+import minigames from '../src/data/minigames.json'
 import { getItemIconKey } from '../src/utils/itemIcons.js'
 
 const itemsData = items as Record<string, any>
@@ -204,5 +205,17 @@ describe('itemIcons', () => {
   it('scimitars resolve to sword_spin glyph', () => {
     expect(getItemIconKey(itemsData.dragon_scimitar)).toBe('sword_spin')
     expect(getItemIconKey(itemsData.mithril_scimitar)).toBe('sword_spin')
+  })
+
+  it('every minigame iconKey resolves to a present glyph', () => {
+    const mg = minigames as { tasks: any[]; minigames: any[] }
+    const bad: string[] = []
+    for (const t of mg.tasks) {
+      if (t.iconKey && !gameIconsData[t.iconKey]) bad.push(`task ${t.id} → "${t.iconKey}"`)
+    }
+    for (const m of mg.minigames) {
+      if (m.iconKey && !gameIconsData[m.iconKey]) bad.push(`minigame ${m.id} → "${m.iconKey}"`)
+    }
+    expect(bad).toEqual([])
   })
 })
