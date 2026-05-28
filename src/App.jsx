@@ -1235,7 +1235,15 @@ function GameApp() {
   function applyBackgroundActionResult(task, result) {
     if (result.xpGained) {
       for (const [skill, xp] of Object.entries(result.xpGained)) {
-        if (skill !== 'combat' && skill !== 'any' && xp > 0) grantXP(skill, xp)
+        if (skill !== 'combat' && skill !== 'any' && xp > 0) {
+          grantXP(skill, xp)
+          // XP-drop overlay reflects BACKGROUND progress only. On the activity's
+          // own screen the screen shows its own XP feedback, so we don't emit
+          // here when a screen is actively driving (it never reaches this path).
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('pocketrpg:xp-gain', { detail: { skill, amount: xp } }))
+          }
+        }
       }
     }
     if ((task.type === 'skill' || task.type === 'gather') && result.finalInventory) {

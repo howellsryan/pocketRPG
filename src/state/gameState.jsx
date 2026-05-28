@@ -517,11 +517,6 @@ export function GameProvider({ children }) {
   // ── Mutations ──
 
   const grantXP = useCallback((skill, amount) => {
-    const gained = Math.floor(amount)
-    if (gained > 0 && typeof window !== 'undefined') {
-      // Lightweight signal for the on-screen XP-drop overlay (non-toast).
-      window.dispatchEvent(new CustomEvent('pocketrpg:xp-gain', { detail: { skill, amount: gained } }))
-    }
     setStats(prev => {
       const cur = prev[skill] || { skill, xp: 0, level: 1 }
       const newXP = clampXP(cur.xp + Math.floor(amount))
