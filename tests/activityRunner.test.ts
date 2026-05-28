@@ -2,11 +2,20 @@ import { describe, expect, it } from 'vitest'
 import {
   isRunnableBackgroundTask,
   getActionTicksForTask,
-  runOneAction,
+  simulateTaskWindow,
   resultActions,
 } from '../src/engine/activityRunner.js'
 
 const inv28 = () => Array(28).fill(null)
+// Construction XP comfortably past level 80 (the gather auto-bank unlock).
+const AUTOBANK_STATS = { construction: { xp: 5_000_000 } }
+
+// Replays the runner's per-action path: accumulate one action's worth of ticks,
+// then simulate over that window.
+function runOneAction(task: any, ctx: any) {
+  const ticks = getActionTicksForTask(task, ctx)
+  return simulateTaskWindow(task, ticks * 600, ctx)
+}
 
 describe('isRunnableBackgroundTask', () => {
   it('accepts skill/gather/agility/thieving/hunter tasks', () => {
@@ -35,7 +44,7 @@ describe('getActionTicksForTask', () => {
   })
 })
 
-describe('runOneAction', () => {
+describe('simulateTaskWindow (one action)', () => {
   it('completes exactly one mining action into the inventory', () => {
     const task = { type: 'skill', skill: 'mining', action: { id: 'iron', name: 'Iron', ticks: 3, xp: 35, product: 'iron_ore' } }
     const result = runOneAction(task as any, {
@@ -60,14 +69,40 @@ describe('runOneAction', () => {
     expect(resultActions(result)).toBe(1)
     expect(result?.xpGained?.agility).toBe(40)
   })
+})
 
-  it('returns a stop signal when a gathering action cannot fit in a full inventory', () => {
-    const fullInv = Array(28).fill({ itemId: 'junk', quantity: 1 })
-    const task = { type: 'gather', gatherTask: { id: 'gather_bowstring', ticks: 1, product: 'bowstring', qty: 1 } }
-    const result = runOneAction(task as any, {
-      inventory: fullInv, bank: {}, stats: {}, itemsData: { bowstring: { stackable: false } },
+describe('full inventory handling', () => {
+  const fullInv = () => Array(28).fill({ itemId: 'junk', quantity: 1 })
+  const gatherTask = { type: 'gather', gatherTask: { id: 'gather_bowstring', ticks: 3, product: 'bowstring', qty: 1 } }
+  const itemsData = { bowstring: { stackable: false }, junk: { stackable: false } }
+
+  it('stops with inventory_full when auto-bank is NOT unlocked', () => {
+    const result = simulateTaskWindow(gatherTask as any, 3 * 600, {
+      inventory: fullInv(), bank: {}, stats: {}, itemsData,
     })
     expect(resultActions(result)).toBe(0)
     expect(result?.stoppedReason).toBe('inventory_full')
+  })
+
+  it('banks and keeps gathering (no stop) when auto-bank IS unlocked, given enough time', () => {
+    // Bank trip is agility-scaled; with agility 1 it needs ~5 minutes, so give a
+    // generous window — the runner reaches this by accumulating pending ticks.
+    const result = simulateTaskWindow(gatherTask as any, 600_000, {
+      inventory: fullInv(), bank: {}, stats: AUTOBANK_STATS, itemsData,
+    })
+    expect(result).not.toBeNull()
+    expect(result?.stoppedReason).toBeUndefined()
+    expect(resultActions(result)).toBeGreaterThan(0)
+    expect(Object.keys(result?.itemsBanked || {}).length).toBeGreaterThan(0)
+  })
+
+  it('does not complete an action (but does not stop) before the bank trip has had enough time', () => {
+    // One action's worth of time is far less than the agility-1 bank delay.
+    const result = simulateTaskWindow(gatherTask as any, 3 * 600, {
+      inventory: fullInv(), bank: {}, stats: AUTOBANK_STATS, itemsData,
+    })
+    expect(result).not.toBeNull()
+    expect(resultActions(result)).toBe(0)
+    expect(result?.stoppedReason).toBeUndefined()
   })
 })

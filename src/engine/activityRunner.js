@@ -74,22 +74,27 @@ export function resultActions(result) {
 }
 
 /**
- * Run exactly one action of the task and return its sim result, or null when the
- * action could not complete (e.g. out of materials / inventory full / no input).
+ * Simulate the task over an arbitrary elapsed window and return the sim result.
+ * The App-level runner accumulates real ticks and replays them here so that
+ * variable-cost steps (agility-scaled auto-bank trips) get enough time to
+ * complete, instead of being starved by a fixed one-action window.
+ *
+ * Only call this once the accumulated window covers at least one action's ticks
+ * (see getActionTicksForTask); below that the skilling/gather sims return null,
+ * which is indistinguishable from running out of materials.
  */
-export function runOneAction(task, ctx = {}) {
-  const elapsed = getActionTicksForTask(task, ctx) * TICK_DURATION
+export function simulateTaskWindow(task, elapsedMs, ctx = {}) {
   switch (task.type) {
     case 'skill':
-      return simulateIdleSkilling(task, elapsed, ctx.bank, ctx.equipment, ctx.stats, ctx.itemsData, ctx.inventory)
+      return simulateIdleSkilling(task, elapsedMs, ctx.bank, ctx.equipment, ctx.stats, ctx.itemsData, ctx.inventory)
     case 'gather':
-      return simulateIdleGather(task, elapsed, ctx.inventory, ctx.stats, ctx.itemsData, ctx.bank)
+      return simulateIdleGather(task, elapsedMs, ctx.inventory, ctx.stats, ctx.itemsData, ctx.bank)
     case 'agility':
-      return simulateIdleAgility(task, elapsed)
+      return simulateIdleAgility(task, elapsedMs)
     case 'thieving':
-      return simulateIdleThieving(task, elapsed)
+      return simulateIdleThieving(task, elapsedMs)
     case 'hunter':
-      return simulateIdleHunting(task, elapsed)
+      return simulateIdleHunting(task, elapsedMs)
     default:
       return null
   }

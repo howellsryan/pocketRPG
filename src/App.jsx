@@ -34,7 +34,7 @@ import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, r
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { isBackground } from './engine/activityRegistry.js'
-import { isRunnableBackgroundTask, getActionTicksForTask, runOneAction, resultActions, isScreenRecentlyDriving } from './engine/activityRunner.js'
+import { isRunnableBackgroundTask, getActionTicksForTask, simulateTaskWindow, resultActions, isScreenRecentlyDriving } from './engine/activityRunner.js'
 import { resetActivityProgressSync } from './cloud/activityProgress.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
 import { triggerOneLifeDeath } from './utils/oneLifeDeath.js'
@@ -1259,21 +1259,20 @@ function GameApp() {
     if (result.dungeoneeringTokensGained > 0) awardDungeoneeringTokens(result.dungeoneeringTokensGained)
   }
 
-  // A background action that couldn't complete (out of materials / inventory
-  // full / missing input) clears the task and tells the player why.
-  function applyBackgroundStop(task, result) {
+  // A background task that can no longer make progress (out of materials /
+  // missing input, or inventory full with no auto-bank unlock) is cleared with
+  // a reason. A full inventory while auto-bank IS unlocked is NOT a stop — the
+  // runner keeps banking, so the sim never reports 'inventory_full' in that case.
+  function applyBackgroundStop(task, reason) {
     setActiveTask(null)
     activeTaskRef.current = null
     try { localStorage.removeItem('pocketrpg_activeTask') } catch { /* non-fatal */ }
-    const reason = result?.stoppedReason
     if (reason === 'inventory_full') {
       addToast('Inventory full — gathering stopped.', 'error')
-    } else if (reason === 'out_of_materials' || task.action?.materials || task.action?.runeReq || task.gatherTask?.materials) {
-      addToast('Out of materials!', 'error')
-    } else if (task.gatherTask?.requiresItem) {
+    } else if (reason === 'missing_input') {
       addToast('Out of supplies for gathering.', 'error')
     } else {
-      addToast('Activity stopped.', 'info')
+      addToast('Out of materials!', 'error')
     }
   }
 
@@ -1282,6 +1281,10 @@ function GameApp() {
   // live, not only while the activity's own screen is open. Gated to the visible
   // tab so it never double-counts with the idle catch-up on hide/return, and it
   // yields to a mounted activity screen that is already driving the same task.
+  //
+  // Ticks are accumulated (`pendingTicks`) and replayed through the idle sim so
+  // variable-cost steps — notably the agility-scaled auto-bank trip on a full
+  // inventory — get enough time to complete rather than being starved.
   useEffect(() => {
     if (!gameReady) return
     const unsub = onTick(() => {
@@ -1299,25 +1302,41 @@ function GameApp() {
         itemsData: itemsDataRef.current,
       }
       const totalTicks = getActionTicksForTask(task, ctx)
-      const prevRemaining = Number.isFinite(Number(task.ticksRemaining)) ? Number(task.ticksRemaining) : totalTicks
-      const remaining = prevRemaining - 1
+      const pending = (Number(task.pendingTicks) || 0) + 1
 
-      if (remaining > 0) {
-        const next = { ...task, ticksRemaining: remaining, totalTicks }
+      const commit = (pendingTicks) => {
+        const next = { ...task, pendingTicks, totalTicks, ticksRemaining: Math.max(0, totalTicks - pendingTicks) }
         activeTaskRef.current = next
         setActiveTask(next)
+      }
+
+      // Below one action's worth of time the skilling/gather sims return null
+      // (indistinguishable from "out of materials"), so just keep accumulating.
+      if (pending < totalTicks) {
+        commit(pending)
         return
       }
 
-      const result = runOneAction(task, ctx)
-      if (!result || resultActions(result) <= 0) {
-        applyBackgroundStop(task, result)
+      const result = simulateTaskWindow(task, pending * 600, ctx)
+      const actions = resultActions(result)
+      if (result && actions > 0) applyBackgroundActionResult(task, result)
+
+      if (!result) {
+        applyBackgroundStop(task, task.gatherTask?.requiresItem ? 'missing_input' : 'out_of_materials')
         return
       }
-      applyBackgroundActionResult(task, result)
-      const next = { ...task, ticksRemaining: totalTicks, totalTicks }
-      activeTaskRef.current = next
-      setActiveTask(next)
+      if (result.stoppedReason === 'inventory_full') {
+        applyBackgroundStop(task, 'inventory_full')
+        return
+      }
+      if (result.stoppedReason === 'out_of_materials') {
+        applyBackgroundStop(task, 'out_of_materials')
+        return
+      }
+
+      // actions > 0 → reset and refill toward the next action; actions === 0
+      // means a bank trip is still pending, so keep the accumulated ticks.
+      commit(actions > 0 ? 0 : pending)
     })
     return unsub
   }, [gameReady])
