@@ -1,8 +1,9 @@
 import { useGame } from '../state/gameState.jsx'
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { CLOUD_SAVE_STATUS_EVENT } from '../cloud/sync.js'
+import ActivityIndicator from './ActivityIndicator.jsx'
 
-export default function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null, onBuyCredits = null, onMenuClick = null }) {
+export default function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null, onBuyCredits = null, onMenuClick = null, onNavigate = null }) {
   const { player, currentHP, getMaxHP } = useGame()
   const [cloudStatus, setCloudStatus] = useState('idle')
   const [showSavedToCloud, setShowSavedToCloud] = useState(false)
@@ -104,6 +105,9 @@ export default function Header({ activity, credits = 0, isCloudAccount = false, 
             </div>
           )}
         </div>
+
+        {/* Background activity indicator */}
+        <ActivityIndicator onNavigate={onNavigate} />
 
         {/* HP bar */}
         <div class="flex items-center gap-1.5">

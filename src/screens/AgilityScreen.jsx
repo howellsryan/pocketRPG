@@ -4,6 +4,7 @@ import ProgressBar from '../components/ProgressBar.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createAgilityState, processAgilityTick, getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick } from '../engine/tick.js'
+import { markScreenTick } from '../engine/activityRunner.js'
 import { formatNumber } from '../utils/helpers.js'
 import skillsData from '../data/skills.json'
 
@@ -61,10 +62,12 @@ export default function AgilityScreen({ initialActionId, idleResult, onBack }) {
   useEffect(() => {
     if (!agility || !agility.active) return
     agilityRef.current = agility
+    markScreenTick() // claim the task before the App-level runner's next tick
 
     const unsub = onTick(() => {
       const state = agilityRef.current
       if (!state || !state.active) return
+      markScreenTick()
 
       const { agilityState, events } = processAgilityTick(state)
       agilityRef.current = agilityState

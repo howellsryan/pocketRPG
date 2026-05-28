@@ -7,6 +7,7 @@ import { getActionProgress } from '../hooks/useActionTick.js'
 import { countItem, addItem } from '../engine/inventory.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { onTick } from '../engine/tick.js'
+import { markScreenTick } from '../engine/activityRunner.js'
 import { GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
 import minigamesData from '../data/minigames.json'
 
@@ -250,10 +251,12 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
     if (!activeTask) return
     if (activeTask.gatherTask?.oneShot) return
     taskRef.current = activeTask
+    markScreenTick() // claim the task before the App-level runner's next tick
 
     const unsub = onTick(() => {
       const state = taskRef.current
       if (!state || state.stopped) return
+      markScreenTick()
 
       // Handle reset from previous completion tick
       let ticksRemaining = state.ticksRemaining

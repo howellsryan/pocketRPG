@@ -6,6 +6,7 @@ import { getActionProgress } from '../hooks/useActionTick.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createHunterState, processHunterTick } from '../engine/hunter.js'
 import { onTick } from '../engine/tick.js'
+import { markScreenTick } from '../engine/activityRunner.js'
 import { formatNumber } from '../utils/helpers.js'
 import skillsData from '../data/skills.json'
 import itemsData from '../data/items.json'
@@ -60,10 +61,12 @@ export default function HunterScreen({ initialActionId, idleResult, onBack }) {
   useEffect(() => {
     if (!hunter || !hunter.active) return
     hunterRef.current = hunter
+    markScreenTick() // claim the task before the App-level runner's next tick
 
     const unsub = onTick(() => {
       const state = hunterRef.current
       if (!state || !state.active) return
+      markScreenTick()
 
       const { hunterState, events } = processHunterTick(state)
       hunterRef.current = hunterState

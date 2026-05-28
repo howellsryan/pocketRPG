@@ -9,6 +9,7 @@ import { createSkillingState, processSkillingTick, getAvailableActions, checkBur
 import { addItem, removeItem, countItem, canFit } from '../engine/inventory.js'
 import { hasRequiredRunes, getRunesToConsume } from '../engine/runes.js'
 import { onTick } from '../engine/tick.js'
+import { markScreenTick } from '../engine/activityRunner.js'
 import { formatNumber } from '../utils/helpers.js'
 import { calculateDungeoneeringTokensForAction, getDungeoneeringRewardCost, canAffordDungeoneeringReward } from '../engine/dungeoneeringTokens.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
@@ -136,10 +137,12 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   useEffect(() => {
     if (!skilling || !skilling.active) return
     skillingRef.current = skilling
+    markScreenTick() // claim the task before the App-level runner's next tick
 
     const unsub = onTick(() => {
       const state = skillingRef.current
       if (!state || !state.active || state.stopped) return
+      markScreenTick()
 
       const { skillingState, events } = processSkillingTick(state)
       skillingRef.current = skillingState

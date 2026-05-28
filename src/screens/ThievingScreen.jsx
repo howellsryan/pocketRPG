@@ -5,6 +5,7 @@ import { getActionProgress } from '../hooks/useActionTick.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createThievingState, processThievingTick } from '../engine/thieving.js'
 import { onTick } from '../engine/tick.js'
+import { markScreenTick } from '../engine/activityRunner.js'
 import { formatNumber } from '../utils/helpers.js'
 import skillsData from '../data/skills.json'
 
@@ -62,10 +63,12 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
   useEffect(() => {
     if (!thieving || !thieving.active) return
     thievingRef.current = thieving
+    markScreenTick() // claim the task before the App-level runner's next tick
 
     const unsub = onTick(() => {
       const state = thievingRef.current
       if (!state || !state.active) return
+      markScreenTick()
 
       const { thievingState, events } = processThievingTick(state)
       thievingRef.current = thievingState

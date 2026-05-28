@@ -5,6 +5,7 @@ import BurgerMenu from './components/BurgerMenu.jsx'
 import SideNav from './components/SideNav.jsx'
 import Header from './components/Header.jsx'
 import ToastContainer from './components/Toast.jsx'
+import XpDropOverlay from './components/XpDropOverlay.jsx'
 import BuyCreditsModal from './components/BuyCreditsModal.jsx'
 import HomeScreen from './screens/HomeScreen.jsx'
 import StatsScreen from './screens/StatsScreen.jsx'
@@ -33,6 +34,7 @@ import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, r
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { isBackground } from './engine/activityRegistry.js'
+import { isRunnableBackgroundTask, getActionTicksForTask, runOneAction, resultActions, isScreenRecentlyDriving } from './engine/activityRunner.js'
 import { resetActivityProgressSync } from './cloud/activityProgress.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
 import { triggerOneLifeDeath } from './utils/oneLifeDeath.js'
@@ -497,9 +499,11 @@ function GameApp() {
   const equipmentRef = useRef(equipment)
   const inventoryRef = useRef(inventory)
   const itemsDataRef = useRef(itemsData)
+  const bankRef = useRef(bank)
   const questQueueRef = useRef(questQueue)
   const idleCombatSetupRef = useRef(idleCombatSetup)
   const currentHPRef = useRef(currentHP)
+  useEffect(() => { bankRef.current = bank }, [bank])
   useEffect(() => { idleCombatSetupRef.current = idleCombatSetup }, [idleCombatSetup])
   useEffect(() => { currentHPRef.current = currentHP }, [currentHP])
   useEffect(() => { completedQuestsRef.current = completedQuests }, [completedQuests])
@@ -1227,6 +1231,97 @@ function GameApp() {
 
   const isSkippingRef = useRef(false)
 
+  // Apply one completed action's rewards from a background-runner sim result.
+  function applyBackgroundActionResult(task, result) {
+    if (result.xpGained) {
+      for (const [skill, xp] of Object.entries(result.xpGained)) {
+        if (skill !== 'combat' && skill !== 'any' && xp > 0) grantXP(skill, xp)
+      }
+    }
+    if ((task.type === 'skill' || task.type === 'gather') && result.finalInventory) {
+      updateInventory(result.finalInventory)
+      const banked = result.itemsBanked || {}
+      if (Object.keys(banked).length > 0) updateBankDirect(banked)
+      if (result.itemsConsumed && Object.keys(result.itemsConsumed).length > 0) {
+        const negated = {}
+        for (const [itemId, qty] of Object.entries(result.itemsConsumed)) negated[itemId] = -qty
+        updateBankDirect(negated)
+      }
+    }
+    // Coin rewards: alchemy (skill), agility and thieving.
+    if (result.coinsGained > 0) updateBankDirect({ coins: result.coinsGained })
+    // Hunter loot goes straight to the bank.
+    if (task.type === 'hunter' && Array.isArray(result.rewards) && result.rewards.length > 0) {
+      const banked = {}
+      for (const r of result.rewards) banked[r.itemId] = (banked[r.itemId] || 0) + r.quantity
+      updateBankDirect(banked)
+    }
+    if (result.dungeoneeringTokensGained > 0) awardDungeoneeringTokens(result.dungeoneeringTokensGained)
+  }
+
+  // A background action that couldn't complete (out of materials / inventory
+  // full / missing input) clears the task and tells the player why.
+  function applyBackgroundStop(task, result) {
+    setActiveTask(null)
+    activeTaskRef.current = null
+    try { localStorage.removeItem('pocketrpg_activeTask') } catch { /* non-fatal */ }
+    const reason = result?.stoppedReason
+    if (reason === 'inventory_full') {
+      addToast('Inventory full — gathering stopped.', 'error')
+    } else if (reason === 'out_of_materials' || task.action?.materials || task.action?.runeReq || task.gatherTask?.materials) {
+      addToast('Out of materials!', 'error')
+    } else if (task.gatherTask?.requiresItem) {
+      addToast('Out of supplies for gathering.', 'error')
+    } else {
+      addToast('Activity stopped.', 'info')
+    }
+  }
+
+  // App-level background activity runner: progresses the active skill / gather /
+  // agility / thieving / hunter task on ANY in-app screen so XP and items apply
+  // live, not only while the activity's own screen is open. Gated to the visible
+  // tab so it never double-counts with the idle catch-up on hide/return, and it
+  // yields to a mounted activity screen that is already driving the same task.
+  useEffect(() => {
+    if (!gameReady) return
+    const unsub = onTick(() => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+      if (isSkippingRef.current) return
+      if (isScreenRecentlyDriving()) return
+      const task = activeTaskRef.current
+      if (!isRunnableBackgroundTask(task)) return
+
+      const ctx = {
+        inventory: inventoryRef.current,
+        bank: bankRef.current,
+        stats: statsRef.current,
+        equipment: equipmentRef.current,
+        itemsData: itemsDataRef.current,
+      }
+      const totalTicks = getActionTicksForTask(task, ctx)
+      const prevRemaining = Number.isFinite(Number(task.ticksRemaining)) ? Number(task.ticksRemaining) : totalTicks
+      const remaining = prevRemaining - 1
+
+      if (remaining > 0) {
+        const next = { ...task, ticksRemaining: remaining, totalTicks }
+        activeTaskRef.current = next
+        setActiveTask(next)
+        return
+      }
+
+      const result = runOneAction(task, ctx)
+      if (!result || resultActions(result) <= 0) {
+        applyBackgroundStop(task, result)
+        return
+      }
+      applyBackgroundActionResult(task, result)
+      const next = { ...task, ticksRemaining: totalTicks, totalTicks }
+      activeTaskRef.current = next
+      setActiveTask(next)
+    })
+    return unsub
+  }, [gameReady])
+
   // Wait for React to commit and run the stateRef-syncing effects in
   // gameState before snapshotting. grantXP / updateBankDirect etc. are
   // setState calls, and getSnapshot() reads stateRef.current, which is
@@ -1768,12 +1863,13 @@ function GameApp() {
         onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')}
       />
       <div class="flex-1 flex flex-col min-w-0 min-h-0">
-        <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onMenuClick={() => setMenuOpen(true)} />
+        <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onMenuClick={() => setMenuOpen(true)} onNavigate={(s) => navigate(s)} />
         <ToastContainer />
         <main class="flex-1 overflow-hidden">
           {renderScreen()}
         </main>
       </div>
+      <XpDropOverlay />
       <BurgerMenu
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
