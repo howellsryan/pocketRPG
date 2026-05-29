@@ -438,6 +438,25 @@ function GameApp() {
     initCloudAndSave()
   }, [])
 
+  // Boot watchdog: if the boot sequence can't reach a usable state within 5s,
+  // surface the existing error screen instead of leaving the user stranded on a
+  // "Loading…" screen. This is a backstop for async calls that can hang with no
+  // timeout (e.g. pushNow→api.putSave, a wedged IndexedDB open/read). Each phase
+  // gets its own 5s budget — the effect re-arms whenever cloudPhase/gameReady
+  // changes, and clears itself once we reach a resting state.
+  useEffect(() => {
+    // 'auth' is a legitimate resting state (login needed, or an error is already
+    // shown). 'ready' + gameReady means the game is up. Neither needs a watchdog.
+    if (cloudPhase === 'auth') return
+    if (cloudPhase === 'ready' && gameReady) return
+    const timer = setTimeout(() => {
+      console.warn(`[PocketRPG] Boot watchdog fired (cloudPhase=${cloudPhase}, gameReady=${gameReady})`)
+      setCloudLoadError('Loading took too long. Please try again, or reset and return to the start screen.')
+      setCloudPhase('auth')
+    }, 5000)
+    return () => clearTimeout(timer)
+  }, [cloudPhase, gameReady])
+
   // Refresh /me — used after a Stripe purchase so the credit balance reflects
   // whatever the webhook has added to the character row.
   async function refreshMe() {
@@ -1085,6 +1104,26 @@ function GameApp() {
       setCloudLoadError(err?.message || 'Failed to load cloud save')
       setCloudPhase('auth')
     }
+  }
+
+  // Hard reset escape hatch for a stuck/failed boot. The cloud save is
+  // authoritative (the local IndexedDB save is only a cache), so wiping local
+  // state and re-pulling on the next login is a safe recovery. Auth is cleared
+  // first so we always land on the start screen even if the DB wipe wedges, and
+  // the DB wipe is time-boxed so a corrupt IndexedDB can't hang the reset. A
+  // full page reload guarantees a clean boot free of any wedged in-memory state.
+  async function handleResetAndRestart() {
+    try { clearAuth() } catch (_) {}
+    try { clearCollectionLogCache() } catch (_) {}
+    try { resetSyncState() } catch (_) {}
+    try {
+      await Promise.race([
+        wipeLocalSave(),
+        new Promise(resolve => setTimeout(resolve, 3000)),
+      ])
+    } catch (_) {}
+    try { closeDB() } catch (_) {}
+    window.location.reload()
   }
 
   async function resolveConflict(useCloud) {
@@ -1818,7 +1857,8 @@ function GameApp() {
           <div className="max-w-md w-full rounded-xl border border-[var(--color-void-border)] bg-[var(--color-void-light)] p-4">
             <h2 className="font-[var(--font-display)] text-[var(--color-gold)] mb-2">Cloud save unavailable</h2>
             <p className="text-sm mb-4">{cloudLoadError}</p>
-            <button onClick={() => { setCloudPhase('pending'); setCloudLoadError(null); initCloudAndSave() }} className="w-full mb-2 rounded-lg px-3 py-2 bg-[var(--color-gold)] text-black font-semibold">Retry</button>
+            <button onClick={() => { setGameReady(false); setCloudPhase('pending'); setCloudLoadError(null); initCloudAndSave() }} className="w-full mb-2 rounded-lg px-3 py-2 bg-[var(--color-gold)] text-black font-semibold">Retry</button>
+            <button onClick={handleResetAndRestart} className="w-full mb-2 rounded-lg px-3 py-2 border border-[var(--color-void-border)]">Reset &amp; return to start</button>
             <button onClick={() => { clearAuth(); clearCollectionLogCache(); setCloudLoadError(null); setCloudPhase('auth') }} className="w-full rounded-lg px-3 py-2 border border-[var(--color-void-border)]">Log out</button>
           </div>
         </div>
