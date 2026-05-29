@@ -5,6 +5,7 @@ import { getLevelFromXP, getLevelProgress, getXPToNextLevel } from '../engine/ex
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { COMBAT_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, STUB_SKILLS } from '../utils/constants.js'
 import { getSkillArt } from '../utils/skillArt.js'
+import { homeLogo } from '../utils/homeLogo.js'
 import Modal from '../components/Modal.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import SkillEmblem from '../components/SkillEmblem.jsx'
@@ -28,7 +29,6 @@ function SkillCard({ skill, level, progress, toNext, onClick }) {
       <SkillEmblem class="skill-card__emblem" iconKey={art.icon} accent={art.accent} size={56} glow={0.5} />
       <div class="skill-card__top">
         <div class="skill-card__name">
-          <GameIcon iconKey={art.icon} color={art.accent} size={22} title={titleCase(skill)} />
           <span>{titleCase(skill)}</span>
         </div>
         <div class="skill-card__level">{level}</div>
@@ -48,6 +48,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
   const [loggingOut, setLoggingOut] = useState(false)
   const [saving, setSaving] = useState(false)
   const [selectedSkillDetail, setSelectedSkillDetail] = useState(null)
+  const [logoOk, setLogoOk] = useState(true)
 
   async function handleLogout() {
     if (loggingOut || saving) return
@@ -107,7 +108,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
               aria-label="Save game"
               title={saving ? 'Saving…' : 'Save your chronicle'}
             >
-              <GameIcon iconKey={saving ? 'save' : 'scroll'} color="#f0c040" size={24} title="Save" />
+              <GameIcon iconKey="save" color="#f0c040" size={24} title="Save" />
             </button>
             <button
               class="rune-btn"
@@ -131,9 +132,15 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
             <b>{totalLevel.toLocaleString()}</b>
           </div>
           <div class="hero-emblem">
-            <div class="hero-emblem__glow" />
-            <GameIcon iconKey="shield" color="#7d8a99" size={86} class="hero-emblem__shield" title="" />
-            <GameIcon iconKey="crossed_swords" color="#f0c040" size={88} class="hero-emblem__swords" title="" />
+            {homeLogo && logoOk ? (
+              <img class="hero-emblem__logo" src={homeLogo} alt="PocketRPG" onError={() => setLogoOk(false)} />
+            ) : (
+              <>
+                <div class="hero-emblem__glow" />
+                <GameIcon iconKey="shield" color="#7d8a99" size={86} class="hero-emblem__shield" title="" />
+                <GameIcon iconKey="crossed_swords" color="#f0c040" size={88} class="hero-emblem__swords" title="" />
+              </>
+            )}
           </div>
           <div class="hero-total hero-total--right">
             <span class="hero-total__label">Total XP</span>
