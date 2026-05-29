@@ -137,6 +137,7 @@ const sourceFiles = [
   'screens/CollectionLogScreen.js',
   'screens/LeaderboardScreen.js',
   'screens/HelpScreen.js',
+  'screens/DesktopLandingScreen.js',
   'screens/LandingScreen.js',
   'screens/AuthScreen.js',
   'App.js',

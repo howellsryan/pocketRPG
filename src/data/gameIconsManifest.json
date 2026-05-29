@@ -103,5 +103,6 @@
   "dungeon_gate":   "dungeon-gate",
   "progression":    "progression",
   "door":           "door",
-  "save":           "save"
+  "save":           "save",
+  "cash":           "cash"
 }
