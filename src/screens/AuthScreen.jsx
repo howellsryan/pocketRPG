@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'preact/hooks'
 import { api, startGitHubLogin, startGoogleLogin, isEmbeddedBrowser, setCharacter, getToken, clearAuth } from '../cloud/api.js'
 import { resetSyncState } from '../cloud/sync.js'
+import LandingScreen from './LandingScreen.jsx'
 
 // Three internal modes:
 //   login      — no token, show OAuth login options
@@ -116,39 +117,14 @@ export default function AuthScreen({ onCloudReady }) {
 
   if (mode === 'login') {
     return (
-      <Wrap>
-        <Title />
-        <p style={subtitle}>Log in to sync your save across browsers.</p>
-        <button onClick={startGitHubLogin} style={primaryBtn}>
-          🐙 Login with GitHub
-        </button>
-        <button onClick={handleGoogleLogin} style={googleBtn}>
-          <span style={googleG}>G</span> Login with Google
-        </button>
-        {embedded && (
-          <div style={browserHintBox}>
-            <div style={{ fontSize: '12px', color: '#d4af37', fontWeight: 'bold', marginBottom: '6px' }}>
-              ⚠️ Google sign-in needs your real browser
-            </div>
-            <div style={{ fontSize: '11px', color: '#e8d5b0', lineHeight: 1.45, marginBottom: showBrowserHint ? '10px' : 0 }}>
-              You're in an app's built-in browser, which Google blocks for sign-in. Tap the menu (••• or the Share icon) and choose <strong>Open in Safari</strong> / <strong>Open in Chrome</strong>, then use Google there. GitHub sign-in works here as-is.
-            </div>
-            {showBrowserHint && (
-              <>
-                <button type="button" onClick={copyAppLink} style={secondaryBtn}>
-                  {copied ? '✓ Link copied' : '🔗 Copy link to open in browser'}
-                </button>
-                <div style={{ fontSize: '10px', color: '#e8d5b0', opacity: 0.5, wordBreak: 'break-all', marginTop: '2px' }}>
-                  {window.location.origin}
-                </div>
-              </>
-            )}
-          </div>
-        )}
-        <p style={{ ...subtitle, fontSize: '10px', marginTop: '20px', opacity: 0.4 }}>
-          GitHub and Google accounts are kept separate — signing in with a different provider gives you a different character roster.
-        </p>
-      </Wrap>
+      <LandingScreen
+        onGitHubLogin={startGitHubLogin}
+        onGoogleLogin={handleGoogleLogin}
+        embedded={embedded}
+        showBrowserHint={showBrowserHint}
+        copied={copied}
+        onCopyLink={copyAppLink}
+      />
     )
   }
 
@@ -347,9 +323,6 @@ function SectionLabel({ children }) {
 
 const subtitle = { fontSize: '12px', color: '#e8d5b0', opacity: 0.7, textAlign: 'center', marginBottom: '16px', lineHeight: 1.5 }
 const primaryBtn = { width: '100%', padding: '14px', borderRadius: '12px', background: 'linear-gradient(135deg, #b8940e, #d4af37)', color: '#0f0f0f', fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '14px', letterSpacing: '0.05em', border: 'none', cursor: 'pointer', marginBottom: '10px' }
-const googleBtn = { width: '100%', padding: '13px', borderRadius: '12px', background: '#ffffff', color: '#1f1f1f', fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '14px', letterSpacing: '0.05em', border: 'none', cursor: 'pointer', marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }
-const googleG = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', borderRadius: '50%', background: 'conic-gradient(from -45deg, #ea4335 0 25%, #fbbc05 25% 50%, #34a853 50% 75%, #4285f4 75% 100%)', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: '13px', lineHeight: 1 }
-
 function providerLabel(provider) {
   if (provider === 'github') return 'GitHub'
   if (provider === 'google') return 'Google'
@@ -361,4 +334,3 @@ const dangerBtn = { width: '100%', padding: '12px', borderRadius: '12px', backgr
 const charRowBtn = { width: '100%', padding: '12px 14px', borderRadius: '10px', background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#e8d5b0', textAlign: 'left', cursor: 'pointer' }
 const input = { width: '100%', padding: '12px 16px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #333', color: '#e8d5b0', fontSize: '14px', fontFamily: 'Nunito, sans-serif', boxSizing: 'border-box', outline: 'none' }
 const errorText = { color: '#ff6b6b', fontSize: '12px', marginTop: '12px', textAlign: 'center' }
-const browserHintBox = { marginTop: '4px', marginBottom: '10px', padding: '12px', borderRadius: '12px', background: '#1a1a1a', border: '1px solid #3a3a3a' }

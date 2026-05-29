@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@utility font-display {
+  font-family: var(--font-display);
+}
+
 :root {
   --color-parchment: #f5e6c8;
   --color-parchment-dark: #e8d5a8;
