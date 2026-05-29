@@ -3,17 +3,54 @@ import { useGame } from '../state/gameState.jsx'
 import { calcCombatLevel, formatNumber } from '../utils/helpers.js'
 import { getLevelFromXP, getLevelProgress, getXPToNextLevel } from '../engine/experience.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
-import { SCREENS, COMBAT_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SKILL_ICONS, STUB_SKILLS } from '../utils/constants.js'
+import { COMBAT_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, STUB_SKILLS } from '../utils/constants.js'
+import { getSkillArt } from '../utils/skillArt.js'
 import Modal from '../components/Modal.jsx'
-import SkillBadge from '../components/SkillBadge.jsx'
+import GameIcon from '../components/GameIcon.jsx'
+import SkillEmblem from '../components/SkillEmblem.jsx'
+
+const SKILL_GROUPS = [
+  { title: 'Combat', skills: COMBAT_SKILLS },
+  { title: 'Gathering', skills: GATHERING_SKILLS },
+  { title: 'Production', skills: PRODUCTION_SKILLS },
+  { title: 'Utility', skills: UTILITY_SKILLS },
+]
+
+function titleCase(skill) {
+  return skill.charAt(0).toUpperCase() + skill.slice(1)
+}
+
+function SkillCard({ skill, level, progress, toNext, onClick }) {
+  const art = getSkillArt(skill)
+  const isMax = level >= 99
+  return (
+    <button class="skill-card" onClick={() => onClick(skill)} aria-label={`${titleCase(skill)}, level ${level}`}>
+      <SkillEmblem class="skill-card__emblem" iconKey={art.icon} accent={art.accent} size={110} />
+      <div class="skill-card__top">
+        <div class="skill-card__name">
+          <GameIcon iconKey={art.icon} color={art.accent} size={22} title={titleCase(skill)} />
+          <span>{titleCase(skill)}</span>
+        </div>
+        <div class="skill-card__level">{level}</div>
+      </div>
+      <div class="skill-card__bottom">
+        <div class="xp-track"><div class="xp-fill" style={{ width: `${Math.round(progress * 100)}%` }} /></div>
+        <div class={isMax ? 'xp-meta xp-meta--max' : 'xp-meta'}>
+          {isMax ? 'MAX' : `${formatNumber(toNext)} to ${level + 1}`}
+        </div>
+      </div>
+    </button>
+  )
+}
 
 export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloudAccount, removeAds, identityId, characterId, stripeLinks }) {
-  const { player, stats, setActiveTask, equipment, inventory, itemsData } = useGame()
+  const { player, stats } = useGame()
   const [loggingOut, setLoggingOut] = useState(false)
   const [saving, setSaving] = useState(false)
   const [selectedSkillDetail, setSelectedSkillDetail] = useState(null)
 
   async function handleLogout() {
+    if (loggingOut || saving) return
     setLoggingOut(true)
     try { await onLogout() } finally { setLoggingOut(false) }
   }
@@ -42,97 +79,101 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
   const selLevel = selectedSkillData ? (selectedSkillData.level || getLevelFromXP(selectedSkillData.xp)) : 0
   const selProgress = selectedSkillData ? getLevelProgress(selectedSkillData.xp) : 0
   const selToNext = selectedSkillData ? getXPToNextLevel(selectedSkillData.xp) : 0
+  const selArt = selectedSkillDetail ? getSkillArt(selectedSkillDetail) : null
 
-  const handleSkillSelect = (skill) => {
-    setSelectedSkillDetail(skill)
-  }
-
-  function SkillGroup({ title, skills }) {
-    return (
-      <div class="mb-4">
-        <h3 class="text-[10px] font-bold text-[var(--color-parchment)] opacity-40 uppercase tracking-widest mb-1.5">
-          {title}
-        </h3>
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1.5">
-          {skills.map(skill => {
-            const data = stats[skill] || { xp: 0, level: 1 }
-            return (
-              <SkillBadge
-                key={skill}
-                skill={skill}
-                xp={data.xp}
-                level={data.level || getLevelFromXP(data.xp)}
-                onClick={handleSkillSelect}
-              />
-            )
-          })}
-        </div>
-      </div>
-    )
-  }
+  const saveDisabled = saving || loggingOut || !onManualSave
 
   return (
     <div class="h-full flex flex-col">
-      {/* Welcome card and section tabs */}
+      {/* Welcome card with rune save/logout buttons */}
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
-        <div style={{ background: 'linear-gradient(135deg, #1a1a1a, #0f0f0f)', borderRadius: '14px', border: '1px solid #333', padding: '16px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <h1 style={{ fontFamily: 'Cinzel, serif', fontSize: '18px', fontWeight: 'bold', color: '#d4af37', marginBottom: '4px' }}>
-              Welcome, {player.name}
-            </h1>
-            <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#e8d5b0', opacity: 0.7 }}>
-              <span>⚔️ Combat {combatLevel}</span>
-              <span>📊 Total {totalLevel}</span>
-            </div>
+        <div class="welcome-card">
+          <h1 class="welcome-card__title">Welcome, {player.name}</h1>
+          <div class="welcome-card__stats">
+            <span class="wstat">
+              <GameIcon iconKey="crossed_swords" color="#cdd6e0" size={18} title="Combat level" />
+              Combat <b>{combatLevel}</b>
+            </span>
+            <span class="wstat">
+              <GameIcon iconKey="progression" color="#9aa7b0" size={18} title="Total level" />
+              Total <b>{totalLevel.toLocaleString()}</b>
+            </span>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="welcome-card__actions">
             <button
+              class="rune-btn"
               onClick={handleManualSave}
-              disabled={saving || loggingOut || !onManualSave}
+              disabled={saveDisabled}
               aria-label="Save game"
-              title={saving ? 'Saving...' : 'Save game'}
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #333', borderRadius: '8px', width: '44px', height: '44px', fontSize: '18px', color: '#e8d5b0', opacity: (saving || loggingOut || !onManualSave) ? 0.4 : 0.7, cursor: (saving || loggingOut || !onManualSave) ? 'default' : 'pointer' }}
+              title={saving ? 'Saving…' : 'Save your chronicle'}
             >
-              {saving ? '☁️' : '💾'}
+              <GameIcon iconKey={saving ? 'save' : 'scroll'} color="#f0c040" size={24} title="Save" />
             </button>
             <button
+              class="rune-btn"
               onClick={handleLogout}
               disabled={loggingOut || saving}
               aria-label="Log out"
-              title={isCloudAccount && loggingOut ? 'Saving...' : 'Log out'}
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #333', borderRadius: '8px', width: '44px', height: '44px', fontSize: '18px', color: '#e8d5b0', opacity: (loggingOut || saving) ? 0.4 : 0.7, cursor: (loggingOut || saving) ? 'default' : 'pointer' }}
+              title={isCloudAccount && loggingOut ? 'Saving…' : 'Log out'}
             >
-              🚪
+              <GameIcon iconKey="door" color="#e8d5a8" size={24} title="Log out" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Content area */}
+      {/* Scrollable skill grid */}
       <div class="flex-1 overflow-y-auto px-4 pb-4">
-        <div class="py-4">
-          <div class="flex justify-between items-center mb-3 px-1">
-            <span class="text-xs text-[var(--color-parchment)] opacity-60">
-              Total Level: <span class="font-[var(--font-mono)] font-bold text-[var(--color-gold)]">{totalLevel}</span>
-            </span>
-            <span class="text-xs text-[var(--color-parchment)] opacity-60">
-              Total XP: <span class="font-[var(--font-mono)] font-bold text-[var(--color-gold)]">{formatNumber(totalXP)}</span>
-            </span>
+        {/* Hero emblem band */}
+        <div class="hero-band">
+          <div class="hero-total">
+            <span class="hero-total__label">Total Level</span>
+            <b>{totalLevel.toLocaleString()}</b>
           </div>
-          <SkillGroup title="Combat" skills={COMBAT_SKILLS} />
-          <SkillGroup title="Gathering" skills={GATHERING_SKILLS} />
-          <SkillGroup title="Production" skills={PRODUCTION_SKILLS} />
-          <SkillGroup title="Utility" skills={UTILITY_SKILLS} />
+          <div class="hero-emblem">
+            <div class="hero-emblem__glow" />
+            <GameIcon iconKey="shield" color="#7d8a99" size={86} class="hero-emblem__shield" title="" />
+            <GameIcon iconKey="crossed_swords" color="#f0c040" size={88} class="hero-emblem__swords" title="" />
+          </div>
+          <div class="hero-total hero-total--right">
+            <span class="hero-total__label">Total XP</span>
+            <b>{formatNumber(totalXP)}</b>
+          </div>
         </div>
+
+        {SKILL_GROUPS.map(group => (
+          <div key={group.title}>
+            <div class="section-head">
+              <span>{group.title}</span>
+              <div class="section-head__rule" />
+            </div>
+            <div class="skill-grid">
+              {group.skills.map(skill => {
+                const data = stats[skill] || { xp: 0, level: 1 }
+                const level = data.level || getLevelFromXP(data.xp)
+                return (
+                  <SkillCard
+                    key={`${group.title}-${skill}`}
+                    skill={skill}
+                    level={level}
+                    progress={getLevelProgress(data.xp)}
+                    toNext={getXPToNextLevel(data.xp)}
+                    onClick={setSelectedSkillDetail}
+                  />
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Skill detail modal */}
       {selectedSkillDetail && selectedSkillData && (
-        <Modal title={`${SKILL_ICONS[selectedSkillDetail]} ${selectedSkillDetail.charAt(0).toUpperCase() + selectedSkillDetail.slice(1)}`} onClose={() => setSelectedSkillDetail(null)}>
+        <Modal title={titleCase(selectedSkillDetail)} onClose={() => setSelectedSkillDetail(null)}>
           <div class="space-y-3">
-            <div class="text-center">
-              <div class="text-4xl font-[var(--font-mono)] font-bold text-[var(--color-gold)]">{selLevel}</div>
-              <div class="text-xs text-[var(--color-parchment)] opacity-50 mt-1">Current Level</div>
+            <div class="skill-detail__hero">
+              <SkillEmblem iconKey={selArt.icon} accent={selArt.accent} size={64} />
+              <div class="skill-detail__lvl">Level <b>{selLevel}</b> / 99</div>
             </div>
             <div class="bg-[#111] rounded-lg p-3 space-y-2">
               <div class="flex justify-between text-sm">
@@ -147,6 +188,9 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
                 <span class="text-[var(--color-parchment)] opacity-60">Progress</span>
                 <span class="font-[var(--font-mono)] text-[var(--color-gold)]">{(selProgress * 100).toFixed(1)}%</span>
               </div>
+            </div>
+            <div class="xp-track" style={{ height: 9 }}>
+              <div class="xp-fill" style={{ width: `${Math.round(selProgress * 100)}%` }} />
             </div>
             {STUB_SKILLS.has(selectedSkillDetail) && (
               <div class="text-xs text-center text-[var(--color-parchment)] opacity-40 italic">

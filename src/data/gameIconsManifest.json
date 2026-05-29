@@ -83,5 +83,25 @@
   "nest":           "nest-birds",
   "wine":           "wine-glass",
   "planks":         "planks",
-  "list":           "checklist"
+  "list":           "checklist",
+
+  "_skill_emblems": "Home-screen artsy skill emblems + UI glyphs",
+  "muscle_up":      "muscle-up",
+  "hearts":         "hearts",
+  "high_shot":      "high-shot",
+  "crystal_ball":   "crystal-ball",
+  "mining":         "mining",
+  "wood_axe":       "wood-axe",
+  "wheat":          "wheat",
+  "anvil":          "anvil",
+  "cooking_pot":    "cooking-pot",
+  "sewing_needle":  "sewing-needle",
+  "sprint":         "sprint",
+  "hood":           "hood",
+  "wolf_trap":      "wolf-trap",
+  "death_skull":    "death-skull",
+  "dungeon_gate":   "dungeon-gate",
+  "progression":    "progression",
+  "door":           "door",
+  "save":           "save"
 }
