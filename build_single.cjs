@@ -34,6 +34,7 @@ const sourceFiles = [
   'engine/runes.js',
   'engine/slayerRewards.js',
   'engine/slayerTasks.js',
+  'engine/slayerMasters.js',
   'engine/slayerUnlocks.js',
   'engine/slayerCombatBonuses.js',
   'engine/itemSources.js',

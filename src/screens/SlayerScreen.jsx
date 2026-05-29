@@ -5,135 +5,12 @@ import itemsData from '../data/items.json'
 import { SLAYER_UNLOCKS, getSlayerUnlockPurchaseState } from '../engine/slayerUnlocks.js'
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { DAGANNOTH_KINGS_TASK_ID } from '../engine/slayerTasks.js'
+import { SLAYER_MASTERS, resolveTaskMonsterIds, pickSlayerMonster } from '../engine/slayerMasters.js'
 import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 import { applyCloudSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
 import { SCREENS } from '../utils/constants.js'
-
-// PocketRPG slayer masters — requirements and monster pools from PocketRPG design references
-const SLAYER_MASTERS = [
-  {
-    id: 'turael',
-    name: 'Torvak',
-    location: 'Brighthome',
-    icon: '👴',
-    combatReq: 0,
-    slayerReq: 0,
-    pointsPerTask: 0,
-    description: 'Assigns the easiest slayer tasks. No requirements.',
-    taskRange: [50, 120],
-    monsterPool: [
-      'field_chicken', 'cave_goblin', 'pasture_bull', 'arcane_adept',
-      'stoneback_crab', 'duneback_crab', 'umbral_adept',
-      'dustpaw_rat', 'bogling_sprite',
-    ],
-  },
-  {
-    id: 'mazchna',
-    name: 'Morven',
-    location: 'Duskmire',
-    icon: '🧙',
-    combatReq: 20,
-    slayerReq: 0,
-    pointsPerTask: 2,
-    description: 'Assigns medium-low level monsters. Requires combat 20.',
-    taskRange: [60, 130],
-    monsterPool: [
-      'umbral_adept', 'broodfang_spider', 'highland_giant', 'briar_giant', 'wailing_banshee',
-      'frostbite_imp', 'marshfen_toad', 'cinderpaw_cub',
-    ],
-  },
-  {
-    id: 'vannaka',
-    name: 'Valdrin',
-    location: 'Deepgate Caverns',
-    icon: '⚔️',
-    combatReq: 40,
-    slayerReq: 0,
-    pointsPerTask: 4,
-    description: 'Assigns mid-level combat tasks. Requires combat 40.',
-    taskRange: [70, 160],
-    monsterPool: [
-      'briar_giant', 'green_dragon', 'lesser_fiend', 'sanguine_veld',
-      'warped_spectre', 'ash_wyrm',
-      'glaive_skeleton', 'mirebound_husk', 'verdant_stalker', 'stoneglare_basilisk',
-      'embertongue_lizard', 'hollow_reaver',
-    ],
-  },
-  {
-    id: 'chaeldar',
-    name: 'Caelira',
-    location: 'Moonglade',
-    icon: '🧝',
-    combatReq: 70,
-    slayerReq: 0,
-    pointsPerTask: 10,
-    description: 'High-level tasks including Netherfiend Demons. Requires combat 70.',
-    taskRange: [80, 300],
-    monsterPool: [
-      'green_dragon', 'lesser_fiend', 'nether_demon', 'red_dragon',
-      'sanguine_veld', 'nether_wraith', 'warped_spectre', 'astral_warrior',
-      'astral_ranger', 'runestone_gargoyle', 'ash_wyrm',
-      'briarheart_treant', 'frostmaw_direwolf', 'pyreclaw_demon',
-      'wraithgale_specter', 'bloodmoon_stalker', 'ironfang_drake',
-      'shadeglass_golem', 'tidereaper_crab',
-    ],
-  },
-  {
-    id: 'nieve',
-    name: 'Nyra',
-    location: 'Spryroot Grove',
-    icon: '🌿',
-    combatReq: 0,
-    slayerReq: 70,
-    pointsPerTask: 12,
-    description: 'Elite tasks including God Wars Dungeon bosses. Requires slayer 70.',
-    taskRange: [150, 400],
-    bossTaskRange: [5, 25],
-    monsterPool: [
-      'nether_demon',
-      { id: DAGANNOTH_KINGS_TASK_ID, boss: true },
-      'red_dragon',
-      'sanguine_veld', 'nether_wraith', 'bone_wyvern', 'cinder_devil',
-      'astral_mage', 'runestone_gargoyle', 'vicious_black_dragon', 'nightfang_beast',
-      { id: 'deepmaw_kraken', boss: true },
-      { id: 'ember_tyrant', boss: true },
-      'voidweave_stalker', 'drakthul_wyrmling', 'bonelight_pyromancer',
-      'cinderfang_reaver', 'ashen_marauder',
-      { id: 'sovrathar_the_ashen_sovereign', boss: true },
-    ],
-  },
-  {
-    id: 'duradel',
-    name: 'Druven',
-    location: 'Silverkeep Quarter',
-    icon: '💀',
-    combatReq: 0,
-    slayerReq: 90,
-    pointsPerTask: 15,
-    description: 'The most prestigious master. Assigns the hardest tasks. Requires slayer 90.',
-    taskRange: [100, 250],
-    bossTaskRange: [20, 50],
-    monsterPool: [
-      'nether_demon',
-      { id: DAGANNOTH_KINGS_TASK_ID, boss: true },
-      { id: 'warlord_grondar', boss: true },
-      { id: 'commander_zephyra', boss: true },
-      { id: 'krylth_the_defiler', boss: true },
-      { id: 'skyrender_kharra', boss: true },
-      'sanguine_veld', 'nether_wraith', 'bone_wyvern', 'cinder_devil',
-      'astral_mage', 'runestone_gargoyle', 'vicious_black_dragon', 'nightfang_beast',
-      { id: 'deepmaw_kraken', boss: true },
-      { id: 'ember_tyrant', boss: true },
-      { id: 'threefang_cerberus', boss: true },
-      { id: 'ashen_hydra', boss: true },
-      'voidweave_stalker', 'drakthul_wyrmling', 'bonelight_pyromancer',
-      'cinderfang_reaver', 'ashen_marauder',
-      { id: 'sovrathar_the_ashen_sovereign', boss: true },
-    ],
-  },
-]
 
 // PocketRPG combat level formula
 function getPlayerCombatLevel(stats) {
@@ -177,6 +54,7 @@ const SLAYER_MONSTER_ICONS = {
   voidweave_stalker: '🕸️', drakthul_wyrmling: '🐉', bonelight_pyromancer: '🔥',
   cinderfang_reaver: '🗡️', ashen_marauder: '⚒️',
   sovrathar_the_ashen_sovereign: '👑',
+  marshscale_shaman: '🦎', crazy_archaeologist: '🏺', adamant_dragon: '🐲', rune_dragon: '🐲',
 }
 
 export default function SlayerScreen({ onBack, onNavigate }) {
@@ -185,11 +63,6 @@ export default function SlayerScreen({ onBack, onNavigate }) {
   const combatLevel = getPlayerCombatLevel(stats)
   const slayerLevel = getLevelFromXP(stats.slayer?.xp || 0)
 
-
-  const resolveTaskMonsterIds = (monsterId) => {
-    if (monsterId === DAGANNOTH_KINGS_TASK_ID) return ['nagadoth_rex', 'nagadoth_prime', 'nagadoth_supreme']
-    return [monsterId]
-  }
 
   const handleGetTask = (master) => {
     if (slayerTask) {
@@ -205,38 +78,14 @@ export default function SlayerScreen({ onBack, onNavigate }) {
       return
     }
 
-    // Pick random monster from pool
-    const pool = master.monsterPool
-    const pick = pool[Math.floor(Math.random() * pool.length)]
-    const isBoss = typeof pick === 'object' && pick.boss
-    const monsterId = typeof pick === 'object' ? pick.id : pick
-
-    // Check slayer requirement on the monster itself
-    const candidateIds = resolveTaskMonsterIds(monsterId)
-    const unmetRequirement = candidateIds
-      .map(id => monstersData[id]?.slayerRequirement || 0)
-      .find(req => req > slayerLevel)
-    if (unmetRequirement) {
-      // Re-roll once to avoid blocking the player
-      const fallback = pool.find(p => {
-        const id = typeof p === 'object' ? p.id : p
-        const fallbackIds = resolveTaskMonsterIds(id)
-        return fallbackIds.every(monsterKey => {
-          const m = monstersData[monsterKey]
-          return !m?.slayerRequirement || slayerLevel >= m.slayerRequirement
-        })
-      })
-      if (!fallback) {
-        addToast(`Need slayer level ${unmetRequirement} for this task`, 'error')
-        return
-      }
-      const fbId = typeof fallback === 'object' ? fallback.id : fallback
-      const fbBoss = typeof fallback === 'object' && fallback.boss
-      assignTask(master, fbId, fbBoss)
+    // Evenly distributed pick across the master's eligible monsters.
+    const pick = pickSlayerMonster(master, slayerLevel)
+    if (!pick) {
+      addToast('No tasks available — raise your slayer level for this master.', 'error')
       return
     }
 
-    assignTask(master, monsterId, isBoss)
+    assignTask(master, pick.monsterId, pick.isBoss)
   }
 
   const assignTask = (master, monsterId, isBoss) => {
