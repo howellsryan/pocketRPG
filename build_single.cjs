@@ -134,6 +134,7 @@ const sourceFiles = [
   'screens/CollectionLogScreen.js',
   'screens/LeaderboardScreen.js',
   'screens/HelpScreen.js',
+  'screens/LandingScreen.js',
   'screens/AuthScreen.js',
   'App.js',
 ];
@@ -173,6 +174,21 @@ const questsJSON = readSrc('data/quests.json');
 const minigamesJSON = readSrc('data/minigames.json');
 const cluesJSON = readSrc('data/clues.json');
 const collectionLogJSON = readSrc('data/collectionLog.json');
+
+// Landing screen images. The single-file build is served from the site root
+// with no external assets, so inline each webp from public/landing/ as a
+// base64 data URI keyed by basename (e.g. 'ss-stats'). Keys must match the
+// `landingImages` map in src/screens/landingImages.js, whose import is stripped
+// from this bundle in favour of the global injected below.
+const landingDir = path.join(__dirname, 'public', 'landing');
+const landingImagesObj = {};
+for (const file of fs.readdirSync(landingDir)) {
+  if (!file.endsWith('.webp')) continue;
+  const key = file.replace(/\.webp$/, '');
+  const b64 = fs.readFileSync(path.join(landingDir, file)).toString('base64');
+  landingImagesObj[key] = `data:image/webp;base64,${b64}`;
+}
+const landingImagesJSON = JSON.stringify(landingImagesObj);
 
 // Concatenate all JS
 let allJS = '';
@@ -231,6 +247,7 @@ const questsData = ${questsJSON};
 const minigamesData = ${minigamesJSON};
 const cluesData = ${cluesJSON};
 const collectionLogData = ${collectionLogJSON};
+const landingImages = ${landingImagesJSON};
 
 ${allJS}
 
