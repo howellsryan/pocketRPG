@@ -2,9 +2,10 @@ import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import Modal from '../components/Modal.jsx'
 import GameIcon from '../components/GameIcon.jsx'
+import SkillIcon from '../components/SkillIcon.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
-import { SKILL_ICONS, STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS, formatDropChance, GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
+import { STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS, formatDropChance, GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getEffectiveToolActionTicks, hasToolForSkill, getEquippedSkillXpMultiplier } from '../engine/skilling.js'
 import { addItem, removeItem, countItem, canFit } from '../engine/inventory.js'
@@ -595,7 +596,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
                 onClick={() => setSelectedSkill(skill)}
                 class="flex items-center gap-2.5 p-3 rounded-xl border transition-colors bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]"
               >
-                <span class="text-xl">{SKILL_ICONS[skill]}</span>
+                <SkillIcon skill={skill} size={24} />
                 <div class="text-left">
                   <div class="text-sm font-semibold text-[var(--color-parchment)] capitalize">{skill}</div>
                   <div class="text-[10px] font-[var(--font-mono)] text-[var(--color-gold)]">Lv {level}</div>
@@ -625,8 +626,8 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
         </button>
 
         <div class="mb-1 flex items-center justify-between">
-          <h2 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] capitalize">
-            {SKILL_ICONS[selectedSkill]} {selectedSkill}
+          <h2 class="flex items-center gap-2 font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] capitalize">
+            <SkillIcon skill={selectedSkill} size={20} /> {selectedSkill}
           </h2>
           {selectedSkill === 'dungeoneering' && (
             <div class="inline-flex rounded-full border border-[var(--color-void-border)] bg-[var(--color-void-light)] px-2 py-1 text-[10px] font-[var(--font-mono)] text-[var(--color-gold)]">
@@ -846,7 +847,7 @@ Shop value: ×1.1
   return (
     <div class="h-full flex flex-col p-4">
       <div class="flex-1 flex flex-col items-center justify-center">
-        <span class="text-4xl mb-2">{SKILL_ICONS[selectedSkill]}</span>
+        <SkillIcon skill={selectedSkill} size={44} class="mb-2" />
         <h2 class="font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)] mb-1">
           {skilling.action.name}
         </h2>

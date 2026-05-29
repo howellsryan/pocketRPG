@@ -2,8 +2,9 @@ import { useGame } from '../state/gameState.jsx'
 import { getLevelFromXP, getLevelProgress, getXPToNextLevel } from '../engine/experience.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { formatNumber } from '../utils/helpers.js'
-import { COMBAT_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SKILL_ICONS, STUB_SKILLS } from '../utils/constants.js'
+import { COMBAT_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, STUB_SKILLS } from '../utils/constants.js'
 import SkillBadge from '../components/SkillBadge.jsx'
+import SkillIcon from '../components/SkillIcon.jsx'
 import { useState } from 'preact/hooks'
 import Modal from '../components/Modal.jsx'
 
@@ -62,7 +63,7 @@ export default function StatsScreen() {
 
       {/* Skill detail modal */}
       {selectedSkill && selected && (
-        <Modal title={`${SKILL_ICONS[selectedSkill]} ${selectedSkill.charAt(0).toUpperCase() + selectedSkill.slice(1)}`} onClose={() => setSelectedSkill(null)}>
+        <Modal title={<span class="flex items-center gap-2"><SkillIcon skill={selectedSkill} size={20} />{selectedSkill.charAt(0).toUpperCase() + selectedSkill.slice(1)}</span>} onClose={() => setSelectedSkill(null)}>
           <div class="space-y-3">
             <div class="text-center">
               <div class="text-4xl font-[var(--font-mono)] font-bold text-[var(--color-gold)]">{selLevel}</div>

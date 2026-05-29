@@ -1,7 +1,8 @@
 import { h } from 'preact'
 import { useState } from 'preact/hooks'
-import { SKILL_ICONS, COMBAT_SKILLS, ALL_SKILLS } from '../utils/constants.js'
+import { COMBAT_SKILLS, ALL_SKILLS } from '../utils/constants.js'
 import { getLevelFromXP } from '../engine/experience.js'
+import SkillIcon from './SkillIcon.jsx'
 
 const UNIQUE_ALL_SKILLS = [...new Set(ALL_SKILLS)]
 
@@ -60,7 +61,7 @@ export default function QuestXpChoiceModal({ rewards, questName, stats, onComple
                   onClick={() => pick(skill)}
                   class="flex flex-col items-center justify-center gap-1 min-h-[64px] rounded-xl border border-[var(--color-void-border)] bg-[#111] hover:border-[var(--color-gold)] hover:bg-[#1c1c1c] active:bg-[#222] transition-colors p-2"
                 >
-                  <span class="text-2xl leading-none">{SKILL_ICONS[skill]}</span>
+                  <SkillIcon skill={skill} size={26} />
                   <span class="text-xs font-bold text-[var(--color-parchment)] capitalize">{skill}</span>
                   <span class="text-[10px] text-[var(--color-gold)] opacity-60">Lv {lvl}</span>
                 </button>

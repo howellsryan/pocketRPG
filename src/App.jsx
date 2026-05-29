@@ -7,6 +7,7 @@ import SideNav from './components/SideNav.jsx'
 import Header from './components/Header.jsx'
 import ToastContainer from './components/Toast.jsx'
 import XpDropOverlay from './components/XpDropOverlay.jsx'
+import SkillIcon from './components/SkillIcon.jsx'
 import RewardRevealOverlay from './components/RewardRevealOverlay.jsx'
 import { emitRewardReveal } from './utils/rewardReveal.js'
 import BuyCreditsModal from './components/BuyCreditsModal.jsx'
@@ -1976,13 +1977,6 @@ function GameApp() {
               {(() => {
                 const hrs = idleResult.elapsedMs / 3600000
                 const perHr = (n) => hrs > 0 ? Math.round(n / hrs).toLocaleString() : '—'
-                const SKILL_ICONS = {
-                  attack: '⚔️', strength: '💪', defence: '🛡️', hitpoints: '❤️',
-                  ranged: '🏹', magic: '🔮', prayer: '🙏',
-                  mining: '⛏️', woodcutting: '🪓', fishing: '🎣', farming: '🌾', hunter: '🪤',
-                  smithing: '🔨', cooking: '🍳', crafting: '✂️', fletching: '🏹', herblore: '🧪', runecraft: '🔴',
-                  agility: '🏃', thieving: '🗝️', slayer: '💀', firemaking: '🔥', construction: '🏠', dungeoneering: '🏰'
-                }
 
                 return (<>
                   {/* Cloud override notice — another session saved while we were away */}
@@ -2109,7 +2103,7 @@ function GameApp() {
                         {xpEntries.map(([skill, xp]) => (
                           <div key={skill} style={{ marginBottom: '4px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' }}>
-                              <span>{SKILL_ICONS[skill] || '⭐'} {skill.charAt(0).toUpperCase() + skill.slice(1)}</span>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><SkillIcon skill={skill} size={14} /> {skill.charAt(0).toUpperCase() + skill.slice(1)}</span>
                               <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>+{Math.floor(xp).toLocaleString()}</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8d5b0', opacity: 0.45 }}>
@@ -2121,7 +2115,7 @@ function GameApp() {
                         {hasSlayerXp && (
                           <div style={{ marginBottom: '4px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#e8d5b0' }}>
-                              <span>{SKILL_ICONS.slayer} Slayer</span>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><SkillIcon skill="slayer" size={14} /> Slayer</span>
                               <span style={{ color: '#d4af37', fontFamily: 'monospace', fontWeight: 'bold' }}>+{Math.floor(idleResult.slayerXpGained).toLocaleString()}</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8d5b0', opacity: 0.45 }}>

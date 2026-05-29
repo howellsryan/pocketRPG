@@ -160,7 +160,7 @@ html, body, #app {
 }
 .skill-card:hover { border-color: rgba(240, 192, 64, 0.35); transform: translateY(-1px); }
 .skill-card:active { transform: scale(0.98); }
-.skill-card__emblem { position: absolute; right: -8px; top: 50%; transform: translateY(-50%); }
+.skill-card__emblem { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); z-index: 1; opacity: 0.9; }
 .skill-card__top { position: relative; z-index: 2; display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
 .skill-card__name { display: flex; align-items: center; gap: 7px; }
 .skill-card__name span { font-size: 14.5px; font-weight: 800; letter-spacing: 0.01em; color: var(--color-parchment); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }

@@ -87,6 +87,7 @@ const sourceFiles = [
   'components/SkillBadge.js',
   'components/GameIcon.js',
   'components/SkillEmblem.js',
+  'components/SkillIcon.js',
   'components/ItemSlot.js',
   'components/Toast.js',
   'components/ActivityIndicator.js',
