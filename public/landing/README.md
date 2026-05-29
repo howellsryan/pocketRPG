@@ -19,3 +19,4 @@ Target: each file < ~100 KB, phone-portrait aspect ratio.
 | Ember Tyrant boss combat                  | `ss-combat.webp`        |
 | Collection Log                            | `ss-collection.webp`    |
 | Trading Post market                       | `ss-trading.webp`       |
+| Farming Locations                         | `ss-farming.webp`       |

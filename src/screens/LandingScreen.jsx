@@ -34,6 +34,7 @@ const FEATURES = [
 const STRIP = [
   { src: '/landing/ss-inventory.webp', alt: 'Full inventory' },
   { src: '/landing/ss-combat.webp', alt: 'Boss fight in progress' },
+  { src: '/landing/ss-farming.webp', alt: 'Farming locations' },
   { src: '/landing/ss-collection.webp', alt: 'Collection Log' },
   { src: '/landing/ss-trading.webp', alt: 'Trading Post market' },
 ]
