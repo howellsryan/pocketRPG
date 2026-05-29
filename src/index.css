@@ -129,16 +129,11 @@ html, body, #app {
 .rune-btn:disabled { opacity: 0.45; cursor: default; }
 
 /* Hero emblem band */
-.hero-band { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; margin: 18px 2px 6px; }
+.hero-band { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 16px 2px 6px; }
 .hero-total { font-size: 12px; line-height: 1.45; color: var(--color-parchment); opacity: 0.66; }
 .hero-total--right { text-align: right; }
 .hero-total__label { display: block; font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.7; }
 .hero-total b { font-family: var(--font-mono); font-weight: 700; font-size: 16px; color: var(--color-gold-light); }
-.hero-emblem { position: relative; width: 96px; height: 96px; display: flex; align-items: center; justify-content: center; }
-.hero-emblem__glow { position: absolute; inset: -10px; background: radial-gradient(circle, rgba(240, 192, 64, 0.30), transparent 65%); }
-.hero-emblem__shield { position: absolute; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6)); }
-.hero-emblem__swords { position: absolute; filter: drop-shadow(0 0 6px rgba(240, 192, 64, 0.5)); }
-.hero-emblem__logo { width: 96px; height: 96px; object-fit: contain; filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px rgba(240, 192, 64, 0.25)); }
 
 /* Section header */
 .section-head { display: flex; align-items: center; gap: 10px; margin: 20px 2px 11px; }
@@ -152,7 +147,7 @@ html, body, #app {
 
 .skill-card {
   position: relative; width: 100%; overflow: hidden; cursor: pointer; text-align: left;
-  border-radius: 14px; padding: 9px 11px; gap: 8px;
+  border-radius: 14px; padding: 8px 10px; gap: 6px;
   background: linear-gradient(150deg, #1a1813 0%, #100e0a 100%);
   border: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow: 0 6px 16px -12px rgba(0, 0, 0, 0.9);
@@ -162,14 +157,14 @@ html, body, #app {
 .skill-card:hover { border-color: rgba(240, 192, 64, 0.35); transform: translateY(-1px); }
 .skill-card:active { transform: scale(0.98); }
 .skill-card__emblem { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 1; opacity: 0.9; }
-.skill-card__top { position: relative; z-index: 2; display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
+.skill-card__top { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .skill-card__name { display: flex; align-items: center; gap: 7px; }
-.skill-card__name span { font-size: 14.5px; font-weight: 800; letter-spacing: 0.01em; color: var(--color-parchment); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }
+.skill-card__name span { font-size: 14px; font-weight: 800; letter-spacing: 0.01em; color: var(--color-parchment); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }
 .skill-card__level {
-  flex-shrink: 0; font-family: var(--font-display); font-weight: 800; font-size: 27px; line-height: 0.9;
+  flex-shrink: 0; font-family: var(--font-display); font-weight: 800; font-size: 22px; line-height: 1;
   color: var(--color-gold-light); text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85), 0 0 14px rgba(240, 192, 64, 0.25);
 }
-.skill-card__bottom { position: relative; z-index: 2; margin-top: auto; }
+.skill-card__bottom { position: relative; z-index: 2; }
 
 /* XP track (shared by cards + detail) */
 .xp-track {

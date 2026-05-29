@@ -5,7 +5,6 @@ import { getLevelFromXP, getLevelProgress, getXPToNextLevel } from '../engine/ex
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { COMBAT_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, STUB_SKILLS } from '../utils/constants.js'
 import { getSkillArt } from '../utils/skillArt.js'
-import { homeLogo } from '../utils/homeLogo.js'
 import Modal from '../components/Modal.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import SkillEmblem from '../components/SkillEmblem.jsx'
@@ -26,7 +25,7 @@ function SkillCard({ skill, level, progress, toNext, onClick }) {
   const isMax = level >= 99
   return (
     <button class="skill-card" onClick={() => onClick(skill)} aria-label={`${titleCase(skill)}, level ${level}`}>
-      <SkillEmblem class="skill-card__emblem" iconKey={art.icon} accent={art.accent} size={56} glow={0.5} />
+      <SkillEmblem class="skill-card__emblem" iconKey={art.icon} accent={art.accent} size={42} glow={0.5} />
       <div class="skill-card__top">
         <div class="skill-card__name">
           <span>{titleCase(skill)}</span>
@@ -48,7 +47,6 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
   const [loggingOut, setLoggingOut] = useState(false)
   const [saving, setSaving] = useState(false)
   const [selectedSkillDetail, setSelectedSkillDetail] = useState(null)
-  const [logoOk, setLogoOk] = useState(true)
 
   async function handleLogout() {
     if (loggingOut || saving) return
@@ -130,17 +128,6 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
           <div class="hero-total">
             <span class="hero-total__label">Total Level</span>
             <b>{totalLevel.toLocaleString()}</b>
-          </div>
-          <div class="hero-emblem">
-            {homeLogo && logoOk ? (
-              <img class="hero-emblem__logo" src={homeLogo} alt="PocketRPG" onError={() => setLogoOk(false)} />
-            ) : (
-              <>
-                <div class="hero-emblem__glow" />
-                <GameIcon iconKey="shield" color="#7d8a99" size={86} class="hero-emblem__shield" title="" />
-                <GameIcon iconKey="crossed_swords" color="#f0c040" size={88} class="hero-emblem__swords" title="" />
-              </>
-            )}
           </div>
           <div class="hero-total hero-total--right">
             <span class="hero-total__label">Total XP</span>
