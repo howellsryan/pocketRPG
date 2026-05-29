@@ -289,13 +289,13 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, emb
                 <h5>Play</h5>
                 <a href="#dl-play">Sign in with GitHub</a>
                 <a href="#dl-play">Sign in with Google</a>
-                <a href="https://pocketrpg.pages.dev" target="_blank" rel="noopener">Live build ↗</a>
+                <a href="https://pocketrpg.co.uk" target="_blank" rel="noopener">Live build ↗</a>
               </div>
             </div>
           </div>
           <div class="dl-foot__bottom">
             <span>© 2026 PocketRPG. Level up while you live your life.</span>
-            <span>pocketrpg.pages.dev</span>
+            <span>pocketrpg.co.uk</span>
           </div>
         </div>
       </footer>
