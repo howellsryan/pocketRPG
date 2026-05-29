@@ -88,35 +88,37 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
         <div class="welcome-card">
           <h1 class="welcome-card__title">Welcome, {player.name}</h1>
-          <div class="welcome-card__stats">
-            <span class="wstat">
-              <GameIcon iconKey="crossed_swords" color="#cdd6e0" size={18} title="Combat level" />
-              Combat <b>{combatLevel}</b>
-            </span>
-            <span class="wstat">
-              <GameIcon iconKey="progression" color="#9aa7b0" size={18} title="Total level" />
-              Total <b>{totalLevel.toLocaleString()}</b>
-            </span>
-          </div>
-          <div class="welcome-card__actions">
-            <button
-              class="rune-btn"
-              onClick={handleManualSave}
-              disabled={saveDisabled}
-              aria-label="Save game"
-              title={saving ? 'Saving…' : 'Save your chronicle'}
-            >
-              <GameIcon iconKey="save" color="#f0c040" size={24} title="Save" />
-            </button>
-            <button
-              class="rune-btn"
-              onClick={handleLogout}
-              disabled={loggingOut || saving}
-              aria-label="Log out"
-              title={isCloudAccount && loggingOut ? 'Saving…' : 'Log out'}
-            >
-              <GameIcon iconKey="door" color="#e8d5a8" size={24} title="Log out" />
-            </button>
+          <div class="welcome-card__bottom">
+            <div class="welcome-card__stats">
+              <span class="wstat">
+                <GameIcon iconKey="crossed_swords" color="#cdd6e0" size={18} title="Combat level" />
+                Combat <b>{combatLevel}</b>
+              </span>
+              <span class="wstat">
+                <GameIcon iconKey="progression" color="#9aa7b0" size={18} title="Total level" />
+                Total <b>{totalLevel.toLocaleString()}</b>
+              </span>
+            </div>
+            <div class="welcome-card__actions">
+              <button
+                class="rune-btn"
+                onClick={handleManualSave}
+                disabled={saveDisabled}
+                aria-label="Save game"
+                title={saving ? 'Saving…' : 'Save your chronicle'}
+              >
+                <GameIcon iconKey="save" color="#f0c040" size={24} title="Save" />
+              </button>
+              <button
+                class="rune-btn"
+                onClick={handleLogout}
+                disabled={loggingOut || saving}
+                aria-label="Log out"
+                title={isCloudAccount && loggingOut ? 'Saving…' : 'Log out'}
+              >
+                <GameIcon iconKey="door" color="#e8d5a8" size={24} title="Log out" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
