@@ -16,6 +16,7 @@ const sourceFiles = [
   'utils/itemValue.js',
   'utils/idleElapsed.js',
   'utils/itemIcons.js',
+  'utils/skillArt.js',
   'utils/prayerIcons.js',
   'utils/bonusLabels.js',
   'utils/oneLifeDeath.js',
@@ -85,6 +86,8 @@ const sourceFiles = [
   'components/ProgressBar.js',
   'components/SkillBadge.js',
   'components/GameIcon.js',
+  'components/SkillEmblem.js',
+  'components/SkillIcon.js',
   'components/ItemSlot.js',
   'components/Toast.js',
   'components/ActivityIndicator.js',
@@ -134,6 +137,7 @@ const sourceFiles = [
   'screens/CollectionLogScreen.js',
   'screens/LeaderboardScreen.js',
   'screens/HelpScreen.js',
+  'screens/DesktopLandingScreen.js',
   'screens/LandingScreen.js',
   'screens/AuthScreen.js',
   'App.js',
@@ -189,6 +193,16 @@ for (const file of fs.readdirSync(landingDir)) {
   landingImagesObj[key] = `data:image/webp;base64,${b64}`;
 }
 const landingImagesJSON = JSON.stringify(landingImagesObj);
+
+// Optional Home Screen hero logo. The single-file build has no external
+// assets, so inline public/pocketrpg-logo.png as a base64 data URI under the
+// `homeLogo` global (matching src/utils/homeLogo.js, whose import is stripped
+// from this bundle). Falls back to null — and the crossed-swords crest — when
+// the file is absent.
+const logoPath = path.join(__dirname, 'public', 'pocketrpg-logo.png');
+const homeLogoJSON = fs.existsSync(logoPath)
+  ? JSON.stringify(`data:image/png;base64,${fs.readFileSync(logoPath).toString('base64')}`)
+  : 'null';
 
 // Concatenate all JS
 let allJS = '';
@@ -248,6 +262,7 @@ const minigamesData = ${minigamesJSON};
 const cluesData = ${cluesJSON};
 const collectionLogData = ${collectionLogJSON};
 const landingImages = ${landingImagesJSON};
+const homeLogo = ${homeLogoJSON};
 
 ${allJS}
 

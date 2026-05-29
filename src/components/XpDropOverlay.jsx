@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
-import { SKILL_ICONS } from '../utils/constants.js'
+import SkillIcon from './SkillIcon.jsx'
 
 /**
  * Floating "+X skill XP" numbers shown when an action grants XP. Non-blocking
@@ -64,7 +64,7 @@ export default function XpDropOverlay() {
           class="flex items-center gap-1 rounded-full border border-[#3a5a3a] bg-[#0d1a0d] px-3 py-1 text-[12px] font-bold text-[var(--color-hp-green)] shadow-lg"
           style={{ animation: `pocketrpg-xp-rise ${DROP_LIFETIME_MS}ms ease-out forwards` }}
         >
-          <span>{SKILL_ICONS[d.skill] || '⭐'}</span>
+          <SkillIcon skill={d.skill} size={14} />
           <span>+{d.amount.toLocaleString()} {d.skill} XP</span>
         </div>
       ))}

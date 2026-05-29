@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
+import SkillIcon from '../components/SkillIcon.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createThievingState, processThievingTick } from '../engine/thieving.js'
@@ -149,7 +150,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
         </div>
 
         <div class="mb-3 bg-[#111] rounded-lg px-3 py-2 text-[11px] text-[var(--color-parchment)] opacity-60 flex items-center gap-2">
-          <span>🗝️</span>
+          <SkillIcon skill="thieving" size={16} />
           <span>Pickpocket targets to earn coins and experience</span>
         </div>
 
@@ -200,7 +201,7 @@ export default function ThievingScreen({ initialNpcId, idleResult, onBack }) {
   return (
     <div class="h-full flex flex-col p-4">
       <div class="flex-1 flex flex-col items-center justify-center">
-        <span class="text-4xl mb-2">🗝️</span>
+        <SkillIcon skill="thieving" size={40} class="mb-2" />
         <h2 class="font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)] mb-1">
           {thieving.npc.name}
         </h2>

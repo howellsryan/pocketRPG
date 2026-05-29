@@ -3,6 +3,7 @@ import { useGame } from '../state/gameState.jsx'
 import { getPatchesForLocation, getPlantableCropOptions, getCropDef, formatGrowthTime, getGrowthProgress, getStageLabel, getEffectiveStage, plantCrop, harvestCrop } from '../engine/farming.ts'
 import { onTick } from '../engine/tick.js'
 import ProgressBar from '../components/ProgressBar.jsx'
+import SkillIcon from '../components/SkillIcon.jsx'
 import Modal from '../components/Modal.jsx'
 import farmingData from '../data/farming.json'
 
@@ -90,8 +91,8 @@ export default function FarmPatchView({ locationId, farmingLevel, onBack }) {
       </button>
 
       <div class="flex items-center justify-between mb-1">
-        <h2 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] capitalize">
-          🌾 {location?.name}
+        <h2 class="flex items-center gap-2 font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] capitalize">
+          <SkillIcon skill="farming" size={18} /> {location?.name}
         </h2>
         <span class="text-xs font-[var(--font-mono)] text-[var(--color-gold)]">Lv {farmingLevel}</span>
       </div>

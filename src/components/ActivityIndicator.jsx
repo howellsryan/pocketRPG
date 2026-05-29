@@ -1,5 +1,6 @@
 import { useGame } from '../state/gameState.jsx'
 import { SKILL_ICONS, SCREENS } from '../utils/constants.js'
+import SkillIcon from './SkillIcon.jsx'
 
 /**
  * Compact indicator for the currently running background task: the activity's
@@ -11,16 +12,16 @@ function describeTask(task) {
   if (!task) return null
   switch (task.type) {
     case 'skill':
-      return { icon: SKILL_ICONS[task.skill] || '🔨', screen: SCREENS.SKILLS, label: task.skill }
+      return { skill: task.skill, icon: SKILL_ICONS[task.skill] || '🔨', screen: SCREENS.SKILLS, label: task.skill }
     case 'gather':
       if (task.gatherTask?.oneShot || task.gatherTask?.isClue) return null
       return { icon: task.gatherTask?.icon || '🌿', screen: SCREENS.GATHER, label: task.gatherTask?.name || 'Gathering' }
     case 'agility':
-      return { icon: SKILL_ICONS.agility || '🏃', screen: SCREENS.AGILITY, label: 'Agility' }
+      return { skill: 'agility', icon: SKILL_ICONS.agility || '🏃', screen: SCREENS.AGILITY, label: 'Agility' }
     case 'thieving':
-      return { icon: SKILL_ICONS.thieving || '🗝️', screen: SCREENS.SKILLS, label: 'Thieving' }
+      return { skill: 'thieving', icon: SKILL_ICONS.thieving || '🗝️', screen: SCREENS.SKILLS, label: 'Thieving' }
     case 'hunter':
-      return { icon: SKILL_ICONS.hunter || '🪤', screen: SCREENS.SKILLS, label: 'Hunter' }
+      return { skill: 'hunter', icon: SKILL_ICONS.hunter || '🪤', screen: SCREENS.SKILLS, label: 'Hunter' }
     case 'quest':
       return { icon: '📜', screen: SCREENS.QUESTS, label: task.quest?.name || 'Quest' }
     case 'minigame':
@@ -76,10 +77,10 @@ export default function ActivityIndicator({ onNavigate }) {
         )}
       </svg>
       <span
-        class="text-[13px] leading-none"
+        class="flex items-center justify-center text-[13px] leading-none"
         style={hasProgress ? undefined : { animation: 'pocketrpg-activity-pulse 1.6s ease-in-out infinite' }}
       >
-        {info.icon}
+        {info.skill ? <SkillIcon skill={info.skill} size={16} title={info.label} /> : info.icon}
       </span>
     </button>
   )
