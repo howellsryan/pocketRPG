@@ -25,7 +25,7 @@ function SkillCard({ skill, level, progress, toNext, onClick }) {
   const isMax = level >= 99
   return (
     <button class="skill-card" onClick={() => onClick(skill)} aria-label={`${titleCase(skill)}, level ${level}`}>
-      <SkillEmblem class="skill-card__emblem" iconKey={art.icon} accent={art.accent} size={42} glow={0.5} />
+      <SkillEmblem class="skill-card__emblem" iconKey={art.icon} accent={art.accent} size={28} glow={0.5} />
       <div class="skill-card__top">
         <div class="skill-card__name">
           <span>{titleCase(skill)}</span>

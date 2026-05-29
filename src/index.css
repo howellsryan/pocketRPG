@@ -147,7 +147,7 @@ html, body, #app {
 
 .skill-card {
   position: relative; width: 100%; overflow: hidden; cursor: pointer; text-align: left;
-  border-radius: 14px; padding: 8px 10px; gap: 6px;
+  border-radius: 10px; padding: 3px 5px; gap: 2px;
   background: linear-gradient(150deg, #1a1813 0%, #100e0a 100%);
   border: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow: 0 6px 16px -12px rgba(0, 0, 0, 0.9);
@@ -159,16 +159,16 @@ html, body, #app {
 .skill-card__emblem { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 1; opacity: 0.9; }
 .skill-card__top { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .skill-card__name { display: flex; align-items: center; gap: 7px; }
-.skill-card__name span { font-size: 14px; font-weight: 800; letter-spacing: 0.01em; color: var(--color-parchment); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }
+.skill-card__name span { font-size: 10px; font-weight: 800; letter-spacing: 0.01em; color: var(--color-parchment); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }
 .skill-card__level {
-  flex-shrink: 0; font-family: var(--font-display); font-weight: 800; font-size: 22px; line-height: 1;
+  flex-shrink: 0; font-family: var(--font-display); font-weight: 800; font-size: 14px; line-height: 1;
   color: var(--color-gold-light); text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85), 0 0 14px rgba(240, 192, 64, 0.25);
 }
 .skill-card__bottom { position: relative; z-index: 2; }
 
 /* XP track (shared by cards + detail) */
 .xp-track {
-  height: 7px; border-radius: 6px; overflow: hidden;
+  height: 4px; border-radius: 3px; overflow: hidden;
   background: rgba(0, 0, 0, 0.55); border: 1px solid rgba(255, 255, 255, 0.07);
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
 }
@@ -178,7 +178,7 @@ html, body, #app {
   box-shadow: 0 0 8px rgba(60, 176, 67, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
   transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.xp-meta { margin-top: 5px; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.02em; color: var(--color-parchment); opacity: 0.42; text-align: center; }
+.xp-meta { margin-top: 1px; font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.02em; color: var(--color-parchment); opacity: 0.42; text-align: center; }
 .xp-meta--max { color: var(--color-gold-light); opacity: 0.85; letter-spacing: 0.2em; font-weight: 700; }
 
 /* Emblem primitive */
