@@ -1,4 +1,4 @@
-import { getDB, deleteDB } from './database.js'
+import { getDB, clearAllStores } from './database.js'
 import { INVENTORY_SIZE } from '../utils/constants.js'
 
 const SAVE_VERSION = 1
@@ -56,7 +56,7 @@ export function buildSavePayloadFromSnapshot(snapshot) {
 // restore and cloud-save pull.
 export async function applySavePayload(data, options = {}) {
   const { restoreLocalIdleMirrors = false } = options
-  await deleteDB()
+  await clearAllStores()
   const db = await getDB()
 
   if (data.player) await db.put('player', data.player, 'profile')
@@ -112,7 +112,7 @@ export async function applySavePayload(data, options = {}) {
 // switching to a different character so the new character doesn't inherit
 // IDB rows or idle-engine timers from the previous one.
 export async function wipeLocalSave() {
-  await deleteDB()
+  await clearAllStores()
   localStorage.removeItem('pocketrpg_backup')
   localStorage.removeItem('pocketrpg_lastTick')
   localStorage.removeItem('pocketrpg_activeTask')

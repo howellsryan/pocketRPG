@@ -1,3 +1,4 @@
+import { Component } from 'preact'
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { GameProvider, useGame } from './state/gameState.jsx'
 import { PvpProvider, usePvp } from './state/pvpState.jsx'
@@ -1106,26 +1107,6 @@ function GameApp() {
     }
   }
 
-  // Hard reset escape hatch for a stuck/failed boot. The cloud save is
-  // authoritative (the local IndexedDB save is only a cache), so wiping local
-  // state and re-pulling on the next login is a safe recovery. Auth is cleared
-  // first so we always land on the start screen even if the DB wipe wedges, and
-  // the DB wipe is time-boxed so a corrupt IndexedDB can't hang the reset. A
-  // full page reload guarantees a clean boot free of any wedged in-memory state.
-  async function handleResetAndRestart() {
-    try { clearAuth() } catch (_) {}
-    try { clearCollectionLogCache() } catch (_) {}
-    try { resetSyncState() } catch (_) {}
-    try {
-      await Promise.race([
-        wipeLocalSave(),
-        new Promise(resolve => setTimeout(resolve, 3000)),
-      ])
-    } catch (_) {}
-    try { closeDB() } catch (_) {}
-    window.location.reload()
-  }
-
   async function resolveConflict(useCloud) {
     if (!conflict) return
     if (useCloud) {
@@ -1858,7 +1839,7 @@ function GameApp() {
             <h2 className="font-[var(--font-display)] text-[var(--color-gold)] mb-2">Cloud save unavailable</h2>
             <p className="text-sm mb-4">{cloudLoadError}</p>
             <button onClick={() => { setGameReady(false); setCloudPhase('pending'); setCloudLoadError(null); initCloudAndSave() }} className="w-full mb-2 rounded-lg px-3 py-2 bg-[var(--color-gold)] text-black font-semibold">Retry</button>
-            <button onClick={handleResetAndRestart} className="w-full rounded-lg px-3 py-2 border border-[var(--color-void-border)]">Force Restart</button>
+            <button onClick={forceRestart} className="w-full rounded-lg px-3 py-2 border border-[var(--color-void-border)]">Force Restart</button>
           </div>
         </div>
       )
@@ -2396,12 +2377,63 @@ function GameApp() {
   )
 }
 
+// Hard reset escape hatch for a stuck/failed boot. The cloud save is
+// authoritative (the local IndexedDB save is only a cache), so wiping local
+// state and re-pulling on the next login is a safe recovery. Auth is cleared
+// first so we always land on the start screen even if the DB wipe wedges, and
+// the DB wipe is time-boxed so a corrupt IndexedDB can't hang the reset. A
+// full page reload guarantees a clean boot free of any wedged in-memory state.
+async function forceRestart() {
+  try { clearAuth() } catch (_) {}
+  try { clearCollectionLogCache() } catch (_) {}
+  try { resetSyncState() } catch (_) {}
+  try {
+    await Promise.race([
+      wipeLocalSave(),
+      new Promise(resolve => setTimeout(resolve, 3000)),
+    ])
+  } catch (_) {}
+  try { closeDB() } catch (_) {}
+  window.location.reload()
+}
+
+// Catches synchronous render/throw failures anywhere in the tree so a crash
+// during boot shows a recovery screen instead of a blank/frozen page. Async
+// hangs are handled separately by the boot watchdog inside GameApp.
+class BootErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { error: null }
+  }
+  componentDidCatch(error) {
+    console.error('[PocketRPG] Uncaught render error:', error)
+    this.setState({ error })
+  }
+  render() {
+    if (!this.state.error) return this.props.children
+    return (
+      <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: '#0f0f0f' }}>
+        <div style={{ width: '100%', maxWidth: '380px', background: '#1a1a1a', borderRadius: '20px', border: '1px solid #333', padding: '20px' }}>
+          <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '17px', color: '#d4af37', textAlign: 'center', marginBottom: '8px' }}>Something went wrong</h2>
+          <p style={{ fontSize: '12px', color: '#e8d5b0', opacity: 0.7, textAlign: 'center', lineHeight: 1.5, marginBottom: '16px' }}>
+            The game hit an unexpected error. Reload to try again, or force a restart to clear local data and return to the start screen.
+          </p>
+          <button onClick={() => window.location.reload()} style={{ width: '100%', padding: '13px', borderRadius: '12px', background: 'linear-gradient(135deg, #b8940e, #d4af37)', color: '#0f0f0f', fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '14px', border: 'none', cursor: 'pointer', marginBottom: '10px' }}>Reload</button>
+          <button onClick={forceRestart} style={{ width: '100%', padding: '13px', borderRadius: '12px', background: '#2a2a2a', border: '1px solid #3a3a3a', color: '#e8d5b0', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>Force Restart</button>
+        </div>
+      </div>
+    )
+  }
+}
+
 export default function App() {
   return (
-    <GameProvider>
-      <PvpProvider>
-        <GameApp />
-      </PvpProvider>
-    </GameProvider>
+    <BootErrorBoundary>
+      <GameProvider>
+        <PvpProvider>
+          <GameApp />
+        </PvpProvider>
+      </GameProvider>
+    </BootErrorBoundary>
   )
 }
