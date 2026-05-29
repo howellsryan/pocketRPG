@@ -108,7 +108,7 @@ describe('save payload snapshot', () => {
   it('does not restore local idle mirrors by default', async () => {
     const ls = { setItem: vi.fn(), removeItem: vi.fn() } as any
     globalThis.localStorage = ls
-    vi.spyOn(dbModule, 'deleteDB').mockResolvedValue(undefined as any)
+    vi.spyOn(dbModule, 'clearAllStores').mockResolvedValue(undefined as any)
     vi.spyOn(dbModule, 'getDB').mockResolvedValue({
       put: vi.fn(),
       transaction: vi.fn(() => ({ store: { put: vi.fn() }, done: Promise.resolve() })),

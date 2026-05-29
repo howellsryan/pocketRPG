@@ -10,6 +10,10 @@ const CHARACTER_NAME_KEY = 'pocketrpg_cloud_character_name'
 // Used to detect "I switched characters but IDB still holds the old one" and
 // wipe before loading, so characters never bleed into each other.
 const LOCAL_CHARACTER_KEY = 'pocketrpg_local_character_id'
+// Backstop timeout for all transactional API calls. Reads also have a tighter
+// 5s guard at the sync layer; this is the hard cap that aborts a genuinely hung
+// connection so it can't trap boot or wedge the save queue (inFlight) forever.
+const REQUEST_TIMEOUT_MS = 15_000
 const ACTIVE_MATCH_EVENT = 'pocketrpg:pvp-active-match'
 export const SAVE_REVISION_EVENT = 'pocketrpg:cloud-save-revision'
 export const CREDITS_UPDATED_EVENT = 'pocketrpg:credits-updated'
@@ -108,7 +112,21 @@ async function request(path, options = {}) {
     headers.set('X-Character-Id', String(characterId))
   }
 
-  const res = await fetch(apiUrl(path), { ...options, headers })
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  let res
+  try {
+    res = await fetch(apiUrl(path), { ...options, headers, signal: controller.signal })
+  } catch (err) {
+    if (err?.name === 'AbortError') {
+      const timeoutErr = new Error('request_timeout')
+      timeoutErr.status = 0
+      throw timeoutErr
+    }
+    throw err
+  } finally {
+    clearTimeout(timeoutId)
+  }
   if (res.status === 401) {
     clearAuth()
     const err = new Error('Not authenticated')
