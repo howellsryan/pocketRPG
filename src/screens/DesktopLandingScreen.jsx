@@ -12,6 +12,19 @@ import GameIcon from '../components/GameIcon.jsx'
 // single-file build (which concatenates every module at top level) stays free
 // of duplicate-identifier collisions with the mobile LandingScreen.
 
+const DL_LANDING_DIMS = {
+  'ss-stats':         { w: 560, h: 979  },
+  'ss-combat-select': { w: 560, h: 996  },
+  'ss-thieving':      { w: 560, h: 991  },
+  'ss-bank':          { w: 560, h: 987  },
+  'ss-quests':        { w: 560, h: 990  },
+  'ss-inventory':     { w: 560, h: 985  },
+  'ss-combat':        { w: 560, h: 994  },
+  'ss-farming':       { w: 560, h: 995  },
+  'ss-collection':    { w: 560, h: 998  },
+  'ss-trading':       { w: 560, h: 998  },
+}
+
 const DL_FEATURES = [
   {
     icon: 'crossed_swords', title: 'Bosses & Raids',
@@ -62,7 +75,9 @@ const DL_STEPS = [
 
 function DlEmblem({ size }) {
   if (homeLogo) {
-    return <img class="dl-emblem dl-emblem--logo" src={homeLogo} alt="PocketRPG" style={{ width: size, height: size }} />
+    return <img class="dl-emblem dl-emblem--logo" src={homeLogo} alt="PocketRPG"
+      style={{ width: size, height: size }} width={size} height={size}
+      loading="eager" decoding="async" />
   }
   return (
     <div class="dl-emblem" style={{ '--E': `${size}px`, width: size, height: size }} aria-hidden="true">
@@ -117,7 +132,7 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, emb
         </div>
       </header>
 
-      <main>
+      <div class="dl-main">
         {/* HERO */}
         <section class="dl-hero">
           <div class="dl-wrap dl-hero__grid">
@@ -138,9 +153,9 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, emb
               </div>
             </div>
             <div class="dl-cluster">
-              <div class="dl-device dl-device--back"><img src={landingImages['ss-combat']} alt="Boss fight in progress" /></div>
-              <div class="dl-device dl-device--back2"><img src={landingImages['ss-inventory']} alt="Full inventory grid" /></div>
-              <div class="dl-device dl-device--main"><img src={landingImages['ss-stats']} alt="Skills overview" /></div>
+              <div class="dl-device dl-device--back"><img src={landingImages['ss-combat']} alt="Boss fight in progress" width="560" height="994" loading="eager" decoding="async" /></div>
+              <div class="dl-device dl-device--back2"><img src={landingImages['ss-inventory']} alt="Full inventory grid" width="560" height="985" loading="eager" decoding="async" /></div>
+              <div class="dl-device dl-device--main"><img src={landingImages['ss-stats']} alt="Skills overview" width="560" height="979" loading="eager" decoding="async" /></div>
             </div>
           </div>
         </section>
@@ -166,7 +181,9 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, emb
               {DL_FEATURES.map(f => (
                 <div class="dl-feature dl-reveal" key={f.title}>
                   <div class="dl-feature__media">
-                    <div class="dl-frame"><img src={landingImages[f.img]} alt={f.title} /></div>
+                    <div class="dl-frame"><img src={landingImages[f.img]} alt={f.title}
+                      width={DL_LANDING_DIMS[f.img]?.w} height={DL_LANDING_DIMS[f.img]?.h}
+                      loading="lazy" decoding="async" /></div>
                   </div>
                   <div class="dl-feature__copy">
                     <div class="dl-feature__ico"><GameIcon iconKey={f.icon} color="#f0c040" size={32} title="" /></div>
@@ -211,7 +228,9 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, emb
           <div class="dl-gallery-wrap">
             <div class="dl-gallery">
               {DL_GALLERY.map(g => (
-                <div class="dl-shot" key={g}><img src={landingImages[g]} alt={g} /></div>
+                <div class="dl-shot" key={g}><img src={landingImages[g]} alt={g}
+                  width={DL_LANDING_DIMS[g]?.w} height={DL_LANDING_DIMS[g]?.h}
+                  loading="lazy" decoding="async" /></div>
               ))}
             </div>
           </div>
@@ -268,7 +287,7 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, emb
             </div>
           </div>
         </section>
-      </main>
+      </div>
 
       <footer class="dl-footer">
         <div class="dl-wrap">

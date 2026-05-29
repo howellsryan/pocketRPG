@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 const fs = require('fs');
 const path = require('path');
+const { spawnSync } = require('child_process');
+const esbuild = require('esbuild');
 
 const DIST = path.join(__dirname, 'dist_tmp');
 const SRC = path.join(__dirname, 'src');
@@ -215,38 +217,89 @@ for (const f of sourceFiles) {
   }
 }
 
+// ── Compile Tailwind CSS ──
+fs.mkdirSync(path.join(__dirname, '.tmp'), { recursive: true });
+const twBin = path.join(__dirname, 'node_modules', '.bin', 'tailwindcss');
+const twResult = spawnSync(twBin, [
+  '-i', path.join(__dirname, 'src', 'index.css'),
+  '-o', path.join(__dirname, '.tmp', 'app.css'),
+  '--minify',
+], { stdio: 'inherit', cwd: __dirname });
+if (twResult.status !== 0) {
+  console.error('Tailwind CLI failed. Ensure @tailwindcss/cli is installed.');
+  process.exit(1);
+}
+const compiledTailwindCSS = fs.readFileSync(path.join(__dirname, '.tmp', 'app.css'), 'utf-8');
+
+// ── Inline @font-face blocks from @fontsource (latin subset, no CDN) ──
+const FONT_FACES = [
+  { pkg: '@fontsource/cinzel',         family: 'Cinzel',         weights: [400, 700, 900] },
+  { pkg: '@fontsource/nunito',          family: 'Nunito',         weights: [400, 600, 700] },
+  { pkg: '@fontsource/jetbrains-mono', family: 'JetBrains Mono', weights: [400, 700]      },
+];
+let fontFaceCSS = '';
+for (const { pkg, family, weights } of FONT_FACES) {
+  const fontName = pkg.split('/')[1];
+  for (const weight of weights) {
+    const fname = `${fontName}-latin-${weight}-normal.woff2`;
+    const fpath = path.join(__dirname, 'node_modules', pkg, 'files', fname);
+    if (!fs.existsSync(fpath)) {
+      console.error(`Missing font: ${fpath}`);
+      process.exit(1);
+    }
+    const b64 = fs.readFileSync(fpath).toString('base64');
+    fontFaceCSS +=
+      `@font-face{font-family:'${family}';font-style:normal;font-weight:${weight};` +
+      `font-display:swap;src:url('data:font/woff2;base64,${b64}') format('woff2')}\n`;
+  }
+}
+
+// ── Bundle preact + idb via esbuild (eliminates esm.sh network dependency chain) ──
+const vendorBuildResult = esbuild.buildSync({
+  stdin: {
+    contents: [
+      `export{h,render,Fragment,createContext,Component}from'preact';`,
+      `export{createPortal}from'preact/compat';`,
+      `export{useState,useEffect,useRef,useMemo,useCallback,useContext}from'preact/hooks';`,
+      `export{openDB}from'idb';`,
+    ].join('\n'),
+    resolveDir: __dirname,
+    loader: 'js',
+  },
+  bundle: true,
+  format: 'esm',
+  minify: true,
+  platform: 'browser',
+  target: 'es2020',
+  write: false,
+});
+if (vendorBuildResult.errors.length > 0) {
+  console.error('esbuild vendor bundle failed:', vendorBuildResult.errors);
+  process.exit(1);
+}
+const vendorBundle = vendorBuildResult.outputFiles[0].text;
+
 // CSS
-const css = readSrc('index.css').replace('@import "tailwindcss";', '').trim();
+const customCSS = readSrc('index.css').replace('@import "tailwindcss";', '').trim();
+const css = fontFaceCSS + compiledTailwindCSS + '\n' + customCSS;
 
 const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>PocketRPG</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Nunito:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"><\/script>
-<script>
-  // Gate hover utilities behind @media (hover: hover) so tap-induced
-  // hover states do not stick on touch devices.
-  if (typeof tailwind !== 'undefined') {
-    tailwind.config = { future: { hoverOnlyWhenSupported: true } }
-  }
-<\/script>
+<meta name="description" content="PocketRPG — a tick-based idle fantasy RPG. Train 24 skills, fight bosses, and complete quests — progress continues whether the app is open or not.">
 <style>
 ${css}
 </style>
 </head>
 <body>
-<div id="app"></div>
+<main id="app"></main>
 <script type="module">
-import { h, render, Fragment, createContext, Component } from 'https://esm.sh/preact@10.25.4';
-import { createPortal } from 'https://esm.sh/preact@10.25.4/compat';
-import { useState, useEffect, useRef, useMemo, useCallback, useContext } from 'https://esm.sh/preact@10.25.4/hooks';
-import { openDB } from 'https://esm.sh/idb@8.0.2';
+${vendorBundle}
 
 // ── Inline JSON Data ──
 const gameIconsData = ${gameIconsJSON};
@@ -267,7 +320,7 @@ const homeLogo = ${homeLogoJSON};
 ${allJS}
 
 // ── Bootstrap ──
-render(h(App, null), document.getElementById('app'));
+render(h(App, null), document.getElementById('app') || document.querySelector('main'));
 <\/script>
 </body>
 </html>`;

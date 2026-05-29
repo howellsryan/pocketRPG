@@ -3,11 +3,25 @@ import { landingImages } from './landingImages.js'
 import { useIsDesktop } from '../hooks/useIsDesktop.js'
 import DesktopLandingScreen from './DesktopLandingScreen.jsx'
 
+const LANDING_DIMS = {
+  'ss-stats':         { w: 560, h: 979  },
+  'ss-combat-select': { w: 560, h: 996  },
+  'ss-thieving':      { w: 560, h: 991  },
+  'ss-bank':          { w: 560, h: 987  },
+  'ss-quests':        { w: 560, h: 990  },
+  'ss-inventory':     { w: 560, h: 985  },
+  'ss-combat':        { w: 560, h: 994  },
+  'ss-farming':       { w: 560, h: 995  },
+  'ss-collection':    { w: 560, h: 998  },
+  'ss-trading':       { w: 560, h: 998  },
+}
+
 const FEATURES = [
   {
     icon: '⚔️',
     title: 'Bosses & Raids',
     desc: 'God Wars Dungeon, Dragons Lair, Wilderness, and end-game Raids. Set your setup, then fight on autopilot.',
+    imgKey: 'ss-combat-select',
     img: landingImages['ss-combat-select'],
     imgAlt: 'Monster and boss selection screen',
   },
@@ -15,6 +29,7 @@ const FEATURES = [
     icon: '📈',
     title: '15+ Skills',
     desc: 'Level Attack, Thieving, Mining, Fishing and more from 1 to 99. XP ticks every 600ms — even when the screen is off.',
+    imgKey: 'ss-thieving',
     img: landingImages['ss-thieving'],
     imgAlt: 'Thieving skill with live XP and coin rates',
   },
@@ -22,6 +37,7 @@ const FEATURES = [
     icon: '🏦',
     title: 'Deep Economy',
     desc: 'A bank with hundreds of slots, a live Trading Post, and 221 Collection Log entries to hunt.',
+    imgKey: 'ss-bank',
     img: landingImages['ss-bank'],
     imgAlt: 'Bank filled with hundreds of stacked items',
   },
@@ -29,17 +45,18 @@ const FEATURES = [
     icon: '📜',
     title: '168 Quests',
     desc: 'Quest chains from Novice to Elite, each rewarding XP, items, and lore. Chase the max Quest Point cape.',
+    imgKey: 'ss-quests',
     img: landingImages['ss-quests'],
     imgAlt: 'Quest log showing completed quests',
   },
 ]
 
 const STRIP = [
-  { src: landingImages['ss-inventory'], alt: 'Full inventory' },
-  { src: landingImages['ss-combat'], alt: 'Boss fight in progress' },
-  { src: landingImages['ss-farming'], alt: 'Farming locations' },
-  { src: landingImages['ss-collection'], alt: 'Collection Log' },
-  { src: landingImages['ss-trading'], alt: 'Trading Post market' },
+  { key: 'ss-inventory',  src: landingImages['ss-inventory'],  alt: 'Full inventory' },
+  { key: 'ss-combat',     src: landingImages['ss-combat'],     alt: 'Boss fight in progress' },
+  { key: 'ss-farming',    src: landingImages['ss-farming'],    alt: 'Farming locations' },
+  { key: 'ss-collection', src: landingImages['ss-collection'], alt: 'Collection Log' },
+  { key: 'ss-trading',    src: landingImages['ss-trading'],    alt: 'Trading Post market' },
 ]
 
 export default function LandingScreen({ onGitHubLogin, onGoogleLogin, embedded, showBrowserHint, copied, onCopyLink }) {
@@ -88,7 +105,9 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, embedded, 
             src={landingImages['ss-stats']}
             alt="PocketRPG skills overview — Combat 102, Total Level 1457"
             class="w-full block"
+            width="560" height="979"
             loading="eager"
+            decoding="async"
           />
         </div>
       </section>
@@ -102,7 +121,9 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, embedded, 
           {FEATURES.map(f => (
             <div key={f.title} class="bg-[var(--color-void-light)] border border-[var(--color-void-border)] rounded-2xl overflow-hidden flex flex-col">
               <div class="overflow-hidden max-h-48">
-                <img src={f.img} alt={f.imgAlt} class="w-full object-cover object-top" loading="lazy" />
+                <img src={f.img} alt={f.imgAlt} class="w-full object-cover object-top"
+                     width={LANDING_DIMS[f.imgKey].w} height={LANDING_DIMS[f.imgKey].h}
+                     loading="lazy" decoding="async" />
               </div>
               <div class="p-3 flex flex-col gap-1">
                 <div class="text-xl">{f.icon}</div>
@@ -122,7 +143,9 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, embedded, 
         <div class="flex gap-3 overflow-x-auto px-4 pb-3 snap-x snap-mandatory">
           {STRIP.map(s => (
             <div key={s.src} class="flex-none w-36 snap-start rounded-xl overflow-hidden border border-[var(--color-void-border)] shadow-lg">
-              <img src={s.src} alt={s.alt} class="w-full block" loading="lazy" />
+              <img src={s.src} alt={s.alt} class="w-full block"
+                   width={LANDING_DIMS[s.key].w} height={LANDING_DIMS[s.key].h}
+                   loading="lazy" decoding="async" />
             </div>
           ))}
         </div>

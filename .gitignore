@@ -5,3 +5,4 @@ www/
 .wrangler/
 .dev.vars
 /index.html
+.tmp/
