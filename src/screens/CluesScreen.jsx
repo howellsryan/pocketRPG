@@ -15,6 +15,12 @@ import { applyCloudSave, requestCriticalPushSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 import { recordCollectionLogDrop, applyServerCollectionLogEntries } from '../cloud/collectionLog.js'
 import { isLoggedDrop } from '../engine/collectionLog.js'
+import { emitRewardReveal } from '../utils/rewardReveal.js'
+
+const clueRevealTitle = (task) => {
+  const level = task?.clueLevel || ''
+  return `${level.charAt(0).toUpperCase()}${level.slice(1)} Clue Reward`
+}
 
 const CLUE_TASKS = [
   {
@@ -131,8 +137,8 @@ export default function CluesScreen() {
             if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
             applyServerCollectionLogEntries(res?.collectionLogEntries || [])
             const granted = Array.isArray(res?.granted) ? res.granted : []
-            const rewardNames = granted.map(r => `${itemsData?.[r.itemId]?.name || CLUE_ITEM_NAMES[r.itemId] || r.itemId} ×${r.quantity}`).join(', ')
-            addToast(`${task.icon} Rewards: ${rewardNames || 'none'}`, 'success')
+            if (granted.length > 0) emitRewardReveal(clueRevealTitle(task), task.icon || '📜', granted)
+            else addToast(`${task.icon} Clue complete — no rewards.`, 'info')
           }).catch((err) => {
             addToast(`Clue claim failed: ${err?.message || 'server_error'}`, 'error')
           })
@@ -146,8 +152,7 @@ export default function CluesScreen() {
             if (isLoggedDrop(reward.itemId, 'clues', task.clueLevel)) recordCollectionLogDrop({ itemId: reward.itemId, sourceType: 'clues', sourceId: task.clueLevel })
           }
           requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.CLUE_REWARD)
-          const rewardNames = rewards.map(r => `${itemsData?.[r.itemId]?.name || CLUE_ITEM_NAMES[r.itemId] || r.itemId} ×${r.quantity}`).join(', ')
-          addToast(`${task.icon} Rewards: ${rewardNames}`, 'success')
+          emitRewardReveal(clueRevealTitle(task), task.icon || '📜', rewards)
         }
 
         const updated = {
@@ -177,7 +182,7 @@ export default function CluesScreen() {
     }
     taskRef.current = newState
     setLocalTask(newState)
-    setActiveTask({ type: 'gather', gatherTask: task, bankingEnabled: true })
+    setActiveTask({ type: 'clue', gatherTask: task, bankingEnabled: true })
   }
 
   const stopTask = () => {
@@ -188,7 +193,7 @@ export default function CluesScreen() {
 
   useEffect(() => {
     if (!activeTask) return
-    const globalGatherTask = globalActiveTask?.type === 'gather' ? globalActiveTask.gatherTask : null
+    const globalGatherTask = (globalActiveTask?.type === 'gather' || globalActiveTask?.type === 'clue') ? globalActiveTask.gatherTask : null
     if (!globalGatherTask || globalGatherTask.id !== activeTask.task?.id) {
       taskRef.current = null
       setLocalTask(null)

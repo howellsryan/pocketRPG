@@ -1,8 +1,9 @@
 import { useGame } from '../state/gameState.jsx'
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { CLOUD_SAVE_STATUS_EVENT } from '../cloud/sync.js'
+import ActivityIndicator from './ActivityIndicator.jsx'
 
-export default function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null, onBuyCredits = null, onMenuClick = null }) {
+export default function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null, onBuyCredits = null, onMenuClick = null, onNavigate = null }) {
   const { player, currentHP, getMaxHP } = useGame()
   const [cloudStatus, setCloudStatus] = useState('idle')
   const [showSavedToCloud, setShowSavedToCloud] = useState(false)
@@ -98,17 +99,17 @@ export default function Header({ activity, credits = 0, isCloudAccount = false, 
         <div class="flex-1 flex items-center justify-center pointer-events-none min-w-0">
           {!showSavedToCloud && (cloudStatus === 'pending' || cloudStatus === 'saving') && <div class="h-3.5 w-3.5 rounded-full border-2 border-[#555] border-t-[var(--color-gold)] animate-spin" aria-label="Saving to Cloud" />}
           {showSavedToCloud && (
-            <div class="flex items-center gap-1 text-[10px] font-semibold text-[var(--color-success)]" aria-label="Saved to Cloud">
-              <span>✓</span>
-              <span>Saved</span>
-            </div>
+            <span class="text-[13px] leading-none text-[var(--color-success)]" aria-label="Saved to Cloud" title="Saved to Cloud">💾</span>
           )}
         </div>
+
+        {/* Background activity indicator */}
+        <ActivityIndicator onNavigate={onNavigate} />
 
         {/* HP bar */}
         <div class="flex items-center gap-1.5">
           <span class="text-xs">❤️</span>
-          <div class="w-20 h-3 bg-[#222] rounded-full overflow-hidden border border-[#444]">
+          <div class="w-14 h-3 bg-[#222] rounded-full overflow-hidden border border-[#444]">
             <div
               class="h-full rounded-full transition-all duration-300"
               style={{ width: `${hpPct}%`, backgroundColor: hpColor }}

@@ -13,6 +13,7 @@ import {
 } from '../engine/quests.js'
 import { QUEST_QUEUE_MAX } from '../utils/constants.js'
 import questsData from '../data/quests.json'
+import { getActivityKey } from '../engine/activityRegistry.js'
 
 const COMPLEXITY_COLORS = {
   Novice:        '#7fbf7f',
@@ -31,6 +32,7 @@ export default function QuestsScreen() {
   const {
     stats, completedQuests, activeTask, setActiveTask,
     addToast, itemsData, questQueue, addQuestToQueue, removeFromQuestQueue, updateQuestQueue,
+    getActivityProgress,
   } = useGame()
 
   const [hideCompleted, setHideCompleted] = useState(false)
@@ -41,11 +43,17 @@ export default function QuestsScreen() {
 
   const startQuest = (quest) => {
     const state = createQuestState(quest)
+    const key = getActivityKey({ type: 'quest', quest })
+    const savedProgress = key ? getActivityProgress(key) : null
+    const ticksRemaining = savedProgress?.progressTicks > 0
+      ? Math.max(0, state.totalTicks - savedProgress.progressTicks)
+      : state.totalTicks
+    const resuming = savedProgress?.progressTicks > 0 && ticksRemaining > 0
     setActiveTask({
       type: 'quest',
       quest,
       totalTicks: state.totalTicks,
-      ticksRemaining: state.ticksRemaining,
+      ticksRemaining,
       startedAt: state.startedAt,
     })
     // Remove from queue if it was queued
@@ -53,7 +61,7 @@ export default function QuestsScreen() {
       removeFromQuestQueue(quest.id)
     }
     setSelectedQuest(null)
-    addToast(`📜 Started: ${quest.name}`, 'info')
+    addToast(resuming ? `📜 Resuming: ${quest.name}` : `📜 Started: ${quest.name}`, 'info')
   }
 
   const addToQueue = (quest) => {

@@ -53,12 +53,35 @@ const HELP_GUIDES = [
     title: 'Idle Progress & Skip 1h',
     icon: '💤',
     points: [
-      'Active tasks can continue while you are away.',
+      'Active tasks keep progressing while you are away (offline) and while you browse other in-app screens.',
       'Idle progress can apply to combat, gathering, skills, agility, thieving, hunter, and quests where supported.',
       'Some idle tasks consume supplies like runes, ammo, food, potions, or materials.',
-      'Skip 1h manually advances eligible active tasks.',
-      'If required supplies are missing, progress or rewards may be limited.',
-      'High-risk boss and raid content may have additional restrictions.'
+      'Skip 1h instantly advances your current active task by one hour.',
+      'Skip 1h is a cloud-account feature, needs an active task, and spends 1 credit (💎) per use.',
+      'Skip only charges a credit when there is meaningful progress to apply.',
+      'Boss and raid combat cannot be skipped, and missing supplies may limit progress or rewards.'
+    ]
+  },
+  {
+    title: 'Background Activities',
+    icon: '🌀',
+    points: [
+      'Skilling, gathering, agility, thieving, and hunter keep running while you view other screens.',
+      'The header shows a ring icon for the current background task; the ring fills as each action completes.',
+      'Tap the activity ring to jump straight back to that activity.',
+      'XP drops float on screen for background gains, so you can watch progress from the Inventory or Bank.',
+      'Items and rewards are applied live — open the Inventory to see gathered loot arrive.',
+      'Combat is not a background activity and runs only on the Combat screen.'
+    ]
+  },
+  {
+    title: 'Credits (💎)',
+    icon: '💎',
+    points: [
+      'Credits are a cloud-account currency shown by the 💎 pill in the header.',
+      'Tap the 💎 pill to purchase more credits.',
+      'Credits are spent on Skip 1h (1 credit per skip).',
+      'A skip with nothing meaningful to apply will not consume a credit.'
     ]
   },
   {
@@ -72,13 +95,13 @@ const HELP_GUIDES = [
     ]
   },
   { title: 'Store & Economy', icon: '🪙', points: ['Use coins to buy items and sell extra loot for upgrades.', 'Some items are visible but not buyable until requirements are met.', 'Quest items may need quest completion first.', 'Boss uniques and clue rewards must be earned from their activities.', 'Ironman has stricter shop access, and some minigame rewards unlock differently.'] },
-  { title: 'Skills Overview', icon: '🔨', points: ['Combat skills improve your fighting power.', 'Gathering skills collect raw resources.', 'Production skills turn resources into gear and supplies.', 'Utility skills support account progression and unlocks.', 'Some skills use standard action lists, while others have dedicated screens.'] },
+  { title: 'Skills Overview', icon: '🔨', points: ['Combat skills improve your fighting power.', 'Gathering skills collect raw resources.', 'Production skills turn resources into gear and supplies.', 'Utility skills support account progression and unlocks.', 'Some skills use standard action lists, while others have dedicated screens.', 'Gathering fills your inventory and stops when full — reach Construction 80 to auto-bank and keep gathering.', 'Auto-bank trips scale with Agility, from about 5 minutes at level 1 down to 10 seconds at level 99.'] },
   { title: 'Slayer', icon: '💀', points: ['Take Slayer tasks to fight assigned monsters.', 'Complete tasks for Slayer XP and Slayer points.', 'Spend points on unlocks that expand Slayer progression.', 'Some Slayer gear and unlocks improve efficiency on relevant targets.'] },
-  { title: 'Quests & Minigames', icon: '📜', points: ['Quests can have requirements and reward useful progression unlocks.', 'Quest progress can run in the background where supported.', 'Minigames can unlock unique rewards and progression options.', 'Some minigame rewards may later become purchasable or re-obtainable, depending on the activity.'] },
+  { title: 'Quests & Minigames', icon: '📜', points: ['Quests can have requirements and reward useful progression unlocks.', 'Quest progress can run in the background where supported.', 'Minigames can unlock unique rewards and progression options.', 'Completing a clue or minigame shows a reward card listing what you received.', 'Clue scrolls progress on the Clues screen; minigames can finish in the background.', 'Some minigame rewards may later become purchasable or re-obtainable, depending on the activity.'] },
   { title: 'Collection Log & Leaderboards', icon: '📖', points: ['Collection Log tracks important drops and reward milestones.', 'Boss, raid, clue, and minigame rewards may appear there.', 'Leaderboards show account progression and ranking snapshots.'] },
   { title: 'PvP Basics', icon: '🛡️', points: ['PvP is higher risk than normal PvE.', 'Learn invitations, matchmaking flow, and risk before entering.', 'Deaths in PvP can cause item or coin loss depending on current rules.', 'Bring proper food, prayer, potions, gear, and special attack setup before fighting players.'] },
   { title: 'Cloud Saves & Troubleshooting', icon: '☁️', points: ['Cloud saves sync progress for the selected account and character.', 'GitHub and Google sign-ins do not share character rosters.', 'If progress looks wrong, verify both provider and selected character first.', 'Try to avoid refreshing during critical combat or PvP moments.'] },
-  { title: 'Credits', icon: '🎨', points: ['Item icons by game-icons.net (CC BY 3.0). See the NOTICE file for full attribution.'] }
+  { title: 'Attribution', icon: '🎨', points: ['Item icons by game-icons.net (CC BY 3.0). See the NOTICE file for full attribution.'] }
 ]
 
 function CollapsibleGuide({ icon, title, points }) {

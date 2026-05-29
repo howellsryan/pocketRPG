@@ -5,6 +5,9 @@ import BurgerMenu from './components/BurgerMenu.jsx'
 import SideNav from './components/SideNav.jsx'
 import Header from './components/Header.jsx'
 import ToastContainer from './components/Toast.jsx'
+import XpDropOverlay from './components/XpDropOverlay.jsx'
+import RewardRevealOverlay from './components/RewardRevealOverlay.jsx'
+import { emitRewardReveal } from './utils/rewardReveal.js'
 import BuyCreditsModal from './components/BuyCreditsModal.jsx'
 import HomeScreen from './screens/HomeScreen.jsx'
 import StatsScreen from './screens/StatsScreen.jsx'
@@ -32,6 +35,9 @@ import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, 
 import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave } from './cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
+import { isBackground } from './engine/activityRegistry.js'
+import { isRunnableBackgroundTask, getActionTicksForTask, simulateTaskWindow, resultActions, isScreenRecentlyDriving } from './engine/activityRunner.js'
+import { resetActivityProgressSync } from './cloud/activityProgress.js'
 import { formatIdleTime, simulateIdleSkilling, simulateIdleGather, simulateIdleCombat, simulateIdleAgility, simulateIdleHPRegen } from './engine/idleEngine.js'
 import { triggerOneLifeDeath } from './utils/oneLifeDeath.js'
 import { defaultIdleCombatSetup } from './engine/idleSupplies.js'
@@ -495,9 +501,11 @@ function GameApp() {
   const equipmentRef = useRef(equipment)
   const inventoryRef = useRef(inventory)
   const itemsDataRef = useRef(itemsData)
+  const bankRef = useRef(bank)
   const questQueueRef = useRef(questQueue)
   const idleCombatSetupRef = useRef(idleCombatSetup)
   const currentHPRef = useRef(currentHP)
+  useEffect(() => { bankRef.current = bank }, [bank])
   useEffect(() => { idleCombatSetupRef.current = idleCombatSetup }, [idleCombatSetup])
   useEffect(() => { currentHPRef.current = currentHP }, [currentHP])
   useEffect(() => { completedQuestsRef.current = completedQuests }, [completedQuests])
@@ -652,7 +660,7 @@ function GameApp() {
               sim = { minigameTimeReduced: true, hoursRemaining: Math.ceil(newRemaining / 6000) }
             }
           } else if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
-          else if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
+          else if (savedTask.type === 'gather' || savedTask.type === 'clue')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
           else if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank, {
             currentHP: currentHPRef.current ?? getMaxHP(),
             idleFood: idleCombatSetupRef.current?.food || [],
@@ -769,7 +777,7 @@ function GameApp() {
             grantXP('slayer', sim.slayerXpGained)
           }
           // Apply items
-          if ((savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather') && sim.finalInventory) {
+          if ((savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather' || savedTask.type === 'clue') && sim.finalInventory) {
             updateInventory(sim.finalInventory)
             const bankedItems = sim.lootBanked || sim.itemsBanked || {}
             if (Object.keys(bankedItems).length > 0) {
@@ -781,7 +789,7 @@ function GameApp() {
           if (savedTask.type === 'combat' && savedTask.monster?.id) {
             recordCollectionLogDropsForIdleCombat(savedTask.monster.id, sim)
           }
-          if (savedTask.type === 'gather' && savedTask.gatherTask?.isClue) {
+          if ((savedTask.type === 'gather' || savedTask.type === 'clue') && savedTask.gatherTask?.isClue) {
             recordCollectionLogDropsForIdleClues(savedTask, sim)
           }
           // Apply agility coin reward directly to bank
@@ -853,6 +861,16 @@ function GameApp() {
           // Update HP from regen if applicable
           if (sim.hpAfterRegen !== undefined) {
             updateHP(sim.hpAfterRegen)
+          }
+
+          // A background skill/gather that exhausted its materials or filled the
+          // inventory stops — clear the task and tell the player why.
+          if ((savedTask.type === 'skill' || savedTask.type === 'gather') &&
+              (sim.stoppedReason === 'inventory_full' || sim.stoppedReason === 'out_of_materials')) {
+            setActiveTask(null)
+            activeTaskRef.current = null
+            try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+            addToast(sim.stoppedReason === 'inventory_full' ? 'Inventory full — gathering stopped.' : 'Out of materials!', 'error')
           }
 
           setIdleResult({ elapsedMs, task: savedTask, ...sim })
@@ -946,7 +964,9 @@ function GameApp() {
         const total = task.totalTicks ?? task.gatherTask.ticks
         const remaining = (task.ticksRemaining ?? total) - 1
         if (remaining <= 0) {
-          addToast(`${task.gatherTask.icon || '🎮'} ${task.gatherTask.name} complete!`, 'levelup', '🏆')
+          const mgRewards = getMinigameRewardEntries(task.gatherTask)
+          if (mgRewards.length > 0) emitRewardReveal(`${task.gatherTask.name} Complete!`, task.gatherTask.icon || '🎮', mgRewards)
+          else addToast(`${task.gatherTask.icon || '🎮'} ${task.gatherTask.name} complete!`, 'levelup', '🏆')
           setActiveTask(null)
           activeTaskRef.current = null
           try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
@@ -971,7 +991,9 @@ function GameApp() {
         const remaining = (task.ticksRemaining ?? total) - 1
         if (remaining <= 0) {
           const mgTask = task.minigameTask
-          addToast(`${mgTask.icon || '🎮'} ${mgTask.name} complete!`, 'levelup', '🏆')
+          const mgRewards = getMinigameRewardEntries(mgTask)
+          if (mgRewards.length > 0) emitRewardReveal(`${mgTask.name} Complete!`, mgTask.icon || '🎮', mgRewards)
+          else addToast(`${mgTask.icon || '🎮'} ${mgTask.name} complete!`, 'levelup', '🏆')
           setActiveTask(null)
           activeTaskRef.current = null
           try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
@@ -1178,6 +1200,7 @@ function GameApp() {
     setCharacter(null)
     resetSyncState()
     resetIdleStateSync()
+    resetActivityProgressSync()
     clearCollectionLogCache()
     setGameReady(false)
     setCloudPhase('auth')
@@ -1196,12 +1219,12 @@ function GameApp() {
   }
   // Navigate with optional action data
   const navigate = (scr, data) => {
-    // Navigating away stops any active screen-bound task (skilling, gathering,
-    // combat, agility, thieving) and clears the idle-engine keys so it won't
-    // re-process a cancelled task. Quests and minigames run in the background — preserve them.
-    const isGatherMinigame = activeTask?.type === 'gather' && activeTask?.gatherTask?.oneShot
-    const shouldPreserve = activeTask?.type === 'quest' || activeTask?.type === 'minigame' || isGatherMinigame
-    if (!shouldPreserve) {
+    // Every activity except combat persists across screens — skills and gathering
+    // keep accruing in the background. Only combat stops when the player leaves.
+    if (!isBackground(activeTask)) {
+      if (activeTask) {
+        addToast('You fled combat.', 'info')
+      }
       setActiveTask(null)
     }
     setActionData(data || null)
@@ -1213,6 +1236,124 @@ function GameApp() {
 
 
   const isSkippingRef = useRef(false)
+
+  // Apply one completed action's rewards from a background-runner sim result.
+  function applyBackgroundActionResult(task, result) {
+    if (result.xpGained) {
+      for (const [skill, xp] of Object.entries(result.xpGained)) {
+        if (skill !== 'combat' && skill !== 'any' && xp > 0) {
+          grantXP(skill, xp)
+          // XP-drop overlay reflects BACKGROUND progress only. On the activity's
+          // own screen the screen shows its own XP feedback, so we don't emit
+          // here when a screen is actively driving (it never reaches this path).
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('pocketrpg:xp-gain', { detail: { skill, amount: xp } }))
+          }
+        }
+      }
+    }
+    if ((task.type === 'skill' || task.type === 'gather') && result.finalInventory) {
+      updateInventory(result.finalInventory)
+      const banked = result.itemsBanked || {}
+      if (Object.keys(banked).length > 0) updateBankDirect(banked)
+      if (result.itemsConsumed && Object.keys(result.itemsConsumed).length > 0) {
+        const negated = {}
+        for (const [itemId, qty] of Object.entries(result.itemsConsumed)) negated[itemId] = -qty
+        updateBankDirect(negated)
+      }
+    }
+    // Coin rewards: alchemy (skill), agility and thieving.
+    if (result.coinsGained > 0) updateBankDirect({ coins: result.coinsGained })
+    // Hunter loot goes straight to the bank.
+    if (task.type === 'hunter' && Array.isArray(result.rewards) && result.rewards.length > 0) {
+      const banked = {}
+      for (const r of result.rewards) banked[r.itemId] = (banked[r.itemId] || 0) + r.quantity
+      updateBankDirect(banked)
+    }
+    if (result.dungeoneeringTokensGained > 0) awardDungeoneeringTokens(result.dungeoneeringTokensGained)
+  }
+
+  // A background task that can no longer make progress (out of materials /
+  // missing input, or inventory full with no auto-bank unlock) is cleared with
+  // a reason. A full inventory while auto-bank IS unlocked is NOT a stop — the
+  // runner keeps banking, so the sim never reports 'inventory_full' in that case.
+  function applyBackgroundStop(task, reason) {
+    setActiveTask(null)
+    activeTaskRef.current = null
+    try { localStorage.removeItem('pocketrpg_activeTask') } catch { /* non-fatal */ }
+    if (reason === 'inventory_full') {
+      addToast('Inventory full — gathering stopped.', 'error')
+    } else if (reason === 'missing_input') {
+      addToast('Out of supplies for gathering.', 'error')
+    } else {
+      addToast('Out of materials!', 'error')
+    }
+  }
+
+  // App-level background activity runner: progresses the active skill / gather /
+  // agility / thieving / hunter task on ANY in-app screen so XP and items apply
+  // live, not only while the activity's own screen is open. Gated to the visible
+  // tab so it never double-counts with the idle catch-up on hide/return, and it
+  // yields to a mounted activity screen that is already driving the same task.
+  //
+  // Ticks are accumulated (`pendingTicks`) and replayed through the idle sim so
+  // variable-cost steps — notably the agility-scaled auto-bank trip on a full
+  // inventory — get enough time to complete rather than being starved.
+  useEffect(() => {
+    if (!gameReady) return
+    const unsub = onTick(() => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+      if (isSkippingRef.current) return
+      if (isScreenRecentlyDriving()) return
+      const task = activeTaskRef.current
+      if (!isRunnableBackgroundTask(task)) return
+
+      const ctx = {
+        inventory: inventoryRef.current,
+        bank: bankRef.current,
+        stats: statsRef.current,
+        equipment: equipmentRef.current,
+        itemsData: itemsDataRef.current,
+      }
+      const totalTicks = getActionTicksForTask(task, ctx)
+      const pending = (Number(task.pendingTicks) || 0) + 1
+
+      const commit = (pendingTicks) => {
+        const next = { ...task, pendingTicks, totalTicks, ticksRemaining: Math.max(0, totalTicks - pendingTicks) }
+        activeTaskRef.current = next
+        setActiveTask(next)
+      }
+
+      // Below one action's worth of time the skilling/gather sims return null
+      // (indistinguishable from "out of materials"), so just keep accumulating.
+      if (pending < totalTicks) {
+        commit(pending)
+        return
+      }
+
+      const result = simulateTaskWindow(task, pending * 600, ctx)
+      const actions = resultActions(result)
+      if (result && actions > 0) applyBackgroundActionResult(task, result)
+
+      if (!result) {
+        applyBackgroundStop(task, task.gatherTask?.requiresItem ? 'missing_input' : 'out_of_materials')
+        return
+      }
+      if (result.stoppedReason === 'inventory_full') {
+        applyBackgroundStop(task, 'inventory_full')
+        return
+      }
+      if (result.stoppedReason === 'out_of_materials') {
+        applyBackgroundStop(task, 'out_of_materials')
+        return
+      }
+
+      // actions > 0 → reset and refill toward the next action; actions === 0
+      // means a bank trip is still pending, so keep the accumulated ticks.
+      commit(actions > 0 ? 0 : pending)
+    })
+    return unsub
+  }, [gameReady])
 
   // Wait for React to commit and run the stateRef-syncing effects in
   // gameState before snapshotting. grantXP / updateBankDirect etc. are
@@ -1441,7 +1582,7 @@ function GameApp() {
           }
         } else {
           if (savedTask.type === 'skill')   sim = simulateIdleSkilling(savedTask, elapsedMs, freshBank, freshEq, freshStats, itemsDataRef.current, freshInv)
-          if (savedTask.type === 'gather')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
+          if (savedTask.type === 'gather' || savedTask.type === 'clue')  sim = simulateIdleGather(savedTask, elapsedMs, freshInv, freshStats, itemsDataRef.current, freshBank)
           if (savedTask.type === 'combat')  sim = simulateIdleCombat(savedTask, elapsedMs, freshStats, freshEq, freshInv, itemsDataRef.current, freshSlayerTask, freshBank, {
             currentHP: currentHPRef.current ?? getMaxHP(),
             idleFood: idleCombatSetupRef.current?.food || [],
@@ -1502,7 +1643,7 @@ function GameApp() {
             grantXP('slayer', sim.slayerXpGained)
           }
           // Apply items
-          if ((savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather') && sim.finalInventory) {
+          if ((savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather' || savedTask.type === 'clue') && sim.finalInventory) {
             updateInventory(sim.finalInventory)
             const bankedItems = sim.lootBanked || sim.itemsBanked || {}
             if (Object.keys(bankedItems).length > 0) {
@@ -1514,7 +1655,7 @@ function GameApp() {
           if (savedTask.type === 'combat' && savedTask.monster?.id) {
             recordCollectionLogDropsForIdleCombat(savedTask.monster.id, sim)
           }
-          if (savedTask.type === 'gather' && savedTask.gatherTask?.isClue) {
+          if ((savedTask.type === 'gather' || savedTask.type === 'clue') && savedTask.gatherTask?.isClue) {
             recordCollectionLogDropsForIdleClues(savedTask, sim)
           }
           // Apply agility coin reward directly to bank
@@ -1545,6 +1686,13 @@ function GameApp() {
             // Long-form skill reward (e.g. Dungeoneering equipment unlock)
             // finished — clear the task so the user can start a new action.
             setActiveTask(null)
+          } else if ((savedTask.type === 'skill' || savedTask.type === 'gather') &&
+              (sim.stoppedReason === 'inventory_full' || sim.stoppedReason === 'out_of_materials')) {
+            // Skill/gather that ran out of materials or filled the inventory stops.
+            setActiveTask(null)
+            activeTaskRef.current = null
+            try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
+            addToast(sim.stoppedReason === 'inventory_full' ? 'Inventory full — gathering stopped.' : 'Out of materials!', 'error')
           } else if (sim.ticksRemaining !== undefined) {
             // Non-quest task — update progress if partial
             setActiveTask({
@@ -1748,12 +1896,14 @@ function GameApp() {
         onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')}
       />
       <div class="flex-1 flex flex-col min-w-0 min-h-0">
-        <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onMenuClick={() => setMenuOpen(true)} />
+        <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onMenuClick={() => setMenuOpen(true)} onNavigate={(s) => navigate(s)} />
         <ToastContainer />
         <main class="flex-1 overflow-hidden">
           {renderScreen()}
         </main>
       </div>
+      <XpDropOverlay />
+      <RewardRevealOverlay />
       <BurgerMenu
         open={menuOpen}
         onClose={() => setMenuOpen(false)}

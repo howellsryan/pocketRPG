@@ -15,6 +15,11 @@ import { CRITICAL_SAVE_REASONS, detectCountIncreases, detectLevelUps, detectSetG
 import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
 import { normaliseDungeoneeringTokens, isDungeoneeringRewardAction } from '../engine/dungeoneeringTokens.js'
+import { isBackground, getActivityKey } from '../engine/activityRegistry.js'
+import {
+  saveActivityProgress, getActivityProgress, hydrateActivityLedger,
+  fetchAndHydrateActivityProgress, clearActivityProgress, resetActivityProgressSync,
+} from '../cloud/activityProgress.js'
 import { getSlayerTaskReward } from '../engine/slayerRewards.js'
 import { defaultIdleCombatSetup, normaliseIdleCombatSetup } from '../engine/idleSupplies.js'
 import { migrateLegacyItemIds } from '../engine/itemMigrations.js'
@@ -24,7 +29,7 @@ const normalisePointCurrency = (value) => {
   return n > 0 ? n : 0
 }
 const CLOUD_ACTIVITY_HEARTBEAT_MS = 30_000
-const HEARTBEAT_ACTIVE_TASK_TYPES = new Set(['skill', 'gather', 'agility', 'thieving', 'hunter', 'minigame'])
+const HEARTBEAT_ACTIVE_TASK_TYPES = new Set(['skill', 'gather', 'clue', 'agility', 'thieving', 'hunter', 'minigame', 'quest'])
 
 const GameContext = createContext(null)
 
@@ -42,6 +47,7 @@ export function GameProvider({ children }) {
   const [idleCombatSetup, setIdleCombatSetupState] = useState(() => defaultIdleCombatSetup())
   const [autoBankLoot, setAutoBankLootState] = useState(true)
   const [activeTask, setActiveTaskState] = useState(null)
+  const activeTaskInternalRef = useRef(null) // tracks latest active task for flush in setActiveTask
   const [bankConfig, setBankConfig] = useState({ tabs: [], itemTabMap: {} })
   const [unlockedFeatures, setUnlockedFeatures] = useState(new Set())
   const [slayerTask, setSlayerTaskState] = useState(null)
@@ -67,6 +73,9 @@ export function GameProvider({ children }) {
   const slayerTasksCompletedRef = useRef(0)
   const completedQuestsRef = useRef(new Set())
   const questQueueRef = useRef([])
+
+  // Keep activeTaskInternalRef in sync with state (handles setActiveTaskState calls that bypass setActiveTask)
+  useEffect(() => { activeTaskInternalRef.current = activeTask }, [activeTask])
 
   // Keep refs in sync with state
   useEffect(() => { stateRef.current.stats = stats }, [stats])
@@ -127,6 +136,12 @@ export function GameProvider({ children }) {
         console.warn('[PocketRPG] fetchIdleState failed, using local fallback:', e?.message || e)
       }
     }
+    // Hydrate per-activity progress ledger from server (non-fatal)
+    try {
+      if (isCloudCharacter) await fetchAndHydrateActivityProgress()
+    } catch (e) {
+      console.warn('[PocketRPG] fetchAndHydrateActivityProgress failed:', e?.message || e)
+    }
     if (savedTask?.type === 'skill' && savedTask?.skill === 'dungeoneering' && isDungeoneeringRewardAction(savedTask?.action)) {
       savedTask = null
       localStorage.removeItem('pocketrpg_activeTask')
@@ -147,7 +162,7 @@ export function GameProvider({ children }) {
         try {
           if (savedTask.type === 'skill') {
             sim = simulateIdleSkilling(savedTask, elapsedMs, b, eq, s, itemsData, inv)
-          } else if (savedTask.type === 'gather') {
+          } else if (savedTask.type === 'gather' || savedTask.type === 'clue') {
             sim = simulateIdleGather(savedTask, elapsedMs, inv, s, itemsData, b)
           } else if (savedTask.type === 'combat') {
             const idleHpForLoad = savedHP != null ? savedHP : (s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10)
@@ -246,7 +261,7 @@ export function GameProvider({ children }) {
             await saveEquipment(eq)
           }
           // Apply items to inventory and bank
-          if ((savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather') && sim.finalInventory) {
+          if ((savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather' || savedTask.type === 'clue') && sim.finalInventory) {
             // Use the already-mutated inventory from simulation
             sim.finalInventory.forEach((slot, i) => { inv[i] = slot })
             // Apply any items banked during auto-bank trips
@@ -298,9 +313,8 @@ export function GameProvider({ children }) {
           }
           // Persist updated stats + bank/inventory to DB
           await saveAllStats(s)
-          if (savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather') {
+          if (savedTask.type === 'combat' || savedTask.type === 'skill' || savedTask.type === 'gather' || savedTask.type === 'clue') {
             await saveInventory(inv)
-            // Save bank if items were banked during auto-bank trips
             const bankedItems = sim.lootBanked || sim.itemsBanked || {}
             if (Object.keys(bankedItems).length > 0) {
               await saveBank(b)
@@ -637,6 +651,24 @@ export function GameProvider({ children }) {
   }, [])
 
   const setActiveTask = useCallback((task) => {
+    const outgoing = activeTaskInternalRef.current
+
+    // Flush outgoing background task's progress to the ledger before replacing it.
+    // This preserves partial progress so the player can resume later at the same point.
+    if (isBackground(outgoing)) {
+      const outKey = getActivityKey(outgoing)
+      if (outKey && (!task || getActivityKey(task) !== outKey)) {
+        const progressTicks = (outgoing.totalTicks != null && outgoing.ticksRemaining != null)
+          ? Math.max(0, outgoing.totalTicks - outgoing.ticksRemaining)
+          : 0
+        saveActivityProgress(outKey, {
+          progressTicks,
+          totalTicks: outgoing.totalTicks ?? null,
+        })
+      }
+    }
+
+    activeTaskInternalRef.current = task
     setActiveTaskState(task)
     // Synchronous localStorage write — safe from iOS background freeze
     if (task) {
@@ -895,6 +927,7 @@ export function GameProvider({ children }) {
     updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,
     markDirty, itemsData, updateHomeShortcuts, updateCombatStance,
     setActiveTask, updateBankDirect, getSnapshot, updateAutoBankLoot, updateBankConfig,
+    getActivityProgress, clearActivityProgress,
     isIronman: player?.is_ironman || false,
     isOneLife: player?.is_one_life || false
   }

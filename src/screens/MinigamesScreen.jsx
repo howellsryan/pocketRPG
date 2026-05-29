@@ -5,6 +5,7 @@ import SectionHeader from '../components/SectionHeader.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import { countItem } from '../engine/inventory.js'
 import minigamesData from '../data/minigames.json'
+import { getActivityKey } from '../engine/activityRegistry.js'
 
 function formatMinigameHours(hours) {
   if (hours === Math.floor(hours)) return `${hours}h`
@@ -14,17 +15,25 @@ function formatMinigameHours(hours) {
 export default function MinigamesScreen() {
   const {
     inventory, bank, equipment, activeTask, setActiveTask, unlockedMinigameItems,
+    getActivityProgress, addToast,
   } = useGame()
 
   const startMinigame = (task) => {
+    const key = getActivityKey({ type: 'minigame', minigameTask: task })
+    const savedProgress = key ? getActivityProgress(key) : null
+    const ticksRemaining = savedProgress?.progressTicks > 0
+      ? Math.max(0, task.ticks - savedProgress.progressTicks)
+      : task.ticks
+    const resuming = savedProgress?.progressTicks > 0 && ticksRemaining > 0
     setActiveTask({
       type: 'minigame',
       minigameTask: task,
       bankingEnabled: true,
       totalTicks: task.ticks,
-      ticksRemaining: task.ticks,
+      ticksRemaining,
       startedAt: Date.now(),
     })
+    if (resuming) addToast(`🎮 Resuming: ${task.name}`, 'info')
   }
 
   const stopMinigame = () => {

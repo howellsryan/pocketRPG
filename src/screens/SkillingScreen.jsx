@@ -4,12 +4,13 @@ import Modal from '../components/Modal.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import { getActionProgress } from '../hooks/useActionTick.js'
-import { SKILL_ICONS, STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS, formatDropChance } from '../utils/constants.js'
+import { SKILL_ICONS, STUB_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, SCREENS, formatDropChance, GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createSkillingState, processSkillingTick, getAvailableActions, checkBurn, getEffectiveToolActionTicks, hasToolForSkill, getEquippedSkillXpMultiplier } from '../engine/skilling.js'
-import { addItem, removeItem, countItem } from '../engine/inventory.js'
+import { addItem, removeItem, countItem, canFit } from '../engine/inventory.js'
 import { hasRequiredRunes, getRunesToConsume } from '../engine/runes.js'
 import { onTick } from '../engine/tick.js'
+import { markScreenTick } from '../engine/activityRunner.js'
 import { formatNumber } from '../utils/helpers.js'
 import { calculateDungeoneeringTokensForAction, getDungeoneeringRewardCost, canAffordDungeoneeringReward } from '../engine/dungeoneeringTokens.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
@@ -137,10 +138,12 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   useEffect(() => {
     if (!skilling || !skilling.active) return
     skillingRef.current = skilling
+    markScreenTick() // claim the task before the App-level runner's next tick
 
     const unsub = onTick(() => {
       const state = skillingRef.current
       if (!state || !state.active || state.stopped) return
+      markScreenTick()
 
       const { skillingState, events } = processSkillingTick(state)
       skillingRef.current = skillingState
@@ -150,6 +153,38 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
           // Check materials and runes
           const action = ev.action
           const newInv = [...inventoryRef.current]
+
+          // Gathering skills (mining/woodcutting/fishing) deposit into the
+          // inventory. When full, stop unless the Construction unlock enables
+          // bank trips. Returns false when gathering stopped (caller must bail).
+          const isGatheringSkill = GATHERING_SKILLS.includes(state.skill)
+          const bankWhenFull = getLevelFromXP(stats.construction?.xp || 0) >= GATHER_AUTOBANK_CONSTRUCTION_LEVEL
+          const depositGathered = (inv, drops) => {
+            if (!canFit(inv, drops, itemsData)) {
+              if (bankWhenFull) {
+                const bankUpdates = {}
+                for (let i = 0; i < inv.length; i++) {
+                  if (!inv[i]) continue
+                  bankUpdates[inv[i].itemId] = (bankUpdates[inv[i].itemId] || 0) + inv[i].quantity
+                  inv[i] = null
+                }
+                if (Object.keys(bankUpdates).length > 0) updateBankDirect(bankUpdates)
+              } else {
+                updateInventory(inv)
+                skillingRef.current = { ...skillingState, active: false, stopped: true }
+                setSkilling(null)
+                setSelectedAction(null)
+                setSelectedAlchemyItem(null)
+                setActiveTask(null)
+                addToast('Inventory full!', 'error')
+                return false
+              }
+            }
+            for (const [itemId, qty] of Object.entries(drops)) {
+              addItem(inv, itemId, qty, itemsData[itemId]?.stackable || false)
+            }
+            return true
+          }
 
           // Check and consume runes (for magic spells)
           if (action.runeReq) {
@@ -267,25 +302,40 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
               addToast(`Alchemized ${alchItem.name} for ${alchValue.toLocaleString()} coins`, 'success')
             }
           } else if (action.product) {
-            // Add product — goes to bank directly
             const qty = action.productQty || 1
-            updateBankDirect({ [action.product]: qty })
+            if (isGatheringSkill) {
+              // Gathered resources fill the inventory; stop or bank-trip on full.
+              if (!depositGathered(newInv, { [action.product]: qty })) return
+              updateInventory(newInv)
+            } else {
+              // Production output goes to the bank directly.
+              updateBankDirect({ [action.product]: qty })
+              if (action.materials) updateInventory(newInv)
+            }
           } else if (action.dropTable) {
             // Roll drops from drop table
-            const bankUpdates = {}
+            const drops = {}
             for (const drop of action.dropTable) {
               if (Math.random() < drop.chance) {
                 const qty = Array.isArray(drop.quantity)
                   ? Math.floor(Math.random() * (drop.quantity[1] - drop.quantity[0] + 1)) + drop.quantity[0]
                   : drop.quantity
-                bankUpdates[drop.itemId] = (bankUpdates[drop.itemId] || 0) + qty
+                drops[drop.itemId] = (drops[drop.itemId] || 0) + qty
               }
             }
-            if (Object.keys(bankUpdates).length > 0) updateBankDirect(bankUpdates)
+            if (isGatheringSkill) {
+              if (Object.keys(drops).length > 0) {
+                if (!depositGathered(newInv, drops)) return
+              }
+              updateInventory(newInv)
+            } else {
+              if (Object.keys(drops).length > 0) updateBankDirect(drops)
+              if (action.materials) updateInventory(newInv)
+            }
+          } else if (action.materials) {
+            // Still update inventory if materials were consumed
+            updateInventory(newInv)
           }
-
-          // Still update inventory if materials were consumed
-          if (action.materials) updateInventory(newInv)
 
           // Grant XP
           const xpMultiplier = getEquippedSkillXpMultiplier(state.skill, equipment, itemsData)
