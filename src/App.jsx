@@ -6,6 +6,8 @@ import SideNav from './components/SideNav.jsx'
 import Header from './components/Header.jsx'
 import ToastContainer from './components/Toast.jsx'
 import XpDropOverlay from './components/XpDropOverlay.jsx'
+import RewardRevealOverlay from './components/RewardRevealOverlay.jsx'
+import { emitRewardReveal } from './utils/rewardReveal.js'
 import BuyCreditsModal from './components/BuyCreditsModal.jsx'
 import HomeScreen from './screens/HomeScreen.jsx'
 import StatsScreen from './screens/StatsScreen.jsx'
@@ -962,7 +964,9 @@ function GameApp() {
         const total = task.totalTicks ?? task.gatherTask.ticks
         const remaining = (task.ticksRemaining ?? total) - 1
         if (remaining <= 0) {
-          addToast(`${task.gatherTask.icon || '🎮'} ${task.gatherTask.name} complete!`, 'levelup', '🏆')
+          const mgRewards = getMinigameRewardEntries(task.gatherTask)
+          if (mgRewards.length > 0) emitRewardReveal(`${task.gatherTask.name} Complete!`, task.gatherTask.icon || '🎮', mgRewards)
+          else addToast(`${task.gatherTask.icon || '🎮'} ${task.gatherTask.name} complete!`, 'levelup', '🏆')
           setActiveTask(null)
           activeTaskRef.current = null
           try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
@@ -987,7 +991,9 @@ function GameApp() {
         const remaining = (task.ticksRemaining ?? total) - 1
         if (remaining <= 0) {
           const mgTask = task.minigameTask
-          addToast(`${mgTask.icon || '🎮'} ${mgTask.name} complete!`, 'levelup', '🏆')
+          const mgRewards = getMinigameRewardEntries(mgTask)
+          if (mgRewards.length > 0) emitRewardReveal(`${mgTask.name} Complete!`, mgTask.icon || '🎮', mgRewards)
+          else addToast(`${mgTask.icon || '🎮'} ${mgTask.name} complete!`, 'levelup', '🏆')
           setActiveTask(null)
           activeTaskRef.current = null
           try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
@@ -1897,6 +1903,7 @@ function GameApp() {
         </main>
       </div>
       <XpDropOverlay />
+      <RewardRevealOverlay />
       <BurgerMenu
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
