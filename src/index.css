@@ -151,7 +151,7 @@ html, body, #app {
 
 .skill-card {
   position: relative; width: 100%; overflow: hidden; cursor: pointer; text-align: left;
-  border-radius: 14px; min-height: 96px; padding: 11px 12px 12px;
+  border-radius: 14px; padding: 9px 11px; gap: 8px;
   background: linear-gradient(150deg, #1a1813 0%, #100e0a 100%);
   border: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow: 0 6px 16px -12px rgba(0, 0, 0, 0.9);

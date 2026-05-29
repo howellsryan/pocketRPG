@@ -644,7 +644,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
           if (needsTool && !hasTool) {
             return (
               <div class="mt-10 flex flex-col items-center justify-center gap-2 text-center">
-                <span class="text-4xl opacity-30">{selectedSkill === 'mining' ? '⚒️' : selectedSkill === 'woodcutting' ? '🪓' : '🎣'}</span>
+                <SkillIcon skill={selectedSkill} size={40} class="opacity-30" />
                 <p class="text-sm font-semibold text-[#ff6b6b]">No tool available</p>
                 <p class="text-xs text-[var(--color-parchment)] opacity-50">
                   {selectedSkill === 'mining'

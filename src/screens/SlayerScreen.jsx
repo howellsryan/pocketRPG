@@ -1,4 +1,5 @@
 import { useGame } from '../state/gameState.jsx'
+import SkillIcon from '../components/SkillIcon.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
 import monstersData from '../data/monsters.json'
 import itemsData from '../data/items.json'
@@ -198,8 +199,8 @@ export default function SlayerScreen({ onBack, onNavigate }) {
       </button>
 
       {/* Header */}
-      <h2 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] mb-0.5">
-        💀 Slayer
+      <h2 class="flex items-center gap-2 font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] mb-0.5">
+        <SkillIcon skill="slayer" size={18} /> Slayer
       </h2>
       <p class="text-xs text-[var(--color-parchment)] opacity-40 mb-3">
         Level {slayerLevel} · Combat {combatLevel} · {slayerPoints.toLocaleString()} points · {slayerTasksCompleted.toLocaleString()} tasks completed

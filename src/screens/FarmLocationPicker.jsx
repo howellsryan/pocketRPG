@@ -1,4 +1,5 @@
 import farmingData from '../data/farming.json'
+import SkillIcon from '../components/SkillIcon.jsx'
 import { getReadyPatchSummaryForLocation } from '../engine/farming.ts'
 
 const patchTypeLabels = {
@@ -35,7 +36,7 @@ export default function FarmLocationPicker({ farmingLevel, farming, onSelectLoca
       </div>
 
       <div class="mb-3 bg-[#111] rounded-lg px-3 py-2 text-[11px] text-[var(--color-parchment)] opacity-60 flex items-center gap-2">
-        <span>🌾</span>
+        <SkillIcon skill="farming" size={16} />
         <span>Plant seeds at farms and harvest crops over time</span>
       </div>
 

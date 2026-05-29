@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
+import SkillIcon from '../components/SkillIcon.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createSkillingState, processSkillingTick } from '../engine/skilling.js'
 import { countItem, removeItem } from '../engine/inventory.js'
@@ -129,7 +130,7 @@ export default function ConstructionScreen({ onBack }) {
     return (
       <div class="h-full flex flex-col p-4">
         <div class="flex-1 flex flex-col items-center justify-center">
-          <span class="text-4xl mb-2">🏠</span>
+          <SkillIcon skill="construction" size={40} class="mb-2" />
           <h2 class="font-[var(--font-display)] text-lg font-bold text-[var(--color-gold)] mb-1">
             {skilling.action.name}
           </h2>
@@ -171,8 +172,8 @@ export default function ConstructionScreen({ onBack }) {
         ← Back
       </button>
 
-      <h2 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] mb-1">
-        🏠 Construction
+      <h2 class="flex items-center gap-2 font-[var(--font-display)] text-base font-bold text-[var(--color-gold)] mb-1">
+        <SkillIcon skill="construction" size={18} /> Construction
       </h2>
       <p class="text-xs text-[var(--color-parchment)] opacity-40 mb-4">Level {constructionLevel}</p>
 
