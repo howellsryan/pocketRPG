@@ -1,42 +1,43 @@
 import { useRef } from 'preact/hooks'
+import { landingImages } from './landingImages.js'
 
 const FEATURES = [
   {
     icon: '⚔️',
     title: 'Bosses & Raids',
     desc: 'God Wars Dungeon, Dragons Lair, Wilderness, and end-game Raids. Set your setup, then fight on autopilot.',
-    img: '/landing/ss-combat-select.webp',
+    img: landingImages['ss-combat-select'],
     imgAlt: 'Monster and boss selection screen',
   },
   {
     icon: '📈',
     title: '15+ Skills',
     desc: 'Level Attack, Thieving, Mining, Fishing and more from 1 to 99. XP ticks every 600ms — even when the screen is off.',
-    img: '/landing/ss-thieving.webp',
+    img: landingImages['ss-thieving'],
     imgAlt: 'Thieving skill with live XP and coin rates',
   },
   {
     icon: '🏦',
     title: 'Deep Economy',
     desc: 'A bank with hundreds of slots, a live Trading Post, and 221 Collection Log entries to hunt.',
-    img: '/landing/ss-bank.webp',
+    img: landingImages['ss-bank'],
     imgAlt: 'Bank filled with hundreds of stacked items',
   },
   {
     icon: '📜',
     title: '168 Quests',
     desc: 'Quest chains from Novice to Elite, each rewarding XP, items, and lore. Chase the max Quest Point cape.',
-    img: '/landing/ss-quests.webp',
+    img: landingImages['ss-quests'],
     imgAlt: 'Quest log showing completed quests',
   },
 ]
 
 const STRIP = [
-  { src: '/landing/ss-inventory.webp', alt: 'Full inventory' },
-  { src: '/landing/ss-combat.webp', alt: 'Boss fight in progress' },
-  { src: '/landing/ss-farming.webp', alt: 'Farming locations' },
-  { src: '/landing/ss-collection.webp', alt: 'Collection Log' },
-  { src: '/landing/ss-trading.webp', alt: 'Trading Post market' },
+  { src: landingImages['ss-inventory'], alt: 'Full inventory' },
+  { src: landingImages['ss-combat'], alt: 'Boss fight in progress' },
+  { src: landingImages['ss-farming'], alt: 'Farming locations' },
+  { src: landingImages['ss-collection'], alt: 'Collection Log' },
+  { src: landingImages['ss-trading'], alt: 'Trading Post market' },
 ]
 
 export default function LandingScreen({ onGitHubLogin, onGoogleLogin, embedded, showBrowserHint, copied, onCopyLink }) {
@@ -68,7 +69,7 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, embedded, 
         </button>
         <div class="w-full max-w-[280px] rounded-2xl overflow-hidden border border-[var(--color-gold-dim)] shadow-2xl">
           <img
-            src="/landing/ss-stats.webp"
+            src={landingImages['ss-stats']}
             alt="PocketRPG skills overview — Combat 102, Total Level 1457"
             class="w-full block"
             loading="eager"
