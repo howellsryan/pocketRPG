@@ -236,6 +236,8 @@ html, body, #app {
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor; mask-composite: exclude;
 }
+.dl-emblem--logo { border-radius: 50%; object-fit: contain; box-shadow: none; background: none; flex-shrink: 0; }
+.dl-emblem--logo::before { content: none; }
 .dl-emblem__art { position: absolute; filter: drop-shadow(0 0 4px rgba(240,192,64,0.5)); }
 .dl-emblem__shield { position: absolute; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.6)); }
 .dl-brand { display: flex; align-items: center; gap: 12px; }

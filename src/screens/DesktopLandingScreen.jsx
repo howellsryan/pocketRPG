@@ -1,5 +1,6 @@
 import { useEffect } from 'preact/hooks'
 import { landingImages } from './landingImages.js'
+import { homeLogo } from '../utils/homeLogo.js'
 import { getSkillArt } from '../utils/skillArt.js'
 import GameIcon from '../components/GameIcon.jsx'
 
@@ -60,6 +61,9 @@ const DL_STEPS = [
 ]
 
 function DlEmblem({ size }) {
+  if (homeLogo) {
+    return <img class="dl-emblem dl-emblem--logo" src={homeLogo} alt="PocketRPG" style={{ width: size, height: size }} />
+  }
   return (
     <div class="dl-emblem" style={{ '--E': `${size}px`, width: size, height: size }} aria-hidden="true">
       <GameIcon iconKey="shield" color="#7d8a99" size={Math.round(size * 0.52)} class="dl-emblem__shield" title="" />
