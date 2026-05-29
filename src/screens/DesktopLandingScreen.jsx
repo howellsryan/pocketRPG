@@ -3,11 +3,15 @@ import { landingImages } from './landingImages.js'
 import { getSkillArt } from '../utils/skillArt.js'
 import GameIcon from '../components/GameIcon.jsx'
 
-// Wide marketing landing for desktop (≥1024px). Mirrors the Claude "Desktop
-// Landing" design, built on the real product copy, screenshots, vendored
-// game-icons, and the live GitHub/Google auth handlers.
+// Wide marketing landing for desktop (≥768px). Mirrors the Claude "Desktop
+// Landing" design, built on the real product copy, landing screenshots,
+// vendored game-icons, and the live GitHub/Google auth handlers.
+//
+// All top-level identifiers are DL_-prefixed and all CSS classes dl-* so the
+// single-file build (which concatenates every module at top level) stays free
+// of duplicate-identifier collisions with the mobile LandingScreen.
 
-const FEATURES = [
+const DL_FEATURES = [
   {
     icon: 'crossed_swords', title: 'Bosses & Raids',
     desc: "God Wars Dungeon, Dragon's Lair, the Wilderness, and end-game Raids. Lock in your setup, then fight on autopilot while the ticks roll.",
@@ -30,7 +34,7 @@ const FEATURES = [
   },
 ]
 
-const SKILLS_BAND = [
+const DL_SKILLS = [
   ['attack', 'Attack'], ['strength', 'Strength'], ['defence', 'Defence'], ['hitpoints', 'Hitpoints'],
   ['ranged', 'Ranged'], ['magic', 'Magic'], ['prayer', 'Prayer'], ['mining', 'Mining'],
   ['woodcutting', 'Woodcut'], ['fishing', 'Fishing'], ['farming', 'Farming'], ['smithing', 'Smithing'],
@@ -39,9 +43,9 @@ const SKILLS_BAND = [
   ['slayer', 'Slayer'], ['construction', 'Construct.'], ['fletching', 'Fletching'], ['dungeoneering', 'Dungeon.'],
 ]
 
-const GALLERY = ['ss-inventory', 'ss-combat', 'ss-farming', 'ss-collection', 'ss-trading', 'ss-stats']
+const DL_GALLERY = ['ss-inventory', 'ss-combat', 'ss-farming', 'ss-collection', 'ss-trading', 'ss-stats']
 
-const STATS = [
+const DL_STATS = [
   ['600ms', 'Game tick'],
   ['24', 'Skills to 99'],
   ['168', 'Quests'],
@@ -49,13 +53,13 @@ const STATS = [
   ['∞', 'Offline progress'],
 ]
 
-const STEPS = [
+const DL_STEPS = [
   ['Pick an activity', 'Choose a skill to train, a boss to fight, or a quest to chase. Set your loadout once.'],
   ['Progress on a tick', 'The world advances on a deterministic 600ms tick — XP, drops, and rewards accrue whether the app is open or closed.'],
   ['Come back richer', 'Idle time is simulated when you return. Cloud saves keep your roster in sync across every device.'],
 ]
 
-function Emblem({ size }) {
+function DlEmblem({ size }) {
   return (
     <div class="dl-emblem" style={{ '--E': `${size}px`, width: size, height: size }} aria-hidden="true">
       <GameIcon iconKey="shield" color="#7d8a99" size={Math.round(size * 0.52)} class="dl-emblem__shield" title="" />
@@ -64,13 +68,15 @@ function Emblem({ size }) {
   )
 }
 
-const GitHubMark = () => (
-  <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="dl-btn__ico">
-    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
-  </svg>
-)
+function DlGitHubMark() {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="dl-btn__ico">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+    </svg>
+  )
+}
 
-export default function DesktopLandingScreen({ onSignIn, onGoogleSignIn, authLoading, authError }) {
+export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, embedded, showBrowserHint, copied, onCopyLink }) {
   useEffect(() => {
     const els = document.querySelectorAll('.dl-reveal')
     if (typeof IntersectionObserver === 'undefined') {
@@ -91,7 +97,7 @@ export default function DesktopLandingScreen({ onSignIn, onGoogleSignIn, authLoa
       <header class="dl-nav">
         <div class="dl-wrap dl-nav__inner">
           <a class="dl-brand" href="#dl-top">
-            <Emblem size={40} />
+            <DlEmblem size={40} />
             <span class="dl-word dl-gold">PocketRPG</span>
           </a>
           <nav class="dl-nav__links">
@@ -138,7 +144,7 @@ export default function DesktopLandingScreen({ onSignIn, onGoogleSignIn, authLoa
         {/* STAT STRIP */}
         <div class="dl-strip">
           <div class="dl-wrap dl-strip__inner">
-            {STATS.map(s => (
+            {DL_STATS.map(s => (
               <div class="dl-stat" key={s[1]}><b>{s[0]}</b><span>{s[1]}</span></div>
             ))}
           </div>
@@ -153,7 +159,7 @@ export default function DesktopLandingScreen({ onSignIn, onGoogleSignIn, authLoa
               <p>A full fantasy MMO-style progression loop, distilled into menus that respect your time.</p>
             </div>
             <div class="dl-features">
-              {FEATURES.map(f => (
+              {DL_FEATURES.map(f => (
                 <div class="dl-feature dl-reveal" key={f.title}>
                   <div class="dl-feature__media">
                     <div class="dl-frame"><img src={landingImages[f.img]} alt={f.title} /></div>
@@ -179,7 +185,7 @@ export default function DesktopLandingScreen({ onSignIn, onGoogleSignIn, authLoa
               <p>Every skill ticks live and idles offline. Combat, gathering, production, and utility — pick your path to the max cape.</p>
             </div>
             <div class="dl-skills__grid">
-              {SKILLS_BAND.map(([skill, label]) => (
+              {DL_SKILLS.map(([skill, label]) => (
                 <div class="dl-skchip dl-reveal" key={skill}>
                   <GameIcon iconKey={getSkillArt(skill).icon} color="#e8c25a" size={30} title={label} />
                   <span>{label}</span>
@@ -200,7 +206,7 @@ export default function DesktopLandingScreen({ onSignIn, onGoogleSignIn, authLoa
           </div>
           <div class="dl-gallery-wrap">
             <div class="dl-gallery">
-              {GALLERY.map(g => (
+              {DL_GALLERY.map(g => (
                 <div class="dl-shot" key={g}><img src={landingImages[g]} alt={g} /></div>
               ))}
             </div>
@@ -216,10 +222,10 @@ export default function DesktopLandingScreen({ onSignIn, onGoogleSignIn, authLoa
               <p>PocketRPG is simulation-first. Set your intent, and a deterministic engine does the grinding.</p>
             </div>
             <div class="dl-steps">
-              {STEPS.map((s, i) => (
+              {DL_STEPS.map((s, i) => (
                 <div class="dl-step dl-reveal" key={s[0]}>
                   <div class="dl-step__n">{i + 1}</div>
-                  {i < STEPS.length - 1 && <div class="dl-step__line" />}
+                  {i < DL_STEPS.length - 1 && <div class="dl-step__line" />}
                   <h4>{s[0]}</h4>
                   <p>{s[1]}</p>
                 </div>
@@ -232,18 +238,28 @@ export default function DesktopLandingScreen({ onSignIn, onGoogleSignIn, authLoa
         <section class="dl-cta-band" id="dl-play">
           <div class="dl-wrap">
             <div class="dl-cta dl-reveal">
-              <Emblem size={72} />
+              <DlEmblem size={72} />
               <h2 class="dl-gold">Start your adventure</h2>
               <p>Free account. Progress saved to the cloud.<br />Play across all your devices.</p>
               <div class="dl-auth">
-                <button class="dl-btn dl-btn--github dl-btn--lg" onClick={onSignIn} disabled={authLoading}>
-                  <GitHubMark />{authLoading ? 'Signing in…' : 'Continue with GitHub'}
+                <button class="dl-btn dl-btn--github dl-btn--lg" onClick={onGitHubLogin}>
+                  <DlGitHubMark />Continue with GitHub
                 </button>
-                <button class="dl-btn dl-btn--google dl-btn--lg" onClick={onGoogleSignIn} disabled={authLoading}>
+                <button class="dl-btn dl-btn--google dl-btn--lg" onClick={onGoogleLogin}>
                   <span class="dl-gg">G</span>Continue with Google
                 </button>
               </div>
-              {authError && <p class="dl-auth__error">{authError}</p>}
+              {embedded && (
+                <div class="dl-embed-hint">
+                  <div class="dl-embed-hint__title">⚠️ Google sign-in needs your real browser</div>
+                  <p>You're in an in-app browser, which Google blocks. Open this page in Safari or Chrome. GitHub works as-is.</p>
+                  {showBrowserHint && (
+                    <button type="button" class="dl-embed-hint__copy" onClick={onCopyLink}>
+                      {copied ? '✓ Link copied' : '🔗 Copy link to open in browser'}
+                    </button>
+                  )}
+                </div>
+              )}
               <p class="dl-fineprint">GitHub and Google accounts are kept separate — signing in with a different provider gives you a different character roster.</p>
             </div>
           </div>
@@ -254,7 +270,7 @@ export default function DesktopLandingScreen({ onSignIn, onGoogleSignIn, authLoa
         <div class="dl-wrap">
           <div class="dl-foot">
             <div class="dl-foot__brand">
-              <a class="dl-brand" href="#dl-top"><Emblem size={36} /><span class="dl-word dl-gold">PocketRPG</span></a>
+              <a class="dl-brand" href="#dl-top"><DlEmblem size={36} /><span class="dl-word dl-gold">PocketRPG</span></a>
               <p>A menu-driven, tick-based fantasy idle RPG. Built mobile-first, offline-first, and free to play.</p>
             </div>
             <div class="dl-foot__cols">

@@ -349,6 +349,11 @@ html, body, #app {
 .dl-gg { width: 20px; height: 20px; border-radius: 50%; display: inline-grid; place-items: center; font-weight: 800; font-size: 12px; color: #fff; background: conic-gradient(from -45deg, #ea4335 0 25%, #fbbc05 25% 50%, #34a853 50% 75%, #4285f4 75% 100%); }
 .dl-auth__error { margin-top: 18px; font-size: 14px; color: #ff6b6b; font-weight: 600; }
 .dl-fineprint { margin-top: 22px; font-size: 13px; opacity: 0.42; line-height: 1.5; max-width: 46ch; margin-left: auto; margin-right: auto; }
+.dl-embed-hint { margin: 22px auto 0; max-width: 46ch; padding: 14px 16px; border-radius: 14px; text-align: left; background: #1a1200; border: 1px solid var(--gold-deep); }
+.dl-embed-hint__title { font-size: 13px; font-weight: 800; color: var(--gold); margin-bottom: 6px; }
+.dl-embed-hint p { margin: 0; font-size: 13px; line-height: 1.5; opacity: 0.8; }
+.dl-embed-hint__copy { margin-top: 12px; width: 100%; padding: 10px; border-radius: 10px; font-size: 13px; cursor: pointer; color: var(--parchment); background: rgba(255,255,255,0.03); border: 1px solid var(--border); }
+.dl-embed-hint__copy:hover { border-color: var(--gold); }
 
 /* Footer */
 .dl-footer { border-top: 1px solid var(--border); padding: 48px 0 56px; }

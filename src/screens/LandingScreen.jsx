@@ -1,5 +1,7 @@
 import { useRef } from 'preact/hooks'
 import { landingImages } from './landingImages.js'
+import { useIsDesktop } from '../hooks/useIsDesktop.js'
+import DesktopLandingScreen from './DesktopLandingScreen.jsx'
 
 const FEATURES = [
   {
@@ -42,9 +44,23 @@ const STRIP = [
 
 export default function LandingScreen({ onGitHubLogin, onGoogleLogin, embedded, showBrowserHint, copied, onCopyLink }) {
   const authRef = useRef(null)
+  const isDesktop = useIsDesktop()
 
   function scrollToAuth() {
     authRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  if (isDesktop) {
+    return (
+      <DesktopLandingScreen
+        onGitHubLogin={onGitHubLogin}
+        onGoogleLogin={onGoogleLogin}
+        embedded={embedded}
+        showBrowserHint={showBrowserHint}
+        copied={copied}
+        onCopyLink={onCopyLink}
+      />
+    )
   }
 
   return (
