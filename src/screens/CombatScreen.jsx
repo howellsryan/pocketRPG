@@ -100,6 +100,30 @@ const COMBAT_CATEGORIES = [
     icon: '⚡',
     ids: ['blighted_gauntlet'],
   },
+  {
+    key: 'sunken_crypts',
+    label: 'Sunken Crypts',
+    icon: '🪦',
+    ids: ['gravehusk_brute', 'boneclaw_revenant', 'shroudwraith_specter'],
+  },
+  {
+    key: 'ashveil_highlands',
+    label: 'Ashveil Highlands',
+    icon: '🌿',
+    ids: ['stonegale_elemental', 'cindermaw_serpent', 'thornhide_colossus'],
+  },
+  {
+    key: 'ironhold_fortress',
+    label: 'Ironhold Fortress',
+    icon: '⚒️',
+    ids: ['ironclad_guardian', 'emberhowl_warlord'],
+  },
+  {
+    key: 'verdant_wilds',
+    label: 'Verdant Wilds',
+    icon: '🌲',
+    ids: ['gravethorn_drake', 'razorwing_harpy'],
+  },
 ]
 
 const MONSTER_ICONS = {
@@ -125,7 +149,11 @@ const MONSTER_ICONS = {
   crazy_archaeologist: '📜', king_black_dragon: '👑', venomcoil_matriarch: '🐍', ember_tyrant: '🌋', ashen_crucible: '🌋', blighted_gauntlet: '⚡',
   tekton: '🔨', vespula: '🦟', muttadile: '🦷', the_great_olm: '🏛️',
   the_maiden_of_sugadinti: '🩸', pestilent_bloat: '🤢', nylocas_vasilias: '🕷️',
-  sotetseg: '🔮', xarpus: '☠️', verzik_vitur: '👑'
+  sotetseg: '🔮', xarpus: '☠️', verzik_vitur: '👑',
+  gravehusk_brute: '💀', boneclaw_revenant: '🦴', shroudwraith_specter: '👻',
+  stonegale_elemental: '🪨', cindermaw_serpent: '🐍', thornhide_colossus: '🌳',
+  ironclad_guardian: '⚙️', emberhowl_warlord: '🪓',
+  gravethorn_drake: '🦎', razorwing_harpy: '🦅'
 }
 
 class PvpCombatErrorBoundary extends Component {
@@ -374,7 +402,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             slice_and_dice: '🦀🦀🦀🦀 Slice and Dice',
             lunge: '🔰 The Block',
             triple_hit: '🪨🪨🪨 Quake',
-            descent_of_darkness: '🏹🏹 Descent of Darkness'
+            descent_of_darkness: '🏹🏹 Descent of Darkness',
+            soul_leech: `🩸 Soul Leech (+${ev.healAmount || 0} HP)`,
+            gale_shot: ev.stunned ? '💨 Gale Shot (staggered!)' : '💨 Gale Shot',
+            molten_crush: ev.defenceReducedBy > 0 ? `🌋 Molten Crush (-${ev.defenceReducedBy} Defence)` : '🌋 Molten Crush',
+            volley: '🌿🌿🌿 Volley'
           }
           const label = specLabels[ev.specType] || '⚡ Special Attack'
           setLog(prev => [...prev.slice(-20), {
@@ -382,7 +414,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             type: 'special',
             time: Date.now()
           }])
-          if ((ev.specType === 'healing_blade' || ev.specType === 'toxic_siphon') && ev.healAmount > 0) {
+          if ((ev.specType === 'healing_blade' || ev.specType === 'toxic_siphon' || ev.specType === 'soul_leech') && ev.healAmount > 0) {
             const maxHP = getMaxHP()
             const newHP = Math.min(hpRef.current + ev.healAmount, maxHP)
             updateHP(newHP)

@@ -16,6 +16,10 @@ export const PVP_SPECIAL_ATTACK_LABELS = {
   lunge: '🔰 The Block',
   triple_hit: '🪨🪨🪨 Quake',
   descent_of_darkness: '🏹🏹 Descent of Darkness',
+  soul_leech: '🩸 Soul Leech',
+  gale_shot: '💨 Gale Shot',
+  molten_crush: '🌋 Molten Crush',
+  volley: '🌿🌿🌿 Volley',
 }
 
 export const SUPPORTED_PVP_SPECIAL_ATTACK_TYPES = new Set(Object.keys(PVP_SPECIAL_ATTACK_LABELS))

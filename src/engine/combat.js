@@ -1413,6 +1413,88 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       break
     }
 
+    case 'soul_leech': {
+      // Boneclaw Rapier — two stab hits at 100% max hit; heals for 100% of second hit's damage
+      const styleBonuses = getMeleeStyleBonuses(state.stance)
+      const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
+      const maxHit = meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength)
+      const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
+      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      const h1 = rollDamage(acc, maxHit)
+      const h2 = rollDamage(acc, maxHit)
+      const rawTotal = h1 + h2
+      const actual = Math.min(rawTotal, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const healAmount = h2 > 0 ? Math.min(h2, actual) : 0
+      const xpSkills = _meleeXP(state.stance, actual)
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits: [h1, h2], totalDamage: actual, specType: 'soul_leech', healAmount, monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'gale_shot': {
+      // Stonegale Bow — guaranteed ranged hit at 140% max hit; stuns monster for 1 attack cycle
+      const styleBonus = getRangedStyleBonus(state.stance)
+      const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
+      const maxHit = Math.floor(rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength) * 1.4)
+      const damage = randInt(1, Math.max(1, maxHit))
+      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      state.monsterAttackTimer += (monster.attackSpeed || 4)
+      const xpSkills = { ranged: actual * RANGED_XP_PER_DAMAGE, hitpoints: Math.floor(actual * HP_XP_PER_DAMAGE) }
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'gale_shot', stunned: true, monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'molten_crush': {
+      // Cindermaw Maul — 125% crush max hit; on hit, reduces monster Defence level by 20%
+      const styleBonuses = getMeleeStyleBonuses(state.stance)
+      const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
+      const maxHit = Math.floor(meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength) * 1.25)
+      const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
+      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      const damage = rollDamage(acc, maxHit)
+      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      let defenceReducedBy = 0
+      if (actual > 0) {
+        const currentDefence = Math.max(0, monster.stats.defence || 0)
+        defenceReducedBy = Math.floor(currentDefence * 0.2)
+        monster.stats.defence = currentDefence - defenceReducedBy
+      }
+      const xpSkills = _meleeXP(state.stance, actual)
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'molten_crush', defenceReducedBy, monsterHP: monster.currentHP })
+      break
+    }
+
+    case 'volley': {
+      // Thornspine Shortbow — three rapid ranged shots at 70% max hit each
+      const styleBonus = getRangedStyleBonus(state.stance)
+      const effRng = effectiveRanged(playerStats.ranged, 0, 1.0, styleBonus)
+      const maxHit = Math.floor(rangedMaxHit(effRng, bonuses.otherBonus.rangedStrength) * 0.7)
+      const atkRoll = maxAttackRoll(effRng, bonuses.attackBonus.ranged || 0)
+      const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus.ranged || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      const hits = [rollDamage(acc, maxHit), rollDamage(acc, maxHit), rollDamage(acc, maxHit)]
+      const rawTotal = hits[0] + hits[1] + hits[2]
+      const actual = Math.min(rawTotal, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const xpSkills = { ranged: actual * RANGED_XP_PER_DAMAGE, hitpoints: Math.floor(actual * HP_XP_PER_DAMAGE) }
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits, totalDamage: actual, specType: 'volley', monsterHP: monster.currentHP })
+      break
+    }
+
     default:
       return { combatState, events: [] }
   }
