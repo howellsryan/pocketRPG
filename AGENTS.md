@@ -51,6 +51,17 @@
   - else: `attackRoll / (2 * (defRoll + 1))`
 - Auto-fight restart delay after kill: 1.2s.
 
+### Monster max hit — stats are the single source of truth
+- A monster's max hit is **always derived from its stats**, never authored as a standalone number. The engine computes it from the offensive stat matching the monster's `attackStyle`:
+  - `ranged` → `stats.ranged`
+  - `magic` → `stats.magic`
+  - melee (`stab`/`slash`/`crush`) → `stats.strength`
+  - Formula (same as the player's): `floor(0.5 + (stat + 8) * ((strengthBonus || 0) + 64) / 640)`.
+- **Do NOT add a top-level `maxHit` field to a monster.** It is not read by the combat engine for normal monsters; tune the relevant offensive stat (and `strengthBonus`) instead so the derived value matches the intended hit. A regression test (`tests/monster-maxhit-by-style.test.ts`) enforces that the raid bosses carry no override.
+- **Accuracy is independent of the damage stat.** Monster attack rolls read `stats.magic || stats.attack`, not `stats.strength`/`stats.ranged`. So raising a ranged/melee monster's damage stat changes only its max hit, not its hit chance — exploit this to retune damage without touching difficulty-via-accuracy.
+- **Only exception — multi-form / phased bosses** (e.g. Olm, Verzik, Nylocas, Sotetseg): each form declares a per-form `maxHit` inside its `forms.<key>` block, which the engine copies into the runtime-only `formMaxHit`. This is the *one* place a literal max hit is authored, because forms do not carry their own per-form stat block. Never set top-level `maxHit` even on these bosses.
+- When changing the max-hit formula or the stat-selection logic in `src/engine/combat.js` / `src/engine/idleEngine.js`, keep both call sites in sync and update `tests/monster-maxhit-by-style.test.ts`.
+
 ## 7) Special Attacks
 - PvE special energy (`combatState.specialAttackEnergy`) is 0–100.
 - PvE behavior: starts each fight at 100, drains on use, refills on kill.
@@ -77,6 +88,7 @@ Schema:
 ```
 
 ## 8) Drops & Data Authoring
+- **New monsters: stats are the source of truth for damage.** Set `attackStyle` plus the matching offensive stat (`stats.strength` for melee, `stats.ranged` for ranged, `stats.magic` for magic) so the engine derives the intended max hit — do **not** add a top-level `maxHit` field. See §6 "Monster max hit — stats are the single source of truth" for the formula and the multi-form exception.
 - Before adding a monster drop, ensure every referenced item exists in `src/data/items.json`.
 - **Item Naming**: All item `name` fields must use **Title Case** (each word capitalized), e.g., "Bronze Dagger", "Oak Logs", "Iron Ore".
 - Stackables (coins/runes/arrows): quantity as `[min, max]`.
