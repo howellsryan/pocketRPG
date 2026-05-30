@@ -821,14 +821,12 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const acc = hitChance(monsterAtkRoll, defRoll)
       // Max hit precedence:
       //  1. per-form maxHit (multi-form bosses)
-      //  2. explicit top-level maxHit override
-      //  3. derived from the offensive stat that matches the attack style —
+      //  2. derived from the offensive stat that matches the attack style —
       //     ranged attacks scale with Ranged, magic with Magic, melee with Strength.
+      //     This is the single source of truth for non-multi-form monsters.
       let monsterMaxHit
       if (monster.formMaxHit != null) {
         monsterMaxHit = monster.formMaxHit
-      } else if (monster.maxHit != null) {
-        monsterMaxHit = monster.maxHit
       } else {
         const damageStat = effectiveAttackStyle === 'ranged'
           ? monster.stats.ranged

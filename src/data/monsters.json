@@ -4926,7 +4926,6 @@
     "attackStyle": "magic",
     "attackBonus": 0,
     "strengthBonus": 0,
-    "maxHit": 36,
     "defenceBonus": {
       "stab": 0,
       "slash": 0,
@@ -4952,7 +4951,7 @@
     "hitpoints": 1500,
     "stats": {
       "attack": 100,
-      "strength": 100,
+      "strength": 109,
       "defence": 100,
       "magic": 75,
       "ranged": 1
@@ -4961,7 +4960,6 @@
     "attackStyle": "crush",
     "attackBonus": 100,
     "strengthBonus": 100,
-    "maxHit": 30,
     "defenceBonus": {
       "stab": 20,
       "slash": -20,
@@ -5170,13 +5168,12 @@
       "strength": 1,
       "defence": 250,
       "magic": 1,
-      "ranged": 200
+      "ranged": 492
     },
     "attackSpeed": 4,
     "attackStyle": "ranged",
     "attackBonus": 0,
     "strengthBonus": 0,
-    "maxHit": 50,
     "defenceBonus": {
       "stab": 0,
       "slash": 0,
@@ -5299,7 +5296,7 @@
     "hitpoints": 500,
     "stats": {
       "attack": 132,
-      "strength": 153,
+      "strength": 147,
       "defence": 140,
       "magic": 50,
       "ranged": 1
@@ -5308,7 +5305,6 @@
     "attackStyle": "crush",
     "attackBonus": 130,
     "strengthBonus": 150,
-    "maxHit": 52,
     "defenceBonus": {
       "stab": 80,
       "slash": 80,

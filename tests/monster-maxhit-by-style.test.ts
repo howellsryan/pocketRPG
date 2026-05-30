@@ -5,11 +5,15 @@
 // (and raid bosses authoring an ignored top-level maxHit) capped at 1 damage.
 //
 // The engine now derives max hit from the offensive stat matching the attack
-// style (ranged→Ranged, magic→Magic, melee→Strength), and honours an explicit
-// top-level `maxHit` override. These tests pin that contract.
+// style (ranged→Ranged, magic→Magic, melee→Strength). This derivation is the
+// single source of truth for non-multi-form monsters — there is no top-level
+// `maxHit` override. These tests pin that contract.
 
 import { describe, expect, it, afterEach, vi } from 'vitest'
 import { createCombatState, processCombatTick } from '../src/engine/combat.js'
+import monstersData from '../src/data/monsters.json'
+
+const monsters = monstersData as Record<string, any>
 
 const itemsData: any = {}
 const equipment: any = {}
@@ -89,14 +93,22 @@ describe('monster max hit derives from the style-appropriate stat', () => {
     expect(dmg).toBe(expectedMaxHit(230))
   })
 
-  it('explicit top-level maxHit overrides the stat-derived value', () => {
-    // Raid bosses (Tekton, Xarpus, Maiden, Pestilent Bloat) author maxHit directly.
-    const monster = baseMonster({
-      attackStyle: 'ranged',
-      maxHit: 50,
-      stats: { attack: 1, strength: 1, defence: 50, magic: 1, ranged: 200 },
-    })
-    expect(forceMonsterMaxHit(monster)).toBe(50)
+  it('raid bosses derive their max hit from stats with no top-level override', () => {
+    // Tekton, Xarpus, the Maiden and the Pestilent Bloat used to author a
+    // top-level maxHit. That damage is now baked into the style-appropriate stat
+    // and the override field is gone, so the derivation is the only source.
+    const expected: Record<string, number> = {
+      the_maiden_of_sugadinti: 36, // magic 350
+      xarpus: 50, // ranged 492
+      pestilent_bloat: 30, // strength 109
+      tekton: 52, // strength 147
+    }
+    for (const [id, maxHit] of Object.entries(expected)) {
+      const boss = monsters[id]
+      expect(boss, `${id} missing from monsters.json`).toBeTruthy()
+      expect(boss.maxHit, `${id} should not carry a top-level maxHit`).toBeUndefined()
+      expect(forceMonsterMaxHit({ ...boss }), `${id} max hit`).toBe(maxHit)
+    }
   })
 
   it('strengthBonus still scales magic/ranged max hit', () => {
