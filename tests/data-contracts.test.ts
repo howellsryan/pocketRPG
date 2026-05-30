@@ -98,6 +98,28 @@ const EXPECTED_BOSS_UNIQUE_ITEM_IDS = new Set([
   'cinderforged_helm',
   'sovereigns_cinderplate',
   'sovereigns_cindergreaves',
+
+  // New low-tier bosses (Sunken Crypts / Ashveil Highlands / Ironhold Fortress / Verdant Wilds)
+  'gravehusk_helm',
+  'gravehusk_platebody',
+  'boneclaw_rapier',
+  'boneclaw_shield',
+  'shroud_robes_top',
+  'shroud_staff',
+  'stonegale_bow',
+  'stonegale_coif',
+  'cindermaw_maul',
+  'cindermaw_scale_body',
+  'thornhide_platelegs',
+  'thornhide_gauntlets',
+  'thornspine_shortbow',
+  'drake_leather_body',
+  'ironclad_longsword',
+  'ironclad_helm',
+  'emberhowl_axe',
+  'emberhowl_boots',
+  'razorwing_crossbow',
+  'razorwing_vambraces',
 ])
 describe('data contracts', () => {
   it('item ids match keys and equipment slots are valid when present', () => {

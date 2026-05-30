@@ -256,6 +256,96 @@
             "ashen_sovereigns_edge",
             "ashen_slayer_helm"
           ]
+        },
+        {
+          "id": "gravehusk_brute",
+          "label": "Gravehusk Brute",
+          "icon": "💀",
+          "items": [
+            "gravehusk_helm",
+            "gravehusk_platebody"
+          ]
+        },
+        {
+          "id": "boneclaw_revenant",
+          "label": "Boneclaw Revenant",
+          "icon": "🦴",
+          "items": [
+            "boneclaw_rapier",
+            "boneclaw_shield"
+          ]
+        },
+        {
+          "id": "shroudwraith_specter",
+          "label": "Shroudwraith Specter",
+          "icon": "🌑",
+          "items": [
+            "shroud_robes_top",
+            "shroud_staff"
+          ]
+        },
+        {
+          "id": "stonegale_elemental",
+          "label": "Stonegale Elemental",
+          "icon": "🪨",
+          "items": [
+            "stonegale_bow",
+            "stonegale_coif"
+          ]
+        },
+        {
+          "id": "cindermaw_serpent",
+          "label": "Cindermaw Serpent",
+          "icon": "🐍",
+          "items": [
+            "cindermaw_maul",
+            "cindermaw_scale_body"
+          ]
+        },
+        {
+          "id": "thornhide_colossus",
+          "label": "Thornhide Colossus",
+          "icon": "🌳",
+          "items": [
+            "thornhide_platelegs",
+            "thornhide_gauntlets"
+          ]
+        },
+        {
+          "id": "gravethorn_drake",
+          "label": "Gravethorn Drake",
+          "icon": "🦎",
+          "items": [
+            "thornspine_shortbow",
+            "drake_leather_body"
+          ]
+        },
+        {
+          "id": "ironclad_guardian",
+          "label": "Ironclad Guardian",
+          "icon": "🔩",
+          "items": [
+            "ironclad_longsword",
+            "ironclad_helm"
+          ]
+        },
+        {
+          "id": "emberhowl_warlord",
+          "label": "Emberhowl Warlord",
+          "icon": "🪓",
+          "items": [
+            "emberhowl_axe",
+            "emberhowl_boots"
+          ]
+        },
+        {
+          "id": "razorwing_harpy",
+          "label": "Razorwing Harpy",
+          "icon": "🦅",
+          "items": [
+            "razorwing_crossbow",
+            "razorwing_vambraces"
+          ]
         }
       ]
     },
