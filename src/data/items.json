@@ -16386,11 +16386,11 @@
       "ranged": 0
     },
     "defenceBonus": {
-      "stab": 45,
-      "slash": 47,
-      "crush": 44,
+      "stab": 9,
+      "slash": 9,
+      "crush": 8,
       "magic": 0,
-      "ranged": 46
+      "ranged": 9
     },
     "otherBonus": {
       "meleeStrength": 0,
@@ -16420,11 +16420,11 @@
       "ranged": 0
     },
     "defenceBonus": {
-      "stab": 93,
-      "slash": 95,
-      "crush": 92,
+      "stab": 18,
+      "slash": 19,
+      "crush": 18,
       "magic": 0,
-      "ranged": 94
+      "ranged": 18
     },
     "otherBonus": {
       "meleeStrength": 0,
@@ -16454,11 +16454,11 @@
       "ranged": 0
     },
     "defenceBonus": {
-      "stab": 69,
-      "slash": 71,
-      "crush": 68,
+      "stab": 13,
+      "slash": 14,
+      "crush": 13,
       "magic": 0,
-      "ranged": 70
+      "ranged": 14
     },
     "otherBonus": {
       "meleeStrength": 0,
@@ -16488,11 +16488,11 @@
       "ranged": 0
     },
     "defenceBonus": {
-      "stab": 35,
-      "slash": 37,
-      "crush": 34,
+      "stab": 7,
+      "slash": 7,
+      "crush": 6,
       "magic": 0,
-      "ranged": 36
+      "ranged": 7
     },
     "otherBonus": {
       "meleeStrength": 0,
