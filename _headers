@@ -1,0 +1,15 @@
+# Allow indexing on the production custom domain. NOTE: Cloudflare Pages
+# injects `x-robots-tag: noindex` on *.pages.dev preview/alias deployments at
+# the edge and that cannot be overridden from _headers — so the SEO audit will
+# still report "blocked from indexing" when run against a *.pages.dev URL.
+# Run Lighthouse against the production domain (pocketrpg.co.uk) to verify.
+/*
+  X-Robots-Tag: index, follow
+
+# Long-lived caching for static, content-stable assets (fonts + landing
+# screenshots). These are served from /public by Cloudflare Pages.
+/public/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/public/landing/*
+  Cache-Control: public, max-age=31536000, immutable
