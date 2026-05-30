@@ -819,10 +819,25 @@ export function processCombatTick(combatState, playerStats, equipment, itemsData
       const effDef = Math.floor(playerDefLevel) + styleBonuses.defenceStyleBonus + 8
       const defRoll = effDef * ((bonuses.defenceBonus[effectiveAttackStyle] || bonuses.defenceBonus.crush || 0) + 64)
       const acc = hitChance(monsterAtkRoll, defRoll)
-      // Multi-form monsters may declare an explicit max hit per form
-      const monsterMaxHit = monster.formMaxHit != null
-        ? monster.formMaxHit
-        : Math.floor(0.5 + (monster.stats.strength + 8) * ((monster.strengthBonus || 0) + 64) / 640)
+      // Max hit precedence:
+      //  1. per-form maxHit (multi-form bosses)
+      //  2. explicit top-level maxHit override
+      //  3. derived from the offensive stat that matches the attack style —
+      //     ranged attacks scale with Ranged, magic with Magic, melee with Strength.
+      let monsterMaxHit
+      if (monster.formMaxHit != null) {
+        monsterMaxHit = monster.formMaxHit
+      } else if (monster.maxHit != null) {
+        monsterMaxHit = monster.maxHit
+      } else {
+        const damageStat = effectiveAttackStyle === 'ranged'
+          ? monster.stats.ranged
+          : effectiveAttackStyle === 'magic'
+            ? monster.stats.magic
+            : monster.stats.strength
+        const stat = (damageStat == null) ? monster.stats.strength : damageStat
+        monsterMaxHit = Math.floor(0.5 + (stat + 8) * ((monster.strengthBonus || 0) + 64) / 640)
+      }
       damage = rollDamage(acc, monsterMaxHit)
 
       // Apply protection prayer damage reduction if active and matches attack style
