@@ -267,7 +267,12 @@ const vendorBuildResult = esbuild.buildSync({
     loader: 'js',
   },
   bundle: true,
-  format: 'esm',
+  // IIFE (not ESM): minify renames internal bindings, and an inline module's
+  // `export { x as h }` would NOT expose `h` as a usable binding to the
+  // concatenated app code. IIFE + globalName assigns the exports object to
+  // `__vendor`, which we then destructure into real top-level const bindings.
+  format: 'iife',
+  globalName: '__vendor',
   minify: true,
   platform: 'browser',
   target: 'es2020',
@@ -278,6 +283,9 @@ if (vendorBuildResult.errors.length > 0) {
   process.exit(1);
 }
 const vendorBundle = vendorBuildResult.outputFiles[0].text;
+const vendorDestructure =
+  'const { h, render, Fragment, createContext, Component, createPortal, ' +
+  'useState, useEffect, useRef, useMemo, useCallback, useContext, openDB } = __vendor;';
 
 // CSS
 const customCSS = readSrc('index.css').replace('@import "tailwindcss";', '').trim();
@@ -300,6 +308,7 @@ ${css}
 <main id="app"></main>
 <script type="module">
 ${vendorBundle}
+${vendorDestructure}
 
 // ── Inline JSON Data ──
 const gameIconsData = ${gameIconsJSON};
