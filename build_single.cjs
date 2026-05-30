@@ -339,8 +339,12 @@ const html = `<!DOCTYPE html>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>PocketRPG</title>
 <meta name="description" content="PocketRPG — a tick-based idle fantasy RPG. Train 24 skills, fight bosses, and complete quests — progress continues whether the app is open or not.">
-<link rel="preload" href="/public/fonts/cinzel-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="/public/fonts/nunito-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<!-- LCP image: the hero screenshot is rendered by JS, so preload it here to
+     make the request discoverable from the initial document and fetch it at
+     high priority. Same asset is the hero on both mobile and desktop layouts.
+     Fonts are intentionally NOT preloaded — they use font-display:swap, so
+     they paint in fallback immediately and must not compete with the LCP. -->
+<link rel="preload" href="/public/landing/ss-stats.webp" as="image" type="image/webp" fetchpriority="high">
 <style>
 ${css}
 </style>

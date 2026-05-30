@@ -155,7 +155,7 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, emb
             <div class="dl-cluster">
               <div class="dl-device dl-device--back"><img src={landingImages['ss-combat']} alt="Boss fight in progress" width="560" height="994" loading="eager" decoding="async" /></div>
               <div class="dl-device dl-device--back2"><img src={landingImages['ss-inventory']} alt="Full inventory grid" width="560" height="985" loading="eager" decoding="async" /></div>
-              <div class="dl-device dl-device--main"><img src={landingImages['ss-stats']} alt="Skills overview" width="560" height="979" loading="eager" decoding="async" /></div>
+              <div class="dl-device dl-device--main"><img src={landingImages['ss-stats']} alt="Skills overview" width="560" height="979" loading="eager" fetchpriority="high" decoding="async" /></div>
             </div>
           </div>
         </section>

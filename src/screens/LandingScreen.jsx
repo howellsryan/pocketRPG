@@ -107,6 +107,7 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, embedded, 
             class="w-full block"
             width="560" height="979"
             loading="eager"
+            fetchpriority="high"
             decoding="async"
           />
         </div>
