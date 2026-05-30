@@ -16,6 +16,7 @@ export const PVP_SPECIAL_ATTACK_LABELS = {
   lunge: '🔰 The Block',
   triple_hit: '🪨🪨🪨 Quake',
   descent_of_darkness: '🏹🏹 Descent of Darkness',
+  overpower: '🔨 Overpower',
   soul_leech: '🩸 Soul Leech',
   gale_shot: '💨 Gale Shot',
   molten_crush: '🌋 Molten Crush',

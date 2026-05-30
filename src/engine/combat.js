@@ -1413,6 +1413,25 @@ export function applySpecialAttack(combatState, playerStats, equipment, itemsDat
       break
     }
 
+    case 'overpower': {
+      // Dragon Mace — single crush hit at 150% max hit
+      const styleBonuses = getMeleeStyleBonuses(state.stance)
+      const effStr = effectiveStrength(playerStats.strength, 0, 1.0, styleBonuses.strengthStyleBonus)
+      const maxHit = Math.floor(meleeMaxHit(effStr, bonuses.otherBonus.meleeStrength) * 1.5)
+      const effAtk = effectiveAttack(playerStats.attack, 0, 1.0, styleBonuses.attackStyleBonus)
+      const atkRoll = maxAttackRoll(effAtk, bonuses.attackBonus[weaponStyle] || 0)
+      const defRoll = maxDefenceRoll(monster.stats.defence, monster.defenceBonus[weaponStyle] || 0)
+      const acc = hitChance(atkRoll, defRoll)
+      const damage = rollDamage(acc, maxHit)
+      const actual = Math.min(damage, Math.max(0, monster.currentHP))
+      monster.currentHP -= actual
+      const xpSkills = _meleeXP(state.stance, actual)
+      _accXP(state, xpSkills)
+      events.push({ type: 'xp', xpSkills })
+      events.push({ type: 'specialHit', hits: [damage], totalDamage: actual, specType: 'overpower', monsterHP: monster.currentHP })
+      break
+    }
+
     case 'soul_leech': {
       // Boneclaw Rapier — two stab hits at 100% max hit; heals for 100% of second hit's damage
       const styleBonuses = getMeleeStyleBonuses(state.stance)

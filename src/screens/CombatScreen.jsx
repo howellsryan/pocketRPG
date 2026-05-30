@@ -403,6 +403,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             lunge: '🔰 The Block',
             triple_hit: '🪨🪨🪨 Quake',
             descent_of_darkness: '🏹🏹 Descent of Darkness',
+            overpower: '🔨 Overpower',
             soul_leech: `🩸 Soul Leech (+${ev.healAmount || 0} HP)`,
             gale_shot: ev.stunned ? '💨 Gale Shot (staggered!)' : '💨 Gale Shot',
             molten_crush: ev.defenceReducedBy > 0 ? `🌋 Molten Crush (-${ev.defenceReducedBy} Defence)` : '🌋 Molten Crush',
