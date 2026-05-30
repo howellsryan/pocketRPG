@@ -24276,7 +24276,7 @@
       "energyCost": 50,
       "description": "Soul Leech: Strikes twice at full power; the second hit heals you for 100% of its damage dealt."
     },
-    "shopValue": 380000,
+    "shopValue": 3800000,
     "icon": "🗡️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -24300,7 +24300,7 @@
       "energyCost": 55,
       "description": "Gale Shot: A guaranteed arrow strike at 140% max hit that staggers the target, delaying its next attack by one cycle."
     },
-    "shopValue": 400000,
+    "shopValue": 4000000,
     "icon": "🌬️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -24323,7 +24323,7 @@
       "energyCost": 50,
       "description": "Molten Crush: A searing blow at 125% max hit that shatters the target's armour, reducing its Defence level by 20%."
     },
-    "shopValue": 450000,
+    "shopValue": 4500000,
     "icon": "🌋",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -24347,7 +24347,7 @@
       "energyCost": 65,
       "description": "Volley: Unleashes three rapid thorn-shots in quick succession, each dealing up to 70% of your max hit."
     },
-    "shopValue": 360000,
+    "shopValue": 3600000,
     "icon": "🌿",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -24365,7 +24365,7 @@
     "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 12, "ranged": 0 },
     "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 4 },
     "requirements": { "magic": 55 },
-    "shopValue": 300000,
+    "shopValue": 3000000,
     "icon": "🧿",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -24383,7 +24383,7 @@
     "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
     "otherBonus": { "meleeStrength": 76, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "attack": 60 },
-    "shopValue": 340000,
+    "shopValue": 3400000,
     "icon": "⚙️",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -24401,7 +24401,7 @@
     "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
     "otherBonus": { "meleeStrength": 80, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "attack": 60 },
-    "shopValue": 360000,
+    "shopValue": 3600000,
     "icon": "🪓",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -24420,7 +24420,7 @@
     "defenceBonus": { "stab": 0, "slash": 0, "crush": 0, "magic": 0, "ranged": 0 },
     "otherBonus": { "meleeStrength": 0, "rangedStrength": 62, "magicDamage": 0 },
     "requirements": { "ranged": 60 },
-    "shopValue": 490000,
+    "shopValue": 4900000,
     "icon": "🪶",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -24435,7 +24435,7 @@
     "defenceBonus": { "stab": 40, "slash": 42, "crush": 45, "magic": 5, "ranged": 38 },
     "otherBonus": { "meleeStrength": 3, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "defence": 60 },
-    "shopValue": 240000,
+    "shopValue": 2400000,
     "icon": "💀",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -24450,7 +24450,7 @@
     "defenceBonus": { "stab": 92, "slash": 90, "crush": 82, "magic": -5, "ranged": 85 },
     "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "defence": 60 },
-    "shopValue": 480000,
+    "shopValue": 4800000,
     "icon": "🧟",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -24465,7 +24465,7 @@
     "defenceBonus": { "stab": 46, "slash": 44, "crush": 40, "magic": 12, "ranged": 42 },
     "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "defence": 60 },
-    "shopValue": 290000,
+    "shopValue": 2900000,
     "icon": "🦴",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -24480,7 +24480,7 @@
     "defenceBonus": { "stab": 5, "slash": 5, "crush": 5, "magic": 55, "ranged": -10 },
     "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 2 },
     "requirements": { "magic": 55 },
-    "shopValue": 350000,
+    "shopValue": 3500000,
     "icon": "🌑",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -24495,7 +24495,7 @@
     "defenceBonus": { "stab": 35, "slash": 32, "crush": 28, "magic": 8, "ranged": 36 },
     "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "ranged": 60, "defence": 40 },
-    "shopValue": 240000,
+    "shopValue": 2400000,
     "icon": "🪨",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -24510,7 +24510,7 @@
     "defenceBonus": { "stab": 95, "slash": 92, "crush": 85, "magic": -5, "ranged": 88 },
     "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "defence": 60 },
-    "shopValue": 500000,
+    "shopValue": 5000000,
     "icon": "🐍",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -24525,7 +24525,7 @@
     "defenceBonus": { "stab": 62, "slash": 60, "crush": 54, "magic": -3, "ranged": 58 },
     "otherBonus": { "meleeStrength": 2, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "defence": 60 },
-    "shopValue": 400000,
+    "shopValue": 4000000,
     "icon": "🌳",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -24540,7 +24540,7 @@
     "defenceBonus": { "stab": 22, "slash": 20, "crush": 18, "magic": 2, "ranged": 20 },
     "otherBonus": { "meleeStrength": 6, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "defence": 60 },
-    "shopValue": 170000,
+    "shopValue": 1700000,
     "icon": "🤜",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -24555,7 +24555,7 @@
     "defenceBonus": { "stab": 38, "slash": 40, "crush": 44, "magic": 4, "ranged": 36 },
     "otherBonus": { "meleeStrength": 3, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "defence": 60 },
-    "shopValue": 250000,
+    "shopValue": 2500000,
     "icon": "🔩",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -24570,7 +24570,7 @@
     "defenceBonus": { "stab": 30, "slash": 28, "crush": 26, "magic": 5, "ranged": 26 },
     "otherBonus": { "meleeStrength": 4, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "defence": 60 },
-    "shopValue": 170000,
+    "shopValue": 1700000,
     "icon": "🥾",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -24585,7 +24585,7 @@
     "defenceBonus": { "stab": 28, "slash": 24, "crush": 20, "magic": 55, "ranged": 28 },
     "otherBonus": { "meleeStrength": 0, "rangedStrength": 0, "magicDamage": 0 },
     "requirements": { "ranged": 60, "defence": 40 },
-    "shopValue": 420000,
+    "shopValue": 4200000,
     "icon": "🦎",
     "isGeneralStore": false,
     "isBossUnique": true
@@ -24600,7 +24600,7 @@
     "defenceBonus": { "stab": 18, "slash": 16, "crush": 14, "magic": 2, "ranged": 18 },
     "otherBonus": { "meleeStrength": 0, "rangedStrength": 6, "magicDamage": 0 },
     "requirements": { "ranged": 60, "defence": 40 },
-    "shopValue": 190000,
+    "shopValue": 1900000,
     "icon": "🦅",
     "isGeneralStore": false,
     "isBossUnique": true
