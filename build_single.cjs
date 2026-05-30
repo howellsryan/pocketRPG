@@ -181,29 +181,26 @@ const minigamesJSON = readSrc('data/minigames.json');
 const cluesJSON = readSrc('data/clues.json');
 const collectionLogJSON = readSrc('data/collectionLog.json');
 
-// Landing screen images. The single-file build is served from the site root
-// with no external assets, so inline each webp from public/landing/ as a
-// base64 data URI keyed by basename (e.g. 'ss-stats'). Keys must match the
-// `landingImages` map in src/screens/landingImages.js, whose import is stripped
-// from this bundle in favour of the global injected below.
+// Landing screen images. Served as external files from /public/landing/ (the
+// Cloudflare Pages output dir is the repo root) and referenced by URL rather
+// than base64-inlined — this keeps them out of the render-blocking HTML and
+// lets them load lazily/in parallel. Keys must match the `landingImages` map
+// in src/screens/landingImages.js, whose import is stripped from this bundle
+// in favour of the global injected below.
 const landingDir = path.join(__dirname, 'public', 'landing');
 const landingImagesObj = {};
 for (const file of fs.readdirSync(landingDir)) {
   if (!file.endsWith('.webp')) continue;
   const key = file.replace(/\.webp$/, '');
-  const b64 = fs.readFileSync(path.join(landingDir, file)).toString('base64');
-  landingImagesObj[key] = `data:image/webp;base64,${b64}`;
+  landingImagesObj[key] = `/public/landing/${file}`;
 }
 const landingImagesJSON = JSON.stringify(landingImagesObj);
 
-// Optional Home Screen hero logo. The single-file build has no external
-// assets, so inline public/pocketrpg-logo.png as a base64 data URI under the
-// `homeLogo` global (matching src/utils/homeLogo.js, whose import is stripped
-// from this bundle). Falls back to null — and the crossed-swords crest — when
-// the file is absent.
+// Optional Home Screen hero logo, served externally from /public. Falls back
+// to null — and the crossed-swords crest — when the file is absent.
 const logoPath = path.join(__dirname, 'public', 'pocketrpg-logo.png');
 const homeLogoJSON = fs.existsSync(logoPath)
-  ? JSON.stringify(`data:image/png;base64,${fs.readFileSync(logoPath).toString('base64')}`)
+  ? JSON.stringify('/public/pocketrpg-logo.png')
   : 'null';
 
 // Concatenate all JS
@@ -231,12 +228,19 @@ if (twResult.status !== 0) {
 }
 const compiledTailwindCSS = fs.readFileSync(path.join(__dirname, '.tmp', 'app.css'), 'utf-8');
 
-// ── Inline @font-face blocks from @fontsource (latin subset, no CDN) ──
+// ── External @font-face blocks from @fontsource (latin subset, no CDN) ──
+// Copy the woff2 files to public/fonts/ (served at /public/fonts/) and
+// reference them by URL instead of base64. This keeps the render-blocking
+// <style> tiny and lets fonts load in parallel (font-display:swap). The
+// copied files are a build artifact (gitignored); the deploy's rebuild
+// regenerates them, mirroring how index.html itself is produced.
 const FONT_FACES = [
   { pkg: '@fontsource/cinzel',         family: 'Cinzel',         weights: [400, 700, 900] },
   { pkg: '@fontsource/nunito',          family: 'Nunito',         weights: [400, 600, 700] },
   { pkg: '@fontsource/jetbrains-mono', family: 'JetBrains Mono', weights: [400, 700]      },
 ];
+const fontsOutDir = path.join(__dirname, 'public', 'fonts');
+fs.mkdirSync(fontsOutDir, { recursive: true });
 let fontFaceCSS = '';
 for (const { pkg, family, weights } of FONT_FACES) {
   const fontName = pkg.split('/')[1];
@@ -247,10 +251,10 @@ for (const { pkg, family, weights } of FONT_FACES) {
       console.error(`Missing font: ${fpath}`);
       process.exit(1);
     }
-    const b64 = fs.readFileSync(fpath).toString('base64');
+    fs.copyFileSync(fpath, path.join(fontsOutDir, fname));
     fontFaceCSS +=
       `@font-face{font-family:'${family}';font-style:normal;font-weight:${weight};` +
-      `font-display:swap;src:url('data:font/woff2;base64,${b64}') format('woff2')}\n`;
+      `font-display:swap;src:url('/public/fonts/${fname}') format('woff2')}\n`;
   }
 }
 
@@ -291,26 +295,14 @@ const vendorDestructure =
 const customCSS = readSrc('index.css').replace('@import "tailwindcss";', '').trim();
 const css = fontFaceCSS + compiledTailwindCSS + '\n' + customCSS;
 
-const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>PocketRPG</title>
-<meta name="description" content="PocketRPG — a tick-based idle fantasy RPG. Train 24 skills, fight bosses, and complete quests — progress continues whether the app is open or not.">
-<style>
-${css}
-</style>
-</head>
-<body>
-<main id="app"></main>
-<script type="module">
-${vendorBundle}
+// ── Assemble the inline module script, then minify it as one unit ──
+// The app modules are concatenated raw (transpiled TS) and are the dominant
+// payload. esbuild minifies the whole script (vendor + data + app) — safe
+// because everything shares one top-level scope and there are no dynamic
+// identifier lookups (window[…], eval, Function, .name dispatch).
+const moduleScript = `${vendorBundle}
 ${vendorDestructure}
 
-// ── Inline JSON Data ──
 const gameIconsData = ${gameIconsJSON};
 const itemsData = ${itemsJSON};
 const monstersData = ${monstersJSON};
@@ -328,8 +320,36 @@ const homeLogo = ${homeLogoJSON};
 
 ${allJS}
 
-// ── Bootstrap ──
 render(h(App, null), document.getElementById('app') || document.querySelector('main'));
+document.getElementById('app-splash')?.remove();`;
+
+const minified = esbuild.transformSync(moduleScript, {
+  minify: true,
+  target: 'es2020',
+  legalComments: 'none',
+});
+const inlineScript = minified.code.trim();
+
+const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>PocketRPG</title>
+<meta name="description" content="PocketRPG — a tick-based idle fantasy RPG. Train 24 skills, fight bosses, and complete quests — progress continues whether the app is open or not.">
+<link rel="preload" href="/public/fonts/cinzel-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/public/fonts/nunito-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+${css}
+</style>
+</head>
+<body>
+<div id="app-splash"><div class="app-splash__brand">PocketRPG</div><div class="app-splash__sub">Loading your adventure…</div></div>
+<main id="app"></main>
+<script type="module">
+${inlineScript}
 <\/script>
 </body>
 </html>`;

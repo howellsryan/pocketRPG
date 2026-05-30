@@ -6,3 +6,4 @@ www/
 .dev.vars
 /index.html
 .tmp/
+public/fonts/

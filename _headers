@@ -1,0 +1,7 @@
+# Long-lived caching for static, content-stable assets (fonts + landing
+# screenshots). These are served from /public by Cloudflare Pages.
+/public/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/public/landing/*
+  Cache-Control: public, max-age=31536000, immutable
