@@ -9,6 +9,8 @@ import HPBar from '../components/HPBar.jsx'
 import IdleCombatSetupModal from '../components/IdleCombatSetupModal.jsx'
 import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
 import ItemSlot from '../components/ItemSlot.jsx'
+import CombatMobileSelect from './CombatMobileSelect.jsx'
+import { CombatMonsterInfoSheet, CombatRaidInfoSheet } from './CombatMobileSheets.jsx'
 import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applySpecialAttack } from '../engine/combat.js'
 import { getLevelFromXP } from '../engine/experience.js'
@@ -125,6 +127,16 @@ const COMBAT_CATEGORIES = [
     ids: ['gravethorn_drake', 'razorwing_harpy'],
   },
 ]
+
+// Resolve which combat category a monster id belongs to (for art accent fallback).
+const MONSTER_CATEGORY_KEY = (() => {
+  const map = {}
+  for (const cat of COMBAT_CATEGORIES) for (const id of cat.ids) map[id] = cat.key
+  return map
+})()
+function getMonsterCategoryKey(monsterId) {
+  return MONSTER_CATEGORY_KEY[monsterId]
+}
 
 const MONSTER_ICONS = {
   field_chicken: '🐔', cave_goblin: '👺', pasture_bull: '🐄', broodfang_spider: '🕷️',
@@ -1450,6 +1462,36 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   if (!combat) {
     return (
       <>
+      {/* Mobile uses the artsy CombatMobileSelect; desktop keeps the responsive
+          grid below unchanged. Shared modals (info / raid / idle / PvP) follow. */}
+      {!isDesktopCombatLayout ? (
+        <div class="h-full overflow-y-auto">
+          <CombatMobileSelect
+            categories={COMBAT_CATEGORIES}
+            monstersData={monstersData}
+            raidsData={raidsData}
+            collapsedSections={collapsedSections}
+            onToggleSection={toggleSection}
+            onFight={startFight}
+            onMonsterInfo={setSelectedMonsterInfo}
+            onStartRaid={startRaid}
+            onRaidInfo={setSelectedRaidInfo}
+            checkBossRequirements={checkBossRequirements}
+            checkRaidRequirements={checkRaidRequirements}
+            getSlayerLevel={getSlayerLevel}
+            doesSlayerTaskMatchMonster={doesSlayerTaskMatchMonster}
+            slayerTask={slayerTask}
+            bossKillCounts={bossKillCounts}
+            raidKillCounts={raidKillCounts}
+            combatStance={combatStance}
+            onStance={updateCombatStance}
+            idleSetup={idleCombatSetup}
+            onOpenIdle={setIdleSetupMode}
+            showPvp={!isIronman && !isOneLife}
+            onOpenPvp={() => setShowPvpLobby(true)}
+          />
+        </div>
+      ) : (
       <div class="h-full overflow-y-auto p-4">
         <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider mb-3">
           Choose a Monster
@@ -1677,6 +1719,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           </div>
         )}
       </div>
+      )}
 
       {showPvpLobby && (
         <PvpLobbyModal
@@ -1700,8 +1743,19 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         />
       )}
 
-      {/* Monster Info Modal — shown from picker view */}
-      {selectedMonsterInfo && (
+      {/* Monster Info — mobile gets the artsy slide-up bestiary sheet; desktop
+          keeps the <Modal> below. */}
+      {selectedMonsterInfo && !isDesktopCombatLayout && (
+        <CombatMonsterInfoSheet
+          monster={selectedMonsterInfo}
+          categoryKey={getMonsterCategoryKey(selectedMonsterInfo.id)}
+          itemsData={itemsData}
+          onClose={() => setSelectedMonsterInfo(null)}
+        />
+      )}
+
+      {/* Monster Info Modal — desktop only (shown from picker view) */}
+      {selectedMonsterInfo && isDesktopCombatLayout && (
         <Modal onClose={() => setSelectedMonsterInfo(null)}>
           <div class="flex items-center justify-between mb-3">
             <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">
@@ -1768,8 +1822,20 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         </Modal>
       )}
 
-      {/* Raid Info Modal */}
-      {selectedRaidInfo && (
+      {/* Raid Info — mobile gets the artsy slide-up sheet; desktop keeps <Modal>. */}
+      {selectedRaidInfo && !isDesktopCombatLayout && (
+        <CombatRaidInfoSheet
+          raid={selectedRaidInfo}
+          monstersData={monstersData}
+          itemsData={itemsData}
+          raidKillCounts={raidKillCounts}
+          onStartRaid={(raid) => { setSelectedRaidInfo(null); startRaid(raid) }}
+          onClose={() => setSelectedRaidInfo(null)}
+        />
+      )}
+
+      {/* Raid Info Modal — desktop only */}
+      {selectedRaidInfo && isDesktopCombatLayout && (
         <Modal onClose={() => setSelectedRaidInfo(null)}>
           <div class="flex items-center justify-between mb-3">
             <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">
