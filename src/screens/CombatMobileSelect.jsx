@@ -63,7 +63,7 @@ export default function CombatMobileSelect({
     <div class="cb-pad">
       <div class="cb-select__head" style={{ margin: '4px 2px 14px' }}>
         <h1 class="cb-h1">Choose a Monster</h1>
-        <div class="cb-h1sub">{totalFoes} foes · {uniqueRaids.length} {uniqueRaids.length === 1 ? 'raid' : 'raids'} await</div>
+        <div class="cb-h1sub">{totalFoes} monsters · {uniqueRaids.length} {uniqueRaids.length === 1 ? 'raid' : 'raids'} await</div>
       </div>
 
       {/* Idle toggles */}

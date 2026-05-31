@@ -22,7 +22,7 @@ export const CATEGORY_ART = {
   "bossing": { icon: "crowned_skull", accent: "#d8b13a", blurb: "Generals of the eternal war" },
   "dagganoth_kings": { icon: "horned_skull", accent: "#e0564b", blurb: "The crowned tyrants" },
   "wilderness": { icon: "spectre", accent: "#8a7ae6", blurb: "High risk, high reward" },
-  "dragons_lair": { icon: "dragon_head", accent: "#46a7c4", blurb: "Where the great wyrms sleep" },
+  "dragons_lair": { icon: "dragon_head", accent: "#46a7c4", blurb: "Where the great dragons sleep" },
   "venomcoil_matriarch": { icon: "wyvern", accent: "#3fb56b", blurb: "The serpent queen of the marsh" },
   "fight_caves": { icon: "flame", accent: "#ef6b3a", blurb: "Demons of the molten deep" },
   "blighted_gauntlet": { icon: "lightning_arc", accent: "#46a0e0", blurb: "A gauntlet of the blighted" },
@@ -171,22 +171,50 @@ export function getStyleArt(style) {
   return STYLE_ART[style] || STYLE_ART.melee
 }
 
-// Derive a monster's weakness ('melee' | 'ranged' | 'magic') from its lowest
-// defence bonus. stab/slash/crush collapse into the melee group (their min).
+// Colours for multi-style weakness chips (single-style chips use the style's own
+// colour from STYLE_ART).
+const WEAKNESS_ALL_COLOR = '#f0c040'    // gold — weak to everything equally
+const WEAKNESS_MULTI_COLOR = '#cdd6e0'  // silver — tied between two styles
+
+const STYLE_LABEL = { melee: 'Melee', ranged: 'Ranged', magic: 'Magic' }
+
+// Derive a monster's weakness from its lowest defence bonus, collapsing
+// stab/slash/crush into a single "melee" group. Ties are meaningful:
+//   - all three styles equal  → weak to "All"  (gold)
+//   - two styles tied lowest   → e.g. "Melee & Ranged" (silver)
+//   - a single lowest style    → that style (its own colour)
+// Returns { styles, label, color, tier } or null when no defence data exists.
 export function getMonsterWeakness(monster) {
   const d = monster && monster.defenceBonus
   if (!d) return null
-  const melee = Math.min(
-    d.stab ?? Infinity, d.slash ?? Infinity, d.crush ?? Infinity,
-  )
+  const melee = Math.min(d.stab ?? Infinity, d.slash ?? Infinity, d.crush ?? Infinity)
   const groups = [
     ['melee', melee],
     ['ranged', d.ranged ?? Infinity],
     ['magic', d.magic ?? Infinity],
   ].filter(([, v]) => Number.isFinite(v))
   if (groups.length === 0) return null
-  groups.sort((a, b) => a[1] - b[1])
-  return groups[0][0]
+
+  const lowest = Math.min(...groups.map(([, v]) => v))
+  const styles = groups.filter(([, v]) => v === lowest).map(([k]) => k)
+
+  if (styles.length === groups.length && groups.length > 1) {
+    return { styles, label: 'All', color: WEAKNESS_ALL_COLOR, tier: 'all' }
+  }
+  if (styles.length > 1) {
+    return {
+      styles,
+      label: styles.map(s => STYLE_LABEL[s]).join(' & '),
+      color: WEAKNESS_MULTI_COLOR,
+      tier: 'multi',
+    }
+  }
+  return {
+    styles,
+    label: STYLE_LABEL[styles[0]],
+    color: getStyleArt(styles[0]).color,
+    tier: 'single',
+  }
 }
 
 // Derive a monster's max hit at render time from its own stats, keyed off attack

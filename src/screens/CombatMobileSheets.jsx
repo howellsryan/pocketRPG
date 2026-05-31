@@ -45,6 +45,20 @@ function StyleChip({ style, label, kind }) {
   )
 }
 
+// Weakness chip driven by the structured weakness object: shows one glyph per
+// tied style and the weakness's own colour (style colour / silver / gold).
+function WeaknessChip({ weakness }) {
+  if (!weakness) return null
+  const { styles, label, color } = weakness
+  return (
+    <span class="cb-stylechip" style={{ borderColor: `${color}73`, background: `${color}1a`, color }}>
+      {styles.map(s => <GameIcon key={s} iconKey={getStyleArt(s).icon} color={color} size={14} />)}
+      <span>Weak: {label}</span>
+      <span class="cb-stylechip__k">!</span>
+    </span>
+  )
+}
+
 function DropRow({ drop, itemsData, accent }) {
   const item = itemsData[drop.itemId]
   const key = item?.iconId || (item ? undefined : 'crossed_swords')
@@ -116,7 +130,7 @@ export function CombatMonsterInfoSheet({ monster, categoryKey, itemsData, onClos
             <h2 class="cb-sheet__name">{monster.name}</h2>
             <div class="cb-sheet__chips">
               <StyleChip style={monster.attackStyle} label={'Uses ' + getStyleArt(monster.attackStyle).label} />
-              {weakness && <StyleChip style={weakness} label={'Weak: ' + getStyleArt(weakness).label} kind="!" />}
+              <WeaknessChip weakness={weakness} />
             </div>
           </div>
           <button class="cb-x" onClick={onClose} aria-label="Close"><GameIcon iconKey="cancel" color="#cdbf9f" size={16} /></button>

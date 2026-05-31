@@ -54,16 +54,34 @@ describe('combatArt', () => {
     }
   })
 
-  it('derives weakness from the lowest defence bonus, melee grouped', () => {
-    const m = {
-      defenceBonus: { stab: 10, slash: 12, crush: 11, ranged: 40, magic: -5 },
-    }
-    expect(getMonsterWeakness(m as any)).toBe('magic')
-    const m2 = {
-      defenceBonus: { stab: -20, slash: 50, crush: 50, ranged: 60, magic: 70 },
-    }
-    expect(getMonsterWeakness(m2 as any)).toBe('melee')
+  it('derives a single-style weakness from the lowest defence bonus, melee grouped', () => {
+    const magicWeak = getMonsterWeakness({ defenceBonus: { stab: 10, slash: 12, crush: 11, ranged: 40, magic: -5 } } as any)
+    expect(magicWeak.styles).toEqual(['magic'])
+    expect(magicWeak.label).toBe('Magic')
+    expect(magicWeak.tier).toBe('single')
+
+    const meleeWeak = getMonsterWeakness({ defenceBonus: { stab: -20, slash: 50, crush: 50, ranged: 60, magic: 70 } } as any)
+    expect(meleeWeak.styles).toEqual(['melee'])
+    expect(meleeWeak.label).toBe('Melee')
+
     expect(getMonsterWeakness({} as any)).toBeNull()
+  })
+
+  it('reports "All" in gold when every style shares the same defence bonus', () => {
+    const w = getMonsterWeakness({ defenceBonus: { stab: -42, slash: -42, crush: -42, magic: -42, ranged: -42 } } as any)
+    expect(w.tier).toBe('all')
+    expect(w.label).toBe('All')
+    expect(w.color).toBe('#f0c040')
+    expect(w.styles).toEqual(['melee', 'ranged', 'magic'])
+  })
+
+  it('reports a two-style tie in silver (e.g. Melee & Ranged)', () => {
+    // melee group min and ranged tie below magic
+    const w = getMonsterWeakness({ defenceBonus: { stab: -5, slash: 0, crush: 0, ranged: -5, magic: 8 } } as any)
+    expect(w.tier).toBe('multi')
+    expect(w.styles).toEqual(['melee', 'ranged'])
+    expect(w.label).toBe('Melee & Ranged')
+    expect(w.color).toBe('#cdd6e0')
   })
 
   it('derives a positive integer max hit for each attack style', () => {
