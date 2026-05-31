@@ -1,6 +1,6 @@
 import SkillEmblem from '../components/SkillEmblem.jsx'
 import GameIcon from '../components/GameIcon.jsx'
-import collectionLog from '../data/collectionLog.json'
+import collectionLogData from '../data/collectionLog.json'
 import { formatDropChance } from '../utils/constants.js'
 import {
   getMonsterArt,
@@ -28,7 +28,7 @@ function qtyLabel(quantity) {
 // Authoritative unique-item ids for a monster/raid section, sourced from the
 // collection log (never inferred from drop rarity). Returns [{itemId}].
 function loggedUniques(categoryId, sectionId) {
-  const cat = collectionLog.categories.find(c => c.id === categoryId)
+  const cat = collectionLogData.categories.find(c => c.id === categoryId)
   const section = cat?.sections.find(s => s.id === sectionId)
   return section?.items || []
 }

@@ -102,7 +102,7 @@ export default function CombatMobileSelect({
                   <div class="cb-area__name">{category.label}</div>
                   <div class="cb-area__blurb">{empty ? 'Coming soon' : art.blurb}</div>
                 </div>
-                {!empty && <span class="cb-area__count">{monsters.length} {monsters.length === 1 ? 'foe' : 'foes'}</span>}
+                {!empty && <span class="cb-area__count">{monsters.length}</span>}
                 <span class="cb-area__chev"><span class={'cb-chev' + (!isCollapsed ? ' down' : '')} /></span>
               </button>
               {!isCollapsed && !empty && (
