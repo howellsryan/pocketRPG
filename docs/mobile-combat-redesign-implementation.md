@@ -157,10 +157,14 @@ strip to `<path>` bodies). Group into a clear PR section.
 | Ranged | `high_shot` | `#7bbf52` |
 | Magic | `crystal_ball` | `#9b6cff` |
 
-**Monster / category / raid emblems** — the big set. Recommended approach: add a
-representative glyph per **category** first (low cost, high impact), then a
-per-monster `iconKey` for bosses and high-traffic monsters, falling back to the
-category glyph, then to the legacy emoji. Suggested category mapping:
+**Monster / category / raid emblems** — the big set. **Decided: author a unique
+glyph for all 98 monsters** (maximum polish). The category map below is still
+required as the **fallback chain** (covers any monster missing art, new monsters
+added later, and category headers themselves), but every current monster in
+`MONSTER_ART` should get its own glyph key. Practically: vendor a distinct
+game-icons.net glyph per `monsters.json` id and list it in `MONSTER_ART`
+(`monsterId -> { icon, accent }`); use the area accent unless a monster reads
+better with its own. Suggested category mapping (fallback + headers):
 
 | Category (`COMBAT_CATEGORIES.key`) | Accent | Glyph key |
 |---|---|---|
@@ -181,9 +185,12 @@ category glyph, then to the legacy emoji. Suggested category mapping:
 Raids (`raids.json`): map each `raid.id` to a glyph (`temple_gate`,
 `ancient_columns`, `stone_tower`, …) + the violet raid accent `#9b6cff`.
 
-> **Effort note:** authoring ~30–40 new SVG bodies is the bulk of the work.
-> Per-monster art for all 98 monsters is optional polish; the category-fallback
-> chain makes the screen look complete with far fewer glyphs.
+> **Effort note (decided scope):** authoring ~98 per-monster glyphs + the
+> category/raid/UI/style glyphs is the bulk of the work — budget for it. Vendor in
+> batches by category, verify each renders offline, and keep the category-fallback
+> chain so the screen is never blank if a glyph is missed. This is the single
+> largest line item in the redesign; consider splitting glyph-vendoring into its
+> own PR ahead of the UI work.
 
 ### 3b. Add a combat-art resolver util
 
@@ -229,12 +236,12 @@ The prototype's mock fields differ from `monsters.json` / `raids.json`. Map them
 | `mon.cb` | `monster.combatLevel` | |
 | `mon.maxHit` | derive via engine | use the same max-hit calc the combat engine uses; or read from combat state once a fight starts. For the info sheet, compute from `monster.stats.strength` + `strengthBonus` per CLAUDE.md melee formula, or surface the engine's value. |
 | `mon.style` | `monster.attackStyle` (`stab/slash/crush/ranged/magic`) | map stab/slash/crush → "Melee" label via `STYLE_ART`. |
-| `mon.weakness` | **not stored** | Decision needed (§9). Either add a `weakness` field to `monsters.json`, derive from defence bonuses (lowest `defenceBonus.*`), or omit the weakness chip on mobile. |
+| `mon.weakness` | **derive at runtime** (decided) | Compute from `monster.defenceBonus` — the **lowest** of `stab/slash/crush/(melee group)`, `ranged`, `magic` is the weakness. Collapse stab/slash/crush into a single "Melee" weakness. No `monsters.json` change. Add a helper `getMonsterWeakness(monster)` in `combatArt.js` returning `'melee'|'ranged'|'magic'`, mapped to a chip via `STYLE_ART`. |
 | `mon.kc` | `bossKillCounts[id]` / slayer counts | already available. |
 | `mon.drops` | `monster.drops[]` (`itemId`, `quantity`, `chance`) | resolve names/icons through `itemsData[itemId]`; render rates as `%`. |
 | `mon.unique` | derive from drops flagged rare, or from collectionLog uniques | the prototype's gilded "Unique Drop" panel can group the lowest-chance / boss-unique drops. Confirm grouping rule (§9). |
 | raid `rooms/bosses` | `raid.bosses[]` → `monstersData[bossId]` | progression timeline. |
-| raid `bestTime/avgTime/kc` | `raidKillCounts[raid.id]` exists; **best/avg time not tracked** | Decision needed (§9): add timing telemetry or hide those tiles. |
+| raid `bestTime/avgTime/kc` | `raidKillCounts[raid.id]` (decided) | **Hide the Best/Average time tiles** — timing isn't tracked and we're not adding telemetry. Show only the **Completions (KC)** tile from `raidKillCounts[raid.id]`. Keep the tile grid layout balanced for a single stat (or center it). |
 
 ---
 
@@ -364,20 +371,25 @@ npm test && npm run build && npm run rebuild && npm run check:single
 
 ## 9. Open decisions (resolve before/while building)
 
+_Resolved:_
+
+- ✅ **Weakness chip** — **derive at runtime** from the lowest `defenceBonus.*`
+  (stab/slash/crush collapse to "Melee"). No data change. See §4 + `getMonsterWeakness`.
+- ✅ **Raid best/avg time** — **hide those tiles**, show only Completions (KC). No
+  timing telemetry. See §4.
+- ✅ **Per-monster art** — **author a unique glyph for all 98 monsters**; keep the
+  category map as fallback + headers. See §3a.
+
+_Still open:_
+
 1. **Modal vs mobile sheet:** keep shared `Modal` chrome (less code, slight desktop
    restyle) or introduce mobile-gated slide-up sheets (zero desktop change)?
    *Recommended: mobile-gated sheets.*
-2. **Weakness chip:** add a `weakness` field to `monsters.json`, derive it from the
-   lowest `defenceBonus`, or omit on mobile? (Prototype shows it prominently.)
-3. **Max hit in info sheet:** surface the engine's computed value, recompute from
+2. **Max hit in info sheet:** surface the engine's computed value, recompute from
    formula, or omit until a fight starts?
-4. **Unique-drop grouping:** what defines a monster's "unique" set — a flag on
+3. **Unique-drop grouping:** what defines a monster's "unique" set — a flag on
    drops, the collection-log uniques, or the N lowest-chance drops?
-5. **Raid best/avg time:** add timing telemetry (new state + save field) or hide
-   those two tiles and keep only KC?
-6. **Per-monster art depth:** category-fallback only (fast) vs authoring per-monster
-   glyphs for all 98 (polish)? Recommend category + bosses first.
-7. **Skip 1h / gems pills:** the prototype's toolbar shows a "Skip 1h" and gems
+4. **Skip 1h / gems pills:** the prototype's toolbar shows a "Skip 1h" and gems
    pill. Confirm these map to existing features (skip-hour purchase, credits/gems)
    or should be omitted on the combat screen.
 
