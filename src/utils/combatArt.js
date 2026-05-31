@@ -171,12 +171,47 @@ export function getStyleArt(style) {
   return STYLE_ART[style] || STYLE_ART.melee
 }
 
-// Colours for multi-style weakness chips (single-style chips use the style's own
+// Colours for multi-style chips (single-style chips use the style's own
 // colour from STYLE_ART).
-const WEAKNESS_ALL_COLOR = '#f0c040'    // gold — weak to everything equally
-const WEAKNESS_MULTI_COLOR = '#cdd6e0'  // silver — tied between two styles
+const MULTI_ALL_COLOR = '#f0c040'    // gold — all three combat styles
+const MULTI_TWO_COLOR = '#cdd6e0'    // silver — two styles
 
 const STYLE_LABEL = { melee: 'Melee', ranged: 'Ranged', magic: 'Magic' }
+
+// Normalise any attack/defence style key to one of the three combat groups.
+function styleGroup(style) {
+  if (style === 'stab' || style === 'slash' || style === 'crush' || style === 'melee') return 'melee'
+  if (style === 'ranged') return 'ranged'
+  if (style === 'magic') return 'magic'
+  return null
+}
+
+// Shape a set of combat-style groups into a chip descriptor:
+//   - 3 distinct styles → gold "All"
+//   - 2 distinct styles → silver "Melee & Ranged" (etc.)
+//   - 1 style           → that style's own colour
+// `prefix` (e.g. 'Weak: ') is prepended to the label. Returns null when empty.
+function multiStyleChip(styles, prefix = '') {
+  if (!styles || styles.length === 0) return null
+  const ordered = ['melee', 'ranged', 'magic'].filter(s => styles.includes(s))
+  if (ordered.length >= 3) {
+    return { styles: ordered, label: prefix + 'All', color: MULTI_ALL_COLOR, tier: 'all' }
+  }
+  if (ordered.length === 2) {
+    return {
+      styles: ordered,
+      label: prefix + ordered.map(s => STYLE_LABEL[s]).join(' & '),
+      color: MULTI_TWO_COLOR,
+      tier: 'multi',
+    }
+  }
+  return {
+    styles: ordered,
+    label: prefix + STYLE_LABEL[ordered[0]],
+    color: getStyleArt(ordered[0]).color,
+    tier: 'single',
+  }
+}
 
 // Derive a monster's weakness from its lowest defence bonus, collapsing
 // stab/slash/crush into a single "melee" group. Ties are meaningful:
@@ -197,24 +232,23 @@ export function getMonsterWeakness(monster) {
 
   const lowest = Math.min(...groups.map(([, v]) => v))
   const styles = groups.filter(([, v]) => v === lowest).map(([k]) => k)
+  return multiStyleChip(styles)
+}
 
-  if (styles.length === groups.length && groups.length > 1) {
-    return { styles, label: 'All', color: WEAKNESS_ALL_COLOR, tier: 'all' }
-  }
-  if (styles.length > 1) {
-    return {
-      styles,
-      label: styles.map(s => STYLE_LABEL[s]).join(' & '),
-      color: WEAKNESS_MULTI_COLOR,
-      tier: 'multi',
-    }
-  }
-  return {
-    styles,
-    label: STYLE_LABEL[styles[0]],
-    color: getStyleArt(styles[0]).color,
-    tier: 'single',
-  }
+// Derive the attack style(s) a monster uses. Multi-form bosses (e.g. Venomcoil
+// Matriarch) attack with a different style per form, so collect the distinct
+// styles across all forms; single-form monsters use their top-level attackStyle.
+//   - 3 distinct styles → "All" (gold)
+//   - 2 distinct styles → e.g. "Melee & Magic" (silver)
+//   - 1 style           → that style (its own colour)
+// Returns { styles, label, color, tier } or null when no style data exists.
+export function getMonsterAttackStyles(monster) {
+  if (!monster) return null
+  const raw = monster.multiForm && monster.forms
+    ? Object.values(monster.forms).map(f => f.attackStyle)
+    : [monster.attackStyle]
+  const styles = [...new Set(raw.map(styleGroup).filter(Boolean))]
+  return multiStyleChip(styles)
 }
 
 // Derive a monster's max hit at render time from its own stats, keyed off attack

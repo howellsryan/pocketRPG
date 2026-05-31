@@ -7,6 +7,7 @@ import {
   getRaidArt,
   getStyleArt,
   getMonsterWeakness,
+  getMonsterAttackStyles,
   getMonsterMaxHit,
 } from '../utils/combatArt.js'
 
@@ -45,16 +46,17 @@ function StyleChip({ style, label, kind }) {
   )
 }
 
-// Weakness chip driven by the structured weakness object: shows one glyph per
-// tied style and the weakness's own colour (style colour / silver / gold).
-function WeaknessChip({ weakness }) {
-  if (!weakness) return null
-  const { styles, label, color } = weakness
+// Chip for a structured multi-style descriptor (from getMonsterAttackStyles /
+// getMonsterWeakness): one glyph per style and the descriptor's own colour
+// (style colour for one, silver for two, gold for all three).
+function MultiStyleChip({ chip, prefix = '', kind }) {
+  if (!chip) return null
+  const { styles, label, color } = chip
   return (
     <span class="cb-stylechip" style={{ borderColor: `${color}73`, background: `${color}1a`, color }}>
       {styles.map(s => <GameIcon key={s} iconKey={getStyleArt(s).icon} color={color} size={14} />)}
-      <span>Weak: {label}</span>
-      <span class="cb-stylechip__k">!</span>
+      <span>{prefix}{label}</span>
+      {kind && <span class="cb-stylechip__k">{kind}</span>}
     </span>
   )
 }
@@ -103,6 +105,7 @@ function UniquePanel({ items, itemsData, chanceLabel }) {
 /** Mobile monster bestiary sheet (slide-up). Desktop keeps the <Modal>. */
 export function CombatMonsterInfoSheet({ monster, categoryKey, itemsData, onClose }) {
   const art = getMonsterArt(monster, categoryKey)
+  const attackStyles = getMonsterAttackStyles(monster)
   const weakness = getMonsterWeakness(monster)
   const maxHit = getMonsterMaxHit(monster)
   const uniques = loggedUniques('monsters', monster.id)
@@ -129,8 +132,8 @@ export function CombatMonsterInfoSheet({ monster, categoryKey, itemsData, onClos
           <div style={{ flex: 1, minWidth: 0 }}>
             <h2 class="cb-sheet__name">{monster.name}</h2>
             <div class="cb-sheet__chips">
-              <StyleChip style={monster.attackStyle} label={'Uses ' + getStyleArt(monster.attackStyle).label} />
-              <WeaknessChip weakness={weakness} />
+              <MultiStyleChip chip={attackStyles} prefix="Uses " />
+              <MultiStyleChip chip={weakness} prefix="Weak: " kind="!" />
             </div>
           </div>
           <button class="cb-x" onClick={onClose} aria-label="Close"><GameIcon iconKey="cancel" color="#cdbf9f" size={16} /></button>

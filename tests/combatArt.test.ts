@@ -11,8 +11,10 @@ import {
   getRaidArt,
   getStyleArt,
   getMonsterWeakness,
+  getMonsterAttackStyles,
   getMonsterMaxHit,
 } from '../src/utils/combatArt.js'
+import monsters from '../src/data/monsters.json' assert { type: 'json' }
 
 const monstersData = monsters as Record<string, any>
 const raidsData = raids as Record<string, any>
@@ -82,6 +84,34 @@ describe('combatArt', () => {
     expect(w.styles).toEqual(['melee', 'ranged'])
     expect(w.label).toBe('Melee & Ranged')
     expect(w.color).toBe('#cdd6e0')
+  })
+
+  it('derives attack styles for single-form monsters (one chip)', () => {
+    const c = getMonsterAttackStyles({ attackStyle: 'crush' } as any)
+    expect(c.tier).toBe('single')
+    expect(c.styles).toEqual(['melee'])
+    expect(c.label).toBe('Melee')
+    expect(getMonsterAttackStyles(null as any)).toBeNull()
+  })
+
+  it('collects distinct attack styles across multi-form bosses', () => {
+    // 3 distinct styles -> gold "All"
+    const venom = getMonsterAttackStyles((monsters as any).venomcoil_matriarch)
+    expect(venom.tier).toBe('all')
+    expect(venom.label).toBe('All')
+    expect(venom.color).toBe('#f0c040')
+    expect(venom.styles).toEqual(['melee', 'ranged', 'magic'])
+
+    // 2 distinct styles -> silver
+    const muttadile = getMonsterAttackStyles((monsters as any).muttadile)
+    expect(muttadile.tier).toBe('multi')
+    expect(muttadile.color).toBe('#cdd6e0')
+    expect(muttadile.label).toBe('Melee & Magic')
+
+    // forms that all collapse to melee -> single chip
+    const sovrathar = getMonsterAttackStyles((monsters as any).sovrathar_the_ashen_sovereign)
+    expect(sovrathar.tier).toBe('single')
+    expect(sovrathar.styles).toEqual(['melee'])
   })
 
   it('derives a positive integer max hit for each attack style', () => {
