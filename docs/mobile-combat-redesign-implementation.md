@@ -138,7 +138,7 @@ strip to `<path>` bodies). Group into a clear PR section.
 | Info | `info` | monster/raid info buttons |
 | Play | `play_button` | boss/raid "enter" affordance |
 | Fast-forward | `fast_forward_button` | Skip 1h pill |
-| Diamond | `cut_diamond` | gems pill |
+| Diamond | `cut_diamond` | credits pill (prototype's "gems" → real `credits`) |
 | Check | `check_mark` | idle-on indicator, raid requirements |
 | Cancel | `cancel` | sheet close |
 | Gears | `gears` | Gear action |
@@ -234,12 +234,12 @@ The prototype's mock fields differ from `monsters.json` / `raids.json`. Map them
 | `mon.att` | `monster.stats.attack` | |
 | `mon.def` | `monster.stats.defence` | |
 | `mon.cb` | `monster.combatLevel` | |
-| `mon.maxHit` | derive via engine | use the same max-hit calc the combat engine uses; or read from combat state once a fight starts. For the info sheet, compute from `monster.stats.strength` + `strengthBonus` per CLAUDE.md melee formula, or surface the engine's value. |
+| `mon.maxHit` | **derive at render** (decided) | Compute the monster's max hit from its own stats using the engine helpers already in `src/engine/combat.js` — `meleeMaxHit(monster.stats.strength, monster.strengthBonus)` for stab/slash/crush styles, `rangedMaxHit(...)` for ranged, and the magic equivalent for magic — keyed off `monster.attackStyle`. Add a `getMonsterMaxHit(monster)` wrapper in `combatArt.js` (or a small `combatStats.js`) that re-exports the right helper. It is an approximation (monsters carry no authored maxHit); label it plainly as "Max Hit". |
 | `mon.style` | `monster.attackStyle` (`stab/slash/crush/ranged/magic`) | map stab/slash/crush → "Melee" label via `STYLE_ART`. |
 | `mon.weakness` | **derive at runtime** (decided) | Compute from `monster.defenceBonus` — the **lowest** of `stab/slash/crush/(melee group)`, `ranged`, `magic` is the weakness. Collapse stab/slash/crush into a single "Melee" weakness. No `monsters.json` change. Add a helper `getMonsterWeakness(monster)` in `combatArt.js` returning `'melee'|'ranged'|'magic'`, mapped to a chip via `STYLE_ART`. |
 | `mon.kc` | `bossKillCounts[id]` / slayer counts | already available. |
 | `mon.drops` | `monster.drops[]` (`itemId`, `quantity`, `chance`) | resolve names/icons through `itemsData[itemId]`; render rates as `%`. |
-| `mon.unique` | derive from drops flagged rare, or from collectionLog uniques | the prototype's gilded "Unique Drop" panel can group the lowest-chance / boss-unique drops. Confirm grouping rule (§9). |
+| `mon.unique` | **`collectionLog.json`** (decided) | The gilded "Unique Drop" panel reads the authoritative uniques from `src/data/collectionLog.json` → `categories[id='monsters'].sections[<monsterId>].items[]`, plus the global `sharedItems[]` where relevant. Resolve each item id through `itemsData` for name/icon. This is already maintained per CLAUDE.md §8, so the panel stays correct as content is added. For raids, use the matching raid section in the same file. Do **not** infer uniques from drop rarity. |
 | raid `rooms/bosses` | `raid.bosses[]` → `monstersData[bossId]` | progression timeline. |
 | raid `bestTime/avgTime/kc` | `raidKillCounts[raid.id]` (decided) | **Hide the Best/Average time tiles** — timing isn't tracked and we're not adding telemetry. Show only the **Completions (KC)** tile from `raidKillCounts[raid.id]`. Keep the tile grid layout balanced for a single stat (or center it). |
 
@@ -369,29 +369,38 @@ npm test && npm run build && npm run rebuild && npm run check:single
 
 ---
 
-## 9. Open decisions (resolve before/while building)
-
-_Resolved:_
+## 9. Decisions (all resolved — ready to build)
 
 - ✅ **Weakness chip** — **derive at runtime** from the lowest `defenceBonus.*`
   (stab/slash/crush collapse to "Melee"). No data change. See §4 + `getMonsterWeakness`.
-- ✅ **Raid best/avg time** — **hide those tiles**, show only Completions (KC). No
-  timing telemetry. See §4.
+- ✅ **Raid best/avg time** — **hide those tiles**, show only Completions (KC) from
+  `raidKillCounts`. No timing telemetry. See §4.
 - ✅ **Per-monster art** — **author a unique glyph for all 98 monsters**; keep the
   category map as fallback + headers. See §3a.
+- ✅ **Modal vs mobile sheet** — **mobile-gated slide-up sheets** (rendered only when
+  `!isDesktopCombatLayout`); desktop keeps the existing `<Modal>` path untouched.
+  See §2 + §7 Phase 3.
+- ✅ **Max hit** — **derive at render** via the engine's `meleeMaxHit`/`rangedMaxHit`
+  (+ magic) helpers, keyed off `monster.attackStyle`; expose as `getMonsterMaxHit`.
+  Approximation, labelled plainly. See §4.
+- ✅ **Unique-drop grouping** — **read `collectionLog.json`** monster/raid sections
+  (+ `sharedItems`); never infer from rarity. See §4.
+- ✅ **Top toolbar = real features** — the toolbar maps to existing app handlers,
+  not mocks:
+  - **Skip 1h** → the existing `handleSkip1h` flow (`src/App.jsx`, via `Header`'s
+    `onSkip1h`), guarded by `skipPreflight.js`; **cloud-account gated** exactly as
+    `Header` does (`isCloudAccount ? handleSkip1h : null`). On the combat screen,
+    thread the same handler in (or hoist the pill into the shared `Header` rather
+    than re-implementing). Honour the save-lock invariants (CLAUDE.md §10) — no skip
+    while a PvP match is active.
+  - **"Gems" pill → `credits`** (the prototype's "gems" is this app's credits).
+    Surface the real `credits` value and open the existing `BuyCreditsModal` via the
+    `onBuyCredits` handler. Don't invent a separate gem currency.
+  - **HP pill** → `currentHP` / `getMaxHP()` (already in combat state), via `HPBar`.
 
-_Still open:_
-
-1. **Modal vs mobile sheet:** keep shared `Modal` chrome (less code, slight desktop
-   restyle) or introduce mobile-gated slide-up sheets (zero desktop change)?
-   *Recommended: mobile-gated sheets.*
-2. **Max hit in info sheet:** surface the engine's computed value, recompute from
-   formula, or omit until a fight starts?
-3. **Unique-drop grouping:** what defines a monster's "unique" set — a flag on
-   drops, the collection-log uniques, or the N lowest-chance drops?
-4. **Skip 1h / gems pills:** the prototype's toolbar shows a "Skip 1h" and gems
-   pill. Confirm these map to existing features (skip-hour purchase, credits/gems)
-   or should be omitted on the combat screen.
+> Net: **no new currencies, no new telemetry, no new stored fields.** The only data
+> authoring is glyph vendoring (§3a) and the offline icon set; everything else reads
+> existing state, `collectionLog.json`, and engine helpers.
 
 > Per the session brief, raise these via a quick question rather than guessing on
 > anything that changes economy/progression or stored data shape.
