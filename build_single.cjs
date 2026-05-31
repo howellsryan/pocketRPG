@@ -122,6 +122,7 @@ const sourceFiles = [
   'screens/PvpLobbyModal.js',
   'screens/PvpCombatScreen.js',
   'screens/CombatMobileSelect.js',
+  'screens/CombatMobileSheets.js',
   'screens/CombatScreen.js',
   'screens/AgilityScreen.js',
   'screens/FarmingScreen.js',
