@@ -34,18 +34,6 @@ function loggedUniques(categoryId, sectionId) {
   return section?.items || []
 }
 
-function StyleChip({ style, label, kind }) {
-  if (!style) return null
-  const art = getStyleArt(style)
-  return (
-    <span class="cb-stylechip" style={{ borderColor: `${art.color}73`, background: `${art.color}1a`, color: art.color }}>
-      <GameIcon iconKey={art.icon} color={art.color} size={14} />
-      <span>{label || art.label}</span>
-      {kind && <span class="cb-stylechip__k">{kind}</span>}
-    </span>
-  )
-}
-
 // Chip for a structured multi-style descriptor (from getMonsterAttackStyles /
 // getMonsterWeakness): one glyph per style and the descriptor's own colour
 // (style colour for one, silver for two, gold for all three).
@@ -231,7 +219,7 @@ export function CombatRaidInfoSheet({ raid, monstersData, itemsData, raidKillCou
                     <div class="cb-room__boss">HP {boss.hitpoints} · CB {boss.combatLevel}</div>
                   </div>
                   <div class="cb-room__right">
-                    <StyleChip style={boss.attackStyle} />
+                    <MultiStyleChip chip={getMonsterAttackStyles(boss)} />
                   </div>
                 </div>
               )
