@@ -201,6 +201,9 @@ html, body, #app {
    Tap targets are ≥44px per the UI rules.
    ────────────────────────────────────────────────────────────────────────── */
 
+/* Mobile combat scroll padding */
+.cb-pad { padding: 8px 15px 26px; }
+
 /* Masked gradient-filled glowing icon art (shared with SkillEmblem technique). */
 .cb-art { flex-shrink: 0; }
 .cb-art--locked { background: linear-gradient(135deg, #3a382f, #1b1a15); opacity: 0.42; }

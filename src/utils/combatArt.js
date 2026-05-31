@@ -17,19 +17,19 @@ const DEFAULT_ART = { icon: 'crossed_swords', accent: '#cdd6e0' }
 
 // Area category key -> emblem + accent (also the fallback for monsters in it).
 export const CATEGORY_ART = {
-  "training": { icon: "crossed_swords", accent: "#cdd6e0" },
-  "slayer": { icon: "death_skull", accent: "#c0453b" },
-  "bossing": { icon: "crowned_skull", accent: "#d8b13a" },
-  "dagganoth_kings": { icon: "horned_skull", accent: "#e0564b" },
-  "wilderness": { icon: "spectre", accent: "#8a7ae6" },
-  "dragons_lair": { icon: "dragon_head", accent: "#46a7c4" },
-  "venomcoil_matriarch": { icon: "wyvern", accent: "#3fb56b" },
-  "fight_caves": { icon: "flame", accent: "#ef6b3a" },
-  "blighted_gauntlet": { icon: "lightning_arc", accent: "#46a0e0" },
-  "sunken_crypts": { icon: "dungeon_gate", accent: "#7f8c95" },
-  "ashveil_highlands": { icon: "cut_palm", accent: "#8db04a" },
-  "ironhold_fortress": { icon: "anvil", accent: "#9aa3ac" },
-  "verdant_wilds": { icon: "wolf_trap", accent: "#5fae5f" },
+  "training": { icon: "crossed_swords", accent: "#cdd6e0", blurb: "Cut your teeth on the weak" },
+  "slayer": { icon: "death_skull", accent: "#c0453b", blurb: "Tasks from the Slayer Master" },
+  "bossing": { icon: "crowned_skull", accent: "#d8b13a", blurb: "Generals of the eternal war" },
+  "dagganoth_kings": { icon: "horned_skull", accent: "#e0564b", blurb: "The crowned tyrants" },
+  "wilderness": { icon: "spectre", accent: "#8a7ae6", blurb: "High risk, high reward" },
+  "dragons_lair": { icon: "dragon_head", accent: "#46a7c4", blurb: "Where the great wyrms sleep" },
+  "venomcoil_matriarch": { icon: "wyvern", accent: "#3fb56b", blurb: "The serpent queen of the marsh" },
+  "fight_caves": { icon: "flame", accent: "#ef6b3a", blurb: "Demons of the molten deep" },
+  "blighted_gauntlet": { icon: "lightning_arc", accent: "#46a0e0", blurb: "A gauntlet of the blighted" },
+  "sunken_crypts": { icon: "dungeon_gate", accent: "#7f8c95", blurb: "The restless dead stir below" },
+  "ashveil_highlands": { icon: "cut_palm", accent: "#8db04a", blurb: "Beasts of the ashen wilds" },
+  "ironhold_fortress": { icon: "anvil", accent: "#9aa3ac", blurb: "Guardians of the iron keep" },
+  "verdant_wilds": { icon: "wolf_trap", accent: "#5fae5f", blurb: "Predators of the deep wood" },
 }
 
 // Raid id -> emblem + accent.

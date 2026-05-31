@@ -9,6 +9,7 @@ import HPBar from '../components/HPBar.jsx'
 import IdleCombatSetupModal from '../components/IdleCombatSetupModal.jsx'
 import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
 import ItemSlot from '../components/ItemSlot.jsx'
+import CombatMobileSelect from './CombatMobileSelect.jsx'
 import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applySpecialAttack } from '../engine/combat.js'
 import { getLevelFromXP } from '../engine/experience.js'
@@ -1450,6 +1451,36 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   if (!combat) {
     return (
       <>
+      {/* Mobile uses the artsy CombatMobileSelect; desktop keeps the responsive
+          grid below unchanged. Shared modals (info / raid / idle / PvP) follow. */}
+      {!isDesktopCombatLayout ? (
+        <div class="h-full overflow-y-auto">
+          <CombatMobileSelect
+            categories={COMBAT_CATEGORIES}
+            monstersData={monstersData}
+            raidsData={raidsData}
+            collapsedSections={collapsedSections}
+            onToggleSection={toggleSection}
+            onFight={startFight}
+            onMonsterInfo={setSelectedMonsterInfo}
+            onStartRaid={startRaid}
+            onRaidInfo={setSelectedRaidInfo}
+            checkBossRequirements={checkBossRequirements}
+            checkRaidRequirements={checkRaidRequirements}
+            getSlayerLevel={getSlayerLevel}
+            doesSlayerTaskMatchMonster={doesSlayerTaskMatchMonster}
+            slayerTask={slayerTask}
+            bossKillCounts={bossKillCounts}
+            raidKillCounts={raidKillCounts}
+            combatStance={combatStance}
+            onStance={updateCombatStance}
+            idleSetup={idleCombatSetup}
+            onOpenIdle={setIdleSetupMode}
+            showPvp={!isIronman && !isOneLife}
+            onOpenPvp={() => setShowPvpLobby(true)}
+          />
+        </div>
+      ) : (
       <div class="h-full overflow-y-auto p-4">
         <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider mb-3">
           Choose a Monster
@@ -1677,6 +1708,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           </div>
         )}
       </div>
+      )}
 
       {showPvpLobby && (
         <PvpLobbyModal
