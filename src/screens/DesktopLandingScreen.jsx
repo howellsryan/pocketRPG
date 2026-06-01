@@ -1,5 +1,6 @@
 import { useEffect } from 'preact/hooks'
 import { landingImages } from './landingImages.js'
+import { landingSrcSet } from '../utils/helpers.js'
 import { homeLogo } from '../utils/homeLogo.js'
 import { getSkillArt } from '../utils/skillArt.js'
 import GameIcon from '../components/GameIcon.jsx'
@@ -153,9 +154,9 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, emb
               </div>
             </div>
             <div class="dl-cluster">
-              <div class="dl-device dl-device--back"><img src={landingImages['ss-combat']} alt="Boss fight in progress" width="560" height="994" loading="eager" decoding="async" /></div>
-              <div class="dl-device dl-device--back2"><img src={landingImages['ss-inventory']} alt="Full inventory grid" width="560" height="985" loading="eager" decoding="async" /></div>
-              <div class="dl-device dl-device--main"><img src={landingImages['ss-stats']} alt="Skills overview" width="560" height="979" loading="eager" fetchpriority="high" decoding="async" /></div>
+              <div class="dl-device dl-device--back"><img src={landingImages['ss-combat']} srcset={landingSrcSet(landingImages['ss-combat'])} sizes="202px" alt="Boss fight in progress" width="560" height="994" loading="eager" decoding="async" /></div>
+              <div class="dl-device dl-device--back2"><img src={landingImages['ss-inventory']} srcset={landingSrcSet(landingImages['ss-inventory'])} sizes="182px" alt="Full inventory grid" width="560" height="985" loading="eager" decoding="async" /></div>
+              <div class="dl-device dl-device--main"><img src={landingImages['ss-stats']} srcset={landingSrcSet(landingImages['ss-stats'])} sizes="250px" alt="Skills overview" width="560" height="979" loading="eager" fetchpriority="high" decoding="async" /></div>
             </div>
           </div>
         </section>
@@ -181,7 +182,7 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, emb
               {DL_FEATURES.map(f => (
                 <div class="dl-feature dl-reveal" key={f.title}>
                   <div class="dl-feature__media">
-                    <div class="dl-frame"><img src={landingImages[f.img]} alt={f.title}
+                    <div class="dl-frame"><img src={landingImages[f.img]} srcset={landingSrcSet(landingImages[f.img])} sizes="248px" alt={f.title}
                       width={DL_LANDING_DIMS[f.img]?.w} height={DL_LANDING_DIMS[f.img]?.h}
                       loading="lazy" decoding="async" /></div>
                   </div>
@@ -228,7 +229,7 @@ export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, emb
           <div class="dl-gallery-wrap">
             <div class="dl-gallery">
               {DL_GALLERY.map(g => (
-                <div class="dl-shot" key={g}><img src={landingImages[g]} alt={g}
+                <div class="dl-shot" key={g}><img src={landingImages[g]} srcset={landingSrcSet(landingImages[g])} sizes="200px" alt={g}
                   width={DL_LANDING_DIMS[g]?.w} height={DL_LANDING_DIMS[g]?.h}
                   loading="lazy" decoding="async" /></div>
               ))}

@@ -1,5 +1,6 @@
 import { useRef } from 'preact/hooks'
 import { landingImages } from './landingImages.js'
+import { landingSrcSet } from '../utils/helpers.js'
 import { useIsDesktop } from '../hooks/useIsDesktop.js'
 import DesktopLandingScreen from './DesktopLandingScreen.jsx'
 
@@ -103,6 +104,8 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, embedded, 
         <div class="w-full max-w-[280px] rounded-2xl overflow-hidden border border-[var(--color-gold-dim)] shadow-2xl">
           <img
             src={landingImages['ss-stats']}
+            srcset={landingSrcSet(landingImages['ss-stats'])}
+            sizes="280px"
             alt="PocketRPG skills overview — Combat 102, Total Level 1457"
             class="w-full block"
             width="560" height="979"
@@ -122,7 +125,9 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, embedded, 
           {FEATURES.map(f => (
             <div key={f.title} class="bg-[var(--color-void-light)] border border-[var(--color-void-border)] rounded-2xl overflow-hidden flex flex-col">
               <div class="overflow-hidden max-h-48">
-                <img src={f.img} alt={f.imgAlt} class="w-full object-cover object-top"
+                <img src={f.img} srcset={landingSrcSet(f.img)}
+                     sizes="(min-width: 672px) 328px, 45vw"
+                     alt={f.imgAlt} class="w-full object-cover object-top"
                      width={LANDING_DIMS[f.imgKey].w} height={LANDING_DIMS[f.imgKey].h}
                      loading="lazy" decoding="async" />
               </div>
@@ -144,7 +149,8 @@ export default function LandingScreen({ onGitHubLogin, onGoogleLogin, embedded, 
         <div class="flex gap-3 overflow-x-auto px-4 pb-3 snap-x snap-mandatory">
           {STRIP.map(s => (
             <div key={s.src} class="flex-none w-36 snap-start rounded-xl overflow-hidden border border-[var(--color-void-border)] shadow-lg">
-              <img src={s.src} alt={s.alt} class="w-full block"
+              <img src={s.src} srcset={landingSrcSet(s.src)} sizes="144px"
+                   alt={s.alt} class="w-full block"
                    width={LANDING_DIMS[s.key].w} height={LANDING_DIMS[s.key].h}
                    loading="lazy" decoding="async" />
             </div>

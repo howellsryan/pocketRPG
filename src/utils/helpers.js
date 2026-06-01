@@ -6,6 +6,19 @@ export function randInt(min, max) {
 }
 
 /**
+ * Build a responsive `srcset` for a landing screenshot from its 560px-wide URL.
+ * Smaller variants are committed next to the original as `<name>-<width>.webp`
+ * (see scripts/gen-landing-variants.cjs). Works for both the Vite build
+ * (base-prefixed `/landing/…`) and the single-file build (`/public/landing/…`)
+ * since it only rewrites the file extension on the given URL.
+ */
+export function landingSrcSet(url) {
+  if (!url) return undefined
+  const base = url.replace(/\.webp$/, '')
+  return `${base}-240.webp 240w, ${base}-360.webp 360w, ${base}-480.webp 480w, ${url} 560w`
+}
+
+/**
  * Format a number with commas: 1234567 → "1,234,567"
  */
 export function formatNumber(n) {
