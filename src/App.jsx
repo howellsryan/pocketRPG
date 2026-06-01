@@ -1452,10 +1452,11 @@ function GameApp() {
         return
       }
       try {
-        const result = await api.skipHour()
+        const result = await api.skipHour({ bossId: activeTaskRef.current?.monster?.id })
         setCredits(result?.credits_remaining ?? credits)
         killHandler()
-        addToast('⏭️ Skipped to the kill', 'info')
+        const spent = result?.cost ?? 1
+        addToast(`⏭️ Skipped to the kill (${spent} credit${spent === 1 ? '' : 's'})`, 'info')
       } catch (err) {
         if (err?.status === 402) {
           addToast('You do not have enough credits to skip.', 'error')
