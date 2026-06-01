@@ -1112,7 +1112,16 @@ function GameApp() {
         const result = await pullSave()
         if (result && result.payload) {
           await applyCloudSave(result.payload, result.updatedAt)
+        } else if (result && result.readFailed) {
+          // The cloud read timed out or errored — we genuinely do NOT know
+          // whether this character has a save. Initialising a fresh game and
+          // pushing it here is exactly how a transient blip used to wipe a
+          // live account back to level 3. Bail to the "cloud unavailable"
+          // screen (Retry / Force Restart) instead of risking an overwrite.
+          throw new Error('Could not reach your cloud save. Check your connection and retry.')
         } else {
+          // Server authoritatively reported no save row for this character —
+          // safe to initialise a new game and push it.
           await wipeLocalSave()
           await startNewGame(getIronmanMode(), getCharacterName(), getOneLifeMode())
           if (!isInPvpMatch) await pushNow(getSnapshot())

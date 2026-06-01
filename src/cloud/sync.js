@@ -200,16 +200,28 @@ export function requestCriticalPushSave(snapshotOrFactory, reason = 'critical') 
 }
 
 // Public: pull the cloud save for the selected character.
-// Returns { applied, payload, updatedAt } or { applied: false }. Guarded by
-// a timeout so a slow/hung endpoint can't trap the boot sequence on the
-// "Loading…" screen — we fall back to the local IDB save in that case.
+// Returns { applied, payload, updatedAt, readFailed }. Guarded by a timeout so
+// a slow/hung endpoint can't trap the boot sequence on the "Loading…" screen.
+//
+// `readFailed` distinguishes two very different no-payload outcomes that the
+// caller MUST treat differently:
+//   • readFailed: true  — the read timed out or errored. We do NOT know
+//     whether a save exists. Callers must never treat this as "no save" and
+//     overwrite the cloud with a fresh character (that is how a transient
+//     network blip used to wipe a live account back to level 3).
+//   • readFailed: false — the server authoritatively answered and there is no
+//     save row yet. Safe to initialise a new game.
+// `withTimeout` resolves to the sentinel on BOTH timeout and rejection, so a
+// sentinel return unambiguously means the read did not succeed.
 export async function pullSave() {
-  if (!canSync()) return { applied: false }
-  const res = await withTimeout(api.getSave(), CLOUD_READ_TIMEOUT_MS, null)
-  if (!res || !res.save) return { applied: false }
+  if (!canSync()) return { applied: false, readFailed: true }
+  const READ_FAILED = Symbol('read_failed')
+  const res = await withTimeout(api.getSave(), CLOUD_READ_TIMEOUT_MS, READ_FAILED)
+  if (res === READ_FAILED) return { applied: false, readFailed: true }
+  if (!res || !res.save) return { applied: false, readFailed: false }
   const { save_data, updatedAt, save_revision } = res.save
   if (Number.isFinite(save_revision)) lastSaveRevision = save_revision
-  return { applied: false, payload: JSON.parse(save_data), updatedAt }
+  return { applied: false, payload: JSON.parse(save_data), updatedAt, readFailed: false }
 }
 
 // Public: check if the cloud copy is meaningfully newer than the last save we
