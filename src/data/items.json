@@ -18615,16 +18615,6 @@
     "isGeneralStore": false,
     "isBossUnique": true
   },
-  "planks": {
-    "id": "plank",
-    "legacy_item_id": "planks",
-    "name": "Plank",
-    "type": "resource",
-    "stackable": true,
-    "shopValue": 156,
-    "icon": "🪵",
-    "isGeneralStore": false
-  },
   "zulrah_scales": {
     "id": "venomcoil_scales",
     "legacy_item_id": "zulrah_scales",
