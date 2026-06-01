@@ -25,6 +25,21 @@ environment (so they reference each other by source name) and are minified with
 `minifyIdentifiers: false`. See `CLAUDE.md`/`AGENTS.md` §12 for the contributor
 rules. Re-run Lighthouse on a preview deploy to confirm the new numbers.
 
+### Follow-up — moved the icon glyph data off the landing page too
+
+A second pass moved `gameIconsData` (the ~126 KiB game-icons.net SVG glyph map —
+larger than all other game data combined) out of the inline core and into the
+chunk. It is consumed only by icon code (`GameIcon`/`itemIcons`/`skillArt`) and
+the **mobile** landing renders no icons, so on mobile it was pure dead weight.
+Those three modules now guard every access with `typeof gameIconsData !==
+'undefined'` (emoji fallback until loaded); the **desktop** landing — the one
+place an icon paints pre-game — fetches the chunk on mount and re-renders.
+
+Net: the landing/login document transfer dropped from ~407 KiB → ~213 KiB gzip
+(~48%). The rest of the game data (`itemsData`, `monstersData`, …) stays in core
+because it is referenced by `GameProvider`/boot, which mount on the landing page;
+moving it would need re-render orchestration not worth the risk.
+
 ---
 
 ## 0) Why these problems exist (root cause)

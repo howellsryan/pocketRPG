@@ -399,7 +399,15 @@ const SPLIT_MINIFY = {
 // Built first so the core loader can embed its content-hashed URL. Classic
 // script + "use strict" matches the module semantics the source was authored
 // under (strict, top-level `this` === undefined).
-const gameChunkScript = esbuild.transformSync(gameJS, SPLIT_MINIFY).code.trim();
+//
+// gameIconsData (the ~126 KiB game-icons.net SVG glyph map) lives in the chunk,
+// not core: it is consumed only by icon code (GameIcon / itemIcons / skillArt),
+// never on the mobile landing/login page, so it is pure dead weight there. The
+// desktop landing — the one place an icon renders before the player is in-game —
+// fetches the chunk on mount (see DesktopLandingScreen) and GameIcon falls back
+// to an emoji until it arrives.
+const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\n${gameJS}`;
+const gameChunkScript = esbuild.transformSync(gameChunkSource, SPLIT_MINIFY).code.trim();
 const gameChunkBody = `"use strict";\n${gameChunkScript}\n`;
 const gameChunkHash = require('crypto').createHash('sha256').update(gameChunkBody).digest('hex').slice(0, 12);
 const gameChunkFile = `game-${gameChunkHash}.js`;
@@ -424,7 +432,6 @@ const coreScript = `${vendorBundle}
 ${vendorDestructure}
 ${gameChunkLoader}
 
-const gameIconsData = ${gameIconsJSON};
 const itemsData = ${itemsJSON};
 const monstersData = ${monstersJSON};
 const skillsData = ${skillsJSON};

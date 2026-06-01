@@ -1,4 +1,4 @@
-import { useEffect } from 'preact/hooks'
+import { useEffect, useState } from 'preact/hooks'
 import { landingImages } from './landingImages.js'
 import { landingSrcSet } from '../utils/helpers.js'
 import { homeLogo } from '../utils/homeLogo.js'
@@ -97,6 +97,17 @@ function DlGitHubMark() {
 }
 
 export default function DesktopLandingScreen({ onGitHubLogin, onGoogleLogin, embedded, showBrowserHint, copied, onCopyLink }) {
+  // The desktop landing renders game-icons glyphs, whose data (gameIconsData)
+  // ships in the lazily-loaded game chunk in the single-file build. Fetch it on
+  // mount and re-render once it arrives so the icons swap in from their emoji
+  // fallback. No-op in the Vite builds, where gameIconsData is statically
+  // bundled and the icons render immediately.
+  const [, bumpIcons] = useState(0)
+  useEffect(() => {
+    const load = (typeof globalThis !== 'undefined') && globalThis.__loadGameChunk
+    if (load) load().then(() => bumpIcons(n => n + 1)).catch(() => {})
+  }, [])
+
   useEffect(() => {
     const els = document.querySelectorAll('.dl-reveal')
     if (typeof IntersectionObserver === 'undefined') {
