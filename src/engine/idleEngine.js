@@ -13,7 +13,7 @@ import {
 import { getEquipmentBonuses, getAttackSpeed, getAttackStyle, getCombatType, getRangedAmmoRequirementFailure } from './equipment.js'
 import { getEffectiveToolActionTicks, getEquippedSkillXpMultiplier } from './skilling.js'
 import { hasRequiredRunes, getRunesToConsume } from './runes.js'
-import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE, GATHERING_SKILLS, GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
+import { MELEE_XP_PER_DAMAGE, RANGED_XP_PER_DAMAGE, MAGIC_XP_PER_DAMAGE, HP_XP_PER_DAMAGE, GATHERING_SKILLS, IDLE_AUTOBANK_GATHERING_SKILLS, GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
 import { addItem, canFit } from './inventory.js'
 import { getAgilityBankDelayFromStats, simulateIdleAgility } from './agility.js'
 import { rollClueRewards } from './clueScrolls.js'
@@ -304,7 +304,10 @@ export function simulateIdleSkilling(task, elapsedMs, bank, equipment = null, st
   let gatheringStoppedReason
 
   if (isGatheringSkill && (task.action.dropTable || task.action.product)) {
-    const bankWhenFull = hasGatherAutoBankUnlock(stats)
+    // Mining/woodcutting/fishing always auto-bank during idle/skip so the
+    // inventory cap can't stall the session; other gatherers (farming) still
+    // require the Construction auto-bank unlock.
+    const bankWhenFull = hasGatherAutoBankUnlock(stats) || IDLE_AUTOBANK_GATHERING_SKILLS.includes(task.skill)
     const bankDelayTicks = Math.ceil(getAgilityBankDelayFromStats(stats) / TICK_MS)
     const productQty = task.action.productQty || 1
 

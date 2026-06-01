@@ -16,6 +16,7 @@ const MANUAL_LEGACY_ALIASES = {
   void_body: 'void_king_top',
   void_bottoms: 'void_king_robe',
   void_gloves: 'void_king_gloves',
+  planks: 'plank',
 }
 
 // The redundant legacy-keyed duplicate items were removed from items.json;

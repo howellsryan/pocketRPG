@@ -60,20 +60,54 @@ describe('simulateIdleGather inventory routing', () => {
 })
 
 describe('simulateIdleSkilling gathering routing', () => {
-  it('mining fills the inventory and stops when full without the construction unlock', () => {
+  it('mining auto-banks during idle even without the Construction unlock', () => {
+    // Regression: mining/woodcutting/fishing used to fill the 28-slot inventory
+    // and stop (inventory_full) unless the player had the Construction-80
+    // auto-bank unlock, so they were the only skills that couldn't be idled or
+    // skipped. They now always bank during idle/skip catch-up.
     const sim = simulateIdleSkilling(
       { skill: 'mining', action: { id: 'iron', name: 'Iron', ticks: 1, xp: 35, product: 'iron_ore' } } as any,
+      600_000,
+      {} as any,
+      null,
+      { agility: { xp: 13_034_431 } } as any, // agility 99 -> fast bank trips, no construction unlock
+      { iron_ore: { stackable: false } } as any,
+      invWithFreeSlots(2),
+    )
+    expect(sim?.stoppedReason).toBeUndefined()
+    expect(sim?.actions).toBeGreaterThan(2)
+    expect(sim?.itemsBanked?.iron_ore).toBeGreaterThan(0)
+  })
+
+  it('fishing auto-banks during idle even without the Construction unlock', () => {
+    const sim = simulateIdleSkilling(
+      { skill: 'fishing', action: { id: 'shrimp', name: 'Shrimp', ticks: 1, xp: 10, product: 'raw_shrimps' } } as any,
+      600_000,
+      {} as any,
+      null,
+      { agility: { xp: 13_034_431 } } as any,
+      { raw_shrimps: { stackable: false } } as any,
+      invWithFreeSlots(2),
+    )
+    expect(sim?.stoppedReason).toBeUndefined()
+    expect(sim?.actions).toBeGreaterThan(2)
+    expect(sim?.itemsBanked?.raw_shrimps).toBeGreaterThan(0)
+  })
+
+  it('farming is NOT auto-banked early — it still fills and stops without the unlock', () => {
+    // Scope guard: only mining/woodcutting/fishing get the unconditional idle
+    // auto-bank. Farming keeps requiring the Construction-80 unlock.
+    const sim = simulateIdleSkilling(
+      { skill: 'farming', action: { id: 'potato', name: 'Potato', ticks: 1, xp: 9, product: 'potato' } } as any,
       60_000,
       {} as any,
       null,
-      {} as any,
-      { iron_ore: { stackable: false } } as any,
+      { agility: { xp: 13_034_431 } } as any,
+      { potato: { stackable: false } } as any,
       invWithFreeSlots(2),
     )
     expect(sim?.actions).toBe(2)
     expect(sim?.stoppedReason).toBe('inventory_full')
-    expect(sim?.xpGained?.mining).toBe(70)
-    expect(sim?.itemsGained?.iron_ore).toBe(2)
     expect(sim?.itemsBanked).toEqual({})
   })
 
