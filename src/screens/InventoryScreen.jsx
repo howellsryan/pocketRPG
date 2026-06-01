@@ -163,7 +163,7 @@ export default function InventoryScreen() {
       return
     }
 
-    const chargeItemId = item.chargeItemId || 'zulrah_scales'
+    const chargeItemId = item.chargeItemId || 'venomcoil_scales'
     const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
     const scalesIdx = inventory.findIndex(s => s && s.itemId === chargeItemId)
     if (scalesIdx === -1) {
@@ -248,7 +248,7 @@ export default function InventoryScreen() {
       newBank[item.id] = { ...newBank[item.id], charges: 0 }
     }
 
-    const chargeItemId = item.chargeItemId || 'zulrah_scales'
+    const chargeItemId = item.chargeItemId || 'venomcoil_scales'
     const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
     const existingIdx = newInv.findIndex(s => s && s.itemId === chargeItemId)
     if (existingIdx !== -1) {
@@ -594,7 +594,7 @@ export default function InventoryScreen() {
                 </button>
               </div>
               {selected.item.scaleCharged && !selected.slot.noted && (selected.slot.charges || 0) > 0 && (() => {
-                const chargeItemId = selected.item.chargeItemId || 'zulrah_scales'
+                const chargeItemId = selected.item.chargeItemId || 'venomcoil_scales'
                 const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
                 return (
                   <button onClick={handleUnchargeWeapon}
@@ -788,7 +788,7 @@ export default function InventoryScreen() {
 
       {/* ── Charge weapon modal ──────────────────────────────────────── */}
       {showChargeModal && selected && (() => {
-        const chargeItemId = selected.item.chargeItemId || 'zulrah_scales'
+        const chargeItemId = selected.item.chargeItemId || 'venomcoil_scales'
         const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
         const scalesInInv = inventory.find(s => s && s.itemId === chargeItemId)
         const availableScales = scalesInInv?.quantity || 0

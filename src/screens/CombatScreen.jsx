@@ -549,7 +549,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         }
         if (ev.type === 'noCharges') {
           const item = itemsData[ev.itemId]
-          const chargeItemId = item?.chargeItemId || 'zulrah_scales'
+          const chargeItemId = item?.chargeItemId || 'venomcoil_scales'
           const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
           setLog(prev => [...prev.slice(-20), {
             text: `${item?.name || 'Weapon'} has no charges — use ${chargeItemName} to charge it!`,
@@ -1162,7 +1162,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
     // Scale-charged weapons must have at least one charge to fire a spec
     if (weapon.scaleCharged && (weaponEntry.charges || 0) <= 0) {
-      const chargeItemId = weapon.chargeItemId || 'zulrah_scales'
+      const chargeItemId = weapon.chargeItemId || 'venomcoil_scales'
       const chargeItemName = itemsData[chargeItemId]?.name || chargeItemId
       addToast(`No charges — use ${chargeItemName} to charge this weapon.`, 'error')
       return

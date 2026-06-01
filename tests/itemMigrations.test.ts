@@ -8,7 +8,7 @@ describe('migrateLegacyItemIds', () => {
       body: { itemId: 'void_knight_top' },
       legs: { itemId: 'void_knight_robe' },
       gloves: { itemId: 'void_knight_gloves' },
-      weapon: { itemId: 'rune_scimitar' },
+      ring: { itemId: 'coins' },
     }
     const result = migrateLegacyItemIds({ equipment, inventory: [], bank: {} })
     expect(result.changed).toBe(true)
@@ -16,7 +16,19 @@ describe('migrateLegacyItemIds', () => {
     expect(result.equipment.body.itemId).toBe('void_king_top')
     expect(result.equipment.legs.itemId).toBe('void_king_robe')
     expect(result.equipment.gloves.itemId).toBe('void_king_gloves')
-    expect(result.equipment.weapon.itemId).toBe('rune_scimitar')
+    expect(result.equipment.ring.itemId).toBe('coins') // canonical id untouched
+  })
+
+  it('rewrites pre-migration ids derived from legacy_item_id (post-dedupe)', () => {
+    // The legacy-keyed duplicate items were removed from items.json; the map
+    // is now derived from each canonical entry's `legacy_item_id` field, so an
+    // old save id resolves to its canonical id on load.
+    const equipment = { weapon: { itemId: 'rune_scimitar' } }
+    const inventory = [{ itemId: 'saradomin_brew', quantity: 3 }]
+    const result = migrateLegacyItemIds({ equipment, inventory, bank: {} })
+    expect(result.changed).toBe(true)
+    expect(result.equipment.weapon.itemId).toBe('runeforged_scimitar')
+    expect(result.inventory[0]).toEqual({ itemId: 'lumira_brew', quantity: 3 })
   })
 
   it('preserves other equipment fields (charges, quantity) on the rewritten slot', () => {

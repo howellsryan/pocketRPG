@@ -65,8 +65,13 @@ export function groupLabelOf(item) {
 // sort by their lowest tier then label.
 export function buildArmoury(items = itemsData) {
   const cats = { melee: new Map(), ranged: new Map(), magic: new Map() }
+  const seenIds = new Set()
   for (const item of Object.values(items)) {
     if (!hasPositiveCombatBonus(item)) continue
+    // Defensive: never list the same canonical id twice (e.g. if a legacy
+    // duplicate ever re-enters the data).
+    if (seenIds.has(item.id)) continue
+    seenIds.add(item.id)
     const cat = categoryOf(item)
     const key = groupKeyOf(item)
     if (!cats[cat].has(key)) cats[cat].set(key, { key, label: groupLabelOf(item), items: [] })

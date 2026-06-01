@@ -1,16 +1,30 @@
 import { GameApiError } from './errors.js'
 
-// Some items in items.json are keyed by a legacy id but expose a different
-// canonical id via the `id` field on the entry (e.g. key "rune_scimitar"
-// holds id "runeforged_scimitar"). Save data on old clients still carries
-// the legacy key. Resolve to the canonical id whenever we touch persistent
-// state so writes from inventory (sell) and shop search (buy) use the same
-// identifier on the trading post.
+// Save data on old clients still carries pre-migration item ids (e.g.
+// "rune_scimitar" for "runeforged_scimitar"). The redundant legacy-keyed
+// duplicate entries were removed from items.json; each surviving canonical
+// entry records the id it replaced in `legacy_item_id`. Resolve to the
+// canonical id whenever we touch persistent state so writes from inventory
+// (sell) and shop search (buy) use the same identifier on the trading post.
+const legacyMapCache = new WeakMap()
+function getLegacyMap(itemsData) {
+  let map = legacyMapCache.get(itemsData)
+  if (map) return map
+  map = new Map()
+  for (const key of Object.keys(itemsData || {})) {
+    const entry = itemsData[key]
+    const legacy = entry && entry.legacy_item_id
+    if (typeof legacy === 'string' && legacy && legacy !== entry.id) map.set(legacy, entry.id)
+  }
+  legacyMapCache.set(itemsData, map)
+  return map
+}
+
 export function canonicalItemId(itemsData, rawId) {
   if (typeof rawId !== 'string' || !rawId) return rawId
   const direct = itemsData?.[rawId]
   if (direct && typeof direct.id === 'string' && direct.id) return direct.id
-  return rawId
+  return getLegacyMap(itemsData).get(rawId) || rawId
 }
 
 // Walk the save's inventory + bank and rewrite any legacy keys to their
