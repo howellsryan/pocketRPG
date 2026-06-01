@@ -237,15 +237,26 @@ const compiledTailwindCSS = fs.readFileSync(path.join(__dirname, '.tmp', 'app.cs
 // <style> tiny and lets fonts load in parallel (font-display:swap). The
 // copied files are a build artifact (gitignored); the deploy's rebuild
 // regenerates them, mirroring how index.html itself is produced.
+//
+// `preload` lists the weights that paint above the fold (the splash brand +
+// landing hero headings in Cinzel, body copy in Nunito). Without a hint these
+// are only discovered after the inline CSS parses and those elements lay out,
+// which puts them at the tail of the critical request chain (Lighthouse's
+// "Network dependency tree" insight). Emitting `<link rel=preload as=font>`
+// for just those weights lets the browser fetch them up front in parallel with
+// the document, shortening the chain. Below-the-fold / in-app-only weights
+// (Nunito 600/700, all JetBrains Mono) are intentionally NOT preloaded so they
+// don't compete with the LCP image for early bandwidth.
 const FONT_FACES = [
-  { pkg: '@fontsource/cinzel',         family: 'Cinzel',         weights: [400, 700, 900] },
-  { pkg: '@fontsource/nunito',          family: 'Nunito',         weights: [400, 600, 700] },
-  { pkg: '@fontsource/jetbrains-mono', family: 'JetBrains Mono', weights: [400, 700]      },
+  { pkg: '@fontsource/cinzel',         family: 'Cinzel',         weights: [400, 700, 900], preload: [400, 700, 900] },
+  { pkg: '@fontsource/nunito',          family: 'Nunito',         weights: [400, 600, 700], preload: [400]           },
+  { pkg: '@fontsource/jetbrains-mono', family: 'JetBrains Mono', weights: [400, 700],      preload: []              },
 ];
 const fontsOutDir = path.join(__dirname, 'public', 'fonts');
 fs.mkdirSync(fontsOutDir, { recursive: true });
 let fontFaceCSS = '';
-for (const { pkg, family, weights } of FONT_FACES) {
+let fontPreloadTags = '';
+for (const { pkg, family, weights, preload } of FONT_FACES) {
   const fontName = pkg.split('/')[1];
   for (const weight of weights) {
     const fname = `${fontName}-latin-${weight}-normal.woff2`;
@@ -258,6 +269,13 @@ for (const { pkg, family, weights } of FONT_FACES) {
     fontFaceCSS +=
       `@font-face{font-family:'${family}';font-style:normal;font-weight:${weight};` +
       `font-display:swap;src:url('/public/fonts/${fname}') format('woff2')}\n`;
+    // `crossorigin` is required even for same-origin fonts: woff2 is always
+    // fetched in CORS-anonymous mode, so a preload without it would be a
+    // separate, unused fetch (double download).
+    if ((preload || []).includes(weight)) {
+      fontPreloadTags +=
+        `<link rel="preload" href="/public/fonts/${fname}" as="font" type="font/woff2" crossorigin>\n`;
+    }
   }
 }
 
@@ -345,9 +363,13 @@ const html = `<!DOCTYPE html>
 <!-- LCP image: the hero screenshot is rendered by JS, so preload it here to
      make the request discoverable from the initial document and fetch it at
      high priority. Same asset is the hero on both mobile and desktop layouts.
-     Fonts are intentionally NOT preloaded — they use font-display:swap, so
-     they paint in fallback immediately and must not compete with the LCP. -->
+     Kept first (and fetchpriority="high") so it stays ahead of the font
+     preloads below in the queue. -->
 <link rel="preload" href="/public/landing/ss-stats.webp" as="image" type="image/webp" fetchpriority="high">
+<!-- Above-the-fold fonts: discover them from the initial document so they load
+     in parallel instead of trailing the critical request chain. font-display:swap
+     keeps text visible in a fallback meanwhile. See FONT_FACES.preload above. -->
+${fontPreloadTags.trim()}
 <style>
 ${css}
 </style>
