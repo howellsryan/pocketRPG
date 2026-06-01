@@ -322,13 +322,16 @@ not auto-derived.
 ### Design
 
 > **✅ Shipped design (supersedes the category-split pseudocode below).** The Armoury renders as
-> **one flat page** — no Melee/Ranged/Magic tabs. `buildArmoury(items)` returns a single
-> tier-ordered array of family groups `[{ key, label, minTier, items[] }]` (grouped by the first
-> word of the name: Dragon, Runeforged, Grondar, …). **Max-level skill capes** (cape slot + a
-> single level-99 requirement, 17 items) collapse into one **"Skill Capes"** group via
-> `isSkillCape()` / `groupKeyOf()`; tier 99 places it last. Inclusion rule is "any positive
-> attack **or** defence bonus." `categoryOf()` is retained as a general helper but no longer
-> drives grouping. The pseudocode below is the original plan and is kept for context.
+> **one flat page** — no Melee/Ranged/Magic tabs. `buildArmoury(items)` returns a single array of
+> **kind** groups `[{ key, label, minTier, items[] }]`, grouped by item kind (the noun in the
+> name) rather than material family — so every Shortbow groups with other shortbows, every Amulet
+> with amulets, etc. `kindOf()` takes the last word of the name, stripping a trailing `(G)`/`(T)`
+> variant tag and using the noun before "of" for "<Kind> of <X>" names (Amulet of Glory → Amulet,
+> Staff of Fire → Staff). Groups are ordered **alphabetically by label**; items within a group are
+> tier-ordered. **Max-level skill capes** (cape slot + a single level-99 requirement, 17 items)
+> collapse into one **"Skill Capes"** group via `isSkillCape()`, pinned last. Inclusion rule is
+> "any positive attack **or** defence bonus." `categoryOf()` is retained as a general helper but
+> no longer drives grouping. The pseudocode below is the original plan and is kept for context.
 
 Build the Armoury as a **read-only compendium** reusing the existing item-modal stack, fed by a
 **pure data classifier** so the logic is testable and the screen stays thin.

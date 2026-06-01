@@ -4,6 +4,7 @@ import {
   buildArmoury,
   categoryOf,
   tierOf,
+  kindOf,
   groupKeyOf,
   isSkillCape,
   hasSpecialAttack,
@@ -36,10 +37,26 @@ describe('armoury classifier', () => {
     expect(tierOf({})).toBe(0)
   })
 
-  it('groups by the first word of the name', () => {
-    expect(groupKeyOf({ name: 'Dragon Scimitar' })).toBe('dragon')
-    expect(groupKeyOf({ name: 'Runeforged Platebody' })).toBe('runeforged')
-    expect(groupKeyOf({ name: "Ava's Accumulator", slot: 'cape', requirements: { ranged: 50 } })).toBe('avas')
+  it('groups by item kind (the noun in the name), not material family', () => {
+    // Same kind across materials shares a group.
+    expect(groupKeyOf({ name: 'Dragon Scimitar' })).toBe('scimitar')
+    expect(groupKeyOf({ name: 'Bronze Scimitar' })).toBe('scimitar')
+    expect(groupKeyOf({ name: 'Magic Shortbow' })).toBe('shortbow')
+    expect(groupKeyOf({ name: 'Yew Longbow' })).toBe('longbow')
+    expect(groupKeyOf({ name: 'Rune Crossbow' })).toBe('crossbow')
+    expect(groupKeyOf({ name: 'Runeforged Platebody' })).toBe('platebody')
+  })
+
+  it('kindOf handles "<Kind> of <X>" names and parenthetical variants', () => {
+    expect(kindOf({ name: 'Amulet of Glory' })).toBe('Amulet')
+    expect(kindOf({ name: 'Amulet of Glory (T)' })).toBe('Amulet')
+    expect(kindOf({ name: 'Staff of Fire' })).toBe('Staff')
+    expect(kindOf({ name: 'Trident of Venom' })).toBe('Trident')
+    expect(kindOf({ name: 'Climbing Boots (G)' })).toBe('Boots')
+    expect(kindOf({ name: 'Magic Shortbow' })).toBe('Shortbow')
+    // jewellery amulets and "Amulet of X" land in the same group
+    expect(groupKeyOf({ name: 'Sapphire Amulet' })).toBe('amulet')
+    expect(groupKeyOf({ name: 'Amulet of Fury' })).toBe('amulet')
   })
 
   it('treats only level-99 single-skill capes as skill capes', () => {
@@ -69,10 +86,11 @@ describe('armoury classifier', () => {
   describe('buildArmoury over the live data', () => {
     const groups = buildArmoury(items)
 
-    it('returns one flat, tier-ordered list of groups', () => {
+    it('returns one flat list ordered alphabetically by label (Skill Capes last), items by tier', () => {
       expect(Array.isArray(groups)).toBe(true)
-      for (let i = 1; i < groups.length; i++) {
-        expect(groups[i].minTier).toBeGreaterThanOrEqual(groups[i - 1].minTier)
+      const ordinary = groups.filter(g => g.key !== SKILL_CAPES_GROUP_KEY)
+      for (let i = 1; i < ordinary.length; i++) {
+        expect(ordinary[i].label.localeCompare(ordinary[i - 1].label)).toBeGreaterThanOrEqual(0)
       }
       for (const group of groups) {
         for (let i = 1; i < group.items.length; i++) {
@@ -81,11 +99,15 @@ describe('armoury classifier', () => {
       }
     })
 
-    it('surfaces the named families requested (dragon, runeforged, grondar)', () => {
-      const keys = groups.map(g => g.key)
-      expect(keys).toContain('dragon')
-      expect(keys).toContain('runeforged')
-      expect(keys).toContain('grondar')
+    it('groups the kinds requested (shortbow, longbow, crossbow, amulet) across materials', () => {
+      const byKey = Object.fromEntries(groups.map(g => [g.key, g]))
+      for (const kind of ['shortbow', 'longbow', 'crossbow', 'amulet']) {
+        expect(byKey[kind], `missing kind group ${kind}`).toBeTruthy()
+        expect(byKey[kind].items.length).toBeGreaterThan(1)
+      }
+      // a kind spans materials (bronze … dragon dagger together)
+      const daggerNames = (byKey['dagger']?.items || []).map((i: any) => i.name)
+      expect(daggerNames.some((n: string) => /bronze/i.test(n))).toBe(true)
     })
 
     it('collapses all max-level skill capes into a single Skill Capes group at the end', () => {

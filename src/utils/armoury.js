@@ -2,11 +2,12 @@
 // and to consume from the single-file build.
 //
 // There is no `tier`/`group` field in items.json, so both are derived:
-//   - group: the first word of the item name (Dragon, Runeforged, Grondar, …);
-//     items in the same equipment family share a first word. Max-level (99)
-//     skill capes are collapsed into one "Skill Capes" group.
-//   - tier: the lowest equip requirement (used purely as a sort key).
-// Everything is presented as one flat, tier-ordered list of groups.
+//   - group: the item *kind* — the noun in its name, so every Shortbow groups
+//     with other shortbows, every Amulet with amulets, etc. (not by material
+//     family). Max-level (99) skill capes collapse into one "Skill Capes" group.
+//   - tier: the lowest equip requirement (used to order items within a group).
+// Everything is presented as one flat list of kind groups, ordered alphabetically
+// (Skill Capes last), with items inside each group ordered by tier.
 import itemsData from '../data/items.json'
 
 const hasPositive = (obj) => !!obj && Object.values(obj).some(v => typeof v === 'number' && v > 0)
@@ -57,22 +58,35 @@ export function isSkillCape(item) {
   return reqs.length === 1 && reqs[0] === 99
 }
 
-// Group key = "skill_capes" for max-level capes, else the first word of the
-// name, lowercased and stripped of punctuation.
+// The item kind — the defining noun of the name. By default the last word
+// ("Magic Shortbow" → "Shortbow", "Rune Platebody" → "Platebody"), with two
+// fixes: strip a trailing variant tag in parentheses ("Climbing Boots (G)"),
+// and for "<Kind> of <X>" names use the noun before "of" ("Amulet of Glory" →
+// "Amulet", "Staff of Fire" → "Staff", "Trident of Venom" → "Trident").
+export function kindOf(item) {
+  let name = String(item?.name || '').trim().replace(/\s*\([^)]*\)\s*$/, '').trim()
+  if (!name) return 'Other'
+  const ofMatch = name.match(/^(.*?)\s+of\s+/i)
+  const base = (ofMatch ? ofMatch[1] : name).trim()
+  const words = base.split(/\s+/)
+  return words[words.length - 1] || 'Other'
+}
+
+// Group key = "skill_capes" for max-level capes, else the item kind, lowercased
+// and stripped of punctuation.
 export function groupKeyOf(item) {
   if (isSkillCape(item)) return SKILL_CAPES_GROUP_KEY
-  const first = String(item?.name || '').trim().split(/\s+/)[0] || ''
-  return first.toLowerCase().replace(/[^a-z0-9]/g, '') || 'other'
+  return kindOf(item).toLowerCase().replace(/[^a-z0-9]/g, '') || 'other'
 }
 
 export function groupLabelOf(item) {
   if (isSkillCape(item)) return 'Skill Capes'
-  return String(item?.name || '').trim().split(/\s+/)[0] || 'Other'
+  return kindOf(item)
 }
 
-// Build one flat, tier-ordered list of groups: [{ key, label, minTier, items[] }].
-// Items sort by tier then name; groups sort by their lowest tier then label,
-// so the Skill Capes group (all level 99) naturally lands at the end.
+// Build one flat list of kind groups: [{ key, label, minTier, items[] }].
+// Items sort by tier then name; groups sort alphabetically by label, with the
+// Skill Capes catch-all pinned last.
 export function buildArmoury(items = itemsData) {
   const groups = new Map()
   const seenIds = new Set()
@@ -90,5 +104,9 @@ export function buildArmoury(items = itemsData) {
     group.items.sort((a, b) => tierOf(a) - tierOf(b) || a.name.localeCompare(b.name))
     group.minTier = tierOf(group.items[0])
     return group
-  }).sort((a, b) => a.minTier - b.minTier || a.label.localeCompare(b.label))
+  }).sort((a, b) => {
+    if (a.key === SKILL_CAPES_GROUP_KEY) return 1
+    if (b.key === SKILL_CAPES_GROUP_KEY) return -1
+    return a.label.localeCompare(b.label)
+  })
 }
