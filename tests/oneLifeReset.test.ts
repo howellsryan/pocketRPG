@@ -7,6 +7,7 @@ const clearAuthMock = vi.fn()
 const closeDBMock = vi.fn()
 const wipeLocalSaveMock = vi.fn()
 const setLocalCharacterIdMock = vi.fn()
+const clearCollectionLogCacheMock = vi.fn()
 let tokenValue: string | null = 'token'
 
 vi.mock('../src/cloud/api.js', () => ({
@@ -22,6 +23,7 @@ vi.mock('../src/cloud/api.js', () => ({
 
 vi.mock('../src/db/database.js', () => ({ closeDB: () => closeDBMock() }))
 vi.mock('../src/db/saveload.js', () => ({ wipeLocalSave: () => wipeLocalSaveMock() }))
+vi.mock('../src/cloud/collectionLog.js', () => ({ clearCollectionLogCache: () => clearCollectionLogCacheMock() }))
 
 import {
   isAlreadyReset,
@@ -90,11 +92,12 @@ describe('performOneLifeReset', () => {
     expect(deleteIdleMock).not.toHaveBeenCalled()
   })
 
-  it('wipes local state and clears auth only after the server reset succeeds', async () => {
+  it('wipes local state, clears the collection-log cache, and clears auth only after the server reset succeeds', async () => {
     resetOneLifeMock.mockResolvedValue(undefined)
     await performOneLifeReset()
     expect(closeDBMock).toHaveBeenCalled()
     expect(wipeLocalSaveMock).toHaveBeenCalled()
+    expect(clearCollectionLogCacheMock).toHaveBeenCalled()
     expect(clearAuthMock).toHaveBeenCalled()
   })
 

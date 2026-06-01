@@ -12,6 +12,7 @@
 import { api, clearAuth, getToken, setLocalCharacterId } from '../cloud/api.js'
 import { closeDB } from '../db/database.js'
 import { wipeLocalSave } from '../db/saveload.js'
+import { clearCollectionLogCache } from '../cloud/collectionLog.js'
 
 // Treat "this character id no longer exists / is not one-life" as proof the
 // atomic server reset already committed — covers a retry after a committed
@@ -54,6 +55,11 @@ async function wipeLocalState() {
     closeDB()
     await wipeLocalSave()
   } catch (err) { console.error('Failed to wipe local save:', err) }
+  // Purge the in-memory collection-log cache + pending drop buffer so the
+  // recreated character can't display (or re-flush) the dead character's log.
+  // The server reset already deletes the collection_log rows; this clears the
+  // matching client state, mirroring logout / force-restart.
+  try { clearCollectionLogCache() } catch { /* ignore */ }
   try {
     localStorage.removeItem('pocketrpg_activeCombatSpell')
     localStorage.removeItem('pocketrpg_offline_mode')

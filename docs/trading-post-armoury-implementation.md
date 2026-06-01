@@ -52,6 +52,7 @@ await env.DB.batch([
   env.DB.prepare('DELETE FROM saves              WHERE character_id = ?').bind(characterId),
   env.DB.prepare('DELETE FROM character_idle_state WHERE character_id = ?').bind(characterId),
   env.DB.prepare('DELETE FROM collection_log      WHERE character_id = ?').bind(characterId),
+  env.DB.prepare('DELETE FROM kill_counts         WHERE character_id = ?').bind(characterId), // ← boss/raid KC (leaderboard-indexed)
   env.DB.prepare('DELETE FROM trading_post_offers WHERE character_id = ?').bind(characterId), // ← offers
   env.DB.prepare('DELETE FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL').bind(characterId, auth.identity.id),
   env.DB.prepare(`INSERT INTO characters (owner_id, username, is_ironman, is_one_life, …) VALUES (…)`), // recreate, same login + name
@@ -231,6 +232,19 @@ handles it client-side; do it only if other callers would benefit.
   post (auth-only) has no offers — the local wipe alone is sufficient. The `if (getToken())` guard
   preserves this.
 - **Retry after committed-but-lost response**: handled by `isAlreadyReset()` (404/400 → success).
+- **All per-character progression must be in the batch.** The recreated character gets a *new*
+  id, so any table keyed by the old `character_id` (and not deleted) becomes orphaned rather than
+  inherited — usually invisible to the player but not always. `kill_counts` is the cautionary
+  case: it carries a leaderboard index (`idx_kill_counts_leaderboard`) queried *across all*
+  characters, so a dead one-life character's KC rows keep showing on boss/raid KC leaderboards
+  until deleted. The batch therefore wipes `saves`, `character_idle_state`, `collection_log`,
+  `kill_counts`, and `trading_post_offers`. Audit/financial rows (`audit_events`, `stripe_events`,
+  `purchase_grants`) are deliberately **kept**, and credits carry over to the recreated character.
+- **Client caches must be cleared too.** Some progression is cached in-memory client-side, not
+  just in the save. `performOneLifeReset()` calls `clearCollectionLogCache()` (mirroring logout /
+  `forceRestart`) so the recreated character can't display or re-flush the dead character's
+  collection log. Kill counts live in the save/game-state and are cleared by the local wipe +
+  reload, so they need no separate cache call.
 - **Don't refund on one-life**: the server `DELETE FROM trading_post_offers` hard-deletes escrow
   (no `cancelOffer` refund). That is intentional and correct for a death wipe — do not route the
   one-life path through `cancelOffer`.
