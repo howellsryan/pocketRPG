@@ -194,6 +194,10 @@ const landingDir = path.join(__dirname, 'public', 'landing');
 const landingImagesObj = {};
 for (const file of fs.readdirSync(landingDir)) {
   if (!file.endsWith('.webp')) continue;
+  // Skip responsive variants (e.g. ss-bank-360.webp); only the full-size
+  // originals are keyed. Variants are referenced via `srcset` built from the
+  // original URL (see landingSrcSet in utils/helpers.js).
+  if (/-\d+\.webp$/.test(file)) continue;
   const key = file.replace(/\.webp$/, '');
   landingImagesObj[key] = `/public/landing/${file}`;
 }
@@ -312,8 +316,15 @@ const vendorDestructure =
   'const { h, render, Fragment, createContext, Component, createPortal, ' +
   'useState, useEffect, useRef, useMemo, useCallback, useContext, openDB } = __vendor;';
 
-// CSS
-const customCSS = readSrc('index.css').replace('@import "tailwindcss";', '').trim();
+// CSS. Tailwind's CLI already minifies its output; the hand-written rules from
+// index.css (the `:root` variables, app/landing styles) are not, so run them
+// through esbuild's CSS minifier too — otherwise they ship as ~2 KiB of
+// avoidable whitespace (Lighthouse "Minify CSS").
+const rawCustomCSS = readSrc('index.css').replace('@import "tailwindcss";', '').trim();
+const customCSS = esbuild.transformSync(rawCustomCSS, {
+  loader: 'css',
+  minify: true,
+}).code.trim();
 const css = fontFaceCSS + compiledTailwindCSS + '\n' + customCSS;
 
 // ── Assemble the inline module script, then minify it as one unit ──
