@@ -40,6 +40,12 @@ export const QUEST_QUEUE_MAX = 3
 // Skills list
 export const COMBAT_SKILLS = ['attack', 'strength', 'defence', 'hitpoints', 'ranged', 'magic', 'prayer']
 export const GATHERING_SKILLS = ['mining', 'woodcutting', 'fishing', 'farming']
+// Gathering skills that always auto-bank during idle/skip catch-up, regardless
+// of the Construction auto-bank unlock. This stops the 28-slot inventory cap
+// from halting long idle/skip sessions — otherwise these are the only skills
+// that can't be meaningfully idled/skipped without the unlock. Farming is
+// excluded (it still banks only once the Construction unlock is earned).
+export const IDLE_AUTOBANK_GATHERING_SKILLS = ['mining', 'woodcutting', 'fishing']
 export const PRODUCTION_SKILLS = ['smithing', 'cooking', 'crafting', 'fletching', 'herblore', 'runecraft', 'firemaking']
 export const UTILITY_SKILLS = ['agility', 'thieving', 'hunter', 'slayer', 'construction', 'dungeoneering']
 
