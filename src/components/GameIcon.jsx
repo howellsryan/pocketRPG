@@ -16,8 +16,14 @@ import { getItemIconKey, getItemIconTint } from '../utils/itemIcons'
  * so un-curated items never render blank.
  */
 export default function GameIcon({ item, iconKey, size = 24, color, class: cls = '', title }) {
-  const key   = iconKey || getItemIconKey(item)
-  const entry = gameIconsData[key]
+  // In the single-file production build, gameIconsData lives in the lazily
+  // loaded game chunk (it is never needed on the mobile landing/login page).
+  // Before that chunk loads it is an undeclared global, so guard every access
+  // with `typeof` — GameIcon then renders its emoji fallback until it arrives.
+  // In the Vite web/Capacitor builds it is a static import and always defined.
+  const icons = typeof gameIconsData !== 'undefined' ? gameIconsData : null
+  const key   = iconKey || (icons ? getItemIconKey(item) : 'default')
+  const entry = icons ? icons[key] : undefined
 
   if (!entry) {
     // Graceful fallback to legacy emoji during incremental curation

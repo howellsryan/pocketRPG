@@ -60,6 +60,20 @@ import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, o
 import { fetchKillCounts } from './cloud/killCounts.js'
 import { isLoggedDrop, collectIdleCombatLoggedDrops } from './engine/collectionLog.js'
 
+// ── Lazy in-game code chunk ──────────────────────────────────────────────────
+// The single-file production build (build_single.cjs) splits the heavy in-game
+// screens into a separate script that is only fetched once the player actually
+// enters the game (cloudPhase === 'ready'). This keeps that ~130 KiB of code
+// off the landing/login page, where it would otherwise download and parse but
+// never run (Lighthouse "Reduce unused JavaScript"). The build installs a
+// `globalThis.__loadGameChunk` injector. In the Vite web/Capacitor builds the
+// screens are statically bundled into the main chunk, so there is nothing to
+// load and this resolves immediately.
+const loadGameChunk = () =>
+  (typeof globalThis !== 'undefined' && globalThis.__loadGameChunk)
+    ? globalThis.__loadGameChunk()
+    : Promise.resolve()
+
 // ── Clock-rollback watermark ────────────────────────────────────────────────
 // We persist the highest Date.now() we've ever observed. If the device clock
 // later reports a value below the watermark, the user rolled it backwards —
@@ -212,6 +226,9 @@ function GameApp() {
   const pendingXpChoicesRef = useRef(pendingXpChoices)
   // Cloud auth gate: 'pending' until we resolve, 'auth' if AuthScreen needed, 'ready' to boot game
   const [cloudPhase, setCloudPhase] = useState('pending')
+  // Lazy in-game chunk gate (single-file build only — see loadGameChunk above).
+  const [gameChunkReady, setGameChunkReady] = useState(false)
+  const [gameChunkAttempt, setGameChunkAttempt] = useState(0)
   const [cloudLoadError, setCloudLoadError] = useState(null)
   const [conflict, setConflict] = useState(null) // { cloudPayload, cloudHash, cloudUpdatedAt, localUpdatedAt }
   const [removeAds, setRemoveAds] = useState(false)
@@ -458,6 +475,20 @@ function GameApp() {
     }, 5000)
     return () => clearTimeout(timer)
   }, [cloudPhase, gameReady])
+
+  // Fetch the lazy in-game code chunk as soon as the player is past the
+  // landing/login gate (cloudPhase === 'ready'). This is the first point at
+  // which an in-game screen can render, so the chunk is always loaded before
+  // renderScreen() needs it. No-op (resolves immediately) outside the
+  // single-file build. Retries on transient network failure.
+  useEffect(() => {
+    if (cloudPhase !== 'ready' || gameChunkReady) return
+    let cancelled = false
+    loadGameChunk()
+      .then(() => { if (!cancelled) setGameChunkReady(true) })
+      .catch(() => { if (!cancelled) setTimeout(() => setGameChunkAttempt(a => a + 1), 1500) })
+    return () => { cancelled = true }
+  }, [cloudPhase, gameChunkReady, gameChunkAttempt])
 
   // Refresh /me — used after a Stripe purchase so the credit balance reflects
   // whatever the webhook has added to the character row.
@@ -1927,8 +1958,8 @@ function GameApp() {
     )
   }
 
-  // Loading
-  if (!loaded || !gameReady) {
+  // Loading (also waits on the lazy in-game chunk in the single-file build)
+  if (!loaded || !gameReady || !gameChunkReady) {
     return (
       <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f0f0f' }}>
         <div style={{ textAlign: 'center' }}>
