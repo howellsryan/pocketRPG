@@ -2,7 +2,7 @@ import { requireAuth, json } from '../_lib/auth.js'
 import { assertNotInActiveMatch, sweepStaleRows } from '../_lib/pvp.js'
 import { computeSaveSummaryFromJson } from '../_lib/saveSummary.js'
 import { decodeSaveRow, gzipJsonString } from '../_lib/saveCodec.js'
-import { detectProtectedDelta } from '../_lib/game/saveValidation.js'
+import { detectProtectedDelta, detectTotalLevelRegression } from '../_lib/game/saveValidation.js'
 import itemsData from '../../src/data/items.json' assert { type: 'json' }
 
 const MAX_SAVE_BYTES = 256 * 1024 // 256 KB ceiling — current saves are well under this
@@ -120,11 +120,31 @@ export async function onRequestPut({ request, env }) {
     }
   }
 
+  // Parse the incoming save once (null = a full blob clear). Both the
+  // total-level regression guard and the protected-delta check run against it.
+  let parsedNext = null
   if (save_data) {
-    let parsedNext
     try { parsedNext = JSON.parse(save_data) } catch {
       return json({ error: 'save_data_not_json', code: 'INVALID_SAVE_DATA' }, 400)
     }
+  }
+
+  // Total-level regression guard — the definitive backstop against a fresh /
+  // "level 3" character being written over a real one (see
+  // detectTotalLevelRegression). A null save_data clears the blob to total
+  // level 0; the only legitimate full wipe is One-Life death, which goes
+  // through DELETE, so a null PUT over a levelled save is the same regression.
+  const regression = detectTotalLevelRegression(previousSave, parsedNext || {})
+  if (regression.regressed) {
+    return json({
+      error: 'total_level_regression_rejected',
+      code: 'TOTAL_LEVEL_REGRESSION',
+      previous_total_level: regression.previousTotalLevel,
+      next_total_level: regression.nextTotalLevel,
+    }, 409)
+  }
+
+  if (save_data) {
     // PocketRPG is offline-first: live skilling, offline idle catch-up, and
     // skip-hour all compute XP / coins / common drops on the CLIENT and
     // persist them through this endpoint. There is no server-side game
