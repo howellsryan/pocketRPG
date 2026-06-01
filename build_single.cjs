@@ -190,6 +190,7 @@ const GAME_CHUNK_FILES = new Set([
   'screens/GatherScreen.js',
   'screens/TradingPostScreen.js',
   'screens/EquipmentScreen.js',
+  'screens/ArmouryScreen.js',
   'screens/QuestsScreen.js',
   'screens/CluesScreen.js',
   'screens/MinigamesScreen.js',
