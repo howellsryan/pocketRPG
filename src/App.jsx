@@ -31,7 +31,7 @@ import AuthScreen from './screens/AuthScreen.jsx'
 import { SCREENS } from './utils/constants.js'
 import { hasSave, closeDB } from './db/database.js'
 import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
-import { startTicks, stopTicks, onTick, pauseTicks } from './engine/tick.js'
+import { startTicks, stopTicks, onTick, pauseTicks, resumeTicks } from './engine/tick.js'
 import { wipeLocalSave } from './db/saveload.js'
 import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode, CREDITS_UPDATED_EVENT } from './cloud/api.js'
 import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave } from './cloud/sync.js'
@@ -1257,6 +1257,51 @@ function GameApp() {
 
 
   const isSkippingRef = useRef(false)
+  // Pending boss-skip confirmation: { bossId, monsterName, cost } | null
+  const [skipConfirm, setSkipConfirm] = useState(null)
+
+  // Charge + resolve a boss/raid instant-kill skip. Server is authoritative for cost.
+  async function executeBossSkip(bossId) {
+    const killHandler = combatSkipHandlerRef?.current
+    if (!killHandler) {
+      addToast('Open the fight to skip a kill.', 'info')
+      return
+    }
+    try {
+      const result = await api.skipHour({ bossId })
+      setCredits(result?.credits_remaining ?? credits)
+      killHandler()
+      const spent = result?.cost ?? 1
+      addToast(`⏭️ Skipped to the kill (${spent} credit${spent === 1 ? '' : 's'})`, 'info')
+    } catch (err) {
+      if (err?.status === 402) {
+        addToast('You do not have enough credits to skip.', 'error')
+      } else {
+        addToast(err.message || 'Error during skip!', 'error')
+      }
+    }
+  }
+
+  const confirmBossSkip = async () => {
+    const pending = skipConfirm
+    setSkipConfirm(null)
+    if (!pending) { resumeTicks(); return }
+    if (isSkippingRef.current) { resumeTicks(); return }
+    isSkippingRef.current = true
+    try {
+      // Stay paused during the credit charge; executeBossSkip arms the kill
+      // (monster HP → 0) so the first tick after resume fires the death.
+      await executeBossSkip(pending.bossId)
+    } finally {
+      isSkippingRef.current = false
+      resumeTicks()
+    }
+  }
+
+  const cancelBossSkip = () => {
+    setSkipConfirm(null)
+    resumeTicks()
+  }
 
   // Apply one completed action's rewards from a background-runner sim result.
   function applyBackgroundActionResult(task, result) {
@@ -1442,30 +1487,26 @@ function GameApp() {
       return
     }
 
-    // Boss/raid fights: skip = instant kill on the current monster (charges 1 credit).
+    // Boss/raid fights: skip = instant kill on the current monster.
     const inBossRaid = activeTaskRef.current?.type === 'combat' && (activeTaskRef.current?.monster?.boss === true || activeTaskRef.current?.raid === true)
     if (inBossRaid) {
+      const monster = activeTaskRef.current?.monster
       const killHandler = combatSkipHandlerRef?.current
       if (!killHandler) {
         addToast('Open the fight to skip a kill.', 'info')
         isSkippingRef.current = false
         return
       }
-      try {
-        const result = await api.skipHour({ bossId: activeTaskRef.current?.monster?.id })
-        setCredits(result?.credits_remaining ?? credits)
-        killHandler()
-        const spent = result?.cost ?? 1
-        addToast(`⏭️ Skipped to the kill (${spent} credit${spent === 1 ? '' : 's'})`, 'info')
-      } catch (err) {
-        if (err?.status === 402) {
-          addToast('You do not have enough credits to skip.', 'error')
-        } else {
-          addToast(err.message || 'Error during skip!', 'error')
-        }
-      } finally {
+      // Costly skips pause combat and require explicit confirmation before charging.
+      const cost = Math.max(1, Math.floor(Number(monster?.skipCost) || 1))
+      if (cost > 1) {
+        pauseTicks()
+        setSkipConfirm({ bossId: monster?.id, monsterName: monster?.name || 'this boss', cost })
         isSkippingRef.current = false
+        return
       }
+      await executeBossSkip(monster?.id)
+      isSkippingRef.current = false
       return
     }
 
@@ -2388,6 +2429,27 @@ function GameApp() {
           stats={stats}
           onComplete={handleXpChoiceComplete}
         />
+      )}
+
+      {skipConfirm && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: 'rgba(0,0,0,0.8)' }}>
+          <div style={{ width: '100%', maxWidth: '360px', background: '#1a1a1a', borderRadius: '20px', border: '1px solid #333', overflow: 'hidden' }}>
+            <div style={{ padding: '20px', borderBottom: '1px solid #333' }}>
+              <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '17px', color: '#d4af37', textAlign: 'center', marginBottom: '8px' }}>Skip this kill?</h2>
+              <p style={{ fontSize: '13px', color: '#e8d5b0', opacity: 0.8, textAlign: 'center', lineHeight: 1.5 }}>
+                Instantly defeating <b style={{ color: '#f0c040' }}>{skipConfirm.monsterName}</b> costs <b style={{ color: '#e879f9' }}>{skipConfirm.cost.toLocaleString()} credits</b>. Combat is paused until you decide.
+              </p>
+            </div>
+            <div style={{ padding: '16px' }}>
+              <button onClick={confirmBossSkip} style={{ width: '100%', minHeight: '44px', padding: '13px', borderRadius: '12px', background: 'linear-gradient(135deg, #b8940e, #d4af37)', color: '#0f0f0f', fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '14px', border: 'none', cursor: 'pointer', marginBottom: '10px' }}>
+                Skip for {skipConfirm.cost.toLocaleString()} credits
+              </button>
+              <button onClick={cancelBossSkip} style={{ width: '100%', minHeight: '44px', padding: '13px', borderRadius: '12px', background: '#2a2a2a', border: '1px solid #3a3a3a', color: '#e8d5b0', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>
+                Cancel — keep fighting
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
