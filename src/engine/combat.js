@@ -299,6 +299,18 @@ function checkMonsterDeath(state, monster, events) {
 }
 
 /**
+ * Force-kill the current monster immediately, reusing all death/phase/raid semantics.
+ * Returns the emitted events array (monsterDeath / raidBossAdvance / raidComplete / etc.).
+ */
+export function applyInstantKill(state) {
+  const events = []
+  if (!state || !state.monster) return events
+  state.monster.currentHP = 0
+  checkMonsterDeath(state, state.monster, events)
+  return events
+}
+
+/**
  * Check if player is wearing full Dharok set
  */
 function hasFullDharokSet(equipment, itemsData) {

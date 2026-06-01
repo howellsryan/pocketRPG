@@ -197,7 +197,7 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
 
 function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
-    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts } = useGame()
+    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts, combatSkipHandlerRef } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -1438,12 +1438,33 @@ function GameApp() {
     isSkippingRef.current = true
     if (!isCloudAccount) {
       addToast('Skip only available for cloud accounts!', 'error')
+      isSkippingRef.current = false
       return
     }
 
-    // Check if currently in boss/raid combat — bosses and raids cannot be skipped
-    if (activeTaskRef.current?.type === 'combat' && (activeTaskRef.current?.monster?.boss === true || activeTaskRef.current?.raid === true)) {
-      addToast('Cannot skip boss/raid combat!', 'error')
+    // Boss/raid fights: skip = instant kill on the current monster (charges 1 credit).
+    const inBossRaid = activeTaskRef.current?.type === 'combat' && (activeTaskRef.current?.monster?.boss === true || activeTaskRef.current?.raid === true)
+    if (inBossRaid) {
+      const killHandler = combatSkipHandlerRef?.current
+      if (!killHandler) {
+        addToast('Open the fight to skip a kill.', 'info')
+        isSkippingRef.current = false
+        return
+      }
+      try {
+        const result = await api.skipHour()
+        setCredits(result?.credits_remaining ?? credits)
+        killHandler()
+        addToast('⏭️ Skipped to the kill', 'info')
+      } catch (err) {
+        if (err?.status === 402) {
+          addToast('You do not have enough credits to skip.', 'error')
+        } else {
+          addToast(err.message || 'Error during skip!', 'error')
+        }
+      } finally {
+        isSkippingRef.current = false
+      }
       return
     }
 
@@ -1917,7 +1938,7 @@ function GameApp() {
         onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')}
       />
       <div class="flex-1 flex flex-col min-w-0 min-h-0">
-        <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onMenuClick={() => setMenuOpen(true)} onNavigate={(s) => navigate(s)} />
+        <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onMenuClick={() => setMenuOpen(true)} onNavigate={(s) => navigate(s)} skipMode={activeTask?.type === 'combat' && (activeTask?.monster?.boss === true || activeTask?.raid === true) ? 'kill' : 'hour'} />
         <ToastContainer />
         <main class="flex-1 overflow-hidden">
           {renderScreen()}

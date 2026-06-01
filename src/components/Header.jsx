@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'preact/hooks'
 import { CLOUD_SAVE_STATUS_EVENT } from '../cloud/sync.js'
 import ActivityIndicator from './ActivityIndicator.jsx'
 
-export default function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null, onBuyCredits = null, onMenuClick = null, onNavigate = null }) {
+export default function Header({ activity, credits = 0, isCloudAccount = false, onSkip1h = null, onBuyCredits = null, onMenuClick = null, onNavigate = null, skipMode = 'hour' }) {
   const { player, currentHP, getMaxHP } = useGame()
   const [cloudStatus, setCloudStatus] = useState('idle')
   const [showSavedToCloud, setShowSavedToCloud] = useState(false)
@@ -75,10 +75,10 @@ export default function Header({ activity, credits = 0, isCloudAccount = false, 
           <button
             onClick={handleSkip}
             class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1a2a1a] border border-[#3a5a3a] hover:border-[#5a8a5a] transition-colors text-[10px] font-semibold text-[var(--color-parchment)] whitespace-nowrap"
-            title="Skip 1 hour (requires 1 credit)"
+            title={skipMode === 'kill' ? 'Skip to the kill (requires 1 credit)' : 'Skip 1 hour (requires 1 credit)'}
           >
             <span>⏭️</span>
-            <span>Skip 1h</span>
+            <span>{skipMode === 'kill' ? 'Skip' : 'Skip 1h'}</span>
           </button>
 
           {/* Credits pill — cloud accounts only */}

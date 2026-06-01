@@ -12,7 +12,7 @@ import ItemSlot from '../components/ItemSlot.jsx'
 import CombatMobileSelect from './CombatMobileSelect.jsx'
 import { CombatMonsterInfoSheet, CombatRaidInfoSheet } from './CombatMobileSheets.jsx'
 import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
-import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applySpecialAttack } from '../engine/combat.js'
+import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applySpecialAttack, applyInstantKill } from '../engine/combat.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { onTick, pauseTicks, resumeTicks } from '../engine/tick.js'
@@ -208,7 +208,7 @@ class PvpCombatErrorBoundary extends Component {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame, combatSkipHandlerRef } = useGame()
   const pvp = usePvp()
   const [showPvpLobby, setShowPvpLobby] = useState(false)
 
@@ -1065,20 +1065,57 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     setActiveTask(null)
   }
 
+  const isLumiraBrew = (item) => !!(item && item.type === 'potion' && item.wipesPotions)
+
+  // Drink a brew: heals immediately, wipes all active potion effects, can be used unlimited times.
+  const consumeBrewAt = (idx, newInv) => {
+    const brew = itemsData[newInv[idx].itemId]
+    if (!brew) return
+    if (newInv[idx].quantity > 1) {
+      newInv[idx] = { ...newInv[idx], quantity: newInv[idx].quantity - 1 }
+    } else {
+      newInv[idx] = null
+    }
+    updateInventory(newInv)
+    inventoryRef.current = newInv
+
+    const maxHP = getMaxHP()
+    const healing = brew.boost || 10
+    const newHP = Math.min(hpRef.current + healing, maxHP)
+    updateHP(newHP)
+    hpRef.current = newHP
+
+    if (combat) {
+      // Wipe all active potion buffs, then apply eat-delay so brew shares food cooldown
+      const wiped = { ...combatRef.current, activePotions: {} }
+      const afterEat = applyEat(wiped)
+      setCombat(afterEat)
+      combatRef.current = afterEat
+    }
+
+    setLog(prev => [...prev.slice(-20), {
+      text: `Drank ${brew.name}, healed ${healing} HP (potions cleared)`,
+      type: 'heal',
+      time: Date.now(),
+    }])
+  }
+
   const handleEat = () => {
     const newInv = [...inventoryRef.current]
-    const foodIdx = newInv.findIndex(s => s && itemsData[s.itemId]?.type === 'food')
-    if (foodIdx === -1) { addToast('No food!', 'error'); return }
-    consumeFoodAt(foodIdx, newInv)
+    let idx = newInv.findIndex(s => s && itemsData[s.itemId]?.type === 'food')
+    if (idx !== -1) return consumeFoodAt(idx, newInv)
+    idx = newInv.findIndex(s => s && isLumiraBrew(itemsData[s.itemId]))
+    if (idx !== -1) return consumeBrewAt(idx, newInv)
+    addToast('No food!', 'error')
   }
 
   const handleEatItem = (itemId) => {
-    const food = itemsData[itemId]
-    if (!food || food.type !== 'food') return
+    const item = itemsData[itemId]
     const newInv = [...inventoryRef.current]
-    const foodIdx = newInv.findIndex(s => s && s.itemId === itemId)
-    if (foodIdx === -1) return
-    consumeFoodAt(foodIdx, newInv)
+    const idx = newInv.findIndex(s => s && s.itemId === itemId)
+    if (idx === -1) return
+    if (item?.type === 'food') return consumeFoodAt(idx, newInv)
+    if (isLumiraBrew(item)) return consumeBrewAt(idx, newInv)
   }
 
   // Shared eat path used by both the Eat button and direct inventory clicks.
@@ -1150,6 +1187,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     const potion = itemsData[potionItemId]
     if (!potion) return
 
+    // Lumira Brew: unlimited use, heals, wipes all active potion effects — bypass normal gate
+    if (isLumiraBrew(potion)) {
+      consumeBrewAt(potionIdx, newInv)
+      return
+    }
+
     // Check if a potion with the same effect type is already active
     const hasPotionOfType = Object.keys(combatRef.current.activePotions).some(existingId => {
       const existingPotion = itemsData[existingId]
@@ -1202,6 +1245,26 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     setShowPotionModal(false)
     addToast(`${potion.icon} ${potion.name}`, 'info')
   }
+
+  // Boss/raid skip: set monster HP to 0 and arm player attack timer so the next
+  // engine tick fires the kill and routes through the full death event pipeline.
+  const forceKillHandlerRef = useRef(null)
+  forceKillHandlerRef.current = () => {
+    const state = combatRef.current
+    if (!state || !state.active || !state.monster) return false
+    state.monster.currentHP = 0
+    state.playerAttackTimer = 0
+    state.eatCooldown = 0
+    combatRef.current = state
+    setCombat({ ...state })
+    return true
+  }
+
+  useEffect(() => {
+    if (!combatSkipHandlerRef) return
+    combatSkipHandlerRef.current = () => forceKillHandlerRef.current?.()
+    return () => { combatSkipHandlerRef.current = null }
+  }, [])
 
   const handleEquipItem = (itemId) => {
     if (!combat) return
