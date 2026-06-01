@@ -5,9 +5,10 @@ import {
   categoryOf,
   tierOf,
   groupKeyOf,
+  isSkillCape,
   hasSpecialAttack,
   hasPositiveCombatBonus,
-  ARMOURY_CATEGORIES,
+  SKILL_CAPES_GROUP_KEY,
 } from '../src/utils/armoury.js'
 
 const items = itemsData as Record<string, any>
@@ -38,7 +39,18 @@ describe('armoury classifier', () => {
   it('groups by the first word of the name', () => {
     expect(groupKeyOf({ name: 'Dragon Scimitar' })).toBe('dragon')
     expect(groupKeyOf({ name: 'Runeforged Platebody' })).toBe('runeforged')
-    expect(groupKeyOf({ name: "Ava's Accumulator" })).toBe('avas')
+    expect(groupKeyOf({ name: "Ava's Accumulator", slot: 'cape', requirements: { ranged: 50 } })).toBe('avas')
+  })
+
+  it('treats only level-99 single-skill capes as skill capes', () => {
+    expect(isSkillCape({ slot: 'cape', name: 'Attack Cape', requirements: { attack: 99 } })).toBe(true)
+    expect(isSkillCape({ slot: 'cape', name: 'Mining Cape', requirements: { mining: 99 } })).toBe(true)
+    expect(isSkillCape({ slot: 'cape', name: 'Fire Cape', requirements: {} })).toBe(false)
+    expect(isSkillCape({ slot: 'cape', name: "Ava's Accumulator", requirements: { ranged: 50 } })).toBe(false)
+    expect(isSkillCape({ slot: 'weapon', name: 'Dragon Scimitar', requirements: { attack: 60 } })).toBe(false)
+    // Skill capes all collapse into one group regardless of skill name.
+    expect(groupKeyOf({ slot: 'cape', name: 'Attack Cape', requirements: { attack: 99 } })).toBe(SKILL_CAPES_GROUP_KEY)
+    expect(groupKeyOf({ slot: 'cape', name: 'Thieving Cape', requirements: { thieving: 99 } })).toBe(SKILL_CAPES_GROUP_KEY)
   })
 
   it('only includes items with a positive attack or defence bonus', () => {
@@ -55,48 +67,51 @@ describe('armoury classifier', () => {
   })
 
   describe('buildArmoury over the live data', () => {
-    const armoury = buildArmoury(items)
+    const groups = buildArmoury(items)
 
-    it('returns all three categories', () => {
-      for (const cat of ARMOURY_CATEGORIES) {
-        expect(Array.isArray(armoury[cat as keyof typeof armoury])).toBe(true)
+    it('returns one flat, tier-ordered list of groups', () => {
+      expect(Array.isArray(groups)).toBe(true)
+      for (let i = 1; i < groups.length; i++) {
+        expect(groups[i].minTier).toBeGreaterThanOrEqual(groups[i - 1].minTier)
       }
-    })
-
-    it('sorts groups by lowest tier and items by tier then name', () => {
-      for (const cat of ARMOURY_CATEGORIES) {
-        const groups = armoury[cat as keyof typeof armoury]
-        for (let i = 1; i < groups.length; i++) {
-          expect(groups[i].minTier).toBeGreaterThanOrEqual(groups[i - 1].minTier)
-        }
-        for (const group of groups) {
-          for (let i = 1; i < group.items.length; i++) {
-            expect(tierOf(group.items[i])).toBeGreaterThanOrEqual(tierOf(group.items[i - 1]))
-          }
+      for (const group of groups) {
+        for (let i = 1; i < group.items.length; i++) {
+          expect(tierOf(group.items[i])).toBeGreaterThanOrEqual(tierOf(group.items[i - 1]))
         }
       }
     })
 
     it('surfaces the named families requested (dragon, runeforged, grondar)', () => {
-      const meleeKeys = armoury.melee.map(g => g.key)
-      expect(meleeKeys).toContain('dragon')
-      expect(meleeKeys).toContain('runeforged')
-      expect(meleeKeys).toContain('grondar')
+      const keys = groups.map(g => g.key)
+      expect(keys).toContain('dragon')
+      expect(keys).toContain('runeforged')
+      expect(keys).toContain('grondar')
     })
 
-    it('every included item has a positive combat bonus and a resolved group', () => {
+    it('collapses all max-level skill capes into a single Skill Capes group at the end', () => {
+      const capeGroups = groups.filter(g => g.key === SKILL_CAPES_GROUP_KEY)
+      expect(capeGroups.length).toBe(1)
+      const capes = capeGroups[0]
+      expect(capes.label).toBe('Skill Capes')
+      expect(capes.items.length).toBe(17) // attack…thieving
+      expect(capes.items.every(isSkillCape)).toBe(true)
+      // tier 99 → last group in the list
+      expect(groups[groups.length - 1].key).toBe(SKILL_CAPES_GROUP_KEY)
+    })
+
+    it('lists every positive-bonus item exactly once across groups', () => {
       let total = 0
-      for (const cat of ARMOURY_CATEGORIES) {
-        for (const group of armoury[cat as keyof typeof armoury]) {
-          expect(group.key).toBeTruthy()
-          expect(group.label).toBeTruthy()
-          for (const item of group.items) {
-            expect(hasPositiveCombatBonus(item)).toBe(true)
-            total++
-          }
+      const ids = new Set<string>()
+      for (const group of groups) {
+        expect(group.key).toBeTruthy()
+        expect(group.label).toBeTruthy()
+        for (const item of group.items) {
+          expect(hasPositiveCombatBonus(item)).toBe(true)
+          ids.add(item.id)
+          total++
         }
       }
-      // Every positive-bonus item in the data lands in exactly one category/group.
+      expect(total).toBe(ids.size) // no duplicates
       const expected = Object.values(items).filter(hasPositiveCombatBonus).length
       expect(total).toBe(expected)
     })

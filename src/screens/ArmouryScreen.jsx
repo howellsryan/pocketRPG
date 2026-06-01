@@ -1,10 +1,8 @@
 import { useMemo, useState } from 'preact/hooks'
 import itemsData from '../data/items.json'
-import { buildArmoury, ARMOURY_CATEGORIES, CATEGORY_LABELS, hasSpecialAttack, tierOf } from '../utils/armoury.js'
+import { buildArmoury, hasSpecialAttack, tierOf } from '../utils/armoury.js'
 import SharedItemModal from '../components/SharedItemModal.jsx'
 import GameIcon from '../components/GameIcon.jsx'
-
-const CATEGORY_ICONS = { melee: '⚔️', ranged: '🏹', magic: '🔮' }
 
 // Special-attack detail block injected into the shared item modal.
 function ArmourySpecial({ item }) {
@@ -24,41 +22,19 @@ function ArmourySpecial({ item }) {
 }
 
 export default function ArmouryScreen() {
-  const armoury = useMemo(() => buildArmoury(itemsData), [])
-  const [category, setCategory] = useState('melee')
+  const groups = useMemo(() => buildArmoury(itemsData), [])
   const [selected, setSelected] = useState(null)
-  const groups = armoury[category] || []
 
   return (
     <div class="h-full flex flex-col">
       <div class="px-4 pt-4 pb-2 flex-shrink-0">
         <h1 class="font-[var(--font-display)] text-[var(--color-gold)] text-lg font-bold tracking-wide">Armoury</h1>
         <p class="text-[11px] text-[var(--color-parchment)] opacity-50 mt-[2px]">
-          Every weapon and piece of armour, by tier. <span aria-hidden="true">⚔️</span> marks a special attack.
+          Every weapon and piece of armour, grouped by set and ordered by tier. <span aria-hidden="true">⚔️</span> marks a special attack.
         </p>
-        <div class="flex gap-2 mt-3">
-          {ARMOURY_CATEGORIES.map(cat => {
-            const active = category === cat
-            return (
-              <button
-                key={cat}
-                onClick={() => setCategory(cat)}
-                aria-pressed={active}
-                class={`flex-1 rounded-lg py-2 text-sm font-semibold transition-colors border ${active
-                  ? 'bg-[var(--color-gold)] text-[var(--color-void)] border-transparent'
-                  : 'bg-[#222] text-[var(--color-parchment)] border-[var(--color-void-border)]'}`}
-              >
-                <span class="mr-1" aria-hidden="true">{CATEGORY_ICONS[cat]}</span>{CATEGORY_LABELS[cat]}
-              </button>
-            )
-          })}
-        </div>
       </div>
 
       <div class="flex-1 overflow-y-auto px-4 pb-4">
-        {groups.length === 0 && (
-          <p class="text-center text-[var(--color-parchment)] opacity-40 text-sm mt-8">No items in this category.</p>
-        )}
         {groups.map(group => (
           <div key={group.key}>
             <div class="section-head">
