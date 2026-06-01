@@ -14,6 +14,15 @@ const FRESHNESS_GRACE_MS = 5_000
 // idle-result modal from appearing — we fall back to local state instead.
 const CLOUD_READ_TIMEOUT_MS = 5_000
 const ACTIVE_MATCH_RETRY_MS = 5_000
+// How many consecutive failed pushes we tolerate before declaring the save
+// "blocked" — at which point the UI hard-stops play and forces the player to
+// retry or log out, rather than letting them keep playing on top of progress
+// that is silently failing to persist.
+const SAVE_FAILURE_BLOCK_THRESHOLD = 3
+// Backoff between automatic retries of a failed push. Scales with the failure
+// streak and is capped so a long outage retries on a steady cadence.
+const SAVE_RETRY_BACKOFF_MS = 3_000
+const MAX_RETRY_BACKOFF_MS = 30_000
 export const CLOUD_SAVE_STATUS_EVENT = 'pocketrpg:cloud-save-status'
 
 let lastPushedAt = 0
@@ -22,6 +31,13 @@ let pendingTimer = null
 let pendingSnapshot = null
 let pendingSaveOptions = {}
 let inFlight = false
+// Promise for the push currently on the wire. Callers (pushNow, re-entrant
+// flushNow) await this so we never abandon a save while the server is still
+// responding — the skip-hour durability gate depends on this WAIT.
+let inFlightPromise = null
+// Consecutive failed pushes since the last success. Drives escalation from a
+// soft 'failed' badge to a hard 'blocked' modal.
+let consecutiveFailures = 0
 let criticalTimer = null
 let pendingCriticalSnapshotSource = null
 let pendingCriticalReasons = new Set()
@@ -70,14 +86,9 @@ function canSync() {
   return !!getToken() && !!getCharacterId() && !isPvpSaveSyncBlocked()
 }
 
-async function flushNow() {
-  pendingTimer = null
-  if (!canSync() || !pendingSnapshot) return false
-  if (inFlight) {
-    // Reschedule a single retry once the in-flight push settles.
-    schedulePush(pendingSnapshot, 1000)
-    return false
-  }
+// Perform the actual network push for the current pendingSnapshot. The caller
+// guarantees no other push is in flight. Returns true if the save landed.
+async function performPush() {
   const snap = pendingSnapshot
   pendingSnapshot = null
   inFlight = true
@@ -90,6 +101,7 @@ async function flushNow() {
     if (res?.updatedAt) lastPushedAt = res.updatedAt
     if (Number.isFinite(res?.save_revision)) lastSaveRevision = res.save_revision
     hasUnsyncedChanges = false
+    consecutiveFailures = 0
     emitCloudSaveStatus('saved', { updatedAt: res?.updatedAt || null })
     console.log('[PocketRPG] Cloud save pushed, size:', json.length)
     return true
@@ -98,6 +110,8 @@ async function flushNow() {
     //   409 { error: 'character_in_active_match' }
     // Keep the latest snapshot queued and retry shortly after so we don't
     // spam warnings every minute and we resume syncing automatically on exit.
+    // This is an expected, transient lock — it must NOT count toward the
+    // failure streak that escalates to the blocking modal.
     if (err?.status === 409 && (err?.body?.error === 'character_in_active_match' || err?.message === 'character_in_active_match')) {
       emitSaveSyncActiveMatchConflict(err?.body?.match_id)
       pendingSnapshot = snap
@@ -106,11 +120,48 @@ async function flushNow() {
       return false
     }
     pendingSaveOptions = {}
-    emitCloudSaveStatus('failed', { error: err?.message || 'cloud_save_failed' })
-    console.warn('[PocketRPG] Cloud push failed:', err.message)
+    // Genuine failure: keep the snapshot queued so the retry re-sends THIS
+    // state (never silently drop progress) and track the streak. Once we've
+    // failed enough times in a row we escalate to 'blocked', which the UI
+    // turns into a hard stop with Retry / Logout.
+    pendingSnapshot = snap
+    hasUnsyncedChanges = true
+    consecutiveFailures++
+    const backoff = Math.min(SAVE_RETRY_BACKOFF_MS * consecutiveFailures, MAX_RETRY_BACKOFF_MS)
+    console.warn(`[PocketRPG] Cloud push failed (attempt ${consecutiveFailures}):`, err.message)
+    if (consecutiveFailures >= SAVE_FAILURE_BLOCK_THRESHOLD) {
+      emitCloudSaveStatus('blocked', { error: err?.message || 'cloud_save_failed', failures: consecutiveFailures })
+    } else {
+      emitCloudSaveStatus('failed', { error: err?.message || 'cloud_save_failed' })
+    }
+    // Keep retrying in the background regardless of state — if the network
+    // recovers, the next success emits 'saved' and the UI lifts the block.
+    schedulePush(snap, backoff)
     return false
   } finally {
     inFlight = false
+  }
+}
+
+async function flushNow() {
+  pendingTimer = null
+  if (!canSync()) return false
+  if (inFlight) {
+    // A push is already on the wire. Wait for it to settle rather than bail.
+    if (inFlightPromise) { try { await inFlightPromise } catch { /* handled below */ } }
+    // If newer data is queued and nothing is scheduled to flush it, push now.
+    // A failed push restores its snapshot AND schedules a backoff retry (which
+    // sets pendingTimer), so a pending timer means "leave it to the backoff" —
+    // don't tight-loop and bypass it.
+    if (pendingSnapshot && !inFlight && !pendingTimer) return await flushNow()
+    return !hasUnsyncedChanges
+  }
+  if (!pendingSnapshot) return !hasUnsyncedChanges
+  inFlightPromise = performPush()
+  try {
+    return await inFlightPromise
+  } finally {
+    inFlightPromise = null
   }
 }
 
@@ -137,6 +188,10 @@ export function schedulePushSave(snapshot) {
 // this to decide whether to reveal rewards or keep retrying.
 export async function pushNow(snapshot) {
   if (!canSync()) return false
+  // If a push is already on the wire, wait for it to settle before issuing our
+  // own. We must never abandon the server mid-response — the paid skip-hour
+  // flow awaits this to confirm progress is durable before revealing rewards.
+  if (inFlight && inFlightPromise) { try { await inFlightPromise } catch { /* re-attempted below */ } }
   if (snapshot) pendingSnapshot = snapshot
   if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }
 
@@ -154,6 +209,13 @@ export async function pushNow(snapshot) {
   }
 
   return await flushNow()
+}
+
+// Public: force an immediate save attempt — used by the save-blocked modal's
+// "Retry" button. Reuses pushNow (which waits for any in-flight push), so a
+// success lifts the block (emits 'saved') and a failure keeps it up.
+export async function retrySaveNow(snapshot) {
+  return await pushNow(snapshot)
 }
 
 
@@ -258,6 +320,8 @@ export function resetSyncState() {
   lastSaveRevision = 0
   pendingSnapshot = null
   hasUnsyncedChanges = false
+  consecutiveFailures = 0
+  inFlightPromise = null
   pendingSaveOptions = {}
   pendingCriticalSnapshotSource = null
   pendingCriticalReasons.clear()

@@ -77,6 +77,73 @@ describe('cloud sync save status events', () => {
     expect(calls).not.toContain('saved')
   })
 
+  it('escalates to a blocked state after consecutive failures', async () => {
+    putSaveMock.mockRejectedValue(new Error('network down'))
+    const sync = await import('../src/cloud/sync.js')
+
+    sync.schedulePushSave({ player: { name: 'Hero' } })
+    // First attempt fires after the debounce; each failure schedules an
+    // escalating backoff retry (3s, 6s, …).
+    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.runAllTicks()
+    await vi.advanceTimersByTimeAsync(3_000)
+    await vi.runAllTicks()
+    await vi.advanceTimersByTimeAsync(6_000)
+    await vi.runAllTicks()
+
+    expect(putSaveMock).toHaveBeenCalledTimes(3)
+    const calls = (window.dispatchEvent as any).mock.calls.map((c: any[]) => c[0].detail.status)
+    // Soft 'failed' on the first couple, then a hard 'blocked'.
+    expect(calls).toContain('failed')
+    expect(calls).toContain('blocked')
+    expect(calls).not.toContain('saved')
+  })
+
+  it('a successful retry after failures lifts the block (emits saved)', async () => {
+    putSaveMock
+      .mockRejectedValueOnce(new Error('down'))
+      .mockRejectedValueOnce(new Error('down'))
+      .mockRejectedValueOnce(new Error('down'))
+      .mockResolvedValue({ updatedAt: 500 })
+    const sync = await import('../src/cloud/sync.js')
+
+    sync.schedulePushSave({ player: { name: 'Hero' } })
+    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.runAllTicks()
+    await vi.advanceTimersByTimeAsync(3_000)
+    await vi.runAllTicks()
+    await vi.advanceTimersByTimeAsync(6_000)
+    await vi.runAllTicks()
+
+    let calls = (window.dispatchEvent as any).mock.calls.map((c: any[]) => c[0].detail.status)
+    expect(calls).toContain('blocked')
+
+    // Manual retry from the modal — now the network is back.
+    const ok = await sync.retrySaveNow({ player: { name: 'Hero' } })
+    expect(ok).toBe(true)
+    calls = (window.dispatchEvent as any).mock.calls.map((c: any[]) => c[0].detail.status)
+    expect(calls).toContain('saved')
+  })
+
+  it('keeps the failed snapshot queued so a retry re-sends the same state', async () => {
+    putSaveMock
+      .mockRejectedValueOnce(new Error('down'))
+      .mockResolvedValue({ updatedAt: 600 })
+    const sync = await import('../src/cloud/sync.js')
+
+    sync.schedulePushSave({ player: { name: 'Hero' }, rev: 7 })
+    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.runAllTicks()
+    // Backoff retry re-sends the SAME snapshot rather than dropping it.
+    await vi.advanceTimersByTimeAsync(3_000)
+    await vi.runAllTicks()
+
+    expect(putSaveMock).toHaveBeenCalledTimes(2)
+    const firstBody = JSON.parse(putSaveMock.mock.calls[0][0])
+    const secondBody = JSON.parse(putSaveMock.mock.calls[1][0])
+    expect(secondBody).toEqual(firstBody)
+  })
+
   it('pushNow resolves true when the save lands (paid-skip durability gate)', async () => {
     putSaveMock.mockResolvedValue({ updatedAt: 999, save_revision: 4 })
     const sync = await import('../src/cloud/sync.js')
