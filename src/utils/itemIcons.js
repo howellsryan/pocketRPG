@@ -77,7 +77,7 @@ function keyFromId(id) {
   if (id.includes('greens') || id.includes('herb') || id.includes('grimy_') || id.includes('leaf') ||
       id.includes('root') || id.includes('weed') || id === 'nettle' || id === 'eye_of_newt' || id === 'goat_horn_dust') return 'herb'
   if (id === 'vial' || id === 'unpowered_orb') return 'vial'
-  if (id === 'shrimp' || id === 'shark' || id === 'lobster' || id === 'swordfish' || id === 'trout' || id === 'anglerfish' || id === 'cooked_chicken' || id === 'cooked_meat') return 'cooked_fish'
+  if (id === 'shrimps' || id === 'shark' || id === 'lobster' || id === 'swordfish' || id === 'trout' || id === 'anglerfish' || id === 'cooked_chicken' || id === 'cooked_meat') return 'cooked_fish'
   return null
 }
 

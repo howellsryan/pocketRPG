@@ -30,6 +30,7 @@ export async function onRequestPost({ request, env }) {
     env.DB.prepare('DELETE FROM saves WHERE character_id = ?').bind(characterId),
     env.DB.prepare('DELETE FROM character_idle_state WHERE character_id = ?').bind(characterId),
     env.DB.prepare('DELETE FROM collection_log WHERE character_id = ?').bind(characterId),
+    env.DB.prepare('DELETE FROM kill_counts WHERE character_id = ?').bind(characterId),
     env.DB.prepare('DELETE FROM trading_post_offers WHERE character_id = ?').bind(characterId),
     env.DB.prepare('DELETE FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL').bind(characterId, auth.identity.id),
     env.DB.prepare(

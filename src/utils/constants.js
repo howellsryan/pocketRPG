@@ -98,5 +98,6 @@ export const SCREENS = {
   MINIGAMES: 'minigames',
   COLLECTION_LOG: 'collection_log',
   LEADERBOARD: 'leaderboard',
-  HELP: 'help'
+  HELP: 'help',
+  ARMOURY: 'armoury'
 }

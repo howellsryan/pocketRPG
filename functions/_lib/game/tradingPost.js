@@ -6,14 +6,17 @@ import { subtractCoins, addCoins } from './economy.js'
 // Alias map keyed by every id form (canonical AND legacy) -> the full set
 // of synonymous ids. Used by the matcher so a buy can find sells stored
 // under any synonym, regardless of which form the buyer/seller picked.
+// The legacy-keyed duplicate entries were removed from items.json, so the
+// pre-migration id is now read from each canonical entry's `legacy_item_id`.
 const ALIAS_GROUPS = (() => {
   const groups = new Map()
-  for (const [key, item] of Object.entries(itemsData)) {
-    const canon = (item && typeof item.id === 'string' && item.id) ? item.id : key
-    if (canon === key) continue
-    const group = new Set([key, canon])
-    groups.set(key, group)
+  for (const item of Object.values(itemsData)) {
+    const canon = (item && typeof item.id === 'string' && item.id) ? item.id : null
+    const legacy = (item && typeof item.legacy_item_id === 'string' && item.legacy_item_id) ? item.legacy_item_id : null
+    if (!canon || !legacy || legacy === canon) continue
+    const group = new Set([canon, legacy])
     groups.set(canon, group)
+    groups.set(legacy, group)
   }
   return groups
 })()
