@@ -12,7 +12,7 @@ import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
 import ItemSlot from '../components/ItemSlot.jsx'
 import { OTHER_BONUS_LABELS, OTHER_BONUS_PERCENT_KEYS } from '../utils/bonusLabels.js'
 
-const DEFAULT_CHARGE_ITEM_ID = 'zulrah_scales'
+const DEFAULT_CHARGE_ITEM_ID = 'venomcoil_scales'
 
 export default function EquipmentScreen() {
   const { equipment, inventory, bank, stats, updateEquipment, updateInventory, updateBank, addToast, itemsData, completedQuests } = useGame()

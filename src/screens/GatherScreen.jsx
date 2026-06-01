@@ -49,7 +49,7 @@ const GATHER_TASKS = [
     iconKey: 'seaweed',
     description: 'Gather seaweed from the shore. Burnt with a bucket of sand to make glass.',
     ticks: 4,
-    product: 'giant_seaweed',
+    product: 'seaweed',
     qty: 1,
     stackable: false,
     category: 'beach',
@@ -64,7 +64,7 @@ const GATHER_TASKS = [
     product: 'soda_ash',
     qty: 1,
     stackable: false,
-    materials: { giant_seaweed: 1 },
+    materials: { seaweed: 1 },
     category: 'beach',
   },
   {
@@ -134,7 +134,7 @@ const GATHER_TASKS = [
     iconKey: 'nest',
     description: 'Crush an empty bird\'s nest into powder. Used in saradomin brew.',
     ticks: 5,
-    product: 'crushed_birds_nest',
+    product: 'crushed_bird_s_nest',
     qty: 1,
     stackable: true,
     materials: { empty_birds_nest: 1 },
@@ -147,7 +147,7 @@ const GATHER_TASKS = [
     iconKey: 'wine',
     description: 'Collect bottles of Wine of Zamorak. Used in herblore to make ranging potions.',
     ticks: 5,
-    product: 'wine_of_zamorak',
+    product: 'wine_of_krylth',
     qty: 1,
     stackable: true,
     category: 'fields',
@@ -227,16 +227,16 @@ const CATEGORIES = [
 ]
 
 const ITEM_NAMES = {
-  bowstring: 'Bowstring', bucket_of_sand: 'Bucket of sand', giant_seaweed: 'Seaweed',
+  bowstring: 'Bowstring', bucket_of_sand: 'Bucket of sand', seaweed: 'Seaweed',
   clay: 'Clay', soft_clay: 'Soft clay', wheat: 'Wheat', pot_of_flour: 'Pot of flour',
   leather: 'Leather', hard_leather: 'Hard leather', molten_glass: 'Molten glass',
   soda_ash: 'Soda ash', cowhide: 'Cowhide', bucket: 'Bucket',
   pot: 'Pot', eye_of_newt: 'Eye of newt', white_berries: 'White berries',
   snape_grass: 'Snape grass', red_spiders_eggs: 'Red spiders\' eggs',
-  potato_cactus: 'Potato cactus', crushed_birds_nest: 'Crushed bird\'s nest',
+  potato_cactus: 'Potato cactus', crushed_bird_s_nest: 'Crushed bird\'s nest',
   empty_birds_nest: 'Empty bird\'s nest', limpwurt_root: 'Limpwurt root',
   logs: 'Logs', oak_logs: 'Oak logs', teak_logs: 'Teak logs', mahogany_logs: 'Mahogany logs',
-  planks: 'Plank', oak_plank: 'Oak plank', teak_plank: 'Teak plank', mahogany_plank: 'Mahogany plank',
+  plank: 'Plank', oak_plank: 'Oak plank', teak_plank: 'Teak plank', mahogany_plank: 'Mahogany plank',
   ...minigamesData.itemNames,
 }
 

@@ -14,5 +14,6 @@ export const NAV_TABS = [
   { id: SCREENS.GATHER,         label: 'Gather',         icon: '🌿' },
   { id: SCREENS.COLLECTION_LOG, label: 'Collection Log', icon: '📖' },
   { id: SCREENS.LEADERBOARD,    label: 'Leaderboard',    icon: '🏆' },
+  { id: SCREENS.ARMOURY,        label: 'Armoury',        icon: '🗡️' },
   { id: SCREENS.HELP,           label: 'Help',           icon: '🧭' },
 ]

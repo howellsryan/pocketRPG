@@ -2,8 +2,12 @@
 // Each entry maps an old itemId → the current itemId. Migrations run on
 // load before idle simulation so the rest of the engine never sees a
 // stale id.
+import itemsData from '../data/items.json'
 
-const LEGACY_ITEM_ID_MAP = {
+// Manual aliases that can't be expressed as a single `legacy_item_id` field
+// — e.g. two old ids collapsing onto one new id (void had both a "knight"
+// and a bare-"void" naming).
+const MANUAL_LEGACY_ALIASES = {
   void_knight_helm: 'void_king_helm',
   void_knight_top: 'void_king_top',
   void_knight_robe: 'void_king_robe',
@@ -14,6 +18,24 @@ const LEGACY_ITEM_ID_MAP = {
   void_gloves: 'void_king_gloves',
   planks: 'plank',
 }
+
+// The redundant legacy-keyed duplicate items were removed from items.json;
+// each surviving canonical entry records the id it replaced in
+// `legacy_item_id`. Derive the full old→new map from that field so a save
+// holding a pre-migration id (e.g. "rune_scimitar") is rewritten on load to
+// the canonical id ("runeforged_scimitar") — the item table no longer carries
+// an entry under the old key for a direct lookup.
+function buildLegacyItemIdMap() {
+  const map = {}
+  for (const key of Object.keys(itemsData)) {
+    const entry = itemsData[key]
+    const legacy = entry && entry.legacy_item_id
+    if (typeof legacy === 'string' && legacy && legacy !== entry.id) map[legacy] = entry.id
+  }
+  return { ...map, ...MANUAL_LEGACY_ALIASES }
+}
+
+const LEGACY_ITEM_ID_MAP = buildLegacyItemIdMap()
 
 function rewriteEquipment(equipment) {
   if (!equipment) return { equipment, changed: false }
