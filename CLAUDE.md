@@ -128,6 +128,13 @@ Do not commit with failing checks.
 - Treat duplicate identifier syntax errors as release-blocking.
 - Prefer shared helpers from `src/utils/helpers.js` over redefining common top-level names.
 
+### Code-split: core script + lazy game chunk
+- `build_single.cjs` emits **two CLASSIC scripts** (not `type="module"`): the inline core in `index.html`, and a content-hashed `game-<hash>.js` chunk with the heavy in-game screens (listed in `GAME_CHUNK_FILES`). The chunk loads lazily once the player enters the game (`cloudPhase === 'ready'`) via `globalThis.__loadGameChunk`, keeping ~130 KiB of unused JS off the landing/login page (Lighthouse "Reduce unused JavaScript").
+- Classic scripts share one global lexical environment, so the chunk references core's bindings and `App.renderScreen` references the chunk's screens — all by **source name**. Both bundles are minified with `minifyIdentifiers: false` to keep those names stable; do not re-enable identifier minification.
+- Unique top-level names matter **across both files**. `npm run check:single` syntax-checks each artifact plus the combined concatenation to catch cross-script redeclarations.
+- Adding a new **in-game** screen: add it to `sourceFiles` **and** `GAME_CHUNK_FILES`. Landing/auth-reachable screens must stay out of `GAME_CHUNK_FILES`, and nothing in core may reference a chunk binding at module-evaluation time (only inside `renderScreen`).
+- `gameIconsData` (the ~126 KiB icon glyph map) is injected into the **chunk**, not core — the mobile landing never renders icons. Core icon code (`GameIcon`, `itemIcons`, `skillArt`) guards every access with `typeof gameIconsData !== 'undefined'` and falls back to an emoji until the chunk loads; the desktop landing fetches the chunk on mount to swap real icons in. Keep those guards if you touch icon code.
+
 ## 13) Contribution Best Practices for Agents
 - Keep changes minimal and scoped; avoid unrelated refactors.
 - Update tests with new gameplay logic (deterministic, logic-only).

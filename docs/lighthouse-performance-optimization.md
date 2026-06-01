@@ -8,6 +8,40 @@
 
 ---
 
+## ✅ Update — remaining "Reduce unused JavaScript" (~131 KiB) addressed via code-split
+
+Fixes #1–#3 below removed the Tailwind-CDN bulk of the original unused JS. The
+~131 KiB that **remained** on a later run was the in-game screen code (Combat,
+Skilling, PvP, Inventory, …) — it downloaded and parsed in the single inline
+bundle but never *ran* on the landing/login page.
+
+`build_single.cjs` now **code-splits** those screens (`GAME_CHUNK_FILES`) into a
+content-hashed `game-<hash>.js` chunk that `App.jsx` fetches lazily only when the
+player enters the game (`cloudPhase === 'ready'`, via `globalThis.__loadGameChunk`).
+Because Lighthouse audits the unauthenticated landing URL, that chunk is never
+requested during the run, so its bytes drop out of the "unused JS" total. Core
+and chunk are emitted as **classic scripts** sharing the global lexical
+environment (so they reference each other by source name) and are minified with
+`minifyIdentifiers: false`. See `CLAUDE.md`/`AGENTS.md` §12 for the contributor
+rules. Re-run Lighthouse on a preview deploy to confirm the new numbers.
+
+### Follow-up — moved the icon glyph data off the landing page too
+
+A second pass moved `gameIconsData` (the ~126 KiB game-icons.net SVG glyph map —
+larger than all other game data combined) out of the inline core and into the
+chunk. It is consumed only by icon code (`GameIcon`/`itemIcons`/`skillArt`) and
+the **mobile** landing renders no icons, so on mobile it was pure dead weight.
+Those three modules now guard every access with `typeof gameIconsData !==
+'undefined'` (emoji fallback until loaded); the **desktop** landing — the one
+place an icon paints pre-game — fetches the chunk on mount and re-renders.
+
+Net: the landing/login document transfer dropped from ~407 KiB → ~213 KiB gzip
+(~48%). The rest of the game data (`itemsData`, `monstersData`, …) stays in core
+because it is referenced by `GameProvider`/boot, which mount on the landing page;
+moving it would need re-render orchestration not worth the risk.
+
+---
+
 ## 0) Why these problems exist (root cause)
 
 Production is **not** the Vite app build — it is the concatenated single-file

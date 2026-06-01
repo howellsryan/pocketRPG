@@ -47,16 +47,47 @@ try {
   checkJsonImportNames();
 
   const html = fs.readFileSync(indexPath, 'utf8');
-  const match = html.match(/<script\s+type=["']module["']>([\s\S]*?)<\/script>/i);
+  // The build emits the core app as a classic inline <script> (so it shares the
+  // global lexical environment with the lazily-loaded game chunk). Match an
+  // inline <script> that has no attributes.
+  const match = html.match(/<script>([\s\S]*?)<\/script>/i);
   if (!match) {
-    console.error('No <script type="module"> block found in index.html');
+    console.error('No inline <script> block found in index.html');
     process.exit(1);
   }
 
-  fs.writeFileSync(tmpPath, match[1], 'utf8');
-  const result = spawnSync(process.execPath, ['--check', tmpPath], { stdio: 'inherit' });
-  if (result.status !== 0) {
-    process.exit(result.status || 1);
+  // Syntax-check every concatenated artifact: the inline core script plus the
+  // content-hashed game-*.js chunk (build_single.cjs code-splits the in-game
+  // screens out of the inline payload).
+  const scripts = [{ name: 'index.html inline core', code: match[1] }];
+  for (const f of fs.readdirSync(root)) {
+    if (/^game-[0-9a-f]+\.js$/.test(f)) {
+      scripts.push({ name: f, code: fs.readFileSync(path.join(root, f), 'utf8') });
+    }
+  }
+
+  for (const { name, code } of scripts) {
+    fs.writeFileSync(tmpPath, code, 'utf8');
+    const result = spawnSync(process.execPath, ['--check', tmpPath], { stdio: 'inherit' });
+    if (result.status !== 0) {
+      console.error(`Syntax check failed for ${name}`);
+      process.exit(result.status || 1);
+    }
+  }
+
+  // The core script and the game chunk are CLASSIC scripts that share one global
+  // lexical environment at runtime, so a top-level identifier declared in BOTH
+  // would throw "Identifier already declared" in the browser — something the
+  // per-file syntax checks above can't catch. Concatenate and --check the lot to
+  // surface any cross-script redeclaration (a single combined script makes
+  // duplicate top-level const/let/class a SyntaxError).
+  if (scripts.length > 1) {
+    fs.writeFileSync(tmpPath, scripts.map(s => s.code).join('\n;\n'), 'utf8');
+    const combined = spawnSync(process.execPath, ['--check', tmpPath], { stdio: 'inherit' });
+    if (combined.status !== 0) {
+      console.error('Combined core+chunk syntax check failed — likely a top-level identifier declared in both the core script and the game chunk.');
+      process.exit(combined.status || 1);
+    }
   }
 } finally {
   cleanup();

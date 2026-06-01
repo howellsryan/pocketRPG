@@ -150,6 +150,54 @@ const sourceFiles = [
   'App.js',
 ];
 
+// ── Code-split: lazily loaded in-game screens ────────────────────────────────
+// These screen modules only render once the player is in the game
+// (App.renderScreen, gated behind cloudPhase === 'ready'). They are the bulk of
+// the "unused JavaScript" on the landing/login page, so they are emitted into a
+// separate `game-<hash>.js` chunk that App.jsx fetches on demand via
+// globalThis.__loadGameChunk. Everything else — vendor, data, engine, utils,
+// components, state, db, App, and the landing/auth screens — stays in the inline
+// core script.
+//
+// Both scripts are emitted as CLASSIC scripts (not type="module") so they share
+// the global lexical environment: the game chunk can reference core's top-level
+// bindings (h, render, itemsData, helpers, …) and App can reference the game
+// screens — all by their source names. That cross-script name stability is why
+// the bundles are minified with `minifyIdentifiers: false` below; only the
+// self-contained vendor IIFE is fully minified. The landing/auth screens MUST
+// stay in core (App's pre-game render path uses them), and nothing in core may
+// reference a game screen at module-evaluation time (App only does so inside
+// renderScreen, which runs after the chunk has loaded).
+const GAME_CHUNK_FILES = new Set([
+  'screens/HomeScreen.js',
+  'screens/StatsScreen.js',
+  'screens/InventoryScreen.js',
+  'screens/BankScreen.js',
+  'screens/PvpLobbyModal.js',
+  'screens/PvpCombatScreen.js',
+  'screens/CombatMobileSelect.js',
+  'screens/CombatMobileSheets.js',
+  'screens/CombatScreen.js',
+  'screens/AgilityScreen.js',
+  'screens/FarmingScreen.js',
+  'screens/FarmLocationPicker.js',
+  'screens/FarmPatchView.js',
+  'screens/ThievingScreen.js',
+  'screens/HunterScreen.js',
+  'screens/SkillingScreen.js',
+  'screens/ConstructionScreen.js',
+  'screens/SlayerScreen.js',
+  'screens/GatherScreen.js',
+  'screens/TradingPostScreen.js',
+  'screens/EquipmentScreen.js',
+  'screens/QuestsScreen.js',
+  'screens/CluesScreen.js',
+  'screens/MinigamesScreen.js',
+  'screens/CollectionLogScreen.js',
+  'screens/LeaderboardScreen.js',
+  'screens/HelpScreen.js',
+]);
+
 function processFile(relPath) {
   let code = readDist(relPath);
   
@@ -212,11 +260,14 @@ const homeLogoJSON = fs.existsSync(logoPath)
   ? JSON.stringify('/public/pocketrpg-logo.png')
   : 'null';
 
-// Concatenate all JS
-let allJS = '';
+// Concatenate JS — core (inline) vs lazily-loaded game chunk
+let coreJS = '';
+let gameJS = '';
 for (const f of sourceFiles) {
   try {
-    allJS += processFile(f);
+    const out = processFile(f);
+    if (GAME_CHUNK_FILES.has(f)) gameJS += out;
+    else coreJS += out;
   } catch(e) {
     console.error(`Error: ${f}: ${e.message}`);
     process.exit(1);
@@ -329,15 +380,60 @@ const customCSS = esbuild.transformSync(rawCustomCSS, {
 }).code.trim();
 const css = fontFaceCSS + compiledTailwindCSS + '\n' + customCSS;
 
-// ── Assemble the inline module script, then minify it as one unit ──
-// The app modules are concatenated raw (transpiled TS) and are the dominant
-// payload. esbuild minifies the whole script (vendor + data + app) — safe
-// because everything shares one top-level scope and there are no dynamic
-// identifier lookups (window[…], eval, Function, .name dispatch).
-const moduleScript = `${vendorBundle}
-${vendorDestructure}
+// ── Minify settings for the split bundles ──
+// The core inline script and the lazily-loaded game chunk are emitted as two
+// CLASSIC scripts that share the global lexical environment (see
+// GAME_CHUNK_FILES). For App (core) to reference the game screens — and for the
+// game chunk to reference core's bindings — top-level identifiers must keep
+// their source names across both files, so identifier minification is disabled.
+// Whitespace + syntax minification still apply, and the self-contained vendor
+// IIFE is already fully minified. Re-running esbuild over already-minified code
+// (vendor) is a no-op.
+const SPLIT_MINIFY = {
+  minifyWhitespace: true,
+  minifySyntax: true,
+  minifyIdentifiers: false,
+  target: 'es2020',
+  legalComments: 'none',
+};
 
-const gameIconsData = ${gameIconsJSON};
+// ── Game chunk (lazily loaded in-game screens) ──
+// Built first so the core loader can embed its content-hashed URL. Classic
+// script + "use strict" matches the module semantics the source was authored
+// under (strict, top-level `this` === undefined).
+//
+// gameIconsData (the ~126 KiB game-icons.net SVG glyph map) lives in the chunk,
+// not core: it is consumed only by icon code (GameIcon / itemIcons / skillArt),
+// never on the mobile landing/login page, so it is pure dead weight there. The
+// desktop landing — the one place an icon renders before the player is in-game —
+// fetches the chunk on mount (see DesktopLandingScreen) and GameIcon falls back
+// to an emoji until it arrives.
+const gameChunkSource = `const gameIconsData = ${gameIconsJSON};\n${gameJS}`;
+const gameChunkScript = esbuild.transformSync(gameChunkSource, SPLIT_MINIFY).code.trim();
+const gameChunkBody = `"use strict";\n${gameChunkScript}\n`;
+const gameChunkHash = require('crypto').createHash('sha256').update(gameChunkBody).digest('hex').slice(0, 12);
+const gameChunkFile = `game-${gameChunkHash}.js`;
+// Remove stale game-*.js chunks from previous builds so only the current one ships.
+for (const f of fs.readdirSync(__dirname)) {
+  if (/^game-[0-9a-f]+\.js$/.test(f) && f !== gameChunkFile) {
+    try { fs.unlinkSync(path.join(__dirname, f)); } catch {}
+  }
+}
+fs.writeFileSync(path.join(__dirname, gameChunkFile), gameChunkBody);
+
+// Loader installed in the core script: injects the game chunk on first request
+// and caches the promise. A failed load clears the cache so the next call (App
+// retries on error) re-attempts. Served from the site root by Cloudflare Pages.
+const gameChunkLoader = `globalThis.__loadGameChunk=(function(){var p=null;return function(){if(!p){p=new Promise(function(resolve,reject){var s=document.createElement('script');s.src='/${gameChunkFile}';s.onload=function(){resolve();};s.onerror=function(e){p=null;reject(e);};document.head.appendChild(s);});}return p;};})();`;
+
+// ── Core inline script ──
+// vendor (preact + idb) + injected JSON data globals + game-chunk loader +
+// core app modules (engine, utils, components, state, db, App, landing/auth) +
+// bootstrap. Concatenated raw and minified as one unit (sans identifier renaming).
+const coreScript = `${vendorBundle}
+${vendorDestructure}
+${gameChunkLoader}
+
 const itemsData = ${itemsJSON};
 const monstersData = ${monstersJSON};
 const skillsData = ${skillsJSON};
@@ -352,17 +448,13 @@ const collectionLogData = ${collectionLogJSON};
 const landingImages = ${landingImagesJSON};
 const homeLogo = ${homeLogoJSON};
 
-${allJS}
+${coreJS}
 
 render(h(App, null), document.getElementById('app') || document.querySelector('main'));
 document.getElementById('app-splash')?.remove();`;
 
-const minified = esbuild.transformSync(moduleScript, {
-  minify: true,
-  target: 'es2020',
-  legalComments: 'none',
-});
-const inlineScript = minified.code.trim();
+const minified = esbuild.transformSync(coreScript, SPLIT_MINIFY);
+const inlineScript = `"use strict";\n${minified.code.trim()}`;
 
 const html = `<!DOCTYPE html>
 <html lang="en">
@@ -390,7 +482,7 @@ ${css}
 <body>
 <div id="app-splash"><div class="app-splash__brand">PocketRPG</div><div class="app-splash__sub">Loading your adventure…</div></div>
 <main id="app"></main>
-<script type="module">
+<script>
 ${inlineScript}
 <\/script>
 </body>
@@ -398,5 +490,6 @@ ${inlineScript}
 
 // Always write to project root (the served/committed artifact)
 fs.writeFileSync(path.join(__dirname, 'index.html'), html);
-console.log('✅ Built index.html (' + (html.length / 1024).toFixed(1) + ' KB)');
+console.log('✅ Built index.html (' + (html.length / 1024).toFixed(1) + ' KB)'
+  + ' + ' + gameChunkFile + ' (' + (gameChunkBody.length / 1024).toFixed(1) + ' KB)');
 

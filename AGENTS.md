@@ -140,6 +140,13 @@ Do not commit with failing checks.
 - Treat duplicate identifier syntax errors as release-blocking.
 - Prefer shared helpers from `src/utils/helpers.js` over redefining common top-level names.
 
+### Code-split: core script + lazy game chunk
+- `build_single.cjs` emits **two CLASSIC scripts** (not `type="module"`): the inline core in `index.html`, and a content-hashed `game-<hash>.js` chunk with the heavy in-game screens (listed in `GAME_CHUNK_FILES`). The chunk is fetched lazily once the player enters the game (`cloudPhase === 'ready'`) via `globalThis.__loadGameChunk`, keeping ~130 KiB of unused JS off the landing/login page (Lighthouse "Reduce unused JavaScript").
+- Classic scripts share one global lexical environment, so the chunk references core's bindings and `App.renderScreen` references the chunk's screens — all by **source name**. That's why both bundles are minified with `minifyIdentifiers: false`; do not re-enable identifier minification (it would break cross-script references).
+- Globally-unique top-level names matter **across both files** now. `npm run check:single` syntax-checks each artifact and the combined concatenation to catch cross-script redeclarations.
+- Adding a new **in-game** screen: add it to `sourceFiles` **and** `GAME_CHUNK_FILES`. A screen reachable on the landing/login path (landing/auth) must stay out of `GAME_CHUNK_FILES`. Nothing in the core script may reference a chunk binding at module-evaluation time (only inside `renderScreen`, which runs after the chunk loads).
+- `gameIconsData` (the ~126 KiB icon glyph map) is injected into the **chunk**, not core, because the mobile landing renders no icons. Core icon code (`GameIcon`, `itemIcons`, `skillArt`) guards every access with `typeof gameIconsData !== 'undefined'` and emoji-falls-back until the chunk loads; the desktop landing fetches the chunk on mount and re-renders to swap in real icons. Preserve those guards. Other game data (`itemsData`, `monstersData`, …) stays in core — it is woven into `GameProvider`/boot, which mount on the landing page.
+
 ## 13) Contribution Best Practices for Agents
 - Keep changes minimal and scoped; avoid unrelated refactors.
 - Update tests with new gameplay logic (deterministic, logic-only).

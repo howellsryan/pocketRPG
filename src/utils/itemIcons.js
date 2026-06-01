@@ -85,6 +85,9 @@ function keyFromId(id) {
 
 export function getItemIconKey(item) {
   if (!item) return 'default'
+  // gameIconsData ships in the lazily-loaded game chunk in the single-file
+  // build; bail to a safe key if it hasn't loaded yet (see GameIcon).
+  if (typeof gameIconsData === 'undefined') return item.iconId || 'default'
 
   // 1. Explicit curated iconId set in items.json
   if (item.iconId && gameIconsData[item.iconId]) return item.iconId

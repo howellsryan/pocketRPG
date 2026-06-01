@@ -73,6 +73,9 @@ export function skillArtTreatment(accent) {
 // div can be masked into the icon silhouette. Returns null if the glyph is
 // unknown (caller should fall back).
 export function skillEmblemMask(iconKey) {
+  // gameIconsData ships in the lazily-loaded game chunk in the single-file
+  // build; until it loads, callers fall back (see GameIcon).
+  if (typeof gameIconsData === 'undefined') return null
   const entry = gameIconsData[iconKey]
   if (!entry) return null
   const vb = entry.viewBox || '0 0 512 512'
