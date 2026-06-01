@@ -171,7 +171,7 @@ const GATHER_TASKS = [
     iconKey: 'planks',
     description: 'Convert logs into planks at the sawmill. Costs 25gp per action.',
     ticks: 1,
-    product: 'planks',
+    product: 'plank',
     qty: 1,
     stackable: true,
     materials: { logs: 1 },

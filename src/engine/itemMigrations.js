@@ -12,6 +12,7 @@ const LEGACY_ITEM_ID_MAP = {
   void_body: 'void_king_top',
   void_bottoms: 'void_king_robe',
   void_gloves: 'void_king_gloves',
+  planks: 'plank',
 }
 
 function rewriteEquipment(equipment) {

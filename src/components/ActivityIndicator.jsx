@@ -1,6 +1,7 @@
 import { useGame } from '../state/gameState.jsx'
 import { SKILL_ICONS, SCREENS } from '../utils/constants.js'
 import SkillIcon from './SkillIcon.jsx'
+import GameIcon from './GameIcon.jsx'
 
 /**
  * Compact indicator for the currently running background task: the activity's
@@ -25,7 +26,12 @@ function describeTask(task) {
     case 'quest':
       return { icon: '📜', screen: SCREENS.QUESTS, label: task.quest?.name || 'Quest' }
     case 'minigame':
-      return { icon: task.minigameTask?.icon || '🎮', screen: SCREENS.MINIGAMES, label: task.minigameTask?.name || 'Minigame' }
+      return {
+        iconKey: task.minigameTask?.iconKey,
+        icon: task.minigameTask?.icon || '🎮',
+        screen: SCREENS.MINIGAMES,
+        label: task.minigameTask?.name || 'Minigame',
+      }
     case 'clue':
       return { icon: '🗺️', screen: SCREENS.CLUES, label: 'Clue scroll' }
     default:
@@ -80,7 +86,11 @@ export default function ActivityIndicator({ onNavigate }) {
         class="flex items-center justify-center text-[13px] leading-none"
         style={hasProgress ? undefined : { animation: 'pocketrpg-activity-pulse 1.6s ease-in-out infinite' }}
       >
-        {info.skill ? <SkillIcon skill={info.skill} size={16} title={info.label} /> : info.icon}
+        {info.skill
+          ? <SkillIcon skill={info.skill} size={16} title={info.label} />
+          : info.iconKey
+            ? <GameIcon iconKey={info.iconKey} item={{ icon: info.icon, name: info.label }} size={16} color="currentColor" />
+            : info.icon}
       </span>
     </button>
   )

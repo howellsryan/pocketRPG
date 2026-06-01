@@ -89,6 +89,25 @@ describe('migrateLegacyItemIds', () => {
     expect(result.bank.void_king_gloves).toEqual({ itemId: 'void_king_gloves', quantity: 1 })
   })
 
+  it('rewrites legacy "planks" stacks to canonical "plank" in inventory and bank', () => {
+    // Regression: the Construction "Build with Plank" recipe and the sawmill
+    // once used itemId `planks`, while Trading Post purchases used `plank`,
+    // so bought planks were invisible to the build action. Everything now uses
+    // canonical `plank`; old saves' `planks` stacks must migrate over.
+    const inventory = [{ itemId: 'planks', quantity: 50 }, { itemId: 'oak_plank', quantity: 5 }]
+    const bank = {
+      planks: { itemId: 'planks', quantity: 200 },
+      plank: { itemId: 'plank', quantity: 10 },
+    }
+    const result = migrateLegacyItemIds({ equipment: {}, inventory, bank })
+    expect(result.changed).toBe(true)
+    expect(result.inventory[0]).toEqual({ itemId: 'plank', quantity: 50 })
+    expect(result.inventory[1]).toEqual({ itemId: 'oak_plank', quantity: 5 })
+    expect(result.bank.planks).toBeUndefined()
+    // existing `plank` (10) + migrated `planks` (200) merge to a single stack.
+    expect(result.bank.plank).toEqual({ itemId: 'plank', quantity: 210 })
+  })
+
   it('handles missing containers safely', () => {
     const result = migrateLegacyItemIds({ equipment: null as any, inventory: null as any, bank: null as any })
     expect(result.changed).toBe(false)
