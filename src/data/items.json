@@ -8736,18 +8736,18 @@
     "slot": "cape",
     "stackable": false,
     "attackBonus": {
-      "stab": 11,
-      "slash": 11,
-      "crush": 11,
+      "stab": 5,
+      "slash": 5,
+      "crush": 5,
       "magic": 0,
       "ranged": 0
     },
     "defenceBonus": {
-      "stab": 11,
-      "slash": 11,
-      "crush": 11,
-      "magic": 11,
-      "ranged": 11
+      "stab": 5,
+      "slash": 5,
+      "crush": 5,
+      "magic": 0,
+      "ranged": 0
     },
     "otherBonus": {
       "meleeStrength": 4,
@@ -8768,16 +8768,16 @@
     "slot": "cape",
     "stackable": false,
     "attackBonus": {
-      "stab": 12,
-      "slash": 12,
-      "crush": 12,
-      "magic": 1,
-      "ranged": 1
+      "stab": 20,
+      "slash": 20,
+      "crush": 20,
+      "magic": 0,
+      "ranged": 0
     },
     "defenceBonus": {
-      "stab": 12,
-      "slash": 12,
-      "crush": 12,
+      "stab": 20,
+      "slash": 20,
+      "crush": 20,
       "magic": 12,
       "ranged": 12
     },
