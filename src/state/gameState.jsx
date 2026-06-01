@@ -63,6 +63,8 @@ export function GameProvider({ children }) {
   const [questQueue, setQuestQueueState] = useState([])
   const [isSaving, setIsSaving] = useState(false)
   const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false })
+  // CombatScreen registers a force-kill handler here so handleSkip1h (in App) can invoke it
+  const combatSkipHandlerRef = useRef(null)
 
   // Refs to hold latest state for the debounced auto-save
   const stateRef = useRef({ stats: {}, inventory: new Array(28).fill(null), equipment: {}, bank: {}, player: null })
@@ -922,6 +924,7 @@ export function GameProvider({ children }) {
     completedQuests, completeQuest,
     unlockedMinigameItems, unlockMinigameItem,
     questQueue, addQuestToQueue, removeFromQuestQueue, clearQuestQueue, updateQuestQueue,
+    combatSkipHandlerRef,
     loadGame, grantXP, updateInventory, updateEquipment, updateBank,
     removeFromInventory, addToBank,
     updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,

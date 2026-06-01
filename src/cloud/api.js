@@ -162,9 +162,9 @@ export const api = {
     method: 'POST',
     body: JSON.stringify({ item_id: itemId, quantity, unlocked_minigame_items: unlockedMinigameItems }),
   }),
-  skipHour: () => request('/api/skip-hour', {
+  skipHour: (body = {}) => request('/api/skip-hour', {
     method: 'POST',
-    body: JSON.stringify({}),
+    body: JSON.stringify(body || {}),
   }),
   slayerSkip: () => request('/api/slayer/skip', {
     method: 'POST',

@@ -103,7 +103,6 @@ export function getSkipPreflight(activeTask, context, elapsedMs = SKIP_HOUR_MS) 
   if (activeTask.type === 'gather' || activeTask.type === 'clue') return getGatherSkipPreflight(activeTask, context, elapsedMs)
   if (activeTask.type === 'skill') return getSkillSkipPreflight(activeTask, context, elapsedMs)
   if (activeTask.type === 'quest') return (Number(activeTask.ticksRemaining || 0) > 0 || (context.questQueue || []).length > 0) ? valid(1, 'quest') : invalid('No quest time remains to skip.', 'quest', true)
-  if (activeTask.type === 'combat' && (activeTask.monster?.boss || activeTask.raid)) return invalid('Cannot skip boss/raid combat.', 'combat', false)
   const ticks = activeTask.action?.ticks || activeTask.npc?.ticks || activeTask.monster?.speed || 4
   return actionsFromTicks(elapsedMs, ticks) > 0 ? valid(actionsFromTicks(elapsedMs, ticks), activeTask.type) : invalid('This action cannot progress from a 1 hour skip.', activeTask.type, false)
 }
