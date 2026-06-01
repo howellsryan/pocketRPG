@@ -21,6 +21,7 @@ import GatherScreen from './screens/GatherScreen.jsx'
 import AgilityScreen from './screens/AgilityScreen.jsx'
 import TradingPostScreen from './screens/TradingPostScreen.jsx'
 import EquipmentScreen from './screens/EquipmentScreen.jsx'
+import ArmouryScreen from './screens/ArmouryScreen.jsx'
 import QuestsScreen from './screens/QuestsScreen.jsx'
 import CluesScreen from './screens/CluesScreen.jsx'
 import MinigamesScreen from './screens/MinigamesScreen.jsx'
@@ -1945,6 +1946,7 @@ function GameApp() {
       case SCREENS.STATS:     return <StatsScreen />
       case SCREENS.INVENTORY: return <InventoryScreen />
       case SCREENS.EQUIPMENT: return <EquipmentScreen />
+      case SCREENS.ARMOURY:   return <ArmouryScreen />
       case SCREENS.BANK:      return <BankScreen />
       case SCREENS.COMBAT:    return <CombatScreen onNavigate={navigate} initialMonsterId={actionData?.monsterId} initialRaidId={actionData?.raidId} onCombatStatusChange={setIsInCombat} />
       case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} idleResult={idleResult} onNavigate={navigate} />
