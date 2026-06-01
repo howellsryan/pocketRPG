@@ -64,7 +64,7 @@ is *already* the atomic "total reset that keeps login + name" the request descri
 **The bug is the fallback.** When `api.resetOneLife()` throws (a transient network error, a
 cold worker, a 5xx), `performOneLifeReset()` silently degrades to `deleteSave()` + `deleteIdle()`:
 
-- `DELETE /api/save`  → `DELETE FROM saves WHERE character_id = ?` only (`functions/api/save.js:189`)
+- `DELETE /api/save`  → `DELETE FROM saves WHERE character_id = ?` only (`functions/api/save.js`, `onRequestDelete`)
 - `DELETE /api/idle`  → `DELETE FROM character_idle_state WHERE character_id = ?` only (`functions/api/idle.js:115`)
 
 Neither touches `trading_post_offers`, and neither deletes the `characters` row. So after a
