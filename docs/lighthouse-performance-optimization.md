@@ -8,6 +8,25 @@
 
 ---
 
+## ✅ Update — remaining "Reduce unused JavaScript" (~131 KiB) addressed via code-split
+
+Fixes #1–#3 below removed the Tailwind-CDN bulk of the original unused JS. The
+~131 KiB that **remained** on a later run was the in-game screen code (Combat,
+Skilling, PvP, Inventory, …) — it downloaded and parsed in the single inline
+bundle but never *ran* on the landing/login page.
+
+`build_single.cjs` now **code-splits** those screens (`GAME_CHUNK_FILES`) into a
+content-hashed `game-<hash>.js` chunk that `App.jsx` fetches lazily only when the
+player enters the game (`cloudPhase === 'ready'`, via `globalThis.__loadGameChunk`).
+Because Lighthouse audits the unauthenticated landing URL, that chunk is never
+requested during the run, so its bytes drop out of the "unused JS" total. Core
+and chunk are emitted as **classic scripts** sharing the global lexical
+environment (so they reference each other by source name) and are minified with
+`minifyIdentifiers: false`. See `CLAUDE.md`/`AGENTS.md` §12 for the contributor
+rules. Re-run Lighthouse on a preview deploy to confirm the new numbers.
+
+---
+
 ## 0) Why these problems exist (root cause)
 
 Production is **not** the Vite app build — it is the concatenated single-file
