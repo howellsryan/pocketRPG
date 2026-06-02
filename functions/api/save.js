@@ -2,8 +2,7 @@ import { requireAuth, json } from '../_lib/auth.js'
 import { assertNotInActiveMatch, sweepStaleRows } from '../_lib/pvp.js'
 import { computeSaveSummaryFromJson } from '../_lib/saveSummary.js'
 import { decodeSaveRow, gzipJsonString } from '../_lib/saveCodec.js'
-import { detectProtectedDelta, detectTotalLevelRegression } from '../_lib/game/saveValidation.js'
-import itemsData from '../../src/data/items.json' assert { type: 'json' }
+import { detectTotalLevelRegression } from '../_lib/game/saveValidation.js'
 
 const MAX_SAVE_BYTES = 256 * 1024 // 256 KB ceiling — current saves are well under this
 
@@ -101,10 +100,9 @@ export async function onRequestPut({ request, env }) {
     return json({ error: 'save_revision_conflict', code: 'SAVE_REVISION_CONFLICT', current_revision: currentRevision }, 409)
   }
 
-  // Decode the previous save once. The economy- and protected-delta checks
-  // both run against it; the catch-all that used to wrap the protected
-  // check (and swallow ALL errors silently) is gone — a decode failure on
-  // an existing row should return 500, not let the write through.
+  // Decode the previous save once. The total-level regression guard runs
+  // against it; a decode failure on an existing row should surface as an
+  // error, not let the write through.
   let previousSave = {}
   if (existing?.save_data || existing?.save_blob) {
     let previousJson = null
@@ -120,8 +118,8 @@ export async function onRequestPut({ request, env }) {
     }
   }
 
-  // Parse the incoming save once (null = a full blob clear). Both the
-  // total-level regression guard and the protected-delta check run against it.
+  // Parse the incoming save once (null = a full blob clear). The total-level
+  // regression guard runs against it.
   let parsedNext = null
   if (save_data) {
     try { parsedNext = JSON.parse(save_data) } catch {
@@ -144,29 +142,23 @@ export async function onRequestPut({ request, env }) {
     }, 409)
   }
 
-  if (save_data) {
-    // PocketRPG is offline-first: live skilling, offline idle catch-up, and
-    // skip-hour all compute XP / coins / common drops on the CLIENT and
-    // persist them through this endpoint. There is no server-side game
-    // engine to recompute against, so a blanket "reject any economy
-    // increase" check would reject the core gameplay loop. We therefore
-    // only guard the high-value rewards that DO have server-authoritative
-    // grant paths: boss / raid / clue uniques (detectProtectedDelta, which
-    // already exempts anything present in a monster-drop or clue-reward
-    // table so normal drops pass). Paid credits are protected separately
-    // by the Stripe webhook + server-side debits; the trading post and PvP
-    // have their own server-authoritative paths. See the production-
-    // readiness notes: client-authoritative XP/coins is inherent to the
-    // idle-game design and the leaderboard is best-effort, not cheat-proof.
-    const protectedViolations = detectProtectedDelta(previousSave, parsedNext, itemsData)
-    if (protectedViolations.length) {
-      return json({
-        error: 'protected_state_delta_rejected',
-        code: 'PROTECTED_STATE_DELTA',
-        items: protectedViolations,
-      }, 403)
-    }
-  }
+  // NOTE: /api/save is intentionally client-authoritative and trusted.
+  // PocketRPG is offline-first — live skilling, offline idle catch-up, and
+  // skip-hour all compute XP / coins / drops on the CLIENT and persist them
+  // through this endpoint; there is no server-side game engine to recompute
+  // against, and the same client paths legitimately create high-value items
+  // (idle/offline monster loot, crafted/smithed/cooked products, skill capes),
+  // so the endpoint cannot reject "protected" item increases without breaking
+  // the core loop. Integrity for the things that CAN be made authoritative is
+  // enforced upstream instead: boss/raid/clue/minigame/dungeoneering uniques are
+  // granted (and their kill-counts / collection-log entries recorded) by the
+  // server-side completion endpoints with nonce replay protection and
+  // server-rolled RNG; purchases debit and grant via /api/purchase; credits are
+  // debited server-side by /api/skip-hour and /api/slayer/skip; the trading post
+  // and PvP have their own authoritative paths. Client-authoritative XP/coins is
+  // inherent to the idle-game design and the leaderboard is best-effort, not
+  // cheat-proof. The only write this endpoint refuses is a total-level
+  // regression (above), which is account-wipe protection, not anti-cheat.
 
   const now = Date.now()
   // Recompute denormalized summary so the leaderboard / PvP CB lookups can

@@ -35,7 +35,7 @@ import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEqu
 import { startTicks, stopTicks, onTick, pauseTicks, resumeTicks } from './engine/tick.js'
 import { wipeLocalSave } from './db/saveload.js'
 import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode, CREDITS_UPDATED_EVENT } from './cloud/api.js'
-import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave } from './cloud/sync.js'
+import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave, retrySaveNow, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { isBackground } from './engine/activityRegistry.js'
@@ -220,6 +220,9 @@ function GameApp() {
   const [activity, setActivity] = useState(null)
   const [idleResult, setIdleResult] = useState(null) // { elapsedMs, task, xpGained, itemsGained, lootLost, monstersKilled }
   const [skipSaving, setSkipSaving] = useState(false) // true while a paid skip is being persisted before reveal
+  const [saveBlocked, setSaveBlocked] = useState(false) // true when cloud saves have failed repeatedly — hard-stop play
+  const [saveBlockedError, setSaveBlockedError] = useState(null)
+  const [retryingBlockedSave, setRetryingBlockedSave] = useState(false)
   const [actionData, setActionData] = useState(null) // { monsterId, gatherTaskId, skillId, actionId }
   const [isInCombat, setIsInCombat] = useState(false) // Track if currently in combat
   const [pendingXpChoices, setPendingXpChoices] = useState([]) // [{ rewards, questId, questName }, ...]
@@ -532,6 +535,25 @@ function GameApp() {
     }
     window.addEventListener(CREDITS_UPDATED_EVENT, handler)
     return () => window.removeEventListener(CREDITS_UPDATED_EVENT, handler)
+  }, [])
+
+  // Cloud-save guard: when the sync layer reports saves have failed enough
+  // times to be "blocked", hard-stop play with a modal (Retry / Logout) rather
+  // than letting the player keep accruing progress that isn't persisting. Any
+  // subsequent successful save ('saved') lifts the block automatically.
+  useEffect(() => {
+    const handler = (event) => {
+      const status = event?.detail?.status
+      if (status === 'blocked') {
+        setSaveBlocked(true)
+        setSaveBlockedError(event?.detail?.error || null)
+      } else if (status === 'saved') {
+        setSaveBlocked(false)
+        setSaveBlockedError(null)
+      }
+    }
+    window.addEventListener(CLOUD_SAVE_STATUS_EVENT, handler)
+    return () => window.removeEventListener(CLOUD_SAVE_STATUS_EVENT, handler)
   }, [])
 
   useEffect(() => {
@@ -1252,10 +1274,14 @@ function GameApp() {
   // Switch character — flush any pending push, clear character (keep GitHub
    // token) and bounce back to AuthScreen so the user can pick or create
    // another character under the same GitHub login.
-  async function handleLogoutToCharacterSelect() {
-    if (!isInPvpMatch) {
+  async function handleLogoutToCharacterSelect({ skipSave = false } = {}) {
+    // When leaving from the save-blocked modal the save is already failing, so
+    // skip the final push (it would just hang) and drop the doomed retry queue.
+    if (!skipSave && !isInPvpMatch) {
       try { await pushNow(getSnapshot()) } catch { /* non-fatal */ }
     }
+    setSaveBlocked(false)
+    setSaveBlockedError(null)
     setActiveTask(null)
     localStorage.removeItem('pocketrpg_activeTask')
     localStorage.removeItem('pocketrpg_hiddenAt')
@@ -1266,6 +1292,26 @@ function GameApp() {
     clearCollectionLogCache()
     setGameReady(false)
     setCloudPhase('auth')
+  }
+
+  // Save-blocked modal actions. Retry forces an immediate push; a success
+  // emits 'saved' which lifts the block via the status listener above.
+  async function handleRetryBlockedSave() {
+    if (retryingBlockedSave) return
+    setRetryingBlockedSave(true)
+    try {
+      const ok = await retrySaveNow(getSnapshot())
+      if (ok) {
+        setSaveBlocked(false)
+        setSaveBlockedError(null)
+      } else {
+        addToast('Still unable to reach the server. Check your connection.', 'error')
+      }
+    } catch {
+      addToast('Still unable to reach the server. Check your connection.', 'error')
+    } finally {
+      setRetryingBlockedSave(false)
+    }
   }
 
 
@@ -2048,6 +2094,42 @@ function GameApp() {
             <div style={{ fontSize: '30px', marginBottom: '10px' }}>⏭️</div>
             <div style={{ fontFamily: 'Cinzel, serif', fontSize: '18px', color: '#d4af37', marginBottom: '6px' }}>Saving your progress…</div>
             <div style={{ fontSize: '12px', color: '#c8a96e', opacity: 0.8 }}>Please don't close the app.</div>
+          </div>
+        </div>
+      )}
+
+      {/* Save-blocked modal — hard stop when cloud saves keep failing. Sits
+          above every other overlay so the player cannot keep playing on top of
+          progress that isn't persisting. Only Retry or Logout get them out. */}
+      {saveBlocked && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', zIndex: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div style={{ width: '100%', maxWidth: '380px', background: '#1a1a1a', borderRadius: '20px', border: '1px solid #5a2a2a', overflow: 'hidden' }}>
+            <div style={{ background: 'linear-gradient(135deg, #3a1414, #2a1a0a)', padding: '20px 20px 16px', borderBottom: '1px solid #5a2a2a' }}>
+              <div style={{ fontSize: '28px', textAlign: 'center', marginBottom: '6px' }}>⚠️</div>
+              <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '17px', color: '#ff6b6b', textAlign: 'center', marginBottom: '4px' }}>Save Failed</h2>
+              <p style={{ fontSize: '12px', color: '#e8d5b0', textAlign: 'center', opacity: 0.8, lineHeight: 1.5 }}>
+                We couldn't save your progress to the cloud. To avoid losing progress, the game is paused until your save goes through.
+              </p>
+            </div>
+            <div style={{ padding: '16px' }}>
+              <p style={{ fontSize: '11px', color: '#e8d5b0', textAlign: 'center', opacity: 0.5, marginBottom: '16px', lineHeight: 1.5 }}>
+                Check your internet connection, then retry. If you log out now, recent unsaved progress may be lost.
+              </p>
+              <button
+                onClick={handleRetryBlockedSave}
+                disabled={retryingBlockedSave}
+                style={{ width: '100%', padding: '13px', borderRadius: '12px', background: 'linear-gradient(135deg, #b8940e, #d4af37)', color: '#0f0f0f', fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '14px', border: 'none', cursor: retryingBlockedSave ? 'wait' : 'pointer', marginBottom: '10px', opacity: retryingBlockedSave ? 0.7 : 1 }}
+              >
+                {retryingBlockedSave ? 'Retrying…' : 'Retry Save'}
+              </button>
+              <button
+                onClick={() => handleLogoutToCharacterSelect({ skipSave: true })}
+                disabled={retryingBlockedSave}
+                style={{ width: '100%', padding: '13px', borderRadius: '12px', background: '#2a2a2a', border: '1px solid #3a3a3a', color: '#e8d5b0', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}
+              >
+                Log Out
+              </button>
+            </div>
           </div>
         </div>
       )}

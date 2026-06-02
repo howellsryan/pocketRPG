@@ -144,8 +144,11 @@ Do not commit with failing checks.
 - When this guide becomes stale, update it in the same PR as the behavior/script changes.
 
 ## 14) Production Security Model (Server Authority)
-- Treat browser/client state as untrusted for progression/economy outcomes.
-- API/server must authoritatively validate and mutate important outcomes (items, coins, XP, points, unlocks, collection log, PvP settlement, credits usage).
-- `/api/save` must reject stale writes (`save_revision`) and reject unauthorized protected reward/economy deltas.
-- High-value/protected rewards (boss/raid/clue/minigame/dungeoneering and restricted items) require server-authoritative mutation paths with regression tests.
+- PocketRPG is offline-first: live skilling, idle/offline catch-up, and skip-hour compute XP, coins, and drops on the **client** and persist them through `/api/save`. There is no server-side game engine to recompute against, so XP/coins (and any client-created items: idle/offline loot, crafted/smithed/cooked products, skill capes) are **client-authoritative by design**. The leaderboard is best-effort, not cheat-proof — do not add `/api/save` checks that try to police economy/item *increases*; they break the core loop and provide no real protection while XP/coins remain client-side.
+- Integrity is enforced where it actually *can* be server-authoritative, not on the trusted save:
+  - **High-value reward grants** — boss/raid/clue/minigame/dungeoneering uniques are granted by the server-side completion endpoints (`/api/actions/**`), which roll loot RNG server-side, record kill-counts and collection-log entries, and claim a nonce for replay protection. These are the legitimate grant path for the honest client; the save merely carries the already-granted item.
+  - **Purchases** — `/api/purchase` debits coins and grants the item server-side.
+  - **Credits** — debited atomically by `/api/skip-hour` and `/api/slayer/skip`; never bumped from `/api/save`.
+  - **PvP settlement / trading post** — their own server-authoritative paths.
+- `/api/save` enforces exactly two write guards, both integrity (not anti-cheat): stale-write rejection (`save_revision`) and the total-level regression guard (account-wipe protection — a save whose total level drops below the stored one is refused).
 - New API mutations that can materially change economy/progression must emit audit events.

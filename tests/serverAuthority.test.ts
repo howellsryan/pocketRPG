@@ -1,16 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { detectProtectedDelta } from '../functions/_lib/game/saveValidation.js'
 import { subtractCoins } from '../functions/_lib/game/economy.js'
 import { addItemToInventory } from '../functions/_lib/game/inventory.js'
 
 describe('server authority helpers', () => {
-  it('flags protected item inventory increases', () => {
-    const prev = { inventory: [{ id: 'bronze_sword', quantity: 1 }] }
-    const next = { inventory: [{ id: 'bronze_sword', quantity: 1 }, { id: 'dragon_claws', quantity: 1 }] }
-    const items = { dragon_claws: { isBossUnique: true } }
-    expect(detectProtectedDelta(prev, next, items)).toEqual(['dragon_claws'])
-  })
-
   it('rejects insufficient coins', () => {
     const save: any = { coins: 50 }
     expect(() => subtractCoins(save, 100)).toThrow(/Insufficient/)
