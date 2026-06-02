@@ -10,7 +10,7 @@
 CREATE TABLE IF NOT EXISTS oauth_clients (
   client_id     TEXT    PRIMARY KEY,
   client_name   TEXT,
-  redirect_uris TEXT    NOT NULL,   -- JSON array of allowed redirect URIs
+  redirect_uris TEXT    NOT NULL,
   created_at    INTEGER NOT NULL
 );
 
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS oauth_codes (
   client_id      TEXT    NOT NULL,
   identity_id    INTEGER NOT NULL,
   redirect_uri   TEXT    NOT NULL,
-  code_challenge TEXT    NOT NULL,   -- S256 challenge
+  code_challenge TEXT    NOT NULL,
   scope          TEXT,
   expires_at     INTEGER NOT NULL,
   consumed       INTEGER NOT NULL DEFAULT 0,
