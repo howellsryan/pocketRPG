@@ -6,8 +6,10 @@ import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { COMBAT_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, STUB_SKILLS } from '../utils/constants.js'
 import { getSkillArt } from '../utils/skillArt.js'
 import Modal from '../components/Modal.jsx'
+import Button from '../components/Button.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import SkillEmblem from '../components/SkillEmblem.jsx'
+import { getToken } from '../cloud/api.js'
 
 const SKILL_GROUPS = [
   { title: 'Combat', skills: COMBAT_SKILLS },
@@ -47,6 +49,30 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
   const [loggingOut, setLoggingOut] = useState(false)
   const [saving, setSaving] = useState(false)
   const [selectedSkillDetail, setSelectedSkillDetail] = useState(null)
+  const [showApiAccess, setShowApiAccess] = useState(false)
+  const [copiedField, setCopiedField] = useState(null)
+
+  async function copyText(text, field) {
+    if (!text) return
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text)
+      } else {
+        const ta = document.createElement('textarea')
+        ta.value = text
+        ta.setAttribute('readonly', '')
+        document.body.appendChild(ta)
+        ta.select()
+        document.execCommand('copy')
+        ta.remove()
+      }
+      setCopiedField(field)
+      setTimeout(() => setCopiedField((f) => (f === field ? null : f)), 1500)
+    } catch { /* clipboard unavailable — user can select manually */ }
+  }
+
+  const mcpToken = isCloudAccount ? getToken() : null
+  const mcpServerUrl = typeof window !== 'undefined' ? `${window.location.origin}/api/mcp` : '/api/mcp'
 
   async function handleLogout() {
     if (loggingOut || saving) return
@@ -109,6 +135,16 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
               >
                 <GameIcon iconKey="save" color="#f0c040" size={24} title="Save" />
               </button>
+              {isCloudAccount && (
+                <button
+                  class="rune-btn"
+                  onClick={() => setShowApiAccess(true)}
+                  aria-label="AI / API access"
+                  title="Connect an AI assistant (MCP)"
+                >
+                  <GameIcon iconKey="scroll" color="#7fd1e0" size={24} title="API access" />
+                </button>
+              )}
               <button
                 class="rune-btn"
                 onClick={handleLogout}
@@ -206,6 +242,58 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
                 </div>
               </div>
             )}
+          </div>
+        </Modal>
+      )}
+
+      {/* AI / API (MCP) access modal */}
+      {showApiAccess && (
+        <Modal title="Connect an AI assistant" onClose={() => setShowApiAccess(false)}>
+          <div class="space-y-4 text-sm text-[var(--color-parchment)]">
+            <p class="opacity-70">
+              PocketRPG exposes an <b>MCP server</b> so assistants like ChatGPT and Claude can
+              view your characters and perform shop/credit actions on your behalf. Add the server
+              below to your assistant and paste your access token when it asks for a bearer token.
+            </p>
+
+            <div>
+              <div class="text-xs uppercase tracking-wide opacity-50 mb-1">MCP server URL</div>
+              <div class="flex items-center gap-2">
+                <code class="flex-1 min-w-0 break-all rounded-lg bg-[#111] border border-[var(--color-void-border)] p-2 font-[var(--font-mono)] text-xs text-[var(--color-gold)]">
+                  {mcpServerUrl}
+                </code>
+                <Button size="md" onClick={() => copyText(mcpServerUrl, 'url')}>
+                  {copiedField === 'url' ? 'Copied' : 'Copy'}
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <div class="text-xs uppercase tracking-wide opacity-50 mb-1">Access token (bearer)</div>
+              {mcpToken ? (
+                <div class="flex items-center gap-2">
+                  <code class="flex-1 min-w-0 break-all rounded-lg bg-[#111] border border-[var(--color-void-border)] p-2 font-[var(--font-mono)] text-xs text-[var(--color-parchment)] max-h-24 overflow-y-auto">
+                    {mcpToken}
+                  </code>
+                  <Button size="md" variant="primary" onClick={() => copyText(mcpToken, 'token')}>
+                    {copiedField === 'token' ? 'Copied' : 'Copy'}
+                  </Button>
+                </div>
+              ) : (
+                <div class="rounded-lg bg-[#111] border border-[var(--color-void-border)] p-2 text-xs opacity-60">
+                  No token found — make sure you are signed in to your cloud account.
+                </div>
+              )}
+            </div>
+
+            <div class="rounded-lg bg-[#2a1d12] border border-[#5a3d1a] p-3 text-xs space-y-1">
+              <div class="font-bold text-[var(--color-gold)]">Keep this token private</div>
+              <p class="opacity-80">
+                Anyone with this token can act on your account through these tools — treat it like a
+                password. It expires automatically about <b>30 days</b> after you last signed in, and a
+                fresh one is issued each time you log in. Log out and back in to revoke an old token.
+              </p>
+            </div>
           </div>
         </Modal>
       )}

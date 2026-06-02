@@ -152,3 +152,8 @@ Do not commit with failing checks.
   - **PvP settlement / trading post** — their own server-authoritative paths.
 - `/api/save` enforces exactly two write guards, both integrity (not anti-cheat): stale-write rejection (`save_revision`) and the total-level regression guard (account-wipe protection — a save whose total level drops below the stored one is refused).
 - New API mutations that can materially change economy/progression must emit audit events.
+
+## 15) MCP Server (`/api/mcp`)
+- A stateless MCP (Model Context Protocol) server lives in the Pages app at `functions/api/mcp.js` (JSON-RPC 2.0 over POST). It lets AI assistants view characters and run server-authoritative actions. See `docs/mcp-server.md`.
+- Tools never duplicate game logic: each `tools/call` forwards the caller's bearer token to the matching `/api/*` handler via `functions/_lib/mcp/bridge.js`, so all auth/locks/audit run in the existing endpoints. Adding a tool = add it to `functions/_lib/mcp/schema.js` (metadata) and `functions/_lib/mcp/tools.js` (dispatch).
+- Auth is token-paste: the player's existing session JWT (30-day expiry) used as `Authorization: Bearer`. Players copy it in-game via Home → "Connect an AI assistant". Keep scope to read + already-server-authoritative actions; do not expose raw save writes.
