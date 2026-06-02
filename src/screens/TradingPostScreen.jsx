@@ -3,6 +3,7 @@ import { useGame } from '../state/gameState.jsx'
 import { countItem } from '../engine/inventory.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
 import { isOrderBookItem, getPurchaseRestriction, isStoreVisibleItem } from '../engine/storeRules.js'
+import { getLevelFromXP } from '../engine/experience.js'
 import Panel from '../components/Panel.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import SharedItemModal from '../components/SharedItemModal.jsx'
@@ -41,6 +42,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
   const {
     inventory,
     bank,
+    stats,
     addToast,
     itemsData,
     isIronman,
@@ -229,6 +231,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
       if (err?.body?.code === 'TRADING_POST_SLOTS_FULL') addToast(err.body.error, 'error')
       else if (err?.body?.code === 'IRONMAN_RESTRICTED') addToast(err.body.error, 'error')
       else if (err?.body?.code === 'INSUFFICIENT_COINS') addToast('Insufficient coins.', 'error')
+      else if (err?.body?.code === 'LEVEL_REQUIREMENT_NOT_MET') addToast(err.body.error, 'error')
       else addToast(`Buy failed: ${err.message}`, 'error')
     } finally {
       setBusy(false)
@@ -352,12 +355,23 @@ export default function TradingPostScreen({ onBuyCredits }) {
   }
 
   // ── RENDERING ────────────────────────────────────────────────────────────
+  const getSkillCapeLevelBlock = (item) => {
+    if (!item?.isSkillCape) return null
+    const reqSkill = Object.keys(item.requirements || {})[0]
+    if (!reqSkill) return null
+    const playerLevel = getLevelFromXP(stats?.[reqSkill]?.xp || 0)
+    if (playerLevel < 99) return `🔒 Requires level 99 ${reqSkill[0].toUpperCase()}${reqSkill.slice(1)}`
+    return null
+  }
+
   const renderListRow = (item) => {
     const orderBook = isOrderBookItem(item)
     const restriction = getPurchaseRestriction(item, { isIronman: false })
     const buyDisabledReason = (() => {
       if (item.questUnlock && !completedQuests.has(item.questUnlock)) return `🔒 ${questMap[item.questUnlock] || 'Quest required'}`
       if (minigameProductIds.has(item.id) && !unlockedMinigameItems.has(item.id)) return '🔒 Earn from minigame first'
+      const capeBlock = getSkillCapeLevelBlock(item)
+      if (capeBlock) return capeBlock
       if (!orderBook && !restriction.allowed && restriction.code !== 'BOSS_UNIQUE_RESTRICTED' && restriction.code !== 'CLUE_REWARD_RESTRICTED') return restriction.message
       return null
     })()
@@ -506,7 +520,8 @@ export default function TradingPostScreen({ onBuyCredits }) {
       : null
     const isQuestLocked = selected.questUnlock && !completedQuests.has(selected.questUnlock)
     const isMinigameLocked = minigameProductIds.has(selected.id) && !unlockedMinigameItems.has(selected.id)
-    const buyLocked = isBuy && (isQuestLocked || isMinigameLocked)
+    const capeBlock = getSkillCapeLevelBlock(selected)
+    const buyLocked = isBuy && (isQuestLocked || isMinigameLocked || !!capeBlock)
     return (
       <div class="space-y-3">
         {summary && <Panel>{summary}</Panel>}
@@ -515,7 +530,11 @@ export default function TradingPostScreen({ onBuyCredits }) {
         )}
         {buyLocked && (
           <Panel className="text-[11px] text-[#a77]">
-            🔒 {isQuestLocked ? `Complete ${questMap[selected.questUnlock]} to unlock this item.` : 'Earn this from the minigame once before purchasing.'}
+            {isQuestLocked
+              ? `🔒 Complete ${questMap[selected.questUnlock]} to unlock this item.`
+              : isMinigameLocked
+                ? '🔒 Earn this from the minigame once before purchasing.'
+                : capeBlock}
           </Panel>
         )}
         {orderBook && (
@@ -557,6 +576,11 @@ export default function TradingPostScreen({ onBuyCredits }) {
                   : `${(generalStoreSellPrice(selected) * qty).toLocaleString()} gp`)}
           </span>
         </Panel>
+        {!orderBook && isBuy && (
+          <div class="text-[10px] text-[#888] -mt-1">
+            The Trading Post cost for this item is {GENERAL_BUY_MULTIPLIER}× the item's shop value.
+          </div>
+        )}
         <div class="flex gap-2">
           <Button variant="secondary" size="lg" onClick={closeModal} className="flex-1">Cancel</Button>
           <Button

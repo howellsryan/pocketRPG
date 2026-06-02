@@ -116,6 +116,34 @@ export function removeItem(inventory, itemId, quantity = 1) {
 }
 
 /**
+ * Remove quantity of an item, consuming un-noted slots before noted slots.
+ * Returns true if successful.
+ */
+export function removeItemUnnotedFirst(inventory, itemId, quantity = 1) {
+  if (countItem(inventory, itemId) < quantity) return false
+  let remaining = quantity
+  // First pass: un-noted
+  for (let i = 0; i < inventory.length && remaining > 0; i++) {
+    const slot = inventory[i]
+    if (!slot || slot.itemId !== itemId || slot.noted) continue
+    const take = Math.min(slot.quantity, remaining)
+    inventory[i] = { ...slot, quantity: slot.quantity - take }
+    if (inventory[i].quantity <= 0) inventory[i] = null
+    remaining -= take
+  }
+  // Second pass: noted
+  for (let i = 0; i < inventory.length && remaining > 0; i++) {
+    const slot = inventory[i]
+    if (!slot || slot.itemId !== itemId || !slot.noted) continue
+    const take = Math.min(slot.quantity, remaining)
+    inventory[i] = { ...slot, quantity: slot.quantity - take }
+    if (inventory[i].quantity <= 0) inventory[i] = null
+    remaining -= take
+  }
+  return true
+}
+
+/**
  * Swap two inventory slots
  */
 export function swapSlots(inventory, slotA, slotB) {

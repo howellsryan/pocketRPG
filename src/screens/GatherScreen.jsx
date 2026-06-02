@@ -327,21 +327,32 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
             addToast('Out of materials!', 'error')
             return
           }
-          // Remove materials — consume from inventory first, then bank
+          // Remove materials — un-noted inventory first, then noted inventory, then bank
           for (const [id, qty] of Object.entries(task.materials)) {
             const invCount = countItem(newInv, id)
             const fromInv = Math.min(invCount, qty)
             const fromBank = qty - fromInv
             if (fromInv > 0) {
               let rem = fromInv
+              // Un-noted first
               for (let i = 0; i < newInv.length && rem > 0; i++) {
-                if (newInv[i] && newInv[i].itemId === id) {
-                  const take = Math.min(newInv[i].quantity, rem)
-                  newInv[i] = { ...newInv[i], quantity: newInv[i].quantity - take }
-                  rem -= take
-                  if (newInv[i].quantity <= 0) newInv[i] = null
-                  inventoryModified = true
-                }
+                const slot = newInv[i]
+                if (!slot || slot.itemId !== id || slot.noted) continue
+                const take = Math.min(slot.quantity, rem)
+                newInv[i] = { ...slot, quantity: slot.quantity - take }
+                rem -= take
+                if (newInv[i].quantity <= 0) newInv[i] = null
+                inventoryModified = true
+              }
+              // Noted second
+              for (let i = 0; i < newInv.length && rem > 0; i++) {
+                const slot = newInv[i]
+                if (!slot || slot.itemId !== id || !slot.noted) continue
+                const take = Math.min(slot.quantity, rem)
+                newInv[i] = { ...slot, quantity: slot.quantity - take }
+                rem -= take
+                if (newInv[i].quantity <= 0) newInv[i] = null
+                inventoryModified = true
               }
             }
             if (fromBank > 0) bankUpdates[id] = -fromBank

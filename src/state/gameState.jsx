@@ -75,7 +75,7 @@ export function GameProvider({ children }) {
   const raidSkipHandlerRef = useRef(null)
 
   // Refs to hold latest state for the debounced auto-save
-  const stateRef = useRef({ stats: {}, inventory: new Array(28).fill(null), equipment: {}, bank: {}, player: null })
+  const stateRef = useRef({ stats: {}, inventory: new Array(28).fill(null), equipment: {}, bank: {}, player: null, bankConfig: { tabs: [], itemTabMap: {} } })
   const criticalMilestoneRef = useRef(null)
   const slayerTaskRef = useRef(null)
   const slayerPointsRef = useRef(0)
@@ -93,6 +93,7 @@ export function GameProvider({ children }) {
   useEffect(() => { stateRef.current.equipment = equipment }, [equipment])
   useEffect(() => { stateRef.current.bank = bank }, [bank])
   useEffect(() => { stateRef.current.player = player }, [player])
+  useEffect(() => { stateRef.current.bankConfig = bankConfig }, [bankConfig])
   useEffect(() => { slayerTaskRef.current = slayerTask }, [slayerTask])
   useEffect(() => { slayerPointsRef.current = normalisePointCurrency(slayerPoints) }, [slayerPoints])
   useEffect(() => { dungeoneeringTokensRef.current = dungeoneeringTokens }, [dungeoneeringTokens])
@@ -452,6 +453,27 @@ export function GameProvider({ children }) {
       }
     }
 
+    // Backfill itemTabMap for bank items that have no ordering entry.
+    // Covers: idle-sim deposits, legacy saves, PvP loot applied server-side.
+    // Items that are already in itemTabMap (incl. placeholders) are untouched.
+    {
+      const cfg = savedBankConfig ?? { tabs: [], itemTabMap: {} }
+      const tabMap = { ...(cfg.itemTabMap ?? {}) }
+      const placeholders = cfg.placeholders ?? {}
+      let nextPos = Object.values(tabMap).reduce((max, v) => Math.max(max, v?.position ?? -1), -1) + 1
+      let changed = false
+      for (const itemId of Object.keys(b)) {
+        if (!tabMap[itemId] && !placeholders[itemId]) {
+          tabMap[itemId] = { tabIndex: 0, position: nextPos++ }
+          changed = true
+        }
+      }
+      if (changed) {
+        savedBankConfig = { ...cfg, itemTabMap: tabMap }
+        saveSetting('bankConfig', savedBankConfig)
+      }
+    }
+
     setPlayer(p)
     setStats({ ...s })
     setInventory([...inv])
@@ -590,6 +612,7 @@ export function GameProvider({ children }) {
   }, [markDirty])
 
   const addToBank = useCallback((itemId, qty) => {
+    const isNew = !stateRef.current.bank[itemId]
     setBank(prev => {
       const next = { ...prev }
       if (next[itemId]) {
@@ -600,6 +623,17 @@ export function GameProvider({ children }) {
       markDirty('bank')
       return next
     })
+    if (isNew) {
+      const cfg = stateRef.current.bankConfig
+      if (!cfg.itemTabMap?.[itemId]) {
+        const tabMap = { ...(cfg.itemTabMap ?? {}) }
+        const nextPos = Object.values(tabMap).reduce((max, v) => Math.max(max, v?.position ?? -1), -1) + 1
+        tabMap[itemId] = { tabIndex: 0, position: nextPos }
+        const newCfg = { ...cfg, itemTabMap: tabMap }
+        setBankConfig(newCfg)
+        saveSetting('bankConfig', newCfg)
+      }
+    }
   }, [markDirty])
 
   const updateHP = useCallback((hp) => {
@@ -744,6 +778,27 @@ export function GameProvider({ children }) {
   const updateRaidKillCounts = useCallback((counts) => {
     setRaidKillCountsState(counts)
     saveSetting('raidKillCounts', counts)
+  }, [])
+
+  // Merges server-authoritative KC into local state using max(local, server) per
+  // id. This prevents a transient empty server response from zeroing local KC.
+  const syncServerKillCounts = useCallback((serverBoss, serverRaid) => {
+    setBossKillCountsState(prev => {
+      const merged = { ...prev }
+      for (const [id, count] of Object.entries(serverBoss || {})) {
+        merged[id] = Math.max(merged[id] || 0, count)
+      }
+      saveSetting('bossKillCounts', merged)
+      return merged
+    })
+    setRaidKillCountsState(prev => {
+      const merged = { ...prev }
+      for (const [id, count] of Object.entries(serverRaid || {})) {
+        merged[id] = Math.max(merged[id] || 0, count)
+      }
+      saveSetting('raidKillCounts', merged)
+      return merged
+    })
   }, [])
 
   const updateFarming = useCallback((farmingState) => {
@@ -928,6 +983,7 @@ export function GameProvider({ children }) {
     activeCombatSpell, updateActiveCombatSpell,
     bossKillCounts, updateBossKillCounts,
     raidKillCounts, updateRaidKillCounts,
+    syncServerKillCounts,
     farming, updateFarming,
     completedQuests, completeQuest,
     unlockedMinigameItems, unlockMinigameItem,

@@ -679,12 +679,13 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
   const itemsConsumed = {}
   let outOfMaterials = false
 
-  // Cap actions to available materials in bank
+  // Cap actions to available materials across inventory (noted + un-noted) and bank
   if (task.gatherTask.materials) {
     let maxFromMaterials = Infinity
     for (const [itemId, qtyPerAction] of Object.entries(task.gatherTask.materials)) {
-      const available = (bank && bank[itemId]) ? bank[itemId].quantity : 0
-      const possible = Math.floor(available / qtyPerAction)
+      const invCount = inventory.reduce((sum, slot) => sum + (slot?.itemId === itemId ? (slot?.quantity || 0) : 0), 0)
+      const bankCount = (bank && bank[itemId]) ? bank[itemId].quantity : 0
+      const possible = Math.floor((invCount + bankCount) / qtyPerAction)
       if (possible < maxFromMaterials) maxFromMaterials = possible
     }
     if (maxFromMaterials === 0) return null
@@ -734,10 +735,30 @@ export function simulateIdleGather(task, elapsedMs, inventory = [], stats = {}, 
     addItem(newInv, product, qtyPerAction, stackable)
   }
 
-  // Materials are consumed per completed action only.
-  if (task.gatherTask.materials) {
+  // Consume materials per completed action — inventory first (un-noted before noted), then bank.
+  if (task.gatherTask.materials && actionsCompleted > 0) {
     for (const [itemId, qtyPerAction] of Object.entries(task.gatherTask.materials)) {
-      if (actionsCompleted > 0) itemsConsumed[itemId] = qtyPerAction * actionsCompleted
+      let remaining = qtyPerAction * actionsCompleted
+      // Un-noted inventory first
+      for (let i = 0; i < newInv.length && remaining > 0; i++) {
+        const slot = newInv[i]
+        if (!slot || slot.itemId !== itemId || slot.noted) continue
+        const take = Math.min(slot.quantity, remaining)
+        newInv[i] = { ...slot, quantity: slot.quantity - take }
+        if (newInv[i].quantity === 0) newInv[i] = null
+        remaining -= take
+      }
+      // Noted inventory second
+      for (let i = 0; i < newInv.length && remaining > 0; i++) {
+        const slot = newInv[i]
+        if (!slot || slot.itemId !== itemId || !slot.noted) continue
+        const take = Math.min(slot.quantity, remaining)
+        newInv[i] = { ...slot, quantity: slot.quantity - take }
+        if (newInv[i].quantity === 0) newInv[i] = null
+        remaining -= take
+      }
+      // Remainder comes from bank
+      if (remaining > 0) itemsConsumed[itemId] = remaining
     }
   }
 

@@ -10,4 +10,13 @@ describe('raid rewards', () => {
     expect(zaryte.weight).toBe(elder.weight)
     expect((itemsData as any).zaryth_vambraces.isBossUnique).toBe(true)
   })
+
+  it('vaults_of_xyren never drops dragon_bones', () => {
+    const cox = (raidsData as any).vaults_of_xyren
+    const allDrops = [
+      ...(cox.rewards.always ?? []),
+      ...(cox.rewards.unique?.items ?? []),
+    ]
+    expect(allDrops.some((d: any) => d.itemId === 'dragon_bones')).toBe(false)
+  })
 })

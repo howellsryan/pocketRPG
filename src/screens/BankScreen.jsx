@@ -22,6 +22,8 @@ export default function BankScreen() {
 
   const dragRef = useRef(null)
   const overRef = useRef(null)
+  const scrollRef = useRef(null)
+  const autoScrollRef = useRef(null)
 
   const tabs = bankConfig?.tabs ?? []
   const itemTabMap = bankConfig?.itemTabMap ?? {}
@@ -241,6 +243,52 @@ export default function BankScreen() {
     updateBankConfig({ tabs, itemTabMap: newMap, allTabName, placeholders })
   }
 
+  // Auto-scroll the item grid while dragging near its top/bottom edge so items
+  // can be dropped beyond the currently visible viewport.
+  const EDGE_ZONE = 56   // px from each edge that triggers scrolling
+  const MAX_SCROLL_SPEED = 14 // px per frame at the very edge
+
+  const stopAutoScroll = () => {
+    if (autoScrollRef.current != null) {
+      cancelAnimationFrame(autoScrollRef.current)
+      autoScrollRef.current = null
+    }
+  }
+
+  const updateAutoScroll = (clientY) => {
+    const el = scrollRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    let velocity = 0
+    if (clientY < rect.top + EDGE_ZONE) {
+      const intensity = (rect.top + EDGE_ZONE - clientY) / EDGE_ZONE
+      velocity = -MAX_SCROLL_SPEED * Math.min(1, intensity)
+    } else if (clientY > rect.bottom - EDGE_ZONE) {
+      const intensity = (clientY - (rect.bottom - EDGE_ZONE)) / EDGE_ZONE
+      velocity = MAX_SCROLL_SPEED * Math.min(1, intensity)
+    }
+
+    if (velocity === 0) {
+      stopAutoScroll()
+      return
+    }
+
+    if (autoScrollRef.current == null) {
+      const step = () => {
+        const d = dragRef.current
+        const target = scrollRef.current
+        if (!d || !d.isDragging || !target) {
+          autoScrollRef.current = null
+          return
+        }
+        target.scrollTop += d.scrollVelocity || 0
+        autoScrollRef.current = requestAnimationFrame(step)
+      }
+      autoScrollRef.current = requestAnimationFrame(step)
+    }
+    if (dragRef.current) dragRef.current.scrollVelocity = velocity
+  }
+
   // Drag handle pointer events — pointer capture ensures move/up fire on the handle
   // even after the pointer leaves it.
   const handleDragStart = (e, itemId) => {
@@ -312,6 +360,8 @@ export default function BankScreen() {
 
       overRef.current = newOver
       if (newOver !== overItemId) setOverItemId(newOver)
+
+      updateAutoScroll(e.clientY)
     }
   }
 
@@ -319,6 +369,7 @@ export default function BankScreen() {
     const d = dragRef.current
     if (!d || d.itemId !== itemId) return
 
+    stopAutoScroll()
     if (d.ghostEl) d.ghostEl.remove()
     if (d.isDragging && overRef.current) reorderItems(itemId, overRef.current)
 
@@ -331,6 +382,7 @@ export default function BankScreen() {
   const handleDragCancel = (e, itemId) => {
     const d = dragRef.current
     if (!d || d.itemId !== itemId) return
+    stopAutoScroll()
     if (d.ghostEl) d.ghostEl.remove()
     setDraggingId(null)
     setOverItemId(null)
@@ -338,8 +390,11 @@ export default function BankScreen() {
     dragRef.current = null
   }
 
-  // Clean up ghost if component unmounts mid-drag
-  useEffect(() => () => { if (dragRef.current?.ghostEl) dragRef.current.ghostEl.remove() }, [])
+  // Clean up ghost + auto-scroll loop if component unmounts mid-drag
+  useEffect(() => () => {
+    if (dragRef.current?.ghostEl) dragRef.current.ghostEl.remove()
+    if (autoScrollRef.current != null) cancelAnimationFrame(autoScrollRef.current)
+  }, [])
 
   const displayItems = getDisplayItems()
 
@@ -421,7 +476,7 @@ export default function BankScreen() {
       </div>
 
       {/* ── Item grid ────────────────────────────────────────────────────── */}
-      <div class="flex-1 overflow-y-auto px-4 pb-4">
+      <div ref={scrollRef} class="flex-1 overflow-y-auto px-4 pb-4">
         {displayItems.length === 0 ? (
           <div class="text-center py-12 text-[var(--color-parchment)] opacity-30 text-sm">
             {activeTab === 0

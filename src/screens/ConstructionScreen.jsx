@@ -4,7 +4,7 @@ import ProgressBar from '../components/ProgressBar.jsx'
 import SkillIcon from '../components/SkillIcon.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
 import { createSkillingState, processSkillingTick } from '../engine/skilling.js'
-import { countItem, removeItem } from '../engine/inventory.js'
+import { countItem, removeItemUnnotedFirst } from '../engine/inventory.js'
 import { onTick } from '../engine/tick.js'
 import { formatNumber } from '../utils/helpers.js'
 import { GATHER_AUTOBANK_CONSTRUCTION_LEVEL } from '../utils/constants.js'
@@ -95,13 +95,13 @@ export default function ConstructionScreen({ onBack }) {
           }
 
           if (invCount >= qtyNeeded) {
-            removeItem(curInv, matId, qtyNeeded)
+            removeItemUnnotedFirst(curInv, matId, qtyNeeded)
             updateInventory(curInv)
           } else {
             const fromInv = invCount > 0 ? invCount : 0
             const fromBank = qtyNeeded - fromInv
             if (fromInv > 0) {
-              removeItem(curInv, matId, fromInv)
+              removeItemUnnotedFirst(curInv, matId, fromInv)
               updateInventory(curInv)
             }
             if (fromBank > 0) {
