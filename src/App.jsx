@@ -1359,8 +1359,6 @@ function GameApp() {
       const result = await api.skipHour({ bossId })
       setCredits(result?.credits_remaining ?? credits)
       killHandler()
-      const spent = result?.cost ?? 1
-      addToast(`⏭️ Skipped to the kill (${spent} credit${spent === 1 ? '' : 's'})`, 'info')
     } catch (err) {
       if (err?.status === 402) {
         addToast('You do not have enough credits to skip.', 'error')
