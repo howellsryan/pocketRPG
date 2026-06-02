@@ -3,6 +3,8 @@
 // `initialize`. Kept free of handler imports so it can be unit-tested cheaply.
 // The dispatch table in tools.js must expose exactly these names.
 
+import { EQUIP_SLOT_NAMES } from './intents.js'
+
 // Server-level guidance surfaced to the model on connect (MCP `instructions`).
 export const SERVER_INSTRUCTIONS = `PocketRPG is a menu-driven idle/simulation fantasy RPG. These tools let you
 inspect a player's account and run server-authoritative actions on their behalf.
@@ -23,6 +25,9 @@ Acting:
   place_offer (buy/sell on the order book), cancel_offer/collect_offer/
   instant_sell_offer to manage them, and sell_item to sell general items at
   shop value. The trading post is blocked for ironman characters and during PvP.
+- Inventory/gear: deposit_to_bank, withdraw_from_bank, equip_item and
+  unequip_item move the character's own items around (no items are created).
+  equip_item enforces the item's skill/quest requirements.
 - XP, coins and most loot are client-computed in this game, so these tools
   cannot simulate live training or combat yet; report state and take only the
   supported actions. Prefer concrete, checkable advice grounded in get_* reads.`
@@ -236,6 +241,65 @@ export const TOOL_SCHEMAS = [
       additionalProperties: false,
     },
     annotations: WRITE('Sell item'),
+  },
+  {
+    name: 'deposit_to_bank',
+    description: "Move items from a character's inventory into their bank.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        item_id: { type: 'string' },
+        quantity: { type: 'integer', minimum: 1 },
+        ...optionalCharacterId,
+      },
+      required: ['item_id', 'quantity'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Deposit to bank'),
+  },
+  {
+    name: 'withdraw_from_bank',
+    description: "Move items from a character's bank into their inventory (respects the 28-slot limit).",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        item_id: { type: 'string' },
+        quantity: { type: 'integer', minimum: 1 },
+        ...optionalCharacterId,
+      },
+      required: ['item_id', 'quantity'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Withdraw from bank'),
+  },
+  {
+    name: 'equip_item',
+    description:
+      "Equip an item from a character's inventory. Checks skill/quest requirements; any item already in that slot (or a conflicting 2H/shield) is returned to the inventory.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        item_id: { type: 'string' },
+        ...optionalCharacterId,
+      },
+      required: ['item_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Equip item'),
+  },
+  {
+    name: 'unequip_item',
+    description: "Unequip the item in a given equipment slot, returning it to the character's inventory.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        slot: { type: 'string', enum: EQUIP_SLOT_NAMES },
+        ...optionalCharacterId,
+      },
+      required: ['slot'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Unequip item'),
   },
 ]
 

@@ -86,6 +86,10 @@ describe('MCP tool schema', () => {
       'collect_offer',
       'instant_sell_offer',
       'sell_item',
+      'deposit_to_bank',
+      'withdraw_from_bank',
+      'equip_item',
+      'unequip_item',
     ])
   })
 

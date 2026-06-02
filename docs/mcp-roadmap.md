@@ -55,22 +55,26 @@ auth/ownership/PvP-lock/ironman/audit/save-revision server-side.
   - `claim_idle_rewards` likewise needs server-derived idle rates → Phase C.
   - `reset_one_life` is an account-reset footgun; left out of the agent surface.
 
-## Phase C — Play via the engine (T3)
+## Phase C — Play via the engine (T3) — in progress
 
-The first real server-authority growth. New "apply intent → save" endpoints that
-import the pure engine:
+The first real server-authority growth. "apply intent → save" tools that mutate
+the decoded save server-side via the pure engine. Shared groundwork landed:
+`functions/_lib/mcp/intents.js` (pure, golden-tested) + `applySaveIntent` in
+tools.js (resolve+own character → PvP-lock guard → loadCharacterWithSave →
+intent → writeSave → audit). Throw-before-write gives atomicity.
 
-- `start_idle_task` + `claim`, with **server-derived** rates from
-  `idleEngine.js` / `skilling.js` (today the client supplies the rates).
-- `equip_item` / `unequip` / `bank_item` / `withdraw` — validated via
-  `equipment.js` / `inventory.js` (28-slot, requirements).
-- `train_skill_session(skill, action, ticks)` — bounded deterministic run of
-  `skilling.js` / `activityRunner.js`, applying XP + outputs + supply drain.
-- `do_quest_step` — `quests.js` / `questIdleCascade.js`.
-
-Shared groundwork: a server `loadSave → applyIntent(engine) → validate → save`
-helper with replay protection (reuse the `action_nonces` pattern), plus audit
-events. Heavy test coverage (engine is deterministic, so golden tests are easy).
+- [x] **Increment 1 — inventory/gear (no value created):** `deposit_to_bank`,
+      `withdraw_from_bank`, `equip_item`, `unequip_item`. Reuse the proven
+      `game/inventory.js` helpers + engine `equipment.js`; enforce 28-slot cap
+      and skill/quest equip requirements. Golden tests in `tests/mcpIntents.test.ts`.
+- [ ] **Increment 2 — idle activities (value):** `start_idle_task` + `claim`
+      with **server-derived** rates by running `idleEngine.js`
+      (`simulateIdleSkilling/Gather/Combat`) over the elapsed window, applying
+      XP/loot/supply-drain to the save. Replaces the current client-rate idle
+      claim. Add nonce-style replay protection on the claim.
+- [ ] **Increment 3 — `train_skill_session(skill, action, ticks)`** — bounded
+      deterministic `skilling.js` / `activityRunner.js` run.
+- [ ] **Increment 4 — `do_quest_step`** — `quests.js` / `questIdleCascade.js`.
 
 ## Phase D — Full autoplayer (T3, heaviest)
 

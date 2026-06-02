@@ -46,7 +46,7 @@ function rpcError(id, code, message) {
 }
 
 // Returns a JSON-RPC response object, or null for notifications (no reply).
-async function handleMessage(msg, env, authorization) {
+async function handleMessage(msg, env, authorization, identity) {
   if (!msg || msg.jsonrpc !== '2.0' || typeof msg.method !== 'string') {
     return rpcError(msg?.id ?? null, -32600, 'Invalid Request')
   }
@@ -75,7 +75,7 @@ async function handleMessage(msg, env, authorization) {
       const name = params?.name
       const args = params?.arguments || {}
       try {
-        const result = await callTool(name, args, { env, authorization })
+        const result = await callTool(name, args, { env, authorization, identity })
         return rpcResult(id, result)
       } catch (err) {
         // Unknown tool / bad params.
@@ -92,7 +92,7 @@ async function handleMessage(msg, env, authorization) {
     case 'resources/read': {
       const uri = params?.uri
       try {
-        const contents = await readResource(uri, { env, authorization })
+        const contents = await readResource(uri, { env, authorization, identity })
         return rpcResult(id, { contents: [contents] })
       } catch (err) {
         return rpcError(id, -32002, err?.message || `Resource not found: ${uri}`)
@@ -115,6 +115,7 @@ export async function onRequestPost({ request, env }) {
   const auth = await requireAuth(request, env)
   if (auth.error) return unauthorized(origin)
   const authorization = request.headers.get('Authorization')
+  const identity = auth.identity
 
   let body
   try {
@@ -127,14 +128,14 @@ export async function onRequestPost({ request, env }) {
   if (Array.isArray(body)) {
     const responses = []
     for (const msg of body) {
-      const r = await handleMessage(msg, env, authorization)
+      const r = await handleMessage(msg, env, authorization, identity)
       if (r) responses.push(r)
     }
     if (responses.length === 0) return new Response(null, { status: 202 })
     return json(responses, 200)
   }
 
-  const response = await handleMessage(body, env, authorization)
+  const response = await handleMessage(body, env, authorization, identity)
   if (!response) return new Response(null, { status: 202 })
   return json(response, 200)
 }

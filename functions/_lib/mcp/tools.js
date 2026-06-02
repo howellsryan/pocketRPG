@@ -1,6 +1,10 @@
 import { callHandler } from './bridge.js'
 import { summarizeSave } from './summary.js'
 import { getItem, getMonster, itemName, withItemName, REFERENCE_RESOURCES, readReference } from './reference.js'
+import { loadCharacterWithSave, writeSave } from '../game/save.js'
+import { auditLog } from '../game/audit.js'
+import { assertNotInActiveMatch } from '../pvp.js'
+import { depositToBank, withdrawFromBank, equip, unequip } from './intents.js'
 
 // Reuse the exact production endpoint handlers (see bridge.js).
 import { onRequestGet as listCharacters } from '../../api/characters/index.js'
@@ -47,6 +51,21 @@ async function resolveCharacterId(env, authorization, provided) {
   if (characters.length === 1) return Number(characters[0].id)
   const list = characters.map((c) => `${c.id} (${c.username})`).join(', ')
   throw new Error(`Multiple characters found — pass character_id. Options: ${list}`)
+}
+
+// Apply a Phase C save intent: resolve + own the character, refuse during PvP,
+// load → mutate (throws abort the write) → save → audit. No value is created;
+// intents only relocate items the character already owns.
+async function applySaveIntent({ env, authorization, identity }, characterIdArg, intentFn, auditType) {
+  if (!identity?.id) throw new Error('Not authenticated.')
+  const id = await resolveCharacterId(env, authorization, characterIdArg)
+  const lock = await assertNotInActiveMatch(env, id)
+  if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+  const { saveObject, saveRevision } = await loadCharacterWithSave(env, id, identity.id)
+  const result = intentFn(saveObject)
+  const write = await writeSave(env, id, saveObject, saveRevision)
+  await auditLog(env, auditType, { characterId: id, identityId: identity.id, ...result }, { swallow: true })
+  return ok({ characterId: id, ...result, save_revision: write.saveRevision })
 }
 
 const TOOLS = {
@@ -204,6 +223,24 @@ const TOOLS = {
     })
     if (!res.ok) throw httpError(res)
     return ok({ characterId: id, item: itemName(item_id), ...res.data })
+  },
+
+  // ── Bank & equipment management (Phase C) ──────────────────────────────────
+
+  deposit_to_bank({ item_id, quantity, character_id }, ctx) {
+    return applySaveIntent(ctx, character_id, (save) => depositToBank(save, item_id, quantity), 'mcp_deposit_to_bank')
+  },
+
+  withdraw_from_bank({ item_id, quantity, character_id }, ctx) {
+    return applySaveIntent(ctx, character_id, (save) => withdrawFromBank(save, item_id, quantity), 'mcp_withdraw_from_bank')
+  },
+
+  equip_item({ item_id, character_id }, ctx) {
+    return applySaveIntent(ctx, character_id, (save) => equip(save, item_id), 'mcp_equip_item')
+  },
+
+  unequip_item({ slot, character_id }, ctx) {
+    return applySaveIntent(ctx, character_id, (save) => unequip(save, slot), 'mcp_unequip_item')
   },
 }
 
