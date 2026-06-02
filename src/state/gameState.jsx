@@ -10,7 +10,7 @@ import { ALL_SKILLS, MAX_XP, AUTO_SAVE_DEBOUNCE, QUEST_QUEUE_MAX } from '../util
 import { debounce } from '../utils/helpers.js'
 import { fetchIdleState, pushIdleState } from '../cloud/idleState.js'
 import { getToken, getCharacterId } from '../cloud/api.js'
-import { requestCriticalPushSave } from '../cloud/sync.js'
+import { requestCriticalPushSave, pushNow, suspendSaves, resumeSaves, isSaveConflict } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS, detectCountIncreases, detectLevelUps, detectSetGrowth, didNumberIncrease, extractSkillLevels } from '../cloud/criticalSavePolicy.js'
 import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
@@ -62,6 +62,15 @@ export function GameProvider({ children }) {
   const [unlockedMinigameItems, setUnlockedMinigameItemsState] = useState(new Set())
   const [questQueue, setQuestQueueState] = useState([])
   const [isSaving, setIsSaving] = useState(false)
+  // Reference-counted game lock. Raised around any operation that must persist
+  // durably before the player continues (manual save, skip-hour/quest, boss
+  // skip, raid skip). While the count is > 0 the App renders a full-screen
+  // blocking overlay (input frozen) and background autosaves / critical-save
+  // milestones are suspended, so the operation's own authoritative write is the
+  // ONLY save in flight. This is the root-cause fix for save_revision_conflict:
+  // nothing can race the in-flight write.
+  const [gameLockCount, setGameLockCount] = useState(0)
+  const gameLockCountRef = useRef(0)
   const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false })
   // CombatScreen registers a force-kill handler here so handleSkip1h (in App) can invoke it
   const combatSkipHandlerRef = useRef(null)
@@ -925,6 +934,64 @@ export function GameProvider({ children }) {
   }), [currentHP, autoBankLoot, bankConfig, homeShortcuts, combatStance, idleCombatSetup, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, slayerTasksCompleted, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, questQueue])
 
 
+  // ---- Shared game lock --------------------------------------------------
+  const lockGame = useCallback(() => {
+    gameLockCountRef.current += 1
+    setGameLockCount(gameLockCountRef.current)
+    if (gameLockCountRef.current === 1) suspendSaves()
+  }, [])
+  const unlockGame = useCallback(() => {
+    gameLockCountRef.current = Math.max(0, gameLockCountRef.current - 1)
+    setGameLockCount(gameLockCountRef.current)
+    if (gameLockCountRef.current === 0) resumeSaves()
+  }, [])
+
+  // Deferred that resolves when the next live combat completion round-trip
+  // settles (loot modal loaded or errored). A boss-skip arms a kill on a FUTURE
+  // engine tick, so the caller awaits this to hold the lock continuously from
+  // the credit charge through the server completion — with no unlocked gap in
+  // which a competing save could race.
+  const combatCompletionResolverRef = useRef(null)
+  const awaitCombatCompletion = useCallback((timeoutMs = 12000) => {
+    return new Promise((resolve) => {
+      let done = false
+      const finish = () => {
+        if (done) return
+        done = true
+        if (combatCompletionResolverRef.current === finish) combatCompletionResolverRef.current = null
+        resolve()
+      }
+      combatCompletionResolverRef.current = finish
+      // Backstop: never hang the lock forever if a completion never settles.
+      setTimeout(finish, timeoutMs)
+    })
+  }, [])
+  const resolveCombatCompletion = useCallback(() => {
+    const fn = combatCompletionResolverRef.current
+    if (fn) fn()
+  }, [])
+
+  // Run an operation behind the game lock and persist its result durably before
+  // unlocking — the lock is held until the save SUCCESSFULLY RESPONDS, not just
+  // until the operation completes. Returns true if the save landed. On a
+  // save-revision conflict we leave the lock up (the app is rolling back to the
+  // authoritative cloud copy via a reload). Used by the manual Save button.
+  const runLockedSave = useCallback(async (operation) => {
+    lockGame()
+    try {
+      if (operation) await operation()
+      let saved = false
+      for (let attempt = 0; attempt < 4 && !saved; attempt++) {
+        saved = await pushNow(getSnapshot())
+        if (isSaveConflict()) return false
+        if (!saved) await new Promise((r) => setTimeout(r, 400 * (attempt + 1)))
+      }
+      return saved
+    } finally {
+      if (!isSaveConflict()) unlockGame()
+    }
+  }, [lockGame, unlockGame, getSnapshot])
+
   useEffect(() => {
     if (!loaded) return
 
@@ -992,6 +1059,9 @@ export function GameProvider({ children }) {
     skipHourHandlerRef,
     chargeSkipRef,
     raidSkipHandlerRef,
+    gameLocked: gameLockCount > 0,
+    lockGame, unlockGame, runLockedSave,
+    awaitCombatCompletion, resolveCombatCompletion,
     loadGame, grantXP, updateInventory, updateEquipment, updateBank,
     removeFromInventory, addToBank,
     updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,
