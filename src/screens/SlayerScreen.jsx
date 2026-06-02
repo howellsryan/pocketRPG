@@ -159,7 +159,7 @@ export default function SlayerScreen({ onBack, onNavigate }) {
     if (getToken() && getCharacterId()) {
       try {
         const res = await api.completeSlayer('slayer', { actionNonce: `slayer:${unlock.itemId}:${Date.now()}`, rewards: [{ itemId: unlock.itemId, quantity: 1 }], slayerPoints: -unlock.cost })
-        if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
+        if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt, res.save.save_revision)
         await loadGame()
         addToast(`🎉 Purchased ${item.name} — sent to bank`, 'info')
         return

@@ -46,6 +46,7 @@ import { triggerOneLifeDeath } from './utils/oneLifeDeath.js'
 import { defaultIdleCombatSetup } from './engine/idleSupplies.js'
 import prayersData from './data/prayers.json'
 import minigamesData from './data/minigames.json'
+import raidsData from './data/raids.json'
 import { simulateIdleThieving } from './engine/thieving.js'
 import { simulateIdleHunting } from './engine/hunter.js'
 import { createQuestState } from './engine/quests.js'
@@ -212,7 +213,7 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
 
 function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
-    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts, combatSkipHandlerRef } = useGame()
+    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -260,7 +261,7 @@ function GameApp() {
       actionNonce: `minigame:${task.id}:${Date.now()}`,
     })
     if (res?.save?.save_data) {
-      await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
+      await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt, res.save.save_revision)
       await loadGame()
     }
   }
@@ -1358,8 +1359,6 @@ function GameApp() {
       const result = await api.skipHour({ bossId })
       setCredits(result?.credits_remaining ?? credits)
       killHandler()
-      const spent = result?.cost ?? 1
-      addToast(`⏭️ Skipped to the kill (${spent} credit${spent === 1 ? '' : 's'})`, 'info')
     } catch (err) {
       if (err?.status === 402) {
         addToast('You do not have enough credits to skip.', 'error')
@@ -1574,7 +1573,25 @@ function GameApp() {
       return
     }
 
-    // Boss/raid fights: skip = instant kill on the current monster.
+    // Raids: skip = skip the ENTIRE raid for its full skipCost. Delegates to the
+    // same full-raid skip the loot-modal Skip uses (charge + one reward roll),
+    // which serializes itself so rapid clicks can't race the server writes.
+    if (activeTaskRef.current?.type === 'combat' && activeTaskRef.current?.raidId) {
+      const raidSkip = raidSkipHandlerRef?.current
+      if (!raidSkip) {
+        addToast('Open the raid to skip it.', 'info')
+        isSkippingRef.current = false
+        return
+      }
+      try {
+        await raidSkip()
+      } finally {
+        isSkippingRef.current = false
+      }
+      return
+    }
+
+    // Boss fights: skip = instant kill on the current monster.
     const inBossRaid = activeTaskRef.current?.type === 'combat' && (activeTaskRef.current?.monster?.boss === true || activeTaskRef.current?.raid === true)
     if (inBossRaid) {
       const monster = activeTaskRef.current?.monster
@@ -1958,6 +1975,20 @@ function GameApp() {
     }
   }
 
+  // Expose the skip handler so the combat loot modal can trigger another skip.
+  // Reassigned every render to keep the latest closure (state/credits) fresh.
+  if (skipHourHandlerRef) skipHourHandlerRef.current = handleSkip1h
+
+  // Charge a server-authoritative skip (e.g. full-raid skip) and keep the
+  // header credits display in sync. Throws on failure (e.g. 402) so the caller
+  // can surface the error without spending; the loot grant is the caller's job.
+  async function chargeSkipCredits(body = {}) {
+    const result = await api.skipHour(body)
+    setCredits(result?.credits_remaining ?? credits)
+    return result
+  }
+  if (chargeSkipRef) chargeSkipRef.current = chargeSkipCredits
+
   // Cloud conflict modal — shown while cloudPhase is still resolving
   if (conflict) {
     const fmt = (ms) => ms ? new Date(ms).toLocaleString() : '—'
@@ -2068,7 +2099,7 @@ function GameApp() {
         onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')}
       />
       <div class="flex-1 flex flex-col min-w-0 min-h-0">
-        <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onMenuClick={() => setMenuOpen(true)} onNavigate={(s) => navigate(s)} skipMode={activeTask?.type === 'combat' && (activeTask?.monster?.boss === true || activeTask?.raid === true) ? 'kill' : 'hour'} />
+        <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onMenuClick={() => setMenuOpen(true)} onNavigate={(s) => navigate(s)} skipMode={activeTask?.type === 'combat' && (activeTask?.monster?.boss === true || activeTask?.raid === true) ? 'kill' : 'hour'} raidSkipCost={activeTask?.type === 'combat' && activeTask?.raidId ? (raidsData[activeTask.raidId]?.skipCost ?? 1) : null} />
         <ToastContainer />
         <main class="flex-1 overflow-hidden">
           {renderScreen()}

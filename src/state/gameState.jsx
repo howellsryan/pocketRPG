@@ -65,6 +65,14 @@ export function GameProvider({ children }) {
   const dirty = useRef({ stats: false, inventory: false, equipment: false, bank: false, player: false })
   // CombatScreen registers a force-kill handler here so handleSkip1h (in App) can invoke it
   const combatSkipHandlerRef = useRef(null)
+  // App registers handleSkip1h here so CombatScreen (loot modal) can trigger another skip
+  const skipHourHandlerRef = useRef(null)
+  // App registers a credit-charge helper here so CombatScreen can charge a
+  // server-authoritative skip (e.g. full-raid skip) and keep the credits display in sync
+  const chargeSkipRef = useRef(null)
+  // CombatScreen registers a full-raid skip handler here so the top-nav Skip can
+  // skip an entire raid (mid-raid), reusing the same logic as the loot-modal Skip
+  const raidSkipHandlerRef = useRef(null)
 
   // Refs to hold latest state for the debounced auto-save
   const stateRef = useRef({ stats: {}, inventory: new Array(28).fill(null), equipment: {}, bank: {}, player: null })
@@ -925,6 +933,9 @@ export function GameProvider({ children }) {
     unlockedMinigameItems, unlockMinigameItem,
     questQueue, addQuestToQueue, removeFromQuestQueue, clearQuestQueue, updateQuestQueue,
     combatSkipHandlerRef,
+    skipHourHandlerRef,
+    chargeSkipRef,
+    raidSkipHandlerRef,
     loadGame, grantXP, updateInventory, updateEquipment, updateBank,
     removeFromInventory, addToBank,
     updateHP, getMaxHP, getSkillLevel, addToast, setPlayer,

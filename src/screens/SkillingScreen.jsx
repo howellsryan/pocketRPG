@@ -402,7 +402,7 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
           const res = await api.completeDungeoneering('dungeoneering', { actionNonce: `dng:${action.id}:${Date.now()}`, rewards: [{ itemId: action.product, quantity: action.productQty || 1 }], dungeoneeringTokens: -cost })
           if (res?.save?.save_data) {
             const cloudSave = JSON.parse(res.save.save_data)
-            await applyCloudSave(cloudSave, res.save.updatedAt)
+            await applyCloudSave(cloudSave, res.save.updatedAt, res.save.save_revision)
             await loadGame()
 
             // Keep token display in sync immediately after purchase.

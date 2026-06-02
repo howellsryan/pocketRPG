@@ -134,7 +134,7 @@ export default function CluesScreen() {
             actionNonce: `clue:${task.clueLevel}:${Date.now()}`,
             consumptions: [{ itemId: task.requiresItem, quantity: 1 }],
           }).then(async (res) => {
-            if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
+            if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt, res.save.save_revision)
             applyServerCollectionLogEntries(res?.collectionLogEntries || [])
             const granted = Array.isArray(res?.granted) ? res.granted : []
             if (granted.length > 0) emitRewardReveal(clueRevealTitle(task), task.icon || '📜', granted)

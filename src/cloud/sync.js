@@ -304,10 +304,14 @@ export async function checkCloudNewer() {
 
 // Public: apply a previously-pulled cloud save to IDB. Caller decides whether
 // to do this based on conflict-resolution UX.
-export async function applyCloudSave(payload, updatedAt) {
+export async function applyCloudSave(payload, updatedAt, saveRevision) {
   await applySavePayload(payload, { restoreLocalIdleMirrors: false })
   if (updatedAt) lastPushedAt = updatedAt
-  if (Number.isFinite(updatedAt) && Number.isFinite(lastSaveRevision) === false) lastSaveRevision = 0
+  // When the server hands back its authoritative revision (e.g. an action
+  // completion / skip that wrote the save server-side), adopt it. Otherwise the
+  // next client save would push a stale save_revision and be rejected 409.
+  if (Number.isFinite(saveRevision)) lastSaveRevision = saveRevision
+  else if (Number.isFinite(updatedAt) && Number.isFinite(lastSaveRevision) === false) lastSaveRevision = 0
   // IDB now holds this character's data — stamp ownership so the next boot
   // knows which character these rows belong to.
   const charId = getCharacterId()
