@@ -212,7 +212,7 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
 
 function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
-    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef } = useGame()
+    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -1574,7 +1574,25 @@ function GameApp() {
       return
     }
 
-    // Boss/raid fights: skip = instant kill on the current monster.
+    // Raids: skip = skip the ENTIRE raid for its full skipCost. Delegates to the
+    // same full-raid skip the loot-modal Skip uses (charge + one reward roll),
+    // which serializes itself so rapid clicks can't race the server writes.
+    if (activeTaskRef.current?.type === 'combat' && activeTaskRef.current?.raidId) {
+      const raidSkip = raidSkipHandlerRef?.current
+      if (!raidSkip) {
+        addToast('Open the raid to skip it.', 'info')
+        isSkippingRef.current = false
+        return
+      }
+      try {
+        await raidSkip()
+      } finally {
+        isSkippingRef.current = false
+      }
+      return
+    }
+
+    // Boss fights: skip = instant kill on the current monster.
     const inBossRaid = activeTaskRef.current?.type === 'combat' && (activeTaskRef.current?.monster?.boss === true || activeTaskRef.current?.raid === true)
     if (inBossRaid) {
       const monster = activeTaskRef.current?.monster

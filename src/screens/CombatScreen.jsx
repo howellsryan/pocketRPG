@@ -208,7 +208,7 @@ class PvpCombatErrorBoundary extends Component {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef } = useGame()
   const pvp = usePvp()
   const [showPvpLobby, setShowPvpLobby] = useState(false)
 
@@ -988,7 +988,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       { text: `🩸 ${raidData.name} — Raid started!`, type: 'raid', time: Date.now() },
       { text: `Boss 1/${raidData.bosses.length}: ${firstBoss?.name || 'Unknown'}`, type: 'info', time: Date.now() }
     ])
-    setActiveTask({ type: 'combat', monster: firstBoss, stance: combatStance, bankingEnabled: false, spell: spell || null })
+    setActiveTask({ type: 'combat', monster: firstBoss, stance: combatStance, bankingEnabled: false, spell: spell || null, raid: true, raidId: raidData.id })
   }
 
   const continueFight = (monster) => {
@@ -1061,28 +1061,62 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     }
   }
 
-  // Loot-modal "skip". For a raid, skip the ENTIRE raid: charge the raid's
-  // skipCost server-side, then re-roll one complete raid reward (no per-boss
-  // re-simulation). For a single boss/monster, re-arm the fight and trigger the
-  // same skip the top-nav uses (boss instant-kill or 1-hour idle skip), so the
-  // player can chain skips without manually clicking Fight Again then Skip.
+  // Guards the full-raid skip so rapid clicks (top-nav and/or loot modal) can't
+  // fire overlapping charge/claim round-trips — overlapping server writes were
+  // the source of the save_revision conflict. Held for the entire sequence.
+  const raidSkipBusyRef = useRef(false)
+
+  // Shared full-raid skip used by BOTH the top-nav Skip (mid-raid) and the
+  // loot-modal Skip (after a completion): charge the raid's skipCost
+  // server-side, then re-roll one complete raid reward (no per-boss
+  // re-simulation). Serialized end-to-end via raidSkipBusyRef.
+  const skipEntireRaid = async ({ raidId, monster, slayerXpGained = 0, isBossKill = false } = {}) => {
+    if (!raidId || raidSkipBusyRef.current) return
+    const charge = chargeSkipRef?.current
+    if (!charge) return
+    raidSkipBusyRef.current = true
+    const prevModal = lootModal
+    const prevCombat = combatRef.current
+    // Freeze the live raid immediately so no boss death fires during the server
+    // round-trip (which would trigger a second, conflicting completion).
+    if (prevCombat?.active) {
+      const frozen = { ...prevCombat, active: false }
+      combatRef.current = frozen
+      setCombat(frozen)
+    }
+    setLootModal({ monster, loot: [], slayerXpGained, isBossKill, raidId, loading: true })
+    try {
+      await charge({ raidId })
+    } catch (err) {
+      // Nothing was spent — restore the live raid and the previous modal.
+      if (prevCombat?.active) {
+        combatRef.current = prevCombat
+        setCombat(prevCombat)
+      }
+      setLootModal(prevModal)
+      if (err?.status === 402) addToast('Not enough credits to skip this raid.', 'error')
+      else addToast(err?.message || 'Error during skip!', 'error')
+      raidSkipBusyRef.current = false
+      return
+    }
+    try {
+      setActiveTask(null)
+      await claimRaidCompletion({ raidId, monster, slayerXpGained, isBossKill })
+    } finally {
+      raidSkipBusyRef.current = false
+    }
+  }
+
+  // Loot-modal "skip". For a raid, skip the ENTIRE raid via skipEntireRaid. For
+  // a single boss/monster, re-arm the fight and trigger the same skip the
+  // top-nav uses (boss instant-kill or 1-hour idle skip), so the player can
+  // chain skips without manually clicking Fight Again then Skip.
   const skipAgain = async () => {
     const modal = lootModal
     if (!modal || modal.loading) return
 
     if (modal.raidId) {
-      const charge = chargeSkipRef?.current
-      if (!charge) return
-      setLootModal({ ...modal, loading: true })
-      try {
-        await charge({ raidId: modal.raidId })
-      } catch (err) {
-        setLootModal(modal)
-        if (err?.status === 402) addToast('Not enough credits to skip this raid.', 'error')
-        else addToast(err?.message || 'Error during skip!', 'error')
-        return
-      }
-      await claimRaidCompletion({
+      await skipEntireRaid({
         raidId: modal.raidId,
         monster: modal.monster,
         slayerXpGained: modal.slayerXpGained || 0,
@@ -1096,6 +1130,22 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     if (original) continueFight(original)
     skipHourHandlerRef?.current?.()
   }
+
+  // Register the full-raid skip for the top-nav Skip button. The nav button
+  // (App.handleSkip1h) calls this when the active task is a raid, deriving the
+  // raid from the live combat state. Mirrors combatSkipHandlerRef wiring.
+  const navRaidSkipRef = useRef(null)
+  navRaidSkipRef.current = () => {
+    const st = combatRef.current
+    const raidId = st?.raid?.raidId
+    if (!raidId) return Promise.resolve()
+    return skipEntireRaid({ raidId, monster: st?.monster, isBossKill: true })
+  }
+  useEffect(() => {
+    if (!raidSkipHandlerRef) return
+    raidSkipHandlerRef.current = () => navRaidSkipRef.current?.()
+    return () => { raidSkipHandlerRef.current = null }
+  }, [])
 
   const stopAndBack = () => {
     setCombat(null)
