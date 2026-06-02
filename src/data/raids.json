@@ -22,14 +22,6 @@
           "chance": 1
         },
         {
-          "itemId": "dragon_bones",
-          "quantity": [
-            5,
-            15
-          ],
-          "chance": 0.6
-        },
-        {
           "itemId": "death_rune",
           "quantity": [
             100,
@@ -389,14 +381,6 @@
             150000
           ],
           "chance": 1
-        },
-        {
-          "itemId": "dragon_bones",
-          "quantity": [
-            5,
-            15
-          ],
-          "chance": 0.6
         },
         {
           "itemId": "death_rune",
