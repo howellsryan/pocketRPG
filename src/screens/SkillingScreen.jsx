@@ -28,7 +28,7 @@ import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
 
 // Farming, Agility, Prayer, Thieving, Hunter, Slayer, Construction, and Dungeoneering are special
 // skills shown here in the Skills tab.
-const SPECIAL_SKILLS = ['farming', 'agility', 'prayer', 'thieving', 'hunter', 'slayer', 'construction', 'dungeoneering']
+const SPECIAL_SKILLS = ['farming', 'agility', 'prayer', 'thieving', 'hunter', 'slayer', 'construction', 'dungeoneering', 'magic']
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0)
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS]
 
