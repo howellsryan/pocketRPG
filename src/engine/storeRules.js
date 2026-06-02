@@ -37,8 +37,9 @@ export function getPurchaseRestriction(item, { isIronman = false, allowMinigameU
 
   const isQuestItem = Boolean(item.questUnlock)
   const isMinigameUnlockItem = allowMinigameUnlockPurchase === true
+  const isSkillCape = Boolean(item.isSkillCape)
 
-  if (item.isUntradeable && !isQuestItem && !isMinigameUnlockItem) {
+  if (item.isUntradeable && !isQuestItem && !isMinigameUnlockItem && !isSkillCape) {
     return {
       allowed: false,
       code: 'UNTRADEABLE_RESTRICTED',
@@ -63,6 +64,7 @@ export function isStoreVisibleItem(item, { isIronman = false, includeQuestItems 
 
   const isQuestItem = Boolean(item.questUnlock)
   if (isQuestItem) return includeQuestItems
+  if (item.isSkillCape) return !isIronman
   if (item.isUntradeable) return false
   if (isIronman) return Boolean(item.isGeneralStore)
   return true

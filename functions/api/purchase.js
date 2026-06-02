@@ -8,6 +8,7 @@ import { subtractCoins } from '../_lib/game/economy.js'
 import { addItemToInventory } from '../_lib/game/inventory.js'
 import { auditLog } from '../_lib/game/audit.js'
 import { toErrorResponse } from '../_lib/game/errors.js'
+import { getLevelFromXP } from '../../src/engine/experience.js'
 
 const MINIGAME_UNLOCK_STORE_PRICE = 4_500_000
 const MINIGAME_STORE_PRODUCTS = new Set(
@@ -38,6 +39,17 @@ export async function onRequestPost({ request, env }) {
     const allowMinigameUnlockPurchase = MINIGAME_STORE_PRODUCTS.has(itemId) && unlockedMinigameItems.has(itemId)
     const restriction = assertPurchasable(item, { isIronman: Boolean(row.is_ironman), allowMinigameUnlockPurchase })
     if (!restriction.allowed) return json({ error: restriction.message, code: restriction.code }, 403)
+
+    if (item.isSkillCape) {
+      const reqSkill = Object.keys(item.requirements || {})[0]
+      if (reqSkill) {
+        const playerXP = saveObject.stats?.[reqSkill]?.xp || 0
+        const playerLevel = getLevelFromXP(playerXP)
+        if (playerLevel < 99) {
+          return json({ error: `You need level 99 ${reqSkill} to buy this cape.`, code: 'LEVEL_REQUIREMENT_NOT_MET' }, 403)
+        }
+      }
+    }
 
     const unitCost = allowMinigameUnlockPurchase ? MINIGAME_UNLOCK_STORE_PRICE : (Number(item.shopValue) || 0)
     const totalCost = unitCost * quantity
