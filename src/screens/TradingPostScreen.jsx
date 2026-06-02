@@ -578,7 +578,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
         </Panel>
         {!orderBook && isBuy && (
           <div class="text-[10px] text-[#888] -mt-1">
-            General store buys cost {GENERAL_BUY_MULTIPLIER}× the item's shop value ({generalStoreBuyPrice(selected).toLocaleString()} gp each).
+            The Trading Post cost for this item is {GENERAL_BUY_MULTIPLIER}× the item's shop value.
           </div>
         )}
         <div class="flex gap-2">
