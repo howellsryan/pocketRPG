@@ -154,7 +154,7 @@ Do not commit with failing checks.
 - New API mutations that can materially change economy/progression must emit audit events.
 
 ## 15) MCP Server (`/api/mcp`)
-- A stateless MCP (Model Context Protocol) server lives in the Pages app at `functions/api/mcp.js` (JSON-RPC 2.0 over POST). It lets AI assistants view characters and run server-authoritative actions. See `docs/mcp-server.md`.
+- A stateless MCP (Model Context Protocol) server lives in the Pages app at `functions/api/mcp.js` (JSON-RPC 2.0 over POST). It lets AI assistants view characters and run server-authoritative actions, and serves context via `instructions` + resources (`functions/_lib/mcp/reference.js`). Roadmap: `docs/mcp-roadmap.md`.
 - Tools never duplicate game logic: each `tools/call` forwards the caller's bearer token to the matching `/api/*` handler via `functions/_lib/mcp/bridge.js`, so all auth/locks/audit run in the existing endpoints. Adding a tool = add it to `functions/_lib/mcp/schema.js` (metadata) and `functions/_lib/mcp/tools.js` (dispatch).
 - Auth is **OAuth 2.1** (PKCE + Dynamic Client Registration), tailored for ChatGPT custom connectors. PocketRPG is its own authorization server (`functions/api/oauth/**`, `functions/.well-known/**`, `functions/_lib/oauth/**`, migration `0022`); the issued access token is the normal session JWT, verified by `requireAuth` like every other route. The in-app consent screen is `src/screens/OAuthConsentScreen.jsx` (reached via `/?oauth=…`, must stay out of `GAME_CHUNK_FILES`). No new secrets — reuses `JWT_SECRET`.
 - Keep scope to read + already-server-authoritative actions; do not expose raw save writes.

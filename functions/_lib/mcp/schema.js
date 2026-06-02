@@ -1,7 +1,27 @@
-// Static MCP tool metadata (name / description / JSON-Schema input) returned by
-// `tools/list`. Kept free of handler imports so it can be unit-tested cheaply
-// and is safe to import from the lightweight discovery path. The dispatch table
-// in tools.js must expose exactly these names.
+// Static MCP tool metadata (name / description / JSON-Schema input / annotations)
+// returned by `tools/list`, plus the server `instructions` advertised at
+// `initialize`. Kept free of handler imports so it can be unit-tested cheaply.
+// The dispatch table in tools.js must expose exactly these names.
+
+// Server-level guidance surfaced to the model on connect (MCP `instructions`).
+export const SERVER_INSTRUCTIONS = `PocketRPG is a menu-driven idle/simulation fantasy RPG. These tools let you
+inspect a player's account and run server-authoritative actions on their behalf.
+
+Getting oriented:
+- Call list_characters first; most tools take an optional character_id and
+  auto-select when the account has a single character.
+- get_character_state returns coins, per-skill level + XP, current HP, worn
+  equipment and inventory (item ids include resolved names).
+- Read the resources for context: pocketrpg://reference/mechanics (rules),
+  /skills, /shop, /quests, and the item/monster indexes. Use inspect_item and
+  inspect_monster for full details (stats, drop tables) by id.
+
+Acting:
+- buy_item, skip_hour and skip_slayer_task spend the player's coins/credits and
+  take effect server-side — confirm intent before calling them.
+- XP, coins and most loot are client-computed in this game, so these tools
+  cannot simulate live training or combat yet; report state and take only the
+  supported actions. Prefer concrete, checkable advice grounded in get_* reads.`
 
 const optionalCharacterId = {
   character_id: {
@@ -10,35 +30,43 @@ const optionalCharacterId = {
   },
 }
 
+const READ = (title) => ({ title, readOnlyHint: true, openWorldHint: false })
+const WRITE = (title) => ({ title, readOnlyHint: false, destructiveHint: false, openWorldHint: false })
+
 export const TOOL_SCHEMAS = [
   {
     name: 'list_characters',
     description:
       'List the characters on the signed-in PocketRPG account (id, username, ironman/one-life flags, last save time). Use an id with the other tools.',
     inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+    annotations: READ('List characters'),
   },
   {
     name: 'get_account',
     description:
       "Get the signed-in account identity and, if a character is given, that character's credit balance and PvP kill total.",
     inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
+    annotations: READ('Get account'),
   },
   {
     name: 'get_character_state',
     description:
-      "Get a summary of a character's current game state: coins, skill levels + XP, current HP, worn equipment, inventory contents and bank size.",
+      "Get a summary of a character's current game state: coins, skill levels + XP, current HP, worn equipment, inventory contents (with item names) and bank size.",
     inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
+    annotations: READ('Get character state'),
   },
   {
     name: 'get_collection_log',
     description:
       'List the unique items a character has obtained (boss/raid/clue/minigame uniques) and the total number of log slots.',
     inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
+    annotations: READ('Get collection log'),
   },
   {
     name: 'get_kill_counts',
     description: "List a character's server-authoritative boss/raid kill counts.",
     inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
+    annotations: READ('Get kill counts'),
   },
   {
     name: 'get_leaderboard',
@@ -55,6 +83,31 @@ export const TOOL_SCHEMAS = [
       },
       additionalProperties: false,
     },
+    annotations: READ('Get leaderboard'),
+  },
+  {
+    name: 'inspect_item',
+    description:
+      'Get the full definition of a single item by id (name, type, equipment slot, combat bonuses, shop value, flags). Use pocketrpg://reference/items to find ids.',
+    inputSchema: {
+      type: 'object',
+      properties: { item_id: { type: 'string', description: "The item id, e.g. 'rune_scimitar'." } },
+      required: ['item_id'],
+      additionalProperties: false,
+    },
+    annotations: READ('Inspect item'),
+  },
+  {
+    name: 'inspect_monster',
+    description:
+      'Get the full definition of a single monster by id (combat level, hitpoints, stats, attack style and full drop table). Use pocketrpg://reference/monsters to find ids.',
+    inputSchema: {
+      type: 'object',
+      properties: { monster_id: { type: 'string', description: "The monster id, e.g. 'goblin'." } },
+      required: ['monster_id'],
+      additionalProperties: false,
+    },
+    annotations: READ('Inspect monster'),
   },
   {
     name: 'buy_item',
@@ -70,6 +123,7 @@ export const TOOL_SCHEMAS = [
       required: ['item_id'],
       additionalProperties: false,
     },
+    annotations: WRITE('Buy item'),
   },
   {
     name: 'skip_hour',
@@ -84,11 +138,13 @@ export const TOOL_SCHEMAS = [
       },
       additionalProperties: false,
     },
+    annotations: WRITE('Skip hour'),
   },
   {
     name: 'skip_slayer_task',
     description: "Spend 1 credit to skip the character's current slayer task. Debits the credit server-side.",
     inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
+    annotations: WRITE('Skip slayer task'),
   },
 ]
 

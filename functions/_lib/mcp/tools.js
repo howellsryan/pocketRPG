@@ -1,5 +1,6 @@
 import { callHandler } from './bridge.js'
 import { summarizeSave } from './summary.js'
+import { getItem, getMonster, itemName, withItemName, REFERENCE_RESOURCES, readReference } from './reference.js'
 
 // Reuse the exact production endpoint handlers (see bridge.js).
 import { onRequestGet as listCharacters } from '../../api/characters/index.js'
@@ -59,7 +60,25 @@ const TOOLS = {
     const res = await callHandler(getSave, env, { authorization, characterId: id })
     if (!res.ok) throw httpError(res)
     if (!res.data?.save?.save_data) return ok({ characterId: id, state: null, note: 'No save yet.' })
-    return ok({ characterId: id, savedAt: res.data.save.updatedAt, ...summarizeSave(res.data.save.save_data) })
+    const summary = summarizeSave(res.data.save.save_data)
+    // Resolve item ids to names so the model doesn't need a separate lookup.
+    summary.inventory = summary.inventory.map(withItemName)
+    for (const [slot, item] of Object.entries(summary.equipment)) summary.equipment[slot] = withItemName(item)
+    return ok({ characterId: id, savedAt: res.data.save.updatedAt, ...summary })
+  },
+
+  async inspect_item({ item_id }) {
+    if (!item_id) throw new Error('item_id is required.')
+    const item = getItem(item_id)
+    if (!item) throw new Error(`No item with id '${item_id}'. Browse ids via pocketrpg://reference/items.`)
+    return ok(item)
+  },
+
+  async inspect_monster({ monster_id }) {
+    if (!monster_id) throw new Error('monster_id is required.')
+    const monster = getMonster(monster_id)
+    if (!monster) throw new Error(`No monster with id '${monster_id}'. Browse ids via pocketrpg://reference/monsters.`)
+    return ok(monster)
   },
 
   async get_collection_log({ character_id }, { env, authorization }) {
@@ -93,7 +112,7 @@ const TOOLS = {
       body: { item_id, quantity, unlocked_minigame_items: [] },
     })
     if (!res.ok) throw httpError(res)
-    return ok({ characterId: id, ...res.data })
+    return ok({ characterId: id, item: itemName(item_id), ...res.data })
   },
 
   async skip_hour({ bossId, raidId, character_id }, { env, authorization }) {
@@ -114,6 +133,64 @@ const TOOLS = {
     if (!res.ok) throw httpError(res)
     return ok({ characterId: id, ...res.data })
   },
+}
+
+// ── Resources ────────────────────────────────────────────────────────────────
+
+export const RESOURCE_LIST = REFERENCE_RESOURCES
+
+export const RESOURCE_TEMPLATES = [
+  {
+    uriTemplate: 'pocketrpg://character/{character_id}/state',
+    name: 'Character state',
+    description: "A character's coins, skills, HP, equipment and inventory. Use 'me' for the sole character.",
+    mimeType: 'application/json',
+  },
+  {
+    uriTemplate: 'pocketrpg://character/{character_id}/bank',
+    name: 'Character bank',
+    description: "A character's full bank contents (item ids, names and quantities).",
+    mimeType: 'application/json',
+  },
+]
+
+function parseBank(saveData) {
+  const state = typeof saveData === 'string' ? JSON.parse(saveData) : (saveData || {})
+  const raw = state.bank
+  let entries = []
+  if (Array.isArray(raw)) entries = raw
+  else if (raw && typeof raw === 'object') {
+    entries = Object.entries(raw).map(([k, v]) =>
+      v && typeof v === 'object' ? { itemId: v.itemId ?? k, quantity: v.quantity ?? v.qty ?? 0 } : { itemId: k, quantity: v },
+    )
+  }
+  return entries.map(withItemName)
+}
+
+// Read an MCP resource by uri. Reference uris are static; character uris fetch
+// the live save through the bridge (auth forwarded).
+export async function readResource(uri, { env, authorization }) {
+  const ref = readReference(uri)
+  if (ref) return { uri, mimeType: ref.mimeType, text: ref.text }
+
+  const m = /^pocketrpg:\/\/character\/([^/]+)\/(state|bank)$/.exec(uri)
+  if (m) {
+    const provided = m[1] === 'me' ? undefined : Number(m[1])
+    const id = await resolveCharacterId(env, authorization, provided)
+    const res = await callHandler(getSave, env, { authorization, characterId: id })
+    if (!res.ok) throw httpError(res)
+    const save = res.data?.save?.save_data
+    if (!save) return { uri, mimeType: 'application/json', text: JSON.stringify({ characterId: id, note: 'No save yet.' }) }
+    if (m[2] === 'state') {
+      const summary = summarizeSave(save)
+      summary.inventory = summary.inventory.map(withItemName)
+      for (const [slot, item] of Object.entries(summary.equipment)) summary.equipment[slot] = withItemName(item)
+      return { uri, mimeType: 'application/json', text: JSON.stringify({ characterId: id, ...summary }, null, 2) }
+    }
+    return { uri, mimeType: 'application/json', text: JSON.stringify({ characterId: id, bank: parseBank(save) }, null, 2) }
+  }
+
+  throw new Error(`Unknown resource: ${uri}`)
 }
 
 // Dispatch a tools/call. Unknown tool names throw (surfaced as a JSON-RPC

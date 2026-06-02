@@ -14,8 +14,8 @@
 
 import { json, requireAuth } from '../_lib/auth.js'
 import { OAUTH_CORS } from '../_lib/oauth/store.js'
-import { TOOL_SCHEMAS } from '../_lib/mcp/schema.js'
-import { callTool } from '../_lib/mcp/tools.js'
+import { TOOL_SCHEMAS, SERVER_INSTRUCTIONS } from '../_lib/mcp/schema.js'
+import { callTool, readResource, RESOURCE_LIST, RESOURCE_TEMPLATES } from '../_lib/mcp/tools.js'
 
 // Unauthenticated requests get a 401 carrying a Protected Resource Metadata
 // pointer (RFC 9728), which is what makes an MCP client (ChatGPT, …) start the
@@ -59,8 +59,9 @@ async function handleMessage(msg, env, authorization) {
       const requested = typeof params?.protocolVersion === 'string' ? params.protocolVersion : null
       return rpcResult(id, {
         protocolVersion: requested || DEFAULT_PROTOCOL_VERSION,
-        capabilities: { tools: { listChanged: false } },
+        capabilities: { tools: { listChanged: false }, resources: { listChanged: false } },
         serverInfo: SERVER_INFO,
+        instructions: SERVER_INSTRUCTIONS,
       })
     }
 
@@ -79,6 +80,22 @@ async function handleMessage(msg, env, authorization) {
       } catch (err) {
         // Unknown tool / bad params.
         return rpcError(id, -32602, err?.message || 'Tool call failed')
+      }
+    }
+
+    case 'resources/list':
+      return rpcResult(id, { resources: RESOURCE_LIST })
+
+    case 'resources/templates/list':
+      return rpcResult(id, { resourceTemplates: RESOURCE_TEMPLATES })
+
+    case 'resources/read': {
+      const uri = params?.uri
+      try {
+        const contents = await readResource(uri, { env, authorization })
+        return rpcResult(id, { contents: [contents] })
+      } catch (err) {
+        return rpcError(id, -32002, err?.message || `Resource not found: ${uri}`)
       }
     }
 

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { summarizeSave } from '../functions/_lib/mcp/summary.js'
-import { TOOL_SCHEMAS, TOOL_NAMES } from '../functions/_lib/mcp/schema.js'
+import { TOOL_SCHEMAS, TOOL_NAMES, SERVER_INSTRUCTIONS } from '../functions/_lib/mcp/schema.js'
+import { itemName, shopCatalog, REFERENCE_RESOURCES, readReference, getItem } from '../functions/_lib/mcp/reference.js'
 
 describe('MCP summarizeSave', () => {
   const save = {
@@ -72,23 +73,72 @@ describe('MCP tool schema', () => {
       'get_collection_log',
       'get_kill_counts',
       'get_leaderboard',
+      'inspect_item',
+      'inspect_monster',
       'buy_item',
       'skip_hour',
       'skip_slayer_task',
     ])
   })
 
-  it('every tool has a description and a valid object input schema', () => {
+  it('every tool has a description, object input schema and annotations', () => {
     for (const tool of TOOL_SCHEMAS) {
       expect(typeof tool.name).toBe('string')
       expect(tool.description.length).toBeGreaterThan(10)
       expect(tool.inputSchema.type).toBe('object')
       expect(tool.inputSchema.properties).toBeTypeOf('object')
+      expect(typeof tool.annotations.title).toBe('string')
+      expect(typeof tool.annotations.readOnlyHint).toBe('boolean')
     }
+  })
+
+  it('marks reads read-only and writes not read-only', () => {
+    const a = (n: string) => TOOL_SCHEMAS.find((t) => t.name === n)?.annotations
+    expect(a('get_character_state')?.readOnlyHint).toBe(true)
+    expect(a('inspect_item')?.readOnlyHint).toBe(true)
+    expect(a('buy_item')?.readOnlyHint).toBe(false)
+    expect(a('skip_hour')?.readOnlyHint).toBe(false)
   })
 
   it('buy_item requires item_id', () => {
     const buy = TOOL_SCHEMAS.find((t) => t.name === 'buy_item')
     expect(buy?.inputSchema.required).toContain('item_id')
+  })
+
+  it('advertises non-trivial server instructions', () => {
+    expect(SERVER_INSTRUCTIONS.length).toBeGreaterThan(100)
+    expect(SERVER_INSTRUCTIONS).toMatch(/list_characters/)
+  })
+})
+
+describe('MCP reference data', () => {
+  it('resolves item ids to names', () => {
+    expect(itemName('coins')).toBe('Coins')
+    expect(getItem('coins')?.type).toBe('currency')
+    expect(itemName('definitely_not_an_item')).toBe('definitely_not_an_item')
+  })
+
+  it('shop catalogue entries all have id + name and exclude restricted uniques', () => {
+    const shop = shopCatalog()
+    expect(shop.length).toBeGreaterThan(0)
+    for (const entry of shop) {
+      expect(typeof entry.id).toBe('string')
+      expect(typeof entry.name).toBe('string')
+      expect(getItem(entry.id)?.isBossUnique).not.toBe(true)
+    }
+  })
+
+  it('lists reference resources including mechanics + item index', () => {
+    const uris = REFERENCE_RESOURCES.map((r) => r.uri)
+    expect(uris).toContain('pocketrpg://reference/mechanics')
+    expect(uris).toContain('pocketrpg://reference/items')
+  })
+
+  it('reads markdown mechanics and a JSON index, and rejects unknown uris', () => {
+    expect(readReference('pocketrpg://reference/mechanics')?.mimeType).toBe('text/markdown')
+    const items = readReference('pocketrpg://reference/items')
+    expect(items?.mimeType).toBe('application/json')
+    expect(Array.isArray(JSON.parse(items!.text))).toBe(true)
+    expect(readReference('pocketrpg://reference/nope')).toBe(null)
   })
 })
