@@ -35,7 +35,7 @@ import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEqu
 import { startTicks, stopTicks, onTick, pauseTicks, resumeTicks } from './engine/tick.js'
 import { wipeLocalSave } from './db/saveload.js'
 import { api, captureTokenFromHash, getToken, getCharacterId, getCharacterName, setCharacter, clearAuth, getLocalCharacterId, setLocalCharacterId, getIronmanMode, getOneLifeMode, CREDITS_UPDATED_EVENT } from './cloud/api.js'
-import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave, retrySaveNow, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
+import { schedulePushSave, pushNow, pullSave, applyCloudSave, checkCloudNewer, resetSyncState, requestCriticalPushSave, retrySaveNow, suspendSaves, resumeSaves, isSaveConflict, CLOUD_SAVE_STATUS_EVENT } from './cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from './cloud/criticalSavePolicy.js'
 import { fetchIdleState, heartbeatIdleState, beaconIdleState, resetIdleStateSync } from './cloud/idleState.js'
 import { isBackground } from './engine/activityRegistry.js'
@@ -221,6 +221,8 @@ function GameApp() {
   const [activity, setActivity] = useState(null)
   const [idleResult, setIdleResult] = useState(null) // { elapsedMs, task, xpGained, itemsGained, lootLost, monstersKilled }
   const [skipSaving, setSkipSaving] = useState(false) // true while a paid skip is being persisted before reveal
+  const [skipLocked, setSkipLocked] = useState(false) // true for the WHOLE paid-skip op — freezes the game until the server confirms
+  const [rollingBack, setRollingBack] = useState(false) // true while rolling back to the cloud copy after a save-revision conflict
   const [saveBlocked, setSaveBlocked] = useState(false) // true when cloud saves have failed repeatedly — hard-stop play
   const [saveBlockedError, setSaveBlockedError] = useState(null)
   const [retryingBlockedSave, setRetryingBlockedSave] = useState(false)
@@ -551,6 +553,14 @@ function GameApp() {
       } else if (status === 'saved') {
         setSaveBlocked(false)
         setSaveBlockedError(null)
+      } else if (status === 'conflict') {
+        // Our local progress diverged from the server's authoritative save (a
+        // "bad state" — typically progress applied faster than a prior save
+        // round-tripped). Roll back to the cloud copy: a full reload re-pulls
+        // and re-applies the server save over local IDB on boot. We keep the
+        // overlay up and reload on the next frame so it paints first.
+        setRollingBack(true)
+        setTimeout(() => { try { window.location.reload() } catch {} }, 50)
       }
     }
     window.addEventListener(CLOUD_SAVE_STATUS_EVENT, handler)
@@ -1542,6 +1552,10 @@ function GameApp() {
       let saved = false
       for (let attempt = 0; attempt < 4 && !saved; attempt++) {
         saved = await pushNow(getSnapshot())
+        // A save-revision conflict is NOT retryable — our state diverged from
+        // the server. Stop pushing; the 'conflict' status handler is already
+        // rolling us back to the cloud copy.
+        if (isSaveConflict()) return
         if (!saved) await new Promise((r) => setTimeout(r, 400 * (attempt + 1)))
       }
       if (!saved) {
@@ -1634,6 +1648,17 @@ function GameApp() {
         else addToast(preflight.reason || 'Cannot skip this action right now.', 'info')
         return
       }
+      // Commit to the skip: freeze the game until the server confirms. Pausing
+      // the engine tick stops tick-driven autosaves / combat / HP-regen writes,
+      // suspendSaves() silences the autosave cadence and critical-save
+      // milestones, and skipLocked raises a full-screen blocking overlay so the
+      // player cannot keep playing (and producing competing saves) while we
+      // simulate and persist. This eliminates the write race that caused the
+      // intermittent save_revision_conflict. All three are released in finally.
+      pauseTicks()
+      suspendSaves()
+      setSkipLocked(true)
+
       if (task?.type === 'quest') {
         const skipResult = await api.skipHour()
         setCredits(skipResult?.credits_remaining ?? credits)
@@ -1972,6 +1997,14 @@ function GameApp() {
         addToast(err.message || 'Error during skip!', 'error')
       }
     } finally {
+      // Release the skip lock and resume the game. Skipped if a conflict
+      // rollback is in flight — that path reloads the page, so leaving the
+      // overlay up and the engine frozen until reload is the correct behaviour.
+      if (!isSaveConflict()) {
+        setSkipLocked(false)
+        resumeSaves()
+        resumeTicks()
+      }
       isSkippingRef.current = false
     }
   }
@@ -2117,15 +2150,30 @@ function GameApp() {
         onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')}
       />
 
-      {/* Skip-save overlay — shown while a paid skip is being persisted to
-          the cloud, before its rewards are revealed. Blocks interaction so
-          a refresh can't drop progress the player spent a credit on. */}
-      {skipSaving && (
+      {/* Skip lock overlay — shown for the WHOLE paid-skip operation (simulate
+          + persist), not just the final save. The game is frozen (engine paused,
+          autosaves suspended) and interaction is blocked behind this overlay
+          until the server confirms the save, so the player cannot keep playing
+          and produce competing writes that race the skip's save. */}
+      {(skipSaving || skipLocked) && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', zIndex: 250, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '30px', marginBottom: '10px' }}>⏭️</div>
             <div style={{ fontFamily: 'Cinzel, serif', fontSize: '18px', color: '#d4af37', marginBottom: '6px' }}>Saving your progress…</div>
             <div style={{ fontSize: '12px', color: '#c8a96e', opacity: 0.8 }}>Please don't close the app.</div>
+          </div>
+        </div>
+      )}
+
+      {/* Rollback overlay — shown when a save-revision conflict means our local
+          state diverged from the server. We discard the bad local state and
+          reload to re-pull the authoritative cloud copy. Sits above everything. */}
+      {rollingBack && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '30px', marginBottom: '10px' }}>☁️</div>
+            <div style={{ fontFamily: 'Cinzel, serif', fontSize: '18px', color: '#d4af37', marginBottom: '6px' }}>Restoring your saved game…</div>
+            <div style={{ fontSize: '12px', color: '#c8a96e', opacity: 0.8 }}>Syncing the latest progress from the cloud.</div>
           </div>
         </div>
       )}
@@ -2167,7 +2215,7 @@ function GameApp() {
       )}
 
       {/* Idle Result Modal */}
-      {idleResult && !skipSaving && pvp.phase !== 'in_match' && Date.now() >= suppressIdleModalUntil && (
+      {idleResult && !skipSaving && !skipLocked && pvp.phase !== 'in_match' && Date.now() >= suppressIdleModalUntil && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <div style={{ width: '100%', maxWidth: '380px', background: '#1a1a1a', borderRadius: '20px', border: '1px solid #333', overflow: 'hidden' }}>
             {/* Header */}

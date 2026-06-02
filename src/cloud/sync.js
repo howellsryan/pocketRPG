@@ -42,6 +42,17 @@ let criticalTimer = null
 let pendingCriticalSnapshotSource = null
 let pendingCriticalReasons = new Set()
 let hasUnsyncedChanges = false
+// While a critical, all-or-nothing operation (e.g. a paid skip) is mid-flight,
+// the game is frozen and we MUST NOT let the autosave cadence or critical-save
+// milestones fire competing writes that race the operation's own authoritative
+// push — that race is what drove the intermittent save_revision_conflict. The
+// operation calls pushNow() directly, which deliberately bypasses this gate.
+let savesSuspended = false
+// Set once the server rejects a push with save_revision_conflict — our local
+// state has diverged from the authoritative cloud copy. We stop pushing the
+// stale snapshot (it only repeats the 409) and let the app roll back to the
+// cloud copy. Cleared on resetSyncState / a fresh page boot.
+let conflictPending = false
 
 if (typeof window !== 'undefined') {
   window.addEventListener(SAVE_REVISION_EVENT, (event) => {
@@ -119,6 +130,23 @@ async function performPush() {
       schedulePush(snap, ACTIVE_MATCH_RETRY_MS)
       return false
     }
+    // save_revision_conflict: our local state diverged from the server's
+    // authoritative copy (we got into a bad state — typically progress applied
+    // faster than a prior save round-tripped). Re-pushing the same stale
+    // snapshot only repeats the 409, so we DROP the pending push, flag the
+    // conflict, and emit 'conflict' so the app rolls back to the cloud copy
+    // (a fresh GET on the next boot). This is NOT a transient network failure,
+    // so it must NOT count toward the failure streak that escalates to the
+    // blocking modal, and we must NOT schedule a retry.
+    if (err?.status === 409 && (err?.body?.code === 'SAVE_REVISION_CONFLICT' || err?.body?.error === 'save_revision_conflict' || err?.message === 'save_revision_conflict')) {
+      conflictPending = true
+      pendingSnapshot = null
+      pendingSaveOptions = {}
+      hasUnsyncedChanges = false
+      if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }
+      emitCloudSaveStatus('conflict', { currentRevision: Number(err?.body?.current_revision) })
+      return false
+    }
     pendingSaveOptions = {}
     // Genuine failure: keep the snapshot queued so the retry re-sends THIS
     // state (never silently drop progress) and track the streak. Once we've
@@ -175,8 +203,18 @@ function schedulePush(snapshot, delay = PUSH_DEBOUNCE_MS) {
 // Public: schedule a debounced push (called from the 60s tick + idle modal events).
 export function schedulePushSave(snapshot) {
   if (!canSync()) return
+  if (savesSuspended || conflictPending) return
   schedulePush(snapshot)
 }
+
+// Public: freeze/unfreeze the background save cadence while a critical,
+// all-or-nothing operation (paid skip) owns the single in-flight write. The
+// operation drives its own durable save via pushNow(), which bypasses this gate.
+export function suspendSaves() { savesSuspended = true }
+export function resumeSaves() { savesSuspended = false }
+// Public: has the server rejected our state as diverged? The app uses this to
+// short-circuit its own save retry loops and trigger a cloud rollback.
+export function isSaveConflict() { return conflictPending }
 
 // Public: bypass the debounce — used on tab-hide / page-unload so we don't
 // lose a pending push. Also drains any pending critical save inline, so
@@ -188,6 +226,9 @@ export function schedulePushSave(snapshot) {
 // this to decide whether to reveal rewards or keep retrying.
 export async function pushNow(snapshot) {
   if (!canSync()) return false
+  // Once we've detected a divergence, stop pushing — the app is rolling back to
+  // the cloud copy. Any further push would just repeat the 409.
+  if (conflictPending) return false
   // If a push is already on the wire, wait for it to settle before issuing our
   // own. We must never abandon the server mid-response — the paid skip-hour
   // flow awaits this to confirm progress is durable before revealing rewards.
@@ -226,6 +267,7 @@ function resolveSnapshotSource(source) {
 
 export function requestCriticalPushSave(snapshotOrFactory, reason = 'critical') {
   if (!canSync()) return false
+  if (savesSuspended || conflictPending) return false
   if (!snapshotOrFactory) return false
 
   pendingCriticalSnapshotSource = snapshotOrFactory
@@ -327,6 +369,8 @@ export function resetSyncState() {
   consecutiveFailures = 0
   inFlightPromise = null
   pendingSaveOptions = {}
+  savesSuspended = false
+  conflictPending = false
   pendingCriticalSnapshotSource = null
   pendingCriticalReasons.clear()
   if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }
