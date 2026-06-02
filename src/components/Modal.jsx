@@ -20,6 +20,7 @@ function getVisualViewportHeight() {
 
 export default function Modal({
   title,
+  titleRight = null,
   onClose,
   children,
   fullHeight = false,
@@ -94,11 +95,14 @@ export default function Modal({
         style={dialogSizeStyle}
         onClick={(e) => e.stopPropagation()}
       >
-        {title && (
-          <div class="flex flex-shrink-0 items-center justify-between border-b border-[#333] px-4 py-3">
-            <h2 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">
-              {title}
-            </h2>
+        {(title || titleRight) && (
+          <div class="flex flex-shrink-0 items-center justify-between gap-2 border-b border-[#333] px-4 py-3">
+            <div class="flex min-w-0 items-center gap-2">
+              <h2 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">
+                {title}
+              </h2>
+              {titleRight}
+            </div>
             {onClose && (
               <button
                 onClick={onClose}

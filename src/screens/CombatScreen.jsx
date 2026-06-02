@@ -208,7 +208,7 @@ class PvpCombatErrorBoundary extends Component {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame, combatSkipHandlerRef } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef } = useGame()
   const pvp = usePvp()
   const [showPvpLobby, setShowPvpLobby] = useState(false)
 
@@ -1033,6 +1033,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     }
     state.specialAttackEnergy = 100
     state.activePotions = combatRef.current ? { ...combatRef.current.activePotions } : {}
+    combatRef.current = state
     setCombat(state)
     setKillCount(0)
     setFightStartedAt(Date.now())
@@ -1055,8 +1056,26 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     state.activePotions = combatRef.current ? { ...combatRef.current.activePotions } : {}
     state.activeProtectionPrayer = combatRef.current?.activeProtectionPrayer ?? null
     state.activeCombatPrayer = combatRef.current?.activeCombatPrayer ?? null
+    combatRef.current = state
     setCombat(state)
     setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: true, spell: spell || null })
+  }
+
+  // Loot-modal "skip" — re-arm the fight (or raid) and immediately trigger the
+  // same skip the top-nav uses, so the player can chain skips without manually
+  // clicking Fight Again then Skip 1h each time.
+  const skipAgain = () => {
+    const modal = lootModal
+    if (!modal || modal.loading) return
+    setLootModal(null)
+    if (modal.raidId) {
+      const raid = raidsData[modal.raidId]
+      if (raid) startRaid(raid)
+    } else {
+      const original = monstersData[modal.monster.id]
+      if (original) continueFight(original)
+    }
+    skipHourHandlerRef?.current?.()
   }
 
   const stopAndBack = () => {
@@ -2672,7 +2691,20 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
       {/* Loot Modal */}
       {lootModal && (
-        <Modal title={lootModal.raidId ? '🏆 Raid Complete' : 'Loot'} onClose={() => setLootModal(null)}>
+        <Modal
+          title={lootModal.raidId ? '🏆 Raid Complete' : 'Loot'}
+          titleRight={!lootModal.loading && getToken() && getCharacterId() && (
+            <button
+              onClick={skipAgain}
+              class="flex items-center gap-1 px-2 py-1 rounded-full bg-[#2a2010] border border-[var(--color-gold-dim)] hover:border-[var(--color-gold)] transition-colors text-[11px] font-semibold text-[var(--color-gold-light)] whitespace-nowrap"
+              title={lootModal.raidId ? 'Raid again and skip automatically (requires 1 credit)' : 'Fight again and skip automatically (requires 1 credit)'}
+            >
+              <span>⏭️</span>
+              <span>Skip</span>
+            </button>
+          )}
+          onClose={() => setLootModal(null)}
+        >
           <div class="space-y-4">
             {/* Header message */}
             <div class="text-center py-2">

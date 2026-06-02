@@ -74,7 +74,7 @@ export default function Header({ activity, credits = 0, isCloudAccount = false, 
           )}
           <button
             onClick={handleSkip}
-            class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1a2a1a] border border-[#3a5a3a] hover:border-[#5a8a5a] transition-colors text-[10px] font-semibold text-[var(--color-parchment)] whitespace-nowrap"
+            class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#2a2010] border border-[var(--color-gold-dim)] hover:border-[var(--color-gold)] transition-colors text-[10px] font-semibold text-[var(--color-gold-light)] whitespace-nowrap"
             title={skipMode === 'kill' ? 'Skip to the kill (requires 1 credit)' : 'Skip 1 hour (requires 1 credit)'}
           >
             <span>⏭️</span>
