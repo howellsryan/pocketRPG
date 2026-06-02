@@ -46,6 +46,7 @@ import { triggerOneLifeDeath } from './utils/oneLifeDeath.js'
 import { defaultIdleCombatSetup } from './engine/idleSupplies.js'
 import prayersData from './data/prayers.json'
 import minigamesData from './data/minigames.json'
+import raidsData from './data/raids.json'
 import { simulateIdleThieving } from './engine/thieving.js'
 import { simulateIdleHunting } from './engine/hunter.js'
 import { createQuestState } from './engine/quests.js'
@@ -2100,7 +2101,7 @@ function GameApp() {
         onDisabledClick={() => addToast('⚔️ Cannot navigate during PvP combat!', 'warning')}
       />
       <div class="flex-1 flex flex-col min-w-0 min-h-0">
-        <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onMenuClick={() => setMenuOpen(true)} onNavigate={(s) => navigate(s)} skipMode={activeTask?.type === 'combat' && (activeTask?.monster?.boss === true || activeTask?.raid === true) ? 'kill' : 'hour'} />
+        <Header activity={activity} credits={credits} isCloudAccount={isCloudAccount} onSkip1h={isCloudAccount ? handleSkip1h : null} onBuyCredits={() => setShowBuyCreditsModal(true)} onMenuClick={() => setMenuOpen(true)} onNavigate={(s) => navigate(s)} skipMode={activeTask?.type === 'combat' && (activeTask?.monster?.boss === true || activeTask?.raid === true) ? 'kill' : 'hour'} raidSkipCost={activeTask?.type === 'combat' && activeTask?.raidId ? (raidsData[activeTask.raidId]?.skipCost ?? 1) : null} />
         <ToastContainer />
         <main class="flex-1 overflow-hidden">
           {renderScreen()}
