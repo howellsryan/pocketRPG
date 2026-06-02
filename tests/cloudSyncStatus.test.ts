@@ -201,7 +201,7 @@ describe('cloud sync save status events', () => {
     // the same UPDATE that debits credits. The client must not set the
     // flag on any putSave call.
     putSaveMock
-      .mockRejectedValueOnce({ status: 403, message: 'protected_state_delta_rejected' })
+      .mockRejectedValueOnce({ status: 500, message: 'server_error' })
       .mockResolvedValueOnce({ updatedAt: 250 })
     const sync = await import('../src/cloud/sync.js')
     const { CRITICAL_SAVE_REASONS } = await import('../src/cloud/criticalSavePolicy.js')

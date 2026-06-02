@@ -20,6 +20,8 @@ You can land each step as a separate PR. Ship 1, 2, 6, 7 before 3 if Stripe is g
 
 ## Step 1 — Lock `PUT /api/save` to non-economy fields
 
+> **Status (2026-06): Not pursued — superseded.** This step assumes the server can treat `stats.*.xp`, `bank`, `inventory`, `equipment`, etc. as server-owned and reject/sanitize client increases. That is incompatible with PocketRPG's offline-first design: live skilling, idle/offline catch-up, and skip-hour all compute XP, coins, and drops on the **client** and there is no server-side engine to recompute against, so those fields are client-authoritative by necessity. The earlier partial attempt at this (`detectProtectedDelta`, which rejected "protected" item increases on `/api/save`) was removed — it produced false-positive save failures for legitimately client-created items (idle/offline loot, crafted/smithed/cooked products, skill capes) while providing no real protection as long as XP/coins stay client-side. Integrity is instead enforced where it genuinely can be server-authoritative: the `/api/actions/**` completion endpoints (server-rolled loot RNG, kill-count + collection-log recording, nonce replay protection), `/api/purchase`, and the server-side credit debits. `/api/save` keeps only two integrity guards — `save_revision` staleness rejection and the total-level regression guard (account-wipe protection). See CLAUDE.md §14. The remaining steps below still stand on their own merits.
+
 ### Goal
 
 `/api/save` becomes a sync channel for **UI / settings / non-economy state only**. Every economy mutation must travel through an `/api/actions/*` endpoint that runs server-authoritative `settleActionCompletion` (or its equivalents).
