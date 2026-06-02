@@ -208,6 +208,86 @@ describe('cloud sync save status events', () => {
     expect(pendingAfterSavedIndex).toBeGreaterThan(firstSavedIndex)
   })
 
+  it('emits conflict (not failed/blocked) on save_revision_conflict and stops retrying', async () => {
+    // A 409 save_revision_conflict means local state diverged from the server.
+    // Re-pushing the same stale snapshot only repeats the 409, so we must emit
+    // 'conflict' (for the app to roll back), NOT count it toward the failure
+    // streak, and NOT schedule a retry.
+    putSaveMock.mockRejectedValue({ status: 409, body: { code: 'SAVE_REVISION_CONFLICT', current_revision: 5 } })
+    const sync = await import('../src/cloud/sync.js')
+
+    const ok = await sync.pushNow({ player: { name: 'Hero' } })
+    expect(ok).toBe(false)
+
+    const calls = (window.dispatchEvent as any).mock.calls.map((c: any[]) => c[0].detail.status)
+    expect(calls).toContain('conflict')
+    expect(calls).not.toContain('failed')
+    expect(calls).not.toContain('blocked')
+
+    // No backoff retry should be scheduled for a conflict.
+    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.runAllTicks()
+    expect(putSaveMock).toHaveBeenCalledTimes(1)
+    expect(sync.isSaveConflict()).toBe(true)
+  })
+
+  it('short-circuits further pushes once a conflict is detected', async () => {
+    putSaveMock.mockRejectedValue({ status: 409, body: { code: 'SAVE_REVISION_CONFLICT', current_revision: 5 } })
+    const sync = await import('../src/cloud/sync.js')
+
+    await sync.pushNow({ player: { name: 'Hero' } })
+    expect(putSaveMock).toHaveBeenCalledTimes(1)
+
+    // Subsequent pushNow / schedulePushSave must not hit the network — the app
+    // is rolling back to the cloud copy.
+    const second = await sync.pushNow({ player: { name: 'Hero' } })
+    expect(second).toBe(false)
+    sync.schedulePushSave({ player: { name: 'Hero' } })
+    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.runAllTicks()
+    expect(putSaveMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('suspendSaves silences the autosave cadence and critical saves but pushNow still writes', async () => {
+    putSaveMock.mockResolvedValue({ updatedAt: 1, save_revision: 2 })
+    const sync = await import('../src/cloud/sync.js')
+
+    sync.suspendSaves()
+    sync.schedulePushSave({ player: { name: 'Hero' } })
+    sync.requestCriticalPushSave(() => ({ player: { name: 'Hero' } }), 'level_up')
+    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.runAllTicks()
+    expect(putSaveMock).not.toHaveBeenCalled()
+
+    // The owning operation's own authoritative write bypasses the gate.
+    const ok = await sync.pushNow({ player: { name: 'Hero' } })
+    expect(ok).toBe(true)
+    expect(putSaveMock).toHaveBeenCalledTimes(1)
+
+    // resumeSaves re-enables the background cadence.
+    sync.resumeSaves()
+    sync.schedulePushSave({ player: { name: 'Hero' } })
+    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.runAllTicks()
+    expect(putSaveMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('resetSyncState clears suspension and conflict flags', async () => {
+    putSaveMock.mockRejectedValueOnce({ status: 409, body: { code: 'SAVE_REVISION_CONFLICT', current_revision: 5 } })
+    const sync = await import('../src/cloud/sync.js')
+
+    await sync.pushNow({ player: { name: 'Hero' } })
+    expect(sync.isSaveConflict()).toBe(true)
+
+    sync.resetSyncState()
+    expect(sync.isSaveConflict()).toBe(false)
+
+    // After reset a normal push works again.
+    putSaveMock.mockResolvedValue({ updatedAt: 9, save_revision: 1 })
+    const ok = await sync.pushNow({ player: { name: 'Hero' } })
+    expect(ok).toBe(true)
+  })
+
   it('does not carry credits_used_increment on any save (server-debits via /api/skip-hour)', async () => {
     // Pre-step-1, the client attached creditsUsedIncrement:1 to the next
     // save after a skip-hour and the server bumped credits_used from

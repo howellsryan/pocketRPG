@@ -19,7 +19,7 @@ import { onTick, pauseTicks, resumeTicks } from '../engine/tick.js'
 import { addItem, removeItem, freeSlots } from '../engine/inventory.js'
 import { getCombatType, equipItem, checkEquipRequirements } from '../engine/equipment.js'
 import { api, getToken, getCharacterId, getOneLifeMode } from '../cloud/api.js'
-import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow } from '../cloud/sync.js'
+import { pullSave, applyCloudSave, requestCriticalPushSave, pushNow, isSaveConflict } from '../cloud/sync.js'
 import { pvpApi } from '../cloud/pvp.js'
 import { triggerOneLifeDeath } from '../utils/oneLifeDeath.js'
 import monstersData from '../data/monsters.json'
@@ -208,7 +208,7 @@ class PvpCombatErrorBoundary extends Component {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion } = useGame()
   const pvp = usePvp()
   const [showPvpLobby, setShowPvpLobby] = useState(false)
 
@@ -846,6 +846,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             }).catch((err) => {
               setLootModal(null)
               addToast(`Monster claim failed: ${err?.message || 'server_error'}`, 'error')
+            }).finally(() => {
+              // Release any boss-skip lock awaiting this completion (no-op for a
+              // normal live kill that didn't arm a wait).
+              resolveCombatCompletion()
             })
           } else if (killLoot.length > 0) {
             const newInv = [...inventoryRef.current]
@@ -1058,6 +1062,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     } catch (err) {
       setLootModal(null)
       addToast(`Raid claim failed: ${err?.message || 'server_error'}`, 'error')
+    } finally {
+      // Release any boss-skip lock awaiting this completion (no-op otherwise).
+      resolveCombatCompletion()
     }
   }
 
@@ -1075,6 +1082,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     const charge = chargeSkipRef?.current
     if (!charge) return
     raidSkipBusyRef.current = true
+    // Freeze the game for the WHOLE raid skip (charge → claim): block input and
+    // suspend competing autosaves until the server completion responds, so
+    // nothing races the authoritative write.
+    lockGame()
     const prevModal = lootModal
     const prevCombat = combatRef.current
     // Freeze the live raid immediately so no boss death fires during the server
@@ -1097,6 +1108,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       if (err?.status === 402) addToast('Not enough credits to skip this raid.', 'error')
       else addToast(err?.message || 'Error during skip!', 'error')
       raidSkipBusyRef.current = false
+      unlockGame()
       return
     }
     try {
@@ -1104,6 +1116,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       await claimRaidCompletion({ raidId, monster, slayerXpGained, isBossKill })
     } finally {
       raidSkipBusyRef.current = false
+      if (!isSaveConflict()) unlockGame()
     }
   }
 
