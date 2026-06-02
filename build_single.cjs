@@ -147,6 +147,7 @@ const sourceFiles = [
   'screens/DesktopLandingScreen.js',
   'screens/LandingScreen.js',
   'screens/AuthScreen.js',
+  'screens/OAuthConsentScreen.js',
   'App.js',
 ];
 

@@ -12,9 +12,27 @@
 // Scope is read + server-authoritative actions (see functions/_lib/mcp). It does
 // not simulate the client-side game loop.
 
-import { json } from '../_lib/auth.js'
+import { json, requireAuth } from '../_lib/auth.js'
+import { OAUTH_CORS } from '../_lib/oauth/store.js'
 import { TOOL_SCHEMAS } from '../_lib/mcp/schema.js'
 import { callTool } from '../_lib/mcp/tools.js'
+
+// Unauthenticated requests get a 401 carrying a Protected Resource Metadata
+// pointer (RFC 9728), which is what makes an MCP client (ChatGPT, …) start the
+// OAuth discovery + authorization flow.
+function unauthorized(origin) {
+  return new Response(
+    JSON.stringify({ jsonrpc: '2.0', id: null, error: { code: -32001, message: 'Unauthorized' } }),
+    {
+      status: 401,
+      headers: {
+        'Content-Type': 'application/json',
+        'WWW-Authenticate': `Bearer realm="PocketRPG", resource_metadata="${origin}/.well-known/oauth-protected-resource"`,
+        ...OAUTH_CORS,
+      },
+    },
+  )
+}
 
 const SERVER_INFO = { name: 'PocketRPG', version: '0.1.0' }
 const DEFAULT_PROTOCOL_VERSION = '2025-06-18'
@@ -72,14 +90,21 @@ async function handleMessage(msg, env, authorization) {
 }
 
 export async function onRequestPost({ request, env }) {
+  const url = new URL(request.url)
+  const origin = `${url.protocol}//${url.host}`
+
+  // Transport-level auth: every MCP request must carry a valid bearer token.
+  // Missing/invalid → 401 with the metadata pointer so clients start OAuth.
+  const auth = await requireAuth(request, env)
+  if (auth.error) return unauthorized(origin)
+  const authorization = request.headers.get('Authorization')
+
   let body
   try {
     body = await request.json()
   } catch {
     return json(rpcError(null, -32700, 'Parse error'), 200)
   }
-
-  const authorization = request.headers.get('Authorization') || null
 
   // JSON-RPC batch support.
   if (Array.isArray(body)) {
@@ -98,7 +123,17 @@ export async function onRequestPost({ request, env }) {
 }
 
 // The optional server->client SSE stream of Streamable HTTP is not implemented
-// (stateless server). Clients fall back to plain request/response on 405.
-export function onRequestGet() {
+// (stateless server). Unauthenticated GETs still return the 401 challenge so a
+// client probing with GET can discover the OAuth flow; authenticated GETs get
+// 405 and the client falls back to plain request/response.
+export async function onRequestGet({ request, env }) {
+  const url = new URL(request.url)
+  const origin = `${url.protocol}//${url.host}`
+  const auth = await requireAuth(request, env)
+  if (auth.error) return unauthorized(origin)
   return json({ error: 'Method Not Allowed', hint: 'POST JSON-RPC 2.0 messages to this endpoint.' }, 405)
+}
+
+export function onRequestOptions() {
+  return new Response(null, { status: 204, headers: OAUTH_CORS })
 }

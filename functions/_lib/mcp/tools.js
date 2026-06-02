@@ -19,9 +19,7 @@ function ok(payload) {
 
 function httpError(res) {
   if (res.status === 401) {
-    return new Error(
-      'Not authenticated. Paste your PocketRPG access token as the connector bearer token (get it in-game: Home → API Access).',
-    )
+    return new Error('Not authenticated. Reconnect the PocketRPG connector and approve access.')
   }
   return new Error(res.data?.error || `Request failed (HTTP ${res.status}).`)
 }

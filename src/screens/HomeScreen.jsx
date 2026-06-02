@@ -9,7 +9,6 @@ import Modal from '../components/Modal.jsx'
 import Button from '../components/Button.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import SkillEmblem from '../components/SkillEmblem.jsx'
-import { getToken } from '../cloud/api.js'
 
 const SKILL_GROUPS = [
   { title: 'Combat', skills: COMBAT_SKILLS },
@@ -71,7 +70,6 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
     } catch { /* clipboard unavailable — user can select manually */ }
   }
 
-  const mcpToken = isCloudAccount ? getToken() : null
   const mcpServerUrl = typeof window !== 'undefined' ? `${window.location.origin}/api/mcp` : '/api/mcp'
 
   async function handleLogout() {
@@ -251,9 +249,9 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
         <Modal title="Connect an AI assistant" onClose={() => setShowApiAccess(false)}>
           <div class="space-y-4 text-sm text-[var(--color-parchment)]">
             <p class="opacity-70">
-              PocketRPG exposes an <b>MCP server</b> so assistants like ChatGPT and Claude can
-              view your characters and perform shop/credit actions on your behalf. Add the server
-              below to your assistant and paste your access token when it asks for a bearer token.
+              PocketRPG exposes an <b>MCP server</b> so assistants like ChatGPT can view your
+              characters and perform shop/credit actions for you. Add the server below as a custom
+              connector — you'll approve access in your browser, no token to copy.
             </p>
 
             <div>
@@ -262,36 +260,28 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
                 <code class="flex-1 min-w-0 break-all rounded-lg bg-[#111] border border-[var(--color-void-border)] p-2 font-[var(--font-mono)] text-xs text-[var(--color-gold)]">
                   {mcpServerUrl}
                 </code>
-                <Button size="md" onClick={() => copyText(mcpServerUrl, 'url')}>
+                <Button size="md" variant="primary" onClick={() => copyText(mcpServerUrl, 'url')}>
                   {copiedField === 'url' ? 'Copied' : 'Copy'}
                 </Button>
               </div>
             </div>
 
             <div>
-              <div class="text-xs uppercase tracking-wide opacity-50 mb-1">Access token (bearer)</div>
-              {mcpToken ? (
-                <div class="flex items-center gap-2">
-                  <code class="flex-1 min-w-0 break-all rounded-lg bg-[#111] border border-[var(--color-void-border)] p-2 font-[var(--font-mono)] text-xs text-[var(--color-parchment)] max-h-24 overflow-y-auto">
-                    {mcpToken}
-                  </code>
-                  <Button size="md" variant="primary" onClick={() => copyText(mcpToken, 'token')}>
-                    {copiedField === 'token' ? 'Copied' : 'Copy'}
-                  </Button>
-                </div>
-              ) : (
-                <div class="rounded-lg bg-[#111] border border-[var(--color-void-border)] p-2 text-xs opacity-60">
-                  No token found — make sure you are signed in to your cloud account.
-                </div>
-              )}
+              <div class="text-xs uppercase tracking-wide opacity-50 mb-1">In ChatGPT</div>
+              <ol class="list-decimal list-inside space-y-1 opacity-80">
+                <li>Settings → Connectors → Add custom connector.</li>
+                <li>Paste the MCP server URL above.</li>
+                <li>Click Connect — a PocketRPG window asks you to approve.</li>
+                <li>Sign in (if needed) and choose <b>Allow access</b>.</li>
+              </ol>
             </div>
 
             <div class="rounded-lg bg-[#2a1d12] border border-[#5a3d1a] p-3 text-xs space-y-1">
-              <div class="font-bold text-[var(--color-gold)]">Keep this token private</div>
+              <div class="font-bold text-[var(--color-gold)]">You stay in control</div>
               <p class="opacity-80">
-                Anyone with this token can act on your account through these tools — treat it like a
-                password. It expires automatically about <b>30 days</b> after you last signed in, and a
-                fresh one is issued each time you log in. Log out and back in to revoke an old token.
+                Access is granted only after you approve it, and an assistant can only do what these
+                tools allow (view state, shop purchases, credit skips). Access expires within
+                <b> 30 days</b>; logging out revokes it sooner.
               </p>
             </div>
           </div>
