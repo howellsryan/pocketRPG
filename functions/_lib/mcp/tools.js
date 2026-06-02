@@ -12,6 +12,13 @@ import { onRequestGet as getLeaderboard } from '../../api/leaderboard.js'
 import { onRequestPost as postPurchase } from '../../api/purchase.js'
 import { onRequestPost as postSkipHour } from '../../api/skip-hour.js'
 import { onRequestPost as postSlayerSkip } from '../../api/slayer/skip.js'
+import { onRequestPost as postMarketSearch } from '../../api/trading-post/search.js'
+import { onRequestGet as getMyOffers } from '../../api/trading-post/my-offers.js'
+import { onRequestPost as postPlaceOffer } from '../../api/trading-post/list.js'
+import { onRequestPost as postCancelOffer } from '../../api/trading-post/cancel.js'
+import { onRequestPost as postCollectOffer } from '../../api/trading-post/collect.js'
+import { onRequestPost as postInstantSell } from '../../api/trading-post/instant-sell.js'
+import { onRequestPost as postSellImmediate } from '../../api/trading-post/sell-immediate.js'
 
 function ok(payload) {
   const text = typeof payload === 'string' ? payload : JSON.stringify(payload, null, 2)
@@ -132,6 +139,71 @@ const TOOLS = {
     const res = await callHandler(postSlayerSkip, env, { method: 'POST', authorization, characterId: id })
     if (!res.ok) throw httpError(res)
     return ok({ characterId: id, ...res.data })
+  },
+
+  // ── Trading post (Phase B) ─────────────────────────────────────────────────
+
+  async search_market({ item_ids }, { env, authorization }) {
+    if (!Array.isArray(item_ids) || item_ids.length === 0) throw new Error('item_ids must be a non-empty array.')
+    const res = await callHandler(postMarketSearch, env, { method: 'POST', authorization, body: { item_ids } })
+    if (!res.ok) throw httpError(res)
+    const market = {}
+    for (const [id, summary] of Object.entries(res.data?.market || {})) market[id] = { name: itemName(id), ...summary }
+    return ok({ market })
+  },
+
+  async my_offers({ character_id }, { env, authorization }) {
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const res = await callHandler(getMyOffers, env, { authorization, characterId: id })
+    if (!res.ok) throw httpError(res)
+    const offers = (res.data?.offers || []).map((o) => ({ ...o, name: itemName(o.item_id) }))
+    return ok({ characterId: id, maxSlots: res.data?.max_slots, offers })
+  },
+
+  async place_offer({ offer_type, item_id, price, quantity, character_id }, { env, authorization }) {
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const res = await callHandler(postPlaceOffer, env, {
+      method: 'POST',
+      authorization,
+      characterId: id,
+      body: { offer_type, item_id, price, quantity },
+    })
+    if (!res.ok) throw httpError(res)
+    return ok({ characterId: id, item: itemName(item_id), ...res.data })
+  },
+
+  async cancel_offer({ offer_id, character_id }, { env, authorization }) {
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const res = await callHandler(postCancelOffer, env, { method: 'POST', authorization, characterId: id, body: { offer_id } })
+    if (!res.ok) throw httpError(res)
+    return ok({ characterId: id, ...res.data })
+  },
+
+  async collect_offer({ offer_id, character_id }, { env, authorization }) {
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const res = await callHandler(postCollectOffer, env, { method: 'POST', authorization, characterId: id, body: { offer_id } })
+    if (!res.ok) throw httpError(res)
+    return ok({ characterId: id, ...res.data })
+  },
+
+  async instant_sell_offer({ offer_id, character_id }, { env, authorization }) {
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const res = await callHandler(postInstantSell, env, { method: 'POST', authorization, characterId: id, body: { offer_id } })
+    if (!res.ok) throw httpError(res)
+    return ok({ characterId: id, ...res.data })
+  },
+
+  async sell_item({ item_id, quantity, character_id }, { env, authorization }) {
+    if (!item_id) throw new Error('item_id is required.')
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const res = await callHandler(postSellImmediate, env, {
+      method: 'POST',
+      authorization,
+      characterId: id,
+      body: { item_id, quantity },
+    })
+    if (!res.ok) throw httpError(res)
+    return ok({ characterId: id, item: itemName(item_id), ...res.data })
   },
 }
 

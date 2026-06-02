@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { summarizeSave } from '../functions/_lib/mcp/summary.js'
 import { TOOL_SCHEMAS, TOOL_NAMES, SERVER_INSTRUCTIONS } from '../functions/_lib/mcp/schema.js'
 import { itemName, shopCatalog, REFERENCE_RESOURCES, readReference, getItem } from '../functions/_lib/mcp/reference.js'
+import { callTool } from '../functions/_lib/mcp/tools.js'
 
 describe('MCP summarizeSave', () => {
   const save = {
@@ -78,6 +79,13 @@ describe('MCP tool schema', () => {
       'buy_item',
       'skip_hour',
       'skip_slayer_task',
+      'search_market',
+      'my_offers',
+      'place_offer',
+      'cancel_offer',
+      'collect_offer',
+      'instant_sell_offer',
+      'sell_item',
     ])
   })
 
@@ -96,8 +104,16 @@ describe('MCP tool schema', () => {
     const a = (n: string) => TOOL_SCHEMAS.find((t) => t.name === n)?.annotations
     expect(a('get_character_state')?.readOnlyHint).toBe(true)
     expect(a('inspect_item')?.readOnlyHint).toBe(true)
+    expect(a('search_market')?.readOnlyHint).toBe(true)
     expect(a('buy_item')?.readOnlyHint).toBe(false)
     expect(a('skip_hour')?.readOnlyHint).toBe(false)
+    expect(a('place_offer')?.readOnlyHint).toBe(false)
+    expect(a('sell_item')?.readOnlyHint).toBe(false)
+  })
+
+  it('place_offer requires its order fields', () => {
+    const req = TOOL_SCHEMAS.find((t) => t.name === 'place_offer')?.inputSchema.required
+    expect(req).toEqual(expect.arrayContaining(['offer_type', 'item_id', 'price', 'quantity']))
   })
 
   it('buy_item requires item_id', () => {
@@ -140,5 +156,23 @@ describe('MCP reference data', () => {
     expect(items?.mimeType).toBe('application/json')
     expect(Array.isArray(JSON.parse(items!.text))).toBe(true)
     expect(readReference('pocketrpg://reference/nope')).toBe(null)
+  })
+})
+
+describe('MCP dispatch', () => {
+  // Empty env: handlers fail auth/DB and surface as isError results, but a
+  // *known* tool must never throw "Unknown tool" — this guards schema/dispatch drift.
+  const ctx = { env: {}, authorization: null } as any
+
+  it('every advertised tool has a dispatch handler', async () => {
+    for (const name of TOOL_NAMES) {
+      const result = await callTool(name, {}, ctx)
+      expect(result).toBeTypeOf('object')
+      expect(Array.isArray(result.content)).toBe(true)
+    }
+  })
+
+  it('unknown tool names reject', async () => {
+    await expect(callTool('does_not_exist', {}, ctx)).rejects.toThrow(/Unknown tool/)
   })
 })

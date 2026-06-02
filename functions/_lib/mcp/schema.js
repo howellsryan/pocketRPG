@@ -19,6 +19,10 @@ Getting oriented:
 Acting:
 - buy_item, skip_hour and skip_slayer_task spend the player's coins/credits and
   take effect server-side — confirm intent before calling them.
+- Trading post: search_market to price items, my_offers to see open offers,
+  place_offer (buy/sell on the order book), cancel_offer/collect_offer/
+  instant_sell_offer to manage them, and sell_item to sell general items at
+  shop value. The trading post is blocked for ironman characters and during PvP.
 - XP, coins and most loot are client-computed in this game, so these tools
   cannot simulate live training or combat yet; report state and take only the
   supported actions. Prefer concrete, checkable advice grounded in get_* reads.`
@@ -145,6 +149,93 @@ export const TOOL_SCHEMAS = [
     description: "Spend 1 credit to skip the character's current slayer task. Debits the credit server-side.",
     inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
     annotations: WRITE('Skip slayer task'),
+  },
+  {
+    name: 'search_market',
+    description:
+      'Look up trading-post market data (best bid, best ask, quantity listed) for up to 50 items by id. Read-only.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        item_ids: { type: 'array', items: { type: 'string' }, minItems: 1, maxItems: 50, description: 'Item ids to price.' },
+      },
+      required: ['item_ids'],
+      additionalProperties: false,
+    },
+    annotations: READ('Search market'),
+  },
+  {
+    name: 'my_offers',
+    description: "List a character's open and awaiting-collection trading-post offers, with the max slot count.",
+    inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
+    annotations: READ('My offers'),
+  },
+  {
+    name: 'place_offer',
+    description:
+      'Place a trading-post buy or sell offer on the order book. Escrows the coins (buy) or items (sell) and matches against the book. Blocked for ironman characters and during PvP.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        offer_type: { type: 'string', enum: ['buy', 'sell'] },
+        item_id: { type: 'string' },
+        price: { type: 'integer', minimum: 1, description: 'Coins per item.' },
+        quantity: { type: 'integer', minimum: 1 },
+        ...optionalCharacterId,
+      },
+      required: ['offer_type', 'item_id', 'price', 'quantity'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Place offer'),
+  },
+  {
+    name: 'cancel_offer',
+    description: 'Cancel an active trading-post offer, returning escrowed items/coins and any pending fills to the character.',
+    inputSchema: {
+      type: 'object',
+      properties: { offer_id: { type: 'integer', minimum: 1 }, ...optionalCharacterId },
+      required: ['offer_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Cancel offer'),
+  },
+  {
+    name: 'collect_offer',
+    description: "Collect a trading-post offer's pending coins/items into the character's save.",
+    inputSchema: {
+      type: 'object',
+      properties: { offer_id: { type: 'integer', minimum: 1 }, ...optionalCharacterId },
+      required: ['offer_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Collect offer'),
+  },
+  {
+    name: 'instant_sell_offer',
+    description: "Convert an active sell offer's remaining quantity to an immediate payout at the 80% instant-sell rate.",
+    inputSchema: {
+      type: 'object',
+      properties: { offer_id: { type: 'integer', minimum: 1 }, ...optionalCharacterId },
+      required: ['offer_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Instant-sell offer'),
+  },
+  {
+    name: 'sell_item',
+    description:
+      "Immediately sell general-store-tier items from a character's inventory at their shop value for coins (no order book). Boss/raid/clue uniques must use place_offer instead.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        item_id: { type: 'string' },
+        quantity: { type: 'integer', minimum: 1 },
+        ...optionalCharacterId,
+      },
+      required: ['item_id', 'quantity'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Sell item'),
   },
 ]
 

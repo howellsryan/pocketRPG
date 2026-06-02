@@ -39,18 +39,21 @@ Context + read. Mostly reading `src/data/*.json` and the save.
 - [ ] Follow-ups: `get_equipment` detail with bonuses, `get_slayer_task`,
       drop-table-by-item ("where does X drop?"), quest/skill requirement checks.
 
-## Phase B — Wire existing server-authoritative actions (T2)
+## Phase B — Wire existing server-authoritative actions (T2) — done
 
-Thin bridge tools over endpoints that already exist:
+Thin bridge tools over endpoints that already exist. Risk low — they enforce
+auth/ownership/PvP-lock/ironman/audit/save-revision server-side.
 
-- Trading post: `list_offer`, `cancel_offer`, `collect_offer`, `instant_sell`,
-  `my_offers`, `search_market` (`functions/api/trading-post/*`).
-- Reward claims: clue / minigame / monster / raid / dungeoneering completion
-  endpoints (`functions/api/actions/**`) and `claim_idle_rewards`
-  (`functions/api/actions/idle/claim.js`).
-- `reset_one_life` (`functions/api/characters/reset-one-life.js`).
-
-Risk: low — these already enforce auth/locks/RNG/audit server-side.
+- [x] Trading post: `search_market`, `my_offers`, `place_offer`, `cancel_offer`,
+      `collect_offer`, `instant_sell_offer`, `sell_item`
+      (`functions/api/trading-post/*`). Results enriched with item names.
+- Deferred deliberately:
+  - Reward-claim/completion endpoints (`functions/api/actions/**`) are
+    nonce-bound to a completion event the *client* computed — not meaningfully
+    agent-callable on their own. They become Phase C/D where the **server**
+    simulates the completion and grants the loot.
+  - `claim_idle_rewards` likewise needs server-derived idle rates → Phase C.
+  - `reset_one_life` is an account-reset footgun; left out of the agent surface.
 
 ## Phase C — Play via the engine (T3)
 
