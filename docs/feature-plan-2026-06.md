@@ -151,6 +151,46 @@ Medium–high (server endpoint + store rules + UI + economy). Files: `functions/
 
 ---
 
+## Feature 6 — Re-add the Magic skilling screen (dedicated screen)
+
+### Root cause / current state
+There is **no `MagicScreen` in git history** (repo history is a single squashed root commit), but Magic is **UI-orphaned**: all engine + data are intact, yet nothing routes to Magic skilling.
+
+What still exists (no changes needed — verify only):
+- **Engine**: `src/engine/runes.js` (`hasRequiredRunes`, `getRunesToConsume`, elemental-staff handling), Magic idle logic in `src/engine/idleEngine.js` (alchemy ~201–298, superheat, enchant, utility spells, rune consumption ~183/240), `src/engine/skipPreflight.js` (rune checks ~80–86, alchemy selection ~86–91), combat magic in `src/engine/combat.js`.
+- **Data**: `src/data/skills.json` `magic` actions (`curse`, `high_alch`, `superheat`, `enchant_sapphire/ruby/diamond/dragonstone`), `src/data/spells.json` (combat spells), all rune items + elemental staffs in `src/data/items.json`.
+
+Why it's unreachable:
+- Magic is in `COMBAT_SKILLS` (`src/utils/constants.js:41`), so it's excluded from `SkillingScreen`'s `trainableSkills` (GATHERING + PRODUCTION only, `SkillingScreen.jsx` ~29–33).
+- Not in `SPECIAL_SKILLS`, no `SCREENS.MAGIC`, no `navTabs` entry, no `renderScreen` case, not in `build_single.cjs`.
+- No dangling references to a removed component, so re-adding adds new wiring rather than repairing broken links — low breakage risk.
+
+### Implementation (dedicated screen — chosen)
+1. **Create `src/screens/MagicScreen.jsx`** — model on `ConstructionScreen.jsx`/`AgilityScreen.jsx`. Responsibilities:
+   - Read `magic` actions from `skills.json`; gate by level.
+   - **Rune display + cost check** via `runes.js` (`hasRequiredRunes`/`getRunesToConsume`), accounting for equipped elemental staffs.
+   - **Action types**: alchemy (needs an **item picker** for which item to High Alch — reuse the existing `selectedAlchemyItem` shape already consumed by `idleEngine.js`), superheat (materials + runes → bar), enchant (jewellery → enchanted), utility (curse).
+   - Drive idle/active training through the **same engine entry points** the idle loop already uses — do not fork the consumption math. The screen sets the active action/selection; the engine consumes runes/materials and grants XP.
+   - **Noted items**: alchemy already supports noted via `idleEngine`; keep the un-noted-first behavior consistent if Feature 4's helper lands first.
+2. **`src/utils/constants.js`**: add `MAGIC: 'magic'` to `SCREENS`.
+3. **`build_single.cjs`**: add `'screens/MagicScreen.js'` to **both** `sourceFiles` **and** `GAME_CHUNK_FILES` (it's an in-game screen), following the existing ordering convention (group near other skilling screens). Keep top-level names globally unique; `npm run check:single` must pass.
+4. **`src/App.jsx` `renderScreen`** (~2060–2081): add `case SCREENS.MAGIC: return <MagicScreen .../>` mirroring the Construction delegation (pass `initialActionId`, `idleResult`, `onNavigate`).
+5. **Navigation entry**: add a Magic entry so players can reach it. Two routes — pick during impl to match UX:
+   - Add to `SkillingScreen`'s `SPECIAL_SKILLS` so the Skills tab shows a Magic tile that delegates to `MagicScreen` (consistent with Construction/Agility/etc. — **preferred**, keeps Magic under the Skills hub), **or**
+   - Add a top-level `navTabs.js` entry. Avoid doing both (duplicate access). Recommended: `SPECIAL_SKILLS` delegation only.
+6. **Skip-hour / idle**: confirm `skipPreflight.js` already validates magic rune/alchemy selection (it does) so skip-hour and offline catch-up work for the newly-reachable actions. No new server work (client-authoritative skilling, §14).
+
+### Tests
+- Magic appears in the skill picker and routes to `MagicScreen` without console errors.
+- Each action type: sufficient runes → action succeeds, runes consumed (incl. elemental-staff discount); insufficient runes → blocked.
+- Alchemy item-picker selection flows into the engine and consumes the correct noted/un-noted item.
+- `npm run check:single` passes (no duplicate top-level identifiers across core + chunk).
+
+### Risk / files
+Low (additive UI/routing; engine untouched). Files: new `src/screens/MagicScreen.jsx`, `src/utils/constants.js`, `build_single.cjs`, `src/App.jsx`, `src/screens/SkillingScreen.jsx` (delegation), tests. **No engine/data changes.**
+
+---
+
 ## Cross-cutting notes
 - **Commit gate** before every commit/push (see top). Don't commit generated root `index.html` in normal changes; it's a build artifact.
 - **Single-file build**: any new shared helper must keep globally-unique top-level names; run `npm run check:single`. No new in-game screens are introduced here, so `GAME_CHUNK_FILES` is unaffected.
