@@ -72,4 +72,38 @@ describe('detectProtectedDelta', () => {
 
     expect(detectProtectedDelta(previousSave, nextSave, itemsData)).toEqual([])
   })
+
+  it('does not flag raid uniques granted server-authoritatively (Crimson Night Theatre)', () => {
+    // Scythe of Vythar is a Crimson Night Theatre unique with a 300M shopValue,
+    // so isProtectedItem flags it — but it is granted by the raid-complete
+    // endpoint and rides along in routine saves, so it must be exempt.
+    const previousSave = { inventory: [], bank: {} }
+    const nextSave = { inventory: [{ itemId: 'scythe_of_vythar', quantity: 1 }], bank: {} }
+    const itemsData = { scythe_of_vythar: { id: 'scythe_of_vythar', shopValue: 300_000_000 } }
+
+    expect(detectProtectedDelta(previousSave, nextSave, itemsData)).toEqual([])
+  })
+
+  it('exempts every Crimson Night Theatre unique from the protected-delta guard', () => {
+    const raidUniques = [
+      'avernal_defender', 'ghraxis_rapier', 'sanguine_staff',
+      'justicar_faceguard', 'justicar_chestguard', 'justicar_legguards', 'scythe_of_vythar',
+    ]
+    const itemsData = Object.fromEntries(raidUniques.map(id => [id, { id, shopValue: 100_000_000 }]))
+    for (const itemId of raidUniques) {
+      const previousSave = { inventory: [], bank: {} }
+      const nextSave = { inventory: [{ itemId, quantity: 1 }], bank: {} }
+      expect(detectProtectedDelta(previousSave, nextSave, itemsData)).toEqual([])
+    }
+  })
+
+  it('still flags a protected item with no server-authoritative reward source', () => {
+    // Sanity check that the exemption did not become a blanket pass — a high
+    // value item that is not in any reward table is still rejected.
+    const previousSave = { inventory: [] }
+    const nextSave = { inventory: [{ itemId: 'totally_made_up_item', quantity: 1 }] }
+    const itemsData = { totally_made_up_item: { id: 'totally_made_up_item', shopValue: 50_000_000 } }
+
+    expect(detectProtectedDelta(previousSave, nextSave, itemsData)).toEqual(['totally_made_up_item'])
+  })
 })

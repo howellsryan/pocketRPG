@@ -2,6 +2,9 @@ import { isProtectedItem } from './rewards.js'
 import { getTotalLevelFromSave } from '../saveSummary.js'
 import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
 import cluesData from '../../../src/data/clues.json' assert { type: 'json' }
+import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
+import minigamesData from '../../../src/data/minigames.json' assert { type: 'json' }
+import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
 
 const MONSTER_DROP_ITEMS = new Set(
   Object.values(monstersData || {}).flatMap(monster => (monster?.drops || []).map(drop => drop?.itemId)).filter(Boolean)
@@ -9,10 +12,41 @@ const MONSTER_DROP_ITEMS = new Set(
 const CLUE_REWARD_ITEMS = new Set(
   Object.values(cluesData || {}).flatMap(clue => (clue?.rewards || []).map(reward => reward?.itemId)).filter(Boolean)
 )
+// Raid rewards (both the guaranteed "always" table and the unique drop pool) are
+// granted server-authoritatively by /api/actions/raid/complete, which mutates
+// the save and persists the item before returning. The granted item then rides
+// along in every subsequent routine /api/save PUT, so it MUST be exempt from the
+// protected-delta guard — otherwise the first autosave after a raid unique drop
+// (e.g. Crimson Night Theatre's Scythe of Vythar) is rejected as a forged
+// delta and the save wedges. Mirrors the monster-drop / clue-reward exemptions.
+const RAID_REWARD_ITEMS = new Set(
+  Object.values(raidsData || {}).flatMap(raid => [
+    ...((raid?.rewards?.always || []).map(reward => reward?.itemId)),
+    ...((raid?.rewards?.unique?.items || []).map(reward => reward?.itemId)),
+  ]).filter(Boolean)
+)
+// Minigame rewards (task product + bonus rewardItems) and dungeoneering reward
+// products share the same server-authoritative grant-then-save pattern as raids,
+// so they get the same exemption to avoid the identical wedge.
+const MINIGAME_REWARD_ITEMS = new Set(
+  (minigamesData?.tasks || []).flatMap(task => [
+    task?.product,
+    ...(Array.isArray(task?.rewardItems) ? task.rewardItems : []),
+  ]).filter(Boolean)
+)
+const DUNGEONEERING_REWARD_ITEMS = new Set(
+  ((skillsData?.dungeoneering?.actions) || [])
+    .filter(action => action?.category === 'reward' && typeof action?.product === 'string')
+    .map(action => action.product)
+)
 
 function isProtectedDeltaExempt(itemId) {
   if (!itemId) return true
-  return MONSTER_DROP_ITEMS.has(itemId) || CLUE_REWARD_ITEMS.has(itemId)
+  return MONSTER_DROP_ITEMS.has(itemId)
+    || CLUE_REWARD_ITEMS.has(itemId)
+    || RAID_REWARD_ITEMS.has(itemId)
+    || MINIGAME_REWARD_ITEMS.has(itemId)
+    || DUNGEONEERING_REWARD_ITEMS.has(itemId)
 }
 
 function addQuantity(map, itemId, quantity) {

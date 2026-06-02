@@ -4,11 +4,16 @@ import { subtractCoins } from '../functions/_lib/game/economy.js'
 import { addItemToInventory } from '../functions/_lib/game/inventory.js'
 
 describe('server authority helpers', () => {
-  it('flags protected item inventory increases', () => {
+  it('flags protected item inventory increases with no reward source', () => {
+    // Uses a fabricated item id that belongs to no monster/raid/clue/minigame/
+    // dungeoneering reward table, so it has no server-authoritative grant path
+    // and a plain-save increase is a forged delta. (Items that DO have a grant
+    // path — e.g. raid uniques like dragon_claws — are exempt; see
+    // saveValidationProtectedDelta.test.ts.)
     const prev = { inventory: [{ id: 'bronze_sword', quantity: 1 }] }
-    const next = { inventory: [{ id: 'bronze_sword', quantity: 1 }, { id: 'dragon_claws', quantity: 1 }] }
-    const items = { dragon_claws: { isBossUnique: true } }
-    expect(detectProtectedDelta(prev, next, items)).toEqual(['dragon_claws'])
+    const next = { inventory: [{ id: 'bronze_sword', quantity: 1 }, { id: 'forged_unique', quantity: 1 }] }
+    const items = { forged_unique: { isBossUnique: true } }
+    expect(detectProtectedDelta(prev, next, items)).toEqual(['forged_unique'])
   })
 
   it('rejects insufficient coins', () => {
