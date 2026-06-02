@@ -213,7 +213,7 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
 
 function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
-    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef } = useGame()
+    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -1154,16 +1154,17 @@ function GameApp() {
       }
 
       setCloudPhase('ready')
+      // Kick off KC fetch in parallel with checkSave to minimise the window
+      // where KC is missing from the first render. The result is merged via
+      // max(local, server) so a transient empty response never zeros local KC.
+      const kcPromise = fetchKillCounts()
       await checkSave()
       // Pull collection log alongside the save. Fire-and-forget — UI shows a
       // loading state until cache populates.
       fetchCollectionLog({ force: true }).catch(() => {})
-      // Pull server-authoritative kill counts (kill_counts table) and let them
-      // replace the local cache — the server is the source of truth.
-      fetchKillCounts().then(server => {
+      kcPromise.then(server => {
         if (!server) return
-        updateBossKillCounts(server.bossKillCounts)
-        updateRaidKillCounts(server.raidKillCounts)
+        syncServerKillCounts(server.bossKillCounts, server.raidKillCounts)
       }).catch(() => {})
     } catch (err) {
       console.warn('[PocketRPG] Cloud init failed:', err)

@@ -746,6 +746,27 @@ export function GameProvider({ children }) {
     saveSetting('raidKillCounts', counts)
   }, [])
 
+  // Merges server-authoritative KC into local state using max(local, server) per
+  // id. This prevents a transient empty server response from zeroing local KC.
+  const syncServerKillCounts = useCallback((serverBoss, serverRaid) => {
+    setBossKillCountsState(prev => {
+      const merged = { ...prev }
+      for (const [id, count] of Object.entries(serverBoss || {})) {
+        merged[id] = Math.max(merged[id] || 0, count)
+      }
+      saveSetting('bossKillCounts', merged)
+      return merged
+    })
+    setRaidKillCountsState(prev => {
+      const merged = { ...prev }
+      for (const [id, count] of Object.entries(serverRaid || {})) {
+        merged[id] = Math.max(merged[id] || 0, count)
+      }
+      saveSetting('raidKillCounts', merged)
+      return merged
+    })
+  }, [])
+
   const updateFarming = useCallback((farmingState) => {
     setFarmingState(farmingState)
     saveSetting('farming', farmingState)
@@ -928,6 +949,7 @@ export function GameProvider({ children }) {
     activeCombatSpell, updateActiveCombatSpell,
     bossKillCounts, updateBossKillCounts,
     raidKillCounts, updateRaidKillCounts,
+    syncServerKillCounts,
     farming, updateFarming,
     completedQuests, completeQuest,
     unlockedMinigameItems, unlockMinigameItem,
