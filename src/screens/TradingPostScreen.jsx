@@ -576,6 +576,11 @@ export default function TradingPostScreen({ onBuyCredits }) {
                   : `${(generalStoreSellPrice(selected) * qty).toLocaleString()} gp`)}
           </span>
         </Panel>
+        {!orderBook && isBuy && (
+          <div class="text-[10px] text-[#888] -mt-1">
+            General store buys cost {GENERAL_BUY_MULTIPLIER}× the item's shop value ({generalStoreBuyPrice(selected).toLocaleString()} gp each).
+          </div>
+        )}
         <div class="flex gap-2">
           <Button variant="secondary" size="lg" onClick={closeModal} className="flex-1">Cancel</Button>
           <Button
