@@ -833,7 +833,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                 updateBossKillCounts(updated)
               }
               if (res?.save?.save_data) {
-                await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
+                await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt, res.save.save_revision)
               }
               setLootModal({
                 monster: defeatedMonsterData,
@@ -1045,7 +1045,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
         updateRaidKillCounts(updated)
       }
       if (res?.save?.save_data) {
-        await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
+        await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt, res.save.save_revision)
       }
       setLootModal({
         monster,

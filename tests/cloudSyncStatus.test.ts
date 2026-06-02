@@ -158,6 +158,21 @@ describe('cloud sync save status events', () => {
     expect(ok).toBe(false)
   })
 
+  it('adopts the server save_revision from a completion so the next push is not a stale write', async () => {
+    putSaveMock.mockResolvedValue({ updatedAt: 222, save_revision: 9 })
+    const sync = await import('../src/cloud/sync.js')
+
+    // An action completion (raid/boss/clue/skip) wrote the save server-side and
+    // returned its authoritative revision. Without adopting it the client keeps
+    // revision 0 and the next save is rejected 409 save_revision_conflict.
+    await sync.applyCloudSave({ player: { name: 'Hero' } }, 100, 8)
+
+    const ok = await sync.pushNow({ player: { name: 'Hero' } })
+    expect(ok).toBe(true)
+    expect(putSaveMock).toHaveBeenCalledTimes(1)
+    expect(putSaveMock.mock.calls[0][1].saveRevision).toBe(8)
+  })
+
   it('critical saves still coalesce before a single push', async () => {
     putSaveMock.mockResolvedValue({ updatedAt: 77 })
     const sync = await import('../src/cloud/sync.js')

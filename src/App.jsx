@@ -260,7 +260,7 @@ function GameApp() {
       actionNonce: `minigame:${task.id}:${Date.now()}`,
     })
     if (res?.save?.save_data) {
-      await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
+      await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt, res.save.save_revision)
       await loadGame()
     }
   }
