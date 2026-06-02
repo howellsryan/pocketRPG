@@ -208,7 +208,7 @@ class PvpCombatErrorBoundary extends Component {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef } = useGame()
   const pvp = usePvp()
   const [showPvpLobby, setShowPvpLobby] = useState(false)
 
@@ -784,61 +784,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           }
 
           if (cloudAuthoritativeRaid) {
-            setLootModal({
-              monster: defeatedMonsterData,
-              loot: [],
-              slayerXpGained,
-              isBossKill: isDefeatedBoss,
-              raidId,
-              loading: true
-            })
-            void api.completeRaid(raidId, {
-              actionNonce: `raid:${raidId}:${Date.now()}`,
-            }).then(async (res) => {
-              const granted = Array.isArray(res?.granted) ? res.granted : []
-              if (granted.length > 0) {
-                const newInv = [...inventoryRef.current]
-                const newBank = { ...(bankRef.current || {}) }
-                for (const reward of granted) {
-                  const itemId = reward?.itemId
-                  const quantity = Math.floor(Number(reward?.quantity) || 0)
-                  if (!itemId || quantity < 1) continue
-                  const item = itemsData[itemId]
-                  if (reward?.destination === 'bank') {
-                    const existing = newBank[itemId]
-                    const existingQty = Math.floor(Number(existing?.quantity ?? existing) || 0)
-                    newBank[itemId] = { itemId, quantity: existingQty + quantity }
-                  } else {
-                    addItem(newInv, itemId, quantity, item?.stackable || false)
-                  }
-                }
-                updateInventory(newInv)
-                inventoryRef.current = newInv
-                updateBank(newBank)
-                bankRef.current = newBank
-              }
-              applyServerCollectionLogEntries(res?.collectionLogEntries || [])
-              const serverRaidKc = res?.killCount
-              if (serverRaidKc?.sourceType === 'raids' && typeof serverRaidKc.killCount === 'number') {
-                const updated = { ...raidKillCountsRef.current, [serverRaidKc.sourceId]: serverRaidKc.killCount }
-                raidKillCountsRef.current = updated
-                updateRaidKillCounts(updated)
-              }
-              if (res?.save?.save_data) {
-                await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
-              }
-              setLootModal({
-                monster: defeatedMonsterData,
-                loot: granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity })),
-                slayerXpGained,
-                isBossKill: isDefeatedBoss,
-                raidId,
-                loading: false
-              })
-            }).catch((err) => {
-              setLootModal(null)
-              addToast(`Raid claim failed: ${err?.message || 'server_error'}`, 'error')
-            })
+            void claimRaidCompletion({ raidId, monster: defeatedMonsterData, slayerXpGained, isBossKill: isDefeatedBoss })
           } else if (cloudAuthoritativeMonster) {
             setLootModal({
               monster: defeatedMonsterData,
@@ -1061,20 +1007,93 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     setActiveTask({ type: 'combat', monster, stance: combatStance, bankingEnabled: true, spell: spell || null })
   }
 
-  // Loot-modal "skip" — re-arm the fight (or raid) and immediately trigger the
-  // same skip the top-nav uses, so the player can chain skips without manually
-  // clicking Fight Again then Skip 1h each time.
-  const skipAgain = () => {
+  // Claim one full-raid reward roll from the server (the legitimate grant path)
+  // and surface it in the loot modal. Used both when a raid is completed live
+  // and when the player skips an entire raid from the loot modal — a skip just
+  // re-rolls another complete reward rather than re-simulating every boss.
+  const claimRaidCompletion = async ({ raidId, monster, slayerXpGained = 0, isBossKill = false }) => {
+    setLootModal({ monster, loot: [], slayerXpGained, isBossKill, raidId, loading: true })
+    try {
+      const res = await api.completeRaid(raidId, { actionNonce: `raid:${raidId}:${Date.now()}` })
+      const granted = Array.isArray(res?.granted) ? res.granted : []
+      if (granted.length > 0) {
+        const newInv = [...inventoryRef.current]
+        const newBank = { ...(bankRef.current || {}) }
+        for (const reward of granted) {
+          const itemId = reward?.itemId
+          const quantity = Math.floor(Number(reward?.quantity) || 0)
+          if (!itemId || quantity < 1) continue
+          const item = itemsData[itemId]
+          if (reward?.destination === 'bank') {
+            const existing = newBank[itemId]
+            const existingQty = Math.floor(Number(existing?.quantity ?? existing) || 0)
+            newBank[itemId] = { itemId, quantity: existingQty + quantity }
+          } else {
+            addItem(newInv, itemId, quantity, item?.stackable || false)
+          }
+        }
+        updateInventory(newInv)
+        inventoryRef.current = newInv
+        updateBank(newBank)
+        bankRef.current = newBank
+      }
+      applyServerCollectionLogEntries(res?.collectionLogEntries || [])
+      const serverRaidKc = res?.killCount
+      if (serverRaidKc?.sourceType === 'raids' && typeof serverRaidKc.killCount === 'number') {
+        const updated = { ...raidKillCountsRef.current, [serverRaidKc.sourceId]: serverRaidKc.killCount }
+        raidKillCountsRef.current = updated
+        updateRaidKillCounts(updated)
+      }
+      if (res?.save?.save_data) {
+        await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt)
+      }
+      setLootModal({
+        monster,
+        loot: granted.map(reward => ({ itemId: reward.itemId, quantity: reward.quantity })),
+        slayerXpGained,
+        isBossKill,
+        raidId,
+        loading: false
+      })
+    } catch (err) {
+      setLootModal(null)
+      addToast(`Raid claim failed: ${err?.message || 'server_error'}`, 'error')
+    }
+  }
+
+  // Loot-modal "skip". For a raid, skip the ENTIRE raid: charge the raid's
+  // skipCost server-side, then re-roll one complete raid reward (no per-boss
+  // re-simulation). For a single boss/monster, re-arm the fight and trigger the
+  // same skip the top-nav uses (boss instant-kill or 1-hour idle skip), so the
+  // player can chain skips without manually clicking Fight Again then Skip.
+  const skipAgain = async () => {
     const modal = lootModal
     if (!modal || modal.loading) return
-    setLootModal(null)
+
     if (modal.raidId) {
-      const raid = raidsData[modal.raidId]
-      if (raid) startRaid(raid)
-    } else {
-      const original = monstersData[modal.monster.id]
-      if (original) continueFight(original)
+      const charge = chargeSkipRef?.current
+      if (!charge) return
+      setLootModal({ ...modal, loading: true })
+      try {
+        await charge({ raidId: modal.raidId })
+      } catch (err) {
+        setLootModal(modal)
+        if (err?.status === 402) addToast('Not enough credits to skip this raid.', 'error')
+        else addToast(err?.message || 'Error during skip!', 'error')
+        return
+      }
+      await claimRaidCompletion({
+        raidId: modal.raidId,
+        monster: modal.monster,
+        slayerXpGained: modal.slayerXpGained || 0,
+        isBossKill: modal.isBossKill,
+      })
+      return
     }
+
+    setLootModal(null)
+    const original = monstersData[modal.monster.id]
+    if (original) continueFight(original)
     skipHourHandlerRef?.current?.()
   }
 
@@ -2697,10 +2716,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             <button
               onClick={skipAgain}
               class="flex items-center gap-1 px-2 py-1 rounded-full bg-[#2a2010] border border-[var(--color-gold-dim)] hover:border-[var(--color-gold)] transition-colors text-[11px] font-semibold text-[var(--color-gold-light)] whitespace-nowrap"
-              title={lootModal.raidId ? 'Raid again and skip automatically (requires 1 credit)' : 'Fight again and skip automatically (requires 1 credit)'}
+              title={lootModal.raidId
+                ? `Skip the entire raid (costs ${raidsData[lootModal.raidId]?.skipCost ?? 1} credit${(raidsData[lootModal.raidId]?.skipCost ?? 1) === 1 ? '' : 's'})`
+                : 'Fight again and skip automatically'}
             >
               <span>⏭️</span>
-              <span>Skip</span>
+              <span>{lootModal.raidId ? `Skip raid (${raidsData[lootModal.raidId]?.skipCost ?? 1})` : 'Skip'}</span>
             </button>
           )}
           onClose={() => setLootModal(null)}

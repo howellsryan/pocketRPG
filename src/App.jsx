@@ -212,7 +212,7 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
 
 function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
-    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts, combatSkipHandlerRef, skipHourHandlerRef } = useGame()
+    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef } = useGame()
   const pvp = usePvp()
   const [screen, setScreen] = useState(SCREENS.HOME)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -1961,6 +1961,16 @@ function GameApp() {
   // Expose the skip handler so the combat loot modal can trigger another skip.
   // Reassigned every render to keep the latest closure (state/credits) fresh.
   if (skipHourHandlerRef) skipHourHandlerRef.current = handleSkip1h
+
+  // Charge a server-authoritative skip (e.g. full-raid skip) and keep the
+  // header credits display in sync. Throws on failure (e.g. 402) so the caller
+  // can surface the error without spending; the loot grant is the caller's job.
+  async function chargeSkipCredits(body = {}) {
+    const result = await api.skipHour(body)
+    setCredits(result?.credits_remaining ?? credits)
+    return result
+  }
+  if (chargeSkipRef) chargeSkipRef.current = chargeSkipCredits
 
   // Cloud conflict modal — shown while cloudPhase is still resolving
   if (conflict) {

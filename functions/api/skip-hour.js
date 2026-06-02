@@ -2,13 +2,21 @@ import { requireAuth, json } from '../_lib/auth.js'
 import { assertNotInActiveMatch } from '../_lib/pvp.js'
 import { auditLog } from '../_lib/game/audit.js'
 import monstersData from '../../src/data/monsters.json' assert { type: 'json' }
+import raidsData from '../../src/data/raids.json' assert { type: 'json' }
 
-// Server-authoritative skip cost. A boss/raid instant-kill skip costs the
-// monster's `skipCost` (defaults to 1); a normal 1-hour skip costs 1.
-function resolveSkipCost(bossId) {
-  if (!bossId || typeof bossId !== 'string') return 1
-  const cost = monstersData[bossId]?.skipCost
-  return Number.isFinite(cost) && cost > 0 ? Math.floor(cost) : 1
+// Server-authoritative skip cost. A boss instant-kill skip costs the monster's
+// `skipCost`; a full-raid skip costs the raid's `skipCost` (its bosses plus any
+// additional forms); a normal 1-hour skip costs 1. All default to 1 credit.
+function resolveSkipCost({ bossId, raidId } = {}) {
+  if (raidId && typeof raidId === 'string') {
+    const cost = raidsData[raidId]?.skipCost
+    return Number.isFinite(cost) && cost > 0 ? Math.floor(cost) : 1
+  }
+  if (bossId && typeof bossId === 'string') {
+    const cost = monstersData[bossId]?.skipCost
+    return Number.isFinite(cost) && cost > 0 ? Math.floor(cost) : 1
+  }
+  return 1
 }
 
 export async function onRequestPost({ request, env }) {
@@ -20,7 +28,7 @@ export async function onRequestPost({ request, env }) {
 
   let body = {}
   try { body = await request.json() } catch { body = {} }
-  const cost = resolveSkipCost(body?.bossId)
+  const cost = resolveSkipCost({ bossId: body?.bossId, raidId: body?.raidId })
 
   try {
     const character = await env.DB.prepare(
@@ -49,6 +57,7 @@ export async function onRequestPost({ request, env }) {
       identityId: auth.identity.id,
       cost,
       bossId: body?.bossId || null,
+      raidId: body?.raidId || null,
       credits_remaining: debit.credits_remaining ?? 0,
     }, { swallow: true })
 
