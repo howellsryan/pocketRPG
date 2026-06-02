@@ -10,7 +10,7 @@
       "muttadile",
       "the_great_olm"
     ],
-    "skipCost": 5,
+    "skipCost": 10,
     "rewards": {
       "always": [
         {
@@ -127,7 +127,7 @@
       "xarpus",
       "verzik_vitur"
     ],
-    "skipCost": 8,
+    "skipCost": 10,
     "rewards": {
       "always": [
         {
@@ -228,7 +228,7 @@
       "torvek_the_corrupted",
       "verin_the_defiled"
     ],
-    "skipCost": 6,
+    "skipCost": 2,
     "rewards": {
       "always": [
         {
@@ -379,7 +379,7 @@
       "muttadile",
       "the_great_olm"
     ],
-    "skipCost": 5,
+    "skipCost": 10,
     "rewards": {
       "always": [
         {
@@ -496,7 +496,7 @@
       "xarpus",
       "verzik_vitur"
     ],
-    "skipCost": 8,
+    "skipCost": 10,
     "rewards": {
       "always": [
         {
@@ -597,7 +597,7 @@
       "torvek_the_corrupted",
       "verin_the_defiled"
     ],
-    "skipCost": 6,
+    "skipCost": 2,
     "rewards": {
       "always": [
         {

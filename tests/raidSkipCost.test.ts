@@ -9,9 +9,9 @@ import { signJWT } from '../functions/_lib/jwt.js'
 describe('raid skip cost data', () => {
   it('charges the agreed full-raid skip costs', () => {
     const r = raids as Record<string, any>
-    expect(r.crimson_night_theatre.skipCost).toBe(8)
-    expect(r.vaults_of_xyren.skipCost).toBe(5)
-    expect(r.cryptbound_champions.skipCost).toBe(6)
+    expect(r.crimson_night_theatre.skipCost).toBe(10)
+    expect(r.vaults_of_xyren.skipCost).toBe(10)
+    expect(r.cryptbound_champions.skipCost).toBe(2)
   })
 
   it('keeps legacy raid aliases in sync with their canonical raid', () => {
@@ -79,7 +79,7 @@ describe('POST /api/skip-hour cost resolution', () => {
     })
     expect(res.status).toBe(200)
     const body = await res.json() as any
-    expect(body.cost).toBe(8)
+    expect(body.cost).toBe(10)
     expect(body.credits_remaining).toBe(92)
   })
 
