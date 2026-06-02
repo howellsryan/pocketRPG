@@ -9,6 +9,7 @@ import HPBar from '../components/HPBar.jsx'
 import IdleCombatSetupModal from '../components/IdleCombatSetupModal.jsx'
 import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
 import ItemSlot from '../components/ItemSlot.jsx'
+import GameIcon from '../components/GameIcon.jsx'
 import CombatMobileSelect from './CombatMobileSelect.jsx'
 import { CombatMonsterInfoSheet, CombatRaidInfoSheet } from './CombatMobileSheets.jsx'
 import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
@@ -2819,7 +2820,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                   return (
                     <div key={idx} class={`rounded-lg p-3 flex items-center justify-between ${isHighValue ? 'bg-purple-900 bg-opacity-30 border border-purple-500' : 'bg-[#111]'}`}>
                       <div class="flex items-center gap-2">
-                        <span class="text-2xl">{item?.icon || '📦'}</span>
+                        <GameIcon item={item} size={28} />
                         <div>
                           <div class={`text-sm font-semibold ${isHighValue ? 'text-purple-300' : 'text-[var(--color-parchment)]'}`}>
                             {item?.name || drop.itemId}
