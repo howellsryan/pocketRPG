@@ -67,13 +67,20 @@ intent → writeSave → audit). Throw-before-write gives atomicity.
       `withdraw_from_bank`, `equip_item`, `unequip_item`. Reuse the proven
       `game/inventory.js` helpers + engine `equipment.js`; enforce 28-slot cap
       and skill/quest equip requirements. Golden tests in `tests/mcpIntents.test.ts`.
-- [ ] **Increment 2 — idle activities (value):** `start_idle_task` + `claim`
-      with **server-derived** rates by running `idleEngine.js`
-      (`simulateIdleSkilling/Gather/Combat`) over the elapsed window, applying
-      XP/loot/supply-drain to the save. Replaces the current client-rate idle
-      claim. Add nonce-style replay protection on the claim.
-- [ ] **Increment 3 — `train_skill_session(skill, action, ticks)`** — bounded
-      deterministic `skilling.js` / `activityRunner.js` run.
+- [x] **Increment 2 — idle skilling (value):** `start_skilling`,
+      `get_active_activity`, `claim_activity`. Runs `simulateIdleSkilling` over
+      the elapsed window server-side and applies XP/loot/supply-drain to the
+      save (`applyIdleSkillResult` mirrors the client load-time application so
+      the two paths can't drift). Safe against double-grant because cloud
+      clients treat the server `character_idle_state` clock as authoritative and
+      resync from it; the claim resets `last_active_at`. Scoped to production
+      skills (smithing/cooking/crafting/fletching/herblore/runecraft/firemaking);
+      gathering/combat/agility/thieving/hunter idle still run in the client.
+      `start_skilling` auto-claims a pending supported task and refuses to clobber
+      an unsupported one. Golden tests in `tests/mcpIntents.test.ts`.
+- [ ] **Increment 3 — gathering + remaining idle types** (`simulateIdleGather`
+      for woodcutting/mining/fishing, then agility/thieving/hunter), and/or a
+      bounded `train_skill_session(skill, action, ticks)` primitive.
 - [ ] **Increment 4 — `do_quest_step`** — `quests.js` / `questIdleCascade.js`.
 
 ## Phase D — Full autoplayer (T3, heaviest)

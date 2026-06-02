@@ -4,7 +4,8 @@ import { getItem, getMonster, itemName, withItemName, REFERENCE_RESOURCES, readR
 import { loadCharacterWithSave, writeSave } from '../game/save.js'
 import { auditLog } from '../game/audit.js'
 import { assertNotInActiveMatch } from '../pvp.js'
-import { depositToBank, withdrawFromBank, equip, unequip } from './intents.js'
+import { depositToBank, withdrawFromBank, equip, unequip, buildSkillTask, runIdleSkilling, SKILL_IDLE_SKILLS } from './intents.js'
+import { getIdleRow, setIdleTask, resetIdleActiveAt } from './idle.js'
 
 // Reuse the exact production endpoint handlers (see bridge.js).
 import { onRequestGet as listCharacters } from '../../api/characters/index.js'
@@ -66,6 +67,32 @@ async function applySaveIntent({ env, authorization, identity }, characterIdArg,
   const write = await writeSave(env, id, saveObject, saveRevision)
   await auditLog(env, auditType, { characterId: id, identityId: identity.id, ...result }, { swallow: true })
   return ok({ characterId: id, ...result, save_revision: write.saveRevision })
+}
+
+const MAX_IDLE_MS = 24 * 60 * 60 * 1000
+const MIN_IDLE_MS = 2000
+
+// Claim a character's running idle skilling task: simulate the elapsed window
+// server-side, apply it to the save, then reset the idle clock. Only supported
+// production-skill tasks are claimed; anything else is left for the game client.
+async function claimIdleCore(env, characterId, identityId) {
+  const idle = await getIdleRow(env, characterId)
+  if (!idle || !idle.active_task) return { claimed: false, reason: 'no_active_task' }
+  let task
+  try { task = JSON.parse(idle.active_task) } catch { return { claimed: false, reason: 'bad_task' } }
+  if (task?.type !== 'skill' || !SKILL_IDLE_SKILLS.has(task.skill)) {
+    return { claimed: false, reason: 'unsupported_type', type: task?.type || 'unknown' }
+  }
+  const now = Date.now()
+  const elapsedMs = Math.max(0, Math.min(now - (Number(idle.last_active_at) || now), MAX_IDLE_MS))
+  if (elapsedMs < MIN_IDLE_MS) return { claimed: false, reason: 'too_soon', elapsedMs }
+
+  const { saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, identityId)
+  const result = runIdleSkilling(saveObject, task, elapsedMs)
+  if (!result.applied) return { claimed: false, reason: result.reason || 'no_progress', elapsedMs }
+  await writeSave(env, characterId, saveObject, saveRevision)
+  await resetIdleActiveAt(env, characterId, now)
+  return { claimed: true, elapsedMs, ...result }
 }
 
 const TOOLS = {
@@ -241,6 +268,65 @@ const TOOLS = {
 
   unequip_item({ slot, character_id }, ctx) {
     return applySaveIntent(ctx, character_id, (save) => unequip(save, slot), 'mcp_unequip_item')
+  },
+
+  // ── Idle activities (Phase C increment 2) ──────────────────────────────────
+
+  async get_active_activity({ character_id }, { env, authorization }) {
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const idle = await getIdleRow(env, id)
+    if (!idle || !idle.active_task) return ok({ characterId: id, active: null })
+    let task = null
+    try { task = JSON.parse(idle.active_task) } catch { /* leave null */ }
+    const runningForSeconds = Math.floor(Math.max(0, Date.now() - (Number(idle.last_active_at) || Date.now())) / 1000)
+    return ok({
+      characterId: id,
+      active: task && { type: task.type, skill: task.skill || null, action: task.action?.name || task.action?.id || null },
+      runningForSeconds,
+      claimableViaMcp: task?.type === 'skill' && SKILL_IDLE_SKILLS.has(task.skill),
+    })
+  },
+
+  async start_skilling({ skill, action_id, character_id }, { env, authorization, identity }) {
+    if (!identity?.id) throw new Error('Not authenticated.')
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const lock = await assertNotInActiveMatch(env, id)
+    if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+
+    // Bank any pending rewards from a current supported task before switching;
+    // refuse if an unsupported activity (combat/gather/…) is mid-flight so we
+    // never silently discard its progress.
+    const autoClaimed = await claimIdleCore(env, id, identity.id)
+    if (autoClaimed.reason === 'unsupported_type') {
+      throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
+    }
+
+    const { saveObject } = await loadCharacterWithSave(env, id, identity.id)
+    const task = buildSkillTask(saveObject, skill, action_id) // validates skill/action/level
+    const now = Date.now()
+    await setIdleTask(env, id, JSON.stringify(task), now)
+    await auditLog(env, 'mcp_start_skilling', { characterId: id, identityId: identity.id, skill, actionId: action_id }, { swallow: true })
+    return ok({
+      characterId: id,
+      started: { skill, action: task.action.name },
+      autoClaimed: autoClaimed.claimed ? autoClaimed : undefined,
+    })
+  },
+
+  async claim_activity({ character_id }, { env, authorization, identity }) {
+    if (!identity?.id) throw new Error('Not authenticated.')
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const lock = await assertNotInActiveMatch(env, id)
+    if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+    const result = await claimIdleCore(env, id, identity.id)
+    if (!result.claimed) {
+      if (result.reason === 'unsupported_type') {
+        return ok({ characterId: id, claimed: false, note: `The active ${result.type} activity must be claimed in the game client.` })
+      }
+      return ok({ characterId: id, claimed: false, reason: result.reason })
+    }
+    await auditLog(env, 'mcp_claim_activity', { characterId: id, identityId: identity.id, elapsedMs: result.elapsedMs, skill: result.skill }, { swallow: true })
+    return ok({ characterId: id, ...result })
   },
 }
 

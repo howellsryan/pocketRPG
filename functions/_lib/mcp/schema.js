@@ -3,7 +3,9 @@
 // `initialize`. Kept free of handler imports so it can be unit-tested cheaply.
 // The dispatch table in tools.js must expose exactly these names.
 
-import { EQUIP_SLOT_NAMES } from './intents.js'
+import { EQUIP_SLOT_NAMES, SKILL_IDLE_SKILLS } from './intents.js'
+
+const IDLE_SKILLS = [...SKILL_IDLE_SKILLS]
 
 // Server-level guidance surfaced to the model on connect (MCP `instructions`).
 export const SERVER_INSTRUCTIONS = `PocketRPG is a menu-driven idle/simulation fantasy RPG. These tools let you
@@ -28,6 +30,10 @@ Acting:
 - Inventory/gear: deposit_to_bank, withdraw_from_bank, equip_item and
   unequip_item move the character's own items around (no items are created).
   equip_item enforces the item's skill/quest requirements.
+- Idle skilling: start_skilling begins a production-skilling task that earns
+  XP/items over real time; get_active_activity shows what's running; claim_activity
+  banks the accrued rewards and keeps it going. Only production skills are
+  supported here — gathering/combat idle is still done in the game client.
 - XP, coins and most loot are client-computed in this game, so these tools
   cannot simulate live training or combat yet; report state and take only the
   supported actions. Prefer concrete, checkable advice grounded in get_* reads.`
@@ -300,6 +306,36 @@ export const TOOL_SCHEMAS = [
       additionalProperties: false,
     },
     annotations: WRITE('Unequip item'),
+  },
+  {
+    name: 'get_active_activity',
+    description:
+      "Show the character's current idle activity (what's running and for how long) and whether it can be claimed via MCP.",
+    inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
+    annotations: READ('Active activity'),
+  },
+  {
+    name: 'start_skilling',
+    description:
+      'Start an idle production-skilling task (rewards accrue over real time, like the game). Auto-claims any pending supported task first. Find action ids in pocketrpg://reference/skills.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        skill: { type: 'string', enum: IDLE_SKILLS },
+        action_id: { type: 'string', description: "Action id within the skill, e.g. 'bronze_bar'." },
+        ...optionalCharacterId,
+      },
+      required: ['skill', 'action_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Start skilling'),
+  },
+  {
+    name: 'claim_activity',
+    description:
+      'Claim the rewards accrued by the running idle skilling task: the elapsed time is simulated server-side, XP/items are applied, and the idle clock resets so the activity keeps running.',
+    inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
+    annotations: WRITE('Claim activity'),
   },
 ]
 

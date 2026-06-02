@@ -19,6 +19,12 @@ import {
   bankQuantity,
 } from '../game/inventory.js'
 import { equipItem, unequipSlot, checkEquipRequirements, createEquipment } from '../../../src/engine/equipment.js'
+import { getLevelFromXP } from '../../../src/engine/experience.js'
+import { simulateIdleSkilling } from '../../../src/engine/idleEngine.js'
+import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
+import { PRODUCTION_SKILLS } from '../../../src/utils/constants.js'
+
+const XP_CAP = 200000000
 
 const EQUIPMENT_SLOTS = new Set(Object.keys(createEquipment()))
 
@@ -127,3 +133,111 @@ export function unequip(save, slot) {
 }
 
 export const EQUIP_SLOT_NAMES = [...EQUIPMENT_SLOTS]
+
+// ── Idle skilling (Phase C increment 2) ──────────────────────────────────────
+// Production skilling only (type:'skill' → simulateIdleSkilling). Gathering,
+// combat, agility, thieving, hunter and farming use other idle paths and are
+// out of scope here.
+
+export const SKILL_IDLE_SKILLS = new Set(PRODUCTION_SKILLS)
+
+// Build (and validate) a type:'skill' idle task from skills.json, gated on the
+// character meeting the action's level requirement.
+export function buildSkillTask(save, skill, actionId) {
+  if (!SKILL_IDLE_SKILLS.has(skill)) {
+    throw new GameApiError(
+      'UNSUPPORTED_SKILL',
+      `Idle skilling via MCP supports production skills only (${[...SKILL_IDLE_SKILLS].join(', ')}).`,
+      400,
+    )
+  }
+  const skillDef = skillsData[skill]
+  const actions = Array.isArray(skillDef?.actions) ? skillDef.actions : []
+  const action = actions.find((a) => a.id === actionId)
+  if (!action) throw new GameApiError('UNKNOWN_ACTION', `Unknown ${skill} action '${actionId}'. See pocketrpg://reference/skills.`, 400)
+  const level = getLevelFromXP(Number(save.stats?.[skill]?.xp) || 0)
+  if (action.level && level < action.level) {
+    throw new GameApiError('LEVEL_TOO_LOW', `${skill} ${action.level} required (you have ${level})`, 400)
+  }
+  return { type: 'skill', skill, action, bankingEnabled: true }
+}
+
+// Decoded save inventory (compact occupied-slot array) → the fixed 28-slot
+// array (null-padded) the idle engine expects.
+export function toSlotArray(save) {
+  const arr = new Array(28).fill(null)
+  const inv = Array.isArray(save.inventory) ? save.inventory : []
+  let i = 0
+  for (const slot of inv) {
+    if (!slot || typeof slot !== 'object') continue
+    const itemId = slot.itemId ?? slot.id
+    const quantity = Math.floor(Number(slot.quantity) || 0)
+    if (!itemId || quantity < 1 || i >= 28) continue
+    arr[i++] = { ...slot, itemId, quantity }
+  }
+  return arr
+}
+
+// Apply a simulateIdleSkilling result to the save. Mirrors the client's
+// load-time application (gameState.jsx) exactly for type:'skill' tasks so the
+// two paths can't drift: XP (capped), dungeoneering tokens, consumed inputs
+// (from bank), the final inventory, and auto-banked overflow.
+export function applyIdleSkillResult(save, sim) {
+  if (!save.stats || typeof save.stats !== 'object') save.stats = {}
+  if (!save.bank || typeof save.bank !== 'object') save.bank = {}
+
+  if (sim.xpGained) {
+    for (const [skill, xp] of Object.entries(sim.xpGained)) {
+      if (xp > 0 && save.stats[skill]) {
+        const newXP = Math.min((save.stats[skill].xp || 0) + Math.floor(xp), XP_CAP)
+        save.stats[skill] = { ...save.stats[skill], xp: newXP, level: getLevelFromXP(newXP) }
+      }
+    }
+  }
+
+  if (sim.dungeoneeringTokensGained > 0) {
+    if (!save.settings || typeof save.settings !== 'object') save.settings = {}
+    save.settings.dungeoneeringTokens = (Number(save.settings.dungeoneeringTokens) || 0) + Math.floor(sim.dungeoneeringTokensGained)
+  }
+
+  if (sim.itemsConsumed) {
+    for (const [itemId, qty] of Object.entries(sim.itemsConsumed)) {
+      const existing = save.bank[itemId]
+      if (!existing) continue
+      const newQty = (Number(existing.quantity) || 0) - qty
+      if (newQty <= 0) delete save.bank[itemId]
+      else save.bank[itemId] = { ...existing, quantity: newQty }
+    }
+  }
+
+  if (Array.isArray(sim.finalInventory)) save.inventory = sim.finalInventory
+
+  const banked = sim.itemsBanked || {}
+  for (const [itemId, qty] of Object.entries(banked)) {
+    if (qty <= 0) continue
+    const existing = save.bank[itemId]
+    save.bank[itemId] = existing
+      ? { ...existing, quantity: (Number(existing.quantity) || 0) + qty }
+      : { itemId, quantity: qty }
+  }
+
+  const named = (obj) => Object.entries(obj || {}).map(([itemId, quantity]) => ({ itemId, name: itemsData[itemId]?.name || itemId, quantity }))
+  return {
+    skill: sim.skill,
+    action: sim.actionName,
+    actions: sim.actions || 0,
+    xpGained: sim.xpGained || {},
+    itemsBanked: named(banked),
+    itemsConsumed: named(sim.itemsConsumed),
+    stoppedReason: sim.stoppedReason || null,
+  }
+}
+
+// Run the idle skilling simulation for an elapsed window and apply it. Pure
+// over the save (no DB); the caller persists.
+export function runIdleSkilling(save, task, elapsedMs) {
+  const slots = toSlotArray(save)
+  const sim = simulateIdleSkilling(task, elapsedMs, save.bank || {}, save.equipment || {}, save.stats || {}, itemsData, slots)
+  if (!sim) return { applied: false, reason: 'no_progress' }
+  return { applied: true, ...applyIdleSkillResult(save, sim) }
+}

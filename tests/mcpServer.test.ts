@@ -90,6 +90,9 @@ describe('MCP tool schema', () => {
       'withdraw_from_bank',
       'equip_item',
       'unequip_item',
+      'get_active_activity',
+      'start_skilling',
+      'claim_activity',
     ])
   })
 

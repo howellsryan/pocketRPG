@@ -1,5 +1,15 @@
 import { describe, it, expect } from 'vitest'
-import { depositToBank, withdrawFromBank, equip, unequip } from '../functions/_lib/mcp/intents.js'
+import {
+  depositToBank,
+  withdrawFromBank,
+  equip,
+  unequip,
+  buildSkillTask,
+  applyIdleSkillResult,
+  toSlotArray,
+  runIdleSkilling,
+} from '../functions/_lib/mcp/intents.js'
+import { getLevelFromXP } from '../src/engine/experience.js'
 
 // Phase C save intents are pure mutations of a decoded save. These golden tests
 // exercise them directly (no D1), asserting items only relocate and that
@@ -105,5 +115,68 @@ describe('equipment intents', () => {
 
   it('unequipping an empty slot throws', () => {
     expect(() => unequip(makeSave(), 'weapon')).toThrow(/Nothing equipped/)
+  })
+})
+
+describe('idle skilling intents', () => {
+  it('builds a valid production-skill task', () => {
+    const task = buildSkillTask(makeSave(), 'firemaking', 'normal_logs')
+    expect(task).toMatchObject({ type: 'skill', skill: 'firemaking', bankingEnabled: true })
+    expect(task.action.id).toBe('normal_logs')
+  })
+
+  it('rejects gathering/combat skills (production only)', () => {
+    expect(() => buildSkillTask(makeSave(), 'woodcutting', 'normal')).toThrow(/production skills/i)
+  })
+
+  it('rejects an unknown action', () => {
+    expect(() => buildSkillTask(makeSave(), 'firemaking', 'nope')).toThrow(/Unknown/)
+  })
+
+  it('enforces the action level requirement', () => {
+    // firemaking 'oak_logs' needs level 15; a fresh account is level 1.
+    expect(() => buildSkillTask(makeSave(), 'firemaking', 'oak_logs')).toThrow(/required/i)
+  })
+
+  it('toSlotArray pads to a fixed 28-slot array', () => {
+    const arr = toSlotArray(makeSave({ inventory: [{ itemId: 'logs', quantity: 3 }] }))
+    expect(arr).toHaveLength(28)
+    expect(arr[0]).toEqual({ itemId: 'logs', quantity: 3 })
+    expect(arr[1]).toBeNull()
+  })
+
+  it('applyIdleSkillResult applies XP, consumes inputs, banks output, sets inventory', () => {
+    const save = makeSave({
+      stats: { cooking: { xp: 1000, level: 9 } },
+      bank: { raw_shrimps: { itemId: 'raw_shrimps', quantity: 10 } },
+    })
+    const sim = {
+      skill: 'cooking',
+      actionName: 'Cook shrimps',
+      actions: 5,
+      xpGained: { cooking: 150, mining: 99 }, // mining absent from stats → ignored
+      itemsConsumed: { raw_shrimps: 5 },
+      itemsBanked: { shrimps: 5 },
+      finalInventory: [{ itemId: 'pickaxe', quantity: 1 }],
+    }
+    const summary = applyIdleSkillResult(save, sim)
+    expect(save.stats.cooking.xp).toBe(1150)
+    expect(save.stats.cooking.level).toBe(getLevelFromXP(1150))
+    expect(save.stats.mining).toBeUndefined()
+    expect(save.bank.raw_shrimps.quantity).toBe(5)
+    expect(save.bank.shrimps).toEqual({ itemId: 'shrimps', quantity: 5 })
+    expect(save.inventory).toEqual([{ itemId: 'pickaxe', quantity: 1 }])
+    expect(summary.itemsBanked).toContainEqual({ itemId: 'shrimps', name: expect.any(String), quantity: 5 })
+  })
+
+  it('runIdleSkilling simulates a real window and grants XP', () => {
+    const save = makeSave({
+      stats: { firemaking: { xp: 0, level: 1 } },
+      inventory: [{ itemId: 'logs', quantity: 100 }],
+    })
+    const r = runIdleSkilling(save, buildSkillTask(save, 'firemaking', 'normal_logs'), 60_000)
+    expect(r.applied).toBe(true)
+    expect(typeof r.xpGained.firemaking).toBe('number')
+    expect(r.xpGained.firemaking).toBeGreaterThan(0)
   })
 })
