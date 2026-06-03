@@ -7,6 +7,7 @@ import { assertNotInActiveMatch } from '../pvp.js'
 import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward } from './intents.js'
 import { getIdleRow, setIdleTask, resetIdleActiveAt, clearIdleTask, advanceIdleClock } from './idle.js'
 import { SKIP_HOUR_MS } from '../../../src/engine/skipPreflight.js'
+import { simulateBossFight, applyBossFightOutcome } from './bossFight.js'
 import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
 
 // Reuse the exact production endpoint handlers (see bridge.js).
@@ -528,6 +529,64 @@ const TOOLS = {
       killed: monster.name || monster_id,
       creditsSpent: skip.data?.cost,
       creditsRemaining: skip.data?.credits_remaining,
+      granted: (res.data?.granted || []).map((g) => ({ ...g, name: itemName(g.itemId) })),
+      killCount: res.data?.killCount,
+      collectionLogEntries: res.data?.collectionLogEntries || [],
+    })
+  },
+
+  // Fight a boss for real — simulate the whole fight over the combat engine
+  // (no credits). A win is granted through the normal completion endpoint; a
+  // loss/death grants nothing. The sim is conservative (no prayers/potions/
+  // specials), so a win is always genuinely achievable.
+  async fight_boss({ monster_id, character_id }, { env, authorization, identity }) {
+    if (!identity?.id) throw new Error('Not authenticated.')
+    if (!monster_id) throw new Error('monster_id is required.')
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const lock = await assertNotInActiveMatch(env, id)
+    if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+    if (await isOneLifeCharacter(env, id)) {
+      throw new Error('Refused: One-Life characters fight bosses in the game client, where death is permanent.')
+    }
+    const monster = getMonster(monster_id)
+    if (!monster) throw new Error(`No monster with id '${monster_id}'. Browse ids via pocketrpg://reference/monsters.`)
+    if (monster.boss !== true) throw new Error(`${monster.name || monster_id} is not a boss — use start_fight for normal monsters.`)
+
+    const { saveObject, saveRevision } = await loadCharacterWithSave(env, id, identity.id)
+    const outcome = simulateBossFight(saveObject, monster) // throws for magic setups
+    applyBossFightOutcome(saveObject, outcome)
+    await writeSave(env, id, saveObject, saveRevision)
+    await auditLog(env, 'mcp_fight_boss', { characterId: id, identityId: identity.id, monsterId: monster_id, victory: outcome.victory, died: outcome.died, ticks: outcome.ticks }, { swallow: true })
+
+    const foodUsed = Object.entries(outcome.foodConsumed).map(([itemId, quantity]) => ({ itemId, name: itemName(itemId), quantity }))
+    if (!outcome.victory) {
+      return ok({
+        characterId: id,
+        killed: false,
+        died: outcome.died,
+        monster: monster.name || monster_id,
+        ticks: outcome.ticks,
+        finalHP: outcome.finalHP,
+        foodUsed,
+        reason: outcome.died
+          ? 'You died before defeating the boss — bring more/better food or stronger gear.'
+          : 'Could not out-damage the boss; improve gear before trying again.',
+      })
+    }
+
+    // Victory — grant the server-rolled loot, kill count and collection log.
+    const res = await callHandler(completeMonster, env, {
+      method: 'POST', authorization, characterId: id,
+      body: { sourceId: monster_id, actionNonce: `mcp:fight:${monster_id}:${Date.now()}` },
+    })
+    if (!res.ok) throw httpError(res)
+    return ok({
+      characterId: id,
+      killed: true,
+      monster: monster.name || monster_id,
+      ticks: outcome.ticks,
+      finalHP: outcome.finalHP,
+      foodUsed,
       granted: (res.data?.granted || []).map((g) => ({ ...g, name: itemName(g.itemId) })),
       killCount: res.data?.killCount,
       collectionLogEntries: res.data?.collectionLogEntries || [],

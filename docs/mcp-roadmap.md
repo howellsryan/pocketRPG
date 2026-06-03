@@ -117,8 +117,19 @@ the material-gathering `gather` tasks.
       then grant through the existing server-rolled completion endpoints
       (`/api/actions/monster|raid/complete`). Loot RNG, kill counts, collection
       log and reward-source validation all stay server-authoritative; no combat
-      sim is trusted. (A future enhancement could simulate the fight via
-      `combat.js`/`combatant.js` to kill *without* spending credits.)
+      sim is trusted. Credit-free combat-based kills also landed — see below.
+- [x] **Increment 2b — combat-based boss kills (`fight_boss`):** a headless
+      runner (`functions/_lib/mcp/bossFight.js`) drives the real engine
+      (`createCombatState` + `processCombatTick`) tick-by-tick, tracking HP and
+      auto-eating the configured idle food, until the boss or the player dies. A
+      win grants through the normal server-rolled completion endpoint (no
+      credits); a loss/death grants nothing but still consumes the food used.
+      Deliberately CONSERVATIVE — no prayers, potions or special attacks — so a
+      simulated win is always genuinely achievable (never over-credits an
+      unearnable kill). Magic setups and One-Life accounts are refused (use
+      `kill_boss` / the client). Combat-based *raids* (multi-boss) remain a
+      future extension; `kill_raid` (credit skip) covers raids today.
+      Seeded-RNG golden tests in `tests/mcpBossFight.test.ts`.
 - [x] **Increment 3 — dungeoneering:** train it as a normal idle skill
       (`start_skilling` skill=`dungeoneering`) to earn XP + tokens
       (`simulateIdleSkilling` + `applyIdleResult`), and `claim_dungeoneering_reward`

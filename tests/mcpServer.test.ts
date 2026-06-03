@@ -97,6 +97,7 @@ describe('MCP tool schema', () => {
       'start_quest',
       'start_fight',
       'kill_boss',
+      'fight_boss',
       'kill_raid',
       'claim_dungeoneering_reward',
     ])

@@ -47,7 +47,9 @@ Acting:
   fight stops. One-Life characters fight in the client.
 - Bosses & raids: kill_boss / kill_raid spend the target's skip cost in credits
   for an instant kill, then grant the server-rolled loot, kill count and
-  collection-log uniques — confirm the credit spend first.
+  collection-log uniques — confirm the credit spend first. fight_boss instead
+  simulates the actual fight (no credits): you win only if your gear/food are
+  strong enough, and it consumes the food used.
 - Dungeoneering: train it like any skill (start_skilling skill="dungeoneering")
   to earn XP and tokens, then claim_dungeoneering_reward spends those tokens to
   unlock dungeoneering gear.
@@ -409,6 +411,21 @@ export const TOOL_SCHEMAS = [
       additionalProperties: false,
     },
     annotations: WRITE('Kill boss'),
+  },
+  {
+    name: 'fight_boss',
+    description:
+      "Fight a boss for real — the whole fight is simulated over the combat engine (no credits spent), auto-eating your configured idle food. On a win you receive the server-rolled loot, kill count and collection-log uniques; a loss or death grants nothing (but still consumes the food used). Conservative: no prayers/potions/special attacks, so if it reports a loss you may still win in the client. Magic setups and One-Life characters aren't supported here (use kill_boss / the client). Find boss ids via pocketrpg://reference/monsters.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        monster_id: { type: 'string', description: "The boss monster id, e.g. 'deepmaw_kraken'." },
+        ...optionalCharacterId,
+      },
+      required: ['monster_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Fight boss'),
   },
   {
     name: 'kill_raid',
