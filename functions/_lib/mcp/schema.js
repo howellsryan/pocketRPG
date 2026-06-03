@@ -57,12 +57,21 @@ Acting:
   starting another activity. When a startable quest has an xpChoice (a free
   combat/"any" XP reward), ask the player which skill should receive it before
   starting and pass it as xp_skill — never default it to attack or choose for
-  them.
+  them. To chain quests, start the first with start_quest then queue the rest
+  with queue_quest (up to queueMax); they auto-start in order. get_quests shows
+  the current queue; remove_from_queue drops one.
+- Idle combat setup: idle fights and fight_boss auto-use the character's
+  configured food, potions and prayers. get_idle_combat_setup shows them (and
+  how many are in stock); set_idle_combat_setup changes them (food/potions
+  replace the list; prayers set/clear a slot). Configure food before fighting so
+  the character can heal.
 - Combat: start_fight fights a normal monster idly (XP + loot rolled
-  server-side over real time, using the food/potions configured in the game
-  client); get_active_activity shows the fight; claim_activity collects it. The
-  character can die — rewards up to the killing blow are kept, HP resets and the
-  fight stops. One-Life characters fight in the client.
+  server-side over real time, using the configured idle food/potions/prayers);
+  get_active_activity shows the fight; claim_activity collects it. The character
+  can die — rewards up to the killing blow are kept, HP resets and the fight
+  stops. If no food is configured/in stock, start_fight returns a warning and
+  does not start until you retry with confirm_no_food: true — relay that to the
+  player first. One-Life characters fight in the client.
 - Bosses & raids: kill_boss / kill_raid spend the target's skip cost in credits
   for an instant kill, then grant the server-rolled loot, kill count and
   collection-log uniques — confirm the credit spend first. fight_boss instead
@@ -439,7 +448,7 @@ export const TOOL_SCHEMAS = [
   {
     name: 'get_quests',
     description:
-      "List a character's quest progress: total quest points, completed quests, the quests they can start right now (with rewards), and the locked ones with their missing requirements. Use ids with start_quest. A startable quest that lets the player choose where its XP goes carries an `xpChoice` field (type + the skills to choose from) — ask the player which skill before starting it.",
+      "List a character's quest progress: total quest points, completed quests, the quests they can start right now (with rewards), the locked ones with their missing requirements, and the current quest `queue` (with queueMax). Use ids with start_quest / queue_quest. A startable quest that lets the player choose where its XP goes carries an `xpChoice` field (type + the skills to choose from) — ask the player which skill before starting or queueing it.",
     inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
     annotations: READ('Get quests'),
   },
@@ -460,14 +469,93 @@ export const TOOL_SCHEMAS = [
     annotations: WRITE('Start quest'),
   },
   {
+    name: 'queue_quest',
+    description:
+      'Add a quest to the character\'s quest queue so it auto-starts after the active quest (and any earlier queued quests) finishes — up to queueMax (see get_quests). The quest must be startable now (queueing cannot bypass requirements) and not already active/queued/completed. If it offers a combat/"any" XP choice, ASK THE PLAYER which skill and pass xp_skill — do not default. Start the first quest with start_quest, then queue the rest.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        quest_id: { type: 'string', description: 'The quest id to queue. Find ids via get_quests.' },
+        xp_skill: { type: 'string', description: 'Skill to receive this quest\'s free combat/"any" XP choice, if it has one. Set it to the player\'s pick; required for choice quests.' },
+        ...optionalCharacterId,
+      },
+      required: ['quest_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Queue quest'),
+  },
+  {
+    name: 'remove_from_queue',
+    description: "Remove a quest from the character's quest queue (does not affect the quest currently in progress).",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        quest_id: { type: 'string', description: 'The quest id to remove from the queue.' },
+        ...optionalCharacterId,
+      },
+      required: ['quest_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Remove from queue'),
+  },
+  {
+    name: 'get_idle_combat_setup',
+    description:
+      "Show the character's idle-combat supplies: the food, boost/restore potions and protection/combat prayers that idle fights and fight_boss auto-use, each with how many the character currently owns (inventory + bank). foodConfigured/foodInStock flag whether the character can heal while fighting.",
+    inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
+    annotations: READ('Get idle combat setup'),
+  },
+  {
+    name: 'set_idle_combat_setup',
+    description:
+      "Configure the character's idle-combat supplies (used by start_fight and fight_boss). Each field is optional: omit to leave it unchanged. food/potions REPLACE the current list (pass [] to clear); protection_prayer/combat_prayer set or clear (null) a prayer slot. Validates item categories and that prayers fit their slot and the character's Prayer level. Find ids with list_items (type 'food'/'potion') and get_reference topic='prayers'. This only records which of the character's own supplies to auto-use — it creates nothing.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        food: {
+          type: 'array',
+          description: 'Replacement food list (each is consumed when HP is low). [] clears it.',
+          items: {
+            type: 'object',
+            properties: {
+              item_id: { type: 'string' },
+              quantity: { type: 'integer', minimum: 1, description: 'Max to use this fight.' },
+            },
+            required: ['item_id', 'quantity'],
+            additionalProperties: false,
+          },
+        },
+        potions: {
+          type: 'array',
+          description: 'Replacement potion list (boost/restore potions). [] clears it.',
+          items: {
+            type: 'object',
+            properties: {
+              item_id: { type: 'string' },
+              quantity: { type: 'integer', minimum: 1 },
+            },
+            required: ['item_id', 'quantity'],
+            additionalProperties: false,
+          },
+        },
+        protection_prayer: { type: ['string', 'null'], description: "Protection prayer id (e.g. 'protection_from_magic'), or null to clear the slot." },
+        combat_prayer: { type: ['string', 'null'], description: 'Combat (stat-boost) prayer id, or null to clear the slot.' },
+        ...optionalCharacterId,
+      },
+      additionalProperties: false,
+    },
+    annotations: WRITE('Set idle combat setup'),
+  },
+  {
     name: 'start_fight',
     description:
-      'Fight a normal monster idly: XP and loot are rolled server-side over real time, drawing on the food/potions/prayers configured in the game client. claim_activity collects the result; skip_hour advances an hour. Bosses/raids and One-Life characters are refused (use the game client). Find ids via inspect_monster / pocketrpg://reference/monsters.',
+      "Fight a normal monster idly: XP and loot are rolled server-side over real time, drawing on the character's idle food/potions/prayers (configure them with set_idle_combat_setup). claim_activity collects the result; skip_hour advances an hour. Bosses/raids and One-Life characters are refused (use the game client). If no idle food is configured or in stock, the fight is NOT started and a warning is returned instead — relay it to the player and only retry with confirm_no_food: true if they accept the death risk. Find ids via inspect_monster / pocketrpg://reference/monsters.",
     inputSchema: {
       type: 'object',
       properties: {
         monster_id: { type: 'string', description: "The monster id, e.g. 'goblin'." },
         stance: { type: 'string', enum: ['accurate', 'aggressive', 'defensive', 'controlled'], description: 'Combat stance. Defaults to the saved combat stance.' },
+        confirm_no_food: { type: 'boolean', description: 'Set true to start the fight even though no healing food is configured/in stock (the character may die). Only after the player has accepted the risk.' },
         ...optionalCharacterId,
       },
       required: ['monster_id'],

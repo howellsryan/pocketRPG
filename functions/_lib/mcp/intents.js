@@ -23,7 +23,7 @@ import {
 import { equipItem, unequipSlot, checkEquipRequirements, createEquipment } from '../../../src/engine/equipment.js'
 import { getLevelFromXP } from '../../../src/engine/experience.js'
 import { simulateIdleSkilling, simulateIdleAgility, simulateIdleCombat } from '../../../src/engine/idleEngine.js'
-import { normaliseIdleCombatSetup } from '../../../src/engine/idleSupplies.js'
+import { normaliseIdleCombatSetup, defaultIdleCombatSetup, isFoodItem, isPotionItem, getFoodHealAmount } from '../../../src/engine/idleSupplies.js'
 import { simulateIdleThieving } from '../../../src/engine/thieving.js'
 import { simulateIdleHunting } from '../../../src/engine/hunter.js'
 import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
@@ -31,7 +31,7 @@ import { getDungeoneeringRewardCost } from '../../../src/engine/dungeoneeringTok
 import questsData from '../../../src/data/quests.json' assert { type: 'json' }
 import { checkQuestEligibility, getQuestPointsEarned, getCombatLevel } from '../../../src/engine/quests.js'
 import { createQueuedQuestTask, simulateQuestIdleCascade, splitQuestXpRewards } from '../../../src/engine/questIdleCascade.js'
-import { PRODUCTION_SKILLS, IDLE_AUTOBANK_GATHERING_SKILLS, COMBAT_SKILLS, ALL_SKILLS, TICK_DURATION } from '../../../src/utils/constants.js'
+import { PRODUCTION_SKILLS, IDLE_AUTOBANK_GATHERING_SKILLS, COMBAT_SKILLS, ALL_SKILLS, TICK_DURATION, QUEST_QUEUE_MAX } from '../../../src/utils/constants.js'
 
 const XP_CAP = 200000000
 
@@ -330,6 +330,130 @@ export function runIdleTask(save, task, elapsedMs) {
   return { applied: true, ...applyIdleResult(save, sim, task.type) }
 }
 
+// ── Idle combat setup (food / potions / prayers) ─────────────────────────────
+// The food, boost/restore potions and protection/combat prayers the idle
+// combat + boss-fight simulators consume, stored on settings.idleCombatSetup
+// (same shape the game client persists). No items are created — this only
+// records *which* of the character's own supplies to auto-use while fighting.
+
+// Count how many of an item the character actually holds (inventory, unnoted, +
+// bank), so the agent can see whether configured supplies are in stock.
+function countOwned(save, itemId) {
+  let n = 0
+  for (const slot of getInventory(save)) {
+    if (slot.itemId === itemId && !slot.noted) n += Number(slot.quantity) || 0
+  }
+  return n + bankQuantity(save, itemId)
+}
+
+// Validate + normalise a food/potion list from the tool ([{ item_id, quantity }]).
+// Returns [{ itemId, quantity }] with ids canonicalised; throws on a bad id or
+// the wrong item category so a typo can't silently disable healing.
+function validateSupplyList(rawList, kind) {
+  if (!Array.isArray(rawList)) {
+    throw new GameApiError('INVALID_SETUP', `${kind} must be an array of { item_id, quantity } (pass [] to clear).`, 400)
+  }
+  const out = []
+  const seen = new Set()
+  for (const entry of rawList) {
+    const rawId = entry?.item_id ?? entry?.itemId
+    if (!rawId) throw new GameApiError('INVALID_SETUP', `Each ${kind} entry needs an item_id.`, 400)
+    const itemId = canonicalItemId(itemsData, String(rawId))
+    const item = itemsData[itemId]
+    if (!item) throw new GameApiError('ITEM_NOT_FOUND', `No item with id '${rawId}'.`, 404)
+    if (kind === 'food' && !isFoodItem(item)) {
+      throw new GameApiError('NOT_FOOD', `${item.name} is not food (it heals nothing). List items with list_items type='food'.`, 400)
+    }
+    if (kind === 'potions' && !isPotionItem(item)) {
+      throw new GameApiError('NOT_POTION', `${item.name} is not a potion. List items with list_items type='potion'.`, 400)
+    }
+    if (seen.has(itemId)) continue
+    seen.add(itemId)
+    out.push({ itemId, quantity: Math.max(1, Math.floor(Number(entry.quantity) || 0)) })
+  }
+  return out
+}
+
+// Resolve + validate a prayer selection against its slot and the character's
+// Prayer level. '' / null clears the slot; undefined leaves it unchanged.
+function resolvePrayerChoice(value, kind, prayerLevel, current) {
+  if (value === undefined) return current
+  if (value === null || value === '') return null
+  const prayer = prayersData[value]
+  if (!prayer) throw new GameApiError('UNKNOWN_PRAYER', `No prayer with id '${value}'. See get_reference topic='prayers'.`, 400)
+  const isProtection = prayer.bonusType === 'protection'
+  const isCombat = prayer.bonusType === 'stat' || prayer.bonusType === 'multi_stat'
+  if (kind === 'protection' && !isProtection) {
+    throw new GameApiError('WRONG_PRAYER_SLOT', `${prayer.name} is not a protection prayer.`, 400)
+  }
+  if (kind === 'combat' && !isCombat) {
+    throw new GameApiError('WRONG_PRAYER_SLOT', `${prayer.name} is not a combat (stat-boost) prayer.`, 400)
+  }
+  if ((prayer.level || 1) > prayerLevel) {
+    throw new GameApiError('PRAYER_LEVEL_TOO_LOW', `${prayer.name} needs Prayer level ${prayer.level} — you have ${prayerLevel}.`, 400)
+  }
+  return value
+}
+
+// Read-only summary of the stored setup, decorating each supply with its name
+// and how many the character actually owns (so the agent can warn about gaps).
+export function idleCombatSetupSummary(save) {
+  const setup = normaliseIdleCombatSetup(save.settings?.idleCombatSetup)
+  const decorate = (list) => list.map((e) => ({
+    itemId: e.itemId,
+    name: itemsData[e.itemId]?.name || e.itemId,
+    quantity: e.quantity,
+    available: countOwned(save, e.itemId),
+  }))
+  const prayerName = (id) => (id ? (prayersData[id]?.name || id) : null)
+  const food = decorate(setup.food)
+  return {
+    food,
+    potions: decorate(setup.potions),
+    prayers: {
+      protectionPrayerId: setup.prayers.protectionPrayerId,
+      protectionPrayer: prayerName(setup.prayers.protectionPrayerId),
+      combatPrayerId: setup.prayers.combatPrayerId,
+      combatPrayer: prayerName(setup.prayers.combatPrayerId),
+    },
+    foodConfigured: food.length > 0,
+    foodInStock: food.some((f) => f.available > 0),
+  }
+}
+
+// Mutate settings.idleCombatSetup. Each field is optional: omit to leave it
+// unchanged, pass [] (food/potions) or null (prayers) to clear it.
+export function setIdleCombatSetup(save, { food, potions, protectionPrayerId, combatPrayerId }) {
+  if (!save.settings || typeof save.settings !== 'object') save.settings = {}
+  const current = normaliseIdleCombatSetup(save.settings.idleCombatSetup || defaultIdleCombatSetup())
+  const prayerLevel = getLevelFromXP(Number(save.stats?.prayer?.xp) || 0)
+
+  const next = normaliseIdleCombatSetup({
+    food: food === undefined ? current.food : validateSupplyList(food, 'food'),
+    potions: potions === undefined ? current.potions : validateSupplyList(potions, 'potions'),
+    prayers: {
+      protectionPrayerId: resolvePrayerChoice(protectionPrayerId, 'protection', prayerLevel, current.prayers.protectionPrayerId),
+      combatPrayerId: resolvePrayerChoice(combatPrayerId, 'combat', prayerLevel, current.prayers.combatPrayerId),
+    },
+  })
+  save.settings.idleCombatSetup = next
+  return { idleCombatSetup: idleCombatSetupSummary(save) }
+}
+
+// A human-readable warning if a character would idle-fight without any healing
+// (no food configured, or none of it in stock), else null. start_fight uses
+// this to make the agent confirm before risking a death.
+export function idleFoodWarning(save) {
+  const setup = normaliseIdleCombatSetup(save.settings?.idleCombatSetup)
+  if (setup.food.length === 0) {
+    return 'No idle food is configured, so the character cannot heal and may die. Set food with set_idle_combat_setup, or confirm to fight without food.'
+  }
+  if (!setup.food.some((e) => countOwned(save, e.itemId) > 0)) {
+    return 'None of the configured idle food is in the inventory or bank, so the character cannot heal and may die. Restock it, or confirm to fight without food.'
+  }
+  return null
+}
+
 // ── Quests (Phase C increment 4) ─────────────────────────────────────────────
 // Quests are a timed idle task (type:'quest'): starting one runs the engine
 // clock down over real time, exactly like skilling, and completing it records
@@ -345,6 +469,19 @@ function completedQuestSet(save) {
   const list = Array.isArray(save.settings?.completedQuests) ? save.settings.completedQuests : []
   return new Set(list)
 }
+
+// The persisted quest queue (settings.questQueue holds full quest objects, each
+// optionally carrying xpChoiceSkill — the same shape the game client saves).
+function questQueueArr(save) {
+  return Array.isArray(save.settings?.questQueue) ? save.settings.questQueue : []
+}
+
+// Compact view of the queue for tool responses.
+function queueSummary(save) {
+  return questQueueArr(save).map((q) => ({ id: q.id, name: q.name, xpChoiceSkill: q.xpChoiceSkill || null }))
+}
+
+export { queueSummary }
 
 // Allowed skills for a quest's free XP choice ('combat' → combat skills only,
 // 'any' → every skill). Quests never carry more than one such choice.
@@ -401,6 +538,78 @@ export function buildQuestTask(save, questId, xpSkill) {
   return { ...createQueuedQuestTask(quest), xpChoiceSkill }
 }
 
+// Append a quest to settings.questQueue so it auto-starts after the active one
+// (and any earlier queued quests) finishes. activeQuestId is the id currently
+// running in the idle slot, if any, so we never queue a duplicate of it.
+// Requires the quest to be eligible *now* (so queueing can't bypass quest
+// requirements), and resolves its XP choice up front like start_quest.
+export function addQuestToQueueIntent(save, questId, xpSkill, activeQuestId) {
+  if (!save.settings || typeof save.settings !== 'object') save.settings = {}
+  const quest = QUEST_BY_ID.get(questId)
+  if (!quest) {
+    throw new GameApiError('UNKNOWN_QUEST', `No quest with id '${questId}'. See get_quests or pocketrpg://reference/quests.`, 400)
+  }
+  const completed = completedQuestSet(save)
+  if (completed.has(questId)) {
+    throw new GameApiError('QUEST_ALREADY_COMPLETE', `'${quest.name}' is already completed.`, 400)
+  }
+  if (activeQuestId && activeQuestId === questId) {
+    throw new GameApiError('QUEST_ALREADY_ACTIVE', `'${quest.name}' is the quest currently in progress.`, 400)
+  }
+  const queue = [...questQueueArr(save)]
+  if (queue.some((q) => q.id === questId)) {
+    throw new GameApiError('QUEST_ALREADY_QUEUED', `'${quest.name}' is already in the queue.`, 400)
+  }
+  if (queue.length >= QUEST_QUEUE_MAX) {
+    throw new GameApiError('QUEUE_FULL', `The quest queue is full (max ${QUEST_QUEUE_MAX}). Remove one first.`, 400)
+  }
+  const { eligible, reasons } = checkQuestEligibility(quest, save.stats || {}, completed, questsData)
+  if (!eligible) {
+    throw new GameApiError('QUEST_INELIGIBLE', `Cannot queue '${quest.name}': ${reasons.join('; ')}. Only quests you can start now may be queued.`, 400)
+  }
+
+  const choice = questXpChoice(quest)
+  let xpChoiceSkill = null
+  if (choice) {
+    if (!xpSkill) {
+      const label = choice.type === 'combat' ? 'a combat skill' : 'any skill'
+      throw new GameApiError(
+        'XP_CHOICE_REQUIRED',
+        `'${quest.name}' awards ${choice.amount} XP to ${label} of the player's choice. Ask the player which skill they want (do not default), then pass it as xp_skill (one of: ${choice.chooseFrom.join(', ')}).`,
+        400,
+      )
+    }
+    if (!choice.chooseFrom.includes(xpSkill)) {
+      throw new GameApiError('INVALID_XP_SKILL', `xp_skill '${xpSkill}' is not valid here. Choose one of: ${choice.chooseFrom.join(', ')}.`, 400)
+    }
+    xpChoiceSkill = xpSkill
+  }
+
+  queue.push(xpChoiceSkill ? { ...quest, xpChoiceSkill } : { ...quest })
+  save.settings.questQueue = queue
+  return { queued: { id: quest.id, name: quest.name, xpChoiceSkill }, queue: queueSummary(save) }
+}
+
+// Remove a quest from the queue (no effect on the active quest).
+export function removeQuestFromQueueIntent(save, questId) {
+  if (!save.settings || typeof save.settings !== 'object') save.settings = {}
+  const queue = questQueueArr(save)
+  if (!queue.some((q) => q.id === questId)) {
+    throw new GameApiError('NOT_QUEUED', `'${questId}' is not in the quest queue.`, 400)
+  }
+  save.settings.questQueue = queue.filter((q) => q.id !== questId)
+  return { removed: questId, queue: queueSummary(save) }
+}
+
+// Remove a quest from the queue if present, returning true when one was dropped.
+// start_quest uses this so a quest can't be both active and queued.
+export function dropFromQueue(save, questId) {
+  const queue = questQueueArr(save)
+  if (!queue.some((q) => q.id === questId)) return false
+  save.settings.questQueue = queue.filter((q) => q.id !== questId)
+  return true
+}
+
 function addQuestXp(save, skill, rawXp, gained) {
   const amount = Math.floor(Number(rawXp) || 0)
   if (amount <= 0 || !save.stats[skill]) return
@@ -418,18 +627,27 @@ export function applyQuestTask(save, task, elapsedMs, now = Date.now()) {
   if (!save.stats || typeof save.stats !== 'object') save.stats = {}
   if (!save.bank || typeof save.bank !== 'object') save.bank = {}
 
-  const cascade = simulateQuestIdleCascade({ activeTask: task, questQueue: [], elapsedMs, now })
+  // The queue (settings.questQueue) auto-starts after the active quest, exactly
+  // like the game client. Each queued entry carries its own xpChoiceSkill.
+  const queue = questQueueArr(save)
+  const cascade = simulateQuestIdleCascade({ activeTask: task, questQueue: queue, elapsedMs, now })
   const completedSet = completedQuestSet(save)
   const completed = []
 
   for (const entry of cascade.completed) {
     const quest = entry.quest
+    // Guard against a quest being both active and queued: never grant the same
+    // completion twice in one cascade.
+    if (completedSet.has(quest.id)) continue
     completedSet.add(quest.id)
 
     const { fixed, choices } = splitQuestXpRewards(quest.xpReward || {})
+    // Queued entries store their own choice on the quest object; the active task
+    // carries it on the task. Fall back across both so the right skill is used.
+    const chosenSkill = quest.xpChoiceSkill || task.xpChoiceSkill
     const gained = {}
     for (const [skill, xp] of Object.entries(fixed)) addQuestXp(save, skill, xp, gained)
-    for (const choice of choices) addQuestXp(save, task.xpChoiceSkill, choice.amount, gained)
+    for (const choice of choices) addQuestXp(save, chosenSkill, choice.amount, gained)
 
     const coins = Number(quest.coinReward || 0) || 0
     if (coins > 0) {
@@ -449,15 +667,23 @@ export function applyQuestTask(save, task, elapsedMs, now = Date.now()) {
   }
 
   save.settings.completedQuests = [...completedSet]
+  // Persist the remaining queue (cascade.finalQueue already had completed/
+  // promoted entries shifted off).
+  save.settings.questQueue = Array.isArray(cascade.finalQueue) ? cascade.finalQueue : []
 
   // The cascade rebuilds the front task via createQueuedQuestTask, which drops
-  // our xpChoiceSkill; re-attach it so a later claim still resolves the choice.
-  const finalTask = cascade.finalTask ? { ...cascade.finalTask, xpChoiceSkill: task.xpChoiceSkill } : null
+  // the task-level xpChoiceSkill. For a still-running active quest that's the
+  // original task's choice; for a promoted queued quest it's the entry's own
+  // choice (stored on finalTask.quest). Re-attach so a later claim resolves it.
+  const finalTask = cascade.finalTask
+    ? { ...cascade.finalTask, xpChoiceSkill: cascade.finalTask.quest?.xpChoiceSkill ?? task.xpChoiceSkill }
+    : null
 
   return {
     type: 'quest',
     completed,
     finalTask,
+    queue: queueSummary(save),
     ticksUsed: Math.floor((Number(cascade.elapsedMsUsed) || 0) / TICK_DURATION),
     ticksRemaining: finalTask?.ticksRemaining ?? 0,
   }
@@ -488,6 +714,8 @@ export function questStatuses(save) {
     combatLevel: getCombatLevel(stats),
     completedCount: completed.size,
     completed: [...completed],
+    queue: queueSummary(save),
+    queueMax: QUEST_QUEUE_MAX,
     eligible,
     locked,
   }

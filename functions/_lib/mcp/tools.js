@@ -4,7 +4,7 @@ import { getItem, getMonster, itemName, withItemName, REFERENCE_RESOURCES, readR
 import { loadCharacterWithSave, writeSave } from '../game/save.js'
 import { auditLog } from '../game/audit.js'
 import { assertNotInActiveMatch } from '../pvp.js'
-import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward } from './intents.js'
+import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue } from './intents.js'
 import { getIdleRow, setIdleTask, resetIdleActiveAt, clearIdleTask, advanceIdleClock } from './idle.js'
 import { SKIP_HOUR_MS } from '../../../src/engine/skipPreflight.js'
 import { simulateBossFight, applyBossFightOutcome } from './bossFight.js'
@@ -483,8 +483,10 @@ const TOOLS = {
       throw new Error('One-Life combat is in progress — claim it in the game client, where death is handled.')
     }
 
-    const { saveObject } = await loadCharacterWithSave(env, id, identity.id)
+    const { saveObject, saveRevision } = await loadCharacterWithSave(env, id, identity.id)
     const task = buildQuestTask(saveObject, quest_id, xp_skill) // validates eligibility + xp choice
+    // A started quest must not also sit in the queue (it would re-complete).
+    if (dropFromQueue(saveObject, quest_id)) await writeSave(env, id, saveObject, saveRevision)
     const now = Date.now()
     await setIdleTask(env, id, JSON.stringify(task), now)
     await auditLog(env, 'mcp_start_quest', { characterId: id, identityId: identity.id, questId: quest_id, xpSkill: xp_skill || null }, { swallow: true })
@@ -496,9 +498,49 @@ const TOOLS = {
     })
   },
 
+  // ── Quest queue ─────────────────────────────────────────────────────────────
+
+  async queue_quest({ quest_id, xp_skill, character_id }, ctx) {
+    const { env, authorization } = ctx
+    if (!quest_id) throw new Error('quest_id is required.')
+    const id = await resolveCharacterId(env, authorization, character_id)
+    // Never queue the quest that's already running in the idle slot.
+    const activeTask = await peekActiveTask(env, id)
+    const activeQuestId = activeTask?.type === 'quest' ? (activeTask.quest?.id || null) : null
+    return applySaveIntent(ctx, id, (save) => addQuestToQueueIntent(save, quest_id, xp_skill, activeQuestId), 'mcp_queue_quest')
+  },
+
+  remove_from_queue({ quest_id, character_id }, ctx) {
+    if (!quest_id) throw new Error('quest_id is required.')
+    return applySaveIntent(ctx, character_id, (save) => removeQuestFromQueueIntent(save, quest_id), 'mcp_remove_from_queue')
+  },
+
+  // ── Idle combat setup (food / potions / prayers) ────────────────────────────
+
+  async get_idle_combat_setup({ character_id }, { env, authorization, identity }) {
+    if (!identity?.id) throw new Error('Not authenticated.')
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const { saveObject } = await loadCharacterWithSave(env, id, identity.id)
+    return ok({ characterId: id, ...idleCombatSetupSummary(saveObject) })
+  },
+
+  set_idle_combat_setup({ food, potions, protection_prayer, combat_prayer, character_id }, ctx) {
+    return applySaveIntent(
+      ctx,
+      character_id,
+      (save) => setIdleCombatSetup(save, {
+        food,
+        potions,
+        protectionPrayerId: protection_prayer,
+        combatPrayerId: combat_prayer,
+      }),
+      'mcp_set_idle_combat_setup',
+    )
+  },
+
   // ── Combat (Phase D increment 1) ────────────────────────────────────────────
 
-  async start_fight({ monster_id, stance, character_id }, { env, authorization, identity }) {
+  async start_fight({ monster_id, stance, confirm_no_food, character_id }, { env, authorization, identity }) {
     if (!identity?.id) throw new Error('Not authenticated.')
     if (!monster_id) throw new Error('monster_id is required.')
     const id = await resolveCharacterId(env, authorization, character_id)
@@ -509,20 +551,37 @@ const TOOLS = {
     }
     await assertNoActiveQuest(env, id)
 
+    // Pre-flight the idle food. Fighting with no healing risks losing the
+    // character's HP (and progress on death), so unless the caller confirms,
+    // surface a warning and don't start — let the player decide.
+    const { saveObject } = await loadCharacterWithSave(env, id, identity.id)
+    const foodWarning = idleFoodWarning(saveObject)
+    if (foodWarning && !confirm_no_food) {
+      return ok({
+        characterId: id,
+        started: false,
+        warning: foodWarning,
+        hint: 'Set up healing with set_idle_combat_setup, or call start_fight again with confirm_no_food: true to fight without food.',
+      })
+    }
+
     const autoClaimed = await claimIdleCore(env, id, identity.id)
     if (autoClaimed.reason === 'unsupported_type') {
       throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
     }
 
-    const { saveObject } = await loadCharacterWithSave(env, id, identity.id)
-    const task = buildCombatTask(saveObject, monster_id, stance) // validates monster + stance
+    // claimIdleCore may have mutated/persisted the save (a prior task); reload so
+    // the combat task is built from the post-claim state.
+    const { saveObject: freshSave } = await loadCharacterWithSave(env, id, identity.id)
+    const task = buildCombatTask(freshSave, monster_id, stance) // validates monster + stance
     const now = Date.now()
     await setIdleTask(env, id, JSON.stringify(task), now)
-    await auditLog(env, 'mcp_start_fight', { characterId: id, identityId: identity.id, monsterId: monster_id, stance: task.stance }, { swallow: true })
+    await auditLog(env, 'mcp_start_fight', { characterId: id, identityId: identity.id, monsterId: monster_id, stance: task.stance, noFood: !!foodWarning }, { swallow: true })
     return ok({
       characterId: id,
       started: { monsterId: task.monster.id, monster: task.monster.name, combatLevel: task.monster.combatLevel ?? null, stance: task.stance },
-      note: 'Combat started — XP and loot accrue over real time using your configured idle food/potions (set them in the game client). Call claim_activity to collect; skip_hour advances an hour.',
+      warning: foodWarning || undefined,
+      note: 'Combat started — XP and loot accrue over real time using the configured idle food/potions/prayers (set them with set_idle_combat_setup). Call claim_activity to collect; skip_hour advances an hour.',
       autoClaimed: autoClaimed.claimed ? autoClaimed : undefined,
     })
   },

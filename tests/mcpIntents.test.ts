@@ -13,6 +13,11 @@ import {
   applyQuestTask,
   questStatuses,
   questXpChoice,
+  setIdleCombatSetup,
+  idleCombatSetupSummary,
+  idleFoodWarning,
+  addQuestToQueueIntent,
+  removeQuestFromQueueIntent,
   buildCombatTask,
   runCombatTask,
   planDungeoneeringReward,
@@ -440,5 +445,94 @@ describe('dungeoneering intents', () => {
     const lowLevel = makeSave({ stats: { dungeoneering: { xp: 0 } }, settings: { dungeoneeringTokens: 100_000 } })
     expect(() => planDungeoneeringReward(lowLevel, 'unlock_arcane_necklace')).toThrow(/required/i)
     expect(() => planDungeoneeringReward(lowTokens, 'nope')).toThrow(/No dungeoneering reward/)
+  })
+})
+
+describe('MCP idle combat setup', () => {
+  const HIGH_PRAYER = { prayer: { xp: 1_500_000 } } // well above level 37
+
+  it('configures food, potions and prayers, reporting availability', () => {
+    const save = makeSave({ stats: HIGH_PRAYER, inventory: [{ itemId: 'shrimps', quantity: 10 }] })
+    const r = setIdleCombatSetup(save, {
+      food: [{ item_id: 'shrimps', quantity: 5 }],
+      potions: [{ item_id: 'attack_potion', quantity: 2 }],
+      protectionPrayerId: 'protection_from_magic',
+      combatPrayerId: 'thick_skin',
+    })
+    expect(save.settings.idleCombatSetup.food).toEqual([{ itemId: 'shrimps', quantity: 5 }])
+    expect(save.settings.idleCombatSetup.potions).toEqual([{ itemId: 'attack_potion', quantity: 2 }])
+    expect(save.settings.idleCombatSetup.prayers).toEqual({ protectionPrayerId: 'protection_from_magic', combatPrayerId: 'thick_skin' })
+    // Summary decorates with owned counts (10 shrimps in inventory).
+    expect(r.idleCombatSetup.food[0]).toMatchObject({ itemId: 'shrimps', available: 10 })
+    expect(r.idleCombatSetup.foodInStock).toBe(true)
+  })
+
+  it('rejects non-food, the wrong prayer slot, and an under-level prayer', () => {
+    expect(() => setIdleCombatSetup(makeSave(), { food: [{ item_id: 'attack_potion', quantity: 1 }] })).toThrow(/not food/i)
+    expect(() => setIdleCombatSetup(makeSave({ stats: HIGH_PRAYER }), { protectionPrayerId: 'thick_skin' })).toThrow(/not a protection/i)
+    expect(() => setIdleCombatSetup(makeSave({ stats: { prayer: { xp: 0 } } }), { protectionPrayerId: 'protection_from_magic' })).toThrow(/Prayer level/i)
+  })
+
+  it('leaves omitted fields unchanged and clears with [] / null', () => {
+    const save = makeSave({
+      stats: HIGH_PRAYER,
+      settings: { completedQuests: [], idleCombatSetup: { food: [{ itemId: 'shrimps', quantity: 3 }], potions: [], prayers: { protectionPrayerId: null, combatPrayerId: 'thick_skin' } } },
+    })
+    setIdleCombatSetup(save, { combatPrayerId: null }) // food omitted → unchanged
+    expect(save.settings.idleCombatSetup.food).toEqual([{ itemId: 'shrimps', quantity: 3 }])
+    expect(save.settings.idleCombatSetup.prayers.combatPrayerId).toBeNull()
+    setIdleCombatSetup(save, { food: [] }) // explicit clear
+    expect(save.settings.idleCombatSetup.food).toEqual([])
+  })
+
+  it('warns only when there is no usable idle food', () => {
+    expect(idleFoodWarning(makeSave())).toMatch(/No idle food/i)
+    const configured = { completedQuests: [], idleCombatSetup: { food: [{ itemId: 'shrimps', quantity: 5 }], potions: [], prayers: { protectionPrayerId: null, combatPrayerId: null } } }
+    expect(idleFoodWarning(makeSave({ settings: configured }))).toMatch(/inventory or bank/i)
+    expect(idleFoodWarning(makeSave({ inventory: [{ itemId: 'shrimps', quantity: 5 }], settings: configured }))).toBeNull()
+    // The read-only summary mirrors the same stock signal.
+    expect(idleCombatSetupSummary(makeSave({ settings: configured })).foodInStock).toBe(false)
+  })
+})
+
+describe('MCP quest queue', () => {
+  it('queues an eligible quest, resolving its XP choice up front', () => {
+    const save = makeSave({ stats: { cooking: { xp: 0 } } })
+    // cross_marks_the_spot: {any:300} — must ask for the skill, not default.
+    expect(() => addQuestToQueueIntent(save, 'cross_marks_the_spot', undefined, null)).toThrow(/ask the player/i)
+    const r = addQuestToQueueIntent(save, 'cross_marks_the_spot', 'cooking', null)
+    expect(r.queue).toEqual([{ id: 'cross_marks_the_spot', name: expect.any(String), xpChoiceSkill: 'cooking' }])
+    expect(save.settings.questQueue[0].xpChoiceSkill).toBe('cooking')
+  })
+
+  it('refuses duplicates, the active quest, a full queue and ineligible quests', () => {
+    const save = makeSave({ stats: { cooking: { xp: 0 } } })
+    addQuestToQueueIntent(save, 'cross_marks_the_spot', 'cooking', null)
+    expect(() => addQuestToQueueIntent(save, 'cross_marks_the_spot', 'cooking', null)).toThrow(/already in the queue/i)
+    expect(() => addQuestToQueueIntent(save, 'a_boarborn_of_interest', undefined, 'a_boarborn_of_interest')).toThrow(/currently in progress/i)
+    const full = makeSave({ stats: { slayer: { xp: 0 } }, settings: { completedQuests: [], questQueue: [{ id: 'x1', name: 'x' }, { id: 'x2', name: 'x' }, { id: 'x3', name: 'x' }] } })
+    expect(() => addQuestToQueueIntent(full, 'a_boarborn_of_interest', undefined, null)).toThrow(/full/i)
+    // a_realm_divided has unmet requirements → cannot queue.
+    expect(() => addQuestToQueueIntent(makeSave(), 'a_realm_divided', 'strength', null)).toThrow(/Cannot queue|startable now/i)
+  })
+
+  it('removes a queued quest (and errors when absent)', () => {
+    const save = makeSave({ stats: { cooking: { xp: 0 } } })
+    addQuestToQueueIntent(save, 'cross_marks_the_spot', 'cooking', null)
+    expect(removeQuestFromQueueIntent(save, 'cross_marks_the_spot').queue).toEqual([])
+    expect(() => removeQuestFromQueueIntent(save, 'cross_marks_the_spot')).toThrow(/not in the quest queue/i)
+  })
+
+  it('auto-starts the queued quest on completion and applies its own XP choice', () => {
+    const save = makeSave({ stats: { slayer: { xp: 0, level: 1 }, cooking: { xp: 0, level: 1 } } })
+    addQuestToQueueIntent(save, 'cross_marks_the_spot', 'cooking', 'a_boarborn_of_interest')
+    const task = buildQuestTask(save, 'a_boarborn_of_interest', undefined)
+    // 700000ms covers both ~500-tick quests back to back.
+    const r = applyQuestTask(save, task, 700_000)
+    expect(r.completed.map((c: any) => c.id)).toEqual(['a_boarborn_of_interest', 'cross_marks_the_spot'])
+    // The "any" choice was routed to cooking via the queue entry, not defaulted.
+    expect(save.stats.cooking.xp).toBe(300)
+    expect(save.settings.questQueue).toEqual([])
+    expect(r.queue).toEqual([])
   })
 })
