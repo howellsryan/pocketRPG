@@ -6,7 +6,6 @@ import { getAgilityBankDelayMs, formatBankDelay } from '../engine/agility.js'
 import { COMBAT_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, STUB_SKILLS } from '../utils/constants.js'
 import { getSkillArt } from '../utils/skillArt.js'
 import Modal from '../components/Modal.jsx'
-import Button from '../components/Button.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import SkillEmblem from '../components/SkillEmblem.jsx'
 
@@ -48,29 +47,6 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
   const [loggingOut, setLoggingOut] = useState(false)
   const [saving, setSaving] = useState(false)
   const [selectedSkillDetail, setSelectedSkillDetail] = useState(null)
-  const [showApiAccess, setShowApiAccess] = useState(false)
-  const [copiedField, setCopiedField] = useState(null)
-
-  async function copyText(text, field) {
-    if (!text) return
-    try {
-      if (navigator?.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text)
-      } else {
-        const ta = document.createElement('textarea')
-        ta.value = text
-        ta.setAttribute('readonly', '')
-        document.body.appendChild(ta)
-        ta.select()
-        document.execCommand('copy')
-        ta.remove()
-      }
-      setCopiedField(field)
-      setTimeout(() => setCopiedField((f) => (f === field ? null : f)), 1500)
-    } catch { /* clipboard unavailable — user can select manually */ }
-  }
-
-  const mcpServerUrl = typeof window !== 'undefined' ? `${window.location.origin}/api/mcp` : '/api/mcp'
 
   async function handleLogout() {
     if (loggingOut || saving) return
@@ -133,16 +109,6 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
               >
                 <GameIcon iconKey="save" color="#f0c040" size={24} title="Save" />
               </button>
-              {isCloudAccount && (
-                <button
-                  class="rune-btn"
-                  onClick={() => setShowApiAccess(true)}
-                  aria-label="AI / API access"
-                  title="Connect an AI assistant (MCP)"
-                >
-                  <GameIcon iconKey="scroll" color="#7fd1e0" size={24} title="API access" />
-                </button>
-              )}
               <button
                 class="rune-btn"
                 onClick={handleLogout}
@@ -244,49 +210,6 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
         </Modal>
       )}
 
-      {/* AI / API (MCP) access modal */}
-      {showApiAccess && (
-        <Modal title="Connect an AI assistant" onClose={() => setShowApiAccess(false)}>
-          <div class="space-y-4 text-sm text-[var(--color-parchment)]">
-            <p class="opacity-70">
-              PocketRPG exposes an <b>MCP server</b> so assistants like ChatGPT can view your
-              characters and perform shop/credit actions for you. Add the server below as a custom
-              connector — you'll approve access in your browser, no token to copy.
-            </p>
-
-            <div>
-              <div class="text-xs uppercase tracking-wide opacity-50 mb-1">MCP server URL</div>
-              <div class="flex items-center gap-2">
-                <code class="flex-1 min-w-0 break-all rounded-lg bg-[#111] border border-[var(--color-void-border)] p-2 font-[var(--font-mono)] text-xs text-[var(--color-gold)]">
-                  {mcpServerUrl}
-                </code>
-                <Button size="md" variant="primary" onClick={() => copyText(mcpServerUrl, 'url')}>
-                  {copiedField === 'url' ? 'Copied' : 'Copy'}
-                </Button>
-              </div>
-            </div>
-
-            <div>
-              <div class="text-xs uppercase tracking-wide opacity-50 mb-1">In ChatGPT</div>
-              <ol class="list-decimal list-inside space-y-1 opacity-80">
-                <li>Settings → Connectors → Add custom connector.</li>
-                <li>Paste the MCP server URL above.</li>
-                <li>Click Connect — a PocketRPG window asks you to approve.</li>
-                <li>Sign in (if needed) and choose <b>Allow access</b>.</li>
-              </ol>
-            </div>
-
-            <div class="rounded-lg bg-[#2a1d12] border border-[#5a3d1a] p-3 text-xs space-y-1">
-              <div class="font-bold text-[var(--color-gold)]">You stay in control</div>
-              <p class="opacity-80">
-                Access is granted only after you approve it, and an assistant can only do what these
-                tools allow (view state, shop purchases, credit skips). Access expires within
-                <b> 30 days</b>; logging out revokes it sooner.
-              </p>
-            </div>
-          </div>
-        </Modal>
-      )}
     </div>
   )
 }

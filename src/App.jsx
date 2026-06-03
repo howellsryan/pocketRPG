@@ -28,6 +28,7 @@ import MinigamesScreen from './screens/MinigamesScreen.jsx'
 import CollectionLogScreen from './screens/CollectionLogScreen.jsx'
 import LeaderboardScreen from './screens/LeaderboardScreen.jsx'
 import HelpScreen from './screens/HelpScreen.jsx'
+import ConnectAiScreen from './screens/ConnectAiScreen.jsx'
 import AuthScreen from './screens/AuthScreen.jsx'
 import OAuthConsentScreen from './screens/OAuthConsentScreen.jsx'
 import { SCREENS } from './utils/constants.js'
@@ -2160,6 +2161,7 @@ function GameApp() {
       case SCREENS.COLLECTION_LOG: return <CollectionLogScreen />
       case SCREENS.LEADERBOARD:    return <LeaderboardScreen />
       case SCREENS.HELP:           return <HelpScreen />
+      case SCREENS.CONNECT_AI:     return <ConnectAiScreen isCloudAccount={!!getToken() && !!getCharacterId()} />
       default:                  return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} />
     }
   }
