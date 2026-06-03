@@ -24,7 +24,10 @@ import { simulateIdleSkilling, simulateIdleAgility } from '../../../src/engine/i
 import { simulateIdleThieving } from '../../../src/engine/thieving.js'
 import { simulateIdleHunting } from '../../../src/engine/hunter.js'
 import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
-import { PRODUCTION_SKILLS, IDLE_AUTOBANK_GATHERING_SKILLS } from '../../../src/utils/constants.js'
+import questsData from '../../../src/data/quests.json' assert { type: 'json' }
+import { checkQuestEligibility, getQuestPointsEarned, getCombatLevel } from '../../../src/engine/quests.js'
+import { createQueuedQuestTask, simulateQuestIdleCascade, splitQuestXpRewards } from '../../../src/engine/questIdleCascade.js'
+import { PRODUCTION_SKILLS, IDLE_AUTOBANK_GATHERING_SKILLS, COMBAT_SKILLS, ALL_SKILLS, TICK_DURATION } from '../../../src/utils/constants.js'
 
 const XP_CAP = 200000000
 
@@ -147,7 +150,7 @@ export const SKILL_IDLE_SKILLS = new Set([...IDLE_AUTOBANK_GATHERING_SKILLS, ...
 // magic, construction, dungeoneering and slayer use other systems.
 export const SUPPORTED_IDLE_SKILLS = [...SKILL_IDLE_SKILLS, 'agility', 'thieving', 'hunter']
 
-const SUPPORTED_IDLE_TYPES = new Set(['skill', 'agility', 'thieving', 'hunter'])
+const SUPPORTED_IDLE_TYPES = new Set(['skill', 'agility', 'thieving', 'hunter', 'quest'])
 
 export function isClaimableTask(task) {
   if (!task || !SUPPORTED_IDLE_TYPES.has(task.type)) return false
@@ -317,4 +320,152 @@ export function runIdleTask(save, task, elapsedMs) {
   }
   if (!sim) return { applied: false, reason: 'no_progress' }
   return { applied: true, ...applyIdleResult(save, sim, task.type) }
+}
+
+// ── Quests (Phase C increment 4) ─────────────────────────────────────────────
+// Quests are a timed idle task (type:'quest'): starting one runs the engine
+// clock down over real time, exactly like skilling, and completing it records
+// the quest, grants its XP/coins and unlocks its quest-gated items. The game
+// client pops a modal to pick where combat/"any" XP lands; the agent resolves
+// that up front by passing an xp_skill, stored on the task so the later claim
+// is deterministic.
+
+const QUEST_BY_ID = new Map(questsData.map((q) => [q.id, q]))
+const UNIQUE_ALL_SKILLS = [...new Set(ALL_SKILLS)]
+
+function completedQuestSet(save) {
+  const list = Array.isArray(save.settings?.completedQuests) ? save.settings.completedQuests : []
+  return new Set(list)
+}
+
+// Allowed skills for a quest's free XP choice ('combat' → combat skills only,
+// 'any' → every skill). Quests never carry more than one such choice.
+function allowedChoiceSkills(choiceType) {
+  return choiceType === 'combat' ? COMBAT_SKILLS : UNIQUE_ALL_SKILLS
+}
+
+// Build (and validate) a quest idle task. Throws if the quest is unknown, the
+// character is ineligible, or a required XP-skill choice is missing/invalid.
+export function buildQuestTask(save, questId, xpSkill) {
+  const quest = QUEST_BY_ID.get(questId)
+  if (!quest) {
+    throw new GameApiError('UNKNOWN_QUEST', `No quest with id '${questId}'. See pocketrpg://reference/quests.`, 400)
+  }
+  const completed = completedQuestSet(save)
+  const { eligible, reasons } = checkQuestEligibility(quest, save.stats || {}, completed, questsData)
+  if (!eligible) {
+    throw new GameApiError('QUEST_INELIGIBLE', `Cannot start '${quest.name}': ${reasons.join('; ')}.`, 400)
+  }
+
+  const { choices } = splitQuestXpRewards(quest.xpReward || {})
+  let xpChoiceSkill = null
+  if (choices.length > 0) {
+    const choice = choices[0]
+    const allowed = allowedChoiceSkills(choice.type)
+    if (!xpSkill) {
+      const label = choice.type === 'combat' ? 'a combat skill' : 'any skill'
+      throw new GameApiError(
+        'XP_CHOICE_REQUIRED',
+        `'${quest.name}' awards ${choice.amount} XP to ${label} on completion — pass xp_skill (one of: ${allowed.join(', ')}).`,
+        400,
+      )
+    }
+    if (!allowed.includes(xpSkill)) {
+      throw new GameApiError('INVALID_XP_SKILL', `xp_skill '${xpSkill}' is not valid here. Choose one of: ${allowed.join(', ')}.`, 400)
+    }
+    xpChoiceSkill = xpSkill
+  }
+
+  return { ...createQueuedQuestTask(quest), xpChoiceSkill }
+}
+
+function addQuestXp(save, skill, rawXp, gained) {
+  const amount = Math.floor(Number(rawXp) || 0)
+  if (amount <= 0 || !save.stats[skill]) return
+  const newXP = Math.min((save.stats[skill].xp || 0) + amount, XP_CAP)
+  save.stats[skill] = { ...save.stats[skill], xp: newXP, level: getLevelFromXP(newXP) }
+  gained[skill] = (gained[skill] || 0) + amount
+}
+
+// Run a quest idle task over the elapsed window and apply every completion to
+// the save. Mirrors the client load-time cascade (gameState.jsx): records the
+// quest, applies fixed + chosen XP, banks coins. Returns the (partial-progress)
+// finalTask the caller should persist — null once the quest is finished.
+export function applyQuestTask(save, task, elapsedMs, now = Date.now()) {
+  if (!save.settings || typeof save.settings !== 'object') save.settings = {}
+  if (!save.stats || typeof save.stats !== 'object') save.stats = {}
+  if (!save.bank || typeof save.bank !== 'object') save.bank = {}
+
+  const cascade = simulateQuestIdleCascade({ activeTask: task, questQueue: [], elapsedMs, now })
+  const completedSet = completedQuestSet(save)
+  const completed = []
+
+  for (const entry of cascade.completed) {
+    const quest = entry.quest
+    completedSet.add(quest.id)
+
+    const { fixed, choices } = splitQuestXpRewards(quest.xpReward || {})
+    const gained = {}
+    for (const [skill, xp] of Object.entries(fixed)) addQuestXp(save, skill, xp, gained)
+    for (const choice of choices) addQuestXp(save, task.xpChoiceSkill, choice.amount, gained)
+
+    const coins = Number(quest.coinReward || 0) || 0
+    if (coins > 0) {
+      const existing = save.bank.coins
+      save.bank.coins = existing
+        ? { ...existing, quantity: (Number(existing.quantity) || 0) + coins }
+        : { itemId: 'coins', quantity: coins }
+    }
+
+    completed.push({
+      id: quest.id,
+      name: quest.name,
+      xpGained: gained,
+      coinsGained: coins,
+      itemUnlocks: (quest.itemUnlocks || []).map((id) => ({ itemId: id, name: itemsData[id]?.name || id })),
+    })
+  }
+
+  save.settings.completedQuests = [...completedSet]
+
+  // The cascade rebuilds the front task via createQueuedQuestTask, which drops
+  // our xpChoiceSkill; re-attach it so a later claim still resolves the choice.
+  const finalTask = cascade.finalTask ? { ...cascade.finalTask, xpChoiceSkill: task.xpChoiceSkill } : null
+
+  return {
+    type: 'quest',
+    completed,
+    finalTask,
+    ticksUsed: Math.floor((Number(cascade.elapsedMsUsed) || 0) / TICK_DURATION),
+    ticksRemaining: finalTask?.ticksRemaining ?? 0,
+  }
+}
+
+// Read-only quest status for an account: which quests are done, startable now,
+// or locked (with the missing requirements), plus the total quest points.
+export function questStatuses(save) {
+  const completed = completedQuestSet(save)
+  const stats = save.stats || {}
+  const eligible = []
+  const locked = []
+
+  for (const quest of questsData) {
+    if (completed.has(quest.id)) continue
+    const status = checkQuestEligibility(quest, stats, completed, questsData)
+    const base = { id: quest.id, name: quest.name, complexity: quest.complexity, durationSeconds: quest.durationSeconds }
+    if (status.eligible) {
+      eligible.push({ ...base, coinReward: quest.coinReward || 0, xpReward: quest.xpReward || {} })
+    } else {
+      locked.push({ ...base, requirements: status.reasons })
+    }
+  }
+
+  return {
+    questPoints: getQuestPointsEarned(completed, questsData),
+    combatLevel: getCombatLevel(stats),
+    completedCount: completed.size,
+    completed: [...completed],
+    eligible,
+    locked,
+  }
 }

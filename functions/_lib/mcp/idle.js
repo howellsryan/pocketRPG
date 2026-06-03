@@ -25,3 +25,20 @@ export async function resetIdleActiveAt(env, characterId, now) {
     'UPDATE character_idle_state SET last_active_at = ?, updated_at = ? WHERE character_id = ?',
   ).bind(now, now, characterId).run()
 }
+
+// Clear the active task (e.g. a quest that just finished) and reset the clock.
+export async function clearIdleTask(env, characterId, now) {
+  await env.DB.prepare(
+    'UPDATE character_idle_state SET active_task = NULL, last_active_at = ?, updated_at = ? WHERE character_id = ?',
+  ).bind(now, now, characterId).run()
+}
+
+// Push the idle clock back by `ms`, so the next claim simulates that much extra
+// elapsed time. Used by a 1-hour skip: the credit is already debited, this is
+// what actually advances the running activity (the game client applies the same
+// hour locally; whichever claims first resets the clock, so it grants once).
+export async function advanceIdleClock(env, characterId, ms) {
+  await env.DB.prepare(
+    'UPDATE character_idle_state SET last_active_at = last_active_at - ?, updated_at = ? WHERE character_id = ?',
+  ).bind(ms, Date.now(), characterId).run()
+}

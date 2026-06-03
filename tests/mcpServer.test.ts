@@ -93,6 +93,8 @@ describe('MCP tool schema', () => {
       'get_active_activity',
       'start_skilling',
       'claim_activity',
+      'get_quests',
+      'start_quest',
     ])
   })
 

@@ -81,12 +81,20 @@ intent → writeSave → audit). Throw-before-write gives atomicity.
       coins-to-inventory for agility/thieving, reward-table items to bank for
       hunter). Generalised `buildIdleTask` / `runIdleTask` / `applyIdleResult`
       dispatch by task type. Golden + deterministic tests in `tests/mcpIntents.test.ts`.
-- [ ] **Increment 4 — `do_quest_step`** — `quests.js` / `questIdleCascade.js`.
+- [x] **Increment 4 — quests:** `get_quests` (read: completed / startable-now /
+      locked-with-reasons + quest points) and `start_quest` (validates
+      eligibility via `quests.js` `checkQuestEligibility`, resolving the
+      combat/"any" XP choice up front via an `xp_skill` arg). A quest is a timed
+      idle task on the single idle slot; `claim_activity` runs
+      `simulateQuestIdleCascade` server-side to record the completion, grant
+      fixed + chosen XP, bank coins and unlock quest-gated items. `skip_hour`
+      now also advances the idle clock an hour, so the skipped time materialises
+      on the next claim (it previously only debited the credit). Golden tests in
+      `tests/mcpIntents.test.ts`.
 
 Still client-only (other systems / Phase D): combat & slayer (`simulateIdleCombat`
 — food/death), farming patches, prayer, magic, construction, dungeoneering, and
 the material-gathering `gather` tasks.
-- [ ] **Increment 4 — `do_quest_step`** — `quests.js` / `questIdleCascade.js`.
 
 ## Phase D — Full autoplayer (T3, heaviest)
 

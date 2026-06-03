@@ -9,6 +9,9 @@ import {
   applyIdleResult,
   toSlotArray,
   runIdleTask,
+  buildQuestTask,
+  applyQuestTask,
+  questStatuses,
 } from '../functions/_lib/mcp/intents.js'
 import { getLevelFromXP } from '../src/engine/experience.js'
 
@@ -225,5 +228,84 @@ describe('idle gathering + agility/thieving/hunter', () => {
     expect(save.stats.hunter.xp).toBe(750)
     expect(save.bank.cowhide.quantity).toBe(5)
     expect(r.rewards).toContainEqual({ itemId: 'cowhide', name: expect.any(String), quantity: 5 })
+  })
+})
+
+describe('quest intents', () => {
+  // a_boarborn_of_interest: no requirements, 300s (500 ticks), {slayer:1000} XP,
+  // 1000 coins — a fixed-skill reward with no player choice.
+  it('builds a quest task for an eligible quest with no XP choice', () => {
+    const task = buildQuestTask(makeSave({ stats: { slayer: { xp: 0 } } }), 'a_boarborn_of_interest', undefined)
+    expect(task).toMatchObject({ type: 'quest', xpChoiceSkill: null })
+    expect(task.quest.id).toBe('a_boarborn_of_interest')
+    expect(task.totalTicks).toBe(500)
+    expect(task.ticksRemaining).toBe(500)
+  })
+
+  it('rejects an unknown quest id', () => {
+    expect(() => buildQuestTask(makeSave(), 'not_a_quest', undefined)).toThrow(/No quest/)
+  })
+
+  it('refuses a quest whose requirements are unmet', () => {
+    // a_realm_divided needs several skills + prerequisite quests.
+    expect(() => buildQuestTask(makeSave(), 'a_realm_divided', undefined)).toThrow(/Cannot start/)
+  })
+
+  it('requires xp_skill when the quest offers a combat/any XP choice', () => {
+    // cross_marks_the_spot: {any:300} — a free "any skill" choice.
+    expect(() => buildQuestTask(makeSave(), 'cross_marks_the_spot', undefined)).toThrow(/xp_skill/)
+  })
+
+  it('rejects an xp_skill outside the choice scope (combat-only reward)', () => {
+    // a_dusk_at_the_theater: {combat:40000} — cooking is not a combat skill.
+    expect(() => buildQuestTask(makeSave(), 'a_dusk_at_the_theater', 'cooking')).toThrow(/not valid/)
+    expect(buildQuestTask(makeSave(), 'a_dusk_at_the_theater', 'attack').xpChoiceSkill).toBe('attack')
+  })
+
+  it('completing a quest records it, grants fixed XP and banks coins', () => {
+    const save = makeSave({ stats: { slayer: { xp: 0, level: 1 } } })
+    const task = buildQuestTask(save, 'a_boarborn_of_interest', undefined)
+    // 500 ticks * 600ms = 300000ms exactly completes it.
+    const r = applyQuestTask(save, task, 300_000)
+    expect(r.finalTask).toBeNull()
+    expect(r.completed.map((c: any) => c.id)).toEqual(['a_boarborn_of_interest'])
+    expect(save.settings.completedQuests).toContain('a_boarborn_of_interest')
+    expect(save.stats.slayer.xp).toBe(1000)
+    expect(save.bank.coins).toEqual({ itemId: 'coins', quantity: 1000 })
+  })
+
+  it('routes a chosen XP reward to the picked skill', () => {
+    const save = makeSave({ stats: { cooking: { xp: 0, level: 1 } } })
+    const task = buildQuestTask(save, 'cross_marks_the_spot', 'cooking')
+    const r = applyQuestTask(save, task, 300_000)
+    expect(r.completed[0].xpGained).toEqual({ cooking: 300 })
+    expect(save.stats.cooking.xp).toBe(300)
+  })
+
+  it('partial progress persists the remaining task without granting rewards', () => {
+    const save = makeSave({ stats: { attack: { xp: 0, level: 1 } } })
+    // a_dusk_at_the_theater: 4500s = 7500 ticks. 600000ms = 1000 ticks elapsed.
+    const task = buildQuestTask(save, 'a_dusk_at_the_theater', 'attack')
+    const r = applyQuestTask(save, task, 600_000)
+    expect(r.completed).toEqual([])
+    expect(r.finalTask).toMatchObject({ type: 'quest', ticksRemaining: 6500, xpChoiceSkill: 'attack' })
+    expect(save.stats.attack.xp).toBe(0)
+    expect(save.settings.completedQuests).toEqual([])
+  })
+
+  it('questStatuses partitions completed / eligible / locked and totals quest points', () => {
+    const save = makeSave({
+      stats: {},
+      settings: { completedQuests: ['a_boarborn_of_interest'] },
+    })
+    const status = questStatuses(save)
+    expect(status.completedCount).toBe(1)
+    expect(status.questPoints).toBeGreaterThan(0)
+    expect(status.completed).toContain('a_boarborn_of_interest')
+    // Already-completed quests are not re-listed as eligible.
+    expect(status.eligible.find((q: any) => q.id === 'a_boarborn_of_interest')).toBeUndefined()
+    // A quest with unmet prerequisites is locked, with reasons.
+    const locked = status.locked.find((q: any) => q.id === 'a_realm_divided')
+    expect(locked?.requirements?.length).toBeGreaterThan(0)
   })
 })

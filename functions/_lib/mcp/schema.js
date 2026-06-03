@@ -35,6 +35,13 @@ Acting:
   get_active_activity shows what's running; claim_activity banks the accrued
   rewards and keeps it going. Combat/farming/prayer/magic idle is still done in
   the game client.
+- Quests: get_quests shows what's completed, startable now, or locked (with the
+  missing requirements). start_quest begins an eligible quest — it runs for its
+  duration of real time, then claim_activity grants the XP/coins and unlocks its
+  quest-gated items. Quests use the single idle slot, so finish one before
+  starting another activity.
+- skip_hour spends a credit to advance the running idle activity by one hour;
+  follow it with claim_activity to collect the skipped time.
 - XP, coins and most loot are client-computed in this game, so these tools
   cannot simulate live training or combat yet; report state and take only the
   supported actions. Prefer concrete, checkable advice grounded in get_* reads.`
@@ -144,7 +151,7 @@ export const TOOL_SCHEMAS = [
   {
     name: 'skip_hour',
     description:
-      "Spend credits to skip ahead. With no boss/raid id this is a 1-credit one-hour skip; a bossId or raidId charges that target's skip cost. Debits credits server-side.",
+      "Spend credits to skip ahead. With no boss/raid id this is a 1-credit one-hour skip that advances the running idle activity by an hour (follow with claim_activity to collect it); a bossId or raidId charges that target's skip cost for client-side combat. Debits credits server-side.",
     inputSchema: {
       type: 'object',
       properties: {
@@ -334,9 +341,32 @@ export const TOOL_SCHEMAS = [
   {
     name: 'claim_activity',
     description:
-      'Claim the rewards accrued by the running idle skilling task: the elapsed time is simulated server-side, XP/items are applied, and the idle clock resets so the activity keeps running.',
+      'Claim the rewards accrued by the running idle activity (skilling or a quest): the elapsed time is simulated server-side, XP/items/quest completions are applied, and the idle clock resets (a finished quest clears the slot; skilling keeps running).',
     inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
     annotations: WRITE('Claim activity'),
+  },
+  {
+    name: 'get_quests',
+    description:
+      "List a character's quest progress: total quest points, completed quests, the quests they can start right now (with rewards), and the locked ones with their missing requirements. Use ids with start_quest.",
+    inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
+    annotations: READ('Get quests'),
+  },
+  {
+    name: 'start_quest',
+    description:
+      'Start a quest the character is eligible for (checks skill/quest-point/prerequisite/combat-level requirements). It completes after its duration of real time — claim_activity collects the XP, coins and item unlocks; skip_hour advances it an hour. If the quest awards combat/"any" XP, pass xp_skill to choose where it lands.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        quest_id: { type: 'string', description: "The quest id, e.g. 'dragon_slayer_i'. Find ids via get_quests or pocketrpg://reference/quests." },
+        xp_skill: { type: 'string', description: 'Skill to receive the quest\'s free combat/"any" XP choice (a combat skill for a combat choice, any skill for an "any" choice). Required only when the quest offers such a choice.' },
+        ...optionalCharacterId,
+      },
+      required: ['quest_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Start quest'),
   },
 ]
 

@@ -4,8 +4,9 @@ import { getItem, getMonster, itemName, withItemName, REFERENCE_RESOURCES, readR
 import { loadCharacterWithSave, writeSave } from '../game/save.js'
 import { auditLog } from '../game/audit.js'
 import { assertNotInActiveMatch } from '../pvp.js'
-import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask } from './intents.js'
-import { getIdleRow, setIdleTask, resetIdleActiveAt } from './idle.js'
+import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildQuestTask, applyQuestTask, questStatuses } from './intents.js'
+import { getIdleRow, setIdleTask, resetIdleActiveAt, clearIdleTask, advanceIdleClock } from './idle.js'
+import { SKIP_HOUR_MS } from '../../../src/engine/skipPreflight.js'
 
 // Reuse the exact production endpoint handlers (see bridge.js).
 import { onRequestGet as listCharacters } from '../../api/characters/index.js'
@@ -88,11 +89,39 @@ async function claimIdleCore(env, characterId, identityId) {
   if (elapsedMs < MIN_IDLE_MS) return { claimed: false, reason: 'too_soon', elapsedMs }
 
   const { saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, identityId)
+
+  // Quests carry finite progress: apply completions, then persist the partial
+  // task (clock reset) or clear it once the quest is finished.
+  if (task.type === 'quest') {
+    const result = applyQuestTask(saveObject, task, elapsedMs, now)
+    await writeSave(env, characterId, saveObject, saveRevision)
+    if (result.finalTask) await setIdleTask(env, characterId, JSON.stringify(result.finalTask), now)
+    else await clearIdleTask(env, characterId, now)
+    return { claimed: true, elapsedMs, ...result }
+  }
+
   const result = runIdleTask(saveObject, task, elapsedMs)
   if (!result.applied) return { claimed: false, reason: result.reason || 'no_progress', elapsedMs }
   await writeSave(env, characterId, saveObject, saveRevision)
   await resetIdleActiveAt(env, characterId, now)
   return { claimed: true, elapsedMs, ...result }
+}
+
+// Parse the character's current idle task without mutating anything.
+async function peekActiveTask(env, characterId) {
+  const idle = await getIdleRow(env, characterId)
+  if (!idle?.active_task) return null
+  try { return JSON.parse(idle.active_task) } catch { return null }
+}
+
+// A quest occupies the single idle slot exclusively and carries finite
+// progress, so refuse to start another activity over a running quest — it must
+// be finished via claim_activity first (which clears the slot).
+async function assertNoActiveQuest(env, characterId) {
+  const task = await peekActiveTask(env, characterId)
+  if (task?.type === 'quest') {
+    throw new Error('A quest is in progress. Call claim_activity to finish and collect it before starting another activity.')
+  }
 }
 
 const TOOLS = {
@@ -177,7 +206,30 @@ const TOOLS = {
       body: { bossId, raidId },
     })
     if (!res.ok) throw httpError(res)
-    return ok({ characterId: id, ...res.data })
+
+    // The endpoint only debits the credit; the time-advance is applied to the
+    // running activity. For a plain 1-hour skip (no boss/raid), push the server
+    // idle clock back an hour so the running idle task accrues the skipped time
+    // on the next claim_activity. Boss/raid skips drive client-side combat and
+    // have no claimable idle task to advance.
+    let appliedToActivity = false
+    if (!bossId && !raidId) {
+      const idle = await getIdleRow(env, id)
+      let task = null
+      try { task = idle?.active_task ? JSON.parse(idle.active_task) : null } catch { task = null }
+      if (isClaimableTask(task)) {
+        await advanceIdleClock(env, id, SKIP_HOUR_MS)
+        appliedToActivity = true
+      }
+    }
+
+    return ok({
+      characterId: id,
+      ...res.data,
+      skippedActivity: appliedToActivity
+        ? { advancedByMs: SKIP_HOUR_MS, note: 'Idle activity advanced 1 hour — call claim_activity to collect it.' }
+        : { advancedByMs: 0, note: 'No claimable idle activity to advance; the credit applies to client-side play (combat/farming).' },
+    })
   },
 
   async skip_slayer_task({ character_id }, { env, authorization }) {
@@ -279,13 +331,22 @@ const TOOLS = {
     let task = null
     try { task = JSON.parse(idle.active_task) } catch { /* leave null */ }
     const runningForSeconds = Math.floor(Math.max(0, Date.now() - (Number(idle.last_active_at) || Date.now())) / 1000)
+    const active = task && (
+      task.type === 'quest'
+        ? {
+            type: 'quest',
+            quest: task.quest?.name || task.quest?.id || null,
+            secondsRemaining: Math.max(0, Math.ceil(((Number(task.ticksRemaining) || 0) * 600) / 1000) - runningForSeconds),
+          }
+        : {
+            type: task.type,
+            skill: task.skill || (task.type !== 'skill' ? task.type : null),
+            action: task.action?.name || task.npc?.name || task.action?.id || null,
+          }
+    )
     return ok({
       characterId: id,
-      active: task && {
-        type: task.type,
-        skill: task.skill || (task.type !== 'skill' ? task.type : null),
-        action: task.action?.name || task.npc?.name || task.action?.id || null,
-      },
+      active,
       runningForSeconds,
       claimableViaMcp: isClaimableTask(task),
     })
@@ -296,6 +357,7 @@ const TOOLS = {
     const id = await resolveCharacterId(env, authorization, character_id)
     const lock = await assertNotInActiveMatch(env, id)
     if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+    await assertNoActiveQuest(env, id)
 
     // Bank any pending rewards from a current supported task before switching;
     // refuse if an unsupported activity (combat/gather/…) is mid-flight so we
@@ -331,6 +393,45 @@ const TOOLS = {
     }
     await auditLog(env, 'mcp_claim_activity', { characterId: id, identityId: identity.id, elapsedMs: result.elapsedMs, skill: result.skill }, { swallow: true })
     return ok({ characterId: id, ...result })
+  },
+
+  // ── Quests (Phase C increment 4) ────────────────────────────────────────────
+
+  async get_quests({ character_id }, { env, authorization }) {
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const res = await callHandler(getSave, env, { authorization, characterId: id })
+    if (!res.ok) throw httpError(res)
+    const save = res.data?.save?.save_data
+    const state = save ? (typeof save === 'string' ? JSON.parse(save) : save) : {}
+    return ok({ characterId: id, ...questStatuses(state) })
+  },
+
+  async start_quest({ quest_id, xp_skill, character_id }, { env, authorization, identity }) {
+    if (!identity?.id) throw new Error('Not authenticated.')
+    if (!quest_id) throw new Error('quest_id is required.')
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const lock = await assertNotInActiveMatch(env, id)
+    if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+    await assertNoActiveQuest(env, id)
+
+    // Bank/clear any pending supported skilling task first; refuse if an
+    // unsupported activity is mid-flight so its progress isn't discarded.
+    const autoClaimed = await claimIdleCore(env, id, identity.id)
+    if (autoClaimed.reason === 'unsupported_type') {
+      throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
+    }
+
+    const { saveObject } = await loadCharacterWithSave(env, id, identity.id)
+    const task = buildQuestTask(saveObject, quest_id, xp_skill) // validates eligibility + xp choice
+    const now = Date.now()
+    await setIdleTask(env, id, JSON.stringify(task), now)
+    await auditLog(env, 'mcp_start_quest', { characterId: id, identityId: identity.id, questId: quest_id, xpSkill: xp_skill || null }, { swallow: true })
+    return ok({
+      characterId: id,
+      started: { questId: task.quest.id, quest: task.quest.name, durationSeconds: task.quest.durationSeconds, xpSkill: task.xpChoiceSkill || undefined },
+      note: 'Quest started — it completes after its duration of real time. Call claim_activity to collect rewards (skip_hour advances it an hour).',
+      autoClaimed: autoClaimed.claimed ? autoClaimed : undefined,
+    })
   },
 }
 
