@@ -2,9 +2,11 @@
 
 North star (chosen): a **full autoplayer** — the agent can eventually see the
 whole game and *play* it (train skills, manage gear, progress quests, fight
-monsters/bosses, PvP), with results computed server-side. This document is the
-phased plan to get there. The deployed surface lives in `functions/api/mcp.js`
-and `functions/_lib/mcp/**`; see `CLAUDE.md` §15 for the auth/scope summary.
+monsters/bosses), with results computed server-side. **PvP is explicitly out of
+scope** (owner decision) — it stays in the game client and is never exposed via
+MCP. This document is the phased plan to get there. The deployed surface lives
+in `functions/api/mcp.js` and `functions/_lib/mcp/**`; see `CLAUDE.md` §15 for
+the auth/scope summary.
 
 ## The constraint that shapes everything
 
@@ -113,7 +115,9 @@ the material-gathering `gather` tasks.
       driving the whole fight, granting uniques through the existing completion
       endpoints).
 - [ ] Dungeoneering (`dungeoneeringTokens.js`).
-- [ ] PvP intents (`pvpEngine.js` is already server-side — extend tool coverage).
+- **PvP — out of scope (will not build).** Per owner decision, the MCP server
+  does not expose PvP. No matchmaking, match-state reads or move-submission
+  tools; PvP stays entirely in the game client. Do not add PvP tooling here.
 
 ## Cross-cutting
 
