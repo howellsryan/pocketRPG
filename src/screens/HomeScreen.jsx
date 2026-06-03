@@ -209,6 +209,7 @@ export default function HomeScreen({ onNavigate, onLogout, onManualSave, isCloud
           </div>
         </Modal>
       )}
+
     </div>
   )
 }

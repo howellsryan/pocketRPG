@@ -99,5 +99,6 @@ export const SCREENS = {
   COLLECTION_LOG: 'collection_log',
   LEADERBOARD: 'leaderboard',
   HELP: 'help',
-  ARMOURY: 'armoury'
+  ARMOURY: 'armoury',
+  CONNECT_AI: 'connect_ai'
 }

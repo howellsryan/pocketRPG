@@ -138,3 +138,18 @@ export function addItemToBank(save, itemId, quantity) {
     : Math.floor(Number(existing?.quantity) || 0)
   save.bank[itemId] = { itemId, quantity: curQty + qty }
 }
+
+export function bankQuantity(save, itemId) {
+  const existing = save?.bank?.[itemId]
+  return typeof existing === 'number' ? Math.floor(existing) : Math.floor(Number(existing?.quantity) || 0)
+}
+
+export function removeItemFromBank(save, itemId, quantity) {
+  const qty = Math.floor(Number(quantity) || 0)
+  if (qty < 1) throw new GameApiError('INVALID_QUANTITY', 'Invalid quantity', 400)
+  const cur = bankQuantity(save, itemId)
+  if (cur < qty) throw new GameApiError('INSUFFICIENT_BANK', 'Not enough of that item in the bank', 400)
+  const next = cur - qty
+  if (next <= 0) delete save.bank[itemId]
+  else save.bank[itemId] = { itemId, quantity: next }
+}

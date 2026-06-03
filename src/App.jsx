@@ -28,7 +28,9 @@ import MinigamesScreen from './screens/MinigamesScreen.jsx'
 import CollectionLogScreen from './screens/CollectionLogScreen.jsx'
 import LeaderboardScreen from './screens/LeaderboardScreen.jsx'
 import HelpScreen from './screens/HelpScreen.jsx'
+import ConnectAiScreen from './screens/ConnectAiScreen.jsx'
 import AuthScreen from './screens/AuthScreen.jsx'
+import OAuthConsentScreen from './screens/OAuthConsentScreen.jsx'
 import { SCREENS } from './utils/constants.js'
 import { hasSave, closeDB } from './db/database.js'
 import { initNewGame, saveSetting, getSetting, getAllStats, getInventory, getEquipment, getBank } from './db/stores.js'
@@ -233,6 +235,9 @@ function GameApp() {
   const pendingXpChoicesRef = useRef(pendingXpChoices)
   // Cloud auth gate: 'pending' until we resolve, 'auth' if AuthScreen needed, 'ready' to boot game
   const [cloudPhase, setCloudPhase] = useState('pending')
+  // OAuth consent: the signed request token when an MCP client is connecting
+  // (arrives as ?oauth=… from /api/oauth/authorize; held across login).
+  const [oauthRequest, setOauthRequest] = useState(null)
   // Lazy in-game chunk gate (single-file build only — see loadGameChunk above).
   const [gameChunkReady, setGameChunkReady] = useState(false)
   const [gameChunkAttempt, setGameChunkAttempt] = useState(0)
@@ -448,6 +453,24 @@ function GameApp() {
   }
 
   useEffect(() => {
+    // Detect an OAuth consent hand-off (?oauth=<request token> from
+    // /api/oauth/authorize). Stash it so it survives the login round-trip, then
+    // strip it from the URL. OAuthConsentScreen drives the rest.
+    try {
+      const params = new URLSearchParams(window.location.search)
+      const fromUrl = params.get('oauth')
+      if (fromUrl) {
+        sessionStorage.setItem('pocketrpg_oauth_req', fromUrl)
+        setOauthRequest(fromUrl)
+        params.delete('oauth')
+        const qs = params.toString()
+        history.replaceState(null, '', window.location.pathname + (qs ? `?${qs}` : '') + window.location.hash)
+      } else {
+        const stashed = sessionStorage.getItem('pocketrpg_oauth_req')
+        if (stashed) setOauthRequest(stashed)
+      }
+    } catch { /* non-fatal */ }
+
     // Detect Stripe post-checkout redirect (path or query contains "payment")
     // and strip it from the URL before routing decisions run.
     try {
@@ -2037,6 +2060,20 @@ function GameApp() {
   }
   if (chargeSkipRef) chargeSkipRef.current = chargeSkipCredits
 
+  // OAuth consent — an MCP client (e.g. ChatGPT) is connecting. Takes priority
+  // over the normal boot path; OAuthConsentScreen handles login itself.
+  if (oauthRequest) {
+    return (
+      <OAuthConsentScreen
+        requestToken={oauthRequest}
+        onClose={() => {
+          try { sessionStorage.removeItem('pocketrpg_oauth_req') } catch { /* ignore */ }
+          setOauthRequest(null)
+        }}
+      />
+    )
+  }
+
   // Cloud conflict modal — shown while cloudPhase is still resolving
   if (conflict) {
     const fmt = (ms) => ms ? new Date(ms).toLocaleString() : '—'
@@ -2124,6 +2161,7 @@ function GameApp() {
       case SCREENS.COLLECTION_LOG: return <CollectionLogScreen />
       case SCREENS.LEADERBOARD:    return <LeaderboardScreen />
       case SCREENS.HELP:           return <HelpScreen />
+      case SCREENS.CONNECT_AI:     return <ConnectAiScreen isCloudAccount={!!getToken() && !!getCharacterId()} />
       default:                  return <HomeScreen onNavigate={navigate} onLogout={handleLogoutToCharacterSelect} onManualSave={handleManualSave} isCloudAccount={!!getToken() && !!getCharacterId()} />
     }
   }

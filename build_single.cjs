@@ -144,9 +144,11 @@ const sourceFiles = [
   'screens/CollectionLogScreen.js',
   'screens/LeaderboardScreen.js',
   'screens/HelpScreen.js',
+  'screens/ConnectAiScreen.js',
   'screens/DesktopLandingScreen.js',
   'screens/LandingScreen.js',
   'screens/AuthScreen.js',
+  'screens/OAuthConsentScreen.js',
   'App.js',
 ];
 
@@ -197,6 +199,7 @@ const GAME_CHUNK_FILES = new Set([
   'screens/CollectionLogScreen.js',
   'screens/LeaderboardScreen.js',
   'screens/HelpScreen.js',
+  'screens/ConnectAiScreen.js',
 ]);
 
 function processFile(relPath) {
