@@ -4,7 +4,7 @@ import { getItem, getMonster, itemName, withItemName, REFERENCE_RESOURCES, readR
 import { loadCharacterWithSave, writeSave } from '../game/save.js'
 import { auditLog } from '../game/audit.js'
 import { assertNotInActiveMatch } from '../pvp.js'
-import { depositToBank, withdrawFromBank, equip, unequip, buildSkillTask, runIdleSkilling, SKILL_IDLE_SKILLS } from './intents.js'
+import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask } from './intents.js'
 import { getIdleRow, setIdleTask, resetIdleActiveAt } from './idle.js'
 
 // Reuse the exact production endpoint handlers (see bridge.js).
@@ -80,7 +80,7 @@ async function claimIdleCore(env, characterId, identityId) {
   if (!idle || !idle.active_task) return { claimed: false, reason: 'no_active_task' }
   let task
   try { task = JSON.parse(idle.active_task) } catch { return { claimed: false, reason: 'bad_task' } }
-  if (task?.type !== 'skill' || !SKILL_IDLE_SKILLS.has(task.skill)) {
+  if (!isClaimableTask(task)) {
     return { claimed: false, reason: 'unsupported_type', type: task?.type || 'unknown' }
   }
   const now = Date.now()
@@ -88,7 +88,7 @@ async function claimIdleCore(env, characterId, identityId) {
   if (elapsedMs < MIN_IDLE_MS) return { claimed: false, reason: 'too_soon', elapsedMs }
 
   const { saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, identityId)
-  const result = runIdleSkilling(saveObject, task, elapsedMs)
+  const result = runIdleTask(saveObject, task, elapsedMs)
   if (!result.applied) return { claimed: false, reason: result.reason || 'no_progress', elapsedMs }
   await writeSave(env, characterId, saveObject, saveRevision)
   await resetIdleActiveAt(env, characterId, now)
@@ -281,9 +281,13 @@ const TOOLS = {
     const runningForSeconds = Math.floor(Math.max(0, Date.now() - (Number(idle.last_active_at) || Date.now())) / 1000)
     return ok({
       characterId: id,
-      active: task && { type: task.type, skill: task.skill || null, action: task.action?.name || task.action?.id || null },
+      active: task && {
+        type: task.type,
+        skill: task.skill || (task.type !== 'skill' ? task.type : null),
+        action: task.action?.name || task.npc?.name || task.action?.id || null,
+      },
       runningForSeconds,
-      claimableViaMcp: task?.type === 'skill' && SKILL_IDLE_SKILLS.has(task.skill),
+      claimableViaMcp: isClaimableTask(task),
     })
   },
 
@@ -302,13 +306,13 @@ const TOOLS = {
     }
 
     const { saveObject } = await loadCharacterWithSave(env, id, identity.id)
-    const task = buildSkillTask(saveObject, skill, action_id) // validates skill/action/level
+    const task = buildIdleTask(saveObject, skill, action_id) // validates skill/action/level
     const now = Date.now()
     await setIdleTask(env, id, JSON.stringify(task), now)
     await auditLog(env, 'mcp_start_skilling', { characterId: id, identityId: identity.id, skill, actionId: action_id }, { swallow: true })
     return ok({
       characterId: id,
-      started: { skill, action: task.action.name },
+      started: { skill, action: task.action?.name || task.npc?.name || action_id },
       autoClaimed: autoClaimed.claimed ? autoClaimed : undefined,
     })
   },

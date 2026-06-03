@@ -5,9 +5,10 @@ import {
   equip,
   unequip,
   buildSkillTask,
-  applyIdleSkillResult,
+  buildIdleTask,
+  applyIdleResult,
   toSlotArray,
-  runIdleSkilling,
+  runIdleTask,
 } from '../functions/_lib/mcp/intents.js'
 import { getLevelFromXP } from '../src/engine/experience.js'
 
@@ -125,8 +126,9 @@ describe('idle skilling intents', () => {
     expect(task.action.id).toBe('normal_logs')
   })
 
-  it('rejects gathering/combat skills (production only)', () => {
-    expect(() => buildSkillTask(makeSave(), 'woodcutting', 'normal')).toThrow(/production skills/i)
+  it('buildSkillTask rejects non-skilling skills (combat/agility use other paths)', () => {
+    expect(() => buildSkillTask(makeSave(), 'attack', 'whatever')).toThrow()
+    expect(() => buildSkillTask(makeSave(), 'agility', 'gnome_stronghold')).toThrow()
   })
 
   it('rejects an unknown action', () => {
@@ -159,7 +161,7 @@ describe('idle skilling intents', () => {
       itemsBanked: { shrimps: 5 },
       finalInventory: [{ itemId: 'pickaxe', quantity: 1 }],
     }
-    const summary = applyIdleSkillResult(save, sim)
+    const summary = applyIdleResult(save, sim, 'skill')
     expect(save.stats.cooking.xp).toBe(1150)
     expect(save.stats.cooking.level).toBe(getLevelFromXP(1150))
     expect(save.stats.mining).toBeUndefined()
@@ -169,14 +171,59 @@ describe('idle skilling intents', () => {
     expect(summary.itemsBanked).toContainEqual({ itemId: 'shrimps', name: expect.any(String), quantity: 5 })
   })
 
-  it('runIdleSkilling simulates a real window and grants XP', () => {
+  it('runIdleTask simulates a real production window and grants XP', () => {
     const save = makeSave({
       stats: { firemaking: { xp: 0, level: 1 } },
       inventory: [{ itemId: 'logs', quantity: 100 }],
     })
-    const r = runIdleSkilling(save, buildSkillTask(save, 'firemaking', 'normal_logs'), 60_000)
+    const r = runIdleTask(save, buildSkillTask(save, 'firemaking', 'normal_logs'), 60_000)
     expect(r.applied).toBe(true)
-    expect(typeof r.xpGained.firemaking).toBe('number')
     expect(r.xpGained.firemaking).toBeGreaterThan(0)
+  })
+})
+
+describe('idle gathering + agility/thieving/hunter', () => {
+  it('treats gathering skills as simulateIdleSkilling tasks', () => {
+    const task = buildIdleTask(makeSave({ stats: { woodcutting: { xp: 0 } } }), 'woodcutting', 'normal')
+    expect(task).toMatchObject({ type: 'skill', skill: 'woodcutting' })
+  })
+
+  it('gathering accrues XP over a window', () => {
+    const save = makeSave({ stats: { woodcutting: { xp: 0, level: 1 } } })
+    const r = runIdleTask(save, buildIdleTask(save, 'woodcutting', 'normal'), 60_000)
+    expect(r.applied).toBe(true)
+    expect(r.xpGained.woodcutting).toBeGreaterThan(0)
+  })
+
+  it('builds agility/thieving/hunter tasks from skills.json', () => {
+    expect(buildIdleTask(makeSave(), 'agility', 'gnome_stronghold').type).toBe('agility')
+    expect(buildIdleTask(makeSave(), 'thieving', 'villager').type).toBe('thieving')
+    expect(buildIdleTask(makeSave(), 'hunter', 'hunt_cow').type).toBe('hunter')
+  })
+
+  it('agility grants XP deterministically and banks coins to inventory', () => {
+    const save = makeSave({ stats: { agility: { xp: 0, level: 1 } } })
+    // gnome_stronghold: ticks 40, xp 86, coinReward 10. 240000ms = 400 ticks = 10 laps.
+    const r = runIdleTask(save, buildIdleTask(save, 'agility', 'gnome_stronghold'), 240_000)
+    expect(save.stats.agility.xp).toBe(860)
+    expect(r.coinsGained).toBe(100)
+    expect(save.inventory.find((s: any) => s.itemId === 'coins')?.quantity).toBe(100)
+  })
+
+  it('thieving grants XP and coins deterministically', () => {
+    const save = makeSave({ stats: { thieving: { xp: 0, level: 1 } } })
+    // villager: xp 8, coins 3, 4 ticks/action. 24000ms = 40 ticks = 10 actions.
+    runIdleTask(save, buildIdleTask(save, 'thieving', 'villager'), 24_000)
+    expect(save.stats.thieving.xp).toBe(80)
+    expect(save.inventory.find((s: any) => s.itemId === 'coins')?.quantity).toBe(30)
+  })
+
+  it('hunter grants XP and banks reward items', () => {
+    const save = makeSave({ stats: { hunter: { xp: 0, level: 1 } } })
+    // hunt_cow: ticks 20, xp 150, drops 1 cowhide @100%. 60000ms = 100 ticks = 5 actions.
+    const r = runIdleTask(save, buildIdleTask(save, 'hunter', 'hunt_cow'), 60_000)
+    expect(save.stats.hunter.xp).toBe(750)
+    expect(save.bank.cowhide.quantity).toBe(5)
+    expect(r.rewards).toContainEqual({ itemId: 'cowhide', name: expect.any(String), quantity: 5 })
   })
 })

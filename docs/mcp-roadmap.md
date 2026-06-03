@@ -68,19 +68,24 @@ intent → writeSave → audit). Throw-before-write gives atomicity.
       `game/inventory.js` helpers + engine `equipment.js`; enforce 28-slot cap
       and skill/quest equip requirements. Golden tests in `tests/mcpIntents.test.ts`.
 - [x] **Increment 2 — idle skilling (value):** `start_skilling`,
-      `get_active_activity`, `claim_activity`. Runs `simulateIdleSkilling` over
-      the elapsed window server-side and applies XP/loot/supply-drain to the
-      save (`applyIdleSkillResult` mirrors the client load-time application so
-      the two paths can't drift). Safe against double-grant because cloud
-      clients treat the server `character_idle_state` clock as authoritative and
-      resync from it; the claim resets `last_active_at`. Scoped to production
-      skills (smithing/cooking/crafting/fletching/herblore/runecraft/firemaking);
-      gathering/combat/agility/thieving/hunter idle still run in the client.
-      `start_skilling` auto-claims a pending supported task and refuses to clobber
-      an unsupported one. Golden tests in `tests/mcpIntents.test.ts`.
-- [ ] **Increment 3 — gathering + remaining idle types** (`simulateIdleGather`
-      for woodcutting/mining/fishing, then agility/thieving/hunter), and/or a
-      bounded `train_skill_session(skill, action, ticks)` primitive.
+      `get_active_activity`, `claim_activity`. Runs the idle engine over the
+      elapsed window server-side and applies XP/loot/supply-drain to the save
+      (`applyIdleResult` mirrors the client load-time application so the two
+      paths can't drift). Safe against double-grant because cloud clients treat
+      the server `character_idle_state` clock as authoritative and resync from
+      it; the claim resets `last_active_at`. `start_skilling` auto-claims a
+      pending supported task and refuses to clobber an unsupported one.
+- [x] **Increment 3 — all non-combat idle skills:** gathering
+      (woodcutting/mining/fishing, via `simulateIdleSkilling`'s gathering path)
+      plus agility, thieving and hunter (their own simulators + apply branches:
+      coins-to-inventory for agility/thieving, reward-table items to bank for
+      hunter). Generalised `buildIdleTask` / `runIdleTask` / `applyIdleResult`
+      dispatch by task type. Golden + deterministic tests in `tests/mcpIntents.test.ts`.
+- [ ] **Increment 4 — `do_quest_step`** — `quests.js` / `questIdleCascade.js`.
+
+Still client-only (other systems / Phase D): combat & slayer (`simulateIdleCombat`
+— food/death), farming patches, prayer, magic, construction, dungeoneering, and
+the material-gathering `gather` tasks.
 - [ ] **Increment 4 — `do_quest_step`** — `quests.js` / `questIdleCascade.js`.
 
 ## Phase D — Full autoplayer (T3, heaviest)

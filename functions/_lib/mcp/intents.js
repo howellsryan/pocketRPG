@@ -20,9 +20,11 @@ import {
 } from '../game/inventory.js'
 import { equipItem, unequipSlot, checkEquipRequirements, createEquipment } from '../../../src/engine/equipment.js'
 import { getLevelFromXP } from '../../../src/engine/experience.js'
-import { simulateIdleSkilling } from '../../../src/engine/idleEngine.js'
+import { simulateIdleSkilling, simulateIdleAgility } from '../../../src/engine/idleEngine.js'
+import { simulateIdleThieving } from '../../../src/engine/thieving.js'
+import { simulateIdleHunting } from '../../../src/engine/hunter.js'
 import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
-import { PRODUCTION_SKILLS } from '../../../src/utils/constants.js'
+import { PRODUCTION_SKILLS, IDLE_AUTOBANK_GATHERING_SKILLS } from '../../../src/utils/constants.js'
 
 const XP_CAP = 200000000
 
@@ -134,32 +136,72 @@ export function unequip(save, slot) {
 
 export const EQUIP_SLOT_NAMES = [...EQUIPMENT_SLOTS]
 
-// ── Idle skilling (Phase C increment 2) ──────────────────────────────────────
-// Production skilling only (type:'skill' → simulateIdleSkilling). Gathering,
-// combat, agility, thieving, hunter and farming use other idle paths and are
-// out of scope here.
+// ── Idle activities (Phase C increments 2-3) ─────────────────────────────────
+// Skills the idle engine drives via simulateIdleSkilling (type:'skill'):
+// the three gathering skills (woodcutting/mining/fishing — auto-bank + tool
+// speed handled inside the simulator) plus the production skills.
+export const SKILL_IDLE_SKILLS = new Set([...IDLE_AUTOBANK_GATHERING_SKILLS, ...PRODUCTION_SKILLS])
 
-export const SKILL_IDLE_SKILLS = new Set(PRODUCTION_SKILLS)
+// All non-combat skills an agent can train via MCP, including the three with
+// their own simulators (agility/thieving/hunter). Combat, farming, prayer,
+// magic, construction, dungeoneering and slayer use other systems.
+export const SUPPORTED_IDLE_SKILLS = [...SKILL_IDLE_SKILLS, 'agility', 'thieving', 'hunter']
 
-// Build (and validate) a type:'skill' idle task from skills.json, gated on the
-// character meeting the action's level requirement.
+const SUPPORTED_IDLE_TYPES = new Set(['skill', 'agility', 'thieving', 'hunter'])
+
+export function isClaimableTask(task) {
+  if (!task || !SUPPORTED_IDLE_TYPES.has(task.type)) return false
+  if (task.type === 'skill') return SKILL_IDLE_SKILLS.has(task.skill)
+  return true
+}
+
+function findSkillEntry(skill, key, id) {
+  const list = Array.isArray(skillsData[skill]?.[key]) ? skillsData[skill][key] : []
+  const entry = list.find((e) => e.id === id)
+  if (!entry) throw new GameApiError('UNKNOWN_ACTION', `Unknown ${skill} option '${id}'. See pocketrpg://reference/skills.`, 400)
+  return entry
+}
+
+function requireSkillLevel(save, skill, entry) {
+  const level = getLevelFromXP(Number(save.stats?.[skill]?.xp) || 0)
+  if (entry.level && level < entry.level) {
+    throw new GameApiError('LEVEL_TOO_LOW', `${skill} ${entry.level} required (you have ${level})`, 400)
+  }
+}
+
+// Build (and validate) a type:'skill' idle task — production + gathering.
 export function buildSkillTask(save, skill, actionId) {
   if (!SKILL_IDLE_SKILLS.has(skill)) {
-    throw new GameApiError(
-      'UNSUPPORTED_SKILL',
-      `Idle skilling via MCP supports production skills only (${[...SKILL_IDLE_SKILLS].join(', ')}).`,
-      400,
-    )
+    throw new GameApiError('UNSUPPORTED_SKILL', `'${skill}' is not a simulateIdleSkilling skill.`, 400)
   }
-  const skillDef = skillsData[skill]
-  const actions = Array.isArray(skillDef?.actions) ? skillDef.actions : []
-  const action = actions.find((a) => a.id === actionId)
-  if (!action) throw new GameApiError('UNKNOWN_ACTION', `Unknown ${skill} action '${actionId}'. See pocketrpg://reference/skills.`, 400)
-  const level = getLevelFromXP(Number(save.stats?.[skill]?.xp) || 0)
-  if (action.level && level < action.level) {
-    throw new GameApiError('LEVEL_TOO_LOW', `${skill} ${action.level} required (you have ${level})`, 400)
-  }
+  const action = findSkillEntry(skill, 'actions', actionId)
+  requireSkillLevel(save, skill, action)
   return { type: 'skill', skill, action, bankingEnabled: true }
+}
+
+// Build any supported idle task from skills.json, gated on the level requirement.
+export function buildIdleTask(save, skill, actionId) {
+  if (SKILL_IDLE_SKILLS.has(skill)) return buildSkillTask(save, skill, actionId)
+  if (skill === 'agility') {
+    const action = findSkillEntry('agility', 'actions', actionId)
+    requireSkillLevel(save, 'agility', action)
+    return { type: 'agility', action }
+  }
+  if (skill === 'thieving') {
+    const npc = findSkillEntry('thieving', 'npcs', actionId)
+    requireSkillLevel(save, 'thieving', npc)
+    return { type: 'thieving', npc }
+  }
+  if (skill === 'hunter') {
+    const action = findSkillEntry('hunter', 'actions', actionId)
+    requireSkillLevel(save, 'hunter', action)
+    return { type: 'hunter', action }
+  }
+  throw new GameApiError(
+    'UNSUPPORTED_SKILL',
+    `Idle training via MCP supports: ${SUPPORTED_IDLE_SKILLS.join(', ')}.`,
+    400,
+  )
 }
 
 // Decoded save inventory (compact occupied-slot array) → the fixed 28-slot
@@ -178,14 +220,23 @@ export function toSlotArray(save) {
   return arr
 }
 
-// Apply a simulateIdleSkilling result to the save. Mirrors the client's
-// load-time application (gameState.jsx) exactly for type:'skill' tasks so the
-// two paths can't drift: XP (capped), dungeoneering tokens, consumed inputs
-// (from bank), the final inventory, and auto-banked overflow.
-export function applyIdleSkillResult(save, sim) {
+// Coins from agility/thieving land in the inventory (stackable, coalescing),
+// falling back to the bank when the inventory is full — matching the client.
+function addCoinsInventoryFirst(save, qty) {
+  if (qty <= 0) return
+  try { addItemToInventory(save, 'coins', qty, { stackable: true }) }
+  catch { addItemToBank(save, 'coins', qty) }
+}
+
+const named = (obj) => Object.entries(obj || {}).map(([itemId, quantity]) => ({ itemId, name: itemsData[itemId]?.name || itemId, quantity }))
+
+// Apply an idle simulation result to the save. Mirrors the client's load-time
+// application (gameState.jsx) exactly per task type so the two paths can't drift.
+export function applyIdleResult(save, sim, type) {
   if (!save.stats || typeof save.stats !== 'object') save.stats = {}
   if (!save.bank || typeof save.bank !== 'object') save.bank = {}
 
+  // XP (all types) — only for skills the save already tracks.
   if (sim.xpGained) {
     for (const [skill, xp] of Object.entries(sim.xpGained)) {
       if (xp > 0 && save.stats[skill]) {
@@ -210,34 +261,60 @@ export function applyIdleSkillResult(save, sim) {
     }
   }
 
-  if (Array.isArray(sim.finalInventory)) save.inventory = sim.finalInventory
-
-  const banked = sim.itemsBanked || {}
-  for (const [itemId, qty] of Object.entries(banked)) {
-    if (qty <= 0) continue
+  const bankAdd = (itemId, qty) => {
+    if (qty <= 0) return
     const existing = save.bank[itemId]
     save.bank[itemId] = existing
       ? { ...existing, quantity: (Number(existing.quantity) || 0) + qty }
       : { itemId, quantity: qty }
   }
 
-  const named = (obj) => Object.entries(obj || {}).map(([itemId, quantity]) => ({ itemId, name: itemsData[itemId]?.name || itemId, quantity }))
+  let banked = {}
+  if (type === 'skill' || type === 'gather' || type === 'clue') {
+    if (Array.isArray(sim.finalInventory)) save.inventory = sim.finalInventory
+    banked = sim.lootBanked || sim.itemsBanked || {}
+    for (const [itemId, qty] of Object.entries(banked)) bankAdd(itemId, qty)
+  } else if (type === 'agility' || type === 'thieving') {
+    addCoinsInventoryFirst(save, Number(sim.coinsGained) || 0)
+  } else if (type === 'hunter') {
+    for (const reward of sim.rewards || []) bankAdd(reward.itemId, reward.quantity)
+  } else if (sim.itemsGained) {
+    for (const [itemId, qty] of Object.entries(sim.itemsGained)) bankAdd(itemId, qty)
+  }
+
   return {
     skill: sim.skill,
     action: sim.actionName,
-    actions: sim.actions || 0,
+    actions: sim.actions || sim.laps || 0,
     xpGained: sim.xpGained || {},
+    coinsGained: Number(sim.coinsGained) || 0,
     itemsBanked: named(banked),
+    rewards: type === 'hunter' ? (sim.rewards || []).map((r) => ({ itemId: r.itemId, name: itemsData[r.itemId]?.name || r.itemId, quantity: r.quantity })) : undefined,
     itemsConsumed: named(sim.itemsConsumed),
     stoppedReason: sim.stoppedReason || null,
   }
 }
 
-// Run the idle skilling simulation for an elapsed window and apply it. Pure
-// over the save (no DB); the caller persists.
-export function runIdleSkilling(save, task, elapsedMs) {
-  const slots = toSlotArray(save)
-  const sim = simulateIdleSkilling(task, elapsedMs, save.bank || {}, save.equipment || {}, save.stats || {}, itemsData, slots)
+// Run the right idle simulator for the task type and apply it. Pure over the
+// save (no DB); the caller persists.
+export function runIdleTask(save, task, elapsedMs) {
+  let sim = null
+  switch (task.type) {
+    case 'skill':
+      sim = simulateIdleSkilling(task, elapsedMs, save.bank || {}, save.equipment || {}, save.stats || {}, itemsData, toSlotArray(save))
+      break
+    case 'agility':
+      sim = simulateIdleAgility(task, elapsedMs)
+      break
+    case 'thieving':
+      sim = simulateIdleThieving(task, elapsedMs)
+      break
+    case 'hunter':
+      sim = simulateIdleHunting(task, elapsedMs)
+      break
+    default:
+      return { applied: false, reason: 'unsupported_type' }
+  }
   if (!sim) return { applied: false, reason: 'no_progress' }
-  return { applied: true, ...applyIdleSkillResult(save, sim) }
+  return { applied: true, ...applyIdleResult(save, sim, task.type) }
 }
