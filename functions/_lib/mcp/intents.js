@@ -27,6 +27,7 @@ import { normaliseIdleCombatSetup } from '../../../src/engine/idleSupplies.js'
 import { simulateIdleThieving } from '../../../src/engine/thieving.js'
 import { simulateIdleHunting } from '../../../src/engine/hunter.js'
 import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
+import { getDungeoneeringRewardCost } from '../../../src/engine/dungeoneeringTokens.js'
 import questsData from '../../../src/data/quests.json' assert { type: 'json' }
 import { checkQuestEligibility, getQuestPointsEarned, getCombatLevel } from '../../../src/engine/quests.js'
 import { createQueuedQuestTask, simulateQuestIdleCascade, splitQuestXpRewards } from '../../../src/engine/questIdleCascade.js'
@@ -146,7 +147,7 @@ export const EQUIP_SLOT_NAMES = [...EQUIPMENT_SLOTS]
 // Skills the idle engine drives via simulateIdleSkilling (type:'skill'):
 // the three gathering skills (woodcutting/mining/fishing — auto-bank + tool
 // speed handled inside the simulator) plus the production skills.
-export const SKILL_IDLE_SKILLS = new Set([...IDLE_AUTOBANK_GATHERING_SKILLS, ...PRODUCTION_SKILLS])
+export const SKILL_IDLE_SKILLS = new Set([...IDLE_AUTOBANK_GATHERING_SKILLS, ...PRODUCTION_SKILLS, 'dungeoneering'])
 
 // All non-combat skills an agent can train via MCP, including the three with
 // their own simulators (agility/thieving/hunter). Combat, farming, prayer,
@@ -181,6 +182,10 @@ export function buildSkillTask(save, skill, actionId) {
     throw new GameApiError('UNSUPPORTED_SKILL', `'${skill}' is not a simulateIdleSkilling skill.`, 400)
   }
   const action = findSkillEntry(skill, 'actions', actionId)
+  // Dungeoneering 'reward' actions spend tokens to unlock gear — they don't idle.
+  if (action.category === 'reward') {
+    throw new GameApiError('USE_REWARD_CLAIM', `'${actionId}' is a reward unlock, not an idle action. Use claim_dungeoneering_reward.`, 400)
+  }
   requireSkillLevel(save, skill, action)
   return { type: 'skill', skill, action, bankingEnabled: true }
 }
@@ -600,4 +605,35 @@ export function runCombatTask(save, task, elapsedMs) {
   })
   if (!sim) return { applied: false, reason: 'no_progress' }
   return { applied: true, ...applyIdleCombatResult(save, sim, task) }
+}
+
+// ── Dungeoneering rewards (Phase D increment 2) ───────────────────────────────
+// Training dungeoneering is just an idle 'skill' task (XP + tokens, handled by
+// simulateIdleSkilling + applyIdleResult). Spending those tokens to unlock gear
+// goes through the dungeoneering completion endpoint; this validates the unlock
+// (exists / level / affordable) before the caller forwards it.
+
+export function getDungeoneeringTokens(save) {
+  const settings = Number(save?.settings?.dungeoneeringTokens)
+  if (Number.isFinite(settings)) return Math.floor(settings)
+  const top = Number(save?.dungeoneeringTokens)
+  return Number.isFinite(top) ? Math.floor(top) : 0
+}
+
+export function planDungeoneeringReward(save, actionId) {
+  const action = (skillsData.dungeoneering?.actions || []).find((a) => a.id === actionId && a.category === 'reward')
+  if (!action) {
+    throw new GameApiError('UNKNOWN_DUNGEONEERING_REWARD', `No dungeoneering reward '${actionId}'. See pocketrpg://reference/skills.`, 400)
+  }
+  const level = getLevelFromXP(Number(save.stats?.dungeoneering?.xp) || 0)
+  const required = Math.max(1, Math.floor(Number(action.level) || 1))
+  if (level < required) {
+    throw new GameApiError('LEVEL_TOO_LOW', `Dungeoneering ${required} required (you have ${level}).`, 400)
+  }
+  const cost = getDungeoneeringRewardCost(action)
+  const tokens = getDungeoneeringTokens(save)
+  if (tokens < cost) {
+    throw new GameApiError('INSUFFICIENT_TOKENS', `Need ${cost} dungeoneering tokens (you have ${tokens}).`, 400)
+  }
+  return { action, cost, product: action.product, productQty: Math.max(1, Math.floor(Number(action.productQty) || 1)) }
 }

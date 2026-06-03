@@ -21,11 +21,16 @@ export function summarizeSave(saveData) {
     if (item) equipment[slot] = { itemId: item.itemId ?? item.id, quantity: item.quantity ?? 1 }
   }
 
+  const dungeoneeringTokens = Number.isFinite(Number(state.settings?.dungeoneeringTokens))
+    ? Math.floor(Number(state.settings.dungeoneeringTokens))
+    : (Number.isFinite(Number(state.dungeoneeringTokens)) ? Math.floor(Number(state.dungeoneeringTokens)) : 0)
+
   return {
     coins: state.coins ?? 0,
     combatStance: state.settings?.combatStance ?? null,
     currentHP: state.player?.currentHP ?? null,
     prayerPoints: state.player?.prayer ?? null,
+    dungeoneeringTokens,
     skills,
     equipment,
     inventory,

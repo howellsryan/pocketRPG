@@ -44,7 +44,13 @@ Acting:
   server-side over real time, using the food/potions configured in the game
   client); get_active_activity shows the fight; claim_activity collects it. The
   character can die — rewards up to the killing blow are kept, HP resets and the
-  fight stops. Bosses, raids and One-Life characters are handled in the client.
+  fight stops. One-Life characters fight in the client.
+- Bosses & raids: kill_boss / kill_raid spend the target's skip cost in credits
+  for an instant kill, then grant the server-rolled loot, kill count and
+  collection-log uniques — confirm the credit spend first.
+- Dungeoneering: train it like any skill (start_skilling skill="dungeoneering")
+  to earn XP and tokens, then claim_dungeoneering_reward spends those tokens to
+  unlock dungeoneering gear.
 - skip_hour spends a credit to advance the running idle activity by one hour;
   follow it with claim_activity to collect the skipped time.
 - XP, coins and most loot are client-computed in this game, so these tools
@@ -388,6 +394,51 @@ export const TOOL_SCHEMAS = [
       additionalProperties: false,
     },
     annotations: WRITE('Start fight'),
+  },
+  {
+    name: 'kill_boss',
+    description:
+      "Kill a boss by spending its skip cost in credits (the in-game instant-kill skip), then receive the server-rolled loot, kill count and collection-log entries. Debits credits server-side — confirm intent first. Find boss ids via inspect_monster / pocketrpg://reference/monsters.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        monster_id: { type: 'string', description: "The boss monster id, e.g. 'deepmaw_kraken'." },
+        ...optionalCharacterId,
+      },
+      required: ['monster_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Kill boss'),
+  },
+  {
+    name: 'kill_raid',
+    description:
+      "Clear a raid by spending its skip cost in credits, then receive the server-rolled raid loot, kill count and collection-log entries. Debits credits server-side — confirm intent first. Find raid ids via pocketrpg://reference/raids.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        raid_id: { type: 'string', description: "The raid id, e.g. 'chambers_of_xeric'." },
+        ...optionalCharacterId,
+      },
+      required: ['raid_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Kill raid'),
+  },
+  {
+    name: 'claim_dungeoneering_reward',
+    description:
+      'Spend dungeoneering tokens to unlock a piece of dungeoneering gear. Tokens are earned by training dungeoneering (start_skilling with skill="dungeoneering"). Checks the dungeoneering level and token balance. Find reward action ids via pocketrpg://reference/skills (dungeoneering actions with category "reward").',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        action_id: { type: 'string', description: "The reward action id, e.g. 'unlock_chaotic_rapier'." },
+        ...optionalCharacterId,
+      },
+      required: ['action_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Claim dungeoneering reward'),
   },
 ]
 

@@ -4,9 +4,10 @@ import { getItem, getMonster, itemName, withItemName, REFERENCE_RESOURCES, readR
 import { loadCharacterWithSave, writeSave } from '../game/save.js'
 import { auditLog } from '../game/audit.js'
 import { assertNotInActiveMatch } from '../pvp.js'
-import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask } from './intents.js'
+import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward } from './intents.js'
 import { getIdleRow, setIdleTask, resetIdleActiveAt, clearIdleTask, advanceIdleClock } from './idle.js'
 import { SKIP_HOUR_MS } from '../../../src/engine/skipPreflight.js'
+import raidsData from '../../../src/data/raids.json' assert { type: 'json' }
 
 // Reuse the exact production endpoint handlers (see bridge.js).
 import { onRequestGet as listCharacters } from '../../api/characters/index.js'
@@ -25,6 +26,9 @@ import { onRequestPost as postCancelOffer } from '../../api/trading-post/cancel.
 import { onRequestPost as postCollectOffer } from '../../api/trading-post/collect.js'
 import { onRequestPost as postInstantSell } from '../../api/trading-post/instant-sell.js'
 import { onRequestPost as postSellImmediate } from '../../api/trading-post/sell-immediate.js'
+import { onRequestPost as completeMonster } from '../../api/actions/monster/complete.js'
+import { onRequestPost as completeRaid } from '../../api/actions/raid/complete.js'
+import { onRequestPost as completeDungeoneering } from '../../api/actions/dungeoneering/complete.js'
 
 function ok(payload) {
   const text = typeof payload === 'string' ? payload : JSON.stringify(payload, null, 2)
@@ -496,6 +500,97 @@ const TOOLS = {
       started: { monsterId: task.monster.id, monster: task.monster.name, combatLevel: task.monster.combatLevel ?? null, stance: task.stance },
       note: 'Combat started — XP and loot accrue over real time using your configured idle food/potions (set them in the game client). Call claim_activity to collect; skip_hour advances an hour.',
       autoClaimed: autoClaimed.claimed ? autoClaimed : undefined,
+    })
+  },
+
+  // Kill a boss by spending its skip cost in credits (the in-game instant-kill
+  // skip), then grant the server-rolled loot, kill count and collection-log
+  // entries through the normal completion endpoint.
+  async kill_boss({ monster_id, character_id }, { env, authorization, identity }) {
+    if (!identity?.id) throw new Error('Not authenticated.')
+    if (!monster_id) throw new Error('monster_id is required.')
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const lock = await assertNotInActiveMatch(env, id)
+    if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+    const monster = getMonster(monster_id)
+    if (!monster) throw new Error(`No monster with id '${monster_id}'. Browse ids via pocketrpg://reference/monsters.`)
+    if (monster.boss !== true) throw new Error(`${monster.name || monster_id} is not a boss — use start_fight for normal monsters.`)
+
+    const skip = await callHandler(postSkipHour, env, { method: 'POST', authorization, characterId: id, body: { bossId: monster_id } })
+    if (!skip.ok) throw httpError(skip)
+    const res = await callHandler(completeMonster, env, {
+      method: 'POST', authorization, characterId: id,
+      body: { sourceId: monster_id, actionNonce: `mcp:monster:${monster_id}:${Date.now()}` },
+    })
+    if (!res.ok) throw httpError(res)
+    return ok({
+      characterId: id,
+      killed: monster.name || monster_id,
+      creditsSpent: skip.data?.cost,
+      creditsRemaining: skip.data?.credits_remaining,
+      granted: (res.data?.granted || []).map((g) => ({ ...g, name: itemName(g.itemId) })),
+      killCount: res.data?.killCount,
+      collectionLogEntries: res.data?.collectionLogEntries || [],
+    })
+  },
+
+  // Clear a raid by spending its skip cost in credits, then grant the
+  // server-rolled raid loot, kill count and collection-log entries.
+  async kill_raid({ raid_id, character_id }, { env, authorization, identity }) {
+    if (!identity?.id) throw new Error('Not authenticated.')
+    if (!raid_id) throw new Error('raid_id is required.')
+    const raid = raidsData[raid_id]
+    if (!raid) throw new Error(`No raid with id '${raid_id}'. Browse ids via pocketrpg://reference/raids.`)
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const lock = await assertNotInActiveMatch(env, id)
+    if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+
+    const skip = await callHandler(postSkipHour, env, { method: 'POST', authorization, characterId: id, body: { raidId: raid_id } })
+    if (!skip.ok) throw httpError(skip)
+    const res = await callHandler(completeRaid, env, {
+      method: 'POST', authorization, characterId: id,
+      body: { sourceId: raid_id, actionNonce: `mcp:raid:${raid_id}:${Date.now()}` },
+    })
+    if (!res.ok) throw httpError(res)
+    return ok({
+      characterId: id,
+      cleared: raid.name || raid_id,
+      creditsSpent: skip.data?.cost,
+      creditsRemaining: skip.data?.credits_remaining,
+      granted: (res.data?.granted || []).map((g) => ({ ...g, name: itemName(g.itemId) })),
+      killCount: res.data?.killCount,
+      collectionLogEntries: res.data?.collectionLogEntries || [],
+    })
+  },
+
+  // Spend dungeoneering tokens to unlock a piece of dungeoneering gear. Tokens
+  // are earned by training dungeoneering (start_skilling skill='dungeoneering').
+  async claim_dungeoneering_reward({ action_id, character_id }, { env, authorization, identity }) {
+    if (!identity?.id) throw new Error('Not authenticated.')
+    if (!action_id) throw new Error('action_id is required.')
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const saveRes = await callHandler(getSave, env, { authorization, characterId: id })
+    if (!saveRes.ok) throw httpError(saveRes)
+    const raw = saveRes.data?.save?.save_data
+    const state = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : {}
+    const plan = planDungeoneeringReward(state, action_id) // validates level + token affordability
+
+    const res = await callHandler(completeDungeoneering, env, {
+      method: 'POST', authorization, characterId: id,
+      body: {
+        sourceId: 'dungeoneering',
+        actionNonce: `mcp:dng:${action_id}:${Date.now()}`,
+        rewards: [{ itemId: plan.product, quantity: plan.productQty }],
+        dungeoneeringTokens: -plan.cost,
+      },
+    })
+    if (!res.ok) throw httpError(res)
+    return ok({
+      characterId: id,
+      unlocked: { itemId: plan.product, name: itemName(plan.product), quantity: plan.productQty },
+      tokensSpent: plan.cost,
+      granted: (res.data?.granted || []).map((g) => ({ ...g, name: itemName(g.itemId) })),
+      collectionLogEntries: res.data?.collectionLogEntries || [],
     })
   },
 }

@@ -14,6 +14,7 @@ import {
   questStatuses,
   buildCombatTask,
   runCombatTask,
+  planDungeoneeringReward,
 } from '../functions/_lib/mcp/intents.js'
 import { getLevelFromXP } from '../src/engine/experience.js'
 
@@ -376,5 +377,38 @@ describe('combat intents', () => {
     expect(r.died).toBe(true)
     expect(r.finalHP).toBe(0)
     expect(save.settings.currentHP).toBe(10)
+  })
+})
+
+describe('dungeoneering intents', () => {
+  it('trains dungeoneering as an idle skill, earning XP and tokens', () => {
+    const save = makeSave({ stats: { dungeoneering: { xp: 0, level: 1 } } })
+    const task = buildIdleTask(save, 'dungeoneering', 'dungeoneering_floor_1')
+    expect(task).toMatchObject({ type: 'skill', skill: 'dungeoneering' })
+    // dungeoneering_floor_1: 500 ticks, 1000 XP. 600000ms = 1000 ticks = 2 floors.
+    const r = runIdleTask(save, task, 600_000)
+    expect(r.applied).toBe(true)
+    expect(save.stats.dungeoneering.xp).toBe(2000)
+    // Token rate 0.15 → ceil(1000*0.15)=150 tokens/floor × 2.
+    expect(save.settings.dungeoneeringTokens).toBe(300)
+  })
+
+  it('refuses to idle a dungeoneering reward unlock', () => {
+    const save = makeSave({ stats: { dungeoneering: { xp: 50_000_000 } } })
+    expect(() => buildIdleTask(save, 'dungeoneering', 'unlock_arcane_necklace')).toThrow(/claim_dungeoneering_reward/)
+  })
+
+  it('plans an affordable dungeoneering reward unlock', () => {
+    const save = makeSave({ stats: { dungeoneering: { xp: 14_000_000 } }, settings: { dungeoneeringTokens: 100_000 } })
+    const plan = planDungeoneeringReward(save, 'unlock_arcane_necklace')
+    expect(plan).toMatchObject({ product: 'arcane_necklace', cost: 65000, productQty: 1 })
+  })
+
+  it('rejects unaffordable, under-levelled, or unknown reward unlocks', () => {
+    const lowTokens = makeSave({ stats: { dungeoneering: { xp: 14_000_000 } }, settings: { dungeoneeringTokens: 100 } })
+    expect(() => planDungeoneeringReward(lowTokens, 'unlock_arcane_necklace')).toThrow(/tokens/i)
+    const lowLevel = makeSave({ stats: { dungeoneering: { xp: 0 } }, settings: { dungeoneeringTokens: 100_000 } })
+    expect(() => planDungeoneeringReward(lowLevel, 'unlock_arcane_necklace')).toThrow(/required/i)
+    expect(() => planDungeoneeringReward(lowTokens, 'nope')).toThrow(/No dungeoneering reward/)
   })
 })

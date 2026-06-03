@@ -111,10 +111,20 @@ the material-gathering `gather` tasks.
       rewards up to the killing blow are kept); One-Life death stays in the
       client. Slayer-task credit is deliberately left client-side for now
       (`slayerTask = null`). Golden tests in `tests/mcpIntents.test.ts`.
-- [ ] Boss / raid simulation via `combat.js` + `combatant.js` (server-rolled,
-      driving the whole fight, granting uniques through the existing completion
-      endpoints).
-- [ ] Dungeoneering (`dungeoneeringTokens.js`).
+- [x] **Increment 2 — boss & raid kills (`kill_boss` / `kill_raid`):** rather
+      than driving a full tick-by-tick fight, this uses the in-game credit-gated
+      instant-kill **skip** — debit the boss/raid skip cost via `/api/skip-hour`,
+      then grant through the existing server-rolled completion endpoints
+      (`/api/actions/monster|raid/complete`). Loot RNG, kill counts, collection
+      log and reward-source validation all stay server-authoritative; no combat
+      sim is trusted. (A future enhancement could simulate the fight via
+      `combat.js`/`combatant.js` to kill *without* spending credits.)
+- [x] **Increment 3 — dungeoneering:** train it as a normal idle skill
+      (`start_skilling` skill=`dungeoneering`) to earn XP + tokens
+      (`simulateIdleSkilling` + `applyIdleResult`), and `claim_dungeoneering_reward`
+      spends tokens to unlock gear via `/api/actions/dungeoneering/complete`
+      (level + token-balance validated, `planDungeoneeringReward`). Golden tests
+      in `tests/mcpIntents.test.ts`.
 - **PvP — out of scope (will not build).** Per owner decision, the MCP server
   does not expose PvP. No matchmaking, match-state reads or move-submission
   tools; PvP stays entirely in the game client. Do not add PvP tooling here.
