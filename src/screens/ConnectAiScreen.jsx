@@ -4,7 +4,8 @@ import Button from '../components/Button.jsx'
 
 // Step-by-step connector guides. Kept current with the Claude and ChatGPT
 // custom-connector / MCP flows (both reworked their settings UI in late 2025 /
-// early 2026). This iteration connects via the private MCP server URL below.
+// early 2026). Players connect by adding the shared MCP server URL below as a
+// custom connector; per-account access comes from the OAuth sign-in, not the URL.
 const GUIDES = {
   claude: {
     label: 'Claude',
@@ -86,7 +87,7 @@ export default function ConnectAiScreen({ isCloudAccount }) {
 
         {/* Private connector URL */}
         <div>
-          <div class="text-xs uppercase tracking-wide opacity-50 mb-1">Your private MCP server URL</div>
+          <div class="text-xs uppercase tracking-wide opacity-50 mb-1">MCP server URL</div>
           <div class="flex items-center gap-2">
             <code class="flex-1 min-w-0 break-all rounded-lg bg-[#111] border border-[var(--color-void-border)] p-2 font-[var(--font-mono)] text-xs text-[var(--color-gold)]">
               {mcpServerUrl}
@@ -96,8 +97,9 @@ export default function ConnectAiScreen({ isCloudAccount }) {
             </Button>
           </div>
           <p class="text-[11px] text-[var(--color-parchment)] opacity-50 mt-1">
-            This is your personal connector link — treat it like a private URL and paste it into the
-            connector setup below.
+            This URL is the same for every player — it isn't a secret. Your characters are protected by the
+            sign-in step: when you connect, you log into PocketRPG and approve access, and the connector
+            gets a personal token that ties it to <b>your</b> account.
           </p>
         </div>
 
