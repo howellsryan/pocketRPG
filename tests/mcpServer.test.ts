@@ -95,6 +95,7 @@ describe('MCP tool schema', () => {
       'claim_activity',
       'get_quests',
       'start_quest',
+      'start_fight',
     ])
   })
 

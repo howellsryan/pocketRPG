@@ -4,7 +4,7 @@ import { getItem, getMonster, itemName, withItemName, REFERENCE_RESOURCES, readR
 import { loadCharacterWithSave, writeSave } from '../game/save.js'
 import { auditLog } from '../game/audit.js'
 import { assertNotInActiveMatch } from '../pvp.js'
-import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildQuestTask, applyQuestTask, questStatuses } from './intents.js'
+import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask } from './intents.js'
 import { getIdleRow, setIdleTask, resetIdleActiveAt, clearIdleTask, advanceIdleClock } from './idle.js'
 import { SKIP_HOUR_MS } from '../../../src/engine/skipPreflight.js'
 
@@ -88,7 +88,24 @@ async function claimIdleCore(env, characterId, identityId) {
   const elapsedMs = Math.max(0, Math.min(now - (Number(idle.last_active_at) || now), MAX_IDLE_MS))
   if (elapsedMs < MIN_IDLE_MS) return { claimed: false, reason: 'too_soon', elapsedMs }
 
+  // Combat can kill the character. We never wipe via MCP, so One-Life accounts
+  // are deferred to the game client where death is handled explicitly.
+  if (task.type === 'combat' && (await isOneLifeCharacter(env, characterId))) {
+    return { claimed: false, reason: 'one_life_combat' }
+  }
+
   const { saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, identityId)
+
+  // Combat continues like skilling, but a simulated death clears the slot and
+  // resets HP to max (rewards up to the killing blow are kept by the engine).
+  if (task.type === 'combat') {
+    const result = runCombatTask(saveObject, task, elapsedMs)
+    if (!result.applied) return { claimed: false, reason: result.reason || 'no_progress', elapsedMs }
+    await writeSave(env, characterId, saveObject, saveRevision)
+    if (result.died) await clearIdleTask(env, characterId, now)
+    else await resetIdleActiveAt(env, characterId, now)
+    return { claimed: true, elapsedMs, ...result }
+  }
 
   // Quests carry finite progress: apply completions, then persist the partial
   // task (clock reset) or clear it once the quest is finished.
@@ -105,6 +122,12 @@ async function claimIdleCore(env, characterId, identityId) {
   await writeSave(env, characterId, saveObject, saveRevision)
   await resetIdleActiveAt(env, characterId, now)
   return { claimed: true, elapsedMs, ...result }
+}
+
+// True if the character is a One-Life account (combat death = permanent wipe).
+async function isOneLifeCharacter(env, characterId) {
+  const row = await env.DB.prepare('SELECT is_one_life FROM characters WHERE id = ?').bind(characterId).first()
+  return !!(row && (row.is_one_life === 1 || row.is_one_life === true))
 }
 
 // Parse the character's current idle task without mutating anything.
@@ -338,6 +361,8 @@ const TOOLS = {
             quest: task.quest?.name || task.quest?.id || null,
             secondsRemaining: Math.max(0, Math.ceil(((Number(task.ticksRemaining) || 0) * 600) / 1000) - runningForSeconds),
           }
+        : task.type === 'combat'
+        ? { type: 'combat', monster: task.monster?.name || task.monster?.id || null, stance: task.stance || null }
         : {
             type: task.type,
             skill: task.skill || (task.type !== 'skill' ? task.type : null),
@@ -366,6 +391,9 @@ const TOOLS = {
     if (autoClaimed.reason === 'unsupported_type') {
       throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
     }
+    if (autoClaimed.reason === 'one_life_combat') {
+      throw new Error('One-Life combat is in progress — claim it in the game client, where death is handled.')
+    }
 
     const { saveObject } = await loadCharacterWithSave(env, id, identity.id)
     const task = buildIdleTask(saveObject, skill, action_id) // validates skill/action/level
@@ -388,6 +416,9 @@ const TOOLS = {
     if (!result.claimed) {
       if (result.reason === 'unsupported_type') {
         return ok({ characterId: id, claimed: false, note: `The active ${result.type} activity must be claimed in the game client.` })
+      }
+      if (result.reason === 'one_life_combat') {
+        return ok({ characterId: id, claimed: false, note: 'One-Life combat must be claimed in the game client, where death is handled.' })
       }
       return ok({ characterId: id, claimed: false, reason: result.reason })
     }
@@ -420,6 +451,9 @@ const TOOLS = {
     if (autoClaimed.reason === 'unsupported_type') {
       throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
     }
+    if (autoClaimed.reason === 'one_life_combat') {
+      throw new Error('One-Life combat is in progress — claim it in the game client, where death is handled.')
+    }
 
     const { saveObject } = await loadCharacterWithSave(env, id, identity.id)
     const task = buildQuestTask(saveObject, quest_id, xp_skill) // validates eligibility + xp choice
@@ -430,6 +464,37 @@ const TOOLS = {
       characterId: id,
       started: { questId: task.quest.id, quest: task.quest.name, durationSeconds: task.quest.durationSeconds, xpSkill: task.xpChoiceSkill || undefined },
       note: 'Quest started — it completes after its duration of real time. Call claim_activity to collect rewards (skip_hour advances it an hour).',
+      autoClaimed: autoClaimed.claimed ? autoClaimed : undefined,
+    })
+  },
+
+  // ── Combat (Phase D increment 1) ────────────────────────────────────────────
+
+  async start_fight({ monster_id, stance, character_id }, { env, authorization, identity }) {
+    if (!identity?.id) throw new Error('Not authenticated.')
+    if (!monster_id) throw new Error('monster_id is required.')
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const lock = await assertNotInActiveMatch(env, id)
+    if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+    if (await isOneLifeCharacter(env, id)) {
+      throw new Error('Refused: One-Life characters can die permanently. Fight in the game client, where death is handled explicitly.')
+    }
+    await assertNoActiveQuest(env, id)
+
+    const autoClaimed = await claimIdleCore(env, id, identity.id)
+    if (autoClaimed.reason === 'unsupported_type') {
+      throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
+    }
+
+    const { saveObject } = await loadCharacterWithSave(env, id, identity.id)
+    const task = buildCombatTask(saveObject, monster_id, stance) // validates monster + stance
+    const now = Date.now()
+    await setIdleTask(env, id, JSON.stringify(task), now)
+    await auditLog(env, 'mcp_start_fight', { characterId: id, identityId: identity.id, monsterId: monster_id, stance: task.stance }, { swallow: true })
+    return ok({
+      characterId: id,
+      started: { monsterId: task.monster.id, monster: task.monster.name, combatLevel: task.monster.combatLevel ?? null, stance: task.stance },
+      note: 'Combat started — XP and loot accrue over real time using your configured idle food/potions (set them in the game client). Call claim_activity to collect; skip_hour advances an hour.',
       autoClaimed: autoClaimed.claimed ? autoClaimed : undefined,
     })
   },

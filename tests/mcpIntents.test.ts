@@ -12,6 +12,8 @@ import {
   buildQuestTask,
   applyQuestTask,
   questStatuses,
+  buildCombatTask,
+  runCombatTask,
 } from '../functions/_lib/mcp/intents.js'
 import { getLevelFromXP } from '../src/engine/experience.js'
 
@@ -307,5 +309,72 @@ describe('quest intents', () => {
     // A quest with unmet prerequisites is locked, with reasons.
     const locked = status.locked.find((q: any) => q.id === 'a_realm_divided')
     expect(locked?.requirements?.length).toBeGreaterThan(0)
+  })
+})
+
+describe('combat intents', () => {
+  function combatSave(overrides: any = {}) {
+    return makeSave({
+      stats: {
+        attack: { xp: 1_000_000 },
+        strength: { xp: 1_000_000 },
+        defence: { xp: 1_000_000 },
+        hitpoints: { xp: 1_000_000 },
+        ranged: { xp: 0 },
+        magic: { xp: 0 },
+      },
+      settings: { currentHP: 73, idleCombatSetup: { food: [], potions: [], prayers: {} } },
+      ...overrides,
+    })
+  }
+
+  it('builds a combat task for a normal monster, defaulting the stance', () => {
+    const task = buildCombatTask(combatSave(), 'field_chicken', undefined)
+    expect(task).toMatchObject({ type: 'combat', stance: 'accurate', bankingEnabled: true })
+    expect(task.monster.id).toBe('field_chicken')
+  })
+
+  it('refuses to idle-fight a boss', () => {
+    expect(() => buildCombatTask(combatSave(), 'deepmaw_kraken', undefined)).toThrow(/boss/i)
+  })
+
+  it('rejects an unknown monster and an invalid stance', () => {
+    expect(() => buildCombatTask(combatSave(), 'not_a_monster', undefined)).toThrow(/No monster/)
+    expect(() => buildCombatTask(combatSave(), 'field_chicken', 'berserk')).toThrow(/stance/i)
+  })
+
+  it('kills weak monsters: applies combat XP, banks/holds loot, survives', () => {
+    const save = combatSave()
+    const r = runCombatTask(save, buildCombatTask(save, 'field_chicken', 'accurate'), 60_000)
+    expect(r.applied).toBe(true)
+    expect(r.died).toBe(false)
+    expect(r.monstersKilled).toBeGreaterThan(0)
+    // Accurate stance trains attack; all damage trains hitpoints.
+    expect(r.xpGained.attack).toBeGreaterThan(0)
+    expect(r.xpGained.hitpoints).toBeGreaterThan(0)
+    expect(save.stats.attack.xp).toBeGreaterThan(1_000_000)
+    // Chicken always drops bones — they land in the (previously empty) inventory.
+    const hasLoot = (save.inventory || []).some((s: any) => s?.itemId === 'bones')
+    expect(hasLoot).toBe(true)
+    expect(Number.isFinite(save.settings.currentHP)).toBe(true)
+  })
+
+  it('on a fatal fight keeps no-wipe semantics: died flag, HP reset to max', () => {
+    // Strong attacker but only 10 HP and no food vs a 330-HP dragon → death.
+    const save = combatSave({
+      stats: {
+        attack: { xp: 5_000_000 },
+        strength: { xp: 5_000_000 },
+        defence: { xp: 0 },
+        hitpoints: { xp: 1154 }, // level 10 → max HP 10
+        ranged: { xp: 0 },
+        magic: { xp: 0 },
+      },
+      settings: { currentHP: 10, idleCombatSetup: { food: [], potions: [], prayers: {} } },
+    })
+    const r = runCombatTask(save, buildCombatTask(save, 'rune_dragon', 'accurate'), 24 * 60 * 60 * 1000)
+    expect(r.died).toBe(true)
+    expect(r.finalHP).toBe(0)
+    expect(save.settings.currentHP).toBe(10)
   })
 })

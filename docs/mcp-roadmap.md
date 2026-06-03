@@ -98,11 +98,22 @@ the material-gathering `gather` tasks.
 
 ## Phase D — Full autoplayer (T3, heaviest)
 
-- `fight_monster` / boss / raid simulation via `combat.js` + `combatant.js`
-  (server-rolled, like the existing completion endpoints but driving the whole
-  fight).
-- Dungeoneering (`dungeoneeringTokens.js`).
-- PvP intents (`pvpEngine.js` is already server-side — extend tool coverage).
+- [x] **Increment 1 — idle combat (`start_fight`):** server-rolled combat vs
+      normal monsters via the pure `simulateIdleCombat`, applied to the save by
+      `runCombatTask` (combat XP across the 6 skills, food/potion/ammo/rune/
+      charge consumption, post-fight inventory + banked loot, HP). It reuses the
+      single idle slot, so `claim_activity`/`get_active_activity` now handle
+      combat too. Safety: bosses/raids are refused (the simulator already blocks
+      them), and **One-Life accounts are refused** from starting or MCP-claiming
+      a fight — combat death never wipes here (HP resets, the fight stops,
+      rewards up to the killing blow are kept); One-Life death stays in the
+      client. Slayer-task credit is deliberately left client-side for now
+      (`slayerTask = null`). Golden tests in `tests/mcpIntents.test.ts`.
+- [ ] Boss / raid simulation via `combat.js` + `combatant.js` (server-rolled,
+      driving the whole fight, granting uniques through the existing completion
+      endpoints).
+- [ ] Dungeoneering (`dungeoneeringTokens.js`).
+- [ ] PvP intents (`pvpEngine.js` is already server-side — extend tool coverage).
 
 ## Cross-cutting
 

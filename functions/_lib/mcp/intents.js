@@ -7,6 +7,8 @@
 // inventory, bank and equipment.
 
 import itemsData from '../../../src/data/items.json' assert { type: 'json' }
+import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
+import prayersData from '../../../src/data/prayers.json' assert { type: 'json' }
 import { GameApiError } from '../game/errors.js'
 import {
   canonicalItemId,
@@ -20,7 +22,8 @@ import {
 } from '../game/inventory.js'
 import { equipItem, unequipSlot, checkEquipRequirements, createEquipment } from '../../../src/engine/equipment.js'
 import { getLevelFromXP } from '../../../src/engine/experience.js'
-import { simulateIdleSkilling, simulateIdleAgility } from '../../../src/engine/idleEngine.js'
+import { simulateIdleSkilling, simulateIdleAgility, simulateIdleCombat } from '../../../src/engine/idleEngine.js'
+import { normaliseIdleCombatSetup } from '../../../src/engine/idleSupplies.js'
 import { simulateIdleThieving } from '../../../src/engine/thieving.js'
 import { simulateIdleHunting } from '../../../src/engine/hunter.js'
 import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
@@ -150,7 +153,7 @@ export const SKILL_IDLE_SKILLS = new Set([...IDLE_AUTOBANK_GATHERING_SKILLS, ...
 // magic, construction, dungeoneering and slayer use other systems.
 export const SUPPORTED_IDLE_SKILLS = [...SKILL_IDLE_SKILLS, 'agility', 'thieving', 'hunter']
 
-const SUPPORTED_IDLE_TYPES = new Set(['skill', 'agility', 'thieving', 'hunter', 'quest'])
+const SUPPORTED_IDLE_TYPES = new Set(['skill', 'agility', 'thieving', 'hunter', 'quest', 'combat'])
 
 export function isClaimableTask(task) {
   if (!task || !SUPPORTED_IDLE_TYPES.has(task.type)) return false
@@ -468,4 +471,133 @@ export function questStatuses(save) {
     eligible,
     locked,
   }
+}
+
+// ── Combat (Phase D increment 1) ─────────────────────────────────────────────
+// Server-rolled idle combat against normal monsters via the pure
+// `simulateIdleCombat` engine — the same simulator the client runs at load
+// time. It only fights normal monsters (bosses/raids are blocked inside the
+// simulator and gated again here) and uses the character's own configured idle
+// food/potions/prayers from settings.idleCombatSetup. Slayer-task credit is
+// deliberately left to the client for now (we pass slayerTask = null).
+
+const VALID_STANCES = new Set(['accurate', 'aggressive', 'defensive', 'controlled'])
+
+function resolveMonster(monsterId) {
+  if (!monsterId || typeof monsterId !== 'string') throw new GameApiError('INVALID_MONSTER_ID', 'Invalid monster_id', 400)
+  const monster = Array.isArray(monstersData) ? monstersData.find((m) => m.id === monsterId) : monstersData[monsterId]
+  if (!monster) throw new GameApiError('MONSTER_NOT_FOUND', `No monster with id '${monsterId}'. See pocketrpg://reference/monsters.`, 404)
+  return monster
+}
+
+// Build (and validate) a combat idle task. Refuses bosses (they need the
+// client's explicit fight flow) and normalises the stance.
+export function buildCombatTask(save, monsterId, stance) {
+  const monster = resolveMonster(monsterId)
+  if (monster.boss === true) {
+    throw new GameApiError('BOSS_NOT_IDLEABLE', `${monster.name || monsterId} is a boss — fight it in the game client.`, 400)
+  }
+  const chosen = stance || save.settings?.combatStance || 'accurate'
+  if (!VALID_STANCES.has(chosen)) {
+    throw new GameApiError('INVALID_STANCE', `Invalid stance '${chosen}'. Use one of: ${[...VALID_STANCES].join(', ')}.`, 400)
+  }
+  return { type: 'combat', monster, stance: chosen, bankingEnabled: true, spell: save.settings?.activeCombatSpell || null }
+}
+
+function maxHpFromStats(stats) {
+  return stats?.hitpoints ? getLevelFromXP(stats.hitpoints.xp || 0) : 10
+}
+
+// Apply a simulateIdleCombat result to the save. Mirrors the client load-time
+// application (gameState.jsx) field-for-field: HP/death, combat XP, bank-side
+// supply consumption, ammo/charge drain, the post-fight inventory and banked
+// loot. On death nothing is wiped here — HP resets to max and the caller clears
+// the task (One-Life accounts are refused upstream).
+function applyIdleCombatResult(save, sim, task) {
+  if (!save.stats || typeof save.stats !== 'object') save.stats = {}
+  if (!save.bank || typeof save.bank !== 'object') save.bank = {}
+  if (!save.equipment || typeof save.equipment !== 'object') save.equipment = {}
+  if (!save.settings || typeof save.settings !== 'object') save.settings = {}
+
+  const maxHP = maxHpFromStats(save.stats)
+  const died = sim.died === true
+  if (died) {
+    save.settings.currentHP = maxHP
+  } else if (Number.isFinite(Number(sim.finalHP))) {
+    save.settings.currentHP = Math.max(1, Math.min(maxHP, Math.floor(Number(sim.finalHP))))
+  }
+
+  const xpGained = {}
+  if (sim.xpGained) {
+    for (const [skill, xp] of Object.entries(sim.xpGained)) {
+      const amount = Math.floor(Number(xp) || 0)
+      if (amount > 0 && save.stats[skill]) {
+        const newXP = Math.min((save.stats[skill].xp || 0) + amount, XP_CAP)
+        save.stats[skill] = { ...save.stats[skill], xp: newXP, level: getLevelFromXP(newXP) }
+        xpGained[skill] = amount
+      }
+    }
+  }
+
+  // Supplies drawn from the bank (inventory-side consumption is already baked
+  // into sim.finalInventory).
+  if (sim.itemsConsumed) {
+    for (const [itemId, qty] of Object.entries(sim.itemsConsumed)) {
+      const existing = save.bank[itemId]
+      if (!existing) continue
+      const newQty = (Number(existing.quantity) || 0) - qty
+      if (newQty <= 0) delete save.bank[itemId]
+      else save.bank[itemId] = { ...existing, quantity: newQty }
+    }
+  }
+
+  if (sim.ammoConsumed && save.equipment.ammo && save.equipment.ammo.itemId === sim.ammoConsumed.itemId) {
+    const remaining = Math.max(0, (Number(save.equipment.ammo.quantity) || 0) - sim.ammoConsumed.quantity)
+    save.equipment.ammo = remaining > 0 ? { ...save.equipment.ammo, quantity: remaining } : null
+  }
+  if (sim.chargesConsumed > 0 && save.equipment.weapon) {
+    const remaining = Math.max(0, (Number(save.equipment.weapon.charges) || 0) - sim.chargesConsumed)
+    save.equipment.weapon = { ...save.equipment.weapon, charges: remaining }
+  }
+
+  if (Array.isArray(sim.finalInventory)) save.inventory = sim.finalInventory
+  const banked = sim.lootBanked || {}
+  for (const [itemId, qty] of Object.entries(banked)) {
+    if (qty <= 0) continue
+    const existing = save.bank[itemId]
+    save.bank[itemId] = existing
+      ? { ...existing, quantity: (Number(existing.quantity) || 0) + qty }
+      : { itemId, quantity: qty }
+  }
+
+  return {
+    type: 'combat',
+    monster: task.monster?.name || task.monster?.id || null,
+    monstersKilled: sim.monstersKilled || 0,
+    xpGained,
+    lootBanked: named(banked),
+    lootGained: named(sim.lootGained),
+    itemsConsumed: named(sim.itemsConsumed),
+    died,
+    finalHP: died ? 0 : (Number.isFinite(Number(sim.finalHP)) ? Math.floor(Number(sim.finalHP)) : null),
+    stoppedReason: sim.stoppedReason || null,
+  }
+}
+
+// Run a combat idle task over the elapsed window and apply it to the save.
+export function runCombatTask(save, task, elapsedMs) {
+  const stats = save.stats || {}
+  const setup = normaliseIdleCombatSetup(save.settings?.idleCombatSetup)
+  const currentHP = Number.isFinite(Number(save.settings?.currentHP))
+    ? Math.max(0, Math.floor(Number(save.settings.currentHP)))
+    : maxHpFromStats(stats)
+  const sim = simulateIdleCombat(task, elapsedMs, stats, save.equipment || {}, toSlotArray(save), itemsData, null, save.bank || {}, {
+    currentHP,
+    idleFood: setup.food,
+    idlePotions: setup.potions,
+    idlePrayers: setup.prayers,
+    prayersData,
+  })
+  if (!sim) return { applied: false, reason: 'no_progress' }
+  return { applied: true, ...applyIdleCombatResult(save, sim, task) }
 }

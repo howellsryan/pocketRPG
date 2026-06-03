@@ -40,6 +40,11 @@ Acting:
   duration of real time, then claim_activity grants the XP/coins and unlocks its
   quest-gated items. Quests use the single idle slot, so finish one before
   starting another activity.
+- Combat: start_fight fights a normal monster idly (XP + loot rolled
+  server-side over real time, using the food/potions configured in the game
+  client); get_active_activity shows the fight; claim_activity collects it. The
+  character can die — rewards up to the killing blow are kept, HP resets and the
+  fight stops. Bosses, raids and One-Life characters are handled in the client.
 - skip_hour spends a credit to advance the running idle activity by one hour;
   follow it with claim_activity to collect the skipped time.
 - XP, coins and most loot are client-computed in this game, so these tools
@@ -367,6 +372,22 @@ export const TOOL_SCHEMAS = [
       additionalProperties: false,
     },
     annotations: WRITE('Start quest'),
+  },
+  {
+    name: 'start_fight',
+    description:
+      'Fight a normal monster idly: XP and loot are rolled server-side over real time, drawing on the food/potions/prayers configured in the game client. claim_activity collects the result; skip_hour advances an hour. Bosses/raids and One-Life characters are refused (use the game client). Find ids via inspect_monster / pocketrpg://reference/monsters.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        monster_id: { type: 'string', description: "The monster id, e.g. 'goblin'." },
+        stance: { type: 'string', enum: ['accurate', 'aggressive', 'defensive', 'controlled'], description: 'Combat stance. Defaults to the saved combat stance.' },
+        ...optionalCharacterId,
+      },
+      required: ['monster_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Start fight'),
   },
 ]
 
