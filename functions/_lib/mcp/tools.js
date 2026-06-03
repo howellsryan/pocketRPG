@@ -1,6 +1,6 @@
 import { callHandler } from './bridge.js'
 import { summarizeSave } from './summary.js'
-import { getItem, getMonster, itemName, withItemName, REFERENCE_RESOURCES, readReference } from './reference.js'
+import { getItem, getMonster, itemName, withItemName, REFERENCE_RESOURCES, readReference, listSkills, getSkillActions, searchItems, searchMonsters, REFERENCE_TOPICS } from './reference.js'
 import { loadCharacterWithSave, writeSave } from '../game/save.js'
 import { auditLog } from '../game/audit.js'
 import { assertNotInActiveMatch } from '../pvp.js'
@@ -189,6 +189,29 @@ const TOOLS = {
     const monster = getMonster(monster_id)
     if (!monster) throw new Error(`No monster with id '${monster_id}'. Browse ids via pocketrpg://reference/monsters.`)
     return ok(monster)
+  },
+
+  list_skill_actions({ skill }) {
+    if (!skill) return ok({ skills: listSkills() })
+    const data = getSkillActions(skill)
+    if (!data) throw new Error(`No skill with id '${skill}'. Call list_skill_actions with no arguments to see the skill ids.`)
+    return ok(data)
+  },
+
+  list_items({ query, type, limit }) {
+    return ok(searchItems({ query, type, limit }))
+  },
+
+  list_monsters({ query, limit }) {
+    return ok(searchMonsters({ query, limit }))
+  },
+
+  get_reference({ topic }) {
+    const uri = REFERENCE_TOPICS[topic]
+    if (!uri) throw new Error(`Unknown topic '${topic}'. Valid topics: ${Object.keys(REFERENCE_TOPICS).join(', ')}.`)
+    const ref = readReference(uri)
+    if (!ref) throw new Error(`No reference data for topic '${topic}'.`)
+    return ok(ref.text)
   },
 
   async get_collection_log({ character_id }, { env, authorization }) {

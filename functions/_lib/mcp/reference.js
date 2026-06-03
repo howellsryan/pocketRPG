@@ -43,7 +43,7 @@ function monsterList() {
 
 // ── Compact indexes (items.json/monsters.json are large; detail via inspect_*) ─
 
-function itemsIndex() {
+export function itemsIndex() {
   return Object.values(itemsData).map((it) => ({
     id: it.id,
     name: it.name,
@@ -53,13 +53,70 @@ function itemsIndex() {
   }))
 }
 
-function monstersIndex() {
+export function monstersIndex() {
   return monsterList().map((m) => ({
     id: m.id,
     name: m.name,
     combatLevel: m.combatLevel ?? null,
     hitpoints: m.hitpoints ?? null,
+    boss: !!m.boss,
   }))
+}
+
+// ── Browse/search helpers (power the list_* tools) ───────────────────────────
+// The indexes above are large (hundreds of items/monsters), and many MCP
+// clients don't surface resources to the model at all — so these let the agent
+// discover PocketRPG ids and values through ordinary tool calls instead of
+// guessing them (or importing them from another game).
+
+const SKILL_ACTION_KEYS = ['actions', 'courses', 'npcs', 'options']
+
+export const SKILL_IDS = Object.keys(skillsData)
+
+function skillActionList(skill) {
+  const key = SKILL_ACTION_KEYS.find((k) => Array.isArray(skill?.[k]))
+  return { key: key || null, list: key ? skill[key] : [] }
+}
+
+// Overview of every skill: id, name and how many trainable options it has.
+export function listSkills() {
+  return Object.values(skillsData).map((sk) => {
+    const { key, list } = skillActionList(sk)
+    return { id: sk.id, name: sk.name, actionKey: key, actionCount: list.length }
+  })
+}
+
+// Full trainable options for one skill (mining ores, agility courses, thieving
+// npcs, …) with their level/xp so the agent can plan training. null = unknown id.
+export function getSkillActions(skillId) {
+  const skill = skillsData[skillId]
+  if (!skill) return null
+  const { key, list } = skillActionList(skill)
+  return { id: skill.id, name: skill.name, actionKey: key, actions: list }
+}
+
+function nameMatches(name, id, query) {
+  if (!query) return true
+  const q = String(query).toLowerCase()
+  return String(name || '').toLowerCase().includes(q) || String(id || '').toLowerCase().includes(q)
+}
+
+function clampLimit(limit) {
+  return Math.max(1, Math.min(Number(limit) || 50, 200))
+}
+
+// Filter the item index by name/id substring and (optionally) type.
+export function searchItems({ query, type, limit } = {}) {
+  const cap = clampLimit(limit)
+  const all = itemsIndex().filter((it) => (!type || it.type === type) && nameMatches(it.name, it.id, query))
+  return { total: all.length, returned: Math.min(all.length, cap), items: all.slice(0, cap) }
+}
+
+// Filter the monster index by name/id substring.
+export function searchMonsters({ query, limit } = {}) {
+  const cap = clampLimit(limit)
+  const all = monstersIndex().filter((m) => nameMatches(m.name, m.id, query))
+  return { total: all.length, returned: Math.min(all.length, cap), monsters: all.slice(0, cap) }
 }
 
 // General-store catalogue (the agent's buyable list). Mirrors the buy path's
@@ -73,6 +130,11 @@ export function shopCatalog() {
 // ── Mechanics summary (kept aligned with AGENTS.md core invariants) ──────────
 
 export const MECHANICS = `# PocketRPG core mechanics
+
+> PocketRPG is its own game — NOT Old School RuneScape / RuneScape. Item names,
+> monster stats, drop tables, XP rates, requirements and prices are
+> PocketRPG-specific and frequently differ from RuneScape. Source every value
+> from these tools/resources; never import figures from another game or the web.
 
 - Menu-driven idle/simulation fantasy RPG. Engine tick: 600ms.
 - Levels 1–99 per skill. XP cap 200,000,000. Use floor() for all gameplay rounding.
@@ -102,6 +164,24 @@ const REFERENCE = {
   'pocketrpg://reference/raids': { mime: 'application/json', name: 'Raids', body: () => raidsData },
   'pocketrpg://reference/farming': { mime: 'application/json', name: 'Farming', body: () => farmingData },
 }
+
+// Short topic names → reference uris, for the get_reference tool. The big
+// item/monster indexes are intentionally omitted (use list_items/list_monsters
+// or inspect_*); everything else is small enough to return whole.
+export const REFERENCE_TOPICS = {
+  mechanics: 'pocketrpg://reference/mechanics',
+  shop: 'pocketrpg://reference/shop',
+  skills: 'pocketrpg://reference/skills',
+  spells: 'pocketrpg://reference/spells',
+  prayers: 'pocketrpg://reference/prayers',
+  quests: 'pocketrpg://reference/quests',
+  clues: 'pocketrpg://reference/clues',
+  minigames: 'pocketrpg://reference/minigames',
+  raids: 'pocketrpg://reference/raids',
+  farming: 'pocketrpg://reference/farming',
+}
+
+export const REFERENCE_TOPIC_NAMES = Object.keys(REFERENCE_TOPICS)
 
 export const REFERENCE_RESOURCES = Object.entries(REFERENCE).map(([uri, r]) => ({
   uri,

@@ -4,6 +4,7 @@
 // The dispatch table in tools.js must expose exactly these names.
 
 import { EQUIP_SLOT_NAMES, SUPPORTED_IDLE_SKILLS } from './intents.js'
+import { SKILL_IDS, REFERENCE_TOPIC_NAMES } from './reference.js'
 
 const IDLE_SKILLS = [...SUPPORTED_IDLE_SKILLS]
 
@@ -11,14 +12,28 @@ const IDLE_SKILLS = [...SUPPORTED_IDLE_SKILLS]
 export const SERVER_INSTRUCTIONS = `PocketRPG is a menu-driven idle/simulation fantasy RPG. These tools let you
 inspect a player's account and run server-authoritative actions on their behalf.
 
+IMPORTANT — PocketRPG is its OWN game, not Old School RuneScape (OSRS) or
+RuneScape. Item names, monster stats, drop tables, XP rates, level
+requirements, shop prices, quests and mechanics are PocketRPG-specific and
+often differ from RuneScape. Do NOT rely on OSRS/RuneScape knowledge and do NOT
+search the web for game data: every statement about items, monsters, skills,
+drops, quests, prices or mechanics must come from these tools and resources.
+Look values up with list_items, list_monsters, list_skill_actions,
+inspect_item, inspect_monster and get_reference. If the data isn't available
+through a tool, say so plainly rather than guessing or filling it in from
+another game.
+
 Getting oriented:
 - Call list_characters first; most tools take an optional character_id and
   auto-select when the account has a single character.
 - get_character_state returns coins, per-skill level + XP, current HP, worn
   equipment and inventory (item ids include resolved names).
-- Read the resources for context: pocketrpg://reference/mechanics (rules),
-  /skills, /shop, /quests, and the item/monster indexes. Use inspect_item and
-  inspect_monster for full details (stats, drop tables) by id.
+- Browse the game content with tools (these work in every client, unlike
+  resources): list_skill_actions (trainable options per skill), list_items and
+  list_monsters (search the catalogues by name), inspect_item / inspect_monster
+  (full stats + drop tables by id) and get_reference (mechanics, shop, spells,
+  prayers, quests, clues, minigames, raids, farming). The same data is also
+  published as pocketrpg://reference/* resources if your client reads them.
 
 Acting:
 - buy_item, skip_hour and skip_slayer_task spend the player's coins/credits and
@@ -144,6 +159,66 @@ export const TOOL_SCHEMAS = [
       additionalProperties: false,
     },
     annotations: READ('Inspect monster'),
+  },
+  {
+    name: 'list_skill_actions',
+    description:
+      "Browse PocketRPG's skills and their trainable options. With no skill, returns every skill (id, name, option count). With a skill, returns that skill's actions/courses/npcs with their level requirement, ticks and XP — the ids to pass to start_skilling.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        skill: { type: 'string', enum: SKILL_IDS, description: 'Skill id, e.g. \'mining\'. Omit for an overview of all skills.' },
+      },
+      additionalProperties: false,
+    },
+    annotations: READ('List skill actions'),
+  },
+  {
+    name: 'list_items',
+    description:
+      "Search PocketRPG's item catalogue by name (and optionally type) to find item ids. Returns compact rows (id, name, type, stackable, shopValue); pass an id to inspect_item for full stats. This is the canonical item list — do not assume items from other games exist.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Case-insensitive substring matched against item name and id. Omit to list everything (paged by limit).' },
+        type: {
+          type: 'string',
+          enum: ['ammo', 'armour', 'currency', 'food', 'junk', 'potion', 'quest', 'resource', 'rune', 'seed', 'tool', 'weapon'],
+          description: 'Optional item type filter.',
+        },
+        limit: { type: 'integer', minimum: 1, maximum: 200, description: 'Max rows to return (default 50).' },
+      },
+      additionalProperties: false,
+    },
+    annotations: READ('List items'),
+  },
+  {
+    name: 'list_monsters',
+    description:
+      "Search PocketRPG's monster catalogue by name to find monster ids (also flags bosses). Returns compact rows (id, name, combatLevel, hitpoints, boss); pass an id to inspect_monster for stats and the full drop table. This is the canonical monster list — do not assume monsters from other games exist.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Case-insensitive substring matched against monster name and id. Omit to list everything (paged by limit).' },
+        limit: { type: 'integer', minimum: 1, maximum: 200, description: 'Max rows to return (default 50).' },
+      },
+      additionalProperties: false,
+    },
+    annotations: READ('List monsters'),
+  },
+  {
+    name: 'get_reference',
+    description:
+      'Read a PocketRPG reference dataset by topic so you can answer from canonical game data instead of guessing. Topics: mechanics (rules), shop, skills, spells, prayers, quests, clues, minigames, raids, farming.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        topic: { type: 'string', enum: REFERENCE_TOPIC_NAMES, description: 'Which reference dataset to return.' },
+      },
+      required: ['topic'],
+      additionalProperties: false,
+    },
+    annotations: READ('Get reference'),
   },
   {
     name: 'buy_item',

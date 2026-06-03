@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { summarizeSave } from '../functions/_lib/mcp/summary.js'
 import { TOOL_SCHEMAS, TOOL_NAMES, SERVER_INSTRUCTIONS } from '../functions/_lib/mcp/schema.js'
-import { itemName, shopCatalog, REFERENCE_RESOURCES, readReference, getItem } from '../functions/_lib/mcp/reference.js'
+import { itemName, shopCatalog, REFERENCE_RESOURCES, readReference, getItem, listSkills, getSkillActions, searchItems, searchMonsters, REFERENCE_TOPIC_NAMES } from '../functions/_lib/mcp/reference.js'
 import { callTool } from '../functions/_lib/mcp/tools.js'
 
 describe('MCP summarizeSave', () => {
@@ -76,6 +76,10 @@ describe('MCP tool schema', () => {
       'get_leaderboard',
       'inspect_item',
       'inspect_monster',
+      'list_skill_actions',
+      'list_items',
+      'list_monsters',
+      'get_reference',
       'buy_item',
       'skip_hour',
       'skip_slayer_task',
@@ -139,6 +143,53 @@ describe('MCP tool schema', () => {
     expect(SERVER_INSTRUCTIONS.length).toBeGreaterThan(100)
     expect(SERVER_INSTRUCTIONS).toMatch(/list_characters/)
   })
+
+  it('instructs the model not to use OSRS/RuneScape knowledge or the web', () => {
+    expect(SERVER_INSTRUCTIONS).toMatch(/OSRS|RuneScape/)
+    expect(SERVER_INSTRUCTIONS).toMatch(/not search the web|do not rely/i)
+    // The browse tools the rule points the model at must actually exist.
+    for (const name of ['list_items', 'list_monsters', 'list_skill_actions', 'get_reference']) {
+      expect(TOOL_NAMES).toContain(name)
+    }
+  })
+})
+
+describe('MCP browse helpers', () => {
+  it('lists every skill with an action count', () => {
+    const skills = listSkills()
+    const mining = skills.find((s) => s.id === 'mining')
+    expect(mining?.name).toBe('Mining')
+    expect(mining?.actionCount).toBeGreaterThan(0)
+  })
+
+  it('resolves a skill\'s actions (including non-"actions" arrays like thieving npcs)', () => {
+    expect(getSkillActions('mining')?.actions.some((a: any) => a.id === 'iron')).toBe(true)
+    const thieving = getSkillActions('thieving')
+    expect(thieving?.actionKey).toBe('npcs')
+    expect(thieving?.actions.length).toBeGreaterThan(0)
+    expect(getSkillActions('not_a_skill')).toBe(null)
+  })
+
+  it('searches items by name and type, honouring the limit', () => {
+    const bronze = searchItems({ query: 'bronze' })
+    expect(bronze.items.length).toBeGreaterThan(0)
+    expect(bronze.items.every((i) => /bronze/i.test(i.name) || /bronze/i.test(i.id))).toBe(true)
+    const food = searchItems({ type: 'food', limit: 3 })
+    expect(food.items.length).toBe(3)
+    expect(food.items.every((i) => i.type === 'food')).toBe(true)
+    expect(food.total).toBeGreaterThanOrEqual(food.returned)
+  })
+
+  it('searches monsters by name and flags bosses', () => {
+    const all = searchMonsters({})
+    expect(all.total).toBeGreaterThan(0)
+    expect(all.monsters[0]).toHaveProperty('boss')
+  })
+
+  it('every advertised reference topic resolves to readable data', () => {
+    expect(REFERENCE_TOPIC_NAMES).toContain('mechanics')
+    expect(REFERENCE_TOPIC_NAMES).not.toContain('items')
+  })
 })
 
 describe('MCP reference data', () => {
@@ -188,5 +239,21 @@ describe('MCP dispatch', () => {
 
   it('unknown tool names reject', async () => {
     await expect(callTool('does_not_exist', {}, ctx)).rejects.toThrow(/Unknown tool/)
+  })
+
+  it('browse tools return real content without auth/DB', async () => {
+    const items = await callTool('list_items', { query: 'bronze', limit: 5 }, ctx)
+    expect(items.isError).toBeFalsy()
+    expect(JSON.parse(items.content[0].text).items.length).toBeGreaterThan(0)
+
+    const skills = await callTool('list_skill_actions', {}, ctx)
+    expect(JSON.parse(skills.content[0].text).skills.length).toBeGreaterThan(0)
+
+    const ref = await callTool('get_reference', { topic: 'mechanics' }, ctx)
+    expect(ref.isError).toBeFalsy()
+    expect(ref.content[0].text).toMatch(/PocketRPG/)
+
+    const bad = await callTool('get_reference', { topic: 'nonsense' }, ctx)
+    expect(bad.isError).toBe(true)
   })
 })
