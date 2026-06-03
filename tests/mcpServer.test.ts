@@ -70,6 +70,7 @@ describe('MCP tool schema', () => {
     expect(TOOL_NAMES).toEqual([
       'list_characters',
       'get_account',
+      'logout',
       'get_character_state',
       'get_collection_log',
       'get_kill_counts',
@@ -259,5 +260,17 @@ describe('MCP dispatch', () => {
 
     const bad = await callTool('get_reference', { topic: 'nonsense' }, ctx)
     expect(bad.isError).toBe(true)
+  })
+
+  it('logout returns disconnect/switch guidance for the signed-in identity', async () => {
+    const authed = { env: {}, authorization: null, identity: { id: 7, provider: 'github', displayName: 'Ada' } } as any
+    const res = await callTool('logout', {}, authed)
+    expect(res.isError).toBeFalsy()
+    const data = JSON.parse(res.content[0].text)
+    expect(data.account).toEqual({ provider: 'github', displayName: 'Ada' })
+    expect(Array.isArray(data.switchAccount)).toBe(true)
+    expect(data.switchAccount.join(' ')).toMatch(/different account/i)
+    // Without an identity it surfaces an auth error rather than guidance.
+    expect((await callTool('logout', {}, ctx)).isError).toBe(true)
   })
 })

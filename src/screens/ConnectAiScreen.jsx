@@ -152,6 +152,19 @@ export default function ConnectAiScreen({ isCloudAccount }) {
           </ul>
         </Card>
 
+        {/* Switch account / disconnect */}
+        <Card className="p-3">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-lg">🔁</span>
+            <span class="font-bold text-[var(--color-gold)] text-sm">Switch account or disconnect</span>
+          </div>
+          <ul class="list-disc pl-4 space-y-1 text-xs text-[var(--color-parchment)] opacity-85 leading-relaxed">
+            <li>To disconnect, remove the PocketRPG connector in your AI client's settings — that deletes the stored access token.</li>
+            <li>To switch accounts, reconnect and choose <b>"Use a different account"</b> on the PocketRPG sign-in screen, then sign in with the account you want.</li>
+            <li>You can also ask the assistant to <b>log out</b> — it will walk you through these steps. Access expires on its own within 30 days.</li>
+          </ul>
+        </Card>
+
         {/* Control / security note */}
         <Card className="p-3">
           <div class="font-bold text-[var(--color-gold)] text-sm mb-1">You stay in control</div>

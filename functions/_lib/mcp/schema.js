@@ -112,6 +112,13 @@ export const TOOL_SCHEMAS = [
     annotations: READ('Get account'),
   },
   {
+    name: 'logout',
+    description:
+      "Explain how to disconnect this connector and switch PocketRPG accounts. For security the server cannot delete the OAuth token your AI client holds, so this returns the steps to remove/reconnect the PocketRPG connector in your client and sign in as a different account (the token also expires on its own within 30 days). Use this when the player asks to log out or change accounts.",
+    inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+    annotations: READ('Logout / switch account'),
+  },
+  {
     name: 'get_character_state',
     description:
       "Get a summary of a character's current game state: coins, skill levels + XP, current HP, worn equipment, inventory contents (with item names) and bank size.",

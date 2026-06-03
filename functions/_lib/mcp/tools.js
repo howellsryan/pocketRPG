@@ -165,6 +165,25 @@ const TOOLS = {
     return ok(res.data)
   },
 
+  // Account tokens are stateless and client-held, so the server can't revoke
+  // them remotely — return the steps to disconnect/switch in the AI client.
+  logout(_args, { identity }) {
+    if (!identity?.id) throw new Error('Not authenticated.')
+    return ok({
+      account: { provider: identity.provider || null, displayName: identity.displayName || null },
+      note: 'For security the MCP server cannot delete the access token your AI client stores, so logging out / switching accounts is done in your client (and browser). Follow the steps below.',
+      disconnect: [
+        "Open your AI client's connector settings (ChatGPT: Settings → Apps & Connectors; Claude: Settings → Connectors).",
+        'Remove or disconnect the PocketRPG connector — that deletes the stored token from the client.',
+      ],
+      switchAccount: [
+        'Disconnect PocketRPG as above, then add/reconnect it.',
+        'At the PocketRPG sign-in window choose "Use a different account", sign in with the account you want, and approve.',
+      ],
+      tokenNote: 'Even if you do nothing, the current access expires on its own within 30 days.',
+    })
+  },
+
   async get_character_state({ character_id }, { env, authorization }) {
     const id = await resolveCharacterId(env, authorization, character_id)
     const res = await callHandler(getSave, env, { authorization, characterId: id })

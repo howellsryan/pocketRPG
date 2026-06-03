@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks'
-import { getToken, startGitHubLogin, startGoogleLogin } from '../cloud/api.js'
+import { getToken, clearAuth, startGitHubLogin, startGoogleLogin } from '../cloud/api.js'
 import { apiUrl } from '../cloud/apiBase.js'
 
 // Consent screen for the OAuth authorization flow (see functions/api/oauth/**).
@@ -7,20 +7,44 @@ import { apiUrl } from '../cloud/apiBase.js'
 // If the user isn't signed in yet we show the normal login first; the request
 // token is held by App (in sessionStorage) so it survives the login round-trip.
 
-function decodeClientName(requestToken) {
+function decodeJwtPayload(token) {
   try {
-    const payload = JSON.parse(atob(requestToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
-    return typeof payload.client_name === 'string' ? payload.client_name : null
+    return JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
   } catch {
     return null
   }
 }
 
+function decodeClientName(requestToken) {
+  const payload = decodeJwtPayload(requestToken)
+  return payload && typeof payload.client_name === 'string' ? payload.client_name : null
+}
+
+// Best-effort label for the currently signed-in account (the session JWT
+// carries displayName/provider claims), so the user can tell which account
+// they'd be linking before they approve.
+function decodeAccount(token) {
+  const payload = decodeJwtPayload(token)
+  if (!payload) return null
+  return { displayName: payload.displayName || null, provider: payload.provider || null }
+}
+
 export default function OAuthConsentScreen({ requestToken, onClose }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
-  const signedIn = !!getToken()
+  const [signedIn, setSignedIn] = useState(!!getToken())
+  const account = signedIn ? decodeAccount(getToken()) : null
   const clientName = decodeClientName(requestToken) || 'An AI assistant'
+
+  // Log out of this browser session so the login buttons reappear and the user
+  // can authorize with a different account. The request token is preserved by
+  // App, so signing back in returns here to approve as the new account.
+  function useDifferentAccount() {
+    if (busy) return
+    clearAuth()
+    setError(null)
+    setSignedIn(false)
+  }
 
   async function decide(decision) {
     if (busy) return
@@ -59,6 +83,10 @@ export default function OAuthConsentScreen({ requestToken, onClose }) {
 
         {signedIn ? (
           <div class="space-y-3">
+            <div class="text-[11px] text-center opacity-60">
+              Signed in as <b class="text-[var(--color-parchment)] opacity-100">{account?.displayName || 'your account'}</b>
+              {account?.provider ? ` (${account.provider})` : ''}
+            </div>
             <button
               class="w-full rounded-lg px-4 py-3 bg-[var(--color-gold)] text-[var(--color-void)] font-bold disabled:opacity-40"
               disabled={busy}
@@ -72,6 +100,13 @@ export default function OAuthConsentScreen({ requestToken, onClose }) {
               onClick={() => decide('deny')}
             >
               Deny
+            </button>
+            <button
+              class="w-full rounded-lg px-3 py-2 bg-transparent border-0 text-[var(--color-parchment)] opacity-60 hover:opacity-100 text-xs font-semibold disabled:opacity-40"
+              disabled={busy}
+              onClick={useDifferentAccount}
+            >
+              Use a different account
             </button>
             <p class="text-[11px] text-center opacity-50 pt-1">
               You can revoke access later by logging out, which expires the token within 30 days.
@@ -92,6 +127,10 @@ export default function OAuthConsentScreen({ requestToken, onClose }) {
             >
               Sign in with Google
             </button>
+            <p class="text-[11px] text-center opacity-50 pt-1">
+              Tip: to switch between two accounts on the same provider, sign out of that provider (GitHub/Google)
+              in this browser first.
+            </p>
           </div>
         )}
       </div>
