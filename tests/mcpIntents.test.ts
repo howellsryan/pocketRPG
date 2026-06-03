@@ -12,6 +12,7 @@ import {
   buildQuestTask,
   applyQuestTask,
   questStatuses,
+  questXpChoice,
   buildCombatTask,
   runCombatTask,
   planDungeoneeringReward,
@@ -257,6 +258,23 @@ describe('quest intents', () => {
   it('requires xp_skill when the quest offers a combat/any XP choice', () => {
     // cross_marks_the_spot: {any:300} — a free "any skill" choice.
     expect(() => buildQuestTask(makeSave(), 'cross_marks_the_spot', undefined)).toThrow(/xp_skill/)
+    // The error tells the agent to ask the player rather than defaulting.
+    expect(() => buildQuestTask(makeSave(), 'cross_marks_the_spot', undefined)).toThrow(/ask the player/i)
+  })
+
+  it('describes a quest XP choice (or returns null) via questXpChoice', () => {
+    // combat-only reward → choose from combat skills.
+    const combat = questXpChoice({ xpReward: { combat: 40000 } } as any)
+    expect(combat).toMatchObject({ type: 'combat', amount: 40000 })
+    expect(combat?.chooseFrom).toContain('attack')
+    expect(combat?.chooseFrom).not.toContain('cooking')
+    // "any" reward → choose from every skill.
+    const any = questXpChoice({ xpReward: { any: 300 } } as any)
+    expect(any?.type).toBe('any')
+    expect(any?.chooseFrom).toContain('cooking')
+    // No choice → null.
+    expect(questXpChoice({ xpReward: { slayer: 1000 } } as any)).toBeNull()
+    expect(questXpChoice({} as any)).toBeNull()
   })
 
   it('rejects an xp_skill outside the choice scope (combat-only reward)', () => {
@@ -310,6 +328,18 @@ describe('quest intents', () => {
     // A quest with unmet prerequisites is locked, with reasons.
     const locked = status.locked.find((q: any) => q.id === 'a_realm_divided')
     expect(locked?.requirements?.length).toBeGreaterThan(0)
+  })
+
+  it('surfaces an xpChoice on eligible quests so the agent can ask before starting', () => {
+    // cross_marks_the_spot: {any:300}. Give a clean save so it is eligible.
+    const save = makeSave({ stats: {}, settings: { completedQuests: [] } })
+    const eligible = questStatuses(save).eligible
+    const choiceQuest = eligible.find((q: any) => q.id === 'cross_marks_the_spot')
+    expect(choiceQuest?.xpChoice).toMatchObject({ type: 'any' })
+    expect(choiceQuest?.xpChoice.chooseFrom).toContain('cooking')
+    // A quest with only fixed XP carries no xpChoice field.
+    const fixedQuest = eligible.find((q: any) => q.xpChoice === undefined)
+    expect(fixedQuest).toBeDefined()
   })
 })
 

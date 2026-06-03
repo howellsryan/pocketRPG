@@ -352,6 +352,21 @@ function allowedChoiceSkills(choiceType) {
   return choiceType === 'combat' ? COMBAT_SKILLS : UNIQUE_ALL_SKILLS
 }
 
+// Describe a quest's optional XP-skill choice (or null if it has none) so the
+// agent can surface it and ask the player *before* starting — start_quest then
+// applies the player's pick instead of silently defaulting to a skill.
+export function questXpChoice(quest) {
+  const { choices } = splitQuestXpRewards(quest?.xpReward || {})
+  if (choices.length === 0) return null
+  const choice = choices[0]
+  return {
+    type: choice.type, // 'combat' | 'any'
+    amount: choice.amount,
+    chooseFrom: allowedChoiceSkills(choice.type),
+    note: `This quest awards ${choice.amount} XP to a skill of the player's choice — ask which, then pass it as xp_skill (do not default).`,
+  }
+}
+
 // Build (and validate) a quest idle task. Throws if the quest is unknown, the
 // character is ineligible, or a required XP-skill choice is missing/invalid.
 export function buildQuestTask(save, questId, xpSkill) {
@@ -365,16 +380,15 @@ export function buildQuestTask(save, questId, xpSkill) {
     throw new GameApiError('QUEST_INELIGIBLE', `Cannot start '${quest.name}': ${reasons.join('; ')}.`, 400)
   }
 
-  const { choices } = splitQuestXpRewards(quest.xpReward || {})
+  const choice = questXpChoice(quest)
   let xpChoiceSkill = null
-  if (choices.length > 0) {
-    const choice = choices[0]
-    const allowed = allowedChoiceSkills(choice.type)
+  if (choice) {
+    const allowed = choice.chooseFrom
     if (!xpSkill) {
       const label = choice.type === 'combat' ? 'a combat skill' : 'any skill'
       throw new GameApiError(
         'XP_CHOICE_REQUIRED',
-        `'${quest.name}' awards ${choice.amount} XP to ${label} on completion — pass xp_skill (one of: ${allowed.join(', ')}).`,
+        `'${quest.name}' awards ${choice.amount} XP to ${label} of the player's choice on completion. Ask the player which skill they want (do not default), then pass it as xp_skill (one of: ${allowed.join(', ')}).`,
         400,
       )
     }
@@ -462,7 +476,8 @@ export function questStatuses(save) {
     const status = checkQuestEligibility(quest, stats, completed, questsData)
     const base = { id: quest.id, name: quest.name, complexity: quest.complexity, durationSeconds: quest.durationSeconds }
     if (status.eligible) {
-      eligible.push({ ...base, coinReward: quest.coinReward || 0, xpReward: quest.xpReward || {} })
+      const xpChoice = questXpChoice(quest)
+      eligible.push({ ...base, coinReward: quest.coinReward || 0, xpReward: quest.xpReward || {}, ...(xpChoice ? { xpChoice } : {}) })
     } else {
       locked.push({ ...base, requirements: status.reasons })
     }

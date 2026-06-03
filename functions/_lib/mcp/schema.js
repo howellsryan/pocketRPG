@@ -54,7 +54,10 @@ Acting:
   missing requirements). start_quest begins an eligible quest — it runs for its
   duration of real time, then claim_activity grants the XP/coins and unlocks its
   quest-gated items. Quests use the single idle slot, so finish one before
-  starting another activity.
+  starting another activity. When a startable quest has an xpChoice (a free
+  combat/"any" XP reward), ask the player which skill should receive it before
+  starting and pass it as xp_skill — never default it to attack or choose for
+  them.
 - Combat: start_fight fights a normal monster idly (XP + loot rolled
   server-side over real time, using the food/potions configured in the game
   client); get_active_activity shows the fight; claim_activity collects it. The
@@ -436,19 +439,19 @@ export const TOOL_SCHEMAS = [
   {
     name: 'get_quests',
     description:
-      "List a character's quest progress: total quest points, completed quests, the quests they can start right now (with rewards), and the locked ones with their missing requirements. Use ids with start_quest.",
+      "List a character's quest progress: total quest points, completed quests, the quests they can start right now (with rewards), and the locked ones with their missing requirements. Use ids with start_quest. A startable quest that lets the player choose where its XP goes carries an `xpChoice` field (type + the skills to choose from) — ask the player which skill before starting it.",
     inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
     annotations: READ('Get quests'),
   },
   {
     name: 'start_quest',
     description:
-      'Start a quest the character is eligible for (checks skill/quest-point/prerequisite/combat-level requirements). It completes after its duration of real time — claim_activity collects the XP, coins and item unlocks; skip_hour advances it an hour. If the quest awards combat/"any" XP, pass xp_skill to choose where it lands.',
+      'Start a quest the character is eligible for (checks skill/quest-point/prerequisite/combat-level requirements). It completes after its duration of real time — claim_activity collects the XP, coins and item unlocks; skip_hour advances it an hour. If the quest awards a combat/"any" XP choice (see the quest\'s `xpChoice` in get_quests), ASK THE PLAYER which skill should receive it and pass that as xp_skill — do not default to attack or pick for them. Calling without xp_skill on such a quest fails with the list of valid skills rather than guessing.',
     inputSchema: {
       type: 'object',
       properties: {
         quest_id: { type: 'string', description: "The quest id, e.g. 'dragon_slayer_i'. Find ids via get_quests or pocketrpg://reference/quests." },
-        xp_skill: { type: 'string', description: 'Skill to receive the quest\'s free combat/"any" XP choice (a combat skill for a combat choice, any skill for an "any" choice). Required only when the quest offers such a choice.' },
+        xp_skill: { type: 'string', description: 'Skill that should receive the quest\'s free combat/"any" XP choice (a combat skill for a combat choice, any skill for an "any" choice). Required when the quest offers such a choice — set it to the skill the player chose, never a hardcoded default.' },
         ...optionalCharacterId,
       },
       required: ['quest_id'],
