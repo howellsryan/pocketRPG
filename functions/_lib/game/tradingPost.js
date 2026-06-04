@@ -446,6 +446,54 @@ export async function getMarketSummary(env, itemId) {
   }
 }
 
+// List all active offers aggregated by item_id and offer_type.
+// Returns best price + total quantity + offer count for buy/sell sides per item.
+export async function getAllMarketListings(env) {
+  const rows = await env.DB.prepare(
+    `SELECT item_id, offer_type,
+            SUM(quantity_remaining) AS total_qty,
+            COUNT(*) AS offer_count,
+            MIN(price) AS min_price,
+            MAX(price) AS max_price
+     FROM trading_post_offers
+     WHERE status = 'active' AND quantity_remaining > 0
+     GROUP BY item_id, offer_type`,
+  ).all()
+
+  const byItem = {}
+  for (const row of rows?.results || []) {
+    const itemId = row.item_id
+    if (!byItem[itemId]) {
+      byItem[itemId] = {
+        item_id: itemId,
+        bestBuy: null,
+        totalBuyQty: 0,
+        buyOfferCount: 0,
+        bestSell: null,
+        totalSellQty: 0,
+        sellOfferCount: 0,
+      }
+    }
+    const entry = byItem[itemId]
+    const totalQty = Number(row.total_qty) || 0
+    const offerCount = Number(row.offer_count) || 0
+    const minPrice = Number(row.min_price) || 0
+    const maxPrice = Number(row.max_price) || 0
+
+    if (row.offer_type === 'buy') {
+      entry.bestBuy = maxPrice
+      entry.totalBuyQty = totalQty
+      entry.buyOfferCount = offerCount
+    } else if (row.offer_type === 'sell') {
+      entry.bestSell = minPrice
+      entry.totalSellQty = totalQty
+      entry.sellOfferCount = offerCount
+    }
+  }
+
+  return Object.values(byItem)
+}
+
 export async function assertSlotAvailable(env, characterId) {
   const active = await countActiveOffers(env, characterId)
   if (active >= MAX_ACTIVE_OFFERS_PER_CHARACTER) {

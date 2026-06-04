@@ -64,6 +64,8 @@ export default function TradingPostScreen({ onBuyCredits }) {
   const [marketData, setMarketData] = useState({}) // item_id -> { bestSell, bestBuy, totalListedQuantity }
   const [myOffers, setMyOffers] = useState([])
   const [offersLoaded, setOffersLoaded] = useState(false)
+  const [allListings, setAllListings] = useState([])
+  const [listingsLoaded, setListingsLoaded] = useState(false)
   const searchAbortRef = useRef(0)
 
   const hasMoneyPurse = unlockedFeatures.has('money_purse')
@@ -104,6 +106,16 @@ export default function TradingPostScreen({ onBuyCredits }) {
       }
     } catch (err) {
       addToast(`Failed to load offers: ${err.message}`, 'error')
+    }
+  }
+
+  const refreshListings = async () => {
+    try {
+      const res = await api.tradingPostListings()
+      setAllListings(res?.listings || [])
+      setListingsLoaded(true)
+    } catch (err) {
+      addToast(`Failed to load listings: ${err.message}`, 'error')
     }
   }
 
@@ -504,6 +516,49 @@ export default function TradingPostScreen({ onBuyCredits }) {
     )
   }
 
+  const renderListings = () => {
+    const renderListingRow = (listing) => {
+      const item = itemsData[listing.item_id]
+      const hasAnyOffer = listing.bestBuy !== null || listing.bestSell !== null
+      if (!hasAnyOffer) return null
+      return (
+        <div key={listing.item_id} class="p-3 rounded-lg bg-[var(--color-void-light)] border border-[#2a2a2a] flex items-center gap-3">
+          <GameIcon item={item} size={24} class="shrink-0" />
+          <div class="flex-1 min-w-0">
+            <div class="text-[13px] font-semibold text-[var(--color-parchment)]">{item?.name || listing.item_id}</div>
+            <div class="text-[10px] text-[#888] mt-1">
+              {listing.buyOfferCount > 0 && <span>Buyers: {listing.buyOfferCount}</span>}
+              {listing.buyOfferCount > 0 && listing.sellOfferCount > 0 && <span class="mx-1">·</span>}
+              {listing.sellOfferCount > 0 && <span>Sellers: {listing.sellOfferCount}</span>}
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            {listing.bestBuy !== null && (
+              <div class="text-[11px] font-[var(--font-mono)] text-[#8fb0d1]">Buy: {listing.bestBuy.toLocaleString()} gp</div>
+            )}
+            {listing.bestSell !== null && (
+              <div class="text-[11px] font-[var(--font-mono)] text-[var(--color-gold)]">Sell: {listing.bestSell.toLocaleString()} gp</div>
+            )}
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div class="h-full overflow-y-auto px-4 pb-20 md:pb-4">
+        {!listingsLoaded ? (
+          <div class="py-10 px-4 text-center text-[#888] text-[12px]">Loading listings…</div>
+        ) : allListings.length === 0 ? (
+          <div class="py-10 px-4 text-center text-[#888] text-[12px]">No active listings.</div>
+        ) : (
+          <div class="flex flex-col gap-2 pt-3">
+            {allListings.map(renderListingRow).filter(Boolean)}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   const detailModal = selected ? (() => {
     const orderBook = isOrderBookItem(selected)
     const m = marketData[selected.id] || {}
@@ -629,6 +684,14 @@ export default function TradingPostScreen({ onBuyCredits }) {
               </span>
             )}
           </button>
+          <button
+            onClick={() => { setMode('listings'); refreshListings() }}
+            class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
+              mode === 'listings'
+                ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
+                : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
+            } inline-flex items-center gap-1`}
+          ><GameIcon iconKey="search" size={13} color="currentColor" /> All Listings</button>
         </div>
         {mode === 'market' && (
           <input
@@ -638,6 +701,9 @@ export default function TradingPostScreen({ onBuyCredits }) {
             onInput={(e) => setSearchTerm(e.target.value)}
             class="w-full px-3 py-2 rounded-lg border border-[#2a2a2a] bg-[#111] text-[var(--color-parchment)] text-[13px] outline-none"
           />
+        )}
+        {mode === 'listings' && (
+          <div class="text-[11px] text-[#888]">Browse all active market listings</div>
         )}
       </div>
 
@@ -655,10 +721,12 @@ export default function TradingPostScreen({ onBuyCredits }) {
             </div>
           )}
         </div>
-      ) : (
+      ) : mode === 'offers' ? (
         <div class="h-full overflow-y-auto">
           {renderMyOffersList()}
         </div>
+      ) : (
+        renderListings()
       )}
 
       {selected && (
