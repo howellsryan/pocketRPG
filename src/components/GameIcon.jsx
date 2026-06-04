@@ -1,13 +1,24 @@
 import gameIconsData from '../data/gameIcons.json'
 import { getItemIconKey, getItemIconTint, isCryptboundChampion } from '../utils/itemIcons'
 
+// Items that get a white rim outline (their fill is near-black, so the rim
+// traces the silhouette against the dark UI).
+const WHITE_OUTLINE_IDS = new Set(['ring_of_affliction'])
+
+// Items that get a black rim outline to define their coloured silhouette.
+const BLACK_OUTLINE_IDS = new Set([
+  'amulet_of_torment', 'necklace_of_agony', 'afflicted_bracelet',
+  'berserker_ring', 'archers_ring', 'seers_ring',
+  'kodai_hat', 'kodai_robe_top', 'kodai_robe_bottom',
+])
+
 // game-icons glyph paths are authored with fill="currentColor", which resolves
 // to the CSS `color` property — NOT the svg `fill` attribute. So the tint drives
 // `color` (see below). Some items additionally get an SVG `drop-shadow` filter:
-//   • a prestige glow (infernal cape gold, 2nd age platinum), or
+//   • a prestige glow (infernal cape gold, 2nd age platinum),
 //   • a white rim outline for black items (cryptbound champions, black
-//     dragonhide) — their fill is near-black so it would vanish against the dark
-//     UI; the white rim traces the silhouette while the fill stays black.
+//     dragonhide, ring of affliction) so the black silhouette reads, or
+//   • a black rim outline to define a coloured silhouette.
 function glowFor(id) {
   if (!id) return undefined
   if (id === 'infernal_cape') {
@@ -16,9 +27,11 @@ function glowFor(id) {
   if (id.startsWith('2nd_age_')) {
     return 'drop-shadow(0 0 3px #e5e4e2)'
   }
-  // Black items — white rim so the black silhouette reads on the dark UI.
-  if (isCryptboundChampion(id) || (id.startsWith('black_') && id.includes('_d_hide_'))) {
+  if (isCryptboundChampion(id) || (id.startsWith('black_') && id.includes('_d_hide_')) || WHITE_OUTLINE_IDS.has(id)) {
     return 'drop-shadow(0 0 1px #ffffff) drop-shadow(0 0 0.5px #ffffff)'
+  }
+  if (BLACK_OUTLINE_IDS.has(id)) {
+    return 'drop-shadow(0 0 1px #000000) drop-shadow(0 0 0.5px #000000)'
   }
   return undefined
 }

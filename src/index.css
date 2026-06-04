@@ -38,7 +38,6 @@
   --tier-mithril: #3550c4;
   --tier-adamant: #3aa55f;
   --tier-cryptbound: #1f1f1f;
-  --tier-kodai: #4db8e8;
   --tier-ranger: #4a8c3a;
   --tier-dhide-black: #1f1f1f;
   --tier-dhide-red: #c0392b;
@@ -54,6 +53,10 @@
   --tier-gold: #f39c12;
   --tier-2nd-age: #e5e4e2;
   --tier-shardglass: #dcdbe0;
+  --tier-jewel-red: #d23b2f;
+  --tier-jewel-green: #2ecc71;
+  --tier-jewel-blue: #3498db;
+  --tier-jewel-purple: #9b59b6;
   --font-display: 'Cinzel', serif;
   --font-body: 'Nunito', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;

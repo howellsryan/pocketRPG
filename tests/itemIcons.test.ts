@@ -239,8 +239,6 @@ describe('getItemIconTint — tier colouring', () => {
     ['gorath_s_warspear',    'var(--tier-cryptbound)'],
     ['kaelor_s_crossbow',    'var(--tier-cryptbound)'],
     ['verin_s_flail',        'var(--tier-cryptbound)'],
-    ['kodai_hat',            'var(--tier-kodai)'],
-    ['kodai_robe_top',       'var(--tier-kodai)'],
     ['robin_hood_hat',       'var(--tier-ranger)'],
     ['rangers_tunic',        'var(--tier-ranger)'],
     ['pathfinder_boots',     'var(--tier-ranger)'],
@@ -266,6 +264,19 @@ describe('getItemIconTint — tier colouring', () => {
     ['shardglass_helmet',    'var(--tier-shardglass)'],
     ['shardglass_bow',       'var(--tier-shardglass)'],
     ['shardglass_shards',    'var(--tier-shardglass)'],
+    ['amulet_of_torment',    'var(--tier-jewel-red)'],
+    ['necklace_of_agony',    'var(--tier-jewel-green)'],
+    ['afflicted_bracelet',   'var(--tier-jewel-blue)'],
+    ['zaryth_vambraces',     'var(--tier-jewel-purple)'],
+    ['ring_of_affliction',   'var(--tier-cryptbound)'],
+    ['berserker_ring',       'var(--tier-jewel-red)'],
+    ['archers_ring',         'var(--tier-jewel-green)'],
+    ['seers_ring',           'var(--tier-jewel-blue)'],
+    ['arcanist_robe_top',    'var(--tier-jewel-blue)'],
+    ['arcanist_robe_bottom', 'var(--tier-jewel-blue)'],
+    ['kodai_hat',            'var(--tier-jewel-purple)'],
+    ['kodai_robe_top',       'var(--tier-jewel-purple)'],
+    ['kodai_robe_bottom',    'var(--tier-jewel-purple)'],
   ]
 
   for (const [id, expected] of cases) {

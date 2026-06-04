@@ -164,12 +164,23 @@ function getTierTint(item) {
 
   // Named uniques & special items (most specific first)
   if (isCryptboundChampion(id)) return 'var(--tier-cryptbound)'
-  if (id.startsWith('kodai'))      return 'var(--tier-kodai)'
+  if (id.startsWith('kodai'))      return 'var(--tier-jewel-purple)'
   if (id === 'robin_hood_hat' || id === 'rangers_tunic' || id === 'pathfinder_boots') {
     return 'var(--tier-ranger)'
   }
   if (id === 'fire_cape')          return 'var(--tier-fire-cape)'
   if (id === 'infernal_cape')      return 'var(--tier-infernal-cape)'
+
+  // Jewellery & named armour uniques
+  if (id === 'amulet_of_torment')  return 'var(--tier-jewel-red)'
+  if (id === 'necklace_of_agony')  return 'var(--tier-jewel-green)'
+  if (id === 'afflicted_bracelet') return 'var(--tier-jewel-blue)'
+  if (id === 'zaryth_vambraces')   return 'var(--tier-jewel-purple)'
+  if (id === 'ring_of_affliction') return 'var(--tier-cryptbound)'
+  if (id === 'berserker_ring')     return 'var(--tier-jewel-red)'
+  if (id === 'archers_ring')       return 'var(--tier-jewel-green)'
+  if (id === 'seers_ring')         return 'var(--tier-jewel-blue)'
+  if (id === 'arcanist_robe_top' || id === 'arcanist_robe_bottom') return 'var(--tier-jewel-blue)'
   if (id.startsWith('2nd_age_'))   return 'var(--tier-2nd-age)'
   if (id.startsWith('shardglass_')) return 'var(--tier-shardglass)'
 
