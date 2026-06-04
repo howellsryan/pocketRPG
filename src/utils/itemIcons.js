@@ -1,5 +1,6 @@
 import gameIconsData from '../data/gameIcons.json'
 import collectionLogData from '../data/collectionLog.json'
+import { SKILL_ART } from './skillArt'
 
 // The "Cryptbound Champions" raid set (the six named champions: morvyn, dravok,
 // gorath, kaelor, torvek, verin) is defined authoritatively in the collection
@@ -70,7 +71,8 @@ function keyFromId(id) {
   if (id === 'ava_s_accumulator' || id === 'ava_s_assembler') return 'quiver'
   if (id.endsWith('_partyhat') || id === 'partyhat') return 'party_hat'
   if (id.includes('charm') || id.includes('blessing')) return 'prayer'
-  if (id.includes('skirt')) return 'legs'
+  if (id.endsWith('_mitre')) return 'pointy_hat'
+  if (id.includes('skirt') || id.includes('chaps')) return 'legs'
   if (id.includes('_ore') || id === 'ore') return 'ore'
   if (id.endsWith('_bar') || id === 'bar') return 'metal_bar'
   if (id.endsWith('_logs') || id === 'logs') return 'log'
@@ -154,40 +156,115 @@ export function getItemIconKey(item) {
 }
 
 // ─── Tier-based equipment tint ────────────────────────────────────────────────
+
+// Explicit per-item tints (named uniques: jewellery, magic gear, boss weapons,
+// boots, gloves, etc.). One id → one CSS colour.
+const ITEM_TINT = {
+  // Jewellery
+  amulet_of_torment:  'var(--tier-jewel-red)',
+  necklace_of_agony:  'var(--tier-jewel-green)',
+  afflicted_bracelet: 'var(--tier-jewel-blue)',
+  zaryth_vambraces:   'var(--tier-jewel-purple)',
+  ring_of_affliction: 'var(--tier-cryptbound)',
+  berserker_ring:     'var(--tier-jewel-red)',
+  archers_ring:       'var(--tier-jewel-green)',
+  seers_ring:         'var(--tier-jewel-blue)',
+  amulet_of_fury:     'var(--tier-cryptbound)',
+  amulet_of_glory:    'var(--tier-jewel-purple)',
+  amulet_of_glory_t:  'var(--tier-jewel-purple)',
+  amulet_of_strength: 'var(--tier-jewel-red)',
+  arcane_necklace:    'var(--tier-jewel-blue)',
+  occult_necklace:    'var(--tier-jewel-purple)',
+  // Kodai set
+  kodai_hat:          'var(--tier-jewel-purple)',
+  kodai_robe_top:     'var(--tier-jewel-purple)',
+  kodai_robe_bottom:  'var(--tier-jewel-purple)',
+  // Ranger uniques
+  robin_hood_hat:     'var(--tier-ranger)',
+  rangers_tunic:      'var(--tier-ranger)',
+  pathfinder_boots:   'var(--tier-ranger)',
+  // Special capes (skill capes are handled separately by accent colour)
+  fire_cape:          'var(--tier-fire-cape)',
+  infernal_cape:      'var(--tier-infernal-cape)',
+  imbued_god_cape:    'var(--tier-cryptbound)',
+  ava_s_assembler:    'var(--tier-jewel-green)',
+  ava_s_accumulator:  'var(--tier-jewel-green)',
+  // Magic gear / materials
+  magic_shortbow:     'var(--tier-jewel-blue)',
+  magic_shortbow_u:   'var(--tier-jewel-blue)',
+  magic_logs:         'var(--tier-jewel-blue)',
+  staff_of_water:     'var(--tier-jewel-blue)',
+  sanguine_staff:     'var(--tier-jewel-red)',
+  staff_of_fire:      'var(--tier-jewel-red)',
+  staff_of_earth:     'var(--tier-jewel-green)',
+  staff_of_the_dead:  'var(--tier-cryptbound)',
+  ancestral_wand:     'var(--tier-jewel-blue)',
+  black_wizard_hat:   'var(--tier-cryptbound)',
+  black_wizard_robe:  'var(--tier-cryptbound)',
+  // Shields / bucklers / defenders
+  arcane_kiteshield:     'var(--tier-orange)',
+  eagle_eyed_kiteshield: 'var(--tier-jewel-green)',
+  visage_shield:         'var(--tier-cryptbound)',
+  warped_buckler:        'var(--tier-jewel-purple)',
+  durn_s_bulwark:        'var(--tier-jewel-purple)',
+  slayer_defender:       'var(--tier-cryptbound)',
+  avernal_defender:      'var(--tier-cryptbound)',
+  slayer_helmet:         'var(--tier-cryptbound)',
+  // Weapons
+  colossal_ballista:  'var(--tier-cryptbound)',
+  twisted_longbow:    'var(--tier-cryptbound)',
+  gargoyle_maul:      'var(--tier-cryptbound)',
+  nightfang_bow:      'var(--tier-cryptbound)',
+  scythe_of_vythar:   'var(--tier-cryptbound)',
+  nether_demon_whip:  'var(--tier-cryptbound)',
+  abyssal_tentacle:   'var(--tier-cryptbound)',
+  // Venom gear
+  venom_blowpipe:     'var(--tier-jewel-green)',
+  trident_of_venom:   'var(--tier-jewel-green)',
+  serpentine_helm:    'var(--tier-jewel-green)',
+  // Boots & accessories
+  spiked_manacles:    'var(--tier-cryptbound)',
+  evermore_boots:     'var(--tier-jewel-blue)',
+  primeval_boots:     'var(--tier-jewel-red)',
+  skyfury_boots:      'var(--tier-jewel-green)',
+  // Gloves
+  ferocious_gloves:   'var(--tier-cryptbound)',
+  gloves_of_slaughter:'var(--tier-cryptbound)',
+}
+
+// "God" armour/weapon sets — every item sharing the prefix takes one colour.
+const GOD_TINT = {
+  'ancient_': 'var(--tier-jewel-purple)',
+  'lumira_':  'var(--tier-jewel-blue)',
+  'grondar_': 'var(--tier-bronze)',
+  'krylth_':  'var(--tier-jewel-red)',
+  'verdant_': 'var(--tier-jewel-green)',
+}
+
 // An item's metal/material tier decides its icon colour so the inventory reads
-// at a glance. Matched on the leading segment of the item id. The FIRST matching
-// rule wins, so the most specific (named uniques) are checked before the generic
-// metal-prefix rules. Returns a CSS color string, or null if the item has no
-// tier (so the caller falls back to the type-based tint).
+// at a glance. The FIRST matching rule wins, so the most specific (named
+// uniques, then god sets) are checked before the generic metal-prefix rules.
+// Returns a CSS color string, or null if the item has no tier (so the caller
+// falls back to the type-based tint).
 function getTierTint(item) {
   const id = item.id || ''
 
-  // Named uniques & special items (most specific first)
   if (isCryptboundChampion(id)) return 'var(--tier-cryptbound)'
-  if (id.startsWith('kodai'))      return 'var(--tier-jewel-purple)'
-  if (id === 'robin_hood_hat' || id === 'rangers_tunic' || id === 'pathfinder_boots') {
-    return 'var(--tier-ranger)'
-  }
-  if (id === 'fire_cape')          return 'var(--tier-fire-cape)'
-  if (id === 'infernal_cape')      return 'var(--tier-infernal-cape)'
 
-  // Jewellery & named armour uniques
-  if (id === 'amulet_of_torment')  return 'var(--tier-jewel-red)'
-  if (id === 'necklace_of_agony')  return 'var(--tier-jewel-green)'
-  if (id === 'afflicted_bracelet') return 'var(--tier-jewel-blue)'
-  if (id === 'zaryth_vambraces')   return 'var(--tier-jewel-purple)'
-  if (id === 'ring_of_affliction') return 'var(--tier-cryptbound)'
-  if (id === 'berserker_ring')     return 'var(--tier-jewel-red)'
-  if (id === 'archers_ring')       return 'var(--tier-jewel-green)'
-  if (id === 'seers_ring')         return 'var(--tier-jewel-blue)'
+  // Skill capes inherit their skill's accent colour (matches the skill icons).
+  if (id.endsWith('_cape')) {
+    const art = SKILL_ART[id.slice(0, -5)]
+    if (art) return art.accent
+  }
+
+  // Explicit per-item tints
+  if (ITEM_TINT[id]) return ITEM_TINT[id]
   if (id.startsWith('arcanist_')) return 'var(--tier-jewel-blue)'
 
-  // Magic gear / runecrafting & fletching materials by element
-  if (id === 'magic_shortbow' || id === 'magic_shortbow_u' || id === 'magic_logs' ||
-      id === 'staff_of_water' || id === 'magic_cape') return 'var(--tier-jewel-blue)'
-  if (id === 'sanguine_staff' || id === 'staff_of_fire') return 'var(--tier-jewel-red)'
-  if (id === 'staff_of_earth') return 'var(--tier-jewel-green)'
-  if (id === 'staff_of_the_dead') return 'var(--tier-cryptbound)'
+  // God armour/weapon sets by prefix
+  for (const prefix in GOD_TINT) {
+    if (id.startsWith(prefix)) return GOD_TINT[prefix]
+  }
 
   // Dragonhide / dragon leather crafting materials — match the d-hide armour colours
   if (id.includes('dragon_leather') || id.includes('dragonhide')) {

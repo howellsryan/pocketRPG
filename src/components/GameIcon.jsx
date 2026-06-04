@@ -1,9 +1,62 @@
 import gameIconsData from '../data/gameIcons.json'
 import { getItemIconKey, getItemIconTint, isCryptboundChampion } from '../utils/itemIcons'
 
-// Items that get a white rim outline (their fill is near-black, so the rim
-// traces the silhouette against the dark UI).
-const WHITE_OUTLINE_IDS = new Set(['ring_of_affliction', 'staff_of_the_dead'])
+// Outline / glow palette.
+const RIM = {
+  white: '#ffffff', black: '#000000', red: '#d23b2f',
+  green: '#2ecc71', blue: '#3498db', purple: '#9b59b6',
+  gold: '#f0c040', platinum: '#e5e4e2',
+}
+// Tight rim outline vs a stronger "glowing" halo.
+const outline = (c) => `drop-shadow(0 0 1px ${c}) drop-shadow(0 0 0.5px ${c})`
+const glowing = (c) => `drop-shadow(0 0 3px ${c}) drop-shadow(0 0 1.5px ${c})`
+
+// Per-item rim outline spec: [palette colour, glowing?].
+const OUTLINE_SPEC = {
+  // White rim — black-filled items so their silhouette reads on the dark UI.
+  ring_of_affliction:  ['white', false],
+  staff_of_the_dead:   ['white', false],
+  amulet_of_fury:      ['white', false],
+  gargoyle_maul:       ['white', false],
+  spiked_manacles:     ['white', false],
+  black_wizard_hat:    ['white', false],
+  black_wizard_robe:   ['white', false],
+  ferocious_gloves:    ['white', false],
+  gloves_of_slaughter: ['white', false],
+  slayer_defender:     ['white', false],
+  avernal_defender:    ['white', false],
+  slayer_helmet:       ['white', false],
+  // Black rim — defines a coloured silhouette.
+  amulet_of_torment:   ['black', false],
+  necklace_of_agony:   ['black', false],
+  afflicted_bracelet:  ['black', false],
+  berserker_ring:      ['black', false],
+  archers_ring:        ['black', false],
+  seers_ring:          ['black', false],
+  kodai_hat:           ['black', false],
+  kodai_robe_top:      ['black', false],
+  kodai_robe_bottom:   ['black', false],
+  ancient_maul:        ['black', true],
+  occult_necklace:     ['black', true],
+  // Red rim
+  colossal_ballista:   ['red', false],
+  nightfang_bow:       ['red', false],
+  nether_demon_whip:   ['red', false],
+  durn_s_bulwark:      ['red', false],
+  visage_shield:       ['red', true],
+  scythe_of_vythar:    ['red', true],
+  abyssal_tentacle:    ['red', true],
+  // Blue rim
+  venom_blowpipe:      ['blue', false],
+  trident_of_venom:    ['blue', false],
+  serpentine_helm:     ['blue', false],
+  imbued_god_cape:     ['blue', false],
+  // Green rim
+  warped_buckler:      ['green', false],
+  twisted_longbow:     ['green', true],
+  // Purple rim
+  ancestral_wand:      ['purple', true],
+}
 
 // Near-black hide/leather items (armour or crafting material) — white rim so
 // the black silhouette reads on the dark UI.
@@ -12,33 +65,22 @@ function isBlackHide(id) {
     (id.includes('_d_hide_') || id.includes('dragon_leather') || id.includes('dragonhide'))
 }
 
-// Items that get a black rim outline to define their coloured silhouette.
-const BLACK_OUTLINE_IDS = new Set([
-  'amulet_of_torment', 'necklace_of_agony', 'afflicted_bracelet',
-  'berserker_ring', 'archers_ring', 'seers_ring',
-  'kodai_hat', 'kodai_robe_top', 'kodai_robe_bottom',
-])
-
 // game-icons glyph paths are authored with fill="currentColor", which resolves
 // to the CSS `color` property — NOT the svg `fill` attribute. So the tint drives
 // `color` (see below). Some items additionally get an SVG `drop-shadow` filter:
 //   • a prestige glow (infernal cape gold, 2nd age platinum),
 //   • a white rim outline for black items (cryptbound champions, black
-//     dragonhide, ring of affliction) so the black silhouette reads, or
-//   • a black rim outline to define a coloured silhouette.
+//     dragonhide) so the black silhouette reads, or
+//   • a per-item coloured rim/glow from OUTLINE_SPEC.
 function glowFor(id) {
   if (!id) return undefined
-  if (id === 'infernal_cape') {
-    return 'drop-shadow(0 0 3px #f0c040) drop-shadow(0 0 1.5px #f0c040)'
-  }
-  if (id.startsWith('2nd_age_')) {
-    return 'drop-shadow(0 0 3px #e5e4e2)'
-  }
-  if (isCryptboundChampion(id) || isBlackHide(id) || WHITE_OUTLINE_IDS.has(id)) {
-    return 'drop-shadow(0 0 1px #ffffff) drop-shadow(0 0 0.5px #ffffff)'
-  }
-  if (BLACK_OUTLINE_IDS.has(id)) {
-    return 'drop-shadow(0 0 1px #000000) drop-shadow(0 0 0.5px #000000)'
+  if (id === 'infernal_cape') return glowing(RIM.gold)
+  if (id.startsWith('2nd_age_')) return 'drop-shadow(0 0 3px #e5e4e2)'
+  if (isCryptboundChampion(id) || isBlackHide(id)) return outline(RIM.white)
+  const spec = OUTLINE_SPEC[id]
+  if (spec) {
+    const [color, glow] = spec
+    return (glow ? glowing : outline)(RIM[color])
   }
   return undefined
 }

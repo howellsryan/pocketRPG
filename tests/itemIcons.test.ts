@@ -3,6 +3,7 @@ import items from '../src/data/items.json'
 import gameIcons from '../src/data/gameIcons.json'
 import minigames from '../src/data/minigames.json'
 import { getItemIconKey, getItemIconTint } from '../src/utils/itemIcons.js'
+import { SKILL_ART } from '../src/utils/skillArt.js'
 
 const itemsData = items as Record<string, any>
 const gameIconsData = gameIcons as Record<string, { body: string; viewBox: string | null }>
@@ -153,8 +154,8 @@ describe('itemIcons', () => {
   })
 
   it('dragonhide armour resolves by ranged bonus, raw hide by material', () => {
-    // d-hide chaps are legs with ranged attackBonus → full ninja figure
-    expect(getItemIconKey(itemsData.green_d_hide_chaps)).toBe('ninja_body')
+    // d-hide body keeps the full ninja figure
+    expect(getItemIconKey(itemsData.green_d_hide_body)).toBe('ninja_body')
     // boots slot is not subject to magic/ranged override
     expect(getItemIconKey(itemsData.lumira_d_hide_boots)).toBe('boots')
     // raw materials use id pattern
@@ -176,11 +177,21 @@ describe('itemIcons', () => {
     expect(getItemIconKey(itemsData.kodai_robe_top)).toBe('magic_robe')
   })
 
-  it('ranged head armour resolves to ninja (mask), body/legs to ninja_body', () => {
+  it('ranged head armour resolves to ninja (mask), body to ninja_body', () => {
     expect(getItemIconKey(itemsData.leather_cowl)).toBe('ninja')
     expect(getItemIconKey(itemsData.zephyra_helmet)).toBe('ninja')
     expect(getItemIconKey(itemsData.leather_body)).toBe('ninja_body')
-    expect(getItemIconKey(itemsData.leather_chaps)).toBe('ninja_body')
+  })
+
+  it('all chaps resolve to the legs glyph', () => {
+    expect(getItemIconKey(itemsData.leather_chaps)).toBe('legs')
+    expect(getItemIconKey(itemsData.green_d_hide_chaps)).toBe('legs')
+    expect(getItemIconKey(itemsData.studded_chaps)).toBe('legs')
+  })
+
+  it('mitres resolve to the pointy_hat glyph', () => {
+    expect(getItemIconKey(itemsData.ancient_mitre)).toBe('pointy_hat')
+    expect(getItemIconKey(itemsData.zephyra_mitre)).toBe('pointy_hat')
   })
 
   it('halo resolves to angel_outfit glyph', () => {
@@ -288,7 +299,6 @@ describe('getItemIconTint — tier colouring', () => {
     ['magic_shortbow_u',     'var(--tier-jewel-blue)'],
     ['magic_logs',           'var(--tier-jewel-blue)'],
     ['staff_of_water',       'var(--tier-jewel-blue)'],
-    ['magic_cape',           'var(--tier-jewel-blue)'],
     ['sanguine_staff',       'var(--tier-jewel-red)'],
     ['staff_of_fire',        'var(--tier-jewel-red)'],
     ['staff_of_earth',       'var(--tier-jewel-green)'],
@@ -298,6 +308,50 @@ describe('getItemIconTint — tier colouring', () => {
     ['black_dragon_leather', 'var(--tier-dhide-black)'],
     ['blue_dragon_leather',  'var(--color-mana-light)'],
     ['green_dragonhide',     'var(--tier-dhide-green)'],
+    // Jewellery & uniques batch
+    ['amulet_of_fury',       'var(--tier-cryptbound)'],
+    ['amulet_of_glory',      'var(--tier-jewel-purple)'],
+    ['amulet_of_strength',   'var(--tier-jewel-red)'],
+    ['arcane_necklace',      'var(--tier-jewel-blue)'],
+    ['occult_necklace',      'var(--tier-jewel-purple)'],
+    ['ava_s_assembler',      'var(--tier-jewel-green)'],
+    ['ava_s_accumulator',    'var(--tier-jewel-green)'],
+    ['colossal_ballista',    'var(--tier-cryptbound)'],
+    ['venom_blowpipe',       'var(--tier-jewel-green)'],
+    ['trident_of_venom',     'var(--tier-jewel-green)'],
+    ['serpentine_helm',      'var(--tier-jewel-green)'],
+    ['arcane_kiteshield',    'var(--tier-orange)'],
+    ['eagle_eyed_kiteshield','var(--tier-jewel-green)'],
+    ['twisted_longbow',      'var(--tier-cryptbound)'],
+    ['gargoyle_maul',        'var(--tier-cryptbound)'],
+    ['spiked_manacles',      'var(--tier-cryptbound)'],
+    ['ancient_maul',         'var(--tier-jewel-purple)'],
+    ['visage_shield',        'var(--tier-cryptbound)'],
+    ['evermore_boots',       'var(--tier-jewel-blue)'],
+    ['primeval_boots',       'var(--tier-jewel-red)'],
+    ['skyfury_boots',        'var(--tier-jewel-green)'],
+    ['nightfang_bow',        'var(--tier-cryptbound)'],
+    ['warped_buckler',       'var(--tier-jewel-purple)'],
+    ['durn_s_bulwark',       'var(--tier-jewel-purple)'],
+    ['imbued_god_cape',      'var(--tier-cryptbound)'],
+    ['black_wizard_hat',     'var(--tier-cryptbound)'],
+    ['black_wizard_robe',    'var(--tier-cryptbound)'],
+    ['ferocious_gloves',     'var(--tier-cryptbound)'],
+    ['gloves_of_slaughter',  'var(--tier-cryptbound)'],
+    ['slayer_defender',      'var(--tier-cryptbound)'],
+    ['avernal_defender',     'var(--tier-cryptbound)'],
+    ['slayer_helmet',        'var(--tier-cryptbound)'],
+    ['scythe_of_vythar',     'var(--tier-cryptbound)'],
+    ['nether_demon_whip',    'var(--tier-cryptbound)'],
+    ['abyssal_tentacle',     'var(--tier-cryptbound)'],
+    ['ancestral_wand',       'var(--tier-jewel-blue)'],
+    // God sets by prefix
+    ['ancient_stole',        'var(--tier-jewel-purple)'],
+    ['lumira_godsword',      'var(--tier-jewel-blue)'],
+    ['grondar_chestplate',   'var(--tier-bronze)'],
+    ['krylth_spear',         'var(--tier-jewel-red)'],
+    ['verdant_d_hide_body',  'var(--tier-jewel-green)'],
+    ['ancient_mitre',        'var(--tier-jewel-purple)'],
   ]
 
   for (const [id, expected] of cases) {
@@ -316,5 +370,16 @@ describe('getItemIconTint — tier colouring', () => {
 
   it('returns the parchment fallback for null input', () => {
     expect(getItemIconTint(null)).toBe('var(--color-parchment)')
+  })
+
+  it('skill capes inherit their skill accent colour', () => {
+    expect(getItemIconTint(itemsData.attack_cape)).toBe(SKILL_ART.attack.accent)
+    expect(getItemIconTint(itemsData.magic_cape)).toBe(SKILL_ART.magic.accent)
+    expect(getItemIconTint(itemsData.prayer_cape)).toBe(SKILL_ART.prayer.accent)
+  })
+
+  it('non-skill capes keep their own tint (not a skill accent)', () => {
+    expect(getItemIconTint(itemsData.fire_cape)).toBe('var(--tier-fire-cape)')
+    expect(getItemIconTint(itemsData.imbued_god_cape)).toBe('var(--tier-cryptbound)')
   })
 })
