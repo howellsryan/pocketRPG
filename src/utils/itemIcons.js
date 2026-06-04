@@ -110,8 +110,8 @@ function keyFromId(id) {
   // Specific fish glyphs — raw and cooked share the same silhouette
   if (id === 'raw_shrimps'   || id === 'shrimps')   return 'shrimp'
   if (id === 'raw_trout'     || id === 'trout')      return 'trout'
-  if (id === 'raw_lobster'   || id === 'lobster')    return 'flatfish'
-  if (id === 'raw_swordfish' || id === 'swordfish')  return 'piranha'
+  if (id === 'raw_crab'  || id === 'crab')  return 'crab'
+  if (id === 'raw_eel'   || id === 'eel')   return 'eel'
   if (id === 'raw_shark'     || id === 'shark')      return 'shark'
   if (id === 'raw_manta_ray' || id === 'manta_ray')  return 'manta_ray'
   if (id === 'raw_anglerfish'|| id === 'anglerfish') return 'tropical_fish'

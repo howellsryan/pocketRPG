@@ -938,13 +938,13 @@
     "icon": "🐟",
     "isGeneralStore": false
   },
-  "raw_lobster": {
-    "id": "raw_lobster",
+  "raw_crab": {
+    "id": "raw_crab",
     "legacy_item_id": "raw_lobster",
-    "name": "Raw Lobster",
+    "name": "Raw Crab",
     "type": "resource",
     "stackable": false,
-    "cookedInto": "lobster",
+    "cookedInto": "crab",
     "cookLevel": 40,
     "cookXP": 120,
     "burnStopLevel": 74,
@@ -952,10 +952,10 @@
     "icon": "🦞",
     "isGeneralStore": false
   },
-  "lobster": {
-    "id": "lobster",
+  "crab": {
+    "id": "crab",
     "legacy_item_id": "lobster",
-    "name": "Lobster",
+    "name": "Crab",
     "type": "food",
     "stackable": false,
     "heals": 12,
@@ -964,13 +964,13 @@
     "icon": "🦞",
     "isGeneralStore": false
   },
-  "raw_swordfish": {
-    "id": "raw_swordfish",
+  "raw_eel": {
+    "id": "raw_eel",
     "legacy_item_id": "raw_swordfish",
-    "name": "Raw Swordfish",
+    "name": "Raw Eel",
     "type": "resource",
     "stackable": false,
-    "cookedInto": "swordfish",
+    "cookedInto": "eel",
     "cookLevel": 45,
     "cookXP": 140,
     "burnStopLevel": 86,
@@ -978,10 +978,10 @@
     "icon": "🐟",
     "isGeneralStore": false
   },
-  "swordfish": {
-    "id": "swordfish",
+  "eel": {
+    "id": "eel",
     "legacy_item_id": "swordfish",
-    "name": "Swordfish",
+    "name": "Eel",
     "type": "food",
     "stackable": false,
     "heals": 14,
