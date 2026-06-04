@@ -5,7 +5,7 @@ import { getItemIconKey, getItemIconTint, isCryptboundChampion } from '../utils/
 const RIM = {
   white: '#ffffff', black: '#000000', red: '#d23b2f',
   green: '#2ecc71', blue: '#3498db', purple: '#9b59b6',
-  gold: '#f0c040', platinum: '#e5e4e2',
+  gold: '#f0c040', platinum: '#e5e4e2', runeforged: '#b7e4ff',
 }
 // Tight rim outline vs a stronger "glowing" halo.
 const outline = (c) => `drop-shadow(0 0 1px ${c}) drop-shadow(0 0 0.5px ${c})`
@@ -58,22 +58,34 @@ const OUTLINE_SPEC = {
   // Purple rim
   ancestral_wand:      ['purple', true],
   // Gem bolts — gem-coloured rim over material-tier body
-  ruby_dragon_bolt:          ['red',    false],
-  ruby_dragon_bolt_e:        ['red',    false],
-  diamond_dragon_bolt:       ['white',  false],
-  diamond_dragon_bolt_e:     ['white',  false],
-  dragonstone_dragon_bolt:   ['purple', false],
-  dragonstone_dragon_bolt_e: ['purple', false],
-  onyx_dragon_bolt:          ['black',  false],
-  onyx_dragon_bolt_e:        ['black',  false],
-  ruby_bolt:                 ['red',    false],
-  ruby_bolt_e:               ['red',    false],
-  diamond_bolt:              ['white',  false],
-  diamond_bolt_e:            ['white',  false],
-  dragonstone_bolt:          ['purple', false],
-  dragonstone_bolt_e:        ['purple', false],
-  onyx_bolt:                 ['black',  false],
-  onyx_bolt_e:               ['black',  false],
+  ruby_dragon_bolt:          ['red',        false],
+  ruby_dragon_bolt_e:        ['red',        false],
+  diamond_dragon_bolt:       ['white',      false],
+  diamond_dragon_bolt_e:     ['white',      false],
+  dragonstone_dragon_bolt:   ['purple',     false],
+  dragonstone_dragon_bolt_e: ['purple',     false],
+  onyx_dragon_bolt:          ['red',        false],
+  onyx_dragon_bolt_e:        ['red',        false],
+  ruby_bolt:                 ['red',        false],
+  ruby_bolt_e:               ['red',        false],
+  diamond_bolt:              ['white',      false],
+  diamond_bolt_e:            ['white',      false],
+  dragonstone_bolt:          ['purple',     false],
+  dragonstone_bolt_e:        ['purple',     false],
+  onyx_bolt:                 ['runeforged', false],
+  onyx_bolt_e:               ['runeforged', false],
+  // Onyx gems/jewellery — black body, white rim
+  onyx:                      ['white',      false],
+  uncut_onyx:                ['white',      false],
+  onyx_amulet:               ['white',      false],
+  // Zyrite gems/jewellery — black body, red rim
+  zyrite:                    ['red',        false],
+  uncut_zyrite:              ['red',        false],
+  zyrite_amulet:             ['red',        false],
+  zyrite_bracelet:           ['red',        false],
+  zyrite_necklace:           ['red',        false],
+  zyrite_ring:               ['red',        false],
+  zyrite_shard:              ['red',        false],
 }
 
 // Near-black hide/leather items (armour or crafting material) — white rim so

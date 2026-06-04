@@ -295,22 +295,23 @@ const ITEM_TINT = {
   super_combat:       'var(--potion-super-combat)',
   lumira_brew:        'var(--potion-strength)',
   // Gem bolts — body colour by base material, outline by gem (see OUTLINE_SPEC in GameIcon.jsx)
-  ruby_dragon_bolt:          'var(--tier-dragon)',
-  ruby_dragon_bolt_e:        'var(--tier-dragon)',
-  diamond_dragon_bolt:       'var(--tier-dragon)',
-  diamond_dragon_bolt_e:     'var(--tier-dragon)',
+  dragon_bolt:               'var(--tier-runeforged)',
+  ruby_dragon_bolt:          'var(--tier-runeforged)',
+  ruby_dragon_bolt_e:        'var(--tier-runeforged)',
+  diamond_dragon_bolt:       'var(--tier-runeforged)',
+  diamond_dragon_bolt_e:     'var(--tier-runeforged)',
   dragonstone_dragon_bolt:   'var(--tier-dragon)',
   dragonstone_dragon_bolt_e: 'var(--tier-dragon)',
-  onyx_dragon_bolt:          'var(--tier-dragon)',
-  onyx_dragon_bolt_e:        'var(--tier-dragon)',
-  ruby_bolt:                 'var(--tier-adamant)',
-  ruby_bolt_e:               'var(--tier-adamant)',
-  diamond_bolt:              'var(--tier-adamant)',
-  diamond_bolt_e:            'var(--tier-adamant)',
+  onyx_dragon_bolt:          '#111111',
+  onyx_dragon_bolt_e:        '#111111',
+  ruby_bolt:                 'var(--tier-runeforged)',
+  ruby_bolt_e:               'var(--tier-runeforged)',
+  diamond_bolt:              'var(--tier-runeforged)',
+  diamond_bolt_e:            'var(--tier-runeforged)',
   dragonstone_bolt:          'var(--tier-adamant)',
   dragonstone_bolt_e:        'var(--tier-adamant)',
-  onyx_bolt:                 'var(--tier-runeforged)',
-  onyx_bolt_e:               'var(--tier-runeforged)',
+  onyx_bolt:                 '#111111',
+  onyx_bolt_e:               '#111111',
   runite_bolt:               'var(--tier-runeforged)',
   runite_bolt_unf:           'var(--tier-runeforged)',
 }
@@ -364,10 +365,13 @@ function getTierTint(item) {
 
   // Gem-tinted items (bolts are caught by ITEM_TINT above, so this covers rings/
   // amulets/uncut gems/equipment named after a gem)
-  if (id.includes('sapphire'))   return 'var(--tier-jewel-blue)'
-  if (id.includes('emerald'))    return 'var(--tier-jewel-green)'
-  if (id.includes('ruby'))       return 'var(--tier-jewel-red)'
+  if (id.includes('sapphire'))    return 'var(--tier-jewel-blue)'
+  if (id.includes('emerald'))     return 'var(--tier-jewel-green)'
+  if (id.includes('ruby'))        return 'var(--tier-jewel-red)'
   if (id.includes('dragonstone')) return 'var(--tier-jewel-purple)'
+  // Onyx and zyrite — near-black fill (outlines defined in GameIcon OUTLINE_SPEC)
+  if (id === 'onyx' || id === 'uncut_onyx' || id.startsWith('onyx_')) return '#111111'
+  if (id.includes('zyrite'))      return '#111111'
 
   // Party hats by colour
   if (id === 'red_partyhat')       return 'var(--tier-partyhat-red)'
