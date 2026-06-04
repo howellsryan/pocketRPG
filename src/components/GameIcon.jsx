@@ -5,7 +5,7 @@ import { getItemIconKey, getItemIconTint, isCryptboundChampion } from '../utils/
 const RIM = {
   white: '#ffffff', black: '#000000', red: '#d23b2f',
   green: '#2ecc71', blue: '#3498db', purple: '#9b59b6',
-  gold: '#f0c040', platinum: '#e5e4e2',
+  gold: '#f0c040', platinum: '#e5e4e2', runeforged: '#b7e4ff',
 }
 // Tight rim outline vs a stronger "glowing" halo.
 const outline = (c) => `drop-shadow(0 0 1px ${c}) drop-shadow(0 0 0.5px ${c})`
@@ -47,9 +47,9 @@ const OUTLINE_SPEC = {
   scythe_of_vythar:    ['red', true],
   abyssal_tentacle:    ['red', true],
   ghraxis_rapier:      ['white', true],
-  // Blue rim
-  venom_blowpipe:      ['blue', false],
-  trident_of_venom:    ['blue', false],
+  // Venom weapons — blowpipe: green body + purple rim; trident: purple body + green glow
+  venom_blowpipe:      ['purple', false],
+  trident_of_venom:    ['green', true],
   serpentine_helm:     ['blue', false],
   imbued_god_cape:     ['blue', false],
   // Green rim
@@ -57,6 +57,35 @@ const OUTLINE_SPEC = {
   twisted_longbow:     ['green', true],
   // Purple rim
   ancestral_wand:      ['purple', true],
+  // Gem bolts — gem-coloured rim over material-tier body
+  ruby_dragon_bolt:          ['red',        false],
+  ruby_dragon_bolt_e:        ['red',        false],
+  diamond_dragon_bolt:       ['white',      false],
+  diamond_dragon_bolt_e:     ['white',      false],
+  dragonstone_dragon_bolt:   ['purple',     false],
+  dragonstone_dragon_bolt_e: ['purple',     false],
+  onyx_dragon_bolt:          ['red',        false],
+  onyx_dragon_bolt_e:        ['red',        false],
+  ruby_bolt:                 ['red',        false],
+  ruby_bolt_e:               ['red',        false],
+  diamond_bolt:              ['white',      false],
+  diamond_bolt_e:            ['white',      false],
+  dragonstone_bolt:          ['purple',     false],
+  dragonstone_bolt_e:        ['purple',     false],
+  onyx_bolt:                 ['runeforged', false],
+  onyx_bolt_e:               ['runeforged', false],
+  // Onyx gems/jewellery — black body, white rim
+  onyx:                      ['white',      false],
+  uncut_onyx:                ['white',      false],
+  onyx_amulet:               ['white',      false],
+  // Zyrite gems/jewellery — black body, red rim
+  zyrite:                    ['red',        false],
+  uncut_zyrite:              ['red',        false],
+  zyrite_amulet:             ['red',        false],
+  zyrite_bracelet:           ['red',        false],
+  zyrite_necklace:           ['red',        false],
+  zyrite_ring:               ['red',        false],
+  zyrite_shard:              ['red',        false],
 }
 
 // Near-black hide/leather items (armour or crafting material) — white rim so
@@ -73,7 +102,7 @@ function isBlackHide(id) {
 //   • a white rim outline for black items (cryptbound champions, black
 //     dragonhide) so the black silhouette reads, or
 //   • a per-item coloured rim/glow from OUTLINE_SPEC.
-function glowFor(id) {
+function glowFor(id, type) {
   if (!id) return undefined
   if (id === 'infernal_cape') return glowing(RIM.gold)
   if (id.startsWith('2nd_age_')) return 'drop-shadow(0 0 3px #e5e4e2)'
@@ -83,6 +112,7 @@ function glowFor(id) {
     const [color, glow] = spec
     return (glow ? glowing : outline)(RIM[color])
   }
+  if (type === 'food') return glowing('#a0622a')
   return undefined
 }
 
@@ -127,7 +157,7 @@ export default function GameIcon({ item, iconKey, size = 24, color, class: cls =
   const label      = title || item?.name || key
   const px         = typeof size === 'number' ? size : undefined
   const sizeStyle  = px ? { width: px, height: px, flexShrink: 0 } : undefined
-  const glow       = glowFor(item?.id)
+  const glow       = glowFor(item?.id, item?.type)
   const style      = {
     ...(sizeStyle || {}),
     color: fill,

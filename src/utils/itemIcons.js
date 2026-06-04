@@ -54,6 +54,12 @@ const POINTY_HAT_IDS = new Set([
   'arcanist_hat', '2nd_age_mage_hat',
 ])
 
+// Herblore herbs with custom fantasy names that don't contain 'herb'/'weed'/'leaf'/'root'.
+const HERB_IDS = new Set([
+  'sunblossom', 'wyrmspice', 'snapdrake', 'cinderbloom',
+  'stonefern', 'mistvine', 'marshflax', 'thornspire',
+])
+
 // Magic "robe bottom" silhouette. Named tops that read as robe bottoms plus any
 // magic robe leg piece (skirt/bottom/legs whose id mentions a robe).
 const ROBE_BOTTOM_IDS = new Set(['black_wizard_robe', 'void_king_robe'])
@@ -87,16 +93,32 @@ function keyFromId(id) {
   if (id.endsWith('_cape')) return 'cape'
   if (id.endsWith('_partyhat') || id === 'partyhat') return 'party_hat'
   if (id.includes('charm') || id.includes('blessing')) return 'prayer'
-  if (id.endsWith('_mitre') || POINTY_HAT_IDS.has(id)) return 'pointy_hat'
+  if (id.endsWith('_mitre')) return 'mitre'
+  if (POINTY_HAT_IDS.has(id)) return 'pointy_hat'
+  if (id.endsWith('_stole')) return 'stole'
+  if (id === 'venom_blowpipe') return 'blowpipe'
+  if (id.includes('trident')) return 'trident'
+  if (id === 'purple_sweets') return 'wrapped_sweet'
   if (isRobeBottom(id)) return 'magic_robe_bottom'
   if (id.includes('skirt') || id.includes('chaps')) return 'legs'
   if (id.includes('_ore') || id === 'ore') return 'ore'
   if (id.endsWith('_bar') || id === 'bar') return 'metal_bar'
+  if (id === 'raw_chicken' || id === 'cooked_chicken') return 'chicken'
+  if (id === 'plank' || id.endsWith('_plank')) return 'planks'
+  if (id === 'raw_beef') return 'meat'
   if (id.endsWith('_logs') || id === 'logs') return 'log'
+  // Specific fish glyphs — raw and cooked share the same silhouette
+  if (id === 'raw_shrimps'   || id === 'shrimps')   return 'shrimp'
+  if (id === 'raw_trout'     || id === 'trout')      return 'trout'
+  if (id === 'raw_crab'  || id === 'crab')  return 'crab'
+  if (id === 'raw_eel'   || id === 'eel')   return 'eel'
+  if (id === 'raw_shark'     || id === 'shark')      return 'shark'
+  if (id === 'raw_manta_ray' || id === 'manta_ray')  return 'manta_ray'
+  if (id === 'raw_anglerfish'|| id === 'anglerfish') return 'tropical_fish'
   if (id.startsWith('raw_')) return 'raw_fish'
   if (id.startsWith('uncut_')) return 'gem'
   // Raw hide/leather materials only — *_d_hide_body/chaps/boots resolve by slot.
-  if (id.endsWith('hide') || id.endsWith('_leather') || id === 'cowhide') return 'animal_hide'
+  if (id === 'leather' || id.endsWith('hide') || id.endsWith('_leather') || id === 'cowhide') return 'animal_hide'
   if (id.endsWith('_seed') || id.endsWith('_sapling')) return 'seed'
   if (id.endsWith('_rune') || id === 'rune') return 'rune'
   if (id.endsWith('_potion') || id.endsWith('_brew') || id === 'prayer_potion' || id.endsWith('_restore') || id === 'super_combat') return 'potion'
@@ -118,10 +140,11 @@ function keyFromId(id) {
   if (id.includes('_mace')) return 'mace'
   if (id.includes('_bow')) return 'bow'
   if (id.includes('_gem') || id === 'dragonstone' || id === 'sapphire' || id === 'emerald' || id === 'ruby' || id === 'diamond' || id === 'onyx' || id === 'zyrite') return 'gem'
+  if (HERB_IDS.has(id)) return 'herb'
   if (id.includes('greens') || id.includes('herb') || id.includes('grimy_') || id.includes('leaf') ||
       id.includes('root') || id.includes('weed') || id === 'nettle' || id === 'eye_of_newt' || id === 'goat_horn_dust') return 'herb'
   if (id === 'vial' || id === 'unpowered_orb') return 'vial'
-  if (id === 'shrimps' || id === 'shark' || id === 'lobster' || id === 'swordfish' || id === 'trout' || id === 'anglerfish' || id === 'cooked_chicken' || id === 'cooked_meat') return 'cooked_fish'
+  if (id === 'cooked_meat') return 'meat'
   return null
 }
 
@@ -238,7 +261,25 @@ const ITEM_TINT = {
   ghraxis_rapier:     'var(--tier-cryptbound)',
   // Venom gear
   venom_blowpipe:     'var(--tier-jewel-green)',
-  trident_of_venom:   'var(--tier-jewel-green)',
+  trident_of_venom:   'var(--tier-jewel-purple)',
+  // Sweets
+  purple_sweets:      'var(--tier-jewel-purple)',
+  // Spellweaver boots
+  spellweaver_boots:  'var(--tier-jewel-blue)',
+  // Planks — graduated brown, lightest to darkest
+  plank:              '#c9a96e',
+  oak_plank:          '#a07444',
+  teak_plank:         '#7a5228',
+  mahogany_plank:     '#5c3015',
+  // Logs — representative logs match their plank; others graduated
+  logs:               '#c9a96e',
+  oak_logs:           '#a07444',
+  willow_logs:        '#b08a55',
+  teak_logs:          '#7a5228',
+  maple_logs:         '#8a6234',
+  mahogany_logs:      '#5c3015',
+  yew_logs:           '#6b4420',
+  redwood_logs:       '#c0372b',
   serpentine_helm:    'var(--tier-jewel-green)',
   // Boots & accessories
   spiked_manacles:    'var(--tier-cryptbound)',
@@ -260,6 +301,28 @@ const ITEM_TINT = {
   ranging_potion:     'var(--potion-ranging)',
   super_combat:       'var(--potion-super-combat)',
   lumira_brew:        'var(--potion-strength)',
+  // Gem bolts — body colour by gem/material, outline by gem (see OUTLINE_SPEC in GameIcon.jsx)
+  dragon_bolt:               'var(--tier-dragon)',
+  dragon_bolt_unf:           'var(--tier-dragon)',
+  ruby_dragon_bolt:          'var(--tier-jewel-red)',
+  ruby_dragon_bolt_e:        'var(--tier-jewel-red)',
+  diamond_dragon_bolt:       'var(--tier-runeforged)',
+  diamond_dragon_bolt_e:     'var(--tier-runeforged)',
+  dragonstone_dragon_bolt:   'var(--tier-jewel-purple)',
+  dragonstone_dragon_bolt_e: 'var(--tier-jewel-purple)',
+  onyx_dragon_bolt:          '#111111',
+  onyx_dragon_bolt_e:        '#111111',
+  ruby_bolt_tips:            'var(--tier-jewel-red)',
+  ruby_bolt:                 'var(--tier-jewel-red)',
+  ruby_bolt_e:               'var(--tier-jewel-red)',
+  diamond_bolt:              'var(--tier-runeforged)',
+  diamond_bolt_e:            'var(--tier-runeforged)',
+  dragonstone_bolt:          'var(--tier-jewel-purple)',
+  dragonstone_bolt_e:        'var(--tier-jewel-purple)',
+  onyx_bolt:                 '#111111',
+  onyx_bolt_e:               '#111111',
+  runite_bolt:               'var(--tier-runeforged)',
+  runite_bolt_unf:           'var(--tier-runeforged)',
 }
 
 // "God" armour/weapon sets — every item sharing the prefix takes one colour.
@@ -305,6 +368,19 @@ function getTierTint(item) {
   }
   if (id.startsWith('2nd_age_'))   return 'var(--tier-2nd-age)'
   if (id.startsWith('shardglass_')) return 'var(--tier-shardglass)'
+  // Leather tiers — material + armour pieces share the same colour
+  if (id === 'leather' || id.startsWith('leather_')) return '#d4a870'
+  if (id === 'hard_leather' || id.startsWith('hard_leather_')) return '#6b3d1a'
+
+  // Gem-tinted items (bolts are caught by ITEM_TINT above, so this covers rings/
+  // amulets/uncut gems/equipment named after a gem)
+  if (id.includes('sapphire'))    return 'var(--tier-jewel-blue)'
+  if (id.includes('emerald'))     return 'var(--tier-jewel-green)'
+  if (id.includes('ruby'))        return 'var(--tier-jewel-red)'
+  if (id.includes('dragonstone')) return 'var(--tier-jewel-purple)'
+  // Onyx and zyrite — near-black fill (outlines defined in GameIcon OUTLINE_SPEC)
+  if (id === 'onyx' || id === 'uncut_onyx' || id.startsWith('onyx_')) return '#111111'
+  if (id.includes('zyrite'))      return '#111111'
 
   // Party hats by colour
   if (id === 'red_partyhat')       return 'var(--tier-partyhat-red)'
@@ -366,7 +442,9 @@ export function getItemIconTint(item) {
   // Special overrides
   if (item.type === 'currency') return 'var(--color-gold)'
   if (item.id?.includes('charm') || item.id?.includes('blessing')) return 'var(--color-gold)'
-  if (item.id?.includes('leaf') || item.id?.includes('herb') || item.id?.includes('root') || item.id?.includes('weed')) return 'var(--color-emerald-light)'
+  if (item.id?.startsWith('raw_')) return '#f4a08c'
+  if (item.type === 'food') return '#a0622a'
+  if (HERB_IDS.has(item.id) || item.id?.includes('leaf') || item.id?.includes('herb') || item.id?.includes('root') || item.id?.includes('weed')) return 'var(--color-emerald-light)'
   if (item.id === 'bones' || item.id?.endsWith('_bones')) return '#a0a0a0'
   if (item.type === 'rune' || item.id?.endsWith('_rune')) return 'var(--color-mana-light)'
   if (item.type === 'seed' || item.id?.endsWith('_seed') || item.id?.endsWith('_sapling')) return 'var(--color-emerald-light)'

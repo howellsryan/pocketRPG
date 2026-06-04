@@ -7632,8 +7632,8 @@
     "drops": [
       { "itemId": "big_bones", "quantity": 1, "chance": 1 },
       { "itemId": "coins", "quantity": [900, 2800], "chance": 0.7 },
-      { "itemId": "raw_lobster", "quantity": [3, 8], "chance": 0.3 },
-      { "itemId": "raw_swordfish", "quantity": [2, 6], "chance": 0.25 },
+      { "itemId": "raw_crab", "quantity": [3, 8], "chance": 0.3 },
+      { "itemId": "raw_eel", "quantity": [2, 6], "chance": 0.25 },
       { "itemId": "uncut_sapphire", "quantity": [1, 2], "chance": 0.15 },
       { "itemId": "uncut_dragonstone", "quantity": 1, "chance": 0.025 },
       { "itemId": "runeforged_ore", "quantity": [1, 3], "chance": 0.1 },

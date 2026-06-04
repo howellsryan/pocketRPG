@@ -10,7 +10,7 @@ export const SKILL_ART = {
   defence:       { icon: 'shield',         accent: '#8fa6c0' },
   hitpoints:     { icon: 'hearts',         accent: '#e8554e' },
   ranged:        { icon: 'high_shot',      accent: '#b3873f' },
-  magic:         { icon: 'crystal_ball',   accent: '#9b6cff' },
+  magic:         { icon: 'pointy_hat',     accent: '#9b6cff' },
   prayer:        { icon: 'prayer',         accent: '#f0c040' },
   // Gathering
   mining:        { icon: 'mining',         accent: '#9aa7b0' },

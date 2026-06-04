@@ -195,7 +195,7 @@
     "actions": [
       {
         "id": "shrimps",
-        "name": "Fish shrimps",
+        "name": "Fish Shrimps",
         "level": 1,
         "ticks": 4,
         "xp": 10,
@@ -203,35 +203,51 @@
       },
       {
         "id": "trout",
-        "name": "Fish trout",
+        "name": "Fish Trout",
         "level": 20,
         "ticks": 5,
         "xp": 50,
         "product": "raw_trout"
       },
       {
-        "id": "lobster",
-        "name": "Fish lobster",
+        "id": "crab",
+        "name": "Fish Crab",
         "level": 40,
         "ticks": 6,
         "xp": 90,
-        "product": "raw_lobster"
+        "product": "raw_crab"
       },
       {
-        "id": "swordfish",
-        "name": "Fish swordfish",
+        "id": "eel",
+        "name": "Fish Eel",
         "level": 50,
         "ticks": 7,
         "xp": 100,
-        "product": "raw_swordfish"
+        "product": "raw_eel"
       },
       {
         "id": "shark",
-        "name": "Fish shark",
+        "name": "Fish Shark",
         "level": 76,
         "ticks": 8,
         "xp": 110,
         "product": "raw_shark"
+      },
+      {
+        "id": "manta_ray",
+        "name": "Fish Manta Ray",
+        "level": 85,
+        "ticks": 9,
+        "xp": 115,
+        "product": "raw_manta_ray"
+      },
+      {
+        "id": "anglerfish",
+        "name": "Fish Anglerfish",
+        "level": 90,
+        "ticks": 10,
+        "xp": 120,
+        "product": "raw_anglerfish"
       }
     ]
   },
@@ -681,7 +697,7 @@
     "actions": [
       {
         "id": "cook_shrimp",
-        "name": "Cook shrimps",
+        "name": "Cook Shrimps",
         "level": 1,
         "ticks": 4,
         "xp": 30,
@@ -693,7 +709,7 @@
       },
       {
         "id": "cook_chicken",
-        "name": "Cook chicken",
+        "name": "Cook Chicken",
         "level": 1,
         "ticks": 4,
         "xp": 30,
@@ -705,7 +721,7 @@
       },
       {
         "id": "cook_meat",
-        "name": "Cook meat",
+        "name": "Cook Meat",
         "level": 1,
         "ticks": 4,
         "xp": 30,
@@ -717,7 +733,7 @@
       },
       {
         "id": "cook_trout",
-        "name": "Cook trout",
+        "name": "Cook Trout",
         "level": 15,
         "ticks": 4,
         "xp": 70,
@@ -728,38 +744,62 @@
         "burnStopLevel": 50
       },
       {
-        "id": "cook_lobster",
-        "name": "Cook lobster",
+        "id": "cook_crab",
+        "name": "Cook Crab",
         "level": 40,
         "ticks": 4,
         "xp": 120,
-        "product": "lobster",
+        "product": "crab",
         "materials": {
-          "raw_lobster": 1
+          "raw_crab": 1
         },
         "burnStopLevel": 74
       },
       {
-        "id": "cook_swordfish",
-        "name": "Cook swordfish",
+        "id": "cook_eel",
+        "name": "Cook Eel",
         "level": 45,
         "ticks": 4,
         "xp": 140,
-        "product": "swordfish",
+        "product": "eel",
         "materials": {
-          "raw_swordfish": 1
+          "raw_eel": 1
         },
         "burnStopLevel": 86
       },
       {
         "id": "cook_shark",
-        "name": "Cook shark",
+        "name": "Cook Shark",
         "level": 80,
         "ticks": 4,
         "xp": 210,
         "product": "shark",
         "materials": {
           "raw_shark": 1
+        },
+        "burnStopLevel": 99
+      },
+      {
+        "id": "cook_manta_ray",
+        "name": "Cook Manta Ray",
+        "level": 91,
+        "ticks": 4,
+        "xp": 216,
+        "product": "manta_ray",
+        "materials": {
+          "raw_manta_ray": 1
+        },
+        "burnStopLevel": 99
+      },
+      {
+        "id": "cook_anglerfish",
+        "name": "Cook Anglerfish",
+        "level": 93,
+        "ticks": 4,
+        "xp": 230,
+        "product": "anglerfish",
+        "materials": {
+          "raw_anglerfish": 1
         },
         "burnStopLevel": 99
       }

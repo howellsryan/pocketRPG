@@ -23,6 +23,13 @@ Icons used (our key → game-icons name):
   raw_fish             → shrimp
   cooked_fish          → fish-cooked
   fish_scales          → fish-scales
+  shrimp               → shrimp
+  trout                → flying-trout
+  flatfish             → flatfish
+  piranha              → piranha
+  shark                → shark-jaws
+  tropical_fish        → tropical-fish
+  eel                  → eel
   bones                → crossed-bones
   feather              → feather
   animal_hide          → animal-hide
@@ -61,6 +68,7 @@ Icons used (our key → game-icons name):
   quiver               → quiver
   crested_helmet       → crested-helmet
   magic_robe           → robe
+  magic_robe_bottom    → skirt
   ninja                → ninja-mask
   ninja_body           → ninja-armor
   body                 → breastplate
@@ -188,5 +196,12 @@ Icons used (our key → game-icons name):
   lightning_arc        → lightning-arc
   meat                 → meat
   potion_ball          → potion-ball
+  stole                → ribbon
+  mitre                → chess-bishop
+  trident              → trident
+  blowpipe             → dart
+  wrapped_sweet        → wrapped-sweet
+  manta_ray            → manta-ray
+  angler_fish          → angler-fish
 
-Generated: 2026-05-31
+Generated: 2026-06-04

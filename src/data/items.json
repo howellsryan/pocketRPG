@@ -938,13 +938,13 @@
     "icon": "🐟",
     "isGeneralStore": false
   },
-  "raw_lobster": {
-    "id": "raw_lobster",
+  "raw_crab": {
+    "id": "raw_crab",
     "legacy_item_id": "raw_lobster",
-    "name": "Raw Lobster",
+    "name": "Raw Crab",
     "type": "resource",
     "stackable": false,
-    "cookedInto": "lobster",
+    "cookedInto": "crab",
     "cookLevel": 40,
     "cookXP": 120,
     "burnStopLevel": 74,
@@ -952,10 +952,10 @@
     "icon": "🦞",
     "isGeneralStore": false
   },
-  "lobster": {
-    "id": "lobster",
+  "crab": {
+    "id": "crab",
     "legacy_item_id": "lobster",
-    "name": "Lobster",
+    "name": "Crab",
     "type": "food",
     "stackable": false,
     "heals": 12,
@@ -964,13 +964,13 @@
     "icon": "🦞",
     "isGeneralStore": false
   },
-  "raw_swordfish": {
-    "id": "raw_swordfish",
+  "raw_eel": {
+    "id": "raw_eel",
     "legacy_item_id": "raw_swordfish",
-    "name": "Raw Swordfish",
+    "name": "Raw Eel",
     "type": "resource",
     "stackable": false,
-    "cookedInto": "swordfish",
+    "cookedInto": "eel",
     "cookLevel": 45,
     "cookXP": 140,
     "burnStopLevel": 86,
@@ -978,10 +978,10 @@
     "icon": "🐟",
     "isGeneralStore": false
   },
-  "swordfish": {
-    "id": "swordfish",
+  "eel": {
+    "id": "eel",
     "legacy_item_id": "swordfish",
-    "name": "Swordfish",
+    "name": "Eel",
     "type": "food",
     "stackable": false,
     "heals": 14,
@@ -1014,6 +1014,34 @@
     "eatTicks": 3,
     "shopValue": 791,
     "icon": "🦈",
+    "isGeneralStore": false
+  },
+  "raw_manta_ray": {
+    "id": "raw_manta_ray",
+    "legacy_item_id": "raw_manta_ray",
+    "name": "Raw Manta Ray",
+    "type": "resource",
+    "stackable": false,
+    "cookedInto": "manta_ray",
+    "cookLevel": 91,
+    "cookXP": 216,
+    "burnStopLevel": 99,
+    "shopValue": 1053,
+    "icon": "🐟",
+    "isGeneralStore": false
+  },
+  "raw_anglerfish": {
+    "id": "raw_anglerfish",
+    "legacy_item_id": "raw_anglerfish",
+    "name": "Raw Anglerfish",
+    "type": "resource",
+    "stackable": false,
+    "cookedInto": "anglerfish",
+    "cookLevel": 93,
+    "cookXP": 230,
+    "burnStopLevel": 99,
+    "shopValue": 1569,
+    "icon": "🐟",
     "isGeneralStore": false
   },
   "raw_chicken": {
@@ -4709,7 +4737,7 @@
   "runite_bolt": {
     "id": "runite_bolt",
     "legacy_item_id": "runite_bolts",
-    "name": "Runite Bolt",
+    "name": "Runeforged Bolt",
     "type": "ammo",
     "slot": "ammo",
     "stackable": true,
@@ -5152,7 +5180,7 @@
       "chance": 0.11,
       "description": "Life Leech — 11%: +20% damage, heal 25% of damage dealt."
     },
-    "shopValue": 11500,
+    "shopValue": 11000,
     "icon": "🖤",
     "isGeneralStore": false
   },
@@ -5209,7 +5237,7 @@
   "runite_bolt_unf": {
     "id": "runite_bolt_unf",
     "legacy_item_id": "runite_bolts_unf",
-    "name": "Runite Bolt (Unf)",
+    "name": "Runeforged Bolt (Unf)",
     "type": "resource",
     "stackable": true,
     "shopValue": 35,
@@ -12064,8 +12092,9 @@
     "id": "manta_ray",
     "legacy_item_id": "manta_ray",
     "name": "Manta Ray",
-    "type": "resource",
-    "stackable": true,
+    "type": "food",
+    "heals": 22,
+    "stackable": false,
     "shopValue": 1404,
     "icon": "🐟",
     "isGeneralStore": false
@@ -12074,10 +12103,37 @@
     "id": "dragon_battleaxe",
     "legacy_item_id": "dragon_battleaxe",
     "name": "Dragon Battleaxe",
-    "type": "resource",
-    "stackable": true,
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 6,
+    "attackStyle": "crush",
+    "iconId": "axe",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 95,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 85,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 60
+    },
     "shopValue": 119143,
-    "icon": "📦",
+    "icon": "🪓",
     "isGeneralStore": false
   },
   "anglerfish": {
