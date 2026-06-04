@@ -8298,6 +8298,7 @@
     "effect": "combat",
     "boost": 18,
     "duration": 300,
+    "isUntradeable": true,
     "isGeneralStore": false
   },
   "dragon_pickaxe": {

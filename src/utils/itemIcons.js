@@ -230,6 +230,16 @@ const ITEM_TINT = {
   // Gloves
   ferocious_gloves:   'var(--tier-cryptbound)',
   gloves_of_slaughter:'var(--tier-cryptbound)',
+  // Potions
+  attack_potion:      'var(--potion-attack)',
+  strength_potion:    'var(--potion-strength)',
+  combat_potion:      'var(--potion-combat)',
+  prayer_potion:      'var(--potion-prayer)',
+  super_attack:       'var(--potion-super-attack)',
+  super_restore:      'var(--potion-super-restore)',
+  ranging_potion:     'var(--potion-ranging)',
+  super_combat:       'var(--potion-super-combat)',
+  lumira_brew:        'var(--potion-strength)',
 }
 
 // "God" armour/weapon sets — every item sharing the prefix takes one colour.

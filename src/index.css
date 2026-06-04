@@ -58,6 +58,14 @@
   --tier-jewel-blue: #3498db;
   --tier-jewel-purple: #9b59b6;
   --tier-orange: #e67e22;
+  --potion-attack: #7ec8e3;
+  --potion-strength: #f4d03f;
+  --potion-combat: #cde6b8;
+  --potion-prayer: #8fd96f;
+  --potion-super-attack: #1f4eb0;
+  --potion-super-restore: #9b59b6;
+  --potion-ranging: #3498db;
+  --potion-super-combat: #1e7d4f;
   --font-display: 'Cinzel', serif;
   --font-body: 'Nunito', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
