@@ -1,6 +1,28 @@
 import gameIconsData from '../data/gameIcons.json'
 import { getItemIconKey, getItemIconTint } from '../utils/itemIcons'
 
+// game-icons glyph paths are authored with fill="currentColor", which resolves
+// to the CSS `color` property — NOT the svg `fill` attribute. So the tint drives
+// `color` (see below). Some items additionally get an SVG `drop-shadow` filter:
+//   • a prestige glow (infernal cape gold, 2nd age platinum), or
+//   • a light rim outline for near-black items — without it a black icon is
+//     invisible against the dark UI, so the rim traces the silhouette while the
+//     fill stays genuinely black.
+function glowFor(id) {
+  if (!id) return undefined
+  if (id === 'infernal_cape') {
+    return 'drop-shadow(0 0 3px #f0c040) drop-shadow(0 0 1.5px #f0c040)'
+  }
+  if (id.startsWith('2nd_age_')) {
+    return 'drop-shadow(0 0 3px #e5e4e2)'
+  }
+  // Near-black items (cryptbound, black dragonhide) — light rim so they show.
+  if (id.startsWith('cryptbound') || (id.startsWith('black_') && id.includes('_d_hide_'))) {
+    return 'drop-shadow(0 0 1px #9a9a9a) drop-shadow(0 0 1px #9a9a9a)'
+  }
+  return undefined
+}
+
 /**
  * Renders a game-icons.net SVG glyph for an item.
  *
@@ -42,18 +64,11 @@ export default function GameIcon({ item, iconKey, size = 24, color, class: cls =
   const label      = title || item?.name || key
   const px         = typeof size === 'number' ? size : undefined
   const sizeStyle  = px ? { width: px, height: px, flexShrink: 0 } : undefined
-  // game-icons glyph paths are authored with fill="currentColor", which resolves
-  // to the CSS `color` property — NOT the svg `fill` attribute. So the tint has
-  // to drive `color` for it to actually show; `fill` alone is overridden by the
-  // inner currentColor. Set both so currentColor glyphs (all of them today) and
-  // any future bare-fill glyph both take the colour.
+  const glow       = glowFor(item?.id)
   const style      = {
     ...(sizeStyle || {}),
     color: fill,
-    // Infernal cape gets a distinctive gold glow effect; 2nd age items get a
-    // distinctive platinum glow.
-    ...(item?.id === 'infernal_cape' && { filter: 'drop-shadow(0 0 2px #f0c040)' }),
-    ...(item?.id?.startsWith('2nd_age_') && { filter: 'drop-shadow(0 0 2px #e5e4e2)' })
+    ...(glow && { filter: glow })
   }
 
   return (
