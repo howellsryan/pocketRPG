@@ -253,6 +253,12 @@ describe('getItemIconTint — tier colouring', () => {
     ['copper_ore',           'var(--tier-bronze)'],
     ['gold_ore',             'var(--tier-gold)'],
     ['gold_bar',             'var(--tier-gold)'],
+    ['2nd_age_platebody',    'var(--tier-2nd-age)'],
+    ['2nd_age_bow',          'var(--tier-2nd-age)'],
+    ['2nd_age_druidic_staff','var(--tier-2nd-age)'],
+    ['shardglass_helmet',    'var(--tier-shardglass)'],
+    ['shardglass_bow',       'var(--tier-shardglass)'],
+    ['shardglass_shards',    'var(--tier-shardglass)'],
   ]
 
   for (const [id, expected] of cases) {

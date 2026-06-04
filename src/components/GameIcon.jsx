@@ -50,8 +50,10 @@ export default function GameIcon({ item, iconKey, size = 24, color, class: cls =
   const style      = {
     ...(sizeStyle || {}),
     color: fill,
-    // Infernal cape gets a distinctive gold glow effect
-    ...(item?.id === 'infernal_cape' && { filter: 'drop-shadow(0 0 2px #f0c040)' })
+    // Infernal cape gets a distinctive gold glow effect; 2nd age items get a
+    // distinctive platinum glow.
+    ...(item?.id === 'infernal_cape' && { filter: 'drop-shadow(0 0 2px #f0c040)' }),
+    ...(item?.id?.startsWith('2nd_age_') && { filter: 'drop-shadow(0 0 2px #e5e4e2)' })
   }
 
   return (

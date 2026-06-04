@@ -145,6 +145,8 @@ function getTierTint(item) {
   }
   if (id === 'fire_cape')          return 'var(--tier-fire-cape)'
   if (id === 'infernal_cape')      return 'var(--tier-infernal-cape)'
+  if (id.startsWith('2nd_age_'))   return 'var(--tier-2nd-age)'
+  if (id.startsWith('shardglass_')) return 'var(--tier-shardglass)'
 
   // Party hats by colour
   if (id === 'red_partyhat')       return 'var(--tier-partyhat-red)'
