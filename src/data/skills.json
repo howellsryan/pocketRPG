@@ -195,7 +195,7 @@
     "actions": [
       {
         "id": "shrimps",
-        "name": "Fish shrimps",
+        "name": "Fish Shrimps",
         "level": 1,
         "ticks": 4,
         "xp": 10,
@@ -203,7 +203,7 @@
       },
       {
         "id": "trout",
-        "name": "Fish trout",
+        "name": "Fish Trout",
         "level": 20,
         "ticks": 5,
         "xp": 50,
@@ -227,7 +227,7 @@
       },
       {
         "id": "shark",
-        "name": "Fish shark",
+        "name": "Fish Shark",
         "level": 76,
         "ticks": 8,
         "xp": 110,
@@ -235,7 +235,7 @@
       },
       {
         "id": "manta_ray",
-        "name": "Fish manta ray",
+        "name": "Fish Manta Ray",
         "level": 85,
         "ticks": 9,
         "xp": 115,
@@ -243,7 +243,7 @@
       },
       {
         "id": "anglerfish",
-        "name": "Fish anglerfish",
+        "name": "Fish Anglerfish",
         "level": 90,
         "ticks": 10,
         "xp": 120,
@@ -697,7 +697,7 @@
     "actions": [
       {
         "id": "cook_shrimp",
-        "name": "Cook shrimps",
+        "name": "Cook Shrimps",
         "level": 1,
         "ticks": 4,
         "xp": 30,
@@ -709,7 +709,7 @@
       },
       {
         "id": "cook_chicken",
-        "name": "Cook chicken",
+        "name": "Cook Chicken",
         "level": 1,
         "ticks": 4,
         "xp": 30,
@@ -721,7 +721,7 @@
       },
       {
         "id": "cook_meat",
-        "name": "Cook meat",
+        "name": "Cook Meat",
         "level": 1,
         "ticks": 4,
         "xp": 30,
@@ -733,7 +733,7 @@
       },
       {
         "id": "cook_trout",
-        "name": "Cook trout",
+        "name": "Cook Trout",
         "level": 15,
         "ticks": 4,
         "xp": 70,
@@ -769,7 +769,7 @@
       },
       {
         "id": "cook_shark",
-        "name": "Cook shark",
+        "name": "Cook Shark",
         "level": 80,
         "ticks": 4,
         "xp": 210,
@@ -781,7 +781,7 @@
       },
       {
         "id": "cook_manta_ray",
-        "name": "Cook manta ray",
+        "name": "Cook Manta Ray",
         "level": 91,
         "ticks": 4,
         "xp": 216,
@@ -793,7 +793,7 @@
       },
       {
         "id": "cook_anglerfish",
-        "name": "Cook anglerfish",
+        "name": "Cook Anglerfish",
         "level": 93,
         "ticks": 4,
         "xp": 230,
