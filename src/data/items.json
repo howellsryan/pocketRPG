@@ -8298,6 +8298,7 @@
     "effect": "combat",
     "boost": 18,
     "duration": 300,
+    "isUntradeable": true,
     "isGeneralStore": false
   },
   "dragon_pickaxe": {
@@ -12027,8 +12028,34 @@
     "id": "battlestaff",
     "legacy_item_id": "battlestaff",
     "name": "Battlestaff",
-    "type": "resource",
-    "stackable": true,
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 5,
+    "attackStyle": "magic",
+    "attackBonus": {
+      "stab": 7,
+      "slash": -1,
+      "crush": 17,
+      "magic": 15,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 4,
+      "slash": 6,
+      "crush": 2,
+      "magic": 6,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 8,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "magic": 30
+    },
     "shopValue": 7534,
     "icon": "🪄",
     "isGeneralStore": false
