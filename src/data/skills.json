@@ -292,7 +292,7 @@
         "xp": 25,
         "product": "bronze_scimitar",
         "materials": {
-          "bronze_bar": 2
+          "bronze_bar": 1
         }
       },
       {
@@ -336,7 +336,7 @@
         "xp": 50,
         "product": "iron_scimitar",
         "materials": {
-          "iron_bar": 2
+          "iron_bar": 1
         }
       },
       {
@@ -381,7 +381,7 @@
         "xp": 75,
         "product": "steel_scimitar",
         "materials": {
-          "steel_bar": 2
+          "steel_bar": 1
         }
       },
       {
@@ -437,7 +437,7 @@
         "xp": 100,
         "product": "mithril_scimitar",
         "materials": {
-          "mithril_bar": 2
+          "mithril_bar": 1
         }
       },
       {
@@ -482,7 +482,7 @@
         "xp": 125,
         "product": "adamant_scimitar",
         "materials": {
-          "adamant_bar": 2
+          "adamant_bar": 1
         }
       },
       {
@@ -527,7 +527,7 @@
         "xp": 300,
         "product": "runeforged_scimitar",
         "materials": {
-          "runeforged_bar": 2
+          "runeforged_bar": 1
         }
       },
       {

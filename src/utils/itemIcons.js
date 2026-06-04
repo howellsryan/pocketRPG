@@ -236,6 +236,8 @@ const ITEM_TINT = {
   combat_potion:      'var(--potion-combat)',
   prayer_potion:      'var(--potion-prayer)',
   super_attack:       'var(--potion-super-attack)',
+  super_strength:     'var(--potion-super-strength)',
+  super_defence:      'var(--potion-super-defence)',
   super_restore:      'var(--potion-super-restore)',
   ranging_potion:     'var(--potion-ranging)',
   super_combat:       'var(--potion-super-combat)',
