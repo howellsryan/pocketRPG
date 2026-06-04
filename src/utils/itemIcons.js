@@ -110,7 +110,7 @@ function keyFromId(id) {
   if (id.startsWith('raw_')) return 'raw_fish'
   if (id.startsWith('uncut_')) return 'gem'
   // Raw hide/leather materials only — *_d_hide_body/chaps/boots resolve by slot.
-  if (id.endsWith('hide') || id.endsWith('_leather') || id === 'cowhide') return 'animal_hide'
+  if (id === 'leather' || id.endsWith('hide') || id.endsWith('_leather') || id === 'cowhide') return 'animal_hide'
   if (id.endsWith('_seed') || id.endsWith('_sapling')) return 'seed'
   if (id.endsWith('_rune') || id === 'rune') return 'rune'
   if (id.endsWith('_potion') || id.endsWith('_brew') || id === 'prayer_potion' || id.endsWith('_restore') || id === 'super_combat') return 'potion'
@@ -339,6 +339,9 @@ function getTierTint(item) {
   }
   if (id.startsWith('2nd_age_'))   return 'var(--tier-2nd-age)'
   if (id.startsWith('shardglass_')) return 'var(--tier-shardglass)'
+  // Leather tiers — material + armour pieces share the same colour
+  if (id === 'leather' || id.startsWith('leather_')) return '#d4a870'
+  if (id === 'hard_leather' || id.startsWith('hard_leather_')) return '#6b3d1a'
 
   // Party hats by colour
   if (id === 'red_partyhat')       return 'var(--tier-partyhat-red)'
