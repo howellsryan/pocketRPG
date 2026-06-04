@@ -42,11 +42,17 @@ export default function GameIcon({ item, iconKey, size = 24, color, class: cls =
   const label      = title || item?.name || key
   const px         = typeof size === 'number' ? size : undefined
   const sizeStyle  = px ? { width: px, height: px, flexShrink: 0 } : undefined
+  // game-icons glyph paths are authored with fill="currentColor", which resolves
+  // to the CSS `color` property — NOT the svg `fill` attribute. So the tint has
+  // to drive `color` for it to actually show; `fill` alone is overridden by the
+  // inner currentColor. Set both so currentColor glyphs (all of them today) and
+  // any future bare-fill glyph both take the colour.
+  const style      = { ...(sizeStyle || {}), color: fill }
 
   return (
     <svg
       viewBox={vb}
-      style={sizeStyle}
+      style={style}
       class={cls}
       role="img"
       aria-label={label}
