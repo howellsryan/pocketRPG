@@ -66,6 +66,18 @@ describe('itemIcons', () => {
     expect(getItemIconKey(itemsData.logs)).toBe('log')
   })
 
+  it('planks resolve to the planks glyph', () => {
+    expect(getItemIconKey(itemsData.plank)).toBe('planks')
+    expect(getItemIconKey(itemsData.oak_plank)).toBe('planks')
+    expect(getItemIconKey(itemsData.teak_plank)).toBe('planks')
+    expect(getItemIconKey(itemsData.mahogany_plank)).toBe('planks')
+  })
+
+  it('raw_beef and cooked_meat resolve to the meat glyph', () => {
+    expect(getItemIconKey(itemsData.raw_beef)).toBe('meat')
+    expect(getItemIconKey(itemsData.cooked_meat)).toBe('meat')
+  })
+
   it('stab weapons resolve to the dagger glyph', () => {
     const dagger = itemsData.bronze_dagger
     expect(getItemIconKey(dagger)).toBe('dagger')

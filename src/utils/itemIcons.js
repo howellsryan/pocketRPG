@@ -103,6 +103,8 @@ function keyFromId(id) {
   if (id.includes('skirt') || id.includes('chaps')) return 'legs'
   if (id.includes('_ore') || id === 'ore') return 'ore'
   if (id.endsWith('_bar') || id === 'bar') return 'metal_bar'
+  if (id === 'plank' || id.endsWith('_plank')) return 'planks'
+  if (id === 'raw_beef') return 'meat'
   if (id.endsWith('_logs') || id === 'logs') return 'log'
   if (id.startsWith('raw_')) return 'raw_fish'
   if (id.startsWith('uncut_')) return 'gem'
@@ -133,7 +135,8 @@ function keyFromId(id) {
   if (id.includes('greens') || id.includes('herb') || id.includes('grimy_') || id.includes('leaf') ||
       id.includes('root') || id.includes('weed') || id === 'nettle' || id === 'eye_of_newt' || id === 'goat_horn_dust') return 'herb'
   if (id === 'vial' || id === 'unpowered_orb') return 'vial'
-  if (id === 'shrimps' || id === 'shark' || id === 'lobster' || id === 'swordfish' || id === 'trout' || id === 'anglerfish' || id === 'manta_ray' || id === 'cooked_chicken' || id === 'cooked_meat') return 'cooked_fish'
+  if (id === 'cooked_meat') return 'meat'
+  if (id === 'shrimps' || id === 'shark' || id === 'lobster' || id === 'swordfish' || id === 'trout' || id === 'anglerfish' || id === 'manta_ray' || id === 'cooked_chicken') return 'cooked_fish'
   return null
 }
 
@@ -253,6 +256,20 @@ const ITEM_TINT = {
   trident_of_venom:   'var(--tier-jewel-purple)',
   // Sweets
   purple_sweets:      'var(--tier-jewel-purple)',
+  // Planks — graduated brown, lightest to darkest
+  plank:              '#c9a96e',
+  oak_plank:          '#a07444',
+  teak_plank:         '#7a5228',
+  mahogany_plank:     '#5c3015',
+  // Logs — representative logs match their plank; others graduated
+  logs:               '#c9a96e',
+  oak_logs:           '#a07444',
+  willow_logs:        '#b08a55',
+  teak_logs:          '#7a5228',
+  maple_logs:         '#8a6234',
+  mahogany_logs:      '#5c3015',
+  yew_logs:           '#6b4420',
+  redwood_logs:       '#c0372b',
   serpentine_helm:    'var(--tier-jewel-green)',
   // Boots & accessories
   spiked_manacles:    'var(--tier-cryptbound)',
