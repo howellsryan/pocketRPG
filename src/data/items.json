@@ -12103,10 +12103,37 @@
     "id": "dragon_battleaxe",
     "legacy_item_id": "dragon_battleaxe",
     "name": "Dragon Battleaxe",
-    "type": "resource",
-    "stackable": true,
+    "type": "weapon",
+    "slot": "weapon",
+    "twoHanded": false,
+    "stackable": false,
+    "attackSpeed": 6,
+    "attackStyle": "crush",
+    "iconId": "axe",
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 95,
+      "magic": 0,
+      "ranged": 0
+    },
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": 0,
+      "ranged": 0
+    },
+    "otherBonus": {
+      "meleeStrength": 85,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "attack": 60
+    },
     "shopValue": 119143,
-    "icon": "📦",
+    "icon": "🪓",
     "isGeneralStore": false
   },
   "anglerfish": {
