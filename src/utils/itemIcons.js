@@ -107,6 +107,14 @@ function keyFromId(id) {
   if (id === 'plank' || id.endsWith('_plank')) return 'planks'
   if (id === 'raw_beef') return 'meat'
   if (id.endsWith('_logs') || id === 'logs') return 'log'
+  // Specific fish glyphs — raw and cooked share the same silhouette
+  if (id === 'raw_shrimps'   || id === 'shrimps')   return 'shrimp'
+  if (id === 'raw_trout'     || id === 'trout')      return 'trout'
+  if (id === 'raw_lobster'   || id === 'lobster')    return 'flatfish'
+  if (id === 'raw_swordfish' || id === 'swordfish')  return 'piranha'
+  if (id === 'raw_shark'     || id === 'shark')      return 'shark'
+  if (id === 'raw_manta_ray' || id === 'manta_ray')  return 'manta_ray'
+  if (id === 'raw_anglerfish'|| id === 'anglerfish') return 'tropical_fish'
   if (id.startsWith('raw_')) return 'raw_fish'
   if (id.startsWith('uncut_')) return 'gem'
   // Raw hide/leather materials only — *_d_hide_body/chaps/boots resolve by slot.
@@ -137,7 +145,6 @@ function keyFromId(id) {
       id.includes('root') || id.includes('weed') || id === 'nettle' || id === 'eye_of_newt' || id === 'goat_horn_dust') return 'herb'
   if (id === 'vial' || id === 'unpowered_orb') return 'vial'
   if (id === 'cooked_meat') return 'meat'
-  if (id === 'shrimps' || id === 'shark' || id === 'lobster' || id === 'swordfish' || id === 'trout' || id === 'anglerfish' || id === 'manta_ray') return 'cooked_fish'
   return null
 }
 
