@@ -87,6 +87,7 @@ describe('MCP tool schema', () => {
       'get_slayer_task',
       'assign_slayer_task',
       'search_market',
+      'list_market_listings',
       'my_offers',
       'place_offer',
       'cancel_offer',
@@ -130,6 +131,7 @@ describe('MCP tool schema', () => {
     expect(a('get_character_state')?.readOnlyHint).toBe(true)
     expect(a('inspect_item')?.readOnlyHint).toBe(true)
     expect(a('search_market')?.readOnlyHint).toBe(true)
+    expect(a('list_market_listings')?.readOnlyHint).toBe(true)
     expect(a('buy_item')?.readOnlyHint).toBe(false)
     expect(a('skip_hour')?.readOnlyHint).toBe(false)
     expect(a('place_offer')?.readOnlyHint).toBe(false)

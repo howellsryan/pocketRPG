@@ -318,6 +318,17 @@ export const TOOL_SCHEMAS = [
     annotations: READ('Search market'),
   },
   {
+    name: 'list_market_listings',
+    description:
+      'List all active trading-post offers aggregated by item. Shows best buy/sell prices and total offer counts per item. Read-only, no player identity exposed.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      additionalProperties: false,
+    },
+    annotations: READ('List market listings'),
+  },
+  {
     name: 'my_offers',
     description: "List a character's open and awaiting-collection trading-post offers, with the max slot count.",
     inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },

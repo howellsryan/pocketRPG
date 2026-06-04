@@ -236,6 +236,7 @@ export const api = {
     method: 'POST',
     body: JSON.stringify({ item_id: itemId, quantity }),
   }),
+  tradingPostListings: () => request('/api/trading-post/listings'),
 }
 
 // Fire-and-forget idle state write via navigator.sendBeacon. Survives tab

@@ -22,6 +22,7 @@ import { onRequestPost as postSkipHour } from '../../api/skip-hour.js'
 import { onRequestPost as postSlayerSkip } from '../../api/slayer/skip.js'
 import { onRequestPost as postMarketSearch } from '../../api/trading-post/search.js'
 import { onRequestGet as getMyOffers } from '../../api/trading-post/my-offers.js'
+import { onRequestGet as getListings } from '../../api/trading-post/listings.js'
 import { onRequestPost as postPlaceOffer } from '../../api/trading-post/list.js'
 import { onRequestPost as postCancelOffer } from '../../api/trading-post/cancel.js'
 import { onRequestPost as postCollectOffer } from '../../api/trading-post/collect.js'
@@ -332,6 +333,13 @@ const TOOLS = {
     const market = {}
     for (const [id, summary] of Object.entries(res.data?.market || {})) market[id] = { name: itemName(id), ...summary }
     return ok({ market })
+  },
+
+  async list_market_listings(_args, { env, authorization }) {
+    const res = await callHandler(getListings, env, { method: 'GET', authorization })
+    if (!res.ok) throw httpError(res)
+    const listings = (res.data?.listings || []).map((l) => ({ ...l, name: itemName(l.item_id) }))
+    return ok({ listings })
   },
 
   async my_offers({ character_id }, { env, authorization }) {
