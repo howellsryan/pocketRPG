@@ -171,8 +171,7 @@ describe('itemIcons', () => {
     expect(getItemIconKey(itemsData.durn_s_bulwark)).toBe('shield')
   })
 
-  it('magic armour (positive magic attackBonus highest) resolves to magic_robe', () => {
-    expect(getItemIconKey(itemsData.wizard_hat)).toBe('magic_robe')
+  it('magic robe tops (positive magic attackBonus highest) resolve to magic_robe', () => {
     expect(getItemIconKey(itemsData.wizard_robe_top)).toBe('magic_robe')
     expect(getItemIconKey(itemsData.kodai_robe_top)).toBe('magic_robe')
   })
@@ -192,6 +191,33 @@ describe('itemIcons', () => {
   it('mitres resolve to the pointy_hat glyph', () => {
     expect(getItemIconKey(itemsData.ancient_mitre)).toBe('pointy_hat')
     expect(getItemIconKey(itemsData.zephyra_mitre)).toBe('pointy_hat')
+  })
+
+  it('named mage hats/hoods resolve to the pointy_hat glyph', () => {
+    expect(getItemIconKey(itemsData.morvyn_s_hood)).toBe('pointy_hat')
+    expect(getItemIconKey(itemsData.kodai_hat)).toBe('pointy_hat')
+    expect(getItemIconKey(itemsData.wizard_hat)).toBe('pointy_hat')
+    expect(getItemIconKey(itemsData.black_wizard_hat)).toBe('pointy_hat')
+    expect(getItemIconKey(itemsData.arcanist_hat)).toBe('pointy_hat')
+    expect(getItemIconKey(itemsData['2nd_age_mage_hat'])).toBe('pointy_hat')
+  })
+
+  it('robe bottoms resolve to the magic_robe_bottom glyph', () => {
+    expect(getItemIconKey(itemsData.black_wizard_robe)).toBe('magic_robe_bottom')
+    expect(getItemIconKey(itemsData.void_king_robe)).toBe('magic_robe_bottom')
+    expect(getItemIconKey(itemsData.kodai_robe_bottom)).toBe('magic_robe_bottom')
+    expect(getItemIconKey(itemsData.arcanist_robe_bottom)).toBe('magic_robe_bottom')
+    expect(getItemIconKey(itemsData.wizard_robe_skirt)).toBe('magic_robe_bottom')
+    expect(getItemIconKey(itemsData.morvyn_s_robeskirt)).toBe('magic_robe_bottom')
+  })
+
+  it('the herblore cape resolves to the cape glyph (not a herb)', () => {
+    expect(getItemIconKey(itemsData.herblore_cape)).toBe('cape')
+  })
+
+  it('ghraxis_rapier resolves to the rapier glyph and cryptbound tint', () => {
+    expect(getItemIconKey(itemsData.ghraxis_rapier)).toBe('rapier')
+    expect(getItemIconTint(itemsData.ghraxis_rapier)).toBe('var(--tier-cryptbound)')
   })
 
   it('halo resolves to angel_outfit glyph', () => {

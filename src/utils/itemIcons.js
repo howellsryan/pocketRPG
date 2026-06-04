@@ -48,6 +48,21 @@ const TYPE_KEY = {
 
 // ─── ID pattern matching ──────────────────────────────────────────────────────
 
+// Pointy "wizard hat" silhouette for mage headgear that isn't a literal *_mitre.
+const POINTY_HAT_IDS = new Set([
+  'morvyn_s_hood', 'kodai_hat', 'wizard_hat', 'black_wizard_hat',
+  'arcanist_hat', '2nd_age_mage_hat',
+])
+
+// Magic "robe bottom" silhouette. Named tops that read as robe bottoms plus any
+// magic robe leg piece (skirt/bottom/legs whose id mentions a robe).
+const ROBE_BOTTOM_IDS = new Set(['black_wizard_robe', 'void_king_robe'])
+function isRobeBottom(id) {
+  if (ROBE_BOTTOM_IDS.has(id)) return true
+  return id.includes('robe') &&
+    (id.includes('bottom') || id.includes('skirt') || id.includes('legs'))
+}
+
 function keyFromId(id) {
   if (!id) return null
   if (id === 'coins') return 'coins'
@@ -69,9 +84,11 @@ function keyFromId(id) {
   if (id === 'sanguine_staff') return 'wand'
   if (id === 'halo') return 'angel_outfit'
   if (id === 'ava_s_accumulator' || id === 'ava_s_assembler') return 'quiver'
+  if (id.endsWith('_cape')) return 'cape'
   if (id.endsWith('_partyhat') || id === 'partyhat') return 'party_hat'
   if (id.includes('charm') || id.includes('blessing')) return 'prayer'
-  if (id.endsWith('_mitre')) return 'pointy_hat'
+  if (id.endsWith('_mitre') || POINTY_HAT_IDS.has(id)) return 'pointy_hat'
+  if (isRobeBottom(id)) return 'magic_robe_bottom'
   if (id.includes('skirt') || id.includes('chaps')) return 'legs'
   if (id.includes('_ore') || id === 'ore') return 'ore'
   if (id.endsWith('_bar') || id === 'bar') return 'metal_bar'
@@ -218,6 +235,7 @@ const ITEM_TINT = {
   scythe_of_vythar:   'var(--tier-cryptbound)',
   nether_demon_whip:  'var(--tier-cryptbound)',
   abyssal_tentacle:   'var(--tier-cryptbound)',
+  ghraxis_rapier:     'var(--tier-cryptbound)',
   // Venom gear
   venom_blowpipe:     'var(--tier-jewel-green)',
   trident_of_venom:   'var(--tier-jewel-green)',

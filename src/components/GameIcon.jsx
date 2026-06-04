@@ -46,6 +46,7 @@ const OUTLINE_SPEC = {
   visage_shield:       ['red', true],
   scythe_of_vythar:    ['red', true],
   abyssal_tentacle:    ['red', true],
+  ghraxis_rapier:      ['white', true],
   // Blue rim
   venom_blowpipe:      ['blue', false],
   trident_of_venom:    ['blue', false],
