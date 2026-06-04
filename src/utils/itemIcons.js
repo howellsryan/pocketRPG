@@ -294,6 +294,25 @@ const ITEM_TINT = {
   ranging_potion:     'var(--potion-ranging)',
   super_combat:       'var(--potion-super-combat)',
   lumira_brew:        'var(--potion-strength)',
+  // Gem bolts — body colour by base material, outline by gem (see OUTLINE_SPEC in GameIcon.jsx)
+  ruby_dragon_bolt:          'var(--tier-dragon)',
+  ruby_dragon_bolt_e:        'var(--tier-dragon)',
+  diamond_dragon_bolt:       'var(--tier-dragon)',
+  diamond_dragon_bolt_e:     'var(--tier-dragon)',
+  dragonstone_dragon_bolt:   'var(--tier-dragon)',
+  dragonstone_dragon_bolt_e: 'var(--tier-dragon)',
+  onyx_dragon_bolt:          'var(--tier-dragon)',
+  onyx_dragon_bolt_e:        'var(--tier-dragon)',
+  ruby_bolt:                 'var(--tier-adamant)',
+  ruby_bolt_e:               'var(--tier-adamant)',
+  diamond_bolt:              'var(--tier-adamant)',
+  diamond_bolt_e:            'var(--tier-adamant)',
+  dragonstone_bolt:          'var(--tier-adamant)',
+  dragonstone_bolt_e:        'var(--tier-adamant)',
+  onyx_bolt:                 'var(--tier-runeforged)',
+  onyx_bolt_e:               'var(--tier-runeforged)',
+  runite_bolt:               'var(--tier-runeforged)',
+  runite_bolt_unf:           'var(--tier-runeforged)',
 }
 
 // "God" armour/weapon sets — every item sharing the prefix takes one colour.
@@ -342,6 +361,13 @@ function getTierTint(item) {
   // Leather tiers — material + armour pieces share the same colour
   if (id === 'leather' || id.startsWith('leather_')) return '#d4a870'
   if (id === 'hard_leather' || id.startsWith('hard_leather_')) return '#6b3d1a'
+
+  // Gem-tinted items (bolts are caught by ITEM_TINT above, so this covers rings/
+  // amulets/uncut gems/equipment named after a gem)
+  if (id.includes('sapphire'))   return 'var(--tier-jewel-blue)'
+  if (id.includes('emerald'))    return 'var(--tier-jewel-green)'
+  if (id.includes('ruby'))       return 'var(--tier-jewel-red)'
+  if (id.includes('dragonstone')) return 'var(--tier-jewel-purple)'
 
   // Party hats by colour
   if (id === 'red_partyhat')       return 'var(--tier-partyhat-red)'

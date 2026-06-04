@@ -57,6 +57,23 @@ const OUTLINE_SPEC = {
   twisted_longbow:     ['green', true],
   // Purple rim
   ancestral_wand:      ['purple', true],
+  // Gem bolts — gem-coloured rim over material-tier body
+  ruby_dragon_bolt:          ['red',    false],
+  ruby_dragon_bolt_e:        ['red',    false],
+  diamond_dragon_bolt:       ['white',  false],
+  diamond_dragon_bolt_e:     ['white',  false],
+  dragonstone_dragon_bolt:   ['purple', false],
+  dragonstone_dragon_bolt_e: ['purple', false],
+  onyx_dragon_bolt:          ['black',  false],
+  onyx_dragon_bolt_e:        ['black',  false],
+  ruby_bolt:                 ['red',    false],
+  ruby_bolt_e:               ['red',    false],
+  diamond_bolt:              ['white',  false],
+  diamond_bolt_e:            ['white',  false],
+  dragonstone_bolt:          ['purple', false],
+  dragonstone_bolt_e:        ['purple', false],
+  onyx_bolt:                 ['black',  false],
+  onyx_bolt_e:               ['black',  false],
 }
 
 // Near-black hide/leather items (armour or crafting material) — white rim so

@@ -4737,7 +4737,7 @@
   "runite_bolt": {
     "id": "runite_bolt",
     "legacy_item_id": "runite_bolts",
-    "name": "Runite Bolt",
+    "name": "Runeforged Bolt",
     "type": "ammo",
     "slot": "ammo",
     "stackable": true,
@@ -5237,7 +5237,7 @@
   "runite_bolt_unf": {
     "id": "runite_bolt_unf",
     "legacy_item_id": "runite_bolts_unf",
-    "name": "Runite Bolt (Unf)",
+    "name": "Runeforged Bolt (Unf)",
     "type": "resource",
     "stackable": true,
     "shopValue": 35,
