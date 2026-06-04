@@ -1,4 +1,29 @@
 import gameIconsData from '../data/gameIcons.json'
+import collectionLogData from '../data/collectionLog.json'
+
+// The "Cryptbound Champions" raid set (the six named champions: morvyn, dravok,
+// gorath, kaelor, torvek, verin) is defined authoritatively in the collection
+// log — none of the item ids contain "cryptbound", so pull the list straight
+// from the content data to stay in sync. `cryptbound_gloves` is the matching
+// quest reward and is included too.
+const CRYPTBOUND_CHAMPION_IDS = (() => {
+  const ids = new Set(['cryptbound_gloves'])
+  const walk = (node) => {
+    if (Array.isArray(node)) { node.forEach(walk); return }
+    if (node && typeof node === 'object') {
+      if (node.id === 'cryptbound_champions' && Array.isArray(node.items)) {
+        node.items.forEach((id) => ids.add(id))
+      }
+      Object.values(node).forEach(walk)
+    }
+  }
+  walk(collectionLogData)
+  return ids
+})()
+
+export function isCryptboundChampion(id) {
+  return !!id && CRYPTBOUND_CHAMPION_IDS.has(id)
+}
 
 // ─── Fallback tables ──────────────────────────────────────────────────────────
 
@@ -138,7 +163,7 @@ function getTierTint(item) {
   const id = item.id || ''
 
   // Named uniques & special items (most specific first)
-  if (id.startsWith('cryptbound')) return 'var(--tier-cryptbound)'
+  if (isCryptboundChampion(id)) return 'var(--tier-cryptbound)'
   if (id.startsWith('kodai'))      return 'var(--tier-kodai)'
   if (id === 'robin_hood_hat' || id === 'rangers_tunic' || id === 'pathfinder_boots') {
     return 'var(--tier-ranger)'
