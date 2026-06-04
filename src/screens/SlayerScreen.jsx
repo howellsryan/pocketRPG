@@ -5,8 +5,8 @@ import monstersData from '../data/monsters.json'
 import itemsData from '../data/items.json'
 import { SLAYER_UNLOCKS, getSlayerUnlockPurchaseState } from '../engine/slayerUnlocks.js'
 import { requestCriticalPushSave } from '../cloud/sync.js'
-import { DAGANNOTH_KINGS_TASK_ID } from '../engine/slayerTasks.js'
-import { SLAYER_MASTERS, resolveTaskMonsterIds, pickSlayerMonster } from '../engine/slayerMasters.js'
+import { DAGANNOTH_KINGS_TASK_ID, SLAYER_TASK_SKIP_POINT_COST } from '../engine/slayerTasks.js'
+import { SLAYER_MASTERS, resolveTaskMonsterIds, pickSlayerMonster, buildSlayerTask } from '../engine/slayerMasters.js'
 import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
 import { applyCloudSave } from '../cloud/sync.js'
 import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
@@ -28,10 +28,6 @@ function getPlayerCombatLevel(stats) {
   const rangedCB = Math.floor(Math.floor(ranged * 3 / 2) * 13 / 40)
   const magicCB = Math.floor(Math.floor(magic * 3 / 2) * 13 / 40)
   return base + Math.max(melee, rangedCB, magicCB)
-}
-
-function randRange(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
 const SLAYER_MONSTER_ICONS = {
@@ -90,35 +86,14 @@ export default function SlayerScreen({ onBack, onNavigate }) {
   }
 
   const assignTask = (master, monsterId, isBoss) => {
-    const monsterData = monstersData[monsterId]
-    const monsterName = monsterId === DAGANNOTH_KINGS_TASK_ID ? 'Nagadoth Kings' : (monsterData?.name || monsterId.replace(/_/g, ' '))
-
-    // Ember Tyrant always has a single-kill task
-    let totalCount
-    if (monsterId === 'ember_tyrant') {
-      totalCount = 1
-    } else {
-      const taskRange = isBoss ? (master.bossTaskRange || [20, 50]) : master.taskRange
-      totalCount = randRange(taskRange[0], taskRange[1])
-    }
-
-    const task = {
-      monsterId,
-      monsterName,
-      monstersRemaining: totalCount,
-      totalCount,
-      masterId: master.id,
-      pointsOnComplete: master.pointsPerTask,
-      isBoss,
-    }
-
+    const task = buildSlayerTask(master, monsterId, isBoss)
     setSlayerTask(task)
     requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SLAYER_TASK_CHANGE)
-    addToast(`💀 Task: Kill ${totalCount} ${monsterName}`, 'info')
+    addToast(`💀 Task: Kill ${task.totalCount} ${task.monsterName}`, 'info')
   }
 
   const handleCancelTask = () => {
-    const skipCost = 30
+    const skipCost = SLAYER_TASK_SKIP_POINT_COST
     if (slayerPoints < skipCost) {
       addToast(`Need ${skipCost} slayer points to skip a task.`, 'error')
       return
@@ -244,7 +219,7 @@ export default function SlayerScreen({ onBack, onNavigate }) {
                 onClick={handleCancelTask}
                 class="text-[10px] text-[var(--color-parchment)] opacity-40 underline"
               >
-                Skip (-30 points)
+                Skip (-{SLAYER_TASK_SKIP_POINT_COST} points)
               </button>
               <button
                 onClick={handleSkipWithCredit}
