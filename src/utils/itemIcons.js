@@ -86,7 +86,7 @@ function keyFromId(id) {
   if (id.includes('_pickaxe')) return 'pickaxe'
   if (id.includes('_shortbow') || id.endsWith('_shortbow_u')) return 'bow'
   if (id.includes('_longbow') || id === 'longbow') return 'bow'
-  if (id.includes('_staff') || id.endsWith('_staff')) return 'staff'
+  if (id.includes('_staff') || id.endsWith('_staff') || id === 'battlestaff') return 'staff'
   if (id.includes('_wand')) return 'wand'
   if (id.includes('_spear') || id.includes('_lance')) return 'spear'
   if (id.includes('_halberd')) return 'halberd'
@@ -181,6 +181,21 @@ function getTierTint(item) {
   if (id === 'archers_ring')       return 'var(--tier-jewel-green)'
   if (id === 'seers_ring')         return 'var(--tier-jewel-blue)'
   if (id.startsWith('arcanist_')) return 'var(--tier-jewel-blue)'
+
+  // Magic gear / runecrafting & fletching materials by element
+  if (id === 'magic_shortbow' || id === 'magic_shortbow_u' || id === 'magic_logs' ||
+      id === 'staff_of_water' || id === 'magic_cape') return 'var(--tier-jewel-blue)'
+  if (id === 'sanguine_staff' || id === 'staff_of_fire') return 'var(--tier-jewel-red)'
+  if (id === 'staff_of_earth') return 'var(--tier-jewel-green)'
+  if (id === 'staff_of_the_dead') return 'var(--tier-cryptbound)'
+
+  // Dragonhide / dragon leather crafting materials — match the d-hide armour colours
+  if (id.includes('dragon_leather') || id.includes('dragonhide')) {
+    if (id.startsWith('red_'))   return 'var(--tier-dhide-red)'
+    if (id.startsWith('green_')) return 'var(--tier-dhide-green)'
+    if (id.startsWith('black_')) return 'var(--tier-dhide-black)'
+    if (id.startsWith('blue_'))  return 'var(--color-mana-light)'
+  }
   if (id.startsWith('2nd_age_'))   return 'var(--tier-2nd-age)'
   if (id.startsWith('shardglass_')) return 'var(--tier-shardglass)'
 

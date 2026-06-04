@@ -3,7 +3,14 @@ import { getItemIconKey, getItemIconTint, isCryptboundChampion } from '../utils/
 
 // Items that get a white rim outline (their fill is near-black, so the rim
 // traces the silhouette against the dark UI).
-const WHITE_OUTLINE_IDS = new Set(['ring_of_affliction'])
+const WHITE_OUTLINE_IDS = new Set(['ring_of_affliction', 'staff_of_the_dead'])
+
+// Near-black hide/leather items (armour or crafting material) — white rim so
+// the black silhouette reads on the dark UI.
+function isBlackHide(id) {
+  return id.startsWith('black_') &&
+    (id.includes('_d_hide_') || id.includes('dragon_leather') || id.includes('dragonhide'))
+}
 
 // Items that get a black rim outline to define their coloured silhouette.
 const BLACK_OUTLINE_IDS = new Set([
@@ -27,7 +34,7 @@ function glowFor(id) {
   if (id.startsWith('2nd_age_')) {
     return 'drop-shadow(0 0 3px #e5e4e2)'
   }
-  if (isCryptboundChampion(id) || (id.startsWith('black_') && id.includes('_d_hide_')) || WHITE_OUTLINE_IDS.has(id)) {
+  if (isCryptboundChampion(id) || isBlackHide(id) || WHITE_OUTLINE_IDS.has(id)) {
     return 'drop-shadow(0 0 1px #ffffff) drop-shadow(0 0 0.5px #ffffff)'
   }
   if (BLACK_OUTLINE_IDS.has(id)) {

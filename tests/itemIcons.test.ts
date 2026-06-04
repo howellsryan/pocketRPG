@@ -90,6 +90,10 @@ describe('itemIcons', () => {
     expect(getItemIconKey(staff)).toBe('staff')
   })
 
+  it('battlestaff resolves to the staff glyph (not an ore)', () => {
+    expect(getItemIconKey(itemsData.battlestaff)).toBe('staff')
+  })
+
   it('head slot armour resolves to crested_helmet glyph', () => {
     const helm = itemsData.bronze_full_helm
     expect(getItemIconKey(helm)).toBe('crested_helmet')
@@ -280,6 +284,20 @@ describe('getItemIconTint — tier colouring', () => {
     ['kodai_hat',            'var(--tier-jewel-purple)'],
     ['kodai_robe_top',       'var(--tier-jewel-purple)'],
     ['kodai_robe_bottom',    'var(--tier-jewel-purple)'],
+    ['magic_shortbow',       'var(--tier-jewel-blue)'],
+    ['magic_shortbow_u',     'var(--tier-jewel-blue)'],
+    ['magic_logs',           'var(--tier-jewel-blue)'],
+    ['staff_of_water',       'var(--tier-jewel-blue)'],
+    ['magic_cape',           'var(--tier-jewel-blue)'],
+    ['sanguine_staff',       'var(--tier-jewel-red)'],
+    ['staff_of_fire',        'var(--tier-jewel-red)'],
+    ['staff_of_earth',       'var(--tier-jewel-green)'],
+    ['staff_of_the_dead',    'var(--tier-cryptbound)'],
+    ['red_dragon_leather',   'var(--tier-dhide-red)'],
+    ['green_dragon_leather', 'var(--tier-dhide-green)'],
+    ['black_dragon_leather', 'var(--tier-dhide-black)'],
+    ['blue_dragon_leather',  'var(--color-mana-light)'],
+    ['green_dragonhide',     'var(--tier-dhide-green)'],
   ]
 
   for (const [id, expected] of cases) {
