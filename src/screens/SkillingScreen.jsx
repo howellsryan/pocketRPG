@@ -683,17 +683,21 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
             )
             const xpMultiplier = getEquippedSkillXpMultiplier(selectedSkill, equipment, itemsData)
             const displayXP = xpMultiplier !== 1 ? Math.floor(action.xp * xpMultiplier) : action.xp
+            const productItem = action.product ? itemsData[action.product] : null
             return (
               <button
                 key={action.id}
                 onClick={() => rowEnabled && startSkilling(action)}
                 disabled={!rowEnabled}
-                class={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors
+                class={`w-full flex items-center gap-3 p-3 rounded-xl border transition-colors
                   ${rowEnabled
                     ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
                     : 'bg-[#111] border-[#1a1a1a] opacity-40'}`}
               >
-                <div class="text-left">
+                {productItem && (
+                  <GameIcon item={productItem} size={28} class="flex-shrink-0" />
+                )}
+                <div class="text-left flex-1">
                   <div class="text-sm font-semibold text-[var(--color-parchment)]">{action.name}</div>
                   <div class="text-[10px] text-[var(--color-parchment)] opacity-40">
                     {isDungeoneeringReward
