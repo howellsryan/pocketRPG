@@ -46,6 +46,7 @@
   "quiver": "quiver",
   "crested_helmet": "crested-helmet",
   "magic_robe": "robe",
+  "magic_robe_bottom": "skirt",
   "ninja": "ninja-mask",
   "ninja_body": "ninja-armor",
   "body": "breastplate",
@@ -173,5 +174,12 @@
   "gears": "gears",
   "lightning_arc": "lightning-arc",
   "meat": "meat",
-  "potion_ball": "potion-ball"
+  "potion_ball": "potion-ball",
+  "stole": "ribbon",
+  "mitre": "chess-bishop",
+  "trident": "trident",
+  "blowpipe": "bamboo",
+  "wrapped_sweet": "wrapped-sweet",
+  "manta_ray": "manta-ray",
+  "angler_fish": "angler-fish"
 }

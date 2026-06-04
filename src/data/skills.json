@@ -232,6 +232,22 @@
         "ticks": 8,
         "xp": 110,
         "product": "raw_shark"
+      },
+      {
+        "id": "manta_ray",
+        "name": "Fish manta ray",
+        "level": 85,
+        "ticks": 9,
+        "xp": 115,
+        "product": "raw_manta_ray"
+      },
+      {
+        "id": "anglerfish",
+        "name": "Fish anglerfish",
+        "level": 90,
+        "ticks": 10,
+        "xp": 120,
+        "product": "raw_anglerfish"
       }
     ]
   },
@@ -760,6 +776,30 @@
         "product": "shark",
         "materials": {
           "raw_shark": 1
+        },
+        "burnStopLevel": 99
+      },
+      {
+        "id": "cook_manta_ray",
+        "name": "Cook manta ray",
+        "level": 91,
+        "ticks": 4,
+        "xp": 216,
+        "product": "manta_ray",
+        "materials": {
+          "raw_manta_ray": 1
+        },
+        "burnStopLevel": 99
+      },
+      {
+        "id": "cook_anglerfish",
+        "name": "Cook anglerfish",
+        "level": 93,
+        "ticks": 4,
+        "xp": 230,
+        "product": "anglerfish",
+        "materials": {
+          "raw_anglerfish": 1
         },
         "burnStopLevel": 99
       }

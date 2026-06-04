@@ -54,6 +54,12 @@ const POINTY_HAT_IDS = new Set([
   'arcanist_hat', '2nd_age_mage_hat',
 ])
 
+// Herblore herbs with custom fantasy names that don't contain 'herb'/'weed'/'leaf'/'root'.
+const HERB_IDS = new Set([
+  'sunblossom', 'wyrmspice', 'snapdrake', 'cinderbloom',
+  'stonefern', 'mistvine', 'marshflax', 'thornspire',
+])
+
 // Magic "robe bottom" silhouette. Named tops that read as robe bottoms plus any
 // magic robe leg piece (skirt/bottom/legs whose id mentions a robe).
 const ROBE_BOTTOM_IDS = new Set(['black_wizard_robe', 'void_king_robe'])
@@ -87,7 +93,12 @@ function keyFromId(id) {
   if (id.endsWith('_cape')) return 'cape'
   if (id.endsWith('_partyhat') || id === 'partyhat') return 'party_hat'
   if (id.includes('charm') || id.includes('blessing')) return 'prayer'
-  if (id.endsWith('_mitre') || POINTY_HAT_IDS.has(id)) return 'pointy_hat'
+  if (id.endsWith('_mitre')) return 'mitre'
+  if (POINTY_HAT_IDS.has(id)) return 'pointy_hat'
+  if (id.endsWith('_stole')) return 'stole'
+  if (id === 'venom_blowpipe') return 'blowpipe'
+  if (id.includes('trident')) return 'trident'
+  if (id === 'purple_sweets') return 'wrapped_sweet'
   if (isRobeBottom(id)) return 'magic_robe_bottom'
   if (id.includes('skirt') || id.includes('chaps')) return 'legs'
   if (id.includes('_ore') || id === 'ore') return 'ore'
@@ -118,10 +129,11 @@ function keyFromId(id) {
   if (id.includes('_mace')) return 'mace'
   if (id.includes('_bow')) return 'bow'
   if (id.includes('_gem') || id === 'dragonstone' || id === 'sapphire' || id === 'emerald' || id === 'ruby' || id === 'diamond' || id === 'onyx' || id === 'zyrite') return 'gem'
+  if (HERB_IDS.has(id)) return 'herb'
   if (id.includes('greens') || id.includes('herb') || id.includes('grimy_') || id.includes('leaf') ||
       id.includes('root') || id.includes('weed') || id === 'nettle' || id === 'eye_of_newt' || id === 'goat_horn_dust') return 'herb'
   if (id === 'vial' || id === 'unpowered_orb') return 'vial'
-  if (id === 'shrimps' || id === 'shark' || id === 'lobster' || id === 'swordfish' || id === 'trout' || id === 'anglerfish' || id === 'cooked_chicken' || id === 'cooked_meat') return 'cooked_fish'
+  if (id === 'shrimps' || id === 'shark' || id === 'lobster' || id === 'swordfish' || id === 'trout' || id === 'anglerfish' || id === 'manta_ray' || id === 'cooked_chicken' || id === 'cooked_meat') return 'cooked_fish'
   return null
 }
 
@@ -238,7 +250,9 @@ const ITEM_TINT = {
   ghraxis_rapier:     'var(--tier-cryptbound)',
   // Venom gear
   venom_blowpipe:     'var(--tier-jewel-green)',
-  trident_of_venom:   'var(--tier-jewel-green)',
+  trident_of_venom:   'var(--tier-jewel-purple)',
+  // Sweets
+  purple_sweets:      'var(--tier-jewel-purple)',
   serpentine_helm:    'var(--tier-jewel-green)',
   // Boots & accessories
   spiked_manacles:    'var(--tier-cryptbound)',

@@ -47,9 +47,9 @@ const OUTLINE_SPEC = {
   scythe_of_vythar:    ['red', true],
   abyssal_tentacle:    ['red', true],
   ghraxis_rapier:      ['white', true],
-  // Blue rim
-  venom_blowpipe:      ['blue', false],
-  trident_of_venom:    ['blue', false],
+  // Venom weapons — blowpipe: green body + purple rim; trident: purple body + green glow
+  venom_blowpipe:      ['purple', false],
+  trident_of_venom:    ['green', true],
   serpentine_helm:     ['blue', false],
   imbued_god_cape:     ['blue', false],
   // Green rim

@@ -133,6 +133,15 @@ describe('itemIcons', () => {
     expect(getItemIconKey(itemsData.limpwurt_root)).toBe('herb')
     expect(getItemIconKey(itemsData.rynarr_weed)).toBe('herb')
     expect(getItemIconKey(itemsData.eye_of_newt)).toBe('herb')
+    // Custom-named herbs (fantasy names without 'herb'/'weed'/'leaf'/'root')
+    expect(getItemIconKey(itemsData.sunblossom)).toBe('herb')
+    expect(getItemIconKey(itemsData.wyrmspice)).toBe('herb')
+    expect(getItemIconKey(itemsData.snapdrake)).toBe('herb')
+    expect(getItemIconKey(itemsData.cinderbloom)).toBe('herb')
+    expect(getItemIconKey(itemsData.stonefern)).toBe('herb')
+    expect(getItemIconKey(itemsData.mistvine)).toBe('herb')
+    expect(getItemIconKey(itemsData.marshflax)).toBe('herb')
+    expect(getItemIconKey(itemsData.thornspire)).toBe('herb')
   })
 
   it('herb-seed still resolves to the seed glyph (not herb)', () => {
@@ -188,9 +197,9 @@ describe('itemIcons', () => {
     expect(getItemIconKey(itemsData.studded_chaps)).toBe('legs')
   })
 
-  it('mitres resolve to the pointy_hat glyph', () => {
-    expect(getItemIconKey(itemsData.ancient_mitre)).toBe('pointy_hat')
-    expect(getItemIconKey(itemsData.zephyra_mitre)).toBe('pointy_hat')
+  it('mitres resolve to the mitre glyph', () => {
+    expect(getItemIconKey(itemsData.ancient_mitre)).toBe('mitre')
+    expect(getItemIconKey(itemsData.zephyra_mitre)).toBe('mitre')
   })
 
   it('named mage hats/hoods resolve to the pointy_hat glyph', () => {
@@ -344,7 +353,7 @@ describe('getItemIconTint — tier colouring', () => {
     ['ava_s_accumulator',    'var(--tier-jewel-green)'],
     ['colossal_ballista',    'var(--tier-cryptbound)'],
     ['venom_blowpipe',       'var(--tier-jewel-green)'],
-    ['trident_of_venom',     'var(--tier-jewel-green)'],
+    ['trident_of_venom',     'var(--tier-jewel-purple)'],
     ['serpentine_helm',      'var(--tier-jewel-green)'],
     ['arcane_kiteshield',    'var(--tier-orange)'],
     ['eagle_eyed_kiteshield','var(--tier-jewel-green)'],
