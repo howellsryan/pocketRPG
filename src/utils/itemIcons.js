@@ -180,7 +180,7 @@ function getTierTint(item) {
   if (id === 'berserker_ring')     return 'var(--tier-jewel-red)'
   if (id === 'archers_ring')       return 'var(--tier-jewel-green)'
   if (id === 'seers_ring')         return 'var(--tier-jewel-blue)'
-  if (id === 'arcanist_robe_top' || id === 'arcanist_robe_bottom') return 'var(--tier-jewel-blue)'
+  if (id.startsWith('arcanist_')) return 'var(--tier-jewel-blue)'
   if (id.startsWith('2nd_age_'))   return 'var(--tier-2nd-age)'
   if (id.startsWith('shardglass_')) return 'var(--tier-shardglass)'
 
