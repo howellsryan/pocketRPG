@@ -256,6 +256,8 @@ const ITEM_TINT = {
   trident_of_venom:   'var(--tier-jewel-purple)',
   // Sweets
   purple_sweets:      'var(--tier-jewel-purple)',
+  // Spellweaver boots
+  spellweaver_boots:  'var(--tier-jewel-blue)',
   // Planks — graduated brown, lightest to darkest
   plank:              '#c9a96e',
   oak_plank:          '#a07444',
@@ -397,7 +399,9 @@ export function getItemIconTint(item) {
   // Special overrides
   if (item.type === 'currency') return 'var(--color-gold)'
   if (item.id?.includes('charm') || item.id?.includes('blessing')) return 'var(--color-gold)'
-  if (item.id?.includes('leaf') || item.id?.includes('herb') || item.id?.includes('root') || item.id?.includes('weed')) return 'var(--color-emerald-light)'
+  if (item.id?.startsWith('raw_')) return '#f4a08c'
+  if (item.type === 'food') return '#a0622a'
+  if (HERB_IDS.has(item.id) || item.id?.includes('leaf') || item.id?.includes('herb') || item.id?.includes('root') || item.id?.includes('weed')) return 'var(--color-emerald-light)'
   if (item.id === 'bones' || item.id?.endsWith('_bones')) return '#a0a0a0'
   if (item.type === 'rune' || item.id?.endsWith('_rune')) return 'var(--color-mana-light)'
   if (item.type === 'seed' || item.id?.endsWith('_seed') || item.id?.endsWith('_sapling')) return 'var(--color-emerald-light)'

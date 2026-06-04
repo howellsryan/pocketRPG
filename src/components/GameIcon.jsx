@@ -73,7 +73,7 @@ function isBlackHide(id) {
 //   • a white rim outline for black items (cryptbound champions, black
 //     dragonhide) so the black silhouette reads, or
 //   • a per-item coloured rim/glow from OUTLINE_SPEC.
-function glowFor(id) {
+function glowFor(id, type) {
   if (!id) return undefined
   if (id === 'infernal_cape') return glowing(RIM.gold)
   if (id.startsWith('2nd_age_')) return 'drop-shadow(0 0 3px #e5e4e2)'
@@ -83,6 +83,7 @@ function glowFor(id) {
     const [color, glow] = spec
     return (glow ? glowing : outline)(RIM[color])
   }
+  if (type === 'food') return glowing('#a0622a')
   return undefined
 }
 
@@ -127,7 +128,7 @@ export default function GameIcon({ item, iconKey, size = 24, color, class: cls =
   const label      = title || item?.name || key
   const px         = typeof size === 'number' ? size : undefined
   const sizeStyle  = px ? { width: px, height: px, flexShrink: 0 } : undefined
-  const glow       = glowFor(item?.id)
+  const glow       = glowFor(item?.id, item?.type)
   const style      = {
     ...(sizeStyle || {}),
     color: fill,
