@@ -146,6 +146,17 @@ function getTierTint(item) {
   if (id === 'fire_cape')          return 'var(--tier-fire-cape)'
   if (id === 'infernal_cape')      return 'var(--tier-infernal-cape)'
 
+  // Party hats by colour
+  if (id === 'red_partyhat')       return 'var(--tier-partyhat-red)'
+  if (id === 'blue_partyhat')      return 'var(--tier-partyhat-blue)'
+  if (id === 'green_partyhat')     return 'var(--tier-partyhat-green)'
+  if (id === 'yellow_partyhat')    return 'var(--tier-partyhat-yellow)'
+  if (id === 'white_partyhat')     return 'var(--tier-partyhat-white)'
+  if (id === 'purple_partyhat')    return 'var(--tier-partyhat-purple)'
+
+  // Gold items (ore, bar, tools, amulet)
+  if (id.startsWith('gold_'))      return 'var(--tier-gold)'
+
   // Dragonhide armour by colour
   if (id.includes('_d_hide_')) {
     if (id.startsWith('red_'))     return 'var(--tier-dhide-red)'
@@ -160,7 +171,7 @@ function getTierTint(item) {
   // "dragonstone_", not "dragon_".
   if (id.startsWith('runeforged_')) return 'var(--tier-runeforged)'
   if (id.startsWith('dragon_') && id !== 'dragon_bones') return 'var(--tier-dragon)'
-  if (id.startsWith('bronze_'))  return 'var(--tier-bronze)'
+  if (id.startsWith('bronze_') || id === 'copper_ore') return 'var(--tier-bronze)'
   if (id.startsWith('iron_'))    return 'var(--tier-iron)'
   if (id.startsWith('steel_'))   return 'var(--tier-steel)'
   if (id.startsWith('mithril_')) return 'var(--tier-mithril)'

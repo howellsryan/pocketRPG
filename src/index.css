@@ -45,6 +45,13 @@
   --tier-dhide-green: #27ae60;
   --tier-fire-cape: #c0392b;
   --tier-infernal-cape: #d23b2f;
+  --tier-partyhat-red: #e74c3c;
+  --tier-partyhat-blue: #3498db;
+  --tier-partyhat-green: #2ecc71;
+  --tier-partyhat-yellow: #f1c40f;
+  --tier-partyhat-white: #ecf0f1;
+  --tier-partyhat-purple: #9b59b6;
+  --tier-gold: #f39c12;
   --font-display: 'Cinzel', serif;
   --font-body: 'Nunito', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;

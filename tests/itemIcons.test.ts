@@ -244,6 +244,15 @@ describe('getItemIconTint — tier colouring', () => {
     ['black_d_hide_chaps',   'var(--tier-dhide-black)'],
     ['fire_cape',            'var(--tier-fire-cape)'],
     ['infernal_cape',        'var(--tier-infernal-cape)'],
+    ['red_partyhat',         'var(--tier-partyhat-red)'],
+    ['blue_partyhat',        'var(--tier-partyhat-blue)'],
+    ['green_partyhat',       'var(--tier-partyhat-green)'],
+    ['yellow_partyhat',      'var(--tier-partyhat-yellow)'],
+    ['white_partyhat',       'var(--tier-partyhat-white)'],
+    ['purple_partyhat',      'var(--tier-partyhat-purple)'],
+    ['copper_ore',           'var(--tier-bronze)'],
+    ['gold_ore',             'var(--tier-gold)'],
+    ['gold_bar',             'var(--tier-gold)'],
   ]
 
   for (const [id, expected] of cases) {
