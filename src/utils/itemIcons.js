@@ -128,6 +128,37 @@ export function getItemIconKey(item) {
   return 'default'
 }
 
+// ─── Tier-based equipment tint ────────────────────────────────────────────────
+// An item's metal/material tier decides its icon colour so the inventory reads
+// at a glance. Matched on the leading segment of the item id. The FIRST matching
+// rule wins, so the most specific (named uniques) are checked before the generic
+// metal-prefix rules. Returns a CSS color string, or null if the item has no
+// tier (so the caller falls back to the type-based tint).
+function getTierTint(item) {
+  const id = item.id || ''
+
+  // Named uniques (most specific first)
+  if (id.startsWith('cryptbound')) return 'var(--tier-cryptbound)'
+  if (id.startsWith('kodai'))      return 'var(--tier-kodai)'
+  if (id === 'robin_hood_hat' || id === 'rangers_tunic' || id === 'pathfinder_boots') {
+    return 'var(--tier-ranger)'
+  }
+
+  // Metal / material tier prefixes. Each rule matches ids whose first segment is
+  // the tier word (e.g. "bronze_dagger"). `dragon_bones` is excluded so it keeps
+  // its bone-grey tint; "dragonstone*" ids never match because they begin with
+  // "dragonstone_", not "dragon_".
+  if (id.startsWith('runeforged_')) return 'var(--tier-runeforged)'
+  if (id.startsWith('dragon_') && id !== 'dragon_bones') return 'var(--tier-dragon)'
+  if (id.startsWith('bronze_'))  return 'var(--tier-bronze)'
+  if (id.startsWith('iron_'))    return 'var(--tier-iron)'
+  if (id.startsWith('steel_'))   return 'var(--tier-steel)'
+  if (id.startsWith('mithril_')) return 'var(--tier-mithril)'
+  if (id.startsWith('adamant_') || id === 'adamantite_ore') return 'var(--tier-adamant)'
+
+  return null
+}
+
 // ─── Tint by type ─────────────────────────────────────────────────────────────
 
 const TYPE_TINT = {
@@ -148,6 +179,9 @@ const TYPE_TINT = {
 
 export function getItemIconTint(item) {
   if (!item) return 'var(--color-parchment)'
+  // Tier colouring takes priority over the type-based tint below.
+  const tierTint = getTierTint(item)
+  if (tierTint) return tierTint
   // Special overrides
   if (item.type === 'currency') return 'var(--color-gold)'
   if (item.id?.includes('charm') || item.id?.includes('blessing')) return 'var(--color-gold)'

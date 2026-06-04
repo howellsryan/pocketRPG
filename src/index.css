@@ -28,6 +28,18 @@
   --color-hp-green: #27ae60;
   --color-hp-yellow: #f39c12;
   --color-hp-red: #c0392b;
+
+  /* Equipment tier tints (icon colouring) — see docs/tier-icon-colouring-plan.md */
+  --tier-runeforged: #b7e4ff;
+  --tier-dragon: #d23b2f;
+  --tier-bronze: #b87333;
+  --tier-iron: #8c8c8c;
+  --tier-steel: #cdd2d8;
+  --tier-mithril: #3550c4;
+  --tier-adamant: #3aa55f;
+  --tier-cryptbound: #3d3d3d;
+  --tier-kodai: #4db8e8;
+  --tier-ranger: #4a8c3a;
   --font-display: 'Cinzel', serif;
   --font-body: 'Nunito', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;

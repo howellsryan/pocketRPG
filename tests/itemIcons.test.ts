@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import items from '../src/data/items.json'
 import gameIcons from '../src/data/gameIcons.json'
 import minigames from '../src/data/minigames.json'
-import { getItemIconKey } from '../src/utils/itemIcons.js'
+import { getItemIconKey, getItemIconTint } from '../src/utils/itemIcons.js'
 
 const itemsData = items as Record<string, any>
 const gameIconsData = gameIcons as Record<string, { body: string; viewBox: string | null }>
@@ -217,5 +217,43 @@ describe('itemIcons', () => {
       if (m.iconKey && !gameIconsData[m.iconKey]) bad.push(`minigame ${m.id} → "${m.iconKey}"`)
     }
     expect(bad).toEqual([])
+  })
+})
+
+describe('getItemIconTint — tier colouring', () => {
+  const cases: [string, string][] = [
+    ['runeforged_platebody', 'var(--tier-runeforged)'],
+    ['dragon_scimitar',      'var(--tier-dragon)'],
+    ['dragon_full_helm',     'var(--tier-dragon)'],
+    ['bronze_dagger',        'var(--tier-bronze)'],
+    ['iron_platebody',       'var(--tier-iron)'],
+    ['steel_scimitar',       'var(--tier-steel)'],
+    ['mithril_kiteshield',   'var(--tier-mithril)'],
+    ['adamant_platelegs',    'var(--tier-adamant)'],
+    ['adamantite_ore',       'var(--tier-adamant)'],
+    ['cryptbound_gloves',    'var(--tier-cryptbound)'],
+    ['kodai_hat',            'var(--tier-kodai)'],
+    ['kodai_robe_top',       'var(--tier-kodai)'],
+    ['robin_hood_hat',       'var(--tier-ranger)'],
+    ['rangers_tunic',        'var(--tier-ranger)'],
+    ['pathfinder_boots',     'var(--tier-ranger)'],
+  ]
+
+  for (const [id, expected] of cases) {
+    it(`${id} resolves to ${expected}`, () => {
+      expect(getItemIconTint(itemsData[id])).toBe(expected)
+    })
+  }
+
+  it('dragon_bones keeps its bone-grey tint (not dragon red)', () => {
+    expect(getItemIconTint(itemsData.dragon_bones)).toBe('#a0a0a0')
+  })
+
+  it('dragonstone (a gem) is NOT coloured as dragon tier', () => {
+    expect(getItemIconTint(itemsData.dragonstone)).not.toBe('var(--tier-dragon)')
+  })
+
+  it('returns the parchment fallback for null input', () => {
+    expect(getItemIconTint(null)).toBe('var(--color-parchment)')
   })
 })
