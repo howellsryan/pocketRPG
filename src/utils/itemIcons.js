@@ -103,6 +103,7 @@ function keyFromId(id) {
   if (id.includes('skirt') || id.includes('chaps')) return 'legs'
   if (id.includes('_ore') || id === 'ore') return 'ore'
   if (id.endsWith('_bar') || id === 'bar') return 'metal_bar'
+  if (id === 'raw_chicken' || id === 'cooked_chicken') return 'chicken'
   if (id === 'plank' || id.endsWith('_plank')) return 'planks'
   if (id === 'raw_beef') return 'meat'
   if (id.endsWith('_logs') || id === 'logs') return 'log'
@@ -136,7 +137,7 @@ function keyFromId(id) {
       id.includes('root') || id.includes('weed') || id === 'nettle' || id === 'eye_of_newt' || id === 'goat_horn_dust') return 'herb'
   if (id === 'vial' || id === 'unpowered_orb') return 'vial'
   if (id === 'cooked_meat') return 'meat'
-  if (id === 'shrimps' || id === 'shark' || id === 'lobster' || id === 'swordfish' || id === 'trout' || id === 'anglerfish' || id === 'manta_ray' || id === 'cooked_chicken') return 'cooked_fish'
+  if (id === 'shrimps' || id === 'shark' || id === 'lobster' || id === 'swordfish' || id === 'trout' || id === 'anglerfish' || id === 'manta_ray') return 'cooked_fish'
   return null
 }
 
