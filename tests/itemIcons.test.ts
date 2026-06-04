@@ -237,6 +237,13 @@ describe('getItemIconTint — tier colouring', () => {
     ['robin_hood_hat',       'var(--tier-ranger)'],
     ['rangers_tunic',        'var(--tier-ranger)'],
     ['pathfinder_boots',     'var(--tier-ranger)'],
+    ['red_d_hide_body',      'var(--tier-dhide-red)'],
+    ['green_d_hide_body',    'var(--tier-dhide-green)'],
+    ['green_d_hide_chaps',   'var(--tier-dhide-green)'],
+    ['black_d_hide_body',    'var(--tier-dhide-black)'],
+    ['black_d_hide_chaps',   'var(--tier-dhide-black)'],
+    ['fire_cape',            'var(--tier-fire-cape)'],
+    ['infernal_cape',        'var(--tier-infernal-cape)'],
   ]
 
   for (const [id, expected] of cases) {

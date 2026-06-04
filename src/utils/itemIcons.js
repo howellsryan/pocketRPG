@@ -137,11 +137,21 @@ export function getItemIconKey(item) {
 function getTierTint(item) {
   const id = item.id || ''
 
-  // Named uniques (most specific first)
+  // Named uniques & special items (most specific first)
   if (id.startsWith('cryptbound')) return 'var(--tier-cryptbound)'
   if (id.startsWith('kodai'))      return 'var(--tier-kodai)'
   if (id === 'robin_hood_hat' || id === 'rangers_tunic' || id === 'pathfinder_boots') {
     return 'var(--tier-ranger)'
+  }
+  if (id === 'fire_cape')          return 'var(--tier-fire-cape)'
+  if (id === 'infernal_cape')      return 'var(--tier-infernal-cape)'
+
+  // Dragonhide armour by colour
+  if (id.includes('_d_hide_')) {
+    if (id.startsWith('red_'))     return 'var(--tier-dhide-red)'
+    if (id.startsWith('green_'))   return 'var(--tier-dhide-green)'
+    if (id.startsWith('black_'))   return 'var(--tier-dhide-black)'
+    if (id.startsWith('blue_'))    return 'var(--color-mana-light)'
   }
 
   // Metal / material tier prefixes. Each rule matches ids whose first segment is

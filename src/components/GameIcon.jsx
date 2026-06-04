@@ -47,7 +47,12 @@ export default function GameIcon({ item, iconKey, size = 24, color, class: cls =
   // to drive `color` for it to actually show; `fill` alone is overridden by the
   // inner currentColor. Set both so currentColor glyphs (all of them today) and
   // any future bare-fill glyph both take the colour.
-  const style      = { ...(sizeStyle || {}), color: fill }
+  const style      = {
+    ...(sizeStyle || {}),
+    color: fill,
+    // Infernal cape gets a distinctive gold glow effect
+    ...(item?.id === 'infernal_cape' && { filter: 'drop-shadow(0 0 2px #f0c040)' })
+  }
 
   return (
     <svg
