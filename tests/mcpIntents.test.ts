@@ -21,8 +21,11 @@ import {
   buildCombatTask,
   runCombatTask,
   planDungeoneeringReward,
+  assignSlayerTask,
+  slayerStatus,
 } from '../functions/_lib/mcp/intents.js'
 import { getLevelFromXP } from '../src/engine/experience.js'
+import { SLAYER_MASTERS } from '../src/engine/slayerMasters.js'
 
 // Phase C save intents are pure mutations of a decoded save. These golden tests
 // exercise them directly (no D1), asserting items only relocate and that
@@ -534,5 +537,70 @@ describe('MCP quest queue', () => {
     expect(save.stats.cooking.xp).toBe(300)
     expect(save.settings.questQueue).toEqual([])
     expect(r.queue).toEqual([])
+  })
+})
+
+describe('slayer intents', () => {
+  // Deterministic assignment: rng()=0 picks the first eligible monster and the
+  // low end of the master's task range; a fresh history avoids cross-test bleed.
+  const det = () => ({ rng: () => 0, history: new Map() })
+  const maxedSlayer = () => makeSave({ stats: { slayer: { xp: 200_000_000 } } })
+
+  it('assigns a task from an eligible master and writes it to settings', () => {
+    const save = maxedSlayer()
+    const r = assignSlayerTask(save, 'turael', det())
+    expect(r.action).toBe('assign_slayer_task')
+    expect(r.master.id).toBe('turael')
+    expect(typeof r.task.monsterId).toBe('string')
+    expect(r.task.totalCount).toBe(SLAYER_MASTERS[0].taskRange[0]) // rng()=0 → low end
+    expect(save.settings.slayerTask.monsterId).toBe(r.task.monsterId)
+    expect(save.settings.slayerTask.monstersRemaining).toBe(r.task.totalCount)
+    expect(save.settings.slayerTask.pointsOnComplete).toBe(SLAYER_MASTERS[0].pointsPerTask)
+  })
+
+  it('refuses a new task while one is already active', () => {
+    const save = maxedSlayer()
+    save.settings.slayerTask = { monsterId: 'field_chicken', monstersRemaining: 5, totalCount: 5 }
+    expect(() => assignSlayerTask(save, 'turael', det())).toThrow(/already active/i)
+  })
+
+  it("enforces the master's slayer requirement (nothing written on failure)", () => {
+    const save = makeSave() // slayer level 1
+    expect(() => assignSlayerTask(save, 'duradel', det())).toThrow(/slayer level/i)
+    expect(save.settings.slayerTask).toBeUndefined()
+  })
+
+  it('rejects an unknown master', () => {
+    expect(() => assignSlayerTask(maxedSlayer(), 'not_a_master', det())).toThrow(/No slayer master/i)
+  })
+
+  it('summarises current task, points and master eligibility', () => {
+    const save = makeSave({
+      stats: { slayer: { xp: 200_000_000 } },
+      settings: {
+        slayerPoints: 120,
+        slayerTasksCompleted: 4,
+        slayerTask: {
+          monsterId: 'green_dragon', monsterName: 'Green Dragon',
+          monstersRemaining: 30, totalCount: 100, masterId: 'vannaka',
+          pointsOnComplete: 4, isBoss: false,
+        },
+      },
+    })
+    const s = slayerStatus(save)
+    expect(s.slayerPoints).toBe(120)
+    expect(s.tasksCompleted).toBe(4)
+    expect(s.currentTask.killed).toBe(70)
+    expect(s.currentTask.progressPct).toBe(70)
+    expect(s.nextTaskMultiplier).toBe(10) // the 5th task hits a x10 milestone
+    expect(s.skipCosts).toEqual({ points: 30, credits: 1 })
+    expect(s.masters.find((m: any) => m.id === 'turael')?.eligible).toBe(true)
+  })
+
+  it('reports no current task on a fresh save', () => {
+    const s = slayerStatus(makeSave())
+    expect(s.currentTask).toBeNull()
+    expect(s.slayerPoints).toBe(0)
+    expect(s.nextTaskMultiplier).toBe(1)
   })
 })

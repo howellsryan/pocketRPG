@@ -38,6 +38,11 @@ Getting oriented:
 Acting:
 - buy_item, skip_hour and skip_slayer_task spend the player's coins/credits and
   take effect server-side — confirm intent before calling them.
+- Slayer: get_slayer_task shows the current task, slayer points, tasks completed
+  and each master's eligibility; assign_slayer_task gets a new task from a master
+  (none may be active and the character must meet the master's requirements);
+  skip_slayer_task spends a credit to drop the current task. Actually killing the
+  task's monster is done through the normal combat flow (start_fight/the client).
 - Trading post: search_market to price items, my_offers to see open offers,
   place_offer (buy/sell on the order book), cancel_offer/collect_offer/
   instant_sell_offer to manage them, and sell_item to sell general items at
@@ -275,6 +280,28 @@ export const TOOL_SCHEMAS = [
     description: "Spend 1 credit to skip the character's current slayer task. Debits the credit server-side.",
     inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
     annotations: WRITE('Skip slayer task'),
+  },
+  {
+    name: 'get_slayer_task',
+    description:
+      "Get a character's slayer status: the current task (monster, kills remaining/total, progress %, points awarded on completion), slayer points balance, slayer + combat level, tasks completed, the points multiplier on the next completed task, the skip costs, and every slayer master with whether the character meets its requirements. Read-only.",
+    inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
+    annotations: READ('Get slayer task'),
+  },
+  {
+    name: 'assign_slayer_task',
+    description:
+      "Get a new slayer task from a slayer master (the in-game 'get task'). Picks an eligible monster from that master's pool and assigns it. Refused if the character already has an active task, or doesn't meet the master's combat/slayer requirements. Find master ids and eligibility via get_slayer_task. No points or loot are granted here — only on completing the task by killing its monster in combat.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        master_id: { type: 'string', description: "The slayer master id, e.g. 'turael'. See get_slayer_task for ids and eligibility." },
+        ...optionalCharacterId,
+      },
+      required: ['master_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Assign slayer task'),
   },
   {
     name: 'search_market',

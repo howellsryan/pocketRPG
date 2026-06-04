@@ -28,6 +28,9 @@ import { simulateIdleThieving } from '../../../src/engine/thieving.js'
 import { simulateIdleHunting } from '../../../src/engine/hunter.js'
 import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
 import { getDungeoneeringRewardCost } from '../../../src/engine/dungeoneeringTokens.js'
+import { SLAYER_MASTERS, pickSlayerMonster, buildSlayerTask } from '../../../src/engine/slayerMasters.js'
+import { SLAYER_TASK_SKIP_POINT_COST } from '../../../src/engine/slayerTasks.js'
+import { getSlayerTaskReward } from '../../../src/engine/slayerRewards.js'
 import questsData from '../../../src/data/quests.json' assert { type: 'json' }
 import { checkQuestEligibility, getQuestPointsEarned, getCombatLevel } from '../../../src/engine/quests.js'
 import { createQueuedQuestTask, simulateQuestIdleCascade, splitQuestXpRewards } from '../../../src/engine/questIdleCascade.js'
@@ -879,4 +882,111 @@ export function planDungeoneeringReward(save, actionId) {
     throw new GameApiError('INSUFFICIENT_TOKENS', `Need ${cost} dungeoneering tokens (you have ${tokens}).`, 400)
   }
   return { action, cost, product: action.product, productQty: Math.max(1, Math.floor(Number(action.productQty) || 1)) }
+}
+
+// ── Slayer (Phase D increment 3) ─────────────────────────────────────────────
+// Slayer task state is client-authoritative save data (settings.slayerTask /
+// slayerPoints / slayerTasksCompleted). Assigning a task creates no economic
+// value — points and loot are only granted on completion through the normal
+// combat flow — so it fits the save-intent pattern: enforce the master's
+// requirements, pick an eligible monster and write the task. slayerStatus is a
+// read-only summary of the current task, points and master eligibility.
+
+const SLAYER_MASTER_BY_ID = new Map(SLAYER_MASTERS.map((m) => [m.id, m]))
+
+function slayerLevelOf(save) {
+  return getLevelFromXP(Number(save.stats?.slayer?.xp) || 0)
+}
+
+// Assign a new slayer task from a master, mirroring the client SlayerScreen:
+// refuse while a task is active, enforce the master's combat/slayer
+// requirements, pick an eligible monster and write settings.slayerTask.
+// `options` (rng/history) is forwarded to the picker so callers can be
+// deterministic.
+export function assignSlayerTask(save, masterId, options = {}) {
+  if (!save.settings || typeof save.settings !== 'object') save.settings = {}
+  const master = SLAYER_MASTER_BY_ID.get(masterId)
+  if (!master) {
+    throw new GameApiError('UNKNOWN_SLAYER_MASTER', `No slayer master '${masterId}'. Masters: ${[...SLAYER_MASTER_BY_ID.keys()].join(', ')}.`, 400)
+  }
+  if (save.settings.slayerTask && save.settings.slayerTask.monsterId) {
+    throw new GameApiError('SLAYER_TASK_ACTIVE', 'A slayer task is already active — finish it or skip it (skip_slayer_task) before getting a new one.', 400)
+  }
+  const slayerLevel = slayerLevelOf(save)
+  const combatLevel = getCombatLevel(save.stats || {})
+  if (combatLevel < master.combatReq) {
+    throw new GameApiError('COMBAT_LEVEL_TOO_LOW', `${master.name} requires combat level ${master.combatReq} (you are ${combatLevel}).`, 400)
+  }
+  if (slayerLevel < master.slayerReq) {
+    throw new GameApiError('SLAYER_LEVEL_TOO_LOW', `${master.name} requires slayer level ${master.slayerReq} (you have ${slayerLevel}).`, 400)
+  }
+  const pick = pickSlayerMonster(master, slayerLevel, options)
+  if (!pick) {
+    throw new GameApiError('NO_SLAYER_TASK', `${master.name} has no eligible task for slayer level ${slayerLevel}. Raise slayer or pick another master.`, 400)
+  }
+  const task = buildSlayerTask(master, pick.monsterId, pick.isBoss, options)
+  save.settings.slayerTask = task
+  return {
+    action: 'assign_slayer_task',
+    master: { id: master.id, name: master.name },
+    task: {
+      monsterId: task.monsterId,
+      monsterName: task.monsterName,
+      monstersRemaining: task.monstersRemaining,
+      totalCount: task.totalCount,
+      pointsOnComplete: task.pointsOnComplete,
+      isBoss: task.isBoss,
+    },
+  }
+}
+
+// Read-only slayer summary: current task (with progress), points, tasks done,
+// the points multiplier on the next completed task, skip costs, and each
+// master's eligibility for the character.
+export function slayerStatus(save) {
+  const settings = (save.settings && typeof save.settings === 'object') ? save.settings : {}
+  const slayerLevel = slayerLevelOf(save)
+  const combatLevel = getCombatLevel(save.stats || {})
+  const points = Math.max(0, Math.floor(Number(settings.slayerPoints) || 0))
+  const tasksCompleted = Math.max(0, Math.floor(Number(settings.slayerTasksCompleted) || 0))
+
+  const raw = settings.slayerTask
+  let currentTask = null
+  if (raw && raw.monsterId) {
+    const total = Math.max(0, Math.floor(Number(raw.totalCount) || 0))
+    const remaining = Math.max(0, Math.floor(Number(raw.monstersRemaining) || 0))
+    const killed = Math.max(0, total - remaining)
+    currentTask = {
+      monsterId: raw.monsterId,
+      monsterName: raw.monsterName || raw.monsterId,
+      monstersRemaining: remaining,
+      totalCount: total,
+      killed,
+      progressPct: total > 0 ? Math.floor((killed / total) * 100) : 0,
+      masterId: raw.masterId || null,
+      pointsOnComplete: Math.max(0, Math.floor(Number(raw.pointsOnComplete) || 0)),
+      isBoss: !!raw.isBoss,
+    }
+  }
+
+  const masters = SLAYER_MASTERS.map((m) => ({
+    id: m.id,
+    name: m.name,
+    location: m.location,
+    combatReq: m.combatReq,
+    slayerReq: m.slayerReq,
+    pointsPerTask: m.pointsPerTask,
+    eligible: combatLevel >= m.combatReq && slayerLevel >= m.slayerReq,
+  }))
+
+  return {
+    slayerLevel,
+    combatLevel,
+    slayerPoints: points,
+    tasksCompleted,
+    currentTask,
+    nextTaskMultiplier: getSlayerTaskReward(1, tasksCompleted).multiplier,
+    skipCosts: { points: SLAYER_TASK_SKIP_POINT_COST, credits: 1 },
+    masters,
+  }
 }

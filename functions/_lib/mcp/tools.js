@@ -4,7 +4,7 @@ import { getItem, getMonster, itemName, withItemName, REFERENCE_RESOURCES, readR
 import { loadCharacterWithSave, writeSave } from '../game/save.js'
 import { auditLog } from '../game/audit.js'
 import { assertNotInActiveMatch } from '../pvp.js'
-import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue } from './intents.js'
+import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue, assignSlayerTask, slayerStatus } from './intents.js'
 import { getIdleRow, setIdleTask, resetIdleActiveAt, clearIdleTask, advanceIdleClock } from './idle.js'
 import { SKIP_HOUR_MS } from '../../../src/engine/skipPreflight.js'
 import { simulateBossFight, applyBossFightOutcome } from './bossFight.js'
@@ -307,6 +307,20 @@ const TOOLS = {
     const res = await callHandler(postSlayerSkip, env, { method: 'POST', authorization, characterId: id })
     if (!res.ok) throw httpError(res)
     return ok({ characterId: id, ...res.data })
+  },
+
+  async get_slayer_task({ character_id }, { env, authorization }) {
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const res = await callHandler(getSave, env, { authorization, characterId: id })
+    if (!res.ok) throw httpError(res)
+    const save = res.data?.save?.save_data
+    const state = save ? (typeof save === 'string' ? JSON.parse(save) : save) : {}
+    return ok({ characterId: id, ...slayerStatus(state) })
+  },
+
+  assign_slayer_task({ master_id, character_id }, ctx) {
+    if (!master_id) throw new Error('master_id is required.')
+    return applySaveIntent(ctx, character_id, (save) => assignSlayerTask(save, master_id), 'mcp_assign_slayer_task')
   },
 
   // ── Trading post (Phase B) ─────────────────────────────────────────────────

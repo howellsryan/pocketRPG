@@ -136,6 +136,37 @@ export const SLAYER_MASTERS = [
   },
 ]
 
+// Build a slayer task object for an assigned monster. Shared by the game client
+// and the MCP assignment intent so the two paths can't drift: Ember Tyrant is
+// always a single kill; bosses use the master's bossTaskRange (default [20,50]);
+// everything else rolls within the master's taskRange. `options.rng` overrides
+// Math.random for deterministic assignment.
+export function buildSlayerTask(master, monsterId, isBoss, options = {}) {
+  const rng = options.rng || Math.random
+  const monsterData = monstersData[monsterId]
+  const monsterName = monsterId === DAGANNOTH_KINGS_TASK_ID
+    ? 'Nagadoth Kings'
+    : (monsterData?.name || monsterId.replace(/_/g, ' '))
+
+  let totalCount
+  if (monsterId === 'ember_tyrant') {
+    totalCount = 1
+  } else {
+    const taskRange = isBoss ? (master.bossTaskRange || [20, 50]) : master.taskRange
+    totalCount = Math.floor(rng() * (taskRange[1] - taskRange[0] + 1)) + taskRange[0]
+  }
+
+  return {
+    monsterId,
+    monsterName,
+    monstersRemaining: totalCount,
+    totalCount,
+    masterId: master.id,
+    pointsOnComplete: master.pointsPerTask,
+    isBoss,
+  }
+}
+
 // Composite tasks (e.g. Nagadoth Kings) resolve to the set of monsters that count.
 export function resolveTaskMonsterIds(monsterId) {
   if (monsterId === DAGANNOTH_KINGS_TASK_ID) return ['nagadoth_rex', 'nagadoth_prime', 'nagadoth_supreme']

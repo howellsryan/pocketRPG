@@ -84,6 +84,8 @@ describe('MCP tool schema', () => {
       'buy_item',
       'skip_hour',
       'skip_slayer_task',
+      'get_slayer_task',
+      'assign_slayer_task',
       'search_market',
       'my_offers',
       'place_offer',

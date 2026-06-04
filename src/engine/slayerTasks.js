@@ -1,6 +1,9 @@
 export const DAGANNOTH_KINGS_TASK_ID = 'dagganoth_kings'
 const DAGANNOTH_KINGS = new Set(['nagadoth_rex', 'nagadoth_prime', 'nagadoth_supreme'])
 
+// Slayer points spent to skip (cancel) the current task without a credit.
+export const SLAYER_TASK_SKIP_POINT_COST = 30
+
 export function doesSlayerTaskMatchMonster(taskMonsterId, monsterId) {
   if (!taskMonsterId || !monsterId) return false
   if (taskMonsterId === monsterId) return true
