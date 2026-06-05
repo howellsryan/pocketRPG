@@ -784,7 +784,7 @@
         "name": "Cook Manta Ray",
         "level": 91,
         "ticks": 4,
-        "xp": 216,
+        "xp": 250,
         "product": "manta_ray",
         "materials": {
           "raw_manta_ray": 1
@@ -796,7 +796,7 @@
         "name": "Cook Anglerfish",
         "level": 93,
         "ticks": 4,
-        "xp": 230,
+        "xp": 270,
         "product": "anglerfish",
         "materials": {
           "raw_anglerfish": 1
