@@ -2,7 +2,7 @@ import { requireAuth, json } from '../../../../_lib/auth.js'
 import { getOwnedCharacter, sweepStaleRows } from '../../../../_lib/pvp.js'
 import { readOwnedActiveMatch, itemsData, readCharacterSave, applyCombatantToSave } from '../../../../_lib/pvpMatch.js'
 import { processPvpTick } from '../../../../../src/engine/pvpEngine.js'
-import { applyLootTransfer, splitInventoryByTradeable, fillBank } from '../../../../../src/engine/lootTransfer.js'
+import { applyLootTransfer, splitInventoryByTradeable, fillBank, lootEntryValue } from '../../../../../src/engine/lootTransfer.js'
 import { appendPvpEndSummaryToState, createPvpEndSummary } from '../../../../../src/engine/pvpEndSummary.js'
 import { rollBotLootBox, isZestaUnique } from '../../../../../src/engine/pvpBotRewards.js'
 import { computeBotIntents } from '../../../../../src/engine/pvpBotAI.js'
@@ -118,7 +118,7 @@ async function finalizeTerminalMatch(env, match, stateNext, terminal, appliedInt
           addedValue: 0,
           bankedValue: 0,
           droppedValue: 0,
-          totalRiskValue: transfer.reduce((s, e) => s + (e.quantity || 1), 0),
+          totalRiskValue: transfer.reduce((s, e) => s + lootEntryValue(e, itemsData), 0),
           isBotLootBox: true,
         }
       }
