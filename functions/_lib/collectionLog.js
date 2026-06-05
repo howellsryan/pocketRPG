@@ -39,3 +39,22 @@ export function isValidEntry(sourceType, sourceId, itemId) {
   const normalizedSourceType = SOURCE_TYPE_ALIASES[sourceType] || sourceType
   return VALID.has(`${normalizedSourceType}:${sourceId}:${itemId}`)
 }
+
+// Insert a collection log entry for a PvP bot loot box unique drop.
+// sourceType='pvp', sourceId='pvp_bots'. Idempotent (ON CONFLICT DO NOTHING).
+// Returns the entry object if inserted, null if skipped/invalid.
+export async function persistPvpBotCollectionLog(env, characterId, itemId) {
+  if (!env?.DB || !characterId || !itemId) return null
+  if (!isValidEntry('pvp', 'pvp_bots', itemId)) return null
+  const now = Date.now()
+  try {
+    await env.DB.prepare(
+      `INSERT INTO collection_log (character_id, item_id, source_type, source_id, obtained_at)
+       VALUES (?, ?, 'pvp', 'pvp_bots', ?)
+       ON CONFLICT(character_id, item_id, source_type, source_id) DO NOTHING`
+    ).bind(characterId, itemId, now).run()
+    return { itemId, sourceType: 'pvp', sourceId: 'pvp_bots' }
+  } catch {
+    return null
+  }
+}

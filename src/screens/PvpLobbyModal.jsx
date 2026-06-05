@@ -215,10 +215,15 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
     }
   }, [joined, refresh])
 
-  const handleInvite = async (toCharacterId, username) => {
+  const handleInvite = async (toCharacterId, username, isBot = false) => {
     setBusy(true)
     try {
-      await pvpApi.sendInvitation(toCharacterId)
+      const res = await pvpApi.sendInvitation(toCharacterId)
+      // Bots auto-accept: server returns match_id immediately.
+      if (res?.auto_accepted && res?.match_id) {
+        await launchMatch(res.match_id, `Fighting ${username}!`)
+        return
+      }
       addToast(`Invitation sent to ${username}`, 'info')
       await refresh()
     } catch (err) {
@@ -393,31 +398,37 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
           <SectionHeader size="sm" className="mb-2">Available opponents (CB ±10)</SectionHeader>
           {waiting.length === 0 && (
             <Card className="text-center text-[11px] text-[var(--color-parchment)] opacity-50 py-6">
-              No one in your CB band right now. Wait for someone to join, or come back later.
+              No opponents in your CB band right now. Bots appear when your combat level is within their range.
             </Card>
           )}
           <div class="space-y-1.5">
             {waiting.map(p => {
-              const alreadyInvited = invitations.outgoing.some(o => o.to_character === p.character_id)
-                            return (
+              const alreadyInvited = !p.is_bot && invitations.outgoing.some(o => o.to_character === p.character_id)
+              return (
                 <Card key={p.character_id} className="flex items-center justify-between" padding="p-2.5">
                   <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-1">
                       <div class="truncate text-sm font-semibold text-[var(--color-parchment)]">{p.username}</div>
+                      {p.is_bot && (
+                        <span class="rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide bg-[var(--color-gold-dim)] text-black">Bot</span>
+                      )}
                       <CombatStatsInfoButton
                         label={`View ${p.username} combat stats`}
                         onClick={() => openStatsModal(p.username, p.combat_stats)}
                       />
                     </div>
-                    <div class="text-[10px] text-[var(--color-parchment)] opacity-50">CB {p.combat_level} · Total Risk: {formatCompactCoins(p.total_shop_value)} · Rank: {formatLobbyPvpRank(p.pvp_rank)}</div>
+                    <div class="text-[10px] text-[var(--color-parchment)] opacity-50">
+                      CB {p.combat_level}
+                      {p.is_bot ? ' · Bot Rewards on Win' : ` · Total Risk: ${formatCompactCoins(p.total_shop_value)} · Rank: ${formatLobbyPvpRank(p.pvp_rank)}`}
+                    </div>
                   </div>
                   <Button
                     variant={alreadyInvited ? 'secondary' : 'primary'}
                     size="sm"
                     disabled={busy || alreadyInvited}
-                    onClick={() => handleInvite(p.character_id, p.username)}
+                    onClick={() => handleInvite(p.character_id, p.username, p.is_bot)}
                   >
-                    {alreadyInvited ? 'Invited' : '⚔️ Invite'}
+                    {alreadyInvited ? 'Invited' : '⚔️ Fight'}
                   </Button>
                 </Card>
               )

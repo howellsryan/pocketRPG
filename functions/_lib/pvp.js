@@ -12,6 +12,7 @@
 // somehow stale.
 
 import { json } from './auth.js'
+import { resetBotSave } from './pvpBot.js'
 
 // Returns null if the character is free to mutate, or a Response with a
 // 409 'character_in_active_match' body. Endpoints should:
@@ -81,8 +82,13 @@ export async function sweepStaleRows(env) {
     // Find stalled active matches first, so we can clear the matching
     // active_match_id columns on characters in the same pass.
     const stalled = await env.DB.prepare(
-      'SELECT id, character_a, character_b FROM pvp_matches WHERE status = ? AND last_tick_at < ?'
-    ).bind('active', matchCutoff).all()
+      `SELECT m.id, m.character_a, m.character_b,
+              ca.is_bot AS a_is_bot, cb.is_bot AS b_is_bot
+         FROM pvp_matches m
+         JOIN characters ca ON ca.id = m.character_a
+         JOIN characters cb ON cb.id = m.character_b
+        WHERE m.status = 'active' AND m.last_tick_at < ?`
+    ).bind(matchCutoff).all()
 
     for (const m of stalled.results || []) {
       await env.DB.batch([
@@ -93,6 +99,9 @@ export async function sweepStaleRows(env) {
           'UPDATE characters SET active_match_id = NULL WHERE id IN (?, ?) AND active_match_id = ?'
         ).bind(m.character_a, m.character_b, m.id),
       ])
+      // Reset any bot involved in the stalled match so it's ready for next fight.
+      if (m.a_is_bot) await resetBotSave(env, m.character_a).catch(() => {})
+      if (m.b_is_bot) await resetBotSave(env, m.character_b).catch(() => {})
     }
   } catch (e) {
     console.error('[pvp.sweep] match cleanup failed:', e?.message || e)

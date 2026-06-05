@@ -16,6 +16,7 @@ import { readCombatLevel } from '../../_lib/combatLevel.js'
 import { itemsData, readCharacterSave, readCombatStatLevels } from '../../_lib/pvpMatch.js'
 import { readCharacterPvpRank } from '../../_lib/pvpRanks.js'
 import { calculatePvpRiskValues } from '../../../src/engine/pvpRisk.js'
+import { buildBotSavePayload, getBotTemplate } from '../../_lib/pvpBot.js'
 
 const CB_BAND = 10
 
@@ -102,10 +103,46 @@ export async function onRequestGet({ request, env }) {
       ORDER BY w.combat_level ASC, w.joined_at ASC`
   ).bind(ch.id, lo, hi).all()
 
+  // Bots are never in pvp_waiting_room (no heartbeat client), so we UNION
+  // them in virtually. Any bot whose combat_level falls in the caller's band
+  // and who is not currently in an active match is always available.
+  const botRows = await env.DB.prepare(
+    `SELECT c.id AS character_id, c.combat_level, c.username, c.bot_template_id
+       FROM characters c
+      WHERE c.is_bot = 1
+        AND c.deleted_at IS NULL
+        AND c.combat_level BETWEEN ? AND ?
+        AND c.active_match_id IS NULL`
+  ).bind(lo, hi).all()
+
+  const botEntries = (botRows.results || []).map((r) => {
+    const template = getBotTemplate(r.bot_template_id)
+    const payload  = template ? buildBotSavePayload(template) : null
+    const risk = calculatePvpRiskValues({
+      inventory: payload?.inventory,
+      equipment: payload?.equipment,
+      itemsData,
+    })
+    const statsRaw = readCombatStatLevels(payload)
+    return {
+      character_id: r.character_id,
+      username: r.username,
+      combat_level: r.combat_level,
+      inventory_shop_value: risk.inventoryShopValue,
+      equipment_shop_value: risk.equipmentShopValue,
+      total_shop_value: risk.totalShopValue,
+      combat_stats: statsRaw,
+      total_pvp_kills: 0,
+      last_updated_total_pvp_kills: null,
+      pvp_rank: null,
+      is_bot: true,
+    }
+  })
+
   return json({
     my_combat_level: myCB,
     band: { lo, hi },
-    waiting: await Promise.all((rows.results || []).map(async (r) => {
+    waiting: [...botEntries, ...await Promise.all((rows.results || []).map(async (r) => {
       try {
         const [save, pvpRank] = await Promise.all([
           readCharacterSave(env, r.character_id),
@@ -144,6 +181,6 @@ export async function onRequestGet({ request, env }) {
           pvp_rank: null,
         }
       }
-    }))
+    }))]
   })
 }

@@ -1,0 +1,60 @@
+{
+  "bots": [
+    {
+      "id": "ranger_pure_v1",
+      "username": "Ranger",
+      "aiProfile": "balanced_pure",
+      "stats": {
+        "attack": 60,
+        "strength": 99,
+        "defence": 1,
+        "ranged": 99,
+        "magic": 99,
+        "hitpoints": 99,
+        "prayer": 1
+      },
+      "equipment": {
+        "weapon": { "itemId": "magic_shortbow" },
+        "ammo":   { "itemId": "dragon_arrow", "quantity": 500 },
+        "legs":   { "itemId": "black_d_hide_chaps" },
+        "neck":   { "itemId": "amulet_of_fury" },
+        "head":   { "itemId": "halo" },
+        "hands":  { "itemId": "cryptbound_gloves" },
+        "feet":   { "itemId": "climbing_boots" },
+        "cape":   { "itemId": "fire_cape" },
+        "body":   { "itemId": "decorative_top" }
+      },
+      "inventory": [
+        { "itemId": "super_combat", "quantity": 1 },
+        { "itemId": "dragon_dagger", "quantity": 1 },
+        { "itemId": "dragon_battleaxe", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 },
+        { "itemId": "manta_ray", "quantity": 1 }
+      ],
+      "combatStance": "rapid"
+    }
+  ]
+}

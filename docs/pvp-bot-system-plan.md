@@ -12,11 +12,24 @@
 1. **Infra**: No new always-on compute. Combat ticks are driven by the human
    client's existing `POST /api/pvp/match/[id]/tick` calls. The bot only needs
    to "think" *inside* tick processing — it does not self-drive.
-2. **Loser keeps nothing**: a player who loses to a bot loses their risked gear
-   (true PvP risk / item sink). This is already how `applyLootTransfer` works.
-3. **Reward = minted carried build**: when a player wins, they receive the bot's
-   carried loot. Bots only ever carry **non-unique** items, so this introduces
-   no new untradeable wealth (see Open Item A re: untradeable equipped pieces).
+2. **Loser keeps nothing**: a player who loses to a bot loses their tradeable
+   risked gear (true PvP risk / item sink). Untradeables are not affected.
+3. **Reward = server-rolled loot box**: when a player wins vs a bot, the server
+   rolls a loot box immediately at match end (no separate "open" action needed).
+   Contents: ~70% coins (1k–10k), ~28% coins (10k–50k), ~2% rare Zesta unique
+   item (equal split across three items). The box and its Zesta items are
+   **bound — not tradeable** (box never exists as an inventory item; contents
+   go straight to winner's bank server-side). Bot gear is **not** transferred
+   to the winner; the bot's save is simply reset from template.
+   Three new unique items introduced as rewards:
+   - `zesta_longsword` — slash weapon, attack speed 4 (scimitar speed), 60 att
+     req, same combat stats as Dragon Longsword, special `overpower` at 25
+     energy (150% max hit). Reuses existing `overpower` spec type.
+   - `zesta_vest` — body armour, 45 def req, same defence stats as Adamant
+     Platebody, +10 melee strength bonus.
+   - `zesta_skirt` — legs armour, 45 def req, same defence stats as Adamant
+     Plateskirt, +8 melee strength bonus.
+   All three go into a new **"PvP"** collection log category.
 4. **Matchmaking UX**: bots appear in the normal waiting-room list. Sending an
    "invite" to a bot **immediately starts the match** (server auto-accepts on
    the bot's behalf).
@@ -173,23 +186,29 @@ weapon — all of which are in `state.combatants`. See §5 for the AI policy.
 > single authoritative tick call is simpler, deterministic, unit-testable, and
 > impossible to desync.
 
-### 3.4 Post-match reset + loot minting
+### 3.4 Post-match reset + loot box grant
 
 **Interception point**: wherever a match involving a bot leaves `active` —
 i.e. `finalizeTerminalMatch` (terminal) **and** the abort paths in
 `sweepStaleRows` (human disconnect) and the aborted-on-save-conflict branch.
 
-Add `functions/_lib/pvpBot.js#resetBotSave(env, botCharacterId)`:
+**`applyLootTransfer` is skipped entirely for bot matches.** Instead:
 
-- Rewrite the bot's `saves` row back to its **template** (full HP, full
-  inventory, full equipment, fresh `updated_at`). This both refreshes the bot
-  for the next fight and **mints** the reward: the winner already received the
-  bot's gear via `applyLootTransfer`, and the bot is simply restored from
-  template (so its loot is effectively infinite, per Decision 3). If a player
-  *lost*, the human's transferred items now sit in the bot's save and are
-  discarded by the reset (the intended sink).
-- Always clear `active_match_id` (existing code already does on terminal/abort —
-  just ensure the reset runs on every exit path for bots).
+- **Human wins vs bot**: `rollBotLootBox()` (pure fn in
+  `src/engine/pvpBotRewards.js`) is called server-side. Its contents go into
+  the human's bank via `fillBank`. If a Zesta unique was rolled, a
+  `collection_log` row is inserted. Bot save is reset from template.
+- **Bot wins vs human**: the human's tradeable gear is stripped via
+  `splitInventoryByTradeable` (loser keep only untradeables). The stripped
+  items are simply discarded (sinked). Bot save is reset from template.
+- **Abort (disconnect/save-conflict)**: inventories untouched (same as today);
+  bot save is reset from template.
+
+`resetBotSave(env, botId)` in `functions/_lib/pvpBot.js`:
+- Rebuilds the save payload from the bot's `bot_template_id` (reads
+  `pvpBots.json`), gzip-encodes it, and upserts `saves` for the bot.
+- Always clears `active_match_id` (existing code already does on
+  terminal/abort — just ensure reset runs on every exit path for bots).
 
 Centralize "is this character a bot?" in `pvpBot.js` (`isBotCharacter(env, id)`
 or carry the `is_bot` flag already loaded in the handlers' SELECTs to avoid
@@ -382,14 +401,8 @@ Work on branch `claude/pvp-bot-system-design-dmW9A`. Run the commit gate
 
 ## 8. Open items to confirm before/while building
 
-- **A. Untradeable equipped pieces.** Several pieces in the requested build are
-  untradeable (fire cape, halo, decorative top, climbing boots, cryptbound
-  gloves). `applyLootTransfer` converts untradeables to **coins** at shop value
-  rather than handing the item to the winner. So winning yields those as coins,
-  not items. Options: (a) accept coins-for-untradeables (no new wealth type), or
-  (b) curate bot builds to carry only tradeable items, or (c) special-case bot
-  untradeables to mint the actual item. **Recommend (a)** for v1 — it matches
-  existing semantics and avoids minting untradeables into the economy.
+- **A. ~~Untradeable equipped pieces.~~** Resolved — loot box replaces gear
+  transfer entirely. The bot's equipment is irrelevant to rewards.
 - **B. Leaderboard/ranks.** Confirm bots should be excluded from the PvP rank
   ladder and total-level leaderboard (recommended).
 - **C. Bot win-rate / difficulty.** The AI as specified is near-optimal and will
