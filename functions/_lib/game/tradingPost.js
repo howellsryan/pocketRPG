@@ -376,12 +376,12 @@ export async function cancelOffer(env, { offer, saveObject, itemsLookup }) {
 }
 
 // Convert a still-active sell offer into orphan house stock at 80% payout.
-// The row is detached from the character (character_id = NULL) and stays
-// purchasable at the original listed price. The instant payout is 80% of the
-// item's static shopValue — NOT the seller's chosen listing price — so a
-// player can't list at an absurd price and instant-sell themselves a fortune.
-// Coins/items already pending from earlier partial fills go to the seller in
-// the same op.
+// The row is detached from the character (character_id = NULL) and re-priced
+// to the item's static shopValue (NOT the seller's chosen listing price), so
+// it rests in the order book as house stock at a fair price. The instant
+// payout is 80% of that same shopValue, so a player can't list at an absurd
+// price and instant-sell themselves a fortune. Coins/items already pending
+// from earlier partial fills go to the seller in the same op.
 export async function instantSellOffer(env, { offer, saveObject, itemsLookup }) {
   const remaining = Number(offer.quantity_remaining) || 0
   if (remaining <= 0) throw new GameApiError('NO_REMAINING_QTY', 'Offer has no remaining quantity to instant-sell', 400)
@@ -402,15 +402,17 @@ export async function instantSellOffer(env, { offer, saveObject, itemsLookup }) 
   // character AND its remaining quantity hasn't already been consumed by
   // a concurrent buyer's fill. Without the WHERE guards a buyer matching
   // mid-orphan can pay the original seller, and the seller still takes
-  // the 80% instant-sell payout — double pay.
+  // the 80% instant-sell payout — double pay. The price is rewritten to
+  // shopValue here (only on instant-sell) so the public house stock no
+  // longer carries the seller's arbitrary listing price.
   const orphan = await env.DB.prepare(
     `UPDATE trading_post_offers
-        SET character_id = NULL, coins_pending = 0, items_pending = 0, updated_at = ?
+        SET character_id = NULL, price = ?, coins_pending = 0, items_pending = 0, updated_at = ?
       WHERE id = ?
         AND character_id IS NOT NULL
         AND status = 'active'
         AND quantity_remaining = ?`,
-  ).bind(now, offer.id, remaining).run()
+  ).bind(shopValue, now, offer.id, remaining).run()
   if (!orphan?.meta?.changes) {
     throw new GameApiError('OFFER_RACE', 'offer changed concurrently', 409)
   }
