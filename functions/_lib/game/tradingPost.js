@@ -377,20 +377,24 @@ export async function cancelOffer(env, { offer, saveObject, itemsLookup }) {
 
 // Convert a still-active sell offer into orphan house stock at 80% payout.
 // The row is detached from the character (character_id = NULL) and stays
-// purchasable at the original listed price; the 20% spread is the gold
-// sink. Coins/items already pending from earlier partial fills go to the
-// seller in the same op.
+// purchasable at the original listed price. The instant payout is 80% of the
+// item's static shopValue — NOT the seller's chosen listing price — so a
+// player can't list at an absurd price and instant-sell themselves a fortune.
+// Coins/items already pending from earlier partial fills go to the seller in
+// the same op.
 export async function instantSellOffer(env, { offer, saveObject, itemsLookup }) {
   const remaining = Number(offer.quantity_remaining) || 0
   if (remaining <= 0) throw new GameApiError('NO_REMAINING_QTY', 'Offer has no remaining quantity to instant-sell', 400)
   if (offer.offer_type !== 'sell') throw new GameApiError('NOT_SELL_OFFER', 'Only sell offers can be instant-sold', 400)
-  const payout = Math.floor(remaining * Number(offer.price) * INSTANT_SELL_PAYOUT_FRACTION)
+  const canonId = canonicalItemId(itemsLookup, offer.item_id)
+  const item = itemsLookup?.[canonId] || itemsLookup?.[offer.item_id]
+  const shopValue = Math.floor(Number(item?.shopValue) || 0)
+  if (shopValue <= 0) throw new GameApiError('NO_VALUE', 'This item has no shop value to instant-sell against.', 400)
+  const payout = Math.floor(remaining * shopValue * INSTANT_SELL_PAYOUT_FRACTION)
   deliverCoins(saveObject, payout)
   const coinsPending = Number(offer.coins_pending) || 0
   if (offer.offer_type === 'sell' && coinsPending > 0) deliverCoins(saveObject, coinsPending)
   const itemsPending = Number(offer.items_pending) || 0
-  const canonId = canonicalItemId(itemsLookup, offer.item_id)
-  const item = itemsLookup?.[canonId] || itemsLookup?.[offer.item_id]
   if (itemsPending > 0) deliverItems(saveObject, canonId, itemsPending, { stackable: Boolean(item?.stackable) })
 
   const now = nowMs()
