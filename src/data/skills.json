@@ -186,6 +186,14 @@
         "ticks": 9,
         "xp": 250,
         "product": "magic_logs"
+      },
+      {
+        "id": "redwood",
+        "name": "Chop redwood",
+        "level": 90,
+        "ticks": 10,
+        "xp": 300,
+        "product": "redwood_logs"
       }
     ]
   },
