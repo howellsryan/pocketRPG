@@ -238,7 +238,7 @@
         "name": "Fish Manta Ray",
         "level": 85,
         "ticks": 9,
-        "xp": 115,
+        "xp": 250,
         "product": "raw_manta_ray"
       },
       {
@@ -246,7 +246,7 @@
         "name": "Fish Anglerfish",
         "level": 90,
         "ticks": 10,
-        "xp": 120,
+        "xp": 270,
         "product": "raw_anglerfish"
       }
     ]
