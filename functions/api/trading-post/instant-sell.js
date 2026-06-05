@@ -8,9 +8,10 @@ import { getOwnedOffer, instantSellOffer, INSTANT_SELL_PAYOUT_FRACTION } from '.
 
 // POST /api/trading-post/instant-sell  { offer_id }
 //
-// Convert an active sell offer's remaining quantity into orphan stock at the
-// 80% payout rate. The orphan stays in the order book at the original listed
-// price; the 20% spread is the gold sink (per spec answer).
+// Convert an active sell offer's remaining quantity into orphan stock. The
+// seller is paid 80% of the item's static shopValue (not their listed price,
+// which they pick freely), and the orphan stays in the order book at the
+// original listed price as house stock.
 export async function onRequestPost({ request, env }) {
   const auth = await requireAuth(request, env)
   if (auth.error) return json({ error: auth.error }, auth.status)

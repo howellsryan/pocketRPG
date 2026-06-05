@@ -116,16 +116,17 @@ class FakeDB {
       if (row) { row.coins_pending = 0; row.items_pending = 0; row.updated_at = updatedAt }
       return { meta: { changes: row ? 1 : 0 } }
     }
-    if (sql.startsWith('UPDATE trading_post_offers SET character_id = NULL')) {
-      // Instant-sell orphan: now conditional on still owning the row and
-      // remaining quantity matching, so a buyer mid-match can't get
-      // credited twice.
-      const [updatedAt, id, quantityRemaining] = params
+    if (sql.startsWith('UPDATE trading_post_offers SET character_id = NULL, price = ?')) {
+      // Instant-sell orphan: re-prices the row to shopValue, and is
+      // conditional on still owning the row and remaining quantity matching,
+      // so a buyer mid-match can't get credited twice.
+      const [price, updatedAt, id, quantityRemaining] = params
       const row = this.rows.find((r) => r.id === id)
       if (!row || row.character_id == null || row.status !== 'active' || row.quantity_remaining !== quantityRemaining) {
         return { meta: { changes: 0 } }
       }
       row.character_id = null
+      row.price = price
       row.coins_pending = 0
       row.items_pending = 0
       row.updated_at = updatedAt
@@ -199,8 +200,8 @@ function makeSave(coins = 0, inventory: any[] = []) {
 }
 
 const ITEM = {
-  twisted_longbow: { isBossUnique: true, stackable: false },
-  ring_of_endless_riches: { isClueReward: true, stackable: false },
+  twisted_longbow: { isBossUnique: true, stackable: false, shopValue: 600 },
+  ring_of_endless_riches: { isClueReward: true, stackable: false, shopValue: 100 },
   coins: { stackable: true },
 }
 
@@ -493,28 +494,47 @@ describe('orphan stock (instant sell)', () => {
   let env: any
   beforeEach(() => { env = fakeEnv() })
 
-  it('pays seller 80% of remaining and detaches character_id', async () => {
+  it('pays seller 80% of shopValue (not the listed price) and detaches character_id', async () => {
+    // Listed price 1000, but shopValue is 600. Payout must follow shopValue.
     const offerId = await insertOffer(env, { characterId: 1, offerType: 'sell', itemId: 'twisted_longbow', price: 1000, quantityTotal: 5, quantityRemaining: 5 })
     const offer = await getOwnedOffer(env, offerId!, 1)
     const sellerSave = makeSave(0)
     const payout = await instantSellOffer(env, { offer, saveObject: sellerSave, itemsLookup: ITEM })
-    expect(payout).toBe(Math.floor(5 * 1000 * INSTANT_SELL_PAYOUT_FRACTION))
+    expect(payout).toBe(Math.floor(5 * ITEM.twisted_longbow.shopValue * INSTANT_SELL_PAYOUT_FRACTION))
     expect(getCoinTotal(sellerSave)).toBe(payout)
     const row = env.DB.rows.find((r: any) => r.id === offerId)
     expect(row.character_id).toBeNull()
-    expect(row.price).toBe(1000)
+    // Orphan is re-priced down to shopValue (no longer the 1000 listed price).
+    expect(row.price).toBe(ITEM.twisted_longbow.shopValue)
     expect(row.quantity_remaining).toBe(5)
   })
 
-  it('orphan stock is matched by future buyers at the original price (gold sink)', async () => {
+  it('cannot be gamed by listing at an absurd price (payout ignores price)', async () => {
+    // Player lists at 100 billion then instant-sells. Payout is bounded to
+    // 80% of shopValue, NOT 80% of the inflated listing price.
+    const absurdPrice = 100_000_000_000
+    const offerId = await insertOffer(env, { characterId: 1, offerType: 'sell', itemId: 'twisted_longbow', price: absurdPrice, quantityTotal: 1, quantityRemaining: 1 })
+    const offer = await getOwnedOffer(env, offerId!, 1)
+    const sellerSave = makeSave(0)
+    const payout = await instantSellOffer(env, { offer, saveObject: sellerSave, itemsLookup: ITEM })
+    expect(payout).toBe(Math.floor(ITEM.twisted_longbow.shopValue * INSTANT_SELL_PAYOUT_FRACTION))
+    expect(payout).toBeLessThan(absurdPrice)
+  })
+
+  it('orphan stock rests at shopValue and is matched by future buyers at that price', async () => {
     const offerId = await insertOffer(env, { characterId: 1, offerType: 'sell', itemId: 'twisted_longbow', price: 1000, quantityTotal: 2, quantityRemaining: 2 })
     const offer = await getOwnedOffer(env, offerId!, 1)
     await instantSellOffer(env, { offer, saveObject: makeSave(0), itemsLookup: ITEM })
-    // Buyer comes in.
+    // Orphan now rests at shopValue, not the 1000 listed price.
+    const orphanBefore = env.DB.rows.find((r: any) => r.id === offerId)
+    expect(orphanBefore.price).toBe(ITEM.twisted_longbow.shopValue)
+    // Buyer comes in and pays the resting shopValue price (price improvement
+    // refunds the difference between their bid and the orphan price).
     const buyer = makeSave(10000)
-    const { offerId: buyerOfferId } = await placeOffer(env, {
+    const { offerId: buyerOfferId, res } = await placeOffer(env, {
       characterId: 9, offerType: 'buy', itemId: 'twisted_longbow', price: 5000, quantity: 2, saveObject: buyer,
     })
+    expect(res.totalSpent).toBe(2 * ITEM.twisted_longbow.shopValue)
     const buyerOffer = env.DB.rows.find((r: any) => r.id === buyerOfferId)
     expect(buyerOffer.items_pending).toBe(2)
     // Orphan row vanished: no character_id to pay, no pending to keep.
