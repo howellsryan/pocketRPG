@@ -79,11 +79,11 @@ export async function resetBotSave(env, botCharacterId) {
 
   const now = Date.now()
   await env.DB.prepare(
-    `INSERT INTO saves (character_id, base64, save_blob, hash, updated_at)
-     VALUES (?, '', ?, 'reset', ?)
+    `INSERT INTO saves (character_id, save_blob, save_data, updated_at, save_revision)
+     VALUES (?, ?, '', ?, 1)
      ON CONFLICT(character_id) DO UPDATE SET
        save_blob  = excluded.save_blob,
-       hash       = excluded.hash,
+       save_data  = excluded.save_data,
        updated_at = excluded.updated_at`
   ).bind(botCharacterId, blob, now).run()
 
