@@ -193,13 +193,15 @@ styles unless truly dynamic) and the existing `.cb-*` pattern in `src/index.css`
    - `subtitle` from opponent username (`{opp} has fallen before you` / `… has slain you`).
    - `status` from tick + damage if available (optional; fall back to omitting).
    - Pass `<MatchupHpStrip self={pair.self} opp={pair.opp} .../>` as `children`.
-   - `loot` = `wonLootRows` (win) shown as gained (`+`); for a loss, show the
-     player's lost items as `-` if that data is available (the design's "Items Lost"
-     list). If loss-item detail isn't surfaced today, keep the existing "defeated for
-     a total of …" summary inside the shell and list what we have.
+   - `loot`: **win** → `aggregateLootEntries(endModal.loot.added)` rendered as gained (`+`);
+     **loss** → `aggregateLootEntries(endModal.loot.dropped)` rendered as lost (`-`).
+     *Confirmed:* the client loot summary carries both `added`/`addedValue` and
+     `dropped`/`droppedValue` (`pvpEndSummary.js` / `buildEndModalFromResponse` L346),
+     so the design's "Items Lost" list is fully populated — no need for a fallback summary.
    - Preserve the **writeback-warning** branch (`!endModal.writebackOk`) and the
      `handleCloseEndModal` flow (it does async cleanup — keep it as the close/primary handler).
-   - Primary action "Return to PvE"; "⚔ Fight Again" only if a rematch entry point exists (today there is none in PvP end — likely omit the secondary action for PvP).
+   - Primary action "Return to PvE". **Omit "⚔ Fight Again"** — *confirmed:* there is no
+     rematch/requeue entry point from the PvP end modal today; only "Return to PvE" exists.
 6. Verify `aggregateLootEntries` / `getLootIcon` / `formatLootEntry` / `getEndLootTotal`
    still feed the rows (reuse them to build the `loot` prop), or move that mapping
    into `LootResultRow`.
@@ -276,11 +278,10 @@ styles unless truly dynamic) and the existing `.cb-*` pattern in `src/index.css`
   `IdleResultProgressCard`/XP/supplies internals.
 - **One-life death** must keep its dedicated flow; only non-one-life PvE death gets
   the new modal.
-- **Loss-side loot for PvP:** confirm whether lost-item detail is available client
-  side; if not, render the existing total summary inside the new shell rather than
-  inventing data.
+- **Loss-side loot for PvP:** resolved — `endModal.loot.dropped` + `droppedValue` are
+  available client-side, so "Items Lost" renders from real data.
 - **Decoration (rays/particles)** is optional and must respect `prefers-reduced-motion`;
-  ship the static themed look first.
+  ship the static themed look first. (Only open design choice — see hand-off note.)
 - **Tap targets ≥ 44px** for all action buttons (§9).
 - **No `/N` Tailwind opacity** — use the CSS-var colours (§9).
 
