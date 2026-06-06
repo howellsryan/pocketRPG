@@ -238,14 +238,13 @@ export default function LootResultModal({
               <div class="loot-modal__status">{status}</div>
             )}
 
-            <div class="loot-modal__title">{title}</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+              <div class="loot-modal__title">{title}</div>
+              {titleRight && <div style={{ flexShrink: 0 }}>{titleRight}</div>}
+            </div>
 
             {subtitle && (
               <div class="loot-modal__subtitle">{subtitle}</div>
-            )}
-
-            {titleRight && (
-              <div style={{ marginTop: '10px' }}>{titleRight}</div>
             )}
           </div>
 
