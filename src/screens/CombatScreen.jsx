@@ -926,8 +926,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     if (!canFightSlayerMonster(monster, slayerTask)) {
       return { locked: true, reason: `${monster.name} can only be slain on an active Slayer task` }
     }
-    if (monster.id === 'blighted_gauntlet' && !completedQuests.has('song_of_the_elves')) {
-      return { locked: true, reason: 'Complete Song of the Elves to fight Blighted Gauntlet' }
+    if (monster.id === 'blighted_gauntlet' && !completedQuests.has('hymn_of_the_elves')) {
+      return { locked: true, reason: 'Complete Hymn of the Elves to fight Blighted Gauntlet' }
     }
     if (monster.id === 'ashen_crucible' && (!bossKillCounts['ember_tyrant'] || bossKillCounts['ember_tyrant'] < 1)) {
       return { locked: true, reason: 'Defeat Ember Tyrant first to unlock Ashen Crucible' }
@@ -935,7 +935,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     if ((monster.id === 'adamant_dragon' || monster.id === 'rune_dragon') && !completedQuests.has('dragon_slayer_ii')) {
       return { locked: true, reason: 'Complete Dragon Slayer II to fight Metal Dragons' }
     }
-    if (monster.id === 'hellbound_gorilla' && !completedQuests.has('monkey_madness_ii')) {
+    if (monster.id === 'hellbound_gorilla' && !completedQuests.has('gorilla_slayer_ii')) {
       return { locked: true, reason: 'Complete Monkey Madness II to fight Hellbound Gorilla' }
     }
     return { locked: false }
