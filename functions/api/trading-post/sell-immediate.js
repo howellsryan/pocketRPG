@@ -4,8 +4,8 @@ import itemsData from '../../../src/data/items.json' assert { type: 'json' }
 import { loadCharacterWithSave, writeSave } from '../../_lib/game/save.js'
 import { toErrorResponse } from '../../_lib/game/errors.js'
 import { auditLog } from '../../_lib/game/audit.js'
-import { isOrderBookItem } from '../../_lib/game/tradingPost.js'
-import { removeItemFromInventory, canonicalItemId, normalizeSaveItemIds } from '../../_lib/game/inventory.js'
+import { isOrderBookItem, normalizeSellSource } from '../../_lib/game/tradingPost.js'
+import { removeItemFromSource, canonicalItemId, normalizeSaveItemIds } from '../../_lib/game/inventory.js'
 import { addCoins } from '../../_lib/game/economy.js'
 
 // POST /api/trading-post/sell-immediate  { item_id, quantity }
@@ -23,6 +23,7 @@ export async function onRequestPost({ request, env }) {
     const characterId = parseInt(request.headers.get('X-Character-Id') || '0', 10)
     const rawItemId = body?.item_id
     const quantity = Math.floor(Number(body?.quantity) || 0)
+    const source = normalizeSellSource(body?.source)
     if (!characterId) return json({ error: 'Missing X-Character-Id header' }, 400)
     if (!rawItemId || typeof rawItemId !== 'string') return json({ error: 'Invalid item_id', code: 'INVALID_ITEM_ID' }, 400)
     if (quantity < 1) return json({ error: 'Quantity must be >= 1', code: 'INVALID_QUANTITY' }, 400)
@@ -48,18 +49,19 @@ export async function onRequestPost({ request, env }) {
     }
 
     normalizeSaveItemIds(saveObject, itemsData)
-    removeItemFromInventory(saveObject, itemId, quantity)
+    removeItemFromSource(saveObject, itemId, quantity, source)
     const totalPayout = unit * quantity
     addCoins(saveObject, totalPayout)
 
     const write = await writeSave(env, characterId, saveObject, saveRevision)
 
-    await auditLog(env, 'trading_post_sell_immediate', { characterId, identityId: auth.identity.id, itemId, quantity, unit, totalPayout }, { swallow: true })
+    await auditLog(env, 'trading_post_sell_immediate', { characterId, identityId: auth.identity.id, itemId, quantity, unit, totalPayout, source }, { swallow: true })
 
     return json({
       ok: true,
       item_id: itemId,
       quantity,
+      source,
       total_payout: totalPayout,
       save_revision: write.saveRevision,
       updatedAt: write.updatedAt,

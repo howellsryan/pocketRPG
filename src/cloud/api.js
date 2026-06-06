@@ -211,9 +211,9 @@ export const api = {
     body: JSON.stringify({ sku, character_id: characterId || 0 }),
   }),
 
-  tradingPostList: (offerType, itemId, price, quantity) => request('/api/trading-post/list', {
+  tradingPostList: (offerType, itemId, price, quantity, source = 'inventory') => request('/api/trading-post/list', {
     method: 'POST',
-    body: JSON.stringify({ offer_type: offerType, item_id: itemId, price, quantity }),
+    body: JSON.stringify({ offer_type: offerType, item_id: itemId, price, quantity, source }),
   }),
   tradingPostCancel: (offerId) => request('/api/trading-post/cancel', {
     method: 'POST',
@@ -232,9 +232,9 @@ export const api = {
     method: 'POST',
     body: JSON.stringify({ item_ids: itemIds }),
   }),
-  tradingPostSellImmediate: (itemId, quantity) => request('/api/trading-post/sell-immediate', {
+  tradingPostSellImmediate: (itemId, quantity, source = 'inventory') => request('/api/trading-post/sell-immediate', {
     method: 'POST',
-    body: JSON.stringify({ item_id: itemId, quantity }),
+    body: JSON.stringify({ item_id: itemId, quantity, source }),
   }),
   tradingPostListings: () => request('/api/trading-post/listings'),
 }

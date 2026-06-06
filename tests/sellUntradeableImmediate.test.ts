@@ -92,4 +92,43 @@ describe('POST /api/trading-post/sell-immediate — untradeable items', () => {
     const body = await res.json() as any
     expect(body.code).toBe('ORDER_BOOK_REQUIRED')
   })
+
+  it("sells from the BANK when source: 'bank', leaving inventory copies intact", async () => {
+    const save = {
+      inventory: [{ itemId: 'fighter_helm', quantity: 1 }],
+      bank: { fighter_helm: { itemId: 'fighter_helm', quantity: 2 } },
+    }
+    const { env, captured } = mockEnv({ save })
+    const res = await onRequestPost({
+      request: await makeRequest({ item_id: 'fighter_helm', quantity: 2, source: 'bank' }),
+      env,
+    })
+    expect(res.status).toBe(200)
+    const body = await res.json() as any
+    expect(body.source).toBe('bank')
+    expect(body.total_payout).toBe(1000000)
+
+    const written = JSON.parse(captured.saveData!)
+    // Bank fully drained of the sold item
+    expect(written.bank.fighter_helm).toBeUndefined()
+    // Inventory copy untouched — not consumed by a bank sell
+    expect(written.inventory.find((s: any) => s.itemId === 'fighter_helm')?.quantity).toBe(1)
+    expect(written.inventory.find((s: any) => s.itemId === 'coins')?.quantity).toBe(1000000)
+  })
+
+  it("rejects a bank sell that exceeds the bank balance even if inventory has copies", async () => {
+    const save = {
+      inventory: [{ itemId: 'fighter_helm', quantity: 5 }],
+      bank: { fighter_helm: { itemId: 'fighter_helm', quantity: 1 } },
+    }
+    const { env, captured } = mockEnv({ save })
+    const res = await onRequestPost({
+      request: await makeRequest({ item_id: 'fighter_helm', quantity: 3, source: 'bank' }),
+      env,
+    })
+    expect(res.status).toBe(400)
+    const body = await res.json() as any
+    expect(body.code).toBe('INSUFFICIENT_SUPPLIES')
+    expect(captured.saveData).toBeNull()
+  })
 })

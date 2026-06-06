@@ -16,6 +16,7 @@ import {
   escrowBuyCoins,
   executeMatching,
   insertOffer,
+  normalizeSellSource,
   MAX_ACTIVE_OFFERS_PER_CHARACTER,
 } from '../../_lib/game/tradingPost.js'
 
@@ -37,6 +38,8 @@ export async function onRequestPost({ request, env }) {
     const rawItemId = body?.item_id
     const price = Math.floor(Number(body?.price) || 0)
     const quantity = Math.floor(Number(body?.quantity) || 0)
+    // Sells can pull from the bank as well as the inventory. Buys ignore this.
+    const source = normalizeSellSource(body?.source)
     if (!characterId) return json({ error: 'Missing X-Character-Id header' }, 400)
     if (offerType !== 'buy' && offerType !== 'sell') return json({ error: 'Invalid offer_type', code: 'INVALID_OFFER_TYPE' }, 400)
     if (!rawItemId || typeof rawItemId !== 'string') return json({ error: 'Invalid item_id', code: 'INVALID_ITEM_ID' }, 400)
@@ -65,7 +68,7 @@ export async function onRequestPost({ request, env }) {
     // and no DB row is inserted. The client-supplied price is intentionally
     // ignored to prevent a "list at extreme price → game buys" gold dupe.
     if (offerType === 'sell' && !isOrderBookItem(item)) {
-      const { unit, totalPayout } = autoFillSellAtShopValue(saveObject, item, itemId, quantity)
+      const { unit, totalPayout } = autoFillSellAtShopValue(saveObject, item, itemId, quantity, source)
       const write = await writeSave(env, characterId, saveObject, saveRevision)
       await auditLog(env, 'trading_post_list_autofill', { characterId, identityId: auth.identity.id, itemId, quantity, unit, totalPayout }, { swallow: true })
       return json({
@@ -92,7 +95,7 @@ export async function onRequestPost({ request, env }) {
     if (offerType === 'buy') {
       escrowBuyCoins(saveObject, price * quantity)
     } else {
-      escrowSellItems(saveObject, itemId, quantity)
+      escrowSellItems(saveObject, itemId, quantity, source)
     }
     const escrowWrite = await writeSave(env, characterId, saveObject, saveRevision)
     const postEscrowRevision = escrowWrite.saveRevision

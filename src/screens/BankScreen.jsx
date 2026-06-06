@@ -6,7 +6,6 @@ import TradingPostSellForm from '../components/TradingPostSellForm.jsx'
 import { formatQuantity } from '../utils/helpers'
 import GameIcon from '../components/GameIcon.jsx'
 import { isOrderBookItem } from '../engine/storeRules.js'
-import { addItem } from '../engine/inventory.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
 import { pullSave, applyCloudSave, pushNow } from '../cloud/sync.js'
 
@@ -240,33 +239,21 @@ export default function BankScreen() {
 
     setSellBusy(true)
     try {
-      // Move item from bank to inventory locally
-      const newInv = [...inventory]
-      const newBank = { ...bank }
-
-      if (!addItem(newInv, selected.itemId, sellQty, item?.stackable || false)) {
-        addToast('Not enough inventory space to sell this item', 'error')
-        return
-      }
-
-      // Remove from bank
-      newBank[selected.itemId] = { itemId: selected.itemId, quantity: bankEntry.quantity - sellQty }
-
-      // Update local state immediately for visual feedback
-      updateInventory(newInv)
-      updateBank(newBank)
-
-      // Push this modified state and WAIT for it to complete before API call
+      // Flush the current local save to the server first so the server-side
+      // sell operates on an up-to-date bank (e.g. items just deposited locally
+      // before the 60s autosave fires). Then the server removes the items from
+      // the BANK directly via source: 'bank' — no local bank→inventory shuffle,
+      // which is what previously caused the duplicate / stale-state bugs.
       await pushNow(getSnapshot())
 
       if (isIronman || item.isUntradeable) {
-        await api.tradingPostSellImmediate(selected.itemId, sellQty)
+        await api.tradingPostSellImmediate(selected.itemId, sellQty, 'bank')
         const cloud = await pullSave()
         if (cloud?.payload) await applyCloudSave(cloud.payload, cloud.updatedAt)
         await loadGame()
         addToast(`Sold ${sellQty} × ${item.name} for ${(sellQty * price).toLocaleString()} gp`, 'info')
       } else {
-        const res = await api.tradingPostList('sell', selected.itemId, price, sellQty)
+        const res = await api.tradingPostList('sell', selected.itemId, price, sellQty, 'bank')
         const cloud = await pullSave()
         if (cloud?.payload) await applyCloudSave(cloud.payload, cloud.updatedAt)
         await loadGame()
