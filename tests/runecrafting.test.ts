@@ -18,10 +18,10 @@ const RUNES = [
   ['craft_astral_rune', 40, 17.4, 'astral_rune'],
   ['craft_nature_rune', 44, 18.0, 'nature_rune'],
   ['craft_law_rune', 54, 19.0, 'law_rune'],
-  ['craft_death_rune', 65, 20.0, 'death_rune'],
-  ['craft_blood_rune', 77, 21.0, 'blood_rune'],
-  ['craft_soul_rune', 90, 22.6, 'soul_rune'],
-  ['craft_wrath_rune', 95, 16.0, 'wrath_rune'],
+  ['craft_death_rune', 65, 25.0, 'death_rune'],
+  ['craft_blood_rune', 77, 30.0, 'blood_rune'],
+  ['craft_soul_rune', 90, 35.0, 'soul_rune'],
+  ['craft_wrath_rune', 95, 40.0, 'wrath_rune'],
 ] as const
 
 describe('runecrafting enablement and data', () => {

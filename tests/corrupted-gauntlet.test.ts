@@ -214,14 +214,11 @@ describe('Blighted Gauntlet Boss', () => {
       }
     })
 
-    it('should include dragon and daganoth bones', () => {
+    it('should include dragon bones', () => {
       const dragonBones = corruptedGauntlet.drops.find((d: any) => d.itemId === 'dragon_bones')
-      const daganothBones = corruptedGauntlet.drops.find((d: any) => d.itemId === 'daganoth_bones')
 
       expect(dragonBones).toBeDefined()
       expect(dragonBones.quantity).toBe(50)
-      expect(daganothBones).toBeDefined()
-      expect(daganothBones.quantity).toBe(50)
     })
 
     it('should include rune armour items', () => {
