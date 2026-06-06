@@ -240,7 +240,7 @@ export default function BankScreen() {
 
     setSellBusy(true)
     try {
-      // Move item from bank to inventory locally to show user we're taking it from bank
+      // Move item from bank to inventory locally
       const newInv = [...inventory]
       const newBank = { ...bank }
 
@@ -252,12 +252,12 @@ export default function BankScreen() {
       // Remove from bank
       newBank[selected.itemId] = { itemId: selected.itemId, quantity: bankEntry.quantity - sellQty }
 
-      // Update local state for visual feedback
+      // Update local state immediately for visual feedback
       updateInventory(newInv)
       updateBank(newBank)
 
-      // Push the modified state before API call so server sees item in inventory
-      try { await pushNow(getSnapshot()) } catch (_) { /* ignore push failure */ }
+      // Push this modified state and WAIT for it to complete before API call
+      await pushNow(getSnapshot())
 
       if (isIronman || item.isUntradeable) {
         await api.tradingPostSellImmediate(selected.itemId, sellQty)
