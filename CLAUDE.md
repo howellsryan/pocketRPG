@@ -107,6 +107,22 @@ Schema:
 - Protection prayers disabled in PvP v1.
 - Forfeit treated as death for loot transfer.
 
+### PvP Bot System
+- Bot characters live in the `characters` table with `is_bot=1` and a `bot_template_id` referencing `src/data/pvpBots.json`.
+- Bots are seeded once via `scripts/seed-pvp-bots.cjs` (outputs SQL for `wrangler d1 execute`). Add `npm run seed:bots` to run it.
+- **Four integration seams**:
+  1. **Lobby** — `GET /api/pvp/waiting` UNIONs virtual bot entries (no real waiting-room rows) for the player's CB band.
+  2. **Auto-accept** — `POST /api/pvp/invitations` detects `target.is_bot` and calls `createMatch()` immediately, bypassing the normal accept handshake.
+  3. **AI injection** — `tick.js` calls `computeBotIntents(state, botId, itemsData)` before `processPvpTick` and merges intents in-memory (no DB writes for bot actions).
+  4. **Post-match reset** — `resetBotSave(env, botCharacterId)` rebuilds the bot's save from its template after every match end or stall-abort.
+- **Loot on bot match end** (server-authoritative, in `finalizeTerminalMatch`):
+  - Human wins → `rollBotLootBox()` grants coins (~70% 1k–10k, ~28% 10k–50k) or a Zesta unique (~2%); loot goes to the human's bank via `fillBank()`. Collection log entry written for Zesta drops.
+  - Bot wins → `splitInventoryByTradeable()` strips human's tradeable gear (item sink); untradeable items stay.
+  - Normal PvP loot transfer (`applyLootTransfer`) is bypassed entirely for bot matches.
+- **Reward items** (untradeables, collection log category `pvp` / section `pvp_bots`): `zesta_longsword`, `zesta_vest`, `zesta_skirt`.
+- Bot template format: see `src/data/pvpBots.json`. `aiProfile` field selects behaviour in `src/engine/pvpBotAI.js`.
+- Bots are excluded from the PvP kill-count rank ladder (`pvpRanks.js` CTE filters `is_bot = 0`).
+
 ## 11) Build/Test Commands (Authoritative)
 Use these npm scripts as the source of truth:
 - `npm test` → full Vitest run.

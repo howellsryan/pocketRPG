@@ -22,7 +22,7 @@ const COINS_ID = 'coins'
 const MINIGAME_UNLOCK_ITEM_VALUE = 4_500_000
 const MINIGAME_UNLOCK_PRODUCTS = new Set((minigamesData?.tasks || []).map(t => t?.product).filter(Boolean))
 
-function lootEntryValue(entry, itemsData) {
+export function lootEntryValue(entry, itemsData) {
   if (!entry?.itemId) return 0
   const qty = Math.max(1, Number(entry.quantity) || 1)
   if (entry.itemId === COINS_ID) return qty

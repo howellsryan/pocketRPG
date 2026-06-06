@@ -29,7 +29,7 @@ export async function readCharacterPvpRank(env, characterId) {
              id ASC
          ) AS pvp_rank
        FROM characters
-       WHERE deleted_at IS NULL
+       WHERE deleted_at IS NULL AND COALESCE(is_bot, 0) = 0
      )
      SELECT
        c.id,

@@ -59,6 +59,7 @@ export async function onRequestGet(context) {
            JOIN characters c ON c.id = k.character_id
           WHERE k.source_type = ? AND k.source_id = ?
             AND c.deleted_at IS NULL AND k.kill_count > 0
+            AND c.is_bot = 0
           ORDER BY k.kill_count DESC, c.id ASC
           LIMIT ? OFFSET ?`
       ).bind(sourceType, sourceId, limit, offset).all()
@@ -75,7 +76,7 @@ export async function onRequestGet(context) {
       const rows = await env.DB.prepare(
         `SELECT id, username, total_level, combat_level, is_one_life
            FROM characters
-          WHERE deleted_at IS NULL AND total_level > 33
+          WHERE deleted_at IS NULL AND total_level > 33 AND is_bot = 0
           ORDER BY total_level DESC, id ASC
           LIMIT ? OFFSET ?`
       ).bind(limit, offset).all()
