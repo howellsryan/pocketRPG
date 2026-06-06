@@ -1676,6 +1676,7 @@ function GameApp() {
       return
     }
 
+    let didShowIdleModal = false
     try {
       const task = activeTaskRef.current
       const [freshStats, freshInv, freshEq, freshBank, freshSlayerTask] = await Promise.all([
@@ -2027,6 +2028,7 @@ function GameApp() {
       // lands, then shows the idle-result modal — so a refresh mid-save
       // can't lose progress the player spent a credit on.
       await persistSkipThenReveal(idleResultData)
+      didShowIdleModal = !!idleResultData
     } catch (err) {
       console.error('[PocketRPG] Skip 1h error:', err)
       if (err?.status === 402) {
@@ -2036,12 +2038,12 @@ function GameApp() {
         addToast(err.message || 'Error during skip!', 'error')
       }
     } finally {
-      // Release the skip lock and resume the game. Skipped if a conflict
-      // rollback is in flight — that path reloads the page, so leaving the
-      // overlay up and the engine frozen until reload is the correct behaviour.
+      // Release the skip lock. When an idle-result modal is being shown we
+      // intentionally keep ticks paused so combat cannot advance while the
+      // player reviews the result. closeIdleResultModal calls resumeTicks().
       if (!isSaveConflict()) {
         unlockGame()
-        resumeTicks()
+        if (!didShowIdleModal) resumeTicks()
       }
       isSkippingRef.current = false
     }
@@ -2172,6 +2174,7 @@ function GameApp() {
       setScreen(SCREENS.SKILLS)
       setActionData({ skillId: 'dungeoneering' })
     }
+    resumeTicks()
     setIdleResult(null)
   }
 
