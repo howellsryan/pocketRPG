@@ -131,6 +131,20 @@ function findPotionSlot(bot, itemsData) {
   return -1
 }
 
+// Largest single-food heal sitting in the opponent's inventory — used to
+// size how much extra burst is needed to kill them THROUGH an eat. Returns
+// 0 if they have no food (so the bot won't waste specs on a foodless foe).
+function opponentBestHeal(opponent, itemsData) {
+  let best = 0
+  for (const slot of opponent?.inventory || []) {
+    if (!slot) continue
+    const item = itemsData?.[slot.itemId]
+    const heal = item ? (item.heals || item.healsHP || item.healAmount || 0) : 0
+    if (heal > best) best = heal
+  }
+  return best
+}
+
 // Best prayer for a given combat type (no protection prayers in PvP v1).
 function bestDamagePrayer(combatType) {
   if (combatType === 'ranged') return 'rigour'
@@ -204,17 +218,21 @@ export function computeBotIntents(state, botId, itemsData) {
     const curCanSpec  = !!curSpec && energy >= curCost
     const curBurst    = curCanSpec ? estimateWeaponBurst(current, bot, opponent, itemsData) : 0
     const curNormal   = estimateBotMaxHit(bot, opponent, itemsData)
-    const specKill    = curCanSpec && curBurst >= opponent.hp
-    const normalKill  = curNormal >= opponent.hp
-    // Spec to secure a kill a normal swing can't guarantee, or to spend
-    // capped cheap energy (free value — it regenerates anyway).
+    // Spend capped cheap energy even outside a KO — free value, it regenerates.
     const cappedCheap = curCanSpec && energy >= 100 && curCost <= 25
 
-    if ((specKill && !normalKill) || cappedCheap) {
-      intents.push({ type: 'queue_special' })
-    } else if (!normalKill) {
-      // Swap to a finisher weapon that CAN kill when the equipped one can't.
-      let swapped = false
+    // Aggression vs eating: if the opponent can eat this tick, the damage
+    // needed to guarantee a kill is hp + their heal. We try the eat-proof
+    // target first (spec/swap to out-damage the heal), then fall back to
+    // the kill-now target. A weapon swap that can finish wins over leaving
+    // a kill to chance, even if a normal swing could kill a non-eating foe.
+    const eatHeal     = opponentBestHeal(opponent, itemsData)
+    const canEatNow   = eatHeal > 0 && (opponent.eatCooldown || 0) <= 1
+    const targets     = canEatNow ? [opponent.hp + eatHeal, opponent.hp] : [opponent.hp]
+
+    // Returns a finisher swap { inventorySlot, weaponId } that reaches a
+    // damage target, or null.
+    const findFinisher = (target) => {
       for (const weaponId of KO_WEAPONS) {
         if (weaponId === current) continue
         const inv = findInventoryWeapon(bot, weaponId, itemsData)
@@ -222,22 +240,35 @@ export function computeBotIntents(state, botId, itemsData) {
         const spec       = itemsData?.[weaponId]?.specialAttack
         const needEnergy = spec ? Math.max(0, Number(spec.energyCost) || 0) : 0
         if (energy < needEnergy) continue
-        if (estimateWeaponBurst(weaponId, bot, opponent, itemsData) >= opponent.hp) {
-          intents.push({ type: 'equip', inventorySlot: inv.inventorySlot })
-          plannedWeapon = weaponId
-          swapped = true
-          break
+        if (estimateWeaponBurst(weaponId, bot, opponent, itemsData) >= target) {
+          return { inventorySlot: inv.inventorySlot, weaponId }
         }
       }
-      // No KO available — return to the highest-DPS weapon if we drifted off it.
-      if (!swapped && !PRIMARY_DPS_WEAPONS.includes(current)) {
-        for (const weaponId of PRIMARY_DPS_WEAPONS) {
-          const inv = findInventoryWeapon(bot, weaponId, itemsData)
-          if (inv) {
-            intents.push({ type: 'equip', inventorySlot: inv.inventorySlot })
-            plannedWeapon = weaponId
-            break
-          }
+      return null
+    }
+
+    let decided = false
+    for (const target of targets) {
+      if (curNormal >= target) { decided = true; break }   // a normal swing already secures this
+      if (curCanSpec && curBurst >= target) { intents.push({ type: 'queue_special' }); decided = true; break }
+      const fin = findFinisher(target)
+      if (fin) { intents.push({ type: 'equip', inventorySlot: fin.inventorySlot }); plannedWeapon = fin.weaponId; decided = true; break }
+      // Can't reach this target — try the next (lower) one.
+    }
+
+    if (!decided && cappedCheap) {
+      intents.push({ type: 'queue_special' })
+      decided = true
+    }
+
+    // No KO being pursued — return to the highest-DPS weapon if we drifted off it.
+    if (!decided && !PRIMARY_DPS_WEAPONS.includes(current)) {
+      for (const weaponId of PRIMARY_DPS_WEAPONS) {
+        const inv = findInventoryWeapon(bot, weaponId, itemsData)
+        if (inv) {
+          intents.push({ type: 'equip', inventorySlot: inv.inventorySlot })
+          plannedWeapon = weaponId
+          break
         }
       }
     }

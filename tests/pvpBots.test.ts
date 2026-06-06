@@ -320,6 +320,52 @@ describe('computeBotIntents', () => {
     expect(bot.inventory[equip.inventorySlot].itemId).toBe('magic_shortbow')
   })
 
+  it('specs to kill through an eat even when a normal hit could kill a non-eating foe', () => {
+    // Opponent at hp 30 with food: a normal bow hit (max 25) cannot secure
+    // the kill through a 22-heal eat (needs 52), and the bow snapshot (36)
+    // also falls short — so the bot should swap to the dragon dagger
+    // (double-hit burst 56 >= 52) to push the kill through the heal.
+    const bot = makeCombatant({
+      equipment: {
+        weapon: { itemId: 'magic_shortbow' },
+        ammo:   { itemId: 'dragon_arrow', quantity: 500 },
+      },
+      activePotions: { super_combat: 50 },
+      activeCombatPrayer: 'rigour',
+      specialAttackEnergy: 100,
+      attackTimer: 1,
+      eatCooldown: 0,
+      combatType: 'ranged',
+    })
+    const opponent = makeOpponent({
+      hp: 30,
+      attackTimer: 4,
+      eatCooldown: 0,
+      inventory: [{ itemId: 'manta_ray', quantity: 5 }],
+    })
+    const intents = computeBotIntents(makeState(bot, opponent), 99, itemsData)
+    const equip = intents.find((i: any) => i.type === 'equip')
+    expect(equip).toBeDefined()
+    expect(bot.inventory[equip.inventorySlot].itemId).toBe('dragon_dagger')
+  })
+
+  it('does not waste a spec when the opponent has no food and a normal hit kills', () => {
+    const bot = makeCombatant({
+      equipment: { weapon: { itemId: 'magic_shortbow' }, ammo: { itemId: 'dragon_arrow', quantity: 500 } },
+      activePotions: { super_combat: 50 },
+      activeCombatPrayer: 'rigour',
+      specialAttackEnergy: 100,
+      attackTimer: 1,
+      eatCooldown: 0,
+      combatType: 'ranged',
+    })
+    // hp 10, no food → a normal swing (max 25) secures it; no spec/swap.
+    const opponent = makeOpponent({ hp: 10, attackTimer: 4, inventory: [] })
+    const intents = computeBotIntents(makeState(bot, opponent), 99, itemsData)
+    expect(intents.some((i: any) => i.type === 'queue_special')).toBe(false)
+    expect(intents.some((i: any) => i.type === 'equip')).toBe(false)
+  })
+
   it('matches prayer + stance to the weapon it plans to wield', () => {
     const bot = makeCombatant({
       equipment: { weapon: { itemId: 'magic_shortbow' }, ammo: { itemId: 'dragon_arrow', quantity: 500 } },
