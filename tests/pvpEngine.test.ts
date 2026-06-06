@@ -116,6 +116,22 @@ describe('pvpEngine phase 2B contract', () => {
     expect(out.stateNext.combatants['1'].equipment.weapon.itemId).toBe('nether_demon_whip')
   })
 
+  it('drinks a potion: consumes the dose and applies the boost', () => {
+    const a = buildPlayer({ characterId: 1, inventory: [{ itemId: 'strength_potion', quantity: 2 }] })
+    const b = buildPlayer({ characterId: 2 })
+    const state = createPvpState(a, b, 0)
+    expect(state.combatants['1'].activePotions?.strength_potion ?? 0).toBe(0)
+
+    const out = processPvpTick(state, [
+      { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'drink_potion', inventorySlot: 0 } },
+    ], items)
+
+    const self = out.stateNext.combatants['1']
+    expect(out.events.some(e => e.type === 'drink' && e.characterId === 1)).toBe(true)
+    expect(self.activePotions.strength_potion).toBeGreaterThan(0)   // boost active
+    expect(self.inventory[0].quantity).toBe(1)                       // one dose consumed
+  })
+
   it('uses heals field value for PvP eat intent', () => {
     const a = buildPlayer({ characterId: 1, currentHP: 10, maxHP: 99, inventory: [{ itemId: 'shark', quantity: 1 }] })
     const b = buildPlayer({ characterId: 2, currentHP: 99 })

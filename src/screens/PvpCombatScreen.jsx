@@ -757,7 +757,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
                   if (slot && item) {
                     if (item.slot) onClick = () => queueGearEquip(idx)
                     else if (isPvpFoodItem(item)) onClick = () => queueAction({ type: 'eat', inventorySlot: idx }, { showBusy: false })
-                    else if (isPvpCombatPotion(item)) onClick = () => queueAction({ type: 'drink', inventorySlot: idx }, { showBusy: false })
+                    else if (isPvpCombatPotion(item)) onClick = () => queueAction({ type: 'drink_potion', inventorySlot: idx }, { showBusy: false })
                   }
                   return (
                     <div key={`inv-${idx}`} onClick={onClick}>
@@ -940,7 +940,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
                         variant="secondary"
                         size="md"
                         className="min-h-11 w-full justify-center px-1 text-center text-[10px] leading-tight"
-                        onClick={() => queueAction({ type: 'drink', inventorySlot: idx }, { showBusy: false })}
+                        onClick={() => queueAction({ type: 'drink_potion', inventorySlot: idx }, { showBusy: false })}
                       >
                         <span class="block truncate">{item?.icon || '🧪'} {item?.name || slot.itemId}</span>
                       </Button>
