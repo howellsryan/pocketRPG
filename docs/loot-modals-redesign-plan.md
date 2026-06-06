@@ -280,8 +280,12 @@ styles unless truly dynamic) and the existing `.cb-*` pattern in `src/index.css`
   the new modal.
 - **Loss-side loot for PvP:** resolved — `endModal.loot.dropped` + `droppedValue` are
   available client-side, so "Items Lost" renders from real data.
-- **Decoration (rays/particles)** is optional and must respect `prefers-reduced-motion`;
-  ship the static themed look first. (Only open design choice — see hand-off note.)
+- **Decoration (rays/particles):** implement the **full animated treatment for both themes**.
+  Gold (win/normal): spinning conic rays + gold particle burst. Blood (death/defeat):
+  particle burst in blood-red (`#e0564b` / `#c03020`), no rays (they're a win-exclusive
+  motif in the design). Both must respect `prefers-reduced-motion` — gate the animations
+  behind `@media (prefers-reduced-motion: no-preference)` or a CSS class so the modal
+  is still usable without them.
 - **Tap targets ≥ 44px** for all action buttons (§9).
 - **No `/N` Tailwind opacity** — use the CSS-var colours (§9).
 
