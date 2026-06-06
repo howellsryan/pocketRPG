@@ -43,6 +43,15 @@ export default function BankScreen() {
   const selected = selectedId && bank[selectedId]?.quantity > 0 ? bank[selectedId] : null
   useEffect(() => { if (selectedId && !selected) setSelectedId(null) }, [selected, selectedId])
 
+  // Set default price when item is selected
+  useEffect(() => {
+    if (selected) {
+      const item = itemsData[selected.itemId]
+      setListQtyInput(1)
+      setListPriceInput(Math.max(1, Math.floor(Number(item?.shopValue) || 1)))
+    }
+  }, [selected, itemsData])
+
   const bankItems = Object.values(bank).filter(b => b && b.quantity > 0)
   const placeholderIds = Object.keys(placeholders).filter(itemId => !bank[itemId] || bank[itemId].quantity <= 0)
 
