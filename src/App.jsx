@@ -2285,6 +2285,16 @@ function GameApp() {
             idleResult.task.type === 'quest' ? (idleResult.completedQuests?.length > 1 ? `✅ ${idleResult.completedQuests.length} Quests Completed` : (idleResult.completed ? '✅ Completed' : '⏳ On quest')) :
             undefined
           ) : undefined)}
+          titleRight={!idleResult.died && isCloudAccount && (
+            <button
+              onClick={handleSkip1h}
+              class="flex items-center gap-1 px-2 py-1 rounded-full bg-[#2a2010] border border-[var(--color-gold-dim)] hover:border-[var(--color-gold)] transition-colors text-[11px] font-semibold text-[var(--color-gold-light)] whitespace-nowrap"
+              title="Skip 1 hour"
+            >
+              <span>⏭️</span>
+              <span>Skip</span>
+            </button>
+          )}
           primaryAction={{ label: 'Continue Adventure', onClick: closeIdleResultModal }}
           onClose={closeIdleResultModal}
         >
