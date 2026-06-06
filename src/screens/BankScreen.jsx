@@ -210,6 +210,15 @@ export default function BankScreen() {
 
   const handleSell = async (qty, overridePrice = null) => {
     if (!selected || sellBusy) return
+
+    // Re-verify the item still exists in the bank with the correct quantity
+    const bankEntry = bank[selected.itemId]
+    if (!bankEntry || bankEntry.quantity <= 0) {
+      addToast('Item no longer in bank', 'error')
+      setSelectedId(null)
+      return
+    }
+
     const item = itemsData[selected.itemId]
     if (!item) return
     const defaultPrice = Math.floor(Number(item.shopValue) || 0)
@@ -225,7 +234,8 @@ export default function BankScreen() {
       return
     }
 
-    const sellQty = Math.max(1, Math.min(Number(qty) || 1, selected.quantity))
+    // Use the current bank quantity, not the stale selected state
+    const sellQty = Math.max(1, Math.min(Number(qty) || 1, bankEntry.quantity))
 
     setSellBusy(true)
     try {

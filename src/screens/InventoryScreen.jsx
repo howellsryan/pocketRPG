@@ -335,6 +335,15 @@ export default function InventoryScreen() {
 
   const handleSell = async (qty, overridePrice = null) => {
     if (!selected || sellBusy) return
+
+    // Re-verify the inventory slot still exists with the same item
+    const currentSlot = inventory[selected.slotIndex]
+    if (!currentSlot || currentSlot.itemId !== selected.slot.itemId) {
+      addToast('Item no longer in inventory', 'error')
+      setSelected(null)
+      return
+    }
+
     const { slot, item } = selected
     const defaultPrice = Math.floor(Number(item.shopValue) || 0)
     const price = Math.floor(Number(overridePrice ?? defaultPrice) || 0)
@@ -349,10 +358,10 @@ export default function InventoryScreen() {
       return
     }
 
-    const isNoted = !!slot.noted
+    const isNoted = !!currentSlot.noted
     const ownedQty = (item.stackable || isNoted)
-      ? slot.quantity
-      : inventory.reduce((n, s) => n + ((s && s.itemId === slot.itemId && !!s.noted === isNoted) ? 1 : 0), 0)
+      ? currentSlot.quantity
+      : inventory.reduce((n, s) => n + ((s && s.itemId === currentSlot.itemId && !!s.noted === isNoted) ? 1 : 0), 0)
     const sellQty = Math.max(1, Math.min(Number(qty) || 1, ownedQty))
 
     setSellBusy(true)
@@ -368,13 +377,13 @@ export default function InventoryScreen() {
         // Ironman accounts can't use the trading post, and untradeable items
         // never list there either; both take the NPC-instant-sell path that
         // deletes the item and pays out its shopValue in coins.
-        await api.tradingPostSellImmediate(slot.itemId, sellQty)
+        await api.tradingPostSellImmediate(currentSlot.itemId, sellQty)
         const cloud = await pullSave()
         if (cloud?.payload) await applyCloudSave(cloud.payload, cloud.updatedAt)
         await loadGame()
         addToast(`Sold ${sellQty} × ${item.name} for ${(sellQty * price).toLocaleString()} gp`, 'info')
       } else {
-        const res = await api.tradingPostList('sell', slot.itemId, price, sellQty)
+        const res = await api.tradingPostList('sell', currentSlot.itemId, price, sellQty)
         const cloud = await pullSave()
         if (cloud?.payload) await applyCloudSave(cloud.payload, cloud.updatedAt)
         await loadGame()
