@@ -4470,12 +4470,12 @@
         "chance": 0.004
       },
       {
-        "itemId": "faerdhinen_warbow",
+        "itemId": "bow_of_faerdhinen",
         "quantity": 1,
         "chance": 0.004
       },
       {
-        "itemId": "saeldor_warblade",
+        "itemId": "blade_of_saeldor",
         "quantity": 1,
         "chance": 0.004
       },
