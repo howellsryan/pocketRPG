@@ -270,6 +270,71 @@ describe('computeBotIntents', () => {
     expect(intents.some((i: any) => i.type === 'queue_special')).toBe(true)
   })
 
+  it('swaps to a finisher weapon when the bow cannot KO but the bag weapon can', () => {
+    // Opponent on very low hp: a melee finisher (dagger spec) should be able
+    // to KO when the equipped bow's snapshot cannot reach.
+    const bot = makeCombatant({
+      equipment: {
+        weapon: { itemId: 'magic_shortbow' },
+        ammo:   { itemId: 'dragon_arrow', quantity: 500 },
+      },
+      activePotions: { super_combat: 50 },
+      activeCombatPrayer: 'rigour',
+      specialAttackEnergy: 100,
+      attackTimer: 1,
+      eatCooldown: 0,
+      combatType: 'ranged',
+    })
+    // hp 50 is above the bow snapshot ceiling (36) but within the dragon
+    // dagger double-hit burst (56), so the bot should swap to the dagger.
+    const state = makeState(bot, makeOpponent({ hp: 50, attackTimer: 4 }))
+    const intents = computeBotIntents(state, 99, itemsData)
+    const equip = intents.find((i: any) => i.type === 'equip')
+    expect(equip).toBeDefined()
+    // The equipped slot must be a finisher weapon from the bag.
+    const equippedId = bot.inventory[equip.inventorySlot].itemId
+    expect(['dragon_dagger', 'dragon_battleaxe']).toContain(equippedId)
+  })
+
+  it('swaps back to the highest-DPS weapon when no KO is available', () => {
+    // Bot is stuck on the battleaxe but the opponent is at full hp — it
+    // should return to the magic shortbow (its primary DPS weapon).
+    const bot = makeCombatant({
+      equipment: { weapon: { itemId: 'dragon_battleaxe' } },
+      inventory: [
+        { itemId: 'magic_shortbow', quantity: 1 },
+        { itemId: 'dragon_dagger', quantity: 1 },
+        ...Array.from({ length: 26 }, () => ({ itemId: 'manta_ray', quantity: 1 })),
+      ],
+      activePotions: { super_combat: 50 },
+      activeCombatPrayer: 'piety',
+      specialAttackEnergy: 0,
+      attackTimer: 1,
+      eatCooldown: 0,
+      combatType: 'melee',
+    })
+    const state = makeState(bot, makeOpponent({ hp: 99, attackTimer: 4 }))
+    const intents = computeBotIntents(state, 99, itemsData)
+    const equip = intents.find((i: any) => i.type === 'equip')
+    expect(equip).toBeDefined()
+    expect(bot.inventory[equip.inventorySlot].itemId).toBe('magic_shortbow')
+  })
+
+  it('matches prayer + stance to the weapon it plans to wield', () => {
+    const bot = makeCombatant({
+      equipment: { weapon: { itemId: 'magic_shortbow' }, ammo: { itemId: 'dragon_arrow', quantity: 500 } },
+      activeCombatPrayer: 'piety',     // wrong prayer for ranged
+      stance: 'aggressive',            // wrong stance for ranged
+      attackTimer: 5,                  // not swinging — stays on bow
+      combatType: 'ranged',
+      activePotions: { super_combat: 50 },
+    })
+    const state = makeState(bot, makeOpponent({ hp: 99 }))
+    const intents = computeBotIntents(state, 99, itemsData)
+    expect(intents.some((i: any) => i.type === 'toggle_prayer' && i.prayerId === 'rigour')).toBe(true)
+    expect(intents.some((i: any) => i.type === 'change_stance' && i.stance === 'rapid')).toBe(true)
+  })
+
   it('returns no intents when invalid state', () => {
     expect(computeBotIntents(null as any, 99, itemsData)).toEqual([])
     expect(computeBotIntents({} as any, 99, itemsData)).toEqual([])

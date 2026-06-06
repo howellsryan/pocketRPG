@@ -7,14 +7,29 @@
 // Decision pipeline (highest priority first):
 //   1. Drink potion at fight start if none active
 //   2. Eat if survival threshold breached and no eat cooldown
-//   3. Kill push — queue spec if it can plausibly kill; swap to battleaxe
-//      for a one-shot attempt when opponent is low
-//   4. Prayer — activate best damage prayer for current combat type if none
-//   5. Default — nothing (normal shortbow attack continues)
+//   3. Offensive plan (only on a tick the bot can actually act):
+//        a. KO push — if the equipped weapon's spec can finish the
+//           opponent (or energy is capped on a cheap spec), queue it.
+//        b. Weapon swap — if a finisher weapon in the bag could KO when
+//           the equipped one can't, swap to it (the spec fires once it's
+//           ready). Falls back to the highest-DPS weapon when no KO is on.
+//   4. Prayer + stance — keep them matched to the weapon we'll be wielding.
+//
+// Why the off-by-one matters: the engine decrements attackTimer AFTER
+// intents are applied, so a swing resolves on the tick where the bot
+// enters with attackTimer <= 1. KO/spec decisions therefore gate on
+// `willSwingThisTick` rather than `attackTimer === 0`, otherwise the bot
+// would only ever spec on the opening tick.
 
 import { getEquippedPvpSpecialAttack, clampPvpSpecialEnergy } from './pvpSpecialAttacks.js'
-import { rollMeleeAttack, rollRangedAttack } from './combatPrimitives.js'
-import { getAttackSpeed } from './equipment.js'
+import { rollMeleeAttack, rollRangedAttack, rollMagicAttack } from './combatPrimitives.js'
+import { getCombatType } from './equipment.js'
+
+// Highest-DPS weapon(s) the bot returns to when no KO is being pursued,
+// in preference order. Finisher weapons it swaps to for a kill attempt,
+// cheapest / highest-burst first.
+const PRIMARY_DPS_WEAPONS = ['magic_shortbow']
+const KO_WEAPONS          = ['dragon_dagger', 'dragon_battleaxe']
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
@@ -28,19 +43,52 @@ function getOpponentCombatant(state, botId) {
   return oppId ? state.combatants[oppId] : null
 }
 
-// Estimate max damage the bot can land in its current weapon configuration.
-function estimateBotMaxHit(bot, opponent, itemsData) {
+// Roll a max-hit snapshot for a combatant using the right combat style.
+function rollMaxHitFor(combatant, opponent, itemsData) {
   try {
-    const snapshot = bot.combatType === 'melee'
-      ? rollMeleeAttack(bot, opponent, itemsData)
-      : rollRangedAttack(bot, opponent, itemsData)
-    return snapshot?.maxHit || 0
+    const snap = combatant.combatType === 'ranged' ? rollRangedAttack(combatant, opponent, itemsData)
+      : combatant.combatType === 'magic'  ? rollMagicAttack(combatant, opponent, itemsData)
+      :                                     rollMeleeAttack(combatant, opponent, itemsData)
+    return snap?.maxHit || 0
   } catch {
     return 0
   }
 }
 
-// Find a weapon in the bot's inventory by itemId; returns { slot, item }.
+// Estimate max damage the bot can land in its current weapon configuration.
+function estimateBotMaxHit(bot, opponent, itemsData) {
+  return rollMaxHitFor(bot, opponent, itemsData)
+}
+
+// Estimate the biggest burst a given weapon could land on the opponent on
+// a single action — used to decide whether a weapon (equipped or swapped
+// to) can plausibly KO. Simulates the bot wielding `weaponId` with the
+// correct combat style and damage prayer, then applies the spec multiplier.
+function estimateWeaponBurst(weaponId, bot, opponent, itemsData) {
+  const item = itemsData?.[weaponId]
+  if (!item) return 0
+  const fakeEquip   = { ...bot.equipment, weapon: { itemId: weaponId } }
+  const combatType  = getCombatType(fakeEquip, itemsData)
+  const fakeBot = {
+    ...bot,
+    equipment: fakeEquip,
+    combatType,
+    stance: combatType === 'ranged' ? 'rapid' : 'aggressive',
+    activeCombatPrayer: bestDamagePrayer(combatType),
+  }
+  const base = rollMaxHitFor(fakeBot, opponent, itemsData)
+  const spec = item.specialAttack
+  if (!spec) return base   // no spec: a single high normal hit (e.g. battleaxe finisher)
+  const dmgMult = Number(spec.maxHitMultiplier ?? spec.damageMultiplier ?? 0) || 0
+  switch (spec.type) {
+    case 'double_hit': return Math.floor(base * (dmgMult || 1.15)) * 2
+    case 'snapshot':   return Math.floor(base * (dmgMult || 0.75)) * 2
+    case 'overpower':  return Math.floor(base * (dmgMult || 1.5))
+    default:           return base
+  }
+}
+
+// Find a weapon in the bot's inventory by itemId; returns { inventorySlot, item }.
 function findInventoryWeapon(bot, weaponId, itemsData) {
   const inv = bot.inventory || []
   for (let i = 0; i < inv.length; i++) {
@@ -83,11 +131,16 @@ function findPotionSlot(bot, itemsData) {
   return -1
 }
 
-// Best prayer for the bot's combat type (no protection prayers in PvP v1).
-function bestDamagePrayer(bot) {
-  if (bot.combatType === 'ranged') return 'rigour'
-  if (bot.combatType === 'magic')  return 'augury'
+// Best prayer for a given combat type (no protection prayers in PvP v1).
+function bestDamagePrayer(combatType) {
+  if (combatType === 'ranged') return 'rigour'
+  if (combatType === 'magic')  return 'augury'
   return 'piety'
+}
+
+// Stance that maximises offence for a combat type.
+function bestOffensiveStance(combatType) {
+  return combatType === 'ranged' ? 'rapid' : 'aggressive'
 }
 
 // ── Main export ───────────────────────────────────────────────────────────────
@@ -122,88 +175,88 @@ export function computeBotIntents(state, botId, itemsData) {
     }
   }
 
-  // 2. Prayer — activate best damage prayer if none active.
-  if (!bot.activeCombatPrayer) {
-    intents.push({ type: 'toggle_prayer', prayerId: bestDamagePrayer(bot) })
-  }
-
-  // 3. Eat — survival check.
-  //    Eat when hp could die to opponent's next swing.
-  //    Use a heal of 22 (manta_ray) as the look-ahead.
+  // 2. Eat — survival check.
+  //    Eat when current hp could die to the opponent's next swing(s).
+  //    Eating blocks our own swing this tick, so do it before planning offence.
   if ((bot.eatCooldown || 0) <= 0) {
-    const MANTA_HEAL  = 22
     const opMaxHit    = estimateBotMaxHit(opponent, bot, itemsData)
-    // Eat if: current hp minus opponent's likely max hit is less than a safety
-    // margin, BUT only if eating doesn't expose us to certain death (i.e. we
-    // have enough ticks before opponent swings to survive the eat delay).
     const opponentSwingsNextTick = (opponent.attackTimer || 0) <= 1
     const eatThreshold = opMaxHit + (opponentSwingsNextTick ? opMaxHit : 0) + 5
     if (bot.hp <= eatThreshold) {
       const foodSlot = findFoodSlot(bot, itemsData)
       if (foodSlot >= 0) {
         intents.push({ type: 'eat', inventorySlot: foodSlot })
-        // After eating we can't swing this tick — skip further offensive actions.
-        return intents
+        return intents   // can't act offensively this tick
       }
     }
   }
 
-  // 4. Kill push — spec if it can plausibly kill.
-  if ((bot.attackTimer || 0) <= 0 && (bot.eatCooldown || 0) <= 0) {
-    const equipped = getEquippedPvpSpecialAttack(bot, itemsData)
-    const energy   = clampPvpSpecialEnergy(bot.specialAttackEnergy, 0)
+  // 3. Offensive plan. `plannedWeapon` is what we'll be wielding after this
+  //    tick's decisions; prayer + stance (step 4) are matched to it.
+  const willSwingThisTick = (bot.attackTimer || 0) <= 1
+  const energy  = clampPvpSpecialEnergy(bot.specialAttackEnergy, 0)
+  const current = bot.equipment?.weapon?.itemId
+  let plannedWeapon = current
 
-    if (equipped?.specialAttack && energy >= equipped.specialAttack.energyCost) {
-      // Estimate spec damage (conservative: use 1.5x normal max hit for overpower,
-      // 2 hits at 75% for snapshot, 2 hits at 115% for double_hit).
-      const baseMax  = estimateBotMaxHit(bot, opponent, itemsData)
-      const specType = equipped.specialAttack.type
-      let specMaxEstimate = baseMax
+  if (willSwingThisTick) {
+    const curSpec     = getEquippedPvpSpecialAttack(bot, itemsData)?.specialAttack || null
+    const curCost     = curSpec ? Math.max(0, Number(curSpec.energyCost) || 0) : 0
+    const curCanSpec  = !!curSpec && energy >= curCost
+    const curBurst    = curCanSpec ? estimateWeaponBurst(current, bot, opponent, itemsData) : 0
+    const curNormal   = estimateBotMaxHit(bot, opponent, itemsData)
+    const specKill    = curCanSpec && curBurst >= opponent.hp
+    const normalKill  = curNormal >= opponent.hp
+    // Spec to secure a kill a normal swing can't guarantee, or to spend
+    // capped cheap energy (free value — it regenerates anyway).
+    const cappedCheap = curCanSpec && energy >= 100 && curCost <= 25
 
-      if (specType === 'snapshot')    specMaxEstimate = Math.floor(baseMax * 0.75) * 2
-      if (specType === 'double_hit')  specMaxEstimate = Math.floor(baseMax * 1.15) * 2
-      if (specType === 'overpower')   specMaxEstimate = Math.floor(baseMax * 1.5)
-
-      // Queue spec if plausible kill OR energy is capped (free value for cheap specs).
-      const canKill    = specMaxEstimate >= opponent.hp
-      const energyCap  = energy >= 100 && equipped.specialAttack.energyCost <= 25
-      if (canKill || energyCap) {
-        intents.push({ type: 'queue_special' })
-      }
-    }
-
-    // 5. Battleaxe swap for one-shot kill attempt.
-    //    If opponent is low and the battleaxe's higher max hit could finish
-    //    them when the shortbow can't, swap to it for the kill.
-    if (intents.length === 0 || (intents.length === 1 && intents[0].type === 'toggle_prayer')) {
-      const currentWeapon = bot.equipment?.weapon?.itemId
-      if (currentWeapon !== 'dragon_battleaxe') {
-        const axeInInv = findInventoryWeapon(bot, 'dragon_battleaxe', itemsData)
-        if (axeInInv) {
-          // Temporarily simulate the bot wearing the axe to check max hit
-          const fakeBot = {
-            ...bot,
-            equipment: { ...bot.equipment, weapon: { itemId: 'dragon_battleaxe' } },
-            combatType: 'melee',
-          }
-          let axeMax = 0
-          try {
-            const snap = rollMeleeAttack(fakeBot, opponent, itemsData)
-            axeMax = snap?.maxHit || 0
-          } catch { /* ignore */ }
-          if (axeMax >= opponent.hp) {
-            intents.push({ type: 'equip', inventorySlot: axeInInv.inventorySlot })
-          }
+    if ((specKill && !normalKill) || cappedCheap) {
+      intents.push({ type: 'queue_special' })
+    } else if (!normalKill) {
+      // Swap to a finisher weapon that CAN kill when the equipped one can't.
+      let swapped = false
+      for (const weaponId of KO_WEAPONS) {
+        if (weaponId === current) continue
+        const inv = findInventoryWeapon(bot, weaponId, itemsData)
+        if (!inv) continue
+        const spec       = itemsData?.[weaponId]?.specialAttack
+        const needEnergy = spec ? Math.max(0, Number(spec.energyCost) || 0) : 0
+        if (energy < needEnergy) continue
+        if (estimateWeaponBurst(weaponId, bot, opponent, itemsData) >= opponent.hp) {
+          intents.push({ type: 'equip', inventorySlot: inv.inventorySlot })
+          plannedWeapon = weaponId
+          swapped = true
+          break
         }
-      } else {
-        // Already on battleaxe and kill shot missed — swap back to shortbow.
-        const bowInInv = findInventoryWeapon(bot, 'magic_shortbow', itemsData)
-        if (bowInInv) {
-          intents.push({ type: 'equip', inventorySlot: bowInInv.inventorySlot })
-          intents.push({ type: 'change_stance', stance: 'rapid' })
+      }
+      // No KO available — return to the highest-DPS weapon if we drifted off it.
+      if (!swapped && !PRIMARY_DPS_WEAPONS.includes(current)) {
+        for (const weaponId of PRIMARY_DPS_WEAPONS) {
+          const inv = findInventoryWeapon(bot, weaponId, itemsData)
+          if (inv) {
+            intents.push({ type: 'equip', inventorySlot: inv.inventorySlot })
+            plannedWeapon = weaponId
+            break
+          }
         }
       }
     }
+  }
+
+  // 4. Prayer + stance — matched to the weapon we'll be wielding next.
+  //    Toggling a *different* prayer id switches to it directly (engine
+  //    semantics), so this both activates and corrects the prayer.
+  const plannedCombatType = getCombatType(
+    { ...bot.equipment, weapon: plannedWeapon ? { itemId: plannedWeapon } : null },
+    itemsData,
+  )
+  const desiredPrayer = bestDamagePrayer(plannedCombatType)
+  if (bot.activeCombatPrayer !== desiredPrayer) {
+    intents.push({ type: 'toggle_prayer', prayerId: desiredPrayer })
+  }
+  const desiredStance = bestOffensiveStance(plannedCombatType)
+  if (bot.stance !== desiredStance) {
+    intents.push({ type: 'change_stance', stance: desiredStance })
   }
 
   return intents
