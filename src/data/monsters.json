@@ -1,3 +1,6 @@
+
+
+
 {
   "field_chicken": {
     "id": "field_chicken",
@@ -4470,12 +4473,12 @@
         "chance": 0.004
       },
       {
-        "itemId": "bow_of_faerdhinen",
+        "itemId": "faerdhinen_warbow",
         "quantity": 1,
         "chance": 0.004
       },
       {
-        "itemId": "blade_of_saeldor",
+        "itemId": "saeldor_warblade",
         "quantity": 1,
         "chance": 0.004
       },
@@ -4597,7 +4600,7 @@
         "chance": 0.25
       },
       {
-        "itemId": "daganoth_bones",
+        "itemId": "nagadoth_bones",
         "quantity": 50,
         "chance": 0.2
       },
