@@ -6,6 +6,7 @@ import TradingPostSellForm from '../components/TradingPostSellForm.jsx'
 import { formatQuantity } from '../utils/helpers'
 import GameIcon from '../components/GameIcon.jsx'
 import { isOrderBookItem } from '../engine/storeRules.js'
+import { addItem } from '../engine/inventory.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
 import { pullSave, applyCloudSave, pushNow } from '../cloud/sync.js'
 
@@ -239,6 +240,23 @@ export default function BankScreen() {
 
     setSellBusy(true)
     try {
+      // Move the item from bank to inventory (trading post API requires items in inventory)
+      const newInv = [...inventory]
+      const newBank = { ...bank }
+
+      if (!addItem(newInv, selected.itemId, sellQty, item?.stackable || false)) {
+        addToast('Not enough inventory space to sell this item', 'error')
+        setSelectedId(null)
+        return
+      }
+
+      // Remove from bank
+      newBank[selected.itemId] = { itemId: selected.itemId, quantity: bankEntry.quantity - sellQty }
+
+      // Update state before API call
+      updateInventory(newInv)
+      updateBank(newBank)
+
       try { await pushNow(getSnapshot()) } catch (_) { /* ignore push failure */ }
 
       if (isIronman || item.isUntradeable) {
