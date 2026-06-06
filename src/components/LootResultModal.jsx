@@ -192,23 +192,21 @@ export default function LootResultModal({
         data-theme={theme}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Skip button (top-left) */}
-        {titleRight && (
-          <div style={{ position: 'absolute', top: '12px', left: '12px', zIndex: 10 }}>
-            {titleRight}
+        {/* Header row: skip on left, close on right */}
+        <div class="loot-modal__header">
+          <div class="loot-modal__header-left">
+            {titleRight || null}
           </div>
-        )}
-
-        {/* Close button */}
-        {onClose && (
-          <button
-            class="loot-modal__close"
-            aria-label="Close"
-            onClick={onClose}
-          >
-            ✕
-          </button>
-        )}
+          {onClose && (
+            <button
+              class="loot-modal__close"
+              aria-label="Close"
+              onClick={onClose}
+            >
+              ✕
+            </button>
+          )}
+        </div>
 
         {/* Spinning rays — gold only */}
         {theme === 'gold' && <div class="loot-modal__rays" aria-hidden="true" />}
