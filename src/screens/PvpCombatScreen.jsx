@@ -5,6 +5,7 @@ import Panel from '../components/Panel.jsx'
 import Button from '../components/Button.jsx'
 import ItemSlot from '../components/ItemSlot.jsx'
 import Modal from '../components/Modal.jsx'
+import LootResultModal, { MatchupHpStrip, LootResultRow } from '../components/LootResultModal.jsx'
 import { pvpApi } from '../cloud/pvp.js'
 import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
@@ -1026,73 +1027,70 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
         </>
       )}
 
-      {endModal && (
-        <Modal
-          title={endModal.youWon ? '🏆 Victory' : '💀 Defeat'}
-          onClose={handleCloseEndModal}
-          contentClassName="space-y-4"
-        >
-          {!endModal.writebackOk ? (
-            <div class="rounded-2xl border border-[var(--color-blood)] bg-[#2a1010] p-3 text-sm text-[var(--color-parchment)]">
-              <div class="font-semibold text-[var(--color-blood-light)]">PvP result saved with a warning</div>
-              <div class="mt-1 text-xs opacity-80">
-                The match ended, but the reward writeback did not complete. Please refresh before starting another PvP match.
-              </div>
-            </div>
-          ) : (
-            <>
-              <p class="text-sm leading-relaxed text-[var(--color-parchment)]">
-                {endModal.youWon ? (
-                  <>
-                    You are Victorious! Your total loot is:{' '}
-                    <span class="font-semibold text-[var(--color-gold)]">{endTotalRiskLabel}</span>.
-                  </>
-                ) : (
-                  <>
-                    You were defeated for a total of:{' '}
-                    <span class="font-semibold text-[var(--color-gold)]">{endTotalRiskLabel}</span>.
-                  </>
-                )}
-              </p>
+      {endModal && (() => {
+        const youWon = endModal.youWon
+        const oppName = pair.opp?.username || 'Opponent'
+        const selfName = pair.self?.username || 'You'
 
-              {endModal.youWon && (
-                <div class="rounded-2xl border border-[#333] bg-[var(--color-void)] p-3">
-                  <div class="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--color-gold)]">
-                    Items won
-                  </div>
+        // Build loot rows for the shared component
+        const pvpLootEntries = youWon
+          ? aggregateLootEntries(endModal.loot?.added || [])
+          : aggregateLootEntries(endModal.loot?.dropped || [])
 
-                  {wonLootRows.length > 0 ? (
-                    <div class="max-h-[min(38svh,360px)] space-y-2 overflow-y-auto overscroll-contain pr-1">
-                      {wonLootRows.map((entry) => (
-                        <div
-                          key={getLootGroupKey(entry)}
-                          class="flex items-center gap-3 rounded-xl border border-[#333] bg-[var(--color-void-light)] px-3 py-2 text-sm text-[var(--color-parchment)]"
-                        >
-                          <span class="shrink-0 text-xl">{getLootIcon(entry)}</span>
-                          <span class="min-w-0 truncate">{formatLootEntry(entry)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div class="rounded-xl border border-[#333] bg-[var(--color-void-light)] px-3 py-2 text-sm text-[var(--color-parchment)] opacity-70">
-                      Nothing tradeable was dropped!
-                    </div>
-                  )}
-                </div>
-              )}
-            </>
-          )}
+        const pvpLootRows = pvpLootEntries.map((entry) => ({
+          key: getLootGroupKey(entry),
+          item: itemsData?.[entry.itemId] || null,
+          name: itemsData?.[entry.itemId]?.name || entry.itemId || 'Unknown item',
+          quantity: getLootQuantity(entry),
+          lost: !youWon,
+        }))
 
-          <Button
-            variant="primary"
-            size="lg"
-            className="w-full"
-            onClick={handleCloseEndModal}
+        const pvpLootTotal = youWon
+          ? Number(endModal.loot?.addedValue ?? 0)
+          : Number(endModal.loot?.droppedValue ?? endModal.loot?.totalRiskValue ?? 0)
+
+        const selfRisk = getCombatantTotalRisk(pair.self)
+        const oppRisk = getCombatantTotalRisk(pair.opp)
+        const selfRank = formatPvpRank(pair.self)
+        const oppRank = formatPvpRank(pair.opp)
+
+        return (
+          <LootResultModal
+            theme={youWon ? 'gold' : 'blood'}
+            icon={youWon ? '🏆' : '💀'}
+            title={youWon ? 'Victorious' : 'Defeated'}
+            subtitle={youWon
+              ? `${oppName} has fallen before you`
+              : `${oppName} has slain you`}
+            loot={endModal.writebackOk && pvpLootRows.length > 0 ? pvpLootRows : null}
+            lootTitle={youWon ? '✦ Loot Plundered' : 'Items Lost'}
+            lootTotal={pvpLootTotal}
+            lootSigned={youWon ? '+' : '-'}
+            primaryAction={{ label: 'Return to PvE', onClick: handleCloseEndModal }}
+            onClose={handleCloseEndModal}
           >
-            Return to PvE
-          </Button>
-        </Modal>
-      )}
+            {/* Writeback warning */}
+            {!endModal.writebackOk && (
+              <div class="mx-4 mb-3 rounded-2xl border border-[var(--color-blood)] bg-[#2a1010] p-3 text-sm text-[var(--color-parchment)]">
+                <div class="font-semibold text-[var(--color-blood-light)]">PvP result saved with a warning</div>
+                <div class="mt-1 text-xs opacity-80">
+                  The match ended, but the reward writeback did not complete. Please refresh before starting another PvP match.
+                </div>
+              </div>
+            )}
+
+            {/* Both-fighter HP strip */}
+            <MatchupHpStrip
+              self={pair.self}
+              opp={pair.opp}
+              selfRisk={selfRisk}
+              oppRisk={oppRisk}
+              selfRank={selfRank}
+              oppRank={oppRank}
+            />
+          </LootResultModal>
+        )
+      })()}
     </div>
   )
 }
