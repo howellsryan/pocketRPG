@@ -87,6 +87,7 @@ const sourceFiles = [
   'state/pvpState.js',
   'components/Modal.js',
   'components/HPBar.js',
+  'components/LootResultModal.js',
   'components/ProgressBar.js',
   'components/SkillBadge.js',
   'components/GameIcon.js',

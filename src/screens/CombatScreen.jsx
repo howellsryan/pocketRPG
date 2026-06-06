@@ -5,6 +5,7 @@ import { usePvp } from '../state/pvpState.jsx'
 import PvpLobbyModal from './PvpLobbyModal.jsx'
 import PvpCombatScreen from './PvpCombatScreen.jsx'
 import Modal from '../components/Modal.jsx'
+import LootResultModal, { LootResultRow as PveLootResultRow } from '../components/LootResultModal.jsx'
 import HPBar from '../components/HPBar.jsx'
 import IdleCombatSetupModal from '../components/IdleCombatSetupModal.jsx'
 import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
@@ -230,6 +231,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     ...Object.fromEntries(COMBAT_CATEGORIES.map(category => [category.key, true])),
   }))
   const [lootModal, setLootModal] = useState(null)
+  const [deathModal, setDeathModal] = useState(null)
   const [isDesktopCombatLayout, setIsDesktopCombatLayout] = useState(false)
 
   const combatRef = useRef(null)
@@ -452,9 +454,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             if (oneLifeModeRef.current) {
               void triggerOneLifeDeath(addToast)
             } else {
-              addToast('You died!', 'error')
               updateHP(getMaxHP())
               hpRef.current = getMaxHP()
+              setDeathModal({ monsterName: state.monster?.name || 'the monster', cause: 'slain' })
             }
           }
         }
@@ -480,9 +482,9 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
             if (oneLifeModeRef.current) {
               void triggerOneLifeDeath(addToast)
             } else {
-              addToast('Incinerated by dragonfire!', 'error')
               updateHP(getMaxHP())
               hpRef.current = getMaxHP()
+              setDeathModal({ monsterName: state.monster?.name || 'the dragon', cause: 'incinerated' })
             }
           }
         }
@@ -2774,8 +2776,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
       {/* Loot Modal */}
       {lootModal && (
-        <Modal
-          title={lootModal.raidId ? '🏆 Raid Complete' : 'Loot'}
+        <LootResultModal
+          theme="gold"
+          icon={lootModal.raidId ? '🏆' : (MONSTER_ICONS[lootModal.monster?.id] || '👹')}
+          title={lootModal.raidId
+            ? `${raidsData[lootModal.raidId]?.name || 'Raid'} Complete`
+            : `${lootModal.monster?.name || 'Monster'} Defeated!`}
           titleRight={!lootModal.loading && getToken() && getCharacterId() && (
             <button
               onClick={skipAgain}
@@ -2788,91 +2794,65 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               <span>{lootModal.raidId ? `Skip raid (${raidsData[lootModal.raidId]?.skipCost ?? 1})` : 'Skip'}</span>
             </button>
           )}
+          loot={!lootModal.loading && lootModal.loot && lootModal.loot.length > 0
+            ? lootModal.loot.map((drop, idx) => ({
+                key: idx,
+                item: itemsData[drop.itemId] || null,
+                name: itemsData[drop.itemId]?.name || drop.itemId,
+                quantity: drop.quantity,
+                highlight: isHighValueDrop(drop.itemId, drop.quantity, itemsData),
+              }))
+            : null}
+          primaryAction={!lootModal.loading ? {
+            label: lootModal.raidId ? 'Raid Again' : 'Fight Again',
+            onClick: () => {
+              if (lootModal.raidId) {
+                const raid = raidsData[lootModal.raidId]
+                if (raid) startRaid(raid)
+              } else {
+                const original = monstersData[lootModal.monster.id]
+                if (original) continueFight(original)
+              }
+              setLootModal(null)
+            },
+          } : null}
+          secondaryAction={!lootModal.loading ? {
+            label: lootModal.raidId ? 'Leave' : 'Run Away',
+            onClick: () => {
+              setLootModal(null)
+              stopAndBack()
+            },
+          } : null}
           onClose={() => setLootModal(null)}
         >
-          <div class="space-y-4">
-            {/* Header message */}
-            <div class="text-center py-2">
-              {lootModal.raidId ? (
-                <>
-                  <div class="text-4xl mb-2">🏆</div>
-                  <div class="text-lg font-semibold text-[var(--color-gold)]">{raidsData[lootModal.raidId]?.name || 'Raid'} complete!</div>
-                </>
-              ) : (
-                <>
-                  <div class="text-4xl mb-2">{MONSTER_ICONS[lootModal.monster.id] || '👹'}</div>
-                  <div class="text-lg font-semibold text-[var(--color-gold)]">{lootModal.monster.name} defeated!</div>
-                </>
-              )}
+          {/* Loading state shown as child content */}
+          {lootModal.loading && (
+            <div class="flex flex-col items-center py-6 gap-3">
+              <div class="w-8 h-8 border-2 border-[var(--color-gold)] border-t-transparent rounded-full animate-spin" />
+              <div class="text-sm text-[var(--color-parchment)] opacity-70">Waiting for server loot…</div>
             </div>
+          )}
+          {!lootModal.loading && (!lootModal.loot || lootModal.loot.length === 0) && (
+            <div class="text-center py-4 text-[var(--color-parchment)] opacity-60 text-sm">No loot dropped</div>
+          )}
+        </LootResultModal>
+      )}
 
-            {/* Loot items */}
-            {lootModal.loading ? (
-              <div class="text-center py-6">
-                <div class="w-8 h-8 mx-auto border-2 border-[var(--color-gold)] border-t-transparent rounded-full animate-spin" />
-                <div class="mt-3 text-sm text-[var(--color-parchment)] opacity-70">Waiting for server loot…</div>
-              </div>
-            ) : lootModal.loot && lootModal.loot.length > 0 ? (
-              <div class="space-y-2 max-h-48 overflow-y-auto">
-                {lootModal.loot.map((drop, idx) => {
-                  const item = itemsData[drop.itemId]
-                  const isHighValue = isHighValueDrop(drop.itemId, drop.quantity, itemsData)
-                  return (
-                    <div key={idx} class={`rounded-lg p-3 flex items-center justify-between ${isHighValue ? 'bg-purple-900 bg-opacity-30 border border-purple-500' : 'bg-[#111]'}`}>
-                      <div class="flex items-center gap-2">
-                        <GameIcon item={item} size={28} />
-                        <div>
-                          <div class={`text-sm font-semibold ${isHighValue ? 'text-purple-300' : 'text-[var(--color-parchment)]'}`}>
-                            {item?.name || drop.itemId}
-                          </div>
-                          <div class={`text-xs ${isHighValue ? 'text-purple-300 opacity-80' : 'text-[var(--color-parchment)] opacity-60'}`}>
-                            ×{drop.quantity}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            ) : (
-              <div class="text-center py-4 text-[var(--color-parchment)] opacity-60 text-sm">
-                No loot dropped
-              </div>
-            )}
-
-            {/* Action buttons */}
-            {!lootModal.loading && (
-            <div class="grid grid-cols-2 gap-3 pt-2">
-              <button
-                onClick={() => {
-                  setLootModal(null)
-                  stopAndBack()
-                }}
-                style="background:#1a1a1a;border:1px solid #2a2a2a;color:#888"
-                class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
-              >
-                {lootModal.raidId ? 'Leave' : 'Run Away'}
-              </button>
-              <button
-                onClick={() => {
-                  if (lootModal.raidId) {
-                    const raid = raidsData[lootModal.raidId]
-                    if (raid) startRaid(raid)
-                  } else {
-                    const original = monstersData[lootModal.monster.id]
-                    if (original) continueFight(original)
-                  }
-                  setLootModal(null)
-                }}
-                style="background:linear-gradient(135deg,#1a3a2a,#2a5a3a);border:1px solid rgba(100,200,120,0.35);color:#7de8a0"
-                class="py-2.5 rounded-lg font-semibold text-sm active:opacity-80"
-              >
-                {lootModal.raidId ? 'Raid Again' : 'Fight Again'}
-              </button>
-            </div>
-            )}
-          </div>
-        </Modal>
+      {/* PvE Death Modal */}
+      {deathModal && (
+        <LootResultModal
+          theme="blood"
+          icon="💀"
+          title="Defeated"
+          subtitle={deathModal.cause === 'incinerated'
+            ? `Incinerated by ${deathModal.monsterName}`
+            : `Slain by ${deathModal.monsterName}`}
+          primaryAction={{
+            label: 'Continue',
+            onClick: () => setDeathModal(null),
+          }}
+          onClose={() => setDeathModal(null)}
+        />
       )}
 
       {/* Monster Info Modal */}
