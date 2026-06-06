@@ -148,8 +148,32 @@ export function removeItemFromBank(save, itemId, quantity) {
   const qty = Math.floor(Number(quantity) || 0)
   if (qty < 1) throw new GameApiError('INVALID_QUANTITY', 'Invalid quantity', 400)
   const cur = bankQuantity(save, itemId)
-  if (cur < qty) throw new GameApiError('INSUFFICIENT_BANK', 'Not enough of that item in the bank', 400)
+  if (cur < qty) throw new GameApiError('INSUFFICIENT_SUPPLIES', 'Not enough of that item in the bank', 400)
   const next = cur - qty
   if (next <= 0) delete save.bank[itemId]
   else save.bank[itemId] = { itemId, quantity: next }
+}
+
+// Remove `quantity` of `itemId` from whichever store the caller names. The
+// trading-post sell flows use this so a sell from the bank checks (and debits)
+// the bank balance only, never silently consuming inventory copies of the same
+// item, and vice versa. `source` is 'inventory' (default) or 'bank'.
+export function removeItemFromSource(save, itemId, quantity, source = 'inventory') {
+  if (source === 'bank') {
+    removeItemFromBank(save, itemId, quantity)
+  } else {
+    removeItemFromInventory(save, itemId, quantity)
+  }
+}
+
+// Count how much of `itemId` the named store holds. Used to validate a sell
+// quantity against the correct source before any mutation.
+export function sourceQuantity(save, itemId, source = 'inventory') {
+  if (source === 'bank') return bankQuantity(save, itemId)
+  const inv = getInventory(save)
+  let available = 0
+  for (const s of inv) {
+    if (s?.itemId === itemId) available += Number(s.quantity) || 0
+  }
+  return available
 }

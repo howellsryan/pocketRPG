@@ -362,6 +362,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     onCombatStatusChange?.(isActive)
   }, [combat?.active, onCombatStatusChange])
 
+  // Pause ticks while the loot modal is open so combat cannot advance in the background
+  useEffect(() => {
+    if (!lootModal) return
+    pauseTicks()
+    return () => resumeTicks()
+  }, [!!lootModal])
+
   // Tick listener for combat
   useEffect(() => {
     if (!combat || !combat.active) return

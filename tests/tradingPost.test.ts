@@ -574,6 +574,31 @@ describe('escrow primitives', () => {
     expect(save.inventory[0].quantity).toBe(2)
   })
 
+  it("escrowSellItems with source 'bank' removes from the bank, not inventory", () => {
+    const save = makeSave(0, [{ itemId: 'twisted_longbow', quantity: 5 }])
+    save.bank = { twisted_longbow: { itemId: 'twisted_longbow', quantity: 9 } }
+    escrowSellItems(save, 'twisted_longbow', 4, 'bank')
+    // Bank debited, inventory copies untouched
+    expect(save.bank.twisted_longbow.quantity).toBe(5)
+    expect(save.inventory[0].quantity).toBe(5)
+  })
+
+  it("escrowSellItems with source 'bank' validates against the bank balance only", () => {
+    const save = makeSave(0, [{ itemId: 'twisted_longbow', quantity: 5 }])
+    save.bank = { twisted_longbow: { itemId: 'twisted_longbow', quantity: 2 } }
+    // 5 in inventory must NOT count toward a bank sell of 3
+    expect(() => escrowSellItems(save, 'twisted_longbow', 3, 'bank')).toThrow(/bank/)
+    expect(save.bank.twisted_longbow.quantity).toBe(2)
+    expect(save.inventory[0].quantity).toBe(5)
+  })
+
+  it("escrowSellItems with source 'bank' deletes the bank entry when fully sold", () => {
+    const save = makeSave(0, [])
+    save.bank = { twisted_longbow: { itemId: 'twisted_longbow', quantity: 3 } }
+    escrowSellItems(save, 'twisted_longbow', 3, 'bank')
+    expect(save.bank.twisted_longbow).toBeUndefined()
+  })
+
   it('escrowBuyCoins subtracts from coins (inventory + bank)', () => {
     const save = makeSave(1000)
     escrowBuyCoins(save, 800)
@@ -660,5 +685,26 @@ describe('autoFillSellAtShopValue (non-order-book auto-sell)', () => {
     const item = { shopValue: 0 }
     const save = makeSave(0, [{ itemId: 'bones', quantity: 1 }])
     expect(() => autoFillSellAtShopValue(save, item, 'bones', 1)).toThrow(/no shop value/)
+  })
+
+  it("source 'bank' removes from the bank and ignores inventory copies", () => {
+    const item = { shopValue: 50, stackable: false }
+    const save = makeSave(0, [{ itemId: 'bronze_dagger', quantity: 2 }])
+    save.bank = { bronze_dagger: { itemId: 'bronze_dagger', quantity: 4 } }
+    const { totalPayout } = autoFillSellAtShopValue(save, item, 'bronze_dagger', 3, 'bank')
+    expect(totalPayout).toBe(150)
+    expect(getCoinTotal(save)).toBe(150)
+    // Bank debited by 3; the 2 inventory copies are untouched
+    expect(save.bank.bronze_dagger.quantity).toBe(1)
+    expect(save.inventory.find((s: any) => s?.itemId === 'bronze_dagger')?.quantity).toBe(2)
+  })
+
+  it("source 'bank' validates against the bank balance, not inventory", () => {
+    const item = { shopValue: 50, stackable: true }
+    const save = makeSave(0, [{ itemId: 'iron_ore', quantity: 100 }])
+    save.bank = { iron_ore: { itemId: 'iron_ore', quantity: 5 } }
+    expect(() => autoFillSellAtShopValue(save, item, 'iron_ore', 10, 'bank')).toThrow(/bank/)
+    expect(getCoinTotal(save)).toBe(0)
+    expect(save.bank.iron_ore.quantity).toBe(5)
   })
 })

@@ -849,10 +849,13 @@ html, body, #app {
   min-height: 0;
 }
 
-/* Decorative spinning rays (gold/win only) */
+/* Decorative spinning rays (gold/win only) — lives inside .loot-modal__hero so it's
+   clipped to that element and cannot bleed into the scrollable content below.
+   top: -84px places the mask's bright-spot (129px into the 340px element) at
+   the vertical centre of the seal icon (hero padding-top 8px + seal 74px/2 = 45px). */
 .loot-modal__rays {
   position: absolute;
-  top: -60px;
+  top: -84px;
   left: 50%;
   width: 340px;
   height: 340px;
@@ -872,7 +875,7 @@ html, body, #app {
   align-items: center;
   padding: 8px 24px 20px;
   text-align: center;
-  overflow: visible;
+  overflow: hidden;
 }
 
 /* Circular seal */

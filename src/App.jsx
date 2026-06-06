@@ -1676,6 +1676,7 @@ function GameApp() {
       return
     }
 
+    let didShowIdleModal = false
     try {
       const task = activeTaskRef.current
       const [freshStats, freshInv, freshEq, freshBank, freshSlayerTask] = await Promise.all([
@@ -2027,6 +2028,7 @@ function GameApp() {
       // lands, then shows the idle-result modal — so a refresh mid-save
       // can't lose progress the player spent a credit on.
       await persistSkipThenReveal(idleResultData)
+      didShowIdleModal = !!idleResultData
     } catch (err) {
       console.error('[PocketRPG] Skip 1h error:', err)
       if (err?.status === 402) {
@@ -2036,12 +2038,12 @@ function GameApp() {
         addToast(err.message || 'Error during skip!', 'error')
       }
     } finally {
-      // Release the skip lock and resume the game. Skipped if a conflict
-      // rollback is in flight — that path reloads the page, so leaving the
-      // overlay up and the engine frozen until reload is the correct behaviour.
+      // Release the skip lock. When an idle-result modal is being shown we
+      // intentionally keep ticks paused so combat cannot advance while the
+      // player reviews the result. closeIdleResultModal calls resumeTicks().
       if (!isSaveConflict()) {
         unlockGame()
-        resumeTicks()
+        if (!didShowIdleModal) resumeTicks()
       }
       isSkippingRef.current = false
     }
@@ -2172,6 +2174,7 @@ function GameApp() {
       setScreen(SCREENS.SKILLS)
       setActionData({ skillId: 'dungeoneering' })
     }
+    resumeTicks()
     setIdleResult(null)
   }
 
@@ -2285,6 +2288,16 @@ function GameApp() {
             idleResult.task.type === 'quest' ? (idleResult.completedQuests?.length > 1 ? `✅ ${idleResult.completedQuests.length} Quests Completed` : (idleResult.completed ? '✅ Completed' : '⏳ On quest')) :
             undefined
           ) : undefined)}
+          titleRight={!idleResult.died && isCloudAccount && idleResult.task && !(idleResult.task?.type === 'combat' && (idleResult.task?.monster?.boss === true || idleResult.task?.raid === true)) && (
+            <button
+              onClick={handleSkip1h}
+              class="flex items-center gap-1 px-2 py-1 rounded-full bg-[#2a2010] border border-[var(--color-gold-dim)] hover:border-[var(--color-gold)] transition-colors text-[11px] font-semibold text-[var(--color-gold-light)] whitespace-nowrap"
+              title="Skip 1 hour"
+            >
+              <span>⏭️</span>
+              <span>Skip</span>
+            </button>
+          )}
           primaryAction={{ label: 'Continue Adventure', onClick: closeIdleResultModal }}
           onClose={closeIdleResultModal}
         >

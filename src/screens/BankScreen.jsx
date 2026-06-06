@@ -2,14 +2,18 @@ import { useState, useRef, useEffect } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import Modal from '../components/Modal.jsx'
 import SharedItemModal from '../components/SharedItemModal.jsx'
+import TradingPostSellForm from '../components/TradingPostSellForm.jsx'
 import { formatQuantity } from '../utils/helpers'
 import GameIcon from '../components/GameIcon.jsx'
+import { isOrderBookItem } from '../engine/storeRules.js'
+import { api, getToken, getCharacterId } from '../cloud/api.js'
+import { pullSave, applyCloudSave, pushNow } from '../cloud/sync.js'
 
 const MAX_TABS = 8
 const DEFAULT_NAMES = ['Combat', 'Skilling', 'Resources', 'Food', 'Gems', 'Runes', 'Misc', 'Extra']
 
 export default function BankScreen() {
-  const { bank, inventory, updateBank, updateInventory, addToast, itemsData, bankConfig, updateBankConfig } = useGame()
+  const { bank, inventory, updateBank, updateInventory, addToast, itemsData, bankConfig, updateBankConfig, isIronman, loadGame, getSnapshot } = useGame()
   const [selectedId, setSelectedId] = useState(null)
   const [activeTab, setActiveTab] = useState(0)
   const [tabMenu, setTabMenu] = useState(null)   // tabIndex of tab being edited
@@ -19,6 +23,11 @@ export default function BankScreen() {
   const [searchTerm, setSearchTerm] = useState('')
   const [quantityModalMode, setQuantityModalMode] = useState(null) // 'take' | 'note' | null
   const [quantityInput, setQuantityInput] = useState('')
+  const [sellBusy, setSellBusy] = useState(false)
+  const [listQtyInput, setListQtyInput] = useState(1)
+  const [listPriceInput, setListPriceInput] = useState(1)
+
+  const hasCloudAccount = Boolean(getToken() && getCharacterId())
 
   const dragRef = useRef(null)
   const overRef = useRef(null)
@@ -197,6 +206,90 @@ export default function BankScreen() {
     }
     updateBankConfig({ tabs, itemTabMap: newMap, allTabName, placeholders })
     setSelectedId(null)
+  }
+
+  const handleSell = async (qty, overridePrice = null) => {
+    if (!selected || sellBusy) return
+
+    // Re-verify the item still exists in the bank with the correct quantity
+    const bankEntry = bank[selected.itemId]
+    if (!bankEntry || bankEntry.quantity <= 0) {
+      addToast('Item no longer in bank', 'error')
+      setSelectedId(null)
+      return
+    }
+
+    const item = itemsData[selected.itemId]
+    if (!item) return
+    const defaultPrice = Math.floor(Number(item.shopValue) || 0)
+    const price = Math.floor(Number(overridePrice ?? defaultPrice) || 0)
+    if (price <= 0) {
+      addToast('This item has no value', 'error')
+      setSelectedId(null)
+      return
+    }
+    if (!hasCloudAccount) {
+      addToast('Selling requires a cloud-synced character', 'error')
+      setSelectedId(null)
+      return
+    }
+
+    // Use the current bank quantity, not the stale selected state
+    const sellQty = Math.max(1, Math.min(Number(qty) || 1, bankEntry.quantity))
+
+    setSellBusy(true)
+    try {
+      // Flush the current local save to the server first so the server-side
+      // sell operates on an up-to-date bank (e.g. items just deposited locally
+      // before the 60s autosave fires). Then the server removes the items from
+      // the BANK directly via source: 'bank' — no local bank→inventory shuffle,
+      // which is what previously caused the duplicate / stale-state bugs.
+      await pushNow(getSnapshot())
+
+      if (isIronman || item.isUntradeable) {
+        await api.tradingPostSellImmediate(selected.itemId, sellQty, 'bank')
+        const cloud = await pullSave()
+        if (cloud?.payload) await applyCloudSave(cloud.payload, cloud.updatedAt)
+        await loadGame()
+        addToast(`Sold ${sellQty} × ${item.name} for ${(sellQty * price).toLocaleString()} gp`, 'info')
+      } else {
+        const res = await api.tradingPostList('sell', selected.itemId, price, sellQty, 'bank')
+        const cloud = await pullSave()
+        if (cloud?.payload) await applyCloudSave(cloud.payload, cloud.updatedAt)
+        await loadGame()
+        const sold = Number(res?.matched_quantity) || 0
+        const remaining = Number(res?.remaining) || 0
+        const earned = Number(res?.total_earned) || 0
+        const autoFilled = res?.offer_id == null
+        if (autoFilled) {
+          addToast(`Sold ${sold} × ${item.name} for ${earned.toLocaleString()} gp`, 'success')
+        } else if (sold > 0 && remaining === 0) {
+          addToast(`Matched ${sold} × ${item.name} — collect ${earned.toLocaleString()} gp from the trading post`, 'success')
+        } else if (sold > 0 && remaining > 0) {
+          addToast(`Matched ${sold} (collect ${earned.toLocaleString()} gp); ${remaining} still listed`, 'success')
+        } else {
+          addToast(`Listed ${sellQty} × ${item.name} at ${price.toLocaleString()} gp on the trading post`, 'info')
+        }
+      }
+    } catch (err) {
+      const code = err?.body?.code
+      if (code === 'TRADING_POST_SLOTS_FULL') addToast(err.body.error, 'error')
+      else if (code === 'IRONMAN_RESTRICTED') addToast(err.body.error, 'error')
+      else if (code === 'INSUFFICIENT_SUPPLIES') addToast("You don't have that many to sell.", 'error')
+      else if (code === 'NOT_LISTABLE') addToast('This item cannot be listed.', 'error')
+      else if (code === 'IN_ACTIVE_MATCH') addToast('Cannot sell during a PvP match.', 'error')
+      else addToast(`Sell failed: ${err?.message || 'unknown error'}`, 'error')
+    } finally {
+      setSellBusy(false)
+      setSelectedId(null)
+    }
+  }
+
+  const handleCustomListSubmit = async () => {
+    if (!selected) return
+    const qty = Math.floor(Number(listQtyInput) || 0)
+    const price = Math.floor(Number(listPriceInput) || 0)
+    await handleSell(qty, price)
   }
 
   const clearPlaceholder = (itemId) => {
@@ -598,6 +691,48 @@ export default function BankScreen() {
                 })()}
               </div>
 
+              {/* Tab assignment — only shown when tabs exist — moved here */}
+              {tabs.length > 0 && (
+                <div class="border-t border-[#333] pt-2">
+                  <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1 uppercase tracking-wider font-bold">Move to Tab</p>
+                  <div class="flex flex-wrap gap-1.5">
+                    {/* All tab as first option */}
+                    {(() => {
+                      const isInAll = !currentAssignment || currentAssignment.tabIndex === 0
+                      return (
+                        <button
+                          onClick={() => !isInAll && assignToTab(selected.itemId, 0)}
+                          class={`px-3 py-1.5 rounded-md text-xs font-semibold ${
+                            isInAll
+                              ? 'bg-[var(--color-gold-dim)] text-white cursor-default'
+                              : 'bg-[#2a2a2a] text-[var(--color-parchment)] active:opacity-70'
+                          }`}
+                        >
+                          {allTabName}
+                        </button>
+                      )
+                    })()}
+                    {tabs.map((name, i) => {
+                      const tabIdx = i + 1
+                      const isAssigned = currentAssignment?.tabIndex === tabIdx
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => !isAssigned && assignToTab(selected.itemId, tabIdx)}
+                          class={`px-3 py-1.5 rounded-md text-xs font-semibold ${
+                            isAssigned
+                              ? 'bg-[var(--color-mana)] text-white cursor-default'
+                              : 'bg-[#2a2a2a] text-[var(--color-parchment)] active:opacity-70'
+                          }`}
+                        >
+                          {name}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Withdraw buttons */}
               <div class="grid grid-cols-3 gap-2">
                 {[1, 5, 10].map(qty => (
@@ -667,47 +802,50 @@ export default function BankScreen() {
                 </div>
               )}
 
-              {/* Tab assignment — only shown when tabs exist */}
-              {tabs.length > 0 && (
-                <div class="border-t border-[#333] pt-2">
-                  <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1 uppercase tracking-wider font-bold">Move to Tab</p>
-                  <div class="flex flex-wrap gap-1.5">
-                    {/* All tab as first option */}
-                    {(() => {
-                      const isInAll = !currentAssignment || currentAssignment.tabIndex === 0
-                      return (
-                        <button
-                          onClick={() => !isInAll && assignToTab(selected.itemId, 0)}
-                          class={`px-3 py-1.5 rounded-md text-xs font-semibold ${
-                            isInAll
-                              ? 'bg-[var(--color-gold-dim)] text-white cursor-default'
-                              : 'bg-[#2a2a2a] text-[var(--color-parchment)] active:opacity-70'
-                          }`}
-                        >
-                          {allTabName}
+              {/* Sell section */}
+              {selItem?.shopValue > 0 && selItem?.type !== 'currency' && (() => {
+                const useQuickSell = isIronman || selItem?.isUntradeable || !isOrderBookItem(selItem)
+                return (
+                  <div class="border-t border-[#333] pt-2">
+                    <p class="text-[10px] text-[var(--color-parchment)] opacity-40 mb-1.5 uppercase tracking-wider font-bold">
+                      {useQuickSell ? 'Sell' : 'Trading Post Listing'}
+                    </p>
+                    {!useQuickSell && (
+                      <p class="text-[10px] text-[var(--color-parchment)] opacity-50 mb-1.5">
+                        Listing at {selItem?.shopValue.toLocaleString()} gp · paid only when sold.
+                      </p>
+                    )}
+                    {useQuickSell && (
+                      <div class="grid grid-cols-3 gap-2">
+                        {[1, 5, 10].map(qty => (
+                          <button key={qty} onClick={() => handleSell(qty)}
+                            disabled={selected.quantity < qty || sellBusy}
+                            class={`py-2 rounded-lg text-white font-semibold text-sm ${selected.quantity < qty || sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
+                            Sell {qty}
+                          </button>
+                        ))}
+                        <button onClick={() => handleSell(selected.quantity)}
+                          disabled={sellBusy}
+                          class={`py-2 rounded-lg text-white font-semibold text-sm col-span-3 ${sellBusy ? 'bg-[#222] opacity-30' : 'bg-[var(--color-gold-dim)] active:opacity-80'}`}>
+                          Sell All ({selected.quantity * selItem?.shopValue} gp)
                         </button>
-                      )
-                    })()}
-                    {tabs.map((name, i) => {
-                      const tabIdx = i + 1
-                      const isAssigned = currentAssignment?.tabIndex === tabIdx
-                      return (
-                        <button
-                          key={i}
-                          onClick={() => !isAssigned && assignToTab(selected.itemId, tabIdx)}
-                          class={`px-3 py-1.5 rounded-md text-xs font-semibold ${
-                            isAssigned
-                              ? 'bg-[var(--color-mana)] text-white cursor-default'
-                              : 'bg-[#2a2a2a] text-[var(--color-parchment)] active:opacity-70'
-                          }`}
-                        >
-                          {name}
-                        </button>
-                      )
-                    })}
+                      </div>
+                    )}
+                    {!useQuickSell && (
+                      <TradingPostSellForm
+                        qty={listQtyInput}
+                        setQty={setListQtyInput}
+                        price={listPriceInput}
+                        setPrice={setListPriceInput}
+                        maxQty={selected.quantity}
+                        busy={sellBusy}
+                        onCancel={() => setSelectedId(null)}
+                        onSubmit={handleCustomListSubmit}
+                      />
+                    )}
                   </div>
-                </div>
-              )}
+                )
+              })()}
 
             </div>
           </SharedItemModal>

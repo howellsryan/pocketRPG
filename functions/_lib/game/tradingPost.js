@@ -1,6 +1,6 @@
 import itemsData from '../../../src/data/items.json' assert { type: 'json' }
 import { GameApiError } from './errors.js'
-import { getInventory, addItemToInventory, addItemToBank, removeItemFromInventory, canonicalItemId } from './inventory.js'
+import { getInventory, addItemToInventory, addItemToBank, removeItemFromInventory, removeItemFromSource, canonicalItemId } from './inventory.js'
 import { subtractCoins, addCoins } from './economy.js'
 
 // Alias map keyed by every id form (canonical AND legacy) -> the full set
@@ -32,6 +32,13 @@ export const INSTANT_SELL_PAYOUT_FRACTION = 0.8
 
 export const OFFER_STATUS = {
   ACTIVE: 'active',
+}
+
+// Normalize a client-supplied sell source to 'inventory' | 'bank'. Anything
+// other than an explicit 'bank' falls back to 'inventory' so existing callers
+// (and old clients that never send the field) keep their current behaviour.
+export function normalizeSellSource(raw) {
+  return raw === 'bank' ? 'bank' : 'inventory'
 }
 
 export function isOrderBookItem(item) {
@@ -511,8 +518,8 @@ export async function assertSlotAvailable(env, characterId) {
   }
 }
 
-export function escrowSellItems(saveObject, itemId, quantity) {
-  removeItemFromInventory(saveObject, itemId, quantity)
+export function escrowSellItems(saveObject, itemId, quantity, source = 'inventory') {
+  removeItemFromSource(saveObject, itemId, quantity, source)
 }
 
 export function escrowBuyCoins(saveObject, totalCoins) {
@@ -523,7 +530,7 @@ export function escrowBuyCoins(saveObject, totalCoins) {
 // the buyer, so no DB row is created and no slot is consumed; items leave the
 // inventory and coins land in the save directly. Returns the unit price and
 // total payout so the caller can audit and respond.
-export function autoFillSellAtShopValue(saveObject, item, itemId, quantity) {
+export function autoFillSellAtShopValue(saveObject, item, itemId, quantity, source = 'inventory') {
   if (isOrderBookItem(item)) {
     throw new GameApiError('ORDER_BOOK_ITEM', 'Order book items cannot auto-fill at shopValue.', 400)
   }
@@ -531,7 +538,7 @@ export function autoFillSellAtShopValue(saveObject, item, itemId, quantity) {
   if (unit <= 0) {
     throw new GameApiError('NO_VALUE', 'This item has no shop value.', 400)
   }
-  removeItemFromInventory(saveObject, itemId, quantity)
+  removeItemFromSource(saveObject, itemId, quantity, source)
   const totalPayout = unit * quantity
   addCoins(saveObject, totalPayout)
   return { unit, totalPayout }
