@@ -58,6 +58,7 @@ import { pvpApi } from './cloud/pvp.js'
 import { SKIP_HOUR_MS, getSkipPreflight, isChargeableSkipOutcome } from './engine/skipPreflight.js'
 import { getSlayerTaskReward } from './engine/slayerRewards.js'
 import { isHighValueDrop } from './utils/itemValue.js'
+import LootResultModal from './components/LootResultModal.jsx'
 import { computeIdleElapsedMs } from './utils/idleElapsed.js'
 import { advanceFarmingState } from './engine/farming.ts'
 import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, onCollectionLogSlotComplete } from './cloud/collectionLog.js'
@@ -2268,31 +2269,29 @@ function GameApp() {
 
       {/* Idle Result Modal */}
       {idleResult && !skipSaving && !gameLocked && pvp.phase !== 'in_match' && Date.now() >= suppressIdleModalUntil && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-          <div style={{ width: '100%', maxWidth: '380px', background: '#1a1a1a', borderRadius: '20px', border: '1px solid #333', overflow: 'hidden' }}>
-            {/* Header */}
-            <div style={{ background: 'linear-gradient(135deg, #1d3a2a, #2a1a0a)', padding: '20px 20px 16px', borderBottom: '1px solid #333' }}>
-              <div style={{ fontSize: '28px', textAlign: 'center', marginBottom: '6px' }}>💤</div>
-              <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '17px', color: '#d4af37', textAlign: 'center', marginBottom: '4px' }}>Welcome Back!</h2>
-              <p style={{ fontSize: '12px', color: '#c8a96e', textAlign: 'center', opacity: 0.8 }}>
-                Away for {formatIdleTime(idleResult.elapsedMs)}
-              </p>
-              {idleResult.task && (
-                <p style={{ fontSize: '11px', color: '#e8d5b0', textAlign: 'center', opacity: 0.5, marginTop: '4px' }}>
-                  {idleResult.task.type === 'combat' ? `Fighting ${idleResult.task.monster?.name}` :
-                   idleResult.task.type === 'skill' ? `Training ${idleResult.task.skill}` :
-                   idleResult.task.type === 'gather' ? idleResult.task.gatherTask?.name :
-                   idleResult.task.type === 'minigame' ? idleResult.task.minigameTask?.name :
-                   idleResult.task.type === 'thieving' ? `Pickpocketing ${idleResult.task.npc?.name}` :
-                   idleResult.task.type === 'agility' ? `Training agility` :
-                   idleResult.task.type === 'hunter' ? `${idleResult.task.action?.name}` :
-                   idleResult.task.type === 'quest' ? `${idleResult.completedQuests?.length > 1 ? `✅ ${idleResult.completedQuests.length} Quests Completed` : (idleResult.completed ? '✅ Completed' : '⏳ On quest')}: ${idleResult.completedQuests?.length > 0 ? idleResult.completedQuests[0].name : idleResult.task.quest?.name}` : ''}
-                </p>
-              )}
-            </div>
-
+        <LootResultModal
+          theme={idleResult.died ? 'blood' : 'gold'}
+          icon={idleResult.died ? '💀' : '💤'}
+          title={idleResult.died ? 'Defeated' : 'Welcome Back!'}
+          status={idleResult.died ? undefined : `Away for ${formatIdleTime(idleResult.elapsedMs)}`}
+          subtitle={idleResult.died ? 'You died during idle combat' : (idleResult.task ? (
+            idleResult.task.type === 'combat' ? `Fighting ${idleResult.task.monster?.name || ''}` :
+            idleResult.task.type === 'skill' ? `Training ${idleResult.task.skill}` :
+            idleResult.task.type === 'gather' ? idleResult.task.gatherTask?.name :
+            idleResult.task.type === 'minigame' ? idleResult.task.minigameTask?.name :
+            idleResult.task.type === 'thieving' ? `Pickpocketing ${idleResult.task.npc?.name}` :
+            idleResult.task.type === 'agility' ? 'Training agility' :
+            idleResult.task.type === 'hunter' ? idleResult.task.action?.name :
+            idleResult.task.type === 'quest' ? (idleResult.completedQuests?.length > 1 ? `✅ ${idleResult.completedQuests.length} Quests Completed` : (idleResult.completed ? '✅ Completed' : '⏳ On quest')) :
+            undefined
+          ) : undefined)}
+          primaryAction={{ label: 'Continue Adventure', onClick: closeIdleResultModal }}
+          onClose={closeIdleResultModal}
+        >
+          {/* Inner idle-specific content — kept intact */}
+          <div style={{ padding: '0 0 4px' }}>
             {/* Content */}
-            <div style={{ padding: '16px', maxHeight: '55vh', overflowY: 'auto' }}>
+            <div style={{ padding: '16px' }}>
               {(() => {
                 const hrs = idleResult.elapsedMs / 3600000
                 const perHr = (n) => hrs > 0 ? Math.round(n / hrs).toLocaleString() : '—'
@@ -2654,18 +2653,8 @@ function GameApp() {
                 </>)
               })()}
             </div>
-
-            {/* Footer button */}
-            <div style={{ padding: '12px 16px', borderTop: '1px solid #222' }}>
-              <button
-                onClick={closeIdleResultModal}
-                style={{ width: '100%', padding: '13px', borderRadius: '12px', background: 'linear-gradient(135deg, #b8940e, #d4af37)', color: '#0f0f0f', fontFamily: 'Cinzel, serif', fontWeight: 'bold', fontSize: '14px', border: 'none', cursor: 'pointer' }}
-              >
-                Continue Adventure
-              </button>
-            </div>
           </div>
-        </div>
+        </LootResultModal>
       )}
 
       {showBuyCreditsModal && isCloudAccount && (
