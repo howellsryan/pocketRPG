@@ -192,6 +192,13 @@ export default function LootResultModal({
         data-theme={theme}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Skip button (top-left) */}
+        {titleRight && (
+          <div style={{ position: 'absolute', top: '12px', left: '12px', zIndex: 10 }}>
+            {titleRight}
+          </div>
+        )}
+
         {/* Close button */}
         {onClose && (
           <button
@@ -238,10 +245,7 @@ export default function LootResultModal({
               <div class="loot-modal__status">{status}</div>
             )}
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-              <div class="loot-modal__title">{title}</div>
-              {titleRight && <div style={{ flexShrink: 0 }}>{titleRight}</div>}
-            </div>
+            <div class="loot-modal__title">{title}</div>
 
             {subtitle && (
               <div class="loot-modal__subtitle">{subtitle}</div>
