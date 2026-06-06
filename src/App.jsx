@@ -2288,7 +2288,7 @@ function GameApp() {
             idleResult.task.type === 'quest' ? (idleResult.completedQuests?.length > 1 ? `✅ ${idleResult.completedQuests.length} Quests Completed` : (idleResult.completed ? '✅ Completed' : '⏳ On quest')) :
             undefined
           ) : undefined)}
-          titleRight={!idleResult.died && isCloudAccount && (
+          titleRight={!idleResult.died && isCloudAccount && idleResult.task && !(idleResult.task?.type === 'combat' && (idleResult.task?.monster?.boss === true || idleResult.task?.raid === true)) && (
             <button
               onClick={handleSkip1h}
               class="flex items-center gap-1 px-2 py-1 rounded-full bg-[#2a2010] border border-[var(--color-gold-dim)] hover:border-[var(--color-gold)] transition-colors text-[11px] font-semibold text-[var(--color-gold-light)] whitespace-nowrap"
