@@ -1,24 +1,21 @@
 // POST /api/pvp/invitations/:id/accept
 //
-// Phase 3: real match creation.
+// Phase 3: real match creation (human-to-human only — bot invitations are
+// auto-accepted immediately in POST /api/pvp/invitations, so this endpoint
+// is never reached for a bot target).
 //
 // Atomic flow:
 //   - validate pending invitation + account restrictions + CB band
 //   - require both saves to be fresh (<= 15s old)
-//   - build canonical initial PvP state from both save snapshots
-//   - INSERT active pvp_matches row
-//   - set both characters.active_match_id to the new match
+//   - delegate match creation to shared pvpMatchCreate helper
 //   - mark invitation accepted and remove both waiting-room rows
 
 import { requireAuth, json } from '../../../../_lib/auth.js'
 import { getOwnedCharacter, sweepStaleRows } from '../../../../_lib/pvp.js'
 import { readCombatLevel } from '../../../../_lib/combatLevel.js'
-import { createPvpState } from '../../../../../src/engine/pvpEngine.js'
-import { buildCombatantFromSave, readCharacterSave } from '../../../../_lib/pvpMatch.js'
-import { applyPvpRankToCombatant, readCharacterPvpRank } from '../../../../_lib/pvpRanks.js'
+import { createMatch } from '../../../../_lib/pvpMatchCreate.js'
 
 const CB_BAND = 10
-const STALE_SAVE_MS = 15_000
 
 export async function onRequestPost({ request, env, params }) {
   const auth = await requireAuth(request, env)
@@ -95,122 +92,25 @@ export async function onRequestPost({ request, env, params }) {
   }
 
   const fromCB = await readCombatLevel(env, invite.from_character)
-  const toCB = await readCombatLevel(env, invite.to_character)
+  const toCB   = await readCombatLevel(env, invite.to_character)
   if (Math.abs(fromCB - toCB) > CB_BAND) {
     return json({ error: 'cb_band_mismatch', from_cb: fromCB, to_cb: toCB, band: CB_BAND }, 409)
   }
 
-  const fromSave = await readCharacterSave(env, invite.from_character)
-  const toSave = await readCharacterSave(env, invite.to_character)
-  if (!fromSave || !toSave) {
-    return json({ error: 'missing_save_data' }, 409)
+  const now    = Date.now()
+  const result = await createMatch(
+    env,
+    { id: invite.from_character, username: invite.from_username },
+    { id: invite.to_character,   username: invite.to_username },
+    now,
+    { invitationId: inviteId },
+  )
+
+  if (!result.ok) {
+    console.error('[pvp.accept] match creation failed:', result.error)
+    return json({ error: result.error }, result.status || 500)
   }
 
-  const now = Date.now()
-  const staleCharacters = []
-  if (now - fromSave.updatedAt > STALE_SAVE_MS) staleCharacters.push(invite.from_character)
-  if (now - toSave.updatedAt > STALE_SAVE_MS) staleCharacters.push(invite.to_character)
-  if (staleCharacters.length) {
-    console.log('[PocketRPG][PvP] accept stale save:', {
-      invitationId: inviteId,
-      staleCharacters,
-      now,
-      fromUpdatedAt: fromSave.updatedAt,
-      toUpdatedAt: toSave.updatedAt,
-    })
-    return json({
-      error: 'stale_save',
-      forCharacters: staleCharacters,
-      server_now: now,
-      stale_save_ms: STALE_SAVE_MS,
-      from_updated_at: fromSave.updatedAt,
-      to_updated_at: toSave.updatedAt,
-    }, 409)
-  }
-
-  const [fromRank, toRank] = await Promise.all([
-    readCharacterPvpRank(env, invite.from_character),
-    readCharacterPvpRank(env, invite.to_character),
-  ])
-
-  const aCombatant = applyPvpRankToCombatant(buildCombatantFromSave({
-    characterId: invite.from_character,
-    username: invite.from_username,
-    savePayload: fromSave.payload,
-  }), fromRank)
-  const bCombatant = applyPvpRankToCombatant(buildCombatantFromSave({
-    characterId: invite.to_character,
-    username: invite.to_username,
-    savePayload: toSave.payload,
-  }), toRank)
-  const state = createPvpState(aCombatant, bCombatant, now, Math.floor(Math.random() * 2_147_483_647))
-
-  try {
-    // One-active-match invariant across BOTH columns (character_a and
-    // character_b). The partial unique indexes are per-column, so we
-    // enforce the cross-column rule here at write time too.
-    const insertRes = await env.DB.prepare(
-      `INSERT INTO pvp_matches
-         (character_a, character_b, status, started_at, current_tick, state_json, last_tick_at)
-       SELECT ?, ?, 'active', ?, 0, ?, ?
-       WHERE NOT EXISTS (
-         SELECT 1 FROM pvp_matches
-          WHERE status = 'active'
-            AND (character_a IN (?, ?) OR character_b IN (?, ?))
-       )`
-    ).bind(
-      invite.from_character,
-      invite.to_character,
-      now,
-      JSON.stringify(state),
-      now,
-      invite.from_character,
-      invite.to_character,
-      invite.from_character,
-      invite.to_character,
-    ).run()
-
-    if (insertRes.meta.changes !== 1) {
-      return json({ error: 'character_in_active_match' }, 409)
-    }
-
-    const matchId = insertRes.meta.last_row_id
-    console.log('[PocketRPG][PvP] accept created match:', { invitationId: inviteId, matchId })
-
-    const lockRows = await env.DB.prepare(
-      `UPDATE characters SET active_match_id = ?
-        WHERE id IN (?, ?) AND active_match_id IS NULL`
-    ).bind(matchId, invite.from_character, invite.to_character).run()
-    if (lockRows.meta.changes !== 2) {
-      await env.DB.prepare(
-        "UPDATE pvp_matches SET status = 'aborted', ended_at = ? WHERE id = ? AND status = 'active'"
-      ).bind(now, matchId).run()
-      return json({ error: 'character_in_active_match', match_id: matchId }, 409)
-    }
-
-    const inviteUpdate = await env.DB.prepare(
-      `UPDATE pvp_invitations SET status = 'accepted', responded_at = ?, match_id = ?
-        WHERE id = ? AND status = 'pending'`
-    ).bind(now, matchId, inviteId).run()
-    if (inviteUpdate.meta.changes !== 1) {
-      await env.DB.batch([
-        env.DB.prepare(
-          "UPDATE pvp_matches SET status = 'aborted', ended_at = ? WHERE id = ? AND status = 'active'"
-        ).bind(now, matchId),
-        env.DB.prepare(
-          'UPDATE characters SET active_match_id = NULL WHERE id IN (?, ?) AND active_match_id = ?'
-        ).bind(invite.from_character, invite.to_character, matchId),
-      ])
-      return json({ error: 'invitation_not_pending' }, 409)
-    }
-
-    await env.DB.prepare(
-      'DELETE FROM pvp_waiting_room WHERE character_id IN (?, ?)'
-    ).bind(invite.from_character, invite.to_character).run()
-
-    return json({ ok: true, match_id: matchId })
-  } catch (err) {
-    console.error('[pvp.accept] match creation failed:', err?.message || err)
-    return json({ error: 'accept_failed' }, 500)
-  }
+  console.log('[PocketRPG][PvP] accept created match:', { invitationId: inviteId, matchId: result.matchId })
+  return json({ ok: true, match_id: result.matchId })
 }

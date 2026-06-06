@@ -18,6 +18,7 @@ import { readCombatLevel } from '../../../_lib/combatLevel.js'
 import { itemsData, readCharacterSave, readCombatStatLevels } from '../../../_lib/pvpMatch.js'
 import { readCharacterPvpRank } from '../../../_lib/pvpRanks.js'
 import { calculatePvpRiskValues } from '../../../../src/engine/pvpRisk.js'
+import { createMatch } from '../../../_lib/pvpMatchCreate.js'
 
 const CB_BAND = 10
 
@@ -163,6 +164,7 @@ export async function onRequestPost({ request, env }) {
   // Pull target + verify they're a real, alive, non-ironman, non-onelife character.
   const target = await env.DB.prepare(
     `SELECT c.id, c.username, c.is_ironman, c.is_one_life, c.active_match_id,
+            c.is_bot, c.bot_template_id,
             w.character_id AS in_waiting,
             w.combat_level AS waiting_cb
        FROM characters c
@@ -171,12 +173,35 @@ export async function onRequestPost({ request, env }) {
   ).bind(targetId).first()
 
   if (!target) return json({ error: 'Target not found' }, 404)
-  if (target.is_ironman || target.is_one_life) {
+  if (!target.is_bot && (target.is_ironman || target.is_one_life)) {
     return json({ error: 'pvp_not_allowed_for_account_type' }, 403)
   }
   if (target.active_match_id) {
     return json({ error: 'target_in_active_match' }, 409)
   }
+
+  // Bot auto-accept: bots are never in pvp_waiting_room but are always
+  // available (virtual presence). When the target is a bot, skip the pending
+  // invitation step and create the match immediately on the bot's behalf.
+  if (target.is_bot) {
+    const myCB     = await readCombatLevel(env, ch.id)
+    const targetCB = await readCombatLevel(env, target.id)
+    if (Math.abs(targetCB - myCB) > CB_BAND) {
+      return json({ error: 'cb_band_mismatch', my_cb: myCB, target_cb: targetCB, band: CB_BAND }, 409)
+    }
+    const now    = Date.now()
+    const result = await createMatch(
+      env,
+      { id: ch.id, username: ch.username },
+      { id: target.id, username: target.username, is_bot: true, bot_template_id: target.bot_template_id },
+      now,
+    )
+    if (!result.ok) {
+      return json({ error: result.error }, result.status || 500)
+    }
+    return json({ ok: true, auto_accepted: true, match_id: result.matchId }, 201)
+  }
+
   if (!target.in_waiting) {
     return json({ error: 'target_not_in_waiting_room' }, 409)
   }

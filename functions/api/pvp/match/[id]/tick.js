@@ -2,8 +2,12 @@ import { requireAuth, json } from '../../../../_lib/auth.js'
 import { getOwnedCharacter, sweepStaleRows } from '../../../../_lib/pvp.js'
 import { readOwnedActiveMatch, itemsData, readCharacterSave, applyCombatantToSave } from '../../../../_lib/pvpMatch.js'
 import { processPvpTick } from '../../../../../src/engine/pvpEngine.js'
-import { applyLootTransfer } from '../../../../../src/engine/lootTransfer.js'
+import { applyLootTransfer, splitInventoryByTradeable, fillBank, lootEntryValue } from '../../../../../src/engine/lootTransfer.js'
 import { appendPvpEndSummaryToState, createPvpEndSummary } from '../../../../../src/engine/pvpEndSummary.js'
+import { rollBotLootBox, isZestaUnique } from '../../../../../src/engine/pvpBotRewards.js'
+import { computeBotIntents } from '../../../../../src/engine/pvpBotAI.js'
+import { resetBotSave } from '../../../../_lib/pvpBot.js'
+import { persistPvpBotCollectionLog } from '../../../../_lib/collectionLog.js'
 import { gzipJsonString } from '../../../../_lib/saveCodec.js'
 import { auditLog } from '../../../../_lib/game/audit.js'
 
@@ -37,54 +41,134 @@ function parseMatchState(match) {
   }
 }
 
+// ── Bot-aware terminal finalization ──────────────────────────────────────────
+
 async function finalizeTerminalMatch(env, match, stateNext, terminal, appliedIntentIds) {
-  const now = Date.now()
+  const now      = Date.now()
   const winnerId = terminal.winner
-  const loserId = terminal.loser
+  const loserId  = terminal.loser
+
+  // Detect bot involvement from the match columns.
+  const botRow = await env.DB.prepare(
+    'SELECT id, bot_template_id FROM characters WHERE id IN (?, ?) AND is_bot = 1 LIMIT 1'
+  ).bind(match.character_a, match.character_b).first()
+
+  const isBotMatch  = !!botRow
+  const botId       = botRow?.id || null
+  const humanWinner = isBotMatch && (winnerId !== botId)
+  const humanId     = isBotMatch ? (botId === winnerId ? loserId : winnerId) : null
 
   for (let attempt = 0; attempt < 2; attempt++) {
     const winnerSave = await readCharacterSave(env, winnerId)
-    const loserSave = await readCharacterSave(env, loserId)
+    const loserSave  = await readCharacterSave(env, loserId)
     if (!winnerSave || !loserSave) return { ok: false, reason: 'missing_save' }
 
     const winnerCombatant = stateNext.combatants[String(winnerId)]
-    const loserCombatant = stateNext.combatants[String(loserId)]
+    const loserCombatant  = stateNext.combatants[String(loserId)]
 
-    const winnerSnapshot = applyCombatantToSave(winnerSave.payload, winnerCombatant)
-    const loserSnapshot = applyCombatantToSave(loserSave.payload, loserCombatant)
+    let winnerSnapshot = applyCombatantToSave(winnerSave.payload, winnerCombatant)
+    let loserSnapshot  = applyCombatantToSave(loserSave.payload,  loserCombatant)
 
-    const loot = applyLootTransfer({
-      loserInventory: loserSnapshot.inventory || [],
-      loserEquipment: loserSnapshot.equipment || {},
-      winnerBank: winnerSnapshot.bank || {},
-      itemsData,
-    })
+    let lootSummary
+    let botLootBox = null
 
-    winnerSnapshot.bank = loot.winner.bank
-    loserSnapshot.inventory = loot.loser.inventory
-    loserSnapshot.equipment = loot.loser.equipment
+    if (isBotMatch) {
+      if (humanWinner) {
+        // Human wins: roll loot box, add to human's bank. Bot gear not transferred.
+        const humanSnapshot = applyCombatantToSave(
+          (winnerId === humanId ? winnerSave : loserSave).payload,
+          stateNext.combatants[String(humanId)],
+        )
+        const rewards = rollBotLootBox()
+        const fillResult = fillBank(humanSnapshot.bank || {}, rewards, itemsData)
+        humanSnapshot.bank = fillResult.bank
+        botLootBox = { rewards, added: fillResult.added, dropped: fillResult.dropped }
 
-    const endSummary = createPvpEndSummary({
-      terminal,
-      loot: loot.summary,
-      endedAt: now,
-      writebackOk: true,
-    })
-    const finalState = appendPvpEndSummaryToState(stateNext, endSummary)
+        if (winnerId === humanId) winnerSnapshot = humanSnapshot
+        else                      loserSnapshot  = humanSnapshot
 
+        lootSummary = {
+          transferCount: rewards.length,
+          added: fillResult.added,
+          dropped: fillResult.dropped,
+          addedValue: fillResult.addedValue,
+          bankedValue: fillResult.addedValue,
+          droppedValue: fillResult.droppedValue,
+          totalRiskValue: 0,
+          isBotLootBox: true,
+        }
+      } else {
+        // Bot wins: strip human's tradeable gear (item sink). No transfer to bot.
+        const humanSnapshot = applyCombatantToSave(
+          (loserId === humanId ? loserSave : winnerSave).payload,
+          stateNext.combatants[String(humanId)],
+        )
+        const { remainingInventory, remainingEquipment, transfer } =
+          splitInventoryByTradeable(humanSnapshot.inventory || [], humanSnapshot.equipment || {}, itemsData)
+        humanSnapshot.inventory = remainingInventory
+        humanSnapshot.equipment = remainingEquipment
+
+        if (loserId === humanId) loserSnapshot  = humanSnapshot
+        else                     winnerSnapshot = humanSnapshot
+
+        lootSummary = {
+          transferCount: 0,
+          added: [],
+          dropped: [],
+          addedValue: 0,
+          bankedValue: 0,
+          droppedValue: 0,
+          totalRiskValue: transfer.reduce((s, e) => s + lootEntryValue(e, itemsData), 0),
+          isBotLootBox: true,
+        }
+      }
+    } else {
+      // Normal human-vs-human loot transfer (existing logic).
+      const loot = applyLootTransfer({
+        loserInventory: loserSnapshot.inventory || [],
+        loserEquipment: loserSnapshot.equipment || {},
+        winnerBank: winnerSnapshot.bank || {},
+        itemsData,
+      })
+      winnerSnapshot.bank      = loot.winner.bank
+      loserSnapshot.inventory  = loot.loser.inventory
+      loserSnapshot.equipment  = loot.loser.equipment
+      lootSummary              = loot.summary
+    }
+
+    const endSummary  = createPvpEndSummary({ terminal, loot: lootSummary, endedAt: now, writebackOk: true })
+    const finalState  = appendPvpEndSummaryToState(stateNext, endSummary)
+
+    // For bot matches, only persist the human's save (bot will be reset separately).
     const winnerJson = JSON.stringify(winnerSnapshot)
-    const loserJson = JSON.stringify(loserSnapshot)
+    const loserJson  = JSON.stringify(loserSnapshot)
     const winnerBlob = await gzipJsonString(winnerJson)
-    const loserBlob = await gzipJsonString(loserJson)
+    const loserBlob  = isBotMatch ? null : await gzipJsonString(loserJson)
     const finalStateJson = JSON.stringify(finalState)
 
     const writes = [
       env.DB.prepare(
         'UPDATE saves SET save_blob = ?, updated_at = ? WHERE character_id = ? AND updated_at = ?'
       ).bind(winnerBlob, now, winnerId, winnerSave.updatedAt),
-      env.DB.prepare(
-        'UPDATE saves SET save_blob = ?, updated_at = ? WHERE character_id = ? AND updated_at = ?'
-      ).bind(loserBlob, now, loserId, loserSave.updatedAt),
+    ]
+    // Only write loser save for human-vs-human; bots are reset in a separate call.
+    if (!isBotMatch) {
+      writes.push(
+        env.DB.prepare(
+          'UPDATE saves SET save_blob = ?, updated_at = ? WHERE character_id = ? AND updated_at = ?'
+        ).bind(loserBlob, now, loserId, loserSave.updatedAt),
+      )
+    } else if (loserId === humanId) {
+      // Bot won: write the stripped human (loser) save.
+      const humanLoserBlob = await gzipJsonString(loserJson)
+      writes.push(
+        env.DB.prepare(
+          'UPDATE saves SET save_blob = ?, updated_at = ? WHERE character_id = ? AND updated_at = ?'
+        ).bind(humanLoserBlob, now, loserId, loserSave.updatedAt),
+      )
+    }
+
+    writes.push(
       env.DB.prepare(
         `UPDATE pvp_matches
             SET status = 'completed', ended_at = ?, winner_character_id = ?,
@@ -94,7 +178,7 @@ async function finalizeTerminalMatch(env, match, stateNext, terminal, appliedInt
       env.DB.prepare(
         'UPDATE characters SET active_match_id = NULL WHERE id IN (?, ?) AND active_match_id = ?'
       ).bind(match.character_a, match.character_b, match.id),
-    ]
+    )
     const markIntents = appliedIntentsStatement(env, appliedIntentIds)
     if (markIntents) writes.push(markIntents)
     writes.push(env.DB.prepare(
@@ -110,23 +194,36 @@ async function finalizeTerminalMatch(env, match, stateNext, terminal, appliedInt
                AND ended_at = ?
           )`
     ).bind(now, winnerId, match.id, winnerId, now))
+
     const batchResults = await env.DB.batch(writes)
     const winnerUpdate = batchResults[0]
-    const loserUpdate = batchResults[1]
-    const matchUpdate = batchResults[2]
-    const killUpdate = batchResults[batchResults.length - 1]
+    const matchUpdate  = batchResults[isBotMatch ? 1 : 2]
+    const killUpdate   = batchResults[batchResults.length - 1]
 
-    if (
-      winnerUpdate.meta.changes !== 1 ||
-      loserUpdate.meta.changes !== 1 ||
-      matchUpdate.meta.changes !== 1 ||
-      killUpdate.meta.changes !== 1
-    ) {
+    if (winnerUpdate.meta.changes !== 1 || matchUpdate.meta.changes !== 1 || killUpdate.meta.changes !== 1) {
       continue
     }
-    return { ok: true, loot, state: finalState, endSummary }
+
+    // Reset bot save (both win and loss cases) — idempotent, runs after batch.
+    if (isBotMatch && botId) {
+      await resetBotSave(env, botId)
+    }
+
+    // Collection log for Zesta unique drops.
+    const collectionLogEntries = []
+    if (humanWinner && botLootBox) {
+      for (const entry of botLootBox.rewards || []) {
+        if (isZestaUnique(entry.itemId)) {
+          const logEntry = await persistPvpBotCollectionLog(env, humanId, entry.itemId)
+          if (logEntry) collectionLogEntries.push(logEntry)
+        }
+      }
+    }
+
+    return { ok: true, loot: { summary: lootSummary }, state: finalState, endSummary, collectionLogEntries, botLootBox }
   }
 
+  // Both attempts failed — abort with no loot transfer.
   const abortWrites = [
     env.DB.prepare(
       "UPDATE pvp_matches SET status = 'aborted', ended_at = ?, state_json = ?, last_tick_at = ? WHERE id = ? AND status = 'active'"
@@ -139,8 +236,14 @@ async function finalizeTerminalMatch(env, match, stateNext, terminal, appliedInt
   if (abortMarkIntents) abortWrites.push(abortMarkIntents)
   await env.DB.batch(abortWrites)
 
+  if (isBotMatch && botId) {
+    await resetBotSave(env, botId)
+  }
+
   return { ok: false, reason: 'save_conflict' }
 }
+
+// ── Request handler ───────────────────────────────────────────────────────────
 
 export async function onRequestPost({ request, env, params }) {
   const auth = await requireAuth(request, env)
@@ -197,9 +300,25 @@ export async function onRequestPost({ request, env, params }) {
       })
       appliedIntentIds.push(row.id)
     } catch {
-      // Ignore malformed intent payloads but still consume them so they
-      // cannot poison every future tick forever.
       appliedIntentIds.push(row.id)
+    }
+  }
+
+  // Inject bot intents in-memory (no DB write — state snapshot is authoritative).
+  const botCombatantIds = Object.keys(state.combatants || {}).filter(
+    (id) => state.combatants[id]?.isBot,
+  )
+  for (const botIdStr of botCombatantIds) {
+    const botId      = Number(botIdStr)
+    const botActions = computeBotIntents(state, botId, itemsData)
+    let   botSeq     = 1000  // high seq so bot acts after any human intent on same tick
+    for (const action of botActions) {
+      intents.push({
+        tick_number:  (state.tick || 0) + 1,
+        characterId:  botId,
+        characterSeq: botSeq++,
+        action,
+      })
     }
   }
 
@@ -222,6 +341,7 @@ export async function onRequestPost({ request, env, params }) {
       reason: out.terminal.reason || null,
       writebackOk: terminalWrite.ok,
       loot: terminalWrite.loot?.summary || null,
+      botLootBox: terminalWrite.botLootBox || null,
     }, { swallow: true })
 
     return json({
@@ -233,6 +353,8 @@ export async function onRequestPost({ request, env, params }) {
       state: terminalWrite.state || out.stateNext,
       events: out.events,
       loot: terminalWrite.loot?.summary || null,
+      bot_loot_box: terminalWrite.botLootBox || null,
+      collection_log_entries: terminalWrite.collectionLogEntries || [],
       ended_at: terminalWrite.endSummary?.endedAt || now,
     })
   }

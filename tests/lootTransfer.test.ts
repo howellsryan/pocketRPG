@@ -11,6 +11,7 @@ import {
   sortLootByValueDesc,
   fillBank,
   applyLootTransfer,
+  lootEntryValue,
 } from '../src/engine/lootTransfer.js'
 
 // Minimal items lookup. Only the fields lootTransfer reads are present.
@@ -114,6 +115,32 @@ describe('splitInventoryByTradeable', () => {
     expect(transfer).toHaveLength(1)
     expect(transfer[0]).toMatchObject({ itemId: 'boss_blade', quantity: 1, fromSlot: 'equipment.weapon' })
     expect(remainingEquipment.weapon).toBeNull()
+  })
+})
+
+describe('lootEntryValue (bot-win risk value)', () => {
+  it('returns coins quantity directly', () => {
+    expect(lootEntryValue({ itemId: 'coins', quantity: 5000 }, items)).toBe(5000)
+  })
+
+  it('multiplies shopValue by quantity for non-coin items', () => {
+    expect(lootEntryValue({ itemId: 'dragon_arrow', quantity: 100 }, items)).toBe(150_000)
+  })
+
+  it('values a single high-worth item by its shopValue, not its stack count', () => {
+    // Regression: the bot-win risk summary used to sum item *quantities*,
+    // so a 1.5M whip reported as "1". It must report its coin value.
+    expect(lootEntryValue({ itemId: 'nether_demon_whip', quantity: 1 }, items)).toBe(1_500_000)
+  })
+
+  it('summing a tradeable transfer pile yields true gold value', () => {
+    const equipment = {
+      weapon: { itemId: 'nether_demon_whip', quantity: 1 },
+      ammo:   { itemId: 'dragon_arrow', quantity: 200 },
+    }
+    const { transfer } = splitInventoryByTradeable([], equipment, items)
+    const totalRiskValue = transfer.reduce((s, e) => s + lootEntryValue(e, items), 0)
+    expect(totalRiskValue).toBe(1_500_000 + 200 * 1500)
   })
 })
 

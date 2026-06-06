@@ -11,6 +11,13 @@ const items = {
     defenceBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
     otherBonus: { meleeStrength: 82, rangedStrength: 0, magicDamage: 0 },
   },
+  test_bow: {
+    id: 'test_bow', slot: 'weapon', attackStyle: 'ranged', attackSpeed: 4,
+    attackBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 60 },
+    defenceBonus: { stab: 0, slash: 0, crush: 0, magic: 0, ranged: 0 },
+    otherBonus: { meleeStrength: 0, rangedStrength: 40, magicDamage: 0 },
+  },
+  dragon_arrow: { id: 'dragon_arrow', slot: 'ammo', stackable: true, otherBonus: { rangedStrength: 60 } },
   shark: { id: 'shark', heals: 20, stackable: false },
   attack_potion: { id: 'attack_potion', type: 'potion' },
   strength_potion: { id: 'strength_potion', type: 'potion' },
@@ -88,6 +95,41 @@ describe('pvpEngine phase 2B contract', () => {
 
     expect(out.events.some(e => e.type === 'eat')).toBe(true)
     expect(out.stateNext.combatants['1'].hp).toBeGreaterThan(0)
+  })
+
+  it('recomputes combatType when a weapon of a different style is equipped', () => {
+    // Start ranged (test bow), swap to a melee weapon (whip) mid-fight.
+    const a = buildPlayer({
+      characterId: 1,
+      equipment: { weapon: { itemId: 'test_bow' }, ammo: { itemId: 'dragon_arrow', quantity: 100 } },
+      inventory: [{ itemId: 'nether_demon_whip', quantity: 1 }],
+    })
+    const b = buildPlayer({ characterId: 2 })
+    const state = createPvpState(a, b, 0)
+    expect(state.combatants['1'].combatType).toBe('ranged')
+
+    const out = processPvpTick(state, [
+      { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'equip', inventorySlot: 0 } },
+    ], items)
+
+    expect(out.stateNext.combatants['1'].combatType).toBe('melee')
+    expect(out.stateNext.combatants['1'].equipment.weapon.itemId).toBe('nether_demon_whip')
+  })
+
+  it('drinks a potion: consumes the dose and applies the boost', () => {
+    const a = buildPlayer({ characterId: 1, inventory: [{ itemId: 'strength_potion', quantity: 2 }] })
+    const b = buildPlayer({ characterId: 2 })
+    const state = createPvpState(a, b, 0)
+    expect(state.combatants['1'].activePotions?.strength_potion ?? 0).toBe(0)
+
+    const out = processPvpTick(state, [
+      { tick_number: 1, characterId: 1, characterSeq: 1, action: { type: 'drink_potion', inventorySlot: 0 } },
+    ], items)
+
+    const self = out.stateNext.combatants['1']
+    expect(out.events.some(e => e.type === 'drink' && e.characterId === 1)).toBe(true)
+    expect(self.activePotions.strength_potion).toBeGreaterThan(0)   // boost active
+    expect(self.inventory[0].quantity).toBe(1)                       // one dose consumed
   })
 
   it('uses heals field value for PvP eat intent', () => {

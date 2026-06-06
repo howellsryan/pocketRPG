@@ -39,6 +39,65 @@ function normalizeCombatStats(stats) {
   return out
 }
 
+const BOT_LOOT_TABLE = [
+  {
+    label: 'Common',
+    chance: '70%',
+    color: 'var(--color-parchment)',
+    items: [{ icon: '🪙', name: '1,000–10,000 Coins' }],
+  },
+  {
+    label: 'Uncommon',
+    chance: '28%',
+    color: '#7ec87e',
+    items: [{ icon: '🪙', name: '10,000–50,000 Coins' }],
+  },
+  {
+    label: 'Rare',
+    chance: '2%',
+    color: 'var(--color-gold)',
+    items: [
+      { icon: '⚔️', name: 'Zesta Longsword' },
+      { icon: '🧥', name: 'Zesta Vest' },
+      { icon: '👖', name: 'Zesta Skirt' },
+    ],
+  },
+]
+
+function BotLootBoxModal({ onClose }) {
+  return (
+    <Modal title="🎁 Bot Loot Box" onClose={onClose}>
+      <p class="mb-4 text-[11px] text-[var(--color-parchment)] opacity-60 leading-relaxed">
+        Defeating a bot rewards you with one loot box. Each box rolls the following drop table:
+      </p>
+      <div class="space-y-2">
+        {BOT_LOOT_TABLE.map(tier => (
+          <div
+            key={tier.label}
+            class="rounded-lg border border-[var(--color-void-border)] bg-[var(--color-void-light)] p-3"
+          >
+            <div class="mb-2 flex items-center justify-between">
+              <span class="text-xs font-bold" style={{ color: tier.color }}>{tier.label}</span>
+              <span class="text-[10px] font-bold opacity-80" style={{ color: tier.color }}>{tier.chance}</span>
+            </div>
+            <div class="space-y-1">
+              {tier.items.map(item => (
+                <div key={item.name} class="flex items-center gap-2 text-[11px] text-[var(--color-parchment)]">
+                  <span>{item.icon}</span>
+                  <span>{item.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <p class="mt-3 text-[10px] text-[var(--color-parchment)] opacity-40 text-center">
+        Zesta items are untradeable collection log rewards.
+      </p>
+    </Modal>
+  )
+}
+
 function CombatStatsInfoButton({ label, onClick }) {
   return (
     <button
@@ -99,6 +158,7 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const [statsModal, setStatsModal] = useState(null)
+  const [lootBoxModal, setLootBoxModal] = useState(false)
   const [joined, setJoined] = useState(false)
   const mounted = useRef(true)
   const pollTimer = useRef(null)
@@ -215,10 +275,15 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
     }
   }, [joined, refresh])
 
-  const handleInvite = async (toCharacterId, username) => {
+  const handleInvite = async (toCharacterId, username, isBot = false) => {
     setBusy(true)
     try {
-      await pvpApi.sendInvitation(toCharacterId)
+      const res = await pvpApi.sendInvitation(toCharacterId)
+      // Bots auto-accept: server returns match_id immediately.
+      if (res?.auto_accepted && res?.match_id) {
+        await launchMatch(res.match_id, `Fighting ${username}!`)
+        return
+      }
       addToast(`Invitation sent to ${username}`, 'info')
       await refresh()
     } catch (err) {
@@ -393,31 +458,49 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
           <SectionHeader size="sm" className="mb-2">Available opponents (CB ±10)</SectionHeader>
           {waiting.length === 0 && (
             <Card className="text-center text-[11px] text-[var(--color-parchment)] opacity-50 py-6">
-              No one in your CB band right now. Wait for someone to join, or come back later.
+              No opponents in your CB band right now. Bots appear when your combat level is within their range.
             </Card>
           )}
           <div class="space-y-1.5">
             {waiting.map(p => {
-              const alreadyInvited = invitations.outgoing.some(o => o.to_character === p.character_id)
-                            return (
+              const alreadyInvited = !p.is_bot && invitations.outgoing.some(o => o.to_character === p.character_id)
+              return (
                 <Card key={p.character_id} className="flex items-center justify-between" padding="p-2.5">
                   <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-1">
                       <div class="truncate text-sm font-semibold text-[var(--color-parchment)]">{p.username}</div>
+                      {p.is_bot && (
+                        <span class="rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide bg-[var(--color-gold-dim)] text-black">Bot</span>
+                      )}
                       <CombatStatsInfoButton
                         label={`View ${p.username} combat stats`}
                         onClick={() => openStatsModal(p.username, p.combat_stats)}
                       />
                     </div>
-                    <div class="text-[10px] text-[var(--color-parchment)] opacity-50">CB {p.combat_level} · Total Risk: {formatCompactCoins(p.total_shop_value)} · Rank: {formatLobbyPvpRank(p.pvp_rank)}</div>
+                    <div class="flex items-center gap-1 text-[10px] text-[var(--color-parchment)] opacity-50">
+                      CB {p.combat_level}
+                      {p.is_bot ? (
+                        <>
+                          <span>{' · Loot Box on Win'}</span>
+                          <button
+                            type="button"
+                            aria-label="View loot box rewards"
+                            onClick={(e) => { e.stopPropagation(); setLootBoxModal(true) }}
+                            class="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-[11px] opacity-80 hover:opacity-100"
+                          >
+                            🎁
+                          </button>
+                        </>
+                      ) : ` · Total Risk: ${formatCompactCoins(p.total_shop_value)} · Rank: ${formatLobbyPvpRank(p.pvp_rank)}`}
+                    </div>
                   </div>
                   <Button
                     variant={alreadyInvited ? 'secondary' : 'primary'}
                     size="sm"
                     disabled={busy || alreadyInvited}
-                    onClick={() => handleInvite(p.character_id, p.username)}
+                    onClick={() => handleInvite(p.character_id, p.username, p.is_bot)}
                   >
-                    {alreadyInvited ? 'Invited' : '⚔️ Invite'}
+                    {alreadyInvited ? 'Invited' : '⚔️ Fight'}
                   </Button>
                 </Card>
               )
@@ -510,6 +593,9 @@ export default function PvpLobbyModal({ onClose, getSnapshot }) {
           stats={statsModal.stats}
           onClose={() => setStatsModal(null)}
         />
+      )}
+      {lootBoxModal && (
+        <BotLootBoxModal onClose={() => setLootBoxModal(false)} />
       )}
     </Modal>
   )
