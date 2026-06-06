@@ -240,6 +240,23 @@ export default function BankScreen() {
 
     setSellBusy(true)
     try {
+      // Move item from bank to inventory locally to show user we're taking it from bank
+      const newInv = [...inventory]
+      const newBank = { ...bank }
+
+      if (!addItem(newInv, selected.itemId, sellQty, item?.stackable || false)) {
+        addToast('Not enough inventory space to sell this item', 'error')
+        return
+      }
+
+      // Remove from bank
+      newBank[selected.itemId] = { itemId: selected.itemId, quantity: bankEntry.quantity - sellQty }
+
+      // Update local state for visual feedback
+      updateInventory(newInv)
+      updateBank(newBank)
+
+      // Push the modified state before API call so server sees item in inventory
       try { await pushNow(getSnapshot()) } catch (_) { /* ignore push failure */ }
 
       if (isIronman || item.isUntradeable) {
