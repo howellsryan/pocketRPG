@@ -362,6 +362,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     onCombatStatusChange?.(isActive)
   }, [combat?.active, onCombatStatusChange])
 
+  // Pause ticks while the loot modal is open so combat cannot advance in the background
+  useEffect(() => {
+    if (!lootModal) return
+    pauseTicks()
+    return () => resumeTicks()
+  }, [!!lootModal])
+
   // Tick listener for combat
   useEffect(() => {
     if (!combat || !combat.active) return
@@ -1143,12 +1150,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
     setLootModal(null)
     const original = monstersData[modal.monster.id]
-    if (original) {
-      continueFight(original)
-      // Kill the monster immediately before skipping to prevent race condition
-      // where it could attack while the skip is being processed
-      forceKillHandlerRef.current?.()
-    }
+    if (original) continueFight(original)
     skipHourHandlerRef?.current?.()
   }
 

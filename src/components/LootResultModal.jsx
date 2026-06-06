@@ -208,9 +208,6 @@ export default function LootResultModal({
           )}
         </div>
 
-        {/* Spinning rays — gold only */}
-        {theme === 'gold' && <div class="loot-modal__rays" aria-hidden="true" />}
-
         {/* Particle burst */}
         <div class="loot-modal__particles" aria-hidden="true">
           {particles.map((p) => (
@@ -233,8 +230,9 @@ export default function LootResultModal({
 
         {/* Scrollable content */}
         <div class="loot-modal__scroll">
-          {/* Hero section */}
+          {/* Hero section — rays live here so they're clipped to this area and don't bleed into scrolled content */}
           <div class="loot-modal__hero">
+            {theme === 'gold' && <div class="loot-modal__rays" aria-hidden="true" />}
             <div class="loot-modal__seal" aria-hidden="true">
               <span style={{ fontSize: '32px', lineHeight: 1 }}>{icon}</span>
             </div>

@@ -849,14 +849,15 @@ html, body, #app {
   min-height: 0;
 }
 
-/* Decorative spinning rays (gold/win only) */
+/* Decorative spinning rays (gold/win only) — lives inside .loot-modal__hero so it's
+   clipped to that element and cannot bleed into the scrollable content below */
 .loot-modal__rays {
   position: absolute;
-  top: -60px;
+  top: 50%;
   left: 50%;
   width: 340px;
   height: 340px;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   background: repeating-conic-gradient(rgba(255, 250, 224, 0) 0deg 8deg, rgba(255, 250, 224, 0.5) 8deg 16deg);
   mask-image: radial-gradient(ellipse 60% 55% at 50% 38%, black 30%, transparent 72%);
   -webkit-mask-image: radial-gradient(ellipse 60% 55% at 50% 38%, black 30%, transparent 72%);
@@ -872,7 +873,7 @@ html, body, #app {
   align-items: center;
   padding: 8px 24px 20px;
   text-align: center;
-  overflow: visible;
+  overflow: hidden;
 }
 
 /* Circular seal */
