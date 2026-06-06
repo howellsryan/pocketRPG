@@ -3213,7 +3213,7 @@
         "name": "Craft death rune",
         "level": 65,
         "ticks": 2,
-        "xp": 20,
+        "xp": 25,
         "product": "death_rune",
         "productQty": 1,
         "materials": {
@@ -3225,7 +3225,7 @@
         "name": "Craft blood rune",
         "level": 77,
         "ticks": 2,
-        "xp": 21,
+        "xp": 30,
         "product": "blood_rune",
         "productQty": 1,
         "materials": {
@@ -3237,7 +3237,7 @@
         "name": "Craft soul rune",
         "level": 90,
         "ticks": 2,
-        "xp": 22.6,
+        "xp": 35,
         "product": "soul_rune",
         "productQty": 1,
         "materials": {
@@ -3249,7 +3249,7 @@
         "name": "Craft wrath rune",
         "level": 95,
         "ticks": 2,
-        "xp": 16,
+        "xp": 40,
         "product": "wrath_rune",
         "productQty": 1,
         "materials": {
