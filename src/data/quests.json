@@ -3611,7 +3611,7 @@
       "herblore": 70,
       "hunter": 65
     },
-    "questPointRequirement": 270,
+    "questPointRequirement": 265,
     "combatLevelRequirement": 0,
     "questRequirements": [
       "mourning_s_finale_part_ii",
