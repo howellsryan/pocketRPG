@@ -1143,7 +1143,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
     setLootModal(null)
     const original = monstersData[modal.monster.id]
-    if (original) continueFight(original)
+    if (original) {
+      continueFight(original)
+      // Kill the monster immediately before skipping to prevent race condition
+      // where it could attack while the skip is being processed
+      forceKillHandlerRef.current?.()
+    }
     skipHourHandlerRef?.current?.()
   }
 
