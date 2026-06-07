@@ -703,7 +703,7 @@ export function GameProvider({ children }) {
     })
   }, [])
 
-  const setActiveTask = useCallback((task) => {
+  const setActiveTask = useCallback((task, { skipCloudSync = false } = {}) => {
     const outgoing = activeTaskInternalRef.current
 
     // Flush outgoing background task's progress to the ledger before replacing it.
@@ -731,8 +731,9 @@ export function GameProvider({ children }) {
       localStorage.removeItem('pocketrpg_lastTick')
     }
     // Mirror to D1 so the idle engine picks the right task on next return.
-    // Fire-and-forget — offline-mode / logged-out users are no-ops internally.
-    pushIdleState(task ?? null)
+    // Skip when only ticksRemaining changed (per-tick countdown) — the 30s heartbeat
+    // keeps last_active_at fresh without a D1 write on every 600ms tick.
+    if (!skipCloudSync) pushIdleState(task ?? null)
   }, [])
 
   const setSlayerTask = useCallback((task) => {
