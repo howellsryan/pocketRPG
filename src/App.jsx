@@ -1065,7 +1065,7 @@ function GameApp() {
         if (remaining <= 0) {
           handleQuestCompletion(task.quest, task.quest.xpReward, task.quest.coinReward)
         } else {
-          setActiveTask({ ...task, ticksRemaining: remaining })
+          setActiveTask({ ...task, ticksRemaining: remaining }, { skipCloudSync: true })
         }
       }
 
@@ -1091,7 +1091,7 @@ function GameApp() {
             if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(task.gatherTask), 'minigame_complete')
           }
         } else {
-          setActiveTask({ ...task, ticksRemaining: remaining, totalTicks: total })
+          setActiveTask({ ...task, ticksRemaining: remaining, totalTicks: total }, { skipCloudSync: true })
         }
       }
 
@@ -1118,7 +1118,7 @@ function GameApp() {
             if (!isInPvpMatch) requestCriticalPushSave(() => buildMinigameCompletionSnapshot(mgTask), 'minigame_complete')
           }
         } else {
-          setActiveTask({ ...task, ticksRemaining: remaining, totalTicks: total })
+          setActiveTask({ ...task, ticksRemaining: remaining, totalTicks: total }, { skipCloudSync: true })
         }
       }
     })
