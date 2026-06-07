@@ -1,3 +1,4 @@
+
 {
   "coins": {
     "id": "coins",
@@ -12325,9 +12326,6 @@
       "ranged": 0
     },
     "isUntradeable": false,
-    "requirements": {
-      "defence": 20
-    },
     "isClueReward": true
   },
   "lumira_d_hide_body": {
