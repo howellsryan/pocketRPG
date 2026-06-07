@@ -5935,7 +5935,6 @@
     "requirements": {
       "defence": 1
     },
-    "questUnlock": "dragon_slayer_i",
     "shopValue": 89,
     "icon": "\ud83d\udee1\ufe0f",
     "isGeneralStore": false
@@ -12160,7 +12159,7 @@
     "name": "Anglerfish",
     "type": "food",
     "heals": 22,
-    "stackable": true,
+    "stackable": false,
     "shopValue": 2093,
     "icon": "\ud83d\udc1f",
     "isGeneralStore": false
