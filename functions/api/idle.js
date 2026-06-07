@@ -29,8 +29,43 @@ function validateTaskJson(taskJson) {
   return { ok: true, value: taskJson }
 }
 
+// How long last_active_at must be stale before a same-task write is allowed.
+// 25s sits just under the 30s client heartbeat so legitimate keepalives still
+// go through, while per-tick flushes from older clients (600ms cadence) are
+// collapsed to at most one write per 25s — a >97% reduction in write volume.
+const IDLE_WRITE_THROTTLE_MS = 25_000
+
+// Return a stable fingerprint for task identity by stripping volatile progress
+// counters (ticksRemaining, pendingTicks, totalTicks) that change every tick
+// but carry no information the server needs.
+function stableTaskFingerprint(json) {
+  if (!json) return null
+  try {
+    const parsed = JSON.parse(json)
+    if (!parsed || typeof parsed !== 'object') return json
+    const { ticksRemaining, pendingTicks, totalTicks, ...rest } = parsed
+    return JSON.stringify(rest)
+  } catch {
+    return json // unparseable — treat as unique so we always write
+  }
+}
+
 async function upsertIdleRow(env, characterId, activeTaskJson) {
   const now = Date.now()
+
+  // Read the existing row before writing. This lets us skip the upsert when
+  // nothing meaningful has changed, converting an expensive write into a cheap
+  // read — the dominant saving for clients that flush on every game tick.
+  const existing = await env.DB.prepare(
+    'SELECT last_active_at, active_task FROM character_idle_state WHERE character_id = ?'
+  ).bind(characterId).first()
+
+  if (existing) {
+    const recentlyWritten = (now - existing.last_active_at) < IDLE_WRITE_THROTTLE_MS
+    const taskUnchanged = stableTaskFingerprint(existing.active_task) === stableTaskFingerprint(activeTaskJson)
+    if (recentlyWritten && taskUnchanged) return now // nothing meaningful changed — skip
+  }
+
   await env.DB.prepare(
     `INSERT INTO character_idle_state (character_id, last_active_at, active_task, updated_at)
      VALUES (?, ?, ?, ?)
