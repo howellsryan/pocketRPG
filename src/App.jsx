@@ -1524,7 +1524,9 @@ function GameApp() {
       const commit = (pendingTicks) => {
         const next = { ...task, pendingTicks, totalTicks, ticksRemaining: Math.max(0, totalTicks - pendingTicks) }
         activeTaskRef.current = next
-        setActiveTask(next)
+        // Only pendingTicks/ticksRemaining change here — skip D1 write every tick.
+        // The 30s heartbeat keeps last_active_at fresh; task identity hasn't changed.
+        setActiveTask(next, { skipCloudSync: true })
       }
 
       // Below one action's worth of time the skilling/gather sims return null
