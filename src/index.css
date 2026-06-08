@@ -143,13 +143,14 @@ html, body, #app {
   .pwa-header { padding-top: env(safe-area-inset-top); }
 }
 
-/* PWA standalone — account for the home indicator at the bottom so the layout
-   fills the screen correctly and content isn't obscured behind the indicator.
-   Applied to <html> (which holds pwa-standalone) so the percentage-height chain
-   (html → body → #app → flex layout) all shrink by the inset amount. The JS
-   inline style takes precedence for iOS; the media query covers Android PWAs. */
+/* PWA standalone — add bottom safe-area padding to scroll containers so content
+   scrolls above the home indicator instead of going behind it. Targeting
+   overflow-y-auto keeps the outer layout at full 100vh (no shrinkage), which
+   lets screens fill the extra space that was previously hidden by the browser
+   toolbar. The JS-injected style handles iOS; the media query covers Android. */
+.pwa-standalone .overflow-y-auto { padding-bottom: env(safe-area-inset-bottom); }
 @media (display-mode: standalone) {
-  html { padding-bottom: env(safe-area-inset-bottom); }
+  .overflow-y-auto { padding-bottom: env(safe-area-inset-bottom); }
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
