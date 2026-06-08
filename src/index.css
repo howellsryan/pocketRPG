@@ -144,10 +144,12 @@ html, body, #app {
 }
 
 /* PWA standalone — account for the home indicator at the bottom so the layout
-   fills the screen correctly and content isn't obscured behind the indicator. */
-.pwa-standalone .pwa-app { padding-bottom: env(safe-area-inset-bottom); }
+   fills the screen correctly and content isn't obscured behind the indicator.
+   Applied to <html> (which holds pwa-standalone) so the percentage-height chain
+   (html → body → #app → flex layout) all shrink by the inset amount. The JS
+   inline style takes precedence for iOS; the media query covers Android PWAs. */
 @media (display-mode: standalone) {
-  .pwa-app { padding-bottom: env(safe-area-inset-bottom); }
+  html { padding-bottom: env(safe-area-inset-bottom); }
 }
 
 /* ──────────────────────────────────────────────────────────────────────────

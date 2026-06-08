@@ -9,7 +9,7 @@
   <meta name="description" content="PocketRPG — a tick-based idle fantasy RPG. Train 24 skills, fight bosses, and complete quests — progress continues whether the app is open or not.">
 </head>
 <body>
-  <script>if(navigator.standalone)document.documentElement.classList.add('pwa-standalone')</script>
+  <script>if(navigator.standalone){document.documentElement.classList.add('pwa-standalone');document.documentElement.style.paddingBottom='env(safe-area-inset-bottom)'}</script>
   <main id="app"></main>
   <script type="module" src="./main.jsx"></script>
 </body>

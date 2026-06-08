@@ -485,7 +485,7 @@ ${css}
 </style>
 </head>
 <body>
-<script>if(navigator.standalone)document.documentElement.classList.add('pwa-standalone')</script>
+<script>if(navigator.standalone){document.documentElement.classList.add('pwa-standalone');document.documentElement.style.paddingBottom='env(safe-area-inset-bottom)'}</script>
 <div id="app-splash"><div class="app-splash__brand">PocketRPG</div><div class="app-splash__sub">Loading your adventure…</div></div>
 <main id="app"></main>
 <script>

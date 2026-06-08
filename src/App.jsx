@@ -2183,7 +2183,7 @@ function GameApp() {
   const isCloudAccount = !!getToken() && !!getCharacterId()
 
   return (
-    <div class="pwa-app h-full flex flex-col md:flex-row">
+    <div class="h-full flex flex-col md:flex-row">
       <SideNav
         active={screen}
         onNavigate={(s) => navigate(s)}
