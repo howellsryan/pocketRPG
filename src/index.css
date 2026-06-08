@@ -143,6 +143,13 @@ html, body, #app {
   .pwa-header { padding-top: env(safe-area-inset-top); }
 }
 
+/* PWA standalone — account for the home indicator at the bottom so the layout
+   fills the screen correctly and content isn't obscured behind the indicator. */
+.pwa-standalone .pwa-app { padding-bottom: env(safe-area-inset-bottom); }
+@media (display-mode: standalone) {
+  .pwa-app { padding-bottom: env(safe-area-inset-bottom); }
+}
+
 /* ──────────────────────────────────────────────────────────────────────────
    Home Screen — artsy skill cards
    Large gradient-filled game-icon emblems bleed off the right edge of each
