@@ -135,8 +135,10 @@ html, body, #app {
 .mb-safe { margin-bottom: env(safe-area-inset-bottom); }
 
 /* PWA standalone — push the header below the system status bar (time/battery/wifi).
-   env(safe-area-inset-top) is non-zero only when running as a home-screen web app
-   with viewport-fit=cover; in a normal browser it resolves to 0, so this no-ops. */
+   iOS Safari uses navigator.standalone (set via JS on <html>); Android/Chrome PWAs
+   match the display-mode media query. env(safe-area-inset-top) equals the status
+   bar height only when viewport-fit=cover is active and content sits behind it. */
+.pwa-standalone .pwa-header { padding-top: env(safe-area-inset-top); }
 @media (display-mode: standalone) {
   .pwa-header { padding-top: env(safe-area-inset-top); }
 }
