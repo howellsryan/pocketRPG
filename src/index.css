@@ -134,6 +134,13 @@ html, body, #app {
 .pb-safe { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
 .mb-safe { margin-bottom: env(safe-area-inset-bottom); }
 
+/* PWA standalone — push the header below the system status bar (time/battery/wifi).
+   env(safe-area-inset-top) is non-zero only when running as a home-screen web app
+   with viewport-fit=cover; in a normal browser it resolves to 0, so this no-ops. */
+@media (display-mode: standalone) {
+  .pwa-header { padding-top: env(safe-area-inset-top); }
+}
+
 /* ──────────────────────────────────────────────────────────────────────────
    Home Screen — artsy skill cards
    Large gradient-filled game-icon emblems bleed off the right edge of each
