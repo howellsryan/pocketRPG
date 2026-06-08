@@ -134,6 +134,25 @@ html, body, #app {
 .pb-safe { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
 .mb-safe { margin-bottom: env(safe-area-inset-bottom); }
 
+/* PWA standalone — push the header below the system status bar (time/battery/wifi).
+   iOS Safari uses navigator.standalone (set via JS on <html>); Android/Chrome PWAs
+   match the display-mode media query. env(safe-area-inset-top) equals the status
+   bar height only when viewport-fit=cover is active and content sits behind it. */
+.pwa-standalone .pwa-header { padding-top: env(safe-area-inset-top); }
+@media (display-mode: standalone) {
+  .pwa-header { padding-top: env(safe-area-inset-top); }
+}
+
+/* PWA standalone — add bottom safe-area padding to scroll containers so content
+   scrolls above the home indicator instead of going behind it. Targeting
+   overflow-y-auto keeps the outer layout at full 100vh (no shrinkage), which
+   lets screens fill the extra space that was previously hidden by the browser
+   toolbar. The JS-injected style handles iOS; the media query covers Android. */
+.pwa-standalone .overflow-y-auto { padding-bottom: env(safe-area-inset-bottom); }
+@media (display-mode: standalone) {
+  .overflow-y-auto { padding-bottom: env(safe-area-inset-bottom); }
+}
+
 /* ──────────────────────────────────────────────────────────────────────────
    Home Screen — artsy skill cards
    Large gradient-filled game-icon emblems bleed off the right edge of each

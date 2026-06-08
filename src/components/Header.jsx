@@ -56,7 +56,7 @@ export default function Header({ activity, credits = 0, isCloudAccount = false, 
   }, [])
 
   return (
-    <header class="relative flex-shrink-0 bg-[#111] border-b border-[#333] px-3 py-2 md:px-6 md:py-3">
+    <header class="pwa-header relative flex-shrink-0 bg-[#111] border-b border-[#333] px-3 py-2 md:px-6 md:py-3">
       <div class="flex items-center gap-2">
         <div class="flex items-center gap-1">
           {onMenuClick && (
