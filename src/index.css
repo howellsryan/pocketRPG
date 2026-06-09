@@ -801,6 +801,23 @@ html, body, #app {
     0 0 50px -12px rgba(200, 50, 30, 0.45);
 }
 
+/* Purple theme — epic loot (total value >1m). Metallic amethyst surface. */
+.loot-modal[data-theme="purple"] {
+  --loot-ink: #f3e8ff;
+  --loot-ink-dim: rgba(243, 232, 255, 0.74);
+  --loot-ink-faint: rgba(243, 232, 255, 0.46);
+  --loot-divider: rgba(0, 0, 0, 0.26);
+  background:
+    linear-gradient(125deg, transparent 26%, rgba(233, 213, 255, 0.22) 43%, transparent 57%),
+    radial-gradient(150% 95% at 50% -12%, #b06ae8 0%, rgba(176, 106, 232, 0) 52%),
+    linear-gradient(168deg, #8b3fd0 0%, #6d28a8 40%, #4a1878 78%, #2e0c50 100%);
+  border: 1.5px solid rgba(216, 180, 254, 0.5);
+  box-shadow:
+    0 0 0 1px rgba(60, 20, 90, 0.5),
+    0 8px 48px -8px rgba(0, 0, 0, 0.9),
+    0 0 50px -12px rgba(168, 85, 247, 0.6);
+}
+
 /* Ornate conic rim pseudo-element */
 .loot-modal::before {
   content: '';
@@ -817,6 +834,11 @@ html, body, #app {
 }
 .loot-modal[data-theme="blood"]::before {
   background: conic-gradient(#f0a090, #c03020, #7a1c1c, #e05040, #f0a090);
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), black calc(100% - 2px));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), black calc(100% - 2px));
+}
+.loot-modal[data-theme="purple"]::before {
+  background: conic-gradient(#e9d5ff, #a855f7, #6b21a8, #c084fc, #e9d5ff);
   mask: radial-gradient(farthest-side, transparent calc(100% - 3px), black calc(100% - 2px));
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), black calc(100% - 2px));
 }
@@ -930,6 +952,13 @@ html, body, #app {
 .loot-modal[data-theme="blood"] .loot-modal__seal::before {
   background: conic-gradient(#f0a090, #c03020, #7a1c1c, #e05040, #f0a090);
 }
+.loot-modal[data-theme="purple"] .loot-modal__seal {
+  background: radial-gradient(circle at 38% 30%, #e9d5ff 0%, #a855f7 50%, #581c87 100%);
+  box-shadow: 0 6px 22px -6px rgba(0, 0, 0, 0.7), inset 0 2px 0 rgba(255, 255, 255, 0.40), 0 0 34px rgba(168, 85, 247, 0.65);
+}
+.loot-modal[data-theme="purple"] .loot-modal__seal::before {
+  background: conic-gradient(#e9d5ff, #a855f7, #6b21a8, #c084fc, #e9d5ff);
+}
 
 /* Status line (optional small monospace) */
 .loot-modal__status {
@@ -962,6 +991,10 @@ html, body, #app {
 .loot-modal[data-theme="blood"] .loot-modal__title {
   background-image: linear-gradient(180deg, #ffe6e2, #ffb0a6 46%, #6e160c);
   filter: drop-shadow(0 1px 1px rgba(40, 8, 8, 0.6));
+}
+.loot-modal[data-theme="purple"] .loot-modal__title {
+  background-image: linear-gradient(180deg, #f8f0ff, #e2c6ff 46%, #8b3fd0);
+  filter: drop-shadow(0 1px 1px rgba(30, 8, 50, 0.6));
 }
 
 /* Subtitle */
@@ -1163,6 +1196,11 @@ html, body, #app {
   color: #2a0808;
   box-shadow: 0 2px 12px -2px rgba(200, 50, 30, 0.5);
 }
+.loot-modal[data-theme="purple"] .loot-btn--primary {
+  background: linear-gradient(180deg, #c084fc, #9333ea 60%, #6b21a8);
+  color: #f8f0ff;
+  box-shadow: 0 2px 12px -2px rgba(168, 85, 247, 0.5);
+}
 .loot-btn--primary:hover { filter: brightness(1.1); }
 .loot-btn--primary:active { transform: scale(0.97); }
 .loot-btn--secondary {
@@ -1201,6 +1239,42 @@ html, body, #app {
   opacity: 0;
 }
 
+/* ── Hit splats — floating damage markers over a combatant's HP bar.
+   Rendered by <HitSplatLayer> inside a position:relative wrapper. ── */
+.hit-splat-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 5;
+}
+.hit-splat {
+  position: absolute;
+  top: -4px;
+  transform: translateX(-50%);
+  min-width: 22px;
+  height: 22px;
+  padding: 0 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.8);
+  opacity: 0;
+}
+.hit-splat--damage {
+  background: radial-gradient(circle at 38% 30%, #e0564b 0%, #c03020 55%, #7a1c1c 100%);
+  border: 1px solid rgba(240, 160, 144, 0.6);
+}
+.hit-splat--zero {
+  background: radial-gradient(circle at 38% 30%, #4a7ab8 0%, #2a5288 55%, #1a3258 100%);
+  border: 1px solid rgba(140, 180, 230, 0.6);
+}
+
 /* ── Animations (all gated behind prefers-reduced-motion) ── */
 @media (prefers-reduced-motion: no-preference) {
   @keyframes lootPop {
@@ -1222,7 +1296,19 @@ html, body, #app {
     100% { transform: translate(var(--tx), var(--ty)) scale(1) rotate(200deg); opacity: 0; }
   }
 
+  @keyframes hitSplatFloat {
+    0%   { transform: translateX(-50%) translateY(6px) scale(0.6); opacity: 0; }
+    15%  { transform: translateX(-50%) translateY(0) scale(1.1); opacity: 1; }
+    30%  { transform: translateX(-50%) translateY(-2px) scale(1); opacity: 1; }
+    100% { transform: translateX(-50%) translateY(-18px) scale(0.95); opacity: 0; }
+  }
+
   .loot-modal { animation: lootPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
   .loot-modal__rays { animation: lootSpin 18s linear infinite, lootRaysIn 1.2s ease-out both; }
   .loot-particle { animation: lootPart var(--d, 0.8s) ease-out both; }
+  .hit-splat { animation: hitSplatFloat 0.9s ease-out both; }
+}
+/* Reduced motion: splats appear/disappear without floating, still readable. */
+@media (prefers-reduced-motion: reduce) {
+  .hit-splat { opacity: 1; }
 }
