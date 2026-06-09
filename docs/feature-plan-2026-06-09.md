@@ -14,9 +14,11 @@
 | **1** | Quick-win bug fixes | Slayer purchase bug · PvP defeat HP · Drop confirmation · Gargoyle dust price | Low |
 | **2** | Slayer progression unlocks | Double monster-quantity unlock (250 pts) · Double slayer-XP unlock (100 creds) | Med |
 | **3** | Combat magic | Blood/chaos/death rune spells + Wrath tier | Med |
-| **4** | Combat feedback & mobile UI | Hit markers · potion icon · purple fireworks >1m · KC gating · mobile combat UI | Med–High |
+| **4** | Combat feedback | Hit markers · potion icon · purple fireworks >1m · KC gating | Med |
 | **5** | PvP bot coverage | Bots for every combat level (±10 band) | Med–High |
-| **6** | Economy & persistence | Everything tradeable · reduce DB writes · charge-loss-in-bank | High |
+| **6** | Economy & persistence | Everything tradeable (allowlist) · reduce DB writes · charge-loss-in-bank | High |
+
+> **Deferred (not in this batch):** the **mobile combat UI redesign** is on hold — the product owner will produce a new **Claude-designed mobile PvP interface** separately. This batch must **not** restyle the combat/PvP screen layout. The functional feedback features in Phase 4 (hit markers, potion icon, fireworks, KC gate) still ship, built as reusable pieces that the future PvP design can adopt (see Phase 4 notes on PvP scope).
 
 ---
 
@@ -56,7 +58,7 @@ opp={youWon ? { ...pair.opp, hp: 0 } : pair.opp}
 
 ## Phase 2 — Slayer progression unlocks
 
-Two new unlocks. **Design note / decision needed:** the two requested unlocks use *different currencies* and *different persistence models* — confirm with product owner before building 2.2.
+Two new unlocks using *different currencies* and *different homes*: the **slayer-point** unlock (2.1) stays in the Slayer screen's unlocks section; the **credit** unlock (2.2) lives in a **new Character Unlock screen** (per product owner).
 
 ### 2.1 — New slayer-point unlock: "Double assigned quantity" (250 points)
 A purchasable, persistent account perk (not a banked item like the existing `SLAYER_UNLOCKS`, which all grant gear). It doubles the monster count of newly assigned tasks.
@@ -68,18 +70,24 @@ A purchasable, persistent account perk (not a banked item like the existing `SLA
 
 **Files:** `slayerMasters.js`, `gameState.jsx`, `SlayerScreen.jsx`, save snapshot. **Tests:** `buildSlayerTask` with `quantityMultiplier: 2` doubles `totalCount`/`monstersRemaining`; perk persists through a save round-trip.
 
-### 2.2 — New credit unlock: "Double Slayer XP" (100 credits)  *(needs design confirmation)*
-**Credits are server-authoritative** (CLAUDE.md §14; debited in `functions/api/skip-hour.js:42` and `functions/api/slayer/skip.js`). So a credit purchase **cannot** be a pure client change.
+### 2.2 — New credit unlock: "Double Slayer XP" (100 credits) — **permanent, in a new Character Unlock screen**
+**Confirmed (product owner):** the unlock is **permanent / account-wide**, and lives in a **new dedicated Character Unlock screen** (the first home for credit-purchased permanent perks; future unlocks land here too).
 
-**Recommended design:**
-1. **New server endpoint** (e.g. `functions/api/slayer/unlock.js`, or a generic `functions/api/unlocks/purchase.js`) that atomically debits 100 credits (`UPDATE characters SET credits = credits - ?, credits_used = credits_used + ? WHERE … AND credits >= ?` with `RETURNING credits`, mirroring `skip-hour.js:42-53`), returns `credits_remaining`, and emits an audit event (§14). Reject with 402 on insufficient credits.
-2. The unlock **flag** lives in the client save (slayer XP is client-authoritative skilling, so the multiplier may be applied client-side). Client sets `slayerPerks.doubleXp = true` after a successful debit and dispatches `CREDITS_UPDATED_EVENT`.
-3. **Apply** in `src/engine/slayerRewards.js:37` `getSlayerTaskXpForKill` — accept a `multiplier`/perk arg and multiply the result with `Math.floor`. Thread the perk into every caller (combat reward path that awards slayer XP — grep `getSlayerTaskXpForKill`).
-4. **UI:** a "Character Unlocks" section (new) in `SlayerScreen.jsx` or a dedicated unlocks panel, priced in credits, using the existing credits UI (`BuyCreditsModal.jsx` for top-up).
+**Credits are server-authoritative** (CLAUDE.md §14; debited in `functions/api/skip-hour.js:42` and `functions/api/slayer/skip.js`), so the purchase needs a server debit.
 
-**Open question for product owner:** (a) Is "Double Slayer XP" account-wide and permanent? (b) Should it stack with the boss ×10 / default ×2 task multipliers in `slayerRewards.js:1-2`, or only the base? (c) New dedicated "Character Unlocks" screen vs. a section inside Slayer? Resolve before implementing.
+**Implementation:**
+1. **New server endpoint** `functions/api/unlocks/purchase.js` (generic, so future credit unlocks reuse it). Takes an unlock id, atomically debits its credit cost (`UPDATE characters SET credits = credits - ?, credits_used = credits_used + ? WHERE … AND credits >= ?` with `RETURNING credits`, mirroring `skip-hour.js:42-53`), returns `credits_remaining`, emits an audit event (§14), and rejects 402 on insufficient credits. Keep a server-side registry of valid unlock ids + costs so the client can't pick the price.
+2. **Persist the perk flag** in the client save (e.g. `characterUnlocks: { doubleSlayerXp: true }`) via `src/state/gameState.jsx` + `getSnapshot`/load. Permanent once set. After a successful debit the client sets the flag, critical-saves, and dispatches `CREDITS_UPDATED_EVENT`. (The flag is client-authoritative, consistent with slayer XP already being client-side §14; the *credit debit* is the server-authoritative part.)
+3. **Apply the multiplier** in `src/engine/slayerRewards.js:37` `getSlayerTaskXpForKill` — accept a `doubleXp`/multiplier arg and apply with `Math.floor`. **Default: applies as a final ×2 on the awarded slayer task XP, stacking on top of the existing default ×2 / boss ×10** task multipliers (`slayerRewards.js:1-2`). Thread the flag into every caller (grep `getSlayerTaskXpForKill` — the combat slayer-reward path).
+4. **New screen `src/screens/CharacterUnlockScreen.jsx`** — lists permanent unlocks with credit price, "Owned" state, and a buy button calling the endpoint. Reuse the credits top-up UI (`BuyCreditsModal.jsx`). **Wiring (single-file build §12):**
+   - add `MAGIC`-style `SCREENS.CHARACTER_UNLOCKS` to `src/utils/constants.js`;
+   - register `'screens/CharacterUnlockScreen.js'` in **both** `build_single.cjs` `sourceFiles` **and** `GAME_CHUNK_FILES` (in-game screen), unique top-level names, `npm run check:single` green;
+   - add a `case SCREENS.CHARACTER_UNLOCKS` in `App.jsx` `renderScreen`;
+   - add a reachable entry point (Stats/Home or Skills hub — confirm placement during impl; a button on the Stats/character screen is the natural home).
 
-**Files:** new endpoint, `slayerRewards.js`, `gameState.jsx`, `SlayerScreen.jsx`. **Tests:** endpoint debits/rejects correctly + audit emitted; `getSlayerTaskXpForKill` doubles with perk; perk persists.
+**Default to confirm only if you disagree:** the ×2 stacks with boss ×10 (so a boss slayer kill becomes ×20). Say the word if you want it to *not* stack with the boss multiplier.
+
+**Files:** new `functions/api/unlocks/purchase.js`, new `src/screens/CharacterUnlockScreen.jsx`, `slayerRewards.js`, `gameState.jsx`, `constants.js`, `build_single.cjs`, `App.jsx`. **Tests:** endpoint debits/rejects + audit emitted; `getSlayerTaskXpForKill` doubles (and stacks with boss ×10) when flag set; perk persists through a save round-trip; `check:single` passes.
 
 ---
 
@@ -99,18 +107,20 @@ A purchasable, persistent account perk (not a banked item like the existing `SLA
 
 ---
 
-## Phase 4 — Combat feedback & mobile UI
+## Phase 4 — Combat feedback
 
-Touches `CombatScreen.jsx`, `PvpCombatScreen.jsx`, `LootResultModal.jsx`, combat tick events. Reference the prior design docs `docs/mobile-combat-redesign-implementation.md` and `docs/loot-modals-redesign-plan.md` — some scaffolding may already exist; **audit first, don't duplicate.** Largest phase; consider splitting into sub-deliveries (4.1+4.2 feedback, 4.3 fireworks, 4.4 KC gate, 4.5 mobile polish).
+Functional combat-feedback features only — **no layout/visual redesign** of the combat or PvP screens (that's the deferred Claude-designed mobile PvP interface). Build the hit-splat and potion-icon as **reusable, self-contained components** so the future PvP design can drop them in. Reference `docs/loot-modals-redesign-plan.md` for the fireworks/loot modal; **audit existing scaffolding first, don't duplicate.** Consider sub-deliveries (4.1+4.2 PvE feedback, 4.3 fireworks, 4.4 KC gate).
 
-### 4.1 — Hit markers replacing chat-based combat info
-Replace the textual combat log with floating hit splats over the damaged combatant's HP area, for **both** PvE (`CombatScreen.jsx`) and PvP (`PvpCombatScreen.jsx`).
-- **Source of truth:** the combat tick already emits damage events. PvE: `src/engine/combat.js` pushes `events` (e.g. `noRunesForSpell` at line 708; damage values computed around 691-702). PvP: tick processing in `functions/api/pvp/match/[id]/tick.js` / `src/engine/pvpEngine.js`, surfaced through `state.recentEvents` (see `pvpEndSummary.js:51`).
-- **UI:** a small `HitSplat` component (register in `src/components/` + `build_single.cjs` `sourceFiles`/`GAME_CHUNK_FILES` per §12 if shared) rendered near the target HP bar: **red splat with the damage number when >0**, **blue "0" splat when 0 damage**. Animate up-and-fade; key by event id so each hit shows once. Drive from the per-tick damage events both screens already receive.
-- Remove/retire the chat-style info feed once splats cover the same information (keep a minimal log only if product wants history).
+**PvP scope decision (assumption — flip if you prefer):** implement hit markers + potion icon on the **PvE** combat screen now, and the **shared component**, but **defer wiring them into `PvpCombatScreen.jsx`** so we don't invest in a screen the new Claude PvP design will replace. Fireworks (4.3, shared modal) and KC gating (4.4, PvE) are layout-independent and ship for their normal surfaces regardless.
 
-### 4.2 — Active-potion icon near HP
-Show an icon next to the HP bar indicating an active potion boost, with the **correct icon per potion type**. Boost/potion state is tracked in the combat boost logic (`combat.js:1043-1063` applies combat/magic boosts). Surface the active boost type + remaining duration to the screen and render the matching potion icon (use `src/utils/itemIcons.js` / `GameIcon`). Mirror for PvP (PvP potions: `src/engine/pvpPotions.js`).
+### 4.1 — Hit markers replacing chat-based combat info (PvE now; PvP with the new design)
+Replace the textual combat log with floating hit splats over the damaged combatant's HP area on the **PvE** combat screen (`CombatScreen.jsx`).
+- **Source of truth:** the combat tick already emits damage events. PvE: `src/engine/combat.js` pushes `events` (e.g. `noRunesForSpell` at line 708; damage values computed around 691-702). PvP (for later): tick processing in `functions/api/pvp/match/[id]/tick.js` / `src/engine/pvpEngine.js`, surfaced through `state.recentEvents` (see `pvpEndSummary.js:51`).
+- **UI:** a small reusable `HitSplat` component (register in `src/components/` + `build_single.cjs` `sourceFiles`/`GAME_CHUNK_FILES` per §12) rendered near the target HP bar: **red splat with the damage number when >0**, **blue "0" splat when 0 damage**. Animate up-and-fade; key by event id so each hit shows once. Drive from the per-tick damage events.
+- Retire the chat-style info feed on the PvE screen once splats cover the same info (keep a minimal log only if product wants history). Leave `PvpCombatScreen.jsx`'s log untouched for now (handed to the new PvP design with the shared `HitSplat` ready to use).
+
+### 4.2 — Active-potion icon near HP (PvE now)
+Show an icon next to the PvE HP bar indicating an active potion boost, with the **correct icon per potion type**. Boost/potion state is tracked in the combat boost logic (`combat.js:1043-1063` applies combat/magic boosts). Surface the active boost type + remaining duration and render the matching potion icon (use `src/utils/itemIcons.js` / `GameIcon`). Build it reusable; PvP wiring (PvP potions: `src/engine/pvpPotions.js`) lands with the new PvP design.
 
 ### 4.3 — Purple fireworks for drops >1m value
 `LootResultModal.jsx` already has a particle burst (`buildParticles(theme)`, line 9) with `gold`/`blood` themes and a purple `loot-row--highlight` row style. Add a **purple/epic** particle palette and trigger it when the loot's value exceeds **1,000,000**.
@@ -122,10 +132,9 @@ Show an icon next to the HP bar indicating an active potion boost, with the **co
 **Fix:** expose a `killCountsLoaded` signal (resolve when `fetchKillCounts()` settles, success *or* fail, per character) and **gate the combat screen render** on it — show a lightweight loading state until KC has returned, then render. Scope the gate to the combat screen specifically (do **not** block global `setGameReady`, to protect startup time). Persist server KC back to IndexedDB so the next cold load is warm.
 **Files:** `App.jsx`, `src/cloud/killCounts.js`, `CombatScreen.jsx` (+ `CombatMobileSelect.jsx`). **Tests:** merge/loaded-flag logic unit test.
 
-### 4.5 — Mobile combat UI improvements
-Per `docs/mobile-combat-redesign-implementation.md`. Improve layout/readability of `CombatScreen.jsx` + `CombatMobileSelect.jsx`/`CombatMobileSheets.jsx` for mobile: tap targets ≥44px, Tailwind utilities + CSS variables (no `/N` opacity), reuse shared components (CLAUDE.md §9). **Confirm exact visual scope with product owner** (this is subjective). The hit markers (4.1) and potion icon (4.2) are part of this redesign.
+> *(Mobile combat UI redesign removed from this batch — deferred to the separate Claude-designed mobile PvP interface. Do not restyle combat/PvP screen layout here.)*
 
-**Files:** `CombatScreen.jsx`, `PvpCombatScreen.jsx`, `CombatMobileSelect.jsx`, `CombatMobileSheets.jsx`, `LootResultModal.jsx`, new `HitSplat` component, `App.jsx`, `src/index.css`. **Tests:** logic-only where applicable (splat event mapping, fireworks threshold, KC gate).
+**Files:** `CombatScreen.jsx`, `LootResultModal.jsx` (fireworks), new reusable `HitSplat`/potion-icon components, `App.jsx` + `src/cloud/killCounts.js` (KC gate), `src/index.css`. PvP end modal (`PvpCombatScreen.jsx:1058`) only for the fireworks theme prop — no layout changes. **Tests:** logic-only (splat event mapping, fireworks >1m threshold, KC loaded-flag/merge).
 
 ---
 
@@ -151,13 +160,21 @@ Per `docs/mobile-combat-redesign-implementation.md`. Improve layout/readability 
 Highest-risk phase (server + economy + persistence). Ship as three separate deliveries.
 
 ### 6.1 — Make everything tradeable flow through the trading post
-**Current:** `functions/_lib/game/tradingPost.js:49` `isTradingPostListable` already lists any item that is **not** `isUntradeable` and has `shopValue > 0` (boss/raid/clue uniques go via the order book, line 44). So "add everything tradeable" is largely a **data audit of `isUntradeable` flags** in `items.json`, plus ensuring listable items have a `shopValue`.
+**Current:** `functions/_lib/game/tradingPost.js:49` `isTradingPostListable` already lists any item that is **not** `isUntradeable` and has `shopValue > 0` (boss/raid/clue uniques go via the order book, line 44). So "make everything tradeable" is largely a **data audit of `isUntradeable` flags** in `items.json`, plus ensuring listable items have a `shopValue`.
+
+**Confirmed untradeable allowlist (everything else becomes tradeable):**
+- **Minigame reward items** (collection-log `minigame` items).
+- **Skill capes** (the 20 capes — keep their own buy path per `docs/feature-plan-2026-06.md` Feature 5; stay off the order book).
+- **Zesta / PvP bot reward items** (`zesta_longsword`, `zesta_vest`, `zesta_skirt` — CLAUDE.md §10).
+- **Quest reward items.**
+
 **Implementation:**
-1. Audit `items.json` for items that are currently `isUntradeable: true` (or `shopValue: 0`) but *should* be player-tradeable. Flip `isUntradeable`/set `shopValue` for those.
-2. **Decision needed (product owner):** confirm what stays untradeable — e.g. skill capes (see `docs/feature-plan-2026-06.md` Feature 5), quest items, PvP bot rewards (`zesta_*`), bound/Ironman items, clue/boss uniques (order-book). Don't blanket-flip; produce an explicit allowlist of what becomes tradeable.
+1. Build the keep-untradeable set programmatically where possible: derive minigame items from `src/data/collectionLog.json` (`minigame` category), skill capes from the cape id set / `isSkillCape`, Zesta from the `pvp_bots` section, and quest rewards from `src/data/quests.json` reward tables. Anything in these sets keeps `isUntradeable: true`.
+2. For **every other** item currently `isUntradeable: true` (or with `shopValue: 0`) that *should* be player-tradeable, clear `isUntradeable`/set a sensible `shopValue` in `items.json` so it lists. Use `src/utils/itemValue.js`/existing `shopValue`s for pricing; don't invent wild values.
 3. Verify the purchase/sell/visibility gates honour the new flags: `src/engine/storeRules.js` (`getPurchaseRestriction`, `isStoreVisibleItem`), `functions/api/purchase.js`, and the trading-post search. Add an audit event for any new economy path (§14).
-4. `TradingPostScreen.jsx` surfaces the newly listable items automatically once flags/shopValue are set — verify search/visibility.
-**Files:** `src/data/items.json` (primary), `tradingPost.js`/`storeRules.js` (verify), `TradingPostScreen.jsx` (verify). **Tests:** extend `tests/tradingPost.test.ts` — newly-tradeable items list/sell; allowlist-excluded items stay unlistable.
+4. `TradingPostScreen.jsx` surfaces newly-listable items automatically once flags/shopValue are set — verify search/visibility.
+
+**Files:** `src/data/items.json` (primary), `tradingPost.js`/`storeRules.js` (verify), `TradingPostScreen.jsx` (verify). **Tests:** extend `tests/tradingPost.test.ts` — newly-tradeable items list/sell; **assert each allowlist category (minigame, skill capes, Zesta, quest rewards) stays unlistable** so a future data edit can't accidentally expose them.
 
 ### 6.2 — Reduce daily DB writes (still ~48k/day)
 **Current:** `/api/save` (`functions/api/save.js:170-186`) runs a 2-statement `DB.batch` on **every** save — `INSERT … saves` **+** `UPDATE characters` (total_level/combat_level). Client pushes are debounced to **once per 60s** (`src/cloud/sync.js:1`). 2 writes × ~1440 pushes/day/active-char ⇒ the 48k figure scales with active characters. A prior optimisation gated the PvP sweep to 5% (`save.js:15-19`).
@@ -182,4 +199,5 @@ Highest-risk phase (server + economy + persistence). Ship as three separate deli
 - **Single-file build (§12):** any new shared component (`HitSplat`, etc.) must have globally-unique top-level names and be registered in `build_single.cjs` `sourceFiles`; in-game-only screens/components also go in `GAME_CHUNK_FILES`. Run `npm run check:single`.
 - **Server authority (§14):** new economy/credit mutations (2.2, 6.1) must debit/grant server-side and emit audit events. Client-authoritative XP/coins/charges stay client-side by design.
 - **Item naming (§8):** any new/edited item `name` stays Title Case; verify referenced `itemId`s exist before use (bots, spells).
-- **Open product decisions to confirm before building:** 2.2 (double-XP unlock scope/placement/currency), 4.5 (mobile redesign visual scope), 6.1 (which items become tradeable).
+- **Resolved product decisions (2026-06-09):** 2.2 Double Slayer XP is **permanent**, lives in a **new Character Unlock screen**; mobile combat redesign **deferred** to a separate Claude-designed PvP interface (no layout changes here); 6.1 untradeable allowlist = **minigame items, skill capes, Zesta/PvP bot rewards, quest reward items** — everything else runs through the trading post.
+- **Remaining minor assumptions (flip if you disagree):** double-XP ×2 **stacks** with the boss ×10 / default ×2 task multipliers (2.2); hit markers + potion icon ship on **PvE now**, PvP wiring lands with the new PvP design (Phase 4).
