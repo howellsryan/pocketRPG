@@ -1,6 +1,6 @@
 # PocketRPG — Feature & Bug Batch Plan (2026-06-09)
 
-> **Status:** planning / implementation guide. An AI agent picks up **one phase at a time**.
+> **Status:** Phases 1 & 2 complete (including post-delivery bug fixes). Phases 3–6 pending.
 > Every phase ends with the **commit gate** (`npm test && npm run build && npm run rebuild && npm run check:single`, **or** `npm run ci && npm test`) green before commit/push. Do **not** commit generated root `index.html` (build artifact).
 >
 > **Branch:** `claude/feature-requests-bug-fixes-ne4ajs`.
@@ -9,14 +9,62 @@
 
 ## Phase map
 
-| Phase | Theme | Items | Risk |
-|------|-------|-------|------|
-| **1** | Quick-win bug fixes | Slayer purchase bug · PvP defeat HP · Drop confirmation · Gargoyle dust price | Low |
-| **2** | Slayer progression unlocks | Double monster-quantity unlock (250 pts) · Double slayer-XP unlock (100 creds) | Med |
-| **3** | Combat magic | Blood/chaos/death rune spells + Wrath tier | Med |
-| **4** | Combat feedback | Hit markers · potion icon · purple fireworks >1m · KC gating | Med |
-| **5** | PvP bot coverage | Bots for every combat level (±10 band) | Med–High |
-| **6** | Economy & persistence | Everything tradeable (allowlist) · reduce DB writes · charge-loss-in-bank | High |
+| Phase | Theme | Items | Status | Risk |
+|------|-------|-------|--------|------|
+| **1** | Quick-win bug fixes | Slayer purchase bug · PvP defeat HP · Drop confirmation · Gargoyle dust price | ✅ Done | Low |
+| **2** | Slayer progression unlocks | Double monster-quantity unlock (250 pts) · Double slayer-XP unlock (100 creds) | ✅ Done | Med |
+| **3** | Combat magic | Blood/chaos/death rune spells + Wrath tier | ⬜ Pending | Med |
+| **4** | Combat feedback | Hit markers · potion icon · purple fireworks >1m · KC gating | ⬜ Pending | Med |
+| **5** | PvP bot coverage | Bots for every combat level (±10 band) | ⬜ Pending | Med–High |
+| **6** | Economy & persistence | Everything tradeable (allowlist) · reduce DB writes · charge-loss-in-bank | ⬜ Pending | High |
+
+---
+
+## Completed work — handoff notes for next agent
+
+### Phase 1 — Quick-win bug fixes ✅ (commit `5b39fbc`)
+
+All four items shipped and gate-green.
+
+| Item | What was done |
+|------|--------------|
+| 1.1 Slayer purchase bug | `SlayerScreen.jsx:6` — added `ownsItem` to import; `SlayerScreen.jsx:297` — changed bare-string call to `ownsItem({ itemId: unlock.itemId, bank, inventory })`; extended `tests/slayerUnlocks.test.ts` |
+| 1.2 PvP defeat HP=0 | `PvpCombatScreen.jsx:1083–1085` — `self={youWon ? pair.self : { ...pair.self, hp: 0 }}` |
+| 1.3 Drop confirmation | `InventoryScreen.jsx` — added `showDropConfirm` state; `handleDrop` now sets the state rather than immediately dropping; `confirmDrop()` performs the actual null-slot op; confirmation Modal rendered at bottom |
+| 1.4 Gargoyle dust price | `items.json` — `gargoyle_dust.shopValue` 1500 → 750 |
+
+### Phase 2 — Slayer progression unlocks ✅ (commit `4806e16` + bug-fix commits `49cd5ce`, `8e73c5f`)
+
+**New files:**
+- `src/screens/CharacterUnlockScreen.jsx` — lists permanent credit-purchased unlocks. Currently has one entry: Double Slayer XP (100 credits, stateKey `doubleSlayerXp`). Calls `api.purchaseUnlock(unlock.id)`, dispatches `CREDITS_UPDATED_EVENT`, calls `updateCharacterUnlock`, then `requestCriticalPushSave`.
+- `functions/api/unlocks/purchase.js` — server endpoint. Atomically debits credits with `UPDATE … WHERE credits >= ? RETURNING credits_remaining`, emits audit event, returns `{ ok, unlock_id, credits_remaining }`. Server-side `UNLOCK_REGISTRY` prevents client price-picking.
+
+**Modified files:**
+- `src/engine/slayerMasters.js` — `buildSlayerTask` accepts `options.quantityMultiplier`; applies `Math.floor(totalCount * quantityMultiplier)` (ember_tyrant capped at 1 regardless).
+- `src/engine/slayerRewards.js` — `getSlayerTaskXpForKill` accepts `options.doubleXp`; returns `Math.floor(xp * 2)` when set. Multipliers: default ×2, boss ×10; with `doubleXp` these become ×4 and ×20.
+- `src/engine/idleEngine.js:1394` — `simulateIdleCombat` reads `options.doubleSlayerXp`; multiplier is 4 (perk active) or 2 (no perk). Bosses still return `null` from this function (they're excluded from idle simulation) — boss XP is handled in the active combat path (CombatScreen).
+- `src/state/gameState.jsx` — added `slayerPerks` state + ref + `updateSlayerPerk`; added `characterUnlocks` state + ref + `updateCharacterUnlock`; both loaded from IDB in `loadGame` `Promise.all`; both in `getSnapshot()`; idle combat sim call threads `doubleSlayerXp: !!(savedCharacterUnlocks?.doubleSlayerXp)`.
+- `src/screens/SlayerScreen.jsx` — destructures `slayerPerks, updateSlayerPerk`; `assignTask` passes `quantityMultiplier: 2` when perk active; Perks section added (Slayer Multitask, 250 pts); `handleUnlock` cloud path now calls `api.getSave()` after `api.completeSlayer()` and applies the save via `applyCloudSave` before `loadGame()` (fixes stale-IDB overwrite bug).
+- `src/screens/CombatScreen.jsx` — destructures `characterUnlocks`; passes `{ doubleXp: characterUnlocks?.doubleSlayerXp }` to `getSlayerTaskXpForKill`.
+- `src/App.jsx` — destructures `characterUnlocks` from `useGame()`; skip-hour `simulateIdleCombat` call passes `doubleSlayerXp: !!(characterUnlocks?.doubleSlayerXp)`.
+- `src/utils/constants.js` — `SCREENS.CHARACTER_UNLOCKS: 'character_unlocks'`
+- `src/components/navTabs.js` — added Unlocks tab (✨)
+- `build_single.cjs` — `'screens/CharacterUnlockScreen.js'` in both `sourceFiles` and `GAME_CHUNK_FILES`
+- `src/cloud/api.js` — `api.purchaseUnlock(unlockId)` — POST `/api/unlocks/purchase`
+- `tests/slayerRewards.test.ts` — three new cases for `doubleXp` option (normal, boss, false)
+
+**Bug fixes shipped after Phase 2 delivery:**
+1. `CharacterUnlockScreen` — after `updateCharacterUnlock`, now calls `requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.PURCHASE)` so the flag reaches the cloud in the same round-trip as the credit debit.
+2. `SlayerScreen handleUnlock` cloud path — `api.completeSlayer` returns `{ ok, ...applied }`, not `{ save: { save_data } }`. Fixed: pull via `api.getSave()` then `applyCloudSave(...)` before `loadGame()`.
+3. Skip-hour `simulateIdleCombat` in `App.jsx` was missing `doubleSlayerXp` because `characterUnlocks` was not in the `useGame()` destructure. Fixed.
+
+### What tests exist
+
+- `tests/slayerUnlocks.test.ts` — purchase allowed/blocked, `ownsItem` object-form
+- `tests/slayerRewards.test.ts` — all multiplier cases including `doubleXp` and boss stack
+- All 1403 tests pass on the branch as of last push.
+
+---
 
 > **Deferred (not in this batch):** the **mobile combat UI redesign** is on hold — the product owner will produce a new **Claude-designed mobile PvP interface** separately. This batch must **not** restyle the combat/PvP screen layout. The functional feedback features in Phase 4 (hit markers, potion icon, fireworks, KC gate) still ship, built as reusable pieces that the future PvP design can adopt (see Phase 4 notes on PvP scope).
 
