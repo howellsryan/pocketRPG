@@ -30,6 +30,7 @@ import LeaderboardScreen from './screens/LeaderboardScreen.jsx'
 import HelpScreen from './screens/HelpScreen.jsx'
 import CharacterUnlockScreen from './screens/CharacterUnlockScreen.jsx'
 import ConnectAiScreen from './screens/ConnectAiScreen.jsx'
+import MagicScreen from './screens/MagicScreen.jsx'
 import AuthScreen from './screens/AuthScreen.jsx'
 import OAuthConsentScreen from './screens/OAuthConsentScreen.jsx'
 import { SCREENS } from './utils/constants.js'
@@ -2162,6 +2163,7 @@ function GameApp() {
       case SCREENS.SKILLS:    return <SkillingScreen initialSkillId={actionData?.skillId} initialActionId={actionData?.actionId} idleResult={idleResult} onNavigate={navigate} />
       case SCREENS.GATHER:    return <GatherScreen initialTaskId={actionData?.gatherTaskId} idleResult={idleResult} />
       case SCREENS.AGILITY:     return <AgilityScreen initialActionId={actionData?.actionId} idleResult={idleResult} />
+      case SCREENS.MAGIC:       return <MagicScreen onNavigate={navigate} />
       case SCREENS.STORE:       return <TradingPostScreen />
       case SCREENS.QUESTS:         return <QuestsScreen />
       case SCREENS.CLUES:          return <CluesScreen />

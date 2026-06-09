@@ -101,5 +101,6 @@ export const SCREENS = {
   HELP: 'help',
   ARMOURY: 'armoury',
   CONNECT_AI: 'connect_ai',
-  CHARACTER_UNLOCKS: 'character_unlocks'
+  CHARACTER_UNLOCKS: 'character_unlocks',
+  MAGIC: 'magic'
 }
