@@ -3,7 +3,7 @@ import SkillIcon from '../components/SkillIcon.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
 import monstersData from '../data/monsters.json'
 import itemsData from '../data/items.json'
-import { SLAYER_UNLOCKS, getSlayerUnlockPurchaseState } from '../engine/slayerUnlocks.js'
+import { SLAYER_UNLOCKS, getSlayerUnlockPurchaseState, ownsItem } from '../engine/slayerUnlocks.js'
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { DAGANNOTH_KINGS_TASK_ID, SLAYER_TASK_SKIP_POINT_COST } from '../engine/slayerTasks.js'
 import { SLAYER_MASTERS, resolveTaskMonsterIds, pickSlayerMonster, buildSlayerTask } from '../engine/slayerMasters.js'
@@ -294,7 +294,7 @@ export default function SlayerScreen({ onBack, onNavigate }) {
         {SLAYER_UNLOCKS.map(unlock => {
           const item = itemsData[unlock.itemId]
           if (!item) return null
-          const owned = ownsItem(unlock.itemId)
+          const owned = ownsItem({ itemId: unlock.itemId, bank, inventory })
           const canAfford = slayerPoints >= unlock.cost
           const disabled = owned || !canAfford
           return (

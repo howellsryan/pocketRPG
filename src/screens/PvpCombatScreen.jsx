@@ -1081,7 +1081,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
             {/* Both-fighter HP strip */}
             <MatchupHpStrip
-              self={pair.self}
+              self={youWon ? pair.self : { ...pair.self, hp: 0 }}
               opp={youWon ? { ...pair.opp, hp: 0 } : pair.opp}
               selfRisk={selfRisk}
               oppRisk={oppRisk}

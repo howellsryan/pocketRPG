@@ -19,6 +19,7 @@ export default function InventoryScreen() {
   const [bankQuantityInput, setBankQuantityInput] = useState('')
   const [chargeInput, setChargeInput] = useState('')
   const [showChargeModal, setShowChargeModal] = useState(false)
+  const [showDropConfirm, setShowDropConfirm] = useState(false)
   const [sellBusy, setSellBusy] = useState(false)
   const [listQtyInput, setListQtyInput] = useState(1)
   const [listPriceInput, setListPriceInput] = useState(1)
@@ -114,9 +115,15 @@ export default function InventoryScreen() {
 
   const handleDrop = () => {
     if (!selected) return
+    setShowDropConfirm(true)
+  }
+
+  const confirmDrop = () => {
+    if (!selected) { setShowDropConfirm(false); return }
     const newInv = [...inventory]
     newInv[selected.slotIndex] = null
     updateInventory(newInv)
+    setShowDropConfirm(false)
     setSelected(null)
   }
 
@@ -837,6 +844,30 @@ export default function InventoryScreen() {
           </Modal>
         )
       })()}
+
+      {showDropConfirm && selected && (
+        <Modal title="Drop item?" onClose={() => setShowDropConfirm(false)}>
+          <div class="space-y-4">
+            <p class="text-sm text-[var(--color-parchment)] opacity-80">
+              Drop <span class="font-bold text-[var(--color-gold)]">{selected.item.name}</span>? It will be lost permanently.
+            </p>
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setShowDropConfirm(false)}
+                class="min-h-[44px] py-2.5 rounded-lg bg-[#222] text-[var(--color-parchment)] font-semibold text-sm active:opacity-80 border border-[#333]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDrop}
+                class="min-h-[44px] py-2.5 rounded-lg bg-[var(--color-blood-mid)] text-white font-semibold text-sm active:opacity-80"
+              >
+                Drop
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }
