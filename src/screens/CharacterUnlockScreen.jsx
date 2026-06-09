@@ -1,5 +1,7 @@
 import { useGame } from '../state/gameState.jsx'
 import { api, getToken, getCharacterId, CREDITS_UPDATED_EVENT } from '../cloud/api.js'
+import { requestCriticalPushSave } from '../cloud/sync.js'
+import { CRITICAL_SAVE_REASONS } from '../cloud/criticalSavePolicy.js'
 
 const CHARACTER_UNLOCKS_DEF = [
   {
@@ -14,7 +16,7 @@ const CHARACTER_UNLOCKS_DEF = [
 ]
 
 export default function CharacterUnlockScreen({ onBack }) {
-  const { characterUnlocks, updateCharacterUnlock, addToast } = useGame()
+  const { characterUnlocks, updateCharacterUnlock, addToast, getSnapshot } = useGame()
   const isCloud = Boolean(getToken() && getCharacterId())
 
   const handlePurchase = async (unlock) => {
@@ -33,6 +35,7 @@ export default function CharacterUnlockScreen({ onBack }) {
         window.dispatchEvent(new CustomEvent(CREDITS_UPDATED_EVENT, { detail: { credits_remaining: remaining } }))
       }
       updateCharacterUnlock(unlock.stateKey, true)
+      requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.PURCHASE)
       addToast(`✨ ${unlock.name} unlocked permanently!`, 'info')
     } catch (err) {
       if (err?.status === 402) addToast('Not enough credits.', 'error')

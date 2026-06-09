@@ -196,6 +196,7 @@ export function GameProvider({ children }) {
               idlePotions: normalisedIdleCombatSetup.potions,
               idlePrayers: normalisedIdleCombatSetup.prayers,
               prayersData,
+              doubleSlayerXp: !!(savedCharacterUnlocks?.doubleSlayerXp),
             })
           } else if (savedTask.type === 'agility') {
             sim = simulateIdleAgility(savedTask, elapsedMs)
