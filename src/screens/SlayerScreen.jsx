@@ -55,7 +55,7 @@ const SLAYER_MONSTER_ICONS = {
 }
 
 export default function SlayerScreen({ onBack, onNavigate }) {
-  const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, bank, inventory, addToBank, getSnapshot, slayerTasksCompleted, loadGame } = useGame()
+  const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, bank, inventory, addToBank, getSnapshot, slayerTasksCompleted, loadGame, slayerPerks, updateSlayerPerk } = useGame()
 
   const combatLevel = getPlayerCombatLevel(stats)
   const slayerLevel = getLevelFromXP(stats.slayer?.xp || 0)
@@ -86,7 +86,8 @@ export default function SlayerScreen({ onBack, onNavigate }) {
   }
 
   const assignTask = (master, monsterId, isBoss) => {
-    const task = buildSlayerTask(master, monsterId, isBoss)
+    const quantityMultiplier = slayerPerks?.doubleQuantity ? 2 : 1
+    const task = buildSlayerTask(master, monsterId, isBoss, { quantityMultiplier })
     setSlayerTask(task)
     requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SLAYER_TASK_CHANGE)
     addToast(`💀 Task: Kill ${task.totalCount} ${task.monsterName}`, 'info')
@@ -338,6 +339,59 @@ export default function SlayerScreen({ onBack, onNavigate }) {
             </button>
           )
         })}
+      </div>
+
+      {/* Perks — point-purchased, non-item bonuses */}
+      <div class="mt-5 mb-2 text-[10px] text-[var(--color-parchment)] opacity-50 uppercase font-bold tracking-wider">
+        Perks
+      </div>
+      <div class="space-y-2">
+        {(() => {
+          const perkOwned = slayerPerks?.doubleQuantity === true
+          const cost = 250
+          const canAfford = slayerPoints >= cost
+          const disabled = perkOwned || !canAfford
+          return (
+            <button
+              onClick={() => {
+                if (disabled) return
+                updateSlayerPoints(slayerPoints - cost)
+                updateSlayerPerk('doubleQuantity', true)
+                requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SLAYER_TASK_CHANGE)
+                addToast('🗡️ Slayer Multitask unlocked!', 'info')
+              }}
+              disabled={disabled}
+              class={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left
+                ${!disabled
+                  ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
+                  : 'bg-[#111] border-[#1a1a1a] opacity-50'}`}
+            >
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="text-2xl flex-shrink-0">🗡️</span>
+                <div class="min-w-0">
+                  <div class="text-sm font-semibold text-[var(--color-parchment)]">Slayer Multitask</div>
+                  <div class="text-[9px] text-[var(--color-parchment)] opacity-50 mt-0.5 leading-tight">
+                    Doubles the number of monsters assigned by your Slayer Master.
+                  </div>
+                </div>
+              </div>
+              <div class="text-right flex-shrink-0 ml-3 space-y-0.5">
+                {perkOwned ? (
+                  <div class="text-[10px] font-bold text-[var(--color-hp-green)]">Active</div>
+                ) : (
+                  <>
+                    <div class={`text-[11px] font-[var(--font-mono)] font-bold ${canAfford ? 'text-[var(--color-gold)]' : 'text-[var(--color-blood-light)]'}`}>
+                      {cost.toLocaleString()} pts
+                    </div>
+                    <div class="text-[9px] text-[var(--color-parchment)] opacity-40">
+                      {canAfford ? 'Buy' : 'Locked'}
+                    </div>
+                  </>
+                )}
+              </div>
+            </button>
+          )
+        })()}
       </div>
     </div>
   )

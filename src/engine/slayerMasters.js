@@ -143,6 +143,7 @@ export const SLAYER_MASTERS = [
 // Math.random for deterministic assignment.
 export function buildSlayerTask(master, monsterId, isBoss, options = {}) {
   const rng = options.rng || Math.random
+  const quantityMultiplier = (Number(options.quantityMultiplier) > 0) ? Number(options.quantityMultiplier) : 1
   const monsterData = monstersData[monsterId]
   const monsterName = monsterId === DAGANNOTH_KINGS_TASK_ID
     ? 'Nagadoth Kings'
@@ -154,6 +155,7 @@ export function buildSlayerTask(master, monsterId, isBoss, options = {}) {
   } else {
     const taskRange = isBoss ? (master.bossTaskRange || [20, 50]) : master.taskRange
     totalCount = Math.floor(rng() * (taskRange[1] - taskRange[0] + 1)) + taskRange[0]
+    totalCount = Math.floor(totalCount * quantityMultiplier)
   }
 
   return {

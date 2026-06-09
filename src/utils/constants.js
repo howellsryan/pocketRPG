@@ -100,5 +100,6 @@ export const SCREENS = {
   LEADERBOARD: 'leaderboard',
   HELP: 'help',
   ARMOURY: 'armoury',
-  CONNECT_AI: 'connect_ai'
+  CONNECT_AI: 'connect_ai',
+  CHARACTER_UNLOCKS: 'character_unlocks'
 }
