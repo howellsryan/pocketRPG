@@ -14,45 +14,148 @@
         "prayer": 52
       },
       "equipment": {
-        "weapon": { "itemId": "magic_shortbow" },
-        "ammo":   { "itemId": "dragon_arrow", "quantity": 500 },
-        "legs":   { "itemId": "black_d_hide_chaps" },
-        "neck":   { "itemId": "amulet_of_fury" },
-        "head":   { "itemId": "halo" },
-        "hands":  { "itemId": "cryptbound_gloves" },
-        "feet":   { "itemId": "climbing_boots" },
-        "cape":   { "itemId": "fire_cape" },
-        "body":   { "itemId": "decorative_top" }
+        "weapon": {
+          "itemId": "magic_shortbow"
+        },
+        "ammo": {
+          "itemId": "dragon_arrow",
+          "quantity": 500
+        },
+        "legs": {
+          "itemId": "black_d_hide_chaps"
+        },
+        "neck": {
+          "itemId": "amulet_of_fury"
+        },
+        "head": {
+          "itemId": "halo"
+        },
+        "hands": {
+          "itemId": "cryptbound_gloves"
+        },
+        "feet": {
+          "itemId": "climbing_boots"
+        },
+        "cape": {
+          "itemId": "fire_cape"
+        },
+        "body": {
+          "itemId": "decorative_top"
+        }
       },
       "inventory": [
-        { "itemId": "super_combat", "quantity": 1 },
-        { "itemId": "dragon_dagger", "quantity": 1 },
-        { "itemId": "dragon_battleaxe", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 }
+        {
+          "itemId": "super_combat",
+          "quantity": 1
+        },
+        {
+          "itemId": "dragon_dagger",
+          "quantity": 1
+        },
+        {
+          "itemId": "dragon_battleaxe",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        }
       ],
       "combatStance": "rapid"
     },
@@ -70,46 +173,1213 @@
         "prayer": 99
       },
       "equipment": {
-        "weapon": { "itemId": "abyssal_tentacle" },
-        "shield": { "itemId": "avernal_defender" },
-        "head":   { "itemId": "justicar_faceguard" },
-        "body":   { "itemId": "justicar_chestguard" },
-        "legs":   { "itemId": "justicar_legguards" },
-        "hands":  { "itemId": "cryptbound_gloves" },
-        "feet":   { "itemId": "primeval_boots" },
-        "neck":   { "itemId": "amulet_of_torment" },
-        "cape":   { "itemId": "fire_cape" },
-        "ring":   { "itemId": "berserker_ring" }
+        "weapon": {
+          "itemId": "abyssal_tentacle"
+        },
+        "shield": {
+          "itemId": "avernal_defender"
+        },
+        "head": {
+          "itemId": "justicar_faceguard"
+        },
+        "body": {
+          "itemId": "justicar_chestguard"
+        },
+        "legs": {
+          "itemId": "justicar_legguards"
+        },
+        "hands": {
+          "itemId": "cryptbound_gloves"
+        },
+        "feet": {
+          "itemId": "primeval_boots"
+        },
+        "neck": {
+          "itemId": "amulet_of_torment"
+        },
+        "cape": {
+          "itemId": "fire_cape"
+        },
+        "ring": {
+          "itemId": "berserker_ring"
+        }
       },
       "inventory": [
-        { "itemId": "super_combat", "quantity": 1 },
-        { "itemId": "dragon_claws", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 },
-        { "itemId": "manta_ray", "quantity": 1 }
+        {
+          "itemId": "super_combat",
+          "quantity": 1
+        },
+        {
+          "itemId": "dragon_claws",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        }
+      ],
+      "combatStance": "aggressive"
+    },
+    {
+      "id": "rustyblade_v1",
+      "username": "rustyblade",
+      "aiProfile": "balanced_pure",
+      "stats": {
+        "attack": 10,
+        "strength": 10,
+        "defence": 5,
+        "ranged": 1,
+        "magic": 1,
+        "hitpoints": 12,
+        "prayer": 1
+      },
+      "equipment": {
+        "weapon": {
+          "itemId": "iron_scimitar"
+        },
+        "head": {
+          "itemId": "iron_full_helm"
+        },
+        "body": {
+          "itemId": "iron_platebody"
+        },
+        "legs": {
+          "itemId": "iron_platelegs"
+        },
+        "shield": {
+          "itemId": "iron_kiteshield"
+        }
+      },
+      "inventory": [
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        },
+        {
+          "itemId": "trout",
+          "quantity": 1
+        }
+      ],
+      "combatStance": "aggressive"
+    },
+    {
+      "id": "thornduel_v1",
+      "username": "thornduel",
+      "aiProfile": "balanced_pure",
+      "stats": {
+        "attack": 25,
+        "strength": 25,
+        "defence": 12,
+        "ranged": 1,
+        "magic": 1,
+        "hitpoints": 22,
+        "prayer": 5
+      },
+      "equipment": {
+        "weapon": {
+          "itemId": "steel_scimitar"
+        },
+        "head": {
+          "itemId": "steel_full_helm"
+        },
+        "body": {
+          "itemId": "steel_platebody"
+        },
+        "legs": {
+          "itemId": "steel_platelegs"
+        },
+        "shield": {
+          "itemId": "steel_kiteshield"
+        },
+        "neck": {
+          "itemId": "amulet_of_power"
+        }
+      },
+      "inventory": [
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        }
+      ],
+      "combatStance": "aggressive"
+    },
+    {
+      "id": "galearcher_v1",
+      "username": "galearcher",
+      "aiProfile": "balanced_pure",
+      "stats": {
+        "attack": 1,
+        "strength": 1,
+        "defence": 20,
+        "ranged": 50,
+        "magic": 1,
+        "hitpoints": 35,
+        "prayer": 10
+      },
+      "equipment": {
+        "weapon": {
+          "itemId": "maple_shortbow"
+        },
+        "ammo": {
+          "itemId": "mithril_arrow",
+          "quantity": 500
+        },
+        "head": {
+          "itemId": "leather_cowl"
+        },
+        "body": {
+          "itemId": "studded_body"
+        },
+        "legs": {
+          "itemId": "studded_chaps"
+        }
+      },
+      "inventory": [
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        },
+        {
+          "itemId": "crab",
+          "quantity": 1
+        }
+      ],
+      "combatStance": "rapid"
+    },
+    {
+      "id": "runewarden_v1",
+      "username": "runewarden",
+      "aiProfile": "balanced_pure",
+      "stats": {
+        "attack": 50,
+        "strength": 50,
+        "defence": 40,
+        "ranged": 1,
+        "magic": 1,
+        "hitpoints": 45,
+        "prayer": 20
+      },
+      "equipment": {
+        "weapon": {
+          "itemId": "runeforged_scimitar"
+        },
+        "head": {
+          "itemId": "runeforged_full_helm"
+        },
+        "body": {
+          "itemId": "runeforged_platebody"
+        },
+        "legs": {
+          "itemId": "runeforged_platelegs"
+        },
+        "shield": {
+          "itemId": "runeforged_kiteshield"
+        },
+        "neck": {
+          "itemId": "amulet_of_power"
+        }
+      },
+      "inventory": [
+        {
+          "itemId": "combat_potion",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        },
+        {
+          "itemId": "eel",
+          "quantity": 1
+        }
+      ],
+      "combatStance": "aggressive"
+    },
+    {
+      "id": "mistarcher_v1",
+      "username": "mistarcher",
+      "aiProfile": "balanced_pure",
+      "stats": {
+        "attack": 1,
+        "strength": 1,
+        "defence": 45,
+        "ranged": 85,
+        "magic": 1,
+        "hitpoints": 60,
+        "prayer": 31
+      },
+      "equipment": {
+        "weapon": {
+          "itemId": "magic_shortbow"
+        },
+        "ammo": {
+          "itemId": "adamant_arrow",
+          "quantity": 500
+        },
+        "head": {
+          "itemId": "leather_cowl"
+        },
+        "body": {
+          "itemId": "green_d_hide_body"
+        },
+        "legs": {
+          "itemId": "green_d_hide_chaps"
+        },
+        "neck": {
+          "itemId": "amulet_of_glory"
+        }
+      },
+      "inventory": [
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        },
+        {
+          "itemId": "shark",
+          "quantity": 1
+        }
+      ],
+      "combatStance": "rapid"
+    },
+    {
+      "id": "drakechampion_v1",
+      "username": "drakechampion",
+      "aiProfile": "balanced_pure",
+      "stats": {
+        "attack": 80,
+        "strength": 80,
+        "defence": 70,
+        "ranged": 1,
+        "magic": 1,
+        "hitpoints": 80,
+        "prayer": 52
+      },
+      "equipment": {
+        "weapon": {
+          "itemId": "dragon_scimitar"
+        },
+        "head": {
+          "itemId": "dragon_full_helm"
+        },
+        "body": {
+          "itemId": "dragon_chainbody"
+        },
+        "legs": {
+          "itemId": "dragon_platelegs"
+        },
+        "shield": {
+          "itemId": "avernal_defender"
+        },
+        "neck": {
+          "itemId": "amulet_of_fury"
+        },
+        "cape": {
+          "itemId": "fire_cape"
+        },
+        "hands": {
+          "itemId": "cryptbound_gloves"
+        },
+        "feet": {
+          "itemId": "climbing_boots"
+        },
+        "ring": {
+          "itemId": "berserker_ring"
+        }
+      },
+      "inventory": [
+        {
+          "itemId": "super_combat",
+          "quantity": 1
+        },
+        {
+          "itemId": "dragon_dagger",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        }
+      ],
+      "combatStance": "aggressive"
+    },
+    {
+      "id": "veilbreaker_v1",
+      "username": "veilbreaker",
+      "aiProfile": "balanced_pure",
+      "stats": {
+        "attack": 92,
+        "strength": 92,
+        "defence": 85,
+        "ranged": 1,
+        "magic": 1,
+        "hitpoints": 90,
+        "prayer": 70
+      },
+      "equipment": {
+        "weapon": {
+          "itemId": "abyssal_tentacle"
+        },
+        "head": {
+          "itemId": "justicar_faceguard"
+        },
+        "body": {
+          "itemId": "justicar_chestguard"
+        },
+        "legs": {
+          "itemId": "justicar_legguards"
+        },
+        "shield": {
+          "itemId": "avernal_defender"
+        },
+        "neck": {
+          "itemId": "amulet_of_torment"
+        },
+        "cape": {
+          "itemId": "fire_cape"
+        },
+        "hands": {
+          "itemId": "cryptbound_gloves"
+        },
+        "feet": {
+          "itemId": "primeval_boots"
+        },
+        "ring": {
+          "itemId": "berserker_ring"
+        }
+      },
+      "inventory": [
+        {
+          "itemId": "super_combat",
+          "quantity": 1
+        },
+        {
+          "itemId": "dragon_dagger",
+          "quantity": 1
+        },
+        {
+          "itemId": "dragon_battleaxe",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        },
+        {
+          "itemId": "manta_ray",
+          "quantity": 1
+        }
       ],
       "combatStance": "aggressive"
     }
