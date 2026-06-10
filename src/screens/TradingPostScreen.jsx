@@ -55,6 +55,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
   const isDesktop = useIsDesktop()
 
   const [mode, setMode] = useState('market')
+  const [openSections, setOpenSections] = useState(new Set())
   const [searchTerm, setSearchTerm] = useState('')
   const [selected, setSelected] = useState(null) // item entry from search
   const [pendingAction, setPendingAction] = useState(null) // 'buy' | 'sell'
@@ -92,36 +93,33 @@ export default function TradingPostScreen({ onBuyCredits }) {
     return pool
   }, [itemsData])
 
-  // General Store inventory: only items the player has already unlocked.
-  // Curated store stock (isGeneralStore) always shows. Skill capes show only
-  // at level 99. Minigame unlocks show once the player has earned them once.
-  // Quest-unlock items show only once the quest is complete.
-  const storePool = useMemo(() => {
-    const pool = []
+  const STORE_SECTIONS = ['Weapons & Armour', 'Minigame & Quest Unlocks', 'Runes, Robes & Staves', 'Skilling Equipment']
+
+  const SKILLING_WEAPON_IDS = new Set(['bronze_axe', 'bronze_pickaxe', 'fishing_net', 'fishing_rod', 'lobster_cage', 'harpoon', 'angler_net'])
+  const WIZARD_IDS = new Set(['wizard_hat', 'black_wizard_hat', 'wizard_robe_top', 'wizard_robe_skirt'])
+
+  function getStoreSection(id, item) {
+    if (item.questUnlock || minigameProductIds.has(id) || item.isSkillCape) return 'Minigame & Quest Unlocks'
+    if (item.type === 'rune' || (item.type === 'resource' && id.endsWith('_rune')) || id.startsWith('staff_of_') || WIZARD_IDS.has(id)) return 'Runes, Robes & Staves'
+    if (SKILLING_WEAPON_IDS.has(id) || item.type === 'resource' || item.type === 'seed') return 'Skilling Equipment'
+    return 'Weapons & Armour'
+  }
+
+  // All store items grouped into sections — locked items included but shown disabled.
+  const storeSections = useMemo(() => {
+    const sections = {}
+    for (const s of STORE_SECTIONS) sections[s] = []
     for (const [id, item] of Object.entries(itemsData)) {
       if (!item || (item.id && item.id !== id)) continue
-      if (item.isGeneralStore) {
-        pool.push({ id, item })
-        continue
-      }
-      if (item.isSkillCape) {
-        const reqSkill = Object.keys(item.requirements || {})[0]
-        const playerLevel = reqSkill ? getLevelFromXP(stats?.[reqSkill]?.xp || 0) : 0
-        if (playerLevel >= 99) pool.push({ id, item })
-        continue
-      }
-      if (minigameProductIds.has(id)) {
-        if (unlockedMinigameItems.has(id)) pool.push({ id, item })
-        continue
-      }
-      if (item.questUnlock) {
-        if (completedQuests.has(item.questUnlock)) pool.push({ id, item })
-        continue
-      }
+      if (!item.isGeneralStore && !item.isSkillCape && !minigameProductIds.has(id) && !item.questUnlock) continue
+      const section = getStoreSection(id, item)
+      sections[section].push({ id, item })
     }
-    pool.sort((a, b) => (a.item.name || '').localeCompare(b.item.name || ''))
-    return pool
-  }, [itemsData, minigameProductIds, unlockedMinigameItems, completedQuests, stats])
+    for (const s of STORE_SECTIONS) {
+      sections[s].sort((a, b) => (a.item.name || '').localeCompare(b.item.name || ''))
+    }
+    return sections
+  }, [itemsData, minigameProductIds])
 
   const refreshMyOffers = async () => {
     try {
@@ -550,15 +548,40 @@ export default function TradingPostScreen({ onBuyCredits }) {
     )
   }
 
+  const toggleSection = (name) => {
+    setOpenSections((prev) => {
+      const next = new Set(prev)
+      if (next.has(name)) next.delete(name)
+      else next.add(name)
+      return next
+    })
+  }
+
   const renderStore = () => (
-    <div class="h-full overflow-y-auto px-4 pb-20 md:pb-4">
-      {storePool.length === 0 ? (
-        <div class="py-10 px-4 text-center text-[#888] text-[12px]">No store items unlocked yet.</div>
-      ) : (
-        <div class="flex flex-col gap-2 pt-3">
-          {storePool.map((row) => renderListRow({ ...row.item, id: row.id }))}
-        </div>
-      )}
+    <div class="h-full overflow-y-auto px-4 pb-20 md:pb-4 pt-3 flex flex-col gap-2">
+      {STORE_SECTIONS.map((section) => {
+        const rows = storeSections[section] || []
+        const isOpen = openSections.has(section)
+        return (
+          <div key={section} class="rounded-lg border border-[#2a2a2a] overflow-hidden">
+            <button
+              onClick={() => toggleSection(section)}
+              class="w-full flex items-center justify-between px-4 py-3 bg-[var(--color-void-light)] text-left"
+            >
+              <span class="text-[13px] font-semibold text-[var(--color-parchment)]">{section}</span>
+              <span class="text-[11px] text-[#888] flex items-center gap-2">
+                <span>{rows.length} item{rows.length !== 1 ? 's' : ''}</span>
+                <span class="text-[var(--color-gold)]">{isOpen ? '▲' : '▼'}</span>
+              </span>
+            </button>
+            {isOpen && (
+              <div class="flex flex-col gap-2 p-2 bg-[var(--color-void)]">
+                {rows.map((row) => renderListRow({ ...row.item, id: row.id }))}
+              </div>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 
