@@ -1,6 +1,7 @@
 import SkillEmblem from '../components/SkillEmblem.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import { getMonsterArt, getCategoryArt, getRaidArt } from '../utils/combatArt.js'
+import { getSkillArt } from '../utils/skillArt.js'
 
 // Mobile section display order (desktop keeps the COMBAT_CATEGORIES order).
 // Categories and raids are interleaved per design; PvP renders last.
@@ -81,7 +82,7 @@ export default function CombatMobileSelect({
   return (
     <div class="cb-pad">
       <div class="cb-select__head" style={{ margin: '4px 2px 14px' }}>
-        <h1 class="cb-h1">Choose a Monster</h1>
+        <h1 class="cb-h1">Choose a Foe</h1>
         <div class="cb-h1sub">{totalFoes} monsters · {uniqueRaids.length} {uniqueRaids.length === 1 ? 'raid' : 'raids'} await</div>
       </div>
 
@@ -98,11 +99,15 @@ export default function CombatMobileSelect({
 
       {/* Attack-style selector */}
       <div class="cb-styles">
-        {['accurate', 'aggressive', 'defensive'].map(s => (
-          <button key={s} class={'cb-styleseg' + (combatStance === s ? ' is-on' : '')} onClick={() => onStance(s)}>
-            <span style={{ textTransform: 'capitalize' }}>{s}</span>
-          </button>
-        ))}
+        {[['accurate', 'attack'], ['aggressive', 'strength'], ['defensive', 'defence']].map(([s, skill]) => {
+          const art = getSkillArt(skill)
+          return (
+            <button key={s} class={'cb-styleseg' + (combatStance === s ? ' is-on' : '')} onClick={() => onStance(s)}>
+              <GameIcon iconKey={art.icon} color={art.accent} size={15} />
+              <span style={{ textTransform: 'capitalize' }}>{s}</span>
+            </button>
+          )
+        })}
       </div>
 
       {/* Area list */}
