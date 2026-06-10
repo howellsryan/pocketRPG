@@ -723,7 +723,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
                 ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
                 : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
             } inline-flex items-center gap-1`}
-          ><GameIcon iconKey="coins" size={13} color="currentColor" /> General Store</button>
+          ><GameIcon iconKey="coins" size={13} color="currentColor" /> Store</button>
           <button
             onClick={() => { setMode('offers'); refreshMyOffers() }}
             class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
