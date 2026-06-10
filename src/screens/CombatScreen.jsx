@@ -31,7 +31,7 @@ import itemsData from '../data/items.json'
 import prayersData from '../data/prayers.json'
 import spellsData from '../data/spells.json'
 import raidsData from '../data/raids.json'
-import { SCREENS, formatDropChance, EQUIPMENT_SLOTS } from '../utils/constants.js'
+import { SCREENS, formatDropChance } from '../utils/constants.js'
 import { isHighValueDrop, getLootTotalValue, isEpicLootValue } from '../utils/itemValue.js'
 import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
 import { HitSplatLayer } from '../components/HitSplat.jsx'
@@ -1381,13 +1381,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   }, [])
 
   const handleEquipItem = (itemId) => {
-    if (!combat) return
+    if (!combat) return false
     const newInv = [...inventoryRef.current]
     const itemIdx = newInv.findIndex(s => s && s.itemId === itemId)
-    if (itemIdx === -1) return
+    if (itemIdx === -1) return false
 
     const itemData = itemsData[itemId]
-    if (!itemData || !itemData.slot) return
+    if (!itemData || !itemData.slot) return false
 
     // Combat gear tab must enforce the same level/quest gates as the inventory
     // screen — otherwise the player can swap into mid-combat gear they haven't
@@ -1399,7 +1399,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       } else {
         addToast(`Need ${reqError.skill} level ${reqError.required} to equip`, 'error')
       }
-      return
+      return false
     }
 
     // Copy equipment to avoid mutating ref directly
@@ -1409,7 +1409,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
     if (!result.equipped) {
       addToast('Could not equip item', 'error')
-      return
+      return false
     }
 
     // Remove the equipped item from inventory
@@ -1443,6 +1443,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     equipmentRef.current = newEq
 
     addToast(`Equipped ${itemData.name}`, 'info')
+    return true
   }
 
   const handleUnequipSlot = (slotName) => {
@@ -2636,19 +2637,15 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               {/* Quick-actions panel — replaces the text combat log */}
               {combat.active && !isAutoRestarting && (() => {
                 const POT_TAG = { hp: '+HP', attack: '+ATK', strength: '+STR', defence: '+DEF', ranged: '+RNG', magic: '+MAG', combat: '+ALL', super_restore: 'RESTORE' }
+                // Stable name-sort so the grid doesn't reshuffle as items are
+                // equipped/consumed. Weapons/armour only list inventory items —
+                // currently-worn gear is intentionally not shown here.
+                const byName = (a, b) => a.item.name.localeCompare(b.item.name)
                 const foods = groupInv(it => it.type === 'food' || isLumiraBrew(it))
                 const potions = groupInv(it => it.type === 'potion')
-                const invWeapons = groupInv(it => it.slot === 'weapon')
-                const invArmour = groupInv(it => it.slot && it.slot !== 'weapon')
-                const equippedWeapon = equipment?.weapon && itemsData[equipment.weapon.itemId]
-                  ? { itemId: equipment.weapon.itemId, item: itemsData[equipment.weapon.itemId] } : null
-                const equippedArmour = EQUIPMENT_SLOTS
-                  .filter(s => s !== 'weapon' && equipment?.[s])
-                  .map(s => ({ slotName: s, item: itemsData[equipment[s].itemId] }))
-                  .filter(e => e.item)
-                const weaponCount = invWeapons.length + (equippedWeapon ? 1 : 0)
-                const armourCount = invArmour.length + equippedArmour.length
-                const tabs = [['food', 'Food', foods.length], ['potion', 'Potions', potions.length], ['weapon', 'Weapons', weaponCount], ['armour', 'Armour', armourCount]]
+                const weapons = groupInv(it => it.slot === 'weapon').sort(byName)
+                const armour = groupInv(it => it.slot && it.slot !== 'weapon').sort(byName)
+                const tabs = [['food', 'Food', foods.length], ['potion', 'Potions', potions.length], ['weapon', 'Weapons', weapons.length], ['armour', 'Armour', armour.length]]
                 return (
                   <div class="cb-qa">
                     <div class="cb-qa__tabs">
@@ -2667,7 +2664,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                         : foods.map(({ itemId, item, qty }) => (
                           <button key={itemId} class="cb-slot" onClick={() => { handleEatItem(itemId); flashQa(`Ate ${item.name}` + (item.heals ? ` · +${item.heals}` : ''), 'heal') }}>
                             <span class="cb-slot__qty">{fmtQty(qty)}</span>
-                            <GameIcon item={item} size={32} />
+                            <GameIcon item={item} size={18} />
                             <span class="cb-slot__name">{item.name}</span>
                             {item.heals != null && <span class="cb-slot__tag heal">+{item.heals}</span>}
                           </button>
@@ -2680,7 +2677,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                           return (
                             <button key={itemId} class={'cb-slot' + (active ? ' is-active' : '')} onClick={() => { handlePotion(itemId); flashQa(`Drank ${item.name}`, 'potion') }}>
                               <span class="cb-slot__qty">{fmtQty(qty)}</span>
-                              <GameIcon item={item} size={32} />
+                              <GameIcon item={item} size={18} />
                               <span class="cb-slot__name">{item.name}</span>
                               {POT_TAG[item.effect] && <span class="cb-slot__tag">{POT_TAG[item.effect]}</span>}
                               {active && <span class="cb-slot__ring" />}
@@ -2688,46 +2685,26 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                           )
                         }))}
 
-                      {invTab === 'weapon' && (weaponCount === 0
+                      {invTab === 'weapon' && (weapons.length === 0
                         ? <div class="cb-qa__empty">No weapons to wield</div>
-                        : <>
-                          {equippedWeapon && (
-                            <button class="cb-slot is-active" onClick={() => { handleUnequipSlot('weapon'); flashQa(`Unequipped ${equippedWeapon.item.name}`, 'gear') }}>
-                              <GameIcon item={equippedWeapon.item} size={32} />
-                              <span class="cb-slot__name">{equippedWeapon.item.name}</span>
-                              <span class="cb-slot__tag">Worn</span>
-                              <span class="cb-slot__ring" />
-                            </button>
-                          )}
-                          {invWeapons.map(({ itemId, item, qty }) => (
-                            <button key={itemId} class="cb-slot" onClick={() => { handleEquipItem(itemId); flashQa(`Wielding ${item.name}`, 'gear') }}>
-                              {qty > 1 && <span class="cb-slot__qty">{fmtQty(qty)}</span>}
-                              <GameIcon item={item} size={32} />
-                              <span class="cb-slot__name">{item.name}</span>
-                            </button>
-                          ))}
-                        </>)}
+                        : weapons.map(({ itemId, item, qty }) => (
+                          <button key={itemId} class="cb-slot" onClick={() => { if (handleEquipItem(itemId)) flashQa(`Wielding ${item.name}`, 'gear') }}>
+                            {qty > 1 && <span class="cb-slot__qty">{fmtQty(qty)}</span>}
+                            <GameIcon item={item} size={18} />
+                            <span class="cb-slot__name">{item.name}</span>
+                          </button>
+                        )))}
 
-                      {invTab === 'armour' && (armourCount === 0
+                      {invTab === 'armour' && (armour.length === 0
                         ? <div class="cb-qa__empty">No armour to equip</div>
-                        : <>
-                          {equippedArmour.map(({ slotName, item }) => (
-                            <button key={'eq-' + slotName} class="cb-slot is-active" onClick={() => { handleUnequipSlot(slotName); flashQa(`Unequipped ${item.name}`, 'gear') }}>
-                              <GameIcon item={item} size={32} />
-                              <span class="cb-slot__name">{item.name}</span>
-                              <span class="cb-slot__tag">{slotName}</span>
-                              <span class="cb-slot__ring" />
-                            </button>
-                          ))}
-                          {invArmour.map(({ itemId, item, qty }) => (
-                            <button key={itemId} class="cb-slot" onClick={() => { handleEquipItem(itemId); flashQa(`Equipped ${item.name}`, 'gear') }}>
-                              {qty > 1 && <span class="cb-slot__qty">{fmtQty(qty)}</span>}
-                              <GameIcon item={item} size={32} />
-                              <span class="cb-slot__name">{item.name}</span>
-                              <span class="cb-slot__tag">{item.slot}</span>
-                            </button>
-                          ))}
-                        </>)}
+                        : armour.map(({ itemId, item, qty }) => (
+                          <button key={itemId} class="cb-slot" onClick={() => { if (handleEquipItem(itemId)) flashQa(`Equipped ${item.name}`, 'gear') }}>
+                            {qty > 1 && <span class="cb-slot__qty">{fmtQty(qty)}</span>}
+                            <GameIcon item={item} size={18} />
+                            <span class="cb-slot__name">{item.name}</span>
+                            <span class="cb-slot__tag">{item.slot}</span>
+                          </button>
+                        )))}
                     </div>
                   </div>
                 )
