@@ -1501,6 +1501,38 @@
     "icon": "\ud83e\udde5",
     "isGeneralStore": false
   },
+  "red_d_hide_chaps": {
+    "id": "red_d_hide_chaps",
+    "name": "Red D'Hide Chaps",
+    "type": "armour",
+    "slot": "legs",
+    "stackable": false,
+    "attackBonus": {
+      "stab": 0,
+      "slash": 0,
+      "crush": 0,
+      "magic": -10,
+      "ranged": 20
+    },
+    "defenceBonus": {
+      "stab": 26,
+      "slash": 28,
+      "crush": 22,
+      "magic": -7,
+      "ranged": 35
+    },
+    "otherBonus": {
+      "meleeStrength": 0,
+      "rangedStrength": 0,
+      "magicDamage": 0
+    },
+    "requirements": {
+      "ranged": 60
+    },
+    "shopValue": 3062,
+    "icon": "\ud83d\udc56",
+    "isGeneralStore": false
+  },
   "black_dragon_leather": {
     "id": "black_dragon_leather",
     "legacy_item_id": "black_dhide",

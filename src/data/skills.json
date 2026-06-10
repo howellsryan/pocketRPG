@@ -291,7 +291,7 @@
         "name": "Smith bronze axe",
         "level": 4,
         "ticks": 5,
-        "xp": 25,
+        "xp": 12,
         "product": "bronze_axe",
         "materials": {
           "bronze_bar": 1
@@ -302,7 +302,7 @@
         "name": "Smith bronze pickaxe",
         "level": 4,
         "ticks": 5,
-        "xp": 25,
+        "xp": 12,
         "product": "bronze_pickaxe",
         "materials": {
           "bronze_bar": 1
@@ -316,7 +316,7 @@
         "xp": 25,
         "product": "bronze_scimitar",
         "materials": {
-          "bronze_bar": 1
+          "bronze_bar": 2
         }
       },
       {
@@ -360,7 +360,7 @@
         "xp": 50,
         "product": "iron_scimitar",
         "materials": {
-          "iron_bar": 1
+          "iron_bar": 2
         }
       },
       {
@@ -380,7 +380,7 @@
         "name": "Smith steel axe",
         "level": 31,
         "ticks": 5,
-        "xp": 75,
+        "xp": 37,
         "product": "steel_axe",
         "materials": {
           "steel_bar": 1
@@ -391,7 +391,7 @@
         "name": "Smith steel pickaxe",
         "level": 31,
         "ticks": 5,
-        "xp": 75,
+        "xp": 37,
         "product": "steel_pickaxe",
         "materials": {
           "steel_bar": 1
@@ -405,7 +405,7 @@
         "xp": 75,
         "product": "steel_scimitar",
         "materials": {
-          "steel_bar": 1
+          "steel_bar": 2
         }
       },
       {
@@ -436,7 +436,7 @@
         "name": "Smith mithril axe",
         "level": 51,
         "ticks": 5,
-        "xp": 100,
+        "xp": 50,
         "product": "mithril_axe",
         "materials": {
           "mithril_bar": 1
@@ -447,7 +447,7 @@
         "name": "Smith mithril pickaxe",
         "level": 51,
         "ticks": 5,
-        "xp": 100,
+        "xp": 50,
         "product": "mithril_pickaxe",
         "materials": {
           "mithril_bar": 1
@@ -461,7 +461,7 @@
         "xp": 100,
         "product": "mithril_scimitar",
         "materials": {
-          "mithril_bar": 1
+          "mithril_bar": 2
         }
       },
       {
@@ -481,7 +481,7 @@
         "name": "Smith adamant axe",
         "level": 71,
         "ticks": 5,
-        "xp": 125,
+        "xp": 62,
         "product": "adamant_axe",
         "materials": {
           "adamant_bar": 1
@@ -492,7 +492,7 @@
         "name": "Smith adamant pickaxe",
         "level": 71,
         "ticks": 5,
-        "xp": 125,
+        "xp": 62,
         "product": "adamant_pickaxe",
         "materials": {
           "adamant_bar": 1
@@ -506,7 +506,7 @@
         "xp": 125,
         "product": "adamant_scimitar",
         "materials": {
-          "adamant_bar": 1
+          "adamant_bar": 2
         }
       },
       {
@@ -525,8 +525,8 @@
         "id": "smith_rune_axe",
         "name": "Smith runeforged axe",
         "level": 86,
-        "ticks": 10,
-        "xp": 400,
+        "ticks": 5,
+        "xp": 75,
         "product": "runeforged_axe",
         "materials": {
           "runeforged_bar": 1
@@ -536,8 +536,8 @@
         "id": "smith_rune_pickaxe",
         "name": "Smith runeforged pickaxe",
         "level": 86,
-        "ticks": 10,
-        "xp": 400,
+        "ticks": 5,
+        "xp": 75,
         "product": "runeforged_pickaxe",
         "materials": {
           "runeforged_bar": 1
@@ -547,9 +547,504 @@
         "id": "smith_rune_scimitar",
         "name": "Smith runeforged scimitar",
         "level": 89,
-        "ticks": 10,
-        "xp": 300,
+        "ticks": 5,
+        "xp": 150,
         "product": "runeforged_scimitar",
+        "materials": {
+          "runeforged_bar": 2
+        }
+      },
+      {
+        "id": "smith_iron_dagger",
+        "name": "Smith iron dagger",
+        "level": 15,
+        "ticks": 5,
+        "xp": 25,
+        "product": "iron_dagger",
+        "materials": {
+          "iron_bar": 1
+        }
+      },
+      {
+        "id": "smith_iron_mace",
+        "name": "Smith iron mace",
+        "level": 16,
+        "ticks": 5,
+        "xp": 25,
+        "product": "iron_mace",
+        "materials": {
+          "iron_bar": 1
+        }
+      },
+      {
+        "id": "smith_iron_sword",
+        "name": "Smith iron sword",
+        "level": 18,
+        "ticks": 5,
+        "xp": 25,
+        "product": "iron_sword",
+        "materials": {
+          "iron_bar": 1
+        }
+      },
+      {
+        "id": "smith_iron_longsword",
+        "name": "Smith iron longsword",
+        "level": 20,
+        "ticks": 5,
+        "xp": 50,
+        "product": "iron_longsword",
+        "materials": {
+          "iron_bar": 2
+        }
+      },
+      {
+        "id": "smith_iron_full_helm",
+        "name": "Smith iron full helm",
+        "level": 21,
+        "ticks": 5,
+        "xp": 50,
+        "product": "iron_full_helm",
+        "materials": {
+          "iron_bar": 2
+        }
+      },
+      {
+        "id": "smith_iron_chainbody",
+        "name": "Smith iron chainbody",
+        "level": 25,
+        "ticks": 5,
+        "xp": 75,
+        "product": "iron_chainbody",
+        "materials": {
+          "iron_bar": 3
+        }
+      },
+      {
+        "id": "smith_iron_kiteshield",
+        "name": "Smith iron kiteshield",
+        "level": 26,
+        "ticks": 5,
+        "xp": 75,
+        "product": "iron_kiteshield",
+        "materials": {
+          "iron_bar": 3
+        }
+      },
+      {
+        "id": "smith_iron_platelegs",
+        "name": "Smith iron platelegs",
+        "level": 30,
+        "ticks": 5,
+        "xp": 75,
+        "product": "iron_platelegs",
+        "materials": {
+          "iron_bar": 3
+        }
+      },
+      {
+        "id": "smith_iron_platebody",
+        "name": "Smith iron platebody",
+        "level": 32,
+        "ticks": 5,
+        "xp": 125,
+        "product": "iron_platebody",
+        "materials": {
+          "iron_bar": 5
+        }
+      },
+      {
+        "id": "smith_steel_dagger",
+        "name": "Smith steel dagger",
+        "level": 30,
+        "ticks": 5,
+        "xp": 37,
+        "product": "steel_dagger",
+        "materials": {
+          "steel_bar": 1
+        }
+      },
+      {
+        "id": "smith_steel_mace",
+        "name": "Smith steel mace",
+        "level": 31,
+        "ticks": 5,
+        "xp": 37,
+        "product": "steel_mace",
+        "materials": {
+          "steel_bar": 1
+        }
+      },
+      {
+        "id": "smith_steel_sword",
+        "name": "Smith steel sword",
+        "level": 33,
+        "ticks": 5,
+        "xp": 37,
+        "product": "steel_sword",
+        "materials": {
+          "steel_bar": 1
+        }
+      },
+      {
+        "id": "smith_steel_longsword",
+        "name": "Smith steel longsword",
+        "level": 35,
+        "ticks": 5,
+        "xp": 75,
+        "product": "steel_longsword",
+        "materials": {
+          "steel_bar": 2
+        }
+      },
+      {
+        "id": "smith_steel_full_helm",
+        "name": "Smith steel full helm",
+        "level": 36,
+        "ticks": 5,
+        "xp": 75,
+        "product": "steel_full_helm",
+        "materials": {
+          "steel_bar": 2
+        }
+      },
+      {
+        "id": "smith_steel_chainbody",
+        "name": "Smith steel chainbody",
+        "level": 40,
+        "ticks": 5,
+        "xp": 112,
+        "product": "steel_chainbody",
+        "materials": {
+          "steel_bar": 3
+        }
+      },
+      {
+        "id": "smith_steel_kiteshield",
+        "name": "Smith steel kiteshield",
+        "level": 41,
+        "ticks": 5,
+        "xp": 112,
+        "product": "steel_kiteshield",
+        "materials": {
+          "steel_bar": 3
+        }
+      },
+      {
+        "id": "smith_steel_platelegs",
+        "name": "Smith steel platelegs",
+        "level": 45,
+        "ticks": 5,
+        "xp": 112,
+        "product": "steel_platelegs",
+        "materials": {
+          "steel_bar": 3
+        }
+      },
+      {
+        "id": "smith_steel_platebody",
+        "name": "Smith steel platebody",
+        "level": 47,
+        "ticks": 5,
+        "xp": 187,
+        "product": "steel_platebody",
+        "materials": {
+          "steel_bar": 5
+        }
+      },
+      {
+        "id": "smith_mithril_dagger",
+        "name": "Smith mithril dagger",
+        "level": 50,
+        "ticks": 5,
+        "xp": 50,
+        "product": "mithril_dagger",
+        "materials": {
+          "mithril_bar": 1
+        }
+      },
+      {
+        "id": "smith_mithril_mace",
+        "name": "Smith mithril mace",
+        "level": 51,
+        "ticks": 5,
+        "xp": 50,
+        "product": "mithril_mace",
+        "materials": {
+          "mithril_bar": 1
+        }
+      },
+      {
+        "id": "smith_mithril_sword",
+        "name": "Smith mithril sword",
+        "level": 53,
+        "ticks": 5,
+        "xp": 50,
+        "product": "mithril_sword",
+        "materials": {
+          "mithril_bar": 1
+        }
+      },
+      {
+        "id": "smith_mithril_longsword",
+        "name": "Smith mithril longsword",
+        "level": 55,
+        "ticks": 5,
+        "xp": 100,
+        "product": "mithril_longsword",
+        "materials": {
+          "mithril_bar": 2
+        }
+      },
+      {
+        "id": "smith_mithril_full_helm",
+        "name": "Smith mithril full helm",
+        "level": 44,
+        "ticks": 5,
+        "xp": 100,
+        "product": "mithril_full_helm",
+        "materials": {
+          "mithril_bar": 2
+        }
+      },
+      {
+        "id": "smith_mithril_chainbody",
+        "name": "Smith mithril chainbody",
+        "level": 48,
+        "ticks": 5,
+        "xp": 150,
+        "product": "mithril_chainbody",
+        "materials": {
+          "mithril_bar": 3
+        }
+      },
+      {
+        "id": "smith_mithril_kiteshield",
+        "name": "Smith mithril kiteshield",
+        "level": 48,
+        "ticks": 5,
+        "xp": 150,
+        "product": "mithril_kiteshield",
+        "materials": {
+          "mithril_bar": 3
+        }
+      },
+      {
+        "id": "smith_mithril_platelegs",
+        "name": "Smith mithril platelegs",
+        "level": 52,
+        "ticks": 5,
+        "xp": 150,
+        "product": "mithril_platelegs",
+        "materials": {
+          "mithril_bar": 3
+        }
+      },
+      {
+        "id": "smith_mithril_plateskirt",
+        "name": "Smith mithril plateskirt",
+        "level": 52,
+        "ticks": 5,
+        "xp": 150,
+        "product": "mithril_plateskirt",
+        "materials": {
+          "mithril_bar": 3
+        }
+      },
+      {
+        "id": "smith_mithril_platebody",
+        "name": "Smith mithril platebody",
+        "level": 53,
+        "ticks": 5,
+        "xp": 250,
+        "product": "mithril_platebody",
+        "materials": {
+          "mithril_bar": 5
+        }
+      },
+      {
+        "id": "smith_adamant_dagger",
+        "name": "Smith adamant dagger",
+        "level": 70,
+        "ticks": 5,
+        "xp": 62,
+        "product": "adamant_dagger",
+        "materials": {
+          "adamant_bar": 1
+        }
+      },
+      {
+        "id": "smith_adamant_mace",
+        "name": "Smith adamant mace",
+        "level": 71,
+        "ticks": 5,
+        "xp": 62,
+        "product": "adamant_mace",
+        "materials": {
+          "adamant_bar": 1
+        }
+      },
+      {
+        "id": "smith_adamant_sword",
+        "name": "Smith adamant sword",
+        "level": 73,
+        "ticks": 5,
+        "xp": 62,
+        "product": "adamant_sword",
+        "materials": {
+          "adamant_bar": 1
+        }
+      },
+      {
+        "id": "smith_adamant_longsword",
+        "name": "Smith adamant longsword",
+        "level": 75,
+        "ticks": 5,
+        "xp": 125,
+        "product": "adamant_longsword",
+        "materials": {
+          "adamant_bar": 2
+        }
+      },
+      {
+        "id": "smith_adamant_full_helm",
+        "name": "Smith adamant full helm",
+        "level": 60,
+        "ticks": 5,
+        "xp": 125,
+        "product": "adamant_full_helm",
+        "materials": {
+          "adamant_bar": 2
+        }
+      },
+      {
+        "id": "smith_adamant_kiteshield",
+        "name": "Smith adamant kiteshield",
+        "level": 64,
+        "ticks": 5,
+        "xp": 187,
+        "product": "adamant_kiteshield",
+        "materials": {
+          "adamant_bar": 3
+        }
+      },
+      {
+        "id": "smith_adamant_platelegs",
+        "name": "Smith adamant platelegs",
+        "level": 68,
+        "ticks": 5,
+        "xp": 187,
+        "product": "adamant_platelegs",
+        "materials": {
+          "adamant_bar": 3
+        }
+      },
+      {
+        "id": "smith_adamant_plateskirt",
+        "name": "Smith adamant plateskirt",
+        "level": 68,
+        "ticks": 5,
+        "xp": 187,
+        "product": "adamant_plateskirt",
+        "materials": {
+          "adamant_bar": 3
+        }
+      },
+      {
+        "id": "smith_adamant_platebody",
+        "name": "Smith adamant platebody",
+        "level": 69,
+        "ticks": 5,
+        "xp": 312,
+        "product": "adamant_platebody",
+        "materials": {
+          "adamant_bar": 5
+        }
+      },
+      {
+        "id": "smith_runeforged_med_helm",
+        "name": "Smith runeforged med helm",
+        "level": 69,
+        "ticks": 5,
+        "xp": 75,
+        "product": "runeforged_med_helm",
+        "materials": {
+          "runeforged_bar": 1
+        }
+      },
+      {
+        "id": "smith_runeforged_full_helm",
+        "name": "Smith runeforged full helm",
+        "level": 72,
+        "ticks": 5,
+        "xp": 150,
+        "product": "runeforged_full_helm",
+        "materials": {
+          "runeforged_bar": 2
+        }
+      },
+      {
+        "id": "smith_runeforged_chainbody",
+        "name": "Smith runeforged chainbody",
+        "level": 76,
+        "ticks": 5,
+        "xp": 225,
+        "product": "runeforged_chainbody",
+        "materials": {
+          "runeforged_bar": 3
+        }
+      },
+      {
+        "id": "smith_runeforged_kiteshield",
+        "name": "Smith runeforged kiteshield",
+        "level": 76,
+        "ticks": 5,
+        "xp": 225,
+        "product": "runeforged_kiteshield",
+        "materials": {
+          "runeforged_bar": 3
+        }
+      },
+      {
+        "id": "smith_runeforged_platelegs",
+        "name": "Smith runeforged platelegs",
+        "level": 80,
+        "ticks": 5,
+        "xp": 225,
+        "product": "runeforged_platelegs",
+        "materials": {
+          "runeforged_bar": 3
+        }
+      },
+      {
+        "id": "smith_runeforged_plateskirt",
+        "name": "Smith runeforged plateskirt",
+        "level": 80,
+        "ticks": 5,
+        "xp": 225,
+        "product": "runeforged_plateskirt",
+        "materials": {
+          "runeforged_bar": 3
+        }
+      },
+      {
+        "id": "smith_runeforged_platebody",
+        "name": "Smith runeforged platebody",
+        "level": 81,
+        "ticks": 5,
+        "xp": 375,
+        "product": "runeforged_platebody",
+        "materials": {
+          "runeforged_bar": 5
+        }
+      },
+      {
+        "id": "smith_runeforged_sword",
+        "name": "Smith runeforged sword",
+        "level": 88,
+        "ticks": 5,
+        "xp": 75,
+        "product": "runeforged_sword",
         "materials": {
           "runeforged_bar": 1
         }
@@ -1574,6 +2069,39 @@
         "product": "red_d_hide_body",
         "materials": {
           "red_dragon_leather": 4
+        }
+      },
+      {
+        "id": "red_d_hide_chaps",
+        "name": "Craft red d'hide chaps",
+        "level": 73,
+        "ticks": 5,
+        "xp": 124,
+        "product": "red_d_hide_chaps",
+        "materials": {
+          "red_dragon_leather": 2
+        }
+      },
+      {
+        "id": "black_d_hide_chaps",
+        "name": "Craft black d'hide chaps",
+        "level": 79,
+        "ticks": 5,
+        "xp": 172,
+        "product": "black_d_hide_chaps",
+        "materials": {
+          "black_dragon_leather": 2
+        }
+      },
+      {
+        "id": "black_d_hide_body",
+        "name": "Craft black d'hide body",
+        "level": 84,
+        "ticks": 6,
+        "xp": 258,
+        "product": "black_d_hide_body",
+        "materials": {
+          "black_dragon_leather": 3
         }
       },
       {

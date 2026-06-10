@@ -534,19 +534,19 @@ export default function BankScreen() {
           <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider flex-shrink-0">
             Bank ({bankItems.length})
           </h2>
-          <div class="flex-1 flex justify-center">
-            <div class="w-32 flex items-center bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-2.5 py-1.5">
+          <div class="flex-1 min-w-0 flex justify-center">
+            <div class="flex items-center bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-2.5 py-1.5 w-full max-w-[128px]">
               <input
                 type="text"
                 value={searchTerm}
                 onInput={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search..."
-                class="flex-1 bg-transparent text-xs text-[var(--color-parchment)] outline-none placeholder:opacity-30"
+                class="flex-1 min-w-0 bg-transparent text-xs text-[var(--color-parchment)] outline-none placeholder:opacity-30"
               />
               {searchTerm && (
                 <button
                   onClick={() => setSearchTerm('')}
-                  class="text-[var(--color-parchment)] opacity-40 hover:opacity-70 active:opacity-80 text-[12px] ml-1 flex-shrink-0"
+                  class="relative z-10 text-[var(--color-parchment)] opacity-40 hover:opacity-70 active:opacity-80 text-[12px] ml-1 flex-shrink-0"
                 >
                   ✕
                 </button>
@@ -560,7 +560,8 @@ export default function BankScreen() {
             }}
             class="text-[10px] text-[var(--color-parchment)] opacity-40 px-2 py-1 rounded active:opacity-70 flex-shrink-0"
           >
-            ✏️ Edit tab
+            <span class="hidden sm:inline">✏️ Edit tab</span>
+            <span class="sm:hidden">✏️</span>
           </button>
         </div>
 
