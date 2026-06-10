@@ -6,12 +6,19 @@ export function isClueRewardItem(item) {
   return Boolean(item?.isClueReward)
 }
 
+// Tradeable items whose only legitimate *source* is special (slayer points,
+// dungeoneering tokens, boss drops, clue scrolls). They trade player-to-player
+// on the order book but are never sold by the infinite store.
+export function isSpecialSourceItem(item) {
+  return Boolean(item?.isSpecialSource)
+}
+
 // Items that transact through the player-to-player order book rather than the
 // immediate-execute general store path. Keep this aligned with the server-side
 // `isOrderBookItem` in functions/_lib/game/tradingPost.js.
 export function isOrderBookItem(item) {
   if (!item) return false
-  return Boolean(item.isBossUnique || item.isClueReward || item.isRaidUnique)
+  return Boolean(item.isBossUnique || item.isClueReward || item.isRaidUnique || item.isSpecialSource)
 }
 
 export function getPurchaseRestriction(item, { isIronman = false, allowMinigameUnlockPurchase = false } = {}) {
@@ -32,6 +39,14 @@ export function getPurchaseRestriction(item, { isIronman = false, allowMinigameU
       allowed: false,
       code: 'CLUE_REWARD_RESTRICTED',
       message: 'This item can only be obtained from clue scroll rewards.',
+    }
+  }
+
+  if (isSpecialSourceItem(item)) {
+    return {
+      allowed: false,
+      code: 'SPECIAL_SOURCE_RESTRICTED',
+      message: 'This item can only be obtained from its original source or traded from other adventurers.',
     }
   }
 
@@ -60,7 +75,9 @@ export function getPurchaseRestriction(item, { isIronman = false, allowMinigameU
 
 export function isStoreVisibleItem(item, { isIronman = false, includeQuestItems = true } = {}) {
   if (!item) return false
-  if (isBossUniqueItem(item) || isClueRewardItem(item)) return true
+  // Order-book items stay visible for discovery — purchasing is blocked by
+  // getPurchaseRestriction; acquisition is the order book / original source.
+  if (isBossUniqueItem(item) || isClueRewardItem(item) || isSpecialSourceItem(item)) return true
 
   const isQuestItem = Boolean(item.questUnlock)
   if (isQuestItem) return includeQuestItems

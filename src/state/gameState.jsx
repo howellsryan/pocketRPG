@@ -8,6 +8,7 @@ import { simulateIdleHunting } from '../engine/hunter.js'
 import { simulateQuestIdleCascade, splitQuestXpRewards } from '../engine/questIdleCascade.js'
 import { ALL_SKILLS, MAX_XP, AUTO_SAVE_DEBOUNCE, QUEST_QUEUE_MAX } from '../utils/constants.js'
 import { debounce } from '../utils/helpers.js'
+import { mergeKillCounts } from '../utils/killCountMerge.js'
 import { fetchIdleState, pushIdleState } from '../cloud/idleState.js'
 import { getToken, getCharacterId } from '../cloud/api.js'
 import { requestCriticalPushSave, pushNow, suspendSaves, resumeSaves, isSaveConflict } from '../cloud/sync.js'
@@ -59,6 +60,10 @@ export function GameProvider({ children }) {
   const [activeCombatSpell, setActiveCombatSpellState] = useState(null)
   const [bossKillCounts, setBossKillCountsState] = useState({})
   const [raidKillCounts, setRaidKillCountsState] = useState({})
+  // True once the per-character server KC fetch has settled (success or fail).
+  // The combat screen gates its first render on this so a cold cache never
+  // briefly shows KC 0.
+  const [killCountsLoaded, setKillCountsLoaded] = useState(false)
   const [farming, setFarmingState] = useState({ patchesById: {} })
   const [completedQuests, setCompletedQuestsState] = useState(new Set())
   const [unlockedMinigameItems, setUnlockedMinigameItemsState] = useState(new Set())
@@ -819,21 +824,19 @@ export function GameProvider({ children }) {
   // id. This prevents a transient empty server response from zeroing local KC.
   const syncServerKillCounts = useCallback((serverBoss, serverRaid) => {
     setBossKillCountsState(prev => {
-      const merged = { ...prev }
-      for (const [id, count] of Object.entries(serverBoss || {})) {
-        merged[id] = Math.max(merged[id] || 0, count)
-      }
+      const merged = mergeKillCounts(prev, serverBoss)
       saveSetting('bossKillCounts', merged)
       return merged
     })
     setRaidKillCountsState(prev => {
-      const merged = { ...prev }
-      for (const [id, count] of Object.entries(serverRaid || {})) {
-        merged[id] = Math.max(merged[id] || 0, count)
-      }
+      const merged = mergeKillCounts(prev, serverRaid)
       saveSetting('raidKillCounts', merged)
       return merged
     })
+  }, [])
+
+  const markKillCountsLoaded = useCallback((value = true) => {
+    setKillCountsLoaded(!!value)
   }, [])
 
   const updateFarming = useCallback((farmingState) => {
@@ -1079,6 +1082,7 @@ export function GameProvider({ children }) {
     bossKillCounts, updateBossKillCounts,
     raidKillCounts, updateRaidKillCounts,
     syncServerKillCounts,
+    killCountsLoaded, markKillCountsLoaded,
     farming, updateFarming,
     completedQuests, completeQuest,
     unlockedMinigameItems, unlockMinigameItem,

@@ -27,9 +27,17 @@ describe('store rules', () => {
       code: 'CLUE_REWARD_RESTRICTED',
     })
   })
-  it('hides slayer point gear in normal store', () => {
-    expect(isStoreVisibleItem(itemsData.slayer_defender, { isIronman: false })).toBe(false)
-    expect(isStoreVisibleItem(itemsData.gloves_of_slaughter, { isIronman: false })).toBe(false)
+  it('shows slayer point gear for discovery but blocks store purchase (special source)', () => {
+    expect(isStoreVisibleItem(itemsData.slayer_defender, { isIronman: false })).toBe(true)
+    expect(isStoreVisibleItem(itemsData.gloves_of_slaughter, { isIronman: false })).toBe(true)
+    expect(getPurchaseRestriction(itemsData.slayer_defender, { isIronman: false })).toMatchObject({
+      allowed: false,
+      code: 'SPECIAL_SOURCE_RESTRICTED',
+    })
+    expect(getPurchaseRestriction(itemsData.gloves_of_slaughter, { isIronman: false })).toMatchObject({
+      allowed: false,
+      code: 'SPECIAL_SOURCE_RESTRICTED',
+    })
   })
   it('preserves normal and ironman restrictions', () => {
     expect(getPurchaseRestriction(itemsData.bronze_scimitar, { isIronman: false }).allowed).toBe(true)

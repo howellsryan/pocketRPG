@@ -59,7 +59,7 @@ import { getLevelFromXP } from './engine/experience.js'
 import { pvpApi } from './cloud/pvp.js'
 import { SKIP_HOUR_MS, getSkipPreflight, isChargeableSkipOutcome } from './engine/skipPreflight.js'
 import { getSlayerTaskReward } from './engine/slayerRewards.js'
-import { isHighValueDrop } from './utils/itemValue.js'
+import { isHighValueDrop, getLootTotalValue, isEpicLootValue } from './utils/itemValue.js'
 import LootResultModal from './components/LootResultModal.jsx'
 import { computeIdleElapsedMs } from './utils/idleElapsed.js'
 import { advanceFarmingState } from './engine/farming.ts'
@@ -166,6 +166,16 @@ function recordCollectionLogDropsForIdleClues(savedTask, sim) {
   }
 }
 
+// Total shop value of everything an idle session *gained* (lost loot doesn't
+// count — no epic fireworks for items you dropped on death).
+function getIdleGainedLootValue(idleResult, items) {
+  let total = 0
+  for (const src of [idleResult?.lootGained, idleResult?.lootBanked, idleResult?.itemsGained]) {
+    total += getLootTotalValue(src, items)
+  }
+  return total
+}
+
 function IdleResultProgressCard({ type, idleResult, taskName }) {
   const configs = {
     minigame_progress: {
@@ -218,7 +228,7 @@ function IdleResultProgressCard({ type, idleResult, taskName }) {
 
 function GameApp() {
   const { loaded, loadGame, player, stats, equipment, inventory, bank, currentHP, updateHP, getMaxHP, updateInventory, updateEquipment, updateBank, updateBankDirect, grantXP, addToast, activeTask, setActiveTask, itemsData, getSnapshot, unlockedFeatures, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, completeQuest, completedQuests, questQueue, removeFromQuestQueue, updateQuestQueue,
-    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
+    unlockMinigameItem, unlockedMinigameItems, awardDungeoneeringTokens, farming, updateFarming, idleCombatSetup, isOneLife, updateBossKillCounts, updateRaidKillCounts, syncServerKillCounts, markKillCountsLoaded, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef,
     gameLocked, lockGame, unlockGame, runLockedSave, awaitCombatCompletion, resolveCombatCompletion,
     characterUnlocks } = useGame()
   const pvp = usePvp()
@@ -1133,6 +1143,10 @@ function GameApp() {
       // Pull token dropped by OAuth redirect (#token=...) into localStorage + clean URL
       captureTokenFromHash()
 
+      // Re-arm the combat-screen KC gate — a character switch must wait for
+      // the new character's kill counts, not show the previous character's.
+      markKillCountsLoaded(false)
+
       const hasToken = !!getToken()
       const hasCharacter = !!getCharacterId()
 
@@ -1185,6 +1199,8 @@ function GameApp() {
           await wipeLocalSave()
           await startNewGame(getIronmanMode(), getCharacterName(), getOneLifeMode())
           if (!isInPvpMatch) await pushNow(getSnapshot())
+          // Brand-new character — there are no kill counts to wait for.
+          markKillCountsLoaded()
           setCloudPhase('ready')
           return
         }
@@ -1202,7 +1218,12 @@ function GameApp() {
       kcPromise.then(server => {
         if (!server) return
         syncServerKillCounts(server.bossKillCounts, server.raidKillCounts)
-      }).catch(() => {})
+      }).catch(() => {}).finally(() => {
+        // Settled (success OR fail) — let the combat screen render. Local
+        // IDB KC was already loaded by checkSave, so a failed fetch still
+        // shows the warm cache rather than blocking the screen.
+        markKillCountsLoaded()
+      })
     } catch (err) {
       console.warn('[PocketRPG] Cloud init failed:', err)
       setCloudLoadError(err?.message || 'Failed to load cloud save')
@@ -2281,7 +2302,7 @@ function GameApp() {
       {/* Idle Result Modal */}
       {idleResult && !skipSaving && !gameLocked && pvp.phase !== 'in_match' && Date.now() >= suppressIdleModalUntil && (
         <LootResultModal
-          theme={idleResult.died ? 'blood' : 'gold'}
+          theme={idleResult.died ? 'blood' : (isEpicLootValue(getIdleGainedLootValue(idleResult, itemsData)) ? 'purple' : 'gold')}
           icon={idleResult.died ? '💀' : '💤'}
           title={idleResult.died ? 'Defeated' : 'Welcome Back!'}
           status={idleResult.died ? undefined : `Away for ${formatIdleTime(idleResult.elapsedMs)}`}

@@ -264,9 +264,10 @@ describe('cloud sync save status events', () => {
     expect(ok).toBe(true)
     expect(putSaveMock).toHaveBeenCalledTimes(1)
 
-    // resumeSaves re-enables the background cadence.
+    // resumeSaves re-enables the background cadence. Use different content —
+    // an identical snapshot would be (correctly) skipped by the dirty check.
     sync.resumeSaves()
-    sync.schedulePushSave({ player: { name: 'Hero' } })
+    sync.schedulePushSave({ player: { name: 'Hero', hp: 50 } })
     await vi.advanceTimersByTimeAsync(60_000)
     await vi.runAllTicks()
     expect(putSaveMock).toHaveBeenCalledTimes(2)

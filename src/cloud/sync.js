@@ -27,6 +27,17 @@ export const CLOUD_SAVE_STATUS_EVENT = 'pocketrpg:cloud-save-status'
 
 let lastPushedAt = 0
 let lastSaveRevision = 0
+// Serialized content of the last *successful* push, with the volatile
+// top-level `timestamp` normalized out. The 60s cadence skips the network
+// round-trip entirely when the snapshot hasn't actually changed (pure idle /
+// AFK tabs), cutting daily DB writes without weakening durability — content
+// equal to the last successful push is already on the server.
+let lastPushedContentKey = null
+
+// Exported for tests: timestamp-insensitive content key for a save payload.
+export function saveContentKey(payload) {
+  return JSON.stringify({ ...payload, timestamp: 0 })
+}
 let pendingTimer = null
 let pendingSnapshot = null
 let pendingSaveOptions = {}
@@ -107,10 +118,20 @@ async function performPush() {
   try {
     const data = buildSavePayloadFromSnapshot(snap)
     const json = JSON.stringify(data)
+    const contentKey = saveContentKey(data)
+    // Dirty check: identical to the last successful push → nothing to do.
+    if (contentKey === lastPushedContentKey) {
+      pendingSaveOptions = {}
+      hasUnsyncedChanges = false
+      consecutiveFailures = 0
+      emitCloudSaveStatus('saved', { updatedAt: lastPushedAt || null, skipped: true })
+      return true
+    }
     const res = await api.putSave(json, { ...pendingSaveOptions, saveRevision: lastSaveRevision })
     pendingSaveOptions = {}
     if (res?.updatedAt) lastPushedAt = res.updatedAt
     if (Number.isFinite(res?.save_revision)) lastSaveRevision = res.save_revision
+    lastPushedContentKey = contentKey
     hasUnsyncedChanges = false
     consecutiveFailures = 0
     emitCloudSaveStatus('saved', { updatedAt: res?.updatedAt || null })
@@ -364,6 +385,7 @@ export async function applyCloudSave(payload, updatedAt, saveRevision) {
 export function resetSyncState() {
   lastPushedAt = 0
   lastSaveRevision = 0
+  lastPushedContentKey = null
   pendingSnapshot = null
   hasUnsyncedChanges = false
   consecutiveFailures = 0

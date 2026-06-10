@@ -1,6 +1,6 @@
 # PocketRPG — Feature & Bug Batch Plan (2026-06-09)
 
-> **Status:** Phases 1 & 2 complete (including post-delivery bug fixes). Phases 3–6 pending.
+> **Status:** Phases 1, 2, 4, 5 & 6 complete. Phase 3 (combat magic) pending.
 > Every phase ends with the **commit gate** (`npm test && npm run build && npm run rebuild && npm run check:single`, **or** `npm run ci && npm test`) green before commit/push. Do **not** commit generated root `index.html` (build artifact).
 >
 > **Branch:** `claude/feature-requests-bug-fixes-ne4ajs`.
@@ -14,9 +14,9 @@
 | **1** | Quick-win bug fixes | Slayer purchase bug · PvP defeat HP · Drop confirmation · Gargoyle dust price | ✅ Done | Low |
 | **2** | Slayer progression unlocks | Double monster-quantity unlock (250 pts) · Double slayer-XP unlock (100 creds) | ✅ Done | Med |
 | **3** | Combat magic | Blood/chaos/death rune spells + Wrath tier | ⬜ Pending | Med |
-| **4** | Combat feedback | Hit markers · potion icon · purple fireworks >1m · KC gating | ⬜ Pending | Med |
-| **5** | PvP bot coverage | Bots for every combat level (±10 band) | ⬜ Pending | Med–High |
-| **6** | Economy & persistence | Everything tradeable (allowlist) · reduce DB writes · charge-loss-in-bank | ⬜ Pending | High |
+| **4** | Combat feedback | Hit markers · potion icon · purple fireworks >1m · KC gating | ✅ Done | Med |
+| **5** | PvP bot coverage | Bots for every combat level (±10 band) | ✅ Done | Med–High |
+| **6** | Economy & persistence | Everything tradeable (allowlist) · reduce DB writes · charge-loss-in-bank | ✅ Done | High |
 
 ---
 
@@ -63,6 +63,31 @@ All four items shipped and gate-green.
 - `tests/slayerUnlocks.test.ts` — purchase allowed/blocked, `ownsItem` object-form
 - `tests/slayerRewards.test.ts` — all multiplier cases including `doubleXp` and boss stack
 - All 1403 tests pass on the branch as of last push.
+
+### Phase 4 — Combat feedback ✅ (commit `159894e`)
+
+| Item | What was done |
+|------|--------------|
+| 4.1 Hit markers | New `src/components/HitSplat.jsx` (`HitSplatLayer`) + pure mapper `src/utils/hitSplats.js` (`splatsFromCombatEvents`); red damage / blue 0 splats float over both HP bars on the PvE combat screen; plain "You hit X"/"Monster hits X"/miss log lines removed (special/dragonfire/heal/info lines kept). PvP wiring deferred to the new PvP design per plan. CSS in `src/index.css` (`.hit-splat*`, reduced-motion safe). |
+| 4.2 Potion icon | New `src/components/ActivePotionBadges.jsx` — GameIcon + remaining seconds per active potion, rendered next to the player HP bar. Reads `combat.activePotions` (`{ potionItemId: ticks }`). |
+| 4.3 Purple fireworks | `LootResultModal` `buildParticles` gained a `purple` theme (plus surface/seal/title/button CSS). Triggered when loot value > 1m via `getLootTotalValue`/`isEpicLootValue` (`src/utils/itemValue.js`) at all three call sites: PvE kill modal (CombatScreen), PvP victory modal (uses existing `pvpLootTotal`), idle welcome-back modal (gained sources only). |
+| 4.4 KC gate | `killCountsLoaded` flag in gameState (+ `markKillCountsLoaded`); set when the App's `fetchKillCounts` promise settles (success or fail; also set for brand-new characters; reset on `initCloudAndSave` for character switches). CombatScreen renders a spinner until it's set. Merge extracted to `src/utils/killCountMerge.js` (`mergeKillCounts`, max per id). |
+
+Tests: `tests/hitSplats.test.ts`, `tests/itemValue.test.ts`, `tests/killCountMerge.test.ts`. New components registered in `build_single.cjs` `sourceFiles` (components are core; only screens go in `GAME_CHUNK_FILES`).
+
+### Phase 5 — PvP bot coverage ✅ (commit `a828a9e`)
+
+7 new templates in `src/data/pvpBots.json` so every CB 3–126 has a bot within the lobby's ±10 band: rustyblade (CB 10), thornduel (25), galearcher (39), runewarden (56), mistarcher (71), drakechampion (96), veilbreaker (112) — existing maxpurebot (83) and maxmainbot (126) fill the top. No mage archetype: PvP combatants start `spell: null` and the bot AI never selects a spell, so a staff bot would deal 0 damage. All loadouts meet their own equip requirements. `npm run seed:bots` script added to package.json (seed script was already data-driven). Coverage regression test: `tests/pvpBotCoverage.test.ts` (±10 coverage via the real server CB formula, 28-slot inventories, equip-requirement consistency, unique ids, food on board).
+
+### Phase 6 — Economy & persistence ✅ (commit `3e7ee84`)
+
+| Item | What was done |
+|------|--------------|
+| 6.1 Tradeable audit | 25 items lost `isUntradeable`. Kept untradeable (38): minigame rewards, 17 skill capes, Zesta ×3, quest rewards (`ava_s_*`, `cryptbound_gloves`), `coins`, and construction feature tokens `money_purse`/`master_rejuvenation` (perk lives in `unlockedFeatures`; trading the token would dupe it). New `isSpecialSource` flag (22 items: slayer gear, dungeoneering gear, fire/infernal capes, shardglass, godsword shard, clue scrolls): listable on the player order book + store-visible for discovery, but blocked from infinite-store purchase (`SPECIAL_SOURCE_RESTRICTED` in `storeRules.js`; `isOrderBookItem` extended in both `storeRules.js` and `tradingPost.js`). `fire_cape` shopValue 2m, `infernal_cape` 10m. Test: `tests/tradeableAllowlist.test.ts` derives the allowlist from live data files. |
+| 6.2 DB writes | `/api/save`: skips the `characters` summary UPDATE when total/combat level unchanged (ownership SELECT now returns both columns); skips the whole write on a no-op save (payload unchanged modulo the volatile top-level `timestamp`), returning the current revision with `noop: true`. Client `sync.js`: `saveContentKey` (timestamp-normalized) of the last successful push; identical 60s pushes are skipped and reported as saved. Stale-write + regression guards intact. Tests: `tests/saveEndpoint.test.ts`, `tests/syncDirtyCheck.test.ts`. |
+| 6.3 Bank charges | **Root cause found:** `functions/_lib/game/inventory.js` `normalizeSaveItemIds`/`addItemToBank`/`removeItemFromBank` rebuilt bank entries as bare `{itemId, quantity}` — every trading-post/MCP/action endpoint call wiped `charges` from every banked chargeable item. All three now spread the existing entry. Also fixed `BankScreen.jsx` partial-withdrawal charge duplication: withdrawals now take a proportional `Math.floor` share of the merged charge pool (full pool when the entry empties) and the bank keeps the rest. Test: `tests/bankCharges.test.ts`. |
+
+All 1514 tests pass; `npm run ci` green.
 
 ---
 
