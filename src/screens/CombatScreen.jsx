@@ -242,8 +242,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const [playerSplats, setPlayerSplats] = useState([])
   // Mobile quick-actions panel (replaces the combat log + Eat/Potion/Gear buttons)
   const [invTab, setInvTab] = useState('food')
-  const [qaPulse, setQaPulse] = useState(null) // { id, text, tone }
-  const qaPulseSeq = useRef(0)
 
   const combatRef = useRef(null)
   const hpRef = useRef(currentHP)
@@ -1357,7 +1355,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     combatRef.current = newState
     setCombat(newState)
     setShowPotionModal(false)
-    addToast(`${potion.icon} ${potion.name}`, 'info')
   }
 
   // Boss/raid skip: set monster HP to 0 and arm player attack timer so the next
@@ -1442,7 +1439,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     updateEquipment(newEq)
     equipmentRef.current = newEq
 
-    addToast(`Equipped ${itemData.name}`, 'info')
     return true
   }
 
@@ -1467,9 +1463,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     inventoryRef.current = newInv
     updateEquipment(newEq)
     equipmentRef.current = newEq
-
-    const itemName = itemsData[entry.itemId]?.name || entry.itemId
-    addToast(`Unequipped ${itemName}`, 'info')
   }
 
   const handlePrayer = (prayerId) => {
@@ -1493,13 +1486,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   }
 
   // ── Mobile quick-actions helpers ──────────────────────────────────────────
-  // Brief feedback line shown above the quick-actions grid after an action.
-  const flashQa = (text, tone) => {
-    const id = ++qaPulseSeq.current
-    setQaPulse({ id, text, tone })
-    setTimeout(() => setQaPulse(p => (p && p.id === id) ? null : p), 1400)
-  }
-
   // Compact quantity formatter for slot badges (312 → 312, 5085 → 5.1k).
   const fmtQty = (n) => {
     if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M'
@@ -2656,13 +2642,11 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       ))}
                     </div>
 
-                    {qaPulse && <div key={qaPulse.id} class={'cb-qa__pulse cb-qa__pulse--' + qaPulse.tone}>{qaPulse.text}</div>}
-
                     <div class="cb-qa__grid">
                       {invTab === 'food' && (foods.length === 0
                         ? <div class="cb-qa__empty">No food in your inventory</div>
                         : foods.map(({ itemId, item, qty }) => (
-                          <button key={itemId} class="cb-slot" onClick={() => { handleEatItem(itemId); flashQa(`Ate ${item.name}` + (item.heals ? ` · +${item.heals}` : ''), 'heal') }}>
+                          <button key={itemId} class="cb-slot" onClick={() => handleEatItem(itemId)}>
                             <span class="cb-slot__qty">{fmtQty(qty)}</span>
                             <GameIcon item={item} size={18} />
                             <span class="cb-slot__name">{item.name}</span>
@@ -2675,7 +2659,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                         : potions.map(({ itemId, item, qty }) => {
                           const active = Object.keys(combat?.activePotions || {}).some(pid => itemsData[pid]?.effect === item.effect)
                           return (
-                            <button key={itemId} class={'cb-slot' + (active ? ' is-active' : '')} onClick={() => { handlePotion(itemId); flashQa(`Drank ${item.name}`, 'potion') }}>
+                            <button key={itemId} class={'cb-slot' + (active ? ' is-active' : '')} onClick={() => handlePotion(itemId)}>
                               <span class="cb-slot__qty">{fmtQty(qty)}</span>
                               <GameIcon item={item} size={18} />
                               <span class="cb-slot__name">{item.name}</span>
@@ -2688,7 +2672,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       {invTab === 'weapon' && (weapons.length === 0
                         ? <div class="cb-qa__empty">No weapons to wield</div>
                         : weapons.map(({ itemId, item, qty }) => (
-                          <button key={itemId} class="cb-slot" onClick={() => { if (handleEquipItem(itemId)) flashQa(`Wielding ${item.name}`, 'gear') }}>
+                          <button key={itemId} class="cb-slot" onClick={() => handleEquipItem(itemId)}>
                             {qty > 1 && <span class="cb-slot__qty">{fmtQty(qty)}</span>}
                             <GameIcon item={item} size={18} />
                             <span class="cb-slot__name">{item.name}</span>
@@ -2698,7 +2682,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                       {invTab === 'armour' && (armour.length === 0
                         ? <div class="cb-qa__empty">No armour to equip</div>
                         : armour.map(({ itemId, item, qty }) => (
-                          <button key={itemId} class="cb-slot" onClick={() => { if (handleEquipItem(itemId)) flashQa(`Equipped ${item.name}`, 'gear') }}>
+                          <button key={itemId} class="cb-slot" onClick={() => handleEquipItem(itemId)}>
                             {qty > 1 && <span class="cb-slot__qty">{fmtQty(qty)}</span>}
                             <GameIcon item={item} size={18} />
                             <span class="cb-slot__name">{item.name}</span>
