@@ -67,21 +67,22 @@ function DropRow({ drop, itemsData, accent }) {
   )
 }
 
-function UniquePanel({ items, itemsData, chanceLabel, drops }) {
+function UniquePanel({ items, itemsData, sharedChance, drops }) {
   if (!items || items.length === 0) return null
   const [showRates, setShowRates] = useState(false)
   // Per-unique drop rate sourced from the monster's drop table (when supplied).
   const chanceById = {}
   for (const d of (drops || [])) chanceById[d.itemId] = d.chance
-  const hasRates = (drops || []).length > 0
+  const hasRates = (drops || []).length > 0 || sharedChance != null
   return (
     <div class="cb-unique">
       <div class="cb-unique__head">
         <span class="cb-unique__spark">✦</span>
         <span>Unique Drops</span>
-        {chanceLabel && <span class="cb-unique__chance">{chanceLabel}</span>}
         {hasRates && (
-          <button class="cb-unique__info" onClick={() => setShowRates(true)} aria-label="View drop rates">i</button>
+          <button class="cb-unique__info" onClick={() => setShowRates(true)} aria-label="View drop rates">
+            <GameIcon iconKey="info" color="#e7c97e" size={16} />
+          </button>
         )}
       </div>
       <div class="cb-unique__grid">
@@ -105,6 +106,9 @@ function UniquePanel({ items, itemsData, chanceLabel, drops }) {
                 <GameIcon iconKey="cancel" color="#cdbf9f" size={14} />
               </button>
             </div>
+            {sharedChance != null && (
+              <div class="cb-rates__note">Any unique: {formatDropChance(sharedChance)}</div>
+            )}
             <div class="cb-rates__list">
               {items.map(itemId => {
                 const item = itemsData[itemId]
@@ -115,7 +119,7 @@ function UniquePanel({ items, itemsData, chanceLabel, drops }) {
                       <GameIcon item={item} iconKey={item?.iconId} size={20} color="#f0c040" />
                       <span>{item?.name || itemId}</span>
                     </div>
-                    <span class="cb-rates__rate">{chance != null ? formatDropChance(chance) : '—'}</span>
+                    {chance != null && <span class="cb-rates__rate">{formatDropChance(chance)}</span>}
                   </div>
                 )
               })}
@@ -209,9 +213,7 @@ export function CombatRaidInfoSheet({ raid, monstersData, itemsData, raidKillCou
   const kc = raidKillCounts?.[raid.id] || 0
   const uniques = loggedUniques('raids', raid.id)
   const alwaysDrops = raid.rewards?.always || []
-  const uniqueChance = raid.rewards?.unique?.chance != null
-    ? formatDropChance(raid.rewards.unique.chance) + ' chance'
-    : null
+  const uniqueChance = raid.rewards?.unique?.chance ?? null
 
   return (
     <div class="cb-overlay" onClick={onClose}>
@@ -275,7 +277,7 @@ export function CombatRaidInfoSheet({ raid, monstersData, itemsData, raidKillCou
           {uniques.length > 0 && (
             <>
               <div class="cb-sheet__sec">Unique Rewards</div>
-              <UniquePanel items={uniques} itemsData={itemsData} chanceLabel={uniqueChance} />
+              <UniquePanel items={uniques} itemsData={itemsData} sharedChance={uniqueChance} />
             </>
           )}
         </div>
