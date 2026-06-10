@@ -73,7 +73,7 @@ function UniquePanel({ items, itemsData, sharedChance, drops }) {
   // Per-unique drop rate sourced from the monster's drop table (when supplied).
   const chanceById = {}
   for (const d of (drops || [])) chanceById[d.itemId] = d.chance
-  const hasRates = (drops || []).length > 0 || sharedChance != null
+  const hasRates = (drops || []).length > 0
   return (
     <div class="cb-unique">
       <div class="cb-unique__head">
