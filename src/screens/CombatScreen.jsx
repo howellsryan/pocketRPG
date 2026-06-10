@@ -30,7 +30,10 @@ import prayersData from '../data/prayers.json'
 import spellsData from '../data/spells.json'
 import raidsData from '../data/raids.json'
 import { SCREENS, formatDropChance } from '../utils/constants.js'
-import { isHighValueDrop } from '../utils/itemValue.js'
+import { isHighValueDrop, getLootTotalValue, isEpicLootValue } from '../utils/itemValue.js'
+import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
+import { HitSplatLayer } from '../components/HitSplat.jsx'
+import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
 import { getSlayerTaskXpForKill, resolveMonsterRewardData } from '../engine/slayerRewards.js'
 import { resolveSlayerTaskKill, doesSlayerTaskMatchMonster, canFightSlayerMonster } from '../engine/slayerTasks.js'
 import { getSlayerTaskReward } from '../engine/slayerRewards.js'
@@ -210,7 +213,7 @@ class PvpCombatErrorBoundary extends Component {
 }
 
 export default function CombatScreen({ onNavigate, initialMonsterId, initialRaidId, onCombatStatusChange }) {
-  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion } = useGame()
+  const { stats, inventory, bank, equipment, currentHP, updateHP, updateInventory, updateBank, updateEquipment, grantXP, getMaxHP, addToast, combatStance, updateCombatStance, idleCombatSetup, updateIdleCombatSetup, homeShortcuts, updateHomeShortcuts, setActiveTask, slayerTask, setSlayerTask, awardSlayerPoints, slayerTasksCompleted, setSlayerTasksCompleted, activeCombatSpell, updateActiveCombatSpell, bossKillCounts, updateBossKillCounts, raidKillCounts, updateRaidKillCounts, unlockedFeatures, completedQuests, isOneLife, isIronman, getSnapshot, loadGame, combatSkipHandlerRef, skipHourHandlerRef, chargeSkipRef, raidSkipHandlerRef, lockGame, unlockGame, resolveCombatCompletion, characterUnlocks, killCountsLoaded } = useGame()
   const pvp = usePvp()
   const [showPvpLobby, setShowPvpLobby] = useState(false)
 
@@ -233,6 +236,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const [lootModal, setLootModal] = useState(null)
   const [deathModal, setDeathModal] = useState(null)
   const [isDesktopCombatLayout, setIsDesktopCombatLayout] = useState(false)
+  const [monsterSplats, setMonsterSplats] = useState([])
+  const [playerSplats, setPlayerSplats] = useState([])
 
   const combatRef = useRef(null)
   const hpRef = useRef(currentHP)
@@ -369,6 +374,24 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     return () => resumeTicks()
   }, [!!lootModal])
 
+  // Hit splats — floating damage markers over the HP bars. Each batch expires
+  // after its float animation; timers are cleared on unmount.
+  const splatTimersRef = useRef(new Set())
+  useEffect(() => () => {
+    for (const t of splatTimersRef.current) clearTimeout(t)
+    splatTimersRef.current.clear()
+  }, [])
+  const pushSplats = (setter, splats) => {
+    if (!splats.length) return
+    setter(prev => [...prev, ...splats])
+    const ids = new Set(splats.map(s => s.id))
+    const timer = setTimeout(() => {
+      splatTimersRef.current.delete(timer)
+      setter(prev => prev.filter(s => !ids.has(s.id)))
+    }, HIT_SPLAT_DURATION_MS)
+    splatTimersRef.current.add(timer)
+  }
+
   // Tick listener for combat
   useEffect(() => {
     if (!combat || !combat.active) return
@@ -397,14 +420,12 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       combatRef.current = combatState
       setCombat({ ...combatState })
 
+      // Hit splats replace the chat-style "You hit X" / "Monster hits X" lines.
+      const tickSplats = splatsFromCombatEvents(events)
+      pushSplats(setMonsterSplats, tickSplats.monster)
+      pushSplats(setPlayerSplats, tickSplats.player)
+
       for (const ev of events) {
-        if (ev.type === 'playerHit') {
-          setLog(prev => [...prev.slice(-20), {
-            text: ev.damage > 0 ? `You hit ${ev.damage}` : 'You miss',
-            type: ev.damage > 0 ? 'hit' : 'miss',
-            time: Date.now()
-          }])
-        }
         if (ev.type === 'specialHit') {
           const hitsStr = ev.hits.map(h => h > 0 ? h : 'miss').join(' + ')
           const specLabels = {
@@ -448,13 +469,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           const newHP = Math.max(0, hpRef.current - ev.damage)
           updateHP(newHP)
           hpRef.current = newHP
-          if (ev.damage > 0) {
-            setLog(prev => [...prev.slice(-20), {
-              text: `${state.monster.name} hits ${ev.damage}`,
-              type: 'enemy',
-              time: Date.now()
-            }])
-          }
           if (newHP <= 0) {
             setCombat(prev => ({ ...prev, active: false }))
             setActiveTask(null)
@@ -466,13 +480,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
               setDeathModal({ monsterName: state.monster?.name || 'the monster', cause: 'slain' })
             }
           }
-        }
-        if (ev.type === 'monsterMiss') {
-          setLog(prev => [...prev.slice(-20), {
-            text: `${state.monster.name} misses!`,
-            type: 'heal',
-            time: Date.now()
-          }])
         }
         if (ev.type === 'dragonfireHit') {
           const newHP = Math.max(0, hpRef.current - ev.damage)
@@ -765,7 +772,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           if (task && defeatedMonsterId && doesSlayerTaskMatchMonster(task.monsterId, defeatedMonsterId)) {
             // Active combat does not flow through the idle-engine slayer XP handler.
             // Grant XP on the live kill event so active and idle kills stay consistent.
-            const xpForKill = getSlayerTaskXpForKill(defeatedMonster, state.monster, monstersData)
+            const xpForKill = getSlayerTaskXpForKill(defeatedMonster, state.monster, monstersData, { doubleXp: characterUnlocks?.doubleSlayerXp })
             slayerXpGained += xpForKill
             if (xpForKill > 0) {
               grantXP('slayer', xpForKill)
@@ -1632,6 +1639,18 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     )
   }
 
+  // Don't render the combat screen until the server kill-count fetch has
+  // settled (success or fail) — on a cold cache boss KC would briefly show 0.
+  // Scoped to this screen so global startup time is unaffected.
+  if (!killCountsLoaded && !combat) {
+    return (
+      <div class="h-full flex flex-col items-center justify-center gap-3">
+        <div class="w-8 h-8 border-2 border-[var(--color-gold)] border-t-transparent rounded-full animate-spin" />
+        <div class="text-sm text-[var(--color-parchment)] opacity-70">Loading kill counts…</div>
+      </div>
+    )
+  }
+
   // Monster picker
   if (!combat) {
     return (
@@ -2128,7 +2147,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           </span>
           <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-blood-light)]">CB {combat.monster.combatLevel}</span>
         </div>
-        <HPBar current={Math.max(0, combat.monster.currentHP)} max={combat.monster.hitpoints} size="large" />
+        <div class="relative">
+          <HPBar current={Math.max(0, combat.monster.currentHP)} max={combat.monster.hitpoints} size="large" />
+          <HitSplatLayer splats={monsterSplats} />
+        </div>
       </div>
 
       {/* Raid progress indicator */}
@@ -2158,8 +2180,14 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
       {/* Player HP */}
       <div class="mb-2">
-        <div class="text-[10px] text-[var(--color-parchment)] opacity-50 mb-0.5">Your HP</div>
-        <HPBar current={currentHP} max={getMaxHP()} size="large" />
+        <div class="flex items-center justify-between mb-0.5">
+          <div class="text-[10px] text-[var(--color-parchment)] opacity-50">Your HP</div>
+          <ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />
+        </div>
+        <div class="relative">
+          <HPBar current={currentHP} max={getMaxHP()} size="large" />
+          <HitSplatLayer splats={playerSplats} />
+        </div>
       </div>
 
       {/* Slayer task indicator */}
@@ -2784,7 +2812,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {/* Loot Modal */}
       {lootModal && (
         <LootResultModal
-          theme="gold"
+          theme={!lootModal.loading && isEpicLootValue(getLootTotalValue(lootModal.loot, itemsData)) ? 'purple' : 'gold'}
           icon={lootModal.raidId ? '🏆' : (MONSTER_ICONS[lootModal.monster?.id] || '👹')}
           title={lootModal.raidId
             ? `${raidsData[lootModal.raidId]?.name || 'Raid'} Complete`

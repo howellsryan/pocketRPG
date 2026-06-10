@@ -118,6 +118,21 @@ describe('getSlayerTaskXpForKill', () => {
     expect(getSlayerTaskXpForKill({ id: 'boss_without_explicit_slayer_xp', boss: true }, null, monstersData))
       .toBe(80 * BOSS_SLAYER_TASK_XP_MULTIPLIER)
   })
+
+  it('doubles XP when doubleXp option is set for a non-boss', () => {
+    expect(getSlayerTaskXpForKill({ id: 'sanguine_veld' }, null, monstersData, { doubleXp: true }))
+      .toBe(Math.floor(120 * DEFAULT_SLAYER_TASK_XP_MULTIPLIER * 2))
+  })
+
+  it('doubles XP when doubleXp option is set for a boss (stacks with ×10)', () => {
+    expect(getSlayerTaskXpForKill({ id: 'deepmaw_kraken', name: 'Deepmaw Kraken', boss: true }, null, monstersData, { doubleXp: true }))
+      .toBe(Math.floor(255 * BOSS_SLAYER_TASK_XP_MULTIPLIER * 2))
+  })
+
+  it('does not double XP when doubleXp is false', () => {
+    expect(getSlayerTaskXpForKill({ id: 'sanguine_veld' }, null, monstersData, { doubleXp: false }))
+      .toBe(120 * DEFAULT_SLAYER_TASK_XP_MULTIPLIER)
+  })
 })
 
 describe('getSlayerTaskReward', () => {

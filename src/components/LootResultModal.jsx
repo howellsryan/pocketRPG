@@ -8,10 +8,13 @@ import { formatCompactCoins } from '../utils/formatters.js'
 
 function buildParticles(theme) {
   const isGold = theme === 'gold'
-  const count = isGold ? 46 : 20
-  const colors = isGold
-    ? ['#fcecb0', '#f0c040', '#fdf3cf', '#d4a017']
-    : ['#e0564b', '#c03020', '#f0a090', '#a82018']
+  const isPurple = theme === 'purple'
+  const count = isPurple ? 64 : isGold ? 46 : 20
+  const colors = isPurple
+    ? ['#e9d5ff', '#c084fc', '#a855f7', '#7c3aed']
+    : isGold
+      ? ['#fcecb0', '#f0c040', '#fdf3cf', '#d4a017']
+      : ['#e0564b', '#c03020', '#f0a090', '#a82018']
 
   return Array.from({ length: count }, (_, i) => {
     const angle = (i / count) * 360 + Math.random() * (360 / count)
@@ -132,7 +135,7 @@ export function MatchupHpStrip({ self, opp, selfRisk, oppRisk, selfRank, oppRank
  * Shared loot/end-of-activity modal shell.
  *
  * Props:
- *   theme          — "gold" | "blood"
+ *   theme          — "gold" | "blood" | "purple" (epic, loot value >1m)
  *   icon           — emoji string (e.g. "🏆" / "💀") shown in seal
  *   title          — big gradient title string
  *   status         — optional small monospace status line
@@ -232,7 +235,7 @@ export default function LootResultModal({
         <div class="loot-modal__scroll">
           {/* Hero section — rays live here so they're clipped to this area and don't bleed into scrolled content */}
           <div class="loot-modal__hero">
-            {theme === 'gold' && <div class="loot-modal__rays" aria-hidden="true" />}
+            {(theme === 'gold' || theme === 'purple') && <div class="loot-modal__rays" aria-hidden="true" />}
             <div class="loot-modal__seal" aria-hidden="true">
               <span style={{ fontSize: '32px', lineHeight: 1 }}>{icon}</span>
             </div>

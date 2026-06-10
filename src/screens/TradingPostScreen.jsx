@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import { countItem } from '../engine/inventory.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
-import { isOrderBookItem, getPurchaseRestriction, isStoreVisibleItem } from '../engine/storeRules.js'
+import { isOrderBookItem, getPurchaseRestriction } from '../engine/storeRules.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import Panel from '../components/Panel.jsx'
 import GameIcon from '../components/GameIcon.jsx'
@@ -55,6 +55,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
   const isDesktop = useIsDesktop()
 
   const [mode, setMode] = useState('market')
+  const [activeStoreSection, setActiveStoreSection] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selected, setSelected] = useState(null) // item entry from search
   const [pendingAction, setPendingAction] = useState(null) // 'buy' | 'sell'
@@ -80,15 +81,45 @@ export default function TradingPostScreen({ onBuyCredits }) {
   ), [])
 
   // Pre-index searchable items once -- 24K-line items.json justifies the cost.
+  // The market search carries order-book items only; General Store stock,
+  // quest items and skill capes live in the General Store tab instead.
   const searchablePool = useMemo(() => {
     const pool = []
     for (const [id, item] of Object.entries(itemsData)) {
       if (!item || (item.id && item.id !== id)) continue
-      if (!isStoreVisibleItem(item, { isIronman: false, includeQuestItems: true })) continue
+      if (!isOrderBookItem(item)) continue
       pool.push({ id, item, lower: (item.name || '').toLowerCase() })
     }
     return pool
   }, [itemsData])
+
+  const STORE_SECTIONS = ['Weapons & Armour', 'Minigame & Quest Unlocks', 'Runes, Robes & Staves', 'Skilling Equipment']
+
+  const SKILLING_WEAPON_IDS = new Set(['bronze_axe', 'bronze_pickaxe', 'fishing_net', 'fishing_rod', 'lobster_cage', 'harpoon', 'angler_net'])
+  const WIZARD_IDS = new Set(['wizard_hat', 'black_wizard_hat', 'wizard_robe_top', 'wizard_robe_skirt'])
+
+  function getStoreSection(id, item) {
+    if (item.questUnlock || minigameProductIds.has(id) || item.isSkillCape) return 'Minigame & Quest Unlocks'
+    if (item.type === 'rune' || (item.type === 'resource' && id.endsWith('_rune')) || id.startsWith('staff_of_') || WIZARD_IDS.has(id)) return 'Runes, Robes & Staves'
+    if (SKILLING_WEAPON_IDS.has(id) || item.type === 'resource' || item.type === 'seed') return 'Skilling Equipment'
+    return 'Weapons & Armour'
+  }
+
+  // All store items grouped into sections — locked items included but shown disabled.
+  const storeSections = useMemo(() => {
+    const sections = {}
+    for (const s of STORE_SECTIONS) sections[s] = []
+    for (const [id, item] of Object.entries(itemsData)) {
+      if (!item || (item.id && item.id !== id)) continue
+      if (!item.isGeneralStore && !item.isSkillCape && !minigameProductIds.has(id) && !item.questUnlock) continue
+      const section = getStoreSection(id, item)
+      sections[section].push({ id, item })
+    }
+    for (const s of STORE_SECTIONS) {
+      sections[s].sort((a, b) => (a.item.name || '').localeCompare(b.item.name || ''))
+    }
+    return sections
+  }, [itemsData, minigameProductIds])
 
   const refreshMyOffers = async () => {
     try {
@@ -378,10 +409,11 @@ export default function TradingPostScreen({ onBuyCredits }) {
 
   const renderListRow = (item) => {
     const orderBook = isOrderBookItem(item)
-    const restriction = getPurchaseRestriction(item, { isIronman: false })
+    const isMinigameUnlocked = minigameProductIds.has(item.id) && unlockedMinigameItems.has(item.id)
+    const restriction = getPurchaseRestriction(item, { isIronman: false, allowMinigameUnlockPurchase: isMinigameUnlocked })
     const buyDisabledReason = (() => {
       if (item.questUnlock && !completedQuests.has(item.questUnlock)) return `🔒 ${questMap[item.questUnlock] || 'Quest required'}`
-      if (minigameProductIds.has(item.id) && !unlockedMinigameItems.has(item.id)) return '🔒 Earn from minigame first'
+      if (minigameProductIds.has(item.id) && !isMinigameUnlocked) return '🔒 Earn from minigame first'
       const capeBlock = getSkillCapeLevelBlock(item)
       if (capeBlock) return capeBlock
       if (!orderBook && !restriction.allowed && restriction.code !== 'BOSS_UNIQUE_RESTRICTED' && restriction.code !== 'CLUE_REWARD_RESTRICTED') return restriction.message
@@ -511,6 +543,57 @@ export default function TradingPostScreen({ onBuyCredits }) {
             )
           }
           return renderOffer(offer, `active-${offer.id}`)
+        })}
+      </div>
+    )
+  }
+
+  const renderStore = () => {
+    // Detail view: one section takes the whole space with its own scroll area
+    // and a back button to return to the section list.
+    if (activeStoreSection) {
+      const rows = storeSections[activeStoreSection] || []
+      return (
+        <div class="h-full flex flex-col overflow-hidden">
+          <button
+            onClick={() => setActiveStoreSection(null)}
+            class="flex-shrink-0 flex items-center gap-2 px-4 py-3 border-b border-[#2a2a2a] bg-[var(--color-void-light)] text-left"
+          >
+            <span class="text-[var(--color-gold)] text-[14px]">‹</span>
+            <span class="text-[13px] font-semibold text-[var(--color-parchment)]">{activeStoreSection}</span>
+            <span class="ml-auto text-[11px] text-[#888]">{rows.length} item{rows.length !== 1 ? 's' : ''}</span>
+          </button>
+          <div class="flex-1 overflow-y-auto px-4 pt-3 pb-20 md:pb-4">
+            {rows.length === 0 ? (
+              <div class="py-10 px-4 text-center text-[#888] text-[12px]">No items in this section.</div>
+            ) : (
+              <div class="flex flex-col gap-2">
+                {rows.map((row) => renderListRow({ ...row.item, id: row.id }))}
+              </div>
+            )}
+          </div>
+        </div>
+      )
+    }
+
+    // List view: section names fill the space; tap to drill into one.
+    return (
+      <div class="h-full overflow-y-auto px-4 pt-3 pb-20 md:pb-4 flex flex-col gap-2">
+        {STORE_SECTIONS.map((section) => {
+          const rows = storeSections[section] || []
+          return (
+            <button
+              key={section}
+              onClick={() => setActiveStoreSection(section)}
+              class="w-full flex items-center justify-between px-4 py-4 rounded-lg border border-[#2a2a2a] bg-[var(--color-void-light)] text-left"
+            >
+              <span class="text-[14px] font-semibold text-[var(--color-parchment)]">{section}</span>
+              <span class="text-[11px] text-[#888] flex items-center gap-2">
+                <span>{rows.length} item{rows.length !== 1 ? 's' : ''}</span>
+                <span class="text-[var(--color-gold)] text-[14px]">›</span>
+              </span>
+            </button>
+          )
         })}
       </div>
     )
@@ -671,13 +754,21 @@ export default function TradingPostScreen({ onBuyCredits }) {
             } inline-flex items-center gap-1`}
           ><GameIcon iconKey="search" size={13} color="currentColor" /> Market</button>
           <button
+            onClick={() => setMode('store')}
+            class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
+              mode === 'store'
+                ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
+                : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
+            } inline-flex items-center gap-1`}
+          ><GameIcon iconKey="coins" size={13} color="currentColor" /> Store</button>
+          <button
             onClick={() => { setMode('offers'); refreshMyOffers() }}
             class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
               mode === 'offers'
                 ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
                 : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
             } inline-flex items-center gap-1`}
-          ><GameIcon iconKey="offers" size={13} color="currentColor" /> My Offers {offersLoaded ? `(${myOffers.filter((o) => !isReadyToCollectOffer(o)).length}/${MAX_SLOTS})` : ''}
+          ><GameIcon iconKey="offers" size={13} color="currentColor" /> Offers
             {offersLoaded && myOffers.some((o) => isReadyToCollectOffer(o)) && (
               <span class="ml-1 inline-block min-w-[16px] h-[16px] leading-[16px] px-1 rounded-full text-[10px] font-bold bg-[var(--color-gold)] text-[var(--color-void)] align-middle">
                 {myOffers.filter((o) => isReadyToCollectOffer(o)).length}
@@ -691,7 +782,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
                 ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
                 : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
             } inline-flex items-center gap-1`}
-          ><GameIcon iconKey="search" size={13} color="currentColor" /> All Listings</button>
+          ><GameIcon iconKey="search" size={13} color="currentColor" /> Listings</button>
         </div>
         {mode === 'market' && (
           <input
@@ -721,6 +812,8 @@ export default function TradingPostScreen({ onBuyCredits }) {
             </div>
           )}
         </div>
+      ) : mode === 'store' ? (
+        renderStore()
       ) : mode === 'offers' ? (
         <div class="h-full overflow-y-auto">
           {renderMyOffersList()}

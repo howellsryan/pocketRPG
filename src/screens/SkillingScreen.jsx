@@ -24,6 +24,7 @@ import ThievingScreen from './ThievingScreen.jsx'
 import HunterScreen from './HunterScreen.jsx'
 import FarmingScreen from './FarmingScreen.jsx'
 import ConstructionScreen from './ConstructionScreen.jsx'
+import MagicScreen from './MagicScreen.jsx'
 import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
 
 // Farming, Agility, Prayer, Thieving, Hunter, Slayer, Construction, and Dungeoneering are special
@@ -130,6 +131,15 @@ export default function SkillingScreen({ initialSkillId, initialActionId, idleRe
   if (selectedSkill === 'construction') {
     return (
       <ConstructionScreen
+        onBack={() => setSelectedSkill(null)}
+      />
+    )
+  }
+
+  // If magic is selected, delegate to MagicScreen
+  if (selectedSkill === 'magic') {
+    return (
+      <MagicScreen
         onBack={() => setSelectedSkill(null)}
       />
     )

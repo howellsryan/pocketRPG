@@ -170,6 +170,10 @@ export const api = {
     method: 'POST',
     body: JSON.stringify({}),
   }),
+  purchaseUnlock: (unlockId) => request('/api/unlocks/purchase', {
+    method: 'POST',
+    body: JSON.stringify({ unlock_id: unlockId }),
+  }),
   getSave: () => request('/api/save'),
   putSave: (save_data, options = {}) => request('/api/save', {
     method: 'PUT',

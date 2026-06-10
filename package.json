@@ -16,6 +16,7 @@
     "build:css": "tailwindcss -i ./src/index.css -o ./.tmp/app.css --minify",
     "rebuild": "tsc --project tsconfig.build.json && node build_single.cjs",
     "check:single": "node scripts/check-single-file-build.cjs",
+    "seed:bots": "node scripts/seed-pvp-bots.cjs",
     "ci": "npm run build && npm run rebuild && npm run check:single",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"

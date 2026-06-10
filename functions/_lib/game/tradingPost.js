@@ -41,9 +41,17 @@ export function normalizeSellSource(raw) {
   return raw === 'bank' ? 'bank' : 'inventory'
 }
 
+// 2026-06: tradeable items with a shop value transact on the player order
+// book — the infinite general store no longer buys or sells them. The
+// exceptions stay on the immediate-execute path: curated General Store
+// stock (`isGeneralStore`) and quest-unlock items buy/sell at fixed prices,
+// untradeables keep the sell-immediate sink. Keep this aligned with the
+// client-side `isOrderBookItem` in src/engine/storeRules.js.
 export function isOrderBookItem(item) {
   if (!item) return false
-  return Boolean(item.isBossUnique || item.isClueReward || item.isRaidUnique)
+  if (item.isBossUnique || item.isClueReward || item.isRaidUnique) return true
+  if (item.isUntradeable || item.questUnlock || item.isGeneralStore) return false
+  return Math.floor(Number(item.shopValue) || 0) > 0
 }
 
 export function isTradingPostListable(item) {

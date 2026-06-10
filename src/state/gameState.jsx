@@ -8,6 +8,7 @@ import { simulateIdleHunting } from '../engine/hunter.js'
 import { simulateQuestIdleCascade, splitQuestXpRewards } from '../engine/questIdleCascade.js'
 import { ALL_SKILLS, MAX_XP, AUTO_SAVE_DEBOUNCE, QUEST_QUEUE_MAX } from '../utils/constants.js'
 import { debounce } from '../utils/helpers.js'
+import { mergeKillCounts } from '../utils/killCountMerge.js'
 import { fetchIdleState, pushIdleState } from '../cloud/idleState.js'
 import { getToken, getCharacterId } from '../cloud/api.js'
 import { requestCriticalPushSave, pushNow, suspendSaves, resumeSaves, isSaveConflict } from '../cloud/sync.js'
@@ -54,9 +55,15 @@ export function GameProvider({ children }) {
   const [slayerPoints, setSlayerPointsState] = useState(0)
   const [slayerTasksCompleted, setSlayerTasksCompletedState] = useState(0)
   const [dungeoneeringTokens, setDungeoneeringTokensState] = useState(0)
+  const [slayerPerks, setSlayerPerksState] = useState({ doubleQuantity: false })
+  const [characterUnlocks, setCharacterUnlocksState] = useState({ doubleSlayerXp: false })
   const [activeCombatSpell, setActiveCombatSpellState] = useState(null)
   const [bossKillCounts, setBossKillCountsState] = useState({})
   const [raidKillCounts, setRaidKillCountsState] = useState({})
+  // True once the per-character server KC fetch has settled (success or fail).
+  // The combat screen gates its first render on this so a cold cache never
+  // briefly shows KC 0.
+  const [killCountsLoaded, setKillCountsLoaded] = useState(false)
   const [farming, setFarmingState] = useState({ patchesById: {} })
   const [completedQuests, setCompletedQuestsState] = useState(new Set())
   const [unlockedMinigameItems, setUnlockedMinigameItemsState] = useState(new Set())
@@ -90,6 +97,8 @@ export function GameProvider({ children }) {
   const slayerPointsRef = useRef(0)
   const dungeoneeringTokensRef = useRef(0)
   const slayerTasksCompletedRef = useRef(0)
+  const slayerPerksRef = useRef({ doubleQuantity: false })
+  const characterUnlocksRef = useRef({ doubleSlayerXp: false })
   const completedQuestsRef = useRef(new Set())
   const questQueueRef = useRef([])
 
@@ -110,13 +119,13 @@ export function GameProvider({ children }) {
 
   // Load all state from IndexedDB — runs idle simulation inline, returns idleResult
   const loadGame = useCallback(async () => {
-    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup] = await Promise.all([
+    let [p, s, inv, eq, b, shortcuts, stance, savedHP, autoBankSetting, savedBankConfig, savedUnlocks, savedSlayerTask, savedSlayerPoints, savedSlayerTasksCompleted, savedDungeoneeringTokens, savedBossKillCounts, savedRaidKillCounts, savedFarming, savedCompletedQuests, savedQuestQueue, savedActiveCombatSpell, savedUnlockedMinigameItems, savedIdleCombatSetup, savedSlayerPerks, savedCharacterUnlocks] = await Promise.all([
       getPlayer(), getAllStats(), getInventory(), getEquipment(), getBank(),
       getSetting('homeShortcuts'), getSetting('combatStance'), getSetting('currentHP'),
       getSetting('autoBankLoot'), getSetting('bankConfig'), getSetting('unlockedFeatures'),
       getSetting('slayerTask'), getSetting('slayerPoints'), getSetting('slayerTasksCompleted'), getSetting('dungeoneeringTokens'), getSetting('bossKillCounts'), getSetting('raidKillCounts'), getSetting('farming'),
       getSetting('completedQuests'), getSetting('questQueue'), getSetting('activeCombatSpell'), getSetting('unlockedMinigameItems'),
-      getSetting('idleCombatSetup')
+      getSetting('idleCombatSetup'), getSetting('slayerPerks'), getSetting('characterUnlocks')
     ])
     const normalisedIdleCombatSetup = normaliseIdleCombatSetup(savedIdleCombatSetup)
     // Rewrite legacy item ids (e.g. void_knight_* → void_king_*) before the
@@ -192,6 +201,7 @@ export function GameProvider({ children }) {
               idlePotions: normalisedIdleCombatSetup.potions,
               idlePrayers: normalisedIdleCombatSetup.prayers,
               prayersData,
+              doubleSlayerXp: !!(savedCharacterUnlocks?.doubleSlayerXp),
             })
           } else if (savedTask.type === 'agility') {
             sim = simulateIdleAgility(savedTask, elapsedMs)
@@ -523,6 +533,12 @@ export function GameProvider({ children }) {
     const initialQuestQueue = savedQuestQueue ?? []
     questQueueRef.current = initialQuestQueue
     setQuestQueueState(initialQuestQueue)
+    const loadedSlayerPerks = savedSlayerPerks && typeof savedSlayerPerks === 'object' ? savedSlayerPerks : { doubleQuantity: false }
+    slayerPerksRef.current = loadedSlayerPerks
+    setSlayerPerksState(loadedSlayerPerks)
+    const loadedCharacterUnlocks = savedCharacterUnlocks && typeof savedCharacterUnlocks === 'object' ? savedCharacterUnlocks : { doubleSlayerXp: false }
+    characterUnlocksRef.current = loadedCharacterUnlocks
+    setCharacterUnlocksState(loadedCharacterUnlocks)
     const hpLevel = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
     setCurrentHP(savedHP != null ? Math.min(savedHP, hpLevel) : hpLevel)
     setLoaded(true)
@@ -780,6 +796,20 @@ export function GameProvider({ children }) {
     return true
   }, [])
 
+  const updateSlayerPerk = useCallback((key, value) => {
+    const next = { ...slayerPerksRef.current, [key]: value }
+    slayerPerksRef.current = next
+    setSlayerPerksState(next)
+    saveSetting('slayerPerks', next)
+  }, [])
+
+  const updateCharacterUnlock = useCallback((key, value) => {
+    const next = { ...characterUnlocksRef.current, [key]: value }
+    characterUnlocksRef.current = next
+    setCharacterUnlocksState(next)
+    saveSetting('characterUnlocks', next)
+  }, [])
+
   const updateBossKillCounts = useCallback((counts) => {
     setBossKillCountsState(counts)
     saveSetting('bossKillCounts', counts)
@@ -794,21 +824,19 @@ export function GameProvider({ children }) {
   // id. This prevents a transient empty server response from zeroing local KC.
   const syncServerKillCounts = useCallback((serverBoss, serverRaid) => {
     setBossKillCountsState(prev => {
-      const merged = { ...prev }
-      for (const [id, count] of Object.entries(serverBoss || {})) {
-        merged[id] = Math.max(merged[id] || 0, count)
-      }
+      const merged = mergeKillCounts(prev, serverBoss)
       saveSetting('bossKillCounts', merged)
       return merged
     })
     setRaidKillCountsState(prev => {
-      const merged = { ...prev }
-      for (const [id, count] of Object.entries(serverRaid || {})) {
-        merged[id] = Math.max(merged[id] || 0, count)
-      }
+      const merged = mergeKillCounts(prev, serverRaid)
       saveSetting('raidKillCounts', merged)
       return merged
     })
+  }, [])
+
+  const markKillCountsLoaded = useCallback((value = true) => {
+    setKillCountsLoaded(!!value)
   }, [])
 
   const updateFarming = useCallback((farmingState) => {
@@ -931,8 +959,10 @@ export function GameProvider({ children }) {
       completedQuests: [...completedQuestsRef.current],
       unlockedMinigameItems: [...unlockedMinigameItems],
       questQueue: questQueueRef.current,
+      slayerPerks: slayerPerksRef.current,
+      characterUnlocks: characterUnlocksRef.current,
     },
-  }), [currentHP, autoBankLoot, bankConfig, homeShortcuts, combatStance, idleCombatSetup, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, slayerTasksCompleted, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, questQueue])
+  }), [currentHP, autoBankLoot, bankConfig, homeShortcuts, combatStance, idleCombatSetup, unlockedFeatures, activeTask, activeCombatSpell, slayerTask, slayerPoints, slayerTasksCompleted, dungeoneeringTokens, bossKillCounts, raidKillCounts, farming, completedQuests, unlockedMinigameItems, questQueue, slayerPerks, characterUnlocks])
 
 
   // ---- Shared game lock --------------------------------------------------
@@ -1052,6 +1082,7 @@ export function GameProvider({ children }) {
     bossKillCounts, updateBossKillCounts,
     raidKillCounts, updateRaidKillCounts,
     syncServerKillCounts,
+    killCountsLoaded, markKillCountsLoaded,
     farming, updateFarming,
     completedQuests, completeQuest,
     unlockedMinigameItems, unlockMinigameItem,
@@ -1069,6 +1100,8 @@ export function GameProvider({ children }) {
     markDirty, itemsData, updateHomeShortcuts, updateCombatStance,
     setActiveTask, updateBankDirect, getSnapshot, updateAutoBankLoot, updateBankConfig,
     getActivityProgress, clearActivityProgress,
+    slayerPerks, updateSlayerPerk,
+    characterUnlocks, updateCharacterUnlock,
     isIronman: player?.is_ironman || false,
     isOneLife: player?.is_one_life || false
   }

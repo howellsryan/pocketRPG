@@ -3,7 +3,7 @@ import SkillIcon from '../components/SkillIcon.jsx'
 import { getLevelFromXP } from '../engine/experience.js'
 import monstersData from '../data/monsters.json'
 import itemsData from '../data/items.json'
-import { SLAYER_UNLOCKS, getSlayerUnlockPurchaseState } from '../engine/slayerUnlocks.js'
+import { SLAYER_UNLOCKS, getSlayerUnlockPurchaseState, ownsItem } from '../engine/slayerUnlocks.js'
 import { requestCriticalPushSave } from '../cloud/sync.js'
 import { DAGANNOTH_KINGS_TASK_ID, SLAYER_TASK_SKIP_POINT_COST } from '../engine/slayerTasks.js'
 import { SLAYER_MASTERS, resolveTaskMonsterIds, pickSlayerMonster, buildSlayerTask } from '../engine/slayerMasters.js'
@@ -55,7 +55,7 @@ const SLAYER_MONSTER_ICONS = {
 }
 
 export default function SlayerScreen({ onBack, onNavigate }) {
-  const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, bank, inventory, addToBank, getSnapshot, slayerTasksCompleted, loadGame } = useGame()
+  const { stats, slayerTask, setSlayerTask, slayerPoints, updateSlayerPoints, addToast, bank, inventory, addToBank, getSnapshot, slayerTasksCompleted, loadGame, slayerPerks, updateSlayerPerk } = useGame()
 
   const combatLevel = getPlayerCombatLevel(stats)
   const slayerLevel = getLevelFromXP(stats.slayer?.xp || 0)
@@ -86,7 +86,8 @@ export default function SlayerScreen({ onBack, onNavigate }) {
   }
 
   const assignTask = (master, monsterId, isBoss) => {
-    const task = buildSlayerTask(master, monsterId, isBoss)
+    const quantityMultiplier = slayerPerks?.doubleQuantity ? 2 : 1
+    const task = buildSlayerTask(master, monsterId, isBoss, { quantityMultiplier })
     setSlayerTask(task)
     requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SLAYER_TASK_CHANGE)
     addToast(`💀 Task: Kill ${task.totalCount} ${task.monsterName}`, 'info')
@@ -133,8 +134,9 @@ export default function SlayerScreen({ onBack, onNavigate }) {
     }
     if (getToken() && getCharacterId()) {
       try {
-        const res = await api.completeSlayer('slayer', { actionNonce: `slayer:${unlock.itemId}:${Date.now()}`, rewards: [{ itemId: unlock.itemId, quantity: 1 }], slayerPoints: -unlock.cost })
-        if (res?.save?.save_data) await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt, res.save.save_revision)
+        await api.completeSlayer('slayer', { actionNonce: `slayer:${unlock.itemId}:${Date.now()}`, rewards: [{ itemId: unlock.itemId, quantity: 1 }], slayerPoints: -unlock.cost })
+        const saveRes = await api.getSave()
+        if (saveRes?.save?.save_data) await applyCloudSave(JSON.parse(saveRes.save.save_data), saveRes.save.updatedAt, saveRes.save.save_revision)
         await loadGame()
         addToast(`🎉 Purchased ${item.name} — sent to bank`, 'info')
         return
@@ -294,7 +296,7 @@ export default function SlayerScreen({ onBack, onNavigate }) {
         {SLAYER_UNLOCKS.map(unlock => {
           const item = itemsData[unlock.itemId]
           if (!item) return null
-          const owned = ownsItem(unlock.itemId)
+          const owned = ownsItem({ itemId: unlock.itemId, bank, inventory })
           const canAfford = slayerPoints >= unlock.cost
           const disabled = owned || !canAfford
           return (
@@ -338,6 +340,59 @@ export default function SlayerScreen({ onBack, onNavigate }) {
             </button>
           )
         })}
+      </div>
+
+      {/* Perks — point-purchased, non-item bonuses */}
+      <div class="mt-5 mb-2 text-[10px] text-[var(--color-parchment)] opacity-50 uppercase font-bold tracking-wider">
+        Perks
+      </div>
+      <div class="space-y-2">
+        {(() => {
+          const perkOwned = slayerPerks?.doubleQuantity === true
+          const cost = 250
+          const canAfford = slayerPoints >= cost
+          const disabled = perkOwned || !canAfford
+          return (
+            <button
+              onClick={() => {
+                if (disabled) return
+                updateSlayerPoints(slayerPoints - cost)
+                updateSlayerPerk('doubleQuantity', true)
+                requestCriticalPushSave(() => getSnapshot(), CRITICAL_SAVE_REASONS.SLAYER_TASK_CHANGE)
+                addToast('🗡️ Slayer Multitask unlocked!', 'info')
+              }}
+              disabled={disabled}
+              class={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left
+                ${!disabled
+                  ? 'bg-[#1a1a1a] border-[#2a2a2a] active:bg-[#222]'
+                  : 'bg-[#111] border-[#1a1a1a] opacity-50'}`}
+            >
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="text-2xl flex-shrink-0">🗡️</span>
+                <div class="min-w-0">
+                  <div class="text-sm font-semibold text-[var(--color-parchment)]">Slayer Multitask</div>
+                  <div class="text-[9px] text-[var(--color-parchment)] opacity-50 mt-0.5 leading-tight">
+                    Doubles the number of monsters assigned by your Slayer Master.
+                  </div>
+                </div>
+              </div>
+              <div class="text-right flex-shrink-0 ml-3 space-y-0.5">
+                {perkOwned ? (
+                  <div class="text-[10px] font-bold text-[var(--color-hp-green)]">Active</div>
+                ) : (
+                  <>
+                    <div class={`text-[11px] font-[var(--font-mono)] font-bold ${canAfford ? 'text-[var(--color-gold)]' : 'text-[var(--color-blood-light)]'}`}>
+                      {cost.toLocaleString()} pts
+                    </div>
+                    <div class="text-[9px] text-[var(--color-parchment)] opacity-40">
+                      {canAfford ? 'Buy' : 'Locked'}
+                    </div>
+                  </>
+                )}
+              </div>
+            </button>
+          )
+        })()}
       </div>
     </div>
   )

@@ -52,8 +52,14 @@ export function normalizeSaveItemIds(save, itemsData) {
         : Math.floor(Number(val?.quantity) || 0)
       if (qty <= 0) continue
       const existing = merged[canon]
-      const next = (existing?.quantity || 0) + qty
-      merged[canon] = { itemId: canon, quantity: next }
+      // Preserve extra entry fields (notably `charges` on chargeable
+      // weapons) — rebuilding entries as bare { itemId, quantity } was
+      // silently wiping banked charges on every server-side save rewrite.
+      // On a legacy-id collision the first-seen entry's fields win,
+      // matching the client-side itemMigrations merge.
+      merged[canon] = existing
+        ? { ...existing, quantity: (existing.quantity || 0) + qty }
+        : { ...(val && typeof val === 'object' ? val : {}), itemId: canon, quantity: qty }
     }
     save.bank = merged
   }
@@ -136,7 +142,12 @@ export function addItemToBank(save, itemId, quantity) {
   const curQty = typeof existing === 'number'
     ? Math.floor(existing)
     : Math.floor(Number(existing?.quantity) || 0)
-  save.bank[itemId] = { itemId, quantity: curQty + qty }
+  // Spread the existing entry so fields like `charges` survive the merge.
+  save.bank[itemId] = {
+    ...(existing && typeof existing === 'object' ? existing : {}),
+    itemId,
+    quantity: curQty + qty,
+  }
 }
 
 export function bankQuantity(save, itemId) {
@@ -150,8 +161,15 @@ export function removeItemFromBank(save, itemId, quantity) {
   const cur = bankQuantity(save, itemId)
   if (cur < qty) throw new GameApiError('INSUFFICIENT_SUPPLIES', 'Not enough of that item in the bank', 400)
   const next = cur - qty
+  const existing = save.bank[itemId]
   if (next <= 0) delete save.bank[itemId]
-  else save.bank[itemId] = { itemId, quantity: next }
+  // Spread the existing entry so fields like `charges` survive a partial
+  // withdrawal — banked charges must never change while the item sits there.
+  else save.bank[itemId] = {
+    ...(existing && typeof existing === 'object' ? existing : {}),
+    itemId,
+    quantity: next,
+  }
 }
 
 // Remove `quantity` of `itemId` from whichever store the caller names. The

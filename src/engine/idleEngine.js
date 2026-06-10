@@ -1391,7 +1391,8 @@ export function simulateIdleCombat(task, elapsedMs, stats, equipment, inventory,
     const slayerResult = resolveSlayerTaskKill(slayerTask, monster.id, monstersKilled)
     if (slayerResult.onTask) {
       const killsForTask = slayerResult.killsApplied
-      slayerXpGained = ((monster.slayerXP || monster.hitpoints) * 2) * killsForTask
+      const slayerXpMultiplier = options.doubleSlayerXp ? 4 : 2
+      slayerXpGained = Math.floor(((monster.slayerXP || monster.hitpoints) * slayerXpMultiplier) * killsForTask)
       slayerTaskUpdate = slayerResult.completed
         ? { completed: true, pointsOnComplete: slayerResult.pointsAwarded, killsApplied: slayerResult.killsApplied }
         : slayerResult.task
