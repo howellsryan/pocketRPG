@@ -43,7 +43,7 @@ export function normalizeSellSource(raw) {
 
 export function isOrderBookItem(item) {
   if (!item) return false
-  return Boolean(item.isBossUnique || item.isClueReward || item.isRaidUnique || item.isSpecialSource)
+  return Boolean(item.isBossUnique || item.isClueReward || item.isRaidUnique)
 }
 
 export function isTradingPostListable(item) {

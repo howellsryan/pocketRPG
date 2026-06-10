@@ -75,22 +75,13 @@ describe('POST /api/trading-post/sell-immediate — untradeable items', () => {
     expect(captured.saveData).toBeNull()
   })
 
-  it('still refuses untradeable items with no shop value (e.g. feature tokens)', async () => {
-    const save = { inventory: [{ itemId: 'master_rejuvenation', quantity: 1 }], bank: {} }
-    const { env } = mockEnv({ save })
-    const res = await onRequestPost({ request: await makeRequest({ item_id: 'master_rejuvenation', quantity: 1 }), env })
-    expect(res.status).toBe(400)
-    const body = await res.json() as any
-    expect(body.code).toBe('NO_VALUE')
-  })
-
-  it('routes the now-tradeable fire cape to the order book (special source)', async () => {
+  it('still refuses untradeable items with no shop value (e.g. prestige capes)', async () => {
     const save = { inventory: [{ itemId: 'fire_cape', quantity: 1 }], bank: {} }
     const { env } = mockEnv({ save })
     const res = await onRequestPost({ request: await makeRequest({ item_id: 'fire_cape', quantity: 1 }), env })
     expect(res.status).toBe(400)
     const body = await res.json() as any
-    expect(body.code).toBe('ORDER_BOOK_REQUIRED')
+    expect(body.code).toBe('NO_VALUE')
   })
 
   it('still routes order-book uniques to the listing endpoint', async () => {
