@@ -8184,9 +8184,9 @@
     "name": "Empty Bird's Nest",
     "type": "resource",
     "stackable": true,
-    "shopValue": 50,
+    "shopValue": 2000,
     "icon": "\ud83e\udeb9",
-    "isGeneralStore": false
+    "isGeneralStore": true
   },
   "attack_potion": {
     "id": "attack_potion",

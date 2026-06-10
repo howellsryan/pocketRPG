@@ -67,6 +67,7 @@ describe('store rules', () => {
       'wizard_hat', 'black_wizard_hat', 'wizard_robe_top', 'wizard_robe_skirt',
       'anti_dragon_shield', 'feather', 'greenthorn_seed',
       'fishing_net', 'harpoon', 'lobster_cage', 'fishing_rod',
+      'empty_bird_s_nest',
     ])
     const flagged = new Set(Object.keys(itemsData).filter((id) => itemsData[id].isGeneralStore === true))
     expect([...flagged].sort()).toEqual([...expected].sort())
