@@ -66,8 +66,11 @@ function DropRow({ drop, itemsData, accent }) {
   )
 }
 
-function UniquePanel({ items, itemsData, chanceLabel }) {
+function UniquePanel({ items, itemsData, chanceLabel, drops }) {
   if (!items || items.length === 0) return null
+  // Per-unique drop rate sourced from the monster's drop table (when supplied).
+  const chanceById = {}
+  for (const d of (drops || [])) chanceById[d.itemId] = d.chance
   return (
     <div class="cb-unique">
       <div class="cb-unique__head">
@@ -78,10 +81,12 @@ function UniquePanel({ items, itemsData, chanceLabel }) {
       <div class="cb-unique__grid">
         {items.map(itemId => {
           const item = itemsData[itemId]
+          const chance = chanceById[itemId]
           return (
             <div key={itemId} class="cb-unique__item">
               <GameIcon item={item} iconKey={item?.iconId} size={20} color="#f0c040" />
               <span>{item?.name || itemId}</span>
+              {chance != null && <span class="cb-unique__rate">{formatDropChance(chance)}</span>}
             </div>
           )
         })}
@@ -157,7 +162,7 @@ export function CombatMonsterInfoSheet({ monster, categoryKey, itemsData, onClos
           {uniques.length > 0 && (
             <>
               <div class="cb-sheet__sec">Collection Log</div>
-              <UniquePanel items={uniques} itemsData={itemsData} />
+              <UniquePanel items={uniques} itemsData={itemsData} drops={monster.drops} />
             </>
           )}
         </div>

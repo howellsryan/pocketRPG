@@ -90,7 +90,7 @@ const COMBAT_CATEGORIES = [
     key: 'dragons_lair',
     label: 'Dragons Lair',
     icon: '🐲',
-    ids: ['green_dragon', 'red_dragon', 'king_black_dragon', 'adamant_dragon', 'rune_dragon'],
+    ids: ['green_dragon', 'red_dragon', 'black_dragon', 'king_black_dragon', 'adamant_dragon', 'rune_dragon'],
   },
   {
     key: 'venomcoil_matriarch',

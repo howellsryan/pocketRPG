@@ -485,6 +485,7 @@ html, body, #app {
 .cb-unique__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 14px; margin-top: 11px; }
 .cb-unique__item { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; color: #f4e6c0; min-width: 0; }
 .cb-unique__item span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cb-unique__rate { margin-left: auto; flex-shrink: 0; font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: #e7c97e; opacity: 0.85; }
 
 /* Combat-stats grid */
 .cb-statgrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }

@@ -97,7 +97,7 @@ export const SLAYER_MASTERS = [
       'cinderfang_reaver', 'ashen_marauder', 'runestone_gargoyle', 'astral_ranger',
       'nether_wraith', 'astral_mage', 'nether_demon', 'astral_warrior', 'bone_wyvern',
       'marshscale_shaman', 'red_dragon', 'cinder_devil', 'vicious_black_dragon',
-      'crazy_archaeologist', 'adamant_dragon',
+      'black_dragon', 'crazy_archaeologist', 'adamant_dragon',
       { id: DAGANNOTH_KINGS_TASK_ID, boss: true },
       { id: 'deepmaw_kraken', boss: true },
       { id: 'ember_tyrant', boss: true },
