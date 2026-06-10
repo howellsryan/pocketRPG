@@ -1317,16 +1317,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       return
     }
 
-    // Check if a potion with the same effect type is already active
-    const hasPotionOfType = Object.keys(combatRef.current.activePotions).some(existingId => {
-      const existingPotion = itemsData[existingId]
-      return existingPotion && existingPotion.effect === potion.effect
-    })
-    if (hasPotionOfType) {
-      addToast(`${potion.name} effect is already active`, 'error')
-      return
-    }
-
     // Remove potion from inventory
     if (newInv[potionIdx].quantity > 1) {
       newInv[potionIdx] = { ...newInv[potionIdx], quantity: newInv[potionIdx].quantity - 1 }
