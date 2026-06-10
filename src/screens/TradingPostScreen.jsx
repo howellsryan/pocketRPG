@@ -55,7 +55,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
   const isDesktop = useIsDesktop()
 
   const [mode, setMode] = useState('market')
-  const [openSections, setOpenSections] = useState(new Set())
+  const [activeStoreSection, setActiveStoreSection] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selected, setSelected] = useState(null) // item entry from search
   const [pendingAction, setPendingAction] = useState(null) // 'buy' | 'sell'
@@ -548,42 +548,56 @@ export default function TradingPostScreen({ onBuyCredits }) {
     )
   }
 
-  const toggleSection = (name) => {
-    setOpenSections((prev) => {
-      const next = new Set(prev)
-      if (next.has(name)) next.delete(name)
-      else next.add(name)
-      return next
-    })
-  }
-
-  const renderStore = () => (
-    <div class="h-full overflow-y-auto px-4 pb-20 md:pb-4 pt-3 flex flex-col gap-2">
-      {STORE_SECTIONS.map((section) => {
-        const rows = storeSections[section] || []
-        const isOpen = openSections.has(section)
-        return (
-          <div key={section} class="rounded-lg border border-[#2a2a2a] overflow-hidden">
-            <button
-              onClick={() => toggleSection(section)}
-              class="w-full flex items-center justify-between px-4 py-3 bg-[var(--color-void-light)] text-left"
-            >
-              <span class="text-[13px] font-semibold text-[var(--color-parchment)]">{section}</span>
-              <span class="text-[11px] text-[#888] flex items-center gap-2">
-                <span>{rows.length} item{rows.length !== 1 ? 's' : ''}</span>
-                <span class="text-[var(--color-gold)]">{isOpen ? '▲' : '▼'}</span>
-              </span>
-            </button>
-            {isOpen && (
-              <div class="flex flex-col gap-2 p-2 bg-[var(--color-void)]">
+  const renderStore = () => {
+    // Detail view: one section takes the whole space with its own scroll area
+    // and a back button to return to the section list.
+    if (activeStoreSection) {
+      const rows = storeSections[activeStoreSection] || []
+      return (
+        <div class="h-full flex flex-col overflow-hidden">
+          <button
+            onClick={() => setActiveStoreSection(null)}
+            class="flex-shrink-0 flex items-center gap-2 px-4 py-3 border-b border-[#2a2a2a] bg-[var(--color-void-light)] text-left"
+          >
+            <span class="text-[var(--color-gold)] text-[14px]">‹</span>
+            <span class="text-[13px] font-semibold text-[var(--color-parchment)]">{activeStoreSection}</span>
+            <span class="ml-auto text-[11px] text-[#888]">{rows.length} item{rows.length !== 1 ? 's' : ''}</span>
+          </button>
+          <div class="flex-1 overflow-y-auto px-4 pt-3 pb-20 md:pb-4">
+            {rows.length === 0 ? (
+              <div class="py-10 px-4 text-center text-[#888] text-[12px]">No items in this section.</div>
+            ) : (
+              <div class="flex flex-col gap-2">
                 {rows.map((row) => renderListRow({ ...row.item, id: row.id }))}
               </div>
             )}
           </div>
-        )
-      })}
-    </div>
-  )
+        </div>
+      )
+    }
+
+    // List view: section names fill the space; tap to drill into one.
+    return (
+      <div class="h-full overflow-y-auto px-4 pt-3 pb-20 md:pb-4 flex flex-col gap-2">
+        {STORE_SECTIONS.map((section) => {
+          const rows = storeSections[section] || []
+          return (
+            <button
+              key={section}
+              onClick={() => setActiveStoreSection(section)}
+              class="w-full flex items-center justify-between px-4 py-4 rounded-lg border border-[#2a2a2a] bg-[var(--color-void-light)] text-left"
+            >
+              <span class="text-[14px] font-semibold text-[var(--color-parchment)]">{section}</span>
+              <span class="text-[11px] text-[#888] flex items-center gap-2">
+                <span>{rows.length} item{rows.length !== 1 ? 's' : ''}</span>
+                <span class="text-[var(--color-gold)] text-[14px]">›</span>
+              </span>
+            </button>
+          )
+        })}
+      </div>
+    )
+  }
 
   const renderListings = () => {
     const renderListingRow = (listing) => {
