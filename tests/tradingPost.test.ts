@@ -240,7 +240,9 @@ describe('trading post classification', () => {
     expect(isOrderBookItem({ isBossUnique: true })).toBe(true)
     expect(isOrderBookItem({ isClueReward: true })).toBe(true)
     expect(isOrderBookItem({ isRaidUnique: true })).toBe(true)
-    expect(isOrderBookItem({ shopValue: 100 })).toBe(false)
+    // Order-book migration: ordinary tradeable items are order-book too.
+    expect(isOrderBookItem({ shopValue: 100 })).toBe(true)
+    expect(isOrderBookItem({ shopValue: 100, questUnlock: 'the_lost_blade' })).toBe(false)
   })
 
   it('blocks untradeables from being listable', () => {
@@ -655,30 +657,39 @@ describe('OFFER_STATUS constants', () => {
   })
 })
 
-describe('autoFillSellAtShopValue (non-order-book auto-sell)', () => {
+describe('autoFillSellAtShopValue (quest-shop auto-sell)', () => {
+  // Since the order-book migration every ordinary tradeable item IS an
+  // order-book item, so only quest-unlock items reach the auto-fill path —
+  // their quest shop keeps buying/selling at fixed shopValue prices.
   it('removes items from inventory and credits coins at shopValue × quantity', () => {
-    const item = { shopValue: 50, stackable: false }
-    const save = makeSave(0, [{ itemId: 'bronze_dagger', quantity: 3 }])
-    const { unit, totalPayout } = autoFillSellAtShopValue(save, item, 'bronze_dagger', 3)
+    const item = { shopValue: 50, stackable: false, questUnlock: 'the_lost_blade' }
+    const save = makeSave(0, [{ itemId: 'dragon_dagger', quantity: 3 }])
+    const { unit, totalPayout } = autoFillSellAtShopValue(save, item, 'dragon_dagger', 3)
     expect(unit).toBe(50)
     expect(totalPayout).toBe(150)
     expect(getCoinTotal(save)).toBe(150)
-    expect(save.inventory.find((s: any) => s?.itemId === 'bronze_dagger')).toBeUndefined()
+    expect(save.inventory.find((s: any) => s?.itemId === 'dragon_dagger')).toBeUndefined()
   })
 
   it('ignores any caller-supplied price and always pays floor(shopValue)', () => {
-    const item = { shopValue: 12.9, stackable: true }
-    const save = makeSave(0, [{ itemId: 'iron_ore', quantity: 10 }])
-    const { unit, totalPayout } = autoFillSellAtShopValue(save, item, 'iron_ore', 10)
+    const item = { shopValue: 12.9, stackable: true, questUnlock: 'the_lost_blade' }
+    const save = makeSave(0, [{ itemId: 'dragon_dart', quantity: 10 }])
+    const { unit, totalPayout } = autoFillSellAtShopValue(save, item, 'dragon_dart', 10)
     expect(unit).toBe(12)
     expect(totalPayout).toBe(120)
     expect(getCoinTotal(save)).toBe(120)
   })
 
-  it('rejects order-book items (must go through the matching engine)', () => {
+  it('rejects boss uniques (must go through the matching engine)', () => {
     const item = { isBossUnique: true, shopValue: 100 }
     const save = makeSave(0, [{ itemId: 'twisted_longbow', quantity: 1 }])
     expect(() => autoFillSellAtShopValue(save, item, 'twisted_longbow', 1)).toThrow(/Order book/)
+  })
+
+  it('rejects ordinary tradeable items — they are order-book items now', () => {
+    const item = { shopValue: 50, stackable: false }
+    const save = makeSave(0, [{ itemId: 'bronze_dagger', quantity: 3 }])
+    expect(() => autoFillSellAtShopValue(save, item, 'bronze_dagger', 1)).toThrow(/Order book/)
   })
 
   it('rejects items with no shopValue', () => {
@@ -688,23 +699,46 @@ describe('autoFillSellAtShopValue (non-order-book auto-sell)', () => {
   })
 
   it("source 'bank' removes from the bank and ignores inventory copies", () => {
-    const item = { shopValue: 50, stackable: false }
-    const save = makeSave(0, [{ itemId: 'bronze_dagger', quantity: 2 }])
-    save.bank = { bronze_dagger: { itemId: 'bronze_dagger', quantity: 4 } }
-    const { totalPayout } = autoFillSellAtShopValue(save, item, 'bronze_dagger', 3, 'bank')
+    const item = { shopValue: 50, stackable: false, questUnlock: 'the_lost_blade' }
+    const save = makeSave(0, [{ itemId: 'dragon_dagger', quantity: 2 }])
+    save.bank = { dragon_dagger: { itemId: 'dragon_dagger', quantity: 4 } }
+    const { totalPayout } = autoFillSellAtShopValue(save, item, 'dragon_dagger', 3, 'bank')
     expect(totalPayout).toBe(150)
     expect(getCoinTotal(save)).toBe(150)
     // Bank debited by 3; the 2 inventory copies are untouched
-    expect(save.bank.bronze_dagger.quantity).toBe(1)
-    expect(save.inventory.find((s: any) => s?.itemId === 'bronze_dagger')?.quantity).toBe(2)
+    expect(save.bank.dragon_dagger.quantity).toBe(1)
+    expect(save.inventory.find((s: any) => s?.itemId === 'dragon_dagger')?.quantity).toBe(2)
   })
 
   it("source 'bank' validates against the bank balance, not inventory", () => {
-    const item = { shopValue: 50, stackable: true }
-    const save = makeSave(0, [{ itemId: 'iron_ore', quantity: 100 }])
-    save.bank = { iron_ore: { itemId: 'iron_ore', quantity: 5 } }
-    expect(() => autoFillSellAtShopValue(save, item, 'iron_ore', 10, 'bank')).toThrow(/bank/)
+    const item = { shopValue: 50, stackable: true, questUnlock: 'the_lost_blade' }
+    const save = makeSave(0, [{ itemId: 'dragon_dart', quantity: 100 }])
+    save.bank = { dragon_dart: { itemId: 'dragon_dart', quantity: 5 } }
+    expect(() => autoFillSellAtShopValue(save, item, 'dragon_dart', 10, 'bank')).toThrow(/bank/)
     expect(getCoinTotal(save)).toBe(0)
-    expect(save.bank.iron_ore.quantity).toBe(5)
+    expect(save.bank.dragon_dart.quantity).toBe(5)
+  })
+})
+
+describe('order-book migration — isOrderBookItem / isTradingPostListable', () => {
+  it('ordinary tradeable items with a shop value are order-book items', () => {
+    expect(isOrderBookItem({ shopValue: 50 })).toBe(true)
+    expect(isOrderBookItem({ shopValue: 1, stackable: true })).toBe(true)
+  })
+
+  it('uniques remain order-book items regardless of shopValue', () => {
+    expect(isOrderBookItem({ isBossUnique: true, shopValue: 0 })).toBe(true)
+    expect(isOrderBookItem({ isClueReward: true })).toBe(true)
+    expect(isOrderBookItem({ isRaidUnique: true })).toBe(true)
+  })
+
+  it('quest-unlock items stay on the immediate-execute quest shop path', () => {
+    expect(isOrderBookItem({ shopValue: 30000, questUnlock: 'the_lost_blade' })).toBe(false)
+    expect(isTradingPostListable({ shopValue: 30000, questUnlock: 'the_lost_blade' })).toBe(true)
+  })
+
+  it('untradeables and valueless items stay off the order book', () => {
+    expect(isOrderBookItem({ isUntradeable: true, shopValue: 500 })).toBe(false)
+    expect(isOrderBookItem({ shopValue: 0 })).toBe(false)
   })
 })

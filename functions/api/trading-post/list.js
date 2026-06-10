@@ -63,7 +63,9 @@ export async function onRequestPost({ request, env }) {
 
     normalizeSaveItemIds(saveObject, itemsData)
 
-    // Non-order-book sells auto-fill at the item's shopValue. The game is the
+    // Non-order-book sells auto-fill at the item's shopValue — since the
+    // 2026-06 order-book migration only quest-unlock items reach this branch
+    // (their quest shop keeps buying/selling at fixed prices). The game is the
     // buyer; the listing never touches the order book, so no slot is consumed
     // and no DB row is inserted. The client-supplied price is intentionally
     // ignored to prevent a "list at extreme price → game buys" gold dupe.

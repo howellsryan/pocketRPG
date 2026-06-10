@@ -10,10 +10,12 @@ import { addCoins } from '../../_lib/game/economy.js'
 
 // POST /api/trading-post/sell-immediate  { item_id, quantity }
 //
-// Immediate-execute sell path for general-store-tier items (anything not in
-// the order book). Settles at the item's static shopValue; player gets coins,
-// items leave their inventory. Boss/raid uniques and clue rewards must use
-// /api/trading-post/list instead.
+// Immediate-execute sell path for anything NOT on the order book — since the
+// 2026-06 order-book migration that means quest-unlock items and untradeables
+// with a shop value (the untradeable item sink). Settles at the item's static
+// shopValue; player gets coins, items leave their inventory. Every other
+// tradeable item must be listed via /api/trading-post/list (quick exit:
+// instant-sell the listing at 80%).
 export async function onRequestPost({ request, env }) {
   const auth = await requireAuth(request, env)
   if (auth.error) return json({ error: auth.error }, auth.status)

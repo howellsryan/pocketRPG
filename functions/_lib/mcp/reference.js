@@ -119,8 +119,11 @@ export function searchMonsters({ query, limit } = {}) {
   return { total: all.length, returned: Math.min(all.length, cap), monsters: all.slice(0, cap) }
 }
 
-// General-store catalogue (the agent's buyable list). Mirrors the buy path's
-// gate that boss/clue/raid uniques are not purchasable.
+// Item value reference. shopValue is the static reference price; since the
+// 2026-06 order-book migration these items are traded player-to-player on
+// the Trading Post order book (search_market / place_offer), NOT bought from
+// an infinite store — buy_item only works for quest-unlock items, skill
+// capes and minigame unlock products.
 export function shopCatalog() {
   return Object.values(itemsData)
     .filter((it) => it.isGeneralStore === true && !it.isBossUnique && !it.isClueReward && !it.isRaidUnique)
@@ -154,7 +157,7 @@ const REFERENCE = {
   'pocketrpg://reference/mechanics': { mime: 'text/markdown', name: 'Game mechanics', body: () => MECHANICS },
   'pocketrpg://reference/items': { mime: 'application/json', name: 'Item index', body: () => itemsIndex() },
   'pocketrpg://reference/monsters': { mime: 'application/json', name: 'Monster index', body: () => monstersIndex() },
-  'pocketrpg://reference/shop': { mime: 'application/json', name: 'General store catalogue', body: () => shopCatalog() },
+  'pocketrpg://reference/shop': { mime: 'application/json', name: 'Item value reference (items trade on the player order book)', body: () => shopCatalog() },
   'pocketrpg://reference/skills': { mime: 'application/json', name: 'Skills & actions', body: () => skillsData },
   'pocketrpg://reference/spells': { mime: 'application/json', name: 'Spellbook', body: () => spellsData },
   'pocketrpg://reference/prayers': { mime: 'application/json', name: 'Prayers', body: () => prayersData },

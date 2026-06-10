@@ -31,11 +31,20 @@ describe('store rules', () => {
     expect(isStoreVisibleItem(itemsData.slayer_defender, { isIronman: false })).toBe(false)
     expect(isStoreVisibleItem(itemsData.gloves_of_slaughter, { isIronman: false })).toBe(false)
   })
-  it('preserves normal and ironman restrictions', () => {
-    expect(getPurchaseRestriction(itemsData.bronze_scimitar, { isIronman: false }).allowed).toBe(true)
-    expect(getPurchaseRestriction(itemsData.runeforged_scimitar, { isIronman: true }).code).toBe('IRONMAN_RESTRICTED')
-    expect(getPurchaseRestriction(itemsData.runeforged_crossbow, { isIronman: true }).allowed).toBe(true)
+  it('routes ordinary tradeable items to the order book (no infinite store)', () => {
+    expect(getPurchaseRestriction(itemsData.bronze_scimitar, { isIronman: false })).toMatchObject({
+      allowed: false,
+      code: 'ORDER_BOOK_REQUIRED',
+    })
+    expect(getPurchaseRestriction(itemsData.runeforged_crossbow, { isIronman: true }).code).toBe('ORDER_BOOK_REQUIRED')
+    // Items stay browsable — acquisition is the player order book.
+    expect(isStoreVisibleItem(itemsData.bronze_scimitar, { isIronman: false })).toBe(true)
     expect(isStoreVisibleItem(itemsData.runeforged_crossbow, { isIronman: true })).toBe(true)
+  })
+  it('keeps the quest shop and skill cape purchase paths', () => {
+    expect(itemsData.dragon_dagger.questUnlock).toBeTruthy()
+    expect(getPurchaseRestriction(itemsData.dragon_dagger, { isIronman: false }).allowed).toBe(true)
+    expect(getPurchaseRestriction(itemsData.attack_cape, { isIronman: false }).allowed).toBe(true)
   })
   it('type tabs can include restricted-only types', () => {
     const fake = {
