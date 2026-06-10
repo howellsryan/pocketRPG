@@ -129,23 +129,23 @@ const GATHER_TASKS = [
   },
   {
     id: 'crush_birds_nest',
-    name: 'Crush Bird\'s Nest → Dust',
+    name: 'Crush Birds Nest',
     icon: '🪹',
     iconKey: 'nest',
-    description: 'Crush an empty bird\'s nest into powder. Used in saradomin brew.',
+    description: 'Crush an empty bird\'s nest into a crushed bird\'s nest. Used in herblore brews.',
     ticks: 5,
     product: 'crushed_bird_s_nest',
     qty: 1,
     stackable: true,
-    materials: { empty_birds_nest: 1 },
+    materials: { empty_bird_s_nest: 1 },
     category: 'fields',
   },
   {
     id: 'collect_wine_of_zamorak',
-    name: 'Collect Wine of Zamorak',
+    name: 'Collect Wine of Krylth',
     icon: '🍷',
     iconKey: 'wine',
-    description: 'Collect bottles of Wine of Zamorak. Used in herblore to make ranging potions.',
+    description: 'Collect bottles of Wine of Krylth. Used in herblore to make ranging potions.',
     ticks: 5,
     product: 'wine_of_krylth',
     qty: 1,
@@ -258,6 +258,10 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
   const taskRef = useRef(null)
   const hasAutoStarted = useRef(false)
 
+  // Prefer the canonical item name from itemsData; fall back to the curated
+  // map and finally the raw id so display never shows a bare item id.
+  const nameOf = (id) => itemsData[id]?.name || ITEM_NAMES[id] || id
+
   const visibleTasks = category === 'all'
     ? GATHER_TASKS
     : GATHER_TASKS.filter(t => t.category === category)
@@ -310,7 +314,7 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
         if (task.requiresItem && !hasItemAnywhere(task.requiresItem, newInv, bank, equipment)) {
           taskRef.current = { ...next, stopped: true }
           setLocalTask(null)
-          addToast(`Need ${ITEM_NAMES[task.requiresItem] || task.requiresItem}.`, 'error')
+          addToast(`Need ${nameOf(task.requiresItem)}.`, 'error')
           return
         }
 
@@ -619,19 +623,19 @@ export default function GatherScreen({ initialTaskId, idleResult }) {
                       ⏱ {(task.ticks * 0.6).toFixed(1)}s/action
                       {task.requiresItem && !task.isClue && (
                       <span class="text-[var(--color-parchment)] opacity-50">
-                        {' · '}Requires: {ITEM_NAMES[task.requiresItem] || task.requiresItem}
+                        {' · '}Requires: {nameOf(task.requiresItem)}
                       </span>
                     )}
                     {task.materials && (
                         <span class="text-[var(--color-parchment)] opacity-50">
-                          {' · '}Needs: {Object.entries(task.materials).map(([id, qty]) => `${ITEM_NAMES[id] || id} ×${qty}`).join(', ')}
+                          {' · '}Needs: {Object.entries(task.materials).map(([id, qty]) => `${nameOf(id)} ×${qty}`).join(', ')}
                         </span>
                       )}
                     </div>
                   </div>
                   <div class="flex-shrink-0 text-right">
                     <div class="text-[18px]">→</div>
-                    <div class="text-[9px] text-[#c8a96e] opacity-70">{ITEM_NAMES[task.product] || task.product}</div>
+                    <div class="text-[9px] text-[#c8a96e] opacity-70">{nameOf(task.product)}</div>
                     {(task.materials || task.requiresItem) && (
                       <div class={`text-[9px] mt-[2px] ${enabled ? 'text-[#4caf50]' : 'text-[#e57373]'}`}>
                         {enabled ? '✓ ready' : '✗ need item'}

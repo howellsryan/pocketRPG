@@ -8184,7 +8184,7 @@
     "name": "Empty Bird's Nest",
     "type": "resource",
     "stackable": true,
-    "shopValue": 2000,
+    "shopValue": 1500,
     "icon": "\ud83e\udeb9",
     "isGeneralStore": true
   },
