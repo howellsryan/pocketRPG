@@ -1,3 +1,4 @@
+import { useState } from 'preact/hooks'
 import SkillEmblem from '../components/SkillEmblem.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import collectionLogData from '../data/collectionLog.json'
@@ -68,29 +69,60 @@ function DropRow({ drop, itemsData, accent }) {
 
 function UniquePanel({ items, itemsData, chanceLabel, drops }) {
   if (!items || items.length === 0) return null
+  const [showRates, setShowRates] = useState(false)
   // Per-unique drop rate sourced from the monster's drop table (when supplied).
   const chanceById = {}
   for (const d of (drops || [])) chanceById[d.itemId] = d.chance
+  const hasRates = (drops || []).length > 0
   return (
     <div class="cb-unique">
       <div class="cb-unique__head">
         <span class="cb-unique__spark">✦</span>
         <span>Unique Drops</span>
         {chanceLabel && <span class="cb-unique__chance">{chanceLabel}</span>}
+        {hasRates && (
+          <button class="cb-unique__info" onClick={() => setShowRates(true)} aria-label="View drop rates">i</button>
+        )}
       </div>
       <div class="cb-unique__grid">
         {items.map(itemId => {
           const item = itemsData[itemId]
-          const chance = chanceById[itemId]
           return (
             <div key={itemId} class="cb-unique__item">
               <GameIcon item={item} iconKey={item?.iconId} size={20} color="#f0c040" />
               <span>{item?.name || itemId}</span>
-              {chance != null && <span class="cb-unique__rate">{formatDropChance(chance)}</span>}
             </div>
           )
         })}
       </div>
+
+      {showRates && (
+        <div class="cb-rates-overlay" onClick={() => setShowRates(false)}>
+          <div class="cb-rates" onClick={e => e.stopPropagation()}>
+            <div class="cb-rates__head">
+              <span>Drop Rates</span>
+              <button class="cb-x" onClick={() => setShowRates(false)} aria-label="Close">
+                <GameIcon iconKey="cancel" color="#cdbf9f" size={14} />
+              </button>
+            </div>
+            <div class="cb-rates__list">
+              {items.map(itemId => {
+                const item = itemsData[itemId]
+                const chance = chanceById[itemId]
+                return (
+                  <div key={itemId} class="cb-rates__row">
+                    <div class="cb-rates__l">
+                      <GameIcon item={item} iconKey={item?.iconId} size={20} color="#f0c040" />
+                      <span>{item?.name || itemId}</span>
+                    </div>
+                    <span class="cb-rates__rate">{chance != null ? formatDropChance(chance) : '—'}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
