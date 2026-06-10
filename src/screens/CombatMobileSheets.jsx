@@ -37,7 +37,7 @@ function loggedUniques(categoryId, sectionId) {
 // Chip for a structured multi-style descriptor (from getMonsterAttackStyles /
 // getMonsterWeakness): one glyph per style and the descriptor's own colour
 // (style colour for one, silver for two, gold for all three).
-function MultiStyleChip({ chip, prefix = '', kind }) {
+export function MultiStyleChip({ chip, prefix = '', kind }) {
   if (!chip) return null
   const { styles, label, color } = chip
   return (

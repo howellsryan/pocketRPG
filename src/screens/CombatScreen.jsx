@@ -11,8 +11,10 @@ import IdleCombatSetupModal from '../components/IdleCombatSetupModal.jsx'
 import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
 import ItemSlot from '../components/ItemSlot.jsx'
 import GameIcon from '../components/GameIcon.jsx'
+import SkillEmblem from '../components/SkillEmblem.jsx'
 import CombatMobileSelect from './CombatMobileSelect.jsx'
-import { CombatMonsterInfoSheet, CombatRaidInfoSheet } from './CombatMobileSheets.jsx'
+import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip } from './CombatMobileSheets.jsx'
+import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness } from '../utils/combatArt.js'
 import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applySpecialAttack, applyInstantKill } from '../engine/combat.js'
 import { getLevelFromXP } from '../engine/experience.js'
@@ -238,6 +240,8 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   const [isDesktopCombatLayout, setIsDesktopCombatLayout] = useState(false)
   const [monsterSplats, setMonsterSplats] = useState([])
   const [playerSplats, setPlayerSplats] = useState([])
+  // Mobile quick-actions panel (replaces the combat log + Eat/Potion/Gear buttons)
+  const [invTab, setInvTab] = useState('food')
 
   const combatRef = useRef(null)
   const hpRef = useRef(currentHP)
@@ -1311,16 +1315,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       return
     }
 
-    // Check if a potion with the same effect type is already active
-    const hasPotionOfType = Object.keys(combatRef.current.activePotions).some(existingId => {
-      const existingPotion = itemsData[existingId]
-      return existingPotion && existingPotion.effect === potion.effect
-    })
-    if (hasPotionOfType) {
-      addToast(`${potion.name} effect is already active`, 'error')
-      return
-    }
-
     // Remove potion from inventory
     if (newInv[potionIdx].quantity > 1) {
       newInv[potionIdx] = { ...newInv[potionIdx], quantity: newInv[potionIdx].quantity - 1 }
@@ -1361,7 +1355,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     combatRef.current = newState
     setCombat(newState)
     setShowPotionModal(false)
-    addToast(`${potion.icon} ${potion.name}`, 'info')
   }
 
   // Boss/raid skip: set monster HP to 0 and arm player attack timer so the next
@@ -1385,13 +1378,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
   }, [])
 
   const handleEquipItem = (itemId) => {
-    if (!combat) return
+    if (!combat) return false
     const newInv = [...inventoryRef.current]
     const itemIdx = newInv.findIndex(s => s && s.itemId === itemId)
-    if (itemIdx === -1) return
+    if (itemIdx === -1) return false
 
     const itemData = itemsData[itemId]
-    if (!itemData || !itemData.slot) return
+    if (!itemData || !itemData.slot) return false
 
     // Combat gear tab must enforce the same level/quest gates as the inventory
     // screen — otherwise the player can swap into mid-combat gear they haven't
@@ -1403,7 +1396,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       } else {
         addToast(`Need ${reqError.skill} level ${reqError.required} to equip`, 'error')
       }
-      return
+      return false
     }
 
     // Copy equipment to avoid mutating ref directly
@@ -1413,11 +1406,16 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
     if (!result.equipped) {
       addToast('Could not equip item', 'error')
-      return
+      return false
     }
 
-    // Remove the equipped item from inventory
-    if (newInv[itemIdx].quantity > 1) {
+    // Remove the equipped item from inventory. Ammo equips the WHOLE stack
+    // (equipItem preserves sourceSlot.quantity into the ammo slot), so clear the
+    // entire inventory slot — otherwise the stack would be both worn and left in
+    // the bag (the "lose one, double the rest" bug). All other gear moves one unit.
+    if (itemData.slot === 'ammo') {
+      newInv[itemIdx] = null
+    } else if (newInv[itemIdx].quantity > 1) {
       newInv[itemIdx] = { ...newInv[itemIdx], quantity: newInv[itemIdx].quantity - 1 }
     } else {
       newInv[itemIdx] = null
@@ -1446,7 +1444,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     updateEquipment(newEq)
     equipmentRef.current = newEq
 
-    addToast(`Equipped ${itemData.name}`, 'info')
+    return true
   }
 
   const handleUnequipSlot = (slotName) => {
@@ -1470,9 +1468,6 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
     inventoryRef.current = newInv
     updateEquipment(newEq)
     equipmentRef.current = newEq
-
-    const itemName = itemsData[entry.itemId]?.name || entry.itemId
-    addToast(`Unequipped ${itemName}`, 'info')
   }
 
   const handlePrayer = (prayerId) => {
@@ -1493,6 +1488,29 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
     combatRef.current = newState
     setCombat(newState)
+  }
+
+  // ── Mobile quick-actions helpers ──────────────────────────────────────────
+  // Compact quantity formatter for slot badges (312 → 312, 5085 → 5.1k).
+  const fmtQty = (n) => {
+    if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M'
+    if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k'
+    return `${n}`
+  }
+
+  // Group the live inventory into distinct item cards (summing stacked qty),
+  // filtered by a predicate over the resolved item definition.
+  const groupInv = (predicate) => {
+    const map = new Map()
+    for (const slot of inventory) {
+      if (!slot || slot.noted) continue
+      const item = itemsData[slot.itemId]
+      if (!item || !predicate(item)) continue
+      const cur = map.get(slot.itemId)
+      if (cur) cur.qty += slot.quantity || 1
+      else map.set(slot.itemId, { itemId: slot.itemId, item, qty: slot.quantity || 1 })
+    }
+    return [...map.values()]
   }
 
   const handleAddToHome = (monster) => {
@@ -2125,7 +2143,10 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
           explicit grid placement puts:
             col 1 = stats + paperdoll
             col 2 = inventory grid (click equippables to equip) + prayers
-            col 3 = special bar + combat log + kills + action buttons */}
+            col 3 = special bar + combat log + kills + action buttons.
+          Desktop keeps this layout untouched; mobile renders the redesigned
+          single-column HUD (fight header + HP bars + quick-actions) below. */}
+      {isDesktopCombatLayout ? (
       <div class={`flex-1 min-h-0 flex flex-col ${isDesktopCombatLayout ? 'grid grid-cols-[minmax(220px,1fr)_minmax(0,1.6fr)_minmax(220px,1fr)] grid-rows-1 gap-4 overflow-hidden' : ''}`}>
 
       {/* LEFT pane: enemy + player stats */}
@@ -2525,30 +2546,220 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       </div>
 
       </div>{/* /CENTRE pane */}
-      </div>{/* /pane container */}
+      </div>
+      ) : (
+      /* ── Mobile combat HUD (redesign): fight header + HP bars + quick-actions ── */
+      <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+        {(() => {
+          const m = combat.monster
+          const categoryKey = COMBAT_CATEGORIES.find(c => c.ids.includes(m.id))?.key
+          const mArt = getMonsterArt(m, categoryKey)
+          const form = m.multiForm && m.currentForm && m.forms?.[m.currentForm] ? m.forms[m.currentForm] : null
+          return (
+            <>
+              {/* Fight header */}
+              <div class="cb-fight__head">
+                <div class="cb-fight__id">
+                  <SkillEmblem iconKey={mArt.icon} accent={mArt.accent} size={34} glow={1} />
+                  <div>
+                    <div class="cb-fight__name">{m.name}</div>
+                    <div class="cb-fight__chips">
+                      <MultiStyleChip chip={getMonsterAttackStyles(m)} />
+                      <MultiStyleChip chip={getMonsterWeakness(m)} prefix="Weak: " kind="!" />
+                    </div>
+                  </div>
+                </div>
+                <button class="cb-fight__cb" onClick={() => setSelectedMonsterInfo(m)} aria-label={`${m.name} info`}>
+                  CB {m.combatLevel}
+                  <GameIcon iconKey="info" color="#e0564b" size={13} />
+                </button>
+              </div>
+
+              {/* Raid progress */}
+              {combat.raid && (
+                <div class="mb-2 bg-[#111] border border-[#2a2a2a] rounded-lg px-3 py-2">
+                  <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-[10px] font-semibold text-[var(--color-gold)]">{raidsData[combat.raid.raidId]?.name || 'Raid'}</span>
+                    <span class="text-[10px] font-[var(--font-mono)] text-[var(--color-parchment)] opacity-60">Boss {combat.raid.currentBossIndex + 1}/{combat.raid.bosses.length}</span>
+                  </div>
+                  <div class="flex gap-1">
+                    {combat.raid.bosses.map((bossId, i) => (
+                      <div key={bossId} class={`flex-1 h-1.5 rounded-full ${i < combat.raid.currentBossIndex ? 'bg-[var(--color-hp-green)]' : i === combat.raid.currentBossIndex ? 'bg-[var(--color-gold)]' : 'bg-[#333]'}`} title={monstersData[bossId]?.name || bossId} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Monster HP */}
+              <div class="cb-hpblock">
+                <div class="cb-hplabel">
+                  <span>{m.name}{form && <span class="ml-2 text-purple-300">{form.icon} {form.displayName}{form.immunity ? ` · 🛡 ${form.immunity}` : ''}</span>}</span>
+                  <span class="cb-hplabel__v">{Math.max(0, Math.round(m.currentHP))}/{m.hitpoints}</span>
+                </div>
+                <div class="relative">
+                  <HPBar current={Math.max(0, m.currentHP)} max={m.hitpoints} size="large" />
+                  <HitSplatLayer splats={monsterSplats} />
+                </div>
+              </div>
+
+              {/* Player HP */}
+              <div class="cb-hpblock">
+                <div class="cb-hplabel">
+                  <span>Your Hitpoints</span>
+                  <span class="cb-hplabel__right">
+                    <ActivePotionBadges activePotions={combat?.activePotions} itemsData={itemsData} />
+                    <span class="cb-hplabel__v" style={{ color: '#7ce88a' }}>{Math.max(0, Math.round(currentHP))}/{getMaxHP()}</span>
+                  </span>
+                </div>
+                <div class="relative">
+                  <HPBar current={currentHP} max={getMaxHP()} size="large" />
+                  <HitSplatLayer splats={playerSplats} />
+                </div>
+              </div>
+
+              {/* Slayer task indicator */}
+              {doesSlayerTaskMatchMonster(slayerTask?.monsterId, m.id) && (
+                <div class="mb-2 bg-[#1a1a08] border border-[#3a3a10] rounded-lg px-3 py-1.5 flex items-center justify-between">
+                  <span class="text-[10px] text-yellow-400 font-semibold">💀 Slayer Task</span>
+                  <span class="text-[10px] font-[var(--font-mono)] text-yellow-400">{slayerTask.monstersRemaining} / {slayerTask.totalCount} remaining</span>
+                </div>
+              )}
+
+              {/* Quick-actions panel — replaces the text combat log */}
+              {combat.active && !isAutoRestarting && (() => {
+                const POT_TAG = { hp: '+HP', attack: '+ATK', strength: '+STR', defence: '+DEF', ranged: '+RNG', magic: '+MAG', combat: '+ALL', super_restore: 'RESTORE' }
+                // Stable name-sort so the grid doesn't reshuffle as items are
+                // equipped/consumed. Weapons/armour only list inventory items —
+                // currently-worn gear is intentionally not shown here.
+                const byName = (a, b) => a.item.name.localeCompare(b.item.name)
+                const foods = groupInv(it => it.type === 'food' || isLumiraBrew(it))
+                const potions = groupInv(it => it.type === 'potion')
+                const weapons = groupInv(it => it.slot === 'weapon').sort(byName)
+                const armour = groupInv(it => it.slot && it.slot !== 'weapon').sort(byName)
+                const tabs = [['food', 'Food', foods.length], ['potion', 'Potions', potions.length], ['weapon', 'Weapons', weapons.length], ['armour', 'Armour', armour.length]]
+                return (
+                  <div class="cb-qa">
+                    <div class="cb-qa__tabs">
+                      {tabs.map(([id, label, n]) => (
+                        <button key={id} class={'cb-qa__tab' + (invTab === id ? ' is-on' : '')} onClick={() => setInvTab(id)}>
+                          {label}<span class="cb-qa__tabn">{n}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div class="cb-qa__grid">
+                      {invTab === 'food' && (foods.length === 0
+                        ? <div class="cb-qa__empty">No food in your inventory</div>
+                        : foods.map(({ itemId, item, qty }) => (
+                          <button key={itemId} class="cb-slot" onClick={() => handleEatItem(itemId)}>
+                            <span class="cb-slot__qty">{fmtQty(qty)}</span>
+                            <GameIcon item={item} size={18} />
+                            <span class="cb-slot__name">{item.name}</span>
+                            {item.heals != null && <span class="cb-slot__tag heal">+{item.heals}</span>}
+                          </button>
+                        )))}
+
+                      {invTab === 'potion' && (potions.length === 0
+                        ? <div class="cb-qa__empty">No potions in your inventory</div>
+                        : potions.map(({ itemId, item, qty }) => {
+                          const active = Object.keys(combat?.activePotions || {}).some(pid => itemsData[pid]?.effect === item.effect)
+                          return (
+                            <button key={itemId} class={'cb-slot' + (active ? ' is-active' : '')} onClick={() => handlePotion(itemId)}>
+                              <span class="cb-slot__qty">{fmtQty(qty)}</span>
+                              <GameIcon item={item} size={18} />
+                              <span class="cb-slot__name">{item.name}</span>
+                              {POT_TAG[item.effect] && <span class="cb-slot__tag">{POT_TAG[item.effect]}</span>}
+                              {active && <span class="cb-slot__ring" />}
+                            </button>
+                          )
+                        }))}
+
+                      {invTab === 'weapon' && (weapons.length === 0
+                        ? <div class="cb-qa__empty">No weapons to wield</div>
+                        : weapons.map(({ itemId, item, qty }) => (
+                          <button key={itemId} class="cb-slot" onClick={() => handleEquipItem(itemId)}>
+                            {qty > 1 && <span class="cb-slot__qty">{fmtQty(qty)}</span>}
+                            <GameIcon item={item} size={18} />
+                            <span class="cb-slot__name">{item.name}</span>
+                          </button>
+                        )))}
+
+                      {invTab === 'armour' && (armour.length === 0
+                        ? <div class="cb-qa__empty">No armour to equip</div>
+                        : armour.map(({ itemId, item, qty }) => (
+                          <button key={itemId} class="cb-slot" onClick={() => handleEquipItem(itemId)}>
+                            {qty > 1 && <span class="cb-slot__qty">{fmtQty(qty)}</span>}
+                            <GameIcon item={item} size={18} />
+                            <span class="cb-slot__name">{item.name}</span>
+                            <span class="cb-slot__tag">{item.slot}</span>
+                          </button>
+                        )))}
+                    </div>
+                  </div>
+                )
+              })()}
+
+              {/* Kill stats */}
+              {fightStartedAt && (
+                <div class="cb-kstats">
+                  <div class="cb-kstat"><span class="cb-kstat__k">Kills</span><span class="cb-kstat__v">{killCount}</span></div>
+                  <div class="cb-kstat"><span class="cb-kstat__k">Kills / hr</span><span class="cb-kstat__v">{killCount > 0 && (Date.now() - fightStartedAt) > 5000 ? Math.round(killCount / ((Date.now() - fightStartedAt) / 3600000)).toLocaleString() : '—'}</span></div>
+                </div>
+              )}
+
+              {/* Action row — Special / Cast / Prayer (Eat/Potion/Gear now live in the quick-actions tabs) */}
+              {combat.active && !isAutoRestarting && (() => {
+                const weaponEntry = equipment?.weapon
+                const weapon = weaponEntry ? itemsData[weaponEntry.itemId] : null
+                const hasSpec = !!weapon?.specialAttack
+                const energy = combat.specialAttackEnergy || 0
+                const canSpec = hasSpec && energy >= weapon.specialAttack.energyCost
+                const isMagic = weapon?.attackStyle === 'magic'
+                const prayerActive = !!(combat?.activeProtectionPrayer || combat?.activeCombatPrayer)
+                return (
+                  <div class="cb-actions" style={{ marginBottom: 4 }}>
+                    <button class={'cb-act cb-act--gold' + (canSpec ? ' is-on' : '')} disabled={!canSpec} onClick={canSpec ? handleSpecialAttack : undefined}>
+                      <GameIcon iconKey="lightning_arc" color={canSpec ? '#1a1206' : '#9b978c'} size={18} />
+                      <span>Special{hasSpec ? ` ${energy}%` : ''}</span>
+                    </button>
+                    <button class={'cb-act cb-act--violet' + (isMagic ? ' is-on' : '')} disabled={!isMagic} onClick={isMagic ? () => setShowSpellModal(true) : undefined}>
+                      <GameIcon iconKey="crystal_ball" color={isMagic ? '#c9b6ff' : '#9b978c'} size={18} />
+                      <span>Cast</span>
+                    </button>
+                    <button class={'cb-act cb-act--green' + (prayerActive ? ' is-on' : '')} onClick={() => setShowPrayerModal(true)}>
+                      <GameIcon iconKey="prayer" color={prayerActive ? '#cfeccb' : '#9b978c'} size={18} />
+                      <span>Prayer</span>
+                    </button>
+                  </div>
+                )
+              })()}
+            </>
+          )
+        })()}
+      </div>
+      )}
 
       {/* Prayer modal */}
       {showPrayerModal && (
         <Modal onClose={() => setShowPrayerModal(false)}>
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="font-[var(--font-display)] text-base font-bold text-[var(--color-gold)]">Choose Prayer</h3>
-            <button
-              onClick={() => setShowPrayerModal(false)}
-              class="w-6 h-6 flex items-center justify-center rounded-lg bg-[#222] text-[var(--color-parchment)] hover:bg-[#333] active:bg-[#444] transition-colors"
-              title="Close"
-            >
-              ✕
+          <div class="cb-prayhead">
+            <h3>Prayers</h3>
+            <button onClick={() => setShowPrayerModal(false)} class="cb-x" aria-label="Close">
+              <GameIcon iconKey="cancel" color="#cdbf9f" size={16} />
             </button>
           </div>
 
-          <div class="space-y-4 max-h-96 overflow-y-auto">
-            {/* Protection Prayers */}
-            <div>
-              <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                {Object.values(prayersData)
-                  .filter(p => p.bonusType === 'protection')
-                  .map(prayer => {
-                    const prayerLevel = getLevelFromXP(stats.prayer?.xp || 0)
+          {(() => {
+            const prayerLevel = getLevelFromXP(stats.prayer?.xp || 0)
+            const protectionPrayers = Object.values(prayersData).filter(p => p.bonusType === 'protection')
+            const combatPrayers = Object.values(prayersData)
+              .filter(p => p.bonusType !== 'protection')
+              .sort((a, b) => b.level - a.level)
+            return (
+              <div class="max-h-96 overflow-y-auto">
+                <div class="cb-praysec">Protection</div>
+                <div class="cb-praygrid cb-praygrid--prot">
+                  {protectionPrayers.map(prayer => {
                     const canUse = prayerLevel >= prayer.level
                     const isActive = combat?.activeProtectionPrayer === prayer.id
                     const protectType = prayer.style === 'magic' ? 'Magic' : prayer.style === 'ranged' ? 'Ranged' : 'Melee'
@@ -2557,37 +2768,21 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                         key={prayer.id}
                         onClick={() => canUse && handlePrayer(prayer.id)}
                         disabled={!canUse}
-                        class={`p-3 rounded-lg border transition-colors flex flex-col items-center justify-between ${
-                          isActive
-                            ? 'bg-[#2a4a2a] border-[#4a8a4a]'
-                            : canUse
-                              ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
-                              : 'bg-[#111] border-[#1a1a1a] opacity-40'
-                        }`}
+                        class={'cb-prayer' + (isActive ? ' is-on' : '') + (!canUse ? ' is-locked' : '')}
+                        style={{ alignItems: 'center', textAlign: 'center', minHeight: 64 }}
                       >
-                        <div class="text-center flex-1 flex flex-col items-center justify-center">
-                          <div class="text-[10px] text-[var(--color-parchment)] opacity-60">{prayer.icon}</div>
-                          <div class="text-[8px] text-[var(--color-parchment)] opacity-60 mt-1 line-clamp-2">Protect from {protectType}</div>
-                          <div class="text-[8px] text-[var(--color-gold-dim)] mt-1">Lv {prayer.level}</div>
-                        </div>
-                        {isActive && (
-                          <span class="text-base text-[var(--color-hp-green)] mt-1">✓</span>
-                        )}
+                        <span class="cb-prayer__name" style={{ justifyContent: 'center' }}>Protect</span>
+                        <span class="cb-prayer__desc" style={{ textAlign: 'center', width: '100%' }}>{protectType}</span>
+                        <span class="cb-prayer__lv" style={{ margin: '0 auto' }}>Lv {prayer.level}</span>
+                        {isActive && <span class="cb-prayer__chk">✓</span>}
                       </button>
                     )
                   })}
-              </div>
-            </div>
+                </div>
 
-            {/* Combat Enhancement Prayers */}
-            <div>
-              <h4 class="text-xs font-semibold text-[var(--color-gold-dim)] uppercase tracking-wider mb-2 opacity-70">Combat</h4>
-              <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                {Object.values(prayersData)
-                  .filter(p => p.bonusType !== 'protection')
-                  .sort((a, b) => b.level - a.level)
-                  .map(prayer => {
-                    const prayerLevel = getLevelFromXP(stats.prayer?.xp || 0)
+                <div class="cb-praysec">Combat</div>
+                <div class="cb-praygrid">
+                  {combatPrayers.map(prayer => {
                     const canUse = prayerLevel >= prayer.level
                     const isActive = combat?.activeCombatPrayer === prayer.id
                     return (
@@ -2595,32 +2790,19 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
                         key={prayer.id}
                         onClick={() => canUse && handlePrayer(prayer.id)}
                         disabled={!canUse}
-                        class={`p-3 rounded-lg border transition-colors ${
-                          isActive
-                            ? 'bg-[#2a3a1a] border-[#4a8a2a]'
-                            : canUse
-                              ? 'bg-[#1a2a1a] border-[#2a4a2a] active:bg-[#2a3a2a]'
-                              : 'bg-[#111] border-[#1a1a1a] opacity-40'
-                        }`}
+                        class={'cb-prayer' + (isActive ? ' is-on' : '') + (!canUse ? ' is-locked' : '')}
                       >
-                        <div class="flex flex-col items-start justify-between h-full">
-                          <div class="text-left flex-1">
-                            <div class="text-sm font-semibold text-[var(--color-parchment)]">{(getPrayerStyleIcon(prayer)?.icon) || prayer.icon} {prayer.name}</div>
-                            <div class="text-[9px] text-[var(--color-parchment)] opacity-60 line-clamp-2 mt-0.5">
-                              {prayer.description}
-                            </div>
-                            <div class="text-[8px] text-[var(--color-gold-dim)] mt-0.5">Lv {prayer.level}</div>
-                          </div>
-                          {isActive && (
-                            <span class="text-base text-[var(--color-hp-green)] mt-1">✓</span>
-                          )}
-                        </div>
+                        <span class="cb-prayer__name">{(getPrayerStyleIcon(prayer)?.icon) || prayer.icon} {prayer.name}</span>
+                        <span class="cb-prayer__desc">{prayer.description}</span>
+                        <span class="cb-prayer__lv">Lv {prayer.level}</span>
+                        {isActive && <span class="cb-prayer__chk">✓</span>}
                       </button>
                     )
                   })}
+                </div>
               </div>
-            </div>
-          </div>
+            )
+          })()}
         </Modal>
       )}
 
