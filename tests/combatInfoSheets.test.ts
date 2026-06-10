@@ -51,3 +51,35 @@ describe('combat info sheets — collection-log sourced uniques', () => {
     }
   })
 })
+
+describe('black dragon', () => {
+  it('logs Dragon Visage and Dragon Full Helm as collection-log uniques', () => {
+    const bd = section('monsters', 'black_dragon')
+    expect(bd).toBeTruthy()
+    expect(bd.items).toEqual(expect.arrayContaining(['dragon_visage', 'dragon_full_helm']))
+  })
+
+  it('carries each unique in the drop table at its rate (so the info sheet can show it)', () => {
+    const drops = monstersData.black_dragon.drops
+    const byId: Record<string, any> = Object.fromEntries(drops.map((d: any) => [d.itemId, d]))
+    expect(byId.dragon_visage?.chance).toBeCloseTo(1 / 20000)
+    expect(byId.dragon_full_helm?.chance).toBeCloseTo(1 / 25000)
+  })
+
+  it('is enhanced over the red dragon: black leather + dragon armour, no red leather', () => {
+    const byId: Record<string, any> = Object.fromEntries(
+      monstersData.black_dragon.drops.map((d: any) => [d.itemId, d]),
+    )
+    expect(byId.black_dragon_leather?.chance).toBe(1)
+    expect(byId.red_dragon_leather).toBeUndefined()
+    expect(byId.dragon_platelegs).toBeTruthy()
+    expect(byId.dragon_plateskirt).toBeTruthy()
+  })
+
+  it('mirrors the red dragon OSRS combat stats baseline (enhanced)', () => {
+    const bd = monstersData.black_dragon
+    expect(bd.combatLevel).toBe(227)
+    expect(bd.hitpoints).toBe(200)
+    expect(bd.specialAttack).toBe('dragonfire')
+  })
+})

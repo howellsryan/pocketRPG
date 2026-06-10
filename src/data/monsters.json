@@ -3091,6 +3091,182 @@
     ],
     "legacy_id": "red_dragon"
   },
+  "black_dragon": {
+    "id": "black_dragon",
+    "name": "Black Dragon",
+    "combatLevel": 227,
+    "hitpoints": 200,
+    "stats": {
+      "attack": 200,
+      "strength": 200,
+      "defence": 200,
+      "magic": 100,
+      "ranged": 1
+    },
+    "attackSpeed": 4,
+    "attackStyle": "slash",
+    "attackBonus": 0,
+    "strengthBonus": 0,
+    "defenceBonus": {
+      "stab": 0,
+      "slash": 90,
+      "crush": 90,
+      "magic": 70,
+      "ranged": 60
+    },
+    "specialAttack": "dragonfire",
+    "dragonfireDamage": 50,
+    "drops": [
+      {
+        "itemId": "dragon_bones",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "black_dragon_leather",
+        "quantity": 1,
+        "chance": 1
+      },
+      {
+        "itemId": "coins",
+        "quantity": [
+          300,
+          700
+        ],
+        "chance": 0.6
+      },
+      {
+        "itemId": "nature_rune",
+        "quantity": 25,
+        "chance": 0.12
+      },
+      {
+        "itemId": "law_rune",
+        "quantity": 10,
+        "chance": 0.1
+      },
+      {
+        "itemId": "chaos_rune",
+        "quantity": [
+          20,
+          30
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "death_rune",
+        "quantity": [
+          15,
+          25
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "dragon_platelegs",
+        "quantity": 1,
+        "chance": 0.012
+      },
+      {
+        "itemId": "dragon_plateskirt",
+        "quantity": 1,
+        "chance": 0.012
+      },
+      {
+        "itemId": "runeforged_full_helm",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "greenthorn_leaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.2
+      },
+      {
+        "itemId": "duskroot",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.15
+      },
+      {
+        "itemId": "rynarr_weed",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.12
+      },
+      {
+        "itemId": "sunblossom",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.1
+      },
+      {
+        "itemId": "emberleaf",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.08
+      },
+      {
+        "itemId": "wyrmspice",
+        "quantity": [
+          1,
+          2
+        ],
+        "chance": 0.06
+      },
+      {
+        "itemId": "snapdrake",
+        "quantity": 1,
+        "chance": 0.05
+      },
+      {
+        "itemId": "cinderbloom",
+        "quantity": 1,
+        "chance": 0.04
+      },
+      {
+        "itemId": "stonefern",
+        "quantity": 1,
+        "chance": 0.03
+      },
+      {
+        "itemId": "mistvine",
+        "quantity": 1,
+        "chance": 0.01
+      },
+      {
+        "itemId": "marshflax",
+        "quantity": 1,
+        "chance": 0.005
+      },
+      {
+        "itemId": "clue_scroll_master",
+        "quantity": 1,
+        "chance": 0.02
+      },
+      {
+        "itemId": "dragon_visage",
+        "quantity": 1,
+        "chance": 0.00005
+      },
+      {
+        "itemId": "dragon_full_helm",
+        "quantity": 1,
+        "chance": 0.00004
+      }
+    ],
+    "legacy_id": "black_dragon"
+  },
   "nagadoth_rex": {
     "id": "nagadoth_rex",
     "name": "Nagadoth Rex",

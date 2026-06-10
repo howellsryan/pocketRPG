@@ -15,6 +15,7 @@ import SkillEmblem from '../components/SkillEmblem.jsx'
 import CombatMobileSelect from './CombatMobileSelect.jsx'
 import { CombatMonsterInfoSheet, CombatRaidInfoSheet, MultiStyleChip } from './CombatMobileSheets.jsx'
 import { getMonsterArt, getMonsterAttackStyles, getMonsterWeakness } from '../utils/combatArt.js'
+import { getSkillArt } from '../utils/skillArt.js'
 import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
 import { createCombatState, createRaidCombatState, processCombatTick, applyEat, applySpecialAttack, applyInstantKill } from '../engine/combat.js'
 import { getLevelFromXP } from '../engine/experience.js'
@@ -89,7 +90,7 @@ const COMBAT_CATEGORIES = [
     key: 'dragons_lair',
     label: 'Dragons Lair',
     icon: '🐲',
-    ids: ['green_dragon', 'red_dragon', 'king_black_dragon', 'adamant_dragon', 'rune_dragon'],
+    ids: ['green_dragon', 'red_dragon', 'black_dragon', 'king_black_dragon', 'adamant_dragon', 'rune_dragon'],
   },
   {
     key: 'venomcoil_matriarch',
@@ -1705,7 +1706,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       ) : (
       <div class="h-full overflow-y-auto p-4">
         <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider mb-3">
-          Choose a Monster
+          Choose a Foe
         </h2>
 
         {/* Idle setup buttons */}
@@ -1744,16 +1745,20 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
 
         {/* Stance selector */}
         <div class="flex gap-1.5 mb-3">
-          {['accurate', 'aggressive', 'defensive'].map(s => (
-            <button
-              key={s}
-              onClick={() => updateCombatStance(s)}
-              class={`flex-1 py-1.5 rounded-lg text-[10px] font-semibold capitalize transition-colors
-                ${combatStance === s ? 'bg-[var(--color-gold-dim)] text-white' : 'bg-[#1a1a1a] text-[var(--color-parchment)] opacity-50'}`}
-            >
-              {s}
-            </button>
-          ))}
+          {[['accurate', 'attack'], ['aggressive', 'strength'], ['defensive', 'defence']].map(([s, skill]) => {
+            const art = getSkillArt(skill)
+            return (
+              <button
+                key={s}
+                onClick={() => updateCombatStance(s)}
+                class={`flex-1 py-1.5 rounded-lg text-[10px] font-semibold capitalize transition-colors flex items-center justify-center gap-1
+                  ${combatStance === s ? 'bg-[var(--color-gold-dim)] text-white' : 'bg-[#1a1a1a] text-[var(--color-parchment)] opacity-50'}`}
+              >
+                <GameIcon iconKey={art.icon} color={art.accent} size={14} />
+                {s}
+              </button>
+            )
+          })}
         </div>
 
         <div class="space-y-4">

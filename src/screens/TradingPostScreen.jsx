@@ -67,7 +67,9 @@ export default function TradingPostScreen({ onBuyCredits }) {
   const [offersLoaded, setOffersLoaded] = useState(false)
   const [allListings, setAllListings] = useState([])
   const [listingsLoaded, setListingsLoaded] = useState(false)
+  const [listingsPage, setListingsPage] = useState(0)
   const searchAbortRef = useRef(0)
+  const LISTINGS_PAGE_SIZE = 20
 
   const hasMoneyPurse = unlockedFeatures.has('money_purse')
   const coinsInInv = countItem(inventory, 'coins')
@@ -145,6 +147,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
       const res = await api.tradingPostListings()
       setAllListings(res?.listings || [])
       setListingsLoaded(true)
+      setListingsPage(0)
     } catch (err) {
       addToast(`Failed to load listings: ${err.message}`, 'error')
     }
@@ -627,16 +630,46 @@ export default function TradingPostScreen({ onBuyCredits }) {
       )
     }
 
+    const activeListings = allListings.filter((l) => l.bestBuy !== null || l.bestSell !== null)
+    const totalPages = Math.ceil(activeListings.length / LISTINGS_PAGE_SIZE)
+    const safePage = Math.min(listingsPage, Math.max(0, totalPages - 1))
+    const pageSlice = activeListings.slice(safePage * LISTINGS_PAGE_SIZE, (safePage + 1) * LISTINGS_PAGE_SIZE)
+
     return (
       <div class="h-full overflow-y-auto px-4 pb-20 md:pb-4">
         {!listingsLoaded ? (
           <div class="py-10 px-4 text-center text-[#888] text-[12px]">Loading listings…</div>
-        ) : allListings.length === 0 ? (
+        ) : activeListings.length === 0 ? (
           <div class="py-10 px-4 text-center text-[#888] text-[12px]">No active listings.</div>
         ) : (
-          <div class="flex flex-col gap-2 pt-3">
-            {allListings.map(renderListingRow).filter(Boolean)}
-          </div>
+          <>
+            <div class="flex flex-col gap-2 pt-3">
+              {pageSlice.map(renderListingRow)}
+            </div>
+            {totalPages > 1 && (
+              <div class="flex items-center justify-center gap-3 pt-4 pb-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={safePage === 0}
+                  onClick={() => setListingsPage((p) => Math.max(0, p - 1))}
+                >
+                  ‹ Prev
+                </Button>
+                <span class="text-[11px] text-[#888]">
+                  {safePage + 1} / {totalPages}
+                </span>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={safePage >= totalPages - 1}
+                  onClick={() => setListingsPage((p) => Math.min(totalPages - 1, p + 1))}
+                >
+                  Next ›
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     )

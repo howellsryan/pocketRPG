@@ -534,37 +534,38 @@ export default function BankScreen() {
           <h2 class="font-[var(--font-display)] text-sm font-bold text-[var(--color-parchment)] opacity-60 uppercase tracking-wider flex-shrink-0">
             Bank ({bankItems.length})
           </h2>
-          <div class="flex-1 flex justify-center">
-            <div class="w-32 flex items-center bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-2.5 py-1.5">
-              <input
-                type="text"
-                value={searchTerm}
-                onInput={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search..."
-                class="flex-1 bg-transparent text-xs text-[var(--color-parchment)] outline-none placeholder:opacity-30"
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm('')}
-                  class="text-[var(--color-parchment)] opacity-40 hover:opacity-70 active:opacity-80 text-[12px] ml-1 flex-shrink-0"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
+          <div class="flex-1 min-w-0 flex items-center bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-2.5 py-1.5">
+            <input
+              type="text"
+              value={searchTerm}
+              onInput={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search..."
+              class="flex-1 min-w-0 bg-transparent text-xs text-[var(--color-parchment)] outline-none placeholder:opacity-30"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                class="relative z-10 text-[var(--color-parchment)] opacity-40 hover:opacity-70 active:opacity-80 text-[12px] ml-1 flex-shrink-0"
+              >
+                ✕
+              </button>
+            )}
           </div>
+        </div>
+
+        <div class="flex gap-1.5 overflow-x-auto pb-2" style="scrollbar-width:none;-webkit-overflow-scrolling:touch">
+          {/* Edit active tab — always left of the first tab */}
           <button
             onClick={() => {
               setTabMenu(activeTab)
               setRenameValue(activeTab === 0 ? allTabName : (tabs[activeTab - 1] ?? ''))
             }}
-            class="text-[10px] text-[var(--color-parchment)] opacity-40 px-2 py-1 rounded active:opacity-70 flex-shrink-0"
+            class="flex-shrink-0 px-2.5 py-1.5 rounded-md bg-[#222] text-[var(--color-parchment)] opacity-40 text-sm active:opacity-70"
+            aria-label="Edit tab"
           >
-            ✏️ Edit tab
+            ✏️
           </button>
-        </div>
 
-        <div class="flex gap-1.5 overflow-x-auto pb-2" style="scrollbar-width:none;-webkit-overflow-scrolling:touch">
           {/* All tab */}
           <button
             onClick={() => setActiveTab(0)}

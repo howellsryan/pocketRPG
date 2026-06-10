@@ -166,6 +166,15 @@
           ]
         },
         {
+          "id": "black_dragon",
+          "label": "Black Dragon",
+          "icon": "\ud83d\udc32",
+          "items": [
+            "dragon_visage",
+            "dragon_full_helm"
+          ]
+        },
+        {
           "id": "deepmaw_kraken",
           "label": "Deepmaw Kraken",
           "icon": "\ud83d\udc51",
