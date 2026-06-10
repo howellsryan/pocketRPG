@@ -1409,8 +1409,13 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       return false
     }
 
-    // Remove the equipped item from inventory
-    if (newInv[itemIdx].quantity > 1) {
+    // Remove the equipped item from inventory. Ammo equips the WHOLE stack
+    // (equipItem preserves sourceSlot.quantity into the ammo slot), so clear the
+    // entire inventory slot — otherwise the stack would be both worn and left in
+    // the bag (the "lose one, double the rest" bug). All other gear moves one unit.
+    if (itemData.slot === 'ammo') {
+      newInv[itemIdx] = null
+    } else if (newInv[itemIdx].quantity > 1) {
       newInv[itemIdx] = { ...newInv[itemIdx], quantity: newInv[itemIdx].quantity - 1 }
     } else {
       newInv[itemIdx] = null
