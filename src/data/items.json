@@ -1102,7 +1102,6 @@
     "name": "Burnt Food",
     "type": "junk",
     "stackable": false,
-    "isUntradeable": true,
     "shopValue": 1,
     "icon": "\ud83d\udd25",
     "isGeneralStore": false
@@ -7109,8 +7108,8 @@
     "name": "Godsword Shard",
     "type": "resource",
     "stackable": false,
-    "isUntradeable": true,
     "shopValue": 65000,
+    "isSpecialSource": true,
     "icon": "\ud83d\udd29",
     "isGeneralStore": false
   },
@@ -7897,6 +7896,7 @@
     "stackable": false,
     "icon": "\ud83d\udc80",
     "shopValue": 1000000,
+    "isSpecialSource": true,
     "attackBonus": {
       "stab": 10,
       "slash": 10,
@@ -7921,7 +7921,6 @@
     "requirements": {
       "slayer": 20
     },
-    "isUntradeable": true,
     "isGeneralStore": false
   },
   "money_purse": {
@@ -8325,7 +8324,6 @@
     "effect": "combat",
     "boost": 18,
     "duration": 300,
-    "isUntradeable": true,
     "isGeneralStore": false
   },
   "dragon_pickaxe": {
@@ -8800,9 +8798,9 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 0,
+    "shopValue": 2000000,
+    "isSpecialSource": true,
     "icon": "\ud83d\udd25",
-    "isUntradeable": true,
     "isGeneralStore": false
   },
   "infernal_cape": {
@@ -8832,9 +8830,9 @@
       "magicDamage": 0
     },
     "requirements": {},
-    "shopValue": 0,
+    "shopValue": 10000000,
+    "isSpecialSource": true,
     "icon": "\ud83c\udf0b",
-    "isUntradeable": true,
     "isGeneralStore": false
   },
   "shardglass_shards": {
@@ -8844,8 +8842,8 @@
     "type": "resource",
     "stackable": true,
     "shopValue": 500,
+    "isSpecialSource": true,
     "icon": "\ud83d\udc8e",
-    "isUntradeable": true,
     "isGeneralStore": false
   },
   "shardglass_helmet": {
@@ -10760,7 +10758,6 @@
     "type": "armour",
     "slot": "boots",
     "stackable": false,
-    "isUntradeable": true,
     "questUnlock": "doom_plateau",
     "attackBonus": {
       "stab": 0,
@@ -10820,8 +10817,8 @@
       "ranged": 70
     },
     "questUnlock": "wandering_elves",
-    "isUntradeable": true,
     "shopValue": 300000,
+    "isSpecialSource": true,
     "icon": "\ud83c\udff9",
     "isGeneralStore": false
   },
@@ -10832,7 +10829,6 @@
     "type": "armour",
     "slot": "shield",
     "stackable": false,
-    "isUntradeable": true,
     "questUnlock": "wandering_elves",
     "attackBonus": {
       "stab": 0,
@@ -10859,6 +10855,7 @@
       "defence": 70
     },
     "shopValue": 300000,
+    "isSpecialSource": true,
     "icon": "\ud83d\udee1\ufe0f",
     "isGeneralStore": false
   },
@@ -11942,9 +11939,9 @@
     "type": "quest",
     "stackable": true,
     "shopValue": 1,
+    "isSpecialSource": true,
     "icon": "\ud83d\udcdc",
-    "isGeneralStore": false,
-    "isUntradeable": true
+    "isGeneralStore": false
   },
   "clue_scroll_hard": {
     "id": "clue_scroll_hard",
@@ -11953,9 +11950,9 @@
     "type": "quest",
     "stackable": true,
     "shopValue": 1,
+    "isSpecialSource": true,
     "icon": "\ud83d\udcdc",
-    "isGeneralStore": false,
-    "isUntradeable": true
+    "isGeneralStore": false
   },
   "clue_scroll_elite": {
     "id": "clue_scroll_elite",
@@ -11964,9 +11961,9 @@
     "type": "quest",
     "stackable": true,
     "shopValue": 1,
+    "isSpecialSource": true,
     "icon": "\ud83d\udcdc",
-    "isGeneralStore": false,
-    "isUntradeable": true
+    "isGeneralStore": false
   },
   "clue_scroll_master": {
     "id": "clue_scroll_master",
@@ -11975,9 +11972,9 @@
     "type": "quest",
     "stackable": true,
     "shopValue": 1,
+    "isSpecialSource": true,
     "icon": "\ud83d\udcdc",
-    "isGeneralStore": false,
-    "isUntradeable": true
+    "isGeneralStore": false
   },
   "mithril_plateskirt": {
     "id": "mithril_plateskirt",
@@ -15402,6 +15399,7 @@
     "type": "armour",
     "stackable": false,
     "shopValue": 5000000,
+    "isSpecialSource": true,
     "icon": "\ud83e\udd4a",
     "isGeneralStore": false,
     "slot": "gloves",
@@ -15426,7 +15424,6 @@
       "magic": 0,
       "ranged": 0
     },
-    "isUntradeable": true,
     "requirements": {
       "slayer": 85,
       "ranged": 85,
@@ -15441,6 +15438,7 @@
     "type": "armour",
     "stackable": false,
     "shopValue": 5000000,
+    "isSpecialSource": true,
     "icon": "\ud83d\udee1\ufe0f",
     "isGeneralStore": false,
     "slot": "shield",
@@ -15465,7 +15463,6 @@
       "magic": -10,
       "ranged": -10
     },
-    "isUntradeable": true,
     "requirements": {
       "slayer": 85,
       "attack": 50,
@@ -15605,8 +15602,8 @@
       "dungeoneering": 80
     },
     "shopValue": 200000,
+    "isSpecialSource": true,
     "icon": "\ud83d\udde1\ufe0f",
-    "isUntradeable": true,
     "isGeneralStore": false
   },
   "chaotic_longsword": {
@@ -15644,8 +15641,8 @@
       "dungeoneering": 80
     },
     "shopValue": 200000,
+    "isSpecialSource": true,
     "icon": "\u2694\ufe0f",
-    "isUntradeable": true,
     "isGeneralStore": false
   },
   "chaotic_maul": {
@@ -15683,8 +15680,8 @@
       "dungeoneering": 80
     },
     "shopValue": 200000,
+    "isSpecialSource": true,
     "icon": "\ud83d\udd28",
-    "isUntradeable": true,
     "isGeneralStore": false
   },
   "chaotic_crossbow": {
@@ -15722,8 +15719,8 @@
       "dungeoneering": 80
     },
     "shopValue": 200000,
+    "isSpecialSource": true,
     "icon": "\ud83c\udff9",
-    "isUntradeable": true,
     "isGeneralStore": false
   },
   "chaotic_staff": {
@@ -15760,8 +15757,8 @@
       "dungeoneering": 80
     },
     "shopValue": 200000,
+    "isSpecialSource": true,
     "icon": "\ud83e\ude84",
-    "isUntradeable": true,
     "isGeneralStore": false
   },
   "arcane_necklace": {
@@ -15795,8 +15792,8 @@
       "dungeoneering": 65
     },
     "shopValue": 100000,
+    "isSpecialSource": true,
     "icon": "\ud83d\udcff",
-    "isUntradeable": true,
     "isGeneralStore": false
   },
   "eagle_eyed_kiteshield": {
@@ -15831,8 +15828,8 @@
       "dungeoneering": 80
     },
     "shopValue": 200000,
+    "isSpecialSource": true,
     "icon": "\ud83d\udee1\ufe0f",
-    "isUntradeable": true,
     "isGeneralStore": false
   },
   "arcane_kiteshield": {
@@ -15867,8 +15864,8 @@
       "dungeoneering": 80
     },
     "shopValue": 200000,
+    "isSpecialSource": true,
     "icon": "\ud83d\udee1\ufe0f",
-    "isUntradeable": true,
     "isGeneralStore": false
   },
   "dragon_warhammer": {
@@ -16667,8 +16664,8 @@
       "slayer": 80
     },
     "shopValue": 7500000,
+    "isSpecialSource": true,
     "icon": "\ud83d\udc80",
-    "isUntradeable": true,
     "isGeneralStore": false
   },
   "ashen_sovereigns_edge": {

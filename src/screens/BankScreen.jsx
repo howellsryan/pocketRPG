@@ -101,6 +101,13 @@ export default function BankScreen() {
     const item = itemsData[itemId]
     const newInv = [...inventory]
     let actualWithdrawn = 0
+    // Charge pool semantics: deposits merge charges into the single bank
+    // entry, so a withdrawal takes its proportional share of the pool (the
+    // full pool when the entry empties) and the bank keeps the rest. The old
+    // code copied the full pool onto the withdrawn item AND left it in the
+    // bank, duplicating charges on partial withdrawals.
+    const poolCharges = Math.max(0, Math.floor(bankEntry.charges || 0))
+    const newSlotIndices = []
 
     if (item?.stackable || asNote) {
       const matchFn = asNote
@@ -115,27 +122,45 @@ export default function BankScreen() {
         if (empty === -1) { addToast('Inventory full', 'error'); return }
         const slot = { itemId, quantity: qty }
         if (asNote) slot.noted = true
-        // Preserve charges from bank entry
-        if (bankEntry.charges && bankEntry.charges > 0) slot.charges = bankEntry.charges
         newInv[empty] = slot
+        newSlotIndices.push(empty)
         actualWithdrawn = qty
       }
     } else {
       for (let i = 0; i < qty; i++) {
         const empty = newInv.indexOf(null)
         if (empty === -1) break
-        const slot = { itemId, quantity: 1 }
-        // Preserve charges from bank entry
-        if (bankEntry.charges && bankEntry.charges > 0) slot.charges = bankEntry.charges
-        newInv[empty] = slot
+        newInv[empty] = { itemId, quantity: 1 }
+        newSlotIndices.push(empty)
         actualWithdrawn++
       }
       if (actualWithdrawn === 0) { addToast('Inventory full', 'error'); return }
     }
 
+    // Distribute the withdrawn share of the charge pool over the new slots
+    // (Math.floor split, remainder on the last slot so no charge is lost).
+    const withdrawnPool = poolCharges > 0 && newSlotIndices.length > 0
+      ? (actualWithdrawn >= bankEntry.quantity
+          ? poolCharges
+          : Math.floor(poolCharges * actualWithdrawn / bankEntry.quantity))
+      : 0
+    if (withdrawnPool > 0) {
+      const per = Math.floor(withdrawnPool / newSlotIndices.length)
+      newSlotIndices.forEach((slotIdx, i) => {
+        const charges = i === newSlotIndices.length - 1
+          ? withdrawnPool - per * (newSlotIndices.length - 1)
+          : per
+        if (charges > 0) newInv[slotIdx] = { ...newInv[slotIdx], charges }
+      })
+    }
+
     const newBank = { ...bank }
     const updatedEntry = { ...bankEntry, quantity: bankEntry.quantity - actualWithdrawn }
-    // For non-stackable items with charges, clear charges when quantity reaches 0
+    if (withdrawnPool > 0) {
+      const remainingCharges = poolCharges - withdrawnPool
+      if (remainingCharges > 0) updatedEntry.charges = remainingCharges
+      else delete updatedEntry.charges
+    }
     if (updatedEntry.quantity <= 0) {
       delete newBank[itemId]
       updateBankConfig({

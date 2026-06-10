@@ -27,12 +27,13 @@ async function getCharacterId(request, env, identityId) {
   const id = parseInt(idStr, 10)
   if (!Number.isFinite(id)) return { error: 'Invalid character id', status: 400 }
 
-  // Confirm ownership
+  // Confirm ownership. total_level / combat_level ride along so the PUT
+  // path can skip the denormalized-summary UPDATE when nothing changed.
   const row = await env.DB.prepare(
-    'SELECT id FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
+    'SELECT id, total_level, combat_level FROM characters WHERE id = ? AND owner_id = ? AND deleted_at IS NULL'
   ).bind(id, identityId).first()
   if (!row) return { error: 'Character not found', status: 404 }
-  return { id }
+  return { id, total_level: row.total_level, combat_level: row.combat_level }
 }
 
 export async function onRequestGet({ request, env }) {
@@ -100,12 +101,12 @@ export async function onRequestPut({ request, env }) {
     return json({ error: 'save_revision_conflict', code: 'SAVE_REVISION_CONFLICT', current_revision: currentRevision }, 409)
   }
 
-  // Decode the previous save once. The total-level regression guard runs
-  // against it; a decode failure on an existing row should surface as an
-  // error, not let the write through.
+  // Decode the previous save once. The total-level regression guard and the
+  // no-op detection below run against it; a decode failure on an existing
+  // row should surface as an error, not let the write through.
   let previousSave = {}
+  let previousJson = null
   if (existing?.save_data || existing?.save_blob) {
-    let previousJson = null
     try {
       const decoded = await decodeSaveRow(existing)
       previousJson = decoded?.save_data || existing?.save_data || null
@@ -161,13 +162,27 @@ export async function onRequestPut({ request, env }) {
   // regression (above), which is account-wipe protection, not anti-cheat.
 
   const now = Date.now()
+
+  // No-op save: the incoming payload matches what's already stored (modulo
+  // the volatile top-level `timestamp` the client stamps on every push), so
+  // skip the write entirely and hand back the current revision. AFK/idle
+  // tabs push unchanged saves on the 60s cadence; together with the
+  // client-side dirty check this stops them burning the daily write budget.
+  if (save_data !== null && previousJson !== null && parsedNext) {
+    const prevKey = JSON.stringify({ ...previousSave, timestamp: 0 })
+    const nextKey = JSON.stringify({ ...parsedNext, timestamp: 0 })
+    if (prevKey === nextKey) {
+      return json({ ok: true, updatedAt: now, save_revision: currentRevision, noop: true })
+    }
+  }
+
   // Recompute denormalized summary so the leaderboard / PvP CB lookups can
   // run as cheap indexed SELECTs against `characters` instead of LEFT
   // JOINing `saves` and JSON.parsing the full blob in a Worker.
   const { totalLevel, combatLevel } = computeSaveSummaryFromJson(save_data)
   const save_blob = save_data ? await gzipJsonString(save_data) : null
 
-  await env.DB.batch([
+  const statements = [
     env.DB.prepare(
       `INSERT INTO saves (character_id, save_blob, save_data, updated_at, save_revision)
        VALUES (?, ?, ?, ?, 1)
@@ -177,13 +192,21 @@ export async function onRequestPut({ request, env }) {
          updated_at = excluded.updated_at,
          save_revision = COALESCE(saves.save_revision, 0) + 1`
     ).bind(ch.id, save_blob, save_data, now),
-    env.DB.prepare(
-      `UPDATE characters
-          SET total_level = ?,
-              combat_level = ?
-        WHERE id = ? AND owner_id = ? AND deleted_at IS NULL`
-    ).bind(totalLevel, combatLevel, ch.id, auth.identity.id),
-  ])
+  ]
+  // total_level / combat_level rarely change between saves — only include the
+  // characters UPDATE in the batch when the stored summary actually differs.
+  // This removes roughly half the daily save-path writes in the common case.
+  if (Number(ch.total_level) !== totalLevel || Number(ch.combat_level) !== combatLevel) {
+    statements.push(
+      env.DB.prepare(
+        `UPDATE characters
+            SET total_level = ?,
+                combat_level = ?
+          WHERE id = ? AND owner_id = ? AND deleted_at IS NULL`
+      ).bind(totalLevel, combatLevel, ch.id, auth.identity.id),
+    )
+  }
+  await env.DB.batch(statements)
 
   const revisionRow = await env.DB.prepare('SELECT save_revision FROM saves WHERE character_id = ?').bind(ch.id).first()
   return json({ ok: true, updatedAt: now, save_revision: Number(revisionRow?.save_revision) || 0 })
