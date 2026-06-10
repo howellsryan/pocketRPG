@@ -40,3 +40,20 @@ export function splatsFromCombatEvents(events) {
   }
   return { monster, player }
 }
+
+// Maps PvP tick events (the engine's tick-tagged recentEvents entries) to
+// splats per side for the given viewer. Returns { self: [...], opp: [...] } —
+// damage you take shows over your HP badge, damage you deal over the
+// opponent's. Multi-hit specials splat each hit; 0 is a miss/blocked hit.
+export function splatsFromPvpEvents(events, selfCharacterId) {
+  const self = []
+  const opp = []
+  const selfId = Number(selfCharacterId)
+  for (const ev of events || []) {
+    if (!ev || ev.type !== 'attack') continue
+    const target = Number(ev.defenderCharacterId) === selfId ? self : opp
+    const hits = Array.isArray(ev.hits) && ev.hits.length > 0 ? ev.hits : [ev.damage]
+    for (const hit of hits) target.push(makeHitSplat(hit))
+  }
+  return { self, opp }
+}

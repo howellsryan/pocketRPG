@@ -4,7 +4,7 @@
 // the player takes shows over the player's; misses are 0-value splats.
 
 import { describe, it, expect } from 'vitest'
-import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../src/utils/hitSplats.js'
+import { splatsFromCombatEvents, splatsFromPvpEvents, HIT_SPLAT_DURATION_MS } from '../src/utils/hitSplats.js'
 
 describe('splatsFromCombatEvents', () => {
   it('maps playerHit damage to a monster splat', () => {
@@ -80,5 +80,49 @@ describe('splatsFromCombatEvents', () => {
 
   it('exposes a positive splat lifetime', () => {
     expect(HIT_SPLAT_DURATION_MS).toBeGreaterThan(0)
+  })
+})
+
+describe('splatsFromPvpEvents', () => {
+  it('routes damage you deal to the opponent side and damage you take to self', () => {
+    const { self, opp } = splatsFromPvpEvents([
+      { type: 'attack', attackerCharacterId: 1, defenderCharacterId: 2, damage: 14 },
+      { type: 'attack', attackerCharacterId: 2, defenderCharacterId: 1, damage: 9 },
+    ], 1)
+    expect(opp.map((s) => s.value)).toEqual([14])
+    expect(self.map((s) => s.value)).toEqual([9])
+  })
+
+  it('splats each hit of a multi-hit special separately', () => {
+    const { opp } = splatsFromPvpEvents([
+      { type: 'attack', attackerCharacterId: 1, defenderCharacterId: 2, damage: 18, hits: [10, 0, 8] },
+    ], 1)
+    expect(opp.map((s) => s.value)).toEqual([10, 0, 8])
+  })
+
+  it('shows misses as 0-value splats', () => {
+    const { self } = splatsFromPvpEvents([
+      { type: 'attack', attackerCharacterId: 2, defenderCharacterId: 1, damage: 0, hit: false },
+    ], 1)
+    expect(self.map((s) => s.value)).toEqual([0])
+  })
+
+  it('handles string vs number character id comparison', () => {
+    const { self } = splatsFromPvpEvents([
+      { type: 'attack', attackerCharacterId: 2, defenderCharacterId: '1', damage: 5 },
+    ], 1)
+    expect(self.map((s) => s.value)).toEqual([5])
+  })
+
+  it('ignores non-attack events', () => {
+    const { self, opp } = splatsFromPvpEvents([
+      { type: 'eat', characterId: 1, itemId: 'shark', heal: 20 },
+      { type: 'drink', characterId: 2, itemId: 'attack_potion' },
+      { type: 'no_ammo', characterId: 1 },
+      { type: 'forfeit', characterId: 2 },
+      null,
+    ], 1)
+    expect(self).toHaveLength(0)
+    expect(opp).toHaveLength(0)
   })
 })

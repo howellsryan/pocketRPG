@@ -182,6 +182,20 @@ describe('pvpEngine phase 2B contract', () => {
     expect(out.stateNext.recentEvents.length).toBeLessThanOrEqual(20)
   })
 
+  it('tags emitted events with the tick they landed on', () => {
+    const a = buildPlayer({ characterId: 1 })
+    const b = buildPlayer({ characterId: 2 })
+    const state = createPvpState(a, b, 0)
+    state.combatants['1'].attackTimer = 1
+    state.combatants['2'].attackTimer = 1
+
+    const out = processPvpTick(state, [], items)
+
+    expect(out.events.length).toBeGreaterThan(0)
+    for (const ev of out.events) expect(ev.tick).toBe(out.stateNext.tick)
+    for (const ev of out.stateNext.recentEvents) expect(ev.tick).toBe(out.stateNext.tick)
+  })
+
   it('consumes special energy when a queued special fires', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0)
 

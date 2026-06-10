@@ -18,6 +18,8 @@ import { isPvpCombatPotion } from '../engine/pvpPotions.js'
 import { calculatePvpRiskValues } from '../engine/pvpRisk.js'
 import { formatCompactCoins } from '../utils/formatters.js'
 import { getPrayerStyleIcon } from '../utils/prayerIcons.js'
+import { splatsFromPvpEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
+import { HitSplatLayer } from '../components/HitSplat.jsx'
 
 const POLL_VISIBLE_MS = 600
 const POLL_HIDDEN_MS = 1500
@@ -41,7 +43,7 @@ function formatPvpRank(combatant) {
   return Number.isFinite(rank) && rank > 0 ? `#${Math.floor(rank)}` : 'No Rank'
 }
 
-function CompactHpBadge({ label, combatant, align = 'left' }) {
+function CompactHpBadge({ label, combatant, align = 'left', splats = null }) {
   const current = Math.max(0, Number(combatant?.hp ?? combatant?.currentHP ?? 0) || 0)
   const max = Math.max(1, Number(combatant?.maxHP ?? 1) || 1)
   const pct = Math.max(0, Math.min(100, (current / max) * 100))
@@ -49,7 +51,8 @@ function CompactHpBadge({ label, combatant, align = 'left' }) {
   const rankLabel = formatPvpRank(combatant)
 
   return (
-    <div class={`min-w-0 ${align === 'right' ? 'text-right' : 'text-left'}`}>
+    <div class={`relative min-w-0 ${align === 'right' ? 'text-right' : 'text-left'}`}>
+      <HitSplatLayer splats={splats} />
       <div class="text-[10px] uppercase tracking-wide text-[var(--color-parchment)] opacity-60">{label}</div>
       <div class="text-sm font-semibold text-[var(--color-parchment)] truncate">{combatant?.username || '...'}</div>
       <div class="text-[11px] font-[var(--font-mono)] text-[var(--color-gold)]">HP {current}/{max}</div>
@@ -216,6 +219,8 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const [staleWarning, setStaleWarning] = useState(false)
   const [specialQueuedOverride, setSpecialQueuedOverride] = useState(null)
   const [prayerQueuedOverride, setPrayerQueuedOverride] = useState(undefined)
+  const [selfSplats, setSelfSplats] = useState([])
+  const [oppSplats, setOppSplats] = useState([])
 
   const selfId = useMemo(() => parseInt(getCharacterId(), 10), [])
   const pollTimer = useRef(null)
@@ -228,6 +233,8 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
   const terminalHandledRef = useRef(false)
   const endModalOpenRef = useRef(false)
   const prayerOverrideTimer = useRef(null)
+  const splatTimersRef = useRef(new Set())
+  const lastSplatTickRef = useRef(null)
 
   useEffect(() => {
     pendingActionRef.current = pendingAction
@@ -251,6 +258,38 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
     const opp = combatants.find(c => getId(c) !== selfId) || null
     return { self, opp }
   }, [state, selfId])
+
+  // Hit splats — floating damage markers over the HP badges. The engine tags
+  // recentEvents with the tick they landed on, so each state update splats
+  // only the events newer than the last seen tick (tick responses carry
+  // events only for whichever player's call advanced the match).
+  const pushSplats = (setter, splats) => {
+    if (!splats.length) return
+    setter(prev => [...prev, ...splats])
+    const ids = new Set(splats.map(s => s.id))
+    const timer = setTimeout(() => {
+      splatTimersRef.current.delete(timer)
+      setter(prev => prev.filter(s => !ids.has(s.id)))
+    }, HIT_SPLAT_DURATION_MS)
+    splatTimersRef.current.add(timer)
+  }
+
+  const ingestSplats = (normalizedState) => {
+    const tick = normalizedState?.tick || 0
+    if (lastSplatTickRef.current === null) {
+      // First state after mount: don't replay the recent-event history.
+      lastSplatTickRef.current = tick
+      return
+    }
+    if (tick <= lastSplatTickRef.current) return
+    const fresh = (normalizedState.recentEvents || []).filter(
+      (ev) => Number(ev?.tick) > lastSplatTickRef.current,
+    )
+    lastSplatTickRef.current = tick
+    const { self, opp } = splatsFromPvpEvents(fresh, selfId)
+    pushSplats(setSelfSplats, self)
+    pushSplats(setOppSplats, opp)
+  }
 
   const serverSpecialQueued = !!pair.self?.specialAttackQueued
   const specialVisuallyQueued = specialQueuedOverride !== null
@@ -289,6 +328,8 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
       mounted.current = false
       if (pollTimer.current) clearTimeout(pollTimer.current)
       if (prayerOverrideTimer.current) clearTimeout(prayerOverrideTimer.current)
+      for (const t of splatTimersRef.current) clearTimeout(t)
+      splatTimersRef.current.clear()
     }
   }, [])
 
@@ -390,6 +431,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
       if (normalizedState) {
         setState(normalizedState)
         latestTick.current = normalizedState.tick || 0
+        ingestSplats(normalizedState)
       }
     } else if (res?.match?.current_tick != null) {
       latestTick.current = Number(res.match.current_tick) || latestTick.current
@@ -420,6 +462,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
         if (normalizedState) {
           setState(normalizedState)
           latestTick.current = normalizedState.tick || latestTick.current
+          ingestSplats(normalizedState)
         }
       }
       lastPollOkAt.current = Date.now()
@@ -722,7 +765,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
         <div class="grid grid-cols-[minmax(220px,1fr)_minmax(0,1.4fr)_minmax(220px,1fr)] gap-4 items-start">
           <div class="space-y-2">
             <Card className="bg-[var(--color-void-dark)]">
-              <CompactHpBadge label="You" combatant={pair.self} align="left" />
+              <CompactHpBadge label="You" combatant={pair.self} align="left" splats={selfSplats} />
             </Card>
             <Card>
               <div class="flex items-center justify-between mb-2">
@@ -809,7 +852,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
           <div class="space-y-2">
             <Card className="bg-[var(--color-void-dark)]">
-              <CompactHpBadge label="Opponent" combatant={pair.opp} align="right" />
+              <CompactHpBadge label="Opponent" combatant={pair.opp} align="right" splats={oppSplats} />
             </Card>
             <Card>
               <div class="text-[10px] uppercase tracking-wide text-[var(--color-gold)] mb-2 text-right">Opponent gear</div>
@@ -827,8 +870,8 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
           <Card className="bg-[var(--color-void-dark)]">
             <div class="grid grid-cols-2 gap-3 items-start">
-              <CompactHpBadge label="Opponent" combatant={pair.opp} align="left" />
-              <CompactHpBadge label="You" combatant={pair.self} align="right" />
+              <CompactHpBadge label="Opponent" combatant={pair.opp} align="left" splats={oppSplats} />
+              <CompactHpBadge label="You" combatant={pair.self} align="right" splats={selfSplats} />
             </div>
             <div class="mt-2 text-center text-[10px] font-[var(--font-mono)] text-[var(--color-gold)]">
               Tick {state?.tick ?? matchMeta?.current_tick ?? 0}
