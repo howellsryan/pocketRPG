@@ -63,12 +63,12 @@ export async function onRequestPost({ request, env }) {
 
     normalizeSaveItemIds(saveObject, itemsData)
 
-    // Non-order-book sells auto-fill at the item's shopValue — since the
-    // 2026-06 order-book migration only quest-unlock items reach this branch
-    // (their quest shop keeps buying/selling at fixed prices). The game is the
-    // buyer; the listing never touches the order book, so no slot is consumed
-    // and no DB row is inserted. The client-supplied price is intentionally
-    // ignored to prevent a "list at extreme price → game buys" gold dupe.
+    // Non-order-book sells auto-fill at the item's shopValue — General Store
+    // stock and quest-unlock items reach this branch (the store/quest shop
+    // keeps buying/selling at fixed prices). The game is the buyer; the
+    // listing never touches the order book, so no slot is consumed and no DB
+    // row is inserted. The client-supplied price is intentionally ignored to
+    // prevent a "list at extreme price → game buys" gold dupe.
     if (offerType === 'sell' && !isOrderBookItem(item)) {
       const { unit, totalPayout } = autoFillSellAtShopValue(saveObject, item, itemId, quantity, source)
       const write = await writeSave(env, characterId, saveObject, saveRevision)
@@ -85,6 +85,14 @@ export async function onRequestPost({ request, env }) {
         updatedAt: write.updatedAt,
         max_slots: MAX_ACTIVE_OFFERS_PER_CHARACTER,
       })
+    }
+
+    // Buy side of a non-order-book item: the General Store / quest shop sells
+    // these at a fixed price in unlimited quantity, so a resting buy offer
+    // could never be filled by a rational seller. Rejecting it keeps the
+    // order book free of General Store and quest items entirely.
+    if (!isOrderBookItem(item)) {
+      return json({ error: 'This item is sold by the General Store — buy it there instead.', code: 'GENERAL_STORE_ITEM' }, 400)
     }
 
     await assertSlotAvailable(env, characterId)

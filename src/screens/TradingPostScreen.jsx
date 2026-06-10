@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'preact/hooks'
 import { useGame } from '../state/gameState.jsx'
 import { countItem } from '../engine/inventory.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
-import { isOrderBookItem, getPurchaseRestriction, isStoreVisibleItem } from '../engine/storeRules.js'
+import { isOrderBookItem, getPurchaseRestriction } from '../engine/storeRules.js'
 import { getLevelFromXP } from '../engine/experience.js'
 import Panel from '../components/Panel.jsx'
 import GameIcon from '../components/GameIcon.jsx'
@@ -55,6 +55,7 @@ export default function TradingPostScreen({ onBuyCredits }) {
   const isDesktop = useIsDesktop()
 
   const [mode, setMode] = useState('market')
+  const [storeFilter, setStoreFilter] = useState('all') // 'all' | 'store' | 'quest'
   const [searchTerm, setSearchTerm] = useState('')
   const [selected, setSelected] = useState(null) // item entry from search
   const [pendingAction, setPendingAction] = useState(null) // 'buy' | 'sell'
@@ -80,15 +81,32 @@ export default function TradingPostScreen({ onBuyCredits }) {
   ), [])
 
   // Pre-index searchable items once -- 24K-line items.json justifies the cost.
+  // The market search carries order-book items only; General Store stock,
+  // quest items and skill capes live in the General Store tab instead.
   const searchablePool = useMemo(() => {
     const pool = []
     for (const [id, item] of Object.entries(itemsData)) {
       if (!item || (item.id && item.id !== id)) continue
-      if (!isStoreVisibleItem(item, { isIronman: false, includeQuestItems: true })) continue
+      if (!isOrderBookItem(item)) continue
       pool.push({ id, item, lower: (item.name || '').toLowerCase() })
     }
     return pool
   }, [itemsData])
+
+  // General Store inventory: curated store stock, skill capes and minigame
+  // unlock products, plus quest-unlock items (toggled via the store filter).
+  const storePool = useMemo(() => {
+    const pool = []
+    for (const [id, item] of Object.entries(itemsData)) {
+      if (!item || (item.id && item.id !== id)) continue
+      const isQuestItem = Boolean(item.questUnlock)
+      const isStoreStock = Boolean(item.isGeneralStore) || Boolean(item.isSkillCape) || minigameProductIds.has(id)
+      if (!isQuestItem && !isStoreStock) continue
+      pool.push({ id, item, isQuestItem })
+    }
+    pool.sort((a, b) => (a.item.name || '').localeCompare(b.item.name || ''))
+    return pool
+  }, [itemsData, minigameProductIds])
 
   const refreshMyOffers = async () => {
     try {
@@ -516,6 +534,25 @@ export default function TradingPostScreen({ onBuyCredits }) {
     )
   }
 
+  const renderStore = () => {
+    const rows = storePool.filter((row) => {
+      if (storeFilter === 'store') return !row.isQuestItem
+      if (storeFilter === 'quest') return row.isQuestItem
+      return true
+    })
+    return (
+      <div class="h-full overflow-y-auto px-4 pb-20 md:pb-4">
+        {rows.length === 0 ? (
+          <div class="py-10 px-4 text-center text-[#888] text-[12px]">No items in this category.</div>
+        ) : (
+          <div class="flex flex-col gap-2 pt-3">
+            {rows.map((row) => renderListRow({ ...row.item, id: row.id }))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   const renderListings = () => {
     const renderListingRow = (listing) => {
       const item = itemsData[listing.item_id]
@@ -671,6 +708,14 @@ export default function TradingPostScreen({ onBuyCredits }) {
             } inline-flex items-center gap-1`}
           ><GameIcon iconKey="search" size={13} color="currentColor" /> Market</button>
           <button
+            onClick={() => setMode('store')}
+            class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
+              mode === 'store'
+                ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
+                : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
+            } inline-flex items-center gap-1`}
+          ><GameIcon iconKey="coins" size={13} color="currentColor" /> General Store</button>
+          <button
             onClick={() => { setMode('offers'); refreshMyOffers() }}
             class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
               mode === 'offers'
@@ -702,6 +747,21 @@ export default function TradingPostScreen({ onBuyCredits }) {
             class="w-full px-3 py-2 rounded-lg border border-[#2a2a2a] bg-[#111] text-[var(--color-parchment)] text-[13px] outline-none"
           />
         )}
+        {mode === 'store' && (
+          <div class="flex gap-2">
+            {[['all', 'All'], ['store', 'General Store'], ['quest', 'Quest Items']].map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setStoreFilter(key)}
+                class={`px-3 py-[5px] rounded-[20px] text-[11px] font-semibold border ${
+                  storeFilter === key
+                    ? 'border-[var(--color-gold)] bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)]'
+                    : 'border-[#2a2a2a] bg-[var(--color-void-light)] text-[var(--color-parchment)] opacity-60'
+                }`}
+              >{label}</button>
+            ))}
+          </div>
+        )}
         {mode === 'listings' && (
           <div class="text-[11px] text-[#888]">Browse all active market listings</div>
         )}
@@ -721,6 +781,8 @@ export default function TradingPostScreen({ onBuyCredits }) {
             </div>
           )}
         </div>
+      ) : mode === 'store' ? (
+        renderStore()
       ) : mode === 'offers' ? (
         <div class="h-full overflow-y-auto">
           {renderMyOffersList()}

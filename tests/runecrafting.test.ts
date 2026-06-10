@@ -47,7 +47,9 @@ describe('runecrafting enablement and data', () => {
 
   it('has rune essence item and all rune products defined stackable', () => {
     expect((items as any).rune_essence).toBeTruthy()
-    expect((items as any).rune_essence.isGeneralStore).toBe(true)
+    // Rune essence is mined or player-traded, not General Store stock
+    // (the curated store list covers crafted runes, not essence).
+    expect((items as any).rune_essence.isGeneralStore).toBe(false)
     expect((items as any).rune_essence.stackable).toBe(true)
 
     for (const [, , , product] of RUNES) {

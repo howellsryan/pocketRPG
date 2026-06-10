@@ -741,4 +741,10 @@ describe('order-book migration — isOrderBookItem / isTradingPostListable', () 
     expect(isOrderBookItem({ isUntradeable: true, shopValue: 500 })).toBe(false)
     expect(isOrderBookItem({ shopValue: 0 })).toBe(false)
   })
+
+  it('General Store stock stays on the immediate-execute store path', () => {
+    expect(isOrderBookItem({ shopValue: 100, isGeneralStore: true })).toBe(false)
+    // Still passes the list gate so sell listings auto-fill at shopValue.
+    expect(isTradingPostListable({ shopValue: 100, isGeneralStore: true })).toBe(true)
+  })
 })

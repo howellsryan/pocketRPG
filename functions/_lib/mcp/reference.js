@@ -119,11 +119,11 @@ export function searchMonsters({ query, limit } = {}) {
   return { total: all.length, returned: Math.min(all.length, cap), monsters: all.slice(0, cap) }
 }
 
-// Item value reference. shopValue is the static reference price; since the
-// 2026-06 order-book migration these items are traded player-to-player on
-// the Trading Post order book (search_market / place_offer), NOT bought from
-// an infinite store — buy_item only works for quest-unlock items, skill
-// capes and minigame unlock products.
+// General Store catalogue. shopValue is the fixed store price — this curated
+// stock buys/sells through the infinite General Store (buy_item /
+// sell_item), never the order book. buy_item also covers quest-unlock items,
+// skill capes and minigame unlock products; every other tradeable item is
+// player-to-player via the order book (search_market / place_offer).
 export function shopCatalog() {
   return Object.values(itemsData)
     .filter((it) => it.isGeneralStore === true && !it.isBossUnique && !it.isClueReward && !it.isRaidUnique)
@@ -157,7 +157,7 @@ const REFERENCE = {
   'pocketrpg://reference/mechanics': { mime: 'text/markdown', name: 'Game mechanics', body: () => MECHANICS },
   'pocketrpg://reference/items': { mime: 'application/json', name: 'Item index', body: () => itemsIndex() },
   'pocketrpg://reference/monsters': { mime: 'application/json', name: 'Monster index', body: () => monstersIndex() },
-  'pocketrpg://reference/shop': { mime: 'application/json', name: 'Item value reference (items trade on the player order book)', body: () => shopCatalog() },
+  'pocketrpg://reference/shop': { mime: 'application/json', name: 'General Store catalogue (fixed-price store stock; other items trade on the player order book)', body: () => shopCatalog() },
   'pocketrpg://reference/skills': { mime: 'application/json', name: 'Skills & actions', body: () => skillsData },
   'pocketrpg://reference/spells': { mime: 'application/json', name: 'Spellbook', body: () => spellsData },
   'pocketrpg://reference/prayers': { mime: 'application/json', name: 'Prayers', body: () => prayersData },

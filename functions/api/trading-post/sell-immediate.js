@@ -10,9 +10,9 @@ import { addCoins } from '../../_lib/game/economy.js'
 
 // POST /api/trading-post/sell-immediate  { item_id, quantity }
 //
-// Immediate-execute sell path for anything NOT on the order book — since the
-// 2026-06 order-book migration that means quest-unlock items and untradeables
-// with a shop value (the untradeable item sink). Settles at the item's static
+// Immediate-execute sell path for anything NOT on the order book — General
+// Store stock, quest-unlock items and untradeables with a shop value (the
+// untradeable item sink). Settles at the item's static
 // shopValue; player gets coins, items leave their inventory. Every other
 // tradeable item must be listed via /api/trading-post/list (quick exit:
 // instant-sell the listing at 80%).
