@@ -512,7 +512,7 @@
       {
         "id": "smelt_rune",
         "name": "Smelt runeforged bar",
-        "level": 85,
+        "level": 75,
         "ticks": 4,
         "xp": 50,
         "product": "runeforged_bar",
@@ -524,7 +524,7 @@
       {
         "id": "smith_rune_axe",
         "name": "Smith runeforged axe",
-        "level": 86,
+        "level": 76,
         "ticks": 5,
         "xp": 75,
         "product": "runeforged_axe",
@@ -535,7 +535,7 @@
       {
         "id": "smith_rune_pickaxe",
         "name": "Smith runeforged pickaxe",
-        "level": 86,
+        "level": 76,
         "ticks": 5,
         "xp": 75,
         "product": "runeforged_pickaxe",
@@ -546,7 +546,7 @@
       {
         "id": "smith_rune_scimitar",
         "name": "Smith runeforged scimitar",
-        "level": 89,
+        "level": 79,
         "ticks": 5,
         "xp": 150,
         "product": "runeforged_scimitar",
@@ -1041,7 +1041,7 @@
       {
         "id": "smith_runeforged_sword",
         "name": "Smith runeforged sword",
-        "level": 88,
+        "level": 78,
         "ticks": 5,
         "xp": 75,
         "product": "runeforged_sword",
@@ -1112,7 +1112,7 @@
       {
         "id": "smith_runite_bolts_unf",
         "name": "Smith runeforged bolts (unf) (10)",
-        "level": 88,
+        "level": 76,
         "ticks": 4,
         "xp": 75,
         "product": "runite_bolt_unf",
