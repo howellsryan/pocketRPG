@@ -1008,7 +1008,7 @@
       {
         "id": "smith_runeforged_platelegs",
         "name": "Smith runeforged platelegs",
-        "level": 77,
+        "level": 80,
         "ticks": 5,
         "xp": 225,
         "product": "runeforged_platelegs",
@@ -1019,7 +1019,7 @@
       {
         "id": "smith_runeforged_plateskirt",
         "name": "Smith runeforged plateskirt",
-        "level": 77,
+        "level": 80,
         "ticks": 5,
         "xp": 225,
         "product": "runeforged_plateskirt",
@@ -1030,7 +1030,7 @@
       {
         "id": "smith_runeforged_platebody",
         "name": "Smith runeforged platebody",
-        "level": 78,
+        "level": 81,
         "ticks": 5,
         "xp": 375,
         "product": "runeforged_platebody",
