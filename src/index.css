@@ -815,16 +815,14 @@ html, body, #app {
   max-height: calc(100svh - 32px);
 }
 
-/* Gold theme — full metallic gold surface with a diagonal sheen.
+/* Gold theme — flat gold surface.
    On-surface text uses dark "ink"; dark loot pills sit on top. */
 .loot-modal[data-theme="gold"] {
   --loot-ink: #2e1f06;
   --loot-ink-dim: rgba(46, 31, 6, 0.66);
   --loot-ink-faint: rgba(46, 31, 6, 0.42);
   --loot-divider: rgba(46, 31, 6, 0.18);
-  background:
-    linear-gradient(125deg, transparent 26%, rgba(255, 248, 220, 0.32) 43%, transparent 57%),
-    linear-gradient(168deg, #eccb52 0%, #d4a017 38%, #ad7d18 74%, #8a610f 100%);
+  background: #c8981c;
   border: 1.5px solid rgba(255, 240, 190, 0.55);
   box-shadow:
     0 0 0 1px rgba(120, 84, 12, 0.4),
@@ -832,15 +830,13 @@ html, body, #app {
     0 0 50px -12px rgba(240, 192, 64, 0.55);
 }
 
-/* Blood theme — full metallic crimson surface ("blood") with a diagonal sheen. */
+/* Blood theme — flat crimson ("blood") surface. */
 .loot-modal[data-theme="blood"] {
   --loot-ink: #fbe9e6;
   --loot-ink-dim: rgba(251, 233, 230, 0.74);
   --loot-ink-faint: rgba(251, 233, 230, 0.46);
   --loot-divider: rgba(0, 0, 0, 0.26);
-  background:
-    linear-gradient(125deg, transparent 26%, rgba(255, 210, 200, 0.20) 43%, transparent 57%),
-    linear-gradient(168deg, #a52b22 0%, #7e1c1c 40%, #571212 78%, #380c0c 100%);
+  background: #7e1c1c;
   border: 1.5px solid rgba(240, 160, 144, 0.45);
   box-shadow:
     0 0 0 1px rgba(60, 14, 14, 0.5),
@@ -848,15 +844,13 @@ html, body, #app {
     0 0 50px -12px rgba(200, 50, 30, 0.45);
 }
 
-/* Purple theme — epic loot (total value >1m). Metallic amethyst surface. */
+/* Purple theme — epic loot (any single item worth >1m). Flat amethyst surface. */
 .loot-modal[data-theme="purple"] {
   --loot-ink: #f3e8ff;
   --loot-ink-dim: rgba(243, 232, 255, 0.74);
   --loot-ink-faint: rgba(243, 232, 255, 0.46);
   --loot-divider: rgba(0, 0, 0, 0.26);
-  background:
-    linear-gradient(125deg, transparent 26%, rgba(233, 213, 255, 0.22) 43%, transparent 57%),
-    linear-gradient(168deg, #8b3fd0 0%, #6d28a8 40%, #4a1878 78%, #2e0c50 100%);
+  background: #6d28a8;
   border: 1.5px solid rgba(216, 180, 254, 0.5);
   box-shadow:
     0 0 0 1px rgba(60, 20, 90, 0.5),
