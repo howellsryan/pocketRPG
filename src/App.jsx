@@ -59,7 +59,7 @@ import { getLevelFromXP } from './engine/experience.js'
 import { pvpApi } from './cloud/pvp.js'
 import { SKIP_HOUR_MS, getSkipPreflight, isChargeableSkipOutcome } from './engine/skipPreflight.js'
 import { getSlayerTaskReward } from './engine/slayerRewards.js'
-import { isHighValueDrop, getLootTotalValue, isEpicLootValue } from './utils/itemValue.js'
+import { isHighValueDrop, hasHighValueLoot } from './utils/itemValue.js'
 import LootResultModal from './components/LootResultModal.jsx'
 import { computeIdleElapsedMs } from './utils/idleElapsed.js'
 import { advanceFarmingState } from './engine/farming.ts'
@@ -168,12 +168,13 @@ function recordCollectionLogDropsForIdleClues(savedTask, sim) {
 
 // Total shop value of everything an idle session *gained* (lost loot doesn't
 // count — no epic fireworks for items you dropped on death).
-function getIdleGainedLootValue(idleResult, items) {
-  let total = 0
+// Epic (purple) when at least one individual item gained during idle clears the
+// threshold, rather than the combined idle haul.
+function idleHasHighValueLoot(idleResult, items) {
   for (const src of [idleResult?.lootGained, idleResult?.lootBanked, idleResult?.itemsGained]) {
-    total += getLootTotalValue(src, items)
+    if (hasHighValueLoot(src, items)) return true
   }
-  return total
+  return false
 }
 
 function IdleResultProgressCard({ type, idleResult, taskName }) {
@@ -2302,7 +2303,7 @@ function GameApp() {
       {/* Idle Result Modal */}
       {idleResult && !skipSaving && !gameLocked && pvp.phase !== 'in_match' && Date.now() >= suppressIdleModalUntil && (
         <LootResultModal
-          theme={idleResult.died ? 'blood' : (isEpicLootValue(getIdleGainedLootValue(idleResult, itemsData)) ? 'purple' : 'gold')}
+          theme={idleResult.died ? 'blood' : (idleHasHighValueLoot(idleResult, itemsData) ? 'purple' : 'gold')}
           icon={idleResult.died ? '💀' : '💤'}
           title={idleResult.died ? 'Defeated' : 'Welcome Back!'}
           status={idleResult.died ? undefined : `Away for ${formatIdleTime(idleResult.elapsedMs)}`}

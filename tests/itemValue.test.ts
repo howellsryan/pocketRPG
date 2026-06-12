@@ -6,6 +6,7 @@ import {
   getItemUnitValue,
   isHighValueDrop,
   getLootTotalValue,
+  hasHighValueLoot,
   isEpicLootValue,
   EPIC_LOOT_THRESHOLD,
 } from '../src/utils/itemValue.js'
@@ -64,5 +65,38 @@ describe('epic loot threshold (purple fireworks)', () => {
   it('isHighValueDrop matches the same threshold per drop', () => {
     expect(isHighValueDrop('nether_demon_whip', 1, items)).toBe(true)
     expect(isHighValueDrop('shrimps', 1000, items)).toBe(false)
+  })
+})
+
+describe('hasHighValueLoot (per-item purple trigger)', () => {
+  it('is epic when at least one single item clears the threshold', () => {
+    const loot = [
+      { itemId: 'shrimps', quantity: 10 },
+      { itemId: 'nether_demon_whip', quantity: 1 },
+    ]
+    expect(hasHighValueLoot(loot, items)).toBe(true)
+  })
+
+  it('is not epic when separate cheap items merely sum past 1m', () => {
+    // 600k coins + 500k shrimps = 1.1m total, but no single item line is 1m+.
+    const loot = [
+      { itemId: 'coins', quantity: 600_000 },
+      { itemId: 'shrimps', quantity: 100_000 },
+    ]
+    expect(getLootTotalValue(loot, items)).toBe(1_100_000)
+    expect(hasHighValueLoot(loot, items)).toBe(false)
+  })
+
+  it('is epic when a single item stack clears the threshold via quantity', () => {
+    // One item line worth 1.5m (already shown as a highlighted row).
+    const loot = [{ itemId: 'shrimps', quantity: 300_000 }]
+    expect(hasHighValueLoot(loot, items)).toBe(true)
+  })
+
+  it('accepts an { itemId: quantity } map and handles empty loot', () => {
+    expect(hasHighValueLoot({ nether_demon_whip: 1 }, items)).toBe(true)
+    expect(hasHighValueLoot({ shrimps: 5 }, items)).toBe(false)
+    expect(hasHighValueLoot(null, items)).toBe(false)
+    expect(hasHighValueLoot([], items)).toBe(false)
   })
 })
