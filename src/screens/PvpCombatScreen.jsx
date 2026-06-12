@@ -12,7 +12,7 @@ import prayersData from '../data/prayers.json'
 import { getCharacterId } from '../cloud/api.js'
 import { normalizePvpState } from '../engine/pvpState.js'
 import { isPvpFoodItem } from '../engine/pvpFood.js'
-import { isEpicLootValue } from '../utils/itemValue.js'
+import { hasEpicSingleItem } from '../utils/itemValue.js'
 import { getEquippedPvpSpecialAttack, getPvpSpecialAttackLabel, hasEnoughPvpSpecialEnergy } from '../engine/pvpSpecialAttacks.js'
 import { isPvpCombatPotion } from '../engine/pvpPotions.js'
 import { calculatePvpRiskValues } from '../engine/pvpRisk.js'
@@ -1100,7 +1100,7 @@ export default function PvpCombatScreen({ matchId, onExit, addToast }) {
 
         return (
           <LootResultModal
-            theme={youWon ? (isEpicLootValue(pvpLootTotal) ? 'purple' : 'gold') : 'blood'}
+            theme={youWon ? (hasEpicSingleItem(pvpLootEntries, itemsData) ? 'purple' : 'gold') : 'blood'}
             icon={youWon ? '🏆' : '💀'}
             title={youWon ? 'Victorious' : 'Defeated'}
             subtitle={youWon

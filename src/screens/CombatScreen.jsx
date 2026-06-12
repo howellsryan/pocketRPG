@@ -33,7 +33,7 @@ import prayersData from '../data/prayers.json'
 import spellsData from '../data/spells.json'
 import raidsData from '../data/raids.json'
 import { SCREENS, formatDropChance } from '../utils/constants.js'
-import { isHighValueDrop, getLootTotalValue, isEpicLootValue } from '../utils/itemValue.js'
+import { isHighValueDrop, getLootTotalValue, isEpicLootValue, hasEpicSingleItem } from '../utils/itemValue.js'
 import { splatsFromCombatEvents, HIT_SPLAT_DURATION_MS } from '../utils/hitSplats.js'
 import { HitSplatLayer } from '../components/HitSplat.jsx'
 import ActivePotionBadges from '../components/ActivePotionBadges.jsx'
@@ -2999,7 +2999,7 @@ export default function CombatScreen({ onNavigate, initialMonsterId, initialRaid
       {/* Loot Modal */}
       {lootModal && (
         <LootResultModal
-          theme={!lootModal.loading && isEpicLootValue(getLootTotalValue(lootModal.loot, itemsData)) ? 'purple' : 'gold'}
+          theme={!lootModal.loading && hasEpicSingleItem(lootModal.loot, itemsData) ? 'purple' : 'gold'}
           icon={lootModal.raidId ? '🏆' : (MONSTER_ICONS[lootModal.monster?.id] || '👹')}
           title={lootModal.raidId
             ? `${raidsData[lootModal.raidId]?.name || 'Raid'} Complete`

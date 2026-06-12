@@ -36,3 +36,12 @@ export function getLootTotalValue(loot, itemsData) {
 export function isEpicLootValue(totalValue) {
   return Number(totalValue) > EPIC_LOOT_THRESHOLD
 }
+
+// Returns true if any single item (not the combined total) exceeds 1m.
+export function hasEpicSingleItem(loot, itemsData) {
+  if (!loot) return false
+  const entries = Array.isArray(loot)
+    ? loot.filter(Boolean).map((e) => [e.itemId, e.quantity])
+    : Object.entries(loot)
+  return entries.some(([itemId, quantity]) => isHighValueDrop(itemId, quantity, itemsData))
+}

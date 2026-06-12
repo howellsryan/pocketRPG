@@ -824,7 +824,6 @@ html, body, #app {
   --loot-divider: rgba(46, 31, 6, 0.18);
   background:
     linear-gradient(125deg, transparent 26%, rgba(255, 248, 220, 0.32) 43%, transparent 57%),
-    radial-gradient(150% 95% at 50% -12%, #fbe7a4 0%, rgba(251, 231, 164, 0) 52%),
     linear-gradient(168deg, #eccb52 0%, #d4a017 38%, #ad7d18 74%, #8a610f 100%);
   border: 1.5px solid rgba(255, 240, 190, 0.55);
   box-shadow:
@@ -841,7 +840,6 @@ html, body, #app {
   --loot-divider: rgba(0, 0, 0, 0.26);
   background:
     linear-gradient(125deg, transparent 26%, rgba(255, 210, 200, 0.20) 43%, transparent 57%),
-    radial-gradient(150% 95% at 50% -12%, #d8584a 0%, rgba(216, 88, 74, 0) 52%),
     linear-gradient(168deg, #a52b22 0%, #7e1c1c 40%, #571212 78%, #380c0c 100%);
   border: 1.5px solid rgba(240, 160, 144, 0.45);
   box-shadow:
@@ -858,7 +856,6 @@ html, body, #app {
   --loot-divider: rgba(0, 0, 0, 0.26);
   background:
     linear-gradient(125deg, transparent 26%, rgba(233, 213, 255, 0.22) 43%, transparent 57%),
-    radial-gradient(150% 95% at 50% -12%, #b06ae8 0%, rgba(176, 106, 232, 0) 52%),
     linear-gradient(168deg, #8b3fd0 0%, #6d28a8 40%, #4a1878 78%, #2e0c50 100%);
   border: 1.5px solid rgba(216, 180, 254, 0.5);
   box-shadow:
