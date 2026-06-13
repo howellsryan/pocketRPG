@@ -140,13 +140,8 @@ function barGlow(accent, gold) {
 function CategoryCard({ category, meta, obtained, total, onOpen }) {
   const done = total > 0 && obtained >= total
   const pct = total > 0 ? obtained / total : 0
-  const t = skillArtTreatment(meta.accent)
   return (
     <button type="button" class={'clog-cat' + (done ? ' is-done' : '')} onClick={() => onOpen(category.id)}>
-      <div class="clog-cat__glow" style={{ background: `radial-gradient(circle, ${done ? 'rgba(240,192,64,0.5)' : t.glow}, transparent 65%)` }} />
-      <div class="clog-cat__art" style={{ opacity: done ? 0.95 : 0.82 }}>
-        <CollogArt glyphKey={meta.glyph} accent={meta.accent} gold={done} size={92} glow={done ? 1.3 : 0.9} />
-      </div>
       {done && <>
         <i class="clog-corner tl" /><i class="clog-corner tr" /><i class="clog-corner bl" /><i class="clog-corner br" />
       </>}
