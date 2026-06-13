@@ -941,11 +941,11 @@ html, body, #app {
   width: 340px;
   height: 340px;
   transform: translateX(-50%);
-  background: repeating-conic-gradient(rgba(255, 250, 224, 0) 0deg 8deg, rgba(255, 250, 224, 0.5) 8deg 16deg);
-  mask-image: radial-gradient(ellipse 60% 55% at 50% 38%, black 30%, transparent 72%);
-  -webkit-mask-image: radial-gradient(ellipse 60% 55% at 50% 38%, black 30%, transparent 72%);
+  background: repeating-conic-gradient(transparent 0deg 9deg, rgba(255, 250, 224, 0.55) 9deg 12deg);
+  mask-image: radial-gradient(ellipse 58% 54% at 50% 36%, black 0%, transparent 72%);
+  -webkit-mask-image: radial-gradient(ellipse 58% 54% at 50% 36%, black 0%, transparent 72%);
   pointer-events: none;
-  opacity: 0.45;
+  opacity: 0.42;
 }
 
 /* Hero section */
