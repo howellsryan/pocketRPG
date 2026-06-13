@@ -1441,8 +1441,8 @@ html, body, #app {
 }
 .clog-cat:hover { transform: translateY(-2px); border-color: rgba(240,192,64,0.32); }
 .clog-cat:active { transform: scale(.99); }
-.clog-cat__art { position: absolute; right: -14px; top: 50%; transform: translateY(-50%); pointer-events: none; z-index: 1; }
-.clog-cat__glow { position: absolute; right: -26px; top: 50%; transform: translateY(-50%); width: 120px; height: 120px; border-radius: 50%; filter: blur(16px); opacity: .4; pointer-events: none; }
+.clog-cat__art { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); pointer-events: none; z-index: 1; }
+.clog-cat__glow { position: absolute; right: 1px; top: 50%; transform: translateY(-50%); width: 120px; height: 120px; border-radius: 50%; filter: blur(16px); opacity: .4; pointer-events: none; }
 .clog-cat__body { position: relative; z-index: 2; padding: 14px 15px 13px; }
 .clog-cat__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .clog-cat__id { display: flex; align-items: center; gap: 9px; min-width: 0; }
