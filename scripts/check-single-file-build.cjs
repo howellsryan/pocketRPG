@@ -48,18 +48,24 @@ try {
 
   const html = fs.readFileSync(indexPath, 'utf8');
   // The build emits the core app as a classic inline <script> (so it shares the
-  // global lexical environment with the lazily-loaded game chunk). Match an
-  // inline <script> that has no attributes.
-  const match = html.match(/<script>([\s\S]*?)<\/script>/i);
-  if (!match) {
+  // global lexical environment with the lazily-loaded game chunk). It also emits
+  // OTHER small attribute-less inline scripts (e.g. a PWA-standalone bootstrap
+  // placed *before* the core). Matching only the first block would check the
+  // wrong script and silently skip the real core↔chunk redeclaration guard
+  // below, so collect EVERY attribute-less inline <script>.
+  const inlineScripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/gi)];
+  if (!inlineScripts.length) {
     console.error('No inline <script> block found in index.html');
     process.exit(1);
   }
 
-  // Syntax-check every concatenated artifact: the inline core script plus the
+  // Syntax-check every concatenated artifact: each inline script plus the
   // content-hashed game-*.js chunk (build_single.cjs code-splits the in-game
   // screens out of the inline payload).
-  const scripts = [{ name: 'index.html inline core', code: match[1] }];
+  const scripts = inlineScripts.map((m, i) => ({
+    name: `index.html inline script #${i + 1}`,
+    code: m[1],
+  }));
   for (const f of fs.readdirSync(root)) {
     if (/^game-[0-9a-f]+\.js$/.test(f)) {
       scripts.push({ name: f, code: fs.readFileSync(path.join(root, f), 'utf8') });

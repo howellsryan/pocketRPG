@@ -8,7 +8,7 @@ import Card from '../components/Card.jsx'
 import Panel from '../components/Panel.jsx'
 import Button from '../components/Button.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
-import EquipmentPaperdoll from '../components/EquipmentPaperdoll.jsx'
+import EquipmentPaperdoll, { EQ_SLOT_NAMES } from '../components/EquipmentPaperdoll.jsx'
 import ItemSlot from '../components/ItemSlot.jsx'
 import { OTHER_BONUS_LABELS, OTHER_BONUS_PERCENT_KEYS } from '../utils/bonusLabels.js'
 
