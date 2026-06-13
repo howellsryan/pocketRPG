@@ -95,7 +95,15 @@ export function makeCompletionHandler(sourceType, deps = {}) {
         slayerPoints: body?.slayerPoints,
         dungeoneeringTokens: body?.dungeoneeringTokens,
       })
-      const collectionLogEntries = await persistCollectionLogFromGranted(env, characterId, sourceType, sourceId, settled.granted)
+      // The collection-log section id can differ from the completion sourceId.
+      // Minigames complete by task id (e.g. `pc_void_set`) but their log slots
+      // are keyed by the parent minigame id (e.g. `pest_control`), so handlers
+      // can remap via resolveCollectionLogSourceId. Defaults to the sourceId,
+      // which is correct for raids/clues/monsters/dungeoneering.
+      const collectionLogSourceId = typeof deps.resolveCollectionLogSourceId === 'function'
+        ? deps.resolveCollectionLogSourceId({ sourceType, sourceId, body })
+        : sourceId
+      const collectionLogEntries = await persistCollectionLogFromGranted(env, characterId, sourceType, collectionLogSourceId, settled.granted)
       const killCount = await persistKillCountFromAction(env, characterId, sourceType, sourceId)
       const write = await (deps.writeSave || writeSave)(env, characterId, saveObject, saveRevision)
 

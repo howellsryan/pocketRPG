@@ -63,7 +63,7 @@ import { isHighValueDrop, getLootTotalValue, isEpicLootValue } from './utils/ite
 import LootResultModal from './components/LootResultModal.jsx'
 import { computeIdleElapsedMs } from './utils/idleElapsed.js'
 import { advanceFarmingState } from './engine/farming.ts'
-import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, onCollectionLogSlotComplete } from './cloud/collectionLog.js'
+import { recordCollectionLogDrop, fetchCollectionLog, clearCollectionLogCache, onCollectionLogSlotComplete, applyServerCollectionLogEntries } from './cloud/collectionLog.js'
 import { fetchKillCounts } from './cloud/killCounts.js'
 import { isLoggedDrop, collectIdleCombatLoggedDrops } from './engine/collectionLog.js'
 
@@ -285,6 +285,10 @@ function GameApp() {
       await applyCloudSave(JSON.parse(res.save.save_data), res.save.updatedAt, res.save.save_revision)
       await loadGame()
     }
+    // Reflect the server-recorded collection-log entries immediately, the same
+    // way the combat/clue completion flows do — otherwise the unlocked slot
+    // doesn't appear until the next full collection-log refetch.
+    applyServerCollectionLogEntries(res?.collectionLogEntries || [])
   }
   function isCloudAuthoritativeMinigame(task) {
     return !!(task?.id && VALID_SERVER_MINIGAME_IDS.has(task.id) && getToken() && getCharacterId())

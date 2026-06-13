@@ -240,6 +240,88 @@ describe('action completion endpoint tamper guards', () => {
     expect(saved.settings.unlockedMinigameItems).toContain('fighter_helm')
   })
 
+  it('records minigame collection-log entries under the minigame section id, not the task id', async () => {
+    const writes: any[] = []
+    const env = {
+      DB: {
+        prepare: (sql: string) => ({ bind: (...args: any[]) => ({ _sql: sql, _args: args }) }),
+        batch: async (stmts: any[]) => { writes.push(...stmts) },
+      },
+    }
+    // Mirror functions/api/actions/minigame/complete.js: the completion sourceId
+    // is the task id (`ba_fighter_hat`) but the log slot lives under the parent
+    // minigame id (`barbarian_assault`).
+    const handler = makeCompletionHandler('minigames', {
+      requireAuth: async () => ({ identity: { id: 1 } }),
+      assertNotInActiveMatch: async () => null,
+      claimActionNonce: async () => {},
+      loadCharacterWithSave: async () => ({ saveObject: { inventory: [] }, saveRevision: 0 }),
+      writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
+      resolveRewards: () => [{ itemId: 'fighter_helm', quantity: 1 }],
+      resolveCollectionLogSourceId: ({ sourceId }: any) =>
+        (sourceId === 'ba_fighter_hat' ? 'barbarian_assault' : sourceId),
+    })
+    const req = new Request('https://example.com/api/actions/minigame/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' },
+      body: JSON.stringify({ sourceId: 'ba_fighter_hat', actionNonce: 'n10' }),
+    })
+    const res = await handler({ request: req, env: env as any })
+    const body = await res.json()
+    expect(res.status).toBe(200)
+    // The entry is recorded — and keyed by the section id the log defines.
+    expect(body.collectionLogEntries).toEqual([
+      { itemId: 'fighter_helm', sourceType: 'minigames', sourceId: 'barbarian_assault' },
+    ])
+    expect(writes.length).toBe(1)
+  })
 
+  it('records nothing when the minigame log source is left as the raw task id (regression guard)', async () => {
+    const env = {
+      DB: { prepare: () => ({ bind: () => ({}) }), batch: async () => {} },
+    }
+    // No resolveCollectionLogSourceId → falls back to the raw task id, which is
+    // not a valid log section. This documents the bug the remap fixes.
+    const handler = makeCompletionHandler('minigames', {
+      requireAuth: async () => ({ identity: { id: 1 } }),
+      assertNotInActiveMatch: async () => null,
+      claimActionNonce: async () => {},
+      loadCharacterWithSave: async () => ({ saveObject: { inventory: [] }, saveRevision: 0 }),
+      writeSave: async () => ({ updatedAt: 1, saveRevision: 1 }),
+      resolveRewards: () => [{ itemId: 'fighter_helm', quantity: 1 }],
+    })
+    const req = new Request('https://example.com/api/actions/minigame/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Character-Id': '42' },
+      body: JSON.stringify({ sourceId: 'ba_fighter_hat', actionNonce: 'n11' }),
+    })
+    const res = await handler({ request: req, env: env as any })
+    const body = await res.json()
+    expect(res.status).toBe(200)
+    expect(body.collectionLogEntries).toEqual([])
+  })
 
+})
+
+describe('minigame collection-log slot mapping (data integrity)', () => {
+  it('every minigame reward is a valid log slot under task.minigame, never under task.id', async () => {
+    const { isValidEntry } = await import('../functions/_lib/collectionLog.js')
+    const minigamesData = (await import('../src/data/minigames.json')).default as any
+    const tasks = minigamesData?.tasks || []
+    expect(tasks.length).toBeGreaterThan(0)
+    for (const task of tasks) {
+      const items = Array.isArray(task.rewardItems) && task.rewardItems.length > 0
+        ? task.rewardItems
+        : (task.product ? [task.product] : [])
+      expect(items.length).toBeGreaterThan(0)
+      for (const itemId of items) {
+        // Correct: keyed by the parent minigame id.
+        expect(isValidEntry('minigames', task.minigame, itemId)).toBe(true)
+        // The task id is NOT a valid log section, so recording under it logs nothing.
+        if (task.id !== task.minigame) {
+          expect(isValidEntry('minigames', task.id, itemId)).toBe(false)
+        }
+      }
+    }
+  })
 })

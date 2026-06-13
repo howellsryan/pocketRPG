@@ -13,4 +13,14 @@ function resolveMinigameRewards({ sourceId }) {
   return task.product ? [{ itemId: task.product, quantity: qty }] : []
 }
 
-export const onRequestPost = makeCompletionHandler('minigames', { resolveRewards: resolveMinigameRewards })
+// Collection-log slots are keyed by the parent minigame id (task.minigame,
+// e.g. `pest_control`), not the completion task id (e.g. `pc_void_set`), so the
+// entry is recorded under the section the log actually defines.
+function resolveMinigameCollectionLogSourceId({ sourceId }) {
+  return TASKS_BY_ID.get(sourceId)?.minigame || sourceId
+}
+
+export const onRequestPost = makeCompletionHandler('minigames', {
+  resolveRewards: resolveMinigameRewards,
+  resolveCollectionLogSourceId: resolveMinigameCollectionLogSourceId,
+})
