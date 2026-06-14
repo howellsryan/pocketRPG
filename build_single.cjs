@@ -14,6 +14,7 @@ function readSrc(rel) { return fs.readFileSync(path.join(SRC, rel), 'utf-8'); }
 const sourceFiles = [
   'utils/constants.js',
   'utils/helpers.js',
+  'utils/completion.js',
   'utils/formatters.js',
   'utils/itemValue.js',
   'utils/hitSplats.js',
