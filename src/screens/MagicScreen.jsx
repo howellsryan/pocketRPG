@@ -11,6 +11,7 @@ import { hasRequiredRunes, getRunesToConsume, getEquippedElementalStaff } from '
 import { onTick } from '../engine/tick.js'
 import { markScreenTick } from '../engine/activityRunner.js'
 import { formatNumber } from '../utils/helpers.js'
+import { formatActionDuration } from '../utils/formatters.js'
 import { SCREENS } from '../utils/constants.js'
 import skillsData from '../data/skills.json'
 import itemsData from '../data/items.json'
@@ -42,13 +43,6 @@ function groupActions(actions) {
     }
   }
   return groups
-}
-
-function formatActionDuration(ticks) {
-  const seconds = ticks * 0.6
-  if (seconds < 60) return `${seconds.toFixed(1)}s`
-  const mins = seconds / 60
-  return Number.isInteger(mins) ? `${mins}m` : `${mins.toFixed(1)}m`
 }
 
 export default function MagicScreen({ onBack, onNavigate }) {

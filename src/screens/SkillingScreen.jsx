@@ -13,6 +13,7 @@ import { hasRequiredRunes, getRunesToConsume } from '../engine/runes.js'
 import { onTick } from '../engine/tick.js'
 import { markScreenTick } from '../engine/activityRunner.js'
 import { formatNumber } from '../utils/helpers.js'
+import { formatActionDuration } from '../utils/formatters.js'
 import { calculateDungeoneeringTokensForAction, getDungeoneeringRewardCost, canAffordDungeoneeringReward } from '../engine/dungeoneeringTokens.js'
 import { api, getToken, getCharacterId } from '../cloud/api.js'
 import { applyCloudSave } from '../cloud/sync.js'
@@ -32,19 +33,6 @@ import { recordCollectionLogDrop } from '../cloud/collectionLog.js'
 const SPECIAL_SKILLS = ['farming', 'agility', 'prayer', 'thieving', 'hunter', 'slayer', 'construction', 'dungeoneering', 'magic']
 const trainableSkills = [...GATHERING_SKILLS, ...PRODUCTION_SKILLS].filter(s => !STUB_SKILLS.has(s) && skillsData[s]?.actions?.length > 0)
 const allSkillsInTab = [...trainableSkills, ...SPECIAL_SKILLS]
-
-// Format an action duration. Tick is 600ms; short actions show as `Xs`,
-// longer ones (>=60s) show as minutes/hours so 10h doesn't render as 36000s.
-function formatActionDuration(ticks) {
-  const seconds = ticks * 0.6
-  if (seconds < 60) return `${seconds.toFixed(1)}s`
-  if (seconds < 3600) {
-    const mins = seconds / 60
-    return Number.isInteger(mins) ? `${mins}m` : `${mins.toFixed(1)}m`
-  }
-  const hours = seconds / 3600
-  return Number.isInteger(hours) ? `${hours}h` : `${hours.toFixed(1)}h`
-}
 
 // Calculate remaining actions based on available materials
 function calculateRemainingActions(action, inventory, bank) {

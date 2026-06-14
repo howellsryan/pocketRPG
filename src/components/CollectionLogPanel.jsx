@@ -174,7 +174,7 @@ function CategoryCard({ category, meta, obtained, total, onOpen }) {
   )
 }
 
-function ItemSlot({ itemId, accent, gold }) {
+function ClogItemSlot({ itemId, accent, gold }) {
   const item = itemsData[itemId]
   const glyphKey = getItemIconKey(item) || 'default'
   return (
@@ -238,7 +238,7 @@ function DetailSheet({ category, meta, entries, obtained, total, desktop, onClos
                   {sec.items.map(itemId => {
                     const has = isSlotObtained(entries, category.id, sec.id, itemId)
                     return has
-                      ? <ItemSlot key={itemId} itemId={itemId} accent={meta.accent} gold={done || secDone} />
+                      ? <ClogItemSlot key={itemId} itemId={itemId} accent={meta.accent} gold={done || secDone} />
                       : <LockedSlot key={itemId} itemId={itemId} accent={meta.accent} />
                   })}
                 </div>
