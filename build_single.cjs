@@ -120,6 +120,7 @@ const sourceFiles = [
   'components/IdleCombatSetupModal.js',
   'components/EquipmentPaperdoll.js',
   'components/CollectionLogPanel.js',
+  'components/GildedComplete.js',
   'components/FilterToggleBar.js',
   'screens/HomeScreen.js',
   'screens/StatsScreen.js',

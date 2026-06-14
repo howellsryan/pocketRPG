@@ -1477,6 +1477,25 @@ html, body, #app {
 @keyframes clogShimmer { 0% { left:-70%; } 55% { left:140%; } 100% { left:140%; } }
 .clog-done-tag { font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.28em; color: #fcecb0; text-shadow: 0 0 10px rgba(240,192,64,.5); }
 
+/* Reusable gilded "completed" treatment (see components/GildedComplete.jsx).
+   Generalises the .clog-cat.is-done gilding so any card/row can wear it: gold
+   ring, corner brackets, and the shared clogShimmer sweep. Markup-agnostic —
+   recolours nothing inside the wrapped child. */
+.gild { display: flex; }
+.gild > * { flex: 1 1 auto; min-width: 0; }
+.gild.is-complete { position: relative; overflow: hidden; }
+.gild.is-complete::before {
+  content:''; position:absolute; inset:0; border-radius:inherit; pointer-events:none; z-index:3;
+  box-shadow: 0 0 0 1.5px rgba(240,192,64,0.55), inset 0 0 22px -6px rgba(240,192,64,0.4), inset 0 1px 0 rgba(255,236,176,0.35);
+}
+.gild-corner { position:absolute; width:14px; height:14px; border:2px solid var(--color-gold-light); opacity:.85; z-index:4; pointer-events:none; filter:drop-shadow(0 0 3px rgba(240,192,64,.5)); }
+.gild-corner.tl { top:6px; left:6px; border-right:0; border-bottom:0; border-radius:4px 0 0 0; }
+.gild-corner.tr { top:6px; right:6px; border-left:0; border-bottom:0; border-radius:0 4px 0 0; }
+.gild-corner.bl { bottom:6px; left:6px; border-right:0; border-top:0; border-radius:0 0 0 4px; }
+.gild-corner.br { bottom:6px; right:6px; border-left:0; border-top:0; border-radius:0 0 4px 0; }
+.gild-shimmer { position:absolute; top:0; bottom:0; left:-70%; width:55%; z-index:5; pointer-events:none; background:linear-gradient(105deg,transparent,rgba(255,247,214,0.30) 50%,transparent); transform:skewX(-18deg); animation:clogShimmer 4.5s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .gild-shimmer { animation: none; } }
+
 /* Detail overlay + sheet */
 .clog-overlay { position: absolute; inset: 0; z-index: 100; display: flex; align-items: flex-end; justify-content: center; background: rgba(4,3,2,0.74); backdrop-filter: blur(3px); animation: clogFade .2s ease; }
 .clog-overlay--center { align-items: center; padding: 24px; }

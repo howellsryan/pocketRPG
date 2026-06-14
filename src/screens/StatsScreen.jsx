@@ -5,6 +5,8 @@ import { formatNumber } from '../utils/helpers.js'
 import { COMBAT_SKILLS, GATHERING_SKILLS, PRODUCTION_SKILLS, UTILITY_SKILLS, STUB_SKILLS } from '../utils/constants.js'
 import SkillBadge from '../components/SkillBadge.jsx'
 import SkillIcon from '../components/SkillIcon.jsx'
+import GildedComplete from '../components/GildedComplete.jsx'
+import { isSkillMaxed } from '../utils/completion.js'
 import { useState } from 'preact/hooks'
 import Modal from '../components/Modal.jsx'
 
@@ -17,14 +19,16 @@ function StatsSkillGroup({ title, skills, stats, onSelect }) {
       <div class="grid grid-cols-2 gap-1.5">
         {skills.map(skill => {
           const data = stats[skill] || { xp: 0, level: 1 }
+          const level = data.level || getLevelFromXP(data.xp)
           return (
-            <SkillBadge
-              key={skill}
-              skill={skill}
-              xp={data.xp}
-              level={data.level || getLevelFromXP(data.xp)}
-              onClick={onSelect}
-            />
+            <GildedComplete key={skill} complete={isSkillMaxed(level)} className="rounded-lg">
+              <SkillBadge
+                skill={skill}
+                xp={data.xp}
+                level={level}
+                onClick={onSelect}
+              />
+            </GildedComplete>
           )
         })}
       </div>

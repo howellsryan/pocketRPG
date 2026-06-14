@@ -8,6 +8,8 @@ import { getSkillArt } from '../utils/skillArt.js'
 import Modal from '../components/Modal.jsx'
 import GameIcon from '../components/GameIcon.jsx'
 import SkillEmblem from '../components/SkillEmblem.jsx'
+import GildedComplete from '../components/GildedComplete.jsx'
+import { isSkillMaxed } from '../utils/completion.js'
 
 const SKILL_GROUPS = [
   { title: 'Combat', skills: COMBAT_SKILLS },
@@ -22,23 +24,25 @@ function titleCase(skill) {
 
 function SkillCard({ skill, level, progress, toNext, onClick }) {
   const art = getSkillArt(skill)
-  const isMax = level >= 99
+  const isMax = isSkillMaxed(level)
   return (
-    <button class="skill-card" onClick={() => onClick(skill)} aria-label={`${titleCase(skill)}, level ${level}`}>
-      <SkillEmblem class="skill-card__emblem" iconKey={art.icon} accent={art.accent} size={28} glow={0.5} />
-      <div class="skill-card__top">
-        <div class="skill-card__name">
-          <span>{titleCase(skill)}</span>
+    <GildedComplete complete={isMax} className="rounded-[10px]">
+      <button class="skill-card" onClick={() => onClick(skill)} aria-label={`${titleCase(skill)}, level ${level}`}>
+        <SkillEmblem class="skill-card__emblem" iconKey={art.icon} accent={art.accent} size={28} glow={0.5} />
+        <div class="skill-card__top">
+          <div class="skill-card__name">
+            <span>{titleCase(skill)}</span>
+          </div>
+          <div class="skill-card__level">{level}</div>
         </div>
-        <div class="skill-card__level">{level}</div>
-      </div>
-      <div class="skill-card__bottom">
-        <div class="xp-track"><div class="xp-fill" style={{ width: `${Math.round(progress * 100)}%` }} /></div>
-        <div class={isMax ? 'xp-meta xp-meta--max' : 'xp-meta'}>
-          {isMax ? 'MAX' : `${formatNumber(toNext)} to ${level + 1}`}
+        <div class="skill-card__bottom">
+          <div class="xp-track"><div class="xp-fill" style={{ width: `${Math.round(progress * 100)}%` }} /></div>
+          <div class={isMax ? 'xp-meta xp-meta--max' : 'xp-meta'}>
+            {isMax ? 'MAX' : `${formatNumber(toNext)} to ${level + 1}`}
+          </div>
         </div>
-      </div>
-    </button>
+      </button>
+    </GildedComplete>
   )
 }
 
