@@ -7,7 +7,7 @@ const EQ_SLOT_LABELS = {
   legs: '👖', gloves: '🧤', boots: '👢', ring: '💍'
 }
 
-const EQ_SLOT_NAMES = {
+export const EQ_SLOT_NAMES = {
   head: 'Head', cape: 'Cape', neck: 'Neck', ammo: 'Ammo',
   weapon: 'Weapon', body: 'Body', shield: 'Shield',
   legs: 'Legs', gloves: 'Gloves', boots: 'Boots', ring: 'Ring'

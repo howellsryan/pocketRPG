@@ -287,6 +287,45 @@ for (const f of sourceFiles) {
   }
 }
 
+// ── Guard: duplicate top-level declarations across the flattened bundle ──
+// The core inline script and the lazily-loaded game chunk are concatenated into
+// one shared global lexical environment (minifyIdentifiers:false keeps source
+// names), so two modules declaring the same top-level name collide. Duplicate
+// `const`/`let`/`class` are SyntaxErrors that `check:single` (node --check)
+// catches in the emitted output — but duplicate top-level `function`
+// declarations are *legal* JS (last one wins) and esbuild's minifier silently
+// drops the shadowed one, so they disappear before any post-build check can see
+// them. We must detect them here, on the pre-minify module source, where both
+// declarations still exist (e.g. a screen-local helper named `ItemSlot`
+// clobbering the shared <ItemSlot> component).
+function topLevelDeclCounts(source) {
+  const counts = new Map();
+  const re = /^(?:async\s+)?(?:function|const|let|class)\s+([A-Za-z0-9_$]+)/;
+  for (const line of source.split('\n')) {
+    const m = re.exec(line);
+    if (m) counts.set(m[1], (counts.get(m[1]) || 0) + 1);
+  }
+  return counts;
+}
+{
+  const coreDecls = topLevelDeclCounts(coreJS);
+  const gameDecls = topLevelDeclCounts(gameJS);
+  const offenders = [];
+  for (const [name, n] of coreDecls) if (n > 1) offenders.push(`${name} — declared ${n}× in the core script`);
+  for (const [name, n] of gameDecls) if (n > 1) offenders.push(`${name} — declared ${n}× in the game chunk`);
+  for (const name of coreDecls.keys()) if (gameDecls.has(name)) offenders.push(`${name} — declared in BOTH the core script and the game chunk`);
+  if (offenders.length) {
+    console.error(
+      'build_single: duplicate top-level declaration(s) in the flattened single-file bundle.\n' +
+      'These share one global scope, so the later declaration silently clobbers the earlier one\n' +
+      '(esbuild then drops the shadowed copy, hiding it from check:single). Rename the\n' +
+      'screen/component-local binding so every top-level name is unique:\n  ' +
+      offenders.join('\n  ')
+    );
+    process.exit(1);
+  }
+}
+
 // ── Compile Tailwind CSS ──
 fs.mkdirSync(path.join(__dirname, '.tmp'), { recursive: true });
 const twBin = path.join(__dirname, 'node_modules', '.bin', 'tailwindcss');
