@@ -484,6 +484,21 @@ describe('MCP clue scrolls (start_clue + server claim)', () => {
     expect(idle.active_task).not.toBeNull()
   })
 
+  it('refuses to start a new activity over a still-running clue (no silent discard)', async () => {
+    const now = Date.now()
+    // Unfinished medium clue (10s « 300_000ms). Starting skilling must not
+    // overwrite it — it should refuse so the timer isn't silently lost.
+    const { env, idle } = mockEnv({
+      save: { inventory: [{ itemId: 'clue_scroll_medium', quantity: 1 }], bank: {} },
+      idle: clueTask(now, 10_000),
+    })
+    const res = await callTool('start_skilling', { skill: 'firemaking', action_id: 'normal_logs', character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBe(true)
+    expect(res.content[0].text).toMatch(/still running/i)
+    // The clue task is untouched.
+    expect(idle.active_task).not.toBeNull()
+  })
+
   it('start_clue refuses when the scroll is not in the inventory', async () => {
     const now = Date.now()
     const { env } = mockEnv({
@@ -620,6 +635,16 @@ describe('MCP unlock purchases (buy_unlock + buy_slayer_unlock)', () => {
     const res = await callTool('buy_slayer_unlock', { unlock_id: 'slayer_helmet', character_id: 7 }, await ctxFor(env))
     expect(res.isError).toBe(true)
     expect(captured.saveData).toBeNull() // nothing written
+  })
+
+  it('buy_slayer_unlock refuses a duplicate the character already owns', async () => {
+    const { env, captured } = mockEnv({
+      save: { inventory: [], bank: { slayer_helmet: { itemId: 'slayer_helmet', quantity: 1 } }, settings: { slayerPoints: 5000 } },
+    })
+    const res = await callTool('buy_slayer_unlock', { unlock_id: 'slayer_helmet', character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBe(true)
+    expect(res.content[0].text).toMatch(/already own/i)
+    expect(captured.saveData).toBeNull() // no purchase written
   })
 
   it('buy_slayer_unlock rejects an unknown unlock id before any server call', async () => {

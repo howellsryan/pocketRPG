@@ -534,7 +534,14 @@ export function castMagic(save, actionId, { targetItemId, quantity } = {}) {
       throw new GameApiError('NOT_ALCHEMISABLE', `${alchItem.name || resolved.itemId} has no shop value and cannot be alchemised.`, 400)
     }
     targetItemId = resolved.itemId
-    maxCasts = Math.min(maxCasts, inventoryOnlyCount(save, targetItemId)) // alchemy draws from inventory only
+    // The alch target is drawn from the inventory only. If it is ALSO one of the
+    // spell's runes, each cast needs runeQty + 1 of it (the +1 being the target);
+    // the rune-only loop above under-counts that, so fold the combined demand in.
+    const targetRunePerCast = Math.max(0, Math.floor(Number(runesToConsume[targetItemId]) || 0))
+    maxCasts = Math.min(maxCasts, inventoryOnlyCount(save, targetItemId))
+    if (targetRunePerCast > 0) {
+      maxCasts = Math.min(maxCasts, Math.floor(heldInInventoryAndBank(save, targetItemId) / (targetRunePerCast + 1)))
+    }
   } else if (action.materials) {
     for (const [matId, qty] of Object.entries(action.materials)) {
       const per = Math.max(1, Math.floor(Number(qty) || 1))
@@ -542,11 +549,14 @@ export function castMagic(save, actionId, { targetItemId, quantity } = {}) {
     }
   }
 
+  // An unbounded cast count (no rune/material/target limit) is never valid — it
+  // would grant XP for free — so reject it whether or not quantity was passed.
+  if (!Number.isFinite(maxCasts)) {
+    throw new GameApiError('INVALID_QUANTITY', `${action.name} has no limiting input — it cannot be cast through this tool.`, 400)
+  }
+
   let want
   if (quantity === undefined || quantity === null) {
-    if (!Number.isFinite(maxCasts)) {
-      throw new GameApiError('INVALID_QUANTITY', `${action.name} has no limiting input — pass quantity to say how many times to cast it.`, 400)
-    }
     want = maxCasts
   } else {
     want = Math.floor(Number(quantity))
@@ -559,14 +569,18 @@ export function castMagic(save, actionId, { targetItemId, quantity } = {}) {
     throw new GameApiError('INSUFFICIENT_SUPPLIES', `Not enough runes or inputs to cast ${action.name}.`, 400)
   }
 
+  const produced = []
+  // Consume the alch target FIRST (inventory only) so a target that is also a
+  // required rune still leaves enough inventory+bank for the rune draw below.
+  if (isAlchemy) {
+    removeItemFromInventory(save, targetItemId, casts)
+  }
   // Consume runes (inventory-first then bank), honouring the staff.
   for (const [runeId, qty] of Object.entries(runesToConsume)) {
     consumeInventoryThenBank(save, runeId, Math.max(1, Math.floor(Number(qty) || 1)) * casts)
   }
 
-  const produced = []
   if (isAlchemy) {
-    removeItemFromInventory(save, targetItemId, casts) // alchemy consumes from inventory only
     const coins = Math.floor((Number(alchItem.shopValue) || 0) * 1.1) * casts
     addItemToBank(save, 'coins', coins)
     produced.push({ itemId: 'coins', name: 'Coins', quantity: coins })

@@ -902,6 +902,22 @@ describe('magic intents (cast_magic)', () => {
   it('rejects an unknown magic action', () => {
     expect(() => castMagic(makeSave(), 'fireball_supreme', {})).toThrow(/Unknown magic action/)
   })
+
+  it('High-Alching a rune that is also a cast rune accounts for the combined demand', () => {
+    // high_alch uses nature_rune:1 + fire_rune:5. Alching nature_rune means each
+    // cast needs 2 nature runes (1 rune + 1 target). With 10 nature in inventory
+    // and ample fire runes, that is 5 casts — not a spurious failure.
+    const save = makeSave({
+      stats: { magic: { xp: 200_000 } },
+      inventory: [{ itemId: 'nature_rune', quantity: 10 }, { itemId: 'fire_rune', quantity: 100 }],
+      bank: {},
+    })
+    const r = castMagic(save, 'high_alch', { targetItemId: 'nature_rune' })
+    expect(r.casts).toBe(5)
+    // 5 casts × (1 rune + 1 target) = 10 nature consumed; 5 × 5 fire = 25 fire.
+    expect(save.inventory.find((s: any) => s?.itemId === 'nature_rune')).toBeUndefined()
+    expect(save.inventory.find((s: any) => s?.itemId === 'fire_rune')?.quantity).toBe(75)
+  })
 })
 
 describe('dungeoneering intents', () => {

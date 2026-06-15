@@ -35,7 +35,7 @@ import { onRequestPost as completeClue } from '../../api/actions/clue/complete.j
 import { onRequestPost as completeMinigame } from '../../api/actions/minigame/complete.js'
 import { onRequestPost as completeSlayer } from '../../api/actions/slayer/complete.js'
 import { onRequestPost as postUnlockPurchase } from '../../api/unlocks/purchase.js'
-import { SLAYER_UNLOCKS } from '../../../src/engine/slayerUnlocks.js'
+import { SLAYER_UNLOCKS, ownsItem as ownsSlayerUnlockItem } from '../../../src/engine/slayerUnlocks.js'
 import { TICK_DURATION } from '../../../src/utils/constants.js'
 
 function ok(payload) {
@@ -577,6 +577,9 @@ const TOOLS = {
     if (autoClaimed.reason === 'unsupported_type') {
       throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
     }
+    if (autoClaimed.reason === 'in_progress') {
+      throw new Error('A timed clue or minigame is still running — wait for it to finish, then call claim_activity to collect it, before starting another activity.')
+    }
     if (autoClaimed.reason === 'one_life_combat') {
       throw new Error('One-Life combat is in progress — claim it in the game client, where death is handled.')
     }
@@ -604,6 +607,9 @@ const TOOLS = {
     const autoClaimed = await claimIdleCore(env, id, identity.id, authorization)
     if (autoClaimed.reason === 'unsupported_type') {
       throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
+    }
+    if (autoClaimed.reason === 'in_progress') {
+      throw new Error('A timed clue or minigame is still running — wait for it to finish, then call claim_activity to collect it, before starting another activity.')
     }
     if (autoClaimed.reason === 'one_life_combat') {
       throw new Error('One-Life combat is in progress — claim it in the game client, where death is handled.')
@@ -634,6 +640,9 @@ const TOOLS = {
     if (autoClaimed.reason === 'unsupported_type') {
       throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
     }
+    if (autoClaimed.reason === 'in_progress') {
+      throw new Error('A timed clue or minigame is still running — wait for it to finish, then call claim_activity to collect it, before starting another activity.')
+    }
     if (autoClaimed.reason === 'one_life_combat') {
       throw new Error('One-Life combat is in progress — claim it in the game client, where death is handled.')
     }
@@ -662,6 +671,9 @@ const TOOLS = {
     const autoClaimed = await claimIdleCore(env, id, identity.id, authorization)
     if (autoClaimed.reason === 'unsupported_type') {
       throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
+    }
+    if (autoClaimed.reason === 'in_progress') {
+      throw new Error('A timed clue or minigame is still running — wait for it to finish, then call claim_activity to collect it, before starting another activity.')
     }
     if (autoClaimed.reason === 'one_life_combat') {
       throw new Error('One-Life combat is in progress — claim it in the game client, where death is handled.')
@@ -736,13 +748,23 @@ const TOOLS = {
   // the game client uses): the slayer completion endpoint grants the item,
   // debits the slayer points atomically and records the collection log under a
   // replay-protected nonce — so this bridges rather than mutating the save.
-  async buy_slayer_unlock({ unlock_id, character_id }, { env, authorization }) {
+  async buy_slayer_unlock({ unlock_id, character_id }, { env, authorization, identity }) {
+    if (!identity?.id) throw new Error('Not authenticated.')
     if (!unlock_id) throw new Error('unlock_id is required.')
     const unlock = SLAYER_UNLOCKS.find((u) => u.itemId === unlock_id)
     if (!unlock) {
       throw new Error(`Unknown slayer unlock '${unlock_id}'. Valid ids: ${SLAYER_UNLOCKS.map((u) => u.itemId).join(', ')}.`)
     }
     const id = await resolveCharacterId(env, authorization, character_id)
+    // Reject duplicates up front (the client's ALREADY_OWNED guard) — these are
+    // untradeable one-offs; the completion endpoint only enforces affordability,
+    // so without this the same item could be bought (and points spent) twice.
+    const { saveObject } = await loadCharacterWithSave(env, id, identity.id)
+    const ownsInBankOrInv = ownsSlayerUnlockItem({ itemId: unlock_id, bank: saveObject.bank || {}, inventory: saveObject.inventory || [] })
+    const ownsEquipped = Object.values(saveObject.equipment || {}).some((s) => s?.itemId === unlock_id)
+    if (ownsInBankOrInv || ownsEquipped) {
+      throw new Error(`You already own a ${itemName(unlock_id)} — no need to buy another.`)
+    }
     const res = await callHandler(completeSlayer, env, {
       method: 'POST',
       authorization,
@@ -808,6 +830,9 @@ const TOOLS = {
     const autoClaimed = await claimIdleCore(env, id, identity.id, authorization)
     if (autoClaimed.reason === 'unsupported_type') {
       throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
+    }
+    if (autoClaimed.reason === 'in_progress') {
+      throw new Error('A timed clue or minigame is still running — wait for it to finish, then call claim_activity to collect it, before starting another activity.')
     }
     if (autoClaimed.reason === 'one_life_combat') {
       throw new Error('One-Life combat is in progress — claim it in the game client, where death is handled.')
@@ -898,6 +923,9 @@ const TOOLS = {
     const autoClaimed = await claimIdleCore(env, id, identity.id, authorization)
     if (autoClaimed.reason === 'unsupported_type') {
       throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
+    }
+    if (autoClaimed.reason === 'in_progress') {
+      throw new Error('A timed clue or minigame is still running — wait for it to finish, then call claim_activity to collect it, before starting another activity.')
     }
 
     // claimIdleCore may have mutated/persisted the save (a prior task); reload so
