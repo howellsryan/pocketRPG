@@ -230,11 +230,19 @@ export function GameProvider({ children }) {
           // whether to trigger a One-Life wipe or just a normal "you died"
           // toast.
           const hpRegenSim = simulateIdleHPRegen(elapsedMs)
+          let diedDuringIdle = false
           if (savedTask.type === 'combat' && sim.died === true) {
             const maxHP = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
             savedHP = maxHP
             sim.hpRestored = 0
-            savedTask = null
+            // Defer clearing the active task until AFTER the reward-application
+            // pass below. That code reads `savedTask.type` repeatedly, so
+            // nulling it here threw "Cannot read properties of null (reading
+            // 'type')" the moment a player died during offline catch-up —
+            // which propagates out of loadGame and locks the account out at
+            // login on every boot. Rewards earned up to the killing blow are
+            // still kept (see the note above); we only clear the task itself.
+            diedDuringIdle = true
             try { localStorage.removeItem('pocketrpg_activeTask') } catch {}
           } else if (savedTask.type === 'combat' && Number.isFinite(Number(sim.finalHP))) {
             const maxHP = s.hitpoints ? getLevelFromXP(s.hitpoints.xp) : 10
@@ -467,6 +475,10 @@ export function GameProvider({ children }) {
             localStorage.removeItem('pocketrpg_activeTask')
             localStorage.removeItem('pocketrpg_lastTick')
           }
+          // Combat rewards earned up to the killing blow have now been applied;
+          // clear the offline-death task so the UI and persisted state show no
+          // active task afterwards.
+          if (diedDuringIdle) savedTask = null
           idleResult = { elapsedMs, task: savedTask, ...sim }
         }
       }
