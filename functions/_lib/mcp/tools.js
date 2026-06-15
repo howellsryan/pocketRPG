@@ -350,13 +350,13 @@ const TOOLS = {
     return ok({ characterId: id, maxSlots: res.data?.max_slots, offers })
   },
 
-  async place_offer({ offer_type, item_id, price, quantity, character_id }, { env, authorization }) {
+  async place_offer({ offer_type, item_id, price, quantity, source, character_id }, { env, authorization }) {
     const id = await resolveCharacterId(env, authorization, character_id)
     const res = await callHandler(postPlaceOffer, env, {
       method: 'POST',
       authorization,
       characterId: id,
-      body: { offer_type, item_id, price, quantity },
+      body: { offer_type, item_id, price, quantity, source },
     })
     if (!res.ok) throw httpError(res)
     return ok({ characterId: id, item: itemName(item_id), ...res.data })
@@ -383,14 +383,14 @@ const TOOLS = {
     return ok({ characterId: id, ...res.data })
   },
 
-  async sell_item({ item_id, quantity, character_id }, { env, authorization }) {
+  async sell_item({ item_id, quantity, source, character_id }, { env, authorization }) {
     if (!item_id) throw new Error('item_id is required.')
     const id = await resolveCharacterId(env, authorization, character_id)
     const res = await callHandler(postSellImmediate, env, {
       method: 'POST',
       authorization,
       characterId: id,
-      body: { item_id, quantity },
+      body: { item_id, quantity, source },
     })
     if (!res.ok) throw httpError(res)
     return ok({ characterId: id, item: itemName(item_id), ...res.data })

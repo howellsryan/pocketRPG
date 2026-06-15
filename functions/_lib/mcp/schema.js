@@ -346,6 +346,7 @@ export const TOOL_SCHEMAS = [
         item_id: { type: 'string' },
         price: { type: 'integer', minimum: 1, description: 'Coins per item.' },
         quantity: { type: 'integer', minimum: 1 },
+        source: { type: 'string', enum: ['inventory', 'bank'], description: 'For sell offers, where to escrow the items from. Defaults to inventory. Ignored for buy offers.' },
         ...optionalCharacterId,
       },
       required: ['offer_type', 'item_id', 'price', 'quantity'],
@@ -389,12 +390,13 @@ export const TOOL_SCHEMAS = [
   {
     name: 'sell_item',
     description:
-      "Immediately sell general-store-tier items from a character's inventory at their shop value for coins (no order book). Boss/raid/clue uniques must use place_offer instead.",
+      "Immediately sell general-store-tier items at their shop value for coins (no order book), sourcing from the character's inventory (default) or bank. Boss/raid/clue uniques must use place_offer instead.",
     inputSchema: {
       type: 'object',
       properties: {
         item_id: { type: 'string' },
         quantity: { type: 'integer', minimum: 1 },
+        source: { type: 'string', enum: ['inventory', 'bank'], description: 'Where to sell the items from. Defaults to inventory.' },
         ...optionalCharacterId,
       },
       required: ['item_id', 'quantity'],

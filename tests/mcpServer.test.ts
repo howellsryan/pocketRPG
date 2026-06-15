@@ -3,6 +3,8 @@ import { summarizeSave } from '../functions/_lib/mcp/summary.js'
 import { TOOL_SCHEMAS, TOOL_NAMES, SERVER_INSTRUCTIONS } from '../functions/_lib/mcp/schema.js'
 import { itemName, shopCatalog, REFERENCE_RESOURCES, readReference, getItem, listSkills, getSkillActions, searchItems, searchMonsters, REFERENCE_TOPIC_NAMES } from '../functions/_lib/mcp/reference.js'
 import { callTool } from '../functions/_lib/mcp/tools.js'
+import { signJWT } from '../functions/_lib/jwt.js'
+import { gzipJsonString } from '../functions/_lib/saveCodec.js'
 
 describe('MCP summarizeSave', () => {
   const save = {
@@ -277,5 +279,82 @@ describe('MCP dispatch', () => {
     expect(data.switchAccount.join(' ')).toMatch(/different account/i)
     // Without an identity it surfaces an auth error rather than guidance.
     expect((await callTool('logout', {}, ctx)).isError).toBe(true)
+  })
+})
+
+describe('MCP trading-post source: inventory|bank', () => {
+  it('place_offer and sell_item advertise an optional inventory|bank source', () => {
+    for (const name of ['place_offer', 'sell_item']) {
+      const src = TOOL_SCHEMAS.find((t) => t.name === name)?.inputSchema.properties.source
+      expect(src).toMatchObject({ type: 'string', enum: ['inventory', 'bank'] })
+      // Optional — never a required field.
+      expect(TOOL_SCHEMAS.find((t) => t.name === name)?.inputSchema.required).not.toContain('source')
+    }
+  })
+
+  // End-to-end: a sell_item call with source:'bank' must reach the production
+  // sell-immediate handler and escrow the item from the bank, leaving any
+  // inventory copy untouched. This proves the MCP layer forwards `source`.
+  const TEST_SECRET = 'test-jwt-secret'
+  const IDENTITY = 'identity-1'
+
+  function mockEnv(save: any) {
+    const captured: { saveData: string | null } = { saveData: null }
+    const blob = gzipJsonString(JSON.stringify(save))
+    const prepare = (sql: string) => ({
+      bind: (...args: any[]) => ({
+        all: async () => {
+          // characters listing (resolveCharacterId)
+          if (sql.includes('FROM characters c') && sql.includes('total_pvp_kills')) {
+            return { results: [{ id: 7, username: 'Hero', is_ironman: 0, is_one_life: 0, created_at: 1 }] }
+          }
+          return { results: [] }
+        },
+        first: async () => {
+          if (sql.includes('active_match_id FROM characters')) return { active_match_id: null }
+          if (sql.includes('FROM pvp_matches')) return null
+          if (sql.includes("c.credits") && sql.includes('save_blob')) {
+            return {
+              id: Number(args[0]),
+              owner_id: args[1],
+              is_ironman: 0,
+              credits: 0,
+              save_blob: await blob,
+              save_data: null,
+              updated_at: 123,
+              save_revision: 0,
+            }
+          }
+          if (sql.includes('save_revision FROM saves')) return { save_revision: 1 }
+          return null
+        },
+        run: async () => {
+          if (sql.startsWith('UPDATE saves')) captured.saveData = args[1]
+          return { meta: { changes: 1 } }
+        },
+      }),
+    })
+    return { env: { DB: { prepare }, JWT_SECRET: TEST_SECRET } as any, captured }
+  }
+
+  it("sell_item with source:'bank' drains the bank and leaves inventory copies", async () => {
+    const save = {
+      inventory: [{ itemId: 'fighter_helm', quantity: 1 }],
+      bank: { fighter_helm: { itemId: 'fighter_helm', quantity: 2 } },
+    }
+    const { env, captured } = mockEnv(save)
+    const token = await signJWT({ sub: IDENTITY, provider: 'test' }, TEST_SECRET)
+    const ctx = { env, authorization: `Bearer ${token}`, identity: { id: IDENTITY } } as any
+
+    const res = await callTool('sell_item', { item_id: 'fighter_helm', quantity: 2, source: 'bank', character_id: 7 }, ctx)
+    expect(res.isError).toBeFalsy()
+    const data = JSON.parse(res.content[0].text)
+    expect(data.source).toBe('bank')
+    expect(data.total_payout).toBe(1000000)
+
+    const written = JSON.parse(captured.saveData!)
+    expect(written.bank.fighter_helm).toBeUndefined()
+    // Inventory copy untouched — the bank was the source.
+    expect(written.inventory.find((s: any) => s.itemId === 'fighter_helm')?.quantity).toBe(1)
   })
 })
