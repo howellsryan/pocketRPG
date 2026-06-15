@@ -39,6 +39,7 @@ import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
 import { getDungeoneeringRewardCost } from '../../../src/engine/dungeoneeringTokens.js'
 import { SLAYER_MASTERS, pickSlayerMonster, buildSlayerTask } from '../../../src/engine/slayerMasters.js'
 import { SLAYER_TASK_SKIP_POINT_COST, doesSlayerTaskMatchMonster } from '../../../src/engine/slayerTasks.js'
+import { SLAYER_UNLOCKS, ownsItem as ownsSlayerUnlockItem } from '../../../src/engine/slayerUnlocks.js'
 import { getSlayerTaskReward } from '../../../src/engine/slayerRewards.js'
 import questsData from '../../../src/data/quests.json' assert { type: 'json' }
 import { checkQuestEligibility, getQuestPointsEarned, getCombatLevel } from '../../../src/engine/quests.js'
@@ -1503,6 +1504,22 @@ export function slayerStatus(save) {
     eligible: combatLevel >= m.combatReq && slayerLevel >= m.slayerReq,
   }))
 
+  // Slayer-point reward unlocks (one-off purchases via buy_slayer_unlock).
+  const bank = (save.bank && typeof save.bank === 'object') ? save.bank : {}
+  const inventory = getInventory(save)
+  const unlocks = SLAYER_UNLOCKS.map((u) => {
+    const owned = ownsSlayerUnlockItem({ itemId: u.itemId, bank, inventory })
+    return {
+      unlockId: u.itemId,
+      name: itemsData[u.itemId]?.name || u.itemId,
+      cost: u.cost,
+      description: u.description,
+      owned,
+      affordable: points >= u.cost,
+      purchasable: !owned && points >= u.cost,
+    }
+  })
+
   return {
     slayerLevel,
     combatLevel,
@@ -1512,5 +1529,6 @@ export function slayerStatus(save) {
     nextTaskMultiplier: getSlayerTaskReward(1, tasksCompleted).multiplier,
     skipCosts: { points: SLAYER_TASK_SKIP_POINT_COST, credits: 1 },
     masters,
+    unlocks,
   }
 }

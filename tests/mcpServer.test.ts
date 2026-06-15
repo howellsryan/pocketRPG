@@ -113,6 +113,8 @@ describe('MCP tool schema', () => {
       'harvest_patch',
       'harvest_all',
       'cast_magic',
+      'buy_unlock',
+      'buy_slayer_unlock',
       'claim_activity',
       'get_quests',
       'start_quest',
@@ -518,5 +520,99 @@ describe('MCP clue scrolls (start_clue + server claim)', () => {
     const res = await callTool('start_minigame', { minigame_task_id: 'wg_dragon_defender', character_id: 7 }, await ctxFor(env))
     expect(res.isError).toBe(true)
     expect(res.content[0].text).toMatch(/requires/i)
+  })
+})
+
+describe('MCP unlock purchases (buy_unlock + buy_slayer_unlock)', () => {
+  const TEST_SECRET = 'test-jwt-secret'
+  const IDENTITY = 'identity-unlock'
+
+  async function ctxFor(env: any) {
+    const token = await signJWT({ sub: IDENTITY, provider: 'test' }, TEST_SECRET)
+    return { env, authorization: `Bearer ${token}`, identity: { id: IDENTITY } } as any
+  }
+
+  // Stateful mock covering resolveCharacterId, the credit-unlock debit and the
+  // slayer completion endpoint (nonce + save load/write) the unlock tools hit.
+  function mockEnv(opts: { save?: any; credits?: number } = {}) {
+    const captured: { saveData: string | null } = { saveData: null }
+    const blob = opts.save ? gzipJsonString(JSON.stringify(opts.save)) : null
+    const credits = opts.credits ?? 0
+    const prepare = (sql: string) => ({
+      bind: (...args: any[]) => ({
+        all: async () => {
+          if (sql.includes('FROM characters c') && sql.includes('total_pvp_kills')) {
+            return { results: [{ id: 7, username: 'Hero', is_ironman: 0, is_one_life: 0, created_at: 1 }] }
+          }
+          return { results: [] }
+        },
+        first: async () => {
+          if (sql.includes('active_match_id FROM characters')) return { active_match_id: null }
+          if (sql.includes('FROM pvp_matches')) return null
+          if (sql.startsWith('SELECT id FROM characters')) return { id: 7 }
+          if (sql.includes('UPDATE') && sql.includes('credits_remaining')) {
+            // The atomic debit only matches when credits >= cost (last bind arg).
+            const cost = Number(args[0])
+            return credits >= cost ? { credits_remaining: credits - cost } : null
+          }
+          if (sql.includes('c.credits') && sql.includes('save_blob')) {
+            return { id: Number(args[0]), owner_id: args[1], is_ironman: 0, credits, save_blob: blob ? await blob : null, save_data: null, updated_at: 1, save_revision: 0 }
+          }
+          if (sql.includes('save_revision FROM saves')) return { save_revision: 1 }
+          return null
+        },
+        run: async () => {
+          if (sql.startsWith('UPDATE saves')) captured.saveData = args[1]
+          if (sql.includes('INSERT INTO action_nonces')) return { meta: { changes: 1 } }
+          return { meta: { changes: 1 } }
+        },
+      }),
+    })
+    return { env: { DB: { prepare, batch: async () => [] }, JWT_SECRET: TEST_SECRET } as any, captured }
+  }
+
+  it('buy_unlock debits credits and returns the remaining balance', async () => {
+    const { env } = mockEnv({ credits: 250 })
+    const res = await callTool('buy_unlock', { unlock_id: 'double_slayer_xp', character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBeFalsy()
+    const data = JSON.parse(res.content[0].text)
+    expect(data.credits_remaining).toBe(150) // 250 - 100
+  })
+
+  it('buy_unlock surfaces insufficient credits', async () => {
+    const { env } = mockEnv({ credits: 50 }) // < 100
+    const res = await callTool('buy_unlock', { unlock_id: 'double_slayer_xp', character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBe(true)
+    expect(res.content[0].text).toMatch(/insufficient/i)
+  })
+
+  it('buy_slayer_unlock grants the item and debits slayer points via the server endpoint', async () => {
+    const { env, captured } = mockEnv({
+      save: { inventory: [], bank: {}, settings: { slayerPoints: 500 } },
+    })
+    const res = await callTool('buy_slayer_unlock', { unlock_id: 'slayer_helmet', character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBeFalsy()
+    const data = JSON.parse(res.content[0].text)
+    expect(data.pointsSpent).toBe(400)
+    expect(data.granted.some((g: any) => g.itemId === 'slayer_helmet')).toBe(true)
+    // The written save shows points debited (500 - 400).
+    const written = JSON.parse(captured.saveData!)
+    expect(written.settings.slayerPoints).toBe(100)
+  })
+
+  it('buy_slayer_unlock refuses when slayer points are insufficient', async () => {
+    const { env, captured } = mockEnv({
+      save: { inventory: [], bank: {}, settings: { slayerPoints: 100 } }, // < 400
+    })
+    const res = await callTool('buy_slayer_unlock', { unlock_id: 'slayer_helmet', character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBe(true)
+    expect(captured.saveData).toBeNull() // nothing written
+  })
+
+  it('buy_slayer_unlock rejects an unknown unlock id before any server call', async () => {
+    const { env } = mockEnv({ save: { inventory: [], bank: {}, settings: { slayerPoints: 5000 } } })
+    const res = await callTool('buy_slayer_unlock', { unlock_id: 'not_a_real_unlock', character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBe(true)
+    expect(res.content[0].text).toMatch(/Unknown slayer unlock/)
   })
 })

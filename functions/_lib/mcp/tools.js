@@ -33,6 +33,9 @@ import { onRequestPost as completeRaid } from '../../api/actions/raid/complete.j
 import { onRequestPost as completeDungeoneering } from '../../api/actions/dungeoneering/complete.js'
 import { onRequestPost as completeClue } from '../../api/actions/clue/complete.js'
 import { onRequestPost as completeMinigame } from '../../api/actions/minigame/complete.js'
+import { onRequestPost as completeSlayer } from '../../api/actions/slayer/complete.js'
+import { onRequestPost as postUnlockPurchase } from '../../api/unlocks/purchase.js'
+import { SLAYER_UNLOCKS } from '../../../src/engine/slayerUnlocks.js'
 import { TICK_DURATION } from '../../../src/utils/constants.js'
 
 function ok(payload) {
@@ -703,6 +706,49 @@ const TOOLS = {
   cast_magic({ action_id, target_item_id, quantity, character_id }, ctx) {
     if (!action_id) throw new Error('action_id is required.')
     return applySaveIntent(ctx, character_id, (save) => castMagic(save, action_id, { targetItemId: target_item_id, quantity }), 'mcp_cast_magic')
+  },
+
+  // Permanent credit unlock — server-authoritative price registry; debits the
+  // character's purchased credits.
+  async buy_unlock({ unlock_id, character_id }, { env, authorization }) {
+    if (!unlock_id) throw new Error('unlock_id is required.')
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const res = await callHandler(postUnlockPurchase, env, { method: 'POST', authorization, characterId: id, body: { unlock_id } })
+    if (!res.ok) throw httpError(res)
+    return ok({ characterId: id, ...res.data })
+  },
+
+  // Slayer-point reward unlock. The purchase is server-authoritative (same path
+  // the game client uses): the slayer completion endpoint grants the item,
+  // debits the slayer points atomically and records the collection log under a
+  // replay-protected nonce — so this bridges rather than mutating the save.
+  async buy_slayer_unlock({ unlock_id, character_id }, { env, authorization }) {
+    if (!unlock_id) throw new Error('unlock_id is required.')
+    const unlock = SLAYER_UNLOCKS.find((u) => u.itemId === unlock_id)
+    if (!unlock) {
+      throw new Error(`Unknown slayer unlock '${unlock_id}'. Valid ids: ${SLAYER_UNLOCKS.map((u) => u.itemId).join(', ')}.`)
+    }
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const res = await callHandler(completeSlayer, env, {
+      method: 'POST',
+      authorization,
+      characterId: id,
+      body: {
+        sourceId: 'slayer',
+        actionNonce: `mcp-slayer-unlock:${id}:${unlock_id}:${Date.now()}`,
+        rewards: [{ itemId: unlock_id, quantity: 1 }],
+        slayerPoints: -unlock.cost,
+      },
+    })
+    if (!res.ok) throw httpError(res)
+    return ok({
+      characterId: id,
+      unlockId: unlock_id,
+      pointsSpent: unlock.cost,
+      granted: res.data?.granted || [],
+      collectionLogEntries: res.data?.collectionLogEntries || [],
+      note: `Unlocked ${itemName(unlock_id)} for ${unlock.cost} slayer points.`,
+    })
   },
 
   async claim_activity({ character_id }, { env, authorization, identity }) {

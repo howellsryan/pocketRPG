@@ -1089,4 +1089,18 @@ describe('slayer intents', () => {
     expect(s.slayerPoints).toBe(0)
     expect(s.nextTaskMultiplier).toBe(1)
   })
+
+  it('lists slayer-point unlocks with ownership + affordability', () => {
+    const save = makeSave({
+      settings: { slayerPoints: 500 },
+      bank: { slayer_helmet: { itemId: 'slayer_helmet', quantity: 1 } },
+    })
+    const unlocks = slayerStatus(save).unlocks
+    const helm = unlocks.find((u: any) => u.unlockId === 'slayer_helmet')
+    const defender = unlocks.find((u: any) => u.unlockId === 'slayer_defender')
+    // Helmet is owned (in bank) → not purchasable even though affordable.
+    expect(helm).toMatchObject({ owned: true, cost: 400, purchasable: false })
+    // Defender costs 1500 > 500 points → affordable false.
+    expect(defender).toMatchObject({ owned: false, affordable: false, purchasable: false })
+  })
 })

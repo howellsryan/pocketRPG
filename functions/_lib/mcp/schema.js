@@ -43,6 +43,9 @@ Acting:
   (none may be active and the character must meet the master's requirements);
   skip_slayer_task spends a credit to drop the current task. Actually killing the
   task's monster is done through the normal combat flow (start_fight/the client).
+  buy_slayer_unlock spends slayer points on a reward item (see the unlocks list
+  in get_slayer_task); buy_unlock spends purchased credits on a permanent perk.
+  Confirm any credit/point spend with the player first.
 - Trading post: search_market to price items, my_offers to see open offers,
   place_offer (buy/sell on the order book), cancel_offer/collect_offer/
   instant_sell_offer to manage them, and sell_item to sell general items at
@@ -299,7 +302,7 @@ export const TOOL_SCHEMAS = [
   {
     name: 'get_slayer_task',
     description:
-      "Get a character's slayer status: the current task (monster, kills remaining/total, progress %, points awarded on completion), slayer points balance, slayer + combat level, tasks completed, the points multiplier on the next completed task, the skip costs, and every slayer master with whether the character meets its requirements. Read-only.",
+      "Get a character's slayer status: the current task (monster, kills remaining/total, progress %, points awarded on completion), slayer points balance, slayer + combat level, tasks completed, the points multiplier on the next completed task, the skip costs, every slayer master with whether the character meets its requirements, and the `unlocks` list of slayer-point reward items (cost, owned, purchasable) for buy_slayer_unlock. Read-only.",
     inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
     annotations: READ('Get slayer task'),
   },
@@ -653,6 +656,36 @@ export const TOOL_SCHEMAS = [
       additionalProperties: false,
     },
     annotations: WRITE('Cast magic'),
+  },
+  {
+    name: 'buy_unlock',
+    description:
+      "Buy a permanent character unlock with the account's purchased CREDITS (server-authoritative price registry). Spends credits — confirm with the player first. Currently available: 'double_slayer_xp' (100 credits — doubles Slayer XP per kill). Returns the remaining credit balance.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        unlock_id: { type: 'string', description: "The unlock to buy, e.g. 'double_slayer_xp'." },
+        ...optionalCharacterId,
+      },
+      required: ['unlock_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Buy credit unlock'),
+  },
+  {
+    name: 'buy_slayer_unlock',
+    description:
+      "Spend SLAYER POINTS to buy a one-off Slayer reward item (e.g. 'slayer_helmet' 400 pts, 'slayer_defender' / 'gloves_of_slaughter' 1500 pts — boost damage/accuracy against the assigned task). The item is granted and the points debited server-side; refused if you already own it or lack the points. Confirm the point spend with the player first. See the `unlocks` list in get_slayer_task for costs and ownership.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        unlock_id: { type: 'string', description: "The slayer reward item id, e.g. 'slayer_helmet'." },
+        ...optionalCharacterId,
+      },
+      required: ['unlock_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Buy slayer unlock'),
   },
   {
     name: 'claim_activity',
