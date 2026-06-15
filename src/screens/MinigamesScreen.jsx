@@ -3,6 +3,8 @@ import Panel from '../components/Panel.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
 import GameIcon from '../components/GameIcon.jsx'
+import GildedComplete from '../components/GildedComplete.jsx'
+import { isMinigameItemUnlocked } from '../utils/completion.js'
 import { countItem } from '../engine/inventory.js'
 import minigamesData from '../data/minigames.json'
 import { getActivityKey } from '../engine/activityRegistry.js'
@@ -121,40 +123,41 @@ export default function MinigamesScreen() {
                 </SectionHeader>
                 {tasks.map(task => {
                   const missingReq = task.requiresItem && !hasItemAnywhere(task.requiresItem)
-                  const alreadyUnlocked = unlockedMinigameItems.has(task.product)
+                  const alreadyUnlocked = isMinigameItemUnlocked(unlockedMinigameItems, task.product)
                   const enabled = !missingReq
                   const rowClass = enabled
                     ? 'bg-[var(--color-void-light)] border-[#2a2a2a] opacity-100'
                     : 'bg-[#111] border-[#1a1a1a] opacity-45'
 
                   return (
-                    <button
-                      key={task.id}
-                      onClick={() => enabled && startMinigame(task)}
-                      disabled={!enabled}
-                      class={`p-3 rounded-xl border text-left flex items-center gap-3 ${rowClass}`}
-                    >
-                      <GameIcon iconKey={task.iconKey} item={{ icon: task.icon }} size={28} color="var(--color-gold)" class="flex-shrink-0" />
+                    <GildedComplete key={task.id} complete={alreadyUnlocked} className="rounded-xl">
+                      <button
+                        onClick={() => enabled && startMinigame(task)}
+                        disabled={!enabled}
+                        class={`w-full p-3 rounded-xl border text-left flex items-center gap-3 ${rowClass}`}
+                      >
+                        <GameIcon iconKey={task.iconKey} item={{ icon: task.icon }} size={28} color="var(--color-gold)" class="flex-shrink-0" />
 
-                      <div class="flex-1 min-w-0">
-                        <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>
-                        <div class="text-[10px] text-[#c8a96e] opacity-80">
-                          {alreadyUnlocked && <span class="text-[#7a7]">✓</span>}
-                          {alreadyUnlocked && task.requiresItem && ' · '}
+                        <div class="flex-1 min-w-0">
+                          <div class="text-[13px] font-semibold text-[var(--color-parchment)] mb-1">{task.name}</div>
+                          <div class="text-[10px] text-[#c8a96e] opacity-80">
+                            {alreadyUnlocked && <span class="text-[#7a7]">✓</span>}
+                            {alreadyUnlocked && task.requiresItem && ' · '}
 
-                          ⏱ {formatMinigameHours(task.hours)} total
-                          {task.requiresItem && (
-                            <span class={`${missingReq ? 'text-[#e57373]' : 'text-[var(--color-parchment)] opacity-50'}`}>
-                              {' · '}Needs: {minigamesData.itemNames[task.requiresItem] || task.requiresItem}
-                            </span>
-                          )}
+                            ⏱ {formatMinigameHours(task.hours)} total
+                            {task.requiresItem && (
+                              <span class={`${missingReq ? 'text-[#e57373]' : 'text-[var(--color-parchment)] opacity-50'}`}>
+                                {' · '}Needs: {minigamesData.itemNames[task.requiresItem] || task.requiresItem}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <div class="flex-shrink-0 text-right">
-                        <div class="text-[18px]">→</div>
-                        <div class="text-[9px] text-[#c8a96e] opacity-70">{minigamesData.itemNames[task.product] || task.product}</div>
-                      </div>
-                    </button>
+                        <div class="flex-shrink-0 text-right">
+                          <div class="text-[18px]">→</div>
+                          <div class="text-[9px] text-[#c8a96e] opacity-70">{minigamesData.itemNames[task.product] || task.product}</div>
+                        </div>
+                      </button>
+                    </GildedComplete>
                   )
                 })}
               </div>

@@ -6,6 +6,8 @@ import Modal from '../components/Modal.jsx'
 import SectionHeader from '../components/SectionHeader.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import TwoPaneLayout from '../components/TwoPaneLayout.jsx'
+import GildedComplete from '../components/GildedComplete.jsx'
+import { isQuestComplete } from '../utils/completion.js'
 import { useIsDesktop } from '../hooks/useIsDesktop.js'
 import {
   createQuestState, checkQuestEligibility,
@@ -251,45 +253,46 @@ export default function QuestsScreen() {
             )}
 
             {visibleQuests.map(quest => {
-              const completed = completedQuests.has(quest.id)
+              const completed = isQuestComplete(completedQuests, quest.id)
               const elig = checkQuestEligibility(quest, stats, completedQuests, questsData)
               const complexityColor = COMPLEXITY_COLORS[quest.complexity] || '#888'
 
               return (
-                <button
-                  key={quest.id}
-                  onClick={() => setSelectedQuest(quest)}
-                  class={`p-3 rounded-xl border text-left flex items-center gap-3 ${
-                    completed
-                      ? 'bg-[rgba(74,222,128,0.06)] border-[rgba(74,222,128,0.2)]'
-                      : elig.eligible
-                        ? 'bg-[var(--color-void-light)] border-[#2a2a2a]'
-                        : 'bg-[#111] border-[#1a1a1a] opacity-70'
-                  }`}
-                >
-                  <span class="text-[24px] flex-shrink-0">
-                    {completed ? '✅' : '📜'}
-                  </span>
-                  <div class="flex-1 min-w-0">
-                    <div
-                      class={`text-[13px] font-semibold ${
-                        completed ? 'text-[#4ade80]' : 'text-[var(--color-parchment)]'
-                      }`}
-                    >
-                      {quest.name}
+                <GildedComplete key={quest.id} complete={completed} className="rounded-xl">
+                  <button
+                    onClick={() => setSelectedQuest(quest)}
+                    class={`w-full p-3 rounded-xl border text-left flex items-center gap-3 ${
+                      completed
+                        ? 'bg-[rgba(74,222,128,0.06)] border-[rgba(74,222,128,0.2)]'
+                        : elig.eligible
+                          ? 'bg-[var(--color-void-light)] border-[#2a2a2a]'
+                          : 'bg-[#111] border-[#1a1a1a] opacity-70'
+                    }`}
+                  >
+                    <span class="text-[24px] flex-shrink-0">
+                      {completed ? '✅' : '📜'}
+                    </span>
+                    <div class="flex-1 min-w-0">
+                      <div
+                        class={`text-[13px] font-semibold ${
+                          completed ? 'text-[#4ade80]' : 'text-[var(--color-parchment)]'
+                        }`}
+                      >
+                        {quest.name}
+                      </div>
+                      <div class="text-[10px] flex items-center gap-2 mt-[2px]">
+                        <span style={{ color: complexityColor }}>{quest.complexity}</span>
+                        <span class="text-[var(--color-parchment)] opacity-50">·</span>
+                        <span class="text-[var(--color-parchment)] opacity-60">
+                          {formatQuestDuration(quest.durationSeconds)}
+                        </span>
+                      </div>
                     </div>
-                    <div class="text-[10px] flex items-center gap-2 mt-[2px]">
-                      <span style={{ color: complexityColor }}>{quest.complexity}</span>
-                      <span class="text-[var(--color-parchment)] opacity-50">·</span>
-                      <span class="text-[var(--color-parchment)] opacity-60">
-                        {formatQuestDuration(quest.durationSeconds)}
-                      </span>
+                    <div class="flex-shrink-0 text-[18px] text-[var(--color-parchment)] opacity-40">
+                      →
                     </div>
-                  </div>
-                  <div class="flex-shrink-0 text-[18px] text-[var(--color-parchment)] opacity-40">
-                    →
-                  </div>
-                </button>
+                  </button>
+                </GildedComplete>
               )
             })}
 

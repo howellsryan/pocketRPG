@@ -14,6 +14,7 @@ function readSrc(rel) { return fs.readFileSync(path.join(SRC, rel), 'utf-8'); }
 const sourceFiles = [
   'utils/constants.js',
   'utils/helpers.js',
+  'utils/completion.js',
   'utils/formatters.js',
   'utils/itemValue.js',
   'utils/hitSplats.js',
@@ -120,6 +121,7 @@ const sourceFiles = [
   'components/IdleCombatSetupModal.js',
   'components/EquipmentPaperdoll.js',
   'components/CollectionLogPanel.js',
+  'components/GildedComplete.js',
   'components/FilterToggleBar.js',
   'screens/HomeScreen.js',
   'screens/StatsScreen.js',

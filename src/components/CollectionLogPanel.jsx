@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'preact/hooks'
 import itemsData from '../data/items.json'
 import { getItemIconKey } from '../utils/itemIcons'
 import { skillEmblemMask, skillArtTreatment } from '../utils/skillArt.js'
+import GildedComplete from './GildedComplete.jsx'
 import {
   getCollectionLogData,
   getCollectionLogTotal,
@@ -141,11 +142,9 @@ function CategoryCard({ category, meta, obtained, total, onOpen }) {
   const done = total > 0 && obtained >= total
   const pct = total > 0 ? obtained / total : 0
   return (
-    <button type="button" class={'clog-cat' + (done ? ' is-done' : '')} onClick={() => onOpen(category.id)}>
-      {done && <>
-        <i class="clog-corner tl" /><i class="clog-corner tr" /><i class="clog-corner bl" /><i class="clog-corner br" />
-      </>}
-      <div class="clog-cat__body">
+    <GildedComplete complete={done} className="rounded-[16px]">
+      <button type="button" class={'clog-cat' + (done ? ' is-done' : '')} onClick={() => onOpen(category.id)}>
+        <div class="clog-cat__body">
         <div class="clog-cat__top">
           <div class="clog-cat__id">
             <CollogArt glyphKey={meta.glyph} accent={meta.accent} gold={done} size={26} glow={0.7} />
@@ -169,8 +168,9 @@ function CategoryCard({ category, meta, obtained, total, onOpen }) {
             </>
           )}
         </div>
-      </div>
-    </button>
+        </div>
+      </button>
+    </GildedComplete>
   )
 }
 
