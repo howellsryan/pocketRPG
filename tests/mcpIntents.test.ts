@@ -27,6 +27,10 @@ import {
   trainPrayer,
   trainConstruction,
   unlockConstructionPerk,
+  farmSummary,
+  plantSeed,
+  harvestPatch,
+  harvestAll,
   isClaimableTask,
   planDungeoneeringReward,
   assignSlayerTask,
@@ -711,6 +715,99 @@ describe('construction intents (train_construction + perks)', () => {
 
   it('rejects an unknown perk id', () => {
     expect(() => unlockConstructionPerk(makeSave(), 'free_lunch')).toThrow(/Unknown construction perk/)
+  })
+})
+
+describe('farming intents (plant → grow → harvest)', () => {
+  // Back-date a planted patch so getEffectiveStage (elapsed wall-clock) reports
+  // it fully grown, simulating the passage of real time.
+  function ripen(save: any, patchId: string) {
+    const patch = save.settings.farming.patchesById[patchId]
+    patch.plantedAt = Date.now() - 10_000_000 // > any crop's growthTimeMs
+  }
+
+  it('farmSummary lists locations and empty patches on a fresh save', () => {
+    const out = farmSummary(makeSave({ stats: { farming: { xp: 0 } } }))
+    expect(out.farmingLevel).toBe(1)
+    const falador = out.locations.find((l: any) => l.locationId === 'falador')
+    expect(falador?.patches.some((p: any) => p.patchId === 'falador_herb_0' && p.planted === null)).toBe(true)
+  })
+
+  it('plants a seed: patch occupied, seed consumed, plant XP granted', () => {
+    const save = makeSave({ stats: { farming: { xp: 0 } }, bank: { greenthorn_seed: { itemId: 'greenthorn_seed', quantity: 2 } } })
+    const r = plantSeed(save, 'falador_herb_0', 'greenthorn_seed')
+    expect(r.planted).toBe('Greenthorn')
+    expect(r.xpGained.farming).toBe(11)
+    expect(save.bank.greenthorn_seed.quantity).toBe(1)
+    expect(save.settings.farming.patchesById['falador_herb_0'].cropId).toBe('greenthorn_seed')
+    expect(save.stats.farming.xp).toBe(11)
+  })
+
+  it('refuses to plant in an occupied patch', () => {
+    const save = makeSave({ stats: { farming: { xp: 0 } }, bank: { greenthorn_seed: { itemId: 'greenthorn_seed', quantity: 2 } } })
+    plantSeed(save, 'falador_herb_0', 'greenthorn_seed')
+    expect(() => plantSeed(save, 'falador_herb_0', 'greenthorn_seed')).toThrow(/already has/i)
+  })
+
+  it('refuses a seed whose type does not match the patch', () => {
+    // greenthorn_seed is a herb; falador_tree_0 is a tree patch.
+    const save = makeSave({ stats: { farming: { xp: 0 } }, bank: { greenthorn_seed: { itemId: 'greenthorn_seed', quantity: 1 } } })
+    expect(() => plantSeed(save, 'falador_tree_0', 'greenthorn_seed')).toThrow(/cannot be planted in a tree patch/i)
+  })
+
+  it('enforces the seed level requirement', () => {
+    // duskroot_seed needs Farming 19; a fresh account is level 1.
+    const save = makeSave({ stats: { farming: { xp: 0 } }, bank: { duskroot_seed: { itemId: 'duskroot_seed', quantity: 1 } } })
+    expect(() => plantSeed(save, 'falador_herb_0', 'duskroot_seed')).toThrow(/level 19/i)
+  })
+
+  it('refuses to plant a seed the character does not own', () => {
+    const save = makeSave({ stats: { farming: { xp: 0 } } })
+    expect(() => plantSeed(save, 'falador_herb_0', 'greenthorn_seed')).toThrow(/No .* available/i)
+  })
+
+  it('rejects an unknown patch id and an unknown seed id', () => {
+    const save = makeSave({ stats: { farming: { xp: 0 } }, bank: { greenthorn_seed: { itemId: 'greenthorn_seed', quantity: 1 } } })
+    expect(() => plantSeed(save, 'not_a_patch', 'greenthorn_seed')).toThrow(/No farm patch/)
+    expect(() => plantSeed(save, 'falador_herb_0', 'not_a_seed')).toThrow(/No farming seed/)
+  })
+
+  it('harvests a ripe patch: produce banked, XP granted, patch cleared', () => {
+    const save = makeSave({ stats: { farming: { xp: 0 } }, bank: { greenthorn_seed: { itemId: 'greenthorn_seed', quantity: 1 } } })
+    plantSeed(save, 'falador_herb_0', 'greenthorn_seed')
+    ripen(save, 'falador_herb_0')
+    const r = harvestPatch(save, 'falador_herb_0')
+    expect(r.harvested.itemId).toBe('greenthorn_leaf')
+    expect(r.harvested.quantity).toBeGreaterThanOrEqual(5)
+    expect(save.bank.greenthorn_leaf.quantity).toBe(r.harvested.quantity)
+    expect(r.xpGained.farming).toBeGreaterThan(0)
+    // Patch cleared after harvest.
+    expect(save.settings.farming.patchesById['falador_herb_0']).toBeUndefined()
+  })
+
+  it('refuses to harvest an unripe or empty patch', () => {
+    const save = makeSave({ stats: { farming: { xp: 0 } }, bank: { greenthorn_seed: { itemId: 'greenthorn_seed', quantity: 1 } } })
+    plantSeed(save, 'falador_herb_0', 'greenthorn_seed') // just planted → stage 1
+    expect(() => harvestPatch(save, 'falador_herb_0')).toThrow(/not ready/i)
+    expect(() => harvestPatch(save, 'falador_tree_0')).toThrow(/empty/i)
+  })
+
+  it('harvest_all reaps every ready patch and refuses when nothing is ready', () => {
+    const save = makeSave({
+      stats: { farming: { xp: 0 } },
+      bank: { greenthorn_seed: { itemId: 'greenthorn_seed', quantity: 1 }, oak_sapling: { itemId: 'oak_sapling', quantity: 1 } },
+    })
+    expect(() => harvestAll(save)).toThrow(/No crops are ready/i)
+    plantSeed(save, 'falador_herb_0', 'greenthorn_seed')
+    save.stats.farming = { xp: 1_000_000 } // level 15+ for the oak sapling
+    plantSeed(save, 'falador_tree_0', 'oak_sapling')
+    ripen(save, 'falador_herb_0')
+    ripen(save, 'falador_tree_0')
+    const r = harvestAll(save)
+    expect(r.patchesHarvested).toBe(2)
+    expect(r.produce.some((p: any) => p.itemId === 'greenthorn_leaf')).toBe(true)
+    expect(r.produce.some((p: any) => p.itemId === 'oak_logs')).toBe(true)
+    expect(Object.keys(save.settings.farming.patchesById)).toHaveLength(0)
   })
 })
 

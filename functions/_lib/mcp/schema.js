@@ -62,8 +62,11 @@ Acting:
   character's bones, and train_construction trains Construction instantly by
   building with planks (neither uses the idle slot);
   unlock_construction_perk toggles the level-gated money_purse /
-  master_rejuvenation perks. Farming/magic idle is still done in the game
-  client.
+  master_rejuvenation perks.
+- Farming: get_farm shows every patch and what's growing; plant_seed plants in
+  an empty patch (the crop grows over real wall-clock time); harvest_patch and
+  harvest_all collect ready crops for produce + Farming XP. Magic idle is still
+  done in the game client.
 - Quests: get_quests shows what's completed, startable now, or locked (with the
   missing requirements). start_quest begins an eligible quest — it runs for its
   duration of real time, then claim_activity grants the XP/coins and unlocks its
@@ -585,6 +588,51 @@ export const TOOL_SCHEMAS = [
       additionalProperties: false,
     },
     annotations: WRITE('Unlock construction perk'),
+  },
+  {
+    name: 'get_farm',
+    description:
+      "Show the character's farm: every location and patch (id + type), what's planted (seed, crop, produce), its growth stage, whether it's ready, and seconds until ready. Patch ids (e.g. 'falador_tree_0') are used by plant_seed and harvest_patch. Crops grow over real wall-clock time. See pocketrpg://reference/farming for seed/level/produce data.",
+    inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
+    annotations: READ('Get farm'),
+  },
+  {
+    name: 'plant_seed',
+    description:
+      "Plant a seed in an empty farm patch. Checks the Farming level for the seed, that the seed type matches the patch type (herb/tree/fruitTree), that the patch is empty, and that the character owns the seed (consumed from inventory first, then bank). The crop then grows over real time — harvest it later with harvest_patch. Find patch ids and seed ids via get_farm / pocketrpg://reference/farming.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        patch_id: { type: 'string', description: "The patch to plant in, e.g. 'falador_herb_0' (from get_farm)." },
+        seed_id: { type: 'string', description: "The seed item id, e.g. 'greenthorn_seed', 'oak_sapling'." },
+        ...optionalCharacterId,
+      },
+      required: ['patch_id', 'seed_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Plant seed'),
+  },
+  {
+    name: 'harvest_patch',
+    description:
+      'Harvest a single ready farm patch, banking the produce and granting Farming XP. Refused if the patch is empty or the crop is not fully grown yet (check ready/secondsUntilReady via get_farm). Yield is randomised, scaling with Farming level.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        patch_id: { type: 'string', description: "The ready patch to harvest, e.g. 'falador_tree_0' (from get_farm)." },
+        ...optionalCharacterId,
+      },
+      required: ['patch_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Harvest patch'),
+  },
+  {
+    name: 'harvest_all',
+    description:
+      'Harvest every ready crop across all farm patches at once, banking all produce and granting the total Farming XP. Refused if nothing is ready.',
+    inputSchema: { type: 'object', properties: { ...optionalCharacterId }, additionalProperties: false },
+    annotations: WRITE('Harvest all crops'),
   },
   {
     name: 'claim_activity',

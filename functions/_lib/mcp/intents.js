@@ -28,6 +28,8 @@ import { simulateIdleSkilling, simulateIdleAgility, simulateIdleCombat, simulate
 import { GATHER_TASKS, findGatherTask } from '../../../src/engine/gatherTasks.js'
 import { getClueCompletionTicks } from '../../../src/engine/clueScrolls.js'
 import { BUILDING_ACTIONS, UNLOCKABLES as CONSTRUCTION_PERKS, findBuildingAction, findConstructionPerk } from '../../../src/engine/construction.js'
+import farmingData from '../../../src/data/farming.json' assert { type: 'json' }
+import { getCropDef, getCropType, getPatchesForLocation, plantCrop, harvestCrop, getEffectiveStage } from '../../../src/engine/farming.ts'
 import { normaliseIdleCombatSetup, defaultIdleCombatSetup, isFoodItem, isPotionItem, getFoodHealAmount } from '../../../src/engine/idleSupplies.js'
 import { simulateIdleThieving } from '../../../src/engine/thieving.js'
 import { simulateIdleHunting } from '../../../src/engine/hunter.js'
@@ -411,6 +413,169 @@ export function unlockConstructionPerk(save, perkId) {
   }
   save.settings.unlockedFeatures = [...unlocked, perkId]
   return { perk: perk.name, perkId, unlocked: true, unlockedFeatures: save.settings.unlockedFeatures }
+}
+
+// ── Farming (plant → grow → harvest) ─────────────────────────────────────────
+// Farming is a patch system, not a single-slot idle task: a seed planted in a
+// patch grows over real wall-clock time (the growth math lives entirely in
+// src/engine/farming.ts — getEffectiveStage / harvestCrop — and is reused here,
+// never re-derived). Patch state lives at save.settings.farming.patchesById,
+// keyed by patch id (e.g. `falador_tree_0`). Harvest yield is RNG (client-
+// authoritative, like every other idle/skilling drop). Patch ids are discovered
+// via farmSummary (the get_farm tool).
+
+function getFarmingState(save) {
+  const f = save?.settings?.farming
+  return (f && typeof f === 'object' && f.patchesById && typeof f.patchesById === 'object')
+    ? f
+    : { patchesById: {} }
+}
+
+function farmingLevelOf(save) {
+  return getLevelFromXP(Math.max(0, Math.floor(Number(save?.stats?.farming?.xp) || 0)))
+}
+
+// Locate a patch slot by id across every farm location, returning its declared
+// type and current contents (null patch = empty). Throws on an unknown id.
+function resolvePatchSlot(state, patchId) {
+  for (const loc of farmingData.locations) {
+    for (const slot of getPatchesForLocation(state, loc.id)) {
+      if (slot.patchId === patchId) return { ...slot, locationId: loc.id, locationName: loc.name }
+    }
+  }
+  throw new GameApiError('UNKNOWN_PATCH', `No farm patch with id '${patchId}'. Call get_farm to list patches.`, 400)
+}
+
+// Add farming XP to the save (capped), returning the actual amount granted.
+function grantFarmingXp(save, amount) {
+  if (!save.stats || typeof save.stats !== 'object') save.stats = {}
+  const cur = Math.max(0, Math.floor(Number(save.stats.farming?.xp) || 0))
+  const next = Math.min(cur + Math.floor(Number(amount) || 0), XP_CAP)
+  save.stats.farming = { ...(save.stats.farming || {}), xp: next, level: getLevelFromXP(next) }
+  return next - cur
+}
+
+// Read-only view of every farm location, patch and what's growing in it.
+export function farmSummary(save) {
+  const state = getFarmingState(save)
+  const now = Date.now()
+  const locations = farmingData.locations.map((loc) => {
+    const patches = getPatchesForLocation(state, loc.id).map(({ patchId, patch, type }) => {
+      if (!patch?.cropId) return { patchId, type, planted: null }
+      const crop = getCropDef(patch.cropId)
+      const stage = getEffectiveStage(patch)
+      const ready = stage >= 4
+      const readyAt = patch.plantedAt + (crop?.growthTimeMs || 0)
+      return {
+        patchId,
+        type,
+        planted: {
+          seedId: patch.cropId,
+          crop: crop?.name || patch.cropId,
+          produce: crop?.cropId || null,
+          stage,
+          maxStage: 4,
+          ready,
+          secondsUntilReady: ready ? 0 : Math.max(0, Math.ceil((readyAt - now) / 1000)),
+        },
+      }
+    })
+    return { locationId: loc.id, name: loc.name, patches }
+  })
+  return { farmingLevel: farmingLevelOf(save), locations }
+}
+
+export function plantSeed(save, patchId, seedId) {
+  const state = getFarmingState(save)
+  const slot = resolvePatchSlot(state, patchId)
+  if (slot.patch?.cropId) {
+    throw new GameApiError('PATCH_OCCUPIED', `Patch '${patchId}' already has ${getCropDef(slot.patch.cropId)?.name || slot.patch.cropId} growing. Harvest it first.`, 400)
+  }
+  const crop = getCropDef(seedId)
+  if (!crop) {
+    throw new GameApiError('UNKNOWN_SEED', `No farming seed with id '${seedId}'. See pocketrpg://reference/farming.`, 400)
+  }
+  const seedType = getCropType(seedId)
+  if (seedType !== slot.type) {
+    throw new GameApiError('SEED_TYPE_MISMATCH', `${crop.name} is a ${seedType} crop and cannot be planted in a ${slot.type} patch.`, 400)
+  }
+  const level = farmingLevelOf(save)
+  if (level < crop.level) {
+    throw new GameApiError('LEVEL_TOO_LOW', `${crop.name} requires Farming level ${crop.level} (you are ${level}).`, 400)
+  }
+  if (heldInInventoryAndBank(save, seedId) < 1) {
+    throw new GameApiError('INSUFFICIENT_SUPPLIES', `No ${crop.name} seed available to plant.`, 400)
+  }
+  consumeInventoryThenBank(save, seedId, 1)
+  const result = plantCrop(state, patchId, seedId, slot.type)
+  if (!result) {
+    throw new GameApiError('PLANT_FAILED', `Could not plant ${crop.name} in patch '${patchId}'.`, 400)
+  }
+  if (!save.settings || typeof save.settings !== 'object') save.settings = {}
+  save.settings.farming = result.state
+  const xpGained = grantFarmingXp(save, result.plantXp)
+  return {
+    patchId,
+    planted: crop.name,
+    seedConsumed: { itemId: seedId, name: itemsData[seedId]?.name || crop.name, quantity: 1 },
+    xpGained: { farming: xpGained },
+    growthTimeSeconds: Math.ceil((crop.growthTimeMs || 0) / 1000),
+  }
+}
+
+export function harvestPatch(save, patchId) {
+  const state = getFarmingState(save)
+  resolvePatchSlot(state, patchId) // validates the id exists
+  const patch = state.patchesById[patchId]
+  if (!patch?.cropId) {
+    throw new GameApiError('NOTHING_PLANTED', `Patch '${patchId}' is empty.`, 400)
+  }
+  if (getEffectiveStage(patch) < 4) {
+    throw new GameApiError('NOT_READY', `The crop in '${patchId}' is not ready to harvest yet.`, 400)
+  }
+  const result = harvestCrop(state, patchId, farmingLevelOf(save))
+  if (!result) {
+    throw new GameApiError('HARVEST_FAILED', `Could not harvest patch '${patchId}'.`, 400)
+  }
+  if (!save.settings || typeof save.settings !== 'object') save.settings = {}
+  save.settings.farming = result.state
+  addItemToBank(save, result.cropId, result.quantity)
+  const xpGained = grantFarmingXp(save, result.harvestXp)
+  return {
+    patchId,
+    harvested: { itemId: result.cropId, name: itemsData[result.cropId]?.name || result.cropId, quantity: result.quantity },
+    xpGained: { farming: xpGained },
+  }
+}
+
+export function harvestAll(save) {
+  let state = getFarmingState(save)
+  const produce = {}
+  let totalXp = 0
+  let patchesHarvested = 0
+  for (const loc of farmingData.locations) {
+    for (const { patchId, patch } of getPatchesForLocation(state, loc.id)) {
+      if (!patch?.cropId || getEffectiveStage(patch) < 4) continue
+      const result = harvestCrop(state, patchId, farmingLevelOf(save))
+      if (!result) continue
+      state = result.state
+      produce[result.cropId] = (produce[result.cropId] || 0) + result.quantity
+      totalXp += result.harvestXp
+      patchesHarvested++
+    }
+  }
+  if (patchesHarvested < 1) {
+    throw new GameApiError('NOTHING_READY', 'No crops are ready to harvest.', 400)
+  }
+  if (!save.settings || typeof save.settings !== 'object') save.settings = {}
+  save.settings.farming = state
+  for (const [itemId, qty] of Object.entries(produce)) addItemToBank(save, itemId, qty)
+  const xpGained = grantFarmingXp(save, totalXp)
+  return {
+    patchesHarvested,
+    produce: Object.entries(produce).map(([itemId, quantity]) => ({ itemId, name: itemsData[itemId]?.name || itemId, quantity })),
+    xpGained: { farming: xpGained },
+  }
 }
 
 function findSkillEntry(skill, key, id) {

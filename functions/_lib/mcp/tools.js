@@ -4,7 +4,7 @@ import { getItem, getMonster, itemName, withItemName, REFERENCE_RESOURCES, readR
 import { loadCharacterWithSave, writeSave } from '../game/save.js'
 import { auditLog } from '../game/audit.js'
 import { assertNotInActiveMatch } from '../pvp.js'
-import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildGatherTask, buildClueTask, CLUE_LEVELS, buildMinigameTask, trainPrayer, trainConstruction, unlockConstructionPerk, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue, assignSlayerTask, slayerStatus } from './intents.js'
+import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildGatherTask, buildClueTask, CLUE_LEVELS, buildMinigameTask, trainPrayer, trainConstruction, unlockConstructionPerk, farmSummary, plantSeed, harvestPatch, harvestAll, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue, assignSlayerTask, slayerStatus } from './intents.js'
 import { getIdleRow, setIdleTask, resetIdleActiveAt, clearIdleTask, advanceIdleClock } from './idle.js'
 import { SKIP_HOUR_MS } from '../../../src/engine/skipPreflight.js'
 import { simulateBossFight, applyBossFightOutcome } from './bossFight.js'
@@ -676,6 +676,28 @@ const TOOLS = {
   unlock_construction_perk({ perk_id, character_id }, ctx) {
     if (!perk_id) throw new Error('perk_id is required.')
     return applySaveIntent(ctx, character_id, (save) => unlockConstructionPerk(save, perk_id), 'mcp_unlock_construction_perk')
+  },
+
+  async get_farm({ character_id }, { env, authorization, identity }) {
+    if (!identity?.id) throw new Error('Not authenticated.')
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const { saveObject } = await loadCharacterWithSave(env, id, identity.id)
+    return ok({ characterId: id, ...farmSummary(saveObject) })
+  },
+
+  plant_seed({ patch_id, seed_id, character_id }, ctx) {
+    if (!patch_id) throw new Error('patch_id is required.')
+    if (!seed_id) throw new Error('seed_id is required.')
+    return applySaveIntent(ctx, character_id, (save) => plantSeed(save, patch_id, seed_id), 'mcp_plant_seed')
+  },
+
+  harvest_patch({ patch_id, character_id }, ctx) {
+    if (!patch_id) throw new Error('patch_id is required.')
+    return applySaveIntent(ctx, character_id, (save) => harvestPatch(save, patch_id), 'mcp_harvest_patch')
+  },
+
+  harvest_all({ character_id }, ctx) {
+    return applySaveIntent(ctx, character_id, (save) => harvestAll(save), 'mcp_harvest_all')
   },
 
   async claim_activity({ character_id }, { env, authorization, identity }) {
