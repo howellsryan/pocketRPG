@@ -47,8 +47,12 @@ export function applyRewardClaim(saveObject, claim) {
 
   const slayerPoints = Math.floor(Number(claim?.slayerPoints) || 0)
   if (slayerPoints > 0) {
-    if (!saveObject.slayer) saveObject.slayer = {}
-    saveObject.slayer.points = (Number(saveObject.slayer.points) || 0) + slayerPoints
+    // Canonical slayer-points location is settings.slayerPoints (see
+    // gameState getSnapshot / intents.slayerStatus). Granting them anywhere
+    // else writes to a field the client never reads, so the points are lost.
+    if (!saveObject.settings || typeof saveObject.settings !== 'object') saveObject.settings = {}
+    const cur = Math.max(0, Math.floor(Number(saveObject.settings.slayerPoints) || 0))
+    saveObject.settings.slayerPoints = cur + slayerPoints
   }
 
   const dungeoneeringTokens = Math.floor(Number(claim?.dungeoneeringTokens) || 0)

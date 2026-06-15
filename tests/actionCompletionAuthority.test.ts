@@ -76,4 +76,38 @@ describe('action completion authority helpers', () => {
 
     expect(out.granted).toEqual([{ itemId: 'feather', quantity: 50, destination: 'inventory' }])
   })
+
+  it('spends slayer points from settings.slayerPoints (the canonical save location)', () => {
+    // Regression: a slayer unlock purchase (e.g. slayer_helmet, cost 400)
+    // round-trips through this handler with slayerPoints: -cost. The points
+    // live at settings.slayerPoints, so reading them anywhere else makes the
+    // server see 0 and reject the spend with INSUFFICIENT_SUPPLIES.
+    const save = makeSave()
+    save.settings.slayerPoints = 500
+    const out = settleActionCompletion(save, {
+      sourceType: 'slayer',
+      sourceId: 'slayer',
+      nonce: 'slayer:slayer_helmet:1',
+      rewards: [{ itemId: 'slayer_helmet', quantity: 1 }],
+      slayerPoints: -400,
+    })
+
+    expect(out.slayerPoints).toBe(-400)
+    expect(save.settings.slayerPoints).toBe(100)
+    expect(out.granted).toEqual([{ itemId: 'slayer_helmet', quantity: 1, destination: 'inventory' }])
+  })
+
+  it('rejects a slayer-points spend the player cannot afford', () => {
+    const save = makeSave()
+    save.settings.slayerPoints = 100
+    expect(() => settleActionCompletion(save, {
+      sourceType: 'slayer',
+      sourceId: 'slayer',
+      nonce: 'slayer:slayer_defender:1',
+      rewards: [{ itemId: 'slayer_defender', quantity: 1 }],
+      slayerPoints: -1500,
+    })).toThrow(/Insufficient supplies/)
+    // The save must be left untouched when the spend is refused.
+    expect(save.settings.slayerPoints).toBe(100)
+  })
 })

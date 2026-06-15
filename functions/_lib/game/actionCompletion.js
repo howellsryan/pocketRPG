@@ -144,10 +144,15 @@ export function settleActionCompletion(saveObject, { sourceType, sourceId, nonce
 
   const sPoints = Math.floor(Number(slayerPoints) || 0)
   if (sPoints !== 0) {
-    if (!saveObject.slayer) saveObject.slayer = {}
-    const cur = Number(saveObject.slayer.points) || 0
+    // Slayer points live at `settings.slayerPoints` in the save blob (the
+    // canonical client/MCP location — see gameState getSnapshot and
+    // intents.slayerStatus). Reading/writing them anywhere else (e.g. a
+    // top-level `slayer.points`) makes the server see 0 points and reject
+    // every slayer-points spend with INSUFFICIENT_SUPPLIES.
+    if (!saveObject.settings || typeof saveObject.settings !== 'object') saveObject.settings = {}
+    const cur = Math.max(0, Math.floor(Number(saveObject.settings.slayerPoints) || 0))
     if (cur + sPoints < 0) throw new GameApiError('INSUFFICIENT_SUPPLIES', 'Insufficient supplies', 400)
-    saveObject.slayer.points = cur + sPoints
+    saveObject.settings.slayerPoints = cur + sPoints
   }
 
   // Boss/raid kill counts are persisted server-authoritatively into the
