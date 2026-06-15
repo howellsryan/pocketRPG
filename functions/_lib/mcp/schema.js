@@ -41,8 +41,10 @@ Acting:
 - Slayer: get_slayer_task shows the current task, slayer points, tasks completed
   and each master's eligibility; assign_slayer_task gets a new task from a master
   (none may be active and the character must meet the master's requirements);
-  skip_slayer_task spends a credit to drop the current task. Actually killing the
-  task's monster is done through the normal combat flow (start_fight/the client).
+  skip_slayer_task spends a credit to drop the current task. Killing the task's
+  monster is done through the normal combat flow: start_fight against the task
+  monster credits the active task (progress + points on completion), or fight it
+  in the client.
   buy_slayer_unlock spends slayer points on a reward item (see the unlocks list
   in get_slayer_task); buy_unlock spends purchased credits on a permanent perk.
   Confirm any credit/point spend with the player first.
@@ -105,9 +107,14 @@ Acting:
   unlock dungeoneering gear.
 - skip_hour spends a credit to advance the running idle activity by one hour;
   follow it with claim_activity to collect the skipped time.
-- XP, coins and most loot are client-computed in this game, so these tools
-  cannot simulate live training or combat yet; report state and take only the
-  supported actions. Prefer concrete, checkable advice grounded in get_* reads.`
+- These tools cover gathering/production skilling, agility/thieving/hunter,
+  gather/clue/minigame activities, prayer, construction, farming, non-combat
+  magic, quests, idle combat (normal monsters, with Slayer-task credit), bosses
+  and raids. Still client-only: PvP, manual/offline special attacks, One-Life
+  combat, combat magic spells, and account billing. XP, coins and most idle loot
+  are client-authoritative by design, so the leaderboard is best-effort, not
+  cheat-proof. Prefer concrete, checkable advice grounded in get_* reads, and
+  confirm any coin/credit/point spend with the player first.`
 
 const optionalCharacterId = {
   character_id: {
