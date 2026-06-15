@@ -37,7 +37,8 @@ and a test (parity enforced by `tests/mcpServer.test.ts`).
 ### Combat
 - `get_idle_combat_setup`, `set_idle_combat_setup`
 - `start_fight` (normal monsters; credits the active Slayer task)
-- `kill_boss`, `fight_boss`, `kill_raid`, `claim_dungeoneering_reward`
+- `kill_boss`, `fight_boss` (melee/ranged/magic simulation), `kill_raid`,
+  `claim_dungeoneering_reward`
 
 ### Instant skilling (save intents, no idle slot)
 - `train_prayer` (bury/scatter/altar bones)
@@ -72,15 +73,14 @@ and a test (parity enforced by `tests/mcpServer.test.ts`).
   no automatic firing (see `CLAUDE.md §7`).
 - **One-Life combat** — combat that can permanently wipe an account is refused;
   it is handled in the client where death is explicit.
-- **Combat magic spells** — only the non-combat magic utility actions are
-  exposed; combat spellcasting stays in the client.
 - **Account billing / Stripe** — credit purchases happen outside MCP.
+
+(`fight_boss` simulates melee, ranged and magic setups; only a magic setup with
+no active combat spell selected is refused — pick a spell or use a powered staff
+in the client.)
 
 ## Deferred / future
 
-- **WO-9 — `fight_boss` magic setups.** `fight_boss` currently simulates melee/
-  ranged setups; a magic-spell boss simulation is the optional next increment
-  (do not start without explicit go-ahead). Tracked in `docs/mcp-gap-plan.md`.
 - **Item-creation charging.** Idle/offline loot, crafted/smithed/cooked products
   and skill capes are client-authoritative by design (`CLAUDE.md §14`); MCP does
   not try to police economy/item increases, matching the offline-first model.

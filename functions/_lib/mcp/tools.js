@@ -965,12 +965,15 @@ const TOOLS = {
     if (monster.boss !== true) throw new Error(`${monster.name || monster_id} is not a boss — use start_fight for normal monsters.`)
 
     const { saveObject, saveRevision } = await loadCharacterWithSave(env, id, identity.id)
-    const outcome = simulateBossFight(saveObject, monster) // throws for magic setups
+    // Simulates melee/ranged and magic (powered staff or active spell); refuses
+    // a magic setup with no spell selected.
+    const outcome = simulateBossFight(saveObject, monster)
     applyBossFightOutcome(saveObject, outcome)
     await writeSave(env, id, saveObject, saveRevision)
     await auditLog(env, 'mcp_fight_boss', { characterId: id, identityId: identity.id, monsterId: monster_id, victory: outcome.victory, died: outcome.died, ticks: outcome.ticks }, { swallow: true })
 
     const foodUsed = Object.entries(outcome.foodConsumed).map(([itemId, quantity]) => ({ itemId, name: itemName(itemId), quantity }))
+    const runesUsed = Object.entries(outcome.runesConsumed || {}).map(([itemId, quantity]) => ({ itemId, name: itemName(itemId), quantity }))
     if (!outcome.victory) {
       return ok({
         characterId: id,
@@ -980,6 +983,7 @@ const TOOLS = {
         ticks: outcome.ticks,
         finalHP: outcome.finalHP,
         foodUsed,
+        runesUsed,
         reason: outcome.died
           ? 'You died before defeating the boss — bring more/better food or stronger gear.'
           : 'Could not out-damage the boss; improve gear before trying again.',
@@ -999,6 +1003,7 @@ const TOOLS = {
       ticks: outcome.ticks,
       finalHP: outcome.finalHP,
       foodUsed,
+      runesUsed,
       granted: (res.data?.granted || []).map((g) => ({ ...g, name: itemName(g.itemId) })),
       killCount: res.data?.killCount,
       collectionLogEntries: res.data?.collectionLogEntries || [],

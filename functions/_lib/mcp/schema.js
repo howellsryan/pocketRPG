@@ -100,8 +100,9 @@ Acting:
 - Bosses & raids: kill_boss / kill_raid spend the target's skip cost in credits
   for an instant kill, then grant the server-rolled loot, kill count and
   collection-log uniques — confirm the credit spend first. fight_boss instead
-  simulates the actual fight (no credits): you win only if your gear/food are
-  strong enough, and it consumes the food used.
+  simulates the actual fight (no credits) for melee/ranged/magic setups: you win
+  only if your gear/food are strong enough, and it consumes the food, ammo and
+  spell runes used.
 - Dungeoneering: train it like any skill (start_skilling skill="dungeoneering")
   to earn XP and tokens, then claim_dungeoneering_reward spends those tokens to
   unlock dungeoneering gear.
@@ -110,8 +111,8 @@ Acting:
 - These tools cover gathering/production skilling, agility/thieving/hunter,
   gather/clue/minigame activities, prayer, construction, farming, non-combat
   magic, quests, idle combat (normal monsters, with Slayer-task credit), bosses
-  and raids. Still client-only: PvP, manual/offline special attacks, One-Life
-  combat, combat magic spells, and account billing. XP, coins and most idle loot
+  and raids (including magic boss fights). Still client-only: PvP,
+  manual/offline special attacks, One-Life combat, and account billing. XP, coins and most idle loot
   are client-authoritative by design, so the leaderboard is best-effort, not
   cheat-proof. Prefer concrete, checkable advice grounded in get_* reads, and
   confirm any coin/credit/point spend with the player first.`
@@ -853,7 +854,7 @@ export const TOOL_SCHEMAS = [
   {
     name: 'fight_boss',
     description:
-      "Fight a boss for real — the whole fight is simulated over the combat engine (no credits spent), auto-eating your configured idle food. On a win you receive the server-rolled loot, kill count and collection-log uniques; a loss or death grants nothing (but still consumes the food used). Conservative: no prayers/potions/special attacks, so if it reports a loss you may still win in the client. Magic setups and One-Life characters aren't supported here (use kill_boss / the client). Find boss ids via pocketrpg://reference/monsters.",
+      "Fight a boss for real — the whole fight is simulated over the combat engine (no credits spent), auto-eating your configured idle food. Works for melee, ranged and magic setups (a powered staff casts off its charges; a regular staff/wand casts the character's active combat spell, consuming its runes from the inventory). On a win you receive the server-rolled loot, kill count and collection-log uniques; a loss or death grants nothing (but still consumes the food/ammo/runes used). Conservative: no prayers/potions/special attacks, so if it reports a loss you may still win in the client. A magic setup with no active spell selected, and One-Life characters, aren't supported here (use kill_boss / the client). Find boss ids via pocketrpg://reference/monsters.",
     inputSchema: {
       type: 'object',
       properties: {
