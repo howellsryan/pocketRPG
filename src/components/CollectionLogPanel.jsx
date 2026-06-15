@@ -142,9 +142,6 @@ function CategoryCard({ category, meta, obtained, total, onOpen }) {
   const pct = total > 0 ? obtained / total : 0
   return (
     <button type="button" class={'clog-cat' + (done ? ' is-done' : '')} onClick={() => onOpen(category.id)}>
-      {done && <>
-        <i class="clog-corner tl" /><i class="clog-corner tr" /><i class="clog-corner bl" /><i class="clog-corner br" />
-      </>}
       <div class="clog-cat__body">
         <div class="clog-cat__top">
           <div class="clog-cat__id">

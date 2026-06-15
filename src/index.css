@@ -1468,11 +1468,6 @@ html, body, #app {
 .clog-cat.is-done .clog-cat__count { color:#fcecb0; opacity:.95; }
 .clog-cat.is-done .clog-cat__count b { color:#fff3cf; }
 .clog-cat.is-done .clog-cat__foot { justify-content: center; }
-.clog-cat.is-done .clog-corner { position:absolute; width:14px; height:14px; border:2px solid var(--color-gold-light); opacity:.85; z-index:4; pointer-events:none; filter:drop-shadow(0 0 3px rgba(240,192,64,.5)); }
-.clog-cat.is-done .clog-corner.tl { top:8px; left:8px; border-right:0; border-bottom:0; border-radius:4px 0 0 0; }
-.clog-cat.is-done .clog-corner.tr { top:8px; right:8px; border-left:0; border-bottom:0; border-radius:0 4px 0 0; }
-.clog-cat.is-done .clog-corner.bl { bottom:8px; left:8px; border-right:0; border-top:0; border-radius:0 0 0 4px; }
-.clog-cat.is-done .clog-corner.br { bottom:8px; right:8px; border-left:0; border-top:0; border-radius:0 0 4px 0; }
 .clog-cat.is-done::after { content:''; position:absolute; top:0; bottom:0; width:55%; z-index:5; pointer-events:none; background:linear-gradient(105deg,transparent,rgba(255,247,214,0.30) 50%,transparent); transform:skewX(-18deg); animation:clogShimmer 4.5s ease-in-out infinite; }
 @keyframes clogShimmer { 0% { left:-70%; } 55% { left:140%; } 100% { left:140%; } }
 .clog-done-tag { font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.28em; color: #fcecb0; text-shadow: 0 0 10px rgba(240,192,64,.5); }
