@@ -21,7 +21,9 @@ describe('reward claim authority helpers', () => {
       dungeoneeringTokens: 25,
     })
     expect(out.granted.length).toBe(1)
-    expect(save.slayer.points).toBe(15)
+    // Slayer points must land at the canonical settings.slayerPoints location
+    // the client reads — not a stray top-level slayer.points that gets lost.
+    expect(save.settings.slayerPoints).toBe(15)
     expect(save.dungeoneeringTokens).toBe(25)
   })
 
