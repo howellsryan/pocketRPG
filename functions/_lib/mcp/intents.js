@@ -243,6 +243,97 @@ export function buildMinigameTask(save, minigameTaskId) {
   return { type: 'minigame', minigameTask: { id: task.id, name: task.name, product: task.product, minigame: task.minigame, ticks }, bankingEnabled: true }
 }
 
+// ── Prayer (bury / altar bones) ──────────────────────────────────────────────
+// Prayer is trained by consuming bones for instant XP: burying them, scattering
+// remains, or offering them on a gilded altar (which needs a level-75
+// Construction house). Unlike the timed idle skills this is a bulk one-shot
+// consume — the engine has no idle simulator for it — so it is a pure save
+// intent that removes the bones (inventory first, then bank) and adds XP.
+
+const PRAYER_ACTIONS = Array.isArray(skillsData.prayer?.actions) ? skillsData.prayer.actions : []
+export const PRAYER_ACTION_IDS = PRAYER_ACTIONS.map((a) => a.id).filter(Boolean)
+const GILDED_ALTAR_CONSTRUCTION_LEVEL = 75
+
+// Total of an item held in the unnoted inventory plus the bank (matches the
+// client's `countItem(inventory, id) + bank[id]` availability check).
+function heldInInventoryAndBank(save, itemId) {
+  let inv = 0
+  for (const slot of getInventory(save)) {
+    if (slot?.itemId === itemId) inv += Number(slot.quantity) || 0
+  }
+  return inv + bankQuantity(save, itemId)
+}
+
+// Remove `total` of an item, draining the inventory first then the bank.
+function consumeInventoryThenBank(save, itemId, total) {
+  let inv = 0
+  for (const slot of getInventory(save)) {
+    if (slot?.itemId === itemId) inv += Number(slot.quantity) || 0
+  }
+  const fromInventory = Math.min(total, inv)
+  if (fromInventory > 0) removeItemFromInventory(save, itemId, fromInventory)
+  const fromBank = total - fromInventory
+  if (fromBank > 0) removeItemFromBank(save, itemId, fromBank)
+}
+
+export function trainPrayer(save, actionId, quantity) {
+  const action = PRAYER_ACTIONS.find((a) => a.id === actionId)
+  if (!action) {
+    throw new GameApiError('UNKNOWN_ACTION', `Unknown prayer action '${actionId}'. Valid ids: ${PRAYER_ACTION_IDS.join(', ')}.`, 400)
+  }
+  if (!save.stats || typeof save.stats !== 'object') save.stats = {}
+  const prayerStats = save.stats.prayer || { xp: 0 }
+  const currentXP = Math.max(0, Math.floor(Number(prayerStats.xp) || 0))
+  if (currentXP >= XP_CAP) {
+    throw new GameApiError('XP_CAP_REACHED', 'Prayer is already at the XP cap.', 400)
+  }
+  const prayerLevel = getLevelFromXP(currentXP)
+  if (prayerLevel < action.level) {
+    throw new GameApiError('LEVEL_TOO_LOW', `${action.name} requires Prayer level ${action.level} (you are ${prayerLevel}).`, 400)
+  }
+  // Gilded-altar offerings need a level-75 Construction house.
+  if (actionId.startsWith('altar_')) {
+    const conLevel = getLevelFromXP(Math.max(0, Math.floor(Number(save.stats.construction?.xp) || 0)))
+    if (conLevel < GILDED_ALTAR_CONSTRUCTION_LEVEL) {
+      throw new GameApiError('NO_GILDED_ALTAR', `Gilded-altar prayer training requires Construction level ${GILDED_ALTAR_CONSTRUCTION_LEVEL} (you are ${conLevel}).`, 400)
+    }
+  }
+  const boneId = Object.keys(action.materials || {})[0]
+  if (!boneId) {
+    throw new GameApiError('INVALID_ACTION', `${action.name} has no bone to consume.`, 400)
+  }
+  const perAction = Math.max(1, Math.floor(Number(action.materials[boneId]) || 1))
+  const available = heldInInventoryAndBank(save, boneId)
+  const maxByBones = Math.floor(available / perAction)
+
+  let want
+  if (quantity === undefined || quantity === null) {
+    want = maxByBones // default: use every bone the character owns
+  } else {
+    want = Math.floor(Number(quantity))
+    if (!Number.isFinite(want) || want < 1) {
+      throw new GameApiError('INVALID_QUANTITY', 'quantity must be an integer >= 1 (omit to use all bones).', 400)
+    }
+  }
+  const actions = Math.min(want, maxByBones)
+  if (actions < 1) {
+    const boneName = itemsData[boneId]?.name || boneId
+    throw new GameApiError('INSUFFICIENT_SUPPLIES', `No ${boneName} available to train ${action.name}.`, 400)
+  }
+
+  const boneTotal = actions * perAction
+  consumeInventoryThenBank(save, boneId, boneTotal)
+  const newXP = Math.min(currentXP + action.xp * actions, XP_CAP)
+  save.stats.prayer = { ...prayerStats, xp: newXP, level: getLevelFromXP(newXP) }
+  return {
+    action: action.name,
+    actions,
+    xpGained: { prayer: newXP - currentXP },
+    itemsConsumed: [{ itemId: boneId, name: itemsData[boneId]?.name || boneId, quantity: boneTotal }],
+    bonesRemaining: heldInInventoryAndBank(save, boneId),
+  }
+}
+
 function findSkillEntry(skill, key, id) {
   const list = Array.isArray(skillsData[skill]?.[key]) ? skillsData[skill][key] : []
   const entry = list.find((e) => e.id === id)

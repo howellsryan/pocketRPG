@@ -3,7 +3,7 @@
 // `initialize`. Kept free of handler imports so it can be unit-tested cheaply.
 // The dispatch table in tools.js must expose exactly these names.
 
-import { EQUIP_SLOT_NAMES, SUPPORTED_IDLE_SKILLS, GATHER_TASK_IDS, CLUE_LEVELS, MINIGAME_TASK_IDS } from './intents.js'
+import { EQUIP_SLOT_NAMES, SUPPORTED_IDLE_SKILLS, GATHER_TASK_IDS, CLUE_LEVELS, MINIGAME_TASK_IDS, PRAYER_ACTION_IDS } from './intents.js'
 import { SKILL_IDS, REFERENCE_TOPIC_NAMES } from './reference.js'
 
 const IDLE_SKILLS = [...SUPPORTED_IDLE_SKILLS]
@@ -58,7 +58,9 @@ Acting:
   minigame grind that awards an unlock item (some need a prior reward first);
   get_active_activity shows what's running; claim_activity banks the accrued
   rewards and keeps it going.
-  Farming/prayer/magic idle is still done in the game client.
+  train_prayer trains Prayer instantly by burying/scattering/altar-offering the
+  character's bones (no idle slot used). Farming/magic idle is still done in the
+  game client.
 - Quests: get_quests shows what's completed, startable now, or locked (with the
   missing requirements). start_quest begins an eligible quest — it runs for its
   duration of real time, then claim_activity grants the XP/coins and unlocks its
@@ -533,6 +535,22 @@ export const TOOL_SCHEMAS = [
       additionalProperties: false,
     },
     annotations: WRITE('Start minigame grind'),
+  },
+  {
+    name: 'train_prayer',
+    description:
+      "Train Prayer by consuming bones for instant XP — burying them, scattering remains, or offering on a gilded altar (altar_* actions need a level-75 Construction house). Drains the bones from the inventory first, then the bank. Omit quantity to use every matching bone the character owns; it stops early when the bones run out. Valid action_id values: " + PRAYER_ACTION_IDS.join(', ') + '. See list_skill_actions skill="prayer" for level/XP/bone details.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        action_id: { type: 'string', enum: PRAYER_ACTION_IDS, description: "The prayer training action, e.g. 'bury_big_bones', 'altar_dragon_bones'." },
+        quantity: { type: 'integer', minimum: 1, description: 'How many bones to use. Omit to consume all matching bones the character holds.' },
+        ...optionalCharacterId,
+      },
+      required: ['action_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Train prayer'),
   },
   {
     name: 'claim_activity',

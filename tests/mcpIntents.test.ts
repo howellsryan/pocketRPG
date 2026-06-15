@@ -24,6 +24,7 @@ import {
   CLUE_LEVELS,
   buildMinigameTask,
   MINIGAME_TASK_IDS,
+  trainPrayer,
   isClaimableTask,
   planDungeoneeringReward,
   assignSlayerTask,
@@ -583,6 +584,70 @@ describe('minigame intents', () => {
     expect(inBank.minigameTask.product).toBe('dragon_defender')
     const equipped = buildMinigameTask(makeSave({ equipment: { shield: { itemId: 'runeforged_defender' } } }), 'wg_dragon_defender')
     expect(equipped.type).toBe('minigame')
+  })
+})
+
+describe('prayer intents (train_prayer)', () => {
+  it('buries every bone by default, granting N × action.xp', () => {
+    // bury_bones: level 1, xp 5, consumes 1 `bones`.
+    const save = makeSave({ stats: { prayer: { xp: 0 } }, bank: { bones: { itemId: 'bones', quantity: 10 } } })
+    const r = trainPrayer(save, 'bury_bones', undefined)
+    expect(r.actions).toBe(10)
+    expect(r.xpGained.prayer).toBe(50)
+    expect(save.stats.prayer.xp).toBe(50)
+    expect(save.bank.bones).toBeUndefined()
+    expect(r.bonesRemaining).toBe(0)
+  })
+
+  it('drains the inventory first, then the bank', () => {
+    const save = makeSave({
+      stats: { prayer: { xp: 0 } },
+      inventory: [{ itemId: 'bones', quantity: 3 }],
+      bank: { bones: { itemId: 'bones', quantity: 5 } },
+    })
+    const r = trainPrayer(save, 'bury_bones', 6)
+    expect(r.actions).toBe(6)
+    // 3 from inventory (emptied), 3 from bank (2 left).
+    expect(save.inventory.find((s: any) => s?.itemId === 'bones')).toBeUndefined()
+    expect(save.bank.bones.quantity).toBe(2)
+    expect(r.bonesRemaining).toBe(2)
+  })
+
+  it('caps the requested quantity at the bones actually owned', () => {
+    const save = makeSave({ stats: { prayer: { xp: 0 } }, bank: { bones: { itemId: 'bones', quantity: 4 } } })
+    const r = trainPrayer(save, 'bury_bones', 100)
+    expect(r.actions).toBe(4)
+    expect(save.stats.prayer.xp).toBe(20)
+  })
+
+  it('enforces the action level requirement (nothing consumed)', () => {
+    // bury_big_bones needs Prayer level 5; a fresh account is level 1.
+    const save = makeSave({ stats: { prayer: { xp: 0 } }, bank: { big_bones: { itemId: 'big_bones', quantity: 10 } } })
+    expect(() => trainPrayer(save, 'bury_big_bones', undefined)).toThrow(/level 5/i)
+    expect(save.bank.big_bones.quantity).toBe(10)
+  })
+
+  it('gilded-altar offerings require a level-75 Construction house', () => {
+    // altar_big_bones: Prayer 5, xp 52, needs the gilded altar.
+    const noAltar = makeSave({ stats: { prayer: { xp: 10_000 } }, bank: { big_bones: { itemId: 'big_bones', quantity: 5 } } })
+    expect(() => trainPrayer(noAltar, 'altar_big_bones', undefined)).toThrow(/Construction level 75/i)
+
+    const withAltar = makeSave({
+      stats: { prayer: { xp: 10_000 }, construction: { xp: 1_300_000 } }, // level 75+
+      bank: { big_bones: { itemId: 'big_bones', quantity: 5 } },
+    })
+    const r = trainPrayer(withAltar, 'altar_big_bones', undefined)
+    expect(r.actions).toBe(5)
+    expect(r.xpGained.prayer).toBe(52 * 5)
+  })
+
+  it('refuses when no matching bones are held', () => {
+    const save = makeSave({ stats: { prayer: { xp: 0 } } })
+    expect(() => trainPrayer(save, 'bury_bones', undefined)).toThrow(/No .* available/i)
+  })
+
+  it('rejects an unknown prayer action', () => {
+    expect(() => trainPrayer(makeSave(), 'bury_unicorns', undefined)).toThrow(/Unknown prayer action/)
   })
 })
 
