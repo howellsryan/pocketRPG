@@ -4,7 +4,7 @@ import { getItem, getMonster, itemName, withItemName, REFERENCE_RESOURCES, readR
 import { loadCharacterWithSave, writeSave } from '../game/save.js'
 import { auditLog } from '../game/audit.js'
 import { assertNotInActiveMatch } from '../pvp.js'
-import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue, assignSlayerTask, slayerStatus } from './intents.js'
+import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildGatherTask, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue, assignSlayerTask, slayerStatus } from './intents.js'
 import { getIdleRow, setIdleTask, resetIdleActiveAt, clearIdleTask, advanceIdleClock } from './idle.js'
 import { SKIP_HOUR_MS } from '../../../src/engine/skipPreflight.js'
 import { simulateBossFight, applyBossFightOutcome } from './bossFight.js'
@@ -432,6 +432,8 @@ const TOOLS = {
           }
         : task.type === 'combat'
         ? { type: 'combat', monster: task.monster?.name || task.monster?.id || null, stance: task.stance || null }
+        : task.type === 'gather'
+        ? { type: 'gather', taskId: task.gatherTask?.id || null, task: task.gatherTask?.name || null }
         : {
             type: task.type,
             skill: task.skill || (task.type !== 'skill' ? task.type : null),
@@ -472,6 +474,35 @@ const TOOLS = {
     return ok({
       characterId: id,
       started: { skill, action: task.action?.name || task.npc?.name || action_id },
+      autoClaimed: autoClaimed.claimed ? autoClaimed : undefined,
+    })
+  },
+
+  async start_gather({ task_id, character_id }, { env, authorization, identity }) {
+    if (!identity?.id) throw new Error('Not authenticated.')
+    if (!task_id) throw new Error('task_id is required.')
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const lock = await assertNotInActiveMatch(env, id)
+    if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+    await assertNoActiveQuest(env, id)
+
+    const autoClaimed = await claimIdleCore(env, id, identity.id)
+    if (autoClaimed.reason === 'unsupported_type') {
+      throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
+    }
+    if (autoClaimed.reason === 'one_life_combat') {
+      throw new Error('One-Life combat is in progress — claim it in the game client, where death is handled.')
+    }
+
+    const { saveObject } = await loadCharacterWithSave(env, id, identity.id)
+    const task = buildGatherTask(saveObject, task_id)
+    const now = Date.now()
+    await setIdleTask(env, id, JSON.stringify(task), now)
+    await auditLog(env, 'mcp_start_gather', { characterId: id, identityId: identity.id, taskId: task_id }, { swallow: true })
+    return ok({
+      characterId: id,
+      started: { taskId: task.gatherTask.id, task: task.gatherTask.name },
+      note: 'Gather task started — items accrue over real time. Call claim_activity to collect them.',
       autoClaimed: autoClaimed.claimed ? autoClaimed : undefined,
     })
   },

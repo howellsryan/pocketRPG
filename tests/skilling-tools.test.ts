@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import { getEffectiveToolActionTicks } from '../src/engine/skilling.js'
+import { buildGatherTask, isClaimableTask, runIdleTask } from '../functions/_lib/mcp/intents.js'
+
+function makeSave(overrides: any = {}) {
+  return {
+    stats: {},
+    inventory: [],
+    bank: {},
+    equipment: {},
+    settings: {},
+    ...overrides,
+  }
+}
 
 const maxedWoodcuttingStats = {
   woodcutting: { xp: 13_034_431 },
@@ -139,5 +151,80 @@ describe('woodcutting axe effective action ticks', () => {
     expect(thirdAgeTicks).toBe(4)
     expect(crystalTicks).toBeLessThan(runeTicks)
     expect(thirdAgeTicks).toBeLessThan(runeTicks)
+  })
+})
+
+describe('buildGatherTask — validation', () => {
+  it('returns a valid gather task for a known id', () => {
+    const task = buildGatherTask(makeSave(), 'gather_bowstring')
+    expect(task.type).toBe('gather')
+    expect(task.gatherTask.id).toBe('gather_bowstring')
+    expect(task.gatherTask.product).toBe('bowstring')
+  })
+
+  it('throws for an unknown gather task id', () => {
+    expect(() => buildGatherTask(makeSave(), 'nonexistent_task')).toThrow()
+  })
+
+  it('refuses tasks with gpCost (log→plank sawmill conversions)', () => {
+    expect(() => buildGatherTask(makeSave(), 'convert_log_to_plank')).toThrow()
+    expect(() => buildGatherTask(makeSave(), 'convert_oak_log_to_plank')).toThrow()
+  })
+})
+
+describe('isClaimableTask — gather support', () => {
+  it('returns true for a normal gather task', () => {
+    const task = { type: 'gather', gatherTask: { id: 'gather_bowstring' } }
+    expect(isClaimableTask(task)).toBe(true)
+  })
+
+  it('returns false for a clue-scroll gather task', () => {
+    const task = { type: 'gather', gatherTask: { id: 'fake_clue', isClue: true } }
+    expect(isClaimableTask(task)).toBe(false)
+  })
+
+  it('returns false for a one-shot minigame gather task', () => {
+    const task = { type: 'gather', gatherTask: { id: 'fake_minigame', oneShot: true } }
+    expect(isClaimableTask(task)).toBe(false)
+  })
+})
+
+describe('runIdleTask — gather type', () => {
+  it('bowstring gather: stackable items coalesce in one slot', () => {
+    const save = makeSave()
+    // gather_bowstring: 6 ticks × 600ms = 3600ms per bowstring; 36000ms → 10 actions
+    // bowstring is stackable in items.json, so all 10 land in one slot
+    const task = buildGatherTask(save, 'gather_bowstring')
+    const result = runIdleTask(save, task, 36_000)
+    expect(result.applied).toBe(true)
+    expect(result.actions).toBe(10)
+    const slot = save.inventory.find((s: any) => s?.itemId === 'bowstring')
+    expect(slot?.quantity).toBe(10)
+  })
+
+  it('non-stackable gather (bucket_of_sand): fills separate inventory slots', () => {
+    const save = makeSave()
+    // collect_sand: 3 ticks × 600ms = 1800ms each; 5400ms → 3 actions
+    // bucket_of_sand is non-stackable in items.json, so each occupies its own slot
+    const task = buildGatherTask(save, 'collect_sand')
+    const result = runIdleTask(save, task, 5_400)
+    expect(result.applied).toBe(true)
+    expect(result.actions).toBe(3)
+    const slots = save.inventory.filter((s: any) => s?.itemId === 'bucket_of_sand')
+    expect(slots.length).toBe(3)
+    expect(slots.every((s: any) => s.quantity === 1)).toBe(true)
+  })
+
+  it('gather with materials (burn_seaweed): consumes from bank', () => {
+    const save = makeSave({ bank: { seaweed: { itemId: 'seaweed', quantity: 5 } } })
+    // burn_seaweed: 3 ticks = 1800ms each; 9000ms → 5 actions, consuming 5 seaweed
+    // soda_ash is non-stackable in items.json → 5 separate slots
+    const task = buildGatherTask(save, 'burn_seaweed')
+    const result = runIdleTask(save, task, 9_000)
+    expect(result.applied).toBe(true)
+    expect(result.actions).toBe(5)
+    expect(save.bank.seaweed).toBeUndefined()
+    const slots = save.inventory.filter((s: any) => s?.itemId === 'soda_ash')
+    expect(slots.length).toBe(5)
   })
 })

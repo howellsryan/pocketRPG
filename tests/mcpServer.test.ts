@@ -100,6 +100,7 @@ describe('MCP tool schema', () => {
       'unequip_item',
       'get_active_activity',
       'start_skilling',
+      'start_gather',
       'claim_activity',
       'get_quests',
       'start_quest',

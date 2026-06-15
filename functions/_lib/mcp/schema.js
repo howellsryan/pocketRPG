@@ -3,7 +3,7 @@
 // `initialize`. Kept free of handler imports so it can be unit-tested cheaply.
 // The dispatch table in tools.js must expose exactly these names.
 
-import { EQUIP_SLOT_NAMES, SUPPORTED_IDLE_SKILLS } from './intents.js'
+import { EQUIP_SLOT_NAMES, SUPPORTED_IDLE_SKILLS, GATHER_TASK_IDS } from './intents.js'
 import { SKILL_IDS, REFERENCE_TOPIC_NAMES } from './reference.js'
 
 const IDLE_SKILLS = [...SUPPORTED_IDLE_SKILLS]
@@ -52,9 +52,10 @@ Acting:
   equip_item enforces the item's skill/quest requirements.
 - Idle training: start_skilling begins a task that earns XP/items over real
   time (gathering + production skilling, agility, thieving, hunter);
-  get_active_activity shows what's running; claim_activity banks the accrued
-  rewards and keeps it going. Combat/farming/prayer/magic idle is still done in
-  the game client.
+  start_gather starts a field-gathering task (bowstrings, herbs, seaweed, etc.
+  — no level requirement); get_active_activity shows what's running;
+  claim_activity banks the accrued rewards and keeps it going.
+  Combat/farming/prayer/magic idle is still done in the game client.
 - Quests: get_quests shows what's completed, startable now, or locked (with the
   missing requirements). start_quest begins an eligible quest — it runs for its
   duration of real time, then claim_activity grants the XP/coins and unlocks its
@@ -482,6 +483,21 @@ export const TOOL_SCHEMAS = [
       additionalProperties: false,
     },
     annotations: WRITE('Start skilling'),
+  },
+  {
+    name: 'start_gather',
+    description:
+      "Start an idle field-gathering task (bowstrings, herbs, seaweed, soda ash, etc.). No skill level required. Items accrue over real time and are collected via claim_activity. Log→plank conversion (gpCost tasks) is not yet supported. Valid task_id values: " + GATHER_TASK_IDS.join(', ') + '.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        task_id: { type: 'string', enum: GATHER_TASK_IDS, description: "The gather task id, e.g. 'gather_bowstring', 'catch_newts', 'pick_white_berries'." },
+        ...optionalCharacterId,
+      },
+      required: ['task_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Start gather task'),
   },
   {
     name: 'claim_activity',

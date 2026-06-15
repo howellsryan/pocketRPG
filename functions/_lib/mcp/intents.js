@@ -22,7 +22,8 @@ import {
 } from '../game/inventory.js'
 import { equipItem, unequipSlot, checkEquipRequirements, createEquipment } from '../../../src/engine/equipment.js'
 import { getLevelFromXP } from '../../../src/engine/experience.js'
-import { simulateIdleSkilling, simulateIdleAgility, simulateIdleCombat } from '../../../src/engine/idleEngine.js'
+import { simulateIdleSkilling, simulateIdleAgility, simulateIdleCombat, simulateIdleGather } from '../../../src/engine/idleEngine.js'
+import { GATHER_TASKS, findGatherTask } from '../../../src/engine/gatherTasks.js'
 import { normaliseIdleCombatSetup, defaultIdleCombatSetup, isFoodItem, isPotionItem, getFoodHealAmount } from '../../../src/engine/idleSupplies.js'
 import { simulateIdleThieving } from '../../../src/engine/thieving.js'
 import { simulateIdleHunting } from '../../../src/engine/hunter.js'
@@ -158,12 +159,36 @@ export const SKILL_IDLE_SKILLS = new Set([...IDLE_AUTOBANK_GATHERING_SKILLS, ...
 // magic, construction, dungeoneering and slayer use other systems.
 export const SUPPORTED_IDLE_SKILLS = [...SKILL_IDLE_SKILLS, 'agility', 'thieving', 'hunter']
 
-const SUPPORTED_IDLE_TYPES = new Set(['skill', 'agility', 'thieving', 'hunter', 'quest', 'combat'])
+const SUPPORTED_IDLE_TYPES = new Set(['skill', 'agility', 'thieving', 'hunter', 'quest', 'combat', 'gather'])
 
 export function isClaimableTask(task) {
   if (!task || !SUPPORTED_IDLE_TYPES.has(task.type)) return false
   if (task.type === 'skill') return SKILL_IDLE_SKILLS.has(task.skill)
+  if (task.type === 'gather') return !task.gatherTask?.isClue && !task.gatherTask?.oneShot
   return true
+}
+
+// IDs for gather tasks that are safe to idle via MCP (no GP cost, not clue/oneShot).
+export const GATHER_TASK_IDS = GATHER_TASKS
+  .filter((t) => !t.isClue && !t.oneShot && !t.gpCost)
+  .map((t) => t.id)
+
+// Build (and validate) a type:'gather' idle task.
+export function buildGatherTask(_save, taskId) {
+  const gatherTask = findGatherTask(taskId)
+  if (!gatherTask) {
+    throw new GameApiError('UNKNOWN_GATHER_TASK', `No gather task with id '${taskId}'. Valid ids: ${GATHER_TASK_IDS.join(', ')}.`, 400)
+  }
+  if (gatherTask.isClue) {
+    throw new GameApiError('CLUE_NOT_SUPPORTED', `'${gatherTask.name}' is a clue scroll task — complete clues in the game client.`, 400)
+  }
+  if (gatherTask.oneShot) {
+    throw new GameApiError('ONE_SHOT_NOT_SUPPORTED', `'${gatherTask.name}' is a one-shot minigame task — complete it in the game client.`, 400)
+  }
+  if (gatherTask.gpCost) {
+    throw new GameApiError('GP_COST_NOT_SUPPORTED', `'${gatherTask.name}' costs ${gatherTask.gpCost} GP per action which is not yet tracked by the MCP idle engine. Use the game client.`, 400)
+  }
+  return { type: 'gather', gatherTask }
 }
 
 function findSkillEntry(skill, key, id) {
@@ -292,6 +317,9 @@ export function runIdleTask(save, task, elapsedMs) {
       break
     case 'hunter':
       sim = simulateIdleHunting(task, elapsedMs)
+      break
+    case 'gather':
+      sim = simulateIdleGather(task, elapsedMs, inv28, save.stats || {}, itemsData, save.bank || {})
       break
     default:
       return { applied: false, reason: 'unsupported_type' }
