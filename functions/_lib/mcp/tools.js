@@ -4,7 +4,7 @@ import { getItem, getMonster, itemName, withItemName, REFERENCE_RESOURCES, readR
 import { loadCharacterWithSave, writeSave } from '../game/save.js'
 import { auditLog } from '../game/audit.js'
 import { assertNotInActiveMatch } from '../pvp.js'
-import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildGatherTask, buildClueTask, CLUE_LEVELS, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue, assignSlayerTask, slayerStatus } from './intents.js'
+import { depositToBank, withdrawFromBank, equip, unequip, buildIdleTask, runIdleTask, isClaimableTask, buildGatherTask, buildClueTask, CLUE_LEVELS, buildMinigameTask, buildQuestTask, applyQuestTask, questStatuses, buildCombatTask, runCombatTask, planDungeoneeringReward, setIdleCombatSetup, idleCombatSetupSummary, idleFoodWarning, addQuestToQueueIntent, removeQuestFromQueueIntent, dropFromQueue, assignSlayerTask, slayerStatus } from './intents.js'
 import { getIdleRow, setIdleTask, resetIdleActiveAt, clearIdleTask, advanceIdleClock } from './idle.js'
 import { SKIP_HOUR_MS } from '../../../src/engine/skipPreflight.js'
 import { simulateBossFight, applyBossFightOutcome } from './bossFight.js'
@@ -32,6 +32,7 @@ import { onRequestPost as completeMonster } from '../../api/actions/monster/comp
 import { onRequestPost as completeRaid } from '../../api/actions/raid/complete.js'
 import { onRequestPost as completeDungeoneering } from '../../api/actions/dungeoneering/complete.js'
 import { onRequestPost as completeClue } from '../../api/actions/clue/complete.js'
+import { onRequestPost as completeMinigame } from '../../api/actions/minigame/complete.js'
 import { TICK_DURATION } from '../../../src/utils/constants.js'
 
 function ok(payload) {
@@ -110,6 +111,13 @@ async function claimIdleCore(env, characterId, identityId, authorization) {
     return claimClueCore(env, characterId, authorization, task, elapsedMs, now)
   }
 
+  // Minigames are server-rolled one-shot grinds (same pattern as clues): once
+  // the timer elapses, the completion endpoint grants the unlock item and
+  // records the collection log under the parent minigame section.
+  if (task.type === 'minigame') {
+    return claimMinigameCore(env, characterId, authorization, task, elapsedMs, now)
+  }
+
   const { saveObject, saveRevision } = await loadCharacterWithSave(env, characterId, identityId)
 
   // Combat continues like skilling, but a simulated death clears the slot and
@@ -170,6 +178,38 @@ async function claimClueCore(env, characterId, authorization, task, elapsedMs, n
     type: 'clue',
     elapsedMs,
     clueLevel,
+    granted: res.data?.granted || [],
+    collectionLogEntries: res.data?.collectionLogEntries || [],
+  }
+}
+
+// Finish a running minigame grind. One-shot: completing it once awards the
+// unlock item server-side and clears the slot. The completion endpoint owns
+// the save write, nonce claim, reward roll and collection-log persistence
+// (keyed to the parent minigame), so no minigame logic is duplicated.
+async function claimMinigameCore(env, characterId, authorization, task, elapsedMs, now) {
+  const taskId = task.minigameTask?.id
+  const ticks = Math.max(1, Number(task.minigameTask?.ticks) || 0)
+  const elapsedTicks = Math.floor(elapsedMs / TICK_DURATION)
+  if (elapsedTicks < ticks) {
+    return { claimed: false, reason: 'in_progress', elapsedMs, ticksRemaining: ticks - elapsedTicks }
+  }
+  const res = await callHandler(completeMinigame, env, {
+    method: 'POST',
+    authorization,
+    characterId,
+    body: {
+      sourceId: taskId,
+      actionNonce: `mcp-minigame:${characterId}:${taskId}:${now}`,
+    },
+  })
+  if (!res.ok) throw httpError(res)
+  await clearIdleTask(env, characterId, now)
+  return {
+    claimed: true,
+    type: 'minigame',
+    elapsedMs,
+    minigameTaskId: taskId,
     granted: res.data?.granted || [],
     collectionLogEntries: res.data?.collectionLogEntries || [],
   }
@@ -485,6 +525,13 @@ const TOOLS = {
             clueLevel: task.gatherTask?.clueLevel || null,
             secondsRemaining: Math.max(0, Math.ceil(((Number(task.gatherTask?.ticks) || 0) * TICK_DURATION) / 1000) - runningForSeconds),
           }
+        : task.type === 'minigame'
+        ? {
+            type: 'minigame',
+            minigameTaskId: task.minigameTask?.id || null,
+            product: task.minigameTask?.product || null,
+            secondsRemaining: Math.max(0, Math.ceil(((Number(task.minigameTask?.ticks) || 0) * TICK_DURATION) / 1000) - runningForSeconds),
+          }
         : {
             type: task.type,
             skill: task.skill || (task.type !== 'skill' ? task.type : null),
@@ -583,6 +630,35 @@ const TOOLS = {
       characterId: id,
       started: { clueLevel: task.gatherTask.clueLevel, requiresItem: task.gatherTask.requiresItem, ticks: task.gatherTask.ticks },
       note: 'Clue started — it solves after its timer of real time, then consumes one scroll and banks server-rolled rewards. Call claim_activity to collect; skip_hour advances an hour.',
+      autoClaimed: autoClaimed.claimed ? autoClaimed : undefined,
+    })
+  },
+
+  async start_minigame({ minigame_task_id, character_id }, { env, authorization, identity }) {
+    if (!identity?.id) throw new Error('Not authenticated.')
+    if (!minigame_task_id) throw new Error('minigame_task_id is required.')
+    const id = await resolveCharacterId(env, authorization, character_id)
+    const lock = await assertNotInActiveMatch(env, id)
+    if (lock) throw new Error('Blocked: the character is in an active PvP match.')
+    await assertNoActiveQuest(env, id)
+
+    const autoClaimed = await claimIdleCore(env, id, identity.id, authorization)
+    if (autoClaimed.reason === 'unsupported_type') {
+      throw new Error(`An active ${autoClaimed.type} activity is in progress — claim it in the game client first.`)
+    }
+    if (autoClaimed.reason === 'one_life_combat') {
+      throw new Error('One-Life combat is in progress — claim it in the game client, where death is handled.')
+    }
+
+    const { saveObject } = await loadCharacterWithSave(env, id, identity.id)
+    const task = buildMinigameTask(saveObject, minigame_task_id) // validates id + prerequisite item
+    const now = Date.now()
+    await setIdleTask(env, id, JSON.stringify(task), now)
+    await auditLog(env, 'mcp_start_minigame', { characterId: id, identityId: identity.id, minigameTaskId: minigame_task_id }, { swallow: true })
+    return ok({
+      characterId: id,
+      started: { minigameTaskId: task.minigameTask.id, minigame: task.minigameTask.minigame, product: task.minigameTask.product, ticks: task.minigameTask.ticks },
+      note: 'Minigame grind started — it awards its unlock item after the timer of real time. Call claim_activity to collect; skip_hour advances an hour.',
       autoClaimed: autoClaimed.claimed ? autoClaimed : undefined,
     })
   },

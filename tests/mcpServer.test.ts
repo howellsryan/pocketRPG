@@ -104,6 +104,7 @@ describe('MCP tool schema', () => {
       'start_skilling',
       'start_gather',
       'start_clue',
+      'start_minigame',
       'claim_activity',
       'get_quests',
       'start_quest',
@@ -470,5 +471,44 @@ describe('MCP clue scrolls (start_clue + server claim)', () => {
     const res = await callTool('start_clue', { clue_level: 'master', character_id: 7 }, await ctxFor(env))
     expect(res.isError).toBe(true)
     expect(res.content[0].text).toMatch(/inventory/i)
+  })
+
+  const minigameTask = (now: number, elapsedMs: number) => ({
+    active_task: JSON.stringify({ type: 'minigame', minigameTask: { id: 'wg_rune_defender', name: 'Grind for Rune Defender', product: 'runeforged_defender', minigame: 'warriors_guild', ticks: 18000 }, bankingEnabled: true }),
+    last_active_at: now - elapsedMs,
+    updated_at: now - elapsedMs,
+  })
+
+  it('claims a finished minigame via the completion endpoint, granting the unlock and clearing the slot', async () => {
+    const now = Date.now()
+    // wg_rune_defender = 18000 ticks = 10_800_000ms; cap-safe 20h elapsed → done.
+    const { env, idle } = mockEnv({
+      save: { inventory: [], bank: {} },
+      idle: minigameTask(now, 20 * 60 * 60 * 1000),
+    })
+    const res = await callTool('claim_activity', { character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBeFalsy()
+    const data = JSON.parse(res.content[0].text)
+    expect(data.claimed).toBe(true)
+    expect(data.minigameTaskId).toBe('wg_rune_defender')
+    expect(data.granted.some((g: any) => g.itemId === 'runeforged_defender')).toBe(true)
+    expect(idle.active_task).toBeNull()
+  })
+
+  it('leaves an unfinished minigame running (in_progress, slot intact)', async () => {
+    const now = Date.now()
+    const { env, idle } = mockEnv({ save: { inventory: [], bank: {} }, idle: minigameTask(now, 60_000) })
+    const res = await callTool('claim_activity', { character_id: 7 }, await ctxFor(env))
+    const data = JSON.parse(res.content[0].text)
+    expect(data.claimed).toBe(false)
+    expect(data.reason).toBe('in_progress')
+    expect(idle.active_task).not.toBeNull()
+  })
+
+  it('start_minigame refuses a prerequisite-gated grind when the required item is missing', async () => {
+    const { env } = mockEnv({ save: { inventory: [], bank: {} }, idle: { active_task: null, last_active_at: null } })
+    const res = await callTool('start_minigame', { minigame_task_id: 'wg_dragon_defender', character_id: 7 }, await ctxFor(env))
+    expect(res.isError).toBe(true)
+    expect(res.content[0].text).toMatch(/requires/i)
   })
 })

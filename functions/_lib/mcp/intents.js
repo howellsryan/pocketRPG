@@ -10,6 +10,7 @@ import itemsData from '../../../src/data/items.json' assert { type: 'json' }
 import monstersData from '../../../src/data/monsters.json' assert { type: 'json' }
 import prayersData from '../../../src/data/prayers.json' assert { type: 'json' }
 import cluesData from '../../../src/data/clues.json' assert { type: 'json' }
+import minigamesData from '../../../src/data/minigames.json' assert { type: 'json' }
 import { GameApiError } from '../game/errors.js'
 import {
   canonicalItemId,
@@ -161,7 +162,7 @@ export const SKILL_IDLE_SKILLS = new Set([...IDLE_AUTOBANK_GATHERING_SKILLS, ...
 // magic, construction, dungeoneering and slayer use other systems.
 export const SUPPORTED_IDLE_SKILLS = [...SKILL_IDLE_SKILLS, 'agility', 'thieving', 'hunter']
 
-const SUPPORTED_IDLE_TYPES = new Set(['skill', 'agility', 'thieving', 'hunter', 'quest', 'combat', 'gather', 'clue'])
+const SUPPORTED_IDLE_TYPES = new Set(['skill', 'agility', 'thieving', 'hunter', 'quest', 'combat', 'gather', 'clue', 'minigame'])
 
 export function isClaimableTask(task) {
   if (!task || !SUPPORTED_IDLE_TYPES.has(task.type)) return false
@@ -213,6 +214,33 @@ export function buildClueTask(save, clueLevel) {
   }
   const ticks = getClueCompletionTicks(clueLevel)
   return { type: 'clue', gatherTask: { id: `complete_${clueLevel}_clue`, clueLevel, requiresItem, ticks }, bankingEnabled: true }
+}
+
+// Minigame grind tasks (minigames.json), each a one-shot timer that awards an
+// unlock item. Some need a prior reward (e.g. Dragon Defender needs the Rune
+// Defender), gated by `requiresItem`.
+const MINIGAME_TASKS = Array.isArray(minigamesData?.tasks) ? minigamesData.tasks : []
+export const MINIGAME_TASK_IDS = MINIGAME_TASKS.map((t) => t.id).filter(Boolean)
+
+function findMinigameTask(id) {
+  return MINIGAME_TASKS.find((t) => t.id === id) || null
+}
+
+// Build (and validate) a type:'minigame' idle task. Validates the task id and
+// its prerequisite item (held anywhere — inventory, bank or equipment). Like
+// clues, the reward is rolled server-side at claim time, so this builds only
+// the timer shape; no item is created here.
+export function buildMinigameTask(save, minigameTaskId) {
+  const task = findMinigameTask(minigameTaskId)
+  if (!task) {
+    throw new GameApiError('UNKNOWN_MINIGAME_TASK', `No minigame task with id '${minigameTaskId}'. Valid ids: ${MINIGAME_TASK_IDS.join(', ')}.`, 400)
+  }
+  if (task.requiresItem && !ownsItemAnywhere(save, task.requiresItem)) {
+    const reqName = minigamesData?.itemNames?.[task.requiresItem] || task.requiresItem
+    throw new GameApiError('MINIGAME_PREREQUISITE', `'${task.name}' first requires ${reqName}. Earn it before starting this grind.`, 400)
+  }
+  const ticks = Math.max(1, Math.floor(Number(task.ticks) || 0))
+  return { type: 'minigame', minigameTask: { id: task.id, name: task.name, product: task.product, minigame: task.minigame, ticks }, bankingEnabled: true }
 }
 
 function findSkillEntry(skill, key, id) {
@@ -382,6 +410,20 @@ function countOwned(save, itemId) {
     if (slot.itemId === itemId && !slot.noted) n += Number(slot.quantity) || 0
   }
   return n + bankQuantity(save, itemId)
+}
+
+// True if the character holds the item anywhere — inventory, bank or a worn
+// equipment slot. Mirrors the client's `hasItemAnywhere` used to gate minigame
+// prerequisites (a Rune Defender may be equipped, not banked).
+function ownsItemAnywhere(save, itemId) {
+  if (countOwned(save, itemId) > 0) return true
+  const equipment = save?.equipment
+  if (equipment && typeof equipment === 'object') {
+    for (const slot of Object.values(equipment)) {
+      if (slot && slot.itemId === itemId) return true
+    }
+  }
+  return false
 }
 
 // Validate + normalise a food/potion list from the tool ([{ item_id, quantity }]).

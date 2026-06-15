@@ -3,7 +3,7 @@
 // `initialize`. Kept free of handler imports so it can be unit-tested cheaply.
 // The dispatch table in tools.js must expose exactly these names.
 
-import { EQUIP_SLOT_NAMES, SUPPORTED_IDLE_SKILLS, GATHER_TASK_IDS, CLUE_LEVELS } from './intents.js'
+import { EQUIP_SLOT_NAMES, SUPPORTED_IDLE_SKILLS, GATHER_TASK_IDS, CLUE_LEVELS, MINIGAME_TASK_IDS } from './intents.js'
 import { SKILL_IDS, REFERENCE_TOPIC_NAMES } from './reference.js'
 
 const IDLE_SKILLS = [...SUPPORTED_IDLE_SKILLS]
@@ -54,8 +54,10 @@ Acting:
   time (gathering + production skilling, agility, thieving, hunter);
   start_gather starts a field-gathering task (bowstrings, herbs, seaweed, etc.
   — no level requirement); start_clue solves a clue scroll held in the
-  inventory (server-rolled treasure on completion); get_active_activity shows
-  what's running; claim_activity banks the accrued rewards and keeps it going.
+  inventory (server-rolled treasure on completion); start_minigame runs a
+  minigame grind that awards an unlock item (some need a prior reward first);
+  get_active_activity shows what's running; claim_activity banks the accrued
+  rewards and keeps it going.
   Farming/prayer/magic idle is still done in the game client.
 - Quests: get_quests shows what's completed, startable now, or locked (with the
   missing requirements). start_quest begins an eligible quest — it runs for its
@@ -516,6 +518,21 @@ export const TOOL_SCHEMAS = [
       additionalProperties: false,
     },
     annotations: WRITE('Start clue scroll'),
+  },
+  {
+    name: 'start_minigame',
+    description:
+      "Start an idle minigame grind that awards an unlock item (e.g. a Dragon Defender, Fighter Helm, Void set) after a timer of real time. Some grinds need a prior reward first (e.g. the Dragon Defender grind requires the Rune Defender) — that prerequisite is checked at start. claim_activity collects the unlock and records its collection-log slot; skip_hour advances an hour. Valid minigame_task_id values: " + MINIGAME_TASK_IDS.join(', ') + '. See pocketrpg://reference/minigames for details.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        minigame_task_id: { type: 'string', enum: MINIGAME_TASK_IDS, description: "The minigame grind id, e.g. 'wg_dragon_defender', 'pc_void_set'." },
+        ...optionalCharacterId,
+      },
+      required: ['minigame_task_id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE('Start minigame grind'),
   },
   {
     name: 'claim_activity',

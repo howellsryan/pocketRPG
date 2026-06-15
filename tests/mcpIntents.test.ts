@@ -22,6 +22,8 @@ import {
   runCombatTask,
   buildClueTask,
   CLUE_LEVELS,
+  buildMinigameTask,
+  MINIGAME_TASK_IDS,
   isClaimableTask,
   planDungeoneeringReward,
   assignSlayerTask,
@@ -548,6 +550,39 @@ describe('clue intents', () => {
 
   it('refuses when no scroll is held at all', () => {
     expect(() => buildClueTask(makeSave(), 'hard')).toThrow(/clue scroll/i)
+  })
+})
+
+describe('minigame intents', () => {
+  it('exposes the minigame task ids', () => {
+    expect(MINIGAME_TASK_IDS).toContain('wg_rune_defender')
+    expect(MINIGAME_TASK_IDS).toContain('wg_dragon_defender')
+  })
+
+  it('builds a minigame task with no prerequisite', () => {
+    const task = buildMinigameTask(makeSave(), 'wg_rune_defender')
+    expect(task.type).toBe('minigame')
+    expect(task.minigameTask).toMatchObject({ id: 'wg_rune_defender', product: 'runeforged_defender', minigame: 'warriors_guild' })
+    expect(task.minigameTask.ticks).toBeGreaterThan(0)
+    expect(isClaimableTask(task)).toBe(true)
+  })
+
+  it('rejects an unknown minigame task id', () => {
+    expect(() => buildMinigameTask(makeSave(), 'not_a_task')).toThrow(/No minigame task/)
+  })
+
+  it('refuses a prerequisite-gated grind when the required item is missing', () => {
+    // wg_dragon_defender requires the Rune Defender (runeforged_defender).
+    expect(() => buildMinigameTask(makeSave(), 'wg_dragon_defender')).toThrow(/requires/i)
+  })
+
+  it('allows a prerequisite-gated grind when the item is held (inventory, bank or equipped)', () => {
+    const inInv = buildMinigameTask(makeSave({ inventory: [{ itemId: 'runeforged_defender', quantity: 1 }] }), 'wg_dragon_defender')
+    expect(inInv.minigameTask.id).toBe('wg_dragon_defender')
+    const inBank = buildMinigameTask(makeSave({ bank: { runeforged_defender: { itemId: 'runeforged_defender', quantity: 1 } } }), 'wg_dragon_defender')
+    expect(inBank.minigameTask.product).toBe('dragon_defender')
+    const equipped = buildMinigameTask(makeSave({ equipment: { shield: { itemId: 'runeforged_defender' } } }), 'wg_dragon_defender')
+    expect(equipped.type).toBe('minigame')
   })
 })
 
