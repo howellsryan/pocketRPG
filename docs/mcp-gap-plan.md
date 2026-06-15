@@ -157,6 +157,49 @@ If you think something here actually needs doing, **stop and ask** — do not bu
 
 ---
 
+## 3.5) Architecture review — duplication & future-proofing
+
+**Question this answers:** is MCP logic duplicated, and when we change the API
+does the MCP reach inherit it automatically?
+
+**What already self-syncs (do not touch):**
+- **Bridge tools** (`tools.js` → `callHandler` → a real `/api/*` handler):
+  `buy_item`, the whole trading post, `skip_hour`, `skip_slayer_task`,
+  `kill_boss`/`kill_raid`/`fight_boss` completions, `get_*` reads, leaderboard.
+  These invoke the production endpoint, so API changes flow through for free.
+- **Engine simulators** (`src/engine/idleEngine.js`, `hunter.js`, `thieving.js`,
+  `farming.ts`, `quests.js`): imported by **both** the client and MCP — the game
+  math is single-source.
+- **Persistence** (`loadCharacterWithSave`/`writeSave` in
+  `functions/_lib/game/save.js`): shared, so stale-revision conflict handling is
+  inherited. *(One non-parity: `/api/save` PUT also runs
+  `detectTotalLevelRegression` from `saveValidation.js`; the MCP write path does
+  not. Harmless today — intents can't lower total level — but see WO‑0a.)*
+- **Game content** (items/skills/monsters/quests JSON): single-source.
+- **Schema ↔ dispatch parity**: already guarded by `tests/mcpServer.test.ts`
+  ("every advertised tool has a dispatch handler").
+
+**The one structural duplication (the real drift risk):**
+The "apply a finished task's simulation result to the save" glue — bank this
+loot, add coins inventory-first, drain ammo/charges, write XP — is **re-coded in
+two places**:
+- `src/state/gameState.jsx` (~lines 286–360, client load-time application), and
+- `functions/_lib/mcp/intents.js` (`applyIdleResult`, `applyIdleCombatResult`,
+  `applyQuestTask`).
+
+The simulators are shared; this *application* layer is copy-pasted and kept in
+sync only by the "mirror the client exactly" comments — there is no test that
+fails when they drift. A new save field or a change to client reward-application
+will silently make the MCP copy stale. **This is what Phase 0 fixes.** (Note:
+`functions/_lib/game/idleClaim.js` is a *deliberately different* model —
+client-authoritative trusted rewards per §14 — not a duplicate of the above.)
+
+**Verdict:** no rewrite is needed; a targeted consolidation is. Do **Phase 0
+first** so the new activities (Phase 1–5) build on the shared apply layer instead
+of adding more copies.
+
+---
+
 ## 4) Work orders (the implementation guide)
 
 Execute in order. **One work order = one commit** (run the commit gate first).
@@ -167,6 +210,72 @@ Each work order is self‑contained. Phases group related risk.
 > - "bridge" = wrap a real `/api/*` handler with `callHandler`.
 > - Every new tool needs: a `schema.js` entry, a `tools.js` handler, a test, and
 >   (if it changes behaviour the AI should know) a `SERVER_INSTRUCTIONS` line.
+
+### Phase 0 — Consolidate the apply layer (do BEFORE any feature work)
+
+#### WO‑0a — Extract one shared `applyTaskResult` module
+**Why:** remove the duplicated "apply sim result → save" glue so client and MCP
+can never drift, and so every new activity in Phase 1–5 has one place to plug in.
+
+**Files:** new `src/engine/applyTaskResult.js` (or `.ts`); `src/state/gameState.jsx`;
+`functions/_lib/mcp/intents.js`; tests.
+
+**Steps:**
+1. Create a **pure** `applyTaskResult(state, sim, type)` in `src/engine/` that
+   takes a normalized state object `{ stats, inventory, bank, equipment, settings }`
+   and a simulator result, mutates it in place (XP with `XP_CAP`, banked loot,
+   inventory-first coins for agility/thieving, hunter→bank, ammo/charge drain,
+   dungeoneering tokens), and returns a summary. Lift the logic from the current
+   `intents.js` `applyIdleResult`/`applyIdleCombatResult` (they already match the
+   client) — do **not** invent new behaviour.
+2. Rewrite `intents.js` `runIdleTask`/`runCombatTask` to call `applyTaskResult`.
+3. Rewrite the `gameState.jsx` load-time block (~286–360) to build a state object,
+   call `applyTaskResult`, then persist via its existing store writes
+   (`saveInventory`/`saveBank`/`saveAllStats`/`saveEquipment`). Behaviour must be
+   byte-identical — this is a refactor, not a change.
+4. Keep `applyQuestTask` reusing the same module where it overlaps.
+5. (Optional, same commit) make the MCP write path call `detectTotalLevelRegression`
+   so it matches `/api/save`, or document explicitly why it's skipped.
+
+**Acceptance:** all existing tests pass unchanged; `applyTaskResult` is the only
+copy of the application logic. Gate green.
+**Commit:** `engine: extract shared applyTaskResult used by client and MCP`.
+
+#### WO‑0b — Drift-guard parity test
+**Why:** structurally prevent the client/MCP application from ever diverging again.
+
+**Files:** `tests/applyTaskResultParity.test.ts` (new).
+
+**Steps:**
+1. For each task type (skill, gather, agility, thieving, hunter, combat, quest),
+   run a representative simulator output through `applyTaskResult` and assert the
+   resulting state delta (XP, inventory, bank, coins) matches a fixed expectation.
+2. Add a focused assertion that the MCP `runIdleTask` and the client adapter
+   produce identical bank/inventory/XP deltas for the same input.
+
+**Acceptance:** the test fails if either path's application logic changes without
+the other. Gate green.
+**Commit:** `test: parity guard for shared task-application layer`.
+
+#### WO‑0c — Codify the bridge-vs-intent rule
+**Why:** make the architecture self-documenting so future contributors (and agents)
+extend it the same way.
+
+**Files:** `CLAUDE.md` (§15), this plan's §1.
+
+**Steps:**
+1. Add to `CLAUDE.md §15` a short "MCP extension rule":
+   - **Default to a bridge tool** — wrap the real `/api/*` handler with
+     `callHandler` so API changes are inherited automatically.
+   - Use an **intent** only for client-only save mutations that have no endpoint,
+     and intents **must** reuse shared `src/engine` apply functions
+     (`applyTaskResult`) — never re-code reward application.
+   - Adding a tool = `schema.js` (metadata) + `tools.js` (dispatch) + a test; the
+     `tests/mcpServer.test.ts` parity test enforces the two stay in lockstep.
+2. Cross-link `docs/mcp-gap-plan.md` from `CLAUDE.md §15`.
+
+**Acceptance:** the rule is written down where contributors will see it. Gate green.
+**Commit:** `docs: codify MCP bridge-vs-intent extension rule`.
 
 ### Phase 1 — Parity fixes on existing tools (do first; low risk, high value)
 
@@ -383,6 +492,7 @@ Only if WO‑8 lands cleanly and there's appetite. Extend `simulateBossFight` (`
 
 | Tool | Type | WO |
 | --- | --- | --- |
+| `applyTaskResult` extraction + parity test + rule | refactor | WO‑0a/0b/0c |
 | `start_gather` | new (idle) | WO‑1 |
 | `claim_activity` (gather/clue/minigame) | changed | WO‑1/3/4 |
 | `start_fight` (slayer credit) | changed | WO‑2 |

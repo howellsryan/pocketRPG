@@ -13,8 +13,10 @@ GROUND RULES (non-negotiable):
 1. Work ONLY on git branch `claude/mcp-api-gaps-review-ozuimn`. Create it from the
    current branch if it doesn't exist. Never push to any other branch. Do NOT
    open a pull request unless I explicitly ask.
-2. The work is defined by Work Orders WO-1 through WO-14 in docs/mcp-gap-plan.md
-   section 4. Do them IN ORDER. Each work order = exactly ONE commit.
+2. The work is defined by Work Orders WO-0a through WO-14 in docs/mcp-gap-plan.md
+   section 4. Do them IN ORDER, starting with Phase 0 (WO-0a/0b/0c) — those
+   consolidate the duplicated apply layer and MUST land before any feature work.
+   Each work order = exactly ONE commit.
 3. Before EVERY commit run the full commit gate and make sure it passes:
        npm test && npm run build && npm run rebuild && npm run check:single
    If it fails, fix your change until it passes. NEVER commit with a failing gate.
@@ -55,8 +57,8 @@ touch PvP or any design-excluded area, or a change would require redesigning the
 plan, STOP and ask me a specific question. Do NOT improvise or pivot. WO-9 is
 explicitly optional and must not be started without my go-ahead.
 
-Begin with WO-1. After each work order, post a one-line status (work order, commit
-hash, gate result) and continue to the next. Do not stop until WO-1 through WO-14
+Begin with WO-0a. After each work order, post a one-line status (work order, commit
+hash, gate result) and continue to the next. Do not stop until WO-0a through WO-14
 are committed and pushed, or you hit a STOP-AND-ASK condition.
 ```
 </content>
