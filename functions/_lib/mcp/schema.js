@@ -32,7 +32,7 @@ Getting oriented:
   resources): list_skill_actions (trainable options per skill), list_items and
   list_monsters (search the catalogues by name), inspect_item / inspect_monster
   (full stats + drop tables by id) and get_reference (mechanics, shop, spells,
-  prayers, quests, clues, minigames, raids, farming). The same data is also
+  prayers, quests, clues, minigames, raids, farming, construction, gather). The same data is also
   published as pocketrpg://reference/* resources if your client reads them.
 
 Acting:
@@ -267,7 +267,7 @@ export const TOOL_SCHEMAS = [
   {
     name: 'get_reference',
     description:
-      'Read a PocketRPG reference dataset by topic so you can answer from canonical game data instead of guessing. Topics: mechanics (rules), shop, skills, spells, prayers, quests, clues, minigames, raids, farming.',
+      'Read a PocketRPG reference dataset by topic so you can answer from canonical game data instead of guessing. Topics: mechanics (rules), shop, skills, spells, prayers, quests, clues, minigames, raids, farming, construction (build actions + perks), gather (field-gathering tasks).',
     inputSchema: {
       type: 'object',
       properties: {

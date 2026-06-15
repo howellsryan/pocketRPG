@@ -215,6 +215,18 @@ describe('MCP browse helpers', () => {
     expect(REFERENCE_TOPIC_NAMES).toContain('mechanics')
     expect(REFERENCE_TOPIC_NAMES).not.toContain('items')
   })
+
+  it('exposes construction and gather reference topics with real data', () => {
+    expect(REFERENCE_TOPIC_NAMES).toContain('construction')
+    expect(REFERENCE_TOPIC_NAMES).toContain('gather')
+    const construction = readReference('pocketrpg://reference/construction')
+    expect(construction?.mimeType).toBe('application/json')
+    const conData = JSON.parse(construction!.text)
+    expect(conData.buildActions.some((a: any) => a.id === 'build_oak_plank')).toBe(true)
+    expect(conData.perks.some((p: any) => p.id === 'money_purse')).toBe(true)
+    const gather = readReference('pocketrpg://reference/gather')
+    expect(Array.isArray(JSON.parse(gather!.text))).toBe(true)
+  })
 })
 
 describe('MCP reference data', () => {
