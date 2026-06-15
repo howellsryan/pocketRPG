@@ -31,7 +31,7 @@ import { applyTaskResult } from '../../../src/engine/applyTaskResult.js'
 import skillsData from '../../../src/data/skills.json' assert { type: 'json' }
 import { getDungeoneeringRewardCost } from '../../../src/engine/dungeoneeringTokens.js'
 import { SLAYER_MASTERS, pickSlayerMonster, buildSlayerTask } from '../../../src/engine/slayerMasters.js'
-import { SLAYER_TASK_SKIP_POINT_COST } from '../../../src/engine/slayerTasks.js'
+import { SLAYER_TASK_SKIP_POINT_COST, doesSlayerTaskMatchMonster } from '../../../src/engine/slayerTasks.js'
 import { getSlayerTaskReward } from '../../../src/engine/slayerRewards.js'
 import questsData from '../../../src/data/quests.json' assert { type: 'json' }
 import { checkQuestEligibility, getQuestPointsEarned, getCombatLevel } from '../../../src/engine/quests.js'
@@ -740,8 +740,9 @@ export function questStatuses(save) {
 // `simulateIdleCombat` engine — the same simulator the client runs at load
 // time. It only fights normal monsters (bosses/raids are blocked inside the
 // simulator and gated again here) and uses the character's own configured idle
-// food/potions/prayers from settings.idleCombatSetup. Slayer-task credit is
-// deliberately left to the client for now (we pass slayerTask = null).
+// food/potions/prayers from settings.idleCombatSetup. If the monster matches
+// the character's active Slayer task, kills are credited and the task progress
+// (or completion + point grant) is written back to save.settings.
 
 const VALID_STANCES = new Set(['accurate', 'aggressive', 'defensive', 'controlled'])
 
@@ -763,7 +764,11 @@ export function buildCombatTask(save, monsterId, stance) {
   if (!VALID_STANCES.has(chosen)) {
     throw new GameApiError('INVALID_STANCE', `Invalid stance '${chosen}'. Use one of: ${[...VALID_STANCES].join(', ')}.`, 400)
   }
-  return { type: 'combat', monster, stance: chosen, bankingEnabled: true, spell: save.settings?.activeCombatSpell || null }
+  const slayerTask = save.settings?.slayerTask || null
+  const activeSlayerTask = (slayerTask && doesSlayerTaskMatchMonster(slayerTask.monsterId, monster.id))
+    ? slayerTask
+    : null
+  return { type: 'combat', monster, stance: chosen, bankingEnabled: true, spell: save.settings?.activeCombatSpell || null, slayerTask: activeSlayerTask }
 }
 
 function maxHpFromStats(stats) {
@@ -782,7 +787,7 @@ export function runCombatTask(save, task, elapsedMs) {
     ? Math.max(0, Math.floor(Number(save.settings.currentHP)))
     : maxHpFromStats(stats)
   const inv28 = toSlotArray(save)
-  const sim = simulateIdleCombat(task, elapsedMs, stats, save.equipment, inv28, itemsData, null, save.bank, {
+  const sim = simulateIdleCombat(task, elapsedMs, stats, save.equipment, inv28, itemsData, task.slayerTask || null, save.bank, {
     currentHP,
     idleFood: setup.food,
     idlePotions: setup.potions,
@@ -797,6 +802,28 @@ export function runCombatTask(save, task, elapsedMs) {
   for (const [skill, xp] of Object.entries(sim.xpGained || {})) {
     if (Math.floor(Number(xp) || 0) > 0) xpGained[skill] = Math.floor(Number(xp))
   }
+
+  let slayerCredit = null
+  if (task.slayerTask && sim.slayerTaskUpdate) {
+    if (sim.slayerTaskUpdate.completed) {
+      const reward = getSlayerTaskReward(sim.slayerTaskUpdate.pointsOnComplete, Number(save.settings.slayerTasksCompleted) || 0)
+      save.settings.slayerTasksCompleted = reward.totalTasks
+      save.settings.slayerPoints = (Number(save.settings.slayerPoints) || 0) + reward.pointsEarned
+      save.settings.slayerTask = null
+      slayerCredit = { completed: true, pointsEarned: reward.pointsEarned, totalSlayerPoints: save.settings.slayerPoints }
+    } else {
+      save.settings.slayerTask = sim.slayerTaskUpdate
+      slayerCredit = { completed: false, monstersRemaining: sim.slayerTaskUpdate.monstersRemaining, monstersKilledOnTask: sim.monstersKilledOnTask || 0 }
+    }
+  }
+
+  if (Math.floor(Number(sim.slayerXpGained) || 0) > 0) {
+    const slayerStats = save.stats.slayer || { xp: 0 }
+    const newXP = Math.min((slayerStats.xp || 0) + Math.floor(sim.slayerXpGained), XP_CAP)
+    save.stats.slayer = { ...slayerStats, xp: newXP, level: getLevelFromXP(newXP) }
+    xpGained.slayer = Math.floor(sim.slayerXpGained)
+  }
+
   return {
     applied: true,
     type: 'combat',
@@ -809,6 +836,7 @@ export function runCombatTask(save, task, elapsedMs) {
     died: result.died,
     finalHP: result.finalHP,
     stoppedReason: result.stoppedReason,
+    ...(slayerCredit ? { slayerTask: slayerCredit } : {}),
   }
 }
 

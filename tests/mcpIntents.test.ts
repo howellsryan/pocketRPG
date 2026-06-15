@@ -418,6 +418,106 @@ describe('combat intents', () => {
   })
 })
 
+describe('combat intents — slayer task credit', () => {
+  function slayerSave(overrides: any = {}) {
+    return makeSave({
+      stats: {
+        attack: { xp: 1_000_000 },
+        strength: { xp: 1_000_000 },
+        defence: { xp: 1_000_000 },
+        hitpoints: { xp: 1_000_000 },
+        slayer: { xp: 1_000_000 },
+        ranged: { xp: 0 },
+        magic: { xp: 0 },
+      },
+      settings: {
+        currentHP: 73,
+        idleCombatSetup: { food: [], potions: [], prayers: {} },
+        slayerPoints: 10,
+        slayerTasksCompleted: 4,
+        slayerTask: {
+          monsterId: 'field_chicken',
+          monsterName: 'Field Chicken',
+          monstersRemaining: 500,
+          totalCount: 500,
+          masterId: 'turael',
+          pointsOnComplete: 1,
+          isBoss: false,
+        },
+      },
+      ...overrides,
+    })
+  }
+
+  it('buildCombatTask attaches slayerTask when the monster matches the active task', () => {
+    const save = slayerSave()
+    const task = buildCombatTask(save, 'field_chicken', undefined)
+    expect(task.slayerTask).not.toBeNull()
+    expect(task.slayerTask.monsterId).toBe('field_chicken')
+    expect(task.slayerTask.monstersRemaining).toBe(500)
+  })
+
+  it('buildCombatTask leaves slayerTask null when fighting a different monster', () => {
+    const save = slayerSave()
+    const task = buildCombatTask(save, 'cave_goblin', undefined)
+    expect(task.slayerTask).toBeNull()
+  })
+
+  it('buildCombatTask leaves slayerTask null when no active slayer task', () => {
+    const save = slayerSave({ settings: { currentHP: 73, idleCombatSetup: { food: [], potions: [], prayers: {} } } })
+    const task = buildCombatTask(save, 'field_chicken', undefined)
+    expect(task.slayerTask).toBeNull()
+  })
+
+  it('runCombatTask decrements monstersRemaining and adds slayer XP on partial progress', () => {
+    const save = slayerSave()
+    const task = buildCombatTask(save, 'field_chicken', undefined)
+    const r = runCombatTask(save, task, 30_000)
+    expect(r.applied).toBe(true)
+    expect(r.slayerTask).toBeDefined()
+    expect(r.slayerTask.completed).toBe(false)
+    expect(r.slayerTask.monstersRemaining).toBeGreaterThan(0)
+    expect(r.slayerTask.monstersRemaining).toBeLessThan(500)
+    // Slayer task still active — not cleared
+    expect(save.settings.slayerTask).not.toBeNull()
+    expect(save.settings.slayerTask.monstersRemaining).toBe(r.slayerTask.monstersRemaining)
+    // Slayer XP granted for kills on task
+    expect(save.stats.slayer.xp).toBeGreaterThan(1_000_000)
+    expect(r.xpGained.slayer).toBeGreaterThan(0)
+  })
+
+  it('runCombatTask completes the task and grants slayer points when monstersRemaining hits 0', () => {
+    const save = slayerSave({
+      settings: {
+        currentHP: 73,
+        idleCombatSetup: { food: [], potions: [], prayers: {} },
+        slayerPoints: 10,
+        slayerTasksCompleted: 4,
+        slayerTask: { monsterId: 'field_chicken', monsterName: 'Field Chicken', monstersRemaining: 1, totalCount: 10, masterId: 'turael', pointsOnComplete: 1, isBoss: false },
+      },
+    })
+    const task = buildCombatTask(save, 'field_chicken', undefined)
+    const r = runCombatTask(save, task, 60_000)
+    expect(r.applied).toBe(true)
+    expect(r.slayerTask?.completed).toBe(true)
+    // The 5th task completion (tasksCompleted was 4) hits the 5-task milestone → x10
+    expect(r.slayerTask?.pointsEarned).toBe(10)
+    expect(save.settings.slayerTask).toBeNull()
+    expect(save.settings.slayerPoints).toBe(20) // 10 existing + 10 earned
+    expect(save.settings.slayerTasksCompleted).toBe(5)
+    expect(r.slayerTask?.totalSlayerPoints).toBe(20)
+  })
+
+  it('runCombatTask does not produce slayerTask credit when monster does not match', () => {
+    const save = slayerSave()
+    const task = buildCombatTask(save, 'cave_goblin', undefined)
+    const r = runCombatTask(save, task, 60_000)
+    expect(r.slayerTask).toBeUndefined()
+    // Slayer task settings unchanged
+    expect(save.settings.slayerTask.monstersRemaining).toBe(500)
+  })
+})
+
 describe('dungeoneering intents', () => {
   it('trains dungeoneering as an idle skill, earning XP and tokens', () => {
     const save = makeSave({ stats: { dungeoneering: { xp: 0, level: 1 } } })
